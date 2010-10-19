@@ -37,3 +37,5 @@ static var_info vtab_pvwatts[] = {
 
 { var_data::INVALID,       0,                       NULL,                       NULL,                             NULL,     NULL,                 NULL,           NULL,           NULL } };
 
+
+

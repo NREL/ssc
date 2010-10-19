@@ -10,15 +10,12 @@
 #include <cstdarg>
 
 /* Macros require for building
-	__VISUALC__ *or* __GNUC__
 	__32BIT__ *or* __64BIT__
 	__WINDOWS__ *or* __UNIX__
-	__VERSION__
 	_DEBUG *if debug mode*
 */
-#define __SSCVER__ 1
 
-#ifdef __VISUALC__
+#ifdef _MSC_VER
 #define __COMPILER__  "VisualC++"
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 #endif
@@ -50,7 +47,7 @@
 #define __DEBUG__ 0
 #endif
 
-#ifdef __VISUALC__
+#ifdef _MSC_VER
 #include <unordered_map>
 using std::tr1::unordered_map;
 #else
@@ -58,7 +55,7 @@ using std::tr1::unordered_map;
 using std::tr1::unordered_map;
 #endif
 
-#include "util.h"
+#include "lib_util.h"
 #include "sscapi.h"
 
 struct var_info
@@ -73,12 +70,15 @@ struct var_info
 	const char *group;
 	const char *required_if; // e.g. always required: "*"  optional: "?"  depends: "pv.model=3" "pv.model=3|pv.size<3" "pv.model=3&pv.tilt=33.2"
 	const char *constraints; // e.g. "MIN=10,MAX=12,NVALUES=23,ARRAYLEN=8760,TMYEPW,LOCAL_FILE,MXH_SCHEDULE"
+	const char *ui_hint; // e.g. "hide,decpt=3" so hints for a user interface's treatment of this variable
 };
 
 struct param_info
 {
 	int type;
 	const char *name;
+	const char *default_value; // NULL for no default value - must be specified by user
+	const char *description;
 };
 
 extern const var_info var_info_invalid;
@@ -112,7 +112,7 @@ public:
 	explicit var_table();
 	virtual ~var_table();
 
-	void assign( const std::string &name, const var_data &value );
+	var_data *assign( const std::string &name, const var_data &value );
 	void unassign( const std::string &name );
 	var_data *lookup( const std::string &name );
 
@@ -121,7 +121,6 @@ private:
 };
 
 class handler_interface; // forward decl
-
 
 class compute_module
 {
@@ -168,6 +167,20 @@ public:
 			: general_error( "constraint fail: reason " + reason + ", with '" + expr + "' for: " + cur_var ) {  }
 	};
 
+	class exec_error : public general_error
+	{
+	public:
+		exec_error( const std::string &mod_name, const std::string &reason )
+			: general_error( "exec fail(" + mod_name + "): " + reason ) {  }
+	};
+
+	class timestep_error : public general_error
+	{
+	public:
+		timestep_error( float start, float end, float step, const char *reason )
+			: general_error( util::format("timestep fail(%f %f %f): %s", start, end, step, reason) ) {  }
+	};
+
 public:
 	compute_module( ); // cannot be created directly - has a pure virtual function
 	virtual ~compute_module();
@@ -211,7 +224,7 @@ public:
 	   the output string to be sent to the log as a NOTICE
 	*/
 	virtual bool on_extproc_output( const std::string &text ) { return false; }	
-
+	
 protected:
 	/* must be implemented to perform calculations
 	   note: can throw exceptions of type 'compute_module::error' */
@@ -222,13 +235,15 @@ protected:
 	void add_var_info( var_info vi[] );
 	void build_info_map();
 	bool has_info_map() { return m_infomap!=NULL; }
-	void set_param_info( param_info *plist );
+	void set_param_info( param_info plist[] );
 	
 	
 	/* for working with input/output/inout variables during 'compute'*/
 	const var_info &info( const std::string &name ) throw( general_error );
-	void assign( const std::string &name, const var_data &value ) throw( general_error );
 	var_data *lookup( const std::string &name ) throw( general_error );
+	var_data *assign( const std::string &name, const var_data &value ) throw( general_error );
+	ssc_number_t *allocate( const std::string &name, size_t length ) throw( general_error );
+	ssc_number_t *allocate( const std::string &name, size_t nrows, size_t ncols ) throw( general_error );
 	var_data &value( const std::string &name ) throw( general_error );
 	int as_integer( const std::string &name ) throw( general_error );
 	bool as_boolean( const std::string &name ) throw( general_error );
@@ -238,6 +253,8 @@ protected:
 	ssc_number_t *as_array( const std::string &name, size_t *count ) throw( general_error );
 	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
 
+	
+	int check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error );
 
 private:
 	// called by 'compute' as necessary for precheck and postcheck
@@ -283,5 +300,21 @@ public:
 		{ if (!m_cm) return;
 		  if (!m_cm->on_extproc_output(text)) m_cm->log( "stdout(child): " + text, SSC_NOTICE ); }
 };
+
+
+
+#define DEFINE_MODULE_ENTRY( name, desc, ver ) \
+	static compute_module *_create_ ## name () { return new cm_ ## name; } \
+	module_entry_info cm_entry_ ## name = { \
+		#name, desc, ver, _create_ ## name }; \
+
+struct module_entry_info
+{
+	const char *name;
+	const char *description;
+	int version;
+	compute_module * (*f_create)();
+};
+
 
 #endif

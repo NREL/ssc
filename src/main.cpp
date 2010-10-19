@@ -2,10 +2,12 @@
 
 #include <cstdio>
 
+#include "sscapi.h"
+
 int main(int argc, char* argv[])
 {
 
-	std::cout << "System Simulator Core (SSC) Version " << __SSCVER__ << std::endl;
+	std::cout << "System Simulator Core (SSC) Version " << ssc_version() << std::endl;
 	std::cout << "Platform: " << __PLATFORM__ << std::endl;
 	std::cout << "Arch: " << __ARCH__ << std::endl;
 	std::cout << "Compiler: " << __COMPILER__ << std::endl;
@@ -24,7 +26,20 @@ int main(int argc, char* argv[])
 	void util_test(); // forward
 	util_test();
 
-	
+	std::string last_path = util::get_cwd();
+	std::cout << "working dir: " << last_path << std::endl;
+	util::set_cwd("c:/Program Files");
+	std::cout << "working dir: " << util::get_cwd() << std::endl;
+	util::set_cwd("c:/Users/adobos/Documents/NREL");
+	std::cout << "working dir: " << util::get_cwd() << std::endl;
+	util::set_cwd("i:/cmlredist");
+	std::cout << "working dir: " << util::get_cwd() << std::endl;
+	util::set_cwd( last_path );
+	std::cout << "working dir: " << util::get_cwd() << std::endl;
+
+	void test_stdhrlywf(); // forward
+	test_stdhrlywf();
+
 	std::cout << std::endl << "Press a key to end..." << std::flush;
 	getc(stdin);
 	return 0;
@@ -95,6 +110,45 @@ void util_test()
 	std::cout << "float 8760 matrix_t membytes: " << val.membytes() << std::endl;
 	util::matrix_t<double> big(8760);
 	std::cout << "double 8760 matrix_t membytes: " << big.membytes() << std::endl;
+}
+
+void test_stdhrlywf()
+{
+	ssc_data_t data = ssc_data_create();
+	ssc_data_set_string( data, "file_name", "c:/SAM/2010.10.8/exelib/climate_files/CA Daggett.tm2" );
+	ssc_data_set_number( data, "header_only", 1);
+
+	ssc_module_t reader = ssc_module_create("stdhrlywf");
+	if (!ssc_module_exec( reader, data ))
+	{
+		int i=0,type;
+		float time;
+		while (const char *err=ssc_module_log(reader, i++, &type, &time))
+		{
+			std::cout << err << std::endl;
+		}
+	}
+	else
+	{
+		ssc_number_t lat, lon, tz, elev;
+		ssc_data_get_number(data, "lat", &lat);
+		ssc_data_get_number(data, "lon", &lon);
+		ssc_data_get_number(data, "tz", &tz);
+		ssc_data_get_number(data, "elev", &elev);
+		std::cout << "loc: '" << ssc_data_get_string(data, "loc_text") << "' lat: " << lat << " lon: " << lon << " tz: " << tz << " elev: " << elev << std::endl;
+
+		int length = 0;
+		const ssc_number_t *dn = ssc_data_get_array(data, "dn", &length);
+		if (!dn) std::cout << "no dn specified." <<std::endl;
+		else
+		{
+			for (int i=0;i<24 && i<length;i++)
+				std::cout << "\t dn," << i << ": " << dn[i] << std::endl;
+		}
+	}
+	
+	ssc_module_free( reader );
+	ssc_data_free( data );
 }
 
 /*

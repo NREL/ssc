@@ -19,26 +19,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\cm_pvwatts.cpp" />
-    <ClCompile Include="src\cm_rescom_cashflow.cpp" />
-    <ClCompile Include="src\cm_weather_reader.cpp" />
+    <ClCompile Include="src\cmod_pvwatts.cpp" />
+    <ClCompile Include="src\cmod_stdhrlywf.cpp" />
     <ClCompile Include="src\core.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">__32BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">__64BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">__64BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="src\lib_pvwatts.cpp" />
+    <ClCompile Include="src\lib_util.cpp" />
+    <ClCompile Include="src\lib_wfhrly.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sscapi.cpp" />
-    <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\attic.h" />
-    <ClInclude Include="src\cm_pvwatts.h" />
-    <ClInclude Include="src\cm_rescom_cashflow.h" />
-    <ClInclude Include="src\cm_weather_reader.h" />
     <ClInclude Include="src\core.h" />
+    <ClInclude Include="src\lib_pvwatts.h" />
+    <ClInclude Include="src\lib_util.h" />
+    <ClInclude Include="src\lib_wfhrly.h" />
     <ClInclude Include="src\sscapi.h" />
-    <ClInclude Include="src\util.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{46D1EE84-840B-4325-910A-BC205A0D4C08}</ProjectGuid>

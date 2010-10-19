@@ -1,35 +1,42 @@
+#include <cstring>
+
 #include "core.h"
 #include "sscapi.h"
-
-#include "cm_pvwatts.h"
-#include "cm_weather_reader.h"
-#include "cm_rescom_cashflow.h"
-
 
 SSCEXPORT int ssc_version()
 {
 	return 1; /* update this version number as needed */
 }
 
-/* to add new computation modules, modify this table and the
-   ssc_module_create function */
+/* to add new computation modules, 
+	specify an extern module entry,
+	and add it to 'module_table'
+*/
 
-static const char *cm_modules[] = {
-	"weather_reader",
-	"pvwatts",
-	"rescom_cashflow_electric",
-	"rescom_cashflow_gas",
+extern module_entry_info 
+/* extern declarations of modules for linking */
+	cm_entry_pvwatts,
+	cm_entry_stdhrlywf;
+
+/* official module table */
+static module_entry_info *module_table[] = {
+	&cm_entry_stdhrlywf,
+	&cm_entry_pvwatts,
 	NULL };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {
 	std::string lname = util::lower_case( name );
 
-	if (lname == "weather_reader")  return new cm_weather_reader;
-	if (lname == "pvwatts") return new cm_pvwatts;
-	if (lname == "rescom_cashflow_electric") return new cm_rescom_cashflow( 0 );
-	if (lname == "rescom_cashflow_gas") return new cm_rescom_cashflow( 1 );
-	
+	int i=0;
+	while ( module_table[i] != NULL
+		 && module_table[i]->f_create != NULL )
+	{
+		if ( lname == util::lower_case( module_table[i]->name ) )
+			return (* (module_table[i]->f_create) );
+		i++;
+	}
+
 	return NULL;
 }
 
@@ -137,14 +144,33 @@ SSCEXPORT const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char
 	return dat->num.data();
 }
 
-SSCEXPORT const char *ssc_module_list( int index )
+SSCEXPORT ssc_entry_t ssc_module_entry( int index )
 {
 	int max=0;
-	while ( cm_modules[max++] ); // count up max number of installed computation modules
+	while( module_table[max++] != NULL );
 
-	if (index >= 0 && index < max) return cm_modules[index];
+	if (index >= 0 && index < max) return static_cast<ssc_entry_t>(module_table[index]);
 	else return NULL;
 }
+
+SSCEXPORT const char *ssc_entry_name( ssc_entry_t p_entry )
+{
+	module_entry_info *p = static_cast<module_entry_info*>(p_entry);
+	return p ? p->name : NULL;
+}
+
+SSCEXPORT const char *ssc_entry_description( ssc_entry_t p_entry )
+{
+	module_entry_info *p = static_cast<module_entry_info*>(p_entry);
+	return p ? p->description : NULL;
+}
+
+SSCEXPORT int ssc_entry_version( ssc_entry_t p_entry )
+{
+	module_entry_info *p = static_cast<module_entry_info*>(p_entry);
+	return p ? p->version : 0;
+}
+
 
 SSCEXPORT const ssc_info_t ssc_module_var_info( ssc_module_t p_mod, int index )
 {
@@ -195,6 +221,25 @@ SSCEXPORT const char *ssc_info_group( ssc_info_t p_inf )
 	return vi ? vi->group : NULL;
 }
 
+SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf )
+{
+	var_info *vi = static_cast<var_info*>(p_inf);
+	return vi ? vi->ui_hint : NULL;
+}
+
+class default_sync_proc : public util::sync_piped_process
+{
+private:
+	ssc_handler_t m_handler;
+public:
+	default_sync_proc( ssc_handler_t ph ) : m_handler(ph) {  }
+
+	virtual void on_stdout(const std::string &line_text)
+	{
+		ssc_module_extproc_output( m_handler, line_text.c_str() );
+	}
+};
+
 static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_handler,
 	int action_type, float f0, float f1, 
 	const char *s0, const char *s1,
@@ -223,7 +268,8 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 	{
 		// run the executable, pipe the output, and return output to p_mod
 		// **TODO**
-		return 0;
+		default_sync_proc exe( p_handler );
+		return exe.spawn( s0, s1 ) == 0;
 	}
 	else
 		return 0;
@@ -257,7 +303,7 @@ static char p_internal_buf[256];
 		const char *text;
 		int type;
 		int i=0;
-		while( text = ssc_module_log( p_mod, i, &type, NULL ) )
+		while( (text = ssc_module_log( p_mod, i, &type, NULL )) )
 		{
 			if (type == SSC_ERROR)
 			{
@@ -360,18 +406,40 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 	if (hi)	hi->on_stdout( output_line );
 }
 
-SSCEXPORT const char *ssc_module_parameter_name( ssc_module_t p_mod, int index, int *param_type )
+SSCEXPORT ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);
 	if (!cm) return NULL;
 	
 	param_info *p = cm->get_param_info( index );
-	if (!p) return NULL;
-
-	if (param_type) *param_type = p->type;
-	
-	return p->name;
+	return static_cast<ssc_param_t>(p);
 }
+
+
+SSCEXPORT const char *ssc_param_name( ssc_param_t p_param )
+{
+	param_info *p = static_cast<param_info*>(p_param);
+	return p ? p->name : NULL;
+}
+
+SSCEXPORT const char *ssc_param_description( ssc_param_t p_param )
+{
+	param_info *p = static_cast<param_info*>(p_param);
+	return p ? p->description : NULL;
+}
+
+SSCEXPORT const char *ssc_param_default_value( ssc_param_t p_param )
+{
+	param_info *p = static_cast<param_info*>(p_param);
+	return p ? p->default_value : NULL;
+}
+
+SSCEXPORT int ssc_param_type( ssc_param_t p_param )
+{
+	param_info *p = static_cast<param_info*>(p_param);
+	return p ? p->type : NULL;
+}
+
 
 SSCEXPORT void ssc_module_parameter_string( ssc_module_t p_mod, const char *name, const char *value )
 {

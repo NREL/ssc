@@ -3,7 +3,7 @@
 
 #include "core.h"
 
-const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 static const char *var_data_types[] = 
 {	"<invalid>", // SSC_INVALID
@@ -37,7 +37,7 @@ var_table::~var_table()
 		delete it->second; // delete the var_data object
 }
 
-void var_table::assign( const std::string &name, const var_data &val )
+var_data *var_table::assign( const std::string &name, const var_data &val )
 {
 	var_data *v = lookup(name);
 	if (!v)
@@ -46,7 +46,8 @@ void var_table::assign( const std::string &name, const var_data &val )
 		m_hash[ util::lower_case(name) ] = v;
 	}
 	
-	*v = val;
+	v->copy(val);
+	return v;
 }
 
 void var_table::unassign( const std::string &name )
@@ -79,7 +80,7 @@ compute_module::~compute_module()
 	if (m_infomap) delete m_infomap;
 }
 
-void compute_module::set_param_info( param_info *plist /* last one 'name' must be null, static array */ )
+void compute_module::set_param_info( param_info plist[] /* last one 'name' must be null, static array */ )
 {
 	m_paramlist.clear();
 	int i=0;
@@ -291,17 +292,34 @@ const var_info &compute_module::info( const std::string &name ) throw( general_e
 	throw general_error("variable information lookup fail: '" + name + "'");
 }
 
-void compute_module::assign( const std::string &name, const var_data &value ) throw( general_error )
-{
-	var_data *v = lookup(name);
-	if (v) v->copy(value);
-}
-
 var_data *compute_module::lookup( const std::string &name ) throw( general_error )
 {
 	if (!m_vartab) throw general_error("invalid data container object reference");
 	return m_vartab->lookup(name);
 }
+
+var_data *compute_module::assign( const std::string &name, const var_data &value ) throw( general_error )
+{
+	if (!m_vartab) throw general_error("invalid data container object reference");
+	return m_vartab->assign( name, value );
+}
+
+ssc_number_t *compute_module::allocate( const std::string &name, size_t length ) throw( general_error )
+{
+	var_data *v = assign(name, var_data());
+	v->type = SSC_ARRAY;
+	v->num.resize( length );
+	return v->num.data();
+}
+
+ssc_number_t *compute_module::allocate( const std::string &name, size_t nrows, size_t ncols ) throw( general_error )
+{
+	var_data *v = assign(name, var_data());
+	v->type = SSC_MATRIX;
+	v->num.resize(nrows, ncols);
+	return v->num.data();
+}
+
 
 var_data &compute_module::value( const std::string &name ) throw( general_error )
 {
@@ -387,9 +405,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 	// if it is an input or an inout variable
 
 	const var_info &inf = info(name);
-	if (inf.var_type != SSC_INPUT ||
-		inf.var_type != SSC_INOUT ||
-		inf.required_if == NULL)
+	if (inf.required_if == NULL)
 		return false;
 
 	std::string reqexpr = inf.required_if;
@@ -443,13 +459,29 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 				{
 					/* handle built-in test operators */
 
-					if (lhs == "na") // check if 'rhs' is not-assigned
+					if (lhs == "na") // check if variable name in 'rhs' is not assigned
 					{
 						expr_result = lookup(rhs)==NULL ? 1 : 0;
 					}
-					else if (lhs == "a")
+					else if (lhs == "a") // check if variable name in 'rhs' is assigned
 					{
 						expr_result = lookup(rhs)!=NULL ? 1 : 0;
+					}
+					else if (lhs == "abt") // check if variable in 'rhs' is assigned, boolean type, and value true
+					{
+						var_data *v;
+						if ( (v = lookup(rhs)) && v->type == SSC_NUMBER &&  ((int)v->num) != 0)
+							return 1;
+						else
+							return 0;
+					}
+					else if (lhs == "abf") // check if variable in 'rhs' is assigned, boolean type, and value false
+					{
+						var_data *v;
+						if ( (v = lookup(rhs)) && v->type == SSC_NUMBER &&  ((int)v->num) == 0)
+							return 1;
+						else
+							return 0;
 					}
 					else
 					{
@@ -587,6 +619,15 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 				if (dat.num.length() != len)
 					fail_constraint( util::to_string( (int)dat.num.length() ) );
 			}
+			else if (test == "length_equal")
+			{
+				if (dat.type != SSC_ARRAY) throw constraint_error(name, "cannot test for length_equal with non-array type", expr);
+				int lenval = 0;
+				var_data *other_array = lookup( rhs );
+				if (!other_array || other_array->type != SSC_ARRAY) throw constraint_error(name, "length_equal cannot find array variable to test against", expr);
+				if (dat.num.length() != other_array->num.length())
+					fail_constraint( util::to_string( (int) other_array->num.length() ) );
+			}
 			else if (test == "length_multiple_of")
 			{
 				if (dat.type != SSC_ARRAY) throw constraint_error(name, "cannot test for length_multiple_of with non-array type", expr);
@@ -609,4 +650,19 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 	return true;
 
 #undef fail_constraint
+}
+
+int compute_module::check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error )
+{
+	if (t_start < 0.0f) throw timestep_error(t_start,t_end,t_step, "start time must be 0 or greater");
+	if (t_end <= t_start) throw timestep_error(t_start,t_end,t_step, "end time must be greater than start time");
+	if (t_end >= 8760.0f) throw timestep_error(t_start,t_end,t_step, "end time must be less than 8760");
+	if (t_step < 1.0f/60.0f) throw timestep_error(t_start,t_end,t_step, "time step must be greater or equal to than 1/60");
+
+	float duration = t_end - t_start;
+	int steps = (int)(duration / t_step);
+
+	if ( steps*t_step != duration ) throw timestep_error(t_start, t_end, t_step, "invalid time step, must represent an integer number of minutes");
+
+	return steps;
 }

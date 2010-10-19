@@ -73,19 +73,19 @@ SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, s
 SSCEXPORT const ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length );
 SSCEXPORT const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols );
 
-
-
-
-
-/* ssc_module_list: Returns names of all computation modules built into ssc. Example:
+/* ssc_module_entry: Returns information of all computation modules built into ssc. Example:
 	int i=0;
-	const char *model_name;
-	while( model_name = ssc_module_list(i++) )
+	ssc_entry_t p_entry;
+	while( p_entry = ssc_module_list(i++) )
 	{
-		printf("Model %d: '%s'\n", i, model_name);
+		printf("Compute Module '%s': \n", ssc_entry_name(p_entry), ssc_entry_description(p_entry));
 	}
 */
-SSCEXPORT const char *ssc_module_list( int index );
+typedef void* ssc_entry_t;
+SSCEXPORT ssc_entry_t ssc_module_entry( int index );
+SSCEXPORT const char *ssc_entry_name( ssc_entry_t p_entry );
+SSCEXPORT const char *ssc_entry_description( ssc_entry_t p_entry );
+SSCEXPORT int ssc_entry_version( ssc_entry_t p_entry );
 
 /* ssc_module_t: An opaque reference to a computation module.
   A computation module performs a transformation on a ssc_data_t. It usually
@@ -139,6 +139,7 @@ SSCEXPORT const char *ssc_info_label( ssc_info_t p_inf );
 SSCEXPORT const char *ssc_info_units( ssc_info_t p_inf );
 SSCEXPORT const char *ssc_info_meta( ssc_info_t p_inf );
 SSCEXPORT const char *ssc_info_group( ssc_info_t p_inf );
+SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf );
 
 /* ssc_module_exec_simple: The simplest way to run a computation module over a data set.
    Simply specify the name of the module, and a data set.  If the whole process succeeded,
@@ -190,7 +191,12 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_mod, const char *output_line );
 
 /* list all simulation parameters required for a computation module */
-SSCEXPORT const char *ssc_module_parameter_name( ssc_module_t p_mod, int index, int *param_type );
+typedef void* ssc_param_t;
+SSCEXPORT ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index );
+SSCEXPORT const char *ssc_param_name( ssc_param_t p_param );
+SSCEXPORT const char *ssc_param_description( ssc_param_t p_param );
+SSCEXPORT const char *ssc_param_default_value( ssc_param_t p_param );
+SSCEXPORT int ssc_param_type( ssc_param_t p_param );
 
 /* Set computation module configuration parameters, return 1 or 0 
    these parameters can include simulation time steps, start and end times,
