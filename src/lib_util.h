@@ -280,6 +280,11 @@ namespace util
 		{
 			return t_array;
 		}
+
+		inline T value() const
+		{
+			return t_array[0];
+		}
 	};
 
 };

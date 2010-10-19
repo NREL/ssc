@@ -25,6 +25,123 @@ std::string var_data::type_name(int type)
 	else return "";
 }
 
+
+std::string var_data::to_string()
+{
+	return var_data::to_string( *this );
+}
+
+std::string var_data::to_string( const var_data &value )
+{
+	switch( value.type )
+	{
+	case SSC_STRING:
+		return value.str;
+	case SSC_NUMBER:
+		return util::to_string( value.num.value() );
+	case SSC_ARRAY:
+		{
+			std::string s;
+			for (size_t i=0;i<value.num.length();i++)
+			{
+				s += util::to_string( (double) value.num[i] );
+				if ( i < value.num.length()-1 )	s += ',';
+			}
+			return s;
+		}
+	case SSC_MATRIX:
+		{
+			std::string s;
+			for (size_t r=0;r<value.num.nrows();r++)
+			{
+				s += "[";
+				for (size_t c=0; c<value.num.ncols();c++)
+				{
+					s += util::to_string( (double) value.num.at(r,c) );
+					if ( c < value.num.ncols()-1 ) s += ' ';
+				}
+				s += "]";
+
+				if (r < value.num.nrows()-1) s += ' ';
+			}
+			return s;
+		}
+	}
+
+	return "<invalid>";
+}
+
+bool var_data::parse( unsigned char type, const std::string &buf, var_data &value )
+{
+	switch(type)
+	{
+	case SSC_STRING:
+		{
+			value.type = SSC_STRING;
+			value.str = buf;
+			return true;
+		}
+	case SSC_NUMBER:
+		{
+			double x;
+			if (util::to_double(buf, &x))
+			{
+				value.type = SSC_NUMBER;
+				value.num = (ssc_number_t)x;
+				return true;
+			}
+			else
+				return false;
+
+		}
+	case SSC_ARRAY:
+		{
+			std::vector<std::string> tokens = util::split(buf," ,\t[]\n");
+			value.type = SSC_ARRAY;
+			value.num.resize_fill( tokens.size(), 0.0 );
+			for (size_t i=0; i<tokens.size(); i++)
+			{
+				double x;
+				if (util::to_double( tokens[i], &x ))
+					value.num[i] = (ssc_number_t) x;
+				else
+					return false;
+			}
+			return true;
+		}
+	case SSC_MATRIX:
+		{
+			std::vector<std::string> rows = util::split(buf,"[]\n");
+			if (rows.size() < 1) return false;
+			std::vector<std::string> cur_row = util::split(rows[0], " ,\t");
+			if (cur_row.size() < 1) return false;
+
+			value.type = SSC_MATRIX;
+			value.num.resize_fill( rows.size(), cur_row.size(), 0.0 );
+
+			for( size_t c=0; c < cur_row.size(); c++)
+			{
+				double x;
+				if (util::to_double(cur_row[c], &x)) value.num.at(0,c) = (ssc_number_t)x;
+			}
+
+			for (size_t r=1; r < rows.size(); r++)
+			{
+				cur_row = util::split(rows[r], " ,\t");
+				for (size_t c=0; c<cur_row.size() && c<value.num.ncols(); c++)
+				{
+					double x;
+					if (util::to_double(cur_row[c], &x))
+						value.num.at(r,c) = (ssc_number_t)x;
+				}
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
 var_table::var_table()
 {
 	/* nothing to do here */
@@ -418,6 +535,17 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 	{
 		return false; // Always optional
 	}
+	else if (reqexpr.length() > 2 && reqexpr[0] == '?' && reqexpr[1] == '=')
+	{
+		// optional but has a default value that is assigned if variable is unassigned
+		var_data *v = lookup(name);
+		if (!v) v = assign(name, m_null_value );
+
+		if ( !var_data::parse( inf.data_type, reqexpr.substr(2), *v ) )
+			throw check_error(name, "could not parse default value in required_if spec (" + var_data::type_name(inf.data_type) + ")", reqexpr);
+
+		return true; // a default value has been assigned, so this variable is effectively always required
+	}
 	else
 	{
 		// run tests
@@ -652,15 +780,47 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 #undef fail_constraint
 }
 
-int compute_module::check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error )
+size_t compute_module::check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error )
 {
 	if (t_start < 0.0f) throw timestep_error(t_start,t_end,t_step, "start time must be 0 or greater");
 	if (t_end <= t_start) throw timestep_error(t_start,t_end,t_step, "end time must be greater than start time");
-	if (t_end >= 8760.0f) throw timestep_error(t_start,t_end,t_step, "end time must be less than 8760");
+	if (t_end > 8760.0f) throw timestep_error(t_start,t_end,t_step, "end time cannot be greater than 8760");
 	if (t_step < 1.0f/60.0f) throw timestep_error(t_start,t_end,t_step, "time step must be greater or equal to than 1/60");
+	if (t_step > 1.0f) throw timestep_error(t_start,t_end,t_step, "the maximum allowed time step is 1 hour");
 
 	float duration = t_end - t_start;
-	int steps = (int)(duration / t_step);
+	size_t steps = (size_t)(ceil(duration / t_step));
+
+	/* time step notes:
+	  
+	  The start and end times represent the time at the beginning of an hour.  For example:
+
+	    0 represents 12am on January 1st
+		8759 represents 11pm on December 31st
+		8760 represents 12am on January 1st of the next year
+
+		As a result, suppose you are simulating only the first twelve hours of January, at 1/2 hour steps.  
+		The 'time'  will take values of
+	
+		DataIndex: 0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19    20    21    22    23
+		Time:      0     0.5   1     1.5   2     2.5   3     3.5   4     4.5   5     5.5   6     6.5   7     7.5   8     8.5   9     9.5   10    10.5  11    11.5
+
+		Therefore, there will be 24 data values needed.
+
+		To specify this time range, use
+			t_start = 0
+			t_end = 12
+			t_step = 0.5
+
+		Pseudo-code for iteration control is done as follows:
+
+		time = t_start
+		while ( time < t_end )
+		{
+			// do calculations for current time // 
+			time = time + t_step
+		}
+	*/
 
 	if ( steps*t_step != duration ) throw timestep_error(t_start, t_end, t_step, "invalid time step, must represent an integer number of minutes");
 

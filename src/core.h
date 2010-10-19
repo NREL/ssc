@@ -97,6 +97,10 @@ public:
 	const char *type_name();
 	static std::string type_name(int type);
 
+	std::string to_string();
+	static std::string to_string( const var_data &value );
+	static bool parse( unsigned char type, const std::string &buf, var_data &value );
+
 	void copy( const var_data &rhs ) { type=rhs.type; num=rhs.num; str=rhs.str; }
 	
 	unsigned char type;
@@ -172,6 +176,13 @@ public:
 	public:
 		exec_error( const std::string &mod_name, const std::string &reason )
 			: general_error( "exec fail(" + mod_name + "): " + reason ) {  }
+	};
+
+	class mismatch_error : public general_error
+	{
+	public:
+		mismatch_error( int required, int specified, const std::string &reason )
+			: general_error(util::format("size mismatch error with %d required, but %d given: %s", required, specified, reason.c_str())) {  }
 	};
 
 	class timestep_error : public general_error
@@ -254,7 +265,7 @@ protected:
 	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
 
 	
-	int check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error );
+	size_t check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error );
 
 private:
 	// called by 'compute' as necessary for precheck and postcheck

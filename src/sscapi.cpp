@@ -33,7 +33,7 @@ SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 		 && module_table[i]->f_create != NULL )
 	{
 		if ( lname == util::lower_case( module_table[i]->name ) )
-			return (* (module_table[i]->f_create) );
+			return (*(module_table[i]->f_create))();
 		i++;
 	}
 
