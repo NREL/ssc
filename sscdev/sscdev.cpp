@@ -427,7 +427,9 @@ SCFrame::SCFrame()
 	if (wxFileExists(dll_path))
 	{
 		m_txtDllPath->ChangeValue( dll_path );
+		m_loadedDllPath = dll_path;
 		sscdll_load( dll_path.c_str() );
+		m_lastLoadTime = wxNow();
 	}
 
 	UpdateRecentMenu();	
@@ -476,7 +478,23 @@ SCFrame::SCFrame()
 
 void SCFrame::UpdateUI()
 {
-	m_lblDllStatus->SetCaption( sscdll_status() );
+	wxString status;
+
+	if (sscdll_isloaded())
+	{
+		int ver = 0;
+		try {
+			ver = ssc_version();
+		} catch (sscdll_error e) {
+			status = e.text + " ";
+			ver = -999;
+		}
+		status += m_loadedDllPath + " ( " + m_lastLoadTime + " ) Version " + wxString::Format("%d", ver);
+	}
+	else
+		status = "ssc32.dll not loaded.";
+
+	m_lblDllStatus->SetCaption( status );
 
 	m_toolBar->SetToolBitmap( ID_LOAD_UNLOAD_DLL, sscdll_isloaded() ? wxBitmap(stock_disconnect_24_xpm) : wxBitmap(stock_connect_24_xpm) );
 	m_toolBar->SetToolShortHelp( ID_LOAD_UNLOAD_DLL, sscdll_isloaded() ? "Unload ssc32.dll" : "Load ssc32.dll" );
@@ -685,8 +703,7 @@ void SCFrame::Exit()
 }
 
 void SCFrame::OnCommand(wxCommandEvent &evt)
-{
-	
+{	
 	switch(evt.GetId())
 	{
 	case wxID_OPEN:
@@ -706,7 +723,12 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 	case ID_LOAD_UNLOAD_DLL:
 		{
 			if (!sscdll_isloaded())
-				sscdll_load( m_txtDllPath->GetValue().c_str() );
+			{
+				m_loadedDllPath = m_txtDllPath->GetValue();
+				sscdll_load( m_loadedDllPath.c_str() );
+				m_lastLoadTime = wxNow();
+				m_currentAppDir = wxPathOnly(m_loadedDllPath);
+			}
 			else
 				sscdll_unload();
 
@@ -718,9 +740,11 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 			wxFileDialog fd(this, "Choose ssc32.dll", m_currentAppDir, "ssc32.dll", "DLL Files (*.dll)|*.dll", wxFD_OPEN);
 			if (fd.ShowModal() != wxID_OK) return;
 			wxString file = fd.GetPath();
-			m_currentAppDir = wxPathOnly(file);
-			sscdll_load(file.c_str());
 			m_txtDllPath->ChangeValue(file);
+			m_currentAppDir = wxPathOnly(file);
+			m_loadedDllPath = file;
+			sscdll_load(file.c_str());
+			m_lastLoadTime = wxNow();
 			UpdateUI();
 		}
 		break;
@@ -728,7 +752,9 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		{
 			wxString file = m_txtDllPath->GetValue();
 			m_currentAppDir = wxPathOnly( file );
+			m_loadedDllPath = file;
 			sscdll_load(file.c_str());
+			m_lastLoadTime = wxNow();
 			UpdateUI();
 		}
 		break;

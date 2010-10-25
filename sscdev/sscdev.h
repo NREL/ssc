@@ -105,7 +105,9 @@ private:
 
 	int m_recentCount;
 	wxString m_recentFiles[MAX_RECENT];
-	
+	wxString m_loadedDllPath;
+	wxString m_lastLoadTime;
+
 	DECLARE_EVENT_TABLE()
 };
 

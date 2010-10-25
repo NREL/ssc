@@ -1,238 +1,288 @@
-#include <wx/wx.h>
-#include <wx/dynlib.h>
-
 #include "dllinvoke.h"
 
-static wxString m_path;
-static wxString m_lastLoadTime;
-static wxDynamicLibrary m_dll;
+#if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)||defined(__MINGW___)||defined(_MSC_VER)
+#include <Windows.h>
+void *dll_open(const char *name) { return (void*) ::LoadLibraryA( name ); }
+void dll_close( void *handle ) { ::FreeLibrary( (HMODULE)handle ); }
+void *dll_sym( void *handle, const char *name ) { return (void*) ::GetProcAddress( (HMODULE)handle, name ); }
+#else
+#include <dlfcn.h>
+void *dll_open(const char *name) { return dlopen( name, RTLD_NOW ); }
+void dll_close( void *handle ) { dlclose( handle ); }
+void *dll_sym( void *handle, const char *name ) { return dlsym( handle, name ); }
+#endif
 
+
+// to reference count unique dll loads so that local static caches can be cleared and reset
+static unsigned int ssc32_access_id = 0; 
+// dll access handle
+static void *ssc32_handle = 0;
 
 bool sscdll_load( const char *path )
 {
 	sscdll_unload();
-	if (m_dll.Load( path ))
+	ssc32_handle = dll_open( path );
+	ssc32_access_id++;
+	
+	if ( 0 != ssc32_handle && 0 == dll_sym(ssc32_handle, "ssc_version"))
 	{
-		m_path = path;
-		m_lastLoadTime = wxNow();
-		return true;
+		dll_close( ssc32_handle );
+		ssc32_handle = 0;
+		return false;
 	}
-	else return false;
+	else
+		return true;
 }
 
 void sscdll_unload()
 {
-	if (m_dll.IsLoaded()) m_dll.Unload();
+	if (ssc32_handle!=0)
+	{
+		ssc32_access_id++;
+		dll_close( ssc32_handle );
+		ssc32_handle = 0;
+	}
 }
 
 bool sscdll_isloaded()
 {
-	return m_dll.IsLoaded();
+	return (ssc32_handle!=0);
 }
 
-const char *sscdll_status()
-{
-static char buf[1024];
+/*  dynamically linked implementations */
 
-	if (!sscdll_isloaded())
-	{
-		strcpy(buf,"No ssc32.dll loaded.");
-	}
-	else
-	{
-		sprintf(buf, "%s ( %s ) Version %d", 
-			(const char*)m_path.c_str(),
-			(const char*)m_lastLoadTime.c_str(),
-			ssc_version() );
-	}
-	return buf;
-}
+#define CHECK_DLL_LOADED() \
+	static unsigned int f_access_id = 0; \
+	if (!sscdll_isloaded()) {f=NULL; throw sscdll_error("ssc32.dll not loaded", __FUNCTION__); } \
+	if (f_access_id!=ssc32_access_id) { f=NULL; f_access_id = ssc32_access_id; } \
+	static const char *func_name = __FUNCTION__
 
-/*  dynamic linked implementations */
+#define FAIL_ON_LOCATE() \
+	{ f=NULL; throw sscdll_error("ssc32.dll lookup address fail", func_name); }
 
+#define PROCADDR() dll_sym(ssc32_handle, func_name)
 
 int ssc_version()
 {
-	static const char *f_name = __FUNCTION__;
-	static int (*f)() = NULL;	
-	if (!sscdll_isloaded()) { f=NULL; return 0; }
-
-	if (!f) {
-		f = (int(*)()) m_dll.GetSymbol( f_name );
-		if (!f) return 0;
-	}
-
+	static int (*f)() = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (int(*)())PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)(); 
 }
 
 ssc_data_t ssc_data_create()
 {
-	static const char *f_name = __FUNCTION__;
 	static ssc_data_t (*f)() = NULL;
-	
-	if (!sscdll_isloaded()) { f=NULL; return NULL; }
-
-	if (!f) {
-		f = (ssc_data_t(*)())m_dll.GetSymbol(f_name);
-		if (!f) return NULL;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (ssc_data_t(*)())PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)();	
 }
 
 void ssc_data_free( ssc_data_t p_data )
 {
-	static const char *f_name = __FUNCTION__;
 	static void (*f)(ssc_data_t) = NULL;
-	
-	if (!sscdll_isloaded()) { f=NULL; return; }
-	
-	if (!f) {
-		f = (void(*)(ssc_data_t))m_dll.GetSymbol(f_name);
-		if (!f) return;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t))PROCADDR() )) FAIL_ON_LOCATE();
 	(*f)( p_data );
 }
 
 void ssc_data_unassign( ssc_data_t p_data, const char *name )
 {
-	static const char *f_name = __FUNCTION__;
 	static void (*f)(ssc_data_t,const char*) = NULL;
-
-	if (!sscdll_isloaded()){f=NULL; return;}
-
-	if (!f) {
-		f = (void(*)(ssc_data_t,const char*))m_dll.GetSymbol(f_name);
-		if (!f) return;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t,const char*))PROCADDR() )) FAIL_ON_LOCATE();
 	(*f)( p_data, name );
 }
 
 int ssc_data_query( ssc_data_t p_data, const char *name )
 {
-	static const char *f_name = __FUNCTION__;
 	static int (*f)(ssc_data_t, const char *) = NULL;
-
-	if (!sscdll_isloaded()) { f=NULL; return SSC_INVALID; }
-
-	if (!f) {
-		f = (int(*)(ssc_data_t, const char *))m_dll.GetSymbol(f_name);
-		if (!f) return SSC_INVALID;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (int(*)(ssc_data_t, const char *))PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)( p_data, name );
 }
 
 void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value )
 {
-	static const char *f_name = __FUNCTION__;
 	static void (*f)(ssc_data_t, const char*, const char*) = NULL;
-
-	if (!sscdll_isloaded()) { f=NULL; return; }
-
-	if (!f) {
-		f = (void(*)(ssc_data_t, const char*, const char*))m_dll.GetSymbol(f_name);
-		if (!f) return;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t, const char*, const char*))PROCADDR() )) FAIL_ON_LOCATE();
 	(*f)(p_data, name, value);
 }
 
 void ssc_data_set_number( ssc_data_t p_data, const char *name, ssc_number_t value )
 {
-	static const char *f_name = __FUNCTION__;
 	static void (*f)(ssc_data_t, const char*, ssc_number_t) = NULL;
-
-	if (!sscdll_isloaded()) { f=NULL; return; }
-
-	if (!f) {
-		f = (void(*)(ssc_data_t, const char*, ssc_number_t))m_dll.GetSymbol(f_name);
-		if (!f) return;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t, const char*, ssc_number_t))PROCADDR() )) FAIL_ON_LOCATE();
 	(*f)(p_data, name, value);
 }
 
 void ssc_data_set_array( ssc_data_t p_data, const char *name, ssc_number_t *pvalues, int length )
 {
-	static const char *f_name = __FUNCTION__;
 	static void (*f)(ssc_data_t, const char*, ssc_number_t*, int) = NULL;
-
-	if (!sscdll_isloaded()) { f=NULL; return; }
-	
-	if (!f) {
-		f = (void(*)(ssc_data_t, const char*, ssc_number_t*, int))m_dll.GetSymbol(f_name);
-		if (!f) return;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t, const char*, ssc_number_t*, int))PROCADDR() )) FAIL_ON_LOCATE();
 	(*f)(p_data, name, pvalues, length);
 }
 
 void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_number_t *pvalues, int nrows, int ncols )
 {
-	static const char *f_name = __FUNCTION__;
 	static void (*f)(ssc_data_t, const char*, ssc_number_t*, int, int) = NULL;
-
-	if (!sscdll_isloaded()) { f=NULL; return; }
-
-	if (!f) {
-		f = (void(*)(ssc_data_t, const char*, ssc_number_t*, int, int))m_dll.GetSymbol(f_name);
-		if (!f) return;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t, const char*, ssc_number_t*, int, int))PROCADDR() )) FAIL_ON_LOCATE();
 	(*f)(p_data, name, pvalues, nrows, ncols);
 }
 
 const char *ssc_data_get_string( ssc_data_t p_data, const char *name )
 {
-	static const char *f_name = __FUNCTION__;
 	static const char* (*f)( ssc_data_t, const char* ) = NULL;
-	
-	if (!sscdll_isloaded()) { f=NULL; return NULL; }
-
-	if (!f) {
-		f = (const char*(*)(ssc_data_t, const char*))m_dll.GetSymbol(f_name);
-		if (!f) return NULL;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (const char*(*)(ssc_data_t, const char*))PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)(p_data, name);
 }
 
 ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, ssc_number_t *value )
 {
-	static const char *f_name = __FUNCTION__;
 	static ssc_bool_t (*f)(ssc_data_t, const char*, ssc_number_t*) = NULL;
-	
-	if (!sscdll_isloaded()) { f=NULL; return 0; }
-
-	if (!f) {
-		f = (ssc_bool_t(*)(ssc_data_t, const char*, ssc_number_t*))m_dll.GetSymbol(f_name);
-		if (!f) return 0;
-	}
-
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (ssc_bool_t(*)(ssc_data_t, const char*, ssc_number_t*))PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)(p_data, name, value);
 }
-/*
+
 const ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length )
+{
+	static ssc_number_t* (*f)(ssc_data_t, const char*, int*) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_number_t*(*)(ssc_data_t, const char*, int*))PROCADDR() )) FAIL_ON_LOCATE();
+	return (*f)( p_data, name, length );
+}
 const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols )
+{
+	static ssc_number_t* (*f)(ssc_data_t, const char*, int*, int*) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_number_t*(*)(ssc_data_t, const char*, int*, int*))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( p_data, name, nrows, ncols );
+}
+
 ssc_entry_t ssc_module_entry( int index )
+{
+	static ssc_entry_t (*f)(int) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_entry_t(*)(int))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( index );
+}
+
 const char *ssc_entry_name( ssc_entry_t p_entry )
+{
+	static const char* (*f)(ssc_entry_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (const char* (*)(ssc_entry_t))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( p_entry );
+}
+
 const char *ssc_entry_description( ssc_entry_t p_entry )
+{
+	static const char* (*f)(ssc_entry_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (const char* (*)(ssc_entry_t))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( p_entry );
+}
+
 int ssc_entry_version( ssc_entry_t p_entry )
+{
+	static int (*f)(ssc_entry_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (int (*)(ssc_entry_t))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( p_entry );
+}
+
 ssc_module_t ssc_module_create( const char *name )
+{
+	static ssc_module_t (*f)( const char * ) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_module_t (*)(const char*))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( name );
+}
+
 void ssc_module_free( ssc_module_t p_mod )
+{
+	static void (*f)(ssc_module_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (void(*)(ssc_module_t))PROCADDR())) FAIL_ON_LOCATE();	
+	(*f)( p_mod );
+}
+
 const ssc_info_t ssc_module_var_info( ssc_module_t p_mod, int index )
+{
+	static ssc_info_t(*f)(ssc_module_t, int) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_info_t(*)(ssc_module_t,int))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( p_mod, index );
+}
+
+#define DYNAMICCALL_INT__SSCINFOT() \
+	static int (*f)(ssc_info_t) = NULL; \
+	CHECK_DLL_LOADED(); \
+	if (!f && 0 == (f = (int(*)(ssc_info_t))PROCADDR())) FAIL_ON_LOCATE(); \
+	return (*f)(p_inf);
+
+#define DYNAMICCALL_CONSTCHARSTAR__SSCINFOT() \
+	static const char* (*f)(ssc_info_t) = NULL; \
+	CHECK_DLL_LOADED(); \
+	if (!f && 0 == (f = (const char*(*)(ssc_info_t))PROCADDR())) FAIL_ON_LOCATE(); \
+	return (*f)(p_inf);
+
 int ssc_info_var_type( ssc_info_t p_inf )
+{
+	DYNAMICCALL_INT__SSCINFOT();
+}
+
 int ssc_info_data_type( ssc_info_t p_inf )
+{
+	DYNAMICCALL_INT__SSCINFOT();
+}
+
 const char *ssc_info_name( ssc_info_t p_inf )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
+}
+
 const char *ssc_info_label( ssc_info_t p_inf )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
+}
+
 const char *ssc_info_units( ssc_info_t p_inf )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
+}
+
 const char *ssc_info_meta( ssc_info_t p_inf )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
+}
+
 const char *ssc_info_group( ssc_info_t p_inf )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
+}
+
 const char *ssc_info_uihint( ssc_info_t p_inf )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
+}
+
 ssc_bool_t ssc_module_exec_simple( const char *name, ssc_data_t p_data )
+{
+	static ssc_bool_t (*f)(const char*, ssc_data_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_bool_t(*)(const char*,ssc_data_t))PROCADDR())) FAIL_ON_LOCATE();
+
+	return (*f)( name, p_data );
+}
+
+/*
 const char *ssc_module_exec_simple_nothread( const char *name, ssc_data_t p_data )
 ssc_bool_t ssc_module_exec( ssc_module_t p_mod, ssc_data_t p_data )
 ssc_bool_t ssc_module_exec_with_handler( 
