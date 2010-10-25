@@ -15,9 +15,14 @@
 #define SSCEXPORT
 #endif
 
+
+#ifndef __SSCLINKAGECPP__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#endif // __SSCLINKAGECPP__
 	
 /* Note:  Opaque pointer types will be 4-byte pointer 
 	on 32-bit architectures, 8-byte pointer on 64-bit
@@ -211,10 +216,13 @@ SSCEXPORT void ssc_module_parameter_float( ssc_module_t p_mod, const char *name,
 /* Retrive notices, warnings, and error messages from the simulation */
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );
 
+#ifndef __SSCLINKAGECPP__
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#endif // __SSCLINKAGECPP__
 
 #endif
 

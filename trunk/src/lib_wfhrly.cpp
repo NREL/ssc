@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#if defined(__WINDOWS__)||defined(WIN32)
+#if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)
 #define CASECMP(a,b) _stricmp(a,b)
 #define CASENCMP(a,b,n) _strnicmp(a,b,n)
 #else
