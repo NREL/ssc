@@ -212,7 +212,7 @@ public:
 	std::string param_string( const std::string &name ) throw( general_error );
 
 	
-	void update( const std::string &current_action, float percent_done, float time=-1.0 );
+	bool update( const std::string &current_action, float percent_done, float time=-1.0 );
 	void log( const std::string &msg, int type=SSC_NOTICE, float time=-1.0 );
 	bool extproc( const std::string &command, const std::string &workdir );
 	void clear_log();
@@ -302,7 +302,7 @@ protected:
 	handler_interface( compute_module *cm ) : m_cm(cm) {  }
 public:
 	virtual void on_log( const std::string &text, int type, float time ) = 0;
-	virtual void on_update( const std::string &text, float percent_done, float time ) = 0;
+	virtual bool on_update( const std::string &text, float percent_done, float time ) = 0;
 	virtual bool on_exec( const std::string &command, const std::string &workdir ) = 0;
 
 	compute_module *module() { return m_cm; }

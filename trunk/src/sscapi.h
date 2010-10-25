@@ -3,7 +3,7 @@
  A general purpose system simulation framework.
  Cross-platform (Windows/Unix) and is 64-bit compatible.
  (c) 2010 National Renewable Energy Laboratory
- Authors: Aron Dobos, Steve Janzou
+ Authors: Aron Dobos, Steve Janzou, Mike Wagner, Carl Shapiro
 *********************************************************************/
 
 #ifndef __ssc_api_h
