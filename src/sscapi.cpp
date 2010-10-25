@@ -5,7 +5,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 1; /* update this version number as needed */
+	return 2; /* update this version number as needed */
 }
 
 /* to add new computation modules, 
@@ -262,7 +262,7 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 	{
 		// print status update to console
 		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 << std::endl;
-		return 1;
+		return 1; // return 0 to abort simulation as needed.
 	}
 	else if (action_type == SSC_EXECUTE)
 	{
@@ -350,12 +350,13 @@ public:
 					SSC_LOG, (float)type, time, text.c_str(), NULL, m_hdata );
 	}
 
-	virtual void on_update( const std::string &text, float percent, float time )
+	virtual bool on_update( const std::string &text, float percent, float time )
 	{
-		if (!m_hfunc) return;
-		(*m_hfunc)( static_cast<ssc_module_t>( module() ),
+		if (!m_hfunc) return true;
+		
+		return (*m_hfunc)( static_cast<ssc_module_t>( module() ),
 					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ), 
-					SSC_UPDATE, percent, time, text.c_str(), NULL, m_hdata );
+					SSC_UPDATE, percent, time, text.c_str(), NULL, m_hdata ) ? 1 : 0;
 	}
 
 	virtual bool on_exec( const std::string &command, const std::string &workdir )

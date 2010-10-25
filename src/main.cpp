@@ -4,6 +4,8 @@
 
 #include "sscapi.h"
 
+#ifndef __DLL__
+
 int main(int argc, char* argv[])
 {
 
@@ -150,6 +152,8 @@ void test_stdhrlywf()
 	ssc_module_free( reader );
 	ssc_data_free( data );
 }
+
+#endif
 
 /*
 

@@ -115,7 +115,7 @@ public:
 		while ( time < t_end && idx < data_values )
 		{
 			// calculate month, day, hour, minute time
-			float tmid = time + t_step/2;
+
 			int month = month_of(time);              // month goes 1-12
 			int day =  ( ((int)(time/24.0)) + 1 );   // day goes 1-365
 			int hour = (int)(time)%24;		         // hour goes 0-23

@@ -346,10 +346,11 @@ void compute_module::build_info_map()
 		(*m_infomap)[ (*it)->name ] = *it;
 }
 
-void compute_module::update( const std::string &current_action, float percent_done, float time )
+bool compute_module::update( const std::string &current_action, float percent_done, float time )
 {
 	// forward to handler interface
-	if (m_handler) m_handler->on_update( current_action, percent_done, time);
+	if (m_handler) return m_handler->on_update( current_action, percent_done, time);
+	else return true;
 }
 
 void compute_module::log( const std::string &msg, int type, float time )
