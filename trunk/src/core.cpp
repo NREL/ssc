@@ -186,6 +186,26 @@ var_data *var_table::lookup( const std::string &name )
 		return NULL;
 }
 
+const char *var_table::first( )
+{
+	m_iterator = m_hash.begin();
+	if (m_iterator != m_hash.end())
+		return m_iterator->first.c_str();
+	else
+		return NULL;
+}
+
+const char *var_table::next()
+{
+	if (m_iterator == m_hash.end()) return NULL;
+
+	++m_iterator;
+
+	if (m_iterator != m_hash.end())	return m_iterator->first.c_str();
+
+	return NULL;
+}
+
 compute_module::compute_module( )
 	:  m_infomap(NULL), m_handler(NULL), m_vartab(NULL)
 {

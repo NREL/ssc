@@ -64,8 +64,8 @@ SSCEXPORT ssc_data_t ssc_data_create();
 SSCEXPORT void ssc_data_free( ssc_data_t p_data );
 SSCEXPORT void ssc_data_unassign( ssc_data_t p_data, const char *name );
 SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name ); // returns SSC_INVALID if not assigned
-/*SSCEXPORT ssc_bool_t ssc_data_write_disk( ssc_data_t p_data, const char *file );*/
-/*SSCEXPORT ssc_bool_t ssc_data_read_disk( ssc_data_t p_data, const char *file );*/
+SSCEXPORT const char *ssc_data_first( ssc_data_t p_data ); // returns the name of the first data item, NULL if empty
+SSCEXPORT const char *ssc_data_next( ssc_data_t p_data ); // returns the next name in the data set object, NULL, if none left.
 
 /* assign values */
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value );
@@ -215,6 +215,12 @@ SSCEXPORT void ssc_module_parameter_float( ssc_module_t p_mod, const char *name,
 
 /* Retrive notices, warnings, and error messages from the simulation */
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );
+
+
+/* DO NOT CALL THIS FUNCTION: immediately causes a segmentation fault within the library.
+   This is only useful for testing crash handling from an external application that
+   is dynamically linked to the SSC library */
+SSCEXPORT void __ssc_segfault();
 
 #ifndef __SSCLINKAGECPP__
 

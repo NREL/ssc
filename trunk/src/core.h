@@ -119,9 +119,12 @@ public:
 	var_data *assign( const std::string &name, const var_data &value );
 	void unassign( const std::string &name );
 	var_data *lookup( const std::string &name );
+	const char *first();
+	const char *next();
 
 private:
 	var_hash m_hash;
+	var_hash::iterator m_iterator;
 };
 
 class handler_interface; // forward decl

@@ -5,7 +5,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 2; /* update this version number as needed */
+	return 3; /* update this version number as needed */
 }
 
 /* to add new computation modules, 
@@ -73,6 +73,20 @@ SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name )
 	var_data *dat = vt->lookup(name);
 	if (!dat) return SSC_INVALID;
 	else return dat->type;
+}
+
+SSCEXPORT const char *ssc_data_first( ssc_data_t p_data ) // returns the name of the first data item, NULL if empty
+{
+	var_table *vt = static_cast<var_table*>(p_data);
+	if (!vt) return NULL;
+	return vt->first();
+}
+
+SSCEXPORT const char *ssc_data_next( ssc_data_t p_data ) // returns the next name in the data set object, NULL, if none left.
+{
+	var_table *vt = static_cast<var_table*>(p_data);
+	if (!vt) return NULL;
+	return vt->next();
 }
 
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value )
@@ -468,4 +482,10 @@ SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_t
 	if (time) *time = l->time;
 
 	return l->text.c_str();
+}
+
+SSCEXPORT void __ssc_segfault()
+{
+	std::string *pstr = NULL;
+	std::string mystr = *pstr;
 }
