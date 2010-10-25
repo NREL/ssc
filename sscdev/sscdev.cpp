@@ -20,10 +20,37 @@
 #include <wx/generic/helpext.h>
 #include <wx/clipbrd.h>
 #include <wx/aui/aui.h>
+#include <wx/snglinst.h>
+#include <wx/filepicker.h>
 
 #include <cml/util.h>
 #include <cml/painter.h>
 #include <cml/array.h>
+#include <cml/afeditctrls.h>
+#include <cml/afuiorgctrls.h>
+#include <cml/afdialogs.h>
+
+
+#include <cml/pixmaps/stock_save_24.xpm>
+#include <cml/pixmaps/stock_save_as_24.xpm>
+#include <cml/pixmaps/stock_open_24.xpm>
+#include <cml/pixmaps/stock_text_indent_16.xpm>
+#include <cml/pixmaps/stock_preferences_16.xpm>
+#include <cml/pixmaps/stock_convert_16.xpm>
+#include <cml/pixmaps/stock_exec_24.xpm>
+#include <cml/pixmaps/stock_help_16.xpm>
+#include <cml/pixmaps/stock_redo_24.xpm>
+#include <cml/pixmaps/stock_undo_rtl_24.xpm>
+#include <cml/pixmaps/stock_jump_to_24.xpm>
+#include <cml/pixmaps/stock_search_24.xpm>
+#include <cml/pixmaps/stock_refresh_24.xpm>
+#include <cml/pixmaps/stock_about_24.xpm>
+#include <cml/pixmaps/stock_preferences_24.xpm>
+#include <cml/pixmaps/stock_trash_24.xpm>
+#include <cml/pixmaps/stock_media_play_24.xpm>
+#include <cml/pixmaps/stock_media_record_24.xpm>
+#include <cml/pixmaps/stock_connect_24.xpm>
+#include <cml/pixmaps/stock_disconnect_24.xpm>
 
 #include "sscdev.h"
 #include "splash.xpm"
@@ -78,7 +105,7 @@ bool SCApp::OnInit()
 	// now we've found a unique instance name
 	// and the app's instance checker object has been created
 	// we will use the instance name as the temporary work directory
-	SetAppName( "sscdev" );
+	SetAppName( "SSCdev" );
 	
 	// accumulate all the command line args
 	for (int i=0;i<argc;i++)
@@ -139,27 +166,34 @@ int SCApp::OnExit()
 /* simple class to get a stack trace */
 #include <wx/stackwalk.h>
 
-class StackDialog : public wxDialog
+class TextMessageDialog : public wxDialog
 {
 private:
 	wxTextCtrl *m_text;
 public:
-	StackDialog() : wxDialog( NULL, -1, "Stack Trace", wxPoint(30,30), wxSize(500,400), wxRESIZE_BORDER )
+	TextMessageDialog(const wxString &text, const wxString &title="Notice") : wxDialog( NULL, -1, title, wxPoint(30,30), wxSize(500,400), wxRESIZE_BORDER|wxDEFAULT_DIALOG_STYLE )
 	{
 		m_text = new wxTextCtrl(this, -1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_DONTWRAP|wxTE_READONLY);
 		m_text->SetFont( wxFont(10, wxMODERN, wxNORMAL, wxNORMAL) );
+		m_text->ChangeValue(text);
 		wxButton *btnclose = new wxButton(this, wxID_CANCEL, "Close");
 		wxBoxSizer *btnsz = new wxBoxSizer(wxHORIZONTAL);
 		btnsz->AddStretchSpacer(1);
 		btnsz->Add(btnclose, 0, wxALL, 2);
 		wxBoxSizer *vert = new wxBoxSizer(wxVERTICAL);
 		vert->Add( m_text, 1, wxALL|wxEXPAND, 0 );
-		vert->Add( btnsz, 0, wxALL, 2 );
+		vert->Add( btnsz, 0, wxALL|wxEXPAND, 2 );
 		SetSizer(vert);
 	}
 
 	void SetText(const wxString &text) { m_text->ChangeValue(text);	}
 };
+
+void wxTextMessageDialog(const wxString &text, const wxString &title="Notice")
+{
+	TextMessageDialog dlg(text);
+	dlg.ShowModal();	
+}
 
 class StackDump : public wxStackWalker
 {
@@ -201,9 +235,7 @@ void SCApp::OnFatalException()
 
 	body += "\nCRASH TRACE [" + wxNow() + "]\n\n" + dump.GetStackTrace();
 
-	StackDialog dlg;
-	dlg.SetText( body );
-	dlg.ShowModal();	
+	wxTextMessageDialog(body);
 }
 
 
@@ -219,7 +251,7 @@ BEGIN_EVENT_TABLE(SCAbout, wxDialog)
 	EVT_BUTTON( ID_ABOUT_CRASH,SCAbout::OnCrash )
 END_EVENT_TABLE()
 
-static char *SC_about_text = "sscdev - System Simulator Core\n\n"
+static char *SC_about_text = "SSCdev - System Simulator Core\n\n"
 "Developer interface for simulation, component development, validation, and basic visualization of SSC computation modules.";
 
 SCAbout::SCAbout(wxWindow *parent)
@@ -293,9 +325,10 @@ void SCAbout::OnCrash(wxCommandEvent &evt)
    ************ SC  Parent window class  ******************
    ************************************************************ */
 
-enum{  ID_OPEN, ID_SAVE, ID_SAVEAS, ID_CLOSEFILE,
-
-		ID_RECENT_FILES,		
+enum{   ID_START, ID_STOP, 
+		ID_LOAD_UNLOAD_DLL,
+		ID_DLL_PATH,
+		ID_CHOOSE_DLL,
 			
 		// up to 100 recent items can be accommodated
 		ID_RECENT = 500,
@@ -304,14 +337,21 @@ enum{  ID_OPEN, ID_SAVE, ID_SAVEAS, ID_CLOSEFILE,
 
 BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 
-	EVT_MENU( ID_OPEN,                   SCFrame::OnCommand )
-	EVT_MENU( ID_SAVE,                   SCFrame::OnCommand )
-	EVT_MENU( ID_SAVEAS,                 SCFrame::OnCommand )
-	EVT_MENU( ID_CLOSEFILE,              SCFrame::OnCommand )
+	EVT_TOOL( wxID_OPEN,                   SCFrame::OnCommand )
+	EVT_TOOL( wxID_SAVE,                   SCFrame::OnCommand )
+	EVT_TOOL( wxID_SAVEAS,                 SCFrame::OnCommand )
+	EVT_TOOL( wxID_PREFERENCES,            SCFrame::OnCommand )
 
-	EVT_MENU( wxID_EXIT,                SCFrame::OnCommand )
-	EVT_MENU( wxID_ABOUT,                 SCFrame::OnCommand )
-	EVT_MENU( wxID_HELP,                  SCFrame::OnCommand )
+	EVT_TOOL( wxID_EXIT,                 SCFrame::OnCommand )
+	EVT_TOOL( wxID_ABOUT,                 SCFrame::OnCommand )
+	EVT_TOOL( wxID_HELP,                  SCFrame::OnCommand )
+
+	EVT_TOOL( ID_LOAD_UNLOAD_DLL,              SCFrame::OnCommand )
+	EVT_TEXT_ENTER( ID_DLL_PATH,                SCFrame::OnCommand )
+	EVT_BUTTON( ID_CHOOSE_DLL,            SCFrame::OnCommand )
+	
+
+    EVT_AUITOOLBAR_TOOL_DROPDOWN(wxID_OPEN, SCFrame::OnRecentDropDownButton)
 	
 	EVT_CLOSE( SCFrame::OnCloseFrame )
 	
@@ -321,71 +361,84 @@ BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 END_EVENT_TABLE()
 
 SCFrame::SCFrame()
- : wxFrame(NULL, wxID_ANY, "sscdev", wxDefaultPosition, wxSize(800,600))
+ : wxFrame(NULL, wxID_ANY, "SSCdev", wxDefaultPosition, wxSize(800,600))
 {
 	
-	mRecentCount = 0;
-
+	m_recentCount = 0;
 	SetIcon( wxIcon("appicon") );
 
-	wxMenuBar *menubar = new wxMenuBar;
-
-	mRecentMenu = new wxMenu;
-
-	mFileMenu = new wxMenu;
-	mFileMenu->Append(ID_OPEN, "Open...\tCtrl-O");
-	mFileMenu->Append(ID_SAVE, "Save\tCtrl-S");
-	mFileMenu->Append(ID_SAVEAS, "Save As...");
-	mFileMenu->AppendSeparator();
-	mFileMenu->Append(ID_CLOSEFILE, "Close\tCtrl-W");
-	mFileMenu->AppendSeparator();
-	mFileMenu->Append(ID_RECENT_FILES, "Recent Files", mRecentMenu);
+	m_toolBar = new wxAuiToolBar(this);
 	
-#ifndef __WXMAC__
-	mFileMenu->AppendSeparator();
-	mFileMenu->Append(wxID_EXIT);
-#endif
-	menubar->Append(mFileMenu, "&File");
-	
-	wxMenu *help_menu = new wxMenu;
+	m_toolBar->AddTool( ID_LOAD_UNLOAD_DLL,"Load/unload ssc32.dll", wxBitmap(stock_connect_24_xpm),"Load/unload ssc32.dll");
+	m_toolBar->AddSeparator();
+	m_toolBar->AddTool( ID_START ,"Start", wxBitmap(stock_media_play_24_xpm),"Start computations...");
+	m_toolBar->AddTool( ID_STOP, "Stop", wxBitmap(stock_media_record_24_xpm), "Stop computations");
+	m_toolBar->AddSeparator();
+	m_toolBar->AddTool( wxID_OPEN ,"Open", wxBitmap(stock_open_24_xpm),"Open input file");
+    m_toolBar->SetToolDropDown(wxID_OPEN, true);
+	m_toolBar->AddTool( wxID_SAVE, "Save", wxBitmap(stock_save_24_xpm),"Save input file");
+	m_toolBar->AddTool( wxID_SAVEAS, "Save as", wxBitmap(stock_save_as_24_xpm), "Save input file as...");
+	m_toolBar->AddSeparator();
+	m_toolBar->AddTool( wxID_PREFERENCES, "Options...", wxBitmap(stock_preferences_24_xpm), "Options...");
+	m_toolBar->AddStretchSpacer();
+	m_toolBar->AddTool( wxID_ABOUT, "About SSCdev", wxBitmap(stock_about_24_xpm), "About SSCdev...");
+	m_toolBar->SetToolBitmapSize(wxSize(24,24));
+	m_toolBar->Realize();
 
-	help_menu->Append(wxID_HELP, "Help Contents\tF1");
-#ifndef __WXMAC__
-	help_menu->AppendSeparator();
-#endif
-	help_menu->Append(wxID_ABOUT);
-	menubar->Append(help_menu, "&Help");
-	
-	SetMenuBar( menubar );
-				
+	m_txtDllPath = new wxTextCtrl( this, ID_DLL_PATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	m_btnChooseDll = new wxButton( this, ID_CHOOSE_DLL, "...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_lblDllStatus = new AFLabel( this, -1, "Status" );
+
+	wxBoxSizer *sz_dll_info = new wxBoxSizer(wxHORIZONTAL);
+	sz_dll_info->Add( m_lblDllStatus, 2, wxALL|wxEXPAND, 0 );
+	sz_dll_info->Add( m_txtDllPath, 1, wxALL|wxEXPAND, 0 );
+	sz_dll_info->Add( m_btnChooseDll, 0, wxALL|wxEXPAND, 0 );
+
+	wxBoxSizer *sz_main = new wxBoxSizer(wxVERTICAL);
+	sz_main->Add( m_toolBar, 0, wxALL|wxEXPAND, 0 );
+	sz_main->Add( sz_dll_info, 0, wxALL|wxEXPAND, 0 );
+	sz_main->AddStretchSpacer();
+
+	SetSizer(sz_main );
+
+
+	m_recentMenu = new wxMenu;	
 	long ct = 0;
 	if (app_config->Read("RecentCount", &ct))
-		mRecentCount = (int)ct;
+		m_recentCount = (int)ct;
 
-	if (mRecentCount > MAX_RECENT)
-		mRecentCount = MAX_RECENT;
+	if (m_recentCount > MAX_RECENT)
+		m_recentCount = MAX_RECENT;
 
-	for (int i=0;i<mRecentCount;i++)
+	for (int i=0;i<m_recentCount;i++)
 	{
-		wxString key;
-		key.Printf("RecentFile_%d", i);
 		wxString fn;
-		if (app_config->Read(key, &fn))
+		if (app_config->Read(wxString::Format("RecentFile_%d", i), &fn))
 		{
 			fn.Replace("\\","/");
-			mRecentFiles[i] = fn;
+			m_recentFiles[i] = fn;
 		}
 	}
 
-	app_config->Read("LastDirectory", &mLastDir);
+	app_config->Read("CurrentDirectory", &m_currentAppDir);
+
+	wxString dll_path;
+	app_config->Read("DllPath", &dll_path);
+	if (wxFileExists(dll_path))
+	{
+		m_txtDllPath->ChangeValue( dll_path );
+		sscdll_load( dll_path.c_str() );
+	}
 
 	UpdateRecentMenu();	
+
 	
 
-	/*wxAcceleratorEntry entries[6];
-	entries[0].Set( wxACCEL_SHIFT, WXK_F1, ID_HELPCONTEXT );
-	SetAcceleratorTable( wxAcceleratorTable(1,entries) );
-	*/
+	wxAcceleratorEntry entries[6];
+	entries[0].Set( wxACCEL_NORMAL, WXK_F1, ID_LOAD_UNLOAD_DLL );
+	entries[1].Set( wxACCEL_NORMAL, WXK_F5, ID_START );
+	SetAcceleratorTable( wxAcceleratorTable(2,entries) );
+	
 
 
 	/************ SHOW THE APPLICATION *************/
@@ -416,42 +469,39 @@ SCFrame::SCFrame()
 		if (f_x > 0 && f_y > 0)
 			this->SetPosition(wxPoint(f_x,f_y));
 	}
+
+	UpdateUI();
+	
 }
 
-SCFrame::~SCFrame()
-{	
-	
-	long ct = (long)mRecentCount;
-	app_config->Write("RecentCount", ct);
-	for (int i=0;i<mRecentCount;i++)
-	{
-		wxString key;
-		key.Printf("RecentFile_%d", i);
-		app_config->Write(key, mRecentFiles[i]);
-	}
+void SCFrame::UpdateUI()
+{
+	m_lblDllStatus->SetCaption( sscdll_status() );
 
-	app_config->Write("LastDirectory", mLastDir);
+	m_toolBar->SetToolBitmap( ID_LOAD_UNLOAD_DLL, sscdll_isloaded() ? wxBitmap(stock_disconnect_24_xpm) : wxBitmap(stock_connect_24_xpm) );
+	m_toolBar->SetToolShortHelp( ID_LOAD_UNLOAD_DLL, sscdll_isloaded() ? "Unload ssc32.dll" : "Load ssc32.dll" );
 
-};
+	m_toolBar->EnableTool( ID_START, sscdll_isloaded() );
+	m_toolBar->EnableTool( ID_STOP, sscdll_isloaded() );
+	m_toolBar->Refresh();
+}
 	
 void SCFrame::UpdateRecentMenu()
 {
 	int i;
 	for (i=0;i<MAX_RECENT;i++)
 	{
-		if (mRecentMenu->FindItem(ID_RECENT+i) != NULL)
-			mRecentMenu->Destroy(ID_RECENT+i);
+		if (m_recentMenu->FindItem(ID_RECENT+i) != NULL)
+			m_recentMenu->Destroy(ID_RECENT+i);
 	}
 
-	for (i=0;i<mRecentCount;i++)
+	for (i=0;i<m_recentCount;i++)
 	{
 		wxString name;
-		name.Printf("%d  %s", i+1, mRecentFiles[i].c_str());
-		mRecentMenu->Append(ID_RECENT+i, name);
+		name.Printf("%d  %s", i+1, m_recentFiles[i].c_str());
+		m_recentMenu->Append(ID_RECENT+i, name);
 	}
 
-
-	mFileMenu->Enable(ID_RECENT_FILES, mRecentCount > 0);
 }
 
 void SCFrame::OnRecent(wxCommandEvent &evt)
@@ -463,16 +513,39 @@ void SCFrame::OnRecent(wxCommandEvent &evt)
 //	if (!CloseDocument())
 //		return;
 
-	wxString fn = mRecentFiles[id];
+	wxString fn = m_recentFiles[id];
 	if (fn != "")
 		Load(fn);
+}
+
+void SCFrame::OnRecentDropDownButton(wxAuiToolBarEvent& evt)
+{
+	if (evt.IsDropDownClicked())
+	{
+		wxAuiToolBar* tb = static_cast<wxAuiToolBar*>(evt.GetEventObject());
+		if (m_recentCount < 1)
+		{
+			wxMessageBox("No recent files.");
+			tb->SetToolSticky(evt.GetId(), false);
+			return;
+		}
+
+		tb->SetToolSticky(evt.GetId(), true);
+		// line up our menu with the button
+		wxRect rect = tb->GetToolRect(evt.GetId());
+		wxPoint pt = tb->ClientToScreen(rect.GetBottomLeft());
+		pt = ScreenToClient(pt);
+		PopupMenu(m_recentMenu, pt);
+		// make sure the button is "un-stuck"
+		tb->SetToolSticky(evt.GetId(), false);
+	}
 }
 
 wxArrayString SCFrame::GetRecentFiles()
 {
 	wxArrayString list;
-	for (int i=0;i<mRecentCount;i++)
-		list.Add( mRecentFiles[i] );
+	for (int i=0;i<m_recentCount;i++)
+		list.Add( m_recentFiles[i] );
 	return list;
 }
 
@@ -484,9 +557,9 @@ void SCFrame::AddRecent(const wxString &fn)
 	int i;
 	int index = -1;
 	// find the file in the recent list
-	for (i=0;i<mRecentCount;i++)
+	for (i=0;i<m_recentCount;i++)
 	{
-		if (norm_fn == mRecentFiles[i])
+		if (norm_fn == m_recentFiles[i])
 		{
 			index = i;
 			break;
@@ -499,7 +572,7 @@ void SCFrame::AddRecent(const wxString &fn)
 		// recent file list
 
 		for (i=index;i>0;i--)
-			mRecentFiles[i] = mRecentFiles[i-1];
+			m_recentFiles[i] = m_recentFiles[i-1];
 	}
 	else // not found in recent list
 	{
@@ -508,13 +581,13 @@ void SCFrame::AddRecent(const wxString &fn)
 		// less than MAX_RECENT
 
 		for (i=MAX_RECENT-1;i>0;i--)
-			mRecentFiles[i] = mRecentFiles[i-1];
+			m_recentFiles[i] = m_recentFiles[i-1];
 
-		if (mRecentCount < MAX_RECENT)
-			mRecentCount++;
+		if (m_recentCount < MAX_RECENT)
+			m_recentCount++;
 	}
 	
-	mRecentFiles[0] = norm_fn;
+	m_recentFiles[0] = norm_fn;
 	UpdateRecentMenu();
 }
 
@@ -526,9 +599,9 @@ void SCFrame::RemoveRecent(const wxString &fn)
 	int i;
 	int index = -1;
 	// find the file in the recent list
-	for (i=0;i<mRecentCount;i++)
+	for (i=0;i<m_recentCount;i++)
 	{
-		if (norm_fn == mRecentFiles[i])
+		if (norm_fn == m_recentFiles[i])
 		{
 			index = i;
 			break;
@@ -538,9 +611,9 @@ void SCFrame::RemoveRecent(const wxString &fn)
 	if (index >= 0)
 	{
 		for (i=index;i<MAX_RECENT-1;i++)
-			mRecentFiles[i] = mRecentFiles[i+1];
+			m_recentFiles[i] = m_recentFiles[i+1];
 
-		mRecentCount--;
+		m_recentCount--;
 		UpdateRecentMenu();
 	}
 }
@@ -553,8 +626,7 @@ void SCFrame::OnCloseFrame( wxCloseEvent &evt )
 	{
 		evt.Veto();
 		return;
-	}
-	
+	}	
 
 	/* save window position */
 	bool b_maximize = this->IsMaximized();
@@ -569,7 +641,17 @@ void SCFrame::OnCloseFrame( wxCloseEvent &evt )
 	app_config->Write("FrameHeight", f_height);
 	app_config->Write("FrameMaximized", b_maximize);
 
-	
+	long ct = (long)m_recentCount;
+	app_config->Write("RecentCount", ct);
+	for (int i=0;i<m_recentCount;i++)
+	{
+		wxString key;
+		key.Printf("RecentFile_%d", i);
+		app_config->Write(key, m_recentFiles[i]);
+	}
+	app_config->Write("CurrentDirectory", m_currentAppDir);
+	app_config->Write("DllPath", m_txtDllPath->GetValue());
+
 	Destroy();
 }
 
@@ -607,14 +689,47 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 	
 	switch(evt.GetId())
 	{
+	case wxID_OPEN:
+	case wxID_SAVE:
+	case wxID_SAVEAS:
+		wxMessageBox("open/save/saveas");
+		break;
 	case wxID_EXIT:
 		Exit();
 		break;
 	case wxID_ABOUT:
-		{
-		
+		{		
 			SCAbout dlg(this);
 			dlg.ShowModal();	
+		}
+		break;
+	case ID_LOAD_UNLOAD_DLL:
+		{
+			if (!sscdll_isloaded())
+				sscdll_load( m_txtDllPath->GetValue().c_str() );
+			else
+				sscdll_unload();
+
+			UpdateUI();
+		}
+		break;
+	case ID_CHOOSE_DLL:
+		{
+			wxFileDialog fd(this, "Choose ssc32.dll", m_currentAppDir, "ssc32.dll", "DLL Files (*.dll)|*.dll", wxFD_OPEN);
+			if (fd.ShowModal() != wxID_OK) return;
+			wxString file = fd.GetPath();
+			m_currentAppDir = wxPathOnly(file);
+			sscdll_load(file.c_str());
+			m_txtDllPath->ChangeValue(file);
+			UpdateUI();
+		}
+		break;
+	case ID_DLL_PATH:
+		{
+			wxString file = m_txtDllPath->GetValue();
+			m_currentAppDir = wxPathOnly( file );
+			sscdll_load(file.c_str());
+			UpdateUI();
 		}
 		break;
 	}

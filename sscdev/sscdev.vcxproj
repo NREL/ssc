@@ -59,7 +59,7 @@
     <ClCompile>
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(WXMSW3)\lib\vc_lib\mswud;$(WXMSW3)\include;$(CMLMSW3);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WXMSW3)\lib\vc_lib\mswud;$(WXMSW3)\include;$(CMLMSW3);%(AdditionalIncludeDirectories);$(SSCDIR)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;__USENOTEBOOK__;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -113,7 +113,7 @@
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(WXMSW3)\lib\vc_lib\mswu;$(WXMSW3)\include;$(CMLMSW3);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WXMSW3)\lib\vc_lib\mswu;$(WXMSW3)\include;$(CMLMSW3);%(AdditionalIncludeDirectories);$(SSCDIR)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;__USENOTEBOOK__;_CRT_SECURE_NO_WARNINGS;__RELEASE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -155,9 +155,11 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="dllinvoke.cpp" />
     <ClCompile Include="sscdev.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dllinvoke.h" />
     <ClInclude Include="sscdev.h" />
   </ItemGroup>
   <ItemGroup>

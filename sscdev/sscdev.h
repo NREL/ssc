@@ -2,12 +2,11 @@
 #define __SC_h
 
 #include <wx/wx.h>
-#include <wx/scrolbar.h>
-#include <wx/print.h>
-#include <wx/listctrl.h>
-#include <wx/printdlg.h>
-#include <wx/aui/auibook.h>
-#include <wx/snglinst.h>
+#include "dllinvoke.h"
+
+class wxAuiToolBar;
+class wxSingleInstanceChecker;
+class AFLabel;
 
 class SCFrame;
 class SCDocWin;
@@ -74,7 +73,6 @@ class SCFrame : public wxFrame
 {
 public:
 	SCFrame();
-	virtual ~SCFrame();
 	
 	bool Load(const wxString &fn);
 	bool CloseDocument();
@@ -82,6 +80,7 @@ public:
 	void Save();
 	void SaveAs();
 	void Exit();
+	
 
 	void AddRecent(const wxString &fn);
 	void RemoveRecent(const wxString &fn);
@@ -89,19 +88,24 @@ public:
 	wxArrayString GetRecentFiles();
 
 private:	
+	void UpdateUI();
 
 	void OnCommand(wxCommandEvent &evt);
 	void OnRecent(wxCommandEvent &evt);
-
+	void OnRecentDropDownButton(wxAuiToolBarEvent &evt);
 	void OnCloseFrame(wxCloseEvent &evt);
 
-	wxMenu *mFileMenu, *mRecentMenu;
-	wxToolBar *mToolBar;
-	wxString mLastDir;
+	wxMenu *m_recentMenu;
+	wxAuiToolBar *m_toolBar;
+	wxString m_currentAppDir;
 	
-	int mRecentCount;
-	wxString mRecentFiles[MAX_RECENT];
+	wxTextCtrl *m_txtDllPath;
+	wxButton *m_btnChooseDll;
+	AFLabel *m_lblDllStatus;
 
+	int m_recentCount;
+	wxString m_recentFiles[MAX_RECENT];
+	
 	DECLARE_EVENT_TABLE()
 };
 
