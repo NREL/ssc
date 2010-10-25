@@ -155,10 +155,12 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="dataview.cpp" />
     <ClCompile Include="dllinvoke.cpp" />
     <ClCompile Include="sscdev.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dataview.h" />
     <ClInclude Include="dllinvoke.h" />
     <ClInclude Include="sscdev.h" />
   </ItemGroup>

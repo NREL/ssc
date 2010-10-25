@@ -165,6 +165,22 @@ const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, in
 	return (*f)( p_data, name, nrows, ncols );
 }
 
+#define DYNAMICCALL_CONSTCHARSTAR__SSCDATAT() \
+	static const char *(*f)(ssc_data_t) = NULL; \
+	CHECK_DLL_LOADED(); \
+	if (!f && 0 == (f = (const char*(*)(ssc_data_t))PROCADDR())) FAIL_ON_LOCATE(); \
+	return (*f)( p_data );
+
+const char *ssc_data_first( ssc_data_t p_data )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCDATAT();
+}
+
+const char *ssc_data_next( ssc_data_t p_data )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCDATAT();
+}
+
 ssc_entry_t ssc_module_entry( int index )
 {
 	static ssc_entry_t (*f)(int) = NULL;
@@ -282,23 +298,116 @@ ssc_bool_t ssc_module_exec_simple( const char *name, ssc_data_t p_data )
 	return (*f)( name, p_data );
 }
 
-/*
+
 const char *ssc_module_exec_simple_nothread( const char *name, ssc_data_t p_data )
+{
+	static const char *(*f)(const char *, ssc_data_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (const char*(*)(const char *, ssc_data_t))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)(name, p_data);
+}
+
 ssc_bool_t ssc_module_exec( ssc_module_t p_mod, ssc_data_t p_data )
+{
+	static ssc_bool_t (*f)( ssc_module_t, ssc_data_t ) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_bool_t(*)(ssc_module_t,ssc_data_t))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( p_mod, p_data );
+}
+
 ssc_bool_t ssc_module_exec_with_handler( 
 	ssc_module_t p_mod, 
 	ssc_data_t p_data, 
 	ssc_bool_t (*pf_handler)( ssc_module_t, ssc_handler_t, int action, float f0, float f1, const char *s0, const char *s1, void *user_data ),
 	void *pf_user_data )
+{
+	static ssc_bool_t (*f) ( ssc_module_t,
+		ssc_data_t,
+		ssc_bool_t (*)(ssc_module_t, ssc_handler_t, int, float, float, const char *, const char *, void *),
+		void *) = NULL;
+
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_bool_t (*) ( ssc_module_t,
+		ssc_data_t,
+		ssc_bool_t (*)(ssc_module_t, ssc_handler_t, int, float, float, const char *, const char *, void *),
+		void *) ) PROCADDR())) FAIL_ON_LOCATE();
+
+	return (*f)( p_mod, p_data, pf_handler, pf_user_data );
+}
 
 void ssc_module_extproc_output( ssc_handler_t p_mod, const char *output_line )
-ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index )
-const char *ssc_param_name( ssc_param_t p_param )
-const char *ssc_param_description( ssc_param_t p_param )
-const char *ssc_param_default_value( ssc_param_t p_param )
-int ssc_param_type( ssc_param_t p_param )
-void ssc_module_parameter_string( ssc_module_t p_mod, const char *name, const char *value )
-void ssc_module_parameter_float( ssc_module_t p_mod, const char *name, float value )
-const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
+{
+	static void (*f)(ssc_handler_t, const char*) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_handler_t,const char*))PROCADDR())) FAIL_ON_LOCATE();
+	(*f)(p_mod, output_line);
+}
 
-*/
+ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index )
+{
+	static ssc_param_t (*f) (ssc_module_t, int) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_param_t(*)(ssc_module_t, int))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)(p_mod, index);
+}
+
+#define DYNAMICCALL_CONSTCHARSTAR__SSCPARAMT() \
+	static const char* (*f)(ssc_param_t) = NULL; \
+	CHECK_DLL_LOADED(); \
+	if (!f && 0 == (f = (const char*(*)(ssc_param_t))PROCADDR())) FAIL_ON_LOCATE(); \
+	return (*f)(p_param);
+
+const char *ssc_param_name( ssc_param_t p_param )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCPARAMT();
+}
+
+const char *ssc_param_description( ssc_param_t p_param )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCPARAMT();
+}
+
+const char *ssc_param_default_value( ssc_param_t p_param )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCPARAMT();
+}
+
+int ssc_param_type( ssc_param_t p_param )
+{
+	static int (*f)(ssc_param_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (int(*)(ssc_param_t))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)(p_param);
+}
+
+void ssc_module_parameter_string( ssc_module_t p_mod, const char *name, const char *value )
+{
+	static void (*f)(ssc_module_t, const char *, const char *) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (void(*)(ssc_module_t, const char *, const char *))PROCADDR())) FAIL_ON_LOCATE();
+	(*f)( p_mod, name, value );
+}
+
+void ssc_module_parameter_float( ssc_module_t p_mod, const char *name, float value )
+{
+	static void (*f)(ssc_module_t, const char *, float);
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (void(*)(ssc_module_t, const char*, float))PROCADDR())) FAIL_ON_LOCATE();
+	(*f)( p_mod, name, value );
+}
+
+const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
+{
+	static const char *(*f)(ssc_module_t, int, int*, float*) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (const char*(*)(ssc_module_t, int, int*, float*))PROCADDR())) FAIL_ON_LOCATE();
+	return (*f)( p_mod, index, item_type, time );
+}
+
+void __ssc_segfault()
+{
+	static void (*f)() = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (void(*)())PROCADDR())) FAIL_ON_LOCATE();
+	(*f)();
+}

@@ -315,9 +315,11 @@ void SCAbout::OnClose(wxCommandEvent &evt)
 
 void SCAbout::OnCrash(wxCommandEvent &evt)
 {
-	// force a segfault!
-	wxBitmap *bit = NULL;
-	wxBitmap bit2 = *bit;
+	try {
+		__ssc_segfault();
+	}catch(sscdll_error e){
+		wxMessageBox(e.func + ": " + e.text,"Error",wxICON_ERROR|wxOK);
+	}
 }
 
 
@@ -329,7 +331,7 @@ enum{   ID_START, ID_STOP,
 		ID_LOAD_UNLOAD_DLL,
 		ID_DLL_PATH,
 		ID_CHOOSE_DLL,
-			
+					
 		// up to 100 recent items can be accommodated
 		ID_RECENT = 500,
 		ID_RECENT_LAST = 600
@@ -361,12 +363,11 @@ BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 END_EVENT_TABLE()
 
 SCFrame::SCFrame()
- : wxFrame(NULL, wxID_ANY, "SSCdev", wxDefaultPosition, wxSize(800,600))
+   : wxFrame(NULL, wxID_ANY, "SSCdev", wxDefaultPosition, wxSize(800,600)),
+   m_recentCount(0)
 {
-	
-	m_recentCount = 0;
 	SetIcon( wxIcon("appicon") );
-
+	
 	m_toolBar = new wxAuiToolBar(this);
 	
 	m_toolBar->AddTool( ID_LOAD_UNLOAD_DLL,"Load/unload ssc32.dll", wxBitmap(stock_connect_24_xpm),"Load/unload ssc32.dll");
@@ -669,6 +670,8 @@ void SCFrame::OnCloseFrame( wxCloseEvent &evt )
 	}
 	app_config->Write("CurrentDirectory", m_currentAppDir);
 	app_config->Write("DllPath", m_txtDllPath->GetValue());
+
+	sscdll_unload(); // make sure dll is unloaded;
 
 	Destroy();
 }
