@@ -7,6 +7,7 @@
 class wxAuiToolBar;
 class wxSingleInstanceChecker;
 class AFLabel;
+class DataView;
 
 class SCFrame;
 class SCDocWin;
@@ -73,6 +74,7 @@ class SCFrame : public wxFrame
 {
 public:
 	SCFrame();
+	virtual ~SCFrame();
 	
 	bool Load(const wxString &fn);
 	bool CloseDocument();
@@ -102,6 +104,11 @@ private:
 	wxTextCtrl *m_txtDllPath;
 	wxButton *m_btnChooseDll;
 	AFLabel *m_lblDllStatus;
+	wxTextCtrl *m_txtOutput;
+
+	DataView *m_dataView;
+
+	var_table *m_varTable;
 
 	int m_recentCount;
 	wxString m_recentFiles[MAX_RECENT];

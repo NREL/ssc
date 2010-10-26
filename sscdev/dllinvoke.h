@@ -37,4 +37,9 @@ bool sscdll_load( const char *path );
 void sscdll_unload();
 bool sscdll_isloaded();
 
+
+/* include shared ssc code here */
+#include <lib_util.h>
+#include <lib_vartab.h>
+
 #endif

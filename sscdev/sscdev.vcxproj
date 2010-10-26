@@ -157,15 +157,21 @@
   <ItemGroup>
     <ClCompile Include="dataview.cpp" />
     <ClCompile Include="dllinvoke.cpp" />
+    <ClCompile Include="editvariableform.cpp" />
     <ClCompile Include="sscdev.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dataview.h" />
     <ClInclude Include="dllinvoke.h" />
+    <ClInclude Include="editvariableform.h" />
+    <ClInclude Include="formalizer.h" />
     <ClInclude Include="sscdev.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sscdev.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="EditVariableForm.ifb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

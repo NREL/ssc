@@ -1,0 +1,425 @@
+form width 592 height 452 nguiobjects 13
+start btnChooseFile type Button
+geom 534 9 50 21
+properties 7
+prop(v'2) 1 name
+btnChooseFile
+endprop name
+prop(v'2) 2 x
+534
+endprop x
+prop(v'2) 2 y
+9
+endprop y
+prop(v'2) 2 width
+50
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+file..
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start txtValue type TextEntry
+geom 270 9 262 21
+properties 10
+prop(v'2) 1 name
+txtValue
+endprop name
+prop(v'2) 2 x
+270
+endprop x
+prop(v'2) 2 y
+9
+endprop y
+prop(v'2) 2 width
+262
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 text
+
+endprop text
+prop(v'2) 5 editable
+1
+endprop editable
+prop(v'2) 6 forecolour
+0 0 0
+endprop forecolour
+prop(v'2) 6 backcolour
+255 255 255
+endprop backcolour
+prop(v'2) 2 taborder
+0
+endprop taborder
+start Label1 type Label
+geom 156 9 110 21
+properties 12
+prop(v'2) 1 name
+Label1
+endprop name
+prop(v'2) 2 x
+156
+endprop x
+prop(v'2) 2 y
+9
+endprop y
+prop(v'2) 2 width
+110
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 6 textcolour
+0 0 0
+endprop textcolour
+prop(v'2) 1 caption
+String value:
+endprop caption
+prop(v'2) 5 alignright
+1
+endprop alignright
+prop(v'2) 5 aligntop
+0
+endprop aligntop
+prop(v'2) 5 wordwrap
+0
+endprop wordwrap
+prop(v'2) 5 bold
+0
+endprop bold
+prop(v'2) 2 fontsize
+0
+endprop fontsize
+start numValue type Numeric
+geom 270 33 100 21
+properties 10
+prop(v'2) 1 name
+numValue
+endprop name
+prop(v'2) 2 x
+270
+endprop x
+prop(v'2) 2 y
+33
+endprop y
+prop(v'2) 2 width
+100
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 4 value
+0.000000
+endprop value
+prop(v'2) 5 intonly
+0
+endprop intonly
+prop(v'2) 1 format
+%lg
+endprop format
+prop(v'2) 5 editable
+1
+endprop editable
+prop(v'2) 2 taborder
+0
+endprop taborder
+start Label11 type Label
+geom 156 33 110 21
+properties 12
+prop(v'2) 1 name
+Label11
+endprop name
+prop(v'2) 2 x
+156
+endprop x
+prop(v'2) 2 y
+33
+endprop y
+prop(v'2) 2 width
+110
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 6 textcolour
+0 0 0
+endprop textcolour
+prop(v'2) 1 caption
+Numeric value:
+endprop caption
+prop(v'2) 5 alignright
+1
+endprop alignright
+prop(v'2) 5 aligntop
+0
+endprop aligntop
+prop(v'2) 5 wordwrap
+0
+endprop wordwrap
+prop(v'2) 5 bold
+0
+endprop bold
+prop(v'2) 2 fontsize
+0
+endprop fontsize
+start rbgVarType type RadioChoice
+geom 9 9 137 86
+properties 10
+prop(v'2) 1 name
+rbgVarType
+endprop name
+prop(v'2) 2 x
+9
+endprop x
+prop(v'2) 2 y
+9
+endprop y
+prop(v'2) 2 width
+137
+endprop width
+prop(v'2) 2 height
+86
+endprop height
+prop(v'2) 2 selection
+-1
+endprop selection
+prop(v'2) 1 value
+
+endprop value
+prop(v'2) 3 items
+4
+SSC_STRING
+SSC_NUMBER
+SSC_ARRAY
+SSC_MATRIX
+endprop items
+prop(v'2) 5 showcaptions
+1
+endprop showcaptions
+prop(v'2) 2 taborder
+0
+endprop taborder
+start btnCancel type Button
+geom 504 423 80 21
+properties 7
+prop(v'2) 1 name
+btnCancel
+endprop name
+prop(v'2) 2 x
+504
+endprop x
+prop(v'2) 2 y
+423
+endprop y
+prop(v'2) 2 width
+80
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Cancel
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start btnAccept type Button
+geom 420 423 80 21
+properties 7
+prop(v'2) 1 name
+btnAccept
+endprop name
+prop(v'2) 2 x
+420
+endprop x
+prop(v'2) 2 y
+423
+endprop y
+prop(v'2) 2 width
+80
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Accept
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start grdArrMat type DataGrid
+geom 9 99 572 318
+properties 8
+prop(v'2) 1 name
+grdArrMat
+endprop name
+prop(v'2) 2 x
+9
+endprop x
+prop(v'2) 2 y
+99
+endprop y
+prop(v'2) 2 width
+572
+endprop width
+prop(v'2) 2 height
+318
+endprop height
+prop(v'2) 2 nrows
+2
+endprop nrows
+prop(v'2) 2 ncols
+2
+endprop ncols
+prop(v'2) 5 cellediting
+1
+endprop cellediting
+start numCols type Numeric
+geom 507 75 70 21
+properties 10
+prop(v'2) 1 name
+numCols
+endprop name
+prop(v'2) 2 x
+507
+endprop x
+prop(v'2) 2 y
+75
+endprop y
+prop(v'2) 2 width
+70
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 4 value
+4.000000
+endprop value
+prop(v'2) 5 intonly
+1
+endprop intonly
+prop(v'2) 1 format
+%d
+endprop format
+prop(v'2) 5 editable
+1
+endprop editable
+prop(v'2) 2 taborder
+0
+endprop taborder
+start Label21 type Label
+geom 447 75 59 21
+properties 12
+prop(v'2) 1 name
+Label21
+endprop name
+prop(v'2) 2 x
+447
+endprop x
+prop(v'2) 2 y
+75
+endprop y
+prop(v'2) 2 width
+59
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 6 textcolour
+0 0 0
+endprop textcolour
+prop(v'2) 1 caption
+# cols:
+endprop caption
+prop(v'2) 5 alignright
+1
+endprop alignright
+prop(v'2) 5 aligntop
+0
+endprop aligntop
+prop(v'2) 5 wordwrap
+0
+endprop wordwrap
+prop(v'2) 5 bold
+0
+endprop bold
+prop(v'2) 2 fontsize
+0
+endprop fontsize
+start Label2 type Label
+geom 315 75 59 21
+properties 12
+prop(v'2) 1 name
+Label2
+endprop name
+prop(v'2) 2 x
+315
+endprop x
+prop(v'2) 2 y
+75
+endprop y
+prop(v'2) 2 width
+59
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 6 textcolour
+0 0 0
+endprop textcolour
+prop(v'2) 1 caption
+# rows:
+endprop caption
+prop(v'2) 5 alignright
+1
+endprop alignright
+prop(v'2) 5 aligntop
+0
+endprop aligntop
+prop(v'2) 5 wordwrap
+0
+endprop wordwrap
+prop(v'2) 5 bold
+0
+endprop bold
+prop(v'2) 2 fontsize
+0
+endprop fontsize
+start numRows type Numeric
+geom 375 75 70 21
+properties 10
+prop(v'2) 1 name
+numRows
+endprop name
+prop(v'2) 2 x
+375
+endprop x
+prop(v'2) 2 y
+75
+endprop y
+prop(v'2) 2 width
+70
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 4 value
+3.000000
+endprop value
+prop(v'2) 5 intonly
+1
+endprop intonly
+prop(v'2) 1 format
+%d
+endprop format
+prop(v'2) 5 editable
+1
+endprop editable
+prop(v'2) 2 taborder
+0
+endprop taborder

@@ -4,9 +4,9 @@
 #include <wx/panel.h>
 #include <cml/afeditctrls.h>
 #include <cml/wfgridctrl.h>
+#include <wx/checklst.h>
 
 #include "dllinvoke.h"
-
 
 class DataView : public wxPanel
 {
@@ -15,27 +15,35 @@ public:
 	class Table; // forward
 
 	DataView( wxWindow *parent );
-	virtual ~DataView();
+	virtual ~DataView() { m_vt = NULL; }
 
-	void SetDataObject( ssc_data_t p_dat ) { m_pdata = p_dat; UpdateView(); }
-	ssc_data_t GetDataObject() { return m_pdata; }
+	void SetDataObject( var_table *vt ) { m_vt = vt; UpdateView(); }
+	ssc_data_t GetDataObject() { return m_vt; }
 
 	void UpdateView();	
 	void UpdateGrid();
 
+	void EditVariable(const wxString &name);
+	void DeleteVariable(const wxString &name);
+
+	wxArrayString GetSelections();
+	void SetSelections(const wxArrayString &sel);
+
 private:
 	void OnCommand(wxCommandEvent &evt);
-	void OnVarTree(wxTreeEvent &evt);
+	void OnVarListCheck(wxCommandEvent &evt);
+	void OnVarListDClick(wxCommandEvent &evt);
 
-	ssc_data_t m_pdata;
 	WFGridCtrl *m_grid;
 	Table *m_grid_table;
-	AFTreeView *m_tree;
+	wxCheckListBox *m_varlist;
 
 	wxTreeItemId m_root_item;
 	Array<wxTreeItemId> m_tree_items;
-	wxArrayString m_tree_names;
-	wxArrayString m_tree_selections;
+	wxArrayString m_names;
+	wxArrayString m_selections;
+
+	var_table *m_vt;
 
 	DECLARE_EVENT_TABLE();
 };

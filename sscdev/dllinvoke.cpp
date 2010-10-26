@@ -411,3 +411,8 @@ void __ssc_segfault()
 	if (!f && 0 == (f = (void(*)())PROCADDR())) FAIL_ON_LOCATE();
 	(*f)();
 }
+
+/* include shared ssc code here */
+#include <lib_util.cpp>
+#include <lib_vartab.cpp>
+

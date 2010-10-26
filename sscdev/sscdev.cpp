@@ -20,7 +20,9 @@
 #include <wx/generic/helpext.h>
 #include <wx/clipbrd.h>
 #include <wx/aui/aui.h>
+#include <wx/splitter.h>
 #include <wx/snglinst.h>
+#include <wx/statline.h>
 #include <wx/filepicker.h>
 
 #include <cml/util.h>
@@ -53,6 +55,7 @@
 #include <cml/pixmaps/stock_disconnect_24.xpm>
 
 #include "sscdev.h"
+#include "dataview.h"
 #include "splash.xpm"
 
 /* exported application global variables */
@@ -331,6 +334,7 @@ enum{   ID_START, ID_STOP,
 		ID_LOAD_UNLOAD_DLL,
 		ID_DLL_PATH,
 		ID_CHOOSE_DLL,
+		ID_OUTPUT,
 					
 		// up to 100 recent items can be accommodated
 		ID_RECENT = 500,
@@ -366,6 +370,8 @@ SCFrame::SCFrame()
    : wxFrame(NULL, wxID_ANY, "SSCdev", wxDefaultPosition, wxSize(800,600)),
    m_recentCount(0)
 {
+	m_varTable = new var_table;
+
 	SetIcon( wxIcon("appicon") );
 	
 	m_toolBar = new wxAuiToolBar(this);
@@ -395,10 +401,29 @@ SCFrame::SCFrame()
 	sz_dll_info->Add( m_txtDllPath, 1, wxALL|wxEXPAND, 0 );
 	sz_dll_info->Add( m_btnChooseDll, 0, wxALL|wxEXPAND, 0 );
 
+	wxSplitterWindow *split_win = new wxSplitterWindow( this, wxID_ANY,
+		wxPoint(0,0), wxSize(800,700), wxSP_LIVE_UPDATE|wxBORDER_NONE );
+
+	m_dataView = new DataView(split_win);
+	m_dataView->SetDataObject( m_varTable );
+
+	
+	m_txtOutput = new wxTextCtrl(split_win, ID_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize,
+		wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL | wxTE_DONTWRAP);
+	m_txtOutput->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "courier") );
+	m_txtOutput->SetForegroundColour( *wxBLUE );
+	m_txtOutput->AppendText("compute_module log output");
+	
+
+	split_win->SplitHorizontally( m_dataView, m_txtOutput, -180 );
+	split_win->SetSashGravity( 1 );
+
+
 	wxBoxSizer *sz_main = new wxBoxSizer(wxVERTICAL);
 	sz_main->Add( m_toolBar, 0, wxALL|wxEXPAND, 0 );
 	sz_main->Add( sz_dll_info, 0, wxALL|wxEXPAND, 0 );
-	sz_main->AddStretchSpacer();
+	sz_main->Add( new wxStaticLine( this ), 0, wxALL|wxEXPAND, 0);
+	sz_main->Add( split_win, 1, wxALL|wxEXPAND, 0 );
 
 	SetSizer(sz_main );
 
@@ -475,6 +500,11 @@ SCFrame::SCFrame()
 
 	UpdateUI();
 	
+}
+
+SCFrame::~SCFrame()
+{
+	delete m_varTable;
 }
 
 void SCFrame::UpdateUI()
