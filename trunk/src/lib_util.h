@@ -6,6 +6,7 @@
 #include <vector>
 #include <cassert>
 
+#include "lib_util.h"
 /* 
 
 For proper compilation:

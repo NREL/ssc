@@ -28,6 +28,7 @@
     </ClCompile>
     <ClCompile Include="src\lib_pvwatts.cpp" />
     <ClCompile Include="src\lib_util.cpp" />
+    <ClCompile Include="src\lib_vartab.cpp" />
     <ClCompile Include="src\lib_wfhrly.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sscapi.cpp" />
@@ -37,6 +38,7 @@
     <ClInclude Include="src\core.h" />
     <ClInclude Include="src\lib_pvwatts.h" />
     <ClInclude Include="src\lib_util.h" />
+    <ClInclude Include="src\lib_vartab.h" />
     <ClInclude Include="src\lib_wfhrly.h" />
     <ClInclude Include="src\sscapi.h" />
   </ItemGroup>
