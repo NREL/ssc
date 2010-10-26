@@ -69,6 +69,17 @@ enum { NOTIFY_SAVE, NOTIFY_TABCHANGE };
 
 #define MAX_RECENT 9
 
+struct cmParam {
+	wxString name;
+	int type;
+	wxString str;
+	float num;
+};
+
+struct cmModule {
+	wxString cm_mod_name;
+	Array<cmParam> params;
+};
 
 class SCFrame : public wxFrame
 {
@@ -77,18 +88,24 @@ public:
 	virtual ~SCFrame();
 	
 	bool Load(const wxString &fn);
+	bool WriteToDisk(const wxString &fn);
 	bool CloseDocument();
 	void Open();
 	void Save();
 	void SaveAs();
 	void Exit();
 	
+	void Start();
+	void Log(const wxString &);
+	
 
 	void AddRecent(const wxString &fn);
 	void RemoveRecent(const wxString &fn);
 	void UpdateRecentMenu();
 	wxArrayString GetRecentFiles();
-
+	
+	static void Copy( ssc_data_t p_data, var_table *vt, bool clear_first );
+	static void Copy( var_table *vt,  ssc_data_t p_data, bool clear_first );
 private:	
 	void UpdateUI();
 
@@ -100,6 +117,7 @@ private:
 	wxMenu *m_recentMenu;
 	wxAuiToolBar *m_toolBar;
 	wxString m_currentAppDir;
+	wxString m_lastFile;
 	
 	wxTextCtrl *m_txtDllPath;
 	wxButton *m_btnChooseDll;
@@ -107,7 +125,8 @@ private:
 	wxTextCtrl *m_txtOutput;
 
 	DataView *m_dataView;
-
+	
+	Array<cmModule> m_cmList;
 	var_table *m_varTable;
 
 	int m_recentCount;

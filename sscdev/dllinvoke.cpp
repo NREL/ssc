@@ -86,6 +86,14 @@ void ssc_data_free( ssc_data_t p_data )
 	(*f)( p_data );
 }
 
+void ssc_data_clear( ssc_data_t p_data )
+{
+	static void (*f)(ssc_data_t) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t))PROCADDR() )) FAIL_ON_LOCATE();
+	(*f)( p_data );
+}
+
 void ssc_data_unassign( ssc_data_t p_data, const char *name )
 {
 	static void (*f)(ssc_data_t,const char*) = NULL;

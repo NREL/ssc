@@ -5,6 +5,7 @@
 #include <wx/wx.h>
 #include <wx/mdi.h>
 #include <wx/config.h>
+#include <wx/busyinfo.h>
 #include <wx/print.h>
 #include <wx/printdlg.h>
 #include <wx/scrolwin.h>
@@ -19,6 +20,10 @@
 #ifdef __WXMSW__
 #include <cml/xlautomation.h>
 #endif
+#include <cml/wpplotsurface2d.h>
+#include <cml/wpbarplot.h>
+#include <cml/wplinearaxis.h>
+#include <cml/wplineplot.h>
 
 #include "dataview.h"
 #include "editvariableform.h"
@@ -101,8 +106,18 @@ public:
 			if (!m_vt_ref) return m_items[col];
 			else {
 				wxString label = m_items[col];
+				/*
 				var_data *v = m_vt_ref->lookup( (const char*)m_items[col].c_str() );
-				if (v) label += " " + wxString(v->type_name());
+				if (v)
+				{
+					switch(v->type)
+					{
+					case SSC_STRING: label+= " (S)"; break;
+					case SSC_NUMBER: label+= " (N)"; break;
+					case SSC_ARRAY:  label+= " (A)"; break;
+					case SSC_MATRIX: label+= " (M)"; break;
+					}
+				}*/
 				return label;
 			}
 		}
@@ -126,12 +141,19 @@ private:
 
 
 enum { ID_COPY_CLIPBOARD = 2315,
-	   ID_DELETE_VARIABLE,
-	   ID_DELETE_ALL_VARIABLES,
-	   ID_UNSELECT_ALL,
 	   ID_LIST,
 	   ID_ADD_VARIABLE,
 	   ID_EDIT_VARIABLE,
+	   ID_DELETE_VARIABLE,
+	   ID_DELETE_ALL_VARIABLES,
+	   ID_SELECT_ALL,
+	   ID_UNSELECT_ALL,
+	   ID_DELETE_SELECTED,
+	   ID_DELETE_UNSELECTED,
+	   ID_POPUP_EDIT,
+	   ID_POPUP_DELETE,
+	   ID_POPUP_PLOT_BAR,
+	   ID_POPUP_PLOT_LINE,
 	   ID_GRID };
 
 BEGIN_EVENT_TABLE( DataView, wxPanel )
@@ -141,8 +163,20 @@ BEGIN_EVENT_TABLE( DataView, wxPanel )
 	EVT_BUTTON( ID_EDIT_VARIABLE, DataView::OnCommand )
 	EVT_BUTTON( ID_DELETE_VARIABLE, DataView::OnCommand )
 	EVT_BUTTON( ID_DELETE_ALL_VARIABLES, DataView::OnCommand )
+	EVT_BUTTON( ID_SELECT_ALL, DataView::OnCommand )
+	EVT_BUTTON( ID_UNSELECT_ALL, DataView::OnCommand )
+	EVT_BUTTON( ID_DELETE_SELECTED, DataView::OnCommand )
+	EVT_BUTTON( ID_DELETE_UNSELECTED, DataView::OnCommand )
 	EVT_CHECKLISTBOX( ID_LIST, DataView::OnVarListCheck )
 	EVT_LISTBOX_DCLICK( ID_LIST, DataView::OnVarListDClick )
+	EVT_GRID_CMD_LABEL_RIGHT_CLICK( ID_GRID, DataView::OnGridLabelRightClick )
+	EVT_GRID_CMD_LABEL_LEFT_DCLICK( ID_GRID, DataView::OnGridLabelDoubleClick )
+	
+	EVT_MENU( ID_POPUP_EDIT, DataView::OnPopup )
+	EVT_MENU( ID_POPUP_DELETE, DataView::OnPopup )
+	EVT_MENU( ID_POPUP_PLOT_BAR, DataView::OnPopup )
+	EVT_MENU( ID_POPUP_PLOT_LINE, DataView::OnPopup )
+
 END_EVENT_TABLE()
 
 
@@ -153,10 +187,14 @@ DataView::DataView( wxWindow *parent )
 	m_grid_table(0)
 {
 	wxBoxSizer *tb_sizer = new wxBoxSizer(wxHORIZONTAL);
-	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add variable..."), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_EDIT_VARIABLE, "Edit variable..."), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_VARIABLE, "Delete variable"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_ALL_VARIABLES, "Delete all variables"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add..."), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_EDIT_VARIABLE, "Edit..."), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_VARIABLE, "Delete"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_SELECTED, "Del selected"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_UNSELECTED, "Del unselected"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_ALL_VARIABLES, "Del all"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_SELECT_ALL, "Select all"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_UNSELECT_ALL, "Unselect all"), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton( this, ID_COPY_CLIPBOARD, "Copy to clipboard"), 0, wxEXPAND|wxALL, 2);
 	tb_sizer->AddStretchSpacer(1);
 
@@ -167,6 +205,7 @@ DataView::DataView( wxWindow *parent )
 	wxPanel *left_panel = new wxPanel(splitwin);
 
 	m_varlist = new wxCheckListBox( left_panel, ID_LIST );
+	m_varlist->SetFont( wxFont(9, wxMODERN, wxNORMAL, wxNORMAL) );
 
 	wxBoxSizer *left_tool_sizer = new wxBoxSizer(wxHORIZONTAL);
 	// can add widgets with parent 'left_panel' into this sizer (empty for now)
@@ -199,6 +238,20 @@ DataView::DataView( wxWindow *parent )
 	SetSizer( szv_main );
 
 }	
+
+Array<int> DataView::GetColumnWidths()
+{
+	Array<int> list;
+	for (int i=0;i<m_grid->GetNumberCols();i++)
+		list.append( m_grid->GetColumnWidth( i ) );
+	return list;
+}
+
+void DataView::SetColumnWidths( const Array<int> &cwl )
+{
+	for (int i=0;i<cwl.count() && i<m_grid->GetNumberCols();i++)
+		m_grid->SetColumnWidth( i, cwl[i] );
+}
 
 wxArrayString DataView::GetSelections()
 {
@@ -233,14 +286,47 @@ void DataView::UpdateView()
 
 	if (m_vt != NULL)
 	{
+		int padto = 0;
 		const char *name = m_vt->first();
 		while (name)
 		{
-			int idx = m_varlist->Append(  name );
-			m_varlist->Check( idx, false );
+			int len = strlen(name);
+			if (len > padto) padto = len;
+			name = m_vt->next();
+		}
+
+		padto += 2;
+
+
+		wxArrayString labels;
+		name = m_vt->first();
+		while (name)
+		{
 			m_names.Add( name );
+			wxString label = name;
+
+			if (var_data *v = m_vt->lookup(name))
+			{
+				for (int j=0;j< padto-strlen(name);j++)
+					label += ' ';
+
+				label += wxString(v->type_name());
+				if (v->type == SSC_ARRAY)
+					label += wxString::Format( "[%d]", v->num.length() );
+				if (v->type == SSC_MATRIX)
+					label += wxString::Format("[%d,%d]", v->num.nrows(), v->num.ncols() );
+			}
+
+			labels.Add( label );
 
 			name = m_vt->next();
+		}
+
+		SortByLabels(m_names, labels );
+		for (int i=0;i<m_names.Count();i++)
+		{
+			int idx = m_varlist->Append( labels[i]);
+			m_varlist->Check( idx, false );
 		}
 	}
 	
@@ -250,6 +336,7 @@ void DataView::UpdateView()
 	
 void DataView::UpdateGrid()
 {
+	Array<int> cwl = GetColumnWidths();
 	m_grid->Freeze();
 	
 	if (m_grid_table) m_grid_table->Detach();
@@ -259,38 +346,91 @@ void DataView::UpdateGrid()
 	m_grid_table->SetAttrProvider( new WFGridCellAttrProvider );
 	m_grid->SetTable( m_grid_table, true );
 	m_grid->SetRowLabelSize(60);
-	
 	m_grid->SetColLabelSize( wxGRID_AUTOSIZE );
 	m_grid->Thaw();
-
-
+	
 	m_grid->Layout();
 	m_grid->GetParent()->Layout();
+	SetColumnWidths(cwl);
 	m_grid->ForceRefresh();
+
 }
 
 void DataView::OnCommand(wxCommandEvent &evt)
 {
 	switch(evt.GetId())
 	{
+	case ID_SELECT_ALL:
+		{
+			m_selections.Clear();
+			const char *name = m_vt->first();
+			while (name)
+			{
+				m_selections.Add( name );
+				name = m_vt->next();
+			}
+			UpdateView();
+		}
+		break;
+	case ID_UNSELECT_ALL:
+		m_selections.Clear();
+		UpdateView();
+		break;
+	case ID_DELETE_SELECTED:
+		{
+			for (int i=0;i<m_selections.Count();i++)
+				DeleteVariable(m_selections[i]);
+		}
+		break;
+	case ID_DELETE_UNSELECTED:
+		{
+			wxArrayString list;
+				
+			const char *name = m_vt->first();
+			while (name)
+			{
+				list.Add( name );
+				name = m_vt->next();
+			}
+
+			for (int i=0;i<m_selections.Count();i++)
+				list.Remove( m_selections[i] );
+			
+			for (int i=0;i<list.Count();i++)
+				DeleteVariable(list[i]);
+		}
+		break;	
 	case ID_ADD_VARIABLE:
 		{
 			wxString name = wxGetTextFromUser("Enter variable name:");
 			if (name.IsEmpty()) return;
-
+			
 			if (m_vt)
 			{
+				if (m_vt->lookup( (const char*)name.c_str() ))
+					if (wxNO==wxMessageBox("That var exists. overwrite with a new one?", "Q", wxYES_NO))
+						return;
+
 				m_vt->assign( (const char*)name.c_str(), var_data("'empty'") );
-				m_selections.Add( name );
+				if (m_selections.Index( name ) == wxNOT_FOUND)
+					m_selections.Add( name );
 				UpdateView();
 			}
 		}
 		break;
 	case ID_EDIT_VARIABLE:
-		EditVariable( m_varlist->GetStringSelection() );
+		{
+			int n = m_varlist->GetSelection();
+			if (n >= 0 && n < m_names.Count())
+				EditVariable( m_names[n] );
+		}
 		break;
 	case ID_DELETE_VARIABLE:
-		DeleteVariable( m_varlist->GetStringSelection() );
+		{
+			int n = m_varlist->GetSelection();
+			if (n >= 0 && n < m_names.Count())
+				DeleteVariable( m_names[n] );
+		}
 		break;
 	case ID_DELETE_ALL_VARIABLES:
 		{
@@ -302,7 +442,10 @@ void DataView::OnCommand(wxCommandEvent &evt)
 		}
 		break;
 	case ID_COPY_CLIPBOARD:
-	case ID_UNSELECT_ALL:
+		{
+			wxBusyInfo busy("Copying to clipboard...");
+			m_grid->Copy(true);
+		}
 		break;
 	}
 }
@@ -326,7 +469,9 @@ void DataView::OnVarListCheck(wxCommandEvent &evt)
 
 void DataView::OnVarListDClick(wxCommandEvent &evt)
 {
-	EditVariable( m_varlist->GetStringSelection() );
+	int n = m_varlist->GetSelection();
+	if (n >= 0 && n < m_names.Count())
+		EditVariable( m_names[n] );
 }
 
 void DataView::EditVariable( const wxString &name )
@@ -359,5 +504,74 @@ void DataView::DeleteVariable( const wxString &name )
 	{
 		m_vt->unassign( (const char*)name.c_str() );
 		UpdateView();
+	}
+}
+
+void DataView::OnGridLabelRightClick(wxGridEvent &evt)
+{
+	int col = evt.GetCol();
+	if (col < 0 || col >= m_selections.Count()) return;
+	
+	m_popup_var_name = m_selections[col];
+
+	wxMenu popup;
+	popup.Append( ID_POPUP_EDIT, "Edit..." );
+	popup.AppendSeparator();
+	popup.Append( ID_POPUP_DELETE, "Delete..." );
+	popup.AppendSeparator();
+	popup.Append( ID_POPUP_PLOT_BAR, "Bar plot (array only)" );
+	popup.Append( ID_POPUP_PLOT_LINE, "Line plot (array only)" );
+
+	m_grid->PopupMenu( &popup, evt.GetPosition() );
+}
+
+void DataView::OnGridLabelDoubleClick(wxGridEvent &evt)
+{
+	int col = evt.GetCol();
+	if (col < 0 || col >= m_selections.Count()) return;
+	EditVariable( m_selections[col] );
+}
+
+void DataView::OnPopup(wxCommandEvent &evt)
+{
+	switch(evt.GetId())
+	{
+	case ID_POPUP_EDIT:
+		EditVariable( m_popup_var_name );
+		break;
+	case ID_POPUP_DELETE:
+		if (wxYES == wxMessageBox("Really delete variable: " + m_popup_var_name, "Query", wxYES_NO ))
+			DeleteVariable( m_popup_var_name );
+		break;
+	case ID_POPUP_PLOT_BAR:
+	case ID_POPUP_PLOT_LINE:
+		{
+			if (!m_vt) return;
+			var_data *v = m_vt->lookup( (const char*) m_popup_var_name.c_str() );
+			if (!v || v->type != SSC_ARRAY)
+			{
+				wxMessageBox("variable not found or not of array type.");
+				return;
+			}
+
+			wxFrame *frm = new wxFrame(this, -1, "plot: " + m_popup_var_name, wxDefaultPosition, wxSize(500,350));
+			WPPlotSurface2D *plotsurf = new WPPlotSurface2D( frm );
+			WPPlottable2D *plot = NULL;
+			if (evt.GetId() == ID_POPUP_PLOT_BAR) plot = new WPBarPlot;					
+			else plot = new WPLinePlot;
+
+			for (int i=0;i<v->num.length();i++)
+				plot->Data.append( PointF( i, v->num[i] ) );
+
+			plot->Label = m_popup_var_name;
+
+			plotsurf->Add( plot );
+			plotsurf->Title = "Plot of: '" + m_popup_var_name + "'";
+
+			plotsurf->SetXAxis1( new WPLinearAxis( -1, v->num.length() ) );
+
+			frm->Show();
+		}
+		break;
 	}
 }

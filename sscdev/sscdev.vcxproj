@@ -155,12 +155,14 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cmform.cpp" />
     <ClCompile Include="dataview.cpp" />
     <ClCompile Include="dllinvoke.cpp" />
     <ClCompile Include="editvariableform.cpp" />
     <ClCompile Include="sscdev.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cmform.h" />
     <ClInclude Include="dataview.h" />
     <ClInclude Include="dllinvoke.h" />
     <ClInclude Include="editvariableform.h" />
@@ -171,6 +173,7 @@
     <ResourceCompile Include="sscdev.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="CMForm.ifb" />
     <None Include="EditVariableForm.ifb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

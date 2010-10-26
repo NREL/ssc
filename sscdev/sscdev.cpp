@@ -56,6 +56,7 @@
 
 #include "sscdev.h"
 #include "dataview.h"
+#include "cmform.h"
 #include "splash.xpm"
 
 /* exported application global variables */
@@ -352,6 +353,7 @@ BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 	EVT_TOOL( wxID_ABOUT,                 SCFrame::OnCommand )
 	EVT_TOOL( wxID_HELP,                  SCFrame::OnCommand )
 
+	EVT_TOOL( ID_START, SCFrame::OnCommand )
 	EVT_TOOL( ID_LOAD_UNLOAD_DLL,              SCFrame::OnCommand )
 	EVT_TEXT_ENTER( ID_DLL_PATH,                SCFrame::OnCommand )
 	EVT_BUTTON( ID_CHOOSE_DLL,            SCFrame::OnCommand )
@@ -384,9 +386,9 @@ SCFrame::SCFrame()
 	m_toolBar->AddTool( wxID_OPEN ,"Open", wxBitmap(stock_open_24_xpm),"Open input file");
     m_toolBar->SetToolDropDown(wxID_OPEN, true);
 	m_toolBar->AddTool( wxID_SAVE, "Save", wxBitmap(stock_save_24_xpm),"Save input file");
-	m_toolBar->AddTool( wxID_SAVEAS, "Save as", wxBitmap(stock_save_as_24_xpm), "Save input file as...");
+	//m_toolBar->AddTool( wxID_SAVEAS, "Save as", wxBitmap(stock_save_as_24_xpm), "Save input file as...");
 	m_toolBar->AddSeparator();
-	m_toolBar->AddTool( wxID_PREFERENCES, "Options...", wxBitmap(stock_preferences_24_xpm), "Options...");
+	m_toolBar->AddTool( wxID_PREFERENCES, "Compute Modules...", wxBitmap(stock_preferences_24_xpm), "Options...");
 	m_toolBar->AddStretchSpacer();
 	m_toolBar->AddTool( wxID_ABOUT, "About SSCdev", wxBitmap(stock_about_24_xpm), "About SSCdev...");
 	m_toolBar->SetToolBitmapSize(wxSize(24,24));
@@ -464,8 +466,10 @@ SCFrame::SCFrame()
 
 	wxAcceleratorEntry entries[6];
 	entries[0].Set( wxACCEL_NORMAL, WXK_F1, ID_LOAD_UNLOAD_DLL );
-	entries[1].Set( wxACCEL_NORMAL, WXK_F5, ID_START );
-	SetAcceleratorTable( wxAcceleratorTable(2,entries) );
+	entries[1].Set( wxACCEL_CTRL,   's',  wxID_SAVE );
+	entries[2].Set( wxACCEL_NORMAL, WXK_F2, wxID_PREFERENCES );
+	entries[3].Set( wxACCEL_NORMAL, WXK_F5, ID_START );
+	SetAcceleratorTable( wxAcceleratorTable(4,entries) );
 	
 
 
@@ -558,13 +562,10 @@ void SCFrame::OnRecent(wxCommandEvent &evt)
 	int id = evt.GetId() - ID_RECENT;
 	if (id < 0 || id >= MAX_RECENT)
 		return;
-
-//	if (!CloseDocument())
-//		return;
-
-	wxString fn = m_recentFiles[id];
-	if (fn != "")
-		Load(fn);
+	
+	m_lastFile = m_recentFiles[id];
+	if (m_lastFile != "")
+		Load(m_lastFile);
 }
 
 void SCFrame::OnRecentDropDownButton(wxAuiToolBarEvent& evt)
@@ -706,19 +707,38 @@ void SCFrame::OnCloseFrame( wxCloseEvent &evt )
 	Destroy();
 }
 
-
-bool SCFrame::Load(const wxString &fn)
-{
-	return false;	
-}
-
 void SCFrame::Open()
 {
+	wxFileDialog dlg(this, "Load SSCDEV State",
+		wxPathOnly(m_lastFile),
+		m_lastFile,
+		"Data File (*.sscdat)|*.sscdat",
+		wxFD_OPEN);
+
+	if (dlg.ShowModal() == wxID_OK)
+	{
+		m_lastFile = dlg.GetPath();
+		if (!Load(m_lastFile))
+			wxMessageBox("Error loading:\n\n", m_lastFile);
+	}
+
 }
 
 
 void SCFrame::Save()
 {
+	wxFileDialog dlg(this, "Save SSCDEV State", wxPathOnly(m_lastFile),
+		m_lastFile, "Data File (*.sscdat)|*.sscdat", wxFD_SAVE);
+	
+	int ret = dlg.ShowModal();
+	m_lastFile = dlg.GetPath();
+
+	if (ret!=wxID_OK) return;
+
+	if(!WriteToDisk(m_lastFile))
+		wxMessageBox("Error writing:\n\n" + m_lastFile );
+	else
+		AddRecent( m_lastFile );
 }
 
 void SCFrame::SaveAs()
@@ -737,13 +757,20 @@ void SCFrame::Exit()
 
 void SCFrame::OnCommand(wxCommandEvent &evt)
 {	
+
 	switch(evt.GetId())
 	{
-	case wxID_OPEN:
-	case wxID_SAVE:
-	case wxID_SAVEAS:
-		wxMessageBox("open/save/saveas");
+	case ID_START:
+		Start();
 		break;
+	case wxID_OPEN:
+		Open();
+		break;
+	case wxID_SAVE:
+		Save();
+		break;
+	/*case wxID_SAVEAS:
+		break;*/
 	case wxID_EXIT:
 		Exit();
 		break;
@@ -791,5 +818,313 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 			UpdateUI();
 		}
 		break;
+	case wxID_PREFERENCES:
+		{
+			CMFormDialog dlg(this, "Compute Module Browser");
+			dlg.CentreOnParent();
+			dlg.GetPanel()->SetCMList( m_cmList );
+			if (dlg.ShowModal()==wxID_OK)
+				m_cmList = dlg.GetPanel()->GetCMList();
+
+			UpdateUI();
+		}
+		break;
 	}
+}
+
+bool SCFrame::Load(const wxString &fn)
+{
+	wxBusyInfo busy("Loading: " + fn);
+	FILE *fp = fopen( (const char*)fn.c_str(), "r" );
+	if (!fp) return false;
+		
+	m_cmList.clear();
+	m_varTable->clear();
+	UpdateUI();
+	m_dataView->UpdateView();
+
+	wxString buf;
+	AllocReadLine(fp, buf); // header&fileformatversion line
+	
+	int n_cmmods = 0;
+	AllocReadLine(fp, buf); sscanf( (const char*)buf.c_str(), "cm_mods %d", &n_cmmods);
+	for (int i=0;i<n_cmmods;i++)
+	{
+		cmModule cm;
+		AllocReadLine(fp, cm.cm_mod_name);
+		int n_params = 0;
+		AllocReadLine(fp, buf); sscanf((const char*)buf.c_str(), "params %d", &n_params);
+		for (int j=0;j<n_params;j++)
+		{
+			cmParam pa;
+			AllocReadLine(fp, pa.name);
+			AllocReadLine(fp, buf); pa.type = atoi(buf.c_str());
+			AllocReadLine(fp, pa.str);
+			AllocReadLine(fp, buf); pa.num = (float)atof(buf.c_str());
+
+			cm.params.append( pa );
+		}
+
+		m_cmList.append( cm );
+	}
+
+	wxArrayString sel_vars;
+	Array<int> cwl;
+
+	AllocReadLine(fp, buf); // selected_variables:
+	AllocReadLine(fp, buf); sel_vars = Split(buf,",");
+	AllocReadLine(fp, buf); StringToIntArray( buf, ',', cwl );
+
+	int data_size = 0;
+	AllocReadLine(fp, buf); sscanf( buf.c_str(), "data_set_size: %d", &data_size );
+	
+	for (int i=0;i<data_size;i++)
+	{
+		wxString name;
+		int type;
+		wxString sval;
+		AllocReadLine(fp, name);
+		AllocReadLine(fp, buf); type = atoi(buf.c_str());
+		AllocReadLine(fp, sval);
+
+		var_data val;
+		var_data::parse( type, (const char*)sval.c_str(), val );
+
+		m_varTable->assign( (const char*)name.c_str(), val );
+	}
+	
+	m_dataView->UpdateView();	
+	m_dataView->SetSelections( sel_vars );
+	m_dataView->UpdateView();
+	m_dataView->SetColumnWidths( cwl );
+
+
+	fclose(fp);
+	AddRecent(fn);
+	return true;	
+}
+
+bool SCFrame::WriteToDisk(const wxString &fn)
+{
+	wxBusyInfo busy("Writing: " + fn);
+	FILE *fp = fopen( (const char*)fn.c_str(), "w" );
+	if (!fp) return false;
+
+	fprintf(fp, "sscdev state file version 1\n");
+	fprintf(fp, "cm_mods %d\n", m_cmList.count());
+	for (int i=0;i<m_cmList.count();i++)
+	{
+		fprintf(fp, "%s\n", (const char*)m_cmList[i].cm_mod_name.c_str());
+		fprintf(fp, "params %d\n", m_cmList[i].params.count());
+		for (int j=0;j<m_cmList[i].params.count();j++)
+		{
+			fprintf(fp, "%s\n", (const char*)m_cmList[i].params[j].name.c_str());
+			fprintf(fp, "%d\n", m_cmList[i].params[j].type );
+			fprintf(fp, "%s\n", (const char*)m_cmList[i].params[j].str.c_str());
+			fprintf(fp, "%lg\n", (double)m_cmList[i].params[i].num );
+		}
+	}
+
+	wxString selvars = Unsplit(m_dataView->GetSelections(), ",");
+	fprintf(fp, "selected_variables:\n%s\n", (const char*)selvars.c_str());
+	fprintf(fp, "%s\n", (const char*)IntArrayToString(m_dataView->GetColumnWidths(), ',').c_str());
+
+	int nvars = (int) m_varTable->size();
+	fprintf(fp, "data_set_size: %d\n", nvars );
+
+	const char *name = m_varTable->first();
+	while( name )
+	{
+		var_data *v = m_varTable->lookup( name );
+		
+		fprintf(fp, "%s\n", name );
+		fprintf(fp, "%d\n", v->type);
+		fprintf(fp, "%s\n", v->to_string().c_str());
+
+		name = m_varTable->next();
+	}
+
+	fclose(fp);
+	return true;
+}
+
+void SCFrame::Log(const wxString &text)
+{
+	m_txtOutput->AppendText(text + "\n");
+}
+
+class default_sync_proc : public util::sync_piped_process
+{
+private:
+	ssc_handler_t m_handler;
+public:
+	default_sync_proc( ssc_handler_t ph ) : m_handler(ph) {  }
+
+	virtual void on_stdout(const std::string &line_text)
+	{
+		::ssc_module_extproc_output( m_handler, line_text.c_str() );
+	}
+};
+
+ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action, 
+	float f0, float f1, const char *s0, const char *s1, void *user_data )
+{
+	SCFrame *sc_frame = (SCFrame*) user_data;
+	if (action == SSC_LOG)
+	{
+		// print log message to console
+		wxString msg;
+		switch( (int)f0 )
+		{
+		case SSC_NOTICE: msg << "Notice: " << s0 << " time " << f1; break;
+		case SSC_WARNING: msg << "Warning: " << s0 << " time " << f1; break;
+		case SSC_ERROR: msg << "Error: " << s0 << " time " << f1; break;
+		default: msg << "Log notice uninterpretable: " << f0 << " time " << f1; break;
+		}
+
+		sc_frame->Log(msg);
+		return 1;
+	}
+	else if (action == SSC_UPDATE)
+	{
+		// print status update to console
+		wxString msg;
+		msg << "Progress " << f0 << "%:" << s1 << " time " << f1;
+		sc_frame->Log(msg);
+		return 1; // return 0 to abort simulation as needed.
+	}
+	else if (action == SSC_EXECUTE)
+	{
+		// run the executable, pipe the output, and return output to p_mod
+		// **TODO**
+		default_sync_proc exe( p_handler );
+		return exe.spawn( s0, s1 ) == 0;
+	}
+	else
+		return 0;
+}
+
+void SCFrame::Copy( ssc_data_t p_data, var_table *vt, bool clear_first)
+{
+	if (clear_first)
+		::ssc_data_clear( p_data );
+
+	const char *name = vt->first();
+	while( name )
+	{
+		var_data *v = vt->lookup( name );
+
+		if (v)
+		{
+			switch(v->type)
+			{
+			case SSC_STRING:
+				::ssc_data_set_string( p_data, name, v->str.c_str() );
+				break;
+			case SSC_NUMBER:
+				::ssc_data_set_number( p_data, name, (ssc_number_t)v->num );
+				break;
+			case SSC_ARRAY:
+				::ssc_data_set_array( p_data, name, v->num.data(), v->num.length() );
+				break;
+			case SSC_MATRIX:
+				::ssc_data_set_matrix( p_data, name, v->num.data(), v->num.nrows(), v->num.ncols() );
+				break;
+			}
+		}
+
+		name = vt->next();
+	}
+}
+
+void SCFrame::Copy( var_table *vt,  ssc_data_t p_data, bool clear_first )
+{	
+	if (clear_first) vt->clear();
+
+	const char *name = ::ssc_data_first( p_data );
+	while (name)
+	{
+		int type = ::ssc_data_query( p_data, name );
+		switch( type )
+		{
+		case SSC_STRING:
+			{
+				const char *s = ::ssc_data_get_string( p_data, name );
+				if (s) vt->assign( name, var_data(  std::string(s) ) );
+			}
+			break;
+		case SSC_NUMBER:
+			{
+				ssc_number_t val = 0.0;
+				if ( ::ssc_data_get_number( p_data, name, &val ) )
+					vt->assign( name, var_data( val ) );
+			}
+			break;
+		case SSC_ARRAY:
+			{
+				int len = 0;
+				const ssc_number_t *pvals = ::ssc_data_get_array( p_data, name, &len );
+				if (pvals)
+					vt->assign( name, var_data( pvals, len ) );
+			}
+			break;
+		case SSC_MATRIX:
+			{
+				int nrows = 0, ncols = 0;
+				const ssc_number_t *pmat = ::ssc_data_get_matrix( p_data, name, &nrows, &ncols );
+				if (pmat)
+					vt->assign( name, var_data( pmat, nrows, ncols ) );
+			}
+			break;
+		}
+
+		name = ::ssc_data_next( p_data );
+	}
+}
+
+void SCFrame::Start()
+{
+	m_txtOutput->Clear();
+	try {
+
+		ssc_data_t p_data = ::ssc_data_create();
+
+		Copy( p_data, m_varTable, true );
+
+
+		for (int i=0;i<m_cmList.count();i++)
+		{
+			ssc_module_t p_mod = ::ssc_module_create( (const char*) m_cmList[i].cm_mod_name.c_str() );
+
+			if (p_mod == 0)
+			{
+				Log("CREATE_FAIL: " + m_cmList[i].cm_mod_name );
+				break;
+			}
+
+
+			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
+				my_handler,	this) )
+			{
+				Log("EXEC_FAIL: "+m_cmList[i].cm_mod_name);
+				::ssc_module_free( p_mod );
+				break;
+			}
+			else
+			{
+				Log("EXEC_SUCCESS: " + m_cmList[i].cm_mod_name );
+			}
+
+			::ssc_module_free( p_mod );
+		}
+
+		Copy( m_varTable, p_data, false );
+		m_dataView->UpdateView();
+
+		::ssc_data_free( p_data );
+	 
+	} catch(sscdll_error e) {
+		wxMessageBox("DLL error: " + e.func + ": " + e.text );
+	}
+
 }

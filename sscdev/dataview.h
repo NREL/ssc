@@ -26,6 +26,8 @@ public:
 	void EditVariable(const wxString &name);
 	void DeleteVariable(const wxString &name);
 
+	Array<int> GetColumnWidths();
+	void SetColumnWidths( const Array<int> &cwl );
 	wxArrayString GetSelections();
 	void SetSelections(const wxArrayString &sel);
 
@@ -33,6 +35,10 @@ private:
 	void OnCommand(wxCommandEvent &evt);
 	void OnVarListCheck(wxCommandEvent &evt);
 	void OnVarListDClick(wxCommandEvent &evt);
+	void OnPopup( wxCommandEvent &evt);
+
+	void OnGridLabelRightClick(wxGridEvent &evt);
+	void OnGridLabelDoubleClick(wxGridEvent &evt);
 
 	WFGridCtrl *m_grid;
 	Table *m_grid_table;
@@ -42,6 +48,8 @@ private:
 	Array<wxTreeItemId> m_tree_items;
 	wxArrayString m_names;
 	wxArrayString m_selections;
+
+	wxString m_popup_var_name;
 
 	var_table *m_vt;
 
