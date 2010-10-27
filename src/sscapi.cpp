@@ -5,7 +5,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 3; /* update this version number as needed */
+	return 9; /* update this version number as needed */
 }
 
 /* to add new computation modules, 
@@ -57,6 +57,12 @@ SSCEXPORT void ssc_data_free( ssc_data_t p_data )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
 	if (vt) delete vt;
+}
+
+SSCEXPORT void ssc_data_clear( ssc_data_t p_data )
+{
+	var_table *vt = static_cast<var_table*>(p_data);
+	if (vt) vt->clear();
 }
 
 SSCEXPORT void ssc_data_unassign( ssc_data_t p_data, const char *name )

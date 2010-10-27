@@ -21,8 +21,8 @@ public:
 	explicit var_data( const var_data &cp ) : type(cp.type), num(cp.num), str(cp.str) {  }
 	explicit var_data( const std::string &s ) : type(SSC_STRING), str(s) {  }
 	explicit var_data( ssc_number_t n ) : type(SSC_NUMBER) { num = n; }
-	explicit var_data( ssc_number_t *pvalues, int length ) { num.assign( pvalues, (size_t)length ); }
-	explicit var_data( ssc_number_t *pvalues, int nr, int nc) { num.assign( pvalues, (size_t)nr, (size_t)nc ); }
+	explicit var_data( const ssc_number_t *pvalues, int length ) : type(SSC_ARRAY) { num.assign( pvalues, (size_t)length ); }
+	explicit var_data( const ssc_number_t *pvalues, int nr, int nc) : type(SSC_MATRIX) { num.assign( pvalues, (size_t)nr, (size_t)nc ); }
 
 	const char *type_name();
 	static std::string type_name(int type);
@@ -52,6 +52,7 @@ public:
 	var_data *lookup( const std::string &name );
 	const char *first();
 	const char *next();
+	unsigned int size() { return m_hash.size(); }
 
 private:
 	var_hash m_hash;
