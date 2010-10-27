@@ -81,6 +81,29 @@ public:
 		return 0;
 	}
 
+	int day_of(int month, float time)
+	{
+		//int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+		int daynum = ( ((int)(time/24.0)) + 1 );   // day goes 1-365
+		switch(month)
+		{
+		case 1: return  daynum;
+		case 2: return  daynum-31;
+		case 3: return  daynum-31-28;
+		case 4: return  daynum-31-28-31;
+		case 5: return  daynum-31-28-31-30;
+		case 6: return  daynum-31-28-31-30-31;
+		case 7: return  daynum-31-28-31-30-31-30;
+		case 8: return  daynum-31-28-31-30-31-30-31;
+		case 9: return  daynum-31-28-31-30-31-30-31-31;
+		case 10: return daynum-31-28-31-30-31-30-31-31-30;
+		case 11: return daynum-31-28-31-30-31-30-31-31-30-31;
+		case 12: return daynum-31-28-31-30-31-30-31-31-30-31-30; 
+		default: break;
+		}
+		return daynum;
+	}
+
 	bool exec( ) throw( general_error )
 	{
 		float t_start = (float)param_number("t_start");
@@ -139,15 +162,17 @@ public:
 
 		float time = t_start;
 		size_t idx = 0;
+		
 		while ( time < t_end && idx < num_steps )
 		{
 			// calculate month, day, hour, minute time
 
 			int month = month_of(time) ;              // month goes 1-12
-			int day =  ( ((int)(time/24.0)) + 1 );   // day goes 1-365
+			int day = day_of(month,time) ;   // day goes 1-nday_in_month
 			int hour = (int)(time)%24;		         // hour goes 0-23
 			int minute = (int)( (time-floor(time))*60  + t_step*30.0);      // minute goes 0-59
 			
+			int day_of_month = day_of(month, time);
 			// calculate solar position
 			solarpos( year, month, day, hour, minute, lat, lon, tz, sun );
 
@@ -210,4 +235,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( pvwatts, "Integrated PV system simulator.", 4 )
+DEFINE_MODULE_ENTRY( pvwatts, "Integrated PV system simulator.", 5 )
