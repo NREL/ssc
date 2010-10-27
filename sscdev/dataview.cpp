@@ -150,8 +150,8 @@ enum { ID_COPY_CLIPBOARD = 2315,
 	   ID_DELETE_ALL_VARIABLES,
 	   ID_SELECT_ALL,
 	   ID_UNSELECT_ALL,
-	   ID_DELETE_SELECTED,
-	   ID_DELETE_UNSELECTED,
+	   ID_DELETE_CHECKED,
+	   ID_DELETE_UNCHECKED,
 	   ID_POPUP_EDIT,
 	   ID_POPUP_DELETE,
 	   ID_POPUP_STATS,
@@ -168,8 +168,8 @@ BEGIN_EVENT_TABLE( DataView, wxPanel )
 	EVT_BUTTON( ID_DELETE_ALL_VARIABLES, DataView::OnCommand )
 	EVT_BUTTON( ID_SELECT_ALL, DataView::OnCommand )
 	EVT_BUTTON( ID_UNSELECT_ALL, DataView::OnCommand )
-	EVT_BUTTON( ID_DELETE_SELECTED, DataView::OnCommand )
-	EVT_BUTTON( ID_DELETE_UNSELECTED, DataView::OnCommand )
+	EVT_BUTTON( ID_DELETE_CHECKED, DataView::OnCommand )
+	EVT_BUTTON( ID_DELETE_UNCHECKED, DataView::OnCommand )
 	EVT_BUTTON( ID_SHOW_STATS, DataView::OnCommand )
 	EVT_CHECKLISTBOX( ID_LIST, DataView::OnVarListCheck )
 	EVT_LISTBOX_DCLICK( ID_LIST, DataView::OnVarListDClick )
@@ -195,8 +195,8 @@ DataView::DataView( wxWindow *parent )
 	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add..."), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_EDIT_VARIABLE, "Edit..."), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_DELETE_VARIABLE, "Delete"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_SELECTED, "Del selected"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_UNSELECTED, "Del unselected"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_CHECKED, "Del checked"), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_UNCHECKED, "Del unchecked"), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_DELETE_ALL_VARIABLES, "Del all"), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_SELECT_ALL, "Select all"), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_UNSELECT_ALL, "Unselect all"), 0, wxALL|wxEXPAND, 2);
@@ -389,13 +389,13 @@ void DataView::OnCommand(wxCommandEvent &evt)
 		m_selections.Clear();
 		UpdateView();
 		break;
-	case ID_DELETE_SELECTED:
+	case ID_DELETE_CHECKED:
 		{
 			for (int i=0;i<m_selections.Count();i++)
 				DeleteVariable(m_selections[i]);
 		}
 		break;
-	case ID_DELETE_UNSELECTED:
+	case ID_DELETE_UNCHECKED:
 		{
 			wxArrayString list;
 				

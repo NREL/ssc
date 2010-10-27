@@ -63,7 +63,7 @@
 
 int SC_major_ver = 0;
 int SC_minor_ver = 1;
-int SC_micro_ver = 0;
+int SC_micro_ver = 1;
 
 SCFrame *app_frame = NULL;
 wxArrayString app_args;
