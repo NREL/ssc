@@ -40,7 +40,7 @@ static var_info _cm_vtab_pvwatts[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_dec",                    "Sun declination",                "deg",    "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                        "Plane of array radiation",       "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tmod",                       "Module temperature",             "'C",     "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                      "Module temperature",             "'C",     "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                         "DC array output",                "kWhdc",  "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                         "AC system output",               "kWhac",  "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 
@@ -131,7 +131,7 @@ public:
 		if ( lookup("tilt_eq_lat") && as_boolean("tilt_eq_lat") ) tilt = lat; // override tilt angle
 
 		ssc_number_t *p_poa = allocate("poa", num_steps);
-		ssc_number_t *p_tmod = allocate("tmod", num_steps);
+		ssc_number_t *p_tcell = allocate("tcell", num_steps);
 		ssc_number_t *p_dc = allocate("dc", num_steps);
 		ssc_number_t *p_ac = allocate("ac", num_steps);
 
@@ -223,7 +223,7 @@ public:
 			p_dec[idx] = (ssc_number_t) (sun[3] * 180/M_PI);
 
 			p_poa[idx] = (ssc_number_t)poa;
-			p_tmod[idx] = (ssc_number_t)pvt;
+			p_tcell[idx] = (ssc_number_t)pvt;
 			p_dc[idx] = (ssc_number_t)dc;
 			p_ac[idx] = (ssc_number_t)ac;
 
