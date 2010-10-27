@@ -266,6 +266,11 @@ var_data &compute_module::value( const std::string &name ) throw( general_error 
 	return (*v);
 }
 
+bool compute_module::is_assigned( const std::string &name ) throw( general_error )
+{
+	return (lookup(name) != 0);
+}
+
 int compute_module::as_integer( const std::string &name ) throw( general_error )
 {
 	var_data &x = value(name);
@@ -360,10 +365,13 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 	{
 		// optional but has a default value that is assigned if variable is unassigned
 		var_data *v = lookup(name);
-		if (!v) v = assign(name, m_null_value );
+		if (!v)
+		{
+			v = assign(name, m_null_value );
 
-		if ( !var_data::parse( inf.data_type, reqexpr.substr(2), *v ) )
-			throw check_error(name, "could not parse default value in required_if spec (" + var_data::type_name(inf.data_type) + ")", reqexpr);
+			if ( !var_data::parse( inf.data_type, reqexpr.substr(2), *v ) )
+				throw check_error(name, "could not parse default value in required_if spec (" + var_data::type_name(inf.data_type) + ")", reqexpr);
+		}
 
 		return true; // a default value has been assigned, so this variable is effectively always required
 	}

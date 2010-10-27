@@ -208,6 +208,7 @@ protected:
 	ssc_number_t *allocate( const std::string &name, size_t length ) throw( general_error );
 	ssc_number_t *allocate( const std::string &name, size_t nrows, size_t ncols ) throw( general_error );
 	var_data &value( const std::string &name ) throw( general_error );
+	bool is_assigned( const std::string &name ) throw( general_error );
 	int as_integer( const std::string &name ) throw( general_error );
 	bool as_boolean( const std::string &name ) throw( general_error );
 	float as_float( const std::string &name ) throw( general_error );

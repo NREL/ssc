@@ -89,6 +89,9 @@ public:
 					throw exec_error("stdhrlywf", "could not read data line " + util::to_string(i+1) + " of 8760");
 				}
 
+				if (i%876 == 0)
+					update("reading", 100.0f * float(i+1) / 8760.0f, (float)i);
+
 				p_gh[i] = (ssc_number_t) dat.gh;
 				p_dn[i] = (ssc_number_t) dat.dn;
 				p_df[i] = (ssc_number_t) dat.df;

@@ -775,7 +775,7 @@ double perez( double dn,double df,double alb,double inc,double tilt,double zen )
 	double F23R[8] = { -0.0220216, -0.0288748, -0.0260542, -0.0139754,
 							 0.0012448, 0.0558651, 0.1310694, 0.2506212 };
 	double EPSBINS[7] = { 1.065, 1.23, 1.5, 1.95, 2.8, 4.5, 6.2 };
-	double B2=0.000005534f,
+	double B2=0.000005534,
 		EPS,T,D,DELTA,A,B,C,ZH,F1,F2,COSINC,poa,x;
 	double CZ,ZC,ZENITH,AIRMASS;
 

@@ -62,6 +62,7 @@ typedef int ssc_bool_t;
 /* create, release, query, read, and write data set objects */
 SSCEXPORT ssc_data_t ssc_data_create();
 SSCEXPORT void ssc_data_free( ssc_data_t p_data );
+SSCEXPORT void ssc_data_clear( ssc_data_t p_data );
 SSCEXPORT void ssc_data_unassign( ssc_data_t p_data, const char *name );
 SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name ); // returns SSC_INVALID if not assigned
 SSCEXPORT const char *ssc_data_first( ssc_data_t p_data ); // returns the name of the first data item, NULL if empty
@@ -207,7 +208,7 @@ SSCEXPORT int ssc_param_type( ssc_param_t p_param );
    these parameters can include simulation time steps, start and end times,
    working directories, local external executable names, supplemental file paths, etc */
 SSCEXPORT void ssc_module_parameter_string( ssc_module_t p_mod, const char *name, const char *value );
-SSCEXPORT void ssc_module_parameter_float( ssc_module_t p_mod, const char *name, float value );
+SSCEXPORT void ssc_module_parameter_number( ssc_module_t p_mod, const char *name, ssc_number_t value );
 
 #define SSC_NOTICE 1
 #define SSC_WARNING 2

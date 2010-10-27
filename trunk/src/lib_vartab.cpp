@@ -57,8 +57,6 @@ std::string var_data::to_string( const var_data &value )
 					if ( c < value.num.ncols()-1 ) s += ' ';
 				}
 				s += "]";
-
-				if (r < value.num.nrows()-1) s += ' ';
 			}
 			return s;
 		}
