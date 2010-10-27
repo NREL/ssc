@@ -69,6 +69,12 @@ SCFrame *app_frame = NULL;
 wxArrayString app_args;
 wxConfig *app_config = NULL;
 
+
+void applog(const wxString &s)
+{
+	if (app_frame) app_frame->Log(s);
+}
+
 /* ************************************************************
    ************ SC Application (set up handlers/config) ******
    ************************************************************ */
@@ -331,7 +337,7 @@ void SCAbout::OnCrash(wxCommandEvent &evt)
    ************ SC  Parent window class  ******************
    ************************************************************ */
 
-enum{   ID_START, ID_STOP, 
+enum{   ID_START, ID_STOP, ID_SHOW_STATS,
 		ID_LOAD_UNLOAD_DLL,
 		ID_DLL_PATH,
 		ID_CHOOSE_DLL,
@@ -354,6 +360,7 @@ BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 	EVT_TOOL( wxID_HELP,                  SCFrame::OnCommand )
 
 	EVT_TOOL( ID_START, SCFrame::OnCommand )
+	EVT_TOOL( ID_SHOW_STATS,              SCFrame::OnCommand )
 	EVT_TOOL( ID_LOAD_UNLOAD_DLL,              SCFrame::OnCommand )
 	EVT_TEXT_ENTER( ID_DLL_PATH,                SCFrame::OnCommand )
 	EVT_BUTTON( ID_CHOOSE_DLL,            SCFrame::OnCommand )
@@ -375,13 +382,19 @@ SCFrame::SCFrame()
 	m_varTable = new var_table;
 
 	SetIcon( wxIcon("appicon") );
+
 	
 	m_toolBar = new wxAuiToolBar(this);
 	
+	m_gauProgress = new wxGauge( m_toolBar, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_SMOOTH );
+	m_txtProgress = new wxTextCtrl( m_toolBar, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(270, 21), wxTE_READONLY );
+	m_txtProgress->SetBackgroundColour(*wxBLACK);
+	m_txtProgress->SetForegroundColour(*wxYELLOW);
+	
 	m_toolBar->AddTool( ID_LOAD_UNLOAD_DLL,"Load/unload ssc32.dll", wxBitmap(stock_connect_24_xpm),"Load/unload ssc32.dll");
-	m_toolBar->AddSeparator();
+	//m_toolBar->AddSeparator();
 	m_toolBar->AddTool( ID_START ,"Start", wxBitmap(stock_media_play_24_xpm),"Start computations...");
-	m_toolBar->AddTool( ID_STOP, "Stop", wxBitmap(stock_media_record_24_xpm), "Stop computations");
+	//m_toolBar->AddTool( ID_STOP, "Stop", wxBitmap(stock_media_record_24_xpm), "Stop computations");
 	m_toolBar->AddSeparator();
 	m_toolBar->AddTool( wxID_OPEN ,"Open", wxBitmap(stock_open_24_xpm),"Open input file");
     m_toolBar->SetToolDropDown(wxID_OPEN, true);
@@ -389,7 +402,10 @@ SCFrame::SCFrame()
 	//m_toolBar->AddTool( wxID_SAVEAS, "Save as", wxBitmap(stock_save_as_24_xpm), "Save input file as...");
 	m_toolBar->AddSeparator();
 	m_toolBar->AddTool( wxID_PREFERENCES, "Compute Modules...", wxBitmap(stock_preferences_24_xpm), "Options...");
+	m_toolBar->AddSeparator();
 	m_toolBar->AddStretchSpacer();
+	m_toolBar->AddControl( m_txtProgress );
+	m_toolBar->AddControl( m_gauProgress );
 	m_toolBar->AddTool( wxID_ABOUT, "About SSCdev", wxBitmap(stock_about_24_xpm), "About SSCdev...");
 	m_toolBar->SetToolBitmapSize(wxSize(24,24));
 	m_toolBar->Realize();
@@ -414,7 +430,6 @@ SCFrame::SCFrame()
 		wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL | wxTE_DONTWRAP);
 	m_txtOutput->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "courier") );
 	m_txtOutput->SetForegroundColour( *wxBLUE );
-	m_txtOutput->AppendText("compute_module log output");
 	
 
 	split_win->SplitHorizontally( m_dataView, m_txtOutput, -180 );
@@ -428,7 +443,8 @@ SCFrame::SCFrame()
 	sz_main->Add( split_win, 1, wxALL|wxEXPAND, 0 );
 
 	SetSizer(sz_main );
-
+	m_txtProgress->Hide();
+	m_gauProgress->Hide();
 
 	m_recentMenu = new wxMenu;	
 	long ct = 0;
@@ -467,9 +483,11 @@ SCFrame::SCFrame()
 	wxAcceleratorEntry entries[6];
 	entries[0].Set( wxACCEL_NORMAL, WXK_F1, ID_LOAD_UNLOAD_DLL );
 	entries[1].Set( wxACCEL_CTRL,   's',  wxID_SAVE );
-	entries[2].Set( wxACCEL_NORMAL, WXK_F2, wxID_PREFERENCES );
-	entries[3].Set( wxACCEL_NORMAL, WXK_F5, ID_START );
-	SetAcceleratorTable( wxAcceleratorTable(4,entries) );
+	entries[2].Set( wxACCEL_CTRL,   'o',  wxID_OPEN );
+	entries[3].Set( wxACCEL_NORMAL, WXK_F2, wxID_PREFERENCES );
+	entries[4].Set( wxACCEL_NORMAL, WXK_F3, ID_SHOW_STATS );
+	entries[5].Set( wxACCEL_NORMAL, WXK_F5, ID_START );
+	SetAcceleratorTable( wxAcceleratorTable(6,entries) );
 	
 
 
@@ -808,6 +826,9 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 			UpdateUI();
 		}
 		break;
+	case ID_SHOW_STATS:
+		m_dataView->ShowStats();
+		break;
 	case ID_DLL_PATH:
 		{
 			wxString file = m_txtDllPath->GetValue();
@@ -921,7 +942,7 @@ bool SCFrame::WriteToDisk(const wxString &fn)
 			fprintf(fp, "%s\n", (const char*)m_cmList[i].params[j].name.c_str());
 			fprintf(fp, "%d\n", m_cmList[i].params[j].type );
 			fprintf(fp, "%s\n", (const char*)m_cmList[i].params[j].str.c_str());
-			fprintf(fp, "%lg\n", (double)m_cmList[i].params[i].num );
+			fprintf(fp, "%lg\n", (double)m_cmList[i].params[j].num );
 		}
 	}
 
@@ -951,6 +972,14 @@ bool SCFrame::WriteToDisk(const wxString &fn)
 void SCFrame::Log(const wxString &text)
 {
 	m_txtOutput->AppendText(text + "\n");
+}
+
+void SCFrame::Progress(const wxString &text, float percent)
+{
+	m_txtProgress->SetValue(text);
+	m_txtProgress->Update();
+	m_gauProgress->SetValue( (int)percent );
+	m_gauProgress->Update();
 }
 
 class default_sync_proc : public util::sync_piped_process
@@ -988,9 +1017,8 @@ ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 	else if (action == SSC_UPDATE)
 	{
 		// print status update to console
-		wxString msg;
-		msg << "Progress " << f0 << "%:" << s1 << " time " << f1;
-		sc_frame->Log(msg);
+		sc_frame->Progress( wxString::Format("(%.2f %%) %s",f0,s0), f0 );
+		wxGetApp().Yield(true);
 		return 1; // return 0 to abort simulation as needed.
 	}
 	else if (action == SSC_EXECUTE)
@@ -1084,7 +1112,14 @@ void SCFrame::Copy( var_table *vt,  ssc_data_t p_data, bool clear_first )
 
 void SCFrame::Start()
 {
+	m_txtProgress->Clear();
+	m_txtProgress->Show();
+	m_gauProgress->SetValue(0);
+	m_gauProgress->Show();
 	m_txtOutput->Clear();
+
+	wxGetApp().Yield(true);
+
 	try {
 
 		ssc_data_t p_data = ::ssc_data_create();
@@ -1094,15 +1129,27 @@ void SCFrame::Start()
 
 		for (int i=0;i<m_cmList.count();i++)
 		{
-			ssc_module_t p_mod = ::ssc_module_create( (const char*) m_cmList[i].cm_mod_name.c_str() );
+			m_txtProgress->SetValue( m_cmList[i].cm_mod_name );
+			m_gauProgress->SetValue( 0 );
+			wxGetApp().Yield(true);
 
+			ssc_module_t p_mod = ::ssc_module_create( (const char*) m_cmList[i].cm_mod_name.c_str() );
+			
 			if (p_mod == 0)
 			{
 				Log("CREATE_FAIL: " + m_cmList[i].cm_mod_name );
 				break;
 			}
+			
+			for (int j=0;j<m_cmList[i].params.count();j++)
+			{
+				cmParam &pa = m_cmList[i].params[j];
+				if (pa.type == SSC_STRING) ::ssc_module_parameter_string( p_mod, pa.name.c_str(), pa.str.c_str() );
+				else ::ssc_module_parameter_number( p_mod, pa.name.c_str(), (ssc_number_t)pa.num );
+			}
 
-
+			wxStopWatch sw;
+			sw.Start();			
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
 				my_handler,	this) )
 			{
@@ -1111,9 +1158,7 @@ void SCFrame::Start()
 				break;
 			}
 			else
-			{
-				Log("EXEC_SUCCESS: " + m_cmList[i].cm_mod_name );
-			}
+				Log("EXEC_SUCCESS: " + m_cmList[i].cm_mod_name + " (" + wxString::Format("%.3lf", (double)sw.Time()/1000.0) + " sec)");
 
 			::ssc_module_free( p_mod );
 		}
@@ -1126,5 +1171,7 @@ void SCFrame::Start()
 	} catch(sscdll_error e) {
 		wxMessageBox("DLL error: " + e.func + ": " + e.text );
 	}
-
+	
+	m_txtProgress->Hide();
+	m_gauProgress->Hide();
 }

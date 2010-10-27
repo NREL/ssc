@@ -328,7 +328,7 @@ void CMForm::OnParamCommand(wxCommandEvent &evt)
 			
 				cmParam x;
 				x.name = name;
-				x.type = SSC_STRING;
+				x.type = SSC_NUMBER;
 				x.num = 0.0;
 
 				m_cmList[cmidx].params.append(x);
@@ -357,12 +357,19 @@ void CMForm::OnParamCommand(wxCommandEvent &evt)
 			if (cmidx >= 0 && cmidx < m_cmList.count()
 				&& pidx >= 0 && pidx < m_cmList[cmidx].params.count())
 			{
-				if (m_cmList[cmidx].params[pidx].type == SSC_STRING)
-					m_cmList[cmidx].params[pidx].str = txtParamValue->GetValue();
+				cmParam &p = m_cmList[cmidx].params[pidx];
+
+				if (p.type == SSC_STRING)
+				{
+					p.str = txtParamValue->GetValue();
+					applog("set " + m_cmList[cmidx].cm_mod_name + " param: " + p.name + "=" + p.str);
+				}
 				else
 				{
-					m_cmList[cmidx].params[pidx].num = atof( txtParamValue->GetValue().c_str() );
-					txtParamValue->ChangeValue(wxString::Format("%lg", (double)m_cmList[cmidx].params[pidx].num));
+					p.num = atof( txtParamValue->GetValue().c_str() );
+					txtParamValue->ChangeValue(wxString::Format("%lg", (double)p.num));
+					
+					applog("set " + m_cmList[cmidx].cm_mod_name + " param: " + p.name + "=" + FloatToStr(p.num));
 				}
 			}
 		}

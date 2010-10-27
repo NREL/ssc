@@ -106,6 +106,8 @@ public:
 	
 	static void Copy( ssc_data_t p_data, var_table *vt, bool clear_first );
 	static void Copy( var_table *vt,  ssc_data_t p_data, bool clear_first );
+
+	void Progress(const wxString &text, float percent);
 private:	
 	void UpdateUI();
 
@@ -123,6 +125,8 @@ private:
 	wxButton *m_btnChooseDll;
 	AFLabel *m_lblDllStatus;
 	wxTextCtrl *m_txtOutput;
+	wxTextCtrl *m_txtProgress;
+	wxGauge *m_gauProgress;
 
 	DataView *m_dataView;
 	

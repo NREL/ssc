@@ -396,11 +396,11 @@ void ssc_module_parameter_string( ssc_module_t p_mod, const char *name, const ch
 	(*f)( p_mod, name, value );
 }
 
-void ssc_module_parameter_float( ssc_module_t p_mod, const char *name, float value )
+void ssc_module_parameter_number( ssc_module_t p_mod, const char *name, ssc_number_t value )
 {
-	static void (*f)(ssc_module_t, const char *, float);
+	static void (*f)(ssc_module_t, const char *, ssc_number_t);
 	CHECK_DLL_LOADED();
-	if (!f && 0 == (f = (void(*)(ssc_module_t, const char*, float))PROCADDR())) FAIL_ON_LOCATE();
+	if (!f && 0 == (f = (void(*)(ssc_module_t, const char*, ssc_number_t))PROCADDR())) FAIL_ON_LOCATE();
 	(*f)( p_mod, name, value );
 }
 

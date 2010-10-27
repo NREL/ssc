@@ -160,6 +160,7 @@
     <ClCompile Include="dllinvoke.cpp" />
     <ClCompile Include="editvariableform.cpp" />
     <ClCompile Include="sscdev.cpp" />
+    <ClCompile Include="statform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cmform.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="editvariableform.h" />
     <ClInclude Include="formalizer.h" />
     <ClInclude Include="sscdev.h" />
+    <ClInclude Include="statform.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sscdev.rc" />
@@ -175,6 +177,7 @@
   <ItemGroup>
     <None Include="CMForm.ifb" />
     <None Include="EditVariableForm.ifb" />
+    <None Include="StatForm.ifb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

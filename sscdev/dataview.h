@@ -23,13 +23,17 @@ public:
 	void UpdateView();	
 	void UpdateGrid();
 
-	void EditVariable(const wxString &name);
-	void DeleteVariable(const wxString &name);
 
 	Array<int> GetColumnWidths();
 	void SetColumnWidths( const Array<int> &cwl );
 	wxArrayString GetSelections();
 	void SetSelections(const wxArrayString &sel);
+
+	wxString GetSelection();
+
+	void EditVariable(wxString name=wxEmptyString);
+	void DeleteVariable(wxString name=wxEmptyString);
+	void ShowStats( wxString name=wxEmptyString );
 
 private:
 	void OnCommand(wxCommandEvent &evt);

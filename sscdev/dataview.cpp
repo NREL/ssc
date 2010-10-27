@@ -27,6 +27,7 @@
 
 #include "dataview.h"
 #include "editvariableform.h"
+#include "statform.h"
 
 class DataView::Table : public wxGridTableBase
 {
@@ -142,6 +143,7 @@ private:
 
 enum { ID_COPY_CLIPBOARD = 2315,
 	   ID_LIST,
+	   ID_SHOW_STATS,
 	   ID_ADD_VARIABLE,
 	   ID_EDIT_VARIABLE,
 	   ID_DELETE_VARIABLE,
@@ -152,6 +154,7 @@ enum { ID_COPY_CLIPBOARD = 2315,
 	   ID_DELETE_UNSELECTED,
 	   ID_POPUP_EDIT,
 	   ID_POPUP_DELETE,
+	   ID_POPUP_STATS,
 	   ID_POPUP_PLOT_BAR,
 	   ID_POPUP_PLOT_LINE,
 	   ID_GRID };
@@ -167,6 +170,7 @@ BEGIN_EVENT_TABLE( DataView, wxPanel )
 	EVT_BUTTON( ID_UNSELECT_ALL, DataView::OnCommand )
 	EVT_BUTTON( ID_DELETE_SELECTED, DataView::OnCommand )
 	EVT_BUTTON( ID_DELETE_UNSELECTED, DataView::OnCommand )
+	EVT_BUTTON( ID_SHOW_STATS, DataView::OnCommand )
 	EVT_CHECKLISTBOX( ID_LIST, DataView::OnVarListCheck )
 	EVT_LISTBOX_DCLICK( ID_LIST, DataView::OnVarListDClick )
 	EVT_GRID_CMD_LABEL_RIGHT_CLICK( ID_GRID, DataView::OnGridLabelRightClick )
@@ -174,6 +178,7 @@ BEGIN_EVENT_TABLE( DataView, wxPanel )
 	
 	EVT_MENU( ID_POPUP_EDIT, DataView::OnPopup )
 	EVT_MENU( ID_POPUP_DELETE, DataView::OnPopup )
+	EVT_MENU( ID_POPUP_STATS, DataView::OnPopup )
 	EVT_MENU( ID_POPUP_PLOT_BAR, DataView::OnPopup )
 	EVT_MENU( ID_POPUP_PLOT_LINE, DataView::OnPopup )
 
@@ -196,6 +201,7 @@ DataView::DataView( wxWindow *parent )
 	tb_sizer->Add( new wxButton(this, ID_SELECT_ALL, "Select all"), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_UNSELECT_ALL, "Unselect all"), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton( this, ID_COPY_CLIPBOARD, "Copy to clipboard"), 0, wxEXPAND|wxALL, 2);
+	tb_sizer->Add( new wxButton( this, ID_SHOW_STATS, "Show stats..."), 0, wxEXPAND|wxALL, 2);
 	tb_sizer->AddStretchSpacer(1);
 
 	wxSplitterWindow *splitwin = new wxSplitterWindow(this, wxID_ANY, 
@@ -227,7 +233,7 @@ DataView::DataView( wxWindow *parent )
 	m_grid->SetDefaultCellAlignment( wxALIGN_RIGHT, wxALIGN_CENTER );
 	m_grid->SetRowLabelAlignment( wxALIGN_LEFT, wxALIGN_CENTER );
 
-	splitwin->SplitVertically(left_panel, m_grid, 210);
+	splitwin->SplitVertically(left_panel, m_grid, 290);
 
 
 	wxBoxSizer *szv_main = new wxBoxSizer(wxVERTICAL);
@@ -311,10 +317,14 @@ void DataView::UpdateView()
 					label += ' ';
 
 				label += wxString(v->type_name());
-				if (v->type == SSC_ARRAY)
-					label += wxString::Format( "[%d]", v->num.length() );
-				if (v->type == SSC_MATRIX)
-					label += wxString::Format("[%d,%d]", v->num.nrows(), v->num.ncols() );
+				if (v->type == SSC_NUMBER)
+					label += " " + FloatToStr( (ssc_number_t) v->num );				
+				else if (v->type == SSC_STRING)
+					label += " " + v->str;
+				else if (v->type == SSC_ARRAY)
+					label += wxString::Format( " [%d]", v->num.length() );
+				else if (v->type == SSC_MATRIX)
+					label += wxString::Format(" [%d,%d]", v->num.nrows(), v->num.ncols() );
 			}
 
 			labels.Add( label );
@@ -360,6 +370,9 @@ void DataView::OnCommand(wxCommandEvent &evt)
 {
 	switch(evt.GetId())
 	{
+	case ID_SHOW_STATS:
+		ShowStats();
+		break;
 	case ID_SELECT_ALL:
 		{
 			m_selections.Clear();
@@ -419,18 +432,10 @@ void DataView::OnCommand(wxCommandEvent &evt)
 		}
 		break;
 	case ID_EDIT_VARIABLE:
-		{
-			int n = m_varlist->GetSelection();
-			if (n >= 0 && n < m_names.Count())
-				EditVariable( m_names[n] );
-		}
+		EditVariable();
 		break;
 	case ID_DELETE_VARIABLE:
-		{
-			int n = m_varlist->GetSelection();
-			if (n >= 0 && n < m_names.Count())
-				DeleteVariable( m_names[n] );
-		}
+		DeleteVariable();
 		break;
 	case ID_DELETE_ALL_VARIABLES:
 		{
@@ -469,13 +474,21 @@ void DataView::OnVarListCheck(wxCommandEvent &evt)
 
 void DataView::OnVarListDClick(wxCommandEvent &evt)
 {
-	int n = m_varlist->GetSelection();
-	if (n >= 0 && n < m_names.Count())
-		EditVariable( m_names[n] );
+	EditVariable();
 }
 
-void DataView::EditVariable( const wxString &name )
+wxString DataView::GetSelection()
 {
+	int n = m_varlist->GetSelection();
+	if (n >= 0 && n < m_names.Count())
+		return m_names[n];
+	else
+		return wxEmptyString;
+}
+
+void DataView::EditVariable( wxString name )
+{
+	if (name.IsEmpty()) name = GetSelection();
 	if (name.IsEmpty()) return;
 
 	if (m_vt)
@@ -498,12 +511,35 @@ void DataView::EditVariable( const wxString &name )
 
 }
 
-void DataView::DeleteVariable( const wxString &name )
+void DataView::DeleteVariable( wxString name )
 {
+	if (name.IsEmpty()) name = GetSelection();
+	if (name.IsEmpty()) return;
+
 	if (m_vt)
 	{
 		m_vt->unassign( (const char*)name.c_str() );
 		UpdateView();
+	}
+}
+
+void DataView::ShowStats( wxString name )
+{
+	if (name.IsEmpty()) name = GetSelection();
+	if (name.IsEmpty()) return;
+
+	if (m_vt)
+	{
+		var_data *v = m_vt->lookup((const char*) name.c_str() );
+		if (!v || v->type != SSC_ARRAY)
+		{
+			wxMessageBox("variable not found or not of array type.");
+			return;
+		}
+
+		StatFormDialog dlg(this, "Stats for: " + name);
+		dlg.Compute( v->num );
+		dlg.ShowModal();
 	}
 }
 
@@ -519,6 +555,7 @@ void DataView::OnGridLabelRightClick(wxGridEvent &evt)
 	popup.AppendSeparator();
 	popup.Append( ID_POPUP_DELETE, "Delete..." );
 	popup.AppendSeparator();
+	popup.Append( ID_POPUP_STATS, "Statistics...");
 	popup.Append( ID_POPUP_PLOT_BAR, "Bar plot (array only)" );
 	popup.Append( ID_POPUP_PLOT_LINE, "Line plot (array only)" );
 
@@ -542,6 +579,9 @@ void DataView::OnPopup(wxCommandEvent &evt)
 	case ID_POPUP_DELETE:
 		if (wxYES == wxMessageBox("Really delete variable: " + m_popup_var_name, "Query", wxYES_NO ))
 			DeleteVariable( m_popup_var_name );
+		break;
+	case ID_POPUP_STATS:
+		ShowStats( m_popup_var_name );
 		break;
 	case ID_POPUP_PLOT_BAR:
 	case ID_POPUP_PLOT_LINE:
