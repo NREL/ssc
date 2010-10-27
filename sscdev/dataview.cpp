@@ -428,6 +428,8 @@ void DataView::OnCommand(wxCommandEvent &evt)
 				if (m_selections.Index( name ) == wxNOT_FOUND)
 					m_selections.Add( name );
 				UpdateView();
+
+				EditVariable( name );
 			}
 		}
 		break;

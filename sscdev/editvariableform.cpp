@@ -1,13 +1,20 @@
 #include "editvariableform.h"
 
 /*user.global.start*/
+enum { ID_TYPE_STRING=4235,
+	   ID_TYPE_NUMBER,
+	   ID_TYPE_ARRAY,
+	   ID_TYPE_MATRIX,
+	   ID_FOCUS_STRING,
+	   ID_FOCUS_NUMBER };
 /*user.global.end*/
 enum {
+  ID_Label3,
   ID_btnChooseFile,
   ID_txtValue,
-  ID_Label1,
   ID_numValue,
   ID_Label11,
+  ID_Label1,
   ID_rbgVarType,
   ID_btnCancel,
   ID_btnAccept,
@@ -19,6 +26,12 @@ enum {
 
 BEGIN_EVENT_TABLE( EditVariableForm, wxPanel )
 /*user.eventtable.start*/
+EVT_MENU( ID_TYPE_STRING, EditVariableForm::OnShortcut )
+EVT_MENU( ID_TYPE_NUMBER, EditVariableForm::OnShortcut )
+EVT_MENU( ID_TYPE_ARRAY, EditVariableForm::OnShortcut )
+EVT_MENU( ID_TYPE_MATRIX, EditVariableForm::OnShortcut )
+EVT_MENU( ID_FOCUS_STRING, EditVariableForm::OnShortcut )
+EVT_MENU( ID_FOCUS_NUMBER, EditVariableForm::OnShortcut )
 EVT_NUMERIC( ID_numRows, EditVariableForm::OnRowsColsChange )
 EVT_NUMERIC( ID_numCols, EditVariableForm::OnRowsColsChange )
 EVT_TEXT_ENTER( ID_txtValue, EditVariableForm::OnTextChange )
@@ -34,38 +47,43 @@ EditVariableForm::EditVariableForm(wxWindow *parent, int id)
 {
 /*user.klsinit.start*/
 /*user.klsinit.end*/
-	SetClientSize( 592, 452 );
+	SetClientSize( 591, 479 );
 	numRows = new AFNumeric(this, ID_numRows, 3, true, wxPoint(375,75), wxSize(70,21));
 	numRows->SetFormat( "%d");
 	numRows->SetInt( (int) 3 );
 	numCols = new AFNumeric(this, ID_numCols, 4, true, wxPoint(507,75), wxSize(70,21));
 	numCols->SetFormat( "%d");
 	numCols->SetInt( (int) 4 );
-	btnAccept = new wxButton(this, ID_btnAccept, "Accept", wxPoint(420,423), wxSize(80,21));
-	btnCancel = new wxButton(this, ID_btnCancel, "Cancel", wxPoint(504,423), wxSize(80,21));
+	btnAccept = new wxButton(this, ID_btnAccept, "Accept", wxPoint(408,432), wxSize(80,21));
+	btnCancel = new wxButton(this, ID_btnCancel, "Cancel", wxPoint(492,432), wxSize(80,21));
 	wxArrayString _data_rbgVarType;
 	_data_rbgVarType.Add("SSC_STRING");
 	_data_rbgVarType.Add("SSC_NUMBER");
 	_data_rbgVarType.Add("SSC_ARRAY");
 	_data_rbgVarType.Add("SSC_MATRIX");
-	rbgVarType = new AFRadioChoice(this, ID_rbgVarType, wxPoint(9,9), wxSize(137,86));
+	rbgVarType = new AFRadioChoice(this, ID_rbgVarType, wxPoint(9,9), wxSize(110,86));
 	rbgVarType->Add( _data_rbgVarType);
-	numValue = new AFNumeric(this, ID_numValue, 0, false, wxPoint(270,33), wxSize(100,21));
+	numValue = new AFNumeric(this, ID_numValue, 0, false, wxPoint(207,33), wxSize(133,21));
 	numValue->SetFormat( "%lg");
 	numValue->SetDouble( 0 );
-	txtValue = new AFTextCtrl(this, ID_txtValue, wxPoint(270,9), wxSize(262,21));
+	txtValue = new AFTextCtrl(this, ID_txtValue, wxPoint(207,9), wxSize(331,21));
 	txtValue->ChangeValue("");
 	txtValue->SetForegroundColour( wxColour(0, 0, 0) );
 	txtValue->SetBackgroundColour( wxColour(255, 255, 255) );
-	btnChooseFile = new wxButton(this, ID_btnChooseFile, "file..", wxPoint(534,9), wxSize(50,21));
-	Label1 = new AFLabel(this, ID_Label1, "String value:", wxPoint(156,9), wxSize(110,21));
-	Label1->AlignRight();
-	Label1->SetColour(wxColour(0, 0, 0));
-	Label1->SetRelativeSize(0);
-	Label11 = new AFLabel(this, ID_Label11, "Numeric value:", wxPoint(156,33), wxSize(110,21));
+	btnChooseFile = new wxButton(this, ID_btnChooseFile, "file..", wxPoint(540,9), wxSize(38,21));
+	Label3 = new AFLabel(this, ID_Label3, "Shortcuts: F1=SSC_STRING, F2=SSC_NUMBER, F3=SSC_ARRAY, F4=SSC_MATRIX, F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog", wxPoint(6,423), wxSize(371,48));
+	Label3->AlignTop();
+	Label3->SetColour(wxColour(0, 0, 0));
+	Label3->SetRelativeSize(0);
+	Label3->SetWordWrap( true );
+	Label11 = new AFLabel(this, ID_Label11, "Numeric value:", wxPoint(123,33), wxSize(80,21));
 	Label11->AlignRight();
 	Label11->SetColour(wxColour(0, 0, 0));
 	Label11->SetRelativeSize(0);
+	Label1 = new AFLabel(this, ID_Label1, "String value:", wxPoint(123,9), wxSize(80,21));
+	Label1->AlignRight();
+	Label1->SetColour(wxColour(0, 0, 0));
+	Label1->SetRelativeSize(0);
 	grdArrMat = new WFGridCtrl(this, ID_grdArrMat, wxPoint(9,99), wxSize(572,318));
 	grdArrMat->CreateGrid(2,2);
 	grdArrMat->EnableEditing(true);
@@ -85,6 +103,17 @@ EditVariableForm::EditVariableForm(wxWindow *parent, int id)
 	Label2->SetColour(wxColour(0, 0, 0));
 	Label2->SetRelativeSize(0);
 /*user.constructor.start*/
+
+	wxAcceleratorEntry entries[10];
+	entries[0].Set(::wxACCEL_NORMAL, WXK_F1, ID_TYPE_STRING);
+	entries[1].Set(::wxACCEL_NORMAL, WXK_F2, ID_TYPE_NUMBER);
+	entries[2].Set(::wxACCEL_NORMAL, WXK_F3, ID_TYPE_ARRAY);
+	entries[3].Set(::wxACCEL_NORMAL, WXK_F4, ID_TYPE_MATRIX);
+	entries[4].Set(::wxACCEL_NORMAL, WXK_F5, ID_FOCUS_STRING);
+	entries[5].Set(::wxACCEL_NORMAL, WXK_F6, ID_FOCUS_NUMBER);
+	entries[6].Set(::wxACCEL_NORMAL, WXK_F10, ID_btnAccept);
+	wxAcceleratorTable acceltab(7,entries);
+	SetAcceleratorTable(acceltab);
 /*user.constructor.end*/
 }
 EditVariableForm::~EditVariableForm()
@@ -137,6 +166,19 @@ void EditVariableForm::OnTypeChange( wxCommandEvent &evt )
 {
 	m_var.type = rbgVarType->GetSelection()+1;
 	UpdateForm();	
+}
+
+void EditVariableForm::OnShortcut( wxCommandEvent &evt)
+{
+	switch(evt.GetId())
+	{
+	case ID_TYPE_STRING: m_var.type = SSC_STRING; UpdateForm(); break;
+	case ID_TYPE_NUMBER: m_var.type = SSC_NUMBER; UpdateForm(); break;
+	case ID_TYPE_ARRAY:  m_var.type = SSC_ARRAY; UpdateForm(); break;
+	case ID_TYPE_MATRIX: m_var.type = SSC_MATRIX; UpdateForm(); break;
+	case ID_FOCUS_STRING: txtValue->SetFocus(); txtValue->SelectAll(); break;
+	case ID_FOCUS_NUMBER: numValue->SetFocus(); numValue->SelectAll(); break;
+	}
 }
 
 void EditVariableForm::OnTextChange( wxCommandEvent &evt )

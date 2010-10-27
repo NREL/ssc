@@ -15,11 +15,12 @@ public:
 	virtual ~EditVariableForm();
 	/* class members */
 
+	AFLabel *Label3;
 	wxButton *btnChooseFile;
 	AFTextCtrl *txtValue;
-	AFLabel *Label1;
 	AFNumeric *numValue;
 	AFLabel *Label11;
+	AFLabel *Label1;
 	AFRadioChoice *rbgVarType;
 	wxButton *btnCancel;
 	wxButton *btnAccept;
@@ -35,6 +36,7 @@ public:
 	void UpdateForm();
 
 private:
+	void OnShortcut( wxCommandEvent &evt);
 	void OnTypeChange( wxCommandEvent &evt );
 	void OnTextChange( wxCommandEvent &evt );
 	void OnNumChange( wxCommandEvent &evt);

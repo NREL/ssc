@@ -1,18 +1,57 @@
-form width 592 height 452 nguiobjects 13
+form width 591 height 479 nguiobjects 14
+start Label3 type Label
+geom 6 423 371 48
+properties 12
+prop(v'2) 1 name
+Label3
+endprop name
+prop(v'2) 2 x
+6
+endprop x
+prop(v'2) 2 y
+423
+endprop y
+prop(v'2) 2 width
+371
+endprop width
+prop(v'2) 2 height
+48
+endprop height
+prop(v'2) 6 textcolour
+0 0 0
+endprop textcolour
+prop(v'2) 1 caption
+Shortcuts: F1=SSC_STRING, F2=SSC_NUMBER, F3=SSC_ARRAY, F4=SSC_MATRIX, F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog
+endprop caption
+prop(v'2) 5 alignright
+0
+endprop alignright
+prop(v'2) 5 aligntop
+1
+endprop aligntop
+prop(v'2) 5 wordwrap
+1
+endprop wordwrap
+prop(v'2) 5 bold
+0
+endprop bold
+prop(v'2) 2 fontsize
+0
+endprop fontsize
 start btnChooseFile type Button
-geom 534 9 50 21
+geom 540 9 38 21
 properties 7
 prop(v'2) 1 name
 btnChooseFile
 endprop name
 prop(v'2) 2 x
-534
+540
 endprop x
 prop(v'2) 2 y
 9
 endprop y
 prop(v'2) 2 width
-50
+38
 endprop width
 prop(v'2) 2 height
 21
@@ -24,19 +63,19 @@ prop(v'2) 2 taborder
 0
 endprop taborder
 start txtValue type TextEntry
-geom 270 9 262 21
+geom 207 9 331 21
 properties 10
 prop(v'2) 1 name
 txtValue
 endprop name
 prop(v'2) 2 x
-270
+207
 endprop x
 prop(v'2) 2 y
 9
 endprop y
 prop(v'2) 2 width
-262
+331
 endprop width
 prop(v'2) 2 height
 21
@@ -56,59 +95,20 @@ endprop backcolour
 prop(v'2) 2 taborder
 0
 endprop taborder
-start Label1 type Label
-geom 156 9 110 21
-properties 12
-prop(v'2) 1 name
-Label1
-endprop name
-prop(v'2) 2 x
-156
-endprop x
-prop(v'2) 2 y
-9
-endprop y
-prop(v'2) 2 width
-110
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 6 textcolour
-0 0 0
-endprop textcolour
-prop(v'2) 1 caption
-String value:
-endprop caption
-prop(v'2) 5 alignright
-1
-endprop alignright
-prop(v'2) 5 aligntop
-0
-endprop aligntop
-prop(v'2) 5 wordwrap
-0
-endprop wordwrap
-prop(v'2) 5 bold
-0
-endprop bold
-prop(v'2) 2 fontsize
-0
-endprop fontsize
 start numValue type Numeric
-geom 270 33 100 21
+geom 207 33 133 21
 properties 10
 prop(v'2) 1 name
 numValue
 endprop name
 prop(v'2) 2 x
-270
+207
 endprop x
 prop(v'2) 2 y
 33
 endprop y
 prop(v'2) 2 width
-100
+133
 endprop width
 prop(v'2) 2 height
 21
@@ -129,19 +129,19 @@ prop(v'2) 2 taborder
 0
 endprop taborder
 start Label11 type Label
-geom 156 33 110 21
+geom 123 33 80 21
 properties 12
 prop(v'2) 1 name
 Label11
 endprop name
 prop(v'2) 2 x
-156
+123
 endprop x
 prop(v'2) 2 y
 33
 endprop y
 prop(v'2) 2 width
-110
+80
 endprop width
 prop(v'2) 2 height
 21
@@ -167,8 +167,47 @@ endprop bold
 prop(v'2) 2 fontsize
 0
 endprop fontsize
+start Label1 type Label
+geom 123 9 80 21
+properties 12
+prop(v'2) 1 name
+Label1
+endprop name
+prop(v'2) 2 x
+123
+endprop x
+prop(v'2) 2 y
+9
+endprop y
+prop(v'2) 2 width
+80
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 6 textcolour
+0 0 0
+endprop textcolour
+prop(v'2) 1 caption
+String value:
+endprop caption
+prop(v'2) 5 alignright
+1
+endprop alignright
+prop(v'2) 5 aligntop
+0
+endprop aligntop
+prop(v'2) 5 wordwrap
+0
+endprop wordwrap
+prop(v'2) 5 bold
+0
+endprop bold
+prop(v'2) 2 fontsize
+0
+endprop fontsize
 start rbgVarType type RadioChoice
-geom 9 9 137 86
+geom 9 9 110 86
 properties 10
 prop(v'2) 1 name
 rbgVarType
@@ -180,7 +219,7 @@ prop(v'2) 2 y
 9
 endprop y
 prop(v'2) 2 width
-137
+110
 endprop width
 prop(v'2) 2 height
 86
@@ -205,16 +244,16 @@ prop(v'2) 2 taborder
 0
 endprop taborder
 start btnCancel type Button
-geom 504 423 80 21
+geom 492 432 80 21
 properties 7
 prop(v'2) 1 name
 btnCancel
 endprop name
 prop(v'2) 2 x
-504
+492
 endprop x
 prop(v'2) 2 y
-423
+432
 endprop y
 prop(v'2) 2 width
 80
@@ -229,16 +268,16 @@ prop(v'2) 2 taborder
 0
 endprop taborder
 start btnAccept type Button
-geom 420 423 80 21
+geom 408 432 80 21
 properties 7
 prop(v'2) 1 name
 btnAccept
 endprop name
 prop(v'2) 2 x
-420
+408
 endprop x
 prop(v'2) 2 y
-423
+432
 endprop y
 prop(v'2) 2 width
 80
