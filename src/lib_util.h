@@ -40,6 +40,9 @@ namespace util
 	std::string upper_case( const std::string &in );
 
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
+	
+	int month_of(double time); /* hour: 0 = jan 1st 12am, returns 1-12 */
+	int day_of_month(int month, double time); /* month: 1-12 time: hours, starting 0=jan 1st 12am, returns 1-nday*/
 
 	char dir_sep();
 	std::string get_cwd();

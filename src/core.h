@@ -54,7 +54,7 @@
 struct var_info
 {
 	int var_type; //  SSC_INVALID, SSC_INPUT, SSC_OUTPUT, SSC_INOUT
-	int data_type; // SSC_INVALID, SSC_STRING, SSC_NUMBER, SSC_ARRAY, SSC_MATRIX
+	unsigned char data_type; // SSC_INVALID, SSC_STRING, SSC_NUMBER, SSC_ARRAY, SSC_MATRIX
 	
 	const char *name;
 	const char *label;
@@ -140,8 +140,8 @@ public:
 	class timestep_error : public general_error
 	{
 	public:
-		timestep_error( float start, float end, float step, const char *reason )
-			: general_error( util::format("timestep fail(%f %f %f): %s", start, end, step, reason) ) {  }
+		timestep_error( double start, double end, double step, const char *reason )
+			: general_error( util::format("timestep fail(%lg %lg %lg): %s", start, end, step, reason) ) {  }
 	};
 
 public:
@@ -207,18 +207,20 @@ protected:
 	var_data *assign( const std::string &name, const var_data &value ) throw( general_error );
 	ssc_number_t *allocate( const std::string &name, size_t length ) throw( general_error );
 	ssc_number_t *allocate( const std::string &name, size_t nrows, size_t ncols ) throw( general_error );
+	util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols ) throw( general_error );
 	var_data &value( const std::string &name ) throw( general_error );
 	bool is_assigned( const std::string &name ) throw( general_error );
 	int as_integer( const std::string &name ) throw( general_error );
 	bool as_boolean( const std::string &name ) throw( general_error );
 	float as_float( const std::string &name ) throw( general_error );
+	ssc_number_t as_number( const std::string &name ) throw( general_error );
 	double as_double( const std::string &name ) throw( general_error );
 	const char *as_string( const std::string &name ) throw( general_error );
 	ssc_number_t *as_array( const std::string &name, size_t *count ) throw( general_error );
 	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
 
 	
-	size_t check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error );
+	size_t check_timestep( double t_start, double t_end, double t_step ) throw( timestep_error );
 
 private:
 	// called by 'compute' as necessary for precheck and postcheck
