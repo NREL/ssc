@@ -160,6 +160,12 @@ void EditVariableForm::UpdateForm()
 	grdArrMat->Enable( m_var.type == SSC_ARRAY || m_var.type == SSC_MATRIX );
 	numRows->Enable( m_var.type == SSC_ARRAY || m_var.type == SSC_MATRIX );
 	numCols->Enable( m_var.type == SSC_MATRIX );
+
+	if (m_var.type == SSC_NUMBER)
+	{
+		numValue->SelectAll();
+		numValue->SetFocus();
+	}
 }
 
 void EditVariableForm::OnTypeChange( wxCommandEvent &evt )

@@ -29,6 +29,38 @@
 #include "editvariableform.h"
 #include "statform.h"
 
+class MyAttrProvider : public wxGridCellAttrProvider
+{
+public:
+	MyAttrProvider( std::vector<int> types )
+	{
+		m_colTypes = types;
+		m_attr = new wxGridCellAttr;
+		m_attr->SetFont( wxFont(9, wxMODERN, wxNORMAL, wxNORMAL) );
+	}
+
+    virtual ~MyAttrProvider()
+	{
+		m_attr->DecRef();
+	}
+
+    virtual wxGridCellAttr *GetAttr(int row, int col,
+                                    wxGridCellAttr::wxAttrKind  kind) const
+	{
+		if (col >= 0 && col < m_colTypes.size() && m_colTypes[col] == SSC_MATRIX)
+		{
+			m_attr->IncRef();
+			return m_attr;
+		}
+		else
+			return NULL;
+	}
+
+private:
+	std::vector<int> m_colTypes;
+    wxGridCellAttr *m_attr;
+};
+
 class DataView::Table : public wxGridTableBase
 {
 public:
@@ -50,14 +82,15 @@ public:
 			var_data *v = m_vt_ref->lookup( (const char*)m_items[i].c_str() );
 			if (!v) continue;
 
-			int len = 0;
-			if ( v->type == SSC_STRING ) len = 1;
-			else len = v->num.ncells();
+			int len = 1;
+			if (v->type == SSC_ARRAY) len = v->num.length();
+			else if (v->type == SSC_MATRIX) len = v->num.nrows();
 
 			if (len > max0) max0 = len;
 		}
 		return max0;
 	}
+
 	virtual int GetNumberCols()
 	{
 		return m_items.Count();
@@ -73,7 +106,9 @@ public:
 
 		if ( v->type == SSC_STRING && row >= 1 ) return true;
 
-		if ( row >= v->num.ncells() ) return true;
+		if ( v->type == SSC_ARRAY && row >= v->num.length() ) return true;
+		
+		if ( v->type == SSC_MATRIX && row >= v->num.nrows() ) return true;
 
 		return false;
 	}
@@ -88,7 +123,16 @@ public:
 			if (v->type == SSC_STRING && row == 0) return wxString(v->str.c_str());
 			else if (v->type == SSC_NUMBER && row == 0) return wxString::Format("%lg", (double) v->num);
 			else if (v->type == SSC_ARRAY && row < v->num.length()) return wxString::Format("%lg", (double)v->num[row]);
-			else if (v->type == SSC_MATRIX && row < v->num.ncells()) return wxString::Format("%lg", (double)v->num.data()[row] );
+			else if (v->type == SSC_MATRIX && row < v->num.nrows())
+			{
+				wxString ret;
+				for (int j=0;j<v->num.ncols();j++)
+				{
+					ret += wxString::Format("%*lg", 13, (double)v->num.at(row, j));
+				}
+
+				return ret;
+			}
 		}
 		
 		return wxEmptyString;
@@ -105,22 +149,7 @@ public:
 		{
 
 			if (!m_vt_ref) return m_items[col];
-			else {
-				wxString label = m_items[col];
-				/*
-				var_data *v = m_vt_ref->lookup( (const char*)m_items[col].c_str() );
-				if (v)
-				{
-					switch(v->type)
-					{
-					case SSC_STRING: label+= " (S)"; break;
-					case SSC_NUMBER: label+= " (N)"; break;
-					case SSC_ARRAY:  label+= " (A)"; break;
-					case SSC_MATRIX: label+= " (M)"; break;
-					}
-				}*/
-				return label;
-			}
+			else return m_items[col];
 		}
 		else
 			return "<unknown>";
@@ -224,7 +253,9 @@ DataView::DataView( wxWindow *parent )
 
 
 	m_grid = new WFGridCtrl(splitwin, ID_GRID);
+	m_grid->SetFont( wxFont(8, wxMODERN, wxNORMAL, wxNORMAL) );
 	m_grid->EnableEditing(false);
+	m_grid->EnableCopyPaste(false);
 	m_grid->DisableDragCell();
 	//mGrid->DisableDragColSize();
 	m_grid->DisableDragRowSize();
@@ -351,9 +382,17 @@ void DataView::UpdateGrid()
 	
 	if (m_grid_table) m_grid_table->Detach();
 
+	std::vector<int> col_types;
+	for (int i=0;i<m_selections.Count();i++)
+	{
+		var_data *v = m_vt->lookup( (const char*)m_selections[i].c_str() );
+		if (v) col_types.push_back( v->type );
+		else col_types.push_back( SSC_INVALID );
+	}
+
 	m_grid_table = new DataView::Table;
 	m_grid_table->SetData( m_selections, m_vt, true );
-	m_grid_table->SetAttrProvider( new WFGridCellAttrProvider );
+	m_grid_table->SetAttrProvider( new MyAttrProvider(col_types) );
 	m_grid->SetTable( m_grid_table, true );
 	m_grid->SetRowLabelSize(60);
 	m_grid->SetColLabelSize( wxGRID_AUTOSIZE );
@@ -391,8 +430,9 @@ void DataView::OnCommand(wxCommandEvent &evt)
 		break;
 	case ID_DELETE_CHECKED:
 		{
-			for (int i=0;i<m_selections.Count();i++)
-				DeleteVariable(m_selections[i]);
+			wxArrayString list = m_selections;
+			for (int i=0;i<list.Count();i++)
+				DeleteVariable(list[i]);
 		}
 		break;
 	case ID_DELETE_UNCHECKED:
@@ -424,7 +464,7 @@ void DataView::OnCommand(wxCommandEvent &evt)
 					if (wxNO==wxMessageBox("That var exists. overwrite with a new one?", "Q", wxYES_NO))
 						return;
 
-				m_vt->assign( (const char*)name.c_str(), var_data("'empty'") );
+				m_vt->assign( (const char*)name.c_str(), var_data( (ssc_number_t)0.0 ) );
 				if (m_selections.Index( name ) == wxNOT_FOUND)
 					m_selections.Add( name );
 				UpdateView();

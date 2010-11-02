@@ -385,7 +385,11 @@ SCFrame::SCFrame()
 
 	
 	m_toolBar = new wxAuiToolBar(this);
-	
+
+	m_txtSelectedCMs = new wxTextCtrl( m_toolBar, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(270, 21), wxTE_READONLY );
+	m_txtSelectedCMs->SetBackgroundColour( *wxWHITE );
+	m_txtSelectedCMs->SetForegroundColour( *wxBLUE );
+
 	m_gauProgress = new wxGauge( m_toolBar, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_SMOOTH );
 	m_txtProgress = new wxTextCtrl( m_toolBar, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(270, 21), wxTE_READONLY );
 	m_txtProgress->SetBackgroundColour(*wxBLACK);
@@ -403,9 +407,11 @@ SCFrame::SCFrame()
 	m_toolBar->AddSeparator();
 	m_toolBar->AddTool( wxID_PREFERENCES, "Compute Modules...", wxBitmap(stock_preferences_24_xpm), "Options...");
 	m_toolBar->AddSeparator();
-	m_toolBar->AddStretchSpacer();
+	m_toolBar->AddControl( m_txtSelectedCMs );
+	m_toolBar->AddSeparator();
 	m_toolBar->AddControl( m_txtProgress );
 	m_toolBar->AddControl( m_gauProgress );
+	m_toolBar->AddStretchSpacer();
 	m_toolBar->AddTool( wxID_ABOUT, "About SSCdev", wxBitmap(stock_about_24_xpm), "About SSCdev...");
 	m_toolBar->SetToolBitmapSize(wxSize(24,24));
 	m_toolBar->Realize();
@@ -555,6 +561,12 @@ void SCFrame::UpdateUI()
 	m_toolBar->EnableTool( ID_START, sscdll_isloaded() );
 	m_toolBar->EnableTool( ID_STOP, sscdll_isloaded() );
 	m_toolBar->Refresh();
+
+	
+	wxString cmtext;
+	for (int i=0;i<m_cmList.count();i++)
+		cmtext += m_cmList[i].cm_mod_name + "  ";
+	m_txtSelectedCMs->ChangeValue( cmtext );
 }
 	
 void SCFrame::UpdateRecentMenu()
@@ -919,6 +931,7 @@ bool SCFrame::Load(const wxString &fn)
 	m_dataView->UpdateView();
 	m_dataView->SetColumnWidths( cwl );
 
+	UpdateUI();
 
 	fclose(fp);
 	AddRecent(fn);
@@ -966,6 +979,9 @@ bool SCFrame::WriteToDisk(const wxString &fn)
 	}
 
 	fclose(fp);
+
+	UpdateUI();
+
 	return true;
 }
 

@@ -125,6 +125,7 @@ private:
 	wxButton *m_btnChooseDll;
 	AFLabel *m_lblDllStatus;
 	wxTextCtrl *m_txtOutput;
+	wxTextCtrl *m_txtSelectedCMs;
 	wxTextCtrl *m_txtProgress;
 	wxGauge *m_gauProgress;
 

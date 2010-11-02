@@ -108,7 +108,7 @@ static int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 	{
 		mmin[i]=(ssc_number_t)1e99;
 		mmax[i]=(ssc_number_t)-1e99;
-		mmean[i]=msum[i] = (ssc_number_t)-999.9;
+		mmean[i]=msum[i] = 0;
 	}
 
 
