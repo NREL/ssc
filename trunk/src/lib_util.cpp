@@ -601,3 +601,45 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 	else return (bp-buffer);
 }
 
+
+
+int util::month_of(double time)
+{
+	if (time < 0) return 0;
+	if (time < 744) return 1;
+	if (time < 1416) return 2;
+	if (time < 2160) return 3;
+	if (time < 2880) return 4;
+	if (time < 3624) return 5;
+	if (time < 4344) return 6;
+	if (time < 5088) return 7;
+	if (time < 5832) return 8;
+	if (time < 6552) return 9;
+	if (time < 7296) return 10;
+	if (time < 8016) return 11;
+	if (time < 8760) return 12;
+	return 0;
+}
+
+int util::day_of_month(int month, double time)
+{
+	//int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+	int daynum = ( ((int)(time/24.0)) + 1 );   // day goes 1-365
+	switch(month)
+	{
+	case 1: return  daynum;
+	case 2: return  daynum-31;
+	case 3: return  daynum-31-28;
+	case 4: return  daynum-31-28-31;
+	case 5: return  daynum-31-28-31-30;
+	case 6: return  daynum-31-28-31-30-31;
+	case 7: return  daynum-31-28-31-30-31-30;
+	case 8: return  daynum-31-28-31-30-31-30-31;
+	case 9: return  daynum-31-28-31-30-31-30-31-31;
+	case 10: return daynum-31-28-31-30-31-30-31-31-30;
+	case 11: return daynum-31-28-31-30-31-30-31-31-30-31;
+	case 12: return daynum-31-28-31-30-31-30-31-31-30-31-30; 
+	default: break;
+	}
+	return daynum;
+}

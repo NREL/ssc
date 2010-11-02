@@ -5,7 +5,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 10; /* update this version number as needed */
+	return 12; /* update this version number as needed */
 }
 
 /* to add new computation modules, 
@@ -16,12 +16,18 @@ SSCEXPORT int ssc_version()
 extern module_entry_info 
 /* extern declarations of modules for linking */
 	cm_entry_pvwatts,
-	cm_entry_stdhrlywf;
+	cm_entry_stdhrlywf,
+	cm_entry_timeseq,
+	cm_entry_easywatts,
+	cm_entry_windwatts;
 
 /* official module table */
 static module_entry_info *module_table[] = {
 	&cm_entry_stdhrlywf,
 	&cm_entry_pvwatts,
+	&cm_entry_timeseq,
+	&cm_entry_easywatts,
+	&cm_entry_windwatts,
 	NULL };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )

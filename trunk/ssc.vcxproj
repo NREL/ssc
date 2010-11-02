@@ -19,8 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\cmod_easywatts.cpp" />
     <ClCompile Include="src\cmod_pvwatts.cpp" />
     <ClCompile Include="src\cmod_stdhrlywf.cpp" />
+    <ClCompile Include="src\cmod_timeseq.cpp" />
+    <ClCompile Include="src\cmod_windwatts.cpp" />
     <ClCompile Include="src\core.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">__32BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">__64BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
@@ -30,6 +33,7 @@
     <ClCompile Include="src\lib_util.cpp" />
     <ClCompile Include="src\lib_vartab.cpp" />
     <ClCompile Include="src\lib_wfhrly.cpp" />
+    <ClCompile Include="src\lib_windwatts.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sscapi.cpp" />
   </ItemGroup>
@@ -40,6 +44,7 @@
     <ClInclude Include="src\lib_util.h" />
     <ClInclude Include="src\lib_vartab.h" />
     <ClInclude Include="src\lib_wfhrly.h" />
+    <ClInclude Include="src\lib_windwatts.h" />
     <ClInclude Include="src\sscapi.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -194,7 +199,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>

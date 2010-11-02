@@ -63,52 +63,11 @@ public:
 		set_param_info( _cm_param_tab );
 	}
 
-	int month_of(float hour)
-	{
-		if (hour < 0) return 0;
-		if (hour < 744) return 1;
-		if (hour < 1416) return 2;
-		if (hour < 2160) return 3;
-		if (hour < 2880) return 4;
-		if (hour < 3624) return 5;
-		if (hour < 4344) return 6;
-		if (hour < 5088) return 7;
-		if (hour < 5832) return 8;
-		if (hour < 6552) return 9;
-		if (hour < 7296) return 10;
-		if (hour < 8016) return 11;
-		if (hour < 8760) return 12;
-		return 0;
-	}
-
-	int day_of(int month, float time)
-	{
-		//int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
-		int daynum = ( ((int)(time/24.0)) + 1 );   // day goes 1-365
-		switch(month)
-		{
-		case 1: return  daynum;
-		case 2: return  daynum-31;
-		case 3: return  daynum-31-28;
-		case 4: return  daynum-31-28-31;
-		case 5: return  daynum-31-28-31-30;
-		case 6: return  daynum-31-28-31-30-31;
-		case 7: return  daynum-31-28-31-30-31-30;
-		case 8: return  daynum-31-28-31-30-31-30-31;
-		case 9: return  daynum-31-28-31-30-31-30-31-31;
-		case 10: return daynum-31-28-31-30-31-30-31-31-30;
-		case 11: return daynum-31-28-31-30-31-30-31-31-30-31;
-		case 12: return daynum-31-28-31-30-31-30-31-31-30-31-30; 
-		default: break;
-		}
-		return daynum;
-	}
-
 	bool exec( ) throw( general_error )
 	{
-		float t_start = (float)param_number("t_start");
-		float t_end = (float)param_number("t_end");
-		float t_step = (float)param_number("t_step");
+		double t_start = (double)param_number("t_start");
+		double t_end = (double)param_number("t_end");
+		double t_step = (double)param_number("t_step");
 
 		size_t num_steps = check_timestep( t_start, t_end, t_step );
 
@@ -147,37 +106,36 @@ public:
 
 		
 		/* PV RELATED SPECIFICATIONS */
-		double inoct = 45.0 + 273.15;        /* Installed normal operating cell temperature (deg K) */
-		double height = 5.0;                 /* Average array height (meters) */
-		double reftem = 25.0;                /* Reference module temperature (deg C) */
-		double pwrdgr = -0.005;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
-		double efffp = 0.92;                 /* Efficiency of inverter at rated output (decimal fraction) */
+		double inoct = PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
+		double height = PVWATTS_HEIGHT;                 /* Average array height (meters) */
+		double reftem = PVWATTS_REFTEM;                /* Reference module temperature (deg C) */
+		double pwrdgr = PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
+		double efffp = PVWATTS_EFFFP;                 /* Efficiency of inverter at rated output (decimal fraction) */
 		double tmloss = 1.0 - derate/efffp;  /* All losses except inverter,decimal */
-		double rot_limit = 45.0;             /* +/- rotation in degrees permitted by physical constraint of tracker */
-		double albedo = 0.2;                 /* surface albedo, decimal fraction */
+		double rot_limit = PVWATTS_ROTLIM;             /* +/- rotation in degrees permitted by physical constraint of tracker */
+		double albedo = PVWATTS_ALBEDO;                 /* surface albedo, decimal fraction */
 
 		/* storage for calculations */
 		double angle[3];
 		double sun[8];
 
-		float time = t_start;
+		double time = t_start;
 		size_t idx = 0;
 		
 		while ( time < t_end && idx < num_steps )
 		{
 			// calculate month, day, hour, minute time
 
-			int month = month_of(time) ;              // month goes 1-12
-			int day = day_of(month,time) ;   // day goes 1-nday_in_month
+			int month = util::month_of(time) ;              // month goes 1-12
+			int day = util::day_of_month(month,time) ;   // day goes 1-nday_in_month
 			int hour = (int)(time)%24;		         // hour goes 0-23
 			int minute = (int)( (time-floor(time))*60  + t_step*30.0);      // minute goes 0-59
 			
-			int day_of_month = day_of(month, time);
 			// calculate solar position
 			solarpos( year, month, day, hour, minute, lat, lon, tz, sun );
 
 			if (idx % (num_steps/25)==0)
-				update( "calculating", 100*((float)idx+1)/((float)num_steps), time );
+				update( "calculating", 100*((float)idx+1)/((float)num_steps), (float)time );
 
 			double poa, pvt, dc, ac;
 

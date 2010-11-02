@@ -246,7 +246,7 @@ ssc_number_t *compute_module::allocate( const std::string &name, size_t length )
 {
 	var_data *v = assign(name, var_data());
 	v->type = SSC_ARRAY;
-	v->num.resize( length );
+	v->num.resize_fill( length, 0.0 );
 	return v->num.data();
 }
 
@@ -254,10 +254,17 @@ ssc_number_t *compute_module::allocate( const std::string &name, size_t nrows, s
 {
 	var_data *v = assign(name, var_data());
 	v->type = SSC_MATRIX;
-	v->num.resize(nrows, ncols);
+	v->num.resize_fill(nrows, ncols, 0.0);
 	return v->num.data();
 }
 
+util::matrix_t<ssc_number_t>& compute_module::allocate_matrix( const std::string &name, size_t nrows, size_t ncols ) throw( general_error )
+{
+	var_data *v = assign(name, var_data());
+	v->type = SSC_MATRIX;
+	v->num.resize_fill(nrows, ncols, 0.0);
+	return v->num;
+}
 
 var_data &compute_module::value( const std::string &name ) throw( general_error )
 {
@@ -290,6 +297,13 @@ float compute_module::as_float( const std::string &name ) throw( general_error )
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("float", x, name);
 	return (float) x.num;
+}
+
+float compute_module::as_number( const std::string &name ) throw( general_error )
+{
+	var_data &x = value(name);
+	if (x.type != SSC_NUMBER) throw cast_error("ssc_number_t", x, name);
+	return x.num;
 }
 
 double compute_module::as_double( const std::string &name ) throw( general_error )
@@ -440,6 +454,14 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 						else
 							return 0;
 					}
+					else if (lhs == "naof") // check if variable is not assigned OR boolean value is 'false'
+					{
+						var_data *v;
+						if ( (v = lookup(rhs)) == 0 ) return 1;
+						if ( v->type == SSC_NUMBER && ((int)v->num)==0 ) return 1;
+
+						return 0;
+					}
 					else
 					{
 						throw check_error(name, "invalid built-in test", expr);
@@ -535,7 +557,7 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 				fail_constraint("number data type required");
 
 			int val = (int)dat.num;
-			if (val != 0 || val != 1)
+			if (val != 0 && val != 1)
 				fail_constraint("value was not 0 nor 1");
 		}
 		else if (expr == "integer")
@@ -545,6 +567,23 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 
 			if ( ((ssc_number_t)((int)dat.num)) != dat.num )
 				fail_constraint("number could not be interpreted as an integer: " + util::to_string( (double) dat.num ));
+		}
+		else if (expr == "ts_m")
+		{
+			if (dat.type != SSC_NUMBER)
+				fail_constraint("number data type required");
+
+			int val = (int) dat.num;
+			if (   val != 1
+				&& val != 5
+				&& val != 10
+				&& val != 15
+				&& val != 30
+				&& val != 60
+				)
+			{
+				fail_constraint("time step must be 1,5,10,15,30,60 minutes");
+			}
 		}
 		else if ( (pos=expr.find('=')) != std::string::npos )
 		{
@@ -579,7 +618,6 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 			else if (test == "length_equal")
 			{
 				if (dat.type != SSC_ARRAY) throw constraint_error(name, "cannot test for length_equal with non-array type", expr);
-				int lenval = 0;
 				var_data *other_array = lookup( rhs );
 				if (!other_array || other_array->type != SSC_ARRAY) throw constraint_error(name, "length_equal cannot find array variable to test against", expr);
 				if (dat.num.length() != other_array->num.length())
@@ -595,6 +633,22 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 				if ( dat.num.length() < len || len*multiplier != dat.num.length() )
 					fail_constraint( util::to_string( (int)dat.num.length() ) );
 			}
+			else if (test == "rows")
+			{
+				if (dat.type != SSC_MATRIX) throw constraint_error(name, "cannot test for rows with non-matrix type", expr);
+				int nrows = 0;
+				if (!util::to_integer( rhs, &nrows ) || nrows < 1) throw constraint_error(name, "test for rows requires a positive integer value", expr);
+				if ( dat.num.nrows() != (size_t)nrows )
+					fail_constraint( util::to_string( (int)dat.num.nrows() ) );
+			}
+			else if (test == "cols")
+			{
+				if (dat.type != SSC_MATRIX) throw constraint_error(name, "cannot test for cols with non-matrix type", expr);
+				int ncols = 0;
+				if (!util::to_integer( rhs, &ncols) || ncols < 1) throw constraint_error(name, "test for cols requires a positive integer value", expr);
+				if ( dat.num.ncols() != (size_t)ncols )
+					fail_constraint( util::to_string( (int)dat.num.ncols() ) );
+			}
 		}
 		else
 		{
@@ -609,15 +663,15 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 #undef fail_constraint
 }
 
-size_t compute_module::check_timestep( float t_start, float t_end, float t_step ) throw( timestep_error )
+size_t compute_module::check_timestep( double t_start, double t_end, double t_step ) throw( timestep_error )
 {
-	if (t_start < 0.0f) throw timestep_error(t_start,t_end,t_step, "start time must be 0 or greater");
+	if (t_start < 0.0) throw timestep_error(t_start,t_end,t_step, "start time must be 0 or greater");
 	if (t_end <= t_start) throw timestep_error(t_start,t_end,t_step, "end time must be greater than start time");
-	if (t_end > 8760.0f) throw timestep_error(t_start,t_end,t_step, "end time cannot be greater than 8760");
-	if (t_step < 1.0f/60.0f) throw timestep_error(t_start,t_end,t_step, "time step must be greater or equal to than 1/60");
-	if (t_step > 1.0f) throw timestep_error(t_start,t_end,t_step, "the maximum allowed time step is 1 hour");
+	if (t_end > 8760.0) throw timestep_error(t_start,t_end,t_step, "end time cannot be greater than 8760");
+	if (t_step < 1.0/60.0) throw timestep_error(t_start,t_end,t_step, "time step must be greater or equal to than 1/60");
+	if (t_step > 1.0) throw timestep_error(t_start,t_end,t_step, "the maximum allowed time step is 1 hour");
 
-	float duration = t_end - t_start;
+	double duration = t_end - t_start;
 	size_t steps = (size_t)(ceil(duration / t_step));
 
 	/* time step notes:
@@ -651,7 +705,11 @@ size_t compute_module::check_timestep( float t_start, float t_end, float t_step 
 		}
 	*/
 
-	if ( steps*t_step != duration ) throw timestep_error(t_start, t_end, t_step, "invalid time step, must represent an integer number of minutes");
+	size_t max0 = (size_t)( steps*t_step );
+	size_t max1 = (size_t)( duration );
+
+	if ( max0 != max1 ) throw timestep_error(t_start, t_end, t_step, 
+		util::format("invalid time step, must represent an integer number of minutes steps(%u != %u)", max0, max1).c_str());
 
 	return steps;
 }
