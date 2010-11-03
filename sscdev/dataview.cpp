@@ -29,44 +29,46 @@
 #include "editvariableform.h"
 #include "statform.h"
 
-class MyAttrProvider : public wxGridCellAttrProvider
+
+class DataView::Table : public wxGridTableBase
 {
 public:
-	MyAttrProvider( std::vector<int> types )
+
+	Table()
 	{
-		m_colTypes = types;
+		m_vt_ref = 0;
 		m_attr = new wxGridCellAttr;
+		m_attr->SetBackgroundColour( wxColour( 240,240,240 ) );
+		m_attr->SetTextColour( "navy" );
 		m_attr->SetFont( wxFont(9, wxMODERN, wxNORMAL, wxNORMAL) );
 	}
 
-    virtual ~MyAttrProvider()
-	{
+	virtual ~Table()
+	{		
 		m_attr->DecRef();
+		m_vt_ref = 0;
 	}
 
+	
+
+	
     virtual wxGridCellAttr *GetAttr(int row, int col,
-                                    wxGridCellAttr::wxAttrKind  kind) const
+                                    wxGridCellAttr::wxAttrKind  kind)
 	{
-		if (col >= 0 && col < m_colTypes.size() && m_colTypes[col] == SSC_MATRIX)
+		if (col >= 0 && col < m_items.Count())
 		{
+			if (!m_vt_ref) return NULL;
+			var_data *v = m_vt_ref->lookup( (const char*)m_items[col].c_str() );
+			if (!v) return NULL;
+
+			if (v->type != SSC_MATRIX) return NULL;
+
 			m_attr->IncRef();
 			return m_attr;
 		}
 		else
 			return NULL;
 	}
-
-private:
-	std::vector<int> m_colTypes;
-    wxGridCellAttr *m_attr;
-};
-
-class DataView::Table : public wxGridTableBase
-{
-public:
-
-	Table()	{ }
-	virtual ~Table() { m_vt_ref = 0; }
 
 	void Detach()
 	{
@@ -138,11 +140,6 @@ public:
 		return wxEmptyString;
 	}
 
-	virtual void SetValue( int row, int col, const wxString &)
-	{
-		if (m_readonly || !m_vt_ref) return;
-	}
-
 	virtual wxString GetColLabelValue(int col)
 	{
 		if (col >= 0 && col < m_items.Count())
@@ -159,13 +156,17 @@ public:
 	{
 		m_items = items;
 		m_vt_ref = vt;
-		m_readonly = ro;
+	}
+
+	virtual void SetValue(int,int,const wxString &)
+	{
+		/* nothing to do */
 	}
 
 private:
-	bool m_readonly;
-	wxArrayString m_items;
+    wxGridCellAttr *m_attr;
 	var_table *m_vt_ref;
+	wxArrayString m_items;
 };
 
 
@@ -382,17 +383,8 @@ void DataView::UpdateGrid()
 	
 	if (m_grid_table) m_grid_table->Detach();
 
-	std::vector<int> col_types;
-	for (int i=0;i<m_selections.Count();i++)
-	{
-		var_data *v = m_vt->lookup( (const char*)m_selections[i].c_str() );
-		if (v) col_types.push_back( v->type );
-		else col_types.push_back( SSC_INVALID );
-	}
-
 	m_grid_table = new DataView::Table;
 	m_grid_table->SetData( m_selections, m_vt, true );
-	m_grid_table->SetAttrProvider( new MyAttrProvider(col_types) );
 	m_grid->SetTable( m_grid_table, true );
 	m_grid->SetRowLabelSize(60);
 	m_grid->SetColLabelSize( wxGRID_AUTOSIZE );
