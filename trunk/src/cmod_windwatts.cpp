@@ -102,11 +102,13 @@ public:
 		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", 8760, nwt );
-
-		double last_wind, last_theta, wind, theta;
-		wf_read_data( reader.wf, &dat );  // read the first line
+		
+		double last_wind, last_theta, last_tdry, last_pres, wind, theta, tdry, pres;
+		wf_read_data(reader.wf, &dat );  // read the first line
 		wind = last_wind = dat.wspd;
 		theta = last_theta = dat.wdir;
+		tdry = last_tdry = dat.tdry;
+		pres = last_pres = dat.pres;
 
 		for (i=0;i<8760;i++)
 		{
@@ -119,8 +121,8 @@ public:
 						theta,
 						shear,
 						turbul,
-						dat.pres*0.000986923267,  /* convert mbar to Atm */
-						dat.tdry,
+						pres*0.000986923267,  /* convert mbar to Atm */
+						tdry,
 						nwt,
 						X.data(),
 						Y.data(),
@@ -166,12 +168,16 @@ public:
 			if (i < 8759)
 			{
 				if (!wf_read_data( reader.wf, &dat ))
-					throw exec_error("easywatts", "could not read data line " + util::to_string((int)i+1) + " of 8760");
-
+					throw exec_error("windwatts", "could not read data line " + util::to_string((int)i+1) + " of 8760");
+				
 				wind = (last_wind+dat.wspd)/2.0;
 				theta = (last_theta+dat.wdir)/2.0;
+				tdry = (last_tdry+dat.tdry)/2.0;
+				pres = (last_pres+dat.pres)/2.0;
 				last_wind = dat.wspd;
 				last_theta = dat.wdir;
+				last_tdry = dat.tdry;
+				last_pres = dat.pres;
 			}
 
 		}

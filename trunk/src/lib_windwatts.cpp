@@ -22,9 +22,9 @@ static inline double min_of(double a, double b)
 }
 
 
-void turbine_power( double Vel_T, double Rho_T, double Alpha_T, double Hub_Ht, double DataHt,
+void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	double Spd_CtIn, double Rotor_Di,
-	double Air_Dens, double Spd_Ratd, double Pwr_Ratd,
+	double Air_Dens, double Rho_T, double Spd_Ratd, double Pwr_Ratd,
 	int Ctl_Mode, double LossC, double LossP, double PC_wspd[], double PC_pwr[], int Num_Pair,
 	double *PWECS, double *CT, double *CP )
 {
@@ -33,6 +33,7 @@ void turbine_power( double Vel_T, double Rho_T, double Alpha_T, double Hub_Ht, d
 
 	// CORRECT SITE WIND SPEED TO ROTOR CENTER HEIGHT 
 	if (Alpha_T > 1.0) Alpha_T = 1.0/7.0;
+
 	double V_Hub = Vel_T * pow(Hub_Ht/DataHt, Alpha_T);
 	
 	// POWER OUTPUT CALCULATION
@@ -44,7 +45,8 @@ void turbine_power( double Vel_T, double Rho_T, double Alpha_T, double Hub_Ht, d
 	else 
 	{
 		int j = 1;
-		while ( V_Hub > PC_wspd[j++] ); // find first PC_wspd > V_Hub
+		while ( PC_wspd[j] <= V_Hub )
+			j++; // find first PC_wspd > V_Hub
 
 		out_pwr = PC_pwr[j-1] 
 				+  ( (V_Hub-PC_wspd[j-1])
@@ -231,13 +233,13 @@ int wind_power(
 	double pwecs, ct, cp;
 
 	turbine_power( Vel_T,
-				Rho_T,
 				Alpha_T,
 				Hub_Ht,
 				Data_Ht,
 				Spd_CtIn,
 				Rotor_Di,
 				1.249,  // air density
+				Rho_T,
 				Spd_Ratd,
 				Pwr_Ratd,
 				Ctl_Mode,
@@ -292,6 +294,9 @@ int wind_power(
 	{
 		for (j=i+1;j<NumWT;j++)
 		{
+			// 'i' represents up-wind turbine
+			// 'j' represents down-wind turbine
+
 			// distance downwind, upwind to downwind WT
 			double dd = Dn[j] - Dn[i]; 
 
@@ -305,22 +310,22 @@ int wind_power(
 			double rr = Cs[j] - Cs[i];
 				
 			double sig, delt;
-			vel_delta_loc( rr, dd, Turbul[j], Thrust[j], &sig, &delt);
+			vel_delta_loc( rr, dd, Turbul[j], Thrust[i], &sig, &delt);
 
-			Wind[i] = Wind[i]*(1-delt);
-			Turbul[i] = sig;
+			Wind[j] = Wind[j]*(1-delt);
+			Turbul[j] = sig;
 
 			if (j==i+1)
 			{
 				// call turbine power
-				turbine_power( Wind[i],
-					Rho_T,
+				turbine_power( Wind[j],
 					Alpha_T,
 					Hub_Ht,
 					Data_Ht,
 					Spd_CtIn,
 					Rotor_Di,
 					1.249,
+					Rho_T,
 					Spd_Ratd,
 					Pwr_Ratd,
 					Ctl_Mode,
