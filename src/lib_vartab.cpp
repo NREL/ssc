@@ -11,7 +11,7 @@ static const char *var_data_types[] =
 
 const char *var_data::type_name()
 {
-	if (type >= 0 && type < 5) return var_data_types[ (int)type ];
+	if (type < 5) return var_data_types[ (int)type ];
 	else return NULL;
 }
 
@@ -136,7 +136,7 @@ bool var_data::parse( unsigned char type, const std::string &buf, var_data &valu
 	return false;
 }
 
-var_table::var_table()
+var_table::var_table() : m_iterator(m_hash.begin())
 {
 	/* nothing to do here */
 }
@@ -148,8 +148,7 @@ var_table::~var_table()
 
 void var_table::clear()
 {
-	var_hash::iterator it;
-	for ( it = m_hash.begin(); it !=m_hash.end(); ++it )
+	for ( var_hash::iterator it = m_hash.begin(); it !=m_hash.end(); ++it )
 		delete it->second; // delete the var_data object
 	m_hash.clear();
 }

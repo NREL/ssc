@@ -17,12 +17,12 @@ class var_data
 {
 public:
 	
-	explicit var_data() : type(SSC_INVALID) { num=0.0; }
-	explicit var_data( const var_data &cp ) : type(cp.type), num(cp.num), str(cp.str) {  }
-	explicit var_data( const std::string &s ) : type(SSC_STRING), str(s) {  }
-	explicit var_data( ssc_number_t n ) : type(SSC_NUMBER) { num = n; }
-	explicit var_data( const ssc_number_t *pvalues, int length ) : type(SSC_ARRAY) { num.assign( pvalues, (size_t)length ); }
-	explicit var_data( const ssc_number_t *pvalues, int nr, int nc) : type(SSC_MATRIX) { num.assign( pvalues, (size_t)nr, (size_t)nc ); }
+	var_data() : type(SSC_INVALID) { num=0.0; }
+	var_data( const var_data &cp ) : type(cp.type), num(cp.num), str(cp.str) {  }
+	var_data( const std::string &s ) : type(SSC_STRING), str(s) {  }
+	var_data( ssc_number_t n ) : type(SSC_NUMBER) { num = n; }
+	var_data( const ssc_number_t *pvalues, int length ) : type(SSC_ARRAY) { num.assign( pvalues, (size_t)length ); }
+	var_data( const ssc_number_t *pvalues, int nr, int nc) : type(SSC_MATRIX) { num.assign( pvalues, (size_t)nr, (size_t)nc ); }
 
 	const char *type_name();
 	static std::string type_name(int type);

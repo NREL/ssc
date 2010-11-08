@@ -256,6 +256,7 @@ private:
 protected:
 	handler_interface( compute_module *cm ) : m_cm(cm) {  }
 public:
+	virtual ~handler_interface() {  /* nothing to do */ }
 	virtual void on_log( const std::string &text, int type, float time ) = 0;
 	virtual bool on_update( const std::string &text, float percent_done, float time ) = 0;
 	virtual bool on_exec( const std::string &command, const std::string &workdir ) = 0;
