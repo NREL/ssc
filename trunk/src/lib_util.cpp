@@ -327,7 +327,6 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 #else
 int util::sync_piped_process::spawn(const std::string &command, const std::string &workdir)
 {
-	char c;
 	std::string line;
 
 	std::string lastwd;

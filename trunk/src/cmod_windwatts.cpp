@@ -124,11 +124,11 @@ public:
 						pres*0.000986923267,  /* convert mbar to Atm */
 						tdry,
 						nwt,
-						X.data(),
-						Y.data(),
+						&X[0],
+						&Y[0],
 						pc_len,
-						dpcW.data(),
-						dpcP.data(),
+						&dpcW[0],
+						&dpcP[0],
 						10.0, /* 10 meter data measure height in TMY2 */
 						hub_ht,
 						rotor_di,
@@ -141,13 +141,13 @@ public:
 
 						/* outputs */
 						&farmp,
-						Dn.data(),
-						Cs.data(),
-						Power.data(),
-						Thrust.data(),
-						Eff.data(),
-						Wind.data(),
-						Turb.data() ) ) 
+						&Dn[0],
+						&Cs[0],
+						&Power[0],
+						&Thrust[0],
+						&Eff[0],
+						&Wind[0],
+						&Turb[0] ) ) 
 				throw exec_error( "windwatts", util::format("error in wind calculation time %d", i) );
 
 

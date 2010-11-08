@@ -950,7 +950,7 @@ main(int argc, char **argv)
 	  cost = -99.0;
   sprintf(dum1,"pvw_%s_%d_%2.1f.csv",wban,year,step);
 	fp_out = fopen(dum1,"w" );  /* Open file to write */
-	/* strncpy( name+12,swban,5 );   1/25/06   /* Copy WBAN no to .tm2 file name */
+	/* strncpy( name+12,swban,5 );   1/25/06    Copy WBAN no to .tm2 file name */
 	//strcat( name,swban );     /* Concatenate wban# to name 1/25/06*/
 	//strcat( name,stmy );      /* Concatenate .tmy to name 1/25/06*/
 	//printf("%s\n",name);
