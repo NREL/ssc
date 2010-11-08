@@ -48,9 +48,9 @@ var_info_invalid };
 
 static param_info _cm_param_tab[] = {
 	/* TYPE,      NAME,       DEFAULT_VALUE,    DESCRIPTION */
-	{ SSC_NUMBER, "t_start",  "0",              "Simulation start time (hours), 0 = Jan 1st, 12am" },
-	{ SSC_NUMBER, "t_end",    "8760",           "Simulation end time (hours), 8759 = Dec 31st 11pm" },
-	{ SSC_NUMBER, "t_step",   "1",              "Simulation time step (hours), must represent integer number of minutes" },
+	{ SSC_NUMBER, "t_start",  "0",              "Simulation start time (sec), 0 = Jan 1st, 12am" },
+	{ SSC_NUMBER, "t_end",    "31536000",       "Simulation end time (sec), 8759*3600 = Dec 31st 11pm" },
+	{ SSC_NUMBER, "t_step",   "3600",           "Simulation time step (sec)" },
 	{ SSC_INVALID, NULL }  };
 	
 class cm_pvwatts : public compute_module
@@ -69,7 +69,7 @@ public:
 		double t_end = (double)param_number("t_end");
 		double t_step = (double)param_number("t_step");
 
-		size_t num_steps = check_timestep( t_start, t_end, t_step );
+		size_t num_steps = check_timestep_seconds( t_start, t_end, t_step );
 
 		size_t arr_len;
 		ssc_number_t *p_dn = as_array( "dn", &arr_len );      if (arr_len != num_steps) throw mismatch_error( (int)num_steps, (int)arr_len, "direct normal radiation");
