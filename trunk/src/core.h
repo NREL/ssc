@@ -220,7 +220,7 @@ protected:
 	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
 
 	
-	size_t check_timestep( double t_start, double t_end, double t_step ) throw( timestep_error );
+	size_t check_timestep_seconds( double t_start, double t_end, double t_step ) throw( timestep_error );
 
 private:
 	// called by 'compute' as necessary for precheck and postcheck

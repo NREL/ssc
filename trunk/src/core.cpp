@@ -663,13 +663,13 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 #undef fail_constraint
 }
 
-size_t compute_module::check_timestep( double t_start, double t_end, double t_step ) throw( timestep_error )
+size_t compute_module::check_timestep_seconds( double t_start, double t_end, double t_step ) throw( timestep_error )
 {
 	if (t_start < 0.0) throw timestep_error(t_start,t_end,t_step, "start time must be 0 or greater");
 	if (t_end <= t_start) throw timestep_error(t_start,t_end,t_step, "end time must be greater than start time");
-	if (t_end > 8760.0) throw timestep_error(t_start,t_end,t_step, "end time cannot be greater than 8760");
-	if (t_step < 1.0/60.0) throw timestep_error(t_start,t_end,t_step, "time step must be greater or equal to than 1/60");
-	if (t_step > 1.0) throw timestep_error(t_start,t_end,t_step, "the maximum allowed time step is 1 hour");
+	if (t_end > 8760.0*3600.0) throw timestep_error(t_start,t_end,t_step, "end time cannot be greater than 8760*3600");
+	if (t_step < 1.0) throw timestep_error(t_start,t_end,t_step, "time step must be greater or equal to than 1 sec");
+	if (t_step > 3600.0) throw timestep_error(t_start,t_end,t_step, "the maximum allowed time step is 3600 sec");
 
 	double duration = t_end - t_start;
 	size_t steps = (size_t)(ceil(duration / t_step));
