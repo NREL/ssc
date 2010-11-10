@@ -19,10 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\cmod_cashloan.cpp" />
     <ClCompile Include="src\cmod_easywatts.cpp" />
     <ClCompile Include="src\cmod_pvwatts.cpp" />
     <ClCompile Include="src\cmod_stdhrlywf.cpp" />
     <ClCompile Include="src\cmod_timeseq.cpp" />
+    <ClCompile Include="src\cmod_utilityrate.cpp" />
     <ClCompile Include="src\cmod_windwatts.cpp" />
     <ClCompile Include="src\core.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">__32BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
@@ -36,6 +38,7 @@
     <ClCompile Include="src\lib_windwatts.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sscapi.cpp" />
+    <ClCompile Include="src\vtab_common.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\attic.h" />
