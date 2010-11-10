@@ -15,6 +15,8 @@ SSCEXPORT int ssc_version()
 
 extern module_entry_info 
 /* extern declarations of modules for linking */
+	cm_entry_utilityrate,
+	cm_entry_cashloan,
 	cm_entry_pvwatts,
 	cm_entry_stdhrlywf,
 	cm_entry_timeseq,
@@ -23,6 +25,8 @@ extern module_entry_info
 
 /* official module table */
 static module_entry_info *module_table[] = {
+	&cm_entry_utilityrate,
+	&cm_entry_cashloan,
 	&cm_entry_stdhrlywf,
 	&cm_entry_pvwatts,
 	&cm_entry_timeseq,
