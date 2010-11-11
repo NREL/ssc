@@ -1,6 +1,6 @@
 #include "core.h"
 
-static var_info _cm_vtab_finleveragedpartnershipflip[] = {
+static var_info _cm_vtab_levpartflip[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_ARRAY,      "system_enet",				"Annual energy produced by system",	"kWh",   "",                      "",             "*",						   "",                              "" },
@@ -37,13 +37,13 @@ var_info_invalid };
 
 
 
-class cm_finleveragedpartnershipflip : public compute_module
+class cm_levpartflip : public compute_module
 {
 private:
 public:
-	cm_finleveragedpartnershipflip()
+	cm_levpartflip()
 	{
-		add_var_info( _cm_vtab_finleveragedpartnershipflip );
+		add_var_info( _cm_vtab_levpartflip );
 	}
 
 	bool exec( ) throw( general_error )
@@ -84,6 +84,6 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( finleveragedpartnershipflip, "DHF Leveraged Partnership Flip Financial Model_", 1 );
+DEFINE_MODULE_ENTRY( levpartflip, "DHF Leveraged Partnership Flip Financial Model_", 1 );
 
 
