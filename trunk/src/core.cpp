@@ -606,6 +606,12 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 				if (dat.num > (ssc_number_t)maxval )
 					fail_constraint( util::to_string( (double)dat.num ) );
 			}
+			else if (test == "positive")
+			{
+				if (dat.type != SSC_NUMBER) throw constraint_error(name, "cannot test for positive with non-numeric type", expr);
+				if (dat.num <= 0.0)
+					fail_constraint( util::to_string( (double)dat.num ) );
+			}
 			else if (test == "length")
 			{
 				if (dat.type != SSC_ARRAY) throw constraint_error(name, "cannot test for length with non-array type", expr);
