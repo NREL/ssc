@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClCompile Include="src\cmod_cashloan.cpp" />
     <ClCompile Include="src\cmod_easywatts.cpp" />
-    <ClCompile Include="src\cmod_levpartnerflip.cpp" />
+    <ClCompile Include="src\cmod_levpartflip.cpp" />
     <ClCompile Include="src\cmod_pvwatts.cpp" />
     <ClCompile Include="src\cmod_stdhrlywf.cpp" />
     <ClCompile Include="src\cmod_timeseq.cpp" />
