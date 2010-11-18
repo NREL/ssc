@@ -37,7 +37,7 @@ public:
 		add_var_info( _cm_vtab_easywatts );
 	}
 
-	bool exec( ) throw( general_error )
+	void exec( ) throw( general_error )
 	{
 		const char *file = as_string("file_name");
 
@@ -116,8 +116,6 @@ public:
 			p_dc[i] = (ssc_number_t)dc;
 			p_ac[i] = (ssc_number_t)ac;
 		}
-
-		return true;
 	}
 };
 

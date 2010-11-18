@@ -12,9 +12,8 @@ public:
 		add_var_info( vtab_utility_rate );
 	}
 
-	bool exec( ) throw( general_error )
+	void exec( ) throw( general_error )
 	{
-		return false;
 	}
 };
 

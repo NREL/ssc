@@ -37,7 +37,7 @@ public:
 		add_var_info( _cm_vtab_stdhrlywf );
 	}
 
-	bool exec( ) throw( general_error )
+	void exec( ) throw( general_error )
 	{
 		bool header_only = false;
 		if (lookup("header_only"))
@@ -105,8 +105,6 @@ public:
 		}
 
 		wf_close(wf);
-
-		return true;
 	}
 };
 

@@ -50,7 +50,7 @@ public:
 		add_var_info( _cm_vtab_levpartflip );
 	}
 
-	bool exec( ) throw( general_error )
+	void exec( ) throw( general_error )
 	{
 		double inf = as_double("inflation") / 100.0;
 		double disc_real = as_double("discount_real") / 100.0;
@@ -82,9 +82,6 @@ public:
 
 		double nameplate = as_double("system_nameplate");
 		assign( "cost_installedperwatt", var_data( cost_installed / nameplate / 1000.0 ) );
-
-
-		return true;
 	}
 };
 
