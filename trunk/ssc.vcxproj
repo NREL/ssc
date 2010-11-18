@@ -32,6 +32,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">__64BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">__64BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="src\lib_financial.cpp" />
     <ClCompile Include="src\lib_pvwatts.cpp" />
     <ClCompile Include="src\lib_util.cpp" />
     <ClCompile Include="src\lib_vartab.cpp" />
@@ -44,6 +45,7 @@
   <ItemGroup>
     <ClInclude Include="src\attic.h" />
     <ClInclude Include="src\core.h" />
+    <ClInclude Include="src\lib_financial.h" />
     <ClInclude Include="src\lib_pvwatts.h" />
     <ClInclude Include="src\lib_util.h" />
     <ClInclude Include="src\lib_vartab.h" />
