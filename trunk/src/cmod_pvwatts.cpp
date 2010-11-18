@@ -63,7 +63,7 @@ public:
 		set_param_info( _cm_param_tab );
 	}
 
-	bool exec( ) throw( general_error )
+	void exec( ) throw( general_error )
 	{
 		double t_start = (double)param_number("t_start");
 		double t_end = (double)param_number("t_end");
@@ -119,12 +119,13 @@ public:
 		double angle[3];
 		double sun[8];
 
-		double time = t_start;
+		double Ts = t_start;
 		size_t idx = 0;
 		
-		while ( time < t_end && idx < num_steps )
+		while ( Ts < t_end && idx < num_steps )
 		{
 			// calculate month, day, hour, minute time
+			double time = Ts/3600;
 
 			int month = util::month_of(time) ;              // month goes 1-12
 			int day = util::day_of_month(month,time) ;   // day goes 1-nday_in_month
@@ -185,11 +186,9 @@ public:
 			p_dc[idx] = (ssc_number_t)dc;
 			p_ac[idx] = (ssc_number_t)ac;
 
-			time += t_step;
+			Ts += t_step;
 			idx++;
 		}
-		
-		return true;
 	}
 };
 

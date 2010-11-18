@@ -191,7 +191,7 @@ public:
 protected:
 	/* must be implemented to perform calculations
 	   note: can throw exceptions of type 'compute_module::error' */
-	virtual bool exec( ) throw( general_error ) = 0;
+	virtual void exec( ) throw( general_error ) = 0;
 
 	
 	/* can be called in constructors to build up the variable table references */

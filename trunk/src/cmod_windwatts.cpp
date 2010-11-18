@@ -45,7 +45,7 @@ public:
 		add_var_info( _cm_vtab_windwatts );
 	}
 
-	bool exec( ) throw( general_error )
+	void exec( ) throw( general_error )
 	{
 		const char *file = as_string("file_name");
 		
@@ -181,8 +181,6 @@ public:
 			}
 
 		}
-
-		return true;
 	}
 };
 

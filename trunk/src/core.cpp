@@ -94,7 +94,7 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 	try { // catch any 'general_error' that can be thrown during precheck, exec, and postcheck
 
 		if (!verify("precheck input", SSC_INPUT)) return false;
-		if (!exec()) return false; // pure virtual, implemented in descendants
+		exec();
 		if (!verify("postcheck output", SSC_OUTPUT)) return false;
 
 	} catch ( general_error e )	{
