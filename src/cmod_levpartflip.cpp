@@ -24,6 +24,10 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "percent_taxable",          "Taxable cost",				        "%",	 "",					  "",             "?=100",                     "MIN=0,MAX=100",      			"" },
 
 
+/* o and m */
+
+/* market specific inputs */
+
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_contingency",        "Contingency cost",                 "$",     "",					   "",			   "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_hard",               "Hard cost",                        "$",     "",					   "",			   "*",                         "",                             "" },

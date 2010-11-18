@@ -22,6 +22,15 @@ var_info vtab_standard_financial[] = {
 
 var_info_invalid };
 
+var_info vtab_standard_loan[] = {
+
+/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_NUMBER,      "loan_term",					"Loan term",					  "years",  "",                      "Loan",            "?=30",                   "INTEGER,MIN=0,MAX=50",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "loan_rate",					"Loan rate",					  "%",      "",                      "Loan",            "?=6",                    "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "debt_percentage",             "Debt percentage",                "%",      "",                      "Loan",			"?=50",                   "MIN=0,MAX=100",                 "" },
+
+var_info_invalid };
+
 var_info vtab_oandm[] = {
 /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	

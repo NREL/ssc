@@ -206,3 +206,5 @@ double ppmt (double rate, double per, double nper, double pv, double fv, int typ
 	double ip = ipmt (rate, per, nper, pv, fv, type); 
 	return p - ip; 
 }
+
+
