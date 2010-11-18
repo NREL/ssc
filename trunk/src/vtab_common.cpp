@@ -1,6 +1,6 @@
 #include "core.h"
 
-var_info vtab_standard_financials[] = {
+var_info vtab_standard_financial[] = {
 
 /*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_years",              "Analyis period",                 "years",  "",                      "Financials",      "?=30",                   "INTEGER,MIN=0,MAX=50",          "" },
@@ -14,9 +14,9 @@ var_info vtab_standard_financials[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",          "Salvage value percentage",       "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",             "System nameplate capacity",      "kW",     "",                      "System",          "*",                      "POSITIVE",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "heat_rate",                   "System heat rate",               "MMBTus/MWh", "",                  "System",          "?=0.0",                  "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_hard_cost",             "Total hard cost",                "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_soft_cost",             "Total soft cost",                "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_heat_rate",            "System heat rate",               "MMBTus/MWh", "",                  "System",          "?=0.0",                  "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_direct_cost",           "Total direct cost",              "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_indirect_cost",         "Total indirect cost",            "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "total_construction_interest", "Total construction interest",    "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "total_direct_sales_tax",      "Total direct sales tax",         "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
 
