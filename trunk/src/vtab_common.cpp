@@ -2,31 +2,31 @@
 
 var_info vtab_standard_financial[] = {
 
-/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_years",              "Analyis period",                 "years",  "",                      "Financials",      "?=30",                   "INTEGER,MIN=0,MAX=50",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "federal_tax_rate",            "Federal tax rate",               "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "state_tax_rate",              "State tax rate",                 "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "property_tax_rate",           "Property tax rate",              "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "real_discount_rate",          "Real discount rate",             "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inflation_rate",              "Inflation rate",                 "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "insurance_rate",              "Insurance rate",                 "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",          "Salvage value percentage",       "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+/*   VARTYPE           DATATYPE         NAME                                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_years",                           "Analyis period",                                  "years",  "",                      "Financials",      "?=30",                   "INTEGER,MIN=0,MAX=50",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "federal_tax_rate",                         "Federal tax rate",                                "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "state_tax_rate",                           "State tax rate",                                  "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "property_tax_rate",                        "Property tax rate",                               "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",                           "Sales tax rate",                                  "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "real_discount_rate",                       "Real discount rate",                              "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inflation_rate",                           "Inflation rate",                                  "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "insurance_rate",                           "Insurance rate",                                  "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",             "System nameplate capacity",      "kW",     "",                      "System",          "*",                      "POSITIVE",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_heat_rate",            "System heat rate",               "MMBTus/MWh", "",                  "System",          "?=0.0",                  "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_direct_cost",           "Total direct cost",              "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_indirect_cost",         "Total indirect cost",            "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_construction_interest", "Total construction interest",    "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_sales_tax",             "Total sales tax",                "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                          "System nameplate capacity",                       "kW",     "",                      "System",          "*",                      "POSITIVE",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_heat_rate",                         "System heat rate",                                "MMBTus/MWh", "",                  "System",          "?=0.0",                  "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_cost",                               "Total system cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_subject_sales_tax",        "Percent cost subject sales tax",                  "%",      "",                      "Cost",            "*",                      "MIN=0,MAX=100",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_due_construction_interest","Percent of cost due to construction interest",    "%",      "",                      "Cost",            "?=0",                    "MIN=0,MAX=100",                                         "" },
 
 var_info_invalid };
 
 var_info vtab_standard_loan[] = {
 
 /*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "loan_term",					"Loan term",					  "years",  "",                      "Loan",            "?=30",                   "INTEGER,MIN=0,MAX=50",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "loan_rate",					"Loan rate",					  "%",      "",                      "Loan",            "?=6",                    "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "debt_percentage",             "Debt percentage",                "%",      "",                      "Loan",			"?=50",                   "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "loan_term",					"Loan term",					  "years",  "",                      "Loan",            "?=0",                    "INTEGER,MIN=0,MAX=50",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "loan_rate",					"Loan rate",					  "%",      "",                      "Loan",            "?=0",                    "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "loan_debt",                   "Debt percentage",                "%",      "",                      "Loan",			"?=0",                    "MIN=0,MAX=100",                 "" },
 
 var_info_invalid };
 

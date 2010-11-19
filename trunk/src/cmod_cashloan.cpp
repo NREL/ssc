@@ -4,8 +4,8 @@
 static var_info vtab_cashloan[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Financial mode",                     "0/1",          "0=residential,1=comm.", "Cashloan",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "deduct_interest",          "Deduct loan interest payments",      "0/1",          "",                      "Cashloan",      "?=0",                     "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Residential or Commercial Market",   "0/1",          "0=residential,1=comm.", "Cashloan",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		 "mortgage",		         "Use mortgage style loan (res. only)","0/1",          "",                      "Cashloan",      "?=0",                     "BOOLEAN",                        "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "Cashloan",      "?=0",                     "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
@@ -13,7 +13,7 @@ static var_info vtab_cashloan[] = {
 
 	/* standard financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nominal",             "Nominal LCOE",                       "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback",                            "years",        "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",                  "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 	
@@ -38,8 +38,11 @@ enum {
 	CF_om_fuel_expense,
 	CF_property_tax_expense,
 	CF_insurance_expense,
-	CF_operating_expenses_total,
+	CF_operating_expenses,
 
+	CF_deductible_expenses,
+
+	CF_debt_balance,
 	CF_debt_payment_interest,
 	CF_debt_payment_principal,
 	CF_debt_payment_total,
@@ -71,22 +74,25 @@ enum {
 	
 	CF_itc_fed_amt,
 	CF_itc_fed_per,
+	CF_itc_fed_total,
+
 	CF_itc_sta_amt,
 	CF_itc_sta_per,
+	CF_itc_sta_total,
 	
-	CF_state_depr_sched,
-	CF_state_depreciation,
-	CF_state_total_income,
-	CF_state_total_taxable_incentive_income_less_deductions,
-	CF_state_tax_savings,
+	CF_sta_depr_sched,
+	CF_sta_depreciation,
+	CF_sta_incentive_income_less_deductions,
+	CF_sta_taxable_income_less_deductions,
+	CF_sta_tax_savings,
 	
-	CF_federal_depr_sched,
-	CF_federal_depreciation,
-	CF_federal_total_income,
-	CF_federal_total_taxable_incentive_income_less_deductions,
-	CF_federal_tax_savings,
+	CF_fed_depr_sched,
+	CF_fed_depreciation,
+	CF_fed_incentive_income_less_deductions,
+	CF_fed_taxable_income_less_deductions,
+	CF_fed_tax_savings,
 
-	CF_state_and_federal_tax_savings,
+	CF_sta_and_fed_tax_savings,
 	CF_after_tax_net_equity_cost_flow,
 	CF_after_tax_cash_flow,
 
@@ -113,7 +119,7 @@ public:
 		add_var_info( vtab_standard_loan );
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_depreciation );
-		add_var_info( vtab_utility_rate );
+		//add_var_info( vtab_utility_rate );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
 				
@@ -123,6 +129,12 @@ public:
 	void exec( ) throw( general_error )
 	{
 		int i;
+
+		bool is_commercial = (as_integer("market")==1);
+		bool is_mortgage = as_boolean("mortgage");
+
+		if (is_commercial) log("commercial market"); else log("residential market");
+		if (is_mortgage) log("mortgage loan"); else log("standard loan");
 
 		int nyears = as_integer("analysis_years");
 
@@ -153,32 +165,28 @@ public:
     	double nameplate = as_double("system_capacity"); // kW
 		
 		double inflation_rate = as_double("inflation_rate")*0.01;
-		double property_tax = as_double("property_tax")*0.01;
+		double property_tax = as_double("property_tax_rate")*0.01;
 		double insurance_rate = as_double("insurance_rate")*0.01;
 		double salvage_frac = as_double("salvage_percentage")*0.01;
 		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
 		double state_tax_rate = as_double("state_tax_rate")*0.01;
 		double effective_tax_rate = federal_tax_rate + (1-federal_tax_rate)*state_tax_rate;
 		
-		double real_discount_rate = as_double("real_discount_rate");
+		double real_discount_rate = as_double("real_discount_rate")*0.01;
 		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
-		double direct_cost = as_double("total_direct_cost");
-		double indirect_cost = as_double("total_indirect_cost");
-		double total_cost = direct_cost + indirect_cost;
-		double total_sales_tax = as_double("total_sales_tax");
+		double total_cost = as_double("total_cost");
+		double total_sales_tax = as_double("percent_of_cost_subject_sales_tax")*0.01*total_cost;
 
 		int loan_term = as_integer("loan_term");
 		double loan_rate = as_double("loan_rate")*0.01;
-		double debt_frac = as_double("debt_percentage")*0.01;
-		double loan_amount = debt_frac * total_cost;
-
-		
+		double debt_frac = as_double("loan_debt")*0.01;
+				
 		// precompute expenses from annual schedules or value+escalation
-		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal") );
-		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal") );  
-		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal") );  
-		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal") );
+		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
+		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
+		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
+		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 		
 		// precompute ibi
 		single_or_schedule( CF_ibi_fed_amt, nyears, 1.0, "ibi_fed_amount" );
@@ -279,34 +287,66 @@ public:
 			- ( as_boolean("itc_sta_amount_deprbas_sta")   ? 0.5*(1+nom_discount_rate)*npv( CF_itc_sta_amt, nyears, nom_discount_rate ) : 0 )
 			- ( as_boolean("itc_sta_percent_deprbas_sta")  ? 0.5*(1+nom_discount_rate)*npv( CF_itc_sta_per, nyears, nom_discount_rate ) : 0 );
 
-
-		switch( as_integer("depr_state_basis") )
+		if (is_commercial)
 		{
-		case 1: depreciation_sched_macrs_half_year( CF_state_depr_sched, nyears ); break;
-		case 2: depreciation_sched_straight_line( CF_state_depr_sched, nyears, as_integer("depr_sta_sl_years") ); break;
-		case 3: 
+			// only compute depreciation for commercial market
+
+			switch( as_integer("depr_sta_type") )
 			{
-				size_t arr_len;
-				ssc_number_t *arr_cust = as_array( "depr_sta_custom", &arr_len );
-				depreciation_sched_custom( CF_state_depr_sched, nyears, arr_cust, arr_len );
-				break;
+			case 1: depreciation_sched_macrs_half_year( CF_sta_depr_sched, nyears ); break;
+			case 2: depreciation_sched_straight_line( CF_sta_depr_sched, nyears, as_integer("depr_sta_sl_years") ); break;
+			case 3: 
+				{
+					size_t arr_len;
+					ssc_number_t *arr_cust = as_array( "depr_sta_custom", &arr_len );
+					depreciation_sched_custom( CF_sta_depr_sched, nyears, arr_cust, arr_len );
+					break;
+				}
+			}
+
+			switch( as_integer("depr_fed_type") )
+			{
+			case 1: depreciation_sched_macrs_half_year( CF_fed_depr_sched, nyears ); break;
+			case 2: depreciation_sched_straight_line( CF_fed_depr_sched, nyears, as_integer("depr_fed_sl_years") ); break;
+			case 3: 
+				{
+					size_t arr_len;
+					ssc_number_t *arr_cust = as_array( "depr_fed_custom", &arr_len );
+					depreciation_sched_custom( CF_fed_depr_sched, nyears, arr_cust, arr_len );
+					break;
+				}
 			}
 		}
+		
+		double state_tax_savings = 0.0;
+		double federal_tax_savings = 0.0;
 
-		switch( as_integer("depr_federal_basis") )
-		{
-		case 1: depreciation_sched_macrs_half_year( CF_federal_depr_sched, nyears ); break;
-		case 2: depreciation_sched_straight_line( CF_federal_depr_sched, nyears, as_integer("depr_fed_sl_years") ); break;
-		case 3: 
-			{
-				size_t arr_len;
-				ssc_number_t *arr_cust = as_array( "depr_fed_custom", &arr_len );
-				depreciation_sched_custom( CF_federal_depr_sched, nyears, arr_cust, arr_len );
-				break;
-			}
-		}
+		double adjusted_installed_cost = total_cost
+			- npv( CF_ibi_fed_amt, nyears, nom_discount_rate )
+			- npv( CF_ibi_sta_amt, nyears, nom_discount_rate )
+			- npv( CF_ibi_uti_amt, nyears, nom_discount_rate )
+			- npv( CF_ibi_oth_amt, nyears, nom_discount_rate )
+			- npv( CF_ibi_fed_per, nyears, nom_discount_rate )
+			- npv( CF_ibi_sta_per, nyears, nom_discount_rate )
+			- npv( CF_ibi_uti_per, nyears, nom_discount_rate )
+			- npv( CF_ibi_oth_per, nyears, nom_discount_rate )
+			- npv( CF_cbi_fed, nyears, nom_discount_rate )
+			- npv( CF_cbi_sta, nyears, nom_discount_rate )
+			- npv( CF_cbi_uti, nyears, nom_discount_rate )
+			- npv( CF_cbi_oth, nyears, nom_discount_rate );
 
+		double loan_amount = debt_frac * adjusted_installed_cost;
+		double first_cost = adjusted_installed_cost - loan_amount;
+		double capital_investment = loan_amount + first_cost;
+		
+		cf.at(CF_after_tax_net_equity_cost_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
+		cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cost_flow,0);
 
+		cf.at(CF_payback_with_expenses,0) = -capital_investment;
+		cf.at(CF_cumulative_payback_with_expenses,0) = -capital_investment;
+		
+		cf.at(CF_payback_without_expenses,0) = -capital_investment;
+		cf.at(CF_cumulative_payback_without_expenses,0) = -capital_investment;
 
 		for (i=1; i<=nyears; i++)
 		{			
@@ -315,19 +355,28 @@ public:
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 			cf.at(CF_property_tax_expense,i) =  total_cost * property_tax * pow( 1 + inflation_rate, i-1 );
+			
 			cf.at(CF_insurance_expense,i) = total_cost * insurance_rate * pow( 1 + inflation_rate, i-1 );
 
-			cf.at(CF_operating_expenses_total,i) = cf.at(CF_om_production_expense,i)
+			cf.at(CF_operating_expenses,i) = 
+				+ cf.at(CF_om_fixed_expense,i)
+				+ cf.at(CF_om_production_expense,i)
 				+ cf.at(CF_om_capacity_expense,i)
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i);
 
 			if (i == nyears) /* salvage value handled as negative operating expense in last year */
-				cf.at(CF_operating_expenses_total,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
+				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
+			
+			if (is_commercial)
+				cf.at(CF_deductible_expenses,i) = -cf.at(CF_operating_expenses,i);  // commercial
+			else
+				cf.at(CF_deductible_expenses,i) = -cf.at(CF_property_tax_expense,i); // residential
 
 			if (i == 1)
 			{
+				cf.at(CF_debt_balance,i) = -loan_amount;
 				cf.at(CF_debt_payment_interest,i) = loan_amount * loan_rate;
 				cf.at(CF_debt_payment_principal,i) = -ppmt( loan_rate,       // Rate
 																i,           // Period
@@ -340,8 +389,8 @@ public:
 			{
 				if (i <= loan_term) 
 				{
-					cf.at(CF_debt_payment_interest,i) = -loan_rate * 
-						(cf.at(CF_debt_payment_total,i-1) + cf.at(CF_debt_payment_principal,i-1));
+					cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) + cf.at(CF_debt_payment_principal,i-1);
+					cf.at(CF_debt_payment_interest,i) = -loan_rate * cf.at(CF_debt_balance,i);
 
 					if (loan_rate != 0.0)
 					{
@@ -350,8 +399,7 @@ public:
 					}
 					else
 					{
-						cf.at(CF_debt_payment_principal,i) = loan_amount / loan_term
-						-  cf.at(CF_debt_payment_interest,i);
+						cf.at(CF_debt_payment_principal,i) = loan_amount / loan_term - cf.at(CF_debt_payment_interest,i);
 					}
 				}
 			}
@@ -369,70 +417,91 @@ public:
 			// compute pbi total		
 			cf.at(CF_pbi_total, i) = cf.at(CF_pbi_fed, i) + cf.at(CF_pbi_sta, i) + cf.at(CF_pbi_uti, i) + cf.at(CF_pbi_oth, i);
 			
+			// compute itc total, fed&sta
+			cf.at(CF_itc_fed_total, i) = cf.at(CF_itc_fed_amt,i) + cf.at(CF_itc_fed_per,i);
+			cf.at(CF_itc_sta_total, i) = cf.at(CF_itc_sta_amt,i) + cf.at(CF_itc_sta_per,i);
+
 			// compute depreciation from basis and precalculated schedule
-			cf.at(CF_state_depreciation,i) = cf.at(CF_state_depr_sched,i)*state_depr_basis;
-			cf.at(CF_federal_depreciation,i) = cf.at(CF_federal_depr_sched,i)*federal_depr_basis;
+			cf.at(CF_sta_depreciation,i) = cf.at(CF_sta_depr_sched,i)*state_depr_basis;
+			cf.at(CF_fed_depreciation,i) = cf.at(CF_fed_depr_sched,i)*federal_depr_basis;
 
-
+			
+			// ************************************************
 			// tax effect on equity (state)
-			cf.at(CF_state_total_income, i) =
-				- cf.at(CF_operating_expenses_total, i) 
+
+			cf.at(CF_sta_incentive_income_less_deductions, i) =
+				+ cf.at(CF_deductible_expenses, i) 
 				+ cf.at(CF_ibi_total,i)
 				+ cf.at(CF_cbi_total,i)
 				+ cf.at(CF_pbi_total,i)
-				- cf.at(CF_state_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i);
+				- cf.at(CF_sta_depreciation,i)
+				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 );
 			
-			if (i == 1) cf.at(CF_state_total_income, i) -= total_sales_tax;
+			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
 
-			cf.at(CF_state_total_taxable_incentive_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
-				- cf.at(CF_operating_expenses_total,i)
-				- cf.at(CF_state_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i);
 
-			if (i == 1) cf.at(CF_state_total_taxable_incentive_income_less_deductions,i) -= total_sales_tax;
+			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+				cf.at(CF_sta_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
-			if (as_boolean("deduct_interest") == 0) cf.at(CF_state_total_taxable_incentive_income_less_deductions,i) -= cf.at(CF_debt_payment_interest,i);
-
-			cf.at(CF_state_tax_savings, i) = cf.at(CF_itc_sta_amt,i) + cf.at(CF_itc_sta_per,i) + cf.at(CF_ptc_sta,i)
-				- state_tax_rate*cf.at(CF_state_total_taxable_incentive_income_less_deductions,i);
+			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
+				+ cf.at(CF_deductible_expenses,i)
+				- cf.at(CF_sta_depreciation,i)
+				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 );
 			
-			// tax effect on equity (federal)
+			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
 
-			cf.at(CF_federal_total_income, i) =
-				- cf.at(CF_operating_expenses_total, i)
+			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+				cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
+
+			cf.at(CF_sta_tax_savings, i) = cf.at(CF_itc_sta_amt,i) + cf.at(CF_itc_sta_per,i) + cf.at(CF_ptc_sta,i)
+				- state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
+			
+			// ************************************************
+			//	tax effect on equity (federal)
+
+			cf.at(CF_fed_incentive_income_less_deductions, i) =
+				+ cf.at(CF_deductible_expenses, i)
 				+ cf.at(CF_ibi_total,i)
 				+ cf.at(CF_cbi_total,i)
 				+ cf.at(CF_pbi_total,i)
-				- cf.at(CF_federal_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i)
-				+ cf.at(CF_state_tax_savings, i);
+				- cf.at(CF_fed_depreciation,i)
+				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 )
+				+ cf.at(CF_sta_tax_savings, i);
 			
-			if (i == 1) cf.at(CF_federal_total_income, i) -= total_sales_tax;
-
-			cf.at(CF_federal_total_taxable_incentive_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
-				- cf.at(CF_operating_expenses_total,i)
-				- cf.at(CF_federal_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i)
-				+ cf.at(CF_state_tax_savings, i);
-
-			if (i == 1) cf.at(CF_federal_total_taxable_incentive_income_less_deductions, i) -= total_sales_tax;
+			if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
 			
-			cf.at(CF_federal_tax_savings, i) = cf.at(CF_itc_fed_amt,i) + cf.at(CF_itc_fed_per,i) + cf.at(CF_ptc_fed,i)
-				- federal_tax_rate*cf.at(CF_federal_total_taxable_incentive_income_less_deductions,i);
+			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+				cf.at(CF_fed_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
+			cf.at(CF_fed_taxable_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
+				+ cf.at(CF_deductible_expenses,i)
+				- cf.at(CF_fed_depreciation,i)
+				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 )
+				+ cf.at(CF_sta_tax_savings, i);
+
+			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
+
+			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
+			
+			cf.at(CF_fed_tax_savings, i) = cf.at(CF_itc_fed_amt,i) + cf.at(CF_itc_fed_per,i) + cf.at(CF_ptc_fed,i)
+				- federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
+
+			
+			// ************************************************
+			// combined tax savings and cost/cash flows
 				
-			cf.at(CF_state_and_federal_tax_savings,i) = cf.at(CF_state_tax_savings, i)+cf.at(CF_federal_tax_savings, i);
+			cf.at(CF_sta_and_fed_tax_savings,i) = cf.at(CF_sta_tax_savings, i)+cf.at(CF_fed_tax_savings, i);
 
 			cf.at(CF_after_tax_net_equity_cost_flow, i) =
-				- cf.at(CF_operating_expenses_total, i)
+				+ cf.at(CF_deductible_expenses, i)
 				- cf.at(CF_debt_payment_total, i)
 				+ cf.at(CF_pbi_total, i)
-				+ cf.at(CF_state_and_federal_tax_savings,i);
+				+ cf.at(CF_sta_and_fed_tax_savings,i);
 
 			cf.at(CF_after_tax_cash_flow,i) = 
 				cf.at(CF_after_tax_net_equity_cost_flow, i)
-				+ (1.0 - effective_tax_rate)*cf.at(CF_energy_value, i);
+				+ (is_commercial?(1.0 - effective_tax_rate):1.0)*cf.at(CF_energy_value, i);
 	
 			cf.at(CF_payback_with_expenses,i) =
 				cf.at(CF_after_tax_cash_flow,i)
@@ -447,30 +516,98 @@ public:
 				+ cf.at(CF_after_tax_cash_flow,i)
 				+ cf.at(CF_debt_payment_interest,i) * (1.0 - effective_tax_rate)
 				+ cf.at(CF_debt_payment_principal,i)
-				+ cf.at(CF_operating_expenses_total,i)
-				- cf.at(CF_operating_expenses_total,i) * effective_tax_rate;
+				- cf.at(CF_deductible_expenses,i)
+				+ cf.at(CF_deductible_expenses,i) * effective_tax_rate;
 
 			cf.at(CF_cumulative_payback_without_expenses,i) =
 				+ cf.at(CF_cumulative_payback_without_expenses,i-1)
 				+ cf.at(CF_payback_without_expenses,i);	
 		}
-
-		double net_present_value = npv( CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate );
-
+		
 		double x = npv( CF_energy_net, nyears, real_discount_rate );
 		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + net_present_value ) * 100 / x;
+		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / x;
 
 		x = npv( CF_energy_net, nyears, nom_discount_rate );
 		if (x == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + net_present_value ) * 100 / x;
+		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / x;
 
-		net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
+		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
 
 		double payback = compute_payback( CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears );
+
+		// save outputs
+		assign( "payback", var_data((ssc_number_t)payback) );
+		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
+		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
+		assign( "npv",  var_data((ssc_number_t)net_present_value) );
+		assign( "credit_basis_fed", var_data((ssc_number_t)federal_credit_basis ));
+		assign( "credit_basis_sta", var_data((ssc_number_t)state_credit_basis ));
+		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
+		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
+		
+
+		save_cf( CF_energy_net, nyears, "cf_energy_net" );
+		save_cf( CF_energy_value, nyears, "cf_energy_value" );
+		
+		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
+		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
+		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
+		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
+		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
+		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
+		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
+
+		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");
+		
+		save_cf( CF_debt_balance, nyears, "cf_debt_balance" );
+		save_cf( CF_debt_payment_interest, nyears, "cf_debt_payment_interest" );
+		save_cf( CF_debt_payment_principal, nyears, "cf_debt_payment_principal" );
+		save_cf( CF_debt_payment_total, nyears, "cf_debt_payment_total" );
+	
+		save_cf( CF_ibi_total, nyears, "cf_ibi_total" );
+		save_cf( CF_cbi_total, nyears, "cf_cbi_total" );
+		save_cf( CF_pbi_total, nyears, "cf_pbi_total" );
+	
+		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
+		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
+
+		save_cf( CF_itc_fed_total, nyears, "cf_itc_fed_total" );
+		save_cf( CF_itc_sta_total, nyears, "cf_itc_sta_total" );
+	
+		save_cf( CF_sta_depr_sched, nyears, "cf_sta_depr_sched" );
+		save_cf( CF_sta_depreciation, nyears, "cf_sta_depreciation" );
+		save_cf( CF_sta_incentive_income_less_deductions, nyears, "cf_sta_incentive_income_less_deductions" );
+		save_cf( CF_sta_taxable_income_less_deductions, nyears, "cf_sta_taxable_income_less_deductions" );
+		save_cf( CF_sta_tax_savings, nyears, "cf_sta_tax_savings" );
+	
+		save_cf( CF_fed_depr_sched, nyears, "cf_fed_depr_sched" );
+		save_cf( CF_fed_depreciation, nyears, "cf_fed_depreciation" );
+		save_cf( CF_fed_incentive_income_less_deductions, nyears, "cf_fed_incentive_income_less_deductions" );
+		save_cf( CF_fed_taxable_income_less_deductions, nyears, "cf_fed_taxable_income_less_deductions" );
+		save_cf( CF_fed_tax_savings, nyears, "cf_fed_tax_savings" );
+
+		save_cf( CF_sta_and_fed_tax_savings, nyears, "cf_sta_and_fed_tax_savings" );
+		save_cf( CF_after_tax_net_equity_cost_flow, nyears, "cf_after_tax_net_equity_cost_flow" );
+		save_cf( CF_after_tax_cash_flow, nyears, "cf_after_tax_cash_flow" );
+
+		save_cf( CF_payback_with_expenses, nyears, "cf_payback_with_expenses" );
+		save_cf( CF_cumulative_payback_with_expenses, nyears, "cf_cumulative_payback_with_expenses" );
+	
+		save_cf( CF_payback_without_expenses, nyears, "cf_payback_without_expenses" );
+		save_cf( CF_cumulative_payback_without_expenses, nyears, "cf_cumulative_payback_without_expenses" );
+
 	}
 
 /* These functions can be placed in common financial library with matrix and constants passed? */
+
+	void save_cf(int cf_line, int nyears, const std::string &name)
+	{
+		ssc_number_t *arrp = allocate( name, nyears+1 );
+		for (int i=0;i<=nyears;i++)
+			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
+	}
+
 	double compute_payback( int cf_cpb, int cf_pb, int nyears )
 	{	
 		double dPayback = 1e99; // report as > analysis period
@@ -675,7 +812,7 @@ public:
 			if (count == 1)
 			{
 				for (int i=0;i<nyears;i++)
-					cf.at(cf_line, i+1) = arrp[0]*scale*pow( 1+escal, i );
+					cf.at(cf_line, i+1) = arrp[0]*scale*pow( 1+escal+inflation_rate, i );
 			}
 			else
 			{

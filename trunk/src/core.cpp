@@ -568,6 +568,12 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 			if ( ((ssc_number_t)((int)dat.num)) != dat.num )
 				fail_constraint("number could not be interpreted as an integer: " + util::to_string( (double) dat.num ));
 		}
+		else if (expr == "positive")
+		{
+			if (dat.type != SSC_NUMBER) throw constraint_error(name, "cannot test for positive with non-numeric type", expr);
+			if (dat.num <= 0.0)
+				fail_constraint( util::to_string( (double)dat.num ) );
+		}
 		else if (expr == "ts_m")
 		{
 			if (dat.type != SSC_NUMBER)
@@ -604,12 +610,6 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 				double maxval = 0;
 				if (!util::to_double( rhs, &maxval )) throw constraint_error(name, "test for max requires a numeric value", expr);
 				if (dat.num > (ssc_number_t)maxval )
-					fail_constraint( util::to_string( (double)dat.num ) );
-			}
-			else if (test == "positive")
-			{
-				if (dat.type != SSC_NUMBER) throw constraint_error(name, "cannot test for positive with non-numeric type", expr);
-				if (dat.num <= 0.0)
 					fail_constraint( util::to_string( (double)dat.num ) );
 			}
 			else if (test == "length")
