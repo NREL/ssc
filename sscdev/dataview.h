@@ -31,6 +31,7 @@ public:
 
 	wxString GetSelection();
 
+	void AddVariable();
 	void EditVariable(wxString name=wxEmptyString);
 	void DeleteVariable(wxString name=wxEmptyString);
 	void ShowStats( wxString name=wxEmptyString );

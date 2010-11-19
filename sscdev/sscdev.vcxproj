@@ -155,14 +155,17 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="automation.cpp" />
     <ClCompile Include="cmform.cpp" />
     <ClCompile Include="dataview.cpp" />
     <ClCompile Include="dllinvoke.cpp" />
     <ClCompile Include="editvariableform.cpp" />
+    <ClCompile Include="invoke.cpp" />
     <ClCompile Include="sscdev.cpp" />
     <ClCompile Include="statform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="automation.h" />
     <ClInclude Include="cmform.h" />
     <ClInclude Include="dataview.h" />
     <ClInclude Include="dllinvoke.h" />

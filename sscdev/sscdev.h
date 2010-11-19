@@ -11,6 +11,7 @@ class DataView;
 
 class SCFrame;
 class SCDocWin;
+class AutomationForm;
 
 extern SCFrame *app_frame;
 extern wxArrayString app_args;
@@ -86,7 +87,7 @@ class SCFrame : public wxFrame
 public:
 	SCFrame();
 	virtual ~SCFrame();
-	
+		
 	bool Load(const wxString &fn);
 	bool WriteToDisk(const wxString &fn);
 	bool CloseDocument();
@@ -96,7 +97,8 @@ public:
 	void Exit();
 	
 	void Start();
-	void Log(const wxString &);
+	void ClearLog();
+	void Log(const wxString &, bool wnl=true);
 	
 
 	void AddRecent(const wxString &fn);
@@ -108,6 +110,12 @@ public:
 	static void Copy( var_table *vt,  ssc_data_t p_data, bool clear_first );
 
 	void Progress(const wxString &text, float percent);
+
+	wxString LastFileName() { return m_lastFile; }
+
+	DataView *GetDataView() { return m_dataView; }
+	var_table *GetVarTable() { return m_varTable; }
+
 private:	
 	void UpdateUI();
 
@@ -130,7 +138,8 @@ private:
 	wxGauge *m_gauProgress;
 
 	DataView *m_dataView;
-	
+	AutomationForm *m_automForm;
+
 	Array<cmModule> m_cmList;
 	var_table *m_varTable;
 

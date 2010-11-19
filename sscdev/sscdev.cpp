@@ -39,6 +39,7 @@
 #include <cml/pixmaps/stock_text_indent_16.xpm>
 #include <cml/pixmaps/stock_preferences_16.xpm>
 #include <cml/pixmaps/stock_convert_16.xpm>
+#include <cml/pixmaps/stock_convert_24.xpm>
 #include <cml/pixmaps/stock_exec_24.xpm>
 #include <cml/pixmaps/stock_help_16.xpm>
 #include <cml/pixmaps/stock_redo_24.xpm>
@@ -57,6 +58,7 @@
 #include "sscdev.h"
 #include "dataview.h"
 #include "cmform.h"
+#include "automation.h"
 #include "splash.xpm"
 
 /* exported application global variables */
@@ -342,6 +344,7 @@ enum{   ID_START, ID_STOP, ID_SHOW_STATS,
 		ID_DLL_PATH,
 		ID_CHOOSE_DLL,
 		ID_OUTPUT,
+		ID_ADD_VARIABLE,
 					
 		// up to 100 recent items can be accommodated
 		ID_RECENT = 500,
@@ -349,6 +352,7 @@ enum{   ID_START, ID_STOP, ID_SHOW_STATS,
 };
 
 BEGIN_EVENT_TABLE(SCFrame, wxFrame)
+	EVT_TOOL( ID_ADD_VARIABLE,             SCFrame::OnCommand )
 
 	EVT_TOOL( wxID_OPEN,                   SCFrame::OnCommand )
 	EVT_TOOL( wxID_SAVE,                   SCFrame::OnCommand )
@@ -428,8 +432,16 @@ SCFrame::SCFrame()
 	wxSplitterWindow *split_win = new wxSplitterWindow( this, wxID_ANY,
 		wxPoint(0,0), wxSize(800,700), wxSP_LIVE_UPDATE|wxBORDER_NONE );
 
-	m_dataView = new DataView(split_win);
+	wxAuiNotebook *nb = new wxAuiNotebook( split_win, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+		wxAUI_NB_TOP | wxAUI_NB_TAB_SPLIT | wxAUI_NB_TAB_MOVE | wxAUI_NB_SCROLL_BUTTONS);
+
+	m_dataView = new DataView(nb);
 	m_dataView->SetDataObject( m_varTable );
+
+	m_automForm = new AutomationForm(nb);
+
+	nb->AddPage( m_dataView, "Variables & Output", true, wxBitmap(stock_preferences_24_xpm) );
+	nb->AddPage( m_automForm, "Automation & Control", false,  wxBitmap(stock_convert_24_xpm) );
 
 	
 	m_txtOutput = new wxTextCtrl(split_win, ID_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize,
@@ -438,7 +450,7 @@ SCFrame::SCFrame()
 	m_txtOutput->SetForegroundColour( *wxBLUE );
 	
 
-	split_win->SplitHorizontally( m_dataView, m_txtOutput, -180 );
+	split_win->SplitHorizontally( nb, m_txtOutput, -180 );
 	split_win->SetSashGravity( 1 );
 
 
@@ -486,14 +498,15 @@ SCFrame::SCFrame()
 
 	
 
-	wxAcceleratorEntry entries[6];
+	wxAcceleratorEntry entries[7];
 	entries[0].Set( wxACCEL_NORMAL, WXK_F1, ID_LOAD_UNLOAD_DLL );
 	entries[1].Set( wxACCEL_CTRL,   's',  wxID_SAVE );
 	entries[2].Set( wxACCEL_CTRL,   'o',  wxID_OPEN );
 	entries[3].Set( wxACCEL_NORMAL, WXK_F2, wxID_PREFERENCES );
 	entries[4].Set( wxACCEL_NORMAL, WXK_F3, ID_SHOW_STATS );
-	entries[5].Set( wxACCEL_NORMAL, WXK_F5, ID_START );
-	SetAcceleratorTable( wxAcceleratorTable(6,entries) );
+	entries[5].Set( wxACCEL_NORMAL, WXK_F4, ID_ADD_VARIABLE );
+	entries[6].Set( wxACCEL_NORMAL, WXK_F5, ID_START );
+	SetAcceleratorTable( wxAcceleratorTable(7,entries) );
 	
 
 
@@ -777,7 +790,7 @@ void SCFrame::SaveAs()
 
 bool SCFrame::CloseDocument()
 {
-	return true;
+	return (m_automForm->CloseEditors());
 }
 
 void SCFrame::Exit()
@@ -790,7 +803,11 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 
 	switch(evt.GetId())
 	{
-	case ID_START:
+	case ID_ADD_VARIABLE:
+		m_dataView->AddVariable();
+		break;
+	case ID_START:		
+		m_txtOutput->Clear();
 		Start();
 		break;
 	case wxID_OPEN:
@@ -985,9 +1002,15 @@ bool SCFrame::WriteToDisk(const wxString &fn)
 	return true;
 }
 
-void SCFrame::Log(const wxString &text)
+void SCFrame::Log(const wxString &text, bool wnl)
 {
-	m_txtOutput->AppendText(text + "\n");
+	if (wnl) m_txtOutput->AppendText(text + "\n");
+	else m_txtOutput->AppendText(text);
+}
+
+void SCFrame::ClearLog()
+{
+	m_txtOutput->Clear();
 }
 
 void SCFrame::Progress(const wxString &text, float percent)
@@ -1132,7 +1155,6 @@ void SCFrame::Start()
 	m_txtProgress->Show();
 	m_gauProgress->SetValue(0);
 	m_gauProgress->Show();
-	m_txtOutput->Clear();
 
 	wxGetApp().Yield(true);
 

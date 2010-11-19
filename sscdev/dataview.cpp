@@ -446,24 +446,7 @@ void DataView::OnCommand(wxCommandEvent &evt)
 		}
 		break;	
 	case ID_ADD_VARIABLE:
-		{
-			wxString name = wxGetTextFromUser("Enter variable name:");
-			if (name.IsEmpty()) return;
-			
-			if (m_vt)
-			{
-				if (m_vt->lookup( (const char*)name.c_str() ))
-					if (wxNO==wxMessageBox("That var exists. overwrite with a new one?", "Q", wxYES_NO))
-						return;
-
-				m_vt->assign( (const char*)name.c_str(), var_data( (ssc_number_t)0.0 ) );
-				if (m_selections.Index( name ) == wxNOT_FOUND)
-					m_selections.Add( name );
-				UpdateView();
-
-				EditVariable( name );
-			}
-		}
+		AddVariable();
 		break;
 	case ID_EDIT_VARIABLE:
 		EditVariable();
@@ -504,6 +487,26 @@ void DataView::OnVarListCheck(wxCommandEvent &evt)
 	}
 
 	UpdateGrid();
+}
+
+void DataView::AddVariable()
+{	
+	wxString name = wxGetTextFromUser("Enter variable name:");
+	if (name.IsEmpty()) return;
+			
+	if (m_vt)
+	{
+		if (m_vt->lookup( (const char*)name.c_str() ))
+			if (wxNO==wxMessageBox("That var exists. overwrite with a new one?", "Q", wxYES_NO))
+				return;
+
+		m_vt->assign( (const char*)name.c_str(), var_data( (ssc_number_t)0.0 ) );
+		if (m_selections.Index( name ) == wxNOT_FOUND)
+			m_selections.Add( name );
+		UpdateView();
+
+		EditVariable( name );
+	}
 }
 
 void DataView::OnVarListDClick(wxCommandEvent &evt)
