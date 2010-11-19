@@ -119,6 +119,13 @@ DECL_INVOKEFCN( ssc_get )
 	return true;
 }
 
+DECL_INVOKEFCN( ssc_clear )
+{
+	app_frame->GetVarTable()->clear();
+	app_frame->GetDataView()->UpdateView();
+	return true;
+}
+
 DECL_INVOKEFCN( ssc_save_state )
 {
 	wxString fn;
@@ -138,6 +145,7 @@ DECL_INVOKEFCN( ssc_load_state )
 void AppendSSCInvokeFunctions(SLInvokeTable *tab)
 {
 	tab->Add( ssc_start, "ssc_start", 0, "Start SSC simulation", "(NONE):NONE" );
+	tab->Add( ssc_clear, "ssc_clear", 0, "Clears all variables", "(NONE):NONE" );
 	tab->Add( ssc_set, "ssc_set", 2, "Set variable value", "(STRING:name, VARIANT:value):NONE");
 	tab->Add( ssc_get, "ssc_get", 1, "Get variable value", "(STRING:name):VARIANT");
 	tab->Add( ssc_save_state, "ssc_save_state", 1, "Save current variable state", "(STRING:file):BOOLEAN");
