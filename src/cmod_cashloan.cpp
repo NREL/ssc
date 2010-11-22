@@ -11,22 +11,59 @@ static var_info vtab_cashloan[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_net",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
 
-	/* standard financial outputs */
+	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback",                            "years",        "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
+			
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M Capacity-based expense",         "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M Fuel expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
 
-	/* intermediate outputs for validation */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "adj_installed_cost",       "Adjusted installed costs",           "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_basis_fed",           "Federal depreciable basis",          "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_basis_sta",           "State depreciable basis",            "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "credit_basis_fed",         "Federal ITC basis",                  "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "credit_basis_sta",         "State ITC basis",                    "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "discount_nominal",         "Nominal discount rate",              "%",            "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sales_tax_deduction",      "Sales tax deduction",                "$",            "",                      "Cashloan",      "market=1",                "",                                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+		
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_balance",          "Debt balance",                       "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_interest", "Interest payment",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_principal","Principal payment",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_total",    "Total P&I debt payment",             "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
 	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ibi_total",             "Total IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cbi_total",             "Total CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_fed_total",         "Federal ITC income",                 "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_sta_total",         "State ITC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depr_sched",                        "State depreciation schedule",              "%",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depreciation",                      "State depreciation",                       "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_incentive_income_less_deductions",  "State incentive income less deductions",   "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_taxable_income_less_deductions",    "State taxable income less deductions",     "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_tax_savings",                       "State tax savings",                        "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depr_sched",                        "Federal depreciation schedule",            "%",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depreciation",                      "Federal depreciation",                     "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_incentive_income_less_deductions",  "Federal incentive income less deductions", "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_taxable_income_less_deductions",    "Federal taxable income less deductions",   "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_tax_savings",                       "Federal tax savings",                      "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_and_fed_tax_savings",               "Total tax savings (Federal & State)",      "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "After tax net equity cost flow",           "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After tax cash flow",                      "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative payback with expenses",         "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_without_expenses",              "Payback without expenses",                 "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_without_expenses",   "Cumulative payback without expenses",      "$",            "",                      "Cashloan",      "*",                     "LENGTH=analysis_years",                "" },
+	
 var_info_invalid };
 
 extern var_info
@@ -129,7 +166,6 @@ public:
 		add_var_info( vtab_standard_loan );
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_depreciation );
-		//add_var_info( vtab_utility_rate );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
 				
@@ -507,7 +543,7 @@ public:
 			cf.at(CF_sta_and_fed_tax_savings,i) = cf.at(CF_sta_tax_savings, i)+cf.at(CF_fed_tax_savings, i);
 
 			cf.at(CF_after_tax_net_equity_cost_flow, i) =
-				+ cf.at(CF_deductible_expenses, i)
+				+ (is_commercial ? cf.at(CF_deductible_expenses, i) : -cf.at(CF_operating_expenses,i) )
 				- cf.at(CF_debt_payment_total, i)
 				+ cf.at(CF_pbi_total, i)
 				+ cf.at(CF_sta_and_fed_tax_savings,i);
@@ -554,6 +590,8 @@ public:
 		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
+
+		/*
 		assign( "credit_basis_fed", var_data((ssc_number_t)federal_credit_basis ));
 		assign( "credit_basis_sta", var_data((ssc_number_t)state_credit_basis ));
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
@@ -561,9 +599,10 @@ public:
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
 		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
 		assign( "adj_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
-
+		
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
+		*/
 		
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );

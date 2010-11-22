@@ -624,10 +624,19 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 			else if (test == "length_equal")
 			{
 				if (dat.type != SSC_ARRAY) throw constraint_error(name, "cannot test for length_equal with non-array type", expr);
-				var_data *other_array = lookup( rhs );
-				if (!other_array || other_array->type != SSC_ARRAY) throw constraint_error(name, "length_equal cannot find array variable to test against", expr);
-				if (dat.num.length() != other_array->num.length())
-					fail_constraint( util::to_string( (int) other_array->num.length() ) );
+				var_data *other = lookup( rhs );
+				if (!other) throw constraint_error(name, "length_equal cannot find variable to test against", expr);
+				if (other->type == SSC_ARRAY)
+				{
+					if (dat.num.length() != other->num.length())
+						fail_constraint( util::to_string( (int) other->num.length() ) );
+				}
+				else if (other->type == SSC_NUMBER)
+				{
+					if (dat.num.length() != (size_t)(ssc_number_t)other->num)
+						fail_constraint( util::to_string( (int) other->num ) );
+				}
+				else throw constraint_error(name, "length_equal must specify a number or array variable to test against", expr);
 			}
 			else if (test == "length_multiple_of")
 			{
