@@ -25,7 +25,7 @@ OBJECTS = \
 	sscapi.o \
 	vtab_common.o
 
-TARGET = ssc32.dylib
+TARGET = ssc.dylib
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) -dynamiclib -flat_namespace -o $@ $^
