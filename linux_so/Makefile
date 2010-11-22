@@ -25,7 +25,7 @@ OBJECTS = \
 	sscapi.o \
 	vtab_common.o
 
-TARGET = ssc32.so
+TARGET = ssc.so
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS)
