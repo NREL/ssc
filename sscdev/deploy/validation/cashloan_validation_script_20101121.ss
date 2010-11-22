@@ -9,28 +9,30 @@ ssc_set("energy_net", energy_net)
 ssc_set("federal_tax_rate", 35.0)
 ssc_set("state_tax_rate", 8.0)
 ssc_set("real_discount_rate", 11.0)
-ssc_set("insurance_rate", 0.5)
+ssc_set("insurance_rate", 0.5) 
 ssc_set("property_tax_rate", 2.0)
 ssc_set("sales_tax_rate", 3.2)
 ssc_set("inflation_rate", 3)
 ssc_set("system_capacity", 250)
 'ssc_set("total_cost", 937394.51)
-ssc_set("total_hard_cost", 865100)
+ssc_set("total_hard_cost", 1038120)
 ssc_set("total_soft_cost", 71500)
-ssc_set("percent_of_cost_subject_sales_tax", 2.87)
+ssc_set("percent_of_cost_subject_sales_tax", 90)
 ssc_set("salvage_percentage", 50)
 
+ssc_set("market", 0) '0=residential, 1=commercial
+ssc_set("mortgage", 0) ' boolean
 
-ssc_set("loan_term", 15)
-ssc_set("loan_rate", 8)
-ssc_set("loan_debt", 60)
+ssc_set("loan_term", 30)
+ssc_set("loan_rate", 4.95)
+ssc_set("loan_debt", 80)
 ssc_set("itc_fed_percent", array(30))
 
 ssc_set("depr_fed_type", 1) ' half year convention
 ssc_set("depr_sta_type", 1) ' half year convention
 
-ssc_set("om_fixed", array(3500))
-ssc_set("om_capacity", array(20))
+ssc_set("om_fixed", array(5500))
+ssc_set("om_capacity", array(50))
 
 
 ssc_set("itc_sta_percent", array(10,10,10,5))

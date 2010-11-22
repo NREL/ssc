@@ -108,6 +108,7 @@ CMForm::CMForm(wxWindow *parent, int id)
 	Label1->SetColour(wxColour(0, 0, 0));
 	Label1->SetRelativeSize(0);
 /*user.constructor.start*/
+	grdCMVars->EnableDragColSize();
 	LoadCMs();
 	UpdateForm();
 /*user.constructor.end*/
