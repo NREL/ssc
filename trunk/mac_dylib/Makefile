@@ -7,20 +7,25 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
 
 OBJECTS = \
+	cmod_cashloan.o \
 	cmod_easywatts.o \
+	cmod_levpartflip.o \
 	cmod_pvwatts.o \
 	cmod_stdhrlywf.o \
 	cmod_timeseq.o \
+	cmod_utilityrate.o \
 	cmod_windwatts.o \
 	core.o \
+	lib_financial.o \
 	lib_pvwatts.o \
 	lib_util.o \
 	lib_vartab.o \
 	lib_wfhrly.o \
 	lib_windwatts.o \
-	sscapi.o
+	sscapi.o \
+	vtab_common.o
 
-TARGET = ssc32.so.dylib
+TARGET = ssc32.dylib
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) -dynamiclib -flat_namespace -o $@ $^
