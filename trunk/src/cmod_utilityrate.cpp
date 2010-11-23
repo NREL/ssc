@@ -4,8 +4,17 @@
 static var_info vtab_utility_rate[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_NUMBER,     "analysis_years",           "Number of years in analysis",     "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "e_sys",                    "Net energy with system",          "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "p_sys",                    "Max power with system",           "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "e_load",                   "Net energy use by load",          "kWh",    "",                      "",             "?",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "p_load",                   "Max power use by load",           "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_buy_eq_sell",           "Force sell rate equal to buy",    "0/1",    "Enforce net metering",  "",             "?=1",                       "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "system_degradation",       "Annual degradation of system",    "%/year", "",                      "",             "?=0",                       "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "load_escalation",          "Annual load escalation",          "%/year", "",                      "",             "?=0",                       "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
+	
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_sell_eq_buy",           "Force sell rate equal to buy",    "0/1",    "Enforce net metering",  "",             "?=1",                       "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
@@ -147,37 +156,6 @@ static var_info vtab_utility_rate[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_sched_m12",          "Tiered Structure for December",   "0-5",    "tiered structure #",    "",             "?=0",                       "INTEGER,MIN=0,MAX=5",           "" },
 	
 var_info_invalid };
-	
-var_info vtab_tax_credits[] = {
-/*   VARTYPE           DATATYPE         NAME                               LABEL                                                UNITS     META                      GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	{ SSC_INPUT,        SSC_ARRAY,       "itc_fed_amount",                 "Federal Amount-based ITC Amount",                         "$",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_amount_deprbas_fed",     "Federal Amount-based ITC Reduces Fed. Depr. Basis",       "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_amount_deprbas_sta",     "Federal Amount-based ITC Reduces Sta. Depr. Basis",       "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
-	
-	{ SSC_INPUT,        SSC_ARRAY,       "itc_sta_amount",                 "State Amount-based ITC Amount",                           "$",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_amount_deprbas_fed",     "State Amount-based ITC Reduces Fed. Depr. Basis",         "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_amount_deprbas_sta",     "State Amount-based ITC Reduces Sta. Depr. Basis",         "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
-	
-	{ SSC_INPUT,        SSC_ARRAY,       "itc_fed_percent",                "Federal Percentage-based ITC Percent",                    "%",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_maxvalue",       "Federal Percentage-based ITC Max. Value",                 "$",      "",          "Tax Credit Incentives",      "?=1e99",                    "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_deprbas_fed",    "Federal Percentage-based ITC Reduces Fed. Depr. Basis",   "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_deprbas_sta",    "Federal Percentage-based ITC Reduces Sta. Depr. Basis",   "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
-
-	{ SSC_INPUT,        SSC_ARRAY,       "itc_sta_percent",                "State Percentage-based ITC Percent",                      "%",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_maxvalue",       "State Percentage-based ITC Max. Value",                   "$",      "",          "Tax Credit Incentives",      "?=1e99",                    "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_deprbas_fed",    "State Percentage-based ITC Reduces Fed. Depr. Basis",     "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_deprbas_sta",    "State Percentage-based ITC Reduces Sta. Depr. Basis",     "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
-
-	{ SSC_INPUT,        SSC_ARRAY,       "ptc_fed_amount",                 "Federal PTC Amount",                                      "$/kWh",  "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_fed_term",                   "Federal PTC Term",                                        "years",  "",          "Tax Credit Incentives",      "?=10",                      "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_fed_escal",                  "Federal PTC Escalation",                                  "%/year", "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	
-	{ SSC_INPUT,        SSC_ARRAY,       "ptc_sta_amount",                 "State PTC Amount",                                        "$/kWh",  "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_sta_term",                   "State PTC Term",                                          "years",  "",          "Tax Credit Incentives",      "?=10",                      "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_sta_escal",                  "State PTC Escalation",                                    "%/year", "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	
-var_info_invalid };
 
 class cm_utilityrate : public compute_module
 {
@@ -190,7 +168,109 @@ public:
 
 	void exec( ) throw( general_error )
 	{
+		ssc_number_t *parr = 0;
+		size_t count, i, j;
+
+		size_t nyears = (size_t)as_integer("analysis_years");
+
+		std::vector<ssc_number_t> load_scale(nyears), rate_scale(nyears), sys_scale(nyears);
+		for (i=0;i<nyears;i++)
+			sys_scale[i] = load_scale[i] = rate_scale[i] = 1.0f; // need to be initialized to escalation or degradation schedules
+				
+		std::vector<ssc_number_t> e_sys(8760), p_sys(8760), 
+			e_load(8760), p_load(8760),
+			e_grid(8760), p_grid(8760),
+			e_load_cy(8760), p_load_cy(8760); // current year load (accounts for escal)
+		
+		parr = as_array("e_sys", &count);
+		for (i=0;i<8760;i++)
+		{
+			e_sys[i] = p_sys[i] = parr[i];  // by default p_sys = e_sys
+			e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0f;
+		}
+
+		if (is_assigned("p_sys"))
+		{
+			parr = as_array("p_sys", &count);
+			if (count != 8760) throw general_error("p_sys must have 8760 values");
+			for (i=0;i<8760;i++)
+				p_sys[i] = parr[i];
+		}
+
+		if (is_assigned("e_load"))
+		{
+			parr = as_array("e_load", &count);
+			if (count != 8760) throw general_error("e_load must have 8760 values");
+			for (i=0;i<8760;i++)
+				e_load[i] = parr[i];
+		}
+
+		if (is_assigned("p_load"))
+		{
+			parr = as_array("p_load", &count);
+			if (count != 8760) throw general_error("p_load must have 8760 values");
+			for (i=0;i<8760;i++)
+				p_load[i] = parr[i];
+		}
+		
+		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
+			payment(8760), income(8760), price(8760);
+		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
+			monthly_fixed_charges(12),
+			monthly_dc_fixed(12), monthly_dc_tou(12),
+			monthly_tr_charges(12), monthly_tr_rates(12);
+
+		for (i=0;i<nyears;i++)
+		{
+			for (j=0;j<8760;j++)
+			{
+				// apply load escalation appropriate for current year
+				e_load_cy[j] = e_load[j] * load_scale[i];
+				p_load_cy[j] = p_load[j] * load_scale[i];
+
+				// calculate e_grid value (e_sys + e_load)
+				// note: load is assumed to have negative sign
+
+				e_grid[j] = e_sys[j] + e_load_cy[j];
+				p_grid[j] = p_sys[j] + p_load_cy[j];
+			}
+
+			ur_calc( &e_grid[0], &p_grid[0],
+				&revenue_w_sys[0], &payment[0], &income[0], &price[0],
+				&monthly_revenue_w_sys[0], &monthly_fixed_charges[0],
+				&monthly_dc_fixed[0], &monthly_dc_tou[0],
+				&monthly_tr_charges[0], &monthly_tr_rates[0] );
+			
+		}
+
+
+
+
+
 	}
+
+	void ur_calc( ssc_number_t e_in[8760], ssc_number_t p_in[8760],
+
+		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], ssc_number_t price[8760],
+		ssc_number_t monthly_revenue[12], ssc_number_t monthly_fixed_charges[12],
+		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
+		ssc_number_t monthly_tr_charges[12], ssc_number_t monthly_tr_rates[12] ) throw(general_error)
+	{
+		int i;
+
+		for (i=0;i<8760;i++)
+			revenue[i] = payment[i] = income[i] = price[i] = 0.0;
+
+		for (i=0;i<12;i++)
+		{
+			monthly_revenue[i] = monthly_fixed_charges[i] 
+				= monthly_dc_fixed[i] = monthly_dc_tou[i] 
+				= monthly_tr_charges[i] = monthly_tr_rates[i] = 0.0;
+		}
+
+
+	}
+
 };
 
 DEFINE_MODULE_ENTRY( utilityrate, "Complex utility rate structure calculator_", 1 );

@@ -56,8 +56,39 @@ var_info vtab_depreciation[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "depr_sta_custom",              "State Custom Depreciation",           "%/year", "",                                        "Depreciation",      "depr_sta_type=3",         "",                           "" },
 
 var_info_invalid };
-
 	
+var_info vtab_tax_credits[] = {
+/*   VARTYPE           DATATYPE         NAME                               LABEL                                                UNITS     META                      GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+	{ SSC_INPUT,        SSC_ARRAY,       "itc_fed_amount",                 "Federal Amount-based ITC Amount",                         "$",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_amount_deprbas_fed",     "Federal Amount-based ITC Reduces Fed. Depr. Basis",       "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_amount_deprbas_sta",     "Federal Amount-based ITC Reduces Sta. Depr. Basis",       "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
+	
+	{ SSC_INPUT,        SSC_ARRAY,       "itc_sta_amount",                 "State Amount-based ITC Amount",                           "$",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_amount_deprbas_fed",     "State Amount-based ITC Reduces Fed. Depr. Basis",         "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_amount_deprbas_sta",     "State Amount-based ITC Reduces Sta. Depr. Basis",         "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
+	
+	{ SSC_INPUT,        SSC_ARRAY,       "itc_fed_percent",                "Federal Percentage-based ITC Percent",                    "%",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_maxvalue",       "Federal Percentage-based ITC Max. Value",                 "$",      "",          "Tax Credit Incentives",      "?=1e99",                    "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_deprbas_fed",    "Federal Percentage-based ITC Reduces Fed. Depr. Basis",   "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_deprbas_sta",    "Federal Percentage-based ITC Reduces Sta. Depr. Basis",   "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
+
+	{ SSC_INPUT,        SSC_ARRAY,       "itc_sta_percent",                "State Percentage-based ITC Percent",                      "%",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_maxvalue",       "State Percentage-based ITC Max. Value",                   "$",      "",          "Tax Credit Incentives",      "?=1e99",                    "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_deprbas_fed",    "State Percentage-based ITC Reduces Fed. Depr. Basis",     "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_deprbas_sta",    "State Percentage-based ITC Reduces Sta. Depr. Basis",     "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
+
+	{ SSC_INPUT,        SSC_ARRAY,       "ptc_fed_amount",                 "Federal PTC Amount",                                      "$/kWh",  "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ptc_fed_term",                   "Federal PTC Term",                                        "years",  "",          "Tax Credit Incentives",      "?=10",                      "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ptc_fed_escal",                  "Federal PTC Escalation",                                  "%/year", "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	
+	{ SSC_INPUT,        SSC_ARRAY,       "ptc_sta_amount",                 "State PTC Amount",                                        "$/kWh",  "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ptc_sta_term",                   "State PTC Term",                                          "years",  "",          "Tax Credit Incentives",      "?=10",                      "",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ptc_sta_escal",                  "State PTC Escalation",                                    "%/year", "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
+	
+var_info_invalid };
+
+
 var_info vtab_payment_incentives[] = {
 	/*   VARTYPE           DATATYPE         NAME                          LABEL                                                  UNITS     META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
