@@ -173,10 +173,51 @@ public:
 
 		size_t nyears = (size_t)as_integer("analysis_years");
 
-		std::vector<ssc_number_t> load_scale(nyears), rate_scale(nyears), sys_scale(nyears);
-		for (i=0;i<nyears;i++)
-			sys_scale[i] = load_scale[i] = rate_scale[i] = 1.0f; // need to be initialized to escalation or degradation schedules
-				
+		// compute annual system output degradation multipliers
+		std::vector<ssc_number_t> sys_scale(nyears);
+		parr = as_array("system_degradation", &count);
+		if (count == 1)
+		{
+			for (i=0;i<nyears;i++)
+				sys_scale[i] = (ssc_number_t) pow( (double)(1-parr[0]*0.01), (double)i );
+		}
+		else
+		{
+			for (i=0;i<nyears && i<count;i++)
+				sys_scale[i] = (ssc_number_t)(1.0 - parr[i]*0.01);
+		}
+
+		// compute load (electric demand) annual escalation multipliers
+		std::vector<ssc_number_t> load_scale(nyears);
+		parr = as_array("load_escalation", &count);
+		if (count == 1)
+		{
+			// TODO: add in inflation rate
+			for (i=0;i<nyears;i++)
+				load_scale[i] = (ssc_number_t)pow( (double)(/*inflation_rate+*/1+parr[0]*0.01), (double)i );
+		}
+		else
+		{
+			for (i=0;i<nyears;i++)
+				load_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
+		}
+
+		// compute utility rate out-years escalation multipliers
+		std::vector<ssc_number_t> rate_scale(nyears);
+		parr = as_array("rate_escalation", &count);
+		if (count == 1)
+		{
+			for (i=0;i<nyears;i++)
+				rate_scale[i] = (ssc_number_t)pow( (double)(/*inflation_rate+*/1+parr[0]*0.01), (double)i );
+		}
+		else
+		{
+			for (i=0;i<nyears;i++)
+				rate_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
+		}
+
+
+		// prepare 8760 arrays for load and grid values
 		std::vector<ssc_number_t> e_sys(8760), p_sys(8760), 
 			e_load(8760), p_load(8760),
 			e_grid(8760), p_grid(8760),
@@ -212,13 +253,71 @@ public:
 			for (i=0;i<8760;i++)
 				p_load[i] = parr[i];
 		}
-		
+
+		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
 			payment(8760), income(8760), price(8760);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12),
 			monthly_dc_fixed(12), monthly_dc_tou(12),
 			monthly_tr_charges(12), monthly_tr_rates(12);
+
+		/* allocate outputs */		
+		ssc_number_t *annual_net_revenue = allocate("energy_value", nyears);
+		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears);
+		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears);
+
+		ssc_number_t *ch_monthly_fixed_jan = allocate("charge_monthly_fixed_jan", nyears );
+		ssc_number_t *ch_monthly_fixed_feb = allocate("charge_monthly_fixed_feb", nyears );
+		ssc_number_t *ch_monthly_fixed_mar = allocate("charge_monthly_fixed_mar", nyears );
+		ssc_number_t *ch_monthly_fixed_apr = allocate("charge_monthly_fixed_apr", nyears );
+		ssc_number_t *ch_monthly_fixed_may = allocate("charge_monthly_fixed_may", nyears );
+		ssc_number_t *ch_monthly_fixed_jun = allocate("charge_monthly_fixed_jun", nyears );
+		ssc_number_t *ch_monthly_fixed_jul = allocate("charge_monthly_fixed_jul", nyears );
+		ssc_number_t *ch_monthly_fixed_aug = allocate("charge_monthly_fixed_aug", nyears );
+		ssc_number_t *ch_monthly_fixed_sep = allocate("charge_monthly_fixed_sep", nyears );
+		ssc_number_t *ch_monthly_fixed_oct = allocate("charge_monthly_fixed_oct", nyears );
+		ssc_number_t *ch_monthly_fixed_nov = allocate("charge_monthly_fixed_nov", nyears );
+		ssc_number_t *ch_monthly_fixed_dec = allocate("charge_monthly_fixed_dec", nyears );
+		
+		ssc_number_t *ch_dc_fixed_jan = allocate("charge_dc_fixed_jan", nyears );
+		ssc_number_t *ch_dc_fixed_feb = allocate("charge_dc_fixed_feb", nyears );
+		ssc_number_t *ch_dc_fixed_mar = allocate("charge_dc_fixed_mar", nyears );
+		ssc_number_t *ch_dc_fixed_apr = allocate("charge_dc_fixed_apr", nyears );
+		ssc_number_t *ch_dc_fixed_may = allocate("charge_dc_fixed_may", nyears );
+		ssc_number_t *ch_dc_fixed_jun = allocate("charge_dc_fixed_jun", nyears );
+		ssc_number_t *ch_dc_fixed_jul = allocate("charge_dc_fixed_jul", nyears );
+		ssc_number_t *ch_dc_fixed_aug = allocate("charge_dc_fixed_aug", nyears );
+		ssc_number_t *ch_dc_fixed_sep = allocate("charge_dc_fixed_sep", nyears );
+		ssc_number_t *ch_dc_fixed_oct = allocate("charge_dc_fixed_oct", nyears );
+		ssc_number_t *ch_dc_fixed_nov = allocate("charge_dc_fixed_nov", nyears );
+		ssc_number_t *ch_dc_fixed_dec = allocate("charge_dc_fixed_dec", nyears );
+		
+		ssc_number_t *ch_dc_tou_jan = allocate("charge_dc_tou_jan", nyears );
+		ssc_number_t *ch_dc_tou_feb = allocate("charge_dc_tou_feb", nyears );
+		ssc_number_t *ch_dc_tou_mar = allocate("charge_dc_tou_mar", nyears );
+		ssc_number_t *ch_dc_tou_apr = allocate("charge_dc_tou_apr", nyears );
+		ssc_number_t *ch_dc_tou_may = allocate("charge_dc_tou_may", nyears );
+		ssc_number_t *ch_dc_tou_jun = allocate("charge_dc_tou_jun", nyears );
+		ssc_number_t *ch_dc_tou_jul = allocate("charge_dc_tou_jul", nyears );
+		ssc_number_t *ch_dc_tou_aug = allocate("charge_dc_tou_aug", nyears );
+		ssc_number_t *ch_dc_tou_sep = allocate("charge_dc_tou_sep", nyears );
+		ssc_number_t *ch_dc_tou_oct = allocate("charge_dc_tou_oct", nyears );
+		ssc_number_t *ch_dc_tou_nov = allocate("charge_dc_tou_nov", nyears );
+		ssc_number_t *ch_dc_tou_dec = allocate("charge_dc_tou_dec", nyears );
+		
+		ssc_number_t *ch_tr_jan = allocate("charge_tr_jan", nyears );
+		ssc_number_t *ch_tr_feb = allocate("charge_tr_feb", nyears );
+		ssc_number_t *ch_tr_mar = allocate("charge_tr_mar", nyears );
+		ssc_number_t *ch_tr_apr = allocate("charge_tr_apr", nyears );
+		ssc_number_t *ch_tr_may = allocate("charge_tr_may", nyears );
+		ssc_number_t *ch_tr_jun = allocate("charge_tr_jun", nyears );
+		ssc_number_t *ch_tr_jul = allocate("charge_tr_jul", nyears );
+		ssc_number_t *ch_tr_aug = allocate("charge_tr_aug", nyears );
+		ssc_number_t *ch_tr_sep = allocate("charge_tr_sep", nyears );
+		ssc_number_t *ch_tr_oct = allocate("charge_tr_oct", nyears );
+		ssc_number_t *ch_tr_nov = allocate("charge_tr_nov", nyears );
+		ssc_number_t *ch_tr_dec = allocate("charge_tr_dec", nyears );
 
 		for (i=0;i<nyears;i++)
 		{
@@ -231,22 +330,127 @@ public:
 				// calculate e_grid value (e_sys + e_load)
 				// note: load is assumed to have negative sign
 
-				e_grid[j] = e_sys[j] + e_load_cy[j];
-				p_grid[j] = p_sys[j] + p_load_cy[j];
+				e_grid[j] = e_sys[j]*sys_scale[i] + e_load_cy[j];
+				p_grid[j] = p_sys[j]*sys_scale[i] + p_load_cy[j];
 			}
 
+			// calculate revenue with solar system (using net grid energy & maxpower)
 			ur_calc( &e_grid[0], &p_grid[0],
 				&revenue_w_sys[0], &payment[0], &income[0], &price[0],
 				&monthly_revenue_w_sys[0], &monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
 				&monthly_tr_charges[0], &monthly_tr_rates[0] );
+
+			if (i == 0)
+			{
+				assign( "year1_hourly_revenue_with_system", var_data( &revenue_w_sys[0], 8760 ) );
+				assign( "year1_hourly_payment_with_system", var_data( &payment[0], 8760 ) );
+				assign( "year1_hourly_income_with_system", var_data( &income[0], 8760 ) );
+				assign( "year1_hourly_price_with_system", var_data( &price[0], 8760 ) );
+				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
+				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
+				
+				// output and demand per Paul's email 9/10/10
+				// positive demand indicates system does not produce enough electricity to meet load
+				// zero if the system produces more than the demand
+				std::vector<ssc_number_t> output(8760), edemand(8760), pdemand(8760);
+				for (j=0;j<8760;j++)
+				{
+					output[j] = e_sys[j] * sys_scale[i];
+					edemand[j] = e_grid[j] < 0.0 ? -e_grid[j] : 0.0f;
+					pdemand[j] = p_grid[j] < 0.0 ? -p_grid[j] : 0.0f;
+				}
+
+				assign( "year1_hourly_system_output", var_data(&output[0], 8760) );
+				assign( "year1_hourly_e_demand", var_data(&edemand[0], 8760) );
+				assign( "year1_hourly_p_demand", var_data(&pdemand[0], 8760) );
+			}
+
+			// now recalculate revenue without solar system (using load only)
+			ur_calc( &e_load_cy[0], &p_load_cy[0],
+				&revenue_wo_sys[0], &payment[0], &income[0], &price[0],
+				&monthly_revenue_w_sys[0], &monthly_fixed_charges[0],
+				&monthly_dc_fixed[0], &monthly_dc_tou[0],
+				&monthly_tr_charges[0], &monthly_tr_rates[0] );
+
+			if (i == 0)
+			{
+				assign( "year1_hourly_revenue_without_system", var_data( &revenue_wo_sys[0], 8760 ) );
+				assign( "year1_hourly_payment_without_system", var_data( &payment[0], 8760 ) );
+				assign( "year1_hourly_income_without_system", var_data( &income[0], 8760 ) );
+				assign( "year1_hourly_price_without_system", var_data( &price[0], 8760 ) );
+			}
+
+			// determine net-revenue benefit due to solar for year 'i'
 			
+			annual_net_revenue[i] = 0.0f;
+			annual_revenue_w_sys[i] = 0.0f;
+			annual_revenue_wo_sys[i] = 0.0f;
+
+			for(j=0;j<8760;j++)
+			{
+				annual_net_revenue[i] += revenue_w_sys[j] - revenue_wo_sys[j];
+				annual_revenue_w_sys[i] += revenue_w_sys[j];
+				annual_revenue_wo_sys[i] += revenue_wo_sys[j];
+			}
+
+			annual_net_revenue[i] *= rate_scale[i];
+			annual_revenue_w_sys[i] *= rate_scale[i];
+			annual_revenue_wo_sys[i] *= rate_scale[i];
+
+			ch_monthly_fixed_jan[i] = monthly_fixed_charges[0] * rate_scale[i];
+			ch_monthly_fixed_feb[i] = monthly_fixed_charges[1] * rate_scale[i];
+			ch_monthly_fixed_mar[i] = monthly_fixed_charges[2] * rate_scale[i];
+			ch_monthly_fixed_apr[i] = monthly_fixed_charges[3] * rate_scale[i];
+			ch_monthly_fixed_may[i] = monthly_fixed_charges[4] * rate_scale[i];
+			ch_monthly_fixed_jun[i] = monthly_fixed_charges[5] * rate_scale[i];
+			ch_monthly_fixed_jul[i] = monthly_fixed_charges[6] * rate_scale[i];
+			ch_monthly_fixed_aug[i] = monthly_fixed_charges[7] * rate_scale[i];
+			ch_monthly_fixed_sep[i] = monthly_fixed_charges[8] * rate_scale[i];
+			ch_monthly_fixed_oct[i] = monthly_fixed_charges[9] * rate_scale[i];
+			ch_monthly_fixed_nov[i] = monthly_fixed_charges[10] * rate_scale[i];
+			ch_monthly_fixed_dec[i] = monthly_fixed_charges[11] * rate_scale[i];
+		
+			ch_dc_fixed_jan[i] = monthly_dc_fixed[0] * rate_scale[i];
+			ch_dc_fixed_feb[i] = monthly_dc_fixed[1] * rate_scale[i];
+			ch_dc_fixed_mar[i] = monthly_dc_fixed[2] * rate_scale[i];
+			ch_dc_fixed_apr[i] = monthly_dc_fixed[3] * rate_scale[i];
+			ch_dc_fixed_may[i] = monthly_dc_fixed[4] * rate_scale[i];
+			ch_dc_fixed_jun[i] = monthly_dc_fixed[5] * rate_scale[i];
+			ch_dc_fixed_jul[i] = monthly_dc_fixed[6] * rate_scale[i];
+			ch_dc_fixed_aug[i] = monthly_dc_fixed[7] * rate_scale[i];
+			ch_dc_fixed_sep[i] = monthly_dc_fixed[8] * rate_scale[i];
+			ch_dc_fixed_oct[i] = monthly_dc_fixed[9] * rate_scale[i];
+			ch_dc_fixed_nov[i] = monthly_dc_fixed[10] * rate_scale[i];
+			ch_dc_fixed_dec[i] = monthly_dc_fixed[11] * rate_scale[i];
+		
+			ch_dc_tou_jan[i] = monthly_dc_tou[0] * rate_scale[i];
+			ch_dc_tou_feb[i] = monthly_dc_tou[1] * rate_scale[i];
+			ch_dc_tou_mar[i] = monthly_dc_tou[2] * rate_scale[i];
+			ch_dc_tou_apr[i] = monthly_dc_tou[3] * rate_scale[i];
+			ch_dc_tou_may[i] = monthly_dc_tou[4] * rate_scale[i];
+			ch_dc_tou_jun[i] = monthly_dc_tou[5] * rate_scale[i];
+			ch_dc_tou_jul[i] = monthly_dc_tou[6] * rate_scale[i];
+			ch_dc_tou_aug[i] = monthly_dc_tou[7] * rate_scale[i];
+			ch_dc_tou_sep[i] = monthly_dc_tou[8] * rate_scale[i];
+			ch_dc_tou_oct[i] = monthly_dc_tou[9] * rate_scale[i];
+			ch_dc_tou_nov[i] = monthly_dc_tou[10] * rate_scale[i];
+			ch_dc_tou_dec[i] = monthly_dc_tou[11] * rate_scale[i];
+		
+			ch_tr_jan[i] = monthly_tr_charges[0] * rate_scale[i];
+			ch_tr_feb[i] = monthly_tr_charges[1] * rate_scale[i];
+			ch_tr_mar[i] = monthly_tr_charges[2] * rate_scale[i];
+			ch_tr_apr[i] = monthly_tr_charges[3] * rate_scale[i];
+			ch_tr_may[i] = monthly_tr_charges[4] * rate_scale[i];
+			ch_tr_jun[i] = monthly_tr_charges[5] * rate_scale[i];
+			ch_tr_jul[i] = monthly_tr_charges[6] * rate_scale[i];
+			ch_tr_aug[i] = monthly_tr_charges[7] * rate_scale[i];
+			ch_tr_sep[i] = monthly_tr_charges[8] * rate_scale[i];
+			ch_tr_oct[i] = monthly_tr_charges[9] * rate_scale[i];
+			ch_tr_nov[i] = monthly_tr_charges[10] * rate_scale[i];
+			ch_tr_dec[i] = monthly_tr_charges[11] * rate_scale[i];			
 		}
-
-
-
-
-
+	
 	}
 
 	void ur_calc( ssc_number_t e_in[8760], ssc_number_t p_in[8760],
@@ -268,7 +472,17 @@ public:
 				= monthly_tr_charges[i] = monthly_tr_rates[i] = 0.0;
 		}
 
+		// process basic flat rate
 
+		// process monthly fixed charges
+
+		// process time of use charges
+
+		// process demand charges
+
+		// process tiered rate charges
+
+		// compute revenue ( = income - payment )
 	}
 
 };
