@@ -6,6 +6,12 @@ static var_info vtab_cashloan[] = {
 
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Residential or Commercial Market",   "0/1",          "0=residential,1=comm.", "Cashloan",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "mortgage",		         "Use mortgage style loan (res. only)","0/1",          "",                      "Cashloan",      "?=0",                     "BOOLEAN",                        "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,      "total_hard_cost",                          "Total hard cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_soft_cost",                          "Total soft cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_subject_sales_tax",        "Percent cost subject sales tax",                  "%",      "",                      "Cost",            "*",                      "MIN=0,MAX=100",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_due_construction_interest","Percent of cost due to construction interest",    "%",      "",                      "Cost",            "?=0",                    "MIN=0,MAX=100",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "Cashloan",      "?=0",                     "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },

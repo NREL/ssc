@@ -1,0 +1,39 @@
+' energy values used to match with DHF Team SAM Model Update - V2.xlsm
+energy_net   = array(17000000,16915000,16830425,16746273,16662542,16579229,16496333,16413851,16331782,16250123,16168872,16088028,16007588,15927550,15847912,15768672,15689829,15611380,15533323,15455656,15378378,15301486,15224979,15148854,15073110,14997744,14922755,14848142,14773901,14700031,14626531,14553399,14480632,14408228,14336187,14264506,14193184,14122218,14051607,13981349)
+
+ssc_set("energy_net", energy_net)
+ssc_set("federal_tax_rate", 35.0)
+ssc_set("state_tax_rate", 5.5)
+ssc_set("real_discount_rate", 11.0)
+'ssc_set("insurance_rate", 0.5)
+'ssc_set("property_tax_rate", 2.0)
+ssc_set("sales_tax_rate", 5.5)
+ssc_set("inflation_rate", 1.5)
+ssc_set("system_capacity", 10000)
+ssc_set("ppa_price_input", 33.73441692)
+'ssc_set("total_hard_cost", 865100)
+'ssc_set("total_soft_cost", 71500)
+'ssc_set("percent_of_cost_subject_sales_tax", 2.87)
+'ssc_set("salvage_percentage", 50)
+
+
+ssc_set("loan_term", 15)
+ssc_set("loan_rate", 8)
+ssc_set("loan_debt", 60)
+ssc_set("itc_fed_percent", array(30))
+
+ssc_set("depr_fed_type", 1) ' half year convention
+ssc_set("depr_sta_type", 1) ' half year convention
+
+ssc_set("om_fixed", array(3500))
+ssc_set("om_capacity", array(20))
+
+
+ssc_set("itc_sta_percent", array(10,10,10,5))
+ssc_set("ptc_fed_amount", array(0.1))
+ssc_set("ptc_fed_term", 10)
+ssc_set("ptc_fed_escal", 1.5)
+
+ssc_set("analysis_years", 30)
+
+ssc_start()
