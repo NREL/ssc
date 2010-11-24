@@ -1,16 +1,12 @@
+#include "lib_financial.h"
 #include "core.h"
 
 static var_info _cm_vtab_levpartflip[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_ARRAY,      "system_enet",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
 /* constraint is > 0 */
-	{ SSC_INPUT,        SSC_NUMBER,     "system_nameplate",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1",                         "" },
-/* want analysis years determined by enet length - system degradation, availablity compute module output */
-	{ SSC_INPUT,        SSC_NUMBER,     "analysis_years",           "Number of years in analysis",     "years",  "",                      "DHF",             "?=30",                      "INTEGER,MIN=1,MAX=40",          "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,     "inflation",			    "Inflation rate",					"%",     "",                      "DHF",             "*",						   "MIN=0,MAX=100",					"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "discount_real",			"Real discount rate",				"%",     "",                      "DHF",             "*",						   "MIN=0,MAX=100",					"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "sales_tax_rate",		    "Sales tax rate",	    			"%",     "",                      "DHF",             "*",						   "MIN=0,MAX=100",					"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
 /* costs - to be updated based on meetings with DHF */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_gen_equip",           "Generation equiptment cost",		"$",	 "",					  "DHF",             "?=24000000",              "MIN=0",                         "" },
@@ -25,7 +21,7 @@ static var_info _cm_vtab_levpartflip[] = {
 
 /* inputs in DHF model not currently in SAM 11/15/10 */
 	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "DHF",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_cost_assessed",   "Percent of pre-financing costs assessed","%","",					  "DHF",			 "?=95",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_cost_assessed_percent",   "Percent of pre-financing costs assessed","%","",			  "DHF",			 "?=95",                     "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_assessed_decline","Assessed value annual decline",	"%",	 "",					  "DHF",             "?=95",                     "MIN=0,MAX=100",      			"" },
 
 /* DHF replacement reserve on top of regular o and m */
@@ -41,10 +37,12 @@ static var_info _cm_vtab_levpartflip[] = {
 // TODO - add to depreciation static table */
 	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",   "Major equipment reserve state depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=5",  "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_fed",   "Major equipment reserve federal depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=5",  "" },
-	
+
+/* DHF salvage value */	
+	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",          "Net pre-tax cash salvage value",	"%",	 "",					  "DHF",             "?=10",                     "MIN=0,MAX=100",      			"" },
 /* DHF market specific inputs - leveraged partnership flip */
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=specify ppa,1=solve ppa", "DHF",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price",				"Initial year PPA price",			"cents/kWh",	 "",			  "DHF",			 "ppa_soln_mode=1",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"cents/kWh",	 "",			  "DHF",			 "ppa_soln_mode=0",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
 /* DHF construction period */
 	{ SSC_INPUT,        SSC_NUMBER,     "constr_period",            "Construction period",				"months", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
@@ -104,14 +102,20 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_39",   "Federal itc depreciation 39-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
 
 /* intermediate outputs */
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_contingency",        "Contingency cost",                 "$",     "",					   "DHF",			   "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_hard",               "Hard cost",                        "$",     "",					   "DHF",			   "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_soft",               "Soft cost",                        "$",     "",					   "DHF",			   "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_salestax",           "Sales tax",                        "$",     "",					   "DHF",			   "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Installed cost",                   "$",     "",					   "DHF",			   "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					   "DHF",			   "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "discount_nominal",        "Nominal discount rate",            "%",     "",					   "DHF",			   "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				   "DHF",			   "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_contingency",        "Contingency cost",                 "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_hard",               "Hard cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_soft",               "Soft cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_salestax",           "Sales tax",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "nominal_discount_rate",   "Nominal discount rate",            "%",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "salvage_value",			"Net pre-tax cash salvage value",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+
+/* model outputs */
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ppa_price",			    "Initial year PPA price",			"cents/kWh",	"",				   "DHF",			  "*",                         "",      					   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "cf_energy_value",         "Energy value",                     "$",      "",                      "DHF",             "*",                         "",                             "" },
+
 
 var_info_invalid };
 
@@ -210,19 +214,34 @@ private:
 public:
 	cm_levpartflip()
 	{
+		add_var_info( vtab_standard_financial );
+		add_var_info( vtab_standard_loan );
+		add_var_info( vtab_oandm );
+		add_var_info( vtab_depreciation );
+		add_var_info( vtab_tax_credits );
+		add_var_info( vtab_payment_incentives );
+				
 		add_var_info( _cm_vtab_levpartflip );
 	}
 
 	void exec( ) throw( general_error )
 	{
-		double inf = as_double("inflation") / 100.0;
-		double disc_real = as_double("discount_real") / 100.0;
-		assign( "discount_nominal", var_data((ssc_number_t) ((1+inf)*(1+disc_real)-1) ) );
+
+		// cash flow initialization
+		int nyears = as_integer("analysis_years");
+		cf.resize_fill( CF_max, nyears+1, 0.0 );
+
+		// assign inputs
+		double inflation_rate = as_double("inflation_rate")*0.01;
+		double ppa_escalation = as_double("ppa_escalation")*0.01;
+		double disc_real = as_double("real_discount_rate")*0.01;
+		double discount_rate = (1+inflation_rate)*(1+disc_real)-1;
+		assign( "nominal_discount_rate", var_data((ssc_number_t)discount_rate ) );
 
 		double gen = as_double("cost_gen_equip");
 		double bop = as_double("cost_bop");
 		double net = as_double("cost_network");
-		double cont = as_double("percent_contingency") / 100.0;
+		double cont = as_double("percent_contingency")*0.01;
 
 		double cost_hard = gen + bop + net;
 		double cost_cont = cost_hard * cont;
@@ -244,8 +263,49 @@ public:
 		double pre_financing_installed_cost_total = cost_soft + cost_salestax + cost_hard + cost_cont;
 		assign( "cost_installed", var_data((ssc_number_t) pre_financing_installed_cost_total ) );
 
-		double nameplate = as_double("system_nameplate");
+		double nameplate = as_double("system_capacity");
 		assign( "cost_installedperwatt", var_data((ssc_number_t)( pre_financing_installed_cost_total / nameplate / 1000.0 ) ));
+
+		double assessed_frac = as_double("prop_tax_cost_assessed_percent")*0.01;
+		assign( "prop_tax_assessed_value", var_data((ssc_number_t)( assessed_frac * pre_financing_installed_cost_total )));
+
+		double salvage_value_frac = as_double("salvage_percentage")*0.01;
+		double salvage_value = salvage_value_frac * pre_financing_installed_cost_total;
+		assign( "salvage_value", var_data((ssc_number_t)salvage_value));
+
+
+		// initialize energy
+		size_t count = 0;
+		ssc_number_t *arrp = 0;
+		
+		arrp = as_array("energy_net", &count);
+		int i=0;
+		while ( i < nyears && i < (int)count )
+		{
+			cf.at(CF_energy_net, i+1) = (double) arrp[i];
+			i++;
+		}
+
+		int ppa_mode = as_integer("ppa_soln_mode");
+
+
+		// outputs
+		double ppa = 0;
+		if (ppa_mode == 0)
+			ppa = as_double("ppa_price_input");
+
+		for (i=1; i<=nyears; i++)
+		{			
+			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * ppa/100.0 * pow( 1 + ppa_escalation, i-1 );
+		}
+		// salvage value
+		cf.at(CF_energy_value,nyears) += salvage_value;
+
+
+		assign("ppa_price", var_data((ssc_number_t) ppa));
+
+		save_cf( CF_energy_value, nyears, "cf_energy_value" );
+
 	}
 
 	// std lib
@@ -430,6 +490,13 @@ public:
 			}
 			cf.at(cf_line, i) = factor;
 		}
+	}
+	// std lib
+	void save_cf(int cf_line, int nyears, const std::string &name)
+	{
+		ssc_number_t *arrp = allocate( name, nyears+1 );
+		for (int i=0;i<=nyears;i++)
+			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
 
 

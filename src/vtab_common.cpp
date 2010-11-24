@@ -11,14 +11,9 @@ var_info vtab_standard_financial[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "real_discount_rate",                       "Real discount rate",                              "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inflation_rate",                           "Inflation rate",                                  "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "insurance_rate",                           "Insurance rate",                                  "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                          "System nameplate capacity",                       "kW",     "",                      "System",          "*",                      "POSITIVE",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_heat_rate",                         "System heat rate",                                "MMBTus/MWh", "",                  "System",          "?=0.0",                  "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_hard_cost",                          "Total hard cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_soft_cost",                          "Total soft cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_subject_sales_tax",        "Percent cost subject sales tax",                  "%",      "",                      "Cost",            "*",                      "MIN=0,MAX=100",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_due_construction_interest","Percent of cost due to construction interest",    "%",      "",                      "Cost",            "?=0",                    "MIN=0,MAX=100",                                         "" },
 
 var_info_invalid };
 
