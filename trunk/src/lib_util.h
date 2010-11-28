@@ -26,6 +26,8 @@ Define _DEBUG if compile with debugging
 
 namespace util
 {
+	static const int nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+
 	std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );
 	std::string join( const std::vector< std::string > &list, const std::string &delim );
 		
@@ -43,6 +45,8 @@ namespace util
 	
 	int month_of(double time); /* hour: 0 = jan 1st 12am, returns 1-12 */
 	int day_of_month(int month, double time); /* month: 1-12 time: hours, starting 0=jan 1st 12am, returns 1-nday*/
+
+	bool translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val);
 
 	char dir_sep();
 	std::string get_cwd();
