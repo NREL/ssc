@@ -622,7 +622,6 @@ int util::month_of(double time)
 
 int util::day_of_month(int month, double time)
 {
-	//int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 	int daynum = ( ((int)(time/24.0)) + 1 );   // day goes 1-365
 	switch(month)
 	{
@@ -642,3 +641,36 @@ int util::day_of_month(int month, double time)
 	}
 	return daynum;
 }
+
+bool util::translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val)
+{
+	int i=0;
+	if (!wkday || !wkend || strlen(wkday) != 288 || strlen(wkend) != 288)
+	{
+		for (i=0;i<8760;i++) tod[i] = min_val;
+		return false;
+	}
+
+	int wday = 5;
+	for (int m=0;m<12;m++)
+	{
+		for (int d=0;d<nday[m];d++)
+		{
+			const char *sptr = (wday<=0) ? wkend : wkday;
+
+			if (wday >= 0) wday--;
+			else wday = 5;
+
+			for (int h=0;h<24;h++)
+			{
+				tod[i] = (int)( sptr[m*24+h] - '1' );
+				if (tod[i] < min_val) tod[i] = min_val;
+				if (tod[i] > max_val) tod[i] = max_val;
+				i++;
+			}
+		}
+	}
+
+	return true;
+}
+

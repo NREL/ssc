@@ -67,8 +67,8 @@ static var_info vtab_utility_rate[] = {
 	{ SSC_INPUT,        SSC_STRING,     "ur_dc_sched_weekend",      "DC TOU Weekend Schedule",         "",       "288 digits 0-9, 24x12", "",             "ur_dc_enable=1",            "TOUSCHED",                      "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_enable",             "Enable tiered rates",             "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_sell_type",          "Tiered rate sell mode",           "0,1,2",  "0=specified,1=tier1,2=lowest", "",      "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_sell_rate",          "Specified tiered sell rate",      "$/kW",   "",                      "",             "ur_tr_sell_type=0",         "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_sell_mode",          "Tiered rate sell mode",           "0,1,2",  "0=specified,1=tier1,2=lowest", "",      "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_sell_rate",          "Specified tiered sell rate",      "$/kW",   "",                      "",             "ur_tr_sell_mode=0",         "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_p1_energy_ub1",      "Tiered Struct. 1 Energy UB 1",    "kWh",    "",                      "",             "?=1e99",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_p1_energy_ub2",      "Tiered Struct. 1 Energy UB 2",    "kWh",    "",                      "",             "?=1e99",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_p1_energy_ub3",      "Tiered Struct. 1 Energy UB 3",    "kWh",    "",                      "",             "?=1e99",                    "",                              "" },
@@ -337,7 +337,7 @@ public:
 			// calculate revenue with solar system (using net grid energy & maxpower)
 			ur_calc( &e_grid[0], &p_grid[0],
 				&revenue_w_sys[0], &payment[0], &income[0], &price[0],
-				&monthly_revenue_w_sys[0], &monthly_fixed_charges[0],
+				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
 				&monthly_tr_charges[0], &monthly_tr_rates[0] );
 
@@ -369,7 +369,7 @@ public:
 			// now recalculate revenue without solar system (using load only)
 			ur_calc( &e_load_cy[0], &p_load_cy[0],
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0],
-				&monthly_revenue_w_sys[0], &monthly_fixed_charges[0],
+				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
 				&monthly_tr_charges[0], &monthly_tr_rates[0] );
 
@@ -456,7 +456,7 @@ public:
 	void ur_calc( ssc_number_t e_in[8760], ssc_number_t p_in[8760],
 
 		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], ssc_number_t price[8760],
-		ssc_number_t monthly_revenue[12], ssc_number_t monthly_fixed_charges[12],
+		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_tr_charges[12], ssc_number_t monthly_tr_rates[12] ) throw(general_error)
 	{
@@ -467,23 +467,308 @@ public:
 
 		for (i=0;i<12;i++)
 		{
-			monthly_revenue[i] = monthly_fixed_charges[i] 
+			monthly_fixed_charges[i] 
 				= monthly_dc_fixed[i] = monthly_dc_tou[i] 
 				= monthly_tr_charges[i] = monthly_tr_rates[i] = 0.0;
 		}
 
 		// process basic flat rate
+		process_flat_rate( e_in, payment, income, price );
 
 		// process monthly fixed charges
+		process_monthly_charge( payment, monthly_fixed_charges );
 
 		// process time of use charges
+		if (as_boolean("ur_tou_enable"))
+			process_tou_rate( e_in, payment, income, price );
 
 		// process demand charges
+		if (as_boolean("ur_dc_enable"))
+			process_demand_charge( p_in, payment, monthly_dc_fixed, monthly_dc_tou );
 
 		// process tiered rate charges
+		if (as_boolean("ur_tr_enable"))
+			process_tiered_rate( e_in, payment, income, monthly_tr_charges, monthly_tr_rates );
 
 		// compute revenue ( = income - payment )
+		for (i=0;i<8760;i++)
+			revenue[i] = income[i] - payment[i];
 	}
+
+	void process_flat_rate( ssc_number_t e[8760],
+			ssc_number_t payment[8760],
+			ssc_number_t income[8760],
+			ssc_number_t price[8760] )
+	{
+		int i;
+		ssc_number_t buy = as_number("ur_flat_buy_rate");
+		ssc_number_t sell = as_number("ur_flat_sell_rate");
+		ssc_number_t fuel = as_number("ur_flat_fuel_rate");
+
+		if (as_boolean("ur_sell_eq_buy")) sell = buy;
+
+		for (i=0;i<8760;i++)
+		{
+			if (e[i] < 0) // must buy from grid
+			{
+				payment[i] += -1.0*e[i]*(buy+fuel);
+				price[i] += (buy+fuel);
+			}
+			else
+			{
+				income[i] += e[i]*sell;
+				price[i] += sell;
+			}
+		}
+	}
+
+	void process_monthly_charge( ssc_number_t payment[8760], ssc_number_t charges[12] )
+	{
+		int m,d,h,c;
+
+		ssc_number_t fixed = as_number("ur_monthly_fixed_charge");
+		c=0;
+		for (m=0;m<12;m++)
+		{
+			for (d=0;d<util::nday[m];d++)
+			{
+				for (h=0;h<24;h++)
+				{
+					if ( d==util::nday[m]-1 && h == 23)
+					{
+						charges[m] = fixed;
+						payment[c] += fixed;
+					}
+					c++;
+				}
+			}
+		}
+	}
+
+	void process_tou_rate( ssc_number_t e[8760],
+			ssc_number_t payment[8760],
+			ssc_number_t income[8760],
+			ssc_number_t price[8760] )
+	{
+		double rates[9][3];
+
+		const char *schedwkday = as_string("ur_tou_sched_weekday");
+		const char *schedwkend = as_string("ur_tou_sched_weekend");
+
+		int tod[8760];
+
+		if (!util::translate_schedule( tod, schedwkday, schedwkend, 0, 8))
+			throw general_error("could not translate weekday and weekend schedules for time-of-use rate");
+
+		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+
+		for (int i=0;i<9;i++)
+		{
+			std::string nstr = util::to_string( i+1 );
+			rates[i][0] = as_number("ur_tou_p" + nstr + "_buy_rate");
+			rates[i][1] = sell_eq_buy ? rates[i][0] : as_number("ur_tou_p" + nstr + "_sell_rate");
+			rates[i][2] = as_number("ur_tou_p" + nstr + "_fuel_rate");
+		}
+
+		for (int i=0;i<8760;i++)
+		{
+			int tod_p = tod[i];
+			ssc_number_t buy = rates[tod_p][0];
+			ssc_number_t sell = rates[tod_p][1];
+			ssc_number_t fuel = rates[tod_p][2];
+
+			if (e[i] < 0)
+			{
+				payment[i] += -1.0*e[i]*(buy+fuel);
+				price[i] += (buy+fuel);
+			}
+			else
+			{
+				income[i] += e[i]*sell;
+				price[i] += sell;
+			}
+		}
+	}
+
+	void process_demand_charge( ssc_number_t p[8760],
+			ssc_number_t payment[8760],
+			ssc_number_t dc_fixed[12],
+			ssc_number_t dc_tou[12] )
+	{
+		int i,m,d,h,c;
+
+
+		// compute fixed monthly demand charges
+		c=0;
+		for (m=0;m<12;m++)
+		{
+			ssc_number_t mpeak = 0.0f;
+			for (d=0;d<util::nday[m];d++)
+			{
+				for (h=0;h<24;h++)
+				{
+					if (p[c] < 0 && p[c] < mpeak)
+						mpeak = p[c];
+
+					if (d==util::nday[m]-1 && h==23)
+					{
+						dc_fixed[m] = -mpeak*as_number(util::format("ur_dc_fixed%d", m+1));
+						payment[c] += dc_fixed[m];
+					}
+
+					c++;
+				}
+			}
+		}
+
+
+		// compute time-of-use based demand charge
+		// for each month:
+		// 1. find peak demand in each period (1-9)
+		// 2. multiply each period's peak demand by period price and add to payment for that month
+
+		// extract schedules
+		const char *schedwkday = as_string("ur_dc_sched_weekday");
+		const char *schedwkend = as_string("ur_dc_sched_weekend");
+		int tod[8760];
+		if (!util::translate_schedule( tod, schedwkday, schedwkend, 0, 8))
+			throw general_error("could not translate weekday and weekend schedules for demand charge time-of-use rate");
+
+		// extract rate info
+		double period_price[9];
+		for (i=0;i<9;i++)
+			period_price[i] = as_number(util::format("ur_dc_p%d", i+1));
+
+		double ppeaks[9];
+		c=0;
+		for (m=0;m<12;m++)
+		{
+			for (i=0;i<9;i++) ppeaks[i] = 0;
+
+			for (d=0;d<util::nday[m];d++)
+			{
+				for(h=0;h<24;h++)
+				{
+					int todp = tod[c];
+					if (p[c] < 0 && p[c] < ppeaks[todp])
+						ppeaks[todp] = p[c];
+
+					if (d==util::nday[m]-1 && h==23)
+					{
+						// sum up all peak demand charges at end of month
+						double charge=0;
+						for (i=0;i<9;i++)
+							charge += -ppeaks[i]*period_price[i];
+
+						// add to payments
+						dc_tou[m] = charge;
+						payment[c] += charge;
+					}
+
+					c++;
+				}
+			}
+		}
+
+	}
+
+	void process_tiered_rate( ssc_number_t e[8760],
+			ssc_number_t payment[8760],
+			ssc_number_t income[8760],
+			ssc_number_t tr_charge[12],
+			ssc_number_t tr_rate[12] )
+	{
+		int i,m,d,h,c;
+
+		ssc_number_t energy_ub[6];
+		ssc_number_t rates[6];
+		ssc_number_t sell_rate=0, tier_rate=0;
+
+		c=0;
+		for (m=0;m<12;m++)
+		{
+			// compute total monthly energy use (net)
+			ssc_number_t energy_use = 0;
+			for (d=0;d<util::nday[m];d++)
+			{
+				for (h=0;h<24;h++)
+				{
+					energy_use += -1.0*e[c]; // add up total energy use
+					c++;
+				}
+			}
+
+
+			int period = as_integer(util::format("ur_tr_sched_m%d",m+1)); // 0..5
+			if (period < 0) period = 0;
+			if (period > 5) period = 5;
+
+			if (energy_use > 0)
+			{
+
+				for (i=0;i<6;i++)
+				{
+					energy_ub[i] = as_number(util::format("ur_tr_p%d_energy_ub%d", period+1, i+1));
+					rates[i] = as_number(util::format("ur_tr_p%d_rate%d", period+1, i+1))
+						+ as_number(util::format("ur_tr_p%d_fuel%d", period+1, i+1));
+				}
+
+
+				double charge_amt = 0;
+				i=0;
+				while (i<6)
+				{
+					// add up the charge amount for this block
+					ssc_number_t e_upper = energy_ub[i];
+					ssc_number_t e_lower = i > 0 ? energy_ub[i-1] : 0.0;
+	
+					if (energy_use > e_upper)
+						charge_amt += (e_upper-e_lower)*rates[i];
+					else
+						charge_amt += (energy_use-e_lower)*rates[i];
+	
+					if ( energy_use < e_upper )
+						break;
+	
+					i++;
+				}
+	
+				tr_rate[m] = energy_use > 0 ? charge_amt/energy_use : 0.0;
+				tr_charge[m] = charge_amt;
+				payment[c-1] += charge_amt;
+			}
+			else // sell excess
+			{
+				tr_rate[m] = 0;
+				tr_charge[m] = 0;
+				sell_rate = 0;
+				switch (as_integer("ur_tr_sell_mode"))
+				{
+				case 0: // flat tiered sell rate
+					sell_rate = as_number("ur_tr_sell_rate");
+					break;
+				case 1: // Tier 1 rate
+					sell_rate = as_number(util::format("ur_tr_p%d_rate1", period+1));
+					break;
+				case 2: // cheapest rate for tier structure
+					sell_rate = as_number(util::format("ur_tr_p%d_rate1", period+1));
+					for (int j=1; j<6; j++)
+					{
+						tier_rate = as_number(util::format("ur_tr_p%d_rate%d", period+1, j+1));
+						if (tier_rate < sell_rate) sell_rate=tier_rate;
+					}
+					break;
+				default:
+					throw general_error("invalid sell rate mode. must be 0, 1, or 2");
+					break;
+				}
+
+				income[c-1] -= sell_rate * energy_use;
+			}
+		}
+	
+	}
+
 
 };
 
