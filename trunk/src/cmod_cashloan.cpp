@@ -187,8 +187,10 @@ public:
 		bool is_commercial = (as_integer("market")==1);
 		bool is_mortgage = as_boolean("mortgage");
 
+		/*
 		if (is_commercial) log("commercial market"); else log("residential market");
 		if (is_mortgage) log("mortgage loan"); else log("standard loan");
+		*/
 
 		int nyears = as_integer("analysis_years");
 
