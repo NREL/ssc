@@ -166,9 +166,10 @@ static var_info vtab_utility_rate[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_sched_m11",          "Tiered Structure for November",   "0-5",    "tiered structure #",    "",             "?=0",                       "INTEGER,MIN=0,MAX=5",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tr_sched_m12",          "Tiered Structure for December",   "0-5",    "tiered structure #",    "",             "?=0",                       "INTEGER,MIN=0,MAX=5",           "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Net energy value in each year",   "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",    "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Net energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 hourly grid energy",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 hourly grid peak power",   "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -350,6 +351,7 @@ public:
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("energy_value", nyears);
+		ssc_number_t *energy_net = allocate("energy_net", nyears);
 		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears);
 		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears);
 
@@ -467,11 +469,13 @@ public:
 			// determine net-revenue benefit due to solar for year 'i'
 			
 			annual_net_revenue[i] = 0.0;
+			energy_net[i] = 0.0;
 			annual_revenue_w_sys[i] = 0.0;
 			annual_revenue_wo_sys[i] = 0.0;
 
 			for(j=0;j<8760;j++)
 			{
+				energy_net[i] +=  e_sys[j]*sys_scale[i];
 				annual_net_revenue[i] += revenue_w_sys[j] - revenue_wo_sys[j];
 				annual_revenue_w_sys[i] += revenue_w_sys[j];
 				annual_revenue_wo_sys[i] += revenue_wo_sys[j];
