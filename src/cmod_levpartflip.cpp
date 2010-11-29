@@ -158,6 +158,7 @@ extern var_info
 
 enum {
 	CF_energy_net,
+	CF_energy_value, // apd: had to add this back in to compile (29 nov 10)
 	CF_ppa_price,
 	CF_ppa_revenue,
 

@@ -568,6 +568,20 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 			if ( ((ssc_number_t)((int)dat.num)) != dat.num )
 				fail_constraint("number could not be interpreted as an integer: " + util::to_string( (double) dat.num ));
 		}
+		else if (expr == "tousched")
+		{
+			if (dat.type != SSC_STRING)
+				fail_constraint("string data type required");
+
+			if (dat.str.length() != 288)
+				fail_constraint("288 character string required (12x24 values)");
+
+			for (std::string::size_type i=0;i<dat.str.length();i++)
+			{
+				if ( dat.str[i] < '1' || dat.str[i] > '9' )
+					fail_constraint("all digits must be between 1 and 9, inclusive");
+			}
+		}
 		else if (expr == "positive")
 		{
 			if (dat.type != SSC_NUMBER) throw constraint_error(name, "cannot test for positive with non-numeric type", expr);
