@@ -228,7 +228,7 @@ if __name__ == "__main__":
 		ssc = PySSC()
 		dat = ssc.data_create()
 
-		ssc.data_set_string(dat, 'file_name', 'c:/SAM/2010.11.9/exelib/climate_files/CA Daggett.tm2')
+		ssc.data_set_string(dat, 'file_name', 'daggett.tm2')
 		ssc.data_set_number(dat, 'system_size', 4)
 		ssc.data_set_number(dat, 'derate', 0.77)
 		ssc.data_set_number(dat, 'track_mode', 0)
