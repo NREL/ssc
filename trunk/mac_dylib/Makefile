@@ -29,6 +29,7 @@ TARGET = ssc.dylib
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) -dynamiclib -flat_namespace -o $@ $^
+	cp $(TARGET) ../python/ssc32
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
