@@ -25,14 +25,14 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_assessed_decline","Assessed value annual decline",	"%",	 "",					  "DHF",             "?=5",                     "MIN=0,MAX=100",      			"" },
 
 /* DHF replacement reserve on top of regular o and m */
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve1_cost",      "Major equipment reserve1 cost",	"$/Wdc",	 "",				  "DHF",             "?=0.25",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve1_freq",      "Major equipment reserve1 frequency",	"years",	 "",			  "DHF",             "?=12",               "INTEGER,MIN=0",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_cost",      "Major equipment reserve1 cost",	"$/Wdc",	 "",				  "DHF",             "?=0.25",               "MIN=0",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_freq",      "Major equipment reserve1 frequency",	"years",	 "",			  "DHF",             "?=12",               "INTEGER,MIN=0",                         "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve2_cost",      "Major equipment reserve2 cost",	"$/Wdc",	 "",				  "DHF",             "?=0",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve2_freq",      "Major equipment reserve2 frequency",	"years",	 "",			  "DHF",             "?=15",               "INTEGER,MIN=0",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip2_reserve_cost",      "Major equipment reserve2 cost",	"$/Wdc",	 "",				  "DHF",             "?=0",               "MIN=0",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip2_reserve_freq",      "Major equipment reserve2 frequency",	"years",	 "",			  "DHF",             "?=15",               "INTEGER,MIN=0",                         "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve3_cost",      "Major equipment reserve3 cost",	"$/Wdc",	 "",				  "DHF",             "?=0",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve3_freq",      "Major equipment reserve3 frequency",	"years",	 "",			  "DHF",             "?=20",               "INTEGER,MIN=0",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip3_reserve_cost",      "Major equipment reserve3 cost",	"$/Wdc",	 "",				  "DHF",             "?=0",               "MIN=0",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip3_reserve_freq",      "Major equipment reserve3 frequency",	"years",	 "",			  "DHF",             "?=20",               "INTEGER,MIN=0",                         "" },
 
 // TODO - add to depreciation static table */
 	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",   "Major equipment reserve state depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=5",  "" },
@@ -52,7 +52,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "term_tenor",               "Term financing tenor",				"years", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "term_int_rate",            "Term financing interest rate",		"%",	 "",					  "DHF",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dscr",						"Debt service coverage ratio",		"",	     "",				      "DHF",             "?=1.5",					"MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve",				"Debt service reserve account",		"months P&I","",			      "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		"Debt service reserve account",		"months P&I","",			      "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
 /* DHF Capital Cost */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_closing",		"Debt closing cost",				"$",	 "",					  "DHF",             "?=250000",					    "MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "DHF",             "?=100000",					    "MIN=0",      			        "" },
@@ -112,6 +112,12 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "salvage_value",			"Net pre-tax cash salvage value",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 
+/* intermediate outputs for validation */
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "pv_cafds", "Present value of cash avaialble for debt service","$", "",				  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Size of debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+
+
 /* model outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "DHF",      "*",                       "INTEGER",                                  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "ppa_price",			    "Initial year PPA price",			"cents/kWh",	"",				   "DHF",			  "*",                         "",      					   "" },
@@ -129,14 +135,25 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-/*
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ebitda",    "EBITDA (cash available for debt service)",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_debtservice",    "Debt service reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "O and M reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip1",    "Major equipment reserve 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Major equipment reserve 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Major equipment reserve 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Total reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 		
+	{ SSC_OUTPUT,        SSC_ARRAY,      "CF_pv_cash_for_ds",     "Cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "CF_debt_size",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_balance",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_interest", "Interest payment",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_principal","Principal payment",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_total",    "Total P&I debt payment",             "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	
+/*	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -173,8 +190,26 @@ enum {
 	CF_property_tax_expense,
 	CF_insurance_expense,
 	CF_operating_expenses,
+	CF_ebitda,
+
+	CF_reserve_debtservice,
+	CF_reserve_om,
+	CF_reserve_equip1,
+	CF_funding_equip1,
+	CF_disbursement_equip1,
+	CF_reserve_equip2,
+	CF_funding_equip2,
+	CF_disbursement_equip2,
+	CF_reserve_equip3,
+	CF_funding_equip3,
+	CF_disbursement_equip3,
+	CF_reserve_total,
 
 	CF_deductible_expenses,
+
+	CF_pv_interest_factor,
+	CF_pv_cash_for_ds,
+	CF_debt_size,
 
 	CF_debt_balance,
 	CF_debt_payment_interest,
@@ -431,13 +466,105 @@ public:
 			- ( as_boolean("itc_sta_percent_deprbas_sta")  ? 0.5*(1+nom_discount_rate)*npv( CF_itc_sta_per, nyears, nom_discount_rate ) : 0 );
 
 
+		// outputs
+		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
+		double ppa = 0;
+		if (ppa_mode == 0)
+			ppa = as_double("ppa_price_input");
 
 		double property_tax_assessed_value = pre_financing_installed_cost_total * as_double("prop_tax_cost_assessed_percent") * 0.01;
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double property_tax_rate = as_double("property_tax_rate")*0.01;
 		double insurance_rate = as_double("insurance_rate")*0.01;
+		double cost_working_reserve = as_double("cost_working_reserve");
+		double equip1_reserve_cost = as_double("equip1_reserve_cost");
+		int equip1_reserve_freq = as_integer("equip1_reserve_freq");
+		double equip2_reserve_cost = as_double("equip2_reserve_cost");
+		int equip2_reserve_freq = as_integer("equip2_reserve_freq");
+		double equip3_reserve_cost = as_double("equip3_reserve_cost");
+		int equip3_reserve_freq = as_integer("equip3_reserve_freq");
+
+
+		//  calculate debt
+		int term_tenor = as_integer("term_tenor"); 
+		double term_int_rate = as_double("term_int_rate")*0.01;
+		double dscr = as_double("dscr");
+		int dscr_reserve_months = as_integer("dscr_reserve_months");
+		double cash_for_debt_service=0;
+		double pv_cafds=0;
+		double size_of_debt=0;
+
+
+
+		// pre calculate reserves
+		int i_equip1=1;
+		int i_equip2=1;
+		int i_equip3=1;
+
 		for (i=1; i<=nyears; i++)
 		{			
+			// reserves calculations
+			// debt service reserve
+			// o and m reserve
+			if (i==1) cf.at(CF_reserve_om,i) = cost_working_reserve;
+			if (i==nyears) cf.at(CF_reserve_om,i) = -cost_working_reserve;
+			// major equipment 1 reserve
+			if ( (i <= (i_equip1 * equip1_reserve_freq)) && ((i_equip1 * equip1_reserve_freq) <= nyears) ) // note will not enter if equip_reequip1_reserve_freq=0
+			{
+				cf.at(CF_funding_equip1,i) = equip1_reserve_cost * nameplate*1000 * pow( 1 + inflation_rate, i_equip1 * equip1_reserve_freq-1 ) / equip1_reserve_freq;
+			}
+			if (i == (i_equip1 * equip1_reserve_freq))
+			{
+				cf.at(CF_disbursement_equip1,i) =  equip1_reserve_cost * nameplate*1000 * pow( 1 + inflation_rate, i-1 );
+				i_equip1++;
+			}
+			cf.at(CF_reserve_equip1,i) = cf.at(CF_funding_equip1,i) - cf.at(CF_disbursement_equip1,i) + cf.at(CF_reserve_equip1,i-1);
+			// major equipment 2 reserve
+			if ( (i <= (i_equip2 * equip2_reserve_freq)) && ((i_equip2 * equip2_reserve_freq) <= nyears) ) // note will not enter if equip_reequip2_reserve_freq=0
+			{
+				cf.at(CF_funding_equip2,i) = equip2_reserve_cost * nameplate*1000 * pow( 1 + inflation_rate, i_equip2 * equip2_reserve_freq-1 ) / equip2_reserve_freq;
+			}
+			if (i == (i_equip2 * equip2_reserve_freq))
+			{
+				cf.at(CF_disbursement_equip2,i) =  equip2_reserve_cost * nameplate*1000 * pow( 1 + inflation_rate, i-1 );
+				i_equip2++;
+			}
+			cf.at(CF_reserve_equip2,i) = cf.at(CF_funding_equip2,i) - cf.at(CF_disbursement_equip2,i) + cf.at(CF_reserve_equip2,i-1);;
+			// major equipment 3 reserve
+			if ( (i <= (i_equip3 * equip3_reserve_freq)) && ((i_equip3 * equip3_reserve_freq) <= nyears) ) // note will not enter if equip_reequip3_reserve_freq=0
+			{
+				cf.at(CF_funding_equip3,i) = equip3_reserve_cost * nameplate*1000 * pow( 1 + inflation_rate, i_equip3 * equip3_reserve_freq-1 ) / equip3_reserve_freq;
+			}
+			if (i == (i_equip3 * equip3_reserve_freq))
+			{
+				cf.at(CF_disbursement_equip3,i) =  equip3_reserve_cost * nameplate*1000 * pow( 1 + inflation_rate, i-1 );
+				i_equip3++;
+			}
+			cf.at(CF_reserve_equip3,i) = cf.at(CF_funding_equip3,i) - cf.at(CF_disbursement_equip3,i) + cf.at(CF_reserve_equip3,i-1);
+			// total reserves
+			cf.at(CF_reserve_total,i) = 
+				cf.at(CF_reserve_debtservice,i) +
+				cf.at(CF_reserve_om,i) +
+				cf.at(CF_reserve_equip1,i) +
+				cf.at(CF_reserve_equip2,i) +
+				cf.at(CF_reserve_equip3,i);
+		}
+
+
+		// debt pre calculation
+		for (i=1; i<=nyears; i++)
+		{			
+		// Project partial income statement			
+			// energy_value = DHF Total PPA Revenue
+			cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); // ppa_mode==0
+			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
+			// salvage value
+			if (i==nyears) cf.at(CF_energy_value,nyears) += salvage_value;
+			// compute expenses
+			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
+			cf.at(CF_om_capacity_expense,i) *= nameplate;
+// fuel use?			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
+
 			double decline_percent = 100 - (i-1)*property_tax_decline_percentage;
 			cf.at(CF_property_tax_assesed_value,i) = (decline_percent > 0) ? property_tax_assessed_value * decline_percent * 0.01:0.0;
 			cf.at(CF_property_tax_expense,i) = cf.at(CF_property_tax_assesed_value,i) * property_tax_rate;
@@ -450,23 +577,48 @@ public:
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i);
+
+			cf.at(CF_ebitda,i) = cf.at(CF_energy_value,i) - cf.at(CF_operating_expenses,i);
+		
+			// term financing
+			if (i<=term_tenor)
+			{
+				cash_for_debt_service += cf.at(CF_ebitda,i);
+				if (i==1) 
+					cf.at(CF_pv_interest_factor,i) = 1.0/(1.0+term_int_rate);
+				else
+					cf.at(CF_pv_interest_factor,i) = cf.at(CF_pv_interest_factor,i-1)/(1.0+term_int_rate);
+				cf.at(CF_pv_cash_for_ds,i) = cf.at(CF_pv_interest_factor,i) * cf.at(CF_ebitda,i);
+				pv_cafds += cf.at(CF_pv_cash_for_ds,i);
+				if (dscr!=0) cf.at(CF_debt_size,i) = cf.at(CF_pv_cash_for_ds,i) / dscr;
+				size_of_debt += cf.at(CF_debt_size,i);
+			}
 		}
 
+		cf.at(CF_debt_balance,0) = size_of_debt;
 
-		// outputs
-		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
-		double ppa = 0;
-		if (ppa_mode == 0)
-			ppa = as_double("ppa_price_input");
-
-		// energy_value = DHF Total PPA Revenue
-		for (i=1; i<=nyears; i++)
-		{			
-			cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); // ppa_mode==0
-			cf.at(CF_energy_value,i) = cf.at(CF_ppa_price,i) /100.0;
+		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
+		{
+			if(dscr!=0) cf.at(CF_debt_payment_total,i) = cf.at(CF_ebitda,i) / dscr;
+			cf.at(CF_debt_payment_interest,i) = cf.at(CF_debt_balance,i-1) * term_int_rate;
+			cf.at(CF_debt_payment_principal,i) = cf.at(CF_debt_payment_total,i) - cf.at(CF_debt_payment_interest,i);
+			cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) - cf.at(CF_debt_payment_principal,i);
 		}
-		// salvage value
-		cf.at(CF_energy_value,nyears) += salvage_value;
+
+		assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
+		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
+		assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
+		save_cf( CF_pv_interest_factor, nyears, "CF_pv_interest_factor" );
+		save_cf( CF_pv_cash_for_ds, nyears, "CF_pv_cash_for_ds" );
+		save_cf( CF_debt_size, nyears, "CF_debt_size" );
+
+		save_cf( CF_debt_payment_total, nyears, "CF_debt_payment_total" );
+		save_cf( CF_debt_payment_interest, nyears, "CF_debt_payment_interest" );
+		save_cf( CF_debt_payment_principal, nyears, "CF_debt_payment_principal" );
+		save_cf( CF_debt_balance, nyears, "CF_debt_balance" );
+
+		
+
 
 
 		assign("ppa_price", var_data((ssc_number_t) ppa));
@@ -481,6 +633,14 @@ public:
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
+		save_cf( CF_ebitda, nyears, "cf_ebitda" );
+		save_cf( CF_reserve_debtservice, nyears, "cf_reserve_debtservice" );
+		save_cf( CF_reserve_om, nyears, "cf_reserve_om" );
+		save_cf( CF_reserve_equip1, nyears, "cf_reserve_equip1" );
+		save_cf( CF_reserve_equip2, nyears, "cf_reserve_equip2" );
+		save_cf( CF_reserve_equip3, nyears, "cf_reserve_equip3" );
+		save_cf( CF_reserve_total, nyears, "cf_reserve_total" );
+
 
 	}
 

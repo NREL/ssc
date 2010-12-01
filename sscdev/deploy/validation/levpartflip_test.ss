@@ -5,16 +5,19 @@ ssc_set("energy_net", energy_net)
 ssc_set("federal_tax_rate", 35.0)
 ssc_set("state_tax_rate", 5.5)
 ssc_set("real_discount_rate", 11.0)
-'ssc_set("insurance_rate", 0.5)
-'ssc_set("property_tax_rate", 2.0)
+ssc_set("insurance_rate", 0.5)
+ssc_set("property_tax_rate", 0.75)
 ssc_set("sales_tax_rate", 5.5)
 ssc_set("inflation_rate", 1.5)
 ssc_set("system_capacity", 10000)
 ssc_set("ppa_price_input", 33.73441692)
-'ssc_set("total_hard_cost", 865100)
-'ssc_set("total_soft_cost", 71500)
-'ssc_set("percent_of_cost_subject_sales_tax", 2.87)
-'ssc_set("salvage_percentage", 50)
+ssc_set("salvage_percentage", 50)
+
+' test equipment reserves
+ssc_set("equip2_reserve_freq",15)
+ssc_set("equip2_reserve_cost",0.1)
+ssc_set("equip3_reserve_freq",20)
+ssc_set("equip3_reserve_cost",0.05)
 
 
 ssc_set("loan_term", 15)
@@ -25,8 +28,11 @@ ssc_set("itc_fed_percent", array(30))
 ssc_set("depr_fed_type", 1) ' half year convention
 ssc_set("depr_sta_type", 1) ' half year convention
 
-ssc_set("om_fixed", array(3500))
-ssc_set("om_capacity", array(20))
+ssc_set("om_fixed", array(10000))
+ssc_set("om_fixed_escal", 1)
+ssc_set("om_capacity", array(22))
+ssc_set("om_capacity_escal", 0.75)
+ssc_set("om_production", array(3.5))
 
 
 ssc_set("itc_sta_percent", array(10,10,10,5))
