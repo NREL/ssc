@@ -143,6 +143,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Major equipment reserve 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Major equipment reserve 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Total reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Interest on reserves",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 		
 	{ SSC_OUTPUT,        SSC_ARRAY,      "CF_pv_cash_for_ds",     "Cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "CF_debt_size",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -193,7 +194,11 @@ enum {
 	CF_ebitda,
 
 	CF_reserve_debtservice,
+	CF_funding_debtservice,
+	CF_disbursement_debtservice,
 	CF_reserve_om,
+	CF_funding_om,
+	CF_disbursement_om,
 	CF_reserve_equip1,
 	CF_funding_equip1,
 	CF_disbursement_equip1,
@@ -204,6 +209,7 @@ enum {
 	CF_funding_equip3,
 	CF_disbursement_equip3,
 	CF_reserve_total,
+	CF_reserve_interest,
 
 	CF_deductible_expenses,
 
@@ -504,10 +510,6 @@ public:
 		for (i=1; i<=nyears; i++)
 		{			
 			// reserves calculations
-			// debt service reserve
-			// o and m reserve
-			if (i==1) cf.at(CF_reserve_om,i) = cost_working_reserve;
-			if (i==nyears) cf.at(CF_reserve_om,i) = -cost_working_reserve;
 			// major equipment 1 reserve
 			if ( (i <= (i_equip1 * equip1_reserve_freq)) && ((i_equip1 * equip1_reserve_freq) <= nyears) ) // note will not enter if equip_reequip1_reserve_freq=0
 			{
@@ -541,13 +543,6 @@ public:
 				i_equip3++;
 			}
 			cf.at(CF_reserve_equip3,i) = cf.at(CF_funding_equip3,i) - cf.at(CF_disbursement_equip3,i) + cf.at(CF_reserve_equip3,i-1);
-			// total reserves
-			cf.at(CF_reserve_total,i) = 
-				cf.at(CF_reserve_debtservice,i) +
-				cf.at(CF_reserve_om,i) +
-				cf.at(CF_reserve_equip1,i) +
-				cf.at(CF_reserve_equip2,i) +
-				cf.at(CF_reserve_equip3,i);
 		}
 
 
@@ -605,6 +600,39 @@ public:
 			cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) - cf.at(CF_debt_payment_principal,i);
 		}
 
+		// o and m reserve
+		cf.at(CF_funding_om,0) = cost_working_reserve;
+		cf.at(CF_disbursement_om,nyears) = -cost_working_reserve;
+		cf.at(CF_reserve_om,0) = cost_working_reserve;
+		for (i=1; i<=nyears; i++)
+			cf.at(CF_reserve_om,i) = cf.at(CF_reserve_om,i-1)+cf.at(CF_funding_om,i)+cf.at(CF_disbursement_om,i);
+
+		// debt service reserve
+
+		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
+		{
+			cf.at(CF_reserve_debtservice,i-1) = dscr_reserve_months/12.0 * (cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i));
+			cf.at(CF_funding_debtservice,i-1) = cf.at(CF_reserve_debtservice,i-1);
+			if (i>1) cf.at(CF_funding_debtservice,i-1) -= cf.at(CF_reserve_debtservice,i-2);
+		}
+		if (i>0) cf.at(CF_disbursement_debtservice,i)=0-cf.at(CF_debt_balance,i-1);
+
+
+
+		for (i=0; i<=nyears; i++)
+					// total reserves
+			cf.at(CF_reserve_total,i) = 
+				cf.at(CF_reserve_debtservice,i) +
+				cf.at(CF_reserve_om,i) +
+				cf.at(CF_reserve_equip1,i) +
+				cf.at(CF_reserve_equip2,i) +
+				cf.at(CF_reserve_equip3,i);
+
+		// interest on reserves
+		double reserves_interest = as_double("reserves_interest")*0.01;
+		for (i=1; i<=nyears; i++)
+			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
+
 		assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
 		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
 		assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
@@ -640,6 +668,7 @@ public:
 		save_cf( CF_reserve_equip2, nyears, "cf_reserve_equip2" );
 		save_cf( CF_reserve_equip3, nyears, "cf_reserve_equip3" );
 		save_cf( CF_reserve_total, nyears, "cf_reserve_total" );
+		save_cf( CF_reserve_interest, nyears, "CF_reserve_interest" );
 
 
 	}
