@@ -1,4 +1,4 @@
-' energy values used to match with DHF Team SAM Model Update - V2.xlsm
+' energy values used to match with DHF Team SAM Model Update - V3.xlsm
 energy_net   = array(17000000,16915000,16830425,16746273,16662542,16579229,16496333,16413851,16331782,16250123,16168872,16088028,16007588,15927550,15847912,15768672,15689829,15611380,15533323,15455656,15378378,15301486,15224979,15148854,15073110,14997744,14922755,14848142,14773901,14700031,14626531,14553399,14480632,14408228,14336187,14264506,14193184,14122218,14051607,13981349)
 
 ssc_set("energy_net", energy_net)
@@ -10,14 +10,17 @@ ssc_set("property_tax_rate", 0.75)
 ssc_set("sales_tax_rate", 5.5)
 ssc_set("inflation_rate", 1.5)
 ssc_set("system_capacity", 10000)
-ssc_set("ppa_price_input", 33.73441692)
-ssc_set("salvage_percentage", 50)
+ssc_set("ppa_price_input", 34.7539948813069)
+ssc_set("ppa_escalation", 2)
+ssc_set("salvage_percentage", 10)
 
 ' test equipment reserves
+ssc_set("equip1_reserve_freq",12)
+ssc_set("equip1_reserve_cost",0.25)
 ssc_set("equip2_reserve_freq",15)
-ssc_set("equip2_reserve_cost",0.1)
-ssc_set("equip3_reserve_freq",20)
-ssc_set("equip3_reserve_cost",0.05)
+ssc_set("equip2_reserve_cost",0.5)
+ssc_set("equip3_reserve_freq",3)
+ssc_set("equip3_reserve_cost",0.01)
 
 
 ssc_set("loan_term", 15)

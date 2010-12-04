@@ -124,6 +124,7 @@ static var_info _cm_vtab_levpartflip[] = {
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */	
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Net Energy",                     "kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "Total PPA revenue",                     "$",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -134,6 +135,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,        SSC_ARRAY,      "cf_total_revenue",    "Total revenue",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ebitda",    "EBITDA (cash available for debt service)",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -191,6 +193,7 @@ enum {
 	CF_property_tax_expense,
 	CF_insurance_expense,
 	CF_operating_expenses,
+	CF_total_revenue,
 	CF_ebitda,
 
 	CF_reserve_debtservice,
@@ -553,8 +556,11 @@ public:
 			// energy_value = DHF Total PPA Revenue
 			cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); // ppa_mode==0
 			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
+			// PBI
+			// total revenue
+			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) + cf.at(CF_pbi_total,i);
 			// salvage value
-			if (i==nyears) cf.at(CF_energy_value,nyears) += salvage_value;
+			if (i==nyears) cf.at(CF_total_revenue,nyears) += salvage_value;
 			// compute expenses
 			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
@@ -662,6 +668,8 @@ public:
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
 		save_cf( CF_ebitda, nyears, "cf_ebitda" );
+		save_cf( CF_total_revenue, nyears, "cf_total_revenue" );
+		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_reserve_debtservice, nyears, "cf_reserve_debtservice" );
 		save_cf( CF_reserve_om, nyears, "cf_reserve_om" );
 		save_cf( CF_reserve_equip1, nyears, "cf_reserve_equip1" );
