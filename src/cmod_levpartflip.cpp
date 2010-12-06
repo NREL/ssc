@@ -65,12 +65,12 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "return_target",			"After-tax flip/return target",		"%",	 "",					  "DHF",             "?=11",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "return_target_year",		"Return target year",				"",		 "",					  "DHF",             "?=11",					  "MIN=1",     			        "" },
 /* DHF depreciation allocation */
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and state allocation",	"%", "",	  "DHF",             "?=89",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and state allocation",	"%", "",  "DHF",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and state allocation",	"%", "",  "DHF",             "?=0",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=3",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=3",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=0.5",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5_percent",		"5-yr MACRS depreciation federal and state allocation",	"%", "",	  "DHF",             "?=89",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15_percent",		"15-yr MACRS depreciation federal and state allocation",	"%", "",  "DHF",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_5_percent",		"5-yr straight line depreciation federal and state allocation",	"%", "",  "DHF",             "?=0",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_15_percent",		"15-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=3",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_20_percent",		"20-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=3",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_39_percent",		"39-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=0.5",					  "MIN=0,MAX=100",     			        "" },
 /* DHF bonus depreciation */
 	{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_sta",			"State bonus depreciation",			"%",	 "",					  "DHF",             "?=0",						  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_5",   "State bonus depreciation 5-yr MACRS","0/1", "",                      "DHF",			 "?=1",                       "BOOLEAN",                        "" },
@@ -114,6 +114,32 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "nominal_discount_rate",   "Nominal discount rate",            "%",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "salvage_value",			"Net pre-tax cash salvage value",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none_percent",		"Non-depreciable federal and state allocation",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none",		"Non-depreciable federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and state allocation",	"$", "",  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and state allocation",	"$", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+// state itc table
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_macrs_5",		"5-yr MACRS depreciation ITC qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_macrs_15",		"15-yr MACRS depreciation ITC qualifying costs",	"$", "",  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_5",		"5-yr straight line depreciation ITC qualifying costs",	"$", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_15",		"15-yr straight line depreciation ITC qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_20",		"20-yr straight line depreciation ITC qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_39",		"39-yr straight line depreciation ITC qualifying costs","$", "",  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_total",		"Total ITC qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_macrs_5_percent",		"5-yr MACRS depreciation ITC qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_macrs_15_percent",		"15-yr MACRS depreciation ITC qualifying costs",	"%", "",  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_5_percent",		"5-yr straight line depreciation ITC qualifying costs",	"%", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_15_percent",		"15-yr straight line depreciation ITC qualifying costs","%", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_20_percent",		"20-yr straight line depreciation ITC qualifying costs","%", "",  "DHF",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_alloc_sl_39_percent",		"39-yr straight line depreciation ITC qualifying costs","%", "",  "DHF",             "*",					  "",     			        "" },
 
 /* intermediate outputs for validation */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
@@ -196,8 +222,15 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_financing_activities",    "Cash flow from financing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_cashflow",    "Pre-tax cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	/*	
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+// Project returns
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax",    "Pre-tax project returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_cumulative_irr",    "Pre-tax project cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_cumulative_npv",    "Pre-tax project cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_cash",    "After-tax project returns cash total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+		
+	//{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -207,7 +240,7 @@ static var_info _cm_vtab_levpartflip[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_fed_total",         "Federal ITC income",                 "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_sta_total",         "State ITC income",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-*/
+
 
 var_info_invalid };
 
@@ -271,6 +304,13 @@ enum {
 	CF_project_investing_activities,
 	CF_project_financing_activities,
 	CF_pretax_cashflow,
+
+
+	// Project returns
+	CF_project_return_pretax,
+	CF_project_return_cumulative_irr,
+	CF_project_return_cumulative_npv,
+	CF_project_return_aftertax_cash,
 
 	CF_deductible_expenses,
 
@@ -652,6 +692,20 @@ public:
 		assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
 		assign( "cost_installedperwatt", var_data((ssc_number_t)( cost_installed / nameplate / 1000.0 ) ));
 
+		double depr_alloc_macrs_5 = as_double("depr_alloc_macrs_5_percent") * 0.01 * cost_installed;
+		double depr_alloc_macrs_15 = as_double("depr_alloc_macrs_15_percent") * 0.01 * cost_installed;
+		double depr_alloc_sl_5 = as_double("depr_alloc_sl_5_percent") * 0.01 * cost_installed;
+		double depr_alloc_sl_15 = as_double("depr_alloc_sl_15_percent") * 0.01 * cost_installed;
+		double depr_alloc_sl_20 = as_double("depr_alloc_sl_20_percent") * 0.01 * cost_installed;
+		double depr_alloc_sl_39 = as_double("depr_alloc_sl_39_percent") * 0.01 * cost_installed;
+
+		assign( "depr_alloc_macrs_5", var_data((ssc_number_t) depr_alloc_macrs_5 ) );
+		assign( "depr_alloc_macrs_15", var_data((ssc_number_t) depr_alloc_macrs_15 ) );
+		assign( "depr_alloc_sl_5", var_data((ssc_number_t) depr_alloc_sl_5 ) );
+		assign( "depr_alloc_sl_15", var_data((ssc_number_t) depr_alloc_sl_15 ) );
+		assign( "depr_alloc_sl_20", var_data((ssc_number_t) depr_alloc_sl_20 ) );
+		assign( "depr_alloc_sl_39", var_data((ssc_number_t) depr_alloc_sl_39 ) );
+
 
 		// precompute credit basis
 		double federal_credit_basis = cost_installed
@@ -765,10 +819,29 @@ public:
 			if (i==0) cf.at(CF_project_financing_activities,i) = issuance_of_equity + size_of_debt;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
+
+			cf.at(CF_project_return_pretax,i) = cf.at(CF_pretax_cashflow,i);
+			if (i==0) cf.at(CF_project_return_pretax,i) -= issuance_of_equity; 
+
+			cf.at(CF_project_return_cumulative_irr,i) = irr(CF_project_return_pretax,i);
+			cf.at(CF_project_return_cumulative_npv,i) = npv(CF_project_return_pretax,i,nom_discount_rate) +  cf.at(CF_project_return_pretax,0) ;
+
+			cf.at(CF_project_return_aftertax_cash,i) = cf.at(CF_project_return_pretax,i);
 		}
 
+		save_cf( CF_ibi_total, nyears, "cf_ibi_total" );
+		save_cf( CF_cbi_total, nyears, "cf_cbi_total" );
+		save_cf( CF_pbi_total, nyears, "cf_pbi_total" );
+		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
+		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
+		save_cf( CF_itc_fed_total, nyears, "cf_itc_fed_total" );
+		save_cf( CF_itc_sta_total, nyears, "cf_itc_sta_total" );
 
 
+		save_cf( CF_project_return_aftertax_cash, nyears, "cf_project_return_aftertax_cash" );
+		save_cf( CF_project_return_pretax, nyears, "cf_project_return_pretax" );
+		save_cf( CF_project_return_cumulative_irr, nyears, "cf_project_return_cumulative_irr" );
+		save_cf( CF_project_return_cumulative_npv, nyears, "cf_project_return_cumulative_npv" );
 
 		save_cf( CF_project_financing_activities, nyears, "cf_project_financing_activities" );
 		save_cf( CF_pretax_cashflow, nyears, "cf_pretax_cashflow" );
@@ -1149,6 +1222,74 @@ public:
 			result = rr * result + cf.at(cf_line,i);
 
 		return result*rr;
+	}
+
+/* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
+	bool is_valid_iter_bound(double estimated_return_rate)
+	{
+		return estimated_return_rate != -1 && (estimated_return_rate < INT_MAX) && (estimated_return_rate > INT_MIN);
+	}
+
+	double irr_poly_sum(double estimated_return_rate, int cf_line, int count)
+	{
+		double sum_of_polynomial = 0;
+		if (is_valid_iter_bound(estimated_return_rate))
+		{
+			for (int j = 0; j <= count ; j++)
+			{
+				double val = (pow((1 + estimated_return_rate), j));
+				if (val != 0.0)
+					sum_of_polynomial += cf.at(cf_line,j)/val;
+				else
+					break;
+			}
+		}
+		return sum_of_polynomial;
+	}
+
+	double irr_derivative_sum(double estimated_return_rate,int cf_line, int count)
+	{
+		double sum_of_derivative = 0;
+		if (is_valid_iter_bound(estimated_return_rate))
+			for (int i = 1; i <= count ; i++)
+			{
+				sum_of_derivative += cf.at(cf_line,i)*(i)/pow((1 + estimated_return_rate), i);
+			}
+		return sum_of_derivative*-1;
+	}
+
+	double irr( int cf_line, int count, double initial_guess=0.01 )
+	{
+		int max_iterations=1000;
+		double tolerance = 1e-4;
+		int number_of_iterations=0;
+		double calculated_irr=0;
+
+		if (count < 3) 
+			return calculated_irr;
+
+		if ( (count > 1) && (cf.at(cf_line,0) <= 0))
+		{
+			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+			if (deriv_sum != 0)
+				calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
+			else
+				return initial_guess;
+
+			number_of_iterations++;
+			while (!(fabs(irr_poly_sum(calculated_irr,cf_line,count)) <= tolerance) && (number_of_iterations < max_iterations))
+			{
+				deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+				if (deriv_sum != 0.0)
+					calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
+				else
+					break;
+
+				number_of_iterations++;
+			}
+		}
+		if (number_of_iterations >= max_iterations) calculated_irr = 0; 
+		return calculated_irr;
 	}
 
 
