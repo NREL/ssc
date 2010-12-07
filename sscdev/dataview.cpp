@@ -123,14 +123,14 @@ public:
 			if (!v) return "<lookup error>";
 
 			if (v->type == SSC_STRING && row == 0) return wxString(v->str.c_str());
-			else if (v->type == SSC_NUMBER && row == 0) return wxString::Format("%lg", (double) v->num);
-			else if (v->type == SSC_ARRAY && row < v->num.length()) return wxString::Format("%lg", (double)v->num[row]);
+			else if (v->type == SSC_NUMBER && row == 0) return wxString::Format("%lf", (double) v->num);
+			else if (v->type == SSC_ARRAY && row < v->num.length()) return wxString::Format("%lf", (double)v->num[row]);
 			else if (v->type == SSC_MATRIX && row < v->num.nrows())
 			{
 				wxString ret;
 				for (int j=0;j<v->num.ncols();j++)
 				{
-					ret += wxString::Format("%*lg", 13, (double)v->num.at(row, j));
+					ret += wxString::Format("%*lf", 13, (double)v->num.at(row, j));
 				}
 
 				return ret;
