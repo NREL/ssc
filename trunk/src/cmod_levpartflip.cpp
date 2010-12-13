@@ -371,6 +371,8 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "After-tax tax investor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_max_irr",    "After-tax tax investor maximum IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
+	{ SSC_OUTPUT,        SSC_NUMBER,     "target_return_flip_year",       "Year Flip Target/Year Hurdle Rate Reached",                       "",    "",                      "DHF",      "*",                       "INTEGER",     "" },
+
 var_info_invalid };
 
 extern var_info
@@ -1526,9 +1528,10 @@ public:
 		double tax_investor_postflip_cash_frac = as_double("tax_investor_postflip_cash_percent") * 0.01;
 		double tax_investor_preflip_tax_frac = as_double("tax_investor_preflip_tax_percent") * 0.01;
 		double tax_investor_postflip_tax_frac = as_double("tax_investor_postflip_tax_percent") * 0.01;
-		double flip_target_percent = as_double("flip_target_percent") * 0.01;
+		double flip_target_percent = as_double("flip_target_percent") ;
 		double flip_target_year = as_integer("flip_target_year");
 		double equity_tax_investor = tax_investor_equity_frac * issuance_of_equity;
+		int flip_year=-1;
 
 		cf.at(CF_tax_investor_aftertax_cash,0) = -equity_tax_investor;
 		cf.at(CF_tax_investor_aftertax_itc,0) = 0;
@@ -1542,28 +1545,33 @@ public:
 
 		cf.at(CF_tax_investor_aftertax_irr,0) = irr(CF_tax_investor_aftertax_tax,0)*100.0;
 		cf.at(CF_tax_investor_aftertax_max_irr,0) = cf.at(CF_tax_investor_aftertax_irr,0);
-		cf.at(CF_tax_investor_aftertax_npv,0) = cf.at(CF_tax_investor_aftertax_tax,0) ;
+		cf.at(CF_tax_investor_aftertax_npv,0) = cf.at(CF_tax_investor_aftertax,0) ;
 
 		for (i=1;i<=nyears;i++)
 		{
-			cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,0) < flip_target_percent) ? 
+			cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
 						tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * cf.at(CF_project_return_aftertax_cash,i);
-			cf.at(CF_tax_investor_aftertax_itc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,0) < flip_target_percent) ? 
-						tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * cf.at(CF_itc_total,i);
-			cf.at(CF_tax_investor_aftertax_ptc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,0) < flip_target_percent) ? 
-						tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i));
-			cf.at(CF_tax_investor_aftertax_tax,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,0) < flip_target_percent) ? 
-						tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * (cf.at(CF_statax,i) + cf.at(CF_fedtax,i));
+			cf.at(CF_tax_investor_aftertax_itc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
+						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * cf.at(CF_itc_total,i);
+			cf.at(CF_tax_investor_aftertax_ptc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
+						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i));
+			cf.at(CF_tax_investor_aftertax_tax,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
+						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_statax,i) + cf.at(CF_fedtax,i));
 			cf.at(CF_tax_investor_aftertax,i) = 			
 				cf.at(CF_tax_investor_aftertax_cash,i) +
 				cf.at(CF_tax_investor_aftertax_itc,i) +
 				cf.at(CF_tax_investor_aftertax_ptc,i) +
 				cf.at(CF_tax_investor_aftertax_tax,i);
-			cf.at(CF_tax_investor_aftertax_irr,i) = irr(CF_tax_investor_aftertax_tax,i)*100.0;
+			cf.at(CF_tax_investor_aftertax_irr,i) = irr(CF_tax_investor_aftertax,i)*100.0;
 			cf.at(CF_tax_investor_aftertax_max_irr,i) = max(cf.at(CF_tax_investor_aftertax_max_irr,i-1),cf.at(CF_tax_investor_aftertax_irr,i));
-			cf.at(CF_tax_investor_aftertax_npv,i) = npv(CF_tax_investor_aftertax_tax,i,nom_discount_rate) +  cf.at(CF_tax_investor_aftertax_tax,0) ;
+			cf.at(CF_tax_investor_aftertax_npv,i) = npv(CF_tax_investor_aftertax,i,nom_discount_rate) +  cf.at(CF_tax_investor_aftertax,0) ;
+
+			if (flip_year <=0) 
+				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) && ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
 		}
 
+		assign("target_return_flip_year", var_data((ssc_number_t) flip_year));
+		
 
 		save_cf( CF_tax_investor_aftertax_cash, nyears, "cf_tax_investor_aftertax_cash" );
 		save_cf( CF_tax_investor_aftertax_itc, nyears, "cf_tax_investor_aftertax_itc" );
@@ -2059,25 +2067,39 @@ public:
 		if (is_valid_iter_bound(estimated_return_rate))
 			for (int i = 1; i <= count ; i++)
 			{
-				sum_of_derivative += cf.at(cf_line,i)*(i)/pow((1 + estimated_return_rate), i);
+				sum_of_derivative += cf.at(cf_line,i)*(i)/pow((1 + estimated_return_rate), i+1);
 			}
 		return sum_of_derivative*-1;
 	}
 
-	double irr( int cf_line, int count, double initial_guess=0.1 )
+	double irr( int cf_line, int count, double initial_guess=-1 )
 	{
-		int max_iterations=1000;
-		double tolerance =1e-7;
+		// from Excel
+//		int max_iterations=20;
+//		double tolerance =1e-5;
+//		initial_guess = 0.1;
+		// from various cases
+		int max_iterations=200;
+		double tolerance =1e-6;
+
 		int number_of_iterations=0;
 		double calculated_irr=0;
+
 
 		if (count < 1) 
 			return calculated_irr;
 
+		// initial guess from http://zainco.blogspot.com/2008/08/internal-rate-of-return-using-newton.html
+		if (initial_guess < 0) 
+		{
+			if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
+			if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
+		}
+
 		if ( (cf.at(cf_line,0) <= 0))
 		{
 			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
-			if (deriv_sum != 0)
+			if (deriv_sum != 0.0)
 				calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
 			else
 				return initial_guess;
@@ -2094,6 +2116,8 @@ public:
 				number_of_iterations++;
 			}
 		}
+		// TODO - check cases for which bounded irr -50% to 200% are all greater than zero or less than zero - no irr
+		// should be NA with explanation
 		if (number_of_iterations >= max_iterations) calculated_irr = 0; 
 		return calculated_irr;
 	}
