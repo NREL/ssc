@@ -268,7 +268,8 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Major equipment disbursement 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip3",    "Major equipment disbursement 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 		
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pv_cash_for_ds",     "Cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cash_for_ds",     "Cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pv_cash_for_ds",     "Present value of cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_size",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	
@@ -461,6 +462,7 @@ enum {
 	CF_deductible_expenses,
 
 	CF_pv_interest_factor,
+	CF_cash_for_ds,
 	CF_pv_cash_for_ds,
 	CF_debt_size,
 
@@ -809,12 +811,13 @@ public:
 			// term financing
 			if (i<=term_tenor)
 			{
-				cash_for_debt_service += cf.at(CF_ebitda,i);
+				cf.at(CF_cash_for_ds,i) = cf.at(CF_ebitda,i) - cf.at(CF_funding_equip1,i) - cf.at(CF_funding_equip2,i) - cf.at(CF_funding_equip3,i);
+				cash_for_debt_service += cf.at(CF_cash_for_ds,i);
 				if (i==1) 
 					cf.at(CF_pv_interest_factor,i) = 1.0/(1.0+term_int_rate);
 				else
 					cf.at(CF_pv_interest_factor,i) = cf.at(CF_pv_interest_factor,i-1)/(1.0+term_int_rate);
-				cf.at(CF_pv_cash_for_ds,i) = cf.at(CF_pv_interest_factor,i) * cf.at(CF_ebitda,i);
+				cf.at(CF_pv_cash_for_ds,i) = cf.at(CF_pv_interest_factor,i) * cf.at(CF_cash_for_ds,i);
 				pv_cafds += cf.at(CF_pv_cash_for_ds,i);
 				if (dscr!=0) cf.at(CF_debt_size,i) = cf.at(CF_pv_cash_for_ds,i) / dscr;
 				size_of_debt += cf.at(CF_debt_size,i);
@@ -825,7 +828,7 @@ public:
 
 		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
 		{
-			if(dscr!=0) cf.at(CF_debt_payment_total,i) = cf.at(CF_ebitda,i) / dscr;
+			if(dscr!=0) cf.at(CF_debt_payment_total,i) = cf.at(CF_cash_for_ds,i) / dscr;
 			cf.at(CF_debt_payment_interest,i) = cf.at(CF_debt_balance,i-1) * term_int_rate;
 			cf.at(CF_debt_payment_principal,i) = cf.at(CF_debt_payment_total,i) - cf.at(CF_debt_payment_interest,i);
 			cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) - cf.at(CF_debt_payment_principal,i);
@@ -1658,6 +1661,7 @@ public:
 		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
 		assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
 		save_cf( CF_pv_interest_factor, nyears, "cf_pv_interest_factor" );
+		save_cf( CF_cash_for_ds, nyears, "cf_cash_for_ds" );
 		save_cf( CF_pv_cash_for_ds, nyears, "cf_pv_cash_for_ds" );
 		save_cf( CF_debt_size, nyears, "cf_debt_size" );
 
