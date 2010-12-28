@@ -325,6 +325,42 @@ if __name__ == "__main__":
 		
 		ssc.module_free(mod)		
 		
+		
+		# Test windwatts with skystream 2.4
+		ssc.data_set_string(dat, 'file_name', 'rocksprings.tm2')
+		ssc.data_set_number(dat, 'ctl_mode', 2)
+		ssc.data_set_number(dat, 'cutin', 4)
+		ssc.data_set_number(dat, 'hub_ht', 13)
+		ssc.data_set_number(dat, 'lossc', 0)
+		ssc.data_set_number(dat, 'lossp', 0)
+		ssc.data_set_array(dat, 'pc_wind', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39])
+		ssc.data_set_array(dat, 'pc_power', [0,0,0,0,0.08,0.02,0.35,0.6,1,1.6,2,2.25,2.35,2.4,2.4,2.37,2.3,2.09,2,2,2,2,2,1.98,1.95,1.8,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+		ssc.data_set_number(dat, 'rotor_di', 3.7)
+		ssc.data_set_number(dat, 'shear', 0.14)
+		ssc.data_set_number(dat, 'turbul', 0.1)
+		ssc.data_set_array(dat, 'wt_x', [0])
+		ssc.data_set_array(dat, 'wt_y', [0])
+			
+			
+		# run wind system simulation
+		mod = ssc.module_create("windwatts")
+		if ssc.module_exec(mod, dat) == 0:
+			print 'WindWatts simulation error'
+			idx = 1
+			msg = ssc.module_log(mod, 0)
+			while (msg != None):
+				print '\t: ' + msg
+				msg = ssc.module_log(mod, idx)
+				idx = idx + 1
+		else:
+			ann = 0
+			ac = ssc.data_get_array(dat, "farmpwr")
+			for i in range(len(ac)):
+				ann += ac[i]		
+			print 'WindWatts Simulation ok, e_net (annual kW)=', ann
+			
+		ssc.module_free(mod)
+		
 		ssc.data_free(dat)
 	
 	
