@@ -13,7 +13,7 @@ static var_info _cm_vtab_windwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "wt_y",                       "Turbine Y coordinates",            "m",      "",                      "WindWatts",      "*",             "LENGTH_EQUAL=wt_x",     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "hub_ht",                     "Hub height",                       "m",      "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotor_di",                   "Rotor diameter",                   "m",      "",                      "WindWatts",      "*",             "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ctl_mode",                   "Control mode",                     "0/1/2",  "",                      "WindWatts",      "*",             "",                      "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "ctl_mode",                   "Control mode",                     "0/1/2",  "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cutin",                      "Cut-in wind speed",                "m/s",    "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossc",                      "Constant losses",                  "kW",     "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossp",                      "Percentage losses",                "0-100",  "",                      "WindWatts",      "*",             "",                      "" },
@@ -68,7 +68,12 @@ public:
 		double turbul = as_double("turbul");
 		double hub_ht = as_double("hub_ht");
 		double rotor_di = as_double("rotor_di");
-		int ctl_mode = as_integer("ctl_mode");
+
+		/* ctl_mode hardwired to '2'.  apparently not implemented 
+		  correctly for modes 0 and 1, so no point exposing it.
+		  apd 03jan11 */
+
+		int ctl_mode = 2; // as_integer("ctl_mode");
 		double cutin = as_double("cutin");
 		double lossc = as_double("lossc");
 		double lossp = as_double("lossp");
