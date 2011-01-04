@@ -23,9 +23,12 @@
     <ClCompile Include="src\cmod_easywatts.cpp" />
     <ClCompile Include="src\cmod_fossilgen.cpp" />
     <ClCompile Include="src\cmod_levpartflip.cpp" />
+    <ClCompile Include="src\cmod_ptflux.cpp" />
     <ClCompile Include="src\cmod_pvwatts.cpp" />
     <ClCompile Include="src\cmod_stdhrlywf.cpp" />
     <ClCompile Include="src\cmod_timeseq.cpp" />
+    <ClCompile Include="src\cmod_trndish.cpp" />
+    <ClCompile Include="src\cmod_trntower.cpp" />
     <ClCompile Include="src\cmod_utilityrate.cpp" />
     <ClCompile Include="src\cmod_windwatts.cpp" />
     <ClCompile Include="src\core.cpp">

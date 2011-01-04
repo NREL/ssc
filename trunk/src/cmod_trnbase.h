@@ -20,13 +20,22 @@ protected:
 	cm_trnbase();
 	virtual ~cm_trnbase() {  /* nothing to do here */ }
 
-	virtual bool pre_trnsys_call() { return true; }
-	virtual bool write_include_file( FILE *fp ) = 0;
-	virtual bool write_deck_end( FILE *fp ) { return true; }
-	virtual bool process_outputs() = 0;
+	virtual void pre_trnsys_call() throw( general_error ) { }
+	virtual void write_include_file( FILE *fp ) throw( general_error )= 0;
+	virtual void write_deck_end( FILE *fp ) throw( general_error ) { }
+	virtual void process_outputs() throw( general_error ) = 0;
 	virtual const char *deck_name() = 0;
 
-	bool save_column( output &data, const std::string &col_name, const std::string &var_name, ssc_number_t scale);
+	std::string work_dir();
+	std::string data_file();
+
+	virtual bool on_extproc_output( const std::string &text );
+
+	void save_column( output &data, 
+		const char *col_name, 
+		const char *var_name, 
+		ssc_number_t scale = 1.0,
+		int check_num_values = -1) throw( general_error );
 
 	bool accumulate_annual( output &data, const std::string &var, double &sum);
 	bool accumulate_monthly( output &data, const std::string &var, double sums[12]);
@@ -38,14 +47,14 @@ protected:
 	bool write_htf_file( const char *htf_type_var,
 		const char *htf_user_var,
 		const char *file );
-
-
+	
+	int weather_file_type(const char *wf);
 
 	struct trndata_t
 	{
 		std::string name;
 		std::string units;
-		std::vector<double> data;
+		std::vector<ssc_number_t> data;
 	};
 
 	class output
@@ -70,18 +79,6 @@ protected:
 		trndata_t *lookup( const std::string &var );		
 	};
 
-	class file_obj
-	{
-	public:
-		file_obj() : p(0) {  }
-		file_obj(const char *file, const char *mode) { p = fopen(file, mode); }
-		~file_obj() { close(); }
-		bool ok() { return 0!=p; }
-		operator FILE*() const { return p; }
-		void close() { if (p) ::fclose(p); p=0; }
-	private:
-		FILE *p;
-	};
 
 };
 
