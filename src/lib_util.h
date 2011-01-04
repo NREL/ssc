@@ -49,7 +49,8 @@ namespace util
 
 	std::string lower_case( const std::string &in );
 	std::string upper_case( const std::string &in );
-
+	
+	std::string read_file( const std::string &file );
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
 	
 	int month_of(double time); /* hour: 0 = jan 1st 12am, returns 1-12 */
@@ -81,7 +82,23 @@ namespace util
 	
 	std::string format(const char *fmt, ...);
 	size_t format_vn(char *buffer, int maxlen, const char *fmt, va_list arglist);
-	
+		
+	class stdfile
+	{
+	public:
+		stdfile() : p(0) {  }
+		stdfile(const char *file, const char *mode) { p = fopen(file, mode); }
+		stdfile( const std::string &file, const char *mode ) { p = fopen(file.c_str(), mode); }
+		~stdfile() { close(); }
+		bool open(const char *file, const char *mode) { close(); p = fopen(file,mode); return ok(); }
+		bool open(const std::string &file, const char *mode) {  return open(file.c_str(), mode); }
+		bool ok() { return 0!=p; }
+		operator FILE*() const { return p; }
+		void close() { if (p) ::fclose(p); p=0; }
+	private:
+		FILE *p;
+	};
+
 	template< typename T >
 	class matrix_t
 	{

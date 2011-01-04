@@ -181,17 +181,19 @@ bool util::mkdir( const char *path, bool make_full )
 {
 	if (make_full)
 	{
-		std::vector<std::string> dirs = split( path, "/\\" );
+		std::vector<std::string> parts = split( path, "/\\" );
 	
-		if (dirs.size() < 1) return false;
-
-		std::string cur_path = dirs[0];
-		for (size_t i=0;i<dirs.size();i++)
+		if (parts.size() < 1) return false;
+		
+		std::string cur_path = parts[0] + path_separator();
+		
+		for (size_t i=1;i<parts.size();i++)
 		{
-			cur_path += dirs[i];
-			if (!dir_exists(cur_path.c_str()))
-				if (0 != ::mkdir( cur_path.c_str() )) return false;
+			cur_path += parts[i];
 
+			if ( !dir_exists(cur_path.c_str()) )
+				if (0 != ::mkdir( cur_path.c_str() ) ) return false;
+						
 			cur_path += path_separator();
 		}
 
@@ -250,6 +252,20 @@ bool util::set_cwd( const std::string &path )
 #else
 	return ::chdir( path.c_str() ) == 0;
 #endif
+}
+
+std::string util::read_file( const std::string &file )
+{
+	std::string buf;
+	char c;
+	FILE *fp = fopen(file.c_str(), "r");
+	if (fp)
+	{
+		while ( (c=fgetc(fp))!=EOF )
+			buf += c;
+		fclose(fp);
+	}
+	return buf;
 }
 
 bool util::read_line( FILE *fp, std::string &buf, int prealloc )

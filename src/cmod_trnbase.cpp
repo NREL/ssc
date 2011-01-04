@@ -9,7 +9,7 @@ static var_info _cm_vtab_trnbase[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv3",                "TRNSYS User Defined Variable 3",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv4",                "TRNSYS User Defined Variable 4",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv5",                "TRNSYS User Defined Variable 5",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv7",                "TRNSYS User Defined Variable 6",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv6",                "TRNSYS User Defined Variable 6",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv7",                "TRNSYS User Defined Variable 7",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv8",                "TRNSYS User Defined Variable 8",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv9",                "TRNSYS User Defined Variable 9",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
@@ -22,12 +22,12 @@ var_info_invalid };
 	
 static param_info _cm_params_trnbase[] = {
 	/* TYPE,      NAME,       DEFAULT_VALUE,    DESCRIPTION */
-	{ SSC_STRING, "trnsys_exe",    "",            "Path to TRNSYS executable" },
-	{ SSC_STRING, "working_dir",   "",            "Local working directory" },
-	{ SSC_STRING, "hourly_file",   "",            "(sub)Hourly output file" },
-	{ SSC_NUMBER, "trnsys_start",  "0",           "Simulation start time (hr) (default=0)" },
-	{ SSC_NUMBER, "trnsys_end",    "8760",        "Simulation end time (hr) (default=8760)" },
-	{ SSC_NUMBER, "trnsys_step",   "1",           "Simulation time step (hr) (default=1)" },
+	{ SSC_STRING, "trnsys_exe",     "",            "Path to TRNSYS executable" },
+	{ SSC_STRING, "working_dir",    "",            "Local working directory" },
+	{ SSC_STRING, "data_file",      "",            "(sub)Hourly output data file" },
+	{ SSC_NUMBER, "trnsys_tmstart", "0",           "Simulation start time (hr) (default=0)" },
+	{ SSC_NUMBER, "trnsys_tmstop",  "8760",        "Simulation end time (hr) (default=8760)" },
+	{ SSC_NUMBER, "trnsys_tmstep",  "1",           "Simulation time step (hr) (default=1)" },
 	{ SSC_INVALID, NULL }  };
 
 cm_trnbase::cm_trnbase()
@@ -86,43 +86,71 @@ bool cm_trnbase::write_tou_file( const char *weekday_var, const char *weekend_va
 	return true;
 }
 
+int cm_trnbase::weather_file_type(const char *wf)
+{
+	std::string ext = util::lower_case( util::ext_only( wf ) );
+	
+	if (ext == "tm2") return 2;
+	if (ext == "tm3") return 7;
+	if (ext == "epw") return 3;
+	if (ext == "swf") return 8;
+
+	return 0;
+}
+
+std::string cm_trnbase::work_dir()
+{
+	return param_string("working_dir");
+}
+
+std::string cm_trnbase::data_file()
+{
+	return param_string("data_file");
+}
+
 void cm_trnbase::exec() throw(general_error)
 {
-	std::string work_dir = param_string("working_dir");
+	std::string wkdir = work_dir();
 	std::string exe = param_string("trnsys_exe");
 	std::string deck = deck_name();
 	
-	if (!util::dir_exists( work_dir.c_str() ))
-		util::mkdir( work_dir.c_str(), true );
+	if (!util::dir_exists( wkdir.c_str() ))
+		util::mkdir( wkdir.c_str(), true );
 
-	if (!util::dir_exists( work_dir.c_str() ))
-		throw general_error("could not create working directory for simulation: " + work_dir);
+	if (!util::dir_exists( wkdir.c_str() ))
+		throw general_error("could not create working directory for simulation: " + wkdir);
 	
-	std::string list_file = work_dir + util::path_separator() + deck + ".lst";
-	std::string log_file = work_dir + util::path_separator() + deck + ".log";
-	std::string trd_file = work_dir + util::path_separator() + deck + ".trd";
+	std::string list_file = wkdir + util::path_separator() + deck + ".lst";
+	std::string log_file = wkdir + util::path_separator() + deck + ".log";
+	std::string trd_file = wkdir + util::path_separator() + deck + ".trd";
 
-	file_obj f( trd_file.c_str(), "w" );
+	util::stdfile f( trd_file.c_str(), "w" );
 	if (!f.ok())
 		throw general_error("could not create write TRNSYS input file: " + trd_file);
 	
 	fprintf(f, "VERSION 16\n");
 	fprintf(f, "*****************************************************************\n");
-	fprintf(f, "*** TRNSYS input file generated by SSC for %s", deck.c_str());
+	fprintf(f, "*** TRNSYS input file generated by SSC for %s\n", deck.c_str());
 	fprintf(f, "*** Copyright (c) 2011 National Renewable Energy Laboratory\n");
 	fprintf(f, "*****************************************************************\n\n");
 
-	if (!write_include_file(f)) throw general_error("error writing include file section\n");
+	write_include_file(f);
 
-	fprintf(f, "\n\nCONSTANTS 10\n");
-	for (int i=0;i<=9;i++)
+	fprintf(f, "\n\nCONSTANTS 9\n");
+	for (int i=1;i<=9;i++)
 		fprintf(f, "\tUDV%d=%lg\n", i, 
-			as_double( util::format("trn_udv%d\n", i) ) );
+			as_double( util::format("trn_udv%d", i) ) );
 
 	fprintf(f, "\n*** end include section ***\n\n");
 
+	fprintf(f, "EQUATIONS 3\n");
+	fprintf(f, "\tSTART=%lg\n", (double)param_number("trnsys_tmstart"));
+	fprintf(f, "\tSTOP=%lg\n",  (double)param_number("trnsys_tmstop"));
+	fprintf(f, "\tSTEP=%lg\n\n",(double)param_number("trnsys_tmstep"));
+
+	
 	std::string deck_src = util::path_only(exe) + util::path_separator() + deck + ".trdsrc";
-	file_obj src( deck_src.c_str(), "r" );
+	util::stdfile src( deck_src.c_str(), "r" );
 	if (!src.ok()) throw general_error("error reading deck source file: " + deck_src);
 
 	int c;
@@ -131,22 +159,56 @@ void cm_trnbase::exec() throw(general_error)
 
 	src.close();
 	
-	if (!write_deck_end( f )) throw general_error("error writing deck common end portion");
+	write_deck_end( f );
 
 	f.close();
 
-	if (!pre_trnsys_call()) throw general_error("error with pre-trnsys call");
+	pre_trnsys_call( );
 	
 	// main call to external process marshaller:  run trn.exe
-	if (!extproc( exe, work_dir )) throw general_error("failed to run trnsys");
+	if (!extproc( "\"" + exe + "\" \"" + trd_file + "\"", util::path_only(exe) )) throw general_error("failed to run trnsys");
 
 	assign("deck_file", var_data(trd_file));
 	assign("log_file", var_data(log_file));
 
-	if (!process_outputs()) throw general_error("failed to read TRNSYS output data");
+	update("Reading data...", 99);
+	process_outputs( );
+	update("Finished.", 100);
+}
+
+bool cm_trnbase::on_extproc_output( const std::string &text )
+{
+	double percent = atof( text.c_str() );
+	
+	if (percent == 0.0)	update( "Processing...", 0.0f, 0.0f );
+	else update( "Simulating...", (float)percent, 0.0f );
+	
+	return true;
+}
+
+void cm_trnbase::save_column( output &data, 
+		const char *col_name, 
+		const char *var_name, 
+		ssc_number_t scale,
+		int check_num_values) throw( general_error )
+{
+	trndata_t *pd = data.lookup( col_name );
+	if (!pd) throw general_error("could not retrieve output data: " + std::string(col_name));
+
+	size_t n = pd->data.size();
+
+	if ( check_num_values >= 0 
+		&& check_num_values != (int)n )
+		throw general_error( util::format("inconsistent number of data values in output column %s: %d (%d expected)",
+			col_name, (int)n, check_num_values ) );
+
+	ssc_number_t *vec = allocate( var_name, n );
+
+	for (size_t i=0;i<n;i++) vec[i] = pd->data[i]*scale;
 }
 
 
+/* trnsys output file reader */
 
 bool cm_trnbase::output::read(const char *fn, size_t expected_data_len)
 {
@@ -185,7 +247,7 @@ bool cm_trnbase::output::read(const char *fn, size_t expected_data_len)
 	size_t line = 0, ncol, ndbuf;
 	char dblbuf[256], *p, *bp;
 	
-	line_buf_len = ncols * 100; // should be sufficient room for a whole line
+	line_buf_len = ncols * 128; // should be sufficient room for a whole line (128 chars per line)
 	char *buf = new char[ line_buf_len ];
 	
 	while ( 1 )
@@ -202,7 +264,7 @@ bool cm_trnbase::output::read(const char *fn, size_t expected_data_len)
 			while(*p && (*p==' '||*p=='\t')) p++; // skip white space
 			while(*p && (*p!=' '&&*p!='\t') && ++ndbuf < 127) *bp++ = *p++; // read in number
 			*bp = '\0'; // terminate string
-			m_cols[ncol++]->data.push_back( atof( dblbuf ) ); // convert number and save
+			m_cols[ncol++]->data.push_back( (ssc_number_t)atof( dblbuf ) ); // convert number and save
 		}
 		line++;
 	}
