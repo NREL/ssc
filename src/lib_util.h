@@ -6,7 +6,16 @@
 #include <vector>
 #include <cassert>
 
-#include "lib_util.h"
+
+#ifdef _MSC_VER
+#include <unordered_map>
+using std::tr1::unordered_map;
+#else
+#include <tr1/unordered_map>
+using std::tr1::unordered_map;
+#endif
+
+
 /* 
 
 For proper compilation:
@@ -48,7 +57,14 @@ namespace util
 
 	bool translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val);
 
-	char dir_sep();
+	bool file_exists( const char *file );
+	bool dir_exists( const char *path );
+	bool remove_file( const char *path );
+	bool mkdir( const char *path, bool make_full = false); 
+	std::string path_only( const std::string &path );
+	std::string name_only( const std::string &path );
+	std::string ext_only( const std::string &path );
+	char path_separator();
 	std::string get_cwd();
 	bool set_cwd( const std::string &path );
 	

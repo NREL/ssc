@@ -6,6 +6,10 @@
 #ifdef _WIN32
 #include <direct.h>
 #include <Windows.h>
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 
 #include "lib_util.h"
@@ -107,7 +111,7 @@ std::string util::lower_case( const std::string &in )
 {
 	std::string ret(in);
 	for (std::string::size_type i=0;i<ret.length();i++)
-		ret[i] = tolower(ret[i]);
+		ret[i] = (char)tolower(ret[i]);
 	return ret;
 }
 
@@ -115,11 +119,110 @@ std::string util::upper_case( const std::string &in )
 {
 	std::string ret(in);
 	for (std::string::size_type i=0;i<ret.length();i++)
-		ret[i] = toupper(ret[i]);
+		ret[i] = (char)toupper(ret[i]);
 	return ret;
 }
+
+bool util::file_exists( const char *file )
+{
+#ifdef _WIN32
+	// from wxWidgets: must use GetFileAttributes instead of ansi C 
+	// b/c can cope with network (unc) paths
+	DWORD ret = ::GetFileAttributes( file );
+	return (ret != (DWORD)-1) && !(ret & FILE_ATTRIBUTE_DIRECTORY);
+#else
+	struct stat st;
+	return stat(file, &st) == 0 && S_ISREG(st.st_mode);
+#endif
+}
+
+bool util::dir_exists( const char *path )
+{
+#ifdef _WIN32
+	// Windows fails to find directory named "c:\dir\" even if "c:\dir" exists,
+	// so remove all trailing backslashes from the path - but don't do this for
+	// the paths "d:\" (which are different from "d:") nor for just "\"
+	char *wpath = strdup( path );
+	if (!wpath) return false;
+
+	int pos = strlen(wpath)-1;
+	while (pos > 1 && (wpath[pos] == '/' || wpath[pos] == '\\'))
+	{
+		if (pos == 3 && wpath[pos-1] == ':') break;
+
+		wpath[pos] = 0;
+		pos--;
+	}
+
+	DWORD ret = ::GetFileAttributes(wpath);
+    bool exists =  (ret != (DWORD)-1) && (ret & FILE_ATTRIBUTE_DIRECTORY);
+
+	free( wpath );
+
+	return exists;
+#else
+	struct stat st;
+	return stat(path, st) == 0 && S_ISDIR(st.st_mode);
+#endif
+}
+
+bool util::remove_file( const char *path )
+{
+	return 0 == ::remove( path );
+}
+
+#ifdef _WIN32
+#define make_dir(x) ::mkdir(x)
+#else
+#define make_dir(x) ::mkdir(x, 0777)
+#endif
+
+bool util::mkdir( const char *path, bool make_full )
+{
+	if (make_full)
+	{
+		std::vector<std::string> dirs = split( path, "/\\" );
 	
-char util::dir_sep()
+		if (dirs.size() < 1) return false;
+
+		std::string cur_path = dirs[0];
+		for (size_t i=0;i<dirs.size();i++)
+		{
+			cur_path += dirs[i];
+			if (!dir_exists(cur_path.c_str()))
+				if (0 != ::mkdir( cur_path.c_str() )) return false;
+
+			cur_path += path_separator();
+		}
+
+		return true;
+	}
+	else
+		return 0 == ::mkdir( path );
+}
+
+std::string util::path_only( const std::string &path )
+{
+	std::string::size_type pos = path.find_last_of("/\\");
+	if (pos==std::string::npos) return path;
+	else return path.substr(0, pos);
+}
+
+std::string util::name_only( const std::string &path )
+{
+	std::string::size_type pos = path.find_last_of("/\\");
+	if (pos==std::string::npos) return path;
+	else return path.substr(pos+1);
+}
+
+std::string util::ext_only( const std::string &path )
+{
+	std::string::size_type pos = path.find_last_of('.');
+	if (pos==std::string::npos) return path;
+	else return path.substr(pos+1);
+}
+	
+char util::path_separator()
 {
 #ifdef _WIN32
 	return '\\';
@@ -151,7 +254,7 @@ bool util::set_cwd( const std::string &path )
 
 bool util::read_line( FILE *fp, std::string &buf, int prealloc )
 {
-	char c;
+	int c;
 
 	buf = "";
 	if (prealloc > 10)
@@ -159,7 +262,7 @@ bool util::read_line( FILE *fp, std::string &buf, int prealloc )
 
 	// read the whole line, 1 character at a time, no concern about buffer length
 	while ( (c=fgetc(fp)) != EOF && c != '\n' && c != '\r')
-		buf += c;
+		buf += (char)c;
 
 	// handle windows <CR><LF>
 	if (c == '\r')
