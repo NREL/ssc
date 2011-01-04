@@ -133,7 +133,7 @@ double my_erfc(const double &x)
     // returns the integral of Gauss' standard error function and complimentary error function
 	// first 6 digits match MS Excel erfc function, but they are different after that
 	int i;
-    double u, a0, a1, a2, b0, B1, b2, g, t, p, s, f1, f2, d;
+    double u, a0, a1, a2, b0, B1, b2, g, t, p, s, f1, f2=0, d;
 	double y, yc; // y = err function, yc = complimentary error function
     const int maxloop = 2000;
     const double pi_ = 2*acos(0.0);
