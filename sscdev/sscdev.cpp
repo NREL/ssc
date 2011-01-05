@@ -937,6 +937,10 @@ bool SCFrame::Load(const wxString &fn)
 		AllocReadLine(fp, buf); type = atoi(buf.c_str());
 		AllocReadLine(fp, sval);
 
+		for (size_t n=0;n<sval.Length();n++)
+			if (((char)sval.at(n)) == (char)11)
+				sval[n] = '\n';
+
 		var_data val;
 		var_data::parse( type, (const char*)sval.c_str(), val );
 
@@ -990,7 +994,12 @@ bool SCFrame::WriteToDisk(const wxString &fn)
 		
 		fprintf(fp, "%s\n", name );
 		fprintf(fp, "%d\n", v->type);
-		fprintf(fp, "%s\n", v->to_string().c_str());
+		
+		std::string nlfix = v->to_string();
+		for (size_t n=0;n<nlfix.length();n++)
+			if (nlfix[n] == '\n') nlfix[n] = (char)11;
+
+		fprintf(fp, "%s\n", nlfix.c_str());
 
 		name = m_varTable->next();
 	}
