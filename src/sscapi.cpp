@@ -24,7 +24,8 @@ extern module_entry_info
 	cm_entry_windwatts,
 	cm_entry_levpartflip,
 	cm_entry_trndish,
-	cm_entry_ptflux;
+	cm_entry_ptflux,
+	cm_entry_trntower;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -38,6 +39,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_levpartflip,
 	&cm_entry_trndish,
 	&cm_entry_ptflux,
+	&cm_entry_trntower,
 	NULL };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )

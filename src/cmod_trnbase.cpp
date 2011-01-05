@@ -66,6 +66,30 @@ bool cm_trnbase::accumulate_monthly( output &data, const std::string &var, doubl
 	return true;
 }
 
+bool cm_trnbase::write_htf_file( const char *custom_var, const char *file )
+{
+	size_t nrows = 0, ncols = 0;
+	ssc_number_t *tab = as_matrix(custom_var, &nrows, &ncols);
+
+	if (ncols != 7 || nrows < 2)
+	{
+		log("user specified htf table must have exactly seven columns and at least two rows");
+		return false;
+	}
+
+	FILE *fp = fopen(file, "w");
+	if (!fp) return false;
+
+	fprintf(fp, "&\n");
+	for (size_t r=0;r<nrows;r++)
+		for (size_t c=0;c<ncols;c++)
+			fprintf(fp,"%lg%c", RCINDEX(tab,ncols,r,c), (c<ncols-1)?' ':'\n');
+
+	fclose(fp);
+	return true;
+
+}
+
 bool cm_trnbase::write_tou_file( const char *weekday_var, const char *weekend_var, const char *file )
 {
 	int tod[8760];
