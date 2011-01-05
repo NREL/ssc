@@ -36,6 +36,9 @@ static var_info _cm_vtab_ptflux[] = {
 	{ SSC_OUTPUT,        SSC_MATRIX,     "optieff_matrix",           "Optical efficiency matrix",         "",    "",                         "PTFlux",      "*",                         "",                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "optieff_azimuth",          "Efficiency array azimuth angles"    "",    "",                         "PTFlux",      "*",                         "",                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "optieff_zenith",           "Efficiency array zenith angles"     "",    "",                         "PTFlux",      "*",                         "",                         "" },
+
+	{ SSC_OUTPUT,        SSC_STRING,     "optieff_datablob",         "Efficiency array data blob",        "",    "",                         "PTFlux",      "*",                         "",                         "" },
+	{ SSC_OUTPUT,        SSC_STRING,     "fluxmap_datablob",         "Flux map data blob",                "",    "",                         "PTFlux",      "*",                         "",                         "" },
 	
 
 var_info_invalid };
@@ -216,6 +219,9 @@ public:
 		assign( "optieff_matrix", var_data( opt.data(), opt.nrows(), opt.ncols() ) );
 		assign( "optieff_azimuth", azivec );
 		assign( "optieff_zenith", zenvec );
+
+		assign( "optieff_datablob", var_data( util::read_file( wkdir + util::path_separator() + "eff_array.dat" ) ));
+		assign( "fluxmap_datablob", var_data( util::read_file( wkdir + util::path_separator() + "fluxmap.csv" ) ));
 		
 		fp.close();
 

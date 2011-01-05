@@ -24,7 +24,7 @@ protected:
 	virtual void write_include_file( FILE *fp ) throw( general_error )= 0;
 	virtual void write_deck_end( FILE *fp ) throw( general_error ) { }
 	virtual void process_outputs() throw( general_error ) = 0;
-	virtual const char *deck_name() = 0;
+	virtual const char *deck_name() throw( general_error )= 0;
 
 	std::string work_dir();
 	std::string data_file();
@@ -44,8 +44,7 @@ protected:
 		const char *weekend_var,
 		const char *file );
 
-	bool write_htf_file( const char *htf_type_var,
-		const char *htf_user_var,
+	bool write_htf_file( const char *custom_var,
 		const char *file );
 	
 	int weather_file_type(const char *wf);

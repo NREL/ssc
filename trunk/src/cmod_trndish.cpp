@@ -212,7 +212,7 @@ public:
 			//log("failed to delete hourly file: " + hourly);
 	}
 
-	virtual const char *deck_name()
+	virtual const char *deck_name() throw( general_error )
 	{
 		return "csp_dish";
 	}
