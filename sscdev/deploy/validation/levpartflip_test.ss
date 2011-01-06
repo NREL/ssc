@@ -123,4 +123,22 @@ ssc_set("ptc_fed_amount", array(0))
 
 ssc_set("analysis_years", 30)
 
+
+ssc_set("tax_investor_equity_percent",98)
+ssc_set("tax_investor_preflip_cash_percent",98)
+ssc_set("tax_investor_postflip_cash_percent",15)
+ssc_set("tax_investor_preflip_tax_percent",98)
+ssc_set("tax_investor_postflip_tax_percent",15)
+ssc_set("flip_target_percent",11)
+ssc_set("flip_target_year",11)
+
+' 0 = solve for input ppa, 1 = iterative solve for ppa price to satisfy flip targe year and percent
+ssc_set("ppa_soln_mode",0)
+
+' iterative solution control variables
+ssc_set("ppa_soln_tolerance",1e-9)
+ssc_set("ppa_soln_max_iterations",100)
+ssc_set("ppa_soln_min",0)
+ssc_set("ppa_soln_max",100)
+
 ssc_start()
