@@ -31,7 +31,7 @@ protected:
 
 	virtual bool on_extproc_output( const std::string &text );
 
-	void save_column( output &data, 
+	void save_data( output &data, 
 		const char *col_name, 
 		const char *var_name, 
 		ssc_number_t scale = 1.0,
