@@ -210,7 +210,7 @@ bool cm_trnbase::on_extproc_output( const std::string &text )
 	return true;
 }
 
-void cm_trnbase::save_column( output &data, 
+void cm_trnbase::save_data( output &data, 
 		const char *col_name, 
 		const char *var_name, 
 		ssc_number_t scale,
@@ -226,9 +226,15 @@ void cm_trnbase::save_column( output &data,
 		throw general_error( util::format("inconsistent number of data values in output column %s: %d (%d expected)",
 			col_name, (int)n, check_num_values ) );
 
-	ssc_number_t *vec = allocate( var_name, n );
-
-	for (size_t i=0;i<n;i++) vec[i] = pd->data[i]*scale;
+	if ( n > 1 )
+	{
+		ssc_number_t *vec = allocate( var_name, n );
+		for (size_t i=0;i<n;i++) vec[i] = pd->data[i]*scale;
+	}
+	else
+	{
+		assign( var_name, var_data( (ssc_number_t) pd->data[0] ) );
+	}
 }
 
 

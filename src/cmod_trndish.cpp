@@ -76,12 +76,12 @@ static var_info _cm_vtab_trndish[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "ref_air_flow_rate",       "Reference air flow rate",           "cfm",     "",                     "Dish Stirling",       "*",                    "MIN=0",                              "" },
 
 	// outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "e_coll_in",               "Collector energy (in)",             "kWh",     "",                     "Dish Stirling",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "e_coll_out",              "Collector energy (out)",            "kWh",     "",                     "Dish Stirling",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "e_rec_in",                "Receiver energy (in)",              "kWh",     "",                     "Dish Stirling",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "e_rec_out",               "Receiver energy (out)",             "kWh",     "",                     "Dish Stirling",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "e_gross",                 "Gross electric generation",         "kWh",     "",                     "Dish Stirling",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "e_net",                   "Net electric generation",           "kWh",     "",                     "Dish Stirling",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "e_coll_in",               "Collector energy (in)",             "kWh",     "",                     "Dish Stirling",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "e_coll_out",              "Collector energy (out)",            "kWh",     "",                     "Dish Stirling",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "e_rec_in",                "Receiver energy (in)",              "kWh",     "",                     "Dish Stirling",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "e_rec_out",               "Receiver energy (out)",             "kWh",     "",                     "Dish Stirling",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "e_gross",                 "Gross electric generation",         "kWh",     "",                     "Dish Stirling",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "e_net",                   "Net electric generation",           "kWh",     "",                     "Dish Stirling",       "*",                    "LENGTH=8760",                              "" },
 	
 var_info_invalid };
 	
@@ -194,22 +194,23 @@ public:
 
 	virtual void process_outputs() throw( general_error )
 	{
+		update("Saving data...", 99.5);
+
 		std::string hourly = work_dir() + util::path_separator() + "dish_hourly.out";
 
 		output d;
 		if (!d.read( hourly.c_str() )) throw general_error("could not read hourly output file: " + hourly);
 		
-		update("Saving data...", 99.5);
 
-		save_column(d, "Power_in_Coll_Field", "e_coll_in", 1000.0, 8760);
-		save_column(d, "Power_out_Coll_Field", "e_coll_out", 1000.0, 8760);
-		save_column(d, "Power_in_Receiver_Field", "e_rec_in", 1000.0, 8760);
-		save_column(d, "Receiver_Power_Out_Field", "e_rec_out", 1000.0, 8760);
-		save_column(d, "Gross_Field_Power", "e_gross", 1000.0, 8760);
-		save_column(d, "Net_Field_Power", "e_net", 1000.0, 8760);
+		save_data(d, "Power_in_Coll_Field", "e_coll_in", 1000.0, 8760);
+		save_data(d, "Power_out_Coll_Field", "e_coll_out", 1000.0, 8760);
+		save_data(d, "Power_in_Receiver_Field", "e_rec_in", 1000.0, 8760);
+		save_data(d, "Receiver_Power_Out_Field", "e_rec_out", 1000.0, 8760);
+		save_data(d, "Gross_Field_Power", "e_gross", 1000.0, 8760);
+		save_data(d, "Net_Field_Power", "e_net", 1000.0, 8760);
 
-		//if (!util::remove_file( hourly.c_str() ))
-			//log("failed to delete hourly file: " + hourly);
+		if (!util::remove_file( hourly.c_str() ))
+			log("failed to delete hourly file: " + hourly);
 	}
 
 	virtual const char *deck_name() throw( general_error )

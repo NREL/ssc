@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "lib_wfhrly.h"
 #include "cmod_trnbase.h"
 
 
@@ -8,7 +9,7 @@
 #endif
 
 static var_info _cm_vtab_trntower[] = {
-/*   VARTYPE           DATATYPE         NAME                                  LABEL                                UNITS      META                      GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+/*   VARTYPE           DATATYPE         NAME                                  LABEL                                UNITS      META                      GROUP          REQUIRED_IF                  CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "weather_file",                      "Weather data file (TM2,TM2,EPW)",   "",       "",                      "CSPTower",      "*",                         "",                         "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "solar_multiple",                    "Solar multiple",                    "",       "",                      "CSPTower",      "*",                         "POSITIVE",                 "" },
@@ -17,177 +18,175 @@ static var_info _cm_vtab_trntower[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "span_angle",                        "Field span angle",                  "deg",    "",                      "CSPTower",      "*",                         "MIN=0,MAX=360",            "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "round_heliostats",                  "Use round heliostats",              "0/1",    "",                      "CSPTower",      "*",                         "BOOLEAN",                  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_width",                   "Heliostat width",                   "m",      "",                      "CSPTower",      "*",                         "",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_height",                  "Heliostat height",                  "m",      "",                      "CSPTower",      "*",                         "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_width",                   "Heliostat width",                   "m",      "",                      "CSPTower",      "*",                         "MIN=0",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_height",                  "Heliostat height",                  "m",      "",                      "CSPTower",      "*",                         "MIN=0",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "field_availability",                "Heliostat field availability",      "%",      "",                      "CSPTower",      "*",                         "MIN=0,MAX=100",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ratio_reflect_to_profile",          "Ratio reflected area to profile",   "frac",   "",                      "CSPTower",      "*",                         "MIN=0,MAX=1",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "mirror_reflectivity",               "Mirror reflectivity",               "frac",   "",                      "CSPTower",      "*",                         "MIN=0,MAX=1",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "max_hel_tower_dist_ratio",          "Max helio-to-tower distance ratio", "frac", "",                        "CSPTower",      "*",                         "POSITIVE",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "min_hel_tower_dist_ratio",          "Min helio-to-tower distance ratio", "frac", "",                        "CSPTower",      "*",                         "POSITIVE",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "image_error",                       "Image error",                       "rad",    "",                      "CSPTower",      "*",                         "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "image_error",                       "Image error",                       "rad",    "",                      "CSPTower",      "*",                         "MIN=0",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "coating_absorptivity",              "Coating absorptivity",              "frac",   "",                      "CSPTower",      "*",                         "MIN=0,MAX=1",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "max_receiver_flux",                 "Max receiver flux",                 "kWt/m2", "",                      "CSPTower",      "*",                         "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "max_receiver_flux",                 "Max receiver flux",                 "kWt/m2", "",                      "CSPTower",      "*",                         "MIN=0",                    "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "receiver_type",                     "Receiver type",                     "",       "0=external,1=cavity",   "CSPTower",      "*",                         "MIN=0,MAX=1,INTEGER",      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cavity_aperture_width",             "Cavity aperture width",             "m",      "",                      "CSPTower",      "receiver_type=1",           "",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cavity_aperture_hw_ratio",          "Cavity height-to-width ratio",      "frac",   "",                      "CSPTower",      "receiver_type=1",           "MIN=0,MAX=1",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cavity_lip_height_ratio",           "Cavity lip-to-height ratio",        "frac",   "",                      "CSPTower",      "receiver_type=1",           "MIN=0,MAX=1",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cavity_panel_height",               "Cavity panel height",               "",       "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cavity_aperture_width",             "Cavity aperture width",             "m",      "",                      "CSPTower",      "receiver_type=1",           "POSITIVE",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cavity_aperture_hw_ratio",          "Cavity height-to-width ratio",      "frac",   "",                      "CSPTower",      "receiver_type=1",           "POSITIVE",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cavity_lip_height_ratio",           "Cavity lip-to-height ratio",        "frac",   "",                      "CSPTower",      "receiver_type=1",           "POSITIVE",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cavity_panel_height",               "Cavity panel height",               "",       "",                      "CSPTower",       "*",                        "POSITIVE",                 "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "exter_height",                      "External receiver height",          "m",      "",                      "CSPTower",      "receiver_type=0",           "POSITIVE",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "exter_diameter",                    "External receiver diameter",        "m",      "",                      "CSPTower",      "receiver_type=0",           "POSITIVE"                  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "exter_num_panels",                  "External receiver num panels",      "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "exter_coating_emittance",           "External receiver emittance",       "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "exter_num_panels",                  "External receiver num panels",      "",       "",                      "CSPTower",      "receiver_type=0",           "POSITIVE,INTEGER",         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "exter_coating_emittance",           "External receiver emittance",       "frac",   "",                      "CSPTower",      "receiver_type=0",           "",                         "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "tower_height",                      "Tower height",                      "m",      "",                      "CSPTower",      "*",                         "MIN=0",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "design_gross_output",               "Plant design gross output",         "MW",     "",                      "CSPTower",      "*",                         "MIN=0",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cycle_eff",                         "Cycle efficiency",                  "frac",   "",                      "CSPTower",      "*",                         "MIN=0",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tower_height",                      "Tower height",                      "m",      "",                      "CSPTower",      "*",                         "POSITIVE",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "design_gross_output",               "Plant design gross output",         "MW",     "",                      "CSPTower",      "*",                         "POSITIVE",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cycle_eff",                         "Cycle efficiency",                  "frac",   "",                      "CSPTower",      "*",                         "MIN=0,MAX=1",              "" },
 
-	{ SSC_INPUT,        SSC_MATRIX,      "optieff_matrix",                    "Optical efficiency matrix",         "",       "",                         "CSPTower",      "*",                         "",                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "optieff_azimuth",                   "Efficiency array azimuth angles"    "",       "",                         "CSPTower",      "*",                         "",                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "optieff_zenith",                    "Efficiency array zenith angles"     "",       "",                         "CSPTower",      "*",                         "",                         "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",                   "Wind stow speed",                   "m/s",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "stow_deploy_angle",                 "Stow deploy angle",                 "deg",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",              "Water usage per wash",              "L/m2,ap","",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",                 "Washing frequency",                 "#/yr",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tube_outer_diameter",               "Tube outer diameter",               "mm",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tube_wall_thickness",               "Tube wall thickness",               "mm",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "flow_pattern",                      "Flow pattern",                      "0..8",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "req_htf_outlet_temp",               "Required HTF outlet temp",          "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "max_temp_to_receiver",              "Max temp to receiver",              "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "max_flow_to_receiver",              "Max flow rate to receiver",         "kg/s",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "enable_night_recirc",               "Enable night recirculation",        "0/1",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "recirc_eff",                        "Recirculation efficiency",          "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "htf_type",                          "HTF fluid type",                    "0..2",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "custom_htf",                        "Custom HTF fluid properties",       "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "min_turndown_frac",                 "Min turndown fraction",             "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "startup_delay_time",                "Startup delay time",                "hr",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "startup_delay_energy_frac",         "Startup delay energy fraction",     "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "heat_loss_f",                       "Heat loss factor",                  "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_STRING,      "optieff_datablob",                  "Optical efficiency data file",      "",       ""                       "CSPTower",      "*",                         "",                         "" },
+	{ SSC_INPUT,        SSC_STRING,      "fluxmap_datablob",                  "Flux map data file",                "",       ""                       "CSPTower",      "*",                         "",                         "" },
+	
+	{ SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",                   "Wind stow speed",                   "m/s",    "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "stow_deploy_angle",                 "Stow deploy angle",                 "deg",    "",                      "CSPTower",       "*",                        "",                         "" },
+	
+	{ SSC_INPUT,        SSC_NUMBER,      "tube_outer_diameter",               "Tube outer diameter",               "mm",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tube_wall_thickness",               "Tube wall thickness",               "mm",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flow_pattern",                      "Flow pattern",                      "0..8",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "req_htf_outlet_temp",               "Required HTF outlet temp",          "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "max_temp_to_receiver",              "Max temp to receiver",              "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "max_flow_to_receiver",              "Max flow rate to receiver",         "kg/s",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "enable_night_recirc",               "Enable night recirculation",        "0/1",    "",                      "CSPTower",       "*",                        "BOOLEAN",                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "recirc_eff",                        "Recirculation efficiency",          "frac",   "",                      "CSPTower",       "*",                        "MIN=0,MAX=1",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "htf_type",                          "HTF fluid type",                    "0..2",   "",                      "CSPTower",       "*",                        "INTEGER,MIN=0,MAX=2",      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "custom_htf",                        "Custom HTF fluid properties",       "",       "",                      "CSPTower",       "htf_type=2",               "NCOLS=7",                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "min_turndown_frac",                 "Min turndown fraction",             "frac",   "",                      "CSPTower",       "*",                        "MIN=0,MAX=1",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "startup_delay_time",                "Startup delay time",                "hr",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "startup_delay_energy_frac",         "Startup delay energy fraction",     "frac",   "",                      "CSPTower",       "*",                        "MIN=0,MAX=1",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heat_loss_f",                       "Heat loss factor",                  "",       "",                      "CSPTower",       "*",                        "",                         "" },
 	
 	// power block
-	{ SSC_INPUT,        SSC_NUMBER,      "boiler_steam_pressure",             "Boiler steam pressure",             "bar",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cycle_eff",                         "Cycle efficiency",                  "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "design_ambient_temp",               "Design ambient temp",               "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "design_htf_inlet_temp",             "Design HTF inlet temp",             "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "design_htf_outlet_temp",            "Design HTF outlet temp",            "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "design_thermal_power",              "Design thermal power",              "MWt",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "max_over_design",                   "Max over design operation fraction","frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "min_load",                          "Minimum loading",                   "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "min_temp_to_load",                  "Minimum temp to load",              "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ref_condenser_dt",                  "Reference condenser delta-T",       "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "standby_fraction",                  "Standby fraction",                  "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "standby_period",                    "Standby period",                    "hr",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "startup_fraction",                  "Startup fraction",                  "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "startup_time",                      "Startup time",                      "hr",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "lhv_eff",                           "Boiler lower heating value",        "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "blowdown_frac",                     "Blowdown fraction",                 "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "approach_temp",                     "Approach temperature",              "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "condenser_pressure_ratio",          "Condenser pressure ratio",          "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "condenser_type",                    "Condenser type",                    "0..2",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itd_design",                        "ITD at design",                     "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "min_condenser_pressure",            "Min condenser pressure",            "inHg",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hr_pl_nlev",                        "Cooling system part load levels",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl1",                           "Hybrid cooling dispatch fraction 1","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl2",                           "Hybrid cooling dispatch fraction 2","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl3",                           "Hybrid cooling dispatch fraction 3","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl4",                           "Hybrid cooling dispatch fraction 4","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl5",                           "Hybrid cooling dispatch fraction 5","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl6",                           "Hybrid cooling dispatch fraction 6","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl7",                           "Hybrid cooling dispatch fraction 7","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl8",                           "Hybrid cooling dispatch fraction 8","",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl9",                           "Hybrid cooling dispatch fraction 9","",       "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "boiler_steam_pressure",             "Boiler steam pressure",             "bar",    "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cycle_eff",                         "Cycle efficiency",                  "frac",   "",                      "CSPTower",       "*",                        "MIN=0,MAX=1",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "design_ambient_temp",               "Design ambient temp",               "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "design_htf_inlet_temp",             "Design HTF inlet temp",             "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "design_htf_outlet_temp",            "Design HTF outlet temp",            "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "design_thermal_power",              "Design thermal power",              "MWt",    "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "max_over_design",                   "Max over design operation fraction","frac",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "min_load",                          "Minimum loading",                   "frac",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "min_temp_to_load",                  "Minimum temp to load",              "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ref_condenser_dt",                  "Reference condenser delta-T",       "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "standby_fraction",                  "Standby fraction",                  "frac",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "standby_period",                    "Standby period",                    "hr",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "startup_fraction",                  "Startup fraction",                  "frac",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "startup_time",                      "Startup time",                      "hr",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "lhv_eff",                           "Boiler lower heating value",        "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "blowdown_frac",                     "Blowdown fraction",                 "frac",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "approach_temp",                     "Approach temperature",              "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "condenser_pressure_ratio",          "Condenser pressure ratio",          "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "condenser_type",                    "Condenser type",                    "0..2",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "itd_design",                        "ITD at design",                     "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "min_condenser_pressure",            "Min condenser pressure",            "inHg",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hr_pl_nlev",                        "Cooling system part load levels",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl1",                           "Hybrid cooling dispatch fraction 1","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl2",                           "Hybrid cooling dispatch fraction 2","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl3",                           "Hybrid cooling dispatch fraction 3","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl4",                           "Hybrid cooling dispatch fraction 4","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl5",                           "Hybrid cooling dispatch fraction 5","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl6",                           "Hybrid cooling dispatch fraction 6","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl7",                           "Hybrid cooling dispatch fraction 7","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl8",                           "Hybrid cooling dispatch fraction 8","",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl9",                           "Hybrid cooling dispatch fraction 9","",       "",                      "CSPTower",       "*",                        "",                         "" },
 	
 	// storage
-	{ SSC_INPUT,        SSC_NUMBER,      "full_load_ts_hours",                "Full load thermal storage hours",   "hr",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "parallel_tank_pairs",               "Number of parallel tank pairs",     "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tank_height",                       "Storage tank height",               "m",      "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "heater_eff",                        "Storage tank heater efficiency",    "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hot_heater_max_load",               "Hot tank heater max load",          "MWe",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hot_heater_set_temp",               "Hot tank heater set temp",          "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cold_heater_max_load",              "Cold tank heater max load",         "MWe",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cold_heater_set_temp",              "Cold tank heater set temp",         "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_temp",                 "Initial hot tank HTF temp",         "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "init_cold_htf_temp",                "Initial cold tank HTF temp",        "'C",     "",                      "CSPTower",       "*",                    "",                              "" },	
-	{ SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_percent",              "Initial hot tank HTF percentage",   "%",      "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "wetted_loss_coeff",                 "Wetted loss coefficient",           "Wt/m2-K","",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dry_loss_coeff",                    "Dry loss coefficient",              "Wt/m2-K","",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "storage_bypass",                    "Enable storage bypass valve",       "0/1",    "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "full_load_ts_hours",                "Full load thermal storage hours",   "hr",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "parallel_tank_pairs",               "Number of parallel tank pairs",     "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tank_height",                       "Storage tank height",               "m",      "",                      "CSPTower",       "*",                        "MIN=0,MAX=1",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heater_eff",                        "Storage tank heater efficiency",    "frac",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hot_heater_max_load",               "Hot tank heater max load",          "MWe",    "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hot_heater_set_temp",               "Hot tank heater set temp",          "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cold_heater_max_load",              "Cold tank heater max load",         "MWe",    "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cold_heater_set_temp",              "Cold tank heater set temp",         "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_temp",                 "Initial hot tank HTF temp",         "'C",     "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "init_cold_htf_temp",                "Initial cold tank HTF temp",        "'C",     "",                      "CSPTower",       "*",                        "",                         "" },	
+	{ SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_percent",              "Initial hot tank HTF percentage",   "%",      "",                      "CSPTower",       "*",                        "MIN=0,MAX=100",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "wetted_loss_coeff",                 "Wetted loss coefficient",           "Wt/m2-K","",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dry_loss_coeff",                    "Dry loss coefficient",              "Wt/m2-K","",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "storage_bypass",                    "Enable storage bypass valve",       "0/1",    "",                      "CSPTower",       "*",                        "BOOLEAN",                         "" },
 	
 	// dispatch
-	{ SSC_INPUT,        SSC_STRING,      "dispatch_weekday",                  "Weekday dispatch schedule",           "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_STRING,      "dispatch_weekend",                  "Weekend dispatch schedule",           "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_fossil",                  "Dispatch Period 1 Fossil Fraction"    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_nosolar",                 "Dispatch Period 1 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_solar",                   "Dispatch Period 1 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_turbout",                 "Dispatch Period 1 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_fossil",                  "Dispatch Period 2 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_nosolar",                 "Dispatch Period 2 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_solar",                   "Dispatch Period 2 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_turbout",                 "Dispatch Period 2 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_fossil",                  "Dispatch Period 3 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_nosolar",                 "Dispatch Period 3 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_solar",                   "Dispatch Period 3 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_turbout",                 "Dispatch Period 3 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_fossil",                  "Dispatch Period 4 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_nosolar",                 "Dispatch Period 4 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_solar",                   "Dispatch Period 4 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_turbout",                 "Dispatch Period 4 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_fossil",                  "Dispatch Period 5 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_nosolar",                 "Dispatch Period 5 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_solar",                   "Dispatch Period 5 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_turbout",                 "Dispatch Period 5 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_fossil",                  "Dispatch Period 6 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_nosolar",                 "Dispatch Period 6 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_solar",                   "Dispatch Period 6 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_turbout",                 "Dispatch Period 6 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_fossil",                  "Dispatch Period 7 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_nosolar",                 "Dispatch Period 7 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_solar",                   "Dispatch Period 7 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_turbout",                 "Dispatch Period 7 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_fossil",                  "Dispatch Period 8 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_nosolar",                 "Dispatch Period 8 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_solar",                   "Dispatch Period 8 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_turbout",                 "Dispatch Period 8 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_fossil",                  "Dispatch Period 9 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_nosolar",                 "Dispatch Period 9 No Solar Fraction", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_solar",                   "Dispatch Period 9 Solar Fraction",    "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_turbout",                 "Dispatch Period 9 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_STRING,      "dispatch_weekday",                  "Weekday dispatch schedule",           "",       "",                      "CSPTower",       "*",                        "TOUSCHED",                 "" },
+	{ SSC_INPUT,        SSC_STRING,      "dispatch_weekend",                  "Weekend dispatch schedule",           "",       "",                      "CSPTower",       "*",                        "TOUSCHED",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_fossil",                  "Dispatch Period 1 Fossil Fraction"    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_nosolar",                 "Dispatch Period 1 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_solar",                   "Dispatch Period 1 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch1_turbout",                 "Dispatch Period 1 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_fossil",                  "Dispatch Period 2 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_nosolar",                 "Dispatch Period 2 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_solar",                   "Dispatch Period 2 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch2_turbout",                 "Dispatch Period 2 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_fossil",                  "Dispatch Period 3 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_nosolar",                 "Dispatch Period 3 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_solar",                   "Dispatch Period 3 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch3_turbout",                 "Dispatch Period 3 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_fossil",                  "Dispatch Period 4 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_nosolar",                 "Dispatch Period 4 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_solar",                   "Dispatch Period 4 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch4_turbout",                 "Dispatch Period 4 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_fossil",                  "Dispatch Period 5 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_nosolar",                 "Dispatch Period 5 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_solar",                   "Dispatch Period 5 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch5_turbout",                 "Dispatch Period 5 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_fossil",                  "Dispatch Period 6 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_nosolar",                 "Dispatch Period 6 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_solar",                   "Dispatch Period 6 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch6_turbout",                 "Dispatch Period 6 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_fossil",                  "Dispatch Period 7 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_nosolar",                 "Dispatch Period 7 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_solar",                   "Dispatch Period 7 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch7_turbout",                 "Dispatch Period 7 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_fossil",                  "Dispatch Period 8 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_nosolar",                 "Dispatch Period 8 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_solar",                   "Dispatch Period 8 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch8_turbout",                 "Dispatch Period 8 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_fossil",                  "Dispatch Period 9 Fossil Fraction",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_nosolar",                 "Dispatch Period 9 No Solar Fraction", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_solar",                   "Dispatch Period 9 Solar Fraction",    "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dispatch9_turbout",                 "Dispatch Period 9 Turbine Fraction",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
 
 	// parastics
-	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_startup_energy",          "Heliostat startup energy",            "kWe-hr", "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_tracking_power",          "Heliostat tracking energy",           "kWe",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "piping_loss_coeff",                 "Piping loss coefficient",             "Wt/m",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "rec_htf_pump_eff",                  "Receiver HTF pump efficiency",        "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "storage_pump_power",                "Storage pump power",                  "MWe/MWt","",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_piping_length",               "Total piping length",                 "m",      "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "aux_c0",                            "Aux heater/boiler parasitic coeff 0", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "aux_c1",                            "Aux heater/boiler parasitic coeff 1", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "aux_c2",                            "Aux heater/boiler parasitic coeff 2", "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "aux_pf",                            "Aux heater/boiler parasitic factor",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "aux_val",                           "Aux heater/boiler parasitic value",   "MWe/MWcap","",                    "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bop_c0",                            "Balance of plant parasitic coeff 0",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bop_c1",                            "Balance of plant parasitic coeff 1",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bop_c2",                            "Balance of plant parasitic coeff 2",  "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bop_pf",                            "Balance of plant parasitic factor",   "",       "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bop_val",                           "Balance of plant parasitic value",    "MWe/MWcap",""                     "CSPTower",       "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pb_fixed_frac",                     "Fixed power consumption fraction",    "MWe/MWt","",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_startup_energy",          "Heliostat startup energy",            "kWe-hr", "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_tracking_power",          "Heliostat tracking energy",           "kWe",    "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "piping_loss_coeff",                 "Piping loss coefficient",             "Wt/m",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_htf_pump_eff",                  "Receiver HTF pump efficiency",        "frac",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "storage_pump_power",                "Storage pump power",                  "MWe/MWt","",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_piping_length",               "Total piping length",                 "m",      "",                      "CSPTower",       "*",                        "MIN=0",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "aux_c0",                            "Aux heater/boiler parasitic coeff 0", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "aux_c1",                            "Aux heater/boiler parasitic coeff 1", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "aux_c2",                            "Aux heater/boiler parasitic coeff 2", "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "aux_pf",                            "Aux heater/boiler parasitic factor",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "aux_val",                           "Aux heater/boiler parasitic value",   "MWe/MWcap","",                    "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "bop_c0",                            "Balance of plant parasitic coeff 0",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "bop_c1",                            "Balance of plant parasitic coeff 1",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "bop_c2",                            "Balance of plant parasitic coeff 2",  "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "bop_pf",                            "Balance of plant parasitic factor",   "",       "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "bop_val",                           "Balance of plant parasitic value",    "MWe/MWcap",""                     "CSPTower",       "*",                        "",                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pb_fixed_frac",                     "Fixed power consumption fraction",    "MWe/MWt","",                      "CSPTower",       "*",                        "",                         "" },
 	
 	
 	// outputs
-	{ SSC_OUTPUT,        SSC_ARRAY,       "dni",                              "DNI",                                  "kW/m2",  "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "windspd",                          "Wind Speed",                           "m/s",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "ambtemp",                          "Ambient Temp",                         "'C",     "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "sol_rad_inc_on_col",               "Incident Solar Radiation",             "kWh",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "thermal_energy_from_sf",           "Thermal Energy From SF",               "kWh",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "thermal_energy_to_powerblock",     "Thermal Energy to Power Block",        "kWh",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "gross_electric_output",            "Gross Electric Output",                "kWh",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "e_net",                            "Net Electric Output",                  "kWh",    "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "water_usage",                      "Water Usage",                          "m3/hr",  "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "dni",                              "DNI",                                  "kW/m2",  "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "windspd",                          "Wind speed",                           "m/s",    "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "ambtemp",                          "Ambient temp",                         "'C",     "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "sol_rad_inc_on_col",               "Incident solar radiation",             "kWh",    "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "thermal_energy_from_sf",           "Thermal energy from solar field",      "kWh",    "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "thermal_energy_to_powerblock",     "Thermal energy to power block",        "kWh",    "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "gross_electric_output",            "Gross electric output",                "kWh",    "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "e_net",                            "Net electric output",                  "kWh",    "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "water_flow",                       "Water flow",                           "m3/hr",  "",                      "CSPTower",       "*",                        "LENGTH=8760",                         "" },
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,      "fuel_usage",                       "Annual Fuel Usage (kWht)",             "kWht",   "",                      "CSPTower",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "gross_to_net_conversion_factor",   "Gross to Net Conv. Factor",            "frac",   "",                      "CSPTower",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "fuel_usage",                       "Annual Fuel Usage (kWht)",             "kWht",   "",                      "CSPTower",       "*",                        "",                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "gross_to_net_conversion_factor",   "Gross to Net Conv. Factor",            "frac",   "",                      "CSPTower",       "*",                        "",                         "" },
 	
 var_info_invalid };
 
@@ -228,6 +227,12 @@ public:
 		std::string warnings_file = work_dir() + util::path_separator() + "warnings.out";
 		std::string pb_coeff_file = work_dir() + util::path_separator() + "pb_coeff.in";
 		const char *weather_file = as_string("weather_file");
+
+
+		wf_header hdr;
+		if (!wf_read_header( weather_file, &hdr ))
+			throw general_error("could not scan weather file header information: " + std::string(weather_file));
+
 
 		FILE *fout;
 
@@ -305,12 +310,17 @@ public:
 		fprintf(fp, "d_rec = %lg\n", as_double("exter_diameter"));
 
 		if (as_integer("receiver_type")==0)
+		{
 			fprintf(fp, "h_rec = %lg\n", as_double("exter_height")); // EXTERNAL
-		else
+			fprintf(fp, "Rec_d_spec = 0.0\n");
+			fprintf(fp, "H_lip = 0.0\n");
+		}
+		else 
+		{
 			fprintf(fp, "h_rec = %lg\n", as_double("cavity_panel_height")); // CAVITY
-
-		fprintf(fp, "H_lip = %lg\n", as_double("csp.pt.rec.cav_lip_height"));
-		fprintf(fp, "Rec_d_spec = %lg\n", as_double("cavity_aperture_width"));
+			fprintf(fp, "Rec_d_spec = %lg\n", as_double("cavity_aperture_width"));
+			fprintf(fp, "H_lip = %lg\n", as_double("cavity_panel_height")*as_double("cavity_lip_height_ratio"));
+		}
 
 		fprintf(fp, "h_tower = %lg\n", as_double("tower_height"));
 		fprintf(fp, "d_tube = %lg\n", as_double("tube_outer_diameter"));
@@ -327,7 +337,9 @@ public:
 		fprintf(fp, "recirc_htr_eff = %lg\n", as_double("recirc_eff"));
 		fprintf(fp, "nazm = %d\n", nazm);
 		fprintf(fp, "nrad = %d\n", nrad);
-		fprintf(fp, "Plant_lattitude = %lg\n", as_double("climate.latitude"));
+
+
+		fprintf(fp, "Plant_lattitude = %lg\n", hdr.lat);
 	
 		fprintf(fp, "f_rec_min = %lg\n", as_double("min_turndown_frac"));
 		fprintf(fp, "Q_rec_des = %lg\n", as_double("design_thermal_power"));
@@ -335,20 +347,12 @@ public:
 		fprintf(fp, "rec_qf_delay = %lg\n", as_double("startup_delay_energy_frac"));
 
 		fputs("\n", fp);
-
-		/*double p_cycle_design = as_double("csp.pt.pwrb.nameplate_capacity") * ( 1.0
-			+ as_double("storage_pump_power") * (as_double("full_load_ts_hours")/5)
-			+ 0.03
-			+ as_double("csp.pt.par.balance_power")
-			+ as_double("csp.pt.par.cooling_tower_power") );*/
-
-		double p_cycle_design = as_double("design_gross_output");
-
+		
 		fprintf(fp, "****************Power Block page****************\n");
 		fprintf(fp, "CONSTANTS 27\n");
 		fprintf(fp, "tech_type = 1\n");
 		fprintf(fp, "LU_pb = 65\n");
-		fprintf(fp, "P_cycle_design = %lg\n", p_cycle_design);
+		fprintf(fp, "P_cycle_design = %lg\n", as_double("design_gross_output"));
 		fprintf(fp, "Eff_cycle_design = %lg\n", as_double("cycle_eff"));
 		fprintf(fp, "T_HTF_in_ref = %lg\n", as_double("design_htf_inlet_temp"));
 		fprintf(fp, "T_HTF_out_ref = %lg\n", as_double("design_htf_outlet_temp"));
@@ -476,15 +480,42 @@ public:
 		fprintf(fp, "bop_par = %lg\n", as_double("bop_val"));
 		fprintf(fp, "pb_fixed_par = %lg\n", as_double("pb_fixed_frac"));
 
-		fputs("\n", fp);
-
-		fprintf(fp, "*END OF INCLUDE FILE\n\n");
-
 	}
 
 	virtual void process_outputs() throw( general_error )
 	{
 		update("Saving data...", 99.5);
+		
+		std::string hourly = work_dir() + util::path_separator() + "tower.hourly.out";
+
+		output d;
+		if (!d.read( hourly.c_str() )) throw general_error("could not read hourly output file: " + hourly);
+	
+		save_data(d, "DNI", "dni", 1.0, 8760);
+		save_data(d, "V_wind", "windspd", 1.0, 8760);
+		save_data(d, "Dry_bulb_temp", "ambtemp", 1.0, 8760);
+		save_data(d, "Total_incident_power", "sol_rad_inc_on_col", 1000.0, 8760);
+		save_data(d, "Power_from_receiver", "thermal_energy_from_sf", 1000.0, 8760);
+		save_data(d, "Q_to_PB", "thermal_energy_to_powerblock", 1000.0, 8760);
+		save_data(d, "Power_from_cycle_elec", "gross_electric_output", 1000.0, 8760);
+		save_data(d, "Power_to_the_grid", "e_net", 1000.0, 8760);
+		save_data(d, "water_makeup_flow", "water_flow", (ssc_number_t)(1/998.2), 8760); //Vol [m3] = mass [kg] * 1/998.2 [m3/kg]
+
+		
+		double net_total = 1.0, gross_total = 1.0;
+		if (!accumulate_annual( d, "Power_from_cycle_elec", gross_total)
+			|| ! accumulate_annual( d, "Power_to_the_grid", net_total)) 
+			throw general_error("could not accumulate annual values for gross and net generation");
+
+		std::string annual = work_dir() + util::path_separator() + "tower.annual.out";
+		if (!d.read( annual.c_str() )) throw general_error("could not read annual output file: " + annual);
+		
+		save_data(d, "Fossil_energy", "fuel_usage", 1000.0, 1);
+		assign("gross_to_net_conversion_factor", var_data( (ssc_number_t)( net_total / gross_total ) ));
+
+		if (!util::remove_file( hourly.c_str() ))
+			log("failed to delete hourly file: " + hourly);
+	
 	}
 
 	virtual const char *deck_name() throw( general_error )
