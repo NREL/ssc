@@ -335,8 +335,8 @@ public:
 		fprintf(fp, "epsilon = %lg\n", as_double("exter_coating_emittance"));
 		fprintf(fp, "night_recirc = %d\n", as_integer("enable_night_recirc"));
 		fprintf(fp, "recirc_htr_eff = %lg\n", as_double("recirc_eff"));
-		fprintf(fp, "nazm = %d\n", nazm);
-		fprintf(fp, "nrad = %d\n", nrad);
+		fprintf(fp, "nazm = %d\n", (int)nazm);
+		fprintf(fp, "nrad = %d\n", (int)nrad);
 
 
 		fprintf(fp, "Plant_lattitude = %lg\n", hdr.lat);

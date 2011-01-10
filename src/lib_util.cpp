@@ -162,7 +162,7 @@ bool util::dir_exists( const char *path )
 	return exists;
 #else
 	struct stat st;
-	return stat(path, st) == 0 && S_ISDIR(st.st_mode);
+	return ::stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 #endif
 }
 
@@ -192,7 +192,7 @@ bool util::mkdir( const char *path, bool make_full )
 			cur_path += parts[i];
 
 			if ( !dir_exists(cur_path.c_str()) )
-				if (0 != ::mkdir( cur_path.c_str() ) ) return false;
+				if (0 != make_dir( cur_path.c_str() ) ) return false;
 						
 			cur_path += path_separator();
 		}
@@ -200,7 +200,7 @@ bool util::mkdir( const char *path, bool make_full )
 		return true;
 	}
 	else
-		return 0 == ::mkdir( path );
+		return 0 == make_dir( path );
 }
 
 std::string util::path_only( const std::string &path )
