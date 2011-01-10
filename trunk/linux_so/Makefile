@@ -7,6 +7,10 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
 
 OBJECTS = \
+	cmod_trntower.o \
+	cmod_trnbase.o \
+	cmod_trndish.o \
+	cmod_ptflux.o \
 	cmod_cashloan.o \
 	cmod_easywatts.o \
 	cmod_levpartflip.o \
@@ -22,6 +26,7 @@ OBJECTS = \
 	lib_vartab.o \
 	lib_wfhrly.o \
 	lib_windwatts.o \
+	lib_getem.o \
 	sscapi.o \
 	vtab_common.o
 
