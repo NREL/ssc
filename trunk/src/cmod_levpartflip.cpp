@@ -1533,7 +1533,9 @@ public:
 				cf.at(CF_reserve_interest,i) -
 				cf.at(CF_debt_payment_interest,i) -
 				cf.at(CF_feddepr_total,i) +
-				cf.at(CF_statax,i);
+				cf.at(CF_statax,i) +
+				cf.at(CF_itc_sta_total,i) +
+				cf.at(CF_ptc_sta,i);
 
 			cf.at(CF_fedtax_taxable_incentives,i) =
 				( as_boolean("ibi_fed_amount_tax_fed") ? cf.at(CF_ibi_fed_amt,i) : 0 ) +
