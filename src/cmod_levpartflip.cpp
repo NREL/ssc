@@ -117,7 +117,6 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "pbi_uti_for_ds",    "Utility PBI available for debt service",     "0/1",      "",                      "DHF",      "?=0",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_for_ds",    "Other PBI available for debt service",     "0/1",      "",                      "DHF",      "?=0",                       "",                                         "" },
 
-
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_contingency",        "Contingency cost",                 "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_hard",               "Hard cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
@@ -202,6 +201,10 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",					  "",     			        "" },
 
+
+/* depreciation bases method - added with version 4.1    0=5-yrMacrs, 1=proportional */
+	{ SSC_INPUT,        SSC_NUMBER,      "depr_stabas_method",    "Method of state depreciation reduction",     "0/1",      "",                      "DHF",      "?=0",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "depr_fedbas_method",    "Method of federal depreciation reduction",     "0/1",      "",                      "DHF",      "?=0",                       "",                                         "" },
 
 /* State depreciation table */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_5",		"5-yr MACRS state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
@@ -1233,6 +1236,25 @@ public:
 		double depr_alloc_sl_20_frac = depr_alloc_sl_20 / depr_alloc_total;
 		double depr_alloc_sl_39_frac = depr_alloc_sl_39 / depr_alloc_total;
 
+		if (as_integer("depr_stabas_method")==0) 
+		{
+			depr_alloc_macrs_5_frac = 1.0;
+			depr_alloc_macrs_15_frac = 0.0;
+			depr_alloc_sl_5_frac = 0.0;
+			depr_alloc_sl_15_frac = 0.0;
+			depr_alloc_sl_20_frac = 0.0;
+			depr_alloc_sl_39_frac = 0.0;
+		}
+		else
+		{
+			depr_alloc_macrs_5_frac = depr_alloc_macrs_5 / depr_alloc_total;
+			depr_alloc_macrs_15_frac = depr_alloc_macrs_15 / depr_alloc_total;
+			depr_alloc_sl_5_frac = depr_alloc_sl_5 / depr_alloc_total;
+			depr_alloc_sl_15_frac = depr_alloc_sl_15 / depr_alloc_total;
+			depr_alloc_sl_20_frac = depr_alloc_sl_20 / depr_alloc_total;
+			depr_alloc_sl_39_frac = depr_alloc_sl_39 / depr_alloc_total;
+		}
+
 // State depreciation
 		double depr_sta_reduction =  (
 			( as_boolean("ibi_fed_amount_deprbas_sta")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
@@ -1322,7 +1344,26 @@ public:
 		assign( "depr_stabas_total", var_data((ssc_number_t) depr_stabas_total ) );
 
 
-// Federal depreciation
+		// Federal depreciation
+		if (as_integer("depr_fedbas_method")==0) 
+		{
+			depr_alloc_macrs_5_frac = 1.0;
+			depr_alloc_macrs_15_frac = 0.0;
+			depr_alloc_sl_5_frac = 0.0;
+			depr_alloc_sl_15_frac = 0.0;
+			depr_alloc_sl_20_frac = 0.0;
+			depr_alloc_sl_39_frac = 0.0;
+		}
+		else
+		{
+			depr_alloc_macrs_5_frac = depr_alloc_macrs_5 / depr_alloc_total;
+			depr_alloc_macrs_15_frac = depr_alloc_macrs_15 / depr_alloc_total;
+			depr_alloc_sl_5_frac = depr_alloc_sl_5 / depr_alloc_total;
+			depr_alloc_sl_15_frac = depr_alloc_sl_15 / depr_alloc_total;
+			depr_alloc_sl_20_frac = depr_alloc_sl_20 / depr_alloc_total;
+			depr_alloc_sl_39_frac = depr_alloc_sl_39 / depr_alloc_total;
+		}
+
 		double depr_fed_reduction =  (
 			( as_boolean("ibi_fed_amount_deprbas_fed")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
 			( as_boolean("ibi_fed_percent_deprbas_fed")  ? npv( CF_ibi_fed_per, nyears, nom_discount_rate ) : 0 ) +
@@ -1674,10 +1715,10 @@ public:
 		if (ppa_mode == 1)
 		{
 			double residual = cf.at(CF_tax_investor_aftertax_irr, flip_target_year) - flip_target_percent;
-			solved = ( fabs( residual ) < ppa_soln_tolerance );
+			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(ppa_min-ppa_max) < ppa_soln_tolerance) );
 			if (!solved)
 			{
-				double itnpv = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
+				double itnpv = cf.at(CF_tax_investor_aftertax_npv, flip_target_year);
 				if (cf.at(CF_tax_investor_aftertax_irr, flip_target_year) > 0) // use residual
 				{
 					if (residual < 0)
@@ -1694,7 +1735,7 @@ public:
 				}
 				ppa = 0.5 * (ppa_min + ppa_max);
 				std::stringstream outm;
-				outm << "iteration=" << its << ", npv=" << itnpv  << ", residual=" << residual << ", ppa=" << ppa << ", ppa_min=" << ppa_min << ", ppamax=" << ppa_max;
+				outm << "iteration=" << its << ", npv=" << itnpv  << ", residual=" << residual << ", ppa=" << ppa << ", ppa_min=" << ppa_min << ", ppamax=" << ppa_max << ", ppamax-ppamin=" << ppa_max-ppa_min;
 				log( outm.str() );
 			}
 		}
