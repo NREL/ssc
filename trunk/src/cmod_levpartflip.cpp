@@ -1741,8 +1741,7 @@ public:
 		}
 		its++;
 
-	}
-		// target tax investor return in target year
+	}	// target tax investor return in target year
 	while ( !solved  && (its < ppa_soln_max_iteations) );
 
 

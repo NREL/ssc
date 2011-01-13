@@ -299,7 +299,7 @@ float compute_module::as_float( const std::string &name ) throw( general_error )
 	return (float) x.num;
 }
 
-float compute_module::as_number( const std::string &name ) throw( general_error )
+ssc_number_t compute_module::as_number( const std::string &name ) throw( general_error )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("ssc_number_t", x, name);
