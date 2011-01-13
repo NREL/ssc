@@ -12,6 +12,8 @@ ssc_set("sales_tax_rate", 5.5)
 ssc_set("inflation_rate", 1.5)
 ssc_set("system_capacity", 10000)
 ssc_set("ppa_price_input", 34.7539948813069)
+'Excel Solution
+'ssc_set("ppa_price_input",35.4463141118696)
 ssc_set("ppa_escalation", 2)
 ssc_set("salvage_percentage", 10)
 
@@ -23,6 +25,9 @@ ssc_set("equip2_reserve_cost",0.5)
 ssc_set("equip3_reserve_freq",3)
 ssc_set("equip3_reserve_cost",0.01)
 
+' depreciation reduction method
+ssc_set("depr_fedbas_method",0)
+ssc_set("depr_stabas_method",0)
 
 ' test bonus depreciation
 ssc_set("depr_bonus_sta", 5)
@@ -121,7 +126,7 @@ ssc_set("ptc_fed_amount", array(0))
 'ssc_set("ptc_fed_term", 10)
 'ssc_set("ptc_fed_escal", 1.5)
 
-ssc_set("analysis_years", 30)
+ssc_set("analysis_years", 30.0)
 
 
 ssc_set("tax_investor_equity_percent",98)
@@ -136,7 +141,7 @@ ssc_set("flip_target_year",11)
 ssc_set("ppa_soln_mode",0)
 
 ' iterative solution control variables
-ssc_set("ppa_soln_tolerance",1e-9)
+ssc_set("ppa_soln_tolerance",1e-6)
 ssc_set("ppa_soln_max_iterations",100)
 ssc_set("ppa_soln_min",0)
 ssc_set("ppa_soln_max",100)
