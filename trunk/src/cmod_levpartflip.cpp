@@ -388,7 +388,6 @@ static var_info _cm_vtab_levpartflip[] = {
 	// Sponsor
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_equity",    "Pre-tax sponsor equity investment",  "$", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_development",    "Pre-tax sponsor development fee",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_operating",    "Pre-tax sponsor operating case distributions/(contributions)",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax",    "Pre-tax sponsor total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_irr",    "Pre-tax sponsor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_npv",    "Pre-tax sponsor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -397,7 +396,6 @@ static var_info _cm_vtab_levpartflip[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_equity",    "After-tax sponsor equity investment",  "$", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_development",    "After-tax sponsor development fee",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_operating",    "After-tax sponsor operating case distributions/(contributions)",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_cash",    "After-tax sponsor cash returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax",    "After-tax sponsor total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_itc",    "After-tax sponsor itc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -494,11 +492,9 @@ enum {
 	CF_tax_investor_aftertax_npv,
 
 	// sponsor returns
-	CF_sponsor_pretax_operating,
 	CF_sponsor_pretax,
 	CF_sponsor_pretax_irr,
 	CF_sponsor_pretax_npv,
-	CF_sponsor_aftertax_operating,
 	CF_sponsor_aftertax_cash,
 	CF_sponsor_aftertax,
 	CF_sponsor_aftertax_itc,
@@ -1652,7 +1648,6 @@ public:
 		cf.at(CF_tax_investor_aftertax_max_irr,0) = cf.at(CF_tax_investor_aftertax_irr,0);
 		cf.at(CF_tax_investor_aftertax_npv,0) = cf.at(CF_tax_investor_aftertax,0) ;
 
-		cf.at(CF_sponsor_aftertax_operating,0) = cf.at(CF_project_return_aftertax_cash,0) - cf.at(CF_tax_investor_aftertax_cash,0);
 
 		double sponsor_pretax_equity_investment = -issuance_of_equity * (1.0 - tax_investor_equity_frac);
 		double sponsor_pretax_development_fee = cost_dev_fee_percent * cost_prefinancing;
@@ -1663,7 +1658,7 @@ public:
 		assign("sv_sponsor_aftertax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
 
 
-		cf.at(CF_sponsor_aftertax_cash,0) = cf.at(CF_project_return_aftertax_cash,0) - cf.at(CF_tax_investor_aftertax_cash,0) + sponsor_pretax_equity_investment + sponsor_pretax_development_fee;
+		cf.at(CF_sponsor_aftertax_cash,0) = sponsor_pretax_equity_investment + sponsor_pretax_development_fee;
 		cf.at(CF_sponsor_aftertax,0) = cf.at(CF_sponsor_aftertax_cash,0);
 		cf.at(CF_sponsor_pretax_irr,0) = irr(CF_sponsor_aftertax_tax,0)*100.0;
 		cf.at(CF_sponsor_pretax_npv,0) = cf.at(CF_sponsor_aftertax,0) ;
@@ -1693,10 +1688,8 @@ public:
 				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) && ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
 
 
-			cf.at(CF_sponsor_aftertax_operating,i) = cf.at(CF_project_return_aftertax_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
-			cf.at(CF_sponsor_aftertax_cash,i) = cf.at(CF_sponsor_aftertax_operating,i);
-			cf.at(CF_sponsor_pretax_operating,i) = cf.at(CF_sponsor_aftertax_operating,i);
-			cf.at(CF_sponsor_pretax,i) = cf.at(CF_sponsor_pretax_operating,i);
+			cf.at(CF_sponsor_aftertax_cash,i) = cf.at(CF_project_return_aftertax_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
+			cf.at(CF_sponsor_pretax,i) = cf.at(CF_sponsor_aftertax_cash,i);
 			cf.at(CF_sponsor_aftertax_itc,i) = cf.at(CF_itc_total,i) - cf.at(CF_tax_investor_aftertax_itc,i);
 			cf.at(CF_sponsor_aftertax_ptc,i) = (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i)) - cf.at(CF_tax_investor_aftertax_ptc,i);
 			cf.at(CF_sponsor_aftertax_tax,i) = (cf.at(CF_statax,i) + cf.at(CF_fedtax,i)) - cf.at(CF_tax_investor_aftertax_tax,i);
@@ -1705,6 +1698,8 @@ public:
 				cf.at(CF_sponsor_aftertax_itc,i) +
 				cf.at(CF_sponsor_aftertax_ptc,i) +
 				cf.at(CF_sponsor_aftertax_tax,i);
+			// year 1 development fee tax
+			if (i==1) cf.at(CF_sponsor_aftertax,i) -= sponsor_pretax_development_fee * (as_double("state_tax_rate")*0.01 + as_double("federal_tax_rate")*0.01 * (1.0 - as_double("state_tax_rate")*0.01));
 			cf.at(CF_sponsor_pretax_irr,i) = irr(CF_sponsor_pretax,i)*100.0;
 			cf.at(CF_sponsor_pretax_npv,i) = npv(CF_sponsor_pretax,i,nom_discount_rate) +  cf.at(CF_sponsor_pretax,0) ;
 			cf.at(CF_sponsor_aftertax_irr,i) = irr(CF_sponsor_aftertax,i)*100.0;
@@ -1764,11 +1759,9 @@ public:
 
 		// cash flow line items
 
-		save_cf( CF_sponsor_pretax_operating, nyears, "cf_sponsor_pretax_operating" );
 		save_cf( CF_sponsor_pretax, nyears, "cf_sponsor_pretax" );
 		save_cf( CF_sponsor_pretax_irr, nyears, "cf_sponsor_pretax_irr" );
 		save_cf( CF_sponsor_pretax_npv, nyears, "cf_sponsor_pretax_npv" );
-		save_cf( CF_sponsor_aftertax_operating, nyears, "cf_sponsor_aftertax_operating" );
 		save_cf( CF_sponsor_aftertax_cash, nyears, "cf_sponsor_aftertax_cash" );
 		save_cf( CF_sponsor_aftertax, nyears, "cf_sponsor_aftertax" );
 		save_cf( CF_sponsor_aftertax_itc, nyears, "cf_sponsor_aftertax_itc" );
