@@ -647,9 +647,10 @@ public:
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		double ppa_escalation = as_double("ppa_escalation")*0.01;
 		double disc_real = as_double("real_discount_rate")*0.01;
+		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
+		double state_tax_rate = as_double("state_tax_rate")*0.01;
 
 		double nom_discount_rate = (1+inflation_rate)*(1+disc_real)-1;
-		assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
 
 		double gen = as_double("cost_gen_equip");
 		double bop = as_double("cost_bop");
@@ -667,23 +668,14 @@ public:
 
 		double cost_soft = dev + land + other;
 		double cost_salestax = (cost_hard + cost_cont + cost_soft) * cost_taxable * sales_tax_rate;
-		assign( "cost_contingency", var_data((ssc_number_t) cost_cont ) );
-		assign( "cost_hard", var_data( (ssc_number_t)(cost_hard + cost_cont)) );
-		assign( "cost_salestax", var_data((ssc_number_t)cost_salestax ) );
-		assign( "cost_soft", var_data((ssc_number_t) (cost_soft + cost_salestax) ) );
 
 		// use DHF named range names for variables whenever possible
 		double cost_prefinancing = cost_soft + cost_salestax + cost_hard + cost_cont;
 		double nameplate = as_double("system_capacity");
-		assign( "cost_prefinancing", var_data((ssc_number_t) cost_prefinancing ) );
-		assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
-
+	
 		double assessed_frac = as_double("prop_tax_cost_assessed_percent")*0.01;
-		assign( "prop_tax_assessed_value", var_data((ssc_number_t)( assessed_frac * cost_prefinancing )));
-
 		double salvage_value_frac = as_double("salvage_percentage")*0.01;
 		double salvage_value = salvage_value_frac * cost_prefinancing;
-		assign( "salvage_value", var_data((ssc_number_t)salvage_value));
 
 		double cost_debt_closing = as_double("cost_debt_closing");
 		double cost_equity_closing = as_double("cost_equity_closing");
@@ -744,7 +736,6 @@ public:
 		compute_production_incentive( CF_ptc_sta, nyears, "ptc_sta_amount", "ptc_sta_term", "ptc_sta_escal" );
 		compute_production_incentive( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
 		
-		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
 		double ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for pp_mode=0
 
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
@@ -846,7 +837,6 @@ public:
 			}
 		}
 
-		// debt pre calculation
 		for (i=1; i<=nyears; i++)
 		{			
 		// Project partial income statement			
@@ -872,7 +862,7 @@ public:
 		for (i=1; i<=nyears; i++)
 			cf.at(CF_reserve_om,i) = cf.at(CF_reserve_om,i-1)+cf.at(CF_funding_om,i)+cf.at(CF_disbursement_om,i);
 
-		for (i=0;i<nyears; i++)
+		for (i=0;i<=nyears; i++)
 		{
 			cf.at(CF_project_wcra,i) = -cf.at(CF_funding_om,i) - cf.at(CF_disbursement_om,i);
 			cf.at(CF_project_me1ra,i) = -cf.at(CF_funding_equip1,i) - cf.at(CF_disbursement_equip1,i);
@@ -882,12 +872,6 @@ public:
 
 		// interest on reserves
 		double reserves_interest = as_double("reserves_interest")*0.01;
-		for (i=1; i<=nyears; i++)
-			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
-
-
-
-
 
 		double tax_investor_equity_frac = as_double("tax_investor_equity_percent") * 0.01;
 		double tax_investor_preflip_cash_frac = as_double("tax_investor_preflip_cash_percent") * 0.01;
@@ -899,7 +883,6 @@ public:
 		double issuance_of_equity;
 		double equity_tax_investor;
 		double sponsor_pretax_equity_investment;
-
 
 		// precompute ibi
 		single_or_schedule_check_max( CF_ibi_fed_per, nyears, 0.01*cost_prefinancing, "ibi_fed_percent", "ibi_fed_percent_maxvalue" );
@@ -920,9 +903,7 @@ public:
 			cf.at(CF_itc_fed_total,i) = cf.at(CF_itc_fed_amt,i) + cf.at(CF_itc_fed_per,i);
 			cf.at(CF_itc_sta_total,i) = cf.at(CF_itc_sta_amt,i) + cf.at(CF_itc_sta_per,i);
 			cf.at(CF_itc_total,i) = cf.at(CF_itc_fed_total,i) + cf.at(CF_itc_sta_total,i);
-
 		}
-
 
 		for (i=1;i<=nyears;i++)
 		{
@@ -965,9 +946,7 @@ public:
 
 		double cost_financing;
 
-
 		double cost_installed;
-
 
 		double depr_alloc_macrs_5_frac = as_double("depr_alloc_macrs_5_percent") * 0.01;
 		double depr_alloc_macrs_15_frac = as_double("depr_alloc_macrs_15_percent") * 0.01;
@@ -975,14 +954,74 @@ public:
 		double depr_alloc_sl_15_frac = as_double("depr_alloc_sl_15_percent") * 0.01;
 		double depr_alloc_sl_20_frac = as_double("depr_alloc_sl_20_percent") * 0.01;
 		double depr_alloc_sl_39_frac = as_double("depr_alloc_sl_39_percent") * 0.01;
-		double depr_alloc_none_frac = 1.0 - (
-			depr_alloc_macrs_5_frac +
-			depr_alloc_macrs_15_frac +
-			depr_alloc_sl_5_frac +
-			depr_alloc_sl_15_frac +
-			depr_alloc_sl_20_frac +
-			depr_alloc_sl_39_frac
-			);
+		double depr_alloc_total_frac = depr_alloc_macrs_5_frac + depr_alloc_macrs_15_frac +	
+			depr_alloc_sl_5_frac + depr_alloc_sl_15_frac +	depr_alloc_sl_20_frac +	depr_alloc_sl_39_frac;
+		// TODO - place check that depr_alloc_total_frac <= 1 and <>0
+		double depr_alloc_none_frac = 1.0 - depr_alloc_total_frac;
+		// TODO - place check that depr_alloc_none_frac >= 0
+
+		// redistribute fractions to only depreciable allocations
+		if (depr_alloc_total_frac > 0) // and <=1
+		{
+			depr_alloc_macrs_5_frac /= depr_alloc_total_frac;
+			depr_alloc_macrs_15_frac /= depr_alloc_total_frac;
+			depr_alloc_sl_5_frac /= depr_alloc_total_frac;
+			depr_alloc_sl_15_frac /= depr_alloc_total_frac;
+			depr_alloc_sl_20_frac /= depr_alloc_total_frac;
+			depr_alloc_sl_39_frac /= depr_alloc_total_frac;
+		}
+
+		double depr_stabas_macrs_5_frac;
+		double depr_stabas_macrs_15_frac;
+		double depr_stabas_sl_5_frac;
+		double depr_stabas_sl_15_frac;
+		double depr_stabas_sl_20_frac;
+		double depr_stabas_sl_39_frac;
+
+		if (as_integer("depr_stabas_method")==0) 
+		{
+			depr_stabas_macrs_5_frac = 1.0;
+			depr_stabas_macrs_15_frac = 0.0;
+			depr_stabas_sl_5_frac = 0.0;
+			depr_stabas_sl_15_frac = 0.0;
+			depr_stabas_sl_20_frac = 0.0;
+			depr_stabas_sl_39_frac = 0.0;
+		}
+		else
+		{
+			depr_stabas_macrs_5_frac = depr_alloc_macrs_5_frac;
+			depr_stabas_macrs_15_frac = depr_alloc_macrs_15_frac;
+			depr_stabas_sl_5_frac = depr_alloc_sl_5_frac;
+			depr_stabas_sl_15_frac = depr_alloc_sl_15_frac;
+			depr_stabas_sl_20_frac = depr_alloc_sl_20_frac;
+			depr_stabas_sl_39_frac = depr_alloc_sl_39_frac;
+		}
+
+		double depr_fedbas_macrs_5_frac;
+		double depr_fedbas_macrs_15_frac;
+		double depr_fedbas_sl_5_frac;
+		double depr_fedbas_sl_15_frac;
+		double depr_fedbas_sl_20_frac;
+		double depr_fedbas_sl_39_frac;
+
+		if (as_integer("depr_fedbas_method")==0) 
+		{
+			depr_fedbas_macrs_5_frac = 1.0;
+			depr_fedbas_macrs_15_frac = 0.0;
+			depr_fedbas_sl_5_frac = 0.0;
+			depr_fedbas_sl_15_frac = 0.0;
+			depr_fedbas_sl_20_frac = 0.0;
+			depr_fedbas_sl_39_frac = 0.0;
+		}
+		else
+		{
+			depr_fedbas_macrs_5_frac = depr_alloc_macrs_5_frac;
+			depr_fedbas_macrs_15_frac = depr_alloc_macrs_15_frac;
+			depr_fedbas_sl_5_frac = depr_alloc_sl_5_frac;
+			depr_fedbas_sl_15_frac = depr_alloc_sl_15_frac;
+			depr_fedbas_sl_20_frac = depr_alloc_sl_20_frac;
+			depr_fedbas_sl_39_frac = depr_alloc_sl_39_frac;
+		}
 
 		double depr_alloc_macrs_5;
 		double depr_alloc_macrs_15;
@@ -1011,12 +1050,12 @@ public:
 // escalate back to year 1 for itc reduction 
 		itc_sta_reduction *=  (1.0 + nom_discount_rate);
 
-		double itc_sta_qual_macrs_5_frac = ( as_boolean("depr_itc_sta_macrs_5")  ? depr_alloc_macrs_5_frac: 0 ) ;
-		double itc_sta_qual_macrs_15_frac = ( as_boolean("depr_itc_sta_macrs_15")  ? depr_alloc_macrs_15_frac: 0 ) ;
-		double itc_sta_qual_sl_5_frac = ( as_boolean("depr_itc_sta_sl_5")  ? depr_alloc_sl_5_frac: 0 ) ;
-		double itc_sta_qual_sl_15_frac = ( as_boolean("depr_itc_sta_sl_15")   ? depr_alloc_sl_15_frac: 0 ) ;
-		double itc_sta_qual_sl_20_frac = ( as_boolean("depr_itc_sta_sl_20")  ? depr_alloc_sl_20_frac: 0 ) ;
-		double itc_sta_qual_sl_39_frac = ( as_boolean("depr_itc_sta_sl_39")  ? depr_alloc_sl_39_frac: 0 ) ;
+		double itc_sta_qual_macrs_5_frac = ( as_boolean("depr_itc_sta_macrs_5")  ? depr_stabas_macrs_5_frac: 0 ) ;
+		double itc_sta_qual_macrs_15_frac = ( as_boolean("depr_itc_sta_macrs_15")  ? depr_stabas_macrs_15_frac: 0 ) ;
+		double itc_sta_qual_sl_5_frac = ( as_boolean("depr_itc_sta_sl_5")  ? depr_stabas_sl_5_frac: 0 ) ;
+		double itc_sta_qual_sl_15_frac = ( as_boolean("depr_itc_sta_sl_15")   ? depr_stabas_sl_15_frac: 0 ) ;
+		double itc_sta_qual_sl_20_frac = ( as_boolean("depr_itc_sta_sl_20")  ? depr_stabas_sl_20_frac: 0 ) ;
+		double itc_sta_qual_sl_39_frac = ( as_boolean("depr_itc_sta_sl_39")  ? depr_stabas_sl_39_frac: 0 ) ;
 
 		double itc_sta_qual_total;
 
@@ -1033,16 +1072,16 @@ public:
 		itc_sta_percent_total *= (1 + nom_discount_rate);
 		itc_sta_fixed_total *= (1 + nom_discount_rate);
 
-		itc_sta_percent_total = min(as_double("itc_sta_percent_maxvalue"),itc_sta_percent_total*itc_sta_qual_total);
+		double itc_sta_percent_maxvalue = as_double("itc_sta_percent_maxvalue");
 
 		double itc_sta_disallow_factor = as_double("itc_sta_disallow_factor");
 
-		double itc_disallow_sta_percent_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_percent_total);
+		double itc_disallow_sta_percent_macrs_5;
+		double itc_disallow_sta_percent_macrs_15;
+		double itc_disallow_sta_percent_sl_5;
+		double itc_disallow_sta_percent_sl_15;
+		double itc_disallow_sta_percent_sl_20;
+		double itc_disallow_sta_percent_sl_39;
 
 		double itc_disallow_sta_fixed_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_fixed_total);
 		double itc_disallow_sta_fixed_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_fixed_total);
@@ -1070,32 +1109,21 @@ public:
 // escalate back to year 1 for itc reduction 
 		itc_fed_reduction *=  (1.0 + nom_discount_rate);
 
-		double itc_fed_qual_macrs_5 = ( as_boolean("depr_itc_fed_macrs_5")  ? depr_alloc_macrs_5: 0 ) ;
-		double itc_fed_qual_macrs_15 = ( as_boolean("depr_itc_fed_macrs_15")  ? depr_alloc_macrs_15: 0 ) ;
-		double itc_fed_qual_sl_5 = ( as_boolean("depr_itc_fed_sl_5")  ? depr_alloc_sl_5: 0 ) ;
-		double itc_fed_qual_sl_15 = ( as_boolean("depr_itc_fed_sl_15")  ? depr_alloc_sl_15: 0 ) ;
-		double itc_fed_qual_sl_20 = ( as_boolean("depr_itc_fed_sl_20")  ? depr_alloc_sl_20: 0 ) ;
-		double itc_fed_qual_sl_39 = ( as_boolean("depr_itc_fed_sl_39")  ? depr_alloc_sl_39: 0 ) ;
+		double itc_fed_qual_macrs_5_frac = ( as_boolean("depr_itc_fed_macrs_5")  ? depr_fedbas_macrs_5_frac: 0 ) ;
+		double itc_fed_qual_macrs_15_frac = ( as_boolean("depr_itc_fed_macrs_15")  ? depr_fedbas_macrs_15_frac: 0 ) ;
+		double itc_fed_qual_sl_5_frac = ( as_boolean("depr_itc_fed_sl_5")  ? depr_fedbas_sl_5_frac: 0 ) ;
+		double itc_fed_qual_sl_15_frac = ( as_boolean("depr_itc_fed_sl_15")   ? depr_fedbas_sl_15_frac: 0 ) ;
+		double itc_fed_qual_sl_20_frac = ( as_boolean("depr_itc_fed_sl_20")  ? depr_fedbas_sl_20_frac: 0 ) ;
+		double itc_fed_qual_sl_39_frac = ( as_boolean("depr_itc_fed_sl_39")  ? depr_fedbas_sl_39_frac: 0 ) ;
 
-		double itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39;
+		double itc_fed_qual_total;
 
-		double itc_fed_qual_macrs_5_frac = (itc_fed_qual_macrs_5 / itc_fed_qual_total);
-		double itc_fed_qual_macrs_15_frac = (itc_fed_qual_macrs_15 / itc_fed_qual_total);
-		double itc_fed_qual_sl_5_frac = (itc_fed_qual_sl_5 / itc_fed_qual_total);
-		double itc_fed_qual_sl_15_frac = (itc_fed_qual_sl_15 / itc_fed_qual_total);
-		double itc_fed_qual_sl_20_frac = (itc_fed_qual_sl_20 / itc_fed_qual_total);
-		double itc_fed_qual_sl_39_frac = (itc_fed_qual_sl_39 / itc_fed_qual_total);
-
-		itc_fed_qual_macrs_5 -= itc_fed_qual_macrs_5_frac * itc_fed_reduction;
-		itc_fed_qual_macrs_15 -= itc_fed_qual_macrs_15_frac * itc_fed_reduction;
-		itc_fed_qual_sl_5 -= itc_fed_qual_sl_5_frac * itc_fed_reduction;
-		itc_fed_qual_sl_15 -= itc_fed_qual_sl_15_frac * itc_fed_reduction;
-		itc_fed_qual_sl_20 -= itc_fed_qual_sl_20_frac * itc_fed_reduction;
-		itc_fed_qual_sl_39 -= itc_fed_qual_sl_39_frac * itc_fed_reduction;
-
-		// adjusted
-		itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39;
-
+		double itc_fed_qual_macrs_5;
+		double itc_fed_qual_macrs_15;
+		double itc_fed_qual_sl_5;
+		double itc_fed_qual_sl_15;
+		double itc_fed_qual_sl_20;
+		double itc_fed_qual_sl_39;
 
 		double itc_fed_percent_total = npv(CF_itc_fed_per,nyears,nom_discount_rate);
 		double itc_fed_fixed_total = npv(CF_itc_fed_amt,nyears,nom_discount_rate);
@@ -1103,16 +1131,16 @@ public:
 		itc_fed_percent_total *= (1 + nom_discount_rate);
 		itc_fed_fixed_total *= (1 + nom_discount_rate);
 
-		itc_fed_percent_total = min(as_double("itc_fed_percent_maxvalue"),itc_fed_percent_total*itc_fed_qual_total);
+		double itc_fed_percent_maxvalue = as_double("itc_fed_percent_maxvalue");
 
 		double itc_fed_disallow_factor = as_double("itc_fed_disallow_factor");
 
-		double itc_disallow_fed_percent_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_percent_total);
+		double itc_disallow_fed_percent_macrs_5;
+		double itc_disallow_fed_percent_macrs_15;
+		double itc_disallow_fed_percent_sl_5;
+		double itc_disallow_fed_percent_sl_15;
+		double itc_disallow_fed_percent_sl_20;
+		double itc_disallow_fed_percent_sl_39;
 
 		double itc_disallow_fed_fixed_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_fixed_total);
 		double itc_disallow_fed_fixed_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_fixed_total);
@@ -1123,33 +1151,7 @@ public:
 		
  
 
-// Depreciaiton
-		double depr_stabas_macrs_5_frac;
-		double depr_stabas_macrs_15_frac;
-		double depr_stabas_sl_5_frac;
-		double depr_stabas_sl_15_frac;
-		double depr_stabas_sl_20_frac;
-		double depr_stabas_sl_39_frac;
-
-		if (as_integer("depr_stabas_method")==0) 
-		{
-			depr_stabas_macrs_5_frac = 1.0;
-			depr_stabas_macrs_15_frac = 0.0;
-			depr_stabas_sl_5_frac = 0.0;
-			depr_stabas_sl_15_frac = 0.0;
-			depr_stabas_sl_20_frac = 0.0;
-			depr_stabas_sl_39_frac = 0.0;
-		}
-		else
-		{
-			depr_stabas_macrs_5_frac = depr_alloc_macrs_5_frac;
-			depr_stabas_macrs_15_frac = depr_alloc_macrs_15_frac;
-			depr_stabas_sl_5_frac = depr_alloc_sl_5_frac;
-			depr_stabas_sl_15_frac = depr_alloc_sl_15_frac;
-			depr_stabas_sl_20_frac = depr_alloc_sl_20_frac;
-			depr_stabas_sl_39_frac = depr_alloc_sl_39_frac;
-		}
-
+// Depreciation
 // State depreciation
 		double depr_sta_reduction =  (
 			( as_boolean("ibi_fed_amount_deprbas_sta")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
@@ -1168,97 +1170,38 @@ public:
 // escalate back to year 1 for itc reduction 
 		depr_sta_reduction *=  (1.0 + nom_discount_rate);
 
-		double depr_stabas_macrs_5 = depr_alloc_macrs_5 - depr_stabas_macrs_5_frac * depr_sta_reduction;
-		double depr_stabas_macrs_15 = depr_alloc_macrs_15 - depr_stabas_macrs_15_frac * depr_sta_reduction;
-		double depr_stabas_sl_5 = depr_alloc_sl_5 - depr_stabas_sl_5_frac * depr_sta_reduction;
-		double depr_stabas_sl_15 = depr_alloc_sl_15 - depr_stabas_sl_15_frac * depr_sta_reduction;
-		double depr_stabas_sl_20 = depr_alloc_sl_20 - depr_stabas_sl_20_frac * depr_sta_reduction;
-		double depr_stabas_sl_39 = depr_alloc_sl_39 - depr_stabas_sl_39_frac * depr_sta_reduction;
+		double depr_stabas_macrs_5;
+		double depr_stabas_macrs_15;
+		double depr_stabas_sl_5;
+		double depr_stabas_sl_15;
+		double depr_stabas_sl_20;
+		double depr_stabas_sl_39;
 
 		// ITC reduction
-		depr_stabas_macrs_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_macrs_5 : 0 ) );
+		double itc_fed_percent_deprbas_sta = as_boolean("itc_fed_percent_deprbas_sta") ? 1.0 : 0.0;
+		double itc_fed_amount_deprbas_sta = as_boolean("itc_fed_amount_deprbas_sta") ? 1.0 : 0.0;
+		double itc_sta_percent_deprbas_sta = as_boolean("itc_sta_percent_deprbas_sta") ? 1.0 : 0.0;
+		double itc_sta_amount_deprbas_sta = as_boolean("itc_sta_amount_deprbas_sta") ? 1.0 : 0.0;
 
-		depr_stabas_macrs_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_macrs_15 : 0 ) );
-
-		depr_stabas_sl_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_5 : 0 ) );
-
-		depr_stabas_sl_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_15 : 0 ) );
-
-		depr_stabas_sl_20 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_20 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_20 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_20 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_20 : 0 ) );
-
-		depr_stabas_sl_39 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_39 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_39 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_39 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_39 : 0 ) );
 
 		// Bonus depreciation
-		double depr_stabas_macrs_5_bonus = ( as_boolean("depr_bonus_sta_macrs_5") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_macrs_5 : 0 );
-		double depr_stabas_macrs_15_bonus = ( as_boolean("depr_bonus_sta_macrs_15") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_macrs_15 : 0 );
-		double depr_stabas_sl_5_bonus = ( as_boolean("depr_bonus_sta_sl_5") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_5 : 0 );
-		double depr_stabas_sl_15_bonus = ( as_boolean("depr_bonus_sta_sl_15") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_15 : 0 );
-		double depr_stabas_sl_20_bonus = ( as_boolean("depr_bonus_sta_sl_20") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_20 : 0 );
-		double depr_stabas_sl_39_bonus = ( as_boolean("depr_bonus_sta_sl_39") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_39 : 0 );
+		double depr_stabas_macrs_5_bonus_frac = ( as_boolean("depr_bonus_sta_macrs_5") ? as_double("depr_bonus_sta")*0.01 : 0 );
+		double depr_stabas_macrs_15_bonus_frac = ( as_boolean("depr_bonus_sta_macrs_15") ? as_double("depr_bonus_sta")*0.01 : 0 );
+		double depr_stabas_sl_5_bonus_frac = ( as_boolean("depr_bonus_sta_sl_5") ? as_double("depr_bonus_sta")*0.01 : 0 );
+		double depr_stabas_sl_15_bonus_frac = ( as_boolean("depr_bonus_sta_sl_15") ? as_double("depr_bonus_sta")*0.01 : 0 );
+		double depr_stabas_sl_20_bonus_frac = ( as_boolean("depr_bonus_sta_sl_20") ? as_double("depr_bonus_sta")*0.01 : 0 );
+		double depr_stabas_sl_39_bonus_frac = ( as_boolean("depr_bonus_sta_sl_39") ? as_double("depr_bonus_sta")*0.01 : 0 );
 
-		depr_stabas_macrs_5 -= depr_stabas_macrs_5_bonus;
-		depr_stabas_macrs_15 -= depr_stabas_macrs_15_bonus;
-		depr_stabas_sl_5 -= depr_stabas_sl_5_bonus;
-		depr_stabas_sl_15 -= depr_stabas_sl_15_bonus;
-		depr_stabas_sl_20 -= depr_stabas_sl_20_bonus;
-		depr_stabas_sl_39 -= depr_stabas_sl_39_bonus;
-		
+		double depr_stabas_macrs_5_bonus;
+		double depr_stabas_macrs_15_bonus;
+		double depr_stabas_sl_5_bonus;
+		double depr_stabas_sl_15_bonus;
+		double depr_stabas_sl_20_bonus;
+		double depr_stabas_sl_39_bonus;
 
-		double depr_stabas_total = depr_stabas_macrs_5 + depr_stabas_macrs_15 + depr_stabas_sl_5 + depr_stabas_sl_15 + depr_stabas_sl_20 + depr_stabas_sl_39;
-
-
+		double depr_stabas_total;
 
 		// Federal depreciation
-		double depr_fedbas_macrs_5_frac;
-		double depr_fedbas_macrs_15_frac;
-		double depr_fedbas_sl_5_frac;
-		double depr_fedbas_sl_15_frac;
-		double depr_fedbas_sl_20_frac;
-		double depr_fedbas_sl_39_frac;
-
-		if (as_integer("depr_fedbas_method")==0) 
-		{
-			depr_fedbas_macrs_5_frac = 1.0;
-			depr_fedbas_macrs_15_frac = 0.0;
-			depr_fedbas_sl_5_frac = 0.0;
-			depr_fedbas_sl_15_frac = 0.0;
-			depr_fedbas_sl_20_frac = 0.0;
-			depr_fedbas_sl_39_frac = 0.0;
-		}
-		else
-		{
-			depr_fedbas_macrs_5_frac = depr_alloc_macrs_5_frac;
-			depr_fedbas_macrs_15_frac = depr_alloc_macrs_15_frac;
-			depr_fedbas_sl_5_frac = depr_alloc_sl_5_frac;
-			depr_fedbas_sl_15_frac = depr_alloc_sl_15_frac;
-			depr_fedbas_sl_20_frac = depr_alloc_sl_20_frac;
-			depr_fedbas_sl_39_frac = depr_alloc_sl_39_frac;
-		}
-
 
 		double depr_fed_reduction =  (
 			( as_boolean("ibi_fed_amount_deprbas_fed")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
@@ -1277,71 +1220,44 @@ public:
 // escalate back to year 1 for itc reduction 
 		depr_fed_reduction *=  (1.0 + nom_discount_rate);
 
-		double depr_fedbas_macrs_5 = depr_alloc_macrs_5 - depr_fedbas_macrs_5_frac * depr_fed_reduction;
-		double depr_fedbas_macrs_15 = depr_alloc_macrs_15 - depr_fedbas_macrs_15_frac * depr_fed_reduction;
-		double depr_fedbas_sl_5 = depr_alloc_sl_5 - depr_fedbas_sl_5_frac * depr_fed_reduction;
-		double depr_fedbas_sl_15 = depr_alloc_sl_15 - depr_fedbas_sl_15_frac * depr_fed_reduction;
-		double depr_fedbas_sl_20 = depr_alloc_sl_20 - depr_fedbas_sl_20_frac * depr_fed_reduction;
-		double depr_fedbas_sl_39 = depr_alloc_sl_39 - depr_fedbas_sl_39_frac * depr_fed_reduction;
+		double depr_fedbas_macrs_5;
+		double depr_fedbas_macrs_15;
+		double depr_fedbas_sl_5;
+		double depr_fedbas_sl_15;
+		double depr_fedbas_sl_20;
+		double depr_fedbas_sl_39;
 
 		// ITC reduction
-
-		depr_fedbas_macrs_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_macrs_5 : 0 ) );
-
-		depr_fedbas_macrs_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_macrs_15 : 0 ) );
-
-		depr_fedbas_sl_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_5 : 0 ) );
-
-		depr_fedbas_sl_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_15 : 0 ) );
-
-		depr_fedbas_sl_20 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_20 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_20 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_20 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_20 : 0 ) );
-
-		depr_fedbas_sl_39 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_39 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_39 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_39 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_39 : 0 ) );
+		double itc_fed_percent_deprbas_fed = as_boolean("itc_fed_percent_deprbas_fed") ? 1.0 : 0.0;
+		double itc_fed_amount_deprbas_fed = as_boolean("itc_fed_amount_deprbas_fed") ? 1.0 : 0.0;
+		double itc_sta_percent_deprbas_fed = as_boolean("itc_sta_percent_deprbas_fed") ? 1.0 : 0.0;
+		double itc_sta_amount_deprbas_fed = as_boolean("itc_sta_amount_deprbas_fed") ? 1.0 : 0.0;
 
 		// Bonus depreciation
-		double depr_fedbas_macrs_5_bonus = ( as_boolean("depr_bonus_fed_macrs_5") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_macrs_5 : 0 );
-		double depr_fedbas_macrs_15_bonus = ( as_boolean("depr_bonus_fed_macrs_15") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_macrs_15 : 0 );
-		double depr_fedbas_sl_5_bonus = ( as_boolean("depr_bonus_fed_sl_5") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_5 : 0 );
-		double depr_fedbas_sl_15_bonus = ( as_boolean("depr_bonus_fed_sl_15") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_15 : 0 );
-		double depr_fedbas_sl_20_bonus = ( as_boolean("depr_bonus_fed_sl_20") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_20 : 0 );
-		double depr_fedbas_sl_39_bonus = ( as_boolean("depr_bonus_fed_sl_39") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_39 : 0 );
+		double depr_fedbas_macrs_5_bonus_frac = ( as_boolean("depr_bonus_fed_macrs_5") ? as_double("depr_bonus_fed")*0.01 : 0 );
+		double depr_fedbas_macrs_15_bonus_frac = ( as_boolean("depr_bonus_fed_macrs_15") ? as_double("depr_bonus_fed")*0.01 : 0 );
+		double depr_fedbas_sl_5_bonus_frac = ( as_boolean("depr_bonus_fed_sl_5") ? as_double("depr_bonus_fed")*0.01 : 0 );
+		double depr_fedbas_sl_15_bonus_frac = ( as_boolean("depr_bonus_fed_sl_15") ? as_double("depr_bonus_fed")*0.01 : 0 );
+		double depr_fedbas_sl_20_bonus_frac = ( as_boolean("depr_bonus_fed_sl_20") ? as_double("depr_bonus_fed")*0.01 : 0 );
+		double depr_fedbas_sl_39_bonus_frac = ( as_boolean("depr_bonus_fed_sl_39") ? as_double("depr_bonus_fed")*0.01 : 0 );
 
-		depr_fedbas_macrs_5 -= depr_fedbas_macrs_5_bonus;
-		depr_fedbas_macrs_15 -= depr_fedbas_macrs_15_bonus;
-		depr_fedbas_sl_5 -= depr_fedbas_sl_5_bonus;
-		depr_fedbas_sl_15 -= depr_fedbas_sl_15_bonus;
-		depr_fedbas_sl_20 -= depr_fedbas_sl_20_bonus;
-		depr_fedbas_sl_39 -= depr_fedbas_sl_39_bonus;
+		double depr_fedbas_macrs_5_bonus;
+		double depr_fedbas_macrs_15_bonus;
+		double depr_fedbas_sl_5_bonus;
+		double depr_fedbas_sl_15_bonus;
+		double depr_fedbas_sl_20_bonus;
+		double depr_fedbas_sl_39_bonus;
+
+		double depr_fedbas_total;
+
+
+		double pbi_fed_for_ds_frac = as_boolean("pbi_fed_for_ds") ? 1.0 : 0.0;
+		double pbi_sta_for_ds_frac = as_boolean("pbi_sta_for_ds") ? 1.0 : 0.0;
+		double pbi_uti_for_ds_frac = as_boolean("pbi_uti_for_ds") ? 1.0 : 0.0;
+		double pbi_oth_for_ds_frac = as_boolean("pbi_oth_for_ds") ? 1.0 : 0.0;
+
 		
-
-		double depr_fedbas_total = depr_fedbas_macrs_5 + depr_fedbas_macrs_15 + depr_fedbas_sl_5 + depr_fedbas_sl_15 + depr_fedbas_sl_20 + depr_fedbas_sl_39;
-
-
-//		if (ppa_mode == 1) // iterate to meet flip target by varying ppa price
+		//		if (ppa_mode == 1) // iterate to meet flip target by varying ppa price
 		double ppa_soln_tolerance = as_double("ppa_soln_tolerance");
 		int ppa_soln_max_iteations = as_integer("ppa_soln_max_iterations");
 		double flip_target_percent = as_double("flip_target_percent") ;
@@ -1372,10 +1288,10 @@ public:
 			// PBI
 			// total revenue
 			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) * (1.0 +
-				( as_boolean("pbi_fed_for_ds") ? cf.at(CF_pbi_fed,i): 0) +
-				( as_boolean("pbi_sta_for_ds") ? cf.at(CF_pbi_sta,i): 0) +
-				( as_boolean("pbi_uti_for_ds") ? cf.at(CF_pbi_uti,i): 0) +
-				( as_boolean("pbi_oth_for_ds") ? cf.at(CF_pbi_oth,i): 0) );
+				pbi_fed_for_ds_frac * cf.at(CF_pbi_fed,i) +
+				pbi_sta_for_ds_frac * cf.at(CF_pbi_sta,i) +
+				pbi_uti_for_ds_frac * cf.at(CF_pbi_uti,i) +
+				pbi_oth_for_ds_frac * cf.at(CF_pbi_oth,i) );
 			// salvage value
 			if (i==nyears) cf.at(CF_total_revenue,nyears) += salvage_value;
 			// compute expenses
@@ -1409,7 +1325,6 @@ public:
 		}
 
 		// debt service reserve
-
 		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
 		{
 			cf.at(CF_reserve_debtservice,i-1) = dscr_reserve_months/12.0 * (cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i));
@@ -1418,16 +1333,16 @@ public:
 			if (i==term_tenor) cf.at(CF_disbursement_debtservice,i)=0-cf.at(CF_reserve_debtservice,i-1);
 		}
 
-
-
+		// total reserves
 		for (i=0; i<=nyears; i++)
-					// total reserves
 			cf.at(CF_reserve_total,i) = 
 				cf.at(CF_reserve_debtservice,i) +
 				cf.at(CF_reserve_om,i) +
 				cf.at(CF_reserve_equip1,i) +
 				cf.at(CF_reserve_equip2,i) +
 				cf.at(CF_reserve_equip3,i);
+		for (i=1; i<=nyears; i++)
+			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
 		cost_financing = 
 			cost_dev_fee_percent * cost_prefinancing +
@@ -1439,88 +1354,52 @@ public:
 
 		cost_installed = cost_prefinancing + cost_financing;
 
-		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * cost_installed;
-		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * cost_installed;
-		depr_alloc_sl_5 = depr_alloc_sl_5_frac * cost_installed;
-		depr_alloc_sl_15 = depr_alloc_sl_15_frac * cost_installed;
-		depr_alloc_sl_20 = depr_alloc_sl_20_frac * cost_installed;
-		depr_alloc_sl_39 = depr_alloc_sl_39_frac * cost_installed;
-		depr_alloc_none = depr_alloc_none_frac * cost_installed;
-		depr_alloc_total = depr_alloc_macrs_5 + depr_alloc_macrs_15 + depr_alloc_sl_5 +depr_alloc_sl_15 +depr_alloc_sl_20 +depr_alloc_sl_39;
+		depr_alloc_total = depr_alloc_total_frac * cost_installed;
+		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
+		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
+		depr_alloc_sl_5 = depr_alloc_sl_5_frac * depr_alloc_total;
+		depr_alloc_sl_15 = depr_alloc_sl_15_frac * depr_alloc_total;
+		depr_alloc_sl_20 = depr_alloc_sl_20_frac * depr_alloc_total;
+		depr_alloc_sl_39 = depr_alloc_sl_39_frac * depr_alloc_total;
+		depr_alloc_none = depr_alloc_none_frac * depr_alloc_total;
 
-		itc_sta_qual_macrs_5 = itc_sta_qual_macrs_5_frac * (cost_installed - itc_sta_reduction);
-		itc_sta_qual_macrs_15 = itc_sta_qual_macrs_15_frac * (cost_installed - itc_sta_reduction);
-		itc_sta_qual_sl_5 = itc_sta_qual_sl_5_frac * (cost_installed - itc_sta_reduction);
-		itc_sta_qual_sl_15 = itc_sta_qual_sl_15_frac * (cost_installed - itc_sta_reduction);
-		itc_sta_qual_sl_20 = itc_sta_qual_sl_20_frac * (cost_installed - itc_sta_reduction);
-		itc_sta_qual_sl_39 = itc_sta_qual_sl_39_frac * (cost_installed - itc_sta_reduction);
+		itc_sta_qual_macrs_5 = itc_sta_qual_macrs_5_frac * (depr_alloc_total - itc_sta_reduction);
+		itc_sta_qual_macrs_15 = itc_sta_qual_macrs_15_frac * (depr_alloc_total - itc_sta_reduction);
+		itc_sta_qual_sl_5 = itc_sta_qual_sl_5_frac * (depr_alloc_total - itc_sta_reduction);
+		itc_sta_qual_sl_15 = itc_sta_qual_sl_15_frac * (depr_alloc_total - itc_sta_reduction);
+		itc_sta_qual_sl_20 = itc_sta_qual_sl_20_frac * (depr_alloc_total - itc_sta_reduction);
+		itc_sta_qual_sl_39 = itc_sta_qual_sl_39_frac * (depr_alloc_total - itc_sta_reduction);
 
-		// adjusted
 		itc_sta_qual_total = itc_sta_qual_macrs_5 + itc_sta_qual_macrs_15 + itc_sta_qual_sl_5 +itc_sta_qual_sl_15 +itc_sta_qual_sl_20 + itc_sta_qual_sl_39;
 
-		itc_sta_percent_total = min(as_double("itc_sta_percent_maxvalue"),itc_sta_percent_total*itc_sta_qual_total);
+		itc_sta_percent_total = min(itc_sta_percent_maxvalue,itc_sta_percent_total*itc_sta_qual_total);
 
-		double itc_disallow_sta_percent_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_percent_total);
-		double itc_disallow_sta_percent_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_percent_total);
+		itc_disallow_sta_percent_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_percent_total);
+		itc_disallow_sta_percent_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_percent_total);
+		itc_disallow_sta_percent_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_percent_total);
+		itc_disallow_sta_percent_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_percent_total);
+		itc_disallow_sta_percent_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_percent_total);
+		itc_disallow_sta_percent_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_percent_total);
 
-		double itc_disallow_sta_fixed_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_fixed_total);
-		
-//Federal ITC
+		itc_fed_qual_macrs_5 = itc_fed_qual_macrs_5_frac * (depr_alloc_total - itc_fed_reduction);
+		itc_fed_qual_macrs_15 = itc_fed_qual_macrs_15_frac * (depr_alloc_total - itc_fed_reduction);
+		itc_fed_qual_sl_5 = itc_fed_qual_sl_5_frac * (depr_alloc_total - itc_fed_reduction);
+		itc_fed_qual_sl_15 = itc_fed_qual_sl_15_frac * (depr_alloc_total - itc_fed_reduction);
+		itc_fed_qual_sl_20 = itc_fed_qual_sl_20_frac * (depr_alloc_total - itc_fed_reduction);
+		itc_fed_qual_sl_39 = itc_fed_qual_sl_39_frac * (depr_alloc_total - itc_fed_reduction);
 
-
-		double itc_fed_qual_macrs_5 = ( as_boolean("depr_itc_fed_macrs_5")  ? depr_alloc_macrs_5: 0 ) ;
-		double itc_fed_qual_macrs_15 = ( as_boolean("depr_itc_fed_macrs_15")  ? depr_alloc_macrs_15: 0 ) ;
-		double itc_fed_qual_sl_5 = ( as_boolean("depr_itc_fed_sl_5")  ? depr_alloc_sl_5: 0 ) ;
-		double itc_fed_qual_sl_15 = ( as_boolean("depr_itc_fed_sl_15")  ? depr_alloc_sl_15: 0 ) ;
-		double itc_fed_qual_sl_20 = ( as_boolean("depr_itc_fed_sl_20")  ? depr_alloc_sl_20: 0 ) ;
-		double itc_fed_qual_sl_39 = ( as_boolean("depr_itc_fed_sl_39")  ? depr_alloc_sl_39: 0 ) ;
-
-		double itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39;
-
-		double itc_fed_qual_macrs_5_frac = (itc_fed_qual_macrs_5 / itc_fed_qual_total);
-		double itc_fed_qual_macrs_15_frac = (itc_fed_qual_macrs_15 / itc_fed_qual_total);
-		double itc_fed_qual_sl_5_frac = (itc_fed_qual_sl_5 / itc_fed_qual_total);
-		double itc_fed_qual_sl_15_frac = (itc_fed_qual_sl_15 / itc_fed_qual_total);
-		double itc_fed_qual_sl_20_frac = (itc_fed_qual_sl_20 / itc_fed_qual_total);
-		double itc_fed_qual_sl_39_frac = (itc_fed_qual_sl_39 / itc_fed_qual_total);
-
-		itc_fed_qual_macrs_5 -= itc_fed_qual_macrs_5_frac * itc_fed_reduction;
-		itc_fed_qual_macrs_15 -= itc_fed_qual_macrs_15_frac * itc_fed_reduction;
-		itc_fed_qual_sl_5 -= itc_fed_qual_sl_5_frac * itc_fed_reduction;
-		itc_fed_qual_sl_15 -= itc_fed_qual_sl_15_frac * itc_fed_reduction;
-		itc_fed_qual_sl_20 -= itc_fed_qual_sl_20_frac * itc_fed_reduction;
-		itc_fed_qual_sl_39 -= itc_fed_qual_sl_39_frac * itc_fed_reduction;
-
-		// adjusted
 		itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39;
 
-		itc_fed_percent_total = min(as_double("itc_fed_percent_maxvalue"),itc_fed_percent_total*itc_fed_qual_total);
+		itc_fed_percent_total = min(itc_fed_percent_maxvalue,itc_fed_percent_total*itc_fed_qual_total);
 
-		double itc_disallow_fed_percent_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_percent_total);
-		double itc_disallow_fed_percent_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_percent_total);
+		itc_disallow_fed_percent_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_percent_total);
+		itc_disallow_fed_percent_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_percent_total);
+		itc_disallow_fed_percent_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_percent_total);
+		itc_disallow_fed_percent_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_percent_total);
+		itc_disallow_fed_percent_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_percent_total);
+		itc_disallow_fed_percent_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_percent_total);
 
-		double itc_disallow_fed_fixed_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_fixed_total);
 		
- 
-
 // Depreciaiton
 // State depreciation
 		depr_stabas_macrs_5 = depr_alloc_macrs_5 - depr_stabas_macrs_5_frac * depr_sta_reduction;
@@ -1531,49 +1410,43 @@ public:
 		depr_stabas_sl_39 = depr_alloc_sl_39 - depr_stabas_sl_39_frac * depr_sta_reduction;
 
 		// ITC reduction
-		depr_stabas_macrs_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_macrs_5 : 0 ) );
+		depr_stabas_macrs_5 -= (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_5 +
+								itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_5 +
+								itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_5 +
+								itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_5 );
 
-		depr_stabas_macrs_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_macrs_15 : 0 ) );
+		depr_stabas_macrs_15 -= (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_15 +
+								itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_15 +
+								itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_15 +
+								itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_15 );
 
-		depr_stabas_sl_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_5 : 0 ) );
+		depr_stabas_sl_5 -= (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_5 +
+								itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_5 +
+								itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_5 +
+								itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_5 );
 
-		depr_stabas_sl_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_15 : 0 ) );
+		depr_stabas_sl_15 -= (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_15 +
+								itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_15 +
+								itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_15 +
+								itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_15 );
 
-		depr_stabas_sl_20 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_20 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_20 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_20 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_20 : 0 ) );
+		depr_stabas_sl_20 -= (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_20 +
+								itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_20 +
+								itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_20 +
+								itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_20 );
 
-		depr_stabas_sl_39 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_sta") ? itc_disallow_fed_percent_sl_39 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_sta") ? itc_disallow_fed_fixed_sl_39 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_sta") ? itc_disallow_sta_percent_sl_39 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_sta") ? itc_disallow_sta_fixed_sl_39 : 0 ) );
+		depr_stabas_sl_39 -= (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_39 +
+								itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_39 +
+								itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_39 +
+								itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_39 );
 
 		// Bonus depreciation
-		double depr_stabas_macrs_5_bonus = ( as_boolean("depr_bonus_sta_macrs_5") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_macrs_5 : 0 );
-		double depr_stabas_macrs_15_bonus = ( as_boolean("depr_bonus_sta_macrs_15") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_macrs_15 : 0 );
-		double depr_stabas_sl_5_bonus = ( as_boolean("depr_bonus_sta_sl_5") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_5 : 0 );
-		double depr_stabas_sl_15_bonus = ( as_boolean("depr_bonus_sta_sl_15") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_15 : 0 );
-		double depr_stabas_sl_20_bonus = ( as_boolean("depr_bonus_sta_sl_20") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_20 : 0 );
-		double depr_stabas_sl_39_bonus = ( as_boolean("depr_bonus_sta_sl_39") ? as_double("depr_bonus_sta")*0.01 *depr_stabas_sl_39 : 0 );
+		depr_stabas_macrs_5_bonus = depr_stabas_macrs_5_bonus_frac * depr_stabas_macrs_5;
+		depr_stabas_macrs_15_bonus = depr_stabas_macrs_15_bonus_frac * depr_stabas_macrs_15;
+		depr_stabas_sl_5_bonus = depr_stabas_sl_5_bonus_frac * depr_stabas_sl_5;
+		depr_stabas_sl_15_bonus = depr_stabas_sl_15_bonus_frac * depr_stabas_sl_15;
+		depr_stabas_sl_20_bonus = depr_stabas_sl_20_bonus_frac * depr_stabas_sl_20;
+		depr_stabas_sl_39_bonus = depr_stabas_sl_39_bonus_frac * depr_stabas_sl_39;
 
 		depr_stabas_macrs_5 -= depr_stabas_macrs_5_bonus;
 		depr_stabas_macrs_15 -= depr_stabas_macrs_15_bonus;
@@ -1582,13 +1455,9 @@ public:
 		depr_stabas_sl_20 -= depr_stabas_sl_20_bonus;
 		depr_stabas_sl_39 -= depr_stabas_sl_39_bonus;
 		
-
 		depr_stabas_total = depr_stabas_macrs_5 + depr_stabas_macrs_15 + depr_stabas_sl_5 + depr_stabas_sl_15 + depr_stabas_sl_20 + depr_stabas_sl_39;
 
-
-
 		// Federal depreciation
-
 		depr_fedbas_macrs_5 = depr_alloc_macrs_5 - depr_fedbas_macrs_5_frac * depr_fed_reduction;
 		depr_fedbas_macrs_15 = depr_alloc_macrs_15 - depr_fedbas_macrs_15_frac * depr_fed_reduction;
 		depr_fedbas_sl_5 = depr_alloc_sl_5 - depr_fedbas_sl_5_frac * depr_fed_reduction;
@@ -1597,49 +1466,43 @@ public:
 		depr_fedbas_sl_39 = depr_alloc_sl_39 - depr_fedbas_sl_39_frac * depr_fed_reduction;
 
 		// ITC reduction
-		depr_fedbas_macrs_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_macrs_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_macrs_5 : 0 ) );
+		depr_fedbas_macrs_5 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 +
+								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5 +
+								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 +
+								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5 );
 
-		depr_fedbas_macrs_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_macrs_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_macrs_15 : 0 ) );
+		depr_fedbas_macrs_15 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 +
+								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15 +
+								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 +
+								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15 );
 
-		depr_fedbas_sl_5 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_5 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_5 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_5 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_5 : 0 ) );
+		depr_fedbas_sl_5 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 +
+								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5 +
+								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 +
+								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5 );
 
-		depr_fedbas_sl_15 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_15 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_15 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_15 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_15 : 0 ) );
+		depr_fedbas_sl_15 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 +
+								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15 +
+								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 +
+								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15 );
 
-		depr_fedbas_sl_20 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_20 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_20 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_20 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_20 : 0 ) );
+		depr_fedbas_sl_20 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 +
+								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20 +
+								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 +
+								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20 );
 
-		depr_fedbas_sl_39 -= ( 
-			( as_boolean("itc_fed_percent_deprbas_fed") ? itc_disallow_fed_percent_sl_39 : 0 ) +
-			( as_boolean("itc_fed_amount_deprbas_fed") ? itc_disallow_fed_fixed_sl_39 : 0 ) +
-			( as_boolean("itc_sta_percent_deprbas_fed") ? itc_disallow_sta_percent_sl_39 : 0 ) +
-			( as_boolean("itc_sta_amount_deprbas_fed") ? itc_disallow_sta_fixed_sl_39 : 0 ) );
+		depr_fedbas_sl_39 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 +
+								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39 +
+								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 +
+								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39 );
 
 		// Bonus depreciation
-		double depr_fedbas_macrs_5_bonus = ( as_boolean("depr_bonus_fed_macrs_5") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_macrs_5 : 0 );
-		double depr_fedbas_macrs_15_bonus = ( as_boolean("depr_bonus_fed_macrs_15") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_macrs_15 : 0 );
-		double depr_fedbas_sl_5_bonus = ( as_boolean("depr_bonus_fed_sl_5") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_5 : 0 );
-		double depr_fedbas_sl_15_bonus = ( as_boolean("depr_bonus_fed_sl_15") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_15 : 0 );
-		double depr_fedbas_sl_20_bonus = ( as_boolean("depr_bonus_fed_sl_20") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_20 : 0 );
-		double depr_fedbas_sl_39_bonus = ( as_boolean("depr_bonus_fed_sl_39") ? as_double("depr_bonus_fed")*0.01 *depr_fedbas_sl_39 : 0 );
+		depr_fedbas_macrs_5_bonus = depr_fedbas_macrs_5_bonus_frac * depr_fedbas_macrs_5;
+		depr_fedbas_macrs_15_bonus = depr_fedbas_macrs_15_bonus_frac * depr_fedbas_macrs_15;
+		depr_fedbas_sl_5_bonus = depr_fedbas_sl_5_bonus_frac * depr_fedbas_sl_5;
+		depr_fedbas_sl_15_bonus = depr_fedbas_sl_15_bonus_frac * depr_fedbas_sl_15;
+		depr_fedbas_sl_20_bonus = depr_fedbas_sl_20_bonus_frac * depr_fedbas_sl_20;
+		depr_fedbas_sl_39_bonus = depr_fedbas_sl_39_bonus_frac * depr_fedbas_sl_39;
 
 		depr_fedbas_macrs_5 -= depr_fedbas_macrs_5_bonus;
 		depr_fedbas_macrs_15 -= depr_fedbas_macrs_15_bonus;
@@ -1728,7 +1591,7 @@ public:
 
 
 			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + cf.at(CF_statax_taxable_incentives,i);
-			cf.at(CF_statax,i) = -as_double("state_tax_rate")*0.01 * cf.at(CF_statax_income_with_incentives,i); 
+			cf.at(CF_statax,i) = -state_tax_rate * cf.at(CF_statax_income_with_incentives,i); 
 
 // federal 
 			cf.at(CF_feddepr_macrs_5,i) = cf.at(CF_macrs_5_frac,i) * depr_fedbas_macrs_5;
@@ -1759,7 +1622,7 @@ public:
 
 
 			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_fedtax_taxable_incentives,i);
-			cf.at(CF_fedtax,i) = -as_double("federal_tax_rate")*0.01 * cf.at(CF_fedtax_income_with_incentives,i); 
+			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i); 
 
 			cf.at(CF_cbi_total,i) = cf.at(CF_cbi_fed,i) + cf.at(CF_cbi_sta,i) + cf.at(CF_cbi_uti,i) + cf.at(CF_cbi_oth,i);
 			cf.at(CF_ibi_total,i) = cf.at(CF_ibi_fed_amt,i) + cf.at(CF_ibi_sta_amt,i) + cf.at(CF_ibi_uti_amt,i) + cf.at(CF_ibi_oth_amt,i) + cf.at(CF_ibi_fed_per,i) + cf.at(CF_ibi_sta_per,i) + cf.at(CF_ibi_uti_per,i) + cf.at(CF_ibi_oth_per,i);
@@ -1779,9 +1642,6 @@ public:
 
 		}
 		cf.at(CF_project_return_aftertax_npv,0) = cf.at(CF_project_return_aftertax,0) ;
-
-
-
 
 // partner returns
 
@@ -1841,7 +1701,7 @@ public:
 				cf.at(CF_sponsor_aftertax_ptc,i) +
 				cf.at(CF_sponsor_aftertax_tax,i);
 			// year 1 development fee tax
-			if (i==1) cf.at(CF_sponsor_aftertax,i) -= sponsor_pretax_development_fee * (as_double("state_tax_rate")*0.01 + as_double("federal_tax_rate")*0.01 * (1.0 - as_double("state_tax_rate")*0.01));
+			if (i==1) cf.at(CF_sponsor_aftertax,i) -= sponsor_pretax_development_fee * (state_tax_rate + federal_tax_rate * (1.0 - state_tax_rate));
 			cf.at(CF_sponsor_pretax_irr,i) = irr(CF_sponsor_pretax,i)*100.0;
 			cf.at(CF_sponsor_pretax_npv,i) = npv(CF_sponsor_pretax,i,nom_discount_rate) +  cf.at(CF_sponsor_pretax,0) ;
 			cf.at(CF_sponsor_aftertax_irr,i) = irr(CF_sponsor_aftertax,i)*100.0;
@@ -1888,6 +1748,23 @@ public:
 		double lcoe_nom = npv_revenue / npv(CF_energy_net,nyears,nom_discount_rate) * 100.0;
 		double lcoe_real = npv_revenue / npv(CF_energy_net,nyears,disc_real) * 100.0;
 
+		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
+
+		assign( "salvage_value", var_data((ssc_number_t)salvage_value));
+
+		assign( "prop_tax_assessed_value", var_data((ssc_number_t)( assessed_frac * cost_prefinancing )));
+
+		assign( "cost_prefinancing", var_data((ssc_number_t) cost_prefinancing ) );
+		assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
+
+		assign( "cost_prefinancing", var_data((ssc_number_t) cost_prefinancing ) );
+		assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
+
+		assign( "cost_contingency", var_data((ssc_number_t) cost_cont ) );
+		assign( "cost_hard", var_data( (ssc_number_t)(cost_hard + cost_cont)) );
+		assign( "cost_salestax", var_data((ssc_number_t)cost_salestax ) );
+		assign( "cost_soft", var_data((ssc_number_t) (cost_soft + cost_salestax) ) );
+		assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
 
 		assign( "depr_stabas_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5 ) );
 		assign( "depr_stabas_macrs_15", var_data((ssc_number_t) depr_stabas_macrs_15 ) );
@@ -1941,7 +1818,7 @@ public:
 		assign( "itc_fed_fixed_total", var_data((ssc_number_t) itc_fed_fixed_total ) );
 	
 	
-	assign("sv_sponsor_pretax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
+	    assign("sv_sponsor_pretax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
 		assign("sv_sponsor_pretax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
 		assign("sv_sponsor_aftertax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
 		assign("sv_sponsor_aftertax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
