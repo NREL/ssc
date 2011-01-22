@@ -1544,7 +1544,7 @@ public:
 			// TODO - address out IBI CBI at year 1 and DHF has at year 0
 //			cf.at(CF_project_financing_activities,i) = cf.at(CF_ibi_total,i) + cf.at(CF_cbi_total,i) - cf.at(CF_debt_payment_principal,i);
 			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1);
+			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1);
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 

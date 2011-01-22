@@ -225,8 +225,8 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "depr_fedbas_method",    "Method of federal depreciation reduction",     "",      "0=5yr MACRS,1=Proportional",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
 
 /* Sponsor recovery method    0=Time, 1=Full Capital Recovery */
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_stabas_method",    "Sponsor Capital Recovery",     "",      "0=Time, 1=Full Capital Recovery",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_fedbas_method",    "Duration (in years)",     "years",      "",                      "DHF",      "?=3",                       "INTEGER",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sponsor_cap_recovery_mode",    "Sponsor Capital Recovery",     "",      "0=Time, 1=Full Capital Recovery",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sponsor_cap_recovery_year",    "Duration (in years)",     "years",      "",                      "DHF",      "?=3",                       "INTEGER",                                         "" },
 
 
 /* State depreciation table */
@@ -251,9 +251,9 @@ static var_info _cm_vtab_equpartflip[] = {
 /* State taxes */
 
 	/* intermediate outputs for validation */
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "pv_cafds", "Present value of cash avaialble for debt service","$", "",				  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Size of debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "pv_cafds", "Present value of cash avaialble for debt service","$", "",				  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Size of debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_interest",			"Interest during construction",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_upfront_fee",		"Construction up-front fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
@@ -772,13 +772,13 @@ public:
 		int equip3_reserve_freq = as_integer("equip3_reserve_freq");
 
 		//  calculate debt
-		int term_tenor = as_integer("term_tenor");
-		double term_int_rate = as_double("term_int_rate")*0.01;
-		double dscr = as_double("dscr");
-		int dscr_reserve_months = as_integer("dscr_reserve_months");
-		double cash_for_debt_service=0;
-		double pv_cafds=0;
-		double size_of_debt=0;
+//		int term_tenor = as_integer("term_tenor");
+//		double term_int_rate = as_double("term_int_rate")*0.01;
+//		double dscr = as_double("dscr");
+//		int dscr_reserve_months = as_integer("dscr_reserve_months");
+//		double cash_for_debt_service=0;
+//		double pv_cafds=0;
+//		double size_of_debt=0;
 
 		// pre calculate reserves
 		int i_equip1=1;
@@ -1295,9 +1295,9 @@ public:
 	do
 	{
 
-		cash_for_debt_service=0;
-		pv_cafds=0;
-		size_of_debt=0;
+//		cash_for_debt_service=0;
+//		pv_cafds=0;
+//		size_of_debt=0;
 
 		// debt pre calculation
 		for (i=1; i<=nyears; i++)
@@ -1319,6 +1319,7 @@ public:
 
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 
+/*
 			// term financing
 			if (i<=term_tenor)
 			{
@@ -1333,8 +1334,10 @@ public:
 				if (dscr!=0) cf.at(CF_debt_size,i) = cf.at(CF_pv_cash_for_ds,i) / dscr;
 				size_of_debt += cf.at(CF_debt_size,i);
 			}
+*/
 		}
 
+/*
 		cf.at(CF_debt_balance,0) = size_of_debt;
 
 		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
@@ -1353,7 +1356,7 @@ public:
 			if (i>1) cf.at(CF_funding_debtservice,i-1) -= cf.at(CF_reserve_debtservice,i-2);
 			if (i==term_tenor) cf.at(CF_disbursement_debtservice,i)=0-cf.at(CF_reserve_debtservice,i-1);
 		}
-
+*/
 		// total reserves
 		for (i=0; i<=nyears; i++)
 			cf.at(CF_reserve_total,i) =
@@ -1536,7 +1539,8 @@ public:
 
 		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice,0) + cost_working_reserve;
 		// TODO - check with incentives - need total ibi and cbi - can use npv at year 1 - note that itc at year 1 but cbi and ibi at year 0
-		issuance_of_equity = cost_installed - (size_of_debt + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1));
+//		issuance_of_equity = cost_installed - (size_of_debt + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1));
+		issuance_of_equity = cost_installed - (cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1));
 
 		equity_tax_investor = tax_investor_equity_frac * issuance_of_equity;
 
@@ -1565,7 +1569,8 @@ public:
 			// TODO - address out IBI CBI at year 1 and DHF has at year 0
 //			cf.at(CF_project_financing_activities,i) = cf.at(CF_ibi_total,i) + cf.at(CF_cbi_total,i) - cf.at(CF_debt_payment_principal,i);
 			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1);
+//			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1);
+			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1);
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 
@@ -1891,9 +1896,9 @@ public:
 
 		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
 		assign("purchase_of_property", var_data((ssc_number_t) purchase_of_property));
-		assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
-		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
-		assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
+//		assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
+//		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
+//		assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
 
 		assign("ppa_price", var_data((ssc_number_t) ppa));
 		assign("target_return_flip_year", var_data((ssc_number_t) flip_year));
