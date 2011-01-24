@@ -145,6 +145,7 @@ SSCEXPORT const char *ssc_info_label( ssc_info_t p_inf );
 SSCEXPORT const char *ssc_info_units( ssc_info_t p_inf );
 SSCEXPORT const char *ssc_info_meta( ssc_info_t p_inf );
 SSCEXPORT const char *ssc_info_group( ssc_info_t p_inf );
+SSCEXPORT const char *ssc_info_constraints( ssc_info_t p_inf );
 SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf );
 
 /* ssc_module_exec_simple: The simplest way to run a computation module over a data set.
