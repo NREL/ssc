@@ -261,6 +261,12 @@ SSCEXPORT const char *ssc_info_group( ssc_info_t p_inf )
 	return vi ? vi->group : NULL;
 }
 
+SSCEXPORT const char *ssc_info_constraints( ssc_info_t p_inf )
+{
+	var_info *vi = static_cast<var_info*>(p_inf);
+	return vi ? vi->constraints : NULL;
+}
+
 SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
