@@ -16,9 +16,11 @@ static var_info _cm_vtab_windwatts[] = {
 	//{ SSC_INPUT,        SSC_NUMBER,      "ctl_mode",                   "Control mode",                     "0/1/2",  "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cutin",                      "Cut-in wind speed",                "m/s",    "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossc",                      "Constant losses",                  "kW",     "",                      "WindWatts",      "*",             "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "lossp",                      "Percentage losses",                "0-100",  "",                      "WindWatts",      "*",             "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "lossp",                      "Percentage losses",                "%",      "",                      "WindWatts",      "*",             "",                      "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "farmpwr",                    "AC wind farm power",               "kWhdc",  "",                      "WindWatts",      "*",             "LENGTH=8760",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "farmpwr",                    "Net electric generation",          "kWhac",  "",                      "WindWatts",      "*",             "LENGTH=8760",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "winddir",                    "Wind direction",                   "deg",    "",                      "WindWatts",      "*",             "LENGTH=8760",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "windspd",                    "Wind speed",                       "m/s",    "",                      "WindWatts",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "wtpwr",                      "Power at each WT",                 "kWhac",  "",                      "WindWatts",      "*",             "ROWS=8760",       "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "wteff",                      "Eff at each WT",                   "kWhac",  "",                      "WindWatts",      "*",             "ROWS=8760",       "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "wtvel",                      "Wind speed at each WT",            "kWhac",  "",                      "WindWatts",      "*",             "ROWS=8760",       "" },
@@ -100,13 +102,14 @@ public:
 		}
 
 		ssc_number_t *farmpwr = allocate( "farmpwr", 8760 );
-		ssc_number_t *wspd = allocate("wspd", 8760);
-		ssc_number_t *wdir = allocate("wdir", 8760);
+		ssc_number_t *wspd = allocate("windspd", 8760);
+		ssc_number_t *wdir = allocate("winddir", 8760);
 		util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", 8760, nwt );
+		
 		
 		double last_wind, last_theta, last_tdry, last_pres, wind, theta, tdry, pres;
 		wf_read_data(reader.wf, &dat );  // read the first line
@@ -189,5 +192,5 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( windwatts, "Wind farm model (ported from original TRNSYS P.Quinlan)", 1 );
+DEFINE_MODULE_ENTRY( windwatts, "Wind farm model (ported from original TRNSYS P.Quinlan)", 2 );
 
