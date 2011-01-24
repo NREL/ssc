@@ -292,6 +292,11 @@ const char *ssc_info_group( ssc_info_t p_inf )
 	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
 }
 
+const char *ssc_info_constraints( ssc_info_t p_inf )
+{
+	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
+}
+
 const char *ssc_info_uihint( ssc_info_t p_inf )
 {
 	DYNAMICCALL_CONSTCHARSTAR__SSCINFOT();
