@@ -13,6 +13,7 @@ OBJECTS = \
 	cmod_ptflux.o \
 	cmod_cashloan.o \
 	cmod_easywatts.o \
+	cmod_equpartflip.o \
 	cmod_levpartflip.o \
 	cmod_pvwatts.o \
 	cmod_stdhrlywf.o \
