@@ -411,7 +411,7 @@ var_info_invalid };
 
 extern var_info
 	vtab_standard_financial[],
-	vtab_standard_loan[],
+//	vtab_standard_loan[],
 	vtab_oandm[],
 	vtab_depreciation[],
 	vtab_utility_rate[],
@@ -516,22 +516,6 @@ enum {
 	CF_debt_payment_principal,
 	CF_debt_payment_total,
 	
-	CF_ibi_fed_amt,
-	CF_ibi_sta_amt,
-	CF_ibi_uti_amt,
-	CF_ibi_oth_amt,
-	CF_ibi_fed_per,
-	CF_ibi_sta_per,
-	CF_ibi_uti_per,
-	CF_ibi_oth_per,
-	CF_ibi_total,
-	
-	CF_cbi_fed,
-	CF_cbi_sta,
-	CF_cbi_uti,
-	CF_cbi_oth,
-	CF_cbi_total,
-
 	CF_pbi_fed,
 	CF_pbi_sta,
 	CF_pbi_uti,
@@ -540,16 +524,6 @@ enum {
 	
 	CF_ptc_fed,
 	CF_ptc_sta,
-	
-	CF_itc_fed_amt,
-	CF_itc_fed_per,
-	CF_itc_fed_total,
-
-	CF_itc_sta_amt,
-	CF_itc_sta_per,
-	CF_itc_sta_total,
-
-	CF_itc_total,
 	
 	CF_macrs_5_frac,
 	CF_macrs_15_frac,
@@ -627,7 +601,7 @@ public:
 	cm_levpartflip()
 	{
 		add_var_info( vtab_standard_financial );
-		add_var_info( vtab_standard_loan );
+//		add_var_info( vtab_standard_loan );
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
@@ -713,18 +687,21 @@ public:
 			i++;
 		}
 
-		// precompute ibi
-		single_or_schedule( CF_ibi_fed_amt, nyears, 1.0, "ibi_fed_amount" );
-		single_or_schedule( CF_ibi_sta_amt, nyears, 1.0, "ibi_sta_amount" );
-		single_or_schedule( CF_ibi_uti_amt, nyears, 1.0, "ibi_uti_amount" );
-		single_or_schedule( CF_ibi_oth_amt, nyears, 1.0, "ibi_oth_amount" );
-
+		// ibi
+		double ibi_fed_amount = as_double("ibi_fed_amount");
+		double ibi_sta_amount = as_double("ibi_sta_amount");
+		double ibi_uti_amount = as_double("ibi_uti_amount");
+		double ibi_oth_amount = as_double("ibi_oth_amount");
 		
-		// precompute cbi
-		single_or_schedule_check_max( CF_cbi_fed, nyears, 1000*nameplate, "cbi_fed_amount", "cbi_fed_maxvalue");
-		single_or_schedule_check_max( CF_cbi_sta, nyears, 1000*nameplate, "cbi_sta_amount", "cbi_sta_maxvalue");
-		single_or_schedule_check_max( CF_cbi_uti, nyears, 1000*nameplate, "cbi_uti_amount", "cbi_uti_maxvalue");
-		single_or_schedule_check_max( CF_cbi_oth, nyears, 1000*nameplate, "cbi_oth_amount", "cbi_oth_maxvalue");
+		// cbi
+		double cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
+		if (cbi_fed_amount > as_double("cbi_fed_maxvalue")) cbi_fed_amount = as_double("cbi_fed_maxvalue"); 
+		double cbi_sta_amount = 1000.0*nameplate*as_double("cbi_sta_amount");
+		if (cbi_sta_amount > as_double("cbi_sta_maxvalue")) cbi_sta_amount = as_double("cbi_sta_maxvalue"); 
+		double cbi_uti_amount = 1000.0*nameplate*as_double("cbi_uti_amount");
+		if (cbi_uti_amount > as_double("cbi_uti_maxvalue")) cbi_uti_amount = as_double("cbi_uti_maxvalue"); 
+		double cbi_oth_amount = 1000.0*nameplate*as_double("cbi_oth_amount");
+		if (cbi_oth_amount > as_double("cbi_oth_maxvalue")) cbi_oth_amount = as_double("cbi_oth_maxvalue"); 
 		
 		// precompute pbi
 		compute_production_incentive( CF_pbi_fed, nyears, "pbi_fed_amount", "pbi_fed_term", "pbi_fed_escal" );
