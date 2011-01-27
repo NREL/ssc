@@ -163,7 +163,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_percent_total",		"State ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_fixed_total",		"State ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_reduction",		"State ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_reduction",		"State ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
@@ -192,7 +192,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_reduction",		"federal ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_reduction",		"federal ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
@@ -322,19 +322,14 @@ static var_info _cm_vtab_levpartflip[] = {
 
 		
 	//{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",             "Total ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_fed_total",         "Federal ITC income",                 "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_sta_total",         "State ITC income",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_fed_amt",         "Federal ITC income from fixed amount",                 "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_sta_amt",         "State ITC income from fixed amount",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_fed_per",         "Federal ITC income from percentage",                 "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_itc_sta_per",         "State ITC income from percentage",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 /* state depreciation and tax */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_macrs_5",         "State depreciation from 5-yr MACRS",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -687,31 +682,6 @@ public:
 			i++;
 		}
 
-		// ibi
-		double ibi_fed_amount = as_double("ibi_fed_amount");
-		double ibi_sta_amount = as_double("ibi_sta_amount");
-		double ibi_uti_amount = as_double("ibi_uti_amount");
-		double ibi_oth_amount = as_double("ibi_oth_amount");
-		
-		// cbi
-		double cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
-		if (cbi_fed_amount > as_double("cbi_fed_maxvalue")) cbi_fed_amount = as_double("cbi_fed_maxvalue"); 
-		double cbi_sta_amount = 1000.0*nameplate*as_double("cbi_sta_amount");
-		if (cbi_sta_amount > as_double("cbi_sta_maxvalue")) cbi_sta_amount = as_double("cbi_sta_maxvalue"); 
-		double cbi_uti_amount = 1000.0*nameplate*as_double("cbi_uti_amount");
-		if (cbi_uti_amount > as_double("cbi_uti_maxvalue")) cbi_uti_amount = as_double("cbi_uti_maxvalue"); 
-		double cbi_oth_amount = 1000.0*nameplate*as_double("cbi_oth_amount");
-		if (cbi_oth_amount > as_double("cbi_oth_maxvalue")) cbi_oth_amount = as_double("cbi_oth_maxvalue"); 
-		
-		// precompute pbi
-		compute_production_incentive( CF_pbi_fed, nyears, "pbi_fed_amount", "pbi_fed_term", "pbi_fed_escal" );
-		compute_production_incentive( CF_pbi_sta, nyears, "pbi_sta_amount", "pbi_sta_term", "pbi_sta_escal" );
-		compute_production_incentive( CF_pbi_uti, nyears, "pbi_uti_amount", "pbi_uti_term", "pbi_uti_escal" );
-		compute_production_incentive( CF_pbi_oth, nyears, "pbi_oth_amount", "pbi_oth_term", "pbi_oth_escal" );
-
-		// precompute ptc
-		compute_production_incentive( CF_ptc_sta, nyears, "ptc_sta_amount", "ptc_sta_term", "ptc_sta_escal" );
-		compute_production_incentive( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
 		
 		double ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for pp_mode=0
 
@@ -861,60 +831,105 @@ public:
 		double equity_tax_investor;
 		double sponsor_pretax_equity_investment;
 
-		// precompute ibi
-		single_or_schedule_check_max( CF_ibi_fed_per, nyears, 0.01*cost_prefinancing, "ibi_fed_percent", "ibi_fed_percent_maxvalue" );
-		single_or_schedule_check_max( CF_ibi_sta_per, nyears, 0.01*cost_prefinancing, "ibi_sta_percent", "ibi_sta_percent_maxvalue" );
-		single_or_schedule_check_max( CF_ibi_uti_per, nyears, 0.01*cost_prefinancing, "ibi_uti_percent", "ibi_uti_percent_maxvalue" );
-		single_or_schedule_check_max( CF_ibi_oth_per, nyears, 0.01*cost_prefinancing, "ibi_oth_percent", "ibi_oth_percent_maxvalue" );
-		// precompute itc
-		single_or_schedule( CF_itc_fed_amt, nyears, 1.0, "itc_fed_amount" );
-		single_or_schedule( CF_itc_sta_amt, nyears, 1.0, "itc_sta_amount" );
-		single_or_schedule_check_max( CF_itc_fed_per, nyears, 0.01, "itc_fed_percent", "itc_fed_percent_maxvalue");
-		single_or_schedule_check_max( CF_itc_sta_per, nyears, 0.01, "itc_sta_percent", "itc_sta_percent_maxvalue");
+		// ibi fixed
+		double ibi_fed_amount = as_double("ibi_fed_amount");
+		double ibi_sta_amount = as_double("ibi_sta_amount");
+		double ibi_uti_amount = as_double("ibi_uti_amount");
+		double ibi_oth_amount = as_double("ibi_oth_amount");
 
-		for (i=0;i<=nyears;i++)
-		{
-			cf.at(CF_cbi_total,i) = cf.at(CF_cbi_fed,i) + cf.at(CF_cbi_sta,i) + cf.at(CF_cbi_uti,i) + cf.at(CF_cbi_oth,i);
-			cf.at(CF_ibi_total,i) = cf.at(CF_ibi_fed_amt,i) + cf.at(CF_ibi_sta_amt,i) + cf.at(CF_ibi_uti_amt,i) + cf.at(CF_ibi_oth_amt,i) + cf.at(CF_ibi_fed_per,i) + cf.at(CF_ibi_sta_per,i) + cf.at(CF_ibi_uti_per,i) + cf.at(CF_ibi_oth_per,i);
+		// ibi percent
+		double ibi_fed_per = as_double("ibi_fed_percent")*0.01*cost_prefinancing;
+		if (ibi_fed_per > as_double("ibi_fed_percent_maxvalue")) ibi_fed_per = as_double("ibi_fed_percent_maxvalue"); 
+		double ibi_sta_per = as_double("ibi_sta_percent")*0.01*cost_prefinancing;
+		if (ibi_sta_per > as_double("ibi_sta_percent_maxvalue")) ibi_sta_per = as_double("ibi_sta_percent_maxvalue"); 
+		double ibi_uti_per = as_double("ibi_uti_percent")*0.01*cost_prefinancing;
+		if (ibi_uti_per > as_double("ibi_uti_percent_maxvalue")) ibi_uti_per = as_double("ibi_uti_percent_maxvalue"); 
+		double ibi_oth_per = as_double("ibi_oth_percent")*0.01*cost_prefinancing;
+		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue"); 
 
-			cf.at(CF_itc_fed_total,i) = cf.at(CF_itc_fed_amt,i) + cf.at(CF_itc_fed_per,i);
-			cf.at(CF_itc_sta_total,i) = cf.at(CF_itc_sta_amt,i) + cf.at(CF_itc_sta_per,i);
-			cf.at(CF_itc_total,i) = cf.at(CF_itc_fed_total,i) + cf.at(CF_itc_sta_total,i);
-		}
+		// itc fixed
+		double itc_fed_amount = as_double("itc_fed_amount");
+		double itc_sta_amount = as_double("itc_sta_amount");
 
-		for (i=1;i<=nyears;i++)
+		// itc percent - max value used for comparison to qualifying costs
+		double itc_fed_frac = as_double("itc_fed_percent")*0.01;
+		double itc_fed_per;
+		double itc_sta_frac = as_double("itc_sta_percent")*0.01;
+		double itc_sta_per;
+
+		// cbi
+		double cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
+		if (cbi_fed_amount > as_double("cbi_fed_maxvalue")) cbi_fed_amount = as_double("cbi_fed_maxvalue"); 
+		double cbi_sta_amount = 1000.0*nameplate*as_double("cbi_sta_amount");
+		if (cbi_sta_amount > as_double("cbi_sta_maxvalue")) cbi_sta_amount = as_double("cbi_sta_maxvalue"); 
+		double cbi_uti_amount = 1000.0*nameplate*as_double("cbi_uti_amount");
+		if (cbi_uti_amount > as_double("cbi_uti_maxvalue")) cbi_uti_amount = as_double("cbi_uti_maxvalue"); 
+		double cbi_oth_amount = 1000.0*nameplate*as_double("cbi_oth_amount");
+		if (cbi_oth_amount > as_double("cbi_oth_maxvalue")) cbi_oth_amount = as_double("cbi_oth_maxvalue"); 
+		
+		// precompute pbi
+		compute_production_incentive( CF_pbi_fed, nyears, "pbi_fed_amount", "pbi_fed_term", "pbi_fed_escal" );
+		compute_production_incentive( CF_pbi_sta, nyears, "pbi_sta_amount", "pbi_sta_term", "pbi_sta_escal" );
+		compute_production_incentive( CF_pbi_uti, nyears, "pbi_uti_amount", "pbi_uti_term", "pbi_uti_escal" );
+		compute_production_incentive( CF_pbi_oth, nyears, "pbi_oth_amount", "pbi_oth_term", "pbi_oth_escal" );
+
+		// precompute ptc
+		compute_production_incentive( CF_ptc_sta, nyears, "ptc_sta_amount", "ptc_sta_term", "ptc_sta_escal" );
+		compute_production_incentive( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
+
+		double cbi_total = cbi_fed_amount + cbi_sta_amount +cbi_uti_amount + cbi_oth_amount;
+		double ibi_total = ibi_fed_amount + ibi_sta_amount +ibi_uti_amount + ibi_oth_amount + ibi_fed_per + ibi_sta_per +ibi_uti_per + ibi_oth_per;
+		double itc_fed_total;
+		double itc_sta_total;
+		double itc_total;
+
+		cf.at(CF_statax_taxable_incentives,1) = 
+			( as_boolean("ibi_fed_amount_tax_sta") ? ibi_fed_amount : 0 ) +
+			( as_boolean("ibi_fed_percent_tax_sta") ? ibi_fed_per : 0 ) +
+			( as_boolean("ibi_sta_amount_tax_sta") ? ibi_sta_amount : 0 ) +
+			( as_boolean("ibi_sta_percent_tax_sta") ? ibi_sta_per : 0 ) +
+			( as_boolean("ibi_uti_amount_tax_sta") ? ibi_uti_amount : 0 ) +
+			( as_boolean("ibi_uti_percent_tax_sta") ? ibi_uti_per : 0 ) +
+			( as_boolean("ibi_oth_amount_tax_sta") ? ibi_oth_amount : 0 ) +
+			( as_boolean("ibi_oth_percent_tax_sta") ? ibi_oth_per : 0 ) +
+			( as_boolean("cbi_fed_tax_sta") ? cbi_fed_amount : 0 ) +
+			( as_boolean("cbi_sta_tax_sta") ? cbi_sta_amount : 0 ) +
+			( as_boolean("cbi_uti_tax_sta") ? cbi_uti_amount : 0 ) +
+			( as_boolean("cbi_oth_tax_sta") ? cbi_oth_amount : 0 ) +
+			( (as_boolean("pbi_fed_tax_sta") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
+			( (as_boolean("pbi_sta_tax_sta") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
+			( (as_boolean("pbi_uti_tax_sta") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
+			( (as_boolean("pbi_oth_tax_sta") && (!as_boolean("pbi_oth_for_ds")) ) ? cf.at(CF_pbi_oth,i) : 0 ) ;
+
+		cf.at(CF_fedtax_taxable_incentives,1) =
+			( as_boolean("ibi_fed_amount_tax_fed") ? ibi_fed_amount : 0 ) +
+			( as_boolean("ibi_fed_percent_tax_fed") ? ibi_fed_per : 0 ) +
+			( as_boolean("ibi_sta_amount_tax_fed") ? ibi_sta_amount : 0 ) +
+			( as_boolean("ibi_sta_percent_tax_fed") ? ibi_sta_per : 0 ) +
+			( as_boolean("ibi_uti_amount_tax_fed") ? ibi_uti_amount : 0 ) +
+			( as_boolean("ibi_uti_percent_tax_fed") ? ibi_uti_per : 0 ) +
+			( as_boolean("ibi_oth_amount_tax_fed") ? ibi_oth_amount : 0 ) +
+			( as_boolean("ibi_oth_percent_tax_fed") ? ibi_oth_per : 0 ) +
+			( as_boolean("cbi_fed_tax_fed") ? cbi_fed_amount : 0 ) +
+			( as_boolean("cbi_sta_tax_fed") ? cbi_sta_amount : 0 ) +
+			( as_boolean("cbi_uti_tax_fed") ? cbi_uti_amount : 0 ) +
+			( as_boolean("cbi_oth_tax_fed") ? cbi_oth_amount : 0 ) +
+			( (as_boolean("pbi_fed_tax_fed") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
+			( (as_boolean("pbi_sta_tax_fed") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
+			( (as_boolean("pbi_uti_tax_fed") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
+			( (as_boolean("pbi_oth_tax_fed") && (!as_boolean("pbi_oth_for_ds")) ) ? cf.at(CF_pbi_oth,i) : 0 ) ;
+
+
+
+		for (i=2;i<=nyears;i++)
 		{
 			cf.at(CF_statax_taxable_incentives,i) = 
-				( as_boolean("ibi_fed_amount_tax_sta") ? cf.at(CF_ibi_fed_amt,i) : 0 ) +
-				( as_boolean("ibi_fed_percent_tax_sta") ? cf.at(CF_ibi_fed_per,i) : 0 ) +
-				( as_boolean("ibi_sta_amount_tax_sta") ? cf.at(CF_ibi_sta_amt,i) : 0 ) +
-				( as_boolean("ibi_sta_percent_tax_sta") ? cf.at(CF_ibi_sta_per,i) : 0 ) +
-				( as_boolean("ibi_uti_amount_tax_sta") ? cf.at(CF_ibi_uti_amt,i) : 0 ) +
-				( as_boolean("ibi_uti_percent_tax_sta") ? cf.at(CF_ibi_uti_per,i) : 0 ) +
-				( as_boolean("ibi_oth_amount_tax_sta") ? cf.at(CF_ibi_oth_amt,i) : 0 ) +
-				( as_boolean("ibi_oth_percent_tax_sta") ? cf.at(CF_ibi_oth_per,i) : 0 ) +
-				( as_boolean("cbi_fed_tax_sta") ? cf.at(CF_cbi_fed,i) : 0 ) +
-				( as_boolean("cbi_sta_tax_sta") ? cf.at(CF_cbi_sta,i) : 0 ) +
-				( as_boolean("cbi_uti_tax_sta") ? cf.at(CF_cbi_uti,i) : 0 ) +
-				( as_boolean("cbi_oth_tax_sta") ? cf.at(CF_cbi_oth,i) : 0 ) +
 				( (as_boolean("pbi_fed_tax_sta") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
 				( (as_boolean("pbi_sta_tax_sta") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
 				( (as_boolean("pbi_uti_tax_sta") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
 				( (as_boolean("pbi_oth_tax_sta") && (!as_boolean("pbi_oth_for_ds")) ) ? cf.at(CF_pbi_oth,i) : 0 ) ;
 
 			cf.at(CF_fedtax_taxable_incentives,i) =
-				( as_boolean("ibi_fed_amount_tax_fed") ? cf.at(CF_ibi_fed_amt,i) : 0 ) +
-				( as_boolean("ibi_fed_percent_tax_fed") ? cf.at(CF_ibi_fed_per,i) : 0 ) +
-				( as_boolean("ibi_sta_amount_tax_fed") ? cf.at(CF_ibi_sta_amt,i) : 0 ) +
-				( as_boolean("ibi_sta_percent_tax_fed") ? cf.at(CF_ibi_sta_per,i) : 0 ) +
-				( as_boolean("ibi_uti_amount_tax_fed") ? cf.at(CF_ibi_uti_amt,i) : 0 ) +
-				( as_boolean("ibi_uti_percent_tax_fed") ? cf.at(CF_ibi_uti_per,i) : 0 ) +
-				( as_boolean("ibi_oth_amount_tax_fed") ? cf.at(CF_ibi_oth_amt,i) : 0 ) +
-				( as_boolean("ibi_oth_percent_tax_fed") ? cf.at(CF_ibi_oth_per,i) : 0 ) +
-				( as_boolean("cbi_fed_tax_fed") ? cf.at(CF_cbi_fed,i) : 0 ) +
-				( as_boolean("cbi_sta_tax_fed") ? cf.at(CF_cbi_sta,i) : 0 ) +
-				( as_boolean("cbi_uti_tax_fed") ? cf.at(CF_cbi_uti,i) : 0 ) +
-				( as_boolean("cbi_oth_tax_fed") ? cf.at(CF_cbi_oth,i) : 0 ) +
 				( (as_boolean("pbi_fed_tax_fed") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
 				( (as_boolean("pbi_sta_tax_fed") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
 				( (as_boolean("pbi_uti_tax_fed") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
@@ -1009,6 +1024,7 @@ public:
 		double depr_alloc_none;
 		double depr_alloc_total;
 
+/*
 //State ITC
 		double itc_sta_reduction =  (
 			( as_boolean("ibi_fed_amount_itcbas_sta")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
@@ -1026,7 +1042,7 @@ public:
 			);
 // escalate back to year 1 for itc reduction 
 		itc_sta_reduction *=  (1.0 + nom_discount_rate);
-
+*/
 		double itc_sta_qual_macrs_5_frac = ( as_boolean("depr_itc_sta_macrs_5")  ? depr_stabas_macrs_5_frac: 0 ) ;
 		double itc_sta_qual_macrs_15_frac = ( as_boolean("depr_itc_sta_macrs_15")  ? depr_stabas_macrs_15_frac: 0 ) ;
 		double itc_sta_qual_sl_5_frac = ( as_boolean("depr_itc_sta_sl_5")  ? depr_stabas_sl_5_frac: 0 ) ;
@@ -1043,12 +1059,12 @@ public:
 		double itc_sta_qual_sl_20;
 		double itc_sta_qual_sl_39;
 
-		double itc_sta_percent_total = npv(CF_itc_sta_per,nyears,nom_discount_rate);
+/*		double itc_sta_percent_total = npv(CF_itc_sta_per,nyears,nom_discount_rate);
 		double itc_sta_fixed_total = npv(CF_itc_sta_amt,nyears,nom_discount_rate);
 // escalate back to year 1 for itc reduction 
 		itc_sta_percent_total *= (1 + nom_discount_rate);
 		itc_sta_fixed_total *= (1 + nom_discount_rate);
-
+*/
 		double itc_sta_percent_maxvalue = as_double("itc_sta_percent_maxvalue");
 
 		double itc_sta_disallow_factor = as_double("itc_sta_disallow_factor");
@@ -1060,15 +1076,15 @@ public:
 		double itc_disallow_sta_percent_sl_20;
 		double itc_disallow_sta_percent_sl_39;
 
-		double itc_disallow_sta_fixed_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_fixed_total);
-		double itc_disallow_sta_fixed_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_fixed_total);
+		double itc_disallow_sta_fixed_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_amount);
 		
 //Federal ITC
-
+/*
 		double itc_fed_reduction =  (
 			( as_boolean("ibi_fed_amount_itcbas_fed")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
 			( as_boolean("ibi_fed_percent_itcbas_fed")  ? npv( CF_ibi_fed_per, nyears, nom_discount_rate ) : 0 ) +
@@ -1085,7 +1101,7 @@ public:
 			);
 // escalate back to year 1 for itc reduction 
 		itc_fed_reduction *=  (1.0 + nom_discount_rate);
-
+*/
 		double itc_fed_qual_macrs_5_frac = ( as_boolean("depr_itc_fed_macrs_5")  ? depr_fedbas_macrs_5_frac: 0 ) ;
 		double itc_fed_qual_macrs_15_frac = ( as_boolean("depr_itc_fed_macrs_15")  ? depr_fedbas_macrs_15_frac: 0 ) ;
 		double itc_fed_qual_sl_5_frac = ( as_boolean("depr_itc_fed_sl_5")  ? depr_fedbas_sl_5_frac: 0 ) ;
@@ -1102,12 +1118,12 @@ public:
 		double itc_fed_qual_sl_20;
 		double itc_fed_qual_sl_39;
 
-		double itc_fed_percent_total = npv(CF_itc_fed_per,nyears,nom_discount_rate);
+/*		double itc_fed_percent_total = npv(CF_itc_fed_per,nyears,nom_discount_rate);
 		double itc_fed_fixed_total = npv(CF_itc_fed_amt,nyears,nom_discount_rate);
 // escalate back to year 1 for itc reduction 
 		itc_fed_percent_total *= (1 + nom_discount_rate);
 		itc_fed_fixed_total *= (1 + nom_discount_rate);
-
+*/
 		double itc_fed_percent_maxvalue = as_double("itc_fed_percent_maxvalue");
 
 		double itc_fed_disallow_factor = as_double("itc_fed_disallow_factor");
@@ -1119,33 +1135,31 @@ public:
 		double itc_disallow_fed_percent_sl_20;
 		double itc_disallow_fed_percent_sl_39;
 
-		double itc_disallow_fed_fixed_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_fixed_total);
-		double itc_disallow_fed_fixed_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_fixed_total);
+		double itc_disallow_fed_fixed_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_amount);
 		
  
 
 // Depreciation
 // State depreciation
 		double depr_sta_reduction =  (
-			( as_boolean("ibi_fed_amount_deprbas_sta")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_fed_percent_deprbas_sta")  ? npv( CF_ibi_fed_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_fed_deprbas_sta")  ? npv( CF_cbi_fed, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_amount_deprbas_sta")  ? npv( CF_ibi_sta_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_percent_deprbas_sta")  ? npv( CF_ibi_sta_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_sta_deprbas_sta")  ? npv( CF_cbi_sta, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_amount_deprbas_sta")  ? npv( CF_ibi_uti_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_percent_deprbas_sta")  ? npv( CF_ibi_uti_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_uti_deprbas_sta")  ? npv( CF_cbi_uti, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_amount_deprbas_sta")  ? npv( CF_ibi_oth_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_percent_deprbas_sta")  ? npv( CF_ibi_oth_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_oth_deprbas_sta")  ? npv( CF_cbi_oth, nyears, nom_discount_rate ) : 0 ) 
+			( as_boolean("ibi_fed_amount_deprbas_sta")  ? ibi_fed_amount : 0 ) +
+			( as_boolean("ibi_fed_percent_deprbas_sta")  ? ibi_fed_per : 0 ) +
+			( as_boolean("cbi_fed_deprbas_sta")  ? cbi_fed_amount : 0 ) +
+			( as_boolean("ibi_sta_amount_deprbas_sta")  ? ibi_sta_amount : 0 ) +
+			( as_boolean("ibi_sta_percent_deprbas_sta")  ? ibi_sta_per : 0 ) +
+			( as_boolean("cbi_sta_deprbas_sta")  ? cbi_sta_amount : 0 ) +
+			( as_boolean("ibi_uti_amount_deprbas_sta")  ? ibi_uti_amount : 0 ) +
+			( as_boolean("ibi_uti_percent_deprbas_sta")  ? ibi_uti_per : 0 ) +
+			( as_boolean("cbi_uti_deprbas_sta")  ? cbi_uti_amount : 0 ) +
+			( as_boolean("ibi_oth_amount_deprbas_sta")  ? ibi_oth_amount : 0 ) +
+			( as_boolean("ibi_oth_percent_deprbas_sta")  ? ibi_oth_per : 0 ) +
+			( as_boolean("cbi_oth_deprbas_sta")  ? cbi_oth_amount : 0 ) 
 			);
-// escalate back to year 1 for itc reduction 
-		depr_sta_reduction *=  (1.0 + nom_discount_rate);
 
 		double depr_stabas_macrs_5;
 		double depr_stabas_macrs_15;
@@ -1181,21 +1195,19 @@ public:
 		// Federal depreciation
 
 		double depr_fed_reduction =  (
-			( as_boolean("ibi_fed_amount_deprbas_fed")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_fed_percent_deprbas_fed")  ? npv( CF_ibi_fed_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_fed_deprbas_fed")  ? npv( CF_cbi_fed, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_amount_deprbas_fed")  ? npv( CF_ibi_sta_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_percent_deprbas_fed")  ? npv( CF_ibi_sta_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_sta_deprbas_fed")  ? npv( CF_cbi_sta, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_amount_deprbas_fed")  ? npv( CF_ibi_uti_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_percent_deprbas_fed")  ? npv( CF_ibi_uti_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_uti_deprbas_fed")  ? npv( CF_cbi_uti, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_amount_deprbas_fed")  ? npv( CF_ibi_oth_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_percent_deprbas_fed")  ? npv( CF_ibi_oth_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_oth_deprbas_fed")  ? npv( CF_cbi_oth, nyears, nom_discount_rate ) : 0 ) 
+			( as_boolean("ibi_fed_amount_deprbas_fed")  ? ibi_fed_amount : 0 ) +
+			( as_boolean("ibi_fed_percent_deprbas_fed")  ? ibi_fed_per : 0 ) +
+			( as_boolean("cbi_fed_deprbas_fed")  ? cbi_fed_amount : 0 ) +
+			( as_boolean("ibi_sta_amount_deprbas_fed")  ? ibi_sta_amount : 0 ) +
+			( as_boolean("ibi_sta_percent_deprbas_fed")  ? ibi_sta_per : 0 ) +
+			( as_boolean("cbi_sta_deprbas_fed")  ? cbi_sta_amount : 0 ) +
+			( as_boolean("ibi_uti_amount_deprbas_fed")  ? ibi_uti_amount : 0 ) +
+			( as_boolean("ibi_uti_percent_deprbas_fed")  ? ibi_uti_per : 0 ) +
+			( as_boolean("cbi_uti_deprbas_fed")  ? cbi_uti_amount : 0 ) +
+			( as_boolean("ibi_oth_amount_deprbas_fed")  ? ibi_oth_amount : 0 ) +
+			( as_boolean("ibi_oth_percent_deprbas_fed")  ? ibi_oth_per : 0 ) +
+			( as_boolean("cbi_oth_deprbas_fed")  ? cbi_oth_amount : 0 ) 
 			);
-// escalate back to year 1 for itc reduction 
-		depr_fed_reduction *=  (1.0 + nom_discount_rate);
 
 		double depr_fedbas_macrs_5;
 		double depr_fedbas_macrs_15;
@@ -1340,43 +1352,46 @@ public:
 		depr_alloc_sl_39 = depr_alloc_sl_39_frac * depr_alloc_total;
 		depr_alloc_none = depr_alloc_none_frac * depr_alloc_total;
 
-		itc_sta_qual_macrs_5 = itc_sta_qual_macrs_5_frac * (depr_alloc_total - itc_sta_reduction);
-		itc_sta_qual_macrs_15 = itc_sta_qual_macrs_15_frac * (depr_alloc_total - itc_sta_reduction);
-		itc_sta_qual_sl_5 = itc_sta_qual_sl_5_frac * (depr_alloc_total - itc_sta_reduction);
-		itc_sta_qual_sl_15 = itc_sta_qual_sl_15_frac * (depr_alloc_total - itc_sta_reduction);
-		itc_sta_qual_sl_20 = itc_sta_qual_sl_20_frac * (depr_alloc_total - itc_sta_reduction);
-		itc_sta_qual_sl_39 = itc_sta_qual_sl_39_frac * (depr_alloc_total - itc_sta_reduction);
+		itc_sta_qual_macrs_5 = itc_sta_qual_macrs_5_frac * depr_alloc_total;
+		itc_sta_qual_macrs_15 = itc_sta_qual_macrs_15_frac * depr_alloc_total;
+		itc_sta_qual_sl_5 = itc_sta_qual_sl_5_frac * depr_alloc_total;
+		itc_sta_qual_sl_15 = itc_sta_qual_sl_15_frac * depr_alloc_total;
+		itc_sta_qual_sl_20 = itc_sta_qual_sl_20_frac * depr_alloc_total;
+		itc_sta_qual_sl_39 = itc_sta_qual_sl_39_frac * depr_alloc_total;
 
 		itc_sta_qual_total = itc_sta_qual_macrs_5 + itc_sta_qual_macrs_15 + itc_sta_qual_sl_5 +itc_sta_qual_sl_15 +itc_sta_qual_sl_20 + itc_sta_qual_sl_39;
 
-		itc_sta_percent_total = min(itc_sta_percent_maxvalue,itc_sta_percent_total*itc_sta_qual_total);
+		itc_sta_per = min(itc_sta_percent_maxvalue,itc_sta_frac*itc_sta_qual_total);
 
-		itc_disallow_sta_percent_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_percent_total);
-		itc_disallow_sta_percent_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_percent_total);
-		itc_disallow_sta_percent_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_percent_total);
-		itc_disallow_sta_percent_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_percent_total);
-		itc_disallow_sta_percent_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_percent_total);
-		itc_disallow_sta_percent_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_percent_total);
+		itc_disallow_sta_percent_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_per);
+		itc_disallow_sta_percent_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_per);
+		itc_disallow_sta_percent_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_per);
+		itc_disallow_sta_percent_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_per);
+		itc_disallow_sta_percent_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_per);
+		itc_disallow_sta_percent_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_per);
 
-		itc_fed_qual_macrs_5 = itc_fed_qual_macrs_5_frac * (depr_alloc_total - itc_fed_reduction);
-		itc_fed_qual_macrs_15 = itc_fed_qual_macrs_15_frac * (depr_alloc_total - itc_fed_reduction);
-		itc_fed_qual_sl_5 = itc_fed_qual_sl_5_frac * (depr_alloc_total - itc_fed_reduction);
-		itc_fed_qual_sl_15 = itc_fed_qual_sl_15_frac * (depr_alloc_total - itc_fed_reduction);
-		itc_fed_qual_sl_20 = itc_fed_qual_sl_20_frac * (depr_alloc_total - itc_fed_reduction);
-		itc_fed_qual_sl_39 = itc_fed_qual_sl_39_frac * (depr_alloc_total - itc_fed_reduction);
+		itc_fed_qual_macrs_5 = itc_fed_qual_macrs_5_frac * depr_alloc_total;
+		itc_fed_qual_macrs_15 = itc_fed_qual_macrs_15_frac * depr_alloc_total;
+		itc_fed_qual_sl_5 = itc_fed_qual_sl_5_frac * depr_alloc_total;
+		itc_fed_qual_sl_15 = itc_fed_qual_sl_15_frac * depr_alloc_total;
+		itc_fed_qual_sl_20 = itc_fed_qual_sl_20_frac * depr_alloc_total;
+		itc_fed_qual_sl_39 = itc_fed_qual_sl_39_frac * depr_alloc_total;
 
 		itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39;
 
-		itc_fed_percent_total = min(itc_fed_percent_maxvalue,itc_fed_percent_total*itc_fed_qual_total);
+		itc_fed_per = min(itc_fed_percent_maxvalue,itc_fed_frac*itc_fed_qual_total);
 
-		itc_disallow_fed_percent_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_percent_total);
-		itc_disallow_fed_percent_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_percent_total);
-		itc_disallow_fed_percent_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_percent_total);
-		itc_disallow_fed_percent_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_percent_total);
-		itc_disallow_fed_percent_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_percent_total);
-		itc_disallow_fed_percent_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_percent_total);
+		itc_disallow_fed_percent_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_per);
+		itc_disallow_fed_percent_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_per);
+		itc_disallow_fed_percent_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_per);
+		itc_disallow_fed_percent_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_per);
+		itc_disallow_fed_percent_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_per);
+		itc_disallow_fed_percent_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_per);
 
-		
+		itc_fed_total = itc_fed_amount + itc_fed_per;
+		itc_sta_total = itc_sta_amount + itc_sta_per;
+		itc_total = itc_fed_total + itc_sta_total;
+
 // Depreciaiton
 // State depreciation
 		depr_stabas_macrs_5 = depr_alloc_macrs_5 - depr_stabas_macrs_5_frac * depr_sta_reduction;
@@ -1491,8 +1506,7 @@ public:
 		depr_fedbas_total = depr_fedbas_macrs_5 + depr_fedbas_macrs_15 + depr_fedbas_sl_5 + depr_fedbas_sl_15 + depr_fedbas_sl_20 + depr_fedbas_sl_39;
 
 		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice,0) + cost_working_reserve;
-		// TODO - check with incentives - need total ibi and cbi - can use npv at year 1 - note that itc at year 1 but cbi and ibi at year 0
-		issuance_of_equity = cost_installed - (size_of_debt + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1));	
+		issuance_of_equity = cost_installed - (size_of_debt + ibi_total + cbi_total);	
 		
 		equity_tax_investor = tax_investor_equity_frac * issuance_of_equity;
 
@@ -1518,10 +1532,8 @@ public:
 			cf.at(CF_project_investing_activities,i) = cf.at(CF_project_ra,i) + cf.at(CF_project_mecs,i);
 			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
 
-			// TODO - address out IBI CBI at year 1 and DHF has at year 0
-//			cf.at(CF_project_financing_activities,i) = cf.at(CF_ibi_total,i) + cf.at(CF_cbi_total,i) - cf.at(CF_debt_payment_principal,i);
 			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + cf.at(CF_ibi_total,1) + cf.at(CF_cbi_total,1);
+			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + ibi_total + cbi_total;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 
@@ -1594,25 +1606,18 @@ public:
 				cf.at(CF_debt_payment_interest,i) -
 				cf.at(CF_feddepr_total,i) +
 				cf.at(CF_statax,i) +
-				cf.at(CF_itc_sta_total,i) +
 				cf.at(CF_ptc_sta,i);
+			if (i==1) cf.at(CF_fedtax_income_prior_incentives,i) += itc_sta_total;
 
 
 			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_fedtax_taxable_incentives,i);
 			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i); 
 
-			cf.at(CF_cbi_total,i) = cf.at(CF_cbi_fed,i) + cf.at(CF_cbi_sta,i) + cf.at(CF_cbi_uti,i) + cf.at(CF_cbi_oth,i);
-			cf.at(CF_ibi_total,i) = cf.at(CF_ibi_fed_amt,i) + cf.at(CF_ibi_sta_amt,i) + cf.at(CF_ibi_uti_amt,i) + cf.at(CF_ibi_oth_amt,i) + cf.at(CF_ibi_fed_per,i) + cf.at(CF_ibi_sta_per,i) + cf.at(CF_ibi_uti_per,i) + cf.at(CF_ibi_oth_per,i);
-
-			cf.at(CF_itc_fed_total,i) = cf.at(CF_itc_fed_amt,i) + cf.at(CF_itc_fed_per,i)*itc_fed_qual_total;
-			cf.at(CF_itc_sta_total,i) = cf.at(CF_itc_sta_amt,i) + cf.at(CF_itc_sta_per,i)*itc_sta_qual_total;
-			cf.at(CF_itc_total,i) = cf.at(CF_itc_fed_total,i) + cf.at(CF_itc_sta_total,i);
-
 			cf.at(CF_project_return_aftertax,i) = 
 				cf.at(CF_project_return_aftertax_cash,i) +
-				cf.at(CF_itc_total,i) +
 				cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i) +
 				cf.at(CF_statax,i) + cf.at(CF_fedtax,i);
+			if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
 
 			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i,0.05)*100.0;
 			cf.at(CF_project_return_aftertax_npv,i) = npv(CF_project_return_aftertax,i,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0) ;
@@ -1648,10 +1653,11 @@ public:
 		{
 			cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
 						tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * cf.at(CF_project_return_aftertax_cash,i);
-			cf.at(CF_tax_investor_aftertax_itc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
-						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * cf.at(CF_itc_total,i);
 			cf.at(CF_tax_investor_aftertax_ptc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
 						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i));
+			if (i==1)
+				cf.at(CF_tax_investor_aftertax_itc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ?
+						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * itc_total;
 			cf.at(CF_tax_investor_aftertax_tax,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
 						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_statax,i) + cf.at(CF_fedtax,i));
 			cf.at(CF_tax_investor_aftertax,i) = 			
@@ -1669,8 +1675,8 @@ public:
 
 			cf.at(CF_sponsor_aftertax_cash,i) = cf.at(CF_project_return_aftertax_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
 			cf.at(CF_sponsor_pretax,i) = cf.at(CF_sponsor_aftertax_cash,i);
-			cf.at(CF_sponsor_aftertax_itc,i) = cf.at(CF_itc_total,i) - cf.at(CF_tax_investor_aftertax_itc,i);
 			cf.at(CF_sponsor_aftertax_ptc,i) = (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i)) - cf.at(CF_tax_investor_aftertax_ptc,i);
+			if (i==1) cf.at(CF_sponsor_aftertax_itc,i) = itc_total - cf.at(CF_tax_investor_aftertax_itc,i);
 			cf.at(CF_sponsor_aftertax_tax,i) = (cf.at(CF_statax,i) + cf.at(CF_fedtax,i)) - cf.at(CF_tax_investor_aftertax_tax,i);
 			cf.at(CF_sponsor_aftertax,i) = 			
 				cf.at(CF_sponsor_aftertax_cash,i) +
@@ -1768,7 +1774,6 @@ public:
 		assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
 		assign( "cost_installedperwatt", var_data((ssc_number_t)( cost_installed / nameplate / 1000.0 ) ));
 
-		assign( "itc_fed_reduction", var_data((ssc_number_t) itc_fed_reduction ) );
  		assign( "itc_fed_qual_macrs_5", var_data((ssc_number_t) itc_fed_qual_macrs_5 ) );
 		assign( "itc_fed_qual_macrs_15", var_data((ssc_number_t) itc_fed_qual_macrs_15 ) );
 		assign( "itc_fed_qual_sl_5", var_data((ssc_number_t) itc_fed_qual_sl_5 ) );
@@ -1791,8 +1796,8 @@ public:
 		assign( "itc_disallow_fed_fixed_sl_39", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_39 ) );
 
 		assign( "itc_fed_qual_total", var_data((ssc_number_t) itc_fed_qual_total ) );
-		assign( "itc_fed_percent_total", var_data((ssc_number_t) itc_fed_percent_total ) );
-		assign( "itc_fed_fixed_total", var_data((ssc_number_t) itc_fed_fixed_total ) );
+		assign( "itc_fed_percent_total", var_data((ssc_number_t) itc_fed_per ) );
+		assign( "itc_fed_fixed_total", var_data((ssc_number_t) itc_fed_amount ) );
 	
 	
 	    assign("sv_sponsor_pretax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
@@ -1815,7 +1820,6 @@ public:
 		assign("constr_upfront_fee", var_data((ssc_number_t) constr_upfront_fee));
 		assign("constr_total_financing", var_data((ssc_number_t) constr_total_financing));
 
- 		assign( "itc_sta_reduction", var_data((ssc_number_t) itc_sta_reduction ) );
  		assign( "itc_sta_qual_macrs_5", var_data((ssc_number_t) itc_sta_qual_macrs_5 ) );
 		assign( "itc_sta_qual_macrs_15", var_data((ssc_number_t) itc_sta_qual_macrs_15 ) );
 		assign( "itc_sta_qual_sl_5", var_data((ssc_number_t) itc_sta_qual_sl_5 ) );
@@ -1838,8 +1842,8 @@ public:
 		assign( "itc_disallow_sta_fixed_sl_39", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_39 ) );
 
 		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
-		assign( "itc_sta_percent_total", var_data((ssc_number_t) itc_sta_percent_total ) );
-		assign( "itc_sta_fixed_total", var_data((ssc_number_t) itc_sta_fixed_total ) );
+		assign( "itc_sta_percent_total", var_data((ssc_number_t) itc_sta_per ) );
+		assign( "itc_sta_fixed_total", var_data((ssc_number_t) itc_sta_amount ) );
 
 
 
@@ -1859,6 +1863,9 @@ public:
 		assign("sv_sponsor_aftertax_irr", var_data((ssc_number_t)  (irr(CF_sponsor_aftertax,nyears)*100.0)));
 		assign("sv_sponsor_aftertax_npv", var_data((ssc_number_t)  (npv(CF_sponsor_aftertax,nyears,nom_discount_rate) +  cf.at(CF_sponsor_aftertax,0)) ));
 
+		assign("ibi_total", var_data((ssc_number_t) ibi_total));
+		assign("cbi_total", var_data((ssc_number_t) cbi_total));
+		assign("itc_total", var_data((ssc_number_t) itc_total));
 
 		// cash flow line items
 
@@ -1913,13 +1920,9 @@ public:
 		save_cf( CF_feddepr_total, nyears, "cf_feddepr_total" );
 		save_cf( CF_fedtax_income_prior_incentives, nyears, "cf_fedtax_income_prior_incentives" );
 
-		save_cf( CF_ibi_total, nyears, "cf_ibi_total" );
-		save_cf( CF_cbi_total, nyears, "cf_cbi_total" );
 		save_cf( CF_pbi_total, nyears, "cf_pbi_total" );
 		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
 		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
-		save_cf( CF_itc_fed_total, nyears, "cf_itc_fed_total" );
-		save_cf( CF_itc_sta_total, nyears, "cf_itc_sta_total" );
 
 		save_cf( CF_project_return_aftertax_cash, nyears, "cf_project_return_aftertax_cash" );
 		save_cf( CF_project_return_aftertax, nyears, "cf_project_return_aftertax" );
@@ -1949,11 +1952,6 @@ public:
 		save_cf( CF_pv_cash_for_ds, nyears, "cf_pv_cash_for_ds" );
 		save_cf( CF_debt_size, nyears, "cf_debt_size" );			
 		save_cf( CF_project_operating_activities, nyears, "cf_project_operating_activities" );
-
-		save_cf( CF_itc_sta_amt, nyears, "cf_itc_sta_amt" );
-		save_cf( CF_itc_sta_per, nyears, "cf_itc_sta_per" );
-		save_cf( CF_itc_fed_amt, nyears, "cf_itc_fed_amt" );
-		save_cf( CF_itc_fed_per, nyears, "cf_itc_fed_per" );
 
 		save_cf( CF_debt_payment_total, nyears, "cf_debt_payment_total" );
 		save_cf( CF_debt_payment_interest, nyears, "cf_debt_payment_interest" );
@@ -2274,33 +2272,6 @@ public:
 		ssc_number_t *p = as_array(name, &len);
 		for (int i=1;i<=(int)len && i <= nyears;i++)
 			cf.at(cf_line, i) = min( scale*p[i-1], max );
-	}
-
-	double taxable_incentive_income(int year, const std::string &fed_or_sta)
-	{
-		double ti = 0.0;
-
-		if ( as_boolean("ibi_fed_amount_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_fed_amt, year );
-		if ( as_boolean("ibi_sta_amount_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_sta_amt, year );
-		if ( as_boolean("ibi_uti_amount_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_uti_amt, year );
-		if ( as_boolean("ibi_oth_amount_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_oth_amt, year );
-		
-		if ( as_boolean("ibi_fed_percent_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_fed_per, year );
-		if ( as_boolean("ibi_sta_percent_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_sta_per, year );
-		if ( as_boolean("ibi_uti_percent_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_uti_per, year );
-		if ( as_boolean("ibi_oth_percent_tax_"+fed_or_sta) ) ti += cf.at( CF_ibi_oth_per, year );
-
-		if ( as_boolean("cbi_fed_tax_"+fed_or_sta) ) ti += cf.at( CF_cbi_fed, year );
-		if ( as_boolean("cbi_sta_tax_"+fed_or_sta) ) ti += cf.at( CF_cbi_sta, year );
-		if ( as_boolean("cbi_uti_tax_"+fed_or_sta) ) ti += cf.at( CF_cbi_uti, year );
-		if ( as_boolean("cbi_oth_tax_"+fed_or_sta) ) ti += cf.at( CF_cbi_oth, year );
-
-		if ( as_boolean("pbi_fed_tax_"+fed_or_sta) ) ti += cf.at( CF_pbi_fed, year );
-		if ( as_boolean("pbi_sta_tax_"+fed_or_sta) ) ti += cf.at( CF_pbi_sta, year );
-		if ( as_boolean("pbi_uti_tax_"+fed_or_sta) ) ti += cf.at( CF_pbi_uti, year );
-		if ( as_boolean("pbi_oth_tax_"+fed_or_sta) ) ti += cf.at( CF_pbi_oth, year );
-
-		return ti;
 	}
 
 	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
