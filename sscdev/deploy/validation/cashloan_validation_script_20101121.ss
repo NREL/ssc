@@ -26,7 +26,7 @@ ssc_set("mortgage", 0) ' boolean
 ssc_set("loan_term", 30)
 ssc_set("loan_rate", 4.95)
 ssc_set("loan_debt", 80)
-ssc_set("itc_fed_percent", array(30))
+ssc_set("itc_fed_percent", 30)
 
 ssc_set("depr_fed_type", 1) ' half year convention
 ssc_set("depr_sta_type", 1) ' half year convention
@@ -35,7 +35,7 @@ ssc_set("om_fixed", array(5500))
 ssc_set("om_capacity", array(50))
 
 
-ssc_set("itc_sta_percent", array(10,10,10,5))
+ssc_set("itc_sta_percent", 10)
 ssc_set("ptc_fed_amount", array(0.1))
 ssc_set("ptc_fed_term", 10)
 ssc_set("ptc_fed_escal", 1.5)
@@ -44,7 +44,7 @@ ssc_set("analysis_years", 30)
 
 for (itc=30;itc<=30;itc=itc+10)
 	outln("ITC=" + itc)
-	ssc_set("itc_fed_percent", array(itc))
+	ssc_set("itc_fed_percent", itc)
 
 	ssc_start()
 
