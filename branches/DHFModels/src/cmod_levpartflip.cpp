@@ -1024,25 +1024,6 @@ public:
 		double depr_alloc_none;
 		double depr_alloc_total;
 
-/*
-//State ITC
-		double itc_sta_reduction =  (
-			( as_boolean("ibi_fed_amount_itcbas_sta")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_fed_percent_itcbas_sta")  ? npv( CF_ibi_fed_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_fed_itcbas_sta")  ? npv( CF_cbi_fed, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_amount_itcbas_sta")  ? npv( CF_ibi_sta_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_percent_itcbas_sta")  ? npv( CF_ibi_sta_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_sta_itcbas_sta")  ? npv( CF_cbi_sta, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_amount_itcbas_sta")  ? npv( CF_ibi_uti_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_percent_itcbas_sta")  ? npv( CF_ibi_uti_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_uti_itcbas_sta")  ? npv( CF_cbi_uti, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_amount_itcbas_sta")  ? npv( CF_ibi_oth_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_percent_itcbas_sta")  ? npv( CF_ibi_oth_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_oth_itcbas_sta")  ? npv( CF_cbi_oth, nyears, nom_discount_rate ) : 0 ) 
-			);
-// escalate back to year 1 for itc reduction 
-		itc_sta_reduction *=  (1.0 + nom_discount_rate);
-*/
 		double itc_sta_qual_macrs_5_frac = ( as_boolean("depr_itc_sta_macrs_5")  ? depr_stabas_macrs_5_frac: 0 ) ;
 		double itc_sta_qual_macrs_15_frac = ( as_boolean("depr_itc_sta_macrs_15")  ? depr_stabas_macrs_15_frac: 0 ) ;
 		double itc_sta_qual_sl_5_frac = ( as_boolean("depr_itc_sta_sl_5")  ? depr_stabas_sl_5_frac: 0 ) ;
@@ -1059,12 +1040,6 @@ public:
 		double itc_sta_qual_sl_20;
 		double itc_sta_qual_sl_39;
 
-/*		double itc_sta_percent_total = npv(CF_itc_sta_per,nyears,nom_discount_rate);
-		double itc_sta_fixed_total = npv(CF_itc_sta_amt,nyears,nom_discount_rate);
-// escalate back to year 1 for itc reduction 
-		itc_sta_percent_total *= (1 + nom_discount_rate);
-		itc_sta_fixed_total *= (1 + nom_discount_rate);
-*/
 		double itc_sta_percent_maxvalue = as_double("itc_sta_percent_maxvalue");
 
 		double itc_sta_disallow_factor = as_double("itc_sta_disallow_factor");
@@ -1083,25 +1058,6 @@ public:
 		double itc_disallow_sta_fixed_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_amount);
 		double itc_disallow_sta_fixed_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_amount);
 		
-//Federal ITC
-/*
-		double itc_fed_reduction =  (
-			( as_boolean("ibi_fed_amount_itcbas_fed")  ? npv( CF_ibi_fed_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_fed_percent_itcbas_fed")  ? npv( CF_ibi_fed_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_fed_itcbas_fed")  ? npv( CF_cbi_fed, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_amount_itcbas_fed")  ? npv( CF_ibi_sta_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_sta_percent_itcbas_fed")  ? npv( CF_ibi_sta_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_sta_itcbas_fed")  ? npv( CF_cbi_sta, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_amount_itcbas_fed")  ? npv( CF_ibi_uti_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_uti_percent_itcbas_fed")  ? npv( CF_ibi_uti_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_uti_itcbas_fed")  ? npv( CF_cbi_uti, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_amount_itcbas_fed")  ? npv( CF_ibi_oth_amt, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("ibi_oth_percent_itcbas_fed")  ? npv( CF_ibi_oth_per, nyears, nom_discount_rate ) : 0 ) +
-			( as_boolean("cbi_oth_itcbas_fed")  ? npv( CF_cbi_oth, nyears, nom_discount_rate ) : 0 ) 
-			);
-// escalate back to year 1 for itc reduction 
-		itc_fed_reduction *=  (1.0 + nom_discount_rate);
-*/
 		double itc_fed_qual_macrs_5_frac = ( as_boolean("depr_itc_fed_macrs_5")  ? depr_fedbas_macrs_5_frac: 0 ) ;
 		double itc_fed_qual_macrs_15_frac = ( as_boolean("depr_itc_fed_macrs_15")  ? depr_fedbas_macrs_15_frac: 0 ) ;
 		double itc_fed_qual_sl_5_frac = ( as_boolean("depr_itc_fed_sl_5")  ? depr_fedbas_sl_5_frac: 0 ) ;
@@ -1118,12 +1074,6 @@ public:
 		double itc_fed_qual_sl_20;
 		double itc_fed_qual_sl_39;
 
-/*		double itc_fed_percent_total = npv(CF_itc_fed_per,nyears,nom_discount_rate);
-		double itc_fed_fixed_total = npv(CF_itc_fed_amt,nyears,nom_discount_rate);
-// escalate back to year 1 for itc reduction 
-		itc_fed_percent_total *= (1 + nom_discount_rate);
-		itc_fed_fixed_total *= (1 + nom_discount_rate);
-*/
 		double itc_fed_percent_maxvalue = as_double("itc_fed_percent_maxvalue");
 
 		double itc_fed_disallow_factor = as_double("itc_fed_disallow_factor");
