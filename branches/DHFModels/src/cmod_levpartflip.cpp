@@ -6,11 +6,15 @@ static var_info _cm_vtab_levpartflip[] = {
 
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
+//	{ SSC_INPUT,        SSC_ARRAY,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
+	/* modify to apply availability and degradation until separate compute module constructed. */
+	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_availabilty",		"Annual energy availability",	"%",   "",                      "DHF",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "DHF",             "*",						   "",                              "" },
 /* constraint is > 0 */
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
-/* costs - to be updated based on meetings with DHF */
+/* costs - to be updated based on meetings with DHF 
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_gen_equip",           "Generation equiptment cost",		"$",	 "",					  "DHF",             "?=24000000",              "MIN=0",                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_bop",					"Balance of plant cost",			"$",	 "",					  "DHF",             "?=8000000",               "MIN=0",                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_network",             "Network upgrade cost",				"$",	 "",					  "DHF",             "?=3500000",               "MIN=0",                         "" },
@@ -20,6 +24,10 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_land_improve",        "Land improvements cost",		    "$",	 "",					  "DHF",             "?=200000",                 "MIN=0",                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_other",               "Other cost",						"$",	 "",					  "DHF",             "?=75000",                  "MIN=0",                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "percent_taxable",          "Taxable cost",				        "%",	 "",					  "DHF",             "?=100",                     "MIN=0,MAX=100",      			"" },
+*/
+	{ SSC_INPUT,       SSC_NUMBER,      "cost_salestax",              "Sales tax",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_INPUT,       SSC_NUMBER,      "cost_prefinancing",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+
 
 /* inputs in DHF model not currently in SAM 11/15/10 */
 	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "DHF",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
@@ -65,6 +73,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_closing",		"Debt closing cost",				"$",	 "",					  "DHF",             "?=250000",					    "MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "DHF",             "?=100000",					    "MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_working_reserve",		"Q&M/Working capital reserve",		"$",	 "",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "cost_other_financing",		"",		"$",	 "Other Financing Cost",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
 /* DHF Equity Structure */
 	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_equity_percent",		"Tax investor equity",				"%",	 "",					  "DHF",             "?=98",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_cash_percent",		"Tax investor pre-flip cash ",		"%",	 "",  "DHF",             "?=98",					  "MIN=0,MAX=100",     			        "" },
@@ -118,11 +127,11 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_for_ds",    "Other PBI available for debt service",     "0/1",      "",                      "DHF",      "?=0",                       "BOOLEAN",                                         "" },
 
 /* intermediate outputs */
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_contingency",        "Contingency cost",                 "$",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_hard",               "Hard cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_soft",               "Soft cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_salestax",           "Sales tax",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancing",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_contingency",        "Contingency cost",                 "$",     "",					  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_hard",               "Hard cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_soft",               "Soft cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_salestax",           "Sales tax",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
+//	{ SSC_INPUT,       SSC_NUMBER,      "cost_prefinancing",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
@@ -621,6 +630,7 @@ public:
 
 		double nom_discount_rate = (1+inflation_rate)*(1+disc_real)-1;
 
+/*
 		double gen = as_double("cost_gen_equip");
 		double bop = as_double("cost_bop");
 		double net = as_double("cost_network");
@@ -632,14 +642,30 @@ public:
 		double dev = as_double("cost_developer");
 		double land = as_double("cost_land_improve");
 		double other = as_double("cost_other");
-		double cost_taxable = as_double("percent_taxable") / 100.0;
-		double sales_tax_rate = as_double("sales_tax_rate") / 100.0;
 
 		double cost_soft = dev + land + other;
+
+		double cost_taxable = as_double("percent_taxable") / 100.0;
+		double sales_tax_rate = as_double("sales_tax_rate") / 100.0;
 		double cost_salestax = (cost_hard + cost_cont + cost_soft) * cost_taxable * sales_tax_rate;
 
 		// use DHF named range names for variables whenever possible
 		double cost_prefinancing = cost_soft + cost_salestax + cost_hard + cost_cont;
+
+
+		// DHF model applies sales tax to both hard and soft costs whereas sam only does hard costs.
+		double cost_hard = as_double("cost_hard");
+		double cost_soft = as_double("cost_soft");
+		double cost_taxable = as_double("percent_taxable") / 100.0;
+		double sales_tax_rate = as_double("sales_tax_rate") / 100.0;
+		double cost_salestax = (cost_hard + cost_soft) * cost_taxable * sales_tax_rate;
+		double cost_prefinancing = cost_soft + cost_salestax + cost_hard;
+*/
+		// In conjunction with SAM - take installed costs and salestax costs (for deducting if necessary)
+		double cost_salestax = as_double("cost_salestax");
+		double cost_prefinancing = as_double("cost_prefinancing");
+
+		// use DHF named range names for variables whenever possible
 		double nameplate = as_double("system_capacity");
 	
 		double assessed_frac = as_double("prop_tax_cost_assessed_percent")*0.01;
@@ -648,6 +674,7 @@ public:
 
 		double cost_debt_closing = as_double("cost_debt_closing");
 		double cost_equity_closing = as_double("cost_equity_closing");
+		double cost_other_financing = as_double("cost_other_financing");
 		double cost_dev_fee_percent = as_double("cost_dev_fee_percent")*0.01;
 
 		int constr_months = as_integer("constr_months");
@@ -668,9 +695,10 @@ public:
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 		
 		// initialize energy
+
+/* Degradation and Availability handled here until separate comput module available 
 		size_t count = 0;
 		ssc_number_t *arrp = 0;
-		
 		arrp = as_array("energy_net", &count);
 		int i=0;
 		while ( i < nyears && i < (int)count )
@@ -681,8 +709,44 @@ public:
 
 			i++;
 		}
+*/
+		int i=0;
+		double first_year_energy = as_double("energy_net");
+		size_t count_avail = 0;
+		ssc_number_t *avail = 0;
+		avail = as_array("energy_availabilty", &count_avail);
+		size_t count_degrad = 0;
+		ssc_number_t *degrad = 0;
+		degrad = as_array("energy_degradation", &count_degrad);
 
+		for (i=1;i<=nyears;i++) cf.at(CF_energy_net,i) = first_year_energy;
+
+		if (count_degrad == 1)
+		{
+			for (i=1;i<=nyears;i++) cf.at(CF_energy_net,i) *= pow((1.0 - degrad[0]/100.0),i-1);
+		}
+		else if (count_degrad > 0)
+		{
+			for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_energy_net,i+1) *= (1.0 - degrad[i]/100.0);
+		}
+
+		if (count_avail == 1)
+		{
+			for (i=1;i<=nyears;i++) cf.at(CF_energy_net,i)  *= avail[0]/100.0;
+		}
+		else if (count_avail > 0)
+		{
+			for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_energy_net,i+1) *= avail[i]/100.0;
+		}
+
+
+		for (i=1;i<=nyears;i++)
+		{
+			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
+			cf.at(CF_om_capacity_expense,i) *= nameplate;
+		}
 		
+
 		double ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for pp_mode=0
 
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
@@ -1289,6 +1353,7 @@ public:
 			cost_dev_fee_percent * cost_prefinancing +
 			cost_equity_closing +
 			cost_debt_closing + 
+			cost_other_financing +
 			cf.at(CF_reserve_debtservice,0) +
 			constr_total_financing +
 			cost_working_reserve;
@@ -1695,10 +1760,10 @@ public:
 		assign( "cost_prefinancing", var_data((ssc_number_t) cost_prefinancing ) );
 		assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
 
-		assign( "cost_contingency", var_data((ssc_number_t) cost_cont ) );
-		assign( "cost_hard", var_data( (ssc_number_t)(cost_hard + cost_cont)) );
+//		assign( "cost_contingency", var_data((ssc_number_t) cost_cont ) );
+//		assign( "cost_hard", var_data( (ssc_number_t)(cost_hard + cost_cont)) );
 		assign( "cost_salestax", var_data((ssc_number_t)cost_salestax ) );
-		assign( "cost_soft", var_data((ssc_number_t) (cost_soft + cost_salestax) ) );
+//		assign( "cost_soft", var_data((ssc_number_t) (cost_soft + cost_salestax) ) );
 		assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
 
 		assign( "depr_stabas_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5 ) );
