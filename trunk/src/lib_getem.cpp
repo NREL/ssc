@@ -1,30 +1,16 @@
 // define classes, global constants, etc.
 #include "lib_getem.h"
 
-
-/* apd 3jan2010 
-
-   These globals (errMsg and GG) need to be removed and placed inside
-   one of the classes, especially errMsg.  Otherwise GETEM will not be 
-   thread-safe.  Once this is completed, just remove this comment also.
-
-   Thanks
-*/
-
-std::string errMsg;
-CGETEMGlobals CGETEMGlobals::GG; // create the global object that provides access to all the constants
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGETEMInterface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGETEMInterface::CGETEMInterface(void) {errMsg = "";}
+CGETEMInterface::CGETEMInterface(void) {m_strErrMsg = "";}
 CGETEMInterface::~CGETEMInterface(void){}
 
 
 bool CGETEMInterface::IsReadyToRun(void) { return oGetem.readyToAnalyze(); }
-bool CGETEMInterface::ErrorOccured(void) { return (errMsg == "") ? false : true; }
-std::string CGETEMInterface::GetErrorMsg(void) { return errMsg; }
+bool CGETEMInterface::ErrorOccured(void) { return (m_strErrMsg == "") ? false : true; }
+std::string CGETEMInterface::GetErrorMsg(void) { return m_strErrMsg; }
 
 int CGETEMInterface::RunGETEM(void)
 {
@@ -32,10 +18,13 @@ int CGETEMInterface::RunGETEM(void)
 	if ( oGetem.readyToAnalyze() && oGetem.analyze() )  // 
 		return 0;
 	else
-		if (errMsg != "")
+		if (oGetem.m_strErrMsg != "")
+		{
+			m_strErrMsg = oGetem.m_strErrMsg;
 			return 1; // error that was flagged
+		}
 		else		
-			{ errMsg = "Unknown error during run"; return 2; }
+			{ m_strErrMsg = "Unknown error during run"; return 2; }
 }
 
 
@@ -79,25 +68,25 @@ double toWattHr(const double &btu) { return (btu/3.413); }
 double PSItoFT(const double &psi) { return psi * 144 / 62.4; }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62.4 lb/ft^3
 double PSItoFTB(const double &psi) { return (IMITATE_GETEM) ? psi*144/62 : PSItoFT(psi); }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62 lb/ft^3 if imitating GETEM
 
-double pumpSizeInHP(const double &flow_LbPerHr, const double &head_Ft, const double &eff)
+double pumpSizeInHP(const double &flow_LbPerHr, const double &head_Ft, const double &eff, std::string sErr)
 {
 	if (eff <= 0) {
-		errMsg = ("Pump efficiency <= 0 in 'pumpSizeInHP'.");
+		sErr = ("Pump efficiency <= 0 in 'pumpSizeInHP'.");
 		return 0;
 	}
 	return (flow_LbPerHr * head_Ft)/(60 * 33000 * eff);
 }
-double pumpWorkInWattHr(const double &flow_LbPerHr, const double &head_Ft, const double &eff) { return HPtoKW(1000 * pumpSizeInHP(flow_LbPerHr, head_Ft, eff)); }
+double pumpWorkInWattHr(const double &flow_LbPerHr, const double &head_Ft, const double &eff, std::string sErr) { return HPtoKW(1000 * pumpSizeInHP(flow_LbPerHr, head_Ft, eff, sErr)); }
 
 
 double evaluatePolynomial(const double &x, const double &c0, const double &c1, const double &c2, const double &c3, const double &c4, const double &c5, const double &c6)
 {	return (c0 + (c1 * x) + (c2 * pow(x,2)) + (c3 * pow(x,3)) + (c4 * pow(x,4)) + (c5 * pow(x,5)) + (c6 * pow(x,6))); }
 
 
-double discountValue(const double &dVal, const double &dDRate, const double &dTimePeriods)
+double discountValue(const double &dVal, const double &dDRate, const double &dTimePeriods, std::string sErr)
 {
 	if (dDRate == -1) {
-		errMsg = ("Division by zerio error in 'discountValue'.");
+		sErr = ("Division by zerio error in 'discountValue'.");
 		return 0;
 	}	
 	return dVal / pow((1 + dDRate),dTimePeriods);
@@ -182,30 +171,30 @@ double my_erfc(const double &x)
 	return yc;  // y = err function, yc = complimentary error function
 }
 
-void setNonZeroValue(double &dVal, const double &newVal, std::string varName)
+void setNonZeroValue(double &dVal, const double &newVal, std::string varName, std::string sErr)
 {
-	if(newVal == 0) { errMsg = ("Input " + varName + " cannot be zero."); return; }
+	if(newVal == 0) { sErr = ("Input " + varName + " cannot be zero."); return; }
 	dVal = newVal;
 	return;
 }
 
-void setPositiveValue(double &dVal, const double &newVal, std::string varName)
+void setPositiveValue(double &dVal, const double &newVal, std::string varName, std::string sErr)
 {
-	if(newVal <= 0) { errMsg = ("Input " + varName + " cannot less than or equal to zero."); return; }
+	if(newVal <= 0) { sErr = ("Input " + varName + " cannot less than or equal to zero."); return; }
 	dVal = newVal;
 	return;
 }
 
-void setPositiveValue(int &dVal, const int &newVal, std::string varName)
+void setPositiveValue(int &dVal, const int &newVal, std::string varName, std::string sErr)
 {
-	if(newVal <= 0) { errMsg = ("Input " + varName + " cannot less than or equal to zero."); return; }
+	if(newVal <= 0) { sErr = ("Input " + varName + " cannot less than or equal to zero."); return; }
 	dVal = newVal;
 	return;
 }
 
-void setZeroTo1(double &dVal, const double &newVal, std::string varName)
+void setZeroTo1(double &dVal, const double &newVal, std::string varName, std::string sErr)
 {
-	if( (newVal < 0) || (newVal >= 1)) { errMsg = ("Input " + varName + " must be >= 0 and less than 100 percent."); return; }
+	if( (newVal < 0) || (newVal >= 1)) { sErr = ("Input " + varName + " must be >= 0 and less than 100 percent."); return; }
 	dVal = newVal;
 	return;
 }
@@ -292,59 +281,62 @@ double CGETEMGlobals::EGSSpecificHeat(double tempC) { return oEGSSpecificHeat.ev
 double CGETEMGlobals::GetDHa(double pressurePSI)
 {
 	if (pressurePSI > 1500)
-		return CGETEMGlobals::GG.oDHaOver1500.evaluatePolynomial(pressurePSI);
+		//return m_oGG.oDHaOver1500.evaluatePolynomial(pressurePSI);
+		return oDHaOver1500.evaluatePolynomial(pressurePSI);
 	else if (pressurePSI > 150)
-		return CGETEMGlobals::GG.oDHa150To1500.evaluatePolynomial(pressurePSI);
+		//return m_oGG.oDHa150To1500.evaluatePolynomial(pressurePSI);
+		return oDHa150To1500.evaluatePolynomial(pressurePSI);
 	else
-		return CGETEMGlobals::GG.oDHaUnder150.evaluatePolynomial(pressurePSI);
+		//return m_oGG.oDHaUnder150.evaluatePolynomial(pressurePSI);
+		return oDHaUnder150.evaluatePolynomial(pressurePSI);
 }
 
 double CGETEMGlobals::GetDHb(double pressurePSI)
 {
 	if (pressurePSI > 1500)
-		return CGETEMGlobals::GG.oDHbOver1500.evaluatePolynomial(pressurePSI);
+		return oDHbOver1500.evaluatePolynomial(pressurePSI);
 	else if (pressurePSI > 150)
-		return CGETEMGlobals::GG.oDHb150To1500.evaluatePolynomial(pressurePSI);
+		return oDHb150To1500.evaluatePolynomial(pressurePSI);
 	else
-		return CGETEMGlobals::GG.oDHbUnder150.evaluatePolynomial(pressurePSI);
+		return oDHbUnder150.evaluatePolynomial(pressurePSI);
 }
 
 double CGETEMGlobals::GetFlashEnthalpyF(double temperatureF)
 {
 	if (temperatureF > 675)
-		return  CGETEMGlobals::GG.oFlashEnthalpyFOver675.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyFOver675.evaluatePolynomial(temperatureF);
 	else if (temperatureF > 325)
-		return  CGETEMGlobals::GG.oFlashEnthalpyF325To675.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyF325To675.evaluatePolynomial(temperatureF);
 	else if (temperatureF > 125)
-		return  CGETEMGlobals::GG.oFlashEnthalpyF125To325.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyF125To325.evaluatePolynomial(temperatureF);
 	else 
-		return  CGETEMGlobals::GG.oFlashEnthalpyFUnder125.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyFUnder125.evaluatePolynomial(temperatureF);
 }
 
 double CGETEMGlobals::GetFlashEnthalpyG(double temperatureF)
 {
 	if (temperatureF > 675)
-		return  CGETEMGlobals::GG.oFlashEnthalpyGOver675.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyGOver675.evaluatePolynomial(temperatureF);
 	else if (temperatureF > 325)
-		return  CGETEMGlobals::GG.oFlashEnthalpyG325To675.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyG325To675.evaluatePolynomial(temperatureF);
 	else if (temperatureF > 125)
-		return  CGETEMGlobals::GG.oFlashEnthalpyG125To325.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyG125To325.evaluatePolynomial(temperatureF);
 	else 
-		return  CGETEMGlobals::GG.oFlashEnthalpyGUnder125.evaluatePolynomial(temperatureF);
+		return  oFlashEnthalpyGUnder125.evaluatePolynomial(temperatureF);
 }
 
 double CGETEMGlobals::GetFlashTemperature(double pressurePSI)
 {
 	if (pressurePSI > 1000)
-		return  CGETEMGlobals::GG.oFlashTemperatureOver1000.evaluatePolynomial(pressurePSI);
+		return  oFlashTemperatureOver1000.evaluatePolynomial(pressurePSI);
 	else if (pressurePSI > 200)
-		return  CGETEMGlobals::GG.oFlashTemperature200To1000.evaluatePolynomial(pressurePSI);
+		return  oFlashTemperature200To1000.evaluatePolynomial(pressurePSI);
 	else if (pressurePSI > 20)
-		return  CGETEMGlobals::GG.oFlashTemperature20To200.evaluatePolynomial(pressurePSI);
+		return  oFlashTemperature20To200.evaluatePolynomial(pressurePSI);
 	else if (pressurePSI > 2)
-		return  CGETEMGlobals::GG.oFlashTemperature2To20.evaluatePolynomial(pressurePSI);
+		return  oFlashTemperature2To20.evaluatePolynomial(pressurePSI);
 	else 
-		return  CGETEMGlobals::GG.oFlashTemperatureUnder2.evaluatePolynomial(pressurePSI);
+		return  oFlashTemperatureUnder2.evaluatePolynomial(pressurePSI);
 }
 
 
@@ -369,9 +361,9 @@ void CGeothermalFluid::init(const CGeothermalConstants &enthalpyConstants, const
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CGeoFluidContainer::CGeoFluidContainer(void)
 {
-	moAmbientGeothermalFluid.init(CGETEMGlobals::GG.oAmbientEnthalpyConstants, CGETEMGlobals::GG.oAmbientEntropyConstants);
-	moBinaryGeothermalFluid.init(CGETEMGlobals::GG.oBinaryEnthalpyConstants, CGETEMGlobals::GG.oBinaryEntropyConstants);
-	moFlashGeothermalFluid.init(CGETEMGlobals::GG.oFlashEnthalpyConstants, CGETEMGlobals::GG.oFlashEntropyConstants);
+	moAmbientGeothermalFluid.init(m_oGG.oAmbientEnthalpyConstants, m_oGG.oAmbientEntropyConstants);
+	moBinaryGeothermalFluid.init(m_oGG.oBinaryEnthalpyConstants, m_oGG.oBinaryEntropyConstants);
+	moFlashGeothermalFluid.init(m_oGG.oFlashEnthalpyConstants, m_oGG.oFlashEntropyConstants);
 }
 
 
@@ -540,9 +532,9 @@ makeupAlgorithmType CGETEMBaseInputs::determineMakeupAlgorithm()
     // Just because the user chooses "EGS" from the drop-down box on the "2A.Scenario Input" sheet,
     // does NOT mean that the model will use the results from the EGS makeup sheet.
     
-	if ((rt != HYDROTHERMAL) && (rt != EGS)) errMsg = "Reource type not recognized in CGETEMBaseInputs::determineMakeupAlgorithm.";
-	if ((cst != BINARY) && (cst != FLASH))   errMsg = "Conversion system not recognized in CGETEMBaseInputs::determineMakeupAlgorithm.";
-	if (errMsg != "") return mat;
+	if ((rt != HYDROTHERMAL) && (rt != EGS)) m_strErrMsg = "Reource type not recognized in CGETEMBaseInputs::determineMakeupAlgorithm.";
+	if ((cst != BINARY) && (cst != FLASH))   m_strErrMsg = "Conversion system not recognized in CGETEMBaseInputs::determineMakeupAlgorithm.";
+	if (m_strErrMsg != "") return mat;
 
     if (tdm == ENTER_RATE)
 	{ // if user has chosen to enter the temperature decline rate, then the makeup is calculated either with the binary or flash method.
@@ -553,7 +545,7 @@ makeupAlgorithmType CGETEMBaseInputs::determineMakeupAlgorithm()
             if ((ft > NO_FLASH_SUBTYPE) && (ft <= DUAL_FLASH_WITH_TEMP_CONSTRAINT))
                 mat = MA_FLASH;
             else
-                errMsg = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGETEMBaseInputs::determineMakeupAlgorithm");
+                m_strErrMsg = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGETEMBaseInputs::determineMakeupAlgorithm");
 		}
 	}
     else if (tdm == CALCULATE_RATE)
@@ -563,13 +555,13 @@ makeupAlgorithmType CGETEMBaseInputs::determineMakeupAlgorithm()
             if (cst == BINARY)
                 mat = MA_EGS;
             else
-                errMsg = ("Fluid temperature decline rate cannot be calculated for EGS resources using a flash plant");
+                m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for EGS resources using a flash plant");
 		}
 		else
-            errMsg = ("Fluid temperature decline rate cannot be calculated for hydrothermal resources");
+            m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for hydrothermal resources");
 	}
 	else
-		errMsg = ("Error: Fluid temperature decline method not recognized in CGETEMBaseInputs::determineMakeupAlgorithm.");
+		m_strErrMsg = ("Error: Fluid temperature decline method not recognized in CGETEMBaseInputs::determineMakeupAlgorithm.");
 
     return mat;
 }
@@ -580,8 +572,8 @@ double CGETEMBaseInputs::injectionTemperatureC() // calculate injection temperat
 	// These are the calculations done at the bottom of [10B.GeoFluid] with the result in D89
 	
 	// this is used in pump work calculations, and in EGS energy produciton calculations
-	if ((this->GetTemperaturePlantDesignC() != this->GetResourceTemperatureC()) && (this->mat != MA_EGS)) { errMsg = ("Resource temperature != plant design temp in non-EGS analysis in CGETEMBaseInputs::injectionTemperatureC"); return 0; }
-	//if(mat == MA_EGS) {	errMsg = ("Not ready for EGS in CGETEMBaseInputs::injectionTemperatureC"); return 0; }
+	if ((this->GetTemperaturePlantDesignC() != this->GetResourceTemperatureC()) && (this->mat != MA_EGS)) { m_strErrMsg = ("Resource temperature != plant design temp in non-EGS analysis in CGETEMBaseInputs::injectionTemperatureC"); return 0; }
+	//if(mat == MA_EGS) {	m_strErrMsg = ("Not ready for EGS in CGETEMBaseInputs::injectionTemperatureC"); return 0; }
 
 	double a = (-0.000655 * GetTemperaturePlantDesignC()) + 1.01964;
 	double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
@@ -608,8 +600,8 @@ double CGETEMBaseInputs::injectionTemperatureC() // calculate injection temperat
 double CGETEMBaseInputs::calcEGSReservoirConstant(double avgWaterTempC, double timeDays)
 {	// all this is from [7C.EGS Subsrfce HX]
 	// this is best done in CGETEMBaseInputs because it requires many CGETEMBaseInputs properties, but it is used in several classes
-	double cp = CGETEMGlobals::GG.EGSSpecificHeat(avgWaterTempC); // J/kg-C
-	double rho = CGETEMGlobals::GG.EGSWaterDensity(avgWaterTempC); // kg/m^3
+	double cp = m_oGG.EGSSpecificHeat(avgWaterTempC); // J/kg-C
+	double rho = m_oGG.EGSWaterDensity(avgWaterTempC); // kg/m^3
 	double flow = EGSFlowPerFracture(avgWaterTempC); // m^3 per day
 	double lv = EGSLengthOverVelocity(avgWaterTempC); // days
 	double x = (mdEGSThermalConductivity * EGSFractureSurfaceArea()) / (cp * rho * flow * sqrt(EGSAlpha()*(timeDays - lv) ) );
@@ -630,40 +622,40 @@ double CGETEMBaseInputs::EGSAverageReservoirTemperatureF(void) //[7C.EGS Subsrfc
 double CGETEMBaseInputs::secondLawEfficiencyGETEM() // This assumes the use of Binary constants and is only necessary for GETEM method of calculating PlantOutputKW - keep private
 {
 	double ae = availableEnergyBinary();
-	if (ae == 0) { errMsg = ("ae = zero in CGETEMBaseInputs::secondLawEfficiencyGETEM"); return 0;}
+	if (ae == 0) { m_strErrMsg = ("ae = zero in CGETEMBaseInputs::secondLawEfficiencyGETEM"); return 0;}
 	return GetPlantBrineEffectiveness() / ae;
 }
 
 
 bool CGETEMBaseInputs::inputErrors(void)
 {
-	if (errMsg != "") return true;
-	if (!miProjectLifeYears) { errMsg = ("Project life is zero in CGETEMMakeupAnalysis::readyToAnalyze."); return true; }
-	if (!miMakeupAnalysesPerYear) { errMsg = ("Time step is zero in CGETEMMakeupAnalysis::readyToAnalyze."); return true; }
+	if (m_strErrMsg != "") return true;
+	if (!miProjectLifeYears) { m_strErrMsg = ("Project life is zero in CGETEMMakeupAnalysis::readyToAnalyze."); return true; }
+	if (!miMakeupAnalysesPerYear) { m_strErrMsg = ("Time step is zero in CGETEMMakeupAnalysis::readyToAnalyze."); return true; }
 
-	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { errMsg = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
+	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { m_strErrMsg = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
-	if (mdPotentialResourceMW < PlantSizeKW()/1000) { errMsg = ("Resource potential must be greater than the gross plant output."); return true; }
+	if (mdPotentialResourceMW < PlantSizeKW()/1000) { m_strErrMsg = ("Resource potential must be greater than the gross plant output."); return true; }
 
-	if ( (this->rt != EGS) && (this->pc == SIMPLE_FRACTURE) ) { errMsg = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
+	if ( (this->rt != EGS) && (this->pc == SIMPLE_FRACTURE) ) { m_strErrMsg = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 
-	if ( (this->rt != EGS) && (this->tdm == CALCULATE_RATE) ) { errMsg = ("Temperature decline can only be calculated for EGS resources."); return true; }
+	if ( (this->rt != EGS) && (this->tdm == CALCULATE_RATE) ) { m_strErrMsg = ("Temperature decline can only be calculated for EGS resources."); return true; }
 
 	if ((tdm == ENTER_RATE) && (mdTemperatureDeclineRate < 0))
-		{ errMsg = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0 in CGETEMMakeupAnalysis::readyToAnalyze"); return true; }
+		{ m_strErrMsg = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0 in CGETEMMakeupAnalysis::readyToAnalyze"); return true; }
 
 	if (GetTemperatureRatio() > MAX_TEMP_RATIO)
-		{ errMsg = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true; }
+		{ m_strErrMsg = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true; }
 
 	if ( this->netBrineEffectiveness() == 0 ) // this will cause a division by zero error
-		{ errMsg = ("Inputs led to a divide by zero error.  Pump work = Plant output, so the net efficiency is zero."); return true; }
+		{ m_strErrMsg = ("Inputs led to a divide by zero error.  Pump work = Plant output, so the net efficiency is zero."); return true; }
 
 	if ( this->netBrineEffectiveness() < 0 )
-		{ errMsg = ("Inputs lead to required pump energy being greater than the plant output."); return true; }
+		{ m_strErrMsg = ("Inputs lead to required pump energy being greater than the plant output."); return true; }
 
 
 	if (availableEnergyBinary() == 0)
-		{ errMsg = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
+		{ m_strErrMsg = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
 
 	return false;
 }
@@ -691,11 +683,11 @@ void CPumpPowerCalculator::init(CGETEMBaseInputs* gbi)
 }
 
 
-double CPumpPowerCalculator::GetTotalPumpPower(void) // watt-hr/lb
+double CPumpPowerCalculator::GetTotalPumpPower(std::string sErr) // watt-hr/lb
 {
 	double retVal = productionPumpPower() + injectionPumpPower();
 	if (retVal < 0)
-		{ errMsg = ("CPumpPowerCalculator::GetTotalPumpPower calculated a value < 0"); return 0; }
+		{ sErr = ("CPumpPowerCalculator::GetTotalPumpPower calculated a value < 0"); return 0; }
 	return retVal;
 }
 
@@ -705,7 +697,7 @@ double CPumpPowerCalculator::productionPumpPower(void) // ft-lbs/hr
 	if (!mbProductionWellsPumped) return 0;
 	
 	// Enter 1 for flow to Get power per lb of flow
-	return pumpWorkInWattHr(1, pumpHeadFt(), mpGBI->GetGFPumpEfficiency());
+	return pumpWorkInWattHr(1, pumpHeadFt(), mpGBI->GetGFPumpEfficiency(), mpGBI->m_strErrMsg);
 }
 
 
@@ -730,7 +722,7 @@ double CPumpPowerCalculator::GetCalculatedPumpDepthInFeet(void)
 double CPumpPowerCalculator::pressureWellHeadPSI(void)
 {
 	double tempF = CelciusToFarenheit(mpGBI->GetTemperaturePlantDesignC());
-	double pressureSaturation = CGETEMGlobals::GG.oPC.evaluatePolynomial(tempF); // valid above boiling, I guess.
+	double pressureSaturation = mpGBI->m_oGG.oPC.evaluatePolynomial(tempF); // valid above boiling, I guess.
 	double pressureExcessPSI = BarToPsi(mpGBI->mdExcessPressureBar); // bar to psi
 	double pressureAmbientPSI = (IMITATE_GETEM) ? 14.7 : mpGBI->mdPressureAmbientPSI;
 	return (mpGBI->GetTemperaturePlantDesignC() > 100) ? pressureSaturation + pressureExcessPSI : pressureAmbientPSI + pressureExcessPSI;
@@ -755,7 +747,7 @@ double CPumpPowerCalculator::GetPressureChangeAcrossReservoir()
 	if (mbPressureChangeCalculated) return mdPressureChangeAcrossReservoir;
 
 	// if user didn't input the pressure change, we have to calculate it.  start with these
-	double density = CGETEMGlobals::GG.oDensityConstants.evaluatePolynomial(GetReservoirTemperatureF()); // lbs per ft^3
+	double density = mpGBI->m_oGG.oDensityConstants.evaluatePolynomial(GetReservoirTemperatureF()); // lbs per ft^3
 	double volumetricFlow =(mpGBI->flowRatePerWell() / density)/3600; // ft^3 per second
 	double viscosity = 0.115631 * pow(GetReservoirTemperatureF(), -1.199532); // lb per ft-second
 
@@ -810,10 +802,10 @@ double CPumpPowerCalculator::pressureInjectionWellBottomHolePSI() // [7B.Reservo
 double CPumpPowerCalculator::pressureHydrostaticPSI(void)
 {	// calculate the hydrostatic pressure (at the bottom of the well)
 	double tempAmbientF = (IMITATE_GETEM) ? CelciusToFarenheit(mpGBI->GetAmbientEGSTemperatureC()) : mpGBI->GetAmbientTemperatureF();
-	double pressureAmbientBar = PsiToBar(CGETEMGlobals::GG.oPressureAmbientConstants.evaluatePolynomial(tempAmbientF));
+	double pressureAmbientBar = PsiToBar(mpGBI->m_oGG.oPressureAmbientConstants.evaluatePolynomial(tempAmbientF));
 
 	double tempF = (IMITATE_GETEM) ? CelciusToFarenheit(mpGBI->GetAmbientEGSTemperatureC()) : mpGBI->GetAmbientTemperatureF();
-	double densityAmbient = LbPerCfToKgPerM3_B(CGETEMGlobals::GG.oDensityConstants.evaluatePolynomial(tempF));
+	double densityAmbient = LbPerCfToKgPerM3_B(mpGBI->m_oGG.oDensityConstants.evaluatePolynomial(tempF));
 
 	double tempAmbientC = (IMITATE_GETEM) ? 10 : mpGBI->GetAmbientTemperatureC(); // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
 	double tempGradient = (mpGBI->rt == EGS) ? mpGBI->GetTemperatureGradient()/1000 : (mpGBI->GetResourceTemperatureC() - tempAmbientC ) / GetResourceDepthM();  
@@ -906,7 +898,7 @@ double CFlashBrineEffectiveness::brineEffectiveness(void)
 double CFlashBrineEffectiveness::waterLossFractionOfGF(void)
 {
 	this->calculateFlashPressures();
-	return waterLoss() / CGETEMGlobals::GG.mGeothermalFluidForFlash();
+	return waterLoss() / mpGBI->m_oGG.mGeothermalFluidForFlash();
 }
 
 
@@ -944,16 +936,16 @@ void CFlashBrineEffectiveness::calculateFlashPressures(void)
 //////////////////////////////////////// Turbine Output ///////////////////////////////////////////
 double CFlashBrineEffectiveness::calculateDH(double pressureIn)
 {
-	double a = CGETEMGlobals::GG.GetDHa(pressureIn);
-	double b = CGETEMGlobals::GG.GetDHb(pressureIn);
+	double a = mpGBI->m_oGG.GetDHa(pressureIn);
+	double b = mpGBI->m_oGG.GetDHb(pressureIn);
 	double x = pressureIn /(pressureCondenser());
 	return a * log(x) + b;
 }
 
 double CFlashBrineEffectiveness::calculateX(double enthalpyIn, double temperatureF)
 {
-	double enthalpyF = CGETEMGlobals::GG.GetFlashEnthalpyF(temperatureF);
-	double enthalpyG = CGETEMGlobals::GG.GetFlashEnthalpyG(temperatureF);
+	double enthalpyF = mpGBI->m_oGG.GetFlashEnthalpyF(temperatureF);
+	double enthalpyG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureF);
 	return (enthalpyIn - enthalpyF)/(enthalpyG-enthalpyF);
 }
 
@@ -975,7 +967,7 @@ double CFlashBrineEffectiveness::enthalpyChangeTurbine(double dEnthalpyDeltaInit
 
 
 //////////////////////////////////////// NCG Removal //////////////////////////////////////////////
-double CFlashBrineEffectiveness::pInter(int stage)
+double CFlashBrineEffectiveness::pInter(int stage, std::string sErr)
 {	// D156, D205, D253 - psi
 	switch (stage)
 	{
@@ -983,7 +975,7 @@ double CFlashBrineEffectiveness::pInter(int stage)
 		case 1: return pTotal() * pRatio();
 		case 2: return (miNumberOfCoolingStages > 2) ? pTotal() * pRatio() * pRatio()  : mpGBI->mdPressureAmbientPSI;
 		case 3: return mpGBI->mdPressureAmbientPSI;
-		default: { errMsg = ("Invalid stage in CFlashBrineEffectiveness::pInter"); return 0; }
+		default: { sErr = ("Invalid stage in CFlashBrineEffectiveness::pInter"); return 0; }
 	}
 }
 
@@ -1009,12 +1001,12 @@ double CFlashBrineEffectiveness::overAllHEx() //I107
 
 double CFlashBrineEffectiveness::pumpWorkFromSteamFlow(double flow)
 {
-	double enthalpyCondF = CGETEMGlobals::GG.GetFlashEnthalpyF(temperatureCondF());
-	double enthalpyCondG = CGETEMGlobals::GG.GetFlashEnthalpyG(temperatureCondF());
+	double enthalpyCondF = mpGBI->m_oGG.GetFlashEnthalpyF(temperatureCondF());
+	double enthalpyCondG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureCondF());
 	
 	double qReject = flow * (enthalpyCondG - enthalpyCondF);
 	double cwFlow = qReject / mdDeltaTemperatureCWF;
-	double pumpHead = mdBaseCWPumpHeadFt + CGETEMGlobals::GG.additionalCWPumpHeadSurface();
+	double pumpHead = mdBaseCWPumpHeadFt + mpGBI->m_oGG.additionalCWPumpHeadSurface();
 	return pumpWorkKW(cwFlow, pumpHead);
 }
 
@@ -1050,7 +1042,7 @@ void CFlashMakeup::initializeSecondLawConstants()
 			moSecondLawConstants.init(-4424.6599, 31.149268, -0.082103498, 0.000096016499, -0.00000004211223, 0, 0);
 			break;
 
-		default: errMsg = ("Invalid flash technology in CFlashMakeup::initializeSecondLawConstants"); return;
+		default: m_strMAError = ("Invalid flash technology in CFlashMakeup::initializeSecondLawConstants"); return;
 	}
 	mbInitialized = true;
 }
@@ -1084,7 +1076,7 @@ double CEGSMakeup::plantBrineEfficiency(void)
 double CEGSMakeup::newInjectionTemperatureC(void)
 {
     double tempBrineEfficiencyC = KelvinToCelcius( exp((-0.42 * log(mdLastProductionTemperatureC) + 1.4745) * mdCurrentEfficiency) * CelciusToKelvin(mdLastProductionTemperatureC));
-	double tempSILimitC = FarenheitToCelcius(CGETEMGlobals::GG.GetSiPrecipitationTemperatureF(LastProducitonTemperatureF()));
+	double tempSILimitC = FarenheitToCelcius(mpGBI->m_oGG.GetSiPrecipitationTemperatureF(LastProducitonTemperatureF()));
 	return (tempBrineEfficiencyC >= tempSILimitC) ? tempBrineEfficiencyC : tempSILimitC;
 }
 
@@ -1108,7 +1100,7 @@ CGETEMMakeupAnalysis::~CGETEMMakeupAnalysis(void)
 void CGETEMMakeupAnalysis::init(void)
 {
 	moMA = NULL;
-	errMsg = "";
+	m_strErrMsg = "";
 	//madNetPower = NULL;
 	//maiReplacements = NULL;
 	//madTemperatureC = NULL;
@@ -1140,7 +1132,7 @@ bool CGETEMMakeupAnalysis::readyToAnalyze()
 			break;
 
 		default:
-			errMsg = ("Could not determine makeup algorithm from scenario parameters in CGETEMMakeupAnalysis::readyToAnalyze.");
+			m_strErrMsg = ("Could not determine makeup algorithm from scenario parameters in CGETEMMakeupAnalysis::readyToAnalyze.");
 			return false;
 	}
 
@@ -1173,9 +1165,9 @@ bool CGETEMMakeupAnalysis::analyze(void)
 		madTemperatureC[iElapsedTimeSteps] = moMA->GetWorkingTemperatureC();
 		dElapsedTimeInYears = iElapsedTimeSteps * timeStepInYears();
 		madNetPower[iElapsedTimeSteps] = moMA->plantNetPower();
-		mdLifeTimeDiscountedNetPower += discountValue(madNetPower[iElapsedTimeSteps], mdAnnualDiscountRate, dElapsedTimeInYears); 
-        mdLifeTimeDiscountedDesignPower += discountValue(DesignCapacityKW() / 1000, mdAnnualDiscountRate, dElapsedTimeInYears);
-        mdSumOfPresentWorthFactors += discountValue(timeStepInYears(), mdAnnualDiscountRate, dElapsedTimeInYears);
+		mdLifeTimeDiscountedNetPower += discountValue(madNetPower[iElapsedTimeSteps], mdAnnualDiscountRate, dElapsedTimeInYears, m_strErrMsg); 
+        mdLifeTimeDiscountedDesignPower += discountValue(DesignCapacityKW() / 1000, mdAnnualDiscountRate, dElapsedTimeInYears, m_strErrMsg);
+        mdSumOfPresentWorthFactors += discountValue(timeStepInYears(), mdAnnualDiscountRate, dElapsedTimeInYears, m_strErrMsg);
 		//madTestValues[iElapsedTimeSteps] = moMA->TestValue();
 
         // Is is possible and do we want to replace the reservoir in the next time step?
@@ -1191,13 +1183,13 @@ bool CGETEMMakeupAnalysis::analyze(void)
 			maiReplacements[iElapsedTimeSteps] = 1;
             
             // Calculate costs
-            mdPresentCostFactorFieldReplacements += discountValue(1, mdAnnualDiscountRate, dElapsedTimeInYears); // discounted number of field replacements (mult by field cost = discounted cost of future field replacements)
+            mdPresentCostFactorFieldReplacements += discountValue(1, mdAnnualDiscountRate, dElapsedTimeInYears, m_strErrMsg); // discounted number of field replacements (mult by field cost = discounted cost of future field replacements)
 		}
         else
             moMA->calculateNewTemperature(); // reduce temperature from last temp
 	}
-	if(mdLifeTimeDiscountedDesignPower == 0) { errMsg = ("LifeTime Discounted Design Power was zero in CGETEMMakeupAnalysis::analyze"); return false; }
-	if(mdSumOfPresentWorthFactors == 0) { errMsg = ("Sum of Present Worth Factors was zero in CGETEMMakeupAnalysis::analyze"); return false; }
+	if(mdLifeTimeDiscountedDesignPower == 0) { m_strErrMsg = ("LifeTime Discounted Design Power was zero in CGETEMMakeupAnalysis::analyze"); return false; }
+	if(mdSumOfPresentWorthFactors == 0) { m_strErrMsg = ("Sum of Present Worth Factors was zero in CGETEMMakeupAnalysis::analyze"); return false; }
 	mbAnalysisRequired = false;
 	return true;
 }

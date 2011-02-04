@@ -18,6 +18,10 @@ public:
 	CGETEMInterface(void);
 	~CGETEMInterface(void);
 
+private:
+	std::string m_strErrMsg;
+
+public:
 	//========================== plant configuration ========================================================
 
 	// energy calculation basis
