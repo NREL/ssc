@@ -52,7 +52,7 @@ public:
 	var_data *lookup( const std::string &name );
 	const char *first();
 	const char *next();
-	unsigned int size() { return m_hash.size(); }
+	unsigned int size() { return (unsigned int)m_hash.size(); }
 
 private:
 	var_hash m_hash;

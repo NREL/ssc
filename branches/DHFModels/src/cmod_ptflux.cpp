@@ -201,8 +201,8 @@ public:
 		if (!var_data::parse( SSC_ARRAY, line0, azivec )) throw general_error("could not parse azimuth angle vector");
 		if (!var_data::parse( SSC_ARRAY, line1, zenvec )) throw general_error("could not parse zenith angle vector");
 
-		int nazi = azivec.num.length();
-		int nzen = zenvec.num.length();
+		int nazi = (int)azivec.num.length();
+		int nzen = (int)zenvec.num.length();
 		if ( nazi <= 0 || nzen <= 0) throw general_error("failed to determine efficiency array size (nzen, nazi)");
 		
 		util::matrix_t<ssc_number_t> opt;
@@ -216,7 +216,7 @@ public:
 			}
 		}
 
-		assign( "optieff_matrix", var_data( opt.data(), opt.nrows(), opt.ncols() ) );
+		assign( "optieff_matrix", var_data( opt.data(), (int)opt.nrows(), (int)opt.ncols() ) );
 		assign( "optieff_azimuth", azivec );
 		assign( "optieff_zenith", zenvec );
 

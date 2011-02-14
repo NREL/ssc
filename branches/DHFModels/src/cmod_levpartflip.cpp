@@ -9,7 +9,7 @@ static var_info _cm_vtab_levpartflip[] = {
 //	{ SSC_INPUT,        SSC_ARRAY,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
 	/* modify to apply availability and degradation until separate compute module constructed. */
 	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_availabilty",		"Annual energy availability",	"%",   "",                      "DHF",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"%",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "DHF",             "*",						   "",                              "" },
 /* constraint is > 0 */
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
@@ -257,7 +257,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M Capacity-based expense",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M Fuel expense",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assesed_value","Property tax net assesed value", "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -430,7 +430,7 @@ enum {
 	CF_om_production_expense,
 	CF_om_capacity_expense,
 	CF_om_fuel_expense,
-	CF_property_tax_assesed_value,
+	CF_property_tax_assessed_value,
 	CF_property_tax_expense,
 	CF_insurance_expense,
 	CF_operating_expenses,
@@ -712,7 +712,7 @@ public:
 		double first_year_energy = as_double("energy_net");
 		size_t count_avail = 0;
 		ssc_number_t *avail = 0;
-		avail = as_array("energy_availabilty", &count_avail);
+		avail = as_array("energy_availability", &count_avail);
 		size_t count_degrad = 0;
 		ssc_number_t *degrad = 0;
 		degrad = as_array("energy_degradation", &count_degrad);
@@ -851,8 +851,8 @@ public:
 		// Project partial income statement			
 
 			double decline_percent = 100 - (i-1)*property_tax_decline_percentage;
-			cf.at(CF_property_tax_assesed_value,i) = (decline_percent > 0) ? property_tax_assessed_value * decline_percent * 0.01:0.0;
-			cf.at(CF_property_tax_expense,i) = cf.at(CF_property_tax_assesed_value,i) * property_tax_rate;
+			cf.at(CF_property_tax_assessed_value,i) = (decline_percent > 0) ? property_tax_assessed_value * decline_percent * 0.01:0.0;
+			cf.at(CF_property_tax_expense,i) = cf.at(CF_property_tax_assessed_value,i) * property_tax_rate;
 			cf.at(CF_insurance_expense,i) = cost_prefinancing * insurance_rate * pow( 1 + inflation_rate, i-1 );
 
 			cf.at(CF_operating_expenses,i) = 
@@ -1979,7 +1979,7 @@ public:
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
-		save_cf( CF_property_tax_assesed_value, nyears, "cf_property_tax_assesed_value" );
+		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );

@@ -29,7 +29,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M Capacity-based expense",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M Fuel expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assesed_value","Property tax net assesed value", "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -92,7 +92,7 @@ enum {
 	CF_om_production_expense,
 	CF_om_capacity_expense,
 	CF_om_fuel_expense,
-	CF_property_tax_assesed_value,
+	CF_property_tax_assessed_value,
 	CF_property_tax_expense,
 	CF_insurance_expense,
 	CF_operating_expenses,
@@ -335,7 +335,7 @@ public:
 				{
 					size_t arr_len;
 					ssc_number_t *arr_cust = as_array( "depr_sta_custom", &arr_len );
-					depreciation_sched_custom( CF_sta_depr_sched, nyears, arr_cust, arr_len );
+					depreciation_sched_custom( CF_sta_depr_sched, nyears, arr_cust, (int)arr_len );
 					break;
 				}
 			}
@@ -348,7 +348,7 @@ public:
 				{
 					size_t arr_len;
 					ssc_number_t *arr_cust = as_array( "depr_fed_custom", &arr_len );
-					depreciation_sched_custom( CF_fed_depr_sched, nyears, arr_cust, arr_len );
+					depreciation_sched_custom( CF_fed_depr_sched, nyears, arr_cust, (int)arr_len );
 					break;
 				}
 			}
@@ -397,8 +397,8 @@ public:
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 //			cf.at(CF_property_tax_expense,i) =  total_cost * property_tax * pow( 1 + inflation_rate, i-1 );
 			double decline_percent = 100 - (i-1)*property_tax_decline_percentage;
-			cf.at(CF_property_tax_assesed_value,i) = (decline_percent > 0) ? property_tax_assessed_value * decline_percent * 0.01:0.0;
-			cf.at(CF_property_tax_expense,i) = cf.at(CF_property_tax_assesed_value,i) * property_tax;
+			cf.at(CF_property_tax_assessed_value,i) = (decline_percent > 0) ? property_tax_assessed_value * decline_percent * 0.01:0.0;
+			cf.at(CF_property_tax_expense,i) = cf.at(CF_property_tax_assessed_value,i) * property_tax;
 			
 			cf.at(CF_insurance_expense,i) = total_cost * insurance_rate * pow( 1 + inflation_rate, i-1 );
 
@@ -588,7 +588,7 @@ public:
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
-		save_cf( CF_property_tax_assesed_value, nyears, "cf_property_tax_assessed_value" );
+		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
