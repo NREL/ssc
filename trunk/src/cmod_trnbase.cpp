@@ -250,8 +250,8 @@ bool cm_trnbase::output::read(const char *fn, size_t expected_data_len)
 	size_t line_buf_len = 2048;
 
 	std::string names, units;
-	util::read_line(fp, names, line_buf_len );
-	util::read_line(fp, units, line_buf_len );
+	util::read_line(fp, names, (int)line_buf_len );
+	util::read_line(fp, units, (int)line_buf_len );
 
 	std::vector<std::string> name_list = util::split( names, " \t" );
 	std::vector<std::string> unit_list = util::split( units, " \t" );
@@ -282,7 +282,7 @@ bool cm_trnbase::output::read(const char *fn, size_t expected_data_len)
 	
 	while ( 1 )
 	{
-		if (fgets(buf,line_buf_len-1,fp) == 0)
+		if (fgets(buf,(int)line_buf_len-1,fp) == 0)
 			break;
 
 		p = buf;
@@ -325,7 +325,7 @@ int cm_trnbase::output::data_length()
 		it != m_cols.end();
 		++it)
 	{
-		if (len == -1) len = (*it)->data.size();
+		if (len == -1) len = (int)((*it)->data.size());
 		else if ( (*it)->data.size() != (size_t)len )
 			return -1;
 	}
