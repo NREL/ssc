@@ -22,7 +22,6 @@ static var_info _cm_vtab_equpartflip[] = {
 
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-//	{ SSC_INPUT,        SSC_ARRAY,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
 	/* modify to apply availability and degradation until separate compute module constructed. */
 	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"%",   "",                      "DHF",             "*",						   "",                              "" },
@@ -30,17 +29,6 @@ static var_info _cm_vtab_equpartflip[] = {
 /* constraint is > 0 */
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
-/* costs - to be updated based on meetings with DHF 
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_gen_equip",           "Generation equiptment cost",		"$",	 "",					  "DHF",             "?=24000000",              "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_bop",					"Balance of plant cost",			"$",	 "",					  "DHF",             "?=8000000",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_network",             "Network upgrade cost",				"$",	 "",					  "DHF",             "?=3500000",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "percent_contingency",      "Contingency percent",				"%",	 "",					  "DHF",             "?=1",                       "MIN=0,MAX=100",		        	"" },
-
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_developer",           "Developer cost & fees",		    "$",	 "",					  "DHF",             "?=2000000",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_land_improve",        "Land improvements cost",		    "$",	 "",					  "DHF",             "?=200000",                 "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_other",               "Other cost",						"$",	 "",					  "DHF",             "?=75000",                  "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "percent_taxable",          "Taxable cost",				        "%",	 "",					  "DHF",             "?=100",                     "MIN=0,MAX=100",      			"" },
-*/
 	{ SSC_INPUT,       SSC_NUMBER,      "cost_salestax",              "Sales tax",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_INPUT,       SSC_NUMBER,      "cost_prefinancing",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 
@@ -78,12 +66,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "constr_int_rate",          "Construction interest rate",		"%",	 "",					  "DHF",             "?=4",                     "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "constr_upfront_percent",  "Construction up-front fee",    	"%",	 "",					  "DHF",             "?=1",                     "MIN=0,MAX=100",      			"" },
 
-/* DHF term financing 
-	{ SSC_INPUT,        SSC_NUMBER,     "term_tenor",               "Term financing tenor",				"years", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "term_int_rate",            "Term financing interest rate",		"%",	 "",					  "DHF",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dscr",						"Debt service coverage ratio",		"",	     "",				      "DHF",             "?=1.5",					"MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		"Debt service reserve account",		"months P&I","",			      "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
-*/
 /* DHF Capital Cost */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "DHF",             "?=3",					    "MIN=0,MAX=100",      			        "" },
 //	{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_closing",		"Debt closing cost",				"$",	 "",					  "DHF",             "?=250000",					    "MIN=0",      			        "" },
@@ -143,11 +125,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_for_ds",    "Other PBI available for debt service",     "0/1",      "",                      "DHF",      "?=0",                       "BOOLEAN",                                         "" },
 
 /* intermediate outputs */
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_contingency",        "Contingency cost",                 "$",     "",					  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_hard",               "Hard cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_soft",               "Soft cost",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_salestax",           "Sales tax",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_INPUT,       SSC_NUMBER,      "cost_prefinancing",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
@@ -164,10 +141,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",						  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
-// disallowment factors - hardcoded to 0.5 in DHF model
-//	{ SSC_INPUT,        SSC_NUMBER,     "itc_sta_disallow_factor",		"State ITC basis disallowment factor",	"$", "",	  "DHF",             "?=0.5",					  "",     			        "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "itc_fed_disallow_factor",		"Federal ITC basis disallowment factor",	"$", "",	  "DHF",             "?=0.5",					  "",     			        "" },
 
 // state itc table
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_5",		"5-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
@@ -187,8 +160,6 @@ static var_info _cm_vtab_equpartflip[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_percent_total",		"State ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_fixed_total",		"State ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_reduction",		"State ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
@@ -216,8 +187,6 @@ static var_info _cm_vtab_equpartflip[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_reduction",		"federal ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
@@ -258,9 +227,6 @@ static var_info _cm_vtab_equpartflip[] = {
 /* State taxes */
 
 	/* intermediate outputs for validation */
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "pv_cafds", "Present value of cash avaialble for debt service","$", "",				  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Size of debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_interest",			"Interest during construction",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_upfront_fee",		"Construction up-front fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
@@ -350,7 +316,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_irr",    "After-tax project cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_npv",    "After-tax project cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	//{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",             "Total ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
@@ -435,10 +400,7 @@ var_info_invalid };
 
 extern var_info
 	vtab_standard_financial[],
-//	vtab_standard_loan[],
 	vtab_oandm[],
-//	vtab_depreciation[],
-//	vtab_utility_rate[],
 	vtab_tax_credits[],
 	vtab_payment_incentives[];
 
@@ -531,7 +493,7 @@ enum {
 	CF_deductible_expenses,
 
 	CF_pv_interest_factor,
-	CF_cash_for_ds,
+/*	CF_cash_for_ds,
 	CF_pv_cash_for_ds,
 	CF_debt_size,
 
@@ -539,7 +501,7 @@ enum {
 	CF_debt_payment_interest,
 	CF_debt_payment_principal,
 	CF_debt_payment_total,
-
+*/
 	CF_pbi_fed,
 	CF_pbi_sta,
 	CF_pbi_uti,
@@ -625,9 +587,7 @@ public:
 	cm_equpartflip()
 	{
 		add_var_info( vtab_standard_financial );
-//		add_var_info( vtab_standard_loan );
 		add_var_info( vtab_oandm );
-//		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
 
@@ -650,37 +610,6 @@ public:
 
 		double nom_discount_rate = (1+inflation_rate)*(1+disc_real)-1;
 
-/*
-		double gen = as_double("cost_gen_equip");
-		double bop = as_double("cost_bop");
-		double net = as_double("cost_network");
-		double cont = as_double("percent_contingency")*0.01;
-
-		double cost_hard = gen + bop + net;
-		double cost_cont = cost_hard * cont;
-
-		double dev = as_double("cost_developer");
-		double land = as_double("cost_land_improve");
-		double other = as_double("cost_other");
-
-		double cost_soft = dev + land + other;
-
-		double cost_taxable = as_double("percent_taxable") / 100.0;
-		double sales_tax_rate = as_double("sales_tax_rate") / 100.0;
-		double cost_salestax = (cost_hard + cost_cont + cost_soft) * cost_taxable * sales_tax_rate;
-
-		// use DHF named range names for variables whenever possible
-		double cost_prefinancing = cost_soft + cost_salestax + cost_hard + cost_cont;
-
-
-		// DHF model applies sales tax to both hard and soft costs whereas sam only does hard costs.
-		double cost_hard = as_double("cost_hard");
-		double cost_soft = as_double("cost_soft");
-		double cost_taxable = as_double("percent_taxable") / 100.0;
-		double sales_tax_rate = as_double("sales_tax_rate") / 100.0;
-		double cost_salestax = (cost_hard + cost_soft) * cost_taxable * sales_tax_rate;
-		double cost_prefinancing = cost_soft + cost_salestax + cost_hard;
-*/
 		// In conjunction with SAM - take installed costs and salestax costs (for deducting if necessary)
 		double cost_salestax = as_double("cost_salestax");
 		double cost_prefinancing = as_double("cost_prefinancing");
@@ -716,20 +645,6 @@ public:
 
 		// initialize energy
 
-/* Degradation and Availability handled here until separate comput module available 
-		size_t count = 0;
-		ssc_number_t *arrp = 0;
-		arrp = as_array("energy_net", &count);
-		int i=0;
-		while ( i < nyears && i < (int)count )
-		{
-			cf.at(CF_energy_net, i+1) = (double) arrp[i];
-			cf.at(CF_om_production_expense,i+1) *= cf.at(CF_energy_net,i+1);
-			cf.at(CF_om_capacity_expense,i+1) *= nameplate;
-
-			i++;
-		}
-*/
 		int i=0;
 		double first_year_energy = as_double("energy_net");
 		size_t count_avail = 0;
@@ -781,14 +696,6 @@ public:
 		double equip3_reserve_cost = as_double("equip3_reserve_cost");
 		int equip3_reserve_freq = as_integer("equip3_reserve_freq");
 
-		//  calculate debt
-//		int term_tenor = as_integer("term_tenor");
-//		double term_int_rate = as_double("term_int_rate")*0.01;
-//		double dscr = as_double("dscr");
-//		int dscr_reserve_months = as_integer("dscr_reserve_months");
-//		double cash_for_debt_service=0;
-//		double pv_cafds=0;
-//		double size_of_debt=0;
 
 		// pre calculate reserves
 		int i_equip1=1;
@@ -1126,7 +1033,6 @@ public:
 
 		double itc_sta_percent_maxvalue = as_double("itc_sta_percent_maxvalue");
 
-//		double itc_sta_disallow_factor = as_double("itc_sta_disallow_factor");
 		double itc_sta_disallow_factor = 0.5;
 
 		double itc_disallow_sta_percent_macrs_5;
@@ -1161,7 +1067,6 @@ public:
 
 		double itc_fed_percent_maxvalue = as_double("itc_fed_percent_maxvalue");
 
-//		double itc_fed_disallow_factor = as_double("itc_fed_disallow_factor");
 		double itc_fed_disallow_factor = 0.5;
 
 		double itc_disallow_fed_percent_macrs_5;
@@ -1299,9 +1204,6 @@ public:
 	do
 	{
 
-//		cash_for_debt_service=0;
-//		pv_cafds=0;
-//		size_of_debt=0;
 
 		// debt pre calculation
 		for (i=1; i<=nyears; i++)
@@ -1323,42 +1225,7 @@ public:
 
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 		
-/*			// term financing
-			if (i<=term_tenor)
-			{
-				cf.at(CF_cash_for_ds,i) = cf.at(CF_ebitda,i) - cf.at(CF_funding_equip1,i) - cf.at(CF_funding_equip2,i) - cf.at(CF_funding_equip3,i);
-				cash_for_debt_service += cf.at(CF_cash_for_ds,i);
-				if (i==1) 
-					cf.at(CF_pv_interest_factor,i) = 1.0/(1.0+term_int_rate);
-				else
-					cf.at(CF_pv_interest_factor,i) = cf.at(CF_pv_interest_factor,i-1)/(1.0+term_int_rate);
-				cf.at(CF_pv_cash_for_ds,i) = cf.at(CF_pv_interest_factor,i) * cf.at(CF_cash_for_ds,i);
-				pv_cafds += cf.at(CF_pv_cash_for_ds,i);
-				if (dscr!=0) cf.at(CF_debt_size,i) = cf.at(CF_pv_cash_for_ds,i) / dscr;
-				size_of_debt += cf.at(CF_debt_size,i);
-			}
-*/
 		}
-/*
-		cf.at(CF_debt_balance,0) = size_of_debt;
-
-		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
-		{
-			if(dscr!=0) cf.at(CF_debt_payment_total,i) = cf.at(CF_cash_for_ds,i) / dscr;
-			cf.at(CF_debt_payment_interest,i) = cf.at(CF_debt_balance,i-1) * term_int_rate;
-			cf.at(CF_debt_payment_principal,i) = cf.at(CF_debt_payment_total,i) - cf.at(CF_debt_payment_interest,i);
-			cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) - cf.at(CF_debt_payment_principal,i);
-		}
-
-		// debt service reserve
-		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
-		{
-			cf.at(CF_reserve_debtservice,i-1) = dscr_reserve_months/12.0 * (cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i));
-			cf.at(CF_funding_debtservice,i-1) = cf.at(CF_reserve_debtservice,i-1);
-			if (i>1) cf.at(CF_funding_debtservice,i-1) -= cf.at(CF_reserve_debtservice,i-2);
-			if (i==term_tenor) cf.at(CF_disbursement_debtservice,i)=0-cf.at(CF_reserve_debtservice,i-1);
-		}
-*/
 		// total reserves
 		for (i=0; i<=nyears; i++)
 			cf.at(CF_reserve_total,i) = 
@@ -1552,7 +1419,7 @@ public:
 
 		for (i=0; i<=nyears; i++)
 		{
-			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i);
+			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i);
 			cf.at(CF_project_dsra,i) = -cf.at(CF_funding_debtservice,i) - cf.at(CF_disbursement_debtservice,i);
 			cf.at(CF_project_ra,i) =
 				cf.at(CF_project_dsra,i) +
@@ -1570,7 +1437,6 @@ public:
 			cf.at(CF_project_investing_activities,i) = cf.at(CF_project_ra,i) + cf.at(CF_project_mecs,i);
 			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
 
-			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
 			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + ibi_total + cbi_total;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
@@ -1612,7 +1478,6 @@ public:
 			cf.at(CF_statax_income_prior_incentives,i)=
 				cf.at(CF_ebitda,i) + 
 				cf.at(CF_reserve_interest,i) -
-				cf.at(CF_debt_payment_interest,i) -
 				cf.at(CF_stadepr_total,i);
 
 
@@ -1641,7 +1506,6 @@ public:
 			cf.at(CF_fedtax_income_prior_incentives,i)=
 				cf.at(CF_ebitda,i) + 
 				cf.at(CF_reserve_interest,i) -
-				cf.at(CF_debt_payment_interest,i) -
 				cf.at(CF_feddepr_total,i) +
 				cf.at(CF_statax,i) +
 				cf.at(CF_ptc_sta,i);
@@ -1781,10 +1645,7 @@ public:
 		assign( "cost_prefinancing", var_data((ssc_number_t) cost_prefinancing ) );
 		assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
 
-//		assign( "cost_contingency", var_data((ssc_number_t) cost_cont ) );
-//		assign( "cost_hard", var_data( (ssc_number_t)(cost_hard + cost_cont)) );
 		assign( "cost_salestax", var_data((ssc_number_t)cost_salestax ) );
-//		assign( "cost_soft", var_data((ssc_number_t) (cost_soft + cost_salestax) ) );
 		assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
 
 		assign( "depr_stabas_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5 ) );
@@ -1889,9 +1750,6 @@ public:
 
 		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
 		assign("purchase_of_property", var_data((ssc_number_t) purchase_of_property));
-		//assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
-		//assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
-		//assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
 		
 		assign("ppa_price", var_data((ssc_number_t) ppa));
 		assign("target_return_flip_year", var_data((ssc_number_t) flip_year));
@@ -1986,15 +1844,8 @@ public:
 		save_cf( CF_project_investing_activities, nyears, "cf_project_investing_activities" );
 
 		save_cf( CF_pv_interest_factor, nyears, "cf_pv_interest_factor" );
-		save_cf( CF_cash_for_ds, nyears, "cf_cash_for_ds" );
-		save_cf( CF_pv_cash_for_ds, nyears, "cf_pv_cash_for_ds" );
-		save_cf( CF_debt_size, nyears, "cf_debt_size" );			
 		save_cf( CF_project_operating_activities, nyears, "cf_project_operating_activities" );
 
-		save_cf( CF_debt_payment_total, nyears, "cf_debt_payment_total" );
-		save_cf( CF_debt_payment_interest, nyears, "cf_debt_payment_interest" );
-		save_cf( CF_debt_payment_principal, nyears, "cf_debt_payment_principal" );
-		save_cf( CF_debt_balance, nyears, "cf_debt_balance" );
 
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
 		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );

@@ -395,7 +395,6 @@ public:
 			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
-//			cf.at(CF_property_tax_expense,i) =  total_cost * property_tax * pow( 1 + inflation_rate, i-1 );
 			double decline_percent = 100 - (i-1)*property_tax_decline_percentage;
 			cf.at(CF_property_tax_assessed_value,i) = (decline_percent > 0) ? property_tax_assessed_value * decline_percent * 0.01:0.0;
 			cf.at(CF_property_tax_expense,i) = cf.at(CF_property_tax_assessed_value,i) * property_tax;
