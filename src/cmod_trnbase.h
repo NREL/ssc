@@ -73,7 +73,7 @@ protected:
 		/* returns -1 if data columns do not all 
 		  have the same length or there are no columns */
 		int data_length(); 
-		int num_vars() { return m_cols.size(); }
+		int num_vars() { return (int)m_cols.size(); }
 		std::vector<std::string> variables();
 		trndata_t *lookup( const std::string &var );		
 	};

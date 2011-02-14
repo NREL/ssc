@@ -131,10 +131,10 @@ public:
 						turbul,
 						pres*0.000986923267,  /* convert mbar to Atm */
 						tdry,
-						nwt,
+						(int)nwt,
 						&X[0],
 						&Y[0],
-						pc_len,
+						(int)pc_len,
 						&dpcW[0],
 						&dpcP[0],
 						10.0, /* 10 meter data measure height in TMY2 */
