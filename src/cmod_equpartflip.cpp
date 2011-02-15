@@ -250,6 +250,7 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_net_salvage_value",    "Salvage value",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_total_revenue",    "Total revenue",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ebitda",    "EBITDA (cash available for debt service)",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -274,15 +275,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Major equipment disbursement 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip3",    "Major equipment disbursement 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cash_for_ds",     "Cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pv_cash_for_ds",     "Present value of cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_size",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_balance",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_interest", "Interest payment",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_principal","Principal payment",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_total",    "Total P&I debt payment",             "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// Project cash flow
 
@@ -418,6 +410,7 @@ enum {
 	CF_property_tax_expense,
 	CF_insurance_expense,
 	CF_operating_expenses,
+	CF_net_salvage_value,
 	CF_total_revenue,
 	CF_ebitda,
 
@@ -493,15 +486,6 @@ enum {
 	CF_deductible_expenses,
 
 	CF_pv_interest_factor,
-/*	CF_cash_for_ds,
-	CF_pv_cash_for_ds,
-	CF_debt_size,
-
-	CF_debt_balance,
-	CF_debt_payment_interest,
-	CF_debt_payment_principal,
-	CF_debt_payment_total,
-*/
 	CF_pbi_fed,
 	CF_pbi_sta,
 	CF_pbi_uti,
@@ -621,7 +605,6 @@ public:
 		double salvage_value_frac = as_double("salvage_percentage")*0.01;
 		double salvage_value = salvage_value_frac * cost_prefinancing;
 
-		double cost_debt_closing = as_double("cost_debt_closing");
 		double cost_equity_closing = as_double("cost_equity_closing");
 		double cost_other_financing = as_double("cost_other_financing");
 		double cost_dev_fee_percent = as_double("cost_dev_fee_percent")*0.01;
@@ -792,6 +775,9 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i);
 		}
+
+		// salvage value
+		cf.at(CF_net_salvage_value,nyears) = salvage_value;
 
 		// o and m reserve
 		cf.at(CF_funding_om,0) = cost_working_reserve;
@@ -1218,10 +1204,8 @@ public:
 				pbi_fed_for_ds_frac * cf.at(CF_pbi_fed,i) +
 				pbi_sta_for_ds_frac * cf.at(CF_pbi_sta,i) +
 				pbi_uti_for_ds_frac * cf.at(CF_pbi_uti,i) +
-				pbi_oth_for_ds_frac * cf.at(CF_pbi_oth,i) );
-			// salvage value
-			if (i==nyears) cf.at(CF_total_revenue,nyears) += salvage_value;
-			// compute expenses
+				pbi_oth_for_ds_frac * cf.at(CF_pbi_oth,i) ) +
+				cf.at(CF_net_salvage_value,i);
 
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 		
@@ -1240,7 +1224,6 @@ public:
 		cost_financing = 
 			cost_dev_fee_percent * cost_prefinancing +
 			cost_equity_closing +
-			cost_debt_closing + 
 			cost_other_financing +
 			cf.at(CF_reserve_debtservice,0) +
 			constr_total_financing +
@@ -1858,6 +1841,7 @@ public:
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
 		save_cf( CF_ebitda, nyears, "cf_ebitda" );
+		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf( CF_total_revenue, nyears, "cf_total_revenue" );
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_reserve_debtservice, nyears, "cf_reserve_debtservice" );
