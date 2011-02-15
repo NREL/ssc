@@ -236,6 +236,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_net_salvage_value",    "Salvage value",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_total_revenue",    "Total revenue",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ebitda",    "EBITDA (cash available for debt service)",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -358,7 +359,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "After-tax tax investor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_max_irr",    "After-tax tax investor maximum IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "target_return_flip_year",       "Year Flip Target/Year Hurdle Rate Reached",                       "",    "",                      "DHF",      "*",                       "INTEGER",     "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "target_return_flip_year",       "Year Hurdle Rate Reached",                       "",    "",                      "DHF",      "*",                       "INTEGER",     "" },
 
 
 	// Sponsor
@@ -405,6 +406,7 @@ enum {
 	CF_property_tax_expense,
 	CF_insurance_expense,
 	CF_operating_expenses,
+	CF_net_salvage_value,
 	CF_total_revenue,
 	CF_ebitda,
 
@@ -787,6 +789,9 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i);
 		}
+
+		// salvage value
+		cf.at(CF_net_salvage_value,nyears) = salvage_value;
 
 		// o and m reserve
 		cf.at(CF_funding_om,0) = cost_working_reserve;
@@ -1216,10 +1221,8 @@ public:
 				pbi_fed_for_ds_frac * cf.at(CF_pbi_fed,i) +
 				pbi_sta_for_ds_frac * cf.at(CF_pbi_sta,i) +
 				pbi_uti_for_ds_frac * cf.at(CF_pbi_uti,i) +
-				pbi_oth_for_ds_frac * cf.at(CF_pbi_oth,i) );
-			// salvage value
-			if (i==nyears) cf.at(CF_total_revenue,nyears) += salvage_value;
-			// compute expenses
+				pbi_oth_for_ds_frac * cf.at(CF_pbi_oth,i) ) +
+				cf.at(CF_net_salvage_value,i);
 
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 		
@@ -1903,6 +1906,7 @@ public:
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
 		save_cf( CF_ebitda, nyears, "cf_ebitda" );
+		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf( CF_total_revenue, nyears, "cf_total_revenue" );
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_reserve_debtservice, nyears, "cf_reserve_debtservice" );
