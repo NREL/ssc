@@ -26,6 +26,7 @@
     <ClCompile Include="src\cmod_levpartflip.cpp" />
     <ClCompile Include="src\cmod_ptflux.cpp" />
     <ClCompile Include="src\cmod_pvwatts.cpp" />
+    <ClCompile Include="src\cmod_saleleaseback.cpp" />
     <ClCompile Include="src\cmod_stdhrlywf.cpp" />
     <ClCompile Include="src\cmod_timeseq.cpp" />
     <ClCompile Include="src\cmod_trndish.cpp" />
