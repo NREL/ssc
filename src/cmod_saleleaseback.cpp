@@ -55,7 +55,8 @@ static var_info _cm_vtab_saleleaseback[] = {
 /* DHF Capital Cost */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "DHF",             "?=3",					    "MIN=0,MAX=100",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "DHF",             "?=100000",					    "MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_working_reserve",		"Q&M/Working capital reserve",		"$",	 "",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
+//	{ SSC_INPUT,        SSC_NUMBER,     "cost_working_reserve",		"Q&M/Working capital reserve",		"$",	 "",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "months_working_reserve",		"Working capital reserve monthst of o and m",		"months",	 "",					  "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_other_financing",		"",		"$",	 "Other Financing Cost",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
 /* DHF Equity Structure */
 	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_equity_percent",		"Tax investor equity",				"%",	 "",					  "DHF",             "?=100",					  "MIN=0,MAX=100",     			        "" },
@@ -236,7 +237,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_margin",    "Operating Margin Not Including Lease Payment",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Debt service reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Lease payment reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "O and M reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip1",    "Major equipment reserve 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Major equipment reserve 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -257,37 +258,40 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip3",    "Major equipment disbursement 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
-	// Project cash flow
+	// Lessee (Sponsor) cash flow
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_operating_activities",    "Cash flow from operating activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_activities",    "Cash flow from operating activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_property",	"Purchase of property cost",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_lpra",    "(Increase)/Decrease in lease payment reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_wcra",    "(Increase)/Decrease in working captial reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me1ra",    "(Increase)/Decrease in major equipment reserve account 1",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me2ra",    "(Increase)/Decrease in major equipment reserve account 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me3ra",    "(Increase)/Decrease in major equipment reserve account 3",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_ra",    "(Increase)/Decrease in reserve accounts",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me1cs",    "Major equipment 1 capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me2cs",    "Major equipment 2 capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me3cs",    "Major equipment 3 capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_mecs",    "Major equipment capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_investing_activities",    "Cash flow from investing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "sale_of_property",	"Sale of property",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "(Increase)/Decrease in lease payment reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "(Increase)/Decrease in working captial reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me1ra",    "(Increase)/Decrease in major equipment reserve account 1",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2ra",    "(Increase)/Decrease in major equipment reserve account 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3ra",    "(Increase)/Decrease in major equipment reserve account 3",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_ra",    "(Increase)/Decrease in reserve accounts",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me1cs",    "Major equipment 1 capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2cs",    "Major equipment 2 capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3cs",    "Major equipment 3 capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_mecs",    "Major equipment capital spending",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_investing_activities",    "Cash flow from investing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "issuance_of_equity",	"Issuance of equity",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_financing_activities",    "Cash flow from financing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "sponsor_equity_in_lessee_llc",	"Sponsor Equity in Lessee LLC (funding of reserve accounts)",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_financing_activities",    "Cash flow from financing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_adj_reserve_release",    "Adjustment for Release of Reserves",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_cashflow",    "Pre-tax cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_operating_cashflow",    "Pre-tax operating cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-// Project returns
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax",    "Pre-tax project returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax_irr",    "Pre-tax project cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax_npv",    "Pre-tax project cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+// sponsor returns
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_return_pretax",    "Pre-tax sponsor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_return_pretax_irr",    "Pre-tax sponsor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_return_pretax_npv",    "Pre-tax sponsor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_cash",    "After-tax project returns cash total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax",    "After-tax project returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_irr",    "After-tax project cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_npv",    "After-tax project cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_return_aftertax_cash",    "After-tax sponsor returns cash total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_return_aftertax",    "After-tax sponsor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_return_aftertax_irr",    "After-tax sponsor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_return_aftertax_npv",    "After-tax sponsor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_fed",             "Total federal CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
@@ -363,7 +367,8 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_tax_investor_pretax_irr",    "Pre-tax tax investor IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_tax_investor_pretax_npv",    "Pre-tax tax investor NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
 
-	// Sponsor
+	// Sponsor= Lessee
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_balance",    "Sponsor capital recovery balance",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_cash",    "Sponsor capital recovery balance",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Pre-tax sponsor cash post recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -451,31 +456,33 @@ enum {
 	CF_reserve_interest,
 
 
-	// Project cash flow
-	CF_project_operating_activities,
-	CF_project_lpra,
-	CF_project_wcra,
-	CF_project_me1ra,
-	CF_project_me2ra,
-	CF_project_me3ra,
-	CF_project_ra,
-	CF_project_me1cs,
-	CF_project_me2cs,
-	CF_project_me3cs,
-	CF_project_mecs,
-	CF_project_investing_activities,
-	CF_project_financing_activities,
+	// sponsor cash flow
+	CF_sponsor_operating_activities,
+	CF_sponsor_lpra,
+	CF_sponsor_wcra,
+	CF_sponsor_me1ra,
+	CF_sponsor_me2ra,
+	CF_sponsor_me3ra,
+	CF_sponsor_ra,
+	CF_sponsor_me1cs,
+	CF_sponsor_me2cs,
+	CF_sponsor_me3cs,
+	CF_sponsor_mecs,
+	CF_sponsor_investing_activities,
+	CF_sponsor_financing_activities,
+	CF_sponsor_adj_reserve_release,
 	CF_pretax_cashflow,
+	CF_pretax_operating_cashflow,
 
 
 	// Project returns
-	CF_project_return_pretax,
-	CF_project_return_pretax_irr,
-	CF_project_return_pretax_npv,
-	CF_project_return_aftertax_cash,
-	CF_project_return_aftertax,
-	CF_project_return_aftertax_irr,
-	CF_project_return_aftertax_npv,
+	CF_sponsor_return_pretax,
+	CF_sponsor_return_pretax_irr,
+	CF_sponsor_return_pretax_npv,
+	CF_sponsor_return_aftertax_cash,
+	CF_sponsor_return_aftertax,
+	CF_sponsor_return_aftertax_irr,
+	CF_sponsor_return_aftertax_npv,
 
 
 	// tax investor returns
@@ -700,7 +707,8 @@ public:
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double property_tax_rate = as_double("property_tax_rate")*0.01;
 		double insurance_rate = as_double("insurance_rate")*0.01;
-		double cost_working_reserve = as_double("cost_working_reserve");
+//		double cost_working_reserve = as_double("cost_working_reserve");
+		double months_working_reserve_frac = as_integer("months_working_reserve") / 12.0;
 		double equip1_reserve_cost = as_double("equip1_reserve_cost");
 		int equip1_reserve_freq = as_integer("equip1_reserve_freq");
 		double equip2_reserve_cost = as_double("equip2_reserve_cost");
@@ -714,9 +722,15 @@ public:
 		int i_equip2=1;
 		int i_equip3=1;
 
+//		cf.at(CF_funding_leasepayment,0) = (tax_investor_required_lease_reserve / 12.0) * ;
+		cf.at(CF_reserve_leasepayment,0) = cf.at(CF_funding_leasepayment,0) + cf.at(CF_disbursement_leasepayment,0);
+
 		for (i=1; i<=nyears; i++)
 		{
-			// reserves calculations
+			// reserves calculations - lease payment
+
+
+
 			// major equipment 1 reserve
 			if ( (i <= (i_equip1 * equip1_reserve_freq)) && ((i_equip1 * equip1_reserve_freq) <= nyears) ) // note will not enter if equip_reequip1_reserve_freq=0
 			{
@@ -811,18 +825,24 @@ public:
 		cf.at(CF_net_salvage_value,nyears) = salvage_value;
 
 		// o and m reserve
-		cf.at(CF_funding_om,0) = cost_working_reserve;
-		cf.at(CF_disbursement_om,nyears) = -cost_working_reserve;
-		cf.at(CF_reserve_om,0) = cost_working_reserve;
-		for (i=1; i<=nyears; i++)
-			cf.at(CF_reserve_om,i) = cf.at(CF_reserve_om,i-1)+cf.at(CF_funding_om,i)+cf.at(CF_disbursement_om,i);
+		if (nyears>0) 
+		{
+			cf.at(CF_reserve_om,0) = months_working_reserve_frac * (cf.at(CF_operating_expenses,1) - cf.at(CF_sponsor_margin,1)) ;
+			cf.at(CF_funding_om,0) = cf.at(CF_reserve_om,0);
+			for (i=1; i<nyears; i++)
+			{
+				cf.at(CF_reserve_om,i) = months_working_reserve_frac * (cf.at(CF_operating_expenses,i+1) - cf.at(CF_sponsor_margin,i+1)) ;
+				cf.at(CF_funding_om,i) = cf.at(CF_reserve_om,i) - cf.at(CF_reserve_om,i-1);
+			}
+			cf.at(CF_disbursement_om, nyears) = cf.at(CF_reserve_om,nyears-1);
+		}
 
 		for (i=0;i<=nyears; i++)
 		{
-			cf.at(CF_project_wcra,i) = -cf.at(CF_funding_om,i) - cf.at(CF_disbursement_om,i);
-			cf.at(CF_project_me1ra,i) = -cf.at(CF_funding_equip1,i) - cf.at(CF_disbursement_equip1,i);
-			cf.at(CF_project_me2ra,i) = -cf.at(CF_funding_equip2,i) - cf.at(CF_disbursement_equip2,i);
-			cf.at(CF_project_me3ra,i) = -cf.at(CF_funding_equip3,i) - cf.at(CF_disbursement_equip3,i);
+			cf.at(CF_sponsor_wcra,i) = -cf.at(CF_funding_om,i) - cf.at(CF_disbursement_om,i);
+			cf.at(CF_sponsor_me1ra,i) = -cf.at(CF_funding_equip1,i) - cf.at(CF_disbursement_equip1,i);
+			cf.at(CF_sponsor_me2ra,i) = -cf.at(CF_funding_equip2,i) - cf.at(CF_disbursement_equip2,i);
+			cf.at(CF_sponsor_me3ra,i) = -cf.at(CF_funding_equip3,i) - cf.at(CF_disbursement_equip3,i);
 		}
 
 		// interest on reserves
@@ -831,7 +851,7 @@ public:
 		double tax_investor_equity_frac = as_double("tax_investor_equity_percent") * 0.01;
 		double sponsor_pretax_development_fee = cost_dev_fee_percent * cost_prefinancing;
 
-		double issuance_of_equity;
+		double sponsor_equity_in_lessee_llc;
 		double equity_tax_investor;
 		double sponsor_pretax_equity_investment;
 
@@ -1206,7 +1226,8 @@ public:
 		double flip_target_percent = as_double("flip_target_percent") ;
 		int flip_target_year = as_integer("flip_target_year");
 		int flip_year=-1;
-		double purchase_of_property;
+		double sale_of_property;
+		double purchase_of_plant;
 		bool solved=true;
 		double ppa_min=as_double("ppa_soln_min");
 		double ppa_max=as_double("ppa_soln_max");
@@ -1254,7 +1275,8 @@ public:
 			cost_other_financing +
 			cf.at(CF_reserve_leasepayment,0) +
 			constr_total_financing +
-			cost_working_reserve;
+			cf.at(CF_reserve_om,0);
+//			cost_working_reserve;
 
 		cost_installed = cost_prefinancing + cost_financing;
 
@@ -1420,49 +1442,61 @@ public:
 
 		depr_fedbas_total = depr_fedbas_macrs_5 + depr_fedbas_macrs_15 + depr_fedbas_sl_5 + depr_fedbas_sl_15 + depr_fedbas_sl_20 + depr_fedbas_sl_39;
 
-		purchase_of_property = -cost_installed + cf.at(CF_reserve_leasepayment,0) + cost_working_reserve;
-		issuance_of_equity = cost_installed - (ibi_total + cbi_total);
+//		sale_of_property = -cost_installed + cf.at(CF_reserve_leasepayment,0) + cost_working_reserve;
+		sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
+		purchase_of_plant = -cost_prefinancing - cost_equity_closing - constr_total_financing;
+//		sponsor_equity_in_lessee_llc = cost_installed - (ibi_total + cbi_total);
 
-		equity_tax_investor = tax_investor_equity_frac * issuance_of_equity;
+//		equity_tax_investor = tax_investor_equity_frac * sponsor_equity_in_lessee_llc;
 
-		sponsor_pretax_equity_investment = -issuance_of_equity * (1.0 - tax_investor_equity_frac);
+//		sponsor_pretax_equity_investment = -sponsor_equity_in_lessee_llc * (1.0 - tax_investor_equity_frac);
 
 		for (i=0; i<=nyears; i++)
 		{
-			cf.at(CF_project_operating_activities,i) = cf.at(CF_sponsor_operating_margin,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i);
-			cf.at(CF_project_lpra,i) = -cf.at(CF_funding_leasepayment,i) - cf.at(CF_disbursement_leasepayment,i);
-			cf.at(CF_project_ra,i) =
-				cf.at(CF_project_lpra,i) +
-				cf.at(CF_project_wcra,i) +
-				cf.at(CF_project_me1ra,i) +
-				cf.at(CF_project_me2ra,i) +
-				cf.at(CF_project_me3ra,i);
-			cf.at(CF_project_me1cs,i) = cf.at(CF_disbursement_equip1,i);
-			cf.at(CF_project_me2cs,i) = cf.at(CF_disbursement_equip2,i);
-			cf.at(CF_project_me3cs,i) = cf.at(CF_disbursement_equip3,i);
-			cf.at(CF_project_mecs,i) =
-				cf.at(CF_project_me1cs,i) +
-				cf.at(CF_project_me2cs,i) +
-				cf.at(CF_project_me3cs,i);
-			cf.at(CF_project_investing_activities,i) = cf.at(CF_project_ra,i) + cf.at(CF_project_mecs,i);
-			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
+			cf.at(CF_sponsor_operating_activities,i) = cf.at(CF_sponsor_operating_margin,i) + cf.at(CF_reserve_interest,i);
+			cf.at(CF_sponsor_lpra,i) = -cf.at(CF_funding_leasepayment,i) - cf.at(CF_disbursement_leasepayment,i);
+			cf.at(CF_sponsor_ra,i) =
+				cf.at(CF_sponsor_lpra,i) +
+				cf.at(CF_sponsor_wcra,i) +
+				cf.at(CF_sponsor_me1ra,i) +
+				cf.at(CF_sponsor_me2ra,i) +
+				cf.at(CF_sponsor_me3ra,i);
+			cf.at(CF_sponsor_me1cs,i) = cf.at(CF_disbursement_equip1,i);
+			cf.at(CF_sponsor_me2cs,i) = cf.at(CF_disbursement_equip2,i);
+			cf.at(CF_sponsor_me3cs,i) = cf.at(CF_disbursement_equip3,i);
+			cf.at(CF_sponsor_mecs,i) =
+				cf.at(CF_sponsor_me1cs,i) +
+				cf.at(CF_sponsor_me2cs,i) +
+				cf.at(CF_sponsor_me3cs,i);
+			cf.at(CF_sponsor_investing_activities,i) = cf.at(CF_sponsor_ra,i) + cf.at(CF_sponsor_mecs,i);
+			if (i==0) cf.at(CF_sponsor_investing_activities,i) += sale_of_property + purchase_of_plant - sponsor_pretax_development_fee;
 
-			cf.at(CF_project_financing_activities,i) = 0;
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + ibi_total + cbi_total;
 
-			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
+			cf.at(CF_sponsor_financing_activities,i) = 0;
+			if (i==0) cf.at(CF_sponsor_financing_activities,i) += sponsor_equity_in_lessee_llc + ibi_total + cbi_total;
 
-			cf.at(CF_project_return_pretax,i) = cf.at(CF_pretax_cashflow,i);
-			if (i==0) cf.at(CF_project_return_pretax,i) -= (issuance_of_equity);
+			cf.at(CF_pretax_cashflow,i) = cf.at(CF_sponsor_operating_activities,i) + cf.at(CF_sponsor_investing_activities,i) + cf.at(CF_sponsor_financing_activities,i);
 
-			cf.at(CF_project_return_pretax_irr,i) = irr(CF_project_return_pretax,i)*100.0;
-			cf.at(CF_project_return_pretax_npv,i) = npv(CF_project_return_pretax,i,nom_discount_rate) +  cf.at(CF_project_return_pretax,0) ;
+			cf.at(CF_sponsor_adj_reserve_release,i) = cf.at(CF_disbursement_om,i) 
+													+ cf.at(CF_disbursement_equip1,i) 
+													+ cf.at(CF_disbursement_equip2,i) 
+													+ cf.at(CF_disbursement_equip3,i) 
+													+ cf.at(CF_disbursement_leasepayment,i)
+													- cf.at(CF_sponsor_mecs,i);
 
-			cf.at(CF_project_return_aftertax_cash,i) = cf.at(CF_project_return_pretax,i);
+			cf.at(CF_pretax_operating_cashflow,i) = cf.at(CF_pretax_cashflow,i) + cf.at(CF_sponsor_adj_reserve_release,i);	
+													
+			cf.at(CF_sponsor_return_pretax,i) = cf.at(CF_pretax_cashflow,i);
+			if (i==0) cf.at(CF_sponsor_return_pretax,i) -= (sponsor_equity_in_lessee_llc);
+
+			cf.at(CF_sponsor_return_pretax_irr,i) = irr(CF_sponsor_return_pretax,i)*100.0;
+			cf.at(CF_sponsor_return_pretax_npv,i) = npv(CF_sponsor_return_pretax,i,nom_discount_rate) +  cf.at(CF_sponsor_return_pretax,0) ;
+
+			cf.at(CF_sponsor_return_aftertax_cash,i) = cf.at(CF_sponsor_return_pretax,i);
 		}
 
 
-		cf.at(CF_project_return_aftertax,0) = cf.at(CF_project_return_aftertax_cash,0);
+		cf.at(CF_sponsor_return_aftertax,0) = cf.at(CF_sponsor_return_aftertax_cash,0);
 
 		for (i=1;i<=nyears;i++)
 		{
@@ -1526,17 +1560,17 @@ public:
 			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_fedtax_taxable_incentives,i);
 			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i);
 
-			cf.at(CF_project_return_aftertax,i) =
-				cf.at(CF_project_return_aftertax_cash,i) +
+			cf.at(CF_sponsor_return_aftertax,i) =
+				cf.at(CF_sponsor_return_aftertax_cash,i) +
 				cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i) +
 				cf.at(CF_statax,i) + cf.at(CF_fedtax,i);
-			if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
+			if (i==1) cf.at(CF_sponsor_return_aftertax,i) += itc_total;
 
-			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i,0.05)*100.0;
-			cf.at(CF_project_return_aftertax_npv,i) = npv(CF_project_return_aftertax,i,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0) ;
+			cf.at(CF_sponsor_return_aftertax_irr,i) = irr(CF_sponsor_return_aftertax,i,0.05)*100.0;
+			cf.at(CF_sponsor_return_aftertax_npv,i) = npv(CF_sponsor_return_aftertax,i,nom_discount_rate) +  cf.at(CF_sponsor_return_aftertax,0) ;
 
 		}
-		cf.at(CF_project_return_aftertax_npv,0) = cf.at(CF_project_return_aftertax,0) ;
+		cf.at(CF_sponsor_return_aftertax_npv,0) = cf.at(CF_sponsor_return_aftertax,0) ;
 
 // partner returns
 
@@ -1605,8 +1639,8 @@ public:
 
 
 			cf.at(CF_sponsor_pretax_cash_during_recovery,i) = -cf.at(CF_sponsor_capital_recovery_cash,i);
-			cf.at(CF_sponsor_pretax_cash_post_recovery,i) = cf.at(CF_project_return_aftertax_cash,i) + cf.at(CF_sponsor_capital_recovery_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
-			cf.at(CF_sponsor_aftertax_cash,i) = cf.at(CF_project_return_aftertax_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
+			cf.at(CF_sponsor_pretax_cash_post_recovery,i) = cf.at(CF_sponsor_return_aftertax_cash,i) + cf.at(CF_sponsor_capital_recovery_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
+			cf.at(CF_sponsor_aftertax_cash,i) = cf.at(CF_sponsor_return_aftertax_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
 			cf.at(CF_sponsor_pretax,i) = cf.at(CF_sponsor_aftertax_cash,i);
 			cf.at(CF_sponsor_aftertax_ptc,i) = (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i)) - cf.at(CF_tax_investor_aftertax_ptc,i);
 			if (i==1) cf.at(CF_sponsor_aftertax_itc,i) = itc_total - cf.at(CF_tax_investor_aftertax_itc,i);
@@ -1806,8 +1840,9 @@ public:
 		assign("sv_first_year_ppa", var_data((ssc_number_t) ppa));
 
 
-		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
-		assign("purchase_of_property", var_data((ssc_number_t) purchase_of_property));
+		assign("sponsor_equity_in_lessee_llc", var_data((ssc_number_t) sponsor_equity_in_lessee_llc));
+		assign("sale_of_property", var_data((ssc_number_t) sale_of_property));
+		assign("purchase_of_plant", var_data((ssc_number_t) purchase_of_plant));
 
 
 		assign("sv_sponsor_pretax_irr", var_data((ssc_number_t)  (irr(CF_sponsor_pretax,nyears)*100.0)));
@@ -1885,31 +1920,34 @@ public:
 		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
 		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
 
-		save_cf( CF_project_return_aftertax_cash, nyears, "cf_project_return_aftertax_cash" );
-		save_cf( CF_project_return_aftertax, nyears, "cf_project_return_aftertax" );
-		save_cf( CF_project_return_aftertax_irr, nyears, "cf_project_return_aftertax_irr" );
-		save_cf( CF_project_return_aftertax_npv, nyears, "cf_project_return_aftertax_npv" );
-		save_cf( CF_project_return_pretax, nyears, "cf_project_return_pretax" );
-		save_cf( CF_project_return_pretax_irr, nyears, "cf_project_return_pretax_irr" );
-		save_cf( CF_project_return_pretax_npv, nyears, "cf_project_return_pretax_npv" );
+		save_cf( CF_sponsor_return_aftertax_cash, nyears, "cf_sponsor_return_aftertax_cash" );
+		save_cf( CF_sponsor_return_aftertax, nyears, "cf_sponsor_return_aftertax" );
+		save_cf( CF_sponsor_return_aftertax_irr, nyears, "cf_sponsor_return_aftertax_irr" );
+		save_cf( CF_sponsor_return_aftertax_npv, nyears, "cf_sponsor_return_aftertax_npv" );
+		save_cf( CF_sponsor_return_pretax, nyears, "cf_sponsor_return_pretax" );
+		save_cf( CF_sponsor_return_pretax_irr, nyears, "cf_sponsor_return_pretax_irr" );
+		save_cf( CF_sponsor_return_pretax_npv, nyears, "cf_sponsor_return_pretax_npv" );
+		
 
-		save_cf( CF_project_financing_activities, nyears, "cf_project_financing_activities" );
+		save_cf( CF_sponsor_adj_reserve_release, nyears, "cf_sponsor_adj_reserve_release" );
+		save_cf( CF_sponsor_financing_activities, nyears, "cf_sponsor_financing_activities" );
 		save_cf( CF_pretax_cashflow, nyears, "cf_pretax_cashflow" );
+		save_cf( CF_pretax_operating_cashflow, nyears, "cf_pretax_operating_cashflow" );
 
-		save_cf( CF_project_lpra, nyears, "cf_project_lpra" );
-		save_cf( CF_project_wcra, nyears, "cf_project_wcra" );
-		save_cf( CF_project_me1ra, nyears, "cf_project_me1ra" );
-		save_cf( CF_project_me2ra, nyears, "cf_project_me2ra" );
-		save_cf( CF_project_me3ra, nyears, "cf_project_me3ra" );
-		save_cf( CF_project_ra, nyears, "cf_project_ra" );
-		save_cf( CF_project_me1cs, nyears, "cf_project_me1cs" );
-		save_cf( CF_project_me2cs, nyears, "cf_project_me2cs" );
-		save_cf( CF_project_me3cs, nyears, "cf_project_me3cs" );
-		save_cf( CF_project_mecs, nyears, "cf_project_mecs" );
-		save_cf( CF_project_investing_activities, nyears, "cf_project_investing_activities" );
+		save_cf( CF_sponsor_lpra, nyears, "cf_sponsor_lpra" );
+		save_cf( CF_sponsor_wcra, nyears, "cf_sponsor_wcra" );
+		save_cf( CF_sponsor_me1ra, nyears, "cf_sponsor_me1ra" );
+		save_cf( CF_sponsor_me2ra, nyears, "cf_sponsor_me2ra" );
+		save_cf( CF_sponsor_me3ra, nyears, "cf_sponsor_me3ra" );
+		save_cf( CF_sponsor_ra, nyears, "cf_sponsor_ra" );
+		save_cf( CF_sponsor_me1cs, nyears, "cf_sponsor_me1cs" );
+		save_cf( CF_sponsor_me2cs, nyears, "cf_sponsor_me2cs" );
+		save_cf( CF_sponsor_me3cs, nyears, "cf_sponsor_me3cs" );
+		save_cf( CF_sponsor_mecs, nyears, "cf_sponsor_mecs" );
+		save_cf( CF_sponsor_investing_activities, nyears, "cf_sponsor_investing_activities" );
 
 		save_cf( CF_pv_interest_factor, nyears, "cf_pv_interest_factor" );
-		save_cf( CF_project_operating_activities, nyears, "cf_project_operating_activities" );
+		save_cf( CF_sponsor_operating_activities, nyears, "cf_sponsor_operating_activities" );
 
 
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
