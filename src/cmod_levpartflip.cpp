@@ -1252,11 +1252,11 @@ public:
 			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 			// PBI
 			// total revenue
-			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) * (1.0 +
+			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) +
 				pbi_fed_for_ds_frac * cf.at(CF_pbi_fed,i) +
 				pbi_sta_for_ds_frac * cf.at(CF_pbi_sta,i) +
 				pbi_uti_for_ds_frac * cf.at(CF_pbi_uti,i) +
-				pbi_oth_for_ds_frac * cf.at(CF_pbi_oth,i) ) +
+				pbi_oth_for_ds_frac * cf.at(CF_pbi_oth,i) +
 				cf.at(CF_net_salvage_value,i);
 
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
