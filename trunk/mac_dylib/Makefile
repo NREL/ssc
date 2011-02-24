@@ -16,6 +16,7 @@ OBJECTS = \
 	cmod_easywatts.o \
 	cmod_equpartflip.o \
 	cmod_levpartflip.o \
+	cmod_saleleaseback.o \
 	cmod_pvwatts.o \
 	cmod_stdhrlywf.o \
 	cmod_timeseq.o \
