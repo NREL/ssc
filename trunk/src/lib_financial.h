@@ -15,4 +15,6 @@ double pmt (double rate, double nper, double pv, double fv, int type);
 double ipmt (double rate, double per, double nper, double pv, double fv, int type) ;
 double ppmt (double rate, double per, double nper, double pv, double fv, int type) ;
 
+long round(double number);
+
 #endif

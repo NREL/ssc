@@ -207,4 +207,9 @@ double ppmt (double rate, double per, double nper, double pv, double fv, int typ
 	return p - ip; 
 }
 
-
+// Do we need a math library?
+// from http://www.codeproject.com/Articles/58289/C-Round-Function.aspx
+long round(double number)
+{
+    return (number >= 0) ? (long)(number + 0.5) : (long)(number - 0.5);
+}
