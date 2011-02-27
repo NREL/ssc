@@ -57,7 +57,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "DHF",             "?=100000",					    "MIN=0",      			        "" },
 //	{ SSC_INPUT,        SSC_NUMBER,     "cost_working_reserve",		"Q&M/Working capital reserve",		"$",	 "",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
 // add months back after sam interface updated and other models updated to 4.4
-//	{ SSC_INPUT,        SSC_NUMBER,     "months_working_reserve",		"Working capital reserve monthst of o and m",		"months",	 "",					  "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "months_working_reserve",		"Working capital reserve monthst of o and m",		"months",	 "",					  "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_other_financing",		"",		"$",	 "Other Financing Cost",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
 /* DHF Equity Structure */
 //	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_equity_percent",		"Tax investor equity",				"%",	 "",					  "DHF",             "?=100",					  "MIN=0,MAX=100",     			        "" },
@@ -251,13 +251,13 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Total reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Interest on reserves",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_leasepayment",    "Debt service funding",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_leasepayment",    "Lease payment funding",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_om",    "O and M funding",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip1",    "Major equipment funding 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip2",    "Major equipment funding 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip3",    "Major equipment funding 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_leasepayment",    "Debt service disbursement",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_leasepayment",    "Lease payment disbursement",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_om",    "O and M disbursement",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip1",    "Major equipment disbursement 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Major equipment disbursement 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -313,11 +313,15 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_oth",             "Total other CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_uti",             "Total utility CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_statax_total",             "Total state taxable CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_fedtax_total",             "Total federal taxable CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_fed",             "Total federal CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_sta",             "Total state iBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_oth",             "Total other IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_uti",             "Total utility IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_statax_total",             "Total state taxable IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_fedtax_total",             "Total federal taxable IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_fed",             "Total federal ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_sta",             "Total state ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",             "Total ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
@@ -342,10 +346,10 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me2",         "State depreciation from major equipment 2",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me3",         "State depreciation from major equipment 3",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_total",         "Total state tax depreciation",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_statax_income_prior_incentives", "State tax income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_statax_taxable_incentives", "State taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_statax_income_with_incentives", "State tax income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_statax",				"State tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_prior_incentives", "State tax income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_taxable_incentives", "State taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_with_incentives", "State tax income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax",				"State tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 /* federal depreciation and tax */
@@ -359,10 +363,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me2",         "Federal depreciation from major equipment 2",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me3",         "Federal depreciation from major equipment 3",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_total",         "Total federal tax depreciation",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fedtax_income_prior_incentives", "Federal tax income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fedtax_taxable_incentives", "Federal taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fedtax_income_with_incentives", "Federal tax income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fedtax",				"Federal tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 // tax investor
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax",        "Pre-tax tax investor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -372,6 +372,15 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_itc",    "After-tax tax investor itc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_ptc",    "After-tax tax investor ptc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_tax",    "After-tax tax investor tax returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income_prior_incentives",        "Tax investor state taxable income prior to incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income_prior_incentives",        "Tax investor federal taxable income prior to incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income",        "Tax investor state taxable income",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income",        "Tax investor federal taxable income",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax",        "Tax investor state tax",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax",        "Tax investor federal tax",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax",        "After-tax tax investor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_irr",    "After-tax tax investor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "After-tax tax investor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -385,17 +394,20 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_balance",    "Sponsor capital recovery balance",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_cash",    "Sponsor capital recovery balance",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Pre-tax sponsor cash post recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_during_recovery",    "Pre-tax sponsor cash during recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_equity",    "Pre-tax sponsor equity investment",  "$", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_development",    "Pre-tax sponsor development fee",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Pre-tax sponsor cash post recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_during_recovery",    "Pre-tax sponsor cash during recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax",    "Pre-tax sponsor total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_irr",    "Pre-tax sponsor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_npv",    "Pre-tax sponsor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_irr",    "Pre-tax sponsor IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_npv",    "Pre-tax sponsor NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
+	
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_prior_incentives", "Federal tax income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_taxable_incentives", "Federal taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_with_incentives", "Federal tax income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax",				"Federal tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_equity",    "After-tax sponsor equity investment",  "$", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_development",    "After-tax sponsor development fee",  "$", "",                      "DHF",      "*",                     "",                "" },
@@ -507,6 +519,14 @@ enum {
 	CF_tax_investor_pretax,
 	CF_tax_investor_pretax_irr,
 	CF_tax_investor_pretax_npv,
+
+	CF_tax_investor_statax_income_prior_incentives,
+	CF_tax_investor_fedtax_income_prior_incentives,
+	CF_tax_investor_statax_income,
+	CF_tax_investor_fedtax_income,
+	CF_tax_investor_statax,
+	CF_tax_investor_fedtax,
+
 	CF_tax_investor_aftertax_cash,
 	CF_tax_investor_aftertax_itc,
 	CF_tax_investor_aftertax_ptc,
@@ -562,10 +582,10 @@ enum {
 	CF_stadepr_me2,
 	CF_stadepr_me3,
 	CF_stadepr_total,
-	CF_statax_income_prior_incentives,
-	CF_statax_taxable_incentives,
-	CF_statax_income_with_incentives,
-	CF_statax,
+	cf_sponsor_statax_income_prior_incentives,
+	cf_sponsor_statax_taxable_incentives,
+	cf_sponsor_statax_income_with_incentives,
+	cf_sponsor_statax,
 
 	CF_feddepr_macrs_5,
 	CF_feddepr_macrs_15,
@@ -577,10 +597,10 @@ enum {
 	CF_feddepr_me2,
 	CF_feddepr_me3,
 	CF_feddepr_total,
-	CF_fedtax_income_prior_incentives,
-	CF_fedtax_taxable_incentives,
-	CF_fedtax_income_with_incentives,
-	CF_fedtax,
+	cf_sponsor_fedtax_income_prior_incentives,
+	cf_sponsor_fedtax_taxable_incentives,
+	cf_sponsor_fedtax_income_with_incentives,
+	cf_sponsor_fedtax,
 
 	CF_me1depr_total,
 	CF_me2depr_total,
@@ -727,8 +747,7 @@ public:
 		double insurance_rate = as_double("insurance_rate")*0.01;
 //		double cost_working_reserve = as_double("cost_working_reserve");
 		// add back after other models and sam udpated
-//		double months_working_reserve_frac = as_integer("months_working_reserve") / 12.0;
-		double months_working_reserve_frac = 7.0 / 12.0;
+		double months_working_reserve_frac = as_integer("months_working_reserve") / 12.0;
 		double equip1_reserve_cost = as_double("equip1_reserve_cost");
 		int equip1_reserve_freq = as_integer("equip1_reserve_freq");
 		double equip2_reserve_cost = as_double("equip2_reserve_cost");
@@ -918,8 +937,8 @@ public:
 		compute_production_incentive( CF_pbi_oth, nyears, "pbi_oth_amount", "pbi_oth_term", "pbi_oth_escal" );
 
 		// precompute ptc
-		compute_production_incentive( CF_ptc_sta, nyears, "ptc_sta_amount", "ptc_sta_term", "ptc_sta_escal" );
-		compute_production_incentive( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
+		compute_production_incentive_IRS_2010_37( CF_ptc_sta, nyears, "ptc_sta_amount", "ptc_sta_term", "ptc_sta_escal" );
+		compute_production_incentive_IRS_2010_37( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
 
 		for (i=0;i<=nyears; i++)
 		{
@@ -933,7 +952,12 @@ public:
 		double itc_sta_total;
 		double itc_total;
 
-		cf.at(CF_statax_taxable_incentives,1) =
+		double cbi_statax_total = 
+			( as_boolean("cbi_fed_tax_sta") ? cbi_fed_amount : 0 ) +
+			( as_boolean("cbi_sta_tax_sta") ? cbi_sta_amount : 0 ) +
+			( as_boolean("cbi_uti_tax_sta") ? cbi_uti_amount : 0 ) +
+			( as_boolean("cbi_oth_tax_sta") ? cbi_oth_amount : 0 );
+		double ibi_statax_total = 
 			( as_boolean("ibi_fed_amount_tax_sta") ? ibi_fed_amount : 0 ) +
 			( as_boolean("ibi_fed_percent_tax_sta") ? ibi_fed_per : 0 ) +
 			( as_boolean("ibi_sta_amount_tax_sta") ? ibi_sta_amount : 0 ) +
@@ -941,17 +965,20 @@ public:
 			( as_boolean("ibi_uti_amount_tax_sta") ? ibi_uti_amount : 0 ) +
 			( as_boolean("ibi_uti_percent_tax_sta") ? ibi_uti_per : 0 ) +
 			( as_boolean("ibi_oth_amount_tax_sta") ? ibi_oth_amount : 0 ) +
-			( as_boolean("ibi_oth_percent_tax_sta") ? ibi_oth_per : 0 ) +
-			( as_boolean("cbi_fed_tax_sta") ? cbi_fed_amount : 0 ) +
-			( as_boolean("cbi_sta_tax_sta") ? cbi_sta_amount : 0 ) +
-			( as_boolean("cbi_uti_tax_sta") ? cbi_uti_amount : 0 ) +
-			( as_boolean("cbi_oth_tax_sta") ? cbi_oth_amount : 0 ) +
+			( as_boolean("ibi_oth_percent_tax_sta") ? ibi_oth_per : 0 );
+
+		cf.at(cf_sponsor_statax_taxable_incentives,1) = cbi_statax_total + ibi_statax_total +
 			( (as_boolean("pbi_fed_tax_sta") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
 			( (as_boolean("pbi_sta_tax_sta") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
 			( (as_boolean("pbi_uti_tax_sta") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
 			( (as_boolean("pbi_oth_tax_sta") && (!as_boolean("pbi_oth_for_ds")) ) ? cf.at(CF_pbi_oth,i) : 0 ) ;
 
-		cf.at(CF_fedtax_taxable_incentives,1) =
+		double cbi_fedtax_total = 
+			( as_boolean("cbi_fed_tax_fed") ? cbi_fed_amount : 0 ) +
+			( as_boolean("cbi_sta_tax_fed") ? cbi_sta_amount : 0 ) +
+			( as_boolean("cbi_uti_tax_fed") ? cbi_uti_amount : 0 ) +
+			( as_boolean("cbi_oth_tax_fed") ? cbi_oth_amount : 0 );
+		double ibi_fedtax_total = 
 			( as_boolean("ibi_fed_amount_tax_fed") ? ibi_fed_amount : 0 ) +
 			( as_boolean("ibi_fed_percent_tax_fed") ? ibi_fed_per : 0 ) +
 			( as_boolean("ibi_sta_amount_tax_fed") ? ibi_sta_amount : 0 ) +
@@ -959,11 +986,9 @@ public:
 			( as_boolean("ibi_uti_amount_tax_fed") ? ibi_uti_amount : 0 ) +
 			( as_boolean("ibi_uti_percent_tax_fed") ? ibi_uti_per : 0 ) +
 			( as_boolean("ibi_oth_amount_tax_fed") ? ibi_oth_amount : 0 ) +
-			( as_boolean("ibi_oth_percent_tax_fed") ? ibi_oth_per : 0 ) +
-			( as_boolean("cbi_fed_tax_fed") ? cbi_fed_amount : 0 ) +
-			( as_boolean("cbi_sta_tax_fed") ? cbi_sta_amount : 0 ) +
-			( as_boolean("cbi_uti_tax_fed") ? cbi_uti_amount : 0 ) +
-			( as_boolean("cbi_oth_tax_fed") ? cbi_oth_amount : 0 ) +
+			( as_boolean("ibi_oth_percent_tax_fed") ? ibi_oth_per : 0 );
+
+		cf.at(cf_sponsor_fedtax_taxable_incentives,1) = cbi_fedtax_total + ibi_fedtax_total +
 			( (as_boolean("pbi_fed_tax_fed") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
 			( (as_boolean("pbi_sta_tax_fed") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
 			( (as_boolean("pbi_uti_tax_fed") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
@@ -973,13 +998,13 @@ public:
 
 		for (i=2;i<=nyears;i++)
 		{
-			cf.at(CF_statax_taxable_incentives,i) =
+			cf.at(cf_sponsor_statax_taxable_incentives,i) =
 				( (as_boolean("pbi_fed_tax_sta") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
 				( (as_boolean("pbi_sta_tax_sta") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
 				( (as_boolean("pbi_uti_tax_sta") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
 				( (as_boolean("pbi_oth_tax_sta") && (!as_boolean("pbi_oth_for_ds")) ) ? cf.at(CF_pbi_oth,i) : 0 ) ;
 
-			cf.at(CF_fedtax_taxable_incentives,i) =
+			cf.at(cf_sponsor_fedtax_taxable_incentives,i) =
 				( (as_boolean("pbi_fed_tax_fed") && (!as_boolean("pbi_fed_for_ds")) ) ? cf.at(CF_pbi_fed,i) : 0 ) +
 				( (as_boolean("pbi_sta_tax_fed") && (!as_boolean("pbi_sta_for_ds")) ) ? cf.at(CF_pbi_sta,i) : 0 ) +
 				( (as_boolean("pbi_uti_tax_fed") && (!as_boolean("pbi_uti_for_ds")) ) ? cf.at(CF_pbi_uti,i) : 0 ) +
@@ -1662,15 +1687,15 @@ public:
 				cf.at(CF_stadepr_me3,i);
 
 			if (i==1) cf.at(CF_stadepr_total,i) += ( depr_stabas_macrs_5_bonus +depr_stabas_macrs_15_bonus + depr_stabas_sl_5_bonus + depr_stabas_sl_15_bonus + depr_stabas_sl_20_bonus + depr_stabas_sl_39_bonus);
-			cf.at(CF_statax_income_prior_incentives,i)=
+			cf.at(cf_sponsor_statax_income_prior_incentives,i)=
 				cf.at(CF_sponsor_operating_margin,i) +
 				cf.at(CF_reserve_interest,i) -
 				cf.at(CF_stadepr_total,i);
 
 
 
-			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + cf.at(CF_statax_taxable_incentives,i);
-			cf.at(CF_statax,i) = -state_tax_rate * cf.at(CF_statax_income_with_incentives,i);
+			cf.at(cf_sponsor_statax_income_with_incentives,i) = cf.at(cf_sponsor_statax_income_prior_incentives,i) + cf.at(cf_sponsor_statax_taxable_incentives,i);
+			cf.at(cf_sponsor_statax,i) = -state_tax_rate * cf.at(cf_sponsor_statax_income_with_incentives,i);
 
 // federal
 			cf.at(CF_feddepr_macrs_5,i) = cf.at(CF_macrs_5_frac,i) * depr_fedbas_macrs_5;
@@ -1690,22 +1715,22 @@ public:
 				cf.at(CF_feddepr_me2,i)+
 				cf.at(CF_feddepr_me3,i);
 			if (i==1) cf.at(CF_feddepr_total,i) += ( depr_fedbas_macrs_5_bonus +depr_fedbas_macrs_15_bonus + depr_fedbas_sl_5_bonus + depr_fedbas_sl_15_bonus + depr_fedbas_sl_20_bonus + depr_fedbas_sl_39_bonus);
-			cf.at(CF_fedtax_income_prior_incentives,i)=
+			cf.at(cf_sponsor_fedtax_income_prior_incentives,i)=
 				cf.at(CF_sponsor_operating_margin,i) +
 				cf.at(CF_reserve_interest,i) -
 				cf.at(CF_feddepr_total,i) +
-				cf.at(CF_statax,i) +
+				cf.at(cf_sponsor_statax,i) +
 				cf.at(CF_ptc_sta,i);
-			if (i==1) cf.at(CF_fedtax_income_prior_incentives,i) += itc_sta_total;
+			if (i==1) cf.at(cf_sponsor_fedtax_income_prior_incentives,i) += itc_sta_total;
 
 
-			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_fedtax_taxable_incentives,i);
-			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i);
+			cf.at(cf_sponsor_fedtax_income_with_incentives,i) = cf.at(cf_sponsor_fedtax_income_prior_incentives,i) + cf.at(cf_sponsor_fedtax_taxable_incentives,i);
+			cf.at(cf_sponsor_fedtax,i) = -federal_tax_rate * cf.at(cf_sponsor_fedtax_income_with_incentives,i);
 
 			cf.at(CF_sponsor_return_aftertax,i) =
 				cf.at(CF_sponsor_return_aftertax_cash,i) +
 				cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i) +
-				cf.at(CF_statax,i) + cf.at(CF_fedtax,i);
+				cf.at(cf_sponsor_statax,i) + cf.at(cf_sponsor_fedtax,i);
 			if (i==1) cf.at(CF_sponsor_return_aftertax,i) += itc_total;
 
 			cf.at(CF_sponsor_return_aftertax_irr,i) = irr(CF_sponsor_return_aftertax,i,0.05)*100.0;
@@ -1749,8 +1774,23 @@ public:
 			cf.at(CF_tax_investor_pretax_irr,i) = irr(CF_tax_investor_pretax,i)*100.0;
 			cf.at(CF_tax_investor_pretax_npv,i) = npv(CF_tax_investor_pretax,i,nom_discount_rate) +  cf.at(CF_tax_investor_pretax,0) ;
 
+			cf.at(CF_tax_investor_statax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_stadepr_total,i) + cf.at(CF_net_salvage_value,i);
+
+			cf.at(CF_tax_investor_statax_income,i) = cf.at(CF_tax_investor_statax_income_prior_incentives,i);
+			if (i==1) cf.at(CF_tax_investor_statax_income,i) += cbi_statax_total + ibi_statax_total;
+			cf.at(CF_tax_investor_statax,i) = -cf.at(CF_tax_investor_statax_income,i)*state_tax_rate;
+
+			cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_feddepr_total,i) + cf.at(CF_net_salvage_value,i)
+				+ cf.at(CF_tax_investor_statax,i) + cf.at(CF_ptc_sta,i);
+			if (i==1) cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) += itc_sta_total;
+			cf.at(CF_tax_investor_fedtax_income,i) = cf.at(CF_tax_investor_fedtax_income_prior_incentives,i);
+			if (i==1) cf.at(CF_tax_investor_fedtax_income,i) += cbi_fedtax_total + ibi_fedtax_total;
+			cf.at(CF_tax_investor_fedtax,i) = -cf.at(CF_tax_investor_fedtax_income,i)*federal_tax_rate;
+
+			cf.at(CF_tax_investor_aftertax_tax,i) = cf.at(CF_tax_investor_fedtax,i) + cf.at(CF_tax_investor_statax,i);
+
 			cf.at(CF_tax_investor_aftertax_cash,i) = cf.at(CF_tax_investor_pretax,i);
-			cf.at(CF_tax_investor_aftertax,i) =
+			cf.at(CF_tax_investor_aftertax,i) = 
 				cf.at(CF_tax_investor_aftertax_cash,i) +
 				cf.at(CF_tax_investor_aftertax_itc,i) +
 				cf.at(CF_tax_investor_aftertax_ptc,i) +
@@ -1773,7 +1813,7 @@ public:
 			cf.at(CF_sponsor_pretax,i) = cf.at(CF_sponsor_aftertax_cash,i);
 			cf.at(CF_sponsor_aftertax_ptc,i) = (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i)) - cf.at(CF_tax_investor_aftertax_ptc,i);
 			if (i==1) cf.at(CF_sponsor_aftertax_itc,i) = itc_total - cf.at(CF_tax_investor_aftertax_itc,i);
-			cf.at(CF_sponsor_aftertax_tax,i) = (cf.at(CF_statax,i) + cf.at(CF_fedtax,i)) - cf.at(CF_tax_investor_aftertax_tax,i);
+			cf.at(CF_sponsor_aftertax_tax,i) = (cf.at(cf_sponsor_statax,i) + cf.at(cf_sponsor_fedtax,i)) - cf.at(CF_tax_investor_aftertax_tax,i);
 			cf.at(CF_sponsor_aftertax,i) =
 				cf.at(CF_sponsor_aftertax_cash,i) +
 				cf.at(CF_sponsor_aftertax_itc,i) +
@@ -1938,7 +1978,11 @@ public:
 		assign("ibi_total_oth", var_data((ssc_number_t) (ibi_oth_amount+ibi_oth_per)));
 		assign("ibi_total_uti", var_data((ssc_number_t) (ibi_uti_amount+ibi_uti_per)));
 		assign("ibi_total", var_data((ssc_number_t) ibi_total));
+		assign("ibi_fedtax_total", var_data((ssc_number_t) ibi_fedtax_total));
+		assign("ibi_statax_total", var_data((ssc_number_t) ibi_statax_total));
 		assign("cbi_total", var_data((ssc_number_t) cbi_total));
+		assign("cbi_fedtax_total", var_data((ssc_number_t) cbi_fedtax_total));
+		assign("cbi_statax_total", var_data((ssc_number_t) cbi_statax_total));
 		assign("cbi_total_fed", var_data((ssc_number_t) cbi_fed_amount));
 		assign("cbi_total_sta", var_data((ssc_number_t) cbi_sta_amount));
 		assign("cbi_total_oth", var_data((ssc_number_t) cbi_oth_amount));
@@ -2004,6 +2048,13 @@ public:
 		save_cf( CF_sponsor_aftertax_irr, nyears, "cf_sponsor_aftertax_irr" );
 		save_cf( CF_sponsor_aftertax_npv, nyears, "cf_sponsor_aftertax_npv" );
 
+		save_cf( CF_tax_investor_statax_income_prior_incentives, nyears, "cf_tax_investor_statax_income_prior_incentives" );
+		save_cf( CF_tax_investor_fedtax_income_prior_incentives, nyears, "cf_tax_investor_fedtax_income_prior_incentives" );
+		save_cf( CF_tax_investor_statax_income, nyears, "cf_tax_investor_statax_income" );
+		save_cf( CF_tax_investor_fedtax_income, nyears, "cf_tax_investor_fedtax_income" );
+		save_cf( CF_tax_investor_statax, nyears, "cf_tax_investor_statax" );
+		save_cf( CF_tax_investor_fedtax, nyears, "cf_tax_investor_fedtax" );
+
 		save_cf( CF_tax_investor_pretax, nyears, "cf_tax_investor_pretax" );
 		save_cf( CF_tax_investor_pretax_irr, nyears, "cf_tax_investor_pretax_irr" );
 		save_cf( CF_tax_investor_pretax_npv, nyears, "cf_tax_investor_pretax_npv" );
@@ -2016,12 +2067,12 @@ public:
 		save_cf( CF_tax_investor_aftertax_npv, nyears, "cf_tax_investor_aftertax_npv" );
 		save_cf( CF_tax_investor_aftertax_max_irr, nyears, "cf_tax_investor_aftertax_max_irr" );
 
-		save_cf( CF_statax_taxable_incentives, nyears, "cf_statax_taxable_incentives" );
-		save_cf( CF_statax_income_with_incentives, nyears, "cf_statax_income_with_incentives" );
-		save_cf( CF_statax, nyears, "cf_statax" );
-		save_cf( CF_fedtax_taxable_incentives, nyears, "cf_fedtax_taxable_incentives" );
-		save_cf( CF_fedtax_income_with_incentives, nyears, "cf_fedtax_income_with_incentives" );
-		save_cf( CF_fedtax, nyears, "cf_fedtax" );
+		save_cf( cf_sponsor_statax_taxable_incentives, nyears, "cf_sponsor_statax_taxable_incentives" );
+		save_cf( cf_sponsor_statax_income_with_incentives, nyears, "cf_sponsor_statax_income_with_incentives" );
+		save_cf( cf_sponsor_statax, nyears, "cf_sponsor_statax" );
+		save_cf( cf_sponsor_fedtax_taxable_incentives, nyears, "cf_sponsor_fedtax_taxable_incentives" );
+		save_cf( cf_sponsor_fedtax_income_with_incentives, nyears, "cf_sponsor_fedtax_income_with_incentives" );
+		save_cf( cf_sponsor_fedtax, nyears, "cf_sponsor_fedtax" );
 
 		save_cf( CF_stadepr_macrs_5, nyears, "cf_stadepr_macrs_5" );
 		save_cf( CF_stadepr_macrs_15, nyears, "cf_stadepr_macrs_15" );
@@ -2033,7 +2084,7 @@ public:
 		save_cf( CF_stadepr_me2, nyears, "cf_stadepr_me2" );
 		save_cf( CF_stadepr_me3, nyears, "cf_stadepr_me3" );
 		save_cf( CF_stadepr_total, nyears, "cf_stadepr_total" );
-		save_cf( CF_statax_income_prior_incentives, nyears, "cf_statax_income_prior_incentives" );
+		save_cf( cf_sponsor_statax_income_prior_incentives, nyears, "cf_sponsor_statax_income_prior_incentives" );
 
 		save_cf( CF_feddepr_macrs_5, nyears, "cf_feddepr_macrs_5" );
 		save_cf( CF_feddepr_macrs_15, nyears, "cf_feddepr_macrs_15" );
@@ -2045,7 +2096,7 @@ public:
 		save_cf( CF_feddepr_me2, nyears, "cf_feddepr_me2" );
 		save_cf( CF_feddepr_me3, nyears, "cf_feddepr_me3" );
 		save_cf( CF_feddepr_total, nyears, "cf_feddepr_total" );
-		save_cf( CF_fedtax_income_prior_incentives, nyears, "cf_fedtax_income_prior_incentives" );
+		save_cf( cf_sponsor_fedtax_income_prior_incentives, nyears, "cf_sponsor_fedtax_income_prior_incentives" );
 
 		save_cf( CF_pbi_fed, nyears, "cf_pbi_total_fed");
 		save_cf( CF_pbi_sta, nyears, "cf_pbi_total_sta");
@@ -2383,6 +2434,26 @@ public:
 		{
 			for (int i=1;i<=nyears;i++)
 				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
+		}
+		else
+		{
+			for (int i=1;i<=nyears && i <= (int)len;i++)
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+		}
+	}
+
+		void compute_production_incentive_IRS_2010_37( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
+	{
+		// rounding based on IRS document and emails from John and Matt from DHF Financials 2/24/2011 and DHF model v4.4
+		size_t len = 0;
+		ssc_number_t *parr = as_array(s_val, &len);
+		int term = as_integer(s_term);
+		double escal = as_double(s_escal)/100.0;
+
+		if (len == 1)
+		{
+			for (int i=1;i<=nyears;i++)
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
