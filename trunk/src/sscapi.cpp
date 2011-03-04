@@ -25,6 +25,7 @@ extern module_entry_info
 	cm_entry_levpartflip,
 	cm_entry_equpartflip,
 	cm_entry_saleleaseback,
+	cm_entry_singleowner,
 	cm_entry_trndish,
 	cm_entry_ptflux,
 	cm_entry_trntower;
@@ -41,6 +42,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_levpartflip,
 	&cm_entry_equpartflip,
 	&cm_entry_saleleaseback,
+	&cm_entry_singleowner,
 	&cm_entry_trndish,
 	&cm_entry_ptflux,
 	&cm_entry_trntower,
