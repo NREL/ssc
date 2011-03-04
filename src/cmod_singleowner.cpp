@@ -2,23 +2,7 @@
 #include "core.h"
 #include <sstream>
 
-/*
-Very close to cmod_levpartflip
-
-5 inputs not used 
-1. term_tenor
-2. term_int_rate
-3. dscr
-4. dscr_reserve_months
-5. cost_debt_closing
-
-2 inputs added
-1. sponsor_cap_recovery_method
-2. sponsor_cap_recovery_time
-*/
-
-
-static var_info _cm_vtab_equpartflip[] = {
+static var_info _cm_vtab_singleowner[] = {
 
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -50,7 +34,7 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",   "Major equipment reserve state depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=5",  "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_fed",   "Major equipment reserve federal depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=5",  "" },
 
-/* DHF salvage value */
+/* DHF salvage value */	
 	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",          "Net pre-tax cash salvage value",	"%",	 "",					  "DHF",             "?=10",                     "MIN=0,MAX=100",      			"" },
 /* DHF market specific inputs - leveraged partnership flip */
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=specify ppa,1=solve ppa", "DHF",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
@@ -65,18 +49,17 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "constr_months",            "Construction period",				"months", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "constr_int_rate",          "Construction interest rate",		"%",	 "",					  "DHF",             "?=4",                     "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "constr_upfront_percent",  "Construction up-front fee",    	"%",	 "",					  "DHF",             "?=1",                     "MIN=0,MAX=100",      			"" },
-
+/* DHF term financing */
+	{ SSC_INPUT,        SSC_NUMBER,     "term_tenor",               "Term financing tenor",				"years", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "term_int_rate",            "Term financing interest rate",		"%",	 "",					  "DHF",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "dscr",						"Debt service coverage ratio",		"",	     "",				      "DHF",             "?=1.5",					"MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		"Debt service reserve account",		"months P&I","",			      "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
 /* DHF Capital Cost */
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "DHF",             "?=3",					    "MIN=0,MAX=100",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "DHF",             "?=100000",					    "MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_closing",		"Debt closing cost",				"$",	 "",					  "DHF",             "?=250000",					    "MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_fee",		"Debt closing fee (% of total debt amount)",				"%",	 "",					  "DHF",             "?=1.5",					    "MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "months_working_reserve",		"Working capital reserve monthst of o and m",		"months",	 "",					  "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_other_financing",		"",		"$",	 "Other Financing Cost",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
 /* DHF Equity Structure */
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_equity_percent",		"Tax investor equity",				"%",	 "",					  "DHF",             "?=98",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_cash_percent",		"Tax investor pre-flip cash ",		"%",	 "",  "DHF",             "?=98",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_postflip_cash_percent",	"Tax investor post-flip cash ",	"%",	 "",  "DHF",             "?=15",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_tax_percent",		"Tax investor pre-flip tax benefit ",		"%",	 "",  "DHF",             "?=98",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_postflip_tax_percent",	"Tax investor post-flip tax benefit ",	"%",	 "",  "DHF",             "?=15",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			"After-tax flip/return target",		"%",	 "",					  "DHF",             "?=11",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		"Return target year",				"",		 "",					  "DHF",             "?=11",					  "MIN=1",     			        "" },
 /* DHF depreciation allocation */
@@ -199,11 +182,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "depr_stabas_method",    "Method of state depreciation reduction",     "",      "0=5yr MACRS,1=Proportional",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "depr_fedbas_method",    "Method of federal depreciation reduction",     "",      "0=5yr MACRS,1=Proportional",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
 
-/* Sponsor recovery method    0=Time, 1=Full Capital Recovery */
-	{ SSC_INPUT,        SSC_NUMBER,      "sponsor_cap_recovery_mode",    "Sponsor Capital Recovery",     "",      "0=Time, 1=Full Capital Recovery",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sponsor_cap_recovery_year",    "Duration (in years)",     "years",      "",                      "DHF",      "?=3",                       "INTEGER",                                         "" },
-
-
 /* State depreciation table */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_5",		"5-yr MACRS state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_15",		"15-yr MACRS state depreciation basis",	"$", "",  "DHF",             "*",					  "",     			        "" },
@@ -226,6 +204,9 @@ static var_info _cm_vtab_equpartflip[] = {
 /* State taxes */
 
 	/* intermediate outputs for validation */
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "pv_cafds", "Present value of cash avaialble for debt service","$", "",				  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Size of debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_interest",			"Interest during construction",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_upfront_fee",		"Construction up-front fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
@@ -237,7 +218,7 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "ppa_price",			    "Initial year PPA price",			"cents/kWh",	"",				   "DHF",			  "*",                         "",      					   "" },
 /* Production - input as energy_net above */
 
-/* Partial Income Statement: Project */
+/* Partial Income Statement: Project */	
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Net Energy",                     "kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "Total PPA revenue",                     "$",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
@@ -252,8 +233,9 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_net_salvage_value",    "Salvage value",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_total_revenue",    "Total revenue",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ebitda",    "EBITDA",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ebitda",    "EBITDA (cash available for debt service)",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_debtservice",    "Debt service reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "O and M reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip1",    "Major equipment reserve 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Major equipment reserve 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -261,22 +243,34 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Total reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Interest on reserves",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_debtservice",    "Debt service funding",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_om",    "O and M funding",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip1",    "Major equipment funding 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip2",    "Major equipment funding 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip3",    "Major equipment funding 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_debtservice",    "Debt service disbursement",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_om",    "O and M disbursement",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip1",    "Major equipment disbursement 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Major equipment disbursement 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip3",    "Major equipment disbursement 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+		
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cash_for_ds",     "Cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pv_cash_for_ds",     "Present value of cash for debt service",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_size",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
+	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_balance",          "Debt balance",                       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_interest", "Interest payment",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_principal","Principal payment",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_total",    "Total P&I debt payment",             "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// Project cash flow
-
+	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_operating_activities",    "Cash flow from operating activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_property",	"Purchase of property cost",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_dsra",    "(Increase)/Decrease in debt service reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_wcra",    "(Increase)/Decrease in working captial reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me1ra",    "(Increase)/Decrease in major equipment reserve account 1",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me2ra",    "(Increase)/Decrease in major equipment reserve account 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -301,6 +295,7 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_cash",    "After-tax project returns cash total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax",    "After-tax project returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_irr",    "After-tax project cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_max_irr",    "After-tax project maximum IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_npv",    "After-tax project cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 		
@@ -366,49 +361,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fedtax_income_with_incentives", "Federal tax income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fedtax",				"Federal tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-// tax investor
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax",        "Pre-tax tax investor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_irr",    "Pre-tax tax investor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_npv",    "Pre-tax tax investor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_cash",    "After-tax tax investor cash returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_itc",    "After-tax tax investor itc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_ptc",    "After-tax tax investor ptc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_tax",    "After-tax tax investor tax returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax",        "After-tax tax investor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_irr",    "After-tax tax investor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "After-tax tax investor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_max_irr",    "After-tax tax investor maximum IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_tax_investor_aftertax_irr",    "After-tax tax investor IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_tax_investor_aftertax_npv",    "After-tax tax investor NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_tax_investor_pretax_irr",    "Pre-tax tax investor IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_tax_investor_pretax_npv",    "Pre-tax tax investor NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
-
-	// Sponsor
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_balance",    "Sponsor capital recovery balance",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_cash",    "Sponsor capital recovery balance",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Pre-tax sponsor cash post recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_during_recovery",    "Pre-tax sponsor cash during recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_equity",    "Pre-tax sponsor equity investment",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_development",    "Pre-tax sponsor development fee",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Pre-tax sponsor cash post recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_during_recovery",    "Pre-tax sponsor cash during recovery",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax",    "Pre-tax sponsor total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_irr",    "Pre-tax sponsor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_npv",    "Pre-tax sponsor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_irr",    "Pre-tax sponsor IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_npv",    "Pre-tax sponsor NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_equity",    "After-tax sponsor equity investment",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_development",    "After-tax sponsor development fee",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_cash",    "After-tax sponsor cash returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax",    "After-tax sponsor total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_itc",    "After-tax sponsor itc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_ptc",    "After-tax sponsor ptc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_tax",    "After-tax sponsor tax returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_irr",    "After-tax sponsor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_npv",    "After-tax sponsor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_irr",    "After-tax sponsor IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_npv",    "After-tax sponsor NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
 
 	// metrics table 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Annual energy",  "kwh", "",                      "DHF",      "*",                     "",                "" },
@@ -423,6 +375,9 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_first_year_ppa",                 "First year PPA price",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_ppa_escalation",                 "PPA price escalation",                       "%",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_project_return_aftertax_irr",    "After-tax IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_project_return_aftertax_npv",    "After-tax NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
+
 
 
 var_info_invalid };
@@ -451,6 +406,9 @@ enum {
 	CF_total_revenue,
 	CF_ebitda,
 
+	CF_reserve_debtservice,
+	CF_funding_debtservice,
+	CF_disbursement_debtservice,
 	CF_reserve_om,
 	CF_funding_om,
 	CF_disbursement_om,
@@ -469,6 +427,7 @@ enum {
 
 	// Project cash flow
 	CF_project_operating_activities,
+	CF_project_dsra,
 	CF_project_wcra,
 	CF_project_me1ra,
 	CF_project_me2ra,
@@ -488,44 +447,25 @@ enum {
 	CF_project_return_pretax_irr,
 	CF_project_return_pretax_npv,
 	CF_project_return_aftertax_cash,
+	CF_project_return_aftertax_itc,
+	CF_project_return_aftertax_ptc,
+	CF_project_return_aftertax_tax,
 	CF_project_return_aftertax,
 	CF_project_return_aftertax_irr,
+	CF_project_return_aftertax_max_irr,
 	CF_project_return_aftertax_npv,
 
 
-	// tax investor returns
-	CF_tax_investor_pretax,
-	CF_tax_investor_pretax_irr,
-	CF_tax_investor_pretax_npv,
-	CF_tax_investor_aftertax_cash,
-	CF_tax_investor_aftertax_itc,
-	CF_tax_investor_aftertax_ptc,
-	CF_tax_investor_aftertax_tax,
-	CF_tax_investor_aftertax,
-	CF_tax_investor_aftertax_irr,
-	CF_tax_investor_aftertax_max_irr,
-	CF_tax_investor_aftertax_npv,
-
-	// sponsor returns
-	CF_sponsor_capital_recovery_balance,
-	CF_sponsor_capital_recovery_cash,
-	CF_sponsor_pretax_cash_post_recovery,
-	CF_sponsor_pretax_cash_during_recovery,
-	CF_sponsor_pretax,
-	CF_sponsor_pretax_irr,
-	CF_sponsor_pretax_npv,
-	CF_sponsor_aftertax_cash,
-	CF_sponsor_aftertax,
-	CF_sponsor_aftertax_itc,
-	CF_sponsor_aftertax_ptc,
-	CF_sponsor_aftertax_tax,
-	CF_sponsor_aftertax_irr,
-	CF_sponsor_aftertax_npv,
-
-
-	CF_deductible_expenses,
-
 	CF_pv_interest_factor,
+	CF_cash_for_ds,
+	CF_pv_cash_for_ds,
+	CF_debt_size,
+
+	CF_debt_balance,
+	CF_debt_payment_interest,
+	CF_debt_payment_principal,
+	CF_debt_payment_total,
+	
 	CF_pbi_fed,
 	CF_pbi_sta,
 	CF_pbi_uti,
@@ -536,6 +476,7 @@ enum {
 
 	CF_ptc_fed,
 	CF_ptc_sta,
+	CF_aftertax_ptc,
 	
 	CF_macrs_5_frac,
 	CF_macrs_15_frac,
@@ -583,7 +524,7 @@ enum {
 	CF_sta_incentive_income_less_deductions,
 	CF_sta_taxable_income_less_deductions,
 	CF_sta_tax_savings,
-
+	
 	CF_fed_depr_sched,
 	CF_fed_depreciation,
 	CF_fed_incentive_income_less_deductions,
@@ -596,7 +537,7 @@ enum {
 
 	CF_payback_with_expenses,
 	CF_cumulative_payback_with_expenses,
-
+	
 	CF_payback_without_expenses,
 	CF_cumulative_payback_without_expenses,
 
@@ -604,20 +545,20 @@ enum {
 
 
 
-class cm_equpartflip : public compute_module
+class cm_singleowner : public compute_module
 {
 private:
 	util::matrix_t<double> cf;
 
 public:
-	cm_equpartflip()
+	cm_singleowner()
 	{
 		add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
-
-		add_var_info( _cm_vtab_equpartflip );
+				
+		add_var_info( _cm_vtab_singleowner );
 	}
 
 	void exec( ) throw( general_error )
@@ -642,17 +583,14 @@ public:
 
 		// use DHF named range names for variables whenever possible
 		double nameplate = as_double("system_capacity");
-
+	
 		double assessed_frac = as_double("prop_tax_cost_assessed_percent")*0.01;
 		double salvage_value_frac = as_double("salvage_percentage")*0.01;
 		double salvage_value = salvage_value_frac * cost_prefinancing;
 
-		double cost_equity_closing = as_double("cost_equity_closing");
+		double cost_debt_closing = as_double("cost_debt_closing");
+		double cost_debt_fee_frac = as_double("cost_debt_fee")*0.01;
 		double cost_other_financing = as_double("cost_other_financing");
-		double cost_dev_fee_percent = as_double("cost_dev_fee_percent")*0.01;
-
-		int sponsor_cap_recovery_mode = as_integer("sponsor_cap_recovery_mode");
-		int sponsor_cap_recovery_year = as_integer("sponsor_cap_recovery_year");
 
 		int constr_months = as_integer("constr_months");
 		double constr_int_rate = as_double("constr_int_rate")*0.01;
@@ -670,7 +608,7 @@ public:
 		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
-
+		
 		// initialize energy
 
 		int i=0;
@@ -724,6 +662,14 @@ public:
 		double equip3_reserve_cost = as_double("equip3_reserve_cost");
 		int equip3_reserve_freq = as_integer("equip3_reserve_freq");
 
+		//  calculate debt
+		int term_tenor = as_integer("term_tenor"); 
+		double term_int_rate = as_double("term_int_rate")*0.01;
+		double dscr = as_double("dscr");
+		int dscr_reserve_months = as_integer("dscr_reserve_months");
+		double cash_for_debt_service=0;
+		double pv_cafds=0;
+		double size_of_debt=0;
 
 		// pre calculate reserves
 		int i_equip1=1;
@@ -848,16 +794,8 @@ public:
 		// interest on reserves
 		double reserves_interest = as_double("reserves_interest")*0.01;
 
-		double tax_investor_equity_frac = as_double("tax_investor_equity_percent") * 0.01;
-		double tax_investor_preflip_cash_frac = as_double("tax_investor_preflip_cash_percent") * 0.01;
-		double tax_investor_postflip_cash_frac = as_double("tax_investor_postflip_cash_percent") * 0.01;
-		double tax_investor_preflip_tax_frac = as_double("tax_investor_preflip_tax_percent") * 0.01;
-		double tax_investor_postflip_tax_frac = as_double("tax_investor_postflip_tax_percent") * 0.01;
-		double sponsor_pretax_development_fee = cost_dev_fee_percent * cost_prefinancing;
-
 		double issuance_of_equity;
-		double equity_tax_investor;
-		double sponsor_pretax_equity_investment;
+		double equity_investment;
 
 		// ibi fixed
 		double ibi_fed_amount = as_double("ibi_fed_amount");
@@ -908,7 +846,7 @@ public:
 		for (i=0;i<=nyears; i++)
 		{
 			cf.at(CF_pbi_total,i) = cf.at(CF_pbi_fed,i) + cf.at(CF_pbi_sta,i) + cf.at(CF_pbi_uti,i) + cf.at(CF_pbi_oth,i);
-			cf.at(CF_tax_investor_aftertax_ptc,i) = cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i);
+			cf.at(CF_aftertax_ptc,i) = cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i);
 		}
 
 		double cbi_total = cbi_fed_amount + cbi_sta_amount +cbi_uti_amount + cbi_oth_amount;
@@ -947,20 +885,23 @@ public:
 			( as_boolean("ibi_oth_amount_tax_fed") ? ibi_oth_amount : 0 ) +
 			( as_boolean("ibi_oth_percent_tax_fed") ? ibi_oth_per : 0 );
 
+
 		for (i=1;i<=nyears;i++)
 		{
 			cf.at(CF_pbi_statax_total,i) =
-				( as_boolean("pbi_fed_tax_sta") ? cf.at(CF_pbi_fed,i) : 0 ) +
-				( as_boolean("pbi_sta_tax_sta") ? cf.at(CF_pbi_sta,i) : 0 ) +
-				( as_boolean("pbi_uti_tax_sta") ? cf.at(CF_pbi_uti,i) : 0 ) +
-				( as_boolean("pbi_oth_tax_sta") ? cf.at(CF_pbi_oth,i) : 0 ) ;
+				(( as_boolean("pbi_fed_tax_sta") && (!as_boolean("pbi_fed_for_ds"))) ? cf.at(CF_pbi_fed,i) : 0 ) +
+				(( as_boolean("pbi_sta_tax_sta") && (!as_boolean("pbi_sta_for_ds"))) ? cf.at(CF_pbi_sta,i) : 0 ) +
+				(( as_boolean("pbi_uti_tax_sta") && (!as_boolean("pbi_uti_for_ds"))) ? cf.at(CF_pbi_uti,i) : 0 ) +
+				(( as_boolean("pbi_oth_tax_sta") && (!as_boolean("pbi_oth_for_ds"))) ? cf.at(CF_pbi_oth,i) : 0 ) ;
 
 			cf.at(CF_pbi_fedtax_total,i) =
-				( as_boolean("pbi_fed_tax_fed") ? cf.at(CF_pbi_fed,i) : 0 ) +
-				( as_boolean("pbi_sta_tax_fed") ? cf.at(CF_pbi_sta,i) : 0 ) +
-				( as_boolean("pbi_uti_tax_fed") ? cf.at(CF_pbi_uti,i) : 0 ) +
-				( as_boolean("pbi_oth_tax_fed") ? cf.at(CF_pbi_oth,i) : 0 ) ;
+				(( as_boolean("pbi_fed_tax_fed") && (!as_boolean("pbi_fed_for_ds"))) ? cf.at(CF_pbi_fed,i) : 0 ) +
+				(( as_boolean("pbi_sta_tax_fed") && (!as_boolean("pbi_sta_for_ds"))) ? cf.at(CF_pbi_sta,i) : 0 ) +
+				(( as_boolean("pbi_uti_tax_fed") && (!as_boolean("pbi_uti_for_ds"))) ? cf.at(CF_pbi_uti,i) : 0 ) +
+				(( as_boolean("pbi_oth_tax_fed") && (!as_boolean("pbi_oth_for_ds"))) ? cf.at(CF_pbi_oth,i) : 0 ) ;
 		}
+
+
 
 		double cost_financing;
 
@@ -1050,12 +991,12 @@ public:
 		double depr_alloc_none;
 		double depr_alloc_total;
 
-		double itc_sta_qual_macrs_5_frac = ( as_boolean("depr_itc_sta_macrs_5")  ? 1: 0 ) ;
-		double itc_sta_qual_macrs_15_frac = ( as_boolean("depr_itc_sta_macrs_15")  ? 1: 0 ) ;
-		double itc_sta_qual_sl_5_frac = ( as_boolean("depr_itc_sta_sl_5")  ? 1: 0 ) ;
-		double itc_sta_qual_sl_15_frac = ( as_boolean("depr_itc_sta_sl_15")   ? 1: 0 ) ;
-		double itc_sta_qual_sl_20_frac = ( as_boolean("depr_itc_sta_sl_20")  ? 1: 0 ) ;
-		double itc_sta_qual_sl_39_frac = ( as_boolean("depr_itc_sta_sl_39")  ? 1: 0 ) ;
+		double itc_sta_qual_macrs_5_frac = ( as_boolean("depr_itc_sta_macrs_5")  ? depr_stabas_macrs_5_frac: 0 ) ;
+		double itc_sta_qual_macrs_15_frac = ( as_boolean("depr_itc_sta_macrs_15")  ? depr_stabas_macrs_15_frac: 0 ) ;
+		double itc_sta_qual_sl_5_frac = ( as_boolean("depr_itc_sta_sl_5")  ? depr_stabas_sl_5_frac: 0 ) ;
+		double itc_sta_qual_sl_15_frac = ( as_boolean("depr_itc_sta_sl_15")   ? depr_stabas_sl_15_frac: 0 ) ;
+		double itc_sta_qual_sl_20_frac = ( as_boolean("depr_itc_sta_sl_20")  ? depr_stabas_sl_20_frac: 0 ) ;
+		double itc_sta_qual_sl_39_frac = ( as_boolean("depr_itc_sta_sl_39")  ? depr_stabas_sl_39_frac: 0 ) ;
 
 		double itc_sta_qual_total;
 
@@ -1215,11 +1156,11 @@ public:
 
 		double depr_fedbas_total;
 
-		// all equity - always count in revenue
-		double pbi_fed_for_ds_frac = 1.0;
-		double pbi_sta_for_ds_frac = 1.0;
-		double pbi_uti_for_ds_frac = 1.0;
-		double pbi_oth_for_ds_frac = 1.0;
+
+		double pbi_fed_for_ds_frac = as_boolean("pbi_fed_for_ds") ? 1.0 : 0.0;
+		double pbi_sta_for_ds_frac = as_boolean("pbi_sta_for_ds") ? 1.0 : 0.0;
+		double pbi_uti_for_ds_frac = as_boolean("pbi_uti_for_ds") ? 1.0 : 0.0;
+		double pbi_oth_for_ds_frac = as_boolean("pbi_oth_for_ds") ? 1.0 : 0.0;
 
 		
 		//		if (ppa_mode == 1) // iterate to meet flip target by varying ppa price
@@ -1240,6 +1181,10 @@ public:
 	{
 
 		flip_year=-1;
+		cash_for_debt_service=0;
+		pv_cafds=0;
+		size_of_debt=0;
+
 		// debt pre calculation
 		for (i=1; i<=nyears; i++)
 		{			
@@ -1258,10 +1203,45 @@ public:
 
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 		
+			// term financing
+			if (i<=term_tenor)
+			{
+				cf.at(CF_cash_for_ds,i) = cf.at(CF_ebitda,i) - cf.at(CF_funding_equip1,i) - cf.at(CF_funding_equip2,i) - cf.at(CF_funding_equip3,i);
+				cash_for_debt_service += cf.at(CF_cash_for_ds,i);
+				if (i==1) 
+					cf.at(CF_pv_interest_factor,i) = 1.0/(1.0+term_int_rate);
+				else
+					cf.at(CF_pv_interest_factor,i) = cf.at(CF_pv_interest_factor,i-1)/(1.0+term_int_rate);
+				cf.at(CF_pv_cash_for_ds,i) = cf.at(CF_pv_interest_factor,i) * cf.at(CF_cash_for_ds,i);
+				pv_cafds += cf.at(CF_pv_cash_for_ds,i);
+				if (dscr!=0) cf.at(CF_debt_size,i) = cf.at(CF_pv_cash_for_ds,i) / dscr;
+				size_of_debt += cf.at(CF_debt_size,i);
+			}
 		}
+
+		cf.at(CF_debt_balance,0) = size_of_debt;
+
+		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
+		{
+			if(dscr!=0) cf.at(CF_debt_payment_total,i) = cf.at(CF_cash_for_ds,i) / dscr;
+			cf.at(CF_debt_payment_interest,i) = cf.at(CF_debt_balance,i-1) * term_int_rate;
+			cf.at(CF_debt_payment_principal,i) = cf.at(CF_debt_payment_total,i) - cf.at(CF_debt_payment_interest,i);
+			cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) - cf.at(CF_debt_payment_principal,i);
+		}
+
+		// debt service reserve
+		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
+		{
+			cf.at(CF_reserve_debtservice,i-1) = dscr_reserve_months/12.0 * (cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i));
+			cf.at(CF_funding_debtservice,i-1) = cf.at(CF_reserve_debtservice,i-1);
+			if (i>1) cf.at(CF_funding_debtservice,i-1) -= cf.at(CF_reserve_debtservice,i-2);
+			if (i==term_tenor) cf.at(CF_disbursement_debtservice,i)=0-cf.at(CF_reserve_debtservice,i-1);
+		}
+
 		// total reserves
 		for (i=0; i<=nyears; i++)
 			cf.at(CF_reserve_total,i) = 
+				cf.at(CF_reserve_debtservice,i) +
 				cf.at(CF_reserve_om,i) +
 				cf.at(CF_reserve_equip1,i) +
 				cf.at(CF_reserve_equip2,i) +
@@ -1270,9 +1250,10 @@ public:
 			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
 		cost_financing = 
-			cost_dev_fee_percent * cost_prefinancing +
-			cost_equity_closing +
+			cost_debt_closing + 
+			cost_debt_fee_frac * size_of_debt +
 			cost_other_financing +
+			cf.at(CF_reserve_debtservice,0) +
 			constr_total_financing +
 			cf.at(CF_reserve_om,0);
 
@@ -1327,7 +1308,7 @@ public:
 		itc_sta_total = itc_sta_amount + itc_sta_per;
 		itc_total = itc_fed_total + itc_sta_total;
 
-// Depreciaiton
+// Depreciation
 // State depreciation
 		depr_stabas_macrs_5 = depr_alloc_macrs_5 - depr_stabas_macrs_5_frac * depr_sta_reduction;
 		depr_stabas_macrs_15 = depr_alloc_macrs_15 - depr_stabas_macrs_15_frac * depr_sta_reduction;
@@ -1381,7 +1362,7 @@ public:
 		depr_stabas_sl_15 -= depr_stabas_sl_15_bonus;
 		depr_stabas_sl_20 -= depr_stabas_sl_20_bonus;
 		depr_stabas_sl_39 -= depr_stabas_sl_39_bonus;
-
+		
 		depr_stabas_total = depr_stabas_macrs_5 + depr_stabas_macrs_15 + depr_stabas_sl_5 + depr_stabas_sl_15 + depr_stabas_sl_20 + depr_stabas_sl_39;
 
 		// Federal depreciation
@@ -1440,17 +1421,17 @@ public:
 		
 		depr_fedbas_total = depr_fedbas_macrs_5 + depr_fedbas_macrs_15 + depr_fedbas_sl_5 + depr_fedbas_sl_15 + depr_fedbas_sl_20 + depr_fedbas_sl_39;
 
-		purchase_of_property = -cost_installed + cf.at(CF_reserve_om,0);
-		issuance_of_equity = cost_installed - (ibi_total + cbi_total);	
+		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice,0) + cf.at(CF_reserve_om,0);
+		issuance_of_equity = cost_installed - (size_of_debt + ibi_total + cbi_total);	
 		
-		equity_tax_investor = tax_investor_equity_frac * issuance_of_equity;
-
-		sponsor_pretax_equity_investment = -issuance_of_equity * (1.0 - tax_investor_equity_frac);
+		equity_investment = -issuance_of_equity;
 
 		for (i=0; i<=nyears; i++)
 		{
-			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_reserve_interest,i);
+			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i);
+			cf.at(CF_project_dsra,i) = -cf.at(CF_funding_debtservice,i) - cf.at(CF_disbursement_debtservice,i);
 			cf.at(CF_project_ra,i) =
+				cf.at(CF_project_dsra,i) +
 				cf.at(CF_project_wcra,i) +
 				cf.at(CF_project_me1ra,i) +
 				cf.at(CF_project_me2ra,i) +
@@ -1465,8 +1446,8 @@ public:
 			cf.at(CF_project_investing_activities,i) = cf.at(CF_project_ra,i) + cf.at(CF_project_mecs,i);
 			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
 
-			cf.at(CF_project_financing_activities,i) = 0;
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + ibi_total + cbi_total;
+			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
+			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + ibi_total + cbi_total;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 
@@ -1481,6 +1462,10 @@ public:
 
 
 		cf.at(CF_project_return_aftertax,0) = cf.at(CF_project_return_aftertax_cash,0);
+		cf.at(CF_project_return_aftertax_irr,0) = irr(CF_project_return_aftertax_tax,0)*100.0;
+		cf.at(CF_project_return_aftertax_max_irr,0) = cf.at(CF_project_return_aftertax_irr,0);
+		cf.at(CF_project_return_aftertax_npv,0) = cf.at(CF_project_return_aftertax,0) ;
+
 
 		for (i=1;i<=nyears;i++)
 		{
@@ -1507,11 +1492,12 @@ public:
 			cf.at(CF_statax_income_prior_incentives,i)=
 				cf.at(CF_ebitda,i) + 
 				cf.at(CF_reserve_interest,i) -
+				cf.at(CF_debt_payment_interest,i) -
 				cf.at(CF_stadepr_total,i);
 
 
 			// pbi in ebitda - so remove if non-taxable
-			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + (cf.at(CF_pbi_statax_total,i) - cf.at(CF_pbi_total,i) );
+			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + cf.at(CF_pbi_statax_total,i);
 			if (i==1) cf.at(CF_statax_income_with_incentives,i) += cbi_statax_total + ibi_statax_total;
 			cf.at(CF_statax,i) = -state_tax_rate * cf.at(CF_statax_income_with_incentives,i); 
 
@@ -1536,6 +1522,7 @@ public:
 			cf.at(CF_fedtax_income_prior_incentives,i)=
 				cf.at(CF_ebitda,i) + 
 				cf.at(CF_reserve_interest,i) -
+				cf.at(CF_debt_payment_interest,i) -
 				cf.at(CF_feddepr_total,i) +
 				cf.at(CF_statax,i) +
 				cf.at(CF_ptc_sta,i);
@@ -1543,7 +1530,7 @@ public:
 
 
 			// pbi in ebitda - so remove if non-taxable
-			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + (cf.at(CF_pbi_fedtax_total,i) - cf.at(CF_pbi_total,i) );
+			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_pbi_fedtax_total,i);
 			if (i==1) cf.at(CF_fedtax_income_with_incentives,i) += cbi_fedtax_total + ibi_fedtax_total;
 			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i); 
 
@@ -1554,104 +1541,27 @@ public:
 			if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
 
 			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i,0.05)*100.0;
+			cf.at(CF_project_return_aftertax_max_irr,i) = max(cf.at(CF_project_return_aftertax_max_irr,i-1),cf.at(CF_project_return_aftertax_irr,i));
 			cf.at(CF_project_return_aftertax_npv,i) = npv(CF_project_return_aftertax,i,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0) ;
+
+			if (flip_year <=0) 
+			{
+				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_project_return_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
+			}
+
 
 		}
 		cf.at(CF_project_return_aftertax_npv,0) = cf.at(CF_project_return_aftertax,0) ;
 
-// partner returns
-
-		cf.at(CF_tax_investor_aftertax_cash,0) = -equity_tax_investor;
-		cf.at(CF_tax_investor_aftertax_itc,0) = 0;
-		cf.at(CF_tax_investor_aftertax_ptc,0) = 0;
-		cf.at(CF_tax_investor_aftertax_tax,0) = 0;
-		cf.at(CF_tax_investor_aftertax,0) = 
-			cf.at(CF_tax_investor_aftertax_cash,0) +
-			cf.at(CF_tax_investor_aftertax_itc,0) +
-			cf.at(CF_tax_investor_aftertax_ptc,0) +
-			cf.at(CF_tax_investor_aftertax_tax,0);
-
-		cf.at(CF_tax_investor_aftertax_irr,0) = irr(CF_tax_investor_aftertax,0)*100.0;
-		cf.at(CF_tax_investor_aftertax_max_irr,0) = cf.at(CF_tax_investor_aftertax_irr,0);
-		cf.at(CF_tax_investor_aftertax_npv,0) = cf.at(CF_tax_investor_aftertax,0) ;
-
-		cf.at(CF_tax_investor_pretax,0) = cf.at(CF_tax_investor_aftertax_cash,0);
-		cf.at(CF_tax_investor_pretax_irr,0) = irr(CF_tax_investor_pretax,0)*100.0;
-		cf.at(CF_tax_investor_pretax_npv,0) = cf.at(CF_tax_investor_pretax,0) ;
-
-
-		cf.at(CF_sponsor_aftertax_cash,0) = sponsor_pretax_equity_investment + sponsor_pretax_development_fee;
-		cf.at(CF_sponsor_aftertax,0) = cf.at(CF_sponsor_aftertax_cash,0);
-		cf.at(CF_sponsor_pretax_irr,0) = irr(CF_sponsor_aftertax_tax,0)*100.0;
-		cf.at(CF_sponsor_pretax_npv,0) = cf.at(CF_sponsor_aftertax,0) ;
-		cf.at(CF_sponsor_aftertax_irr,0) = irr(CF_sponsor_aftertax_tax,0)*100.0;
-		cf.at(CF_sponsor_aftertax_npv,0) = cf.at(CF_sponsor_aftertax,0) ;
-
-		 cf.at(CF_sponsor_capital_recovery_balance,0) = -sponsor_pretax_equity_investment;
-
-		for (i=1;i<=nyears;i++)
-		{
-			cf.at(CF_sponsor_capital_recovery_cash,i) = -( (cf.at(CF_project_return_pretax,i)<0 ) ? 0 : min(cf.at(CF_sponsor_capital_recovery_balance,i-1),cf.at(CF_project_return_pretax,i)) ) * 
-															((sponsor_cap_recovery_mode==0 ) ? ( ( i < sponsor_cap_recovery_year) ? 1:0): 1 );
-			cf.at(CF_sponsor_capital_recovery_balance,i) = cf.at(CF_sponsor_capital_recovery_balance,i-1) + cf.at(CF_sponsor_capital_recovery_cash,i);
-
-			cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
-						tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * ( cf.at(CF_project_return_aftertax_cash,i) + cf.at(CF_sponsor_capital_recovery_cash,i) );
-			cf.at(CF_tax_investor_aftertax_ptc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
-						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i));
-			if (i==1)
-				cf.at(CF_tax_investor_aftertax_itc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ?
-						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * itc_total;
-			cf.at(CF_tax_investor_aftertax_tax,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
-						tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_statax,i) + cf.at(CF_fedtax,i));
-			cf.at(CF_tax_investor_aftertax,i) = 			
-				cf.at(CF_tax_investor_aftertax_cash,i) +
-				cf.at(CF_tax_investor_aftertax_itc,i) +
-				cf.at(CF_tax_investor_aftertax_ptc,i) +
-				cf.at(CF_tax_investor_aftertax_tax,i);
-			cf.at(CF_tax_investor_aftertax_irr,i) = irr(CF_tax_investor_aftertax,i)*100.0;
-			cf.at(CF_tax_investor_aftertax_max_irr,i) = max(cf.at(CF_tax_investor_aftertax_max_irr,i-1),cf.at(CF_tax_investor_aftertax_irr,i));
-			cf.at(CF_tax_investor_aftertax_npv,i) = npv(CF_tax_investor_aftertax,i,nom_discount_rate) +  cf.at(CF_tax_investor_aftertax,0) ;
-
-			cf.at(CF_tax_investor_pretax,i) = cf.at(CF_tax_investor_aftertax_cash,i);
-			cf.at(CF_tax_investor_pretax_irr,i) = irr(CF_tax_investor_pretax,i)*100.0;
-			cf.at(CF_tax_investor_pretax_npv,i) = npv(CF_tax_investor_pretax,i,nom_discount_rate) +  cf.at(CF_tax_investor_pretax,0) ;
-
-			if (flip_year <=0) 
-			{
-				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
-			}
-
-
-			cf.at(CF_sponsor_pretax_cash_during_recovery,i) = -cf.at(CF_sponsor_capital_recovery_cash,i);
-			cf.at(CF_sponsor_pretax_cash_post_recovery,i) = cf.at(CF_project_return_aftertax_cash,i) + cf.at(CF_sponsor_capital_recovery_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
-			cf.at(CF_sponsor_aftertax_cash,i) = cf.at(CF_project_return_aftertax_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
-			cf.at(CF_sponsor_pretax,i) = cf.at(CF_sponsor_aftertax_cash,i);
-			cf.at(CF_sponsor_aftertax_ptc,i) = (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i)) - cf.at(CF_tax_investor_aftertax_ptc,i);
-			if (i==1) cf.at(CF_sponsor_aftertax_itc,i) = itc_total - cf.at(CF_tax_investor_aftertax_itc,i);
-			cf.at(CF_sponsor_aftertax_tax,i) = (cf.at(CF_statax,i) + cf.at(CF_fedtax,i)) - cf.at(CF_tax_investor_aftertax_tax,i);
-			cf.at(CF_sponsor_aftertax,i) = 			
-				cf.at(CF_sponsor_aftertax_cash,i) +
-				cf.at(CF_sponsor_aftertax_itc,i) +
-				cf.at(CF_sponsor_aftertax_ptc,i) +
-				cf.at(CF_sponsor_aftertax_tax,i);
-			// year 1 development fee tax
-			if (i==1) cf.at(CF_sponsor_aftertax,i) -= sponsor_pretax_development_fee * (state_tax_rate + federal_tax_rate * (1.0 - state_tax_rate));
-			cf.at(CF_sponsor_pretax_irr,i) = irr(CF_sponsor_pretax,i)*100.0;
-			cf.at(CF_sponsor_pretax_npv,i) = npv(CF_sponsor_pretax,i,nom_discount_rate) +  cf.at(CF_sponsor_pretax,0) ;
-			cf.at(CF_sponsor_aftertax_irr,i) = irr(CF_sponsor_aftertax,i)*100.0;
-			cf.at(CF_sponsor_aftertax_npv,i) = npv(CF_sponsor_aftertax,i,nom_discount_rate) +  cf.at(CF_sponsor_aftertax,0) ;
-
-		}
 
 		if (ppa_mode == 1)
 		{
-			double residual = cf.at(CF_tax_investor_aftertax_irr, flip_target_year) - flip_target_percent;
+			double residual = cf.at(CF_project_return_aftertax_irr, flip_target_year) - flip_target_percent;
 			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(ppa_min-ppa_max) < ppa_soln_tolerance) );
 			if (!solved)
 			{
-				double itnpv = cf.at(CF_tax_investor_aftertax_npv, flip_target_year);
-				if (cf.at(CF_tax_investor_aftertax_irr, flip_target_year) > 0) // use residual
+				double itnpv = cf.at(CF_project_return_aftertax_npv, flip_target_year);
+				if (cf.at(CF_project_return_aftertax_irr, flip_target_year) > 0) // use residual
 				{
 					if (residual < 0)
 						ppa_min = ppa;
@@ -1682,7 +1592,7 @@ public:
 	assign("sv_flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 	assign("sv_flip_actual_year", var_data((ssc_number_t) flip_year));
 	double actual_flip_irr = 0;
-	if (flip_year > -1) actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
+	if (flip_year > -1) actual_flip_irr = cf.at(CF_project_return_aftertax_irr, flip_target_year);
 	assign("sv_flip_actual_irr", var_data((ssc_number_t) actual_flip_irr ));
 
 	// LCOE
@@ -1750,11 +1660,6 @@ public:
 		assign( "itc_fed_fixed_total", var_data((ssc_number_t) itc_fed_amount ) );
 	
 	
-	    assign("sv_sponsor_pretax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
-		assign("sv_sponsor_pretax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
-		assign("sv_sponsor_aftertax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
-		assign("sv_sponsor_aftertax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
-
 		assign( "depr_alloc_macrs_5", var_data((ssc_number_t) depr_alloc_macrs_5 ) );
 		assign( "depr_alloc_macrs_15", var_data((ssc_number_t) depr_alloc_macrs_15 ) );
 		assign( "depr_alloc_sl_5", var_data((ssc_number_t) depr_alloc_sl_5 ) );
@@ -1801,14 +1706,13 @@ public:
 
 		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
 		assign("purchase_of_property", var_data((ssc_number_t) purchase_of_property));
+		assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
+		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
+		assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
 		
 		assign("ppa_price", var_data((ssc_number_t) ppa));
 		assign("target_return_flip_year", var_data((ssc_number_t) flip_year));
 
-		assign("sv_sponsor_pretax_irr", var_data((ssc_number_t)  (irr(CF_sponsor_pretax,nyears)*100.0)));
-		assign("sv_sponsor_pretax_npv", var_data((ssc_number_t)  (npv(CF_sponsor_pretax,nyears,nom_discount_rate) +  cf.at(CF_sponsor_pretax,0)) ));
-		assign("sv_sponsor_aftertax_irr", var_data((ssc_number_t)  (irr(CF_sponsor_aftertax,nyears)*100.0)));
-		assign("sv_sponsor_aftertax_npv", var_data((ssc_number_t)  (npv(CF_sponsor_aftertax,nyears,nom_discount_rate) +  cf.at(CF_sponsor_aftertax,0)) ));
 
 		assign("ibi_total_fed", var_data((ssc_number_t) (ibi_fed_amount+ibi_fed_per)));
 		assign("ibi_total_sta", var_data((ssc_number_t) (ibi_sta_amount+ibi_sta_per)));
@@ -1828,62 +1732,31 @@ public:
 		assign("itc_total_sta", var_data((ssc_number_t) itc_sta_total));
 		assign("itc_total", var_data((ssc_number_t) itc_total));
 
-	assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
-	double kWhperkW = 0.0;
-	if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
-	assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
-	assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
+		assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+		double kWhperkW = 0.0;
+		if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
+		assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
+		assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
 
-	assign("sv_tax_investor_aftertax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_irr, nyears)));
-	assign("sv_tax_investor_aftertax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_npv, nyears)));
-	assign("sv_tax_investor_pretax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_pretax_irr, nyears)));
-	assign("sv_tax_investor_pretax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_pretax_npv, nyears)));
-	assign("sv_debt_fraction", var_data((ssc_number_t)  0.0));
-	assign("sv_lcoe_nom", var_data((ssc_number_t) lcoe_nom));
-	assign("sv_lcoe_real", var_data((ssc_number_t) lcoe_real));
-	assign("ppa_price", var_data((ssc_number_t) ppa));
-	assign("sv_ppa_escalation", var_data((ssc_number_t) (ppa_escalation *100.0) ));
-	assign("sv_first_year_ppa", var_data((ssc_number_t) ppa));
+		double debt_fraction =0.0;
+		if (cost_installed > 0) debt_fraction = 100.0 * (size_of_debt / cost_installed);
+		assign("sv_debt_fraction", var_data((ssc_number_t) debt_fraction ));
+		assign("sv_lcoe_nom", var_data((ssc_number_t) lcoe_nom));
+		assign("sv_lcoe_real", var_data((ssc_number_t) lcoe_real));
+		assign("ppa_price", var_data((ssc_number_t) ppa));
+		assign("sv_ppa_escalation", var_data((ssc_number_t) (ppa_escalation *100.0) ));
+		assign("sv_first_year_ppa", var_data((ssc_number_t) ppa));
 
 
 		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
-		assign("purchase_of_property", var_data((ssc_number_t) purchase_of_property));
 		
 
-		assign("sv_sponsor_pretax_irr", var_data((ssc_number_t)  (irr(CF_sponsor_pretax,nyears)*100.0)));
-		assign("sv_sponsor_pretax_npv", var_data((ssc_number_t)  (npv(CF_sponsor_pretax,nyears,nom_discount_rate) +  cf.at(CF_sponsor_pretax,0)) ));
-		assign("sv_sponsor_aftertax_irr", var_data((ssc_number_t)  (irr(CF_sponsor_aftertax,nyears)*100.0)));
-		assign("sv_sponsor_aftertax_npv", var_data((ssc_number_t)  (npv(CF_sponsor_aftertax,nyears,nom_discount_rate) +  cf.at(CF_sponsor_aftertax,0)) ));
+		assign("sv_project_return_aftertax_irr", var_data((ssc_number_t)  (irr(CF_project_return_aftertax,nyears)*100.0)));
+		assign("sv_project_return_aftertax_npv", var_data((ssc_number_t)  (npv(CF_project_return_aftertax,nyears,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0)) ));
 
 
 		// cash flow line items
-		save_cf( CF_sponsor_capital_recovery_balance, nyears, "cf_sponsor_capital_recovery_balance" );
-		save_cf( CF_sponsor_capital_recovery_cash, nyears, "cf_sponsor_capital_recovery_cash" );
-		save_cf( CF_sponsor_pretax_cash_post_recovery, nyears, "cf_sponsor_pretax_cash_post_recovery" );
-		save_cf( CF_sponsor_pretax_cash_during_recovery, nyears, "cf_sponsor_pretax_cash_during_recovery" );
 
-		save_cf( CF_sponsor_pretax, nyears, "cf_sponsor_pretax" );
-		save_cf( CF_sponsor_pretax_irr, nyears, "cf_sponsor_pretax_irr" );
-		save_cf( CF_sponsor_pretax_npv, nyears, "cf_sponsor_pretax_npv" );
-		save_cf( CF_sponsor_aftertax_cash, nyears, "cf_sponsor_aftertax_cash" );
-		save_cf( CF_sponsor_aftertax, nyears, "cf_sponsor_aftertax" );
-		save_cf( CF_sponsor_aftertax_itc, nyears, "cf_sponsor_aftertax_itc" );
-		save_cf( CF_sponsor_aftertax_ptc, nyears, "cf_sponsor_aftertax_ptc" );
-		save_cf( CF_sponsor_aftertax_tax, nyears, "cf_sponsor_aftertax_tax" );
-		save_cf( CF_sponsor_aftertax_irr, nyears, "cf_sponsor_aftertax_irr" );
-		save_cf( CF_sponsor_aftertax_npv, nyears, "cf_sponsor_aftertax_npv" );
-
-		save_cf( CF_tax_investor_pretax, nyears, "cf_tax_investor_pretax" );
-		save_cf( CF_tax_investor_pretax_irr, nyears, "cf_tax_investor_pretax_irr" );
-		save_cf( CF_tax_investor_pretax_npv, nyears, "cf_tax_investor_pretax_npv" );
-		save_cf( CF_tax_investor_aftertax_cash, nyears, "cf_tax_investor_aftertax_cash" );
-		save_cf( CF_tax_investor_aftertax_itc, nyears, "cf_tax_investor_aftertax_itc" );
-		save_cf( CF_tax_investor_aftertax_ptc, nyears, "cf_tax_investor_aftertax_ptc" );
-		save_cf( CF_tax_investor_aftertax_tax, nyears, "cf_tax_investor_aftertax_tax" );
-		save_cf( CF_tax_investor_aftertax, nyears, "cf_tax_investor_aftertax" );
-		save_cf( CF_tax_investor_aftertax_irr, nyears, "cf_tax_investor_aftertax_irr" );
-		save_cf( CF_tax_investor_aftertax_npv, nyears, "cf_tax_investor_aftertax_npv" );
-		save_cf( CF_tax_investor_aftertax_max_irr, nyears, "cf_tax_investor_aftertax_max_irr" );
 		
 		save_cf( CF_statax_taxable_incentives, nyears, "cf_statax_taxable_incentives" );
 		save_cf( CF_statax_income_with_incentives, nyears, "cf_statax_income_with_incentives" );
@@ -1930,6 +1803,7 @@ public:
 		save_cf( CF_project_return_aftertax_cash, nyears, "cf_project_return_aftertax_cash" );
 		save_cf( CF_project_return_aftertax, nyears, "cf_project_return_aftertax" );
 		save_cf( CF_project_return_aftertax_irr, nyears, "cf_project_return_aftertax_irr" );
+		save_cf( CF_project_return_aftertax_max_irr, nyears, "cf_project_return_aftertax_max_irr" );
 		save_cf( CF_project_return_aftertax_npv, nyears, "cf_project_return_aftertax_npv" );
 		save_cf( CF_project_return_pretax, nyears, "cf_project_return_pretax" );
 		save_cf( CF_project_return_pretax_irr, nyears, "cf_project_return_pretax_irr" );
@@ -1938,6 +1812,7 @@ public:
 		save_cf( CF_project_financing_activities, nyears, "cf_project_financing_activities" );
 		save_cf( CF_pretax_cashflow, nyears, "cf_pretax_cashflow" );
 
+		save_cf( CF_project_dsra, nyears, "cf_project_dsra" );
 		save_cf( CF_project_wcra, nyears, "cf_project_wcra" );
 		save_cf( CF_project_me1ra, nyears, "cf_project_me1ra" );
 		save_cf( CF_project_me2ra, nyears, "cf_project_me2ra" );
@@ -1950,8 +1825,15 @@ public:
 		save_cf( CF_project_investing_activities, nyears, "cf_project_investing_activities" );
 
 		save_cf( CF_pv_interest_factor, nyears, "cf_pv_interest_factor" );
+		save_cf( CF_cash_for_ds, nyears, "cf_cash_for_ds" );
+		save_cf( CF_pv_cash_for_ds, nyears, "cf_pv_cash_for_ds" );
+		save_cf( CF_debt_size, nyears, "cf_debt_size" );			
 		save_cf( CF_project_operating_activities, nyears, "cf_project_operating_activities" );
 
+		save_cf( CF_debt_payment_total, nyears, "cf_debt_payment_total" );
+		save_cf( CF_debt_payment_interest, nyears, "cf_debt_payment_interest" );
+		save_cf( CF_debt_payment_principal, nyears, "cf_debt_payment_principal" );
+		save_cf( CF_debt_balance, nyears, "cf_debt_balance" );
 
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
 		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
@@ -1967,16 +1849,19 @@ public:
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf( CF_total_revenue, nyears, "cf_total_revenue" );
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
+		save_cf( CF_reserve_debtservice, nyears, "cf_reserve_debtservice" );
 		save_cf( CF_reserve_om, nyears, "cf_reserve_om" );
 		save_cf( CF_reserve_equip1, nyears, "cf_reserve_equip1" );
 		save_cf( CF_reserve_equip2, nyears, "cf_reserve_equip2" );
 		save_cf( CF_reserve_equip3, nyears, "cf_reserve_equip3" );
 
+		save_cf( CF_funding_debtservice, nyears, "cf_funding_debtservice" );
 		save_cf( CF_funding_om, nyears, "cf_funding_om" );
 		save_cf( CF_funding_equip1, nyears, "cf_funding_equip1" );
 		save_cf( CF_funding_equip2, nyears, "cf_funding_equip2" );
 		save_cf( CF_funding_equip3, nyears, "cf_funding_equip3" );
 
+		save_cf( CF_disbursement_debtservice, nyears, "cf_disbursement_debtservice" );
 		save_cf( CF_disbursement_om, nyears, "cf_disbursement_om" );
 		save_cf( CF_disbursement_equip1, nyears, "cf_disbursement_equip1" );
 		save_cf( CF_disbursement_equip2, nyears, "cf_disbursement_equip2" );
@@ -2277,7 +2162,7 @@ public:
 		for (int i=1;i<=(int)len && i <= nyears;i++)
 			cf.at(cf_line, i) = scale*p[i-1];
 	}
-
+	
 	void single_or_schedule_check_max( int cf_line, int nyears, double scale, const std::string &name, const std::string &maxvar )
 	{
 		double max = as_double(maxvar);
@@ -2288,7 +2173,7 @@ public:
 	}
 
 	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
-	{
+	{		
 		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
 
 		double rr = 1/(1+rate);
@@ -2347,11 +2232,11 @@ public:
 		double calculated_irr=0;
 
 
-		if (count < 1)
+		if (count < 1) 
 			return calculated_irr;
 
 		// initial guess from http://zainco.blogspot.com/2008/08/internal-rate-of-return-using-newton.html
-		if (initial_guess < 0)
+		if (initial_guess < 0) 
 		{
 			if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
 			if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
@@ -2379,7 +2264,7 @@ public:
 		}
 		// TODO - check cases for which bounded irr -50% to 200% are all greater than zero or less than zero - no irr
 		// should be NA with explanation
-		if (number_of_iterations >= max_iterations) calculated_irr = 0;
+		if (number_of_iterations >= max_iterations) calculated_irr = 0; 
 		return calculated_irr;
 	}
 
@@ -2399,6 +2284,6 @@ public:
 
 
 
-DEFINE_MODULE_ENTRY( equpartflip, "DHF All Equity Partnership Flip Financial Model_", 1 );
+DEFINE_MODULE_ENTRY( singleowner, "DHF Single Owner Financial Model_", 1 );
 
 
