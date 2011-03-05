@@ -48,9 +48,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"cents/kWh",	 "",			  "DHF",			 "?=10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
 /* DHF construction period */
-	{ SSC_INPUT,        SSC_NUMBER,     "constr_months",            "Construction period",				"months", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "constr_int_rate",          "Construction interest rate",		"%",	 "",					  "DHF",             "?=4",                     "MIN=0,MAX=100",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "constr_upfront_percent",  "Construction up-front fee",    	"%",	 "",					  "DHF",             "?=1",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 
 /* DHF Capital Cost */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "DHF",             "?=3",					    "MIN=0,MAX=100",      			        "" },
@@ -206,11 +204,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 /* State taxes */
 
 	/* intermediate outputs for validation */
-
-	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_interest",			"Interest during construction",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_upfront_fee",		"Construction up-front fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-
 
 /* model outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "DHF",      "*",                       "INTEGER",                                  "" },
@@ -644,13 +637,7 @@ public:
 		double sponsor_operating_margin_escalation = as_double("sponsor_operating_margin_escalation")*0.01;
 		double tax_investor_required_lease_reserve_frac = as_integer("tax_investor_required_lease_reserve") /12.0;
 
-		int constr_months = as_integer("constr_months");
-		double constr_int_rate = as_double("constr_int_rate")*0.01;
-		double constr_upfront_percent = as_double("constr_upfront_percent")*0.01;
-
-		double constr_interest = cost_prefinancing * (constr_months/2.0) * (constr_int_rate/12.0);
-		double constr_upfront_fee = cost_prefinancing * constr_upfront_percent;
-		double constr_total_financing = constr_upfront_fee + constr_interest;
+		double constr_total_financing = as_double("constr_total_financing");
 
 		int ppa_mode = as_integer("ppa_soln_mode");
 
@@ -1837,9 +1824,6 @@ public:
 	assign( "depr_alloc_none", var_data((ssc_number_t) depr_alloc_none ) );
 	assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
 	// Project cash flow
-	assign("constr_interest", var_data((ssc_number_t) constr_interest));
-	assign("constr_upfront_fee", var_data((ssc_number_t) constr_upfront_fee));
-	assign("constr_total_financing", var_data((ssc_number_t) constr_total_financing));
 
  	assign( "itc_sta_qual_macrs_5", var_data((ssc_number_t) itc_sta_qual_macrs_5 ) );
 	assign( "itc_sta_qual_macrs_15", var_data((ssc_number_t) itc_sta_qual_macrs_15 ) );
