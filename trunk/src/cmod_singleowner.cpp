@@ -45,10 +45,10 @@ static var_info _cm_vtab_singleowner[] = {
 
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"cents/kWh",	 "",			  "DHF",			 "?=10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
+
 /* DHF construction period */
-	{ SSC_INPUT,        SSC_NUMBER,     "constr_months",            "Construction period",				"months", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "constr_int_rate",          "Construction interest rate",		"%",	 "",					  "DHF",             "?=4",                     "MIN=0,MAX=100",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "constr_upfront_percent",  "Construction up-front fee",    	"%",	 "",					  "DHF",             "?=1",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+
 /* DHF term financing */
 	{ SSC_INPUT,        SSC_NUMBER,     "term_tenor",               "Term financing tenor",				"years", "",				      "DHF",             "?=10",					"INTEGER,MIN=0",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "term_int_rate",            "Term financing interest rate",		"%",	 "",					  "DHF",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
@@ -207,11 +207,6 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "pv_cafds", "Present value of cash avaialble for debt service","$", "",				  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Size of debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-
-	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_interest",			"Interest during construction",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_upfront_fee",		"Construction up-front fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-
 
 /* model outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "DHF",      "*",                       "INTEGER",                                  "" },
@@ -592,13 +587,7 @@ public:
 		double cost_debt_fee_frac = as_double("cost_debt_fee")*0.01;
 		double cost_other_financing = as_double("cost_other_financing");
 
-		int constr_months = as_integer("constr_months");
-		double constr_int_rate = as_double("constr_int_rate")*0.01;
-		double constr_upfront_percent = as_double("constr_upfront_percent")*0.01;
-
-		double constr_interest = cost_prefinancing * (constr_months/2.0) * (constr_int_rate/12.0);
-		double constr_upfront_fee = cost_prefinancing * constr_upfront_percent;
-		double constr_total_financing = constr_upfront_fee + constr_interest;
+		double constr_total_financing = as_double("constr_total_financing");
 
 		int ppa_mode = as_integer("ppa_soln_mode");
 
@@ -1671,9 +1660,6 @@ public:
 		assign( "depr_alloc_none", var_data((ssc_number_t) depr_alloc_none ) );
 		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
 		// Project cash flow
-		assign("constr_interest", var_data((ssc_number_t) constr_interest));
-		assign("constr_upfront_fee", var_data((ssc_number_t) constr_upfront_fee));
-		assign("constr_total_financing", var_data((ssc_number_t) constr_total_financing));
 
  		assign( "itc_sta_qual_macrs_5", var_data((ssc_number_t) itc_sta_qual_macrs_5 ) );
 		assign( "itc_sta_qual_macrs_15", var_data((ssc_number_t) itc_sta_qual_macrs_15 ) );
