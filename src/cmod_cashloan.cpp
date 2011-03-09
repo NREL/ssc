@@ -410,7 +410,8 @@ public:
 				+ cf.at(CF_insurance_expense,i);
 
 			if (i == nyears) /* salvage value handled as negative operating expense in last year */
-				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
+				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac; // updated to be consistent with DHF models - not inflated
+//				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
 			
 			if (is_commercial)
 				cf.at(CF_deductible_expenses,i) = -cf.at(CF_operating_expenses,i);  // commercial
