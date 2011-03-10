@@ -283,8 +283,8 @@ public:
 		compute_production_incentive( CF_pbi_oth, nyears, "pbi_oth_amount", "pbi_oth_term", "pbi_oth_escal" );
 
 		// precompute ptc
-		compute_production_incentive( CF_ptc_sta, nyears, "ptc_sta_amount", "ptc_sta_term", "ptc_sta_escal" );
-		compute_production_incentive( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
+		compute_production_incentive_IRS_2010_37( CF_ptc_sta, nyears, "ptc_sta_amount", "ptc_sta_term", "ptc_sta_escal" );
+		compute_production_incentive_IRS_2010_37( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
 	
 
 		double federal_depr_basis = total_cost
@@ -699,6 +699,27 @@ public:
 				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
 		}
 	}
+
+		void compute_production_incentive_IRS_2010_37( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
+	{
+		// rounding based on IRS document and emails from John and Matt from DHF Financials 2/24/2011 and DHF model v4.4
+		size_t len = 0;
+		ssc_number_t *parr = as_array(s_val, &len);
+		int term = as_integer(s_term);
+		double escal = as_double(s_escal)/100.0;
+
+		if (len == 1)
+		{
+			for (int i=1;i<=nyears;i++)
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_dhf(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+		}
+		else
+		{
+			for (int i=1;i<=nyears && i <= (int)len;i++)
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+		}
+	}
+
 
 	void single_or_schedule( int cf_line, int nyears, double scale, const std::string &name )
 	{
