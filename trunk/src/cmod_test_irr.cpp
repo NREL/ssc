@@ -15,7 +15,8 @@ static var_info _cm_vtab_test_irr[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "cf_test",		"cash flow input values over which to test irr",	"$",   "",  "DHF",             "*",						   "",                              "" },
 
 
-	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_irr",            "calculated irr",                     "kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_test_scaled",            "scaled cash flow input",                     "",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_irr",            "calculated irr",                     "%",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 
 
 var_info_invalid };
@@ -28,6 +29,7 @@ extern var_info
 
 enum {
 	CF_test,
+	CF_test_scaled,
 	CF_irr,
 
 	CF_max };
@@ -68,15 +70,17 @@ public:
 			i++;
 		}
 
+		scale(CF_test,CF_test_scaled,nyears);
+
 		for (i=1;i<=nyears;i++) 
 		{
-			cf.at(CF_irr,i) = irr(CF_test,i,initial_guess,tolerance,max_iterations)*100.0;
+			cf.at(CF_irr,i) = irr(CF_test_scaled,i,initial_guess,tolerance,max_iterations)*100.0;
 		}
 
-/***************** end iterative solution *********************************************************************/
 
 	    assign("cf_length", var_data((ssc_number_t) cf_length ));
 		save_cf( CF_irr, nyears, "cf_irr" );
+		save_cf( CF_test_scaled, nyears, "cf_test_scaled" );
 	}
 
 
@@ -147,6 +151,7 @@ public:
 			if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
 		}
 
+		// only possible for first value negative
 		if ( (cf.at(cf_line,0) <= 0))
 		{
 			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
@@ -182,6 +187,19 @@ public:
 		return calculated_irr;
 	}
 
+
+	void scale( int cf_unscaled, int cf_scaled, int count)
+	{
+		// scale to max value for better irr convergence
+		if (count<1) return;
+		int i=0;
+		double max=fabs(cf.at(cf_unscaled,0));
+		for (i=0;i<=count;i++) 
+			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
+		if (max>0) 
+			for (i=0;i<=count;i++) 
+				 cf.at(cf_scaled,i)=cf.at(cf_unscaled,i)/max;
+	}
 
 	double min( double a, double b )
 	{
