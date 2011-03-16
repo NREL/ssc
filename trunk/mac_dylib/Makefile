@@ -7,6 +7,7 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
 
 OBJECTS = \
+	cmod_test_irr.o \
 	cmod_trntower.o \
 	cmod_trnbase.o \
 	cmod_trndish.o \
