@@ -29,7 +29,6 @@ extern var_info
 
 enum {
 	CF_test,
-	//CF_test_scaled,
 	CF_irr,
 
 	CF_max };
@@ -39,7 +38,7 @@ enum {
 class cm_test_irr : public compute_module
 {
 private:
-	util::matrix_t<ssc_number_t> cf;
+	util::matrix_t<double> cf;
 
 public:
 	cm_test_irr()
@@ -54,8 +53,8 @@ public:
 		int nyears = as_integer("analysis_years");
 		int cf_length = nyears+1;
 		int max_iterations = as_integer("max_iterations");
-		ssc_number_t tolerance = as_number("tolerance");
-		ssc_number_t initial_guess = as_number("initial_guess");
+		double tolerance = as_number("tolerance");
+		double initial_guess = as_number("initial_guess");
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
 		int i;
 		// initialize energy and revenue
@@ -70,8 +69,6 @@ public:
 			i++;
 		}
 
-		//scale(CF_test,CF_test_scaled,nyears);
-
 		for (i=1;i<=nyears;i++) 
 		{
 			cf.at(CF_irr,i) = irr(CF_test,i,initial_guess,tolerance,max_iterations)*100;
@@ -80,7 +77,6 @@ public:
 
 	    assign("cf_length", var_data((ssc_number_t) cf_length ));
 		save_cf( CF_irr, nyears, "cf_irr" );
-		//save_cf( CF_test_scaled, nyears, "cf_test_scaled" );
 	}
 
 
@@ -99,14 +95,14 @@ public:
 		return estimated_return_rate != -1 && (estimated_return_rate < INT_MAX) && (estimated_return_rate > INT_MIN);
 	}
 
-	ssc_number_t irr_poly_sum(ssc_number_t estimated_return_rate, int cf_line, int count)
+	double irr_poly_sum(double estimated_return_rate, int cf_line, int count)
 	{
-		ssc_number_t sum_of_polynomial = 0;
+		double sum_of_polynomial = 0;
 		if (is_valid_iter_bound(estimated_return_rate))
 		{
 			for (int j = 0; j <= count ; j++)
 			{
-				ssc_number_t val = (pow((1 + estimated_return_rate), j));
+				double val = (pow((1 + estimated_return_rate), j));
 				if (val != 0.0)
 					sum_of_polynomial += cf.at(cf_line,j)/val;
 				else
@@ -116,9 +112,9 @@ public:
 		return sum_of_polynomial;
 	}
 
-	ssc_number_t irr_derivative_sum(ssc_number_t estimated_return_rate,int cf_line, int count)
+	double irr_derivative_sum(double estimated_return_rate,int cf_line, int count)
 	{
-		ssc_number_t sum_of_derivative = 0;
+		double sum_of_derivative = 0;
 		if (is_valid_iter_bound(estimated_return_rate))
 			for (int i = 1; i <= count ; i++)
 			{
@@ -127,45 +123,47 @@ public:
 		return sum_of_derivative*-1;
 	}
 
-	ssc_number_t irr_scale_factor( int cf_unscaled, int count)
+	double irr_scale_factor( int cf_unscaled, int count)
 	{
 		// scale to max value for better irr convergence
 		if (count<1) return 1.0;
 		int i=0;
-		ssc_number_t max=fabs(cf.at(cf_unscaled,0));
+		double max=fabs(cf.at(cf_unscaled,0));
 		for (i=0;i<=count;i++) 
 			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
 		return (max>0 ? max:1);
 	}
 
-	ssc_number_t irr( int cf_line, int count, ssc_number_t initial_guess=-1, ssc_number_t tolerance=1e-6, int max_iterations=200 )
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-5, int max_iterations=200 )
 	{
-		// from Excel
-//		int max_iterations=20;
-//		double tolerance =1e-5;
-//		initial_guess = 0.1;
-		// from various cases
-//		int max_iterations=200;
-//		double tolerance =1e-6;
-
 		int number_of_iterations=0;
-		ssc_number_t calculated_irr=0;
+		double calculated_irr=0;
 
 
 		if (count < 1)
 			return calculated_irr;
 
-		// initial guess from http://zainco.blogspot.com/2008/08/internal-rate-of-return-using-newton.html
-		if (initial_guess < 0)
-		{
-			if (cf.at(cf_line,0) !=0) initial_guess = -(1.0f + cf.at(cf_line,1)/cf.at(cf_line,0));
-			if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1f;
-		}
-
 		// only possible for first value negative
 		if ( (cf.at(cf_line,0) <= 0))
 		{
-			ssc_number_t deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+			// initial guess from http://zainco.blogspot.com/2008/08/internal-rate-of-return-using-newton.html
+			if ((initial_guess < -1) && (count > 1))// second order
+			{
+				if (cf.at(cf_line,0) !=0) 
+				{
+					double b = 2.0+ cf.at(cf_line,1)/cf.at(cf_line,0);
+					double c = 1.0+cf.at(cf_line,1)/cf.at(cf_line,0)+cf.at(cf_line,2)/cf.at(cf_line,0);
+					initial_guess = -0.5*b - 0.5*sqrt(b*b-4.0*c);
+					if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = -0.5*b + 0.5*sqrt(b*b-4.0*c);
+				}
+			}
+			else if (initial_guess < 0) // first order
+			{
+				if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
+			}
+			if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
+
+			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
 			if (deriv_sum != 0.0)
 				calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
 			else
@@ -173,11 +171,10 @@ public:
 
 			number_of_iterations++;
 
-			ssc_number_t scale_factor = irr_scale_factor(cf_line,count);
+			double scale_factor = irr_scale_factor(cf_line,count);
 
-			ssc_number_t residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+			double residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 
-//			while (!(fabs(irr_poly_sum(calculated_irr,cf_line,count)) <= tolerance) && (number_of_iterations < max_iterations))
 			while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
 			{
 				deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
@@ -186,41 +183,28 @@ public:
 				else
 					break;
 
-				std::stringstream outm;
-				outm << "iteration=" << number_of_iterations << ", residual="  << residual << ", deriv_sum=" << deriv_sum  << ", calculated_irr=" << calculated_irr ;
-				log( outm.str() );
+			//	std::stringstream outm;
+			//	outm << "iteration=" << number_of_iterations << ", residual="  << residual << ", deriv_sum=" << deriv_sum  << ", calculated_irr=" << calculated_irr ;
+			//	log( outm.str() );
 
 				number_of_iterations++;
 				residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 			}
+			//std::stringstream outm;
+			//outm << "initial_guess=" << initial_guess << " iterations=" << number_of_iterations << " irr=" << calculated_irr;
+			//log( outm.str() );
+
 		}
-		// TODO - check cases for which bounded irr -50% to 200% are all greater than zero or less than zero - no irr
-		// should be NA with explanation
-		//if (number_of_iterations >= max_iterations) calculated_irr = 0;
 		return calculated_irr;
 	}
 
 
-	void scale( int cf_unscaled, int cf_scaled, int count)
-	{
-		// scale to max value for better irr convergence
-		if (count<1) return;
-		int i=0;
-		ssc_number_t max=fabs(cf.at(cf_unscaled,0));
-		for (i=0;i<=count;i++) 
-			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
-		if (max>0) 
-			for (i=0;i<=count;i++) 
-				 cf.at(cf_scaled,i)=cf.at(cf_unscaled,i)/max;
-	}
-
-
-	ssc_number_t min( ssc_number_t a, ssc_number_t b )
+	double min( double a, double b )
 	{
 		return (a < b) ? a : b;
 	}
 
-	ssc_number_t max( ssc_number_t a, ssc_number_t b )
+	double max( double a, double b )
 	{
 		return (a > b) ? a : b;
 	}
