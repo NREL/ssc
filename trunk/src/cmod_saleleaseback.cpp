@@ -1638,7 +1638,7 @@ public:
 
 			if (i==1) cf.at(CF_sponsor_aftertax,i) += (sponsor_pretax_development_fee * -state_tax_rate) + ((sponsor_pretax_development_fee * -state_tax_rate) + sponsor_pretax_development_fee) * -federal_tax_rate;
 
-			cf.at(CF_sponsor_aftertax_irr,i) = irr(CF_sponsor_aftertax,i,0.05)*100.0;
+			cf.at(CF_sponsor_aftertax_irr,i) = irr(CF_sponsor_aftertax,i)*100.0;
 			cf.at(CF_sponsor_aftertax_npv,i) = npv(CF_sponsor_aftertax,i,nom_discount_rate) +  cf.at(CF_sponsor_aftertax,0) ;
 
 		}

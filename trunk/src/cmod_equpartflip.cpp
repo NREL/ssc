@@ -1540,7 +1540,7 @@ public:
 				cf.at(CF_statax,i) + cf.at(CF_fedtax,i);
 			if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
 
-			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i,0.05)*100.0;
+			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i)*100.0;
 			cf.at(CF_project_return_aftertax_npv,i) = npv(CF_project_return_aftertax,i,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0) ;
 
 		}
