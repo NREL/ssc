@@ -1236,16 +1236,17 @@ public:
 		double ppa_min=as_double("ppa_soln_min");
 		double ppa_max=as_double("ppa_soln_max");
 		int its=0;
-		bool bolDecreasingNPV = false;
-		double wIRR = DBL_MAX;
-		bool bolIRRMinimallyMet = false;
-		bool bolIRR = false;
-		bool bolNPVforIRRSolutionMethod = true;
+		double irr_weighting_factor = DBL_MAX;
+		bool irr_is_minimally_met = false;
+		bool irr_greater_than_target = false;
 		double w0=1.0;
 		double w1=1.0;
 		double x0=ppa_min;
 		double x1=ppa_max;
-		double ppa_old=ppa;
+		double ppa_coarse_interval=10; // 10 cents/kWh
+		bool ppa_interval_found=false;
+		bool ppa_too_large=false;
+		bool ppa_interval_reset=true;
 
 /***************** begin iterative solution *********************************************************************/
 
@@ -1256,6 +1257,8 @@ public:
 		cash_for_debt_service=0;
 		pv_cafds=0;
 		size_of_debt=0;
+		if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
+
 
 		// debt pre calculation
 		for (i=1; i<=nyears; i++)
@@ -1697,69 +1700,86 @@ public:
 		if (ppa_mode == 1)
 		{
 			double residual = cf.at(CF_tax_investor_aftertax_irr, flip_target_year) - flip_target_percent;
-			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
-//			if (!solved)
+//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
+			if (!solved)
 			{
-//				double itnpv = cf.at(CF_tax_investor_aftertax_npv, flip_target_year);
 				double flip_frac = flip_target_percent/100.0;
-				double flip_frac_delta = flip_frac + 0.001;
-				double itnpv_target = npv(CF_tax_investor_pretax,flip_target_year,flip_frac) +  cf.at(CF_tax_investor_pretax,0) ;
-				double itnpv_target_delta = npv(CF_tax_investor_pretax,flip_target_year,flip_frac_delta) +  cf.at(CF_tax_investor_pretax,0) ;
-//				if (cf.at(CF_tax_investor_aftertax_irr, flip_target_year) > 0) // use residual
-
-				if (bolNPVforIRRSolutionMethod)
-				{
-					wIRR = fabs(itnpv_target);
-					bolIRRMinimallyMet = (wIRR < ppa_soln_tolerance);
-					bolIRR = ((itnpv_target >= 0.0) || bolIRRMinimallyMet);
-					if (bolIRRMinimallyMet)
+				double itnpv_target = npv(CF_tax_investor_aftertax,flip_target_year,flip_frac) +  cf.at(CF_tax_investor_aftertax,0) ;
+				irr_weighting_factor = fabs(itnpv_target);
+				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
+				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
+				if (ppa_interval_found)
+				{// reset interval
+				
+					if (irr_greater_than_target) // too large
 					{
-						bolDecreasingNPV = (itnpv_target > itnpv_target_delta);
-						if (!bolDecreasingNPV)
-						{// switch to other solution method
-							bolIRR = false;
-							bolIRRMinimallyMet = false;
-							bolNPVforIRRSolutionMethod = false;
+			// set endpoint of weighted interval x0<x1
+						x1 = ppa;
+						w1 = irr_weighting_factor;
+					}
+					else // too small
+					{
+			// set endpoint of weighted interval x0<x1
+						x0 = ppa;
+						w0 = irr_weighting_factor;
+					}
+
+				}
+				else
+				{ // find solution interval [x0,x1]
+					if (ppa_interval_reset) 
+					{
+							if (irr_greater_than_target) ppa_too_large=true;
+							ppa_interval_reset=false;
+					}
+					if (ppa_too_large) // too large
+					{
+						if (irr_greater_than_target)
+						{
+							x0 = ppa;
+							w0 = irr_weighting_factor;
+							ppa = x0-ppa_coarse_interval;
+						}
+						else
+						{
+						  x1 = x0;
+						  w1 = w0;
+						  x0 = ppa;
+						  w0 = irr_weighting_factor;
+						  ppa_interval_found=true;
 						}
 					}
-				}
-				else  // NPV solution not valid - use IRR function with value for non-convergence
-				{
-					double actual_flip_frac = cf.at(CF_tax_investor_aftertax_irr, flip_target_year)/100.0;
-					double actual_flip_frac_delta = actual_flip_frac + 0.001;
-					double itnpv_actual = npv(CF_tax_investor_pretax,flip_target_year,actual_flip_frac) +  cf.at(CF_tax_investor_pretax,0) ;
-					double itnpv_actual_delta = npv(CF_tax_investor_pretax,flip_target_year,flip_frac_delta) +  cf.at(CF_tax_investor_pretax,0) ;
-					bolDecreasingNPV = (itnpv_actual > itnpv_actual_delta);
+					else
+					{
+						if (!irr_greater_than_target)
+						{
+							x1 = ppa;
+							w1 = irr_weighting_factor;
+							ppa = x1+ppa_coarse_interval;
+						}
+						else
+						{
+						  x0 = x1;
+						  w0 = w1;
+						  x1 = ppa;
+						  w1 = irr_weighting_factor;
+						  ppa_interval_found=true;
+						}
+					}
 
-					wIRR = DBL_MAX;
-					bolIRRMinimallyMet = (fabs(itnpv_actual) <= ppa_soln_tolerance) && bolDecreasingNPV && (actual_flip_frac >= actual_flip_frac_delta);
-					bolIRR = (((!bolDecreasingNPV) && (actual_flip_frac >= 0)) || bolIRRMinimallyMet);
 				}
-
-				if (wIRR==DBL_MAX) wIRR=1.0;
-				if (bolIRR) // too large
-				{
-		// set endpoint of weighted interval x0<x1
-					x1 = ppa;
-					w1 = wIRR;
-				}
-				else // too small
-				{
-		// set endpoint of weighted interval x0<x1
-					x0 = ppa;
-					w0 = wIRR;
-				}
-				ppa_old=ppa;
-		        ppa = (w0*x1+w1*x0)/(w0 + w1);
-				std::stringstream outm;
-				outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npv=" << itnpv_target  << ", npv_delta=" << itnpv_target_delta  << ", residual=" << residual << ", ppa_old=" << ppa_old << ", ppa=" << ppa << ", ppa_min=" << x0 << ", ppamax=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
-				log( outm.str() );
+					//std::stringstream outm;
+					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
+					//	  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
+					//	<< ", residual=" << residual << ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
+					//log( outm.str() );
 			}
 		}
 		its++;
 
 	}	// target tax investor return in target year
-	while ( !bolIRRMinimallyMet  && (its < ppa_soln_max_iteations) );
+	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) );
 
 /***************** end iterative solution *********************************************************************/
 
@@ -2459,7 +2479,7 @@ public:
 			{
 				if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
 			}
-			if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
+			//if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
 
 			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
 			if (deriv_sum != 0.0)
@@ -2480,10 +2500,6 @@ public:
 					calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
 				else
 					break;
-
-			//	std::stringstream outm;
-			//	outm << "iteration=" << number_of_iterations << ", residual="  << residual << ", deriv_sum=" << deriv_sum  << ", calculated_irr=" << calculated_irr ;
-			//	log( outm.str() );
 
 				number_of_iterations++;
 				residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
