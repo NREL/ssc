@@ -1651,6 +1651,15 @@ public:
 
 		for (i=1;i<=nyears;i++)
 		{
+			//cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
+			//			tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * cf.at(CF_project_return_aftertax_cash,i);
+			//cf.at(CF_tax_investor_aftertax_ptc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
+			//			tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i));
+			//if (i==1)
+			//	cf.at(CF_tax_investor_aftertax_itc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ?
+			//			tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * itc_total;
+			//cf.at(CF_tax_investor_aftertax_tax,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
+			//			tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (cf.at(CF_statax,i) + cf.at(CF_fedtax,i));
 			cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
 						tax_investor_preflip_cash_frac : tax_investor_postflip_cash_frac) * cf.at(CF_project_return_aftertax_cash,i);
 			cf.at(CF_tax_investor_aftertax_ptc,i) =  ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
@@ -1675,7 +1684,13 @@ public:
 
 			if (flip_year <=0) 
 			{
-				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
+				double residual = cf.at(CF_tax_investor_aftertax_irr, i) - flip_target_percent;
+				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  (  fabs( residual ) < ppa_soln_tolerance ) ) 
+				{
+					flip_year=i;
+					cf.at(CF_tax_investor_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
+				}
+//				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
 			}
 
 			cf.at(CF_sponsor_aftertax_cash,i) = cf.at(CF_project_return_aftertax_cash,i) - cf.at(CF_tax_investor_aftertax_cash,i);
@@ -1700,8 +1715,9 @@ public:
 		if (ppa_mode == 1)
 		{
 			double residual = cf.at(CF_tax_investor_aftertax_irr, flip_target_year) - flip_target_percent;
-//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
-			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
+			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+//			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
+//				double itnpv_actual = npv(CF_tax_investor_aftertax,flip_target_year,cf.at(CF_tax_investor_aftertax_irr, flip_target_year)/100.0) +  cf.at(CF_tax_investor_aftertax,0) ;
 			if (!solved)
 			{
 				double flip_frac = flip_target_percent/100.0;
@@ -1769,12 +1785,11 @@ public:
 					}
 
 				}
+			}
 					//std::stringstream outm;
-					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
-					//	  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
+					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target   << ", npvactual=" << itnpv_actual  
 					//	<< ", residual=" << residual << ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
 					//log( outm.str() );
-			}
 		}
 		its++;
 
@@ -2452,7 +2467,7 @@ public:
 		return (max>0 ? max:1);
 	}
 
-	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-5, int max_iterations=200 )
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-7, int max_iterations=200 )
 	{
 		int number_of_iterations=0;
 		double calculated_irr=0;

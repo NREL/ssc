@@ -1611,8 +1611,15 @@ public:
 
 			if (flip_year <=0) 
 			{
-				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
+				double residual = cf.at(CF_tax_investor_aftertax_irr, i) - flip_target_percent;
+				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  (  fabs( residual ) < ppa_soln_tolerance ) ) 
+				{
+					flip_year=i;
+					cf.at(CF_tax_investor_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
+				}
+//				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
 			}
+
 
 
 			cf.at(CF_sponsor_pretax_cash_during_recovery,i) = -cf.at(CF_sponsor_capital_recovery_cash,i);
@@ -1639,8 +1646,8 @@ public:
 		if (ppa_mode == 1)
 		{
 			double residual = cf.at(CF_tax_investor_aftertax_irr, flip_target_year) - flip_target_percent;
-//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
-			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
+			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+//			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
 			if (!solved)
 			{
 				double flip_frac = flip_target_percent/100.0;
@@ -2385,7 +2392,7 @@ public:
 		return (max>0 ? max:1);
 	}
 
-	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-5, int max_iterations=200 )
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-7, int max_iterations=200 )
 	{
 		int number_of_iterations=0;
 		double calculated_irr=0;

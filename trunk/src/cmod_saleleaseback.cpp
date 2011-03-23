@@ -1705,13 +1705,16 @@ public:
 		if (ppa_mode == 1)
 		{
 			double residual = cf.at(CF_tax_investor_aftertax_irr, flip_target_year) - flip_target_percent;
-//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
-			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
+			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+//			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
 			if (!solved)
 			{
 				double flip_frac = flip_target_percent/100.0;
 				double itnpv_target = npv(CF_tax_investor_aftertax,flip_target_year,flip_frac) +  cf.at(CF_tax_investor_aftertax,0) ;
-				irr_weighting_factor = fabs(itnpv_target);
+				double itnpv_actual = npv(CF_tax_investor_aftertax,flip_target_year, cf.at(CF_tax_investor_aftertax_irr, flip_target_year)/100.0) +  cf.at(CF_tax_investor_aftertax,0) ;
+				irr_weighting_factor = max(fabs(itnpv_actual),fabs(itnpv_target));
+//				irr_weighting_factor = fabs(itnpv_target);
+//				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
 				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
 				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
 				if (ppa_interval_found)
@@ -2442,7 +2445,7 @@ public:
 		return (max>0 ? max:1);
 	}
 
-	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-5, int max_iterations=200 )
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-7, int max_iterations=200 )
 	{
 		int number_of_iterations=0;
 		double calculated_irr=0;
