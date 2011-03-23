@@ -1557,8 +1557,8 @@ public:
 		if (ppa_mode == 1)
 		{
 			double residual = cf.at(CF_project_return_aftertax_irr, flip_target_year) - flip_target_percent;
-//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
-			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
+			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+//			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
 			if (!solved)
 			{
 				double flip_frac = flip_target_percent/100.0;
@@ -2278,7 +2278,7 @@ public:
 		return (max>0 ? max:1);
 	}
 
-	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-5, int max_iterations=200 )
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-7, int max_iterations=200 )
 	{
 		int number_of_iterations=0;
 		double calculated_irr=0;
