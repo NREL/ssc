@@ -1232,6 +1232,7 @@ public:
 	{
 
 		flip_year=-1;
+		if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
 		// debt pre calculation
 		for (i=1; i<=nyears; i++)
 		{			
@@ -1713,7 +1714,8 @@ public:
 						  ppa_interval_found=true;
 						}
 					}
-
+					// for initial guess of zero
+					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
 					//std::stringstream outm;
 					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
