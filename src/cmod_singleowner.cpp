@@ -1184,6 +1184,7 @@ public:
 		cash_for_debt_service=0;
 		pv_cafds=0;
 		size_of_debt=0;
+		if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
 
 		// debt pre calculation
 		for (i=1; i<=nyears; i++)
@@ -1546,7 +1547,13 @@ public:
 
 			if (flip_year <=0) 
 			{
-				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_project_return_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
+				double residual = cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent;
+				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (  fabs( residual ) < ppa_soln_tolerance ) ) 
+				{
+					flip_year=i;
+					cf.at(CF_project_return_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
+				}
+//				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_project_return_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
 			}
 
 
@@ -1559,10 +1566,15 @@ public:
 			double residual = cf.at(CF_project_return_aftertax_irr, flip_target_year) - flip_target_percent;
 			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
 //			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
-			if (!solved)
-			{
 				double flip_frac = flip_target_percent/100.0;
 				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
+				double itnpv_target_delta = npv(CF_project_return_aftertax,flip_target_year,flip_frac+0.001) +  cf.at(CF_project_return_aftertax,0) ;
+			//	double itnpv_actual = npv(CF_project_return_aftertax,flip_target_year,cf.at(CF_project_return_aftertax_irr, flip_target_year)) +  cf.at(CF_project_return_aftertax,0) ;
+			//	double itnpv_actual_delta = npv(CF_project_return_aftertax,flip_target_year,cf.at(CF_project_return_aftertax_irr, flip_target_year)+0.001) +  cf.at(CF_project_return_aftertax,0) ;
+			if (!solved)
+			{
+//				double flip_frac = flip_target_percent/100.0;
+//				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
 				irr_weighting_factor = fabs(itnpv_target);
 				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
 				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
@@ -1624,13 +1636,14 @@ public:
 						  ppa_interval_found=true;
 						}
 					}
-
+					// for initial guess of zero
+					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
-					//std::stringstream outm;
-					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
-					//	  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
-					//	<< ", residual=" << residual << ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
-					//log( outm.str() );
+					std::stringstream outm;
+					outm << "iteration=" << its  << ", irr=" << cf.at(CF_project_return_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
+						//  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
+						<< ", residual=" << residual << ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
+					log( outm.str() );
 			}
 		}
 		its++;
@@ -2305,7 +2318,7 @@ public:
 			{
 				if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
 			}
-			//if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
+			if (((initial_guess <= 0) || (initial_guess >= 1))&&(count>3)) initial_guess = 0.1;
 
 			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
 			if (deriv_sum != 0.0)
@@ -2330,9 +2343,13 @@ public:
 				number_of_iterations++;
 				residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 			}
-			//std::stringstream outm;
-			//outm << "initial_guess=" << initial_guess << " iterations=" << number_of_iterations << " irr=" << calculated_irr;
-			//log( outm.str() );
+
+			if (count==20)
+			{
+			std::stringstream outm;
+			outm << "initial_guess=" << initial_guess << " iterations=" << number_of_iterations << " irr=" << calculated_irr;
+			log( outm.str() );
+			}
 
 		}
 		return calculated_irr;

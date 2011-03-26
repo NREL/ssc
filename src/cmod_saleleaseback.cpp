@@ -1223,6 +1223,7 @@ public:
 	{
 
 		flip_year=-1;
+		if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
 		// debt pre calculation
 		for (i=1; i<=nyears; i++)
 		{
@@ -1711,10 +1712,7 @@ public:
 			{
 				double flip_frac = flip_target_percent/100.0;
 				double itnpv_target = npv(CF_tax_investor_aftertax,flip_target_year,flip_frac) +  cf.at(CF_tax_investor_aftertax,0) ;
-				double itnpv_actual = npv(CF_tax_investor_aftertax,flip_target_year, cf.at(CF_tax_investor_aftertax_irr, flip_target_year)/100.0) +  cf.at(CF_tax_investor_aftertax,0) ;
-				irr_weighting_factor = max(fabs(itnpv_actual),fabs(itnpv_target));
-//				irr_weighting_factor = fabs(itnpv_target);
-//				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
+				irr_weighting_factor = fabs(itnpv_target);
 				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
 				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
 				if (ppa_interval_found)
@@ -1775,7 +1773,8 @@ public:
 						  ppa_interval_found=true;
 						}
 					}
-
+					// for initial guess of zero
+					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
 					//std::stringstream outm;
 					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  

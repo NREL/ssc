@@ -1783,7 +1783,8 @@ public:
 						  ppa_interval_found=true;
 						}
 					}
-
+					// for initial guess of zero
+					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
 			}
 					//std::stringstream outm;
