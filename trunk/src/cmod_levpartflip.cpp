@@ -113,7 +113,7 @@ static var_info _cm_vtab_levpartflip[] = {
 
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Total project cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "nominal_discount_rate",   "Nominal discount rate",            "%",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "DHF",			 "*",                         "",                             "" },
@@ -211,7 +211,8 @@ static var_info _cm_vtab_levpartflip[] = {
 	/* intermediate outputs for validation */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cash_for_debt_service",   "Cash avaialble for debt service",   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "pv_cafds", "Present value of cash avaialble for debt service","$", "",				  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Size of debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_debt",			"Total debt",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_equity",			"Total equity",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 
 /* model outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "DHF",      "*",                       "INTEGER",                                  "" },
@@ -1843,6 +1844,7 @@ public:
 		assign("cost_financing", var_data((ssc_number_t) cost_financing));
 
 		assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
+		assign( "size_of_equity", var_data((ssc_number_t) (cost_installed - ibi_total - cbi_total - size_of_debt)) );
 		assign( "cost_installedperwatt", var_data((ssc_number_t)( cost_installed / nameplate / 1000.0 ) ));
 
  		assign( "itc_fed_qual_macrs_5", var_data((ssc_number_t) itc_fed_qual_macrs_5 ) );
@@ -2413,7 +2415,7 @@ public:
 
 	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
 	{		
-		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
+		if (rate == -1.0) throw general_error("cannot calculate NPV with discount rate equal to -1.0");
 
 		double rr = 1/(1+rate);
 		double result = 0;
@@ -2468,7 +2470,22 @@ public:
 		return (max>0 ? max:1);
 	}
 
-	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-7, int max_iterations=200 )
+	bool is_valid_irr( int cf_line, int count, double residual, double tolerance, int number_of_iterations, int max_iterations, double calculated_irr, double scale_factor )
+	{
+		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
+		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
+		bool is_valid = ( (number_of_iterations<max_iterations) && (fabs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (fabs(npv_of_irr/scale_factor)<tolerance) );
+				//if (!is_valid)
+				//{
+				//std::stringstream outm;
+				//outm <<  "cf_line=" << cf_line << "count=" << count << "residual=" << residual << "number_of_iterations=" << number_of_iterations << "calculated_irr=" << calculated_irr
+				//	<< "npv of irr=" << npv_of_irr << "npv of irr plus delta=" << npv_of_irr_plus_delta;
+				//log( outm.str() );
+				//}
+		return is_valid;
+	}
+
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-6, int max_iterations=100 )
 	{
 		int number_of_iterations=0;
 		double calculated_irr=0;
@@ -2495,35 +2512,69 @@ public:
 			{
 				if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
 			}
-			//if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
-
-			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
-			if (deriv_sum != 0.0)
-				calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
-			else
-				return initial_guess;
-
-			number_of_iterations++;
 
 			double scale_factor = irr_scale_factor(cf_line,count);
+			double residual=DBL_MAX;
 
-			double residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+			calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
 
-			while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
 			{
-				deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
-				if (deriv_sum != 0.0)
-					calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
-				else
-					break;
-
-				number_of_iterations++;
-				residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+				initial_guess=0.1;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
 			}
-			//std::stringstream outm;
-			//outm << "initial_guess=" << initial_guess << " iterations=" << number_of_iterations << " irr=" << calculated_irr;
-			//log( outm.str() );
 
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try -0.1 as initial guess
+			{
+				initial_guess=-0.1;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+			}
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0 as initial guess
+			{
+				initial_guess=0;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+			}
+
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
+			{
+				calculated_irr = 0.0; // did not converge
+			}
+
+		}
+		return calculated_irr;
+	}
+
+
+	double irr_calc( int cf_line, int count, double initial_guess, double tolerance, int max_iterations, double scale_factor, int &number_of_iterations, double &residual )
+	{
+		double calculated_irr=0;
+		double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+		if (deriv_sum != 0.0)
+			calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
+		else
+			return initial_guess;
+
+		number_of_iterations++;
+
+
+		residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+
+		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		{
+			deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+			if (deriv_sum != 0.0)
+				calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
+			else
+				break;
+
+			number_of_iterations++;
+			residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 		}
 		return calculated_irr;
 	}
