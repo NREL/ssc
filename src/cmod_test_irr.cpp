@@ -17,6 +17,8 @@ static var_info _cm_vtab_test_irr[] = {
 
 	//{ SSC_OUTPUT,        SSC_ARRAY,       "cf_test_scaled",            "scaled cash flow input",                     "",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_irr",            "calculated irr",                     "%",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_npv_irr",            "npv of calculated irr",                     "$",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_npv_irr_plus_delta",            "npv of calculated irr plus 0.001",                     "$",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 
 
 var_info_invalid };
@@ -30,6 +32,8 @@ extern var_info
 enum {
 	CF_test,
 	CF_irr,
+	CF_npv_irr,
+	CF_npv_irr_plus_delta,
 
 	CF_max };
 
@@ -72,11 +76,15 @@ public:
 		for (i=1;i<=nyears;i++) 
 		{
 			cf.at(CF_irr,i) = irr(CF_test,i,initial_guess,tolerance,max_iterations)*100;
+			cf.at(CF_npv_irr,i) = npv(CF_test,i,cf.at(CF_irr,i)/100.0)+cf.at(CF_test,0);
+			cf.at(CF_npv_irr_plus_delta,i) = npv(CF_test,i,cf.at(CF_irr,i)/100.0+0.001)+cf.at(CF_test,0);
 		}
 
 
 	    assign("cf_length", var_data((ssc_number_t) cf_length ));
 		save_cf( CF_irr, nyears, "cf_irr" );
+		save_cf( CF_npv_irr, nyears, "cf_npv_irr" );
+		save_cf( CF_npv_irr_plus_delta, nyears, "cf_npv_irr_plus_delta" );
 	}
 
 
@@ -88,6 +96,18 @@ public:
 	}
 
 
+
+	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
+	{		
+		if (rate == -1.0) throw general_error("cannot calculate NPV with discount rate equal to -1.0");
+
+		double rr = 1/(1+rate);
+		double result = 0;
+		for (int i=nyears;i>0;i--)
+			result = rr * result + cf.at(cf_line,i);
+
+		return result*rr;
+	}
 
 /* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
 	bool is_valid_iter_bound(double estimated_return_rate)
@@ -134,7 +154,22 @@ public:
 		return (max>0 ? max:1);
 	}
 
-	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-5, int max_iterations=200 )
+	bool is_valid_irr( int cf_line, int count, double residual, double tolerance, int number_of_iterations, int max_iterations, double calculated_irr, double scale_factor )
+	{
+		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
+		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
+		bool is_valid = ( (number_of_iterations<max_iterations) && (fabs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (fabs(npv_of_irr/scale_factor)<tolerance) );
+				//if (!is_valid)
+				//{
+				//std::stringstream outm;
+				//outm <<  "cf_line=" << cf_line << "count=" << count << "residual=" << residual << "number_of_iterations=" << number_of_iterations << "calculated_irr=" << calculated_irr
+				//	<< "npv of irr=" << npv_of_irr << "npv of irr plus delta=" << npv_of_irr_plus_delta;
+				//log( outm.str() );
+				//}
+		return is_valid;
+	}
+
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-6, int max_iterations=100 )
 	{
 		int number_of_iterations=0;
 		double calculated_irr=0;
@@ -161,39 +196,69 @@ public:
 			{
 				if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
 			}
-			if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = 0.1;
-
-			double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
-			if (deriv_sum != 0.0)
-				calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
-			else
-				return initial_guess;
-
-			number_of_iterations++;
 
 			double scale_factor = irr_scale_factor(cf_line,count);
+			double residual=DBL_MAX;
 
-			double residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+			calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
 
-			while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
 			{
-				deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
-				if (deriv_sum != 0.0)
-					calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
-				else
-					break;
-
-			//	std::stringstream outm;
-			//	outm << "iteration=" << number_of_iterations << ", residual="  << residual << ", deriv_sum=" << deriv_sum  << ", calculated_irr=" << calculated_irr ;
-			//	log( outm.str() );
-
-				number_of_iterations++;
-				residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+				initial_guess=0.1;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
 			}
-			//std::stringstream outm;
-			//outm << "initial_guess=" << initial_guess << " iterations=" << number_of_iterations << " irr=" << calculated_irr;
-			//log( outm.str() );
 
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try -0.1 as initial guess
+			{
+				initial_guess=-0.1;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+			}
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0 as initial guess
+			{
+				initial_guess=0;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+			}
+
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
+			{
+				calculated_irr = 0.0; // did not converge
+			}
+
+		}
+		return calculated_irr;
+	}
+
+
+	double irr_calc( int cf_line, int count, double initial_guess, double tolerance, int max_iterations, double scale_factor, int &number_of_iterations, double &residual )
+	{
+		double calculated_irr=0;
+		double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+		if (deriv_sum != 0.0)
+			calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
+		else
+			return initial_guess;
+
+		number_of_iterations++;
+
+
+		residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+
+		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		{
+			deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+			if (deriv_sum != 0.0)
+				calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
+			else
+				break;
+
+			number_of_iterations++;
+			residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 		}
 		return calculated_irr;
 	}
