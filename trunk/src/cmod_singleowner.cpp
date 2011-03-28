@@ -2238,9 +2238,9 @@ public:
 
 	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
 	{		
-		if (rate == -1.0) throw general_error("cannot calculate NPV with discount rate equal to -1.0");
-
-		double rr = 1/(1+rate);
+		//if (rate == -1.0) throw general_error("cannot calculate NPV with discount rate equal to -1.0");
+		double rr = 1.0;
+		if (rate != -1.0) rr = 1.0/(1.0+rate);
 		double result = 0;
 		for (int i=nyears;i>0;i--)
 			result = rr * result + cf.at(cf_line,i);
