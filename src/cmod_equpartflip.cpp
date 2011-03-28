@@ -1586,7 +1586,7 @@ public:
 		for (i=1;i<=nyears;i++)
 		{
 			cf.at(CF_sponsor_capital_recovery_cash,i) = -( (cf.at(CF_project_return_pretax,i)<0 ) ? 0 : min(cf.at(CF_sponsor_capital_recovery_balance,i-1),cf.at(CF_project_return_pretax,i)) ) * 
-															((sponsor_cap_recovery_mode==0 ) ? ( ( i < sponsor_cap_recovery_year) ? 1:0): 1 );
+															((sponsor_cap_recovery_mode==0 ) ? ( ( i <= sponsor_cap_recovery_year) ? 1:0): 1 );
 			cf.at(CF_sponsor_capital_recovery_balance,i) = cf.at(CF_sponsor_capital_recovery_balance,i-1) + cf.at(CF_sponsor_capital_recovery_cash,i);
 
 			cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
@@ -2342,7 +2342,6 @@ public:
 	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
 	{		
 		//if (rate == -1.0) throw general_error("cannot calculate NPV with discount rate equal to -1.0");
-
 		double rr = 1.0;
 		if (rate != -1.0) rr = 1.0/(1.0+rate);
 		double result = 0;
