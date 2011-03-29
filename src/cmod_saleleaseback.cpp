@@ -1247,7 +1247,6 @@ public:
 		// total reserves
 		for (i=0; i<=nyears; i++)
 			cf.at(CF_reserve_total,i) =
-				cf.at(CF_reserve_leasepayment,i) +
 				cf.at(CF_reserve_om,i) +
 				cf.at(CF_reserve_equip1,i) +
 				cf.at(CF_reserve_equip2,i) +
@@ -1699,7 +1698,13 @@ public:
 
 			if (flip_year <=0)
 			{
-				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
+				double residual = cf.at(CF_tax_investor_aftertax_irr, i) - flip_target_percent;
+				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  (  fabs( residual ) < ppa_soln_tolerance ) ) 
+				{
+					flip_year=i;
+					cf.at(CF_tax_investor_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
+				}
+//				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
 			}
 
 		}
@@ -1778,8 +1783,8 @@ public:
 					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
 					//std::stringstream outm;
-					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
-					//	  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
+					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_tax_investor_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  //<< ", npvtarget_delta=" << itnpv_target_delta  
+					//	  //<< ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
 					//	<< ", residual=" << residual << ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
 					//log( outm.str() );
 			}
