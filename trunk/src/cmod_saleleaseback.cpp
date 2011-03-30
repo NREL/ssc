@@ -18,7 +18,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,       SSC_NUMBER,      "cost_salestax",              "Sales tax",                        "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_INPUT,       SSC_NUMBER,      "cost_prefinancing",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 
-
 /* inputs in DHF model not currently in SAM 11/15/10 */
 	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "DHF",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
 
@@ -100,6 +99,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_39",   "Federal itc depreciation 39-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
 
 /* intermediate outputs */
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Financing Cost",          "$",   "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Total project cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_equity",			"Total equity",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
@@ -252,7 +252,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "sale_of_property",	"Sale of property",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "(Increase)/Decrease in lease payment reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "(Increase)/Decrease in working captial reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "(Increase)/Decrease in working capital reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me1ra",    "(Increase)/Decrease in major equipment reserve account 1",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2ra",    "(Increase)/Decrease in major equipment reserve account 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3ra",    "(Increase)/Decrease in major equipment reserve account 3",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
