@@ -2,6 +2,11 @@
 #include "core.h"
 #include <sstream>
 
+#ifndef WIN32
+#include <float.h>
+#endif
+
+
 static var_info _cm_vtab_levpartflip[] = {
 
 
