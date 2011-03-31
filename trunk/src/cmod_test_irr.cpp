@@ -2,6 +2,10 @@
 #include "core.h"
 #include <sstream>
 
+#ifndef WIN32
+#include <float.h>
+#endif
+
 static var_info _cm_vtab_test_irr[] = {
 
 /*test and validation of irr function used in ssc financial models */

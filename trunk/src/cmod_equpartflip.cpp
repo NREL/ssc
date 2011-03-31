@@ -2,6 +2,10 @@
 #include "core.h"
 #include <sstream>
 
+#ifndef WIN32
+#include <float.h>
+#endif
+
 /*
 Very close to cmod_levpartflip
 
