@@ -29,7 +29,7 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	double *PWECS, double *CT, double *CP )
 {
 
-	double out_pwr, out_ct, out_cp;
+	double out_pwr=0.0, out_ct=0.0, out_cp=0.0;
 
 	// CORRECT SITE WIND SPEED TO ROTOR CENTER HEIGHT 
 	if (Alpha_T > 1.0) Alpha_T = 1.0/7.0;
@@ -94,9 +94,9 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	}
 	else
 	{
-		out_pwr = 0;
-		out_cp = 0;
-		out_ct = 0;
+		out_pwr = 0.0;
+		out_cp = 0.0;
+		out_ct = 0.0;
 	}
 
 	// set output variables;
@@ -134,27 +134,27 @@ void coordtrans( double N, double E, double thetaRada, double *D, double *C)
 
 int wind_power(
 			// INPUTS
-				double Vel_T,  // wind velocity m/s
-				double Theta_T, // wind direction 0-360, 0=N
-				double Alpha_T, // shear exponent
-				double Sigma_T, // turbulence intensity (%)
-				double BarPAtm,    // barometric pressure (Atm)
-				double TdryC,    // dry bulb temp ('C)
-				int NumWT,      // number of wind turbines
-				double WT_x[],  // x coordinates of wind turbines
-				double WT_y[],  // y coordinates of wind turbines
-				int PC_len,    // number of power curve points
-				double PC_w[],  // Power curve wind speeds m/s
-				double PC_p[],  // Power curve output power (kW)
-				double Data_Ht,  // Site data collection height (m)
-				double Hub_Ht, // each turbine's hub height (m)
-				double Rotor_Di, // turbine rotor diameter (m)
-				int Ctl_Mode,   // control mode 0=pitch, 1=variable, 2=simple
-				double Spd_CtIn, // wind speed Cut in (m/s)
-				double Spd_Ratd, // rated wind speed
-				double Pwr_Ratd, // rated power
-				double LossC,    // constant loss
-				double LossP,    // loss as percent
+				double Vel_T,		// wind velocity m/s
+				double Theta_T,		// wind direction 0-360, 0=N
+				double Alpha_T,		// shear exponent
+				double Sigma_T,		// turbulence intensity (%)
+				double BarPAtm,		// barometric pressure (Atm)
+				double TdryC,		// dry bulb temp ('C)
+				int NumWT,			// number of wind turbines
+				double WT_x[],		// x coordinates of wind turbines
+				double WT_y[],		// y coordinates of wind turbines
+				int PC_len,			// number of power curve points
+				double PC_w[],		// Power curve wind speeds m/s
+				double PC_p[],		// Power curve output power (kW)
+				double Data_Ht,		// Site data collection height (m)
+				double Hub_Ht,		// each turbine's hub height (m)
+				double Rotor_Di,	// turbine rotor diameter (m)
+				int Ctl_Mode,		// control mode 0=pitch, 1=variable, 2=simple
+				double Spd_CtIn,	// wind speed Cut in (m/s)
+				double Spd_Ratd,	// rated wind speed
+				double Pwr_Ratd,	// rated power
+				double LossC,		// constant loss
+				double LossP,		// loss as percent
 			
 			// OUTPUTS
 				double *FarmP,     // total farm power output
@@ -253,7 +253,7 @@ int wind_power(
 				&cp );
 
 	
-
+	// if there is only one turbine, we're done
 	double UpWTkW = pwecs;
 	Power[0] = pwecs;
 	Thrust[0] = ct;
@@ -266,8 +266,7 @@ int wind_power(
 	}
 
 	
-
-	// Sort Dn,Cs arrays by downwind distance 
+	// Sort Dn,Cs arrays by downwind distance, Dn[0] is smallest downwind distance, presumably zero
 	for (j=1;j<NumWT;j++) 
 	{
 		d = Dn[j]; // pick out each element
@@ -288,8 +287,7 @@ int wind_power(
 		wt_id[i] = wid;
 	}
 
-	// downwind propagation of wind speed reduction due to WTs
-
+	// calculate downwind propagation of wind speed reduction due to upwind turbines
 	for (i=0;i<NumWT-1;i++)
 	{
 		for (j=i+1;j<NumWT;j++)
@@ -297,10 +295,10 @@ int wind_power(
 			// 'i' represents up-wind turbine
 			// 'j' represents down-wind turbine
 
-			// distance downwind, upwind to downwind WT
+			// distance downwind = distance from turbine i to turbine j along axis of wind direction
 			double dd = Dn[j] - Dn[i]; 
 
-			// separation crosswind between upwind and downwind WTs
+			// separation crosswind between turbine i and turbine j
 
 			// EQN SIMPLIFIED B/C all hub heights the same currently
 			//  F: RR(j) = ((DA(4,j)-DA(4,i))**2.0+(DA(5,j)-DA(5,i))**2.0)**0.5
@@ -309,9 +307,12 @@ int wind_power(
 			//    where HtRad = HubHt/Rotor_Di for each WT
 			double rr = Cs[j] - Cs[i];
 				
+			// Calculate the wind speed reduction and turbulence at turbine j, due to turbine i
+			// vel_delta_loc() can return values > 1 for delt, which leads to negative wind speed at turbine j
+			// turbine_power() will handle a negative wind speed by setting power output, thrust, and turbulence to zero
+			// This seems prone to errors, Wind[j] should probably be limited to values >=0
 			double sig, delt;
 			vel_delta_loc( rr, dd, Turbul[j], Thrust[i], &sig, &delt);
-
 			Wind[j] = Wind[j]*(1-delt);
 			Turbul[j] = sig;
 
