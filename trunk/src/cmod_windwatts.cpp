@@ -17,6 +17,7 @@ static var_info _cm_vtab_windwatts[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cutin",                      "Cut-in wind speed",                "m/s",    "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossc",                      "Constant losses",                  "kW",     "",                      "WindWatts",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossp",                      "Percentage losses",                "%",      "",                      "WindWatts",      "*",             "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                    "Height of resource measurement",   "m",      "",                      "WindWatts",      "*",             "",                      "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "farmpwr",                    "Net electric generation",          "kWhac",  "",                      "WindWatts",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "winddir",                    "Wind direction",                   "deg",    "",                      "WindWatts",      "*",             "LENGTH=8760",     "" },
@@ -70,6 +71,7 @@ public:
 		double turbul = as_double("turbul");
 		double hub_ht = as_double("hub_ht");
 		double rotor_di = as_double("rotor_di");
+		double meas_ht = as_double("meas_ht");
 
 		/* ctl_mode hardwired to '2'.  apparently not implemented 
 		  correctly for modes 0 and 1, so no point exposing it.
@@ -137,7 +139,7 @@ public:
 						(int)pc_len,
 						&dpcW[0],
 						&dpcP[0],
-						10.0, /* 10 meter data measure height in TMY2 */
+						meas_ht, /* TFF - what if they're not using TMY2? 10.0, /*10 meter data measure height in TMY2 */
 						hub_ht,
 						rotor_di,
 						ctl_mode,
