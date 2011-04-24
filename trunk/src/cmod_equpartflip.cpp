@@ -883,7 +883,10 @@ public:
 
 		if (count_degrad == 1)
 		{
-			for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = pow((1.0 - degrad[0]/100.0),i-1);
+			if (as_integer("system_use_lifetime_output"))
+				for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = 1.0 - degrad[0]/100.0;
+			else
+				for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = pow((1.0 - degrad[0]/100.0),i-1);
 		}
 		else if (count_degrad > 0)
 		{
@@ -899,19 +902,17 @@ public:
 			for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i]/100.0;
 		}
 
-
-		for (i=1;i<=nyears;i++)
-		{
-			cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
-			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
-			cf.at(CF_om_capacity_expense,i) *= nameplate;
-		}
-		
 		// dispatch
 		if (as_integer("system_use_lifetime_output"))
+		{
 			compute_lifetime_dispatch_output(nyears);
+		}
 		else
+		{
+			for (i=1;i<=nyears;i++)
+				cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
 			compute_dispatch_output(nyears);
+		}
 
 		double dispatch_factor1 = as_double("dispatch_factor1");
 		double dispatch_factor2 = as_double("dispatch_factor2");
@@ -922,6 +923,13 @@ public:
 		double dispatch_factor7 = as_double("dispatch_factor7");
 		double dispatch_factor8 = as_double("dispatch_factor8");
 		double dispatch_factor9 = as_double("dispatch_factor9");
+
+		for (i=1;i<=nyears;i++)
+		{
+			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
+			cf.at(CF_om_capacity_expense,i) *= nameplate;
+		}
+
 
 		double ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for pp_mode=0
 
@@ -4013,7 +4021,19 @@ public:
 						break;
 				}
 			}
+			cf.at(CF_energy_net,y) = 
+				cf.at(CF_TOD1Energy,y) +
+				cf.at(CF_TOD2Energy,y) +
+				cf.at(CF_TOD3Energy,y) +
+				cf.at(CF_TOD4Energy,y) +
+				cf.at(CF_TOD5Energy,y) +
+				cf.at(CF_TOD6Energy,y) +
+				cf.at(CF_TOD7Energy,y) +
+				cf.at(CF_TOD8Energy,y) +
+				cf.at(CF_TOD9Energy,y) ;
+
 		}
+
 
 		return true;
 	}
