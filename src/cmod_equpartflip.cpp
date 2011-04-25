@@ -881,10 +881,14 @@ public:
 		ssc_number_t *degrad = 0;
 		degrad = as_array("energy_degradation", &count_degrad);
 
+		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
 		if (count_degrad == 1)
 		{
 			if (as_integer("system_use_lifetime_output"))
-				for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = 1.0 - degrad[0]/100.0;
+			{
+				if (nyears>=1) cf.at(CF_Degradation,1) = 1.0;
+				for (i=2;i<=nyears;i++) cf.at(CF_Degradation,i) = 1.0 - degrad[0]/100.0;
+			}
 			else
 				for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = pow((1.0 - degrad[0]/100.0),i-1);
 		}
