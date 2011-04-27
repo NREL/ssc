@@ -359,8 +359,8 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_statax_total",             "Total state taxable CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_fedtax_total",             "Total federal taxable CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_fed",             "Total federal CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_sta",             "Total state iBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_fed",             "Total federal IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_sta",             "Total state IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_oth",             "Total other IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_uti",             "Total utility IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
@@ -471,6 +471,9 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoe_nom",                 "Nominal LCOE",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_first_year_ppa",                 "First year PPA price",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_ppa_escalation",                 "PPA price escalation",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_npv_ppa_revenue",                "NPV of PPA revenue",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_npv_energy_nom",                "NPV of net annual energy (nominal)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_npv_energy_real",                "NPV of net annual energy (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
 
 
 var_info_invalid };
@@ -1994,9 +1997,17 @@ public:
 	assign("sv_flip_actual_irr", var_data((ssc_number_t) actual_flip_irr ));
 
 	// LCOE
-	double npv_revenue = npv(CF_energy_value,nyears,nom_discount_rate);
-	double lcoe_nom = npv_revenue / npv(CF_energy_net,nyears,nom_discount_rate) * 100.0;
-	double lcoe_real = npv_revenue / npv(CF_energy_net,nyears,disc_real) * 100.0;
+	double npv_ppa_revenue = npv(CF_energy_value,nyears,nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_net,nyears,nom_discount_rate);
+	double lcoe_nom = 0;
+	if (npv_energy_nom != 0) lcoe_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
+	double lcoe_real = 0;
+	double npv_energy_real = npv(CF_energy_net,nyears,disc_real);
+	if (npv_energy_real != 0) lcoe_real = npv_ppa_revenue / npv_energy_real * 100.0;
+
+	assign("sv_npv_ppa_revenue", var_data( (ssc_number_t) npv_ppa_revenue));
+	assign("sv_npv_energy_nom", var_data( (ssc_number_t) npv_energy_nom));
+	assign("sv_npv_energy_real", var_data( (ssc_number_t) npv_energy_real));
 
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
 
