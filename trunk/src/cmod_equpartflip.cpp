@@ -1242,7 +1242,6 @@ public:
 		double itc_fed_total;
 		double itc_sta_total;
 		double itc_total;
-
 		double cbi_statax_total = 
 			( as_boolean("cbi_fed_tax_sta") ? cbi_fed_amount : 0 ) +
 			( as_boolean("cbi_sta_tax_sta") ? cbi_sta_amount : 0 ) +
@@ -1273,20 +1272,29 @@ public:
 			( as_boolean("ibi_oth_amount_tax_fed") ? ibi_oth_amount : 0 ) +
 			( as_boolean("ibi_oth_percent_tax_fed") ? ibi_oth_per : 0 );
 
+		// AEPF - EBITDA includes pbi - so appears a tax reduction if non-taxable
 		for (i=1;i<=nyears;i++)
 		{
 			cf.at(CF_pbi_statax_total,i) =
-				( as_boolean("pbi_fed_tax_sta") ? cf.at(CF_pbi_fed,i) : 0 ) +
-				( as_boolean("pbi_sta_tax_sta") ? cf.at(CF_pbi_sta,i) : 0 ) +
-				( as_boolean("pbi_uti_tax_sta") ? cf.at(CF_pbi_uti,i) : 0 ) +
-				( as_boolean("pbi_oth_tax_sta") ? cf.at(CF_pbi_oth,i) : 0 ) ;
+				( as_boolean("pbi_fed_tax_sta") ? 0:-cf.at(CF_pbi_fed,i) ) +
+				( as_boolean("pbi_sta_tax_sta") ? 0:-cf.at(CF_pbi_sta,i) ) +
+				( as_boolean("pbi_uti_tax_sta") ? 0:-cf.at(CF_pbi_uti,i) ) +
+				( as_boolean("pbi_oth_tax_sta") ? 0:-cf.at(CF_pbi_oth,i) ) ;
 
 			cf.at(CF_pbi_fedtax_total,i) =
-				( as_boolean("pbi_fed_tax_fed") ? cf.at(CF_pbi_fed,i) : 0 ) +
-				( as_boolean("pbi_sta_tax_fed") ? cf.at(CF_pbi_sta,i) : 0 ) +
-				( as_boolean("pbi_uti_tax_fed") ? cf.at(CF_pbi_uti,i) : 0 ) +
-				( as_boolean("pbi_oth_tax_fed") ? cf.at(CF_pbi_oth,i) : 0 ) ;
+				( as_boolean("pbi_fed_tax_fed") ? 0:-cf.at(CF_pbi_fed,i) ) +
+				( as_boolean("pbi_sta_tax_fed") ? 0:-cf.at(CF_pbi_sta,i) ) +
+				( as_boolean("pbi_uti_tax_fed") ? 0:-cf.at(CF_pbi_uti,i) ) +
+				( as_boolean("pbi_oth_tax_fed") ? 0:-cf.at(CF_pbi_oth,i) ) ;
 		}
+		// 5/1/11
+		for (i=1;i<=nyears;i++)
+		{
+			cf.at(CF_statax_taxable_incentives,i) = cf.at(CF_pbi_statax_total,i);
+			cf.at(CF_fedtax_taxable_incentives,i) = cf.at(CF_pbi_fedtax_total,i);
+		}
+		cf.at(CF_statax_taxable_incentives,1) += cbi_statax_total + ibi_statax_total;
+		cf.at(CF_fedtax_taxable_incentives,1) += cbi_fedtax_total + ibi_fedtax_total;
 
 		double cost_financing;
 
@@ -1770,33 +1778,33 @@ public:
 		// ITC reduction
 		depr_fedbas_macrs_5 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_5 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_5 );
 
 		depr_fedbas_macrs_15 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_15 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_15 );
 
 		depr_fedbas_sl_5 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_5 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_5 );
 
 		depr_fedbas_sl_15 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_15 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_15 );
 
 		depr_fedbas_sl_20 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_20 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_20 );
 
 		depr_fedbas_sl_39 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_39 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_39 );
 
 		// Bonus depreciation
 		depr_fedbas_macrs_5_bonus = depr_fedbas_macrs_5_bonus_frac * depr_fedbas_macrs_5;
@@ -1885,9 +1893,13 @@ public:
 				cf.at(CF_stadepr_total,i);
 
 
+
 			// pbi in ebitda - so remove if non-taxable
-			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + (cf.at(CF_pbi_statax_total,i) - cf.at(CF_pbi_total,i) );
-			if (i==1) cf.at(CF_statax_income_with_incentives,i) += cbi_statax_total + ibi_statax_total;
+			// 5/1/11
+			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + cf.at(CF_statax_taxable_incentives,i);
+//			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + (cf.at(CF_statax_taxable_incentives,i) - cf.at(CF_pbi_total,i) );
+//			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + (cf.at(CF_pbi_statax_total,i) - cf.at(CF_pbi_total,i) );
+//			if (i==1) cf.at(CF_statax_income_with_incentives,i) += cbi_statax_total + ibi_statax_total;
 			cf.at(CF_statax,i) = -state_tax_rate * cf.at(CF_statax_income_with_incentives,i); 
 
 // federal 
@@ -1918,8 +1930,11 @@ public:
 
 
 			// pbi in ebitda - so remove if non-taxable
-			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + (cf.at(CF_pbi_fedtax_total,i) - cf.at(CF_pbi_total,i) );
-			if (i==1) cf.at(CF_fedtax_income_with_incentives,i) += cbi_fedtax_total + ibi_fedtax_total;
+			// 5/1/11
+			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_fedtax_taxable_incentives,i);
+//			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + (cf.at(CF_fedtax_taxable_incentives,i) - cf.at(CF_pbi_total,i) );
+//			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + (cf.at(CF_pbi_fedtax_total,i) - cf.at(CF_pbi_total,i) );
+//			if (i==1) cf.at(CF_fedtax_income_with_incentives,i) += cbi_fedtax_total + ibi_fedtax_total;
 			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i); 
 
 			cf.at(CF_project_return_aftertax,i) = 
@@ -2109,7 +2124,7 @@ public:
 		its++;
 
 	}	// target tax investor return in target year
-	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) );
+	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) && (ppa >= 0) );
 
 /***************** end iterative solution *********************************************************************/
 
@@ -2632,8 +2647,10 @@ public:
 		assign( "itc_disallow_sta_percent_macrs_5", var_data((ssc_number_t) itc_disallow_sta_percent_macrs_5 ) );
  		assign( "depr_stabas_fixed_amount_macrs_5", var_data((ssc_number_t) (depr_stabas_percent_qual_macrs_5/100.0 * itc_sta_amount)) );
 		assign( "itc_disallow_sta_fixed_macrs_5", var_data((ssc_number_t) itc_disallow_sta_fixed_macrs_5 ) );
-		assign( "depr_stabas_itc_sta_reduction_macrs_5", var_data((ssc_number_t) (itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_5 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_5 ) ) );
-		assign( "depr_stabas_itc_fed_reduction_macrs_5", var_data((ssc_number_t) (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_5 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_5) ) );
+		double depr_stabas_itc_sta_reduction_macrs_5 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_5 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_5;
+		double depr_stabas_itc_fed_reduction_macrs_5 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_5 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_5;
+		assign( "depr_stabas_itc_sta_reduction_macrs_5", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_macrs_5 ) );
+		assign( "depr_stabas_itc_fed_reduction_macrs_5", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_macrs_5 ) );
 		assign( "depr_stabas_after_itc_macrs_5", var_data((ssc_number_t) (depr_stabas_macrs_5 + depr_stabas_macrs_5_bonus) ) );
 		assign( "depr_stabas_first_year_bonus_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5_bonus ) );
 		assign( "depr_stabas_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5 ) );
@@ -2652,8 +2669,10 @@ public:
 		assign( "itc_disallow_sta_percent_macrs_15", var_data((ssc_number_t) itc_disallow_sta_percent_macrs_15 ) );
  		assign( "depr_stabas_fixed_amount_macrs_15", var_data((ssc_number_t) (depr_stabas_percent_qual_macrs_15/100.0 * itc_sta_amount)) );
 		assign( "itc_disallow_sta_fixed_macrs_15", var_data((ssc_number_t) itc_disallow_sta_fixed_macrs_15 ) );
-		assign( "depr_stabas_itc_sta_reduction_macrs_15", var_data((ssc_number_t) (itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_15 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_15 ) ) );
-		assign( "depr_stabas_itc_fed_reduction_macrs_15", var_data((ssc_number_t) (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_15 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_15) ) );
+		double depr_stabas_itc_sta_reduction_macrs_15 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_15 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_15;
+		double depr_stabas_itc_fed_reduction_macrs_15 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_15 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_15;
+		assign( "depr_stabas_itc_sta_reduction_macrs_15", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_macrs_15 ) );
+		assign( "depr_stabas_itc_fed_reduction_macrs_15", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_macrs_15 ) );
 		assign( "depr_stabas_after_itc_macrs_15", var_data((ssc_number_t) (depr_stabas_macrs_15 + depr_stabas_macrs_15_bonus) ) );
 		assign( "depr_stabas_first_year_bonus_macrs_15", var_data((ssc_number_t) depr_stabas_macrs_15_bonus ) );
 		assign( "depr_stabas_macrs_15", var_data((ssc_number_t) depr_stabas_macrs_15 ) );
@@ -2672,8 +2691,10 @@ public:
 		assign( "itc_disallow_sta_percent_sl_5", var_data((ssc_number_t) itc_disallow_sta_percent_sl_5 ) );
  		assign( "depr_stabas_fixed_amount_sl_5", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_5/100.0 * itc_sta_amount)) );
 		assign( "itc_disallow_sta_fixed_sl_5", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_5 ) );
-		assign( "depr_stabas_itc_sta_reduction_sl_5", var_data((ssc_number_t) (itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_5 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_5 ) ) );
-		assign( "depr_stabas_itc_fed_reduction_sl_5", var_data((ssc_number_t) (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_5 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_5) ) );
+		double depr_stabas_itc_sta_reduction_sl_5 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_5 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_5;
+		double depr_stabas_itc_fed_reduction_sl_5 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_5 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_5;
+		assign( "depr_stabas_itc_sta_reduction_sl_5", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_5 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_5", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_5 ) );
 		assign( "depr_stabas_after_itc_sl_5", var_data((ssc_number_t) (depr_stabas_sl_5 + depr_stabas_sl_5_bonus) ) );
 		assign( "depr_stabas_first_year_bonus_sl_5", var_data((ssc_number_t) depr_stabas_sl_5_bonus ) );
 		assign( "depr_stabas_sl_5", var_data((ssc_number_t) depr_stabas_sl_5 ) );
@@ -2692,8 +2713,10 @@ public:
 		assign( "itc_disallow_sta_percent_sl_15", var_data((ssc_number_t) itc_disallow_sta_percent_sl_15 ) );
  		assign( "depr_stabas_fixed_amount_sl_15", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_15/100.0 * itc_sta_amount)) );
 		assign( "itc_disallow_sta_fixed_sl_15", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_15 ) );
-		assign( "depr_stabas_itc_sta_reduction_sl_15", var_data((ssc_number_t) (itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_15 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_15 ) ) );
-		assign( "depr_stabas_itc_fed_reduction_sl_15", var_data((ssc_number_t) (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_15 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_15) ) );
+		double depr_stabas_itc_sta_reduction_sl_15 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_15 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_15;
+		double depr_stabas_itc_fed_reduction_sl_15 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_15 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_15;
+		assign( "depr_stabas_itc_sta_reduction_sl_15", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_15 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_15", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_15 ) );
 		assign( "depr_stabas_after_itc_sl_15", var_data((ssc_number_t) (depr_stabas_sl_15 + depr_stabas_sl_15_bonus) ) );
 		assign( "depr_stabas_first_year_bonus_sl_15", var_data((ssc_number_t) depr_stabas_sl_15_bonus ) );
 		assign( "depr_stabas_sl_15", var_data((ssc_number_t) depr_stabas_sl_15 ) );
@@ -2712,8 +2735,10 @@ public:
 		assign( "itc_disallow_sta_percent_sl_20", var_data((ssc_number_t) itc_disallow_sta_percent_sl_20 ) );
  		assign( "depr_stabas_fixed_amount_sl_20", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_20/100.0 * itc_sta_amount)) );
 		assign( "itc_disallow_sta_fixed_sl_20", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_20 ) );
-		assign( "depr_stabas_itc_sta_reduction_sl_20", var_data((ssc_number_t) (itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_20 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_20 ) ) );
-		assign( "depr_stabas_itc_fed_reduction_sl_20", var_data((ssc_number_t) (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_20 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_20) ) );
+		double depr_stabas_itc_sta_reduction_sl_20 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_20 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_20;
+		double depr_stabas_itc_fed_reduction_sl_20 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_20 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_20;
+		assign( "depr_stabas_itc_sta_reduction_sl_20", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_20 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_20", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_20 ) );
 		assign( "depr_stabas_after_itc_sl_20", var_data((ssc_number_t) (depr_stabas_sl_20 + depr_stabas_sl_20_bonus) ) );
 		assign( "depr_stabas_first_year_bonus_sl_20", var_data((ssc_number_t) depr_stabas_sl_20_bonus ) );
 		assign( "depr_stabas_sl_20", var_data((ssc_number_t) depr_stabas_sl_20 ) );
@@ -2732,11 +2757,37 @@ public:
 		assign( "itc_disallow_sta_percent_sl_39", var_data((ssc_number_t) itc_disallow_sta_percent_sl_39 ) );
  		assign( "depr_stabas_fixed_amount_sl_39", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_39/100.0 * itc_sta_amount)) );
 		assign( "itc_disallow_sta_fixed_sl_39", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_39 ) );
-		assign( "depr_stabas_itc_sta_reduction_sl_39", var_data((ssc_number_t) (itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_39 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_39 ) ) );
-		assign( "depr_stabas_itc_fed_reduction_sl_39", var_data((ssc_number_t) (itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_39 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_39) ) );
+		double depr_stabas_itc_sta_reduction_sl_39 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_39 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_39;
+		double depr_stabas_itc_fed_reduction_sl_39 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_39 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_39;
+		assign( "depr_stabas_itc_sta_reduction_sl_39", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_39 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_39", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_39 ) );
 		assign( "depr_stabas_after_itc_sl_39", var_data((ssc_number_t) (depr_stabas_sl_39 + depr_stabas_sl_39_bonus) ) );
 		assign( "depr_stabas_first_year_bonus_sl_39", var_data((ssc_number_t) depr_stabas_sl_39_bonus ) );
 		assign( "depr_stabas_sl_39", var_data((ssc_number_t) depr_stabas_sl_39 ) );
+
+		assign("depr_stabas_percent_total", var_data((ssc_number_t)  (100.0*(depr_stabas_macrs_5_frac+depr_stabas_macrs_15_frac+depr_stabas_sl_5_frac+depr_stabas_sl_15_frac+depr_stabas_sl_20_frac+depr_stabas_sl_39_frac))));
+		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
+		assign( "depr_stabas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
+		assign( "depr_stabas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
+ 		assign( "depr_stabas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+ 		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
+ 		assign( "depr_stabas_percent_qual_total", var_data((ssc_number_t) 100.0) );
+ 		assign( "depr_stabas_percent_amount_total", var_data((ssc_number_t) itc_sta_per) );
+		assign( "itc_disallow_sta_percent_total", var_data((ssc_number_t) (itc_disallow_sta_percent_macrs_5 + itc_disallow_sta_percent_macrs_15 + itc_disallow_sta_percent_sl_5 + itc_disallow_sta_percent_sl_15 + itc_disallow_sta_percent_sl_20 + itc_disallow_sta_percent_sl_39) ) );
+ 		assign( "depr_stabas_fixed_amount_total", var_data((ssc_number_t) itc_sta_amount) );
+		assign( "itc_disallow_sta_fixed_total", var_data((ssc_number_t) (itc_disallow_sta_fixed_macrs_5 + itc_disallow_sta_fixed_macrs_15 + itc_disallow_sta_fixed_sl_5 + itc_disallow_sta_fixed_sl_15 + itc_disallow_sta_fixed_sl_20 + itc_disallow_sta_fixed_sl_39) ) );
+		double depr_stabas_itc_sta_reduction_total = depr_stabas_itc_sta_reduction_macrs_5 + depr_stabas_itc_sta_reduction_macrs_15 + depr_stabas_itc_sta_reduction_sl_5 + depr_stabas_itc_sta_reduction_sl_15 + depr_stabas_itc_sta_reduction_sl_20 + depr_stabas_itc_sta_reduction_sl_39;
+		assign( "depr_stabas_itc_sta_reduction_total", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_total ) );
+		double depr_stabas_itc_fed_reduction_total = depr_stabas_itc_fed_reduction_macrs_5 + depr_stabas_itc_fed_reduction_macrs_15 + depr_stabas_itc_fed_reduction_sl_5 + depr_stabas_itc_fed_reduction_sl_15 + depr_stabas_itc_fed_reduction_sl_20 + depr_stabas_itc_fed_reduction_sl_39;
+		assign( "depr_stabas_itc_fed_reduction_total", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_total ) );
+		double depr_stabas_first_year_bonus_total = depr_stabas_macrs_5_bonus+depr_stabas_macrs_15_bonus+depr_stabas_sl_5_bonus+depr_stabas_sl_15_bonus+depr_stabas_sl_20_bonus+depr_stabas_sl_39_bonus;
+		assign( "depr_stabas_after_itc_total", var_data((ssc_number_t) (depr_stabas_total + depr_stabas_first_year_bonus_total) ) );
+		assign( "depr_stabas_first_year_bonus_total", var_data((ssc_number_t) depr_stabas_first_year_bonus_total ) );
+		assign( "depr_stabas_total", var_data((ssc_number_t) depr_stabas_total ) );
+
+	
+		assign( "itc_sta_percent_total", var_data((ssc_number_t) itc_sta_per ) );
+		assign( "itc_sta_fixed_total", var_data((ssc_number_t) itc_sta_amount ) );
 
 
 
@@ -2755,8 +2806,10 @@ public:
 		assign( "itc_disallow_fed_percent_macrs_5", var_data((ssc_number_t) itc_disallow_fed_percent_macrs_5 ) );
  		assign( "depr_fedbas_fixed_amount_macrs_5", var_data((ssc_number_t) (depr_fedbas_percent_qual_macrs_5/100.0 * itc_fed_amount)) );
 		assign( "itc_disallow_fed_fixed_macrs_5", var_data((ssc_number_t) itc_disallow_fed_fixed_macrs_5 ) );
-		assign( "depr_fedbas_itc_sta_reduction_macrs_5", var_data((ssc_number_t) (itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_5 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_5 ) ) );
-		assign( "depr_fedbas_itc_fed_reduction_macrs_5", var_data((ssc_number_t) (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5) ) );
+		double depr_fedbas_itc_sta_reduction_macrs_5 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_5 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_5;
+		double depr_fedbas_itc_fed_reduction_macrs_5 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5;
+		assign( "depr_fedbas_itc_sta_reduction_macrs_5", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_macrs_5 ) );
+		assign( "depr_fedbas_itc_fed_reduction_macrs_5", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_macrs_5 ) );
 		assign( "depr_fedbas_after_itc_macrs_5", var_data((ssc_number_t) (depr_fedbas_macrs_5 + depr_fedbas_macrs_5_bonus) ) );
 		assign( "depr_fedbas_first_year_bonus_macrs_5", var_data((ssc_number_t) depr_fedbas_macrs_5_bonus ) );
 		assign( "depr_fedbas_macrs_5", var_data((ssc_number_t) depr_fedbas_macrs_5 ) );
@@ -2775,8 +2828,10 @@ public:
 		assign( "itc_disallow_fed_percent_macrs_15", var_data((ssc_number_t) itc_disallow_fed_percent_macrs_15 ) );
  		assign( "depr_fedbas_fixed_amount_macrs_15", var_data((ssc_number_t) (depr_fedbas_percent_qual_macrs_15/100.0 * itc_fed_amount)) );
 		assign( "itc_disallow_fed_fixed_macrs_15", var_data((ssc_number_t) itc_disallow_fed_fixed_macrs_15 ) );
-		assign( "depr_fedbas_itc_sta_reduction_macrs_15", var_data((ssc_number_t) (itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_15 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_15 ) ) );
-		assign( "depr_fedbas_itc_fed_reduction_macrs_15", var_data((ssc_number_t) (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15) ) );
+		double depr_fedbas_itc_sta_reduction_macrs_15 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_15 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_15;
+		double depr_fedbas_itc_fed_reduction_macrs_15 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15;
+		assign( "depr_fedbas_itc_sta_reduction_macrs_15", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_macrs_15 ) );
+		assign( "depr_fedbas_itc_fed_reduction_macrs_15", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_macrs_15 ) );
 		assign( "depr_fedbas_after_itc_macrs_15", var_data((ssc_number_t) (depr_fedbas_macrs_15 + depr_fedbas_macrs_15_bonus) ) );
 		assign( "depr_fedbas_first_year_bonus_macrs_15", var_data((ssc_number_t) depr_fedbas_macrs_15_bonus ) );
 		assign( "depr_fedbas_macrs_15", var_data((ssc_number_t) depr_fedbas_macrs_15 ) );
@@ -2795,8 +2850,10 @@ public:
 		assign( "itc_disallow_fed_percent_sl_5", var_data((ssc_number_t) itc_disallow_fed_percent_sl_5 ) );
  		assign( "depr_fedbas_fixed_amount_sl_5", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_5/100.0 * itc_fed_amount)) );
 		assign( "itc_disallow_fed_fixed_sl_5", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_5 ) );
-		assign( "depr_fedbas_itc_sta_reduction_sl_5", var_data((ssc_number_t) (itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_5 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_5 ) ) );
-		assign( "depr_fedbas_itc_fed_reduction_sl_5", var_data((ssc_number_t) (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5) ) );
+		double depr_fedbas_itc_sta_reduction_sl_5 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_5 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_5;
+		double depr_fedbas_itc_fed_reduction_sl_5 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5;
+		assign( "depr_fedbas_itc_sta_reduction_sl_5", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_5 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_5", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_5 ) );
 		assign( "depr_fedbas_after_itc_sl_5", var_data((ssc_number_t) (depr_fedbas_sl_5 + depr_fedbas_sl_5_bonus) ) );
 		assign( "depr_fedbas_first_year_bonus_sl_5", var_data((ssc_number_t) depr_fedbas_sl_5_bonus ) );
 		assign( "depr_fedbas_sl_5", var_data((ssc_number_t) depr_fedbas_sl_5 ) );
@@ -2815,8 +2872,10 @@ public:
 		assign( "itc_disallow_fed_percent_sl_15", var_data((ssc_number_t) itc_disallow_fed_percent_sl_15 ) );
  		assign( "depr_fedbas_fixed_amount_sl_15", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_15/100.0 * itc_fed_amount)) );
 		assign( "itc_disallow_fed_fixed_sl_15", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_15 ) );
-		assign( "depr_fedbas_itc_sta_reduction_sl_15", var_data((ssc_number_t) (itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_15 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_15 ) ) );
-		assign( "depr_fedbas_itc_fed_reduction_sl_15", var_data((ssc_number_t) (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15) ) );
+		double depr_fedbas_itc_sta_reduction_sl_15 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_15 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_15;
+		double depr_fedbas_itc_fed_reduction_sl_15 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15;
+		assign( "depr_fedbas_itc_sta_reduction_sl_15", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_15 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_15", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_15 ) );
 		assign( "depr_fedbas_after_itc_sl_15", var_data((ssc_number_t) (depr_fedbas_sl_15 + depr_fedbas_sl_15_bonus) ) );
 		assign( "depr_fedbas_first_year_bonus_sl_15", var_data((ssc_number_t) depr_fedbas_sl_15_bonus ) );
 		assign( "depr_fedbas_sl_15", var_data((ssc_number_t) depr_fedbas_sl_15 ) );
@@ -2835,8 +2894,10 @@ public:
 		assign( "itc_disallow_fed_percent_sl_20", var_data((ssc_number_t) itc_disallow_fed_percent_sl_20 ) );
  		assign( "depr_fedbas_fixed_amount_sl_20", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_20/100.0 * itc_fed_amount)) );
 		assign( "itc_disallow_fed_fixed_sl_20", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_20 ) );
-		assign( "depr_fedbas_itc_sta_reduction_sl_20", var_data((ssc_number_t) (itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_20 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_20 ) ) );
-		assign( "depr_fedbas_itc_fed_reduction_sl_20", var_data((ssc_number_t) (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20) ) );
+		double depr_fedbas_itc_sta_reduction_sl_20 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_20 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_20;
+		double depr_fedbas_itc_fed_reduction_sl_20 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20;
+		assign( "depr_fedbas_itc_sta_reduction_sl_20", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_20 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_20", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_20 ) );
 		assign( "depr_fedbas_after_itc_sl_20", var_data((ssc_number_t) (depr_fedbas_sl_20 + depr_fedbas_sl_20_bonus) ) );
 		assign( "depr_fedbas_first_year_bonus_sl_20", var_data((ssc_number_t) depr_fedbas_sl_20_bonus ) );
 		assign( "depr_fedbas_sl_20", var_data((ssc_number_t) depr_fedbas_sl_20 ) );
@@ -2855,35 +2916,44 @@ public:
 		assign( "itc_disallow_fed_percent_sl_39", var_data((ssc_number_t) itc_disallow_fed_percent_sl_39 ) );
  		assign( "depr_fedbas_fixed_amount_sl_39", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_39/100.0 * itc_fed_amount)) );
 		assign( "itc_disallow_fed_fixed_sl_39", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_39 ) );
-		assign( "depr_fedbas_itc_sta_reduction_sl_39", var_data((ssc_number_t) (itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_39 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_39 ) ) );
-		assign( "depr_fedbas_itc_fed_reduction_sl_39", var_data((ssc_number_t) (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39) ) );
+		double depr_fedbas_itc_sta_reduction_sl_39 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_39 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_39;
+		double depr_fedbas_itc_fed_reduction_sl_39 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39;
+		assign( "depr_fedbas_itc_sta_reduction_sl_39", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_39 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_39", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_39 ) );
 		assign( "depr_fedbas_after_itc_sl_39", var_data((ssc_number_t) (depr_fedbas_sl_39 + depr_fedbas_sl_39_bonus) ) );
 		assign( "depr_fedbas_first_year_bonus_sl_39", var_data((ssc_number_t) depr_fedbas_sl_39_bonus ) );
 		assign( "depr_fedbas_sl_39", var_data((ssc_number_t) depr_fedbas_sl_39 ) );
 
 
+		assign("depr_fedbas_percent_total", var_data((ssc_number_t)  (100.0*(depr_fedbas_macrs_5_frac+depr_fedbas_macrs_15_frac+depr_fedbas_sl_5_frac+depr_fedbas_sl_15_frac+depr_fedbas_sl_20_frac+depr_fedbas_sl_39_frac))));
+		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
+		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
+		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
+ 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+ 		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
+ 		assign( "depr_fedbas_percent_qual_total", var_data((ssc_number_t) 100.0) );
+ 		assign( "depr_fedbas_percent_amount_total", var_data((ssc_number_t) itc_fed_per) );
+		assign( "itc_disallow_fed_percent_total", var_data((ssc_number_t) (itc_disallow_fed_percent_macrs_5 + itc_disallow_fed_percent_macrs_15 + itc_disallow_fed_percent_sl_5 + itc_disallow_fed_percent_sl_15 + itc_disallow_fed_percent_sl_20 + itc_disallow_fed_percent_sl_39) ) );
+ 		assign( "depr_fedbas_fixed_amount_total", var_data((ssc_number_t) itc_fed_amount) );
+		assign( "itc_disallow_fed_fixed_total", var_data((ssc_number_t) (itc_disallow_fed_fixed_macrs_5 + itc_disallow_fed_fixed_macrs_15 + itc_disallow_fed_fixed_sl_5 + itc_disallow_fed_fixed_sl_15 + itc_disallow_fed_fixed_sl_20 + itc_disallow_fed_fixed_sl_39) ) );
+		double depr_fedbas_itc_sta_reduction_total = depr_fedbas_itc_sta_reduction_macrs_5 + depr_fedbas_itc_sta_reduction_macrs_15 + depr_fedbas_itc_sta_reduction_sl_5 + depr_fedbas_itc_sta_reduction_sl_15 + depr_fedbas_itc_sta_reduction_sl_20 + depr_fedbas_itc_sta_reduction_sl_39;
+		assign( "depr_fedbas_itc_sta_reduction_total", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_total ) );
+		double depr_fedbas_itc_fed_reduction_total = depr_fedbas_itc_fed_reduction_macrs_5 + depr_fedbas_itc_fed_reduction_macrs_15 + depr_fedbas_itc_fed_reduction_sl_5 + depr_fedbas_itc_fed_reduction_sl_15 + depr_fedbas_itc_fed_reduction_sl_20 + depr_fedbas_itc_fed_reduction_sl_39;
+		assign( "depr_fedbas_itc_fed_reduction_total", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_total ) );
+		double depr_fedbas_first_year_bonus_total = depr_fedbas_macrs_5_bonus+depr_fedbas_macrs_15_bonus+depr_fedbas_sl_5_bonus+depr_fedbas_sl_15_bonus+depr_fedbas_sl_20_bonus+depr_fedbas_sl_39_bonus;
+		assign( "depr_fedbas_after_itc_total", var_data((ssc_number_t) (depr_fedbas_total + depr_fedbas_first_year_bonus_total) ) );
+		assign( "depr_fedbas_first_year_bonus_total", var_data((ssc_number_t) depr_fedbas_first_year_bonus_total ) );
+		assign( "depr_fedbas_total", var_data((ssc_number_t) depr_fedbas_total ) );
 
 
 
 
 
-
-		assign( "depr_stabas_total", var_data((ssc_number_t) depr_stabas_total ) );
-
-		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
-		assign( "itc_sta_percent_total", var_data((ssc_number_t) itc_sta_per ) );
-		assign( "itc_sta_fixed_total", var_data((ssc_number_t) itc_sta_amount ) );
 
 		assign( "depr_alloc_none_percent", var_data((ssc_number_t) (depr_alloc_none_frac*100.0) ) );
 		assign( "depr_alloc_none", var_data((ssc_number_t) depr_alloc_none ) );
 		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
 		// Project cash flow
-
-
-
-		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
-		assign( "itc_sta_percent_total", var_data((ssc_number_t) itc_sta_per ) );
-		assign( "itc_sta_fixed_total", var_data((ssc_number_t) itc_sta_amount ) );
 
 
 
