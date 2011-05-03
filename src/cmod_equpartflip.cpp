@@ -186,11 +186,6 @@ static var_info _cm_vtab_equpartflip[] = {
 	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none_percent",		"Non-depreciable federal and state allocation",	"%", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none",		"Non-depreciable federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and state allocation",	"$", "",  "DHF",             "*",					  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and state allocation",	"$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 // state itc table
@@ -296,55 +291,149 @@ static var_info _cm_vtab_equpartflip[] = {
 /*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_39",		"39-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_39",		"39-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
-
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_15",		"15-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",  "DHF",             "*",					  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_5",		"5-yr straight line depreciation state ITC adj qualifying costs",	"$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_15",		"15-yr straight line depreciation state ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_20",		"20-yr straight line depreciation state ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_39",		"39-yr straight line depreciation state ITC adj qualifying costs","$", "",  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_total",		"Total state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_total",		"Total state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_total",		"Total state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_total",		"Total state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_total",		"Total state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",  "DHF",             "*",					  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state percentage","$", "",  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_total",		"Total state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_total",		"Total depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_total",		"Total depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_total",		"Total depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_total",		"Total depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_total",		"Total state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_total",		"Total state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_total",		"Total state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_total",		"Total state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_percent_total",		"State ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_fixed_total",		"State ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state fixed amount","$", "",  "DHF",             "*",					  "",     			        "" },
-
-	
 // federal itc table
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_5",		"5-yr MACRS federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_5",		"5-yr MACRS federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_5",		"5-yr MACRS federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_5",		"5-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_5",		"5-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_15",		"15-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_5",		"5-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_15",		"15-yr straight line depreciation federal ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_20",		"20-yr straight line depreciation federal ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_39",		"39-yr straight line depreciation federal ITC adj qualifying costs","$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_total",		"Total federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_5",		"5-yr MACRS federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal percentage","$", "",  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_5",		"5-yr MACRS federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_5",		"5-yr MACRS federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_5",		"5-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_5",		"5-yr MACRS federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_5",		"5-yr MACRS federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_15",		"15-yr MACRS federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_15",		"15-yr MACRS federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_15",		"15-yr MACRS federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_15",		"15-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_15",		"15-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_15",		"15-yr MACRS federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_15",		"15-yr MACRS federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_15",		"15-yr MACRS federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_15",		"15-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_15",		"15-yr MACRS federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_15",		"15-yr MACRS federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_5",		"5-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_5",		"5-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_5",		"5-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_5",		"5-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_5",		"5-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_5",		"5-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_5",		"5-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_5",		"5-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_5",		"5-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_5",		"5-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_5",		"5-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_15",		"15-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_15",		"15-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_15",		"15-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_15",		"15-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_15",		"15-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_15",		"15-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_15",		"15-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_15",		"15-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_15",		"15-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_15",		"15-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_15",		"15-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_20",		"20-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_20",		"20-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_20",		"20-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_20",		"20-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_20",		"20-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_20",		"20-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_20",		"20-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_20",		"20-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_20",		"20-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_20",		"20-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_20",		"20-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_39",		"39-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_39",		"39-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_39",		"39-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_39",		"39-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_39",		"39-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_39",		"39-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_39",		"39-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_39",		"39-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_39",		"39-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_39",		"39-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_39",		"39-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_total",		"Total federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_total",		"Total federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_total",		"Total federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_total",		"Total federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_total",		"Total federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_total",		"Total federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_total",		"Total depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_total",		"Total depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_total",		"Total depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_total",		"Total depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_total",		"Total federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_total",		"Total federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_total",		"Total federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_total",		"Total federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",					  "",     			        "" },
 
 
 /* depreciation bases method - added with version 4.1    0=5-yrMacrs, 1=proportional */
@@ -357,11 +446,6 @@ static var_info _cm_vtab_equpartflip[] = {
 
 
 /* State depreciation table */
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_15",		"15-yr MACRS state depreciation basis",	"$", "",  "DHF",             "*",					  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_5",		"5-yr straight line state depreciation basis",	"$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_15",		"15-yr straight line state depreciation basis","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_20",		"20-yr straight line state depreciation basis","$", "",  "DHF",             "*",						  "",     			        "" },
-//	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_39",		"39-yr straight line state depreciation basis","$", "",  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 /* Federal depreciation table */
@@ -1710,7 +1794,7 @@ public:
 		itc_sta_total = itc_sta_amount + itc_sta_per;
 		itc_total = itc_fed_total + itc_sta_total;
 
-// Depreciaiton
+// Depreciation
 // State depreciation
 		depr_stabas_macrs_5 = depr_alloc_macrs_5 - depr_stabas_macrs_5_frac * depr_sta_reduction;
 		depr_stabas_macrs_15 = depr_alloc_macrs_15 - depr_stabas_macrs_15_frac * depr_sta_reduction;
@@ -1897,9 +1981,6 @@ public:
 			// pbi in ebitda - so remove if non-taxable
 			// 5/1/11
 			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + cf.at(CF_statax_taxable_incentives,i);
-//			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + (cf.at(CF_statax_taxable_incentives,i) - cf.at(CF_pbi_total,i) );
-//			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + (cf.at(CF_pbi_statax_total,i) - cf.at(CF_pbi_total,i) );
-//			if (i==1) cf.at(CF_statax_income_with_incentives,i) += cbi_statax_total + ibi_statax_total;
 			cf.at(CF_statax,i) = -state_tax_rate * cf.at(CF_statax_income_with_incentives,i); 
 
 // federal 
@@ -1932,9 +2013,6 @@ public:
 			// pbi in ebitda - so remove if non-taxable
 			// 5/1/11
 			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_fedtax_taxable_incentives,i);
-//			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + (cf.at(CF_fedtax_taxable_incentives,i) - cf.at(CF_pbi_total,i) );
-//			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + (cf.at(CF_pbi_fedtax_total,i) - cf.at(CF_pbi_total,i) );
-//			if (i==1) cf.at(CF_fedtax_income_with_incentives,i) += cbi_fedtax_total + ibi_fedtax_total;
 			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i); 
 
 			cf.at(CF_project_return_aftertax,i) = 
@@ -2945,20 +3023,11 @@ public:
 		assign( "depr_fedbas_first_year_bonus_total", var_data((ssc_number_t) depr_fedbas_first_year_bonus_total ) );
 		assign( "depr_fedbas_total", var_data((ssc_number_t) depr_fedbas_total ) );
 
-
-
-
-
-
 		assign( "depr_alloc_none_percent", var_data((ssc_number_t) (depr_alloc_none_frac*100.0) ) );
 		assign( "depr_alloc_none", var_data((ssc_number_t) depr_alloc_none ) );
 		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
 		// Project cash flow
-
-
-
-
-	}
+}
 
 
 	// std lib

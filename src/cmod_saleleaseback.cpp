@@ -143,7 +143,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_20",   "Federal bonus depreciation 20-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_39",   "Federal bonus depreciation 39-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
 /* DHF ITC depreciation */
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_5",   "State itc depreciation 5-yr MACRS","0/1", "",                      "DHF",			 "?=1",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_5",   "State itc depreciation 5-yr MACRS","0/1","",                     "DHF",			 "?=0",                       "BOOLEAN",                        "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_15",   "State itc depreciation 15-yr MACRS","0/1","",                     "DHF",			 "?=0",                       "BOOLEAN",                        "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_5",   "State itc depreciation 5-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_15",   "State itc depreciation 15-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
@@ -166,69 +166,258 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "nominal_discount_rate",   "Nominal discount rate",            "%",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "salvage_value",			"Net pre-tax cash salvage value",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-
+	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none_percent",		"Non-depreciable federal and state allocation",	"%", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none",		"Non-depreciable federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and state allocation",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and state allocation",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation","$", "",  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 // state itc table
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_macrs_5",		"5-yr MACRS state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_macrs_5",		"5-yr MACRS state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_macrs_5",		"5-yr MACRS state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_macrs_5",		"5-yr MACRS state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_5",		"5-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_15",		"15-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_5",		"5-yr straight line depreciation state ITC adj qualifying costs",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_15",		"15-yr straight line depreciation state ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_20",		"20-yr straight line depreciation state ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_39",		"39-yr straight line depreciation state ITC adj qualifying costs","$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_total",		"Total state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_macrs_5",		"5-yr MACRS state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state percentage","$", "",  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_macrs_5",		"5-yr MACRS state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_macrs_5",		"5-yr MACRS state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_macrs_5",		"5-yr MACRS state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_macrs_5",		"5-yr MACRS state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_5",		"5-yr MACRS state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_macrs_15",		"15-yr MACRS state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_macrs_15",		"15-yr MACRS state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_macrs_15",		"15-yr MACRS state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_macrs_15",		"15-yr MACRS state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_15",		"15-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_macrs_15",		"15-yr MACRS state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_macrs_15",		"15-yr MACRS state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_macrs_15",		"15-yr MACRS state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_macrs_15",		"15-yr MACRS state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_macrs_15",		"15-yr MACRS state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_15",		"15-yr MACRS state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_5",		"5-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_5",		"5-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_5",		"5-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_5",		"5-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_5",		"5-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_5",		"5-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_5",		"5-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_5",		"5-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_5",		"5-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_5",		"5-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_5",		"5-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_5",		"5-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_5",		"5-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_15",		"15-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_15",		"15-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_15",		"15-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_15",		"15-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_15",		"15-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_15",		"15-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_15",		"15-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_15",		"15-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_15",		"15-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_15",		"15-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_15",		"15-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_15",		"15-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_15",		"15-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_20",		"20-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_20",		"20-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_20",		"20-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_20",		"20-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_20",		"20-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_20",		"20-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_20",		"20-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_20",		"20-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_20",		"20-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_20",		"20-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_20",		"20-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_20",		"20-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_20",		"20-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_39",		"39-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_39",		"39-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_39",		"39-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_39",		"39-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_39",		"39-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_39",		"39-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_39",		"39-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_39",		"39-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_39",		"39-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_39",		"39-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_39",		"39-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_39",		"39-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_39",		"39-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_total",		"Total state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_total",		"Total state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_total",		"Total state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_total",		"Total state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_total",		"Total state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_total",		"Total state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_total",		"Total depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_total",		"Total depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_total",		"Total depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_total",		"Total depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_total",		"Total state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_total",		"Total state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_total",		"Total state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_total",		"Total state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_percent_total",		"State ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_fixed_total",		"State ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state fixed amount","$", "",  "DHF",             "*",					  "",     			        "" },
-
-	
 // federal itc table
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_5",		"5-yr MACRS federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_5",		"5-yr MACRS federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_5",		"5-yr MACRS federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_5",		"5-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_5",		"5-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_15",		"15-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_5",		"5-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_15",		"15-yr straight line depreciation federal ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_20",		"20-yr straight line depreciation federal ITC adj qualifying costs","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_39",		"39-yr straight line depreciation federal ITC adj qualifying costs","$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_total",		"Total federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_5",		"5-yr MACRS federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal percentage","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal percentage","$", "",  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_5",		"5-yr MACRS federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_5",		"5-yr MACRS federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_5",		"5-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_5",		"5-yr MACRS federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_5",		"5-yr MACRS federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_15",		"15-yr MACRS federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_15",		"15-yr MACRS federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_15",		"15-yr MACRS federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_15",		"15-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_15",		"15-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_15",		"15-yr MACRS federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_15",		"15-yr MACRS federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_15",		"15-yr MACRS federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_15",		"15-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_15",		"15-yr MACRS federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_15",		"15-yr MACRS federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_5",		"5-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_5",		"5-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_5",		"5-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_5",		"5-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_5",		"5-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_5",		"5-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_5",		"5-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_5",		"5-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_5",		"5-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_5",		"5-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_5",		"5-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_15",		"15-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_15",		"15-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_15",		"15-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_15",		"15-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_15",		"15-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_15",		"15-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_15",		"15-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_15",		"15-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_15",		"15-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_15",		"15-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_15",		"15-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_20",		"20-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_20",		"20-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_20",		"20-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_20",		"20-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_20",		"20-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_20",		"20-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_20",		"20-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_20",		"20-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_20",		"20-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_20",		"20-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_20",		"20-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_39",		"39-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_39",		"39-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_39",		"39-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_39",		"39-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_39",		"39-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_39",		"39-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_39",		"39-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_39",		"39-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_39",		"39-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_39",		"39-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_39",		"39-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_total",		"Total federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_total",		"Total federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_total",		"Total federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_total",		"Total federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_total",		"Total federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_total",		"Total federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_total",		"Total depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_total",		"Total depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_total",		"Total depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_total",		"Total depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_total",		"Total federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_total",		"Total federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_total",		"Total federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_total",		"Total federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal fixed amount","$", "",  "DHF",             "*",					  "",     			        "" },
 
 
 /* depreciation bases method - added with version 4.1    0=5-yrMacrs, 1=proportional */
@@ -237,12 +426,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 
 /* State depreciation table */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_5",		"5-yr MACRS state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_15",		"15-yr MACRS state depreciation basis",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_5",		"5-yr straight line state depreciation basis",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_15",		"15-yr straight line state depreciation basis","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_20",		"20-yr straight line state depreciation basis","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_39",		"39-yr straight line state depreciation basis","$", "",  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 
 /* Federal depreciation table */
@@ -403,8 +586,10 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income_prior_incentives",        "Tax investor state taxable income prior to incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income_prior_incentives",        "Tax investor federal taxable income prior to incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income",        "Tax investor state taxable income",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income",        "Tax investor federal taxable income",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income_with_incentives",        "Tax investor state taxable income with incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income_with_incentives",        "Tax investor federal taxable income with incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_taxable_incentives",        "Tax investor state taxable incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_taxable_incentives",        "Tax investor federal taxable incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax",        "Tax investor state tax",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax",        "Tax investor federal tax",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -437,17 +622,19 @@ static var_info _cm_vtab_saleleaseback[] = {
 	
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_prior_incentives", "Developer state taxable income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income", "Developer state taxable income",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_with_incentives", "Developer state taxable income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_taxable_incentives", "Developer state taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax",				"Developer state tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_prior_incentives", "Developer federal taxable income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income", "Developer federal tax income",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_with_incentives", "Developer federal tax income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_taxable_incentives", "Developer federal taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax",				"Developer federal tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	// metrics table
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_capacity_factor",    "Capacity factor",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_kwh_per_kw",    "Year 1 kWh/kW",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_kwh_per_kw",    "First year kWh/kW",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_debt_fraction",    "Debt fraction",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_flip_target_year",    "IRR target year",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_flip_target_irr",    "IRR target",  "", "",                      "DHF",      "*",                     "",                "" },
@@ -541,8 +728,10 @@ enum {
 
 	CF_tax_investor_statax_income_prior_incentives,
 	CF_tax_investor_fedtax_income_prior_incentives,
-	CF_tax_investor_statax_income,
-	CF_tax_investor_fedtax_income,
+	CF_tax_investor_statax_income_with_incenitves,
+	CF_tax_investor_fedtax_income_with_incentives,
+	CF_tax_investor_statax_taxable_incentives,
+	CF_tax_investor_fedtax_taxable_incentives,
 	CF_tax_investor_statax,
 	CF_tax_investor_fedtax,
 
@@ -596,7 +785,8 @@ enum {
 	CF_stadepr_me3,
 	CF_stadepr_total,
 	CF_sponsor_statax_income_prior_incentives,
-	CF_sponsor_statax_income,
+	CF_sponsor_statax_income_with_incentives,
+	CF_sponsor_statax_taxable_incentives,
 	CF_sponsor_statax,
 
 	CF_feddepr_macrs_5,
@@ -610,7 +800,8 @@ enum {
 	CF_feddepr_me3,
 	CF_feddepr_total,
 	CF_sponsor_fedtax_income_prior_incentives,
-	CF_sponsor_fedtax_income,
+	CF_sponsor_fedtax_income_with_incentives,
+	CF_sponsor_fedtax_taxable_incentives,
 	CF_sponsor_fedtax,
 
 	CF_me1depr_total,
@@ -1164,20 +1355,29 @@ public:
 			( as_boolean("ibi_oth_amount_tax_fed") ? ibi_oth_amount : 0 ) +
 			( as_boolean("ibi_oth_percent_tax_fed") ? ibi_oth_per : 0 );
 
+		// SL - EBITDA includes pbi - so appears a tax reduction if non-taxable
 		for (i=1;i<=nyears;i++)
 		{
 			cf.at(CF_pbi_statax_total,i) =
-				( as_boolean("pbi_fed_tax_sta") ? cf.at(CF_pbi_fed,i) : 0 ) +
-				( as_boolean("pbi_sta_tax_sta") ? cf.at(CF_pbi_sta,i) : 0 ) +
-				( as_boolean("pbi_uti_tax_sta") ? cf.at(CF_pbi_uti,i) : 0 ) +
-				( as_boolean("pbi_oth_tax_sta") ? cf.at(CF_pbi_oth,i) : 0 ) ;
+				( as_boolean("pbi_fed_tax_sta") ? 0:-cf.at(CF_pbi_fed,i) ) +
+				( as_boolean("pbi_sta_tax_sta") ? 0:-cf.at(CF_pbi_sta,i) ) +
+				( as_boolean("pbi_uti_tax_sta") ? 0:-cf.at(CF_pbi_uti,i) ) +
+				( as_boolean("pbi_oth_tax_sta") ? 0:-cf.at(CF_pbi_oth,i) ) ;
 
 			cf.at(CF_pbi_fedtax_total,i) =
-				( as_boolean("pbi_fed_tax_fed") ? cf.at(CF_pbi_fed,i) : 0 ) +
-				( as_boolean("pbi_sta_tax_fed") ? cf.at(CF_pbi_sta,i) : 0 ) +
-				( as_boolean("pbi_uti_tax_fed") ? cf.at(CF_pbi_uti,i) : 0 ) +
-				( as_boolean("pbi_oth_tax_fed") ? cf.at(CF_pbi_oth,i) : 0 ) ;
+				( as_boolean("pbi_fed_tax_fed") ? 0:-cf.at(CF_pbi_fed,i) ) +
+				( as_boolean("pbi_sta_tax_fed") ? 0:-cf.at(CF_pbi_sta,i) ) +
+				( as_boolean("pbi_uti_tax_fed") ? 0:-cf.at(CF_pbi_uti,i) ) +
+				( as_boolean("pbi_oth_tax_fed") ? 0:-cf.at(CF_pbi_oth,i) ) ;
 		}
+		// 5/1/11
+		for (i=1;i<=nyears;i++)
+		{
+			cf.at(CF_sponsor_statax_taxable_incentives,i) = cf.at(CF_pbi_statax_total,i);
+			cf.at(CF_sponsor_fedtax_taxable_incentives,i) = cf.at(CF_pbi_fedtax_total,i);
+		}
+		cf.at(CF_tax_investor_statax_taxable_incentives,1) = cbi_statax_total + ibi_statax_total;
+		cf.at(CF_tax_investor_fedtax_taxable_incentives,1) = cbi_fedtax_total + ibi_fedtax_total;
 
 		double cost_financing;
 
@@ -1189,7 +1389,7 @@ public:
 		double depr_alloc_sl_15_frac = as_double("depr_alloc_sl_15_percent") * 0.01;
 		double depr_alloc_sl_20_frac = as_double("depr_alloc_sl_20_percent") * 0.01;
 		double depr_alloc_sl_39_frac = as_double("depr_alloc_sl_39_percent") * 0.01;
-		double depr_alloc_total_frac = depr_alloc_macrs_5_frac + depr_alloc_macrs_15_frac +
+		double depr_alloc_total_frac = depr_alloc_macrs_5_frac + depr_alloc_macrs_15_frac +	
 			depr_alloc_sl_5_frac + depr_alloc_sl_15_frac +	depr_alloc_sl_20_frac +	depr_alloc_sl_39_frac;
 		// TODO - place check that depr_alloc_total_frac <= 1 and <>0
 		double depr_alloc_none_frac = 1.0 - depr_alloc_total_frac;
@@ -1213,7 +1413,7 @@ public:
 		double depr_stabas_sl_20_frac;
 		double depr_stabas_sl_39_frac;
 
-		if (as_integer("depr_stabas_method")==0)
+		if (as_integer("depr_stabas_method")==0) 
 		{
 			depr_stabas_macrs_5_frac = 1.0;
 			depr_stabas_macrs_15_frac = 0.0;
@@ -1239,7 +1439,7 @@ public:
 		double depr_fedbas_sl_20_frac;
 		double depr_fedbas_sl_39_frac;
 
-		if (as_integer("depr_fedbas_method")==0)
+		if (as_integer("depr_fedbas_method")==0) 
 		{
 			depr_fedbas_macrs_5_frac = 1.0;
 			depr_fedbas_macrs_15_frac = 0.0;
@@ -1339,20 +1539,25 @@ public:
 
 // Depreciation
 // State depreciation
-		double depr_sta_reduction =  (
+		double depr_sta_reduction_ibi =  (
 			( as_boolean("ibi_fed_amount_deprbas_sta")  ? ibi_fed_amount : 0 ) +
 			( as_boolean("ibi_fed_percent_deprbas_sta")  ? ibi_fed_per : 0 ) +
-			( as_boolean("cbi_fed_deprbas_sta")  ? cbi_fed_amount : 0 ) +
 			( as_boolean("ibi_sta_amount_deprbas_sta")  ? ibi_sta_amount : 0 ) +
 			( as_boolean("ibi_sta_percent_deprbas_sta")  ? ibi_sta_per : 0 ) +
-			( as_boolean("cbi_sta_deprbas_sta")  ? cbi_sta_amount : 0 ) +
 			( as_boolean("ibi_uti_amount_deprbas_sta")  ? ibi_uti_amount : 0 ) +
 			( as_boolean("ibi_uti_percent_deprbas_sta")  ? ibi_uti_per : 0 ) +
-			( as_boolean("cbi_uti_deprbas_sta")  ? cbi_uti_amount : 0 ) +
 			( as_boolean("ibi_oth_amount_deprbas_sta")  ? ibi_oth_amount : 0 ) +
-			( as_boolean("ibi_oth_percent_deprbas_sta")  ? ibi_oth_per : 0 ) +
-			( as_boolean("cbi_oth_deprbas_sta")  ? cbi_oth_amount : 0 )
+			( as_boolean("ibi_oth_percent_deprbas_sta")  ? ibi_oth_per : 0 )
 			);
+
+		double depr_sta_reduction_cbi =  (
+			( as_boolean("cbi_fed_deprbas_sta")  ? cbi_fed_amount : 0 ) +
+			( as_boolean("cbi_sta_deprbas_sta")  ? cbi_sta_amount : 0 ) +
+			( as_boolean("cbi_uti_deprbas_sta")  ? cbi_uti_amount : 0 ) +
+			( as_boolean("cbi_oth_deprbas_sta")  ? cbi_oth_amount : 0 ) 
+			);
+		
+		double depr_sta_reduction = depr_sta_reduction_ibi + depr_sta_reduction_cbi;
 
 		double depr_stabas_macrs_5;
 		double depr_stabas_macrs_15;
@@ -1386,21 +1591,25 @@ public:
 		double depr_stabas_total;
 
 		// Federal depreciation
-
-		double depr_fed_reduction =  (
+			double depr_fed_reduction_ibi =  (
 			( as_boolean("ibi_fed_amount_deprbas_fed")  ? ibi_fed_amount : 0 ) +
 			( as_boolean("ibi_fed_percent_deprbas_fed")  ? ibi_fed_per : 0 ) +
-			( as_boolean("cbi_fed_deprbas_fed")  ? cbi_fed_amount : 0 ) +
 			( as_boolean("ibi_sta_amount_deprbas_fed")  ? ibi_sta_amount : 0 ) +
 			( as_boolean("ibi_sta_percent_deprbas_fed")  ? ibi_sta_per : 0 ) +
-			( as_boolean("cbi_sta_deprbas_fed")  ? cbi_sta_amount : 0 ) +
 			( as_boolean("ibi_uti_amount_deprbas_fed")  ? ibi_uti_amount : 0 ) +
 			( as_boolean("ibi_uti_percent_deprbas_fed")  ? ibi_uti_per : 0 ) +
-			( as_boolean("cbi_uti_deprbas_fed")  ? cbi_uti_amount : 0 ) +
 			( as_boolean("ibi_oth_amount_deprbas_fed")  ? ibi_oth_amount : 0 ) +
-			( as_boolean("ibi_oth_percent_deprbas_fed")  ? ibi_oth_per : 0 ) +
-			( as_boolean("cbi_oth_deprbas_fed")  ? cbi_oth_amount : 0 )
+			( as_boolean("ibi_oth_percent_deprbas_fed")  ? ibi_oth_per : 0 )
 			);
+
+		double depr_fed_reduction_cbi =  (
+			( as_boolean("cbi_fed_deprbas_fed")  ? cbi_fed_amount : 0 ) +
+			( as_boolean("cbi_sta_deprbas_fed")  ? cbi_sta_amount : 0 ) +
+			( as_boolean("cbi_uti_deprbas_fed")  ? cbi_uti_amount : 0 ) +
+			( as_boolean("cbi_oth_deprbas_fed")  ? cbi_oth_amount : 0 ) 
+			);
+		
+		double depr_fed_reduction = depr_fed_reduction_ibi + depr_fed_reduction_cbi;
 
 		double depr_fedbas_macrs_5;
 		double depr_fedbas_macrs_15;
@@ -1549,6 +1758,15 @@ public:
 		itc_disallow_sta_percent_sl_20 = itc_sta_qual_sl_20_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_20 / itc_sta_qual_total * itc_sta_per);
 		itc_disallow_sta_percent_sl_39 = itc_sta_qual_sl_39_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_39 / itc_sta_qual_total * itc_sta_per);
 
+		// 4/30/11
+		itc_disallow_sta_fixed_macrs_5 = itc_sta_qual_macrs_5_frac * (itc_sta_disallow_factor * itc_sta_qual_macrs_5 / itc_sta_qual_total * itc_sta_amount);
+		itc_disallow_sta_fixed_macrs_15 = itc_sta_qual_macrs_15_frac * (itc_sta_disallow_factor * itc_sta_qual_macrs_15 / itc_sta_qual_total * itc_sta_amount);
+		itc_disallow_sta_fixed_sl_5 = itc_sta_qual_sl_5_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_5 / itc_sta_qual_total * itc_sta_amount);
+		itc_disallow_sta_fixed_sl_15 = itc_sta_qual_sl_15_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_15 / itc_sta_qual_total * itc_sta_amount);
+		itc_disallow_sta_fixed_sl_20 = itc_sta_qual_sl_20_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_20 / itc_sta_qual_total * itc_sta_amount);
+		itc_disallow_sta_fixed_sl_39 = itc_sta_qual_sl_39_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_39 / itc_sta_qual_total * itc_sta_amount);
+
+
 		itc_fed_qual_macrs_5 = itc_fed_qual_macrs_5_frac * ( depr_alloc_macrs_5 - depr_fedbas_macrs_5_frac * depr_fed_reduction);
 		itc_fed_qual_macrs_15 = itc_fed_qual_macrs_15_frac * ( depr_alloc_macrs_15 - depr_fedbas_macrs_15_frac * depr_fed_reduction);
 		itc_fed_qual_sl_5 = itc_fed_qual_sl_5_frac * ( depr_alloc_sl_5 - depr_fedbas_sl_5_frac * depr_fed_reduction);
@@ -1566,6 +1784,14 @@ public:
 		itc_disallow_fed_percent_sl_15 = itc_fed_qual_sl_15_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_15 / itc_fed_qual_total * itc_fed_per);
 		itc_disallow_fed_percent_sl_20 = itc_fed_qual_sl_20_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_20 / itc_fed_qual_total * itc_fed_per);
 		itc_disallow_fed_percent_sl_39 = itc_fed_qual_sl_39_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_39 / itc_fed_qual_total * itc_fed_per);
+
+		// 4/30/11
+		itc_disallow_fed_fixed_macrs_5 = itc_fed_qual_macrs_5_frac * (itc_fed_disallow_factor * itc_fed_qual_macrs_5 / itc_fed_qual_total * itc_fed_amount);
+		itc_disallow_fed_fixed_macrs_15 = itc_fed_qual_macrs_15_frac * (itc_fed_disallow_factor * itc_fed_qual_macrs_15 / itc_fed_qual_total * itc_fed_amount);
+		itc_disallow_fed_fixed_sl_5 = itc_fed_qual_sl_5_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_5 / itc_fed_qual_total * itc_fed_amount);
+		itc_disallow_fed_fixed_sl_15 = itc_fed_qual_sl_15_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_15 / itc_fed_qual_total * itc_fed_amount);
+		itc_disallow_fed_fixed_sl_20 = itc_fed_qual_sl_20_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_20 / itc_fed_qual_total * itc_fed_amount);
+		itc_disallow_fed_fixed_sl_39 = itc_fed_qual_sl_39_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_39 / itc_fed_qual_total * itc_fed_amount);
 
 		itc_fed_total = itc_fed_amount + itc_fed_per;
 		itc_sta_total = itc_sta_amount + itc_sta_per;
@@ -1639,33 +1865,33 @@ public:
 		// ITC reduction
 		depr_fedbas_macrs_5 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_5 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_5 );
 
 		depr_fedbas_macrs_15 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_15 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_15 );
 
 		depr_fedbas_sl_5 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_5 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_5 );
 
 		depr_fedbas_sl_15 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_15 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_15 );
 
 		depr_fedbas_sl_20 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_20 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_20 );
 
 		depr_fedbas_sl_39 -= (itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 +
 								itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39 +
-								itc_sta_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 +
-								itc_sta_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39 );
+								itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_39 +
+								itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_39 );
 
 		// Bonus depreciation
 		depr_fedbas_macrs_5_bonus = depr_fedbas_macrs_5_bonus_frac * depr_fedbas_macrs_5;
@@ -1823,15 +2049,15 @@ public:
 			cf.at(CF_energy_value,0) + cf.at(CF_reserve_interest,0) + cf.at(CF_reserve_leasepayment_interest,0)
 			- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
 			- cf.at(CF_pretax_operating_cashflow,0);
-		cf.at(CF_sponsor_statax_income,0) = cf.at(CF_sponsor_statax_income_prior_incentives,0) + cf.at(CF_pbi_statax_total,0);
-		cf.at(CF_sponsor_statax,0) = -state_tax_rate * cf.at(CF_sponsor_statax_income,0);
+		cf.at(CF_sponsor_statax_income_with_incentives,0) = cf.at(CF_sponsor_statax_income_prior_incentives,0) + cf.at(CF_sponsor_statax_taxable_incentives,0);
+		cf.at(CF_sponsor_statax,0) = -state_tax_rate * cf.at(CF_sponsor_statax_income_with_incentives,0);
 
 		cf.at(CF_sponsor_fedtax_income_prior_incentives,0)=
 			cf.at(CF_energy_value,0) + cf.at(CF_reserve_interest,0) + cf.at(CF_reserve_leasepayment_interest,0)
 			- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
 			- cf.at(CF_pretax_operating_cashflow,0) + cf.at(CF_sponsor_statax,0);
-		cf.at(CF_sponsor_fedtax_income,0) = cf.at(CF_sponsor_fedtax_income_prior_incentives,0) + cf.at(CF_pbi_fedtax_total,0);
-		cf.at(CF_sponsor_fedtax,0) = -federal_tax_rate * cf.at(CF_sponsor_fedtax_income,0);
+		cf.at(CF_sponsor_fedtax_income_with_incentives,0) = cf.at(CF_sponsor_fedtax_income_prior_incentives,0) + cf.at(CF_sponsor_fedtax_taxable_incentives,0);
+		cf.at(CF_sponsor_fedtax,0) = -federal_tax_rate * cf.at(CF_sponsor_fedtax_income_with_incentives,0);
 
 		
 
@@ -1863,10 +2089,11 @@ public:
 				- (cf.at(CF_om_fixed_expense,i) + cf.at(CF_om_capacity_expense,i) + cf.at(CF_om_production_expense,i) + cf.at(CF_om_fuel_expense,i) + cf.at(CF_insurance_expense,i) + cf.at(CF_property_tax_expense,i) )
 				- cf.at(CF_pretax_operating_cashflow,i);
 
-			cf.at(CF_sponsor_statax_income,i) = cf.at(CF_sponsor_statax_income_prior_incentives,i) + cf.at(CF_pbi_statax_total,i);
-			cf.at(CF_sponsor_statax,i) = -state_tax_rate * cf.at(CF_sponsor_statax_income,i);
+			// 5/1/11
+			cf.at(CF_sponsor_statax_income_with_incentives,i) = cf.at(CF_sponsor_statax_income_prior_incentives,i) + cf.at(CF_sponsor_statax_taxable_incentives,i);
+			cf.at(CF_sponsor_statax,i) = -state_tax_rate * cf.at(CF_sponsor_statax_income_with_incentives,i); 
 
-// federal
+// federal 
 			cf.at(CF_feddepr_macrs_5,i) = cf.at(CF_macrs_5_frac,i) * depr_fedbas_macrs_5;
 			cf.at(CF_feddepr_macrs_15,i) = cf.at(CF_macrs_15_frac,i) * depr_fedbas_macrs_15;
 			cf.at(CF_feddepr_sl_5,i) = cf.at(CF_sl_5_frac,i) * depr_fedbas_sl_5;
@@ -1888,8 +2115,9 @@ public:
 				cf.at(CF_energy_value,i) + cf.at(CF_reserve_interest,i) + cf.at(CF_reserve_leasepayment_interest,i)
 				- (cf.at(CF_om_fixed_expense,i) + cf.at(CF_om_capacity_expense,i) + cf.at(CF_om_production_expense,i) + cf.at(CF_om_fuel_expense,i) + cf.at(CF_insurance_expense,i) + cf.at(CF_property_tax_expense,i) )
 				- cf.at(CF_pretax_operating_cashflow,i) + cf.at(CF_sponsor_statax,i);
-			cf.at(CF_sponsor_fedtax_income,i) = cf.at(CF_sponsor_fedtax_income_prior_incentives,i) + cf.at(CF_pbi_fedtax_total,i);
-			cf.at(CF_sponsor_fedtax,i) = -federal_tax_rate * cf.at(CF_sponsor_fedtax_income,i);
+			// 5/1/11
+			cf.at(CF_sponsor_fedtax_income_with_incentives,i) = cf.at(CF_sponsor_fedtax_income_prior_incentives,i) + cf.at(CF_sponsor_fedtax_taxable_incentives,i);
+			cf.at(CF_sponsor_fedtax,i) = -federal_tax_rate * cf.at(CF_sponsor_fedtax_income_with_incentives,i); 
 
 			cf.at(CF_sponsor_aftertax,i) =
 				cf.at(CF_sponsor_aftertax_cash,i) +
@@ -1930,16 +2158,15 @@ public:
 
 			cf.at(CF_tax_investor_statax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_stadepr_total,i) + cf.at(CF_net_salvage_value,i);
 
-			cf.at(CF_tax_investor_statax_income,i) = cf.at(CF_tax_investor_statax_income_prior_incentives,i);
-			if (i==1) cf.at(CF_tax_investor_statax_income,i) += cbi_statax_total + ibi_statax_total;
-			cf.at(CF_tax_investor_statax,i) = -cf.at(CF_tax_investor_statax_income,i)*state_tax_rate;
+			cf.at(CF_tax_investor_statax_income_with_incenitves,i) = cf.at(CF_tax_investor_statax_income_prior_incentives,i) + cf.at(CF_tax_investor_statax_taxable_incentives,i);
+			cf.at(CF_tax_investor_statax,i) = -cf.at(CF_tax_investor_statax_income_with_incenitves,i)*state_tax_rate;
 
 			cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_feddepr_total,i) + cf.at(CF_net_salvage_value,i)
 				+ cf.at(CF_tax_investor_statax,i) + cf.at(CF_ptc_sta,i);
+
 			if (i==1) cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) += itc_sta_total;
-			cf.at(CF_tax_investor_fedtax_income,i) = cf.at(CF_tax_investor_fedtax_income_prior_incentives,i);
-			if (i==1) cf.at(CF_tax_investor_fedtax_income,i) += cbi_fedtax_total + ibi_fedtax_total;
-			cf.at(CF_tax_investor_fedtax,i) = -cf.at(CF_tax_investor_fedtax_income,i)*federal_tax_rate;
+			cf.at(CF_tax_investor_fedtax_income_with_incentives,i) = cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) + cf.at(CF_tax_investor_fedtax_taxable_incentives,i);
+			cf.at(CF_tax_investor_fedtax,i) = -cf.at(CF_tax_investor_fedtax_income_with_incentives,i)*federal_tax_rate;
 
 			cf.at(CF_tax_investor_aftertax_tax,i) = cf.at(CF_tax_investor_fedtax,i) + cf.at(CF_tax_investor_statax,i);
 
@@ -1961,7 +2188,7 @@ public:
 					flip_year=i;
 					cf.at(CF_tax_investor_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
 				}
-//				if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
+				else if ( ( cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_tax_investor_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
 			}
 
 		}
@@ -2049,7 +2276,7 @@ public:
 		its++;
 
 	}	// target tax investor return in target year
-	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) );
+	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) && (ppa >= 0) );
 
 /***************** end iterative solution *********************************************************************/
 
@@ -2087,13 +2314,6 @@ public:
 	assign( "cost_salestax", var_data((ssc_number_t)cost_salestax ) );
 	assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
 
-	assign( "depr_stabas_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5 ) );
-	assign( "depr_stabas_macrs_15", var_data((ssc_number_t) depr_stabas_macrs_15 ) );
-	assign( "depr_stabas_sl_5", var_data((ssc_number_t) depr_stabas_sl_5 ) );
-	assign( "depr_stabas_sl_15", var_data((ssc_number_t) depr_stabas_sl_15 ) );
-	assign( "depr_stabas_sl_20", var_data((ssc_number_t) depr_stabas_sl_20 ) );
-	assign( "depr_stabas_sl_39", var_data((ssc_number_t) depr_stabas_sl_39 ) );
-	assign( "depr_stabas_total", var_data((ssc_number_t) depr_stabas_total ) );
 
 	assign( "depr_fedbas_macrs_5", var_data((ssc_number_t) depr_fedbas_macrs_5 ) );
 	assign( "depr_fedbas_macrs_15", var_data((ssc_number_t) depr_fedbas_macrs_15 ) );
@@ -2139,38 +2359,15 @@ public:
 	assign("sv_sponsor_pretax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
 	assign("sv_sponsor_aftertax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
 
-	assign( "depr_alloc_macrs_5", var_data((ssc_number_t) depr_alloc_macrs_5 ) );
-	assign( "depr_alloc_macrs_15", var_data((ssc_number_t) depr_alloc_macrs_15 ) );
-	assign( "depr_alloc_sl_5", var_data((ssc_number_t) depr_alloc_sl_5 ) );
-	assign( "depr_alloc_sl_15", var_data((ssc_number_t) depr_alloc_sl_15 ) );
-	assign( "depr_alloc_sl_20", var_data((ssc_number_t) depr_alloc_sl_20 ) );
-	assign( "depr_alloc_sl_39", var_data((ssc_number_t) depr_alloc_sl_39 ) );
+
+		// output variable and cashflow line item assignments
 
 	assign( "depr_alloc_none_percent", var_data((ssc_number_t) (depr_alloc_none_frac*100.0) ) );
 	assign( "depr_alloc_none", var_data((ssc_number_t) depr_alloc_none ) );
 	assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
 	// Project cash flow
 
- 	assign( "itc_sta_qual_macrs_5", var_data((ssc_number_t) itc_sta_qual_macrs_5 ) );
-	assign( "itc_sta_qual_macrs_15", var_data((ssc_number_t) itc_sta_qual_macrs_15 ) );
-	assign( "itc_sta_qual_sl_5", var_data((ssc_number_t) itc_sta_qual_sl_5 ) );
-	assign( "itc_sta_qual_sl_15", var_data((ssc_number_t) itc_sta_qual_sl_15 ) );
-	assign( "itc_sta_qual_sl_20", var_data((ssc_number_t) itc_sta_qual_sl_20 ) );
-	assign( "itc_sta_qual_sl_39", var_data((ssc_number_t) itc_sta_qual_sl_39 ) );
 
-	assign( "itc_disallow_sta_percent_macrs_5", var_data((ssc_number_t) itc_disallow_sta_percent_macrs_5 ) );
-	assign( "itc_disallow_sta_percent_macrs_15", var_data((ssc_number_t) itc_disallow_sta_percent_macrs_15 ) );
-	assign( "itc_disallow_sta_percent_sl_5", var_data((ssc_number_t) itc_disallow_sta_percent_sl_5 ) );
-	assign( "itc_disallow_sta_percent_sl_15", var_data((ssc_number_t) itc_disallow_sta_percent_sl_15 ) );
-	assign( "itc_disallow_sta_percent_sl_20", var_data((ssc_number_t) itc_disallow_sta_percent_sl_20 ) );
-	assign( "itc_disallow_sta_percent_sl_39", var_data((ssc_number_t) itc_disallow_sta_percent_sl_39 ) );
-
-	assign( "itc_disallow_sta_fixed_macrs_5", var_data((ssc_number_t) itc_disallow_sta_fixed_macrs_5 ) );
-	assign( "itc_disallow_sta_fixed_macrs_15", var_data((ssc_number_t) itc_disallow_sta_fixed_macrs_15 ) );
-	assign( "itc_disallow_sta_fixed_sl_5", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_5 ) );
-	assign( "itc_disallow_sta_fixed_sl_15", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_15 ) );
-	assign( "itc_disallow_sta_fixed_sl_20", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_20 ) );
-	assign( "itc_disallow_sta_fixed_sl_39", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_39 ) );
 
 	assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
 	assign( "itc_sta_percent_total", var_data((ssc_number_t) itc_sta_per ) );
@@ -2227,10 +2424,15 @@ public:
 
 	save_cf( CF_tax_investor_statax_income_prior_incentives, nyears, "cf_tax_investor_statax_income_prior_incentives" );
 	save_cf( CF_tax_investor_fedtax_income_prior_incentives, nyears, "cf_tax_investor_fedtax_income_prior_incentives" );
-	save_cf( CF_tax_investor_statax_income, nyears, "cf_tax_investor_statax_income" );
-	save_cf( CF_tax_investor_fedtax_income, nyears, "cf_tax_investor_fedtax_income" );
+	save_cf( CF_tax_investor_statax_income_with_incenitves, nyears, "cf_tax_investor_statax_income_with_incentives" );
+	save_cf( CF_tax_investor_fedtax_income_with_incentives, nyears, "cf_tax_investor_fedtax_income_with_incentives" );
 	save_cf( CF_tax_investor_statax, nyears, "cf_tax_investor_statax" );
 	save_cf( CF_tax_investor_fedtax, nyears, "cf_tax_investor_fedtax" );
+
+	save_cf( CF_tax_investor_statax_taxable_incentives, nyears, "cf_tax_investor_statax_taxable_incentives" );
+	save_cf( CF_tax_investor_fedtax_taxable_incentives, nyears, "cf_tax_investor_fedtax_taxable_incentives" );
+	save_cf( CF_sponsor_statax_taxable_incentives, nyears, "cf_sponsor_statax_taxable_incentives" );
+	save_cf( CF_sponsor_fedtax_taxable_incentives, nyears, "cf_sponsor_fedtax_taxable_incentives" );
 
 	save_cf( CF_tax_investor_pretax, nyears, "cf_tax_investor_pretax" );
 	save_cf( CF_tax_investor_pretax_irr, nyears, "cf_tax_investor_pretax_irr" );
@@ -2245,10 +2447,10 @@ public:
 	save_cf( CF_tax_investor_aftertax_max_irr, nyears, "cf_tax_investor_aftertax_max_irr" );
 
 	save_cf( CF_pbi_statax_total, nyears, "cf_pbi_statax_total" );
-	save_cf( CF_sponsor_statax_income, nyears, "cf_sponsor_statax_income" );
+	save_cf( CF_sponsor_statax_income_with_incentives, nyears, "cf_sponsor_statax_income_with_incentives" );
 	save_cf( CF_sponsor_statax, nyears, "cf_sponsor_statax" );
 	save_cf( CF_pbi_fedtax_total, nyears, "cf_pbi_fedtax_total" );
-	save_cf( CF_sponsor_fedtax_income, nyears, "cf_sponsor_fedtax_income" );
+	save_cf( CF_sponsor_fedtax_income_with_incentives, nyears, "cf_sponsor_fedtax_income_with_incentives" );
 	save_cf( CF_sponsor_fedtax, nyears, "cf_sponsor_fedtax" );
 
 	save_cf( CF_stadepr_macrs_5, nyears, "cf_stadepr_macrs_5" );
@@ -2591,6 +2793,324 @@ public:
 		}
 		save_cf( CF_TODDecRevenue, nyears, "cf_revenue_Dec");
 
+
+		// State ITC/depreciation table
+		assign("depr_stabas_percent_macrs_5", var_data((ssc_number_t)  (depr_stabas_macrs_5_frac*100.0)));
+		assign( "depr_alloc_macrs_5", var_data((ssc_number_t) depr_alloc_macrs_5 ) );
+		double depr_stabas_ibi_reduc_macrs_5 = depr_stabas_macrs_5_frac * depr_sta_reduction_ibi;
+		double depr_stabas_cbi_reduc_macrs_5 = depr_stabas_macrs_5_frac * depr_sta_reduction_cbi;
+		assign( "depr_stabas_ibi_reduc_macrs_5", var_data((ssc_number_t) depr_stabas_ibi_reduc_macrs_5 ) );
+		assign( "depr_stabas_cbi_reduc_macrs_5", var_data((ssc_number_t) depr_stabas_cbi_reduc_macrs_5 ) );
+ 		assign( "depr_stabas_prior_itc_macrs_5", var_data((ssc_number_t) ( depr_alloc_macrs_5 - depr_stabas_ibi_reduc_macrs_5 - depr_stabas_cbi_reduc_macrs_5)) );
+ 		assign( "itc_sta_qual_macrs_5", var_data((ssc_number_t) itc_sta_qual_macrs_5 ) );
+		double depr_stabas_percent_qual_macrs_5 = (itc_sta_qual_total > 0)? 100.0 * itc_sta_qual_macrs_5 /  itc_sta_qual_total:0.0;
+ 		assign( "depr_stabas_percent_qual_macrs_5", var_data((ssc_number_t) depr_stabas_percent_qual_macrs_5) );
+ 		assign( "depr_stabas_percent_amount_macrs_5", var_data((ssc_number_t) (depr_stabas_percent_qual_macrs_5/100.0 * itc_sta_per)) );
+		assign( "itc_disallow_sta_percent_macrs_5", var_data((ssc_number_t) itc_disallow_sta_percent_macrs_5 ) );
+ 		assign( "depr_stabas_fixed_amount_macrs_5", var_data((ssc_number_t) (depr_stabas_percent_qual_macrs_5/100.0 * itc_sta_amount)) );
+		assign( "itc_disallow_sta_fixed_macrs_5", var_data((ssc_number_t) itc_disallow_sta_fixed_macrs_5 ) );
+		double depr_stabas_itc_sta_reduction_macrs_5 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_5 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_5;
+		double depr_stabas_itc_fed_reduction_macrs_5 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_5 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_5;
+		assign( "depr_stabas_itc_sta_reduction_macrs_5", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_macrs_5 ) );
+		assign( "depr_stabas_itc_fed_reduction_macrs_5", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_macrs_5 ) );
+		assign( "depr_stabas_after_itc_macrs_5", var_data((ssc_number_t) (depr_stabas_macrs_5 + depr_stabas_macrs_5_bonus) ) );
+		assign( "depr_stabas_first_year_bonus_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5_bonus ) );
+		assign( "depr_stabas_macrs_5", var_data((ssc_number_t) depr_stabas_macrs_5 ) );
+
+		assign("depr_stabas_percent_macrs_15", var_data((ssc_number_t)  (depr_stabas_macrs_15_frac*100.0)));
+		assign( "depr_alloc_macrs_15", var_data((ssc_number_t) depr_alloc_macrs_15 ) );
+		double depr_stabas_ibi_reduc_macrs_15 = depr_stabas_macrs_15_frac * depr_sta_reduction_ibi;
+		double depr_stabas_cbi_reduc_macrs_15 = depr_stabas_macrs_15_frac * depr_sta_reduction_cbi;
+		assign( "depr_stabas_ibi_reduc_macrs_15", var_data((ssc_number_t) depr_stabas_ibi_reduc_macrs_15 ) );
+		assign( "depr_stabas_cbi_reduc_macrs_15", var_data((ssc_number_t) depr_stabas_cbi_reduc_macrs_15 ) );
+ 		assign( "depr_stabas_prior_itc_macrs_15", var_data((ssc_number_t) ( depr_alloc_macrs_15 - depr_stabas_ibi_reduc_macrs_15 - depr_stabas_cbi_reduc_macrs_15)) );
+ 		assign( "itc_sta_qual_macrs_15", var_data((ssc_number_t) itc_sta_qual_macrs_15 ) );
+		double depr_stabas_percent_qual_macrs_15 = (itc_sta_qual_total > 0)? 100.0 * itc_sta_qual_macrs_15 /  itc_sta_qual_total:0.0;
+ 		assign( "depr_stabas_percent_qual_macrs_15", var_data((ssc_number_t) depr_stabas_percent_qual_macrs_15) );
+ 		assign( "depr_stabas_percent_amount_macrs_15", var_data((ssc_number_t) (depr_stabas_percent_qual_macrs_15/100.0 * itc_sta_per)) );
+		assign( "itc_disallow_sta_percent_macrs_15", var_data((ssc_number_t) itc_disallow_sta_percent_macrs_15 ) );
+ 		assign( "depr_stabas_fixed_amount_macrs_15", var_data((ssc_number_t) (depr_stabas_percent_qual_macrs_15/100.0 * itc_sta_amount)) );
+		assign( "itc_disallow_sta_fixed_macrs_15", var_data((ssc_number_t) itc_disallow_sta_fixed_macrs_15 ) );
+		double depr_stabas_itc_sta_reduction_macrs_15 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_macrs_15 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_macrs_15;
+		double depr_stabas_itc_fed_reduction_macrs_15 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_macrs_15 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_macrs_15;
+		assign( "depr_stabas_itc_sta_reduction_macrs_15", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_macrs_15 ) );
+		assign( "depr_stabas_itc_fed_reduction_macrs_15", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_macrs_15 ) );
+		assign( "depr_stabas_after_itc_macrs_15", var_data((ssc_number_t) (depr_stabas_macrs_15 + depr_stabas_macrs_15_bonus) ) );
+		assign( "depr_stabas_first_year_bonus_macrs_15", var_data((ssc_number_t) depr_stabas_macrs_15_bonus ) );
+		assign( "depr_stabas_macrs_15", var_data((ssc_number_t) depr_stabas_macrs_15 ) );
+
+		assign("depr_stabas_percent_sl_5", var_data((ssc_number_t)  (depr_stabas_sl_5_frac*100.0)));
+		assign( "depr_alloc_sl_5", var_data((ssc_number_t) depr_alloc_sl_5 ) );
+		double depr_stabas_ibi_reduc_sl_5 = depr_stabas_sl_5_frac * depr_sta_reduction_ibi;
+		double depr_stabas_cbi_reduc_sl_5 = depr_stabas_sl_5_frac * depr_sta_reduction_cbi;
+		assign( "depr_stabas_ibi_reduc_sl_5", var_data((ssc_number_t) depr_stabas_ibi_reduc_sl_5 ) );
+		assign( "depr_stabas_cbi_reduc_sl_5", var_data((ssc_number_t) depr_stabas_cbi_reduc_sl_5 ) );
+ 		assign( "depr_stabas_prior_itc_sl_5", var_data((ssc_number_t) ( depr_alloc_sl_5 - depr_stabas_ibi_reduc_sl_5 - depr_stabas_cbi_reduc_sl_5)) );
+ 		assign( "itc_sta_qual_sl_5", var_data((ssc_number_t) itc_sta_qual_sl_5 ) );
+		double depr_stabas_percent_qual_sl_5 = (itc_sta_qual_total > 0)? 100.0 * itc_sta_qual_sl_5 /  itc_sta_qual_total:0.0;
+ 		assign( "depr_stabas_percent_qual_sl_5", var_data((ssc_number_t) depr_stabas_percent_qual_sl_5) );
+ 		assign( "depr_stabas_percent_amount_sl_5", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_5/100.0 * itc_sta_per)) );
+		assign( "itc_disallow_sta_percent_sl_5", var_data((ssc_number_t) itc_disallow_sta_percent_sl_5 ) );
+ 		assign( "depr_stabas_fixed_amount_sl_5", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_5/100.0 * itc_sta_amount)) );
+		assign( "itc_disallow_sta_fixed_sl_5", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_5 ) );
+		double depr_stabas_itc_sta_reduction_sl_5 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_5 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_5;
+		double depr_stabas_itc_fed_reduction_sl_5 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_5 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_5;
+		assign( "depr_stabas_itc_sta_reduction_sl_5", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_5 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_5", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_5 ) );
+		assign( "depr_stabas_after_itc_sl_5", var_data((ssc_number_t) (depr_stabas_sl_5 + depr_stabas_sl_5_bonus) ) );
+		assign( "depr_stabas_first_year_bonus_sl_5", var_data((ssc_number_t) depr_stabas_sl_5_bonus ) );
+		assign( "depr_stabas_sl_5", var_data((ssc_number_t) depr_stabas_sl_5 ) );
+
+		assign("depr_stabas_percent_sl_15", var_data((ssc_number_t)  (depr_stabas_sl_15_frac*100.0)));
+		assign( "depr_alloc_sl_15", var_data((ssc_number_t) depr_alloc_sl_15 ) );
+		double depr_stabas_ibi_reduc_sl_15 = depr_stabas_sl_15_frac * depr_sta_reduction_ibi;
+		double depr_stabas_cbi_reduc_sl_15 = depr_stabas_sl_15_frac * depr_sta_reduction_cbi;
+		assign( "depr_stabas_ibi_reduc_sl_15", var_data((ssc_number_t) depr_stabas_ibi_reduc_sl_15 ) );
+		assign( "depr_stabas_cbi_reduc_sl_15", var_data((ssc_number_t) depr_stabas_cbi_reduc_sl_15 ) );
+ 		assign( "depr_stabas_prior_itc_sl_15", var_data((ssc_number_t) ( depr_alloc_sl_15 - depr_stabas_ibi_reduc_sl_15 - depr_stabas_cbi_reduc_sl_15)) );
+ 		assign( "itc_sta_qual_sl_15", var_data((ssc_number_t) itc_sta_qual_sl_15 ) );
+		double depr_stabas_percent_qual_sl_15 = (itc_sta_qual_total > 0)? 100.0 * itc_sta_qual_sl_15 /  itc_sta_qual_total:0.0;
+ 		assign( "depr_stabas_percent_qual_sl_15", var_data((ssc_number_t) depr_stabas_percent_qual_sl_15) );
+ 		assign( "depr_stabas_percent_amount_sl_15", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_15/100.0 * itc_sta_per)) );
+		assign( "itc_disallow_sta_percent_sl_15", var_data((ssc_number_t) itc_disallow_sta_percent_sl_15 ) );
+ 		assign( "depr_stabas_fixed_amount_sl_15", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_15/100.0 * itc_sta_amount)) );
+		assign( "itc_disallow_sta_fixed_sl_15", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_15 ) );
+		double depr_stabas_itc_sta_reduction_sl_15 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_15 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_15;
+		double depr_stabas_itc_fed_reduction_sl_15 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_15 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_15;
+		assign( "depr_stabas_itc_sta_reduction_sl_15", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_15 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_15", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_15 ) );
+		assign( "depr_stabas_after_itc_sl_15", var_data((ssc_number_t) (depr_stabas_sl_15 + depr_stabas_sl_15_bonus) ) );
+		assign( "depr_stabas_first_year_bonus_sl_15", var_data((ssc_number_t) depr_stabas_sl_15_bonus ) );
+		assign( "depr_stabas_sl_15", var_data((ssc_number_t) depr_stabas_sl_15 ) );
+
+		assign("depr_stabas_percent_sl_20", var_data((ssc_number_t)  (depr_stabas_sl_20_frac*100.0)));
+		assign( "depr_alloc_sl_20", var_data((ssc_number_t) depr_alloc_sl_20 ) );
+		double depr_stabas_ibi_reduc_sl_20 = depr_stabas_sl_20_frac * depr_sta_reduction_ibi;
+		double depr_stabas_cbi_reduc_sl_20 = depr_stabas_sl_20_frac * depr_sta_reduction_cbi;
+		assign( "depr_stabas_ibi_reduc_sl_20", var_data((ssc_number_t) depr_stabas_ibi_reduc_sl_20 ) );
+		assign( "depr_stabas_cbi_reduc_sl_20", var_data((ssc_number_t) depr_stabas_cbi_reduc_sl_20 ) );
+ 		assign( "depr_stabas_prior_itc_sl_20", var_data((ssc_number_t) ( depr_alloc_sl_20 - depr_stabas_ibi_reduc_sl_20 - depr_stabas_cbi_reduc_sl_20)) );
+ 		assign( "itc_sta_qual_sl_20", var_data((ssc_number_t) itc_sta_qual_sl_20 ) );
+		double depr_stabas_percent_qual_sl_20 = (itc_sta_qual_total > 0)? 100.0 * itc_sta_qual_sl_20 /  itc_sta_qual_total:0.0;
+ 		assign( "depr_stabas_percent_qual_sl_20", var_data((ssc_number_t) depr_stabas_percent_qual_sl_20) );
+ 		assign( "depr_stabas_percent_amount_sl_20", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_20/100.0 * itc_sta_per)) );
+		assign( "itc_disallow_sta_percent_sl_20", var_data((ssc_number_t) itc_disallow_sta_percent_sl_20 ) );
+ 		assign( "depr_stabas_fixed_amount_sl_20", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_20/100.0 * itc_sta_amount)) );
+		assign( "itc_disallow_sta_fixed_sl_20", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_20 ) );
+		double depr_stabas_itc_sta_reduction_sl_20 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_20 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_20;
+		double depr_stabas_itc_fed_reduction_sl_20 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_20 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_20;
+		assign( "depr_stabas_itc_sta_reduction_sl_20", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_20 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_20", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_20 ) );
+		assign( "depr_stabas_after_itc_sl_20", var_data((ssc_number_t) (depr_stabas_sl_20 + depr_stabas_sl_20_bonus) ) );
+		assign( "depr_stabas_first_year_bonus_sl_20", var_data((ssc_number_t) depr_stabas_sl_20_bonus ) );
+		assign( "depr_stabas_sl_20", var_data((ssc_number_t) depr_stabas_sl_20 ) );
+
+		assign("depr_stabas_percent_sl_39", var_data((ssc_number_t)  (depr_stabas_sl_39_frac*100.0)));
+		assign( "depr_alloc_sl_39", var_data((ssc_number_t) depr_alloc_sl_39 ) );
+		double depr_stabas_ibi_reduc_sl_39 = depr_stabas_sl_39_frac * depr_sta_reduction_ibi;
+		double depr_stabas_cbi_reduc_sl_39 = depr_stabas_sl_39_frac * depr_sta_reduction_cbi;
+		assign( "depr_stabas_ibi_reduc_sl_39", var_data((ssc_number_t) depr_stabas_ibi_reduc_sl_39 ) );
+		assign( "depr_stabas_cbi_reduc_sl_39", var_data((ssc_number_t) depr_stabas_cbi_reduc_sl_39 ) );
+ 		assign( "depr_stabas_prior_itc_sl_39", var_data((ssc_number_t) ( depr_alloc_sl_39 - depr_stabas_ibi_reduc_sl_39 - depr_stabas_cbi_reduc_sl_39)) );
+ 		assign( "itc_sta_qual_sl_39", var_data((ssc_number_t) itc_sta_qual_sl_39 ) );
+		double depr_stabas_percent_qual_sl_39 = (itc_sta_qual_total > 0)? 100.0 * itc_sta_qual_sl_39 /  itc_sta_qual_total:0.0;
+ 		assign( "depr_stabas_percent_qual_sl_39", var_data((ssc_number_t) depr_stabas_percent_qual_sl_39) );
+ 		assign( "depr_stabas_percent_amount_sl_39", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_39/100.0 * itc_sta_per)) );
+		assign( "itc_disallow_sta_percent_sl_39", var_data((ssc_number_t) itc_disallow_sta_percent_sl_39 ) );
+ 		assign( "depr_stabas_fixed_amount_sl_39", var_data((ssc_number_t) (depr_stabas_percent_qual_sl_39/100.0 * itc_sta_amount)) );
+		assign( "itc_disallow_sta_fixed_sl_39", var_data((ssc_number_t) itc_disallow_sta_fixed_sl_39 ) );
+		double depr_stabas_itc_sta_reduction_sl_39 = itc_sta_percent_deprbas_sta * itc_disallow_sta_percent_sl_39 + itc_sta_amount_deprbas_sta * itc_disallow_sta_fixed_sl_39;
+		double depr_stabas_itc_fed_reduction_sl_39 = itc_fed_percent_deprbas_sta * itc_disallow_fed_percent_sl_39 + itc_fed_amount_deprbas_sta * itc_disallow_fed_fixed_sl_39;
+		assign( "depr_stabas_itc_sta_reduction_sl_39", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_sl_39 ) );
+		assign( "depr_stabas_itc_fed_reduction_sl_39", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_sl_39 ) );
+		assign( "depr_stabas_after_itc_sl_39", var_data((ssc_number_t) (depr_stabas_sl_39 + depr_stabas_sl_39_bonus) ) );
+		assign( "depr_stabas_first_year_bonus_sl_39", var_data((ssc_number_t) depr_stabas_sl_39_bonus ) );
+		assign( "depr_stabas_sl_39", var_data((ssc_number_t) depr_stabas_sl_39 ) );
+
+		assign("depr_stabas_percent_total", var_data((ssc_number_t)  (100.0*(depr_stabas_macrs_5_frac+depr_stabas_macrs_15_frac+depr_stabas_sl_5_frac+depr_stabas_sl_15_frac+depr_stabas_sl_20_frac+depr_stabas_sl_39_frac))));
+		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
+		assign( "depr_stabas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
+		assign( "depr_stabas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
+ 		assign( "depr_stabas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+ 		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
+ 		assign( "depr_stabas_percent_qual_total", var_data((ssc_number_t) 100.0) );
+ 		assign( "depr_stabas_percent_amount_total", var_data((ssc_number_t) itc_sta_per) );
+		assign( "itc_disallow_sta_percent_total", var_data((ssc_number_t) (itc_disallow_sta_percent_macrs_5 + itc_disallow_sta_percent_macrs_15 + itc_disallow_sta_percent_sl_5 + itc_disallow_sta_percent_sl_15 + itc_disallow_sta_percent_sl_20 + itc_disallow_sta_percent_sl_39) ) );
+ 		assign( "depr_stabas_fixed_amount_total", var_data((ssc_number_t) itc_sta_amount) );
+		assign( "itc_disallow_sta_fixed_total", var_data((ssc_number_t) (itc_disallow_sta_fixed_macrs_5 + itc_disallow_sta_fixed_macrs_15 + itc_disallow_sta_fixed_sl_5 + itc_disallow_sta_fixed_sl_15 + itc_disallow_sta_fixed_sl_20 + itc_disallow_sta_fixed_sl_39) ) );
+		double depr_stabas_itc_sta_reduction_total = depr_stabas_itc_sta_reduction_macrs_5 + depr_stabas_itc_sta_reduction_macrs_15 + depr_stabas_itc_sta_reduction_sl_5 + depr_stabas_itc_sta_reduction_sl_15 + depr_stabas_itc_sta_reduction_sl_20 + depr_stabas_itc_sta_reduction_sl_39;
+		assign( "depr_stabas_itc_sta_reduction_total", var_data((ssc_number_t) depr_stabas_itc_sta_reduction_total ) );
+		double depr_stabas_itc_fed_reduction_total = depr_stabas_itc_fed_reduction_macrs_5 + depr_stabas_itc_fed_reduction_macrs_15 + depr_stabas_itc_fed_reduction_sl_5 + depr_stabas_itc_fed_reduction_sl_15 + depr_stabas_itc_fed_reduction_sl_20 + depr_stabas_itc_fed_reduction_sl_39;
+		assign( "depr_stabas_itc_fed_reduction_total", var_data((ssc_number_t) depr_stabas_itc_fed_reduction_total ) );
+		double depr_stabas_first_year_bonus_total = depr_stabas_macrs_5_bonus+depr_stabas_macrs_15_bonus+depr_stabas_sl_5_bonus+depr_stabas_sl_15_bonus+depr_stabas_sl_20_bonus+depr_stabas_sl_39_bonus;
+		assign( "depr_stabas_after_itc_total", var_data((ssc_number_t) (depr_stabas_total + depr_stabas_first_year_bonus_total) ) );
+		assign( "depr_stabas_first_year_bonus_total", var_data((ssc_number_t) depr_stabas_first_year_bonus_total ) );
+		assign( "depr_stabas_total", var_data((ssc_number_t) depr_stabas_total ) );
+
+	
+		assign( "itc_sta_percent_total", var_data((ssc_number_t) itc_sta_per ) );
+		assign( "itc_sta_fixed_total", var_data((ssc_number_t) itc_sta_amount ) );
+
+
+
+		// Federal ITC/depreciation table
+		assign("depr_fedbas_percent_macrs_5", var_data((ssc_number_t)  (depr_fedbas_macrs_5_frac*100.0)));
+		assign( "depr_alloc_macrs_5", var_data((ssc_number_t) depr_alloc_macrs_5 ) );
+		double depr_fedbas_ibi_reduc_macrs_5 = depr_fedbas_macrs_5_frac * depr_fed_reduction_ibi;
+		double depr_fedbas_cbi_reduc_macrs_5 = depr_fedbas_macrs_5_frac * depr_fed_reduction_cbi;
+		assign( "depr_fedbas_ibi_reduc_macrs_5", var_data((ssc_number_t) depr_fedbas_ibi_reduc_macrs_5 ) );
+		assign( "depr_fedbas_cbi_reduc_macrs_5", var_data((ssc_number_t) depr_fedbas_cbi_reduc_macrs_5 ) );
+ 		assign( "depr_fedbas_prior_itc_macrs_5", var_data((ssc_number_t) ( depr_alloc_macrs_5 - depr_fedbas_ibi_reduc_macrs_5 - depr_fedbas_cbi_reduc_macrs_5)) );
+ 		assign( "itc_fed_qual_macrs_5", var_data((ssc_number_t) itc_fed_qual_macrs_5 ) );
+		double depr_fedbas_percent_qual_macrs_5 = (itc_fed_qual_total > 0)? 100.0 * itc_fed_qual_macrs_5 /  itc_fed_qual_total:0.0;
+ 		assign( "depr_fedbas_percent_qual_macrs_5", var_data((ssc_number_t) depr_fedbas_percent_qual_macrs_5) );
+ 		assign( "depr_fedbas_percent_amount_macrs_5", var_data((ssc_number_t) (depr_fedbas_percent_qual_macrs_5/100.0 * itc_fed_per)) );
+		assign( "itc_disallow_fed_percent_macrs_5", var_data((ssc_number_t) itc_disallow_fed_percent_macrs_5 ) );
+ 		assign( "depr_fedbas_fixed_amount_macrs_5", var_data((ssc_number_t) (depr_fedbas_percent_qual_macrs_5/100.0 * itc_fed_amount)) );
+		assign( "itc_disallow_fed_fixed_macrs_5", var_data((ssc_number_t) itc_disallow_fed_fixed_macrs_5 ) );
+		double depr_fedbas_itc_sta_reduction_macrs_5 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_5 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_5;
+		double depr_fedbas_itc_fed_reduction_macrs_5 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_5 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_5;
+		assign( "depr_fedbas_itc_sta_reduction_macrs_5", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_macrs_5 ) );
+		assign( "depr_fedbas_itc_fed_reduction_macrs_5", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_macrs_5 ) );
+		assign( "depr_fedbas_after_itc_macrs_5", var_data((ssc_number_t) (depr_fedbas_macrs_5 + depr_fedbas_macrs_5_bonus) ) );
+		assign( "depr_fedbas_first_year_bonus_macrs_5", var_data((ssc_number_t) depr_fedbas_macrs_5_bonus ) );
+		assign( "depr_fedbas_macrs_5", var_data((ssc_number_t) depr_fedbas_macrs_5 ) );
+
+		assign("depr_fedbas_percent_macrs_15", var_data((ssc_number_t)  (depr_fedbas_macrs_15_frac*100.0)));
+		assign( "depr_alloc_macrs_15", var_data((ssc_number_t) depr_alloc_macrs_15 ) );
+		double depr_fedbas_ibi_reduc_macrs_15 = depr_fedbas_macrs_15_frac * depr_fed_reduction_ibi;
+		double depr_fedbas_cbi_reduc_macrs_15 = depr_fedbas_macrs_15_frac * depr_fed_reduction_cbi;
+		assign( "depr_fedbas_ibi_reduc_macrs_15", var_data((ssc_number_t) depr_fedbas_ibi_reduc_macrs_15 ) );
+		assign( "depr_fedbas_cbi_reduc_macrs_15", var_data((ssc_number_t) depr_fedbas_cbi_reduc_macrs_15 ) );
+ 		assign( "depr_fedbas_prior_itc_macrs_15", var_data((ssc_number_t) ( depr_alloc_macrs_15 - depr_fedbas_ibi_reduc_macrs_15 - depr_fedbas_cbi_reduc_macrs_15)) );
+ 		assign( "itc_fed_qual_macrs_15", var_data((ssc_number_t) itc_fed_qual_macrs_15 ) );
+		double depr_fedbas_percent_qual_macrs_15 = (itc_fed_qual_total > 0)? 100.0 * itc_fed_qual_macrs_15 /  itc_fed_qual_total:0.0;
+ 		assign( "depr_fedbas_percent_qual_macrs_15", var_data((ssc_number_t) depr_fedbas_percent_qual_macrs_15) );
+ 		assign( "depr_fedbas_percent_amount_macrs_15", var_data((ssc_number_t) (depr_fedbas_percent_qual_macrs_15/100.0 * itc_fed_per)) );
+		assign( "itc_disallow_fed_percent_macrs_15", var_data((ssc_number_t) itc_disallow_fed_percent_macrs_15 ) );
+ 		assign( "depr_fedbas_fixed_amount_macrs_15", var_data((ssc_number_t) (depr_fedbas_percent_qual_macrs_15/100.0 * itc_fed_amount)) );
+		assign( "itc_disallow_fed_fixed_macrs_15", var_data((ssc_number_t) itc_disallow_fed_fixed_macrs_15 ) );
+		double depr_fedbas_itc_sta_reduction_macrs_15 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_macrs_15 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_macrs_15;
+		double depr_fedbas_itc_fed_reduction_macrs_15 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_macrs_15 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_macrs_15;
+		assign( "depr_fedbas_itc_sta_reduction_macrs_15", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_macrs_15 ) );
+		assign( "depr_fedbas_itc_fed_reduction_macrs_15", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_macrs_15 ) );
+		assign( "depr_fedbas_after_itc_macrs_15", var_data((ssc_number_t) (depr_fedbas_macrs_15 + depr_fedbas_macrs_15_bonus) ) );
+		assign( "depr_fedbas_first_year_bonus_macrs_15", var_data((ssc_number_t) depr_fedbas_macrs_15_bonus ) );
+		assign( "depr_fedbas_macrs_15", var_data((ssc_number_t) depr_fedbas_macrs_15 ) );
+
+		assign("depr_fedbas_percent_sl_5", var_data((ssc_number_t)  (depr_fedbas_sl_5_frac*100.0)));
+		assign( "depr_alloc_sl_5", var_data((ssc_number_t) depr_alloc_sl_5 ) );
+		double depr_fedbas_ibi_reduc_sl_5 = depr_fedbas_sl_5_frac * depr_fed_reduction_ibi;
+		double depr_fedbas_cbi_reduc_sl_5 = depr_fedbas_sl_5_frac * depr_fed_reduction_cbi;
+		assign( "depr_fedbas_ibi_reduc_sl_5", var_data((ssc_number_t) depr_fedbas_ibi_reduc_sl_5 ) );
+		assign( "depr_fedbas_cbi_reduc_sl_5", var_data((ssc_number_t) depr_fedbas_cbi_reduc_sl_5 ) );
+ 		assign( "depr_fedbas_prior_itc_sl_5", var_data((ssc_number_t) ( depr_alloc_sl_5 - depr_fedbas_ibi_reduc_sl_5 - depr_fedbas_cbi_reduc_sl_5)) );
+ 		assign( "itc_fed_qual_sl_5", var_data((ssc_number_t) itc_fed_qual_sl_5 ) );
+		double depr_fedbas_percent_qual_sl_5 = (itc_fed_qual_total > 0)? 100.0 * itc_fed_qual_sl_5 /  itc_fed_qual_total:0.0;
+ 		assign( "depr_fedbas_percent_qual_sl_5", var_data((ssc_number_t) depr_fedbas_percent_qual_sl_5) );
+ 		assign( "depr_fedbas_percent_amount_sl_5", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_5/100.0 * itc_fed_per)) );
+		assign( "itc_disallow_fed_percent_sl_5", var_data((ssc_number_t) itc_disallow_fed_percent_sl_5 ) );
+ 		assign( "depr_fedbas_fixed_amount_sl_5", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_5/100.0 * itc_fed_amount)) );
+		assign( "itc_disallow_fed_fixed_sl_5", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_5 ) );
+		double depr_fedbas_itc_sta_reduction_sl_5 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_5 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_5;
+		double depr_fedbas_itc_fed_reduction_sl_5 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_5 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_5;
+		assign( "depr_fedbas_itc_sta_reduction_sl_5", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_5 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_5", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_5 ) );
+		assign( "depr_fedbas_after_itc_sl_5", var_data((ssc_number_t) (depr_fedbas_sl_5 + depr_fedbas_sl_5_bonus) ) );
+		assign( "depr_fedbas_first_year_bonus_sl_5", var_data((ssc_number_t) depr_fedbas_sl_5_bonus ) );
+		assign( "depr_fedbas_sl_5", var_data((ssc_number_t) depr_fedbas_sl_5 ) );
+
+		assign("depr_fedbas_percent_sl_15", var_data((ssc_number_t)  (depr_fedbas_sl_15_frac*100.0)));
+		assign( "depr_alloc_sl_15", var_data((ssc_number_t) depr_alloc_sl_15 ) );
+		double depr_fedbas_ibi_reduc_sl_15 = depr_fedbas_sl_15_frac * depr_fed_reduction_ibi;
+		double depr_fedbas_cbi_reduc_sl_15 = depr_fedbas_sl_15_frac * depr_fed_reduction_cbi;
+		assign( "depr_fedbas_ibi_reduc_sl_15", var_data((ssc_number_t) depr_fedbas_ibi_reduc_sl_15 ) );
+		assign( "depr_fedbas_cbi_reduc_sl_15", var_data((ssc_number_t) depr_fedbas_cbi_reduc_sl_15 ) );
+ 		assign( "depr_fedbas_prior_itc_sl_15", var_data((ssc_number_t) ( depr_alloc_sl_15 - depr_fedbas_ibi_reduc_sl_15 - depr_fedbas_cbi_reduc_sl_15)) );
+ 		assign( "itc_fed_qual_sl_15", var_data((ssc_number_t) itc_fed_qual_sl_15 ) );
+		double depr_fedbas_percent_qual_sl_15 = (itc_fed_qual_total > 0)? 100.0 * itc_fed_qual_sl_15 /  itc_fed_qual_total:0.0;
+ 		assign( "depr_fedbas_percent_qual_sl_15", var_data((ssc_number_t) depr_fedbas_percent_qual_sl_15) );
+ 		assign( "depr_fedbas_percent_amount_sl_15", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_15/100.0 * itc_fed_per)) );
+		assign( "itc_disallow_fed_percent_sl_15", var_data((ssc_number_t) itc_disallow_fed_percent_sl_15 ) );
+ 		assign( "depr_fedbas_fixed_amount_sl_15", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_15/100.0 * itc_fed_amount)) );
+		assign( "itc_disallow_fed_fixed_sl_15", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_15 ) );
+		double depr_fedbas_itc_sta_reduction_sl_15 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_15 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_15;
+		double depr_fedbas_itc_fed_reduction_sl_15 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_15 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_15;
+		assign( "depr_fedbas_itc_sta_reduction_sl_15", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_15 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_15", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_15 ) );
+		assign( "depr_fedbas_after_itc_sl_15", var_data((ssc_number_t) (depr_fedbas_sl_15 + depr_fedbas_sl_15_bonus) ) );
+		assign( "depr_fedbas_first_year_bonus_sl_15", var_data((ssc_number_t) depr_fedbas_sl_15_bonus ) );
+		assign( "depr_fedbas_sl_15", var_data((ssc_number_t) depr_fedbas_sl_15 ) );
+
+		assign("depr_fedbas_percent_sl_20", var_data((ssc_number_t)  (depr_fedbas_sl_20_frac*100.0)));
+		assign( "depr_alloc_sl_20", var_data((ssc_number_t) depr_alloc_sl_20 ) );
+		double depr_fedbas_ibi_reduc_sl_20 = depr_fedbas_sl_20_frac * depr_fed_reduction_ibi;
+		double depr_fedbas_cbi_reduc_sl_20 = depr_fedbas_sl_20_frac * depr_fed_reduction_cbi;
+		assign( "depr_fedbas_ibi_reduc_sl_20", var_data((ssc_number_t) depr_fedbas_ibi_reduc_sl_20 ) );
+		assign( "depr_fedbas_cbi_reduc_sl_20", var_data((ssc_number_t) depr_fedbas_cbi_reduc_sl_20 ) );
+ 		assign( "depr_fedbas_prior_itc_sl_20", var_data((ssc_number_t) ( depr_alloc_sl_20 - depr_fedbas_ibi_reduc_sl_20 - depr_fedbas_cbi_reduc_sl_20)) );
+ 		assign( "itc_fed_qual_sl_20", var_data((ssc_number_t) itc_fed_qual_sl_20 ) );
+		double depr_fedbas_percent_qual_sl_20 = (itc_fed_qual_total > 0)? 100.0 * itc_fed_qual_sl_20 /  itc_fed_qual_total:0.0;
+ 		assign( "depr_fedbas_percent_qual_sl_20", var_data((ssc_number_t) depr_fedbas_percent_qual_sl_20) );
+ 		assign( "depr_fedbas_percent_amount_sl_20", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_20/100.0 * itc_fed_per)) );
+		assign( "itc_disallow_fed_percent_sl_20", var_data((ssc_number_t) itc_disallow_fed_percent_sl_20 ) );
+ 		assign( "depr_fedbas_fixed_amount_sl_20", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_20/100.0 * itc_fed_amount)) );
+		assign( "itc_disallow_fed_fixed_sl_20", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_20 ) );
+		double depr_fedbas_itc_sta_reduction_sl_20 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_20 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_20;
+		double depr_fedbas_itc_fed_reduction_sl_20 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_20 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_20;
+		assign( "depr_fedbas_itc_sta_reduction_sl_20", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_20 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_20", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_20 ) );
+		assign( "depr_fedbas_after_itc_sl_20", var_data((ssc_number_t) (depr_fedbas_sl_20 + depr_fedbas_sl_20_bonus) ) );
+		assign( "depr_fedbas_first_year_bonus_sl_20", var_data((ssc_number_t) depr_fedbas_sl_20_bonus ) );
+		assign( "depr_fedbas_sl_20", var_data((ssc_number_t) depr_fedbas_sl_20 ) );
+
+		assign("depr_fedbas_percent_sl_39", var_data((ssc_number_t)  (depr_fedbas_sl_39_frac*100.0)));
+		assign( "depr_alloc_sl_39", var_data((ssc_number_t) depr_alloc_sl_39 ) );
+		double depr_fedbas_ibi_reduc_sl_39 = depr_fedbas_sl_39_frac * depr_fed_reduction_ibi;
+		double depr_fedbas_cbi_reduc_sl_39 = depr_fedbas_sl_39_frac * depr_fed_reduction_cbi;
+		assign( "depr_fedbas_ibi_reduc_sl_39", var_data((ssc_number_t) depr_fedbas_ibi_reduc_sl_39 ) );
+		assign( "depr_fedbas_cbi_reduc_sl_39", var_data((ssc_number_t) depr_fedbas_cbi_reduc_sl_39 ) );
+ 		assign( "depr_fedbas_prior_itc_sl_39", var_data((ssc_number_t) ( depr_alloc_sl_39 - depr_fedbas_ibi_reduc_sl_39 - depr_fedbas_cbi_reduc_sl_39)) );
+ 		assign( "itc_fed_qual_sl_39", var_data((ssc_number_t) itc_fed_qual_sl_39 ) );
+		double depr_fedbas_percent_qual_sl_39 = (itc_fed_qual_total > 0)? 100.0 * itc_fed_qual_sl_39 /  itc_fed_qual_total:0.0;
+ 		assign( "depr_fedbas_percent_qual_sl_39", var_data((ssc_number_t) depr_fedbas_percent_qual_sl_39) );
+ 		assign( "depr_fedbas_percent_amount_sl_39", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_39/100.0 * itc_fed_per)) );
+		assign( "itc_disallow_fed_percent_sl_39", var_data((ssc_number_t) itc_disallow_fed_percent_sl_39 ) );
+ 		assign( "depr_fedbas_fixed_amount_sl_39", var_data((ssc_number_t) (depr_fedbas_percent_qual_sl_39/100.0 * itc_fed_amount)) );
+		assign( "itc_disallow_fed_fixed_sl_39", var_data((ssc_number_t) itc_disallow_fed_fixed_sl_39 ) );
+		double depr_fedbas_itc_sta_reduction_sl_39 = itc_sta_percent_deprbas_fed * itc_disallow_sta_percent_sl_39 + itc_sta_amount_deprbas_fed * itc_disallow_sta_fixed_sl_39;
+		double depr_fedbas_itc_fed_reduction_sl_39 = itc_fed_percent_deprbas_fed * itc_disallow_fed_percent_sl_39 + itc_fed_amount_deprbas_fed * itc_disallow_fed_fixed_sl_39;
+		assign( "depr_fedbas_itc_sta_reduction_sl_39", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_sl_39 ) );
+		assign( "depr_fedbas_itc_fed_reduction_sl_39", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_sl_39 ) );
+		assign( "depr_fedbas_after_itc_sl_39", var_data((ssc_number_t) (depr_fedbas_sl_39 + depr_fedbas_sl_39_bonus) ) );
+		assign( "depr_fedbas_first_year_bonus_sl_39", var_data((ssc_number_t) depr_fedbas_sl_39_bonus ) );
+		assign( "depr_fedbas_sl_39", var_data((ssc_number_t) depr_fedbas_sl_39 ) );
+
+
+		assign("depr_fedbas_percent_total", var_data((ssc_number_t)  (100.0*(depr_fedbas_macrs_5_frac+depr_fedbas_macrs_15_frac+depr_fedbas_sl_5_frac+depr_fedbas_sl_15_frac+depr_fedbas_sl_20_frac+depr_fedbas_sl_39_frac))));
+		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
+		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
+		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
+ 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+ 		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
+ 		assign( "depr_fedbas_percent_qual_total", var_data((ssc_number_t) 100.0) );
+ 		assign( "depr_fedbas_percent_amount_total", var_data((ssc_number_t) itc_fed_per) );
+		assign( "itc_disallow_fed_percent_total", var_data((ssc_number_t) (itc_disallow_fed_percent_macrs_5 + itc_disallow_fed_percent_macrs_15 + itc_disallow_fed_percent_sl_5 + itc_disallow_fed_percent_sl_15 + itc_disallow_fed_percent_sl_20 + itc_disallow_fed_percent_sl_39) ) );
+ 		assign( "depr_fedbas_fixed_amount_total", var_data((ssc_number_t) itc_fed_amount) );
+		assign( "itc_disallow_fed_fixed_total", var_data((ssc_number_t) (itc_disallow_fed_fixed_macrs_5 + itc_disallow_fed_fixed_macrs_15 + itc_disallow_fed_fixed_sl_5 + itc_disallow_fed_fixed_sl_15 + itc_disallow_fed_fixed_sl_20 + itc_disallow_fed_fixed_sl_39) ) );
+		double depr_fedbas_itc_sta_reduction_total = depr_fedbas_itc_sta_reduction_macrs_5 + depr_fedbas_itc_sta_reduction_macrs_15 + depr_fedbas_itc_sta_reduction_sl_5 + depr_fedbas_itc_sta_reduction_sl_15 + depr_fedbas_itc_sta_reduction_sl_20 + depr_fedbas_itc_sta_reduction_sl_39;
+		assign( "depr_fedbas_itc_sta_reduction_total", var_data((ssc_number_t) depr_fedbas_itc_sta_reduction_total ) );
+		double depr_fedbas_itc_fed_reduction_total = depr_fedbas_itc_fed_reduction_macrs_5 + depr_fedbas_itc_fed_reduction_macrs_15 + depr_fedbas_itc_fed_reduction_sl_5 + depr_fedbas_itc_fed_reduction_sl_15 + depr_fedbas_itc_fed_reduction_sl_20 + depr_fedbas_itc_fed_reduction_sl_39;
+		assign( "depr_fedbas_itc_fed_reduction_total", var_data((ssc_number_t) depr_fedbas_itc_fed_reduction_total ) );
+		double depr_fedbas_first_year_bonus_total = depr_fedbas_macrs_5_bonus+depr_fedbas_macrs_15_bonus+depr_fedbas_sl_5_bonus+depr_fedbas_sl_15_bonus+depr_fedbas_sl_20_bonus+depr_fedbas_sl_39_bonus;
+		assign( "depr_fedbas_after_itc_total", var_data((ssc_number_t) (depr_fedbas_total + depr_fedbas_first_year_bonus_total) ) );
+		assign( "depr_fedbas_first_year_bonus_total", var_data((ssc_number_t) depr_fedbas_first_year_bonus_total ) );
+		assign( "depr_fedbas_total", var_data((ssc_number_t) depr_fedbas_total ) );
+
+		assign( "depr_alloc_none_percent", var_data((ssc_number_t) (depr_alloc_none_frac*100.0) ) );
+		assign( "depr_alloc_none", var_data((ssc_number_t) depr_alloc_none ) );
+		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
+		// Project cash flow
 }
 
 
