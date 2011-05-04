@@ -467,7 +467,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Lease payment reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment_interest",    "Lease payment reserve interest",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "O and M reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "Working capital reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip1",    "Major equipment reserve 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Major equipment reserve 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Major equipment reserve 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -490,7 +490,8 @@ static var_info _cm_vtab_saleleaseback[] = {
 	// Lessee (Sponsor) cash flow
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_activities",    "Cash flow from operating activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
+	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "distribution_of_development_fee",	"Distribution of development fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "sale_of_property",	"Sale of property",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "(Increase)/Decrease in lease payment reserve account",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -613,7 +614,9 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax",    "After-tax developer returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_irr",    "After-tax developer cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_npv",    "After-tax developer cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_tax",    "After-tax sponsor tax returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_devfee",    "After-tax sponsor developer fee tax liability",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_irr",    "Pre-tax developer IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_pretax_npv",    "Pre-tax developer NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_sponsor_aftertax_irr",    "After-tax developer IRR",  "", "",                      "DHF",      "*",                     "",                "" },
@@ -749,10 +752,11 @@ enum {
 	CF_sponsor_pretax_irr,
 	CF_sponsor_pretax_npv,
 	CF_sponsor_aftertax_cash,
+	CF_sponsor_aftertax_tax,
 	CF_sponsor_aftertax,
 	CF_sponsor_aftertax_irr,
 	CF_sponsor_aftertax_npv,
-
+	CF_sponsor_aftertax_devfee,
 
 
 	CF_pv_interest_factor,
@@ -1264,7 +1268,7 @@ public:
 		double reserves_interest = as_double("reserves_interest")*0.01;
 
 		double sponsor_pretax_development_fee = cost_dev_fee_percent * cost_prefinancing;
-
+		double distribution_of_development_fee = -sponsor_pretax_development_fee;
 		double sponsor_equity_in_lessee_llc=0;
 
 		// ibi fixed
@@ -2060,7 +2064,7 @@ public:
 		cf.at(CF_sponsor_fedtax,0) = -federal_tax_rate * cf.at(CF_sponsor_fedtax_income_with_incentives,0);
 
 		
-
+		cf.at(CF_sponsor_aftertax_devfee,1) = (sponsor_pretax_development_fee * -state_tax_rate) + ((sponsor_pretax_development_fee * -state_tax_rate) + sponsor_pretax_development_fee) * -federal_tax_rate;
 
 		for (i=1;i<=nyears;i++)
 		{
@@ -2119,11 +2123,9 @@ public:
 			cf.at(CF_sponsor_fedtax_income_with_incentives,i) = cf.at(CF_sponsor_fedtax_income_prior_incentives,i) + cf.at(CF_sponsor_fedtax_taxable_incentives,i);
 			cf.at(CF_sponsor_fedtax,i) = -federal_tax_rate * cf.at(CF_sponsor_fedtax_income_with_incentives,i); 
 
-			cf.at(CF_sponsor_aftertax,i) =
-				cf.at(CF_sponsor_aftertax_cash,i) +
-				cf.at(CF_sponsor_statax,i) + cf.at(CF_sponsor_fedtax,i);
+			cf.at(CF_sponsor_aftertax_tax,i) = cf.at(CF_sponsor_fedtax,i) + cf.at(CF_sponsor_statax,i);
 
-			if (i==1) cf.at(CF_sponsor_aftertax,i) += (sponsor_pretax_development_fee * -state_tax_rate) + ((sponsor_pretax_development_fee * -state_tax_rate) + sponsor_pretax_development_fee) * -federal_tax_rate;
+			cf.at(CF_sponsor_aftertax,i) = cf.at(CF_sponsor_aftertax_cash,i) + cf.at(CF_sponsor_aftertax_tax,i) + cf.at(CF_sponsor_aftertax_devfee,i);
 
 			cf.at(CF_sponsor_aftertax_irr,i) = irr(CF_sponsor_aftertax,i)*100.0;
 			cf.at(CF_sponsor_aftertax_npv,i) = npv(CF_sponsor_aftertax,i,nom_discount_rate) +  cf.at(CF_sponsor_aftertax,0) ;
@@ -2313,8 +2315,9 @@ public:
 
 	assign( "cost_salestax", var_data((ssc_number_t)cost_salestax ) );
 	assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
+	assign( "distribution_of_development_fee", var_data((ssc_number_t)distribution_of_development_fee ) );
 
-
+	
 	assign( "depr_fedbas_macrs_5", var_data((ssc_number_t) depr_fedbas_macrs_5 ) );
 	assign( "depr_fedbas_macrs_15", var_data((ssc_number_t) depr_fedbas_macrs_15 ) );
 	assign( "depr_fedbas_sl_5", var_data((ssc_number_t) depr_fedbas_sl_5 ) );
@@ -2441,6 +2444,9 @@ public:
 	save_cf( CF_tax_investor_aftertax_itc, nyears, "cf_tax_investor_aftertax_itc" );
 	save_cf( CF_tax_investor_aftertax_ptc, nyears, "cf_tax_investor_aftertax_ptc" );
 	save_cf( CF_tax_investor_aftertax_tax, nyears, "cf_tax_investor_aftertax_tax" );
+	
+	save_cf( CF_sponsor_aftertax_devfee, nyears, "cf_sponsor_aftertax_devfee" );
+	save_cf( CF_sponsor_aftertax_tax, nyears, "cf_sponsor_aftertax_tax" );
 	save_cf( CF_tax_investor_aftertax, nyears, "cf_tax_investor_aftertax" );
 	save_cf( CF_tax_investor_aftertax_irr, nyears, "cf_tax_investor_aftertax_irr" );
 	save_cf( CF_tax_investor_aftertax_npv, nyears, "cf_tax_investor_aftertax_npv" );
