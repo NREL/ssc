@@ -5,7 +5,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 14; /* update this version number as needed */
+	return 15; /* update this version number as needed */
 }
 
 /* to add new computation modules, 
