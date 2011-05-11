@@ -44,6 +44,7 @@
     <ClCompile Include="src\lib_getem.cpp" />
     <ClCompile Include="src\lib_pvwatts.cpp" />
     <ClCompile Include="src\cmod_trnbase.cpp" />
+    <ClCompile Include="src\lib_sandia.cpp" />
     <ClCompile Include="src\lib_util.cpp" />
     <ClCompile Include="src\lib_vartab.cpp" />
     <ClCompile Include="src\lib_wfhrly.cpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="src\lib_getemint.h" />
     <ClInclude Include="src\lib_pvwatts.h" />
     <ClInclude Include="src\cmod_trnbase.h" />
+    <ClInclude Include="src\lib_sandia.h" />
     <ClInclude Include="src\lib_util.h" />
     <ClInclude Include="src\lib_vartab.h" />
     <ClInclude Include="src\lib_wfhrly.h" />
