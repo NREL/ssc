@@ -112,7 +112,8 @@ C Returns Sandia F2 function
 C IncAng = incidence angle (deg)
 C b0,b1,b2,b3,b4,b5 = empirical module-specIFic constants
 */
-	double F2 = b0 
+
+	double F2 = b0
 		+ b1*IncAng
 		+ b2*IncAng*IncAng
 		+ b3*IncAng*IncAng*IncAng
@@ -244,7 +245,8 @@ void sandia_module(
 	double *Tcell, double *Tback,
 	double *Vx, double *Ix,
 	double *Vxx, double *Ixx,
-	double *Voc, double *Isc
+	double *Voc, double *Isc,
+	double *AMa, double *F1, double *F2
 	)
 {
 	sandia_module_t &m = *pModule;
@@ -253,34 +255,35 @@ void sandia_module(
 	*Vmp = 0.0;
 	*Imp = 0.0;
 	*Eff = 0.0;
-	*Tcell = 0.0;
-	*Tback = 0.0;
 	*Vx = 0.0;
 	*Ix = 0.0;
 	*Vxx = 0.0;
 	*Ixx = 0.0;
 	*Voc = 0.0;
 	*Isc = 0.0;
+	*AMa = 0.0;
+	*F1 = 0.0;
+	*F2 = 0.0;
+	
+	//C Calculate back-of-module temperature:
+	*Tback = sandia_module_temperature(PoaBeam,PoaDiffuse,WindSpeed,Tamb,m.fd,m.a,m.b);
+
+	//C Calculate cell temperature:
+	*Tcell = sandia_tcell_from_tmodule(*Tback,PoaBeam,PoaDiffuse,m.fd,m.DT0);
 
 	if ( PoaBeam+PoaDiffuse > 0.0 )
 	{
-		//C Calculate back-of-module temperature:
-		*Tback = sandia_module_temperature(PoaBeam,PoaDiffuse,WindSpeed,Tamb,m.fd,m.a,m.b);
-
-		//C Calculate cell temperature:
-		*Tcell = sandia_tcell_from_tmodule(*Tback,PoaBeam,PoaDiffuse,m.fd,m.DT0);
-
 		//C Calculate Air Mass
-		double AMa = sandia_absolute_air_mass(ZenithAngle, Altitude);
+		*AMa = sandia_absolute_air_mass(ZenithAngle, Altitude);
 
 		//C Calculate F1 function:
-		double F1 = sandia_f1(AMa,m.A0,m.A1,m.A2,m.A3,m.A4);
+		*F1 = sandia_f1(*AMa,m.A0,m.A1,m.A2,m.A3,m.A4);
 
 		//C Calculate F2 function:
-		double F2 = sandia_f2(IncidenceAngle,m.B0,m.B1,m.B2,m.B3,m.B4,m.B5);
+		*F2 = sandia_f2(IncidenceAngle,m.B0,m.B1,m.B2,m.B3,m.B4,m.B5);
 
 		//C Calculate short-circuit current:
-		*Isc = sandia_isc(*Tcell,m.Isc0,PoaBeam,PoaDiffuse,F1,F2,m.fd,m.aIsc);
+		*Isc = sandia_isc(*Tcell,m.Isc0,PoaBeam,PoaDiffuse,*F1,*F2,m.fd,m.aIsc);
 
 		//C Calculate effective irradiance:
 		double Ee = sandia_effective_irradiance(*Tcell,*Isc,m.Isc0,m.aIsc);
