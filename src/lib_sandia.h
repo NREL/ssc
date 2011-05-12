@@ -42,7 +42,8 @@ void sandia_module(
 	double *Tcell, double *Tback,
 	double *Vx, double *Ix,
 	double *Vxx, double *Ixx,
-	double *Voc, double *Isc
+	double *Voc, double *Isc,
+	double *AMa, double *F1, double *F2
 	);
 
 

@@ -32,6 +32,7 @@ OBJECTS = \
 	lib_wfhrly.o \
 	lib_windwatts.o \
 	lib_getem.o \
+	lib_sandia.o \
 	sscapi.o \
 	vtab_common.o
 
