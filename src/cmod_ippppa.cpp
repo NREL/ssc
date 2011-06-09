@@ -407,8 +407,8 @@ public:
 	{
 		int i=0;
 
-		bool is_commercial = (as_integer("market")==1);
-		bool is_mortgage = as_boolean("mortgage");
+		bool is_commercialppa = (as_integer("market")==1);
+		bool is_ppaprice = (as_integer("calculation_mode")==0);
 
 		int nyears = as_integer("analysis_years");
 
@@ -601,34 +601,29 @@ public:
 			- ( as_boolean("itc_sta_amount_deprbas_sta")   ? 0.5*itc_sta_amount : 0 )
 			- ( as_boolean("itc_sta_percent_deprbas_sta")  ? 0.5*itc_sta_per : 0 );
 
-		if (is_commercial)
+		switch( as_integer("depr_sta_type") )
 		{
-			// only compute depreciation for commercial market
-
-			switch( as_integer("depr_sta_type") )
+		case 1: depreciation_sched_macrs_half_year( CF_sta_depr_sched, nyears ); break;
+		case 2: depreciation_sched_straight_line( CF_sta_depr_sched, nyears, as_integer("depr_sta_sl_years") ); break;
+		case 3:
 			{
-			case 1: depreciation_sched_macrs_half_year( CF_sta_depr_sched, nyears ); break;
-			case 2: depreciation_sched_straight_line( CF_sta_depr_sched, nyears, as_integer("depr_sta_sl_years") ); break;
-			case 3:
-				{
-					size_t arr_len;
-					ssc_number_t *arr_cust = as_array( "depr_sta_custom", &arr_len );
-					depreciation_sched_custom( CF_sta_depr_sched, nyears, arr_cust, (int)arr_len );
-					break;
-				}
+				size_t arr_len;
+				ssc_number_t *arr_cust = as_array( "depr_sta_custom", &arr_len );
+				depreciation_sched_custom( CF_sta_depr_sched, nyears, arr_cust, (int)arr_len );
+				break;
 			}
+		}
 
-			switch( as_integer("depr_fed_type") )
+		switch( as_integer("depr_fed_type") )
+		{
+		case 1: depreciation_sched_macrs_half_year( CF_fed_depr_sched, nyears ); break;
+		case 2: depreciation_sched_straight_line( CF_fed_depr_sched, nyears, as_integer("depr_fed_sl_years") ); break;
+		case 3:
 			{
-			case 1: depreciation_sched_macrs_half_year( CF_fed_depr_sched, nyears ); break;
-			case 2: depreciation_sched_straight_line( CF_fed_depr_sched, nyears, as_integer("depr_fed_sl_years") ); break;
-			case 3:
-				{
-					size_t arr_len;
-					ssc_number_t *arr_cust = as_array( "depr_fed_custom", &arr_len );
-					depreciation_sched_custom( CF_fed_depr_sched, nyears, arr_cust, (int)arr_len );
-					break;
-				}
+				size_t arr_len;
+				ssc_number_t *arr_cust = as_array( "depr_fed_custom", &arr_len );
+				depreciation_sched_custom( CF_fed_depr_sched, nyears, arr_cust, (int)arr_len );
+				break;
 			}
 		}
 
@@ -685,11 +680,8 @@ public:
 				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac; // updated to be consistent with DHF models - not inflated
 //				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
 
-			if (is_commercial)
-				cf.at(CF_deductible_expenses,i) = -cf.at(CF_operating_expenses,i);  // commercial
-			else
-				cf.at(CF_deductible_expenses,i) = -cf.at(CF_property_tax_expense,i); // residential
-
+			cf.at(CF_deductible_expenses,i) = -cf.at(CF_operating_expenses,i);  // commercial
+	
 			if (i == 1)
 			{
 				cf.at(CF_debt_balance,i) = -loan_amount;
@@ -737,25 +729,23 @@ public:
 				+ cf.at(CF_deductible_expenses, i)
 				+ cf.at(CF_pbi_total,i)
 				- cf.at(CF_sta_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 );
+				- cf.at(CF_debt_payment_interest,i);
 
 			if (i==1) cf.at(CF_sta_incentive_income_less_deductions, i) += ibi_total + cbi_total;
 
-			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
+//			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
 
 
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
-				cf.at(CF_sta_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
+			cf.at(CF_sta_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
 				+ cf.at(CF_deductible_expenses,i)
 				- cf.at(CF_sta_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 );
+				- cf.at(CF_debt_payment_interest,i);
 
-			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
+//			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
 
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
-				cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
+			cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
 			if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
@@ -767,25 +757,23 @@ public:
 				+ cf.at(CF_deductible_expenses, i)
 				+ cf.at(CF_pbi_total,i)
 				- cf.at(CF_fed_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 )
+				- cf.at(CF_debt_payment_interest,i)
 				+ cf.at(CF_sta_tax_savings, i);
 
 			if (i==1) cf.at(CF_fed_incentive_income_less_deductions, i) += ibi_total + cbi_total;
 
-			if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
+	//		if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
 
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_fed_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_fed_taxable_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
 				+ cf.at(CF_deductible_expenses,i)
 				- cf.at(CF_fed_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 )
+				- cf.at(CF_debt_payment_interest,i)
 				+ cf.at(CF_sta_tax_savings, i);
 
-			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
+	//		if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
 
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
@@ -797,14 +785,14 @@ public:
 			cf.at(CF_sta_and_fed_tax_savings,i) = cf.at(CF_sta_tax_savings, i)+cf.at(CF_fed_tax_savings, i);
 
 			cf.at(CF_after_tax_net_equity_cost_flow, i) =
-				+ (is_commercial ? cf.at(CF_deductible_expenses, i) : -cf.at(CF_operating_expenses,i) )
+				+ cf.at(CF_deductible_expenses, i)
 				- cf.at(CF_debt_payment_total, i)
 				+ cf.at(CF_pbi_total, i)
 				+ cf.at(CF_sta_and_fed_tax_savings,i);
 
 			cf.at(CF_after_tax_cash_flow,i) =
 				cf.at(CF_after_tax_net_equity_cost_flow, i)
-				+ (is_commercial?(1.0 - effective_tax_rate):1.0)*cf.at(CF_energy_value, i);
+				+ (1.0 - effective_tax_rate)*cf.at(CF_energy_value, i);
 
 		}
 
