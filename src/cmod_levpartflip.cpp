@@ -3454,7 +3454,6 @@ public:
 		// if customValue is a single value then that value is used up to 100%
 		int i;
 		size_t count = 0;
-		double totalPercentage = 0.0;
 		ssc_number_t *parr = as_array(custom, &count);
 		for (i = 1; i<nyears; i++)
 		{
@@ -3463,58 +3462,14 @@ public:
 
 		if (count ==1) // single value
 		{
-			if (parr[0] > 100.0) // assign all to first year
-			{
-				cf.at(cf_line,1) = 1;
-			}
-			else 
-			{
-				if ((nyears * parr[0]) < 100.0) // make sure that total is 100%
-				{
-					if (nyears > 0)
-					{
-						parr[0] = (ssc_number_t)(100.0/nyears);
-					}
-				}
-
-				for (i = 1; i<nyears; i++)
-				{
-					totalPercentage += parr[0];
-					if (totalPercentage > 100.0)
-					{
-						cf.at(cf_line,i) = (100.0 - (totalPercentage - parr[0]))/ 100.0;
-						break;
-					}
-					cf.at(cf_line,i) = parr[0] / 100.0; // percentage to factor
-				}
-			}
+			cf.at(cf_line,1) = parr[0]/100.0;
 		}
 		else // annual schedule
 		{// note schedules begin at year 1 (index 0)
 			int scheduleDuration = ((int)count > nyears)? nyears : (int)count;
-			double scheduleScaleFactor = 1.0; // adjust so that total percentage is 100
-			// sum percentage and scale if necessary
-			for (i=1;i<scheduleDuration;i++)
-			{
-				totalPercentage += parr[i-1];
-			}
-			if (totalPercentage < 100) 
-			{
-				if (totalPercentage > 0) 
-				{
-					scheduleScaleFactor = 100.0 / totalPercentage;
-				}
-			}
-			totalPercentage = 0.0;
 			for (i = 1; i<scheduleDuration; i++)
 			{
-				totalPercentage += scheduleScaleFactor * parr[i-1];
-				if (totalPercentage > 100.0)
-				{
-					cf.at(cf_line,i) = (100.0 - (totalPercentage - scheduleScaleFactor * parr[i-1]))/ 100.0;
-					break;
-				}
-				cf.at(cf_line,i) = scheduleScaleFactor *  parr[i-1] / 100.0; // percentage to factor
+				cf.at(cf_line,i) = parr[i-1] / 100.0; // percentage to factor
 			}
 		}
 	}
