@@ -469,7 +469,8 @@ public:
 
 			if (i==1) cf.at(CF_sta_incentive_income_less_deductions, i) += ibi_total + cbi_total;
 
-			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
+// sales tax is in depreciable bases and is already written off according to depreciation schedule.
+//			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
 
 
 			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
@@ -480,7 +481,8 @@ public:
 				- cf.at(CF_sta_depreciation,i)
 				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 );
 			
-			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
+// sales tax is in depreciable bases and is already written off according to depreciation schedule.
+//			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
 
 			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
@@ -500,7 +502,8 @@ public:
 			
 			if (i==1) cf.at(CF_fed_incentive_income_less_deductions, i) += ibi_total + cbi_total;
 
-			if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
+// sales tax is in depreciable bases and is already written off according to depreciation schedule.
+//			if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
 			
 			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_fed_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
@@ -511,7 +514,8 @@ public:
 				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 )
 				+ cf.at(CF_sta_tax_savings, i);
 
-			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
+// sales tax is in depreciable bases and is already written off according to depreciation schedule.
+//			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
 
 			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
@@ -795,53 +799,15 @@ public:
 	
 	void depreciation_sched_custom( int cf_line, int nyears, ssc_number_t *custp, int custp_len )
 	{
+		// note - allows for greater than or less than 100% depreciation - warning to user in samsim
 		if (custp_len < 2)
 		{
-			if (custp[0] > 100.0)
-			{
-				cf.at(cf_line, 1) = 1.0;
-			}
-			else
-			{
-				double d = custp[0];
-				if ( nyears * d < 100.0 )
-					d = 100.0 / nyears;
-
-				double totpercent = 0.0;
-				for (int i=1;i<=nyears;i++)
-				{
-					totpercent += d;
-					if (totpercent > 100.0)
-					{
-						cf.at(cf_line,i) = (100.0 - totpercent - d)/100.0;
-						break;
-					}
-					cf.at(cf_line, i) = d / 100.0;
-				}
-			}
+			cf.at(cf_line, 1) = custp[0]/100.0;
 		}
 		else
 		{
-			double totpercent = 0;
-			double scalef = 1.0;
-
-			for (int i=0; i<custp_len; i++)
-				totpercent += custp[i];
-
-			if (totpercent < 100.0 && totpercent > 0.0)
-				scalef = 100.0 / totpercent;
-
-			totpercent = 0;
 			for (int i=1;i<=nyears && i-1 < custp_len;i++)
-			{
-				totpercent += scalef * custp[i-1];
-				if (totpercent > 100.0)
-				{
-					cf.at(cf_line, i) = (100.0 - totpercent - scalef*custp[i-1])/100.0;
-					break;
-				}
-				cf.at(cf_line, i) = scalef*custp[i-1]/100.0;
-			}
+				cf.at(cf_line, i) = custp[i-1]/100.0;
 		}
 	}
 

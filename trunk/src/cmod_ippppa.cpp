@@ -5,12 +5,24 @@
 static var_info vtab_ippppa[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Utility IPP or Commercial PPA",   "0/1",          "0=ipp,1=ppa", "ippppa",      "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "calculation_mode",                   "PPA Price or IRR Target",   "0/1",          "0=ppaprice,1=irrtarget", "ippppa",      "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"%",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=specify ppa,1=solve ppa", "DHF",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "DHF",         "?=1e-3",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "DHF",         "?=0",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "DHF",         "?=100",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "DHF",         "?=100",                     "INTEGER,MIN=1",            "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"cents/kWh",	 "",			  "DHF",			 "?=10",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
+
+	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+
+
 
 	{ SSC_INPUT,        SSC_NUMBER,      "total_hard_cost",                          "Total hard cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "total_soft_cost",                          "Total soft cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
@@ -135,14 +147,9 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_tax_savings",                       "Federal tax savings",                      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_and_fed_tax_savings",               "Total tax savings (Federal & State)",      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "After tax net equity cost flow",           "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cash_flow",        "After tax net equity cash flow",           "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After tax cash flow",                      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative payback with expenses",         "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_without_expenses",              "Payback without expenses",                 "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_without_expenses",   "Cumulative payback without expenses",      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 var_info_invalid };
 
@@ -199,7 +206,7 @@ enum {
 	CF_fed_tax_savings,
 
 	CF_sta_and_fed_tax_savings,
-	CF_after_tax_net_equity_cost_flow,
+	CF_after_tax_net_equity_cash_flow,
 	CF_after_tax_cash_flow,
 
 	// Dispatch
@@ -369,6 +376,14 @@ enum {
 	CF_Availability,
 	CF_Degradation,
 
+	CF_recapitalization,
+	CF_recapitalization_boolean,
+	
+	CF_operating_income,
+	CF_sta_income_taxes,
+	CF_fed_income_taxes,
+	CF_pretax_dscr,
+
 	CF_max };
 
 
@@ -408,7 +423,7 @@ public:
 		int i=0;
 
 		bool is_commercialppa = (as_integer("market")==1);
-		bool is_ppaprice = (as_integer("calculation_mode")==0);
+		int ppa_soln_mode = as_integer("ppa_soln_mode");
 
 		int nyears = as_integer("analysis_years");
 
@@ -481,8 +496,9 @@ public:
 		}
 
 
-		double ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for pp_mode=0
+		double ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 
+		double ppa_escalation = 0.01*as_double("ppa_escalation");
 
 
 		double year1_fuel_use = as_double("annual_fuel_usage"); // kWht
@@ -648,16 +664,28 @@ public:
 		double first_cost = adjusted_installed_cost - loan_amount;
 		double capital_investment = loan_amount + first_cost;
 
-		cf.at(CF_after_tax_net_equity_cost_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
-		cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cost_flow,0);
+		cf.at(CF_after_tax_net_equity_cash_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
+		cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
 
 		double ibi_total = ibi_fed_amount + ibi_fed_per + ibi_sta_amount + ibi_sta_per + ibi_uti_amount + ibi_uti_per + ibi_oth_amount + ibi_oth_per;
 		double cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
 		double itc_fed_total = itc_fed_amount + itc_fed_per;
 		double itc_sta_total = itc_sta_amount + itc_sta_per;
 
+		double recapitalization_cost = as_double("recapitialization_cost");
+		double recapitalization_escalation = as_double("recapitialization_escalation");
+		if (as_integer("system_use_recapitalization"))
+		{
+			size_t count_recap = 0;
+			ssc_number_t *recap = 0;
+			recap = as_array("recapitalization_boolean", &count_recap);
+			for (i=0;i<nyears && i<(int)count_recap;i++)
+				cf.at(CF_recapitalization_boolean,i+1) = recap[i]; 
+		}
+
 		for (i=1; i<=nyears; i++)
 		{
+
 			// compute expenses
 			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
@@ -668,17 +696,6 @@ public:
 
 			cf.at(CF_insurance_expense,i) = total_cost * insurance_rate * pow( 1 + inflation_rate, i-1 );
 
-			cf.at(CF_operating_expenses,i) =
-				+ cf.at(CF_om_fixed_expense,i)
-				+ cf.at(CF_om_production_expense,i)
-				+ cf.at(CF_om_capacity_expense,i)
-				+ cf.at(CF_om_fuel_expense,i)
-				+ cf.at(CF_property_tax_expense,i)
-				+ cf.at(CF_insurance_expense,i);
-
-			if (i == nyears) /* salvage value handled as negative operating expense in last year */
-				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac; // updated to be consistent with DHF models - not inflated
-//				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
 
 			cf.at(CF_deductible_expenses,i) = -cf.at(CF_operating_expenses,i);  // commercial
 	
@@ -721,40 +738,106 @@ public:
 			cf.at(CF_sta_depreciation,i) = cf.at(CF_sta_depr_sched,i)*state_depr_basis;
 			cf.at(CF_fed_depreciation,i) = cf.at(CF_fed_depr_sched,i)*federal_depr_basis;
 
+			// recapitalization - if present
+			if (as_integer("system_use_recapitalization"))
+			{
+				cf.at(CF_recapitalization,i) =  cf.at(CF_recapitalization_boolean,i) * 
+					recapitalization_cost * pow((1 + inflation_rate + recapitalization_escalation),i-1);
+			}
+
+			// total - added lump 2/23/08
+			cf.at(CF_operating_expenses,i) =
+				+ cf.at(CF_om_fixed_expense,i)
+				+ cf.at(CF_om_production_expense,i)
+				+ cf.at(CF_om_capacity_expense,i)
+				+ cf.at(CF_om_fuel_expense,i)
+				+ cf.at(CF_property_tax_expense,i)
+				+ cf.at(CF_insurance_expense,i)
+				+ cf.at(CF_recapitalization,i);
+
+			if (i == nyears) /* salvage value handled as negative operating expense in last year */
+				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac; // updated to be consistent with DHF models - not inflated
+//				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
+		}
+
+		double ppa_soln_tolerance = as_double("ppa_soln_tolerance");
+		int ppa_soln_max_iteations = as_integer("ppa_soln_max_iterations");
+		bool solved=true;
+		double ppa_min=as_double("ppa_soln_min");
+		double ppa_max=as_double("ppa_soln_max");
+		int its=0;
+		double irr_weighting_factor = DBL_MAX;
+		bool irr_is_minimally_met = false;
+		bool irr_greater_than_target = false;
+		double w0=1.0;
+		double w1=1.0;
+		double x0=ppa_min;
+		double x1=ppa_max;
+		double ppa_coarse_interval=10; // 10 cents/kWh
+		bool ppa_interval_found=false;
+		bool ppa_too_large=false;
+		bool ppa_interval_reset=true;
+
+
+/***************** begin iterative solution *********************************************************************/
+
+		do
+		{
+
+			if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
+
+
+
+			for (i=1; i<=nyears; i++)
+			{
+
+				cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); 
+
+				if (is_commercialppa)
+					cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
+				else
+				// dispatch
+					cf.at(CF_energy_value,i) = cf.at(CF_ppa_price,i) /100.0 * (
+						cf.at(CF_TOD1Energy,i) * dispatch_factor1 +
+						cf.at(CF_TOD2Energy,i) * dispatch_factor2 +
+						cf.at(CF_TOD3Energy,i) * dispatch_factor3 +
+						cf.at(CF_TOD4Energy,i) * dispatch_factor4 +
+						cf.at(CF_TOD5Energy,i) * dispatch_factor5 +
+						cf.at(CF_TOD6Energy,i) * dispatch_factor6 +
+						cf.at(CF_TOD7Energy,i) * dispatch_factor7 +
+						cf.at(CF_TOD8Energy,i) * dispatch_factor8 +
+						cf.at(CF_TOD9Energy,i) * dispatch_factor9			);
+	
+
+			cf.at(CF_operating_income,i) = cf.at(CF_energy_value,i) - cf.at(CF_operating_expenses,i);
 
 			// ************************************************
 			// tax effect on equity (state)
 
 			cf.at(CF_sta_incentive_income_less_deductions, i) =
-				+ cf.at(CF_deductible_expenses, i)
+				+ cf.at(CF_operating_income, i)
 				+ cf.at(CF_pbi_total,i)
 				- cf.at(CF_sta_depreciation,i)
 				- cf.at(CF_debt_payment_interest,i);
 
 			if (i==1) cf.at(CF_sta_incentive_income_less_deductions, i) += ibi_total + cbi_total;
 
-//			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
-
-
-			cf.at(CF_sta_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
-				+ cf.at(CF_deductible_expenses,i)
+				+ cf.at(CF_operating_income,i)
 				- cf.at(CF_sta_depreciation,i)
 				- cf.at(CF_debt_payment_interest,i);
 
-//			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
+			cf.at(CF_sta_income_taxes,i) = state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
 
-			cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
-
-			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
+			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - cf.at(CF_sta_income_taxes,i);
 			if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
 
 			// ************************************************
 			//	tax effect on equity (federal)
 
 			cf.at(CF_fed_incentive_income_less_deductions, i) =
-				+ cf.at(CF_deductible_expenses, i)
+				+ cf.at(CF_operating_income, i)
 				+ cf.at(CF_pbi_total,i)
 				- cf.at(CF_fed_depreciation,i)
 				- cf.at(CF_debt_payment_interest,i)
@@ -762,21 +845,15 @@ public:
 
 			if (i==1) cf.at(CF_fed_incentive_income_less_deductions, i) += ibi_total + cbi_total;
 
-	//		if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
-
-				cf.at(CF_fed_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
-
 			cf.at(CF_fed_taxable_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
-				+ cf.at(CF_deductible_expenses,i)
+				+ cf.at(CF_operating_income,i)
 				- cf.at(CF_fed_depreciation,i)
 				- cf.at(CF_debt_payment_interest,i)
 				+ cf.at(CF_sta_tax_savings, i);
 
-	//		if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
+			cf.at(CF_fed_income_taxes,i) = federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
 
-				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
-
-			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
+			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - cf.at(CF_fed_income_taxes,i);
 			if (i==1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
 
 			// ************************************************
@@ -784,32 +861,124 @@ public:
 
 			cf.at(CF_sta_and_fed_tax_savings,i) = cf.at(CF_sta_tax_savings, i)+cf.at(CF_fed_tax_savings, i);
 
-			cf.at(CF_after_tax_net_equity_cost_flow, i) =
-				+ cf.at(CF_deductible_expenses, i)
+			cf.at(CF_after_tax_net_equity_cash_flow, i) =
+				+ cf.at(CF_operating_income, i)
+				+ cf.at(CF_sta_and_fed_tax_savings,i)
 				- cf.at(CF_debt_payment_total, i)
-				+ cf.at(CF_pbi_total, i)
-				+ cf.at(CF_sta_and_fed_tax_savings,i);
+				+ cf.at(CF_pbi_total, i);
+
+			if (i < loan_term)
+				cf.at(CF_pretax_dscr,i) = 0;
+			else if (cf.at(CF_debt_payment_total,i) !=0.0)
+				cf.at(CF_pretax_dscr,i) = cf.at(CF_operating_income,i) / cf.at(CF_debt_payment_total,i);
 
 			cf.at(CF_after_tax_cash_flow,i) =
-				cf.at(CF_after_tax_net_equity_cost_flow, i)
+				cf.at(CF_after_tax_net_equity_cash_flow, i)
 				+ (1.0 - effective_tax_rate)*cf.at(CF_energy_value, i);
 
 		}
 
-		double x = npv( CF_energy_net, nyears, real_discount_rate );
-		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / x;
 
-		x = npv( CF_energy_net, nyears, nom_discount_rate );
-		if (x == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / x;
+		if (ppa_soln_mode == 1)
+		{
+//			double residual = aftertax_irr - target_irr;
+//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+//				double flip_frac = flip_target_percent/100.0;
+//				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
+			if (!solved)
+			{
+//				irr_weighting_factor = fabs(itnpv_target);
+				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
+//				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
+				if (ppa_interval_found)
+				{// reset interval
+				
+					if (irr_greater_than_target) // too large
+					{
+			// set endpoint of weighted interval x0<x1
+						x1 = ppa;
+						w1 = irr_weighting_factor;
+					}
+					else // too small
+					{
+			// set endpoint of weighted interval x0<x1
+						x0 = ppa;
+						w0 = irr_weighting_factor;
+					}
 
-		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
+				}
+				else
+				{ // find solution interval [x0,x1]
+					if (ppa_interval_reset) 
+					{
+							if (irr_greater_than_target) ppa_too_large=true;
+							ppa_interval_reset=false;
+					}
+					if (ppa_too_large) // too large
+					{
+						if (irr_greater_than_target)
+						{
+							x0 = ppa;
+							w0 = irr_weighting_factor;
+							ppa = x0-ppa_coarse_interval;
+						}
+						else
+						{
+						  x1 = x0;
+						  w1 = w0;
+						  x0 = ppa;
+						  w0 = irr_weighting_factor;
+						  ppa_interval_found=true;
+						}
+					}
+					else
+					{
+						if (!irr_greater_than_target)
+						{
+							x1 = ppa;
+							w1 = irr_weighting_factor;
+							ppa = x1+ppa_coarse_interval;
+						}
+						else
+						{
+						  x0 = x1;
+						  w0 = w1;
+						  x1 = ppa;
+						  w1 = irr_weighting_factor;
+						  ppa_interval_found=true;
+						}
+					}
+					// for initial guess of zero
+					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
+				}
+					//std::stringstream outm;
+					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_project_return_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
+					//	//  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
+					//	<< ", residual=" << residual << ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
+					//log( outm.str() );
+			}
+		}
+		its++;
+
+	}	// target tax investor return in target year
+	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) && (ppa >= 0) );
+
+/***************** end iterative solution *********************************************************************/
 
 
 		// save outputs
 
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
+
+		double x = npv( CF_energy_net, nyears, real_discount_rate );
+		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
+		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate) ) * 100 / x;
+
+		x = npv( CF_energy_net, nyears, nom_discount_rate );
+		if (x == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
+		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate) ) * 100 / x;
+
+		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
 
 		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
@@ -862,7 +1031,7 @@ public:
 		save_cf( CF_fed_tax_savings, nyears, "cf_fed_tax_savings" );
 
 		save_cf( CF_sta_and_fed_tax_savings, nyears, "cf_sta_and_fed_tax_savings" );
-		save_cf( CF_after_tax_net_equity_cost_flow, nyears, "cf_after_tax_net_equity_cost_flow" );
+		save_cf( CF_after_tax_net_equity_cash_flow, nyears, "cf_after_tax_net_equity_cash_flow" );
 		save_cf( CF_after_tax_cash_flow, nyears, "cf_after_tax_cash_flow" );
 
 		// dispatch
@@ -1239,53 +1408,15 @@ public:
 
 	void depreciation_sched_custom( int cf_line, int nyears, ssc_number_t *custp, int custp_len )
 	{
+		// note - allows for greater than or less than 100% depreciation - warning to user in samsim
 		if (custp_len < 2)
 		{
-			if (custp[0] > 100.0)
-			{
-				cf.at(cf_line, 1) = 1.0;
-			}
-			else
-			{
-				double d = custp[0];
-				if ( nyears * d < 100.0 )
-					d = 100.0 / nyears;
-
-				double totpercent = 0.0;
-				for (int i=1;i<=nyears;i++)
-				{
-					totpercent += d;
-					if (totpercent > 100.0)
-					{
-						cf.at(cf_line,i) = (100.0 - totpercent - d)/100.0;
-						break;
-					}
-					cf.at(cf_line, i) = d / 100.0;
-				}
-			}
+			cf.at(cf_line, 1) = custp[0]/100.0;
 		}
 		else
 		{
-			double totpercent = 0;
-			double scalef = 1.0;
-
-			for (int i=0; i<custp_len; i++)
-				totpercent += custp[i];
-
-			if (totpercent < 100.0 && totpercent > 0.0)
-				scalef = 100.0 / totpercent;
-
-			totpercent = 0;
 			for (int i=1;i<=nyears && i-1 < custp_len;i++)
-			{
-				totpercent += scalef * custp[i-1];
-				if (totpercent > 100.0)
-				{
-					cf.at(cf_line, i) = (100.0 - totpercent - scalef*custp[i-1])/100.0;
-					break;
-				}
-				cf.at(cf_line, i) = scalef*custp[i-1]/100.0;
-			}
+				cf.at(cf_line, i) = custp[i-1]/100.0;
 		}
 	}
 
@@ -2949,4 +3080,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( ippppa, "Residential/Commerical Finance model.", 1 );
+DEFINE_MODULE_ENTRY( ippppa, "Utility IPP/Commerical PPA Finance model.", 1 );
