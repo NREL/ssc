@@ -11,27 +11,24 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=specify ppa,1=solve ppa", "DHF",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "DHF",         "?=1e-3",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "DHF",         "?=0",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "DHF",         "?=100",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "DHF",         "?=100",                     "INTEGER,MIN=1",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=specify ppa,1=solve ppa", "ippppa",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "ippppa",         "?=1e-3",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "ippppa",         "?=0",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "ippppa",         "?=100",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "ippppa",         "?=100",                     "INTEGER,MIN=1",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"cents/kWh",	 "",			  "DHF",			 "?=10",         "",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"cents/kWh",	 "",			  "ippppa",			 "?=10",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
-	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
 
 
 
-	{ SSC_INPUT,        SSC_NUMBER,      "total_hard_cost",                          "Total hard cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_soft_cost",                          "Total soft cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_subject_sales_tax",        "Percent cost subject sales tax",                  "%",      "",                      "Cost",            "*",                      "MIN=0,MAX=100",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_due_construction_interest","Percent of cost due to construction interest",    "%",      "",                      "Cost",            "?=0",                    "MIN=0,MAX=100",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",                          "Total installed cost",                               "$",      "",                      "Cashloan",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Cashloan",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "ippppa",      "?=0",                     "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "min_dscr",                       "Minimum required DSCR",        "",      "",                      "ippppa",      "?=1.4",                  "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "min_irr",                       "Minimum required IRR",          "%",      "",                      "ippppa",      "?=15",                  "",                 "" },
@@ -105,8 +102,8 @@ static var_info vtab_ippppa[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback",                            "years",        "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                      "First year PPA",				   "cents/kWh",            "",                      "ippppa",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -116,6 +113,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_income",    "Total operating income",            "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -149,6 +147,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_and_fed_tax_savings",               "Total tax savings (Federal & State)",      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cash_flow",        "After tax net equity cash flow",           "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After tax cash flow",                      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "ippppa",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 
 
 var_info_invalid };
@@ -516,10 +515,11 @@ public:
 		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
 
-		double hard_cost = as_double("total_hard_cost");
-		double total_sales_tax = as_double("percent_of_cost_subject_sales_tax")*0.01*hard_cost*as_double("sales_tax_rate")*0.01;
-		double soft_cost = as_double("total_soft_cost") + total_sales_tax;
-		double total_cost = hard_cost + soft_cost;
+//		double hard_cost = as_double("total_hard_cost");
+//		double total_sales_tax = as_double("percent_of_cost_subject_sales_tax")*0.01*hard_cost*as_double("sales_tax_rate")*0.01;
+//		double soft_cost = as_double("total_soft_cost") + total_sales_tax;
+//		double total_cost = hard_cost + soft_cost;
+		double total_cost = as_double("total_installed_cost");
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
 
 		int loan_term = as_integer("loan_term");
@@ -972,22 +972,23 @@ public:
 
 		double x = npv( CF_energy_net, nyears, real_discount_rate );
 		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate) ) * 100 / x;
+		double lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
 
 		x = npv( CF_energy_net, nyears, nom_discount_rate );
 		if (x == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate) ) * 100 / x;
+		double lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
 
-		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
+		double net_present_value = cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate );
 
 		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
+		assign( "ppa",  var_data((ssc_number_t)ppa) );
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));
-		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));
+//		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));
 		assign( "adj_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));
 
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
@@ -1000,6 +1001,7 @@ public:
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
+		save_cf( CF_operating_income, nyears, "cf_operating_income" );
 
 		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");
 
@@ -1033,6 +1035,8 @@ public:
 		save_cf( CF_sta_and_fed_tax_savings, nyears, "cf_sta_and_fed_tax_savings" );
 		save_cf( CF_after_tax_net_equity_cash_flow, nyears, "cf_after_tax_net_equity_cash_flow" );
 		save_cf( CF_after_tax_cash_flow, nyears, "cf_after_tax_cash_flow" );
+
+		save_cf( CF_ppa_price,nyears,"cf_ppa_price");
 
 		// dispatch
 		if (as_integer("system_use_lifetime_output"))
