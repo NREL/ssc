@@ -7,11 +7,8 @@ static var_info vtab_cashloan[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Residential or Commercial Market",   "0/1",          "0=residential,1=comm.", "Cashloan",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "mortgage",		         "Use mortgage style loan (res. only)","0/1",          "",                      "Cashloan",      "?=0",                     "BOOLEAN",                        "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "total_hard_cost",                          "Total hard cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "total_soft_cost",                          "Total soft cost",                               "$",      "",                      "Cost",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_subject_sales_tax",        "Percent cost subject sales tax",                  "%",      "",                      "Cost",            "*",                      "MIN=0,MAX=100",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "percent_of_cost_due_construction_interest","Percent of cost due to construction interest",    "%",      "",                      "Cost",            "?=0",                    "MIN=0,MAX=100",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",                          "Total installed cost",                               "$",      "",                      "Cashloan",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Cashloan",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "Cashloan",      "?=0",                     "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
@@ -222,10 +219,11 @@ public:
 		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
 
-		double hard_cost = as_double("total_hard_cost");
-		double total_sales_tax = as_double("percent_of_cost_subject_sales_tax")*0.01*hard_cost*as_double("sales_tax_rate")*0.01;
-		double soft_cost = as_double("total_soft_cost") + total_sales_tax;
-		double total_cost = hard_cost + soft_cost;
+//		double hard_cost = as_double("total_hard_cost");
+//		double total_sales_tax = as_double("percent_of_cost_subject_sales_tax")*0.01*hard_cost*as_double("sales_tax_rate")*0.01;
+//		double soft_cost = as_double("total_soft_cost") + total_sales_tax;
+//		double total_cost = hard_cost + soft_cost;
+		double total_cost = as_double("total_installed_cost");
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
 
 		int loan_term = as_integer("loan_term");
@@ -583,7 +581,7 @@ public:
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
-		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
+//		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
 		assign( "adj_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
 		
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
