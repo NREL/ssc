@@ -132,16 +132,20 @@ public:
 		ssc_number_t *T_mains = allocate("T_mains", 8760);
 		ssc_number_t *Draw = allocate("draw", 8760);
 		ssc_number_t *Incident = allocate("incident", 8760);
+		ssc_number_t *G_Tcrit = allocate("G_Tcrit", 8760);
+		
+		ssc_number_t *out_FRta_corr = allocate("FRta_corr", 8760);
+		ssc_number_t *out_FRUL_corr = allocate("FRUL_corr", 8760);
 
-		ssc_number_t *arr_Q_useful = allocate("Q_useful", 8760);
-		ssc_number_t *arr_Q_deliv = allocate("Q_deliv", 8760);
-		ssc_number_t *arr_Q_loss = allocate("Q_loss", 8760);
-		ssc_number_t *arr_T_tank = allocate("T_tank", 8760);
-		ssc_number_t *arr_T_deliv = allocate("T_deliv", 8760);
-		ssc_number_t *arr_P_pump = allocate("P_pump", 8760);
-		ssc_number_t *arr_Q_aux = allocate("Q_aux", 8760);
-		ssc_number_t *arr_Q_auxonly = allocate("Q_auxonly", 8760);
-		ssc_number_t *arr_Q_saved = allocate("Q_saved", 8760);
+		ssc_number_t *out_Q_useful = allocate("Q_useful", 8760);
+		ssc_number_t *out_Q_deliv = allocate("Q_deliv", 8760);
+		ssc_number_t *out_Q_loss = allocate("Q_loss", 8760);
+		ssc_number_t *out_T_tank = allocate("T_tank", 8760);
+		ssc_number_t *out_T_deliv = allocate("T_deliv", 8760);
+		ssc_number_t *out_P_pump = allocate("P_pump", 8760);
+		ssc_number_t *out_Q_aux = allocate("Q_aux", 8760);
+		ssc_number_t *out_Q_auxonly = allocate("Q_auxonly", 8760);
+		ssc_number_t *out_Q_saved = allocate("Q_saved", 8760);
 
 		ssc_number_t *Mode = allocate("mode", 8760);
 	
@@ -377,6 +381,9 @@ public:
 			double FR_ratio = 1/( 1 + (area_coll*FRUL_corr/mdotCp_coll)*(mdotCp_coll/(Eff_hx*mdotCp_coll)-1)); // D&B eqn 10.2.3
 			FRta_corr *= FR_ratio;
 			FRUL_corr *= FR_ratio;
+
+			out_FRta_corr[i] = (ssc_number_t)FRta_corr;
+			out_FRUL_corr[i] = (ssc_number_t)FRUL_corr;
 								
 			double mdot_mix = Draw[i];		
 			double T_tank_last_iter = 0.0;
@@ -395,8 +402,8 @@ public:
 				if ( i > 0 ) T_dry_prev = T_dry[i-1];
 
 				/* calculate critical radiation for operation */
-				double G_Tcrit = FRUL_corr*( T_tank - T_dry[i] ) / FRta_corr; // D&B eqn 6.8.2			
-				if ( Incident[i] > G_Tcrit )
+				G_Tcrit[i] = FRUL_corr*( T_tank - T_dry[i] ) / FRta_corr; // D&B eqn 6.8.2			
+				if ( Incident[i] > G_Tcrit[i] )
 					Q_useful = area_coll*( FRta_corr*Incident[i] - FRUL_corr*(T_tank_prev - T_dry_prev) ); // D&B eqn 6.8.1 
 				else
 					Q_useful = 0.0; // absorbed radiation does not exceed thermal losses, etc => no operation
@@ -506,15 +513,15 @@ public:
 			T_deliv_prev = T_deliv;
 
 			// save output variables
-			arr_Q_useful[i] = (ssc_number_t) Q_useful;
-			arr_Q_deliv[i] = (ssc_number_t) Q_deliv;
-			arr_Q_loss[i] = (ssc_number_t) Q_loss;
-			arr_T_tank[i] = (ssc_number_t) T_tank;
-			arr_T_deliv[i] = (ssc_number_t) T_deliv;
-			arr_P_pump[i] = (ssc_number_t) P_pump;
-			arr_Q_aux[i] = (ssc_number_t) Q_aux;
-			arr_Q_auxonly[i] = (ssc_number_t) Q_auxonly;
-			arr_Q_saved[i] = (ssc_number_t) Q_saved;
+			out_Q_useful[i] = (ssc_number_t) Q_useful;
+			out_Q_deliv[i] = (ssc_number_t) Q_deliv;
+			out_Q_loss[i] = (ssc_number_t) Q_loss;
+			out_T_tank[i] = (ssc_number_t) T_tank;
+			out_T_deliv[i] = (ssc_number_t) T_deliv;
+			out_P_pump[i] = (ssc_number_t) P_pump;
+			out_Q_aux[i] = (ssc_number_t) Q_aux;
+			out_Q_auxonly[i] = (ssc_number_t) Q_auxonly;
+			out_Q_saved[i] = (ssc_number_t) Q_saved;
 		}
 
 		// finished with calculations.
