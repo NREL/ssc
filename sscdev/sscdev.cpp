@@ -1195,6 +1195,8 @@ void SCFrame::Start()
 				else ::ssc_module_parameter_number( p_mod, pa.name.c_str(), (ssc_number_t)pa.num );
 			}
 
+			::wxSetWorkingDirectory( wxPathOnly(m_loadedDllPath) );
+
 			wxStopWatch sw;
 			sw.Start();			
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
