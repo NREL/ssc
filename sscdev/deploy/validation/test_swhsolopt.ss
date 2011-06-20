@@ -1,13 +1,11 @@
-ssc_load_state( "c:/shw_state_ssc.data" )
 ssc_clear()
-
 
 ssc_set( "file_name", "C:/Documents and Settings/adobos/Desktop/SVN/SWH/725650TY.csv" )
 ssc_set( "mdot_single_coll", 0.12618 )
 ssc_set( "area_coll", 3.74 )
 ssc_set( "area_single_coll", 1.87 )
 ssc_set( "FRta", 0.605 )
-ssc_set( "FRUL", -3.84 )
+ssc_set( "FRUL", 3.84 )
 ssc_set( "b0", 0.19 )
 ssc_set( "pipe_k", 0.0342 )
 ssc_set( "pipe_insul", 0.01905 )
@@ -24,7 +22,5 @@ ssc_set( "T_tank_max", 82.2 )
 ssc_set( "T_set", 54.4 )
 ssc_set( "pump_watts", 32.34 )
 ssc_set( "pump_eff", 0.85 )
-
-ssc_save_state( "c:/shw_state_ssc.data" )
 
 ssc_start()
