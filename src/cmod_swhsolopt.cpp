@@ -124,57 +124,56 @@ public:
 		   ********************************************************************** */	
 		int i;
 		double dT = 3600; // Time step, seconds
-		double
-			Beam[8761], 
-			Diffuse[8761],
-			T_dry[8761],
-			Draw[8761],
-			T_mains[8761],
-			Incident[8761], 
-			Q_useful[8761],
-			Q_deliv[8761],
-			T_deliv[8761],
-			Q_loss[8761],
-			T_tank[8761],
-			P_pump[8761],
-			Q_aux[8761],
-			Q_auxonly[8761],
-			Q_saved[8761],
-			G_Tcrit[8761];
+
+		
+		ssc_number_t *Beam = allocate("beam", 8760);
+		ssc_number_t *Diffuse = allocate("diffuse", 8760);
+		ssc_number_t *T_dry = allocate("T_dry", 8760);
+		ssc_number_t *T_mains = allocate("T_mains", 8760);
+		ssc_number_t *Draw = allocate("draw", 8760);
+		ssc_number_t *Incident = allocate("incident", 8760);
+
+		ssc_number_t *arr_Q_useful = allocate("Q_useful", 8760);
+		ssc_number_t *arr_Q_deliv = allocate("Q_deliv", 8760);
+		ssc_number_t *arr_Q_loss = allocate("Q_loss", 8760);
+		ssc_number_t *arr_T_tank = allocate("T_tank", 8760);
+		ssc_number_t *arr_T_deliv = allocate("T_deliv", 8760);
+		ssc_number_t *arr_P_pump = allocate("P_pump", 8760);
+		ssc_number_t *arr_Q_aux = allocate("Q_aux", 8760);
+		ssc_number_t *arr_Q_auxonly = allocate("Q_auxonly", 8760);
+		ssc_number_t *arr_Q_saved = allocate("Q_saved", 8760);
+
+		ssc_number_t *Mode = allocate("mode", 8760);
 	
-		Draw[0] = 0.0; // 0th index value not used in draw profile (used as initial condition in other arrays)
-		Draw[1] = 2.4;
-		Draw[2] = 1.2;
-		Draw[3] = 0.8;
-		Draw[4] = 1;
-		Draw[5] = 1.9;
-		Draw[6] = 6.1;
-		Draw[7] = 14;
-		Draw[8] = 16.2;
-		Draw[9] = 15.7;
-		Draw[10] = 13.9;
-		Draw[11] = 11.9;
-		Draw[12] = 10.1;
-		Draw[13] = 8.6;
-		Draw[14] = 7.7;
-		Draw[15] = 6.9;
-		Draw[16] = 7;
-		Draw[17] = 8;
-		Draw[18] = 10.2;
-		Draw[19] = 12.2;
-		Draw[20] = 12.6;
-		Draw[21] = 11.4;
-		Draw[22] = 9.9;
-		Draw[23] = 7.6;
-		Draw[24] = 5.1;
+		Draw[0] = 2.4f;
+		Draw[1] = 1.2f;
+		Draw[2] = 0.8f;
+		Draw[3] = 1.0f;
+		Draw[4] = 1.9f;
+		Draw[5] = 6.1f;
+		Draw[6] = 14.0f;
+		Draw[7] = 16.2f;
+		Draw[8] = 15.7f;
+		Draw[9] = 13.9f;
+		Draw[10] = 11.9f;
+		Draw[11] = 10.1f;
+		Draw[12] = 8.6f;
+		Draw[13] = 7.7f;
+		Draw[14] = 6.9f;
+		Draw[15] = 7.0f;
+		Draw[16] = 8.0f;
+		Draw[17] = 10.2f;
+		Draw[18] = 12.2f;
+		Draw[19] = 12.6f;
+		Draw[20] = 11.4f;
+		Draw[21] = 9.9f;
+		Draw[22] = 7.6f;
+		Draw[23] = 5.1f;
 	
-		for (i=0;i<8761;i++)
+		for ( i=0; i < 8760; i++ )
 		{	
-			Beam[i] = Diffuse[i] = T_dry[i] = T_mains[i] = 0.0;
-			Incident[i] = Q_useful[i] = Q_deliv[i] = T_deliv[i] = 0.0;
-			Q_loss[i] = T_tank[i] = P_pump[i] = 0.0;
-			Q_aux[i] = Q_auxonly[i] = Q_saved[i] = G_Tcrit[i] = 0.0;
-			if (i > 24) Draw[i] = Draw[i-24];
+			Beam[i] = Diffuse[i] = T_dry[i] = T_mains[i] = Incident[i] = 0.0f;			
+			if (i >= 24) Draw[i] = Draw[i-24];
 		}
 	
 		double latitude = hdr.lat; // degrees ('phi' in D&B pp 13)
@@ -183,15 +182,15 @@ public:
 		for (i=0;i<12;i++)
 			monthly_avg_temp[i] = 0;
 	
-		for (i=1;i<=8760;i++)
+		for ( i=0; i < 8760; i++ )
 		{
 			wf_read_data( reader.wf, &dat );		
-			Beam[i] = dat.dn;
-			Diffuse[i] = dat.df;
-			T_dry[i] = dat.tdry;	
+			Beam[i] = (ssc_number_t)dat.dn;
+			Diffuse[i] = (ssc_number_t)dat.df;
+			T_dry[i] = (ssc_number_t)dat.tdry;	
 		
 			temp_sum += T_dry[i];
-			monthly_avg_temp[ util::month_of(i-1) - 1 ] += T_dry[i];
+			monthly_avg_temp[ util::month_of(i) - 1 ] += T_dry[i];
 		}
 	
 		// Algorithm for calculating mains water temperature from paper 
@@ -218,7 +217,7 @@ public:
 		/* **********************************************************************
 		   Process radiation (Isotropic model), calculate Incident[i], T_mains[i]
 		   ********************************************************************** */	
-		for (i=1;i<=8760;i++)
+		for ( i=0; i < 8760; i++ )
 		{				
 			// calculate hour of day  ( goes 1..24 )
 			// and julian day  ( goes 1..365 )
@@ -227,12 +226,12 @@ public:
 			// the astronomy community, presenting the interval of time in days and fractions of a day since 
 			// January 1, 4713 BC Greenwich noon - WIKIPEDIA)
 			int hour = 0;
-			int julian_day = (int)(((double)i)/24.0);		
-			if ( (double)julian_day == (((double)i)/24) )
+			int julian_day = (int)(((double) (i+1) )/24.0);		
+			if ( (double)julian_day == (((double) (i+1) )/24) )
 				hour = 24;
 			else
 			{
-				hour = i - (julian_day*24);
+				hour =  (i+1) - (julian_day*24);
 				julian_day++;
 			}
 		
@@ -289,12 +288,12 @@ public:
 			double S_d = I_d * Kta_d * ( (1+cos(M_PI/180*tilt))/2 );
 			double S_g = I_g * Kta_g * albedo * ( (1-cos(M_PI/180*tilt))/2 );
 		
-			Incident[i] = S_b + S_d + S_g;
+			Incident[i] = (ssc_number_t)( S_b + S_d + S_g );
 		
 		
-			T_mains[i] = annual_avg_temp + 5 + mains_ratio * ( (avg_temp_high_f - avg_temp_low_f)/2 )
-					* sin( M_PI/180*(0.986*(julian_day-15-lag)-90));
-			T_mains[i] = (T_mains[i]-32)/1.8; // convert to 'C
+			T_mains[i] = (ssc_number_t)(  annual_avg_temp + 5 + mains_ratio * ( (avg_temp_high_f - avg_temp_low_f)/2 )
+					* sin( M_PI/180*(0.986*(julian_day-15-lag)-90)) );
+			T_mains[i] = (ssc_number_t)( (T_mains[i]-32)/1.8 ); // convert to 'C
 		}
 	
 	
@@ -328,42 +327,41 @@ public:
 	
 		double Eff_hx = 0.5;
 	
-		/* initialize simulation variables */
+		/* set initial conditions on some simulation variables */
 		double V_hot = 0.8 * V_tank;
 		double V_cold = V_tank-V_hot;
 		double T_hot = T_mains[1] + 40; // initial hot temp 40'C above ambient
 		double T_cold = T_mains[1];
 		double T_hx_in = 45; // initial inlet temp of heat exchanger 'C
 		double T_hx_out = 40; // initial outlet temp of heat exchanger 'C
-		Q_useful[0] = 0.0;
-		T_tank[0] = V_hot/V_tank*T_hot + V_cold/V_tank*T_cold; // weighted average tank temperature (initial)
+		
 		double Q_tankloss = 0;
+		double Q_useful_prev = 0.0;
+		double T_tank_prev = V_hot/V_tank*T_hot + V_cold/V_tank*T_cold; // weighted average tank temperature (initial)
+		double T_deliv_prev = 0.0;
 
 		/* **********************************************************************
 		   Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, Q_saved
 		   ********************************************************************** */	
-
-		int mode[8761];
-		mode[0] = -1;
-	
-		for (i=1;i<=8760;i++)
+		
+		for ( i=0; i < 8760; i++ )
 		{
 			// at beginning of this timestep, temp is the same as end of last timestep
-			T_tank[i] = T_tank[i-1];
-			Q_useful[i] = Q_useful[i-1];
-			double T_del = T_deliv[i-1];
+			double T_tank = T_tank_prev;
+			double Q_useful = Q_useful_prev;
+			double T_deliv = T_deliv_prev;
 		
 			double Cp_coll = Cp(coll_fluid, (T_hx_in + T_hx_out)/2); // specific heat of collector fluid, at average Hx temp (J/kg.K)
 			double mdotCp_coll = mdot_coll * Cp_coll; // mass flow rate (kg/s) * Cp (J/kg.K)
 			double mdotCp_test = mdot_coll * 4186; // mass flow rate (kg/s) * Cp_water@15'C (J/kg.K)
-			double Cp_tank = Cp(WATER, T_tank[i]);
-			double rho_tank = Density(WATER, T_tank[i]);
+			double Cp_tank = Cp(WATER, T_tank);
+			double rho_tank = Density(WATER, T_tank);
 		
 			// update HX inlet temp using useful energy absorbed in last time step Qu=epsilon*mCp(Ti-Ts)
-			T_hx_in = T_tank[i] + Q_useful[i] / ( Eff_hx * mdotCp_coll );
+			T_hx_in = T_tank + Q_useful / ( Eff_hx * mdotCp_coll );
 		
 			// update HX outlet temp by knowing amount of energy transferred to tank Qu=mCp(Ti-To)
-			T_hx_out = T_hx_in - Q_useful[i] / mdotCp_coll;
+			T_hx_out = T_hx_in - Q_useful / mdotCp_coll;
 		
 			/* Flow rate corrections to FRta, FRUL (D&B pp 307) */
 			double FprimeUL = -mdotCp_test / area_coll * ::log( 1 - FRUL*area_coll/mdotCp_test ); // D&B eqn 6.20.4 **TODO** CHECK |use vs |test
@@ -381,71 +379,76 @@ public:
 			FRUL_corr *= FR_ratio;
 								
 			double mdot_mix = Draw[i];		
-			double T_tank_last = 0.0;
+			double T_tank_last_iter = 0.0;
+
 			int niter = 0;
 			do
 			{
-				if (T_del > T_set)
+				if (T_deliv > T_set)
 				{
 					// limit flow rate to mixing valve by effective ratio of T_set/T_deliv
 					mdot_mix =  Draw[i] * (Cp(WATER, T_set)*T_set - Cp(WATER, T_mains[i])*T_mains[i]) 
-											/(Cp_tank *T_del - Cp(WATER, T_mains[i])*T_mains[i]);
+											/(Cp_tank *T_deliv - Cp(WATER, T_mains[i])*T_mains[i]);
 				}
-						
+				
+				double T_dry_prev = T_dry[i];
+				if ( i > 0 ) T_dry_prev = T_dry[i-1];
+
 				/* calculate critical radiation for operation */
-				G_Tcrit[i] = FRUL_corr*( T_tank[i] - T_dry[i] ) / FRta_corr; // D&B eqn 6.8.2
-			
-				if ( G_Tcrit[i] < Incident[i] )
-					Q_useful[i] = area_coll*( FRta_corr*Incident[i] - FRUL_corr*(T_tank[i-1] - T_dry[i]) ); // D&B eqn 6.8.1 
+				double G_Tcrit = FRUL_corr*( T_tank - T_dry[i] ) / FRta_corr; // D&B eqn 6.8.2			
+				if ( Incident[i] > G_Tcrit )
+					Q_useful = area_coll*( FRta_corr*Incident[i] - FRUL_corr*(T_tank_prev - T_dry_prev) ); // D&B eqn 6.8.1 
 				else
-					Q_useful[i] = 0.0; // absorbed radiation does not exceed thermal losses, etc => no operation
+					Q_useful = 0.0; // absorbed radiation does not exceed thermal losses, etc => no operation
 			
-				T_tank_last = T_tank[i];
+				T_tank_last_iter = T_tank;
 			
 				/* During solar collection, tank is assumed mixed.
 				   During no solar collection hours, tank is assumed startifed (modeled with 2 variable volume nodes) */
-				if (Q_useful[i] > 0)
+				if (Q_useful > 0)
 				{
 				/* MIXED TANK -- solar collection */
 			
-					T_tank_last = T_tank[i];
+					T_tank_last_iter = T_tank;
 				
-					if (Q_useful[i-1] == 0.0)
+					if (Q_useful_prev == 0.0)
 					{
 						// this hour has solar collection, after previous hour with no solar collection
-						T_tank[i] = T_tank[i-1];
-						mode[i] = 1;
+						T_tank = T_tank_prev;
+						Mode[i] = 1;
 					}
 					else
 					{
 						// this hour has solar collection, after previous hour with solar collection
-						T_tank[i] = T_tank[i-1] * 1/(1+ mdot_mix/(rho_tank*V_tank))
-							+ ( Q_useful[i]*dT - Q_tankloss*dT - mdot_mix*Cp_tank*273.15 + mdot_mix*Cp(WATER,T_mains[i])*(T_mains[i]+273.15) )
+						T_tank = T_tank_prev * 1/(1+ mdot_mix/(rho_tank*V_tank))
+							+ ( Q_useful*dT - Q_tankloss*dT - mdot_mix*Cp_tank*273.15 + mdot_mix*Cp(WATER,T_mains[i])*(T_mains[i]+273.15) )
 							  / ( rho_tank * V_tank * Cp_tank * ( 1 + mdot_mix / (rho_tank*V_tank) ) );
 					
-						if (T_tank[i] > T_tank_max) T_tank[i] = T_tank_max;
-						Q_tankloss = UA_tank * (T_tank[i] - T_room);
-						mode[i] = 2;
+						if (T_tank > T_tank_max) T_tank = T_tank_max;
+						Q_tankloss = UA_tank * (T_tank - T_room);
+						Mode[i] = 2;
 					}
 				
-					T_del = T_tank[i];
+					T_deliv = T_tank;
 				}
 				else
 				{
 				/* STRATIFIED TANK -- no solar collection */
-					if (Q_useful[i-1] > 0.0)
+					if (Q_useful_prev > 0.0)
 					{
 						// after previous hour with collection
 						V_hot = V_tank - mdot_mix/rho_tank;
 						if (V_hot < 0) V_hot = 0;
-						T_hot = T_tank[i-1] - UA_tank * V_hot/V_tank * (T_hot-T_room)*dT / (rho_tank * Cp(WATER,T_hot)*V_tank);
+						T_hot = T_tank_prev - UA_tank * V_hot/V_tank * (T_hot-T_room)*dT / (rho_tank * Cp(WATER,T_hot)*V_tank);
 						V_cold = V_tank-V_hot;
 						T_cold = T_mains[i] - UA_tank * V_cold/V_tank * (T_mains[i]-T_room)*dT / (rho_tank*Cp(WATER,T_cold)*V_tank);
+
 						if (V_hot > 0)
-							T_del = T_hot;
+							T_deliv = T_hot;
 						else
-							T_del = T_cold;
-						mode[i] = 3;
+							T_deliv = T_cold;
+
+						Mode[i] = 3;
 					}
 					else
 					{
@@ -456,87 +459,72 @@ public:
 						V_cold = V_tank-V_hot;
 						// note: T_cold calculation is approximate, doesn't account for incoming cold water temperature
 						T_cold = T_cold - UA_tank * V_cold / V_tank * (T_cold - T_room) * dT / (rho_tank * Cp(WATER,T_cold) * V_tank);
+
 						if (V_hot > 0)
-							T_del = T_hot;
+							T_deliv = T_hot;
 						else
-							T_del = T_cold;
-						mode[i] = 4;
+							T_deliv = T_cold;
+
+						Mode[i] = 4;
 					}
 				
-					T_tank[i] = V_hot / V_tank * T_hot + V_cold / V_tank * T_cold;
+					T_tank = V_hot / V_tank * T_hot + V_cold / V_tank * T_cold;
 					Q_tankloss = UA_tank * V_hot / V_tank * (T_hot - T_room) + UA_tank * V_cold / V_tank * (T_cold - T_room);
 				
 					break; // no iteration when tank is stratified
 				}
-			} while ( fabs(T_tank_last - T_tank[i]) / T_tank[i] >= 0.001 || ++niter >= 10 );
+			} while ( fabs(T_tank_last_iter - T_tank) / T_tank >= 0.001 || ++niter >= 10 );
 		
 		
 			// if the delivered water temperature from SHW is greater then set temp
 			// mix with cold mains to lower temp to setp temp
-			if (T_deliv[i] > T_set)
-				Q_deliv[i] = mdot_mix / dT * (Cp_tank * T_del - Cp(WATER, T_mains[i])*T_mains[i]);
+			double Q_deliv = 0.0;
+			if (T_deliv > T_set)
+				Q_deliv = mdot_mix / dT * (Cp_tank * T_deliv - Cp(WATER, T_mains[i])*T_mains[i]);
 			else
-				Q_deliv[i] = Draw[i] / dT * (Cp_tank * T_del - Cp(WATER, T_mains[i])*T_mains[i]);
+				Q_deliv = Draw[i] / dT * (Cp_tank * T_deliv - Cp(WATER, T_mains[i])*T_mains[i]);
 			
-			T_deliv[i] = T_del;
-			Q_loss[i] = Q_tankloss;
+			double Q_loss = Q_tankloss;
 		
 			// calculate pumping losses (pump size is user entered) -
-			P_pump[i] = (Q_useful[i] > 0) ? pump_watts*pump_eff : 0.0;
+			double P_pump = (Q_useful > 0) ? pump_watts*pump_eff : 0.0;
 		
 			// amount of auxiliary energy needed to bring delivered water to set temperature
-			Q_aux[i] = Draw[i] / dT * Cp(WATER,T_set) * (T_set - T_del);
-			if (Q_aux[i] < 0) Q_aux[i] = 0.0;
+			double Q_aux = Draw[i] / dT * Cp(WATER,T_set) * (T_set - T_deliv);
+			if (Q_aux < 0) Q_aux = 0.0;
 		
 			// amount of energy needed to bring T_mains to set temperature (without SHW)
-			Q_auxonly[i] = Draw[i] / dT * Cp(WATER,T_set) * (T_set - T_mains[i]);
-			if (Q_auxonly[i] < 0) Q_auxonly[i] = 0.0;
+			double Q_auxonly = Draw[i] / dT * Cp(WATER,T_set) * (T_set - T_mains[i]);
+			if (Q_auxonly < 0) Q_auxonly = 0.0;
 		
 			// Energy saved by SHW system is difference between auxonly system and shw+aux system
-			Q_saved[i] = Q_auxonly[i] - Q_aux[i];
-		}
-	
-		/* **********************************************************************
-		   Offload output data
-		   ********************************************************************** */
+			double Q_saved = Q_auxonly - Q_aux;
 
-		ssc_number_t *out_beam = allocate("beam", 8760);
-		ssc_number_t *out_diff = allocate("diffuse", 8760);
-		ssc_number_t *out_T_dry = allocate("T_dry", 8760);
-		ssc_number_t *out_T_mains = allocate("T_mains", 8760);
-		ssc_number_t *out_draw = allocate("draw", 8760);
-		ssc_number_t *out_incident = allocate("incident", 8760);
-		ssc_number_t *out_Q_useful = allocate("Q_useful", 8760);
-		ssc_number_t *out_Q_deliv = allocate("Q_deliv", 8760);
-		ssc_number_t *out_Q_loss = allocate("Q_loss", 8760);
-		ssc_number_t *out_T_tank = allocate("T_tank", 8760);
-		ssc_number_t *out_T_deliv = allocate("T_deliv", 8760);
-		ssc_number_t *out_P_pump = allocate("P_pump", 8760);
-		ssc_number_t *out_Q_aux = allocate("Q_aux", 8760);
-		ssc_number_t *out_Q_auxonly = allocate("Q_auxonly", 8760);
-		ssc_number_t *out_Q_saved = allocate("Q_saved", 8760);
-		ssc_number_t *out_mode = allocate("mode", 8760);
+			// save some values for next iteration
+			Q_useful_prev = Q_useful;
+			T_tank_prev = T_tank;
+			T_deliv_prev = T_deliv;
 
-		for ( i=0; i < 8760; i++ )
-		{
-			out_beam[i] = (ssc_number_t) Beam[i+1];
-			out_diff[i] = (ssc_number_t) Diffuse[i+1];
-			out_T_dry[i] = (ssc_number_t) T_dry[i+1];
-			out_T_mains[i] = (ssc_number_t) T_mains[i+1];
-			out_draw[i] = (ssc_number_t) Draw[i+1];
-			out_incident[i] = (ssc_number_t) Incident[i+1];
-			out_Q_useful[i] = (ssc_number_t) Q_useful[i+1];
-			out_Q_deliv[i] = (ssc_number_t) Q_deliv[i+1];
-			out_Q_loss[i] = (ssc_number_t) Q_loss[i+1];
-			out_T_tank[i] = (ssc_number_t) T_tank[i+1];
-			out_T_deliv[i] = (ssc_number_t) T_deliv[i+1];
-			out_P_pump[i] = (ssc_number_t) P_pump[i+1];
-			out_Q_aux[i] = (ssc_number_t) Q_aux[i+1];
-			out_Q_auxonly[i] = (ssc_number_t) Q_auxonly[i+1];
-			out_Q_saved[i] = (ssc_number_t) Q_saved[i+1];
-			out_mode[i] = (ssc_number_t) mode[i+1];
+			// save output variables
+			arr_Q_useful[i] = (ssc_number_t) Q_useful;
+			arr_Q_deliv[i] = (ssc_number_t) Q_deliv;
+			arr_Q_loss[i] = (ssc_number_t) Q_loss;
+			arr_T_tank[i] = (ssc_number_t) T_tank;
+			arr_T_deliv[i] = (ssc_number_t) T_deliv;
+			arr_P_pump[i] = (ssc_number_t) P_pump;
+			arr_Q_aux[i] = (ssc_number_t) Q_aux;
+			arr_Q_auxonly[i] = (ssc_number_t) Q_auxonly;
+			arr_Q_saved[i] = (ssc_number_t) Q_saved;
 		}
+
+		// finished with calculations.
 	}
+
+
+
+	/* ************************************************
+	     Some helper functions 
+	   ************************************************ */
 
 	enum { WATER, GLYCOL34 };
 
