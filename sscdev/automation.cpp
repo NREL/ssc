@@ -583,7 +583,8 @@ class ScriptControlDialog : public wxDialog
 {
 public:
 	ScriptControlDialog(wxWindow *parent)
-		: wxDialog(parent, wxID_ANY, "Script Control")
+		: wxDialog(parent, wxID_ANY, wxString("Script Control"),
+			wxDefaultPosition, wxDefaultSize)
 	{
 		new wxButton(this, wxID_ABORT, "Abort", wxPoint(5,5), wxSize(80,30));
 		SetClientSize(90,40);

@@ -397,7 +397,7 @@ SCFrame::SCFrame()
 	m_gauProgress = new wxGauge( m_toolBar, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_SMOOTH );
 	m_txtProgress = new wxTextCtrl( m_toolBar, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(270, 21), wxTE_READONLY );
 	m_txtProgress->SetBackgroundColour(*wxBLACK);
-	m_txtProgress->SetForegroundColour(*wxYELLOW);
+	m_txtProgress->SetForegroundColour(*wxGREEN);
 	
 	m_toolBar->AddTool( ID_LOAD_UNLOAD_DLL,"Load/unload ssc32.dll", wxBitmap(stock_connect_24_xpm),"Load/unload ssc32.dll");
 	//m_toolBar->AddSeparator();
