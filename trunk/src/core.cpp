@@ -524,7 +524,7 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 			if (dat.type != SSC_STRING || dat.str.length() <= 4)
 				fail_constraint("string data type required with length greater than 4 chars: " + dat.str);
 
-			std::string ext = dat.str.substr( dat.str.length()-3 );
+			std::string ext = util::lower_case( dat.str.substr( dat.str.length()-3 ) );
 			if (ext != "tm2" || ext != "tm3" || ext != "epw" || ext != "csv")
 				fail_constraint("file extension was not tm2,tm3,epw,csv: " + ext);
 		}
@@ -586,6 +586,18 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 		{
 			if (dat.type != SSC_NUMBER) throw constraint_error(name, "cannot test for positive with non-numeric type", expr);
 			if (dat.num <= 0.0)
+				fail_constraint( util::to_string( (double)dat.num ) );
+		}
+		else if (expr == "percent")
+		{
+			if (dat.type != SSC_NUMBER) throw constraint_error(name, "cannot test for percent (%) constraint with non-numeric type", expr);
+			if (dat.num < 0.0 || dat.num > 100.0)
+				fail_constraint( util::to_string( (double)dat.num ) );
+		}
+		else if (expr == "factor")
+		{
+			if (dat.type != SSC_NUMBER) throw constraint_error(name, "cannot test for factor (0..1) constraint with non-numeric type", expr);
+			if (dat.num < 0.0 || dat.num > 1.0)
 				fail_constraint( util::to_string( (double)dat.num ) );
 		}
 		else if (expr == "ts_m")

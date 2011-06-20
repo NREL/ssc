@@ -186,7 +186,7 @@ public:
 	   and does not need to be reported.  returning false causes
 	   the output string to be sent to the log as a NOTICE
 	*/
-	virtual bool on_extproc_output( const std::string &text ) { return false; }	
+	virtual bool on_extproc_output( const std::string & ) { return false; }	
 	
 protected:
 	/* must be implemented to perform calculations
