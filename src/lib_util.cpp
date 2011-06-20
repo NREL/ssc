@@ -723,6 +723,8 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 
 int util::month_of(double time)
 {
+	/* returns month number 1..12 given 
+	   time: hour index in year 0..8759 */
 	if (time < 0) return 0;
 	if (time < 744) return 1;
 	if (time < 1416) return 2;

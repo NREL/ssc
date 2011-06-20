@@ -53,7 +53,7 @@ namespace util
 	std::string read_file( const std::string &file );
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
 	
-	int month_of(double time); /* hour: 0 = jan 1st 12am, returns 1-12 */
+	int month_of(double time); /* hour: 0 = jan 1st 12am-1am, returns 1-12 */
 	int day_of_month(int month, double time); /* month: 1-12 time: hours, starting 0=jan 1st 12am, returns 1-nday*/
 
 	bool translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val);

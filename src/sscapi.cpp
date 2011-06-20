@@ -30,6 +30,7 @@ extern module_entry_info
 	cm_entry_trndish,
 	cm_entry_ptflux,
 	cm_entry_trntower,
+	cm_entry_swhsolopt,
 	cm_entry_test_irr;
 
 /* official module table */
@@ -49,6 +50,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_trndish,
 	&cm_entry_ptflux,
 	&cm_entry_trntower,
+	&cm_entry_swhsolopt,
 	&cm_entry_test_irr,
 	NULL };
 
