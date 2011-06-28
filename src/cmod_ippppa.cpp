@@ -2,6 +2,10 @@
 #include "lib_financial.h"
 #include <sstream>
 
+#ifndef WIN32
+#include <float.h>
+#endif
+
 static var_info vtab_ippppa[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Utility IPP or Commercial PPA",   "0/1",          "0=ipp,1=ppa", "ippppa",      "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
