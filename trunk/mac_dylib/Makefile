@@ -24,6 +24,8 @@ OBJECTS = \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
 	cmod_windwatts.o \
+	cmod_ippppa.o \
+	cmod_swhsolopt.o \
 	core.o \
 	lib_financial.o \
 	lib_pvwatts.o \
