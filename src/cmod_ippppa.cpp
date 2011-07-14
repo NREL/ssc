@@ -36,7 +36,7 @@ static var_info vtab_ippppa[] = {
 
 	{ SSC_INPUT,        SSC_NUMBER,      "min_dscr",                       "Minimum required DSCR",        "",      "",                      "ippppa",      "?=1.4",                  "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "min_irr",                       "Minimum required IRR",          "%",      "",                      "ippppa",      "?=15",                  "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "min_dscr",                       "PPA escalation",               "%",      "",                      "ippppa",      "?=0.6",                  "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ppa_escalation",                       "PPA escalation",               "%",      "",                      "ippppa",      "?=0.6",                  "MIN=0,MAX=100",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "min_dscr_required",              "Minimum DSCR required",        "0/1",      "0=no,1=yes",                      "ippppa",      "?=1",                  "INTEGER,MIN=0,MAX=1",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "positive_cashflow_required",     "Positive cash flow required",  "0/1",      "0=no,1=yes",                      "ippppa",      "?=1",                  "INTEGER,MIN=0,MAX=1",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "optimize_lcoe_wrt_debt_fraction","Optimize LCOE with respect to Debt Fraction",  "0/1",      "0=no,1=yes",                      "ippppa",      "?=0",                  "INTEGER,MIN=0,MAX=1",                 "" },
@@ -518,11 +518,11 @@ public:
 		double real_discount_rate = as_double("real_discount_rate")*0.01;
 		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
+		double min_dscr = as_double("min_dscr");
+		double min_irr = as_double("min_irr");
+		int min_dscr_required = as_integer("min_dscr_required");
+		int positive_cashflow_required = as_integer("positive_cashflow_required");
 
-//		double hard_cost = as_double("total_hard_cost");
-//		double total_sales_tax = as_double("percent_of_cost_subject_sales_tax")*0.01*hard_cost*as_double("sales_tax_rate")*0.01;
-//		double soft_cost = as_double("total_soft_cost") + total_sales_tax;
-//		double total_cost = hard_cost + soft_cost;
 		double total_cost = as_double("total_installed_cost");
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
 
@@ -781,7 +781,7 @@ public:
 		bool ppa_interval_found=false;
 		bool ppa_too_large=false;
 		bool ppa_interval_reset=true;
-
+		double aftertax_irr=0;
 
 /***************** begin iterative solution *********************************************************************/
 
@@ -882,11 +882,12 @@ public:
 
 		}
 
+		aftertax_irr = irr( CF_energy_value, nyears);
 
 		if (ppa_soln_mode == 1)
 		{
-//			double residual = aftertax_irr - target_irr;
-//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+			double residual = aftertax_irr - min_irr;
+			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
 //				double flip_frac = flip_target_percent/100.0;
 //				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
 			if (!solved)
@@ -1301,6 +1302,161 @@ public:
 
 		return result*rr;
 	}
+
+/* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
+	bool is_valid_iter_bound(double estimated_return_rate)
+	{
+		return estimated_return_rate != -1 && (estimated_return_rate < INT_MAX) && (estimated_return_rate > INT_MIN);
+	}
+
+	double irr_poly_sum(double estimated_return_rate, int cf_line, int count)
+	{
+		double sum_of_polynomial = 0;
+		if (is_valid_iter_bound(estimated_return_rate))
+		{
+			for (int j = 0; j <= count ; j++)
+			{
+				double val = (pow((1 + estimated_return_rate), j));
+				if (val != 0.0)
+					sum_of_polynomial += cf.at(cf_line,j)/val;
+				else
+					break;
+			}
+		}
+		return sum_of_polynomial;
+	}
+
+	double irr_derivative_sum(double estimated_return_rate,int cf_line, int count)
+	{
+		double sum_of_derivative = 0;
+		if (is_valid_iter_bound(estimated_return_rate))
+			for (int i = 1; i <= count ; i++)
+			{
+				sum_of_derivative += cf.at(cf_line,i)*(i)/pow((1 + estimated_return_rate), i+1);
+			}
+		return sum_of_derivative*-1;
+	}
+
+	double irr_scale_factor( int cf_unscaled, int count)
+	{
+		// scale to max value for better irr convergence
+		if (count<1) return 1.0;
+		int i=0;
+		double max=fabs(cf.at(cf_unscaled,0));
+		for (i=0;i<=count;i++) 
+			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
+		return (max>0 ? max:1);
+	}
+
+	bool is_valid_irr( int cf_line, int count, double residual, double tolerance, int number_of_iterations, int max_iterations, double calculated_irr, double scale_factor )
+	{
+		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
+		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
+		bool is_valid = ( (number_of_iterations<max_iterations) && (fabs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (fabs(npv_of_irr/scale_factor)<tolerance) );
+				//if (!is_valid)
+				//{
+				//std::stringstream outm;
+				//outm <<  "cf_line=" << cf_line << "count=" << count << "residual=" << residual << "number_of_iterations=" << number_of_iterations << "calculated_irr=" << calculated_irr
+				//	<< "npv of irr=" << npv_of_irr << "npv of irr plus delta=" << npv_of_irr_plus_delta;
+				//log( outm.str() );
+				//}
+		return is_valid;
+	}
+
+	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-6, int max_iterations=100 )
+	{
+		int number_of_iterations=0;
+		double calculated_irr=0;
+
+
+		if (count < 1)
+			return calculated_irr;
+
+		// only possible for first value negative
+		if ( (cf.at(cf_line,0) <= 0))
+		{
+			// initial guess from http://zainco.blogspot.com/2008/08/internal-rate-of-return-using-newton.html
+			if ((initial_guess < -1) && (count > 1))// second order
+			{
+				if (cf.at(cf_line,0) !=0) 
+				{
+					double b = 2.0+ cf.at(cf_line,1)/cf.at(cf_line,0);
+					double c = 1.0+cf.at(cf_line,1)/cf.at(cf_line,0)+cf.at(cf_line,2)/cf.at(cf_line,0);
+					initial_guess = -0.5*b - 0.5*sqrt(b*b-4.0*c);
+					if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = -0.5*b + 0.5*sqrt(b*b-4.0*c);
+				}
+			}
+			else if (initial_guess < 0) // first order
+			{
+				if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
+			}
+
+			double scale_factor = irr_scale_factor(cf_line,count);
+			double residual=DBL_MAX;
+
+			calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
+			{
+				initial_guess=0.1;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+			}
+
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try -0.1 as initial guess
+			{
+				initial_guess=-0.1;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+			}
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0 as initial guess
+			{
+				initial_guess=0;
+				number_of_iterations=0;
+				residual=0;
+				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
+			}
+
+			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
+			{
+				calculated_irr = 0.0; // did not converge
+			}
+
+		}
+		return calculated_irr;
+	}
+
+
+	double irr_calc( int cf_line, int count, double initial_guess, double tolerance, int max_iterations, double scale_factor, int &number_of_iterations, double &residual )
+	{
+		double calculated_irr=0;
+		double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+		if (deriv_sum != 0.0)
+			calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
+		else
+			return initial_guess;
+
+		number_of_iterations++;
+
+
+		residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+
+		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		{
+			deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+			if (deriv_sum != 0.0)
+				calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
+			else
+				break;
+
+			number_of_iterations++;
+			residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
+		}
+		return calculated_irr;
+	}
+
 
 	void compute_production_incentive( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
 	{
