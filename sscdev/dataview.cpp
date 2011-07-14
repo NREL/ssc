@@ -644,7 +644,7 @@ void DataView::OnPopup(wxCommandEvent &evt)
 			plot->Label = m_popup_var_name;
 
 			plotsurf->Add( plot );
-			plotsurf->Title = "Plot of: '" + m_popup_var_name + "'";
+			plotsurf->SetTitle("Plot of: '" + m_popup_var_name + "'");
 
 			plotsurf->SetXAxis1( new WPLinearAxis( -1, v->num.length() ) );
 
