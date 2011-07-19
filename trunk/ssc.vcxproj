@@ -35,6 +35,7 @@
     <ClCompile Include="src\cmod_timeseq.cpp" />
     <ClCompile Include="src\cmod_trndish.cpp" />
     <ClCompile Include="src\cmod_trntower.cpp" />
+    <ClCompile Include="src\cmod_trntrough.cpp" />
     <ClCompile Include="src\cmod_utilityrate.cpp" />
     <ClCompile Include="src\cmod_windwatts.cpp" />
     <ClCompile Include="src\core.cpp">
