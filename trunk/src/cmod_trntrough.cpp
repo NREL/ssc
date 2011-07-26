@@ -332,11 +332,8 @@ public:
 		std::string hourly_output_file = work_dir() + util::path_separator() + "trough.hourly.out";
 		std::string dview_output_file = data_file();
 		std::string touperiod_file = work_dir() + util::path_separator() + "touperiod.in";
-		std::string eff_array_file = work_dir() + util::path_separator() + "eff_array.dat";
-		std::string flux_map_file = work_dir() + util::path_separator() + "flux_map.csv";
 		std::string fluid_file = work_dir() + util::path_separator() + "fluidprop.dat";
 		std::string warnings_file = work_dir() + util::path_separator() + "warnings.out";
-		std::string pb_coeff_file = work_dir() + util::path_separator() + "pb_coeff.in";
 		const char *weather_file = as_string("weather_file");
 
 
@@ -353,243 +350,263 @@ public:
 
 		// write the eff_array, array_view, and fluxmap files
 
-		// ======= efficiency array file
-		fout = fopen(eff_array_file.c_str(), "w");
-		if (fout)
-		{
-			fputs( as_string("optieff_datablob"), fout);
-			fclose(fout);
-		}
-
-		// ======= flux map file
-		fout = fopen(flux_map_file.c_str(), "w");
-		if (fout)
-		{
-			fputs( as_string("fluxmap_datablob"), fout);
-			fclose(fout);
-		}
-
 		// ========= write actual include file
 
-		// get field dimensions
-		size_t nrad = 0, nazm = 0;
-		as_matrix("heliostat_field", &nrad, &nazm);
-
-		// write all include file lines
-
-		// for now, create empty PB coeff file
-		FILE *fpb = fopen(pb_coeff_file.c_str(), "w");
-		if (fpb) fclose(fpb);
 
 		fputs("\n", fp);
-		fprintf(fp, "ASSIGN \"%s\" 30\n", weather_file);
-		fprintf(fp, "ASSIGN \"%s\" 53\n", touperiod_file.c_str());
-		fprintf(fp, "ASSIGN \"%s\" 10\n", eff_array_file.c_str());
-		fprintf(fp, "ASSIGN \"%s\" 60\n", flux_map_file.c_str());
-		fprintf(fp, "ASSIGN \"%s\" 58\n", annual_output_file.c_str());
-		fprintf(fp, "ASSIGN \"%s\" 54\n", hourly_output_file.c_str());
-		fprintf(fp, "ASSIGN \"%s\" 61\n", dview_output_file.c_str());
-		fprintf(fp, "ASSIGN \"%s\" 57\n", monthly_output_file.c_str());
+		fprintf(fp, "ASSIGN \"%s\" 13\n", weather_file);
+		fprintf(fp, "ASSIGN \"%s\" 39\n", touperiod_file.c_str());
+		fprintf(fp, "ASSIGN \"%s\" 40\n", annual_output_file.c_str());
+		fprintf(fp, "ASSIGN \"%s\" 36\n", hourly_output_file.c_str());
+		fprintf(fp, "ASSIGN \"%s\" 35\n", dview_output_file.c_str());
+		fprintf(fp, "ASSIGN \"%s\" 25\n", monthly_output_file.c_str());
 		fprintf(fp, "ASSIGN \"%s\" 95\n", fluid_file.c_str());
 		fprintf(fp, "ASSIGN \"%s\" 96\n", warnings_file.c_str());
-		fprintf(fp, "ASSIGN \"%s\" 65\n", pb_coeff_file.c_str());
 		fputs("\n", fp);
 
+	fprintf(fp, "EQUATIONS 6\n");
+	fprintf(fp, "I_MONTH= 0\n");
+	fprintf(fp, "I_DAY1= 1\n");
+	fprintf(fp, "I_DAY=I_MONTH/24+I_DAY1\n");
+	fprintf(fp, "I_LENGTH= 365\n");
+	fprintf(fp, "WEEKS=I_LENGTH/7.\n");
+	/* cmod_trnbase
+	fprintf(fp, "START=24*(I_DAY-1)+1\n");
+	fprintf(fp, "STOP=START+I_LENGTH*24-1\n");
+	fprintf(fp, "STEP=%lg\n", GetTimestep());
+	*/
+	fprintf(fp, "dispswch=-1\n\n");
 
-		fprintf(fp, "CONSTANTS 2\n");
-		fprintf(fp, "TRAKMODE=4\n");
-		fprintf(fp, "WFType = %d\n", weather_file_type( weather_file ));
+	fprintf(fp, "CONSTANTS 1\n");
+	fprintf(fp, "NUMTOU = 9\n\n");
 
-		fputs("\n", fp);
-		fprintf(fp, "*********************** HELIOSTAT FIELD PAGE **********************\n");
-		fprintf(fp, "CONSTANTS 9\n");
-		fprintf(fp, "num_zen = %d\n", as_integer("optieff_zenith"));
-		fprintf(fp, "num_azi = %d\n", as_integer("optieff_azimuth"));
-		fprintf(fp, "num_helio = %lg\n", as_double("csp.pt.sf.num_heliostats"));
-		fprintf(fp, "wind_stow_speed = %lg\n", as_double("wind_stow_speed"));
-		fprintf(fp, "h_helio = %lg\n", as_double("heliostat_height"));
-		fprintf(fp, "w_helio = %lg\n", as_double("heliostat_width"));
-		fprintf(fp, "Hel_dens = %lg\n", as_double("ratio_reflect_to_profile"));
-		fprintf(fp, "hel_stow_deploy = %lg\n", as_double("stow_deploy_angle"));
-		fprintf(fp, "field_angle = %lg\n", as_double("field_span")/2.0);
-		fputs("\n", fp);
+	fprintf(fp, "CONSTANTS 9\n");
+	fprintf(fp, "STOWANGL = %lg\n", as_double("csp.tr.solf.stowangle"));
+	fprintf(fp, "DEPLYANG = %lg\n", as_double("csp.tr.solf.deployangle"));
+	fprintf(fp, "DISTANCE = %lg\n", as_double("csp.tr.solf.distscas"));
+	fprintf(fp, "DISTANC1 = %lg\n", as_double("csp.tr.solf.distrows"));
+	fprintf(fp, "SCAAPER = %lg\n", as_double("csp.tr.sca.aperture"));
+	fprintf(fp, "SFAVAIL = %lg\n", as_double("csp.tr.sca.availability"));
+	fprintf(fp, "NUMSCAS= %lg\n", as_double("csp.tr.solf.nscasperloop"));
+	fprintf(fp, "SOLARFIE = %lg\n", as_double("csp.tr.solf.dp.fieldarea"));
+	fprintf(fp, "SOLFLDMT = %lg\n\n", as_double("csp.tr.solf.dp.solarmultiple"));
+	
+	fprintf(fp, "CONSTANTS 5\n");
+	fprintf(fp, "TRAKMODE = 3\n");
+	fprintf(fp, "WFType = %d\n", weather_file_type( weather_file ));
+	fprintf(fp, "TILT = %lg\n", as_double("csp.tr.solf.tilt"));
+	fprintf(fp, "AZIMUTHO = %lg\n", as_double("csp.tr.solf.azimuth"));
+	fprintf(fp, "SFti_init = %lg\n\n", as_double("csp.tr.solf.htfinittemp"));
 
-		fprintf(fp, "*********************** RECEIVER/Trough FIELD PAGE **********************\n");
-		fprintf(fp, "CONSTANTS 26\n");
-		fprintf(fp, "is_north = %d\n", as_integer("receiver_type"));
-		fprintf(fp, "num_panels = %d\n", as_integer("exter_num_panels"));
-		fprintf(fp, "d_rec = %lg\n", as_double("exter_diameter"));
+	fprintf(fp, "CONSTANTS 14\n");
+	fprintf(fp, "NUMHCETY = 4\n");
+	fprintf(fp, "IAMF = %lg\n", as_double("csp.tr.sca.iamc1"));
+	fprintf(fp, "IAM1 = %lg\n", as_double("csp.tr.sca.iamc2"));
+	fprintf(fp, "IAM2 = %lg\n", as_double("csp.tr.sca.iamc3"));
+	fprintf(fp, "AVEFOCAL = %lg\n", as_double("csp.tr.sca.avg_focal_length"));
+	fprintf(fp, "SCALEN = %lg\n", as_double("csp.tr.sca.length"));
+	fprintf(fp, "SFPAR = %lg\n", as_double("csp.tr.par.sf.total"));
+	fprintf(fp, "SFPARPF = %lg\n", as_double("csp.tr.par.sf.partload"));
+	fprintf(fp, "COLTYPE = 1\n");
+	fprintf(fp, "TRKTWST = %lg\n", as_double("csp.tr.sca.track_twist_error"));
+	fprintf(fp, "GEOACC = %lg\n", as_double("csp.tr.sca.geometric_accuracy"));
+	fprintf(fp, "MIRREF = %lg\n", as_double("csp.tr.sca.reflectivity"));
+	fprintf(fp, "MIRCLN = %lg\n", as_double("csp.tr.sca.cleanliness"));
+	fprintf(fp, "CNCTRATE = %lg\n\n", as_double("csp.tr.sca.concentrator_factor"));
 
-		if (as_integer("receiver_type")==0)
-		{
-			fprintf(fp, "h_rec = %lg\n", as_double("exter_height")); // EXTERNAL
-			fprintf(fp, "Rec_d_spec = 0.0\n");
-			fprintf(fp, "H_lip = 0.0\n");
-		}
-		else
-		{
-			fprintf(fp, "h_rec = %lg\n", as_double("cavity_panel_height")); // CAVITY
-			fprintf(fp, "Rec_d_spec = %lg\n", as_double("cavity_aperture_width"));
-			fprintf(fp, "H_lip = %lg\n", as_double("cavity_panel_height")*as_double("cavity_lip_height_ratio"));
-		}
+	fprintf(fp, "CONSTANTS 64\n");
+	fprintf(fp, "HCEtype1 = 1\n");
+	fprintf(fp, "HCEFrac1 = %lg\n", as_double("csp.tr.hce.unit1_frac"));
+	fprintf(fp, "HCEdust1 = %lg\n", as_double("csp.tr.sca.dust_on_envelope"));
+	fprintf(fp, "HCEBels1 = %lg\n", as_double("csp.tr.hce.bellows1"));
+	fprintf(fp, "HCEEnvt1 = %lg\n", as_double("csp.tr.hce.envtrans1"));
+	fprintf(fp, "HCEabs1  = %lg\n", as_double("csp.tr.hce.absorption1"));
+	fprintf(fp, "HCEmisc1 = %lg\n", as_double("csp.tr.hce.unaccounted1"));
+	fprintf(fp, "PerfFac1 = %lg\n", as_double("csp.tr.hce.heatlossf1"));
+	fprintf(fp, "RefMirA1 = %lg\n", as_double("csp.tr.sca.aperture"));
+	fprintf(fp, "HCE_A01 = %lg\n", as_double("csp.tr.hce.a0_1"));
+	fprintf(fp, "HCE_A11 = %lg\n", as_double("csp.tr.hce.a1_1"));
+	fprintf(fp, "HCE_A21 = %lg\n", as_double("csp.tr.hce.a2_1"));
+	fprintf(fp, "HCE_A31 = %lg\n", as_double("csp.tr.hce.a3_1"));
+	fprintf(fp, "HCE_A41 = %lg\n", as_double("csp.tr.hce.a4_1"));
+	fprintf(fp, "HCE_A51 = %lg\n", as_double("csp.tr.hce.a5_1"));
+	fprintf(fp, "HCE_A61 = %lg\n", as_double("csp.tr.hce.a6_1"));
 
-		fprintf(fp, "h_trough = %lg\n", as_double("trough_height"));
-		fprintf(fp, "d_tube = %lg\n", as_double("tube_outer_diameter"));
-		fprintf(fp, "th_tube = %lg\n", as_double("tube_wall_thickness"));
-		fprintf(fp, "Material = 2\n"); // fixed to stainless steel
-		fprintf(fp, "HTF = %d\n", translate_htf_type(as_integer("htf_type")));
-		fprintf(fp, "flow_pattern = %d\n", as_integer("flow_pattern")+1);
-		fprintf(fp, "HTF_rec_out = %lg\n", as_double("req_htf_outlet_temp"));
-		fprintf(fp, "HTF_max_inlet = %lg\n", as_double("max_temp_to_receiver"));
-		fprintf(fp, "Rec_HTF_max_flow = %lg\n", as_double("max_flow_to_receiver")*3600);
-		fprintf(fp, "Rec_coating_abs = %lg\n", as_double("coating_absorptance"));
-		fprintf(fp, "epsilon = %lg\n", as_double("exter_coating_emittance"));
-		fprintf(fp, "night_recirc = %d\n", as_integer("enable_night_recirc"));
-		fprintf(fp, "recirc_htr_eff = %lg\n", as_double("recirc_eff"));
-		fprintf(fp, "nazm = %d\n", (int)nazm);
-		fprintf(fp, "nrad = %d\n", (int)nrad);
+	fprintf(fp, "HCEtype2 = 1\n");
+	fprintf(fp, "HCEFrac2 = %lg\n", as_double("csp.tr.hce.unit2_frac"));
+	fprintf(fp, "HCEdust2 = %lg\n", as_double("csp.tr.sca.dust_on_envelope"));
+	fprintf(fp, "HCEBels2 = %lg\n", as_double("csp.tr.hce.bellows2"));
+	fprintf(fp, "HCEEnvt2 = %lg\n", as_double("csp.tr.hce.envtrans2"));
+	fprintf(fp, "HCEabs2  = %lg\n", as_double("csp.tr.hce.absorption2"));
+	fprintf(fp, "HCEmisc2 = %lg\n", as_double("csp.tr.hce.unaccounted2"));
+	fprintf(fp, "PerfFac2 = %lg\n", as_double("csp.tr.hce.heatlossf2"));
+	fprintf(fp, "RefMirA2 = %lg\n", as_double("csp.tr.sca.aperture"));
+	fprintf(fp, "HCE_A02 = %lg\n", as_double("csp.tr.hce.a0_2"));
+	fprintf(fp, "HCE_A12 = %lg\n", as_double("csp.tr.hce.a1_2"));
+	fprintf(fp, "HCE_A22 = %lg\n", as_double("csp.tr.hce.a2_2"));
+	fprintf(fp, "HCE_A32 = %lg\n", as_double("csp.tr.hce.a3_2"));
+	fprintf(fp, "HCE_A42 = %lg\n", as_double("csp.tr.hce.a4_2"));
+	fprintf(fp, "HCE_A52 = %lg\n", as_double("csp.tr.hce.a5_2"));
+	fprintf(fp, "HCE_A62 = %lg\n", as_double("csp.tr.hce.a6_2"));
 
+	fprintf(fp, "HCEtype3 = 1\n");
+	fprintf(fp, "HCEFrac3 = %lg\n", as_double("csp.tr.hce.unit3_frac"));
+	fprintf(fp, "HCEdust3 = %lg\n", as_double("csp.tr.sca.dust_on_envelope"));
+	fprintf(fp, "HCEBels3 = %lg\n", as_double("csp.tr.hce.bellows3"));
+	fprintf(fp, "HCEEnvt3 = %lg\n", as_double("csp.tr.hce.envtrans3"));
+	fprintf(fp, "HCEabs3  = %lg\n", as_double("csp.tr.hce.absorption3"));
+	fprintf(fp, "HCEmisc3 = %lg\n", as_double("csp.tr.hce.unaccounted3"));
+	fprintf(fp, "PerfFac3 = %lg\n", as_double("csp.tr.hce.heatlossf3"));
+	fprintf(fp, "RefMirA3 = %lg\n", as_double("csp.tr.sca.aperture"));
+	fprintf(fp, "HCE_A03 = %lg\n", as_double("csp.tr.hce.a0_3"));
+	fprintf(fp, "HCE_A13 = %lg\n", as_double("csp.tr.hce.a1_3"));
+	fprintf(fp, "HCE_A23 = %lg\n", as_double("csp.tr.hce.a2_3"));
+	fprintf(fp, "HCE_A33 = %lg\n", as_double("csp.tr.hce.a3_3"));
+	fprintf(fp, "HCE_A43 = %lg\n", as_double("csp.tr.hce.a4_3"));
+	fprintf(fp, "HCE_A53 = %lg\n", as_double("csp.tr.hce.a5_3"));
+	fprintf(fp, "HCE_A63 = %lg\n", as_double("csp.tr.hce.a6_3"));
 
-		fprintf(fp, "Plant_lattitude = %lg\n", hdr.lat);
+	fprintf(fp, "HCEtype4 = 1\n");
+	fprintf(fp, "HCEFrac4 = %lg\n", as_double("csp.tr.hce.unit4_frac"));
+	fprintf(fp, "HCEdust4 = %lg\n", as_double("csp.tr.sca.dust_on_envelope"));
+	fprintf(fp, "HCEBels4 = %lg\n", as_double("csp.tr.hce.bellows4"));
+	fprintf(fp, "HCEEnvt4 = %lg\n", as_double("csp.tr.hce.envtrans4"));
+	fprintf(fp, "HCEabs4  = %lg\n", as_double("csp.tr.hce.absorption4"));
+	fprintf(fp, "HCEmisc4 = %lg\n", as_double("csp.tr.hce.unaccounted4"));
+	fprintf(fp, "PerfFac4 = %lg\n", as_double("csp.tr.hce.heatlossf4"));
+	fprintf(fp, "RefMirA4 = %lg\n", as_double("csp.tr.sca.aperture"));
+	fprintf(fp, "HCE_A04 = %lg\n", as_double("csp.tr.hce.a0_4"));
+	fprintf(fp, "HCE_A14 = %lg\n", as_double("csp.tr.hce.a1_4"));
+	fprintf(fp, "HCE_A24 = %lg\n", as_double("csp.tr.hce.a2_4"));
+	fprintf(fp, "HCE_A34 = %lg\n", as_double("csp.tr.hce.a3_4"));
+	fprintf(fp, "HCE_A44 = %lg\n", as_double("csp.tr.hce.a4_4"));
+	fprintf(fp, "HCE_A54 = %lg\n", as_double("csp.tr.hce.a5_4"));
+	fprintf(fp, "HCE_A64 = %lg\n\n", as_double("csp.tr.hce.a6_4"));
 
-		fprintf(fp, "f_rec_min = %lg\n", as_double("min_turndown_frac"));
-		fprintf(fp, "Q_rec_des = %lg\n", as_double("design_thermal_power"));
-		fprintf(fp, "rec_su_delay = %lg\n", as_double("startup_delay_time"));
-		fprintf(fp, "rec_qf_delay = %lg\n", as_double("startup_delay_energy_frac"));
+	fprintf(fp, "CONSTANTS 26\n");
+	fprintf(fp, "TURBOUTG = %lg\n", as_double("csp.tr.pwrb.design_gross_output"));
+	fprintf(fp, "TURBEFFG = %lg\n", as_double("csp.tr.pwrb.effdesign"));
+	fprintf(fp, "PTTMAX = %lg\n", as_double("csp.tr.pwrb.maxoutput"));
+	fprintf(fp, "PTTMIN = %lg\n", as_double("csp.tr.pwrb.minoutput"));
+	fprintf(fp, "TURSUE = %lg\n", as_double("csp.tr.pwrb.startup_energy"));
+	fprintf(fp, "TEPLF = %lg\n", as_double("csp.tr.pwrb.tpl_tef0"));
+	fprintf(fp, "TEPL1 = %lg\n", as_double("csp.tr.pwrb.tpl_tef1"));
+	fprintf(fp, "TEPL2 = %lg\n", as_double("csp.tr.pwrb.tpl_tef2"));
+	fprintf(fp, "TEPL3 = %lg\n", as_double("csp.tr.pwrb.tpl_tef3"));
+	fprintf(fp, "TEPL4 = %lg\n", as_double("csp.tr.pwrb.tpl_tef4"));
+	fprintf(fp, "ETPLF = %lg\n", as_double("csp.tr.pwrb.tpl_tff0"));
+	fprintf(fp, "ETPL1 = %lg\n", as_double("csp.tr.pwrb.tpl_tff1"));
+	fprintf(fp, "ETPL2 = %lg\n", as_double("csp.tr.pwrb.tpl_tff2"));
+	fprintf(fp, "ETPL3 = %lg\n", as_double("csp.tr.pwrb.tpl_tff3"));
+	fprintf(fp, "ETPL4 = %lg\n", as_double("csp.tr.pwrb.tpl_tff4"));
+	fprintf(fp, "TEMPCORR = %d\n", as_integer("csp.tr.pwrb.temp_corr_mode") + 1);
+	fprintf(fp, "TEMPCOR1 = %lg\n", as_double("csp.tr.pwrb.ctcf0"));
+	fprintf(fp, "TEMPCOR2 = %lg\n", as_double("csp.tr.pwrb.ctcf1"));
+	fprintf(fp, "TEMPCOR3 = %lg\n", as_double("csp.tr.pwrb.ctcf2"));
+	fprintf(fp, "TEMPCOR4 = %lg\n", as_double("csp.tr.pwrb.ctcf3"));
+	fprintf(fp, "TEMPCOR5 = %lg\n", as_double("csp.tr.pwrb.ctcf4"));
+	fprintf(fp, "TURTESEF = %lg\n", as_double("csp.tr.tes.adj_eff"));
+	fprintf(fp, "TURTESOU = %lg\n", as_double("csp.tr.tes.adj_output"));
+	fprintf(fp, "MINGROUT = %lg\n", as_double("csp.tr.pwrb.minoutput"));
+	fprintf(fp, "MAXGROUT = %lg\n", as_double("csp.tr.pwrb.maxoutput"));
+	fprintf(fp, "LHVBoilEff = %lg\n\n", as_double("csp.tr.pwrb.boiler_lhv_eff"));
 
-		fputs("\n", fp);
+	fprintf(fp, "CONSTANTS 5\n");
+	fprintf(fp, "HTFFLUID = %d\n", translate_htf_type( as_integer("csp.tr.solf.fieldhtftype") ));
+	fprintf(fp, "SFINTMPD = %lg\n", as_double("csp.tr.solf.htfinlettemp"));
+	fprintf(fp, "SFOUTTMPD = %lg\n", as_double("csp.tr.solf.htfoutlettemp"));
+	fprintf(fp, "MINHTFTE = %lg\n", as_double("csp.tr.solf.htfmintemp"));
+	fprintf(fp, "HTFGALAR = %lg\n\n", as_double("csp.tr.solf.htfgallonsperarea"));
 
-		fprintf(fp, "****************Power Block page****************\n");
-		fprintf(fp, "CONSTANTS 27\n");
-		fprintf(fp, "tech_type = 1\n");
-		fprintf(fp, "LU_pb = 65\n");
-		fprintf(fp, "P_cycle_design = %lg\n", as_double("design_gross_output"));
-		fprintf(fp, "Eff_cycle_design = %lg\n", as_double("cycle_eff"));
-		fprintf(fp, "T_HTF_in_ref = %lg\n", as_double("design_htf_inlet_temp"));
-		fprintf(fp, "T_HTF_out_ref = %lg\n", as_double("design_htf_outlet_temp"));
-		fprintf(fp, "P_boiler = %lg\n", as_double("boiler_steam_pressure"));
-		fprintf(fp, "Cycle_min_inlet_temp = %lg\n", as_double("min_temp_to_load"));
-		fprintf(fp, "Turb_startup_t = %lg\n", as_double("startup_time"));
-		fprintf(fp, "Turb_startup_f = %lg\n", as_double("startup_fraction"));
-		fprintf(fp, "T_standby = %lg\n", as_double("standby_period"));
-		fprintf(fp, "F_standby = %lg\n", as_double("standby_fraction"));
-		fprintf(fp, "startup_time = %lg\n", as_double("startup_time"));
-		fprintf(fp, "startup_frac = %lg\n", as_double("startup_fraction"));
-		fprintf(fp, "hl_ffact = %lg\n", as_double("heat_loss_f"));
-		fprintf(fp, "cycle_cutoff_frac = %lg\n", as_double("min_load"));
-		fprintf(fp, "cycle_max_fraction = %lg\n", as_double("max_over_design"));
-		fprintf(fp, "LHV_eff = %lg\n", as_double("lhv_eff"));
+	fprintf(fp, "CONSTANTS 37\n");
+	fprintf(fp, "TSHOURS = %lg\n", as_double("csp.tr.tes.full_load_hours"));
+	fprintf(fp, "TSLOGICT = %lg\n", as_double("csp.tr.tes.disp1.solar"));
+	fprintf(fp, "TSLOGIC1 = %lg\n", as_double("csp.tr.tes.disp1.nosolar"));
+	fprintf(fp, "TSLOGIC2 = %lg\n", as_double("csp.tr.tes.disp1.turbout"));
+	fprintf(fp, "TSLOGIC3 = %lg\n", as_double("csp.tr.tes.disp2.solar"));
+	fprintf(fp, "TSLOGIC4 = %lg\n", as_double("csp.tr.tes.disp2.nosolar"));
+	fprintf(fp, "TSLOGIC5 = %lg\n", as_double("csp.tr.tes.disp2.turbout"));
+	fprintf(fp, "TSLOGIC6 = %lg\n", as_double("csp.tr.tes.disp3.solar"));
+	fprintf(fp, "TSLOGIC7 = %lg\n", as_double("csp.tr.tes.disp3.nosolar"));
+	fprintf(fp, "TSLOGIC8 = %lg\n", as_double("csp.tr.tes.disp3.turbout"));
+	fprintf(fp, "TSLOGIC9 = %lg\n", as_double("csp.tr.tes.disp4.solar"));
+	fprintf(fp, "TSLOGI10 = %lg\n", as_double("csp.tr.tes.disp4.nosolar"));
+	fprintf(fp, "TSLOGI11 = %lg\n", as_double("csp.tr.tes.disp4.turbout"));	
+	fprintf(fp, "TSLOGI12 = %lg\n", as_double("csp.tr.tes.disp5.solar"));
+	fprintf(fp, "TSLOGI13 = %lg\n", as_double("csp.tr.tes.disp5.nosolar"));
+	fprintf(fp, "TSLOGI14 = %lg\n", as_double("csp.tr.tes.disp5.turbout"));
+	fprintf(fp, "TSLOGI15 = %lg\n", as_double("csp.tr.tes.disp6.solar"));
+	fprintf(fp, "TSLOGI16 = %lg\n", as_double("csp.tr.tes.disp6.nosolar"));
+	fprintf(fp, "TSLOGI17 = %lg\n", as_double("csp.tr.tes.disp6.turbout"));
+	
+	fprintf(fp, "TSLOGI18 = %lg\n", as_double("csp.tr.tes.disp7.solar"));
+	fprintf(fp, "TSLOGI19 = %lg\n", as_double("csp.tr.tes.disp7.nosolar"));
+	fprintf(fp, "TSLOGI20 = %lg\n", as_double("csp.tr.tes.disp7.turbout"));
+	
+	fprintf(fp, "TSLOGI21 = %lg\n", as_double("csp.tr.tes.disp8.solar"));
+	fprintf(fp, "TSLOGI22 = %lg\n", as_double("csp.tr.tes.disp8.nosolar"));
+	fprintf(fp, "TSLOGI23 = %lg\n", as_double("csp.tr.tes.disp8.turbout"));
+	
+	fprintf(fp, "TSLOGI24 = %lg\n", as_double("csp.tr.tes.disp9.solar"));
+	fprintf(fp, "TSLOGI25 = %lg\n", as_double("csp.tr.tes.disp9.nosolar"));
+	fprintf(fp, "TSLOGI26 = %lg\n", as_double("csp.tr.tes.disp9.turbout"));
 
-		fprintf(fp, "T_amb_des = %lg\n", as_double("design_ambient_temp"));
-		fprintf(fp, "dT_cooling_ref = %lg\n", as_double("ref_condenser_dt"));
-		fprintf(fp, "Cool_type = %d\n", as_integer("condenser_type")+1);
-		fprintf(fp, "T_approach = %lg\n", as_double("approach_temp"));
-		fprintf(fp, "T_ITD_des = %lg\n", as_double("itd_design"));
-		fprintf(fp, "P_cond_ratio = %lg\n", as_double("condenser_pressure_ratio"));
-		fprintf(fp, "pb_bd_frac = %lg\n", as_double("blowdown_frac"));
-		fprintf(fp, "min_cond_pres = %lg\n", as_double("min_condenser_pressure"));
-		fprintf(fp, "hr_pl_nlev = %d\n", as_integer("hr_pl_nlev"));
-
-		fputs("\n", fp);
-
-
-		fprintf(fp, "****************Thermal storage page****************\n");
-		fprintf(fp, "CONSTANTS 20\n");
-		fprintf(fp, "storage_bypass = %d\n", as_integer("storage_bypass"));
-		fprintf(fp, "Is_two_tank = %d\n", as_integer("storage_type")+1);
-		fprintf(fp, "V_tank_tot = %lg\n", as_double("storage_htf_vol"));
-		fprintf(fp, "V_tank_min = %lg\n", as_double("min_fluid_vol"));
-		fprintf(fp, "V_tank_max = %lg\n", as_double("max_fluid_vol"));
-		fprintf(fp, "r_tank = %lg\n", as_double("tank_diameter")/2);
-		double t_d = as_double("tank_diameter");
-		fprintf(fp, "Circ_tank = %lg\n", M_PI*t_d);
-		fprintf(fp, "A_c_tank = %lg\n", M_PI*pow(t_d/2,2));
-		fprintf(fp, "h_tank_wetted = %lg\n", as_double("wetted_loss_coeff"));
-		fprintf(fp, "h_tank_dry = %lg\n", as_double("dry_loss_coeff"));
-		fprintf(fp, "T_store_hot_initial = %lg\n", as_double("init_hot_htf_temp"));
-		fprintf(fp, "T_store_cold_initial = %lg\n", as_double("init_cold_htf_temp"));
-		fprintf(fp, "V_store_hot_initial = %lg\n", as_double("init_hot_htf_vol"));
-		fprintf(fp, "V_store_cold_initial = %lg\n", as_double("init_cold_htf_vol"));
-		fprintf(fp, "tank_pairs = %d\n", as_integer("parallel_tank_pairs"));
-		fprintf(fp, "T_htr_ctank= %lg\n", as_double("cold_heater_set_temp"));
-		fprintf(fp, "T_htr_htank= %lg\n", as_double("hot_heater_set_temp"));
-		fprintf(fp, "Q_max_ctank= %lg\n", as_double("cold_heater_max_load"));
-		fprintf(fp, "Q_max_htank= %lg\n", as_double("hot_heater_max_load"));
-		fprintf(fp, "eta_tank_htr= %lg\n", as_double("heater_eff"));
-
-		fprintf(fp, "CONSTANTS 38\n");
-		fprintf(fp, "TSHOURS = %lg\n", as_double("full_load_ts_hours"));
-		fprintf(fp, "NUMTOU = 9\n");
-		fprintf(fp, "TSLOGICT = %lg\n", as_double("dispatch1_solar"));
-		fprintf(fp, "TSLOGIC1 = %lg\n", as_double("dispatch1_nosolar"));
-		fprintf(fp, "TSLOGIC2 = %lg\n", as_double("dispatch1_turbout"));
-		fprintf(fp, "TSLOGIC3 = %lg\n", as_double("dispatch2_solar"));
-		fprintf(fp, "TSLOGIC4 = %lg\n", as_double("dispatch2_nosolar"));
-		fprintf(fp, "TSLOGIC5 = %lg\n", as_double("dispatch2_turbout"));
-		fprintf(fp, "TSLOGIC6 = %lg\n", as_double("dispatch3_solar"));
-		fprintf(fp, "TSLOGIC7 = %lg\n", as_double("dispatch3_nosolar"));
-		fprintf(fp, "TSLOGIC8 = %lg\n", as_double("dispatch3_turbout"));
-		fprintf(fp, "TSLOGIC9 = %lg\n", as_double("dispatch4_solar"));
-		fprintf(fp, "TSLOGI10 = %lg\n", as_double("dispatch4_nosolar"));
-		fprintf(fp, "TSLOGI11 = %lg\n", as_double("dispatch4_turbout"));
-		fprintf(fp, "TSLOGI12 = %lg\n", as_double("dispatch5_solar"));
-		fprintf(fp, "TSLOGI13 = %lg\n", as_double("dispatch5_nosolar"));
-		fprintf(fp, "TSLOGI14 = %lg\n", as_double("dispatch5_turbout"));
-		fprintf(fp, "TSLOGI15 = %lg\n", as_double("dispatch6_solar"));
-		fprintf(fp, "TSLOGI16 = %lg\n", as_double("dispatch6_nosolar"));
-		fprintf(fp, "TSLOGI17 = %lg\n", as_double("dispatch6_turbout"));
-		fprintf(fp, "TSLOGI18 = %lg\n", as_double("dispatch7_solar"));
-		fprintf(fp, "TSLOGI19 = %lg\n", as_double("dispatch7_nosolar"));
-		fprintf(fp, "TSLOGI20 = %lg\n", as_double("dispatch7_turbout"));
-		fprintf(fp, "TSLOGI21 = %lg\n", as_double("dispatch8_solar"));
-		fprintf(fp, "TSLOGI22 = %lg\n", as_double("dispatch8_nosolar"));
-		fprintf(fp, "TSLOGI23 = %lg\n", as_double("dispatch8_turbout"));
-		fprintf(fp, "TSLOGI24 = %lg\n", as_double("dispatch9_solar"));
-		fprintf(fp, "TSLOGI25 = %lg\n", as_double("dispatch9_nosolar"));
-		fprintf(fp, "TSLOGI26 = %lg\n", as_double("dispatch9_turbout"));
-		fprintf(fp, "FOSSILFI = %lg\n", as_double("dispatch1_fossil"));
-		fprintf(fp, "FOSSILF1 = %lg\n", as_double("dispatch2_fossil"));
-		fprintf(fp, "FOSSILF2 = %lg\n", as_double("dispatch3_fossil"));
-		fprintf(fp, "FOSSILF3 = %lg\n", as_double("dispatch4_fossil"));
-		fprintf(fp, "FOSSILF4 = %lg\n", as_double("dispatch5_fossil"));
-		fprintf(fp, "FOSSILF5 = %lg\n", as_double("dispatch6_fossil"));
-		fprintf(fp, "FOSSILF6 = %lg\n", as_double("dispatch7_fossil"));
-		fprintf(fp, "FOSSILF7 = %lg\n", as_double("dispatch8_fossil"));
-		fprintf(fp, "FOSSILF8 = %lg\n", as_double("dispatch9_fossil"));
-		fputs("\n", fp);
-
-		fprintf(fp, "CONSTANTS 9\n");
-		fprintf(fp, "HC_LOGIC0 = %lg\n", as_double("hc_ctl1"));
-		fprintf(fp, "HC_LOGIC1 = %lg\n", as_double("hc_ctl2"));
-		fprintf(fp, "HC_LOGIC2 = %lg\n", as_double("hc_ctl3"));
-		fprintf(fp, "HC_LOGIC3 = %lg\n", as_double("hc_ctl4"));
-		fprintf(fp, "HC_LOGIC4 = %lg\n", as_double("hc_ctl5"));
-		fprintf(fp, "HC_LOGIC5 = %lg\n", as_double("hc_ctl6"));
-		fprintf(fp, "HC_LOGIC6 = %lg\n", as_double("hc_ctl7"));
-		fprintf(fp, "HC_LOGIC7 = %lg\n", as_double("hc_ctl8"));
-		fprintf(fp, "HC_LOGIC8 = %lg\n", as_double("hc_ctl9"));
-
-		fprintf(fp, "****************Parasitics page****************\n");
-		fprintf(fp, "CONSTANTS 17\n");
-		fprintf(fp, "P_hel_start = %lg\n", as_double("heliostat_startup_energy"));
-		fprintf(fp, "P_hel_track = %lg\n", as_double("heliostat_tracking_power"));
-		fprintf(fp, "eta_rec_pump = %lg\n", as_double("rec_htf_pump_eff"));
-		fprintf(fp, "P_storage_pump = %lg\n", as_double("storage_pump_power"));
-		fprintf(fp, "piping_loss = %lg\n", as_double("piping_loss_coeff"));
-		fprintf(fp, "piping_length = %lg\n", as_double("total_piping_length"));
+	fprintf(fp, "FOSSILFI = %lg\n", as_double("csp.tr.tes.disp1.fossil"));
+	fprintf(fp, "FOSSILF1 = %lg\n", as_double("csp.tr.tes.disp2.fossil"));
+	fprintf(fp, "FOSSILF2 = %lg\n", as_double("csp.tr.tes.disp3.fossil"));
+	fprintf(fp, "FOSSILF3 = %lg\n", as_double("csp.tr.tes.disp4.fossil"));
+	fprintf(fp, "FOSSILF4 = %lg\n", as_double("csp.tr.tes.disp5.fossil"));
+	fprintf(fp, "FOSSILF5 = %lg\n", as_double("csp.tr.tes.disp6.fossil"));
+	fprintf(fp, "FOSSILF6 = %lg\n", as_double("csp.tr.tes.disp7.fossil"));
+	fprintf(fp, "FOSSILF7 = %lg\n", as_double("csp.tr.tes.disp8.fossil"));
+	fprintf(fp, "FOSSILF8 = %lg\n\n", as_double("csp.tr.tes.disp9.fossil"));
 
 
-		fprintf(fp, "aux_par_0 = %lg\n", as_double("aux_c0"));
-		fprintf(fp, "aux_par_1 = %lg\n", as_double("aux_c1"));
-		fprintf(fp, "aux_par_2 = %lg\n", as_double("aux_c2"));
-		fprintf(fp, "aux_par_f = %lg\n", as_double("aux_pf"));
-		fprintf(fp, "aux_par = %lg\n", as_double("aux_val"));
-		fprintf(fp, "bop_par_0 = %lg\n", as_double("bop_c0"));
-		fprintf(fp, "bop_par_1 = %lg\n", as_double("bop_c1"));
-		fprintf(fp, "bop_par_2 = %lg\n", as_double("bop_c2"));
-		fprintf(fp, "bop_par_f = %lg\n", as_double("bop_pf"));
-		fprintf(fp, "bop_par = %lg\n", as_double("bop_val"));
-		fprintf(fp, "pb_fixed_par = %lg\n", as_double("pb_fixed_frac"));
+	fprintf(fp, "CONSTANTS 7\n");
+	fprintf(fp, "TNKHL = %lg\n", as_double("csp.tr.tes.tank_heatloss"));
+	fprintf(fp, "PTSMAX = %lg\n", as_double("csp.tr.tes.max_to_power"));
+	fprintf(fp, "PFSMAX = %lg\n", as_double("csp.tr.tes.max_from_power"));
+	fprintf(fp, "SfPipHLD = %lg\n", as_double("csp.tr.solf.pipingheatlossatdesign"));
+	fprintf(fp, "SfPipHl1 = %lg\n", as_double("csp.tr.solf.pipingheatlosscoeff1"));
+	fprintf(fp, "SfPipHl2 = %lg\n", as_double("csp.tr.solf.pipingheatlosscoeff2"));
+	fprintf(fp, "SfPipHl3 = %lg\n\n", as_double("csp.tr.solf.pipingheatlosscoeff3"));
+
+	fprintf(fp, "CONSTANTS 28\n");
+	fprintf(fp, "CHTFPAR = %lg\n", as_double("csp.tr.par.htfpump.total"));
+	fprintf(fp, "CHTFPARP = %lg\n", as_double("csp.tr.par.htfpump.partload"));
+	fprintf(fp, "CHTFPARF = %lg\n", as_double("csp.tr.par.htfpump.f0"));
+	fprintf(fp, "CHTFPAR1 = %lg\n", as_double("csp.tr.par.htfpump.f1"));
+	fprintf(fp, "CHTFPAR2 = %lg\n", as_double("csp.tr.par.htfpump.f2"));
+
+	fprintf(fp, "ANTIFRPA = %lg\n", as_double("csp.tr.par.antifreeze.total"));
+
+	fprintf(fp, "BOPPAR = %lg\n", as_double("csp.tr.par.bop.total"));
+	fprintf(fp, "BOPPARPF = %lg\n", as_double("csp.tr.par.bop.partload"));
+	fprintf(fp, "BOPPARF = %lg\n", as_double("csp.tr.par.bop.f0"));
+	fprintf(fp, "BOPPAR1 = %lg\n", as_double("csp.tr.par.bop.f1"));
+	fprintf(fp, "BOPPAR2 = %lg\n", as_double("csp.tr.par.bop.f2"));
+
+	fprintf(fp, "CTOPF = %d\n", as_integer("csp.tr.par.operation_mode"));
+	fprintf(fp, "CTPAR = %lg\n", as_double("csp.tr.par.ct0.total"));
+	fprintf(fp, "CTPARPF = %lg\n", as_double("csp.tr.par.ct0.partload"));
+	fprintf(fp, "CTPARF = %lg\n", as_double("csp.tr.par.ct0.f0"));
+	fprintf(fp, "CTPAR1 = %lg\n", as_double("csp.tr.par.ct0.f1"));
+	fprintf(fp, "CTPAR2 = %lg\n", as_double("csp.tr.par.ct0.f2"));
+
+	fprintf(fp, "HTRPAR = %lg\n", as_double("csp.tr.par.hb.total"));
+	fprintf(fp, "HTRPARPF = %lg\n", as_double("csp.tr.par.hb.partload"));
+	fprintf(fp, "HTRPARF = %lg\n", as_double("csp.tr.par.hb.f0"));
+	fprintf(fp, "HTRPAR1 = %lg\n", as_double("csp.tr.par.hb.f1"));
+	fprintf(fp, "HTRPAR2 = %lg\n", as_double("csp.tr.par.hb.f2"));
+
+	fprintf(fp, "HHTFPAR = %lg\n", as_double("csp.tr.par.tes.total"));
+	fprintf(fp, "HHTFPARP = %lg\n", as_double("csp.tr.par.tes.partload"));
+	fprintf(fp, "HHTFPARF = %lg\n", as_double("csp.tr.par.tes.f0"));
+	fprintf(fp, "HHTFPAR1 = %lg\n", as_double("csp.tr.par.tes.f1"));
+	fprintf(fp, "HHTFPAR2 = %lg\n", as_double("csp.tr.par.tes.f2"));
+
+	fprintf(fp, "PBFIXPAR = %lg\n", as_double("csp.tr.par.fixedblock.total"));
+
 
 	}
 
@@ -603,14 +620,24 @@ public:
 		if (!d.read( hourly.c_str() )) throw general_error("could not read hourly output file: " + hourly);
 
 		save_data(d, "DNI", "dni", 1.0, 8760);
+		save_data(d, "Q_nipCosTh", "dni_costh", 1.0, 8760);
 		save_data(d, "V_wind", "windspd", 1.0, 8760);
-		save_data(d, "Dry_bulb_temp", "ambtemp", 1.0, 8760);
-		save_data(d, "Total_incident_power", "sol_rad_inc_on_col", 1000.0, 8760);
-		save_data(d, "Power_from_receiver", "thermal_energy_from_sf", 1000.0, 8760);
-		save_data(d, "Q_to_PB", "thermal_energy_to_powerblock", 1000.0, 8760);
-		save_data(d, "Power_from_cycle_elec", "gross_electric_output", 1000.0, 8760);
-		save_data(d, "Power_to_the_grid", "e_net", 1000.0, 8760);
-		save_data(d, "water_makeup_flow", "water_flow", (ssc_number_t)(1/998.2), 8760); //Vol [m3] = mass [kg] * 1/998.2 [m3/kg]
+		save_data(d, "T_dry_bulb", "ambtemp", 1.0, 8760);
+
+		save_data(d, "Q_DNI_on_SF", "sol_rad_inc_on_col", 1000.0, 8760);
+		save_data(d, "QSF_nipCosTh", "qsf_nip_costh", 1000.0, 8760);
+		save_data(d, "SFAvailableEnergy", "sf_avail_energy", 1000.0, 8760);
+		save_data(d, "QSF_Abs", "qsf_abs", 1000.0, 8760);
+		save_data(d, "QSF_HCE_HL", "qsf_hce_hl", 1000.0, 8760);
+		save_data(d, "QSF_Pipe_HL", "qsf_pipe_hl", 1000.0, 8760);
+		save_data(d, "QSF", "qsf", 1000.0, 8760);
+		save_data(d, "Q_TES_Full", "q_tes_full", 1000.0, 8760);
+		save_data(d, "Q_TES_HL", "q_tes_hl", 1000.0, 8760);
+		save_data(d, "Q_turb_SU", "q_turb_su", 1000.0, 8760);
+		save_data(d, "Q_dump", "q_dump", 1000.0, 8760);
+		save_data(d, "Q_to_PB", "q_to_pb", 1000.0, 8760);
+		save_data(d, "E_Gross", "gross_electric_output", 1000.0, 8760);
+		save_data(d, "E_Net", "e_net", 1000.0, 8760);
 
 
 		double net_total = 1.0, gross_total = 1.0;
@@ -631,8 +658,7 @@ public:
 
 	virtual const char *deck_name() throw( general_error )
 	{
-		if (as_integer("receiver_type") == 1) return "csp_cavtrough";
-		else return "csp_exttrough";
+		return "csp_trough";
 	}
 
 
