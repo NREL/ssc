@@ -262,26 +262,26 @@ static var_info _cm_vtab_trntrough[] = {
 { SSC_INPUT,	SSC_NUMBER,	"uservar.7",	"User Variable 7",	"",	"",	"CSP Trough Empirical",	"?=0",	"",	"" },
 { SSC_INPUT,	SSC_NUMBER,	"uservar.8",	"User Variable 8",	"",	"",	"CSP Trough Empirical",	"?=0",	"",	"" },
 { SSC_INPUT,	SSC_NUMBER,	"uservar.9",	"User Variable 9",	"",	"",	"CSP Trough Empirical",	"?=0",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.1",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.10",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.2",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.3",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.4",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.5",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.6",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.7",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.8",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"sysudv.label.9",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.1",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.10",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.2",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.3",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.4",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.5",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.6",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.7",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.8",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
-{ SSC_INPUT,	SSC_STRING,	"uservar.label.9",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.1",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.10",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.2",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.3",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.4",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.5",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.6",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.7",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.8",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"sysudv.label.9",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.1",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.10",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.2",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.3",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.4",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.5",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.6",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.7",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.8",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
+//{ SSC_INPUT,	SSC_STRING,	"uservar.label.9",	"",	"",	"",	"CSP Trough Empirical",	"?=",	"",	"" },
 
 // 252 total variables
 
@@ -370,11 +370,12 @@ public:
 	fprintf(fp, "I_DAY=I_MONTH/24+I_DAY1\n");
 	fprintf(fp, "I_LENGTH= 365\n");
 	fprintf(fp, "WEEKS=I_LENGTH/7.\n");
-	/* cmod_trnbase
+/*	// cmod_trnbase
 	fprintf(fp, "START=24*(I_DAY-1)+1\n");
 	fprintf(fp, "STOP=START+I_LENGTH*24-1\n");
-	fprintf(fp, "STEP=%lg\n", GetTimestep());
-	*/
+	fprintf(fp, "STEP=1\n");
+//	fprintf(fp, "STEP=%lg\n", GetTimestep());
+*/	
 	fprintf(fp, "dispswch=-1\n\n");
 
 	fprintf(fp, "CONSTANTS 1\n");
@@ -388,6 +389,7 @@ public:
 	fprintf(fp, "SCAAPER = %lg\n", as_double("csp.tr.sca.aperture"));
 	fprintf(fp, "SFAVAIL = %lg\n", as_double("csp.tr.sca.availability"));
 	fprintf(fp, "NUMSCAS= %lg\n", as_double("csp.tr.solf.nscasperloop"));
+
 	fprintf(fp, "SOLARFIE = %lg\n", as_double("csp.tr.solf.dp.fieldarea"));
 	fprintf(fp, "SOLFLDMT = %lg\n\n", as_double("csp.tr.solf.dp.solarmultiple"));
 	
@@ -695,9 +697,14 @@ public:
 	*/
 		switch(ui_number)
 		{
-		case 0: return 17;
-		case 1: return 10;
-		case 2: return 36; // user defined fluid #1
+		case 0: return 18;
+		case 1: return 19;
+		case 2: return 20;
+		case 3: return 21;
+		case 4: return 22;
+		case 5: return 23;
+		case 6: return 24;
+		case 7: return 36; // user defined HTF
 		default: return -1;
 		}
 	}

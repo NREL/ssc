@@ -13,6 +13,7 @@ static var_info _cm_vtab_trnbase[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv7",                "TRNSYS User Defined Variable 7",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv8",                "TRNSYS User Defined Variable 8",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv9",                "TRNSYS User Defined Variable 9",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "trn_udv10",                "TRNSYS User Defined Variable 10",   "",       "",                      "TRNSYS",       "?=0.0",                    "",                              "" },
 	
 	{ SSC_OUTPUT,       SSC_STRING,      "deck_file",               "TRNSYS Input Deck File",           "",       "",                      "TRNSYS",       "*",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_STRING,      "log_file",                "TRNSYS Log File",                  "",       "",                      "TRNSYS",       "*",                        "",                              "" },
@@ -160,8 +161,8 @@ void cm_trnbase::exec() throw(general_error)
 
 	write_include_file(f);
 
-	fprintf(f, "\n\nCONSTANTS 9\n");
-	for (int i=1;i<=9;i++)
+	fprintf(f, "\n\nCONSTANTS 10\n");
+	for (int i=1;i<=10;i++)
 		fprintf(f, "\tUDV%d=%lg\n", i, 
 			as_double( util::format("trn_udv%d", i) ) );
 
