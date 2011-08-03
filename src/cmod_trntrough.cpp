@@ -290,14 +290,15 @@ static var_info _cm_vtab_trntrough[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "windspd",                          "Wind speed",                           "m/s",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "ambtemp",                          "Ambient temp",                         "'C",     "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "sol_rad_inc_on_col",               "Incident solar radiation",             "kWh",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "thermal_energy_from_sf",           "Thermal energy from solar field",      "kWh",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "thermal_energy_to_powerblock",     "Thermal energy to power block",        "kWh",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "sf_avail_energy",           "Thermal energy from solar field",      "kWh",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "qsf",     "Thermal energy to power block",        "kWh",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "gross_electric_output",            "Gross electric output",                "kWh",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "e_net",                            "Net electric output",                  "kWh",    "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "water_flow",                       "Water flow",                           "m3/hr",  "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,       "water_flow",                       "Water flow",                           "m3/hr",  "",                      "CSPTrough",       "*",                        "LENGTH=8760",                         "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "fuel_usage",                       "Annual Fuel Usage (kWht)",             "kWht",   "",                      "CSPTrough",       "*",                        "",                         "" },
+//	{ SSC_OUTPUT,        SSC_NUMBER,      "fuel_usage",                       "Annual Fuel Usage (kWht)",             "kWht",   "",                      "CSPTrough",       "*",                        "",                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "gross_to_net_conversion_factor",   "Gross to Net Conv. Factor",            "frac",   "",                      "CSPTrough",       "*",                        "",                         "" },
+
 
 var_info_invalid };
 
@@ -643,14 +644,15 @@ public:
 
 
 		double net_total = 1.0, gross_total = 1.0;
-		if (!accumulate_annual( d, "Power_from_cycle_elec", gross_total)
-			|| ! accumulate_annual( d, "Power_to_the_grid", net_total))
+		if (!accumulate_annual( d, "E_Gross", gross_total)
+			|| ! accumulate_annual( d, "E_net", net_total))
 			throw general_error("could not accumulate annual values for gross and net generation");
+
+
 
 		std::string annual = work_dir() + util::path_separator() + "trough.annual.out";
 		if (!d.read( annual.c_str() )) throw general_error("could not read annual output file: " + annual);
 
-		save_data(d, "Fossil_energy", "fuel_usage", 1000.0, 1);
 		assign("gross_to_net_conversion_factor", var_data( (ssc_number_t)( net_total / gross_total ) ));
 
 		if (!util::remove_file( hourly.c_str() ))

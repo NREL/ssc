@@ -106,7 +106,8 @@ bool cm_trnbase::write_tou_file( const char *weekday_var, const char *weekend_va
 
 	fprintf(fp, "Period\n");
 	for (size_t i=0;i<8760;i++)
-		fprintf(fp, "%d\n", tod[i]);
+		fprintf(fp, "%d\n", tod[i]+1); // translate to 1-9 for TRNSYS
+//		fprintf(fp, "%d\n", tod[i]);
 	fclose(fp);
 	return true;
 }
@@ -138,6 +139,7 @@ void cm_trnbase::exec() throw(general_error)
 	std::string wkdir = work_dir();
 	std::string exe = param_string("trnsys_exe");
 	std::string deck = deck_name();
+	deck = "decks/" + deck; // for consistency with exelib structure
 	
 	if (!util::dir_exists( wkdir.c_str() ))
 		util::mkdir( wkdir.c_str(), true );
