@@ -20,6 +20,7 @@
 #ifdef __WXMSW__
 #include <cml/xlautomation.h>
 #endif
+#include <cml/wpplotdataarray.h>
 #include <cml/wpplotsurface2d.h>
 #include <cml/wpbarplot.h>
 #include <cml/wplinearaxis.h>
@@ -634,14 +635,16 @@ void DataView::OnPopup(wxCommandEvent &evt)
 
 			wxFrame *frm = new wxFrame(this, -1, "plot: " + m_popup_var_name, wxDefaultPosition, wxSize(500,350));
 			WPPlotSurface2D *plotsurf = new WPPlotSurface2D( frm );
+			
+			WPPlotDataArray *pdat = new WPPlotDataArray;
+			for (int i=0;i<v->num.length();i++)
+				pdat->append(  PointF( i, v->num[i] ) );
+			
 			WPPlottable2D *plot = NULL;
 			if (evt.GetId() == ID_POPUP_PLOT_BAR) plot = new WPBarPlot;					
 			else plot = new WPLinePlot;
-
-			for (int i=0;i<v->num.length();i++)
-				plot->Data.append( PointF( i, v->num[i] ) );
-
-			plot->Label = m_popup_var_name;
+			plot->SetData( pdat );
+			plot->SetLabel( m_popup_var_name );
 
 			plotsurf->Add( plot );
 			plotsurf->SetTitle("Plot of: '" + m_popup_var_name + "'");
