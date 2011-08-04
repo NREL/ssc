@@ -25,6 +25,7 @@
     <ClCompile Include="src\cmod_fossilgen.cpp" />
     <ClCompile Include="src\cmod_ippppa.cpp" />
     <ClCompile Include="src\cmod_levpartflip.cpp" />
+    <ClCompile Include="src\cmod_geohourly.cpp" />
     <ClCompile Include="src\cmod_ptflux.cpp" />
     <ClCompile Include="src\cmod_pvwatts.cpp" />
     <ClCompile Include="src\cmod_saleleaseback.cpp" />
@@ -44,7 +45,9 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">__64BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="src\lib_financial.cpp" />
-    <ClCompile Include="src\lib_getem.cpp" />
+    <ClCompile Include="src\lib_geohourly.cpp" />
+    <ClCompile Include="src\lib_physics.cpp" />
+    <ClCompile Include="src\lib_powerblock.cpp" />
     <ClCompile Include="src\lib_pvwatts.cpp" />
     <ClCompile Include="src\cmod_trnbase.cpp" />
     <ClCompile Include="src\lib_sandia.cpp" />
@@ -60,8 +63,10 @@
     <ClInclude Include="src\attic.h" />
     <ClInclude Include="src\core.h" />
     <ClInclude Include="src\lib_financial.h" />
-    <ClInclude Include="src\lib_getem.h" />
-    <ClInclude Include="src\lib_getemint.h" />
+    <ClInclude Include="src\lib_geohourly.h" />
+    <ClInclude Include="src\lib_geohourly_interface.h" />
+    <ClInclude Include="src\lib_physics.h" />
+    <ClInclude Include="src\lib_powerblock.h" />
     <ClInclude Include="src\lib_pvwatts.h" />
     <ClInclude Include="src\cmod_trnbase.h" />
     <ClInclude Include="src\lib_sandia.h" />
