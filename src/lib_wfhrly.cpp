@@ -405,3 +405,21 @@ static int cmp_ext(const char *file, const char *ext)
 	
 	if (obj) free( obj );
 }
+
+ void  wf_rewind(wf_obj_t wf)
+{
+	wf_object *obj = WF_OBJECT(wf);
+	if (obj && obj->fp)
+	{
+		rewind( obj->fp );
+		
+		// skip header info
+		char buf[2048];
+		if (obj->wf_type == WF_TMY2)
+			fgets(buf,2047,obj->fp); 
+		else if(obj->wf_type==WF_TMY3)
+			for(int i=0;i<2;i++) fgets(buf,2047,obj->fp);
+		else if(obj->wf_type==WF_EPW)
+			for(int i=0;i<8;i++) fgets(buf,2047,obj->fp);
+	}
+}

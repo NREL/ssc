@@ -3,19 +3,20 @@
 
 #include <math.h>
 #include <vector>
+#include "lib_wfhrly.h"
+#include "lib_physics.h"
+#include "lib_powerblock.h"
 
 
-const double PI = 2 * acos(0.0);
 const double MAX_TEMP_RATIO = 1.134324;  // max valid value for (resource temp)/(plant design temp) where both are measured in Kelvin
-const bool IMITATE_GETEM = true;
-const double GETEM_FT_IN_METER = (IMITATE_GETEM) ? 3.28083 : 3.280839895; // feet per meter - largest source of discrepancy
-const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : 14.50377373066; // psi per bar
-const double GETEM_PSI_PER_INHG = (IMITATE_GETEM) ? 0.49115 : 0.4911541474703; // psi per inch of mercury
-const double GETEM_KGM3_PER_LBF3 = (IMITATE_GETEM) ? (35.3146/2.20462) : 16.01846337396; // lbs/ft^3 per kg/m^3 
-const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : 2.204622621849; // pounds per kilogram
-const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : 0.7456998715801; // kilowatts per unit of horsepower
-const double GRAVITY_MS2 = (IMITATE_GETEM) ? 9.807 : 9.80665; // meters per second^2; this varies between 9.78 and 9.82 depending on latitude
-const double GRAVITY_FTS2 = 32.174; // ft per second^2
+const bool IMITATE_GETEM = false;
+const double GETEM_FT_IN_METER = (IMITATE_GETEM) ? 3.28083 : physics::FT_PER_METER; // feet per meter - largest source of discrepancy
+const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : physics::PSI_PER_BAR; // psi per bar
+const double GETEM_PSI_PER_INHG = (IMITATE_GETEM) ? 0.49115 : physics::PSI_PER_INHG; // psi per inch of mercury
+const double GETEM_KGM3_PER_LBF3 = (IMITATE_GETEM) ? (35.3146/2.20462) : physics::KGM3_PER_LBF3; // lbs/ft^3 per kg/m^3 
+const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : physics::LB_PER_KG; // pounds per kilogram
+const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : physics::KW_PER_HP; // kilowatts per unit of horsepower
+const double GRAVITY_MS2 = (IMITATE_GETEM) ? 9.807 : physics::GRAVITY_MS2; // meters per second^2; this varies between 9.78 and 9.82 depending on latitude
 const double DAYS_PER_YEAR = (IMITATE_GETEM) ? 365 : 365.25;
 
 const double DEFAULT_AMBIENT_TEMPC_BINARY = 10;  // degrees C
@@ -25,10 +26,10 @@ const double AMBIENT_TEMPC_FOR_GRADIENT = 10;  // degrees C, embedded in [2B.Res
 
 enum calculationBasis { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
 enum resourceTypes { NO_RESOURCE_TYPE, HYDROTHERMAL, EGS };
-enum conversionTypes { NO_CONVERSION_TYPE, BINARY, FLASH };
+enum conversionTypes { NO_CONVERSION_TYPE, BINARY, FLASH }; //}
 enum flashTypes { NO_FLASH_SUBTYPE, SINGLE_FLASH_NO_TEMP_CONSTRAINT, SINGLE_FLASH_WITH_TEMP_CONSTRAINT, DUAL_FLASH_NO_TEMP_CONSTRAINT, DUAL_FLASH_WITH_TEMP_CONSTRAINT };
 enum tempDeclineMethod {NO_TEMPERATURE_DECLINE_METHOD, ENTER_RATE, CALCULATE_RATE };
-enum makeupAlgorithmType { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS};
+enum makeupAlgorithmType { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }; //}
 enum condenserTypes { NO_CONDENSER_TYPE, SURFACE, DIRECT_CONTACT };
 enum ncgRemovalTypes { NO_NCG_TYPE, JET, VAC_PUMP, HYBRID };
 enum wellCostCurveChoices { NO_COST_CURVE, LOW, MED, HIGH };
@@ -38,42 +39,41 @@ enum reservoirPressureChangeCalculation { NO_PC_CHOICE, ENTER_PC, SIMPLE_FRACTUR
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// GETEMPhysics ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// These cannot be inline definitions, since multiple files include this header /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-double FarenheitToCelcius(const double &dTemp);
-double CelciusToFarenheit(const double &dTemp);
+inline double FarenheitToCelcius(const double &dTemp) {return physics::FarenheitToCelcius(dTemp); };
+inline double CelciusToFarenheit(const double &dTemp) {return physics::CelciusToFarenheit(dTemp); };
 
-double KelvinToCelcius(const double &dTemp);
-double CelciusToKelvin(const double &dTemp);
+inline double KelvinToCelcius(const double &dTemp) {return physics::KelvinToCelcius(dTemp); };
+inline double CelciusToKelvin(const double &dTemp) {return physics::CelciusToKelvin(dTemp); };
 
-double FarenheitToKelvin(const double &dTemp);
-double KelvinToFarenheit(const double &dTemp);
+inline double FarenheitToKelvin(const double &dTemp){return physics::FarenheitToKelvin(dTemp); };
+inline double KelvinToFarenheit(const double &dTemp){return physics::KelvinToFarenheit(dTemp); };
 
-double areaCircle(const double &radius);
+inline double areaCircle(const double &radius) { return physics::areaCircle(radius); }
 
-double MetersToFeet(const double &m);
-double FeetToMeters(const double &ft);
-double M2ToFeet2(const double &mSquared);
+inline double MetersToFeet(const double &m) {return m * GETEM_FT_IN_METER; }
+inline double FeetToMeters(const double &ft) {return ft / GETEM_FT_IN_METER; }
+inline double M2ToFeet2(const double &mSquared) { return (IMITATE_GETEM) ? mSquared * 10.76391 : mSquared * pow(GETEM_FT_IN_METER,2); }
 
-double BarToPsi(const double &bar);
-double PsiToBar(const double &psi);
+inline double BarToPsi(const double &bar) { return bar * GETEM_PSI_PER_BAR; }
+inline double PsiToBar(const double &psi){ return psi / GETEM_PSI_PER_BAR; }
 
-double InHgToPsi(const double &inHg);
-double PsiToInHg(const double &psi);
+inline double InHgToPsi(const double &inHg) { return inHg * GETEM_PSI_PER_INHG; }
+inline double PsiToInHg(const double &psi){ return psi / GETEM_PSI_PER_INHG; }
 
-double KgPerM3ToLbPerCf(const double &kgPerM3);
-double LbPerCfToKgPerM3(const double &lbPerCf);
-double LbPerCfToKgPerM3_B(const double &lbPerCf);
+inline double KgPerM3ToLbPerCf(const double &kgPerM3) { return kgPerM3 / GETEM_KGM3_PER_LBF3; }
+inline double LbPerCfToKgPerM3(const double &lbPerCf) { return lbPerCf * GETEM_KGM3_PER_LBF3; }
+inline double LbPerCfToKgPerM3_B(const double &lbPerCf) { return (IMITATE_GETEM) ? lbPerCf * 16.01846 : lbPerCf * GETEM_KGM3_PER_LBF3; }
 
-double KgToLb(const double &kg);
-double LbToKg(const double &lb);
+inline double KgToLb(const double &kg) { return kg * GETEM_LB_PER_KG; }
+inline double LbToKg(const double &lb) { return lb / GETEM_LB_PER_KG; }
 
-double HPtoKW(const double &hp);
-double KWtoHP(const double &kw);
+inline double HPtoKW(const double &hp) { return hp * GETEM_KW_PER_HP; }
+inline double KWtoHP(const double &kw) { return kw / GETEM_KW_PER_HP; }
 
-double toWattHr(const double &btu);
-double PSItoFT(const double &psi);
-double PSItoFTB(const double &psi); // if not IMITATE_GETEM, same as above
+inline double toWattHr(const double &btu) { return (btu/3.413); }
+inline double PSItoFT(const double &psi) { return psi * 144 / 62.4; }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62.4 lb/ft^3
+inline double PSItoFTB(const double &psi) { return (IMITATE_GETEM) ? psi*144/62 : PSItoFT(psi); }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62 lb/ft^3 if imitating GETEM
 
 double pumpSizeInHP(const double &flow_LbPerHr, const double &head_Ft, const double &eff, std::string sErr);
 double pumpWorkInWattHr(const double &flow_LbPerHr, const double &head_Ft, const double &eff, std::string sErr);
@@ -242,13 +242,13 @@ private:
 
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Declaration of CGETEMBaseInputs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Declaration of CGeoHourlyBaseInputs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CGETEMBaseInputs
+class CGeoHourlyBaseInputs
 {
 public:
-	CGETEMBaseInputs(void);
-	virtual ~CGETEMBaseInputs(void){}
+	CGeoHourlyBaseInputs(void);
+	virtual ~CGeoHourlyBaseInputs(void){}
 
 	resourceTypes rt;
 	conversionTypes cst;
@@ -260,10 +260,17 @@ public:
 
 	CGeoFluidContainer GetGeoFluidContainer(void){ return moGFC;}
 	int miProjectLifeYears;			// years
-	int analysisTimeSteps(void) { return (miProjectLifeYears * miMakeupAnalysesPerYear) + 1; } // analysis is done for period zero also, so add 1
+	//unsigned int analysisTimeSteps(void) { return (miProjectLifeYears * GetMakeupAnalysesPerYear()) + 1; } // analysis is done for period zero also, so add 1
+	unsigned int analysisTimeSteps(void) { return (miProjectLifeYears * GetMakeupAnalysesPerYear()); } // analysis is done for period zero also, so add 1
 
-    double mdUtilizationFactor; //not explained well, but used to Get annual capacity factor
-    double mdTemperatureDeclineRate; // % per month
+	void SetModelChoice(int choice) { miModelChoice = ( (choice>=0) && (choice<3) ) ? choice : -1; }
+	int GetModelChoice(void) { return miModelChoice; }
+	int GetMakeupAnalysesPerYear(void) { return (miModelChoice == 2) ? 8760 : 12; }
+	bool IsHourly(void) { return (GetMakeupAnalysesPerYear() == 8760) ? true : false; }
+	bool ReturnGETEMResults(void) { return (miModelChoice == 0) ? true : false; }
+
+	double mdUtilizationFactor; //not explained well, but used to Get annual capacity factor
+    double mdTemperatureDeclineRate; // % per year
 	double mdTemperatureWetBulbC;    // degrees celcius - used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
     double mdMaxTempDeclineC;
     double mdFinalYearsWithNoReplacement;
@@ -386,11 +393,11 @@ public:
 
 
 	// GF pumping
-	/* Base inputs has to be an abstract class because it needs this function to be implemented by the CGETEMMakeupAnalysis class
+	/* Base inputs has to be an abstract class because it needs this function to be implemented by the CGeoHourlyAnalysis class
 	This is a way around a circular class reference dilemma:
-	CPumpPowerCalculator needs values from CGETEMBaseInputs (several), and visa versa (CGETEMBaseInputs needs values from CPumpPowerCalculator - pump work).
-	It's not quite this simple, because it's not actually CGETEMBaseInputs that needs the values, it's CGETEMMakeupAnalysis that needs
-	CGETEMBaseInputs to have the values, but the end result is the same.  This virtual function is part of the solution.
+	CPumpPowerCalculator needs values from CGeoHourlyBaseInputs (several), and visa versa (CGeoHourlyBaseInputs needs values from CPumpPowerCalculator - pump work).
+	It's not quite this simple, because it's not actually CGeoHourlyBaseInputs that needs the values, it's CGeoHourlyAnalysis that needs
+	CGeoHourlyBaseInputs to have the values, but the end result is the same.  This virtual function is part of the solution.
 	Similar situation for the plant brine effectiveness (plant efficiency)
 	*/
 	virtual double GetPumpWorkWattHrPerLb(void)=0;
@@ -427,7 +434,7 @@ public:
 
 
 	// Values that are direct results of EGS inputs (no inputs needed)
-	double EGSFractureLength(void) { return mdEGSDistanceBetweenProductionInjectionWellsM / cos(mdEGSFractureAngle * PI / 180); } //fEffectiveLength, meters used in pump power calcs
+	double EGSFractureLength(void) { return mdEGSDistanceBetweenProductionInjectionWellsM / cos(mdEGSFractureAngle * physics::PI / 180); } //fEffectiveLength, meters used in pump power calcs
 	double EGSFractureLengthUserAdjusted(void) { return EGSFractureLength() * mdFractureLengthAdjustment; }
 
 	void SetEGSFractureWidthM(double meters) { setPositiveValue(mdEGSFractureWidthM, meters, "Fracture Width", m_strErrMsg); }
@@ -436,8 +443,8 @@ public:
 	void SetEGSFractureAperature(double meters) { setPositiveValue(mdEGSFractureAperature, meters, "Fracture Aperature", m_strErrMsg); }
 	double GetEGSFractureAperature (void) { return mdEGSFractureAperature; }
 
-	void SetEGSThermalConductivity(double tc) { setPositiveValue(mdEGSThermalConductivity, tc, "Thermal Conductivity", m_strErrMsg); }
-	double GetEGSThermalConductivity (void) { return mdEGSThermalConductivity; }
+	void SetEGSThermalConductivity(double tc) { setPositiveValue(mdEGSThermalConductivity, tc, "Thermal Conductivity", m_strErrMsg); }		// J/m-day-C
+	double GetEGSThermalConductivity (void) { return (IsHourly()) ? mdEGSThermalConductivity/24 : mdEGSThermalConductivity; }					// convert to J/m-hr-C for hourly analysis
 
 	void SetEGSSpecificHeatConstant(double specificHeat) { setPositiveValue(mdEGSSpecificHeatConstant, specificHeat, "Specific Heat Constant", m_strErrMsg); }
 	double GetEGSSpecificHeatConstant (void) { return mdEGSSpecificHeatConstant; }
@@ -466,9 +473,6 @@ public:
 	void SetWaterLossPercent(double percent) { setZeroTo1(mdWaterLossPercent, percent, "Percent Water Loss", m_strErrMsg); }
 	double GetWaterLossPercent (void) { return mdWaterLossPercent; }
 
-	void SetMakeupAnalysesPerYear(int analysesPerYear) { setPositiveValue(miMakeupAnalysesPerYear, analysesPerYear, "Reservoir Width", m_strErrMsg); }
-	int GetMakeupAnalysesPerYear (void) { return miMakeupAnalysesPerYear; }
-
 	void SetDiameterPumpCasingInches(double inches) { setPositiveValue(mdDiameterPumpCasingInches, inches, "Diameter of the Pump Casing", m_strErrMsg); }
 	double GetDiameterPumpCasingInches (void) { return mdDiameterPumpCasingInches; }
 
@@ -483,7 +487,11 @@ public:
 	std::string m_strErrMsg;
 	CGETEMGlobals m_oGG; // create the global object that provides access to all the constants
 
-
+	// Added June 2011 for geothermal hourly model
+	void SetPowerBlockParameters(const SPowerBlockParameters& pbp) { m_pbp = pbp; }
+	SPowerBlockParameters GetPowerBlockParameters(void) { return m_pbp; }
+	void SetWeatherFileName( const char * fn) { mcFileName = fn;}
+	void SetPowerBlockInputs(const SPowerBlockInputs& pbi) { m_pbi = pbi; }
 
 protected:
 	// CAN'T BE SET TO ZERO
@@ -499,10 +507,11 @@ protected:
 	double mdReservoirHeightM;				// default = 100 meters, [2B.Resource&Well Input].F180
 	double mdReservoirWidthM;				// default = 500 meters, [2B.Resource&Well Input].F181
 	double mdWaterLossPercent;
-	int miMakeupAnalysesPerYear;			// 12 = one per month, 8760 = one per hour
+	int miModelChoice;						// 0=GETEM, 1=Powerblock monthly, 2=Powerblock hourly
 	double mdDiameterPumpCasingInches;		// 9.625
 	double mdDiameterProductionWellInches;	// 10;
 	double mdDiameterInjectionWellInches;	// 10;
+	double mdNumberOfWells;					// entered or calculated, depending on 'cb' (moved to 'protected' June 2011 for hourly modeling)
 
 
 	double mdPlantEfficiency; // not in GETEM - essentially the ratio of plant brine effectiveness to max possible brine effectiveness
@@ -514,13 +523,17 @@ protected:
 	bool mbCalculateFieldOM;
 	double mdOMCostsFieldUserInput;				//O&M costs in cents/kWh, related to field ([2A.Scenario Input].D146)
 
-	// used in CGETEMMakeupAnalysis
+	// used in CGeoHourlyAnalysis
 	double mdPumpDepthFt;
 	double mdPumpSizeHP;
 	double mdPumpSizeHPInjection;
 
 	bool inputErrors(void);
 
+	// Added June 2011 for geothermal hourly model
+	const char * mcFileName;
+	SPowerBlockParameters m_pbp;
+	SPowerBlockInputs m_pbi;
 
 private:
 	double secondLawEfficiencyGETEM(void);
@@ -528,14 +541,15 @@ private:
 	// EGS values that are direct results of EGS inputs (no inputs needed)
 	double EGSFractureSurfaceArea(void) { return mdEGSFractureWidthM * EGSFractureLength(); } //fFractureSurfaceArea, m^2
 	double EGSFractureCrossSectionArea(void) { return mdEGSFractureWidthM * mdEGSFractureAperature; } //fCrossSectionalArea, m^2
-	double EGSAlpha(void) { return mdEGSThermalConductivity / (mdEGSSpecificHeatConstant * mdEGSRockDensity); } //fAlpha
+	double EGSAlpha(void) { return GetEGSThermalConductivity() / (mdEGSSpecificHeatConstant * mdEGSRockDensity); } // fAlpha (m^2 per day) or (m^2 per hr)
 
 	// These EGS function are used in EGS makeup calculations and in pumping calculations
-	double EGSFlowPerFracture(double tempC) { return ((mdProductionFlowRateKgPerS / m_oGG.EGSWaterDensity(tempC))/mdEGSNumberOfFractures)*60*60*24; } // m^3 per day
-	double EGSVelocity(double tempC) { return EGSFlowPerFracture(tempC) / EGSFractureCrossSectionArea(); } // m/day
-	double EGSLengthOverVelocity(double tempC) { return EGSFractureLength() / EGSVelocity(tempC); } // days
+	double flowTimePeriod(void) { return (IsHourly()) ? 60*60 /* hourly analysis uses hourly flow*/ : 60*60*24 /*monthly analysis uses daily flow*/; }
+	double EGSFlowPerFracture(double tempC) { return ((mdProductionFlowRateKgPerS / m_oGG.EGSWaterDensity(tempC))/mdEGSNumberOfFractures)*flowTimePeriod(); } // m^3 per day or per hour
+	double EGSVelocity(double tempC) { return EGSFlowPerFracture(tempC) / EGSFractureCrossSectionArea(); }		// m^3 per day / m^2 = m/day (or hour)
+	double EGSLengthOverVelocity(double tempC) { return EGSFractureLength() / EGSVelocity(tempC); }				// m / m per day = days (or hours)
 
-	double calcEGSTimeStar(double tempC) { return (pow(mdEGSThermalConductivity * EGSFractureSurfaceArea()/(27 * m_oGG.EGSWaterDensity(tempC) * m_oGG.EGSSpecificHeat(tempC) * EGSFlowPerFracture(tempC)),2) / EGSAlpha()) + EGSLengthOverVelocity(tempC); }
+	double calcEGSTimeStar(double tempC) { return (pow(GetEGSThermalConductivity() * EGSFractureSurfaceArea()/(27 * m_oGG.EGSWaterDensity(tempC) * m_oGG.EGSSpecificHeat(tempC) * EGSFlowPerFracture(tempC)),2) / EGSAlpha()) + EGSLengthOverVelocity(tempC); }
 
 	// private member variables
 	double mdResourceDepthM;
@@ -544,7 +558,6 @@ private:
     double mdTemperatureResourceC;
 	double mdTemperatureEGSAmbientC; // Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
 
-	double mdNumberOfWells;					// entered or calculated, depending on 'cb'
 	double mdDesiredSalesCapacityKW;		// entered or calculated, linked to 'cb', like above
 
 	double mdFractionOfInletGFInjected;		// set from flash brine effectiveness for flash, or 1 for binary
@@ -565,7 +578,7 @@ class CPumpPowerCalculator
 {
 public:
 	CPumpPowerCalculator(void) { mpGBI = NULL; }
-	void init(CGETEMBaseInputs* gbi);		// pass in a pointer to the CGETEMBaseInputs object
+	void init(CGeoHourlyBaseInputs* gbi);		// pass in a pointer to the CGeoHourlyBaseInputs object
 	virtual ~CPumpPowerCalculator(void){}
 	
 	
@@ -598,7 +611,7 @@ public:
 
 
 private:
-	CGETEMBaseInputs* mpGBI;
+	CGeoHourlyBaseInputs* mpGBI;
 
 	// Convert foot-lbs per hour to watt-hr/lb and include pump efficiency
 	double productionPumpPower(void);	// watt-hr per lb of flow
@@ -650,7 +663,7 @@ class CFlashBrineEffectiveness
 {
 public:
 	CFlashBrineEffectiveness(void);
-	void init(CGETEMBaseInputs* gbi);
+	void init(CGeoHourlyBaseInputs* gbi);
 	virtual ~CFlashBrineEffectiveness(void){}
 
 	double brineEffectiveness(void); // these are the only public functions
@@ -676,7 +689,7 @@ public:
 
 
 private:
-	CGETEMBaseInputs* mpGBI;
+	CGeoHourlyBaseInputs* mpGBI;
 
 	bool TempConstraint(void) { return ((mpGBI->ft == DUAL_FLASH_WITH_TEMP_CONSTRAINT) || (mpGBI->ft == SINGLE_FLASH_WITH_TEMP_CONSTRAINT)) ; }
 	int FlashCount(void) { return (mpGBI->ft >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1; }
@@ -842,29 +855,49 @@ private:
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Declaration  and Implementation of CMakeupAlgorithm /////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Declaration of CMakeupAlgorithm /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CMakeupAlgorithm
 {
 public:
-	CMakeupAlgorithm(void) { miReservoirReplacements = 0; mdWorkingTemperatureC=0; moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0); } // by default, load Binary(EGS) secondLawConstants - let flash over write them
+
+	class weather_reader
+	{
+	public:
+		weather_reader() : wf(0) {  }
+		~weather_reader() { if (wf) wf_close(wf); }
+		wf_obj_t wf;
+	};
+
+
+
+	CMakeupAlgorithm(void); // { miReservoirReplacements = 0; mdWorkingTemperatureC=0; moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0); } // by default, load Binary(EGS) secondLawConstants - let flash over write them
 	virtual ~CMakeupAlgorithm(void){}
 	virtual makeupAlgorithmType GetType(void)=0;	// this is an abstract class, it should never be created, only derived objects
 
-	void SetScenarioParameters( CGETEMBaseInputs* gbi){ mpGBI = gbi;}
-	virtual void calculateNewTemperature(void) { mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / mpGBI->GetMakeupAnalysesPerYear())); }
+	bool SetScenarioParameters( CGeoHourlyBaseInputs* gbi);
+	virtual void calculateNewTemperature(void) { mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / 12)); } // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
 	bool wantToReplaceReservoir(void) { return ( mdWorkingTemperatureC < (mpGBI->GetResourceTemperatureC() - mpGBI->mdMaxTempDeclineC) ) ? true : false; }
 	virtual bool canReplaceReservoir(double dTimePassedInYears) { return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
 	virtual void replaceReservoir(void) { miReservoirReplacements++; mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); }
-	double plantNetPower(void){	return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000000.0) - (mpGBI->GetPumpWorkKW() / 1000.0); } // MW, as a function of the temperature over time
+	double plantNetPower(void) { return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000.0) - (mpGBI->GetPumpWorkKW()); } // kW, as a function of the temperature over time
+	double plantNetPowerkW(void) { double pnp = plantNetPower(); return (pnp>0) ? pnp : 0; } // kW
+	double plantNetPowerMW(void) { return plantNetPowerkW() / 1000.0; } // MW
 	double GetWorkingTemperatureC(void) { return mdWorkingTemperatureC; }
 	double TestValue(void) { return plantNetPower(); }
 	std::string GetLastErrorMessage(void) { return m_strMAError; }
 
+	// Added June 2011 for geothermal hourly model
+	bool OpenWeatherFile(const char * fn);
+	void SetPowerBlockFlowRateKgPerSec(double dFlowRateKgPerSec) { m_pbInputs.m_dot_htf = dFlowRateKgPerSec*3600.0; /* m_dot_htf should be in kg per hour */ }
+	void SetPowerBlockInputs(const SPowerBlockInputs& pbi) { m_pbInputs = pbi; }
+	bool ReadWeatherForTimeStep(unsigned int timeStep);
+	double type224OutputkW(void);
+
 protected:
 	double mdWorkingTemperatureC;
 	int miReservoirReplacements;	// how many times the reservoir has been 'replaced' (holes redrilled)
-	CGETEMBaseInputs* mpGBI;		// use scenario parameters
+	CGeoHourlyBaseInputs* mpGBI;		// use scenario parameters
 	CGeothermalConstants moSecondLawConstants; //Used to calculate second law (of thermodynamics) efficiencies
 	std::string m_strMAError;
 
@@ -882,6 +915,19 @@ protected:
 	// which leads to relative revenue > 1 ??
 	
 	virtual double fractionOfMaxEfficiency() { return(temperatureRatio() > 0.98) ? moSecondLawConstants.evaluatePolynomial(temperatureRatio()) : 1.0177 * pow(temperatureRatio(), 2.6237); }
+
+	// Added June 2011 for geothermal hourly model
+	SPowerBlockInputs m_pbInputs;
+	CPowerBlock_Type224 m_pb;
+	wf_header m_hdr;
+	wf_data m_dat;
+	weather_reader m_wfreader;
+	bool m_bWeatherFileOpen;
+	long m_lReadCount;  // resource file reads through the year
+	long m_lHourCount;	// hour of analysis (zero to yearsX8760); used to tell the powerblock how many seconds have passed.
+
+private:
+	bool ReadNextLineInWeatherFile(void);
 
 };
 
@@ -933,21 +979,20 @@ public:
 
 	makeupAlgorithmType GetType(void) { return MA_EGS; }
 
-	void calculateNewTemperature(void) { mdLastProductionTemperatureC = mdWorkingTemperatureC; mdWorkingTemperatureC = newEGSProductionTemperatureC();}
-	bool canReplaceReservoir(double dTimePassedInYears); // over-ridden to update mdYearsAtNextTimeStep
-	void replaceReservoir(void); // over-ridden to update mdTimeOfLastReservoirReplacement
+	// These functions over-ride the CMakeupAlgorithm functions  to update some values necessary for EGS calculations
+	void calculateNewTemperature();
+	bool canReplaceReservoir(double dTimePassedInYears);  // dTimePassedInYears -> mdYearsAtNextTimeStep
+	void replaceReservoir();
 
 private:
 	double LastProducitonTemperatureF(void) { return CelciusToFarenheit(mdLastProductionTemperatureC); }  // shortcut for production temp in F
-
 	double temperatureRatio(void) { return CelciusToKelvin(mdLastProductionTemperatureC) / CelciusToKelvin(mpGBI->GetTemperaturePlantDesignC()); }
 	double plantBrineEfficiency(void); // over-ridden to update mdCurrentEfficiency
-
-	double newEGSProductionTemperatureC(void) { return mpGBI->GetResourceTemperatureC() + ((newInjectionTemperatureC() - mpGBI->GetResourceTemperatureC()) * functionOfRockProperties()); }
-	double newInjectionTemperatureC(void);
+	double newEGSProductionTemperatureC() { return mpGBI->GetResourceTemperatureC() + ((newInjectionTemperatureC() - mpGBI->GetResourceTemperatureC()) * functionOfRockProperties()); }
+	double newInjectionTemperatureC();
 	double averageReservoirTempC(void) { return calcEGSAverageWaterTemperatureC(mdLastProductionTemperatureC, mdLastProductionTemperatureC, maxSecondLawEfficiency()); }
-	double timeInDays(void) { return (mdYearsAtNextTimeStep - mdTimeOfLastReservoirReplacement) * DAYS_PER_YEAR; }
-	double functionOfRockProperties(void) { return mpGBI->calcEGSReservoirConstant(averageReservoirTempC(), timeInDays()); }
+	double daysSinceLastReDrill() {	return (mdYearsAtNextTimeStep - mdTimeOfLastReservoirReplacement) * DAYS_PER_YEAR; } 
+	double functionOfRockProperties() { return mpGBI->calcEGSReservoirConstant(averageReservoirTempC(), daysSinceLastReDrill()); }
 
 	double mdLastProductionTemperatureC; // store the last temperature before calculating new one
 	double mdCurrentEfficiency;
@@ -956,15 +1001,14 @@ private:
 };
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Declaration of CGETEMMakeupAnalysis /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Declaration of CGeoHourlyAnalysis /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CGETEMMakeupAnalysis : public CGETEMBaseInputs
+class CGeoHourlyAnalysis : public CGeoHourlyBaseInputs
 {
 public:
-	CGETEMMakeupAnalysis(void);
-	virtual ~CGETEMMakeupAnalysis(void);
+	CGeoHourlyAnalysis(void);
+	virtual ~CGeoHourlyAnalysis(void);
 	void init(void);  // initialize the objects used in this one
 
 	double relativeRevenue(void) { return (analyzeIfNecessary()) ? mdLifeTimeDiscountedNetPower / mdLifeTimeDiscountedDesignPower : 0; }  // levelized average capacity factor, before being adjusted by the 'utilization factor'
@@ -976,19 +1020,9 @@ public:
 	double presentValueCostFactor(void) { return (analyzeIfNecessary()) ? mdPresentCostFactorFieldReplacements : 0; }
 	double sumOfPresentWorthFactors(void) { return (analyzeIfNecessary()) ? mdSumOfPresentWorthFactors : 0; }
 
-	double netPower(int i) { if (analyzeIfNecessary()) return ( (i<0 || i>=analysisTimeSteps()) ) ? 0 : madNetPower[i]; else return 0;} // "net power, MWe" column in GETEM spreadsheet
-	double discountedNetPower(int i) { return discountValue(netPower(i), mdAnnualDiscountRate, i * timeStepInYears(), m_strErrMsg); } // "actual power output" column in GETEM spreadsheet
-
-	double designPower(void) { return DesignCapacityKW(); } // a constant over time - "power sales", F29 on Binary and Flash sheets, F28 on EGS sheet
-	double discountedDesignPower(int i) { return discountValue(designPower(), mdAnnualDiscountRate, i * timeStepInYears(), m_strErrMsg); }  // "design power output" column in GETEM spreadsheet
-
 	bool readyToAnalyze(void);
 	bool analyzeIfNecessary(void) {if (mbAnalysisRequired) return analyze(); else return true; }
 	bool analyze(void);
-	std::vector<double> GetPointerToOutputArray(void) { return madNetPower; }
-	std::vector<int> GetPointerToReplacementArray(void) { return maiReplacements; }
-	std::vector<double> GetPointerToTemperatureCArray(void) { return madTemperatureC; }
-	std::vector<double> GetPointerToTestValueArray(void) { return madTestValues; }
 
 	void SetPumpDepthFt(double feet) { mdPumpDepthFt = feet; }
 	double GetPumpDepthFt(void) { return (mdPumpDepthFt) ? mdPumpDepthFt : moPPC.GetCalculatedPumpDepthInFeet(); }
@@ -997,7 +1031,7 @@ public:
 	void SetPumpSizeHPInjection(double hp) { mdPumpSizeHPInjection = hp; }
 	double GetPumpSizeHPInjection(void) { return mdPumpSizeHPInjection; }
 
-	// virtual functions in CGETEMBaseInputs
+	// virtual functions in CGeoHourlyBaseInputs
 	double GetPumpWorkWattHrPerLb(void) { return moPPC.GetTotalPumpPower(m_strErrMsg); } // small errors in pump work introduce biases throughout the results
 	//double GetPlantBrineEffectiveness(void) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : 11.7414224664536; }
 	double GetPlantBrineEffectiveness(void) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
@@ -1016,6 +1050,16 @@ public:
 	double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
 	double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
+	// Added June 2011 to use create an hourly model using TRNSYS Type 224 code
+	void SetPointerToReplacementArray(float * p) { m_afReplacementsByYear = p; }
+
+	void SetPointerToMonthlyTemperatureArray(float * p) { m_afMonthlyAvgTempC = p; }
+	void SetPointerToMonthlyOutputArray(float * p) { m_afPowerByMonth = p; }
+	void SetPointerToMonthlyPowerArray(float * p) { m_afEnergyByMonth = p; }
+
+	void SetPointerToTimeStepTemperatureArray(float * p) { m_afTemperatureC = p; }
+	void SetPointerToTimeStepOutputArray(float * p) { m_afPowerByTimeStep = p; }
+	void SetPointerToTimeStepTestArray(float * p) { m_afTestValues = p; }
 
 
 private:
@@ -1024,34 +1068,39 @@ private:
 
 	CMakeupAlgorithm* moMA;
 	bool mbAnalysisRequired;
-	double timeStepInYears(void) { return 1.0/miMakeupAnalysesPerYear; }
 
 	double mdLifeTimeDiscountedDesignPower;
 	double mdLifeTimeDiscountedNetPower;
 	double mdPresentCostFactorFieldReplacements;
 	double mdSumOfPresentWorthFactors;
 
-	std::vector<double> madNetPower;
-	std::vector<int> maiReplacements; // array of ones and zero's over time, ones representing time periods where
-	std::vector<double> madTemperatureC; // array of temperatures over time
-	std::vector<double> madTestValues;   // array of values for debugging
+	// Changed in June 2011 to create an hourly model - these arrays will be hourly or monthly, depending on how analysis is being done
+	// Tracked annually
+	float * m_afReplacementsByYear; // array of ones and zero's over time, ones representing years where reservoirs are replaced
 
-	void SetupRun(void);
-	bool mbRunSetup;
+	// Tracked monthly, over lifetime of project
+	float * m_afMonthlyAvgTempC;
+	float * m_afPowerByMonth;
+	float * m_afEnergyByMonth;
+
+	// Could be monthly or hourly, depending on how analysis is being done
+	float * m_afTemperatureC; // array of temperatures over time
+	float * m_afPowerByTimeStep;
+	float * m_afTestValues;   // array of values for debugging
 };
 
 
 
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Declaration of CGETEMOutputs ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Declaration of CGeoHourlyOutputs ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CGETEMOutputs : public CGETEMMakeupAnalysis // which is derived from CGETEMBaseInputs
+class CGeoHourlyOutputs : public CGeoHourlyAnalysis // which is derived from CGeoHourlyBaseInputs
 {
 
 public:
-	CGETEMOutputs(void);
-	virtual ~CGETEMOutputs(void){}
+	CGeoHourlyOutputs(void);
+	virtual ~CGeoHourlyOutputs(void){}
 
 	// costs per kWh
 	double dollarsPerKWhTotal(void) { return dollarsPerKWhCapitalTotal() + dollarsPerKWhOMTotal() + royaltyDollarsPerKWhr(); }						// $/kWh

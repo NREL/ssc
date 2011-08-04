@@ -45,6 +45,7 @@ int  wf_read_header(const char *file, wf_header *p_hdr);
 wf_obj_t  wf_open(const char *file, wf_header *p_hdr);
 int  wf_read_data( wf_obj_t wf, wf_data *dat);
 void  wf_close(wf_obj_t wf);
+void  wf_rewind(wf_obj_t wf);
 
 
 #endif

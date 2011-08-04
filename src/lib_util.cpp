@@ -719,7 +719,21 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 	else return (bp-buffer);
 }
 
+int util::hours_in_month(int month)
+{	// month=1 for January, 12 for December
+	return ( (month<1) || (month>12) ) ? 0 : nday[month-1]*24;
+}
 
+double util::percent_of_year(int month, int hours)
+{	// month=1 for January, 12 for December
+	if (month<1) return 0.0;
+	if (month>12) return 1.0;
+
+	int hours_from_months = 0;
+	for (unsigned int i=0; i<month-1; i++)
+		hours_from_months += (nday[i] * 24);
+	return (hours_from_months + hours)/8760.0;
+}
 
 int util::month_of(double time)
 {
