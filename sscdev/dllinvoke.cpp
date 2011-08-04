@@ -58,7 +58,7 @@ bool sscdll_isloaded()
 	static const char *func_name = __FUNCTION__
 
 #define FAIL_ON_LOCATE() \
-	{ f=NULL; throw sscdll_error("ssc32.dll lookup address fail", func_name); }
+	{ f=NULL; throw sscdll_error("lookup address fail", func_name); }
 
 #define PROCADDR() dll_sym(ssc32_handle, func_name)
 
@@ -68,6 +68,14 @@ int ssc_version()
 	CHECK_DLL_LOADED();
 	if (!f && 0 == ( f = (int(*)())PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)(); 
+}
+
+const char *ssc_build_info()
+{
+	static const char *(*f)() = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (const char*(*)())PROCADDR() )) FAIL_ON_LOCATE();
+	return (*f)();
 }
 
 ssc_data_t ssc_data_create()

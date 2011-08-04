@@ -20,6 +20,7 @@ public:
 	sscdll_error(const std::string &s,
 			const std::string &f) : text(s), func(f) { }
 	virtual ~sscdll_error() throw() { }
+	virtual const char *what() { return std::string( text + " " + func ).c_str(); }
 	std::string text;
 	std::string func;
 };
@@ -29,7 +30,7 @@ public:
 // for DLL not loaded and symbol address lookup errors
 #define __SSCLINKAGECPP__ 1 
 #include <sscapi.h>
-#undef __SSCLINAGECPP__
+#undef __SSCLINKAGECPP__
 
 
 /* these functions do NOT throw exceptions */

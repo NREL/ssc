@@ -555,13 +555,15 @@ void SCFrame::UpdateUI()
 	if (sscdll_isloaded())
 	{
 		int ver = 0;
+		char * build = "no info";
 		try {
 			ver = ssc_version();
+			build = const_cast<char*>( ssc_build_info() );
 		} catch (sscdll_error e) {
 			status = e.text + " ";
 			ver = -999;
 		}
-		status += m_loadedDllPath + " ( " + m_lastLoadTime + " ) Version " + wxString::Format("%d", ver);
+		status += m_loadedDllPath + " ( " + m_lastLoadTime + " ) Version " + wxString::Format("%d [%s]", ver, build);
 	}
 	else
 		status = "ssc32.dll not loaded.";
