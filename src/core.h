@@ -16,7 +16,7 @@
 */
 
 #ifdef _MSC_VER
-#define __COMPILER__  "VisualC++"
+#define __COMPILER__  "Visual C++"
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 #endif
 #ifdef __GNUC__
@@ -28,6 +28,9 @@
 #endif
 #ifdef __UNIX__
 #define __PLATFORM__ "Unix"
+#endif
+#ifdef __MACOSX__
+#define __PLATFORM__ "Mac OS X"
 #endif
 
 #ifdef __32BIT__
