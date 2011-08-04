@@ -14,7 +14,9 @@ static var_info _cm_vtab_easywatts[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                    "Azimuth angle",                  "deg",    "E=90,S=180,W=270",      "PVWatts",      "*",                            "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                       "Tilt angle",                     "deg",    "H=0,V=90",              "PVWatts",      "naof:tilt_eq_lat",             "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                "Tilt=latitude override",         "0/1",    "",                      "PVWatts",      "na:tilt",                      "BOOLEAN",                                  "" },
-	
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                        "Plane of array radiation",       "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                      "Module temperature",             "'C",     "",                      "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                         "DC array output",                "kWhdc",  "",                      "PVWatts",      "*",                            "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                         "AC system output",               "kWhac",  "",                      "PVWatts",      "*",                            "LENGTH=8760",                          "" },
 
@@ -60,6 +62,8 @@ public:
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
 		ssc_number_t *p_ac = allocate("ac", 8760);
+		ssc_number_t *p_tcell = allocate("tcell", 8760);
+		ssc_number_t *p_poa = allocate("poa", 8760);
 	
 		/* PV RELATED SPECIFICATIONS */
 		double inoct = PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
@@ -113,6 +117,8 @@ public:
 				ac = 0.0;
 			}
 
+			p_poa[i] = (ssc_number_t)poa;
+			p_tcell[i] = (ssc_number_t)pvt;
 			p_dc[i] = (ssc_number_t)dc;
 			p_ac[i] = (ssc_number_t)ac;
 		}
