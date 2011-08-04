@@ -129,8 +129,8 @@ public:
 
 			int month = util::month_of(time) ;              // month goes 1-12
 			int day = util::day_of_month(month,time) ;   // day goes 1-nday_in_month
-			int hour = (int)(time)%24;		         // hour goes 0-23
-			int minute = (int)( (time-floor(time))*60  + t_step*30.0);      // minute goes 0-59
+			int hour = ((int)time)%24;		         // hour goes 0-23
+			int minute = (int)( (time-floor(time))*60  + t_step/60/2);      // minute goes 0-59
 			
 			// calculate solar position
 			solarpos( year, month, day, hour, minute, lat, lon, tz, sun );
