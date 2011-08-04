@@ -31,6 +31,7 @@ extern "C" {
 
 /* ssc_version: Returns the library version.  Version numbers start at 1. */
 SSCEXPORT int ssc_version();
+SSCEXPORT const char *ssc_build_info();
 
 
 /* ssc_data_t: An opaque reference to a structure that holds a collection of variables.

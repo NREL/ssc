@@ -9,7 +9,7 @@
 int main(int argc, char* argv[])
 {
 
-	std::cout << "System Simulator Core (SSC) Version " << ssc_version() << std::endl;
+	std::cout << "System Simulator Core (SSC) " << ssc_version_info() << std::endl;
 	std::cout << "Platform: " << __PLATFORM__ << std::endl;
 	std::cout << "Arch: " << __ARCH__ << std::endl;
 	std::cout << "Compiler: " << __COMPILER__ << std::endl;
