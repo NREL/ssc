@@ -96,7 +96,9 @@ public:
 			{
 				/* sun elevation > 0.5 degrees */
 				incident2( track_mode, tilt, azimuth, rot_limit, sun[1], sun[0], angle );
-				poa = perez( dat.dn, dat.df, albedo, angle[0], angle[1], sun[1] );
+				double poa_beam = 0, poa_diff = 0;
+				perez( dat.dn, dat.df, albedo, angle[0], angle[1], sun[1], &poa_beam, &poa_diff );
+				poa = poa_beam + poa_diff;
 
 				double tpoa = 0;
 				if (dat.dn > 0)	

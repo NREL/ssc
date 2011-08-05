@@ -736,7 +736,7 @@ void incident2(int mode,double tilt,double sazm,double rlim,double zen,double az
 	angle[2] = sazm;
 }
 
-double perez( double dn,double df,double alb,double inc,double tilt,double zen )
+void perez( double dn,double df,double alb,double inc,double tilt,double zen, double *poa_beam, double *poa_diffuse )
 {
 /* Defines the Perez function for calculating values of diffuse + direct
 	solar radiation + ground reflected radiation for a tilted surface
@@ -783,19 +783,22 @@ double perez( double dn,double df,double alb,double inc,double tilt,double zen )
 
 	if ( dn < 0.0 )           /* Negative values may be measured if cloudy */
 		dn = 0.0;
+
 	if ( zen < 0.0 || zen > 1.5271631 ) /* Zen not between 0 and 87.5 deg */
 		{
 		if( df < 0.0 )
 			df = 0.0;
 		if ( cos(inc) > 0.0 && zen < 1.5707963 )  /* Zen between 87.5 and 90 */
 			{                                      /* and incident < 90 deg   */
-			poa = df*( 1.0 + cos(tilt) )/2.0 + dn*cos(inc);
-			return(poa);
+			*poa_beam = dn * cos(inc);
+			*poa_diffuse = df*( 1.0 + cos(tilt) )/2.0;
+			return;
 			}
 		else
 			{
-			poa = df*( 1.0 + cos(tilt) )/2.0;   /* Isotropic diffuse only */
-			return(poa);
+			*poa_beam = 0;
+			*poa_diffuse = df*( 1.0 + cos(tilt) )/2.0;   /* Isotropic diffuse only */
+			return;
 			}
 		}
 	else                      /* Zen between 0 and 87.5 deg */
@@ -807,13 +810,15 @@ double perez( double dn,double df,double alb,double inc,double tilt,double zen )
 			{
 			if ( cos(inc) > 0.0 )    /* Incident < 90 deg */
 				{
-				poa = 0.0 + dn*cos(inc);
-				return(poa);
+				*poa_beam = dn*cos(inc);
+				*poa_diffuse = 0;
+				return;
 				}
 			else
 				{
-				poa = 0.0;
-				return(poa);
+				*poa_beam = 0;
+				*poa_diffuse = 0;
+				return;
 				}
 			}
 		else                   /* Diffuse is greater than zero */
@@ -835,11 +840,14 @@ double perez( double dn,double df,double alb,double inc,double tilt,double zen )
 				ZC = 0.0;
 			else
 				ZC = COSINC;
-			A = D*( 1.0 + cos(tilt) )/2.0;
-			B = ZC/ZH*D - A;
-			C = D*sin(tilt);
-			poa = A + F1*B + F2*C + alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0 + dn*ZC;
-			return(poa);
+			A = D*( 1.0 + cos(tilt) )/2.0; // isotropic diffuse
+			B = ZC/ZH*D - A; // circumsolar 
+			C = D*sin(tilt); // horizon brightness term
+			
+			// original PVWatts: poa = A + F1*B + F2*C + alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0 + dn*ZC;
+			*poa_beam = dn*ZC;
+			*poa_diffuse = A + F1*B + F2*C + alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0;
+			return;
 			}
 		}
 }
