@@ -27,6 +27,12 @@ static var_info _cm_vtab_pvwatts[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                    "Azimuth angle",                  "deg",    "E=90,S=180,W=270",      "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                       "Tilt angle",                     "deg",    "H=0,V=90",              "PVWatts",      "*",                       "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                "Tilt=latitude override",         "0/1",    "",                      "PVWatts",      "?",                       "BOOLEAN",                                  "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                     "Nominal operating cell temperature", "'C", "",                      "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "t_ref",                      "Reference cell temperature",     "'C",     "",                      "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                      "Max power temperature coefficient", "%/'C", "",                     "PVWatts",      "?=-0.5",                  "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                    "Inverter efficiency at rated power", "frac", "",                    "PVWatts",      "?=0.92",                  "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                     "Ground reflectivity",            "frac",   "",                      "PVwatts",      "?=0.2",                   "MIN=0,MAX=1",                              "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "time",                       "Time",                           "hours",  "0=Jan1st,12am",         "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "month",                      "Month",                          "",       "1-12",                  "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
@@ -34,13 +40,14 @@ static var_info _cm_vtab_pvwatts[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hour",                       "Hour",                           "",       "0-23",                  "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "minute",                     "Minute",                         "",       "0-59",                  "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Sun azimuth",                    "deg",    "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Sun zenith",                     "deg",    "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Solar azimuth",                  "deg",    "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Solar zenith",                   "deg",    "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_elv",                    "Sun elevation",                  "deg",    "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_dec",                    "Sun declination",                "deg",    "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                        "Plane of array radiation",       "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                      "Module temperature",             "'C",     "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_beam",                   "Incident beam irradiance (POA)", "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_diffuse",                "Incident diffuse irradiance (POA)", "W/m2","",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "t_cell",                     "Cell temperature",               "'C",     "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                         "DC array output",                "kWhdc",  "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                         "AC system output",               "kWhac",  "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 
@@ -89,7 +96,8 @@ public:
 		double azimuth = as_double("azimuth");
 		if ( lookup("tilt_eq_lat") && as_boolean("tilt_eq_lat") ) tilt = lat; // override tilt angle
 
-		ssc_number_t *p_poa = allocate("poa", num_steps);
+		ssc_number_t *p_poa_beam = allocate("poa_beam", num_steps);
+		ssc_number_t *p_poa_diffuse = allocate("poa_diffuse", num_steps);
 		ssc_number_t *p_tcell = allocate("tcell", num_steps);
 		ssc_number_t *p_dc = allocate("dc", num_steps);
 		ssc_number_t *p_ac = allocate("ac", num_steps);
@@ -106,14 +114,19 @@ public:
 
 		
 		/* PV RELATED SPECIFICATIONS */
-		double inoct = PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
+
+		// note: these are normally hard-wired PVwatts constants, but made 
+		// available for this most "advanced" of pvwatts implementations...  (5 aug 2011, apd)
+
+		double inoct = as_double("t_noct") + 273.15; // PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
+		double reftem = as_double("t_ref"); // PVWATTS_REFTEM;                /* Reference module temperature (deg C) */
+		double pwrdgr = as_double("gamma") / 100.0; // PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
+		double efffp = as_double("inv_eff"); // PVWATTS_EFFFP;                 /* Efficiency of inverter at rated output (decimal fraction) */
+		double albedo = as_double("albedo"); // PVWATTS_ALBEDO;                 /* surface albedo, decimal fraction */
+
 		double height = PVWATTS_HEIGHT;                 /* Average array height (meters) */
-		double reftem = PVWATTS_REFTEM;                /* Reference module temperature (deg C) */
-		double pwrdgr = PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
-		double efffp = PVWATTS_EFFFP;                 /* Efficiency of inverter at rated output (decimal fraction) */
-		double tmloss = 1.0 - derate/efffp;  /* All losses except inverter,decimal */
 		double rot_limit = PVWATTS_ROTLIM;             /* +/- rotation in degrees permitted by physical constraint of tracker */
-		double albedo = PVWATTS_ALBEDO;                 /* surface albedo, decimal fraction */
+		double tmloss = 1.0 - derate/efffp;  /* All losses except inverter,decimal */
 
 		/* storage for calculations */
 		double angle[3];
@@ -138,7 +151,7 @@ public:
 			if (idx % (num_steps/25)==0)
 				update( "calculating", 100*((float)idx+1)/((float)num_steps), (float)time );
 
-			double poa, pvt, dc, ac;
+			double poa_beam, poa_diffuse, pvt, dc, ac;
 
 			if (sun[2] > 0.0087)
 			{
@@ -149,22 +162,23 @@ public:
 				double ambt = p_tdry[idx];
 
 				incident2( track_mode, tilt, azimuth, rot_limit, sun[1], sun[0], angle );
-				poa = perez( dn, df, albedo, angle[0], angle[1], sun[1] );
+				perez( dn, df, albedo, angle[0], angle[1], sun[1], &poa_beam, &poa_diffuse );
 
 				double tpoa = 0;
 				if (dn > 0)	
-					tpoa = transpoa( poa, dn, angle[0] );  /* have valid poa and dn, calculate transmitted through glass cover */
+					tpoa = transpoa( poa_beam+poa_diffuse, dn, angle[0] );  /* have valid poa and dn, calculate transmitted through glass cover */
 				else
-					tpoa = poa; /* default to dn 0 or bad value - assume no glass cover on module */
+					tpoa = poa_beam+poa_diffuse; /* default to dn 0 or bad value - assume no glass cover on module */
 				
-				pvt = celltemp(inoct, height, poa, wind, ambt );
+				pvt = celltemp(inoct, height, poa_beam+poa_diffuse, wind, ambt );
 				dc = dcpowr( reftem, watt_spec, pwrdgr, tmloss, tpoa, pvt );
 				ac = dctoac( watt_spec, efffp, dc );
 			}
 			else
 			{
 				/* night time */
-				poa = 0.0;
+				poa_beam = 0.0;
+				poa_diffuse = 0.0;
 				pvt = 999.9;
 				dc = 0.0;
 				ac = 0.0;
@@ -181,7 +195,8 @@ public:
 			p_elv[idx] = (ssc_number_t) (sun[2] * 180/M_PI);
 			p_dec[idx] = (ssc_number_t) (sun[3] * 180/M_PI);
 
-			p_poa[idx] = (ssc_number_t)poa;
+			p_poa_beam[idx] = (ssc_number_t)poa_beam;
+			p_poa_diffuse[idx] = (ssc_number_t)poa_diffuse;
 			p_tcell[idx] = (ssc_number_t)pvt;
 			p_dc[idx] = (ssc_number_t)dc;
 			p_ac[idx] = (ssc_number_t)ac;
