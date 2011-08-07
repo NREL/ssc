@@ -2114,7 +2114,13 @@ public:
 
 		for (i=0; i<=nyears; i++)
 		{
-			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i);
+//			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i);
+			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i) +
+				(1.0 - pbi_fed_for_ds_frac) * cf.at(CF_pbi_fed,i) +
+				(1-0 - pbi_sta_for_ds_frac) * cf.at(CF_pbi_sta,i) +
+				(1-0 - pbi_uti_for_ds_frac) * cf.at(CF_pbi_uti,i) +
+				(1-0 - pbi_oth_for_ds_frac) * cf.at(CF_pbi_oth,i);
+
 			cf.at(CF_project_dsra,i) = -cf.at(CF_funding_debtservice,i) - cf.at(CF_disbursement_debtservice,i);
 			cf.at(CF_project_ra,i) =
 				cf.at(CF_project_dsra,i) +
