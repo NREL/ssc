@@ -1025,10 +1025,10 @@ bool CMakeupAlgorithm::OpenWeatherFile(const char * fn)
 }
 
 // Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
-bool CMakeupAlgorithm::ReadWeatherForTimeStep(unsigned int timeStep)
+bool CMakeupAlgorithm::ReadWeatherForTimeStep(bool bHourly, unsigned int timeStep)
 {	
 	// if this is an hourly analysis, just ignore the time step and get the data from the next line in the weather file
-	if (mpGBI->IsHourly()) return ReadNextLineInWeatherFile();
+	if (bHourly) return ReadNextLineInWeatherFile();
 
 	// Not an hourly analysis, so calculate the monthly weather info
 	int month = (timeStep % 12) + 1;
@@ -1055,25 +1055,24 @@ bool CMakeupAlgorithm::ReadWeatherForTimeStep(unsigned int timeStep)
 	return true;
 }
 
-double CMakeupAlgorithm::type224OutputkW(void)
-{	// calculate output in MW
-
-	// set inputs that change hourly
+void CMakeupAlgorithm::SetType224Inputs(void)
+{
+	// set inputs that change for each timestep
 	m_pbInputs.T_htf_hot = mdWorkingTemperatureC;
 	m_pbInputs.T_wb = m_dat.twet;
 	m_pbInputs.T_db = m_dat.tdry;
 	m_pbInputs.P_amb = physics::mBarToAtm(m_dat.pres);
+}
 
 
+double CMakeupAlgorithm::GetType224OutputkW(void)
+{
 	// run power block model
 	if (!m_pb.Execute((m_lHourCount-1)*3600, m_pbInputs))
 		m_strMAError = "There was an error running the power block model: " + m_pb.GetLastError();
 	
-	// get outputs
+	// return outputs
 	return m_pb.GetOutputkW();
-	//pbo = m_pb.GetOutputs();
-	//output_kw[i] = pbo.P_cycle*1000.0; // convert MW to kW
-	//resource_temp[i] = pbi.T_htf_hot;
 }
 
 // Private function, called from ReadWeatherForTimeStep(timeStep)
@@ -1281,18 +1280,28 @@ bool CGeoHourlyAnalysis::analyze(void)
 			{
 				if ( IsHourly() || (hour==0) )
 				{
+					// Error check
+					if (iElapsedTimeSteps >= analysisTimeSteps() ) {m_strErrMsg = "Time step exceded the array size in CGeoHourlyAnalysis::analyze()."; return false; }
+
 					// Read weather file info (function is smart enough to average for month if tis is a monthly analysis)
-					if(!moMA->ReadWeatherForTimeStep(iElapsedTimeSteps)) { m_strErrMsg = moMA->GetLastErrorMessage(); return false; }
+					if(!moMA->ReadWeatherForTimeStep(IsHourly(), iElapsedTimeSteps)) { m_strErrMsg = moMA->GetLastErrorMessage(); return false; }
+
+					// Put weather data into power block inputs
+					moMA->SetType224Inputs();
 
 					// record current temperature (temperature changes monthly, but this is an hourly record of it)
 					m_afTemperatureC[iElapsedTimeSteps] = (float)moMA->GetWorkingTemperatureC(); // NOTE: If EGS temp drop is being calculated, then plantNetPowerkW must be called.  No production = no temp change
-					
+					m_afPressure[iElapsedTimeSteps] = moMA->WeatherPressure();
+					m_afDryBulb[iElapsedTimeSteps] = moMA->WeatherDryBulb();
+					m_afWetBulb[iElapsedTimeSteps] = moMA->WeatherWetBulb();
+
 					// record outputs based on current inputs
 					if ( ReturnGETEMResults() )
-						m_afPowerByTimeStep[iElapsedTimeSteps]   = (float)moMA->plantNetPowerkW();
+						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->plantNetPowerkW(); // = Gross power - pump work
 					else
-						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->type224OutputkW();
-					m_afTestValues[iElapsedTimeSteps] = year + 1 + ((month)/100.0); // puts number formatted "year.month" number into test value
+						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - GetPumpWorkKW();
+
+					m_afTestValues[iElapsedTimeSteps] = year + 1 + ((month)/100.0); // puts number formatted "year.month" number into test value, but October ends up like 13.1 (in year 13)
 
 					fMonthlyPowerTotal += m_afPowerByTimeStep[iElapsedTimeSteps];
 		

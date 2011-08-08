@@ -23,6 +23,7 @@ static var_info _cm_vtab_geohourly[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"nameplate",					"Desired plant output",				"kW",			"",					"GeoHourly",		"*",			"",						"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"analysis_type",				"Analysis Type",					"",				"",					"GeoHourly",		"*",			"INTEGER",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"num_wells",					"Number of Wells",					"",				"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"num_wells_getem",				"Number of Wells GETEM calc'd",		"",				"",					"GeoHourly",		"*",			"",						"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"conversion_type",				"Conversion Type",					"",				"",					"GeoHourly",		"*",			"INTEGER",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"plant_efficiency_input",		"Plant efficiency",					"",				"",					"GeoHourly",		"*",			"",						"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"conversion_subtype",			"Conversion Subtype",				"",				"",					"GeoHourly",		"*",			"INTEGER",				"" },
@@ -94,6 +95,8 @@ static var_info _cm_vtab_geohourly[] = {
 	// OUTPUTS
 	// User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.
 	// With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.
+	{ SSC_OUTPUT,       SSC_NUMBER,		"pump_work",							"Pump work",									"MW",		"",				"GeoHourly",     "*",             "",						"" },
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "annual_replacements",					"Resource replacement? (1=yes)",				"kWhac",	"",				"GeoHourly",     "*",             "",						"" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,		 "monthly_resource_temperature",		"Monthly avg resource temperature",				"C",		"",             "GeoHourly",     "*",             "",						"" },
@@ -103,6 +106,11 @@ static var_info _cm_vtab_geohourly[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,		 "timestep_resource_temperature",		"Resource temperature in each time step",		"C",		"",				"GeoHourly",     "*",             "",						"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "timestep_power",						"Power in each time step",						"kW",		"",				"GeoHourly",     "*",             "",						"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_test_values",				"Test output values in each time step",			"",			"",             "GeoHourly",     "*",             "",						"" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_pressure",					"Atmospheric pressure in each time step",		"atm",		"",             "GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_dry_bulb",					"Dry bulb temperature in each time step",		"C",		"",             "GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_wet_bulb",					"Wet bulb temperature in each time step",		"C",		"",             "GeoHourly",     "*",             "",						"" },
+
 
 var_info_invalid };
 
@@ -163,7 +171,10 @@ public:
 		// Set power block input values that won't change hourly in geothermal model
 		SPowerBlockInputs pbInputs;
 		pbInputs.mode = 2;
-		pbInputs.m_dot_htf = as_double("well_flow_rate")/*in kg/s*/ * 3600.0 /*s/hr*/ * as_double("num_wells");
+		if ( as_integer("analysis_type") == 0) // used number of wells as calculated by GETEM
+			pbInputs.m_dot_htf = as_double("well_flow_rate")* 3600.0 * as_double("num_wells_getem"); // (kg/sec) * (sec/hour) * (# wells) = total flow (kg/hour)
+		else // use number of wells input by user
+			pbInputs.m_dot_htf = as_double("well_flow_rate")* 3600.0 * as_double("num_wells"); // (kg/sec) * (sec/hour) * (# wells) = total flow (kg/hour)
 		pbInputs.demand_var = pbInputs.m_dot_htf;
 		pbInputs.standby_control = 1;
 		pbInputs.rel_humidity = 0.7;
@@ -255,9 +266,7 @@ public:
 		size_t monthly_array_size = 12 * iyears;
 		ssc_number_t *monthly_resource_temp = allocate( "monthly_resource_temperature", monthly_array_size);
 		ssc_number_t *monthly_power = allocate( "monthly_power", monthly_array_size);
-		//ssc_number_t *monthly_power_type224 = allocate( "monthly_power_type224", monthly_array_size);
 		ssc_number_t *monthly_energy = allocate( "monthly_energy", monthly_array_size);
-		//ssc_number_t *monthly_energy_type224 = allocate( "monthly_energy_type224", monthly_array_size);
 
 		// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
 		// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
@@ -265,6 +274,10 @@ public:
 		ssc_number_t *timestep_resource_temp = allocate( "timestep_resource_temperature", timestep_array_size);
 		ssc_number_t *timestep_power = allocate( "timestep_power", timestep_array_size);
 		ssc_number_t *timestep_test_values = allocate( "timestep_test_values", timestep_array_size);
+
+		ssc_number_t *timestep_pressure = allocate( "timestep_pressure", timestep_array_size);
+		ssc_number_t *timestep_dry_bulb = allocate( "timestep_dry_bulb", timestep_array_size);
+		ssc_number_t *timestep_wet_bulb = allocate( "timestep_wet_bulb", timestep_array_size);
 
 		// set pointer to annual array
 		oGeo.SetPointerToReplacementArray(annual_replacements);
@@ -278,15 +291,23 @@ public:
 		oGeo.SetPointerToTimeStepTemperatureArray(timestep_resource_temp);
 		oGeo.SetPointerToTimeStepOutputArray(timestep_power);
 		oGeo.SetPointerToTimeStepTestArray(timestep_test_values);
+
+		oGeo.SetPointerToTimeStepPressureArray(timestep_pressure);
+		oGeo.SetPointerToTimeStepDryBulbArray(timestep_dry_bulb);
+		oGeo.SetPointerToTimeStepWetBulbArray(timestep_wet_bulb);
+
 		
 		//update( "calculating", (float)0.0, (float)0.0 );
+		//update("Running model...", 10.0);
 
 		// run simulation
 		if (oGeo.RunGeoHourly() != 0)
 			throw exec_error("geothermalhourly", "error from geothermal hourly model: " + oGeo.GetErrorMsg() + ".");
 
+		assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
+
 	}
 };
 
-DEFINE_MODULE_ENTRY( geothermalhourly, "Hourly geothermal model using GETEM geothermal code, and general power block code from original TRNSYS type 224 code by M.Wagner", 2 );
+DEFINE_MODULE_ENTRY( geothermalhourly, "Hourly geothermal model using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code.", 2 );
 
