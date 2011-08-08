@@ -265,9 +265,6 @@ public:
 
 	void SetModelChoice(int choice) { miModelChoice = ( (choice>=0) && (choice<3) ) ? choice : -1; }
 	int GetModelChoice(void) { return miModelChoice; }
-	int GetMakeupAnalysesPerYear(void) { return (miModelChoice == 2) ? 8760 : 12; }
-	bool IsHourly(void) { return (GetMakeupAnalysesPerYear() == 8760) ? true : false; }
-	bool ReturnGETEMResults(void) { return (miModelChoice == 0) ? true : false; }
 
 	double mdUtilizationFactor; //not explained well, but used to Get annual capacity factor
     double mdTemperatureDeclineRate; // % per year
@@ -281,7 +278,6 @@ public:
 	// pumping parameters
 	double mdPressureChangeAcrossSurfaceEquipmentPSI; // 25 psi [2B.Resource&Well Input].D146
 	double mdPumpCostPerHP; // $12,000
-
 
 	void SetResourceTemperatureC(double degreesCelcius) { dc = TEMPERATURE; setPositiveValue(mdTemperatureResourceC, degreesCelcius, "Resource Temperature", m_strErrMsg); }
 	double GetResourceTemperatureC(void);
@@ -534,6 +530,9 @@ protected:
 	const char * mcFileName;
 	SPowerBlockParameters m_pbp;
 	SPowerBlockInputs m_pbi;
+	bool IsHourly(void) { return (GetMakeupAnalysesPerYear() == 8760) ? true : false; }
+	int GetMakeupAnalysesPerYear(void) { return (miModelChoice == 2) ? 8760 : 12; }
+	bool ReturnGETEMResults(void) { return (miModelChoice == 0) ? true : false; }
 
 private:
 	double secondLawEfficiencyGETEM(void);
@@ -880,7 +879,8 @@ public:
 	bool wantToReplaceReservoir(void) { return ( mdWorkingTemperatureC < (mpGBI->GetResourceTemperatureC() - mpGBI->mdMaxTempDeclineC) ) ? true : false; }
 	virtual bool canReplaceReservoir(double dTimePassedInYears) { return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
 	virtual void replaceReservoir(void) { miReservoirReplacements++; mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); }
-	double plantNetPower(void) { return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000.0) - (mpGBI->GetPumpWorkKW()); } // kW, as a function of the temperature over time
+	double plantGrossPower(void) {return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000.0); }
+	double plantNetPower(void) { return plantGrossPower() - mpGBI->GetPumpWorkKW(); } // kW, as a function of the temperature over time
 	double plantNetPowerkW(void) { double pnp = plantNetPower(); return (pnp>0) ? pnp : 0; } // kW
 	double plantNetPowerMW(void) { return plantNetPowerkW() / 1000.0; } // MW
 	double GetWorkingTemperatureC(void) { return mdWorkingTemperatureC; }
@@ -891,8 +891,12 @@ public:
 	bool OpenWeatherFile(const char * fn);
 	void SetPowerBlockFlowRateKgPerSec(double dFlowRateKgPerSec) { m_pbInputs.m_dot_htf = dFlowRateKgPerSec*3600.0; /* m_dot_htf should be in kg per hour */ }
 	void SetPowerBlockInputs(const SPowerBlockInputs& pbi) { m_pbInputs = pbi; }
-	bool ReadWeatherForTimeStep(unsigned int timeStep);
-	double type224OutputkW(void);
+	bool ReadWeatherForTimeStep(const bool bHourly, unsigned int timeStep);
+	void SetType224Inputs(void);
+	double GetType224OutputkW(void);
+	float WeatherPressure(void) { return (float)m_pbInputs.P_amb; }
+	float WeatherDryBulb(void)  { return (float)m_pbInputs.T_db; }
+	float WeatherWetBulb(void)  { return (float)m_pbInputs.T_wb; }
 
 protected:
 	double mdWorkingTemperatureC;
@@ -1061,6 +1065,9 @@ public:
 	void SetPointerToTimeStepOutputArray(float * p) { m_afPowerByTimeStep = p; }
 	void SetPointerToTimeStepTestArray(float * p) { m_afTestValues = p; }
 
+	void SetPointerToTimeStepPressureArray(float * p) {m_afPressure = p;}
+	void SetPointerToTimeStepDryBulbArray(float * p)  {m_afDryBulb = p;}
+	void SetPointerToTimeStepWetBulbArray(float * p)  {m_afWetBulb = p;}
 
 private:
 	CFlashBrineEffectiveness moFBE;
@@ -1087,6 +1094,10 @@ private:
 	float * m_afTemperatureC; // array of temperatures over time
 	float * m_afPowerByTimeStep;
 	float * m_afTestValues;   // array of values for debugging
+
+	float * m_afPressure;
+	float * m_afDryBulb;
+	float * m_afWetBulb;
 };
 
 

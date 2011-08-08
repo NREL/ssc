@@ -26,7 +26,6 @@ public:
 	//========================== Model Choice (GETEM, PowerBlock, ??) =======================================
 	void SetModelChoice(int choice) { oGeoOutputs.SetModelChoice(choice); }
 	int GetModelChoice(void) { return oGeoOutputs.GetModelChoice(); }
-	int GetMakeupAnalysesPerYear(void) { return oGeoOutputs.GetMakeupAnalysesPerYear(); }
 	unsigned int GetTimeStepsInAnalysis(void) { return oGeoOutputs.analysisTimeSteps(); }
 
 
@@ -142,7 +141,7 @@ public:
 
 		// to show user intermediate values
 		double ShowPumpDepthFeet(void) { return oGeoOutputs.GetPumpDepthFt(); } // ft
-		double ShowPumpWork(void) { return oGeoOutputs.GetPumpWorkKW()/1000; } // mega watts
+		double ShowPumpWorkMW(void) { return oGeoOutputs.GetPumpWorkKW()/1000; } // mega watts
 
 
 
@@ -368,6 +367,9 @@ public:
 	void SetPointerToTimeStepOutputArray(float * p) {oGeoOutputs.SetPointerToTimeStepOutputArray(p);}
 	void SetPointerToTimeStepTestArray(float * p) {oGeoOutputs.SetPointerToTimeStepTestArray(p);}
 
+	void SetPointerToTimeStepPressureArray(float * p) {oGeoOutputs.SetPointerToTimeStepPressureArray(p);}
+	void SetPointerToTimeStepDryBulbArray(float * p)  {oGeoOutputs.SetPointerToTimeStepDryBulbArray(p);}
+	void SetPointerToTimeStepWetBulbArray(float * p)  {oGeoOutputs.SetPointerToTimeStepWetBulbArray(p);}
 
 	//========================== status and run =============================================================
 	bool AbleToDetermineAlgorithm(void){return (oGeoOutputs.determineMakeupAlgorithm() == NO_MAKEUP_ALGORITHM) ? false : true; }
