@@ -26,6 +26,7 @@ OBJECTS = \
 	cmod_windwatts.o \
 	cmod_ippppa.o \
 	cmod_swhsolopt.o \
+	cmod_geohourly.o \
 	core.o \
 	lib_financial.o \
 	lib_pvwatts.o \
@@ -33,7 +34,7 @@ OBJECTS = \
 	lib_vartab.o \
 	lib_wfhrly.o \
 	lib_windwatts.o \
-	lib_getem.o \
+	lib_geohourly.o \
 	lib_sandia.o \
 	sscapi.o \
 	vtab_common.o
