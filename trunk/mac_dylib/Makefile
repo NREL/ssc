@@ -2,9 +2,9 @@ VPATH=../src
 
 CC = gcc
 CXX = g++
-CFLAGS = -fPIC -Wall -O3
+CFLAGS = -arch i386 -D__MACOSX__ -D__32BIT__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++
+LDFLAGS = -lm -lstdc++ -arch i386
 
 OBJECTS = \
 	cmod_test_irr.o \
@@ -27,9 +27,12 @@ OBJECTS = \
 	cmod_ippppa.o \
 	cmod_swhsolopt.o \
 	cmod_geohourly.o \
+	cmod_trntrough.o \
 	core.o \
+	lib_powerblock.o \
 	lib_financial.o \
 	lib_pvwatts.o \
+	lib_physics.o \
 	lib_util.o \
 	lib_vartab.o \
 	lib_wfhrly.o \
@@ -42,7 +45,7 @@ OBJECTS = \
 TARGET = ssc.dylib
 
 $(TARGET) : $(OBJECTS)
-	$(CXX) -dynamiclib -flat_namespace -o $@ $^
+	$(CXX) $(LDFLAGS) -dynamiclib -flat_namespace -o $@ $^
 	cp $(TARGET) ../python/ssc32
 
 clean:
