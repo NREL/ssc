@@ -409,10 +409,62 @@ private:
 	double ibi_sta_per;
 	double ibi_uti_per;
 	double ibi_oth_per;
+	double ibi_total;
 	double cbi_fed_amount;
 	double cbi_sta_amount;
 	double cbi_uti_amount;
 	double cbi_oth_amount;
+	double cbi_total;
+	double itc_sta_total;
+	double itc_sta_amount;
+	double itc_sta_per;
+	double itc_fed_total;
+	double itc_fed_amount;
+	double itc_fed_per;
+	double ppa;
+	double ppa_escalation;
+	double year1_fuel_use;
+	double inflation_rate;
+	double property_tax;
+	double property_tax_decline_percentage;
+	double insurance_rate;
+	double salvage_frac;
+	double federal_tax_rate;
+	double state_tax_rate;
+	double effective_tax_rate;
+	double real_discount_rate;
+	double nom_discount_rate;
+	double min_dscr_target;
+	double min_irr_target;
+	double aftertax_irr;
+	double min_after_tax_cash_flow;
+	double min_dscr;
+	double loan_amount;
+	double first_cost;
+	double dispatch_factor1;
+	double dispatch_factor2;
+	double dispatch_factor3;
+	double dispatch_factor4;
+	double dispatch_factor5;
+	double dispatch_factor6;
+	double dispatch_factor7;
+	double dispatch_factor8;
+	double dispatch_factor9;
+	double debt_frac;
+	double adjusted_installed_cost;
+	double ppa_soln_tolerance;
+	double lcoe_nom;
+	double lcoe_real;
+	double net_present_value;
+
+	int min_dscr_required;
+	int	positive_cashflow_required;
+	int ppa_soln_mode;
+	int nyears;
+	int loan_term;
+
+	bool is_commercialppa;
+
 public:
 	cm_ippppa()
 	{
@@ -430,10 +482,11 @@ public:
 	{
 		int i=0;
 
-		bool is_commercialppa = (as_integer("market")==1);
-		int ppa_soln_mode = as_integer("ppa_soln_mode");
+		is_commercialppa = (as_integer("market")==1);
+		ppa_soln_mode = as_integer("ppa_soln_mode");
+		ppa_soln_tolerance = as_double("ppa_soln_tolerance");
 
-		int nyears = as_integer("analysis_years");
+		nyears = as_integer("analysis_years");
 
 		// initialize cashflow matrix
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
@@ -487,15 +540,15 @@ public:
 			compute_dispatch_output(nyears);
 		}
 
-		double dispatch_factor1 = as_double("dispatch_factor1");
-		double dispatch_factor2 = as_double("dispatch_factor2");
-		double dispatch_factor3 = as_double("dispatch_factor3");
-		double dispatch_factor4 = as_double("dispatch_factor4");
-		double dispatch_factor5 = as_double("dispatch_factor5");
-		double dispatch_factor6 = as_double("dispatch_factor6");
-		double dispatch_factor7 = as_double("dispatch_factor7");
-		double dispatch_factor8 = as_double("dispatch_factor8");
-		double dispatch_factor9 = as_double("dispatch_factor9");
+		dispatch_factor1 = as_double("dispatch_factor1");
+		dispatch_factor2 = as_double("dispatch_factor2");
+		dispatch_factor3 = as_double("dispatch_factor3");
+		dispatch_factor4 = as_double("dispatch_factor4");
+		dispatch_factor5 = as_double("dispatch_factor5");
+		dispatch_factor6 = as_double("dispatch_factor6");
+		dispatch_factor7 = as_double("dispatch_factor7");
+		dispatch_factor8 = as_double("dispatch_factor8");
+		dispatch_factor9 = as_double("dispatch_factor9");
 
 		for (i=1;i<=nyears;i++)
 		{
@@ -504,29 +557,29 @@ public:
 		}
 
 
-		double ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
+		ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 
-		double ppa_escalation = 0.01*as_double("ppa_escalation");
+		ppa_escalation = 0.01*as_double("ppa_escalation");
 
 
-		double year1_fuel_use = as_double("annual_fuel_usage"); // kWht
+		year1_fuel_use = as_double("annual_fuel_usage"); // kWht
 
-		double inflation_rate = as_double("inflation_rate")*0.01;
-		double property_tax = as_double("property_tax_rate")*0.01;
-		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
-		double insurance_rate = as_double("insurance_rate")*0.01;
-		double salvage_frac = as_double("salvage_percentage")*0.01;
-		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
-		double state_tax_rate = as_double("state_tax_rate")*0.01;
-		double effective_tax_rate = federal_tax_rate + (1-federal_tax_rate)*state_tax_rate;
+		inflation_rate = as_double("inflation_rate")*0.01;
+		property_tax = as_double("property_tax_rate")*0.01;
+		property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
+		insurance_rate = as_double("insurance_rate")*0.01;
+		salvage_frac = as_double("salvage_percentage")*0.01;
+		federal_tax_rate = as_double("federal_tax_rate")*0.01;
+		state_tax_rate = as_double("state_tax_rate")*0.01;
+		effective_tax_rate = federal_tax_rate + (1-federal_tax_rate)*state_tax_rate;
 
-		double real_discount_rate = as_double("real_discount_rate")*0.01;
-		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
+		real_discount_rate = as_double("real_discount_rate")*0.01;
+		nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
-		double min_dscr_target = as_double("min_dscr_target");
-		double min_irr_target = as_double("min_irr_target");
-		int min_dscr_required = as_integer("min_dscr_required");
-		int positive_cashflow_required = as_integer("positive_cashflow_required");
+		min_dscr_target = as_double("min_dscr_target");
+		min_irr_target = as_double("min_irr_target");
+		min_dscr_required = as_integer("min_dscr_required");
+		positive_cashflow_required = as_integer("positive_cashflow_required");
 
 		if (is_commercialppa)
 		{
@@ -537,9 +590,9 @@ public:
 		double total_cost = as_double("total_installed_cost");
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
 
-		int loan_term = as_integer("loan_term");
+		loan_term = as_integer("loan_term");
 		double loan_rate = as_double("loan_rate")*0.01;
-		double debt_frac = as_double("loan_debt")*0.01;
+		debt_frac = as_double("loan_debt")*0.01;
 
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
@@ -564,15 +617,15 @@ public:
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue");
 
 		// itc fixed
-		double itc_fed_amount = as_double("itc_fed_amount");
-		double itc_sta_amount = as_double("itc_sta_amount");
+		itc_fed_amount = as_double("itc_fed_amount");
+		itc_sta_amount = as_double("itc_sta_amount");
 
 		// itc percent - max value used for comparison to qualifying costs
 		double itc_fed_frac = as_double("itc_fed_percent")*0.01;
-		double itc_fed_per = itc_fed_frac * total_cost;
+		itc_fed_per = itc_fed_frac * total_cost;
 		if (itc_fed_per > as_double("itc_fed_percent_maxvalue")) itc_fed_per = as_double("itc_fed_percent_maxvalue");
 		double itc_sta_frac = as_double("itc_sta_percent")*0.01;
-		double itc_sta_per = itc_sta_frac * total_cost;
+		itc_sta_per = itc_sta_frac * total_cost;
 		if (itc_sta_per > as_double("itc_sta_percent_maxvalue")) itc_sta_per = as_double("itc_sta_percent_maxvalue");
 
 		// cbi
@@ -661,7 +714,7 @@ public:
 		double state_tax_savings = 0.0;
 		double federal_tax_savings = 0.0;
 
-		double adjusted_installed_cost = total_cost
+		adjusted_installed_cost = total_cost
 			- ibi_fed_amount
 			- ibi_sta_amount
 			- ibi_uti_amount
@@ -675,16 +728,16 @@ public:
 			- cbi_uti_amount
 			- cbi_oth_amount;
 
-		double loan_amount = debt_frac * adjusted_installed_cost;
-		double first_cost = adjusted_installed_cost - loan_amount;
+		loan_amount = debt_frac * adjusted_installed_cost;
+		first_cost = adjusted_installed_cost - loan_amount;
 
 		cf.at(CF_after_tax_net_equity_cash_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
 		cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
 
-		double ibi_total = ibi_fed_amount + ibi_fed_per + ibi_sta_amount + ibi_sta_per + ibi_uti_amount + ibi_uti_per + ibi_oth_amount + ibi_oth_per;
-		double cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
-		double itc_fed_total = itc_fed_amount + itc_fed_per;
-		double itc_sta_total = itc_sta_amount + itc_sta_per;
+		ibi_total = ibi_fed_amount + ibi_fed_per + ibi_sta_amount + ibi_sta_per + ibi_uti_amount + ibi_uti_per + ibi_oth_amount + ibi_oth_per;
+		cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
+		itc_fed_total = itc_fed_amount + itc_fed_per;
+		itc_sta_total = itc_sta_amount + itc_sta_per;
 
 		double recapitalization_cost = as_double("recapitialization_cost");
 		double recapitalization_escalation = as_double("recapitialization_escalation");
@@ -774,286 +827,6 @@ public:
 //				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
 		}
 
-		double ppa_soln_tolerance = as_double("ppa_soln_tolerance");
-		int ppa_soln_max_iteations = as_integer("ppa_soln_max_iterations");
-		bool solved=true;
-		double ppa_min=as_double("ppa_soln_min");
-		double ppa_max=as_double("ppa_soln_max");
-		int its=0;
-		double weighting_factor = 1.0;
-		double irr_weighting_factor = DBL_MAX;
-		double dscr_weighting_factor = DBL_MAX;
-		double positive_cashflow_weighting_factor = DBL_MAX;
-		bool irr_is_minimally_met = false;
-		bool irr_greater_than_target = false;
-		double w0=1.0;
-		double w1=1.0;
-		double x0=ppa_min;
-		double x1=ppa_max;
-		double ppa_coarse_interval=10; // 10 cents/kWh
-		bool ppa_interval_found=false;
-		bool ppa_too_large=false;
-		bool ppa_interval_reset=true;
-		bool is_min_irr_satisfied=true;
-		bool is_min_dscr_satisfied=true;
-		bool is_positive_cashflow_satisfied=true;
-		bool is_min_irr_minimally_satisfied=false;
-		bool is_min_dscr_minimally_satisfied=false;
-		bool is_positive_cashflow_minimally_satisfied=false;
-		bool use_target_irr=true;
-		double itnpv_target_irr=1;
-		double itnpv_target_irr_plus_delta=1;
-		double aftertax_irr=0;
-		double min_dscr = DBL_MAX;
-		double min_after_tax_cash_flow = DBL_MAX;
-
-/***************** begin iterative solution *********************************************************************/
-
-		do
-		{
-
-			if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
-
-
-
-			for (i=1; i<=nyears; i++)
-			{
-
-				cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); 
-
-				if (is_commercialppa)
-					cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
-				else
-				// dispatch
-					cf.at(CF_energy_value,i) = cf.at(CF_ppa_price,i) /100.0 * (
-						cf.at(CF_TOD1Energy,i) * dispatch_factor1 +
-						cf.at(CF_TOD2Energy,i) * dispatch_factor2 +
-						cf.at(CF_TOD3Energy,i) * dispatch_factor3 +
-						cf.at(CF_TOD4Energy,i) * dispatch_factor4 +
-						cf.at(CF_TOD5Energy,i) * dispatch_factor5 +
-						cf.at(CF_TOD6Energy,i) * dispatch_factor6 +
-						cf.at(CF_TOD7Energy,i) * dispatch_factor7 +
-						cf.at(CF_TOD8Energy,i) * dispatch_factor8 +
-						cf.at(CF_TOD9Energy,i) * dispatch_factor9			);
-	
-
-			cf.at(CF_operating_income,i) = cf.at(CF_energy_value,i) - cf.at(CF_operating_expenses,i);
-
-			// ************************************************
-			// tax effect on equity (state)
-
-			cf.at(CF_sta_incentive_income_less_deductions, i) =
-				+ cf.at(CF_operating_income, i)
-				+ cf.at(CF_pbi_total,i)
-				- cf.at(CF_sta_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i);
-
-			if (i==1) cf.at(CF_sta_incentive_income_less_deductions, i) += ibi_total + cbi_total;
-
-
-			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
-				+ cf.at(CF_operating_income,i)
-				- cf.at(CF_sta_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i);
-
-			cf.at(CF_sta_income_taxes,i) = state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
-
-			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - cf.at(CF_sta_income_taxes,i);
-			if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
-
-			// ************************************************
-			//	tax effect on equity (federal)
-
-			cf.at(CF_fed_incentive_income_less_deductions, i) =
-				+ cf.at(CF_operating_income, i)
-				+ cf.at(CF_pbi_total,i)
-				- cf.at(CF_fed_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i)
-				+ cf.at(CF_sta_tax_savings, i);
-
-			if (i==1) cf.at(CF_fed_incentive_income_less_deductions, i) += ibi_total + cbi_total;
-
-			cf.at(CF_fed_taxable_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
-				+ cf.at(CF_operating_income,i)
-				- cf.at(CF_fed_depreciation,i)
-				- cf.at(CF_debt_payment_interest,i)
-				+ cf.at(CF_sta_tax_savings, i);
-
-			cf.at(CF_fed_income_taxes,i) = federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
-
-			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - cf.at(CF_fed_income_taxes,i);
-			if (i==1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
-
-			// ************************************************
-			// combined tax savings and cost/cash flows
-
-			cf.at(CF_sta_and_fed_tax_savings,i) = cf.at(CF_sta_tax_savings, i)+cf.at(CF_fed_tax_savings, i);
-
-			cf.at(CF_after_tax_net_equity_cash_flow, i) =
-				+ cf.at(CF_operating_income, i)
-				+ cf.at(CF_sta_and_fed_tax_savings,i)
-				- cf.at(CF_debt_payment_total, i)
-				+ cf.at(CF_pbi_total, i);
-
-			if (cf.at(CF_debt_payment_total,i) !=0.0)
-				cf.at(CF_pretax_dscr,i) = cf.at(CF_operating_income,i) / cf.at(CF_debt_payment_total,i);
-			if (i > loan_term)
-				cf.at(CF_pretax_dscr,i) = 0;
-
-			cf.at(CF_after_tax_cash_flow,i) =
-				cf.at(CF_after_tax_net_equity_cash_flow, i)
-				+ (1.0 - effective_tax_rate)*cf.at(CF_energy_value, i);
-
-		}
-
-		std::stringstream outm;
-
-		aftertax_irr = irr( CF_after_tax_net_equity_cash_flow, nyears);
-		min_dscr = min_cashflow_value( CF_pretax_dscr, nyears);
-		min_after_tax_cash_flow=min_cashflow_value(CF_after_tax_net_equity_cash_flow,nyears);
-
-
-		if (ppa_soln_mode == 1)
-		{
-
-			if (use_target_irr)
-			{
-				itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow,nyears,min_irr_target) +  cf.at(CF_after_tax_net_equity_cash_flow,0) ;
-				itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow,nyears,min_irr_target+0.001) +  cf.at(CF_after_tax_net_equity_cash_flow,0);
-				irr_weighting_factor = fabs(itnpv_target_irr);
-				is_min_irr_minimally_satisfied=( irr_weighting_factor < ppa_soln_tolerance);
-				is_min_irr_satisfied=((itnpv_target_irr >= 0.0) || is_min_irr_minimally_satisfied);
-				if (is_min_dscr_minimally_satisfied)
-				{
-					if (itnpv_target_irr_plus_delta > itnpv_target_irr)
-					{
-						use_target_irr=false;
-						is_min_irr_minimally_satisfied=false;
-						is_min_irr_satisfied=false;
-					}
-				}
-
-			}
-			else
-			{
-				itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow,nyears,aftertax_irr) +  cf.at(CF_after_tax_net_equity_cash_flow,0) ;
-				itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow,nyears,aftertax_irr+0.001) +  cf.at(CF_after_tax_net_equity_cash_flow,0) ;
-				irr_weighting_factor = DBL_MAX;
-				is_min_irr_minimally_satisfied = (fabs(itnpv_target_irr) <= ppa_soln_tolerance) && (itnpv_target_irr>itnpv_target_irr_plus_delta) && (aftertax_irr >= min_irr_target);
-				is_min_irr_satisfied = (((itnpv_target_irr<=itnpv_target_irr_plus_delta) && (aftertax_irr >= 0)) || is_min_irr_minimally_satisfied);
-			}
-
-			if (min_dscr_required == 1)
-			{
-				dscr_weighting_factor = fabs( min_dscr - min_dscr_target );
-				is_min_dscr_minimally_satisfied=( dscr_weighting_factor < ppa_soln_tolerance);
-				is_min_dscr_satisfied=((min_dscr >= min_dscr_target) || is_min_dscr_minimally_satisfied);
-				if (fabs(min_dscr)>ppa_soln_tolerance) dscr_weighting_factor /= fabs(min_dscr);
-			}
-			if (positive_cashflow_required == 1)
-			{
-				is_positive_cashflow_satisfied=(min_after_tax_cash_flow>=0.0);
-//				is_positive_cashflow_minimally_satisfied= ((is_positive_cashflow_satisfied) && ( min_after_tax_cash_flow  < 100.0)); // somewhat arbitrary - consistent with finutility
-				is_positive_cashflow_minimally_satisfied= ((is_positive_cashflow_satisfied) && ( fabs(min_after_tax_cash_flow)  < ppa_soln_tolerance)); // somewhat arbitrary - consistent with finutility
-//				positive_cashflow_weighting_factor = fabs(min_after_tax_cash_flow);
-				positive_cashflow_weighting_factor = 1.0; // switch to binary search
-			}
-			bool are_all_constraints_satisfied = (is_min_dscr_satisfied && is_min_irr_satisfied && is_positive_cashflow_satisfied);
-			bool is_one_constraint_minimally_satisfied = (is_min_dscr_minimally_satisfied || is_min_irr_minimally_satisfied || is_positive_cashflow_minimally_satisfied);
-
-			solved = ( ( (are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied) ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
-
-
-
-
-			if (!solved)
-			{
-
-				weighting_factor = min(positive_cashflow_weighting_factor, dscr_weighting_factor);
-				weighting_factor = min(weighting_factor, irr_weighting_factor);
-				if (ppa_interval_found)
-				{// reset interval
-					//if (irr_greater_than_target) // too large
-					if (are_all_constraints_satisfied) // too large
-					{
-			// set endpoint of weighted interval x0<x1
-						x1 = ppa;
-						w1 = weighting_factor;
-					}
-					else // too small
-					{
-			// set endpoint of weighted interval x0<x1
-						x0 = ppa;
-						w0 = weighting_factor;
-					}
-
-				}
-				else
-				{ // find solution interval [x0,x1]
-					if (ppa_interval_reset) 
-					{
-							if (irr_greater_than_target) ppa_too_large=true;
-							ppa_interval_reset=false;
-					}
-					if (ppa_too_large) // too large
-					{
-						if (are_all_constraints_satisfied) // too large
-						{
-							x0 = ppa;
-							w0 = weighting_factor;
-							ppa = x0-ppa_coarse_interval;
-						}
-						else
-						{
-						  x1 = x0;
-						  w1 = w0;
-						  x0 = ppa;
-						  w0 = weighting_factor;
-						  ppa_interval_found=true;
-						}
-					}
-					else
-					{
-						if (!are_all_constraints_satisfied)
-						{
-							x1 = ppa;
-							w1 = weighting_factor;
-							ppa = x1+ppa_coarse_interval;
-						}
-						else
-						{
-						  x0 = x1;
-						  w0 = w1;
-						  x1 = ppa;
-						  w1 = weighting_factor;
-						  ppa_interval_found=true;
-						}
-					}
-					// for initial guess of zero
-					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
-				}
-					//std::stringstream outm;
-					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_project_return_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
-					//	//  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
-					//	<< ", residual=" << residual << ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
-					//log( outm.str() );
-			}
-/*					outm << "iteration=" << its  << ", irr=" << aftertax_irr  << ", npvtarget=" << itnpv_target_irr  << ", npvtarget_delta=" << itnpv_target_irr_plus_delta  
-						<< ", min cash flow=" << min_after_tax_cash_flow  << ", is_positive_cashflow_satisfied=" << is_positive_cashflow_satisfied
-						<< ", min dscr=" << min_dscr  << ", is_min_dscr_satisfied=" << is_min_dscr_satisfied
-						<< "\ntarget_irr=" << min_irr_target  << ", is_min_irr_satisfied=" << is_min_irr_satisfied
-						<< "\nare_all_constraints_satisfied=" << are_all_constraints_satisfied  << ", is_one_constraint_minimally_satisfied=" << is_one_constraint_minimally_satisfied
-						<< ", solved=" << solved  << ", weighting_factor=" << weighting_factor  
-						<< ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0 << "\n\n";
-					log( outm.str() );
-*/			
-		}
-		its++;
-
-	}	// target tax investor return in target year
-	while (!solved && (its < ppa_soln_max_iteations) && (ppa >= 0) );
-
-/***************** end iterative solution *********************************************************************/
 
 
 		// save outputs
@@ -1070,13 +843,13 @@ public:
 */
 		double x = npv( CF_energy_net, nyears, real_discount_rate );
 		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-		double lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
+		lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
 
 		x = npv( CF_energy_net, nyears, nom_discount_rate );
 		if (x == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-		double lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
+		lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
 
-		double net_present_value = cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate );
+		net_present_value = cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate );
 
 		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
@@ -3365,6 +3138,413 @@ public:
 	}
 
 
+
+void update_loan_amount()
+{
+// used in minimize_lcoe
+    loan_amount = debt_frac * adjusted_installed_cost;
+	// exception for loan term = 0 added 1/26/2010
+	if (loan_term == 0) loan_amount = 0;
+
+	first_cost = adjusted_installed_cost - loan_amount;
+//	sv[svTotalCapitalInvestment] = loan_amount + first_cost;
+	cf.at(CF_after_tax_net_equity_cash_flow,0) = 0.0 - first_cost + cf.at(CF_sta_tax_savings,0) + cf.at(CF_fed_tax_savings,0);
+	cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
+}
+
+void minimize_lcoe(bool* wrtDebtFraction, bool* wrtPPAEscalation)
+{
+// optimization methods placed here - initially based on SimEngine::RunOptimizationSim
+// settings values using samsim
+// minimization of real LCOE
+// debt fraction considered 0 to 100 %
+// PPA Escalation considered 0 to 3% 
+// all or some of the parameters can be user inputs
+// single minima considered
+// converged to CONSTRAINT_TOLERANCE
+	int numDebtValues=8;  // > 1
+	int numPPAEscValues=8; // > 1
+	double minPPA_DebtFraction = 0;
+	double minPPA_PPAEscalation = 0;
+	double minDebtFraction = 0;
+	double minPPAEscalation = 0;
+	double maxDebtFraction = 1.0;
+	double maxPPAEscalation = 0.03;
+	double gridMinDebtFraction = 0;
+	double gridMinPPAEscalation = 0;
+	double gridMaxDebtFraction = 1.0;
+	double gridMaxPPAEscalation = 0.03;
+	int maxIterations = 10;
+	int i,j;
+	int itnum = 0;
+	double oldMin=0;
+	double newMin=1;
+	double newMinPPA=1;
+	double x;
+
+// real energy value
+	x = npv(CF_energy_net,nyears,real_discount_rate);
+	if (x == 0)
+	{
+//		Messages.Add("LCOE real failed");
+		lcoe_real = 0;
+		return;
+	}
+	
+
+	while ((itnum < maxIterations) && (abs(newMin - oldMin) > ppa_soln_tolerance))
+	{
+	// reset values and run
+		oldMin = newMin;
+		newMin = DBL_MAX;
+		for (i=0;i<numDebtValues;i++)
+		{
+			for(j =0;j<numPPAEscValues;j++)
+			{
+				if (*wrtDebtFraction)
+				{
+					debt_frac = gridMinDebtFraction + i * ((gridMaxDebtFraction - gridMinDebtFraction) / (numDebtValues - 1) );
+					update_loan_amount();
+				}
+				if (*wrtPPAEscalation)
+				{
+					ppa_escalation = gridMinPPAEscalation + j * ((gridMaxPPAEscalation - gridMinPPAEscalation) / (numPPAEscValues - 1) );
+				}
+
+				satisfy_all_constraints();
+
+				net_present_value = npv(CF_energy_value, nyears, nom_discount_rate);
+				lcoe_real = net_present_value * 100 / x;
+
+				if (lcoe_real < newMin)
+				{
+					if (*wrtDebtFraction)
+					{
+						minPPA_DebtFraction = debt_frac;
+					}
+					if (*wrtPPAEscalation)
+					{
+						minPPA_PPAEscalation = ppa_escalation;
+					}
+					newMinPPA = ppa;
+					newMin = lcoe_real;
+				}
+			}
+		}
+	// refine grid
+		if (newMin == DBL_MAX)
+		{
+//			Messages.Add("No minimum LCOE found.");
+			break;  // error handling??
+		}
+
+
+		ppa = newMinPPA;
+		if (*wrtDebtFraction)
+		{
+			gridMinDebtFraction = minPPA_DebtFraction - ((gridMaxDebtFraction - gridMinDebtFraction) / (numDebtValues - 1) );
+			if (gridMinDebtFraction < minDebtFraction)
+			{
+				gridMinDebtFraction = minDebtFraction;
+			}
+			gridMaxDebtFraction = minPPA_DebtFraction + ((gridMaxDebtFraction - gridMinDebtFraction) / (numDebtValues - 1) );
+			if (gridMaxDebtFraction > maxDebtFraction)
+			{
+				gridMaxDebtFraction = maxDebtFraction;
+			}
+			debt_frac = minPPA_DebtFraction;
+			update_loan_amount();
+		}
+		if (*wrtPPAEscalation)
+		{
+			gridMinPPAEscalation = minPPA_PPAEscalation - ((gridMaxPPAEscalation - gridMinPPAEscalation) / (numPPAEscValues - 1) );
+			if (gridMinPPAEscalation < minPPAEscalation)
+			{
+				gridMinPPAEscalation = minPPAEscalation;
+			}
+			gridMaxPPAEscalation = minPPA_PPAEscalation + ((gridMaxPPAEscalation - gridMinPPAEscalation) / (numPPAEscValues - 1) );
+			if (gridMaxPPAEscalation > maxPPAEscalation)
+			{
+				gridMaxPPAEscalation = maxPPAEscalation;
+			}
+			ppa_escalation = minPPA_PPAEscalation;
+		}
+	}
+//	compute_constrained_cashflow(); // update all values based on PPA value calculated
+	//Messages.Add(wxString::Format("Min PPA = %lg and Min Real LCOE = %lg found at debt = %lg and ppa escalation = %lg.",mPPA, newMin, sv[svLoanDebtPercentage], sv[svPPAEscalationRate]));
+
+}
+
+void satisfy_all_constraints()
+{
+		int ppa_soln_max_iteations = as_integer("ppa_soln_max_iterations");
+		bool solved=true;
+		double ppa_min=as_double("ppa_soln_min");
+		double ppa_max=as_double("ppa_soln_max");
+		int its=0;
+		double weighting_factor = 1.0;
+		double irr_weighting_factor = DBL_MAX;
+		double dscr_weighting_factor = DBL_MAX;
+		double positive_cashflow_weighting_factor = DBL_MAX;
+//		bool irr_is_minimally_met = false;
+		bool irr_greater_than_target = false;
+		double w0=1.0;
+		double w1=1.0;
+		double x0=ppa_min;
+		double x1=ppa_max;
+		double ppa_coarse_interval=10; // 10 cents/kWh
+		bool ppa_interval_found=false;
+		bool ppa_too_large=false;
+		bool ppa_interval_reset=true;
+		bool is_min_irr_satisfied=true;
+		bool is_min_dscr_satisfied=true;
+		bool is_positive_cashflow_satisfied=true;
+		bool is_min_irr_minimally_satisfied=false;
+		bool is_min_dscr_minimally_satisfied=false;
+		bool is_positive_cashflow_minimally_satisfied=false;
+		bool use_target_irr=true;
+		double itnpv_target_irr=1;
+		double itnpv_target_irr_plus_delta=1;
+		double aftertax_irr=0;
+		double min_dscr = DBL_MAX;
+		double min_after_tax_cash_flow = DBL_MAX;
+		int i;
+
+/***************** begin iterative solution *********************************************************************/
+
+		do
+		{
+
+			if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
+
+
+
+			for (i=1; i<=nyears; i++)
+			{
+
+				cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); 
+
+				if (is_commercialppa)
+					cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
+				else
+				// dispatch
+					cf.at(CF_energy_value,i) = cf.at(CF_ppa_price,i) /100.0 * (
+						cf.at(CF_TOD1Energy,i) * dispatch_factor1 +
+						cf.at(CF_TOD2Energy,i) * dispatch_factor2 +
+						cf.at(CF_TOD3Energy,i) * dispatch_factor3 +
+						cf.at(CF_TOD4Energy,i) * dispatch_factor4 +
+						cf.at(CF_TOD5Energy,i) * dispatch_factor5 +
+						cf.at(CF_TOD6Energy,i) * dispatch_factor6 +
+						cf.at(CF_TOD7Energy,i) * dispatch_factor7 +
+						cf.at(CF_TOD8Energy,i) * dispatch_factor8 +
+						cf.at(CF_TOD9Energy,i) * dispatch_factor9			);
+	
+
+			cf.at(CF_operating_income,i) = cf.at(CF_energy_value,i) - cf.at(CF_operating_expenses,i);
+
+			// ************************************************
+			// tax effect on equity (state)
+
+			cf.at(CF_sta_incentive_income_less_deductions, i) =
+				+ cf.at(CF_operating_income, i)
+				+ cf.at(CF_pbi_total,i)
+				- cf.at(CF_sta_depreciation,i)
+				- cf.at(CF_debt_payment_interest,i);
+
+			if (i==1) cf.at(CF_sta_incentive_income_less_deductions, i) += ibi_total + cbi_total;
+
+
+			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
+				+ cf.at(CF_operating_income,i)
+				- cf.at(CF_sta_depreciation,i)
+				- cf.at(CF_debt_payment_interest,i);
+
+			cf.at(CF_sta_income_taxes,i) = state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
+
+			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - cf.at(CF_sta_income_taxes,i);
+			if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
+
+			// ************************************************
+			//	tax effect on equity (federal)
+
+			cf.at(CF_fed_incentive_income_less_deductions, i) =
+				+ cf.at(CF_operating_income, i)
+				+ cf.at(CF_pbi_total,i)
+				- cf.at(CF_fed_depreciation,i)
+				- cf.at(CF_debt_payment_interest,i)
+				+ cf.at(CF_sta_tax_savings, i);
+
+			if (i==1) cf.at(CF_fed_incentive_income_less_deductions, i) += ibi_total + cbi_total;
+
+			cf.at(CF_fed_taxable_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
+				+ cf.at(CF_operating_income,i)
+				- cf.at(CF_fed_depreciation,i)
+				- cf.at(CF_debt_payment_interest,i)
+				+ cf.at(CF_sta_tax_savings, i);
+
+			cf.at(CF_fed_income_taxes,i) = federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
+
+			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - cf.at(CF_fed_income_taxes,i);
+			if (i==1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
+
+			// ************************************************
+			// combined tax savings and cost/cash flows
+
+			cf.at(CF_sta_and_fed_tax_savings,i) = cf.at(CF_sta_tax_savings, i)+cf.at(CF_fed_tax_savings, i);
+
+			cf.at(CF_after_tax_net_equity_cash_flow, i) =
+				+ cf.at(CF_operating_income, i)
+				+ cf.at(CF_sta_and_fed_tax_savings,i)
+				- cf.at(CF_debt_payment_total, i)
+				+ cf.at(CF_pbi_total, i);
+
+			if (cf.at(CF_debt_payment_total,i) !=0.0)
+				cf.at(CF_pretax_dscr,i) = cf.at(CF_operating_income,i) / cf.at(CF_debt_payment_total,i);
+			if (i > loan_term)
+				cf.at(CF_pretax_dscr,i) = 0;
+
+			cf.at(CF_after_tax_cash_flow,i) =
+				cf.at(CF_after_tax_net_equity_cash_flow, i)
+				+ (1.0 - effective_tax_rate)*cf.at(CF_energy_value, i);
+
+		}
+
+		std::stringstream outm;
+
+		aftertax_irr = irr( CF_after_tax_net_equity_cash_flow, nyears);
+		min_dscr = min_cashflow_value( CF_pretax_dscr, nyears);
+		min_after_tax_cash_flow=min_cashflow_value(CF_after_tax_net_equity_cash_flow,nyears);
+
+
+		if (ppa_soln_mode == 1)
+		{
+
+			if (use_target_irr)
+			{
+				itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow,nyears,min_irr_target) +  cf.at(CF_after_tax_net_equity_cash_flow,0) ;
+				itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow,nyears,min_irr_target+0.001) +  cf.at(CF_after_tax_net_equity_cash_flow,0);
+				irr_weighting_factor = fabs(itnpv_target_irr);
+				is_min_irr_minimally_satisfied=( irr_weighting_factor < ppa_soln_tolerance);
+				is_min_irr_satisfied=((itnpv_target_irr >= 0.0) || is_min_irr_minimally_satisfied);
+				if (is_min_dscr_minimally_satisfied)
+				{
+					if (itnpv_target_irr_plus_delta > itnpv_target_irr)
+					{
+						use_target_irr=false;
+						is_min_irr_minimally_satisfied=false;
+						is_min_irr_satisfied=false;
+					}
+				}
+
+			}
+			else
+			{
+				itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow,nyears,aftertax_irr) +  cf.at(CF_after_tax_net_equity_cash_flow,0) ;
+				itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow,nyears,aftertax_irr+0.001) +  cf.at(CF_after_tax_net_equity_cash_flow,0) ;
+				irr_weighting_factor = DBL_MAX;
+				is_min_irr_minimally_satisfied = (fabs(itnpv_target_irr) <= ppa_soln_tolerance) && (itnpv_target_irr>itnpv_target_irr_plus_delta) && (aftertax_irr >= min_irr_target);
+				is_min_irr_satisfied = (((itnpv_target_irr<=itnpv_target_irr_plus_delta) && (aftertax_irr >= 0)) || is_min_irr_minimally_satisfied);
+			}
+
+			if (min_dscr_required == 1)
+			{
+				dscr_weighting_factor = fabs( min_dscr - min_dscr_target );
+				is_min_dscr_minimally_satisfied=( dscr_weighting_factor < ppa_soln_tolerance);
+				is_min_dscr_satisfied=((min_dscr >= min_dscr_target) || is_min_dscr_minimally_satisfied);
+				if (fabs(min_dscr)>ppa_soln_tolerance) dscr_weighting_factor /= fabs(min_dscr);
+			}
+			if (positive_cashflow_required == 1)
+			{
+				is_positive_cashflow_satisfied=(min_after_tax_cash_flow>=0.0);
+//				is_positive_cashflow_minimally_satisfied= ((is_positive_cashflow_satisfied) && ( min_after_tax_cash_flow  < 100.0)); // somewhat arbitrary - consistent with finutility
+				is_positive_cashflow_minimally_satisfied= ((is_positive_cashflow_satisfied) && ( fabs(min_after_tax_cash_flow)  < ppa_soln_tolerance)); // somewhat arbitrary - consistent with finutility
+//				positive_cashflow_weighting_factor = fabs(min_after_tax_cash_flow);
+				positive_cashflow_weighting_factor = 1.0; // switch to binary search
+			}
+			bool are_all_constraints_satisfied = (is_min_dscr_satisfied && is_min_irr_satisfied && is_positive_cashflow_satisfied);
+			bool is_one_constraint_minimally_satisfied = (is_min_dscr_minimally_satisfied || is_min_irr_minimally_satisfied || is_positive_cashflow_minimally_satisfied);
+
+			solved = ( ( (are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied) ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+
+
+
+
+			if (!solved)
+			{
+
+				weighting_factor = min(positive_cashflow_weighting_factor, dscr_weighting_factor);
+				weighting_factor = min(weighting_factor, irr_weighting_factor);
+				if (ppa_interval_found)
+				{// reset interval
+					//if (irr_greater_than_target) // too large
+					if (are_all_constraints_satisfied) // too large
+					{
+			// set endpoint of weighted interval x0<x1
+						x1 = ppa;
+						w1 = weighting_factor;
+					}
+					else // too small
+					{
+			// set endpoint of weighted interval x0<x1
+						x0 = ppa;
+						w0 = weighting_factor;
+					}
+
+				}
+				else
+				{ // find solution interval [x0,x1]
+					if (ppa_interval_reset) 
+					{
+							if (irr_greater_than_target) ppa_too_large=true;
+							ppa_interval_reset=false;
+					}
+					if (ppa_too_large) // too large
+					{
+						if (are_all_constraints_satisfied) // too large
+						{
+							x0 = ppa;
+							w0 = weighting_factor;
+							ppa = x0-ppa_coarse_interval;
+						}
+						else
+						{
+						  x1 = x0;
+						  w1 = w0;
+						  x0 = ppa;
+						  w0 = weighting_factor;
+						  ppa_interval_found=true;
+						}
+					}
+					else
+					{
+						if (!are_all_constraints_satisfied)
+						{
+							x1 = ppa;
+							w1 = weighting_factor;
+							ppa = x1+ppa_coarse_interval;
+						}
+						else
+						{
+						  x0 = x1;
+						  w0 = w1;
+						  x1 = ppa;
+						  w1 = weighting_factor;
+						  ppa_interval_found=true;
+						}
+					}
+					// for initial guess of zero
+					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
+				}
+			}
+		}
+		its++;
+
+	}	// target tax investor return in target year
+	while (!solved && (its < ppa_soln_max_iteations) && (ppa >= 0) );
+
+/***************** end iterative solution *********************************************************************/
+
+}
 
 };
 
