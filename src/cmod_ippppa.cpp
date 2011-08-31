@@ -112,6 +112,8 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_cashflow",                      "Minimum cash flow value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "irr",                      "Internal rate of return",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_dscr",                      "Minimum DSCR",				   "",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_debt_frac",                      "Calculated debt fraction",				   "",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_ppa_escalation",                      "Calculated ppa escalation",				   "",            "",                      "ippppa",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -577,7 +579,7 @@ public:
 		nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
 		min_dscr_target = as_double("min_dscr_target");
-		min_irr_target = as_double("min_irr_target");
+		min_irr_target = as_double("min_irr_target")*0.01;
 		min_dscr_required = as_integer("min_dscr_required");
 		positive_cashflow_required = as_integer("positive_cashflow_required");
 
@@ -828,6 +830,14 @@ public:
 		}
 
 
+		// iterative loop or optimize
+		bool optimize_lcoe_wrt_debt_fraction = (as_integer("optimize_lcoe_wrt_debt_fraction") == 1);
+		bool optimize_lcoe_wrt_ppa_escalation = (as_integer("optimize_lcoe_wrt_ppa_escalation") == 1);
+		if ( optimize_lcoe_wrt_debt_fraction || optimize_lcoe_wrt_ppa_escalation )
+			minimize_lcoe(optimize_lcoe_wrt_debt_fraction, optimize_lcoe_wrt_ppa_escalation);
+		else
+			satisfy_all_constraints();
+
 
 		// save outputs
 
@@ -859,6 +869,11 @@ public:
 		assign( "min_cashflow",  var_data((ssc_number_t)min_after_tax_cash_flow) );
 		assign( "irr",  var_data((ssc_number_t)(aftertax_irr*100.0)) );
 		assign( "min_dscr",  var_data((ssc_number_t)min_dscr) );
+
+		assign( "actual_debt_frac",  var_data((ssc_number_t)debt_frac) );
+		assign( "actual_ppa_escalation",  var_data((ssc_number_t)ppa_escalation) );
+
+
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
@@ -3152,7 +3167,7 @@ void update_loan_amount()
 	cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
 }
 
-void minimize_lcoe(bool* wrtDebtFraction, bool* wrtPPAEscalation)
+void minimize_lcoe(bool wrtDebtFraction, bool wrtPPAEscalation)
 {
 // optimization methods placed here - initially based on SimEngine::RunOptimizationSim
 // settings values using samsim
@@ -3201,12 +3216,12 @@ void minimize_lcoe(bool* wrtDebtFraction, bool* wrtPPAEscalation)
 		{
 			for(j =0;j<numPPAEscValues;j++)
 			{
-				if (*wrtDebtFraction)
+				if (wrtDebtFraction)
 				{
 					debt_frac = gridMinDebtFraction + i * ((gridMaxDebtFraction - gridMinDebtFraction) / (numDebtValues - 1) );
 					update_loan_amount();
 				}
-				if (*wrtPPAEscalation)
+				if (wrtPPAEscalation)
 				{
 					ppa_escalation = gridMinPPAEscalation + j * ((gridMaxPPAEscalation - gridMinPPAEscalation) / (numPPAEscValues - 1) );
 				}
@@ -3218,11 +3233,11 @@ void minimize_lcoe(bool* wrtDebtFraction, bool* wrtPPAEscalation)
 
 				if (lcoe_real < newMin)
 				{
-					if (*wrtDebtFraction)
+					if (wrtDebtFraction)
 					{
 						minPPA_DebtFraction = debt_frac;
 					}
-					if (*wrtPPAEscalation)
+					if (wrtPPAEscalation)
 					{
 						minPPA_PPAEscalation = ppa_escalation;
 					}
@@ -3240,7 +3255,7 @@ void minimize_lcoe(bool* wrtDebtFraction, bool* wrtPPAEscalation)
 
 
 		ppa = newMinPPA;
-		if (*wrtDebtFraction)
+		if (wrtDebtFraction)
 		{
 			gridMinDebtFraction = minPPA_DebtFraction - ((gridMaxDebtFraction - gridMinDebtFraction) / (numDebtValues - 1) );
 			if (gridMinDebtFraction < minDebtFraction)
@@ -3255,7 +3270,7 @@ void minimize_lcoe(bool* wrtDebtFraction, bool* wrtPPAEscalation)
 			debt_frac = minPPA_DebtFraction;
 			update_loan_amount();
 		}
-		if (*wrtPPAEscalation)
+		if (wrtPPAEscalation)
 		{
 			gridMinPPAEscalation = minPPA_PPAEscalation - ((gridMaxPPAEscalation - gridMinPPAEscalation) / (numPPAEscValues - 1) );
 			if (gridMinPPAEscalation < minPPAEscalation)
@@ -3305,9 +3320,9 @@ void satisfy_all_constraints()
 		bool use_target_irr=true;
 		double itnpv_target_irr=1;
 		double itnpv_target_irr_plus_delta=1;
-		double aftertax_irr=0;
-		double min_dscr = DBL_MAX;
-		double min_after_tax_cash_flow = DBL_MAX;
+		aftertax_irr=0;
+		min_dscr = DBL_MAX;
+		min_after_tax_cash_flow = DBL_MAX;
 		int i;
 
 /***************** begin iterative solution *********************************************************************/
