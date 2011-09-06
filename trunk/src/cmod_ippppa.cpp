@@ -442,6 +442,7 @@ private:
 	double min_after_tax_cash_flow;
 	double min_dscr;
 	double loan_amount;
+	double loan_rate;
 	double first_cost;
 	double dispatch_factor1;
 	double dispatch_factor2;
@@ -595,7 +596,7 @@ public:
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
 
 		loan_term = as_integer("loan_term");
-		double loan_rate = as_double("loan_rate")*0.01;
+		loan_rate = as_double("loan_rate")*0.01;
 		debt_frac = as_double("loan_debt")*0.01;
 
 		// precompute expenses from annual schedules or value+escalation
@@ -732,11 +733,12 @@ public:
 			- cbi_uti_amount
 			- cbi_oth_amount;
 
-		loan_amount = debt_frac * adjusted_installed_cost;
-		first_cost = adjusted_installed_cost - loan_amount;
+//		loan_amount = debt_frac * adjusted_installed_cost;
+//		first_cost = adjusted_installed_cost - loan_amount;
+		update_loan_amount();
 
-		cf.at(CF_after_tax_net_equity_cash_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
-		cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
+//		cf.at(CF_after_tax_net_equity_cash_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
+//		cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
 
 		ibi_total = ibi_fed_amount + ibi_fed_per + ibi_sta_amount + ibi_sta_per + ibi_uti_amount + ibi_uti_per + ibi_oth_amount + ibi_oth_per;
 		cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
@@ -770,37 +772,37 @@ public:
 
 			cf.at(CF_deductible_expenses,i) = -cf.at(CF_operating_expenses,i);  // commercial
 	
-			if (i == 1)
-			{
-				cf.at(CF_debt_balance,i) = -loan_amount;
-				cf.at(CF_debt_payment_interest,i) = loan_amount * loan_rate;
-				cf.at(CF_debt_payment_principal,i) = -ppmt( loan_rate,       // Rate
-																i,           // Period
-																loan_term,   // Number periods
-																loan_amount, // Present Value
-																0,           // future Value
-																0 );         // cash flow at end of period
-			}
-			else
-			{
-				if (i <= loan_term)
-				{
-					cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) + cf.at(CF_debt_payment_principal,i-1);
-					cf.at(CF_debt_payment_interest,i) = -loan_rate * cf.at(CF_debt_balance,i);
+			//if (i == 1)
+			//{
+			//	cf.at(CF_debt_balance,i) = -loan_amount;
+			//	cf.at(CF_debt_payment_interest,i) = loan_amount * loan_rate;
+			//	cf.at(CF_debt_payment_principal,i) = -ppmt( loan_rate,       // Rate
+			//													i,           // Period
+			//													loan_term,   // Number periods
+			//													loan_amount, // Present Value
+			//													0,           // future Value
+			//													0 );         // cash flow at end of period
+			//}
+			//else
+			//{
+			//	if (i <= loan_term)
+			//	{
+			//		cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) + cf.at(CF_debt_payment_principal,i-1);
+			//		cf.at(CF_debt_payment_interest,i) = -loan_rate * cf.at(CF_debt_balance,i);
 
-					if (loan_rate != 0.0)
-					{
-						cf.at(CF_debt_payment_principal,i) = loan_rate * loan_amount/(1 - pow((1 + loan_rate),-loan_term))
-							- cf.at(CF_debt_payment_interest,i);
-					}
-					else
-					{
-						cf.at(CF_debt_payment_principal,i) = loan_amount / loan_term - cf.at(CF_debt_payment_interest,i);
-					}
-				}
-			}
+			//		if (loan_rate != 0.0)
+			//		{
+			//			cf.at(CF_debt_payment_principal,i) = loan_rate * loan_amount/(1 - pow((1 + loan_rate),-loan_term))
+			//				- cf.at(CF_debt_payment_interest,i);
+			//		}
+			//		else
+			//		{
+			//			cf.at(CF_debt_payment_principal,i) = loan_amount / loan_term - cf.at(CF_debt_payment_interest,i);
+			//		}
+			//	}
+			//}
 
-			cf.at(CF_debt_payment_total,i) = cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i);
+			//cf.at(CF_debt_payment_total,i) = cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i);
 
 			// compute pbi total
 			cf.at(CF_pbi_total, i) = cf.at(CF_pbi_fed, i) + cf.at(CF_pbi_sta, i) + cf.at(CF_pbi_uti, i) + cf.at(CF_pbi_oth, i);
@@ -853,6 +855,9 @@ public:
 						<< ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
 					log( outm.str() );
 */
+					std::stringstream outm;
+					outm << "real discount rate=" << real_discount_rate;
+					log( outm.str() );
 		double x = npv( CF_energy_net, nyears, real_discount_rate );
 		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
 		lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
@@ -1202,8 +1207,6 @@ public:
 
 	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
 	{
-		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
-
 		double rr = 1/(1+rate);
 		double result = 0;
 		for (int i=nyears;i>0;i--)
@@ -3164,9 +3167,44 @@ void update_loan_amount()
 	if (loan_term == 0) loan_amount = 0;
 
 	first_cost = adjusted_installed_cost - loan_amount;
-//	sv[svTotalCapitalInvestment] = loan_amount + first_cost;
 	cf.at(CF_after_tax_net_equity_cash_flow,0) = 0.0 - first_cost + cf.at(CF_sta_tax_savings,0) + cf.at(CF_fed_tax_savings,0);
 	cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
+
+	for (int i=1;i<=nyears;i++)
+	{
+		if (i == 1)
+			{
+				cf.at(CF_debt_balance,i) = -loan_amount;
+				cf.at(CF_debt_payment_interest,i) = loan_amount * loan_rate;
+				cf.at(CF_debt_payment_principal,i) = -ppmt( loan_rate,       // Rate
+																i,           // Period
+																loan_term,   // Number periods
+																loan_amount, // Present Value
+																0,           // future Value
+																0 );         // cash flow at end of period
+			}
+			else
+			{
+				if (i <= loan_term)
+				{
+					cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) + cf.at(CF_debt_payment_principal,i-1);
+					cf.at(CF_debt_payment_interest,i) = -loan_rate * cf.at(CF_debt_balance,i);
+
+					if (loan_rate != 0.0)
+					{
+						cf.at(CF_debt_payment_principal,i) = loan_rate * loan_amount/(1 - pow((1 + loan_rate),-loan_term))
+							- cf.at(CF_debt_payment_interest,i);
+					}
+					else
+					{
+						cf.at(CF_debt_payment_principal,i) = loan_amount / loan_term - cf.at(CF_debt_payment_interest,i);
+					}
+				}
+			}
+
+			cf.at(CF_debt_payment_total,i) = cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i);
+	}
+
 }
 
 void minimize_lcoe(bool wrtDebtFraction, bool wrtPPAEscalation)
@@ -3301,7 +3339,9 @@ log( outm.str() );
 		}
 		itnum++;
 	}
-	satisfy_all_constraints();
+outm << "\nbefore compute_cashflow = " << itnum << ": Min PPA = " << ppa << ", and Min Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
+log( outm.str() );
+	compute_cashflow();
 //	compute_constrained_cashflow(); // update all values based on PPA value calculated
 outm << "\ntotal its = " << itnum << ": Min PPA = " << ppa << ", and Min Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
 log( outm.str() );
