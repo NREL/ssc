@@ -24,6 +24,7 @@
     <ClCompile Include="src\cmod_equpartflip.cpp" />
     <ClCompile Include="src\cmod_fossilgen.cpp" />
     <ClCompile Include="src\cmod_ippppa.cpp" />
+    <ClCompile Include="src\cmod_irradproc.cpp" />
     <ClCompile Include="src\cmod_levpartflip.cpp" />
     <ClCompile Include="src\cmod_geohourly.cpp" />
     <ClCompile Include="src\cmod_ptflux.cpp" />
