@@ -35,6 +35,7 @@ struct __wf_data
 	double twet; /* wet bulb temp (C) */
 	double rhum; /* relative humidity (%) */
 	double pres; /* pressure (mbar) */
+	double snow; /* snow depth (cm) 0-150 */
 };
 typedef struct __wf_data wf_data;
 
