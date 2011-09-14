@@ -41,6 +41,11 @@ CPowerBlock_Type224::CPowerBlock_Type224()
 	m_F_wcMin = 0;
 	m_strLastError = "";
 	m_strWarningMsg = "";
+
+	m_sv.dLastP_Cycle=0;
+	m_sv.dStartupEnergyRemaining=0;
+	m_sv.dStartupTimeRemaining=0;
+	m_sv.iLastStandbyControl=1;
 }
 
 CPowerBlock_Type224::~CPowerBlock_Type224()
@@ -463,7 +468,7 @@ bool CPowerBlock_Type224::Execute(const long lSecondsFromStart, const SPowerBloc
 	// OUT(11)=P_cond
 	//m_pbo.P_cond = P_cond;
 
-	return true;
+	return (m_strLastError=="") ? true : false;
 }
 
 //************************************************************************************************************
@@ -587,6 +592,7 @@ void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_
 				break;
 		}
 		eta_adj = eta_ref/(Interpolate(12,2,Psat_ref)/Interpolate(22,2,Psat_ref));
+		m_bFirstCall = false;
 	}
 
 	// Calculate the specific heat before converting to Kelvin
@@ -612,6 +618,11 @@ void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_
 		T_ref = T_sat(P_boil);  // Sat temp for water
 
 	// Calculate the htf hot temperature, in non-dimensional form
+	if (T_ref>=T_htf_hot)
+	{	// boiler pressure is unrealistic -> it could not be achieved with this resource temp
+		m_strLastError = "The input boiler pressure could not be achieved with the resource temperature entered.";
+		P_cycle = 0.0;
+	}
 	double T_htf_hot_ND = (T_htf_hot - T_ref)/(T_htf_hot_ref - T_ref);
 
 	// Calculate the htf mass flow rate in non-dimensional form
@@ -784,7 +795,6 @@ void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_
 
 	// Set the "been called" variable
 	//fcall = 0.0;
-	m_bFirstCall = false;
 }
 
 
