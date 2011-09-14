@@ -36,6 +36,7 @@ struct __wf_data
 	double rhum; /* relative humidity (%) */
 	double pres; /* pressure (mbar) */
 	double snow; /* snow depth (cm) 0-150 */
+	double albedo; /* ground reflectance 0-1.  values outside this range mean it is not included */
 };
 typedef struct __wf_data wf_data;
 

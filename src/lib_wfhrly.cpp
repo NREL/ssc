@@ -325,6 +325,7 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->rhum = (double)d12;
 		dat->pres = (double)d13;
 		dat->snow = (double)d20;
+		dat->albedo = -999; /* no albedo in TMY2 */
 
 		return nread==79 && pret==buf;
 	}
@@ -364,7 +365,8 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->rhum = (double)atof( cols[37] );
 		dat->pres = (double)atof( cols[40] );
 		dat->snow = 999.0; // no snowfall in TMY3
-		
+		dat->albedo = (double)atof( cols[61] );
+				
 		return pret==buf;
 	}
 	else if (obj->wf_type == WF_EPW)
@@ -393,6 +395,7 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->rhum = (double)atof( cols[8] );
 		dat->pres = (double)atof( cols[9] ) * 0.01; /* convert Pa in to mbar */
 		dat->snow = (double)atof( cols[30] ); // snowfall
+		dat->albedo = -999; /* no albedo in EPW file */
 
 		return pret==buf;
 	}
