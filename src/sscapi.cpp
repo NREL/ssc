@@ -21,6 +21,8 @@ SSCEXPORT const char *ssc_build_info()
 
 extern module_entry_info 
 /* extern declarations of modules for linking */
+	cm_entry_wfreader,
+	cm_entry_irradproc,
 	cm_entry_utilityrate,
 	cm_entry_cashloan,
 	cm_entry_ippppa,
@@ -43,6 +45,8 @@ extern module_entry_info
 
 /* official module table */
 static module_entry_info *module_table[] = {
+	&cm_entry_wfreader,
+	&cm_entry_irradproc,
 	&cm_entry_utilityrate,
 	&cm_entry_cashloan,
 	&cm_entry_ippppa,

@@ -1,7 +1,9 @@
 #include "core.h"
 
 #include "lib_wfhrly.h"
+#include "lib_irradproc.h"
 #include "lib_pvwatts.h"
+
 
 #ifndef DTOR
 #define DTOR 0.0174532925
@@ -77,7 +79,7 @@ public:
 	
 		/* storage for calculations */
 		double angle[3];
-		double sun[8];
+		double sun[9];
 
 		double sunrise, sunset;
 		int jday = 0;
@@ -96,7 +98,7 @@ public:
 		{
 			for(int n=1;n<=util::nday[m];n++)    /* For each day of month */
 			{
-				int yr,mn,dy;
+				int yr=1990,mn=1,dy=1;
 				jday++;                 /* Increment julian day */
 				for(int i=0;i<24;i++)      /* Read a day of data and initialize */
 				{
@@ -194,7 +196,7 @@ public:
 						else  /* Midnight sun or not a sunrise/sunup sunset hour */
 							solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
 					
-						incident2(track_mode,tilt,azimuth,rlim,sun[1],sun[0],angle); /* Calculate incident angle */
+						incidence(track_mode,tilt,azimuth,rlim,sun[1],sun[0],angle); /* Calculate incident angle */
 					
 						double alb;
 						if (snow[i] <= 0 || snow[i] >= 150) // outside normal range or 0
@@ -202,9 +204,10 @@ public:
 						else
 							alb = 0.6; // snow cover days
 
-						double poa_beam = 0, poa_diff = 0;
-						perez( dn[i],df[i],alb,angle[0],angle[1],sun[1], &poa_beam, &poa_diff ); /* Incident solar radiation */
-						poa[i] = poa_beam+poa_diff;
+						double irr[3];
+						irr[0]=irr[1]=irr[2] = 0;
+						perez( sun[8], dn[i],df[i],alb,angle[0],angle[1],sun[1], irr ); /* Incident solar radiation */
+						poa[i] = irr[0]+irr[1]+irr[2];
 						tpoa[i] = transpoa( poa[i],dn[i],angle[0]);  /* Radiation transmitted thru module cover */
 						
 					}

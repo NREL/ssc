@@ -7,6 +7,7 @@
 #include "core.h"
 
 #include "lib_pvwatts.h"
+#include "lib_irradproc.h"
 
 static var_info _cm_vtab_pvwatts[] = {
 
@@ -151,7 +152,8 @@ public:
 			if (idx % (num_steps/25)==0)
 				update( "calculating", 100*((float)idx+1)/((float)num_steps), (float)time );
 
-			double poa_beam, poa_diffuse, pvt, dc, ac;
+			double poa[3], pvt, dc, ac;
+			poa[0]=poa[1]=poa[2] = 0.0;
 
 			if (sun[2] > 0.0087)
 			{
@@ -161,24 +163,22 @@ public:
 				double wind = p_wspd[idx];
 				double ambt = p_tdry[idx];
 
-				incident2( track_mode, tilt, azimuth, rot_limit, sun[1], sun[0], angle );
-				perez( dn, df, albedo, angle[0], angle[1], sun[1], &poa_beam, &poa_diffuse );
+				incidence( track_mode, tilt, azimuth, rot_limit, sun[1], sun[0], angle );
+				perez( sun[8], dn, df, albedo, angle[0], angle[1], sun[1], poa );
 
 				double tpoa = 0;
 				if (dn > 0)	
-					tpoa = transpoa( poa_beam+poa_diffuse, dn, angle[0] );  /* have valid poa and dn, calculate transmitted through glass cover */
+					tpoa = transpoa( poa[0]+poa[1]+poa[2], dn, angle[0] );  /* have valid poa and dn, calculate transmitted through glass cover */
 				else
-					tpoa = poa_beam+poa_diffuse; /* default to dn 0 or bad value - assume no glass cover on module */
+					tpoa = poa[0]+poa[1]+poa[2]; /* default to dn 0 or bad value - assume no glass cover on module */
 				
-				pvt = celltemp(inoct, height, poa_beam+poa_diffuse, wind, ambt );
+				pvt = celltemp(inoct, height, poa[0]+poa[1]+poa[2], wind, ambt );
 				dc = dcpowr( reftem, watt_spec, pwrdgr, tmloss, tpoa, pvt );
 				ac = dctoac( watt_spec, efffp, dc );
 			}
 			else
 			{
 				/* night time */
-				poa_beam = 0.0;
-				poa_diffuse = 0.0;
 				pvt = 999.9;
 				dc = 0.0;
 				ac = 0.0;
@@ -195,8 +195,8 @@ public:
 			p_elv[idx] = (ssc_number_t) (sun[2] * 180/M_PI);
 			p_dec[idx] = (ssc_number_t) (sun[3] * 180/M_PI);
 
-			p_poa_beam[idx] = (ssc_number_t)poa_beam;
-			p_poa_diffuse[idx] = (ssc_number_t)poa_diffuse;
+			p_poa_beam[idx] = (ssc_number_t)poa[0];
+			p_poa_diffuse[idx] = (ssc_number_t)(poa[1]+poa[2]);
 			p_tcell[idx] = (ssc_number_t)pvt;
 			p_dc[idx] = (ssc_number_t)dc;
 			p_ac[idx] = (ssc_number_t)ac;
