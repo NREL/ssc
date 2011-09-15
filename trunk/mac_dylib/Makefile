@@ -8,6 +8,8 @@ LDFLAGS = -lm -lstdc++ -arch i386
 
 OBJECTS = \
 	cmod_test_irr.o \
+	cmod_wfreader.o \
+	cmod_irradproc.o \
 	cmod_trntower.o \
 	cmod_trnbase.o \
 	cmod_trndish.o \
@@ -29,6 +31,7 @@ OBJECTS = \
 	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
+	lib_irradproc.o \
 	lib_powerblock.o \
 	lib_financial.o \
 	lib_pvwatts.o \

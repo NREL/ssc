@@ -39,6 +39,7 @@
     <ClCompile Include="src\cmod_trntower.cpp" />
     <ClCompile Include="src\cmod_trntrough.cpp" />
     <ClCompile Include="src\cmod_utilityrate.cpp" />
+    <ClCompile Include="src\cmod_wfreader.cpp" />
     <ClCompile Include="src\cmod_windwatts.cpp" />
     <ClCompile Include="src\core.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">__32BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
@@ -47,6 +48,7 @@
     </ClCompile>
     <ClCompile Include="src\lib_financial.cpp" />
     <ClCompile Include="src\lib_geohourly.cpp" />
+    <ClCompile Include="src\lib_irradproc.cpp" />
     <ClCompile Include="src\lib_physics.cpp" />
     <ClCompile Include="src\lib_powerblock.cpp" />
     <ClCompile Include="src\lib_pvwatts.cpp" />
@@ -66,6 +68,7 @@
     <ClInclude Include="src\lib_financial.h" />
     <ClInclude Include="src\lib_geohourly.h" />
     <ClInclude Include="src\lib_geohourly_interface.h" />
+    <ClInclude Include="src\lib_irradproc.h" />
     <ClInclude Include="src\lib_physics.h" />
     <ClInclude Include="src\lib_powerblock.h" />
     <ClInclude Include="src\lib_pvwatts.h" />
