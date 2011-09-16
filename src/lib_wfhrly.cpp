@@ -314,7 +314,7 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->year = yr + 1900;
 		dat->month = mn;
 		dat->day = dy;
-		dat->hour = hr;
+		dat->hour = hr-1;  // hour goes 0-23, not 1-24
 		dat->gh = (double)d1*1.0;
 		dat->dn=(double)d2;           /* Direct radiation */
 		dat->df=(double)d3;           /* Diffuse radiation */
@@ -350,7 +350,7 @@ static int cmp_ext(const char *file, const char *ext)
 		p++;
 		dat->year = atoi( p );
 
-		dat->hour = atoi( cols[1] );
+		dat->hour = atoi( cols[1] ) - 1;  // hour goes 0-23, not 1-24
 
 		dat->gh = (double)atof( cols[4] );
 		dat->dn = (double)atof( cols[7] );
@@ -380,7 +380,7 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->year = atoi(cols[0]);
 		dat->month = atoi(cols[1]);
 		dat->day = atoi(cols[2]);
-		dat->hour = atoi(cols[3]);
+		dat->hour = atoi(cols[3])-1;  // hour goes 0-23, not 1-24;
 
 		dat->gh = (double)atof(cols[13]);
 		dat->dn = (double)atof(cols[14]);

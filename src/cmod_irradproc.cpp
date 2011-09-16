@@ -38,10 +38,10 @@ static var_info _cm_vtab_irradproc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff",                "Incident Sky Diffuse",           "W/m2",   "",                      "Irradiance Processor",      "*",                       "",                  "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_gnddiff",                "Incident Ground Reflected Diffuse", "W/m2", "",                     "Irradiance Processor",      "*",                       "",                  "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Solar azimuth",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=dn",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Solar zenith",                   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=dn",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_elv",                    "Sun elevation",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=dn",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_dec",                    "Sun declination",                "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Solar azimuth",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Solar zenith",                   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_elv",                    "Sun elevation",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_dec",                    "Sun declination",                "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 
 
 var_info_invalid };
@@ -58,7 +58,7 @@ public:
 	{
 		size_t count;
 		ssc_number_t *beam = as_array("beam", &count);
-		ssc_number_t *diff = as_array("diff", &count);
+		ssc_number_t *diff = as_array("diffuse", &count);
 
 		ssc_number_t *year = as_array("year", &count);		
 		ssc_number_t *month = as_array("month", &count);
@@ -80,7 +80,7 @@ public:
 		int track_mode = as_integer("track_mode");
 		double rotlim = as_double("rotlim");
 
-		double alb = as_double("albedo_const");
+		double alb_const = as_double("albedo_const");
 		ssc_number_t *albvec = 0;
 		if (is_assigned("albedo")) albvec = as_array("albedo", &count);
 	
@@ -105,8 +105,10 @@ public:
 			// if sun is above horizon at this time
 			if (sun[2] > 0)
 			{
+				double alb = alb_const;
 				// if we have array of albedo values, use it
-				if ( albvec != 0 ) alb = albvec[i];  
+				if ( albvec != 0  && albvec[i] >= 0 && albvec[i] <= (ssc_number_t)1.0)
+					alb = albvec[i];
 				
 				// compute incidence angles depending on tracking surface
 				incidence( track_mode, tilt, azimuth, rotlim, sun[1], sun[0], angle );
