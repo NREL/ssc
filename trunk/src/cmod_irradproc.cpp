@@ -58,6 +58,9 @@ public:
 	{
 		size_t count;
 		ssc_number_t *beam = as_array("beam", &count);
+
+		if (count < 2) throw general_error("need at least 2 data points in irradproc");
+
 		ssc_number_t *diff = as_array("diffuse", &count);
 
 		ssc_number_t *year = as_array("year", &count);		
@@ -94,23 +97,99 @@ public:
 		ssc_number_t *p_poa_beam = allocate("poa_beam", count);
 		ssc_number_t *p_poa_skydiff = allocate("poa_skydiff", count);
 		ssc_number_t *p_poa_gnddiff = allocate("poa_gnddiff", count);
+		
+		// "temporary" debugging output
+		ssc_number_t *p_sunup = allocate("sunup", count);
+		ssc_number_t *p_sunrise = allocate("sunrise", count);
+		ssc_number_t *p_sunset = allocate("sunset", count);
+		ssc_number_t *p_delt = allocate("delt", count);
+		ssc_number_t *p_time = allocate("tcur", count);
+		ssc_number_t *p_hrc = allocate("hr_calc", count);
+		ssc_number_t *p_minc = allocate("min_calc", count);
 
 		for (size_t i = 0; i < count ;i ++ )
 		{
-			// calculate solar position
-			solarpos( (int)year[i], (int)month[i], (int)day[i], (int)hour[i], minute[i], lat, lon, tz, sun );
+			double t_cur = hour[i] + minute[i]/60.0;
+			double delt = 1.0;
+			if ( i == 0 )
+			{
+				double t_next = hour[i+1] + minute[i+1]/60.0;
+				if (t_cur > t_next) t_next += 24;
+				delt = t_next - t_cur;
+			}
+			else
+			{
+				double t_prev = hour[i-1] + minute[i-1]/60.0;
+				if (t_cur < t_prev) t_cur += 24;
+				delt = t_cur - t_prev;
+			}
+
+			p_time[i] = t_cur;
+			p_delt[i] = (ssc_number_t)delt;
+						
+			// calculate sunrise and sunset hours in local standard time for the current day
+			solarpos( (int)year[i], (int)month[i], (int)day[i], 12, 0.0, lat, lon, tz, sun );
+
+			double t_sunrise = sun[4];
+			double t_sunset = sun[5];
+
+			if ( t_cur >= t_sunrise - delt/2.0
+				&& t_cur < t_sunrise + delt/2.0 )
+			{
+				// time step encompasses the sunrise
+				double t_calc = (t_sunrise + (t_cur+delt/2.0))/2.0; // midpoint of sunrise and end of timestep
+				int hr_calc = (int)t_calc;
+				double min_calc = (t_calc-hr_calc)*60.0;
+
+				p_hrc[i] = hr_calc;
+				p_minc[i] = min_calc;
 				
+				solarpos( (int)year[i], (int)month[i], (int)day[i], hr_calc, min_calc, lat, lon, tz, sun );
+
+				p_sunup[i] = 2;				
+			}
+			else if (t_cur > t_sunset - delt/2.0
+				&& t_cur <= t_sunset + delt/2.0 )
+			{
+				// timestep encompasses the sunset
+				double t_calc = ( (t_cur-delt/2.0) + t_sunset )/2.0; // midpoint of beginning of timestep and sunset
+				int hr_calc = (int)t_calc;
+				double min_calc = (t_calc-hr_calc)*60.0;
+
+				p_hrc[i] = hr_calc;
+				p_minc[i] = min_calc;
+				
+				solarpos( (int)year[i], (int)month[i], (int)day[i], hr_calc, min_calc, lat, lon, tz, sun );
+
+				p_sunup[i] = 3;
+			}
+			else if (t_cur >= t_sunrise && t_cur <= t_sunset)
+			{
+				// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)			
+				p_hrc[i] = hour[i];
+				p_minc[i] = minute[i];
+				solarpos( (int)year[i], (int)month[i], (int)day[i], (int)hour[i], minute[i], lat, lon, tz, sun );
+				p_sunup[i] = 1;
+			}
+			else
+			{			
+				p_hrc[i] = -1;
+				p_minc[i] = -1;
+				p_sunup[i] = 0;
+			}
+
+			
 			poa[0]=poa[1]=poa[2] = 0;
 
-			// if sun is above horizon at this time
-			if (sun[2] > 0)
+			// do irradiance calculations if sun is up
+			if (p_sunup[i] > 0)
 			{
 				double alb = alb_const;
 				// if we have array of albedo values, use it
 				if ( albvec != 0  && albvec[i] >= 0 && albvec[i] <= (ssc_number_t)1.0)
 					alb = albvec[i];
 				
-				// compute incidence angles depending on tracking surface
+				// compute incidence angles onto fixed or tracking surface
 				incidence( track_mode, tilt, azimuth, rotlim, sun[1], sun[0], angle );
 
 				// compute incident irradiance on tilted surface
@@ -136,6 +215,9 @@ public:
 			p_poa_beam[i] = (ssc_number_t) poa[0];
 			p_poa_skydiff[i] = (ssc_number_t) poa[1];
 			p_poa_gnddiff[i] = (ssc_number_t) poa[2];
+
+			p_sunrise[i] = sun[4];
+			p_sunset[i] = sun[5];
 		}
 	}
 };
