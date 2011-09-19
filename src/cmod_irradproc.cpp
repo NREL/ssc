@@ -9,8 +9,12 @@
 static var_info _cm_vtab_irradproc[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                              UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
-	{ SSC_INPUT,        SSC_ARRAY,       "beam",                       "Beam irradiance",                  "W/m2",   "",                      "Irradiance Processor",      "*",                        "",                      "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "diffuse",                    "Diffuse irradiance",               "W/m2",   "",                      "Irradiance Processor",      "*",                        "LENGTH_EQUAL=beam",     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                 "Irradiance input mode",           "0/1",   "Beam+Diff,Global+Beam",  "Irradiance Processor",      "?=0",                     "INTEGER,MIN=0,MAX=1", ""},
+
+	{ SSC_INPUT,        SSC_ARRAY,       "beam",                       "Beam normal irradiance",          "W/m2",   "",                      "Irradiance Processor",      "*",                        "",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "diffuse",                    "Diffuse horizontal irradiance",   "W/m2",   "",                      "Irradiance Processor",      "irrad_mode=0",             "LENGTH_EQUAL=beam",     "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "global",                     "Global horizontal irradiance",    "W/m2",   "",                      "Irradiance Processor",      "irrad_mode=1",              "LENGTH_EQUAL=beam",     "" },
+
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                     "Ground reflectance (time depend.)","frac",  "0..1",                   "Irradiance Processor",      "?",                        "LENGTH_EQUAL=beam",     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo_const",               "Ground reflectance (single value)","frac",  "0..1",                   "Irradiance Processor",      "?=0.2",                    "",                      "" },
 	
@@ -60,8 +64,13 @@ public:
 		ssc_number_t *beam = as_array("beam", &count);
 
 		if (count < 2) throw general_error("need at least 2 data points in irradproc");
-
-		ssc_number_t *diff = as_array("diffuse", &count);
+		
+		ssc_number_t *diff = 0, *glob = 0;
+		int irrad_mode = as_integer("irrad_mode");
+		if ( irrad_mode == 1 )
+			glob = as_array("global", &count );
+		else
+			diff = as_array("diffuse", &count );
 
 		ssc_number_t *year = as_array("year", &count);		
 		ssc_number_t *month = as_array("month", &count);
@@ -123,6 +132,8 @@ public:
 				if (t_cur < t_prev) t_cur += 24;
 				delt = t_cur - t_prev;
 			}
+
+			if (delt > 2.0) throw general_error( util::format("timestep at index %s yielded a calculated timestep of %lg.  2 hour maximum timestep allowed.", i, delt ));
 
 			p_time[i] = t_cur;
 			p_delt[i] = (ssc_number_t)delt;
@@ -192,17 +203,39 @@ public:
 				// compute incidence angles onto fixed or tracking surface
 				incidence( track_mode, tilt, azimuth, rotlim, sun[1], sun[0], angle );
 
+
+				double hextra = sun[8];
+				double hbeam = beam[i]*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
+				
+				// check beam irradiance against extraterrestrial irradiance
+				if ( hbeam > hextra )
+				{
+					log( util::format("beam irradiance on horizontal of %lg W/m2 exceeded calculated extraterrestrial irradiance of %lg W/m2 constant at %d mon %d day %d hr %lg min",
+							(double)hbeam, hextra, (int)month[i], (int)day[i], (int)hour[i], (double)minute[i], i), SSC_WARNING, (float)i ); 
+				}
+
+
+				// compute beam and diffuse inputs based on irradiance inputs mode
+				double ibeam = beam[i];
+				double idiff = 0.0;
+				if ( irrad_mode == 0 && diff != 0 )  // Beam+Diffuse
+					idiff = diff[i];
+				else if ( irrad_mode == 1 && glob != 0 ) // Total+Beam
+					idiff = glob[i] - hbeam;
+				else
+					throw general_error("diffuse or global must be given in additional to beam irradiance");
+
 				// compute incident irradiance on tilted surface
 				switch( sky_model )
 				{
 				case 0:
-					isotropic( sun[8], beam[i], diff[i], alb, angle[0], angle[1], sun[1], poa );
+					isotropic( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa );
 					break;
 				case 1:
-					hdkr( sun[8], beam[i], diff[i], alb, angle[0], angle[1], sun[1], poa );
+					hdkr( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa );
 					break;
 				default:
-					perez( sun[8], beam[i], diff[i], alb, angle[0], angle[1], sun[1], poa );
+					perez( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa );
 					break;
 				}
 			}
