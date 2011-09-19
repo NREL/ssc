@@ -1,6 +1,6 @@
 #include "core.h"
 #include "lib_util.h"
-#include "lib_wfhrly.h"
+#include "lib_wfreader.h"
 
 static var_info _cm_vtab_wfreader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -14,6 +14,11 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_STRING,      "location",                "Location ID",                      "",       "",                      "Weather Reader",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "city",                    "City",                             "",       "",                      "Weather Reader",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "state",                   "State",                            "",       "",                      "Weather Reader",      "*",                        "",                      "" },
+	
+	{ SSC_OUTPUT,        SSC_NUMBER,      "start",                   "Start",                            "sec",    "",                      "Weather Reader",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "step",                    "Step",                             "sec",    "",                      "Weather Reader",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "nrecords",                "Number of records",                "",       "",                      "Weather Reader",      "*",                       "",                          "" },
+
 
 // timestamp data
 	{ SSC_OUTPUT,        SSC_ARRAY,       "year",                    "Year",                             "yr",     "",                      "Weather Reader",      "*",                       "",               "" },
@@ -64,6 +69,8 @@ public:
 		weather_reader reader;
 		reader.wf = wf_open( file, &hdr );
 
+		int records = hdr.nrecords;
+
 		if (!reader.wf) throw exec_error("wfreader", "failed to read local weather file: " + std::string(file));
 		
 		assign( "lat", var_data( (ssc_number_t)hdr.lat ) );
@@ -74,36 +81,39 @@ public:
 		assign( "city", var_data( std::string( hdr.city ) ) );
 		assign( "state", var_data( std::string( hdr.state ) ) );
 
-		ssc_number_t *p_year = allocate( "year", 8760 );
-		ssc_number_t *p_month = allocate( "month", 8760 );
-		ssc_number_t *p_day = allocate( "day", 8760 );
-		ssc_number_t *p_hour = allocate( "hour", 8760 );
-		ssc_number_t *p_minute = allocate( "minute", 8760 );
-		
-		ssc_number_t *p_global = allocate( "global", 8760 );
-		ssc_number_t *p_beam = allocate( "beam", 8760 );
-		ssc_number_t *p_diffuse = allocate( "diffuse", 8760 );
-		
-		ssc_number_t *p_wspd = allocate( "wspd", 8760 );
-		ssc_number_t *p_wdir = allocate( "wdir", 8760 );
-		ssc_number_t *p_tdry = allocate( "tdry", 8760 );
-		ssc_number_t *p_twet = allocate( "twet", 8760 );
-		ssc_number_t *p_rhum = allocate( "rhum", 8760 );
-		ssc_number_t *p_pres = allocate( "pres", 8760 );
-		ssc_number_t *p_snow = allocate( "snow", 8760 );
-		ssc_number_t *p_albedo = allocate( "albedo", 8760 );
+		assign( "start", var_data( (ssc_number_t)hdr.start ) );
+		assign( "step", var_data( (ssc_number_t)hdr.step ) );
+		assign( "nrecords", var_data( (ssc_number_t)hdr.nrecords ) );
 
-		for (int i=0;i<8760;i++)
+		ssc_number_t *p_year = allocate( "year", records );
+		ssc_number_t *p_month = allocate( "month", records );
+		ssc_number_t *p_day = allocate( "day", records );
+		ssc_number_t *p_hour = allocate( "hour", records );
+		ssc_number_t *p_minute = allocate( "minute", records );
+		
+		ssc_number_t *p_global = allocate( "global", records );
+		ssc_number_t *p_beam = allocate( "beam", records );
+		ssc_number_t *p_diffuse = allocate( "diffuse", records );
+		
+		ssc_number_t *p_wspd = allocate( "wspd", records );
+		ssc_number_t *p_wdir = allocate( "wdir", records );
+		ssc_number_t *p_tdry = allocate( "tdry", records );
+		ssc_number_t *p_twet = allocate( "twet", records );
+		ssc_number_t *p_rhum = allocate( "rhum", records );
+		ssc_number_t *p_pres = allocate( "pres", records );
+		ssc_number_t *p_snow = allocate( "snow", records );
+		ssc_number_t *p_albedo = allocate( "albedo", records );
+
+		for (int i=0;i<records;i++)
 		{
 			if (!wf_read_data( reader.wf, &dat ))
 				throw exec_error("wfreader", "could not read data line " + util::to_string(i+1) + " of 8760");
-
 
 			p_year[i] = (ssc_number_t)dat.year;
 			p_month[i] = (ssc_number_t)dat.month;
 			p_day[i] = (ssc_number_t)dat.day;
 			p_hour[i] = (ssc_number_t)dat.hour;
-			p_minute[i] = 30;
+			p_minute[i] = (ssc_number_t)dat.minute;
 
 			p_global[i] = (ssc_number_t)dat.gh;
 			p_beam[i] = (ssc_number_t)dat.dn;
@@ -116,11 +126,9 @@ public:
 			p_rhum[i] = (ssc_number_t)dat.rhum;
 			p_pres[i] = (ssc_number_t)dat.pres;
 			p_snow[i] = (ssc_number_t)dat.snow;
-			p_albedo[i] = (ssc_number_t)dat.albedo;
-			
+			p_albedo[i] = (ssc_number_t)dat.albedo;			
 		}
-
 	}
 };
 
-DEFINE_MODULE_ENTRY( wfreader, "Standard Weather File Format Reader (TMY2, TMY3, EPW)", 1 )
+DEFINE_MODULE_ENTRY( wfreader, "Standard Weather File Format Reader (TMY2, TMY3, EPW, SMW)", 1 )

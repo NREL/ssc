@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "lib_wfhrly.h"
+#include "lib_wfreader.h"
 #include "cmod_trnbase.h"
 
 

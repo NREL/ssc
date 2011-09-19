@@ -11,11 +11,15 @@
 #define CASENCMP(a,b,n) strncasecmp(a,b,n)
 #endif
 
-#include "lib_wfhrly.h"
+#include "lib_util.h"
+#include "lib_wfreader.h"
 
 struct __wf_object
 {
 	int wf_type;
+	int start_year; // for smw
+	double time; // in sec
+	double step; // in sec
 	FILE *fp;
 };
 typedef struct __wf_object wf_object;
@@ -112,6 +116,8 @@ static int cmp_ext(const char *file, const char *ext)
 		return WF_TMY3;
 	else if ( cmp_ext(file, "epw") )
 		return WF_EPW;
+	else if ( cmp_ext(file, "smw") )
+		return WF_SMW;
 	else
 		return -1;	
 }
@@ -146,6 +152,9 @@ static int cmp_ext(const char *file, const char *ext)
 	obj = (wf_object*) malloc(sizeof(wf_object));
 	obj->wf_type = hdr.type;
 	obj->fp = fp;
+	obj->start_year = -1;
+	obj->time = 1800;
+	obj->step = 3600;
 	
 	
 	/* read header information */
@@ -166,6 +175,9 @@ static int cmp_ext(const char *file, const char *ext)
 		hdr.lat = conv_deg_min_sec(dlat, mlat, 0, slat[0]);
 		hdr.lon = conv_deg_min_sec(dlon, mlon, 0, slon[0]);
 		hdr.elev = elv;
+		hdr.start = 1800;
+		hdr.step = 3600;
+		hdr.nrecords = 8760;
 	}
 	else if(hdr.type==WF_TMY3)
 	{
@@ -196,6 +208,11 @@ static int cmp_ext(const char *file, const char *ext)
 		p = gettoken(NULL, ",", &lasts);
 		hdr.elev = atof( p);
 		
+		
+		hdr.start = 1800;
+		hdr.step = 3600;
+		hdr.nrecords = 8760;
+
 		fgets(buf, 2047, fp); /* skip over labels line */
 	}
 	else if(hdr.type==WF_EPW)
@@ -247,6 +264,71 @@ static int cmp_ext(const char *file, const char *ext)
 		fgets(buf,2047,fp); /* COMMENTS 2 */
 		fgets(buf,2047,fp); /* DATA PERIODS */
 		
+		hdr.start = 1800;
+		hdr.step = 3600;
+		hdr.nrecords = 8760;
+		
+	}
+	else if (hdr.type == WF_SMW)
+	{
+		char *lasts, *p;
+		
+		fgets(buf, 2047, fp);
+		
+		lasts = NULL;
+		p = gettoken( buf, ",", &lasts );
+		strncpy(hdr.loc_id, p, WFHDR_MAXLEN-1); /* loc id */
+
+		p = gettoken( NULL, ",", &lasts );
+		strncpy(hdr.city, p, WFHDR_MAXLEN-1); /* city */
+		
+		p = gettoken( NULL, ",", &lasts );
+		strncpy(hdr.state, p, WFHDR_MAXLEN-1); /* state */
+
+		p = gettoken( NULL, ",", &lasts );
+		hdr.tz = atof(p); // timezone
+
+		p = gettoken( NULL, ",", &lasts );
+		hdr.lat = atof(p); // latitude
+
+		p = gettoken( NULL, ",", &lasts );
+		hdr.lon = atof(p); // longitude
+
+		p = gettoken( NULL, ",", &lasts );
+		hdr.elev = atof(p); // elevation
+
+		p = gettoken( NULL, ",", &lasts );
+		obj->step = atof(p);
+		hdr.step = obj->step; // timestep in secs
+
+		p = gettoken( NULL, ",", &lasts );
+		obj->start_year = atoi(p); // start year
+
+		p = gettoken( NULL, ",", &lasts );
+
+		double start_hour = 0;
+		double start_min = 30;
+		double start_sec = 0;
+
+		start_hour = atoi(p);
+
+		p = strchr(p, ':');
+		if (p && *p) p++;
+		if (p && *p) start_min = atoi(p);
+		
+		p = strchr(p, ':');
+		if (p && *p) p++;
+		if (p && *p) start_sec = atoi(p);
+		
+		obj->time = start_hour*3600 + start_min*60 + start_sec;
+		hdr.start = obj->time;
+
+		hdr.nrecords = 0;
+		while (fgets(buf, 2047, obj->fp ) != 0)
+			hdr.nrecords ++;
+
+		rewind( obj->fp );
+		fgets( buf, 2047, obj->fp );
 	}
 	else
 	{
@@ -263,7 +345,7 @@ static int cmp_ext(const char *file, const char *ext)
 
  int  wf_read_data( wf_obj_t wf, wf_data *dat)
 {
-	char buf[1023];
+	char buf[1025];
 	char *cols[128], *p;
 	wf_object *obj = WF_OBJECT(wf);
 	
@@ -315,6 +397,7 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->month = mn;
 		dat->day = dy;
 		dat->hour = hr-1;  // hour goes 0-23, not 1-24
+		dat->minute = 30;
 		dat->gh = (double)d1*1.0;
 		dat->dn=(double)d2;           /* Direct radiation */
 		dat->df=(double)d3;           /* Diffuse radiation */
@@ -351,6 +434,7 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->year = atoi( p );
 
 		dat->hour = atoi( cols[1] ) - 1;  // hour goes 0-23, not 1-24
+		dat->minute = 30;
 
 		dat->gh = (double)atof( cols[4] );
 		dat->dn = (double)atof( cols[7] );
@@ -381,6 +465,7 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->month = atoi(cols[1]);
 		dat->day = atoi(cols[2]);
 		dat->hour = atoi(cols[3])-1;  // hour goes 0-23, not 1-24;
+		dat->minute = 30;
 
 		dat->gh = (double)atof(cols[13]);
 		dat->dn = (double)atof(cols[14]);
@@ -397,6 +482,43 @@ static int cmp_ext(const char *file, const char *ext)
 		dat->snow = (double)atof( cols[30] ); // snowfall
 		dat->albedo = -999; /* no albedo in EPW file */
 
+		return pret==buf;
+	}
+	else if (obj->wf_type == WF_SMW)
+	{
+		char *pret = fgets(buf, 1024, obj->fp);
+		int ncols = locate(buf, cols, 128, ',');
+
+		if (ncols < 12)
+			return -7;
+		
+		double T = obj->time;
+		double Th = T/3600.0;
+		
+		dat->year = obj->start_year; // start year
+		dat->month = util::month_of( T/3600.0 ); // 1-12
+		dat->day = util::day_of_month( dat->month, T/3600.0 ); // 1-nday
+		dat->hour = ((int)(T/3600.0))%24;  // hour goes 0-23, not 1-24;
+		dat->minute = fmod(T/60.0, 60.0);      // minute goes 0-59
+					
+
+		obj->time += obj->step; // increment by step
+
+		dat->gh = (double)atof(cols[7]);
+		dat->dn = (double)atof(cols[8]);
+		dat->df = (double)atof(cols[9]);
+		
+		dat->wspd = (double)atof(cols[4]);
+		dat->wdir = (double)atof(cols[5]);
+		
+		dat->tdry = (double)atof(cols[0]);
+		dat->twet = (double)atof(cols[2]);
+		
+		dat->rhum = (double)atof( cols[3] );
+		dat->pres = (double)atof( cols[6] );
+		dat->snow = (double)atof( cols[11] );
+		dat->albedo = (double)atof( cols[10] );
+		
 		return pret==buf;
 	}
 	else

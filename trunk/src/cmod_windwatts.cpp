@@ -1,5 +1,5 @@
 #include "core.h"
-#include "lib_wfhrly.h"
+#include "lib_wfreader.h"
 #include "lib_windwatts.h"
 
 static var_info _cm_vtab_windwatts[] = {
