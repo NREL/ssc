@@ -3,7 +3,7 @@
 
 #include <math.h>
 #include <vector>
-#include "lib_wfhrly.h"
+#include "lib_wfreader.h"
 #include "lib_physics.h"
 #include "lib_powerblock.h"
 

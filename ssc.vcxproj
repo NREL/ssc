@@ -56,7 +56,7 @@
     <ClCompile Include="src\lib_sandia.cpp" />
     <ClCompile Include="src\lib_util.cpp" />
     <ClCompile Include="src\lib_vartab.cpp" />
-    <ClCompile Include="src\lib_wfhrly.cpp" />
+    <ClCompile Include="src\lib_wfreader.cpp" />
     <ClCompile Include="src\lib_windwatts.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sscapi.cpp" />
@@ -76,7 +76,7 @@
     <ClInclude Include="src\lib_sandia.h" />
     <ClInclude Include="src\lib_util.h" />
     <ClInclude Include="src\lib_vartab.h" />
-    <ClInclude Include="src\lib_wfhrly.h" />
+    <ClInclude Include="src\lib_wfreader.h" />
     <ClInclude Include="src\lib_windwatts.h" />
     <ClInclude Include="src\sscapi.h" />
   </ItemGroup>

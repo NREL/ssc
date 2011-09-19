@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "core.h"
-#include "lib_wfhrly.h"
+#include "lib_wfreader.h"
 #include "lib_util.h"
 
 #ifndef M_PI

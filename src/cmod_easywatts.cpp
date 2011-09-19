@@ -1,6 +1,6 @@
 #include "core.h"
 
-#include "lib_wfhrly.h"
+#include "lib_wfreader.h"
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
 

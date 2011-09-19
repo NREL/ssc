@@ -1,11 +1,12 @@
-#ifndef __lib_wfhrly_h
-#define __lib_wfhrly_h
+#ifndef __lib_wfreader_h
+#define __lib_wfreader_h
 
 #define WFHDR_MAXLEN 64
 
 #define WF_EPW  1
 #define WF_TMY2 2
 #define WF_TMY3 3
+#define WF_SMW 4
 
 struct __wf_header
 {
@@ -17,6 +18,9 @@ struct __wf_header
 	double lat;
 	double lon;
 	double elev;
+	double start; // start time in seconds, 0 = jan 1st midnight
+	double step; // step time in seconds
+	int nrecords; // number of data records in file
 };
 typedef struct __wf_header wf_header;
 
@@ -26,6 +30,7 @@ struct __wf_data
 	int month;
 	int day;
 	int hour;
+	double minute;
 	double gh;   /* global (Wh/m2) */
 	double dn;   /* direct (Wh/m2) */
 	double df;   /* diffuse (Wh/m2) */

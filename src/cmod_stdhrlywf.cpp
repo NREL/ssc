@@ -1,6 +1,6 @@
 #include "core.h"
 
-#include "lib_wfhrly.h"
+#include "lib_wfreader.h"
 
 static var_info _cm_vtab_stdhrlywf[] = {
 /*    VARTYPE     DATATYPE      NAME           LABEL                            UNITS    META                      GROUP         REQUIRED_IF                CONSTRAINTS       UI_HINTS*/

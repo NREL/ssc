@@ -20,7 +20,7 @@ static var_info _cm_vtab_irradproc[] = {
 	
 	{ SSC_INPUT,        SSC_ARRAY,       "year",                       "Year",                             "yr",     "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",               "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "month",                      "Month",                            "mn",     "1-12",                  "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "day",                        "Day",                              "dy",     "1-365",                 "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "day",                        "Day",                              "dy",     "1-days in month",                 "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "hour",                       "Hour",                             "hr",     "0-23",                  "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "minute",                     "Minute",                           "min",    "0-59",                  "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 
