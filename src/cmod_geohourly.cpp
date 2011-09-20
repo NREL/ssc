@@ -40,6 +40,8 @@ static var_info _cm_vtab_geohourly[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"casing_size",					"Production pump casing size",		"in",			"",					"GeoHourly",		"*",			"",						"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"inj_well_diam",				"Injection well diameter",			"in",			"",					"GeoHourly",		"*",			"",						"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"design_temp",					"Power block design temperature",	"C",			"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"specify_pump_work",			"Did user specify pump work?",		"0 or 1",		"",					"GeoHourly",		"*",			"INTEGER",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"specified_pump_work_amount",	"Pump work specified by user",		"MW",			"",					"GeoHourly",		"*",			"",						"" },
 
 	// detailed geothermal inputs
 	{ SSC_INPUT,		SSC_NUMBER,		"rock_thermal_conductivity",		"Rock thermal conductivity",	"J/m-day-C",	"",					"GeoHourly",		"*",			"",						"" },
@@ -214,9 +216,11 @@ public:
 		oGeo.SetProductionWellDiameter( as_double("well_diameter") );
 		oGeo.SetPumpCasingDiameter( as_double("casing_size") );
 		oGeo.SetInjectionWellDiameter( as_double("inj_well_diam") );
+		oGeo.SetCalculatePumpWork( 1 != as_integer("specify_pump_work") );
+		oGeo.SetUserSpecifiedPumpWorkMW( as_double("specified_pump_work_amount") );
 
 		//resource characterization
-		oGeo.SetPotentialResourceMW( as_double("resource_potential" ) );
+		oGeo.SetPotentialResourceMW( as_double("resource_potential") );
 		oGeo.SetResourceType( 1+as_integer("resource_type") );
 		oGeo.SetResourceDepthMeters( as_double("resource_depth") );
 		oGeo.SetResourceTemperatureCelcius( as_double("resource_temp") );

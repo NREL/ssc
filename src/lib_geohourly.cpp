@@ -393,6 +393,8 @@ CGeoHourlyBaseInputs::CGeoHourlyBaseInputs(void)
 	mdDiameterInjectionWellInches = 10;				// default = 10, [2B.Resource&Well Input].H142
 	mdPressureChangeAcrossSurfaceEquipmentPSI = 25; // default = 25 psi, [2B.Resource&Well Input].H146
 	mdPumpCostPerHP = 12000;						// default = $12,000 per HP, built into the equation in [7A.GF Pumps].G151
+	mbCalculatePumpWork = true;
+	mdUserSpecifiedPumpWorkKW = 0;
 
 	mdReservoirPermeability = 0.05;			// default = 0.05 darcy units, [2B.Resource&Well Input].D179
 	mdReservoirHeightM = 100;				// default = 100 meters, [2B.Resource&Well Input].F180
@@ -1299,9 +1301,9 @@ bool CGeoHourlyAnalysis::analyze(void)
 					if ( ReturnGETEMResults() )
 						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->plantNetPowerkW(); // = Gross power - pump work
 					else
-						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - GetPumpWorkKW();
+						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - (float)GetPumpWorkKW();
 
-					m_afTestValues[iElapsedTimeSteps] = year + 1 + ((month)/100.0); // puts number formatted "year.month" number into test value, but October ends up like 13.1 (in year 13)
+					m_afTestValues[iElapsedTimeSteps] = (year + 1)*1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
 					fMonthlyPowerTotal += m_afPowerByTimeStep[iElapsedTimeSteps];
 		
