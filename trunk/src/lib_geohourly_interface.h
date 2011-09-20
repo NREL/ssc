@@ -143,6 +143,11 @@ public:
 		double ShowPumpDepthFeet(void) { return oGeoOutputs.GetPumpDepthFt(); } // ft
 		double ShowPumpWorkMW(void) { return oGeoOutputs.GetPumpWorkKW()/1000; } // mega watts
 
+	void SetCalculatePumpWork(bool bCalcPumpWork){ oGeoOutputs.mbCalculatePumpWork = bCalcPumpWork; }									// true (default) = getem calculates pump work
+	bool GetCalculatePumpWork(void){ return oGeoOutputs.mbCalculatePumpWork; }
+
+	void SetUserSpecifiedPumpWorkMW(double dUserSpecifiedPumpWorkMW) { oGeoOutputs.mdUserSpecifiedPumpWorkKW = dUserSpecifiedPumpWorkMW*1000; }	// 
+	double GetUserSpecifiedPumpWorkMW(void) { return oGeoOutputs.mdUserSpecifiedPumpWorkKW/1000; }
 
 
 

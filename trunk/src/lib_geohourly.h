@@ -278,6 +278,9 @@ public:
 	// pumping parameters
 	double mdPressureChangeAcrossSurfaceEquipmentPSI; // 25 psi [2B.Resource&Well Input].D146
 	double mdPumpCostPerHP; // $12,000
+	bool mbCalculatePumpWork; // true
+	double mdUserSpecifiedPumpWorkKW; // zero
+
 
 	void SetResourceTemperatureC(double degreesCelcius) { dc = TEMPERATURE; setPositiveValue(mdTemperatureResourceC, degreesCelcius, "Resource Temperature", m_strErrMsg); }
 	double GetResourceTemperatureC(void);
@@ -316,7 +319,7 @@ public:
 	// FIX THE REDUNDANCIES IN THE ABOVE CRAP, FIX 'PLANTNETOUTPUT', SINCE IT'S GROSS OUTPUT
 
 
-	double GetPumpWorkKW(void) { return GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0; }							// shortcut to function in CPumpPowerCalculator
+	double GetPumpWorkKW(void) { return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; }	// shortcut to function in CPumpPowerCalculator
 	double grossCapacityPerWell(void) { return this->flowRatePerWell() * (GetPlantBrineEffectiveness()) / 1000.0; }		// before pumping losses
 	double netCapacityPerWell(void)	  { return this->flowRatePerWell() * netBrineEffectiveness() / 1000.0; }			// after pumping losses
 	double netBrineEffectiveness(void) { return GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb(); }
