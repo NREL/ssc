@@ -2,9 +2,9 @@ VPATH=../src
 
 CC = gcc
 CXX = g++
-CFLAGS = -D__UNIX__ -arch i386 -D__32BIT__ -fPIC -Wall -O3
+CFLAGS = -D__UNIX__ -D__32BIT__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++ -arch i386
+LDFLAGS = -lm -lstdc++
 
 OBJECTS = \
 	cmod_test_irr.o \
