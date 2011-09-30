@@ -506,7 +506,7 @@ protected:
 	double mdReservoirHeightM;				// default = 100 meters, [2B.Resource&Well Input].F180
 	double mdReservoirWidthM;				// default = 500 meters, [2B.Resource&Well Input].F181
 	double mdWaterLossPercent;
-	int miModelChoice;						// 0=GETEM, 1=Powerblock monthly, 2=Powerblock hourly
+	int miModelChoice;						// 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
 	double mdDiameterPumpCasingInches;		// 9.625
 	double mdDiameterProductionWellInches;	// 10;
 	double mdDiameterInjectionWellInches;	// 10;
@@ -931,7 +931,7 @@ protected:
 	weather_reader m_wfreader;
 	bool m_bWeatherFileOpen;
 	long m_lReadCount;  // resource file reads through the year
-	long m_lHourCount;	// hour of analysis (zero to yearsX8760); used to tell the powerblock how many seconds have passed.
+	long m_lHourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.
 
 private:
 	bool ReadNextLineInWeatherFile(void);

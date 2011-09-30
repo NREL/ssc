@@ -23,7 +23,7 @@ private:
 	std::string m_strErrMsg;
 
 public:
-	//========================== Model Choice (GETEM, PowerBlock, ??) =======================================
+	//========================== Model Choice (GETEM, Power Block, ??) =======================================
 	void SetModelChoice(int choice) { oGeoOutputs.SetModelChoice(choice); }
 	int GetModelChoice(void) { return oGeoOutputs.GetModelChoice(); }
 	unsigned int GetTimeStepsInAnalysis(void) { return oGeoOutputs.analysisTimeSteps(); }

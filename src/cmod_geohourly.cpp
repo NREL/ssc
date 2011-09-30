@@ -139,10 +139,10 @@ public:
 		// Set power block parameters (parameters don't change hourly)
 		SPowerBlockParameters pbp;
 		// power block parameters NOT on the SAM power block input page
-		pbp.tech_type = as_integer("tech_type");			// flag for which coef set to use (1=tower,2=trough,3=Sliding pressure power cycle formulation, 4=geothermal)
+		pbp.tech_type = as_integer("tech_type");			// flag for which coef set to use (1=tower,2=trough,3=Sliding pressure power cycle formulation, 4=geothermal) - set in interface, but no user input
 		pbp.T_htf_cold_ref = as_double("T_htf_cold_ref");	// design outlet fluid temp
 		pbp.T_htf_hot_ref = as_double("T_htf_hot_ref");		// design inlet fluid temp
-		pbp.HTF = as_integer("HTF");						// heat transfer fluid type
+		pbp.HTF = as_integer("HTF");						// heat transfer fluid type - set in interface, but no user input
 
 		// power block parameters on the SAM power block input page
 		pbp.P_ref = as_double("nameplate")/1000; // P_ref wants MW, 'nameplate' in kW
