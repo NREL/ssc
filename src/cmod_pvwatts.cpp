@@ -48,6 +48,11 @@ static var_info _cm_vtab_pvwatts[] = {
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_beam",                   "Incident beam irradiance (POA)", "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_diffuse",                "Incident diffuse irradiance (POA)", "W/m2","",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_ground",                 "Incident ground reflected irradiance (POA)", "W/m2","",             "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_diffuse_isotropic",          "Incident diffuse isotropic (POA)", "W/m2","",                       "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_diffuse_circumsolar",        "Incident diffuse circumsolar (POA)", "W/m2","",                     "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_diffuse_horizon",            "Incident diffuse horizon (POA)", "W/m2","",                         "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "t_cell",                     "Cell temperature",               "'C",     "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                         "DC array output",                "kWhdc",  "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                         "AC system output",               "kWhac",  "",                      "PVWatts",      "*",                       "LENGTH_EQUAL=dn",                          "" },
@@ -99,6 +104,10 @@ public:
 
 		ssc_number_t *p_poa_beam = allocate("poa_beam", num_steps);
 		ssc_number_t *p_poa_diffuse = allocate("poa_diffuse", num_steps);
+		ssc_number_t *p_poa_ground = allocate("poa_ground", num_steps);
+		ssc_number_t *p_poa_diffiso = allocate("poa_diffuse_isotropic", num_steps);
+		ssc_number_t *p_poa_diffcir = allocate("poa_diffuse_circumsolar", num_steps);
+		ssc_number_t *p_poa_diffhor = allocate("poa_diffuse_horizon", num_steps);
 		ssc_number_t *p_tcell = allocate("tcell", num_steps);
 		ssc_number_t *p_dc = allocate("dc", num_steps);
 		ssc_number_t *p_ac = allocate("ac", num_steps);
@@ -152,9 +161,10 @@ public:
 			if (idx % (num_steps/25)==0)
 				update( "calculating", 100*((float)idx+1)/((float)num_steps), (float)time );
 
-			double poa[3], pvt, dc, ac;
+			double poa[3], pvt, dc, ac, diff[3];
 			poa[0]=poa[1]=poa[2] = 0.0;
-
+			diff[0]=diff[1]=diff[2] = 0.0;
+			
 			if (sun[2] > 0.0087)
 			{
 				/* sun elevation > 0.5 degrees */
@@ -164,7 +174,7 @@ public:
 				double ambt = p_tdry[idx];
 
 				incidence( track_mode, tilt, azimuth, rot_limit, sun[1], sun[0], angle );
-				perez( sun[8], dn, df, albedo, angle[0], angle[1], sun[1], poa );
+				perez( sun[8], dn, df, albedo, angle[0], angle[1], sun[1], poa, diff );
 
 				double tpoa = 0;
 				if (dn > 0)	
@@ -196,7 +206,11 @@ public:
 			p_dec[idx] = (ssc_number_t) (sun[3] * 180/M_PI);
 
 			p_poa_beam[idx] = (ssc_number_t)poa[0];
-			p_poa_diffuse[idx] = (ssc_number_t)(poa[1]+poa[2]);
+			p_poa_diffuse[idx] = (ssc_number_t)poa[1];
+			p_poa_ground[idx] = (ssc_number_t)poa[2];
+			p_poa_diffiso[idx] = (ssc_number_t)diff[0];
+			p_poa_diffcir[idx] = (ssc_number_t)diff[0];
+			p_poa_diffhor[idx] = (ssc_number_t)diff[0];
 			p_tcell[idx] = (ssc_number_t)pvt;
 			p_dc[idx] = (ssc_number_t)dc;
 			p_ac[idx] = (ssc_number_t)ac;

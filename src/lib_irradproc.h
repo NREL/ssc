@@ -8,8 +8,8 @@
 
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9]);
 void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm,double angle[3]);
-void perez( double hextra, double dn,double df,double alb,double inc,double tilt,double zen, double poa[3] );
-void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3] );
-void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3] );
+void perez( double hextra, double dn,double df,double alb,double inc,double tilt,double zen, double poa[3], double diffc[3] /* can be NULL */ );
+void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
+void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
 #endif

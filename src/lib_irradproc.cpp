@@ -423,7 +423,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 
 #define SMALL 1e-6
 
-void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3] )
+void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be null */ )
 {
 /* added aug2011 by aron dobos. Defines Hay, Davies, Klutcher, Reindl model for diffuse irradiance on a tilted surface
 	
@@ -440,7 +440,12 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 	poa    = plane-of-array irradiances (W/m2)
 				poa[0]: incident beam
 				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse */
+				poa[2]: incident ground diffuse 
+								
+	diffc   = diffuse components, if an array is provided
+				diffc[0] = isotropic
+				diffc[1] = circumsolar
+				diffc[2] = horizon brightening*/
 
 	double hb = dn*cos(zen); /* beam irradiance on horizontal */
 	double ht = hb+df; /* total irradiance on horizontal */
@@ -452,13 +457,28 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 	double f = sqrt(hb/ht); /* modulating factor for horizontal brightening correction */
 	double s3 = pow( sin( tilt*0.5 ), 3 ); /* horizontal brightening correction */
 
+	/* see ESTIMATING DIFFUSE RADIATION ON HORIZONTAL SURFACES AND TOTAL RADIATION ON TILTED SURFACES
+		 Master's Thesis, Douglas T Reindl, 1988, U.Wisc-Madison, Solar Energy Laboratory, http://sel.me.wisc.edu/publications/theses/reindl88.zip */
+
+	double cir = df*Ai*Rb;
+	double iso = df*(1-Ai)*0.5*(1+cos(tilt));
+	double isohor = df*(1.0-Ai)*0.5*(1.0+cos(tilt))*(1.0+f*s3);
+
 	poa[0] = dn*cos(inc);
-	poa[1] = df*(0.5*(1.0-Ai)*(1.0+cos(tilt))*(1.0+f*s3) + Ai*Rb);
+	poa[1] = isohor+cir;
 	poa[2] = (hb+df)*alb*(1.0-cos(tilt))/2.0;
+
+	
+	if (diffc != 0)
+	{
+		diffc[0] = iso;
+		diffc[1] = cir;
+		diffc[2] = isohor-iso;
+	}
 }
 
 
-void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3] )
+void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* added aug2011 by aron dobos. Defines isotropic sky model for diffuse irradiance on a tilted surface
 	
@@ -475,14 +495,27 @@ void isotropic( double hextra, double dn, double df, double alb, double inc, dou
 	poa    = plane-of-array irradiances (W/m2)
 				poa[0]: incident beam
 				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse */
+				poa[2]: incident ground diffuse 
+				
+	diffc   = diffuse components, if an array is provided
+				diffc[0] = isotropic
+				diffc[1] = circumsolar
+				diffc[2] = horizon brightening
+				*/
 
 	poa[0] = dn*cos(inc);
 	poa[1] = df*(1.0+cos(tilt))/2.0;
 	poa[2] = (dn*cos(zen)+df)*alb*(1.0-cos(tilt))/2.0;
+
+	if (diffc != 0)
+	{
+		diffc[0] = poa[1];
+		diffc[1] = 0; // no circumsolar
+		diffc[2] = 0; // no horizon brightening
+	}
 }
 
-void perez( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3] )
+void perez( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
 	Total POA is poa[0]+poa[1]+poa[2]
@@ -511,7 +544,14 @@ void perez( double hextra, double dn, double df, double alb, double inc, double 
 	poa    = plane-of-array irradiances (W/m2)
 				poa[0]: incident beam
 				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse */
+				poa[2]: incident ground diffuse 
+				
+	diffc   = diffuse components, if an array is provided
+				diffc[0] = isotropic
+				diffc[1] = circumsolar
+				diffc[2] = horizon brightening
+
+				*/
 
 													/* Local variables */
 	double F11R[8] = { -0.0083117, 0.1299457, 0.3296958, 0.5682053,
@@ -533,6 +573,9 @@ void perez( double hextra, double dn, double df, double alb, double inc, double 
 
 	int i;
 
+	if ( diffc != 0 )
+		diffc[0] = diffc[1] = diffc[2] = 0.0;
+
 	if ( dn < 0.0 )           /* Negative values may be measured if cloudy */
 		dn = 0.0;
 
@@ -545,6 +588,8 @@ void perez( double hextra, double dn, double df, double alb, double inc, double 
 			poa[0] = dn * cos(inc);
 			poa[1] = df*( 1.0 + cos(tilt) )/2.0;
 			poa[2] = 0.0;
+
+			if (diffc != 0) diffc[0] = poa[1]; /* isotropic only */
 			return;
 			}
 		else
@@ -552,6 +597,8 @@ void perez( double hextra, double dn, double df, double alb, double inc, double 
 			poa[0] = 0;
 			poa[1] = df*( 1.0 + cos(tilt) )/2.0;   /* Isotropic diffuse only */
 			poa[2] = 0.0;
+			
+			if (diffc != 0) diffc[0] = poa[1]; /* isotropic only */
 			return;
 			}
 		}
@@ -596,13 +643,23 @@ void perez( double hextra, double dn, double df, double alb, double inc, double 
 				ZC = 0.0;
 			else
 				ZC = COSINC;
-			A = D*( 1.0 + cos(tilt) )/2.0; // isotropic diffuse
-			B = ZC/ZH*D - A; // circumsolar 
-			C = D*sin(tilt); // horizon brightness term
+
+			// apd 7oct2011: reorganized from original pvwatts code
+			// see duffie&beckman 2006, eqn 2.16.14
+			A = D*(1-F1)*( 1.0 + cos(tilt) )/2.0; // isotropic diffuse
+			B = D*F1*ZC/ZH; // circumsolar diffuse
+			C = D*F2*sin(tilt); // horizon brightness term
+						
+			if (diffc != 0)
+			{
+				diffc[0] = A;
+				diffc[1] = B;
+				diffc[2] = C;
+			}
 			
 			// original PVWatts: poa = A + F1*B + F2*C + alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0 + dn*ZC;
 			poa[0] = dn*ZC;
-			poa[1] = A + F1*B + F2*C;
+			poa[1] = A + B + C;
 			poa[2] = alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0;
 			return;
 			}

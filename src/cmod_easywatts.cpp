@@ -206,7 +206,7 @@ public:
 
 						double irr[3];
 						irr[0]=irr[1]=irr[2] = 0;
-						perez( sun[8], dn[i],df[i],alb,angle[0],angle[1],sun[1], irr ); /* Incident solar radiation */
+						perez( sun[8], dn[i],df[i],alb,angle[0],angle[1],sun[1], irr, 0 ); /* Incident solar radiation */
 						poa[i] = irr[0]+irr[1]+irr[2];
 						tpoa[i] = transpoa( poa[i],dn[i],angle[0]);  /* Radiation transmitted thru module cover */
 						
