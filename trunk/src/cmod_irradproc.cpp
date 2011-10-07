@@ -42,6 +42,11 @@ static var_info _cm_vtab_irradproc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff",                "Incident Sky Diffuse",           "W/m2",   "",                      "Irradiance Processor",      "*",                       "",                  "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_gnddiff",                "Incident Ground Reflected Diffuse", "W/m2", "",                     "Irradiance Processor",      "*",                       "",                  "" },
 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff_iso",            "Incident Diffuse Isotropic Component", "W/m2", "",                  "Irradiance Processor",      "*",                       "",                  "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff_cir",            "Incident Diffuse Circumsolar Component", "W/m2", "",                "Irradiance Processor",      "*",                       "",                  "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff_hor",            "Incident Diffuse Horizon Brightening Component", "W/m2", "",        "Irradiance Processor",      "*",                       "",                  "" },
+
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Solar azimuth",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Solar zenith",                   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_elv",                    "Sun elevation",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
@@ -96,17 +101,23 @@ public:
 		ssc_number_t *albvec = 0;
 		if (is_assigned("albedo")) albvec = as_array("albedo", &count);
 	
-		double sun[9],poa[3],angle[3];
+		double sun[9],poa[3],angle[3],diffc[3];
 		
 		// allocate outputs
 		ssc_number_t *p_azm = allocate("sun_azm", count);
 		ssc_number_t *p_zen = allocate("sun_zen", count);
 		ssc_number_t *p_elv = allocate("sun_elv", count);
 		ssc_number_t *p_dec = allocate("sun_dec", count);
+
 		ssc_number_t *p_poa_beam = allocate("poa_beam", count);
 		ssc_number_t *p_poa_skydiff = allocate("poa_skydiff", count);
 		ssc_number_t *p_poa_gnddiff = allocate("poa_gnddiff", count);
 		
+		ssc_number_t *p_poa_skydiff_iso = allocate("poa_skydiff_iso", count);
+		ssc_number_t *p_poa_skydiff_cir = allocate("poa_skydiff_cir", count);
+		ssc_number_t *p_poa_skydiff_hor = allocate("poa_skydiff_hor", count);
+
+
 		// "temporary" debugging output
 		ssc_number_t *p_sunup = allocate("sunup", count);
 		ssc_number_t *p_sunrise = allocate("sunrise", count);
@@ -191,6 +202,7 @@ public:
 
 			
 			poa[0]=poa[1]=poa[2] = 0;
+			diffc[0]=diffc[1]=diffc[2] = 0;
 
 			// do irradiance calculations if sun is up
 			if (p_sunup[i] > 0)
@@ -229,13 +241,13 @@ public:
 				switch( sky_model )
 				{
 				case 0:
-					isotropic( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa );
+					isotropic( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 					break;
 				case 1:
-					hdkr( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa );
+					hdkr( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 					break;
 				default:
-					perez( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa );
+					perez( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 					break;
 				}
 			}
@@ -248,6 +260,11 @@ public:
 			p_poa_beam[i] = (ssc_number_t) poa[0];
 			p_poa_skydiff[i] = (ssc_number_t) poa[1];
 			p_poa_gnddiff[i] = (ssc_number_t) poa[2];
+			
+			
+			p_poa_skydiff_iso[i] = (ssc_number_t) diffc[1];
+			p_poa_skydiff_cir[i] = (ssc_number_t) diffc[1];
+			p_poa_skydiff_hor[i] = (ssc_number_t) diffc[1];
 
 			p_sunrise[i] = sun[4];
 			p_sunset[i] = sun[5];
