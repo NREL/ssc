@@ -1,19 +1,34 @@
 #ifndef __lib_weatherfile_h
 #define __lib_weatherfile_h
 
-#define WFHDR_MAXLEN 64
+#include <string>
 
-#define WF_EPW  1
-#define WF_TMY2 2
-#define WF_TMY3 3
-#define WF_SMW 4
 
-struct wf_header_t
+class weatherfile
 {
-	int type;
-	char loc_id[WFHDR_MAXLEN];
-	char city[WFHDR_MAXLEN];
-	char state[WFHDR_MAXLEN];
+private:
+	FILE *m_fp;
+	int m_type;
+	std::string m_file;
+	int m_startYear;
+	double m_time;
+
+public:
+	weatherfile();
+	weatherfile( const std::string &file );
+	~weatherfile();
+	enum { INVALID, TMY2, TMY3, EPW, SMW };
+	bool ok();
+	int type();
+	std::string filename();
+	void close();
+	bool open( const std::string &file );
+	void rewind();
+
+	/******** header data *******/
+	std::string loc_id;
+	std::string city;
+	std::string state;
 	double tz;
 	double lat;
 	double lon;
@@ -21,10 +36,12 @@ struct wf_header_t
 	double start; // start time in seconds, 0 = jan 1st midnight
 	double step; // step time in seconds
 	int nrecords; // number of data records in file
-};
+	
 
-struct wf_record_t
-{
+	// reads one more record
+	bool read();
+
+	/******** record data ********/
 	int year;
 	int month;
 	int day;
@@ -42,16 +59,6 @@ struct wf_record_t
 	double snow; /* snow depth (cm) 0-150 */
 	double albedo; /* ground reflectance 0-1.  values outside this range mean it is not included */
 };
-
-typedef void* wf_obj_t;
-
-int  wf_get_type(const char *file);
-int  wf_read_header(const char *file, wf_header_t *p_hdr);
-wf_obj_t  wf_open(const char *file, wf_header_t *p_hdr);
-int  wf_read_data( wf_obj_t wf, wf_record_t *dat);
-void  wf_close(wf_obj_t wf);
-void  wf_rewind(wf_obj_t wf);
-
 
 #endif
 

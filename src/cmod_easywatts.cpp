@@ -30,15 +30,7 @@ var_info_invalid };
 class cm_easywatts : public compute_module
 {
 public:
-
-	class weather_reader
-	{
-	public:
-		weather_reader() : wf(0) {  }
-		~weather_reader() { if (wf) wf_close(wf); }
-		wf_obj_t wf;
-	};
-
+	
 	cm_easywatts()
 	{
 		add_var_info( _cm_vtab_easywatts );
@@ -48,18 +40,14 @@ public:
 	{
 		const char *file = as_string("file_name");
 
-		wf_header_t hdr;
-		wf_record_t dat;
-		weather_reader reader;
-		reader.wf = wf_open( file, &hdr );
-
-		if (!reader.wf) throw exec_error("easywatts", "failed to read local weather file: " + std::string(file));
+		weatherfile wf( file );
+		if (!wf.ok()) throw exec_error("easywatts", "failed to read local weather file: " + std::string(file));
 					
 		double watt_spec = 1000.0 * as_double("system_size");
 		double derate = as_double("derate");
 		int track_mode = as_integer("track_mode"); // 0, 1, 2
 		double azimuth = as_double("azimuth");
-		double tilt = hdr.lat;
+		double tilt = wf.lat;
 		if ( !lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat") )
 			tilt = as_double("tilt");
 
@@ -85,9 +73,9 @@ public:
 		int jday = 0;
 		int cur_hour = 0;
 
-		double lat = hdr.lat;
-		double lng = hdr.lon;
-		double tz = hdr.tz;
+		double lat = wf.lat;
+		double lng = wf.lon;
+		double tz = wf.tz;
 
 		int beghr, endhr;
 
@@ -102,24 +90,24 @@ public:
 				jday++;                 /* Increment julian day */
 				for(int i=0;i<24;i++)      /* Read a day of data and initialize */
 				{
-					if (!wf_read_data( reader.wf, &dat ))
+					if (!wf.read())
 						throw exec_error("easywatts", "could not read data line " + util::to_string(i+1) + " of 8760");
 					
-					dn[i] = dat.dn;
-					df[i] = dat.df;
-					wind[i] = dat.wspd;
-					ambt[i] = dat.tdry;
-					snow[i] = dat.snow;
-					albwf[i] = dat.albedo;
+					dn[i] = wf.dn;
+					df[i] = wf.df;
+					wind[i] = wf.wspd;
+					ambt[i] = wf.tdry;
+					snow[i] = wf.snow;
+					albwf[i] = wf.albedo;
 					poa[i]=0.0;             /* Plane-of-array radiation */
 					tpoa[i]=0.0;            /* Transmitted radiation */
 					dc[i]=0.0;              /* DC power */
 					ac[i]=0.0;              /* AC power */
 					sunup[i] = 0;
 
-					yr = dat.year;
-					mn = dat.month;
-					dy = dat.day;
+					yr = wf.year;
+					mn = wf.month;
+					dy = wf.day;
 				}
 			
 				solarpos(yr,mn,dy,12,0.0,lat,lng,tz,sun);/* Find sunrise and sunset */

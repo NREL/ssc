@@ -62,15 +62,7 @@ static var_info _cm_vtab_swhsolopt[] = {
 class cm_swhsolopt : public compute_module
 {
 public:
-
-	class weather_reader
-	{
-	public:
-		weather_reader() : wf(0) {  }
-		~weather_reader() { if (wf) wf_close(wf); }
-		wf_obj_t wf;
-	};
-
+	
 	cm_swhsolopt()
 	{
 		add_var_info( _cm_vtab_swhsolopt );
@@ -80,12 +72,8 @@ public:
 	{
 		const char *file = as_string("file_name");
 
-		wf_header_t hdr;
-		wf_record_t dat;
-		weather_reader reader;
-		reader.wf = wf_open( file, &hdr );
-
-		if (!reader.wf) throw exec_error("swhsolopt", "failed to read local weather file: " + std::string(file));
+		weatherfile wf(file);
+		if (!wf.ok()) throw exec_error("swhsolopt", "failed to read local weather file: " + std::string(file));
 				
 		/* **********************************************************************
 		   Read user specified system parameters from compute engine
@@ -104,8 +92,8 @@ public:
 		double tank_h2d_ratio = as_double("tank_h2d_ratio"); // ratio of tank height to diameter (dimensionless)
 
 		double U_tank = as_double("U_tank"); // W/m2.C storage tank heat loss coefficient (U-value)
-		double U_hx = as_double("U_hx"); // W/m2.C heat exchanger overall heat transfer coefficient
-		double hx_area_percent = as_double("hx_area_percent"); // percentage of tank area that comprises the heat exchanger
+//		double U_hx = as_double("U_hx"); // W/m2.C heat exchanger overall heat transfer coefficient
+//		double hx_area_percent = as_double("hx_area_percent"); // percentage of tank area that comprises the heat exchanger
 	
 		double albedo = as_double("albedo"); // ground reflectance fraction
 		double tilt = as_double("tilt"); // collector tilt in degrees (aka beta in D&B pp 13)
@@ -180,7 +168,7 @@ public:
 			if (i >= 24) Draw[i] = Draw[i-24];
 		}
 	
-		double latitude = hdr.lat; // degrees ('phi' in D&B pp 13)
+		double latitude = wf.lat; // degrees ('phi' in D&B pp 13)
 		double temp_sum = 0;
 		double monthly_avg_temp[12];
 		for (i=0;i<12;i++)
@@ -188,10 +176,11 @@ public:
 	
 		for ( i=0; i < 8760; i++ )
 		{
-			wf_read_data( reader.wf, &dat );		
-			Beam[i] = (ssc_number_t)dat.dn;
-			Diffuse[i] = (ssc_number_t)dat.df;
-			T_dry[i] = (ssc_number_t)dat.tdry;	
+			wf.read();
+			
+			Beam[i] = (ssc_number_t)wf.dn;
+			Diffuse[i] = (ssc_number_t)wf.df;
+			T_dry[i] = (ssc_number_t)wf.tdry;	
 		
 			temp_sum += T_dry[i];
 			monthly_avg_temp[ util::month_of(i) - 1 ] += T_dry[i];
@@ -318,7 +307,7 @@ public:
 		double tank_height = tank_radius * 2 * tank_h2d_ratio;
 		double tank_area =  2*M_PI*tank_radius*tank_radius + 2*M_PI*tank_radius*tank_height; // 2*pi*R^2 + 2*pi*r*h
 		double UA_tank = tank_area * U_tank;
-		double UA_hx = U_hx * hx_area_percent/100 * tank_area; // W/'C
+//		double UA_hx = U_hx * hx_area_percent/100 * tank_area; // W/'C
 		
 		// pipe sizing
 		// linearized from table in "Solar Hot Water Systems" by Tom Lane
@@ -402,8 +391,9 @@ public:
 				if ( i > 0 ) T_dry_prev = T_dry[i-1];
 
 				/* calculate critical radiation for operation */
-				G_Tcrit[i] = FRUL_corr*( T_tank - T_dry[i] ) / FRta_corr; // D&B eqn 6.8.2			
-				if ( Incident[i] > G_Tcrit[i] )
+				double Gcrit  = FRUL_corr*( T_tank - T_dry[i] ) / FRta_corr; // D&B eqn 6.8.2
+				G_Tcrit[i] = (ssc_number_t)Gcrit;
+				if ( Incident[i] > Gcrit )
 					Q_useful = area_coll*( FRta_corr*Incident[i] - FRUL_corr*(T_tank_prev - T_dry_prev) ); // D&B eqn 6.8.1 
 				else
 					Q_useful = 0.0; // absorbed radiation does not exceed thermal losses, etc => no operation
