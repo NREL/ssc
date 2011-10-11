@@ -1,5 +1,5 @@
 #include "core.h"
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 #include "lib_powerblock.h"
 #include "lib_physics.h"
 #include "lib_geohourly_interface.h"

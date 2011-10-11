@@ -1,6 +1,6 @@
 #include "core.h"
 
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 
 static var_info _cm_vtab_stdhrlywf[] = {
 /*    VARTYPE     DATATYPE      NAME           LABEL                            UNITS    META                      GROUP         REQUIRED_IF                CONSTRAINTS       UI_HINTS*/
@@ -45,8 +45,8 @@ public:
 
 		const char *file = as_string("file_name");
 
-		wf_header hdr;
-		wf_data dat;
+		wf_header_t hdr;
+		wf_record_t dat;
 		wf_obj_t wf = wf_open( file, &hdr );
 
 		if (!wf) throw exec_error("stdhrlywf", "failed to read local weather file: " + std::string(file));

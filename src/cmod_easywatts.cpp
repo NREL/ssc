@@ -1,6 +1,6 @@
 #include "core.h"
 
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
 
@@ -48,8 +48,8 @@ public:
 	{
 		const char *file = as_string("file_name");
 
-		wf_header hdr;
-		wf_data dat;
+		wf_header_t hdr;
+		wf_record_t dat;
 		weather_reader reader;
 		reader.wf = wf_open( file, &hdr );
 

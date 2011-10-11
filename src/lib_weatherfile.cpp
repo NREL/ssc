@@ -12,9 +12,9 @@
 #endif
 
 #include "lib_util.h"
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 
-struct __wf_object
+struct wf_object_t
 {
 	int wf_type;
 	int start_year; // for smw
@@ -22,8 +22,7 @@ struct __wf_object
 	double step; // in sec
 	FILE *fp;
 };
-typedef struct __wf_object wf_object;
-#define WF_OBJECT(x) ((wf_object*)x)
+#define WF_OBJECT(x) ((wf_object_t*)x)
 
 static double conv_deg_min_sec(double degrees, 
 								double minutes, 
@@ -122,7 +121,7 @@ static int cmp_ext(const char *file, const char *ext)
 		return -1;	
 }
 
- int  wf_read_header(const char *file, wf_header *p_hdr)
+ int  wf_read_header(const char *file, wf_header_t *p_hdr)
 {
 	wf_obj_t w = wf_open(file, p_hdr);
 	if (w)
@@ -134,11 +133,11 @@ static int cmp_ext(const char *file, const char *ext)
 		return 0;
 }
 
- wf_obj_t  wf_open(const char *file, wf_header *p_hdr)
+ wf_obj_t  wf_open(const char *file, wf_header_t *p_hdr)
 {
-	wf_header hdr;
+	wf_header_t hdr;
 	FILE *fp = NULL;
-	wf_object *obj = NULL;
+	wf_object_t *obj = NULL;
 	char buf[2048];
 	
 	if (!file) return NULL;
@@ -149,7 +148,7 @@ static int cmp_ext(const char *file, const char *ext)
 	fp = fopen(file, "r");
 	if (!fp) return NULL;
 	
-	obj = (wf_object*) malloc(sizeof(wf_object));
+	obj = new wf_object_t;
 	obj->wf_type = hdr.type;
 	obj->fp = fp;
 	obj->start_year = -1;
@@ -338,16 +337,16 @@ static int cmp_ext(const char *file, const char *ext)
 	}
 	
 	if (p_hdr)
-		memcpy(p_hdr, &hdr, sizeof(wf_header));
+		memcpy(p_hdr, &hdr, sizeof(wf_header_t));
 	
 	return (wf_obj_t*) obj;	
 }
 
- int  wf_read_data( wf_obj_t wf, wf_data *dat)
+ int  wf_read_data( wf_obj_t wf, wf_record_t *dat)
 {
 	char buf[1025];
 	char *cols[128], *p;
-	wf_object *obj = WF_OBJECT(wf);
+	wf_object_t *obj = WF_OBJECT(wf);
 	
 	if (!obj || !dat || obj->wf_type < 0 || obj->fp == NULL) return -1;
 	
@@ -493,7 +492,6 @@ static int cmp_ext(const char *file, const char *ext)
 			return -7;
 		
 		double T = obj->time;
-		double Th = T/3600.0;
 		
 		dat->year = obj->start_year; // start year
 		dat->month = util::month_of( T/3600.0 ); // 1-12
@@ -527,16 +525,16 @@ static int cmp_ext(const char *file, const char *ext)
 
  void  wf_close(wf_obj_t wf)
 {
-	wf_object *obj = WF_OBJECT(wf);
+	wf_object_t *obj = WF_OBJECT(wf);
 	if (obj && obj->fp)
 		fclose( obj->fp );
 	
-	if (obj) free( obj );
+	if (obj) delete obj;
 }
 
  void  wf_rewind(wf_obj_t wf)
 {
-	wf_object *obj = WF_OBJECT(wf);
+	wf_object_t *obj = WF_OBJECT(wf);
 	if (obj && obj->fp)
 	{
 		rewind( obj->fp );
@@ -549,5 +547,7 @@ static int cmp_ext(const char *file, const char *ext)
 			for(int i=0;i<2;i++) fgets(buf,2047,obj->fp);
 		else if(obj->wf_type==WF_EPW)
 			for(int i=0;i<8;i++) fgets(buf,2047,obj->fp);
+		else if (obj->wf_type==WF_SMW)
+			fgets(buf,2047,obj->fp);
 	}
 }

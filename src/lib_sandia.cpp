@@ -224,98 +224,166 @@ C b   = empirical constant
 	return E * exp(a + b * Ws) + Ta;
 }
 
-
-
-void sandia_module(
-	/* parameters */
-	sandia_module_t *pModule,
-
-	/* inputs */
-	double PoaBeam,
-	double PoaDiffuse,
-	double ZenithAngle,
-	double IncidenceAngle,
-	double Tamb,
-	double WindSpeed,
-	double Altitude,
-	
-	/* outputs */
-	double *Pmp, double *Vmp, double *Imp,
-	double *Eff,
-	double *Tcell, double *Tback,
-	double *Vx, double *Ix,
-	double *Vxx, double *Ixx,
-	double *Voc, double *Isc,
-	double *AMa, double *F1, double *F2
-	)
+static double sandia_current_at_voltage(double V, double VmaxPow, double ImaxPow, double Voc, double Isc)
 {
-	sandia_module_t &m = *pModule;
+/* from sam_sandia_pv_type701.for
 
-	*Pmp = 0.0;
-	*Vmp = 0.0;
-	*Imp = 0.0;
-	*Eff = 0.0;
-	*Vx = 0.0;
-	*Ix = 0.0;
-	*Vxx = 0.0;
-	*Ixx = 0.0;
-	*Voc = 0.0;
-	*Isc = 0.0;
-	*AMa = 0.0;
-	*F1 = 0.0;
-	*F2 = 0.0;
+	DOUBLE PRECISION TRW_Current
+	DOUBLE PRECISION V,VmaxPow,ImaxPow,Voc,Isc
+	DOUBLE PRECISION C_1,C_2,Itrw
+
+        IF ((Isc.GT.0.).AND.(Voc.GT.0.)) THEN
+	    IF(ImaxPow.LT.Isc) THEN
+            C_2 = (VmaxPow / Voc - 1.0)/ Log(1.0 - ImaxPow / Isc)
+	    ELSE
+	      C_2 = 0.0
+	    ENDIF
+          IF (C_2.GT.0.) THEN
+            C_1 = (1.0 - ImaxPow / Isc) * Exp(-VmaxPow / C_2 / Voc)
+
+            Itrw = Isc*(1.0 - C_1 * (Exp(V / C_2 / Voc) - 1.0))
+          ELSE
+            Itrw = 0.0
+          ENDIF
+        ELSE
+          Itrw = 0.0
+        ENDIF
+
+	  IF(Itrw.LT.0.0) THEN
+	    Itrw=0.0
+	  ENDIF
+
+	  TRW_Current=Itrw
+ */
+	double Itrw=0,C_1=0,C_2=0;
+	if ((Isc > 0) && (Voc > 0)) {
+	    if(ImaxPow < Isc) C_2 = (VmaxPow / Voc - 1.0)/ log(1.0 - ImaxPow / Isc);
+
+        if (C_2 > 0) {
+            C_1 = (1.0 - ImaxPow / Isc) * exp(-VmaxPow / C_2 / Voc);
+            Itrw = Isc*(1.0 - C_1 * (exp(V / C_2 / Voc) - 1.0));
+		} else {
+            Itrw = 0.0;
+		}
+	}
+	if(Itrw < 0) Itrw=0;
+	return Itrw;
+}
+
+int sandia_cell_temp_function (
+	// INPUTS
+	void *module_spec, // pointer to sandia_module_t
+	pv_input_t *input,
 	
-	//C Calculate back-of-module temperature:
-	*Tback = sandia_module_temperature(PoaBeam,PoaDiffuse,WindSpeed,Tamb,m.fd,m.a,m.b);
+	module_power_function f_modpwr,
+	void *module_spec_modpwr,
+	
+	// OUTPUTS
+	double *celltemp )
+{
+	sandia_module_t *modspec = (sandia_module_t*)module_spec;
+	
+	double Tback = sandia_module_temperature(
+		input->ibeam,
+		input->idiff+input->ignd,
+		input->wspd,
+		input->tamb,
+		modspec->fd,
+		modspec->a,
+		modspec->b);
 
 	//C Calculate cell temperature:
-	*Tcell = sandia_tcell_from_tmodule(*Tback,PoaBeam,PoaDiffuse,m.fd,m.DT0);
+	*celltemp = sandia_tcell_from_tmodule(
+		Tback,
+		input->ibeam,
+		input->idiff+input->ignd,
+		modspec->fd,
+		modspec->DT0);
 
-	if ( PoaBeam+PoaDiffuse > 0.0 )
+	return 0;
+}
+
+ int sandia_module_power_function (
+	// INPUTS
+	void *module_spec, // pointer to sandia_module_t
+	int mode, 
+	double opvoltage, 
+	double celltemp,	
+	pv_input_t *input,
+	
+	// OUTPUTS
+	double *power, double *voltage, double *current, 
+	double *eff, double *voc, double *isc )
+{
+	sandia_module_t *modspec = (sandia_module_t*)module_spec;
+	
+	*power = *voltage = *current = *eff = *voc = *isc = 0.0;
+	
+	double Gtotal = input->ibeam + input->idiff + input->ignd;
+	if ( Gtotal > 0.0 )
 	{
-		//C Calculate Air Mass
-		*AMa = sandia_absolute_air_mass(ZenithAngle, Altitude);
+			//C Calculate Air Mass
+		double AMa = sandia_absolute_air_mass(input->zenith, input->elev);
 
 		//C Calculate F1 function:
-		*F1 = sandia_f1(*AMa,m.A0,m.A1,m.A2,m.A3,m.A4);
+		double F1 = sandia_f1(AMa,modspec->A0,modspec->A1,modspec->A2,modspec->A3,modspec->A4);
 
 		//C Calculate F2 function:
-		*F2 = sandia_f2(IncidenceAngle,m.B0,m.B1,m.B2,m.B3,m.B4,m.B5);
+		double F2 = sandia_f2(input->incang,modspec->B0,modspec->B1,modspec->B2,modspec->B3,modspec->B4,modspec->B5);
 
 		//C Calculate short-circuit current:
-		*Isc = sandia_isc(*Tcell,m.Isc0,PoaBeam,PoaDiffuse,*F1,*F2,m.fd,m.aIsc);
+		double Isc = sandia_isc(celltemp,modspec->Isc0,input->ibeam, input->idiff+input->ignd,F1,F2,modspec->fd,modspec->aIsc);
 
 		//C Calculate effective irradiance:
-		double Ee = sandia_effective_irradiance(*Tcell,*Isc,m.Isc0,m.aIsc);
+		double Ee = sandia_effective_irradiance(celltemp,Isc,modspec->Isc0,modspec->aIsc);
 
 		//C Calculate Imp:
-		*Imp = sandia_imp(*Tcell,Ee,m.Imp0,m.aImp,m.C0,m.C1);
+		double Imp = sandia_imp(celltemp,Ee,modspec->Imp0,modspec->aImp,modspec->C0,modspec->C1);
 
 		//C Calculate Voc:
-		*Voc = sandia_voc(*Tcell,Ee,m.Voc0,m.NcellSer,m.DiodeFactor,m.BVoc0,m.mBVoc);
+		double Voc = sandia_voc(celltemp,Ee,modspec->Voc0,modspec->NcellSer,modspec->DiodeFactor,modspec->BVoc0,modspec->mBVoc);
 
 		//C Calculate Vmp:
-		*Vmp = sandia_vmp(*Tcell,Ee,m.Vmp0,m.NcellSer,m.DiodeFactor,m.BVmp0,m.mBVmp,m.C2,m.C3);
+		double Vmp = sandia_vmp(celltemp,Ee,modspec->Vmp0,modspec->NcellSer,modspec->DiodeFactor,modspec->BVmp0,modspec->mBVmp,modspec->C2,modspec->C3);
 
-		//C Calculate Ix:
-		*Ix = sandia_ix(*Tcell,Ee,m.Ix0,m.aIsc,m.aImp,m.C4,m.C5);
+		double V, I;
+		if ( mode == MAXPOWERPOINT )
+		{
+			V = Vmp;
+			I = Imp;
+		}
+		else
+		{		
+			//C Calculate Ix:
+			double Ix = sandia_ix(celltemp,Ee,modspec->Ix0,modspec->aIsc,modspec->aImp,modspec->C4,modspec->C5);
 
-		//C Calculate Vx:
-		*Vx = *Voc/2.0;
+			//C Calculate Vx:
+			double Vx = Voc/2.0;
 
-		//C Calculate Ixx:
-		*Ixx = sandia_ixx(*Tcell,Ee,m.Ixx0,m.aImp,m.C6,m.C7);
+			//C Calculate Ixx:
+			double Ixx = sandia_ixx(celltemp,Ee,modspec->Ixx0,modspec->aImp,modspec->C6,modspec->C7);
 
-		//C Calculate Vxx:
-		*Vxx = 0.5*(*Voc + *Vmp);
-
-		//C Calculate Pmp, single module:
-		*Pmp = *Imp * *Vmp;
-
-		//C Calculate max efficiency:
-		*Eff = *Pmp/((PoaBeam+PoaDiffuse)*m.Area);
+			//C Calculate Vxx:
+			double Vxx = 0.5*(Voc + Vmp);
+			
+			// calculate current at operating voltage
+			V = opvoltage;
+			
+			// is this correct? (taken from SAM uicallback) (i.e. does not Ix, Ixx, etc)
+			I = sandia_current_at_voltage( opvoltage, Vmp, Imp, Voc, Isc );
+		}
+	
+		*power = V*I;
+		*voltage = V;
+		*current = I;
+		*eff = I*V/(Gtotal*modspec->Area);
+		*voc = Voc;
+		*isc = Isc;
 	}
+	
+	return 0;
 }
+
 
 void sandia_inverter(	
 	/* parameters */
@@ -332,24 +400,24 @@ void sandia_inverter(
 	double *Eff	    /* Conversion efficiency (0..1) */
 	)
 {
-	sandia_inverter_t &i = *pInverter;
+	sandia_inverter_t *pi = pInverter;
 
-	double A = i.Pdco * ( 1.0 + i.C1*( Vdc - i.Vdco ));
-	double B = i.Pso * ( 1.0 + i.C2*( Vdc - i.Vdco ));
-	double C = i.C0 * ( 1.0 + i.C3*( Vdc - i.Vdco ));
+	double A = pi->Pdco * ( 1.0 + pi->C1*( Vdc - pi->Vdco ));
+	double B = pi->Pso * ( 1.0 + pi->C2*( Vdc - pi->Vdco ));
+	double C = pi->C0 * ( 1.0 + pi->C3*( Vdc - pi->Vdco ));
 
-	*Pac = ((i.Paco / (A-B)) - C*(A-B))*(Pdc-B) + i.C0*(Pdc-B)*(Pdc-B);
+	*Pac = ((pi->Paco / (A-B)) - C*(A-B))*(Pdc-B) + pi->C0*(Pdc-B)*(Pdc-B);
 	*Ppar = 0.0;
 
-	if (Pdc <= i.Pso)
+	if (Pdc <= pi->Pso)
 	{
-		*Pac = -i.Pntare;
-		*Ppar = i.Pntare;
+		*Pac = -pi->Pntare;
+		*Ppar = pi->Pntare;
 	}
 
-	if ( *Pac > i.Paco ) *Pac = i.Paco;
+	if ( *Pac > pi->Paco ) *Pac = pi->Paco;
 
-	*Plr = Pdc / i.Pdco;
+	*Plr = Pdc / pi->Pdco;
 	*Eff = *Pac / Pdc;
 	if ( *Eff < 0.0 ) *Eff = 0.0;
 }

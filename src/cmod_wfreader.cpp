@@ -1,6 +1,6 @@
 #include "core.h"
 #include "lib_util.h"
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 
 static var_info _cm_vtab_wfreader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -64,8 +64,8 @@ public:
 	{	
 		const char *file = as_string("file_name");
 
-		wf_header hdr;
-		wf_data dat;
+		wf_header_t hdr;
+		wf_record_t dat;
 		weather_reader reader;
 		reader.wf = wf_open( file, &hdr );
 
