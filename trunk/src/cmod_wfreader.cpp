@@ -47,14 +47,6 @@ class cm_wfreader : public compute_module
 {
 public:
 
-	class weather_reader
-	{
-	public:
-		weather_reader() : wf(0) {  }
-		~weather_reader() { if (wf) wf_close(wf); }
-		wf_obj_t wf;
-	};
-
 	cm_wfreader()
 	{
 		add_var_info( _cm_vtab_wfreader );
@@ -64,26 +56,22 @@ public:
 	{	
 		const char *file = as_string("file_name");
 
-		wf_header_t hdr;
-		wf_record_t dat;
-		weather_reader reader;
-		reader.wf = wf_open( file, &hdr );
+		weatherfile wf( file );
+		if (!wf.ok()) throw exec_error("wfreader", "failed to read local weather file: " + std::string(file));
 
-		int records = hdr.nrecords;
-
-		if (!reader.wf) throw exec_error("wfreader", "failed to read local weather file: " + std::string(file));
+		int records = wf.nrecords;
 		
-		assign( "lat", var_data( (ssc_number_t)hdr.lat ) );
-		assign( "lon", var_data( (ssc_number_t)hdr.lon ) );
-		assign( "tz", var_data( (ssc_number_t)hdr.tz ) );
-		assign( "elev", var_data( (ssc_number_t)hdr.elev ) );
-		assign( "location", var_data( std::string( hdr.loc_id ) ) );
-		assign( "city", var_data( std::string( hdr.city ) ) );
-		assign( "state", var_data( std::string( hdr.state ) ) );
+		assign( "lat", var_data( (ssc_number_t)wf.lat ) );
+		assign( "lon", var_data( (ssc_number_t)wf.lon ) );
+		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
+		assign( "elev", var_data( (ssc_number_t)wf.elev ) );
+		assign( "location", var_data( std::string( wf.loc_id ) ) );
+		assign( "city", var_data( std::string( wf.city ) ) );
+		assign( "state", var_data( std::string( wf.state ) ) );
 
-		assign( "start", var_data( (ssc_number_t)hdr.start ) );
-		assign( "step", var_data( (ssc_number_t)hdr.step ) );
-		assign( "nrecords", var_data( (ssc_number_t)hdr.nrecords ) );
+		assign( "start", var_data( (ssc_number_t)wf.start ) );
+		assign( "step", var_data( (ssc_number_t)wf.step ) );
+		assign( "nrecords", var_data( (ssc_number_t)wf.nrecords ) );
 
 		ssc_number_t *p_year = allocate( "year", records );
 		ssc_number_t *p_month = allocate( "month", records );
@@ -106,27 +94,27 @@ public:
 
 		for (int i=0;i<records;i++)
 		{
-			if (!wf_read_data( reader.wf, &dat ))
+			if (!wf.read())
 				throw exec_error("wfreader", "could not read data line " + util::to_string(i+1) + " of 8760");
 
-			p_year[i] = (ssc_number_t)dat.year;
-			p_month[i] = (ssc_number_t)dat.month;
-			p_day[i] = (ssc_number_t)dat.day;
-			p_hour[i] = (ssc_number_t)dat.hour;
-			p_minute[i] = (ssc_number_t)dat.minute;
+			p_year[i] = (ssc_number_t)wf.year;
+			p_month[i] = (ssc_number_t)wf.month;
+			p_day[i] = (ssc_number_t)wf.day;
+			p_hour[i] = (ssc_number_t)wf.hour;
+			p_minute[i] = (ssc_number_t)wf.minute;
 
-			p_global[i] = (ssc_number_t)dat.gh;
-			p_beam[i] = (ssc_number_t)dat.dn;
-			p_diffuse[i] = (ssc_number_t)dat.df;
+			p_global[i] = (ssc_number_t)wf.gh;
+			p_beam[i] = (ssc_number_t)wf.dn;
+			p_diffuse[i] = (ssc_number_t)wf.df;
 
-			p_wspd[i] = (ssc_number_t)dat.wspd;
-			p_wdir[i] = (ssc_number_t)dat.wdir;
-			p_tdry[i] = (ssc_number_t)dat.tdry;
-			p_twet[i] = (ssc_number_t)dat.twet;
-			p_rhum[i] = (ssc_number_t)dat.rhum;
-			p_pres[i] = (ssc_number_t)dat.pres;
-			p_snow[i] = (ssc_number_t)dat.snow;
-			p_albedo[i] = (ssc_number_t)dat.albedo;			
+			p_wspd[i] = (ssc_number_t)wf.wspd;
+			p_wdir[i] = (ssc_number_t)wf.wdir;
+			p_tdry[i] = (ssc_number_t)wf.tdry;
+			p_twet[i] = (ssc_number_t)wf.twet;
+			p_rhum[i] = (ssc_number_t)wf.rhum;
+			p_pres[i] = (ssc_number_t)wf.pres;
+			p_snow[i] = (ssc_number_t)wf.snow;
+			p_albedo[i] = (ssc_number_t)wf.albedo;			
 		}
 	}
 };

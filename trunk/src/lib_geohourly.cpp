@@ -1017,8 +1017,7 @@ bool CMakeupAlgorithm::OpenWeatherFile(const char * fn)
 {
 	m_bWeatherFileOpen = false;
 	m_lReadCount = 0;
-	m_wfreader.wf= wf_open( fn, &m_hdr );
-	if (!m_wfreader.wf)
+	if (!m_wf.open(fn))
 		m_strMAError = "Could not open the weather file: " + std::string(fn);
 	else
 		m_bWeatherFileOpen = true;
@@ -1045,15 +1044,15 @@ bool CMakeupAlgorithm::ReadWeatherForTimeStep(bool bHourly, unsigned int timeSte
 	for (int i = 0; i<hours; i++)
 	{
 		ReadNextLineInWeatherFile();
-		pressure += m_dat.pres;
-		wetbulb += m_dat.twet;
-		drybulb += m_dat.tdry;
-		rel_humidity += m_dat.rhum;
+		pressure += m_wf.pres;
+		wetbulb += m_wf.twet;
+		drybulb += m_wf.tdry;
+		rel_humidity += m_wf.rhum;
 	}
-	m_dat.pres = pressure / hours;
-	m_dat.twet = wetbulb / hours;
-	m_dat.tdry = drybulb / hours;
-	m_dat.rhum = rel_humidity / hours;
+	m_wf.pres = pressure / hours;
+	m_wf.twet = wetbulb / hours;
+	m_wf.tdry = drybulb / hours;
+	m_wf.rhum = rel_humidity / hours;
 	return true;
 }
 
@@ -1061,9 +1060,9 @@ void CMakeupAlgorithm::SetType224Inputs(void)
 {
 	// set inputs that change for each timestep
 	m_pbInputs.T_htf_hot = mdWorkingTemperatureC;
-	m_pbInputs.T_wb = m_dat.twet;
-	m_pbInputs.T_db = m_dat.tdry;
-	m_pbInputs.P_amb = physics::mBarToAtm(m_dat.pres);
+	m_pbInputs.T_wb = m_wf.twet;
+	m_pbInputs.T_db = m_wf.tdry;
+	m_pbInputs.P_amb = physics::mBarToAtm(m_wf.pres);
 }
 
 
@@ -1084,11 +1083,11 @@ bool CMakeupAlgorithm::ReadNextLineInWeatherFile(void)
 	
 	if (m_lReadCount >= 8760)
 	{
-		wf_rewind(m_wfreader.wf);
+		m_wf.rewind();
 		m_lReadCount = 0;
 	}
 
-	if (!wf_read_data( m_wfreader.wf, &m_dat ))
+	if (!m_wf.read())
 	{
 		m_strMAError = "Could not read  line " + util::to_string((int)m_lReadCount+1) + " in the weather file.";
 		return false;

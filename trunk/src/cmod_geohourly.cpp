@@ -121,14 +121,6 @@ class cm_geothermalhourly : public compute_module
 private:
 public:
 	
-	class weather_reader
-	{
-	public:
-		weather_reader() : wf(0) {  }
-		~weather_reader() { if (wf) wf_close(wf); }
-		wf_obj_t wf;
-	};
-
 	cm_geothermalhourly()
 	{
 		add_var_info( _cm_vtab_geohourly );

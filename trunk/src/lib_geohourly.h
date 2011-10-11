@@ -862,17 +862,7 @@ private:
 class CMakeupAlgorithm
 {
 public:
-
-	class weather_reader
-	{
-	public:
-		weather_reader() : wf(0) {  }
-		~weather_reader() { if (wf) wf_close(wf); }
-		wf_obj_t wf;
-	};
-
-
-
+	
 	CMakeupAlgorithm(void); // { miReservoirReplacements = 0; mdWorkingTemperatureC=0; moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0); } // by default, load Binary(EGS) secondLawConstants - let flash over write them
 	virtual ~CMakeupAlgorithm(void){}
 	virtual makeupAlgorithmType GetType(void)=0;	// this is an abstract class, it should never be created, only derived objects
@@ -926,9 +916,7 @@ protected:
 	// Added June 2011 for geothermal hourly model
 	SPowerBlockInputs m_pbInputs;
 	CPowerBlock_Type224 m_pb;
-	wf_header_t m_hdr;
-	wf_record_t m_dat;
-	weather_reader m_wfreader;
+	weatherfile m_wf;
 	bool m_bWeatherFileOpen;
 	long m_lReadCount;  // resource file reads through the year
 	long m_lHourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.

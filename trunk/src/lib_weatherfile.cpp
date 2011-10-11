@@ -14,16 +14,6 @@
 #include "lib_util.h"
 #include "lib_weatherfile.h"
 
-struct wf_object_t
-{
-	int wf_type;
-	int start_year; // for smw
-	double time; // in sec
-	double step; // in sec
-	FILE *fp;
-};
-#define WF_OBJECT(x) ((wf_object_t*)x)
-
 static double conv_deg_min_sec(double degrees, 
 								double minutes, 
 								double seconds, 
@@ -105,132 +95,149 @@ static int cmp_ext(const char *file, const char *ext)
 	return CASENCMP(extp, ext, len_ext)==0 ? 1 : 0;
 }
 
- int  wf_get_type(const char *file)
+
+
+weatherfile::weatherfile()
 {
-	if (!file) return -1;
+	m_fp = 0;
+	close();
+}
+
+weatherfile::weatherfile( const std::string &file )
+{
+	m_fp = 0;
+	close();
+	open( file );
+}
+
+weatherfile::~weatherfile()
+{
+	if (m_fp != 0) fclose( m_fp );
+}
+
+bool weatherfile::ok()
+{
+	return m_fp != 0 && m_type != INVALID;
+}
+
+int weatherfile::type()
+{
+	return m_type;
+}
+
+std::string weatherfile::filename()
+{
+	return m_file;
+}
+
+bool weatherfile::open( const std::string &file )
+{
+	close();
+	if (file.empty()) return false;
 	
-	if (cmp_ext(file,"tm2") || cmp_ext(file, "tmy2"))
-		return WF_TMY2;
-	else if ( cmp_ext(file, "tm3") || cmp_ext(file, "tmy3") || cmp_ext(file, "csv") )
-		return WF_TMY3;
-	else if ( cmp_ext(file, "epw") )
-		return WF_EPW;
-	else if ( cmp_ext(file, "smw") )
-		return WF_SMW;
+	if (cmp_ext(file.c_str(),"tm2") || cmp_ext(file.c_str(), "tmy2"))
+		m_type = TMY2;
+	else if ( cmp_ext(file.c_str(), "tm3") || cmp_ext(file.c_str(), "tmy3") || cmp_ext(file.c_str(), "csv") )
+		m_type = TMY3;
+	else if ( cmp_ext(file.c_str(), "epw") )
+		m_type = EPW;
+	else if ( cmp_ext(file.c_str(), "smw") )
+		m_type = SMW;
 	else
-		return -1;	
-}
-
- int  wf_read_header(const char *file, wf_header_t *p_hdr)
-{
-	wf_obj_t w = wf_open(file, p_hdr);
-	if (w)
-	{
-		wf_close(w);
-		return 1;
-	}
-	else
-		return 0;
-}
-
- wf_obj_t  wf_open(const char *file, wf_header_t *p_hdr)
-{
-	wf_header_t hdr;
-	FILE *fp = NULL;
-	wf_object_t *obj = NULL;
+		return false;
+	
 	char buf[2048];
 	
-	if (!file) return NULL;
 	
-	hdr.type = wf_get_type( file );
-	if (hdr.type < 0) return NULL;
+	m_fp = fopen(file.c_str(), "r");
+	if (!m_fp)
+	{
+		m_type = INVALID;
+		return false;
+	}
 	
-	fp = fopen(file, "r");
-	if (!fp) return NULL;
-	
-	obj = new wf_object_t;
-	obj->wf_type = hdr.type;
-	obj->fp = fp;
-	obj->start_year = -1;
-	obj->time = 1800;
-	obj->step = 3600;
-	
+	m_startYear = 1900;
+	m_time = 1800;	
 	
 	/* read header information */
-	if (hdr.type==WF_TMY2)
+	if ( m_type==TMY2 )
 	{
 	/*  93037 COLORADO_SPRINGS       CO  -7 N 38 49 W 104 43  1881 */
 		char slat[10], slon[10];
-		int dlat, mlat, dlon, mlon, elv;
+		char pl[256], pc[256], ps[256];
+		int dlat, mlat, dlon, mlon, ielv;
 		
-		fgets(buf, 2047, fp);
+		fgets(buf, 2047, m_fp);
 		sscanf(buf, "%s %s %s %lg %s %d %d %s %d %d %d",
-				hdr.loc_id, hdr.city, hdr.state,
-				&hdr.tz,
+				pl, pc, ps,
+				&tz,
 				slat,&dlat,&mlat,
 				slon,&dlon,&mlon,
-				&elv);
+				&ielv);
 		
-		hdr.lat = conv_deg_min_sec(dlat, mlat, 0, slat[0]);
-		hdr.lon = conv_deg_min_sec(dlon, mlon, 0, slon[0]);
-		hdr.elev = elv;
-		hdr.start = 1800;
-		hdr.step = 3600;
-		hdr.nrecords = 8760;
+		lat = conv_deg_min_sec(dlat, mlat, 0, slat[0]);
+		lon = conv_deg_min_sec(dlon, mlon, 0, slon[0]);
+		loc_id = pl;
+		city = pc;
+		state = ps;
+		elev = ielv;
+		start = 1800;
+		step = 3600;
+		nrecords = 8760;
 	}
-	else if(hdr.type==WF_TMY3)
+	else if( m_type==TMY3 )
 	{
 	/*  724699,"BROOMFIELD/JEFFCO [BOULDER - SURFRAD]",CO,-7.0,40.130,-105.240,1689 */
 		char *lasts, *p;
 		
-		fgets(buf, 2047, fp);
+		fgets(buf, 2047, m_fp);
 		
 		lasts = NULL;
 		p = gettoken( buf, ",", &lasts );
-		strncpy(hdr.loc_id, p, WFHDR_MAXLEN-1);
+		loc_id = p!=0 ? p : "";
 				
 		p = gettoken( NULL, ",", &lasts);		
-		strncpy(hdr.city, p, WFHDR_MAXLEN-1);
+		city = p!=0 ? p : "";
 		
 		p = gettoken(NULL, ",", &lasts);		
-		strncpy(hdr.state, p, WFHDR_MAXLEN-1);
+		state = p!=0 ? p : "";
 		
 		p = gettoken(NULL, ",", &lasts);
-		hdr.tz = atof( p );
+		tz = atof( p );
 		
 		p = gettoken(NULL, ",", &lasts);
-		hdr.lat = atof( p );
+		lat = atof( p );
 		
 		p = gettoken(NULL, ",", &lasts);
-		hdr.lon = atof( p );
+		lon = atof( p );
 		
 		p = gettoken(NULL, ",", &lasts);
-		hdr.elev = atof( p);
+		elev = atof( p);
 		
 		
-		hdr.start = 1800;
-		hdr.step = 3600;
-		hdr.nrecords = 8760;
+		start = 1800;
+		step = 3600;
+		nrecords = 8760;
 
-		fgets(buf, 2047, fp); /* skip over labels line */
+		fgets(buf, 2047, m_fp); /* skip over labels line */
 	}
-	else if(hdr.type==WF_EPW)
+	else if( m_type==EPW )
 	{
 	/*  LOCATION,Cairo Intl Airport,Al Qahirah,EGY,ETMY,623660,30.13,31.40,2.0,74.0 */
 	/*  LOCATION,Alice Springs Airport,NT,AUS,RMY,943260,-23.80,133.88,9.5,547.0 */
 		char *lasts, *p;
 		
-		fgets(buf, 2047, fp);
+		fgets(buf, 2047, m_fp);
 		
 		lasts = NULL;
 		p = gettoken( buf, ",", &lasts );
 		/* skip LOCATION */
 
 		p = gettoken( NULL, ",", &lasts );
-		strncpy(hdr.city, p, WFHDR_MAXLEN-1); /* city */
+		city = p!=0 ? p : "";
 		
 		p = gettoken( NULL, ",", &lasts );
-		strncpy(hdr.state, p, WFHDR_MAXLEN-1); /* state */
+		state = p!=0 ? p : "";
 		
 		p = gettoken( NULL, ",", &lasts );
 		/* skip COUNTRY */
@@ -239,69 +246,68 @@ static int cmp_ext(const char *file, const char *ext)
 		/* skip SOURCE */
 		
 		p = gettoken( NULL, ",", &lasts );
-		strncpy(hdr.loc_id, p, WFHDR_MAXLEN-1); /* location id */
+		loc_id = p!=0 ? p : "";
 		
 		p = gettoken( NULL, ",", &lasts );
-		hdr.lat = atof(p);
+		lat = atof(p);
 		
 		p = gettoken( NULL, ",", &lasts );
-		hdr.lon = atof(p);
+		lon = atof(p);
 		
 		p = gettoken( NULL, ",", &lasts );
-		hdr.tz = atof(p);
+		tz = atof(p);
 		
 		p = gettoken( NULL, ",", &lasts );
-		hdr.elev = atof(p);
+		elev = atof(p);
 		
 		/* skip over excess header lines */
 		
-		fgets(buf,2047,fp); /* DESIGN CONDITIONS */
-		fgets(buf,2047,fp); /* TYPICAL/EXTREME PERIODS */
-		fgets(buf,2047,fp); /* GROUND TEMPERATURES */
-		fgets(buf,2047,fp); /* HOLIDAY/DAYLIGHT SAVINGS */
-		fgets(buf,2047,fp); /* COMMENTS 1 */
-		fgets(buf,2047,fp); /* COMMENTS 2 */
-		fgets(buf,2047,fp); /* DATA PERIODS */
+		fgets(buf,2047,m_fp); /* DESIGN CONDITIONS */
+		fgets(buf,2047,m_fp); /* TYPICAL/EXTREME PERIODS */
+		fgets(buf,2047,m_fp); /* GROUND TEMPERATURES */
+		fgets(buf,2047,m_fp); /* HOLIDAY/DAYLIGHT SAVINGS */
+		fgets(buf,2047,m_fp); /* COMMENTS 1 */
+		fgets(buf,2047,m_fp); /* COMMENTS 2 */
+		fgets(buf,2047,m_fp); /* DATA PERIODS */
 		
-		hdr.start = 1800;
-		hdr.step = 3600;
-		hdr.nrecords = 8760;
+		start = 1800;
+		step = 3600;
+		nrecords = 8760;
 		
 	}
-	else if (hdr.type == WF_SMW)
+	else if ( m_type==SMW )
 	{
 		char *lasts, *p;
 		
-		fgets(buf, 2047, fp);
+		fgets(buf, 2047, m_fp);
 		
 		lasts = NULL;
 		p = gettoken( buf, ",", &lasts );
-		strncpy(hdr.loc_id, p, WFHDR_MAXLEN-1); /* loc id */
+		loc_id = p!=0 ? p : "";
 
 		p = gettoken( NULL, ",", &lasts );
-		strncpy(hdr.city, p, WFHDR_MAXLEN-1); /* city */
+		city = p!=0 ? p : "";
 		
 		p = gettoken( NULL, ",", &lasts );
-		strncpy(hdr.state, p, WFHDR_MAXLEN-1); /* state */
+		state = p!=0 ? p : "";
 
 		p = gettoken( NULL, ",", &lasts );
-		hdr.tz = atof(p); // timezone
+		tz = atof(p); // timezone
 
 		p = gettoken( NULL, ",", &lasts );
-		hdr.lat = atof(p); // latitude
+		lat = atof(p); // latitude
+		
+		p = gettoken( NULL, ",", &lasts );
+		lon = atof(p); // longitude
 
 		p = gettoken( NULL, ",", &lasts );
-		hdr.lon = atof(p); // longitude
+		elev = atof(p); // elevation
+		
+		p = gettoken( NULL, ",", &lasts );
+		step = atof(p);
 
 		p = gettoken( NULL, ",", &lasts );
-		hdr.elev = atof(p); // elevation
-
-		p = gettoken( NULL, ",", &lasts );
-		obj->step = atof(p);
-		hdr.step = obj->step; // timestep in secs
-
-		p = gettoken( NULL, ",", &lasts );
-		obj->start_year = atoi(p); // start year
+		m_startYear = atoi(p); // start year
 
 		p = gettoken( NULL, ",", &lasts );
 
@@ -319,40 +325,76 @@ static int cmp_ext(const char *file, const char *ext)
 		if (p && *p) p++;
 		if (p && *p) start_sec = atoi(p);
 		
-		obj->time = start_hour*3600 + start_min*60 + start_sec;
-		hdr.start = obj->time;
+		m_time = start_hour*3600 + start_min*60 + start_sec;
+		start = m_time;
 
-		hdr.nrecords = 0;
-		while (fgets(buf, 2047, obj->fp ) != 0)
-			hdr.nrecords ++;
+		nrecords = 0;
+		while (fgets(buf, 2047, m_fp ) != 0)
+			nrecords ++;
 
-		rewind( obj->fp );
-		fgets( buf, 2047, obj->fp );
+		::rewind( m_fp );
+		fgets( buf, 2047, m_fp );
 	}
 	else
-	{
-		free( obj );
-		fclose( fp );
-		return NULL;
+	{	
+		close();
+		return false;
 	}
 	
-	if (p_hdr)
-		memcpy(p_hdr, &hdr, sizeof(wf_header_t));
-	
-	return (wf_obj_t*) obj;	
+	return true;
 }
 
- int  wf_read_data( wf_obj_t wf, wf_record_t *dat)
+void weatherfile::rewind()
+{
+	if (!ok()) return;
+	
+	::rewind( m_fp );
+		
+	// skip header info
+	char buf[2048];
+	if (m_type == TMY2 || m_type == SMW)
+		fgets(buf,2047, m_fp); 
+	else if(m_type==TMY3)
+		for(int i=0;i<2;i++) fgets(buf,2047,m_fp);
+	else if(m_type==EPW)
+		for(int i=0;i<8;i++) fgets(buf,2047,m_fp);
+}
+
+void weatherfile::close()
+{
+	if ( m_fp != 0 ) fclose( m_fp );
+	
+	m_fp = 0;
+	m_type = INVALID;
+	m_file.clear();
+	m_startYear = 1900;
+	m_time = 0.0;
+
+	loc_id.clear();
+	city.clear();
+	state.clear();
+	tz = lat = lon = elev = 0.0;
+	start = step = 0.0;
+	nrecords = 0;
+
+	year = month = day = hour = 0;
+	minute = 0.0;
+	gh = dn = df = wspd = wdir = 0.0;
+	tdry = twet = rhum = pres = snow = albedo = 0.0;
+
+}
+
+
+bool  weatherfile::read()
 {
 	char buf[1025];
 	char *cols[128], *p;
-	wf_object_t *obj = WF_OBJECT(wf);
 	
-	if (!obj || !dat || obj->wf_type < 0 || obj->fp == NULL) return -1;
+	if ( !ok() ) return false;
 	
-	if (obj->wf_type == WF_TMY2)
+	if ( m_type == TMY2 )
 	{
-		char *pret = fgets(buf, 1023, obj->fp);
+		char *pret = fgets(buf, 1023, m_fp);
 		
 		int yr,mn,dy,hr,ethor,etdn;
 		int d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,d16,d17,d18,d19,d20,d21;      /* which of these are used? d3, d10, d15 & d20 */
@@ -392,162 +434,133 @@ static int cmp_ext(const char *file, const char *ext)
 			 &d20,&f20,&u20, // snow depth 0-150 cm
 			 &d21,&f21,&u21 ); // days since last snowfall 0-88
 
-		dat->year = yr + 1900;
-		dat->month = mn;
-		dat->day = dy;
-		dat->hour = hr-1;  // hour goes 0-23, not 1-24
-		dat->minute = 30;
-		dat->gh = (double)d1*1.0;
-		dat->dn=(double)d2;           /* Direct radiation */
-		dat->df=(double)d3;           /* Diffuse radiation */
-		dat->tdry=(double)d10/10.0;       /* Ambient dry bulb temperature(C) */
-		dat->twet = (double)d11/10.0;
-		dat->wspd=(double)d15/10.0;       /* Wind speed(m/s) */
-		dat->wdir=(double)d14; /* wind dir */
-		dat->rhum = (double)d12;
-		dat->pres = (double)d13;
-		dat->snow = (double)d20;
-		dat->albedo = -999; /* no albedo in TMY2 */
+		year = yr + 1900;
+		month = mn;
+		day = dy;
+		hour = hr-1;  // hour goes 0-23, not 1-24
+		minute = 30;
+		gh = (double)d1*1.0;
+		dn=(double)d2;           /* Direct radiation */
+		df=(double)d3;           /* Diffuse radiation */
+		tdry=(double)d10/10.0;       /* Ambient dry bulb temperature(C) */
+		twet = (double)d11/10.0;
+		wspd=(double)d15/10.0;       /* Wind speed(m/s) */
+		wdir=(double)d14; /* wind dir */
+		rhum = (double)d12;
+		pres = (double)d13;
+		snow = (double)d20;
+		albedo = -999; /* no albedo in TMY2 */
 
 		return nread==79 && pret==buf;
 	}
-	else if (obj->wf_type == WF_TMY3)
+	else if ( m_type == TMY3)
 	{
-		char *pret = fgets(buf, 1023, obj->fp);
+		char *pret = fgets(buf, 1023, m_fp);
 		int ncols = locate(buf, cols, 128, ',');
 
 		if (ncols < 68)
-			return -3;
+			return false;
 	
 		p = cols[0];
 
-		dat->month = atoi( p );
+		month = atoi( p );
 		p = strchr(p, '/');
 		if (!p)
-			return -4;
+			return false;
 		p++;
-		dat->day = atoi( p );
+		day = atoi( p );
 		p = strchr(p, '/');
-		if (!p) return -5;
+		if (!p) return false;
 		p++;
-		dat->year = atoi( p );
+		year = atoi( p );
 
-		dat->hour = atoi( cols[1] ) - 1;  // hour goes 0-23, not 1-24
-		dat->minute = 30;
+		hour = atoi( cols[1] ) - 1;  // hour goes 0-23, not 1-24
+		minute = 30;
 
-		dat->gh = (double)atof( cols[4] );
-		dat->dn = (double)atof( cols[7] );
-		dat->df = (double)atof( cols[10] );
+		gh = (double)atof( cols[4] );
+		dn = (double)atof( cols[7] );
+		df = (double)atof( cols[10] );
 
-		dat->tdry = (double)atof( cols[31] );
-		dat->twet = (double)atof( cols[34] );
+		tdry = (double)atof( cols[31] );
+		twet = (double)atof( cols[34] );
 
-		dat->wspd = (double)atof( cols[46] );
-		dat->wdir = (double)atof( cols[43] );
+		wspd = (double)atof( cols[46] );
+		wdir = (double)atof( cols[43] );
 
-		dat->rhum = (double)atof( cols[37] );
-		dat->pres = (double)atof( cols[40] );
-		dat->snow = 999.0; // no snowfall in TMY3
-		dat->albedo = (double)atof( cols[61] );
+		rhum = (double)atof( cols[37] );
+		pres = (double)atof( cols[40] );
+		snow = 999.0; // no snowfall in TMY3
+		albedo = (double)atof( cols[61] );
 				
 		return pret==buf;
 	}
-	else if (obj->wf_type == WF_EPW)
+	else if ( m_type == EPW)
 	{
-		char *pret = fgets(buf, 1024, obj->fp);
+		char *pret = fgets(buf, 1024, m_fp);
 		int ncols = locate(buf, cols, 128, ',');
 
 		if (ncols < 32)
-			return -6;
+			return false;
 
-		dat->year = atoi(cols[0]);
-		dat->month = atoi(cols[1]);
-		dat->day = atoi(cols[2]);
-		dat->hour = atoi(cols[3])-1;  // hour goes 0-23, not 1-24;
-		dat->minute = 30;
+		year = atoi(cols[0]);
+		month = atoi(cols[1]);
+		day = atoi(cols[2]);
+		hour = atoi(cols[3])-1;  // hour goes 0-23, not 1-24;
+		minute = 30;
 
-		dat->gh = (double)atof(cols[13]);
-		dat->dn = (double)atof(cols[14]);
-		dat->df = (double)atof(cols[15]);
+		gh = (double)atof(cols[13]);
+		dn = (double)atof(cols[14]);
+		df = (double)atof(cols[15]);
 		
-		dat->wspd = (double)atof(cols[21]);
-		dat->wdir = (double)atof(cols[20]);
+		wspd = (double)atof(cols[21]);
+		wdir = (double)atof(cols[20]);
 		
-		dat->tdry = (double)atof(cols[6]);
-		dat->twet = (double)atof(cols[7]);
+		tdry = (double)atof(cols[6]);
+		twet = (double)atof(cols[7]);
 		
-		dat->rhum = (double)atof( cols[8] );
-		dat->pres = (double)atof( cols[9] ) * 0.01; /* convert Pa in to mbar */
-		dat->snow = (double)atof( cols[30] ); // snowfall
-		dat->albedo = -999; /* no albedo in EPW file */
+		rhum = (double)atof( cols[8] );
+		pres = (double)atof( cols[9] ) * 0.01; /* convert Pa in to mbar */
+		snow = (double)atof( cols[30] ); // snowfall
+		albedo = -999; /* no albedo in EPW file */
 
 		return pret==buf;
 	}
-	else if (obj->wf_type == WF_SMW)
+	else if ( m_type == SMW )
 	{
-		char *pret = fgets(buf, 1024, obj->fp);
+		char *pret = fgets(buf, 1024, m_fp);
 		int ncols = locate(buf, cols, 128, ',');
 
 		if (ncols < 12)
-			return -7;
+			return false;
 		
-		double T = obj->time;
+		double T = m_time;
 		
-		dat->year = obj->start_year; // start year
-		dat->month = util::month_of( T/3600.0 ); // 1-12
-		dat->day = util::day_of_month( dat->month, T/3600.0 ); // 1-nday
-		dat->hour = ((int)(T/3600.0))%24;  // hour goes 0-23, not 1-24;
-		dat->minute = fmod(T/60.0, 60.0);      // minute goes 0-59
+		year = m_startYear; // start year
+		month = util::month_of( T/3600.0 ); // 1-12
+		day = util::day_of_month( month, T/3600.0 ); // 1-nday
+		hour = ((int)(T/3600.0))%24;  // hour goes 0-23, not 1-24;
+		minute = fmod(T/60.0, 60.0);      // minute goes 0-59
 					
 
-		obj->time += obj->step; // increment by step
+		m_time += step; // increment by step
 
-		dat->gh = (double)atof(cols[7]);
-		dat->dn = (double)atof(cols[8]);
-		dat->df = (double)atof(cols[9]);
+		gh = (double)atof(cols[7]);
+		dn = (double)atof(cols[8]);
+		df = (double)atof(cols[9]);
 		
-		dat->wspd = (double)atof(cols[4]);
-		dat->wdir = (double)atof(cols[5]);
+		wspd = (double)atof(cols[4]);
+		wdir = (double)atof(cols[5]);
 		
-		dat->tdry = (double)atof(cols[0]);
-		dat->twet = (double)atof(cols[2]);
+		tdry = (double)atof(cols[0]);
+		twet = (double)atof(cols[2]);
 		
-		dat->rhum = (double)atof( cols[3] );
-		dat->pres = (double)atof( cols[6] );
-		dat->snow = (double)atof( cols[11] );
-		dat->albedo = (double)atof( cols[10] );
+		rhum = (double)atof( cols[3] );
+		pres = (double)atof( cols[6] );
+		snow = (double)atof( cols[11] );
+		albedo = (double)atof( cols[10] );
 		
 		return pret==buf;
 	}
 	else
-		return -1;
-}
-
- void  wf_close(wf_obj_t wf)
-{
-	wf_object_t *obj = WF_OBJECT(wf);
-	if (obj && obj->fp)
-		fclose( obj->fp );
-	
-	if (obj) delete obj;
-}
-
- void  wf_rewind(wf_obj_t wf)
-{
-	wf_object_t *obj = WF_OBJECT(wf);
-	if (obj && obj->fp)
-	{
-		rewind( obj->fp );
-		
-		// skip header info
-		char buf[2048];
-		if (obj->wf_type == WF_TMY2)
-			fgets(buf,2047,obj->fp); 
-		else if(obj->wf_type==WF_TMY3)
-			for(int i=0;i<2;i++) fgets(buf,2047,obj->fp);
-		else if(obj->wf_type==WF_EPW)
-			for(int i=0;i<8;i++) fgets(buf,2047,obj->fp);
-		else if (obj->wf_type==WF_SMW)
-			fgets(buf,2047,obj->fp);
-	}
+		return false;
 }

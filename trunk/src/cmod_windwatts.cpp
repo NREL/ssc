@@ -35,14 +35,6 @@ class cm_windwatts : public compute_module
 private:
 public:
 	
-	class weather_reader
-	{
-	public:
-		weather_reader() : wf(0) {  }
-		~weather_reader() { if (wf) wf_close(wf); }
-		wf_obj_t wf;
-	};
-
 	cm_windwatts()
 	{
 		add_var_info( _cm_vtab_windwatts );
@@ -52,12 +44,8 @@ public:
 	{
 		const char *file = as_string("file_name");
 		
-		wf_header_t hdr;
-		wf_record_t dat;
-		weather_reader reader;
-		reader.wf= wf_open( file, &hdr );
-
-		if (!reader.wf) throw exec_error("windwatts", "failed to read local weather file: " + std::string(file));
+		weatherfile wf(file);		
+		if (!wf.ok()) throw exec_error("windwatts", "failed to read local weather file: " + std::string(file));
 
 		size_t pc_len = 0;
 		ssc_number_t *pc_w = as_array( "pc_wind", &pc_len );
@@ -114,11 +102,11 @@ public:
 		
 		
 		double last_wind, last_theta, last_tdry, last_pres, wind, theta, tdry, pres;
-		wf_read_data(reader.wf, &dat );  // read the first line
-		wind = last_wind = dat.wspd;
-		theta = last_theta = dat.wdir;
-		tdry = last_tdry = dat.tdry;
-		pres = last_pres = dat.pres;
+		wf.read();
+		wind = last_wind = wf.wspd;
+		theta = last_theta = wf.wdir;
+		tdry = last_tdry = wf.tdry;
+		pres = last_pres = wf.pres;
 
 		for (i=0;i<8760;i++)
 		{
@@ -177,17 +165,17 @@ public:
 			
 			if (i < 8759)
 			{
-				if (!wf_read_data( reader.wf, &dat ))
+				if (!wf.read())
 					throw exec_error("windwatts", "could not read data line " + util::to_string((int)i+1) + " of 8760");
 				
-				wind = (last_wind+dat.wspd)/2.0;
-				theta = (last_theta+dat.wdir)/2.0;
-				tdry = (last_tdry+dat.tdry)/2.0;
-				pres = (last_pres+dat.pres)/2.0;
-				last_wind = dat.wspd;
-				last_theta = dat.wdir;
-				last_tdry = dat.tdry;
-				last_pres = dat.pres;
+				wind = (last_wind+wf.wspd)/2.0;
+				theta = (last_theta+wf.wdir)/2.0;
+				tdry = (last_tdry+wf.tdry)/2.0;
+				pres = (last_pres+wf.pres)/2.0;
+				last_wind = wf.wspd;
+				last_theta = wf.wdir;
+				last_tdry = wf.tdry;
+				last_pres = wf.pres;
 			}
 
 		}

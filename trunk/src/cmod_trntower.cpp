@@ -229,10 +229,8 @@ public:
 		const char *weather_file = as_string("weather_file");
 
 
-		wf_header_t hdr;
-		if (!wf_read_header( weather_file, &hdr ))
-			throw general_error("could not scan weather file header information: " + std::string(weather_file));
-
+		weatherfile hdr( weather_file );
+		if (!hdr.ok()) throw general_error("could not scan weather file header information: " + std::string(weather_file));
 
 		FILE *fout;
 
