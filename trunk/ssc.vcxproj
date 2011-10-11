@@ -46,17 +46,19 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">__64BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">__64BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="src\lib_cec6par.cpp" />
     <ClCompile Include="src\lib_financial.cpp" />
     <ClCompile Include="src\lib_geohourly.cpp" />
     <ClCompile Include="src\lib_irradproc.cpp" />
     <ClCompile Include="src\lib_physics.cpp" />
     <ClCompile Include="src\lib_powerblock.cpp" />
+    <ClCompile Include="src\lib_pvmodel.cpp" />
     <ClCompile Include="src\lib_pvwatts.cpp" />
     <ClCompile Include="src\cmod_trnbase.cpp" />
     <ClCompile Include="src\lib_sandia.cpp" />
     <ClCompile Include="src\lib_util.cpp" />
     <ClCompile Include="src\lib_vartab.cpp" />
-    <ClCompile Include="src\lib_wfreader.cpp" />
+    <ClCompile Include="src\lib_weatherfile.cpp" />
     <ClCompile Include="src\lib_windwatts.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sscapi.cpp" />
@@ -65,18 +67,20 @@
   <ItemGroup>
     <ClInclude Include="src\attic.h" />
     <ClInclude Include="src\core.h" />
+    <ClInclude Include="src\lib_cec6par.h" />
     <ClInclude Include="src\lib_financial.h" />
     <ClInclude Include="src\lib_geohourly.h" />
     <ClInclude Include="src\lib_geohourly_interface.h" />
     <ClInclude Include="src\lib_irradproc.h" />
     <ClInclude Include="src\lib_physics.h" />
     <ClInclude Include="src\lib_powerblock.h" />
+    <ClInclude Include="src\lib_pvmodel.h" />
     <ClInclude Include="src\lib_pvwatts.h" />
     <ClInclude Include="src\cmod_trnbase.h" />
     <ClInclude Include="src\lib_sandia.h" />
     <ClInclude Include="src\lib_util.h" />
     <ClInclude Include="src\lib_vartab.h" />
-    <ClInclude Include="src\lib_wfreader.h" />
+    <ClInclude Include="src\lib_weatherfile.h" />
     <ClInclude Include="src\lib_windwatts.h" />
     <ClInclude Include="src\sscapi.h" />
   </ItemGroup>

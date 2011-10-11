@@ -1,5 +1,5 @@
-#ifndef __lib_wfreader_h
-#define __lib_wfreader_h
+#ifndef __lib_weatherfile_h
+#define __lib_weatherfile_h
 
 #define WFHDR_MAXLEN 64
 
@@ -8,7 +8,7 @@
 #define WF_TMY3 3
 #define WF_SMW 4
 
-struct __wf_header
+struct wf_header_t
 {
 	int type;
 	char loc_id[WFHDR_MAXLEN];
@@ -22,9 +22,8 @@ struct __wf_header
 	double step; // step time in seconds
 	int nrecords; // number of data records in file
 };
-typedef struct __wf_header wf_header;
 
-struct __wf_data
+struct wf_record_t
 {
 	int year;
 	int month;
@@ -43,14 +42,13 @@ struct __wf_data
 	double snow; /* snow depth (cm) 0-150 */
 	double albedo; /* ground reflectance 0-1.  values outside this range mean it is not included */
 };
-typedef struct __wf_data wf_data;
 
 typedef void* wf_obj_t;
 
 int  wf_get_type(const char *file);
-int  wf_read_header(const char *file, wf_header *p_hdr);
-wf_obj_t  wf_open(const char *file, wf_header *p_hdr);
-int  wf_read_data( wf_obj_t wf, wf_data *dat);
+int  wf_read_header(const char *file, wf_header_t *p_hdr);
+wf_obj_t  wf_open(const char *file, wf_header_t *p_hdr);
+int  wf_read_data( wf_obj_t wf, wf_record_t *dat);
 void  wf_close(wf_obj_t wf);
 void  wf_rewind(wf_obj_t wf);
 

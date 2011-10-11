@@ -31,6 +31,9 @@ OBJECTS = \
 	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
+	lib_cec6par.o \
+	lib_sandia.o \
+	lib_pvmodel.o \
 	lib_irradproc.o \
 	lib_powerblock.o \
 	lib_financial.o \
@@ -38,7 +41,7 @@ OBJECTS = \
 	lib_physics.o \
 	lib_util.o \
 	lib_vartab.o \
-	lib_wfreader.o \
+	lib_weatherfile.o \
 	lib_windwatts.o \
 	lib_geohourly.o \
 	lib_sandia.o \

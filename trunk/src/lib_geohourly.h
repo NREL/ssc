@@ -3,7 +3,7 @@
 
 #include <math.h>
 #include <vector>
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 #include "lib_physics.h"
 #include "lib_powerblock.h"
 
@@ -926,8 +926,8 @@ protected:
 	// Added June 2011 for geothermal hourly model
 	SPowerBlockInputs m_pbInputs;
 	CPowerBlock_Type224 m_pb;
-	wf_header m_hdr;
-	wf_data m_dat;
+	wf_header_t m_hdr;
+	wf_record_t m_dat;
 	weather_reader m_wfreader;
 	bool m_bWeatherFileOpen;
 	long m_lReadCount;  // resource file reads through the year

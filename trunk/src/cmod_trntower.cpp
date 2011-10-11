@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 #include "cmod_trnbase.h"
 
 
@@ -229,7 +229,7 @@ public:
 		const char *weather_file = as_string("weather_file");
 
 
-		wf_header hdr;
+		wf_header_t hdr;
 		if (!wf_read_header( weather_file, &hdr ))
 			throw general_error("could not scan weather file header information: " + std::string(weather_file));
 

@@ -1,5 +1,5 @@
 #include "core.h"
-#include "lib_wfreader.h"
+#include "lib_weatherfile.h"
 #include "lib_windwatts.h"
 
 static var_info _cm_vtab_windwatts[] = {
@@ -52,8 +52,8 @@ public:
 	{
 		const char *file = as_string("file_name");
 		
-		wf_header hdr;
-		wf_data dat;
+		wf_header_t hdr;
+		wf_record_t dat;
 		weather_reader reader;
 		reader.wf= wf_open( file, &hdr );
 
