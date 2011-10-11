@@ -22,7 +22,6 @@ OBJECTS = \
 	cmod_saleleaseback.o \
 	cmod_singleowner.o \
 	cmod_pvwatts.o \
-	cmod_stdhrlywf.o \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
 	cmod_windwatts.o \
