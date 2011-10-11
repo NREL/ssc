@@ -37,7 +37,7 @@ OBJECTS = \
 	lib_physics.o \
 	lib_util.o \
 	lib_vartab.o \
-	lib_wfreader.o \
+	lib_weatherfile.o \
 	lib_windwatts.o \
 	lib_geohourly.o \
 	lib_sandia.o \
