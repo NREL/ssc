@@ -1016,8 +1016,8 @@ public:
 	double sumOfPresentWorthFactors(void) { return (analyzeIfNecessary()) ? mdSumOfPresentWorthFactors : 0; }
 
 	bool readyToAnalyze(void);
-	bool analyzeIfNecessary(void) {if (mbAnalysisRequired) return analyze(); else return true; }
-	bool analyze(void);
+	bool analyzeIfNecessary(void) {if (mbAnalysisRequired) return analyze(0, 0); else return true; }
+	bool analyze( void (*update_function)(float, void*), void *user_data );
 
 	void SetPumpDepthFt(double feet) { mdPumpDepthFt = feet; }
 	double GetPumpDepthFt(void) { return (mdPumpDepthFt) ? mdPumpDepthFt : moPPC.GetCalculatedPumpDepthInFeet(); }

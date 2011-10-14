@@ -381,7 +381,7 @@ public:
 	bool IsReadyToRun(void);
 	bool ErrorOccured(void);
 	std::string GetErrorMsg(void);
-	int RunGeoHourly(void); // 0=clean run, !=0 means errors
+	int RunGeoHourly(void (*update_function)(float,void*),void*user_data); // 0=clean run, !=0 means errors
 	void Initialize(void) { oGeoOutputs.init(); }
 
 
