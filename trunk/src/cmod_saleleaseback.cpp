@@ -17,6 +17,13 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
+/* Recapitalization */
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_recapitalization",		"Recapitalization expenses",	"0/1",   "0=None,1=Recapitalize",                      "DHF",             "?=0",						   "INTEGER,MIN=0",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_recapitalization_cost",	"Recapitalization cost",	"$",   "",                      "DHF",             "?=0",						   "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation", "Recapitalization escalation (above inflation)",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		"Recapitalization boolean",	"",   "",                      "DHF",             "?=0",						   "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_recapitalization",	"Recapitalization operating expense",	"$",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+
 /* Dispatch */
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "DHF",             "*",						   "INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_net_hourly",	"Hourly energy produced by the system",	"%",   "",                      "DHF",             "*",						   "",                 "" },
@@ -1038,6 +1045,9 @@ enum {
 	CF_Availability,
 	CF_Degradation,
 
+	CF_Recapitalization,
+	CF_Recapitalization_boolean,
+
 	CF_max };
 
 
@@ -1268,6 +1278,20 @@ public:
 			}
 		}
 
+		double recapitalization_cost = as_double("system_recapitalization_cost");
+		double recapitalization_escalation = 0.01*as_double("system_recapitalization_escalation");
+		if (as_integer("system_use_recapitalization"))
+		{
+			size_t recap_boolean_count;
+			ssc_number_t *recap_boolean = 0;
+			recap_boolean = as_array("system_lifetime_recapitalize", &recap_boolean_count);
+
+			if (recap_boolean_count > 0)
+			{
+				for (i=0;i<nyears && i<(int)recap_boolean_count;i++) cf.at(CF_Recapitalization_boolean,i+1) = recap_boolean[i];
+			}
+		}
+
 		for (i=1; i<=nyears; i++)
 		{
 		// Project partial income statement
@@ -1278,6 +1302,13 @@ public:
 			cf.at(CF_insurance_expense,i) = cost_prefinancing * insurance_rate * pow( 1 + inflation_rate, i-1 );
 			cf.at(CF_sponsor_margin,i) = sponsor_operating_margin * nameplate * pow( 1 + sponsor_operating_margin_escalation, i-1);
 
+			if (as_integer("system_use_recapitalization"))
+			{
+				cf.at(CF_Recapitalization,i) = cf.at(CF_Recapitalization_boolean,i) * recapitalization_cost
+					 *  pow((1 + inflation_rate + recapitalization_escalation ), i-1 );
+			}
+
+
 			cf.at(CF_operating_expenses,i) =
 				+ cf.at(CF_om_fixed_expense,i)
 				+ cf.at(CF_om_production_expense,i)
@@ -1285,7 +1316,8 @@ public:
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
-				+ cf.at(CF_sponsor_margin,i);
+				+ cf.at(CF_sponsor_margin,i)
+				+ cf.at(CF_Recapitalization,i);
 		}
 
 		// salvage value
@@ -2707,6 +2739,10 @@ public:
 
 	save_cf( CF_reserve_total, nyears, "cf_reserve_total" );
 	save_cf( CF_reserve_interest, nyears, "cf_reserve_interest" );
+
+	save_cf( CF_Recapitalization, nyears, "cf_recapitalization" );
+		
+
 		// dispatch
 		if (as_integer("system_use_lifetime_output"))
 			process_lifetime_dispatch_output(nyears);
