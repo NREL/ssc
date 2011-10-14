@@ -13,11 +13,11 @@ bool CGeothermalInterface::IsReadyToRun(void) { return oGeoOutputs.readyToAnalyz
 bool CGeothermalInterface::ErrorOccured(void) { return (m_strErrMsg == "") ? false : true; }
 std::string CGeothermalInterface::GetErrorMsg(void) { return m_strErrMsg; }
 
-int CGeothermalInterface::RunGeoHourly(void)
+int CGeothermalInterface::RunGeoHourly(void (*update_function)(float,void*),void*user_data)
 {
 	// do analysis and store results in an 'outputs' object
 	//if ( oGeoOutputs.readyToAnalyze() && oGeoOutputs.analyze() )  // 
-	if ( oGeoOutputs.analyze() )  // 
+	if ( oGeoOutputs.analyze(update_function,user_data) )  // 
 		return 0;
 	else
 		if (oGeoOutputs.m_strErrMsg != "")
@@ -1251,7 +1251,7 @@ bool CGeoHourlyAnalysis::readyToAnalyze()
 	return true;
 }
 
-bool CGeoHourlyAnalysis::analyze(void)
+bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *user_data )
 {
 	mbAnalysisRequired = true;
 	if (!readyToAnalyze()) return false;   //moMA is reset each time readyToAnalyze is called.
@@ -1276,6 +1276,9 @@ bool CGeoHourlyAnalysis::analyze(void)
 		m_afReplacementsByYear[year] = 0;
 		for (unsigned int month=1; month<13; month++)
 		{
+			if (update_function != 0)
+				(*update_function)( (float)iElapsedMonths/(float)(12*miProjectLifeYears)*100.0f, user_data );
+
 			fMonthlyPowerTotal = 0;
 			for (unsigned int hour=0; hour<util::hours_in_month(month); hour++)
 			{

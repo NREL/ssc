@@ -116,6 +116,12 @@ static var_info _cm_vtab_geohourly[] = {
 
 var_info_invalid };
 
+
+static void my_update_function( float percent, void *data )
+{
+	if (data) ((compute_module*)data)->update("working...", percent);
+}
+
 class cm_geothermalhourly : public compute_module
 {
 private:
@@ -297,7 +303,7 @@ public:
 		//update("Running model...", 10.0);
 
 		// run simulation
-		if (oGeo.RunGeoHourly() != 0)
+		if (oGeo.RunGeoHourly( my_update_function, this ) != 0)
 			throw exec_error("geothermalhourly", "error from geothermal hourly model: " + oGeo.GetErrorMsg() + ".");
 
 		assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
