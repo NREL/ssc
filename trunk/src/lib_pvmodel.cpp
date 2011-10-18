@@ -7,19 +7,30 @@
 #endif
 
 
-pvinput_t::pvinput_t( double ib, double id, double ig,
-	double ta, double ws, double zen, double inc, 
-	double elv, double tlt )
+pvinput_t::pvinput_t( double ib, double id, double ig, 
+		double ta, double tw, double td,
+		double ws, double wd, double atm,
+		double zen, double inc, 
+		double elv, double tlt, double azi,
+		double todh  )
 {
+
+
 	Ibeam = ib;
 	Idiff = id;
 	Ignd = ig;
-	Tamb = ta;
+	Tdry = ta;
+	Twet = tw;
+	Tdew = td;
 	Wspd = ws;
+	Wdir = wd;
 	Zenith = zen;
 	IncAng = inc;
 	Elev = elv;
 	Tilt = tlt;
+	Azimuth = azi;
+	Patm = atm;
+	TimeOfDayHr = todh;
 }
 
 std::string pvcelltemp_t::error()

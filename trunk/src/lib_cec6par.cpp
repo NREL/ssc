@@ -7,6 +7,22 @@
 #define M_PI 3.141592653589793238462643383279
 #endif
 
+#ifndef MAX
+#define MAX(a,b) ( (a)>(b) ? (a) : (b) )
+#endif
+
+#ifndef MIN
+#define MIN(a,b) ( (a)<(b) ? (a) : (b) )
+#endif
+
+
+#define sinD(x) sin((x)*0.017453292519943295769236907684886)
+#define cosD(x) cos((x)*0.017453292519943295769236907684886)
+#define tanD(x) tan((x)*0.017453292519943295769236907684886)
+#define asinD(x) (57.295779513082320876798154814105*asin(x))
+#define acosD(x) (57.295779513082320876798154814105*acos(x))
+#define atanD(x) (57.295779513082320876798154814105*atan(x))
+
 /******** BEGIN GOLDEN METHOD CODE FROM NR3 *********/
 
 #define GOLD 1.618034
@@ -233,23 +249,23 @@ static double irradiance_through_cover(
 	// effective irradiance transmitted through glass cover
 
 	// transmittance at angle normal to surface (0 deg), use 1 (deg) to avoid numerical probs.
-	double ta_norm = transmittance( 1.0, n_cover, k_trans, l_thick );
+	double tau_norm = transmittance( 1.0, n_cover, k_trans, l_thick );
 	
 	// transmittance of beam radiation, at incidence angle
-	double ta_beam = transmittance( theta, n_cover, k_trans, l_thick );
+	double tau_beam = transmittance( theta, n_cover, k_trans, l_thick );
 
 	// transmittance of sky diffuse, at modified angle by (D&B Eqn 5.4.2)
 	double theta_sky = 59.7 - 0.1388*tilt + 0.001497*tilt*tilt;
-	double ta_sky = transmittance( theta_sky, n_cover, k_trans, l_thick );
+	double tau_sky = transmittance( theta_sky, n_cover, k_trans, l_thick );
 	
 	// transmittance of ground diffuse, at modified angle by (D&B Eqn 5.4.1)
 	double theta_gnd = 90.0 - 0.5788*tilt  + 0.002693*tilt*tilt;
-	double ta_gnd = transmittance( theta_gnd, n_cover, k_trans, l_thick );
+	double tau_gnd = transmittance( theta_gnd, n_cover, k_trans, l_thick );
 
 	// calculate component incidence angle modifiers, D&B Chap. 5 eqn 5.12.1, DeSoto'04
-	double Kta_beam = ta_beam / ta_norm;
-	double Kta_sky = ta_sky / ta_norm;
-	double Kta_gnd = ta_gnd / ta_norm;
+	double Kta_beam = tau_beam / tau_norm;
+	double Kta_sky = tau_sky / tau_norm;
+	double Kta_gnd = tau_gnd / tau_norm;
 	
 	// total effective irradiance absorbed by solar cell
 	double Geff_total = G_beam*Kta_beam + G_sky*Kta_sky + G_gnd*Kta_gnd;
@@ -259,6 +275,535 @@ static double irradiance_through_cover(
 	return Geff_total;
 }
 
+
+
+mcphys_celltemp_t::mcphys_celltemp_t( )
+{
+	mc = RACK;
+	orient = NOIMPEDE;
+	nrows = ncols = 1;
+	module_width = module_length = W_gap = std::numeric_limits<double>::quiet_NaN();
+
+}
+
+// !*****************************************************************
+static double free_convection( double TC, double TA, double SLOPE, double rho_air, 
+	double Pr_air, double mu_air, double Area, double Length, double Width, double k_air)
+{      
+// !Function added by TN (2010)
+// !Solution for free convection coefficienet as presented in Nellis and Klein (2008) and EES
+	 
+	double L_ch_f,nu,Beta,g_spec,Gr,Ra,C_lam,Nu_lam,C_turb,Nu_turb,Nu_bar,h_up,h_vert,h_down;
+	static const double grav = 9.81;
+
+	L_ch_f    = Area/(2.*(Length+Width));//  !Eq. 6-54 (Nellis&Klein)
+
+	if (TA > TC) SLOPE = 180.0 - SLOPE;
+
+	// !Properties Constant for Each Plate Scenario
+	nu        = mu_air / rho_air; //          !Kinematic Viscosity
+	Beta      = 1. / ((TA+TC)/2.); //         !volumetric coefficient of thermal expansion
+
+	// !Horizontal Heated Upward Facing Plate (L_ch_f)
+	// !OR Cooled Downward Facing Plate
+	g_spec    = grav*max(0.,cosD(SLOPE));//  !Adjustment of gravity vector;
+	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2); //    !Grashof Number
+	Ra        = max(0.0001,Gr*Pr_air); //                 !Rayleigh Number
+
+	C_lam     = 0.671/pow(1. + pow(0.492/Pr_air, 9./16.) , 4./9.); //  !Eq. 6-49 (Nellis&Klein)
+	Nu_lam    = 1.4/log(1.+(1.4/(0.835*C_lam*pow(Ra,0.25)))); // !Eq. 6-56 (Nellis&Klein)
+	C_turb    = 0.14*((1.+0.0107*Pr_air)/(1.+0.01*Pr_air)); // !Eq. 6-58 (Nellis&Klein)
+	Nu_turb   = C_turb*pow(Ra,1./3.); //        !Eq. 6-57  (Nellis&Klein)
+	Nu_bar    = pow(pow(Nu_lam,10) + pow(Nu_turb,10.), (1./10.)); // !Eq. 6-55  (Nellis&Klein)
+	h_up      = Nu_bar*k_air/L_ch_f;
+
+	// !Vertical Plate (Length)
+	g_spec    = grav*sinD(SLOPE);  //          !Adjustment of gravity vector
+	Gr        = g_spec*Beta*fabs(TC-TA)*pow(Length,3)/pow(nu,2);        
+	Ra        = max(0.0001,Gr*Pr_air);
+	
+	Nu_bar    = pow(0.825+(0.387*pow(Ra,(1./6.)))/pow(1+ pow(0.492/Pr_air, 9./16.), (8./27.)),2)  ;  // !(Incropera et al.,2006)
+	h_vert    = Nu_bar*k_air/Length;  
+
+	// !Horizontal Heated Downward Facing Plate
+	// !OR Cooled Upward Facing Plate
+	g_spec    = grav*max(0.,-cosD(SLOPE));
+	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2);
+	Ra        = max(0.0001,Gr*Pr_air);
+
+	Nu_bar    = 2.5/log(1.+(2.5/(0.527*pow(Ra,0.2)))*pow(1.+pow(1.9/Pr_air,0.9),2./9.));//    !Eq. 6-59  (Nellis&Klein)
+	h_down    = Nu_bar*k_air/L_ch_f;
+
+	// !Take Maximum of 3 Calculated Heat Transfer Coefficients
+
+	return max(max(h_down,h_vert),h_up); //  !Fig. 6-12  (Nellis&Klein)
+}
+
+static double ffd( double D_h, double Re_dh )
+{
+	// !Function added by TN (2010)
+	// !Solution for friction factor of channel flow as presented in Nellis and Klein (2008) and EES.
+
+	static const double e = 0.005;
+	return pow( (-2.*log10(max(1.e-6,((2.*e/(7.54*D_h)-5.02/Re_dh*log10(2.*e/(7.54*D_h)+13./Re_dh)))))), -2.0 );
+}
+
+static double channel_free( double W_gap, double SLOPE, double TA, double T_cr, double k_air,
+	double rho_air, double cp_air, double mu_air, double Length )
+{
+	// !Function added by TN (2010)
+	// !Solution for internal forced convection as presented in Nellis and Klein (2008) an d EES
+
+	double g_spec,Beta,alpha,nu_air,Ra,Nu;
+
+	static const double grav = 9.81;
+
+	nu_air    = mu_air / rho_air; //          !Kinematic Viscosity 
+
+	g_spec    = max(0.1, sinD(SLOPE)*grav);
+	Beta   	= 1./((T_cr+TA)/2.);
+	alpha 	= k_air / (rho_air * cp_air);
+	Ra	    = max(0.001,g_spec*pow(W_gap,3)*Beta*(T_cr-TA)/(nu_air*alpha));
+	Nu     	= Ra/24.*W_gap/Length*pow(1.0-exp(-35./Ra*Length/W_gap),0.75);
+
+	return  Nu*k_air/W_gap;
+}
+
+
+bool mcphys_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc )
+{
+	double err_P      = 100.0;  //!Set initial performance error. Must be > tolerance for power error in do loop
+	double err_P1     = 100.0;  //!Set initial performance error for updated power guess
+	double err_P2     = 0.0;    //!Set initial previous error.  Should be zero so approach factor doesn't reset after 1 iteration
+	int p_iter     = 0;     //!Set iteration counter (performance)
+	double app_fac_P  = 1.0;
+        	
+	double Geff_total = irradiance_through_cover(
+			input.IncAng,
+			input.Zenith,
+			input.Tilt,
+			input.Ibeam,
+			input.Idiff,
+			input.Ignd );		
+	
+	if (Geff_total < 1.0 )
+	{	
+		*Tc = input.Tdry;
+		return true;
+	}
+
+	int mceff = mc;
+
+	double Length = module_length;
+	double Width = module_width;
+
+	if (nrows > 0 && ncols > 0)
+	{
+		Length *= nrows;
+		Width *= ncols;
+	}
+
+	double Area = Length*Width;
+
+	double L_char = 4.0 *Length*Width / (2*(Width + Length));
+
+	if ( W_gap < 0.001 && mceff == GAP ) mceff = FLUSH;
+
+	double R_gap = W_gap/(nrows*module_length);
+	
+	if ( mceff == GAP && R_gap > 1 && orient == VERTSUPP ) mceff = RACK;
+
+	
+	double TC = input.Tdry + 273.15;
+	double P_atm = input.Patm;
+	double V_cover = MAX(input.Wspd, 0.001);
+	double TA = input.Tdry + 273.15;	
+	double Fcg        = (1. - cosD(input.Tilt))/2; //   !view factor between top of tilted plate and horizontal plane adjacent to bottom edge of plate
+	double Fcs        = 1. - Fcg; //              !view factor between top of tilted plate and everything else (sky)
+	double Fbs        = Fcg; //                   !view factor bewteen top and ground = bottom and sky
+	double Fbg        = Fcs; //                   !view factor bewteen bottom and ground = top and sky
+	
+	double AMASS  = 1/(cosD(input.Zenith)+0.5057*pow((96.080-input.Zenith),-1.634));
+	double MAM    = a0+a1*AMASS+a2*pow(AMASS,2)+a3*pow(AMASS,3)+a4*pow(AMASS,4);
+	double SunEff = MAM*(input.Ibeam + input.Idiff + input.Ignd);
+	double EffRef = Pmp_ref/(1000*module_width*module_length);
+	double P_guess = EffRef * (SunEff*Area);
+
+	// sky temperature calculation, D&B 3.9.2  Tdew in 'C, TA and Tsky are Kelvin
+	double Tsky = TA*(0.711+0.0056*input.Tdew+0.000073*pow(input.Tdew,2.0)+0.013*pow(cosD(input.TimeOfDayHr),0.25)); //   !Sky Temperature: Berdahl and Martin  
+	double Tgnd = TA; // assume ground temperature is same as ambient
+    
+	while ( p_iter < 301 && fabs(err_P) > 0.1 )
+	{
+		double err_TC   = 100.0;  //!Set initial temperature error. Must be > tolerance for temp error in do loop
+		double err_TC_p = 0.0;    //!Set initial previous error. Should be zero so approach factor doesn't reset after 1 iteration
+		int h_iter   = 0;       //!Set iteration counter (temperature)
+		double app_fac  = 0.5;   //!Set approach factor for updating cell temp guess value
+		double app_fac_v = 0.5;  //!Set approach factor for updating channel velocity guess value
+ 	/*    
+		switch (mceff)
+		{
+		case RACK:
+			{ // !Rack Mounting Configuration 
+				int h_iter = 0;
+				while ( fabs(err_TC) > 0.001 )
+				{
+					double rho_air    = P_atm*28.967/8314.34*(1./((TA+TC)/2.)); // !density of air as a function of pressure and ambient temp
+					double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across module
+					double Nu_forced  = 0.037 * pow(Re_forced, (4./5.)) * pow(Pr_air,(1./3.)); //  !Nusselt Number (Incropera et al., 2006)
+					double h_forced   = Nu_forced * k_air / L_char;
+					double h_sky      = ( pow(TC,2)+pow(Tsky,2))*(TC+Tsky);
+					double h_ground   = ( pow(TC,2)+pow(Tgnd,2))*(TC+Tgnd);
+					double h_free_c   = free_convection(TC,TA, input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air);  // !Call function to calculate free convection on tilted surface (top)           
+					double h_free_b   = free_convection(TC,TA,180.-input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air); // !Call function to calculate free convection on tilted surface (bottom)              
+					double h_conv_c   = pow( pow(h_forced,3.)+pow(h_free_c,3.), 1./3.); // !Combine free and forced heat transfer coefficients (top)
+					double h_conv_b   = pow( pow(h_forced,3.)+pow(h_free_b,3.), 1./3.); // !Combine free and forced heat transfer coefficients (bottom)
+            
+					// !Energy balance to calculate TC
+					double TC1 = ((h_conv_c+h_conv_b)*TA + (Fcs*EmisC+Fbs*EmisB)*sigma*h_sky*Tsky + (Fcg*EmisC+Fbg*EmisB)*sigma*h_ground*Tgnd &
+							-(P_guess/Area)+SHDKR)/(h_conv_c+h_conv_b+(Fcs*EmisC +Fbs*EmisB)*sigma*h_sky+(Fcg*EmisC+Fbg*EmisB)*sigma*h_ground)
+
+					!Since some variables in TC1 calc are function of TC, iterative solving is required        
+					err_TC     = TC1 - TC !Error between n-1 and n temp calculations
+					TC         = TC1      !Set cell temp to most recent calculation
+                    
+					h_iter++;
+            
+					if (h_iter > 150 && fabs(err_TC) > 0.001)
+					{
+						m_err = "cell temperature calculations did not converge";
+						return false;
+					}
+				}
+			}
+			break;
+
+	case FLUSH:
+			{ // !Flush Mounting Configuration
+				DO WHILE ((h_iter .LT. 151).AND.(abs(err_TC) .GT. 0.001))
+            
+					rho_air    = P_atm*28.967/8314.34*(1 / ((TA+TC)/2.)) !density of air a function of pressure and ambient temp
+					Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air)  !Reynolds number of wind moving across panel: function of L_char: array depen?
+					Nu_forced  = 0.037 * Re_forced**(4./5.) * Pr_air**(1./3.)
+					h_forced   = Nu_forced * k_air / L_char
+					h_sky      = (TC**2+T_Sky**2)*(TC+T_sky)
+					h_ground   = (TC**2+T_ground**2)*(TC+T_ground)
+					h_free_c   = FREECONVECTION194(TC,TA,SLOPE,RHO_AIR,Pr_air,mu_air,Area,Length,Width,k_air)         
+					h_conv_c   = (h_forced**3.+h_free_c**3.)**(1./3.)
+                    
+					TC1 = ((h_conv_c)*TA + (Fcs*EmisC)*sigma*h_sky*T_sky + (Fcg*EmisC)*sigma*h_ground*T_ground &
+							-(P_guess/AREA)+SHDKR)/(h_conv_c+(Fcs*EmisC)*sigma*h_sky+(Fcg*EmisC)*sigma*h_ground)
+                    
+					err_TC     = TC1 - TC
+					TC         = TC1
+                    
+					h_iter     = h_iter + 1 
+                    
+					IF((h_iter.GT.150).AND.(abs(err_TC).GT.0.001)) THEN
+						call messages(-1,"Cell Temperature Calculations Did Not Converge",'WARNING',INFO(1),INFO(2))
+						return
+					ENDIF
+            
+				END DO 
+			}
+			break;
+
+		case INTEGRATED:
+			{ // !Integrated Mounting Configuration
+				DO WHILE ((h_iter .LT. 151).AND.(abs(err_TC) .GT. 0.001))
+            
+					rho_air    = P_atm*28.967/8314.34*(1 / ((TA+TC)/2.)) !density of air a function of pressure and film temp
+					rho_bk     = P_atm*28.967/8314.34*(1 / ((T_back+TC)/2.))
+					Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air)  !Reynolds number of wind moving across panel: function of L_char: array depen?
+					Nu_forced  = 0.037 * Re_forced**(4./5.) * Pr_air**(1./3.)
+					h_forced   = Nu_forced * k_air / L_char
+                    
+					h_sky      = (TC**2+T_Sky**2)*(TC+T_sky)
+					h_ground   = (TC**2+T_ground**2)*(TC+T_ground)
+                   
+					h_radbk    = (TC**2+T_back**2)*(TC+T_back)!Using T_back now instead of TA
+                    
+					h_free_c   = FREECONVECTION194(TC,TA,SLOPE,RHO_AIR,Pr_air,mu_air,Area,Length,Width,k_air)
+                 
+					h_free_b   = FREECONVECTION194(TC,T_back,180.-SLOPE,RHO_BK,Pr_air,mu_air,Area,Length,Width,k_air)
+                 
+					h_conv_c   = (h_forced**3.+h_free_c**3.)**(1./3.)
+					h_conv_b   = h_free_b !No forced convection on backside
+                    
+					TC1 = (h_conv_c*TA+h_conv_b*T_back+Fcs*EmisC*sigma*h_sky*T_sky+Fcg*EmisC*sigma*h_ground*T_ground &
+							+EmisB*sigma*h_radbk*T_back-(P_guess/AREA)+SHDKR)/(h_conv_c+h_conv_b+Fcs*EmisC*sigma*h_sky+ &
+							Fcg*EmisC*sigma*h_ground+EmisB*sigma*h_radbk)
+                    
+					err_TC     = TC1 - TC
+					TC         = TC1
+                    
+					h_iter     = h_iter + 1 
+                    
+					IF((h_iter.GT.150).AND.(abs(err_TC).GT.0.001)) THEN
+						call messages(-1,"Cell Temperature Calculations Did Not Converge",'WARNING',INFO(1),INFO(2))
+						return
+					ENDIF
+            
+				END DO
+			}
+			break;
+
+		case GAP:
+			{ // !Gap (channel) Mounting Configuration            
+
+				IF (MSO.EQ.1) THEN
+					!Define channel length and width for gap mounting configuration that does not block air flow in any direction
+					!Use minimum dimension for length so that MSO 1 will have lower temp than MSO 2 or 3
+					L_charB = min(Width, Length)
+					L_str   = max(Width, Length)
+                    
+					!These values are dependent on MSO
+					A_c        = W_gap * L_str      !Cross Sectional area of channel
+					Per_cw 	   = 2.*L_str           !Perimeter minus open sides
+					D_h 	   = (4.*A_c)/Per_cw    !Hydraulic diameter
+				ENDIF
+                
+				IF (MSO.EQ.2) THEN   !Vertical supports
+					L_charB = Length
+					L_str   = Width / Ncols           
+					A_c        = W_gap * L_str          !Cross Sectional area of channel
+					Per_cw 	   = 2.*L_str + 2.*W_gap    !Perimeter ACCOUNTING for supports: different than MSO 1
+					D_h 	   = (4.*A_c)/Per_cw        !Hydraulic diameter
+				ENDIF
+                   
+				IF (MSO.EQ.3) THEN   !Horizontal supports
+					!Flow is restricted to one direction.  Wind speed has already been adjusted using a cosine projection
+					L_charB = Width
+					!Width of channel is function of number of columns of modules.  Assuming that support structures are exactly the length of a module
+					L_str   = Length / Nrows
+					A_c        = W_gap * L_str          !Cross Sectional area of channel
+					Per_cw 	   = 2.*L_str + 2.*W_gap    !Perimeter ACCOUNTING for supports: different than MSO 1
+					D_h 	   = (4.*A_c)/Per_cw        !Hydraulic diameter
+				ENDIF   
+                
+				!Begin iteration to find cell temperature             
+				DO WHILE ((h_iter .LT. 151).AND.(abs(err_TC) .GT. 0.001))
+					rho_air    = P_atm*28.967/8314.34*(1 / ((TA+TC)/2.)) !density of air a function of pressure and film temp
+					err_v      = 100                                     !set error for channel velocity iteration
+					v_iter     = 0                        !set iteration counter for channel velocity iteration
+					P_in       = 0.5*V_WIND**2 * rho_air  !Dynamic pressure at inlet
+                  
+					!Calculate air velocity through channel by assuming roughness and estimating pressure drop
+					DO WHILE ((v_iter.LT.81).AND.(abs(err_v).GT.0.001))        
+						Re_dh_ch   = rho_air*v_ch*(D_h / mu_air)    !Reynolds number for channel flow
+						f_fd       = FFD194(D_h,Re_dh_ch)           !Friction factor of channel flow
+						tau_s      = f_fd*rho_air*v_ch**2/8.        !Shear stress on air
+						P_out      = P_in - tau_s*per_cw*L_charB/A_c !Dynamic pressure at outlet
+						v_ch1      = (max(0.0005,(2*P_out/rho_air)))**(1./2.)  !velocity
+						err_v      = v_ch1 - v_ch                   !Current Error
+						err_v_sign = err_v * err_v_p                !Did error switch signs between previous calc?
+						err_v_p    = err_v                          !Previous Error     
+                        
+						if(err_v_sign<0.)app_fac_v=app_fac_v*0.5    !If error switched signs, reduced "approach factor"
+                        
+						v_ch       = v_ch + app_fac_v * err_v         !New velocity estimate equals old + a portion of the last error
+						v_iter     = v_iter + 1                     !Add 1 to iteration counter
+					END DO
+
+                
+					!Heat transfer on cover of module: using un-adjusted wind speed input
+					Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air)  !Reynolds number of wind moving across panel
+					Nu_forced  = 0.037*Re_forced**(4./5.)*Pr_air**(1./3.)
+					h_forced   = Nu_forced * k_air / L_char
+					h_sky      = (TC**2+T_Sky**2)*(TC+T_sky)
+					h_ground   = (TC**2+T_ground**2)*(TC+T_ground)
+					h_free_c   = FREECONVECTION194(TC,TA,SLOPE,RHO_AIR,Pr_air,mu_air,Area,Length,Width,k_air)
+					h_conv_c   = (h_forced**3.+h_free_c**3.)**(1./3.)
+                
+					!Reynolds number for channel flow
+					Re_fp 	   = rho_air*v_ch*L_charB / mu_air
+					!Use calculated channel velocity in flat plate correlation to find heat transfer coefficient
+					!This approach (rather than channel flow correlations) allows channel equations to approach open rack as gap increases
+					Nus_ch     = 0.037*Re_fp**(4./5.)*Pr_air**(1./3.)
+					h_ch       = Nus_ch * k_air / L_charB
+					h_ch       = min(h_ch, h_forced)           !Make sure gap mounted doesn't calc lower temps than open rack
+                    
+					!Set iteration  counter and initial error for roof/wall temperature iteration
+					iter_T_rw  = 0
+					err_T_rw   = 2
+                
+					!Calculate roof temperature based on current cell temperature guess
+					DO WHILE ((iter_T_rw<121).AND.(abs(err_T_rw).GT.0.001))
+                
+						T_cr       = (TC+T_rw)/2. !Average of cell and roof temp assumed in correlations
+
+						IF (MSO.EQ.3) THEN
+							h_fr       = 0 !If E-W supports then assume no free convection
+						ELSE
+							!Call function for channel free convection        
+							h_fr       = CHANNELFREE194(W_gap,SLOPE,TA,T_cr,k_air,rho_air,cp_air,mu_air,Length)
+						ENDIF
+             
+						m_dot 	   = v_ch*rho_air*A_c !mass flow rate through channel
+						h_conv_b   = (h_ch**3 + h_fr**3)**(1./3.)  !total heat transfer coefficient in channel
+                        
+						!Calculate air temperature at the end of the channel 
+						!For MSO 2 & 3 have been calculating gap HT per channel(not necessarily entire array), so need to consider that going forward
+						if (MSO.EQ.1) AR = 1
+						if (MSO.EQ.2) AR = Ncols
+						if (MSO.EQ.3) AR = Nrows
+                
+						T_m        = T_cr-(T_cr-TA)*Dexp(-2*(Area/AR)*h_conv_b/(m_dot*cp_air))
+                     
+						!Using air temp at end of channel, calculate heat transfer to air in the channel: Then adjust for entire array (AR)
+						Q_air      = max(0.0001,cp_air*m_dot*(T_m - TA)) * AR
+
+						!Determine the ratio of the heat transfered to channel that was from module and roof/wall by comparing temperatures
+						DELTAT_r   = T_rw - TA
+						DELTAT_c   = TC - TA
+                        
+						R_r        = min(1., DELTAT_r / max(0.1,(DELTAT_r + DELTAT_c)))
+						R_c        = min(1., DELTAT_c / max(0.1,(DELTAT_r + DELTAT_c)))
+                        
+						!Adjust to flux
+						Q_conv_c   = R_c * Q_air / Area
+						Q_conv_r   = R_r * Q_air / Area
+                
+						!Calculate heat transfer coefficient for radiation
+						h_radbk    = (TC**2+T_rw**2)*(TC+T_rw)
+						!Energy Balance to calculate roof/wall temperature     
+						T_rw1        = max(TA, TC - Q_conv_r/(EmisB*sigma*h_radbk))
+
+						err_T_rw    = T_rw1 - T_rw   !Error
+						T_rw        = T_rw + (0.5-0.495*(iter_T_rw/60))*err_T_rw  !Reset guess
+						iter_T_rw   = iter_T_rw + 1   !Increase iteration counter
+					END DO     
+                
+					!Once roof temperature has been solved for guess cell temperature, re-calculate cell temperature
+					TC1 = (h_conv_c*TA + Fcs*EmisC*sigma*h_sky*T_sky+Fcg*EmisC*sigma*h_ground*T_ground+sigma*EmisB*h_radbk*T_rw &
+							-Q_conv_c-(P_guess/AREA)+SHDKR)/(h_conv_c+Fcs*EmisC*sigma*h_sky+Fcg*EmisC*sigma*h_ground+sigma*EmisB*h_radbk)
+                    
+					err_TC      = TC1 - TC                  !Current Error
+					err_sign    = err_TC * err_TC_p         !Did error switch signs between previous calc?
+					err_TC_p    = err_TC                    !Previous Error 
+                    
+					if(err_sign < 0.) app_fac = app_fac * 0.9
+                    
+					TC         = TC + app_fac * err_TC
+
+					h_iter     = h_iter + 1 
+                    
+					!If cell temperature does not converge, give error message
+					IF((h_iter.GT.150).AND.(abs(err_TC).GT.0.001)) THEN
+						call messages(-1,"Cell Temperature Calculations Did Not Converge",'WARNING',INFO(1),INFO(2))
+						return
+					ENDIF
+                
+				END DO
+			}
+			break;
+
+		default:
+			m_err = "invalid mounting configuration specification (mc)";
+			return false; 
+		}*/
+
+      /*
+      
+		!Evaluation of IL and IO at operating conditions, for one module
+		IL   = (SUNEFF/SUNR)*(IL_REF+MISC*(TC-TCR))  
+
+		IF (IL.LT.0.0) IL=0.0
+		EG   = EG_REF*(1-0.0002677*(TC-TCR))
+		IO   = IO_REF*((TC/TCR)**3)*DEXP((1/KB)*(EG_REF/TCR-EG/TC))
+		A    = A_REF*TC/TCR
+		RSH  = 1E6
+		IF (SUNEFF.GT.0.d0) RSH=RSH_REF*(SUNR/SUNEFF) !Shunt resistance relation in DeSoto paper
+
+		!Open circuit voltage, short circuit current for 1 module
+		VOC = OPENVOLTN194(VOCR,SUNEFF)   
+		ISC = IL/(1+RS/RSH)
+
+          
+		!****   all calculations are being skipped during time periods
+		!****   with no insolation     
+		IF(SUNEFF.EQ.0.d0)THEN
+			V    = 0.d0
+			I    = 0.d0
+			IMP  = 0.d0
+			VMP  = 0.d0
+			PMAX = 0.d0
+			UTIL = 0.d0
+			FF   = 0.d0
+		ELSE
+			!**** check on operation mode
+			IF(V.LT.0.)THEN
+				V=0.d0
+				I=0.d0
+			ELSE
+				!****normal operation
+				!****check if voltage greater than open circuit voltage
+				IF((V/NSer).GT.VOC)THEN
+					V=VOC*NSer
+					I=0.d0
+				ELSE
+				I=CURRENT5194(V,0.9*IL, NSER, NPRL)  !CURRENT FOR ENTIRE ARRAY
+				ENDIF
+			ENDIF
+
+	1000    P=I*V	!POWER FOR ENTIRE ARRAY
+
+			!MAXIMUM POWER FOR THE ARRAY
+			PMAX=0
+			VMP=0
+			IMP=0
+			VMP=(VMR+MVOC*(TC-TCR))/2
+			DO WHILE (PMAX.LE.(IMP*VMP).AND. (VMP.LT.VOC))
+				PMAX=IMP*VMP
+				VMP=VMP+0.01
+				IMP=CURRENT5194(VMP,0.9*IL, 1, 1)  !IMP PER MODULE 
+			END DO
+    	  
+			PMAX = IMP*VMP*NSER*NPRL  !PER ARRAY
+
+			IF(PMAX.NE.0.)THEN
+				UTIL=P/PMAX
+			ELSE
+				UTIL=0.d0
+			ENDIF
+
+			!Fill factor
+			IF ((VOC.GT.0.d0).AND.(ISC.GT.0.d0)) THEN
+				FF=VMP*IMP/VOC/ISC
+			ELSE
+				FF=0.d0
+			ENDIF
+		ENDIF
+      
+		IF ((SUNEFF.LT.1).OR.(MC.EQ.5)) GOTO 2345 !Don't need to iterate if temp is not a function of power
+      
+		PMAX_1    = Derate * PMAX/(NSER*NPRL) !Calculate power per module  3/22/11: Multiply by module level derate
+      
+		IF (HTD.EQ.2)   PMAX_1    = PMAX_1 * Nrows * Ncols   !Calculate power on # modules used for heat transfer calcs
+     
+		err_P1     = PMAX_1 - P_guess !Performance error
+		err_sign_P = err_P1 * err_P2
+		err_P2     = err_P1
+      
+		if((p_iter > 5).AND.(err_sign_P < 0.)) app_fac_P = 0.75*app_fac_P
+      
+		err_P      = (PMAX_1 - P_guess)/(Nrows * Ncols)    !Performance error for 1 panel
+		P_guess    = P_guess + app_fac_P*err_P1 !Set performance to most recent calc
+		p_iter     = p_iter + 1 !+1 to iteration counter
+      
+		IF ((p_iter.GT.300).AND.(abs(err_P).GT.0.1)) THEN
+			call messages(-1,"Power Calculations Did Not Converge",'WARNING',INFO(1),INFO(2))
+			return
+		ENDIF
+      
+	*/
+
+	} //   !End of power iteration which includes temperature calculations
+
+	return false;
+}
+
+
 noct_celltemp_t::noct_celltemp_t( )
 {
 	Area = Vmp = Imp = Tnoct = std::numeric_limits<double>::quiet_NaN();
@@ -266,7 +811,7 @@ noct_celltemp_t::noct_celltemp_t( )
 
 bool noct_celltemp_t::operator() ( pvinput_t &input, pvpower_t &, double *Tc )
 {
-	double T_cell = input.Tamb + 273.15;
+	double T_cell = input.Tdry + 273.15;
 	
 	double Geff_total = irradiance_through_cover(
 		input.IncAng,
@@ -284,7 +829,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvpower_t &, double *Tc )
 		double W_spd = input.Wspd;		
 		if (W_spd < 0.001) W_spd = 0.001;		
 		if (G_total > 0) tau_al *= Geff_total/G_total;		
-		T_cell = (input.Tamb+273.15) + (G_total/I_noct * (Tnoct - Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
+		T_cell = (input.Tdry+273.15) + (G_total/I_noct * (Tnoct - Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
 	}
 	
 	*Tc = T_cell - 273.15;
