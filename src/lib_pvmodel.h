@@ -9,19 +9,28 @@ class pvpower_t;
 class pvinput_t
 {
 public:
-	pvinput_t( double ib, double id, double ig, double ta, double ws, double zen, double inc, double elv, double tlt );
+	pvinput_t( double ib, double id, double ig, 
+		double ta, double tw, double td,
+		double ws, double wd, double atm,
+		double zen, double inc, 
+		double elv, double tlt, double azi,
+		double todh );
 
-	/* angles are in degrees */
-
-	double Ibeam;
-	double Idiff;
-	double Ignd;
-	double Tamb;
-	double Wspd;
-	double Zenith;
-	double IncAng;
-	double Elev;
-	double Tilt;
+	double Ibeam; // beam irradiance, W/m2
+	double Idiff; // sky diffuse irradiance, W/m2
+	double Ignd; // ground reflected irradiance, W/m2
+	double Tdry; // dry bulb temp, C
+	double Twet; // wet bulb temp, C
+	double Tdew; // dew point temp, C
+	double Wspd; // wind speed, m/s
+	double Wdir; // wind direction, degrees (0=N,90=E)
+	double Zenith; // zenith angle, deg
+	double IncAng; // incidence angle on surface, deg
+	double Elev; // site elevation, m
+	double Tilt; // surface tilt angle, deg
+	double Azimuth; // surface azimuth angle, deg
+	double Patm; // atmospheric pressure, millibar 
+	double TimeOfDayHr; // hours since midnight
 };
 
 class pvcelltemp_t

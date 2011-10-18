@@ -283,7 +283,7 @@ bool sandia_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, doubl
 		input.Ibeam,
 		input.Idiff+input.Ignd,
 		input.Wspd,
-		input.Tamb,
+		input.Tdry,
 		fd,
 		a,
 		b);

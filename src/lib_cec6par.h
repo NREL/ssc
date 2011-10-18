@@ -9,6 +9,29 @@
    http://minds.wisconsin.edu/handle/1793/7602
 */
 
+class mcphys_celltemp_t : public pvcelltemp_t
+{
+public:
+
+	double Pmp_ref;
+
+	enum{ RACK, FLUSH, INTEGRATED, GAP };
+	int mc;
+
+	enum{ NOIMPEDE, VERTSUPP, HORIZSUPP };
+	int orient; // 0=do not impede flow, 1=vertical supports, 2=horizontal supports
+
+	// array dimensions
+	int nrows;
+	int ncols;
+
+	double module_width;
+	double module_length;
+	double W_gap; 
+
+	mcphys_celltemp_t( );
+	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc );
+};
 
 class noct_celltemp_t : public pvcelltemp_t
 {
