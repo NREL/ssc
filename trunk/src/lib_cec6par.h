@@ -3,59 +3,48 @@
 
 #include "lib_pvmodel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
    Implementation of CEC 5 (6) parameter model as presented by
    DeSoto, Klein, and Beckman, Solar Energy Journal 2005   
    http://minds.wisconsin.edu/handle/1793/7602
 */
 
-typedef struct {
+
+class noct_celltemp_t : public pvcelltemp_t
+{
+public:
 	double Area;
-	double Vmp, Imp;
-	double Voc, Isc;
-	double alpha_isc, beta_voc;
-	double T_noct; // 'C
-	
-	// six reference condition parameters (calculated by coeffgen)
-	double a, Il, Io;
-	double Rs, Rsh, Adjust;	
-}  cec6par_module_t;
+	double Vmp;
+	double Imp;
+	double Tnoct;
 
-/*
-	returns 0 on success.
-   -1 indicates temp model failed to converge
-*/
-int cec6par_cell_temp_function (
-	// INPUTS
-	void *module_spec, // pointer to cec6par_module_t
-	pv_input_t *input,
-	
-	module_power_function f_modpwr,
-	void *module_spec_modpwr,
-	
-	// OUTPUTS
-	double *celltemp );
+	noct_celltemp_t( );
+	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc );
+};
 
- int cec6par_module_power_function (
-	// INPUTS
-	void *module_spec, // pointer to cec6par_module_t
-	int mode, 
-	double opvoltage, 
-	double celltemp,	
-	pv_input_t *input,
-	
-	// OUTPUTS
-	double *power, double *voltage, double *current, 
-	double *eff, double *voc, double *isc );
+class cec6par_power_t : public pvpower_t
+{
+public:	
+	double Area;
+	double Vmp;
+	double Imp;
+	double Voc;
+	double Isc;
+	double alpha_isc;
+	double beta_voc;
+	double Tnoct;
+	double a;
+	double Il;
+	double Io;
+	double Rs;
+	double Rsh;
+	double Adj;
 
-#ifdef __cplusplus
-}
-#endif
-
+	cec6par_power_t();
+	virtual bool operator() ( pvinput_t &input, double Tc, double opvoltage,
+		double *P, double *V, double *I,
+		double *Eff, double *Voc, double *Isc );
+};
 
 #endif
 

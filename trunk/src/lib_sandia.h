@@ -4,10 +4,6 @@
 #include "lib_pvmodel.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
 	Implementation of report SAND2004-3535
 	Photovoltaic Array Performance Model
@@ -16,7 +12,21 @@ extern "C" {
 	http://photovoltaics.sandia.gov/docs/PDF/King%20SAND.pdf
 */
 
-typedef struct {
+class sandia_celltemp_t : public pvcelltemp_t
+{
+	double a;
+	double b;
+	double DT0;
+	double fd;
+
+	sandia_celltemp_t( );
+	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc );
+};
+
+class sandia_power_t : public pvpower_t
+{
+public:
+	
 	double a, b, DT0;
 	double A0, A1, A2, A3, A4;
 	double B0, B1, B2, B3, B4, B5;
@@ -28,34 +38,12 @@ typedef struct {
 	double Ix0, Ixx0;
 	double fd, DiodeFactor, NcellSer;
 	double Area;
-} sandia_module_t;
 
-/*
-	returns 0 on success.
-   -1 indicates temp model failed to converge
-*/
-int sandia_cell_temp_function (
-	// INPUTS
-	void *module_spec, // pointer to sandia_module_t
-	pv_input_t *input,
-	
-	module_power_function f_modpwr,
-	void *module_spec_modpwr,
-	
-	// OUTPUTS
-	double *celltemp );
-
- int sandia_module_power_function (
-	// INPUTS
-	void *module_spec, // pointer to sandia_module_t
-	int mode, 
-	double opvoltage, 
-	double celltemp,	
-	pv_input_t *input,
-	
-	// OUTPUTS
-	double *power, double *voltage, double *current, 
-	double *eff, double *voc, double *isc );
+	sandia_power_t( );			
+	virtual bool operator() ( pvinput_t &input, double Tc, double opvoltage, /* by default, mppt, send MPPT_VOLTAGE */
+		double *Power, double *Voltage, double *Current,
+		double *Eff, double *OpVoc, double *OpIsc );
+};
 
 
 
@@ -67,7 +55,11 @@ int sandia_cell_temp_function (
 	http://photovoltaics.sandia.gov/Pubs_2010/old/075036.pdf
 */
 
-typedef struct {
+class sandia_inverter_t
+{
+public:
+	sandia_inverter_t( );
+
 	double Paco;    /* Maximum AC power rating, upper limit value  (Wac) */
 	double Pdco;    /* DC power level at which Paco is achieved (Wdc) */
 	double Vdco;    /* DC voltage level at which Paco is achieved (Vdc) */
@@ -77,25 +69,17 @@ typedef struct {
 	double C1;      /* (1/V, empirical, default 0) Parameter allowing Pdco to vary linearly with dc voltage input */
 	double C2;      /* (1/V, empirical, default 0) Parameter allowing Pso to vary linearly with dc voltage input */
 	double C3;      /* (1/V, empirical, default 0) Parameter allowing C0 to vary linearly with dc voltage input */
-} sandia_inverter_t;
 
-void sandia_inverter(	
-	/* parameters */
-	sandia_inverter_t *pInverter,
+	bool acpower(	/* inputs */
+		double Pdc,     /* Input power to inverter (Wdc) */
+		double Vdc,     /* Voltage input to inverter (Vdc) */
 
-	/* inputs */
-	double Pdc,     /* Input power to inverter (Wdc) */
-	double Vdc,     /* Voltage input to inverter (Vdc) */
-
-	/* outputs */
-	double *Pac,    /* AC output power (Wac) */
-	double *Ppar,   /* AC parasitic power consumption (Wac) */
-	double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
-	double *Eff	    /* Conversion efficiency (0..1) */
-	);
-
-#ifdef __cplusplus
-}
-#endif
+		/* outputs */
+		double *Pac,    /* AC output power (Wac) */
+		double *Ppar,   /* AC parasitic power consumption (Wac) */
+		double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+		double *Eff	    /* Conversion efficiency (0..1) */
+		);
+} ;
 
 #endif

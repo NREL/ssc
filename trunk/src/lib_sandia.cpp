@@ -270,84 +270,88 @@ static double sandia_current_at_voltage(double V, double VmaxPow, double ImaxPow
 	return Itrw;
 }
 
-int sandia_cell_temp_function (
-	// INPUTS
-	void *module_spec, // pointer to sandia_module_t
-	pv_input_t *input,
-	
-	module_power_function f_modpwr,
-	void *module_spec_modpwr,
-	
-	// OUTPUTS
-	double *celltemp )
+
+
+sandia_celltemp_t::sandia_celltemp_t( )
 {
-	sandia_module_t *modspec = (sandia_module_t*)module_spec;
-	
-	double Tback = sandia_module_temperature(
-		input->ibeam,
-		input->idiff+input->ignd,
-		input->wspd,
-		input->tamb,
-		modspec->fd,
-		modspec->a,
-		modspec->b);
-
-	//C Calculate cell temperature:
-	*celltemp = sandia_tcell_from_tmodule(
-		Tback,
-		input->ibeam,
-		input->idiff+input->ignd,
-		modspec->fd,
-		modspec->DT0);
-
-	return 0;
+	a = b = DT0 = fd = std::numeric_limits<double>::quiet_NaN();
 }
 
- int sandia_module_power_function (
-	// INPUTS
-	void *module_spec, // pointer to sandia_module_t
-	int mode, 
-	double opvoltage, 
-	double celltemp,	
-	pv_input_t *input,
-	
-	// OUTPUTS
-	double *power, double *voltage, double *current, 
-	double *eff, double *voc, double *isc )
+bool sandia_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc )
+{	
+	double Tback = sandia_module_temperature(
+		input.Ibeam,
+		input.Idiff+input.Ignd,
+		input.Wspd,
+		input.Tamb,
+		fd,
+		a,
+		b);
+
+	//C Calculate cell temperature:
+	*Tc = sandia_tcell_from_tmodule(
+		Tback,
+		input.Ibeam,
+		input.Idiff+input.Ignd,
+		fd,
+		DT0);
+
+	return true;
+}
+
+
+sandia_power_t::sandia_power_t( )
 {
-	sandia_module_t *modspec = (sandia_module_t*)module_spec;
+	a = b = DT0
+		= A0 = A1 = A2 = A3 = A4
+		= B0 = B1 = B2 = B3 = B4 = B5
+		= C0 = C1 = C2 = C3 = C4 = C5 = C6 = C7
+		= Isc0 = aIsc
+		= Imp0 = aImp
+		= Voc0 = BVoc0 = mBVoc
+		= Vmp0 = BVmp0 = mBVmp
+		= Ix0 = Ixx0
+		= fd = DiodeFactor = NcellSer
+		= Area = std::numeric_limits<double>::quiet_NaN();
+}
+
+
+bool sandia_power_t::operator() ( pvinput_t &input, double Tc, double opvoltage, /* by default, mppt, send MPPT_VOLTAGE */
+		double *Power, double *Voltage, double *Current,
+		double *Eff, double *OpVoc, double *OpIsc )
+{
 	
-	*power = *voltage = *current = *eff = *voc = *isc = 0.0;
+	*Power = *Voltage = *Current = *Eff = *OpVoc = *OpIsc = 0.0;
 	
-	double Gtotal = input->ibeam + input->idiff + input->ignd;
+	double Gtotal = input.Ibeam + input.Idiff + input.Ignd;
 	if ( Gtotal > 0.0 )
 	{
 			//C Calculate Air Mass
-		double AMa = sandia_absolute_air_mass(input->zenith, input->elev);
+		double AMa = sandia_absolute_air_mass(input.Zenith, input.Elev);
 
 		//C Calculate F1 function:
-		double F1 = sandia_f1(AMa,modspec->A0,modspec->A1,modspec->A2,modspec->A3,modspec->A4);
+		double F1 = sandia_f1(AMa,A0,A1,A2,A3,A4);
 
 		//C Calculate F2 function:
-		double F2 = sandia_f2(input->incang,modspec->B0,modspec->B1,modspec->B2,modspec->B3,modspec->B4,modspec->B5);
+		double F2 = sandia_f2(input.IncAng,B0,B1,B2,B3,B4,B5);
 
 		//C Calculate short-circuit current:
-		double Isc = sandia_isc(celltemp,modspec->Isc0,input->ibeam, input->idiff+input->ignd,F1,F2,modspec->fd,modspec->aIsc);
+		double Isc = sandia_isc(Tc,Isc0,input.Ibeam, input.Idiff+input.Ignd,F1,F2,fd,aIsc);
 
 		//C Calculate effective irradiance:
-		double Ee = sandia_effective_irradiance(celltemp,Isc,modspec->Isc0,modspec->aIsc);
+		double Ee = sandia_effective_irradiance(Tc,Isc,Isc0,aIsc);
 
 		//C Calculate Imp:
-		double Imp = sandia_imp(celltemp,Ee,modspec->Imp0,modspec->aImp,modspec->C0,modspec->C1);
+		double Imp = sandia_imp(Tc,Ee,Imp0,aImp,C0,C1);
 
 		//C Calculate Voc:
-		double Voc = sandia_voc(celltemp,Ee,modspec->Voc0,modspec->NcellSer,modspec->DiodeFactor,modspec->BVoc0,modspec->mBVoc);
+		double Voc = sandia_voc(Tc,Ee,Voc0,NcellSer,DiodeFactor,BVoc0,mBVoc);
 
 		//C Calculate Vmp:
-		double Vmp = sandia_vmp(celltemp,Ee,modspec->Vmp0,modspec->NcellSer,modspec->DiodeFactor,modspec->BVmp0,modspec->mBVmp,modspec->C2,modspec->C3);
+		double Vmp = sandia_vmp(Tc,Ee,Vmp0,NcellSer,DiodeFactor,BVmp0,mBVmp,C2,C3);
 
 		double V, I;
-		if ( mode == MAXPOWERPOINT )
+		if ( opvoltage < 0 )
 		{
 			V = Vmp;
 			I = Imp;
@@ -355,13 +359,13 @@ int sandia_cell_temp_function (
 		else
 		{		
 			//C Calculate Ix:
-			double Ix = sandia_ix(celltemp,Ee,modspec->Ix0,modspec->aIsc,modspec->aImp,modspec->C4,modspec->C5);
+			double Ix = sandia_ix(Tc,Ee,Ix0,aIsc,aImp,C4,C5);
 
 			//C Calculate Vx:
 			double Vx = Voc/2.0;
 
 			//C Calculate Ixx:
-			double Ixx = sandia_ixx(celltemp,Ee,modspec->Ixx0,modspec->aImp,modspec->C6,modspec->C7);
+			double Ixx = sandia_ixx(Tc,Ee,Ixx0,aImp,C6,C7);
 
 			//C Calculate Vxx:
 			double Vxx = 0.5*(Voc + Vmp);
@@ -373,22 +377,25 @@ int sandia_cell_temp_function (
 			I = sandia_current_at_voltage( opvoltage, Vmp, Imp, Voc, Isc );
 		}
 	
-		*power = V*I;
-		*voltage = V;
-		*current = I;
-		*eff = I*V/(Gtotal*modspec->Area);
-		*voc = Voc;
-		*isc = Isc;
+		*Power = V*I;
+		*Voltage = V;
+		*Current = I;
+		*Eff = I*V/(Gtotal*Area);
+		*OpVoc = Voc;
+		*OpIsc = Isc;
 	}
 	
-	return 0;
+	return true;
 }
 
 
-void sandia_inverter(	
-	/* parameters */
-	sandia_inverter_t *pInverter,
+sandia_inverter_t::sandia_inverter_t( )
+{
+	Paco = Pdco = Vdco = Pso
+		= Pntare = C0 = C1 = C2 = C3 = std::numeric_limits<double>::quiet_NaN();
+}
 
+bool sandia_inverter_t::acpower(
 	/* inputs */
 	double Pdc,     /* Input power to inverter (Wdc) */
 	double Vdc,     /* Voltage input to inverter (Vdc) */
@@ -400,24 +407,24 @@ void sandia_inverter(
 	double *Eff	    /* Conversion efficiency (0..1) */
 	)
 {
-	sandia_inverter_t *pi = pInverter;
+	double A = Pdco * ( 1.0 + C1*( Vdc - Vdco ));
+	double B = Pso * ( 1.0 + C2*( Vdc - Vdco ));
+	double C = C0 * ( 1.0 + C3*( Vdc - Vdco ));
 
-	double A = pi->Pdco * ( 1.0 + pi->C1*( Vdc - pi->Vdco ));
-	double B = pi->Pso * ( 1.0 + pi->C2*( Vdc - pi->Vdco ));
-	double C = pi->C0 * ( 1.0 + pi->C3*( Vdc - pi->Vdco ));
-
-	*Pac = ((pi->Paco / (A-B)) - C*(A-B))*(Pdc-B) + pi->C0*(Pdc-B)*(Pdc-B);
+	*Pac = ((Paco / (A-B)) - C*(A-B))*(Pdc-B) + C0*(Pdc-B)*(Pdc-B);
 	*Ppar = 0.0;
 
-	if (Pdc <= pi->Pso)
+	if (Pdc <= Pso)
 	{
-		*Pac = -pi->Pntare;
-		*Ppar = pi->Pntare;
+		*Pac = -Pntare;
+		*Ppar = Pntare;
 	}
 
-	if ( *Pac > pi->Paco ) *Pac = pi->Paco;
+	if ( *Pac > Paco ) *Pac = Paco;
 
-	*Plr = Pdc / pi->Pdco;
+	*Plr = Pdc / Pdco;
 	*Eff = *Pac / Pdc;
 	if ( *Eff < 0.0 ) *Eff = 0.0;
+
+	return true;
 }
