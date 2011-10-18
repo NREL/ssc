@@ -129,7 +129,7 @@ static double golden(double ax, double bx, double (*f)(double,void*), void *data
 #define atanD(x) (57.295779513082320876798154814105*atan(x))
 
 
-static double openvoltage_194( double Voc0, double a, double IL, double IO, double RS, double RSH )
+static double openvoltage_194( double Voc0, double a, double IL, double IO, double , double RSH )
 {
 /*
 	C     Iterative solution for open-circuit voltage.  Explicit algebraic solution
@@ -259,48 +259,40 @@ static double irradiance_through_cover(
 	return Geff_total;
 }
 
-int cec6par_cell_temp_function (
-	// INPUTS
-	void *module_spec, // pointer to cec6par_module_t
-	pv_input_t *input,
-	
-	module_power_function f_modpwr,
-	void *module_spec_modpwr,
-	
-	// OUTPUTS
-	double *celltemp )
+noct_celltemp_t::noct_celltemp_t( )
 {
-	double T_cell = input->tamb + 273.15;
-	
-	double Geff_total = irradiance_through_cover(
-		input->incang,
-		input->zenith,
-		input->tilt,
-		input->ibeam,
-		input->idiff,
-		input->ignd );		
-	
-	if (Geff_total > 1.0 )
-	{
-		cec6par_module_t *modspec = (cec6par_module_t*)module_spec;		
-		double G_total = input->ibeam + input->idiff + input->ignd;		
-		double eff_ref = modspec->Imp * modspec->Vmp / ( I_ref*modspec->Area );
-		double tau_al = fabs(TauAlpha);
-		double W_spd = input->wspd;		
-		if (W_spd < 0.001) W_spd = 0.001;		
-		if (G_total > 0) tau_al *= Geff_total/G_total;		
-		T_cell = (input->tamb+273.15) + (G_total/I_noct * (modspec->T_noct-Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
-	}
-	
-	*celltemp = T_cell - 273.15;
-
-	return 0;
+	Area = Vmp = Imp = Tnoct = std::numeric_limits<double>::quiet_NaN();
 }
 
-struct refparm
+bool noct_celltemp_t::operator() ( pvinput_t &input, pvpower_t &, double *Tc )
 {
-	double a,Il,Io,Rs,Rsh;
-};
+	double T_cell = input.Tamb + 273.15;
+	
+	double Geff_total = irradiance_through_cover(
+		input.IncAng,
+		input.Zenith,
+		input.Tilt,
+		input.Ibeam,
+		input.Idiff,
+		input.Ignd );		
+	
+	if (Geff_total > 1.0 )
+	{	
+		double G_total = input.Ibeam + input.Idiff + input.Ignd;		
+		double eff_ref = Imp *Vmp / ( I_ref*Area );
+		double tau_al = fabs(TauAlpha);
+		double W_spd = input.Wspd;		
+		if (W_spd < 0.001) W_spd = 0.001;		
+		if (G_total > 0) tau_al *= Geff_total/G_total;		
+		T_cell = (input.Tamb+273.15) + (G_total/I_noct * (Tnoct - Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
+	}
+	
+	*Tc = T_cell - 273.15;
+
+	return true;
+}
+
+struct refparm { double a, Il, Io, Rs, Rsh; };
 
 static double powerfunc( double V, void *_d )
 {
@@ -308,47 +300,39 @@ static double powerfunc( double V, void *_d )
 	return -V*current_194( V, 0.9*r->Il, r->a, r->Il, r->Io, r->Rs, r->Rsh );
 }
 
- int cec6par_module_power_function (
-	// INPUTS
-	void *module_spec, // pointer to cec6par_module_t
-	int mode, 
-	double opvoltage, 
-	double celltemp,	
-	pv_input_t *input,
-	
-	// OUTPUTS
-	double *power, double *voltage, double *current, 
-	double *eff, double *voc, double *isc )
+cec6par_power_t::cec6par_power_t( )
 {
-	cec6par_module_t *modspec = (cec6par_module_t*) module_spec;
+	Area = Vmp = Imp = Voc = Isc = alpha_isc = beta_voc = Tnoct
+		= a = Il = Io = Rs = Rsh = Adj = std::numeric_limits<double>::quiet_NaN();
+}
+
+bool cec6par_power_t::operator() ( pvinput_t &input, double Tc, double opvoltage,
+		double *Power, double *Voltage, double *Current,
+		double *Eff, double *OpVoc, double *OpIsc )
+{
 	
-	double muIsc = modspec->alpha_isc * (1-modspec->Adjust/100);
-	double muVoc = modspec->beta_voc * (1+modspec->Adjust/100);
-	
-	double T_amb = input->tamb + 273.15;  // convert to Kelvin from C	
+	double muIsc = alpha_isc * (1-Adj/100);
 	
 	/* initialize output first */
-	*power = *voltage = *current = *eff = *voc = *isc = 0.0;
+	*Power = *Voltage = *Current = *Eff = *OpVoc = *OpIsc = 0.0;
 	
-	double G_total = input->ibeam + input->idiff + input->ignd; // total incident irradiance on tilted surface, W/m2
-	
-	
+	double G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
+		
 	double Geff_total = irradiance_through_cover(
-		input->incang,
-		input->zenith,
-		input->tilt,
-		input->ibeam,
-		input->idiff,
-		input->ignd );	
+		input.IncAng,
+		input.Zenith,
+		input.Tilt,
+		input.Ibeam,
+		input.Idiff,
+		input.Ignd );	
 
-	double theta_z = input->zenith;
+	double theta_z = input.Zenith;
 	if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
 	if (theta_z < 0) theta_z = 0; // Zenith angle must be >= 0
 	
-	double W_spd = input->wspd;
+	double W_spd = input.Wspd;
 	if (W_spd < 0.001) W_spd = 0.001;
 	
-	double eff_ref = modspec->Imp * modspec->Vmp / ( I_ref*modspec->Area );
 	double tau_al = fabs(TauAlpha);
 	if (G_total > 0)
 		tau_al *= Geff_total/G_total;
@@ -361,35 +345,35 @@ static double powerfunc( double V, void *_d )
 	double air_mass_modifier = a0 + a1*air_mass + a2*pow(air_mass,2) + a3*pow(air_mass,3) + a4*pow(air_mass,4);
 	Geff_total *= air_mass_modifier;	
 	
-	double T_cell = celltemp + 273.15;
+	double T_cell = Tc + 273.15;
 	if ( Geff_total >= 1.0 )
 	{
 		// calculation of IL and IO at operating conditions
-		double IL = Geff_total/I_ref *( modspec->Il + muIsc*(T_cell-Tc_ref) );
+		double IL = Geff_total/I_ref *( Il + muIsc*(T_cell-Tc_ref) );
 		if (IL < 0.0) IL = 0.0;
 		
 		double EG = eg0 * (1-0.0002677*(T_cell-Tc_ref));
-		double IO = modspec->Io * pow(T_cell/Tc_ref, 3) * exp( 1/KB*(eg0/Tc_ref - EG/T_cell) );
-		double A = modspec->a * T_cell / Tc_ref;
+		double IO = Io * pow(T_cell/Tc_ref, 3) * exp( 1/KB*(eg0/Tc_ref - EG/T_cell) );
+		double A = a * T_cell / Tc_ref;
 		double Rsh = 1e6;
 		if (Geff_total > 0.0)
-			Rsh = modspec->Rsh*(I_ref/Geff_total);
+			Rsh = Rsh*(I_ref/Geff_total);
 			
-		double V_oc = openvoltage_194( modspec->Voc, A, IL, IO, modspec->Rs, Rsh );
-		double I_sc = IL/(1+modspec->Rs/Rsh);
+		double V_oc = openvoltage_194( Voc, A, IL, IO, Rs, Rsh );
+		double I_sc = IL/(1+Rs/Rsh);
 		
 		double P, V, I;
 		
-		if ( mode == MAXPOWERPOINT )
+		if ( opvoltage < 0 )
 		{
 			struct refparm refdata;
 			refdata.a = A;
 			refdata.Il = IL;
 			refdata.Io = IO;
-			refdata.Rs = modspec->Rs;
+			refdata.Rs = Rs;
 			refdata.Rsh = Rsh;
 
-			P = -golden( 0, modspec->Voc, powerfunc, &refdata, 1e-4, &V);
+			P = -golden( 0, Voc, powerfunc, &refdata, 1e-4, &V);
 
 			I = 0;
 			if (V != 0) I=P/V;
@@ -404,14 +388,14 @@ static double powerfunc( double V, void *_d )
 			  /*
 			// maximum power
 			P = 0;
-			V = (modspec->Vmp + muVoc*(T_cell-Tc_ref))/2;
+			V = (Vmp + muVoc*(T_cell-Tc_ref))/2;
 			I = 0;
 			
 			while( P <= V*I && V < V_oc )
 			{
 				P = V*I;
 				V += 0.01;
-				I = current_194( V, 0.9*IL, A, IL, IO, modspec->Rs, Rsh );
+				I = current_194( V, 0.9*IL, A, IL, IO, Rs, Rsh );
 			}
 
 */
@@ -420,18 +404,17 @@ static double powerfunc( double V, void *_d )
 		else
 		{ // calculate power at specified operating voltage
 			V = opvoltage;
-			I = current_194( V, 0.9*IL, A, IL, IO, modspec->Rs, Rsh );
+			I = current_194( V, 0.9*IL, A, IL, IO, Rs, Rsh );
 			P = V*I;
 		}
 		
-//		printf("\tP=%lg V=%lg I=%lg\n", P, V, I);
-		*power = P;
-		*voltage  = V;
-		*current = I;
-		*voc = V_oc;
-		*isc = I_sc;
-		*eff = P/(modspec->Area*G_total);
+		*Power = P;
+		*Voltage  = V;
+		*Current = I;
+		*OpVoc = V_oc;
+		*OpIsc = I_sc;
+		*Eff = P/(Area*G_total);
 	}
 
-	return 0;
+	return true;
 }

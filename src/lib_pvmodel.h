@@ -1,69 +1,53 @@
-#ifndef __pv_h
-#define __pv_h
+#ifndef __pvmodulemodel_h
+#define __pvmodulemodel_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
 
-enum { MAXPOWERPOINT, OPERATINGVOLTAGE };
+class pvcelltemp_t;
+class pvpower_t;
 
-typedef struct {
-	double ibeam;
-	double idiff;
-	double ignd;
-	double tamb;
-	double wspd;
-	double zenith;
-	double incang;
-	double elev;
-	double tilt;
-} pv_input_t;
-	
+class pvinput_t
+{
+public:
+	pvinput_t( double ib, double id, double ig, double ta, double ws, double zen, double inc, double elv, double tlt );
 
-typedef int (*module_power_function) (
-	// INPUTS
-	void *module_spec,
-	int mode, 
-	double opvoltage, 
-	double celltemp,	
-	pv_input_t *input,
-	
-	// OUTPUTS
-	double *power, double *voltage, double *current, 
-	double *eff, double *voc, double *isc );
-	
-typedef int (*cell_temp_function) (
-	// INPUTS
-	void *module_spec,
-	pv_input_t *input,
-	
-	module_power_function f_modpwr,
-	void *module_spec_modpwr,
-	
-	// OUTPUTS
-	double *celltemp ); // degrees C
+	/* angles are in degrees */
 
-int module_power(
-	// INPUTS
-	cell_temp_function f_celltemp,	
-	void *module_spec_celltemp,
-	
-	module_power_function f_modpwr,
-	void *module_spec_modpwr,
-	
-	pv_input_t *input,
-	
-	int mode, double opvoltage,
-	
-	double *power, double *voltage, double *current, 
-	double *eff, double *voc, double *isc, double *celltemp );
-	
-	
+	double Ibeam;
+	double Idiff;
+	double Ignd;
+	double Tamb;
+	double Wspd;
+	double Zenith;
+	double IncAng;
+	double Elev;
+	double Tilt;
+};
 
-#ifdef __cplusplus
-}
-#endif
+class pvcelltemp_t
+{
+protected:
+	std::string m_err;
+public:
+	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc ) = 0;
+	std::string error();
+};
+
+class pvpower_t
+{
+protected:
+	std::string m_err;
+public:
+
+	virtual bool operator() ( pvinput_t &input, double Tc, double opvoltage, /* by default, for mppt, use negative opvoltage */
+		double *Power, double *Voltage, double *Current,
+		double *Eff, double *OpVoc, double *OpIsc ) = 0;
+	std::string error();
+};
+
+
+bool pvmodule_function( pvinput_t &input, pvcelltemp_t &tcfunc, pvpower_t &pwrfunc, double opvol,
+	double *P, double *V, double *I, double *Eff, double *Voc, double *Isc, double *Tcell );
 
 
 #endif
-
