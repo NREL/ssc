@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\cmod_6parsolve.cpp" />
     <ClCompile Include="src\cmod_cashloan.cpp" />
     <ClCompile Include="src\cmod_easywatts.cpp" />
     <ClCompile Include="src\cmod_equpartflip.cpp" />
@@ -64,6 +65,12 @@
     <ClCompile Include="src\vtab_common.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\6par_gamma.h" />
+    <ClInclude Include="src\6par_jacobian.h" />
+    <ClInclude Include="src\6par_lu.h" />
+    <ClInclude Include="src\6par_newton.h" />
+    <ClInclude Include="src\6par_search.h" />
+    <ClInclude Include="src\6par_solve.h" />
     <ClInclude Include="src\attic.h" />
     <ClInclude Include="src\core.h" />
     <ClInclude Include="src\lib_cec6par.h" />
