@@ -7,6 +7,7 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++ -arch i386
 
 OBJECTS = \
+	cmod_6parsolve.o \
 	cmod_test_irr.o \
 	cmod_wfreader.o \
 	cmod_irradproc.o \
