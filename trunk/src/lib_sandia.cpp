@@ -1,4 +1,6 @@
 #include <math.h>
+#include <cmath>
+#include <limits>
 #include "lib_sandia.h"
 
 static double sandia_voc( double Tc, double Ee, double Voc0, double NcellSer, double DiodeFactor, double BVoc0, double mBVoc )

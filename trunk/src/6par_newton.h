@@ -4,7 +4,7 @@ template< typename Real > Real mymax( Real a, Real b ) { return a > b ? a : b; }
 template< typename Real, typename F, int n >
 int newton( Real x[n], Real residual[n], bool &check, F &func, 
 	int MAXITER, const Real TOLF, const Real TOLMIN, const Real STPMX,
-	bool (*notify)(int iter, Real x[], Real resid[], const int n, void *) = 0,
+	bool (*notify)(int iter, Real x[], Real resid[], const int, void *) = 0,
 	void *notify_data = 0)
 {
 	const Real TOLX = std::numeric_limits<Real>::epsilon();
