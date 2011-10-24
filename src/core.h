@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <exception>
 #include <cstdarg>
+#include <cmath>
+#include <limits>
 
 /* Macros require for building
 	__32BIT__ *or* __64BIT__

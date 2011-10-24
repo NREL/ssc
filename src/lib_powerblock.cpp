@@ -1,5 +1,8 @@
 #include "lib_powerblock.h"
+#include <cmath>
+#include <limits>
 #include <math.h>
+
 #include "lib_util.h"
 
 CPowerBlock_Type224::CPowerBlock_Type224()
@@ -484,7 +487,7 @@ double CPowerBlock_Type224::f_Tsat_p(double P)
 		Pg = f_psat_T(Tg);
 		err = (P-Pg)/P;
 		T = Tg;
-		if( (abs(err) < 1.0E-6) ) break;
+		if( (fabs(err) < 1.0E-6) ) break;
 		Tg = T + (err * 25.0);
 	}
 	return T;
@@ -655,7 +658,7 @@ void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_
 
 	// Do a quick check to see if there is actually a mass flow being supplied
 	//   to the cycle. If not, go to the end.
-	if(abs(m_dot_htf_ND) < 1.0E-3)
+	if(fabs(m_dot_htf_ND) < 1.0E-3)
 	{
 		P_cycle = 0.0;
 		eta = 0.0;
@@ -764,7 +767,7 @@ void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_
 			// err = (P_cycle - demand_var)/demand_var
 			// ADJ = 1.+(demand_var-P_cycle)/(3.*demand_var)
 			ADJ = (demand_var-P_cycle)/demand_var;		// MJW 10.31.2010: Adjustment factor
-			err = abs(ADJ);								// MJW 10.31.2010: Take the absolute value of the error..
+			err = fabs(ADJ);								// MJW 10.31.2010: Take the absolute value of the error..
 			m_dot_htf_ND = m_dot_htf_ND + ADJ*0.75;		// MJW 10.31.2010: Iterate the mass flow rate. Take a step smaller than the calculated adjustment
 		
 		}

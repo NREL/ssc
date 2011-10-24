@@ -2,6 +2,8 @@
 #define __CPowerBlock_Type224__
 
 #include <string>
+#include <cmath>
+#include <math.h>
 #include "lib_util.h"
 #include "lib_physics.h"
 

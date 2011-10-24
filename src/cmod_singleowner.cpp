@@ -3497,7 +3497,7 @@ public:
 /* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
 	bool is_valid_iter_bound(double estimated_return_rate)
 	{
-		return estimated_return_rate != -1 && (estimated_return_rate < INT_MAX) && (estimated_return_rate > INT_MIN);
+		return estimated_return_rate != -1 && (estimated_return_rate < std::numeric_limits<int>::max()) && (estimated_return_rate > std::numeric_limits<int>::min());
 	}
 
 	double irr_poly_sum(double estimated_return_rate, int cf_line, int count)

@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <math.h>
+#include <cmath>
+#include <limits>
 
 #include "lib_cec6par.h"
 

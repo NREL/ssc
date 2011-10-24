@@ -1,5 +1,8 @@
 #include "core.h"
 
+#include <limits>
+#include <cmath>
+
 #include "6par_jacobian.h"
 #include "6par_lu.h"
 #include "6par_search.h"

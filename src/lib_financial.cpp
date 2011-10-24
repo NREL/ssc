@@ -1,4 +1,5 @@
 #include <math.h>
+#include <limits>
 #include "lib_financial.h"
 
 /* financial code here */
@@ -6,7 +7,7 @@
 
 static bool is_valid_iter_bound(double estimatedReturnRate)
 {
-	return estimatedReturnRate != -1 && (estimatedReturnRate < INT_MAX) && (estimatedReturnRate > INT_MIN);
+	return estimatedReturnRate != -1 && (estimatedReturnRate < std::numeric_limits<int>::max()) && (estimatedReturnRate > std::numeric_limits<int>::min());
 }
 
 static double irr_poly_sum(double estimatedReturnRate, const std::vector<double> &CashFlows, int Count)
