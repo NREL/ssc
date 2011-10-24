@@ -2,9 +2,25 @@ VPATH=../src
 
 CC = gcc
 CXX = g++
-CFLAGS = -D__UNIX__ -D__32BIT__ -fPIC -Wall -O3
+CFLAGS = -D__UNIX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
+
+ifeq ($(CFG),)
+CFG=64
+endif
+
+
+ifeq ($(CFG),64)
+CFLAGS += -D__64BIT__
+TARGET=ssc64.so
+else
+CFLAGS += -D__32BIT__
+TARGET=ssc32.so
+endif
+
+all: inform $(TARGET)
+
 
 OBJECTS = \
 	cmod_6parsolve.o \
@@ -48,11 +64,21 @@ OBJECTS = \
 	sscapi.o \
 	vtab_common.o
 
-TARGET = ssc.so
-
 $(TARGET) : $(OBJECTS)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS)
 
+inform:
+ifneq ($(CFG),64)
+ifneq ($(CFG),32)
+	@echo "Invalid configuration "$(CFG)" specified."
+	@echo "You must specify a configuration when running make."
+	@echo  "make CFG=64"
+	@echo
+	@echo "Possible choices for CFG are '32' and '64'"
+	@exit 1
+endif
+endif
+
 clean:
-	rm -rf $(OBJECTS) $(TARGET)
+	rm -rf $(OBJECTS) ssc32.so ssc64.so 
 
