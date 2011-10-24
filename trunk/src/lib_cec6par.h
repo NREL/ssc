@@ -19,15 +19,16 @@ public:
 	int mc;
 
 	enum{ NOIMPEDE, VERTSUPP, HORIZSUPP };
-	int orient; // 0=do not impede flow, 1=vertical supports, 2=horizontal supports
+	int orient;
 
-	// array dimensions
+	// array dimensions (use 1,1 to compute using single module basis)
 	int nrows;
 	int ncols;
 
 	double module_width;
 	double module_length;
 	double W_gap; 
+	double T_integ; // temp in 'C of back side of module on integrated mounting configuration
 
 	mcphys_celltemp_t( );
 	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc );
