@@ -394,7 +394,7 @@ static double channel_free( double W_gap, double SLOPE, double TA, double T_cr, 
 }
 
 
-bool mcphys_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc )
+bool mcphys_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc )
 {
 	double err_P      = 100.0;  //!Set initial performance error. Must be > tolerance for power error in do loop
 	double err_P1     = 100.0;  //!Set initial performance error for updated power guess
@@ -742,7 +742,7 @@ bool mcphys_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, doubl
 
 
 		double Power, Voltage, Current, Eff, OpVoc, OpIsc;
-		if ( !pwrfunc( input, TC-273.15, -1, &Power, &Voltage, &Current, &Eff, &OpVoc, &OpIsc ) )
+		if ( !pwrfunc( input, TC-273.15, opvol, &Power, &Voltage, &Current, &Eff, &OpVoc, &OpIsc ) )
 		{
 			m_err = "iterative cell temp error in power calc: " + pwrfunc.error();
 			return false;
@@ -778,7 +778,7 @@ noct_celltemp_t::noct_celltemp_t( )
 	Area = Vmp = Imp = Tnoct = std::numeric_limits<double>::quiet_NaN();
 }
 
-bool noct_celltemp_t::operator() ( pvinput_t &input, pvpower_t &, double *Tc )
+bool noct_celltemp_t::operator() ( pvinput_t &input, pvpower_t &, double opvol, double *Tc )
 {
 	double T_cell = input.Tdry + 273.15;
 	

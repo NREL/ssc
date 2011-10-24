@@ -31,7 +31,7 @@ public:
 	double T_integ; // temp in 'C of back side of module on integrated mounting configuration
 
 	mcphys_celltemp_t( );
-	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc );
+	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc );
 };
 
 class noct_celltemp_t : public pvcelltemp_t
@@ -43,7 +43,7 @@ public:
 	double Tnoct;
 
 	noct_celltemp_t( );
-	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc );
+	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc );
 };
 
 class cec6par_power_t : public pvpower_t
