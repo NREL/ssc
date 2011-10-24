@@ -46,7 +46,7 @@ std::string pvpower_t::error()
 bool pvmodule_function( pvinput_t &input, pvcelltemp_t &tcfunc, pvpower_t &pwrfunc, double opvol,
 	double *P, double *I, double *V, double *Voc, double *Isc, double *Eff, double *Tcell, std::string *err )
 {
-	if (! tcfunc( input, pwrfunc, Tcell ) )
+	if (! tcfunc( input, pwrfunc, opvol, Tcell ) )
 	{
 		if (err) *err = tcfunc.error();
 		return false;

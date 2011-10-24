@@ -38,7 +38,7 @@ class pvcelltemp_t
 protected:
 	std::string m_err;
 public:
-	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc ) = 0;
+	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvoltage, double *Tc ) = 0;
 	std::string error();
 };
 

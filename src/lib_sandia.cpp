@@ -279,7 +279,7 @@ sandia_celltemp_t::sandia_celltemp_t( )
 	a = b = DT0 = fd = std::numeric_limits<double>::quiet_NaN();
 }
 
-bool sandia_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, double *Tc )
+bool sandia_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc )
 {	
 	double Tback = sandia_module_temperature(
 		input.Ibeam,
