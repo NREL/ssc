@@ -35,8 +35,7 @@ static var_info _cm_vtab_irradproc[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                    "Azimuth angle",                  "deg",    "E=90,S=180,W=270",      "Irradiance Processor",      "*",                       "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                       "Tilt angle",                     "deg",    "H=0,V=90",              "Irradiance Processor",      "?",                       "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                     "Rotational limit on tracker",    "deg",    "",                      "Irradiance Processor",      "?=45",                    "MIN=0,MAX=90",                             "" },
-
-
+	
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_beam",                   "Incident Beam Irradiance",       "W/m2",   "",                      "Irradiance Processor",      "*",                       "",                  "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff",                "Incident Sky Diffuse",           "W/m2",   "",                      "Irradiance Processor",      "*",                       "",                  "" },
@@ -46,6 +45,7 @@ static var_info _cm_vtab_irradproc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff_cir",            "Incident Diffuse Circumsolar Component", "W/m2", "",                "Irradiance Processor",      "*",                       "",                  "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff_hor",            "Incident Diffuse Horizon Brightening Component", "W/m2", "",        "Irradiance Processor",      "*",                       "",                  "" },
 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "incidence",                  "Incidence angle to surface",     "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Solar azimuth",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Solar zenith",                   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
@@ -104,6 +104,7 @@ public:
 		double sun[9],poa[3],angle[3],diffc[3];
 		
 		// allocate outputs
+		ssc_number_t *p_inc = allocate("incidence", count);
 		ssc_number_t *p_azm = allocate("sun_azm", count);
 		ssc_number_t *p_zen = allocate("sun_zen", count);
 		ssc_number_t *p_elv = allocate("sun_elv", count);
@@ -204,6 +205,8 @@ public:
 			poa[0]=poa[1]=poa[2] = 0;
 			diffc[0]=diffc[1]=diffc[2] = 0;
 
+			angle[0]=angle[1]=angle[2] = 0;
+
 			// do irradiance calculations if sun is up
 			if (p_sunup[i] > 0)
 			{
@@ -253,6 +256,7 @@ public:
 			}
 			
 			// assign outputs
+			p_inc[i] = (ssc_number_t) (angle[0] * 180/M_PI);
 			p_azm[i] = (ssc_number_t) (sun[0] * 180/M_PI);
 			p_zen[i] = (ssc_number_t) (sun[1] * 180/M_PI);
 			p_elv[i] = (ssc_number_t) (sun[2] * 180/M_PI);

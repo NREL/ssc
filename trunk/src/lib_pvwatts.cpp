@@ -63,7 +63,10 @@
 double transpoa( double poa, double dn, double inc )
 {  /* Calculates the irradiance transmitted thru a PV module cover. Uses King
 		polynomial coefficients for glass from 2nd World Conference Paper,
-		July 6-10, 1998.                         Bill Marion 12/8/1998 */
+		July 6-10, 1998.                         Bill Marion 12/8/1998
+		
+		note: 'inc' is passed in as radians
+		*/
 
 	double b0=1.0,
 		b1=-2.438e-3,
