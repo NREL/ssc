@@ -23,6 +23,7 @@ all: inform $(TARGET)
 
 
 OBJECTS = \
+	cmod_pvwattsperf.o \
 	cmod_6parsolve.o \
 	cmod_test_irr.o \
 	cmod_wfreader.o \
