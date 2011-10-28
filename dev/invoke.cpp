@@ -142,6 +142,72 @@ DECL_INVOKEFCN( ssc_load_state )
 	return true;
 }
 
+DECL_INVOKEFCN( ssc_modules )
+{
+	wxString cms;
+	IVKARG(0, cms, "string");
+
+	wxArrayString list = Split( cms, "," );
+
+	bool ok = true;
+	app_frame->ClearCMs();
+	for (size_t i=0;i<list.Count();i++)
+		ok = ok && app_frame->AddCM( list[i] );
+
+	retval->Assign( ok );
+
+	return true;
+}
+
+DECL_INVOKEFCN( ssc_param )
+{
+	if (args.count() < 3)
+	{
+		ivkobj.Messages.Add("insufficient number of arguments passed to ssc_param");
+		return false;
+	}
+
+	wxString cm, param;
+	IVKARG(0, cm, "string");
+	IVKARG(1, param, "string");
+	ssc_number_t value_num;
+	wxString value_str;
+	int type;
+	if (args[2]->DataType() == SLVariant::DOUBLE)
+	{
+		type = SSC_NUMBER;
+		value_num = args[2]->AsDouble();
+	}
+	else if (args[2]->DataType() == SLVariant::INTEGER)
+	{
+		type = SSC_NUMBER;
+		value_num = args[2]->AsInteger();
+	}
+	else if (args[2]->DataType() == SLVariant::BOOLEAN)
+	{
+		type = SSC_NUMBER;
+		value_num = args[2]->AsBoolean() ? 1.0f : 0.0f;
+	}
+	else
+	{
+		type = SSC_STRING;
+		value_str = args[2]->AsString();
+	}
+
+	if (type == SSC_NUMBER) value_str = wxString::Format("%lg", value_num);
+
+	retval->Assign( app_frame->SetCMParam( cm, param, value_str, type ) );
+	return true;
+}
+
+DECL_INVOKEFCN( ssc_clear_params )
+{
+	wxString cm;
+	IVKARG(0, cm, "string");
+	retval->Assign( app_frame->ClearCMParams( cm )  );
+	return true;
+}
+
 void AppendSSCInvokeFunctions(SLInvokeTable *tab)
 {
 	tab->Add( ssc_start, "ssc_start", 0, "Start SSC simulation", "(NONE):NONE" );
@@ -150,4 +216,7 @@ void AppendSSCInvokeFunctions(SLInvokeTable *tab)
 	tab->Add( ssc_get, "ssc_get", 1, "Get variable value", "(STRING:name):VARIANT");
 	tab->Add( ssc_save_state, "ssc_save_state", 1, "Save current variable state", "(STRING:file):BOOLEAN");
 	tab->Add( ssc_load_state, "ssc_load_state", 1, "Load a variable state file", "(STRING:file):BOOLEAN");
+	tab->Add( ssc_modules, "ssc_modules", 1, "Sets the current list of compute modules, comma separated list", "(STRING:cm list):BOOLEAN");
+	tab->Add( ssc_param, "ssc_param", 3, "Sets a compute module parameter, number or string", "(STRING:cm name, STRING:param name, [STRING|NUMBER]:value):BOOLEAN");
+	tab->Add( ssc_clear_params, "ssc_clear_params", 1, "Clears all parameters for a compute module", "(STRING:cm name):BOOLEAN");
 }

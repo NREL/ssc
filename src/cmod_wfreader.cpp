@@ -5,7 +5,8 @@
 static var_info _cm_vtab_wfreader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,         SSC_STRING,      "file_name",               "local weather file path",          "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
-	
+	{ SSC_INPUT,         SSC_NUMBER,      "syn_albedo_from_snow",    "synthesize albedo from snow depth?","0/1",   "uses PVwatts convention to calculate albedo from snow depth", "Weather Reader", "?=0", "BOOLEAN", "" },
+
 // header data
 	{ SSC_OUTPUT,        SSC_NUMBER,      "lat",                     "Latitude",                         "deg",    "",                      "Weather Reader",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "lon",                     "Longitude",                        "deg",    "",                      "Weather Reader",      "*",                        "",                      "" },
@@ -92,6 +93,8 @@ public:
 		ssc_number_t *p_snow = allocate( "snow", records );
 		ssc_number_t *p_albedo = allocate( "albedo", records );
 
+		bool syn_albedo = as_boolean("syn_albedo_from_snow");
+
 		for (int i=0;i<records;i++)
 		{
 			if (!wf.read())
@@ -114,7 +117,18 @@ public:
 			p_rhum[i] = (ssc_number_t)wf.rhum;
 			p_pres[i] = (ssc_number_t)wf.pres;
 			p_snow[i] = (ssc_number_t)wf.snow;
-			p_albedo[i] = (ssc_number_t)wf.albedo;			
+			p_albedo[i] = (ssc_number_t)wf.albedo;	
+
+			if ( syn_albedo
+				&& ( p_albedo[i] < 0 || p_albedo[i] > 1)
+				&& ( p_snow[i] >= 0 && p_snow[i] < 150 ))
+			{
+				// if we're synthesizing an albedo from snow depth
+				// and there's an invalid albedo and a valid snow depth,
+				// use the PVWatts V1. convention for higher ground 
+				// reflectance in the presence of snow
+				p_albedo[i] = (ssc_number_t)( p_snow[i] > 0 ? 0.6 : 0.2 );
+			}
 		}
 	}
 };

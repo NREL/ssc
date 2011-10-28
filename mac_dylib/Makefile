@@ -7,7 +7,6 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++ -arch i386
 
 OBJECTS = \
-	cmod_pvwattsperf.o \
 	cmod_6parsolve.o \
 	cmod_test_irr.o \
 	cmod_wfreader.o \
@@ -18,7 +17,7 @@ OBJECTS = \
 	cmod_ptflux.o \
 	cmod_fossilgen.o \
 	cmod_cashloan.o \
-	cmod_easywatts.o \
+	cmod_pvwattsv1.o \
 	cmod_equpartflip.o \
 	cmod_levpartflip.o \
 	cmod_saleleaseback.o \

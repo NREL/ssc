@@ -48,6 +48,8 @@ public:
 		m_cmList = list; UpdateForm(); }
 	Array<cmModule> GetCMList() { return m_cmList; }
 
+	static wxArrayString GetAvailableCMs();
+
 private:
 	void UpdateForm();
 	void UpdateParamList();

@@ -9,7 +9,7 @@
 #define DTOR 0.0174532925
 #endif
 
-static var_info _cm_vtab_easywatts[] = {
+static var_info _cm_vtab_pvwattsv1[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "file_name",                  "local weather file path",        "",       "",                      "Weather",      "*",                       "LOCAL_FILE",      "" },
 		
@@ -27,13 +27,13 @@ static var_info _cm_vtab_easywatts[] = {
 
 var_info_invalid };
 
-class cm_easywatts : public compute_module
+class cm_pvwattsv1 : public compute_module
 {
 public:
 	
-	cm_easywatts()
+	cm_pvwattsv1()
 	{
-		add_var_info( _cm_vtab_easywatts );
+		add_var_info( _cm_vtab_pvwattsv1 );
 	}
 
 	void exec( ) throw( general_error )
@@ -41,7 +41,7 @@ public:
 		const char *file = as_string("file_name");
 
 		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("easywatts", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("pvwattsv1", "failed to read local weather file: " + std::string(file));
 					
 		double watt_spec = 1000.0 * as_double("system_size");
 		double derate = as_double("derate");
@@ -91,7 +91,7 @@ public:
 				for(int i=0;i<24;i++)      /* Read a day of data and initialize */
 				{
 					if (!wf.read())
-						throw exec_error("easywatts", "could not read data line " + util::to_string(i+1) + " of 8760");
+						throw exec_error("pvwattsv1", "could not read data line " + util::to_string(i+1) + " of 8760");
 					
 					dn[i] = wf.dn;
 					df[i] = wf.df;
@@ -222,4 +222,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( easywatts, "EasyWatts - PVWatts based integrated hourly weather reader and PV system simulator.", 1 )
+DEFINE_MODULE_ENTRY( pvwattsv1, "PVWatts V.1 - integrated hourly weather reader and PV system simulator.", 1 )
