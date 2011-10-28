@@ -116,6 +116,11 @@ public:
 	DataView *GetDataView() { return m_dataView; }
 	var_table *GetVarTable() { return m_varTable; }
 
+	void ClearCMs();
+	bool AddCM( const wxString &name );
+	bool SetCMParam( const wxString &cm, const wxString &param, const wxString &value, int type = SSC_STRING );
+	bool ClearCMParams( const wxString &cm );
+
 private:	
 	void UpdateUI();
 

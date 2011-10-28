@@ -884,6 +884,72 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 	}
 }
 
+void SCFrame::ClearCMs()
+{
+	m_cmList.clear();
+	UpdateUI();
+}
+
+bool SCFrame::AddCM( const wxString &name )
+{
+	wxArrayString list = CMForm::GetAvailableCMs();
+	if (list.Index( name ) != wxNOT_FOUND)
+	{
+		cmModule x;
+		x.cm_mod_name = name;
+		m_cmList.append( x );
+		UpdateUI();
+		return true;
+	}
+	else
+		return false;
+}
+
+bool SCFrame::SetCMParam( const wxString &cm, const wxString &param, const wxString &value, int type )
+{
+	for (int i=0;i<m_cmList.count();i++)
+	{
+		if (m_cmList[i].cm_mod_name == cm)
+		{
+			for (int j=0;j<m_cmList[i].params.count();j++)
+			{
+				if (param == m_cmList[i].params[j].name)
+				{
+					m_cmList[i].params[j].type = type;
+					m_cmList[i].params[j].str = value;
+					m_cmList[i].params[j].num = atof( value.c_str() );
+					UpdateUI();
+					return true;
+				}
+			}
+
+			cmParam x;
+			x.name = param;
+			x.str = value;
+			x.num = atof( value.c_str() );
+			x.type = type;
+			m_cmList[i].params.append( x );
+			UpdateUI();
+			return true;
+		}
+	}
+
+	return false;	
+}
+
+bool SCFrame::ClearCMParams( const wxString &cm )
+{
+	for (int i=0;i<m_cmList.count();i++)
+	{
+		if (m_cmList[i].cm_mod_name == cm)
+		{
+			m_cmList[i].params.clear();
+			return true;
+		}
+	}
+	return false;
+}
+
 bool SCFrame::Load(const wxString &fn)
 {
 	wxBusyInfo busy("Loading: " + fn);

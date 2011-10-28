@@ -120,17 +120,27 @@ CMForm::~CMForm()
 }
 /*user.class.start*/
 
-void CMForm::LoadCMs()
+wxArrayString CMForm::GetAvailableCMs()
 {
+	wxArrayString list;
 	try {
 
 		int idx=0;
 		while (const ssc_entry_t p_entry = ::ssc_module_entry(idx++))
-			cklCMList->Append( ::ssc_entry_name(p_entry) );
+			list.Add( ::ssc_entry_name(p_entry) );
 
 	} catch(sscdll_error e) {
 		wxMessageBox("DLL error: " + e.func + ": " + e.text );
 	}
+
+	return list;
+}
+
+void CMForm::LoadCMs()
+{
+	wxArrayString l = GetAvailableCMs();
+	for (size_t i=0;i<l.Count();i++)
+		cklCMList->Append( l[i] );
 }
 
 void CMForm::OnCMListCheck(wxCommandEvent &evt)
