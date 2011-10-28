@@ -863,7 +863,7 @@ bool cec6par_power_t::operator() ( pvinput_t &input, double Tc, double opvoltage
 	
 	// !Calculation of Air Mass Modifier
 	double air_mass = 1/(cos( theta_z*M_PI/180 )+0.5057*pow(96.080-theta_z, -1.634));
-	// air_mass *= exp(-0.0001184 * Elevation); // optional correction for elevation (m), as applied in Sandia PV model
+	air_mass *= exp(-0.0001184 * input.Elev); // correction for elevation (m), as applied in Sandia PV model
 	double air_mass_modifier = a0 + a1*air_mass + a2*pow(air_mass,2) + a3*pow(air_mass,3) + a4*pow(air_mass,4);
 	Geff_total *= air_mass_modifier;	
 	
