@@ -48,6 +48,7 @@ public:
 	void SetPowerBlockParameters(const SPowerBlockParameters& pbp) {oGeoOutputs.SetPowerBlockParameters(pbp); }
 	SPowerBlockParameters GetPowerBlockParameters(void) { return oGeoOutputs.GetPowerBlockParameters(); }
 	void SetPowerBlockInputs(const SPowerBlockInputs& pbi) {oGeoOutputs.SetPowerBlockInputs(pbi); }
+	void SetTOUPeriodArray(int * tou) { oGeoOutputs.SetTOUPeriodArray(tou); }
 
 	// plant brine effectiveness (this value is calculated for flash plants)
 	void SetPlantEfficiency(double percent) { oGeoOutputs.SetPlantEfficiency(percent); }

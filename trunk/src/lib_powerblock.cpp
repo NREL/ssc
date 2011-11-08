@@ -202,6 +202,12 @@ bool CPowerBlock_Type224::InitializeForParameters(const SPowerBlockParameters& p
 		m_F_wcMin = dmin1(m_F_wcMin, m_pbp.F_wc[i]);
 	}
 
+	if ( (m_F_wcMax > 1.0) || (m_F_wcMin < 0.0) )
+	{
+        m_strLastError = "Hybrid dispatch values must be between zero and one.";
+		return false;
+	}
+
     // Calculate the power block side steam enthalpy rise for blowdown calculations
     // Steam properties are as follows:
     // =======================================================================
@@ -282,9 +288,9 @@ bool CPowerBlock_Type224::Execute(const long lSecondsFromStart, const SPowerBloc
 {
 	if (!m_bInitialized) return false;
 	if (!SetNewTime(lSecondsFromStart)) return false;
-	if ( (pbi.TOU < 1) || (pbi.TOU > 9) )
+	if ( (pbi.TOU < 0) || (pbi.TOU > 8) )
 	{
-        m_strLastError = "The power block inputs contained an invalid time-of-use period. The value encountered was " + util::to_string(pbi.TOU) + " and it should be >=1 and <=9.";
+        m_strLastError = "The power block inputs contained an invalid time-of-use period. The value encountered was " + util::to_string(pbi.TOU) + " and it should be >=0 and <=8.";
 		return false;
 	}
 	m_pbi = pbi;
@@ -331,7 +337,7 @@ bool CPowerBlock_Type224::Execute(const long lSecondsFromStart, const SPowerBloc
 	{
 		case 1:  // The cycle is in normal operation
 			RankineCycle(m_pbp.P_ref, m_pbp.eta_ref, m_pbp.T_htf_hot_ref, m_pbp.T_htf_cold_ref, m_pbi.T_db, m_pbi.T_wb, m_pbi.P_amb, m_pbp.dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER, 
-						 m_pbi.T_htf_hot, m_pbi.m_dot_htf, m_pbi.mode, m_pbi.demand_var, m_pbp.P_boil, m_pbp.T_amb_des, m_pbp.T_approach, m_pbp.F_wc[m_pbi.TOU-1],
+						 m_pbi.T_htf_hot, m_pbi.m_dot_htf, m_pbi.mode, m_pbi.demand_var, m_pbp.P_boil, m_pbp.T_amb_des, m_pbp.T_approach, m_pbp.F_wc[m_pbi.TOU],
 						 m_F_wcMin, m_F_wcMax, m_pbp.T_ITD_des, m_pbp.P_cond_ratio, m_pbp.P_cond_min,
 						 m_pbo.P_cycle, m_pbo.eta, m_pbo.T_htf_cold, m_pbo.m_dot_demand, m_pbo.m_dot_htf_ref, m_pbo.m_dot_makeup, m_pbo.W_cool_par, m_pbo.f_hrsys, m_pbo.P_cond);
 
