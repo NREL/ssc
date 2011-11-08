@@ -93,6 +93,8 @@ static var_info _cm_vtab_geohourly[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl7",							"HC Control 7",						"",			"",                      "GeoHourly",     "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl8",							"HC Control 8",						"",			"",                      "GeoHourly",     "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "hc_ctl9",							"HC Control 9",						"",			"",                      "GeoHourly",     "*",             "",                      "" },
+	// dispatch
+	{ SSC_INPUT,        SSC_STRING,      "hybrid_dispatch_schedule",		"Daily dispatch schedule",			"",			"",						 "GeoHourly",	  "*",			   "TOUSCHED",				"" },
 
 	// OUTPUTS
 	// User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.
@@ -142,6 +144,7 @@ public:
 		pbp.T_htf_hot_ref = as_double("T_htf_hot_ref");		// design inlet fluid temp
 		pbp.HTF = as_integer("HTF");						// heat transfer fluid type - set in interface, but no user input
 
+
 		// power block parameters on the SAM power block input page
 		pbp.P_ref = as_double("nameplate")/1000; // P_ref wants MW, 'nameplate' in kW
 		pbp.P_boil = as_double("P_boil");
@@ -179,7 +182,13 @@ public:
 		pbInputs.standby_control = 1;
 		pbInputs.rel_humidity = 0.7;
 		pbInputs.f_restart = 1.0;
-		pbInputs.TOU = 4; // HOW TO CALCULATE THE TIME OF USE PERIOD FROM HOUR OF YEAR???????????????????
+
+		// hybrid dispatch schedule
+		//pbInputs.TOU = 4;
+		const char *sched = as_string("hybrid_dispatch_schedule");
+		int tou[8760];
+		if (!util::translate_schedule( tou, sched, sched, 0, 8))
+			throw general_error("could not translate schedule for time-of-use rate");
 
 
 		// Geothermal inputs **********************************************
@@ -196,6 +205,7 @@ public:
 		oGeo.SetWeatherFileName(as_string("file_name"));
 		oGeo.SetPowerBlockParameters(pbp);
 		oGeo.SetPowerBlockInputs(pbInputs);
+		oGeo.SetTOUPeriodArray(tou);
 	
 		// temperature decline
 		oGeo.SetTemperatureDeclineMethod( 1+as_integer("decline_type") );
@@ -256,7 +266,7 @@ public:
 		oGeo.SetModelChoice(as_integer("model_choice")); // with model choice set, model then 'knows' whether this is hourly or monthly analysis
 		size_t iyears = as_integer("analysis_period");
 		if ( iyears == 0)
-			throw exec_error("geothermalhourly", "Invalid analysis period specified in the geothermal hourly model.");
+			throw general_error("invalid analysis period specified in the geothermal hourly model");
 
 		// set geothermal inputs RE how analysis is done and for how long
 		oGeo.SetProjectLifeYears( iyears );

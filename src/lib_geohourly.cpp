@@ -1063,6 +1063,7 @@ void CMakeupAlgorithm::SetType224Inputs(void)
 	m_pbInputs.T_wb = m_wf.twet;
 	m_pbInputs.T_db = m_wf.tdry;
 	m_pbInputs.P_amb = physics::mBarToAtm(m_wf.pres);
+	m_pbInputs.TOU = mpGBI->GetTOUForHour(m_lReadCount-1);
 }
 
 
@@ -1257,10 +1258,15 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 	if (!readyToAnalyze()) return false;   //moMA is reset each time readyToAnalyze is called.
 
 	// We're ready to analyze: moMA is now a valid MakeupAlgorithm with an open weather file and the power block parameters have been passed in
-	if ( !moMA->SetScenarioParameters(this) ) return false;
+	if ( !moMA->SetScenarioParameters(this) )
+	{
+		m_strErrMsg = moMA->GetLastErrorMessage();
+		return false;
+	}
 
 	// ReSet all calculated values to zero
     double dElapsedTimeInYears = 0.0;
+	float fPercentDone = 0.0;
 	bool bCanReplaceReservoir = false;
     
     // Initialize
@@ -1276,8 +1282,10 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 		m_afReplacementsByYear[year] = 0;
 		for (unsigned int month=1; month<13; month++)
 		{
-			if (update_function != 0)
-				(*update_function)( (float)iElapsedMonths/(float)(12*miProjectLifeYears)*100.0f, user_data );
+			fPercentDone = (float)iElapsedMonths/(float)(12*miProjectLifeYears)*100.0f;
+
+			if ( (update_function != 0) && (TimeToUpdateInterface( fPercentDone, 5.0f )) )
+				(*update_function)( fPercentDone, user_data );
 
 			fMonthlyPowerTotal = 0;
 			for (unsigned int hour=0; hour<util::hours_in_month(month); hour++)
@@ -1288,6 +1296,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					if (iElapsedTimeSteps >= analysisTimeSteps() ) {m_strErrMsg = "Time step exceded the array size in CGeoHourlyAnalysis::analyze()."; return false; }
 
 					// Read weather file info (function is smart enough to average for month if tis is a monthly analysis)
+					// The call to ReadWeatherForTimeStep increments the hour counter (over whole life), and file read counter [0 to 8760(=# lines in weather file]
 					if(!moMA->ReadWeatherForTimeStep(IsHourly(), iElapsedTimeSteps)) { m_strErrMsg = moMA->GetLastErrorMessage(); return false; }
 
 					// Put weather data into power block inputs
@@ -1356,6 +1365,26 @@ double CGeoHourlyAnalysis::GetFractionOfInletGFInjected(void)
 			return (1 - moFBE.waterLossFractionOfGF());
 
 }
+
+bool CGeoHourlyAnalysis::TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent)
+{	// Needs to be called with fPercentDone = zero at beginning of each run to reset the static var
+	static float fLastIntervalDone = 0.0;
+
+	if (fPercentDone==0)
+	{
+		fLastIntervalDone = 0;
+		return true;
+	}
+
+	if (fPercentDone >= (fLastIntervalDone+fNotificationIntervalInPercent) )
+	{
+		fLastIntervalDone += fNotificationIntervalInPercent;
+		return true;			
+	}
+
+	return false;
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

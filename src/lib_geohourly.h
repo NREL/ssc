@@ -491,6 +491,8 @@ public:
 	SPowerBlockParameters GetPowerBlockParameters(void) { return m_pbp; }
 	void SetWeatherFileName( const char * fn) { mcFileName = fn;}
 	void SetPowerBlockInputs(const SPowerBlockInputs& pbi) { m_pbi = pbi; }
+	void SetTOUPeriodArray(int * tou) { m_tou = tou; }
+	int GetTOUForHour(int iHour) { return m_tou[iHour]; }
 
 protected:
 	// CAN'T BE SET TO ZERO
@@ -533,6 +535,7 @@ protected:
 	const char * mcFileName;
 	SPowerBlockParameters m_pbp;
 	SPowerBlockInputs m_pbi;
+	int * m_tou;
 	bool IsHourly(void) { return (GetMakeupAnalysesPerYear() == 8760) ? true : false; }
 	int GetMakeupAnalysesPerYear(void) { return (miModelChoice == 2) ? 8760 : 12; }
 	bool ReturnGETEMResults(void) { return (miModelChoice == 0) ? true : false; }
@@ -918,7 +921,7 @@ protected:
 	CPowerBlock_Type224 m_pb;
 	weatherfile m_wf;
 	bool m_bWeatherFileOpen;
-	long m_lReadCount;  // resource file reads through the year
+	long m_lReadCount;  // resource file reads through the year, 1 to 8760
 	long m_lHourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.
 
 private:
@@ -1031,6 +1034,7 @@ public:
 	//double GetPlantBrineEffectiveness(void) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : 11.7414224664536; }
 	double GetPlantBrineEffectiveness(void) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
 	double GetFractionOfInletGFInjected(void);  // used in CPumpPowerCalculator
+	bool TimeToUpdateInterface(float dPercentDone, float iNotificationIntervalInPercent);
 
 
 	// GETEM's "optimizer" seems to pick the max possible brine effectiveness for the default binary plant, so use this as a proxy for now

@@ -41,7 +41,7 @@ struct SPowerBlockInputs
 	int standby_control;	// 6| standby_control               | Control signal indicating standby mode (1=norm,2=standby,3=shutdown)	| none             | none
 	double T_db;			// 7| T_db                          | Ambient dry bulb temperature											| C                | C
 	double P_amb;			// 8| P_amb                         | Ambient pressure														| atm              | Pa
-	int TOU;				// 9| TOU                           | Current Time-of-use period (1-9, for hybrid cooling only)				| none             | none
+	int TOU;				// 9| TOU                           | Current Time-of-use period (0-8, for hybrid cooling only)				| none             | none
 	double rel_humidity;	//10|								| Relative humidity of the ambient air								    | none             | none
 	double f_restart;		//11|								| Fraction of the hour that the turbine can operate during restart		| none             | none
 };
