@@ -125,7 +125,7 @@ EditVariableForm::~EditVariableForm()
 void EditVariableForm::UpdateForm()	
 {
 	rbgVarType->SetSelection( m_var.type-1 );
-	if (m_var.type == SSC_STRING)txtValue->ChangeValue( m_var.str );
+	if (m_var.type == SSC_STRING)txtValue->ChangeValue( wxString(m_var.str.c_str()) );
 
 	if (m_var.type == SSC_NUMBER)numValue->SetDouble( m_var.num );
 

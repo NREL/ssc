@@ -353,7 +353,7 @@ void DataView::UpdateView()
 				if (v->type == SSC_NUMBER)
 					label += " " + FloatToStr( (ssc_number_t) v->num );				
 				else if (v->type == SSC_STRING)
-					label += " " + v->str;
+					label += " " + wxString(v->str.c_str());
 				else if (v->type == SSC_ARRAY)
 					label += wxString::Format( " [%d]", v->num.length() );
 				else if (v->type == SSC_MATRIX)
