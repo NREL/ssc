@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <wx/wx.h>
+#include <wx/imaglist.h>
 
 #include <wx/config.h>
 #include <wx/scrolbar.h>
@@ -228,6 +229,7 @@ private:
 
 void SCApp::OnFatalException()
 {
+#ifdef __WXMSW__
 	StackDump dump;
 	dump.WalkFromException();
 
@@ -248,6 +250,9 @@ void SCApp::OnFatalException()
 	body += "\nCRASH TRACE [" + wxNow() + "]\n\n" + dump.GetStackTrace();
 
 	wxTextMessageDialog(body);
+#else
+	wxMessageBox("Application crashed.  Sorry!");
+#endif
 }
 
 
@@ -330,7 +335,7 @@ void SCAbout::OnCrash(wxCommandEvent &evt)
 	try {
 		__ssc_segfault();
 	}catch(sscdll_error e){
-		wxMessageBox(e.func + ": " + e.text,"Error",wxICON_ERROR|wxOK);
+		wxMessageBox(wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()),"Error",wxICON_ERROR|wxOK);
 	}
 }
 
@@ -560,7 +565,7 @@ void SCFrame::UpdateUI()
 			ver = ssc_version();
 			build = const_cast<char*>( ssc_build_info() );
 		} catch (sscdll_error e) {
-			status = e.text + " ";
+			status = wxString(e.text.c_str()) + " ";
 			ver = -999;
 		}
 		status += m_loadedDllPath + " ( " + m_lastLoadTime + " ) Version " + wxString::Format("%d [%s]", ver, build);
@@ -846,7 +851,14 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		break;
 	case ID_CHOOSE_DLL:
 		{
-			wxFileDialog fd(this, "Choose ssc32.dll", m_currentAppDir, "ssc32.dll", "DLL Files (*.dll)|*.dll", wxFD_OPEN);
+			wxFileDialog fd(this, "Choose ssc32.dll", m_currentAppDir, "ssc32.dll", 
+#ifdef __WXMSW__
+				"DLL Files (*.dll)|*.dll"
+#endif
+#ifdef __WXMAC__
+				"DYLIB Files *.dylib|*.dylib"
+#endif
+				, wxFD_OPEN);
 			if (fd.ShowModal() != wxID_OK) return;
 			wxString file = fd.GetPath();
 			m_txtDllPath->ChangeValue(file);
@@ -1286,7 +1298,7 @@ void SCFrame::Start()
 		::ssc_data_free( p_data );
 	 
 	} catch(sscdll_error e) {
-		wxMessageBox("DLL error: " + e.func + ": " + e.text );
+		wxMessageBox("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
 	
 	m_txtProgress->Hide();

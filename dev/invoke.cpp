@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <wx/wx.h>
 
+#include <wx/wx.h>
+#include <wx/imaglist.h>
 #include <wx/config.h>
 #include <wx/scrolbar.h>
 #include <wx/print.h>
