@@ -552,7 +552,16 @@ void CPumpPowerCalculator::init(CGeoHourlyAnalysis* gbi)
 
 double CPumpPowerCalculator::GetTotalPumpPower(std::string sErr) // watt-hr/lb
 {
-	double retVal = productionPumpPower() + injectionPumpPower();
+	double prod = productionPumpPower();
+	double inj = injectionPumpPower();
+
+	if (FILE*fp=fopen(DEBUGFILE, "a"))
+	{
+		fprintf(fp, "prod=%lg inj=%lg\n", prod, inj);
+		fclose(fp);
+	}
+
+	double retVal = prod + inj;
 	if (retVal < 0)
 		{ sErr = ("CPumpPowerCalculator::GetTotalPumpPower calculated a value < 0"); return 0; }
 	return retVal;
@@ -1567,13 +1576,22 @@ double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies( )
 double CGeoHourlyAnalysis::GetPumpWorkKW( ) 
 { 
 	//return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; 
-	return  GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0; 
+	double pwork_wh_per_lb = GetPumpWorkWattHrPerLb();
+	double flow = flowRateTotal();
+
+	if (FILE*fp=fopen(DEBUGFILE, "a"))
+	{
+		fprintf(fp, "GetPumpWorkKW: WH/lb=%lg  flow=%lg flow_per_well=%lg nwell=%lg\n", pwork_wh_per_lb, flow, mdProductionFlowRateKgPerS, GetNumberOfWells());
+		fclose(fp);
+	}
+	return  pwork_wh_per_lb * flow / 1000.0; 
 }
 
 double CGeoHourlyAnalysis::GetPumpWorkWattHrPerLb( )
 {
 	return moPPC.GetTotalPumpPower(m_strErrMsg);
 } // small errors in pump work introduce biases throughout the results
+
 double CGeoHourlyAnalysis::GetPlantBrineEffectiveness( ) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
 
 double CPumpPowerCalculator::DiameterPumpCasingFt( ) { return mpGBI->GetDiameterPumpCasingInches()/12; }
