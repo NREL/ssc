@@ -841,7 +841,12 @@ public:
 	double netBrineEffectiveness( ) { return GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb(); }
 
 	void SetNumberOfWells(double numWells) { setPositiveValue(mdNumberOfWells, numWells, "Number Of Wells", m_strErrMsg); }
-	double GetNumberOfWells( ) { if (netCapacityPerWell()!=0) return (cb == NUMBER_OF_WELLS) ? mdNumberOfWells : mdDesiredSalesCapacityKW / netCapacityPerWell(); else return 0;}
+	double GetNumberOfWells( ) 
+	{ 
+		if (netCapacityPerWell()!=0) 
+			return (cb == NUMBER_OF_WELLS) ? mdNumberOfWells : mdDesiredSalesCapacityKW / netCapacityPerWell(); 
+		else return 0;
+	}
 	void SetDesiredSalesCapacityKW(double kw) { setPositiveValue(mdDesiredSalesCapacityKW, kw, "Desired Sales Capacity", m_strErrMsg); }
 	double GetSalesCapacityKW( ) { return (cb == POWER_SALES) ? mdDesiredSalesCapacityKW : mdNumberOfWells * netCapacityPerWell(); }
 
