@@ -231,7 +231,9 @@ public:
 		oGeo.SetPotentialResourceMW( as_double("resource_potential") );
 		oGeo.SetResourceType( 1+as_integer("resource_type") );
 		oGeo.SetResourceDepthMeters( as_double("resource_depth") );
-		oGeo.SetResourceTemperatureCelcius( as_double("resource_temp") );
+		double resource_temp = as_double("resource_temp");
+		oGeo.SetResourceTemperatureCelcius( resource_temp );
+
 		oGeo.SetPlantDesignTemperatureCelcius( as_double("design_temp") );
 
 		//reservoir properties

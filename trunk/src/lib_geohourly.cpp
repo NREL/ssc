@@ -602,7 +602,8 @@ double CGeoHourlyBaseInputs::secondLawEfficiencyGETEM() // This assumes the use 
 
 bool CGeoHourlyBaseInputs::inputErrors(void)
 {
-	if (!m_strErrMsg.empty()) return true;
+	if (m_strErrMsg != "") return true;
+
 	if (!miProjectLifeYears) { m_strErrMsg = ("Project life was zero."); return true; }
 	if (miModelChoice < 0) { m_strErrMsg = ("The model choice was not set."); return true; }
 
@@ -1004,6 +1005,12 @@ CMakeupAlgorithm::CMakeupAlgorithm()
 bool CMakeupAlgorithm::SetScenarioParameters( CGeoHourlyBaseInputs* gbi)
 {
 	mpGBI = gbi;
+	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC();
+	if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	{
+		fprintf(fp, "CMakeupAlgorithm::SetScenarioParameters mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
+		fclose(fp);
+	}
 
 	if ( m_pb.InitializeForParameters(mpGBI->GetPowerBlockParameters() ) )
 		return true;
@@ -1065,7 +1072,14 @@ void CMakeupAlgorithm::SetType224Inputs(void)
 	m_pbInputs.P_amb = physics::mBarToAtm(m_wf.pres);
 	m_pbInputs.TOU = mpGBI->GetTOUForHour(m_lReadCount-1);
 
-	if (FILE *fp = fopen("c:/SAM/SetType224Inputs.txt", "a"))
+	static int count = 0;
+	if (FILE *fp = fopen("/Users/adobos/geolog.txt", "a"))
+	{
+		fprintf(fp, "CMakeupAlgorithm::SetType224Inputs [%d] mdWorkingTemperatureC=%lg\n",++count, mdWorkingTemperatureC);
+		fclose(fp);
+	}
+
+	if (FILE *fp = fopen("/Users/adobos/SetType224Inputs_mac.txt", "a"))
 	{
 		fprintf(fp, "T_htf_hot = %lg\n", m_pbInputs.T_htf_hot );
 		fprintf(fp, "T_wb = %lg\n", m_pbInputs.T_wb );
@@ -1154,6 +1168,12 @@ void CEGSMakeup::calculateNewTemperature()
 	// The EGS temperature drop depends on the amount of fluid being produced (makes intuitive sense).
 	mdLastProductionTemperatureC = mdWorkingTemperatureC;
 	mdWorkingTemperatureC = newEGSProductionTemperatureC();
+
+	if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	{
+		fprintf(fp, "CEGSMakeup::calculateNewTemperature mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
+		fclose(fp);
+	}
 }
 
 
@@ -1167,6 +1187,11 @@ void CEGSMakeup::replaceReservoir(void)
 {
 	miReservoirReplacements++; 
 	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); 
+	if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	{
+		fprintf(fp, "CEGSMakeup::replaceReservoir mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
+		fclose(fp);
+	}
 	mdLastProductionTemperatureC = mdWorkingTemperatureC; 
 	if (mdYearsAtNextTimeStep > 0) mdTimeOfLastReservoirReplacement = mdYearsAtNextTimeStep - (mpGBI->EGSTimeStar() / DAYS_PER_YEAR);
 }
@@ -1224,6 +1249,7 @@ void CGeoHourlyAnalysis::init(void)
 
 bool CGeoHourlyAnalysis::readyToAnalyze()
 {
+	m_strErrMsg = "";
 	if ( inputErrors() ) return false;
 	if (moMA) delete moMA; moMA=NULL;
 
@@ -1262,11 +1288,53 @@ bool CGeoHourlyAnalysis::readyToAnalyze()
 
 	return true;
 }
+ 
+ 
+double CMakeupAlgorithm::fractionOfMaxEfficiency() { return(temperatureRatio() > 0.98) ? moSecondLawConstants.evaluatePolynomial(temperatureRatio()) : 1.0177 * pow(temperatureRatio(), 2.6237); }
+double CMakeupAlgorithm::temperatureRatio(void) { return CelciusToKelvin(mdWorkingTemperatureC) / CelciusToKelvin(mpGBI->GetTemperaturePlantDesignC()); }
+double CMakeupAlgorithm::plantBrineEfficiency() { return secondLawEfficiency() * mpGBI->GetAEBinaryAtTemp(mdWorkingTemperatureC); } // plant Brine Efficiency as a function of temperature
+
+
+bool CMakeupAlgorithm::canReplaceReservoir(double dTimePassedInYears) { 
+	      return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
+
+
+void CMakeupAlgorithm::calculateNewTemperature(void)
+{
+  mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / 12));
+ if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+ {
+   fprintf(fp, "CMakeupAlgorithm::calculateNewTemperature mdWorkingTemperatureC=%lg (decline %lg)\n", mdWorkingTemperatureC, mpGBI->mdTemperatureDeclineRate);
+   fclose(fp);
+ }
+} // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
+																	 
+
+ 
+void CMakeupAlgorithm::replaceReservoir()
+{
+   miReservoirReplacements++;
+   mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC();
+	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+   {
+    fprintf(fp, "CMakeupAlgorithm::replaceReservoir mdWorkingTemperatureC=%lg\n", mdWorkingTemperatureC);
+    fclose(fp);
+  }
+
+}
+
 
 bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *user_data )
 {
+	m_strErrMsg = "";
 	mbAnalysisRequired = true;
 	if (!readyToAnalyze()) return false;   //moMA is reset each time readyToAnalyze is called.
+
+	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	 {
+	 	fprintf(fp, "MakeupAlgorithm[%d] readyToAnalyze PASSED, mdWorkingTemperatureC = %lg\n", (int)moMA->GetType(), moMA->GetWorkingTemperatureC());
+		fclose(fp);
+	 }
 
 	// We're ready to analyze: moMA is now a valid MakeupAlgorithm with an open weather file and the power block parameters have been passed in
 	if ( !moMA->SetScenarioParameters(this) )
@@ -1280,8 +1348,19 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 	float fPercentDone = 0.0;
 	bool bCanReplaceReservoir = false;
     
+	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	 {
+	 	fprintf(fp, "analyze: PRE reservoir replacement: mdWorkingTemperatureC = %lg\n", moMA->GetWorkingTemperatureC());
+		fclose(fp);
+	 }
     // Initialize
     moMA->replaceReservoir();
+
+	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	 {
+	 	fprintf(fp, "analyze: POST reservoirReplaced: mdWorkingTemperatureC = %lg\n", moMA->GetWorkingTemperatureC());
+		fclose(fp);
+	 }
 
 	// Go through time step (hours or months) one by one
     //for (unsigned int iElapsedTimeSteps = 0;  iElapsedTimeSteps < analysisTimeSteps();  iElapsedTimeSteps++)
@@ -1454,3 +1533,5 @@ double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies(void)
         // As a simplification, assume that all electricity produced is sold at an average price, and that the price
         // negotiated is 10% over the cost of generating it.
 }
+
+double CGeoHourlyBaseInputs::GetPumpWorkKW(void) { return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; }  // shortcut to function in CPumpPowerCalculat

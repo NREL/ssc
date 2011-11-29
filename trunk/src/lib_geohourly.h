@@ -318,7 +318,7 @@ public:
 	// FIX THE REDUNDANCIES IN THE ABOVE CRAP, FIX 'PLANTNETOUTPUT', SINCE IT'S GROSS OUTPUT
 
 
-	double GetPumpWorkKW(void) { return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; }	// shortcut to function in CPumpPowerCalculator
+	double GetPumpWorkKW(void);	// shortcut to function in CPumpPowerCalculator
 	double grossCapacityPerWell(void) { return this->flowRatePerWell() * (GetPlantBrineEffectiveness()) / 1000.0; }		// before pumping losses
 	double netCapacityPerWell(void)	  { return this->flowRatePerWell() * netBrineEffectiveness() / 1000.0; }			// after pumping losses
 	double netBrineEffectiveness(void) { return GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb(); }
@@ -868,12 +868,14 @@ public:
 	CMakeupAlgorithm(void); // { miReservoirReplacements = 0; mdWorkingTemperatureC=0; moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0); } // by default, load Binary(EGS) secondLawConstants - let flash over write them
 	virtual ~CMakeupAlgorithm(void){}
 	virtual makeupAlgorithmType GetType(void)=0;	// this is an abstract class, it should never be created, only derived objects
+	virtual void calculateNewTemperature();
+	virtual bool canReplaceReservoir(double dTimePassedInYears); 
+	virtual void replaceReservoir();
+
 
 	bool SetScenarioParameters( CGeoHourlyBaseInputs* gbi);
-	virtual void calculateNewTemperature(void) { mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / 12)); } // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
 	bool wantToReplaceReservoir(void) { return ( mdWorkingTemperatureC < (mpGBI->GetResourceTemperatureC() - mpGBI->mdMaxTempDeclineC) ) ? true : false; }
-	virtual bool canReplaceReservoir(double dTimePassedInYears) { return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
-	virtual void replaceReservoir(void) { miReservoirReplacements++; mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); }
+	
 	double plantGrossPower(void) {return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000.0); }
 	double plantNetPower(void) { return plantGrossPower() - mpGBI->GetPumpWorkKW(); } // kW, as a function of the temperature over time
 	double plantNetPowerkW(void) { double pnp = plantNetPower(); return (pnp>0) ? pnp : 0; } // kW
@@ -900,8 +902,8 @@ protected:
 	CGeothermalConstants moSecondLawConstants; //Used to calculate second law (of thermodynamics) efficiencies
 	std::string m_strMAError;
 
-	virtual double temperatureRatio(void) { return CelciusToKelvin(mdWorkingTemperatureC) / CelciusToKelvin(mpGBI->GetTemperaturePlantDesignC()); }
-	virtual double plantBrineEfficiency() { return secondLawEfficiency() * mpGBI->GetAEBinaryAtTemp(mdWorkingTemperatureC); } // plant Brine Efficiency as a function of temperature
+	virtual double temperatureRatio();
+	virtual double plantBrineEfficiency();// plant Brine Efficiency as a function of temperature
 	double secondLawEfficiency() { return maxSecondLawEfficiency() * fractionOfMaxEfficiency(); } // separate step just to help with debugging (compare to spreadsheet) 
 
 	double maxSecondLawEfficiency() { return  mpGBI->GetPlantBrineEffectiveness() /  getemAEForSecondLaw(); }
@@ -913,7 +915,7 @@ protected:
 	// which leads to actual plant output(after pumping losses) > design output (before pump losses) ??
 	// which leads to relative revenue > 1 ??
 	
-	virtual double fractionOfMaxEfficiency() { return(temperatureRatio() > 0.98) ? moSecondLawConstants.evaluatePolynomial(temperatureRatio()) : 1.0177 * pow(temperatureRatio(), 2.6237); }
+	virtual double fractionOfMaxEfficiency();
 
 	// Added June 2011 for geothermal hourly model
 	SPowerBlockInputs m_pbInputs;
@@ -938,8 +940,8 @@ class CBinaryMakeup : public CMakeupAlgorithm
 public:
 
 	CBinaryMakeup(void){ } //moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0); }// ("6Ab. Makeup-Annl%").Range("R24:R27")
-	~CBinaryMakeup(void){}
-	makeupAlgorithmType GetType(void) { return MA_BINARY; }; // this is the only function binary has to override
+	virtual ~CBinaryMakeup(void){}
+	virtual makeupAlgorithmType GetType(void) { return MA_BINARY; }; // this is the only function binary has to override
 
 };
 
@@ -954,7 +956,7 @@ public:
 	CFlashMakeup(void) { mbInitialized = false;}
 	virtual ~CFlashMakeup(void){}
 
-	makeupAlgorithmType GetType(void) { return MA_FLASH; }
+	virtual makeupAlgorithmType GetType(void) { return MA_FLASH; }
 
 
 private:
@@ -974,12 +976,12 @@ public:
 	CEGSMakeup(void) { mdTimeOfLastReservoirReplacement=0; mdYearsAtNextTimeStep=0; mdCurrentEfficiency=0; }
 	virtual ~CEGSMakeup(void){}
 
-	makeupAlgorithmType GetType(void) { return MA_EGS; }
+	virtual makeupAlgorithmType GetType(void) { return MA_EGS; }
 
 	// These functions over-ride the CMakeupAlgorithm functions  to update some values necessary for EGS calculations
-	void calculateNewTemperature();
-	bool canReplaceReservoir(double dTimePassedInYears);  // dTimePassedInYears -> mdYearsAtNextTimeStep
-	void replaceReservoir();
+	virtual void calculateNewTemperature();
+	virtual bool canReplaceReservoir(double dTimePassedInYears);  // dTimePassedInYears -> mdYearsAtNextTimeStep
+	virtual void replaceReservoir();
 
 private:
 	double LastProducitonTemperatureF(void) { return CelciusToFarenheit(mdLastProductionTemperatureC); }  // shortcut for production temp in F
@@ -1029,11 +1031,11 @@ public:
 	double GetPumpSizeHPInjection(void) { return mdPumpSizeHPInjection; }
 
 	// virtual functions in CGeoHourlyBaseInputs
-	double GetPumpWorkWattHrPerLb(void) { return moPPC.GetTotalPumpPower(m_strErrMsg); } // small errors in pump work introduce biases throughout the results
+	virtual double GetPumpWorkWattHrPerLb(void) { return moPPC.GetTotalPumpPower(m_strErrMsg); } // small errors in pump work introduce biases throughout the results
 	//double GetPlantBrineEffectiveness(void) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : 11.7414224664536; }
-	double GetPlantBrineEffectiveness(void) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
-	double GetFractionOfInletGFInjected(void);  // used in CPumpPowerCalculator
-	bool TimeToUpdateInterface(float dPercentDone, float iNotificationIntervalInPercent);
+	virtual double GetPlantBrineEffectiveness(void) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
+	virtual double GetFractionOfInletGFInjected(void);  // used in CPumpPowerCalculator
+	virtual bool TimeToUpdateInterface(float dPercentDone, float iNotificationIntervalInPercent);
 
 
 	// GETEM's "optimizer" seems to pick the max possible brine effectiveness for the default binary plant, so use this as a proxy for now

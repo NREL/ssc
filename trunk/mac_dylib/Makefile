@@ -2,7 +2,7 @@ VPATH=../src
 
 CC = gcc
 CXX = g++
-CFLAGS = -arch i386 -D__MACOSX__ -D__32BIT__ -fPIC -Wall -O3
+CFLAGS = -g -arch i386 -D__MACOSX__ -D__32BIT__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++ -arch i386
 
