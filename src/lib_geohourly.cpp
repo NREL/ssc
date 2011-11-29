@@ -14,7 +14,7 @@ CGeothermalInterface::~CGeothermalInterface( ){}
 #define DEBUGFILE "c:/Transfer/geotherm/geolog_pc.txt"
 #endif
 #ifdef __MACOSX__
-#define DEBUGFILE "/Users/adobos/geolog_mac.txt"
+#define DEBUGFILE "/Volumes/Transfer/geotherm/geolog_mac.txt"
 #endif
 
 bool CGeothermalInterface::IsReadyToRun( ) { return oGeoOutputs.readyToAnalyze(); }
@@ -1423,7 +1423,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					
 					 if (FILE*fp=fopen(DEBUGFILE, "a"))
 					 {
-	 					fprintf(fp, "RESULT[%d] %lg %lg %lg %lg %lg %lg tot: %lg\n",
+	 					fprintf(fp, "RESULT[%d] %lg %lg %lg %lg %lg %lg getem?: %d\n",
 							iElapsedTimeSteps,
 							(double)m_afTemperatureC[iElapsedTimeSteps],
 							(double)m_afPressure[iElapsedTimeSteps],
@@ -1431,7 +1431,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 							(double)m_afWetBulb[iElapsedTimeSteps],
 							(double)m_afPowerByTimeStep[iElapsedTimeSteps],
 							(double) pump_work,
-							(double)fMonthlyPowerTotal );
+							(int) ReturnGETEMResults() ? 1 : 0 );
 
 						fclose(fp);
 					 }
