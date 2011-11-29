@@ -9,6 +9,16 @@
 
 struct SPowerBlockParameters
 {
+	SPowerBlockParameters()
+	{
+		P_ref = eta_ref = T_htf_hot_ref = T_htf_cold_ref = dT_cw_ref = T_amb_des = 0.0;
+		HTF = CT = tech_type = n_pl_inc = 0;
+		q_sby_frac = P_boil = startup_time = startup_frac = T_approach = T_ITD_des = 0.0;
+		P_cond_ratio = pb_bd_frac = P_cond_min = 0.0;
+		for (int i=0;i<9;i++)
+			F_wc[i] = 0.0;
+	}
+
 	double P_ref;				// design electric power output (MW)
 	double eta_ref;				// design conversion efficiency (%)
 	double T_htf_hot_ref;		// design HTF inlet temperature (deg C)
@@ -33,6 +43,12 @@ struct SPowerBlockParameters
 
 struct SPowerBlockInputs
 {
+	SPowerBlockInputs()
+	{
+		mode = standby_control = TOU = 0;
+		T_htf_hot = m_dot_htf = T_wb = demand_var = T_db = P_amb = rel_humidity = f_restart = 0.0;
+	}
+
 	int mode;				// 1| mode                          | Cycle part load control, from plant controller						| none             | none
 	double T_htf_hot;		// 2| T_htf_hot                     | Hot HTF inlet temperature, from storage tank							| C                | K
 	double m_dot_htf;		// 3| m_dot_htf                     | HTF mass flow rate													| kg/hr            | kg/hr
@@ -48,6 +64,12 @@ struct SPowerBlockInputs
 
 struct SPowerBlockOutputs
 {
+	SPowerBlockOutputs()
+	{
+		P_cycle = eta = T_htf_cold = m_dot_makeup = m_dot_demand = m_dot_htf = m_dot_htf_ref = 0.0;
+		W_cool_par = P_ref = f_hrsys = P_cond = 0.0;
+	}
+
 	double P_cycle;       //  1| P_cycle                          | Cycle power output                                                | MWe              | kWe
 	double eta;           //  2| eta                              | Cycle thermal efficiency                                          | none             | none
 	double T_htf_cold;    //  3| T_htf_cold                       | Heat transfer fluid outlet temperature                            | C                | C
@@ -63,6 +85,12 @@ struct SPowerBlockOutputs
 
 struct SStoredValues	// these values are stored from timestep to timestep, only updated when the timestep changes
 {
+	SStoredValues()
+	{
+		iLastStandbyControl = 0;
+		dStartupTimeRemaining = dLastP_Cycle = dStartupEnergyRemaining = 0.0;
+	}
+
 	int iLastStandbyControl;
 	double dStartupTimeRemaining;
 	double dLastP_Cycle;
@@ -163,6 +191,13 @@ private:
 				  double T_ITD_des, double T_approach, double dT_cw_ref, double P_cond_ratio, double P_cycle, double eta_ref, 
 				  double T_db, double T_wb, double P_amb, double q_reject, double& m_dot_water, double& W_dot_acfan, 
 				  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double f_hrsys);
+
+
+private:
+	// moved from static double to member
+	double eta_adj;
+	double T_hot_diff, eta_acfan_s, eta_acfan, C_air, drift_loss_frac, blowdown_frac, dP_evap, eta_pump, eta_pcw_s, eta_wcfan,
+				  eta_wcfan_s, P_ratio_wcfan, mass_ratio_wcfan, Q_reject_des, q_ac_des, m_dot_acair_des, q_wc_des, c_cw, m_dot_cw_des;
 
 };
 

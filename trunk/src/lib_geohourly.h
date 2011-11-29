@@ -1065,6 +1065,8 @@ public:
 	void SetPointerToTimeStepWetBulbArray(float * p)  {m_afWetBulb = p;}
 
 private:
+	float fLastIntervalDone;
+
 	CFlashBrineEffectiveness moFBE;
 	CPumpPowerCalculator moPPC;
 

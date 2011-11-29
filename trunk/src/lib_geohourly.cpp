@@ -1183,6 +1183,7 @@ double CEGSMakeup::newInjectionTemperatureC()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CGeoHourlyAnalysis::CGeoHourlyAnalysis(void)
 {
+	fLastIntervalDone = 0;
 	init();
 }
 
@@ -1368,8 +1369,7 @@ double CGeoHourlyAnalysis::GetFractionOfInletGFInjected(void)
 
 bool CGeoHourlyAnalysis::TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent)
 {	// Needs to be called with fPercentDone = zero at beginning of each run to reset the static var
-	static float fLastIntervalDone = 0.0;
-
+	
 	if (fPercentDone==0)
 	{
 		fLastIntervalDone = 0;

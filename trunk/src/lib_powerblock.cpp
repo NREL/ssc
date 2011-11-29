@@ -571,8 +571,6 @@ void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_
 				  /*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref, 
 				  double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond)
 {
-	static double eta_adj;
-
 	// Note: the old "TT" is now m_pbp.tech_type
 
 	// The user provides a reference efficiency, ambient temperature, and cooling system parameters. Using
@@ -1544,8 +1542,6 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 
 	int i,j;
 
-	static double T_hot_diff, eta_acfan_s, eta_acfan, C_air, drift_loss_frac, blowdown_frac, dP_evap, eta_pump, eta_pcw_s, eta_wcfan,
-				  eta_wcfan_s, P_ratio_wcfan, mass_ratio_wcfan, Q_reject_des, q_ac_des, m_dot_acair_des, q_wc_des, c_cw, m_dot_cw_des;
 
 	// these are static - are they 'reset' in the code and preserved over calls to this function?
 	//save::T_hot_diff, eta_acfan_s, eta_acfan, C_air, drift_loss_frac, blowdown_frac, dP_evap, eta_pump, eta_pcw_s, eta_wcfan, &
