@@ -1275,7 +1275,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 
 	// Go through time step (hours or months) one by one
     //for (unsigned int iElapsedTimeSteps = 0;  iElapsedTimeSteps < analysisTimeSteps();  iElapsedTimeSteps++)
-    bool bReDrill = false;
+
 	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0;
 	float fMonthlyPowerTotal;
 	for (unsigned int year = 0;  year < miProjectLifeYears;  year++)
@@ -1289,7 +1289,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 				(*update_function)( fPercentDone, user_data );
 
 			fMonthlyPowerTotal = 0;
-			for (unsigned int hour=0; hour<util::hours_in_month(month); hour++)
+			for (unsigned int hour=0; hour<(unsigned int)util::hours_in_month(month); hour++)
 			{
 				if ( IsHourly() || (hour==0) )
 				{
@@ -1315,7 +1315,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					else
 						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - (float)GetPumpWorkKW();
 
-					m_afTestValues[iElapsedTimeSteps] = (year + 1)*1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
+					m_afTestValues[iElapsedTimeSteps] = (float)((year + 1)*1000 + month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
 					fMonthlyPowerTotal += m_afPowerByTimeStep[iElapsedTimeSteps];
 		
