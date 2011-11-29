@@ -129,7 +129,7 @@ wxArrayString CMForm::GetAvailableCMs()
 		while (const ssc_entry_t p_entry = ::ssc_module_entry(idx++))
 			list.Add( ::ssc_entry_name(p_entry) );
 
-	} catch(sscdll_error e) {
+	} catch(sscdll_error &e) {
 		wxMessageBox("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
 
@@ -250,7 +250,7 @@ void CMForm::OnCMListSelect(wxCommandEvent &evt)
 
 		::ssc_module_free( p_mod );
 	
-	} catch(sscdll_error e) {
+	} catch(sscdll_error &e) {
 		wxMessageBox("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
 }

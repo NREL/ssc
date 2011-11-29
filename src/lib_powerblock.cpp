@@ -2,6 +2,7 @@
 #include <cmath>
 #include <limits>
 #include <math.h>
+#include <sstream>
 
 #include "lib_util.h"
 
@@ -628,6 +629,9 @@ void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_
 	if (T_ref>=T_htf_hot)
 	{	// boiler pressure is unrealistic -> it could not be achieved with this resource temp
 		m_strLastError = "The input boiler pressure could not be achieved with the resource temperature entered.";
+		std::ostringstream ss;
+		ss << " (" << T_ref << " >= " << T_htf_hot << ")";
+		m_strLastError += ss.str();
 		P_cycle = 0.0;
 	}
 	double T_htf_hot_ND = (T_htf_hot - T_ref)/(T_htf_hot_ref - T_ref);
@@ -1537,10 +1541,12 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 	double m_dot_acair = 0, h_acfan_in, T_acfan_in_K, T_acfan_out_K, T_acfan_out, h_acfan_out_s,  
 	q_ac_rej, q_wc_rej, h_pcw_in, s_pcw_in, rho_cw, h_pcw_out_s, h_pcw_out, m_dot_wcair, m_dot_cw=0, 
 	h_wcfan_in, T_wcfan_in_K, T_wcfan_out, h_wcfan_out_s, h_wcfan_out, W_dot_wcfan, m_dot_evap, m_dot_drift, m_dot_blowdown, h_acfan_out, 
-    f_hrsysair, f_hrsyswc, T_condwc, T_condair, dT_air, R, T_ITD, DeltaT_cw, dT_acfan,
+    f_hrsysair, f_hrsyswc, T_condwc, T_condair, dT_air, T_ITD, DeltaT_cw, dT_acfan,
 	T_wcfan_in, W_dot_cw_pump, T_wcfan_out_K, deltaH_evap;
 
 	int i,j;
+	const double R = 286.986538;					//[J/kg-K] Gas constant for air = 8314./28.97
+
 
 
 	// these are static - are they 'reset' in the code and preserved over calls to this function?
@@ -1549,8 +1555,8 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 	
 	// Only call the parameter equations at the beginning of the simulation. Once they're established, they don't need to be reset each time.
 	//if(fcall == 1.0)
-	//if(m_bFirstCall)
-	if(true)
+	if(m_bFirstCall)
+	//if(true)
 	{
 		// Values that can be estimated--------
 		//-dry
@@ -1558,7 +1564,6 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 		eta_acfan_s = 0.8;				//[-] Fan isentropic efficiency
 		eta_acfan = pow(0.98,3);		//[-] Fan mechanical efficiency
 		C_air = 1005.0;					//[J/kg-K] specific heat of air (This is relatively constant)
-		R = 286.986538;					//[J/kg-K] Gas constant for air = 8314./28.97
 
 		//-wet
 		drift_loss_frac = 0.001;		//Drift loss fraction
