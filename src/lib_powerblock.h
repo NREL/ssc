@@ -104,8 +104,8 @@ public:
 	~CPowerBlock_Type224();
 	bool InitializeForParameters(const SPowerBlockParameters& pbp);
 	bool Execute(const long lSecondsFromStart, const SPowerBlockInputs& pbi);
-	double GetOutputMW( ) { return m_pbo.P_cycle; }
-	double GetOutputkW( ) { return m_pbo.P_cycle*1000; }
+	double GetOutputMW(void) { return m_pbo.P_cycle; }
+	double GetOutputkW(void) { return m_pbo.P_cycle*1000; }
 	SPowerBlockOutputs GetOutputs() const { return m_pbo; }
 	std::string GetLastWarning() {return m_strWarningMsg;}
 	std::string GetLastError() {return m_strLastError;}
