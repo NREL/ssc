@@ -1031,9 +1031,9 @@ public:
 	double GetPumpSizeHPInjection( ) { return mdPumpSizeHPInjection; }
 
 	// virtual functions in CGeoHourlyBaseInputs
-	virtual double GetPumpWorkWattHrPerLb( ) { return moPPC.GetTotalPumpPower(m_strErrMsg); } // small errors in pump work introduce biases throughout the results
+	virtual double GetPumpWorkWattHrPerLb( );
 	//double GetPlantBrineEffectiveness( ) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : 11.7414224664536; }
-	virtual double GetPlantBrineEffectiveness( ) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
+	virtual double GetPlantBrineEffectiveness( );
 	virtual double GetFractionOfInletGFInjected( );  // used in CPumpPowerCalculator
 	virtual bool TimeToUpdateInterface(float dPercentDone, float iNotificationIntervalInPercent);
 

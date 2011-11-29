@@ -1402,22 +1402,23 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					m_afDryBulb[iElapsedTimeSteps] = moMA->WeatherDryBulb();
 					m_afWetBulb[iElapsedTimeSteps] = moMA->WeatherWetBulb();
 
+					double pump_work = -1;
 					// record outputs based on current inputs
 					if ( ReturnGETEMResults() )
+					{
 						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->plantNetPowerkW(); // = Gross power - pump work
+					}
 					else
-						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - (float)GetPumpWorkKW();
+					{
+						pump_work = GetPumpWorkKW();
+						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - (float)pump_work;
+					}
 
 
 
 					m_afTestValues[iElapsedTimeSteps] = (float)((year + 1)*1000 + month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
 					fMonthlyPowerTotal += m_afPowerByTimeStep[iElapsedTimeSteps];
-		
-					//dElapsedTimeInYears = year + util::percent_of_year(month,hour);
-					if (!moMA->GetLastErrorMessage().empty()) { m_strErrMsg = moMA->GetLastErrorMessage(); return false; }
-					iElapsedTimeSteps++;
-					dElapsedTimeInYears = iElapsedTimeSteps * (1.0/GetMakeupAnalysesPerYear());  //moved to be after iElapsedTimeSteps++;
 
 					
 					 if (FILE*fp=fopen(DEBUGFILE, "a"))
@@ -1429,11 +1430,18 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 							(double)m_afDryBulb[iElapsedTimeSteps],
 							(double)m_afWetBulb[iElapsedTimeSteps],
 							(double)m_afPowerByTimeStep[iElapsedTimeSteps],
-							(double) GetPumpWorkKW(),
+							(double) pump_work,
 							(double)fMonthlyPowerTotal );
 
 						fclose(fp);
 					 }
+		
+					//dElapsedTimeInYears = year + util::percent_of_year(month,hour);
+					if (!moMA->GetLastErrorMessage().empty()) { m_strErrMsg = moMA->GetLastErrorMessage(); return false; }
+					iElapsedTimeSteps++;
+					dElapsedTimeInYears = iElapsedTimeSteps * (1.0/GetMakeupAnalysesPerYear());  //moved to be after iElapsedTimeSteps++;
+
+					
 				}
 			}//hours
 
@@ -1556,4 +1564,10 @@ double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies( )
         // negotiated is 10% over the cost of generating it.
 }
 
-double CGeoHourlyBaseInputs::GetPumpWorkKW( ) { return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; }  // shortcut to function in CPumpPowerCalculat
+double CGeoHourlyBaseInputs::GetPumpWorkKW( ) 
+{ 
+	return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; 
+}
+
+double CGeoHourlyAnalysis::GetPumpWorkWattHrPerLb( ) { return moPPC.GetTotalPumpPower(m_strErrMsg); } // small errors in pump work introduce biases throughout the results
+double CGeoHourlyAnalysis::GetPlantBrineEffectiveness( ) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
