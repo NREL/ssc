@@ -467,7 +467,7 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 	}
 
 	default_exec_handler h( cm, pf_handler, pf_user_data );
-	return cm->compute( &h, vt ) ? true : false;
+	return cm->compute( &h, vt ) ? 1 : 0;
 }
 
 

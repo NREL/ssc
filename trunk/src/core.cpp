@@ -97,7 +97,7 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 		exec();
 		if (!verify("postcheck output", SSC_OUTPUT)) return false;
 
-	} catch ( general_error e )	{
+	} catch ( general_error &e )	{
 		log( e.err_text, SSC_ERROR, e.time );
 		return false;
 	}

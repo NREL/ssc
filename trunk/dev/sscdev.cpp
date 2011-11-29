@@ -334,7 +334,7 @@ void SCAbout::OnCrash(wxCommandEvent &evt)
 {
 	try {
 		__ssc_segfault();
-	}catch(sscdll_error e){
+	}catch(sscdll_error& e){
 		wxMessageBox(wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()),"Error",wxICON_ERROR|wxOK);
 	}
 }
@@ -564,7 +564,7 @@ void SCFrame::UpdateUI()
 		try {
 			ver = ssc_version();
 			build = const_cast<char*>( ssc_build_info() );
-		} catch (sscdll_error e) {
+		} catch (sscdll_error &e) {
 			status = wxString(e.text.c_str()) + " ";
 			ver = -999;
 		}
@@ -1297,7 +1297,7 @@ void SCFrame::Start()
 
 		::ssc_data_free( p_data );
 	 
-	} catch(sscdll_error e) {
+	} catch(sscdll_error &e) {
 		wxMessageBox("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
 	
