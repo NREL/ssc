@@ -1010,7 +1010,7 @@ CMakeupAlgorithm::CMakeupAlgorithm()
 	
 	if (FILE*fp=fopen(DEBUGFILE, "w"))
 	{
-		fprintf(fp, "CMakeupAlgorithm::Constructor\n{%}\n", ::ssc_build_info());
+		fprintf(fp, "CMakeupAlgorithm::Constructor\n{%s}\n", ::ssc_build_info());
 		fclose(fp);
 	}
 }
@@ -1402,6 +1402,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					m_afDryBulb[iElapsedTimeSteps] = moMA->WeatherDryBulb();
 					m_afWetBulb[iElapsedTimeSteps] = moMA->WeatherWetBulb();
 
+					double pb_out = -1;
 					double pump_work = -1;
 					// record outputs based on current inputs
 					if ( ReturnGETEMResults() )
@@ -1411,10 +1412,9 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					else
 					{
 						pump_work = GetPumpWorkKW();
-						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - (float)pump_work;
+						pb_out = moMA->GetType224OutputkW();
+						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)pb_out - (float)pump_work;
 					}
-
-
 
 					m_afTestValues[iElapsedTimeSteps] = (float)((year + 1)*1000 + month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
@@ -1423,15 +1423,15 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					
 					 if (FILE*fp=fopen(DEBUGFILE, "a"))
 					 {
-	 					fprintf(fp, "RESULT[%d] %lg %lg %lg %lg %lg %lg getem?: %d\n",
+	 					fprintf(fp, "RESULT[%d] %lg %lg %lg %lg pb: %lg pump: %lg net: %lg\n",
 							iElapsedTimeSteps,
 							(double)m_afTemperatureC[iElapsedTimeSteps],
 							(double)m_afPressure[iElapsedTimeSteps],
 							(double)m_afDryBulb[iElapsedTimeSteps],
 							(double)m_afWetBulb[iElapsedTimeSteps],
-							(double)m_afPowerByTimeStep[iElapsedTimeSteps],
+							(double) pb_out,
 							(double) pump_work,
-							(int) ReturnGETEMResults() ? 1 : 0 );
+							(double) (pb_out-pump_work) );
 
 						fclose(fp);
 					 }
@@ -1566,7 +1566,8 @@ double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies( )
 
 double CGeoHourlyBaseInputs::GetPumpWorkKW( ) 
 { 
-	return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; 
+	//return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; 
+	return  GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0; 
 }
 
 double CGeoHourlyAnalysis::GetPumpWorkWattHrPerLb( ) { return moPPC.GetTotalPumpPower(m_strErrMsg); } // small errors in pump work introduce biases throughout the results
