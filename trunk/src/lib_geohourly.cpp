@@ -1,25 +1,17 @@
 // define classes
-#include "core.h"
-#include "sscapi.h"
 #include "lib_geohourly_interface.h"
 #include "lib_geohourly.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeothermalInterface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeothermalInterface::CGeothermalInterface( ) {m_strErrMsg = "";}
-CGeothermalInterface::~CGeothermalInterface( ){}
+CGeothermalInterface::CGeothermalInterface(void) {m_strErrMsg = "";}
+CGeothermalInterface::~CGeothermalInterface(void){}
 
-#ifdef __WINDOWS__
-#define DEBUGFILE "c:/Transfer/geotherm/geolog_pc.txt"
-#endif
-#ifdef __MACOSX__
-#define DEBUGFILE "/Volumes/Transfer/geotherm/geolog_mac.txt"
-#endif
 
-bool CGeothermalInterface::IsReadyToRun( ) { return oGeoOutputs.readyToAnalyze(); }
-bool CGeothermalInterface::ErrorOccured( ) { return (m_strErrMsg == "") ? false : true; }
-std::string CGeothermalInterface::GetErrorMsg( ) { return m_strErrMsg; }
+bool CGeothermalInterface::IsReadyToRun(void) { return oGeoOutputs.readyToAnalyze(); }
+bool CGeothermalInterface::ErrorOccured(void) { return (m_strErrMsg == "") ? false : true; }
+std::string CGeothermalInterface::GetErrorMsg(void) { return m_strErrMsg; }
 
 int CGeothermalInterface::RunGeoHourly(void (*update_function)(float,void*),void*user_data)
 {
@@ -175,7 +167,7 @@ void setZeroTo1(double &dVal, const double &newVal, std::string varName, std::st
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGETEMGlobals /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGETEMGlobals::CGETEMGlobals( )
+CGETEMGlobals::CGETEMGlobals(void)
 {
 	oAmbientEnthalpyConstants.init(-31.76958886, 0.997066497, 0.00001087, 0, 0, 0, 0);
 	oAmbientEntropyConstants.init(-0.067875028480951, 0.002201824618666, -0.000002665154152, 0.000000004390426, -0.000000000004355, 0, 0);
@@ -315,7 +307,7 @@ double CGETEMGlobals::GetFlashTemperature(double pressurePSI)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeothermalFluid //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeothermalFluid::CGeothermalFluid( )
+CGeothermalFluid::CGeothermalFluid(void)
 {	// constructor: initialize member variables and objects
 	moEnthalpyConstants.init(0,0,0,0,0,0,0);
 	moEntropyConstants.init(0,0,0,0,0,0,0);
@@ -331,7 +323,7 @@ void CGeothermalFluid::init(const CGeothermalConstants &enthalpyConstants, const
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeoFluidContainer ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeoFluidContainer::CGeoFluidContainer( )
+CGeoFluidContainer::CGeoFluidContainer(void)
 {
 	moAmbientGeothermalFluid.init(m_oGG.oAmbientEnthalpyConstants, m_oGG.oAmbientEntropyConstants);
 	moBinaryGeothermalFluid.init(m_oGG.oBinaryEnthalpyConstants, m_oGG.oBinaryEntropyConstants);
@@ -351,766 +343,9 @@ double CGeoFluidContainer::GetAEForFlashBTU(double tempHighF, double tempLowF)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CGeoHourlyAnalysis //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Implementation of CGeoHourlyBaseInputs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-double CGeoHourlyAnalysis::GetAmbientTemperatureC(conversionTypes ct)
-{
-	if (ct == NO_CONVERSION_TYPE) ct = cst;
-	return (ct == BINARY) ? DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * mdTemperatureWetBulbC) + 5.1772 ;
-
-}
-
-
-double CGeoHourlyAnalysis::GetTemperatureGradient( ) // degrees C per km
-{	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
-	if (this->rt == HYDROTHERMAL) { return ((mdTemperatureResourceC - GetAmbientTemperatureC(BINARY))/mdResourceDepthM)*1000; }
-	return ((mdTemperatureResourceC - mdTemperatureEGSAmbientC)/mdResourceDepthM)*1000;
-	//return mdEGSResourceTemperatureGradient; 
-}
-
-
-double CGeoHourlyAnalysis::GetResourceTemperatureC( ) // degrees C
-{
-	if ( (this->rt == EGS) && (dc == DEPTH) ) return ((mdResourceDepthM/1000) * GetTemperatureGradient()) + mdTemperatureEGSAmbientC;
-	return mdTemperatureResourceC;
-}
-
-
-double CGeoHourlyAnalysis::GetResourceDepthM( ) // meters
-{
-	if ( (this->rt == EGS) && (dc == TEMPERATURE) ) return 1000 * (mdTemperatureResourceC - mdTemperatureEGSAmbientC) / GetTemperatureGradient();
-	return mdResourceDepthM;
-}
-
-
-makeupAlgorithmType CGeoHourlyAnalysis::determineMakeupAlgorithm()
-{   // This is the logic to determine which makeup algorithm GETEM uses: Binary, Flash, or EGS
-    // Just because the user chooses "EGS" from the drop-down box on the "2A.Scenario Input" sheet,
-    // does NOT mean that the model will use the results from the EGS makeup sheet.
-    
-	if ((rt != HYDROTHERMAL) && (rt != EGS)) m_strErrMsg = "Reource type not recognized in CGeoHourlyAnalysis::determineMakeupAlgorithm.";
-	if ((cst != BINARY) && (cst != FLASH))   m_strErrMsg = "Conversion system not recognized in CGeoHourlyAnalysis::determineMakeupAlgorithm.";
-	if (m_strErrMsg != "") return mat;
-
-    if (tdm == ENTER_RATE)
-	{ // if user has chosen to enter the temperature decline rate, then the makeup is calculated either with the binary or flash method.
-        if (cst == BINARY)
-            mat = MA_BINARY;
-		else
-		{
-            if ((ft > NO_FLASH_SUBTYPE) && (ft <= DUAL_FLASH_WITH_TEMP_CONSTRAINT))
-                mat = MA_FLASH;
-            else
-                m_strErrMsg = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGeoHourlyAnalysis::determineMakeupAlgorithm");
-		}
-	}
-    else if (tdm == CALCULATE_RATE)
-	{	// this temperature decline can only be calculated for Binary conversion systems with EGS resources
-        if (rt == EGS)
-		{
-            if (cst == BINARY)
-                mat = MA_EGS;
-            else
-                m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for EGS resources using a flash plant");
-		}
-		else
-            m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for hydrothermal resources");
-	}
-	else
-		m_strErrMsg = ("Error: Fluid temperature decline method not recognized in CGeoHourlyAnalysis::determineMakeupAlgorithm.");
-
-    return mat;
-}
-
-
-double CGeoHourlyAnalysis::injectionTemperatureC() // calculate injection temperature in degrees C
-{	// Plant design temp AND resource temp have to be Set correctly!!!
-	// These are the calculations done at the bottom of [10B.GeoFluid] with the result in D89
-	
-	// this is used in pump work calculations, and in EGS energy produciton calculations
-	if ((this->GetTemperaturePlantDesignC() != this->GetResourceTemperatureC()) && ( (this->mat == MA_BINARY) || (this->mat == MA_FLASH) ) )
-		{ m_strErrMsg = ("Resource temperature != plant design temp in non-EGS analysis in CGeoHourlyAnalysis::injectionTemperatureC"); return 0; }
-	//if(mat == MA_EGS) {	m_strErrMsg = ("Not ready for EGS in CGeoHourlyAnalysis::injectionTemperatureC"); return 0; }
-
-	double a = (-0.000655 * GetTemperaturePlantDesignC()) + 1.01964;
-	double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
-	double dPlantBrineEffectiveness = (IMITATE_GETEM) ? 10.35 : GetPlantBrineEffectiveness();
-	double eff = dPlantBrineEffectiveness / availableEnergyBinary(); //available energy based on resource temp
-	double tr = a * exp(b*eff);
-	double t1 = KelvinToCelcius(CelciusToKelvin(GetTemperaturePlantDesignC()) * tr);
-	double t2 = GetAmbientTemperatureC() + 27;
-
-	CGeothermalConstants ogc;
-	ogc.init(4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
-	double x = ogc.evaluatePolynomial(GetTemperaturePlantDesignC());
-
-	ogc.init(-0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0);
-	double x1 = ogc.evaluatePolynomial(x);
-
-	double t3 = FarenheitToCelcius(CelciusToFarenheit(x1)+1);
-	double y = (t1>t2) ? t1 : t2;
-
-	return ( (t3>y) ? t3 : y );
-}
-
-
-double CGeoHourlyAnalysis::calcEGSReservoirConstant(double avgWaterTempC, double timePeriods /* days or hours*/ )
-{	// all this is from [7C.EGS Subsrfce HX], also from the calculations over time on 6Bb.Makeup-EGS HX, AF62-AF422
-	// this is best done in CGeoHourlyAnalysis because it requires many CGeoHourlyAnalysis properties, but it is used in several classes
-	double lv = EGSLengthOverVelocity(avgWaterTempC);	// days (or hours)
-	if (timePeriods <= lv) return 0;
-
-	double cp = m_oGG.EGSSpecificHeat(avgWaterTempC);	// J/kg-C
-	double rho = m_oGG.EGSWaterDensity(avgWaterTempC);	// kg/m^3
-	double flow = EGSFlowPerFracture(avgWaterTempC);	// m^3 per day (or per hour)
-	double x = (GetEGSThermalConductivity() * EGSFractureSurfaceArea()) / (cp * rho * flow * sqrt(EGSAlpha()*(timePeriods - lv) ) );
-	return my_erfc(x);
-}
-
-
-double CGeoHourlyAnalysis::EGSAverageReservoirTemperatureF( ) //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
-{	// all this is from [7C.EGS Subsrfce HX]
-	double waterTempC = (IMITATE_GETEM) ? EGSAverageWaterTemperatureC1() : EGSAverageWaterTemperatureC2(); // degrees C
-	double days = mdEGSTimeInput * DAYS_PER_YEAR;
-	double erfcEGS = calcEGSReservoirConstant(waterTempC, days);
-
-	double tempEGSProductionC = GetResourceTemperatureC() + (mdTemperatureEGSInjectionC - GetResourceTemperatureC()) * erfcEGS;
-	return CelciusToFarenheit((mdTemperatureEGSInjectionC + tempEGSProductionC)/2);
-}
-
-double CGeoHourlyAnalysis::secondLawEfficiencyGETEM() // This assumes the use of Binary constants and is only necessary for GETEM method of calculating PlantOutputKW - keep private
-{
-	double ae = availableEnergyBinary();
-	if (ae == 0) { m_strErrMsg = ("ae = zero in CGeoHourlyAnalysis::secondLawEfficiencyGETEM"); return 0;}
-	return GetPlantBrineEffectiveness() / ae;
-}
-
-
-bool CGeoHourlyAnalysis::inputErrors( )
-{
-	if (m_strErrMsg != "") return true;
-
-	if (!miProjectLifeYears) { m_strErrMsg = ("Project life was zero."); return true; }
-	if (miModelChoice < 0) { m_strErrMsg = ("The model choice was not set."); return true; }
-
-	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { m_strErrMsg = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
-
-	if (mdPotentialResourceMW < PlantSizeKW()/1000) { m_strErrMsg = ("Resource potential must be greater than the gross plant output."); return true; }
-
-	if ( (this->rt != EGS) && (this->pc == SIMPLE_FRACTURE) ) { m_strErrMsg = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
-
-	if ( (this->rt != EGS) && (this->tdm == CALCULATE_RATE) ) { m_strErrMsg = ("Temperature decline can only be calculated for EGS resources."); return true; }
-
-	if ((tdm == ENTER_RATE) && (mdTemperatureDeclineRate < 0))
-		{ m_strErrMsg = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0"); return true; }
-
-	if ( (GetTemperatureRatio() > MAX_TEMP_RATIO) && ReturnGETEMResults() )
-		{ m_strErrMsg = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true; }
-
-	if ( this->netBrineEffectiveness() == 0 ) // this will cause a division by zero error
-		{ m_strErrMsg = ("Inputs led to a divide by zero error.  Pump work = Plant output, so the net efficiency is zero."); return true; }
-
-	if ( this->netBrineEffectiveness() < 0 )
-		{ m_strErrMsg = ("Inputs lead to required pump energy being greater than the plant output."); return true; }
-
-
-	if (availableEnergyBinary() == 0)
-		{ m_strErrMsg = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
-
-	if (m_pbp.P_ref == 0)
-		{ m_strErrMsg = ("The power block parameters were not initialized."); return true;}
-
-	if (!m_strErrMsg.empty()) return true;
-	return false;
-}
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CPumpPowerCalculator //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void CPumpPowerCalculator::init(CGeoHourlyAnalysis* gbi)
-{
-	mpGBI = gbi;
-
-    mdAdditionalPressure = 0;
-	mdPumpSetDepthFt = 0;
-
-	mdCT = 0.0009; // these are both inputs that are shaded out in GETEM
-	mdCP = 0.000000000464;
-
-	mbBottomHolePressureCalculated = false;
-	mbPressureChangeCalculated = false;
-	mbProductionWellsPumped = true;
-	mbAdditionalPressureRequired = false;
-	mbCalculatePumpDepth = true;
-}
-
-
-double CPumpPowerCalculator::GetTotalPumpPower(std::string sErr) // watt-hr/lb
-{
-	double prod = productionPumpPower();
-	double inj = injectionPumpPower();
-
-	if (FILE*fp=fopen(DEBUGFILE, "a"))
-	{
-		fprintf(fp, "prod=%lg inj=%lg\n", prod, inj);
-		fclose(fp);
-	}
-
-	double retVal = prod + inj;
-	if (retVal < 0)
-		{ sErr = ("CPumpPowerCalculator::GetTotalPumpPower calculated a value < 0"); return 0; }
-	return retVal;
-}
-
-// PRIVATE FUNCTIONS -----------------------------------------------------------------
-double CPumpPowerCalculator::productionPumpPower( ) // ft-lbs/hr
-{
-	if (!mbProductionWellsPumped) return 0;
-	
-	// Enter 1 for flow to Get power per lb of flow
-	return pumpWorkInWattHr(1, pumpHeadFt(), mpGBI->GetGFPumpEfficiency(), mpGBI->m_strErrMsg);
-}
-
-
-double CPumpPowerCalculator::GetCalculatedPumpDepthInFeet( )
-{	// Get the pump Set depth in ft
-		
-	if (!mbCalculatePumpDepth) return mdPumpSetDepthFt;
-
-	// calculate the pumpSetDepth
-	double pressureDiff = GetBottomHolePressure()  - pressureWellHeadPSI();
-
-	double areaWell = areaCircle(DiameterProductionWellFt()/2); // ft^2
-	double velocityWell = productionFlowRate()/areaWell;
-	double ReWell = DiameterProductionWellFt() * velocityWell * productionDensity()/productionViscosity();
-	double frictionHeadLossWell = (frictionFactor(ReWell)/DiameterProductionWellFt())* pow(velocityWell,2)/(2 * physics::GRAVITY_FTS2);
-
-	double pumpSetting = ((pressureDiff*144)/productionDensity())*(1-frictionHeadLossWell);   // [7A.GF Pumps].D89
-	return (GetResourceDepthFt() - pumpSetting < 0) ? 0 : GetResourceDepthFt() - pumpSetting; // feet - [7A.GF Pumps].D90
-}
-
-
-double CPumpPowerCalculator::pressureWellHeadPSI( )
-{
-	double tempF = CelciusToFarenheit(mpGBI->GetTemperaturePlantDesignC());
-	double pressureSaturation = mpGBI->m_oGG.oPC.evaluatePolynomial(tempF); // valid above boiling, I guess.
-	double pressureExcessPSI = BarToPsi(mpGBI->mdExcessPressureBar); // bar to psi
-	double pressureAmbientPSI = (IMITATE_GETEM) ? 14.7 : mpGBI->mdPressureAmbientPSI;
-	return (mpGBI->GetTemperaturePlantDesignC() > 100) ? pressureSaturation + pressureExcessPSI : pressureAmbientPSI + pressureExcessPSI;
-}
-
-
-double CPumpPowerCalculator::GetBottomHolePressure()
-{	// [7B.Reservoir Hydraulics].G75
-	if (!mbBottomHolePressureCalculated) {
-		mbBottomHolePressureCalculated = true;
-		if (mpGBI->rt == EGS)
-			mdBottomHolePressure = (pressureInjectionWellBottomHolePSI() + mpGBI->InectionPumpHeadUsed()) - GetPressureChangeAcrossReservoir();
-		else
-			mdBottomHolePressure = pressureHydrostaticPSI() - GetPressureChangeAcrossReservoir();
-	}
-	return mdBottomHolePressure;
-}
-
-double CPumpPowerCalculator::GetPressureChangeAcrossReservoir()
-{	// [7B.Reservoir Hydraulics].G70
-    if (mpGBI->pc == ENTER_PC) return mpGBI->mdReservoirDeltaPressure * mpGBI->flowRatePerWell() / 1000.0;
-	if (mbPressureChangeCalculated) return mdPressureChangeAcrossReservoir;
-
-	// if user didn't input the pressure change, we have to calculate it.  start with these
-	double density = mpGBI->m_oGG.oDensityConstants.evaluatePolynomial(GetReservoirTemperatureF()); // lbs per ft^3
-	double volumetricFlow =(mpGBI->flowRatePerWell() / density)/3600; // ft^3 per second
-	double viscosity = 0.115631 * pow(GetReservoirTemperatureF(), -1.199532); // lb per ft-second
-
-	if ((mpGBI->rt == EGS) && (mpGBI->pc == SIMPLE_FRACTURE)  )
-	{	// only a valid option for EGS resources
-		// calculate the pressure change across the reservoir using simple fracture flow
-		double effectiveLengthFt = MetersToFeet(mpGBI->EGSFractureLengthUserAdjusted());  // Only instance where EGSFractureLengthUserAdjusted is used.
-		double fractureFlowArea = MetersToFeet(mpGBI->GetEGSFractureAperature()) * MetersToFeet(mpGBI->GetEGSFractureWidthM());  // ft^2
-		double hydraulicDiameter = (2 * fractureFlowArea) / (MetersToFeet(mpGBI->GetEGSFractureAperature()) + MetersToFeet(mpGBI->GetEGSFractureWidthM()));  // ft
-		double flowPerFracture = volumetricFlow/mpGBI->GetEGSNumberOfFractures(); // ft^3 per second
-		double velocity = flowPerFracture/fractureFlowArea; // ft per second
-		double Re = density * velocity * hydraulicDiameter / viscosity;
-		double frictionFactor = 64/Re;
-		double headLoss = frictionFactor * (effectiveLengthFt/hydraulicDiameter) * pow(velocity,2)/(2 * physics::GRAVITY_FTS2); // ft
-		mdPressureChangeAcrossReservoir = headLoss * density / 144; // psi
-	}
-	else {
-		// calculate the change in pressure across reservoir using K*A (from [7B.Reservoir Hydraulics].G70)
-		double G53 = M2ToFeet2(mpGBI->GetReservoirPermeability() * reservoirAreaSqFt() *  0.000000000000986923); //ft^4
-		double G61 = volumetricFlow * viscosity * MetersToFeet(mpGBI->mdDistanceBetweenProductionInjectionWellsM) / G53; // lbs per second^2-ft
-		mdPressureChangeAcrossReservoir = G61/physics::GRAVITY_FTS2/144; // change in pressure (psi)
-	}
-	mbPressureChangeCalculated = true;
-	return mdPressureChangeAcrossReservoir;
-}
-
-
-double CPumpPowerCalculator::pressureInjectionWellBottomHolePSI() // [7B.Reservoir Hydraulics].G72, [7A.GF Pumps].G50
-{
-	double injectionWellSurfacePressurePSI = (mpGBI->cst == FLASH) ? 0 : (pressureWellHeadPSI() - mpGBI->mdPressureChangeAcrossSurfaceEquipmentPSI); // [2B.Resource&Well Input].D149
-	// this used to incorrectly convert PSI to bar - does this still work for Binary?????????????????????
-	double pMax = (pZero() > injectionWellSurfacePressurePSI) ? pZero() : injectionWellSurfacePressurePSI; //G18
-	double depthFt = (IMITATE_GETEM) ? this->GetProductionWellDepthFt() : this->GetInjectionWellDepthFt(); //G22
-	double G23 = pMax + injectionDensity() * depthFt/144; // psi
-
-	double flowRate = mpGBI->GetProductionFlowRateKgPerS() / mpGBI->mdRatioInjectionToProduction /(1 - mpGBI->GetWaterLossPercent()); // kg per second
-	flowRate = KgToLb(flowRate) / injectionDensity();  // cf per second
-	double areaInjectionWell = areaCircle(DiameterInjectionWellFt()/2); // ft^2
-	double velocityInjectionWell = flowRate/areaInjectionWell;
-
-	double viscosity = 0.0925 * pow(injectionTempF(),-1.159);
-	double ReInjectionWell = DiameterInjectionWellFt() * velocityInjectionWell * injectionDensity()/viscosity;
-
-	double frictionHeadLossInjectionWell = (frictionFactor(ReInjectionWell) * GetInjectionWellDepthFt() / DiameterInjectionWellFt())* pow(velocityInjectionWell,2)/(2 * physics::GRAVITY_FTS2); //feet
-	double G36 = frictionHeadLossInjectionWell * injectionDensity() / 144; // conversion to psi
-
-	return G23 - G36; // pressureBHInjection, psi
-}
-
-
-
-double CPumpPowerCalculator::pressureHydrostaticPSI( )
-{	// calculate the hydrostatic pressure (at the bottom of the well)
-	double tempAmbientF = (IMITATE_GETEM) ? CelciusToFarenheit(mpGBI->GetAmbientEGSTemperatureC()) : mpGBI->GetAmbientTemperatureF();
-	double pressureAmbientBar = PsiToBar(mpGBI->m_oGG.oPressureAmbientConstants.evaluatePolynomial(tempAmbientF));
-
-	double tempF = (IMITATE_GETEM) ? CelciusToFarenheit(mpGBI->GetAmbientEGSTemperatureC()) : mpGBI->GetAmbientTemperatureF();
-	double densityAmbient = LbPerCfToKgPerM3_B(mpGBI->m_oGG.oDensityConstants.evaluatePolynomial(tempF));
-
-	double tempAmbientC = (IMITATE_GETEM) ? 10 : mpGBI->GetAmbientTemperatureC(); // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
-	double tempGradient = (mpGBI->rt == EGS) ? mpGBI->GetTemperatureGradient()/1000 : (mpGBI->GetResourceTemperatureC() - tempAmbientC ) / GetResourceDepthM();  
-
-	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
-	double pressureHydrostaticBar = pressureAmbientBar + (1/mdCP) * (exp(densityAmbient * GRAVITY_MS2 * mdCP * (GetResourceDepthM() - (0.5 * mdCT * tempGradient * pow(GetResourceDepthM(),2))))-1)/100000;
-	
-	return BarToPsi(pressureHydrostaticBar);
-}
-
-double CPumpPowerCalculator::pumpHeadFt( ) // ft
-{	// calculate the friction head loss of the casing
-	double areaCasing = areaCircle(DiameterPumpCasingFt()/2); // ft^2
-	double velocityCasing = productionFlowRate()/areaCasing;
-	double ReCasing = DiameterPumpCasingFt() * velocityCasing * productionDensity()/productionViscosity();
-	double frictionHeadLossCasing = (frictionFactor(ReCasing) * GetCalculatedPumpDepthInFeet() / DiameterPumpCasingFt())* pow(velocityCasing,2)/(2 * physics::GRAVITY_FTS2); //feet
-
-	// Add (friction head loss) and (pump Set depth) to Get total pump head.
-	return frictionHeadLossCasing + GetCalculatedPumpDepthInFeet();
-}
-
-
-double CPumpPowerCalculator::calcInjectionPressure()
-{	// on [7A.GF Pumps] unless otherwise noted
-	double excessPressureAvailble = pressureInjectionWellBottomHolePSI() - pressureHydrostaticPSI();
-	double injectionPressurePSI = 150 - excessPressureAvailble;
-	return (injectionPressurePSI < 0) ? 0 : injectionPressurePSI; // If it's less than zero, use zero.
-}
-
-
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CFlashBrineEffectiveness //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Public Functions -------------------------------------------------------------------------------
-CFlashBrineEffectiveness::CFlashBrineEffectiveness( )
-{
-	mCondenserType = SURFACE;
-	mNCGRemovalType = JET;
-	mdNCGLevelPPM = 100;
-	mdPressureHPFlashPSI = 0;
-	mdPressureLPFlashPSI = 0;
-	mdDeltaPressureHPFlashPSI = 2.2;
-	mdDeltaPressureLPFlashPSI = 1.0;
-	mdEfficiencyTurbine = 0.825;
-	mdEfficiencyGenerator = 0.98;
-	mdBaseCWPumpHeadFt = 60.0;
-	mdDeltaTemperatureCWF = 30.0;												// degrees F
-	mdTemperaturePinchPtCondenserF = 10.0;
-	mdTemperaturePinchPtCoolingTowerF = 15;
-	miNumberOfCoolingStages = 3;												// 1,2, or 3
-	mdMoleWeightNCG = 44.0;
-	mdMoleWeightH2O = 18.0;
-	mdEfficiencyPump = 0.7;
-	mdEfficencyVacuumPump = 0.7;
-	mdPressureCondenserNCGPartialInHG = 0.5;									// inches of Mercury
-	mbFlashPressuresCalculated = false;
-	mbBrineEffectivenessCalculated = false;
-}
-
-void CFlashBrineEffectiveness::init(CGeoHourlyAnalysis* gbi)
-{
-	mpGBI = gbi;
-	mbFlashPressuresCalculated = false;
-	mbBrineEffectivenessCalculated = false;
-}
-
-
-double CFlashBrineEffectiveness::brineEffectiveness( )
-{
-	if (!mbBrineEffectivenessCalculated) {
-		this->calculateFlashPressures();
-
-		double dGrossOutput = turbine1OutputKWh();
-		if (FlashCount() == 2) dGrossOutput += turbine2OutputKWh();
-		double dGrossPower = dGrossOutput * mdEfficiencyGenerator;
-
-		double dParasiticPower = cwPumpingKW() + condensatePumpingKW() + fanPowerKW() + vacuumPumpingKW() + condenserInjectionPumpingKW();
-		mdFlashBrineEffectiveness = dGrossPower - dParasiticPower;
-		mbBrineEffectivenessCalculated = true;
-	}
-	return mdFlashBrineEffectiveness;
-}
-
-
-double CFlashBrineEffectiveness::waterLossFractionOfGF( )
-{
-	this->calculateFlashPressures();
-	return waterLoss() / mpGBI->m_oGG.mGeothermalFluidForFlash();
-}
-
-
-// Private Functions ------------------------------------------------------------------------------
-//////////////////////////////////////// Flash Pressures //////////////////////////////////////////
-double CFlashBrineEffectiveness::pressureDualHighWithConstraint()
-{
-	double a = (temperatureCondF() > 125) ? 1.59 + (0.0015547 * exp(0.0354727*temperatureCondF())) : 1.59 + (0.098693 * exp(0.0025283*temperatureCondF()));
-	double b = (temperatureCondF() > 125) ? 0.01916 - (0.000005307 * exp(0.031279921*temperatureCondF())) : 0.01916 - (0.000167123 * exp(0.00400728*temperatureCondF()));
-	return a * exp(b * mpGBI->GetTemperaturePlantDesignC());
-}
-
-void CFlashBrineEffectiveness::calculateFlashPressures( )
-{	// This function Sets some values that will be used throughout the calculations of the flash brine effectiveness
-	// These cannot be Set during initialization since some of the public properties may have been changed.  These
-	// need to be calculated right when the brine effectiveness is calculated.
-
-	if (mbFlashPressuresCalculated) return;
-	
-	// if single flash - add flash pressure to delta pressure and quit
-	if (FlashCount() == 1) { mdPressureHPFlashPSI = pressureSingle() + mdDeltaPressureHPFlashPSI; return; }
-
-	// dual flash, have to calculate both
-	// high pressure flash
-//i think this might be using the wrong temperature - resource instead of plant design - for EGS
-	mdPressureHPFlashPSI = pressureDualHigh() + mdDeltaPressureHPFlashPSI;
-
-
-	// low pressure flash
-	mdPressureLPFlashPSI = pressureDualLow() + mdDeltaPressureLPFlashPSI;
-	mbFlashPressuresCalculated = true;
-}
-
-
-//////////////////////////////////////// Turbine Output ///////////////////////////////////////////
-double CFlashBrineEffectiveness::calculateDH(double pressureIn)
-{
-	double a = mpGBI->m_oGG.GetDHa(pressureIn);
-	double b = mpGBI->m_oGG.GetDHb(pressureIn);
-	double x = pressureIn /(pressureCondenser());
-	return a * log(x) + b;
-}
-
-double CFlashBrineEffectiveness::calculateX(double enthalpyIn, double temperatureF)
-{
-	double enthalpyF = mpGBI->m_oGG.GetFlashEnthalpyF(temperatureF);
-	double enthalpyG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureF);
-	return (enthalpyIn - enthalpyF)/(enthalpyG-enthalpyF);
-}
-
-double CFlashBrineEffectiveness::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG)
-{	// I65-I80, I87-I102
-	double xPrime, effTurb, dEnthapyDelta, hEx;
-
-	dEnthapyDelta = dEnthalpyDeltaInitial;
-	for (int i=0;i<4;i++) {
-		hEx = dEnthalpyTurbineG - dEnthapyDelta;
-		xPrime = calculateX(hEx, temperatureCondF());
-		xPrime = (xPrime > 0.95) ? 0 : 0.95 - xPrime;
-		effTurb = mdEfficiencyTurbine - (0.5 * xPrime);
-		dEnthapyDelta = dEnthalpyDeltaInitial * effTurb;
-	}
-	return dEnthapyDelta;
-}
-
-
-
-//////////////////////////////////////// NCG Removal //////////////////////////////////////////////
-double CFlashBrineEffectiveness::pInter(int stage, std::string sErr)
-{	// D156, D205, D253 - psi
-	switch (stage)
-	{
-		case 0: return pTotal();
-		case 1: return pTotal() * pRatio();
-		case 2: return (miNumberOfCoolingStages > 2) ? pTotal() * pRatio() * pRatio()  : mpGBI->mdPressureAmbientPSI;
-		case 3: return mpGBI->mdPressureAmbientPSI;
-		default: { sErr = ("Invalid stage in CFlashBrineEffectiveness::pInter"); return 0; }
-	}
-}
-
-
-
-double CFlashBrineEffectiveness::mForNCGRemoval()
-{
-	if(this->mNCGRemovalType == VAC_PUMP) return 0;
-
-	double dSteamFlow = steamFlow(1); 
-	if (miNumberOfCoolingStages > 1) { dSteamFlow += steamFlow(2); }
-	if (miNumberOfCoolingStages > 2) { dSteamFlow += steamFlow(3); }
-	return dSteamFlow;
-}
-
-
-
-//////////////////////////////////////// CW Pump Power KW /////////////////////////////////////////
-double CFlashBrineEffectiveness::overAllHEx() //I107
-{ return (this->FlashCount() == 2) ? ((turbine2HEx() * turbine2Steam()) + (turbine1HEx() * turbine1NetSteam()))/(turbine1NetSteam()+turbine2Steam()) : turbine1HEx(); }
-
-
-
-double CFlashBrineEffectiveness::pumpWorkFromSteamFlow(double flow)
-{
-	double enthalpyCondF = mpGBI->m_oGG.GetFlashEnthalpyF(temperatureCondF());
-	double enthalpyCondG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureCondF());
-	
-	double qReject = flow * (enthalpyCondG - enthalpyCondF);
-	double cwFlow = qReject / mdDeltaTemperatureCWF;
-	double pumpHead = mdBaseCWPumpHeadFt + mpGBI->m_oGG.additionalCWPumpHeadSurface();
-	return pumpWorkKW(cwFlow, pumpHead);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CMakeupAlgorithm //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CMakeupAlgorithm::CMakeupAlgorithm()
-{
-	miReservoirReplacements = 0; 
-	mdWorkingTemperatureC=0; 
-	moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0);  // by default, load Binary(EGS) secondLawConstants - let flash over write them
-	m_bWeatherFileOpen = false;
-	m_lReadCount = 0;
-	m_lHourCount = 0;
-	
-	if (FILE*fp=fopen(DEBUGFILE, "w"))
-	{
-		fprintf(fp, "CMakeupAlgorithm::Constructor\n{%s}\n", ::ssc_build_info());
-		fclose(fp);
-	}
-}
-
-
-bool CMakeupAlgorithm::SetScenarioParameters( CGeoHourlyAnalysis* gbi)
-{
-	mpGBI = gbi;
-	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC();
-	if (FILE*fp=fopen(DEBUGFILE, "a"))
-	{
-		fprintf(fp, "CMakeupAlgorithm::SetScenarioParameters mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
-		fclose(fp);
-	}
-
-	if ( m_pb.InitializeForParameters(mpGBI->GetPowerBlockParameters() ) )
-		return true;
-	else
-		m_strMAError = "There was an error initializing the power block with the input parameters: " + m_pb.GetLastError();
-
-	return false;
-}
-
-bool CMakeupAlgorithm::OpenWeatherFile(const char * fn)
-{
-	m_bWeatherFileOpen = false;
-	m_lReadCount = 0;
-	if (!m_wf.open(fn))
-		m_strMAError = "Could not open the weather file: " + std::string(fn);
-	else
-		m_bWeatherFileOpen = true;
-
-	return m_bWeatherFileOpen;
-}
-
-// Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
-bool CMakeupAlgorithm::ReadWeatherForTimeStep(bool bHourly, unsigned int timeStep)
-{	
-	// if this is an hourly analysis, just ignore the time step and get the data from the next line in the weather file
-	if (bHourly) return ReadNextLineInWeatherFile();
-
-	// Not an hourly analysis, so calculate the monthly weather info
-	int month = (timeStep % 12) + 1;
-	double hours = util::hours_in_month(month);
-	if (hours==0)
-	{
-		m_strMAError = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
-		return false;
-	}
-
-	double pressure=0, wetbulb=0, drybulb=0, rel_humidity=0;
-	for (int i = 0; i<hours; i++)
-	{
-		ReadNextLineInWeatherFile();
-		pressure += m_wf.pres;
-		wetbulb += m_wf.twet;
-		drybulb += m_wf.tdry;
-		rel_humidity += m_wf.rhum;
-	}
-	m_wf.pres = pressure / hours;
-	m_wf.twet = wetbulb / hours;
-	m_wf.tdry = drybulb / hours;
-	m_wf.rhum = rel_humidity / hours;
-	return true;
-}
-
-void CMakeupAlgorithm::SetType224Inputs( )
-{
-	// set inputs that change for each timestep
-	m_pbInputs.T_htf_hot = mdWorkingTemperatureC;
-	m_pbInputs.T_wb = m_wf.twet;
-	m_pbInputs.T_db = m_wf.tdry;
-	m_pbInputs.P_amb = physics::mBarToAtm(m_wf.pres);
-	m_pbInputs.TOU = mpGBI->GetTOUForHour(m_lReadCount-1);
-
-	static int count = 0;
-	if (FILE *fp = fopen(DEBUGFILE, "a"))
-	{
-		fprintf(fp, "CMakeupAlgorithm::SetType224Inputs [%d] mdWorkingTemperatureC=%lg\n",++count, mdWorkingTemperatureC);
-		fclose(fp);
-	}
-}
-
-
-double CMakeupAlgorithm::GetType224OutputkW( )
-{
-	// run power block model
-	if (!m_pb.Execute((m_lHourCount-1)*3600, m_pbInputs))
-		m_strMAError = "There was an error running the power block model: " + m_pb.GetLastError();
-	
-	// return outputs
-	return m_pb.GetOutputkW();
-}
-
-// Private function, called from ReadWeatherForTimeStep(timeStep)
-// Read the next line from weather file; rewind file if passed the end; assumes 8760 hour weather file;
-bool CMakeupAlgorithm::ReadNextLineInWeatherFile( )
-{
-	
-	if (m_lReadCount >= 8760)
-	{
-		m_wf.rewind();
-		m_lReadCount = 0;
-	}
-
-	if (!m_wf.read())
-	{
-		m_strMAError = "Could not read  line " + util::to_string((int)m_lReadCount+1) + " in the weather file.";
-		return false;
-	}
-	m_lReadCount++;
-	m_lHourCount++;
-
-	return true;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CFlashMakeup //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-double CFlashMakeup::fractionOfMaxEfficiency() 
-{
-    double tr = temperatureRatio();
-	initializeSecondLawConstants();
-	return (1.1 - (0.1 * pow(tr, moSecondLawConstants.evaluatePolynomial(CelciusToKelvin(mpGBI->GetResourceTemperatureC())) )));
-}
-
-void CFlashMakeup::initializeSecondLawConstants()
-{
-	if (mbInitialized) return;
-	switch (mpGBI->ft) //{ NO_FLASH_SUBTYPE, SINGLE_FLASH_NO_TEMP_CONSTRAINT, SINGLE_FLASH_WITH_TEMP_CONSTRAINT, DUAL_FLASH_NO_TEMP_CONSTRAINT, DUAL_FLASH_WITH_TEMP_CONSTRAINT }
-	{
-		case SINGLE_FLASH_NO_TEMP_CONSTRAINT:
-		case SINGLE_FLASH_WITH_TEMP_CONSTRAINT:
-			// ("6Ef.Flash Makeup").Range("R20:V20")
-			moSecondLawConstants.init(-3637.06, 25.7411, -0.0684072, 0.0000808782, -0.0000000359423, 0, 0);
-			break;
-
-		case DUAL_FLASH_NO_TEMP_CONSTRAINT:
-			// ("6Ef.Flash Makeup").Range("R22:V22")
-			moSecondLawConstants.init(-2762.4048, 18.637876, -0.047198813, 0.000053163057, -0.000000022497296, 0, 0);
-			break;
-
-		case DUAL_FLASH_WITH_TEMP_CONSTRAINT:
-			// ("6Ef.Flash Makeup").Range("R21:V21")
-			moSecondLawConstants.init(-4424.6599, 31.149268, -0.082103498, 0.000096016499, -0.00000004211223, 0, 0);
-			break;
-
-		default: m_strMAError = ("Invalid flash technology in CFlashMakeup::initializeSecondLawConstants"); return;
-	}
-	mbInitialized = true;
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CEGSMakeup ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void CEGSMakeup::calculateNewTemperature()
-{	// This function over-rides CMakeupAlgorithm::calculateNewTemperature(double dTempCalculationsPerYear) to calculate the temperature drop for the EGS resource.
-	// The EGS temperature drop depends on the amount of fluid being produced (makes intuitive sense).
-	mdLastProductionTemperatureC = mdWorkingTemperatureC;
-	mdWorkingTemperatureC = newEGSProductionTemperatureC();
-
-	if (FILE*fp=fopen(DEBUGFILE, "a"))
-	{
-		fprintf(fp, "CEGSMakeup::calculateNewTemperature mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
-		fclose(fp);
-	}
-}
-
-
-bool CEGSMakeup::canReplaceReservoir(double dTimePassedInYears)
-{
-	mdYearsAtNextTimeStep = dTimePassedInYears;
-	return CMakeupAlgorithm::canReplaceReservoir(dTimePassedInYears);
-}
-
-void CEGSMakeup::replaceReservoir( )
-{
-	miReservoirReplacements++; 
-	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); 
-	if (FILE*fp=fopen(DEBUGFILE, "a"))
-	{
-		fprintf(fp, "CEGSMakeup::replaceReservoir mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
-		fclose(fp);
-	}
-	mdLastProductionTemperatureC = mdWorkingTemperatureC; 
-	if (mdYearsAtNextTimeStep > 0) mdTimeOfLastReservoirReplacement = mdYearsAtNextTimeStep - (mpGBI->EGSTimeStar() / DAYS_PER_YEAR);
-}
-
-
-double CEGSMakeup::plantBrineEfficiency( )
-{
-    mdCurrentEfficiency = maxSecondLawEfficiency() * fractionOfMaxEfficiency();
-    return mdCurrentEfficiency * mpGBI->GetAEBinaryAtTemp(mdWorkingTemperatureC); // oSP.GeothermalFuildContainer.availableEnergyWattHr(Binary, toF(fWorkingTemperatureC))
-}
-
-
-double CEGSMakeup::newInjectionTemperatureC()
-{
-    double tempBrineEfficiencyC = KelvinToCelcius( exp((-0.42 * log(mdLastProductionTemperatureC) + 1.4745) * mdCurrentEfficiency) * CelciusToKelvin(mdLastProductionTemperatureC));
-	double tempSILimitC = FarenheitToCelcius(mpGBI->m_oGG.GetSiPrecipitationTemperatureF(LastProducitonTemperatureF()));
-	return (tempBrineEfficiencyC >= tempSILimitC) ? tempBrineEfficiencyC : tempSILimitC;
-}
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CGeoHourlyAnalysis //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeoHourlyAnalysis::CGeoHourlyAnalysis( )
+CGeoHourlyBaseInputs::CGeoHourlyBaseInputs(void)
 {
 	tdm = ENTER_RATE;
 	rt = HYDROTHERMAL;
@@ -1229,18 +464,735 @@ CGeoHourlyAnalysis::CGeoHourlyAnalysis( )
 	// Added June 2011 for geothermal hourly model
 	m_pbp.P_ref = 0;
 	mcFileName = NULL;
+}
 
 
+double CGeoHourlyBaseInputs::GetAmbientTemperatureC(conversionTypes ct)
+{
+	if (ct == NO_CONVERSION_TYPE) ct = cst;
+	return (ct == BINARY) ? DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * mdTemperatureWetBulbC) + 5.1772 ;
+
+}
+
+
+double CGeoHourlyBaseInputs::GetTemperatureGradient(void) // degrees C per km
+{	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
+	if (this->rt == HYDROTHERMAL) { return ((mdTemperatureResourceC - GetAmbientTemperatureC(BINARY))/mdResourceDepthM)*1000; }
+	return ((mdTemperatureResourceC - mdTemperatureEGSAmbientC)/mdResourceDepthM)*1000;
+	//return mdEGSResourceTemperatureGradient; 
+}
+
+
+double CGeoHourlyBaseInputs::GetResourceTemperatureC(void) // degrees C
+{
+	if ( (this->rt == EGS) && (dc == DEPTH) ) return ((mdResourceDepthM/1000) * GetTemperatureGradient()) + mdTemperatureEGSAmbientC;
+	return mdTemperatureResourceC;
+}
+
+
+double CGeoHourlyBaseInputs::GetResourceDepthM(void) // meters
+{
+	if ( (this->rt == EGS) && (dc == TEMPERATURE) ) return 1000 * (mdTemperatureResourceC - mdTemperatureEGSAmbientC) / GetTemperatureGradient();
+	return mdResourceDepthM;
+}
+
+
+makeupAlgorithmType CGeoHourlyBaseInputs::determineMakeupAlgorithm()
+{   // This is the logic to determine which makeup algorithm GETEM uses: Binary, Flash, or EGS
+    // Just because the user chooses "EGS" from the drop-down box on the "2A.Scenario Input" sheet,
+    // does NOT mean that the model will use the results from the EGS makeup sheet.
+    
+	if ((rt != HYDROTHERMAL) && (rt != EGS)) m_strErrMsg = "Reource type not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
+	if ((cst != BINARY) && (cst != FLASH))   m_strErrMsg = "Conversion system not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
+	if (m_strErrMsg != "") return mat;
+
+    if (tdm == ENTER_RATE)
+	{ // if user has chosen to enter the temperature decline rate, then the makeup is calculated either with the binary or flash method.
+        if (cst == BINARY)
+            mat = MA_BINARY;
+		else
+		{
+            if ((ft > NO_FLASH_SUBTYPE) && (ft <= DUAL_FLASH_WITH_TEMP_CONSTRAINT))
+                mat = MA_FLASH;
+            else
+                m_strErrMsg = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm");
+		}
+	}
+    else if (tdm == CALCULATE_RATE)
+	{	// this temperature decline can only be calculated for Binary conversion systems with EGS resources
+        if (rt == EGS)
+		{
+            if (cst == BINARY)
+                mat = MA_EGS;
+            else
+                m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for EGS resources using a flash plant");
+		}
+		else
+            m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for hydrothermal resources");
+	}
+	else
+		m_strErrMsg = ("Error: Fluid temperature decline method not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.");
+
+    return mat;
+}
+
+
+double CGeoHourlyBaseInputs::injectionTemperatureC() // calculate injection temperature in degrees C
+{	// Plant design temp AND resource temp have to be Set correctly!!!
+	// These are the calculations done at the bottom of [10B.GeoFluid] with the result in D89
+	
+	// this is used in pump work calculations, and in EGS energy produciton calculations
+	if ((this->GetTemperaturePlantDesignC() != this->GetResourceTemperatureC()) && ( (this->mat == MA_BINARY) || (this->mat == MA_FLASH) ) )
+		{ m_strErrMsg = ("Resource temperature != plant design temp in non-EGS analysis in CGeoHourlyBaseInputs::injectionTemperatureC"); return 0; }
+	//if(mat == MA_EGS) {	m_strErrMsg = ("Not ready for EGS in CGeoHourlyBaseInputs::injectionTemperatureC"); return 0; }
+
+	double a = (-0.000655 * GetTemperaturePlantDesignC()) + 1.01964;
+	double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
+	double dPlantBrineEffectiveness = (IMITATE_GETEM) ? 10.35 : GetPlantBrineEffectiveness();
+	double eff = dPlantBrineEffectiveness / availableEnergyBinary(); //available energy based on resource temp
+	double tr = a * exp(b*eff);
+	double t1 = KelvinToCelcius(CelciusToKelvin(GetTemperaturePlantDesignC()) * tr);
+	double t2 = GetAmbientTemperatureC() + 27;
+
+	CGeothermalConstants ogc;
+	ogc.init(4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
+	double x = ogc.evaluatePolynomial(GetTemperaturePlantDesignC());
+
+	ogc.init(-0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0);
+	double x1 = ogc.evaluatePolynomial(x);
+
+	double t3 = FarenheitToCelcius(CelciusToFarenheit(x1)+1);
+	double y = (t1>t2) ? t1 : t2;
+
+	return ( (t3>y) ? t3 : y );
+}
+
+
+double CGeoHourlyBaseInputs::calcEGSReservoirConstant(double avgWaterTempC, double timePeriods /* days or hours*/ )
+{	// all this is from [7C.EGS Subsrfce HX], also from the calculations over time on 6Bb.Makeup-EGS HX, AF62-AF422
+	// this is best done in CGeoHourlyBaseInputs because it requires many CGeoHourlyBaseInputs properties, but it is used in several classes
+	double lv = EGSLengthOverVelocity(avgWaterTempC);	// days (or hours)
+	if (timePeriods <= lv) return 0;
+
+	double cp = m_oGG.EGSSpecificHeat(avgWaterTempC);	// J/kg-C
+	double rho = m_oGG.EGSWaterDensity(avgWaterTempC);	// kg/m^3
+	double flow = EGSFlowPerFracture(avgWaterTempC);	// m^3 per day (or per hour)
+	double x = (GetEGSThermalConductivity() * EGSFractureSurfaceArea()) / (cp * rho * flow * sqrt(EGSAlpha()*(timePeriods - lv) ) );
+	return my_erfc(x);
+}
+
+
+double CGeoHourlyBaseInputs::EGSAverageReservoirTemperatureF(void) //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
+{	// all this is from [7C.EGS Subsrfce HX]
+	double waterTempC = (IMITATE_GETEM) ? EGSAverageWaterTemperatureC1() : EGSAverageWaterTemperatureC2(); // degrees C
+	double days = mdEGSTimeInput * DAYS_PER_YEAR;
+	double erfcEGS = calcEGSReservoirConstant(waterTempC, days);
+
+	double tempEGSProductionC = GetResourceTemperatureC() + (mdTemperatureEGSInjectionC - GetResourceTemperatureC()) * erfcEGS;
+	return CelciusToFarenheit((mdTemperatureEGSInjectionC + tempEGSProductionC)/2);
+}
+
+double CGeoHourlyBaseInputs::secondLawEfficiencyGETEM() // This assumes the use of Binary constants and is only necessary for GETEM method of calculating PlantOutputKW - keep private
+{
+	double ae = availableEnergyBinary();
+	if (ae == 0) { m_strErrMsg = ("ae = zero in CGeoHourlyBaseInputs::secondLawEfficiencyGETEM"); return 0;}
+	return GetPlantBrineEffectiveness() / ae;
+}
+
+
+bool CGeoHourlyBaseInputs::inputErrors(void)
+{
+	if (!m_strErrMsg.empty()) return true;
+	if (!miProjectLifeYears) { m_strErrMsg = ("Project life was zero."); return true; }
+	if (miModelChoice < 0) { m_strErrMsg = ("The model choice was not set."); return true; }
+
+	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { m_strErrMsg = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
+
+	if (mdPotentialResourceMW < PlantSizeKW()/1000) { m_strErrMsg = ("Resource potential must be greater than the gross plant output."); return true; }
+
+	if ( (this->rt != EGS) && (this->pc == SIMPLE_FRACTURE) ) { m_strErrMsg = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
+
+	if ( (this->rt != EGS) && (this->tdm == CALCULATE_RATE) ) { m_strErrMsg = ("Temperature decline can only be calculated for EGS resources."); return true; }
+
+	if ((tdm == ENTER_RATE) && (mdTemperatureDeclineRate < 0))
+		{ m_strErrMsg = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0"); return true; }
+
+	if ( (GetTemperatureRatio() > MAX_TEMP_RATIO) && ReturnGETEMResults() )
+		{ m_strErrMsg = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true; }
+
+	if ( this->netBrineEffectiveness() == 0 ) // this will cause a division by zero error
+		{ m_strErrMsg = ("Inputs led to a divide by zero error.  Pump work = Plant output, so the net efficiency is zero."); return true; }
+
+	if ( this->netBrineEffectiveness() < 0 )
+		{ m_strErrMsg = ("Inputs lead to required pump energy being greater than the plant output."); return true; }
+
+
+	if (availableEnergyBinary() == 0)
+		{ m_strErrMsg = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
+
+	if (m_pbp.P_ref == 0)
+		{ m_strErrMsg = ("The power block parameters were not initialized."); return true;}
+
+	if (!m_strErrMsg.empty()) return true;
+	return false;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Implementation of CPumpPowerCalculator //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void CPumpPowerCalculator::init(CGeoHourlyBaseInputs* gbi)
+{
+	mpGBI = gbi;
+
+    mdAdditionalPressure = 0;
+	mdPumpSetDepthFt = 0;
+
+	mdCT = 0.0009; // these are both inputs that are shaded out in GETEM
+	mdCP = 0.000000000464;
+
+	mbBottomHolePressureCalculated = false;
+	mbPressureChangeCalculated = false;
+	mbProductionWellsPumped = true;
+	mbAdditionalPressureRequired = false;
+	mbCalculatePumpDepth = true;
+}
+
+
+double CPumpPowerCalculator::GetTotalPumpPower(std::string sErr) // watt-hr/lb
+{
+	double retVal = productionPumpPower() + injectionPumpPower();
+	if (retVal < 0)
+		{ sErr = ("CPumpPowerCalculator::GetTotalPumpPower calculated a value < 0"); return 0; }
+	return retVal;
+}
+
+// PRIVATE FUNCTIONS -----------------------------------------------------------------
+double CPumpPowerCalculator::productionPumpPower(void) // ft-lbs/hr
+{
+	if (!mbProductionWellsPumped) return 0;
+	
+	// Enter 1 for flow to Get power per lb of flow
+	return pumpWorkInWattHr(1, pumpHeadFt(), mpGBI->GetGFPumpEfficiency(), mpGBI->m_strErrMsg);
+}
+
+
+double CPumpPowerCalculator::GetCalculatedPumpDepthInFeet(void)
+{	// Get the pump Set depth in ft
+		
+	if (!mbCalculatePumpDepth) return mdPumpSetDepthFt;
+
+	// calculate the pumpSetDepth
+	double pressureDiff = GetBottomHolePressure()  - pressureWellHeadPSI();
+
+	double areaWell = areaCircle(DiameterProductionWellFt()/2); // ft^2
+	double velocityWell = productionFlowRate()/areaWell;
+	double ReWell = DiameterProductionWellFt() * velocityWell * productionDensity()/productionViscosity();
+	double frictionHeadLossWell = (frictionFactor(ReWell)/DiameterProductionWellFt())* pow(velocityWell,2)/(2 * physics::GRAVITY_FTS2);
+
+	double pumpSetting = ((pressureDiff*144)/productionDensity())*(1-frictionHeadLossWell);   // [7A.GF Pumps].D89
+	return (GetResourceDepthFt() - pumpSetting < 0) ? 0 : GetResourceDepthFt() - pumpSetting; // feet - [7A.GF Pumps].D90
+}
+
+
+double CPumpPowerCalculator::pressureWellHeadPSI(void)
+{
+	double tempF = CelciusToFarenheit(mpGBI->GetTemperaturePlantDesignC());
+	double pressureSaturation = mpGBI->m_oGG.oPC.evaluatePolynomial(tempF); // valid above boiling, I guess.
+	double pressureExcessPSI = BarToPsi(mpGBI->mdExcessPressureBar); // bar to psi
+	double pressureAmbientPSI = (IMITATE_GETEM) ? 14.7 : mpGBI->mdPressureAmbientPSI;
+	return (mpGBI->GetTemperaturePlantDesignC() > 100) ? pressureSaturation + pressureExcessPSI : pressureAmbientPSI + pressureExcessPSI;
+}
+
+
+double CPumpPowerCalculator::GetBottomHolePressure()
+{	// [7B.Reservoir Hydraulics].G75
+	if (!mbBottomHolePressureCalculated) {
+		mbBottomHolePressureCalculated = true;
+		if (mpGBI->rt == EGS)
+			mdBottomHolePressure = (pressureInjectionWellBottomHolePSI() + mpGBI->InectionPumpHeadUsed()) - GetPressureChangeAcrossReservoir();
+		else
+			mdBottomHolePressure = pressureHydrostaticPSI() - GetPressureChangeAcrossReservoir();
+	}
+	return mdBottomHolePressure;
+}
+
+double CPumpPowerCalculator::GetPressureChangeAcrossReservoir()
+{	// [7B.Reservoir Hydraulics].G70
+    if (mpGBI->pc == ENTER_PC) return mpGBI->mdReservoirDeltaPressure * mpGBI->flowRatePerWell() / 1000.0;
+	if (mbPressureChangeCalculated) return mdPressureChangeAcrossReservoir;
+
+	// if user didn't input the pressure change, we have to calculate it.  start with these
+	double density = mpGBI->m_oGG.oDensityConstants.evaluatePolynomial(GetReservoirTemperatureF()); // lbs per ft^3
+	double volumetricFlow =(mpGBI->flowRatePerWell() / density)/3600; // ft^3 per second
+	double viscosity = 0.115631 * pow(GetReservoirTemperatureF(), -1.199532); // lb per ft-second
+
+	if ((mpGBI->rt == EGS) && (mpGBI->pc == SIMPLE_FRACTURE)  )
+	{	// only a valid option for EGS resources
+		// calculate the pressure change across the reservoir using simple fracture flow
+		double effectiveLengthFt = MetersToFeet(mpGBI->EGSFractureLengthUserAdjusted());  // Only instance where EGSFractureLengthUserAdjusted is used.
+		double fractureFlowArea = MetersToFeet(mpGBI->GetEGSFractureAperature()) * MetersToFeet(mpGBI->GetEGSFractureWidthM());  // ft^2
+		double hydraulicDiameter = (2 * fractureFlowArea) / (MetersToFeet(mpGBI->GetEGSFractureAperature()) + MetersToFeet(mpGBI->GetEGSFractureWidthM()));  // ft
+		double flowPerFracture = volumetricFlow/mpGBI->GetEGSNumberOfFractures(); // ft^3 per second
+		double velocity = flowPerFracture/fractureFlowArea; // ft per second
+		double Re = density * velocity * hydraulicDiameter / viscosity;
+		double frictionFactor = 64/Re;
+		double headLoss = frictionFactor * (effectiveLengthFt/hydraulicDiameter) * pow(velocity,2)/(2 * physics::GRAVITY_FTS2); // ft
+		mdPressureChangeAcrossReservoir = headLoss * density / 144; // psi
+	}
+	else {
+		// calculate the change in pressure across reservoir using K*A (from [7B.Reservoir Hydraulics].G70)
+		double G53 = M2ToFeet2(mpGBI->GetReservoirPermeability() * reservoirAreaSqFt() *  0.000000000000986923); //ft^4
+		double G61 = volumetricFlow * viscosity * MetersToFeet(mpGBI->mdDistanceBetweenProductionInjectionWellsM) / G53; // lbs per second^2-ft
+		mdPressureChangeAcrossReservoir = G61/physics::GRAVITY_FTS2/144; // change in pressure (psi)
+	}
+	mbPressureChangeCalculated = true;
+	return mdPressureChangeAcrossReservoir;
+}
+
+
+double CPumpPowerCalculator::pressureInjectionWellBottomHolePSI() // [7B.Reservoir Hydraulics].G72, [7A.GF Pumps].G50
+{
+	double injectionWellSurfacePressurePSI = (mpGBI->cst == FLASH) ? 0 : (pressureWellHeadPSI() - mpGBI->mdPressureChangeAcrossSurfaceEquipmentPSI); // [2B.Resource&Well Input].D149
+	// this used to incorrectly convert PSI to bar - does this still work for Binary?????????????????????
+	double pMax = (pZero() > injectionWellSurfacePressurePSI) ? pZero() : injectionWellSurfacePressurePSI; //G18
+	double depthFt = (IMITATE_GETEM) ? this->GetProductionWellDepthFt() : this->GetInjectionWellDepthFt(); //G22
+	double G23 = pMax + injectionDensity() * depthFt/144; // psi
+
+	double flowRate = mpGBI->GetProductionFlowRateKgPerS() / mpGBI->mdRatioInjectionToProduction /(1 - mpGBI->GetWaterLossPercent()); // kg per second
+	flowRate = KgToLb(flowRate) / injectionDensity();  // cf per second
+	double areaInjectionWell = areaCircle(DiameterInjectionWellFt()/2); // ft^2
+	double velocityInjectionWell = flowRate/areaInjectionWell;
+
+	double viscosity = 0.0925 * pow(injectionTempF(),-1.159);
+	double ReInjectionWell = DiameterInjectionWellFt() * velocityInjectionWell * injectionDensity()/viscosity;
+
+	double frictionHeadLossInjectionWell = (frictionFactor(ReInjectionWell) * GetInjectionWellDepthFt() / DiameterInjectionWellFt())* pow(velocityInjectionWell,2)/(2 * physics::GRAVITY_FTS2); //feet
+	double G36 = frictionHeadLossInjectionWell * injectionDensity() / 144; // conversion to psi
+
+	return G23 - G36; // pressureBHInjection, psi
+}
+
+
+
+double CPumpPowerCalculator::pressureHydrostaticPSI(void)
+{	// calculate the hydrostatic pressure (at the bottom of the well)
+	double tempAmbientF = (IMITATE_GETEM) ? CelciusToFarenheit(mpGBI->GetAmbientEGSTemperatureC()) : mpGBI->GetAmbientTemperatureF();
+	double pressureAmbientBar = PsiToBar(mpGBI->m_oGG.oPressureAmbientConstants.evaluatePolynomial(tempAmbientF));
+
+	double tempF = (IMITATE_GETEM) ? CelciusToFarenheit(mpGBI->GetAmbientEGSTemperatureC()) : mpGBI->GetAmbientTemperatureF();
+	double densityAmbient = LbPerCfToKgPerM3_B(mpGBI->m_oGG.oDensityConstants.evaluatePolynomial(tempF));
+
+	double tempAmbientC = (IMITATE_GETEM) ? 10 : mpGBI->GetAmbientTemperatureC(); // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
+	double tempGradient = (mpGBI->rt == EGS) ? mpGBI->GetTemperatureGradient()/1000 : (mpGBI->GetResourceTemperatureC() - tempAmbientC ) / GetResourceDepthM();  
+
+	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
+	double pressureHydrostaticBar = pressureAmbientBar + (1/mdCP) * (exp(densityAmbient * GRAVITY_MS2 * mdCP * (GetResourceDepthM() - (0.5 * mdCT * tempGradient * pow(GetResourceDepthM(),2))))-1)/100000;
+	
+	return BarToPsi(pressureHydrostaticBar);
+}
+
+double CPumpPowerCalculator::pumpHeadFt(void) // ft
+{	// calculate the friction head loss of the casing
+	double areaCasing = areaCircle(DiameterPumpCasingFt()/2); // ft^2
+	double velocityCasing = productionFlowRate()/areaCasing;
+	double ReCasing = DiameterPumpCasingFt() * velocityCasing * productionDensity()/productionViscosity();
+	double frictionHeadLossCasing = (frictionFactor(ReCasing) * GetCalculatedPumpDepthInFeet() / DiameterPumpCasingFt())* pow(velocityCasing,2)/(2 * physics::GRAVITY_FTS2); //feet
+
+	// Add (friction head loss) and (pump Set depth) to Get total pump head.
+	return frictionHeadLossCasing + GetCalculatedPumpDepthInFeet();
+}
+
+
+double CPumpPowerCalculator::calcInjectionPressure()
+{	// on [7A.GF Pumps] unless otherwise noted
+	double excessPressureAvailble = pressureInjectionWellBottomHolePSI() - pressureHydrostaticPSI();
+	double injectionPressurePSI = 150 - excessPressureAvailble;
+	return (injectionPressurePSI < 0) ? 0 : injectionPressurePSI; // If it's less than zero, use zero.
+}
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Implementation of CFlashBrineEffectiveness //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Public Functions -------------------------------------------------------------------------------
+CFlashBrineEffectiveness::CFlashBrineEffectiveness(void)
+{
+	mCondenserType = SURFACE;
+	mNCGRemovalType = JET;
+	mdNCGLevelPPM = 100;
+	mdPressureHPFlashPSI = 0;
+	mdPressureLPFlashPSI = 0;
+	mdDeltaPressureHPFlashPSI = 2.2;
+	mdDeltaPressureLPFlashPSI = 1.0;
+	mdEfficiencyTurbine = 0.825;
+	mdEfficiencyGenerator = 0.98;
+	mdBaseCWPumpHeadFt = 60.0;
+	mdDeltaTemperatureCWF = 30.0;												// degrees F
+	mdTemperaturePinchPtCondenserF = 10.0;
+	mdTemperaturePinchPtCoolingTowerF = 15;
+	miNumberOfCoolingStages = 3;												// 1,2, or 3
+	mdMoleWeightNCG = 44.0;
+	mdMoleWeightH2O = 18.0;
+	mdEfficiencyPump = 0.7;
+	mdEfficencyVacuumPump = 0.7;
+	mdPressureCondenserNCGPartialInHG = 0.5;									// inches of Mercury
+	mbFlashPressuresCalculated = false;
+	mbBrineEffectivenessCalculated = false;
+}
+
+void CFlashBrineEffectiveness::init(CGeoHourlyBaseInputs* gbi)
+{
+	mpGBI = gbi;
+	mbFlashPressuresCalculated = false;
+	mbBrineEffectivenessCalculated = false;
+}
+
+
+double CFlashBrineEffectiveness::brineEffectiveness(void)
+{
+	if (!mbBrineEffectivenessCalculated) {
+		this->calculateFlashPressures();
+
+		double dGrossOutput = turbine1OutputKWh();
+		if (FlashCount() == 2) dGrossOutput += turbine2OutputKWh();
+		double dGrossPower = dGrossOutput * mdEfficiencyGenerator;
+
+		double dParasiticPower = cwPumpingKW() + condensatePumpingKW() + fanPowerKW() + vacuumPumpingKW() + condenserInjectionPumpingKW();
+		mdFlashBrineEffectiveness = dGrossPower - dParasiticPower;
+		mbBrineEffectivenessCalculated = true;
+	}
+	return mdFlashBrineEffectiveness;
+}
+
+
+double CFlashBrineEffectiveness::waterLossFractionOfGF(void)
+{
+	this->calculateFlashPressures();
+	return waterLoss() / mpGBI->m_oGG.mGeothermalFluidForFlash();
+}
+
+
+// Private Functions ------------------------------------------------------------------------------
+//////////////////////////////////////// Flash Pressures //////////////////////////////////////////
+double CFlashBrineEffectiveness::pressureDualHighWithConstraint()
+{
+	double a = (temperatureCondF() > 125) ? 1.59 + (0.0015547 * exp(0.0354727*temperatureCondF())) : 1.59 + (0.098693 * exp(0.0025283*temperatureCondF()));
+	double b = (temperatureCondF() > 125) ? 0.01916 - (0.000005307 * exp(0.031279921*temperatureCondF())) : 0.01916 - (0.000167123 * exp(0.00400728*temperatureCondF()));
+	return a * exp(b * mpGBI->GetTemperaturePlantDesignC());
+}
+
+void CFlashBrineEffectiveness::calculateFlashPressures(void)
+{	// This function Sets some values that will be used throughout the calculations of the flash brine effectiveness
+	// These cannot be Set during initialization since some of the public properties may have been changed.  These
+	// need to be calculated right when the brine effectiveness is calculated.
+
+	if (mbFlashPressuresCalculated) return;
+	
+	// if single flash - add flash pressure to delta pressure and quit
+	if (FlashCount() == 1) { mdPressureHPFlashPSI = pressureSingle() + mdDeltaPressureHPFlashPSI; return; }
+
+	// dual flash, have to calculate both
+	// high pressure flash
+//i think this might be using the wrong temperature - resource instead of plant design - for EGS
+	mdPressureHPFlashPSI = pressureDualHigh() + mdDeltaPressureHPFlashPSI;
+
+
+	// low pressure flash
+	mdPressureLPFlashPSI = pressureDualLow() + mdDeltaPressureLPFlashPSI;
+	mbFlashPressuresCalculated = true;
+}
+
+
+//////////////////////////////////////// Turbine Output ///////////////////////////////////////////
+double CFlashBrineEffectiveness::calculateDH(double pressureIn)
+{
+	double a = mpGBI->m_oGG.GetDHa(pressureIn);
+	double b = mpGBI->m_oGG.GetDHb(pressureIn);
+	double x = pressureIn /(pressureCondenser());
+	return a * log(x) + b;
+}
+
+double CFlashBrineEffectiveness::calculateX(double enthalpyIn, double temperatureF)
+{
+	double enthalpyF = mpGBI->m_oGG.GetFlashEnthalpyF(temperatureF);
+	double enthalpyG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureF);
+	return (enthalpyIn - enthalpyF)/(enthalpyG-enthalpyF);
+}
+
+double CFlashBrineEffectiveness::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG)
+{	// I65-I80, I87-I102
+	double xPrime, effTurb, dEnthapyDelta, hEx;
+
+	dEnthapyDelta = dEnthalpyDeltaInitial;
+	for (int i=0;i<4;i++) {
+		hEx = dEnthalpyTurbineG - dEnthapyDelta;
+		xPrime = calculateX(hEx, temperatureCondF());
+		xPrime = (xPrime > 0.95) ? 0 : 0.95 - xPrime;
+		effTurb = mdEfficiencyTurbine - (0.5 * xPrime);
+		dEnthapyDelta = dEnthalpyDeltaInitial * effTurb;
+	}
+	return dEnthapyDelta;
+}
+
+
+
+//////////////////////////////////////// NCG Removal //////////////////////////////////////////////
+double CFlashBrineEffectiveness::pInter(int stage, std::string sErr)
+{	// D156, D205, D253 - psi
+	switch (stage)
+	{
+		case 0: return pTotal();
+		case 1: return pTotal() * pRatio();
+		case 2: return (miNumberOfCoolingStages > 2) ? pTotal() * pRatio() * pRatio()  : mpGBI->mdPressureAmbientPSI;
+		case 3: return mpGBI->mdPressureAmbientPSI;
+		default: { sErr = ("Invalid stage in CFlashBrineEffectiveness::pInter"); return 0; }
+	}
+}
+
+
+
+double CFlashBrineEffectiveness::mForNCGRemoval()
+{
+	if(this->mNCGRemovalType == VAC_PUMP) return 0;
+
+	double dSteamFlow = steamFlow(1); 
+	if (miNumberOfCoolingStages > 1) { dSteamFlow += steamFlow(2); }
+	if (miNumberOfCoolingStages > 2) { dSteamFlow += steamFlow(3); }
+	return dSteamFlow;
+}
+
+
+
+//////////////////////////////////////// CW Pump Power KW /////////////////////////////////////////
+double CFlashBrineEffectiveness::overAllHEx() //I107
+{ return (this->FlashCount() == 2) ? ((turbine2HEx() * turbine2Steam()) + (turbine1HEx() * turbine1NetSteam()))/(turbine1NetSteam()+turbine2Steam()) : turbine1HEx(); }
+
+
+
+double CFlashBrineEffectiveness::pumpWorkFromSteamFlow(double flow)
+{
+	double enthalpyCondF = mpGBI->m_oGG.GetFlashEnthalpyF(temperatureCondF());
+	double enthalpyCondG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureCondF());
+	
+	double qReject = flow * (enthalpyCondG - enthalpyCondF);
+	double cwFlow = qReject / mdDeltaTemperatureCWF;
+	double pumpHead = mdBaseCWPumpHeadFt + mpGBI->m_oGG.additionalCWPumpHeadSurface();
+	return pumpWorkKW(cwFlow, pumpHead);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Implementation of CMakeupAlgorithm //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+CMakeupAlgorithm::CMakeupAlgorithm()
+{
+	miReservoirReplacements = 0; 
+	mdWorkingTemperatureC=0; 
+	moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0);  // by default, load Binary(EGS) secondLawConstants - let flash over write them
+	m_bWeatherFileOpen = false;
+	m_lReadCount = 0;
+	m_lHourCount = 0;
+}
+
+
+bool CMakeupAlgorithm::SetScenarioParameters( CGeoHourlyBaseInputs* gbi)
+{
+	mpGBI = gbi;
+
+	if ( m_pb.InitializeForParameters(mpGBI->GetPowerBlockParameters() ) )
+		return true;
+	else
+		m_strMAError = "There was an error initializing the power block with the input parameters: " + m_pb.GetLastError();
+
+	return false;
+}
+
+bool CMakeupAlgorithm::OpenWeatherFile(const char * fn)
+{
+	m_bWeatherFileOpen = false;
+	m_lReadCount = 0;
+	if (!m_wf.open(fn))
+		m_strMAError = "Could not open the weather file: " + std::string(fn);
+	else
+		m_bWeatherFileOpen = true;
+
+	return m_bWeatherFileOpen;
+}
+
+// Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
+bool CMakeupAlgorithm::ReadWeatherForTimeStep(bool bHourly, unsigned int timeStep)
+{	
+	// if this is an hourly analysis, just ignore the time step and get the data from the next line in the weather file
+	if (bHourly) return ReadNextLineInWeatherFile();
+
+	// Not an hourly analysis, so calculate the monthly weather info
+	int month = (timeStep % 12) + 1;
+	double hours = util::hours_in_month(month);
+	if (hours==0)
+	{
+		m_strMAError = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
+		return false;
+	}
+
+	double pressure=0, wetbulb=0, drybulb=0, rel_humidity=0;
+	for (int i = 0; i<hours; i++)
+	{
+		ReadNextLineInWeatherFile();
+		pressure += m_wf.pres;
+		wetbulb += m_wf.twet;
+		drybulb += m_wf.tdry;
+		rel_humidity += m_wf.rhum;
+	}
+	m_wf.pres = pressure / hours;
+	m_wf.twet = wetbulb / hours;
+	m_wf.tdry = drybulb / hours;
+	m_wf.rhum = rel_humidity / hours;
+	return true;
+}
+
+void CMakeupAlgorithm::SetType224Inputs(void)
+{
+	// set inputs that change for each timestep
+	m_pbInputs.T_htf_hot = mdWorkingTemperatureC;
+	m_pbInputs.T_wb = m_wf.twet;
+	m_pbInputs.T_db = m_wf.tdry;
+	m_pbInputs.P_amb = physics::mBarToAtm(m_wf.pres);
+	m_pbInputs.TOU = mpGBI->GetTOUForHour(m_lReadCount-1);
+}
+
+
+double CMakeupAlgorithm::GetType224OutputkW(void)
+{
+	// run power block model
+	if (!m_pb.Execute((m_lHourCount-1)*3600, m_pbInputs))
+		m_strMAError = "There was an error running the power block model: " + m_pb.GetLastError();
+	
+	// return outputs
+	return m_pb.GetOutputkW();
+}
+
+// Private function, called from ReadWeatherForTimeStep(timeStep)
+// Read the next line from weather file; rewind file if passed the end; assumes 8760 hour weather file;
+bool CMakeupAlgorithm::ReadNextLineInWeatherFile(void)
+{
+	
+	if (m_lReadCount >= 8760)
+	{
+		m_wf.rewind();
+		m_lReadCount = 0;
+	}
+
+	if (!m_wf.read())
+	{
+		m_strMAError = "Could not read  line " + util::to_string((int)m_lReadCount+1) + " in the weather file.";
+		return false;
+	}
+	m_lReadCount++;
+	m_lHourCount++;
+
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Implementation of CFlashMakeup //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+double CFlashMakeup::fractionOfMaxEfficiency() 
+{
+    double tr = temperatureRatio();
+	initializeSecondLawConstants();
+	return (1.1 - (0.1 * pow(tr, moSecondLawConstants.evaluatePolynomial(CelciusToKelvin(mpGBI->GetResourceTemperatureC())) )));
+}
+
+void CFlashMakeup::initializeSecondLawConstants()
+{
+	if (mbInitialized) return;
+	switch (mpGBI->ft) //{ NO_FLASH_SUBTYPE, SINGLE_FLASH_NO_TEMP_CONSTRAINT, SINGLE_FLASH_WITH_TEMP_CONSTRAINT, DUAL_FLASH_NO_TEMP_CONSTRAINT, DUAL_FLASH_WITH_TEMP_CONSTRAINT }
+	{
+		case SINGLE_FLASH_NO_TEMP_CONSTRAINT:
+		case SINGLE_FLASH_WITH_TEMP_CONSTRAINT:
+			// ("6Ef.Flash Makeup").Range("R20:V20")
+			moSecondLawConstants.init(-3637.06, 25.7411, -0.0684072, 0.0000808782, -0.0000000359423, 0, 0);
+			break;
+
+		case DUAL_FLASH_NO_TEMP_CONSTRAINT:
+			// ("6Ef.Flash Makeup").Range("R22:V22")
+			moSecondLawConstants.init(-2762.4048, 18.637876, -0.047198813, 0.000053163057, -0.000000022497296, 0, 0);
+			break;
+
+		case DUAL_FLASH_WITH_TEMP_CONSTRAINT:
+			// ("6Ef.Flash Makeup").Range("R21:V21")
+			moSecondLawConstants.init(-4424.6599, 31.149268, -0.082103498, 0.000096016499, -0.00000004211223, 0, 0);
+			break;
+
+		default: m_strMAError = ("Invalid flash technology in CFlashMakeup::initializeSecondLawConstants"); return;
+	}
+	mbInitialized = true;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Implementation of CEGSMakeup ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void CEGSMakeup::calculateNewTemperature()
+{	// This function over-rides CMakeupAlgorithm::calculateNewTemperature(double dTempCalculationsPerYear) to calculate the temperature drop for the EGS resource.
+	// The EGS temperature drop depends on the amount of fluid being produced (makes intuitive sense).
+	mdLastProductionTemperatureC = mdWorkingTemperatureC;
+	mdWorkingTemperatureC = newEGSProductionTemperatureC();
+}
+
+
+bool CEGSMakeup::canReplaceReservoir(double dTimePassedInYears)
+{
+	mdYearsAtNextTimeStep = dTimePassedInYears;
+	return CMakeupAlgorithm::canReplaceReservoir(dTimePassedInYears);
+}
+
+void CEGSMakeup::replaceReservoir(void)
+{
+	miReservoirReplacements++; 
+	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); 
+	mdLastProductionTemperatureC = mdWorkingTemperatureC; 
+	if (mdYearsAtNextTimeStep > 0) mdTimeOfLastReservoirReplacement = mdYearsAtNextTimeStep - (mpGBI->EGSTimeStar() / DAYS_PER_YEAR);
+}
+
+
+double CEGSMakeup::plantBrineEfficiency(void)
+{
+    mdCurrentEfficiency = maxSecondLawEfficiency() * fractionOfMaxEfficiency();
+    return mdCurrentEfficiency * mpGBI->GetAEBinaryAtTemp(mdWorkingTemperatureC); // oSP.GeothermalFuildContainer.availableEnergyWattHr(Binary, toF(fWorkingTemperatureC))
+}
+
+
+double CEGSMakeup::newInjectionTemperatureC()
+{
+    double tempBrineEfficiencyC = KelvinToCelcius( exp((-0.42 * log(mdLastProductionTemperatureC) + 1.4745) * mdCurrentEfficiency) * CelciusToKelvin(mdLastProductionTemperatureC));
+	double tempSILimitC = FarenheitToCelcius(mpGBI->m_oGG.GetSiPrecipitationTemperatureF(LastProducitonTemperatureF()));
+	return (tempBrineEfficiencyC >= tempSILimitC) ? tempBrineEfficiencyC : tempSILimitC;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Implementation of CGeoHourlyAnalysis //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+CGeoHourlyAnalysis::CGeoHourlyAnalysis(void)
+{
 	fLastIntervalDone = 0;
 	init();
 }
 
-CGeoHourlyAnalysis::~CGeoHourlyAnalysis( )
+CGeoHourlyAnalysis::~CGeoHourlyAnalysis(void)
 {
 	if (moMA) delete moMA;
 }
 
-void CGeoHourlyAnalysis::init( )
+void CGeoHourlyAnalysis::init(void)
 {
 	moMA = NULL;
 	m_strErrMsg = "";
@@ -1262,7 +1214,6 @@ void CGeoHourlyAnalysis::init( )
 
 bool CGeoHourlyAnalysis::readyToAnalyze()
 {
-	m_strErrMsg = "";
 	if ( inputErrors() ) return false;
 	if (moMA) delete moMA; moMA=NULL;
 
@@ -1301,53 +1252,11 @@ bool CGeoHourlyAnalysis::readyToAnalyze()
 
 	return true;
 }
- 
- 
-double CMakeupAlgorithm::fractionOfMaxEfficiency() { return(temperatureRatio() > 0.98) ? moSecondLawConstants.evaluatePolynomial(temperatureRatio()) : 1.0177 * pow(temperatureRatio(), 2.6237); }
-double CMakeupAlgorithm::temperatureRatio( ) { return CelciusToKelvin(mdWorkingTemperatureC) / CelciusToKelvin(mpGBI->GetTemperaturePlantDesignC()); }
-double CMakeupAlgorithm::plantBrineEfficiency() { return secondLawEfficiency() * mpGBI->GetAEBinaryAtTemp(mdWorkingTemperatureC); } // plant Brine Efficiency as a function of temperature
-
-
-bool CMakeupAlgorithm::canReplaceReservoir(double dTimePassedInYears) { 
-	      return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
-
-
-void CMakeupAlgorithm::calculateNewTemperature( )
-{
-  mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / 12));
- if (FILE*fp=fopen(DEBUGFILE, "a"))
- {
-   fprintf(fp, "CMakeupAlgorithm::calculateNewTemperature mdWorkingTemperatureC=%lg (decline %lg)\n", mdWorkingTemperatureC, mpGBI->mdTemperatureDeclineRate);
-   fclose(fp);
- }
-} // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
-																	 
-
- 
-void CMakeupAlgorithm::replaceReservoir()
-{
-   miReservoirReplacements++;
-   mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC();
-	 if (FILE*fp=fopen(DEBUGFILE, "a"))
-   {
-    fprintf(fp, "CMakeupAlgorithm::replaceReservoir mdWorkingTemperatureC=%lg\n", mdWorkingTemperatureC);
-    fclose(fp);
-  }
-
-}
-
 
 bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *user_data )
 {
-	m_strErrMsg = "";
 	mbAnalysisRequired = true;
 	if (!readyToAnalyze()) return false;   //moMA is reset each time readyToAnalyze is called.
-
-	 if (FILE*fp=fopen(DEBUGFILE, "a"))
-	 {
-	 	fprintf(fp, "MakeupAlgorithm[%d] readyToAnalyze PASSED, mdWorkingTemperatureC = %lg\n", (int)moMA->GetType(), moMA->GetWorkingTemperatureC());
-		fclose(fp);
-	 }
 
 	// We're ready to analyze: moMA is now a valid MakeupAlgorithm with an open weather file and the power block parameters have been passed in
 	if ( !moMA->SetScenarioParameters(this) )
@@ -1361,23 +1270,12 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 	float fPercentDone = 0.0;
 	bool bCanReplaceReservoir = false;
     
-	 if (FILE*fp=fopen(DEBUGFILE, "a"))
-	 {
-	 	fprintf(fp, "analyze: PRE reservoir replacement: mdWorkingTemperatureC = %lg\n", moMA->GetWorkingTemperatureC());
-		fclose(fp);
-	 }
     // Initialize
     moMA->replaceReservoir();
 
-	 if (FILE*fp=fopen(DEBUGFILE, "a"))
-	 {
-	 	fprintf(fp, "analyze: POST reservoirReplaced: mdWorkingTemperatureC = %lg\n", moMA->GetWorkingTemperatureC());
-		fclose(fp);
-	 }
-
 	// Go through time step (hours or months) one by one
     //for (unsigned int iElapsedTimeSteps = 0;  iElapsedTimeSteps < analysisTimeSteps();  iElapsedTimeSteps++)
-
+    bool bReDrill = false;
 	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0;
 	float fMonthlyPowerTotal;
 	for (unsigned int year = 0;  year < miProjectLifeYears;  year++)
@@ -1391,7 +1289,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 				(*update_function)( fPercentDone, user_data );
 
 			fMonthlyPowerTotal = 0;
-			for (unsigned int hour=0; hour<(unsigned int)util::hours_in_month(month); hour++)
+			for (unsigned int hour=0; hour<util::hours_in_month(month); hour++)
 			{
 				if ( IsHourly() || (hour==0) )
 				{
@@ -1411,46 +1309,20 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					m_afDryBulb[iElapsedTimeSteps] = moMA->WeatherDryBulb();
 					m_afWetBulb[iElapsedTimeSteps] = moMA->WeatherWetBulb();
 
-					double pb_out = -1;
-					double pump_work = -1;
 					// record outputs based on current inputs
 					if ( ReturnGETEMResults() )
-					{
 						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->plantNetPowerkW(); // = Gross power - pump work
-					}
 					else
-					{
-						pump_work = GetPumpWorkKW();
-						pb_out = moMA->GetType224OutputkW();
-						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)pb_out - (float)pump_work;
-					}
+						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - (float)GetPumpWorkKW();
 
-					m_afTestValues[iElapsedTimeSteps] = (float)((year + 1)*1000 + month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
+					m_afTestValues[iElapsedTimeSteps] = (year + 1)*1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
 					fMonthlyPowerTotal += m_afPowerByTimeStep[iElapsedTimeSteps];
-
-					
-					 if (FILE*fp=fopen(DEBUGFILE, "a"))
-					 {
-	 					fprintf(fp, "RESULT[%d] %lg %lg %lg %lg pb: %lg pump: %lg net: %lg\n",
-							iElapsedTimeSteps,
-							(double)m_afTemperatureC[iElapsedTimeSteps],
-							(double)m_afPressure[iElapsedTimeSteps],
-							(double)m_afDryBulb[iElapsedTimeSteps],
-							(double)m_afWetBulb[iElapsedTimeSteps],
-							(double) pb_out,
-							(double) pump_work,
-							(double) (pb_out-pump_work) );
-
-						fclose(fp);
-					 }
 		
 					//dElapsedTimeInYears = year + util::percent_of_year(month,hour);
 					if (!moMA->GetLastErrorMessage().empty()) { m_strErrMsg = moMA->GetLastErrorMessage(); return false; }
 					iElapsedTimeSteps++;
 					dElapsedTimeInYears = iElapsedTimeSteps * (1.0/GetMakeupAnalysesPerYear());  //moved to be after iElapsedTimeSteps++;
-
-					
 				}
 			}//hours
 
@@ -1483,7 +1355,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 }
 
 
-double CGeoHourlyAnalysis::GetFractionOfInletGFInjected( )
+double CGeoHourlyAnalysis::GetFractionOfInletGFInjected(void)
 {
 	if (this->rt == EGS)
 		return (1 + mdWaterLossPercent);
@@ -1518,7 +1390,7 @@ bool CGeoHourlyAnalysis::TimeToUpdateInterface(float fPercentDone, float fNotifi
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeoHourlyOutputs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeoHourlyOutputs::CGeoHourlyOutputs( )
+CGeoHourlyOutputs::CGeoHourlyOutputs(void)
 {
 	// costs curves
 	pwccc = MED;
@@ -1540,7 +1412,7 @@ double CGeoHourlyOutputs::wellCostEstimate(double depthFt, wellCostCurveChoices 
 
 
 
-double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies( )
+double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies(void)
 {	// dollars/kWh - NOT including royalties on contingencies
 	// royalties in GETEM are supposed to = 10% (input) of "field-related annual costs to approximate the BLM calculation"
 
@@ -1572,112 +1444,3 @@ double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies( )
         // As a simplification, assume that all electricity produced is sold at an average price, and that the price
         // negotiated is 10% over the cost of generating it.
 }
-
-double CGeoHourlyAnalysis::GetPumpWorkKW( ) 
-{ 
-	//return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; 
-	double pwork_wh_per_lb = GetPumpWorkWattHrPerLb();
-	double flow = flowRateTotal();
-
-	if (FILE*fp=fopen(DEBUGFILE, "a"))
-	{
-		fprintf(fp, "GetPumpWorkKW: WH/lb=%lg  flow=%lg flow_per_well=%lg nwell=%lg\n", pwork_wh_per_lb, flow, mdProductionFlowRateKgPerS, GetNumberOfWells());
-		fclose(fp);
-	}
-	return  pwork_wh_per_lb * flow / 1000.0; 
-}
-
-double CGeoHourlyAnalysis::GetPumpWorkWattHrPerLb( )
-{
-	return moPPC.GetTotalPumpPower(m_strErrMsg);
-} // small errors in pump work introduce biases throughout the results
-
-double CGeoHourlyAnalysis::GetPlantBrineEffectiveness( ) { return (this->cst == FLASH) ? moFBE.brineEffectiveness() : GetMaxBinaryBrineEffectiveness() * mdPlantEfficiency; }
-
-double CPumpPowerCalculator::DiameterPumpCasingFt( ) { return mpGBI->GetDiameterPumpCasingInches()/12; }
-double CPumpPowerCalculator::DiameterProductionWellFt( ) { return mpGBI->GetDiameterProductionWellInches()/12; }
-double CPumpPowerCalculator::DiameterInjectionWellFt( ) { return mpGBI->GetDiameterInjectionWellInches()/12; }
-double CPumpPowerCalculator::reservoirAreaSqM( ) { return mpGBI->GetReservoirHeightM() * mpGBI->GetReservoirWidthM(); }
-double CPumpPowerCalculator::reservoirAreaSqFt( ) { return MetersToFeet(mpGBI->GetReservoirHeightM()) * MetersToFeet(mpGBI->GetReservoirWidthM()); }
-double CPumpPowerCalculator::GetCalculatedPumpSizeHP( ) { return pumpSizeInHP(mpGBI->flowRatePerWell(), pumpHeadFt(), mpGBI->GetGFPumpEfficiency(), mpGBI->m_strErrMsg); }
-double CPumpPowerCalculator::GetReservoirTemperatureF( ) { return (mpGBI->rt == EGS) ? mpGBI->EGSAverageReservoirTemperatureF() : mpGBI->GetResourceTempF(); }	// G54 on [7B.Reservoir Hydraulics]
-double CPumpPowerCalculator::productionTempF( ) { return CelciusToFarenheit(mpGBI->GetTemperaturePlantDesignC()); }
-double CPumpPowerCalculator::productionDensity( ) { return 1/mpGBI->m_oGG.oSVC.evaluatePolynomial(productionTempF()); }
-double CPumpPowerCalculator::productionFlowRate( ) { return (mpGBI->flowRatePerWell()/productionDensity())/3600; } // lbs per hr / lbs per cf = cf/hr
-double CPumpPowerCalculator::productionViscosity( ) { return 0.115631 * pow(productionTempF(),-1.199532); } // seems like this is resource temp in spreadsheet!
-
-// resource depth
-double CPumpPowerCalculator::GetResourceDepthM( )       { return mpGBI->GetResourceDepthM(); } 
-double CPumpPowerCalculator::GetResourceDepthFt( )      { return mpGBI->GetResourceDepthFt(); }
-double CPumpPowerCalculator::GetProductionWellDepthFt( ){ return mpGBI->GetResourceDepthFt(); }
-double CPumpPowerCalculator::GetInjectionWellDepthFt( ) { return mpGBI->GetResourceDepthFt(); }
-
-// Calculate injection pump items
-double CPumpPowerCalculator::getInjectionTempForResource( ) { return (mpGBI->rt == EGS) ? mpGBI->mdTemperatureEGSInjectionC : mpGBI->injectionTemperatureC(); }		// D15 - degrees C
-double CPumpPowerCalculator::injectionTempF( ) { return CelciusToFarenheit(getInjectionTempForResource()); }															// G15 - degrees F
-double CPumpPowerCalculator::injectionDensity( ) { return (1 / mpGBI->m_oGG.oSVC.evaluatePolynomial(injectionTempF())); }											// G19,G44, G128 - lb/ft^3
-double CPumpPowerCalculator::pZero( ) { return mpGBI->m_oGG.oPC.evaluatePolynomial(injectionTempF()); }															// G16 - psi
-double CPumpPowerCalculator::waterLoss( ) { return (1/(1 - mpGBI->GetWaterLossPercent())); }																				// G130 - lb/hr
-
-double CPumpPowerCalculator::injectionPumpPower( )  { return (mbAdditionalPressureRequired) ? GetInjectionPumpPower() : 0; }
-double CPumpPowerCalculator::GetInjectionPumpPower( )  { return pumpWorkInWattHr(waterLoss(), injectionPumpHeadFt(), mpGBI->GetGFPumpEfficiency(), mpGBI->m_strErrMsg) * mpGBI->GetFractionOfInletGFInjected(); } // ft-lbs/hr
-double CPumpPowerCalculator::injectionPumpHeadFt( ) { return injectionPressure() * 144 / injectionDensity(); }															// G129
-double CPumpPowerCalculator::injectionPressure( ) { return (mdAdditionalPressure >= 0) ? mdAdditionalPressure : calcInjectionPressure(); }
-
-
-bool CFlashBrineEffectiveness::TempConstraint( ) { return ((mpGBI->ft == DUAL_FLASH_WITH_TEMP_CONSTRAINT) || (mpGBI->ft == SINGLE_FLASH_WITH_TEMP_CONSTRAINT)) ; }
-int CFlashBrineEffectiveness::FlashCount( ) { return (mpGBI->ft >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1; }
-double CFlashBrineEffectiveness::TemperatureWetBulbF( ) { return CelciusToFarenheit(mpGBI->mdTemperatureWetBulbC); }
-double CFlashBrineEffectiveness::temperatureCondF( ) { return TemperatureWetBulbF() + mdDeltaTemperatureCWF + mdTemperaturePinchPtCondenserF + mdTemperaturePinchPtCoolingTowerF; }	// D71 - deg F
-double CFlashBrineEffectiveness::pressureSaturation( ) { return mpGBI->m_oGG.oPSatConstants.evaluatePolynomial(temperatureCondF()); }												// D72 - psi
-double CFlashBrineEffectiveness::pressureCondenser( ) { return pressureSaturation() + InHgToPsi(mdPressureCondenserNCGPartialInHG); }													// D74 - psi
-
-double  CFlashBrineEffectiveness::tempFlashLimitF( ) { return CelciusToFarenheit(mpGBI->m_oGG.oFlashTempConstants.evaluatePolynomial(mpGBI->GetResourceTemperatureC())); }				// D26 - deg F
-double  CFlashBrineEffectiveness::pressureFlashAmorphousSilica( ) { return mpGBI->m_oGG.oPC.evaluatePolynomial(tempFlashLimitF()); }												// D27 - psi
-double CFlashBrineEffectiveness:: pressureSingleNoConstraint() { return (0.0207 * temperatureCondF() - 0.8416) * exp(0.0334*pow(temperatureCondF(),-0.1732) * mpGBI->GetTemperaturePlantDesignC()); } // Q64
-double  CFlashBrineEffectiveness::pressureSingleWithConstraint() { return (pressureSingleNoConstraint() < pressureFlashAmorphousSilica()) ? pressureFlashAmorphousSilica() : pressureSingleNoConstraint(); } // S64
-double  CFlashBrineEffectiveness::pressureSingleToTest( ) { return (TempConstraint()) ? pressureSingleWithConstraint() : pressureSingleNoConstraint(); }							// Q64 or S64
-double  CFlashBrineEffectiveness::pressureSingle( ) { return (pressureSingleToTest() < mpGBI->mdPressureAmbientPSI) ? mpGBI->mdPressureAmbientPSI : pressureSingleToTest(); }							// O64
-
-double  CFlashBrineEffectiveness::pressureDualHighNoConstraint() { return mpGBI->m_oGG.oFlashConstants1.evaluatePolynomial(temperatureCondF()) * exp(mpGBI->m_oGG.oFlashConstants2.evaluatePolynomial(temperatureCondF()) * mpGBI->GetTemperaturePlantDesignC()); } // R64
-double  CFlashBrineEffectiveness::pressureDualHigh( ) { return (TempConstraint()) ? pressureDualHighWithConstraint() : pressureDualHighNoConstraint(); }							// P64
-double  CFlashBrineEffectiveness::pressureDualLowUnconstrained() { return (0.12632*exp(0.01918 * temperatureCondF())) * exp((0.0146 * exp(-0.00205*temperatureCondF()) * mpGBI->GetTemperaturePlantDesignC())); } // R65
-double  CFlashBrineEffectiveness::pressureDualLowConstrained() { return (pressureDualLowUnconstrained() < pressureFlashAmorphousSilica()) ? pressureFlashAmorphousSilica() : pressureDualLowUnconstrained(); } // T65
-double  CFlashBrineEffectiveness::pressureDualLowToTest( ) { return (TempConstraint()) ? pressureDualLowConstrained() : pressureDualLowUnconstrained(); }							// R65 or T65
-double  CFlashBrineEffectiveness::pressureDualLow( ) { return  (pressureDualLowToTest() < mpGBI->mdPressureAmbientPSI) ? mpGBI->mdPressureAmbientPSI : pressureDualLowToTest(); }						// P65
-	
-double CFlashBrineEffectiveness::enthalpyPlantDesignTemp( ) { return mpGBI->m_oGG.GetFlashEnthalpyF(CelciusToFarenheit(mpGBI->GetTemperaturePlantDesignC())); }					// D69
-double CFlashBrineEffectiveness::turbine1TemperatureF( ) { return mpGBI->m_oGG.GetFlashTemperature(mdPressureHPFlashPSI); }														// D80
-double CFlashBrineEffectiveness::turbine1EnthalpyF( ) { return  mpGBI->m_oGG.GetFlashEnthalpyF(turbine1TemperatureF()); }															// D81
-double CFlashBrineEffectiveness::turbine1EnthalpyG( ) { return  mpGBI->m_oGG.GetFlashEnthalpyG(turbine1TemperatureF()); }															// D82
-double CFlashBrineEffectiveness::turbine1Steam( ) { return mpGBI->m_oGG.mGeothermalFluidForFlash() * turbine1X(); }																										// D85 - lb/hr
-double CFlashBrineEffectiveness::turbine2TemperatureF( ) { return mpGBI->m_oGG.GetFlashTemperature(mdPressureLPFlashPSI); }														// D88
-double CFlashBrineEffectiveness::turbine2EnthalpyF( ) { return mpGBI->m_oGG.GetFlashEnthalpyF(turbine2TemperatureF()); }															// D89
-double CFlashBrineEffectiveness::turbine2EnthalpyG( ) { return mpGBI->m_oGG.GetFlashEnthalpyG(turbine2TemperatureF());}															// D90
-double CFlashBrineEffectiveness::turbine2Steam( ) { return (FlashCount() == 2) ? mpGBI->m_oGG.mGeothermalFluidForFlash() * turbine2X() * (1-turbine1X()) : 0; }																						// I104, D93 - lb/hr
-double CFlashBrineEffectiveness::pRatio( ) { return exp(log(mpGBI->mdPressureAmbientPSI / (pTotal()))/miNumberOfCoolingStages); }																// D151
-double CFlashBrineEffectiveness::ncgFlowLbsPerHour( ) { return mpGBI->m_oGG.mGeothermalFluidForFlash() * this->mdNCGLevelPPM / 1000000; }										// D152 - lbs/hour
-double CFlashBrineEffectiveness::prJet(int stage){ return pInter(stage, mpGBI->m_strErrMsg) / pInter(stage - 1, mpGBI->m_strErrMsg); }																							// D157, D206, D254
-double CFlashBrineEffectiveness::ER(int st) { return ERd(st) * pow((((460 + mpGBI->m_oGG.GetFlashTemperature(mdPressureHPFlashPSI)) * moleWeightVent(st))/((temperatureCondF() + 460) * mdMoleWeightH2O)),0.5); } // D170, D219, D267
-double CFlashBrineEffectiveness::deltaPressureCondenserFt() { return (mCondenserType == SURFACE) ? mpGBI->m_oGG.additionalCWPumpHeadSurface() : PSItoFT(mpGBI->mdPressureAmbientPSI + 1 - (pressureCondenser())); } // O102
-double CFlashBrineEffectiveness::qCondenser( ) { return overAllSteam() * (overAllHEx() - mpGBI->m_oGG.GetFlashEnthalpyF(temperatureCondF())); }									// D99
-double CFlashBrineEffectiveness::moleRatio(int st) { return (pInter(st, mpGBI->m_strErrMsg) / pressureSaturation()) - 1; }																					// D184,
-double CFlashBrineEffectiveness::condensatePumpHead( ) { return PSItoFTB(mpGBI->mdPressureAmbientPSI + 1 - pressureCondenser()) + mdBaseCWPumpHeadFt; }										// D121
-double CFlashBrineEffectiveness::condensatePumpHeadByStage(int st) { return PSItoFTB(mpGBI->mdPressureAmbientPSI + 1 - pInter(st, mpGBI->m_strErrMsg)); }																// D201, D249, D297
-double CFlashBrineEffectiveness::qRejectByStage(int stage) { return condensedSteamLbPerHour(stage) * (mpGBI->m_oGG.GetFlashEnthalpyG(temperatureCondF()) - mpGBI->m_oGG.GetFlashEnthalpyF(temperatureCondF())); } // D190
-double CFlashBrineEffectiveness::deltaPressureByStage(int st) { return pInter(st, mpGBI->m_strErrMsg) - pSuction(st); }																						// D173, D222, D270 - psi
-double CFlashBrineEffectiveness::injectionDeltaP( ) { return (FlashCount() == 1) ? mdPressureHPFlashPSI - mpGBI->mdPressureAmbientPSI : mdPressureLPFlashPSI - mpGBI->mdPressureAmbientPSI; }		// D127 - psi (condensate injection delta pressure)
-double CFlashBrineEffectiveness::blowDown( ) { return evaporativeWaterLoss() /(mpGBI->m_oGG.injectionPumpingCycles() - 1) - drift(); }																	// D132
-
-
-bool CMakeupAlgorithm::wantToReplaceReservoir( ) { return ( mdWorkingTemperatureC < (mpGBI->GetResourceTemperatureC() - mpGBI->mdMaxTempDeclineC) ) ? true : false; }
-double CMakeupAlgorithm::plantGrossPower( ) {return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000.0); }
-double CMakeupAlgorithm::plantNetPower( ) { return plantGrossPower() - mpGBI->GetPumpWorkKW(); } // kW, as a function of the temperature over time
-double CMakeupAlgorithm::getemAEForSecondLaw( ) { return (IMITATE_GETEM) ? mpGBI->GetAEBinary() : mpGBI->GetAE() ; }  // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
-double CMakeupAlgorithm::maxSecondLawEfficiency() { return  mpGBI->GetPlantBrineEffectiveness() /  getemAEForSecondLaw(); }
-
-double CFlashMakeup::plantBrineEfficiency() { return secondLawEfficiency() * mpGBI->GetAEFlashAtTemp(mdWorkingTemperatureC); } // plant Brine Efficiency as a function of temperature
-
-double CEGSMakeup::temperatureRatio( ) { return CelciusToKelvin(mdLastProductionTemperatureC) / CelciusToKelvin(mpGBI->GetTemperaturePlantDesignC()); }
-double CEGSMakeup::newEGSProductionTemperatureC() { return mpGBI->GetResourceTemperatureC() + ((newInjectionTemperatureC() - mpGBI->GetResourceTemperatureC()) * functionOfRockProperties()); }
-double CEGSMakeup::functionOfRockProperties() { return mpGBI->calcEGSReservoirConstant(averageReservoirTempC(), daysSinceLastReDrill()); }
