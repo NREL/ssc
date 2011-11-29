@@ -1,6 +1,6 @@
 // define classes
 #include "core.h"
-
+#include "sscapi.h"
 #include "lib_geohourly_interface.h"
 #include "lib_geohourly.h"
 
@@ -1007,6 +1007,12 @@ CMakeupAlgorithm::CMakeupAlgorithm()
 	m_bWeatherFileOpen = false;
 	m_lReadCount = 0;
 	m_lHourCount = 0;
+	
+	if (FILE*fp=fopen(DEBUGFILE, "w"))
+	{
+		fprintf(fp, "CMakeupAlgorithm::Constructor\n{%}\n", ::ssc_build_info());
+		fclose(fp);
+	}
 }
 
 
@@ -1084,16 +1090,6 @@ void CMakeupAlgorithm::SetType224Inputs( )
 	if (FILE *fp = fopen(DEBUGFILE, "a"))
 	{
 		fprintf(fp, "CMakeupAlgorithm::SetType224Inputs [%d] mdWorkingTemperatureC=%lg\n",++count, mdWorkingTemperatureC);
-		fclose(fp);
-	}
-
-	if (FILE *fp = fopen("/Users/adobos/SetType224Inputs_mac.txt", "a"))
-	{
-		fprintf(fp, "T_htf_hot = %lg\n", m_pbInputs.T_htf_hot );
-		fprintf(fp, "T_wb = %lg\n", m_pbInputs.T_wb );
-		fprintf(fp, "T_db = %lg\n", m_pbInputs.T_db );
-		fprintf(fp, "P_amb = %lg\n", m_pbInputs.P_amb );
-		fprintf(fp, "TOU = %d\n", (int) m_pbInputs.TOU );
 		fclose(fp);
 	}
 }
@@ -1412,6 +1408,8 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					else
 						m_afPowerByTimeStep[iElapsedTimeSteps] = (float)moMA->GetType224OutputkW() - (float)GetPumpWorkKW();
 
+
+
 					m_afTestValues[iElapsedTimeSteps] = (float)((year + 1)*1000 + month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
 					fMonthlyPowerTotal += m_afPowerByTimeStep[iElapsedTimeSteps];
@@ -1420,6 +1418,22 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 					if (!moMA->GetLastErrorMessage().empty()) { m_strErrMsg = moMA->GetLastErrorMessage(); return false; }
 					iElapsedTimeSteps++;
 					dElapsedTimeInYears = iElapsedTimeSteps * (1.0/GetMakeupAnalysesPerYear());  //moved to be after iElapsedTimeSteps++;
+
+					
+					 if (FILE*fp=fopen(DEBUGFILE, "a"))
+					 {
+	 					fprintf(fp, "RESULT[%d] %lg %lg %lg %lg %lg %lg tot: %lg\n",
+							iElapsedTimeSteps,
+							(double)m_afTemperatureC[iElapsedTimeSteps],
+							(double)m_afPressure[iElapsedTimeSteps],
+							(double)m_afDryBulb[iElapsedTimeSteps],
+							(double)m_afWetBulb[iElapsedTimeSteps],
+							(double)m_afPowerByTimeStep[iElapsedTimeSteps],
+							(double) GetPumpWorkKW(),
+							(double)fMonthlyPowerTotal );
+
+						fclose(fp);
+					 }
 				}
 			}//hours
 
