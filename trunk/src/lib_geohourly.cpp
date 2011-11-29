@@ -1064,6 +1064,16 @@ void CMakeupAlgorithm::SetType224Inputs(void)
 	m_pbInputs.T_db = m_wf.tdry;
 	m_pbInputs.P_amb = physics::mBarToAtm(m_wf.pres);
 	m_pbInputs.TOU = mpGBI->GetTOUForHour(m_lReadCount-1);
+
+	if (FILE *fp = fopen("c:/SAM/SetType224Inputs.txt", "a"))
+	{
+		fprintf(fp, "T_htf_hot = %lg\n", m_pbInputs.T_htf_hot );
+		fprintf(fp, "T_wb = %lg\n", m_pbInputs.T_wb );
+		fprintf(fp, "T_db = %lg\n", m_pbInputs.T_db );
+		fprintf(fp, "P_amb = %lg\n", m_pbInputs.P_amb );
+		fprintf(fp, "TOU = %d\n", (int) m_pbInputs.TOU );
+		fclose(fp);
+	}
 }
 
 
