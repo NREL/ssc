@@ -1,17 +1,25 @@
 // define classes
+#include "core.h"
+
 #include "lib_geohourly_interface.h"
 #include "lib_geohourly.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeothermalInterface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeothermalInterface::CGeothermalInterface(void) {m_strErrMsg = "";}
-CGeothermalInterface::~CGeothermalInterface(void){}
+CGeothermalInterface::CGeothermalInterface( ) {m_strErrMsg = "";}
+CGeothermalInterface::~CGeothermalInterface( ){}
 
+#ifdef __WINDOWS__
+#define DEBUGFILE "c:/Transfer/geotherm/geolog_pc.txt"
+#endif
+#ifdef __MACOSX__
+#define DEBUGFILE "/Users/adobos/geolog_mac.txt"
+#endif
 
-bool CGeothermalInterface::IsReadyToRun(void) { return oGeoOutputs.readyToAnalyze(); }
-bool CGeothermalInterface::ErrorOccured(void) { return (m_strErrMsg == "") ? false : true; }
-std::string CGeothermalInterface::GetErrorMsg(void) { return m_strErrMsg; }
+bool CGeothermalInterface::IsReadyToRun( ) { return oGeoOutputs.readyToAnalyze(); }
+bool CGeothermalInterface::ErrorOccured( ) { return (m_strErrMsg == "") ? false : true; }
+std::string CGeothermalInterface::GetErrorMsg( ) { return m_strErrMsg; }
 
 int CGeothermalInterface::RunGeoHourly(void (*update_function)(float,void*),void*user_data)
 {
@@ -167,7 +175,7 @@ void setZeroTo1(double &dVal, const double &newVal, std::string varName, std::st
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGETEMGlobals /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGETEMGlobals::CGETEMGlobals(void)
+CGETEMGlobals::CGETEMGlobals( )
 {
 	oAmbientEnthalpyConstants.init(-31.76958886, 0.997066497, 0.00001087, 0, 0, 0, 0);
 	oAmbientEntropyConstants.init(-0.067875028480951, 0.002201824618666, -0.000002665154152, 0.000000004390426, -0.000000000004355, 0, 0);
@@ -307,7 +315,7 @@ double CGETEMGlobals::GetFlashTemperature(double pressurePSI)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeothermalFluid //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeothermalFluid::CGeothermalFluid(void)
+CGeothermalFluid::CGeothermalFluid( )
 {	// constructor: initialize member variables and objects
 	moEnthalpyConstants.init(0,0,0,0,0,0,0);
 	moEntropyConstants.init(0,0,0,0,0,0,0);
@@ -323,7 +331,7 @@ void CGeothermalFluid::init(const CGeothermalConstants &enthalpyConstants, const
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeoFluidContainer ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeoFluidContainer::CGeoFluidContainer(void)
+CGeoFluidContainer::CGeoFluidContainer( )
 {
 	moAmbientGeothermalFluid.init(m_oGG.oAmbientEnthalpyConstants, m_oGG.oAmbientEntropyConstants);
 	moBinaryGeothermalFluid.init(m_oGG.oBinaryEnthalpyConstants, m_oGG.oBinaryEntropyConstants);
@@ -345,7 +353,7 @@ double CGeoFluidContainer::GetAEForFlashBTU(double tempHighF, double tempLowF)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeoHourlyBaseInputs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeoHourlyBaseInputs::CGeoHourlyBaseInputs(void)
+CGeoHourlyBaseInputs::CGeoHourlyBaseInputs( )
 {
 	tdm = ENTER_RATE;
 	rt = HYDROTHERMAL;
@@ -475,7 +483,7 @@ double CGeoHourlyBaseInputs::GetAmbientTemperatureC(conversionTypes ct)
 }
 
 
-double CGeoHourlyBaseInputs::GetTemperatureGradient(void) // degrees C per km
+double CGeoHourlyBaseInputs::GetTemperatureGradient( ) // degrees C per km
 {	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
 	if (this->rt == HYDROTHERMAL) { return ((mdTemperatureResourceC - GetAmbientTemperatureC(BINARY))/mdResourceDepthM)*1000; }
 	return ((mdTemperatureResourceC - mdTemperatureEGSAmbientC)/mdResourceDepthM)*1000;
@@ -483,14 +491,14 @@ double CGeoHourlyBaseInputs::GetTemperatureGradient(void) // degrees C per km
 }
 
 
-double CGeoHourlyBaseInputs::GetResourceTemperatureC(void) // degrees C
+double CGeoHourlyBaseInputs::GetResourceTemperatureC( ) // degrees C
 {
 	if ( (this->rt == EGS) && (dc == DEPTH) ) return ((mdResourceDepthM/1000) * GetTemperatureGradient()) + mdTemperatureEGSAmbientC;
 	return mdTemperatureResourceC;
 }
 
 
-double CGeoHourlyBaseInputs::GetResourceDepthM(void) // meters
+double CGeoHourlyBaseInputs::GetResourceDepthM( ) // meters
 {
 	if ( (this->rt == EGS) && (dc == TEMPERATURE) ) return 1000 * (mdTemperatureResourceC - mdTemperatureEGSAmbientC) / GetTemperatureGradient();
 	return mdResourceDepthM;
@@ -582,7 +590,7 @@ double CGeoHourlyBaseInputs::calcEGSReservoirConstant(double avgWaterTempC, doub
 }
 
 
-double CGeoHourlyBaseInputs::EGSAverageReservoirTemperatureF(void) //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
+double CGeoHourlyBaseInputs::EGSAverageReservoirTemperatureF( ) //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 {	// all this is from [7C.EGS Subsrfce HX]
 	double waterTempC = (IMITATE_GETEM) ? EGSAverageWaterTemperatureC1() : EGSAverageWaterTemperatureC2(); // degrees C
 	double days = mdEGSTimeInput * DAYS_PER_YEAR;
@@ -600,7 +608,7 @@ double CGeoHourlyBaseInputs::secondLawEfficiencyGETEM() // This assumes the use 
 }
 
 
-bool CGeoHourlyBaseInputs::inputErrors(void)
+bool CGeoHourlyBaseInputs::inputErrors( )
 {
 	if (m_strErrMsg != "") return true;
 
@@ -670,7 +678,7 @@ double CPumpPowerCalculator::GetTotalPumpPower(std::string sErr) // watt-hr/lb
 }
 
 // PRIVATE FUNCTIONS -----------------------------------------------------------------
-double CPumpPowerCalculator::productionPumpPower(void) // ft-lbs/hr
+double CPumpPowerCalculator::productionPumpPower( ) // ft-lbs/hr
 {
 	if (!mbProductionWellsPumped) return 0;
 	
@@ -679,7 +687,7 @@ double CPumpPowerCalculator::productionPumpPower(void) // ft-lbs/hr
 }
 
 
-double CPumpPowerCalculator::GetCalculatedPumpDepthInFeet(void)
+double CPumpPowerCalculator::GetCalculatedPumpDepthInFeet( )
 {	// Get the pump Set depth in ft
 		
 	if (!mbCalculatePumpDepth) return mdPumpSetDepthFt;
@@ -697,7 +705,7 @@ double CPumpPowerCalculator::GetCalculatedPumpDepthInFeet(void)
 }
 
 
-double CPumpPowerCalculator::pressureWellHeadPSI(void)
+double CPumpPowerCalculator::pressureWellHeadPSI( )
 {
 	double tempF = CelciusToFarenheit(mpGBI->GetTemperaturePlantDesignC());
 	double pressureSaturation = mpGBI->m_oGG.oPC.evaluatePolynomial(tempF); // valid above boiling, I guess.
@@ -777,7 +785,7 @@ double CPumpPowerCalculator::pressureInjectionWellBottomHolePSI() // [7B.Reservo
 
 
 
-double CPumpPowerCalculator::pressureHydrostaticPSI(void)
+double CPumpPowerCalculator::pressureHydrostaticPSI( )
 {	// calculate the hydrostatic pressure (at the bottom of the well)
 	double tempAmbientF = (IMITATE_GETEM) ? CelciusToFarenheit(mpGBI->GetAmbientEGSTemperatureC()) : mpGBI->GetAmbientTemperatureF();
 	double pressureAmbientBar = PsiToBar(mpGBI->m_oGG.oPressureAmbientConstants.evaluatePolynomial(tempAmbientF));
@@ -794,7 +802,7 @@ double CPumpPowerCalculator::pressureHydrostaticPSI(void)
 	return BarToPsi(pressureHydrostaticBar);
 }
 
-double CPumpPowerCalculator::pumpHeadFt(void) // ft
+double CPumpPowerCalculator::pumpHeadFt( ) // ft
 {	// calculate the friction head loss of the casing
 	double areaCasing = areaCircle(DiameterPumpCasingFt()/2); // ft^2
 	double velocityCasing = productionFlowRate()/areaCasing;
@@ -823,7 +831,7 @@ double CPumpPowerCalculator::calcInjectionPressure()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Public Functions -------------------------------------------------------------------------------
-CFlashBrineEffectiveness::CFlashBrineEffectiveness(void)
+CFlashBrineEffectiveness::CFlashBrineEffectiveness( )
 {
 	mCondenserType = SURFACE;
 	mNCGRemovalType = JET;
@@ -856,7 +864,7 @@ void CFlashBrineEffectiveness::init(CGeoHourlyBaseInputs* gbi)
 }
 
 
-double CFlashBrineEffectiveness::brineEffectiveness(void)
+double CFlashBrineEffectiveness::brineEffectiveness( )
 {
 	if (!mbBrineEffectivenessCalculated) {
 		this->calculateFlashPressures();
@@ -873,7 +881,7 @@ double CFlashBrineEffectiveness::brineEffectiveness(void)
 }
 
 
-double CFlashBrineEffectiveness::waterLossFractionOfGF(void)
+double CFlashBrineEffectiveness::waterLossFractionOfGF( )
 {
 	this->calculateFlashPressures();
 	return waterLoss() / mpGBI->m_oGG.mGeothermalFluidForFlash();
@@ -889,7 +897,7 @@ double CFlashBrineEffectiveness::pressureDualHighWithConstraint()
 	return a * exp(b * mpGBI->GetTemperaturePlantDesignC());
 }
 
-void CFlashBrineEffectiveness::calculateFlashPressures(void)
+void CFlashBrineEffectiveness::calculateFlashPressures( )
 {	// This function Sets some values that will be used throughout the calculations of the flash brine effectiveness
 	// These cannot be Set during initialization since some of the public properties may have been changed.  These
 	// need to be calculated right when the brine effectiveness is calculated.
@@ -1006,7 +1014,7 @@ bool CMakeupAlgorithm::SetScenarioParameters( CGeoHourlyBaseInputs* gbi)
 {
 	mpGBI = gbi;
 	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC();
-	if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	if (FILE*fp=fopen(DEBUGFILE, "a"))
 	{
 		fprintf(fp, "CMakeupAlgorithm::SetScenarioParameters mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
 		fclose(fp);
@@ -1063,7 +1071,7 @@ bool CMakeupAlgorithm::ReadWeatherForTimeStep(bool bHourly, unsigned int timeSte
 	return true;
 }
 
-void CMakeupAlgorithm::SetType224Inputs(void)
+void CMakeupAlgorithm::SetType224Inputs( )
 {
 	// set inputs that change for each timestep
 	m_pbInputs.T_htf_hot = mdWorkingTemperatureC;
@@ -1073,7 +1081,7 @@ void CMakeupAlgorithm::SetType224Inputs(void)
 	m_pbInputs.TOU = mpGBI->GetTOUForHour(m_lReadCount-1);
 
 	static int count = 0;
-	if (FILE *fp = fopen("/Users/adobos/geolog.txt", "a"))
+	if (FILE *fp = fopen(DEBUGFILE, "a"))
 	{
 		fprintf(fp, "CMakeupAlgorithm::SetType224Inputs [%d] mdWorkingTemperatureC=%lg\n",++count, mdWorkingTemperatureC);
 		fclose(fp);
@@ -1091,7 +1099,7 @@ void CMakeupAlgorithm::SetType224Inputs(void)
 }
 
 
-double CMakeupAlgorithm::GetType224OutputkW(void)
+double CMakeupAlgorithm::GetType224OutputkW( )
 {
 	// run power block model
 	if (!m_pb.Execute((m_lHourCount-1)*3600, m_pbInputs))
@@ -1103,7 +1111,7 @@ double CMakeupAlgorithm::GetType224OutputkW(void)
 
 // Private function, called from ReadWeatherForTimeStep(timeStep)
 // Read the next line from weather file; rewind file if passed the end; assumes 8760 hour weather file;
-bool CMakeupAlgorithm::ReadNextLineInWeatherFile(void)
+bool CMakeupAlgorithm::ReadNextLineInWeatherFile( )
 {
 	
 	if (m_lReadCount >= 8760)
@@ -1169,7 +1177,7 @@ void CEGSMakeup::calculateNewTemperature()
 	mdLastProductionTemperatureC = mdWorkingTemperatureC;
 	mdWorkingTemperatureC = newEGSProductionTemperatureC();
 
-	if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	if (FILE*fp=fopen(DEBUGFILE, "a"))
 	{
 		fprintf(fp, "CEGSMakeup::calculateNewTemperature mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
 		fclose(fp);
@@ -1183,11 +1191,11 @@ bool CEGSMakeup::canReplaceReservoir(double dTimePassedInYears)
 	return CMakeupAlgorithm::canReplaceReservoir(dTimePassedInYears);
 }
 
-void CEGSMakeup::replaceReservoir(void)
+void CEGSMakeup::replaceReservoir( )
 {
 	miReservoirReplacements++; 
 	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); 
-	if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	if (FILE*fp=fopen(DEBUGFILE, "a"))
 	{
 		fprintf(fp, "CEGSMakeup::replaceReservoir mdWorkingTemperatureC = %lg\n", mdWorkingTemperatureC);
 		fclose(fp);
@@ -1197,7 +1205,7 @@ void CEGSMakeup::replaceReservoir(void)
 }
 
 
-double CEGSMakeup::plantBrineEfficiency(void)
+double CEGSMakeup::plantBrineEfficiency( )
 {
     mdCurrentEfficiency = maxSecondLawEfficiency() * fractionOfMaxEfficiency();
     return mdCurrentEfficiency * mpGBI->GetAEBinaryAtTemp(mdWorkingTemperatureC); // oSP.GeothermalFuildContainer.availableEnergyWattHr(Binary, toF(fWorkingTemperatureC))
@@ -1216,18 +1224,18 @@ double CEGSMakeup::newInjectionTemperatureC()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeoHourlyAnalysis //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeoHourlyAnalysis::CGeoHourlyAnalysis(void)
+CGeoHourlyAnalysis::CGeoHourlyAnalysis( )
 {
 	fLastIntervalDone = 0;
 	init();
 }
 
-CGeoHourlyAnalysis::~CGeoHourlyAnalysis(void)
+CGeoHourlyAnalysis::~CGeoHourlyAnalysis( )
 {
 	if (moMA) delete moMA;
 }
 
-void CGeoHourlyAnalysis::init(void)
+void CGeoHourlyAnalysis::init( )
 {
 	moMA = NULL;
 	m_strErrMsg = "";
@@ -1291,7 +1299,7 @@ bool CGeoHourlyAnalysis::readyToAnalyze()
  
  
 double CMakeupAlgorithm::fractionOfMaxEfficiency() { return(temperatureRatio() > 0.98) ? moSecondLawConstants.evaluatePolynomial(temperatureRatio()) : 1.0177 * pow(temperatureRatio(), 2.6237); }
-double CMakeupAlgorithm::temperatureRatio(void) { return CelciusToKelvin(mdWorkingTemperatureC) / CelciusToKelvin(mpGBI->GetTemperaturePlantDesignC()); }
+double CMakeupAlgorithm::temperatureRatio( ) { return CelciusToKelvin(mdWorkingTemperatureC) / CelciusToKelvin(mpGBI->GetTemperaturePlantDesignC()); }
 double CMakeupAlgorithm::plantBrineEfficiency() { return secondLawEfficiency() * mpGBI->GetAEBinaryAtTemp(mdWorkingTemperatureC); } // plant Brine Efficiency as a function of temperature
 
 
@@ -1299,10 +1307,10 @@ bool CMakeupAlgorithm::canReplaceReservoir(double dTimePassedInYears) {
 	      return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
 
 
-void CMakeupAlgorithm::calculateNewTemperature(void)
+void CMakeupAlgorithm::calculateNewTemperature( )
 {
   mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / 12));
- if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+ if (FILE*fp=fopen(DEBUGFILE, "a"))
  {
    fprintf(fp, "CMakeupAlgorithm::calculateNewTemperature mdWorkingTemperatureC=%lg (decline %lg)\n", mdWorkingTemperatureC, mpGBI->mdTemperatureDeclineRate);
    fclose(fp);
@@ -1315,7 +1323,7 @@ void CMakeupAlgorithm::replaceReservoir()
 {
    miReservoirReplacements++;
    mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC();
-	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	 if (FILE*fp=fopen(DEBUGFILE, "a"))
    {
     fprintf(fp, "CMakeupAlgorithm::replaceReservoir mdWorkingTemperatureC=%lg\n", mdWorkingTemperatureC);
     fclose(fp);
@@ -1330,7 +1338,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 	mbAnalysisRequired = true;
 	if (!readyToAnalyze()) return false;   //moMA is reset each time readyToAnalyze is called.
 
-	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	 if (FILE*fp=fopen(DEBUGFILE, "a"))
 	 {
 	 	fprintf(fp, "MakeupAlgorithm[%d] readyToAnalyze PASSED, mdWorkingTemperatureC = %lg\n", (int)moMA->GetType(), moMA->GetWorkingTemperatureC());
 		fclose(fp);
@@ -1348,7 +1356,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 	float fPercentDone = 0.0;
 	bool bCanReplaceReservoir = false;
     
-	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	 if (FILE*fp=fopen(DEBUGFILE, "a"))
 	 {
 	 	fprintf(fp, "analyze: PRE reservoir replacement: mdWorkingTemperatureC = %lg\n", moMA->GetWorkingTemperatureC());
 		fclose(fp);
@@ -1356,7 +1364,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
     // Initialize
     moMA->replaceReservoir();
 
-	 if (FILE*fp=fopen("/Users/adobos/geolog.txt", "a"))
+	 if (FILE*fp=fopen(DEBUGFILE, "a"))
 	 {
 	 	fprintf(fp, "analyze: POST reservoirReplaced: mdWorkingTemperatureC = %lg\n", moMA->GetWorkingTemperatureC());
 		fclose(fp);
@@ -1444,7 +1452,7 @@ bool CGeoHourlyAnalysis::analyze( void (*update_function)(float, void*), void *u
 }
 
 
-double CGeoHourlyAnalysis::GetFractionOfInletGFInjected(void)
+double CGeoHourlyAnalysis::GetFractionOfInletGFInjected( )
 {
 	if (this->rt == EGS)
 		return (1 + mdWaterLossPercent);
@@ -1479,7 +1487,7 @@ bool CGeoHourlyAnalysis::TimeToUpdateInterface(float fPercentDone, float fNotifi
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeoHourlyOutputs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeoHourlyOutputs::CGeoHourlyOutputs(void)
+CGeoHourlyOutputs::CGeoHourlyOutputs( )
 {
 	// costs curves
 	pwccc = MED;
@@ -1501,7 +1509,7 @@ double CGeoHourlyOutputs::wellCostEstimate(double depthFt, wellCostCurveChoices 
 
 
 
-double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies(void)
+double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies( )
 {	// dollars/kWh - NOT including royalties on contingencies
 	// royalties in GETEM are supposed to = 10% (input) of "field-related annual costs to approximate the BLM calculation"
 
@@ -1534,4 +1542,4 @@ double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies(void)
         // negotiated is 10% over the cost of generating it.
 }
 
-double CGeoHourlyBaseInputs::GetPumpWorkKW(void) { return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; }  // shortcut to function in CPumpPowerCalculat
+double CGeoHourlyBaseInputs::GetPumpWorkKW( ) { return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; }  // shortcut to function in CPumpPowerCalculat
