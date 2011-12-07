@@ -12,7 +12,7 @@ from ctypes import *
 c_number = c_float # must be c_double or c_float depending on how defined in sscapi.h
 class PySSC:
 	def __init__(self):
-		self.pdll = CDLL("ssc32")
+		self.pdll = CDLL("ssc32.dylib")
 	
 	INVALID=0
 	STRING=1

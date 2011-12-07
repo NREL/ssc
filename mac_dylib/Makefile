@@ -2,11 +2,26 @@ VPATH=../src
 
 CC = gcc
 CXX = g++
-CFLAGS = -g -arch i386 -D__MACOSX__ -D__32BIT__ -fPIC -Wall -O3
+CFLAGS = -g -D__MACOSX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++ -arch i386
+LDFLAGS = -lm -lstdc++
+
+ifeq ($(CFG),)
+CFG=32
+endif
+
+ifeq ($(CFG),64)
+CFLAGS += -D__64BIT__
+TARGET = ssc64.dylib
+else
+CFLAGS += -D__32BIT__ -arch i386
+TARGET = ssc32.dylib
+LDFLAGS += -arch i386
+endif
 
 OBJECTS = \
+	cmod_pv6parmod.o \
+	cmod_pvsandiainv.o \
 	cmod_6parsolve.o \
 	cmod_test_irr.o \
 	cmod_wfreader.o \
@@ -31,6 +46,8 @@ OBJECTS = \
 	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
+	lib_pvmodel.o \
+	lib_cec6par.o \
 	lib_irradproc.o \
 	lib_powerblock.o \
 	lib_financial.o \
@@ -45,11 +62,9 @@ OBJECTS = \
 	sscapi.o \
 	vtab_common.o
 
-TARGET = ssc.dylib
-
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(LDFLAGS) -dynamiclib -flat_namespace -o $@ $^
-	cp $(TARGET) ../python/ssc32
+	cp $(TARGET) ../python/ssc.dylib
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
