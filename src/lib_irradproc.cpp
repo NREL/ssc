@@ -257,7 +257,7 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 }
 
 
-void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm,double angle[3])
+void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm,double angle[4])
 {
 /* This function calculates the incident angle of direct beam radiation to a
 	surface for a given sun position, latitude, and surface orientation. The
@@ -281,7 +281,8 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 	angle[]  = array of elements to return angles to calling function
 	angle[0] = inc  = incident angle in radians
 	angle[1] = tilt = tilt angle of surface from horizontal in radians
-	angle[2] = sazm = surface azimuth in radians, measured east from north  */
+	angle[2] = sazm = surface azimuth in radians, measured east from north
+	angle[3] = rot = tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers) */
 
 	/* Local variables: rot is the angle that the collector is rotated about the
 	axis when viewed from the raised end of the 1-axis tracker. If rotated
@@ -296,6 +297,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 			tilt = tilt*DTOR;    /* Change tilt and surface azimuth to radians */
 			sazm = sazm*DTOR;
 			arg = sin(zen)*cos(azm-sazm)*sin(tilt) + cos(zen)*cos(tilt);
+			rot = 0;
 			if( arg < -1.0 )
 				inc = M_PI;
 			else if( arg > 1.0  )
@@ -413,11 +415,13 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 			tilt = zen;
 			sazm = azm;
 			inc = 0.0;
+			rot = 0.0;
 			break;
 		}
 	angle[0] = inc;           /* Variables returned in array angle[] */
 	angle[1] = tilt;
 	angle[2] = sazm;
+	angle[3] = rot;
 
 }
 

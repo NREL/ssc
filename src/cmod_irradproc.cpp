@@ -46,7 +46,10 @@ static var_info _cm_vtab_irradproc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_skydiff_hor",            "Incident Diffuse Horizon Brightening Component", "W/m2", "",        "Irradiance Processor",      "*",                       "",                  "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "incidence",                  "Incidence angle to surface",     "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
-
+	{ SSC_OUTPUT,       SSC_ARRAY,       "surf_tilt",                  "Surface tilt angle",             "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "surf_azm",                   "Surface azimuth angle",          "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "axis_rotation",              "Tracking axis rotation angle",   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Solar azimuth",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Solar zenith",                   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_elv",                    "Sun elevation",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
@@ -101,10 +104,13 @@ public:
 		ssc_number_t *albvec = 0;
 		if (is_assigned("albedo")) albvec = as_array("albedo", &count);
 	
-		double sun[9],poa[3],angle[3],diffc[3];
+		double sun[9],poa[3],angle[4],diffc[3];
 		
 		// allocate outputs
 		ssc_number_t *p_inc = allocate("incidence", count);
+		ssc_number_t *p_surftilt = allocate("surf_tilt", count);
+		ssc_number_t *p_surfazm = allocate("surf_azm", count);
+		ssc_number_t *p_rot = allocate("axis_rotation", count);
 		ssc_number_t *p_azm = allocate("sun_azm", count);
 		ssc_number_t *p_zen = allocate("sun_zen", count);
 		ssc_number_t *p_elv = allocate("sun_elv", count);
@@ -147,7 +153,7 @@ public:
 
 			if (delt > 2.0) throw general_error( util::format("timestep at index %s yielded a calculated timestep of %lg.  2 hour maximum timestep allowed.", i, delt ));
 
-			p_time[i] = t_cur;
+			p_time[i] = (ssc_number_t)t_cur;
 			p_delt[i] = (ssc_number_t)delt;
 						
 			// calculate sunrise and sunset hours in local standard time for the current day
@@ -164,8 +170,8 @@ public:
 				int hr_calc = (int)t_calc;
 				double min_calc = (t_calc-hr_calc)*60.0;
 
-				p_hrc[i] = hr_calc;
-				p_minc[i] = min_calc;
+				p_hrc[i] = (ssc_number_t) hr_calc;
+				p_minc[i] = (ssc_number_t) min_calc;
 				
 				solarpos( (int)year[i], (int)month[i], (int)day[i], hr_calc, min_calc, lat, lon, tz, sun );
 
@@ -179,8 +185,8 @@ public:
 				int hr_calc = (int)t_calc;
 				double min_calc = (t_calc-hr_calc)*60.0;
 
-				p_hrc[i] = hr_calc;
-				p_minc[i] = min_calc;
+				p_hrc[i] = (ssc_number_t) hr_calc;
+				p_minc[i] = (ssc_number_t) min_calc;
 				
 				solarpos( (int)year[i], (int)month[i], (int)day[i], hr_calc, min_calc, lat, lon, tz, sun );
 
@@ -205,7 +211,7 @@ public:
 			poa[0]=poa[1]=poa[2] = 0;
 			diffc[0]=diffc[1]=diffc[2] = 0;
 
-			angle[0]=angle[1]=angle[2] = 0;
+			angle[0]=angle[1]=angle[2]=angle[3] = 0;
 
 			// do irradiance calculations if sun is up
 			if (p_sunup[i] > 0)
@@ -257,6 +263,9 @@ public:
 			
 			// assign outputs
 			p_inc[i] = (ssc_number_t) (angle[0] * 180/M_PI);
+			p_surftilt[i] = (ssc_number_t) (angle[1] * 180/M_PI);
+			p_surfazm[i] = (ssc_number_t) (angle[2] * 180/M_PI);
+			p_rot[i] = (ssc_number_t) (angle[3] * 180/M_PI);
 			p_azm[i] = (ssc_number_t) (sun[0] * 180/M_PI);
 			p_zen[i] = (ssc_number_t) (sun[1] * 180/M_PI);
 			p_elv[i] = (ssc_number_t) (sun[2] * 180/M_PI);
@@ -270,8 +279,8 @@ public:
 			p_poa_skydiff_cir[i] = (ssc_number_t) diffc[1];
 			p_poa_skydiff_hor[i] = (ssc_number_t) diffc[1];
 
-			p_sunrise[i] = sun[4];
-			p_sunset[i] = sun[5];
+			p_sunrise[i] = (ssc_number_t) sun[4];
+			p_sunset[i] = (ssc_number_t) sun[5];
 		}
 	}
 };

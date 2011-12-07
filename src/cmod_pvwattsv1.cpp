@@ -66,7 +66,7 @@ public:
 		double rlim = PVWATTS_ROTLIM;             /* +/- rotation in degrees permitted by physical constraint of tracker */
 	
 		/* storage for calculations */
-		double angle[3];
+		double angle[4];
 		double sun[9];
 
 		double sunrise, sunset;

@@ -1,15 +1,39 @@
-form width 818 height 582 nguiobjects 22
+form width 1006 height 626 nguiobjects 23
+start GroupBox2 type GroupBox
+geom 9 465 428 158
+properties 7
+prop(v'2) 1 name
+GroupBox2
+endprop name
+prop(v'2) 2 x
+9
+endprop x
+prop(v'2) 2 y
+465
+endprop y
+prop(v'2) 2 width
+428
+endprop width
+prop(v'2) 2 height
+158
+endprop height
+prop(v'2) 5 bold
+1
+endprop bold
+prop(v'2) 1 caption
+Configure simulation sequence
+endprop caption
 start GroupBox1 type GroupBox
-geom 228 408 356 158
+geom 441 465 356 158
 properties 7
 prop(v'2) 1 name
 GroupBox1
 endprop name
 prop(v'2) 2 x
-228
+441
 endprop x
 prop(v'2) 2 y
-408
+465
 endprop y
 prop(v'2) 2 width
 356
@@ -18,82 +42,97 @@ prop(v'2) 2 height
 158
 endprop height
 prop(v'2) 5 bold
-0
+1
 endprop bold
 prop(v'2) 1 caption
 Parameters
 endprop caption
-start GroupBox2 type GroupBox
-geom 6 390 587 188
+start btnSendToExcel type Button
+geom 837 468 140 21
 properties 7
 prop(v'2) 1 name
-GroupBox2
+btnSendToExcel
 endprop name
 prop(v'2) 2 x
-6
+837
 endprop x
 prop(v'2) 2 y
-390
+468
 endprop y
 prop(v'2) 2 width
-587
-endprop width
-prop(v'2) 2 height
-188
-endprop height
-prop(v'2) 5 bold
-1
-endprop bold
-prop(v'2) 1 caption
-Configure simulation sequence
-endprop caption
-start txtParamValue type TextEntry
-geom 363 513 214 21
-properties 10
-prop(v'2) 1 name
-txtParamValue
-endprop name
-prop(v'2) 2 x
-363
-endprop x
-prop(v'2) 2 y
-513
-endprop y
-prop(v'2) 2 width
-214
+140
 endprop width
 prop(v'2) 2 height
 21
 endprop height
-prop(v'2) 1 text
-
-endprop text
-prop(v'2) 5 editable
-1
-endprop editable
-prop(v'2) 6 forecolour
-128 0 64
-endprop forecolour
-prop(v'2) 6 backcolour
-255 255 255
-endprop backcolour
+prop(v'2) 1 caption
+Send table to Excel...
+endprop caption
 prop(v'2) 2 taborder
 0
 endprop taborder
-start Label5 type Label
-geom 363 489 110 21
-properties 12
+start btnClose type Button
+geom 867 573 80 21
+properties 7
 prop(v'2) 1 name
-Label5
+btnClose
 endprop name
 prop(v'2) 2 x
-363
+867
 endprop x
 prop(v'2) 2 y
-489
+573
 endprop y
 prop(v'2) 2 width
-110
+80
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Close
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start btnAccept type Button
+geom 867 549 80 21
+properties 7
+prop(v'2) 1 name
+btnAccept
+endprop name
+prop(v'2) 2 x
+867
+endprop x
+prop(v'2) 2 y
+549
+endprop y
+prop(v'2) 2 width
+80
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Accept
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start Label2 type Label
+geom 192 6 146 21
+properties 12
+prop(v'2) 1 name
+Label2
+endprop name
+prop(v'2) 2 x
+192
+endprop x
+prop(v'2) 2 y
+6
+endprop y
+prop(v'2) 2 width
+146
 endprop width
 prop(v'2) 2 height
 21
@@ -102,7 +141,7 @@ prop(v'2) 6 textcolour
 0 0 0
 endprop textcolour
 prop(v'2) 1 caption
-Value:
+Variable Table
 endprop caption
 prop(v'2) 5 alignright
 0
@@ -119,77 +158,29 @@ endprop bold
 prop(v'2) 2 fontsize
 0
 endprop fontsize
-start btnParamFile type Button
-geom 543 537 32 21
-properties 7
-prop(v'2) 1 name
-btnParamFile
-endprop name
-prop(v'2) 2 x
-543
-endprop x
-prop(v'2) 2 y
-537
-endprop y
-prop(v'2) 2 width
-32
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-file..
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
-start btnParamDir type Button
-geom 507 537 32 21
-properties 7
-prop(v'2) 1 name
-btnParamDir
-endprop name
-prop(v'2) 2 x
-507
-endprop x
-prop(v'2) 2 y
-537
-endprop y
-prop(v'2) 2 width
-32
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-dir..
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
 start Label6 type Label
-geom 600 393 209 150
+geom 216 483 209 126
 properties 12
 prop(v'2) 1 name
 Label6
 endprop name
 prop(v'2) 2 x
-600
+216
 endprop x
 prop(v'2) 2 y
-393
+483
 endprop y
 prop(v'2) 2 width
 209
 endprop width
 prop(v'2) 2 height
-150
+126
 endprop height
 prop(v'2) 6 textcolour
 0 0 0
 endprop textcolour
 prop(v'2) 1 caption
-Use the check list box to selection compute modules for simluation.  Then, for each compute module, set the simulation parameters required.
+Use the check list box to select compute modules for simulation.  Then, for each compute module, set the simulation parameters required.
 endprop caption
 prop(v'2) 5 alignright
 0
@@ -207,22 +198,22 @@ prop(v'2) 2 fontsize
 0
 endprop fontsize
 start lstSelectedCMs type ListBox
-geom 21 429 182 135
-properties 10
+geom 24 507 182 105
+properties 11
 prop(v'2) 1 name
 lstSelectedCMs
 endprop name
 prop(v'2) 2 x
-21
+24
 endprop x
 prop(v'2) 2 y
-429
+507
 endprop y
 prop(v'2) 2 width
 182
 endprop width
 prop(v'2) 2 height
-135
+105
 endprop height
 prop(v'2) 2 selection
 -1
@@ -233,211 +224,116 @@ endprop value
 prop(v'2) 3 items
 0
 endprop items
+prop(v'2) 5 hscroll
+0
+endprop hscroll
 prop(v'2) 2 selmode
 -1
 endprop selmode
 prop(v'2) 2 taborder
 0
 endprop taborder
-start rbgParamType type RadioChoice
-geom 363 429 110 44
-properties 10
+start grdCMVars type DataGrid
+geom 183 27 815 432
+properties 8
 prop(v'2) 1 name
-rbgParamType
+grdCMVars
 endprop name
 prop(v'2) 2 x
-363
+183
 endprop x
 prop(v'2) 2 y
-429
+27
 endprop y
 prop(v'2) 2 width
-110
+815
 endprop width
 prop(v'2) 2 height
-44
+432
 endprop height
-prop(v'2) 2 selection
--1
-endprop selection
-prop(v'2) 1 value
-
-endprop value
-prop(v'2) 3 items
+prop(v'2) 2 nrows
 2
-SSC_STRING
-SSC_NUMBER
-endprop items
-prop(v'2) 5 showcaptions
-1
-endprop showcaptions
-prop(v'2) 2 taborder
+endprop nrows
+prop(v'2) 2 ncols
+2
+endprop ncols
+prop(v'2) 5 cellediting
 0
-endprop taborder
-start btnParamReset type Button
-geom 321 537 38 21
-properties 7
-prop(v'2) 1 name
-btnParamReset
-endprop name
-prop(v'2) 2 x
-321
-endprop x
-prop(v'2) 2 y
-537
-endprop y
-prop(v'2) 2 width
-38
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-Rst
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
-start btnParamDel type Button
-geom 279 537 38 21
-properties 7
-prop(v'2) 1 name
-btnParamDel
-endprop name
-prop(v'2) 2 x
-279
-endprop x
-prop(v'2) 2 y
-537
-endprop y
-prop(v'2) 2 width
-38
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-Del
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
-start btnParamAdd type Button
-geom 237 537 38 21
-properties 7
-prop(v'2) 1 name
-btnParamAdd
-endprop name
-prop(v'2) 2 x
-237
-endprop x
-prop(v'2) 2 y
-537
-endprop y
-prop(v'2) 2 width
-38
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-Add..
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
-start lstParams type ListBox
-geom 237 450 122 84
+endprop cellediting
+start txtParams type Editor
+geom 9 354 168 105
 properties 10
 prop(v'2) 1 name
-lstParams
+txtParams
 endprop name
 prop(v'2) 2 x
-237
+9
 endprop x
 prop(v'2) 2 y
-450
+354
 endprop y
 prop(v'2) 2 width
-122
+168
 endprop width
 prop(v'2) 2 height
-84
+105
 endprop height
-prop(v'2) 2 selection
--1
-endprop selection
-prop(v'2) 1 value
+prop(v'2) 1 text
 
-endprop value
+endprop text
+prop(v'2) 5 editable
+0
+endprop editable
+prop(v'2) 6 forecolour
+128 0 128
+endprop forecolour
+prop(v'2) 6 backcolour
+255 255 255
+endprop backcolour
+prop(v'2) 2 taborder
+0
+endprop taborder
+start cklCMList type CheckList
+geom 9 27 167 324
+properties 9
+prop(v'2) 1 name
+cklCMList
+endprop name
+prop(v'2) 2 x
+9
+endprop x
+prop(v'2) 2 y
+27
+endprop y
+prop(v'2) 2 width
+167
+endprop width
+prop(v'2) 2 height
+324
+endprop height
 prop(v'2) 3 items
 0
 endprop items
-prop(v'2) 2 selmode
--1
-endprop selmode
-prop(v'2) 2 taborder
-0
-endprop taborder
-start btnAccept type Button
-geom 645 555 80 21
-properties 7
-prop(v'2) 1 name
-btnAccept
-endprop name
-prop(v'2) 2 x
-645
-endprop x
-prop(v'2) 2 y
-555
-endprop y
-prop(v'2) 2 width
-80
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-Accept
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
-start btnClose type Button
-geom 729 555 80 21
-properties 7
-prop(v'2) 1 name
-btnClose
-endprop name
-prop(v'2) 2 x
-729
-endprop x
-prop(v'2) 2 y
-555
-endprop y
-prop(v'2) 2 width
-80
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-Close
-endprop caption
+prop(v'2) 1 checked
+
+endprop checked
+prop(v'2) 5 hscroll
+1
+endprop hscroll
 prop(v'2) 2 taborder
 0
 endprop taborder
 start Label3 type Label
-geom 21 408 182 21
+geom 24 486 182 21
 properties 12
 prop(v'2) 1 name
 Label3
 endprop name
 prop(v'2) 2 x
-21
+24
 endprop x
 prop(v'2) 2 y
-408
+486
 endprop y
 prop(v'2) 2 width
 182
@@ -466,17 +362,280 @@ endprop bold
 prop(v'2) 2 fontsize
 0
 endprop fontsize
+start btnParamAdd type Button
+geom 450 594 38 21
+properties 7
+prop(v'2) 1 name
+btnParamAdd
+endprop name
+prop(v'2) 2 x
+450
+endprop x
+prop(v'2) 2 y
+594
+endprop y
+prop(v'2) 2 width
+38
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Add..
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start btnParamFile type Button
+geom 756 594 32 21
+properties 7
+prop(v'2) 1 name
+btnParamFile
+endprop name
+prop(v'2) 2 x
+756
+endprop x
+prop(v'2) 2 y
+594
+endprop y
+prop(v'2) 2 width
+32
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+file..
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start txtParamValue type TextEntry
+geom 576 570 214 21
+properties 10
+prop(v'2) 1 name
+txtParamValue
+endprop name
+prop(v'2) 2 x
+576
+endprop x
+prop(v'2) 2 y
+570
+endprop y
+prop(v'2) 2 width
+214
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 text
+
+endprop text
+prop(v'2) 5 editable
+1
+endprop editable
+prop(v'2) 6 forecolour
+128 0 64
+endprop forecolour
+prop(v'2) 6 backcolour
+255 255 255
+endprop backcolour
+prop(v'2) 2 taborder
+0
+endprop taborder
+start Label5 type Label
+geom 576 546 110 21
+properties 12
+prop(v'2) 1 name
+Label5
+endprop name
+prop(v'2) 2 x
+576
+endprop x
+prop(v'2) 2 y
+546
+endprop y
+prop(v'2) 2 width
+110
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 6 textcolour
+0 0 0
+endprop textcolour
+prop(v'2) 1 caption
+Value:
+endprop caption
+prop(v'2) 5 alignright
+0
+endprop alignright
+prop(v'2) 5 aligntop
+0
+endprop aligntop
+prop(v'2) 5 wordwrap
+0
+endprop wordwrap
+prop(v'2) 5 bold
+0
+endprop bold
+prop(v'2) 2 fontsize
+0
+endprop fontsize
+start btnParamDir type Button
+geom 720 594 32 21
+properties 7
+prop(v'2) 1 name
+btnParamDir
+endprop name
+prop(v'2) 2 x
+720
+endprop x
+prop(v'2) 2 y
+594
+endprop y
+prop(v'2) 2 width
+32
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+dir..
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start rbgParamType type RadioChoice
+geom 576 486 110 44
+properties 10
+prop(v'2) 1 name
+rbgParamType
+endprop name
+prop(v'2) 2 x
+576
+endprop x
+prop(v'2) 2 y
+486
+endprop y
+prop(v'2) 2 width
+110
+endprop width
+prop(v'2) 2 height
+44
+endprop height
+prop(v'2) 2 selection
+-1
+endprop selection
+prop(v'2) 1 value
+
+endprop value
+prop(v'2) 3 items
+2
+SSC_STRING
+SSC_NUMBER
+endprop items
+prop(v'2) 5 showcaptions
+1
+endprop showcaptions
+prop(v'2) 2 taborder
+0
+endprop taborder
+start btnParamReset type Button
+geom 534 594 38 21
+properties 7
+prop(v'2) 1 name
+btnParamReset
+endprop name
+prop(v'2) 2 x
+534
+endprop x
+prop(v'2) 2 y
+594
+endprop y
+prop(v'2) 2 width
+38
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Rst
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start btnParamDel type Button
+geom 492 594 38 21
+properties 7
+prop(v'2) 1 name
+btnParamDel
+endprop name
+prop(v'2) 2 x
+492
+endprop x
+prop(v'2) 2 y
+594
+endprop y
+prop(v'2) 2 width
+38
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Del
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start lstParams type ListBox
+geom 450 507 122 84
+properties 11
+prop(v'2) 1 name
+lstParams
+endprop name
+prop(v'2) 2 x
+450
+endprop x
+prop(v'2) 2 y
+507
+endprop y
+prop(v'2) 2 width
+122
+endprop width
+prop(v'2) 2 height
+84
+endprop height
+prop(v'2) 2 selection
+-1
+endprop selection
+prop(v'2) 1 value
+
+endprop value
+prop(v'2) 3 items
+0
+endprop items
+prop(v'2) 5 hscroll
+0
+endprop hscroll
+prop(v'2) 2 selmode
+-1
+endprop selmode
+prop(v'2) 2 taborder
+0
+endprop taborder
 start Label4 type Label
-geom 237 429 110 21
+geom 450 486 110 21
 properties 12
 prop(v'2) 1 name
 Label4
 endprop name
 prop(v'2) 2 x
-237
+450
 endprop x
 prop(v'2) 2 y
-429
+486
 endprop y
 prop(v'2) 2 width
 110
@@ -505,132 +664,6 @@ endprop bold
 prop(v'2) 2 fontsize
 0
 endprop fontsize
-start txtParams type Editor
-geom 9 252 180 132
-properties 10
-prop(v'2) 1 name
-txtParams
-endprop name
-prop(v'2) 2 x
-9
-endprop x
-prop(v'2) 2 y
-252
-endprop y
-prop(v'2) 2 width
-180
-endprop width
-prop(v'2) 2 height
-132
-endprop height
-prop(v'2) 1 text
-
-endprop text
-prop(v'2) 5 editable
-0
-endprop editable
-prop(v'2) 6 forecolour
-128 0 128
-endprop forecolour
-prop(v'2) 6 backcolour
-255 255 255
-endprop backcolour
-prop(v'2) 2 taborder
-0
-endprop taborder
-start Label2 type Label
-geom 192 6 146 21
-properties 12
-prop(v'2) 1 name
-Label2
-endprop name
-prop(v'2) 2 x
-192
-endprop x
-prop(v'2) 2 y
-6
-endprop y
-prop(v'2) 2 width
-146
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 6 textcolour
-0 0 0
-endprop textcolour
-prop(v'2) 1 caption
-CM Variable Table
-endprop caption
-prop(v'2) 5 alignright
-0
-endprop alignright
-prop(v'2) 5 aligntop
-0
-endprop aligntop
-prop(v'2) 5 wordwrap
-0
-endprop wordwrap
-prop(v'2) 5 bold
-0
-endprop bold
-prop(v'2) 2 fontsize
-0
-endprop fontsize
-start cklCMList type CheckList
-geom 9 27 179 219
-properties 8
-prop(v'2) 1 name
-cklCMList
-endprop name
-prop(v'2) 2 x
-9
-endprop x
-prop(v'2) 2 y
-27
-endprop y
-prop(v'2) 2 width
-179
-endprop width
-prop(v'2) 2 height
-219
-endprop height
-prop(v'2) 3 items
-0
-endprop items
-prop(v'2) 1 checked
-
-endprop checked
-prop(v'2) 2 taborder
-0
-endprop taborder
-start grdCMVars type DataGrid
-geom 192 27 617 357
-properties 8
-prop(v'2) 1 name
-grdCMVars
-endprop name
-prop(v'2) 2 x
-192
-endprop x
-prop(v'2) 2 y
-27
-endprop y
-prop(v'2) 2 width
-617
-endprop width
-prop(v'2) 2 height
-357
-endprop height
-prop(v'2) 2 nrows
-2
-endprop nrows
-prop(v'2) 2 ncols
-2
-endprop ncols
-prop(v'2) 5 cellediting
-0
-endprop cellediting
 start Label1 type Label
 geom 9 6 137 21
 properties 12

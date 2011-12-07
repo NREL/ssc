@@ -19,9 +19,9 @@ static var_info _cm_vtab_6parsolve[] = {
 	{ SSC_INPUT,         SSC_NUMBER,      "Imp",                    "Maximum power point current",    "A",       "",                      "6 Parameter Solver",      "*",                       "",      "" },
 	{ SSC_INPUT,         SSC_NUMBER,      "Voc",                    "Open circuit voltage",           "V",       "",                      "6 Parameter Solver",      "*",                       "",      "" },
 	{ SSC_INPUT,         SSC_NUMBER,      "Isc",                    "Short circuit current",          "A",       "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "alpha",                  "Temp coeff of current at SC",    "A/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "beta",                   "Temp coeff of voltage at OC",    "V/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "gamma",                  "Temp coeff of power at MP",      "%/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "alpha_isc",              "Temp coeff of current at SC",    "A/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "beta_voc",               "Temp coeff of voltage at OC",    "V/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "gamma_pmp",              "Temp coeff of power at MP",      "%/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
 	{ SSC_INPUT,         SSC_NUMBER,      "Nser",                   "Number of cells in series",      "",        "",                      "6 Parameter Solver",      "*",                       "INTEGER,POSITIVE",      "" },
 	
 // outputs
@@ -61,9 +61,9 @@ public:
 		double Imp = as_double("Imp");
 		double Voc = as_double("Voc");
 		double Isc = as_double("Isc");
-		double bVoc = as_double("beta");
-		double aIsc = as_double("alpha");
-		double gPmp = as_double("gamma");
+		double bVoc = as_double("beta_voc");
+		double aIsc = as_double("alpha_isc");
+		double gPmp = as_double("gamma_pmp");
 		int nser = as_integer("Nser");
 
 		module6par m( tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser );

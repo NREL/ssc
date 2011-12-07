@@ -274,35 +274,7 @@ static double sandia_current_at_voltage(double V, double VmaxPow, double ImaxPow
 
 
 
-sandia_celltemp_t::sandia_celltemp_t( )
-{
-	a = b = DT0 = fd = std::numeric_limits<double>::quiet_NaN();
-}
-
-bool sandia_celltemp_t::operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc )
-{	
-	double Tback = sandia_module_temperature(
-		input.Ibeam,
-		input.Idiff+input.Ignd,
-		input.Wspd,
-		input.Tdry,
-		fd,
-		a,
-		b);
-
-	//C Calculate cell temperature:
-	*Tc = sandia_tcell_from_tmodule(
-		Tback,
-		input.Ibeam,
-		input.Idiff+input.Ignd,
-		fd,
-		DT0);
-
-	return true;
-}
-
-
-sandia_power_t::sandia_power_t( )
+sandia_module_t::sandia_module_t( )
 {
 	a = b = DT0
 		= A0 = A1 = A2 = A3 = A4
@@ -318,27 +290,31 @@ sandia_power_t::sandia_power_t( )
 }
 
 
-bool sandia_power_t::operator() ( pvinput_t &input, double Tc, double opvoltage, /* by default, mppt, send MPPT_VOLTAGE */
-		double *Power, double *Voltage, double *Current,
-		double *Eff, double *OpVoc, double *OpIsc )
+bool sandia_module_t::operator() ( pvinput_t &in, double opvoltage, pvoutput_t &out )
 {
 	
-	*Power = *Voltage = *Current = *Eff = *OpVoc = *OpIsc = 0.0;
+	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = out.CellTemp = 0.0;
 	
-	double Gtotal = input.Ibeam + input.Idiff + input.Ignd;
+	//C Calculate back-of-module temperature:
+	double Tback = sandia_module_temperature(in.Ibeam, in.Idiff+in.Ignd, in.Wspd, in.Tdry, fd, a, b);
+
+	//C Calculate cell temperature:
+	double Tc = sandia_tcell_from_tmodule(Tback, in.Ibeam, in.Idiff+in.Ignd, fd, DT0);
+
+	double Gtotal = in.Ibeam + in.Idiff + in.Ignd;
 	if ( Gtotal > 0.0 )
 	{
-			//C Calculate Air Mass
-		double AMa = sandia_absolute_air_mass(input.Zenith, input.Elev);
+		//C Calculate Air Mass
+		double AMa = sandia_absolute_air_mass(in.Zenith, in.Elev);
 
 		//C Calculate F1 function:
 		double F1 = sandia_f1(AMa,A0,A1,A2,A3,A4);
 
 		//C Calculate F2 function:
-		double F2 = sandia_f2(input.IncAng,B0,B1,B2,B3,B4,B5);
+		double F2 = sandia_f2(in.IncAng,B0,B1,B2,B3,B4,B5);
 
 		//C Calculate short-circuit current:
-		double Isc = sandia_isc(Tc,Isc0,input.Ibeam, input.Idiff+input.Ignd,F1,F2,fd,aIsc);
+		double Isc = sandia_isc(Tc,Isc0,in.Ibeam, in.Idiff+in.Ignd,F1,F2,fd,aIsc);
 
 		//C Calculate effective irradiance:
 		double Ee = sandia_effective_irradiance(Tc,Isc,Isc0,aIsc);
@@ -379,12 +355,13 @@ bool sandia_power_t::operator() ( pvinput_t &input, double Tc, double opvoltage,
 			I = sandia_current_at_voltage( opvoltage, Vmp, Imp, Voc, Isc );
 		}
 	
-		*Power = V*I;
-		*Voltage = V;
-		*Current = I;
-		*Eff = I*V/(Gtotal*Area);
-		*OpVoc = Voc;
-		*OpIsc = Isc;
+		out.Power = V*I;
+		out.Voltage = V;
+		out.Current = I;
+		out.Efficiency = I*V/(Gtotal*Area);
+		out.Voc_oper = Voc;
+		out.Isc_oper = Isc;
+		out.CellTemp = Tc;
 	}
 	
 	return true;

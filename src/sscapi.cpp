@@ -22,6 +22,8 @@ SSCEXPORT const char *ssc_build_info()
 extern module_entry_info 
 /* extern declarations of modules for linking */
 	cm_entry_6parsolve,
+	cm_entry_pv6parmod,
+	cm_entry_pvsandiainv,
 	cm_entry_wfreader,
 	cm_entry_irradproc,
 	cm_entry_utilityrate,
@@ -46,6 +48,8 @@ extern module_entry_info
 /* official module table */
 static module_entry_info *module_table[] = {
 	&cm_entry_6parsolve,
+	&cm_entry_pv6parmod,
+	&cm_entry_pvsandiainv,
 	&cm_entry_wfreader,
 	&cm_entry_irradproc,
 	&cm_entry_utilityrate,
@@ -66,22 +70,22 @@ static module_entry_info *module_table[] = {
 	&cm_entry_swhsolopt,
 	&cm_entry_test_irr,
 	&cm_entry_geothermalhourly,
-	NULL };
+	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {
 	std::string lname = util::lower_case( name );
 
 	int i=0;
-	while ( module_table[i] != NULL
-		 && module_table[i]->f_create != NULL )
+	while ( module_table[i] != 0
+		 && module_table[i]->f_create != 0 )
 	{
 		if ( lname == util::lower_case( module_table[i]->name ) )
 			return (*(module_table[i]->f_create))();
 		i++;
 	}
 
-	return NULL;
+	return 0;
 }
 
 SSCEXPORT void ssc_module_free( ssc_module_t p_mod )
@@ -125,17 +129,17 @@ SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name )
 	else return dat->type;
 }
 
-SSCEXPORT const char *ssc_data_first( ssc_data_t p_data ) // returns the name of the first data item, NULL if empty
+SSCEXPORT const char *ssc_data_first( ssc_data_t p_data ) // returns the name of the first data item, 0 if empty
 {
 	var_table *vt = static_cast<var_table*>(p_data);
-	if (!vt) return NULL;
+	if (!vt) return 0;
 	return vt->first();
 }
 
-SSCEXPORT const char *ssc_data_next( ssc_data_t p_data ) // returns the next name in the data set object, NULL, if none left.
+SSCEXPORT const char *ssc_data_next( ssc_data_t p_data ) // returns the next name in the data set object, 0, if none left.
 {
 	var_table *vt = static_cast<var_table*>(p_data);
-	if (!vt) return NULL;
+	if (!vt) return 0;
 	return vt->next();
 }
 
@@ -170,9 +174,9 @@ SSCEXPORT void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_num
 SSCEXPORT const char *ssc_data_get_string( ssc_data_t p_data, const char *name )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
-	if (!vt) return NULL;
+	if (!vt) return 0;
 	var_data *dat = vt->lookup(name);
-	if (!dat || dat->type != SSC_STRING) return NULL;
+	if (!dat || dat->type != SSC_STRING) return 0;
 	return dat->str.c_str();	
 }
 
@@ -190,9 +194,9 @@ SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, s
 SSCEXPORT const ssc_number_t *ssc_data_get_array(ssc_data_t p_data,  const char *name, int *length )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
-	if (!vt) return NULL;
+	if (!vt) return 0;
 	var_data *dat = vt->lookup(name);
-	if (!dat || dat->type != SSC_ARRAY) return NULL;
+	if (!dat || dat->type != SSC_ARRAY) return 0;
 	if (length) *length = (int) dat->num.length();
 	return dat->num.data();
 }
@@ -200,9 +204,9 @@ SSCEXPORT const ssc_number_t *ssc_data_get_array(ssc_data_t p_data,  const char 
 SSCEXPORT const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
-	if (!vt) return NULL;
+	if (!vt) return 0;
 	var_data *dat = vt->lookup(name);
-	if (!dat || dat->type != SSC_MATRIX) return NULL;
+	if (!dat || dat->type != SSC_MATRIX) return 0;
 	if (nrows) *nrows = (int) dat->num.nrows();
 	if (ncols) *ncols = (int) dat->num.ncols();
 	return dat->num.data();
@@ -211,22 +215,22 @@ SSCEXPORT const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )
 {
 	int max=0;
-	while( module_table[max++] != NULL );
+	while( module_table[max++] != 0 );
 
 	if (index >= 0 && index < max) return static_cast<ssc_entry_t>(module_table[index]);
-	else return NULL;
+	else return 0;
 }
 
 SSCEXPORT const char *ssc_entry_name( ssc_entry_t p_entry )
 {
 	module_entry_info *p = static_cast<module_entry_info*>(p_entry);
-	return p ? p->name : NULL;
+	return p ? p->name : 0;
 }
 
 SSCEXPORT const char *ssc_entry_description( ssc_entry_t p_entry )
 {
 	module_entry_info *p = static_cast<module_entry_info*>(p_entry);
-	return p ? p->description : NULL;
+	return p ? p->description : 0;
 }
 
 SSCEXPORT int ssc_entry_version( ssc_entry_t p_entry )
@@ -239,7 +243,7 @@ SSCEXPORT int ssc_entry_version( ssc_entry_t p_entry )
 SSCEXPORT const ssc_info_t ssc_module_var_info( ssc_module_t p_mod, int index )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);
-	if (!cm) return NULL;
+	if (!cm) return 0;
 	return static_cast<ssc_info_t>( cm->info( index ) );
 }
 
@@ -258,43 +262,49 @@ SSCEXPORT int ssc_info_data_type( ssc_info_t p_inf )
 SSCEXPORT const char *ssc_info_name( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
-	return vi ? vi->name : NULL;
+	return vi ? vi->name : 0;
 }
 
 SSCEXPORT const char *ssc_info_label( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
-	return vi ? vi->label : NULL;
+	return vi ? vi->label : 0;
 }
 
 SSCEXPORT const char *ssc_info_units( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
-	return vi ? vi->units : NULL;
+	return vi ? vi->units : 0;
 }
 
 SSCEXPORT const char *ssc_info_meta( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
-	return vi ? vi->meta : NULL;
+	return vi ? vi->meta : 0;
+}
+
+SSCEXPORT const char *ssc_info_required( ssc_info_t p_inf )
+{
+	var_info *vi = static_cast<var_info*>(p_inf);
+	return vi? vi->required_if : 0;
 }
 
 SSCEXPORT const char *ssc_info_group( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
-	return vi ? vi->group : NULL;
+	return vi ? vi->group : 0;
 }
 
 SSCEXPORT const char *ssc_info_constraints( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
-	return vi ? vi->constraints : NULL;
+	return vi ? vi->constraints : 0;
 }
 
 SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);
-	return vi ? vi->ui_hint : NULL;
+	return vi ? vi->ui_hint : 0;
 }
 
 class default_sync_proc : public util::sync_piped_process
@@ -373,7 +383,7 @@ static char p_internal_buf[256];
 		const char *text;
 		int type;
 		int i=0;
-		while( (text = ssc_module_log( p_mod, i, &type, NULL )) )
+		while( (text = ssc_module_log( p_mod, i, &type, 0 )) )
 		{
 			if (type == SSC_ERROR)
 			{
@@ -385,13 +395,13 @@ static char p_internal_buf[256];
 	}
 
 	ssc_module_free( p_mod );
-	return result ? NULL : p_internal_buf;
+	return result ? 0 : p_internal_buf;
 }
 
 
 SSCEXPORT ssc_bool_t ssc_module_exec( ssc_module_t p_mod, ssc_data_t p_data )
 {
-	return ssc_module_exec_with_handler( p_mod, p_data, default_internal_handler, NULL );
+	return ssc_module_exec_with_handler( p_mod, p_data, default_internal_handler, 0 );
 }
 
 class default_exec_handler : public handler_interface
@@ -417,7 +427,7 @@ public:
 		if (!m_hfunc) return;
 		(*m_hfunc)( static_cast<ssc_module_t>( module() ), 
 					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ), 
-					SSC_LOG, (float)type, time, text.c_str(), NULL, m_hdata );
+					SSC_LOG, (float)type, time, text.c_str(), 0, m_hdata );
 	}
 
 	virtual bool on_update( const std::string &text, float percent, float time )
@@ -426,7 +436,7 @@ public:
 		
 		return (*m_hfunc)( static_cast<ssc_module_t>( module() ),
 					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ), 
-					SSC_UPDATE, percent, time, text.c_str(), NULL, m_hdata ) ? 1 : 0;
+					SSC_UPDATE, percent, time, text.c_str(), 0, m_hdata ) ? 1 : 0;
 	}
 
 	virtual bool on_exec( const std::string &command, const std::string &workdir )
@@ -460,10 +470,10 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 		return 0;
 	}
 
-	if (pf_handler == NULL)
+	if (pf_handler == 0)
 	{
 		pf_handler = default_internal_handler;
-		pf_user_data = NULL;
+		pf_user_data = 0;
 	}
 
 	default_exec_handler h( cm, pf_handler, pf_user_data );
@@ -480,7 +490,7 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 SSCEXPORT ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);
-	if (!cm) return NULL;
+	if (!cm) return 0;
 	
 	param_info *p = cm->get_param_info( index );
 	return static_cast<ssc_param_t>(p);
@@ -490,25 +500,25 @@ SSCEXPORT ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index )
 SSCEXPORT const char *ssc_param_name( ssc_param_t p_param )
 {
 	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->name : NULL;
+	return p ? p->name : 0;
 }
 
 SSCEXPORT const char *ssc_param_description( ssc_param_t p_param )
 {
 	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->description : NULL;
+	return p ? p->description : 0;
 }
 
 SSCEXPORT const char *ssc_param_default_value( ssc_param_t p_param )
 {
 	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->default_value : NULL;
+	return p ? p->default_value : 0;
 }
 
 SSCEXPORT int ssc_param_type( ssc_param_t p_param )
 {
 	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->type : NULL;
+	return p ? p->type : 0;
 }
 
 
@@ -529,10 +539,10 @@ SSCEXPORT void ssc_module_parameter_number( ssc_module_t p_mod, const char *name
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);
-	if (!p_mod) return NULL;
+	if (!p_mod) return 0;
 
 	compute_module::log_item *l = cm->log(index);
-	if (!l) return NULL;
+	if (!l) return 0;
 
 	if (item_type) *item_type = l->type;
 	if (time) *time = l->time;
@@ -542,6 +552,6 @@ SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_t
 
 SSCEXPORT void __ssc_segfault()
 {
-	std::string *pstr = NULL;
+	std::string *pstr = 0;
 	std::string mystr = *pstr;
 }

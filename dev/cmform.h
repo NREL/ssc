@@ -18,27 +18,28 @@ public:
 	virtual ~CMForm();
 	/* class members */
 
-	AFTextCtrl *txtParamValue;
-	AFLabel *Label5;
-	wxButton *btnParamFile;
-	wxButton *btnParamDir;
-	wxStaticBox *GroupBox1;
+	wxButton *btnSendToExcel;
+	wxButton *btnClose;
+	wxButton *btnAccept;
+	AFLabel *Label2;
 	wxStaticBox *GroupBox2;
 	AFLabel *Label6;
 	wxListBox *lstSelectedCMs;
+	WFGridCtrl *grdCMVars;
+	wxTextCtrl *txtParams;
+	wxCheckListBox *cklCMList;
+	wxStaticBox *GroupBox1;
+	AFLabel *Label3;
+	wxButton *btnParamAdd;
+	wxButton *btnParamFile;
+	AFTextCtrl *txtParamValue;
+	AFLabel *Label5;
+	wxButton *btnParamDir;
 	AFRadioChoice *rbgParamType;
 	wxButton *btnParamReset;
 	wxButton *btnParamDel;
-	wxButton *btnParamAdd;
 	wxListBox *lstParams;
-	wxButton *btnAccept;
-	wxButton *btnClose;
-	AFLabel *Label3;
 	AFLabel *Label4;
-	wxTextCtrl *txtParams;
-	AFLabel *Label2;
-	wxCheckListBox *cklCMList;
-	WFGridCtrl *grdCMVars;
 	AFLabel *Label1;
 
 /*user.class.start*/
@@ -55,6 +56,7 @@ private:
 	void UpdateParamList();
 	void UpdateParam();
 
+	void OnSendToExcel(wxCommandEvent &);
 	void OnCMListCheck(wxCommandEvent &evt);
 	void OnSelCMSelect(wxCommandEvent &evt);
 	void OnParamCommand(wxCommandEvent &evt);

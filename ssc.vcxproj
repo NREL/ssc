@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="src\cmod_6parsolve.cpp" />
     <ClCompile Include="src\cmod_cashloan.cpp" />
+    <ClCompile Include="src\cmod_pv6parmod.cpp" />
+    <ClCompile Include="src\cmod_pvsandiainv.cpp" />
+    <ClCompile Include="src\cmod_pvsandiamod.cpp" />
     <ClCompile Include="src\cmod_pvwattsv1.cpp" />
     <ClCompile Include="src\cmod_equpartflip.cpp" />
     <ClCompile Include="src\cmod_fossilgen.cpp" />

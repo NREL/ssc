@@ -7,58 +7,40 @@
 #endif
 
 
+pvinput_t::pvinput_t()
+{
+	Ibeam = Idiff = Ignd = Tdry 
+		= Zenith = IncAng = Elev 
+		= Tilt = std::numeric_limits<double>::quiet_NaN();
+}
+
+
 pvinput_t::pvinput_t( double ib, double id, double ig, 
-		double ta, double tw, double td,
-		double ws, double wd, double atm,
+		double td, double ws,
 		double zen, double inc, 
-		double elv, double tlt, double azi,
-		double todh  )
+		double elv, double tlt)
 {
 
 
 	Ibeam = ib;
 	Idiff = id;
 	Ignd = ig;
-	Tdry = ta;
-	Twet = tw;
-	Tdew = td;
+	Tdry = td;
 	Wspd = ws;
-	Wdir = wd;
 	Zenith = zen;
 	IncAng = inc;
 	Elev = elv;
 	Tilt = tlt;
-	Azimuth = azi;
-	Patm = atm;
-	TimeOfDayHr = todh;
 }
 
-std::string pvcelltemp_t::error()
+pvoutput_t::pvoutput_t()
+{
+	Power = Voltage = Current = Efficiency
+		= Voc_oper = Isc_oper = std::numeric_limits<double>::quiet_NaN();
+}
+
+
+std::string pvmodule_t::error()
 {
 	return m_err;
-}
-
-std::string pvpower_t::error()
-{
-	return m_err;
-}
-
-bool pvmodule_function( pvinput_t &input, pvcelltemp_t &tcfunc, pvpower_t &pwrfunc, double opvol,
-	double *P, double *I, double *V, double *Voc, double *Isc, double *Eff, double *Tcell, std::string *err )
-{
-	if (! tcfunc( input, pwrfunc, opvol, Tcell ) )
-	{
-		if (err) *err = tcfunc.error();
-		return false;
-	}
-
-	if (! pwrfunc( input, *Tcell, opvol, P, V, I, Eff, Voc, Isc ))
-	{
-		if (err) *err = pwrfunc.error();
-		return false;
-	}
-
-	if (err) err->clear();
-
-	return true;
 }

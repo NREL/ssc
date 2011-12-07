@@ -12,18 +12,7 @@
 	http://photovoltaics.sandia.gov/docs/PDF/King%20SAND.pdf
 */
 
-class sandia_celltemp_t : public pvcelltemp_t
-{
-	double a;
-	double b;
-	double DT0;
-	double fd;
-
-	sandia_celltemp_t( );
-	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc );
-};
-
-class sandia_power_t : public pvpower_t
+class sandia_module_t : public pvmodule_t
 {
 public:
 	
@@ -39,10 +28,13 @@ public:
 	double fd, DiodeFactor, NcellSer;
 	double Area;
 
-	sandia_power_t( );			
-	virtual bool operator() ( pvinput_t &input, double Tc, double opvoltage, /* by default, mppt, send MPPT_VOLTAGE */
-		double *Power, double *Voltage, double *Current,
-		double *Eff, double *OpVoc, double *OpIsc );
+	sandia_module_t( );	
+	
+	virtual double VmpRef() { return Vmp0; }
+	virtual double ImpRef() { return Imp0; }
+	virtual double VocRef() { return Voc0; }
+	virtual double IscRef() { return Isc0; }
+	virtual bool operator() ( pvinput_t &input, double opvoltage, pvoutput_t &output);
 };
 
 

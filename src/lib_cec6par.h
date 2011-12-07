@@ -9,44 +9,7 @@
    http://minds.wisconsin.edu/handle/1793/7602
 */
 
-class mcphys_celltemp_t : public pvcelltemp_t
-{
-public:
-
-	double Pmp_ref;
-
-	enum{ RACK, FLUSH, INTEGRATED, GAP };
-	int mc;
-
-	enum{ NOIMPEDE, VERTSUPP, HORIZSUPP };
-	int orient;
-
-	// array dimensions (use 1,1 to compute using single module basis)
-	int nrows;
-	int ncols;
-
-	double module_width;
-	double module_length;
-	double W_gap; 
-	double T_integ; // temp in 'C of back side of module on integrated mounting configuration
-
-	mcphys_celltemp_t( );
-	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc );
-};
-
-class noct_celltemp_t : public pvcelltemp_t
-{
-public:
-	double Area;
-	double Vmp;
-	double Imp;
-	double Tnoct;
-
-	noct_celltemp_t( );
-	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvol, double *Tc );
-};
-
-class cec6par_power_t : public pvpower_t
+class cec6par_module_t : public pvmodule_t
 {
 public:	
 	double Area;
@@ -64,10 +27,13 @@ public:
 	double Rsh;
 	double Adj;
 
-	cec6par_power_t();
-	virtual bool operator() ( pvinput_t &input, double Tc, double opvoltage,
-		double *P, double *V, double *I,
-		double *Eff, double *Voc, double *Isc );
+	cec6par_module_t();
+
+	virtual double VmpRef() { return Vmp; }
+	virtual double ImpRef() { return Imp; }
+	virtual double VocRef() { return Voc; }
+	virtual double IscRef() { return Isc; }
+	virtual bool operator() ( pvinput_t &input, double opvoltage, pvoutput_t &output );
 };
 
 #endif

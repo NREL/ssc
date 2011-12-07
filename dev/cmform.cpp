@@ -2,29 +2,32 @@
 
 /*user.global.start*/
 #include <wx/dirdlg.h>
+#include <cml/xlautomation.h>
+#include <wx/busyinfo.h>
 /*user.global.end*/
 enum {
-  ID_txtParamValue,
-  ID_Label5,
-  ID_btnParamFile,
-  ID_btnParamDir,
-  ID_GroupBox1,
+  ID_btnSendToExcel,
+  ID_btnClose,
+  ID_btnAccept,
+  ID_Label2,
   ID_GroupBox2,
   ID_Label6,
   ID_lstSelectedCMs,
+  ID_grdCMVars,
+  ID_txtParams,
+  ID_cklCMList,
+  ID_GroupBox1,
+  ID_Label3,
+  ID_btnParamAdd,
+  ID_btnParamFile,
+  ID_txtParamValue,
+  ID_Label5,
+  ID_btnParamDir,
   ID_rbgParamType,
   ID_btnParamReset,
   ID_btnParamDel,
-  ID_btnParamAdd,
   ID_lstParams,
-  ID_btnAccept,
-  ID_btnClose,
-  ID_Label3,
   ID_Label4,
-  ID_txtParams,
-  ID_Label2,
-  ID_cklCMList,
-  ID_grdCMVars,
   ID_Label1 };
 
 BEGIN_EVENT_TABLE( CMForm, wxPanel )
@@ -40,6 +43,7 @@ EVT_TEXT_ENTER(ID_txtParamValue, CMForm::OnParamCommand )
 EVT_RADIOBUTTON(ID_rbgParamType, CMForm::OnParamCommand )
 EVT_BUTTON(ID_btnParamDir, CMForm::OnParamCommand )
 EVT_BUTTON(ID_btnParamFile, CMForm::OnParamCommand )
+EVT_BUTTON(ID_btnSendToExcel, CMForm::OnSendToExcel )
 /*user.eventtable.end*/
 END_EVENT_TABLE()
 
@@ -48,53 +52,45 @@ CMForm::CMForm(wxWindow *parent, int id)
 {
 /*user.klsinit.start*/
 /*user.klsinit.end*/
-	SetClientSize( 818, 582 );
-	GroupBox1 = new wxStaticBox(this, ID_GroupBox1, "Parameters", wxPoint(228,408), wxSize(356,158));
-	GroupBox2 = new wxStaticBox(this, ID_GroupBox2, "Configure simulation sequence", wxPoint(6,390), wxSize(587,188));
-	wxArrayString _data_cklCMList;
-	cklCMList = new wxCheckListBox(this, ID_cklCMList, wxPoint(9,27), wxSize(179,219), _data_cklCMList, 0);
-	txtParams = new wxTextCtrl(this, ID_txtParams, "", wxPoint(9,252), wxSize(180,132),wxTE_MULTILINE|wxTE_DONTWRAP|wxTE_PROCESS_TAB);
-	txtParams->SetFont(wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "courier"));
-	txtParams->ChangeValue("");
-	txtParams->SetEditable( false );
-	btnClose = new wxButton(this, ID_btnClose, "Close", wxPoint(729,555), wxSize(80,21));
-	btnAccept = new wxButton(this, ID_btnAccept, "Accept", wxPoint(645,555), wxSize(80,21));
+	SetClientSize( 1006, 626 );
+	GroupBox2 = new wxStaticBox(this, ID_GroupBox2, "Configure simulation sequence", wxPoint(9,465), wxSize(428,158));
+	GroupBox1 = new wxStaticBox(this, ID_GroupBox1, "Parameters", wxPoint(441,465), wxSize(356,158));
 	wxArrayString _data_lstParams;
-	lstParams = new wxListBox(this, ID_lstParams, wxPoint(237,450), wxSize(122,84), _data_lstParams, wxLB_SINGLE);
-	btnParamAdd = new wxButton(this, ID_btnParamAdd, "Add..", wxPoint(237,537), wxSize(38,21));
-	btnParamDel = new wxButton(this, ID_btnParamDel, "Del", wxPoint(279,537), wxSize(38,21));
-	btnParamReset = new wxButton(this, ID_btnParamReset, "Rst", wxPoint(321,537), wxSize(38,21));
+	lstParams = new wxListBox(this, ID_lstParams, wxPoint(450,507), wxSize(122,84), _data_lstParams, wxLB_SINGLE);
+	btnParamDel = new wxButton(this, ID_btnParamDel, "Del", wxPoint(492,594), wxSize(38,21));
+	btnParamReset = new wxButton(this, ID_btnParamReset, "Rst", wxPoint(534,594), wxSize(38,21));
 	wxArrayString _data_rbgParamType;
 	_data_rbgParamType.Add("SSC_STRING");
 	_data_rbgParamType.Add("SSC_NUMBER");
-	rbgParamType = new AFRadioChoice(this, ID_rbgParamType, wxPoint(363,429), wxSize(110,44));
+	rbgParamType = new AFRadioChoice(this, ID_rbgParamType, wxPoint(576,486), wxSize(110,44));
 	rbgParamType->Add( _data_rbgParamType);
-	wxArrayString _data_lstSelectedCMs;
-	lstSelectedCMs = new wxListBox(this, ID_lstSelectedCMs, wxPoint(21,429), wxSize(182,135), _data_lstSelectedCMs, wxLB_SINGLE);
-	btnParamDir = new wxButton(this, ID_btnParamDir, "dir..", wxPoint(507,537), wxSize(32,21));
-	btnParamFile = new wxButton(this, ID_btnParamFile, "file..", wxPoint(543,537), wxSize(32,21));
-	txtParamValue = new AFTextCtrl(this, ID_txtParamValue, wxPoint(363,513), wxSize(214,21));
+	btnParamDir = new wxButton(this, ID_btnParamDir, "dir..", wxPoint(720,594), wxSize(32,21));
+	txtParamValue = new AFTextCtrl(this, ID_txtParamValue, wxPoint(576,570), wxSize(214,21));
 	txtParamValue->ChangeValue("");
 	txtParamValue->SetForegroundColour( wxColour(128, 0, 64) );
 	txtParamValue->SetBackgroundColour( wxColour(255, 255, 255) );
-	Label5 = new AFLabel(this, ID_Label5, "Value:", wxPoint(363,489), wxSize(110,21));
-	Label5->SetColour(wxColour(0, 0, 0));
-	Label5->SetRelativeSize(0);
-	Label6 = new AFLabel(this, ID_Label6, "Use the check list box to selection compute modules for simluation.  Then, for each compute module, set the simulation parameters required.", wxPoint(600,393), wxSize(209,150));
+	btnParamFile = new wxButton(this, ID_btnParamFile, "file..", wxPoint(756,594), wxSize(32,21));
+	btnParamAdd = new wxButton(this, ID_btnParamAdd, "Add..", wxPoint(450,594), wxSize(38,21));
+	wxArrayString _data_cklCMList;
+	cklCMList = new wxCheckListBox(this, ID_cklCMList, wxPoint(9,27), wxSize(167,324), _data_cklCMList, wxLB_HSCROLL);
+	txtParams = new wxTextCtrl(this, ID_txtParams, "", wxPoint(9,354), wxSize(168,105),wxTE_MULTILINE|wxTE_DONTWRAP|wxTE_PROCESS_TAB);
+	txtParams->SetFont(wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "courier"));
+	txtParams->ChangeValue("");
+	txtParams->SetEditable( false );
+	wxArrayString _data_lstSelectedCMs;
+	lstSelectedCMs = new wxListBox(this, ID_lstSelectedCMs, wxPoint(24,507), wxSize(182,105), _data_lstSelectedCMs, wxLB_SINGLE);
+	btnAccept = new wxButton(this, ID_btnAccept, "Accept", wxPoint(867,549), wxSize(80,21));
+	btnClose = new wxButton(this, ID_btnClose, "Close", wxPoint(867,573), wxSize(80,21));
+	btnSendToExcel = new wxButton(this, ID_btnSendToExcel, "Send table to Excel...", wxPoint(837,468), wxSize(140,21));
+	Label2 = new AFLabel(this, ID_Label2, "Variable Table", wxPoint(192,6), wxSize(146,21));
+	Label2->SetColour(wxColour(0, 0, 0));
+	Label2->SetRelativeSize(0);
+	Label6 = new AFLabel(this, ID_Label6, "Use the check list box to select compute modules for simulation.  Then, for each compute module, set the simulation parameters required.", wxPoint(216,483), wxSize(209,126));
 	Label6->AlignTop();
 	Label6->SetColour(wxColour(0, 0, 0));
 	Label6->SetRelativeSize(0);
 	Label6->SetWordWrap( true );
-	Label3 = new AFLabel(this, ID_Label3, "Selected CMs for simulation:", wxPoint(21,408), wxSize(182,21));
-	Label3->SetColour(wxColour(0, 0, 0));
-	Label3->SetRelativeSize(0);
-	Label4 = new AFLabel(this, ID_Label4, "Parameter names:", wxPoint(237,429), wxSize(110,21));
-	Label4->SetColour(wxColour(0, 0, 0));
-	Label4->SetRelativeSize(0);
-	Label2 = new AFLabel(this, ID_Label2, "CM Variable Table", wxPoint(192,6), wxSize(146,21));
-	Label2->SetColour(wxColour(0, 0, 0));
-	Label2->SetRelativeSize(0);
-	grdCMVars = new WFGridCtrl(this, ID_grdCMVars, wxPoint(192,27), wxSize(617,357));
+	grdCMVars = new WFGridCtrl(this, ID_grdCMVars, wxPoint(183,27), wxSize(815,432));
 	grdCMVars->CreateGrid(2,2);
 	grdCMVars->EnableEditing(false);
 	grdCMVars->DisableDragCell();
@@ -104,6 +100,15 @@ CMForm::CMForm(wxWindow *parent, int id)
 	grdCMVars->DisableDragGridSize();
 	grdCMVars->SetRowLabelSize(23);
 	grdCMVars->SetColLabelSize(23);
+	Label3 = new AFLabel(this, ID_Label3, "Selected CMs for simulation:", wxPoint(24,486), wxSize(182,21));
+	Label3->SetColour(wxColour(0, 0, 0));
+	Label3->SetRelativeSize(0);
+	Label5 = new AFLabel(this, ID_Label5, "Value:", wxPoint(576,546), wxSize(110,21));
+	Label5->SetColour(wxColour(0, 0, 0));
+	Label5->SetRelativeSize(0);
+	Label4 = new AFLabel(this, ID_Label4, "Parameter names:", wxPoint(450,486), wxSize(110,21));
+	Label4->SetColour(wxColour(0, 0, 0));
+	Label4->SetRelativeSize(0);
 	Label1 = new AFLabel(this, ID_Label1, "Compute Modules", wxPoint(9,6), wxSize(137,21));
 	Label1->SetColour(wxColour(0, 0, 0));
 	Label1->SetRelativeSize(0);
@@ -141,6 +146,36 @@ void CMForm::LoadCMs()
 	wxArrayString l = GetAvailableCMs();
 	for (size_t i=0;i<l.Count();i++)
 		cklCMList->Append( l[i] );
+}
+
+void CMForm::OnSendToExcel(wxCommandEvent &)
+{
+#ifdef __WXMSW__
+
+	wxBusyInfo info("Sending data to excel...");
+	grdCMVars->Copy(true);
+	wxMilliSleep(150);
+
+	XLAutomation xl;
+	if (!xl.StartExcel())
+	{
+		wxMessageBox("Could not start Excel.");
+		return;
+	}
+
+	xl.Show(true);
+
+	if (!xl.NewWorkbook())
+	{
+		wxMessageBox("Could not create a new Excel worksheet.");
+		return;
+	}
+	xl.PasteClipboard();
+	xl.AutoFitColumns();
+#else
+	wxMessageBox("Excel connection only available on Windows");
+#endif
+
 }
 
 void CMForm::OnCMListCheck(wxCommandEvent &evt)
@@ -215,13 +250,16 @@ void CMForm::OnCMListSelect(wxCommandEvent &evt)
 			row.Add( ssc_info_units( p_inf ) );
 			row.Add( ssc_info_meta( p_inf ) );
 			row.Add( ssc_info_group( p_inf ) );
+			row.Add( ssc_info_required( p_inf ) );
+			row.Add( ssc_info_constraints( p_inf ) );
 
 			vartab.append(row);
 		}
 
 		int nrows = vartab.count();
-		int ncols = 7;
-
+		int ncols = 9;
+		
+		grdCMVars->Freeze();
 		grdCMVars->ResizeGrid( nrows, ncols);
 		grdCMVars->SetColLabelValue( 0, "TYPE" );
 		grdCMVars->SetColLabelValue( 1, "DATA" );
@@ -230,10 +268,14 @@ void CMForm::OnCMListSelect(wxCommandEvent &evt)
 		grdCMVars->SetColLabelValue( 4, "UNITS" );
 		grdCMVars->SetColLabelValue( 5, "META" );
 		grdCMVars->SetColLabelValue( 6, "GROUP" );
+		grdCMVars->SetColLabelValue( 7, "REQUIRE" );
+		grdCMVars->SetColLabelValue( 8, "CONSTRAINT" );
 
 		for (int r=0;r<nrows;r++)
 			for (int c=0;c<ncols;c++)
 				grdCMVars->SetCellValue( vartab[r][c], r, c );
+
+		grdCMVars->Thaw();
 
 		txtParams->Clear();
 		idx=0;

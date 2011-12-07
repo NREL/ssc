@@ -9,54 +9,50 @@ class pvpower_t;
 class pvinput_t
 {
 public:
+	pvinput_t();
 	pvinput_t( double ib, double id, double ig, 
-		double ta, double tw, double td,
-		double ws, double wd, double atm,
+		double td, double ws,
 		double zen, double inc, 
-		double elv, double tlt, double azi,
-		double todh );
+		double elv, double tlt);
 
 	double Ibeam; // beam irradiance, W/m2
 	double Idiff; // sky diffuse irradiance, W/m2
 	double Ignd; // ground reflected irradiance, W/m2
 	double Tdry; // dry bulb temp, C
-	double Twet; // wet bulb temp, C
-	double Tdew; // dew point temp, C
 	double Wspd; // wind speed, m/s
-	double Wdir; // wind direction, degrees (0=N,90=E)
 	double Zenith; // zenith angle, deg
 	double IncAng; // incidence angle on surface, deg
 	double Elev; // site elevation, m
 	double Tilt; // surface tilt angle, deg
-	double Azimuth; // surface azimuth angle, deg
-	double Patm; // atmospheric pressure, millibar 
-	double TimeOfDayHr; // hours since midnight
 };
 
-class pvcelltemp_t
+class pvoutput_t
+{
+public:
+	pvoutput_t();
+
+	double Power; // output power, Watts
+	double Voltage; // operating voltage, V
+	double Current; // operating current, A
+	double Efficiency; // operating efficiency, fraction (0..1)
+	double Voc_oper; // open circuit voltage at operating condition, V
+	double Isc_oper; // short circuit current at operating condition, A
+	double CellTemp; // cell temperature, 'C
+};
+
+class pvmodule_t
 {
 protected:
 	std::string m_err;
 public:
-	virtual bool operator() ( pvinput_t &input, pvpower_t &pwrfunc, double opvoltage, double *Tc ) = 0;
+	virtual double VmpRef() = 0;
+	virtual double ImpRef() = 0;
+	virtual double VocRef() = 0;
+	virtual double IscRef() = 0;
+
+	virtual bool operator() ( pvinput_t &input, double opvoltage, pvoutput_t &output ) = 0;
 	std::string error();
 };
-
-class pvpower_t
-{
-protected:
-	std::string m_err;
-public:
-
-	virtual bool operator() ( pvinput_t &input, double Tc, double opvoltage, /* by default, for mppt, use negative opvoltage */
-		double *Power, double *Voltage, double *Current,
-		double *Eff, double *OpVoc, double *OpIsc ) = 0;
-	std::string error();
-};
-
-
-bool pvmodule_function( pvinput_t &input, pvcelltemp_t &tcfunc, pvpower_t &pwrfunc, double opvol,
-	double *P, double *V, double *I, double *Eff, double *Voc, double *Isc, double *Tcell );
 
 
 #endif
