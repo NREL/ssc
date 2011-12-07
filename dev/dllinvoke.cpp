@@ -166,14 +166,14 @@ ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, ssc_number_
 	return (*f)(p_data, name, value);
 }
 
-const ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length )
+ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length )
 {
 	static ssc_number_t* (*f)(ssc_data_t, const char*, int*) = NULL;
 	CHECK_DLL_LOADED();
 	if (!f && 0 == (f = (ssc_number_t*(*)(ssc_data_t, const char*, int*))PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)( p_data, name, length );
 }
-const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols )
+ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols )
 {
 	static ssc_number_t* (*f)(ssc_data_t, const char*, int*, int*) = NULL;
 	CHECK_DLL_LOADED();

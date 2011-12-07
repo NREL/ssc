@@ -191,7 +191,7 @@ SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, s
 	return 1;	
 }
 
-SSCEXPORT const ssc_number_t *ssc_data_get_array(ssc_data_t p_data,  const char *name, int *length )
+SSCEXPORT ssc_number_t *ssc_data_get_array(ssc_data_t p_data,  const char *name, int *length )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
 	if (!vt) return 0;
@@ -201,7 +201,7 @@ SSCEXPORT const ssc_number_t *ssc_data_get_array(ssc_data_t p_data,  const char 
 	return dat->num.data();
 }
 
-SSCEXPORT const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols )
+SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
 	if (!vt) return 0;

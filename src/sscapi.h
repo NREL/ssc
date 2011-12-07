@@ -77,8 +77,8 @@ SSCEXPORT void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_num
 /* retrieve values */
 SSCEXPORT const char *ssc_data_get_string( ssc_data_t p_data, const char *name );
 SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, ssc_number_t *value );
-SSCEXPORT const ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length );
-SSCEXPORT const ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols );
+SSCEXPORT ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length );
+SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols );
 
 /* ssc_module_entry: Returns information of all computation modules built into ssc. Example:
 	int i=0;
