@@ -15,8 +15,9 @@ ifeq ($(CFG),64)
 CFLAGS += -D__64BIT__
 TARGET=ssc64.so
 else
-CFLAGS += -D__32BIT__
+CFLAGS += -D__32BIT__ -m32
 TARGET=ssc32.so
+LDFLAGS += -m32
 endif
 
 all: inform $(TARGET)
@@ -25,6 +26,8 @@ all: inform $(TARGET)
 OBJECTS = \
 	cmod_6parsolve.o \
 	cmod_test_irr.o \
+	cmod_pv6parmod.o \
+	cmod_pvsandiainv.o \
 	cmod_wfreader.o \
 	cmod_irradproc.o \
 	cmod_trntower.o \
