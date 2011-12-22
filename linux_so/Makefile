@@ -59,7 +59,7 @@ OBJECTS = \
 	lib_pvwatts.o \
 	lib_physics.o \
 	lib_util.o \
-	lib_vartab.o \
+	vartab.o \
 	lib_weatherfile.o \
 	lib_windwatts.o \
 	lib_geohourly.o \
