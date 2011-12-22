@@ -53,7 +53,7 @@
 #endif
 
 #include "lib_util.h"
-#include "lib_vartab.h"
+#include "vartab.h"
 #include "sscapi.h"
 
 struct var_info

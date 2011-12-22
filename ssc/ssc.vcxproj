@@ -19,75 +19,42 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="core\6par_gamma.h" />
-    <ClInclude Include="core\6par_jacobian.h" />
-    <ClInclude Include="core\6par_lu.h" />
-    <ClInclude Include="core\6par_newton.h" />
-    <ClInclude Include="core\6par_search.h" />
-    <ClInclude Include="core\6par_solve.h" />
-    <ClInclude Include="core\attic.h" />
-    <ClInclude Include="core\cmod_trnbase.h" />
-    <ClInclude Include="core\core.h" />
-    <ClInclude Include="core\lib_cec6par.h" />
-    <ClInclude Include="core\lib_financial.h" />
-    <ClInclude Include="core\lib_geohourly.h" />
-    <ClInclude Include="core\lib_geohourly_interface.h" />
-    <ClInclude Include="core\lib_irradproc.h" />
-    <ClInclude Include="core\lib_physics.h" />
-    <ClInclude Include="core\lib_powerblock.h" />
-    <ClInclude Include="core\lib_pvmodel.h" />
-    <ClInclude Include="core\lib_pvwatts.h" />
-    <ClInclude Include="core\lib_sandia.h" />
-    <ClInclude Include="core\lib_util.h" />
-    <ClInclude Include="core\lib_vartab.h" />
-    <ClInclude Include="core\lib_weatherfile.h" />
-    <ClInclude Include="core\lib_windwatts.h" />
-    <ClInclude Include="core\sscapi.h" />
+    <ClCompile Include="cmod_6parsolve.cpp" />
+    <ClCompile Include="cmod_cashloan.cpp" />
+    <ClCompile Include="cmod_equpartflip.cpp" />
+    <ClCompile Include="cmod_fossilgen.cpp" />
+    <ClCompile Include="cmod_geohourly.cpp" />
+    <ClCompile Include="cmod_ippppa.cpp" />
+    <ClCompile Include="cmod_irradproc.cpp" />
+    <ClCompile Include="cmod_levpartflip.cpp" />
+    <ClCompile Include="cmod_ptflux.cpp" />
+    <ClCompile Include="cmod_pv6parmod.cpp" />
+    <ClCompile Include="cmod_pvsandiainv.cpp" />
+    <ClCompile Include="cmod_pvsandiamod.cpp" />
+    <ClCompile Include="cmod_pvwatts.cpp" />
+    <ClCompile Include="cmod_pvwattsv1.cpp" />
+    <ClCompile Include="cmod_saleleaseback.cpp" />
+    <ClCompile Include="cmod_singleowner.cpp" />
+    <ClCompile Include="cmod_swhsolopt.cpp" />
+    <ClCompile Include="cmod_test_irr.cpp" />
+    <ClCompile Include="cmod_timeseq.cpp" />
+    <ClCompile Include="cmod_trnbase.cpp" />
+    <ClCompile Include="cmod_trndish.cpp" />
+    <ClCompile Include="cmod_trntower.cpp" />
+    <ClCompile Include="cmod_trntrough.cpp" />
+    <ClCompile Include="cmod_utilityrate.cpp" />
+    <ClCompile Include="cmod_wfreader.cpp" />
+    <ClCompile Include="cmod_windwatts.cpp" />
+    <ClCompile Include="core.cpp" />
+    <ClCompile Include="sscapi.cpp" />
+    <ClCompile Include="vartab.cpp" />
+    <ClCompile Include="vtab_common.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="core\cmod_6parsolve.cpp" />
-    <ClCompile Include="core\cmod_cashloan.cpp" />
-    <ClCompile Include="core\cmod_equpartflip.cpp" />
-    <ClCompile Include="core\cmod_fossilgen.cpp" />
-    <ClCompile Include="core\cmod_geohourly.cpp" />
-    <ClCompile Include="core\cmod_ippppa.cpp" />
-    <ClCompile Include="core\cmod_irradproc.cpp" />
-    <ClCompile Include="core\cmod_levpartflip.cpp" />
-    <ClCompile Include="core\cmod_ptflux.cpp" />
-    <ClCompile Include="core\cmod_pv6parmod.cpp" />
-    <ClCompile Include="core\cmod_pvsandiainv.cpp" />
-    <ClCompile Include="core\cmod_pvsandiamod.cpp" />
-    <ClCompile Include="core\cmod_pvwatts.cpp" />
-    <ClCompile Include="core\cmod_pvwattsv1.cpp" />
-    <ClCompile Include="core\cmod_saleleaseback.cpp" />
-    <ClCompile Include="core\cmod_singleowner.cpp" />
-    <ClCompile Include="core\cmod_swhsolopt.cpp" />
-    <ClCompile Include="core\cmod_test_irr.cpp" />
-    <ClCompile Include="core\cmod_timeseq.cpp" />
-    <ClCompile Include="core\cmod_trnbase.cpp" />
-    <ClCompile Include="core\cmod_trndish.cpp" />
-    <ClCompile Include="core\cmod_trntower.cpp" />
-    <ClCompile Include="core\cmod_trntrough.cpp" />
-    <ClCompile Include="core\cmod_utilityrate.cpp" />
-    <ClCompile Include="core\cmod_wfreader.cpp" />
-    <ClCompile Include="core\cmod_windwatts.cpp" />
-    <ClCompile Include="core\core.cpp" />
-    <ClCompile Include="core\lib_cec6par.cpp" />
-    <ClCompile Include="core\lib_financial.cpp" />
-    <ClCompile Include="core\lib_geohourly.cpp" />
-    <ClCompile Include="core\lib_irradproc.cpp" />
-    <ClCompile Include="core\lib_physics.cpp" />
-    <ClCompile Include="core\lib_powerblock.cpp" />
-    <ClCompile Include="core\lib_pvmodel.cpp" />
-    <ClCompile Include="core\lib_pvwatts.cpp" />
-    <ClCompile Include="core\lib_sandia.cpp" />
-    <ClCompile Include="core\lib_util.cpp" />
-    <ClCompile Include="core\lib_vartab.cpp" />
-    <ClCompile Include="core\lib_weatherfile.cpp" />
-    <ClCompile Include="core\lib_windwatts.cpp" />
-    <ClCompile Include="core\main.cpp" />
-    <ClCompile Include="core\sscapi.cpp" />
-    <ClCompile Include="core\vtab_common.cpp" />
+    <ClInclude Include="cmod_trnbase.h" />
+    <ClInclude Include="core.h" />
+    <ClInclude Include="sscapi.h" />
+    <ClInclude Include="vartab.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{46D1EE84-840B-4325-910A-BC205A0D4C08}</ProjectGuid>
@@ -149,9 +116,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>target\</OutDir>
-    <IntDir>build\win32\release\</IntDir>
-    <TargetName>ssc32</TargetName>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -160,19 +127,19 @@
     <TargetName>ssc64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>..\samwx\deploy\</OutDir>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>target\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IntDir>build\win32\debug\</IntDir>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>build\win64\debug\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>ssc32d</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>ssc64d</TargetName>
@@ -249,6 +216,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>__DLL__;__32BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)\recore</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -256,6 +224,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -279,7 +249,12 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>__DLL__;__32BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\recore</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

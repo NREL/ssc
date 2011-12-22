@@ -440,5 +440,5 @@ void __ssc_segfault()
 
 /* include shared ssc code here */
 #include <lib_util.cpp>
-#include <lib_vartab.cpp>
+#include <vartab.cpp>
 

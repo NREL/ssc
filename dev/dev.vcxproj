@@ -13,6 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DA07BBEE-61BB-47D3-9795-958F832E1C28}</ProjectGuid>
     <RootNamespace>sscdev</RootNamespace>
+    <ProjectName>dev</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -37,14 +38,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">deploy\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build\debug\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">deploy\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build\release\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sscdev</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sscdevd</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectName)</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -59,7 +60,7 @@
     <ClCompile>
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\mswd;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\recore;$(SolutionDir)\ssc;$(WXMSW)\lib\vc_lib\mswd;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;__USENOTEBOOK__;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -113,7 +114,7 @@
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\recore;$(SolutionDir)\ssc;$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;__USENOTEBOOK__;_CRT_SECURE_NO_WARNINGS;__RELEASE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>

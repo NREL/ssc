@@ -1,4 +1,4 @@
-VPATH=../core
+VPATH=../ssc;../recore
 
 CC = gcc
 CXX = g++

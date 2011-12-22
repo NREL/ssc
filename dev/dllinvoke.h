@@ -41,6 +41,6 @@ bool sscdll_isloaded();
 
 /* include shared ssc code here */
 #include <lib_util.h>
-#include <lib_vartab.h>
+#include <vartab.h>
 
 #endif

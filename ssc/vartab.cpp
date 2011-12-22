@@ -1,5 +1,5 @@
 #include "lib_util.h"
-#include "lib_vartab.h"
+#include "vartab.h"
 
 static const char *var_data_types[] = 
 {	"<invalid>", // SSC_INVALID
