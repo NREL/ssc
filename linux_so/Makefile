@@ -1,8 +1,8 @@
-VPATH=../ssc;../recore
+VPATH=../ssc ../recore
 
 CC = gcc
 CXX = g++
-CFLAGS = -D__UNIX__ -fPIC -Wall -O3
+CFLAGS = -I../ssc -I../recore -D__UNIX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
 
