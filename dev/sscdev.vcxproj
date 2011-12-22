@@ -59,7 +59,7 @@
     <ClCompile>
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\mswd;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\mswd;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;__USENOTEBOOK__;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -113,7 +113,7 @@
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;NOPCH;__USENOTEBOOK__;_CRT_SECURE_NO_WARNINGS;__RELEASE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>

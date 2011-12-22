@@ -1,4 +1,4 @@
-VPATH=../src
+VPATH=../core
 
 CC = gcc
 CXX = g++
