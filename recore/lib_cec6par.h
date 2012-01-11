@@ -26,6 +26,8 @@ public:
 	double Rs;
 	double Rsh;
 	double Adj;
+	double standoff_tnoct_adj;
+	double ffv_wind;
 
 	cec6par_module_t();
 

@@ -295,7 +295,7 @@ static double powerfunc( double V, void *_d )
 cec6par_module_t::cec6par_module_t( )
 {
 	Area = Vmp = Imp = Voc = Isc = alpha_isc = beta_voc = Tnoct
-		= a = Il = Io = Rs = Rsh = Adj = std::numeric_limits<double>::quiet_NaN();
+		= a = Il = Io = Rs = Rsh = Adj = standoff_tnoct_adj = ffv_wind = std::numeric_limits<double>::quiet_NaN();
 }
 
 bool cec6par_module_t::operator() ( pvinput_t &input, double opvoltage, pvoutput_t &out )
@@ -343,10 +343,13 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double opvoltage, pvoutput
 		double G_total = input.Ibeam + input.Idiff + input.Ignd;		
 		double eff_ref = Imp *Vmp / ( I_ref*Area );
 		double tau_al = fabs(TauAlpha);
-		double W_spd = input.Wspd;		
+
+		double W_spd = input.Wspd * ffv_wind; //added 1/11/12 to account for FFV_wind correction factor internally
 		if (W_spd < 0.001) W_spd = 0.001;		
 		if (G_total > 0) tau_al *= Geff_total/G_total;		
-		T_cell = (input.Tdry+273.15) + (G_total/I_noct * (Tnoct - Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
+
+		double Tnoct_adj = Tnoct + standoff_tnoct_adj; // added 1/11/12 for adjustment to NOCT as in the CECPV calculator based on standoff height, used in eqn below.
+		T_cell = (input.Tdry+273.15) + (G_total/I_noct * (Tnoct_adj - Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
 
 		// calculation of IL and IO at operating conditions
 		double IL_oper = Geff_total/I_ref *( Il + muIsc*(T_cell-Tc_ref) );

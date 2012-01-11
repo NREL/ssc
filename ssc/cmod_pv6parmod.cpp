@@ -38,6 +38,8 @@ static var_info _cm_vtab_pv6parmod[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "Rs",                      "Series resistance",              "ohm",    "",                      "CEC 6 Parameter PV Module Model",      "*",                        "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Rsh",                     "Shunt resistance",               "ohm",    "",                      "CEC 6 Parameter PV Module Model",      "*",                        "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Adj",                     "OC SC temp coeff adjustment",    "%",      "",                      "CEC 6 Parameter PV Module Model",      "*",                        "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "standoff",                "Mounting standoff option",       "0..6",   "0=bipv, 1= >3.5in, 2=2.5-3.5in, 3=1.5-2.5in, 4=0.5-1.5in, 5= <0.5in, 6=ground/rack",   "CEC 6 Parameter PV Module Model",      "?=6",     "INTEGER,MIN=0,MAX=6",     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "height",                  "System installation height",     "0/1",    "0=less than 22ft, 1=more than 22ft",                                                   "CEC 6 Parameter PV Module Model",      "?=0",     "INTEGER,MIN=0,MAX=1",     "" },
 
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                      "Cell temperature",               "'C",     "",                   "CEC 6 Parameter PV Module Model",      "*",                       "LENGTH_EQUAL=poa_beam",                          "" },
@@ -85,7 +87,23 @@ public:
 		mod.Rs = as_double("Rs");
 		mod.Rsh = as_double("Rsh");
 		mod.Adj = as_double("Adj");
-		
+
+		int standoff = as_integer("standoff");
+		mod.standoff_tnoct_adj = 0;
+		switch(standoff)
+		{
+		case 2: mod.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
+		case 3: mod.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
+		case 4: mod.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
+		case 5: mod.standoff_tnoct_adj = 18; break; // less than 0.5 inches
+			// note: all others, standoff_tnoct_adj = 0;
+		}
+
+		int height = as_integer("height");
+		mod.ffv_wind = 0.51;
+		if ( height == 1 )
+			mod.ffv_wind = 0.61;
+
 		ssc_number_t *p_tcell = allocate("tcell", arr_len);
 		ssc_number_t *p_volt = allocate("dc_voltage", arr_len);
 		ssc_number_t *p_amp = allocate("dc_current", arr_len);
