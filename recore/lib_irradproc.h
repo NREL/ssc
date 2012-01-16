@@ -12,4 +12,51 @@ void perez( double hextra, double dn,double df,double alb,double inc,double tilt
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
+
+
+
+class irrad
+{
+private:
+	int year, month, day, hour;
+	double minute, delt;
+	double lat, lon, tz;
+	int radmode, skymodel, track;
+	double gh, dn, df, alb;
+	double tilt, sazm, rlim;
+	double sun[9], angle[4], poa[3], diffc[3];
+	int tms[3];
+
+public:
+
+	irrad();
+	int check();
+	
+	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
+	void set_location( double lat, double lon, double tz );
+	void set_sky_model( int skymodel, double albedo );
+	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg );
+	void set_beam_diffuse( double beam, double diffuse );
+	void set_global_beam( double global, double beam );
+
+	int calc();
+	
+	void get_sun( double *solazi,
+		double *solzen,
+		double *solelv,
+		double *soldec,
+		double *sunrise,
+		double *sunset,
+		int *sunup,
+		double *eccfac,
+		double *tst,
+		double *hextra );
+	void get_angles( double *aoi,
+		double *surftilt,
+		double *surfazi,
+		double *axisrot );
+	void get_poa( double *beam, double *skydiff, double *gnddiff,
+		double *isotrop, double *circum, double *horizon );
+};
+
 #endif

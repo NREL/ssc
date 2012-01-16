@@ -190,7 +190,7 @@ C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
 	return Tm + E / 1000.0 * DT0;
 }
 
-static double sandia_tcell_from_tmodule( double Tm, double Ibc, double Idc, double fd, double DT0)
+double sandia_module_t::sandia_tcell_from_tmodule( double Tm, double Ibc, double Idc, double fd, double DT0)
 {
 	/*
 C Returns cell temperature, deg C
@@ -207,7 +207,7 @@ C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
 	return Tm + E / 1000.0 * DT0;
 }
 
-static double sandia_module_temperature( double Ibc, double Idc, double Ws, double Ta, double fd, double a, double b )
+double sandia_module_t::sandia_module_temperature( double Ibc, double Idc, double Ws, double Ta, double fd, double a, double b )
 {
 	/*
 C Returns back-of-module temperature, deg C

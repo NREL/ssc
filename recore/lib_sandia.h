@@ -35,6 +35,13 @@ public:
 	virtual double VocRef() { return Voc0; }
 	virtual double IscRef() { return Isc0; }
 	virtual bool operator() ( pvinput_t &input, double opvoltage, pvoutput_t &output);
+
+
+
+	
+	static double sandia_tcell_from_tmodule( double Tm, double Ibc, double Idc, double fd, double DT0);
+	static double sandia_module_temperature( double Ibc, double Idc, double Ws, double Ta, double fd, double a, double b );
+
 };
 
 
@@ -72,6 +79,7 @@ public:
 		double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
 		double *Eff	    /* Conversion efficiency (0..1) */
 		);
+
 } ;
 
 #endif

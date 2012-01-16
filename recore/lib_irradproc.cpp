@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <limits>
+
 #include "lib_irradproc.h"
 
 #ifndef M_PI
@@ -671,3 +673,247 @@ void perez( double hextra, double dn, double df, double alb, double inc, double 
 }
 
 
+
+
+
+irrad::irrad()
+{
+	year=month=day=hour = -999;
+	minute=delt=lat=lon=tz=-999;
+	radmode=skymodel=track = -1;
+	gh=dn=df=alb=tilt=sazm=rlim=-999;
+	
+	for (int i=0;i<9;i++) sun[i] = std::numeric_limits<double>::quiet_NaN();
+	angle[0]=angle[1]=angle[2]=angle[3] = std::numeric_limits<double>::quiet_NaN();
+	poa[0]=poa[1]=poa[2]=diffc[0]=diffc[1]=diffc[2] = std::numeric_limits<double>::quiet_NaN();
+	tms[0]=tms[1]=tms[2] = -999;
+}
+
+int irrad::check()
+{
+	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt < 0 || delt > 1) return -1;
+	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
+	if ( radmode < 0 || radmode > 1 || skymodel < 0 || skymodel > 2 ) return -3;
+	if ( track < 0 || track > 2 ) return -4;
+	if ( radmode == 0 && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
+	if ( radmode == 1 && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
+	if ( alb < 0 || alb > 1 ) return -7;
+	if ( tilt < 0 || tilt > 90 ) return -8;
+	if ( sazm < 0 || sazm >= 360 ) return -9;
+	if ( rlim < -90 || rlim > 90 ) return -10;
+	return 0;
+}
+
+void irrad::get_sun( double *solazi,
+	double *solzen,
+	double *solelv,
+	double *soldec,
+	double *sunrise,
+	double *sunset,
+	int *sunup,
+	double *eccfac,
+	double *tst,
+	double *hextra )
+{
+	if ( solazi != 0 ) *solazi = sun[0] * (180/M_PI);
+	if ( solzen != 0 ) *solzen = sun[1] * (180/M_PI);
+	if ( solelv != 0 ) *solelv = sun[2] * (180/M_PI);
+	if ( soldec != 0 ) *soldec = sun[3] * (180/M_PI);
+	if ( sunrise != 0 ) *sunrise = sun[4];
+	if ( sunset != 0 ) *sunset = sun[5];
+	if ( sunup != 0 ) *sunup = tms[2];
+	if ( eccfac != 0 ) *eccfac = sun[6];
+	if ( tst != 0 ) *tst = sun[7];
+	if ( hextra != 0 ) *hextra = sun[8];
+}
+
+void irrad::get_angles( double *aoi,
+	double *surftilt,
+	double *surfazi,
+	double *axisrot )
+{
+	if ( aoi != 0 ) *aoi = angle[0] * (180/M_PI);
+	if ( surftilt != 0 ) *surftilt = angle[1] * (180/M_PI);
+	if ( surfazi != 0 ) *surfazi = angle[2] * (180/M_PI);
+	if ( axisrot != 0 ) *axisrot = angle[3] * (180/M_PI);\
+}
+	
+void irrad::get_poa( double *beam, double *skydiff, double *gnddiff,
+	double *isotrop, double *circum, double *horizon )
+{
+	if ( beam != 0 ) *beam = poa[0];
+	if ( skydiff != 0 ) *skydiff = poa[1];
+	if ( gnddiff != 0 ) *gnddiff = poa[2];
+	if ( isotrop != 0 ) *isotrop = diffc[0];
+	if ( circum != 0 ) *circum = diffc[1];
+	if ( horizon != 0 ) *horizon = diffc[2];
+}
+
+void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr )
+{
+	this->year = year;
+	this->month = month;
+	this->day = day;
+	this->hour = hour;
+	this->minute = minute;
+	this->delt = delt_hr;
+}
+
+void irrad::set_location( double lat, double lon, double tz )
+{
+	this->lat = lat;
+	this->lon = lon;
+	this->tz = tz;
+}
+
+void irrad::set_sky_model( int skymodel, double albedo )
+{
+	this->skymodel = skymodel;
+	this->alb = albedo;
+}
+
+void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg )
+{
+	this->track = tracking;
+	this->tilt = tilt_deg;
+	this->sazm = azimuth_deg;
+	this->rlim = rotlim_deg;
+}
+	
+void irrad::set_beam_diffuse( double beam, double diffuse )
+{
+	this->dn = beam;
+	this->df = diffuse;
+	this->radmode = 0;
+}
+
+void irrad::set_global_beam( double global, double beam )
+{
+	this->gh = global;
+	this->dn = beam;
+	this->radmode = 1;
+}
+
+int irrad::calc()
+{
+	int code = check();
+	if ( code < 0 )
+		return -100+code;
+/*
+	calculates effective sun position at current timestep, with delt specified in hours
+
+	sun: results from solarpos
+	tms: [0]  effective hour of day used for sun position
+			[1]  effective minute of hour used for sun position
+			[2]  is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
+	angle: result from incidence
+	poa: result from sky model
+	diff: broken out diffuse components from sky model
+
+	lat, lon, tilt, sazm, rlim: angles in degrees
+*/
+	
+	double t_cur = hour + minute/60.0;
+
+	// calculate sunrise and sunset hours in local standard time for the current day
+	solarpos( year, month, day, 12, 0.0, lat, lon, tz, sun );
+
+	double t_sunrise = sun[4];
+	double t_sunset = sun[5];
+
+	if ( t_cur >= t_sunrise - delt/2.0
+		&& t_cur < t_sunrise + delt/2.0 )
+	{
+		// time step encompasses the sunrise
+		double t_calc = (t_sunrise + (t_cur+delt/2.0))/2.0; // midpoint of sunrise and end of timestep
+		int hr_calc = (int)t_calc;
+		double min_calc = (t_calc-hr_calc)*60.0;
+
+		tms[0] = hr_calc;
+		tms[1] = (int)min_calc;
+				
+		solarpos( year, month, day, hr_calc, min_calc, lat, lon, tz, sun );
+
+		tms[2] = 2;				
+	}
+	else if (t_cur > t_sunset - delt/2.0
+		&& t_cur <= t_sunset + delt/2.0 )
+	{
+		// timestep encompasses the sunset
+		double t_calc = ( (t_cur-delt/2.0) + t_sunset )/2.0; // midpoint of beginning of timestep and sunset
+		int hr_calc = (int)t_calc;
+		double min_calc = (t_calc-hr_calc)*60.0;
+
+		tms[0] = hr_calc;
+		tms[1] = (int)min_calc;
+				
+		solarpos( year, month, day, hr_calc, min_calc, lat, lon, tz, sun );
+
+		tms[2] = 3;
+	}
+	else if (t_cur >= t_sunrise && t_cur <= t_sunset)
+	{
+		// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)			
+		tms[0] = hour;
+		tms[1] = (int)minute;
+		solarpos( year, month, day, hour, minute, lat, lon, tz, sun );
+		tms[2] = 1;
+	}
+	else
+	{			
+		tms[0] = -1;
+		tms[1] = -1;
+		tms[2] = 0;
+	}
+
+			
+	poa[0]=poa[1]=poa[2] = 0;
+	diffc[0]=diffc[1]=diffc[2] = 0;
+	angle[0]=angle[1]=angle[2]=angle[3] = 0;
+
+	// do irradiance calculations if sun is up
+	if (tms[2] > 0)
+	{				
+		// compute incidence angles onto fixed or tracking surface
+		incidence( track, tilt, sazm, rlim, sun[1], sun[0], angle );
+
+
+		double hextra = sun[8];
+		double hbeam = df*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
+				
+		// check beam irradiance against extraterrestrial irradiance
+		if ( hbeam > hextra )
+		{
+			//beam irradiance on horizontal W/m2 exceeded calculated extraterrestrial irradiance
+			return -1;
+		}
+
+
+		// compute beam and diffuse inputs based on irradiance inputs mode
+		double ibeam = df;
+		double idiff = 0.0;
+		if ( radmode == 0 )  // Beam+Diffuse
+			idiff = df;
+		else if ( radmode == 1 ) // Total+Beam
+			idiff = gh - hbeam;
+		else
+			return -2; // diffuse or global must be given in additional to beam irradiance
+
+		// compute incident irradiance on tilted surface
+		switch( skymodel )
+		{
+		case 0:
+			isotropic( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+			break;
+		case 1:
+			hdkr( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+			break;
+		default:
+			perez( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+			break;
+		}
+	}
+
+	return 0;
+
+}
