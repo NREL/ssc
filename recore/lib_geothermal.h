@@ -35,7 +35,7 @@ enum ncgRemovalTypes { NO_NCG_TYPE, JET, VAC_PUMP, HYBRID };
 enum wellCostCurveChoices { NO_COST_CURVE, LOW, MED, HIGH };
 enum depthCalculationForEGS { NOT_CHOSEN, DEPTH, TEMPERATURE };
 enum reservoirPressureChangeCalculation { NO_PC_CHOICE, ENTER_PC, SIMPLE_FRACTURE, K_AREA };
-
+/*
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// GETEMPhysics ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,10 +54,10 @@ inline double areaCircle(const double &radius) { return physics::areaCircle(radi
 inline double MetersToFeet(const double &m) {return m * GETEM_FT_IN_METER; }
 inline double FeetToMeters(const double &ft) {return ft / GETEM_FT_IN_METER; }
 inline double M2ToFeet2(const double &mSquared) { return (IMITATE_GETEM) ? mSquared * 10.76391 : mSquared * pow(GETEM_FT_IN_METER,2); }
-
+*/
 inline double BarToPsi(const double &bar) { return bar * GETEM_PSI_PER_BAR; }
 inline double PsiToBar(const double &psi){ return psi / GETEM_PSI_PER_BAR; }
-
+/*
 inline double InHgToPsi(const double &inHg) { return inHg * GETEM_PSI_PER_INHG; }
 inline double PsiToInHg(const double &psi){ return psi / GETEM_PSI_PER_INHG; }
 
@@ -239,7 +239,7 @@ private:
 	CGeothermalFluid moBinaryGeothermalFluid;
 	CGeothermalFluid moFlashGeothermalFluid;
 };
-
+*/
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Declaration of geothermal inputs class - all values that can be set from outside are defined here
@@ -292,16 +292,27 @@ public:
 	double md_EGSFractureAngle;								// default 15 degrees
 
 	size_t mi_ProjectLifeYears;
-	size_t mi_MakeupCalculationsPerYear;
+	size_t mi_MakeupCalculationsPerYear;					// 12 (monthly) or 8760 (hourly)
+	size_t mi_TotalMakeupCalculations;						// mi_ProjectLifeYears * mi_MakeupCalculationsPerYear
 
 	int * mia_tou;											// time of use array
 	float * maf_ReplacementsByYear;							// array of ones and zero's over time, ones representing years where reservoirs are replaced
+	float * maf_monthly_resource_temp;
+	float * maf_monthly_power;
+	float * maf_monthly_energy;
+	float * maf_timestep_resource_temp;
+	float * maf_timestep_power;
+	float * maf_timestep_test_values;
+	float * maf_timestep_pressure;
+	float * maf_timestep_dry_bulb;
+	float * maf_timestep_wet_bulb;
 
 };
 
+int RunGeoHourly(void (*update_function)(float,void*),void*user_data, std::string err_msg); // 0=clean run, !=0 means errors
 
 
-
+/*
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Declaration of CGeoHourlyBaseInputs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -454,13 +465,13 @@ public:
 
 
 	// GF pumping
-	/* Base inputs has to be an abstract class because it needs this function to be implemented by the CGeoHourlyAnalysis class
-	This is a way around a circular class reference dilemma:
-	CPumpPowerCalculator needs values from CGeoHourlyBaseInputs (several), and visa versa (CGeoHourlyBaseInputs needs values from CPumpPowerCalculator - pump work).
-	It's not quite this simple, because it's not actually CGeoHourlyBaseInputs that needs the values, it's CGeoHourlyAnalysis that needs
-	CGeoHourlyBaseInputs to have the values, but the end result is the same.  This virtual function is part of the solution.
-	Similar situation for the plant brine effectiveness (plant efficiency)
-	*/
+	// Base inputs has to be an abstract class because it needs this function to be implemented by the CGeoHourlyAnalysis class
+	//This is a way around a circular class reference dilemma:
+	//CPumpPowerCalculator needs values from CGeoHourlyBaseInputs (several), and visa versa (CGeoHourlyBaseInputs needs values from CPumpPowerCalculator - pump work).
+	//It's not quite this simple, because it's not actually CGeoHourlyBaseInputs that needs the values, it's CGeoHourlyAnalysis that needs
+	//CGeoHourlyBaseInputs to have the values, but the end result is the same.  This virtual function is part of the solution.
+	//Similar situation for the plant brine effectiveness (plant efficiency)
+	
 	virtual double GetPumpWorkWattHrPerLb(void)=0;
 	virtual double GetPlantBrineEffectiveness(void)=0;
 	virtual double GetFractionOfInletGFInjected(void)=0;
@@ -611,7 +622,7 @@ private:
 	double EGSAlpha(void) { return GetEGSThermalConductivity() / (mdEGSSpecificHeatConstant * mdEGSRockDensity); } // fAlpha (m^2 per day) or (m^2 per hr)
 
 	// These EGS function are used in EGS makeup calculations and in pumping calculations
-	double flowTimePeriod(void) { return (IsHourly()) ? 60*60 /* hourly analysis uses hourly flow*/ : 60*60*24 /*monthly analysis uses daily flow*/; }
+	double flowTimePeriod(void) { return (IsHourly()) ? 60*60 [[ hourly analysis uses hourly flow ]] : 60*60*24 [[monthly analysis uses daily flow]]; }
 	double EGSFlowPerFracture(double tempC) { return ((mdProductionFlowRateKgPerS / m_oGG.EGSWaterDensity(tempC))/mdEGSNumberOfFractures)*flowTimePeriod(); } // m^3 per day or per hour
 	double EGSVelocity(double tempC) { return EGSFlowPerFracture(tempC) / EGSFractureCrossSectionArea(); }		// m^3 per day / m^2 = m/day (or hour)
 	double EGSLengthOverVelocity(double tempC) { return EGSFractureLength() / EGSVelocity(tempC); }				// m / m per day = days (or hours)
@@ -947,7 +958,7 @@ public:
 
 	// Added June 2011 for geothermal hourly model
 	bool OpenWeatherFile(const char * fn);
-	void SetPowerBlockFlowRateKgPerSec(double dFlowRateKgPerSec) { m_pbInputs.m_dot_htf = dFlowRateKgPerSec*3600.0; /* m_dot_htf should be in kg per hour */ }
+	void SetPowerBlockFlowRateKgPerSec(double dFlowRateKgPerSec) { m_pbInputs.m_dot_htf = dFlowRateKgPerSec*3600.0; [[ m_dot_htf should be in kg per hour ]] }
 	void SetPowerBlockInputs(const SPowerBlockInputs& pbi) { m_pbInputs = pbi; }
 	bool ReadWeatherForTimeStep(const bool bHourly, unsigned int timeStep);
 	void SetType224Inputs(void);
@@ -1294,6 +1305,6 @@ private:
 };
  
 
-
+ */
 
 #endif // __geothermalModelDefinitions__

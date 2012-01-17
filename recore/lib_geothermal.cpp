@@ -1,34 +1,25 @@
 // define classes
-#include "lib_geohourly_interface.h"
-#include "lib_geohourly.h"
+#include "lib_geothermal.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeothermalInterface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CGeothermalInterface::CGeothermalInterface(void) {m_strErrMsg = "";}
-CGeothermalInterface::~CGeothermalInterface(void){}
-
-
-bool CGeothermalInterface::IsReadyToRun(void) { return oGeoOutputs.readyToAnalyze(); }
-bool CGeothermalInterface::ErrorOccured(void) { return (m_strErrMsg == "") ? false : true; }
-std::string CGeothermalInterface::GetErrorMsg(void) { return m_strErrMsg; }
-
-int CGeothermalInterface::RunGeoHourly(void (*update_function)(float,void*),void*user_data)
+int RunGeoHourly(void (*update_function)(float,void*),void*user_data, std::string err_msg)
 {
 	// do analysis and store results in an 'outputs' object
 	//if ( oGeoOutputs.readyToAnalyze() && oGeoOutputs.analyze() )  // 
-	if ( oGeoOutputs.analyze(update_function,user_data) )  // 
+	if ( true ) // oGeoOutputs.analyze(update_function,user_data) )  // 
 		return 0;
 	else
-		if (oGeoOutputs.m_strErrMsg != "")
+		if ( false ) // oGeoOutputs.m_strErrMsg != "")
 		{
-			m_strErrMsg = oGeoOutputs.m_strErrMsg;
+			err_msg = "known err msg"; //oGeoOutputs.m_strErrMsg;
 			return 1; // error that was flagged
 		}
 		else		
-			{ m_strErrMsg = "Unknown error during run"; return 2; }
+			{ err_msg = "Unknown error during run"; return 2; }
 }
-
+/*
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// GETEMEquations //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -319,7 +310,8 @@ void CGeothermalFluid::init(const CGeothermalConstants &enthalpyConstants, const
 	moEntropyConstants = entropyConstants;
 }
  
- 
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGeoFluidContainer ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -568,7 +560,7 @@ double CGeoHourlyBaseInputs::injectionTemperatureC() // calculate injection temp
 }
 
 
-double CGeoHourlyBaseInputs::calcEGSReservoirConstant(double avgWaterTempC, double timePeriods /* days or hours*/ )
+double CGeoHourlyBaseInputs::calcEGSReservoirConstant(double avgWaterTempC, double timePeriods ) // timePeriods could be days or hours
 {	// all this is from [7C.EGS Subsrfce HX], also from the calculations over time on 6Bb.Makeup-EGS HX, AF62-AF422
 	// this is best done in CGeoHourlyBaseInputs because it requires many CGeoHourlyBaseInputs properties, but it is used in several classes
 	double lv = EGSLengthOverVelocity(avgWaterTempC);	// days (or hours)
@@ -1417,7 +1409,6 @@ double CGeoHourlyOutputs::wellCostEstimate(double depthFt, wellCostCurveChoices 
 }
 
 
-
 double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies(void)
 {	// dollars/kWh - NOT including royalties on contingencies
 	// royalties in GETEM are supposed to = 10% (input) of "field-related annual costs to approximate the BLM calculation"
@@ -1450,3 +1441,5 @@ double CGeoHourlyOutputs::royaltyDollarsPerKWhrMinusContingencies(void)
         // As a simplification, assume that all electricity produced is sold at an average price, and that the price
         // negotiated is 10% over the cost of generating it.
 }
+
+*/

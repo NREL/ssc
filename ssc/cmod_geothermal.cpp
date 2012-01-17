@@ -100,19 +100,19 @@ static var_info _cm_vtab_geothermal[] = {
 	// With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.
 	{ SSC_OUTPUT,       SSC_NUMBER,		"pump_work",							"Pump work",									"MW",		"",				"GeoHourly",     "*",             "",						"" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "annual_replacements",					"Resource replacement? (1=yes)",				"kWhac",	"",				"GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_replacements",					"Resource replacement? (1=yes)",				"kWhac",	"",				"GeoHourly",     "*",             "",						"" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,		 "monthly_resource_temperature",		"Monthly avg resource temperature",				"C",		"",             "GeoHourly",     "*",             "",						"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_power",						"Monthly power",								"kW",		"",				"GeoHourly",     "*",             "",						"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",						"Monthly energy",								"kWh",		"",				"GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"monthly_resource_temperature",			"Monthly avg resource temperature",				"C",		"",             "GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",						"Monthly power",								"kW",		"",				"GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",						"Monthly energy",								"kWh",		"",				"GeoHourly",     "*",             "",						"" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,		 "timestep_resource_temperature",		"Resource temperature in each time step",		"C",		"",				"GeoHourly",     "*",             "",						"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "timestep_power",						"Power in each time step",						"kW",		"",				"GeoHourly",     "*",             "",						"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_test_values",				"Test output values in each time step",			"",			"",             "GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"timestep_resource_temperature",		"Resource temperature in each time step",		"C",		"",				"GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "timestep_power",						"Power in each time step",						"kW",		"",				"GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,	    "timestep_test_values",					"Test output values in each time step",			"",			"",             "GeoHourly",     "*",             "",						"" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_pressure",					"Atmospheric pressure in each time step",		"atm",		"",             "GeoHourly",     "*",             "",						"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_dry_bulb",					"Dry bulb temperature in each time step",		"C",		"",             "GeoHourly",     "*",             "",						"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,	     "timestep_wet_bulb",					"Wet bulb temperature in each time step",		"C",		"",             "GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,	    "timestep_pressure",					"Atmospheric pressure in each time step",		"atm",		"",             "GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,	    "timestep_dry_bulb",					"Dry bulb temperature in each time step",		"C",		"",             "GeoHourly",     "*",             "",						"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,	    "timestep_wet_bulb",					"Wet bulb temperature in each time step",		"C",		"",             "GeoHourly",     "*",             "",						"" },
 
 
 var_info_invalid };
@@ -190,7 +190,6 @@ public:
 
 
 		// set the geothermal model inputs
-		CGeoHourlyOutputs oGeo;
 		CGeothermal_Inputs geo_inputs;
 		geo_inputs.md_DesiredSalesCapacityKW = as_double("nameplate");
 		geo_inputs.md_NumberOfWells = as_double("num_wells");
@@ -220,7 +219,6 @@ public:
 		// HOW DO I USE THE POWER BLOCK PARAMETERS, INPUTS????????????????????????
 		//oGeo.SetPowerBlockParameters(pbp);
 		//oGeo.SetPowerBlockInputs(pbInputs);
-
 		geo_inputs.mia_tou = tou;
 	
 		// temperature decline
@@ -287,51 +285,35 @@ public:
 
 		// allocate lifetime annual arrays (one element per year, over lifetime of project)
 		geo_inputs.maf_ReplacementsByYear = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
-		ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
+		//ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
 
 		// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-		size_t monthly_array_size = 12 * geo_inputs.mi_ProjectLifeYears;
-		ssc_number_t *monthly_resource_temp = allocate( "monthly_resource_temperature", monthly_array_size);
-		ssc_number_t *monthly_power = allocate( "monthly_power", monthly_array_size);
-		ssc_number_t *monthly_energy = allocate( "monthly_energy", monthly_array_size);
+		geo_inputs.maf_monthly_resource_temp = allocate( "monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
+		geo_inputs.maf_monthly_power = allocate( "monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
+		geo_inputs.maf_monthly_energy = allocate( "monthly_energy", 12 * geo_inputs.mi_ProjectLifeYears);
 
 		// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
 		// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
-		geo_inputs.mi_MakeupCalculationsPerYear = geo_inputs.mi_ProjectLifeYears * (geo_inputs.mi_ModelChoice == 2) ? 8760 : 12; 
+		geo_inputs.mi_MakeupCalculationsPerYear = (geo_inputs.mi_ModelChoice == 2) ? 8760 : 12; 
+		geo_inputs.mi_TotalMakeupCalculations = geo_inputs.mi_ProjectLifeYears * geo_inputs.mi_MakeupCalculationsPerYear; 
 
-		ssc_number_t *timestep_resource_temp = allocate( "timestep_resource_temperature", geo_inputs.mi_MakeupCalculationsPerYear);
-		ssc_number_t *timestep_power = allocate( "timestep_power", geo_inputs.mi_MakeupCalculationsPerYear);
-		ssc_number_t *timestep_test_values = allocate( "timestep_test_values", geo_inputs.mi_MakeupCalculationsPerYear);
+		geo_inputs.maf_timestep_resource_temp = allocate( "timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
+		geo_inputs.maf_timestep_power = allocate( "timestep_power", geo_inputs.mi_TotalMakeupCalculations);
+		geo_inputs.maf_timestep_test_values = allocate( "timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
 
-		ssc_number_t *timestep_pressure = allocate( "timestep_pressure", geo_inputs.mi_MakeupCalculationsPerYear);
-		ssc_number_t *timestep_dry_bulb = allocate( "timestep_dry_bulb", geo_inputs.mi_MakeupCalculationsPerYear);
-		ssc_number_t *timestep_wet_bulb = allocate( "timestep_wet_bulb", geo_inputs.mi_MakeupCalculationsPerYear);
+		geo_inputs.maf_timestep_pressure = allocate( "timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
+		geo_inputs.maf_timestep_dry_bulb = allocate( "timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
+		geo_inputs.maf_timestep_wet_bulb = allocate( "timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-		// set pointer to annual array
-		oGeo.SetPointerToReplacementArray(annual_replacements);
-
-		// set pointers to monthly arrays
-		oGeo.SetPointerToMonthlyTemperatureArray(monthly_resource_temp);
-		oGeo.SetPointerToMonthlyOutputArray(monthly_power);
-		oGeo.SetPointerToMonthlyPowerArray(monthly_energy);
-		
-		// set pointers for timestep arrays (for monthly analysis, these are redundant)
-		oGeo.SetPointerToTimeStepTemperatureArray(timestep_resource_temp);
-		oGeo.SetPointerToTimeStepOutputArray(timestep_power);
-		oGeo.SetPointerToTimeStepTestArray(timestep_test_values);
-
-		oGeo.SetPointerToTimeStepPressureArray(timestep_pressure);
-		oGeo.SetPointerToTimeStepDryBulbArray(timestep_dry_bulb);
-		oGeo.SetPointerToTimeStepWetBulbArray(timestep_wet_bulb);
-
-		
 		//update( "calculating", (float)0.0, (float)0.0 );
 		//update("Running model...", 10.0);
 
 		// run simulation
-		if (oGeo.RunGeoHourly( my_update_function, this ) != 0)
-			throw exec_error("geothermal", "error from geothermal hourly model: " + oGeo.GetErrorMsg() + ".");
-		assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
+		std::string err_msg;
+		if (RunGeoHourly( my_update_function, this, err_msg ) != 0)
+			throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
+
+		//assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
 
 
 	}

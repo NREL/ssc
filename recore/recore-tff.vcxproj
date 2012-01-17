@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{794A2685-B70E-4504-9402-AC376D4EB459}</ProjectGuid>
+    <ProjectGuid>{87D7D034-D6BA-4B38-A9B0-921327BEE820}</ProjectGuid>
     <RootNamespace>relib</RootNamespace>
-    <ProjectName>recore</ProjectName>
+    <ProjectName>recore-tff</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -69,8 +69,6 @@
     <ClInclude Include="6par_solve.h" />
     <ClInclude Include="lib_cec6par.h" />
     <ClInclude Include="lib_financial.h" />
-    <ClInclude Include="lib_geohourly.h" />
-    <ClInclude Include="lib_geohourly_interface.h" />
     <ClInclude Include="lib_geothermal.h" />
     <ClInclude Include="lib_irradproc.h" />
     <ClInclude Include="lib_physics.h" />
@@ -85,7 +83,6 @@
   <ItemGroup>
     <ClCompile Include="lib_cec6par.cpp" />
     <ClCompile Include="lib_financial.cpp" />
-    <ClCompile Include="lib_geohourly.cpp" />
     <ClCompile Include="lib_geothermal.cpp" />
     <ClCompile Include="lib_irradproc.cpp" />
     <ClCompile Include="lib_physics.cpp" />
