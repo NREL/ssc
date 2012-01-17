@@ -4,9 +4,6 @@
 #include <math.h>
 #include <assert.h>
 
-#include <vector>
-#include <string>
-
 namespace physics
 {
 	const double PI = 2.0 * acos(0.0);
@@ -49,6 +46,10 @@ namespace physics
 
 	inline double mBarToAtm(const double &PressureInmBar) { return PressureInmBar * Atm_PER_Bar/1000; }
 	inline double mBarToPSI(const double &PressureInmBar) { return PressureInmBar * PSI_PER_BAR/1000; }
+	inline double PsiToBar(const double &psi){ return psi / PSI_PER_BAR; }
+
+	inline double toWattHr(const double &btu) { return (btu/3.413); }
+	inline double PSItoFT(const double &psi) { return psi * 144 / 62.4; }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62.4 lb/ft^3
 
 	bool EnthalpyFromTempAndPressure(double tempK, double pressureBar, double& enthalpy );
 

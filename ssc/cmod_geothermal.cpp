@@ -190,7 +190,7 @@ public:
 
 
 		// set the geothermal model inputs
-		CGeothermal_Inputs geo_inputs;
+		SGeothermal_Inputs geo_inputs;
 		geo_inputs.md_DesiredSalesCapacityKW = as_double("nameplate");
 		geo_inputs.md_NumberOfWells = as_double("num_wells");
 		if ( as_integer("analysis_type") == 0)
@@ -237,7 +237,7 @@ public:
 		geo_inputs.md_ProductionFlowRateKgPerS = as_double("well_flow_rate");
 		geo_inputs.md_GFPumpEfficiency = as_double("pump_efficiency")/100;
 		geo_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = as_double("delta_pressure_equip");
-		geo_inputs.md_ExcessPressureBar = PsiToBar( as_double("excess_pressure_pump") );
+		geo_inputs.md_ExcessPressureBar = physics::PsiToBar( as_double("excess_pressure_pump") );
 		geo_inputs.md_DiameterProductionWellInches = as_double("well_diameter");
 		geo_inputs.md_DiameterPumpCasingInches = as_double("casing_size");
 		geo_inputs.md_DiameterInjectionWellInches = as_double("inj_well_diam");
@@ -283,38 +283,40 @@ public:
 		if ( geo_inputs.mi_ProjectLifeYears == 0)
 			throw general_error("invalid analysis period specified in the geothermal hourly model");
 
+		// Create output object
+		SGeothermal_Outputs geo_outputs;
+
 		// allocate lifetime annual arrays (one element per year, over lifetime of project)
-		geo_inputs.maf_ReplacementsByYear = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
+		geo_outputs.maf_ReplacementsByYear = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
 		//ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
 
 		// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-		geo_inputs.maf_monthly_resource_temp = allocate( "monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
-		geo_inputs.maf_monthly_power = allocate( "monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
-		geo_inputs.maf_monthly_energy = allocate( "monthly_energy", 12 * geo_inputs.mi_ProjectLifeYears);
+		geo_outputs.maf_monthly_resource_temp = allocate( "monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
+		geo_outputs.maf_monthly_power = allocate( "monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
+		geo_outputs.maf_monthly_energy = allocate( "monthly_energy", 12 * geo_inputs.mi_ProjectLifeYears);
 
 		// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
 		// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
 		geo_inputs.mi_MakeupCalculationsPerYear = (geo_inputs.mi_ModelChoice == 2) ? 8760 : 12; 
 		geo_inputs.mi_TotalMakeupCalculations = geo_inputs.mi_ProjectLifeYears * geo_inputs.mi_MakeupCalculationsPerYear; 
 
-		geo_inputs.maf_timestep_resource_temp = allocate( "timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
-		geo_inputs.maf_timestep_power = allocate( "timestep_power", geo_inputs.mi_TotalMakeupCalculations);
-		geo_inputs.maf_timestep_test_values = allocate( "timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
+		geo_outputs.maf_timestep_resource_temp = allocate( "timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
+		geo_outputs.maf_timestep_power = allocate( "timestep_power", geo_inputs.mi_TotalMakeupCalculations);
+		geo_outputs.maf_timestep_test_values = allocate( "timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
 
-		geo_inputs.maf_timestep_pressure = allocate( "timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
-		geo_inputs.maf_timestep_dry_bulb = allocate( "timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
-		geo_inputs.maf_timestep_wet_bulb = allocate( "timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
+		geo_outputs.maf_timestep_pressure = allocate( "timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
+		geo_outputs.maf_timestep_dry_bulb = allocate( "timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
+		geo_outputs.maf_timestep_wet_bulb = allocate( "timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
 		//update( "calculating", (float)0.0, (float)0.0 );
 		//update("Running model...", 10.0);
 
 		// run simulation
 		std::string err_msg;
-		if (RunGeoHourly( my_update_function, this, err_msg ) != 0)
+		if (RunGeothermalAnalysis( my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs ) != 0)
 			throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
 
 		//assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
-
 
 	}
 };
