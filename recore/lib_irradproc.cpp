@@ -888,9 +888,8 @@ int irrad::calc()
 			return -1;
 		}
 
-
 		// compute beam and diffuse inputs based on irradiance inputs mode
-		double ibeam = df;
+		double ibeam = dn;
 		double idiff = 0.0;
 		if ( radmode == 0 )  // Beam+Diffuse
 			idiff = df;

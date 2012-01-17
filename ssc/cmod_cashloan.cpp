@@ -1,5 +1,6 @@
 #include "core.h"
 #include "lib_financial.h"
+using namespace libfin;
 
 static var_info vtab_cashloan[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/

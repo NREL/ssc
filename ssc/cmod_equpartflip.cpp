@@ -1,4 +1,5 @@
 #include "lib_financial.h"
+using namespace libfin;
 #include "core.h"
 #include <sstream>
 

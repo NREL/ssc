@@ -3,6 +3,8 @@
 
 #include <vector>
 
+namespace libfin {
+
 double irr(double tolerance, int maxIterations, const std::vector<double> &CashFlows, int Count);
 double npv(double Rate, const std::vector<double> &CashFlows, int Count);
 double payback(const std::vector<double> &CumulativePayback, const std::vector<double> &Payback, int Count);
@@ -16,5 +18,7 @@ double ipmt (double rate, double per, double nper, double pv, double fv, int typ
 double ppmt (double rate, double per, double nper, double pv, double fv, int type) ;
 
 long round_dhf(double number);
+
+}
 
 #endif

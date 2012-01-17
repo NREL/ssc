@@ -2,6 +2,8 @@
 #include <limits>
 #include "lib_financial.h"
 
+using namespace libfin;
+
 /* financial code here */
 /* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
 
@@ -38,7 +40,7 @@ static double irr_derivative_sum(double estimatedReturnRate, const std::vector<d
     return sumOfDerivative*-1;
 }
 
-double irr(double tolerance, int maxIterations, const std::vector<double> &CashFlows, int Count)
+double libfin::irr(double tolerance, int maxIterations, const std::vector<double> &CashFlows, int Count)
 {
 /* Validation check - can write to log if move to FinModel or include SimModel
 	if ((count < 2) || (CashFlows[0] > 0))
@@ -78,7 +80,7 @@ double irr(double tolerance, int maxIterations, const std::vector<double> &CashF
 
   
 /*ported directly from Delphi simple geometric sum*/
-double npv(double Rate, const std::vector<double> &CashFlows, int Count) //, PaymentTime: TPaymentTime)
+double libfin::npv(double Rate, const std::vector<double> &CashFlows, int Count) //, PaymentTime: TPaymentTime)
 {
 	/*
 { Caution: The sign of NPV is reversed from what would be expected for standard
@@ -103,7 +105,7 @@ double npv(double Rate, const std::vector<double> &CashFlows, int Count) //, Pay
 	return result*rr; // assumes end of period payments!!
 }
 
-double payback(const std::vector<double> &CumulativePayback, const std::vector<double> &Payback, int Count)
+double libfin::payback(const std::vector<double> &CumulativePayback, const std::vector<double> &Payback, int Count)
 {
 /*
 Return payback in years of inputs streams
@@ -169,37 +171,37 @@ Make sure that you are consistent about the units you use for specifying rate an
 
 
 */
-double pow1pm1 (double x, double y) 
+double libfin::pow1pm1 (double x, double y) 
 { 
 	return (x <= -1) ? pow (1 + x, y) - 1 : exp(y * log(1.0 + x)) - 1; 
 } 
-double pow1p (double x, double y) 
+double libfin::pow1p (double x, double y) 
 { 
 	return (fabs (x) > 0.5) ? pow (1 + x, y) : exp (y * log(1.0 + x)); 
 } 
-double fvifa (double rate, double nper) 
+double libfin::fvifa (double rate, double nper) 
 { 
 	return (rate == 0) ? nper : pow1pm1 (rate, nper) / rate; 
 } 
 
-double pvif (double rate, double nper) 
+double libfin::pvif (double rate, double nper) 
 { 
 	return pow1p (rate, nper); 
 } 
 
-double pmt (double rate, double nper, double pv, double fv, int type) 
+double libfin::pmt (double rate, double nper, double pv, double fv, int type) 
 { 
 	return ((-pv * pvif (rate, nper) - fv ) / ((1.0 + rate * type) * fvifa (rate, nper))); 
 } 
 
-double ipmt (double rate, double per, double nper, double pv, double fv, int type) 
+double libfin::ipmt (double rate, double per, double nper, double pv, double fv, int type) 
 { 
 	double p = pmt (rate, nper, pv, fv, 0); 
 	double ip = -(pv * pow1p (rate, per - 1) * rate + p * pow1pm1 (rate, per - 1)); 
 	return (type == 0) ? ip : ip / (1 + rate); 
 } 
 
-double ppmt (double rate, double per, double nper, double pv, double fv, int type) 
+double libfin::ppmt (double rate, double per, double nper, double pv, double fv, int type) 
 { 
 	// exception identified 1/26/2010 by Aron and J.MacKnick when term (nper = 0)
 	if (nper == 0) return 0.0;
@@ -209,7 +211,7 @@ double ppmt (double rate, double per, double nper, double pv, double fv, int typ
 }
 
 // from http://www.codeproject.com/Articles/58289/C-Round-Function.aspx
-long round_dhf(double number)
+long libfin::round_dhf(double number)
 {
     return (number >= 0) ? (long)(number + 0.5) : (long)(number - 0.5);
 }

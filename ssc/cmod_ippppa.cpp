@@ -1,5 +1,6 @@
 #include "core.h"
 #include "lib_financial.h"
+using namespace libfin;
 #include <sstream>
 
 #ifndef WIN32
