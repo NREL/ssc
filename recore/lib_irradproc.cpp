@@ -902,13 +902,13 @@ int irrad::calc()
 		switch( skymodel )
 		{
 		case 0:
-			isotropic( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+			isotropic( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 			break;
 		case 1:
-			hdkr( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+			hdkr( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 			break;
 		default:
-			perez( sun[8], ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+			perez( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 			break;
 		}
 	}
