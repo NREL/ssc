@@ -21,6 +21,20 @@ enum reservoirPressureChangeCalculation { NO_PC_CHOICE, ENTER_PC, SIMPLE_FRACTUR
 
 struct SGeothermal_Inputs
 {
+	SGeothermal_Inputs()
+	{
+		me_cb = NO_CALCULATION_BASIS; me_ct = NO_CONVERSION_TYPE; me_ft = NO_FLASH_SUBTYPE; me_tdm = NO_TEMPERATURE_DECLINE_METHOD;
+		me_rt = NO_RESOURCE_TYPE; me_dc = NOT_CHOSEN; me_pc = NO_PC_CHOICE;
+		mi_ModelChoice = -1; mb_CalculatePumpWork = true;
+		mi_ProjectLifeYears = mi_MakeupCalculationsPerYear = mi_TotalMakeupCalculations = 0;
+		md_DesiredSalesCapacityKW = md_NumberOfWells = md_PlantEfficiency = md_TemperatureDeclineRate = md_MaxTempDeclineC = md_TemperatureWetBulbC = 0.0;
+		md_PressureAmbientPSI = md_ProductionFlowRateKgPerS = md_GFPumpEfficiency = md_PressureChangeAcrossSurfaceEquipmentPSI = md_ExcessPressureBar = 0.0;
+		md_DiameterProductionWellInches = md_DiameterPumpCasingInches = md_DiameterInjectionWellInches = md_UserSpecifiedPumpWorkKW = 0.0;
+		md_PotentialResourceMW = md_ResourceDepthM = md_TemperatureResourceC = md_TemperaturePlantDesignC = md_EGSThermalConductivity = md_EGSSpecificHeatConstant = 0.0;
+		md_EGSRockDensity = md_ReservoirDeltaPressure = md_ReservoirWidthM = md_ReservoirHeightM = md_ReservoirPermeability = md_DistanceBetweenProductionInjectionWellsM = 0.0;
+		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = 0.0;
+	}
+
 	calculationBasis me_cb;
 	conversionTypes me_ct;
 	flashTypes me_ft;
@@ -30,10 +44,15 @@ struct SGeothermal_Inputs
 	reservoirPressureChangeCalculation me_pc;				// 1=user enter pressure change, 2=SAM calculates it using simple fracture flow (for EGS resourceTypes only), 3=SAM calculates it using k*A (permeability x area)
 
 	int mi_ModelChoice;										// 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
+	bool mb_CalculatePumpWork;								// true (default) = getem calculates pump work
+
+	size_t mi_ProjectLifeYears;
+	size_t mi_MakeupCalculationsPerYear;					// 12 (monthly) or 8760 (hourly)
+	size_t mi_TotalMakeupCalculations;						// mi_ProjectLifeYears * mi_MakeupCalculationsPerYear
+
 	double md_DesiredSalesCapacityKW;						// entered or calculated, linked to 'cb'
 	double md_NumberOfWells;								// entered or calculated, depending on 'cb'
 	double md_PlantEfficiency;								// not in GETEM - essentially the ratio of plant brine effectiveness to max possible brine effectiveness
-	const char * mc_WeatherFileName;
 	double md_TemperatureDeclineRate;						// '% per year, 3% is default
 	double md_MaxTempDeclineC;								// degrees C, default = 30
 	double md_TemperatureWetBulbC;							// degrees celcius - used in Flash brine effectiveness
@@ -45,7 +64,6 @@ struct SGeothermal_Inputs
 	double md_DiameterProductionWellInches;					// default 10 inches
 	double md_DiameterPumpCasingInches;						// default 9.925 inches
 	double md_DiameterInjectionWellInches;					// default 10 inches
-	bool mb_CalculatePumpWork;								// true (default) = getem calculates pump work
 	double md_UserSpecifiedPumpWorkKW;
 	double md_PotentialResourceMW;							// MW, default = 200 MW, determines how many times reservoir can be replaced
 	double md_ResourceDepthM;								// meters, default 2000
@@ -65,15 +83,18 @@ struct SGeothermal_Inputs
 	double md_EGSFractureWidthM;							// default 175 m
 	double md_EGSFractureAngle;								// default 15 degrees
 
-	size_t mi_ProjectLifeYears;
-	size_t mi_MakeupCalculationsPerYear;					// 12 (monthly) or 8760 (hourly)
-	size_t mi_TotalMakeupCalculations;						// mi_ProjectLifeYears * mi_MakeupCalculationsPerYear
-
+	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
 };
 
 struct SGeothermal_Outputs
 {
+	SGeothermal_Outputs()
+	{
+		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
+		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
+	}
+
 	float * maf_ReplacementsByYear;							// array of ones and zero's over time, ones representing years where reservoirs are replaced
 	float * maf_monthly_resource_temp;
 	float * maf_monthly_power;
@@ -87,7 +108,7 @@ struct SGeothermal_Outputs
 };
 
 int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, std::string &err_msg, 
-	 const SPowerBlockParameters &pbp, const SPowerBlockInputs &pbInputs, 
+	 const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs, 
 	 const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs); 
 
 
