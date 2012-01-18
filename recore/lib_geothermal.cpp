@@ -5,8 +5,10 @@ namespace geothermal
 {
 
 const double MAX_TEMP_RATIO = 1.134324;  // max valid value for (resource temp)/(plant design temp) where both are measured in Kelvin
-const double DEFAULT_AMBIENT_TEMPC_BINARY = 10;  // degrees C
-const double AMBIENT_TEMPC_FOR_GRADIENT = 10;  // degrees C, embedded in [2B.Resource&Well Input].D14
+const double DEFAULT_AMBIENT_TEMPC_BINARY = 10.0;			// degrees C
+const double AMBIENT_TEMPC_FOR_GRADIENT = 10.0;				// degrees C, embedded in [2B.Resource&Well Input].D14
+const double WET_BULB_TEMPERATURE_FOR_FLASH_CALCS = 15.0;	// degrees C, used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GETEM Physics and general equations
@@ -58,16 +60,6 @@ double evaluatePolynomial(const double &x, const double &c0, const double &c1, c
 {	return (c0 + (c1 * x) + (c2 * pow(x,2)) + (c3 * pow(x,3)) + (c4 * pow(x,4)) + (c5 * pow(x,5)) + (c6 * pow(x,6))); }
 
 
-double discountValue(const double &dVal, const double &dDRate, const double &dTimePeriods, std::string sErr)
-{
-	if (dDRate == -1) {
-		sErr = ("Division by zerio error in 'discountValue'.");
-		return 0;
-	}	
-	return dVal / pow((1 + dDRate),dTimePeriods);
-}
-
-
 double calcEGSTemperatureConstant(double tempC, double maxSecondLawEff) 
 {	// not explained.  a constant used to calculate the 'average water temp' for EGS resource
 	// it's used in [7C.EGS Subsrfce HX].D127, and to do the makeup calculations in [6Bb.Makeup-EGS HX]
@@ -80,7 +72,9 @@ double calcEGSTemperatureConstant(double tempC, double maxSecondLawEff)
 }
 
 double calcEGSAverageWaterTemperatureC(double temp1C, double temp2C, double maxEff)
-{ return physics::KelvinToCelcius(physics::CelciusToKelvin(temp1C) * calcEGSTemperatureConstant(temp2C, maxEff)); }
+{
+	return physics::KelvinToCelcius(physics::CelciusToKelvin(temp1C) * calcEGSTemperatureConstant(temp2C, maxEff));
+}
 
 
 double my_erfc(const double &x)
@@ -178,6 +172,7 @@ void setZeroTo1(double &dVal, const double &newVal, std::string varName, std::st
 };// namespace geotheraml
 
 
+/*
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Declaration and Implementation of CGeothermalConstants2
@@ -321,7 +316,6 @@ private:
 	CGeothermalFluid2 moFlashGeothermalFluid;
 };
 
-/*
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Declaration of CGeoHourlyBaseInputs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,7 +344,7 @@ public:
 
 	double mdUtilizationFactor; //not explained well, but used to Get annual capacity factor
     double mdTemperatureDeclineRate; // % per year
-	double mdTemperatureWetBulbC;    // degrees celcius - used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
+	//--//double mdTemperatureWetBulbC;    // degrees celcius - used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
     double mdMaxTempDeclineC;
     double mdFinalYearsWithNoReplacement;
     double mdPotentialResourceMW;
@@ -375,7 +369,7 @@ public:
 	void SetTemperatureGradient(double degreesCelciusPerKM) { setPositiveValue(mdEGSResourceTemperatureGradient, degreesCelciusPerKM, "Temperature Gradient", m_strErrMsg); }
 	double GetTemperatureGradient(void);
 
-	double GetAmbientTemperatureC(conversionTypes ct = NO_CONVERSION_TYPE);
+	//--//double GetAmbientTemperatureC(conversionTypes ct = NO_CONVERSION_TYPE);
 	double GetAmbientTemperatureF(void) { return CelciusToFarenheit(GetAmbientTemperatureC()); }
 
 	void SetAmbientEGSTemperatureC(double degreesCelcius){ setPositiveValue(mdTemperatureEGSAmbientC, degreesCelcius,"EGS Ambient Temperature", m_strErrMsg); }  // not sure why the ambient temperature for EGS is different from other ambient temperature
@@ -401,7 +395,6 @@ public:
 	// FIX THE REDUNDANCIES IN THE ABOVE CRAP, FIX 'PLANTNETOUTPUT', SINCE IT'S GROSS OUTPUT
 
 
-	double GetPumpWorkKW(void) { return (mbCalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mdUserSpecifiedPumpWorkKW; }	// shortcut to function in CPumpPowerCalculator
 	double grossCapacityPerWell(void) { return this->flowRatePerWell() * (GetPlantBrineEffectiveness()) / 1000.0; }		// before pumping losses
 	double netCapacityPerWell(void)	  { return this->flowRatePerWell() * netBrineEffectiveness() / 1000.0; }			// after pumping losses
 	double netBrineEffectiveness(void) { return GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb(); }
@@ -503,14 +496,12 @@ public:
 
 
 
-	double EGSTimeStar(void) { return calcEGSTimeStar(EGSAverageWaterTemperatureC2()); }
 	double calcEGSReservoirConstant(double avgWaterTempC, double timeDays);
 
 	// Why does GETEM calculate the average water temperature for EGS two different ways?  Is one better?  Method 2 is certainly simpler.
 	double EGSAverageWaterTemperatureC1(void) { return calcEGSAverageWaterTemperatureC(GetResourceTemperatureC(), mdTemperaturePlantDesignC, GetPlantBrineEffectiveness() / availableEnergyEGS() ); }// degrees C (used in EGS makeup, and on [7C.EGS Subsrfce HX]
 	//double GetemEGSTemperatureConstant(void)  { return calcEGSTemperatureConstant( (GetPlantBrineEffectiveness() / availableEnergyEGS()), mdTemperaturePlantDesignC); }
 	//double EGSAverageWaterTemperatureC1(void) { return KelvinToCelcius(CelciusToKelvin(GetResourceTemperatureC()) * GetemEGSTemperatureConstant()); }	
-	double EGSAverageWaterTemperatureC2(void) { return (injectionTemperatureC() + GetResourceTemperatureC())/2; } // degrees C (used in [6Bb.Makeup-EGS HX ].X35 to calc time*
 	double EGSAverageReservoirTemperatureF(void);	//[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 
 
@@ -635,8 +626,6 @@ private:
 	double EGSFlowPerFracture(double tempC) { return ((mdProductionFlowRateKgPerS / m_oGG.EGSWaterDensity(tempC))/mdEGSNumberOfFractures)*flowTimePeriod(); } // m^3 per day or per hour
 	double EGSVelocity(double tempC) { return EGSFlowPerFracture(tempC) / EGSFractureCrossSectionArea(); }		// m^3 per day / m^2 = m/day (or hour)
 	double EGSLengthOverVelocity(double tempC) { return EGSFractureLength() / EGSVelocity(tempC); }				// m / m per day = days (or hours)
-
-	double calcEGSTimeStar(double tempC) { return (pow(GetEGSThermalConductivity() * EGSFractureSurfaceArea()/(27 * m_oGG.EGSWaterDensity(tempC) * m_oGG.EGSSpecificHeat(tempC) * EGSFlowPerFracture(tempC)),2) / EGSAlpha()) + EGSLengthOverVelocity(tempC); }
 
 	// private member variables
 	double mdResourceDepthM;
@@ -956,7 +945,6 @@ public:
 	virtual void calculateNewTemperature(void) { mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / 12)); } // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
 	bool wantToReplaceReservoir(void) { return ( mdWorkingTemperatureC < (mpGBI->GetResourceTemperatureC() - mpGBI->mdMaxTempDeclineC) ) ? true : false; }
 	virtual bool canReplaceReservoir(double dTimePassedInYears) { return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
-	virtual void replaceReservoir(void) { miReservoirReplacements++; mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); }
 	double plantGrossPower(void) {return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000.0); }
 	double plantNetPower(void) { return plantGrossPower() - mpGBI->GetPumpWorkKW(); } // kW, as a function of the temperature over time
 	double plantNetPowerkW(void) { double pnp = plantNetPower(); return (pnp>0) ? pnp : 0; } // kW
@@ -977,8 +965,8 @@ public:
 	float WeatherWetBulb(void)  { return (float)m_pbInputs.T_wb; }
 
 protected:
-	double mdWorkingTemperatureC;
-	int miReservoirReplacements;	// how many times the reservoir has been 'replaced' (holes redrilled)
+	//--//double mdWorkingTemperatureC;
+	//--//int miReservoirReplacements;	// how many times the reservoir has been 'replaced' (holes redrilled)
 	CGeoHourlyBaseInputs* mpGBI;		// use scenario parameters
 	CGeothermalConstants2 moSecondLawConstants; //Used to calculate second law (of thermodynamics) efficiencies
 	std::string m_strMAError;
@@ -1054,7 +1042,7 @@ private:
 class CEGSMakeup : public CMakeupAlgorithm
 {
 public:
-	CEGSMakeup(void) { mdTimeOfLastReservoirReplacement=0; mdYearsAtNextTimeStep=0; mdCurrentEfficiency=0; }
+	CEGSMakeup(void) { mdCurrentEfficiency=0; }
 	virtual ~CEGSMakeup(void){}
 
 	makeupAlgorithmType GetType(void) { return MA_EGS; }
@@ -1074,10 +1062,10 @@ private:
 	double daysSinceLastReDrill() {	return (mdYearsAtNextTimeStep - mdTimeOfLastReservoirReplacement) * DAYS_PER_YEAR; } 
 	double functionOfRockProperties() { return mpGBI->calcEGSReservoirConstant(averageReservoirTempC(), daysSinceLastReDrill()); }
 
-	double mdLastProductionTemperatureC; // store the last temperature before calculating new one
+	//--//double mdLastProductionTemperatureC; // store the last temperature before calculating new one
 	double mdCurrentEfficiency;
-	double mdYearsAtNextTimeStep;
-	double mdTimeOfLastReservoirReplacement;
+	//--//double mdYearsAtNextTimeStep;
+	//--//double mdTimeOfLastReservoirReplacement;
 };
 
 
@@ -1131,20 +1119,6 @@ public:
 	double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
 	double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
-	// Added June 2011 to use create an hourly model using TRNSYS Type 224 code
-	void SetPointerToReplacementArray(float * p) { m_afReplacementsByYear = p; }
-
-	void SetPointerToMonthlyTemperatureArray(float * p) { m_afMonthlyAvgTempC = p; }
-	void SetPointerToMonthlyOutputArray(float * p) { m_afPowerByMonth = p; }
-	void SetPointerToMonthlyPowerArray(float * p) { m_afEnergyByMonth = p; }
-
-	void SetPointerToTimeStepTemperatureArray(float * p) { m_afTemperatureC = p; }
-	void SetPointerToTimeStepOutputArray(float * p) { m_afPowerByTimeStep = p; }
-	void SetPointerToTimeStepTestArray(float * p) { m_afTestValues = p; }
-
-	void SetPointerToTimeStepPressureArray(float * p) {m_afPressure = p;}
-	void SetPointerToTimeStepDryBulbArray(float * p)  {m_afDryBulb = p;}
-	void SetPointerToTimeStepWetBulbArray(float * p)  {m_afWetBulb = p;}
 
 private:
 	//--//float fLastIntervalDone;
@@ -1152,35 +1126,20 @@ private:
 	CFlashBrineEffectiveness moFBE;
 	CPumpPowerCalculator moPPC;
 
-	CMakeupAlgorithm* moMA;
-	bool mbAnalysisRequired;
-
 	double mdLifeTimeDiscountedDesignPower;
 	double mdLifeTimeDiscountedNetPower;
 	double mdPresentCostFactorFieldReplacements;
 	double mdSumOfPresentWorthFactors;
 
-	// Changed in June 2011 to create an hourly model - these arrays will be hourly or monthly, depending on how analysis is being done
-	// Tracked annually
-	float * m_afReplacementsByYear; // array of ones and zero's over time, ones representing years where reservoirs are replaced
-
-	// Tracked monthly, over lifetime of project
-	float * m_afMonthlyAvgTempC;
-	float * m_afPowerByMonth;
-	float * m_afEnergyByMonth;
-
-	// Could be monthly or hourly, depending on how analysis is being done
-	float * m_afTemperatureC; // array of temperatures over time
-	float * m_afPowerByTimeStep;
-	float * m_afTestValues;   // array of values for debugging
-
-	float * m_afPressure;
-	float * m_afDryBulb;
-	float * m_afWetBulb;
 };
 */
 
 
+//******************************************************************************************************************************************************************************
+//******************************************************************************************************************************************************************************
+// Declaration of CGeothermalAnalyzer 
+//******************************************************************************************************************************************************************************
+//******************************************************************************************************************************************************************************
 class CGeothermalAnalyzer
 {
 public:
@@ -1194,7 +1153,7 @@ public:
 	void SetGeothermalOutputs(SGeothermal_Outputs& gto) { mo_geo_out = gto; }
 
 	bool analyze( void (*update_function)(float, void*), void *user_data );
-	std::string error() { return m_strErrMsg; }
+	std::string error() { return ms_ErrorString; }
 
 
 private:
@@ -1205,26 +1164,43 @@ private:
 	SGeothermal_Outputs mo_geo_out;
 
 	// variables
-	std::string m_strErrMsg;
-	float m_fLastIntervalDone;
+	std::string ms_ErrorString;
+	float mf_LastIntervalDone;
 	weatherfile m_wf;
-	bool m_bWeatherFileOpen;
-	long m_lReadCount;  // resource file reads through the year, 1 to 8760
-	long m_lHourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.
+	bool mb_WeatherFileOpen;
+	long ml_ReadCount;  // resource file reads through the year, 1 to 8760
+	long ml_HourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.
 	makeupAlgorithmType me_makeup; // { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }; //}
+	int mi_ReservoirReplacements;	// how many times the reservoir has been 'replaced' (holes redrilled)
+	double md_WorkingTemperatureC;
+	double md_LastProductionTemperatureC; // store the last temperature before calculating new one
+	double md_YearsAtNextTimeStep; // for EGS calcs
+	double md_TimeOfLastReservoirReplacement; // for EGS calcs
 
 	// functions
-	bool TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent);
-	bool IsHourly() { return (mo_geo_in.mi_MakeupCalculationsPerYear == 8760) ? true : false; }
-	bool readyToAnalyze(void);
-	bool inputErrors(void);
-	bool determineMakeupAlgorithm();
+	bool IsHourly();
+	double GetPumpWorkKW(void);
+	void ReplaceReservoir(void);
+	double GetTemperatureGradient(void);	// degrees C per km
+	double GetResourceTemperatureC(void);	// degrees C
+	double GetResourceDepthM(void);			// meters
+	double GetAmbientTemperatureC(conversionTypes ct = NO_CONVERSION_TYPE);
+	double calcEGSTimeStar(double tempC);
+	double EGSAverageWaterTemperatureC2(void);
+
 	bool OpenWeatherFile(const char * fn);
 	bool ReadWeatherForTimeStep(const bool bHourly, unsigned int timeStep);
 	bool ReadNextLineInWeatherFile(void);
 
+	bool determineMakeupAlgorithm();
+	bool inputErrors(void);
+	bool readyToAnalyze(void);
+
+	bool TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent);
+
 };
 
+/*
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Implementation of CGETEMGlobals2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1298,7 +1274,9 @@ CGETEMGlobals2::CGETEMGlobals2(void)
 }
 
 double CGETEMGlobals2::GetSiPrecipitationTemperatureF(double geoFluidTempF)
-{ return (geoFluidTempF >= 356) ? oMinimumTemperatureQuartz.evaluatePolynomial(geoFluidTempF) : oMinimumTemperatureChalcedony.evaluatePolynomial(geoFluidTempF); }
+{
+	return (geoFluidTempF >= 356) ? oMinimumTemperatureQuartz.evaluatePolynomial(geoFluidTempF) : oMinimumTemperatureChalcedony.evaluatePolynomial(geoFluidTempF);
+}
 
 double CGETEMGlobals2::EGSWaterDensity(double tempC) { return 1 / oEGSDensity.evaluatePolynomial(tempC); }			// kg/m^3
 double CGETEMGlobals2::EGSSpecificHeat(double tempC) { return oEGSSpecificHeat.evaluatePolynomial(tempC) * 1000; }	// J/kg-C
@@ -1366,7 +1344,7 @@ double CGETEMGlobals2::GetFlashTemperature(double pressurePSI)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CGeothermalFluid2 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation of CGeothermalFluid2
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CGeothermalFluid2::CGeothermalFluid2(void)
 {	// constructor: initialize member variables and objects
@@ -1380,7 +1358,6 @@ void CGeothermalFluid2::init(const CGeothermalConstants2 &enthalpyConstants, con
 	moEntropyConstants = entropyConstants;
 }
  
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation of CGeoFluidContainer2
@@ -1404,9 +1381,8 @@ double CGeoFluidContainer2::GetAEForFlashBTU(double tempHighF, double tempLowF)
 	return (moFlashGeothermalFluid.enthalpy(tempHighF) - moAmbientGeothermalFluid.enthalpy(tempLowF)) - ((tempLowF + 460) * (moFlashGeothermalFluid.entropy(tempHighF) - moAmbientGeothermalFluid.entropy(tempLowF)));
 }
 
-/*
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CGeoHourlyBaseInputs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation of CGeoHourlyBaseInputs
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CGeoHourlyBaseInputs::CGeoHourlyBaseInputs(void)
 {
@@ -1528,39 +1504,6 @@ CGeoHourlyBaseInputs::CGeoHourlyBaseInputs(void)
 	m_pbp.P_ref = 0;
 	mcFileName = NULL;
 }
-
-
-double CGeoHourlyBaseInputs::GetAmbientTemperatureC(conversionTypes ct)
-{
-	if (ct == NO_CONVERSION_TYPE) ct = cst;
-	return (ct == BINARY) ? DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * mdTemperatureWetBulbC) + 5.1772 ;
-
-}
-
-
-double CGeoHourlyBaseInputs::GetTemperatureGradient(void) // degrees C per km
-{	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
-	if (this->rt == HYDROTHERMAL) { return ((mdTemperatureResourceC - GetAmbientTemperatureC(BINARY))/mdResourceDepthM)*1000; }
-	return ((mdTemperatureResourceC - mdTemperatureEGSAmbientC)/mdResourceDepthM)*1000;
-	//return mdEGSResourceTemperatureGradient; 
-}
-
-
-double CGeoHourlyBaseInputs::GetResourceTemperatureC(void) // degrees C
-{
-	if ( (this->rt == EGS) && (dc == DEPTH) ) return ((mdResourceDepthM/1000) * GetTemperatureGradient()) + mdTemperatureEGSAmbientC;
-	return mdTemperatureResourceC;
-}
-
-
-double CGeoHourlyBaseInputs::GetResourceDepthM(void) // meters
-{
-	if ( (this->rt == EGS) && (dc == TEMPERATURE) ) return 1000 * (mdTemperatureResourceC - mdTemperatureEGSAmbientC) / GetTemperatureGradient();
-	return mdResourceDepthM;
-}
-
-
-
 
 double CGeoHourlyBaseInputs::injectionTemperatureC() // calculate injection temperature in degrees C
 {	// Plant design temp AND resource temp have to be Set correctly!!!
@@ -1978,12 +1921,7 @@ double CFlashBrineEffectiveness::pumpWorkFromSteamFlow(double flow)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CMakeupAlgorithm::CMakeupAlgorithm()
 {
-	miReservoirReplacements = 0; 
-	mdWorkingTemperatureC=0; 
 	moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0);  // by default, load Binary(EGS) secondLawConstants - let flash over write them
-	m_bWeatherFileOpen = false;
-	m_lReadCount = 0;
-	m_lHourCount = 0;
 }
 
 
@@ -2075,15 +2013,6 @@ bool CEGSMakeup::canReplaceReservoir(double dTimePassedInYears)
 	return CMakeupAlgorithm::canReplaceReservoir(dTimePassedInYears);
 }
 
-void CEGSMakeup::replaceReservoir(void)
-{
-	miReservoirReplacements++; 
-	mdWorkingTemperatureC = mpGBI->GetResourceTemperatureC(); 
-	mdLastProductionTemperatureC = mdWorkingTemperatureC; 
-	if (mdYearsAtNextTimeStep > 0) mdTimeOfLastReservoirReplacement = mdYearsAtNextTimeStep - (mpGBI->EGSTimeStar() / DAYS_PER_YEAR);
-}
-
-
 double CEGSMakeup::plantBrineEfficiency(void)
 {
     mdCurrentEfficiency = maxSecondLawEfficiency() * fractionOfMaxEfficiency();
@@ -2097,44 +2026,111 @@ double CEGSMakeup::newInjectionTemperatureC()
 	double tempSILimitC = FarenheitToCelcius(mpGBI->m_oGG.GetSiPrecipitationTemperatureF(LastProducitonTemperatureF()));
 	return (tempBrineEfficiencyC >= tempSILimitC) ? tempBrineEfficiencyC : tempSILimitC;
 }
-
-
 */
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CGeoHourlyAnalysis //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//******************************************************************************************************************************************************************************
+//******************************************************************************************************************************************************************************
+// Implementation of CGeoHourlyAnalysis
+//******************************************************************************************************************************************************************************
+//******************************************************************************************************************************************************************************
 CGeothermalAnalyzer::CGeothermalAnalyzer(void)
 {
-	m_fLastIntervalDone = 0;
+	mf_LastIntervalDone = 0;
 	init();
 }
 
 CGeothermalAnalyzer::~CGeothermalAnalyzer(void)
 {
-	//if (moMA) delete moMA;
+	// delete anything?
 }
 
 void CGeothermalAnalyzer::init(void)
 {
-	//moMA = NULL;
 	me_makeup = NO_MAKEUP_ALGORITHM;
-	m_strErrMsg = "";
+	ms_ErrorString = "";
+	mb_WeatherFileOpen = false;
+	ml_ReadCount = 0;
+	ml_HourCount = 0;
+	mi_ReservoirReplacements = 0; 
+	md_WorkingTemperatureC=0; 
+	md_YearsAtNextTimeStep=0;
+	md_TimeOfLastReservoirReplacement=0;
 
 	// make sure the pump work calculator and flash brine effectiveness calculator have a pointer to the base inputs
 	//moFBE.init(this); 
 	//moPPC.init(this);
 }
 
+bool CGeothermalAnalyzer::IsHourly()
+{
+	return (mo_geo_in.mi_MakeupCalculationsPerYear == 8760) ? true : false;
+}
+
+double CGeothermalAnalyzer::GetPumpWorkKW(void)
+{
+	return (mo_geo_in.mb_CalculatePumpWork) ? /*GetPumpWorkWattHrPerLb() * flowRateTotal()*/5 / 1000.0 : mo_geo_in.md_UserSpecifiedPumpWorkKW;
+}
+
+void CGeothermalAnalyzer::ReplaceReservoir(void)
+{
+	mi_ReservoirReplacements++; 
+	md_WorkingTemperatureC = GetResourceTemperatureC(); 
+
+	if(me_makeup = MA_EGS)
+	{
+		md_LastProductionTemperatureC = md_WorkingTemperatureC; 
+		if (md_YearsAtNextTimeStep > 0) md_TimeOfLastReservoirReplacement = md_YearsAtNextTimeStep - (calcEGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
+	}
+}
+
+double CGeothermalAnalyzer::GetTemperatureGradient(void) // degrees C per km
+{	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
+	if (mo_geo_in.me_rt == HYDROTHERMAL) { return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY))/mo_geo_in.md_ResourceDepthM)*1000; }
+	return ((mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC)/mo_geo_in.md_ResourceDepthM)*1000;
+}
+
+double CGeothermalAnalyzer::GetResourceTemperatureC(void) // degrees C
+{
+	if ( (mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH) ) return ((mo_geo_in.md_ResourceDepthM/1000) * GetTemperatureGradient()) + mo_geo_in.md_TemperatureEGSAmbientC;
+	return mo_geo_in.md_TemperatureResourceC;
+}
+
+double CGeothermalAnalyzer::GetResourceDepthM(void) // meters
+{
+	if ( (mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE) ) return 1000 * (mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / GetTemperatureGradient();
+	return mo_geo_in.md_ResourceDepthM;
+}
+
+double CGeothermalAnalyzer::GetAmbientTemperatureC(conversionTypes ct)
+{
+	if (ct == NO_CONVERSION_TYPE) ct = mo_geo_in.me_ct;
+	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * geothermal::WET_BULB_TEMPERATURE_FOR_FLASH_CALCS) + 5.1772 ;
+}
+
+
+
+double CGeothermalAnalyzer::calcEGSTimeStar(double tempC)
+{
+	return 1; // (pow(GetEGSThermalConductivity() * EGSFractureSurfaceArea()/(27 * m_oGG.EGSWaterDensity(tempC) * m_oGG.EGSSpecificHeat(tempC) * EGSFlowPerFracture(tempC)),2) / EGSAlpha()) + EGSLengthOverVelocity(tempC);
+}
+
+double CGeothermalAnalyzer::EGSAverageWaterTemperatureC2(void)
+{
+	return (/*injectionTemperatureC() + */GetResourceTemperatureC())/2; // degrees C (used in [6Bb.Makeup-EGS HX ].X35 to calc time*
+}
+
 bool CGeothermalAnalyzer::OpenWeatherFile(const char * fn)
 {
-	m_bWeatherFileOpen = false;
-	m_lReadCount = 0;
+	mb_WeatherFileOpen = false;
+	ml_ReadCount = 0;
 	if (!m_wf.open(fn))
-		m_strErrMsg = "Could not open the weather file: " + std::string(fn);
+		ms_ErrorString = "Could not open the weather file: " + std::string(fn);
 	else
-		m_bWeatherFileOpen = true;
+		mb_WeatherFileOpen = true;
 
-	return m_bWeatherFileOpen;
+	return mb_WeatherFileOpen;
 }
 
 // Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
@@ -2148,7 +2144,7 @@ bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int time
 	double hours = util::hours_in_month(month);
 	if (hours==0)
 	{
-		m_strErrMsg = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
+		ms_ErrorString = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
 		return false;
 	}
 
@@ -2171,20 +2167,19 @@ bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int time
 // Read the next line from weather file; rewind file if passed the end; assumes 8760 hour weather file;
 bool CGeothermalAnalyzer::ReadNextLineInWeatherFile(void)
 {
-	
-	if (m_lReadCount >= 8760)
+	if (ml_ReadCount >= 8760)
 	{
 		m_wf.rewind();
-		m_lReadCount = 0;
+		ml_ReadCount = 0;
 	}
 
 	if (!m_wf.read())
 	{
-		m_strErrMsg = "Could not read  line " + util::to_string((int)m_lReadCount+1) + " in the weather file.";
+		ms_ErrorString = "Could not read  line " + util::to_string((int)ml_ReadCount+1) + " in the weather file.";
 		return false;
 	}
-	m_lReadCount++;
-	m_lHourCount++;
+	ml_ReadCount++;
+	ml_HourCount++;
 
 	return true;
 }
@@ -2196,9 +2191,9 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
     // does NOT mean that the model will use the results from the EGS makeup sheet.
 	me_makeup = NO_MAKEUP_ALGORITHM;
     
-	if ((mo_geo_in.me_rt != HYDROTHERMAL) && (mo_geo_in.me_rt != EGS)) m_strErrMsg = "Reource type not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
-	if ((mo_geo_in.me_ct != BINARY) && (mo_geo_in.me_ct != FLASH))   m_strErrMsg = "Conversion system not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
-	if (m_strErrMsg != "") return false;
+	if ((mo_geo_in.me_rt != HYDROTHERMAL) && (mo_geo_in.me_rt != EGS)) ms_ErrorString = "Reource type not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
+	if ((mo_geo_in.me_ct != BINARY) && (mo_geo_in.me_ct != FLASH))   ms_ErrorString = "Conversion system not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
+	if (ms_ErrorString != "") return false;
 
     if (mo_geo_in.me_tdm == ENTER_RATE)
 	{ // if user has chosen to enter the temperature decline rate, then the makeup is calculated either with the binary or flash method.
@@ -2209,7 +2204,7 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
             if ((mo_geo_in.me_ft > NO_FLASH_SUBTYPE) && (mo_geo_in.me_ft <= DUAL_FLASH_WITH_TEMP_CONSTRAINT))
                 me_makeup = MA_FLASH;
             else
-                m_strErrMsg = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm");
+                ms_ErrorString = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm");
 		}
 	}
     else if (mo_geo_in.me_tdm == CALCULATE_RATE)
@@ -2219,13 +2214,13 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
             if (mo_geo_in.me_ct == BINARY)
                 me_makeup = MA_EGS;
             else
-                m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for EGS resources using a flash plant");
+                ms_ErrorString = ("Fluid temperature decline rate cannot be calculated for EGS resources using a flash plant");
 		}
 		else
-            m_strErrMsg = ("Fluid temperature decline rate cannot be calculated for hydrothermal resources");
+            ms_ErrorString = ("Fluid temperature decline rate cannot be calculated for hydrothermal resources");
 	}
 	else
-		m_strErrMsg = ("Error: Fluid temperature decline method not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.");
+		ms_ErrorString = ("Error: Fluid temperature decline method not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.");
 
     return ( me_makeup != NO_MAKEUP_ALGORITHM );
 }
@@ -2233,38 +2228,38 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
 
 bool CGeothermalAnalyzer::inputErrors(void)
 {
-	if (!m_strErrMsg.empty()) return true;
-	if (mo_geo_in.mi_ProjectLifeYears == 0) { m_strErrMsg = ("Project life was zero."); return true; }
-	if (mo_geo_in.mi_ModelChoice < 0) { m_strErrMsg = ("The model choice was not set."); return true; }
+	if (!ms_ErrorString.empty()) return true;
+	if (mo_geo_in.mi_ProjectLifeYears == 0) { ms_ErrorString = ("Project life was zero."); return true; }
+	if (mo_geo_in.mi_ModelChoice < 0) { ms_ErrorString = ("The model choice was not set."); return true; }
 
-	//if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { m_strErrMsg = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
+	//if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { ms_ErrorString = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
-	//if (mdPotentialResourceMW < PlantSizeKW()/1000) { m_strErrMsg = ("Resource potential must be greater than the gross plant output."); return true; }
+	//if (mdPotentialResourceMW < PlantSizeKW()/1000) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
 
-	//if ( (this->rt != EGS) && (this->pc == SIMPLE_FRACTURE) ) { m_strErrMsg = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
+	//if ( (this->rt != EGS) && (this->pc == SIMPLE_FRACTURE) ) { ms_ErrorString = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 
-	//if ( (this->rt != EGS) && (this->tdm == CALCULATE_RATE) ) { m_strErrMsg = ("Temperature decline can only be calculated for EGS resources."); return true; }
+	//if ( (this->rt != EGS) && (this->tdm == CALCULATE_RATE) ) { ms_ErrorString = ("Temperature decline can only be calculated for EGS resources."); return true; }
 
 	//if ((tdm == ENTER_RATE) && (mdTemperatureDeclineRate < 0))
-	//	{ m_strErrMsg = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0"); return true; }
+	//	{ ms_ErrorString = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0"); return true; }
 
 	//if ( (GetTemperatureRatio() > MAX_TEMP_RATIO) && ReturnGETEMResults() )
-	//	{ m_strErrMsg = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true; }
+	//	{ ms_ErrorString = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true; }
 
 	//if ( this->netBrineEffectiveness() == 0 ) // this will cause a division by zero error
-	//	{ m_strErrMsg = ("Inputs led to a divide by zero error.  Pump work = Plant output, so the net efficiency is zero."); return true; }
+	//	{ ms_ErrorString = ("Inputs led to a divide by zero error.  Pump work = Plant output, so the net efficiency is zero."); return true; }
 
 	//if ( this->netBrineEffectiveness() < 0 )
-	//	{ m_strErrMsg = ("Inputs lead to required pump energy being greater than the plant output."); return true; }
+	//	{ ms_ErrorString = ("Inputs lead to required pump energy being greater than the plant output."); return true; }
 
 
 	//if (availableEnergyBinary() == 0)
-	//	{ m_strErrMsg = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
+	//	{ ms_ErrorString = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
 
 	//if (m_pbp.P_ref == 0)
-	//	{ m_strErrMsg = ("The power block parameters were not initialized."); return true;}
+	//	{ ms_ErrorString = ("The power block parameters were not initialized."); return true;}
 
-	if (!m_strErrMsg.empty()) return true;
+	if (!ms_ErrorString.empty()) return true;
 	return false;
 }
 
@@ -2282,7 +2277,7 @@ bool CGeothermalAnalyzer::readyToAnalyze()
 		 !mo_geo_out.maf_timestep_power || !mo_geo_out.maf_timestep_test_values || !mo_geo_out.maf_timestep_pressure || !mo_geo_out.maf_timestep_dry_bulb || !mo_geo_out.maf_timestep_wet_bulb )
 
 	{
-		m_strErrMsg = "One of the output arrays was not initialized in the geothermal hourly model.";
+		ms_ErrorString = "One of the output arrays was not initialized in the geothermal hourly model.";
 		return false;
 	}
 
@@ -2306,7 +2301,7 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 	bool bCanReplaceReservoir = false;
     
     // Initialize
-//    moMA->replaceReservoir();
+    ReplaceReservoir();
 
 	// Go through time step (hours or months) one by one
     //for (unsigned int iElapsedTimeSteps = 0;  iElapsedTimeSteps < analysisTimeSteps();  iElapsedTimeSteps++)
@@ -2331,7 +2326,7 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 					// Error check
 					if (iElapsedTimeSteps >= mo_geo_in.mi_TotalMakeupCalculations )
 					{
-						m_strErrMsg = "Time step exceded the array size in CGeoHourlyAnalysis::analyze().";
+						ms_ErrorString = "Time step exceded the array size in CGeoHourlyAnalysis::analyze().";
 						return false;
 					}
 
@@ -2362,7 +2357,7 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 					fMonthlyPowerTotal += mo_geo_out.maf_timestep_power[iElapsedTimeSteps];
 		
 					//dElapsedTimeInYears = year + util::percent_of_year(month,hour);
-					if (!m_strErrMsg.empty()) { return false; }
+					if (!ms_ErrorString.empty()) { return false; }
 					iElapsedTimeSteps++;
 					dElapsedTimeInYears = iElapsedTimeSteps * (1.0/mo_geo_in.mi_MakeupCalculationsPerYear);  //moved to be after iElapsedTimeSteps++;
 				}
@@ -2391,7 +2386,7 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 		}//months
 	}//years
 
-	if (!m_strErrMsg.empty() ) return false;
+	if (!ms_ErrorString.empty() ) return false;
 	//mbAnalysisRequired = false;
 	return true;
 }
@@ -2415,13 +2410,13 @@ bool CGeothermalAnalyzer::TimeToUpdateInterface(float fPercentDone, float fNotif
 	
 	if (fPercentDone==0)
 	{
-		m_fLastIntervalDone = 0;
+		mf_LastIntervalDone = 0;
 		return true;
 	}
 
-	if (fPercentDone >= (m_fLastIntervalDone+fNotificationIntervalInPercent) )
+	if (fPercentDone >= (mf_LastIntervalDone+fNotificationIntervalInPercent) )
 	{
-		m_fLastIntervalDone += fNotificationIntervalInPercent;
+		mf_LastIntervalDone += fNotificationIntervalInPercent;
 		return true;			
 	}
 

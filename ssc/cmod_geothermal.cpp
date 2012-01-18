@@ -189,7 +189,7 @@ public:
 			throw general_error("could not translate schedule for time-of-use rate");
 
 
-		// set the geothermal model inputs
+		// set the geothermal model inputs -------------------------------------
 		SGeothermal_Inputs geo_inputs;
 		geo_inputs.md_DesiredSalesCapacityKW = as_double("nameplate");
 		geo_inputs.md_NumberOfWells = as_double("num_wells");
@@ -198,9 +198,9 @@ public:
 		else
 			geo_inputs.me_cb = NUMBER_OF_WELLS;
 
-		if ( as_integer("conversion_type") == 1)
+		if ( as_integer("conversion_type") == 0)
 			geo_inputs.me_ct = BINARY;
-		else if ( as_integer("conversion_type") == 2)
+		else if ( as_integer("conversion_type") == 1)
 			geo_inputs.me_ct = FLASH;
 
 		switch ( as_integer("conversion_subtype") )
@@ -215,16 +215,12 @@ public:
 
 		// power block parameters and initial inputs
 		geo_inputs.mc_WeatherFileName = as_string("file_name");
-
-		// HOW DO I USE THE POWER BLOCK PARAMETERS, INPUTS????????????????????????
-		//oGeo.SetPowerBlockParameters(pbp);
-		//oGeo.SetPowerBlockInputs(pbInputs);
 		geo_inputs.mia_tou = tou;
 	
 		// temperature decline
-		if ( as_integer("decline_type") == 1 )
+		if ( as_integer("decline_type") == 0 )
 			geo_inputs.me_tdm = ENTER_RATE;
-		else if ( as_integer("decline_type") == 2 )
+		else if ( as_integer("decline_type") == 1 )
 			geo_inputs.me_tdm = CALCULATE_RATE;
 		geo_inputs.md_TemperatureDeclineRate = as_double("temp_decline_rate")/100;
 		geo_inputs.md_MaxTempDeclineC = as_double("temp_decline_max");
@@ -246,9 +242,9 @@ public:
 
 		//resource characterization
 		geo_inputs.md_PotentialResourceMW = as_double("resource_potential");
-		if ( as_integer("resource_type") == 1 )
+		if ( as_integer("resource_type") == 0 )
 			geo_inputs.me_rt =  HYDROTHERMAL;
-		else if ( as_integer("resource_type") == 2 )
+		else if ( as_integer("resource_type") == 1 )
 			geo_inputs.me_rt = EGS;
 		geo_inputs.md_ResourceDepthM = as_double("resource_depth");
 		geo_inputs.md_TemperatureResourceC = as_double("resource_temp");
@@ -256,6 +252,7 @@ public:
 		geo_inputs.md_TemperaturePlantDesignC = as_double("design_temp");
 
 		//reservoir properties
+		geo_inputs.md_TemperatureEGSAmbientC = 15.0;
 		geo_inputs.md_EGSThermalConductivity = as_double("rock_thermal_conductivity");
 		geo_inputs.md_EGSSpecificHeatConstant = as_double("rock_specific_heat");
 		geo_inputs.md_EGSRockDensity = as_double("rock_density");
@@ -316,7 +313,7 @@ public:
 		if (RunGeothermalAnalysis( my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs ) != 0)
 			throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
 
-		//assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
+		assign("pump_work", var_data((ssc_number_t) geo_outputs.md_PumpWork ) );
 
 	}
 };

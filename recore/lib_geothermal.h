@@ -8,8 +8,8 @@
 #include "lib_powerblock.h"
 
 enum calculationBasis { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
-enum resourceTypes { NO_RESOURCE_TYPE, HYDROTHERMAL, EGS };
 enum conversionTypes { NO_CONVERSION_TYPE, BINARY, FLASH }; //}
+enum resourceTypes { NO_RESOURCE_TYPE, HYDROTHERMAL, EGS };
 enum flashTypes { NO_FLASH_SUBTYPE, SINGLE_FLASH_NO_TEMP_CONSTRAINT, SINGLE_FLASH_WITH_TEMP_CONSTRAINT, DUAL_FLASH_NO_TEMP_CONSTRAINT, DUAL_FLASH_WITH_TEMP_CONSTRAINT };
 enum tempDeclineMethod {NO_TEMPERATURE_DECLINE_METHOD, ENTER_RATE, CALCULATE_RATE };
 enum makeupAlgorithmType { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }; //}
@@ -33,9 +33,10 @@ struct SGeothermal_Inputs
 		md_PotentialResourceMW = md_ResourceDepthM = md_TemperatureResourceC = md_TemperaturePlantDesignC = md_EGSThermalConductivity = md_EGSSpecificHeatConstant = 0.0;
 		md_EGSRockDensity = md_ReservoirDeltaPressure = md_ReservoirWidthM = md_ReservoirHeightM = md_ReservoirPermeability = md_DistanceBetweenProductionInjectionWellsM = 0.0;
 		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = 0.0;
+		md_TemperatureEGSAmbientC = 0.0;
 	}
 
-	calculationBasis me_cb;
+	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
 	conversionTypes me_ct;
 	flashTypes me_ft;
 	tempDeclineMethod me_tdm;
@@ -68,6 +69,7 @@ struct SGeothermal_Inputs
 	double md_PotentialResourceMW;							// MW, default = 200 MW, determines how many times reservoir can be replaced
 	double md_ResourceDepthM;								// meters, default 2000
 	double md_TemperatureResourceC;							// degrees C, default 200
+	double md_TemperatureEGSAmbientC;						// Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
 	double md_TemperaturePlantDesignC;						// degrees C, default 225, only used for EGS
 	double md_EGSThermalConductivity;						// default 259,200 Joules per m-day-C, [2B.Resource&Well Input].D240
 	double md_EGSSpecificHeatConstant;						// default 950 Joules per kg-C, [2B.Resource&Well Input].D241
@@ -91,10 +93,12 @@ struct SGeothermal_Outputs
 {
 	SGeothermal_Outputs()
 	{
+		md_PumpWork = 0;
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 	}
 
+	double md_PumpWork;
 	float * maf_ReplacementsByYear;							// array of ones and zero's over time, ones representing years where reservoirs are replaced
 	float * maf_monthly_resource_temp;
 	float * maf_monthly_power;
