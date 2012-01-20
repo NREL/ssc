@@ -84,6 +84,7 @@ struct SGeothermal_Inputs
 	double md_EGSNumberOfFractures;							// default 6
 	double md_EGSFractureWidthM;							// default 175 m
 	double md_EGSFractureAngle;								// default 15 degrees
+	double md_RatioInjectionToProduction;					// used in non-cost equation, so it needs to be an input
 
 	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
