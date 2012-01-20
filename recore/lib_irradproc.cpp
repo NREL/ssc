@@ -267,7 +267,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 	Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
 
 	List of Parameters Passed to Function:
-	mode   = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking
+	mode   = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking
 	tilt   = tilt angle of surface from horizontal in degrees (mode 0),
 				or tilt angle of tracker axis from horizontal in degrees (mode 1),
 				MUST BE FROM 0 to 90 degrees.
@@ -295,9 +295,10 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 
 	switch ( mode )
 		{
-		case 0:                 /* Fixed-Tilt */
+		case 0:              /* Fixed-Tilt, */
+		case 3:              /* or Azimuth Axis*/
 			tilt = tilt*DTOR;    /* Change tilt and surface azimuth to radians */
-			sazm = sazm*DTOR;
+			sazm = (mode==0) ? sazm*DTOR : azm; /* either fixed surface azimuth or solar azimuth */
 			arg = sin(zen)*cos(azm-sazm)*sin(tilt) + cos(zen)*cos(tilt);
 			rot = 0;
 			if( arg < -1.0 )
@@ -694,7 +695,7 @@ int irrad::check()
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt < 0 || delt > 1) return -1;
 	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
 	if ( radmode < 0 || radmode > 1 || skymodel < 0 || skymodel > 2 ) return -3;
-	if ( track < 0 || track > 2 ) return -4;
+	if ( track < 0 || track > 3 ) return -4;
 	if ( radmode == 0 && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
 	if ( radmode == 1 && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
 	if ( alb < 0 || alb > 1 ) return -7;
