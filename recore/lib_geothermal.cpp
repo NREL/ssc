@@ -23,6 +23,16 @@ const double WATER_LOSS_PERCENT = 0.02;							// 2%
 const double EGS_TIME_INPUT = 3.076;							// years, not really explained - user is supposed to vary input until a calculated value equals plant design temp [7C.EGS Subsrfce HX].D42 (fTimeStar)
 const double FRACTURE_LENGTH_ADJUSTMENT = 2;					// used for one instance of where the EGS fracture length is used.  All others use the original fracture length
 const double DELTA_PRESSURE_HP_FLASH_PSI = 2.2;
+const double DELTA_TEMPERATURE_CWF = 30.0;						// degrees F
+const double TEMPERATURE_PINCH_PT_CONDENSER_F = 10.0;
+const double TEMPERATURE_PINCH_PT_COOLING_TOWER_F = 15;
+const double PRESSURE_CONDENSER_NCG_PARTIAL_INHG = 0.5;			// inches of Mercury
+const double GEOTHERMAL_FLUID_FOR_FLASH = 1000;					// D67 in "5C.Flash-Steam Plant Perf" [was an integer, not sure why]
+const double EFFICIENCY_TURBINE = 0.825;
+const ncgRemovalTypes NCG_REMOVAL_TYPE = JET;
+const int NUMBER_OF_COOLING_STAGES = 3;							// 1,2, or 3
+
+
 
 
 
@@ -278,6 +288,65 @@ double gauss_error_function(const double &x)
 	double EGSSpecificHeat(double tempC) { return oEGSSpecificHeat.evaluate(tempC) * 1000; }	// J/kg-C
 
 
+	double GetDHa(double pressurePSI)
+	{
+		if (pressurePSI > 1500)
+			return oDHaOver1500.evaluate(pressurePSI);
+		else if (pressurePSI > 150)
+			return oDHa150To1500.evaluate(pressurePSI);
+		else
+			return oDHaUnder150.evaluate(pressurePSI);
+	}
+
+	double GetDHb(double pressurePSI)
+	{
+		if (pressurePSI > 1500)
+			return oDHbOver1500.evaluate(pressurePSI);
+		else if (pressurePSI > 150)
+			return oDHb150To1500.evaluate(pressurePSI);
+		else
+			return oDHbUnder150.evaluate(pressurePSI);
+	}
+
+	double GetFlashEnthalpyF(double temperatureF)
+	{
+		if (temperatureF > 675)
+			return  oFlashEnthalpyFOver675.evaluate(temperatureF);
+		else if (temperatureF > 325)
+			return  oFlashEnthalpyF325To675.evaluate(temperatureF);
+		else if (temperatureF > 125)
+			return  oFlashEnthalpyF125To325.evaluate(temperatureF);
+		else 
+			return  oFlashEnthalpyFUnder125.evaluate(temperatureF);
+	}
+
+	double GetFlashEnthalpyG(double temperatureF)
+	{
+		if (temperatureF > 675)
+			return  oFlashEnthalpyGOver675.evaluate(temperatureF);
+		else if (temperatureF > 325)
+			return  oFlashEnthalpyG325To675.evaluate(temperatureF);
+		else if (temperatureF > 125)
+			return  oFlashEnthalpyG125To325.evaluate(temperatureF);
+		else 
+			return  oFlashEnthalpyGUnder125.evaluate(temperatureF);
+	}
+
+	double GetFlashTemperature(double pressurePSI)
+	{
+		if (pressurePSI > 1000)
+			return  oFlashTemperatureOver1000.evaluate(pressurePSI);
+		else if (pressurePSI > 200)
+			return  oFlashTemperature200To1000.evaluate(pressurePSI);
+		else if (pressurePSI > 20)
+			return  oFlashTemperature20To200.evaluate(pressurePSI);
+		else if (pressurePSI > 2)
+			return  oFlashTemperature2To20.evaluate(pressurePSI);
+		else 
+			return  oFlashTemperatureUnder2.evaluate(pressurePSI);
+	}
+
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Declaration of CGeoFluidContainer2 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -302,7 +371,6 @@ double gauss_error_function(const double &x)
 		}
 
 	};
-
 	CGeoFluidContainer2 oGFC;
 
 
@@ -326,13 +394,9 @@ public:
 	double GetDHa(double pressurePSI);
 	double GetDHb(double pressurePSI);
 
-	double GetFlashEnthalpyF(double temperatureF);
-	double GetFlashEnthalpyG(double temperatureF);
-	double GetFlashTemperature(double pressurePSI);
 
 	double additionalCWPumpHeadSurface(void) { return 10 * 144 / 62.4; }
 	int injectionPumpingCycles(void) { return 6; }
-	int mGeothermalFluidForFlash(void) { return 1000; } // D67 in "5C.Flash-Steam Plant Perf"
 
 };
 
@@ -604,21 +668,14 @@ public:
 	double waterLossFractionOfGF(void);
 
 	condenserTypes mCondenserType;
-	ncgRemovalTypes mNCGRemovalType;
 	double mdNCGLevelPPM;
 	double mdDeltaPressureLPFlashPSI;
-	double mdEfficiencyTurbine;
 	double mdEfficiencyGenerator;
 	double mdBaseCWPumpHeadFt;
-	double mdDeltaTemperatureCWF;
-	double mdTemperaturePinchPtCondenserF;
-	double mdTemperaturePinchPtCoolingTowerF;
-	int miNumberOfCoolingStages;
 	double mdMoleWeightNCG;
 	double mdMoleWeightH2O;
 	double mdEfficiencyPump;
 	double mdEfficencyVacuumPump;
-	double mdPressureCondenserNCGPartialInHG;
 
 
 private:
@@ -626,7 +683,6 @@ private:
 
 	bool TempConstraint(void) { return ((mpGBI->ft == DUAL_FLASH_WITH_TEMP_CONSTRAINT) || (mpGBI->ft == SINGLE_FLASH_WITH_TEMP_CONSTRAINT)) ; }
 	int FlashCount(void) { return (mpGBI->ft >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1; }
-	double TemperatureWetBulbF(void) { return CelciusToFarenheit(mpGBI->mdTemperatureWetBulbC); }
 
 	
 	double mdFlashBrineEffectiveness;
@@ -634,9 +690,6 @@ private:
 	double mdPressureHPFlashPSI; // D29, D64
 	double mdPressureLPFlashPSI; // D30, D65
 
-	double temperatureCondF(void) { return TemperatureWetBulbF() + mdDeltaTemperatureCWF + mdTemperaturePinchPtCondenserF + mdTemperaturePinchPtCoolingTowerF; }	// D71 - deg F
-	double pressureSaturation(void) { return mpGBI->m_oGG.oPSatConstants.evaluate(temperatureCondF()); }												// D72 - psi
-	double pressureCondenser(void) { return pressureSaturation() + InHgToPsi(mdPressureCondenserNCGPartialInHG); }													// D74 - psi
 
 
 //////////////////////////////////////// Flash Pressures ///////////////////////////////////////////////////
@@ -657,23 +710,8 @@ private:
 
 
 //////////////////////////////////////// Turbine Output ///////////////////////////////////////////////////
-	double calculateDH(double pressureIn);
-	double calculateX(double enthalpyIn, double temperatureF);
 
-	double enthalpyPlantDesignTemp(void) { return mpGBI->m_oGG.GetFlashEnthalpyF(CelciusToFarenheit(mpGBI->GetTemperaturePlantDesignC())); }					// D69
-	double enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG);																			// I65-I80, I87-I102
 
-	// Turbine 1 - high pressure
-	double turbine1dHInitial(void) { return calculateDH(mdPressureHPFlashPSI - DELTA_PRESSURE_HP_FLASH_PSI); }														// I65
-	double turbine1TemperatureF(void) { return mpGBI->m_oGG.GetFlashTemperature(mdPressureHPFlashPSI); }														// D80
-	double turbine1EnthalpyF(void) { return  mpGBI->m_oGG.GetFlashEnthalpyF(turbine1TemperatureF()); }															// D81
-	double turbine1EnthalpyG(void) { return  mpGBI->m_oGG.GetFlashEnthalpyG(turbine1TemperatureF()); }															// D82
-	double turbine1DH(void) { return enthalpyChangeTurbine(turbine1dHInitial(), turbine1EnthalpyG()); }																// I80 - btu/lb
-	double turbine1HEx(void) { return turbine1EnthalpyG() - turbine1DH(); }																							// I81 - btu/lb
-	double turbine1X(void) { return calculateX(enthalpyPlantDesignTemp(), turbine1TemperatureF()); }																// D83 - %
-	double turbine1Steam(void) { return mpGBI->m_oGG.mGeothermalFluidForFlash() * turbine1X(); }																										// D85 - lb/hr
-	double turbine1NetSteam(void) { return turbine1Steam() - mForNCGRemoval(); }																					// I82 lb/hr
-	double turbine1OutputKWh(void) { return turbine1DH() * turbine1NetSteam() / 3413; }																				// I83 - kW/hr = (btu/lb) * (lb/hr) / (btu/kW)
 
 	// Turbine 2 - low pressure
 	double turbine2dHInitial(void) { return calculateDH(mdPressureLPFlashPSI - mdDeltaPressureLPFlashPSI); }														// I87
@@ -683,14 +721,14 @@ private:
 	double turbine2DH(void) { return enthalpyChangeTurbine(turbine2dHInitial(), turbine2EnthalpyG()); }																// I102 - btu/lb
 	double turbine2HEx(void) { return turbine2EnthalpyG() - turbine2DH(); }																							// I103 - btu/lb
 	double turbine2X(void) { return calculateX(turbine1EnthalpyF(), turbine2TemperatureF()); }																		// D91 %
-	double turbine2Steam(void) { return (FlashCount() == 2) ? mpGBI->m_oGG.mGeothermalFluidForFlash() * turbine2X() * (1-turbine1X()) : 0; }																						// I104, D93 - lb/hr
+	double turbine2Steam(void) { return (FlashCount() == 2) ? mpGBI->m_oGG.GEOTHERMAL_FLUID_FOR_FLASH() * turbine2X() * (1-turbine1X()) : 0; }																						// I104, D93 - lb/hr
 	double turbine2OutputKWh(void) { return turbine2DH() * turbine2Steam() / 3413; }																				// I105 - kW/hr
 
 
 //////////////////////////////////////// NCG Removal ///////////////////////////////////////////////////////////
-	double pTotal(void) { return (IMITATE_GETEM) ? pressureSaturation() + (mdPressureCondenserNCGPartialInHG * 0.49) : pressureCondenser(); } // calculated separately in spreadsheet, but mathematically equivalent to pressureCondenser					   D150,D74 - psi
-	double pRatio(void) { return exp(log(mpGBI->PRESSURE_AMBIENT_PSI / (pTotal()))/miNumberOfCoolingStages); }																// D151
-	double ncgFlowLbsPerHour(void) { return mpGBI->m_oGG.mGeothermalFluidForFlash() * this->mdNCGLevelPPM / 1000000; }										// D152 - lbs/hour
+	double pTotal(void) { return (IMITATE_GETEM) ? pressureSaturation() + (PRESSURE_CONDENSER_NCG_PARTIAL_INHG * 0.49) : pressureCondenser(); } // calculated separately in spreadsheet, but mathematically equivalent to pressureCondenser					   D150,D74 - psi
+	double pRatio(void) { return exp(log(mpGBI->PRESSURE_AMBIENT_PSI / (pTotal()))/NUMBER_OF_COOLING_STAGES); }																// D151
+	double ncgFlowLbsPerHour(void) { return mpGBI->m_oGG.GEOTHERMAL_FLUID_FOR_FLASH() * this->mdNCGLevelPPM / 1000000; }										// D152 - lbs/hour
 	double ncgFlowMolesPerHour(void) { return ncgFlowLbsPerHour() / mdMoleWeightNCG; }																				// D162... - moles/hr
 	double pSuction(int stage) { return pTotal() * pow(pRatio(),stage-1); }																							// D165, D214
 	double pInter(int stage,  std::string sErr);																																		// D156, D205, D253 - psi
@@ -702,8 +740,7 @@ private:
 	double AR(int stage) { return ((3.5879 * pow(prJet(stage),-2.1168)) + 0.1) * pow(suctionSteamRatio(stage),(-1.155 * pow(prJet(stage),-0.0453))); }				// D168, D217, D265
 	double ERd(int stage) { return (1.0035 * AR(stage) + 8.9374)* pow(suctionSteamRatio(stage),(2.9594* pow(AR(stage),-0.8458) + 0.99)); }							// D169, D218, D266
 	double ER(int st) { return ERd(st) * pow((((460 + mpGBI->m_oGG.GetFlashTemperature(mdPressureHPFlashPSI)) * moleWeightVent(st))/((temperatureCondF() + 460) * mdMoleWeightH2O)),0.5); } // D170, D219, D267
-	double steamFlow(int st) { return (st >= 3 && (mNCGRemovalType != JET || miNumberOfCoolingStages < 3)) ? 0 : totalVentFlow(st) / ER(st); }																						// D171, D220, D268 - lb/hr
-	double mForNCGRemoval(void);																																	// D302
+	double steamFlow(int st) { return (st >= 3 && (NCG_REMOVAL_TYPE != JET || NUMBER_OF_COOLING_STAGES < 3)) ? 0 : totalVentFlow(st) / ER(st); }																						// D171, D220, D268 - lb/hr
 
 	
 //////////////////////////////////////// CW Pump Power KW //////////////////////////////////////////////////////
@@ -715,7 +752,7 @@ private:
 	double cwPumpHead(void) { return mdBaseCWPumpHeadFt + deltaPressureCondenserFt(); }																				// D110 - ft
 	double overAllSteam(void) { return (this->FlashCount() == 2) ? turbine1NetSteam() + turbine2Steam() : turbine1NetSteam(); }										// D96
 	double qCondenser(void) { return overAllSteam() * (overAllHEx() - mpGBI->m_oGG.GetFlashEnthalpyF(temperatureCondF())); }									// D99
-	double cwFlow(void) { return qCondenser() / this->mdDeltaTemperatureCWF; }																						// D114
+	double cwFlow(void) { return qCondenser() / this->DELTA_TEMPERATURE_CWF; }																						// D114
 	double mainCWPumpPowerKW(void) { return pumpWorkKW(cwFlow(), cwPumpHead()); }																					// part of I116
 	
 
@@ -748,8 +785,8 @@ private:
 	double qRejectTotal(void) { return qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3); }																	// D303
 	double qRejectedTower(void) { return qCondenser() + qRejectTotal(); }																							// D101
 
-	double fanPowerCoeffA(void) { return -2.0814 * log(mdDeltaTemperatureCWF) + 10.6013; }																			// O95
-	double fanPowerCoeffB(void) { return -0.0188 * pow(mdDeltaTemperatureCWF,0.0232); }																				// P95
+	double fanPowerCoeffA(void) { return -2.0814 * log(DELTA_TEMPERATURE_CWF) + 10.6013; }																			// O95
+	double fanPowerCoeffB(void) { return -0.0188 * pow(DELTA_TEMPERATURE_CWF,0.0232); }																				// P95
 	double fanPower(void) { return fanPowerCoeffA() * exp(this->TemperatureWetBulbF() * fanPowerCoeffB()); }														// D103 - hp per MMBtu/hr
 	double fanPowerKW(void) { return HPtoKW(fanPower() * qRejectedTower() / 1000000); }																				// D105, I118
 
@@ -758,17 +795,17 @@ private:
 	double deltaPressureByStage(int st) { return pInter(st, mpGBI->m_strErrMsg) - pSuction(st); }																						// D173, D222, D270 - psi
 	double densityForVacuumPump(int st) { return pSuction(st) * moleWeightVent(st) /((temperatureCondF() + 460)*10.7316); }											// D166, D215, D263 - lb/ft^3
 	double vaccumPumpHead(int st) { return deltaPressureByStage(st) * 144 / densityForVacuumPump(st); }																// D175, D224, D272 - ft
-	double vacuumPumpWorkByStage(int st) { return (mNCGRemovalType == VAC_PUMP || (st == 3 && mNCGRemovalType == HYBRID)) ? pumpWorkKW(totalVentFlow(st),  vaccumPumpHead(st)) : 0; } // D178, D227, D275 - kW
+	double vacuumPumpWorkByStage(int st) { return (NCG_REMOVAL_TYPE == VAC_PUMP || (st == 3 && NCG_REMOVAL_TYPE == HYBRID)) ? pumpWorkKW(totalVentFlow(st),  vaccumPumpHead(st)) : 0; } // D178, D227, D275 - kW
 	double vacuumPumpingKW(void) { return vacuumPumpWorkByStage(1) + vacuumPumpWorkByStage(2) + vacuumPumpWorkByStage(3); }											// D307, I119
 
 
 //////////////////////////////////////// Condenser Injection Pump Power KW /////////////////////////////////////
 	double injectionDeltaP(void) { return (FlashCount() == 1) ? mdPressureHPFlashPSI - mpGBI->PRESSURE_AMBIENT_PSI : mdPressureLPFlashPSI - mpGBI->PRESSURE_AMBIENT_PSI; }		// D127 - psi (condensate injection delta pressure)
 	double injectionPumpHead(void) {return PSItoFT(injectionDeltaP()); }																							// D128 - ft
-	double injCoeffA(void) { return -0.0001769 * log(mdDeltaTemperatureCWF) + 0.0011083; }																			// R95
-	double injCoeffB(void) { return  0.0657628 * log(mdDeltaTemperatureCWF) - 0.4091309; }																			// S95
-	double injCoeffC(void) { return -6.7041142 * log(mdDeltaTemperatureCWF) + 44.3438937; }																			// T95
-	double injCoeffD(void) { return -0.0325112 * pow(mdDeltaTemperatureCWF,2) + (6.831236 * mdDeltaTemperatureCWF) - 64.6250943; }									// U95
+	double injCoeffA(void) { return -0.0001769 * log(DELTA_TEMPERATURE_CWF) + 0.0011083; }																			// R95
+	double injCoeffB(void) { return  0.0657628 * log(DELTA_TEMPERATURE_CWF) - 0.4091309; }																			// S95
+	double injCoeffC(void) { return -6.7041142 * log(DELTA_TEMPERATURE_CWF) + 44.3438937; }																			// T95
+	double injCoeffD(void) { return -0.0325112 * pow(DELTA_TEMPERATURE_CWF,2) + (6.831236 * DELTA_TEMPERATURE_CWF) - 64.6250943; }									// U95
 
 	double evaporativeWaterLoss(void) { return ( (injCoeffA() * pow(TemperatureWetBulbF(),3)) + (injCoeffB() * pow(TemperatureWetBulbF(),2)) + (injCoeffC() * TemperatureWetBulbF()) + injCoeffD()) * qRejectedTower() / 1000000; } // D129 - lb/hr (evaporative water loss)
 	double drift(void) { return 0.0005 * cwFlow(); }																												// D130
@@ -1076,6 +1113,30 @@ private:
 	double flowRateTotal(void);			// flow rate per well * number of wells
 	double GetNumberOfWells(void);
 	double GetPlantBrineEffectiveness(void);
+
+	// turbine output
+	double calculateX(double enthalpyIn, double temperatureF);
+	double enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG); // I65-I80, I87-I102
+
+	// Flash Turbine 1 - high pressure
+	double turbine1dHInitial(void); // I65
+	double turbine1TemperatureF(void); // D80
+	double turbine1EnthalpyF(void); // D81
+	double turbine1EnthalpyG(void); // D82
+	double turbine1DH(void); // I80 - btu/lb
+	double turbine1HEx(void); // I81 - btu/lb
+	double turbine1X(void); // D83 - %
+	double turbine1Steam(void); // D85 - lb/hr
+	double turbine1NetSteam(void); // I82 lb/hr
+	double turbine1OutputKWh(void); // I83 - kW/hr = (btu/lb) * (lb/hr) / (btu/kW)
+
+	double calculateDH(double pressureIn);
+	double TemperatureWetBulbF(void);
+	double temperatureCondF(void); // D71 - deg F
+	double pressureSaturation(void); // D72 - psi
+	double pressureCondenser(void); // D74 - psi
+
+
 	double FlashBrineEffectiveness(void);
 	void calculateFlashPressures(void);
 
@@ -1109,66 +1170,7 @@ double CGETEMGlobals2::GetSiPrecipitationTemperatureF(double geoFluidTempF)
 
 
 
-double CGETEMGlobals2::GetDHa(double pressurePSI)
-{
-	if (pressurePSI > 1500)
-		//return m_oGG.oDHaOver1500.evaluate(pressurePSI);
-		return oDHaOver1500.evaluate(pressurePSI);
-	else if (pressurePSI > 150)
-		//return m_oGG.oDHa150To1500.evaluate(pressurePSI);
-		return oDHa150To1500.evaluate(pressurePSI);
-	else
-		//return m_oGG.oDHaUnder150.evaluate(pressurePSI);
-		return oDHaUnder150.evaluate(pressurePSI);
-}
 
-double CGETEMGlobals2::GetDHb(double pressurePSI)
-{
-	if (pressurePSI > 1500)
-		return oDHbOver1500.evaluate(pressurePSI);
-	else if (pressurePSI > 150)
-		return oDHb150To1500.evaluate(pressurePSI);
-	else
-		return oDHbUnder150.evaluate(pressurePSI);
-}
-
-double CGETEMGlobals2::GetFlashEnthalpyF(double temperatureF)
-{
-	if (temperatureF > 675)
-		return  oFlashEnthalpyFOver675.evaluate(temperatureF);
-	else if (temperatureF > 325)
-		return  oFlashEnthalpyF325To675.evaluate(temperatureF);
-	else if (temperatureF > 125)
-		return  oFlashEnthalpyF125To325.evaluate(temperatureF);
-	else 
-		return  oFlashEnthalpyFUnder125.evaluate(temperatureF);
-}
-
-double CGETEMGlobals2::GetFlashEnthalpyG(double temperatureF)
-{
-	if (temperatureF > 675)
-		return  oFlashEnthalpyGOver675.evaluate(temperatureF);
-	else if (temperatureF > 325)
-		return  oFlashEnthalpyG325To675.evaluate(temperatureF);
-	else if (temperatureF > 125)
-		return  oFlashEnthalpyG125To325.evaluate(temperatureF);
-	else 
-		return  oFlashEnthalpyGUnder125.evaluate(temperatureF);
-}
-
-double CGETEMGlobals2::GetFlashTemperature(double pressurePSI)
-{
-	if (pressurePSI > 1000)
-		return  oFlashTemperatureOver1000.evaluate(pressurePSI);
-	else if (pressurePSI > 200)
-		return  oFlashTemperature200To1000.evaluate(pressurePSI);
-	else if (pressurePSI > 20)
-		return  oFlashTemperature20To200.evaluate(pressurePSI);
-	else if (pressurePSI > 2)
-		return  oFlashTemperature2To20.evaluate(pressurePSI);
-	else 
-		return  oFlashTemperatureUnder2.evaluate(pressurePSI);
-}
 
  
 
@@ -1306,23 +1308,16 @@ double CPumpPowerCalculator::calcInjectionPressure()
 CFlashBrineEffectiveness::CFlashBrineEffectiveness(void)
 {
 	mCondenserType = SURFACE;
-	mNCGRemovalType = JET;
 	mdNCGLevelPPM = 100;
 	mdPressureHPFlashPSI = 0;
 	mdPressureLPFlashPSI = 0;
 	mdDeltaPressureLPFlashPSI = 1.0;
-	mdEfficiencyTurbine = 0.825;
 	mdEfficiencyGenerator = 0.98;
 	mdBaseCWPumpHeadFt = 60.0;
-	mdDeltaTemperatureCWF = 30.0;												// degrees F
-	mdTemperaturePinchPtCondenserF = 10.0;
-	mdTemperaturePinchPtCoolingTowerF = 15;
-	miNumberOfCoolingStages = 3;												// 1,2, or 3
 	mdMoleWeightNCG = 44.0;
 	mdMoleWeightH2O = 18.0;
 	mdEfficiencyPump = 0.7;
 	mdEfficencyVacuumPump = 0.7;
-	mdPressureCondenserNCGPartialInHG = 0.5;									// inches of Mercury
 }
 
 void CFlashBrineEffectiveness::init(CGeoHourlyBaseInputs* gbi)
@@ -1337,7 +1332,7 @@ void CFlashBrineEffectiveness::init(CGeoHourlyBaseInputs* gbi)
 double CFlashBrineEffectiveness::waterLossFractionOfGF(void)
 {
 	this->calculateFlashPressures();
-	return waterLoss() / mpGBI->m_oGG.mGeothermalFluidForFlash();
+	return waterLoss() / mpGBI->m_oGG.GEOTHERMAL_FLUID_FOR_FLASH();
 }
 
 
@@ -1352,35 +1347,7 @@ double CFlashBrineEffectiveness::pressureDualHighWithConstraint()
 
 
 //////////////////////////////////////// Turbine Output ///////////////////////////////////////////
-double CFlashBrineEffectiveness::calculateDH(double pressureIn)
-{
-	double a = mpGBI->m_oGG.GetDHa(pressureIn);
-	double b = mpGBI->m_oGG.GetDHb(pressureIn);
-	double x = pressureIn /(pressureCondenser());
-	return a * log(x) + b;
-}
 
-double CFlashBrineEffectiveness::calculateX(double enthalpyIn, double temperatureF)
-{
-	double enthalpyF = mpGBI->m_oGG.GetFlashEnthalpyF(temperatureF);
-	double enthalpyG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureF);
-	return (enthalpyIn - enthalpyF)/(enthalpyG-enthalpyF);
-}
-
-double CFlashBrineEffectiveness::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG)
-{	// I65-I80, I87-I102
-	double xPrime, effTurb, dEnthapyDelta, hEx;
-
-	dEnthapyDelta = dEnthalpyDeltaInitial;
-	for (int i=0;i<4;i++) {
-		hEx = dEnthalpyTurbineG - dEnthapyDelta;
-		xPrime = calculateX(hEx, temperatureCondF());
-		xPrime = (xPrime > 0.95) ? 0 : 0.95 - xPrime;
-		effTurb = mdEfficiencyTurbine - (0.5 * xPrime);
-		dEnthapyDelta = dEnthalpyDeltaInitial * effTurb;
-	}
-	return dEnthapyDelta;
-}
 
 
 
@@ -1391,7 +1358,7 @@ double CFlashBrineEffectiveness::pInter(int stage, std::string sErr)
 	{
 		case 0: return pTotal();
 		case 1: return pTotal() * pRatio();
-		case 2: return (miNumberOfCoolingStages > 2) ? pTotal() * pRatio() * pRatio()  : mpGBI->PRESSURE_AMBIENT_PSI;
+		case 2: return (NUMBER_OF_COOLING_STAGES > 2) ? pTotal() * pRatio() * pRatio()  : mpGBI->PRESSURE_AMBIENT_PSI;
 		case 3: return mpGBI->PRESSURE_AMBIENT_PSI;
 		default: { sErr = ("Invalid stage in CFlashBrineEffectiveness::pInter"); return 0; }
 	}
@@ -1399,15 +1366,6 @@ double CFlashBrineEffectiveness::pInter(int stage, std::string sErr)
 
 
 
-double CFlashBrineEffectiveness::mForNCGRemoval()
-{
-	if(this->mNCGRemovalType == VAC_PUMP) return 0;
-
-	double dSteamFlow = steamFlow(1); 
-	if (miNumberOfCoolingStages > 1) { dSteamFlow += steamFlow(2); }
-	if (miNumberOfCoolingStages > 2) { dSteamFlow += steamFlow(3); }
-	return dSteamFlow;
-}
 
 
 
@@ -1423,7 +1381,7 @@ double CFlashBrineEffectiveness::pumpWorkFromSteamFlow(double flow)
 	double enthalpyCondG = mpGBI->m_oGG.GetFlashEnthalpyG(temperatureCondF());
 	
 	double qReject = flow * (enthalpyCondG - enthalpyCondF);
-	double cwFlow = qReject / mdDeltaTemperatureCWF;
+	double cwFlow = qReject / DELTA_TEMPERATURE_CWF;
 	double pumpHead = mdBaseCWPumpHeadFt + mpGBI->m_oGG.additionalCWPumpHeadSurface();
 	return pumpWorkKW(cwFlow, pumpHead);
 }
@@ -1542,14 +1500,12 @@ double CEGSMakeup::newInjectionTemperatureC()
 
 
 
+CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
 // Implementation of CGeoHourlyAnalysis
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
-//CGeothermalAnalyzer::CGeothermalAnalyzer(void)
-
-CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
 {
 	mo_pb_p = pbp;
 	mo_pb_in = pbi;
@@ -1934,10 +1890,80 @@ double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
 	return (mo_geo_in.me_ct == FLASH) ? FlashBrineEffectiveness() : dMaxBinaryBrineEffectiveness * mo_geo_in.md_PlantEfficiency;
 }
 
+double CGeothermalAnalyzer::calculateX(double enthalpyIn, double temperatureF)
+{
+	double enthalpyF = geothermal::GetFlashEnthalpyF(temperatureF);
+	double enthalpyG = geothermal::GetFlashEnthalpyG(temperatureF);
+	return (enthalpyIn - enthalpyF)/(enthalpyG-enthalpyF);
+}
+
+
+double CGeothermalAnalyzer::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG)
+{	// I65-I80, I87-I102
+	double xPrime, effTurb, dEnthapyDelta, hEx;
+
+	dEnthapyDelta = dEnthalpyDeltaInitial;
+	for (int i=0;i<4;i++) {
+		hEx = dEnthalpyTurbineG - dEnthapyDelta;
+		xPrime = calculateX(hEx, temperatureCondF());
+		xPrime = (xPrime > 0.95) ? 0 : 0.95 - xPrime;
+		effTurb = geothermal::EFFICIENCY_TURBINE - (0.5 * xPrime);
+		dEnthapyDelta = dEnthalpyDeltaInitial * effTurb;
+	}
+	return dEnthapyDelta;
+}
+
+
+// Turbine 1 - high pressure
+double CGeothermalAnalyzer::turbine1dHInitial() { return calculateDH(mdPressureHPFlashPSI - geothermal::DELTA_PRESSURE_HP_FLASH_PSI); } // I65
+double CGeothermalAnalyzer::turbine1TemperatureF() { return geothermal::GetFlashTemperature(mdPressureHPFlashPSI); } // D80
+double CGeothermalAnalyzer::turbine1EnthalpyF() { return  geothermal::GetFlashEnthalpyF(turbine1TemperatureF()); }	// D81
+double CGeothermalAnalyzer::turbine1EnthalpyG() { return  geothermal::GetFlashEnthalpyG(turbine1TemperatureF()); }	// D82
+double CGeothermalAnalyzer::turbine1DH() { return enthalpyChangeTurbine(turbine1dHInitial(), turbine1EnthalpyG()); } // I80 - btu/lb
+double CGeothermalAnalyzer::turbine1HEx() { return turbine1EnthalpyG() - turbine1DH(); } // I81 - btu/lb
+double CGeothermalAnalyzer::turbine1X()
+{	// D83 - %
+	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()));// D69
+	return calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF()); 
+}																
+double CGeothermalAnalyzer::turbine1Steam() { return geothermal::GEOTHERMAL_FLUID_FOR_FLASH * turbine1X(); }																										// D85 - lb/hr
+double CGeothermalAnalyzer::turbine1NetSteam()
+{	// I82 lb/hr
+	double dForNCGRemoval = 0.0;
+	if(geothermal::NCG_REMOVAL_TYPE != VAC_PUMP)
+	{
+		double dSteamFlow = steamFlow(1); 
+		if (geothermal::NUMBER_OF_COOLING_STAGES > 1) { dSteamFlow += steamFlow(2); }
+		if (geothermal::NUMBER_OF_COOLING_STAGES > 2) { dSteamFlow += steamFlow(3); }
+		dForNCGRemoval = dSteamFlow;
+	}
+	return turbine1Steam() - dForNCGRemoval;
+}
+double CGeothermalAnalyzer::turbine1OutputKWh() { return turbine1DH() * turbine1NetSteam() / 3413; }																				// I83 - kW/hr = (btu/lb) * (lb/hr) / (btu/kW)
+
+double CGeothermalAnalyzer::calculateDH(double pressureIn)
+{
+	double a = geothermal::GetDHa(pressureIn);
+	double b = geothermal::GetDHb(pressureIn);
+	double x = pressureIn /(pressureCondenser());
+	return a * log(x) + b;
+}
+
+double CGeothermalAnalyzer::TemperatureWetBulbF(void) { return physics::CelciusToFarenheit( mo_geo_in.md_TemperatureWetBulbC); }
+double CGeothermalAnalyzer::temperatureCondF(void)
+{	// D71 - deg F
+	return TemperatureWetBulbF() + geothermal::DELTA_TEMPERATURE_CWF + geothermal::TEMPERATURE_PINCH_PT_CONDENSER_F + geothermal::TEMPERATURE_PINCH_PT_COOLING_TOWER_F;
+}
+double CGeothermalAnalyzer::pressureSaturation(void) { return geothermal::oPSatConstants.evaluate(temperatureCondF()); }// D72 - psi
+double CGeothermalAnalyzer::pressureCondenser(void) { return pressureSaturation() + geothermal::InHgToPsi(geothermal::PRESSURE_CONDENSER_NCG_PARTIAL_INHG); }// D74 - psi
+
+
 double CGeothermalAnalyzer::FlashBrineEffectiveness(void)
 {
 	if (!mb_BrineEffectivenessCalculated) {
 		calculateFlashPressures();
+
+
 
 		double dGrossOutput = turbine1OutputKWh();
 		if (FlashCount() == 2) dGrossOutput += turbine2OutputKWh();
