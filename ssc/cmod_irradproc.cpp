@@ -35,6 +35,8 @@ static var_info _cm_vtab_irradproc[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                    "Azimuth angle",                  "deg",    "E=90,S=180,W=270",      "Irradiance Processor",      "*",                       "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                       "Tilt angle",                     "deg",    "H=0,V=90",              "Irradiance Processor",      "?",                       "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                     "Rotational limit on tracker",    "deg",    "",                      "Irradiance Processor",      "?=45",                    "MIN=0,MAX=90",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "btwidth",                    "Array width (BT)",               "m",      "",                      "Irradiance Processor",      "?=-1",                    "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "btspacing",                  "Array edge-to-edge spacing (BT)","m",      "",                      "Irradiance Processor",      "?=-1",                    "",                                         "" },
 	
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_beam",                   "Incident Beam Irradiance",       "W/m2",   "",                      "Irradiance Processor",      "*",                       "",                  "" },
@@ -49,6 +51,7 @@ static var_info _cm_vtab_irradproc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "surf_tilt",                  "Surface tilt angle",             "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "surf_azm",                   "Surface azimuth angle",          "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "axis_rotation",              "Tracking axis rotation angle",   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "bt_diff",                    "Backtracking difference from ideal rotation",   "deg",    "",       "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_azm",                    "Solar azimuth",                  "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sun_zen",                    "Solar zenith",                   "deg",    "",                      "Irradiance Processor",      "*",                       "LENGTH_EQUAL=beam",                          "" },
@@ -99,6 +102,8 @@ public:
 		double azimuth = as_double("azimuth");
 		int track_mode = as_integer("track_mode");
 		double rotlim = as_double("rotlim");
+		double btwidth = as_double("btwidth");
+		double btspacing = as_double("btspacing");
 
 		double alb_const = as_double("albedo_const");
 		ssc_number_t *albvec = 0;
@@ -110,6 +115,7 @@ public:
 		ssc_number_t *p_surftilt = allocate("surf_tilt", count);
 		ssc_number_t *p_surfazm = allocate("surf_azm", count);
 		ssc_number_t *p_rot = allocate("axis_rotation", count);
+		ssc_number_t *p_btdiff = allocate("bt_diff", count);
 		ssc_number_t *p_azm = allocate("sun_azm", count);
 		ssc_number_t *p_zen = allocate("sun_zen", count);
 		ssc_number_t *p_elv = allocate("sun_elv", count);
@@ -158,7 +164,7 @@ public:
 			x.set_sky_model( sky_model, alb );
 			if ( irrad_mode == 1 ) x.set_global_beam( glob[i], beam[i] );
 			else x.set_beam_diffuse( beam[i], diff[i] );
-			x.set_surface( track_mode, tilt, azimuth, rotlim );
+			x.set_surface( track_mode, tilt, azimuth, rotlim, btwidth, btspacing );
 			
 			int code = x.calc();
 			if (code < 0)
@@ -187,14 +193,15 @@ public:
 			p_sunup[i] = (ssc_number_t) sunup;
 			
 			
-			double aoi, stilt, sazi, rot;
-			x.get_angles( &aoi, &stilt, &sazi, &rot );
+			double aoi, stilt, sazi, rot, btd;
+			x.get_angles( &aoi, &stilt, &sazi, &rot, &btd );
 
 			// assign outputs
 			p_inc[i] = (ssc_number_t) aoi;
 			p_surftilt[i] = (ssc_number_t) stilt;
 			p_surfazm[i] = (ssc_number_t) sazi;
 			p_rot[i] = (ssc_number_t) rot;
+			p_btdiff[i] = (ssc_number_t) btd;
 			
 			double beam, skydiff, gnddiff, iso, cir, hor;
 			x.get_poa( &beam, &skydiff, &gnddiff, &iso, &cir, &hor );

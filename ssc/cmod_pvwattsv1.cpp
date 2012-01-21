@@ -66,7 +66,7 @@ public:
 		double rlim = PVWATTS_ROTLIM;             /* +/- rotation in degrees permitted by physical constraint of tracker */
 	
 		/* storage for calculations */
-		double angle[4];
+		double angle[5];
 		double sun[9];
 
 		double sunrise, sunset;
@@ -184,7 +184,7 @@ public:
 						else  /* Midnight sun or not a sunrise/sunup sunset hour */
 							solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
 					
-						incidence(track_mode,tilt,azimuth,rlim,sun[1],sun[0],angle); /* Calculate incident angle */
+						incidence(track_mode,tilt,azimuth,rlim,sun[1],sun[0],-1,-1,angle); /* Calculate incident angle */
 					
 						double alb;
 						if (snow[i] <= 0 || snow[i] >= 150) // outside normal range or 0
