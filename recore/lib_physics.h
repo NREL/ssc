@@ -19,6 +19,7 @@ namespace physics
 	const double GRAVITY_MS2 =			9.8;					// meters per second^2; this varies between 9.78 and 9.82 depending on latitude
 	const double GRAVITY_FTS2 =		   32.174;					// ft per second^2
 	const double SPECIFIC_HEAT_LIQUID_WATER = 4.183 /*4.1813*/;	// J/g*K = joules per gram-degrees K; 4.183 is value currently in Fortran
+	const double WATER_DENSITY =	   62.4;					// lb/ft^3
 
 	const double GAS_CONSTANT_SUPER_HEATED_STEAM =		0.461522;		// kJ/kg-K
 	const double MIN_TEMP_FOR_SUPER_HEATED =		  647.073;			// deg K
@@ -49,7 +50,7 @@ namespace physics
 	inline double PsiToBar(const double &psi){ return psi / PSI_PER_BAR; }
 
 	inline double toWattHr(const double &btu) { return (btu/3.413); }
-	inline double PSItoFT(const double &psi) { return psi * 144 / 62.4; }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62.4 lb/ft^3
+	inline double PSItoFT(const double &psi) { return psi * 144 / WATER_DENSITY; }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62.4 lb/ft^3
 
 	bool EnthalpyFromTempAndPressure(double tempK, double pressureBar, double& enthalpy );
 

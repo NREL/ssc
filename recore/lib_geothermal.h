@@ -33,7 +33,8 @@ struct SGeothermal_Inputs
 		md_PotentialResourceMW = md_ResourceDepthM = md_TemperatureResourceC = md_TemperaturePlantDesignC = md_EGSThermalConductivity = md_EGSSpecificHeatConstant = 0.0;
 		md_EGSRockDensity = md_ReservoirDeltaPressure = md_ReservoirWidthM = md_ReservoirHeightM = md_ReservoirPermeability = md_DistanceBetweenProductionInjectionWellsM = 0.0;
 		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = 0.0;
-		md_TemperatureEGSAmbientC = 0.0;
+		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
+		md_AdditionalPressure = -1.0;
 	}
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
@@ -44,7 +45,7 @@ struct SGeothermal_Inputs
 	depthCalculationForEGS me_dc;							// { NOT_CHOSEN, DEPTH, TEMPERATURE };
 	reservoirPressureChangeCalculation me_pc;				// 1=user enter pressure change, 2=SAM calculates it using simple fracture flow (for EGS resourceTypes only), 3=SAM calculates it using k*A (permeability x area)
 
-	int mi_ModelChoice;										// 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
+	int mi_ModelChoice;										// -1 on initialization; 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
 	bool mb_CalculatePumpWork;								// true (default) = getem calculates pump work
 
 	size_t mi_ProjectLifeYears;
@@ -85,6 +86,8 @@ struct SGeothermal_Inputs
 	double md_EGSFractureWidthM;							// default 175 m
 	double md_EGSFractureAngle;								// default 15 degrees
 	double md_RatioInjectionToProduction;					// used in non-cost equation, so it needs to be an input
+	double md_AdditionalPressure;							// manually enter additional psi for injection pumps
+
 
 	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
@@ -94,12 +97,30 @@ struct SGeothermal_Outputs
 {
 	SGeothermal_Outputs()
 	{
-		md_PumpWork = 0;
+		md_PumpWork = md_NumberOfWells = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
+		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 	}
 
+	// single value
 	double md_PumpWork;
+	double md_NumberOfWells;
+
+	bool mb_BrineEffectivenessCalculated;
+	double md_FlashBrineEffectiveness;
+
+	bool mb_FlashPressuresCalculated;
+	double md_PressureHPFlashPSI; // D29, D64
+	double md_PressureLPFlashPSI; // D30, D65
+
+	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
+	//double GetNetPlantOutputMW(void) { return this->PowerSalesKW()/1000; }
+	//double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
+	//double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
+	//double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
+
+	// output arrays
 	float * maf_ReplacementsByYear;							// array of ones and zero's over time, ones representing years where reservoirs are replaced
 	float * maf_monthly_resource_temp;
 	float * maf_monthly_power;
