@@ -369,28 +369,14 @@ namespace geothermal
 class CGeoHourlyBaseInputs
 {
 public:
-    double md_TemperatureDeclineRate; // % per year
-    double md_FinalYearsWithNoReplacement;
-    double md_PotentialResourceMW;
-
-    mdTemperatureDeclineRate = 0.03;
-    mdFinalYearsWithNoReplacement = 5;
-    mdPotentialResourceMW = 200;
-
-
-	double NumberOfReservoirs(void) { return floor(mdPotentialResourceMW * 1000 / PlantOutputKW()); } // KW = (watt-hr/lb)*(lbs/hr) / 1000
-	double PlantOutputKW() { return (IMITATE_GETEM) ? flowRateTotal() * secondLawEfficiencyGETEM() * GetAE() / 1000.0 : flowRateTotal() * GetPlantBrineEffectiveness() / 1000.0; }	//this should be the same as PlantSizeKW, but GETEM calculates it differently in different places [(lbs/hr) * % * (watt-hr / lb)]
-
-	// HOW DOES [secondLawEfficiencyGETEM() * GetAE()]  compare to [GetPlantBrineEffectiveness()]??????????
-
-double CGeoHourlyBaseInputs::secondLawEfficiencyGETEM() // This assumes the use of Binary constants and is only necessary for GETEM method of calculating PlantOutputKW - keep private
-{
-	double ae = GetAEBinary();
-	if (ae == 0) { m_strErrMsg = ("ae = zero in CGeoHourlyBaseInputs::secondLawEfficiencyGETEM"); return 0;}
-	return GetPlantBrineEffectiveness() / ae;
-}
 
 	
+	
+	double PlantOutputKW()
+	{	// (lbs/hr) * (watt-hr / lb)
+	}	
+
+
 
 }
 
@@ -411,9 +397,9 @@ public:
 	virtual makeupAlgorithmType GetType(void)=0;	// this is an abstract class, it should never be created, only derived objects
 
 	bool SetScenarioParameters( CGeoHourlyBaseInputs* gbi);
-	virtual void calculateNewTemperature(void) { mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->mdTemperatureDeclineRate / 12)); } // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
+	virtual void calculateNewTemperature(void) { mdWorkingTemperatureC = mdWorkingTemperatureC * (1 - (mpGBI->md_TemperatureDeclineRate / 12)); } // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
 	bool wantToReplaceReservoir(void) { return ( mdWorkingTemperatureC < (mpGBI->GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false; }
-	virtual bool canReplaceReservoir(double dTimePassedInYears) { return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->mdFinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
+	virtual bool canReplaceReservoir(double dTimePassedInYears) { return ( (miReservoirReplacements < mpGBI->NumberOfReservoirs() ) && (dTimePassedInYears + mpGBI->md_FinalYearsWithNoReplacement <= mpGBI->miProjectLifeYears) ) ? true : false; }
 	double plantGrossPower(void) {return (plantBrineEfficiency() * mpGBI->flowRateTotal() / 1000.0); }
 	double plantNetPower(void) { return plantGrossPower() - mpGBI->GetPumpWorkKW(); } // kW, as a function of the temperature over time
 	double plantNetPowerkW(void) { double pnp = plantNetPower(); return (pnp>0) ? pnp : 0; } // kW
@@ -549,9 +535,6 @@ public:
 
 
 
-	// for use in the interface to show 'calculated' values
-	double GetNumberOfProductionWells(void) { return this->GetNumberOfWells(); }
-	double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
 
 
 private:
@@ -608,6 +591,7 @@ private:
 	// functions
 	bool IsHourly(void);
 	double GetPumpWorkKW(void);
+	double NumberOfReservoirs(void);
 	double pumpWorkKW(double flowLbPerHr, double pumpHeadFt);
 	double GetPumpWorkWattHrPerLb(void);
 	double GetCalculatedPumpDepthInFeet(void); // only used in pumpHeadFt
@@ -956,7 +940,27 @@ double CGeothermalAnalyzer::GetPumpWorkKW(void)
 {
 	return (mo_geo_in.mb_CalculatePumpWork) ? GetPumpWorkWattHrPerLb() * flowRateTotal() / 1000.0 : mo_geo_in.md_UserSpecifiedPumpWorkKW;
 }
+
+double CGeothermalAnalyzer::NumberOfReservoirs(void)
+{	
+	double d1 = GetAEBinary();
+	if ( (d1 == 0) && ( geothermal::IMITATE_GETEM ) )
+	{
+		ms_ErrorString = ("GetAEBinary returned zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
+		return 0;
+	}
 	
+	double dFactor = (geothermal::IMITATE_GETEM) ? GetAE() / d1 : 1;
+	double dPlantOutputKW = dFactor * flowRateTotal() * GetPlantBrineEffectiveness() / 1000.0; // KW = (watt-hr/lb)*(lbs/hr) / 1000
+	if (dPlantOutputKW = 0)
+	{
+			ms_ErrorString = ("The Plant Output was zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
+			return 0;
+	}
+	return floor(mo_geo_in.md_PotentialResourceMW * 1000 / dPlantOutputKW); 
+} 
+
+
 double CGeothermalAnalyzer::pumpWorkKW(double dFlowLbPerHr, double dPumpHeadFt)
 {
 	return geothermal::HPtoKW((dFlowLbPerHr * dPumpHeadFt)/(60 * 33000 * geothermal::EFFICIENCY_PUMP));
@@ -1735,7 +1739,7 @@ bool CGeothermalAnalyzer::inputErrors(void)
 
 	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { ms_ErrorString = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
-	//if (mo_geo_in.md_PotentialResourceMW < PlantOutputKW()/1000) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
+	//if (!NumberOfReservoirs() > 0) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
 
 	if ( (mo_geo_in.me_rt != EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE) ) { ms_ErrorString = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 

@@ -114,6 +114,8 @@ struct SGeothermal_Outputs
 	double md_PressureHPFlashPSI; // D29, D64
 	double md_PressureLPFlashPSI; // D30, D65
 
+		// for use in the interface to show 'calculated' values
+	//double GetNumberOfProductionWells(void) { return this->GetNumberOfWells(); }
 	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
 	//double GetNetPlantOutputMW(void) { return this->PowerSalesKW()/1000; }
 	//double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
