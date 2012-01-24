@@ -47,7 +47,7 @@ namespace geothermal
 	const double INJECTION_PUMPING_CYCLES = 6.0;
 	const double ADDITIONAL_CW_PUMP_HEAD_SURFACE = 10 * 144 / physics::WATER_DENSITY;
 	const double MAX_TEMPERATURE_DECLINE_C = 30;
-
+	const double FINAL_YEARS_WITH_NO_REPLACEMENT = 5;
 
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -267,6 +267,13 @@ namespace geothermal
 	CPolynomial oFlashTemperature200To1000(256.29706201, 0.93056131917, -0.0020724712921, 0.0000034048164769, -0.0000000034275245432, 1.8867165569E-12, -4.3371351471E-16);
 	CPolynomial oFlashTemperatureOver1000(342.90613285, 0.33345911089, -0.00020256473758, 0.000000094407417758, -2.7823504188E-11, 4.589696886E-15, -3.2288675486E-19);
 
+	// Second law equations, used in FractionOfMaxEfficiency
+	CPolynomial oSecondLawConstantsBinary(130.8952, -426.5406, 462.9957, -166.3503); // ("6Ab. Makeup-Annl%").Range("R24:R27")
+	CPolynomial oSecondLawConstantsSingleFlash(-3637.06, 25.7411, -0.0684072, 0.0000808782, -0.0000000359423);	// ("6Ef.Flash Makeup").Range("R20:V20")
+	CPolynomial oSecondLawConstantsDualFlashNoTempConstraint(-2762.4048, 18.637876, -0.047198813, 0.000053163057, -0.000000022497296); // ("6Ef.Flash Makeup").Range("R22:V22")
+	CPolynomial oSecondLawConstantsDualFlashWithTempConstraint(-4424.6599, 31.149268, -0.082103498, 0.000096016499, -0.00000004211223);	// ("6Ef.Flash Makeup").Range("R21:V21")
+
+
 	double EGSWaterDensity(double tempC) { return 1 / oEGSDensity.evaluate(tempC); }			// kg/m^3
 	double EGSSpecificHeat(double tempC) { return oEGSSpecificHeat.evaluate(tempC) * 1000; }	// J/kg-C
 
@@ -391,14 +398,14 @@ private:
 
 	// variables
 	std::string ms_ErrorString;
-	float mf_LastIntervalDone;
+	float mf_LastIntervalDone; // used to display "% done" to user
 	weatherfile m_wf;
 	bool mb_WeatherFileOpen;
 	long ml_ReadCount;  // resource file reads through the year, 1 to 8760
 	long ml_HourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.
-	makeupAlgorithmType me_makeup; // { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }; //}
+	makeupAlgorithmType me_makeup; // { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }
 	int mi_ReservoirReplacements;	// how many times the reservoir has been 'replaced' (holes redrilled)
-	double md_WorkingTemperatureC;
+	double md_WorkingTemperatureC; // current working temp of the fluid coming out of the ground
 	double md_LastProductionTemperatureC; // store the last temperature before calculating new one
 	double md_YearsAtNextTimeStep; // for EGS calcs
 	double md_TimeOfLastReservoirReplacement; // for EGS calcs
@@ -406,6 +413,12 @@ private:
 
 	// functions
 	bool IsHourly(void);
+	double PlantGrossPowerkW(void);
+	double MaxSecondLawEfficiency(void);
+	double FractionOfMaxEfficiency(void);
+	bool CanReplaceReservoir(double dTimePassedInYears);
+	void CalculateNewTemperature(void);
+
 	double GetPumpWorkKW(void);
 	double NumberOfReservoirs(void);
 	double pumpWorkKW(double flowLbPerHr, double pumpHeadFt);
@@ -607,193 +620,6 @@ private:
 
 
 
-
-/*
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Declaration of CMakeupAlgorithm /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CMakeupAlgorithm
-{
-public:
-	
-	virtual void calculateNewTemperature(void) { md_WorkingTemperatureC = md_WorkingTemperatureC * (1 - (md_TemperatureDeclineRate / 12)); } // For EGS temperature calculations, this virtual function is over-ridden by the EGS makeup algorithm class.
-	bool wantToReplaceReservoir(void) { return ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false; }
-	virtual bool canReplaceReservoir(double dTimePassedInYears) { return ( (mi_ReservoirReplacements < NumberOfReservoirs() ) && (dTimePassedInYears + md_FinalYearsWithNoReplacement <= miProjectLifeYears) ) ? true : false; }
-	double plantGrossPower(void) {return (plantBrineEfficiency() * flowRateTotal() / 1000.0); }
-	double plantNetPowerkW(void) { return MAX(plantGrossPower() - GetPumpWorkKW(), 0); } // kW, as a function of the temperature over time
-
-	// Added June 2011 for geothermal hourly model
-	void SetPowerBlockFlowRateKgPerSec(double dFlowRateKgPerSec) { mo_pb_in.m_dot_htf = dFlowRateKgPerSec*3600.0; [[ m_dot_htf should be in kg per hour ]] }
-
-protected:
-	CGeothermalConstants2 moSecondLawConstants; //Used to calculate second law (of thermodynamics) efficiencies
-
-	virtual double temperatureRatio(void) { return CelciusToKelvin(md_WorkingTemperatureC) / CelciusToKelvin(GetTemperaturePlantDesignC()); }
-	virtual double plantBrineEfficiency() { return secondLawEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC); } // plant Brine Efficiency as a function of temperature
-	double secondLawEfficiency() { return maxSecondLawEfficiency() * fractionOfMaxEfficiency(); } // separate step just to help with debugging (compare to spreadsheet) 
-
-	double maxSecondLawEfficiency() { return  GetPlantBrineEffectiveness() /  getemAEForSecondLaw(); }
-	double getemAEForSecondLaw(void) { return (IMITATE_GETEM) ? GetAEBinary() : GetAE() ; }  // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
-	
-	// the available energy, in GETEM, is actually based on plant design temp, although resource temp is being used to calculate the output
-	// this only matters for EGS resources, where resource temp and plant design temp are different
-	// this leads to Plant brine effectiveness higher than input values
-	// which leads to actual plant output(after pumping losses) > design output (before pump losses) ??
-	// which leads to relative revenue > 1 ??
-	
-	virtual double fractionOfMaxEfficiency() { return(temperatureRatio() > 0.98) ? moSecondLawConstants.evaluate(temperatureRatio()) : 1.0177 * pow(temperatureRatio(), 2.6237); }
-
-private:
-
-};
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Declaration of CFlashMakeup /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CFlashMakeup : public CMakeupAlgorithm
-{
-public:
-	CFlashMakeup(void) { mbInitialized = false;}
-
-
-private:
-	double plantBrineEfficiency() { return secondLawEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC); } // plant Brine Efficiency as a function of temperature
-	double fractionOfMaxEfficiency();
-	void initializeSecondLawConstants();
-	bool mbInitialized;
-};
-
- 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Declaration of CEGSMakeup /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CEGSMakeup : public CMakeupAlgorithm
-{
-public:
-	CEGSMakeup(void) { mdCurrentEfficiency=0; }
-
-
-	// These functions over-ride the CMakeupAlgorithm functions  to update some values necessary for EGS calculations
-	void calculateNewTemperature();
-	bool canReplaceReservoir(double dTimePassedInYears);  // dTimePassedInYears -> md_YearsAtNextTimeStep
-
-private:
-	double temperatureRatio(void) { return CelciusToKelvin(md_LastProductionTemperatureC) / CelciusToKelvin(GetTemperaturePlantDesignC()); }
-	double newInjectionTemperatureC();
-
-	double mdCurrentEfficiency;
-};
-*/
-
-
-
-
-
-
-/*
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CMakeupAlgorithm //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CMakeupAlgorithm::CMakeupAlgorithm()
-{
-	// ("6Ab. Makeup-Annl%").Range("R24:R27")
-	moSecondLawConstants.init(130.8952, -426.5406, 462.9957, -166.3503, 0, 0, 0);
-}
-
-
-
-double CMakeupAlgorithm::GetType224OutputkW(void)
-{
-	// run power block model
-	if (!mo_PowerBlock.Execute((m_lHourCount-1)*3600, mo_pb_in))
-		ms_ErrorString = "There was an error running the power block model: " + mo_PowerBlock.GetLastError();
-	
-	// return outputs
-	return mo_PowerBlock.GetOutputkW();
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CFlashMakeup //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-double CFlashMakeup::fractionOfMaxEfficiency() 
-{
-    double tr = temperatureRatio();
-	initializeSecondLawConstants();
-	return (1.1 - (0.1 * pow(tr, moSecondLawConstants.evaluate(CelciusToKelvin(GetResourceTemperatureC())) )));
-}
-
-void CFlashMakeup::initializeSecondLawConstants()
-{
-	if (mbInitialized) return;
-	switch (ft)
-	{
-		case SINGLE_FLASH_NO_TEMP_CONSTRAINT:
-		case SINGLE_FLASH_WITH_TEMP_CONSTRAINT:
-			// ("6Ef.Flash Makeup").Range("R20:V20")
-			moSecondLawConstants.init(-3637.06, 25.7411, -0.0684072, 0.0000808782, -0.0000000359423, 0, 0);
-			break;
-
-		case DUAL_FLASH_NO_TEMP_CONSTRAINT:
-			// ("6Ef.Flash Makeup").Range("R22:V22")
-			moSecondLawConstants.init(-2762.4048, 18.637876, -0.047198813, 0.000053163057, -0.000000022497296, 0, 0);
-			break;
-
-		case DUAL_FLASH_WITH_TEMP_CONSTRAINT:
-			// ("6Ef.Flash Makeup").Range("R21:V21")
-			moSecondLawConstants.init(-4424.6599, 31.149268, -0.082103498, 0.000096016499, -0.00000004211223, 0, 0);
-			break;
-
-		default: ms_ErrorString = ("Invalid flash technology in CFlashMakeup::initializeSecondLawConstants"); return;
-	}
-	mbInitialized = true;
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Implementation of CEGSMakeup ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void CEGSMakeup::calculateNewTemperature()
-{	// This function over-rides CMakeupAlgorithm::calculateNewTemperature(double dTempCalculationsPerYear) to calculate the temperature drop for the EGS resource.
-	// The EGS temperature drop depends on the amount of fluid being produced (makes intuitive sense).
-	md_LastProductionTemperatureC = md_WorkingTemperatureC;
-
-	
-	
-	//EGS
-	double dAverageReservoirTempC = geothermal::calcEGSAverageWaterTemperatureC(md_LastProductionTemperatureC, md_LastProductionTemperatureC, maxSecondLawEfficiency());
-	double dDaysSinceLastReDrill = (md_YearsAtNextTimeStep - md_TimeOfLastReservoirReplacement) * DAYS_PER_YEAR;
-	double dFunctionOfRockProperties = EGSReservoirConstant(dAverageReservoirTempC, dDaysSinceLastReDrill);
-
-	double tempBrineEfficiencyC = physics::KelvinToCelcius( exp((-0.42 * log(md_LastProductionTemperatureC) + 1.4745) * mdCurrentEfficiency) * physics::CelciusToKelvin(md_LastProductionTemperatureC));
-	double tempSILimitC = physics::FarenheitToCelcius(geothermal::GetSiPrecipitationTemperatureF(physics::CelciusToFarenheit(md_LastProductionTemperatureC)));
-	double dNewInjectionTemperatureC = MAX(tempBrineEfficiencyC, tempSILimitC);
-	double dNewEGSProductionTemperatureC = GetResourceTemperatureC() + ((dNewInjectionTemperatureC - GetResourceTemperatureC()) * dFunctionOfRockProperties);
-	
-	
-	md_WorkingTemperatureC = dNewEGSProductionTemperatureC;
-}
-
-
-bool CEGSMakeup::canReplaceReservoir(double dTimePassedInYears)
-{
-	md_YearsAtNextTimeStep = dTimePassedInYears;
-	return CMakeupAlgorithm::canReplaceReservoir(dTimePassedInYears);
-}
-
-double CEGSMakeup::plantBrineEfficiency(void)
-{	// over-ridden to update mdCurrentEfficiency
-    mdCurrentEfficiency = maxSecondLawEfficiency() * fractionOfMaxEfficiency();
-    return mdCurrentEfficiency * GetAEBinaryAtTemp(md_WorkingTemperatureC); // oSP.GeothermalFuildContainer.availableEnergyWattHr(Binary, toF(fWorkingTemperatureC))
-}
-
-
-*/
-
-
-
 CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
@@ -806,17 +632,17 @@ CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowe
 	mo_geo_in = gti;
 	mo_geo_out = gto;
 
-	me_makeup = NO_MAKEUP_ALGORITHM;
 	ms_ErrorString = "";
+	mf_LastIntervalDone = 0.0f;
 	mb_WeatherFileOpen = false;
 	ml_ReadCount = 0;
 	ml_HourCount = 0;
+	me_makeup = NO_MAKEUP_ALGORITHM;
 	mi_ReservoirReplacements = 0; 
-	md_WorkingTemperatureC=0; 
-	md_YearsAtNextTimeStep=0;
-	md_TimeOfLastReservoirReplacement=0;
-	mf_LastIntervalDone = 0.0f;
-
+	md_WorkingTemperatureC=0.0; 
+	md_LastProductionTemperatureC = 0.0;
+	md_YearsAtNextTimeStep=0.0;
+	md_TimeOfLastReservoirReplacement=0.0;
 }
 
 CGeothermalAnalyzer::~CGeothermalAnalyzer(void)
@@ -825,6 +651,99 @@ CGeothermalAnalyzer::~CGeothermalAnalyzer(void)
 }
 
 bool CGeothermalAnalyzer::IsHourly() { return (mo_geo_in.mi_MakeupCalculationsPerYear == 8760) ? true : false; }
+
+double CGeothermalAnalyzer::PlantGrossPowerkW(void)
+{
+	double dPlantBrineEfficiency = 0;  // plant Brine Efficiency as a function of temperature
+	switch (me_makeup)
+	{
+		case MA_BINARY:
+			dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
+			break;
+
+		case MA_FLASH:
+			dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC); 
+			break;
+
+		case MA_EGS:
+		    dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
+			break;
+
+		default: ms_ErrorString = ("Invalid make up technology in CGeothermalAnalyzer::PlantGrossPowerkW"); return 0;
+	}
+
+	return dPlantBrineEfficiency * flowRateTotal() / 1000.0;
+}
+
+double CGeothermalAnalyzer::MaxSecondLawEfficiency() 
+{
+	// the available energy, in GETEM (dGetemAEForSecondLaw), is actually based on plant design temp, although resource temp is being used to calculate the output
+	// this only matters for EGS resources, where resource temp and plant design temp are different
+	// this leads to Plant brine effectiveness higher than input values
+	// which leads to actual plant output(after pumping losses) > design output (before pump losses) ??
+	// which leads to relative revenue > 1 ??
+	double dGetemAEForSecondLaw = (geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE(); // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
+	return  GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;
+}
+
+
+double CGeothermalAnalyzer::FractionOfMaxEfficiency()
+{
+	double dTemperatureRatio = 0.0;
+	if (me_makeup == MA_EGS)
+		dTemperatureRatio = physics::CelciusToKelvin(md_LastProductionTemperatureC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
+	else
+		dTemperatureRatio = physics::CelciusToKelvin(md_WorkingTemperatureC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
+
+	if (me_makeup == MA_FLASH)
+	{
+		switch (mo_geo_in.me_ft)
+		{
+			case SINGLE_FLASH_NO_TEMP_CONSTRAINT:
+			case SINGLE_FLASH_WITH_TEMP_CONSTRAINT:
+				return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsSingleFlash.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())) )));
+
+			case DUAL_FLASH_NO_TEMP_CONSTRAINT:
+				return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashNoTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())) )));
+
+			case DUAL_FLASH_WITH_TEMP_CONSTRAINT:
+				return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashWithTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())) )));
+
+			default: ms_ErrorString = ("Invalid flash technology in CGeothermalAnalyzer::FractionOfMaxEfficiency"); return 0;
+		}
+
+	}
+	else // Binary and EGS
+		return(dTemperatureRatio > 0.98) ? geothermal::oSecondLawConstantsBinary.evaluate(dTemperatureRatio) : 1.0177 * pow(dTemperatureRatio, 2.6237);
+}
+
+bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
+{
+	return ( (mi_ReservoirReplacements < NumberOfReservoirs() ) && (dTimePassedInYears + geothermal::FINAL_YEARS_WITH_NO_REPLACEMENT <= mo_geo_in.mi_ProjectLifeYears ) ) ? true : false;
+}
+
+void CGeothermalAnalyzer::CalculateNewTemperature()
+{
+	if (me_makeup != MA_EGS)
+		md_WorkingTemperatureC = md_WorkingTemperatureC * (1 - (mo_geo_in.md_TemperatureDeclineRate / 12));
+	else
+	{
+		// The EGS temperature drop depends on the amount of fluid being produced (makes intuitive sense).
+		md_LastProductionTemperatureC = md_WorkingTemperatureC;
+
+		double dAverageReservoirTempC = geothermal::calcEGSAverageWaterTemperatureC(md_LastProductionTemperatureC, md_LastProductionTemperatureC, MaxSecondLawEfficiency());
+		double dDaysSinceLastReDrill = (md_YearsAtNextTimeStep - md_TimeOfLastReservoirReplacement) * geothermal::DAYS_PER_YEAR;
+		double dFunctionOfRockProperties = EGSReservoirConstant(dAverageReservoirTempC, dDaysSinceLastReDrill);
+
+		double tempBrineEfficiencyC = physics::KelvinToCelcius( exp((-0.42 * log(md_LastProductionTemperatureC) + 1.4745) * MaxSecondLawEfficiency() * FractionOfMaxEfficiency() ) * physics::CelciusToKelvin(md_LastProductionTemperatureC));
+		double tempSILimitC = physics::FarenheitToCelcius(geothermal::GetSiPrecipitationTemperatureF(physics::CelciusToFarenheit(md_LastProductionTemperatureC)));
+		double dNewInjectionTemperatureC = MAX(tempBrineEfficiencyC, tempSILimitC);
+		double dNewEGSProductionTemperatureC = GetResourceTemperatureC() + ((dNewInjectionTemperatureC - GetResourceTemperatureC()) * dFunctionOfRockProperties);
+	
+		md_WorkingTemperatureC = dNewEGSProductionTemperatureC;
+	}
+}
+
 
 double CGeothermalAnalyzer::GetPumpWorkKW(void)
 {
@@ -911,7 +830,7 @@ double CGeothermalAnalyzer::GetCalculatedPumpDepthInFeet(void)
 	double dDiameterProductionWellFt = mo_geo_in.md_DiameterProductionWellInches/12;
 
 	double areaWell = physics::areaCircle(dDiameterProductionWellFt/2); // ft^2
-	double velocityWell = productionFlowRate()/areaWell;
+	double velocityWell = productionFlowRate()/areaWell; // [7A.GF Pumps].G70
 	double ReWell = dDiameterProductionWellFt * velocityWell * productionDensity()/productionViscosity();
 	double frictionHeadLossWell = (geothermal::FrictionFactor(ReWell)/dDiameterProductionWellFt)* pow(velocityWell,2)/(2 * physics::GRAVITY_FTS2);
 
@@ -939,7 +858,7 @@ void CGeothermalAnalyzer::ReplaceReservoir(void)
 	mi_ReservoirReplacements++; 
 	md_WorkingTemperatureC = GetResourceTemperatureC(); 
 
-	if(me_makeup = MA_EGS)
+	if(me_makeup == MA_EGS)
 	{
 		md_LastProductionTemperatureC = md_WorkingTemperatureC; 
 		if (md_YearsAtNextTimeStep > 0) md_TimeOfLastReservoirReplacement = md_YearsAtNextTimeStep - (EGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
@@ -1183,8 +1102,8 @@ double CGeothermalAnalyzer::pZero(void) { return geothermal::oPC.evaluate(Inject
 
 // wells
 double CGeothermalAnalyzer::productionTempF(void) { return physics::CelciusToFarenheit(GetTemperaturePlantDesignC()); }
-double CGeothermalAnalyzer::productionDensity(void) { return geothermal::oSVC.evaluate(productionTempF()); }
-double CGeothermalAnalyzer::productionFlowRate(void) { return (flowRatePerWell()/productionDensity())/3600; } // lbs per hr / lbs per cf = cf/hr
+double CGeothermalAnalyzer::productionDensity(void) { return 1 / geothermal::oSVC.evaluate(productionTempF()); } // [7A.GF Pumps].G81; specific volume, f^3 per lb
+double CGeothermalAnalyzer::productionFlowRate(void) { return (flowRatePerWell()/productionDensity())/3600; } // [7A.GF Pumps].G69 // lbs per hr / lbs per cf = cf/hr divided by 3600 = cfs
 double CGeothermalAnalyzer::productionViscosity(void) { return 0.115631 * pow(productionTempF(),-1.199532); } // seems like this is resource temp in spreadsheet!
 double CGeothermalAnalyzer::flowRatePerWell(void) { return (60 * 60 * geothermal::KgToLb(mo_geo_in.md_ProductionFlowRateKgPerS)); } // lbs per hour, one well
 double CGeothermalAnalyzer::flowRateTotal(void) { return (flowRatePerWell() * GetNumberOfWells()); }								// lbs per hour, all wells
@@ -1629,7 +1548,7 @@ bool CGeothermalAnalyzer::inputErrors(void)
 
 	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { ms_ErrorString = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
-	//if (!NumberOfReservoirs() > 0) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
+	if (!NumberOfReservoirs() > 0) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
 
 	if ( (mo_geo_in.me_rt != EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE) ) { ms_ErrorString = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 
@@ -1683,7 +1602,7 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 {
 	if (!readyToAnalyze()) return false;   // open weather file m_wf
 
-	if ( !mo_PowerBlock.InitializeForParameters( mo_pb_p ) )
+	if ( (mo_geo_in.mi_ModelChoice != 0 ) && ( !mo_PowerBlock.InitializeForParameters( mo_pb_p )) )
 	{
 		ms_ErrorString = "There was an error initializing the power block with the input parameters: " + mo_PowerBlock.GetLastError();
 		return false;
@@ -1692,13 +1611,12 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 	// ReSet all calculated values to zero
     double dElapsedTimeInYears = 0.0;
 	float fPercentDone = 0.0;
-	bool bCanReplaceReservoir = false;
+	bool bCanReplaceReservoir = false, bWantToReplaceReservoir = false;
     
     // Initialize
     ReplaceReservoir();
 
 	// Go through time step (hours or months) one by one
-    //for (unsigned int iElapsedTimeSteps = 0;  iElapsedTimeSteps < analysisTimeSteps();  iElapsedTimeSteps++)
     bool bReDrill = false;
 	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0;
 	float fMonthlyPowerTotal, fJunk;
@@ -1736,18 +1654,20 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 					mo_pb_in.TOU = mo_geo_in.mia_tou[ml_ReadCount-1];
 
 					// record current temperature (temperature changes monthly, but this is an hourly record of it)
-					mo_geo_out.maf_timestep_resource_temp[iElapsedTimeSteps] = (float)md_WorkingTemperatureC; // NOTE: If EGS temp drop is being calculated, then plantNetPowerkW must be called.  No production = no temp change
+					mo_geo_out.maf_timestep_resource_temp[iElapsedTimeSteps] = (float)md_WorkingTemperatureC; // NOTE: If EGS temp drop is being calculated, then PlantGrossPowerkW must be called.  No production = no temp change
 					mo_geo_out.maf_timestep_pressure[iElapsedTimeSteps] = (float)mo_pb_in.P_amb;
 					mo_geo_out.maf_timestep_dry_bulb[iElapsedTimeSteps] = (float)mo_pb_in.T_db;
 					mo_geo_out.maf_timestep_wet_bulb[iElapsedTimeSteps] = (float)mo_pb_in.T_wb;
 
 					// record outputs based on current inputs
 					if ( mo_geo_in.mi_ModelChoice == 0 ) // model choice 0 = GETEM
-						mo_geo_out.maf_timestep_power[iElapsedTimeSteps] =1.5f;// (float)moMA->plantNetPowerkW(); // = Gross power - pump Power
+						mo_geo_out.maf_timestep_power[iElapsedTimeSteps] = (float) MAX(PlantGrossPowerkW() - GetPumpWorkKW(), 0);
 					else
-					{
-						mo_geo_out.maf_timestep_power[iElapsedTimeSteps] =1.6f;// (float)moMA->GetType224OutputkW() - (float)GetPumpWorkKW();
-						//fJunk = (float)moMA->plantNetPowerkW(); // kinda works, but not quite the same
+					{	// run power block model
+						if (!mo_PowerBlock.Execute((ml_HourCount-1)*3600, mo_pb_in))
+							ms_ErrorString = "There was an error running the power block model: " + mo_PowerBlock.GetLastError();
+						mo_geo_out.maf_timestep_power[iElapsedTimeSteps] = (float) MAX(mo_PowerBlock.GetOutputkW() - GetPumpWorkKW(), 0);
+						//fJunk = (float)moMA->PlantGrossPowerkW(); // kinda works, but not quite the same
 					}
 
 					mo_geo_out.maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1)*1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
@@ -1761,24 +1681,27 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 				}
 			}//hours
 
-			mo_geo_out.maf_monthly_resource_temp[iElapsedMonths] =1.7f;// (float)moMA->GetWorkingTemperatureC();	// resource temperature for this month
+			mo_geo_out.maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
 			iEvaluationsInMonth = (IsHourly()) ? util::hours_in_month(month) : 1;
 			mo_geo_out.maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal/iEvaluationsInMonth;		// avg monthly power
 			mo_geo_out.maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
 
 			// Is it possible and do we want to replace the reservoir in the next time step?
-			// moMA->canReplaceReservoir HAS to run, even if "wantToReplaceReservoir" returns false, because it sets a value in moMA.
+			// moMA->CanReplaceReservoir HAS to run, even if "wantToReplaceReservoir" returns false, because it sets a value in moMA.
 			// So, first run it and get the value, then use if statement.  (C++ in VC++ will not evaluate further parts of the expression
 			// if the first one is false, since it knows the statement will be false.  Other compilers could evaluate from the right hand
 			// side.  In order to make sure this works consistently - separate the expression.)
-			bCanReplaceReservoir = false;// moMA->canReplaceReservoir(dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear));
-			if (/*(moMA->wantToReplaceReservoir()) &&*/ (bCanReplaceReservoir))
+			md_YearsAtNextTimeStep = dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear); 
+			bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
+
+			bCanReplaceReservoir = CanReplaceReservoir(dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear));
+			if (bWantToReplaceReservoir && bCanReplaceReservoir)
 			{
 				ReplaceReservoir(); // this will 'reset' temperature back to original resource temp
 				mo_geo_out.maf_ReplacementsByYear[year] = mo_geo_out.maf_ReplacementsByYear[year] + 1;
 			}
-			//else
-				//moMA->calculateNewTemperature(); // once per month -> reduce temperature from last temp
+			else
+				CalculateNewTemperature(); // once per month -> reduce temperature from last temp
 
 			iElapsedMonths++;
 		}//months
