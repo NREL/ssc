@@ -61,7 +61,7 @@ namespace geothermal
 	const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : physics::LB_PER_KG; // pounds per kilogram
 	const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : physics::KW_PER_HP; // kilowatts per unit of horsepower
 	const double GRAVITY_MS2 = (IMITATE_GETEM) ? 9.807 : physics::GRAVITY_MS2; // meters per second^2; this varies between 9.78 and 9.82 depending on latitude
-	const double DAYS_PER_YEAR = (IMITATE_GETEM) ? 365 : 365.25;
+	const double DAYS_PER_YEAR = 365;
 
 	double MetersToFeet(const double &m) {return m * GETEM_FT_IN_METER; }
 	double FeetToMeters(const double &ft) {return ft / GETEM_FT_IN_METER; }
@@ -384,7 +384,7 @@ public:
 	CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
 	~CGeothermalAnalyzer();
 
-	bool analyze( void (*update_function)(float, void*), void *user_data );
+	bool RunAnalysis( void (*update_function)(float, void*), void *user_data );
 	std::string error() { return ms_ErrorString; }
 
 
@@ -407,7 +407,6 @@ private:
 	int mi_ReservoirReplacements;	// how many times the reservoir has been 'replaced' (holes redrilled)
 	double md_WorkingTemperatureC; // current working temp of the fluid coming out of the ground
 	double md_LastProductionTemperatureC; // store the last temperature before calculating new one
-	double md_YearsAtNextTimeStep; // for EGS calcs
 	double md_TimeOfLastReservoirReplacement; // for EGS calcs
 
 
@@ -417,7 +416,7 @@ private:
 	double MaxSecondLawEfficiency(void);
 	double FractionOfMaxEfficiency(void);
 	bool CanReplaceReservoir(double dTimePassedInYears);
-	void CalculateNewTemperature(void);
+	void CalculateNewTemperature(double dElapsedTimeInYears);
 
 	double GetPumpWorkKW(void);
 	double NumberOfReservoirs(void);
@@ -426,7 +425,7 @@ private:
 	double GetCalculatedPumpDepthInFeet(void); // only used in pumpHeadFt
 	double pumpHeadFt(void);
 
-	void ReplaceReservoir(void);
+	void ReplaceReservoir(double dElapsedTimeInYears);
 	double GetTemperatureGradient(void);	// degrees C per km
 	double GetResourceTemperatureC(void);	// degrees C
 	double GetTemperaturePlantDesignC(void);
@@ -613,7 +612,7 @@ private:
 	bool ReadNextLineInWeatherFile(void);
 	bool determineMakeupAlgorithm(void);
 	bool inputErrors(void);
-	bool readyToAnalyze(void);
+	bool ReadyToAnalyze(void);
 	bool TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent);
 };
 
@@ -641,7 +640,6 @@ CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowe
 	mi_ReservoirReplacements = 0; 
 	md_WorkingTemperatureC=0.0; 
 	md_LastProductionTemperatureC = 0.0;
-	md_YearsAtNextTimeStep=0.0;
 	md_TimeOfLastReservoirReplacement=0.0;
 }
 
@@ -722,7 +720,7 @@ bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
 	return ( (mi_ReservoirReplacements < NumberOfReservoirs() ) && (dTimePassedInYears + geothermal::FINAL_YEARS_WITH_NO_REPLACEMENT <= mo_geo_in.mi_ProjectLifeYears ) ) ? true : false;
 }
 
-void CGeothermalAnalyzer::CalculateNewTemperature()
+void CGeothermalAnalyzer::CalculateNewTemperature( double dElapsedTimeInYears )
 {
 	if (me_makeup != MA_EGS)
 		md_WorkingTemperatureC = md_WorkingTemperatureC * (1 - (mo_geo_in.md_TemperatureDeclineRate / 12));
@@ -732,8 +730,9 @@ void CGeothermalAnalyzer::CalculateNewTemperature()
 		md_LastProductionTemperatureC = md_WorkingTemperatureC;
 
 		double dAverageReservoirTempC = geothermal::calcEGSAverageWaterTemperatureC(md_LastProductionTemperatureC, md_LastProductionTemperatureC, MaxSecondLawEfficiency());
-		double dDaysSinceLastReDrill = (md_YearsAtNextTimeStep - md_TimeOfLastReservoirReplacement) * geothermal::DAYS_PER_YEAR;
-		double dFunctionOfRockProperties = EGSReservoirConstant(dAverageReservoirTempC, dDaysSinceLastReDrill);
+		//double dDaysSinceLastReDrill = (md_YearsAtNextTimeStep - md_TimeOfLastReservoirReplacement) * geothermal::DAYS_PER_YEAR;
+		double dDaysSinceLastReDrill = (dElapsedTimeInYears - md_TimeOfLastReservoirReplacement) * geothermal::DAYS_PER_YEAR;
+		double dFunctionOfRockProperties = EGSReservoirConstant(dAverageReservoirTempC, dDaysSinceLastReDrill); //[6Bb.Makeup-EGS HX] column AG
 
 		double tempBrineEfficiencyC = physics::KelvinToCelcius( exp((-0.42 * log(md_LastProductionTemperatureC) + 1.4745) * MaxSecondLawEfficiency() * FractionOfMaxEfficiency() ) * physics::CelciusToKelvin(md_LastProductionTemperatureC));
 		double tempSILimitC = physics::FarenheitToCelcius(geothermal::GetSiPrecipitationTemperatureF(physics::CelciusToFarenheit(md_LastProductionTemperatureC)));
@@ -853,15 +852,16 @@ double CGeothermalAnalyzer::pumpHeadFt() // ft
 
 
 
-void CGeothermalAnalyzer::ReplaceReservoir(void)
+void CGeothermalAnalyzer::ReplaceReservoir( double dElapsedTimeInYears )
 {
 	mi_ReservoirReplacements++; 
 	md_WorkingTemperatureC = GetResourceTemperatureC(); 
 
 	if(me_makeup == MA_EGS)
 	{
-		md_LastProductionTemperatureC = md_WorkingTemperatureC; 
-		if (md_YearsAtNextTimeStep > 0) md_TimeOfLastReservoirReplacement = md_YearsAtNextTimeStep - (EGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
+		md_LastProductionTemperatureC = md_WorkingTemperatureC;
+		double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear); 
+		if (dElapsedTimeInYears > 0) md_TimeOfLastReservoirReplacement = dYearsAtNextTimeStep - (EGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
 	}
 }
 
@@ -983,7 +983,6 @@ double CGeothermalAnalyzer::EGSAvailableEnergy()
 
 double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double timePeriods ) // timePeriods could be days or hours
 {	// all this is from [7C.EGS Subsrfce HX], also from the calculations over time on 6Bb.Makeup-EGS HX, AF62-AF422
-	// this is best done in CGeoHourlyBaseInputs because it requires many CGeoHourlyBaseInputs properties, but it is used in several classes
 	double lv = EGSLengthOverVelocity(avgWaterTempC);	// days (or hours)
 	if (timePeriods <= lv) return 0;
 
@@ -1579,7 +1578,7 @@ bool CGeothermalAnalyzer::inputErrors(void)
 }
 
 
-bool CGeothermalAnalyzer::readyToAnalyze()
+bool CGeothermalAnalyzer::ReadyToAnalyze()
 {
 	if ( inputErrors() ) return false;
 
@@ -1598,9 +1597,9 @@ bool CGeothermalAnalyzer::readyToAnalyze()
 	return true;
 }
 
-bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *user_data )
+bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), void *user_data )
 {
-	if (!readyToAnalyze()) return false;   // open weather file m_wf
+	if (!ReadyToAnalyze()) return false;   // open weather file m_wf
 
 	if ( (mo_geo_in.mi_ModelChoice != 0 ) && ( !mo_PowerBlock.InitializeForParameters( mo_pb_p )) )
 	{
@@ -1609,12 +1608,12 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 	}
 
 	// ReSet all calculated values to zero
-    double dElapsedTimeInYears = 0.0;
 	float fPercentDone = 0.0;
-	bool bCanReplaceReservoir = false, bWantToReplaceReservoir = false;
+	bool bWantToReplaceReservoir = false;
+	double dElapsedTimeInYears = 0.0;
     
     // Initialize
-    ReplaceReservoir();
+    ReplaceReservoir(dElapsedTimeInYears);
 
 	// Go through time step (hours or months) one by one
     bool bReDrill = false;
@@ -1638,7 +1637,7 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 					// Error check
 					if (iElapsedTimeSteps >= mo_geo_in.mi_TotalMakeupCalculations )
 					{
-						ms_ErrorString = "Time step exceded the array size in CGeoHourlyAnalysis::analyze().";
+						ms_ErrorString = "Time step exceded the array size in CGeoHourlyAnalysis::RunAnalysis().";
 						return false;
 					}
 
@@ -1674,7 +1673,7 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 
 					fMonthlyPowerTotal += mo_geo_out.maf_timestep_power[iElapsedTimeSteps];
 		
-					//dElapsedTimeInYears = year + util::percent_of_year(month,hour);
+					//md_ElapsedTimeInYears = year + util::percent_of_year(month,hour);
 					if (!ms_ErrorString.empty()) { return false; }
 					iElapsedTimeSteps++;
 					dElapsedTimeInYears = iElapsedTimeSteps * (1.0/mo_geo_in.mi_MakeupCalculationsPerYear);  //moved to be after iElapsedTimeSteps++;
@@ -1687,23 +1686,16 @@ bool CGeothermalAnalyzer::analyze( void (*update_function)(float, void*), void *
 			mo_geo_out.maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
 
 			// Is it possible and do we want to replace the reservoir in the next time step?
-			// moMA->CanReplaceReservoir HAS to run, even if "wantToReplaceReservoir" returns false, because it sets a value in moMA.
-			// So, first run it and get the value, then use if statement.  (C++ in VC++ will not evaluate further parts of the expression
-			// if the first one is false, since it knows the statement will be false.  Other compilers could evaluate from the right hand
-			// side.  In order to make sure this works consistently - separate the expression.)
-			md_YearsAtNextTimeStep = dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear); 
 			bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
-
-			bCanReplaceReservoir = CanReplaceReservoir(dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear));
-			if (bWantToReplaceReservoir && bCanReplaceReservoir)
+			if (bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear) ) )
 			{
-				ReplaceReservoir(); // this will 'reset' temperature back to original resource temp
+				ReplaceReservoir(dElapsedTimeInYears); // this will 'reset' temperature back to original resource temp
 				mo_geo_out.maf_ReplacementsByYear[year] = mo_geo_out.maf_ReplacementsByYear[year] + 1;
 			}
 			else
-				CalculateNewTemperature(); // once per month -> reduce temperature from last temp
+				CalculateNewTemperature(dElapsedTimeInYears); // once per month -> reduce temperature from last temp
 
-			iElapsedMonths++;
+			iElapsedMonths++;  //for recording values into arrays, not used in calculations
 		}//months
 	}//years
 
@@ -1744,7 +1736,7 @@ int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, s
 {
 	// return value 0 = clean run; 1 = error with message; 2 = unknown error, no message
 	CGeothermalAnalyzer geo_analyzer(pbp, pbInputs, geo_inputs, geo_outputs);
-	if ( geo_analyzer.analyze(update_function,user_data) )  // 
+	if ( geo_analyzer.RunAnalysis(update_function,user_data) )  // 
 		return 0;
 	else
 		if ( geo_analyzer.error() != "")
