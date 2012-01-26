@@ -23,6 +23,8 @@ const double DEFAULT_AMBIENT_TEMPC_BINARY = 10;  // degrees C
 const double AMBIENT_TEMPC_FOR_GRADIENT = 10;  // degrees C, embedded in [2B.Resource&Well Input].D14
 
 
+#ifndef __geothermalEnums__
+#define __geothermalEnums__
 
 enum calculationBasis { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
 enum resourceTypes { NO_RESOURCE_TYPE, HYDROTHERMAL, EGS };
@@ -35,7 +37,7 @@ enum ncgRemovalTypes { NO_NCG_TYPE, JET, VAC_PUMP, HYBRID };
 enum wellCostCurveChoices { NO_COST_CURVE, LOW, MED, HIGH };
 enum depthCalculationForEGS { NOT_CHOSEN, DEPTH, TEMPERATURE };
 enum reservoirPressureChangeCalculation { NO_PC_CHOICE, ENTER_PC, SIMPLE_FRACTURE, K_AREA };
-
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// GETEMPhysics ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

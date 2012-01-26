@@ -1,4 +1,10 @@
-// define classes
+// Differences from last version of code that will cause different answers for the same inputs (25-Jan-2012)
+// 1 - "CalculateNewTemperature" is called with current elapsed time, instead of one month ahead (similar to Jun 2011 version & GETEM spreadsheet)
+// 2 - DAYS_PER_YEAR changed to 365 from 365.25
+// 3 - "CGeothermalAnalyzer::EGSFractureLength" uses the input "mo_geo_in.md_DistanceBetweenProductionInjectionWellsM" instead of
+//     having the distance between wells be hardwired to 1000m regardless of what user enters.
+
+
 #include "lib_physics.h"
 #include "lib_geothermal.h"
 
@@ -61,7 +67,7 @@ namespace geothermal
 	const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : physics::LB_PER_KG; // pounds per kilogram
 	const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : physics::KW_PER_HP; // kilowatts per unit of horsepower
 	const double GRAVITY_MS2 = (IMITATE_GETEM) ? 9.807 : physics::GRAVITY_MS2; // meters per second^2; this varies between 9.78 and 9.82 depending on latitude
-	const double DAYS_PER_YEAR = 365;
+	const double DAYS_PER_YEAR = 365.25;
 
 	double MetersToFeet(const double &m) {return m * GETEM_FT_IN_METER; }
 	double FeetToMeters(const double &ft) {return ft / GETEM_FT_IN_METER; }
@@ -953,9 +959,9 @@ double CGeothermalAnalyzer::EGSThermalConductivity()
 }
 
 double CGeothermalAnalyzer::EGSFractureLength()
-{	//fEffectiveLength, meters used in pump power calcs
-	// return 1000 / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180); // Distance was hardwired to 1000m in GETEM
-	return mo_geo_in.md_DistanceBetweenProductionInjectionWellsM / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180);
+{	// fEffectiveLength, meters used in pump power calcs
+	return 1000 / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180); // Distance was hardwired to 1000m in GETEM
+	//return mo_geo_in.md_DistanceBetweenProductionInjectionWellsM / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180);
 }
 
 double CGeothermalAnalyzer::EGSFlowPerFracture(double tempC)
@@ -1693,7 +1699,8 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 				mo_geo_out.maf_ReplacementsByYear[year] = mo_geo_out.maf_ReplacementsByYear[year] + 1;
 			}
 			else
-				CalculateNewTemperature(dElapsedTimeInYears); // once per month -> reduce temperature from last temp
+				CalculateNewTemperature( dElapsedTimeInYears ); // once per month -> reduce temperature from last temp
+				//CalculateNewTemperature(dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear)); // once per month -> reduce temperature from last temp
 
 			iElapsedMonths++;  //for recording values into arrays, not used in calculations
 		}//months
