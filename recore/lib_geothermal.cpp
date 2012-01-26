@@ -1,8 +1,11 @@
-// Differences from last version of code that will cause different answers for the same inputs (25-Jan-2012)
+// TFF notes on 25-Jan-2012
+// Differences from last version (SAM 2011-21-2) of code that will cause different answers for the same inputs
 // 1 - "CalculateNewTemperature" is called with current elapsed time, instead of one month ahead (similar to Jun 2011 version & GETEM spreadsheet)
 // 2 - DAYS_PER_YEAR changed to 365 from 365.25
 // 3 - "CGeothermalAnalyzer::EGSFractureLength" uses the input "mo_geo_in.md_DistanceBetweenProductionInjectionWellsM" instead of
 //     having the distance between wells be hardwired to 1000m regardless of what user enters.
+// 4 - Because this code stores values in constants rather than in member variables (that were never changed), the results changed slightly (at about the 5th significant digit)
+//     E.G., geothermal::EXCESS_PRESSURE_BAR returns 3.50000000000, but mpGBI->mdExcessPressureBar returned 3.4997786965077915, although it was set to 3.5 and never changed.
 
 
 #include "lib_physics.h"
@@ -864,7 +867,7 @@ void CGeothermalAnalyzer::ReplaceReservoir( double dElapsedTimeInYears )
 	md_WorkingTemperatureC = GetResourceTemperatureC(); 
 
 	if(me_makeup == MA_EGS)
-	{
+	{	// have to keep track of the last temperature of the working fluid, and the last time the reservoir was "replaced" (re-drilled)
 		md_LastProductionTemperatureC = md_WorkingTemperatureC;
 		double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear); 
 		if (dElapsedTimeInYears > 0) md_TimeOfLastReservoirReplacement = dYearsAtNextTimeStep - (EGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
@@ -960,6 +963,7 @@ double CGeothermalAnalyzer::EGSThermalConductivity()
 
 double CGeothermalAnalyzer::EGSFractureLength()
 {	// fEffectiveLength, meters used in pump power calcs
+	// Pre Jan-2012 version: 
 	return 1000 / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180); // Distance was hardwired to 1000m in GETEM
 	//return mo_geo_in.md_DistanceBetweenProductionInjectionWellsM / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180);
 }

@@ -194,7 +194,7 @@ public:
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------
-if (pbp.CT == 1)
+if (pbp.n_pl_inc == 8)
 {
 
 		// set the geothermal model inputs -------------------------------------
@@ -214,10 +214,10 @@ if (pbp.CT == 1)
 
 		switch ( as_integer("conversion_subtype") )
 		{
-			case 1:	geo_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
-			case 2:	geo_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
-			case 3:	geo_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
-			case 4:	geo_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;			
+			case 0:	geo_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
+			case 1:	geo_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
+			case 2:	geo_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
+			case 3:	geo_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;			
 		}
 		geo_inputs.md_PlantEfficiency = as_double("plant_efficiency_input")/100;
 
