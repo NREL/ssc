@@ -909,7 +909,7 @@ int irrad::calc()
 
 
 		double hextra = sun[8];
-		double hbeam = df*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
+		double hbeam = dn*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
 				
 		// check beam irradiance against extraterrestrial irradiance
 		if ( hbeam > hextra )
