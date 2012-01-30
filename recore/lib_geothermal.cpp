@@ -4,7 +4,7 @@
 // 2 - DAYS_PER_YEAR changed to 365 from 365.25
 // 3 - "CGeothermalAnalyzer::EGSFractureLength" uses the input "mo_geo_in.md_DistanceBetweenProductionInjectionWellsM" instead of
 //     having the distance between wells be hardwired to 1000m regardless of what user enters.
-// 4 - Because this code stores values in constants rather than in member variables (that were never changed), the results changed slightly (at about the 5th significant digit)
+// 4 - Because this code stores values in constants rather than in member variables (that were never changed), the results changed slightly (at about the 4th significant digit)
 //     E.G., geothermal::EXCESS_PRESSURE_BAR returns 3.50000000000, but mpGBI->mdExcessPressureBar returned 3.4997786965077915, although it was set to 3.5 and never changed.
 
 
@@ -402,7 +402,7 @@ private:
 	SPowerBlockParameters mo_pb_p;
 	SPowerBlockInputs mo_pb_in;
 	SGeothermal_Inputs mo_geo_in;
-	SGeothermal_Outputs mo_geo_out;
+	SGeothermal_Outputs* mp_geo_out;
 	CPowerBlock_Type224 mo_PowerBlock;
 
 	// variables
@@ -634,11 +634,11 @@ CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowe
 // Implementation of CGeoHourlyAnalysis
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
+: mp_geo_out(&gto)
 {
 	mo_pb_p = pbp;
 	mo_pb_in = pbi;
 	mo_geo_in = gti;
-	mo_geo_out = gto;
 
 	ms_ErrorString = "";
 	mf_LastIntervalDone = 0.0f;
@@ -869,7 +869,7 @@ void CGeothermalAnalyzer::ReplaceReservoir( double dElapsedTimeInYears )
 	if(me_makeup == MA_EGS)
 	{	// have to keep track of the last temperature of the working fluid, and the last time the reservoir was "replaced" (re-drilled)
 		md_LastProductionTemperatureC = md_WorkingTemperatureC;
-		double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear); 
+		double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0/12.0); 
 		if (dElapsedTimeInYears > 0) md_TimeOfLastReservoirReplacement = dYearsAtNextTimeStep - (EGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
 	}
 }
@@ -958,7 +958,8 @@ double CGeothermalAnalyzer::EGSAverageWaterTemperatureC2()
 
 double CGeothermalAnalyzer::EGSThermalConductivity()
 {	// convert to J/m-hr-C for hourly analysis
-	return (IsHourly()) ? geothermal::EGS_THERMAL_CONDUCTIVITY/24 : geothermal::EGS_THERMAL_CONDUCTIVITY;
+	//return (IsHourly()) ? geothermal::EGS_THERMAL_CONDUCTIVITY/24 : geothermal::EGS_THERMAL_CONDUCTIVITY;
+	return geothermal::EGS_THERMAL_CONDUCTIVITY;
 }
 
 double CGeothermalAnalyzer::EGSFractureLength()
@@ -969,8 +970,9 @@ double CGeothermalAnalyzer::EGSFractureLength()
 }
 
 double CGeothermalAnalyzer::EGSFlowPerFracture(double tempC)
-{	// m^3 per day or per hour
-	double dFlowInTimePeriod = (IsHourly()) ? 60*60  : 60*60*24 ; // hourly analysis uses hourly flow, monthly analysis uses daily flow
+{	// m^3 per day
+	//double dFlowInTimePeriod = (IsHourly()) ? 60*60  : 60*60*24 ; // hourly analysis uses hourly flow, monthly analysis uses daily flow
+	double dFlowInTimePeriod = 60*60*24 ; // hourly analysis and monthly analyses use daily flow
 	return ((mo_geo_in.md_ProductionFlowRateKgPerS / geothermal::EGSWaterDensity(tempC)) / mo_geo_in.md_EGSNumberOfFractures) * dFlowInTimePeriod;
 }
 
@@ -991,17 +993,17 @@ double CGeothermalAnalyzer::EGSAvailableEnergy()
 	return geothermal::oGFC.GetAEForFlashWattHrUsingC(mo_geo_in.md_TemperaturePlantDesignC, geothermal::TEMPERATURE_EGS_AMBIENT_C);
 }
 
-double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double timePeriods ) // timePeriods could be days or hours
+double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double dDays )
 {	// all this is from [7C.EGS Subsrfce HX], also from the calculations over time on 6Bb.Makeup-EGS HX, AF62-AF422
 	double lv = EGSLengthOverVelocity(avgWaterTempC);	// days (or hours)
-	if (timePeriods <= lv) return 0;
+	if (dDays <= lv) return 0;
 
 	double cp = geothermal::EGSSpecificHeat(avgWaterTempC);	// J/kg-C
 	double rho = geothermal::EGSWaterDensity(avgWaterTempC);	// kg/m^3
 	double flow = EGSFlowPerFracture(avgWaterTempC);	// m^3 per day (or per hour)
 	double dEGSFractureSurfaceArea = mo_geo_in.md_EGSFractureWidthM * EGSFractureLength();//fFractureSurfaceArea, m^2
 
-	double x = (EGSThermalConductivity() * dEGSFractureSurfaceArea) / (cp * rho * flow * sqrt(EGSAlpha()*(timePeriods - lv) ) );
+	double x = (EGSThermalConductivity() * dEGSFractureSurfaceArea) / (cp * rho * flow * sqrt(EGSAlpha()*(dDays - lv) ) );
 	return geothermal::gauss_error_function(x);
 }
 
@@ -1021,8 +1023,7 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	// all this is from [7C.EGS Subsrfce HX]
 	double waterTempC = (geothermal::IMITATE_GETEM) ? dEGSAverageWaterTemperatureC1 : EGSAverageWaterTemperatureC2(); // degrees C
 	double days = geothermal::EGS_TIME_INPUT * geothermal::DAYS_PER_YEAR;
-	double erfcEGS = EGSReservoirConstant(waterTempC, days);
-	double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * erfcEGS;
+	double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
 	double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC)/2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 
 	double dResourceTempF = physics::CelciusToFarenheit(GetResourceTemperatureC());
@@ -1120,7 +1121,7 @@ double CGeothermalAnalyzer::flowRateTotal(void) { return (flowRatePerWell() * Ge
 double CGeothermalAnalyzer::GetNumberOfWells(void)
 {
 	if (mo_geo_in.me_cb == NUMBER_OF_WELLS)
-		mo_geo_out.md_NumberOfWells = mo_geo_in.md_NumberOfWells;
+		mp_geo_out->md_NumberOfWells = mo_geo_in.md_NumberOfWells;
 	else
 	{
 		double netBrineEffectiveness = GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb();
@@ -1128,11 +1129,11 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
 		if (netCapacityPerWell == 0)
 		{
 			ms_ErrorString = "The well capacity was calculated to be zero.  Could not continue analysis.";
-			mo_geo_out.md_NumberOfWells = 0;
+			mp_geo_out->md_NumberOfWells = 0;
 		}
-		mo_geo_out.md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
+		mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
 	}
-	return mo_geo_out.md_NumberOfWells;
+	return mp_geo_out->md_NumberOfWells;
 }
 
 double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
@@ -1173,8 +1174,8 @@ double CGeothermalAnalyzer::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, 
 
 
 // Turbine 1 - high pressure
-double CGeothermalAnalyzer::turbine1dHInitial() { return calculateDH(mo_geo_out.md_PressureHPFlashPSI - geothermal::DELTA_PRESSURE_HP_FLASH_PSI); } // I65
-double CGeothermalAnalyzer::turbine1TemperatureF() { return geothermal::GetFlashTemperature(mo_geo_out.md_PressureHPFlashPSI); } // D80
+double CGeothermalAnalyzer::turbine1dHInitial() { return calculateDH(mp_geo_out->md_PressureHPFlashPSI - geothermal::DELTA_PRESSURE_HP_FLASH_PSI); } // I65
+double CGeothermalAnalyzer::turbine1TemperatureF() { return geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI); } // D80
 double CGeothermalAnalyzer::turbine1EnthalpyF() { return  geothermal::GetFlashEnthalpyF(turbine1TemperatureF()); }	// D81
 double CGeothermalAnalyzer::turbine1EnthalpyG() { return  geothermal::GetFlashEnthalpyG(turbine1TemperatureF()); }	// D82
 double CGeothermalAnalyzer::turbine1DH() { return enthalpyChangeTurbine(turbine1dHInitial(), turbine1EnthalpyG()); } // I80 - btu/lb
@@ -1200,8 +1201,8 @@ double CGeothermalAnalyzer::turbine1NetSteam()
 double CGeothermalAnalyzer::turbine1OutputKWh() { return turbine1DH() * turbine1NetSteam() / 3413; }																				// I83 - kW/hr = (btu/lb) * (lb/hr) / (btu/kW)
 
 // Flash Turbine 2 - low pressure
-double CGeothermalAnalyzer::turbine2dHInitial(void) { return calculateDH(mo_geo_out.md_PressureLPFlashPSI - geothermal::DELTA_PRESSURE_LP_FLASH_PSI); }														// I87
-double CGeothermalAnalyzer::turbine2TemperatureF(void) { return geothermal::GetFlashTemperature(mo_geo_out.md_PressureLPFlashPSI); }														// D88
+double CGeothermalAnalyzer::turbine2dHInitial(void) { return calculateDH(mp_geo_out->md_PressureLPFlashPSI - geothermal::DELTA_PRESSURE_LP_FLASH_PSI); }														// I87
+double CGeothermalAnalyzer::turbine2TemperatureF(void) { return geothermal::GetFlashTemperature(mp_geo_out->md_PressureLPFlashPSI); }														// D88
 double CGeothermalAnalyzer::turbine2EnthalpyF(void) { return geothermal::GetFlashEnthalpyF(turbine2TemperatureF()); }															// D89
 double CGeothermalAnalyzer::turbine2EnthalpyG(void) { return geothermal::GetFlashEnthalpyG(turbine2TemperatureF());}															// D90
 double CGeothermalAnalyzer::turbine2DH(void) { return enthalpyChangeTurbine(turbine2dHInitial(), turbine2EnthalpyG()); }																// I102 - btu/lb
@@ -1232,10 +1233,10 @@ double CGeothermalAnalyzer::prJet(int stage){ return pInter(stage) / pInter(stag
 double CGeothermalAnalyzer::h2oMolesPerHour(int st) { return ncgFlowMolesPerHour() / ((pSuction(st)/pressureSaturation()) - 1); }										
 double CGeothermalAnalyzer::totalVentFlow(int st) { return ncgFlowLbsPerHour() + (h2oMolesPerHour(st) * geothermal::MOLE_WEIGHT_H2O); }									
 double CGeothermalAnalyzer::moleWeightVent(int st) { return totalVentFlow(st) /(ncgFlowMolesPerHour() + h2oMolesPerHour(st)); }											
-double CGeothermalAnalyzer::suctionSteamRatio(int st) { return pSuction(st) / mo_geo_out.md_PressureHPFlashPSI; }																	
+double CGeothermalAnalyzer::suctionSteamRatio(int st) { return pSuction(st) / mp_geo_out->md_PressureHPFlashPSI; }																	
 double CGeothermalAnalyzer::AR(int stage) { return ((3.5879 * pow(prJet(stage),-2.1168)) + 0.1) * pow(suctionSteamRatio(stage),(-1.155 * pow(prJet(stage),-0.0453))); }
 double CGeothermalAnalyzer::ERd(int stage) { return (1.0035 * AR(stage) + 8.9374)* pow(suctionSteamRatio(stage),(2.9594* pow(AR(stage),-0.8458) + 0.99)); }
-double CGeothermalAnalyzer::ER(int st) { return ERd(st) * pow((((460 + geothermal::GetFlashTemperature(mo_geo_out.md_PressureHPFlashPSI)) * moleWeightVent(st))/((temperatureCondF() + 460) * geothermal::MOLE_WEIGHT_H2O)),0.5); }
+double CGeothermalAnalyzer::ER(int st) { return ERd(st) * pow((((460 + geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI)) * moleWeightVent(st))/((temperatureCondF() + 460) * geothermal::MOLE_WEIGHT_H2O)),0.5); }
 double CGeothermalAnalyzer::steamFlow(int st) { return (st >= 3 && (geothermal::NCG_REMOVAL_TYPE != JET || geothermal::NUMBER_OF_COOLING_STAGES < 3)) ? 0 : totalVentFlow(st) / ER(st); }
 
 int CGeothermalAnalyzer::FlashCount(void) { return (mo_geo_in.me_ft >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1; }
@@ -1261,7 +1262,7 @@ double CGeothermalAnalyzer::pressureCondenser(void)
 
 double CGeothermalAnalyzer::FlashBrineEffectiveness(void)
 {
-	if (!mo_geo_out.mb_BrineEffectivenessCalculated) {
+	if (!mp_geo_out->mb_BrineEffectivenessCalculated) {
 		calculateFlashPressures();
 
 		double dGrossOutput = turbine1OutputKWh();
@@ -1275,10 +1276,10 @@ double CGeothermalAnalyzer::FlashBrineEffectiveness(void)
 
 
 		double dParasiticPower = dTotalPumpingKW + condensatePumpingKW() + fanPowerKW() + vacuumPumpingKW() + condenserInjectionPumpingKW();
-		mo_geo_out.md_FlashBrineEffectiveness = dGrossPower - dParasiticPower;
-		mo_geo_out.mb_BrineEffectivenessCalculated = true;
+		mp_geo_out->md_FlashBrineEffectiveness = dGrossPower - dParasiticPower;
+		mp_geo_out->mb_BrineEffectivenessCalculated = true;
 	}
-	return mo_geo_out.md_FlashBrineEffectiveness;
+	return mp_geo_out->md_FlashBrineEffectiveness;
 }
 
 void CGeothermalAnalyzer::calculateFlashPressures(void)
@@ -1286,24 +1287,24 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 	// These cannot be Set during initialization since some of the public properties may have been changed.  These
 	// need to be calculated right when the brine effectiveness is calculated.
 
-	if (mo_geo_out.mb_FlashPressuresCalculated) return;
+	if (mp_geo_out->mb_FlashPressuresCalculated) return;
 	
 	// if single flash - add flash pressure to delta pressure and quit
 	if (FlashCount() == 1)
 	{
-		mo_geo_out.md_PressureHPFlashPSI = pressureSingle() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+		mp_geo_out->md_PressureHPFlashPSI = pressureSingle() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
 		return;
 	}
 
 	// dual flash, have to calculate both
 	// high pressure flash
 //i think this might be using the wrong temperature - resource instead of plant design - for EGS
-	mo_geo_out.md_PressureHPFlashPSI = pressureDualHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+	mp_geo_out->md_PressureHPFlashPSI = pressureDualHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
 
 
 	// low pressure flash
-	mo_geo_out.md_PressureLPFlashPSI = pressureDualLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
-	mo_geo_out.mb_FlashPressuresCalculated = true;
+	mp_geo_out->md_PressureLPFlashPSI = pressureDualLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
+	mp_geo_out->mb_FlashPressuresCalculated = true;
 }
 
 // Pump Power
@@ -1365,7 +1366,7 @@ double CGeothermalAnalyzer:: vacuumPumpingKW(void) { return vacuumPumpWorkByStag
 // Condenser Injection Pump Power
 double CGeothermalAnalyzer:: injectionDeltaP(void)
 {	// D127 - psi (condensate injection delta pressure)
-	return (FlashCount() == 1) ? mo_geo_out.md_PressureHPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI : mo_geo_out.md_PressureLPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI; 
+	return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI : mp_geo_out->md_PressureLPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI; 
 }
 double CGeothermalAnalyzer:: injectionPumpHead(void) {return physics::PSItoFT(injectionDeltaP()); } // D128 - ft
 double CGeothermalAnalyzer:: injCoeffA(void) { return -0.0001769 * log(geothermal::DELTA_TEMPERATURE_CWF) + 0.0011083; }// R95
@@ -1557,7 +1558,7 @@ bool CGeothermalAnalyzer::inputErrors(void)
 
 	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { ms_ErrorString = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
-	if (!NumberOfReservoirs() > 0) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
+	if ( !(NumberOfReservoirs() > 0) ) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
 
 	if ( (mo_geo_in.me_rt != EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE) ) { ms_ErrorString = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 
@@ -1596,8 +1597,8 @@ bool CGeothermalAnalyzer::ReadyToAnalyze()
 
 	if (!OpenWeatherFile(mo_geo_in.mc_WeatherFileName) ) return false;
 
-	if ( !mo_geo_out.maf_ReplacementsByYear || !mo_geo_out.maf_monthly_resource_temp || !mo_geo_out.maf_monthly_power || !mo_geo_out.maf_monthly_energy || !mo_geo_out.maf_timestep_resource_temp ||
-		 !mo_geo_out.maf_timestep_power || !mo_geo_out.maf_timestep_test_values || !mo_geo_out.maf_timestep_pressure || !mo_geo_out.maf_timestep_dry_bulb || !mo_geo_out.maf_timestep_wet_bulb )
+	if ( !mp_geo_out->maf_ReplacementsByYear || !mp_geo_out->maf_monthly_resource_temp || !mp_geo_out->maf_monthly_power || !mp_geo_out->maf_monthly_energy || !mp_geo_out->maf_timestep_resource_temp ||
+		 !mp_geo_out->maf_timestep_power || !mp_geo_out->maf_timestep_test_values || !mp_geo_out->maf_timestep_pressure || !mp_geo_out->maf_timestep_dry_bulb || !mp_geo_out->maf_timestep_wet_bulb )
 
 	{
 		ms_ErrorString = "One of the output arrays was not initialized in the geothermal hourly model.";
@@ -1624,14 +1625,15 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
     
     // Initialize
     ReplaceReservoir(dElapsedTimeInYears);
+	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
 
 	// Go through time step (hours or months) one by one
     bool bReDrill = false;
 	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0;
-	float fMonthlyPowerTotal, fJunk;
+	float fMonthlyPowerTotal;
 	for (unsigned int year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)
 	{
-		mo_geo_out.maf_ReplacementsByYear[year] = 0;
+		mp_geo_out->maf_ReplacementsByYear[year] = 0;
 		for (unsigned int month=1; month<13; month++)
 		{
 			fPercentDone = (float)iElapsedMonths/(float)(12*mo_geo_in.mi_ProjectLifeYears)*100.0f;
@@ -1663,25 +1665,25 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 					mo_pb_in.TOU = mo_geo_in.mia_tou[ml_ReadCount-1];
 
 					// record current temperature (temperature changes monthly, but this is an hourly record of it)
-					mo_geo_out.maf_timestep_resource_temp[iElapsedTimeSteps] = (float)md_WorkingTemperatureC; // NOTE: If EGS temp drop is being calculated, then PlantGrossPowerkW must be called.  No production = no temp change
-					mo_geo_out.maf_timestep_pressure[iElapsedTimeSteps] = (float)mo_pb_in.P_amb;
-					mo_geo_out.maf_timestep_dry_bulb[iElapsedTimeSteps] = (float)mo_pb_in.T_db;
-					mo_geo_out.maf_timestep_wet_bulb[iElapsedTimeSteps] = (float)mo_pb_in.T_wb;
+					mp_geo_out->maf_timestep_resource_temp[iElapsedTimeSteps] = (float)md_WorkingTemperatureC; // NOTE: If EGS temp drop is being calculated, then PlantGrossPowerkW must be called.  No production = no temp change
+					mp_geo_out->maf_timestep_pressure[iElapsedTimeSteps] = (float)mo_pb_in.P_amb;
+					mp_geo_out->maf_timestep_dry_bulb[iElapsedTimeSteps] = (float)mo_pb_in.T_db;
+					mp_geo_out->maf_timestep_wet_bulb[iElapsedTimeSteps] = (float)mo_pb_in.T_wb;
 
 					// record outputs based on current inputs
 					if ( mo_geo_in.mi_ModelChoice == 0 ) // model choice 0 = GETEM
-						mo_geo_out.maf_timestep_power[iElapsedTimeSteps] = (float) MAX(PlantGrossPowerkW() - GetPumpWorkKW(), 0);
+						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float) MAX(PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW, 0);
 					else
 					{	// run power block model
 						if (!mo_PowerBlock.Execute((ml_HourCount-1)*3600, mo_pb_in))
 							ms_ErrorString = "There was an error running the power block model: " + mo_PowerBlock.GetLastError();
-						mo_geo_out.maf_timestep_power[iElapsedTimeSteps] = (float) MAX(mo_PowerBlock.GetOutputkW() - GetPumpWorkKW(), 0);
+						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float) MAX(mo_PowerBlock.GetOutputkW() - mp_geo_out->md_PumpWorkKW, 0);
 						//fJunk = (float)moMA->PlantGrossPowerkW(); // kinda works, but not quite the same
 					}
 
-					mo_geo_out.maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1)*1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
+					mp_geo_out->maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1)*1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
-					fMonthlyPowerTotal += mo_geo_out.maf_timestep_power[iElapsedTimeSteps];
+					fMonthlyPowerTotal += mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
 		
 					//md_ElapsedTimeInYears = year + util::percent_of_year(month,hour);
 					if (!ms_ErrorString.empty()) { return false; }
@@ -1690,28 +1692,27 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 				}
 			}//hours
 
-			mo_geo_out.maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
+			mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
 			iEvaluationsInMonth = (IsHourly()) ? util::hours_in_month(month) : 1;
-			mo_geo_out.maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal/iEvaluationsInMonth;		// avg monthly power
-			mo_geo_out.maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
+			mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal/iEvaluationsInMonth;		// avg monthly power
+			mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
 
 			// Is it possible and do we want to replace the reservoir in the next time step?
 			bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
-			if (bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear) ) )
+			if (bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0/12) ) )
 			{
 				ReplaceReservoir(dElapsedTimeInYears); // this will 'reset' temperature back to original resource temp
-				mo_geo_out.maf_ReplacementsByYear[year] = mo_geo_out.maf_ReplacementsByYear[year] + 1;
+				mp_geo_out->maf_ReplacementsByYear[year] = mp_geo_out->maf_ReplacementsByYear[year] + 1;
 			}
 			else
-				CalculateNewTemperature( dElapsedTimeInYears ); // once per month -> reduce temperature from last temp
-				//CalculateNewTemperature(dElapsedTimeInYears + (1.0/mo_geo_in.mi_MakeupCalculationsPerYear)); // once per month -> reduce temperature from last temp
+				//CalculateNewTemperature( dElapsedTimeInYears ); // once per month -> reduce temperature from last temp
+				CalculateNewTemperature(dElapsedTimeInYears + (1.0/12)); // once per month -> reduce temperature from last temp
 
 			iElapsedMonths++;  //for recording values into arrays, not used in calculations
 		}//months
 	}//years
 
 	if (!ms_ErrorString.empty() ) return false;
-	//mbAnalysisRequired = false;
 	return true;
 }
 

@@ -322,7 +322,7 @@ if (pbp.n_pl_inc == 8)
 		if (RunGeothermalAnalysis( my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs ) != 0)
 			throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
 
-		assign("pump_work", var_data((ssc_number_t) geo_outputs.md_PumpWork ) );
+		assign("pump_work", var_data((ssc_number_t) geo_outputs.md_PumpWorkKW/1000 ) ); // kW must be converted to MW
 //-----------------------------------------------------------------------------------------------------------------------------------------------
 }
 else

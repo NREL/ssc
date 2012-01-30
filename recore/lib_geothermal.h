@@ -100,14 +100,14 @@ struct SGeothermal_Outputs
 {
 	SGeothermal_Outputs()
 	{
-		md_PumpWork = md_NumberOfWells = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
+		md_PumpWorkKW = md_NumberOfWells = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 	}
 
 	// single value
-	double md_PumpWork;
+	double md_PumpWorkKW;
 	double md_NumberOfWells;
 
 	bool mb_BrineEffectivenessCalculated;
