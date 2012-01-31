@@ -11,14 +11,15 @@ pvinput_t::pvinput_t()
 {
 	Ibeam = Idiff = Ignd = Tdry = Tdew = Wspd = Wdir = Patm
 		= Zenith = IncAng = Elev 
-		= Tilt = Azimuth = std::numeric_limits<double>::quiet_NaN();
+		= Tilt = Azimuth = HourOfDay = std::numeric_limits<double>::quiet_NaN();
 }
 
 
 pvinput_t::pvinput_t( double ib, double id, double ig, 
 		double ta, double td, double ws, double wd, double patm,
 		double zen, double inc, 
-		double elv, double tlt, double azi)
+		double elv, double tlt, double azi,
+		double hrday )
 {
 	Ibeam = ib;
 	Idiff = id;
@@ -33,6 +34,7 @@ pvinput_t::pvinput_t( double ib, double id, double ig,
 	Elev = elv;
 	Tilt = tlt;
 	Azimuth = azi;
+	HourOfDay = hrday;
 }
 
 std::string pvcelltemp_t::error()

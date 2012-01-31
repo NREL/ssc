@@ -15,8 +15,6 @@
 class sandia_module_t : public pvmodule_t
 {
 public:
-	
-	double a, b, DT0;
 	double A0, A1, A2, A3, A4;
 	double B0, B1, B2, B3, B4, B5;
 	double C0, C1, C2, C3, C4, C5, C6, C7;

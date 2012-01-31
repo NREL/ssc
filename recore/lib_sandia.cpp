@@ -219,8 +219,7 @@ static double sandia_current_at_voltage(double V, double VmaxPow, double ImaxPow
 
 sandia_module_t::sandia_module_t( )
 {
-	a = b = DT0
-		= A0 = A1 = A2 = A3 = A4
+	A0 = A1 = A2 = A3 = A4
 		= B0 = B1 = B2 = B3 = B4 = B5
 		= C0 = C1 = C2 = C3 = C4 = C5 = C6 = C7
 		= Isc0 = aIsc

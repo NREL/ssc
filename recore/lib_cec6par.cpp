@@ -572,22 +572,6 @@ static double channel_free_194( double W_gap, double SLOPE, double TA, double T_
 	return  Nu*k_air/W_gap;
 }
 
-struct advtcell
-{
-	double HourOfDay; // hour, 0=midnight, 23=11pm
-	double Wspd; // m/s
-	double Wdir; // deg +from N
-	double Tdry;   // ambient dry bulb Temp, 'C
-	double Tdew; // dew point Temp, 'C
-	double Patm; // atmospheric pressure, mbar??
-	double Slope; // PV array slope (tilt), deg
-	double Azimuth; // PV array azimuth, 0=equator, -90=E, 90=W,
-
-	double SUNEFF;  // total effective incident irradiance on tilted surface (W/m2)
-	double SHDKR;  // Total (cover + cell) absorbed radiation for energy balance (W/m2)
-
-};
-
 bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
 {	
 
@@ -713,9 +697,9 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double V_cover = V_WIND;
 	double P_guess = 0;
 
-	double TA = input.Tdry;
-	double Tdew = input.Tdew;
-	double Patm = input.Patm;
+	// convert to kelvin
+	double TA = input.Tdry+273.15;
+	double Patm = input.Patm*100; // convert millibar into Pascal
 
 	double EFFREF = 1e-3;
 		
@@ -740,7 +724,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	Fcs        = 1. - Fcg;              // !view factor between top of tilted plate and everything else (sky)
 	Fbs        = Fcg;                   // !view factor bewteen top and ground = bottom and sky
 	Fbg        = Fcs;                   // !view factor bewteen bottom and ground = top and sky
-	T_sky      = TA*pow(0.711+0.0056*Tdew+0.000073*pow(Tdew,2)+0.013*cosD(input.HourOfDay), 0.25);   // !Sky Temperature: Berdahl and Martin  
+	T_sky      = TA*pow(0.711+0.0056*input.Tdew+0.000073*pow(input.Tdew,2)+0.013*cosD(input.HourOfDay), 0.25);   // !Sky Temperature: Berdahl and Martin  
 	T_ground   = TA;                    // !Set ground temp equal to ambient temp
 	T_rw       = TA;                    // !Initial guess for roof or wall temp
 	
@@ -822,21 +806,22 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		case 3: // !Integrated Mounting Configuration
 			while( fabs(err_TC) > 0.001)
 			{
+				double TbackK = TbackInteg + 273.15;
 				double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and film temp
-				double rho_bk     = Patm*28.967/8314.34*(1 / ((TbackInteg+TC)/2.));
+				double rho_bk     = Patm*28.967/8314.34*(1 / ((TbackK+TC)/2.));
 				double Re_forced  = max(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel: function of L_char: array depen?
 				double Nu_forced  = 0.037 * pow(Re_forced, 4./5.) * pow(Pr_air, 1./3.);
 				double h_forced   = Nu_forced * k_air / L_char;					
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);				   
-				double h_radbk    = (TC*TC+TbackInteg*TbackInteg)*(TC+TbackInteg); // !Using TbackInteg now instead of TA					
+				double h_radbk    = (TC*TC+TbackK*TbackK)*(TC+TbackK); // !Using TbackK now instead of TA					
 				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air);				 
-				double h_free_b   = free_convection_194(TC,TbackInteg,180.-input.Tilt,rho_bk,Pr_air,mu_air,Area,Length,Width,k_air);				 
+				double h_free_b   = free_convection_194(TC,TbackK,180.-input.Tilt,rho_bk,Pr_air,mu_air,Area,Length,Width,k_air);				 
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.), (1./3.));
 				double h_conv_b   = h_free_b;// !No forced convection on backside
 					
-				double TC1 = (h_conv_c*TA+h_conv_b*TbackInteg+Fcs*EmisC*sigma*h_sky*T_sky+Fcg*EmisC*sigma*h_ground*T_ground
-								+EmisB*sigma*h_radbk*TbackInteg-(P_guess/Area)+SHDKR)
+				double TC1 = (h_conv_c*TA+h_conv_b*TbackK+Fcs*EmisC*sigma*h_sky*T_sky+Fcg*EmisC*sigma*h_ground*T_ground
+								+EmisB*sigma*h_radbk*TbackK-(P_guess/Area)+SHDKR)
 							/ (h_conv_c+h_conv_b+Fcs*EmisC*sigma*h_sky+Fcg*EmisC*sigma*h_ground+EmisB*sigma*h_radbk);
 					
 				err_TC     = TC1 - TC;

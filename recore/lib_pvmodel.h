@@ -13,7 +13,8 @@ public:
 	pvinput_t( double ib, double id, double ig, 
 		double ta, double td, double ws, double wd, double patm,
 		double zen, double inc, 
-		double elv, double tlt, double azi);
+		double elv, double tlt, double azi,
+		double hrday );
 
 	double Ibeam; // beam irradiance, W/m2
 	double Idiff; // sky diffuse irradiance, W/m2
