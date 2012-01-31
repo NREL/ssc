@@ -54,6 +54,7 @@ public:
 	double wdir; /* wind direction (deg: N = 0 or 360, E = 90, S = 180,W = 270 ) */
 	double tdry; /* dry bulb temp (C) */
 	double twet; /* wet bulb temp (C) */
+	double tdew; /* dew point temp (C) */
 	double rhum; /* relative humidity (%) */
 	double pres; /* pressure (mbar) */
 	double snow; /* snow depth (cm) 0-150 */

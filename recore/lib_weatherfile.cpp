@@ -381,10 +381,62 @@ void weatherfile::close()
 	year = month = day = hour = 0;
 	minute = 0.0;
 	gh = dn = df = wspd = wdir = 0.0;
-	tdry = twet = rhum = pres = snow = albedo = 0.0;
+	tdry = twet = tdew = rhum = pres = snow = albedo = 0.0;
 
 }
 
+static double calc_twet( double T, double RH, double P )
+{
+//	function [Twet] = calctwet(T, RH, P)
+//% calculate wet bulb temperature from T (dry bulb, 'C), RH (%), Pressure
+//% (mbar)
+//% see http://www.ejournal.unam.mx/atm/Vol07-3/ATM07304.pdf for eqns.
+
+    volatile double Twet = T*0.7;// initial guess
+    
+    int i = 0;
+    while( i++ < 250 )
+	{
+        double F = exp( (21.3 * Twet + 494.41) / (Twet+273.15) ) - RH / 100 * exp( (21.3 * T + 494.41) / (T+273.15) ) - (6.53*10e-4) * P * (T-Twet);
+        double G = exp( (21.3 * Twet + 494.41) / (Twet+273.15) ) * ( (21.4 * (Twet+273.15) - (21.4 * Twet+494.41)) / pow(Twet+273.15, 2) ) + 6.53*10e-4 * P * Twet;
+    
+        if (fabs(F) < 0.1)
+            break;
+
+        Twet = Twet + -F/G;
+	}
+
+	if ( Twet != Twet ) // check for NaN
+	{
+		/*
+		from biopower, Jennie Jorgenson:
+		For estimating the dew point (first line of code), I used this very simple relation from wikipedia: http://en.wikipedia.org/wiki/Dew_point#Simple_approximation
+		The second line is from a slightly sketchier source (http://www.theweatherprediction.com/habyhints/170/), meteorologist Jeff Haby. His procedure is for temperatures in F. 
+		*/
+
+		double dp_est = T - ((1 - RH/100) / 0.05);
+		Twet = T - ((T - dp_est) / 3.0);
+	}
+
+	return Twet;
+}
+
+static double wiki_dew_calc( double T, double RH )
+{
+	// ref: http://en.wikipedia.org/wiki/Dew_point
+
+	if ( RH > 0 )
+	{
+		static const double a = 17.271;
+		static const double b = 237.7;
+		double gamma = a*T/(b+T) + log(RH/100.0);
+		if ( a-gamma != 0.0 )
+			return b*gamma/(a-gamma);
+	}
+
+	// ultra-simple equation (OK as long as RH > 50%)
+	return  T - (100-RH)/5;
+}
 
 bool  weatherfile::read()
 {
@@ -444,13 +496,16 @@ bool  weatherfile::read()
 		dn=(double)d2;           /* Direct radiation */
 		df=(double)d3;           /* Diffuse radiation */
 		tdry=(double)d10/10.0;       /* Ambient dry bulb temperature(C) */
-		twet = (double)d11/10.0;
+		tdew = (double)d11/10.0; /* dew point temp */
 		wspd=(double)d15/10.0;       /* Wind speed(m/s) */
 		wdir=(double)d14; /* wind dir */
 		rhum = (double)d12;
 		pres = (double)d13;
 		snow = (double)d20;
 		albedo = -999; /* no albedo in TMY2 */
+
+		
+		twet = calc_twet( tdry, rhum, pres ); /* must calculate wet bulb */
 
 		return nread==79 && pret==buf;
 	}
@@ -493,6 +548,8 @@ bool  weatherfile::read()
 		snow = 999.0; // no snowfall in TMY3
 		albedo = (double)atof( cols[61] );
 				
+		tdew = wiki_dew_calc( tdry, rhum );
+
 		return pret==buf;
 	}
 	else if ( m_type == EPW)
@@ -524,6 +581,8 @@ bool  weatherfile::read()
 		snow = (double)atof( cols[30] ); // snowfall
 		albedo = -999; /* no albedo in EPW file */
 
+		tdew = wiki_dew_calc( tdry, rhum );
+
 		return pret==buf;
 	}
 	else if ( m_type == SMW )
@@ -553,6 +612,7 @@ bool  weatherfile::read()
 		wdir = (double)atof(cols[5]);
 		
 		tdry = (double)atof(cols[0]);
+		tdew = (double)atof(cols[1]);
 		twet = (double)atof(cols[2]);
 		
 		rhum = (double)atof( cols[3] );

@@ -37,6 +37,7 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "wdir",                    "Wind Direction",                   "deg",   "0=N,E=90",               "Weather Reader",      "*",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "tdry",                    "Temperature, Dry Bulb",            "'C",    "",                       "Weather Reader",      "*",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "twet",                    "Temperature, Wet Bulb",            "'C",    "",                       "Weather Reader",      "*",                        "LENGTH_EQUAL=year",     "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "tdew",                    "Temperature, Dew Point",           "'C",    "",                       "Weather Reader",      "*",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "rhum",                    "Relative Humidity",                "%",     "",                       "Weather Reader",      "*",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "pres",                    "Atmospheric Pressure",             "millibar", "",                    "Weather Reader",      "*",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "snow",                    "Snow Depth",                       "cm",    "",                       "Weather Reader",      "*",                        "LENGTH_EQUAL=year",     "" },
@@ -88,6 +89,7 @@ public:
 		ssc_number_t *p_wdir = allocate( "wdir", records );
 		ssc_number_t *p_tdry = allocate( "tdry", records );
 		ssc_number_t *p_twet = allocate( "twet", records );
+		ssc_number_t *p_tdew = allocate( "tdew", records );
 		ssc_number_t *p_rhum = allocate( "rhum", records );
 		ssc_number_t *p_pres = allocate( "pres", records );
 		ssc_number_t *p_snow = allocate( "snow", records );
@@ -114,6 +116,7 @@ public:
 			p_wdir[i] = (ssc_number_t)wf.wdir;
 			p_tdry[i] = (ssc_number_t)wf.tdry;
 			p_twet[i] = (ssc_number_t)wf.twet;
+			p_tdew[i] = (ssc_number_t)wf.tdew;
 			p_rhum[i] = (ssc_number_t)wf.rhum;
 			p_pres[i] = (ssc_number_t)wf.pres;
 			p_snow[i] = (ssc_number_t)wf.snow;

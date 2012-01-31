@@ -67,6 +67,7 @@ public:
 		ssc_number_t *p_poagnddiff = as_array( "poa_gnddiff", &arr_len );
 		ssc_number_t *p_tdry = as_array( "tdry", &arr_len );
 		ssc_number_t *p_wspd = as_array( "wspd", &arr_len );
+		ssc_number_t *p_wdir = as_array( "wdir", &arr_len );
 		ssc_number_t *p_inc = as_array( "incidence", &arr_len );
 		ssc_number_t *p_zen = as_array( "sun_zen", &arr_len );
 		ssc_number_t *p_stilt = as_array( "surf_tilt", &arr_len );
@@ -80,7 +81,6 @@ public:
 		mod.Isc = as_double("Isc");
 		mod.alpha_isc = as_double("alpha_isc");
 		mod.beta_voc = as_double("beta_voc");
-		mod.Tnoct = as_double("tnoct");
 		mod.a = as_double("a");
 		mod.Il = as_double("Il");
 		mod.Io = as_double("Io");
@@ -88,21 +88,24 @@ public:
 		mod.Rsh = as_double("Rsh");
 		mod.Adj = as_double("Adj");
 
+		noct_celltemp_t tc;
+		tc.Tnoct = as_double("tnoct");
+
 		int standoff = as_integer("standoff");
-		mod.standoff_tnoct_adj = 0;
+		tc.standoff_tnoct_adj = 0;
 		switch(standoff)
 		{
-		case 2: mod.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
-		case 3: mod.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
-		case 4: mod.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
-		case 5: mod.standoff_tnoct_adj = 18; break; // less than 0.5 inches
+		case 2: tc.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
+		case 3: tc.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
+		case 4: tc.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
+		case 5: tc.standoff_tnoct_adj = 18; break; // less than 0.5 inches
 			// note: all others, standoff_tnoct_adj = 0;
 		}
 
 		int height = as_integer("height");
-		mod.ffv_wind = 0.51;
+		tc.ffv_wind = 0.51;
 		if ( height == 1 )
-			mod.ffv_wind = 0.61;
+			tc.ffv_wind = 0.61;
 
 		ssc_number_t *p_tcell = allocate("tcell", arr_len);
 		ssc_number_t *p_volt = allocate("dc_voltage", arr_len);
@@ -118,6 +121,7 @@ public:
 			in.Ignd = (double) p_poagnddiff[i];
 			in.Tdry = (double) p_tdry[i];
 			in.Wspd = (double) p_wspd[i];
+			in.Wdir = (double) p_wdir[i];
 			in.Zenith = (double) p_zen[i];
 			in.IncAng = (double) p_inc[i];
 			in.Elev = site_elevation;
@@ -125,7 +129,9 @@ public:
 
 			pvoutput_t out;
 
-			if (! mod( in, -1, out ) ) throw general_error( "error calculating module power and temperature with given parameters", (float) i);
+			double tcell = in.Tdry;
+			if (! tc( in, mod, -1, tcell ) ) throw general_error("error calculating cell temperature", (float)i);
+			if (! mod( in, tcell, -1, out ) ) throw general_error( "error calculating module power and temperature with given parameters", (float) i);
 
 			p_tcell[i] = (ssc_number_t)out.CellTemp;
 			p_volt[i] = (ssc_number_t)out.Voltage;

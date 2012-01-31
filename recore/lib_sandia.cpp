@@ -169,63 +169,6 @@ C aIsc = Isc temperature coefficient (degC^-1) */
 	return Isc / (1.0+aIsc*(Tc - 25.0))/Isc0;
 }
 
-static double sandia_cell_temperature( double Ibc, double Idc, double Ws, double Ta, double fd, double a, double b, double DT0 )
-{
-/*
-C Returns cell temperature, deg C
-C Ibc = beam radiation on collector plane, W/m2
-C Idc = Diffuse radiation on collector plane, W/m2
-C Ws  = wind speed, m/s
-C Ta  = ambient temperature, degC
-C fd  = fraction of Idc used (empirical constant)
-C a   = empirical constant
-C b   = empirical constant
-C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
-*/
-  
-//C Update from Chris Cameron - email 4/28/10  
-//C        E = Ibc + fd * Idc
-	double E = Ibc + Idc;  
-	double Tm = E * exp(a + b * Ws) + Ta;  
-	return Tm + E / 1000.0 * DT0;
-}
-
-double sandia_module_t::sandia_tcell_from_tmodule( double Tm, double Ibc, double Idc, double fd, double DT0)
-{
-	/*
-C Returns cell temperature, deg C
-C Tm  = module temperature (deg C)
-C Ibc = beam radiation on collector plane, W/m2
-C Idc = Diffuse radiation on collector plane, W/m2
-C fd  = fraction of Idc used (empirical constant)
-C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
-*/
-
-//C Update from Chris Cameron - email 4/28/10  
-//C        E = Ibc + fd * Idc
-	double E = Ibc + Idc;
-	return Tm + E / 1000.0 * DT0;
-}
-
-double sandia_module_t::sandia_module_temperature( double Ibc, double Idc, double Ws, double Ta, double fd, double a, double b )
-{
-	/*
-C Returns back-of-module temperature, deg C
-C Ibc = beam radiation on collector plane, W/m2
-C Idc = Diffuse radiation on collector plane, W/m2
-C Ws  = wind speed, m/s
-C Ta  = ambient temperature, degC
-C fd  = fraction of Idc used (empirical constant)
-C a   = empirical constant
-C b   = empirical constant
-*/
-
-//C Update from Chris Cameron - email 4/28/10  
-//C        E = Ibc + fd * Idc
-	double E = Ibc + Idc;
-	return E * exp(a + b * Ws) + Ta;
-}
-
 static double sandia_current_at_voltage(double V, double VmaxPow, double ImaxPow, double Voc, double Isc)
 {
 /* from sam_sandia_pv_type701.for
@@ -290,17 +233,11 @@ sandia_module_t::sandia_module_t( )
 }
 
 
-bool sandia_module_t::operator() ( pvinput_t &in, double opvoltage, pvoutput_t &out )
+bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltage, pvoutput_t &out )
 {
 	
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = out.CellTemp = 0.0;
 	
-	//C Calculate back-of-module temperature:
-	double Tback = sandia_module_temperature(in.Ibeam, in.Idiff+in.Ignd, in.Wspd, in.Tdry, fd, a, b);
-
-	//C Calculate cell temperature:
-	double Tc = sandia_tcell_from_tmodule(Tback, in.Ibeam, in.Idiff+in.Ignd, fd, DT0);
-
 	double Gtotal = in.Ibeam + in.Idiff + in.Ignd;
 	if ( Gtotal > 0.0 )
 	{
@@ -314,19 +251,19 @@ bool sandia_module_t::operator() ( pvinput_t &in, double opvoltage, pvoutput_t &
 		double F2 = sandia_f2(in.IncAng,B0,B1,B2,B3,B4,B5);
 
 		//C Calculate short-circuit current:
-		double Isc = sandia_isc(Tc,Isc0,in.Ibeam, in.Idiff+in.Ignd,F1,F2,fd,aIsc);
+		double Isc = sandia_isc(TcellC,Isc0,in.Ibeam, in.Idiff+in.Ignd,F1,F2,fd,aIsc);
 
 		//C Calculate effective irradiance:
-		double Ee = sandia_effective_irradiance(Tc,Isc,Isc0,aIsc);
+		double Ee = sandia_effective_irradiance(TcellC,Isc,Isc0,aIsc);
 
 		//C Calculate Imp:
-		double Imp = sandia_imp(Tc,Ee,Imp0,aImp,C0,C1);
+		double Imp = sandia_imp(TcellC,Ee,Imp0,aImp,C0,C1);
 
 		//C Calculate Voc:
-		double Voc = sandia_voc(Tc,Ee,Voc0,NcellSer,DiodeFactor,BVoc0,mBVoc);
+		double Voc = sandia_voc(TcellC,Ee,Voc0,NcellSer,DiodeFactor,BVoc0,mBVoc);
 
 		//C Calculate Vmp:
-		double Vmp = sandia_vmp(Tc,Ee,Vmp0,NcellSer,DiodeFactor,BVmp0,mBVmp,C2,C3);
+		double Vmp = sandia_vmp(TcellC,Ee,Vmp0,NcellSer,DiodeFactor,BVmp0,mBVmp,C2,C3);
 
 		double V, I;
 		if ( opvoltage < 0 )
@@ -337,13 +274,13 @@ bool sandia_module_t::operator() ( pvinput_t &in, double opvoltage, pvoutput_t &
 		else
 		{		
 			//C Calculate Ix:
-			double Ix = sandia_ix(Tc,Ee,Ix0,aIsc,aImp,C4,C5);
+			double Ix = sandia_ix(TcellC,Ee,Ix0,aIsc,aImp,C4,C5);
 
 			//C Calculate Vx:
 			double Vx = Voc/2.0;
 
 			//C Calculate Ixx:
-			double Ixx = sandia_ixx(Tc,Ee,Ixx0,aImp,C6,C7);
+			double Ixx = sandia_ixx(TcellC,Ee,Ixx0,aImp,C6,C7);
 
 			//C Calculate Vxx:
 			double Vxx = 0.5*(Voc + Vmp);
@@ -361,7 +298,7 @@ bool sandia_module_t::operator() ( pvinput_t &in, double opvoltage, pvoutput_t &
 		out.Efficiency = I*V/(Gtotal*Area);
 		out.Voc_oper = Voc;
 		out.Isc_oper = Isc;
-		out.CellTemp = Tc;
+		out.CellTemp = TcellC;
 	}
 	
 	return true;
@@ -405,5 +342,51 @@ bool sandia_inverter_t::acpower(
 	*Eff = *Pac / Pdc;
 	if ( *Eff < 0.0 ) *Eff = 0.0;
 
+	return true;
+}
+
+
+
+double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double Ibc, double Idc, double fd, double DT0)
+{
+	/*
+C Returns cell temperature, deg C
+C Tm  = module temperature (deg C)
+C Ibc = beam radiation on collector plane, W/m2
+C Idc = Diffuse radiation on collector plane, W/m2
+C fd  = fraction of Idc used (empirical constant)
+C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
+*/
+
+//C Update from Chris Cameron - email 4/28/10  
+//C        E = Ibc + fd * Idc
+	double E = Ibc + Idc;
+	return Tm + E / 1000.0 * DT0;
+}
+
+double sandia_celltemp_t::sandia_module_temperature( double Ibc, double Idc, double Ws, double Ta, double fd, double a, double b )
+{
+	/*
+C Returns back-of-module temperature, deg C
+C Ibc = beam radiation on collector plane, W/m2
+C Idc = Diffuse radiation on collector plane, W/m2
+C Ws  = wind speed, m/s
+C Ta  = ambient temperature, degC
+C fd  = fraction of Idc used (empirical constant)
+C a   = empirical constant
+C b   = empirical constant
+*/
+
+//C Update from Chris Cameron - email 4/28/10  
+//C        E = Ibc + fd * Idc
+	double E = Ibc + Idc;
+	return E * exp(a + b * Ws) + Ta;
+}
+
+bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
+{
+	double tmod = sandia_module_temperature( input.Ibeam,
+		input.Idiff + input.Ignd, input.Wspd, input.Tdry, fd, a, b );
+	Tcell = sandia_tcell_from_tmodule( tmod, input.Ibeam, input.Idiff + input.Ignd, fd, DT0 );
 	return true;
 }
