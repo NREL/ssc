@@ -23,7 +23,7 @@
     <ClCompile Include="cmod_cashloan.cpp" />
     <ClCompile Include="cmod_equpartflip.cpp" />
     <ClCompile Include="cmod_fossilgen.cpp" />
-    <ClCompile Include="cmod_geohourly.cpp" />
+    <ClCompile Include="cmod_geothermal.cpp" />
     <ClCompile Include="cmod_ippppa.cpp" />
     <ClCompile Include="cmod_irradproc.cpp" />
     <ClCompile Include="cmod_levpartflip.cpp" />
