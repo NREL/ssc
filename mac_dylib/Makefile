@@ -43,7 +43,7 @@ OBJECTS = \
 	cmod_windwatts.o \
 	cmod_ippppa.o \
 	cmod_swhsolopt.o \
-	cmod_geohourly.o \
+	cmod_geothermal.o \
 	cmod_trntrough.o \
 	core.o \
 	lib_pvmodel.o \
@@ -57,7 +57,7 @@ OBJECTS = \
 	vartab.o \
 	lib_weatherfile.o \
 	lib_windwatts.o \
-	lib_geohourly.o \
+	lib_geothermal.o \
 	lib_sandia.o \
 	sscapi.o \
 	vtab_common.o

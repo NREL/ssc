@@ -5,7 +5,7 @@ CXXFLAGS = $(CFLAGS)
 
 OBJECTS = lib_cec6par.o\
 	lib_financial.o\
-	lib_geohourly.o\
+	lib_geothermal.o\
 	lib_irradproc.o\
 	lib_physics.o\
 	lib_powerblock.o\
