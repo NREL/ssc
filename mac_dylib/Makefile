@@ -65,7 +65,7 @@ OBJECTS = \
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(LDFLAGS) -dynamiclib -flat_namespace -o $@ $^
-	cp $(TARGET) ../python/ssc.dylib
+	#TFF-Jan,2012; still necessary?: cp $(TARGET) ../python/ssc.dylib
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
