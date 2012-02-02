@@ -15,7 +15,7 @@ CFLAGS += -D__64BIT__
 TARGET = ssc64.dylib
 else
 CFLAGS += -D__32BIT__ -arch i386
-TARGET = ssc32.dylib
+TARGET = ssc.dylib
 LDFLAGS += -arch i386
 endif
 
