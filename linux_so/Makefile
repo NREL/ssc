@@ -47,6 +47,7 @@ OBJECTS = \
 	cmod_windwatts.o \
 	cmod_ippppa.o \
 	cmod_swhsolopt.o \
+	cmod_geothermal.o \
 	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
