@@ -483,9 +483,7 @@ public:
 				Q_deliv = mdot_mix / dT * (Cp_tank*T_deliv - Cp_water*T_mains[i]);
 			else
 				Q_deliv = draw[i] / dT * (Cp_tank*T_deliv - Cp_water*T_mains[i]);
-			
-			double Q_loss = Q_tankloss;
-		
+					
 			// calculate pumping losses (pump size is user entered) -
 			double P_pump = (Q_useful > 0) ? pump_watts*pump_eff : 0.0;
 		
@@ -508,7 +506,7 @@ public:
 			// save output variables
 			out_Q_useful[i] = (ssc_number_t) Q_useful;
 			out_Q_deliv[i] = (ssc_number_t) Q_deliv;
-			out_Q_loss[i] = (ssc_number_t) Q_loss;
+			out_Q_loss[i] = (ssc_number_t) Q_tankloss;
 			out_T_tank[i] = (ssc_number_t) T_tank;
 			out_T_deliv[i] = (ssc_number_t) T_deliv;
 			out_P_pump[i] = (ssc_number_t) P_pump;
