@@ -689,9 +689,9 @@ void perez( double hextra, double dn, double df, double alb, double inc, double 
 			}
 			
 			// original PVWatts: poa = A + F1*B + F2*C + alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0 + dn*ZC;
-			poa[0] = dn*ZC;
-			poa[1] = A + B + C;
-			poa[2] = alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0;
+			poa[0] = dn*ZC; // beam
+			poa[1] = A + B + C; // total sky diffuse
+			poa[2] = alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0; // ground diffuse
 			return;
 			}
 		}
