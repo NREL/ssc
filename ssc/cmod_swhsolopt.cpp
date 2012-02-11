@@ -28,8 +28,9 @@ static var_info _cm_vtab_swhsolopt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "area_coll",             "Single collector area",            "m2",     "",                      "SWHsolopt",      "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "FRta",                  "FRta",                             "",       "",                      "SWHsolopt",      "*",                       "",                                  "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "FRUL",                  "FRUL",                             "",       "",                      "SWHsolopt",      "*",                       "",                                  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "b0",                    "Incidence angle modifier",         "",       "",                      "SWHsolopt",      "*",                       "",                                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "iam",                   "Incidence angle modifier",         "",       "",                      "SWHsolopt",      "*",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "test_fluid",            "Fluid used in collector test",     "",       "Water,Glycol",          "SWHsolopt",      "*",                       "INTEGER,MIN=0,MAX=1",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "test_flow",             "Flow rate used in collector test", "kg/s",   "",                      "SWHsolopt",      "*",                       "POSITIVE",                          "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_length",           "Length of piping in system",       "m",      "",                      "SWHsolopt",      "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_diam",             "Pipe diameter",                    "m",      "",                      "SWHsolopt",      "*",                       "POSITIVE",                          "" },
@@ -111,10 +112,11 @@ public:
 		
 		int itest = as_integer("test_fluid"); // 0=water, 1=glycol
 		double test_cp = (itest==0) ? 4816 : 3705;  // test fluid specific heat in J/kgK
+		double test_flow = as_double("test_flow"); // collector test flow rate (kg/s)
 
 		double FRta = as_double("FRta"); // FR(ta)_n (D&B pp 291) (dimensionless) collector heat removal factor * effective transmittance-absorption product (intercept on efficiency curve); indication of how energy is absorbed.
 		double FRUL = as_double("FRUL"); // FRUL (D&B pp 291) (W/m2.C)  collector heat removal factor * collector heat loss coefficient (slope of efficiency curve); indication of how energy is lost.
-		double b0 = as_double("b0"); // incidence angle modifier coefficient (D&B pp 297) (unitless)
+		double iam = as_double("iam"); // incidence angle modifier coefficient (D&B pp 297) (unitless)
 
 		double pipe_diam = as_double("pipe_diam"); // pipe diameter in system (m)
 		double pipe_k = as_double("pipe_k"); // pipe insulation conductivity (W/m2.C)
@@ -245,20 +247,20 @@ public:
 			// calculate transmittance through cover
 					
 			// incidence angle modifier (IAM) for beam (D&B eqn 6.17.10 pp 297)
-			double Kta_b = 1 - b0*( 1/cos(aoi*M_PI/180) - 1 );
+			double Kta_b = 1 - iam*( 1/cos(aoi*M_PI/180) - 1 );
 			if (Kta_b < 0) Kta_b = 0;
 			if (Kta_b > 1) Kta_b = 0;
 		
 			// effective incidence angle for sky diffuse radiation (D&B eqn 5.4.2 pp 215)
 			double cos_theta_eff_diffuse = cos( 59.7*M_PI/180 - 0.1388*tilt*M_PI/180 + 0.001497*tilt*M_PI/180*tilt*M_PI/180 );
 			// incidence angle modifier (IAM) for diffuse (D&B eqn 6.17.10 pp 297)
-			double Kta_d = 1 - b0*( 1/cos_theta_eff_diffuse - 1 );
+			double Kta_d = 1 - iam*( 1/cos_theta_eff_diffuse - 1 );
 			if (Kta_d < 0) Kta_d = 0;
 		
 			// effective incidence angle modifier for ground reflected radiation (D&B eqn 5.4.1 pp 215)
 			double cos_theta_eff_ground = cos( 90*M_PI/180 - 0.5788*tilt*M_PI/180 + 0.002693*tilt*M_PI/180*tilt*M_PI/180 );
 			// incidence angle modifier (IAM) for ground reflected radiation (D&B eqn 6.17.10 pp 297)
-			double Kta_g = 1 - b0*( 1/cos_theta_eff_ground - 1);
+			double Kta_g = 1 - iam*( 1/cos_theta_eff_ground - 1);
 			if (Kta_g < 0) Kta_g = 0;
 			
 
@@ -351,7 +353,7 @@ public:
 			double T_deliv = T_deliv_prev;
 		
 			double mdotCp_coll = mdot * fluid_cp; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
-			double mdotCp_test = mdot * test_cp; // mass flow rate (kg/s) * Cp_test
+			double mdotCp_test = test_flow * test_cp; // test flow (kg/s) * Cp_test
 		
 			// update HX inlet temp using useful energy absorbed in last time step Qu=epsilon*mCp(Ti-Ts)
 			T_hx_in = T_tank + Q_useful / ( Eff_hx * mdotCp_coll );
@@ -360,7 +362,7 @@ public:
 			T_hx_out = T_hx_in - Q_useful / mdotCp_coll;
 		
 			/* Flow rate corrections to FRta, FRUL (D&B pp 307) */
-			double FprimeUL = -mdotCp_test / area * ::log( 1 - FRUL*area/mdotCp_test ); // D&B eqn 6.20.4 **TODO** CHECK |use vs |test
+			double FprimeUL = -mdotCp_test / area * ::log( 1 - FRUL*area/mdotCp_test ); // D&B eqn 6.20.4
 			double r = ( mdotCp_coll/area*(1-exp(-area*FprimeUL/mdotCp_coll)) ) / FRUL; // D&B eqn 6.20.3
 			double FRta_use = r*FRta;
 			double FRUL_use = r*FRUL;
