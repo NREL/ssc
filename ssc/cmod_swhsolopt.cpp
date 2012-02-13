@@ -14,7 +14,10 @@ static var_info _cm_vtab_swhsolopt[] = {
 	{ SSC_INPUT,        SSC_STRING,      "file_name",             "local weather file path",          "",       "",                      "Weather",      "*",                         "LOCAL_FILE",                          "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                   "kg/hr",  "",                      "SWHsolopt",      "*",                       "LENGTH=8760",               "" },
-	
+
+	{ SSC_INPUT,        SSC_NUMBER,      "max_iter",              "Max iterations allowed",           "",       "",                      "SWHsolopt",      "*",                       "MIN=0,MAX=100,INTEGER",             "" },
+
+
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                   "deg",    "",                      "SWHsolopt",      "*",                       "MIN=0,MAX=90",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                "deg",    "90=E,180=S",            "SWHsolopt",      "*",                       "MIN=0,MAX=360",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                "Ground reflectance factor",        "0..1",   "",                      "SWHsolopt",      "*",                       "FACTOR",                            "" },
@@ -64,12 +67,14 @@ static var_info _cm_vtab_swhsolopt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                      "Wh",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                 "Wh",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                          "Wh",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                   "Wh",    "1,2,3,4",               "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_hot",                 "T hot",                            "C",     "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold",                "T cold",                           "C",     "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "V_hot",                 "V hot",                            "m3",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "V_cold",                "V cold",                           "m3",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                   "kg/hr",  "",                      "SWHsolopt",      "*",                       "LENGTH=8760",               "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                   "",      "1,2,3,4",               "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solve_iter",            "Number of iterations to solve",    "",      "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	
 	var_info_invalid };
 
@@ -100,6 +105,8 @@ public:
 		int irrad_mode = as_integer("irrad_mode"); // 0=beam&diffuse, 1=total&beam
 		int sky_model = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
 	
+		int max_iter = as_integer("max_iter"); // max iterations allowed
+
 		size_t len;
 		ssc_number_t *draw = as_array("scaled_draw", &len);
 		if ( len != 8760 ) throw exec_error("swhsolopt", "draw profile must have 8760 values");
@@ -180,6 +187,7 @@ public:
 		ssc_number_t *out_T_cold = allocate("T_cold", 8760);
 
 		ssc_number_t *Mode = allocate("mode", 8760);
+		ssc_number_t *NSolveIter = allocate("solve_iter", 8760);
 	
 		/*
 		Draw[0] = 2.4f;
@@ -328,8 +336,6 @@ public:
 		double V_cold = V_tank-V_hot;
 		double T_hot = T_mains[1] + 40; // initial hot temp 40'C above ambient
 		double T_cold = T_mains[1];
-		double T_hx_in = 45; // initial inlet temp of heat exchanger 'C
-		double T_hx_out = 40; // initial outlet temp of heat exchanger 'C
 		
 		double Q_tankloss = 0;
 		double Q_useful_prev = 0.0;
@@ -352,27 +358,21 @@ public:
 			double Q_useful = Q_useful_prev;
 			double T_deliv = T_deliv_prev;
 		
-			double mdotCp_coll = mdot * fluid_cp; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
+			double mdotCp_use = mdot * fluid_cp; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
 			double mdotCp_test = test_flow * test_cp; // test flow (kg/s) * Cp_test
-		
-			// update HX inlet temp using useful energy absorbed in last time step Qu=epsilon*mCp(Ti-Ts)
-			T_hx_in = T_tank + Q_useful / ( Eff_hx * mdotCp_coll );
-		
-			// update HX outlet temp by knowing amount of energy transferred to tank Qu=mCp(Ti-To)
-			T_hx_out = T_hx_in - Q_useful / mdotCp_coll;
-		
+				
 			/* Flow rate corrections to FRta, FRUL (D&B pp 307) */
 			double FprimeUL = -mdotCp_test / area * ::log( 1 - FRUL*area/mdotCp_test ); // D&B eqn 6.20.4
-			double r = ( mdotCp_coll/area*(1-exp(-area*FprimeUL/mdotCp_coll)) ) / FRUL; // D&B eqn 6.20.3
+			double r = ( mdotCp_use/area*(1-exp(-area*FprimeUL/mdotCp_use)) ) / FRUL; // D&B eqn 6.20.3
 			double FRta_use = r*FRta;
 			double FRUL_use = r*FRUL;
 				
 			/* Pipe loss adjustment (D&B pp 430) */
-			FRta_use = FRta_use / ( 1+UA_pipe/mdotCp_coll ); // D&B eqn 10.3.9
-			FRUL_use = FRUL_use * ( (1-UA_pipe/mdotCp_coll + 2*UA_pipe/(area*FRUL_use) ) / (1 + UA_pipe/mdotCp_coll) ); // D&B eqn 10.3.10
+			FRta_use = FRta_use / ( 1+UA_pipe/mdotCp_use ); // D&B eqn 10.3.9
+			FRUL_use = FRUL_use * ( (1-UA_pipe/mdotCp_use + 2*UA_pipe/(area*FRUL_use) ) / (1 + UA_pipe/mdotCp_use) ); // D&B eqn 10.3.10
 				
 			/* Heat exchanger adjustment (D&B pp 427) */
-			double FR_ratio = 1/( 1 + (area*FRUL_use/mdotCp_coll)*(mdotCp_coll/(Eff_hx*mdotCp_coll)-1)); // D&B eqn 10.2.3
+			double FR_ratio = 1/( 1 + (area*FRUL_use/mdotCp_use)*(mdotCp_use/(Eff_hx*mdotCp_use)-1)); // D&B eqn 10.2.3
 			FRta_use *= FR_ratio;
 			FRUL_use *= FR_ratio;
 
@@ -382,9 +382,12 @@ public:
 			double mdot_mix = draw[i];		
 			double T_tank_last_iter = 0.0;
 
+			
 			int niter = 0;
 			do
 			{
+				if ( niter > max_iter ) break;
+
 				if (T_deliv > T_set)
 				{
 					// limit flow rate to mixing valve by effective ratio of T_set/T_deliv
@@ -475,7 +478,13 @@ public:
 				
 					break; // no iteration when tank is stratified
 				}
-			} while ( fabs(T_tank_last_iter - T_tank) / T_tank >= 0.001 || ++niter >= 10 );
+
+				++niter;
+
+			} while ( fabs(T_tank_last_iter - T_tank) / T_tank >= 0.001 );
+
+			// log in debugging output how many iterations were required
+			NSolveIter[i] = (ssc_number_t)niter;
 		
 		
 			// if the delivered water temperature from SHW is greater then set temp
