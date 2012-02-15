@@ -769,7 +769,7 @@ double CGeothermalAnalyzer::NumberOfReservoirs(void)
 	
 	double dFactor = (geothermal::IMITATE_GETEM) ? GetAE() / d1 : 1;
 	double dPlantOutputKW = dFactor * flowRateTotal() * GetPlantBrineEffectiveness() / 1000.0; // KW = (watt-hr/lb)*(lbs/hr) / 1000
-	if (dPlantOutputKW = 0)
+	if (dPlantOutputKW == 0)
 	{
 			ms_ErrorString = ("The Plant Output was zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
 			return 0;
