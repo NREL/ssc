@@ -12,7 +12,7 @@ from ctypes import *
 c_number = c_float # must be c_double or c_float depending on how defined in sscapi.h
 class PySSC:
 	def __init__(self):
-		self.pdll = CDLL("ssc.dylib")
+		self.pdll = CDLL("ssc.dll")
 
 	INVALID=0
 	STRING=1
@@ -227,6 +227,30 @@ if __name__ == "__main__":
 	def simtest():
 		ssc = PySSC()
 		dat = ssc.data_create()
+		
+		i=0
+		while (1):
+			x = ssc.module_entry(i)
+			if x == None:
+				break;
+			print 'module: "' + ssc.entry_name(x) + '" ver: ', ssc.entry_version(x)
+			print '\t\t' + ssc.entry_description(x) 
+			m = ssc.module_create( ssc.entry_name(x) )
+			k=0
+			while (1):
+				inf = ssc.module_var_info( m, k )
+				if inf == None:
+					break;
+				
+				if ( ssc.info_var_type(inf) == PySSC.INPUT ):
+					print '\tInput: \'' + ssc.info_name(inf) + '\' type(' + str(ssc.info_data_type(inf)) + ')  ' + ssc.info_label(inf) + '  (' + ssc.info_units(inf) + ')'
+				else:
+					print '\tOutput: \'' + ssc.info_name(inf) + '\' type(' + str(ssc.info_data_type(inf)) + ')  ' + ssc.info_label(inf) + '  (' + ssc.info_units(inf) + ')'
+			
+				k=k+1
+				
+			ssc.module_free(m)
+			i=i+1
 
 		ssc.data_set_string(dat, 'file_name', 'daggett.tm2')
 		ssc.data_set_number(dat, 'system_size', 4)
