@@ -50,19 +50,6 @@ static int day_of_year( int month, int day_of_month ) /* returns 1-365 */
 	return iday + day_of_month;
 }
 
-int solarpos2(double ts, int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9])
-{
-	/* calculates effective solar position, correcting for proper 
-		midpoints given the timestep (ts) at sunrise and sunset hours
-		returns 1 if sun is up, 0 otherwise
-
-		taken from pvwatts C implementation.
-		apd: 25aug2011
-		*/
-
-	return 0;
-}
-
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9])
 {
 /* This function is based on a paper by Michalsky published in Solar Energy
