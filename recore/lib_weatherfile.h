@@ -17,7 +17,7 @@ public:
 	weatherfile();
 	weatherfile( const std::string &file );
 	~weatherfile();
-	enum { INVALID, TMY2, TMY3, EPW, SMW };
+	enum { INVALID, TMY2, TMY3, EPW, SMW, SWRF };
 	bool ok();
 	int type();
 	std::string filename();
@@ -59,6 +59,9 @@ public:
 	double pres; /* pressure (mbar) */
 	double snow; /* snow depth (cm) 0-150 */
 	double albedo; /* ground reflectance 0-1.  values outside this range mean it is not included */
+
+	/******** swrf (SAM wind resource file) data ********/
+	int resource_ht;
 };
 
 #endif

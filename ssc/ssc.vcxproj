@@ -44,6 +44,7 @@
     <ClCompile Include="cmod_trntrough.cpp" />
     <ClCompile Include="cmod_utilityrate.cpp" />
     <ClCompile Include="cmod_wfreader.cpp" />
+    <ClCompile Include="cmod_windfarm.cpp" />
     <ClCompile Include="cmod_windwatts.cpp" />
     <ClCompile Include="core.cpp" />
     <ClCompile Include="sscapi.cpp" />
