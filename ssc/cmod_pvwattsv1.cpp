@@ -20,10 +20,19 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                       "Tilt angle",                     "deg",    "H=0,V=90",              "PVWatts",      "naof:tilt_eq_lat",             "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                "Tilt=latitude override",         "0/1",    "",                      "PVWatts",      "na:tilt",                      "BOOLEAN",                                  "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                        "Plane of array radiation",       "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	/* advanced inputs */
+	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                     "Tracker rotation limit (+/- 1 axis)", "deg",    "",                 "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fd",                         "Diffuse fraction",               "0..1",   "",                      "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                     "Nominal operating cell temperature", "'C", "",                      "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "t_ref",                      "Reference cell temperature",     "'C",     "",                      "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                      "Max power temperature coefficient", "%/'C", "",                     "PVWatts",      "?=-0.5",                  "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                    "Inverter efficiency at rated power", "frac", "",                    "PVWatts",      "?=0.92",                  "MIN=0,MAX=1",                              "" },
+
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                        "Plane of array irradiance",      "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                      "Module temperature",             "'C",     "",                      "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                         "DC array output",                "kWhdc",  "",                      "PVWatts",      "*",                            "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                         "AC system output",               "kWhac",  "",                      "PVWatts",      "*",                            "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                         "DC array output",                "Wdc",  "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                         "AC system output",               "Wac",  "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 
 var_info_invalid };
 
@@ -57,13 +66,18 @@ public:
 		ssc_number_t *p_poa = allocate("poa", 8760);
 	
 		/* PV RELATED SPECIFICATIONS */
-		double inoct = PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
+		
+		double inoct = as_double("t_noct") + 273.15; // PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
+		double reftem = as_double("t_ref"); // PVWATTS_REFTEM;                /* Reference module temperature (deg C) */
+		double pwrdgr = as_double("gamma") / 100.0; // PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
+		double efffp = as_double("inv_eff"); // PVWATTS_EFFFP;                 /* Efficiency of inverter at rated output (decimal fraction) */
+
 		double height = PVWATTS_HEIGHT;                 /* Average array height (meters) */
-		double reftem = PVWATTS_REFTEM;                /* Reference module temperature (deg C) */
-		double pwrdgr = PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
-		double efffp = PVWATTS_EFFFP;                 /* Efficiency of inverter at rated output (decimal fraction) */
 		double tmloss = 1.0 - derate/efffp;  /* All losses except inverter,decimal */
-		double rlim = PVWATTS_ROTLIM;             /* +/- rotation in degrees permitted by physical constraint of tracker */
+		double rlim = as_double("rotlim");             /* +/- rotation in degrees permitted by physical constraint of tracker */
+		double fd = as_double("fd"); // diffuse fraction
+
+
 	
 		/* storage for calculations */
 		double angle[5];
@@ -79,7 +93,7 @@ public:
 
 		int beghr, endhr;
 
-		double dn[24],df[24],wind[24],ambt[24],snow[24],albwf[24],dc[24],ac[24],poa[24],tpoa[24];
+		double dn[24],df[24],wind[24],ambt[24],snow[24]/*,albwf[24]*/,dc[24],ac[24],poa[24],tpoa[24];
 		int sunup[24];
 
 		for(int m=0;m<12;m++)   /* Loop thru a year of data a month at a time */
@@ -98,7 +112,7 @@ public:
 					wind[i] = wf.wspd;
 					ambt[i] = wf.tdry;
 					snow[i] = wf.snow;
-					albwf[i] = wf.albedo;
+					//albwf[i] = wf.albedo;
 					poa[i]=0.0;             /* Plane-of-array radiation */
 					tpoa[i]=0.0;            /* Transmitted radiation */
 					dc[i]=0.0;              /* DC power */
@@ -195,7 +209,7 @@ public:
 						double irr[3];
 						irr[0]=irr[1]=irr[2] = 0;
 						perez( sun[8], dn[i],df[i],alb,angle[0],angle[1],sun[1], irr, 0 ); /* Incident solar radiation */
-						poa[i] = irr[0]+irr[1]+irr[2];
+						poa[i] = irr[0]+fd*(irr[1]+irr[2]);
 						tpoa[i] = transpoa( poa[i],dn[i],angle[0]);  /* Radiation transmitted thru module cover */
 						
 					}
