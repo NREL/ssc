@@ -19,7 +19,8 @@ static var_info _cm_vtab_pvwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "tdry",                       "Dry bulb temperature",           "'C",     "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "wspd",                       "Wind speed",                     "m/s",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "incidence",                  "Incidence angle to surface",     "deg",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
-
+	
+	{ SSC_INPUT,        SSC_NUMBER,      "step",                       "Time step of input data",        "sec",    "",                       "PVWatts",     "?=3600",                       "POSITIVE",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                "Nameplate capacity",             "kW",     "",                      "PVWatts",      "*",                       "MIN=0.5,MAX=100000",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                     "System derate value",            "frac",   "",                      "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                     "Nominal operating cell temperature", "'C", "",                      "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
@@ -56,6 +57,8 @@ public:
 		double watt_spec = 1000.0 * as_double("system_size");
 		double derate = as_double("derate");
 
+		double tstephr = as_double("step")/3600.0; // get timestep of data in hours
+
 		ssc_number_t *p_tcell = allocate("tcell", arr_len);
 		ssc_number_t *p_dc = allocate("dc", arr_len);
 		ssc_number_t *p_ac = allocate("ac", arr_len);
@@ -72,6 +75,8 @@ public:
 		double height = PVWATTS_HEIGHT;                 /* Average array height (meters) */
 		double tmloss = 1.0 - derate/efffp;  /* All losses except inverter,decimal */
 
+		pvwatts_celltemp Tccalc(inoct, height, tstephr);
+
 		for (size_t i = 0; i < arr_len; i++ )
 		{
 			double poa = p_poabeam[i] + p_poaskydiff[i] + p_poagnddiff[i];
@@ -83,11 +88,11 @@ public:
 				else
 					tpoa = poa; /* default to dn 0 or bad value - assume no glass cover on module */
 				
-				double pvt = celltemp(inoct, height, poa, p_wspd[i], p_tdry[i] );
-				double dc = dcpowr( reftem, watt_spec, pwrdgr, tmloss, tpoa, pvt );
+				double tcell = Tccalc( poa, p_wspd[i], p_tdry[i] );
+				double dc = dcpowr( reftem, watt_spec, pwrdgr, tmloss, tpoa, tcell );
 				double ac = dctoac( watt_spec, efffp, dc );
 
-				p_tcell[i] = (ssc_number_t)pvt;
+				p_tcell[i] = (ssc_number_t)tcell;
 				p_dc[i] = (ssc_number_t)dc;
 				p_ac[i] = (ssc_number_t)ac;
 			}

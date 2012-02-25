@@ -95,6 +95,9 @@ public:
 
 		double dn[24],df[24],wind[24],ambt[24],snow[24]/*,albwf[24]*/,dc[24],ac[24],poa[24],tpoa[24];
 		int sunup[24];
+		
+		// create cell temp object at beginning (tracks hour-to-hour cell temp)
+		pvwatts_celltemp celltemp( inoct, height, 1.0 );
 
 		for(int m=0;m<12;m++)   /* Loop thru a year of data a month at a time */
 		{
@@ -216,9 +219,10 @@ public:
 				}                       /* End of for i++ loop (24 hours)*/                    /* End of sunup[i] if loop */
 					
 
+
 				for (int i=0;i<24;i++)
 				{
-					double pvt = celltemp(inoct, height, poa[i], wind[i], ambt[i]);
+					double pvt = celltemp( poa[i], wind[i], ambt[i] );
 					double dc = dcpowr(reftem,watt_spec,pwrdgr,tmloss,tpoa[i],pvt);
 					double ac = dctoac(watt_spec,efffp,dc);
 

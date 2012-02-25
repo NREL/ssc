@@ -88,125 +88,80 @@ double transpoa( double poa, double dn, double inc )
 	return(poa);
 }
 
-
-double celltemp(double inoct,double height,double poa2,double ws2,double ambt2 )
-	 /* Defines function to calculate cell temperature, changed 8/22/2007 to
-	 work with single time stamp data, also see pvsubs2.c */
+pvwatts_celltemp::pvwatts_celltemp( double _inoct, double _height, double _dTimeHrs)
 {
-/*  This function was converted from a PVFORM version 3.3 subroutine
-c     this routine estimates the array temperature given the poa radiation,
-c     ambient temperature, and wind speed.  it uses an advanced cell temp
-c     model developed by m fuentes at snla.  if the poa insolation is eq
-c     zero then set cell temp = 999.
-c
-	passed variables:
-		inoct = installed nominal operating cell temperature (deg K)
-		height = average array height (meters)
-		poa2 = plane of array irradiances (W/m2)
-		ws2 = wind speeds (m/s)
-		ambt2 = ambient temperatures (deg C)
+	/* constants */
+	boltz = 0.00000005669;
+	cap = 0;
+	capo = 11000.0;
+	convrt = 0;
+	absorb=0.83;
+	emmis=0.84;
+	tgrat=0;
+	tgrnd=0;
+	xlen=0.5;
 
-c  local variables :
-c     absorb = absorbtivity
-c     backrt = ratio of actual backside heat xfer to theoretical of rack mount
-c     boltz = boltzmann's constant
-c     cap = capacitance per unit area of module
-c     capo = capacitance per unit area of rack mounted module
-c     conair = conductivity of air
-c     convrt = ratio of total convective heat xfer coef to topside hxc
-c     denair = density of air
-c     dtime = time step
-c     eigen = product of eigen value and time step
-c     emmis = emmisivity
-		ex = ?
-c     grashf = grashoffs number
-c     hconv = convective coeff of module (both sides)
-c     hforce = forced convective coeff of top side
-c     hfree = free convective coeff of top side
-c     hgrnd = radiative heat xfer coeff from module to ground
-		hsky = ?
-c     iflagc = flag to check if routine has been executed
-c     reynld = reynolds number
-c     suun = insolation at start of time step
-c     suno = previous hours insolation
-c     tamb = ambient temp
-c     tave = average of amb and cell temp
-c     tgrat = ratio of grnd temp above amb to cell temp above amb
-c     tgrnd = temperature of ground
-c     tmod = computed cell temp
-c     tmodo = cell temp for previous time step
-c     tsky = sky temp
-c     visair = viscosity of air
-c     windmd = wind speed at module height
-c     xlen = hydrodynamic length of module              */
+	/* configuration parameters */
+	inoct = _inoct;
+	height = _height;
 
-	int j,iflagc=0;
-	double pvtemp;  /* The answer returned */
-	//double absorb=0.83,backrt,boltz=5.669e-8,cap,capo=11000.0,conair,convrt,denair;
-	double absorb=0.83,backrt,boltz=.00000005669,cap=0,capo=11000.0,conair,convrt=0,denair;
-	double dtime,eigen,emmis=0.84,grashf,hconv,hforce,hfree,hgrnd,reynld,suun;
-	double suno,tamb,tave,tgrat=0,tgrnd=0,tmod,tmodo,tsky,visair,windmd,xlen=0.5;
-	double hsky,ex;
-
-/* Set time step to a large number for very first calc. After
-	that set time step to 1 (1 hr). Also set prev poa and prev
-	module temp for first time through                  */
-
+	/* initial values */
 	dtime=12.0;
 	suno=0.0;
 	tmodo=293.15;
 
-/* Compute convective coeff, grnd temp ratio, and mod capac one time */
+	/* convective coefficient at noct */
+	windmd=1.0;
+	tave=(inoct+293.15)/2.0;
+	denair=0.003484*101325.0/tave;
+	visair=0.24237e-6*pow(tave,0.76)/denair;
+	conair=2.1695e-4*pow(tave,0.84);
+	reynld=windmd*xlen/visair;
+	hforce=0.8600/pow(reynld,0.5)*denair*windmd*1007.0/pow(0.71,0.67);
+	grashf=9.8/tave*(inoct-293.15)*pow(xlen,3.0)/pow(visair,2.0)*0.5;
+	hfree=0.21*pow(grashf*0.71,0.32)*conair/xlen;
+	hconv=pow(pow(hfree,3.0)+pow(hforce,3.0),1.0/3.0);
 
-	if( iflagc != 1 )
-		{
-				/* convective coefficient at noct */
-		windmd=1.0;
-		tave=(inoct+293.15)/2.0;
-		denair=0.003484*101325.0/tave;
-		visair=0.24237e-6*pow(tave,0.76)/denair;
-		conair=2.1695e-4*pow(tave,0.84);
-		reynld=windmd*xlen/visair;
-		hforce=0.8600/pow(reynld,0.5)*denair*windmd*1007.0/pow(0.71,0.67);
-		grashf=9.8/tave*(inoct-293.15)*pow(xlen,3.0)/pow(visair,2.0)*0.5;
-		hfree=0.21*pow(grashf*0.71,0.32)*conair/xlen;
-		hconv=pow(pow(hfree,3.0)+pow(hforce,3.0),1.0/3.0);
+			/* Determine the ground temperature ratio and the ratio of
+				the total convection to the top side convection */
+	hgrnd=emmis*boltz*(pow(inoct,2.0)+pow(293.15,2.0))*(inoct+293.15);
+	backrt=( absorb*800.0-emmis*boltz*(pow(inoct,4.0)-pow(282.21,4.0))
+				-hconv*(inoct-293.15) )/((hgrnd+hconv)*(inoct-293.15));
+	tgrnd=pow(pow(inoct,4.0)-backrt*(pow(inoct,4.0)-pow(293.15,4.0)),0.25);
+	if( tgrnd > inoct)
+		tgrnd=inoct;
+	if( tgrnd < 293.15)
+		tgrnd=293.15;
+	tgrat=(tgrnd-293.15)/(inoct-293.15);
+	convrt=(absorb*800.0-emmis*boltz*(2.0*pow(inoct,4.0)-pow(282.21,4.0)
+				-pow(tgrnd,4.0)))/(hconv*(inoct-293.15));
 
-				/* Determine the ground temperature ratio and the ratio of
-					the total convection to the top side convection */
-		hgrnd=emmis*boltz*(pow(inoct,2.0)+pow(293.15,2.0))*(inoct+293.15);
-		backrt=( absorb*800.0-emmis*boltz*(pow(inoct,4.0)-pow(282.21,4.0))
-					-hconv*(inoct-293.15) )/((hgrnd+hconv)*(inoct-293.15));
-		tgrnd=pow(pow(inoct,4.0)-backrt*(pow(inoct,4.0)-pow(293.15,4.0)),0.25);
-		if( tgrnd > inoct)
-			tgrnd=inoct;
-		if( tgrnd < 293.15)
-			tgrnd=293.15;
-		tgrat=(tgrnd-293.15)/(inoct-293.15);
-		convrt=(absorb*800.0-emmis*boltz*(2.0*pow(inoct,4.0)-pow(282.21,4.0)
-				  -pow(tgrnd,4.0)))/(hconv*(inoct-293.15));
+			/* Adjust the capacitance of the module based on the inoct */
+	cap=capo;
+	if( inoct > 321.15)
+		cap=cap*(1.0+(inoct-321.15)/12.0);
 
-			  /* Adjust the capacitance of the module based on the inoct */
-		cap=capo;
-		if( inoct > 321.15)
-			cap=cap*(1.0+(inoct-321.15)/12.0);
-		iflagc=1;
-		}
+	dtime = _dTimeHrs; /* set time step */
+}
 
-			/* If poa is gt 0 then compute cell temp, else set to 999 */
+double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2 )
+{
+	double celltemp = -999;
+		
+	/* If poa is gt 0 then compute cell temp, else set to 999 */
 	if( poa2 > 0.0 )
-		{        /* Initialize local variables for insolation and temp */
+	{        /* Initialize local variables for insolation and temp */
 		tamb=ambt2+273.15;
 		suun=poa2*absorb;
 		tsky=0.68*(0.0552*pow(tamb,1.5))+0.32*tamb;  /* Estimate sky temperature */
 
 		/*  Estimate wind speed at module height - use technique developed by
-			 menicucci and hall (sand84-2530) */
+				menicucci and hall (sand84-2530) */
 		windmd=ws2*pow(height/9.144,0.2) + 0.0001;
-								  /* Find overall convective coefficient */
+									/* Find overall convective coefficient */
 		tmod=tmodo;
 		for(j=0;j<=9;j++)
-			{
+		{
 			tave=(tmod+tamb)/2.0;
 			denair=0.003484*101325.0/tave;
 			visair=0.24237e-6*pow(tave,0.76)/denair;
@@ -227,19 +182,23 @@ c     xlen = hydrodynamic length of module              */
 			if(eigen > -10.0)
 				ex=exp(eigen);
 			tmod=tmodo*ex+((1.0-ex)*(hconv*tamb+hsky*tsky+hgrnd*tgrnd
-				  +suno+(suun-suno)/eigen)+suun-suno)/(hconv+hsky+hgrnd);
-			}
+					+suno+(suun-suno)/eigen)+suun-suno)/(hconv+hsky+hgrnd);
+		}
+			
 		tmodo=tmod;  /* Save the new values as initial values for the next hour */
 		suno=suun;
-		dtime=1.0;
-
-		pvtemp=tmod-273.15;  /* PV module temperature in degrees C */
-		}
+			
+		celltemp = tmod-273.15;  /* PV module temperature in degrees C */
+	}
 	else
-		pvtemp = 999.0;      /* Default temp for zero irradiance */
-	return(pvtemp);
-}
+	{
+		/* sun down, save module temp = ambient, poa = 0  (apd 2/24/2012) */
+		tmodo = ambt2+273.15;
+		suno = 0;
+	}
 
+	return celltemp;
+}
 										/* Function to determine DC power */
 double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa,double pvt)
 {        /* Modified 8/22/07 to pass non-array variables */
