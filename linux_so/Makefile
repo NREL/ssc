@@ -25,6 +25,7 @@ all: inform $(TARGET)
 
 OBJECTS = \
 	cmod_6parsolve.o \
+	cmod_windfarm.o \
 	cmod_test_irr.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
@@ -70,7 +71,9 @@ OBJECTS = \
 	vtab_common.o
 
 $(TARGET) : $(OBJECTS)
-	$(CXX) -shared -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS)
+	gcc dltest.c -o dltest -ldl
+	./dltest ./$(TARGET)
 
 inform:
 ifneq ($(CFG),64)
