@@ -608,7 +608,6 @@ bool CGeoHourlyBaseInputs::inputErrors(void)
 
 	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { m_strErrMsg = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
-	if (mdPotentialResourceMW < PlantSizeKW()/1000) { m_strErrMsg = ("Resource potential must be greater than the gross plant output."); return true; }
 
 	if ( (this->rt != EGS) && (this->pc == SIMPLE_FRACTURE) ) { m_strErrMsg = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 
@@ -629,9 +628,6 @@ bool CGeoHourlyBaseInputs::inputErrors(void)
 
 	if (availableEnergyBinary() == 0)
 		{ m_strErrMsg = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
-
-	if (m_pbp.P_ref == 0)
-		{ m_strErrMsg = ("The power block parameters were not initialized."); return true;}
 
 	if (!m_strErrMsg.empty()) return true;
 	return false;
@@ -1215,6 +1211,9 @@ void CGeoHourlyAnalysis::init(void)
 bool CGeoHourlyAnalysis::readyToAnalyze()
 {
 	if ( inputErrors() ) return false;
+	// These checks are only necessary for running an analysis, not for getting user interface updates
+	if (mdPotentialResourceMW < PlantSizeKW()/1000) { m_strErrMsg = ("Resource potential must be greater than the gross plant output."); return false; }
+	if (m_pbp.P_ref == 0)	{ m_strErrMsg = ("The power block parameters were not initialized."); return false;}
 	if (moMA) delete moMA; moMA=NULL;
 
 	switch (determineMakeupAlgorithm())  // determineMakeupAlgorithm Set and returns this->mat

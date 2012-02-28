@@ -382,20 +382,21 @@ namespace geothermal
 
 
 
-class CGeothermalAnalyzer
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
 // Declaration of CGeothermalAnalyzer 
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
+class CGeothermalAnalyzer
 {
 public:
+	CGeothermalAnalyzer(const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
 	CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
 	~CGeothermalAnalyzer();
 
 	bool RunAnalysis( void (*update_function)(float, void*), void *user_data );
+	bool InterfaceOutputsFilled(void);
 	std::string error() { return ms_ErrorString; }
-
 
 private:
 	// objects
@@ -628,16 +629,14 @@ private:
 
 
 
-CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
 // Implementation of CGeoHourlyAnalysis
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
+CGeothermalAnalyzer::CGeothermalAnalyzer(const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
 : mp_geo_out(&gto)
 {
-	mo_pb_p = pbp;
-	mo_pb_in = pbi;
 	mo_geo_in = gti;
 
 	ms_ErrorString = "";
@@ -650,6 +649,13 @@ CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowe
 	md_WorkingTemperatureC=0.0; 
 	md_LastProductionTemperatureC = 0.0;
 	md_TimeOfLastReservoirReplacement=0.0;
+}
+
+CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
+{
+	CGeothermalAnalyzer(gti, gto);
+	mo_pb_p = pbp;
+	mo_pb_in = pbi;
 }
 
 CGeothermalAnalyzer::~CGeothermalAnalyzer(void)
@@ -1551,14 +1557,12 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
 
 
 bool CGeothermalAnalyzer::inputErrors(void)
-{
+{	// check for errors in mo_geo_in
 	if (!ms_ErrorString.empty()) return true;
 	if (mo_geo_in.mi_ProjectLifeYears == 0) { ms_ErrorString = ("Project life was zero."); return true; }
 	if (mo_geo_in.mi_ModelChoice < 0) { ms_ErrorString = ("The model choice was not set."); return true; }
 
 	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { ms_ErrorString = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
-
-	if ( !(NumberOfReservoirs() > 0) ) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
 
 	if ( (mo_geo_in.me_rt != EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE) ) { ms_ErrorString = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 
@@ -1581,9 +1585,6 @@ bool CGeothermalAnalyzer::inputErrors(void)
 	if (GetAEBinary() == 0)
 		{ ms_ErrorString = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
 
-	if (mo_pb_p.P_ref == 0)
-		{ ms_ErrorString = ("The power block parameters were not initialized."); return true;}
-
 	if (!ms_ErrorString.empty()) return true;
 	return false;
 }
@@ -1592,6 +1593,10 @@ bool CGeothermalAnalyzer::inputErrors(void)
 bool CGeothermalAnalyzer::ReadyToAnalyze()
 {
 	if ( inputErrors() ) return false;
+
+	// These checks are only necessary for running an analysis, not for getting user interface updates
+	if ( !(NumberOfReservoirs() > 0) ) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return false; }
+	if (mo_pb_p.P_ref == 0)	{ ms_ErrorString = ("The power block parameters were not initialized."); return false;}
 
 	if (!determineMakeupAlgorithm()) return false; // determineMakeupAlgorithm sets member enum "me_makeup"
 
@@ -1735,6 +1740,16 @@ bool CGeothermalAnalyzer::TimeToUpdateInterface(float fPercentDone, float fNotif
 	return false;
 }
 
+bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
+{
+	if ( inputErrors() ) return false;
+
+	if (GetNumberOfWells() > 0 )
+		return true;
+	else
+		return false;
+
+}
 
 
 
@@ -1749,6 +1764,26 @@ int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, s
 	// return value 0 = clean run; 1 = error with message; 2 = unknown error, no message
 	CGeothermalAnalyzer geo_analyzer(pbp, pbInputs, geo_inputs, geo_outputs);
 	if ( geo_analyzer.RunAnalysis(update_function,user_data) )  // 
+		return 0;
+	else
+		if ( geo_analyzer.error() != "")
+		{
+			err_msg = geo_analyzer.error();
+			return 1; // error that was flagged
+		}
+		else		
+			{ err_msg = "Unknown error during run"; return 2; }
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Get interum values for user interface
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int FillOutputsForInterface( std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
+{
+	// return value 0 = clean run; 1 = error with message; 2 = unknown error, no message
+	CGeothermalAnalyzer geo_analyzer(geo_inputs, geo_outputs);
+	if ( geo_analyzer.InterfaceOutputsFilled() ) 
 		return 0;
 	else
 		if ( geo_analyzer.error() != "")
