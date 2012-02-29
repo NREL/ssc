@@ -66,8 +66,15 @@ static var_info _cm_vtab_geothermalui[] = {
 	// OUTPUTS
 	// User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.
 	// With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.
-	{ SSC_OUTPUT,       SSC_NUMBER,		"pump_work",						"Pump work",						"MW",		"",					"GeoHourly",	    "*",            "",						"" },
-	{ SSC_OUTPUT,		SSC_NUMBER,		"num_wells_getem",					"Number of Wells GETEM calc'd",		"",			"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"num_wells_getem",					"Number of wells calc'd by GETEM",	"",			"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"plant_brine_eff",					"Plant Brine Efficiency",			"",			"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"gross_output",						"Gross output calc'd by GETEM",		"",			"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"pump_depth_ft",					"Pump depth calculated by GETEM",	"ft",		"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,       SSC_NUMBER,		"pump_work",						"Pump work calc'd by GETEM",		"MW",		"",					"GeoHourly",	    "*",            "",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"pump_hp",							"Pump hp calculated by GETEM",		"hp",		"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"reservoir_pressure",				"Reservoir pres calc'd by GETEM",	"",			"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"reservoir_avg_temp",				"Avg reservoir temp calc'd by GETEM","C",		"",					"GeoHourly",		"*",			"",						"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"bottom_hole_pressure",				"Bottom hole pres calc'd by GETEM",	"",			"",					"GeoHourly",		"*",			"",						"" },
 
 var_info_invalid };
 
@@ -215,13 +222,20 @@ if (as_integer("hr_pl_nlev") == 8)
 		if (FillOutputsForInterface( err_msg, geo_inputs, geo_outputs ) != 0)
 			throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
 
-		assign("pump_work", var_data((ssc_number_t) geo_outputs.md_PumpWorkKW/1000 ) ); // kW must be converted to MW
 		assign("num_wells_getem", var_data((ssc_number_t) geo_outputs.md_NumberOfWells ) );
-//-----------------------------------------------------------------------------------------------------------------------------------------------
-}
+		assign("plant_brine_eff", var_data((ssc_number_t) geo_outputs.md_PlantBrineEffectiveness ) );
+		assign("gross_output", var_data((ssc_number_t) geo_outputs.md_GrossPlantOutputMW ) );
+
+		assign("pump_depth_ft", var_data((ssc_number_t) geo_outputs.md_PumpDepthFt ) );
+		assign("pump_work", var_data((ssc_number_t) geo_outputs.md_PumpWorkKW/1000 ) ); // kW must be converted to MW
+		assign("pump_hp", var_data((ssc_number_t) geo_outputs.md_PumpHorsePower ) );
+
+		assign("reservoir_pressure", var_data((ssc_number_t) geo_outputs.md_PressureChangeAcrossReservoir ) );
+		assign("reservoir_avg_temp", var_data((ssc_number_t) physics::FarenheitToCelcius(geo_outputs.md_AverageReservoirTemperatureF) ) );
+		assign("bottom_hole_pressure", var_data((ssc_number_t) geo_outputs.md_BottomHolePressure ) );
+}//-----------------------------------------------------------------------------------------------------------------------------------------------
 else
-{
-//-----------------------------------------------------------------------------------------------------------------------------------------------
+{//-----------------------------------------------------------------------------------------------------------------------------------------------
 		// Geothermal inputs **********************************************
 		CGeothermalInterface oGeo;
 		if ( as_integer("analysis_type") == 0)
@@ -334,18 +348,27 @@ else
 		oGeo.SetPointerToTimeStepDryBulbArray(timestep_dry_bulb);
 		oGeo.SetPointerToTimeStepWetBulbArray(timestep_wet_bulb);
 
+		//samsim_set_d( (long)this,"geotherm.number_of_wells_used", getem.ShowNumberOfWells());				// (correct)
+		//samsim_set_d( (long)this,"geotherm.plant_efficiency_used", getem.ShowPlantBrineEffectiveness());	// in watt-hr/lb (NEW)
+		//samsim_set_d( (long)this,"geotherm.gross_output", getem.ShowGrossOutput());							// in MW (correct)
+		//samsim_set_d( (long)this,"geotherm.pump_depth", getem.ShowPumpDepthFeet());							// in Meters (correct)
+		//samsim_set_d( (long)this,"geotherm.pump_work", getem.ShowPumpWork());								// in MW (correct)
+		//samsim_set_d( (long)this,"geotherm.pump_size_hp", getem.ShowPumpHorsePower());						// in Horse Power (correct)
+		//samsim_set_d( (long)this,"geotherm.delta_pressure_reservoir", getem.ShowPressureChange());			// in PSI (I changed this)
+		//samsim_set_d( (long)this,"geotherm.avg_reservoir_temp", getem.ShowAverageReservoirTemperature());	// in Celcius (correct)
+		//samsim_set_d( (long)this,"geotherm.bottom_hole_pressure", getem.ShowBottomHolePressure());			// in PSI (correct)
 		
-		//update( "calculating", (float)0.0, (float)0.0 );
-		//update("Running model...", 10.0);
-
-		// run simulation
-		if (oGeo.RunGeoHourly( my_update_function, this ) != 0)
-			throw exec_error("geothermalhourly", "error from geothermal hourly model: " + oGeo.GetErrorMsg() + ".");
-
-		assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
 		assign("num_wells_getem", var_data((ssc_number_t) oGeo.ShowNumberOfWells() ) );
-}
-//-----------------------------------------------------------------------------------------------------------------------------------------------
+		assign("plant_brine_eff", var_data((ssc_number_t) oGeo.ShowPlantBrineEffectiveness() ) );
+		assign("gross_output", var_data((ssc_number_t) oGeo.ShowGrossOutput() ) );
+		assign("pump_depth_ft", var_data((ssc_number_t) oGeo.ShowPumpDepthFeet() ) );
+		assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
+		assign("pump_hp", var_data((ssc_number_t) oGeo.ShowPumpHorsePower() ) );
+		assign("reservoir_pressure", var_data((ssc_number_t) oGeo.ShowPressureChange() ) );
+		assign("reservoir_avg_temp", var_data((ssc_number_t) oGeo.ShowAverageReservoirTemperature() ) );
+		assign("bottom_hole_pressure", var_data((ssc_number_t) oGeo.ShowBottomHolePressure() ) );
+
+}//-----------------------------------------------------------------------------------------------------------------------------------------------
 
 
 

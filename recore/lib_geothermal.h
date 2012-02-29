@@ -101,14 +101,16 @@ struct SGeothermal_Outputs
 	SGeothermal_Outputs()
 	{
 		md_PumpWorkKW = md_NumberOfWells = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
+		md_GrossPlantOutputMW = md_PlantBrineEffectiveness = md_PressureChangeAcrossReservoir = md_AverageReservoirTemperatureF = 0;
+		md_PumpDepthFt = md_PumpHorsePower = md_BottomHolePressure = 0;
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 	}
 
-	// single value
-	double md_PumpWorkKW;
+	// single values used in calculations, some also used in UI
 	double md_NumberOfWells;
+	double md_PumpWorkKW;
 
 	bool mb_BrineEffectivenessCalculated;
 	double md_FlashBrineEffectiveness;
@@ -117,13 +119,14 @@ struct SGeothermal_Outputs
 	double md_PressureHPFlashPSI; // D29, D64
 	double md_PressureLPFlashPSI; // D30, D65
 
-		// for use in the interface to show 'calculated' values
-	//double GetNumberOfProductionWells(void) { return this->GetNumberOfWells(); }
-	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
-	//double GetNetPlantOutputMW(void) { return this->PowerSalesKW()/1000; }
-	//double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
-	//double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
-	//double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
+	// only for use in the interface to show 'calculated' values
+	double md_PlantBrineEffectiveness;
+	double md_GrossPlantOutputMW;	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
+	double md_PumpDepthFt;
+	double md_PumpHorsePower;
+	double md_PressureChangeAcrossReservoir; //double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
+	double md_AverageReservoirTemperatureF; //double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
+	double md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
 	// output arrays
 	float * maf_ReplacementsByYear;							// array of ones and zero's over time, ones representing years where reservoirs are replaced

@@ -603,9 +603,6 @@ double CGeoHourlyBaseInputs::secondLawEfficiencyGETEM() // This assumes the use 
 bool CGeoHourlyBaseInputs::inputErrors(void)
 {
 	if (!m_strErrMsg.empty()) return true;
-	if (!miProjectLifeYears) { m_strErrMsg = ("Project life was zero."); return true; }
-	if (miModelChoice < 0) { m_strErrMsg = ("The model choice was not set."); return true; }
-
 	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { m_strErrMsg = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
 
@@ -1212,6 +1209,8 @@ bool CGeoHourlyAnalysis::readyToAnalyze()
 {
 	if ( inputErrors() ) return false;
 	// These checks are only necessary for running an analysis, not for getting user interface updates
+	if (!miProjectLifeYears) { m_strErrMsg = ("Project life was zero."); return false; }
+	if (miModelChoice < 0) { m_strErrMsg = ("The model choice was not set."); return false; }
 	if (mdPotentialResourceMW < PlantSizeKW()/1000) { m_strErrMsg = ("Resource potential must be greater than the gross plant output."); return false; }
 	if (m_pbp.P_ref == 0)	{ m_strErrMsg = ("The power block parameters were not initialized."); return false;}
 	if (moMA) delete moMA; moMA=NULL;
