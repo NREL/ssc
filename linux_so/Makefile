@@ -24,6 +24,7 @@ all: inform $(TARGET)
 
 
 OBJECTS = \
+	cmod_geothermalui.o \
 	cmod_6parsolve.o \
 	cmod_windfarm.o \
 	cmod_test_irr.o \
