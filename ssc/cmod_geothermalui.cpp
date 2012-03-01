@@ -214,13 +214,10 @@ if (as_integer("hr_pl_nlev") == 8)
 		geo_outputs.maf_timestep_dry_bulb = allocate( "timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
 		geo_outputs.maf_timestep_wet_bulb = allocate( "timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-		//update( "calculating", (float)0.0, (float)0.0 );
-		//update("Running model...", 10.0);
-
 		// run simulation
 		std::string err_msg;
 		if (FillOutputsForInterface( err_msg, geo_inputs, geo_outputs ) != 0)
-			throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
+			throw general_error("input error: " + err_msg + ".");
 
 		assign("num_wells_getem", var_data((ssc_number_t) geo_outputs.md_NumberOfWells ) );
 		assign("plant_brine_eff", var_data((ssc_number_t) geo_outputs.md_PlantBrineEffectiveness ) );

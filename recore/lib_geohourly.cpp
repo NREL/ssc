@@ -387,7 +387,7 @@ CGeoHourlyBaseInputs::CGeoHourlyBaseInputs(void)
 
 	// pumping parameters
 	mdProductionFlowRateKgPerS = 70;				// default = 70 kg/s, [2B.Resource&Well Input].H140
-	mdGFPumpEfficiency = 0.6;						// default = 60%, [2A.Scenario Input].D107
+	mdPumpEfficiencyGeothermalFluid = 0.6;						// default = 60%, [2A.Scenario Input].D107
 	mdDiameterPumpCasingInches = 9.625;				// default = 9.926, [2B.Resource&Well Input].H140
 	mdDiameterProductionWellInches = 10;			// default = 10, [2B.Resource&Well Input].H138
 	mdDiameterInjectionWellInches = 10;				// default = 10, [2B.Resource&Well Input].H142
@@ -833,7 +833,7 @@ CFlashBrineEffectiveness::CFlashBrineEffectiveness(void)
 	miNumberOfCoolingStages = 3;												// 1,2, or 3
 	mdMoleWeightNCG = 44.0;
 	mdMoleWeightH2O = 18.0;
-	mdEfficiencyPump = 0.7;
+	mdPumpEfficiencyFlash = 0.7;
 	mdEfficencyVacuumPump = 0.7;
 	mdPressureCondenserNCGPartialInHG = 0.5;									// inches of Mercury
 	mbFlashPressuresCalculated = false;

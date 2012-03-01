@@ -459,8 +459,8 @@ public:
 	void SetProductionFlowRateKgPerS(double KGperS) { setPositiveValue(mdProductionFlowRateKgPerS, KGperS, "Production Flow Rate", m_strErrMsg); }
 	double GetProductionFlowRateKgPerS (void) { return mdProductionFlowRateKgPerS; }
 
-	void SetGFPumpEfficiency(double percent) { setPositiveValue(mdGFPumpEfficiency, percent, "Pump Efficiency", m_strErrMsg); }
-	double GetGFPumpEfficiency (void) { return mdGFPumpEfficiency; }
+	void SetGFPumpEfficiency(double percent) { setPositiveValue(mdPumpEfficiencyGeothermalFluid, percent, "Pump Efficiency", m_strErrMsg); }
+	double GetGFPumpEfficiency (void) { return mdPumpEfficiencyGeothermalFluid; }
 
 	void SetReservoirPermeability(double darcys) { setPositiveValue(mdReservoirPermeability, darcys, "Reservoir Permeability", m_strErrMsg); }
 	double GetReservoirPermeability (void) { return mdReservoirPermeability; }
@@ -505,7 +505,7 @@ protected:
 	double mdEGSRockDensity;									// kg/m^3
 	double mdEGSNumberOfFractures;
 	double mdProductionFlowRateKgPerS;		// 70 kilograms per second in one well (fFlowRate in VBA)
-	double mdGFPumpEfficiency;				// 0.6
+	double mdPumpEfficiencyGeothermalFluid;	// 0.6
 	double mdReservoirPermeability;			// default = 0.05 darcy units, [2B.Resource&Well Input].D179
 	double mdReservoirHeightM;				// default = 100 meters, [2B.Resource&Well Input].F180
 	double mdReservoirWidthM;				// default = 500 meters, [2B.Resource&Well Input].F181
@@ -690,7 +690,7 @@ public:
 	int miNumberOfCoolingStages;
 	double mdMoleWeightNCG;
 	double mdMoleWeightH2O;
-	double mdEfficiencyPump;
+	double mdPumpEfficiencyFlash;
 	double mdEfficencyVacuumPump;
 	double mdPressureCondenserNCGPartialInHG;
 
@@ -784,7 +784,7 @@ private:
 
 	
 //////////////////////////////////////// CW Pump Power KW //////////////////////////////////////////////////////
-	double pumpWorkKW(double flowLbPerHr, double pumpHeadFt) { return HPtoKW((flowLbPerHr * pumpHeadFt)/(60 * 33000 * mdEfficiencyPump)); }
+	double pumpWorkKW(double flowLbPerHr, double pumpHeadFt) { return HPtoKW((flowLbPerHr * pumpHeadFt)/(60 * 33000 * mdPumpEfficiencyFlash)); }
 	double overAllHEx(void);																																		// I107
 
 	// Main Pump Power
