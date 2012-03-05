@@ -1,5 +1,5 @@
 #include "core.h"
-#include "lib_weatherfile.h"
+#include "lib_windfile.h"
 #include "lib_windwatts.h"
 
 static var_info _cm_vtab_windfarm[] = {
@@ -44,7 +44,7 @@ public:
 	{
 		const char *file = as_string("file_name");
 		
-		weatherfile wf(file);		
+		windfile wf(file);		
 		if (!wf.ok()) throw exec_error("windfarm", "failed to read local weather file: " + std::string(file));
 
 		size_t pc_len = 0;

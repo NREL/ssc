@@ -144,8 +144,6 @@ bool weatherfile::open( const std::string &file )
 		m_type = EPW;
 	else if ( cmp_ext(file.c_str(), "smw") )
 		m_type = SMW;
-	else if ( cmp_ext(file.c_str(), "swrf") )
-		m_type = SWRF;
 	else
 		return false;
 	
@@ -337,51 +335,6 @@ bool weatherfile::open( const std::string &file )
 
 		::rewind( m_fp );
 		fgets( buf, 2047, m_fp );
-	}
-	else if ( m_type==SWRF )
-	{
-		resource_ht = 0;
-		//1Created 2010-09-28 10:07:36.991836 by http://scctest/wsis/wwis?lat=40.1222&lon=-102.725&year=2005
-		//2Requested latitude = 40.1222
-		//3Requested longitude = -102.725
-		//4Latitude of data = 40.0917
-		//5Longitude of data = -102.742
-		//6Approximate distance from requested point = 3.8684 km
-		//7Elevation = 1257.88 meters
-		//8
-		//9
-		//10Date/Time (GMT)	Surface Pressure (mb)	Speed 200m (m/s)	Speed 100m (m/s)	Speed 80m (m/s)	Speed 50m (m/s)	Speed 10m (m/s)	Direction 200m (°)	Direction 100m (°)	Direction 80m (°)	Direction 50m (°)	Direction 10m (°)	Temperature 200m (°K)	Temperature 100m (°K)	Temperature 80m (°K)	Temperature 50m (°K)	Temperature 10m (°K)
-		//11 - data starts
-
-		char *lasts, *p;		
-		lasts = NULL;
-		fgets(buf, 2047, m_fp); // skip first line
-		fgets(buf, 2047, m_fp); // skip requested latitude
-		fgets(buf, 2047, m_fp); // skip requested longitude
-		fgets(buf, 2047, m_fp); // latitude
-		p = gettoken( buf, "=", &lasts );  // label
-		p = gettoken( buf, "=", &lasts );  // value
-		lat = atof( p );
-		fgets(buf, 2047, m_fp); // longitude
-		p = gettoken( buf, "=", &lasts );  // label
-		p = gettoken( buf, "=", &lasts );  // value
-		lon = atof( p );
-
-		fgets(buf, 2047, m_fp); // skip distance from requested point
-		fgets(buf, 2047, m_fp); // elevation
-		p = gettoken( buf, " ", &lasts );  // label
-		p = gettoken( buf, " ", &lasts );  // =
-		p = gettoken( buf, " ", &lasts );  // value
-		elev = atof( p );
-
-		fgets(buf, 2047, m_fp); // skip 8
-		fgets(buf, 2047, m_fp); // skip 9
-		fgets(buf, 2047, m_fp); // skip 10 (column labels)
-
-		tz = 0; // GMT
-		start = 1800;
-		step = 3600;
-		nrecords = 8760;
 	}
 	else
 	{	
@@ -666,61 +619,6 @@ bool  weatherfile::read()
 		pres = (double)atof( cols[6] );
 		snow = (double)atof( cols[11] );
 		albedo = (double)atof( cols[10] );
-		
-		return pret==buf;
-	}
-	else if ( m_type == SWRF )
-	{
-		// Date/Time (GMT)	Surface Pressure (mb)	Speed 200m (m/s)	Speed 100m (m/s)	Speed 50m (m/s)	Speed 20m (m/s)	Speed 10m (m/s)	Direction 200m (°)	Direction 100m (°)	Direction 50m (°)	Direction 20m (°)	Direction 10m (°)	Temperature 200m (°C)	Temperature 100m (°C)	Temperature 50m (°C)	Temperature 20m (°C)	Temperature 10m (°C)
-		// 20050101 0100	0.88085523	18.57413101	18.04714012	17.18694305	15.59224415	14.17036247	214.22488403	214.22824097	214.33505249	214.55448914	214.54837036	6.55297852	7.20297241	7.52798462	7.81369019	7.88400269
-
-		char *pret = fgets(buf, 1024, m_fp);
-		int ncols = locate(buf, cols, 128, '\t');
-
-		if (ncols != 17) return false;
-		
-		int hr,min;
-		p = cols[0];
-		int nread = sscanf(p, "%4d%2d%2d %2d%2d", &year, &month, &day, &hr, &min);
-		if (nread != 5) return false;
-		hour = (hr == 0) ? 23 : hr-1; // hours in file go from 1 to 23, then 0; then 1, 2 ... 23, 0; etc. The first hour is labeled 1, not zero, although the hours go from 0 to 23
-
-		pres = (double)atof(cols[1]);
-
-		switch (resource_ht)
-		{
-			case 10:
-				wspd = (double)atof(cols[6]);
-				wdir = (double)atof(cols[11]);
-				tdry = (double)atof(cols[16]);
-				break;
-
-			case 50:
-				wspd = (double)atof(cols[5]);
-				wdir = (double)atof(cols[10]);
-				tdry = (double)atof(cols[15]);
-				break;
-
-			case 80:
-				wspd = (double)atof(cols[4]);
-				wdir = (double)atof(cols[9]);
-				tdry = (double)atof(cols[14]);
-				break;
-
-			case 100:
-				wspd = (double)atof(cols[3]);
-				wdir = (double)atof(cols[8]);
-				tdry = (double)atof(cols[13]);
-				break;
-
-			case 200:
-				wspd = (double)atof(cols[2]);
-				wdir = (double)atof(cols[7]);
-				tdry = (double)atof(cols[12]);
-				break;
-
-			default: return false;
-		}
 		
 		return pret==buf;
 	}

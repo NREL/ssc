@@ -82,6 +82,7 @@
     <ClInclude Include="lib_util.h" />
     <ClInclude Include="lib_weatherfile.h" />
     <ClInclude Include="lib_windwatts.h" />
+    <ClInclude Include="lib_windfile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib_cec6par.cpp" />
@@ -97,6 +98,7 @@
     <ClCompile Include="lib_sandia.cpp" />
     <ClCompile Include="lib_util.cpp" />
     <ClCompile Include="lib_weatherfile.cpp" />
+    <ClCompile Include="lib_windfile.cpp" />
     <ClCompile Include="lib_windwatts.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
