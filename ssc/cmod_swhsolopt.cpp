@@ -15,7 +15,8 @@ static var_info _cm_vtab_swhsolopt[] = {
 
 	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                   "kg/hr",  "",                      "SWHsolopt",      "*",                       "LENGTH=8760",               "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "max_iter",              "Max iterations allowed",           "",       "",                      "SWHsolopt",      "*",                       "MIN=0,MAX=100,INTEGER",             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "max_iter",              "Max iterations allowed",           "",       "",                      "SWHsolopt",      "?=100",                   "MIN=0,MAX=1000,INTEGER",             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ftol_iter",             "Iteration tolerance",              "",       "",                      "SWHsolopt",      "?=0.01",                  "POSITIVE",             "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                   "deg",    "",                      "SWHsolopt",      "*",                       "MIN=0,MAX=90",                      "" },
@@ -56,8 +57,9 @@ static var_info _cm_vtab_swhsolopt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "diffuse",               "Diffuse irradiance",               "W/m2",  "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_dry",                 "Dry bulb temperature",             "C",     "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_mains",               "Mains temperature",                "C",     "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                   "Plane of array irradiance",        "W/m2",  "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "incident",              "Incident irradiance",              "W/m2",  "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "I_incident",            "Incident irradiance",              "W/m2",  "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "I_transmitted",         "Transmitted irradiance",           "W/m2",  "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                    "Wh",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                         "Wh",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                      "Wh",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                           "Wh",    "",                      "SWHsolopt",      "*",                            "LENGTH=8760",               "" },
@@ -98,6 +100,11 @@ public:
 		   Read user specified system parameters from compute engine
 		   ********************************************************************** */
 		
+		/* constant fluid properties */
+		double Cp_water = 4812; // Cp_water@40'C (J/kg.K)
+		double rho_water = 992.2; // density of water, kg/m3 @ 40'C
+		double Cp_glycol = 3705; // Cp_glycol
+
 	
 		double albedo = as_double("albedo"); // ground reflectance fraction
 		double tilt = as_double("tilt"); // collector tilt in degrees
@@ -106,6 +113,7 @@ public:
 		int sky_model = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
 	
 		int max_iter = as_integer("max_iter"); // max iterations allowed
+		double ftol = as_double("ftol_iter"); // iteration tolerance
 
 		size_t len;
 		ssc_number_t *draw = as_array("scaled_draw", &len);
@@ -115,10 +123,10 @@ public:
 		double area = as_double("area_coll") * as_integer("ncoll"); // total solar collector area (m2)
 
 		int ifluid = as_integer("fluid"); // 0=water, 1=glycol
-		double fluid_cp = (ifluid==0) ? 4816 : 3705;  // working fluid specific heat in J/kgK
+		double fluid_cp = (ifluid==0) ? Cp_water : Cp_glycol;  // working fluid specific heat in J/kgK
 		
 		int itest = as_integer("test_fluid"); // 0=water, 1=glycol
-		double test_cp = (itest==0) ? 4816 : 3705;  // test fluid specific heat in J/kgK
+		double test_cp = (itest==0) ? Cp_water : Cp_glycol;  // test fluid specific heat in J/kgK
 		double test_flow = as_double("test_flow"); // collector test flow rate (kg/s)
 
 		double FRta = as_double("FRta"); // FR(ta)_n (D&B pp 291) (dimensionless) collector heat removal factor * effective transmittance-absorption product (intercept on efficiency curve); indication of how energy is absorbed.
@@ -164,13 +172,14 @@ public:
 		ssc_number_t *T_dry = allocate("T_dry", 8760);
 		ssc_number_t *T_mains = allocate("T_mains", 8760);
 		ssc_number_t *out_Draw = allocate("draw", 8760);
-		ssc_number_t *PlaneOfArray = allocate("poa", 8760 );
-		ssc_number_t *Incident = allocate("incident", 8760);
+		ssc_number_t *I_incident = allocate("I_incident", 8760 );
+		ssc_number_t *I_transmitted = allocate("I_transmitted", 8760);
 		ssc_number_t *G_Tcrit = allocate("G_Tcrit", 8760);
 		
 		ssc_number_t *out_FRta_use = allocate("FRta_use", 8760);
 		ssc_number_t *out_FRUL_use = allocate("FRUL_use", 8760);
-
+		
+		ssc_number_t *out_Q_transmitted = allocate("Q_transmitted", 8760 );
 		ssc_number_t *out_Q_useful = allocate("Q_useful", 8760);
 		ssc_number_t *out_Q_deliv = allocate("Q_deliv", 8760);
 		ssc_number_t *out_Q_loss = allocate("Q_loss", 8760);
@@ -188,33 +197,7 @@ public:
 
 		ssc_number_t *Mode = allocate("mode", 8760);
 		ssc_number_t *NSolveIter = allocate("solve_iter", 8760);
-	
-		/*
-		Draw[0] = 2.4f;
-		Draw[1] = 1.2f;
-		Draw[2] = 0.8f;
-		Draw[3] = 1.0f;
-		Draw[4] = 1.9f;
-		Draw[5] = 6.1f;
-		Draw[6] = 14.0f;
-		Draw[7] = 16.2f;
-		Draw[8] = 15.7f;
-		Draw[9] = 13.9f;
-		Draw[10] = 11.9f;
-		Draw[11] = 10.1f;
-		Draw[12] = 8.6f;
-		Draw[13] = 7.7f;
-		Draw[14] = 6.9f;
-		Draw[15] = 7.0f;
-		Draw[16] = 8.0f;
-		Draw[17] = 10.2f;
-		Draw[18] = 12.2f;
-		Draw[19] = 12.6f;
-		Draw[20] = 11.4f;
-		Draw[21] = 9.9f;
-		Draw[22] = 7.6f;
-		Draw[23] = 5.1f;
-		*/
+
 	
 		double temp_sum = 0;
 		double monthly_avg_temp[12];
@@ -229,8 +212,8 @@ public:
 			Diffuse[i] = (ssc_number_t)wf.df;
 			T_dry[i] = (ssc_number_t)wf.tdry;		
 			T_mains[i] = 0;
-			PlaneOfArray[i] = 0;
-			Incident[i] = 0;
+			I_incident[i] = 0;
+			I_transmitted[i] = 0;
 			   
 		/* **********************************************************************
 		   Process radiation (Isotropic model), calculate Incident[i] through cover
@@ -246,7 +229,7 @@ public:
 
 			double poa[3];
 			tt.get_poa( &poa[0], &poa[1], &poa[2], 0, 0, 0 );
-			PlaneOfArray[i] = (ssc_number_t)( poa[0] + poa[1] + poa[2] ); // total PoA on surface
+			I_incident[i] = (ssc_number_t)( poa[0] + poa[1] + poa[2] ); // total PoA on surface
 
 			double aoi = 0;
 			tt.get_angles( &aoi, 0, 0, 0, 0 ); // note: angles returned in degrees
@@ -272,7 +255,7 @@ public:
 			if (Kta_g < 0) Kta_g = 0;
 			
 
-			Incident[i] = (ssc_number_t)( Kta_b*poa[0]
+			I_transmitted[i] = (ssc_number_t)( Kta_b*poa[0]
 				+ Kta_d*poa[1]
 				+ Kta_g*poa[2] );
 		
@@ -339,22 +322,16 @@ public:
 		
 		double Q_tankloss = 0;
 		double Q_useful_prev = 0.0;
-		double T_tank_prev = V_hot/V_tank*T_hot + V_cold/V_tank*T_cold; // weighted average tank temperature (initial)
+		double T_tank_prev_hour = V_hot/V_tank*T_hot + V_cold/V_tank*T_cold; // weighted average tank temperature (initial)
 		double T_deliv_prev = 0.0;
 
 		/* **********************************************************************
 		   Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, Q_saved
 		   ********************************************************************** */	
-	
-		double Cp_water = 4816; // Cp_water@15'C (J/kg.K)  assume constant fluid properties
-
-		double Cp_tank = Cp_water; // assume tank is water. Cp_water@15'C (J/kg.K)
-		double rho_tank = 1000; // density of water, kg/m3
-
 		for ( i=0; i < 8760; i++ )
 		{
 			// at beginning of this timestep, temp is the same as end of last timestep
-			double T_tank = T_tank_prev;
+			double T_tank = T_tank_prev_hour;
 			double Q_useful = Q_useful_prev;
 			double T_deliv = T_deliv_prev;
 		
@@ -379,20 +356,22 @@ public:
 			out_FRta_use[i] = (ssc_number_t)FRta_use;
 			out_FRUL_use[i] = (ssc_number_t)FRUL_use;
 								
-			double mdot_mix = draw[i];		
-			double T_tank_last_iter = 0.0;
+			double mdot_mix = draw[i];
 
-			
+			double T_tank_prev_iter = 0.0;
+
 			int niter = 0;
 			do
 			{
+				T_tank_prev_iter = T_tank;
+
 				if ( niter > max_iter ) break;
 
 				if (T_deliv > T_set)
 				{
 					// limit flow rate to mixing valve by effective ratio of T_set/T_deliv
 					mdot_mix =  draw[i] * (Cp_water*T_set - Cp_water*T_mains[i]) 
-											/(Cp_tank *T_deliv - Cp_water*T_mains[i]);
+											/(Cp_water *T_deliv - Cp_water*T_mains[i]);
 				}
 				
 				double T_dry_prev = T_dry[i];
@@ -401,87 +380,63 @@ public:
 				/* calculate critical radiation for operation */
 				double Gcrit  = FRUL_use*( T_tank - T_dry[i] ) / FRta_use; // D&B eqn 6.8.2
 				G_Tcrit[i] = (ssc_number_t)Gcrit;
-				if ( Incident[i] > Gcrit )
-					Q_useful = area*( FRta_use*Incident[i] - FRUL_use*(T_tank_prev - T_dry_prev) ); // D&B eqn 6.8.1 
+				if ( I_transmitted[i] > Gcrit )
+					Q_useful = area*( FRta_use*I_transmitted[i] - FRUL_use*(T_tank_prev_iter - T_dry_prev) ); // D&B eqn 6.8.1 
 				else
 					Q_useful = 0.0; // absorbed radiation does not exceed thermal losses, etc => no operation
-			
-				T_tank_last_iter = T_tank;
 			
 				/* During solar collection, tank is assumed mixed.
 				   During no solar collection hours, tank is assumed startifed (modeled with 2 variable volume nodes) */
 				if (Q_useful > 0)
 				{
 				/* MIXED TANK -- solar collection */
-			
-					T_tank_last_iter = T_tank;
-				
-					if (Q_useful_prev == 0.0)
-					{
-						// this hour has solar collection, after previous hour with no solar collection
-						T_tank = T_tank_prev;
-						Mode[i] = 1;
-					}
-					else
-					{
-						// this hour has solar collection, after previous hour with solar collection
-						T_tank = T_tank_prev * 1/(1+ mdot_mix/(rho_tank*V_tank))
-							+ ( Q_useful*dT - Q_tankloss*dT - mdot_mix*Cp_tank*273.15 + mdot_mix*Cp_water*(T_mains[i]+273.15) )
-							  / ( rho_tank * V_tank * Cp_tank * ( 1 + mdot_mix / (rho_tank*V_tank) ) );
 					
-						if (T_tank > T_tank_max) T_tank = T_tank_max;
-						Q_tankloss = UA_tank * (T_tank - T_room);
-						Mode[i] = 2;
-					}
-				
+					// this hour has solar collection, after previous hour with solar collection
+					T_tank = T_tank_prev_iter * 1/(1+ mdot_mix/(rho_water*V_tank))
+						+ ( Q_useful*dT - Q_tankloss*dT + mdot_mix*Cp_water*T_mains[i] )
+							/ ( rho_water * V_tank * Cp_water * ( 1 + mdot_mix / (rho_water*V_tank) ) );
+					
+					if (T_tank > T_tank_max) T_tank = T_tank_max;
+					Q_tankloss = UA_tank * (T_tank - T_room);
+					
 					T_deliv = T_tank;
+					
+					Mode[i] = 1;
 				}
 				else
 				{
 				/* STRATIFIED TANK -- no solar collection */
-					if (Q_useful_prev > 0.0)
-					{
-						// after previous hour with collection
-						V_hot = V_tank - mdot_mix/rho_tank;
-						if (V_hot < 0) V_hot = 0;
-						T_hot = T_tank_prev - UA_tank * V_hot/V_tank * (T_hot-T_room)*dT / (rho_tank * Cp_tank * V_tank);
-						V_cold = V_tank-V_hot;
-						T_cold = T_mains[i] - UA_tank * V_cold/V_tank * (T_mains[i]-T_room)*dT / (rho_tank * Cp_tank * V_tank);
+			
+					// If previous hour had solar collection 
+					// (i.e. previous hour was mixed tank, and we don't yet have hot & cold node temperatures), 
+					// use the previous tank temperature
+					// and mains temperature for the reference hot node and cold node
+					// temperatures in the stratified tank
+					double T_nodeH = (Q_useful_prev > 0.0) ? T_tank_prev_iter : T_hot;
+					double T_nodeC = (Q_useful_prev > 0.0) ? T_mains[i] : T_cold;
 
-						if (V_hot > 0)
-							T_deliv = T_hot;
-						else
-							T_deliv = T_cold;
+					// after previous hour with collection
+					V_hot = V_tank - mdot_mix/rho_water;
+					if (V_hot < 0) V_hot = 0;
 
-						Mode[i] = 3;
-					}
+					T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
+					V_cold = V_tank-V_hot;
+					T_cold = T_nodeC - UA_tank * V_cold/V_tank  * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_tank);
+
+					if (V_hot > 0)
+						T_deliv = T_hot;
 					else
-					{
-						// after previous hour with no solar collections
-						V_hot = V_hot - mdot_mix / rho_tank;
-						if (V_hot < 0) V_hot = 0;
-						T_hot = T_hot - UA_tank * V_hot / V_tank * (T_hot - T_room) * dT / (rho_tank * Cp_tank * V_tank);
-						V_cold = V_tank-V_hot;
-						// note: T_cold calculation is approximate, doesn't account for incoming cold water temperature
-						T_cold = T_cold - UA_tank * V_cold / V_tank * (T_cold - T_room) * dT / (rho_tank * Cp_tank * V_tank);
+						T_deliv = T_cold;
 
-						if (V_hot > 0)
-							T_deliv = T_hot;
-						else
-							T_deliv = T_cold;
-
-						Mode[i] = 4;
-					}
-				
+					Mode[i] = 2;
+			
 					T_tank = V_hot / V_tank * T_hot + V_cold / V_tank * T_cold;
 					Q_tankloss = UA_tank * V_hot / V_tank * (T_hot - T_room) + UA_tank * V_cold / V_tank * (T_cold - T_room);
-				
-					break; // no iteration when tank is stratified
 				}
 
 				++niter;
-
-			} while ( fabs(T_tank_last_iter - T_tank) / T_tank >= 0.001 );
+				
+			} while ( fabs(T_tank_prev_iter - T_tank) / T_tank >= ftol );
 
 			// log in debugging output how many iterations were required
 			NSolveIter[i] = (ssc_number_t)niter;
@@ -491,9 +446,9 @@ public:
 			// mix with cold mains to lower temp to setp temp
 			double Q_deliv = 0.0;
 			if (T_deliv > T_set)
-				Q_deliv = mdot_mix / dT * (Cp_tank*T_deliv - Cp_water*T_mains[i]);
+				Q_deliv = mdot_mix / dT * (Cp_water*T_deliv - Cp_water*T_mains[i]);
 			else
-				Q_deliv = draw[i] / dT * (Cp_tank*T_deliv - Cp_water*T_mains[i]);
+				Q_deliv = draw[i] / dT * (Cp_water*T_deliv - Cp_water*T_mains[i]);
 					
 			// calculate pumping losses (pump size is user entered) -
 			double P_pump = (Q_useful > 0) ? pump_watts*pump_eff : 0.0;
@@ -511,10 +466,11 @@ public:
 
 			// save some values for next iteration
 			Q_useful_prev = Q_useful;
-			T_tank_prev = T_tank;
+			T_tank_prev_hour = T_tank;
 			T_deliv_prev = T_deliv;
 
 			// save output variables
+			out_Q_transmitted[i] = (ssc_number_t) (I_transmitted[i] * area);
 			out_Q_useful[i] = (ssc_number_t) Q_useful;
 			out_Q_deliv[i] = (ssc_number_t) Q_deliv;
 			out_Q_loss[i] = (ssc_number_t) Q_tankloss;
@@ -536,4 +492,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( swhsolopt, "Solar Water Heating using SolOpt model with modifications.", 1 )
+DEFINE_MODULE_ENTRY( swhsolopt, "Solar Water Heating using SolOpt model with modifications.", 2 )
