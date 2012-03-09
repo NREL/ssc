@@ -101,7 +101,7 @@ public:
 		   ********************************************************************** */
 		
 		/* constant fluid properties */
-		double Cp_water = 4812; // Cp_water@40'C (J/kg.K)
+		double Cp_water = 4182; // Cp_water@40'C (J/kg.K)
 		double rho_water = 992.2; // density of water, kg/m3 @ 40'C
 		double Cp_glycol = 3705; // Cp_glycol
 
@@ -315,14 +315,13 @@ public:
 		   ********************************************************************** */
 
 		/* set initial conditions on some simulation variables */
-		double V_hot = 0.8 * V_tank;
-		double V_cold = V_tank-V_hot;
 		double T_hot = T_mains[1] + 40; // initial hot temp 40'C above ambient
 		double T_cold = T_mains[1];
 		
 		double Q_tankloss = 0;
 		double Q_useful_prev = 0.0;
-		double T_tank_prev_hour = V_hot/V_tank*T_hot + V_cold/V_tank*T_cold; // weighted average tank temperature (initial)
+		double V_hot_prev_hour = 0.8 * V_tank;
+		double T_tank_prev_hour = V_hot_prev_hour/V_tank*T_hot + V_hot_prev_hour/V_tank*T_cold; // weighted average tank temperature (initial)
 		double T_deliv_prev = 0.0;
 
 		/* **********************************************************************
@@ -330,10 +329,13 @@ public:
 		   ********************************************************************** */	
 		for ( i=0; i < 8760; i++ )
 		{
-			// at beginning of this timestep, temp is the same as end of last timestep
+			// at beginning of this timestep, temp values are the same as end of last timestep
 			double T_tank = T_tank_prev_hour;
 			double Q_useful = Q_useful_prev;
 			double T_deliv = T_deliv_prev;
+			double V_hot = V_hot_prev_hour;
+			double V_cold = V_tank-V_hot;
+
 		
 			double mdotCp_use = mdot * fluid_cp; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
 			double mdotCp_test = test_flow * test_cp; // test flow (kg/s) * Cp_test
@@ -359,11 +361,13 @@ public:
 			double mdot_mix = draw[i];
 
 			double T_tank_prev_iter = 0.0;
+			double V_hot_prev_iter = 1.0;
 
 			int niter = 0;
 			do
 			{
 				T_tank_prev_iter = T_tank;
+				V_hot_prev_iter = V_hot;
 
 				if ( niter > max_iter ) break;
 
@@ -381,7 +385,7 @@ public:
 				double Gcrit  = FRUL_use*( T_tank - T_dry[i] ) / FRta_use; // D&B eqn 6.8.2
 				G_Tcrit[i] = (ssc_number_t)Gcrit;
 				if ( I_transmitted[i] > Gcrit )
-					Q_useful = area*( FRta_use*I_transmitted[i] - FRUL_use*(T_tank_prev_iter - T_dry_prev) ); // D&B eqn 6.8.1 
+					Q_useful = area*( FRta_use*I_transmitted[i] - FRUL_use*(T_tank - T_dry[i]) ); // D&B eqn 6.8.1 
 				else
 					Q_useful = 0.0; // absorbed radiation does not exceed thermal losses, etc => no operation
 			
@@ -389,9 +393,7 @@ public:
 				   During no solar collection hours, tank is assumed startifed (modeled with 2 variable volume nodes) */
 				if (Q_useful > 0)
 				{
-				/* MIXED TANK -- solar collection */
-					
-					// this hour has solar collection, after previous hour with solar collection
+					/* MIXED TANK -- solar collection */
 					T_tank = T_tank_prev_iter * 1/(1+ mdot_mix/(rho_water*V_tank))
 						+ ( Q_useful*dT - Q_tankloss*dT + mdot_mix*Cp_water*T_mains[i] )
 							/ ( rho_water * V_tank * Cp_water * ( 1 + mdot_mix / (rho_water*V_tank) ) );
@@ -405,7 +407,7 @@ public:
 				}
 				else
 				{
-				/* STRATIFIED TANK -- no solar collection */
+					/* STRATIFIED TANK -- no solar collection */
 			
 					// If previous hour had solar collection 
 					// (i.e. previous hour was mixed tank, and we don't yet have hot & cold node temperatures), 
@@ -415,21 +417,29 @@ public:
 					double T_nodeH = (Q_useful_prev > 0.0) ? T_tank_prev_iter : T_hot;
 					double T_nodeC = (Q_useful_prev > 0.0) ? T_mains[i] : T_cold;
 
-					// after previous hour with collection
-					V_hot = V_tank - mdot_mix/rho_water;
-					if (V_hot < 0) V_hot = 0;
-
+					if ( Q_useful_prev > 0 )
+					{
+						// previous hour had solar collection
+						V_hot = V_tank - mdot_mix/rho_water;
+						if (V_hot < 0) V_hot = 0;
+					}
+					else
+					{
+						// previous hour did not have solar collection
+						V_hot = V_hot_prev_iter - mdot_mix/rho_water;
+					}
+				
 					T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
 					V_cold = V_tank-V_hot;
 					T_cold = T_nodeC - UA_tank * V_cold/V_tank  * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_tank);
-
+					
 					if (V_hot > 0)
 						T_deliv = T_hot;
 					else
 						T_deliv = T_cold;
 
 					Mode[i] = 2;
-			
+						
 					T_tank = V_hot / V_tank * T_hot + V_cold / V_tank * T_cold;
 					Q_tankloss = UA_tank * V_hot / V_tank * (T_hot - T_room) + UA_tank * V_cold / V_tank * (T_cold - T_room);
 				}
@@ -464,9 +474,10 @@ public:
 			// Energy saved by SHW system is difference between auxonly system and shw+aux system
 			double Q_saved = Q_auxonly - Q_aux;
 
-			// save some values for next iteration
+			// save some values for next hour
 			Q_useful_prev = Q_useful;
 			T_tank_prev_hour = T_tank;
+			V_hot_prev_hour = V_hot;
 			T_deliv_prev = T_deliv;
 
 			// save output variables
@@ -492,4 +503,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( swhsolopt, "Solar Water Heating using SolOpt model with modifications.", 2 )
+DEFINE_MODULE_ENTRY( swhsolopt, "Solar Water Heating using SolOpt model with modifications.", 4 )
