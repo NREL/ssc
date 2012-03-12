@@ -31,6 +31,8 @@ public:
 		double globhoriz  );
 
 	double dc_derate() {return m_dc_derate;}
+	bool solar_transform(double &solazi, double &solzen, ssarrdat &arr);
+	bool matrix_multiply(double a[][3], double b[][3], double c[][3]);
 
 private:
 	double m_dc_derate;
