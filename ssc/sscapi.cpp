@@ -43,6 +43,7 @@ extern module_entry_info
 	cm_entry_trntrough,
 	cm_entry_swhsolopt,
 	cm_entry_test_irr,
+	cm_entry_test_pvshade,
 	cm_entry_geothermal,
 	cm_entry_windfarm,
 	cm_entry_geothermalui;
@@ -71,6 +72,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_trntrough,
 	&cm_entry_swhsolopt,
 	&cm_entry_test_irr,
+	&cm_entry_test_pvshade,
 	&cm_entry_geothermal,
 	&cm_entry_windfarm,
 	&cm_entry_geothermalui,

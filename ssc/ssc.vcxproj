@@ -38,6 +38,7 @@
     <ClCompile Include="cmod_singleowner.cpp" />
     <ClCompile Include="cmod_swhsolopt.cpp" />
     <ClCompile Include="cmod_test_irr.cpp" />
+    <ClCompile Include="cmod_test_pvshade.cpp" />
     <ClCompile Include="cmod_timeseq.cpp" />
     <ClCompile Include="cmod_trnbase.cpp" />
     <ClCompile Include="cmod_trndish.cpp" />
