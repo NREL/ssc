@@ -37,15 +37,18 @@ static var_info _cm_vtab_test_pvshade[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "ncelly",			"cells per modules in y",	"",   "",                      "pvshade",             "*",						   "INTEGER",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ndiode",			"diodes per modules",	"",   "",                      "pvshade",             "*",						   "INTEGER",                              "" },
 
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cf_length",			"output array length",	"",   "",                      "pvshade",             "*",						   "INTEGER",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,       "derate_shading",   "Shading derate","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "shading_area",   "Shading area","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "shading_reduc",   "Shading reduction","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 
 
 var_info_invalid };
 
 
 enum {
-	CF_derate_shading,
+	CF_shading_area,
+	CF_shading_reduc,
 	CF_max };
 
 
@@ -90,7 +93,34 @@ public:
 
 		cf.resize_fill( CF_max, arr_len, 0.0 );
 
-		save_cf( CF_derate_shading, arr_len, "derate_shading" );
+
+		selfshade_t ss( p_ssarrdat );
+
+		for (int i=0;i<(int)arr_len;i++)
+		{
+			if (ss.exec( p_sol_zenith[i], p_sol_azimuth[i], p_dni[i], p_ghi[i]) )
+			{
+				cf.at( CF_shading_area, i ) = ss.shade_area();
+				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
+				if (ss.shade_area() < 0)
+				{
+				std::stringstream outm;
+				outm <<  "hour " << i << ", shade area = " << ss.shade_area()  << ", xs = " << ss.m_xs  << ", ys = " << ss.m_ys  << ", lrows = " << ss.m_lrows  << ", wrows = " << ss.m_wrows ;
+				log( outm.str() );
+				}
+			}
+			else 
+			{
+				std::stringstream outm;
+				outm <<  "Bad shading calculation at hour " << i ;
+				log( outm.str() );
+			}
+		}
+
+		assign( "cf_length", var_data( (ssc_number_t) arr_len+1 ));
+
+		save_cf( CF_shading_area, arr_len, "shading_area" );
+		save_cf( CF_shading_reduc, arr_len, "shading_reduc" );
 	}
 
 
