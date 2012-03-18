@@ -17,7 +17,25 @@ double max( double a, double b )
 	return (a > b) ? a : b;
 }
 
+double cosd( double degrees )
+{
+	return cos( degrees * M_PI / 180.0 );
+}
 
+double sind( double degrees )
+{
+	return sin( degrees * M_PI / 180.0 );
+}
+
+double tand( double degrees )
+{
+	return tan( degrees * M_PI / 180.0 );
+}
+
+double atand( double radians )
+{
+	return (180.0/ M_PI) * atan( radians );
+}
 
 
 selfshade_t::selfshade_t()
@@ -157,7 +175,7 @@ integer shad_error
 		wrows = m_arr.nmodx * w;
 		lrows = m_arr.nmody * l;
 
-		double azimuth_eff, zenith_eff;
+		double azimuth_eff, zenith_eff; // all inputs in degrees
 		double px, py, xs, ys;
 	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
 		solar_transform( solazi, solzen, m_arr, &azimuth_eff, &zenith_eff);
@@ -165,25 +183,31 @@ integer shad_error
 	
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
-	if ( (zenith_eff < 90) && (abs(azimuth_eff) < 90) ) 
-	{
-		py = lrows * (cos(tilt_eff) + ( cos(azimuth_eff) * sin(tilt_eff) /tan(90-zenith_eff) ) );
-		px = lrows * sin(tilt_eff) * sin(azimuth_eff) / tan(90-zenith_eff);
+//	if ( (zenith_eff < 90) && (abs(azimuth_eff) < 90) ) 
+//	{
+		py = lrows * (cosd(tilt_eff) + ( cosd(azimuth_eff) * sind(tilt_eff) /tand(90-zenith_eff) ) );
+		px = lrows * sind(tilt_eff) * sind(azimuth_eff) / tand(90-zenith_eff);
 		xs = max( 0., wrows - abs(m_arr.row_space*(px/py) ) );
-		ys = max( 0., lrows * (1 - m_arr.row_space/py) );
-	}
-	else //! Otherwise the sun has set
-	{
-		py = 0;
-		px = 0;
-		xs = 0;
-		ys = 0;                     
-	}
+		ys = lrows * (1.0 - m_arr.row_space/py);
+//		ys = max( 0., lrows * (1.0 - m_arr.row_space/py) );
+//	}
+//	else //! Otherwise the sun has set
+//	{
+//		py = 0;
+//		px = 0;
+//		xs = 0;
+//		ys = 0;                     
+//	}
 
+	// testing
 	m_xs=xs;
 	m_ys=ys;
+	m_px=px;
+	m_py=py;
 	m_lrows=lrows;
 	m_wrows=wrows;
+	m_azi_eff=azimuth_eff;
+	m_zen_eff=zenith_eff;
 
 	if ( (ys <= 0.) && (xs <= 0.) )
 	{
@@ -198,8 +222,8 @@ integer shad_error
 		{
 		// Find number of strings, and number in each shading class (shaded,unshaded,fully shaded, partially shaded)
 			nstr = m_arr.nmody;
-			nstr_s = ceil(ys/l);
-			nstr_fs = int(ys/l);
+			nstr_s = (int)ceil(ys/1.0);
+			nstr_fs = int(ys/1.0);
 			nstr_ps = nstr_s - nstr_fs;
 			nstr_us = nstr - nstr_s;
     
@@ -317,7 +341,7 @@ integer shad_error
 		else   // Vertical Strings
 		{
 			nstr = m_arr.nmodx;
-			nstr_s = ceil(xs/w);
+			nstr_s = (int)ceil(xs/w);
 			nstr_fs = int(xs/w);
 			nstr_ps = nstr_s - nstr_fs;
 			nstr_us = nstr - nstr_s;
@@ -472,38 +496,38 @@ bool selfshade_t::solar_transform(double &solazi, double &solzen, ssarrdat &arr,
     double Rz[3][3];
     
     // Convert sun coordinates into Euclidian space
-	S[0][0] = sin(solzen)*cos(solazi);
-    S[1][0] = -sin(solzen)*sin(solazi);
-    S[2][0] = cos(solzen);
+	S[0][0] = sind(solzen)*cosd(solazi);
+    S[1][0] = -sind(solzen)*sind(solazi);
+    S[2][0] = cosd(solzen);
 
     // Calculate Rotation axis around x axis
     Rx[0][0] = 1;
     Rx[0][1] = 0;
     Rx[0][2] = 0;
     Rx[1][0] = 0;
-    Rx[1][1] = cos(m_arr.slope_ew);
-    Rx[1][2] = sin(m_arr.slope_ew);
+    Rx[1][1] = cosd(m_arr.slope_ew);
+    Rx[1][2] = sind(m_arr.slope_ew);
     Rx[2][0] = 0;
-    Rx[2][1] = -sin(m_arr.slope_ew);
-    Rx[2][2] = cos(m_arr.slope_ew);
+    Rx[2][1] = -sind(m_arr.slope_ew);
+    Rx[2][2] = cosd(m_arr.slope_ew);
 
     // Calculate Rotation axis around y axis
-    Ry[0][0] = cos(m_arr.slope_ns);
+    Ry[0][0] = cosd(m_arr.slope_ns);
     Ry[0][1] = 0;
-    Ry[0][2] = -sin(m_arr.slope_ns);
+    Ry[0][2] = -sind(m_arr.slope_ns);
     Ry[1][0] = 0;
     Ry[1][1] = 1;
     Ry[1][2] = 0;
-    Ry[2][0] = sin(m_arr.slope_ns);
+    Ry[2][0] = sind(m_arr.slope_ns);
     Ry[2][1] = 0;
-    Ry[2][2] = cos(m_arr.slope_ns);
+    Ry[2][2] = cosd(m_arr.slope_ns);
 
     // Calculate Rotation axis around z axis
-    Rz[0][0] = cos(m_arr.azimuth);
-    Rz[0][1] = -sin(m_arr.azimuth);
+    Rz[0][0] = cosd(m_arr.azimuth);
+    Rz[0][1] = -sind(m_arr.azimuth);
     Rz[0][2] = 0;
-    Rz[1][0] = sin(m_arr.azimuth);
-    Rz[1][1] = cos(m_arr.azimuth);
+    Rz[1][0] = sind(m_arr.azimuth);
+    Rz[1][1] = cosd(m_arr.azimuth);
     Rz[1][2] = 0;
     Rz[2][0] = 0;
     Rz[2][1] = 0;
@@ -520,11 +544,11 @@ bool selfshade_t::solar_transform(double &solazi, double &solzen, ssarrdat &arr,
     // Correct for domain of Atand
     if ((Snew[0][0] < 0) && (Snew[1][0] > 0)) 
 	{
-		*azimuth_eff = atan(-Snew[1][0]/Snew[0][0]) - 180;
+		*azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
 	}
     else if ((Snew[0][0] < 0) && (Snew[1][0] < 0))
 	{
-		*azimuth_eff = atan(-Snew[1][0]/Snew[0][0]) + 180;
+		*azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
 	}
     else if (Snew[0][0] == 0) 
 	{
@@ -532,7 +556,7 @@ bool selfshade_t::solar_transform(double &solazi, double &solzen, ssarrdat &arr,
 	}
     else
 	{
-        *azimuth_eff = atan(-Snew[1][0]/Snew[0][0]);
+        *azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
 	}
 
     // Correct for domain of Atand
@@ -542,11 +566,11 @@ bool selfshade_t::solar_transform(double &solazi, double &solzen, ssarrdat &arr,
 	}
     else if (Snew[2][0] < 0)
 	{
-		*zenith_eff = atan(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]) + 180;
+		*zenith_eff = atand(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]) + 180;
 	}
     else
 	{
-        *zenith_eff = atan(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]);
+        *zenith_eff = atand(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]);
 	}
     
     return true;

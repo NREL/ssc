@@ -5,6 +5,9 @@
 #ifndef WIN32
 #include <float.h>
 #endif
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
 
 static var_info _cm_vtab_test_pvshade[] = {
 
@@ -102,12 +105,12 @@ public:
 			{
 				cf.at( CF_shading_area, i ) = ss.shade_area();
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
-				if (ss.shade_area() < 0)
-				{
+		//		if (ss.shade_area() < 0)
+		//		{
 				std::stringstream outm;
-				outm <<  "hour " << i << ", shade area = " << ss.shade_area()  << ", xs = " << ss.m_xs  << ", ys = " << ss.m_ys  << ", lrows = " << ss.m_lrows  << ", wrows = " << ss.m_wrows ;
+				outm <<  "hour " << i << ", shade area = " << ss.shade_area()  << ", zen_eff = " << ss.m_zen_eff  << ", azi_eff = " << ss.m_azi_eff  << ", xs = " << ss.m_xs  << ", ys = " << ss.m_ys  << ", px = " << ss.m_px  << ", py = " << ss.m_py  << ", lrows = " << ss.m_lrows  << ", wrows = " << ss.m_wrows ;
 				log( outm.str() );
-				}
+		//		}
 			}
 			else 
 			{

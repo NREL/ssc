@@ -43,9 +43,12 @@ public:
 // testing
 	double m_xs;
 	double m_ys;
+	double m_px;
+	double m_py;
 	double m_wrows;
 	double m_lrows;
-
+	double m_azi_eff;
+	double m_zen_eff;
 
 
 private:
