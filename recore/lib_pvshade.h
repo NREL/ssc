@@ -35,7 +35,8 @@ public:
 	void set_ssarrdat( ssarrdat &arr ) {m_arr = arr;}
 	double dc_derate() {return m_dc_derate;}
 	double shade_area() {return m_shade_area;}
-	bool solar_transform(double &solazi, double &solzen, ssarrdat &arr, double *azimuth_eff, double *zenith_eff);
+//	bool solar_transform(double &solazi, double &solzen, double *azimuth_eff, double *zenith_eff);
+	bool solar_transform(double solazi, double solzen);
 
 	bool matrix_multiply(double a[][3], double b[][3], double c[][3]);
 
@@ -49,7 +50,8 @@ public:
 	double m_lrows;
 	double m_azi_eff;
 	double m_zen_eff;
-
+	double azimuth_eff;
+	double zenith_eff;
 
 private:
 	ssarrdat m_arr;

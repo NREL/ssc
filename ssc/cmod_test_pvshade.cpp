@@ -44,6 +44,8 @@ static var_info _cm_vtab_test_pvshade[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,       "shading_area",   "Shading area","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "shading_reduc",   "Shading reduction","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "azimuth_eff",   "Effective Azimuth","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "zenith_eff",   "Effective Zenith","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 
 
 var_info_invalid };
@@ -52,6 +54,8 @@ var_info_invalid };
 enum {
 	CF_shading_area,
 	CF_shading_reduc,
+	CF_azimuth_eff,
+	CF_zenith_eff,
 	CF_max };
 
 
@@ -97,7 +101,83 @@ public:
 		cf.resize_fill( CF_max, arr_len, 0.0 );
 
 
+/*
+	// test matrix maultiplication
+    double Rx[3][3];
+    double Ry[3][3];
+    double Rz[3][3];
+
+	Rx[0][0] = 1;
+    Rx[0][1] = 2;
+    Rx[0][2] = 3;
+    Rx[1][0] = 4;
+    Rx[1][1] = 5;
+    Rx[1][2] = 6;
+    Rx[2][0] = 7;
+    Rx[2][1] = 8;
+    Rx[2][2] = 9;
+
+	Ry[0][0] = 1;
+    Ry[0][1] = 2;
+    Ry[0][2] = 3;
+    Ry[1][0] = 4;
+    Ry[1][1] = 5;
+    Ry[1][2] = 6;
+    Ry[2][0] = 7;
+    Ry[2][1] = 8;
+    Ry[2][2] = 9;
+
+	ss.matrix_multiply( Rx, Ry, Rz );
+
+	std::stringstream outm;
+	outm  << "\n"<<  Rz[0][0] << "  " <<  Rz[0][1] << "  " <<  Rz[0][2];
+	outm  << "\n"<<  Rz[1][0] << "  " <<  Rz[1][1] << "  " <<  Rz[1][2] ;
+	outm  << "\n"<<  Rz[2][0] << "  " <<  Rz[2][1] << "  " <<  Rz[2][2] ;
+	log( outm.str() );
+
+	return;
+*/
+
+
+		p_ssarrdat.azimuth = as_double("azimuth");
+		p_ssarrdat.tilt = as_double("tilt");
+		p_ssarrdat.length = as_double("length");
+		p_ssarrdat.width = as_double("width");
+		p_ssarrdat.row_space = as_double("row_space");
+		p_ssarrdat.mod_space = as_double("mod_space");
+		p_ssarrdat.slope_ns = as_double("slope_ns");
+		p_ssarrdat.slope_ew = as_double("slope_ew");
+		p_ssarrdat.mod_orient = as_integer("mod_orient");
+		p_ssarrdat.str_orient = as_integer("str_orient");
+		p_ssarrdat.nmodx = as_integer("nmodx");
+		p_ssarrdat.nmody = as_integer("nmody");
+		p_ssarrdat.nrows = as_integer("nrows");
+		p_ssarrdat.ncellx = as_integer("ncellx");
+		p_ssarrdat.ncelly = as_integer("ncelly");
+		p_ssarrdat.ndiode = as_integer("ndiode");
+
+	std::stringstream outm;
+	outm  << "\n azimuth="<< p_ssarrdat.azimuth;
+	outm  << "\n tilt="<< p_ssarrdat.tilt;
+	outm  << "\n length="<< p_ssarrdat.length;
+	outm  << "\n width="<< p_ssarrdat.width;
+	outm  << "\n row_space="<< p_ssarrdat.row_space;
+	outm  << "\n mod_space="<< p_ssarrdat.mod_space;
+	outm  << "\n slope_ns="<< p_ssarrdat.slope_ns;
+	outm  << "\n slope_ew="<< p_ssarrdat.slope_ew;
+	outm  << "\n mod_orient="<< p_ssarrdat.mod_orient;
+	outm  << "\n str_orient="<< p_ssarrdat.str_orient;
+	outm  << "\n nmodx="<< p_ssarrdat.nmodx;
+	outm  << "\n nmody="<< p_ssarrdat.nmody;
+	outm  << "\n nrows="<< p_ssarrdat.nrows;
+	outm  << "\n ncellx="<< p_ssarrdat.ncellx;
+	outm  << "\n ncelly="<< p_ssarrdat.ncelly;
+	outm  << "\n ndiode="<< p_ssarrdat.ndiode;
+	outm  << "\n";
+	log( outm.str() );
+
 		selfshade_t ss( p_ssarrdat );
+
 
 		for (int i=0;i<(int)arr_len;i++)
 		{
@@ -105,12 +185,14 @@ public:
 			{
 				cf.at( CF_shading_area, i ) = ss.shade_area();
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
-		//		if (ss.shade_area() < 0)
-		//		{
+				cf.at( CF_azimuth_eff, i ) = ss.azimuth_eff;
+				cf.at( CF_zenith_eff, i ) = ss.zenith_eff;
+				if (ss.shade_area() < 0)
+				{
 				std::stringstream outm;
 				outm <<  "hour " << i << ", shade area = " << ss.shade_area()  << ", zen_eff = " << ss.m_zen_eff  << ", azi_eff = " << ss.m_azi_eff  << ", xs = " << ss.m_xs  << ", ys = " << ss.m_ys  << ", px = " << ss.m_px  << ", py = " << ss.m_py  << ", lrows = " << ss.m_lrows  << ", wrows = " << ss.m_wrows ;
 				log( outm.str() );
-		//		}
+				}
 			}
 			else 
 			{
@@ -124,6 +206,8 @@ public:
 
 		save_cf( CF_shading_area, arr_len, "shading_area" );
 		save_cf( CF_shading_reduc, arr_len, "shading_reduc" );
+		save_cf( CF_azimuth_eff, arr_len, "azimuth_eff" );
+		save_cf( CF_zenith_eff, arr_len, "zenith_eff" );
 	}
 
 
