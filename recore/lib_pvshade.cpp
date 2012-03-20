@@ -488,6 +488,19 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     double Ry[3][3];
     double Rz[3][3];
     
+	for (int i=0;i<3;i++)
+		for (int j=0;i<3;i++)
+		{
+			Snew[i][j]=0.0;
+			S[i][j]=0.0;
+			Rot_xy[i][j]=0.0;
+			Rot_xyz[i][j]=0.0;
+			Rx[i][j]=0.0;
+			Ry[i][j]=0.0;
+			Rz[i][j]=0.0;
+		}
+
+
     // Convert sun coordinates into Euclidian space
 	S[0][0] = sind(solzen)*cosd(solazi);
 	S[0][1] = 0;
@@ -543,14 +556,14 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 //Preferred	
 //	if (!matrix_multiply(Ry,Rx,Rot_xy)) return false;
 //	if (!matrix_multiply(Rz,Rot_xy,Rot_xyz)) return false;
-//  if (!matrix_multiply(S,Rot_xyz,Snew)) return false;
+ // if (!matrix_multiply(S,Rot_xyz,Snew)) return false;
 
 
 	if ((Snew[0][0] < 0) && (Snew[1][0] > 0)) 
 	{
-//		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
+		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
 // modification based on results - see documentation\PV\Shading\Porting\Testing.docx
-		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
+//		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
 	}
     else if ((Snew[0][0] < 0) && (Snew[1][0] < 0))
 	{
@@ -594,9 +607,9 @@ bool selfshade_t::matrix_multiply(double a[][3], double b[][3], double c[][3])
 			double sum = 0;
 			for (k=0; k<3; k++)
 			{
-//				sum = sum + a[i][k]*b[k][j];
+				sum = sum + a[i][k]*b[k][j];
 // modify to work like fortran - see http://www.nsc.liu.se/~boein/f77to90/c11.html
-				sum = sum + b[i][k]*a[k][j];
+//				sum = sum + b[i][k]*a[k][j];
 			}
 			c[i][j] = sum;
 		}

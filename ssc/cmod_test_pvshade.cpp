@@ -46,6 +46,10 @@ static var_info _cm_vtab_test_pvshade[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "shading_reduc",   "Shading reduction","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "azimuth_eff",   "Effective Azimuth","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "zenith_eff",   "Effective Zenith","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "xs",   "x to shaded area","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "px",   "x shadow","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "ys",   "y to shaded area","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "py",   "y shadow","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 
 
 var_info_invalid };
@@ -56,6 +60,10 @@ enum {
 	CF_shading_reduc,
 	CF_azimuth_eff,
 	CF_zenith_eff,
+	CF_xs,
+	CF_px,
+	CF_ys,
+	CF_py,
 	CF_max };
 
 
@@ -181,12 +189,16 @@ public:
 
 		for (int i=0;i<(int)arr_len;i++)
 		{
-			if (ss.exec( p_sol_zenith[i], p_sol_azimuth[i], p_dni[i], p_ghi[i]) )
+			if (ss.exec( p_sol_azimuth[i], p_sol_zenith[i], p_dni[i], p_ghi[i]) )
 			{
 				cf.at( CF_shading_area, i ) = ss.shade_area();
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
 				cf.at( CF_azimuth_eff, i ) = ss.azimuth_eff;
 				cf.at( CF_zenith_eff, i ) = ss.zenith_eff;
+				cf.at( CF_xs, i ) = ss.m_xs;
+				cf.at( CF_px, i ) = ss.m_px;
+				cf.at( CF_ys, i ) = ss.m_ys;
+				cf.at( CF_py, i ) = ss.m_py;
 				if (ss.shade_area() < 0)
 				{
 				std::stringstream outm;
@@ -208,6 +220,10 @@ public:
 		save_cf( CF_shading_reduc, arr_len, "shading_reduc" );
 		save_cf( CF_azimuth_eff, arr_len, "azimuth_eff" );
 		save_cf( CF_zenith_eff, arr_len, "zenith_eff" );
+		save_cf( CF_xs, arr_len, "xs" );
+		save_cf( CF_px, arr_len, "px" );
+		save_cf( CF_ys, arr_len, "ys" );
+		save_cf( CF_py, arr_len, "py" );
 	}
 
 
