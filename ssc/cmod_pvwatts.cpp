@@ -89,7 +89,7 @@ public:
 					tpoa = poa; /* default to dn 0 or bad value - assume no glass cover on module */
 				
 				double tcell = Tccalc( poa, p_wspd[i], p_tdry[i] );
-				double dc = dcpowr( reftem, watt_spec, pwrdgr, tmloss, tpoa, tcell );
+				double dc = dcpowr( reftem, watt_spec, pwrdgr, tmloss, tpoa, tcell, 1000.0 );
 				double ac = dctoac( watt_spec, efffp, dc );
 
 				p_tcell[i] = (ssc_number_t)tcell;

@@ -200,7 +200,7 @@ double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2 )
 	return celltemp;
 }
 										/* Function to determine DC power */
-double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa,double pvt)
+double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa,double pvt, double iref)
 {        /* Modified 8/22/07 to pass non-array variables */
 /* This function was converted from a PVFORM version 3.3 subroutine but
 	uses reference array power ratings instead of reference array
@@ -231,7 +231,7 @@ double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa
 		poa = plane of array irradiances (W per m2) for each hour of day
 		pvt = temperature of PV cells (deg C)
 		reftem =  reference temperature (deg C)
-		refpwr =  reference power (W) at reftem and 1000 W per m2 irradiance
+		refpwr =  reference power (W) at reftem and iref W per m2 irradiance
 		pwrdgr =  power degradation due to temperature, decimal fraction
 					(si approx. -0.004, negative means efficiency decreases with
 					increasing temperature)
@@ -246,9 +246,9 @@ double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa
 	double dcpwr1,dc;
 
 	if( poa > 125.0 )
-		dcpwr1=refpwr*(1.0+pwrdgr*(pvt-reftem))*poa/1000.0;
+		dcpwr1=refpwr*(1.0+pwrdgr*(pvt-reftem))*poa/iref;
 	else if( poa > 0.1 )
-		dcpwr1=refpwr*(1.0+pwrdgr*(pvt-reftem))*0.008*poa*poa/1000.0;
+		dcpwr1=refpwr*(1.0+pwrdgr*(pvt-reftem))*0.008*poa*poa/iref;
 	else
 		dcpwr1=0.0;
 

@@ -21,14 +21,16 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                "Tilt=latitude override",         "0/1",    "",                      "PVWatts",      "na:tilt",                      "BOOLEAN",                                  "" },
 
 	/* advanced inputs */
-	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                     "Tracker rotation limit (+/- 1 axis)", "deg",    "",                 "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fd",                         "Diffuse fraction",               "0..1",   "",                      "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                     "Nominal operating cell temperature", "'C", "",                      "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "t_ref",                      "Reference cell temperature",     "'C",     "",                      "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                      "Max power temperature coefficient", "%/'C", "",                     "PVWatts",      "?=-0.5",                  "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                    "Inverter efficiency at rated power", "frac", "",                    "PVWatts",      "?=0.92",                  "MIN=0,MAX=1",                              "" },
-
-
+	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                     "Tracker rotation limit (+/- 1 axis)","deg",    "",                 "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                     "Nominal operating cell temperature", "'C",     "",                 "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "t_ref",                      "Reference cell temperature",         "'C",     "",                 "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                      "Max power temperature coefficient",  "%/'C",   "",                 "PVWatts",      "?=-0.5",                  "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                    "Inverter efficiency at rated power", "frac",   "",                 "PVWatts",      "?=0.92",                  "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fd",                         "Diffuse fraction",                   "0..1",   "",                 "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "i_ref",                      "Rating condition irradiance",        "W/m2",   "",                 "PVWatts",      "?=1000",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "poa_cutin",                  "Min reqd irradiance for operation",  "W/m2",   "",                 "PVWatts",      "?=0",                     "MIN=0",                                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                     "Wind stow speed",                    "m/s",    "",                 "PVWatts",      "?=0",                     "MIN=0",                                    "" },
+	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                        "Plane of array irradiance",      "W/m2",   "",                      "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                      "Module temperature",             "'C",     "",                      "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                         "DC array output",                "Wdc",  "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
@@ -76,8 +78,9 @@ public:
 		double tmloss = 1.0 - derate/efffp;  /* All losses except inverter,decimal */
 		double rlim = as_double("rotlim");             /* +/- rotation in degrees permitted by physical constraint of tracker */
 		double fd = as_double("fd"); // diffuse fraction
-
-
+		double i_ref = as_double("i_ref"); // reference irradiance for rating condition
+		double poa_cutin = as_double("poa_cutin"); // minimum POA irradiance level required for any operation
+		double wind_stow = as_double("w_stow"); // maximum wind speed before stowing.  stowing causes all output to be lost
 	
 		/* storage for calculations */
 		double angle[5];
@@ -213,6 +216,13 @@ public:
 						irr[0]=irr[1]=irr[2] = 0;
 						perez( sun[8], dn[i],df[i],alb,angle[0],angle[1],sun[1], irr, 0 ); /* Incident solar radiation */
 						poa[i] = irr[0]+fd*(irr[1]+irr[2]);
+
+						if (poa_cutin > 0 && poa[i] < poa_cutin)
+							poa[i] = 0;
+
+						if (wind_stow > 0 && wind[i] >= wind_stow)
+							poa[i] = 0;
+
 						tpoa[i] = transpoa( poa[i],dn[i],angle[0]);  /* Radiation transmitted thru module cover */
 						
 					}
@@ -223,7 +233,7 @@ public:
 				for (int i=0;i<24;i++)
 				{
 					double pvt = celltemp( poa[i], wind[i], ambt[i] );
-					double dc = dcpowr(reftem,watt_spec,pwrdgr,tmloss,tpoa[i],pvt);
+					double dc = dcpowr(reftem,watt_spec,pwrdgr,tmloss,tpoa[i],pvt, i_ref);
 					double ac = dctoac(watt_spec,efffp,dc);
 
 					p_poa[cur_hour] = (ssc_number_t)poa[i];
