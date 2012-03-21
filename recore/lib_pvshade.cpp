@@ -58,10 +58,62 @@ bool selfshade_t::exec(
 		double solzen,
 		double solazi,
 		double beamnorm,
-		double globhoriz )
+		double globhoriz,
+		double pmp,
+		double voc,
+		double isc)
 {
 // Geometry calculations ported from sam_shading_type241.f90
 /*
+
+! Parameters
+!--------------------------------------------------------------------------------------------------------------------
+!Nb |  Variable                      |  Description                                                    |  Units  
+!---|--------------------------------|-----------------------------------------------------------------|-------------
+!  1| ENABLE                         | 1 enable shading calculations 0 to disable                      | none
+!  2| NMODX                          | Number of modules in row in x direction                         | none
+!  3| NMODY                          | Number of modules in row in y direction                         | none
+!  4| NROWS                          | Number of rows                                                  | none
+!  5| LENGTH                         | Length of module                                                | meters
+!  6| WIDTH                          | Width of module                                                 | meters
+!  7| MOD_ORIENT                     | Oreintation of Panel (0 if Portrait 1 if Landscape)             | none
+!  8| STR_ORIENT                     | Oreintation of Strings (0 if Vertical 1 if Horizontal)          | none
+!  9| ROW_SPACE                      | Spacing between rows                                            | meters
+! 10| MOD_SPACE                      | Spacing between modules in row                                  | meters
+! 11| NCELX                          | Number of cells per module in x direction                       | none
+! 12| NCELY                          | Number of cells per module in y direction                       | none
+! 13| NDIODE                         | Number of bypass diodes per module                              | none
+! 14| SLOPE_NS                       | Slope of Terrain in N/S direction                               | degrees
+! 15| SLOPE_EW                       | Slope of Terrain in E/W direction                               | degrees
+! 16| PV_MODE                        | PV Model used (2 = sandia, 1 = CEC model)                       | none
+! 17| Vmp                            | Maximum Power point voltage                                     | Volts
+! 18| Imp                            | Maximum Power point current                                     | Amps
+! 19| Voc                            | Open Circuit Voltage                                            | Volts
+! 20| Ixx,I_L                        | Ixx for sandia,I_L for CEC                                      | Amps
+! 21| Isc,I_0                        | Isc for sandia,I_0 for CEC                                      | Amps
+
+! Inputs
+!---------------------------------------------------------------------------------------------------------------------
+!Nb |  Variable                      |  Description                                                    |  Units  
+!---|--------------------------------|-----------------------------------------------------------------|--------------
+!  1| ZENITH                         | Solar Zenith Angle                                              | degrees
+!  2| S_AZIMUTH                      | Solar Azimuth Angle                                             | degrees  
+!  3| TILT                           | Tilt of Collectors                                              | degrees    
+!  4| AZIMUTH                        | Surface Azimth                                                  | degrees
+!  5| B                              | Beam irradiance on surface                                      | kJ/hr
+!  6| G                              | Global irradiance on surface                                    | kJ/hr
+!  7| V                              | Operating Voltage of Module                                     | Volts
+!  8| P0                             | Module output before derate                                     | Watts
+ 
+! Outputs
+!----------------------------------------------------------------------------------------------------------------------
+!Nb |  Variable                      |  Description                                                    |  Units  
+!---|--------------------------------|-----------------------------------------------------------------|---------------
+!  1| REDUC                          |  Array Reduction Factor (non-linear)                            | none      
+!  2| SHADE_AREA                     |  Fraction of aray area that is shaded (linear)                  | none
+!3-5| C                              |  Least squares regression coefficients                          | none
+!  6| shad_error                     |  -1 = rmse error, 0 = no error, 1 = too much shading            | none
+
 
 ! Local variables
 !! Axis Rotation/Effective Angles
@@ -145,7 +197,13 @@ integer shad_error
 	//double dt_fs;           // Diode turnon for fully shaded row
 	double f_xs;
 	double f_ys;
-	double test1,test2;
+
+
+	//Cdeline_simplified model of uniform shading _v1.docx
+	double S,X,FF0; 
+	double c1,c2,c3,c3_0,c4;
+	double eqn5, eqn9, eqn10;
+
 
 	// Determine panel orientation, and flip dimensions if landscape
 	if (m_arr.mod_orient == 0) //            ! Portrait Mode
@@ -209,262 +267,302 @@ integer shad_error
 	{
 		shade_area = 1.0-( ( (m_arr.nrows-1.0) * ys * xs ) / (wrows * lrows * m_arr.nrows) );
 
-//		if (m_arr.str_orient == 1) // Horiztonal Strings
-//		{
-//		// Find number of strings, and number in each shading class (shaded,unshaded,fully shaded, partially shaded)
-//			nstr = m_arr.nmody;
-//			nstr_s = (int)ceil(ys/1.0);
-//			nstr_fs = int(ys/1.0);
-//			nstr_ps = nstr_s - nstr_fs;
-//			nstr_us = nstr - nstr_s;
-//    
-//			// Number and length of substrings in x,y directions
-//			if (m_arr.mod_orient == 0) 
-//			{
-//				nsubx = m_arr.nmodx*m_arr.ndiode;
-//				nsuby = 1;
-//				lsubx = w/m_arr.ndiode;
-//				lsuby = l; 
-//			}
-//			else
-//			{
-//				nsubx = m_arr.nmodx;
-//				nsuby = m_arr.ndiode;
-//				lsubx = w;
-//				lsuby = l/m_arr.ndiode;
-//			}
-//
-//			// Find Fraction of substrings shaded in x,y directions
-//			fsubx_fs = int(xs/lsubx)/nsubx;
-//			fsuby_fs = 1.;
-//			fsub_fs = fsubx_fs*fsuby_fs;
-//			fsubx_ps = int(xs/lsubx)/nsubx;
-//			fsuby_ps = int((ys-nstr_fs*l)/lsuby)/nsuby;
-//			fsub_ps = fsubx_ps*fsuby_ps;
-//    
-//			/*
-//			! Find diode turnon threshold
-//			! Removed becuase we have no good measurements of diode turn-on. Instead we hardwire the threshold to 0.25.
-//			!call diodeturnon(B,G,FSUB_PS,DT_PS)
-//			!call diodeturnon(B,G,FSUB_FS,DT_FS)
-//			*/
-//			// Find percent of substrings shaded
-//			f_xs = (xs - int(xs/lsubx)*lsubx)/lsubx;
-//			f_ys = ((ys-nstr_fs*l) - int((ys-nstr_fs*l)/lsuby)*lsuby)/lsuby;
-//    
-//			// Determine whether threshold is reached, and turn on or do nothing
-//			//if (F_XS .GE. DT_FS/NCSUBX) then
-//			if ( (f_xs*beamnorm/globhoriz) >= (.25/ncsubx) )
-//			{
-//				fsubx_fs = ceil(xs/lsubx)/nsubx;
-//				fsubx_ps = ceil(xs/lsubx)/nsubx;
-//				fsuby_fs = 1.;
-//			}
-//			else
-//			{
-//				fsubx_fs = int(xs/lsubx)/nsubx;
-//				fsubx_ps = int(xs/lsubx)/nsubx;
-//				fsuby_fs = 1.;
-//			}
-//
-//			//! Do the same in y direction
-//			//!if (F_YS .GE. DT_PS/NCSUBY) then                   <- expression before hardwiring diode turnon threshold.
-//			if ( (f_ys*beamnorm/globhoriz) >= (.25/ncsuby) )
-//			{
-//				fsuby_ps = ceil((ys-nstr_fs*l)/lsuby)/nsuby;
-//			}
-//			else
-//			{
-//				fsuby_ps = int((ys-nstr_fs*l)/lsuby)/nsuby;
-//			}
-//    
-//			// Find fraction of substrings shaded (FS and PS)
-//			fsub_fs = fsubx_fs*fsuby_fs;
-//			fsub_ps = fsubx_ps*fsuby_ps;
-//
-//		/*
-//			// From:Some notes on partial shading implementation in SAM by Chris Deline (emailed Fall 2010)
-//			// Find operating voltage for shaded substrings
-//			if (abs(1-FSUB_FS) < small .or. FSUB_FS > 1 .or. FSUB_FS < 0-small) then
-//				Vop(1) = Voc+1              !flagging bad value later set to 0 power
-//			else
-//				Vop(1) = Vmp/(1-FSUB_FS)
-//			end if
-//    
-//			if (1-FSUB_PS < small .or. FSUB_PS > 1 .or. FSUB_PS < 0-small) then
-//				Vop(2) = Voc+1
-//			else
-//				Vop(2) = Vmp/(1-FSUB_PS)
-//			end if
-//    
-//			! Find operating current using exponential fit
-//			Iop(1) = c(1)-c(2)*exp(c(3)*Vop(1))
-//			Iop(2) = c(1)-c(2)*exp(c(3)*Vop(2))
-//    
-//			! If there is no shading, make sure power is at Pmp (corrects for bad exponential fits)
-//			do i =1,2 
-//				if (Vop(i) .eq. Vmp) then
-//					Vop(i) = Vmp 
-//					Iop(i) = Imp
-//				end if
-//			end do
-//    
-//			! Make sure Vop is not greater than Voc. 
-//			! if Vop > Voc push power to 0
-//			! otherwise find derated power
-//			if (Vop(1) > Voc) then
-//				FS_SPR = 0.
-//			else
-//				FS_SPR = (1-FSUB_FS)*Vop(1)*Iop(1)/Pmp
-//			end if
-//        
-//			if (Vop(2) > Voc) then
-//				PS_SPR = 0.
-//			else
-//				PS_SPR = (1-FSUB_PS)*Vop(2)*Iop(2)/Pmp
-//			end if
-//    
-//			! Find total array derate
-//			REDUC = (1.+(NROWS-1)*(NSTR_PS*PS_SPR+NSTR_FS*FS_SPR+NSTR_US*1.)/NSTR)/NROWS
-//		  */  
-//			reduc = (1.+(m_arr.nrows-1)*(nstr_ps*ps_spr+nstr_fs*fs_spr+nstr_us*1.)/nstr)/m_arr.nrows;
-//		}
-//		else   // Vertical Strings
-//		{
-//			nstr = m_arr.nmodx;
-//			nstr_s = (int)ceil(xs/w);
-//			nstr_fs = int(xs/w);
-//			nstr_ps = nstr_s - nstr_fs;
-//			nstr_us = nstr - nstr_s;
-//    
-//			if (m_arr.mod_orient == 0) 
-//			{
-//				nsubx = m_arr.ndiode;
-//				nsuby = m_arr.nmody;
-//				lsubx = w/m_arr.ndiode;
-//				lsuby = l;
-//			}
-//			else
-//			{
-//				nsubx = 1;
-//				nsuby = m_arr.ndiode * m_arr.nmody;
-//				lsubx = w;
-//				lsuby = l/ m_arr.ndiode;
-//			}
-//
-//			fsubx_fs = 1.;
-//			fsuby_fs = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
-//			fsubx_ps = int((xs-nstr_fs*w)/lsubx)/nsubx;
-//			fsuby_ps = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
-//                
-//			//call diodeturnon(B,G,FSUB_PS,DT_PS)
-//			//call diodeturnon(B,G,FSUB_FS,DT_FS)
-//    
-//			f_xs = ( (xs-nstr_fs*w) - int( (xs-nstr_fs*w) / lsubx ) * lsubx ) / lsubx;
-//			f_ys = (ys - int(ys/lsuby) *lsuby ) / lsuby;
-//    
-//			//!if (F_YS .GE. DT_FS/NCSUBY) then
-//			if ( (f_ys*beamnorm/globhoriz) >= (.25/ncsuby) )
-//			{
-//				fsubx_fs = 1.;
-//				fsuby_fs = ceil(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
-//				fsuby_ps = ceil(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
-//			}
-//			else
-//			{
-//				fsubx_fs = 1.;
-//				fsuby_fs = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
-//				fsuby_ps = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
-//			}
-//
-//			if ( (f_xs*beamnorm/globhoriz) >= (.25/ncsuby) )
-//			{
-//				fsubx_ps = ceil((xs-nstr_fs*w)/lsubx)/nsubx;
-//			}
-//			else
-//			{
-//				fsubx_ps = int((xs-nstr_fs*w)/lsubx)/nsubx;
-//			}
-//    
-//			fsub_ps = (fsubx_ps*fsuby_ps)*(m_arr.nrows-1)/m_arr.nrows;
-//			fsub_fs = (fsubx_fs*fsuby_fs)*(m_arr.nrows-1)/m_arr.nrows;
-//    
-//	/*
-//			! Find operating voltage for shaded substrings
-//			if (abs(1-FSUB_FS) < small .or. FSUB_FS > 1 .or. FSUB_FS < 0-small) then
-//				Vop(1) = Voc+1
-//			else
-//				Vop(1) = Vmp/(1-FSUB_FS)
-//			end if
-//    
-//			if (1-FSUB_PS < small .or. FSUB_PS > 1 .or. FSUB_PS < 0-small) then
-//				Vop(2) = Voc+1
-//			else
-//				Vop(2) = Vmp/(1-FSUB_PS)
-//			end if
-//    
-//			! Find operating current using exponential fit
-//			Iop(1) = c(1)-c(2)*exp(c(3)*Vop(1))
-//			Iop(2) = c(1)-c(2)*exp(c(3)*Vop(2))
-//    
-//			! If there is no shading, make sure power is at Pmp (corrects for bad exponential fits)
-//			do i =1,2 
-//				if (Vop(i) .eq. Vmp) then
-//					Vop(i) = Vmp 
-//					Iop(i) = Imp
-//				end if
-//			end do
-//    
-//			! Make sure Vop is not greater than Voc. 
-//			! if Vop > Voc push power to 0
-//			! otherwise find derated power
-//			if (Vop(1) > Voc) then
-//				FS_SPR = 0.
-//			else
-//				FS_SPR = (1-FSUB_FS)*Vop(1)*Iop(1)/Pmp
-//			end if
-//        
-//			if (Vop(2) > Voc) then
-//				PS_SPR = 0.
-//			else
-//				PS_SPR = (1-FSUB_PS)*Vop(2)*Iop(2)/Pmp
-//			end if
-//    
-//			REDUC = (NSTR_PS*PS_SPR+NSTR_FS*FS_SPR+NSTR_US*1.)/NSTR
-//	*/
-//			reduc = (nstr_ps*ps_spr+nstr_fs*fs_spr+nstr_us*1.)/nstr;
-//	}
-//
-//// For generating warning messages in SAM.
-//	if (abs(fs_spr) < small && abs(ps_spr) < small) 
-//	{
-//		test1 = (nstr_ps+nstr_fs)/nstr;
-//		test2 = fsub_fs+fsub_ps;
-//		//errortest(shad_error,test1,test2);
-//	}
-//	else if (abs(fs_spr) < small)
-//	{
-//		test1 = (nstr_fs)/(nstr);
-//		test2 = fsub_fs;
-//		//errortest(shad_error,test1,test2);
-//	}
-//	else if(abs(fs_spr) < small)
-//	{
-//		test1 = (nstr_ps)/(nstr);
-//		test2 = fsub_ps;
-//		//errortest(shad_error,test1,test2)
-//	}
-///*
-//10  out(1) = REDUC
-//    out(2) = SHADE_AREA
-//    out(3) = c(1)
-//    out(4) = c(2)
-//    out(5) = c(3)
-//    out(6) = shad_error
-//*/
-//	// TODO - test example in Appelbaum's paper
-//	// Adjust for PVWatts convention
-//
+		if (m_arr.str_orient == 1) // Horiztonal Strings
+		{
+		// Find number of strings, and number in each shading class (shaded,unshaded,fully shaded, partially shaded)
+			nstr = m_arr.nmody;
+			nstr_s = (int)ceil(ys/1.0);
+			nstr_fs = int(ys/1.0);
+			nstr_ps = nstr_s - nstr_fs;
+			nstr_us = nstr - nstr_s;
+    
+			// Number and length of substrings in x,y directions
+			if (m_arr.mod_orient == 0) 
+			{
+				nsubx = m_arr.nmodx*m_arr.ndiode;
+				nsuby = 1;
+				lsubx = w/m_arr.ndiode;
+				lsuby = l; 
+			}
+			else
+			{
+				nsubx = m_arr.nmodx;
+				nsuby = m_arr.ndiode;
+				lsubx = w;
+				lsuby = l/m_arr.ndiode;
+			}
+
+			// Find Fraction of substrings shaded in x,y directions
+			fsubx_fs = int(xs/lsubx)/nsubx;
+			fsuby_fs = 1.;
+			fsub_fs = fsubx_fs*fsuby_fs;
+			fsubx_ps = int(xs/lsubx)/nsubx;
+			fsuby_ps = int((ys-nstr_fs*l)/lsuby)/nsuby;
+			fsub_ps = fsubx_ps*fsuby_ps;
+    
+			/*
+			! Find diode turnon threshold
+			! Removed becuase we have no good measurements of diode turn-on. Instead we hardwire the threshold to 0.25.
+			!call diodeturnon(B,G,FSUB_PS,DT_PS)
+			!call diodeturnon(B,G,FSUB_FS,DT_FS)
+			*/
+			// Find percent of substrings shaded
+			f_xs = (xs - int(xs/lsubx)*lsubx)/lsubx;
+			f_ys = ((ys-nstr_fs*l) - int((ys-nstr_fs*l)/lsuby)*lsuby)/lsuby;
+    
+			// Determine whether threshold is reached, and turn on or do nothing
+			//if (F_XS .GE. DT_FS/NCSUBX) then
+			if ( (f_xs*beamnorm/globhoriz) >= (.25/ncsubx) )
+			{
+				fsubx_fs = ceil(xs/lsubx)/nsubx;
+				fsubx_ps = ceil(xs/lsubx)/nsubx;
+				fsuby_fs = 1.;
+			}
+			else
+			{
+				fsubx_fs = int(xs/lsubx)/nsubx;
+				fsubx_ps = int(xs/lsubx)/nsubx;
+				fsuby_fs = 1.;
+			}
+
+			//! Do the same in y direction
+			//!if (F_YS .GE. DT_PS/NCSUBY) then                   <- expression before hardwiring diode turnon threshold.
+			if ( (f_ys*beamnorm/globhoriz) >= (.25/ncsuby) )
+			{
+				fsuby_ps = ceil((ys-nstr_fs*l)/lsuby)/nsuby;
+			}
+			else
+			{
+				fsuby_ps = int((ys-nstr_fs*l)/lsuby)/nsuby;
+			}
+    
+			// Find fraction of substrings shaded (FS and PS)
+			fsub_fs = fsubx_fs*fsuby_fs;
+			fsub_ps = fsubx_ps*fsuby_ps;
+
+		/*
+			// From:Some notes on partial shading implementation in SAM by Chris Deline (emailed Fall 2010)
+			// Find operating voltage for shaded substrings
+			if (abs(1-FSUB_FS) < small .or. FSUB_FS > 1 .or. FSUB_FS < 0-small) then
+				Vop(1) = Voc+1              !flagging bad value later set to 0 power
+			else
+				Vop(1) = Vmp/(1-FSUB_FS)
+			end if
+    
+			if (1-FSUB_PS < small .or. FSUB_PS > 1 .or. FSUB_PS < 0-small) then
+				Vop(2) = Voc+1
+			else
+				Vop(2) = Vmp/(1-FSUB_PS)
+			end if
+    
+			! Find operating current using exponential fit
+			Iop(1) = c(1)-c(2)*exp(c(3)*Vop(1))
+			Iop(2) = c(1)-c(2)*exp(c(3)*Vop(2))
+    
+			! If there is no shading, make sure power is at Pmp (corrects for bad exponential fits)
+			do i =1,2 
+				if (Vop(i) .eq. Vmp) then
+					Vop(i) = Vmp 
+					Iop(i) = Imp
+				end if
+			end do
+    
+			! Make sure Vop is not greater than Voc. 
+			! if Vop > Voc push power to 0
+			! otherwise find derated power
+			if (Vop(1) > Voc) then
+				FS_SPR = 0.
+			else
+				FS_SPR = (1-FSUB_FS)*Vop(1)*Iop(1)/Pmp
+			end if
+        
+			if (Vop(2) > Voc) then
+				PS_SPR = 0.
+			else
+				PS_SPR = (1-FSUB_PS)*Vop(2)*Iop(2)/Pmp
+			end if
+    
+			! Find total array derate
+			REDUC = (1.+(NROWS-1)*(NSTR_PS*PS_SPR+NSTR_FS*FS_SPR+NSTR_US*1.)/NSTR)/NROWS
+		  */  
+		}
+		else   // Vertical Strings
+		{
+			nstr = m_arr.nmodx;
+			nstr_s = (int)ceil(xs/w);
+			nstr_fs = int(xs/w);
+			nstr_ps = nstr_s - nstr_fs;
+			nstr_us = nstr - nstr_s;
+    
+			if (m_arr.mod_orient == 0) 
+			{
+				nsubx = m_arr.ndiode;
+				nsuby = m_arr.nmody;
+				lsubx = w/m_arr.ndiode;
+				lsuby = l;
+			}
+			else
+			{
+				nsubx = 1;
+				nsuby = m_arr.ndiode * m_arr.nmody;
+				lsubx = w;
+				lsuby = l/ m_arr.ndiode;
+			}
+
+			fsubx_fs = 1.;
+			fsuby_fs = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
+			fsubx_ps = int((xs-nstr_fs*w)/lsubx)/nsubx;
+			fsuby_ps = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
+                
+			//call diodeturnon(B,G,FSUB_PS,DT_PS)
+			//call diodeturnon(B,G,FSUB_FS,DT_FS)
+    
+			f_xs = ( (xs-nstr_fs*w) - int( (xs-nstr_fs*w) / lsubx ) * lsubx ) / lsubx;
+			f_ys = (ys - int(ys/lsuby) *lsuby ) / lsuby;
+    
+			//!if (F_YS .GE. DT_FS/NCSUBY) then
+			if ( (f_ys*beamnorm/globhoriz) >= (.25/ncsuby) )
+			{
+				fsubx_fs = 1.;
+				fsuby_fs = ceil(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
+				fsuby_ps = ceil(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
+			}
+			else
+			{
+				fsubx_fs = 1.;
+				fsuby_fs = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
+				fsuby_ps = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
+			}
+
+			if ( (f_xs*beamnorm/globhoriz) >= (.25/ncsuby) )
+			{
+				fsubx_ps = ceil((xs-nstr_fs*w)/lsubx)/nsubx;
+			}
+			else
+			{
+				fsubx_ps = int((xs-nstr_fs*w)/lsubx)/nsubx;
+			}
+    
+			fsub_ps = (fsubx_ps*fsuby_ps)*(m_arr.nrows-1)/m_arr.nrows;
+			fsub_fs = (fsubx_fs*fsuby_fs)*(m_arr.nrows-1)/m_arr.nrows;
+    
+	/*
+			! Find operating voltage for shaded substrings
+			if (abs(1-FSUB_FS) < small .or. FSUB_FS > 1 .or. FSUB_FS < 0-small) then
+				Vop(1) = Voc+1
+			else
+				Vop(1) = Vmp/(1-FSUB_FS)
+			end if
+    
+			if (1-FSUB_PS < small .or. FSUB_PS > 1 .or. FSUB_PS < 0-small) then
+				Vop(2) = Voc+1
+			else
+				Vop(2) = Vmp/(1-FSUB_PS)
+			end if
+    
+			! Find operating current using exponential fit
+			Iop(1) = c(1)-c(2)*exp(c(3)*Vop(1))
+			Iop(2) = c(1)-c(2)*exp(c(3)*Vop(2))
+    
+			! If there is no shading, make sure power is at Pmp (corrects for bad exponential fits)
+			do i =1,2 
+				if (Vop(i) .eq. Vmp) then
+					Vop(i) = Vmp 
+					Iop(i) = Imp
+				end if
+			end do
+    
+			! Make sure Vop is not greater than Voc. 
+			! if Vop > Voc push power to 0
+			! otherwise find derated power
+			if (Vop(1) > Voc) then
+				FS_SPR = 0.
+			else
+				FS_SPR = (1-FSUB_FS)*Vop(1)*Iop(1)/Pmp
+			end if
+        
+			if (Vop(2) > Voc) then
+				PS_SPR = 0.
+			else
+				PS_SPR = (1-FSUB_PS)*Vop(2)*Iop(2)/Pmp
+			end if
+    
+			REDUC = (NSTR_PS*PS_SPR+NSTR_FS*FS_SPR+NSTR_US*1.)/NSTR
+	*/
+		}  // string orientation
+
+	
+	// Update from Chris Deline "Cdeline_simplified model of uniform shading _v1.docx" 3/8/12
+		FF0 = pmp / voc / isc;
+
+		//  - assumption is that partially shaded is more that half cells in substrings
+		X = (nstr_fs + nstr_ps) / nstr;  // shaded parallel strings
+		S = fsub_fs + fsub_ps;  // shaded sub modules
+
+		c1 = 0.25 * exp( 7.7 - 6.0 * FF0) * X;
+
+		c2 = ( 0.145 - 0.095 * FF0) * exp( 7.7 - 6.0 * FF0) * X;
+
+		c4 = 0.17 * ( beamnorm/globhoriz ) * ( beamnorm/globhoriz ) - 0.16 * ( beamnorm/globhoriz ) - 0.004;
+
+		c3_0 = c4 * X + ( 0.74 * ( beamnorm/globhoriz ) - 0.1 ) * FF0 - 0.65 * ( beamnorm/globhoriz ) + 0.06;
+
+		c3 = max ( c3_0, ( beamnorm/globhoriz ) - 1.0 );
+
+		if ( c2 != 0)
+		{
+			eqn5 = 1.0 - c1 * ( exp( S/c2 - 1.0 ) - 1.0 / exp(1.0) );
+		}
+		else
+		{
+			eqn5 = -DBL_MAX;
+		}
+
+		if ( X != 0)
+		{
+			eqn9 = (X - S) / X;
+		}
+		else
+		{
+			eqn9 = -DBL_MAX;
+		}
+
+		eqn10 = c3 * ( S - 1.0 ) + ( beamnorm/globhoriz );
+
+		reduc = max( eqn5, eqn9);
+
+		reduc = max( reduc, eqn10 );
+
+		reduc = X * reduc + (1.0 - X);
+	
+/*
+// For generating warning messages in SAM.
+	if (abs(fs_spr) < small && abs(ps_spr) < small) 
+	{
+		test1 = (nstr_ps+nstr_fs)/nstr;
+		test2 = fsub_fs+fsub_ps;
+		//errortest(shad_error,test1,test2);
+	}
+	else if (abs(fs_spr) < small)
+	{
+		test1 = (nstr_fs)/(nstr);
+		test2 = fsub_fs;
+		//errortest(shad_error,test1,test2);
+	}
+	else if(abs(fs_spr) < small)
+	{
+		test1 = (nstr_ps)/(nstr);
+		test2 = fsub_ps;
+		//errortest(shad_error,test1,test2)
+	}
+
+10  out(1) = REDUC
+    out(2) = SHADE_AREA
+    out(3) = c(1)
+    out(4) = c(2)
+    out(5) = c(3)
+    out(6) = shad_error
+*/
 
 	}
 
@@ -533,11 +631,24 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     Ry[2][2] = cosd(m_arr.slope_ns);
 
     // Calculate Rotation axis around z axis
+	// assuming that convention correct for 2011.12.2 input, add 180 to degree input for new convention on N=0 instead of equator=0
+	// verify results in new system for both northern and southern hemispheres.
+	// 2011.12.2 - Convention equator=0 rh rotation
     Rz[0][0] = cosd(m_arr.azimuth);
     Rz[0][1] = -sind(m_arr.azimuth);
     Rz[0][2] = 0;
     Rz[1][0] = sind(m_arr.azimuth);
     Rz[1][1] = cosd(m_arr.azimuth);
+    Rz[1][2] = 0;
+    Rz[2][0] = 0;
+    Rz[2][1] = 0;
+    Rz[2][2] = 1;
+	// 2012.3.21 - new convention north=0 rh rotation
+    Rz[0][0] = cosd(m_arr.azimuth+180);
+    Rz[0][1] = -sind(m_arr.azimuth+180);
+    Rz[0][2] = 0;
+    Rz[1][0] = sind(m_arr.azimuth+180);
+    Rz[1][1] = cosd(m_arr.azimuth+180);
     Rz[1][2] = 0;
     Rz[2][0] = 0;
     Rz[2][1] = 0;

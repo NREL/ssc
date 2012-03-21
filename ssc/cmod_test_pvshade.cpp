@@ -15,8 +15,11 @@ static var_info _cm_vtab_test_pvshade[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_ARRAY,       "ghi",				      "Global horizontal radiation",   "W/m2",  "",                      "pvshade",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dni",                   "Direct normal radiation","W/m2",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "sol_zenith",            "Solar Zenith","Wdegreesm2",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "sol_azimuth",            "Solar Azimuth","Wdegreesm2",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "sol_zenith",            "Solar Zenith","degrees",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "sol_azimuth",            "Solar Azimuth","degrees",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "module_pmp",            "Module max power","W",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "module_voc",            "Module open circuit voltage","V",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "module_isc",            "Module short circuit current","A",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",			"Tilt",	"degrees",   "",                      "pvshade",             "*",						   "",                              "" },
@@ -86,6 +89,9 @@ public:
 		ssc_number_t *p_dni = as_array( "dni", &arr_len );
 		ssc_number_t *p_sol_zenith = as_array( "sol_zenith", &arr_len );
 		ssc_number_t *p_sol_azimuth = as_array( "sol_azimuth", &arr_len );
+		ssc_number_t *p_module_pmp = as_array( "module_pmp", &arr_len );
+		ssc_number_t *p_module_voc = as_array( "module_voc", &arr_len );
+		ssc_number_t *p_module_isc = as_array( "module_isc", &arr_len );
 
 
 		ssarrdat p_ssarrdat;
@@ -189,7 +195,7 @@ public:
 
 		for (int i=0;i<(int)arr_len;i++)
 		{
-			if (ss.exec( p_sol_azimuth[i], p_sol_zenith[i], p_dni[i], p_ghi[i]) )
+			if ( ss.exec( p_sol_azimuth[i], p_sol_zenith[i], p_dni[i], p_ghi[i], p_module_pmp[i], p_module_voc[i], p_module_isc[i] ) )
 			{
 				cf.at( CF_shading_area, i ) = ss.shade_area();
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
@@ -199,12 +205,6 @@ public:
 				cf.at( CF_px, i ) = ss.m_px;
 				cf.at( CF_ys, i ) = ss.m_ys;
 				cf.at( CF_py, i ) = ss.m_py;
-				if (ss.shade_area() < 0)
-				{
-				std::stringstream outm;
-				outm <<  "hour " << i << ", shade area = " << ss.shade_area()  << ", zen_eff = " << ss.m_zen_eff  << ", azi_eff = " << ss.m_azi_eff  << ", xs = " << ss.m_xs  << ", ys = " << ss.m_ys  << ", px = " << ss.m_px  << ", py = " << ss.m_py  << ", lrows = " << ss.m_lrows  << ", wrows = " << ss.m_wrows ;
-				log( outm.str() );
-				}
 			}
 			else 
 			{

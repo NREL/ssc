@@ -27,10 +27,13 @@ public:
 	selfshade_t( ssarrdat &arr );
 
 	bool exec( 
-		double solzen,
-		double solazi,
-		double beamnorm,
-		double globhoriz  );
+		double solzen,    // solar zenith
+		double solazi,    // solar azimuth
+		double beamnorm,  // dni
+		double globhoriz, // ghi
+		double pmp,       // max power
+		double voc,		  // open circuit voltage
+		double isc);	  // short circuit current
 
 	void set_ssarrdat( ssarrdat &arr ) {m_arr = arr;}
 	double dc_derate() {return m_dc_derate;}
