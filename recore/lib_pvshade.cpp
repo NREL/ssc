@@ -34,7 +34,7 @@ double tand( double degrees )
 
 double atand( double radians )
 {
-	// return -pi/2, pi/2 or in degrees (-90,90)
+	// return angle in radians (-pi/2, pi/2) or in degrees (-90,90)
 	double arctan_val = atan( radians );
 	while ( arctan_val > M_PI/2.0) arctan_val -= M_PI;	 
 	while ( arctan_val < -M_PI/2.0) arctan_val += M_PI;	 
@@ -60,8 +60,6 @@ bool selfshade_t::exec(
 		double beamnorm,
 		double globhoriz )
 {
-	double l,w;
-	int ncsubx, ncsuby;
 // Geometry calculations ported from sam_shading_type241.f90
 /*
 
@@ -115,6 +113,10 @@ real(8) REDUC, SHADE_AREA, c(3)
 integer shad_error
 
 */
+	double px, py, xs, ys;
+	double tilt_eff;
+	double l,w;
+	int ncsubx, ncsuby;
 	bool finished = false;
 	double small = 1e-4;
 	double reduc = 0, shade_area = 0;
@@ -162,17 +164,14 @@ integer shad_error
 	}
 
 	// Calculate System Dimensions
-		wrows = m_arr.nmodx * w;
-		lrows = m_arr.nmody * l;
+	wrows = m_arr.nmodx * w;
+	lrows = m_arr.nmody * l;
 
-		//double azimuth_eff, zenith_eff; // all inputs in degrees
-		double px, py, xs, ys;
 	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
 //call SolarTransform(azimuth,zenith,s_azimuth,azimuth_eff,zenith_eff,slope_ew,slope_ns)
 
-//		solar_transform( solazi, solzen, &azimuth_eff, &zenith_eff);
-		solar_transform( solazi, solzen );
-		double tilt_eff = m_arr.tilt - m_arr.slope_ns;
+	if (!solar_transform( solazi, solzen )) return false;
+	tilt_eff = m_arr.tilt - m_arr.slope_ns;
 	
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
@@ -201,14 +200,14 @@ integer shad_error
 	m_azi_eff=azimuth_eff;
 	m_zen_eff=zenith_eff;
 
-	if ( (ys <= 0.) && (xs <= 0.) )
+	if ( (ys <= 0.0) && (xs <= 0.0) )
 	{
-		shade_area = 1.;
-		reduc = 1.;
+		shade_area = 1.0;
+		reduc = 1.0;
 	}
 	else
 	{
-		shade_area = 1.-( ( (m_arr.nrows-1.0) * ys * xs ) / (wrows * lrows * m_arr.nrows) );
+		shade_area = 1.0-( ( (m_arr.nrows-1.0) * ys * xs ) / (wrows * lrows * m_arr.nrows) );
 
 //		if (m_arr.str_orient == 1) // Horiztonal Strings
 //		{
@@ -479,7 +478,6 @@ integer shad_error
 bool selfshade_t::solar_transform(double solazi, double solzen)
 {
 
-//    double azimuth,zenith,s_azimuth,azimuth_eff,zenith_eff,slope_ew,slope_ns;
     double Snew[3][3];
     double S[3][3];
     double Rot_xy[3][3];
@@ -553,17 +551,11 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 	if (!matrix_multiply(Rot_xy,Rz,Rot_xyz)) return false;
     if (!matrix_multiply(Rot_xyz,S,Snew)) return false;
 
-//Preferred	
-//	if (!matrix_multiply(Ry,Rx,Rot_xy)) return false;
-//	if (!matrix_multiply(Rz,Rot_xy,Rot_xyz)) return false;
- // if (!matrix_multiply(S,Rot_xyz,Snew)) return false;
 
 
 	if ((Snew[0][0] < 0) && (Snew[1][0] > 0)) 
 	{
 		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
-// modification based on results - see documentation\PV\Shading\Porting\Testing.docx
-//		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
 	}
     else if ((Snew[0][0] < 0) && (Snew[1][0] < 0))
 	{
@@ -579,7 +571,8 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 	}
 
     // Correct for domain of Atand
-    if (Snew[2][0] == 0)
+//    if (Snew[2][0] == 0)
+    if (abs(Snew[2][0]) < 1e-3)
 	{
 		zenith_eff = 90;
 	}
@@ -608,8 +601,6 @@ bool selfshade_t::matrix_multiply(double a[][3], double b[][3], double c[][3])
 			for (k=0; k<3; k++)
 			{
 				sum = sum + a[i][k]*b[k][j];
-// modify to work like fortran - see http://www.nsc.liu.se/~boein/f77to90/c11.html
-//				sum = sum + b[i][k]*a[k][j];
 			}
 			c[i][j] = sum;
 		}

@@ -214,7 +214,7 @@ public:
 			}
 		}
 
-		assign( "cf_length", var_data( (ssc_number_t) arr_len+1 ));
+		assign( "cf_length", var_data( (ssc_number_t) arr_len ));
 
 		save_cf( CF_shading_area, arr_len, "shading_area" );
 		save_cf( CF_shading_reduc, arr_len, "shading_reduc" );
@@ -227,10 +227,10 @@ public:
 	}
 
 
-	void save_cf(int cf_line, int nyears, const std::string &name)
+	void save_cf(int cf_line, int arr_len, const std::string &name)
 	{
-		ssc_number_t *arrp = allocate( name, nyears+1 );
-		for (int i=0;i<=nyears;i++)
+		ssc_number_t *arrp = allocate( name, arr_len );
+		for (int i=0;i<arr_len;i++)
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
 
