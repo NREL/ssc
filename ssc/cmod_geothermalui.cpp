@@ -3,7 +3,6 @@
 #include "lib_physics.h"
 #include "lib_geothermal.h"
 
-
 //temporary for diagnostics
 #include "lib_geohourly_interface.h"
 
@@ -78,12 +77,6 @@ static var_info _cm_vtab_geothermalui[] = {
 
 var_info_invalid };
 
-
-static void my_update_function( float percent, void *data )
-{
-	if (data) ((compute_module*)data)->update("working...", percent);
-}
-
 class cm_geothermalui : public compute_module
 {
 private:
@@ -98,10 +91,10 @@ public:
 	{
 
 
-//-----------------------------------------------------------------------------------------------------------------------------------------------
-if (as_integer("hr_pl_nlev") == 8)
+//if (as_integer("hr_pl_nlev") == 8) // for testing new code against old code
+if (true)
 {
-
+// New code ---------------------------------------------------------------------------------------------------------------------------------------
 		// set the geothermal model inputs -------------------------------------
 		SGeothermal_Inputs geo_inputs;
 		geo_inputs.md_RatioInjectionToProduction = 0.5; // THIS SHOULD BE AN INPUT. ALTHOUGH IT'S FROM THE COST PAGE, IT'S USED IN NON-COST EQUATION
@@ -216,7 +209,7 @@ if (as_integer("hr_pl_nlev") == 8)
 
 		// run simulation
 		std::string err_msg;
-		if (FillOutputsForInterface( err_msg, geo_inputs, geo_outputs ) != 0)
+		if (FillOutputsForUI( err_msg, geo_inputs, geo_outputs ) != 0)
 			throw general_error("input error: " + err_msg + ".");
 
 		assign("num_wells_getem", var_data((ssc_number_t) geo_outputs.md_NumberOfWells ) );
@@ -232,7 +225,7 @@ if (as_integer("hr_pl_nlev") == 8)
 		assign("bottom_hole_pressure", var_data((ssc_number_t) geo_outputs.md_BottomHolePressure ) );
 }//-----------------------------------------------------------------------------------------------------------------------------------------------
 else
-{//-----------------------------------------------------------------------------------------------------------------------------------------------
+{// Old code -------------------------------------------------------------------------------------------------------------------------------------
 		// Geothermal inputs **********************************************
 		CGeothermalInterface oGeo;
 		if ( as_integer("analysis_type") == 0)
@@ -345,16 +338,6 @@ else
 		oGeo.SetPointerToTimeStepDryBulbArray(timestep_dry_bulb);
 		oGeo.SetPointerToTimeStepWetBulbArray(timestep_wet_bulb);
 
-		//samsim_set_d( (long)this,"geotherm.number_of_wells_used", getem.ShowNumberOfWells());				// (correct)
-		//samsim_set_d( (long)this,"geotherm.plant_efficiency_used", getem.ShowPlantBrineEffectiveness());	// in watt-hr/lb (NEW)
-		//samsim_set_d( (long)this,"geotherm.gross_output", getem.ShowGrossOutput());							// in MW (correct)
-		//samsim_set_d( (long)this,"geotherm.pump_depth", getem.ShowPumpDepthFeet());							// in Meters (correct)
-		//samsim_set_d( (long)this,"geotherm.pump_work", getem.ShowPumpWork());								// in MW (correct)
-		//samsim_set_d( (long)this,"geotherm.pump_size_hp", getem.ShowPumpHorsePower());						// in Horse Power (correct)
-		//samsim_set_d( (long)this,"geotherm.delta_pressure_reservoir", getem.ShowPressureChange());			// in PSI (I changed this)
-		//samsim_set_d( (long)this,"geotherm.avg_reservoir_temp", getem.ShowAverageReservoirTemperature());	// in Celcius (correct)
-		//samsim_set_d( (long)this,"geotherm.bottom_hole_pressure", getem.ShowBottomHolePressure());			// in PSI (correct)
-		
 		assign("num_wells_getem", var_data((ssc_number_t) oGeo.ShowNumberOfWells() ) );
 		assign("plant_brine_eff", var_data((ssc_number_t) oGeo.ShowPlantBrineEffectiveness() ) );
 		assign("gross_output", var_data((ssc_number_t) oGeo.ShowGrossOutput() ) );

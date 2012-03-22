@@ -1802,7 +1802,7 @@ int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, s
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Get interum values for user interface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int FillOutputsForInterface( std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
+int FillOutputsForUI( std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
 {
 	// return value 0 = clean run; 1 = error with message; 2 = unknown error, no message
 	CGeothermalAnalyzer geo_analyzer(geo_inputs, geo_outputs);

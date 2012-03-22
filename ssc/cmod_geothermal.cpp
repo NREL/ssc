@@ -3,7 +3,6 @@
 #include "lib_physics.h"
 #include "lib_geothermal.h"
 
-
 //temporary for diagnostics
 #include "lib_geohourly_interface.h"
 
@@ -192,10 +191,10 @@ public:
 		if (!util::translate_schedule( tou, sched, sched, 0, 8))
 			throw general_error("could not translate schedule for time-of-use rate");
 
-
-//-----------------------------------------------------------------------------------------------------------------------------------------------
-if (pbp.n_pl_inc == 8)
+//if (pbp.n_pl_inc == 8)
+if (true)
 {
+//New code ---------------------------------------------------------------------------------------------------------------------------------------
 
 		// set the geothermal model inputs -------------------------------------
 		SGeothermal_Inputs geo_inputs;
@@ -327,7 +326,7 @@ if (pbp.n_pl_inc == 8)
 }
 else
 {
-//-----------------------------------------------------------------------------------------------------------------------------------------------
+// Old code -------------------------------------------------------------------------------------------------------------------------------------
 		// Geothermal inputs **********************************************
 		CGeothermalInterface oGeo;
 		if ( as_integer("analysis_type") == 0)

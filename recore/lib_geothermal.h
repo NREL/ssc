@@ -145,7 +145,7 @@ int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, s
 	 const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs, 
 	 const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs); 
 
-int FillOutputsForInterface( std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs);
+int FillOutputsForUI( std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs);
 
 
 #endif // __geothermalModelDefinitions__
