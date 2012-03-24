@@ -59,9 +59,8 @@ bool selfshade_t::exec(
 		double solazi,
 		double beamnorm,
 		double globhoriz,
-		double pmp,
-		double voc,
-		double isc)
+		double diffuse,
+		double FF0)
 {
 // Geometry calculations ported from sam_shading_type241.f90
 /*
@@ -200,7 +199,7 @@ integer shad_error
 
 
 	//Cdeline_simplified model of uniform shading _v1.docx
-	double S,X,FF0; 
+	double S,X; 
 	double c1,c2,c3,c3_0,c4;
 	double eqn5, eqn9, eqn10;
 
@@ -493,7 +492,7 @@ integer shad_error
 
 	
 	// Update from Chris Deline "Cdeline_simplified model of uniform shading _v1.docx" 3/8/12
-		FF0 = pmp / voc / isc;
+		//FF0 = pmp / voc / isc;
 
 		//  - assumption is that partially shaded is more that half cells in substrings
 		X = (nstr_fs + nstr_ps) / nstr;  // shaded parallel strings
@@ -503,11 +502,11 @@ integer shad_error
 
 		c2 = ( 0.145 - 0.095 * FF0) * exp( 7.7 - 6.0 * FF0) * X;
 
-		c4 = 0.17 * ( beamnorm/globhoriz ) * ( beamnorm/globhoriz ) - 0.16 * ( beamnorm/globhoriz ) - 0.004;
+		c4 = 0.17 * ( diffuse/globhoriz ) * ( diffuse/globhoriz ) - 0.16 * ( diffuse/globhoriz ) - 0.004;
 
-		c3_0 = c4 * X + ( 0.74 * ( beamnorm/globhoriz ) - 0.1 ) * FF0 - 0.65 * ( beamnorm/globhoriz ) + 0.06;
+		c3_0 = c4 * X + ( 0.74 * ( diffuse/globhoriz ) - 0.1 ) * FF0 - 0.65 * ( diffuse/globhoriz ) + 0.06;
 
-		c3 = max ( c3_0, ( beamnorm/globhoriz ) - 1.0 );
+		c3 = max ( c3_0, ( diffuse/globhoriz ) - 1.0 );
 
 		if ( c2 != 0)
 		{
@@ -527,45 +526,17 @@ integer shad_error
 			eqn9 = -DBL_MAX;
 		}
 
-		eqn10 = c3 * ( S - 1.0 ) + ( beamnorm/globhoriz );
+		eqn10 = c3 * ( S - 1.0 ) + ( diffuse/globhoriz );
 
 		reduc = max( eqn5, eqn9);
 
 		reduc = max( reduc, eqn10 );
 
 		reduc = X * reduc + (1.0 - X);
-	
-/*
-// For generating warning messages in SAM.
-	if (abs(fs_spr) < small && abs(ps_spr) < small) 
-	{
-		test1 = (nstr_ps+nstr_fs)/nstr;
-		test2 = fsub_fs+fsub_ps;
-		//errortest(shad_error,test1,test2);
+		// derate
+		reduc = 1.0 - reduc;
 	}
-	else if (abs(fs_spr) < small)
-	{
-		test1 = (nstr_fs)/(nstr);
-		test2 = fsub_fs;
-		//errortest(shad_error,test1,test2);
-	}
-	else if(abs(fs_spr) < small)
-	{
-		test1 = (nstr_ps)/(nstr);
-		test2 = fsub_ps;
-		//errortest(shad_error,test1,test2)
-	}
-
-10  out(1) = REDUC
-    out(2) = SHADE_AREA
-    out(3) = c(1)
-    out(4) = c(2)
-    out(5) = c(3)
-    out(6) = shad_error
-*/
-
-	}
-
+	if (reduc <= 0) reduc = 1.0;
 	m_dc_derate = reduc;
 	m_shade_area = shade_area;
 

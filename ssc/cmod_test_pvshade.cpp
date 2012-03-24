@@ -15,12 +15,12 @@ static var_info _cm_vtab_test_pvshade[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_ARRAY,       "ghi",				      "Global horizontal radiation",   "W/m2",  "",                      "pvshade",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dni",                   "Direct normal radiation","W/m2",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "diffuse",                   "Diffuse radiation","W/m2",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "sol_zenith",            "Solar Zenith","degrees",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "sol_azimuth",            "Solar Azimuth","degrees",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "module_pmp",            "Module max power","W",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "module_voc",            "Module open circuit voltage","V",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "module_isc",            "Module short circuit current","A",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=ghi",                        "" },
 
+
+	{ SSC_INPUT,        SSC_NUMBER,      "stc_fill_factor",			"Fill Factor at STC = Pmp0 / Voc0 / Isc0",	"",   "",                      "pvshade",             "*",						   "",                              "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",			"Tilt",	"degrees",   "",                      "pvshade",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",			"Azimuth",	"degrees",   "",                      "pvshade",             "*",						   "",                              "" },
@@ -87,11 +87,9 @@ public:
 		size_t arr_len;
 		ssc_number_t *p_ghi = as_array( "ghi", &arr_len );
 		ssc_number_t *p_dni = as_array( "dni", &arr_len );
+		ssc_number_t *p_diffuse = as_array( "diffuse", &arr_len );
 		ssc_number_t *p_sol_zenith = as_array( "sol_zenith", &arr_len );
 		ssc_number_t *p_sol_azimuth = as_array( "sol_azimuth", &arr_len );
-		ssc_number_t *p_module_pmp = as_array( "module_pmp", &arr_len );
-		ssc_number_t *p_module_voc = as_array( "module_voc", &arr_len );
-		ssc_number_t *p_module_isc = as_array( "module_isc", &arr_len );
 
 
 		ssarrdat p_ssarrdat;
@@ -192,10 +190,11 @@ public:
 
 		selfshade_t ss( p_ssarrdat );
 
+		double FF0 = as_double("stc_fill_factor");
 
 		for (int i=0;i<(int)arr_len;i++)
 		{
-			if ( ss.exec( p_sol_azimuth[i], p_sol_zenith[i], p_dni[i], p_ghi[i], p_module_pmp[i], p_module_voc[i], p_module_isc[i] ) )
+			if ( ss.exec(  p_sol_zenith[i],p_sol_azimuth[i], p_dni[i], p_ghi[i], p_diffuse[i], FF0 ) )
 			{
 				cf.at( CF_shading_area, i ) = ss.shade_area();
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();

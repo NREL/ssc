@@ -31,9 +31,8 @@ public:
 		double solazi,    // solar azimuth
 		double beamnorm,  // dni
 		double globhoriz, // ghi
-		double pmp,       // max power
-		double voc,		  // open circuit voltage
-		double isc);	  // short circuit current
+		double diffuse,   // diffuse for D/G ratio
+		double FF0);       // Fill Factor at STC = Pmp0 / Voc0 / Isc0;
 
 	void set_ssarrdat( ssarrdat &arr ) {m_arr = arr;}
 	double dc_derate() {return m_dc_derate;}
