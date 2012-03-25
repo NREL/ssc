@@ -100,7 +100,6 @@ public:
 		int sunup[24];
 		
 		// create cell temp object at beginning (tracks hour-to-hour cell temp)
-		pvwatts_celltemp celltemp( inoct, height, 1.0 );
 
 		for(int m=0;m<12;m++)   /* Loop thru a year of data a month at a time */
 		{
@@ -229,12 +228,17 @@ public:
 				}                       /* End of for i++ loop (24 hours)*/                    /* End of sunup[i] if loop */
 					
 
-
+				
+				pvwatts_celltemp celltemp( inoct, height, 1.0 /* 1 hr timestep*/ );
 				for (int i=0;i<24;i++)
 				{
-					double pvt = celltemp( poa[i], wind[i], ambt[i] );
-					double dc = dcpowr(reftem,watt_spec,pwrdgr,tmloss,tpoa[i],pvt, i_ref);
-					double ac = dctoac(watt_spec,efffp,dc);
+					double pvt = -999, dc = 0, ac = 0;
+					if ( poa[i] > 0 )
+					{
+						pvt = celltemp( poa[i], wind[i], ambt[i] );
+						dc = dcpowr(reftem,watt_spec,pwrdgr,tmloss,tpoa[i],pvt, i_ref);
+						ac = dctoac(watt_spec,efffp,dc);
+					}
 
 					p_poa[cur_hour] = (ssc_number_t)poa[i];
 					p_tcell[cur_hour] = (ssc_number_t)pvt;

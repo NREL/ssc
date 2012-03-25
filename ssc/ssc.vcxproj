@@ -36,7 +36,7 @@
     <ClCompile Include="cmod_pvwattsv1.cpp" />
     <ClCompile Include="cmod_saleleaseback.cpp" />
     <ClCompile Include="cmod_singleowner.cpp" />
-    <ClCompile Include="cmod_swhsolopt.cpp" />
+    <ClCompile Include="cmod_swh.cpp" />
     <ClCompile Include="cmod_test_irr.cpp" />
     <ClCompile Include="cmod_test_pvshade.cpp" />
     <ClCompile Include="cmod_timeseq.cpp" />

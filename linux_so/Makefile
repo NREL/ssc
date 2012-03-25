@@ -48,7 +48,7 @@ OBJECTS = \
 	cmod_utilityrate.o \
 	cmod_windwatts.o \
 	cmod_ippppa.o \
-	cmod_swhsolopt.o \
+	cmod_swh.o \
 	cmod_geothermal.o \
 	cmod_geohourly.o \
 	cmod_trntrough.o \
