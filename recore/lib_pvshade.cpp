@@ -204,6 +204,16 @@ integer shad_error
 	double eqn5, eqn9, eqn10;
 
 
+	double beam_globhoriz = 0;
+	double diffuse_globhoriz = 0;
+	// handle globalhoriz == 0
+	if (globhoriz != 0)
+	{
+		beam_globhoriz = beamnorm / globhoriz;
+		diffuse_globhoriz = diffuse / globhoriz;
+	}
+
+
 	// Determine panel orientation, and flip dimensions if landscape
 	if (m_arr.mod_orient == 0) //            ! Portrait Mode
 	{
@@ -311,7 +321,7 @@ integer shad_error
     
 			// Determine whether threshold is reached, and turn on or do nothing
 			//if (F_XS .GE. DT_FS/NCSUBX) then
-			if ( (f_xs*beamnorm/globhoriz) >= (.25/ncsubx) )
+			if ( (f_xs*beam_globhoriz) >= (.25/ncsubx) )
 			{
 				fsubx_fs = ceil(xs/lsubx)/nsubx;
 				fsubx_ps = ceil(xs/lsubx)/nsubx;
@@ -326,7 +336,7 @@ integer shad_error
 
 			//! Do the same in y direction
 			//!if (F_YS .GE. DT_PS/NCSUBY) then                   <- expression before hardwiring diode turnon threshold.
-			if ( (f_ys*beamnorm/globhoriz) >= (.25/ncsuby) )
+			if ( (f_ys*beam_globhoriz) >= (.25/ncsuby) )
 			{
 				fsuby_ps = ceil((ys-nstr_fs*l)/lsuby)/nsuby;
 			}
@@ -420,7 +430,7 @@ integer shad_error
 			f_ys = (ys - int(ys/lsuby) *lsuby ) / lsuby;
     
 			//!if (F_YS .GE. DT_FS/NCSUBY) then
-			if ( (f_ys*beamnorm/globhoriz) >= (.25/ncsuby) )
+			if ( (f_ys*beam_globhoriz) >= (.25/ncsuby) )
 			{
 				fsubx_fs = 1.;
 				fsuby_fs = ceil(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
@@ -433,7 +443,7 @@ integer shad_error
 				fsuby_ps = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
 			}
 
-			if ( (f_xs*beamnorm/globhoriz) >= (.25/ncsuby) )
+			if ( (f_xs*beam_globhoriz) >= (.25/ncsuby) )
 			{
 				fsubx_ps = ceil((xs-nstr_fs*w)/lsubx)/nsubx;
 			}
@@ -502,11 +512,11 @@ integer shad_error
 
 		c2 = ( 0.145 - 0.095 * FF0) * exp( 7.7 - 6.0 * FF0) * X;
 
-		c4 = 0.17 * ( diffuse/globhoriz ) * ( diffuse/globhoriz ) - 0.16 * ( diffuse/globhoriz ) - 0.004;
+		c4 = 0.17 * ( diffuse_globhoriz ) * ( diffuse_globhoriz	) - 0.16 * ( diffuse_globhoriz ) - 0.004;
 
-		c3_0 = c4 * X + ( 0.74 * ( diffuse/globhoriz ) - 0.1 ) * FF0 - 0.65 * ( diffuse/globhoriz ) + 0.06;
+		c3_0 = c4 * X + ( 0.74 * ( diffuse_globhoriz ) - 0.1 ) * FF0 - 0.65 * ( diffuse_globhoriz ) + 0.06;
 
-		c3 = max ( c3_0, ( diffuse/globhoriz ) - 1.0 );
+		c3 = max ( c3_0, ( diffuse_globhoriz ) - 1.0 );
 
 		if ( c2 != 0)
 		{
@@ -514,7 +524,7 @@ integer shad_error
 		}
 		else
 		{
-			eqn5 = -DBL_MAX;
+			eqn5 = 0;
 		}
 
 		if ( X != 0)
@@ -523,10 +533,10 @@ integer shad_error
 		}
 		else
 		{
-			eqn9 = -DBL_MAX;
+			eqn9 = 0;
 		}
 
-		eqn10 = c3 * ( S - 1.0 ) + ( diffuse/globhoriz );
+		eqn10 = c3 * ( S - 1.0 ) + ( diffuse_globhoriz );
 
 		reduc = max( eqn5, eqn9);
 
@@ -537,8 +547,12 @@ integer shad_error
 		reduc = 1.0 - reduc;
 	}
 	if (reduc <= 0) reduc = 1.0;
+	if (globhoriz <= 0) reduc = 1.0;
 	m_dc_derate = reduc;
 	m_shade_area = shade_area;
+	m_eqn5 = eqn5;
+	m_eqn9 = eqn9;
+	m_eqn10 = eqn10;
 
 	return true;
 }
@@ -569,6 +583,8 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 
 
     // Convert sun coordinates into Euclidian space
+
+	// 2011.12.2 - Convention equator=0 rh rotation
 	S[0][0] = sind(solzen)*cosd(solazi);
 	S[0][1] = 0;
 	S[0][2] = 0;
@@ -578,6 +594,18 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     S[2][0] = cosd(solzen);
 	S[2][1] = 0;
 	S[2][2] = 0;
+/*	
+	// 2012.3.21 - new convention north=0 rh rotation
+	S[0][0] = sind(solzen)*cosd(solazi+180);
+	S[0][1] = 0;
+	S[0][2] = 0;
+    S[1][0] = -sind(solzen)*sind(solazi+180);
+	S[1][1] = 0;
+	S[1][2] = 0;
+    S[2][0] = cosd(solzen);
+	S[2][1] = 0;
+	S[2][2] = 0;
+*/
 
     // Calculate Rotation axis around x axis
     Rx[0][0] = 1;
@@ -604,6 +632,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     // Calculate Rotation axis around z axis
 	// assuming that convention correct for 2011.12.2 input, add 180 to degree input for new convention on N=0 instead of equator=0
 	// verify results in new system for both northern and southern hemispheres.
+	
 	// 2011.12.2 - Convention equator=0 rh rotation
     Rz[0][0] = cosd(m_arr.azimuth);
     Rz[0][1] = -sind(m_arr.azimuth);
@@ -614,6 +643,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     Rz[2][0] = 0;
     Rz[2][1] = 0;
     Rz[2][2] = 1;
+	/*
 	// 2012.3.21 - new convention north=0 rh rotation
     Rz[0][0] = cosd(m_arr.azimuth+180);
     Rz[0][1] = -sind(m_arr.azimuth+180);
@@ -624,7 +654,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     Rz[2][0] = 0;
     Rz[2][1] = 0;
     Rz[2][2] = 1;
-
+	*/
 
 
     // Calculate complete rotation matrix
@@ -637,15 +667,18 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 
 	if ((Snew[0][0] < 0) && (Snew[1][0] > 0)) 
 	{
-		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
+//		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
+		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
 	}
     else if ((Snew[0][0] < 0) && (Snew[1][0] < 0))
 	{
-		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
+//		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
+		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
 	}
     else if (Snew[0][0] == 0) 
 	{
-        azimuth_eff = 90;
+//        azimuth_eff = 90;
+        azimuth_eff = -90;
 	}
     else
 	{

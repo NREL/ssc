@@ -53,6 +53,9 @@ public:
 	double m_zen_eff;
 	double azimuth_eff;
 	double zenith_eff;
+	double m_eqn5;
+	double m_eqn9;
+	double m_eqn10;
 
 private:
 	ssarrdat m_arr;

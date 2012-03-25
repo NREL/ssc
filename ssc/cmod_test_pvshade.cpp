@@ -53,6 +53,9 @@ static var_info _cm_vtab_test_pvshade[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "px",   "x shadow","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "ys",   "y to shaded area","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "py",   "y shadow","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "eqn5",   "Equation 5 in paper from Chris Deline","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "eqn9",   "Equation 5 in paper from Chris Deline","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "eqn10",   "Equation 5 in paper from Chris Deline","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 
 
 var_info_invalid };
@@ -67,6 +70,9 @@ enum {
 	CF_px,
 	CF_ys,
 	CF_py,
+	CF_eqn5,
+	CF_eqn9,
+	CF_eqn10,
 	CF_max };
 
 
@@ -151,23 +157,6 @@ public:
 */
 
 
-		p_ssarrdat.azimuth = as_double("azimuth");
-		p_ssarrdat.tilt = as_double("tilt");
-		p_ssarrdat.length = as_double("length");
-		p_ssarrdat.width = as_double("width");
-		p_ssarrdat.row_space = as_double("row_space");
-		p_ssarrdat.mod_space = as_double("mod_space");
-		p_ssarrdat.slope_ns = as_double("slope_ns");
-		p_ssarrdat.slope_ew = as_double("slope_ew");
-		p_ssarrdat.mod_orient = as_integer("mod_orient");
-		p_ssarrdat.str_orient = as_integer("str_orient");
-		p_ssarrdat.nmodx = as_integer("nmodx");
-		p_ssarrdat.nmody = as_integer("nmody");
-		p_ssarrdat.nrows = as_integer("nrows");
-		p_ssarrdat.ncellx = as_integer("ncellx");
-		p_ssarrdat.ncelly = as_integer("ncelly");
-		p_ssarrdat.ndiode = as_integer("ndiode");
-
 	std::stringstream outm;
 	outm  << "\n azimuth="<< p_ssarrdat.azimuth;
 	outm  << "\n tilt="<< p_ssarrdat.tilt;
@@ -204,6 +193,9 @@ public:
 				cf.at( CF_px, i ) = ss.m_px;
 				cf.at( CF_ys, i ) = ss.m_ys;
 				cf.at( CF_py, i ) = ss.m_py;
+				cf.at( CF_eqn5, i ) = ss.m_eqn5;
+				cf.at( CF_eqn9, i ) = ss.m_eqn9;
+				cf.at( CF_eqn10, i ) = ss.m_eqn10;
 			}
 			else 
 			{
@@ -223,6 +215,9 @@ public:
 		save_cf( CF_px, arr_len, "px" );
 		save_cf( CF_ys, arr_len, "ys" );
 		save_cf( CF_py, arr_len, "py" );
+		save_cf( CF_eqn5, arr_len, "eqn5" );
+		save_cf( CF_eqn9, arr_len, "eqn9" );
+		save_cf( CF_eqn10, arr_len, "eqn10" );
 	}
 
 
