@@ -24,6 +24,7 @@ all: inform $(TARGET)
 
 
 OBJECTS = \
+	cmod_test_pvshade.o \
 	cmod_geothermalui.o \
 	cmod_6parsolve.o \
 	cmod_windfarm.o \
@@ -53,7 +54,9 @@ OBJECTS = \
 	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
+	lib_windfile.o \
 	lib_cec6par.o \
+	lib_pvshade.o \
 	lib_sandia.o \
 	lib_pvmodel.o \
 	lib_irradproc.o \
@@ -73,7 +76,7 @@ OBJECTS = \
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS)
-	gcc dltest.c -o dltest -ldl
+	gcc $(CFLAGS) dltest.c -o dltest -ldl
 	./dltest ./$(TARGET)
 
 inform:
