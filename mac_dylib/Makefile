@@ -20,6 +20,11 @@ LDFLAGS += -arch i386
 endif
 
 OBJECTS = \
+	lib_pvshade.o \
+	cmod_test_pvshade.o \
+	lib_windfile.o \
+	cmod_geothermalui.o \
+	cmod_windfarm.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
 	cmod_6parsolve.o \
@@ -65,7 +70,8 @@ OBJECTS = \
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(LDFLAGS) -dynamiclib -flat_namespace -o $@ $^
-	#TFF-Jan,2012; still necessary?: cp $(TARGET) ../python/ssc.dylib
+	gcc $(CFLAGS) dltest.c -o dltest -ldl
+	./dltest ./$(TARGET)
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
