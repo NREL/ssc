@@ -169,7 +169,6 @@ integer shad_error
 	double l,w;
 	int ncsubx, ncsuby;
 	bool finished = false;
-	double small = 1e-4;
 	double reduc = 0, shade_area = 0;
 	int shad_error = 0;
 	double wrows;          // Length of rows (meters)
@@ -189,11 +188,8 @@ integer shad_error
 	double fsuby_ps;       // Fraction of substrings partially shaded in y direction
 	double fsub_fs;        // Fraction of substrings fully shaded
 	double fsub_ps;        // Fraction of substrings partially shaded
-	//int i;              // Index variable
 	double fs_spr=0;         // Shaded percentage ratio for fully shaded row
 	double ps_spr=0;         // Shaded percentage ratio for partially shaded row
-	//double dt_ps;           // Diode turnon for partially shaded row
-	//double dt_fs;           // Diode turnon for fully shaded row
 	double f_xs;
 	double f_ys;
 
@@ -235,17 +231,20 @@ integer shad_error
 	lrows = m_arr.nmody * l;
 
 	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
-//call SolarTransform(azimuth,zenith,s_azimuth,azimuth_eff,zenith_eff,slope_ew,slope_ns)
 
 	if (!solar_transform( solazi, solzen )) return false;
 	tilt_eff = m_arr.tilt - m_arr.slope_ns;
 	
+
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
-	if ( (zenith_eff < 90.0) && (abs(azimuth_eff) < 90.0) ) 
+	// if no effective tilt then no array self-shading
+	if ( ( (zenith_eff < 90.0) && (abs(azimuth_eff) < 90.0) ) && ( tilt_eff != 0 ) )
 	{
 		py = lrows * (cosd(tilt_eff) + ( cosd(azimuth_eff) * sind(tilt_eff) /tand(90.0-zenith_eff) ) );
 		px = lrows * sind(tilt_eff) * sind(azimuth_eff) / tand(90.0-zenith_eff);
+		// note - row_space= 0 not handled properly - see documentation/pv/shaing/porting/testing.docx
+		if ( m_arr.row_space < 1e-3 ) m_arr.row_space = 1e-3;
 		xs = max( 0., wrows - abs(m_arr.row_space*(px/py) ) );
 		ys = max( 0., lrows * (1.0 - m_arr.row_space/py) );
 	}
@@ -349,51 +348,6 @@ integer shad_error
 			fsub_fs = fsubx_fs*fsuby_fs;
 			fsub_ps = fsubx_ps*fsuby_ps;
 
-		/*
-			// From:Some notes on partial shading implementation in SAM by Chris Deline (emailed Fall 2010)
-			// Find operating voltage for shaded substrings
-			if (abs(1-FSUB_FS) < small .or. FSUB_FS > 1 .or. FSUB_FS < 0-small) then
-				Vop(1) = Voc+1              !flagging bad value later set to 0 power
-			else
-				Vop(1) = Vmp/(1-FSUB_FS)
-			end if
-    
-			if (1-FSUB_PS < small .or. FSUB_PS > 1 .or. FSUB_PS < 0-small) then
-				Vop(2) = Voc+1
-			else
-				Vop(2) = Vmp/(1-FSUB_PS)
-			end if
-    
-			! Find operating current using exponential fit
-			Iop(1) = c(1)-c(2)*exp(c(3)*Vop(1))
-			Iop(2) = c(1)-c(2)*exp(c(3)*Vop(2))
-    
-			! If there is no shading, make sure power is at Pmp (corrects for bad exponential fits)
-			do i =1,2 
-				if (Vop(i) .eq. Vmp) then
-					Vop(i) = Vmp 
-					Iop(i) = Imp
-				end if
-			end do
-    
-			! Make sure Vop is not greater than Voc. 
-			! if Vop > Voc push power to 0
-			! otherwise find derated power
-			if (Vop(1) > Voc) then
-				FS_SPR = 0.
-			else
-				FS_SPR = (1-FSUB_FS)*Vop(1)*Iop(1)/Pmp
-			end if
-        
-			if (Vop(2) > Voc) then
-				PS_SPR = 0.
-			else
-				PS_SPR = (1-FSUB_PS)*Vop(2)*Iop(2)/Pmp
-			end if
-    
-			! Find total array derate
-			REDUC = (1.+(NROWS-1)*(NSTR_PS*PS_SPR+NSTR_FS*FS_SPR+NSTR_US*1.)/NSTR)/NROWS
-		  */  
 		}
 		else   // Vertical Strings
 		{
@@ -423,13 +377,10 @@ integer shad_error
 			fsubx_ps = int((xs-nstr_fs*w)/lsubx)/nsubx;
 			fsuby_ps = int(ys/lsuby)/nsuby*(m_arr.nrows-1)/m_arr.nrows;
                 
-			//call diodeturnon(B,G,FSUB_PS,DT_PS)
-			//call diodeturnon(B,G,FSUB_FS,DT_FS)
     
 			f_xs = ( (xs-nstr_fs*w) - int( (xs-nstr_fs*w) / lsubx ) * lsubx ) / lsubx;
 			f_ys = (ys - int(ys/lsuby) *lsuby ) / lsuby;
     
-			//!if (F_YS .GE. DT_FS/NCSUBY) then
 			if ( (f_ys*beam_globhoriz) >= (.25/ncsuby) )
 			{
 				fsubx_fs = 1.;
@@ -455,49 +406,6 @@ integer shad_error
 			fsub_ps = (fsubx_ps*fsuby_ps)*(m_arr.nrows-1)/m_arr.nrows;
 			fsub_fs = (fsubx_fs*fsuby_fs)*(m_arr.nrows-1)/m_arr.nrows;
     
-	/*
-			! Find operating voltage for shaded substrings
-			if (abs(1-FSUB_FS) < small .or. FSUB_FS > 1 .or. FSUB_FS < 0-small) then
-				Vop(1) = Voc+1
-			else
-				Vop(1) = Vmp/(1-FSUB_FS)
-			end if
-    
-			if (1-FSUB_PS < small .or. FSUB_PS > 1 .or. FSUB_PS < 0-small) then
-				Vop(2) = Voc+1
-			else
-				Vop(2) = Vmp/(1-FSUB_PS)
-			end if
-    
-			! Find operating current using exponential fit
-			Iop(1) = c(1)-c(2)*exp(c(3)*Vop(1))
-			Iop(2) = c(1)-c(2)*exp(c(3)*Vop(2))
-    
-			! If there is no shading, make sure power is at Pmp (corrects for bad exponential fits)
-			do i =1,2 
-				if (Vop(i) .eq. Vmp) then
-					Vop(i) = Vmp 
-					Iop(i) = Imp
-				end if
-			end do
-    
-			! Make sure Vop is not greater than Voc. 
-			! if Vop > Voc push power to 0
-			! otherwise find derated power
-			if (Vop(1) > Voc) then
-				FS_SPR = 0.
-			else
-				FS_SPR = (1-FSUB_FS)*Vop(1)*Iop(1)/Pmp
-			end if
-        
-			if (Vop(2) > Voc) then
-				PS_SPR = 0.
-			else
-				PS_SPR = (1-FSUB_PS)*Vop(2)*Iop(2)/Pmp
-			end if
-    
-			REDUC = (NSTR_PS*PS_SPR+NSTR_FS*FS_SPR+NSTR_US*1.)/NSTR
-	*/
 		}  // string orientation
 
 	
@@ -543,11 +451,10 @@ integer shad_error
 		reduc = max( reduc, eqn10 );
 
 		reduc = X * reduc + (1.0 - X);
-		// derate
-		reduc = 1.0 - reduc;
+		// check limits
+		if (reduc > 1) reduc = 1.0;
+		if (reduc < 0) reduc = 0.0;
 	}
-	if (reduc <= 0) reduc = 1.0;
-	if (globhoriz <= 0) reduc = 1.0;
 	m_dc_derate = reduc;
 	m_shade_area = shade_area;
 	m_eqn5 = eqn5;
@@ -583,7 +490,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 
 
     // Convert sun coordinates into Euclidian space
-
+/*
 	// 2011.12.2 - Convention equator=0 rh rotation
 	S[0][0] = sind(solzen)*cosd(solazi);
 	S[0][1] = 0;
@@ -594,7 +501,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     S[2][0] = cosd(solzen);
 	S[2][1] = 0;
 	S[2][2] = 0;
-/*	
+*/	
 	// 2012.3.21 - new convention north=0 rh rotation
 	S[0][0] = sind(solzen)*cosd(solazi+180);
 	S[0][1] = 0;
@@ -605,7 +512,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     S[2][0] = cosd(solzen);
 	S[2][1] = 0;
 	S[2][2] = 0;
-*/
+
 
     // Calculate Rotation axis around x axis
     Rx[0][0] = 1;
@@ -632,8 +539,8 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     // Calculate Rotation axis around z axis
 	// assuming that convention correct for 2011.12.2 input, add 180 to degree input for new convention on N=0 instead of equator=0
 	// verify results in new system for both northern and southern hemispheres.
-	
-	// 2011.12.2 - Convention equator=0 rh rotation
+	// Appelbaum paper takes 0 to be toward the sum in northern hemisphere - so azimuth south=0
+/*	// 2011.12.2 - Convention equator=0 rh rotation
     Rz[0][0] = cosd(m_arr.azimuth);
     Rz[0][1] = -sind(m_arr.azimuth);
     Rz[0][2] = 0;
@@ -643,7 +550,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     Rz[2][0] = 0;
     Rz[2][1] = 0;
     Rz[2][2] = 1;
-	/*
+	*/
 	// 2012.3.21 - new convention north=0 rh rotation
     Rz[0][0] = cosd(m_arr.azimuth+180);
     Rz[0][1] = -sind(m_arr.azimuth+180);
@@ -654,7 +561,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     Rz[2][0] = 0;
     Rz[2][1] = 0;
     Rz[2][2] = 1;
-	*/
+	
 
 
     // Calculate complete rotation matrix
@@ -667,18 +574,15 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 
 	if ((Snew[0][0] < 0) && (Snew[1][0] > 0)) 
 	{
-//		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
-		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
+		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
 	}
     else if ((Snew[0][0] < 0) && (Snew[1][0] < 0))
 	{
-//		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
-		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
+		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
 	}
     else if (Snew[0][0] == 0) 
 	{
-//        azimuth_eff = 90;
-        azimuth_eff = -90;
+        azimuth_eff = 90;
 	}
     else
 	{
