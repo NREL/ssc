@@ -54,7 +54,7 @@ public:
 		weatherfile wf( file );
 		if (!wf.ok()) throw exec_error("pvwattsv1", "failed to read local weather file: " + std::string(file));
 					
-		double watt_spec = 1000.0 * as_double("system_size");
+		double dcrate = as_double("system_size");
 		double derate = as_double("derate");
 		int track_mode = as_integer("track_mode"); // 0, 1, 2
 		double azimuth = as_double("azimuth");
@@ -81,176 +81,80 @@ public:
 		double i_ref = as_double("i_ref"); // reference irradiance for rating condition
 		double poa_cutin = as_double("poa_cutin"); // minimum POA irradiance level required for any operation
 		double wind_stow = as_double("w_stow"); // maximum wind speed before stowing.  stowing causes all output to be lost
-	
-		/* storage for calculations */
-		double angle[5];
-		double sun[9];
-
-		double sunrise, sunset;
-		int jday = 0;
-		int cur_hour = 0;
-
-		double lat = wf.lat;
-		double lng = wf.lon;
-		double tz = wf.tz;
-
-		int beghr, endhr;
-
-		double dn[24],df[24],wind[24],ambt[24],snow[24]/*,albwf[24]*/,dc[24],ac[24],poa[24],tpoa[24];
-		int sunup[24];
 		
-		// create cell temp object at beginning (tracks hour-to-hour cell temp)
+		
+		
+		// check system size
+		if ( dcrate < 0.1 ) dcrate = 0.1;
 
-		for(int m=0;m<12;m++)   /* Loop thru a year of data a month at a time */
+	// bounds of (0,09999, 0.99001) are consistent with online PVWatts http://rredc.nrel.gov/solar/codes_algs/PVWATTS/version1/US/code/pvwattsv1.cgi
+	//    if ( derate < 0.09999 || derate > 0.99001 ) // Use if default ac to dc derate factor out of range
+		if ( derate < 0.0 || derate > 1.0 ) // Use if default ac to dc derate factor out of range
+			derate = 0.77;
+        
+		double pcrate = dcrate * 1000.0;      // rated output of inverter in a.c. watts; 6/29/2005
+		double refpwr = dcrate * 1000.0;      // nameplate in watts; 6/29/2005
+
+		if( track_mode < 0 || track_mode > 2 )
+			track_mode = 0;
+		if( tilt < 0 || tilt > 90 )
+			tilt = wf.lat;
+		if( azimuth < 0 || azimuth > 360 )
+			azimuth = 180.0;
+
+		pvwatts_celltemp tccalc( inoct, height, 1.0 );
+	
+		int i=0;
+		while (wf.read() && i<8760)
 		{
-			for(int n=1;n<=util::nday[m];n++)    /* For each day of month */
-			{
-				int yr=1990,mn=1,dy=1;
-				jday++;                 /* Increment julian day */
-				for(int i=0;i<24;i++)      /* Read a day of data and initialize */
-				{
-					if (!wf.read())
-						throw exec_error("pvwattsv1", "could not read data line " + util::to_string(i+1) + " of 8760");
-					
-					dn[i] = wf.dn;
-					df[i] = wf.df;
-					wind[i] = wf.wspd;
-					ambt[i] = wf.tdry;
-					snow[i] = wf.snow;
-					//albwf[i] = wf.albedo;
-					poa[i]=0.0;             /* Plane-of-array radiation */
-					tpoa[i]=0.0;            /* Transmitted radiation */
-					dc[i]=0.0;              /* DC power */
-					ac[i]=0.0;              /* AC power */
-					sunup[i] = 0;
-
-					yr = wf.year;
-					mn = wf.month;
-					dy = wf.day;
-				}
-			
-				solarpos(yr,mn,dy,12,0.0,lat,lng,tz,sun);/* Find sunrise and sunset */
-
-				sunrise = sun[4];       /* In local standard times */
-				sunset = sun[5];        /* not corrected for refraction */
-			
-				beghr = (int)sunrise + 24;    /* Add an offset since sunrise can be negative */
-				endhr = (int)(sunset - 0.01) + 24; /* Add an offset to make it track with sunrise */
-			
-				if( sunset - sunrise > 0.01 )
-				{
-					for(int i=beghr;i<=endhr;i++ )
-						sunup[i%24] = 1;           /* Assign value of 1 for daytime hrs */
-				}
-
-				beghr %= 24;                     /* Remove offsets */
-				endhr %= 24;
-
-				if( sunrise < 0.0 )
-					sunrise += 24.0;    /* Translate to clock hours */
-				if( sunset > 24.0 )
-					sunset -= 24.0;
-
-				for(int i=0;i<24;i++ )
-				{
-					if( sunup[i] )
-					{
-						double minute = 30.0;    /* Assume the midpoint of the hour,except... */
-						if( beghr != endhr )
-						{
-							if( i == beghr )     /* Find effective time during hr */
-								minute = 60.0*( 1.0 - 0.5*( (double)i + 1.0 - sunrise ) );
-							else if( i == endhr )
-								minute = 60.0*0.5*( sunset - (double)i );
-						
-							solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
-						}
-						else if( i == beghr && fabs(sunset-sunrise) > 0.01 ) /* Same sunup/sunset hour */
-						{  
-							/* Fudge the azimuth and zenith as the mean of sunup periods */
-							if( sunset > sunrise )  /* Rises and sets in same winter hour */
-							{                    /* For zenith at mid-height */
-								minute = 60.0*( sunrise + 0.25*( sunset - sunrise ) - (double)i );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
-								double tmp = sun[1];        /* Save zenith */
-															/* For azimuth at midpoint */
-								minute = 60.0*( sunrise + 0.5*( sunset - sunrise ) - (double)i );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
-								sun[1] = tmp;
-							
-							}
-							else     /* Sets and rises in same summer hour */
-							{
-								double tmp = 0.0;
-								double tmp2 = 0.0;
-								minute = 60.0*( 1.0 - 0.5*( (double)i + 1.0 - sunrise ) );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
-								tmp += sun[1];
-								if( sun[0]/DTOR < 180.0 )
-									sun[0] = sun[0] + 360.0*DTOR;
-								tmp2 += sun[0];
-								minute = 60.0*0.5*( sunset - (double)i );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
-								tmp += sun[1];
-								tmp2 += sun[0];
-								sun[1] = tmp/2.0;    /* Zenith angle */
-								sun[0] = tmp2/2.0;   /* Azimuth angle */
-								if( sun[0]/DTOR > 360.0 )
-									sun[0] = sun[0] - 360.0*DTOR;
-							
-							}
-						}
-						else  /* Midnight sun or not a sunrise/sunup sunset hour */
-							solarpos(yr,mn,dy,i,minute,lat,lng,tz,sun);
-					
-						incidence(track_mode,tilt,azimuth,rlim,sun[1],sun[0],-1,-1,angle); /* Calculate incident angle */
-					
-						double alb;
-						if (snow[i] <= 0 || snow[i] >= 150) // outside normal range or 0
-							alb = 0.2;
-						else
-							alb = 0.6; // snow cover days
-
-						double irr[3];
-						irr[0]=irr[1]=irr[2] = 0;
-						perez( sun[8], dn[i],df[i],alb,angle[0],angle[1],sun[1], irr, 0 ); /* Incident solar radiation */
-						poa[i] = irr[0]+fd*(irr[1]+irr[2]);
-
-						if (poa_cutin > 0 && poa[i] < poa_cutin)
-							poa[i] = 0;
-
-						if (wind_stow > 0 && wind[i] >= wind_stow)
-							poa[i] = 0;
-
-						tpoa[i] = transpoa( poa[i],dn[i],angle[0]);  /* Radiation transmitted thru module cover */
-						
-					}
-				}                       /* End of for i++ loop (24 hours)*/                    /* End of sunup[i] if loop */
-					
-
+			irrad irr;
+			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600.0 );
+			irr.set_location( wf.lat, wf.lon, wf.tz );
 				
-				pvwatts_celltemp celltemp( inoct, height, 1.0 /* 1 hr timestep*/ );
-				for (int i=0;i<24;i++)
-				{
-					double pvt = -999, dc = 0, ac = 0;
-					if ( poa[i] > 0 )
-					{
-						pvt = celltemp( poa[i], wind[i], ambt[i] );
-						dc = dcpowr(reftem,watt_spec,pwrdgr,tmloss,tpoa[i],pvt, i_ref);
-						ac = dctoac(watt_spec,efffp,dc);
-					}
+			double alb = 0.2;
+			if (wf.snow > 0 && wf.snow < 150)
+				alb = 0.6;
 
-					p_poa[cur_hour] = (ssc_number_t)poa[i];
-					p_tcell[cur_hour] = (ssc_number_t)pvt;
-					p_dc[cur_hour] = (ssc_number_t)dc;
-					p_ac[cur_hour] = (ssc_number_t)ac;
+			irr.set_sky_model( 2, alb );
+			irr.set_beam_diffuse( wf.dn, wf.df );
+			irr.set_surface( track_mode, tilt, azimuth, rlim, -1, -1 );
+			
+			double ibeam, iskydiff, ignddiff;
+			double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
+			int sunup;		
 
-					cur_hour++;
-				}
+			if (!irr.calc())
+				sunup = 0; // if for some reason the irradiance processor fails, ignore this hour
 
-			} /* end of day loop in month */
-		} /* end of month loop */
+			p_tcell[i] = (ssc_number_t)wf.tdry;
+	
+			irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
+			if (sunup > 0)
+			{
+				irr.get_angles( &aoi, &stilt, &sazi, &rot, &btd );
+				irr.get_poa( &ibeam, &iskydiff, &ignddiff, 0, 0, 0);
 
+				double poa = ibeam + fd*(iskydiff +ignddiff);
+
+				if (poa_cutin > 0 && poa < poa_cutin)
+					poa = 0;
+
+				if (wind_stow > 0 && wf.wspd >= wind_stow)
+					poa = 0;
+
+				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180);
+				double pvt = tccalc( poa, wf.wspd, wf.tdry );
+				double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
+				double ac = dctoac(pcrate,efffp,dc);
+			
+				p_poa[i] = (ssc_number_t)poa;
+				p_tcell[i] = (ssc_number_t)pvt;
+				p_dc[i] = (ssc_number_t)dc;
+				p_ac[i] = (ssc_number_t)ac;
+			}
+		
+			i++;
+		}
 	}
 };
 

@@ -56,25 +56,13 @@
 #define M_PI 3.1415926535
 #endif
 
-#ifndef DTOR
-#define DTOR 0.0174532925
-#endif
-
-double transpoa( double poa, double dn, double inc )
+double transpoa( double poa,double dn,double inc )
 {  /* Calculates the irradiance transmitted thru a PV module cover. Uses King
 		polynomial coefficients for glass from 2nd World Conference Paper,
-		July 6-10, 1998.                         Bill Marion 12/8/1998
-		
-		note: 'inc' is passed in as radians
-		*/
+		July 6-10, 1998.                         Bill Marion 12/8/1998 */
 
-	double b0=1.0,
-		b1=-2.438e-3,
-		b2=3.103e-4,
-		b3=-1.246e-5,
-		b4=2.112e-7,
-		b5=-1.359e-9,
-		x = 0.0;
+	double b0=1.0,b1=-2.438e-3,b2=3.103e-4,b3=-1.246e-5,b4=2.112e-7,
+			b5=-1.359e-9,x,DTOR=0.017453293;
 
 	inc = inc/DTOR;
 	if( inc > 50.0 && inc < 90.0 ) /* Adjust for relection between 50 and 90 degrees */
@@ -146,7 +134,7 @@ pvwatts_celltemp::pvwatts_celltemp( double _inoct, double _height, double _dTime
 
 double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2 )
 {
-	double celltemp = -999;
+	double celltemp = ambt2;
 		
 	/* If poa is gt 0 then compute cell temp, else set to 999 */
 	if( poa2 > 0.0 )
