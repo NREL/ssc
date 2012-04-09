@@ -285,7 +285,7 @@ integer shad_error
 			nstr_us = nstr - nstr_s;
     
 			// Number and length of substrings in x,y directions
-			if (m_arr.mod_orient == 0) 
+			if (m_arr.mod_orient == 0) // portrait
 			{
 				nsubx = m_arr.nmodx*m_arr.ndiode;
 				nsuby = 1;
@@ -411,10 +411,29 @@ integer shad_error
 	
 	// Update from Chris Deline "Cdeline_simplified model of uniform shading _v1.docx" 3/8/12
 		//FF0 = pmp / voc / isc;
+		m_fsub_fs = fsub_fs;
+		m_fsub_ps = fsub_ps;
+		m_nstr = nstr;
+		m_nstr_s = nstr_s;
+		m_nstr_fs = nstr_fs;
+		m_nstr_ps = nstr_ps;
+		m_nstr_us = nstr_us;
 
 		//  - assumption is that partially shaded is more that half cells in substrings
-		X = (nstr_fs + nstr_ps) / nstr;  // shaded parallel strings
-		S = fsub_fs + fsub_ps;  // shaded sub modules
+//		X = (nstr_fs + nstr_ps) / nstr;  // shaded parallel substrings
+		X = fsub_fs;  // shaded parallel substrings
+		// sets to 1 if none shaded   why?
+		if (X >= 1.0) X= 0.0;
+		X = max( X, fsub_ps);
+		// shaded sub modules
+//		S = fsub_fs + fsub_ps;  
+		S = nstr_fs + nstr_ps;  
+		double d_tmp = nstr;
+		S = S / d_tmp;
+
+		m_X = X;
+		m_S = S;
+
 
 		c1 = 0.25 * exp( 7.7 - 6.0 * FF0) * X;
 

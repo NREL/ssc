@@ -43,6 +43,15 @@ public:
 
 
 // testing
+	double m_X;
+	double m_S;
+	double m_fsub_fs;
+	double m_fsub_ps;
+	int	m_nstr;
+	int	m_nstr_s;
+	int m_nstr_fs;
+	int m_nstr_ps;
+	int m_nstr_us;
 	double m_xs;
 	double m_ys;
 	double m_px;
