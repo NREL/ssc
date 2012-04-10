@@ -45,7 +45,7 @@ public:
 // testing
 	double m_X;
 	double m_S;
-	double m_fsub_fs;
+/*	double m_fsub_fs;
 	double m_fsub_ps;
 	int	m_nstr;
 	int	m_nstr_s;
@@ -54,10 +54,12 @@ public:
 	int m_nstr_us;
 	double m_xs;
 	double m_ys;
+	*/
 	double m_px;
 	double m_py;
-	double m_wrows;
-	double m_lrows;
+//	double m_wrows;
+//	double m_lrows;
+
 	double m_azi_eff;
 	double m_zen_eff;
 	double azimuth_eff;

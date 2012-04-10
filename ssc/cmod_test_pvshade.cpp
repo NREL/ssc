@@ -189,9 +189,7 @@ public:
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
 				cf.at( CF_azimuth_eff, i ) = ss.azimuth_eff;
 				cf.at( CF_zenith_eff, i ) = ss.zenith_eff;
-				cf.at( CF_xs, i ) = ss.m_xs;
 				cf.at( CF_px, i ) = ss.m_px;
-				cf.at( CF_ys, i ) = ss.m_ys;
 				cf.at( CF_py, i ) = ss.m_py;
 				cf.at( CF_eqn5, i ) = ss.m_eqn5;
 				cf.at( CF_eqn9, i ) = ss.m_eqn9;
