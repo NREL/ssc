@@ -16,13 +16,13 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=specify ppa,1=solve ppa", "ippppa",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "ippppa",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "ippppa",         "?=1e-3",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "ippppa",         "?=0",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "ippppa",         "?=100",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "ippppa",         "?=100",                     "INTEGER,MIN=1",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"cents/kWh",	 "",			  "ippppa",			 "?=10",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
 	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
@@ -563,7 +563,7 @@ public:
 		}
 
 
-		ppa = as_double("ppa_price_input"); // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
+		ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 
 		ppa_escalation = 0.01*as_double("ppa_escalation");
 
@@ -847,7 +847,7 @@ public:
 		// save outputs
 
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
-		if (ppa_soln_mode==1) aftertax_irr = irr( CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
+		if (ppa_soln_mode==0) aftertax_irr = irr( CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
 
 /*
 					std::stringstream outm;
@@ -3548,7 +3548,7 @@ void satisfy_all_constraints()
 			compute_cashflow();
 			std::stringstream outm;
 
-			if (ppa_soln_mode == 1)
+			if (ppa_soln_mode == 0)
 			{
 
 				check_constraints(use_target_irr, are_all_constraints_satisfied, is_one_constraint_minimally_satisfied );
@@ -3643,7 +3643,7 @@ void satisfy_all_constraints()
 					}
 				}
 				its++;
-			} // ppa_soln_mode==1
+			} // ppa_soln_mode==0
 		
 		}	
 		while (!solved && (its < ppa_soln_max_iteations) && (ppa >= 0) );

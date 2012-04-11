@@ -193,33 +193,37 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 		if ( m_arr.mod_orient == 1 ) // Landscape mode
 		{
 			if ( Hs <= W )
-			{
+			{ // Situation 1a
 				X = (R - 1.0) / ( M * R);
-				S = round( Hs * D / W ) / D - floor( Xe / L ) / N;
+				// updated to more conservative approach - email from Chris 4/10/12
+				//S = round( Hs * D / W ) / D - floor( Xe / L ) / N;
+				S = ceil( Hs * D / W ) / D - floor( Xe / L ) / N;
 			}
 			else // Hs > m_arr.width
-			{
+			{  // Situation 1b
 				X = ( ceil( Hs / W ) / (M * R) ) * ( R - 1.0);
 			 	S = 1.0;
 			}
 		}
 		else // Portrait mode
-		{
+		{  // Situation 2
 			X = ( ceil( Hs / L ) / (M * R) ) * ( R - 1.0);
 			S = 1.0 - ( floor( Xe * D / W ) / ( D * N) );
 		}
 	}
 	else // Vertical wiring
-	{
-		if ( m_arr.mod_orient == 1 ) // Landscape mode
-		{
-			X = 1.0 - ( floor( Xe / L ) / N );
-			S = ( round( Hs * D / W ) / (D * M * R) ) * (R - 1.0);
-		}
-		else // Portrait
+	{  // Situation 3
+		if ( m_arr.mod_orient == 0 ) // Portrait mode
 		{
 			X = 1.0 - ( floor( Xe / W ) / N );
 			S = ( ceil( Hs / L ) / ( M * R ) ) * (R - 1.0);
+		}
+		else // Landscape
+		{   // Situation 4
+			X = 1.0 - ( floor( Xe / L ) / N );
+			// updated to more conservative approach - email from Chris 4/10/12
+			//S = ( round( Hs * D / W ) / (D * M * R) ) * (R - 1.0);
+			S = ( ceil( Hs * D / W ) / (D * M * R) ) * (R - 1.0);
 		}
 	}
 
