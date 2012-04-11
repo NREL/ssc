@@ -45,6 +45,8 @@ public:
 // testing
 	double m_X;
 	double m_S;
+	double m_Xe;
+	double m_Hs;
 /*	double m_fsub_fs;
 	double m_fsub_ps;
 	int	m_nstr;

@@ -181,6 +181,9 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 		Hs = A * (1.0 - m_arr.row_space / py);
 
 
+	m_Xe = Xe;
+	m_Hs = Hs;
+
 	double M = m_arr.nmody; 
 	double N = m_arr.nmodx; 
 	double D = m_arr.ndiode;
