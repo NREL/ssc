@@ -315,14 +315,14 @@ public:
 		   ********************************************************************** */
 
 		/* set initial conditions on some simulation variables */
-		double T_hot = T_mains[1] + 40; // initial hot temp 40'C above ambient
-		double T_cold = T_mains[1];
-		
+		double T_hot_prev_hour = T_mains[1] + 40; // initial hot temp 40'C above ambient
+		double T_cold_prev_hour = T_mains[1];
+
 		double Q_tankloss = 0;
-		double Q_useful_prev = 0.0;
+		double Q_useful_prev_hour = 0.0;
 		double V_hot_prev_hour = 0.8 * V_tank;
-		double T_tank_prev_hour = V_hot_prev_hour/V_tank*T_hot + V_hot_prev_hour/V_tank*T_cold; // weighted average tank temperature (initial)
-		double T_deliv_prev = 0.0;
+		double T_tank_prev_hour = V_hot_prev_hour/V_tank*T_hot_prev_hour + V_hot_prev_hour/V_tank*T_cold_prev_hour; // weighted average tank temperature (initial)
+		double T_deliv_prev_hour = 0.0;
 
 		/* **********************************************************************
 		   Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, Q_saved
@@ -331,10 +331,12 @@ public:
 		{
 			// at beginning of this timestep, temp values are the same as end of last timestep
 			double T_tank = T_tank_prev_hour;
-			double Q_useful = Q_useful_prev;
-			double T_deliv = T_deliv_prev;
+			double Q_useful = Q_useful_prev_hour;
+			double T_deliv = T_deliv_prev_hour;
 			double V_hot = V_hot_prev_hour;
 			double V_cold = V_tank-V_hot;
+			double T_hot = T_hot_prev_hour;
+			double T_cold = T_cold_prev_hour;
 
 		
 			double mdotCp_use = mdot * fluid_cp; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
@@ -392,7 +394,7 @@ public:
 				if (Q_useful > 0)
 				{
 					/* MIXED TANK -- solar collection */
-					T_tank = T_tank_prev_iter * 1/(1+ mdot_mix/(rho_water*V_tank))
+					T_tank = T_tank_prev_hour * 1/(1+ mdot_mix/(rho_water*V_tank))
 						+ ( Q_useful*dT - Q_tankloss*dT + mdot_mix*Cp_water*T_mains[i] )
 							/ ( rho_water * V_tank * Cp_water * ( 1 + mdot_mix / (rho_water*V_tank) ) );
 					
@@ -412,10 +414,10 @@ public:
 					// use the previous tank temperature
 					// and mains temperature for the reference hot node and cold node
 					// temperatures in the stratified tank
-					double T_nodeH = (Q_useful_prev > 0.0) ? T_tank_prev_iter : T_hot;
-					double T_nodeC = (Q_useful_prev > 0.0) ? T_mains[i] : T_cold;
+					double T_nodeH = (Q_useful_prev_hour > 0.0) ? T_tank_prev_hour : T_hot_prev_hour;
+					double T_nodeC = (Q_useful_prev_hour > 0.0) ? T_mains[i] : T_cold_prev_hour;
 
-					if ( Q_useful_prev > 0 )
+					if ( Q_useful_prev_hour > 0 )
 					{
 						// previous hour had solar collection
 						V_hot = V_tank - mdot_mix/rho_water;
@@ -428,9 +430,11 @@ public:
 						if (V_hot < 0) V_hot = 0;
 					}
 				
-					T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
+					//T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_hot);
+					T_hot = T_nodeH - UA_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
 					V_cold = V_tank-V_hot;
-					T_cold = T_nodeC - UA_tank * V_cold/V_tank  * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_tank);
+					//T_cold = T_nodeC - UA_tank * V_cold/V_tank  * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_cold);
+					T_cold = T_nodeC - UA_tank  * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_tank);
 					
 					if (V_hot > 0)
 						T_deliv = T_hot;
@@ -474,10 +478,12 @@ public:
 			double Q_saved = Q_auxonly - Q_aux;
 
 			// save some values for next hour
-			Q_useful_prev = Q_useful;
+			Q_useful_prev_hour = Q_useful;
 			T_tank_prev_hour = T_tank;
 			V_hot_prev_hour = V_hot;
-			T_deliv_prev = T_deliv;
+			T_deliv_prev_hour = T_deliv;
+			T_hot_prev_hour = T_hot;
+			T_cold_prev_hour = T_cold;
 
 			// save output variables
 			out_Q_transmitted[i] = (ssc_number_t) (I_transmitted[i] * area);
