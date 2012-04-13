@@ -29,9 +29,8 @@ public:
 	bool exec( 
 		double solzen,    // solar zenith
 		double solazi,    // solar azimuth
-		double beamnorm,  // dni
-		double globhoriz, // ghi
-		double diffuse,   // diffuse for D/G ratio
+		double inc_total, // incident total
+		double inc_diff,   // incident diffuse for D/G ratio
 		double FF0);       // Fill Factor at STC = Pmp0 / Voc0 / Isc0;
 
 	void set_ssarrdat( ssarrdat &arr ) {m_arr = arr;}
@@ -47,20 +46,13 @@ public:
 	double m_S;
 	double m_Xe;
 	double m_Hs;
-/*	double m_fsub_fs;
-	double m_fsub_ps;
-	int	m_nstr;
-	int	m_nstr_s;
-	int m_nstr_fs;
-	int m_nstr_ps;
-	int m_nstr_us;
-	double m_xs;
-	double m_ys;
-	*/
+	double m_C1;
+	double m_C2;
+	double m_C3;
+	double m_C3_0;
+	double m_C4;
 	double m_px;
 	double m_py;
-//	double m_wrows;
-//	double m_lrows;
 
 	double m_azi_eff;
 	double m_zen_eff;
@@ -69,6 +61,7 @@ public:
 	double m_eqn5;
 	double m_eqn9;
 	double m_eqn10;
+	double m_eqn14;
 
 private:
 	ssarrdat m_arr;

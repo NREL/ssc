@@ -63,9 +63,8 @@ selfshade_t::selfshade_t( ssarrdat &arr )
 bool selfshade_t::exec(
 		double solzen,
 		double solazi,
-		double beamnorm,
-		double globhoriz,
-		double diffuse,
+		double inc_total,
+		double inc_diff,
 		double FF0)
 {
 /*
@@ -117,13 +116,11 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 	double Xe, Hs, A;
 
 
-	double beam_globhoriz = 0;
 	double diffuse_globhoriz = 0;
 	// handle globalhoriz == 0
-	if (globhoriz != 0)
+	if (inc_total != 0)
 	{
-		beam_globhoriz = beamnorm / globhoriz;
-		diffuse_globhoriz = diffuse / globhoriz;
+		diffuse_globhoriz = inc_diff / inc_total;
 	}
 
 	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
@@ -164,8 +161,12 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 	m_zen_eff=zenith_eff;
 
 
-
-
+	double M = m_arr.nmody; 
+	double N = m_arr.nmodx; 
+	double D = m_arr.ndiode;
+	double W = m_arr.width;
+	double L = m_arr.length;
+	double R = m_arr.nrows;
 
 	// Appelbaum equation A12  Xe = R*Px/Py
 	if (py == 0)
@@ -173,6 +174,12 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 	else
 		Xe = m_arr.row_space * px / py;
 
+	// Additional constraints from Chris 4/11/12
+	Xe = abs(Xe);
+	if ( m_arr.mod_orient == 0 ) // Portrait mode
+		Xe = min( Xe, W*N );
+	else
+		Xe = min( Xe, L*N );
 
 	// Appelbaum equation A13  Hs = EF = A(1 - R/Py)
 	if (py == 0)
@@ -180,16 +187,17 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 	else
 		Hs = A * (1.0 - m_arr.row_space / py);
 
+	// Additional constraints from Chris 4/11/12
+	Hs = max( Hs, 0.0);
+	if ( m_arr.mod_orient == 0 ) // Portrait mode
+		Hs = min( Hs, L*M );
+	else
+		Hs = min( Hs, W*M );
+
 
 	m_Xe = Xe;
 	m_Hs = Hs;
 
-	double M = m_arr.nmody; 
-	double N = m_arr.nmodx; 
-	double D = m_arr.ndiode;
-	double W = m_arr.width;
-	double L = m_arr.length;
-	double R = m_arr.nrows;
 	// X and S from Chris Deline 4/9/12 
 	if ( m_arr.str_orient == 1 ) // Horizontal wiring
 	{
@@ -268,6 +276,13 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 	reduc = max( eqn5, eqn9);
 
 	reduc = max( reduc, eqn10 );
+
+	m_C1 = c1;
+	m_C2 = c2;
+	m_C3 = c3;
+	m_C3_0 = c3_0;
+	m_C4 = c4;
+	m_eqn14 = reduc;
 
 	reduc = X * reduc + (1.0 - X);
 	// check limits

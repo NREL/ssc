@@ -92,7 +92,6 @@ public:
 	{
 		size_t arr_len;
 		ssc_number_t *p_ghi = as_array( "ghi", &arr_len );
-		ssc_number_t *p_dni = as_array( "dni", &arr_len );
 		ssc_number_t *p_diffuse = as_array( "diffuse", &arr_len );
 		ssc_number_t *p_sol_zenith = as_array( "sol_zenith", &arr_len );
 		ssc_number_t *p_sol_azimuth = as_array( "sol_azimuth", &arr_len );
@@ -183,7 +182,7 @@ public:
 
 		for (int i=0;i<(int)arr_len;i++)
 		{
-			if ( ss.exec(  p_sol_zenith[i],p_sol_azimuth[i], p_dni[i], p_ghi[i], p_diffuse[i], FF0 ) )
+			if ( ss.exec(  p_sol_zenith[i],p_sol_azimuth[i], p_ghi[i], p_diffuse[i], FF0 ) )
 			{
 				cf.at( CF_shading_area, i ) = ss.shade_area();
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
