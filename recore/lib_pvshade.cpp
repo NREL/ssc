@@ -208,7 +208,7 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 				X = (R - 1.0) / ( M * R);
 				// updated to more conservative approach - email from Chris 4/10/12
 				//S = round( Hs * D / W ) / D - floor( Xe / L ) / N;
-				S = ceil( Hs * D / W ) / D - floor( Xe / L ) / N;
+				S = ( ceil( Hs * D / W ) / D ) * ( 1.0 - floor( Xe / L ) / N);
 			}
 			else // Hs > m_arr.width
 			{  // Situation 1b
@@ -243,9 +243,9 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 	m_S = S;
 
 
-	c1 = 0.25 * exp( 7.7 - 6.0 * FF0) * X;
+	c1 = 0.25 * exp(( 7.7 - 6.0 * FF0) * X);
 
-	c2 = ( 0.145 - 0.095 * FF0) * exp( 7.7 - 6.0 * FF0) * X;
+	c2 = ( 0.145 - 0.095 * FF0) * exp(( 7.7 - 6.0 * FF0) * X);
 
 	c4 = 0.17 * ( diffuse_globhoriz ) * ( diffuse_globhoriz	) - 0.16 * ( diffuse_globhoriz ) - 0.004;
 
