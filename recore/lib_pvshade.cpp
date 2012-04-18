@@ -1,4 +1,4 @@
-﻿#include "lib_pvshade.h"
+#include "lib_pvshade.h"
 #include <math.h>
 #include <limits>
 #include <sstream>
@@ -70,7 +70,7 @@ bool selfshade_t::exec(
 /*
 Chris Deline 4/9/2012 
 
-Definitions of X and S in SAM for the four layout conditions – portrait, landscape and vertical / horizontal strings.
+Definitions of X and S in SAM for the four layout conditions � portrait, landscape and vertical / horizontal strings.
 Definitions:
 S: Fraction of submodules that are shaded in a given parallel string
 X: Fraction of parallel strings in the system that are shaded
