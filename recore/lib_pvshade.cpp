@@ -140,7 +140,7 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
 	// if no effective tilt then no array self-shading
-	if ( ( (zenith_eff < 90.0) && (abs(azimuth_eff) < 90.0) ) && ( tilt_eff != 0 ) )
+	if ( ( (zenith_eff < 90.0) && (fabs(azimuth_eff) < 90.0) ) && ( tilt_eff != 0 ) )
 	{
 		// Appelbaum eqn (12)
 		py = A * (cosd(tilt_eff) + ( cosd(azimuth_eff) * sind(tilt_eff) /tand(90.0-zenith_eff) ) );
@@ -175,7 +175,7 @@ S=(round ((H_s D)⁄W))/DMR(R-1)
 		Xe = m_arr.row_space * px / py;
 
 	// Additional constraints from Chris 4/11/12
-	Xe = abs(Xe);
+	Xe = fabs(Xe);
 	if ( m_arr.mod_orient == 0 ) // Portrait mode
 		Xe = min( Xe, W*N );
 	else
@@ -426,7 +426,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 
     // Correct for domain of Atand
 //    if (Snew[2][0] == 0)
-    if (abs(Snew[2][0]) < 1e-3)
+    if (fabs(Snew[2][0]) < 1e-3)
 	{
 		zenith_eff = 90;
 	}
