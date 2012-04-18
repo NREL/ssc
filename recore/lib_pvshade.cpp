@@ -36,8 +36,8 @@ double atand( double radians )
 {
 	// return angle in radians (-pi/2, pi/2) or in degrees (-90,90)
 	double arctan_val = atan( radians );
-	while ( arctan_val > M_PI/2.0) arctan_val -= M_PI;	 
-	while ( arctan_val < -M_PI/2.0) arctan_val += M_PI;	 
+	while ( arctan_val > M_PI/2.0) arctan_val -= M_PI;
+	while ( arctan_val < -M_PI/2.0) arctan_val += M_PI;
 	return (180.0/ M_PI) * arctan_val; //convert angle from radians to degrees
 }
 
@@ -68,7 +68,7 @@ bool selfshade_t::exec(
 		double FF0)
 {
 /*
-Chris Deline 4/9/2012 
+Chris Deline 4/9/2012
 
 Definitions of X and S in SAM for the four layout conditions – portrait, landscape and vertical / horizontal strings.
 Definitions:
@@ -86,7 +86,7 @@ Xe: shadow distance from row edge from Applebaum eq. A12
 Situation 1a: Horizontal string, landscape orientation.  Hs = W
 X=(R-1)/MR
 S=(round ((H_s D)/W))/D-floor(X_e/L)/N
-Situation 1b: Horizontal string, landscape orientation.  Hs>W  (*not an exact calculation) 
+Situation 1b: Horizontal string, landscape orientation.  Hs>W  (*not an exact calculation)
 X=ceil(H_s/W)/MR(R-1)
 S=1
 
@@ -108,7 +108,7 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	double reduc;
 
 	//Cdeline_simplified model of uniform shading _v1.docx
-	double S,X; 
+	double S,X;
 	double c1,c2,c3,c3_0,c4;
 	double eqn5, eqn9, eqn10;
 
@@ -135,7 +135,7 @@ S=(round ((H_s D)/W))/DMR(R-1)
 
 	if (!solar_transform( solazi, solzen )) return false;
 	tilt_eff = m_arr.tilt - m_arr.slope_ns;
-	
+
 
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
@@ -161,8 +161,8 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	m_zen_eff=zenith_eff;
 
 
-	double M = m_arr.nmody; 
-	double N = m_arr.nmodx; 
+	double M = m_arr.nmody;
+	double N = m_arr.nmodx;
 	double D = m_arr.ndiode;
 	double W = m_arr.width;
 	double L = m_arr.length;
@@ -198,7 +198,7 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	m_Xe = Xe;
 	m_Hs = Hs;
 
-	// X and S from Chris Deline 4/9/12 
+	// X and S from Chris Deline 4/9/12
 	if ( m_arr.str_orient == 1 ) // Horizontal wiring
 	{
 		if ( m_arr.mod_orient == 1 ) // Landscape mode
@@ -309,7 +309,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     double Rx[3][3];
     double Ry[3][3];
     double Rz[3][3];
-    
+
 	for (int i=0;i<3;i++)
 		for (int j=0;i<3;i++)
 		{
@@ -336,7 +336,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     S[2][0] = cosd(solzen);
 	S[2][1] = 0;
 	S[2][2] = 0;
-*/	
+*/
 	// 2012.3.21 - new convention north=0 rh rotation
 	S[0][0] = sind(solzen)*cosd(solazi+180);
 	S[0][1] = 0;
@@ -396,7 +396,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
     Rz[2][0] = 0;
     Rz[2][1] = 0;
     Rz[2][2] = 1;
-	
+
 
 
     // Calculate complete rotation matrix
@@ -407,7 +407,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 
 
 
-	if ((Snew[0][0] < 0) && (Snew[1][0] > 0)) 
+	if ((Snew[0][0] < 0) && (Snew[1][0] > 0))
 	{
 		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
 	}
@@ -415,7 +415,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 	{
 		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
 	}
-    else if (Snew[0][0] == 0) 
+    else if (Snew[0][0] == 0)
 	{
         azimuth_eff = 90;
 	}
@@ -438,7 +438,7 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 	{
         zenith_eff = atand(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]);
 	}
-    
+
     return true;
 
 }
