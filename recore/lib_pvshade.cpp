@@ -83,24 +83,24 @@ R: number of rows
 Hs: shadow height along inclined plane from Applebaum eqn. A13
 Xe: shadow distance from row edge from Applebaum eq. A12
 
-Situation 1a: Horizontal string, landscape orientation.  Hs ≤ W
+Situation 1a: Horizontal string, landscape orientation.  Hs = W
 X=(R-1)/MR
-S=(round ((H_s D)⁄W))/D-floor(X_e⁄L)/N
+S=(round ((H_s D)/W))/D-floor(X_e/L)/N
 Situation 1b: Horizontal string, landscape orientation.  Hs>W  (*not an exact calculation) 
-X=ceil(H_s⁄W)/MR(R-1)
+X=ceil(H_s/W)/MR(R-1)
 S=1
 
 Situation 2: Horizontal string, portrait orientation.
-X=ceil(H_s⁄L)/MR(R-1)
-S=1-floor((X_e D)⁄W)/DN
+X=ceil(H_s/L)/MR(R-1)
+S=1-floor((X_e D)/W)/DN
 
 Situation 3: Vertical string, portrait orientation.
-X=1-(floor (X_e/W))⁄N
-S=ceil(H_s⁄L)/MR(R-1)
+X=1-(floor (X_e/W))/N
+S=ceil(H_s/L)/MR(R-1)
 
 Situation 4: Vertical string, landscape orientation.
-X=1-floor(X_e/L)⁄N
-S=(round ((H_s D)⁄W))/DMR(R-1)
+X=1-floor(X_e/L)/N
+S=(round ((H_s D)/W))/DMR(R-1)
 
 */
 	double px, py;//, xs, ys;
