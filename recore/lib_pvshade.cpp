@@ -63,25 +63,27 @@ selfshade_t::selfshade_t( ssarrdat &arr )
 bool selfshade_t::exec(
 		double solzen,
 		double solazi,
-		double inc_total,
-		double inc_diff,
-		double FF0)
+		double ibeam,
+		double iskydiff,
+		double ignddiff,
+		double FF0,
+		double albedo)
 {
 /*
-Chris Deline 4/9/2012
+Chris Deline 4/9/2012 - updated 4/19/2012 
 
 Definitions of X and S in SAM for the four layout conditions – portrait, landscape and vertical / horizontal strings.
 Definitions:
 S: Fraction of submodules that are shaded in a given parallel string
 X: Fraction of parallel strings in the system that are shaded
-M: modules along side of row
-N: modules along bottom of row
-D:  # of diodes per module
+m: modules along side of row
+n: modules along bottom of row
+d:  # of diodes per module
 W: module width
 L: module length
-R: number of rows
+r: number of rows
 Hs: shadow height along inclined plane from Applebaum eqn. A13
-Xe: shadow distance from row edge from Applebaum eq. A12
+g: shadow distance from row edge from Applebaum eq. A12
 
 Situation 1a: Horizontal string, landscape orientation.  Hs = W
 X=(R-1)/MR
@@ -103,6 +105,7 @@ X=1-floor(X_e/L)/N
 S=(round ((H_s D)/W))/DMR(R-1)
 
 */
+	
 	double px, py;//, xs, ys;
 	double tilt_eff;
 	double reduc;
@@ -113,15 +116,8 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	double eqn5, eqn9, eqn10;
 
 	// AppelBaum Appendix A
-	double Xe, Hs, A;
+	double g, Hs, A;
 
-
-	double diffuse_globhoriz = 0;
-	// handle globalhoriz == 0
-	if (inc_total != 0)
-	{
-		diffuse_globhoriz = inc_diff / inc_total;
-	}
 
 	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
 
@@ -161,41 +157,50 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	m_zen_eff=zenith_eff;
 
 
-	double M = m_arr.nmody;
-	double N = m_arr.nmodx;
-	double D = m_arr.ndiode;
+	double m = m_arr.nmody;
+	double n = m_arr.nmodx;
+	double d = m_arr.ndiode;
 	double W = m_arr.width;
 	double L = m_arr.length;
-	double R = m_arr.nrows;
+	double r = m_arr.nrows;
+	double R = m_arr.row_space;
+	double B = 0.0;
+
 
 	// Appelbaum equation A12  Xe = R*Px/Py
 	if (py == 0)
-		Xe = 0;
+		g = 0;
 	else
-		Xe = m_arr.row_space * px / py;
+		g = R * px / py;
 
 	// Additional constraints from Chris 4/11/12
-	Xe = fabs(Xe);
+	g = fabs(g);
 	if ( m_arr.mod_orient == 0 ) // Portrait mode
-		Xe = min( Xe, W*N );
+		g = min( g, W*n );
 	else
-		Xe = min( Xe, L*N );
+		g = min( g, L*n );
 
 	// Appelbaum equation A13  Hs = EF = A(1 - R/Py)
 	if (py == 0)
 		Hs = 0;
 	else
-		Hs = A * (1.0 - m_arr.row_space / py);
+		Hs = A * (1.0 - R / py);
 
 	// Additional constraints from Chris 4/11/12
 	Hs = max( Hs, 0.0);
 	if ( m_arr.mod_orient == 0 ) // Portrait mode
-		Hs = min( Hs, L*M );
+	{
+		B = L*m;
+		Hs = min( Hs, B );
+	}
 	else
-		Hs = min( Hs, W*M );
+	{
+		B = W*m;
+		Hs = min( Hs, B );
+	}
 
 
-	m_Xe = Xe;
+	m_Xe = g;
 	m_Hs = Hs;
 
 	// X and S from Chris Deline 4/9/12
@@ -203,44 +208,107 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	{
 		if ( m_arr.mod_orient == 1 ) // Landscape mode
 		{
-			if ( Hs <= W )
+			if ( Hs <= 0.0 )
+			{ // Situation 1c added 4/19/12 based on email from Chris 4/18/12
+				X = 0.0;
+				S = 0.0;
+			}
+			else if ( Hs <= W )
 			{ // Situation 1a
-				X = (R - 1.0) / ( M * R);
+				X = (r - 1.0) / ( m * r);
 				// updated to more conservative approach - email from Chris 4/10/12
 				//S = round( Hs * D / W ) / D - floor( Xe / L ) / N;
-				S = ( ceil( Hs * D / W ) / D ) * ( 1.0 - floor( Xe / L ) / N);
+				S = ( ceil( Hs * d / W ) / d ) * ( 1.0 - floor( g / L ) / n);
 			}
 			else // Hs > m_arr.width
 			{  // Situation 1b
-				X = ( ceil( Hs / W ) / (M * R) ) * ( R - 1.0);
+				X = ( ceil( Hs / W ) / (m * r) ) * ( r - 1.0);
 			 	S = 1.0;
 			}
 		}
 		else // Portrait mode
 		{  // Situation 2
-			X = ( ceil( Hs / L ) / (M * R) ) * ( R - 1.0);
-			S = 1.0 - ( floor( Xe * D / W ) / ( D * N) );
+			X = ( ceil( Hs / L ) / (m * r) ) * ( r - 1.0);
+			S = 1.0 - ( floor( g * d / W ) / ( d * n) );
 		}
 	}
 	else // Vertical wiring
 	{  // Situation 3
 		if ( m_arr.mod_orient == 0 ) // Portrait mode
 		{
-			X = 1.0 - ( floor( Xe / W ) / N );
-			S = ( ceil( Hs / L ) / ( M * R ) ) * (R - 1.0);
+			X = 1.0 - ( floor( g / W ) / n );
+			S = ( ceil( Hs / L ) / ( m * r ) ) * (r - 1.0);
 		}
 		else // Landscape
 		{   // Situation 4
-			X = 1.0 - ( floor( Xe / L ) / N );
+			X = 1.0 - ( floor( g / L ) / n );
 			// updated to more conservative approach - email from Chris 4/10/12
 			//S = ( round( Hs * D / W ) / (D * M * R) ) * (R - 1.0);
-			S = ( ceil( Hs * D / W ) / (D * M * R) ) * (R - 1.0);
+			S = ( ceil( Hs * d / W ) / (d * m * r) ) * (r - 1.0);
 		}
 	}
 
 
 	m_X = X;
 	m_S = S;
+
+
+	// reduced diffuse irradiance - ref from Chris 4/19/12 SAM shade geometry_v2.docx
+	double f = B * sind( tilt_eff );
+	// new g for correction
+	g = B * cosd( tilt_eff );
+
+	double f_R_g = f / (R-g);
+	double g_R_g = g / (R-g);
+
+//	double mask_angle = sind( tilt_eff ) * ( R/B )  *  ( 
+//		tand(tilt_eff) * atand( f_R_g ) * M_PI / 180.0 
+//		+ log( 1.0 + g_R_g )
+//		- 0.5 * log( 1.0 + pow( g_R_g, 2 ))
+//		- atand( f_R_g )* M_PI / 180.0 / (( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff)) );
+
+	double mask_angle = 
+		tand(tilt_eff) * atand( f_R_g ) * M_PI / 180.0 
+		+ log( 1.0 + g_R_g )
+		- 0.5 * log( 1.0 + pow( g_R_g, 2 ));
+	if ( ( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff) != 0)
+		mask_angle -= atand( f_R_g )* M_PI / 180.0 / (( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff)) ;
+
+	mask_angle *= sind( tilt_eff ) * ( R/B );
+
+	mask_angle *= 180.0/M_PI;
+
+	m_mask_angle = mask_angle; // report in degrees
+
+	// should the first term be included here or is this double counting
+	m_reduced_diffuse = iskydiff * pow( cosd( tilt_eff / 2.0), 2)
+		- iskydiff * ( 1.0 - pow( cosd( mask_angle / 2.0), 2) ) * ( r - 1.0) / r;
+
+
+	// reduced reflected irradiance
+	double F1 = albedo * pow( sind(tilt_eff/2.0), 2);
+	double Y1 = R - B * sind( 180.0 - solzen - tilt_eff )  / sind( solzen );
+	double F2 = 0.5 * albedo * ( 1.0 + Y1/B
+		- sqrt( pow(Y1,2)/pow(B,2) - 2*Y1/B * cosd(180 - tilt_eff) + 1.0 ) );
+	double F3 = 0.5 * albedo * ( 1.0 + R/B
+		- sqrt( pow(R,2)/pow(B,2) - 2*R/B * cosd(180 - tilt_eff) + 1.0 ) );
+
+	m_F1 = F1;
+	m_Y1 = Y1;
+	m_F2 = F2;
+	m_F3 = F3;
+
+	m_reduced_reflected = ( (F1 + (r-1)*F2)/ r ) * ibeam
+		+ ( (F1 + (r-1) * F3)/ r ) * iskydiff;
+
+
+//	double inc_total =  (ibeam+iskydiff+ignddiff)/1000;
+//	double inc_diff = (iskydiff+ignddiff)/1000;
+	double inc_total =  (ibeam+m_reduced_diffuse+m_reduced_reflected)/1000;
+	double inc_diff = (m_reduced_diffuse+m_reduced_reflected)/1000;
+	double diffuse_globhoriz = 0;
+	if (inc_total != 0)
+		diffuse_globhoriz = inc_diff / inc_total;
 
 
 	c1 = 0.25 * exp(( 7.7 - 6.0 * FF0) * X);

@@ -182,7 +182,7 @@ public:
 
 		for (int i=0;i<(int)arr_len;i++)
 		{
-			if ( ss.exec(  p_sol_zenith[i],p_sol_azimuth[i], p_ghi[i], p_diffuse[i], FF0 ) )
+/*			if ( ss.exec(  p_sol_zenith[i],p_sol_azimuth[i], p_ghi[i], p_diffuse[i], FF0 ) )
 			{
 				cf.at( CF_shading_area, i ) = ss.shade_area();
 				cf.at( CF_shading_reduc, i ) = ss.dc_derate();
@@ -200,7 +200,7 @@ public:
 				outm <<  "Bad shading calculation at hour " << i ;
 				log( outm.str() );
 			}
-		}
+	*/	}
 
 		assign( "cf_length", var_data( (ssc_number_t) arr_len ));
 

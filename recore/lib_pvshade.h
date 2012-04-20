@@ -29,13 +29,17 @@ public:
 	bool exec( 
 		double solzen,    // solar zenith
 		double solazi,    // solar azimuth
-		double inc_total, // incident total
-		double inc_diff,   // incident diffuse for D/G ratio
-		double FF0);       // Fill Factor at STC = Pmp0 / Voc0 / Isc0;
+		double ibeam,     // incident beam
+		double iskydiff,   // incident diffuse
+		double ignddiff,   // reflected diffuse
+		double FF0,       // Fill Factor at STC = Pmp0 / Voc0 / Isc0;
+		double albedo);   // used to calculate reduced relected irradiance
 
 	void set_ssarrdat( ssarrdat &arr ) {m_arr = arr;}
 	double dc_derate() {return m_dc_derate;}
 	double shade_area() {return m_shade_area;}
+	double reduced_diffuse() {return m_reduced_diffuse;}
+	double reduced_reflected() {return m_reduced_reflected;}
 	bool solar_transform(double solazi, double solzen);
 
 	bool matrix_multiply(double a[][3], double b[][3], double c[][3]);
@@ -53,6 +57,11 @@ public:
 	double m_C4;
 	double m_px;
 	double m_py;
+	double m_mask_angle;
+	double m_F1;
+	double m_Y1;
+	double m_F2;
+	double m_F3;
 
 	double m_azi_eff;
 	double m_zen_eff;
@@ -63,10 +72,13 @@ public:
 	double m_eqn10;
 	double m_eqn14;
 
+
 private:
 	ssarrdat m_arr;
 	double m_dc_derate;
 	double m_shade_area;
+	double m_reduced_diffuse;
+	double m_reduced_reflected;
 };
 
 
