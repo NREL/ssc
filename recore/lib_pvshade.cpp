@@ -203,19 +203,14 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	m_Xe = g;
 	m_Hs = Hs;
 
-	// X and S from Chris Deline 4/9/12
+	// X and S from Chris Deline 4/23/12
 	if ( m_arr.str_orient == 1 ) // Horizontal wiring
 	{
 		if ( m_arr.mod_orient == 1 ) // Landscape mode
 		{
-			if ( Hs <= 0.0 )
-			{ // Situation 1c added 4/19/12 based on email from Chris 4/18/12
-				X = 0.0;
-				S = 0.0;
-			}
-			else if ( Hs <= W )
+			if ( Hs <= W )
 			{ // Situation 1a
-				X = (r - 1.0) / ( m * r);
+				X = ( ceil( Hs / W ) / (m * r) ) * ( r - 1.0);
 				// updated to more conservative approach - email from Chris 4/10/12
 				//S = round( Hs * D / W ) / D - floor( Xe / L ) / N;
 				S = ( ceil( Hs * d / W ) / d ) * ( 1.0 - floor( g / L ) / n);
@@ -261,11 +256,6 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	double f_R_g = f / (R-g);
 	double g_R_g = g / (R-g);
 
-//	double mask_angle = sind( tilt_eff ) * ( R/B )  *  ( 
-//		tand(tilt_eff) * atand( f_R_g ) * M_PI / 180.0 
-//		+ log( 1.0 + g_R_g )
-//		- 0.5 * log( 1.0 + pow( g_R_g, 2 ))
-//		- atand( f_R_g )* M_PI / 180.0 / (( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff)) );
 
 	double mask_angle = 
 		tand(tilt_eff) * atand( f_R_g ) * M_PI / 180.0 
@@ -280,14 +270,12 @@ S=(round ((H_s D)/W))/DMR(R-1)
 
 	m_mask_angle = mask_angle; // report in degrees
 
-	// should the first term be included here or is this double counting
-	m_reduced_diffuse = iskydiff * pow( cosd( tilt_eff / 2.0), 2)
-		- iskydiff * ( 1.0 - pow( cosd( mask_angle / 2.0), 2) ) * ( r - 1.0) / r;
+	m_reduced_diffuse = iskydiff * ( 1.0 - pow( cosd( mask_angle / 2.0), 2) ) * ( r - 1.0) / r;
 
 
 	// reduced reflected irradiance
 	double F1 = albedo * pow( sind(tilt_eff/2.0), 2);
-	double Y1 = R - B * sind( 180.0 - solzen - tilt_eff )  / sind( solzen );
+	double Y1 = R - B * sind( 180.0 - solazi - tilt_eff )  / sind( solazi );
 	double F2 = 0.5 * albedo * ( 1.0 + Y1/B
 		- sqrt( pow(Y1,2)/pow(B,2) - 2*Y1/B * cosd(180 - tilt_eff) + 1.0 ) );
 	double F3 = 0.5 * albedo * ( 1.0 + R/B
