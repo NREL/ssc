@@ -70,7 +70,8 @@ bool selfshade_t::exec(
 		double albedo)
 {
 /*
-Chris Deline 4/9/2012 - updated 4/19/2012 
+Chris Deline 4/9/2012 - updated 4/19/2012 - update 4/23/2012 
+see SAM shade geometry_v2.docx
 
 Definitions of X and S in SAM for the four layout conditions – portrait, landscape and vertical / horizontal strings.
 Definitions:
@@ -85,24 +86,11 @@ r: number of rows
 Hs: shadow height along inclined plane from Applebaum eqn. A13
 g: shadow distance from row edge from Applebaum eq. A12
 
-Situation 1a: Horizontal string, landscape orientation.  Hs = W
-X=(R-1)/MR
-S=(round ((H_s D)/W))/D-floor(X_e/L)/N
-Situation 1b: Horizontal string, landscape orientation.  Hs>W  (*not an exact calculation)
-X=ceil(H_s/W)/MR(R-1)
-S=1
-
-Situation 2: Horizontal string, portrait orientation.
-X=ceil(H_s/L)/MR(R-1)
-S=1-floor((X_e D)/W)/DN
-
-Situation 3: Vertical string, portrait orientation.
-X=1-(floor (X_e/W))/N
-S=ceil(H_s/L)/MR(R-1)
-
-Situation 4: Vertical string, landscape orientation.
-X=1-floor(X_e/L)/N
-S=(round ((H_s D)/W))/DMR(R-1)
+B: array length along side (m*L in portrait, m*W in landscape configuration) = Appelbaum paper A
+beta: effective tilt angle
+alpha: solar elevation angle
+R: inter-row spacing
+phi_bar: average masking angle
 
 */
 	
@@ -276,6 +264,7 @@ S=(round ((H_s D)/W))/DMR(R-1)
 	// reduced reflected irradiance
 	double F1 = albedo * pow( sind(tilt_eff/2.0), 2);
 	double Y1 = R - B * sind( 180.0 - solazi - tilt_eff )  / sind( solazi );
+	Y1 = min(0.0, Y1); // constraint per Chris 4/23/12
 	double F2 = 0.5 * albedo * ( 1.0 + Y1/B
 		- sqrt( pow(Y1,2)/pow(B,2) - 2*Y1/B * cosd(180 - tilt_eff) + 1.0 ) );
 	double F3 = 0.5 * albedo * ( 1.0 + R/B
