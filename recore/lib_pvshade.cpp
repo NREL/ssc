@@ -2,6 +2,7 @@
 #include <math.h>
 #include <limits>
 #include <sstream>
+#include <vector>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -46,6 +47,104 @@ double round(double number)
 {
     return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
 }
+
+
+
+// Romberg integration for phi_bar from Numerical Recipes in C
+#define EPS 1.0e-6
+#define JMAX 20
+#define JMAXP (JMAX+1)
+#define K 5
+#define NRANSI
+#define FUNC(x) ((*func)(x))
+
+double trapzd(double (*func)(double), double a, double b, int n)
+{
+	double x,tnm,sum,del;
+	static double s;
+	int it,j;
+	if (n == 1) 
+	{
+		return (s=0.5*(b-a)*(FUNC(a)+FUNC(b)));
+	} 
+	else 
+	{
+		for (it=1,j=1;j<n-1;j++) it <<= 1;
+		tnm=it;
+		del=(b-a)/tnm; /*This is the spacing of points to be added. */
+		x=a+0.5*del;
+		for (sum=0.0,j=1;j<=it;j++,x+=del) sum += FUNC(x);
+		s=0.5*(s+(b-a)*sum/tnm); /*This replaces s by its refined value.*/
+		return s;
+	}
+}
+/* ********************************************************************* */
+void polint(double xa[], double ya[], int n, double x, double *y, double *dy)
+{
+	int i,m,ns=1;
+	double den,dif,dift,ho,hp,w;
+//	double *c,*d;
+//	c=vector(1,n);
+//	d=vector(1,n);
+	size_t size = n+1;	
+	std::vector<double> c(size);
+	std::vector<double> d(size);
+	dif=fabs(x-xa[1]);
+
+	for (i=1;i<=n;i++) 
+	{
+		if ( (dift=fabs(x-xa[i])) < dif) 
+		{
+			ns=i;
+			dif=dift;
+		}
+		c[i]=ya[i];
+		d[i]=ya[i];
+	}
+	*y=ya[ns--];
+	for (m=1;m<n;m++) 
+	{
+		for (i=1;i<=n-m;i++) 
+		{
+			ho=xa[i]-x;
+			hp=xa[i+m]-x;
+			w=c[i+1]-d[i];
+			den = ho-hp;
+			//if ( (den=ho-hp) == 0.0) nrerror("Error in routine polint");
+			if (den != 0) den=w/den;
+			d[i]=hp*den;
+			c[i]=ho*den;
+		}
+		*y += (*dy=(2*ns < (n-m) ? c[ns+1] : d[ns--]));
+	}
+//free_vector(d,1,n);
+//free_vector(c,1,n);
+}
+/* ********************************************************************* */
+double qromb(double (*func)(double), double a, double b)
+{
+	void polint(double xa[], double ya[], int n, double x, double *y, double *dy);
+	double trapzd(double (*func)(double), double a, double b, int n);
+	void nrerror(char error_text[]);
+	double ss,dss;
+	double s[JMAXP],h[JMAXP+1];
+	int j;
+	h[1]=1.0;
+	for (j=1;j<=JMAX;j++) 
+	{
+		s[j]=trapzd(func,a,b,j);
+		if (j >= K) 
+		{
+			polint(&h[j-K],&s[j-K],K,0.0,&ss,&dss);
+			if (fabs(dss) <= EPS*fabs(ss)) return ss;
+		}
+		h[j+1]=0.25*h[j];
+	}
+	//nrerror("Too many steps in routine qromb");
+	return 0.0;
+}
+// end of Romberg integration functions
+
 
 
 selfshade_t::selfshade_t()

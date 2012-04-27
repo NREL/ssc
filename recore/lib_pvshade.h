@@ -18,6 +18,7 @@ struct ssarrdat
 	double slope_ns, slope_ew;
 };
 
+double qromb(double (*func)(double), double a, double b);
 
 
 class selfshade_t

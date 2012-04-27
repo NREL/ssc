@@ -44,6 +44,7 @@ static var_info _cm_vtab_test_pvshade[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "ndiode",			"diodes per modules",	"",   "",                      "pvshade",             "*",						   "INTEGER",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cf_length",			"output array length",	"",   "",                      "pvshade",             "*",						   "INTEGER",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "Romberg_integral",			"integration result",	"",   "",                      "pvshade",             "*",						   "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,       "shading_area",   "Shading area","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "shading_reduc",   "Shading reduction","",  "",                      "pvshade",      "*",                       "LENGTH_EQUAL=cf_length",                        "" },
@@ -75,6 +76,10 @@ enum {
 	CF_eqn10,
 	CF_max };
 
+double func(double x)
+{
+	return x*x*(x*x-2.0)*sin(x);
+}
 
 
 class cm_test_pvshade : public compute_module
@@ -202,7 +207,16 @@ public:
 			}
 	*/	}
 
+
+// romberg integration test
+		double a=0.0, b=M_PI/2.0;
+		double s = qromb(func,a,b);
+
+
+
 		assign( "cf_length", var_data( (ssc_number_t) arr_len ));
+
+		assign( "Romberg_integral", var_data( (ssc_number_t) s ));
 
 		save_cf( CF_shading_area, arr_len, "shading_area" );
 		save_cf( CF_shading_reduc, arr_len, "shading_reduc" );
@@ -236,6 +250,7 @@ public:
 	{
 		return (a > b) ? a : b;
 	}
+
 
 };
 
