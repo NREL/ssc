@@ -393,7 +393,7 @@ public:
 				   During no solar collection hours, tank is assumed startifed (modeled with 2 variable volume nodes) */
 				if (Q_useful > 0)
 				{
-					if (Q_useful_prev_hour = 0)
+					if (Q_useful_prev_hour == 0)
 					{
 						// During the first hour of collection, the pump may run for only a fraction of the hour due to start time and chattering
 						// consequently, first-hour flow volume, even in a high-flow system, may be significantly less than V-tank and the tank will not be fully mixed
