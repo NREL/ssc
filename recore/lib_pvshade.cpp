@@ -50,22 +50,29 @@ double round(double number)
 
 
 
+// mask angle function for integration from documentation\PV\Shading\ChrisDeline\2012.4.23\SAM shade geometry_v2.docx
+double mask_angle_func(double x, double R, double B, double tilt_eff)
+{
+	return atan( (B-x) * sind(tilt_eff) / (R-B*cosd(tilt_eff) + x*cosd(tilt_eff)) );
+}
+
+
+
 // Romberg integration for phi_bar from Numerical Recipes in C
 #define EPS 1.0e-6
 #define JMAX 20
 #define JMAXP (JMAX+1)
 #define K 5
-#define NRANSI
-#define FUNC(x) ((*func)(x))
+#define FUNC(x,R,B,tilt) ((*func)(x,R,B,tilt))
 
-double trapzd(double (*func)(double), double a, double b, int n)
+double trapzd(double (*func)(double,double,double,double), double a, double b, double R, double B, double tilt, int n)
 {
 	double x,tnm,sum,del;
 	static double s;
 	int it,j;
 	if (n == 1) 
 	{
-		return (s=0.5*(b-a)*(FUNC(a)+FUNC(b)));
+		return (s=0.5*(b-a)*(FUNC(a,R,B,tilt)+FUNC(b,R,B,tilt)));
 	} 
 	else 
 	{
@@ -73,7 +80,7 @@ double trapzd(double (*func)(double), double a, double b, int n)
 		tnm=it;
 		del=(b-a)/tnm; /*This is the spacing of points to be added. */
 		x=a+0.5*del;
-		for (sum=0.0,j=1;j<=it;j++,x+=del) sum += FUNC(x);
+		for (sum=0.0,j=1;j<=it;j++,x+=del) sum += FUNC(x,R,B,tilt);
 		s=0.5*(s+(b-a)*sum/tnm); /*This replaces s by its refined value.*/
 		return s;
 	}
@@ -121,10 +128,10 @@ void polint(double xa[], double ya[], int n, double x, double *y, double *dy)
 //free_vector(c,1,n);
 }
 /* ********************************************************************* */
-double qromb(double (*func)(double), double a, double b)
+double qromb(double (*func)(double,double,double,double), double a, double b, double R, double B, double tilt)
 {
 	void polint(double xa[], double ya[], int n, double x, double *y, double *dy);
-	double trapzd(double (*func)(double), double a, double b, int n);
+	double trapzd(double (*func)(double,double,double,double), double a, double b, double R, double B, double tilt, int n);
 	void nrerror(char error_text[]);
 	double ss,dss;
 	double s[JMAXP],h[JMAXP+1];
@@ -132,7 +139,7 @@ double qromb(double (*func)(double), double a, double b)
 	h[1]=1.0;
 	for (j=1;j<=JMAX;j++) 
 	{
-		s[j]=trapzd(func,a,b,j);
+		s[j]=trapzd(func,a,b,R,B,tilt,j);
 		if (j >= K) 
 		{
 			polint(&h[j-K],&s[j-K],K,0.0,&ss,&dss);
@@ -147,6 +154,7 @@ double qromb(double (*func)(double), double a, double b)
 
 
 
+
 selfshade_t::selfshade_t()
 {
 }
@@ -155,9 +163,76 @@ selfshade_t::selfshade_t()
 selfshade_t::selfshade_t( ssarrdat &arr )
 {
 	m_arr = arr;
+	init();
 }
 
+void selfshade_t::init()
+{
 
+	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
+
+	if (m_arr.mod_orient == 0) //            ! Portrait Mode
+		m_A = m_arr.length * m_arr.nmody;
+	else //                                   ! Landscape Mode
+		m_A = m_arr.width * m_arr.nmody;
+
+
+
+
+	m_tilt_eff = m_arr.tilt - m_arr.slope_ns;
+
+
+
+	m_m = m_arr.nmody;
+	m_n = m_arr.nmodx;
+	m_d = m_arr.ndiode;
+	m_W = m_arr.width;
+	m_L = m_arr.length;
+	m_r = m_arr.nrows;
+	m_R = m_arr.row_space;
+	m_B = 0.0;
+
+
+	if ( m_arr.mod_orient == 0 ) // Portrait mode
+	{
+		m_B = m_L*m_m;
+	}
+	else
+	{
+		m_B = m_W*m_m;
+	}
+
+
+
+	// reduced diffuse irradiance - ref from Chris 4/19/12 SAM shade geometry_v2.docx
+	/* Analytical approximation replaced by Romberg integration
+	double f = B * sind( tilt_eff );
+	// new g for correction
+	g = B * cosd( tilt_eff );
+
+	double f_R_g = f / (R-g);
+	double g_R_g = g / (R-g);
+
+
+	double mask_angle = 
+		tand(tilt_eff) * atand( f_R_g ) * M_PI / 180.0 
+		+ log( 1.0 + g_R_g )
+		- 0.5 * log( 1.0 + pow( g_R_g, 2 ));
+	if ( ( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff) != 0)
+		mask_angle -= atand( f_R_g )* M_PI / 180.0 / (( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff)) ;
+
+	mask_angle *= sind( tilt_eff ) * ( R/B );
+	*/
+
+	double a = 0.0, b = m_B;
+
+	double mask_angle = qromb( mask_angle_func, a, b, m_R, m_B, m_tilt_eff) / m_B;
+
+	mask_angle *= 180.0/M_PI; 
+
+	m_mask_angle = mask_angle; // report in degrees
+
+}
 
 bool selfshade_t::exec(
 		double solzen,
@@ -194,7 +269,6 @@ phi_bar: average masking angle
 */
 	
 	double px, py;//, xs, ys;
-	double tilt_eff;
 	double reduc;
 
 	//Cdeline_simplified model of uniform shading _v1.docx
@@ -203,32 +277,23 @@ phi_bar: average masking angle
 	double eqn5, eqn9, eqn10;
 
 	// AppelBaum Appendix A
-	double g, Hs, A;
-
-
-	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
-
-	if (m_arr.mod_orient == 0) //            ! Portrait Mode
-		A = m_arr.length * m_arr.nmody;
-	else //                                   ! Landscape Mode
-		A = m_arr.width * m_arr.nmody;
+	double g, Hs;
 
 
 
 
 	if (!solar_transform( solazi, solzen )) return false;
-	tilt_eff = m_arr.tilt - m_arr.slope_ns;
 
 
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
 	// if no effective tilt then no array self-shading
-	if ( ( (zenith_eff < 90.0) && (fabs(azimuth_eff) < 90.0) ) && ( tilt_eff != 0 ) )
+	if ( ( (zenith_eff < 90.0) && (fabs(azimuth_eff) < 90.0) ) && ( m_tilt_eff != 0 ) )
 	{
 		// Appelbaum eqn (12)
-		py = A * (cosd(tilt_eff) + ( cosd(azimuth_eff) * sind(tilt_eff) /tand(90.0-zenith_eff) ) );
+		py = m_A * (cosd(m_tilt_eff) + ( cosd(azimuth_eff) * sind(m_tilt_eff) /tand(90.0-zenith_eff) ) );
 		// Appelbaum eqn (11)
-		px = A * sind(tilt_eff) * sind(azimuth_eff) / tand(90.0-zenith_eff);
+		px = m_A * sind(m_tilt_eff) * sind(azimuth_eff) / tand(90.0-zenith_eff);
 	}
 	else //! Otherwise the sun has set
 	{
@@ -244,89 +309,80 @@ phi_bar: average masking angle
 	m_zen_eff=zenith_eff;
 
 
-	double m = m_arr.nmody;
-	double n = m_arr.nmodx;
-	double d = m_arr.ndiode;
-	double W = m_arr.width;
-	double L = m_arr.length;
-	double r = m_arr.nrows;
-	double R = m_arr.row_space;
-	double B = 0.0;
-
-
 	// Appelbaum equation A12  Xe = R*Px/Py
 	if (py == 0)
 		g = 0;
 	else
-		g = R * px / py;
+		g = m_R * px / py;
 
 	// Additional constraints from Chris 4/11/12
 	g = fabs(g);
 	if ( m_arr.mod_orient == 0 ) // Portrait mode
-		g = min( g, W*n );
+		g = min( g, m_W*m_n );
 	else
-		g = min( g, L*n );
+		g = min( g, m_L*m_n );
 
 	// Appelbaum equation A13  Hs = EF = A(1 - R/Py)
 	if (py == 0)
 		Hs = 0;
 	else
-		Hs = A * (1.0 - R / py);
+		Hs = m_A * (1.0 - m_R / py);
 
 	// Additional constraints from Chris 4/11/12
 	Hs = max( Hs, 0.0);
 	if ( m_arr.mod_orient == 0 ) // Portrait mode
 	{
-		B = L*m;
-		Hs = min( Hs, B );
+		Hs = min( Hs, m_B );
 	}
 	else
 	{
-		B = W*m;
-		Hs = min( Hs, B );
+		Hs = min( Hs, m_B );
 	}
 
 
 	m_Xe = g;
 	m_Hs = Hs;
 
+
+
+
 	// X and S from Chris Deline 4/23/12
 	if ( m_arr.str_orient == 1 ) // Horizontal wiring
 	{
 		if ( m_arr.mod_orient == 1 ) // Landscape mode
 		{
-			if ( Hs <= W )
+			if ( Hs <= m_W )
 			{ // Situation 1a
-				X = ( ceil( Hs / W ) / (m * r) ) * ( r - 1.0);
+				X = ( ceil( Hs / m_W ) / (m_m * m_r) ) * ( m_r - 1.0);
 				// updated to more conservative approach - email from Chris 4/10/12
 				//S = round( Hs * D / W ) / D - floor( Xe / L ) / N;
-				S = ( ceil( Hs * d / W ) / d ) * ( 1.0 - floor( g / L ) / n);
+				S = ( ceil( Hs * m_d / m_W ) / m_d ) * ( 1.0 - floor( g / m_L ) / m_n);
 			}
 			else // Hs > m_arr.width
 			{  // Situation 1b
-				X = ( ceil( Hs / W ) / (m * r) ) * ( r - 1.0);
+				X = ( ceil( Hs / m_W ) / (m_m * m_r) ) * ( m_r - 1.0);
 			 	S = 1.0;
 			}
 		}
 		else // Portrait mode
 		{  // Situation 2
-			X = ( ceil( Hs / L ) / (m * r) ) * ( r - 1.0);
-			S = 1.0 - ( floor( g * d / W ) / ( d * n) );
+			X = ( ceil( Hs / m_L ) / (m_m * m_r) ) * ( m_r - 1.0);
+			S = 1.0 - ( floor( g * m_d / m_W ) / ( m_d * m_n) );
 		}
 	}
 	else // Vertical wiring
 	{  // Situation 3
 		if ( m_arr.mod_orient == 0 ) // Portrait mode
 		{
-			X = 1.0 - ( floor( g / W ) / n );
-			S = ( ceil( Hs / L ) / ( m * r ) ) * (r - 1.0);
+			X = 1.0 - ( floor( g / m_W ) / m_n );
+			S = ( ceil( Hs / m_L ) / ( m_m * m_r ) ) * (m_r - 1.0);
 		}
 		else // Landscape
 		{   // Situation 4
-			X = 1.0 - ( floor( g / L ) / n );
+			X = 1.0 - ( floor( g / m_L ) / m_n );
 			// updated to more conservative approach - email from Chris 4/10/12
 			//S = ( round( Hs * D / W ) / (D * M * R) ) * (R - 1.0);
-			S = ( ceil( Hs * d / W ) / (d * m * r) ) * (r - 1.0);
+			S = ( ceil( Hs * m_d / m_W ) / (m_d * m_m * m_r) ) * (m_r - 1.0);
 		}
 	}
 
@@ -335,47 +391,32 @@ phi_bar: average masking angle
 	m_S = S;
 
 
-	// reduced diffuse irradiance - ref from Chris 4/19/12 SAM shade geometry_v2.docx
-	double f = B * sind( tilt_eff );
-	// new g for correction
-	g = B * cosd( tilt_eff );
-
-	double f_R_g = f / (R-g);
-	double g_R_g = g / (R-g);
 
 
-	double mask_angle = 
-		tand(tilt_eff) * atand( f_R_g ) * M_PI / 180.0 
-		+ log( 1.0 + g_R_g )
-		- 0.5 * log( 1.0 + pow( g_R_g, 2 ));
-	if ( ( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff) != 0)
-		mask_angle -= atand( f_R_g )* M_PI / 180.0 / (( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff)) ;
+// diffuse loss term only
+	m_diffuse_loss_term = iskydiff * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
+	// added full diffuse term back per email from Chris 4/25/12
+	m_reduced_diffuse = iskydiff * pow( cosd( m_tilt_eff / 2.0), 2) - m_diffuse_loss_term;
 
-	mask_angle *= sind( tilt_eff ) * ( R/B );
 
-	mask_angle *= 180.0/M_PI;
-
-	m_mask_angle = mask_angle; // report in degrees
-
-	m_reduced_diffuse = iskydiff * ( 1.0 - pow( cosd( mask_angle / 2.0), 2) ) * ( r - 1.0) / r;
 
 
 	// reduced reflected irradiance
-	double F1 = albedo * pow( sind(tilt_eff/2.0), 2);
-	double Y1 = R - B * sind( 180.0 - solazi - tilt_eff )  / sind( solazi );
+	double F1 = albedo * pow( sind(m_tilt_eff/2.0), 2);
+	double Y1 = m_R - m_B * sind( 180.0 - solazi - m_tilt_eff )  / sind( solazi );
 	Y1 = min(0.0, Y1); // constraint per Chris 4/23/12
-	double F2 = 0.5 * albedo * ( 1.0 + Y1/B
-		- sqrt( pow(Y1,2)/pow(B,2) - 2*Y1/B * cosd(180 - tilt_eff) + 1.0 ) );
-	double F3 = 0.5 * albedo * ( 1.0 + R/B
-		- sqrt( pow(R,2)/pow(B,2) - 2*R/B * cosd(180 - tilt_eff) + 1.0 ) );
+	double F2 = 0.5 * albedo * ( 1.0 + Y1/m_B
+		- sqrt( pow(Y1,2)/pow(m_B,2) - 2*Y1/m_B * cosd(180 - m_tilt_eff) + 1.0 ) );
+	double F3 = 0.5 * albedo * ( 1.0 + m_R/m_B
+		- sqrt( pow(m_R,2)/pow(m_B,2) - 2*m_R/m_B * cosd(180 - m_tilt_eff) + 1.0 ) );
 
 	m_F1 = F1;
 	m_Y1 = Y1;
 	m_F2 = F2;
 	m_F3 = F3;
 
-	m_reduced_reflected = ( (F1 + (r-1)*F2)/ r ) * ibeam
-		+ ( (F1 + (r-1) * F3)/ r ) * iskydiff;
+	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * ibeam
+		+ ( (F1 + (m_r-1) * F3)/ m_r ) * iskydiff;
 
 
 //	double inc_total =  (ibeam+iskydiff+ignddiff)/1000;
@@ -441,6 +482,8 @@ phi_bar: average masking angle
 
 	return true;
 }
+
+
 
 
 bool selfshade_t::solar_transform(double solazi, double solzen)
@@ -605,3 +648,7 @@ bool selfshade_t::matrix_multiply(double a[][3], double b[][3], double c[][3])
 	}
 	return true;
 }
+
+
+
+

@@ -18,7 +18,8 @@ struct ssarrdat
 	double slope_ns, slope_ew;
 };
 
-double qromb(double (*func)(double), double a, double b);
+// testing in cmod_testpvshade
+//double qromb(double (*func)(double), double a, double b);
 
 
 class selfshade_t
@@ -45,8 +46,7 @@ public:
 
 	bool matrix_multiply(double a[][3], double b[][3], double c[][3]);
 
-
-// testing
+// testing - move to private variables - used in init
 	double m_X;
 	double m_S;
 	double m_Xe;
@@ -59,10 +59,21 @@ public:
 	double m_px;
 	double m_py;
 	double m_mask_angle;
+	double m_diffuse_loss_term;
 	double m_F1;
 	double m_Y1;
 	double m_F2;
 	double m_F3;
+	double m_tilt_eff;
+	double m_d;
+	double m_W;
+	double m_L;
+	double m_r;
+	double m_A;
+	double m_B;
+	double m_m;
+	double m_R;
+	double m_n;
 
 	double m_azi_eff;
 	double m_zen_eff;
@@ -80,6 +91,7 @@ private:
 	double m_shade_area;
 	double m_reduced_diffuse;
 	double m_reduced_reflected;
+	void init();
 };
 
 

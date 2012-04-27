@@ -210,7 +210,8 @@ public:
 
 // romberg integration test
 		double a=0.0, b=M_PI/2.0;
-		double s = qromb(func,a,b);
+		double s = 0;
+//		double s = qromb(func,a,b);
 
 
 
