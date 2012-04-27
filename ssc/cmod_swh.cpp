@@ -393,16 +393,29 @@ public:
 				   During no solar collection hours, tank is assumed startifed (modeled with 2 variable volume nodes) */
 				if (Q_useful > 0)
 				{
-					/* MIXED TANK -- solar collection */
-					T_tank = T_tank_prev_hour * 1/(1+ mdot_mix/(rho_water*V_tank))
-						+ ( Q_useful*dT - Q_tankloss*dT + mdot_mix*Cp_water*T_mains[i] )
-							/ ( rho_water * V_tank * Cp_water * ( 1 + mdot_mix / (rho_water*V_tank) ) );
+					if (Q_useful_prev_hour = 0)
+					{
+						// During the first hour of collection, the pump may run for only a fraction of the hour due to start time and chattering
+						// consequently, first-hour flow volume, even in a high-flow system, may be significantly less than V-tank and the tank will not be fully mixed
+						// therefore, during the first hour, flow (volume and heat) from the collector is simply added to the hot node	
+						// pump run time is estimated as I_incident / 1000, where full-sun incident is 1000 W/m2)
+						V_hot = V_hot_prev_hour + mdot_mix * dT *(I_transmitted[i] / 1000);
+						if (V_hot > V_tank) V_hot = V_tank;
+						T_hot = (T_hot_prev_hour * V_hot * rho_water * Cp_water + Q_useful) / (V_hot * rho_water * Cp_water);
+					}
+					else
+					{	
+						/* MIXED TANK -- solar collection */
+						T_tank = T_tank_prev_hour * 1/(1+ mdot_mix/(rho_water*V_tank))
+							+ ( Q_useful*dT - Q_tankloss*dT + mdot_mix*Cp_water*T_mains[i] )
+								/ ( rho_water * V_tank * Cp_water * ( 1 + mdot_mix / (rho_water*V_tank) ) );
 					
-					if (T_tank > T_tank_max) T_tank = T_tank_max;
-					Q_tankloss = UA_tank * (T_tank - T_room);
+						if (T_tank > T_tank_max) T_tank = T_tank_max;
+						Q_tankloss = UA_tank * (T_tank - T_room);
 					
-					T_deliv = T_tank;
-					
+						T_deliv = T_tank;
+					}	
+
 					Mode[i] = 1;
 				}
 				else
