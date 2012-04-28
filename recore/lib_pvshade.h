@@ -35,7 +35,8 @@ public:
 		double iskydiff,   // incident diffuse
 		double ignddiff,   // reflected diffuse
 		double FF0,       // Fill Factor at STC = Pmp0 / Voc0 / Isc0;
-		double albedo);   // used to calculate reduced relected irradiance
+		double albedo,   // used to calculate reduced relected irradiance
+		double aoi);     // angle of incidence - use for reduced reflected irradiance calculation
 
 	void set_ssarrdat( ssarrdat &arr ) {m_arr = arr;}
 	double dc_derate() {return m_dc_derate;}
@@ -75,10 +76,8 @@ public:
 	double m_R;
 	double m_n;
 
-	double m_azi_eff;
-	double m_zen_eff;
-	double azimuth_eff;
-	double zenith_eff;
+	double m_azimuth_eff;
+	double m_zenith_eff;
 	double m_eqn5;
 	double m_eqn9;
 	double m_eqn10;

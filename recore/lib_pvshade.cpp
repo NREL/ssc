@@ -168,20 +168,12 @@ selfshade_t::selfshade_t( ssarrdat &arr )
 
 void selfshade_t::init()
 {
-
-	//! Find Effective Angles (i.e. transform sun's position with respect to tilted ground
-
 	if (m_arr.mod_orient == 0) //            ! Portrait Mode
 		m_A = m_arr.length * m_arr.nmody;
 	else //                                   ! Landscape Mode
 		m_A = m_arr.width * m_arr.nmody;
 
-
-
-
 	m_tilt_eff = m_arr.tilt - m_arr.slope_ns;
-
-
 
 	m_m = m_arr.nmody;
 	m_n = m_arr.nmodx;
@@ -192,7 +184,6 @@ void selfshade_t::init()
 	m_R = m_arr.row_space;
 	m_B = 0.0;
 
-
 	if ( m_arr.mod_orient == 0 ) // Portrait mode
 	{
 		m_B = m_L*m_m;
@@ -201,28 +192,6 @@ void selfshade_t::init()
 	{
 		m_B = m_W*m_m;
 	}
-
-
-
-	// reduced diffuse irradiance - ref from Chris 4/19/12 SAM shade geometry_v2.docx
-	/* Analytical approximation replaced by Romberg integration
-	double f = B * sind( tilt_eff );
-	// new g for correction
-	g = B * cosd( tilt_eff );
-
-	double f_R_g = f / (R-g);
-	double g_R_g = g / (R-g);
-
-
-	double mask_angle = 
-		tand(tilt_eff) * atand( f_R_g ) * M_PI / 180.0 
-		+ log( 1.0 + g_R_g )
-		- 0.5 * log( 1.0 + pow( g_R_g, 2 ));
-	if ( ( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff) != 0)
-		mask_angle -= atand( f_R_g )* M_PI / 180.0 / (( 1.0 + g_R_g)* sind(tilt_eff)*cosd(tilt_eff)) ;
-
-	mask_angle *= sind( tilt_eff ) * ( R/B );
-	*/
 
 	double a = 0.0, b = m_B;
 
@@ -241,7 +210,8 @@ bool selfshade_t::exec(
 		double iskydiff,
 		double ignddiff,
 		double FF0,
-		double albedo)
+		double albedo,
+		double aoi)
 {
 /*
 Chris Deline 4/9/2012 - updated 4/19/2012 - update 4/23/2012 
@@ -279,34 +249,28 @@ phi_bar: average masking angle
 	// AppelBaum Appendix A
 	double g, Hs;
 
-
-
-
 	if (!solar_transform( solazi, solzen )) return false;
-
 
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
 	// if no effective tilt then no array self-shading
-	if ( ( (zenith_eff < 90.0) && (fabs(azimuth_eff) < 90.0) ) && ( m_tilt_eff != 0 ) )
-	{
+/*	if ( ( (m_zenith_eff < 90.0) && (fabs(m_azimuth_eff) < 90.0) ) && ( m_tilt_eff != 0 ) )
+	{ */
 		// Appelbaum eqn (12)
-		py = m_A * (cosd(m_tilt_eff) + ( cosd(azimuth_eff) * sind(m_tilt_eff) /tand(90.0-zenith_eff) ) );
+		py = m_A * (cosd(m_tilt_eff) + ( cosd(m_azimuth_eff) * sind(m_tilt_eff) /tand(90.0-m_zenith_eff) ) );
 		// Appelbaum eqn (11)
-		px = m_A * sind(m_tilt_eff) * sind(azimuth_eff) / tand(90.0-zenith_eff);
-	}
+		px = m_A * sind(m_tilt_eff) * sind(m_azimuth_eff) / tand(90.0-m_zenith_eff);
+/*	}
 	else //! Otherwise the sun has set
 	{
 		py = 0;
 		px = 0;
 	}
-
+*/
 
 	// testing
 	m_px=px;
 	m_py=py;
-	m_azi_eff=azimuth_eff;
-	m_zen_eff=zenith_eff;
 
 
 	// Appelbaum equation A12  Xe = R*Px/Py
@@ -339,11 +303,8 @@ phi_bar: average masking angle
 		Hs = min( Hs, m_B );
 	}
 
-
 	m_Xe = g;
 	m_Hs = Hs;
-
-
 
 
 	// X and S from Chris Deline 4/23/12
@@ -386,25 +347,20 @@ phi_bar: average masking angle
 		}
 	}
 
-
 	m_X = X;
 	m_S = S;
 
-
-
-
-// diffuse loss term only
-	m_diffuse_loss_term = iskydiff * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
-	// added full diffuse term back per email from Chris 4/25/12
-	m_reduced_diffuse = iskydiff * pow( cosd( m_tilt_eff / 2.0), 2) - m_diffuse_loss_term;
-
-
+	// diffuse loss term only
+	m_diffuse_loss_term = iskydiff / pow( cosd( m_tilt_eff / 2.0), 2) * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
+	// reduced diffuse radiation
+	m_reduced_diffuse = iskydiff - m_diffuse_loss_term;
 
 
 	// reduced reflected irradiance
 	double F1 = albedo * pow( sind(m_tilt_eff/2.0), 2);
-	double Y1 = m_R - m_B * sind( 180.0 - solazi - m_tilt_eff )  / sind( solazi );
-	Y1 = min(0.0, Y1); // constraint per Chris 4/23/12
+	double solelv = 90.0 - solzen;
+	double Y1 = m_R - m_B * sind( 180.0 - solelv - m_tilt_eff ) / sind(solelv);
+	Y1 = max(0.0, Y1); // constraint per Chris 4/23/12
 	double F2 = 0.5 * albedo * ( 1.0 + Y1/m_B
 		- sqrt( pow(Y1,2)/pow(m_B,2) - 2*Y1/m_B * cosd(180 - m_tilt_eff) + 1.0 ) );
 	double F3 = 0.5 * albedo * ( 1.0 + m_R/m_B
@@ -415,9 +371,8 @@ phi_bar: average masking angle
 	m_F2 = F2;
 	m_F3 = F3;
 
-	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * ibeam
-		+ ( (F1 + (m_r-1) * F3)/ m_r ) * iskydiff;
-
+	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * ibeam/cosd(aoi) 
+		+ ( (F1 + (m_r-1) * F3)/ m_r ) * iskydiff / pow( cosd( m_tilt_eff / 2.0), 2) ;
 
 //	double inc_total =  (ibeam+iskydiff+ignddiff)/1000;
 //	double inc_diff = (iskydiff+ignddiff)/1000;
@@ -473,7 +428,6 @@ phi_bar: average masking angle
 	// check limits
 	if (reduc > 1) reduc = 1.0;
 	if (reduc < 0) reduc = 0.0;
-
 
 	m_dc_derate = reduc;
 	m_eqn5 = eqn5;
@@ -596,34 +550,34 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 
 	if ((Snew[0][0] < 0) && (Snew[1][0] > 0))
 	{
-		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
+		m_azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) - 180;
 	}
     else if ((Snew[0][0] < 0) && (Snew[1][0] < 0))
 	{
-		azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
+		m_azimuth_eff = atand(-Snew[1][0]/Snew[0][0]) + 180;
 	}
     else if (Snew[0][0] == 0)
 	{
-        azimuth_eff = 90;
+        m_azimuth_eff = 90;
 	}
     else
 	{
-        azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
+        m_azimuth_eff = atand(-Snew[1][0]/Snew[0][0]);
 	}
 
     // Correct for domain of Atand
 //    if (Snew[2][0] == 0)
     if (fabs(Snew[2][0]) < 1e-3)
 	{
-		zenith_eff = 90;
+		m_zenith_eff = 90;
 	}
     else if (Snew[2][0] < 0)
 	{
-		zenith_eff = atand(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]) + 180;
+		m_zenith_eff = atand(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]) + 180;
 	}
     else
 	{
-        zenith_eff = atand(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]);
+        m_zenith_eff = atand(sqrt(Snew[0][0]*Snew[0][0]+Snew[1][0]*Snew[1][0])/Snew[2][0]);
 	}
 
     return true;
