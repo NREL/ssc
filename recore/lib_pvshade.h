@@ -31,9 +31,11 @@ public:
 	bool exec( 
 		double solzen,    // solar zenith
 		double solazi,    // solar azimuth
-		double ibeam,     // incident beam
-		double iskydiff,   // incident diffuse
-		double ignddiff,   // reflected diffuse
+		double nominalbeam,     // nominal beam
+		double nominaldiffuse,   // nominal diffuse
+//		double ibeam,     // incident beam
+//		double iskydiff,   // incident diffuse
+//		double ignddiff,   // reflected diffuse
 		double FF0,       // Fill Factor at STC = Pmp0 / Voc0 / Isc0;
 		double albedo,   // used to calculate reduced relected irradiance
 		double aoi);     // angle of incidence - use for reduced reflected irradiance calculation
@@ -82,6 +84,8 @@ public:
 	double m_eqn9;
 	double m_eqn10;
 	double m_eqn14;
+	double m_Gdh;
+	double m_Gd;
 
 
 private:

@@ -206,9 +206,11 @@ void selfshade_t::init()
 bool selfshade_t::exec(
 		double solzen,
 		double solazi,
-		double ibeam,
-		double iskydiff,
-		double ignddiff,
+		double nominalbeam,
+		double nominaldiffuse,
+//		double ibeam,
+//		double iskydiff,
+//		double ignddiff,
 		double FF0,
 		double albedo,
 		double aoi)
@@ -350,10 +352,17 @@ phi_bar: average masking angle
 	m_X = X;
 	m_S = S;
 
+	// Spreadsheet from Chris Deline 4/27/12
+	m_Gd = nominaldiffuse;
+	m_Gdh = m_Gd * 2 / ( 1.0 + cosd( m_tilt_eff ));
+
+//	m_Gd = iskydiff;
+//	m_Gdh = iskydiff / pow( cosd( m_tilt_eff / 2.0), 2);
+
 	// diffuse loss term only
-	m_diffuse_loss_term = iskydiff / pow( cosd( m_tilt_eff / 2.0), 2) * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
+	m_diffuse_loss_term = m_Gdh * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
 	// reduced diffuse radiation
-	m_reduced_diffuse = iskydiff - m_diffuse_loss_term;
+	m_reduced_diffuse = m_Gd - m_diffuse_loss_term;
 
 
 	// reduced reflected irradiance
@@ -371,12 +380,16 @@ phi_bar: average masking angle
 	m_F2 = F2;
 	m_F3 = F3;
 
-	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * ibeam/cosd(aoi) 
-		+ ( (F1 + (m_r-1) * F3)/ m_r ) * iskydiff / pow( cosd( m_tilt_eff / 2.0), 2) ;
+//	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * ibeam/cosd(aoi) 
+//		+ ( (F1 + (m_r-1) * F3)/ m_r ) * m_Gdh;
+	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * nominalbeam/cosd(aoi) 
+		+ ( (F1 + (m_r-1) * F3)/ m_r ) * m_Gdh;
 
 //	double inc_total =  (ibeam+iskydiff+ignddiff)/1000;
 //	double inc_diff = (iskydiff+ignddiff)/1000;
-	double inc_total =  (ibeam+m_reduced_diffuse+m_reduced_reflected)/1000;
+//	double inc_total =  (ibeam+m_reduced_diffuse+m_reduced_reflected)/1000;
+//	double inc_diff = (m_reduced_diffuse+m_reduced_reflected)/1000;
+	double inc_total =  (nominalbeam+m_reduced_diffuse+m_reduced_reflected)/1000;
 	double inc_diff = (m_reduced_diffuse+m_reduced_reflected)/1000;
 	double diffuse_globhoriz = 0;
 	if (inc_total != 0)
