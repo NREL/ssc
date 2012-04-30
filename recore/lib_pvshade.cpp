@@ -363,7 +363,11 @@ phi_bar: average masking angle
 	m_diffuse_loss_term = m_Gdh * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
 	// reduced diffuse radiation
 	m_reduced_diffuse = m_Gd - m_diffuse_loss_term;
-
+	// diffuse derate
+	if (nominaldiffuse == 0)
+		m_dc_derate = 1.0;
+	else
+		m_diffuse_derate = m_reduced_diffuse / m_Gd;
 
 	// reduced reflected irradiance
 	double F1 = albedo * pow( sind(m_tilt_eff/2.0), 2);
@@ -380,10 +384,18 @@ phi_bar: average masking angle
 	m_F2 = F2;
 	m_F3 = F3;
 
+	m_Gr1 = F1 * (nominalbeam + nominaldiffuse);
+	m_Gr2 = F2 * nominalbeam + F3 * nominaldiffuse;
+
 //	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * ibeam/cosd(aoi) 
 //		+ ( (F1 + (m_r-1) * F3)/ m_r ) * m_Gdh;
-	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * nominalbeam/cosd(aoi) 
-		+ ( (F1 + (m_r-1) * F3)/ m_r ) * m_Gdh;
+	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * nominalbeam
+		+ ( (F1 + (m_r-1) * F3)/ m_r ) * nominaldiffuse;
+
+	if (m_Gr1 == 0)
+		m_reflected_derate = 1.0;
+	else
+		m_reflected_derate = m_reduced_reflected / m_Gr1;
 
 //	double inc_total =  (ibeam+iskydiff+ignddiff)/1000;
 //	double inc_diff = (iskydiff+ignddiff)/1000;

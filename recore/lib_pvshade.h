@@ -45,6 +45,8 @@ public:
 	double shade_area() {return m_shade_area;}
 	double reduced_diffuse() {return m_reduced_diffuse;}
 	double reduced_reflected() {return m_reduced_reflected;}
+	double diffuse_derate() {return m_diffuse_derate;}
+	double reflected_derate() {return m_reflected_derate;}
 	bool solar_transform(double solazi, double solzen);
 
 	bool matrix_multiply(double a[][3], double b[][3], double c[][3]);
@@ -86,7 +88,8 @@ public:
 	double m_eqn14;
 	double m_Gdh;
 	double m_Gd;
-
+	double m_Gr1;
+	double m_Gr2;
 
 private:
 	ssarrdat m_arr;
@@ -94,6 +97,8 @@ private:
 	double m_shade_area;
 	double m_reduced_diffuse;
 	double m_reduced_reflected;
+	double m_diffuse_derate;
+	double m_reflected_derate;
 	void init();
 };
 
