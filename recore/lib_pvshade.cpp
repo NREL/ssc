@@ -208,12 +208,8 @@ bool selfshade_t::exec(
 		double solazi,
 		double nominalbeam,
 		double nominaldiffuse,
-//		double ibeam,
-//		double iskydiff,
-//		double ignddiff,
 		double FF0,
-		double albedo,
-		double aoi)
+		double albedo)
 {
 /*
 Chris Deline 4/9/2012 - updated 4/19/2012 - update 4/23/2012 
@@ -256,19 +252,19 @@ phi_bar: average masking angle
 	// Calculate Shading Dimensions
 	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
 	// if no effective tilt then no array self-shading
-/*	if ( ( (m_zenith_eff < 90.0) && (fabs(m_azimuth_eff) < 90.0) ) && ( m_tilt_eff != 0 ) )
-	{ */
+	if ( ( (m_zenith_eff < 90.0) && (fabs(m_azimuth_eff) < 90.0) ) && ( m_tilt_eff != 0 ) )
+	{ 
 		// Appelbaum eqn (12)
 		py = m_A * (cosd(m_tilt_eff) + ( cosd(m_azimuth_eff) * sind(m_tilt_eff) /tand(90.0-m_zenith_eff) ) );
 		// Appelbaum eqn (11)
 		px = m_A * sind(m_tilt_eff) * sind(m_azimuth_eff) / tand(90.0-m_zenith_eff);
-/*	}
+	}
 	else //! Otherwise the sun has set
 	{
 		py = 0;
 		px = 0;
 	}
-*/
+
 
 	// testing
 	m_px=px;
@@ -352,12 +348,8 @@ phi_bar: average masking angle
 	m_X = X;
 	m_S = S;
 
-	// Spreadsheet from Chris Deline 4/27/12
 	m_Gd = nominaldiffuse;
 	m_Gdh = m_Gd * 2 / ( 1.0 + cosd( m_tilt_eff ));
-
-//	m_Gd = iskydiff;
-//	m_Gdh = iskydiff / pow( cosd( m_tilt_eff / 2.0), 2);
 
 	// diffuse loss term only
 	m_diffuse_loss_term = m_Gdh * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
@@ -384,29 +376,26 @@ phi_bar: average masking angle
 	m_F2 = F2;
 	m_F3 = F3;
 
-	m_Gr1 = F1 * (nominalbeam + nominaldiffuse);
-	m_Gr2 = F2 * nominalbeam + F3 * nominaldiffuse;
 
-//	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * ibeam/cosd(aoi) 
-//		+ ( (F1 + (m_r-1) * F3)/ m_r ) * m_Gdh;
-	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * nominalbeam
-		+ ( (F1 + (m_r-1) * F3)/ m_r ) * nominaldiffuse;
+	m_Gb = nominalbeam;
+	m_Gbh = m_Gb * 2 / ( 1.0 + cosd( m_tilt_eff ));
+
+	m_Gr1 = F1 * (m_Gbh + m_Gdh);
+	m_Gr2 = F2 * m_Gbh + F3 * m_Gdh;
+
+	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * m_Gbh
+		+ ( (F1 + (m_r-1) * F3)/ m_r ) * m_Gdh;
 
 	if (m_Gr1 == 0)
 		m_reflected_derate = 1.0;
 	else
 		m_reflected_derate = m_reduced_reflected / m_Gr1;
 
-//	double inc_total =  (ibeam+iskydiff+ignddiff)/1000;
-//	double inc_diff = (iskydiff+ignddiff)/1000;
-//	double inc_total =  (ibeam+m_reduced_diffuse+m_reduced_reflected)/1000;
-//	double inc_diff = (m_reduced_diffuse+m_reduced_reflected)/1000;
-	double inc_total =  (nominalbeam+m_reduced_diffuse+m_reduced_reflected)/1000;
-	double inc_diff = (m_reduced_diffuse+m_reduced_reflected)/1000;
+	double inc_total =  (nominalbeam + m_reduced_diffuse + m_reduced_reflected)/1000;
+	double inc_diff = (m_reduced_diffuse + m_reduced_reflected)/1000;
 	double diffuse_globhoriz = 0;
 	if (inc_total != 0)
 		diffuse_globhoriz = inc_diff / inc_total;
-
 
 	c1 = 0.25 * exp(( 7.7 - 6.0 * FF0) * X);
 
@@ -591,7 +580,6 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 	}
 
     // Correct for domain of Atand
-//    if (Snew[2][0] == 0)
     if (fabs(Snew[2][0]) < 1e-3)
 	{
 		m_zenith_eff = 90;
