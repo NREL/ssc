@@ -321,8 +321,11 @@ public:
 		double Q_tankloss = 0;
 		double Q_useful_prev_hour = 0.0;
 		double V_hot_prev_hour = 0.8 * V_tank;
+		double V_cold_prev_hour = V_tank-V_hot_prev_hour;
 		double T_tank_prev_hour = V_hot_prev_hour/V_tank*T_hot_prev_hour + V_hot_prev_hour/V_tank*T_cold_prev_hour; // weighted average tank temperature (initial)
 		double T_deliv_prev_hour = 0.0;
+		double T_hot_vol_prev_hour = T_hot_prev_hour; 
+		double T_cold_vol_prev_hour = T_cold_prev_hour; 
 
 		/* **********************************************************************
 		   Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, Q_saved
@@ -332,6 +335,7 @@ public:
 			// at beginning of this timestep, temp values are the same as end of last timestep
 			double T_tank = T_tank_prev_hour;
 			double Q_useful = Q_useful_prev_hour;
+			double V_useful = 0.0;
 			double T_deliv = T_deliv_prev_hour;
 			double V_hot = V_hot_prev_hour;
 			double V_cold = V_tank-V_hot;
@@ -361,6 +365,8 @@ public:
 			out_FRUL_use[i] = (ssc_number_t)FRUL_use;
 								
 			double mdot_mix = draw[i];
+			double mdot_useful = mdotCp_use / Cp_water;
+			double T_useful = T_cold;
 
 			double T_tank_prev_iter = 0.0;
 			
@@ -388,6 +394,8 @@ public:
 					Q_useful = area*( FRta_use*I_transmitted[i] - FRUL_use*(T_tank - T_dry[i]) ); // D&B eqn 6.8.1 
 				else
 					Q_useful = 0.0; // absorbed radiation does not exceed thermal losses, etc => no operation
+				//assume: mdot_Cp tank-side = mdot collector-side (= mdotCp_use)
+				T_useful = T_cold + Q_useful / mdotCp_use;
 			
 				/* During solar collection, tank is assumed mixed.
 				   During no solar collection hours, tank is assumed startifed (modeled with 2 variable volume nodes) */
@@ -399,9 +407,23 @@ public:
 						// consequently, first-hour flow volume, even in a high-flow system, may be significantly less than V-tank and the tank will not be fully mixed
 						// therefore, during the first hour, flow (volume and heat) from the collector is simply added to the hot node	
 						// pump run time is estimated as I_incident / 1000, where full-sun incident is 1000 W/m2)
-						V_hot = V_hot_prev_hour + mdot_mix * dT *(I_transmitted[i] / 1000);
-						if (V_hot > V_tank) V_hot = V_tank;
-						T_hot = (T_hot_prev_hour * V_hot * rho_water * Cp_water + Q_useful) / (V_hot * rho_water * Cp_water);
+						mdot = mdot * (I_transmitted[i]/1000);
+						//assume: mdot_Cp tank-side = mdot collector-side (= mdotCp_use)	
+						//mdot_useful = mdotCp_use / Cp_water
+						V_useful = mdot_useful * dT /rho_water; 
+						V_hot = V_hot_prev_hour + V_useful - mdot_mix/rho_water;
+						if (V_hot > V_tank) 
+								V_hot = V_tank;
+						V_cold = V_tank - V_hot;
+						T_hot_vol_prev_hour = T_hot_prev_hour - UA_tank * V_hot/V_tank * (T_hot_prev_hour - T_room) * dT / (rho_water * Cp_water * V_hot);
+						T_hot = (V_useful * T_useful + V_hot_prev_hour * T_hot_vol_prev_hour) / V_hot;
+						T_cold_vol_prev_hour = T_cold_prev_hour - UA_tank * V_cold_prev_hour / V_tank * (T_cold_prev_hour - T_room) * dT / (rho_water * Cp_water * V_cold);
+						T_cold = (mdot_mix * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
+
+						if (V_hot > 0)
+							T_deliv = T_hot;
+						else
+							T_deliv = T_cold;		
 					}
 					else
 					{	
@@ -443,11 +465,13 @@ public:
 						if (V_hot < 0) V_hot = 0;
 					}
 				
-					//T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_hot);
-					T_hot = T_nodeH - UA_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
+					T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_hot);
+					//T_hot = T_nodeH - UA_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
 					V_cold = V_tank-V_hot;
-					//T_cold = T_nodeC - UA_tank * V_cold/V_tank  * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_cold);
-					T_cold = T_nodeC - UA_tank  * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_tank);
+					T_cold_vol_prev_hour = T_nodeC - UA_tank * V_cold_prev_hour / V_tank * (T_nodeC - T_room) * dT / (rho_water * Cp_water * V_cold);
+					T_cold = (mdot_mix * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
+					//T_cold = T_nodeC - UA_tank * V_cold/V_tank * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_cold);
+					//T_cold = T_nodeC - UA_tank  * (T_nodeC - T_room)*dT) / (rho_water * Cp_water * V_tank);
 					
 					if (V_hot > 0)
 						T_deliv = T_hot;
@@ -494,6 +518,7 @@ public:
 			Q_useful_prev_hour = Q_useful;
 			T_tank_prev_hour = T_tank;
 			V_hot_prev_hour = V_hot;
+			V_cold_prev_hour = V_tank-V_hot;
 			T_deliv_prev_hour = T_deliv;
 			T_hot_prev_hour = T_hot;
 			T_cold_prev_hour = T_cold;
