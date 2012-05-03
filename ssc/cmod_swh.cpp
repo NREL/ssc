@@ -18,7 +18,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "max_iter",              "Max iterations allowed",           "",       "",                      "SWH",      "?=100",                   "MIN=0,MAX=1000,INTEGER",             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ftol_iter",             "Iteration tolerance",              "",       "",                      "SWH",      "?=0.01",                  "POSITIVE",             "" },
 
-
+	
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                   "deg",    "",                      "SWH",      "*",                       "MIN=0,MAX=90",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                "deg",    "90=E,180=S",            "SWH",      "*",                       "MIN=0,MAX=360",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                "Ground reflectance factor",        "0..1",   "",                      "SWH",      "*",                       "FACTOR",                            "" },
@@ -415,10 +415,13 @@ public:
 						if (V_hot > V_tank) 
 								V_hot = V_tank;
 						V_cold = V_tank - V_hot;
+						// note: when flow (volume) with a different temperature is added to a variable-volume node, 
+						// the new node temperature is calculated based on volume-weighted temperatures (assuming constant rho and Cp), 
+						// rather than the usual energy balance (with flows into and out of a node) used for a typical constant-volume node. 
 						T_hot_vol_prev_hour = T_hot_prev_hour - UA_tank * V_hot/V_tank * (T_hot_prev_hour - T_room) * dT / (rho_water * Cp_water * V_hot);
 						T_hot = (V_useful * T_useful + V_hot_prev_hour * T_hot_vol_prev_hour) / V_hot;
 						T_cold_vol_prev_hour = T_cold_prev_hour - UA_tank * V_cold_prev_hour / V_tank * (T_cold_prev_hour - T_room) * dT / (rho_water * Cp_water * V_cold);
-						T_cold = (mdot_mix * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
+						T_cold = (mdot_mix/rho_water * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
 
 						if (V_hot > 0)
 							T_deliv = T_hot;
@@ -450,7 +453,6 @@ public:
 					// and mains temperature for the reference hot node and cold node
 					// temperatures in the stratified tank
 					double T_nodeH = (Q_useful_prev_hour > 0.0) ? T_tank_prev_hour : T_hot_prev_hour;
-					double T_nodeC = (Q_useful_prev_hour > 0.0) ? T_mains[i] : T_cold_prev_hour;
 
 					if ( Q_useful_prev_hour > 0 )
 					{
@@ -468,8 +470,10 @@ public:
 					T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_hot);
 					//T_hot = T_nodeH - UA_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
 					V_cold = V_tank-V_hot;
-					T_cold_vol_prev_hour = T_nodeC - UA_tank * V_cold_prev_hour / V_tank * (T_nodeC - T_room) * dT / (rho_water * Cp_water * V_cold);
-					T_cold = (mdot_mix * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
+					// note: when flow (volume) with a different temperature is added to a variable-volume node, 
+					// the new node temperature is calculated based on volume-weighted temperatures (assuming constant rho and Cp), 
+					// rather than the usual energy balance (with flows into and out of a node) used for a tpical constant-volume node. 					T_cold_vol_prev_hour = T_nodeC - UA_tank * V_cold_prev_hour / V_tank * (T_nodeC - T_room) * dT / (rho_water * Cp_water * V_cold);
+					T_cold = (mdot_mix/rho_water * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
 					//T_cold = T_nodeC - UA_tank * V_cold/V_tank * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_cold);
 					//T_cold = T_nodeC - UA_tank  * (T_nodeC - T_room)*dT) / (rho_water * Cp_water * V_tank);
 					
