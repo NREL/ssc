@@ -9,7 +9,7 @@
 struct ssarrdat
 {
 	double tilt, azimuth;
-	int nmodx, nmody, nrows;
+	int nstrx, nmodx, nmody, nrows;
 	double length, width;
 	int mod_orient, str_orient;
 	double row_space, mod_space;

@@ -7,6 +7,9 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
+#ifndef M_EPS
+#define M_EPS 0.00001
+#endif
 
 double min( double a, double b )
 {
@@ -53,7 +56,7 @@ double round(double number)
 // mask angle function for integration from documentation\PV\Shading\ChrisDeline\2012.4.23\SAM shade geometry_v2.docx
 double mask_angle_func(double x, double R, double B, double tilt_eff)
 {
-	return atan( (B-x) * sind(tilt_eff) / (R-B*cosd(tilt_eff) + x*cosd(tilt_eff)) );
+	return atan2( (B-x) * sind(tilt_eff), (R-B*cosd(tilt_eff) + x*cosd(tilt_eff)) );
 }
 
 
@@ -184,6 +187,10 @@ void selfshade_t::init()
 	m_R = m_arr.row_space;
 	m_B = 0.0;
 
+	// check for divide by zero issues with Row spacing per email from Chris 5/2/12
+	if (m_R < M_EPS) m_R = M_EPS;
+
+
 	if ( m_arr.mod_orient == 0 ) // Portrait mode
 	{
 		m_B = m_L*m_m;
@@ -195,7 +202,9 @@ void selfshade_t::init()
 
 	double a = 0.0, b = m_B;
 
-	double mask_angle = qromb( mask_angle_func, a, b, m_R, m_B, m_tilt_eff) / m_B;
+//	double mask_angle = qromb( mask_angle_func, a, b, m_R, m_B, m_tilt_eff) / m_B;
+	// updated to phi(0) per email from Chris Deline 5/2/12
+	double mask_angle = atan2( ( m_B * sind( m_tilt_eff ) ), ( m_R - m_B * cosd( m_tilt_eff ) ) );
 
 	mask_angle *= 180.0/M_PI; 
 
@@ -283,6 +292,13 @@ phi_bar: average masking angle
 		g = min( g, m_W*m_n );
 	else
 		g = min( g, m_L*m_n );
+
+	// if number of modules across bottom > number in string and horizontal wiring then g=0
+	// Chris Deline email 4/19/12
+	if ( ( m_arr.str_orient == 1 ) && ( m_arr.nstrx > 1 ) ) // Horizontal wiring
+	{
+		g = 0;
+	}
 
 	// Appelbaum equation A13  Hs = EF = A(1 - R/Py)
 	if (py == 0)
