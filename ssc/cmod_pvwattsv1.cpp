@@ -139,11 +139,13 @@ public:
 				if (poa_cutin > 0 && poa < poa_cutin)
 					poa = 0;
 
+				double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd;
+
 				if (wind_stow > 0 && wf.wspd >= wind_stow)
 					poa = 0;
 
 				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180);
-				double pvt = tccalc( poa, wf.wspd, wf.tdry );
+				double pvt = tccalc( poa, wspd_corr, wf.tdry );
 				double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
 				double ac = dctoac(pcrate,efffp,dc);
 			
