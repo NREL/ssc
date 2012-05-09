@@ -32,7 +32,6 @@ extern module_entry_info
 	cm_entry_pvwattsv1,
 	cm_entry_pvwatts,
 	cm_entry_timeseq,
-	cm_entry_windwatts,
 	cm_entry_levpartflip,
 	cm_entry_equpartflip,
 	cm_entry_saleleaseback,
@@ -45,7 +44,7 @@ extern module_entry_info
 	cm_entry_test_irr,
 	cm_entry_test_pvshade,
 	cm_entry_geothermal,
-	cm_entry_windfarm,
+	cm_entry_windpower,
 	cm_entry_geothermalui;
 
 /* official module table */
@@ -61,7 +60,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pvwatts,
 	&cm_entry_pvwattsv1,
 	&cm_entry_timeseq,
-	&cm_entry_windwatts,
 	&cm_entry_levpartflip,
 	&cm_entry_equpartflip,
 	&cm_entry_saleleaseback,
@@ -74,7 +72,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_test_irr,
 	&cm_entry_test_pvshade,
 	&cm_entry_geothermal,
-	&cm_entry_windfarm,
+	&cm_entry_windpower,
 	&cm_entry_geothermalui,
 	0 };
 
