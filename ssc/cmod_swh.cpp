@@ -459,25 +459,28 @@ public:
 						// previous hour had solar collection
 						V_hot = V_tank - mdot_mix/rho_water;
 						if (V_hot < 0) V_hot = 0;
+						T_hot = T_nodeH - UA_tank * (T_nodeH - T_room) * dT / (rho_water * Cp_water * V_hot);
+						V_cold = V_tank - V_hot;
+						T_cold = T_nodeC;
 					}
 					else
 					{
 						// previous hour did not have solar collection
 						V_hot = V_hot_prev_hour - mdot_mix/rho_water;
 						if (V_hot < 0) V_hot = 0;
-					}
 				
-					T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_hot);
-					//T_hot = T_nodeH - UA_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
-					V_cold = V_tank-V_hot;
-					// note: when flow (volume) with a different temperature is added to a variable-volume node, 
-					// the new node temperature is calculated based on volume-weighted temperatures (assuming constant rho and Cp), 
-					// rather than the usual energy balance (with flows into and out of a node) used for a tpical constant-volume node.
- 					T_cold_vol_prev_hour = T_nodeC - UA_tank * V_cold_prev_hour / V_tank * (T_nodeC - T_room) * dT / (rho_water * Cp_water * V_cold);
-					T_cold = (mdot_mix/rho_water * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
-					if (V_cold == 0) T_cold = T_cold_vol_prev_hour;
-					//T_cold = T_nodeC - UA_tank * V_cold/V_tank * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_cold);
-					//T_cold = T_nodeC - UA_tank  * (T_nodeC - T_room)*dT) / (rho_water * Cp_water * V_tank);
+						T_hot = T_nodeH - UA_tank * V_hot/V_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_hot);
+						//T_hot = T_nodeH - UA_tank * (T_nodeH - T_room)*dT / (rho_water * Cp_water * V_tank);
+						V_cold = V_tank-V_hot;
+						// note: when flow (volume) with a different temperature is added to a variable-volume node, 
+						// the new node temperature is calculated based on volume-weighted temperatures (assuming constant rho and Cp), 
+						// rather than the usual energy balance (with flows into and out of a node) used for a tpical constant-volume node.
+ 						T_cold_vol_prev_hour = T_nodeC - UA_tank * V_cold_prev_hour / V_tank * (T_nodeC - T_room) * dT / (rho_water * Cp_water * V_cold);
+						T_cold = (mdot_mix/rho_water * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
+						if (V_cold == 0) T_cold = T_cold_vol_prev_hour;
+						//T_cold = T_nodeC - UA_tank * V_cold/V_tank * (T_nodeC - T_room)*dT / (rho_water * Cp_water * V_cold);
+						//T_cold = T_nodeC - UA_tank  * (T_nodeC - T_room)*dT) / (rho_water * Cp_water * V_tank);
+					}
 					
 					if (V_hot > 0)
 						T_deliv = T_hot;
