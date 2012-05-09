@@ -268,13 +268,13 @@ bool  windfile::read()
 				tdry = (double)atof(cols[16]);
 				break;
 
-			case 50:
+			case 20:
 				wspd = (double)atof(cols[5]);
 				wdir = (double)atof(cols[10]);
 				tdry = (double)atof(cols[15]);
 				break;
 
-			case 80:
+			case 50:
 				wspd = (double)atof(cols[4]);
 				wdir = (double)atof(cols[9]);
 				tdry = (double)atof(cols[14]);
