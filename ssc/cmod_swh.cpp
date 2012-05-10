@@ -396,38 +396,51 @@ public:
 				//assume: mdot_Cp tank-side = mdot collector-side (= mdotCp_use)
 				T_useful = T_cold + Q_useful / mdotCp_use;
 			
-				/* During solar collection, tank is assumed mixed.
+				/* During solar collection, tank is assumed mixed (except during hours of low solar collection).
 				   During no solar collection hours, tank is assumed startifed (modeled with 2 variable volume nodes) */
 				if (Q_useful > 0)
 				{
-					if (Q_useful_prev_hour == 0)
+					if (Q_useful_prev_hour == 0 && I_incident[i]/1000 < 0.2)  
+					//if (Q_useful_prev_hour == 0)
 					{
-						// During the first hour of collection, the pump may run for only a fraction of the hour due to start time and chattering
-						// consequently, first-hour flow volume, even in a high-flow system, may be significantly less than V-tank and the tank will not be fully mixed
-						// therefore, during the first hour, flow (volume and heat) from the collector is simply added to the hot node	
-						// first-hour pump run time is estimated as I_incident / 1000, where full-sun incident is 1000 W/m2
-						// assume: mdot_Cp tank-side = mdot collector-side (= mdotCp_use)		
-						double mdotCp_use_first_hour = mdotCp_use * (I_transmitted[i]/1000);
-						V_useful = mdotCp_use_first_hour * dT / (rho_water * Cp_water); 
+						// During start-up hours of low solar collection, the pump may run for only a fraction of the hour due to start/stop times and chattering.
+						// During low solar hours, flow volume (even in a high-flow system) may be significantly less than V-tank and the tank will not be fully mixed
+						// Therefore, during low solar hours, flow (volume and heat) from the collector is simply added to the hot node.
+						// Low solar hour pump run time is estimated as I_incident/1000, where full-sun incident is 1000 W/m2.
+						// Note: This phenomenom may be less prevalent as the system shuts down, because a higher delta-T-off setting keeps the pump running longer and prevents chattering.
+						// Assume: mdot_Cp tank-side = mdot collector-side (= mdotCp_use).		
+						double mdotCp_use_low_solar_hour = mdotCp_use * (I_incident[i]/1000);
+						V_useful = mdotCp_use_low_solar_hour * dT / (rho_water * Cp_water); 
 						V_hot = V_hot_prev_hour + V_useful - mdot_mix/rho_water;
+						
 						if (V_hot > V_tank) 
-								V_hot = V_tank;
+							V_hot = V_tank;
+
 						V_cold = V_tank - V_hot;
 						// note: when flow (volume) with a different temperature is added to a variable-volume node, 
 						// the new node temperature is calculated based on volume-weighted temperatures (assuming constant rho and Cp), 
 						// rather than the usual energy balance (with flows into and out of a node) used for a typical constant-volume node. 
 						if (V_hot_prev_hour == 0) T_hot = T_hot_prev_hour;						
 							T_hot_vol_prev_hour = T_hot_prev_hour - UA_tank * V_hot_prev_hour/V_tank * (T_hot_prev_hour - T_room) * dT / (rho_water * Cp_water * V_hot_prev_hour);
-						if (V_hot == 0) T_hot = T_hot_vol_prev_hour;
+
+						if (V_hot == 0) 
+							T_hot = T_hot_vol_prev_hour;
 						else
 							T_hot = (V_useful * T_useful + (V_hot_prev_hour - mdot_mix/rho_water) * T_hot_vol_prev_hour) / V_hot;						
 
-						if (V_cold_prev_hour == 0) T_cold = T_cold_prev_hour;	
+						if (V_cold_prev_hour == 0) 
+							T_cold = T_cold_prev_hour;	
 						else
 							T_cold_vol_prev_hour = T_cold_prev_hour - UA_tank * V_cold_prev_hour / V_tank * (T_cold_prev_hour - T_room) * dT / (rho_water * Cp_water * V_cold_prev_hour);
-						if (V_cold == 0) T_cold = T_cold_vol_prev_hour;
+
+						if (V_cold == 0) 
+							T_cold = T_cold_vol_prev_hour;
 						else
-							T_cold = (mdot_mix/rho_water * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
+						{
+							if ((mdot_mix/rho_water - V_useful) < 0) T_cold = T_mains[i];
+							else
+								T_cold = ((mdot_mix/rho_water - V_useful) * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
+						}
 
 						if (V_hot > 0)
 							T_deliv = T_hot;
@@ -484,10 +497,13 @@ public:
 						// note: when flow (volume) with a different temperature is added to a variable-volume node, 
 						// the new node temperature is calculated based on volume-weighted temperatures (assuming constant rho and Cp), 
 						// rather than the usual energy balance (with flows into and out of a node) used for a tpical constant-volume node.
-						if (V_cold_prev_hour == 0) T_cold = T_cold_prev_hour;
+						if (V_cold_prev_hour == 0) 
+							T_cold = T_cold_prev_hour;
 						else
 							T_cold_vol_prev_hour = T_cold_prev_hour - UA_tank * V_cold_prev_hour / V_tank * (T_cold_prev_hour - T_room) * dT / (rho_water * Cp_water * V_cold_prev_hour);					
-						if (V_cold == 0) T_cold = T_cold_vol_prev_hour;
+
+						if (V_cold == 0) 
+							T_cold = T_cold_vol_prev_hour;
 						else
 							T_cold = (mdot_mix/rho_water * T_mains[i] + V_cold_prev_hour * T_cold_vol_prev_hour) / V_cold;
 						
