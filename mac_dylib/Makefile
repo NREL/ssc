@@ -45,7 +45,7 @@ OBJECTS = \
 	cmod_pvwatts.o \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
-	cmod_windwatts.o \
+	cmod_windpower.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
