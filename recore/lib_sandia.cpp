@@ -334,7 +334,7 @@ bool sandia_inverter_t::acpower(
 		*Pac = -Pntare;
 		*Ppar = Pntare;
 	}
-
+	// clipping loss
 	if ( *Pac > Paco ) *Pac = Paco;
 
 	*Plr = Pdc / Pdco;
