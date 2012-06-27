@@ -457,7 +457,7 @@ void fcall_httpget( lk::invoke_t &cxt )
 void fcall_httpdownload( lk::invoke_t &cxt )
 {
 	LK_DOC("http_download", "Download a file using HTTP", "(string:url, string:local file):boolean");
-	cxt.result().assign( WebHttpDownload( cxt.arg(0).as_string(), cxt.arg(1).as_string() ) );
+	cxt.result().assign( WebHttpDownload( cxt.arg(0).as_string(), cxt.arg(1).as_string(), "application/binary", false ) );
 }
 
 void fcall_decompress( lk::invoke_t &cxt )
@@ -471,7 +471,7 @@ void fcall_pearson( lk::invoke_t &cxt )
 {
 	LK_DOC("pearson", "Calculate the Pearson linear rank correlation coefficient of two arrays.", "(array:x, array:y):real");
 
-	if ( cxt.arg_count() != 1
+	if ( cxt.arg_count() != 2
 		|| cxt.arg(0).type() != lk::vardata_t::VECTOR
 		|| cxt.arg(1).type() != lk::vardata_t::VECTOR
 		|| cxt.arg(0).length() < 2
@@ -489,7 +489,7 @@ void fcall_pearson( lk::invoke_t &cxt )
 	for (int i=0;i<len;i++)
 	{
 		x[i] = cxt.arg(0).index(i)->as_number();
-		y[i] = cxt.arg(0).index(i)->as_number();
+		y[i] = cxt.arg(1).index(i)->as_number();
 	}
 
 	alglib::real_1d_array xx, yy;
@@ -873,6 +873,9 @@ public:
 			wxMessageBox("A script is already running.");
 			return;
 		}
+		
+		m_env->clear_objs();
+		m_env->clear_vars();
 
 		__g_scriptRunning = true;
 		m_stopScriptFlag = false;
@@ -943,6 +946,7 @@ public:
 				Output("eval fail\n");
 				for (size_t i=0;i<errors.size();i++)
 					Output( wxString(errors[i].c_str()) + "\n");
+
 			}
 		}
 			
@@ -957,6 +961,9 @@ public:
 		m_txtProgress->Hide();
 		
 		Layout();
+		
+		m_env->clear_objs();
+		m_env->clear_vars();
 
 		__g_scriptRunning = false;
 		m_stopScriptFlag = false;
