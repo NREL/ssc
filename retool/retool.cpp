@@ -38,7 +38,9 @@ private:
 public:
 	OutputWindow() : wxFrame( 0, wxID_ANY, "Output Window", wxDefaultPosition, wxSize(900, 200) )
 	{
+#ifdef __WXMSW__
 		SetIcon( wxICON( appicon ) );
+#endif
 		m_text = new wxTextCtrl( this,  wxID_ANY, "Ready\n", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
 	}
 	virtual ~OutputWindow() { __g_outputWindow = 0; }
@@ -561,11 +563,13 @@ private:
 	bool m_stopScriptFlag;
 public:
 	EditorWindow()
-		: wxFrame( 0, wxID_ANY, wxString::Format("untitled %d",++__ndoc), wxDefaultPosition, wxSize(800,800) )
+		: wxFrame( 0, wxID_ANY, wxString::Format("untitled %d",++__ndoc), wxDefaultPosition, wxSize(700,700) )
 	{
 		__s_numEditorWindows++;
 		m_stopScriptFlag = false;
+#ifdef __WXMSW__
 		SetIcon( wxICON( appicon ) );
+#endif
 
 		m_sscData = ::ssc_data_create();
 		
