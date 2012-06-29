@@ -468,57 +468,21 @@ void fcall_decompress( lk::invoke_t &cxt )
 	cxt.result().assign( DecompressFile( cxt.arg(0).as_string(), cxt.arg(1).as_string() ) );
 }
 
-
-void fcall_pearson( lk::invoke_t &cxt )
-{
-	LK_DOC("pearson", "Calculate the Pearson linear rank correlation coefficient of two arrays.", "(array:x, array:y):real");
-
-	if ( cxt.arg_count() != 2
-		|| cxt.arg(0).type() != lk::vardata_t::VECTOR
-		|| cxt.arg(1).type() != lk::vardata_t::VECTOR
-		|| cxt.arg(0).length() < 2
-		|| cxt.arg(1).length() != cxt.arg(0).length() )
-	{
-		cxt.error( "pearson must be supplied with 2 arrays of the same length" );
-		return;
-	}
-	
-	int len = cxt.arg(0).length();
-
-	double *x = new double[len];
-	double *y = new double[len];
-
-	for (int i=0;i<len;i++)
-	{
-		x[i] = cxt.arg(0).index(i)->as_number();
-		y[i] = cxt.arg(1).index(i)->as_number();
-	}
-
-	alglib::real_1d_array xx, yy;
-	xx.setcontent(len,x);
-	yy.setcontent(len,y);
-	cxt.result().assign( alglib::pearsoncorr2( xx, yy ) );
-
-	delete [] x;
-	delete [] y;
-}
-
 lk::fcall_t* retool_funcs()
 {
 	static const lk::fcall_t vec[] = {
 		fcall_in,
 		fcall_out,
 		fcall_outln,
+		fcall_httpget,
+		fcall_httpdownload,
+		fcall_decompress,
 		fcall_newplot,
 		fcall_plot,
 		fcall_plotopt,
 		fcall_plotpng,
 		fcall_axis,
-		fcall_pearson,
 		fcall_rand,
-		fcall_httpget,
-		fcall_httpdownload,
-		fcall_decompress,
 		0 };
 		
 	return (lk::fcall_t*)vec;
