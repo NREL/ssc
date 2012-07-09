@@ -235,7 +235,8 @@ sandia_module_t::sandia_module_t( )
 bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltage, pvoutput_t &out )
 {
 	
-	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = out.CellTemp = 0.0;
+	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
+	out.CellTemp = TcellC;
 	
 	double Gtotal = in.Ibeam + in.Idiff + in.Ignd;
 	if ( Gtotal > 0.0 )
