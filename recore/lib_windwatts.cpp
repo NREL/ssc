@@ -1,11 +1,8 @@
 #include "lib_windwatts.h"
+#include "lib_physics.h"
 
 #include <vector>
 #include <math.h>
-
-#ifndef M_PI
-#define M_PI 3.1415926535
-#endif
 
 #ifndef DTOR
 #define DTOR 0.0174532925
@@ -84,7 +81,7 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	{
 		out_pwr = out_pwr*(1.0-LossP)-LossC;
 		double pden = 0.5*Rho_T*pow(V_Hub, 3.0);
-		double area = M_PI/4.0*Rotor_Di*Rotor_Di;
+		double area = physics::PI/4.0*Rotor_Di*Rotor_Di;
 		out_cp = max_of( 0.0, 1000.0*out_pwr/(pden*area) );
 		if (out_cp < 0.0)
 			out_ct = 0.0;
@@ -127,7 +124,7 @@ void coordtrans( double N, double E, double thetaRada, double *D, double *C)
 {
 //C     THIS SUBROUTINE TRANSFORMS THE MAP EAST,NORTH COORDINATE SYSTEM TO A 
 //C     DOWNWIND,CROSSWIND ORIENTATION ORTHOGONAL TO CURRENT WIND DIRECTION.
-	double thetaRadb = thetaRada +(M_PI/2); //! Rotates to 270 deg (N,E) = 0 deg in (D,E)
+	double thetaRadb = thetaRada +(physics::PI/2); //! Rotates to 270 deg (N,E) = 0 deg in (D,E)
 	*D = E*cos(thetaRadb)-N*sin(thetaRadb); //!northerly = FROM North"
 	*C = E*sin(thetaRadb)+N*cos(thetaRadb);
 }
@@ -396,4 +393,110 @@ int wind_power(
 	}
 	
 	return NumWT;
+}
+
+double gammaln(double x)
+{
+    // Based on VBA code in Xnumbers.xla v 5.6
+	// by Foxes Team, 2007
+    // E -mail: leovlp@libero.it
+    // Web:    http://digilander.libero.it/foxes
+	// 10.11.2006
+
+	double z, w, s, p, mantissa, expo;
+	std::vector<double> cf(15);
+	const double DOUBLEPI = 2 * physics::PI;
+    const double G_ = 607.0/128.0; //= 4.7421875
+    
+    z = x - 1;
+    cf[0] = 0.999999999999997;
+    cf[1] = 57.1562356658629;
+    cf[2] = -59.5979603554755;
+    cf[3] = 14.1360979747417;
+    cf[4] = -0.49191381609762;
+    cf[5] = 3.39946499848119E-05;
+    cf[6] = 4.65236289270486E-05;
+    cf[7] = -9.83744753048796E-05;
+    cf[8] = 1.58088703224912E-04;
+    cf[9] = -2.10264441724105E-04;
+    cf[10] = 2.17439618115213E-04;
+    cf[11] = -1.64318106536764E-04;
+    cf[12] = 8.44182239838528E-05;
+    cf[13] = -2.61908384015814E-05;
+    cf[14] = 3.68991826595316E-06;
+    
+    w = exp(G_)/sqrt(DOUBLEPI);
+    s = cf[0];
+
+	for(int i=1; i<15; i++){
+        s += cf[i] / (z + i);
+	}
+    s = s / w;
+    p = log((z + G_ + 0.5) / exp(1.0)) * (z + 0.5) / log(10.0);
+    
+	//split in mantissa and exponent to avoid overflow
+    expo = floor(p);
+    p = p - floor(p);
+    mantissa = pow(10, p) * s;
+    
+	//rescaling
+    p = floor(log(mantissa) / log(10.0));  // 'int' replaced with '' since VBA 'int' rounds negative numbers down
+    mantissa = mantissa * pow(10.0, -p);
+    expo = expo + p;
+
+	return log(mantissa) + expo * log(10.0);
+}
+
+void weibull_estimate(double turbine_size, double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
+					  double loss_factor, double first_yr_avail,
+					  int count, double wind_speed[], double power_curve[], double hub_efficiency[])
+{
+
+	double hub_ht_windspeed = pow((hub_ht/50.0),shear) * resource_class;
+	double denom = exp(gammaln(1+(1/weibull_k)));
+	double lambda = hub_ht_windspeed/denom;
+	double air_density = 101300.0 * pow( (1-((0.0065*elevation)/288.0)), (9.80665/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
+
+	// 'RUN' MODEL ****************************************************************************************
+	double total_energy_turbine=0;//, total_energy_generic=0;
+	std::vector<double> weibull_cummulative(count, 0);
+	std::vector<double> weibull_probability(count, 0);
+	std::vector<double> weibull_betz(count, 0);
+	std::vector<double> weibull_cp(count, 0);
+	std::vector<double> rayleigh(count, 0);
+	std::vector<double> energy_turbine(count, 0);	// energy from turbine chosen from library
+
+	double step = 0;
+	for (int i=0; i<count; i++)
+	{
+		step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
+
+		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
+		weibull_cummulative[i] = (i>0) ? 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k)) : 0;
+		if (false)
+			weibull_probability[i] = (i>0) ? weibull_cummulative[i] - weibull_cummulative[i-1] : 0;
+		else
+			weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) )/(1/step);
+		weibull_betz[i] = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * 16.0/27.0;
+		weibull_cp[i]   = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * max_cp * hub_efficiency[i];
+		rayleigh[i]		= ( (physics::PI * wind_speed[i]) / (2.0 * pow(hub_ht_windspeed,2.0) ) ) * exp( ((-physics::PI * pow(wind_speed[i],2.0) ) / ( 4.0*pow(hub_ht_windspeed,2.0) )) ) / (1.0/step);
+
+		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
+		energy_turbine[i] = (8760 * weibull_probability[i]) * power_curve[i];
+
+		// keep track of cummulative output
+		total_energy_turbine += energy_turbine[i];
+	}
+
+	// calculate output accounting for losses
+	double annual_output =  total_energy_turbine * loss_factor;
+	double first_yr_output = annual_output * (first_yr_avail/100.0);
+
+
+
+
+
+
+
+
 }

@@ -13,12 +13,22 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "wt_y",                       "Turbine Y coordinates",            "m",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=wt_x",     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "hub_ht",                     "Hub height",                       "m",      "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotor_di",                   "Rotor diameter",                   "m",      "",                      "WindPower",      "*",             "",                      "" },
-	//{ SSC_INPUT,        SSC_NUMBER,      "ctl_mode",                   "Control mode",                     "0/1/2",  "",                      "WindPower",      "*",             "",                      "" },
+	//{ SSC_INPUT,      SSC_NUMBER,      "ctl_mode",                   "Control mode",                     "0/1/2",  "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cutin",                      "Cut-in wind speed",                "m/s",    "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossc",                      "Constant losses",                  "kW",     "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossp",                      "Percentage losses",                "%",      "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                    "Height of resource measurement",   "m",      "",                      "WindPower",      "*",             "INTEGER",               "" },
-	
+
+
+	{ SSC_INPUT,        SSC_NUMBER,      "model_choice",               "Hourly or Weibull model",		   "0/1",    "",                      "WindPower",      "*",             "INTEGER",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "weibullK",                   "Weibull K factor for wind resource","",      "",                      "WindPower",      "*",             "",		              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "max_cp",                     "Max cp",						   "",       "",                      "WindPower",      "*",             "",		              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "resource_class",             "Wind Resource Class",			   "",       "",                      "WindPower",      "*",             "",		              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",						   "m",      "",                      "WindPower",      "*",             "",		              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "hub_efficiency",             "Array of hub efficiencies",		   "%",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
+
+
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "farmpwr",                    "Net electric generation",          "kWhac",  "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "winddir",                    "Wind direction",                   "deg",    "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "windspd",                    "Wind speed",                       "m/s",    "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
@@ -42,10 +52,15 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		const char *file = as_string("file_name");
-		
-		windfile wf(file);		
-		if (!wf.ok()) throw exec_error("windpower", "failed to read local weather file: " + std::string(file));
+		// might be used in either model
+		double shear = as_double("shear");
+		double turbul = as_double("turbul");
+		double hub_ht = as_double("hub_ht");
+		double rotor_di = as_double("rotor_di");
+		double meas_ht = as_double("meas_ht");
+		double cutin = as_double("cutin");
+		double lossc = as_double("lossc");
+		double lossp = as_double("lossp");
 
 		size_t pc_len = 0;
 		ssc_number_t *pc_w = as_array( "pc_wind", &pc_len );
@@ -55,11 +70,21 @@ public:
 		ssc_number_t *wt_x = as_array( "wt_x", &nwt );
 		ssc_number_t *wt_y = as_array( "wt_y", NULL );
 
-		double shear = as_double("shear");
-		double turbul = as_double("turbul");
-		double hub_ht = as_double("hub_ht");
-		double rotor_di = as_double("rotor_di");
-		double meas_ht = as_double("meas_ht");
+		// have to be allocated to return without errors
+		ssc_number_t *farmpwr = allocate( "farmpwr", 8760 );
+		ssc_number_t *wspd = allocate("windspd", 8760);
+		ssc_number_t *wdir = allocate("winddir", 8760);
+		util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", 8760, nwt );
+		util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", 8760, nwt );
+		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", 8760, nwt );
+
+		// now choose which model to run
+		int iModelType = as_integer("model_choice"); // 0=hourly farm model (8760 array outputs), 1=weibull statistical model (single outputs)
+		if (iModelType == 1) return;
+
+		const char *file = as_string("file_name");
+		windfile wf(file);		
+		if (!wf.ok()) throw exec_error("windpower", "failed to read local weather file: " + std::string(file));
 		wf.resource_ht = as_integer("meas_ht");
 
 		/* ctl_mode hardwired to '2'.  apparently not implemented 
@@ -67,9 +92,6 @@ public:
 		  apd 03jan11 */
 
 		int ctl_mode = 2; // as_integer("ctl_mode");
-		double cutin = as_double("cutin");
-		double lossc = as_double("lossc");
-		double lossp = as_double("lossp");
 
 		std::vector<double> Dn(nwt), Cs(nwt), 
 			Power(nwt), Thrust(nwt), Eff(nwt), 
@@ -92,12 +114,6 @@ public:
 			dpcP[i] = (double)pc_p[i];
 		}
 
-		ssc_number_t *farmpwr = allocate( "farmpwr", 8760 );
-		ssc_number_t *wspd = allocate("windspd", 8760);
-		ssc_number_t *wdir = allocate("winddir", 8760);
-		util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", 8760, nwt );
-		util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", 8760, nwt );
-		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", 8760, nwt );
 		
