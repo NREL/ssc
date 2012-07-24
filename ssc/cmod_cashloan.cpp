@@ -23,6 +23,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback",                            "years",        "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 			
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Energy Value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M Capacity-based expense",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -30,6 +33,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_net_salvage_value",     "Net salvage value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -39,15 +43,31 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_principal","Principal payment",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_total",    "Total P&I debt payment",             "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_fed",             "Federal IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_sta",             "State IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_uti",             "Utility IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_oth",             "Other IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total",             "Total IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_fed",             "Federal CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_sta",             "State CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_uti",             "Utility CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_oth",             "Other CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total",             "Total CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_fed",             "Federal PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_sta",             "State PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_uti",             "Utility PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_oth",             "Other PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_total",               "Total PTC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_fed_total",         "Federal ITC income",                 "$",            "",                      "Cashloan",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_sta_total",         "State ITC income",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",         "Total ITC income",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
 	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depr_sched",                        "State depreciation schedule",              "%",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depreciation",                      "State depreciation",                       "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -78,7 +98,7 @@ extern var_info
 	vtab_standard_loan[],
 	vtab_oandm[],
 	vtab_depreciation[],
-	vtab_utility_rate[],
+//	vtab_utility_rate[],
 	vtab_tax_credits[],
 	vtab_payment_incentives[];
 
@@ -93,6 +113,7 @@ enum {
 	CF_property_tax_assessed_value,
 	CF_property_tax_expense,
 	CF_insurance_expense,
+	CF_net_salvage_value,
 	CF_operating_expenses,
 
 	CF_deductible_expenses,
@@ -110,6 +131,7 @@ enum {
 	
 	CF_ptc_fed,
 	CF_ptc_sta,
+	CF_ptc_total,
 	
 	CF_sta_depr_sched,
 	CF_sta_depreciation,
@@ -286,6 +308,7 @@ public:
 		compute_production_incentive_IRS_2010_37( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
 	
 
+
 		double federal_depr_basis = total_cost
 			- ( as_boolean("ibi_fed_amount_deprbas_fed")  ? ibi_fed_amount : 0 )
 			- ( as_boolean("ibi_sta_amount_deprbas_fed")  ? ibi_sta_amount : 0 )
@@ -400,13 +423,19 @@ public:
 			
 			cf.at(CF_insurance_expense,i) = total_cost * insurance_rate * pow( 1 + inflation_rate, i-1 );
 
+			if (i == nyears) /* salvage value handled as negative operating expense in last year */
+				cf.at(CF_net_salvage_value,i) = total_cost * salvage_frac;
+			else
+				cf.at(CF_net_salvage_value,i) = 0.0;
+
 			cf.at(CF_operating_expenses,i) = 
 				+ cf.at(CF_om_fixed_expense,i)
 				+ cf.at(CF_om_production_expense,i)
 				+ cf.at(CF_om_capacity_expense,i)
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
-				+ cf.at(CF_insurance_expense,i);
+				+ cf.at(CF_insurance_expense,i)
+				- cf.at(CF_net_salvage_value,i);
 
 			if (i == nyears) /* salvage value handled as negative operating expense in last year */
 				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac; // updated to be consistent with DHF models - not inflated
@@ -451,6 +480,8 @@ public:
 			
 			// compute pbi total		
 			cf.at(CF_pbi_total, i) = cf.at(CF_pbi_fed, i) + cf.at(CF_pbi_sta, i) + cf.at(CF_pbi_uti, i) + cf.at(CF_pbi_oth, i);
+			// compute ptc total		
+			cf.at(CF_ptc_total, i) = cf.at(CF_ptc_fed, i) + cf.at(CF_ptc_sta, i);
 			
 			// compute depreciation from basis and precalculated schedule
 			cf.at(CF_sta_depreciation,i) = cf.at(CF_sta_depr_sched,i)*state_depr_basis;
@@ -594,6 +625,7 @@ public:
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
+		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
 
 		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");
@@ -603,15 +635,32 @@ public:
 		save_cf( CF_debt_payment_principal, nyears, "cf_debt_payment_principal" );
 		save_cf( CF_debt_payment_total, nyears, "cf_debt_payment_total" );
 
+		assign( "ibi_total_fed", var_data((ssc_number_t) (ibi_fed_amount + ibi_fed_per)));
+		assign( "ibi_total_sta", var_data((ssc_number_t) (ibi_sta_amount + ibi_sta_per)));
+		assign( "ibi_total_uti", var_data((ssc_number_t) (ibi_uti_amount + ibi_uti_per)));
+		assign( "ibi_total_oth", var_data((ssc_number_t) (ibi_oth_amount + ibi_oth_per)));
 		assign( "ibi_total", var_data((ssc_number_t) ibi_total));
+
+		assign( "cbi_total_fed", var_data((ssc_number_t) (cbi_fed_amount)));
+		assign( "cbi_total_sta", var_data((ssc_number_t) (cbi_sta_amount)));
+		assign( "cbi_total_uti", var_data((ssc_number_t) (cbi_uti_amount)));
+		assign( "cbi_total_oth", var_data((ssc_number_t) (cbi_oth_amount)));
 		assign( "cbi_total", var_data((ssc_number_t) cbi_total));
+		
+		
+		save_cf( CF_pbi_fed, nyears, "cf_pbi_total_fed" );
+		save_cf( CF_pbi_sta, nyears, "cf_pbi_total_sta" );
+		save_cf( CF_pbi_uti, nyears, "cf_pbi_total_uti" );
+		save_cf( CF_pbi_oth, nyears, "cf_pbi_total_oth" );
 		save_cf( CF_pbi_total, nyears, "cf_pbi_total" );
 	
 		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
 		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
+		save_cf( CF_ptc_total, nyears, "cf_ptc_total" );
 
 		assign( "itc_fed_total", var_data((ssc_number_t) itc_fed_total));
 		assign( "itc_sta_total", var_data((ssc_number_t) itc_sta_total));
+		assign( "itc_total", var_data((ssc_number_t) (itc_fed_total+itc_sta_total)));
 	
 		save_cf( CF_sta_depr_sched, nyears, "cf_sta_depr_sched" );
 		save_cf( CF_sta_depreciation, nyears, "cf_sta_depreciation" );
