@@ -7,7 +7,7 @@
 namespace physics
 {
 	const double PI = 2.0 * acos(0.0);
-	const double FT_PER_METER =			3.280839895; // feet per meter
+	const double FT_PER_METER =			3.280839895;			// feet per meter
 	const double PSI_PER_BAR =		   14.50377373066;			// psi per bar
 	const double PSI_PER_INHG =			0.4911541474703;		// psi per inch of mercury
 	const double Pa_PER_Atm =	   101300.00	/*101325.0*/;	// pascals per atm;  101300.0 is value currently in fortran

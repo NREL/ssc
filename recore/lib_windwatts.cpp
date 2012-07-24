@@ -447,15 +447,14 @@ double gammaln(double x)
 	return log(mantissa) + expo * log(10.0);
 }
 
-void weibull_estimate(double turbine_size, double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
-					  double loss_factor, double first_yr_avail,
-					  int count, double wind_speed[], double power_curve[], double hub_efficiency[])
-{
+double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
+						 int count, double wind_speed[], double power_curve[], double hub_efficiency[])
+{	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((hub_ht/50.0),shear) * resource_class;
 	double denom = exp(gammaln(1+(1/weibull_k)));
 	double lambda = hub_ht_windspeed/denom;
-	double air_density = 101300.0 * pow( (1-((0.0065*elevation)/288.0)), (9.80665/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
+	double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
 
 	// 'RUN' MODEL ****************************************************************************************
 	double total_energy_turbine=0;//, total_energy_generic=0;
@@ -489,14 +488,5 @@ void weibull_estimate(double turbine_size, double rotor_diameter, double weibull
 	}
 
 	// calculate output accounting for losses
-	double annual_output =  total_energy_turbine * loss_factor;
-	double first_yr_output = annual_output * (first_yr_avail/100.0);
-
-
-
-
-
-
-
-
+	return  total_energy_turbine;
 }

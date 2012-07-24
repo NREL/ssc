@@ -78,9 +78,46 @@ public:
 		util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", 8760, nwt );
 
+		std::vector<double> Dn(nwt), Cs(nwt), 
+			Power(nwt), Thrust(nwt), Eff(nwt), 
+			Wind(nwt), Turb(nwt), 
+			
+			X(nwt), Y(nwt),
+			dpcW(pc_len), dpcP(pc_len);
+
+		size_t i,j;
+
+		for (i=0;i<pc_len;i++)
+		{
+			dpcW[i] = (double)pc_w[i];
+			dpcP[i] = (double)pc_p[i];
+		}
+
 		// now choose which model to run
 		int iModelType = as_integer("model_choice"); // 0=hourly farm model (8760 array outputs), 1=weibull statistical model (single outputs)
-		if (iModelType == 1) return;
+		if (iModelType == 1) // doing a Weibull estimate, not an hourly simulation
+		{
+			double weibull_k = as_double("weibullK");
+			double max_cp = as_double("max_cp");
+			double resource_class = as_double("resource_class");
+			double elevation = as_double("elevation");
+			
+			ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
+			std::vector<double> dp_hub_eff(pc_len);
+			for (i=0;i<pc_len;i++)
+				dp_hub_eff[i] = (double)hub_efficiency[i];
+
+			double turbine_kw = turbine_output_using_weibull(rotor_di, weibull_k, shear, max_cp, hub_ht, resource_class, elevation, (int)pc_len, &dpcW[0], &dpcP[0], &dp_hub_eff[0]);
+			turbine_kw = turbine_kw * (1 - (lossp/100.0)) - lossc;
+
+			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * nwt;
+
+			for (i=0;i<8760;i++)
+				farmpwr[i] = farm_kw/8760.0f;
+
+			return;
+		}
+
 
 		const char *file = as_string("file_name");
 		windfile wf(file);		
@@ -93,26 +130,12 @@ public:
 
 		int ctl_mode = 2; // as_integer("ctl_mode");
 
-		std::vector<double> Dn(nwt), Cs(nwt), 
-			Power(nwt), Thrust(nwt), Eff(nwt), 
-			Wind(nwt), Turb(nwt), 
-			
-			X(nwt), Y(nwt),
-			dpcW(pc_len), dpcP(pc_len);
-
-		size_t i,j;
-
 		for (i=0;i<nwt;i++)
 		{
 			X[i] = (double)wt_x[i];
 			Y[i] = (double)wt_y[i];
 		}
 
-		for (i=0;i<pc_len;i++)
-		{
-			dpcW[i] = (double)pc_w[i];
-			dpcP[i] = (double)pc_p[i];
-		}
 
 		util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", 8760, nwt );
@@ -152,7 +175,7 @@ public:
 						0,
 						0,
 						lossc,
-						lossp,
+						lossp/100.0,
 
 						/* outputs */
 						&farmp,
