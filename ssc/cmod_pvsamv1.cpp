@@ -261,8 +261,6 @@ public:
 	
 	void exec( ) throw( general_error )
 	{
-		static const int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
-
 		// run some preliminary checks on inputs
 		if (as_integer("self_shading_enabled") && as_integer("track_mode"))
 			throw exec_error( "pvsamv1", "Self-shading is enabled on the Shading page, but does not\n"
@@ -665,7 +663,7 @@ public:
 		
 			int c=0;
 			for (int m=0;m<12;m++)
-				for (int d=0;d<nday[m];d++)
+				for (int d=0;d<util::nday[m];d++)
 					for (int h=0;h<24;h++)
 						shad_beam_factor[c++] *= v->num.at(m,h);
 		}
@@ -812,7 +810,7 @@ public:
 				
 			// apply beam shading based on solar azimuth/altitude table
 			if ( enable_azalt_beam_shading )
-				ibeam *= azaltinterp( solazi, solalt, azaltvals );
+				ibeam *= util::azaltinterp( solazi, solalt, azaltvals );
 
 			double dcpwr = 0, dcv = 0, dceff = 0, tcell = wf.tdry;
 			double acpwr = 0, aceff = 0;
@@ -1227,91 +1225,6 @@ TotRadkW = ITotal_soil/3600. */
 		double wx=(irrad-rad[i1])/(rad[i]-rad[i1]);
 		return (1-wx)*eff[i1]+wx*eff[i];
 	}
-
-	double azaltinterp(double azimuth, double altitude, const util::matrix_t<double> &azaltvals)
-	{
-		int r = azaltvals.nrows();
-		int c = azaltvals.ncols();
-
-		int i, j;
-		double reduc = 1.0;
-	
-		if (azimuth < 0 || azimuth > 360 || altitude < 0 || altitude > 90) return reduc;
-
-		int alt_l = 1;
-		int azi_l = 1;
-		double alt_d = 0;
-		double azi_d = 0;
-		util::matrix_t<double> x(2);
-		util::matrix_t<double> y(2);			
-		util::matrix_t<double> fQ(2,2);
-
-		for (i=0;i<2;i++)
-			for (j=0;j<2;j++)
-				fQ.at(i,j) = 1.0;
-
-		for (i=0;i<2;i++)
-		{
-			x[i]=1.0;
-			y[i]=1.0;
-		}
-
-		for (i=1;i<r;i++)
-		{
-			if ((azaltvals.at(i,0) - altitude) > 0)
-			{
-				alt_l = i;
-				if (i == r-1) alt_d = 0;
-				else alt_d = azaltvals.at(i,0) - altitude;
-			
-			}
-		}
-
-		for (i=1;i<c;i++)
-		{
-			if (azimuth - azaltvals.at(0,i) > 0)
-			{
-				azi_l = i;
-				if (i == c-1) azi_d = 0;
-				else azi_d = azimuth-azaltvals.at(0,i);	
-			}
-		}
-
-		if (alt_d == 0 && azi_d == 0) reduc = azaltvals.at(alt_l,azi_l);
-		else if (alt_d == 0) reduc = azaltvals.at(alt_l,azi_l)+
-			((azaltvals.at(alt_l,azi_l+1)-(azaltvals.at(alt_l,azi_l)))
-			/(azaltvals.at(0,azi_l+1)-(azaltvals.at(0,azi_l))))*azi_d;
-		else if (azi_d == 0) reduc = azaltvals.at(alt_l,azi_l)+
-			((azaltvals.at(alt_l+1,azi_l)-(azaltvals.at(alt_l,azi_l)))/
-			(azaltvals.at(alt_l+1,0)-(azaltvals.at(alt_l,0))))*alt_d;
-		else 
-		{
-			for (i=0;i<2;i++)
-				for (j=0;j<2;j++)
-					fQ.at(i,j) = azaltvals.at(alt_l+i,azi_l+j);
-
-			for (i=0;i<2;i++) 
-			{
-				x.at(i) = azaltvals.at(alt_l+i,0);
-				y.at(i) = azaltvals.at(0,azi_l+i);
-			}
-		
-			if (x.at(1) - x.at(0) == 0 && y.at(1) - y.at(0) == 0) reduc = azaltvals.at(alt_l,azi_l);
-			else if (x.at(1) - x.at(0) == 0) reduc = azaltvals.at(alt_l,azi_l)+
-				((azaltvals.at(alt_l,azi_l+1)-(azaltvals.at(alt_l,azi_l)))
-				/(azaltvals.at(0,azi_l+1)-(azaltvals.at(0,azi_l))))*azi_d;
-			else if (y.at(1) - y.at(0) == 0) reduc = azaltvals.at(alt_l,azi_l)+
-				((azaltvals.at(alt_l+1,azi_l)-(azaltvals.at(alt_l,azi_l)))/
-				(azaltvals.at(alt_l+1,0)-(azaltvals.at(alt_l,0))))*alt_d;
-			else reduc = (fQ.at(0,0)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(x.at(1)-altitude)*(y.at(1)-azimuth)
-				+(fQ.at(1,0)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(altitude-x.at(0))*(y.at(1)-azimuth)
-				+(fQ.at(0,1)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(x.at(1)-altitude)*(azimuth-y.at(0))
-				+(fQ.at(1,1)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(altitude-x.at(0))*(azimuth-y.at(0));
-		}
-
-		return reduc;
-	}
-	
 
 	void accumulate_monthly(const std::string &hourly_var, const std::string &monthly_var)
 	{

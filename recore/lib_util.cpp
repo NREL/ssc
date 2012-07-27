@@ -809,3 +809,87 @@ bool util::translate_schedule( int tod[8760], const char *wkday, const char *wke
 	return true;
 }
 
+
+double util::azaltinterp(double azimuth, double altitude, const util::matrix_t<double> &azaltvals)
+{
+	int r = azaltvals.nrows();
+	int c = azaltvals.ncols();
+
+	int i, j;
+	double reduc = 1.0;
+	
+	if (azimuth < 0 || azimuth > 360 || altitude < 0 || altitude > 90) return reduc;
+
+	int alt_l = 1;
+	int azi_l = 1;
+	double alt_d = 0;
+	double azi_d = 0;
+	util::matrix_t<double> x(2);
+	util::matrix_t<double> y(2);			
+	util::matrix_t<double> fQ(2,2);
+
+	for (i=0;i<2;i++)
+		for (j=0;j<2;j++)
+			fQ.at(i,j) = 1.0;
+
+	for (i=0;i<2;i++)
+	{
+		x[i]=1.0;
+		y[i]=1.0;
+	}
+
+	for (i=1;i<r;i++)
+	{
+		if ((azaltvals.at(i,0) - altitude) > 0)
+		{
+			alt_l = i;
+			if (i == r-1) alt_d = 0;
+			else alt_d = azaltvals.at(i,0) - altitude;
+			
+		}
+	}
+
+	for (i=1;i<c;i++)
+	{
+		if (azimuth - azaltvals.at(0,i) > 0)
+		{
+			azi_l = i;
+			if (i == c-1) azi_d = 0;
+			else azi_d = azimuth-azaltvals.at(0,i);	
+		}
+	}
+
+	if (alt_d == 0 && azi_d == 0) reduc = azaltvals.at(alt_l,azi_l);
+	else if (alt_d == 0) reduc = azaltvals.at(alt_l,azi_l)+
+		((azaltvals.at(alt_l,azi_l+1)-(azaltvals.at(alt_l,azi_l)))
+		/(azaltvals.at(0,azi_l+1)-(azaltvals.at(0,azi_l))))*azi_d;
+	else if (azi_d == 0) reduc = azaltvals.at(alt_l,azi_l)+
+		((azaltvals.at(alt_l+1,azi_l)-(azaltvals.at(alt_l,azi_l)))/
+		(azaltvals.at(alt_l+1,0)-(azaltvals.at(alt_l,0))))*alt_d;
+	else 
+	{
+		for (i=0;i<2;i++)
+			for (j=0;j<2;j++)
+				fQ.at(i,j) = azaltvals.at(alt_l+i,azi_l+j);
+
+		for (i=0;i<2;i++) 
+		{
+			x.at(i) = azaltvals.at(alt_l+i,0);
+			y.at(i) = azaltvals.at(0,azi_l+i);
+		}
+		
+		if (x.at(1) - x.at(0) == 0 && y.at(1) - y.at(0) == 0) reduc = azaltvals.at(alt_l,azi_l);
+		else if (x.at(1) - x.at(0) == 0) reduc = azaltvals.at(alt_l,azi_l)+
+			((azaltvals.at(alt_l,azi_l+1)-(azaltvals.at(alt_l,azi_l)))
+			/(azaltvals.at(0,azi_l+1)-(azaltvals.at(0,azi_l))))*azi_d;
+		else if (y.at(1) - y.at(0) == 0) reduc = azaltvals.at(alt_l,azi_l)+
+			((azaltvals.at(alt_l+1,azi_l)-(azaltvals.at(alt_l,azi_l)))/
+			(azaltvals.at(alt_l+1,0)-(azaltvals.at(alt_l,0))))*alt_d;
+		else reduc = (fQ.at(0,0)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(x.at(1)-altitude)*(y.at(1)-azimuth)
+			+(fQ.at(1,0)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(altitude-x.at(0))*(y.at(1)-azimuth)
+			+(fQ.at(0,1)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(x.at(1)-altitude)*(azimuth-y.at(0))
+			+(fQ.at(1,1)/((x.at(1)-x.at(0))*(y.at(1)-y.at(0))))*(altitude-x.at(0))*(azimuth-y.at(0));
+	}
+
+	return reduc;
+}

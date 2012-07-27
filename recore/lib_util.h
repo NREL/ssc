@@ -346,6 +346,8 @@ namespace util
 		}
 	};
 
+	
+	double azaltinterp(double azimuth, double altitude, const matrix_t<double> &azaltvals);
 };
 
 
