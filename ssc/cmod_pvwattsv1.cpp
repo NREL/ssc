@@ -60,7 +60,7 @@ public:
 		double azimuth = as_double("azimuth");
 		double tilt = wf.lat;
 		if ( !lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat") )
-			tilt = as_double("tilt");
+			tilt = fabs( as_double("tilt") );
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
 		ssc_number_t *p_ac = allocate("ac", 8760);

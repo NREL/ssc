@@ -402,11 +402,17 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 			std::string expr = *it;
 			if (expr == "&")
 			{
+				if (cur_result == 0) // short circuit evaluation
+					break;
+
 				cur_cond_oper = '&';
 				continue;
 			}
 			else if (expr == "|")
 			{
+				if (cur_result > 0) // short circuit evaluation
+					break;
+
 				cur_cond_oper = '|';
 				continue;
 			}

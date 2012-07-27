@@ -18,11 +18,11 @@
 #include "6par_solve.h"
 #include "lib_pvshade.h"
 
-inline double to_double(double x) { return x; }
+static inline double to_double(double x) { return x; }
 
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "weather_file",                                "Weather file in TMY2, TMY3, or EPW.",                   "",       "",                              "pvsamv1",              "*",                        "LOCAL_FILE",                    "" },
+	{ SSC_INPUT,        SSC_STRING,      "weather_file",                                "Weather file in TMY2, TMY3, EPW, or SMW.",              "",       "",                              "pvsamv1",              "*",                        "LOCAL_FILE",                    "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",                "0/1",    "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                                      "User specified ground albedo",                          "0..1",   "",                              "pvsamv1",              "?=0.2",                    "MIN=0,MAX=100",                 "" },
@@ -30,7 +30,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                     "",       "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "monthly_soiling",                             "Monthly soiling derate",                                "%",      "",                              "pvsamv1",              "*",                        "LENGTH=12",                     "" },
-
 	{ SSC_INPUT,        SSC_NUMBER,      "pre_derate",                                  "Pre-inverter derate",                                   "%",      "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "post_derate",                                 "Post-inverter derate",                                  "%",      "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                 "" },
 	
@@ -43,8 +42,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                                  "Tracking mode",                                         "",       "0=fixed,1=1axis,2=2axis,3=azi", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                                      "Tracker rotation limit",                                "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "enable_backtracking",                         "Enable backtracking for 1 axis trackers",               "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "btwidth",                                     "Width of backtracking row",                             "m",      "",                              "pvsamv1",              "enable_backtracing=1",     "POSITIVE",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "btspacing",                                   "Spacing between edges of backtracking rows",            "m",      "",                              "pvsamv1",              "enable_backtracing=1",     "POSITIVE",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "btwidth",                                     "Width of backtracking row",                             "m",      "",                              "pvsamv1",              "enable_backtracking=1",    "POSITIVE",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "btspacing",                                   "Spacing between edges of backtracking rows",            "m",      "",                              "pvsamv1",              "enable_backtracking=1",    "POSITIVE",                      "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "module_model",                                "Photovoltaic module model specifier",                   "",       "0=spe,1=cec,2=6par_user,3=snl", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
 	
@@ -77,7 +76,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_i_mp_ref",                                "Maximum power point current",                           "A",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_i_o_ref",                                 "Saturation current",                                    "A",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_i_sc_ref",                                "Short circuit current",                                 "A",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_n_s",                                     "Number of cells in series",                             "",       "",                              "pvsamv1",              "module_model=1",           "INTEGER,POSITIVE",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_n_s",                                     "Number of cells in series",                             "",       "",                              "pvsamv1",              "module_model=1",           "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_r_s",                                     "Series resistance",                                     "ohm",    "",                              "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_r_sh_ref",                                "Shunt resistance",                                      "ohm",    "",                              "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_t_noct",                                  "Nominal operating cell temperature",                    "C",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
@@ -85,7 +84,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_v_oc_ref",                                "Open circuit voltage",                                  "V",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_temp_corr_mode",                          "Cell temperature model selection",                      "",       "0=noct,1=mc",                   "pvsamv1",              "module_model=1",           "INTEGER,MIN=0,MAX=1",           "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_standoff",                                "Standoff mode",                                         "",       "0=bipv,1=3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=ground/rack",  "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=5",       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_standoff",                                "Standoff mode",                                         "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=6",       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_height",                                  "Array mounting height",                                 "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=1",       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_mounting_config",                         "Mounting configuration",                                "",       "0=rack,1=flush,2=integrated,3=gap",                                 "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "INTEGER,MIN=0,MAX=3",       "" },
@@ -94,12 +93,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_gap_spacing",                             "Gap spacing",                                           "m",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_module_width",                            "Module width",                                          "m",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_module_length",                           "Module height",                                         "m",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_array_rows",                              "Rows of modules in array",                              "",       "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "INTEGER",                   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_array_cols",                              "Columns of modules in array",                           "",       "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "INTEGER",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_array_rows",                              "Rows of modules in array",                              "",       "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_array_cols",                              "Columns of modules in array",                           "",       "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_backside_temp",                           "Module backside temperature",                           "C",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "POSITIVE",                  "" },
 		
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_celltech",                               "Solar cell technology type",                            "",       "monoSi=0,multiSi=1,CdTe=2,CIS=3,CIGS=4,Amorphous=5",                "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=5",       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_vmp",                                    "Maximum power point voltage (Vmp)"                      "V",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "6par_vmp",                                    "Maximum power point voltage (Vmp)",                     "V",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_imp",                                    "Imp",                                                   "A",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_voc",                                    "Voc",                                                   "V",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_isc",                                    "Isc",                                                   "A",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
@@ -109,10 +108,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_nser",                                   "Nseries",                                               "",       "",                                                                  "pvsamv1",       "module_model=2",                           "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_area",                                   "Module area",                                           "m2",     "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_tnoct",                                  "Nominal operating cell temperature",                    "C",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_standoff",                               "Standoff mode",                                         "",       "0=bipv,1=3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=ground/rack",  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_mounting",                               "Array mounting height",                                 "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=2",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "6par_standoff",                               "Standoff mode",                                         "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,6=<0.5in,5=ground/rack",  "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=6",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "6par_mounting",                               "Array mounting height",                                 "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=1",           "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_module_structure",                        "Module and mounting structure configuration",           "",       "0=Use Database Values,1=glass/cell/polymer sheet - open rack,2=glass/cell/glass - open rack,3=polymer/thin film/steel - open rack,4=Insulated back (building-integrated PV),5=close roof mount,6=user-defined",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "snl_module_structure",                        "Module and mounting structure configuration",           "",       "0=Use Database Values,1=glass/cell/polymer sheet - open rack,2=glass/cell/glass - open rack,3=polymer/thin film/steel - open rack,4=Insulated back (building-integrated PV),5=close roof mount,6=user-defined",                      "pvsamv1",       "module_model=3",                    "INTEGER,MIN=0,MAX=6",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_a",                                       "Temperature coefficient a",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_b",                                       "Temperature coefficient b",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_dtc",                                     "Temperature coefficient dT",                            "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
@@ -151,7 +150,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_mbvmp",                                   "Irradiance dependence of Vmp temperature coefficient",  "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_mbvoc",                                   "Irradiance dependence of Voc temperature coefficient",  "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_n",                                       "Diode factor",                                          "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_series_cells",                            "Number of cells in series",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "snl_series_cells",                            "Number of cells in series",                             "",       "",                      "pvsamv1",       "module_model=3",                    "INTEGER",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_vmpo",                                    "Max power point voltage",                               "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_voco",                                    "Open circuit voltage",                                  "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	
@@ -180,7 +179,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "shading_diffuse_enabled",                     "Enable diffuse shading factor",                         "0/1",     "",                     "pvsamv1",       "?=0",                                 "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shading_diffuse_factor",                      "Diffuse shading factor",                                "0..1",    "",                     "pvsamv1",       "shading_diffuse_enabled=1",           "",                              "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_enabled",                        "Enable self-shading calculator",                        "",       "",                       "pvsamv1",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_enabled",                        "Enable self-shading calculator",                        "",       "",                       "pvsamv1",       "?=0",                                 "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_length",                         "Module length",                                         "m",      "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_width",                          "Module width",                                          "m",      "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_mod_orient",                     "Module orientation",                                    "",       "0=portrait,1=landscape", "pvsamv1",       "self_shading_enabled=1",              "INTEGER,MIN=0,MAX=1",           "" },
@@ -197,54 +196,54 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_slopeew",                        "East-west slope",                                       "deg",    "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
 
 // outputs
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_glob_horiz_rad",                      "Global horizontal irradiance",                           "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_beam",                                "Nominal incident beam irradiance",                       "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_diff",                                "Nominal incident diffuse irradiance",                    "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_inc_beam",                            "Incident beam irradiance (after shading and soiling)",   "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_inc_diff",                            "Incident diffuse irradiance (after shading and soiling)","kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_inc_total",                           "Incident total irradiance (after shading and soiling)",  "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_input_radiation",                     "Input radiation",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_modeff",                              "Module efficiency",                                      "%",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_surf_tilt",                           "Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_surf_azi",                            "Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_soiling_derate",                      "Soiling derate",                                         "%",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_sol_zen",                             "Solar zenith angle",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_sol_azi",                             "Solar azimuth angle",                                    "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_windspd",                             "Wind speed",                                             "m/s",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_ambtemp",                             "Ambient temperature",                                    "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_celltemp",                            "Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_axisrot",                             "Axis rotation (for 1 axis trackers)",                    "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_idealrot",                            "Ideal axis rotation (for 1 axis trackers)",              "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_ss_derate",                           "Self-shading derate",                                    "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_ss_diffuse_derate",                   "Self-shading diffuse derate",                            "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_ss_reflected_derate",                 "Self-shading reflected derate",                          "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_ss_diffuse_loss",                     "Self-shading diffuse loss",                              "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_vmp",                                 "Max power point voltage",                                "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_dc_gross",                            "Gross dc output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_dc_net",                              "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_ac_gross",                            "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "hourly_ac_net",                              "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_glob_horiz_rad",                       "Global horizontal irradiance",                           "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_beam",                                 "Nominal incident beam irradiance",                       "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_diff",                                 "Nominal incident diffuse irradiance",                    "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inc_beam",                             "Incident beam irradiance (after shading and soiling)",   "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inc_diff",                             "Incident diffuse irradiance (after shading and soiling)","kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inc_total",                            "Incident total irradiance (after shading and soiling)",  "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_input_radiation",                      "Input radiation",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_modeff",                               "Module efficiency",                                      "%",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_surf_tilt",                            "Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_surf_azi",                             "Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_soiling_derate",                       "Soiling derate",                                         "%",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_zen",                              "Solar zenith angle",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_azi",                              "Solar azimuth angle",                                    "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_windspd",                              "Wind speed",                                             "m/s",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ambtemp",                              "Ambient temperature",                                    "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_celltemp",                             "Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_axisrot",                              "Axis rotation (for 1 axis trackers)",                    "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_idealrot",                             "Ideal axis rotation (for 1 axis trackers)",              "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_derate",                            "Self-shading derate",                                    "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_diffuse_derate",                    "Self-shading diffuse derate",                            "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_reflected_derate",                  "Self-shading reflected derate",                          "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_diffuse_loss",                      "Self-shading diffuse loss",                              "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_vmp",                                  "Max power point voltage",                                "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_gross",                             "Gross dc output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                               "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_gross",                             "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_net",                               "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	
-	{ SSC_OUTPUT,        SSC_ARRAY,       "monthly_inc_total",                          "Total incident radiation",                               "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "monthly_inc_beam",                           "Beam incident radiation",                                "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "monthly_dc_net",                             "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "monthly_ac_net",                             "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_inc_total",                           "Total incident radiation",                               "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_inc_beam",                            "Beam incident radiation",                                "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc_net",                              "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_ac_net",                              "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_incident_beam",                       "Incident beam annual",                                   "kW/m2",  "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_input_radiation",                     "Input radiation",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_dc_nominal",                          "Nominal dc energy",                                      "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_dc_gross",                            "Gross dc output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_dc_net",                              "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_gross",                            "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_net",                              "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_performance_factor",                  "System performance factor",                              "%",      "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_incident_beam",                        "Incident beam annual",                                   "kW/m2",  "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation",                      "Input radiation",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "Nominal dc energy",                                      "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_gross",                             "Gross dc output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                               "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_net",                               "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_performance_factor",                   "System performance factor",                              "%",      "",                      "pvsamv1",       "*",                    "",                              "" },
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,      "6par_a",                                     "CEC 6-parameter (a)",                                    "",       "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "6par_Io",                                    "CEC 6-parameter (Io)",                                   "",       "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "6par_Il",                                    "CEC 6-parameter (Il)",                                   "",       "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "6par_Rs",                                    "CEC 6-parameter (Rs)",                                   "",       "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "6par_Rsh",                                   "CEC 6-parameter (Rsh)",                                  "",       "",                      "pvsamv1",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "6par_Adj",                                   "CEC 6-parameter (Adj)",                                  "",       "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_a",                                      "CEC 6-parameter (a)",                                    "",       "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Io",                                     "CEC 6-parameter (Io)",                                   "",       "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Il",                                     "CEC 6-parameter (Il)",                                   "",       "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rs",                                     "CEC 6-parameter (Rs)",                                   "",       "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rsh",                                    "CEC 6-parameter (Rsh)",                                  "",       "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Adj",                                    "CEC 6-parameter (Adj)",                                  "",       "",                      "pvsamv1",       "*",                    "",                              "" },
 var_info_invalid };
 
 
@@ -306,9 +305,9 @@ public:
 
 		int tracking = as_integer("track_mode"); // 0=fixed, 1=1axis, 2=2axis, 3=aziaxis
 
-		double tilt = as_double("tilt");
-		if ( as_integer("tilt_eq_lat") )
-			tilt = fabs( wf.lat );
+		double tilt = wf.lat;
+		if ( !lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat") )
+			tilt = fabs( as_double("tilt") );
 
 		double azi = as_double("azimuth");
 		double rotlim = as_double("rotlim");
@@ -326,7 +325,7 @@ public:
 		int spe_ref = 0;
 
 		cec6par_module_t cec;
-		int cec_celltemp_mode = as_integer("cec_temp_corr_mode");
+		int cec_celltemp_mode = 0;
 		noct_celltemp_t noct_tc;
 		mcsp_celltemp_t mcsp_tc;
 
@@ -413,7 +412,7 @@ public:
 
 			self_shading_fill_factor = cec.Vmp * cec.Imp / cec.Voc / cec.Isc;
 
-
+			cec_celltemp_mode = as_integer("cec_temp_corr_mode");
 			if ( cec_celltemp_mode == 0 )
 			{
 				noct_tc.Tnoct = as_double("cec_t_noct");
@@ -571,14 +570,6 @@ public:
 			double gamma = as_double("6par_gpmp");
 			int nser = as_integer("6par_nser");
 		
-			int alpha_units = as_integer("6par_aisc_units");
-			if (alpha_units == 1)
-				alpha = 0.01*alpha*Isc;
-
-			int beta_units = as_integer("6par_bvoc_units");
-			if (beta_units == 1)
-				beta = 0.01*beta*Voc;
-		
 			module6par m(tech_id, Vmp, Imp, Voc, Isc, beta, alpha, gamma, nser);
 			int err = m.solve_with_sanity_and_heuristics<double>( 300, 1e-7 );
 
@@ -701,26 +692,33 @@ public:
 		}
 
 		// self-shading
-		bool self_shading_enabled = (as_integer("self_shading_enabled")==1);
+		selfshade_t sscalc;
 		ssarrdat ssarr;
-		ssarr.azimuth = azi;
-		ssarr.tilt = tilt;
-		ssarr.length = as_double("self_shading_length");
-		ssarr.width = as_double("self_shading_width");
-		ssarr.row_space = as_double("self_shading_rowspace");
-		ssarr.mod_space = 0; // no ui input - assumed 0 in trnsys inputs
-		ssarr.slope_ns = as_double("self_shading_slopens");
-		ssarr.slope_ew = as_double("self_shading_slopeew");
-		ssarr.mod_orient = as_integer("self_shading_mod_orient");
-		ssarr.str_orient = as_integer("self_shading_str_orient");
-		ssarr.nmodx = as_integer("self_shading_nmodx");
-		ssarr.nstrx = as_integer("self_shading_nstrx");
-		ssarr.nmody = as_integer("self_shading_nmody");
-		ssarr.nrows = as_integer("self_shading_nrows");
-		ssarr.ncellx = as_integer("self_shading_ncellx");
-		ssarr.ncelly = as_integer("self_shading_ncelly");
-		ssarr.ndiode = as_integer("self_shading_ndiode");
-		selfshade_t sscalc( ssarr );
+		ssarr.slope_ns = 0;
+		bool self_shading_enabled = as_boolean("self_shading_enabled");
+		if ( self_shading_enabled )
+		{
+			ssarr.azimuth = azi;
+			ssarr.tilt = tilt;
+			ssarr.length = as_double("self_shading_length");
+			ssarr.width = as_double("self_shading_width");
+			ssarr.row_space = as_double("self_shading_rowspace");
+			ssarr.mod_space = 0; // no ui input - assumed 0 in trnsys inputs
+			ssarr.slope_ns = as_double("self_shading_slopens");
+			ssarr.slope_ew = as_double("self_shading_slopeew");
+			ssarr.mod_orient = as_integer("self_shading_mod_orient");
+			ssarr.str_orient = as_integer("self_shading_str_orient");
+			ssarr.nmodx = as_integer("self_shading_nmodx");
+			ssarr.nstrx = as_integer("self_shading_nstrx");
+			ssarr.nmody = as_integer("self_shading_nmody");
+			ssarr.nrows = as_integer("self_shading_nrows");
+			ssarr.ncellx = as_integer("self_shading_ncellx");
+			ssarr.ncelly = as_integer("self_shading_ncelly");
+			ssarr.ndiode = as_integer("self_shading_ndiode");
+
+			sscalc = selfshade_t( ssarr );
+		}
+
 
 
 		// setup output arrays
@@ -890,48 +888,49 @@ public:
 				// apply pre-inverter power derate
 				dcpwr *= pre_derate;
 
-				// inverter, 
-				if ( inv_type == 0 )
-				{
+			} // if (sunup)
+			
 
-					/*
-	Power = MAX(([3,7]*[12,1]*PREIDRATE)/(3.6*NumInv),.0000001)
-	DCPowerKW = MAX(([3,7]*[12,1]*PREIDRATE)/3.6,.0000001)/1000
+			// inverter: runs at all hours of the day, even if no DC power.  important
+			// for capturing tare losses
 
-	* INVRatedPow is in AC and so needs to be converted to DC Power at full load 
-	* This line calculates the part load ratio and makes sure it is no greater than 1 (so it dumps if it is too large).
-	INVPLR = MIN(1,Power/(INVRatedPow/INVeffinp))
-	* This equation first checks that the power is greater than the low-end cutoff, then multiplies the Power (PLR*RatedPower) by the efficiency to include
-	* the dumping properly. Everything is unitless except the rated Power so the final units are in Watts which is divided by 1000 to get kWs
-	* Note: The cutoff level is assumed to be in AC watts and so the DC power level is converted to AC to check (GT()) if lower than the cutoff level.
-	*ACPowermax = GT((([3,7]*[12,1]*PREIDRATE)/(3.6*NumInv))*INVEFFinp,INVcutoff)*INVPLR*INVRatedPow/1000
-	* SJ 10/4/10 - clip inverter output at rated power
-	ACPowermax = MIN(GT((([3,7]*[12,1]*PREIDRATE)/(3.6*NumInv))*INVEFFinp,INVcutoff)*INVPLR*INVRatedPow/1000,
-						INVRatedPow/1000/NumInv)
-	ACPower = ACPowermax*POSTIDRATE*NUMINV
-	TotRadkW = ITotal_soil/3600. */
+			if ( inv_type == 0 )
+			{
 
-					double pwr1inv = dcpwr/num_inverters;
-					double opeff = speinv_eff/100.0;
-					double invplr =  pwr1inv/(speinv_pac/opeff);
-					// clipping loss
-					if ( invplr > 1 ) invplr = 1;
-					// efficincy loss = 1-opeff/100
-					double pwrmax = pwrmax = invplr * speinv_pac;
+				/*
+Power = MAX(([3,7]*[12,1]*PREIDRATE)/(3.6*NumInv),.0000001)
+DCPowerKW = MAX(([3,7]*[12,1]*PREIDRATE)/3.6,.0000001)/1000
 
-					acpwr = pwrmax * post_derate * num_inverters;
-					aceff = speinv_eff;
+* INVRatedPow is in AC and so needs to be converted to DC Power at full load 
+* This line calculates the part load ratio and makes sure it is no greater than 1 (so it dumps if it is too large).
+INVPLR = MIN(1,Power/(INVRatedPow/INVeffinp))
+* This equation first checks that the power is greater than the low-end cutoff, then multiplies the Power (PLR*RatedPower) by the efficiency to include
+* the dumping properly. Everything is unitless except the rated Power so the final units are in Watts which is divided by 1000 to get kWs
+* Note: The cutoff level is assumed to be in AC watts and so the DC power level is converted to AC to check (GT()) if lower than the cutoff level.
+*ACPowermax = GT((([3,7]*[12,1]*PREIDRATE)/(3.6*NumInv))*INVEFFinp,INVcutoff)*INVPLR*INVRatedPow/1000
+* SJ 10/4/10 - clip inverter output at rated power
+ACPowermax = MIN(GT((([3,7]*[12,1]*PREIDRATE)/(3.6*NumInv))*INVEFFinp,INVcutoff)*INVPLR*INVRatedPow/1000,
+					INVRatedPow/1000/NumInv)
+ACPower = ACPowermax*POSTIDRATE*NUMINV
+TotRadkW = ITotal_soil/3600. */
+
+				double pwr1inv = dcpwr/num_inverters;
+				double opeff = speinv_eff/100.0;
+				double invplr =  pwr1inv/(speinv_pac/opeff);
+					
+				if ( invplr > 1 ) invplr = 1; // clipping loss
+
+				acpwr = invplr * speinv_pac * post_derate * num_inverters;
+				aceff = speinv_eff;
 		
-				}
-				else if ( inv_type == 1 )
-				{
-					double _par, _plr;
-					snlinv.acpower( dcpwr/num_inverters, dcv, &acpwr, &_par, &_plr, &aceff );
-					acpwr *= num_inverters;
-					acpwr *= post_derate;
-					aceff *= 100;
-				}
-
+			}
+			else if ( inv_type == 1 )
+			{
+				double _par, _plr;
+				snlinv.acpower( dcpwr/num_inverters, dcv, &acpwr, &_par, &_plr, &aceff );
+				acpwr *= num_inverters;
+				acpwr *= post_derate;
+				aceff *= 100;
 			}
 
 
