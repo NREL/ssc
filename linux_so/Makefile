@@ -31,6 +31,7 @@ OBJECTS = \
 	cmod_test_irr.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
+	cmod_pvsamv1.o \
 	cmod_wfreader.o \
 	cmod_irradproc.o \
 	cmod_trntower.o \

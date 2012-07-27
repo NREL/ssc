@@ -255,6 +255,22 @@ namespace util
 		{
 			resize_fill( 1, len, val );
 		}
+
+		inline T &at(size_t i)
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( i >= 0 && i < n_cols );
+	#endif
+			return t_array[i];
+		}
+
+		inline const T&at(size_t i) const
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( i >= 0 && i < n_cols );
+	#endif
+			return t_array[i];
+		}
 		
 		inline T &at(size_t r, size_t c)
 		{

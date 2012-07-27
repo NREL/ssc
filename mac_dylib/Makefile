@@ -26,6 +26,7 @@ OBJECTS = \
 	cmod_geothermalui.o \
 	cmod_windfarm.o \
 	cmod_pv6parmod.o \
+	cmod_pvsamv1.o \
 	cmod_pvsandiainv.o \
 	cmod_6parsolve.o \
 	cmod_test_irr.o \
