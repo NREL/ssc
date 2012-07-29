@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cmod_6parsolve.cpp" />
+    <ClCompile Include="cmod_annualoutput.cpp" />
     <ClCompile Include="cmod_cashloan.cpp" />
     <ClCompile Include="cmod_equpartflip.cpp" />
     <ClCompile Include="cmod_fossilgen.cpp" />
