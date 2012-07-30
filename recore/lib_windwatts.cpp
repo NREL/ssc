@@ -62,8 +62,8 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 			out_pwr = Pwr_Ratd;
 		else if (V_Hub > NewVRat)
 			out_pwr = Pwr_Ratd;
-		else
-			out_pwr *= Rho_T/Air_Dens;
+		//else
+		//	out_pwr *= Rho_T/Air_Dens; <- REMOVED BY TFF JULY 2012 SINCE THIS HAS ALREADY BEEN DONE ABOVE, and it should not be done twice
 	}
 	else if (Ctl_Mode == 0) // var speed control
 	{
@@ -71,8 +71,8 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 			out_pwr = Pwr_Ratd;
 		else if (V_Hub > NewVRat)
 			out_pwr = Pwr_Ratd;
-		else
-			out_pwr *= Rho_T/Air_Dens;
+		//else
+		//	out_pwr *= Rho_T/Air_Dens;  <- REMOVED BY TFF JULY 2012 SINCE THIS HAS ALREADY BEEN DONE ABOVE, and it should not be done twice
 	} // !stall defaults to simple density ratio
 
 	//C    Hours, Cp, and Adjustments by Number of WTs and by Loss Coefficient 
@@ -178,11 +178,11 @@ int wind_power(
 //	double T_STD = 288.16;                          //!Standard reference temperature, deg.C
 //	double B = 0.0065;                              //!Standard elevation lapse rate deg.C/m
 //	double G = 9.8066;                              //!Gravitational constant, m/s^2
-	double R = 287.0;                              //!Universal gas constant
-	double BP_STP = 101350;                         //!Standard sea-level pressure,Pa
+//	double R = 287.0;                               //!Universal gas constant
+//	double BP_STP = 101350;                         //!Standard sea-level pressure,Pa
 //	double GAMMA = G/(R*B);                         //!Lapse Rate Manipulation
-	double T_KELV = TdryC+273.15;                 //!Convert temperatures to absolute, deg.K
-	double Rho_T = (BarPAtm * BP_STP)/(R*T_KELV);   //!Air Density, kg/m^3
+//	double T_KELV = TdryC+273.15;                   //!Convert temperatures to absolute, deg.K
+	double Rho_T = (BarPAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 	
 	//CPQ  SPATIAL DATA TRANSFORMATIONS AND SORTING
 	double Theta_TR = Theta_T*DTOR;  // convert degrees to radians
@@ -451,8 +451,9 @@ double turbine_output_using_weibull(double rotor_diameter, double weibull_k, dou
 						 int count, double wind_speed[], double power_curve[], double hub_efficiency[])
 {	// returns same units as 'power_curve'
 
+
 	double hub_ht_windspeed = pow((hub_ht/50.0),shear) * resource_class;
-	double denom = exp(gammaln(1+(1/weibull_k)));
+	double denom = exp(gammaln(1+(1/hub_ht_windspeed)));
 	double lambda = hub_ht_windspeed/denom;
 	double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
 
@@ -465,20 +466,21 @@ double turbine_output_using_weibull(double rotor_diameter, double weibull_k, dou
 	std::vector<double> rayleigh(count, 0);
 	std::vector<double> energy_turbine(count, 0);	// energy from turbine chosen from library
 
-	double step = 0;
+	// double step = 0;
+	// weibull_k = 2.10; // used for testing: this is off in the 5th significant digit when passed into SSC from samwx
 	for (int i=0; i<count; i++)
 	{
-		step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
+		// step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
 
 		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
-		weibull_cummulative[i] = (i>0) ? 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k)) : 0;
-		if (false)
-			weibull_probability[i] = (i>0) ? weibull_cummulative[i] - weibull_cummulative[i-1] : 0;
-		else
-			weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) )/(1/step);
-		weibull_betz[i] = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * 16.0/27.0;
-		weibull_cp[i]   = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * max_cp * hub_efficiency[i];
-		rayleigh[i]		= ( (physics::PI * wind_speed[i]) / (2.0 * pow(hub_ht_windspeed,2.0) ) ) * exp( ((-physics::PI * pow(wind_speed[i],2.0) ) / ( 4.0*pow(hub_ht_windspeed,2.0) )) ) / (1.0/step);
+		if (i>0) {
+			weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
+			weibull_probability[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
+		}
+
+		//weibull_betz[i] = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * 16.0/27.0;
+		//weibull_cp[i]   = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * max_cp * hub_efficiency[i];
+		//rayleigh[i]		= ( (physics::PI * wind_speed[i]) / (2.0 * pow(hub_ht_windspeed,2.0) ) ) * exp( ((-physics::PI * pow(wind_speed[i],2.0) ) / ( 4.0*pow(hub_ht_windspeed,2.0) )) ) / (1.0/step);
 
 		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
 		energy_turbine[i] = (8760 * weibull_probability[i]) * power_curve[i];
