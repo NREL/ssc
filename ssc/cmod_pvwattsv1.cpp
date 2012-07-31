@@ -31,6 +31,8 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "shading_diffuse_factor",         "Diffuse shading factor",                      "0..1",   "",                     "PVWatts",      "shading_diffuse_enabled=1",           "",                              "" },
 
 	/* advanced parameters */
+	{ SSC_INPUT,        SSC_NUMBER,      "enable_user_poa",                "Enable user-defined POA irradiance input",    "0/1",    "",                     "PVWatts",      "?=0",                     "BOOLEAN",                                  "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "user_poa",                       "User-defined POA irradiance",                 "W/m2",   "",                     "PVWatts",      "enable_user_poa=1",       "LENGTH=8760",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation limit (+/- 1 axis)",         "deg",    "",                     "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                         "Nominal operating cell temperature",          "C",      "",                     "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "t_ref",                          "Reference cell temperature",                  "C",      "",                     "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
@@ -78,6 +80,14 @@ public:
 		double tilt = wf.lat;
 		if ( !lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat") )
 			tilt = fabs( as_double("tilt") );
+		
+		ssc_number_t *p_user_poa = 0;
+		if ( as_boolean("enable_user_poa") )
+		{
+			size_t count = 0;
+			p_user_poa = as_array("user_poa", &count);
+			if (count != 8760) p_user_poa = 0;
+		}
 
 		ssc_number_t *p_gh = allocate("gh", 8760);
 		ssc_number_t *p_dn = allocate("dn", 8760);
@@ -230,6 +240,9 @@ public:
 				iskydiff *= shad_skydiff_factor;
 
 				double poa = ibeam + fd*(iskydiff +ignddiff);
+
+				if ( p_user_poa != 0 )
+					poa = p_user_poa[i];
 
 				if (poa_cutin > 0 && poa < poa_cutin)
 					poa = 0;
