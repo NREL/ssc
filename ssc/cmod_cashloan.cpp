@@ -22,7 +22,12 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback",                            "years",        "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-			
+
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_capacity_factor",    "Capacity factor",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_kwh_per_kw",    "First year kWh/kW",  "", "",                      "DHF",      "*",                     "",                "" },
+
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Energy Value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -194,7 +199,7 @@ public:
 		int i;
 
 		bool is_commercial = (as_integer("market")==1);
-		bool is_mortgage = as_boolean("mortgage");
+		bool is_mortgage = (as_integer("mortgage")==1);
 
 		/*
 		if (is_commercial) log("commercial market"); else log("residential market");
@@ -503,7 +508,7 @@ public:
 //			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
 
 
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_sta_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
@@ -514,7 +519,7 @@ public:
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
 
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
@@ -535,7 +540,7 @@ public:
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
 			
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_fed_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_fed_taxable_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
@@ -547,7 +552,7 @@ public:
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
 
-			if (!is_commercial && is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
 				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 			
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
@@ -567,22 +572,38 @@ public:
 			cf.at(CF_after_tax_cash_flow,i) = 
 				cf.at(CF_after_tax_net_equity_cost_flow, i)
 				+ (is_commercial?(1.0 - effective_tax_rate):1.0)*cf.at(CF_energy_value, i);
-	
-			cf.at(CF_payback_with_expenses,i) =
-				cf.at(CF_after_tax_cash_flow,i)
-				+ cf.at(CF_debt_payment_interest,i) * (1-effective_tax_rate)
-				+ cf.at(CF_debt_payment_principal,i);
+
+			if ( is_commercial || is_mortgage )
+				cf.at(CF_payback_with_expenses,i) =
+					cf.at(CF_after_tax_cash_flow,i)
+					+ cf.at(CF_debt_payment_interest,i) * (1-effective_tax_rate)
+					+ cf.at(CF_debt_payment_principal,i);
+			else
+				cf.at(CF_payback_with_expenses,i) =
+					cf.at(CF_after_tax_cash_flow,i)
+					+ cf.at(CF_debt_payment_interest,i)
+					+ cf.at(CF_debt_payment_principal,i);
+
 
 			cf.at(CF_cumulative_payback_with_expenses,i) = 
 				cf.at(CF_cumulative_payback_with_expenses,i-1)
 				+cf.at(CF_payback_with_expenses,i);
 	
-			cf.at(CF_payback_without_expenses,i) =
-				+ cf.at(CF_after_tax_cash_flow,i)
-				+ cf.at(CF_debt_payment_interest,i) * (1.0 - effective_tax_rate)
-				+ cf.at(CF_debt_payment_principal,i)
-				- cf.at(CF_deductible_expenses,i)
-				+ cf.at(CF_deductible_expenses,i) * effective_tax_rate;
+			if ( is_commercial || is_mortgage )
+				cf.at(CF_payback_without_expenses,i) =
+					+ cf.at(CF_after_tax_cash_flow,i)
+					+ cf.at(CF_debt_payment_interest,i) * (1.0 - effective_tax_rate)
+					+ cf.at(CF_debt_payment_principal,i)
+					- cf.at(CF_deductible_expenses,i)
+					+ cf.at(CF_deductible_expenses,i) * effective_tax_rate;
+			else
+				cf.at(CF_payback_without_expenses,i) =
+					+ cf.at(CF_after_tax_cash_flow,i)
+					+ cf.at(CF_debt_payment_interest,i)
+					+ cf.at(CF_debt_payment_principal,i)
+					- cf.at(CF_deductible_expenses,i)
+					+ cf.at(CF_deductible_expenses,i) * effective_tax_rate;
+
 
 			cf.at(CF_cumulative_payback_without_expenses,i) =
 				+ cf.at(CF_cumulative_payback_without_expenses,i-1)
@@ -609,6 +630,13 @@ public:
 		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
+
+		assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+		double kWhperkW = 0.0;
+		if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
+		assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
+		assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
+
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
