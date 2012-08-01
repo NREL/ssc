@@ -46,10 +46,10 @@ var_info vtab_depreciation[] = {
 /*   VARTYPE           DATATYPE         NAME                              LABEL                                 UNITS     META                                      GROUP             REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 	{ SSC_INPUT,        SSC_NUMBER,      "depr_fed_type",                "Federal Depreciation Type",           "",       "0=none,1=macrs_half_year,2=sl,3=custom",  "Depreciation",      "?=0",                     "INTEGER,MIN=0,MAX=3",        "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_fed_sl_years",            "Federal Depreciation SL Years",       "years",  "",                                        "Depreciation",      "?=7",                     "INTEGER,POSITIVE",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "depr_fed_sl_years",            "Federal Depreciation SL Years",       "years",  "",                                        "Depreciation",      "depr_fed_type=2",                     "INTEGER,POSITIVE",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "depr_fed_custom",              "Federal Custom Depreciation",         "%/year", "",                                        "Depreciation",      "depr_fed_type=3",         "",                           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "depr_sta_type",                "State Depreciation Type",             "",       "0=none,1=macrs_half_year,2=sl,3=custom",  "Depreciation",      "?=0",                     "INTEGER,MIN=0,MAX=3",        "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_sta_sl_years",            "State Depreciation SL Years",         "years",  "",                                        "Depreciation",      "?=7",                     "INTEGER,POSITIVE",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "depr_sta_sl_years",            "State Depreciation SL Years",         "years",  "",                                        "Depreciation",      "depr_sta_type=2",                     "INTEGER,POSITIVE",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "depr_sta_custom",              "State Custom Depreciation",           "%/year", "",                                        "Depreciation",      "depr_sta_type=3",         "",                           "" },
 
 var_info_invalid };
