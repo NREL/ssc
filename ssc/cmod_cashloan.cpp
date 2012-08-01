@@ -499,8 +499,7 @@ public:
 			cf.at(CF_sta_incentive_income_less_deductions, i) =
 				+ cf.at(CF_deductible_expenses, i) 
 				+ cf.at(CF_pbi_total,i)
-				- cf.at(CF_sta_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 );
+				- cf.at(CF_sta_depreciation,i);
 
 			if (i==1) cf.at(CF_sta_incentive_income_less_deductions, i) += ibi_total + cbi_total;
 
@@ -508,18 +507,17 @@ public:
 //			if (is_commercial && i == 1) cf.at(CF_sta_incentive_income_less_deductions, i) -= total_sales_tax;
 
 
-			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
 				cf.at(CF_sta_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
 				+ cf.at(CF_deductible_expenses,i)
-				- cf.at(CF_sta_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 );
+				- cf.at(CF_sta_depreciation,i);
 			
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
 
-			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
 				cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
@@ -532,7 +530,6 @@ public:
 				+ cf.at(CF_deductible_expenses, i)
 				+ cf.at(CF_pbi_total,i)
 				- cf.at(CF_fed_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 )
 				+ cf.at(CF_sta_tax_savings, i);
 			
 			if (i==1) cf.at(CF_fed_incentive_income_less_deductions, i) += ibi_total + cbi_total;
@@ -540,19 +537,18 @@ public:
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_fed_incentive_income_less_deductions, i) -= total_sales_tax;
 			
-			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
 				cf.at(CF_fed_incentive_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_fed_taxable_income_less_deductions, i) = taxable_incentive_income( i, "fed" )
 				+ cf.at(CF_deductible_expenses,i)
 				- cf.at(CF_fed_depreciation,i)
-				- ( is_commercial ? cf.at(CF_debt_payment_interest,i) : 0.0 )
 				+ cf.at(CF_sta_tax_savings, i);
 
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
 
-			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage
+			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
 				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 			
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
@@ -571,7 +567,7 @@ public:
 
 			cf.at(CF_after_tax_cash_flow,i) = 
 				cf.at(CF_after_tax_net_equity_cost_flow, i)
-				+ (is_commercial?(1.0 - effective_tax_rate):1.0)*cf.at(CF_energy_value, i);
+				+ ((is_commercial?(1.0 - effective_tax_rate):1.0)*cf.at(CF_energy_value, i));
 
 			if ( is_commercial || is_mortgage )
 				cf.at(CF_payback_with_expenses,i) =
