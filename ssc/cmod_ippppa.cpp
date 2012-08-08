@@ -22,7 +22,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "ippppa",         "?=100",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "ippppa",         "?=100",                     "INTEGER,MIN=1",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=10",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
 	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
@@ -130,9 +130,14 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_capacity_factor",    "Capacity factor",  "", "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_kwh_per_kw",    "First year kWh/kW",  "", "",                      "ippppa",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_first_year_ppa",                 "PPA price",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_ppa_escalation",                 "PPA price escalation",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_debt_fraction",    "Debt fraction",  "", "",                      "DHF",      "*",                     "",                "" },
 
 
-
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Energy Value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ppa_price",      "Energy Price",                  "$/kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -144,6 +149,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_income",    "Total operating income",            "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_net_salvage_value",    "Net Salvage Value",            "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_deductible_expenses",   "Deductible expenses",                "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -206,6 +212,7 @@ enum {
 	CF_property_tax_expense,
 	CF_insurance_expense,
 	CF_operating_expenses,
+	CF_net_salvage_value,
 
 	CF_deductible_expenses,
 
@@ -519,8 +526,11 @@ public:
 
 		// initialize energy and revenue
 		// initialize energy
+		// differs from samsim - accumulate hourly energy
+		//double first_year_energy = as_double("energy_net");
+		double first_year_energy = 0.0;
 
-		double first_year_energy = as_double("energy_net");
+
 		size_t count_avail = 0;
 		ssc_number_t *avail = 0;
 		avail = as_array("energy_availability", &count_avail);
@@ -563,6 +573,11 @@ public:
 		}
 		else
 		{
+			size_t count_energy = 0;
+			ssc_number_t *energy = 0;
+			energy = as_array("energy_net_hourly", &count_energy);
+			for (i=0;i<(int)count_energy;i++) first_year_energy += energy[i]; // sum up hourly kWh to get total annual kWh first year production
+
 			for (i=1;i<=nyears;i++)
 				cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
 			if ( !is_commercialppa) compute_dispatch_output(nyears);
@@ -844,6 +859,10 @@ public:
 					recapitalization_cost * pow((1 + inflation_rate + recapitalization_escalation),i-1);
 			}
 
+			cf.at(CF_net_salvage_value,i) = 0;
+			if (i == nyears) cf.at(CF_net_salvage_value,i) = total_cost * salvage_frac;
+
+
 			// total - added lump 2/23/08
 			cf.at(CF_operating_expenses,i) =
 				+ cf.at(CF_om_fixed_expense,i)
@@ -852,11 +871,9 @@ public:
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
-				+ cf.at(CF_recapitalization,i);
+				+ cf.at(CF_recapitalization,i)
+				-cf.at(CF_net_salvage_value,i);
 
-			if (i == nyears) /* salvage value handled as negative operating expense in last year */
-				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac; // updated to be consistent with DHF models - not inflated
-//				cf.at(CF_operating_expenses,i) -= total_cost * salvage_frac * pow( 1+inflation_rate, i-1 );
 		}
 
 
@@ -881,9 +898,9 @@ public:
 						<< ", ppa=" << ppa << ", x0=" << x0 << ", x1=" << x1 <<  ",w0=" << w0 << ", w1=" << w1 << ", ppamax-ppamin=" << x1-x0;
 					log( outm.str() );
 */
-					std::stringstream outm;
-					outm << "real discount rate=" << real_discount_rate;
-					log( outm.str() );
+//					std::stringstream outm;
+//					outm << "real discount rate=" << real_discount_rate;
+//					log( outm.str() );
 		double x = npv( CF_energy_net, nyears, real_discount_rate );
 		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
 		lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
@@ -911,7 +928,11 @@ public:
 		if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
 		assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
 		assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
-		
+ 
+		assign( "sv_first_year_ppa",var_data((ssc_number_t) ppa) );
+		assign( "sv_ppa_escalation",var_data((ssc_number_t) ppa_escalation) );
+		assign( "sv_debt_fraction",var_data((ssc_number_t) debt_frac) );
+
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
@@ -920,6 +941,7 @@ public:
 		assign( "adj_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));
 
 		
+		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
 		save_cf( CF_pretax_dscr, nyears, "cf_pretax_dscr" );
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
@@ -932,6 +954,7 @@ public:
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
 		save_cf( CF_operating_income, nyears, "cf_operating_income" );
+		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 
 		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");
 
@@ -3640,8 +3663,8 @@ void satisfy_all_constraints()
 							w0 = weighting_factor;
 						}
 
-			outm << " \n(true) ppa_interval_found = " << ppa_interval_found <<  ", ppa = " << ppa<< ", x0 = " << x0<< ", x1 = " << x1 << ", w0 = " << w0<< ", w1 = " << w1 << ", its = " << its;
-			log( outm.str() );
+//			outm << " \n(true) ppa_interval_found = " << ppa_interval_found <<  ", ppa = " << ppa<< ", x0 = " << x0<< ", x1 = " << x1 << ", w0 = " << w0<< ", w1 = " << w1 << ", its = " << its;
+//			log( outm.str() );
 					}
 					else
 					{ // find solution interval [x0,x1]
@@ -3706,8 +3729,8 @@ void satisfy_all_constraints()
 							while (!solved && !are_all_constraints_satisfied && (x1 < ppa_max));
 						}
 						ppa_interval_found = true;
-						outm << " \n ppa_interval_found = " << ppa_interval_found <<  ", ppa = " << ppa<< ", x0 = " << x0<< ", x1 = " << x1 << ", its = " << its;
-						log( outm.str() );
+						//outm << " \n ppa_interval_found = " << ppa_interval_found <<  ", ppa = " << ppa<< ", x0 = " << x0<< ", x1 = " << x1 << ", its = " << its;
+						//log( outm.str() );
 					}
 				}
 				its++;
