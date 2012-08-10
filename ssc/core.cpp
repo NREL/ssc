@@ -328,6 +328,18 @@ ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 	return x.num.data();
 }
 
+std::vector<double> compute_module::as_doublevec( const std::string &name ) throw( general_error )
+{
+	var_data &x = value(name);
+	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
+	size_t len = x.num.length();
+	std::vector<double> v(len);
+	ssc_number_t *p = x.num.data();
+	for (size_t k=0;k<len;k++)
+		v[k] = (double) p[k];
+	return v;
+}
+
 ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error )
 {
 	var_data &x = value(name);

@@ -3,6 +3,7 @@
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
+#include "lib_pvshade.h"
 
 
 #ifndef DTOR
@@ -11,49 +12,42 @@
 
 static var_info _cm_vtab_pvwattsv1[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "file_name",                      "local weather file path",                     "",       "",                     "Weather",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT,        SSC_STRING,      "file_name",                      "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
 		
-	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                     "PVWatts",      "*",                            "MIN=0.05,MAX=500000",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",   "",                     "PVWatts",      "*",                            "MIN=0,MAX=1",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                     "Tracking mode",                               "0/1/2",  "Fixed,1Axis,2Axis",    "PVWatts",      "*",                            "MIN=0,MAX=2,INTEGER",                      "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",    "E=90,S=180,W=270",     "PVWatts",      "*",                            "MIN=0,MAX=360",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",    "H=0,V=90",             "PVWatts",      "naof:tilt_eq_lat",             "MIN=0,MAX=90",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                     "PVWatts",      "na:tilt",                      "BOOLEAN",                                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                     "Tracking mode",                               "0/1/2",  "Fixed,1Axis,2Axis",       "PVWatts",      "*",                       "MIN=0,MAX=2,INTEGER",                      "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",    "E=90,S=180,W=270",        "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",    "H=0,V=90",                "PVWatts",      "naof:tilt_eq_lat",        "MIN=0,MAX=90",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                        "PVWatts",      "na:tilt",                 "BOOLEAN",                                  "" },
 
 	/* shading inputs */
-	{ SSC_INPUT,        SSC_NUMBER,      "shading_beam_hourly_enabled",    "Enable hourly beam shading factors",          "0/1",    "",                     "PVWatts",      "?=0",                                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "shading_beam_hourly_factors",    "Hourly beam shading factor array",            "0..1",   "",                     "PVWatts",      "shading_beam_hourly_enabled=1",       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading_mxh_enabled",            "Enable beam time-based shading factor",       "0/1",    "",                     "PVWatts",      "?=0",                                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading_mxh_factors",            "Beam shading factor time-based matrix",       "0..1",   "",                     "PVWatts",      "shading_mxh_enabled=1",               "ROWS=12,COLS=24",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading_azalt_enabled",          "Enable azimuth-altitude beam shading factor", "0/1",    "",                     "PVWatts",      "?=0",                                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading_azalt_table",            "Azimuth-altitude beam shading factor matrix", "0..1",   "",                     "PVWatts",      "shading_azalt_enabled=1",             "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading_diffuse_enabled",        "Enable diffuse shading factor",               "0/1",    "",                     "PVWatts",      "?=0",                                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading_diffuse_factor",         "Diffuse shading factor",                      "0..1",   "",                     "PVWatts",      "shading_diffuse_enabled=1",           "",                              "" },
-
+	{ SSC_INPUT,        SSC_ARRAY,       "shading",                        "Shading input data array",                    "",       shading_data::format_doc,  "PVWatts",      "?",                       "",                                         "" },
+	
 	/* advanced parameters */
-	{ SSC_INPUT,        SSC_NUMBER,      "enable_user_poa",                "Enable user-defined POA irradiance input",    "0/1",    "",                     "PVWatts",      "?=0",                     "BOOLEAN",                                  "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "user_poa",                       "User-defined POA irradiance",                 "W/m2",   "",                     "PVWatts",      "enable_user_poa=1",       "LENGTH=8760",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation limit (+/- 1 axis)",         "deg",    "",                     "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                         "Nominal operating cell temperature",          "C",      "",                     "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "t_ref",                          "Reference cell temperature",                  "C",      "",                     "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                          "Max power temperature coefficient",           "%/C",    "",                     "PVWatts",      "?=-0.5",                  "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "frac",   "",                     "PVWatts",      "?=0.92",                  "MIN=0,MAX=1",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fd",                             "Diffuse fraction",                            "0..1",   "",                     "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "i_ref",                          "Rating condition irradiance",                 "W/m2",   "",                     "PVWatts",      "?=1000",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "poa_cutin",                      "Min reqd irradiance for operation",           "W/m2",   "",                     "PVWatts",      "?=0",                     "MIN=0",                                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                         "Wind stow speed",                             "m/s",    "",                     "PVWatts",      "?=0",                     "MIN=0",                                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "enable_user_poa",                "Enable user-defined POA irradiance input",    "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                                  "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "user_poa",                       "User-defined POA irradiance",                 "W/m2",   "",                        "PVWatts",      "enable_user_poa=1",       "LENGTH=8760",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation limit (+/- 1 axis)",         "deg",    "",                        "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "t_noct",                         "Nominal operating cell temperature",          "C",      "",                        "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "t_ref",                          "Reference cell temperature",                  "C",      "",                        "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                          "Max power temperature coefficient",           "%/C",    "",                        "PVWatts",      "?=-0.5",                  "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "frac",   "",                        "PVWatts",      "?=0.92",                  "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fd",                             "Diffuse fraction",                            "0..1",   "",                        "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "i_ref",                          "Rating condition irradiance",                 "W/m2",   "",                        "PVWatts",      "?=1000",                  "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "poa_cutin",                      "Min reqd irradiance for operation",           "W/m2",   "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                         "Wind stow speed",                             "m/s",    "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
 	
 	/* outputs */
-	{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam normal irradiance",                      "W/m2",   "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",      "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",    "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam normal irradiance",                      "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                     "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 
 var_info_invalid };
 
@@ -136,59 +130,41 @@ public:
 			azimuth = 180.0;
 
 		
-
-
-		double shad_skydiff_factor = 1;
-		if ( as_integer("shading_diffuse_enabled") )
-			shad_skydiff_factor = as_double("shading_diffuse_factor");
-
-		std::vector<double> shad_beam_factor(8760, 1.0);
-		if (as_integer( "shading_beam_hourly_enabled") )
+		// load the shading data from the input vector
+		shading_data shad;
+		if (is_assigned("shading"))
 		{
-			size_t len = 0;
-			ssc_number_t *ph = as_array("shading_beam_hourly_factors", &len);
-			if (ph == 0 || len != 8760)
-				throw exec_error( "pvsamv1", "hourly beam shading factor enabled, but provided array does not have 8760 values");
-
-			for (int i=0;i<8760;i++)
-				shad_beam_factor[i] *= ph[i];
+			if (!shad.load( as_doublevec("shading") ))
+				throw exec_error("pvwattsv1", "error parsing shading data vector (shading) - see format in meta info");
+			else if (!shad.check_azal_monotonic_increase())
+				throw exec_error("pvwattsv1", "azimuth and altitude values must increase monotonically in shading table");
 		}
 
-		if ( as_integer("shading_mxh_enabled") )
-		{
-			var_data *v = lookup("shading_mxh_factors");
-			if (!v || v->num.nrows() != 12 || v->num.ncols() != 24 )
-				throw exec_error("pvsamv1", "Bad shading factor data for time-based matrix specification, 12x24 values required");
-
 		
+		double shad_skydiff_factor = 1;
+		if ( shad.en_diff )
+			shad_skydiff_factor = shad.diff;
+
+		std::vector<double> shad_beam_factor(8760, 1.0);
+		if ( shad.en_hourly )
+			shad_beam_factor = shad.hourly;
+
+		if ( shad.en_mxh )
+		{
 			int c=0;
 			for (int m=0;m<12;m++)
 				for (int d=0;d<util::nday[m];d++)
 					for (int h=0;h<24;h++)
-						shad_beam_factor[c++] *= v->num.at(m,h);
+						shad_beam_factor[c++] *= shad.mxh.at(m,h);
 		}
 
-		// check that azimuth values increase and altitude values decrease
 		bool enable_azalt_beam_shading = false;
 		util::matrix_t<double> azaltvals;
-		if (as_integer("shading_azalt_enabled"))
+		if ( shad.en_azal)
 		{
-			var_data *v = lookup("shading_azalt_table");
-			if (!v || v->num.nrows() < 2 || v->num.ncols() < 2)
-				throw exec_error( "pvsamv1", "Azimuth-altitude shading factor table data too small" );
-
-			azaltvals = v->num;
-			for (size_t i=2;i<azaltvals.nrows();i++)
-				if (azaltvals.at(i,0) > azaltvals.at(i-1,0))				
-					throw exec_error("pvsamv1", "Error in azimuth-altitude shading table: altitude values must decrease monotonically");
-
-			for (size_t i=2;i<azaltvals.ncols();i++)
-				if (azaltvals.at(0,i) < azaltvals.at(0,i-1))
-					throw exec_error("pvsamv1", "Error in azimuth-altitude shading table: azimuth values must increase monotonically");
-
+			azaltvals = shad.azal;
 			enable_azalt_beam_shading = true;
 		}
-
 		pvwatts_celltemp tccalc( inoct, height, 1.0 );
 	
 		int i=0;
@@ -201,8 +177,6 @@ public:
 			double alb = 0.2;
 			if (wf.snow > 0 && wf.snow < 150)
 				alb = 0.6;
-			
-
 
 			irr.set_sky_model( 2, alb );
 			irr.set_beam_diffuse( wf.dn, wf.df );
@@ -234,7 +208,7 @@ public:
 				
 				// apply beam shading based on solar azimuth/altitude table
 				if ( enable_azalt_beam_shading )
-					ibeam *= util::azaltinterp( solazi, solalt, azaltvals );
+					ibeam *= util::bilinear( solalt, solazi, azaltvals );
 				
 				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
 				iskydiff *= shad_skydiff_factor;

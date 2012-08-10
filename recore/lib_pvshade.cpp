@@ -633,5 +633,132 @@ bool selfshade_t::matrix_multiply(double a[][3], double b[][3], double c[][3])
 }
 
 
+ const char *shading_data::format_doc = 
+	"Shading data array input format: "
+	"d[0] = 1; "
+	"d[1] = en_hourly; "	
+	"d[1:8760] = hourly; "
+	"d[8761] = en_mxh; "
+	"d[8762:9050] = 288 value mxh table, row major; "
+	"d[9051] = en_azal; "
+	"d[9052] = azal_nrows; "
+	"d[9053] = azal_ncols; "
+	"d[next nrows*ncols] = azal table, row major; "
+	"d[next] = en_diff; "
+	"d[next] = diffuse factor; "
+	"d[next] = total vector length for verification";
 
+shading_data::shading_data()
+{
+	clear();
+}
 
+void shading_data::save( std::vector<double> &data )
+{
+	data.clear();
+	data.push_back( 1.0 ); // version number of data format - allows for expansion of options in future.
+
+	data.push_back( (en_hourly && hourly.size() == 8760) ? 1.0 : 0.0 );
+	for (size_t i=0;i<8760;i++)
+		data.push_back( i < hourly.size() ? hourly[i] : 1.0 );
+	
+	data.push_back( (en_mxh && mxh.nrows() == 12 && mxh.ncols() == 24 ) ? 1.0 : 0.0 );
+	if ( mxh.nrows() != 12 || mxh.ncols() != 24 )
+	{
+		mxh.resize(12, 24);
+		mxh.fill( 1 );
+	}
+
+	for (size_t r=0;r<12;r++)
+		for (size_t c=0;c<24;c++)
+			data.push_back( mxh.at(r,c) );
+	
+	data.push_back( en_azal ? 1.0 : 0.0 );
+	data.push_back( azal.nrows() );
+	data.push_back( azal.ncols() );
+	for (size_t r=0;r<azal.nrows();r++)
+		for (size_t c=0;c<azal.ncols();c++)
+			data.push_back( azal.at(r,c) );
+	
+	data.push_back( en_diff ? 1.0 : 0.0 );
+	data.push_back( diff );
+
+	data.push_back( data.size() + 1 ); // verification flag that size is consistent
+}
+
+void shading_data::clear()
+{
+	en_hourly = en_mxh = en_azal = en_diff = false;
+
+	hourly.resize( 8760, 1 );
+
+	mxh.resize(12,24);
+	mxh.fill(1);
+
+	azal.resize(10, 18);
+	azal.fill( 1.0 );
+	for ( int c=0;c<18;c++ )
+		azal.at(0, c) = c*20;
+	for ( int r=0;r<10;r++ )
+		azal.at(r, 0) = r*10;
+	
+	diff = 1.0;
+}
+
+bool shading_data::load( const std::vector<double> &data )
+{
+	clear();
+
+	if (data.size() < 3) return false;
+	if (data.size() != (size_t)data[ data.size() - 1 ]) return false; // verification check
+	
+	size_t idx = 0; // indexer to step through data
+
+	int ver = (int)data[idx++];	
+	if (ver == 1)
+	{
+		en_hourly = data[idx++] > 0 ? true : false;
+		hourly.clear();
+		hourly.reserve(8760);
+		for (size_t i=0;i<8760;i++)
+			hourly.push_back( data[idx++] );
+
+		en_mxh = data[idx++] > 0 ? true : false;
+		for (size_t r=0;r<12;r++)
+			for (size_t c=0;c<24;c++)
+				mxh.at(r,c) = data[idx++];
+		
+		en_azal = data[idx++] > 0 ? true : false;
+
+		size_t nr = (size_t)data[idx++];
+		size_t nc = (size_t)data[idx++];
+		azal.resize( nr, nc );
+		for (size_t r=0;r<nr;r++)
+			for (size_t c=0;c<nc;c++)
+				azal.at(r,c) = data[idx++];
+		
+		en_diff = data[idx++] > 0 ? true : false;
+		diff = data[idx++];
+		
+		int verify = (size_t)data[idx++];
+
+		return idx == verify;
+	}
+
+	return false;
+}
+
+bool shading_data::check_azal_monotonic_increase()
+{
+	if (azal.nrows() < 3 || azal.ncols() < 3) return false;
+
+	for (size_t i=2;i<azal.nrows();i++)
+		if (azal.at(i,0) < azal.at(i-1,0))				
+			return false;
+
+	for (size_t i=2;i<azal.ncols();i++)
+		if (azal.at(0,i) < azal.at(0,i-1))
+			return false;
+
+	return true;
+}

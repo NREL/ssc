@@ -347,7 +347,7 @@ namespace util
 	};
 
 	
-	double azaltinterp(double azimuth, double altitude, const matrix_t<double> &azaltvals);
+	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 };
 
 
