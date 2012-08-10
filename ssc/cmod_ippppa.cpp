@@ -111,6 +111,29 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_dispatch9",	"Energy produced by the system in dispatch period 9",	"",   "",                      "ippppa",             "market=0",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_dispatch9",		"Revenue from the system in dispatch period 9",	"",   "",                      "ippppa",             "market=0",				   "LENGTH_EQUAL=cf_length",                 "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_monthly_firstyear",		"First year revenue from the system by month",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_monthly_firstyear",		"First year energy from the system by month",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch1",                "First year revenue from the system in dispatch period 1",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch2",                "First year revenue from the system in dispatch period 2",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch3",                "First year revenue from the system in dispatch period 3",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch4",                "First year revenue from the system in dispatch period 4",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch5",                "First year revenue from the system in dispatch period 5",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch6",                "First year revenue from the system in dispatch period 6",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch7",                "First year revenue from the system in dispatch period 7",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch8",                "First year revenue from the system in dispatch period 8",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_revenue_dispatch9",                "First year revenue from the system in dispatch period 9",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch1",                "First year energy from the system in dispatch period 1",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch2",                "First year energy from the system in dispatch period 2",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch3",                "First year energy from the system in dispatch period 3",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch4",                "First year energy from the system in dispatch period 4",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch5",                "First year energy from the system in dispatch period 5",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch6",                "First year energy from the system in dispatch period 6",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch7",                "First year energy from the system in dispatch period 7",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch8",                "First year energy from the system in dispatch period 8",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "firstyear_energy_dispatch9",                "First year energy from the system in dispatch period 9",      "",             "",                      "ippppa",      "*",                       "",                                  "" },
+
 
 	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "ippppa",      "*",                       "INTEGER",                                  "" },
@@ -123,8 +146,8 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_cashflow",                      "Minimum cash flow value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "irr",                      "Internal rate of return",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_dscr",                      "Minimum DSCR",				   "",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_debt_frac",                      "Calculated debt fraction",				   "",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_ppa_escalation",                      "Calculated ppa escalation",				   "",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_debt_frac",                      "Calculated debt fraction",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_ppa_escalation",                      "Calculated ppa escalation",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 
 	// metrics table 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
@@ -409,6 +432,10 @@ enum {
 	CF_TODOctRevenue,
 	CF_TODNovRevenue,
 	CF_TODDecRevenue,
+
+	CF_revenue_monthly_firstyear,	
+	CF_energy_net_monthly_firstyear,	
+	
 
 	CF_Availability,
 	CF_Degradation,
@@ -920,8 +947,8 @@ public:
 		assign( "irr",  var_data((ssc_number_t)(aftertax_irr*100.0)) );
 		assign( "min_dscr",  var_data((ssc_number_t)min_dscr) );
 
-		assign( "actual_debt_frac",  var_data((ssc_number_t)debt_frac) );
-		assign( "actual_ppa_escalation",  var_data((ssc_number_t)ppa_escalation) );
+		assign( "actual_debt_frac",  var_data((ssc_number_t)(100.0*debt_frac)) );
+		assign( "actual_ppa_escalation",  var_data((ssc_number_t)(100.0*ppa_escalation)) );
 
 		assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 		double kWhperkW = 0.0;
@@ -1228,6 +1255,55 @@ public:
 		}
 		save_cf( CF_TODDecRevenue, nyears, "cf_revenue_Dec");
 
+
+		cf.at( CF_revenue_monthly_firstyear, 0) = cf.at(CF_TODJanRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 1) = cf.at(CF_TODFebRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 2) = cf.at(CF_TODMarRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 3) = cf.at(CF_TODAprRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 4) = cf.at(CF_TODMayRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 5) = cf.at(CF_TODJunRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 6) = cf.at(CF_TODJulRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 7) = cf.at(CF_TODAugRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 8) = cf.at(CF_TODSepRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 9) = cf.at(CF_TODOctRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 10) = cf.at(CF_TODNovRevenue, 1);
+		cf.at( CF_revenue_monthly_firstyear, 11) = cf.at(CF_TODDecRevenue, 1);
+
+		cf.at( CF_energy_net_monthly_firstyear, 0) = cf.at(CF_TODJanEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 1) = cf.at(CF_TODFebEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 2) = cf.at(CF_TODMarEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 3) = cf.at(CF_TODAprEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 4) = cf.at(CF_TODMayEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 5) = cf.at(CF_TODJunEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 6) = cf.at(CF_TODJulEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 7) = cf.at(CF_TODAugEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 8) = cf.at(CF_TODSepEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 9) = cf.at(CF_TODOctEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 10) = cf.at(CF_TODNovEnergy, 1);
+		cf.at( CF_energy_net_monthly_firstyear, 11) = cf.at(CF_TODDecEnergy, 1);
+
+		save_cf( CF_revenue_monthly_firstyear, 11, "cf_revenue_monthly_firstyear");
+		save_cf( CF_energy_net_monthly_firstyear, 11, "cf_energy_net_monthly_firstyear");
+		
+		assign( "firstyear_revenue_dispatch1", var_data((ssc_number_t) cf.at(CF_TOD1Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch2", var_data((ssc_number_t) cf.at(CF_TOD2Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch3", var_data((ssc_number_t) cf.at(CF_TOD3Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch4", var_data((ssc_number_t) cf.at(CF_TOD4Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch5", var_data((ssc_number_t) cf.at(CF_TOD5Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch6", var_data((ssc_number_t) cf.at(CF_TOD6Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch7", var_data((ssc_number_t) cf.at(CF_TOD7Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch8", var_data((ssc_number_t) cf.at(CF_TOD8Revenue,1) ));  
+		assign( "firstyear_revenue_dispatch9", var_data((ssc_number_t) cf.at(CF_TOD9Revenue,1) ));  
+		
+		assign( "firstyear_energy_dispatch1", var_data((ssc_number_t) cf.at(CF_TOD1Energy,1) ));  
+		assign( "firstyear_energy_dispatch2", var_data((ssc_number_t) cf.at(CF_TOD2Energy,1) ));  
+		assign( "firstyear_energy_dispatch3", var_data((ssc_number_t) cf.at(CF_TOD3Energy,1) ));  
+		assign( "firstyear_energy_dispatch4", var_data((ssc_number_t) cf.at(CF_TOD4Energy,1) ));  
+		assign( "firstyear_energy_dispatch5", var_data((ssc_number_t) cf.at(CF_TOD5Energy,1) ));  
+		assign( "firstyear_energy_dispatch6", var_data((ssc_number_t) cf.at(CF_TOD6Energy,1) ));  
+		assign( "firstyear_energy_dispatch7", var_data((ssc_number_t) cf.at(CF_TOD7Energy,1) ));  
+		assign( "firstyear_energy_dispatch8", var_data((ssc_number_t) cf.at(CF_TOD8Energy,1) ));  
+		assign( "firstyear_energy_dispatch9", var_data((ssc_number_t) cf.at(CF_TOD9Energy,1) ));  
 
 
 	}
