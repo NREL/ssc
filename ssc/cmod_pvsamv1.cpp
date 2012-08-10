@@ -258,7 +258,7 @@ public:
 	void exec( ) throw( general_error )
 	{
 		// run some preliminary checks on inputs
-		if (as_integer("self_shading_enabled") && as_integer("track_mode"))
+		if (as_integer("self_shading_enabled") && as_integer("subarray1_track_mode"))
 			throw exec_error( "pvsamv1", "Self-shading is enabled on the Shading page, but does not\n"
 						  "work with the 1-axis, 2-axis, or azimuth tracking options.\n"
 						  "To correct this problem, either disable self-shading on the\n"

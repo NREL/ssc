@@ -16,7 +16,7 @@ static var_info _cm_vtab_pvwattsv1[] = {
 		
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                     "Tracking mode",                               "0/1/2",  "Fixed,1Axis,2Axis",       "PVWatts",      "*",                       "MIN=0,MAX=2,INTEGER",                      "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                     "Tracking mode",                               "0/1/2/3","Fixed,1Axis,2Axis,AziAxis","PVWatts",      "*",                       "MIN=0,MAX=3,INTEGER",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",    "E=90,S=180,W=270",        "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",    "H=0,V=90",                "PVWatts",      "naof:tilt_eq_lat",        "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                        "PVWatts",      "na:tilt",                 "BOOLEAN",                                  "" },
@@ -69,7 +69,7 @@ public:
 					
 		double dcrate = as_double("system_size");
 		double derate = as_double("derate");
-		int track_mode = as_integer("track_mode"); // 0, 1, 2
+		int track_mode = as_integer("track_mode"); // 0, 1, 2, 3
 		double azimuth = as_double("azimuth");
 		double tilt = wf.lat;
 		if ( !lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat") )
@@ -122,7 +122,7 @@ public:
 		double pcrate = dcrate * 1000.0;      // rated output of inverter in a.c. watts; 6/29/2005
 		double refpwr = dcrate * 1000.0;      // nameplate in watts; 6/29/2005
 
-		if( track_mode < 0 || track_mode > 2 )
+		if( track_mode < 0 || track_mode > 3 )
 			track_mode = 0;
 		if( tilt < 0 || tilt > 90 )
 			tilt = wf.lat;
