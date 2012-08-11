@@ -660,7 +660,9 @@ public:
 			positive_cashflow_required =0;
 		}
 
-		double total_cost = as_double("total_installed_cost");
+		double constr_total_financing = as_double("constr_total_financing");
+
+		double total_cost = as_double("total_installed_cost") + constr_total_financing;
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
 
 		loan_term = as_integer("loan_term");
