@@ -160,7 +160,7 @@ static var_info vtab_ippppa[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Energy Value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ppa_price",      "Energy Price",                  "$/kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_price",      "Energy Price",                  "$/kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -196,12 +196,16 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_incentive_income_less_deductions",  "State incentive income less deductions",   "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_taxable_income_less_deductions",    "State taxable income less deductions",     "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_tax_savings",                       "State tax savings",                        "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_income_taxes",                       "State Income Taxes",                        "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depr_sched",                        "Federal depreciation schedule",            "%",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depreciation",                      "Federal depreciation",                     "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_incentive_income_less_deductions",  "Federal incentive income less deductions", "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_taxable_income_less_deductions",    "Federal taxable income less deductions",   "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_tax_savings",                       "Federal tax savings",                      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_income_taxes",                       "Federal Income Taxes",                        "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_and_fed_tax_savings",               "Total tax savings (Federal & State)",      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cash_flow",        "After tax net equity cash flow",           "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -225,6 +229,7 @@ enum {
 	CF_energy_net,
 	CF_energy_value,
 	CF_ppa_price,
+	CF_energy_price,
 	CF_ppa_revenue,
 
 	CF_om_fixed_expense,
@@ -662,8 +667,8 @@ public:
 
 		double constr_total_financing = as_double("constr_total_financing");
 
-		double total_cost = as_double("total_installed_cost") + constr_total_financing;
-		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
+		double total_cost = as_double("total_installed_cost")+constr_total_financing;
+		double property_tax_assessed_value = (total_cost-constr_total_financing) * as_double("prop_tax_cost_assessed_percent") * 0.01;
 
 		loan_term = as_integer("loan_term");
 		loan_rate = as_double("loan_rate")*0.01;
@@ -837,7 +842,7 @@ public:
 			cf.at(CF_property_tax_assessed_value,i) = (decline_percent > 0) ? property_tax_assessed_value * decline_percent * 0.01:0.0;
 			cf.at(CF_property_tax_expense,i) = cf.at(CF_property_tax_assessed_value,i) * property_tax;
 
-			cf.at(CF_insurance_expense,i) = total_cost * insurance_rate * pow( 1 + inflation_rate, i-1 );
+			cf.at(CF_insurance_expense,i) = (total_cost-constr_total_financing) * insurance_rate * pow( 1 + inflation_rate, i-1 );
 
 
 			cf.at(CF_deductible_expenses,i) = -cf.at(CF_operating_expenses,i);  // commercial
@@ -969,7 +974,16 @@ public:
 //		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));
 		assign( "adj_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));
 
-		
+
+		for (int i=0;i<=nyears;i++)
+		{
+			if (cf.at(CF_energy_net,i) !=0)
+				cf.at(CF_energy_price,i) = cf.at(CF_energy_value,i) / cf.at(CF_energy_net,i);
+			else
+				cf.at(CF_energy_price,i) = 0.0;
+		}
+
+		save_cf( CF_energy_price, nyears, "cf_energy_price" );
 		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
 		save_cf( CF_pretax_dscr, nyears, "cf_pretax_dscr" );
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
@@ -1007,12 +1021,14 @@ public:
 		save_cf( CF_sta_incentive_income_less_deductions, nyears, "cf_sta_incentive_income_less_deductions" );
 		save_cf( CF_sta_taxable_income_less_deductions, nyears, "cf_sta_taxable_income_less_deductions" );
 		save_cf( CF_sta_tax_savings, nyears, "cf_sta_tax_savings" );
+		save_cf( CF_sta_income_taxes, nyears, "cf_sta_income_taxes" );
 
 		save_cf( CF_fed_depr_sched, nyears, "cf_fed_depr_sched" );
 		save_cf( CF_fed_depreciation, nyears, "cf_fed_depreciation" );
 		save_cf( CF_fed_incentive_income_less_deductions, nyears, "cf_fed_incentive_income_less_deductions" );
 		save_cf( CF_fed_taxable_income_less_deductions, nyears, "cf_fed_taxable_income_less_deductions" );
 		save_cf( CF_fed_tax_savings, nyears, "cf_fed_tax_savings" );
+		save_cf( CF_fed_income_taxes, nyears, "cf_fed_income_taxes" );
 
 		save_cf( CF_sta_and_fed_tax_savings, nyears, "cf_sta_and_fed_tax_savings" );
 		save_cf( CF_after_tax_net_equity_cash_flow, nyears, "cf_after_tax_net_equity_cash_flow" );
@@ -3525,7 +3541,6 @@ void compute_cashflow()
 	{
 
 		cf.at(CF_ppa_price,i) = ppa * pow( 1.0 + ppa_escalation, i-1 ); 
-
 		if (is_commercialppa)
 			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 		else
