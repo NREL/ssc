@@ -10,6 +10,7 @@ static var_info vtab_utility_rate[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "e_without_sys",            "Net energy at grid without system (load only)", "kWh",    "",                      "",             "?",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "p_without_system",         "Max power at grid without system (load only)",  "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
 
+	{ SSC_INPUT,        SSC_ARRAY,      "system_availability",       "Annual availability of system",    "%/year", "",                      "",             "?=100",                       "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "system_degradation",       "Annual degradation of system",    "%/year", "",                      "",             "?=0",                       "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "load_escalation",          "Annual load escalation",          "%/year", "",                      "",             "?=0",                       "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
@@ -268,6 +269,19 @@ public:
 		{
 			for (i=0;i<nyears && i<count;i++)
 				sys_scale[i] = (ssc_number_t)(1.0 - parr[i]*0.01);
+		}
+
+		// annual availability multipliers
+		parr = as_array("system_availability", &count);
+		if (count == 1)
+		{
+			for (i=0;i<nyears;i++)
+				sys_scale[i] *= (ssc_number_t) ( parr[0]*0.01 ) ;
+		}
+		else
+		{
+			for (i=0;i<nyears && i<count;i++)
+				sys_scale[i] *= (ssc_number_t)( parr[i]*0.01 );
 		}
 
 		// compute load (electric demand) annual escalation multipliers
