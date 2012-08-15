@@ -30,9 +30,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                       "",       "0=beam&diffuse,1=total&beam",   "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                       "",       "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
-	{ SSC_INPUT,        SSC_ARRAY,       "monthly_soiling",                             "Monthly soiling derate",                                  "%",      "",                              "pvsamv1",              "*",                        "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pre_derate",                                  "Pre-inverter derate",                                     "%",      "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "post_derate",                                 "Post-inverter derate",                                    "%",      "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ac_derate",                                   "Interconnection (AC) derate",                             "0..1",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=1",                   "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "modules_per_string",                          "Modules per string",                                      "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                      "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
@@ -47,6 +45,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_btwidth",                           "Sub-array 1 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_btspacing",                         "Sub-array 1 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading",                           "Sub-array 1 Detailed shading scene data",                 "",       shading_data::format_doc,        "pvsamv1",              "*",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_derate",                            "Sub-array 1 DC power derate",                             "0..1",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=1",                   "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "module_model",                                "Photovoltaic module model specifier",                     "",       "0=spe,1=cec,2=6par_user,3=snl", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
 	
@@ -291,11 +291,11 @@ public:
 		int skymodel = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
 
 		size_t soil_len = 0;
-		ssc_number_t *soiling = as_array("monthly_soiling", &soil_len); // monthly soiling array
+		ssc_number_t *soiling = as_array("subarray1_soiling", &soil_len); // monthly soiling array
 		if (soil_len != 12) throw exec_error( "pvsamv1", "soiling derate must have 12 values");
 	
-		double pre_derate = as_double("pre_derate")/100.0;
-		double post_derate = as_double("post_derate")/100.0;
+		double dc_derate = as_double("subarray1_derate");
+		double ac_derate = as_double("ac_derate");
 
 		int tracking = as_integer("subarray1_track_mode"); // 0=fixed, 1=1axis, 2=2axis, 3=aziaxis
 
@@ -437,7 +437,7 @@ public:
 					double Wgap;  // gap width spacing (m)
 					double TbackInteg; */
 
-				mcsp_tc.DcDerate = pre_derate;
+				mcsp_tc.DcDerate = dc_derate;
 				mcsp_tc.MC = as_integer("cec_mounting_config")+1;
 				mcsp_tc.HTD = as_integer("cec_heat_transfer")+1;
 				mcsp_tc.MSO = as_integer("cec_mounting_orientation")+1;
@@ -781,7 +781,7 @@ public:
 			double soiling_factor = 1.0;
 			if ( midx >= 0 && midx < 12 )
 			{
-				soiling_factor = soiling[midx]/100;
+				soiling_factor = soiling[midx];
 				ibeam *= soiling_factor;
 				iskydiff *= soiling_factor;
 				ignddiff *= soiling_factor;
@@ -873,7 +873,7 @@ public:
 				if (self_shading_enabled) dcpwr *= p_ss_derate[istep];
 
 				// apply pre-inverter power derate
-				dcpwr *= pre_derate;
+				dcpwr *= dc_derate;
 
 			} // if (sunup)
 			
@@ -907,7 +907,7 @@ TotRadkW = ITotal_soil/3600. */
 					
 				if ( invplr > 1 ) invplr = 1; // clipping loss
 
-				acpwr = invplr * speinv_pac * post_derate * num_inverters;
+				acpwr = invplr * speinv_pac * ac_derate * num_inverters;
 				aceff = speinv_eff;
 		
 			}
@@ -916,7 +916,7 @@ TotRadkW = ITotal_soil/3600. */
 				double _par, _plr;
 				snlinv.acpower( dcpwr/num_inverters, dcv, &acpwr, &_par, &_plr, &aceff );
 				acpwr *= num_inverters;
-				acpwr *= post_derate;
+				acpwr *= ac_derate;
 				aceff *= 100;
 			}
 
@@ -940,15 +940,15 @@ TotRadkW = ITotal_soil/3600. */
 			p_vmp[istep] = (ssc_number_t) dcv;
 			p_dcgross[istep] = (ssc_number_t) dcpwr / 1000;
 
-			if (pre_derate != 0) 
-				p_dcgross[istep] = (ssc_number_t) (dcpwr / pre_derate / 1000);
+			if (dc_derate != 0) 
+				p_dcgross[istep] = (ssc_number_t) (dcpwr / dc_derate / 1000);
 			else
 				p_dcgross[istep] = (ssc_number_t) dcpwr / 1000;
 
 			p_dcpwr[istep] = (ssc_number_t) dcpwr/1000;
 
-			if (post_derate != 0) 
-				p_acgross[istep] = (ssc_number_t) (acpwr / post_derate / 1000);
+			if (ac_derate != 0) 
+				p_acgross[istep] = (ssc_number_t) (acpwr / ac_derate / 1000);
 			else
 				p_acgross[istep] = (ssc_number_t) acpwr/1000;
 
