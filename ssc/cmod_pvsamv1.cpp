@@ -735,8 +735,11 @@ public:
 		ssc_number_t *p_solazi = allocate("hourly_sol_azi", 8760);
 	
 		int istep = 0, nstep = wf.nrecords;
-		while( wf.read() && istep < 8760 )
+		while( istep < 8760 )
 		{
+			if (!wf.read())
+				throw exec_error("pvsamv1", "could not read data line " + util::to_string(istep+1) + " of 8760 in weather file");
+
 			double beam_shad_factor = 0;
 
 			if ( istep % (nstep/10) == 0)

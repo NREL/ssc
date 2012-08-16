@@ -168,8 +168,11 @@ public:
 		pvwatts_celltemp tccalc( inoct, height, 1.0 );
 	
 		int i=0;
-		while (wf.read() && i<8760)
+		while( i < 8760 )
 		{
+			if (!wf.read())
+				throw exec_error("pvwattsv1", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
+
 			irrad irr;
 			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600.0 );
 			irr.set_location( wf.lat, wf.lon, wf.tz );
