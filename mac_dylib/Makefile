@@ -20,16 +20,15 @@ LDFLAGS += -arch i386
 endif
 
 OBJECTS = \
-	lib_pvshade.o \
 	cmod_test_pvshade.o \
-	lib_windfile.o \
 	cmod_geothermalui.o \
-	cmod_windfarm.o \
-	cmod_pv6parmod.o \
-	cmod_pvsamv1.o \
-	cmod_pvsandiainv.o \
 	cmod_6parsolve.o \
+	cmod_windpower.o \
+	cmod_annualoutput.o \
 	cmod_test_irr.o \
+	cmod_pv6parmod.o \
+	cmod_pvsandiainv.o \
+	cmod_pvsamv1.o \
 	cmod_wfreader.o \
 	cmod_irradproc.o \
 	cmod_trntower.o \
@@ -46,14 +45,17 @@ OBJECTS = \
 	cmod_pvwatts.o \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
-	cmod_windpower.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
+	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
-	lib_pvmodel.o \
+	lib_windfile.o \
 	lib_cec6par.o \
+	lib_pvshade.o \
+	lib_sandia.o \
+	lib_pvmodel.o \
 	lib_irradproc.o \
 	lib_powerblock.o \
 	lib_financial.o \
