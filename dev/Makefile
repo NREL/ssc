@@ -34,7 +34,7 @@ TARGET=SSCdev
 CXXDEP = g++
 
 # What include flags to pass to the compiler
-INCLUDEFLAGS= -g -D__RELEASE__ -D__USENOTEBOOK__ -I. -I../src -I$(CMLDIR) `wx-config-dsa --cflags`
+INCLUDEFLAGS= -g -D__RELEASE__ -D__USENOTEBOOK__ -I. -I../recore -I../ssc  -I$(CMLDIR) `wx-config-dsa --cflags`
 
 # Separate compile options per configuration
 ifeq ($(CFG),debug)
