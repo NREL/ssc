@@ -494,8 +494,6 @@ bool selfshade_t::solar_transform(double solazi, double solzen)
 		}
 
 
-    // Convert sun coordinates into Euclidian space
-// Rotation reference  http://en.wikipedia.org/wiki/Rotation_matrix with clockwise rotation (-theta)
 /*
 	// 2011.12.2 - Convention equator=0 rh rotation
 	S[0][0] = sind(solzen)*cosd(solazi);

@@ -27,7 +27,8 @@ OBJECTS = \
 	cmod_test_pvshade.o \
 	cmod_geothermalui.o \
 	cmod_6parsolve.o \
-	cmod_windfarm.o \
+	cmod_windpower.o \
+	cmod_annualoutput.o \
 	cmod_test_irr.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
@@ -48,7 +49,6 @@ OBJECTS = \
 	cmod_pvwatts.o \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
-	cmod_windwatts.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
