@@ -150,6 +150,14 @@ void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_number_t *pva
 	(*f)(p_data, name, pvalues, nrows, ncols);
 }
 
+void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data_t table )
+{
+	static void (*f)(ssc_data_t, const char*, ssc_data_t) = 0;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == ( f = (void(*)(ssc_data_t, const char*, ssc_data_t))PROCADDR() )) FAIL_ON_LOCATE();
+	(*f)(p_data, name, table);
+}
+
 const char *ssc_data_get_string( ssc_data_t p_data, const char *name )
 {
 	static const char* (*f)( ssc_data_t, const char* ) = NULL;
@@ -173,12 +181,21 @@ ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *leng
 	if (!f && 0 == (f = (ssc_number_t*(*)(ssc_data_t, const char*, int*))PROCADDR() )) FAIL_ON_LOCATE();
 	return (*f)( p_data, name, length );
 }
+
 ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols )
 {
 	static ssc_number_t* (*f)(ssc_data_t, const char*, int*, int*) = NULL;
 	CHECK_DLL_LOADED();
 	if (!f && 0 == (f = (ssc_number_t*(*)(ssc_data_t, const char*, int*, int*))PROCADDR())) FAIL_ON_LOCATE();
 	return (*f)( p_data, name, nrows, ncols );
+}
+
+ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name )
+{
+	static ssc_data_t (*f)(ssc_data_t, const char*) = NULL;
+	CHECK_DLL_LOADED();
+	if (!f && 0 == (f = (ssc_data_t(*)(ssc_data_t, const char*))PROCADDR() )) FAIL_ON_LOCATE();
+	return (*f)( p_data, name );
 }
 
 #define DYNAMICCALL_CONSTCHARSTAR__SSCDATAT() \

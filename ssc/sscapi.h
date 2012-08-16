@@ -59,6 +59,7 @@ typedef int ssc_bool_t;
 #define SSC_NUMBER 2
 #define SSC_ARRAY 3
 #define SSC_MATRIX 4
+#define SSC_TABLE 5
 
 /* create, release, query, read, and write data set objects */
 SSCEXPORT ssc_data_t ssc_data_create();
@@ -69,16 +70,24 @@ SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name ); // returns 
 SSCEXPORT const char *ssc_data_first( ssc_data_t p_data ); // returns the name of the first data item, NULL if empty
 SSCEXPORT const char *ssc_data_next( ssc_data_t p_data ); // returns the next name in the data set object, NULL, if none left.
 
-/* assign values */
+/* assign values.  
+	note: these functions do not take ownership of the data pointeres for arrays, matrices, and tables.
+	a deep copy is made into the internal SSC engine.
+	you must remember to free the table that you create to pass into ssc_data_set_table( ) for example. */
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value );
 SSCEXPORT void ssc_data_set_number( ssc_data_t p_data, const char *name, ssc_number_t value );
 SSCEXPORT void ssc_data_set_array( ssc_data_t p_data, const char *name, ssc_number_t *pvalues, int length );
 SSCEXPORT void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_number_t *pvalues, int nrows, int ncols );
-/* retrieve values */
+SSCEXPORT void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data_t table );
+
+/* retrieve values.
+	note:  these functions return internal references to memory, and the returned 
+	string, array, matrix, and tables should not be freed by the user */
 SSCEXPORT const char *ssc_data_get_string( ssc_data_t p_data, const char *name );
 SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, ssc_number_t *value );
 SSCEXPORT ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length );
 SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols );
+SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name );
 
 /* ssc_module_entry: Returns information of all computation modules built into ssc. Example:
 	int i=0;

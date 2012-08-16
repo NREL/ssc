@@ -12,6 +12,30 @@ using std::tr1::unordered_map;
 using std::tr1::unordered_map;
 #endif
 
+class var_data;
+
+typedef unordered_map< std::string, var_data* > var_hash;
+
+class var_table
+{
+public:
+	explicit var_table();
+	virtual ~var_table();
+
+	void clear();
+	var_data *assign( const std::string &name, const var_data &value );
+	void unassign( const std::string &name );
+	var_data *lookup( const std::string &name );
+	const char *first();
+	const char *next();
+	unsigned int size() { return (unsigned int)m_hash.size(); }
+	var_table &operator=( const var_table &rhs );
+
+private:
+	var_hash m_hash;
+	var_hash::iterator m_iterator;
+};
+
 
 class var_data
 {
@@ -31,32 +55,13 @@ public:
 	static std::string to_string( const var_data &value );
 	static bool parse( unsigned char type, const std::string &buf, var_data &value );
 
-	void copy( const var_data &rhs ) { type=rhs.type; num=rhs.num; str=rhs.str; }
+	var_data &operator=(const var_data &rhs) { copy(rhs); return *this; }
+	void copy( const var_data &rhs ) { type=rhs.type; num=rhs.num; str=rhs.str; table = rhs.table; }
 	
 	unsigned char type;
 	util::matrix_t<ssc_number_t> num;
 	std::string str;
-};
-
-typedef unordered_map< std::string, var_data* > var_hash;
-
-class var_table
-{
-public:
-	explicit var_table();
-	virtual ~var_table();
-
-	void clear();
-	var_data *assign( const std::string &name, const var_data &value );
-	void unassign( const std::string &name );
-	var_data *lookup( const std::string &name );
-	const char *first();
-	const char *next();
-	unsigned int size() { return (unsigned int)m_hash.size(); }
-
-private:
-	var_hash m_hash;
-	var_hash::iterator m_iterator;
+	var_table table;
 };
 
 #endif

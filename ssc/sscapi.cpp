@@ -179,6 +179,16 @@ SSCEXPORT void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_num
 	vt->assign( name, var_data(pvalues, nrows, ncols) );
 }
 
+SSCEXPORT void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data_t table )
+{
+	var_table *vt = static_cast<var_table*>(p_data);
+	var_table *value = static_cast<var_table*>(table);
+	if (!vt || !value) return;
+	var_data *dat = vt->assign( name, var_data() );
+	dat->type = SSC_TABLE;
+	dat->table = *value;  // invokes operator= for deep copy
+}
+
 SSCEXPORT const char *ssc_data_get_string( ssc_data_t p_data, const char *name )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
@@ -218,6 +228,15 @@ SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name
 	if (nrows) *nrows = (int) dat->num.nrows();
 	if (ncols) *ncols = (int) dat->num.ncols();
 	return dat->num.data();
+}
+
+SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name )
+{
+	var_table *vt = static_cast<var_table*>(p_data);
+	if (!vt) return 0;
+	var_data *dat = vt->lookup(name);
+	if (!dat || dat->type != SSC_TABLE) return 0;
+	return static_cast<ssc_data_t>( &(dat->table) );
 }
 
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )

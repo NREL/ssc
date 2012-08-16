@@ -364,7 +364,6 @@ public:
 			out_FRUL_use[i] = (ssc_number_t)FRUL_use;
 								
 			double mdot_mix = draw[i];
-			double mdot_useful = mdotCp_use / Cp_water;
 			double T_useful = T_cold;
 
 			double T_tank_prev_iter = 0.0;

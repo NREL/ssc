@@ -146,6 +146,18 @@ var_table::~var_table()
 	clear();
 }
 
+var_table &var_table::operator=( const var_table &rhs )
+{
+	clear();
+
+	for ( var_hash::const_iterator it = rhs.m_hash.begin();
+		it != rhs.m_hash.end();
+		++it )
+		assign( (*it).first, *((*it).second) );
+
+	return *this;
+}
+
 void var_table::clear()
 {
 	for ( var_hash::iterator it = m_hash.begin(); it !=m_hash.end(); ++it )
