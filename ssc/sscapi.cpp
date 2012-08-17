@@ -514,55 +514,6 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 	if (hi)	hi->on_stdout( output_line );
 }
 
-SSCEXPORT ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index )
-{
-	compute_module *cm = static_cast<compute_module*>(p_mod);
-	if (!cm) return 0;
-	
-	param_info *p = cm->get_param_info( index );
-	return static_cast<ssc_param_t>(p);
-}
-
-
-SSCEXPORT const char *ssc_param_name( ssc_param_t p_param )
-{
-	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->name : 0;
-}
-
-SSCEXPORT const char *ssc_param_description( ssc_param_t p_param )
-{
-	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->description : 0;
-}
-
-SSCEXPORT const char *ssc_param_default_value( ssc_param_t p_param )
-{
-	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->default_value : 0;
-}
-
-SSCEXPORT int ssc_param_type( ssc_param_t p_param )
-{
-	param_info *p = static_cast<param_info*>(p_param);
-	return p ? p->type : 0;
-}
-
-
-SSCEXPORT void ssc_module_parameter_string( ssc_module_t p_mod, const char *name, const char *value )
-{
-	compute_module *cm = static_cast<compute_module*>(p_mod);
-	if (!cm) return;
-	cm->set_param( name, value );
-}
-
-SSCEXPORT void ssc_module_parameter_number( ssc_module_t p_mod, const char *name, ssc_number_t value )
-{
-	compute_module *cm = static_cast<compute_module*>(p_mod);
-	if (!cm) return;
-	cm->set_param( name, value );
-}
-
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);

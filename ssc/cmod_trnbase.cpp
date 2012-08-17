@@ -20,21 +20,10 @@ static var_info _cm_vtab_trnbase[] = {
 
 var_info_invalid };
 
-	
-static param_info _cm_params_trnbase[] = {
-	/* TYPE,      NAME,       DEFAULT_VALUE,    DESCRIPTION */
-	{ SSC_STRING, "trnsys_exe",     "",            "Path to TRNSYS executable" },
-	{ SSC_STRING, "working_dir",    "",            "Local working directory" },
-	{ SSC_STRING, "data_file",      "",            "(sub)Hourly output data file" },
-	{ SSC_NUMBER, "trnsys_tmstart", "0",           "Simulation start time (hr) (default=0)" },
-	{ SSC_NUMBER, "trnsys_tmstop",  "8760",        "Simulation end time (hr) (default=8760)" },
-	{ SSC_NUMBER, "trnsys_tmstep",  "1",           "Simulation time step (hr) (default=1)" },
-	{ SSC_INVALID, NULL }  };
 
 cm_trnbase::cm_trnbase()
 {
 	add_var_info( _cm_vtab_trnbase );
-	set_param_info( _cm_params_trnbase );
 }
 
 bool cm_trnbase::accumulate_annual( output &data, const std::string &var, double &sum)
@@ -126,18 +115,18 @@ int cm_trnbase::weather_file_type(const char *wf)
 
 std::string cm_trnbase::work_dir()
 {
-	return param_string("working_dir");
+	return as_string("working_dir");
 }
 
 std::string cm_trnbase::data_file()
 {
-	return param_string("data_file");
+	return as_string("data_file");
 }
 
 void cm_trnbase::exec() throw(general_error)
 {
 	std::string wkdir = work_dir();
-	std::string exe = param_string("trnsys_exe");
+	std::string exe = as_string("trnsys_exe");
 	std::string deck = deck_name();
 	deck = "decks/" + deck; // for consistency with exelib structure
 	
@@ -171,9 +160,9 @@ void cm_trnbase::exec() throw(general_error)
 	fprintf(f, "\n*** end include section ***\n\n");
 
 	fprintf(f, "EQUATIONS 3\n");
-	fprintf(f, "\tSTART=%lg\n", (double)param_number("trnsys_tmstart"));
-	fprintf(f, "\tSTOP=%lg\n",  (double)param_number("trnsys_tmstop"));
-	fprintf(f, "\tSTEP=%lg\n\n",(double)param_number("trnsys_tmstep"));
+	fprintf(f, "\tSTART=%lg\n", (double)as_number("trnsys_tmstart"));
+	fprintf(f, "\tSTOP=%lg\n",  (double)as_number("trnsys_tmstop"));
+	fprintf(f, "\tSTEP=%lg\n\n",(double)as_number("trnsys_tmstep"));
 
 	
 	std::string deck_src = util::path_only(exe) + util::path_separator() + deck + ".trdsrc";

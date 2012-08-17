@@ -73,18 +73,6 @@ enum { NOTIFY_SAVE, NOTIFY_TABCHANGE };
 
 #define MAX_RECENT 9
 
-struct cmParam {
-	wxString name;
-	int type;
-	wxString str;
-	float num;
-};
-
-struct cmModule {
-	wxString cm_mod_name;
-	Array<cmParam> params;
-};
-
 class SCFrame : public wxFrame
 {
 public:
@@ -121,9 +109,7 @@ public:
 
 	void ClearCMs();
 	bool AddCM( const wxString &name );
-	bool SetCMParam( const wxString &cm, const wxString &param, const wxString &value, int type = SSC_STRING );
-	bool ClearCMParams( const wxString &cm );
-
+	void SetCMs( const wxArrayString &list );
 private:	
 
 	void WriteVarTable( wxDataOutputStream &o, var_table &vt );
@@ -152,7 +138,7 @@ private:
 	DataView *m_dataView;
 	EditorWindow *m_scriptWindow;
 
-	Array<cmModule> m_cmList;
+	wxArrayString m_cmList;
 	var_table *m_varTable;
 
 	int m_recentCount;

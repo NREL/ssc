@@ -238,7 +238,7 @@ DataView::DataView( wxWindow *parent )
 {
 	SetBackgroundColour( *wxWHITE );
 
-	wxBoxSizer *tb_sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer *tb_sizer = new wxBoxSizer(wxVERTICAL);
 	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add..."), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_EDIT_VARIABLE, "Edit..."), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_DELETE_VARIABLE, "Delete"), 0, wxALL|wxEXPAND, 2);
@@ -285,9 +285,9 @@ DataView::DataView( wxWindow *parent )
 	splitwin->SplitVertically(left_panel, m_grid, 290);
 
 
-	wxBoxSizer *szv_main = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer *szv_main = new wxBoxSizer(wxHORIZONTAL);
 	szv_main->Add( tb_sizer, 0, wxALL|wxEXPAND, 1 );
-	szv_main->Add( new wxStaticLine( this ), 0, wxALL|wxEXPAND);
+	szv_main->Add( new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL ), 0, wxALL|wxEXPAND, 1);
 	szv_main->Add( splitwin, 1, wxALL|wxEXPAND, 1 );
 
 	SetSizer( szv_main );

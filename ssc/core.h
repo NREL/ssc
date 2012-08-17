@@ -71,14 +71,6 @@ struct var_info
 	const char *ui_hint; // e.g. "hide,decpt=3" so hints for a user interface's treatment of this variable
 };
 
-struct param_info
-{
-	int type;
-	const char *name;
-	const char *default_value; // NULL for no default value - must be specified by user
-	const char *description;
-};
-
 extern const var_info var_info_invalid;
 
 class handler_interface; // forward decl
@@ -153,22 +145,6 @@ public:
 	compute_module( ); // cannot be created directly - has a pure virtual function
 	virtual ~compute_module();
 
-	/* Example compute module parameter table 
-	static param_info ptab[] = {
-		{ "start_time", SSC_NUMBER },
-		{ "end_time", SSC_NUMBER },
-		{ "trnsys_dir", SSC_STRING },
-		{ NULL, SSC_INVALID } }; 
-	...
-	cm->set_param_info( ptab ) */
-
-	param_info *get_param_info(int index);
-	void set_param( const std::string &name, const std::string &value );
-	void set_param( const std::string &name, ssc_number_t value );
-	ssc_number_t param_number( const std::string &name ) throw( general_error );
-	std::string param_string( const std::string &name ) throw( general_error );
-
-	
 	bool update( const std::string &current_action, float percent_done, float time=-1.0 );
 	void log( const std::string &msg, int type=SSC_NOTICE, float time=-1.0 );
 	bool extproc( const std::string &command, const std::string &workdir );
@@ -203,7 +179,6 @@ protected:
 	void add_var_info( var_info vi[] );
 	void build_info_map();
 	bool has_info_map() { return m_infomap!=NULL; }
-	void set_param_info( param_info plist[] );
 	
 	
 	/* for working with input/output/inout variables during 'compute'*/
@@ -239,10 +214,7 @@ private:
 	ssc_number_t get_operand_value( const std::string &input, const std::string &cur_var_name ) throw( general_error );
 
 	var_data m_null_value;
-
-	std::vector< param_info* > m_paramlist;
-	var_table m_paramtab;
-
+	
 	std::vector< var_info* > m_varlist;
 	std::vector< log_item > m_loglist;
 	

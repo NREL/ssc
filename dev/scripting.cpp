@@ -440,12 +440,129 @@ lk::fcall_t* retool_funcs()
 	return (lk::fcall_t*)vec;
 }
 
-// forward decl.
-
-
-void fcall_sscvar( lk::invoke_t &cxt )
+static bool sscvar_to_lkvar( lk::vardata_t &out, var_data *vv)
 {
-	LK_DOC2( "ssc_var", "Set or get a variable value in the SSC data object.", "Set a variable value.", "(string:name, variant:value):none", "Get a variable value", "(string:name):variant" );
+	if (!vv) return false;
+
+	switch( vv->type )
+	{
+	case SSC_NUMBER:
+		out.assign( (double) vv->num );
+		break;
+	case SSC_STRING:
+		out.assign( vv->str );
+		break;
+	case SSC_ARRAY:
+		out.empty_vector();
+		out.vec()->reserve( (size_t) vv->num.length() );
+		for (int i=0;i<vv->num.length();i++)
+			out.vec_append( vv->num[i] );
+		break;
+	case SSC_MATRIX:
+		out.empty_vector();
+		out.vec()->reserve( vv->num.nrows() );
+		for (int i=0;i<vv->num.nrows();i++)
+		{
+			out.vec()->push_back( lk::vardata_t() );
+			out.vec()->at(i).empty_vector();
+			out.vec()->at(i).vec()->reserve( vv->num.ncols() );
+			for (int j=0;j<vv->num.ncols();j++)
+				out.vec()->at(i).vec_append( vv->num.at(i,j) );
+		}
+		break;
+	case SSC_TABLE:
+		{
+			out.empty_hash();
+			const char *key = vv->table.first();
+			while (key != 0)
+			{
+				var_data *x = vv->table.lookup( key );
+				lk::vardata_t &xvd = out.hash_item( lk_string(key) );
+				sscvar_to_lkvar( xvd, x );
+				key = vv->table.next();
+			}
+		}
+		break;
+	}
+
+	return true;
+}
+
+static bool lkvar_to_sscvar( var_data *vv, lk::vardata_t &val )
+{	
+	if (!vv) return false;
+
+	switch (val.type())
+	{
+	case lk::vardata_t::NUMBER:
+		vv->type = SSC_NUMBER;
+		vv->num = (ssc_number_t)val.as_number();
+		break;
+	case lk::vardata_t::STRING:
+		vv->type = SSC_STRING;
+		vv->str = std::string((const char*) val.as_string().c_str());
+		break;
+	case lk::vardata_t::VECTOR:
+		{
+			size_t dim1 = val.length(), dim2 = 0;
+			for (size_t i=0;i<val.length();i++)
+			{
+				lk::vardata_t *row = val.index(i);
+				if (row->type() == lk::vardata_t::VECTOR && row->length() > dim2 )
+					dim2 = row->length();
+			}
+
+			if (dim2 == 0 && dim1 > 0)
+			{
+				vv->type = SSC_ARRAY;
+				vv->num.resize( dim1 );
+				for ( size_t i=0;i<dim1;i++)
+					vv->num[i] = (ssc_number_t)val.index(i)->as_number();
+			}
+			else if ( dim1 > 0 && dim2 > 0 )
+			{
+				vv->type = SSC_MATRIX;
+				vv->num.resize( dim1, dim2 );
+				for ( size_t i=0;i<dim1;i++)
+				{
+					for ( size_t j=0;j<dim2;j++ )
+					{
+						double x = 0;
+						if ( val.index(i)->type() == lk::vardata_t::VECTOR
+							&& j < val.index(i)->length() )
+							x = (ssc_number_t)val.index(i)->index(j)->as_number();
+
+						vv->num.at(i,j) = x;
+					}
+				}
+			}
+		}
+		break;
+	case lk::vardata_t::HASH:		
+		{
+			vv->type = SSC_TABLE;
+			vv->table.clear();
+
+			lk::varhash_t &hash = *val.hash();
+			for ( lk::varhash_t::iterator it = hash.begin();
+				it != hash.end();
+				++it )
+			{
+				var_data *item = vv->table.assign( std::string( (const char*)(*it).first.c_str() ), var_data() );
+				lkvar_to_sscvar( item, *(*it).second );
+			}
+		}
+		break;
+	}
+
+	return true;
+}
+
+void fcall_var( lk::invoke_t &cxt )
+{
+	LK_DOC2( "var", "Sets or gets a variable value in the SSC data set.", 
+		"Set a variable value.", "(string:name, variant:value):none", 
+		"Get a variable value", "(string:name):variant" );
 	
 	var_table *vt = app_frame->GetVarTable();
 
@@ -455,119 +572,57 @@ void fcall_sscvar( lk::invoke_t &cxt )
 		ssc_number_t val, *p;
 		int i, j;
 		var_data *vv = vt->lookup( name.c_str() );
-		if (!vv) return;
-		switch( vv->type )
-		{
-		case SSC_NUMBER:
-			cxt.result().assign( (double) vv->num );
-			break;
-		case SSC_STRING:
-			cxt.result().assign( vv->str );
-			break;
-		case SSC_ARRAY:
-			cxt.result().empty_vector();
-			cxt.result().vec()->reserve( (size_t) vv->num.length() );
-			for (i=0;i<vv->num.length();i++)
-				cxt.result().vec_append( vv->num[i] );
-			break;
-		case SSC_MATRIX:
-			cxt.result().empty_vector();
-			cxt.result().vec()->reserve( vv->num.nrows() );
-			for ( i=0;i<vv->num.nrows();i++)
-			{
-				cxt.result().vec()->push_back( lk::vardata_t() );
-				cxt.result().vec()->at(i).empty_vector();
-				cxt.result().vec()->at(i).vec()->reserve( vv->num.ncols() );
-				for (j=0;j<vv->num.ncols();j++)
-					cxt.result().vec()->at(i).vec_append( vv->num.at(i,j) );
-			}
-			break;
-		case SSC_TABLE:
-			// todo
-			break;
-		}
+		sscvar_to_lkvar( cxt.result(), vv );
 	}
 	else if (cxt.arg_count() == 2)
 	{
-		lk::vardata_t &val = cxt.arg(1).deref();
-		switch (val.type())
-		{
-		case lk::vardata_t::NUMBER:
-			vt->assign( name.c_str(), (double)val.as_number() );
-			break;
-		case lk::vardata_t::STRING:
-			vt->assign( name.c_str(), std::string((const char*) val.as_string().c_str()) );
-			break;
-		case lk::vardata_t::VECTOR:
-			{
-				size_t dim1 = val.length(), dim2 = 0;
-				for (size_t i=0;i<val.length();i++)
-				{
-					lk::vardata_t *row = val.index(i);
-					if (row->type() == lk::vardata_t::VECTOR && row->length() > dim2 )
-						dim2 = row->length();
-				}
-
-				if (dim2 == 0 && dim1 > 0)
-				{
-					ssc_number_t *p = new ssc_number_t[ dim1 ];
-					for ( size_t i=0;i<dim1;i++)
-						p[i] = (ssc_number_t)val.index(i)->as_number();
-
-					vt->assign( name.c_str(), var_data( p, dim1 ) );
-					delete [] p;
-				}
-				else if ( dim1 > 0 && dim2 > 0 )
-				{
-					ssc_number_t *p = new ssc_number_t[ dim1 * dim2 ];
-					for ( size_t i=0;i<dim1;i++)
-					{
-						for ( size_t j=0;j<dim2;j++ )
-						{
-							double x = 0;
-							if ( val.index(i)->type() == lk::vardata_t::VECTOR
-								&& j < val.index(i)->length() )
-								x = (ssc_number_t)val.index(i)->index(j)->as_number();
-
-							p[ dim2*i +j ] = x;
-						}
-					}
-					vt->assign( name.c_str(), var_data( p, dim1, dim2 ) );
-					delete [] p;
-				}
-			}
-		case lk::vardata_t::HASH:
-			// todo
-			break;
-		}
-		
+		lk::vardata_t &val = cxt.arg(1).deref();		
+		var_data *vv = vt->assign( name.c_str(), var_data() ); // create empty variable
+		lkvar_to_sscvar( vv, val );		
 		app_frame->GetDataView()->UpdateView();
 	}
 }
 
-void fcall_sscclear( lk::invoke_t &cxt )
+void fcall_clear( lk::invoke_t &cxt )
 {
-	LK_DOC( "ssc_clear", "Clear the SSC data object.", "(none):none");
+	LK_DOC( "clear", "Deletes variables from the SSC data set.  If no variable name(s) are specified, all are deleted.", "([string or array:variable name(s) to delete]):none");
 	
-	app_frame->GetVarTable()->clear();
+	if (cxt.arg_count() > 0)
+	{
+		if (cxt.arg(0).type() == lk::vardata_t::VECTOR)
+		{
+			size_t len = cxt.arg(0).length();
+			for (size_t i=0;i<len;i++)
+				app_frame->GetVarTable()->unassign( 
+					(const char*) cxt.arg(0).index(i)->as_string().c_str() );
+		}
+		else
+			app_frame->GetVarTable()->unassign( (const char*) cxt.arg(0).as_string().c_str() );
+	}
+	else
+		app_frame->GetVarTable()->clear();
+
 	app_frame->GetDataView()->UpdateView();
 }
 
-void fcall_sscsavestate( lk::invoke_t &cxt )
+void fcall_save( lk::invoke_t &cxt )
 {
-	LK_DOC( "ssc_save_state", "Save the current variable state to disk.", "(string:filename):boolean" );
+	LK_DOC( "save", "Save the current variable data set to disk in the SSCdev binary data (*.bdat) format.", "(string:filename):boolean" );
 	cxt.result().assign( app_frame->WriteToDisk( cxt.arg(0).as_string() ) );
 }
 
-void fcall_sscloadstate( lk::invoke_t &cxt )
+void fcall_load( lk::invoke_t &cxt )
 {
-	LK_DOC( "ssc_load_state", "Load the variable data from a state file.", "(string:filename):boolean" );
+	LK_DOC( "load", "Load a variable data set from an SSCdev binary data (*.bdat) file.", "(string:filename):boolean" );
 	cxt.result().assign( app_frame->Load( cxt.arg(0).as_string() ) );
 }
 
-void fcall_sscrun( lk::invoke_t &cxt )
+void fcall_run( lk::invoke_t &cxt )
 {
-	LK_DOC( "ssc_run", "Starts the computation sequence defined.", "([string:compute modules list]):none");
+	LK_DOC( "run", 
+		"Starts the computation sequence defined.  If no parameter is given, it runs the currently defined list of compute modules. "
+		"Passing a comma-separated list of compute module names changes the list.", 
+		"([string:compute modules list]):none");
 
 	if (cxt.arg_count() > 0)
 	{
@@ -583,11 +638,11 @@ void fcall_sscrun( lk::invoke_t &cxt )
 lk::fcall_t* ssc_funcs()
 {
 	static const lk::fcall_t vec[] = {
-		fcall_sscvar,
-		fcall_sscclear,
-		fcall_sscrun,
-		fcall_sscsavestate,
-		fcall_sscloadstate,
+		fcall_var,
+		fcall_clear,
+		fcall_run,
+		fcall_save,
+		fcall_load,
 		0 };
 		
 	return (lk::fcall_t*)vec;
@@ -609,22 +664,7 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	m_stopScriptFlag = false;	
 	m_scriptRunning = false;
 		
-	SetBackgroundColour( *wxWHITE );
-		
-	wxBoxSizer *szdoc = new wxBoxSizer( wxHORIZONTAL );
-	szdoc->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_SAVEAS, "Save as" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, ID_RUN, "Run" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" ), 0, wxALL|wxEXPAND, 2 );	
-	m_stopButton->SetForegroundColour( *wxRED );
-	m_stopButton->Hide();
-			
-		
+	SetBackgroundColour( *wxWHITE );		
 		
 	m_env = new lk::env_t;
 		
@@ -651,8 +691,21 @@ EditorWindow::EditorWindow( wxWindow *parent )
 			funclist += d.func_name + " ";
 		}
 	}
-
+	
 		
+	wxBoxSizer *szdoc = new wxBoxSizer( wxVERTICAL );
+	szdoc->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_SAVEAS, "Save as" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, ID_RUN, "Run" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" ), 0, wxALL|wxEXPAND, 2 );	
+	m_stopButton->SetForegroundColour( *wxRED );
+	m_stopButton->Hide();
+					
 	m_editor = new CodeEdit(this, ID_CODEEDITOR );
 	m_editor->ApplyLKStyling();
 	m_editor->EnableCallTips(true);
@@ -660,11 +713,14 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	m_editor->StyleSetForeground( wxSTC_C_WORD2, wxColour(0,128,192) );
 	m_editor->SetKeyWords( 1, funclist );
 
-	wxBoxSizer *szmain = new wxBoxSizer( wxVERTICAL );
-	szmain->Add( szdoc, 0, wxALL|wxEXPAND, 1 );
-	szmain->Add( new wxStaticLine( this ), 0, wxALL|wxEXPAND, 1 );
-	szmain->Add( m_editor, 1, wxALL|wxEXPAND, 1 );
-	szmain->Add( m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString ), 0, wxALL|wxEXPAND, 1 );
+	wxBoxSizer *szedit = new wxBoxSizer( wxVERTICAL );
+	szedit->Add( m_editor, 1, wxALL|wxEXPAND, 1 );
+	szedit->Add( m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString ), 0, wxALL|wxEXPAND, 1 );
+
+	wxBoxSizer *szmain = new wxBoxSizer( wxHORIZONTAL );
+	szmain->Add( szdoc, 0, wxALL|wxEXPAND, 0 );
+	szmain->Add( new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL ), 0, wxALL|wxEXPAND, 1 );
+	szmain->Add( szedit, 1, wxALL|wxEXPAND, 0 );
 	SetSizer( szmain );
 		
 	m_editor->SetFocus();

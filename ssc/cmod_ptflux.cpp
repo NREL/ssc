@@ -43,11 +43,6 @@ static var_info _cm_vtab_ptflux[] = {
 
 var_info_invalid };
 
-static param_info _cm_params_ptflux[] = {
-	/* TYPE,      NAME,       DEFAULT_VALUE,    DESCRIPTION */
-	{ SSC_STRING, "ptgen_exe",     "",            "Path to PTGEN executable" },
-	{ SSC_STRING, "working_dir",   "",            "Local working directory" },
-	{ SSC_INVALID, NULL }  };
 
 
 class cm_ptflux : public compute_module
@@ -60,13 +55,12 @@ public:
 	{
 		m_success = false;
 		add_var_info( _cm_vtab_ptflux );
-		set_param_info( _cm_params_ptflux );
 	}
 
 	void exec( ) throw( general_error )
 	{
-		std::string ptexe = param_string("ptgen_exe");
-		std::string wkdir = param_string("working_dir");
+		std::string ptexe = as_string("ptgen_exe");
+		std::string wkdir = as_string("working_dir");
 
 		if (!util::dir_exists( wkdir.c_str() ))
 			util::mkdir( wkdir.c_str(), true );

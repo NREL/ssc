@@ -17,55 +17,6 @@ compute_module::~compute_module()
 	if (m_infomap) delete m_infomap;
 }
 
-void compute_module::set_param_info( param_info plist[] /* last one 'name' must be null, static array */ )
-{
-	m_paramlist.clear();
-	int i=0;
-	while (plist[i].name != NULL && plist[i].type != SSC_INVALID)
-	{
-		if (plist[i].type == SSC_STRING ||
-			plist[i].type == SSC_NUMBER )
-		{
-			m_paramlist.push_back( &plist[i] );
-		}
-		i++;
-	}
-}
-
-param_info *compute_module::get_param_info(int index)
-{
-	if (index >= 0 && index < (int) m_paramlist.size() )
-		return m_paramlist[index];
-	else
-		return NULL;
-}
-
-void compute_module::set_param( const std::string &name, const std::string &value )
-{
-	m_paramtab.assign( name, var_data(value) );
-}
-
-void compute_module::set_param( const std::string &name, ssc_number_t value )
-{
-	m_paramtab.assign( name, var_data(value) );
-}
-
-ssc_number_t compute_module::param_number( const std::string &name ) throw( general_error )
-{
-	var_data *t = m_paramtab.lookup( name );
-	if (!t) throw general_error( "request for unassigned compute module parameter: '" + name + "'" );
-	if (t->type != SSC_NUMBER) throw general_error( "compute module parameter '" + name + "' has type " + var_data::type_name(t->type) + ", not <number> as requested" );
-	return t->num;
-}
-
-std::string compute_module::param_string( const std::string &name ) throw( general_error )
-{
-	var_data *t = m_paramtab.lookup( name );
-	if (!t) throw general_error( "request for unassigned compute module parameter: '" + name + "'" );
-	if (t->type != SSC_STRING) throw general_error( "compute module parameter '" + name + "' has type " + var_data::type_name(t->type) + ", not <string> as requested" );
-	return t->str;
-}
-
 bool compute_module::compute( handler_interface *handler, var_table *data )
 {
 	m_handler = NULL;

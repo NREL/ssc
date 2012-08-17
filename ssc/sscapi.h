@@ -166,15 +166,13 @@ SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf );
    computation module requires the execution of external binary executables, it is not
    thread-safe. However, simpler implementations that do all calculations internally are
    probably thread-safe.  Unfortunately there is no standard way to report the thread-safety
-   of a particular computation module. This function can only work for computation modules
-   that do not require any additional configuration parameters to run. */
+   of a particular computation module.  */
 SSCEXPORT ssc_bool_t ssc_module_exec_simple( const char *name, ssc_data_t p_data );
 
 /* ssc_module_exec_simple_nothread: Another very simple way to run a computation module over a data set.
    The function returns NULL on success.  If something went wrong, the first error message is returned.
    Because the returned string references a common internal data container, this function 
-   is never thread-safe.  This function can only work for computation modules
-   that do not require any additional configuration parameters to run. */
+   is never thread-safe.  */
 SSCEXPORT const char *ssc_module_exec_simple_nothread( const char *name, ssc_data_t p_data );
 
 /* action/notification types that can be sent to a handler function */
@@ -207,20 +205,6 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 
 
 SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_mod, const char *output_line );
-
-/* list all simulation parameters required for a computation module */
-typedef void* ssc_param_t;
-SSCEXPORT ssc_param_t ssc_module_parameter( ssc_module_t p_mod, int index );
-SSCEXPORT const char *ssc_param_name( ssc_param_t p_param );
-SSCEXPORT const char *ssc_param_description( ssc_param_t p_param );
-SSCEXPORT const char *ssc_param_default_value( ssc_param_t p_param );
-SSCEXPORT int ssc_param_type( ssc_param_t p_param );
-
-/* Set computation module configuration parameters, return 1 or 0 
-   these parameters can include simulation time steps, start and end times,
-   working directories, local external executable names, supplemental file paths, etc */
-SSCEXPORT void ssc_module_parameter_string( ssc_module_t p_mod, const char *name, const char *value );
-SSCEXPORT void ssc_module_parameter_number( ssc_module_t p_mod, const char *name, ssc_number_t value );
 
 #define SSC_NOTICE 1
 #define SSC_WARNING 2

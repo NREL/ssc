@@ -582,12 +582,8 @@ void SCFrame::UpdateUI()
 	m_toolBar->EnableTool( ID_START, sscdll_isloaded() );
 	m_toolBar->EnableTool( ID_STOP, sscdll_isloaded() );
 	m_toolBar->Refresh();
-
-	
-	wxString cmtext;
-	for (int i=0;i<m_cmList.count();i++)
-		cmtext += m_cmList[i].cm_mod_name + "  ";
-	m_txtSelectedCMs->ChangeValue( cmtext );
+		
+	m_txtSelectedCMs->ChangeValue( Unsplit( m_cmList, "  " ) );
 }
 	
 void SCFrame::UpdateRecentMenu()
@@ -885,11 +881,11 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		break;
 	case wxID_PREFERENCES:
 		{
-			CMFormDialog dlg(this, "Compute Module Browser");
+			CMForm dlg( this );
 			dlg.CentreOnParent();
-			dlg.GetPanel()->SetCMList( m_cmList );
+			dlg.SetCMList( m_cmList );
 			if (dlg.ShowModal()==wxID_OK)
-				m_cmList = dlg.GetPanel()->GetCMList();
+				m_cmList = dlg.GetCMList();
 
 			UpdateUI();
 		}
@@ -908,59 +904,12 @@ bool SCFrame::AddCM( const wxString &name )
 	wxArrayString list = CMForm::GetAvailableCMs();
 	if (list.Index( name ) != wxNOT_FOUND)
 	{
-		cmModule x;
-		x.cm_mod_name = name;
-		m_cmList.append( x );
+		m_cmList.Add( name );
 		UpdateUI();
 		return true;
 	}
 	else
 		return false;
-}
-
-bool SCFrame::SetCMParam( const wxString &cm, const wxString &param, const wxString &value, int type )
-{
-	for (int i=0;i<m_cmList.count();i++)
-	{
-		if (m_cmList[i].cm_mod_name == cm)
-		{
-			for (int j=0;j<m_cmList[i].params.count();j++)
-			{
-				if (param == m_cmList[i].params[j].name)
-				{
-					m_cmList[i].params[j].type = type;
-					m_cmList[i].params[j].str = value;
-					m_cmList[i].params[j].num = atof( value.c_str() );
-					UpdateUI();
-					return true;
-				}
-			}
-
-			cmParam x;
-			x.name = param;
-			x.str = value;
-			x.num = atof( value.c_str() );
-			x.type = type;
-			m_cmList[i].params.append( x );
-			UpdateUI();
-			return true;
-		}
-	}
-
-	return false;	
-}
-
-bool SCFrame::ClearCMParams( const wxString &cm )
-{
-	for (int i=0;i<m_cmList.count();i++)
-	{
-		if (m_cmList[i].cm_mod_name == cm)
-		{
-			m_cmList[i].params.clear();
-			return true;
-		}
-	}
-	return false;
 }
 
 void SCFrame::WriteVarTable( wxDataOutputStream &o, var_table &vt )
@@ -1065,23 +1014,7 @@ bool SCFrame::Load(const wxString &fn)
 
 	int n_cmmods = in.Read32();
 	for (int i=0;i<n_cmmods;i++)
-	{
-		cmModule cm;
-		cm.cm_mod_name = in.ReadString();
-		int n_params = in.Read32();
-		for (int j=0;j<n_params;j++)
-		{
-			cmParam pa;
-			pa.name = in.ReadString();
-			pa.type = in.Read32();
-			pa.str = in.ReadString();
-			pa.num = in.ReadDouble();
-
-			cm.params.append( pa );
-		}
-
-		m_cmList.append( cm );
-	}
+		m_cmList.Add( in.ReadString() );
 
 	wxArrayString sel_vars;
 	Array<int> cwl;
@@ -1117,19 +1050,9 @@ bool SCFrame::WriteToDisk(const wxString &fn)
 	wxDataOutputStream o( fp );
 	o.Write16( 0xe3 );
 
-	o.Write32( m_cmList.count() );
-	for (int i=0;i<m_cmList.count();i++)
-	{
-		o.WriteString( m_cmList[i].cm_mod_name );
-		o.Write32( m_cmList[i].params.count() );
-		for (int j=0;j<m_cmList[i].params.count();j++)
-		{
-			o.WriteString( m_cmList[i].params[j].name);
-			o.Write32( m_cmList[i].params[j].type );
-			o.WriteString( m_cmList[i].params[j].str );
-			o.WriteDouble( (double)m_cmList[i].params[j].num );
-		}
-	}
+	o.Write32( m_cmList.Count() );
+	for (int i=0;i<m_cmList.Count();i++)
+		o.WriteString( m_cmList[i] );
 
 	wxArrayString selvars = m_dataView->GetSelections();
 	o.Write32( selvars.Count() );
@@ -1313,26 +1236,20 @@ void SCFrame::Start()
 		Copy( p_data, m_varTable, true );
 
 
-		for (int i=0;i<m_cmList.count();i++)
+		for (int i=0;i<m_cmList.Count();i++)
 		{
-			m_txtProgress->SetValue( m_cmList[i].cm_mod_name );
+			m_txtProgress->SetValue( m_cmList[i] );
 			m_gauProgress->SetValue( 0 );
 			wxGetApp().Yield(true);
 
-			ssc_module_t p_mod = ::ssc_module_create( (const char*) m_cmList[i].cm_mod_name.c_str() );
+			ssc_module_t p_mod = ::ssc_module_create( (const char*) m_cmList[i].c_str() );
 			
 			if (p_mod == 0)
 			{
-				Log("CREATE_FAIL: " + m_cmList[i].cm_mod_name );
+				Log("CREATE_FAIL: " + m_cmList[i] );
 				break;
 			}
 			
-			for (int j=0;j<m_cmList[i].params.count();j++)
-			{
-				cmParam &pa = m_cmList[i].params[j];
-				if (pa.type == SSC_STRING) ::ssc_module_parameter_string( p_mod, pa.name.c_str(), pa.str.c_str() );
-				else ::ssc_module_parameter_number( p_mod, pa.name.c_str(), (ssc_number_t)pa.num );
-			}
 
 			::wxSetWorkingDirectory( wxPathOnly(m_loadedDllPath) );
 
@@ -1341,12 +1258,12 @@ void SCFrame::Start()
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
 				my_handler,	this) )
 			{
-				Log("EXEC_FAIL: "+m_cmList[i].cm_mod_name);
+				Log("EXEC_FAIL: "+m_cmList[i]);
 				::ssc_module_free( p_mod );
 				break;
 			}
 			else
-				Log("EXEC_SUCCESS: " + m_cmList[i].cm_mod_name + " (" + wxString::Format("%.3lf", (double)sw.Time()/1000.0) + " sec)");
+				Log("EXEC_SUCCESS: " + m_cmList[i] + " (" + wxString::Format("%.3lf", (double)sw.Time()/1000.0) + " sec)");
 
 			::ssc_module_free( p_mod );
 		}
