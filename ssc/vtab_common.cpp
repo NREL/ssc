@@ -40,6 +40,15 @@ var_info vtab_oandm[] = {
 	{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel Cost",                         "$/MMBtu", "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel Cost Escalation",              "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 
+	// optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_usage",           "Optional Fuel 1 Usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_1_cost",                 "Optional Fuel 1  Cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_cost_escal",           "Optional Fuel 1  Cost Escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_usage",           "Optional Fuel 2 Usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_2_cost",                 "Optional Fuel 2  Cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_cost_escal",           "Optional Fuel 2  Cost Escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+
+
 var_info_invalid };
 
 var_info vtab_depreciation[] = {
