@@ -14,7 +14,7 @@ class DataView;
 
 class SCFrame;
 class SCDocWin;
-class AutomationForm;
+class EditorWindow;
 
 extern SCFrame *app_frame;
 extern wxArrayString app_args;
@@ -150,7 +150,7 @@ private:
 	wxGauge *m_gauProgress;
 
 	DataView *m_dataView;
-	AutomationForm *m_automForm;
+	EditorWindow *m_scriptWindow;
 
 	Array<cmModule> m_cmList;
 	var_table *m_varTable;

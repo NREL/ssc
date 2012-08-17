@@ -41,6 +41,7 @@
 #include <cml/pixmaps/stock_preferences_16.xpm>
 #include <cml/pixmaps/stock_convert_16.xpm>
 #include <cml/pixmaps/stock_convert_24.xpm>
+#include <cml/pixmaps/stock_exec_16.xpm>
 #include <cml/pixmaps/stock_exec_24.xpm>
 #include <cml/pixmaps/stock_help_16.xpm>
 #include <cml/pixmaps/stock_redo_24.xpm>
@@ -59,13 +60,13 @@
 #include "sscdev.h"
 #include "dataview.h"
 #include "cmform.h"
-#include "automation.h"
+#include "scripting.h"
 #include "splash.xpm"
 
 /* exported application global variables */
 
-int SC_major_ver = 0;
-int SC_minor_ver = 1;
+int SC_major_ver = 2;
+int SC_minor_ver = 0;
 int SC_micro_ver = 1;
 
 SCFrame *app_frame = NULL;
@@ -295,7 +296,7 @@ SCAbout::SCAbout(wxWindow *parent)
 	mBtnClose = new wxButton(this, ID_ABOUT_CLOSE, "Close");	
 
 	mText = new wxTextCtrl(this, ID_ABOUT_TEXT, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY);
-	mText->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "courier"));
+	mText->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "consolas"));
 	mText->SetForegroundColour( wxColour(90,90,90) );
 
 	mText->SetSize(4,pic.GetHeight()+4,pic.GetWidth()-8,126);
@@ -437,20 +438,21 @@ SCFrame::SCFrame()
 	wxSplitterWindow *split_win = new wxSplitterWindow( this, wxID_ANY,
 		wxPoint(0,0), wxSize(800,700), wxSP_LIVE_UPDATE|wxBORDER_NONE );
 
-	wxNotebook *nb = new wxNotebook( split_win, wxID_ANY );
+	wxAuiNotebook *nb = new wxAuiNotebook( split_win, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+		wxAUI_NB_TOP | wxAUI_NB_TAB_SPLIT | wxAUI_NB_TAB_MOVE | wxAUI_NB_SCROLL_BUTTONS);
 
 	m_dataView = new DataView(nb);
 	m_dataView->SetDataObject( m_varTable );
 
-	m_automForm = new AutomationForm(nb);
+	m_scriptWindow = new EditorWindow(nb);
 
-	nb->AddPage( m_dataView, "   Variable Viewer   ", true );
-	nb->AddPage( m_automForm, "   Scripting   ");
+	nb->AddPage( m_dataView, "Variable Viewer", true, wxBitmap(stock_exec_16_xpm) );
+	nb->AddPage( m_scriptWindow, "Scripting", false,  wxBitmap(stock_text_indent_16_xpm) );
 
 	
 	m_txtOutput = new wxTextCtrl(split_win, ID_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize,
 		wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL | wxTE_DONTWRAP);
-	m_txtOutput->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "courier") );
+	m_txtOutput->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "consolas") );
 	m_txtOutput->SetForegroundColour( *wxBLUE );
 	
 
@@ -796,7 +798,7 @@ void SCFrame::SaveAs()
 
 bool SCFrame::CloseDocument()
 {
-	return (m_automForm->CloseEditors());
+	return (m_scriptWindow->CloseDoc());
 }
 
 void SCFrame::Exit()
