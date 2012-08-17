@@ -50,7 +50,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_recapitalization",		"Recapitalization expenses",	"0/1",   "0=None,1=Recapitalize",                      "ippppa",             "?=0",						   "INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_recapitalization_cost",	"Recapitalization cost",	"$",   "",                      "ippppa",             "?=0",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation", "Recapitalization escalation (above inflation)",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
-	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		"Recapitalization boolean",	"",   "",                      "ippppa",             "?=0",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "system_recapitalization_boolean",		"Recapitalization boolean",	"",   "",                      "ippppa",             "?=0",						   "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_recapitalization",	"Recapitalization operating expense",	"$",   "",                      "ippppa",             "system_use_recapitalization=1",						   "LENGTH_EQUAL=cf_length",                 "" },
 
 
@@ -983,6 +983,7 @@ public:
 				cf.at(CF_energy_price,i) = 0.0;
 		}
 
+		save_cf( CF_recapitalization, nyears, "cf_recapitalization" );
 		save_cf( CF_energy_price, nyears, "cf_energy_price" );
 		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
 		save_cf( CF_pretax_dscr, nyears, "cf_pretax_dscr" );
