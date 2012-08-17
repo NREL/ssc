@@ -15,17 +15,17 @@ public:
 	virtual ~EditVariableForm();
 	/* class members */
 
+	AFNumeric *numCols;
+	AFRadioChoice *rbgVarType;
+	WFGridCtrl *grdArrMat;
+	wxButton *btnCancel;
+	wxButton *btnAccept;
 	AFLabel *Label3;
 	wxButton *btnChooseFile;
 	AFTextCtrl *txtValue;
 	AFNumeric *numValue;
 	AFLabel *Label11;
 	AFLabel *Label1;
-	AFRadioChoice *rbgVarType;
-	wxButton *btnCancel;
-	wxButton *btnAccept;
-	WFGridCtrl *grdArrMat;
-	AFNumeric *numCols;
 	AFLabel *Label21;
 	AFLabel *Label2;
 	AFNumeric *numRows;

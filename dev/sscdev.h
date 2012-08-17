@@ -2,6 +2,9 @@
 #define __SC_h
 
 #include <wx/wx.h>
+#include <wx/wfstream.h>
+#include <wx/datstrm.h>
+
 #include "dllinvoke.h"
 
 class wxAuiToolBar;
@@ -122,6 +125,10 @@ public:
 	bool ClearCMParams( const wxString &cm );
 
 private:	
+
+	void WriteVarTable( wxDataOutputStream &o, var_table &vt );
+	bool ReadVarTable( wxDataInputStream &o, var_table &vt, bool clear_first );
+
 	void UpdateUI();
 
 	void OnCommand(wxCommandEvent &evt);

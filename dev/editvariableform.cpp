@@ -9,17 +9,17 @@ enum { ID_TYPE_STRING=4235,
 	   ID_FOCUS_NUMBER };
 /*user.global.end*/
 enum {
+  ID_numCols,
+  ID_rbgVarType,
+  ID_grdArrMat,
+  ID_btnCancel,
+  ID_btnAccept,
   ID_Label3,
   ID_btnChooseFile,
   ID_txtValue,
   ID_numValue,
   ID_Label11,
   ID_Label1,
-  ID_rbgVarType,
-  ID_btnCancel,
-  ID_btnAccept,
-  ID_grdArrMat,
-  ID_numCols,
   ID_Label21,
   ID_Label2,
   ID_numRows };
@@ -47,22 +47,10 @@ EditVariableForm::EditVariableForm(wxWindow *parent, int id)
 {
 /*user.klsinit.start*/
 /*user.klsinit.end*/
-	SetClientSize( 591, 479 );
-	numRows = new AFNumeric(this, ID_numRows, 3, true, wxPoint(375,75), wxSize(70,21));
+	SetClientSize( 593, 520 );
+	numRows = new AFNumeric(this, ID_numRows, 3, true, wxPoint(378,99), wxSize(70,21));
 	numRows->SetFormat( "%d");
 	numRows->SetInt( (int) 3 );
-	numCols = new AFNumeric(this, ID_numCols, 4, true, wxPoint(507,75), wxSize(70,21));
-	numCols->SetFormat( "%d");
-	numCols->SetInt( (int) 4 );
-	btnAccept = new wxButton(this, ID_btnAccept, "Accept", wxPoint(408,432), wxSize(80,21));
-	btnCancel = new wxButton(this, ID_btnCancel, "Cancel", wxPoint(492,432), wxSize(80,21));
-	wxArrayString _data_rbgVarType;
-	_data_rbgVarType.Add("SSC_STRING");
-	_data_rbgVarType.Add("SSC_NUMBER");
-	_data_rbgVarType.Add("SSC_ARRAY");
-	_data_rbgVarType.Add("SSC_MATRIX");
-	rbgVarType = new AFRadioChoice(this, ID_rbgVarType, wxPoint(9,9), wxSize(110,86));
-	rbgVarType->Add( _data_rbgVarType);
 	numValue = new AFNumeric(this, ID_numValue, 0, false, wxPoint(207,33), wxSize(133,21));
 	numValue->SetFormat( "%lg");
 	numValue->SetDouble( 0 );
@@ -71,7 +59,30 @@ EditVariableForm::EditVariableForm(wxWindow *parent, int id)
 	txtValue->SetForegroundColour( wxColour(0, 0, 0) );
 	txtValue->SetBackgroundColour( wxColour(255, 255, 255) );
 	btnChooseFile = new wxButton(this, ID_btnChooseFile, "file..", wxPoint(540,9), wxSize(38,21));
-	Label3 = new AFLabel(this, ID_Label3, "Shortcuts: F1=SSC_STRING, F2=SSC_NUMBER, F3=SSC_ARRAY, F4=SSC_MATRIX, F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog", wxPoint(6,423), wxSize(371,48));
+	btnAccept = new wxButton(this, ID_btnAccept, "Accept", wxPoint(408,477), wxSize(80,21));
+	btnCancel = new wxButton(this, ID_btnCancel, "Cancel", wxPoint(492,477), wxSize(80,21));
+	wxArrayString _data_rbgVarType;
+	_data_rbgVarType.Add("SSC_STRING");
+	_data_rbgVarType.Add("SSC_NUMBER");
+	_data_rbgVarType.Add("SSC_ARRAY");
+	_data_rbgVarType.Add("SSC_MATRIX");
+	_data_rbgVarType.Add("SSC_TABLE");
+	rbgVarType = new AFRadioChoice(this, ID_rbgVarType, wxPoint(9,9), wxSize(110,107));
+	rbgVarType->Add( _data_rbgVarType);
+	numCols = new AFNumeric(this, ID_numCols, 4, true, wxPoint(510,99), wxSize(70,21));
+	numCols->SetFormat( "%d");
+	numCols->SetInt( (int) 4 );
+	grdArrMat = new WFGridCtrl(this, ID_grdArrMat, wxPoint(9,123), wxSize(572,342));
+	grdArrMat->CreateGrid(2,2);
+	grdArrMat->EnableEditing(true);
+	grdArrMat->DisableDragCell();
+	grdArrMat->DisableDragColSize();
+	grdArrMat->DisableDragRowSize();
+	grdArrMat->DisableDragColMove();
+	grdArrMat->DisableDragGridSize();
+	grdArrMat->SetRowLabelSize(23);
+	grdArrMat->SetColLabelSize(23);
+	Label3 = new AFLabel(this, ID_Label3, "Shortcuts: F1=SSC_STRING, F2=SSC_NUMBER, F3=SSC_ARRAY, F4=SSC_MATRIX, F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog", wxPoint(6,468), wxSize(371,48));
 	Label3->AlignTop();
 	Label3->SetColour(wxColour(0, 0, 0));
 	Label3->SetRelativeSize(0);
@@ -84,21 +95,11 @@ EditVariableForm::EditVariableForm(wxWindow *parent, int id)
 	Label1->AlignRight();
 	Label1->SetColour(wxColour(0, 0, 0));
 	Label1->SetRelativeSize(0);
-	grdArrMat = new WFGridCtrl(this, ID_grdArrMat, wxPoint(9,99), wxSize(572,318));
-	grdArrMat->CreateGrid(2,2);
-	grdArrMat->EnableEditing(true);
-	grdArrMat->DisableDragCell();
-	grdArrMat->DisableDragColSize();
-	grdArrMat->DisableDragRowSize();
-	grdArrMat->DisableDragColMove();
-	grdArrMat->DisableDragGridSize();
-	grdArrMat->SetRowLabelSize(23);
-	grdArrMat->SetColLabelSize(23);
-	Label21 = new AFLabel(this, ID_Label21, "# cols:", wxPoint(447,75), wxSize(59,21));
+	Label21 = new AFLabel(this, ID_Label21, "# cols:", wxPoint(450,99), wxSize(59,21));
 	Label21->AlignRight();
 	Label21->SetColour(wxColour(0, 0, 0));
 	Label21->SetRelativeSize(0);
-	Label2 = new AFLabel(this, ID_Label2, "# rows:", wxPoint(315,75), wxSize(59,21));
+	Label2 = new AFLabel(this, ID_Label2, "# rows:", wxPoint(318,99), wxSize(59,21));
 	Label2->AlignRight();
 	Label2->SetColour(wxColour(0, 0, 0));
 	Label2->SetRelativeSize(0);

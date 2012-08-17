@@ -437,16 +437,15 @@ SCFrame::SCFrame()
 	wxSplitterWindow *split_win = new wxSplitterWindow( this, wxID_ANY,
 		wxPoint(0,0), wxSize(800,700), wxSP_LIVE_UPDATE|wxBORDER_NONE );
 
-	wxAuiNotebook *nb = new wxAuiNotebook( split_win, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-		wxAUI_NB_TOP | wxAUI_NB_TAB_SPLIT | wxAUI_NB_TAB_MOVE | wxAUI_NB_SCROLL_BUTTONS);
+	wxNotebook *nb = new wxNotebook( split_win, wxID_ANY );
 
 	m_dataView = new DataView(nb);
 	m_dataView->SetDataObject( m_varTable );
 
 	m_automForm = new AutomationForm(nb);
 
-	nb->AddPage( m_dataView, "Variables & Output", true, wxBitmap(stock_preferences_24_xpm) );
-	nb->AddPage( m_automForm, "Automation & Control", false,  wxBitmap(stock_convert_24_xpm) );
+	nb->AddPage( m_dataView, "   Variable Viewer   ", true );
+	nb->AddPage( m_automForm, "   Scripting   ");
 
 	
 	m_txtOutput = new wxTextCtrl(split_win, ID_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize,
@@ -759,10 +758,10 @@ void SCFrame::OnCloseFrame( wxCloseEvent &evt )
 
 void SCFrame::Open()
 {
-	wxFileDialog dlg(this, "Load SSCDEV State",
+	wxFileDialog dlg(this, "Load SSCdev State",
 		wxPathOnly(m_lastFile),
 		m_lastFile,
-		"Data File (*.sscdat)|*.sscdat",
+		"Binary Data File (*.bdat)|*.bdat",
 		wxFD_OPEN);
 
 	if (dlg.ShowModal() == wxID_OK)
@@ -777,8 +776,8 @@ void SCFrame::Open()
 
 void SCFrame::Save()
 {
-	wxFileDialog dlg(this, "Save SSCDEV State", wxPathOnly(m_lastFile),
-		m_lastFile, "Data File (*.sscdat)|*.sscdat", wxFD_SAVE);
+	wxFileDialog dlg(this, "Save SSCdev State", wxPathOnly(m_lastFile),
+		m_lastFile, "Binary Data File (*.bdat)|*.bdat", wxFD_SAVE);
 	
 	int ret = dlg.ShowModal();
 	m_lastFile = dlg.GetPath();
@@ -962,35 +961,119 @@ bool SCFrame::ClearCMParams( const wxString &cm )
 	return false;
 }
 
+void SCFrame::WriteVarTable( wxDataOutputStream &o, var_table &vt )
+{
+	o.Write16( 0xae ); // start identifier, versioner
+	o.Write32( vt.size() );
+	const char *key = vt.first();
+	while (key != 0)
+	{
+		o.WriteString( key );
+		var_data *v = vt.lookup( key );
+		o.Write8( v->type );
+		switch( v->type )
+		{
+		case SSC_STRING:
+			o.WriteString( v->str ); break;
+		case SSC_NUMBER:
+			o.WriteDouble( v->num ); break;
+		case SSC_ARRAY:
+			o.Write32( v->num.length() );
+			for (size_t i=0;i<v->num.length(); i++)
+				o.WriteDouble( v->num[i] );
+			break;
+		case SSC_MATRIX:
+			o.Write32( v->num.nrows() );
+			o.Write32( v->num.ncols() );
+			for (size_t r=0;r<v->num.nrows();r++)
+				for (size_t c=0;c<v->num.ncols();c++)
+					o.WriteDouble( v->num.at(r,c) );
+			break;
+		case SSC_TABLE:
+			WriteVarTable(o, v->table );
+			break;
+		}
+
+		key = vt.next();
+	}
+	o.Write16( 0xae ); // end identifier
+}
+
+bool SCFrame::ReadVarTable( wxDataInputStream &o, var_table &vt, bool clear_first )
+{
+	if (clear_first)
+		vt.clear();
+
+	int code = o.Read16();
+	int size = o.Read32();
+	size_t len, nrows, ncols;
+	for (int nn=0;nn<size;nn++)
+	{
+		var_data vv;
+
+		wxString key = o.ReadString();
+		vv.type = (unsigned char) o.Read8();
+		switch( vv.type )
+		{
+		case SSC_STRING:
+			vv.str = (const char*)o.ReadString().c_str(); break;
+		case SSC_NUMBER:
+			vv.num = (ssc_number_t)o.ReadDouble(); break;
+		case SSC_ARRAY:
+			len = (size_t)o.Read32();
+			vv.num.resize( len );
+			for (size_t i=0;i<len;i++)
+				vv.num[i] = (ssc_number_t) o.ReadDouble();
+			break;
+		case SSC_MATRIX:
+			nrows = (size_t)o.Read32();
+			ncols = (size_t)o.Read32();
+			vv.num.resize(nrows,ncols);
+			for (size_t r=0;r<nrows;r++)
+				for (size_t c=0;c<ncols;c++)
+					vv.num.at(r,c) = (ssc_number_t)o.ReadDouble();
+			break;
+		case SSC_TABLE:
+			if (!ReadVarTable( o, vv.table, true ))
+				return false;
+			break;
+		}
+
+		vt.assign( key.c_str(), vv );
+	}
+
+	return (o.Read16() == code);
+}
+
 bool SCFrame::Load(const wxString &fn)
 {
 	wxBusyInfo busy("Loading: " + fn);
-	FILE *fp = fopen( (const char*)fn.c_str(), "r" );
-	if (!fp) return false;
+
+	wxFileInputStream fp( fn );
+	if (!fp.Ok()) return false;
+	wxDataInputStream in( fp );
 		
 	m_cmList.clear();
 	m_varTable->clear();
 	UpdateUI();
 	m_dataView->UpdateView();
 
-	wxString buf;
-	AllocReadLine(fp, buf); // header&fileformatversion line
-	
-	int n_cmmods = 0;
-	AllocReadLine(fp, buf); sscanf( (const char*)buf.c_str(), "cm_mods %d", &n_cmmods);
+	int code = in.Read16(); // start header code, versioner
+
+
+	int n_cmmods = in.Read32();
 	for (int i=0;i<n_cmmods;i++)
 	{
 		cmModule cm;
-		AllocReadLine(fp, cm.cm_mod_name);
-		int n_params = 0;
-		AllocReadLine(fp, buf); sscanf((const char*)buf.c_str(), "params %d", &n_params);
+		cm.cm_mod_name = in.ReadString();
+		int n_params = in.Read32();
 		for (int j=0;j<n_params;j++)
 		{
 			cmParam pa;
-			AllocReadLine(fp, pa.name);
-			AllocReadLine(fp, buf); pa.type = atoi(buf.c_str());
-			AllocReadLine(fp, pa.str);
-			AllocReadLine(fp, buf); pa.num = (float)atof(buf.c_str());
+			pa.name = in.ReadString();
+			pa.type = in.Read32();
+			pa.str = in.ReadString();
+			pa.num = in.ReadDouble();
 
 			cm.params.append( pa );
 		}
@@ -1001,32 +1084,16 @@ bool SCFrame::Load(const wxString &fn)
 	wxArrayString sel_vars;
 	Array<int> cwl;
 
-	AllocReadLine(fp, buf); // selected_variables:
-	AllocReadLine(fp, buf); sel_vars = Split(buf,",");
-	AllocReadLine(fp, buf); StringToIntArray( buf, ',', cwl );
+	int nn = in.Read32();
+	for (int i=0;i<nn;i++)
+		sel_vars.Add( in.ReadString() );
 
-	int data_size = 0;
-	AllocReadLine(fp, buf); sscanf( buf.c_str(), "data_set_size: %d", &data_size );
-	
-	for (int i=0;i<data_size;i++)
-	{
-		wxString name;
-		int type;
-		wxString sval;
-		AllocReadLine(fp, name);
-		AllocReadLine(fp, buf); type = atoi(buf.c_str());
-		AllocReadLine(fp, sval);
+	nn = in.Read32();
+	for (int i=0;i<nn;i++)
+		cwl.append( in.Read32() );
 
-		for (size_t n=0;n<sval.Length();n++)
-			if (((char)sval.at(n)) == (char)11)
-				sval[n] = '\n';
+	bool vtok = ReadVarTable( in, *m_varTable, true );
 
-		var_data val;
-		var_data::parse( type, (const char*)sval.c_str(), val );
-
-		m_varTable->assign( (const char*)name.c_str(), val );
-	}
-	
 	m_dataView->UpdateView();	
 	m_dataView->SetSelections( sel_vars );
 	m_dataView->UpdateView();
@@ -1034,57 +1101,47 @@ bool SCFrame::Load(const wxString &fn)
 
 	UpdateUI();
 
-	fclose(fp);
 	AddRecent(fn);
-	return true;	
+
+	return vtok && in.Read16() == code;	
 }
 
 bool SCFrame::WriteToDisk(const wxString &fn)
 {
 	wxBusyInfo busy("Writing: " + fn);
-	FILE *fp = fopen( (const char*)fn.c_str(), "w" );
-	if (!fp) return false;
 
-	fprintf(fp, "sscdev state file version 1\n");
-	fprintf(fp, "cm_mods %d\n", m_cmList.count());
+	wxFileOutputStream fp( fn );
+	if (!fp.Ok()) return false;
+	wxDataOutputStream o( fp );
+	o.Write16( 0xe3 );
+
+	o.Write32( m_cmList.count() );
 	for (int i=0;i<m_cmList.count();i++)
 	{
-		fprintf(fp, "%s\n", (const char*)m_cmList[i].cm_mod_name.c_str());
-		fprintf(fp, "params %d\n", m_cmList[i].params.count());
+		o.WriteString( m_cmList[i].cm_mod_name );
+		o.Write32( m_cmList[i].params.count() );
 		for (int j=0;j<m_cmList[i].params.count();j++)
 		{
-			fprintf(fp, "%s\n", (const char*)m_cmList[i].params[j].name.c_str());
-			fprintf(fp, "%d\n", m_cmList[i].params[j].type );
-			fprintf(fp, "%s\n", (const char*)m_cmList[i].params[j].str.c_str());
-			fprintf(fp, "%lg\n", (double)m_cmList[i].params[j].num );
+			o.WriteString( m_cmList[i].params[j].name);
+			o.Write32( m_cmList[i].params[j].type );
+			o.WriteString( m_cmList[i].params[j].str );
+			o.WriteDouble( (double)m_cmList[i].params[j].num );
 		}
 	}
 
-	wxString selvars = Unsplit(m_dataView->GetSelections(), ",");
-	fprintf(fp, "selected_variables:\n%s\n", (const char*)selvars.c_str());
-	fprintf(fp, "%s\n", (const char*)IntArrayToString(m_dataView->GetColumnWidths(), ',').c_str());
+	wxArrayString selvars = m_dataView->GetSelections();
+	o.Write32( selvars.Count() );
+	for (size_t i=0;i<selvars.Count(); i++)
+		o.WriteString( selvars[i] );
 
-	int nvars = (int) m_varTable->size();
-	fprintf(fp, "data_set_size: %d\n", nvars );
+	Array<int> cwl = m_dataView->GetColumnWidths();
+	o.Write32( cwl.count() );
+	for (int i=0;i<cwl.count();i++)
+		o.Write32( cwl[i] );
 
-	const char *name = m_varTable->first();
-	while( name )
-	{
-		var_data *v = m_varTable->lookup( name );
-		
-		fprintf(fp, "%s\n", name );
-		fprintf(fp, "%d\n", v->type);
-		
-		std::string nlfix = v->to_string();
-		for (size_t n=0;n<nlfix.length();n++)
-			if (nlfix[n] == '\n') nlfix[n] = (char)11;
+	WriteVarTable( o, *m_varTable );
 
-		fprintf(fp, "%s\n", nlfix.c_str());
-
-		name = m_varTable->next();
-	}
-
-	fclose(fp);
+	o.Write16( 0xe3 );
 
 	UpdateUI();
 

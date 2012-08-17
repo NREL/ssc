@@ -88,6 +88,7 @@ public:
 			int len = 1;
 			if (v->type == SSC_ARRAY) len = v->num.length();
 			else if (v->type == SSC_MATRIX) len = v->num.nrows();
+			else if (v->type == SSC_TABLE) len = v->table.size();
 
 			if (len > max0) max0 = len;
 		}
@@ -113,6 +114,8 @@ public:
 		
 		if ( v->type == SSC_MATRIX && row >= v->num.nrows() ) return true;
 
+		if ( v->type == SSC_TABLE && row >= v->table.size() ) return true;
+
 		return false;
 	}
 
@@ -135,6 +138,17 @@ public:
 				}
 
 				return ret;
+			}
+			else if (v->type == SSC_TABLE && row < v->table.size())
+			{
+				int k = 0;
+				const char *key = v->table.first();
+				while (key != 0)
+				{
+					if (k++ == row) break;
+					key = v->table.next();
+				}
+				return ".{'" + wxString(key) + "'}";
 			}
 		}
 		
@@ -358,6 +372,8 @@ void DataView::UpdateView()
 					label += wxString::Format( " [%d]", v->num.length() );
 				else if (v->type == SSC_MATRIX)
 					label += wxString::Format(" [%d,%d]", v->num.nrows(), v->num.ncols() );
+				else if (v->type == SSC_TABLE)
+					label += wxString::Format(" { %d }", (int) v->table.size() );
 			}
 
 			labels.Add( label );
@@ -529,16 +545,30 @@ void DataView::EditVariable( wxString name )
 {
 	if (name.IsEmpty()) name = GetSelection();
 	if (name.IsEmpty()) return;
+	if (!m_vt) return;
 
-	if (m_vt)
+	var_data *v = m_vt->lookup( (const char*)name.c_str() );
+	if (!v)
 	{
-		var_data *v = m_vt->lookup( (const char*)name.c_str() );
-		if (!v)
-		{
-			wxMessageBox("Could not locate variable: " + name);
-			return;
-		}
+		wxMessageBox("Could not locate variable: " + name);
+		return;
+	}
 
+	if (v->type == SSC_TABLE)
+	{
+		wxDialog dlg( this, wxID_ANY, "Edit table: " + name, 
+			wxDefaultPosition, wxSize(850,600), wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
+		DataView *dv = new DataView( &dlg );
+		wxSizer *sz = new wxBoxSizer(wxVERTICAL);
+		sz->Add(dv, 1, wxALL|wxEXPAND, 0 );
+		sz->Add( new wxButton( &dlg, wxID_OK, "Close" ),0,wxALL,3 );
+		dv->SetDataObject( &v->table );
+		dlg.SetSizer( sz );
+		dlg.ShowModal();
+		UpdateView();
+	}
+	else
+	{
 		EditVariableFormDialog dlg(this, "Edit Variable: " + name);
 		dlg.SetVarData( *v );
 		if (dlg.ShowModal() == wxID_OK)
@@ -547,7 +577,6 @@ void DataView::EditVariable( wxString name )
 			UpdateView();
 		}
 	}
-
 }
 
 void DataView::DeleteVariable( wxString name )

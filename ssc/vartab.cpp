@@ -7,11 +7,12 @@ static const char *var_data_types[] =
 	"<number>",  // SSC_NUMBER
 	"<array>",   // SSC_ARRAY
 	"<matrix>",  // SSC_MATRIX
+	"<table>",   // SSC_TABLE
 	NULL };
 
 const char *var_data::type_name()
 {
-	if (type < 5) return var_data_types[ (int)type ];
+	if (type < 6) return var_data_types[ (int)type ];
 	else return NULL;
 }
 

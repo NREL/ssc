@@ -1,6 +1,152 @@
-form width 591 height 479 nguiobjects 14
+form width 593 height 520 nguiobjects 14
+start numCols type Numeric
+geom 510 99 70 21
+properties 10
+prop(v'2) 1 name
+numCols
+endprop name
+prop(v'2) 2 x
+510
+endprop x
+prop(v'2) 2 y
+99
+endprop y
+prop(v'2) 2 width
+70
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 4 value
+4.000000
+endprop value
+prop(v'2) 5 intonly
+1
+endprop intonly
+prop(v'2) 1 format
+%d
+endprop format
+prop(v'2) 5 editable
+1
+endprop editable
+prop(v'2) 2 taborder
+0
+endprop taborder
+start rbgVarType type RadioChoice
+geom 9 9 110 107
+properties 10
+prop(v'2) 1 name
+rbgVarType
+endprop name
+prop(v'2) 2 x
+9
+endprop x
+prop(v'2) 2 y
+9
+endprop y
+prop(v'2) 2 width
+110
+endprop width
+prop(v'2) 2 height
+107
+endprop height
+prop(v'2) 2 selection
+-1
+endprop selection
+prop(v'2) 1 value
+
+endprop value
+prop(v'2) 3 items
+5
+SSC_STRING
+SSC_NUMBER
+SSC_ARRAY
+SSC_MATRIX
+SSC_TABLE
+endprop items
+prop(v'2) 5 showcaptions
+1
+endprop showcaptions
+prop(v'2) 2 taborder
+0
+endprop taborder
+start grdArrMat type DataGrid
+geom 9 123 572 342
+properties 8
+prop(v'2) 1 name
+grdArrMat
+endprop name
+prop(v'2) 2 x
+9
+endprop x
+prop(v'2) 2 y
+123
+endprop y
+prop(v'2) 2 width
+572
+endprop width
+prop(v'2) 2 height
+342
+endprop height
+prop(v'2) 2 nrows
+2
+endprop nrows
+prop(v'2) 2 ncols
+2
+endprop ncols
+prop(v'2) 5 cellediting
+1
+endprop cellediting
+start btnCancel type Button
+geom 492 477 80 21
+properties 7
+prop(v'2) 1 name
+btnCancel
+endprop name
+prop(v'2) 2 x
+492
+endprop x
+prop(v'2) 2 y
+477
+endprop y
+prop(v'2) 2 width
+80
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Cancel
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
+start btnAccept type Button
+geom 408 477 80 21
+properties 7
+prop(v'2) 1 name
+btnAccept
+endprop name
+prop(v'2) 2 x
+408
+endprop x
+prop(v'2) 2 y
+477
+endprop y
+prop(v'2) 2 width
+80
+endprop width
+prop(v'2) 2 height
+21
+endprop height
+prop(v'2) 1 caption
+Accept
+endprop caption
+prop(v'2) 2 taborder
+0
+endprop taborder
 start Label3 type Label
-geom 6 423 371 48
+geom 6 468 371 48
 properties 12
 prop(v'2) 1 name
 Label3
@@ -9,7 +155,7 @@ prop(v'2) 2 x
 6
 endprop x
 prop(v'2) 2 y
-423
+468
 endprop y
 prop(v'2) 2 width
 371
@@ -206,162 +352,17 @@ endprop bold
 prop(v'2) 2 fontsize
 0
 endprop fontsize
-start rbgVarType type RadioChoice
-geom 9 9 110 86
-properties 10
-prop(v'2) 1 name
-rbgVarType
-endprop name
-prop(v'2) 2 x
-9
-endprop x
-prop(v'2) 2 y
-9
-endprop y
-prop(v'2) 2 width
-110
-endprop width
-prop(v'2) 2 height
-86
-endprop height
-prop(v'2) 2 selection
--1
-endprop selection
-prop(v'2) 1 value
-
-endprop value
-prop(v'2) 3 items
-4
-SSC_STRING
-SSC_NUMBER
-SSC_ARRAY
-SSC_MATRIX
-endprop items
-prop(v'2) 5 showcaptions
-1
-endprop showcaptions
-prop(v'2) 2 taborder
-0
-endprop taborder
-start btnCancel type Button
-geom 492 432 80 21
-properties 7
-prop(v'2) 1 name
-btnCancel
-endprop name
-prop(v'2) 2 x
-492
-endprop x
-prop(v'2) 2 y
-432
-endprop y
-prop(v'2) 2 width
-80
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-Cancel
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
-start btnAccept type Button
-geom 408 432 80 21
-properties 7
-prop(v'2) 1 name
-btnAccept
-endprop name
-prop(v'2) 2 x
-408
-endprop x
-prop(v'2) 2 y
-432
-endprop y
-prop(v'2) 2 width
-80
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 1 caption
-Accept
-endprop caption
-prop(v'2) 2 taborder
-0
-endprop taborder
-start grdArrMat type DataGrid
-geom 9 99 572 318
-properties 8
-prop(v'2) 1 name
-grdArrMat
-endprop name
-prop(v'2) 2 x
-9
-endprop x
-prop(v'2) 2 y
-99
-endprop y
-prop(v'2) 2 width
-572
-endprop width
-prop(v'2) 2 height
-318
-endprop height
-prop(v'2) 2 nrows
-2
-endprop nrows
-prop(v'2) 2 ncols
-2
-endprop ncols
-prop(v'2) 5 cellediting
-1
-endprop cellediting
-start numCols type Numeric
-geom 507 75 70 21
-properties 10
-prop(v'2) 1 name
-numCols
-endprop name
-prop(v'2) 2 x
-507
-endprop x
-prop(v'2) 2 y
-75
-endprop y
-prop(v'2) 2 width
-70
-endprop width
-prop(v'2) 2 height
-21
-endprop height
-prop(v'2) 4 value
-4.000000
-endprop value
-prop(v'2) 5 intonly
-1
-endprop intonly
-prop(v'2) 1 format
-%d
-endprop format
-prop(v'2) 5 editable
-1
-endprop editable
-prop(v'2) 2 taborder
-0
-endprop taborder
 start Label21 type Label
-geom 447 75 59 21
+geom 450 99 59 21
 properties 12
 prop(v'2) 1 name
 Label21
 endprop name
 prop(v'2) 2 x
-447
+450
 endprop x
 prop(v'2) 2 y
-75
+99
 endprop y
 prop(v'2) 2 width
 59
@@ -391,16 +392,16 @@ prop(v'2) 2 fontsize
 0
 endprop fontsize
 start Label2 type Label
-geom 315 75 59 21
+geom 318 99 59 21
 properties 12
 prop(v'2) 1 name
 Label2
 endprop name
 prop(v'2) 2 x
-315
+318
 endprop x
 prop(v'2) 2 y
-75
+99
 endprop y
 prop(v'2) 2 width
 59
@@ -430,16 +431,16 @@ prop(v'2) 2 fontsize
 0
 endprop fontsize
 start numRows type Numeric
-geom 375 75 70 21
+geom 378 99 70 21
 properties 10
 prop(v'2) 1 name
 numRows
 endprop name
 prop(v'2) 2 x
-375
+378
 endprop x
 prop(v'2) 2 y
-75
+99
 endprop y
 prop(v'2) 2 width
 70
