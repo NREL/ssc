@@ -32,7 +32,6 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",                          "Total installed cost",                               "$",      "",                      "Cashloan",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Cashloan",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "ippppa",      "?=0",                     "MIN=0",                                         "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "min_dscr_target",                       "Minimum required DSCR",        "",      "",                      "ippppa",      "?=1.4",                  "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "min_irr_target",                       "Minimum required IRR",          "%",      "",                      "ippppa",      "?=15",                  "",                 "" },

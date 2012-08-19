@@ -522,6 +522,10 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "Fuel expense",                   "",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",       "O&M Optional Fuel 1 expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",       "O&M Optional Fuel 2 expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -734,6 +738,10 @@ enum {
 	CF_om_production_expense,
 	CF_om_capacity_expense,
 	CF_om_fuel_expense,
+
+	CF_om_opt_fuel_2_expense,
+	CF_om_opt_fuel_1_expense,
+
 	CF_property_tax_assessed_value,
 	CF_property_tax_expense,
 	CF_insurance_expense,
@@ -1105,6 +1113,7 @@ public:
 
 		// use DHF named range names for variables whenever possible
 		double nameplate = as_double("system_capacity");
+		double year1_fuel_use = as_double("annual_fuel_usage"); // kWht
 	
 		double assessed_frac = as_double("prop_tax_cost_assessed_percent")*0.01;
 		double salvage_value_frac = as_double("salvage_percentage")*0.01;
@@ -1127,6 +1136,13 @@ public:
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 		
+		escal_or_annual( CF_om_opt_fuel_1_expense, nyears, "om_opt_fuel_1_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_1_cost_escal")*0.01 );  
+		escal_or_annual( CF_om_opt_fuel_2_expense, nyears, "om_opt_fuel_2_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_2_cost_escal")*0.01 );  
+
+		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
+		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
+		
+
 		// initialize energy
 
 		int i=0;
@@ -1189,6 +1205,10 @@ public:
 		{
 			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
+			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
+
+			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
+			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 		}
 
 
@@ -1330,6 +1350,8 @@ public:
 				+ cf.at(CF_om_production_expense,i)
 				+ cf.at(CF_om_capacity_expense,i)
 				+ cf.at(CF_om_fuel_expense,i)
+				+ cf.at(CF_om_opt_fuel_1_expense,i)
+				+ cf.at(CF_om_opt_fuel_2_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_Recapitalization,i);
@@ -2709,6 +2731,8 @@ public:
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
+		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
+		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );

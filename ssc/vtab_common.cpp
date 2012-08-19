@@ -39,6 +39,7 @@ var_info vtab_oandm[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity_escal",            "Capacity-based O&M Escalation",     "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel Cost",                         "$/MMBtu", "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel Cost Escalation",              "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "O&M",      "?=0",                     "MIN=0",                                         "" },
 
 	// optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
 	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_usage",           "Optional Fuel 1 Usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
