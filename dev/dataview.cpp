@@ -26,6 +26,9 @@
 #include <cml/wplinearaxis.h>
 #include <cml/wplineplot.h>
 
+#include <cml/dview/wxdvplotctrl.h>
+#include <cml/dview/wxdvarraydataset.h>
+
 #include "dataview.h"
 #include "editvariableform.h"
 #include "statform.h"
@@ -665,22 +668,35 @@ void DataView::OnPopup(wxCommandEvent &evt)
 			}
 
 			wxFrame *frm = new wxFrame(this, -1, "plot: " + m_popup_var_name, wxDefaultPosition, wxSize(500,350));
-			WPPlotSurface2D *plotsurf = new WPPlotSurface2D( frm );
-			
-			WPPlotDataArray *pdat = new WPPlotDataArray;
-			for (int i=0;i<v->num.length();i++)
-				pdat->append(  PointF( i, v->num[i] ) );
-			
-			WPPlottable2D *plot = NULL;
-			if (evt.GetId() == ID_POPUP_PLOT_BAR) plot = new WPBarPlot;					
-			else plot = new WPLinePlot;
-			plot->SetData( pdat );
-			plot->SetLabel( m_popup_var_name );
 
-			plotsurf->Add( plot );
-			plotsurf->SetTitle("Plot of: '" + m_popup_var_name + "'");
+			if ( v->num.length() == 8760 )
+			{
+				wxDVPlotCtrl *dv = new wxDVPlotCtrl( frm );
+				Vector<double> da(8760);
+				for (int i=0;i<8760;i++)
+					da[i] = v->num[i];
 
-			plotsurf->SetXAxis1( new WPLinearAxis( -1, v->num.length() ) );
+				dv->AddDataSet(  new wxDVArrayDataSet( m_popup_var_name, da ) );
+			}
+			else
+			{
+				WPPlotSurface2D *plotsurf = new WPPlotSurface2D( frm );
+			
+				WPPlotDataArray *pdat = new WPPlotDataArray;
+				for (int i=0;i<v->num.length();i++)
+					pdat->append(  PointF( i, v->num[i] ) );
+			
+				WPPlottable2D *plot = NULL;
+				if (evt.GetId() == ID_POPUP_PLOT_BAR) plot = new WPBarPlot;					
+				else plot = new WPLinePlot;
+				plot->SetData( pdat );
+				plot->SetLabel( m_popup_var_name );
+
+				plotsurf->Add( plot );
+				plotsurf->SetTitle("Plot of: '" + m_popup_var_name + "'");
+
+				plotsurf->SetXAxis1( new WPLinearAxis( -1, v->num.length() ) );
+			}
 
 			frm->Show();
 		}

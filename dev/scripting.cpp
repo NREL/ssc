@@ -16,7 +16,6 @@
 #include <cml/wplineplot.h>
 #include <cml/wpscatterplot.h>
 #include <cml/wpplotsurface2d.h>
-#include <cml/alglib/statistics.h>
 
 #include <lk_lex.h>
 #include <lk_parse.h>
