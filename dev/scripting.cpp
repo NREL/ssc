@@ -575,14 +575,17 @@ void fcall_var( lk::invoke_t &cxt )
 		ssc_number_t val, *p;
 		int i, j;
 		var_data *vv = vt->lookup( name.c_str() );
-		sscvar_to_lkvar( cxt.result(), vv );
+		if (vv)	sscvar_to_lkvar( cxt.result(), vv );
 	}
 	else if (cxt.arg_count() == 2)
 	{
 		lk::vardata_t &val = cxt.arg(1).deref();		
 		var_data *vv = vt->assign( name.c_str(), var_data() ); // create empty variable
-		lkvar_to_sscvar( vv, val );		
-		app_frame->GetDataView()->UpdateView();
+		if (vv)
+		{
+			lkvar_to_sscvar( vv, val );		
+			app_frame->GetDataView()->UpdateView();
+		}
 	}
 }
 
