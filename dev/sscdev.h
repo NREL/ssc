@@ -117,15 +117,14 @@ private:
 	wxString m_currentAppDir;
 	wxString m_lastFile;
 	
-	wxTextCtrl *m_txtDllPath;
-	wxButton *m_btnChooseDll;
+	wxString m_lastLoadTime;
+	wxString m_dllPath;
+
 	wxTextCtrl *m_txtOutput;
-	wxTextCtrl *m_txtSelectedCMs;
-	wxTextCtrl *m_txtProgress;
-	wxGauge *m_gauProgress;
 
 	wxMenu *m_fileMenu, *m_helpMenu;
 
+	wxAuiNotebook *m_notebook;
 	DataView *m_dataView;
 	EditorWindow *m_scriptWindow;
 
@@ -134,8 +133,6 @@ private:
 
 	int m_recentCount;
 	wxString m_recentFiles[MAX_RECENT];
-	wxString m_loadedDllPath;
-	wxString m_lastLoadTime;
 	
 	DECLARE_EVENT_TABLE()
 };
