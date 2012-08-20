@@ -767,7 +767,7 @@ void SCFrame::WriteVarTable( wxDataOutputStream &o, var_table &vt )
 		switch( v->type )
 		{
 		case SSC_STRING:
-			o.WriteString( v->str ); break;
+			o.WriteString( wxString( (const char*)v->str.c_str() ) ); break;
 		case SSC_NUMBER:
 			o.WriteDouble( v->num ); break;
 		case SSC_ARRAY:

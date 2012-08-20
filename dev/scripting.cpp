@@ -453,7 +453,7 @@ static bool sscvar_to_lkvar( lk::vardata_t &out, var_data *vv)
 		out.assign( (double) vv->num );
 		break;
 	case SSC_STRING:
-		out.assign( vv->str );
+		out.assign( vv->str.c_str() );
 		break;
 	case SSC_ARRAY:
 		out.empty_vector();
