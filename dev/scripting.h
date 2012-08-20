@@ -26,6 +26,7 @@ public:
 	void OnCommand( wxCommandEvent &evt );
 	bool IsStopFlagSet() { return m_stopScriptFlag; }	
 	bool IsScriptRunning() { return m_scriptRunning; }
+	void Open();
 	bool Save();
 	bool SaveAs();
 	bool CloseDoc();

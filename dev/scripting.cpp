@@ -6,6 +6,7 @@
 #include <wx/html/htmlwin.h>
 #include <wx/aui/aui.h>
 #include <wx/tokenzr.h>
+#include <wx/busyinfo.h>
 
 #include <cml/codeedit.h>
 #include <cml/mtrand.h>
@@ -16,6 +17,9 @@
 #include <cml/wplineplot.h>
 #include <cml/wpscatterplot.h>
 #include <cml/wpplotsurface2d.h>
+
+#include <cml/dview/wxdvplotctrl.h>
+#include <cml/dview/wxdvarraydataset.h>
 
 #include <lk_lex.h>
 #include <lk_parse.h>
@@ -582,6 +586,7 @@ void fcall_var( lk::invoke_t &cxt )
 	}
 }
 
+
 void fcall_clear( lk::invoke_t &cxt )
 {
 	LK_DOC( "clear", "Deletes variables from the SSC data set.  If no variable name(s) are specified, all are deleted.", "([string or array:variable name(s) to delete]):none");
@@ -607,13 +612,13 @@ void fcall_clear( lk::invoke_t &cxt )
 void fcall_save( lk::invoke_t &cxt )
 {
 	LK_DOC( "save", "Save the current variable data set to disk in the SSCdev binary data (*.bdat) format.", "(string:filename):boolean" );
-	cxt.result().assign( app_frame->WriteToDisk( cxt.arg(0).as_string() ) );
+	cxt.result().assign( app_frame->WriteBdatToDisk( cxt.arg(0).as_string() ) );
 }
 
 void fcall_load( lk::invoke_t &cxt )
 {
 	LK_DOC( "load", "Load a variable data set from an SSCdev binary data (*.bdat) file.", "(string:filename):boolean" );
-	cxt.result().assign( app_frame->Load( cxt.arg(0).as_string() ) );
+	cxt.result().assign( app_frame->LoadBdat( cxt.arg(0).as_string() ) );
 }
 
 void fcall_run( lk::invoke_t &cxt )
@@ -634,6 +639,78 @@ void fcall_run( lk::invoke_t &cxt )
 	app_frame->Start();
 }
 
+void fcall_tsview( lk::invoke_t &cxt )
+{
+	LK_DOC( "tsview", "Show a timeseries viewer for the variables given in the comma-separated list, or plots the name-data pairs sent as arguments.  Variable must have 8760 values.", "(string:comma-separated variable name list -or- string:name1, array:values1,...):none");
+	
+	wxFrame *frm = new wxFrame(app_frame, -1, "Timeseries Viewer", wxDefaultPosition, wxSize(900,600));
+	wxDVPlotCtrl *dv = new wxDVPlotCtrl( frm );
+	var_table *vt = app_frame->GetVarTable();	
+	int iadded = 0;	
+	Vector<double> da(8760);
+
+	if (cxt.arg_count() == 1)
+	{
+		wxArrayString selections = Split(cxt.arg(0).as_string(), ",");
+
+		for (size_t i=0;i<selections.Count();i++)
+		{
+			var_data *v = vt->lookup( (const char*) selections[i].c_str() );
+			if ( v != 0
+				&& v->type == SSC_ARRAY
+				&& v->num.length() == 8760)
+			{
+				for (int k=0;k<8760;k++)
+					da[k] = v->num[k];
+
+				dv->AddDataSet(  new wxDVArrayDataSet( selections[i], da ) );
+				iadded++;
+			}
+		}
+	}
+	else
+	{
+		for (size_t i=1;i<cxt.arg_count();i+=2)
+		{
+			wxString name = cxt.arg(i-1).as_string();
+			wxString units;
+
+			wxString::size_type lpos = name.Find('(');
+			wxString::size_type rpos = name.Find(')');
+			if (lpos != wxString::npos
+				&& rpos != wxString::npos
+				&& rpos > lpos)
+			{
+				units = name.Mid( lpos+1, rpos-lpos-1 );
+				name.Truncate(lpos);
+				name.Trim();
+			}
+
+			if (cxt.arg(i).type() == lk::vardata_t::VECTOR
+				&& cxt.arg(i).length() == 8760)
+			{
+				for (int k=0;k<8760;k++)
+					da[k] = cxt.arg(i).index(k)->as_number();
+				
+				dv->AddDataSet(  new wxDVArrayDataSet( name, units, 1.0, da ) );
+				iadded++;
+			}
+		}
+	}
+			
+	if (iadded == 0)
+	{
+		frm->Destroy();
+		cxt.result().assign( 0.0 );
+	}
+	else
+	{
+		dv->SelectDataOnBlankTabs();
+		frm->Show();
+		cxt.result().assign( (double)iadded );
+	}
+}
+
 lk::fcall_t* ssc_funcs()
 {
 	static const lk::fcall_t vec[] = {
@@ -642,6 +719,7 @@ lk::fcall_t* ssc_funcs()
 		fcall_run,
 		fcall_save,
 		fcall_load,
+		fcall_tsview,
 		0 };
 		
 	return (lk::fcall_t*)vec;
@@ -738,18 +816,7 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 		CloseDoc();
 		break;
 	case wxID_OPEN:
-		{
-			CloseDoc();
-			wxFileDialog dlg(this, "Open", wxEmptyString, wxEmptyString,
-									"LK Script Files (*.lk)|*.lk",
-									wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_CHANGE_DIR);
-
-			if (dlg.ShowModal() == wxID_OK)
-			{									
-				if (!Load( dlg.GetPath() ))
-					wxMessageBox("Could not load file:\n\n" + dlg.GetPath());
-			}
-		}
+		Open();
 		break;
 	case wxID_SAVE:
 		Save();
@@ -791,6 +858,22 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 	}
 }
 	
+void EditorWindow::Open()
+{
+	CloseDoc();
+	wxFileDialog dlg(this, "Open", wxEmptyString, wxEmptyString,
+							"LK Script Files (*.lk)|*.lk",
+							wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_CHANGE_DIR);
+
+	if (dlg.ShowModal() == wxID_OK)
+	{									
+		if (!Load( dlg.GetPath() ))
+			wxMessageBox("Could not load file:\n\n" + dlg.GetPath());
+		else
+			app_frame->AddRecent( dlg.GetPath() );
+	}
+}
+
 bool EditorWindow::Save()
 {
 	if ( m_fileName.IsEmpty() )
@@ -842,6 +925,9 @@ bool EditorWindow::CloseDoc()
 
 bool EditorWindow::Write( const wxString &file )
 {
+	wxBusyInfo info( "Saving script file...");
+	wxMilliSleep( 100 );
+
 	if ( ((wxStyledTextCtrl*)m_editor)->SaveFile( file ) )
 	{
 		m_fileName = file;

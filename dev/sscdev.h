@@ -32,15 +32,8 @@ extern int SC_micro_ver;
 class SCApp : public wxApp
 {
 public:
-	SCApp();
-	bool OnInit();
-	int OnExit();	
-
-	wxString GetInstanceName();
-	void OnFatalException();
-private:
-	wxString m_inst_name;
-	wxSingleInstanceChecker *m_inst_checker;
+	virtual bool OnInit();
+	virtual int OnExit();
 };
 
 DECLARE_APP(SCApp)
@@ -79,19 +72,18 @@ public:
 	SCFrame();
 	virtual ~SCFrame();
 		
-	bool Load(const wxString &fn);
-	bool WriteToDisk(const wxString &fn);
 	bool CloseDocument();
-	void Open();
-	void Save();
-	void SaveAs();
-	void Exit();
+	bool LoadBdat( wxString fn = wxEmptyString );
+	void SaveBdat();
+	bool WriteBdatToDisk(const wxString &fn);
 	
+	void ChooseDynamicLibrary();
+	void LoadUnloadLibrary();
+
 	void Start();
 	void ClearLog();
 	void Log(const wxString &, bool wnl=true);
 	
-
 	void AddRecent(const wxString &fn);
 	void RemoveRecent(const wxString &fn);
 	void UpdateRecentMenu();
@@ -119,21 +111,20 @@ private:
 
 	void OnCommand(wxCommandEvent &evt);
 	void OnRecent(wxCommandEvent &evt);
-	void OnRecentDropDownButton(wxAuiToolBarEvent &evt);
 	void OnCloseFrame(wxCloseEvent &evt);
 
 	wxMenu *m_recentMenu;
-	wxAuiToolBar *m_toolBar;
 	wxString m_currentAppDir;
 	wxString m_lastFile;
 	
 	wxTextCtrl *m_txtDllPath;
 	wxButton *m_btnChooseDll;
-	AFLabel *m_lblDllStatus;
 	wxTextCtrl *m_txtOutput;
 	wxTextCtrl *m_txtSelectedCMs;
 	wxTextCtrl *m_txtProgress;
 	wxGauge *m_gauProgress;
+
+	wxMenu *m_fileMenu, *m_helpMenu;
 
 	DataView *m_dataView;
 	EditorWindow *m_scriptWindow;

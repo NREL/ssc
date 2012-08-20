@@ -200,6 +200,7 @@ enum { ID_COPY_CLIPBOARD = 2315,
 	   ID_UNSELECT_ALL,
 	   ID_DELETE_CHECKED,
 	   ID_DELETE_UNCHECKED,
+	   ID_DVIEW,
 	   ID_POPUP_EDIT,
 	   ID_POPUP_DELETE,
 	   ID_POPUP_STATS,
@@ -219,6 +220,7 @@ BEGIN_EVENT_TABLE( DataView, wxPanel )
 	EVT_BUTTON( ID_DELETE_CHECKED, DataView::OnCommand )
 	EVT_BUTTON( ID_DELETE_UNCHECKED, DataView::OnCommand )
 	EVT_BUTTON( ID_SHOW_STATS, DataView::OnCommand )
+	EVT_BUTTON( ID_DVIEW, DataView::OnCommand )
 	EVT_CHECKLISTBOX( ID_LIST, DataView::OnVarListCheck )
 	EVT_LISTBOX_DCLICK( ID_LIST, DataView::OnVarListDClick )
 	EVT_GRID_CMD_LABEL_RIGHT_CLICK( ID_GRID, DataView::OnGridLabelRightClick )
@@ -252,6 +254,7 @@ DataView::DataView( wxWindow *parent )
 	tb_sizer->Add( new wxButton(this, ID_UNSELECT_ALL, "Unselect all"), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton( this, ID_COPY_CLIPBOARD, "Copy to clipboard"), 0, wxEXPAND|wxALL, 2);
 	tb_sizer->Add( new wxButton( this, ID_SHOW_STATS, "Show stats..."), 0, wxEXPAND|wxALL, 2);
+	tb_sizer->Add( new wxButton( this, ID_DVIEW, "Timeseries graph..."), 0, wxEXPAND|wxALL, 2);
 	tb_sizer->AddStretchSpacer(1);
 
 	wxSplitterWindow *splitwin = new wxSplitterWindow(this, wxID_ANY, 
@@ -426,6 +429,41 @@ void DataView::OnCommand(wxCommandEvent &evt)
 	{
 	case ID_SHOW_STATS:
 		ShowStats();
+		break;
+	case ID_DVIEW:
+		{
+			wxFrame *frm = new wxFrame(this, -1, "Timeseries Viewer", wxDefaultPosition, wxSize(900,600));
+			wxDVPlotCtrl *dv = new wxDVPlotCtrl( frm );
+			
+			Vector<double> da(8760);
+			int iadded = 0;
+			for (size_t i=0;i<m_selections.Count();i++)
+			{
+				var_data *v = m_vt->lookup( (const char*) m_selections[i].c_str() );
+				if ( v != 0 
+					&& v->type == SSC_ARRAY
+					&& v->num.length() == 8760)
+				{
+					for (int k=0;k<8760;k++)
+						da[k] = v->num[k];
+
+					dv->AddDataSet(  new wxDVArrayDataSet( m_selections[i], da ) );
+					iadded++;
+				}
+			}
+			
+			if (iadded == 0)
+			{
+				frm->Destroy();
+				wxMessageBox("Please check one or more array variables with 8760 values to show in the timeseries viewer.");
+			}
+			else
+			{
+				dv->SelectDataOnBlankTabs();
+				frm->Show();
+			}
+
+		}
 		break;
 	case ID_SELECT_ALL:
 		{

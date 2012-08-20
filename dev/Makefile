@@ -7,12 +7,16 @@ ifeq ($(CFG),)
 CFG=debug
 endif
 
-CMLDIR=../../comlib
+CMLDIR= ../../comlib
+CMLLIB = $(CMLDIR)/comlib.a
+
+LKDIR = ../../lk
+LKLIB = $(LKDIR)/wxosx_static/lk.a
 
 # The source files: regardless of where they reside in the source tree,
 # VPATH will locate them...
 sscdev_SRC = \
-	automation.cpp\
+	scripting.cpp\
 	cmform.cpp\
 	dataview.cpp\
 	dllinvoke.cpp\
@@ -34,7 +38,7 @@ TARGET=SSCdev
 CXXDEP = g++
 
 # What include flags to pass to the compiler
-INCLUDEFLAGS= -g -D__RELEASE__ -D__USENOTEBOOK__ -I. -I../recore -I../ssc  -I$(CMLDIR) `wx-config-dsa --cflags`
+INCLUDEFLAGS= -g -D__RELEASE__ -D__USENOTEBOOK__ -I. -I../recore -I../ssc  -I$(CMLDIR) -I$(LKDIR) `wx-config-dsa --cflags`
 
 # Separate compile options per configuration
 ifeq ($(CFG),debug)
@@ -45,7 +49,7 @@ endif
 
 # A common link flag for all configurations
 
-LDFLAGS = `wx-config-dsa --libs` `wx-config-dsa --libs stc` -lm $(CMLDIR)/comlib.a 
+LDFLAGS = `wx-config-dsa --libs` `wx-config-dsa --libs stc` -lm $(CMLLIB) $(LKLIB)
 
 all:	inform bin.$(CFG)/${TARGET}
 

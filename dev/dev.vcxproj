@@ -178,7 +178,6 @@
     <ResourceCompile Include="sscdev.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CMForm.ifb" />
     <None Include="EditVariableForm.ifb" />
     <None Include="StatForm.ifb" />
   </ItemGroup>
