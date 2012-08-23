@@ -1,10 +1,55 @@
-/*********************************************************************
- SSC: System Simulation Core
- A general purpose system simulation framework.
- Cross-platform (Windows/Unix) and is 64-bit compatible.
- (c) 2010 National Renewable Energy Laboratory
- Authors: Aron Dobos, Steve Janzou, Mike Wagner, Carl Shapiro
-*********************************************************************/
+/**
+   \file sscapi.h
+
+   \brief SSC: SAM Simulation Core
+
+   A general purpose simulation input/output framework.
+   Cross-platform (Windows/MacOSX/Unix) and is 32 and 64-bit compatible.
+
+   \note Be sure to use the correct library for your operating platform: ssc32
+   or ssc64. Opaque pointer types will be 4-byte pointer on 32-bit architectures,
+   and 8-byte pointer on 64-bit architectures.
+
+   \note Shared libraries have the .dll file extension on Windows,
+   .dylib on MacOSX, and .so on Linux/Unix.
+
+  \copyright 2012 National Renewable Energy Laboratory
+  \authors Aron Dobos, Steven Janzou
+*/
+
+/**********************************************************
+/* Style Guide for Doxygen-ready Notes                    *
+/**********************************************************
+
+/** One sentence brief description of function.
+
+  Detailed description of what the function does
+  with any useful tips or warnings about using it
+  effectively.
+  
+  Description can be one or more paragraphs. This 
+  description has three paragraphs
+  
+  Only the brief description is required.
+  
+  \return Description of function's return value.
+
+  \param Descripton of function parameter.
+  
+  \param[in]      P1 Description of input paramter P1.
+  \param[in,out]  P2 Description of parameter P2 that is input and output.
+  \param[out]     P3 Description of P3 output parameter.
+  
+  \note Note for important warnings.
+  
+  \code
+  sample code line 1
+    sample code line 2
+  sample code line 3
+  ...  
+  \endcode
+*/
+
 
 #ifndef __ssc_api_h
 #define __ssc_api_h
@@ -24,36 +69,50 @@ extern "C" {
 
 #endif // __SSCLINKAGECPP__
 	
-/* Note:  Opaque pointer types will be 4-byte pointer 
-	on 32-bit architectures, 8-byte pointer on 64-bit
-	architectures.  Ensure that you are using the correct
-	library for your operating platform: ssc32.dll or ssc64.dll 	*/
-
-/* ssc_version: Returns the library version.  Version numbers start at 1. */
+/** Returns the library version.  Version numbers start at 1.
+	\return SSC version number.
+*/
 SSCEXPORT int ssc_version();
+
+/** Returns a ASCII text string that lists the compiler, platform, build date/time and other information.
+	\return Information about the build configuration of this particular SSC library binary.
+*/
 SSCEXPORT const char *ssc_build_info();
 
 
-/* ssc_data_t: An opaque reference to a structure that holds a collection of variables.
+/** An opaque reference to a structure that holds a collection of variables.
+
   This structure can contain any number of variables referenced by name, and can hold
   strings, numbers, arrays, and matrices.  Matrices are stored in row-major order, where
-  the array size is nrows*ncols, and the array index is calculated by r*ncols+c. 
-  
+  the array size is nrows*ncols, and the array index is calculated by r*ncols+c.
+
   An ssc_data_t object holds all input and output variables for a simulation. It does not
   distinguish between input, output, and inout variables - that is handled at the model
   context level.
 
   For convenience, a ssc_data_t can be written to a file on disk, and later retrieved.
-  */
-
+*/
 typedef void* ssc_data_t;
 
-/* Here the numeric type used internally in SSC is defined.  Do not change this
-   without recompiling the library. All numeric values are stored in this format. */
+/** The numeric type used internally in SSC.
+
+   All numeric values are stored in this format. Do not change this without recompiling the library.
+*/
 typedef float ssc_number_t;
+
+/** The boolean type used internally in SSC.
+
+   Zero values represent false; non-zero represents true.
+*/
 typedef int ssc_bool_t;
 
-/* possible data types for variables in an ssc_data_t */
+/** Possible data types for variables in an ssc_data_t:
+	SSC_INVALID
+	SSC_STRING
+	SSC_NUMBER
+	SSC_MATRIX
+	SSC_TABLE
+*/
 #define SSC_INVALID 0
 #define SSC_STRING 1
 #define SSC_NUMBER 2
@@ -61,71 +120,152 @@ typedef int ssc_bool_t;
 #define SSC_MATRIX 4
 #define SSC_TABLE 5
 
-/* create, release, query, read, and write data set objects */
+/** Creates a new data object in memory.  A data object stores a table of named values, where each value can be of any SSC datatype. */
 SSCEXPORT ssc_data_t ssc_data_create();
-SSCEXPORT void ssc_data_free( ssc_data_t p_data );
-SSCEXPORT void ssc_data_clear( ssc_data_t p_data );
-SSCEXPORT void ssc_data_unassign( ssc_data_t p_data, const char *name );
-SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name ); // returns SSC_INVALID if not assigned
-SSCEXPORT const char *ssc_data_first( ssc_data_t p_data ); // returns the name of the first data item, NULL if empty
-SSCEXPORT const char *ssc_data_next( ssc_data_t p_data ); // returns the next name in the data set object, NULL, if none left.
 
-/* assign values.  
-	note: these functions do not take ownership of the data pointeres for arrays, matrices, and tables.
-	a deep copy is made into the internal SSC engine.
-	you must remember to free the table that you create to pass into ssc_data_set_table( ) for example. */
+/** Frees the memory associated with a data object. */
+SSCEXPORT void ssc_data_free( ssc_data_t p_data );
+
+/** Clears all of the variables in a data object. */
+SSCEXPORT void ssc_data_clear( ssc_data_t p_data );
+
+/** Unassigns the variable with the specified name. */
+SSCEXPORT void ssc_data_unassign( ssc_data_t p_data, const char *name );
+
+/** Querys the data object for the data type of the variable with the specified name
+	\return data type, or SSC_INVALID if that variable was not found. */
+SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name );
+
+/** Returns the name of the first variable in the table, or 0 (NULL) if the data object is empty. */
+SSCEXPORT const char *ssc_data_first( ssc_data_t p_data );
+
+/** Returns the name of the next variable in the table, or 0 (NULL) if there are no more variables in the table.  ssc_data_first must be called first. */
+SSCEXPORT const char *ssc_data_next( ssc_data_t p_data );
+
+/**
+\code
+	// Iterate over all variables in a data object
+	const char *key = ssc_data_first( my_data );
+	while (key != 0)
+	{
+		// do something, like query the type
+		int type = ssc_data_query( my_data, key );
+
+		key = ssc_data_next( my_data );
+	}
+\endcode
+**/
+
+
+/** \note Assigning variable values.  
+	These functions do not take ownership of the data pointeres for arrays, matrices, and tables.
+	A deep copy is made into the internal SSC engine.
+	You must remember to free the table that you create to pass into ssc_data_set_table( ) for example.
+	*/
+
+/** Assigns value of type @a SSC_STRING */
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value );
+
+/** Assigns value of type @a SSC_NUMBER */
 SSCEXPORT void ssc_data_set_number( ssc_data_t p_data, const char *name, ssc_number_t value );
+
+/** Assigns value of type @a SSC_ARRAY */
 SSCEXPORT void ssc_data_set_array( ssc_data_t p_data, const char *name, ssc_number_t *pvalues, int length );
+
+/** Assigns value of type @a SSC_MATRIX 
+	
+	\note Matrices are specified as a continuous array, in row-major order.  Example: the matrix [[5,2,3],[9,1,4]] is stored as [5,2,3,9,1,4].
+*/
 SSCEXPORT void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_number_t *pvalues, int nrows, int ncols );
+
+/** Assigns value of type @a SSC_TABLE. */
 SSCEXPORT void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data_t table );
 
-/* retrieve values.
-	note:  these functions return internal references to memory, and the returned 
-	string, array, matrix, and tables should not be freed by the user */
+
+/** \note Retrieving variable values.
+	These functions return internal references to memory, and the returned 
+	string, array, matrix, and tables should not be freed by the user.
+	*/
+
+/** Returns the value of a @a SSC_STRING variable with the given name. */
 SSCEXPORT const char *ssc_data_get_string( ssc_data_t p_data, const char *name );
+
+/** Returns the value of a @a SSC_NUMBER variable with the given name. */
 SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, ssc_number_t *value );
+
+/** Returns the value of a @a SSC_ARRAY variable with the given name. */
 SSCEXPORT ssc_number_t *ssc_data_get_array( ssc_data_t p_data, const char *name, int *length );
+
+/** Returns the value of a @a SSC_MATRIX variable with the given name. 
+
+	\note Matrices are specified as a continuous array, in row-major order.  Example: the matrix [[5,2,3],[9,1,4]] is stored as [5,2,3,9,1,4].
+	*/
 SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name, int *nrows, int *ncols );
+
+/** Returns the value of a @a SSC_TABLE variable with the given name. */
 SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name );
 
-/* ssc_module_entry: Returns information of all computation modules built into ssc. Example:
+/** Returns information of all computation modules built into ssc. Example:
+
+	\code
 	int i=0;
 	ssc_entry_t p_entry;
-	while( p_entry = ssc_module_list(i++) )
+	while( p_entry = ssc_module_entry(i++) )
 	{
 		printf("Compute Module '%s': \n", ssc_entry_name(p_entry), ssc_entry_description(p_entry));
 	}
+	\endcode
 */
+
+/** The opaque data structure that stores information about a compute module. */
 typedef void* ssc_entry_t;
+
+/** Returns compute module information for the i-th module in the SSC library.
+	\return 0 (NULL) for an invalid index. */
 SSCEXPORT ssc_entry_t ssc_module_entry( int index );
+
+/** Returns the name of a compute module.  This is the name that is used to create a new compute module. */
 SSCEXPORT const char *ssc_entry_name( ssc_entry_t p_entry );
+
+/** Returns a short text description of a compute module. */
 SSCEXPORT const char *ssc_entry_description( ssc_entry_t p_entry );
+
+/** Returns version information about a compute module. */
 SSCEXPORT int ssc_entry_version( ssc_entry_t p_entry );
 
-/* ssc_module_t: An opaque reference to a computation module.
-  A computation module performs a transformation on a ssc_data_t. It usually
+/** An opaque reference to a computation module.
+
+  \note A computation module performs a transformation on a ssc_data_t. It usually
   is used to calculate output variables given a set of input variables, but
   it can also be used to change the values of variables defined as INOUT. Modules
   types have unique names, and store information about what input variables are 
   required, what outputs can be expected, along with specific data type,
   unit, label, and meta information about each variable.
 */
-typedef void* ssc_module_t; /* an opaque reference to a computation/transformation module */
-typedef void* ssc_info_t; /* an opaque reference to variable information */
+typedef void* ssc_module_t;
 
-/* functions to create and release computation module objects */
-SSCEXPORT ssc_module_t ssc_module_create( const char *name ); /* returns NULL if invalid name given and the module could not be created */
+/** An opaque reference to variable information.  A compute module defines its input/output variables. */
+typedef void* ssc_info_t;
+
+/** Creates an instance of a compute module with the given name.
+	\return 0 (NULL) if invalid name given and the module could not be created */
+SSCEXPORT ssc_module_t ssc_module_create( const char *name );
+
+/** Releases an instance of a compute module created with ssc_module_create */
 SSCEXPORT void ssc_module_free( ssc_module_t p_mod );
 
-/* functions for obtaining information about variables */
-
-/* variable type definitions */
+/**  Variable types include
+	SSC_INPUT
+	SSC_OUTPUT
+	SSC_INOUT
+	*/
 #define SSC_INPUT 1
 #define SSC_OUTPUT 2
 #define SSC_INOUT 3
 
-/* ssc_module_var_info: Returns references to variable info objects. Example for a previously created 'p_mod' object:
+/** Returns references to variable info objects. Example for a previously created 'p_mod' object:
+
+	\code 
 	int i=0;
 	const ssc_info_t p_inf = NULL;
 	while ( p_inf = ssc_module_var_info( p_mod, i++ ) )
@@ -139,27 +279,46 @@ SSCEXPORT void ssc_module_free( ssc_module_t p_mod );
 		const char *meta = ssc_info_meta( p_inf );
 		const char *group = ssc_info_group( p_inf );
 	}
+	\endcode
 
-  Returns NULL for invalid index.
+  \return Returns NULL for invalid index.
 
-  Note that the ssc_info_* functions that return strings may return NULL if the computation module
+  \note Note that the ssc_info_* functions that return strings may return NULL if the computation module
   has not specified a value, i.e. no units or no grouping name.
 */
-
 SSCEXPORT const ssc_info_t ssc_module_var_info( ssc_module_t p_mod, int index );
 
+/** Returns variable type information: SSC_INPUT, SSC_OUTPUT, or SSC_INOUT */
 SSCEXPORT int ssc_info_var_type( ssc_info_t p_inf );
+
+/** Returns the data type of a variable: SSC_STRING, SSC_NUMBER, SSC_ARRAY, SSC_MATRIX, SSC_TABLE */
 SSCEXPORT int ssc_info_data_type( ssc_info_t p_inf );
+
+/** Returns the name of a variable */
 SSCEXPORT const char *ssc_info_name( ssc_info_t p_inf );
+
+/** Returns the short label description of the variable */
 SSCEXPORT const char *ssc_info_label( ssc_info_t p_inf );
+
+/** Returns the units of the values for the variable */
 SSCEXPORT const char *ssc_info_units( ssc_info_t p_inf );
+
+/** Returns any extra information about a variable */
 SSCEXPORT const char *ssc_info_meta( ssc_info_t p_inf );
+
+/** Returns any grouping information.  Variables can be assigned to groups for presentation to the user, for example */
 SSCEXPORT const char *ssc_info_group( ssc_info_t p_inf );
+
+/** Returns information about whether a variable is required to be assigned for a compute module to run.  It may alternatively be given a default value, specified as '?=<value>'. */
 SSCEXPORT const char *ssc_info_required( ssc_info_t p_inf );
+
+/** Returns constraints on the values accepted.  For example, MIN, MAX, BOOLEAN, INTEGER, POSITIVE are possible constraints. */
 SSCEXPORT const char *ssc_info_constraints( ssc_info_t p_inf );
+
+/** Returns additional information for use in a target application about how to show the variable to the user.  Not used currently. */
 SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf );
 
-/* ssc_module_exec_simple: The simplest way to run a computation module over a data set.
+/** The simplest way to run a computation module over a data set.
    Simply specify the name of the module, and a data set.  If the whole process succeeded,
    the function returns 1, otherwise 0.  No error messages are available. 
    This function can be thread-safe, depending on the computation module used.  If the
@@ -169,34 +328,44 @@ SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf );
    of a particular computation module.  */
 SSCEXPORT ssc_bool_t ssc_module_exec_simple( const char *name, ssc_data_t p_data );
 
-/* ssc_module_exec_simple_nothread: Another very simple way to run a computation module over a data set.
+/** Another very simple way to run a computation module over a data set.
    The function returns NULL on success.  If something went wrong, the first error message is returned.
    Because the returned string references a common internal data container, this function 
    is never thread-safe.  */
 SSCEXPORT const char *ssc_module_exec_simple_nothread( const char *name, ssc_data_t p_data );
 
-/* action/notification types that can be sent to a handler function */
-#define SSC_LOG 0 /* log a message. f0: (int)message type, f1: time, s0: message text, s1: unused */
-#define SSC_UPDATE 1 /* notify simulation progress update. f0: percent done, f1: time, s0: current action text, s1: unused */
-#define SSC_EXECUTE 2 /* request to run an external executable. f0: unused, f1: unused, s0: command line, s1: working directory */
+/** action/notification types that can be sent to a handler function 
+	SSC_LOG
+	SSC_UPDATE
+	SSC_EXECUTE */
 
-/* on an external executable request, the handler function should:
+/** log a message. f0: (int)message type, f1: time, s0: message text, s1: unused */
+#define SSC_LOG 0
+
+/** notify simulation progress update. f0: percent done, f1: time, s0: current action text, s1: unused */
+#define SSC_UPDATE 1
+
+/** request to run an external executable. f0: unused, f1: unused, s0: command line, s1: working directory 
+
+	\note On an external executable request, the handler function should:
    1. save the current working directory
    2. switch to the desired working directory (passed in arg2)
    3. run the specified command synchronously, redirecting the standard output stream of the child process
    4. for each line of output from the child process, call ssc_module_extproc_output( .. ) passing
       the computation module reference and the process output text
    5. when the process is done executing, restore the previously used working directory
-   6. return 1 if everything went fine, or 0 if there was an error executing the child process
+   6. return 1 if everything went fine, or 0 if there was an error executing the child process*/
+#define SSC_EXECUTE 2
 
- ssc_module_exec: Runs a configured computation module over the specified data set.
+/** Runs a configured computation module over the specified data set.
    Returns 1 or 0.  Detailed notices, warnings, and errors can be retrieved
    either via a request_handler callback function, or using the ssc_module_message function. */
-
 SSCEXPORT ssc_bool_t ssc_module_exec( ssc_module_t p_mod, ssc_data_t p_data ); /* uses default internal built-in handler */
 
+/** An opaque pointer for transferring external executable output back to SSC */ 
 typedef void* ssc_handler_t;
 
+/** A full-featured way to run a compute module with a callback function to handle custom logging, progress updates, and external binary execute requests */
 SSCEXPORT ssc_bool_t ssc_module_exec_with_handler( 
 	ssc_module_t p_mod, 
 	ssc_data_t p_data, 
@@ -204,13 +373,18 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 	void *pf_user_data );
 
 
+/** Helper function to be called from within a scc_exec_with_handler callback function to log binary output messages */
 SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_mod, const char *output_line );
 
+/** Messages types
+	SSC_NOTICE
+	SSC_WARNING
+	SSC_ERROR */
 #define SSC_NOTICE 1
 #define SSC_WARNING 2
 #define SSC_ERROR 3
 
-/* Retrive notices, warnings, and error messages from the simulation */
+/** Retrive notices, warnings, and error messages from the simulation */
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );
 
 
