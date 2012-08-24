@@ -106,7 +106,7 @@ public:
 			break;
 		case LINE:
 			p = new WPLinePlot;
-			((WPLinePlot*)p)->LinePen.SetColour( col );
+			((WPLinePlot*)p)->LineColour =  col;
 			((WPLinePlot*)p)->LineThickness = thick;
 			break;
 		case SCATTER:
