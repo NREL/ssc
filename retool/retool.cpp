@@ -12,7 +12,7 @@
 #include <cml/wplineplot.h>
 #include <cml/wpscatterplot.h>
 #include <cml/wpplotsurface2d.h>
-#include <cml/alglib/statistics.h>
+#include <cml/dview/wxdvplotctrl.h>
 
 #include <lk_absyn.h>
 #include <lk_env.h>
@@ -21,7 +21,6 @@
 #include <lk_parse.h>
 #include <lk_stdlib.h>
 
-#include <wxdvplotctrl.h>
 
 
 #include "sscapi.h"
@@ -151,7 +150,7 @@ public:
 			break;
 		case LINE:
 			p = new WPLinePlot;
-			((WPLinePlot*)p)->LinePen.SetColour( col );
+			((WPLinePlot*)p)->LineColour = col;
 			((WPLinePlot*)p)->LineThickness = thick;
 			break;
 		case SCATTER:

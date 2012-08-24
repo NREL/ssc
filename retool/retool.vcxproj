@@ -76,10 +76,10 @@
       <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\mswd;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>ssc.lib;lkd.lib;wxmsw28d_adv.lib;wxbase28d_xml.lib;wxbase28d_net.lib;wxmsw28d_core.lib;wxmsw28d_stc.lib;wxmsw28d_html.lib;wxmsw28d_aui.lib;wxmsw28d_netutils.lib;wxbase28d.lib;wxtiffd.lib;wxjpegd.lib;wxpngd.lib;wxzlibd.lib;wxregexd.lib;wxexpatd.lib;comlibd.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;wxDViewLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ssc.lib;lkd.lib;wxmsw28d_adv.lib;wxbase28d_xml.lib;wxbase28d_net.lib;wxmsw28d_core.lib;wxmsw28d_stc.lib;wxmsw28d_html.lib;wxmsw28d_aui.lib;wxmsw28d_netutils.lib;wxbase28d.lib;wxtiffd.lib;wxjpegd.lib;wxpngd.lib;wxzlibd.lib;wxregexd.lib;wxexpatd.lib;comlibd.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\deploy\retoold.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(CMLMSW);$(WXMSW)\lib\vc_lib;$(LKDIR)\vc_build;$(WXDVIEWDIR)\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CMLMSW);$(WXMSW)\lib\vc_lib;$(LKDIR)\vc_build;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\deploy\retoold.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -107,7 +107,7 @@
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(WXDVIEWDIR);$(LKDIR);$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\include;$(WXMSW)\contrib\include;$(CMLMSW);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(LKDIR);$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\include;$(WXMSW)\contrib\include;$(CMLMSW);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;__WX__;__WXMSW__;_WINDOWS;NOPCH;__USENOTEBOOK__;_CRT_SECURE_NO_WARNINGS;__RELEASE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -127,10 +127,10 @@
       <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>ssc.lib;wxmsw28_adv.lib;wxbase28_xml.lib;wxbase28_net.lib;wxmsw28_core.lib;wxmsw28_stc.lib;wxmsw28_aui.lib;wxmsw28_html.lib;wxmsw28_netutils.lib;wxbase28.lib;wxtiff.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregex.lib;wxexpat.lib;comlib.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;wxDViewLib.lib;lk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ssc.lib;wxmsw28_adv.lib;wxbase28_xml.lib;wxbase28_net.lib;wxmsw28_core.lib;wxmsw28_stc.lib;wxmsw28_aui.lib;wxmsw28_html.lib;wxmsw28_netutils.lib;wxbase28.lib;wxtiff.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregex.lib;wxexpat.lib;comlib.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;lk.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\deploy\retool.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(LKDIR)\vc_build;$(WXDVIEWDIR)\Release;$(CMLMSW);$(WXMSW)\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LKDIR)\vc_build;$(CMLMSW);$(WXMSW)\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\deploy\retool.pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>.\deploy\retool_stripped.pdb</StripPrivateSymbols>
