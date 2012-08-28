@@ -3446,7 +3446,7 @@ void minimize_lcoe(bool wrtDebtFraction, bool wrtPPAEscalation)
 	double newMin=100;
 	double newMinPPA=1;
 	double x;
-std::stringstream outm;
+//std::stringstream outm;
 	//outm <<  "cf_line=" << cf_line << "count=" << count << "residual=" << residual << "number_of_iterations=" << number_of_iterations << "calculated_irr=" << calculated_irr
 	//	<< "npv of irr=" << npv_of_irr << "npv of irr plus delta=" << npv_of_irr_plus_delta;
 
@@ -3480,11 +3480,11 @@ std::stringstream outm;
 					ppa_escalation = gridMinPPAEscalation + j * ((gridMaxPPAEscalation - gridMinPPAEscalation) / (numPPAEscValues - 1) );
 				}
 
-outm << "\nbefore satisfy it = " << itnum << ":  PPA = " << ppa  << ":  newMin = " << newMin << ", and Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
+//outm << "\nbefore satisfy it = " << itnum << ":  PPA = " << ppa  << ":  newMin = " << newMin << ", and Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
 				satisfy_all_constraints();
 
-outm << "\nafter statisfy it = " << itnum << ": PPA = " << ppa  << ":  newMin = " << newMin << ", and Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
-log( outm.str() );
+//outm << "\nafter statisfy it = " << itnum << ": PPA = " << ppa  << ":  newMin = " << newMin << ", and Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
+//log( outm.str() );
 				net_present_value = npv(CF_energy_value, nyears, nom_discount_rate);
 				lcoe_real = net_present_value * 100 / x;
 
@@ -3497,8 +3497,8 @@ log( outm.str() );
 					if (wrtPPAEscalation)
 					{
 						minPPA_PPAEscalation = ppa_escalation;
-outm << "\ndebt fract it = " << i << ",  ppa escalation it = " << j <<  ", and new min ppa escalation =" << minPPA_PPAEscalation  << ":  newMin = " << newMin << ", and Real LCOE =" << lcoe_real;
-log( outm.str() );
+//outm << "\ndebt fract it = " << i << ",  ppa escalation it = " << j <<  ", and new min ppa escalation =" << minPPA_PPAEscalation  << ":  newMin = " << newMin << ", and Real LCOE =" << lcoe_real;
+//log( outm.str() );
 					}
 					newMinPPA = ppa;
 					newMin = lcoe_real;
@@ -3506,8 +3506,8 @@ log( outm.str() );
 			}
 		}
 
-outm << "\nit = " << itnum << ": new Min PPA = " << newMinPPA << ", and new Min Real LCOE =" << newMin << ", and new min debt_frac =" << minPPA_DebtFraction << ", and new min ppa escalation =" << minPPA_PPAEscalation;
-log( outm.str() );
+//outm << "\nit = " << itnum << ": new Min PPA = " << newMinPPA << ", and new Min Real LCOE =" << newMin << ", and new min debt_frac =" << minPPA_DebtFraction << ", and new min ppa escalation =" << minPPA_PPAEscalation;
+//log( outm.str() );
 		
 		// refine grid
 		if (newMin == DBL_MAX)
@@ -3549,12 +3549,12 @@ log( outm.str() );
 		}
 		itnum++;
 	}
-outm << "\nbefore compute_cashflow = " << itnum << ": Min PPA = " << ppa << ", and Min Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
-log( outm.str() );
+//outm << "\nbefore compute_cashflow = " << itnum << ": Min PPA = " << ppa << ", and Min Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
+//log( outm.str() );
 	compute_cashflow();
 //	compute_constrained_cashflow(); // update all values based on PPA value calculated
-outm << "\ntotal its = " << itnum << ": Min PPA = " << ppa << ", and Min Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
-log( outm.str() );
+//outm << "\ntotal its = " << itnum << ": Min PPA = " << ppa << ", and Min Real LCOE =" << lcoe_real << ", and debt_frac =" << debt_frac << ", and ppa escalation =" << ppa_escalation;
+//log( outm.str() );
 
 }
 
@@ -3754,7 +3754,7 @@ void satisfy_all_constraints()
 			}
 
 			compute_cashflow();
-			std::stringstream outm;
+			//std::stringstream outm;
 
 			if (ppa_soln_mode == 0)
 			{
