@@ -459,11 +459,11 @@ double turbine_output_using_weibull(double rotor_diameter, double weibull_k, dou
 
 	// 'RUN' MODEL ****************************************************************************************
 	double total_energy_turbine=0;//, total_energy_generic=0;
-	std::vector<double> weibull_cummulative(count, 0);
+	//std::vector<double> weibull_cummulative(count, 0);
 	std::vector<double> weibull_probability(count, 0);
-	std::vector<double> weibull_betz(count, 0);
-	std::vector<double> weibull_cp(count, 0);
-	std::vector<double> rayleigh(count, 0);
+	//std::vector<double> weibull_betz(count, 0);
+	//std::vector<double> weibull_cp(count, 0);
+	//std::vector<double> rayleigh(count, 0);
 	std::vector<double> energy_turbine(count, 0);	// energy from turbine chosen from library
 
 	// double step = 0;
@@ -474,8 +474,9 @@ double turbine_output_using_weibull(double rotor_diameter, double weibull_k, dou
 
 		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
 		if (i>0) {
-			weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
-			weibull_probability[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
+			//weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
+			//weibull_probability[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
+			weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) );
 		}
 
 		//weibull_betz[i] = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * 16.0/27.0;
