@@ -19,36 +19,26 @@ static var_info vtab_utility_rate[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_fuel_rate",        "Flat rate (fuel adj)",            "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_enable",            "Enable time-of-use rates",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p1_buy_rate",       "TOU Period 1 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p1_sell_rate",      "TOU Period 1 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p1_fuel_rate",      "TOU Period 1 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p2_buy_rate",       "TOU Period 2 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p2_sell_rate",      "TOU Period 2 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p2_fuel_rate",      "TOU Period 2 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p3_buy_rate",       "TOU Period 3 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p3_sell_rate",      "TOU Period 3 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p3_fuel_rate",      "TOU Period 3 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p4_buy_rate",       "TOU Period 4 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p4_sell_rate",      "TOU Period 4 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p4_fuel_rate",      "TOU Period 4 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p5_buy_rate",       "TOU Period 5 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p5_sell_rate",      "TOU Period 5 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p5_fuel_rate",      "TOU Period 5 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p6_buy_rate",       "TOU Period 6 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p6_sell_rate",      "TOU Period 6 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p6_fuel_rate",      "TOU Period 6 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p7_buy_rate",       "TOU Period 7 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p7_sell_rate",      "TOU Period 7 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p7_fuel_rate",      "TOU Period 7 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p8_buy_rate",       "TOU Period 8 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p8_sell_rate",      "TOU Period 8 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p8_fuel_rate",      "TOU Period 8 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p9_buy_rate",       "TOU Period 9 Rate (buy)",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p9_sell_rate",      "TOU Period 9 Rate (sell)",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_tou_p9_fuel_rate",      "TOU Period 9 Rate (fuel adj)",    "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_STRING,     "ur_tou_sched_weekday",     "TOU Weekday Schedule",            "",       "288 digits 0-9, 24x12", "",             "ur_tou_enable=1",           "TOUSCHED",                      "" },
 	{ SSC_INPUT,        SSC_STRING,     "ur_tou_sched_weekend",     "TOU Weekend Schedule",            "",       "288 digits 0-9, 24x12", "",             "ur_tou_enable=1",           "TOUSCHED",                      "" },
 
@@ -591,7 +581,6 @@ public:
 		int i;
 		ssc_number_t buy = as_number("ur_flat_buy_rate");
 		ssc_number_t sell = as_number("ur_flat_sell_rate");
-//		ssc_number_t fuel = as_number("ur_flat_fuel_rate");
 
 		if (as_boolean("ur_sell_eq_buy")) sell = buy;
 
@@ -599,8 +588,6 @@ public:
 		{
 			if (e[i] < 0) // must buy from grid
 			{
-//				payment[i] += -1.0f*e[i]*(buy+fuel);
-//				price[i] += (buy+fuel);
 				payment[i] += -1.0f*e[i]*buy;
 				price[i] += buy;
 			}
@@ -640,7 +627,6 @@ public:
 			ssc_number_t income[8760],
 			ssc_number_t price[8760] )
 	{
-//		ssc_number_t rates[9][3];
 		ssc_number_t rates[9][2];
 
 		const char *schedwkday = as_string("ur_tou_sched_weekday");
@@ -658,7 +644,6 @@ public:
 			std::string nstr = util::to_string( i+1 );
 			rates[i][0] = as_number("ur_tou_p" + nstr + "_buy_rate");
 			rates[i][1] = sell_eq_buy ? rates[i][0] : as_number("ur_tou_p" + nstr + "_sell_rate");
-//			rates[i][2] = as_number("ur_tou_p" + nstr + "_fuel_rate");
 		}
 
 		for (int i=0;i<8760;i++)
@@ -666,12 +651,9 @@ public:
 			int tod_p = tod[i];
 			ssc_number_t buy = rates[tod_p][0];
 			ssc_number_t sell = rates[tod_p][1];
-//			ssc_number_t fuel = rates[tod_p][2];
 
 			if (e[i] < 0)
 			{
-//				payment[i] += -1.0f*e[i]*(buy+fuel);
-//				price[i] += (buy+fuel);
 				payment[i] += -1.0f*e[i]*buy;
 				price[i] += buy;
 			}
