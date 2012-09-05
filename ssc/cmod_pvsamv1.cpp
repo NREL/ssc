@@ -674,13 +674,13 @@ public:
 
 			self_shading_fill_factor = snl.Vmp0 * snl.Imp0 / snl.Voc0 / snl.Isc0;
 
+			// by default, use database values
 			double A = as_double("snl_a");
 			double B = as_double("snl_b");
 			double DT = as_double("snl_dtc");
 	
 			switch(as_integer("snl_module_structure"))
 			{
-			case 0: // use database values;
 			case 1: //glass/cell/polymer sheet - open rack
 				A = -3.56;
 				B = -0.0750;
@@ -710,6 +710,9 @@ public:
 				A = as_double("snl_ref_a");
 				B = as_double("snl_ref_b");
 				DT = as_double("snl_ref_dT");
+				break;
+
+			default:
 				break;
 			}
 		
