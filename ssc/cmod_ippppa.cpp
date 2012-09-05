@@ -148,6 +148,14 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_debt_frac",                      "Calculated debt fraction",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_ppa_escalation",                      "Calculated ppa escalation",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O and M",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O and M",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel O and M",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of Insurance and Prop Tax",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+
+
+
 	// metrics table 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_capacity_factor",    "Capacity factor",  "", "",                      "ippppa",      "*",                     "",                "" },
@@ -1346,6 +1354,31 @@ public:
 		assign( "firstyear_energy_dispatch7", var_data((ssc_number_t) cf.at(CF_TOD7Energy,1) ));  
 		assign( "firstyear_energy_dispatch8", var_data((ssc_number_t) cf.at(CF_TOD8Energy,1) ));  
 		assign( "firstyear_energy_dispatch9", var_data((ssc_number_t) cf.at(CF_TOD9Energy,1) ));  
+
+
+
+
+	// for cost stacked bars
+		//npv(CF_energy_value, nyears, nom_discount_rate)
+		// present value of o and m value - note - present value is distributive - sum of pv = pv of sum
+		double pvAnnualOandM = npv(CF_om_fixed_expense, nyears, nom_discount_rate);
+		double pvFixedOandM = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
+		double pvVariableOandM = npv(CF_om_production_expense, nyears, nom_discount_rate);
+		double pvFuelOandM = npv(CF_om_fuel_expense, nyears, nom_discount_rate);
+		double pvOptFuel1OandM = npv(CF_om_opt_fuel_1_expense, nyears, nom_discount_rate);
+		double pvOptFuel2OandM = npv(CF_om_opt_fuel_2_expense, nyears, nom_discount_rate);
+	//	double pvWaterOandM = NetPresentValue(sv[svNominalDiscountRate], cf[cfAnnualWaterCost], analysis_period);
+
+		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
+
+		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM)));
+		assign( "present_value_fuel", var_data((ssc_number_t)(pvFuelOandM + pvOptFuel1OandM + pvOptFuel2OandM)));
+
+		// present value of insurance and property tax
+		double pvInsurance = npv(CF_insurance_expense, nyears, nom_discount_rate);
+		double pvPropertyTax = npv(CF_property_tax_expense, nyears, nom_discount_rate);
+
+		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
 
 	}
@@ -3858,6 +3891,9 @@ void satisfy_all_constraints()
 
 
 }
+
+
+
 
 };
 
