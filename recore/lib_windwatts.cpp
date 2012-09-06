@@ -459,32 +459,27 @@ double turbine_output_using_weibull(double rotor_diameter, double weibull_k, dou
 
 	// 'RUN' MODEL ****************************************************************************************
 	double total_energy_turbine=0;//, total_energy_generic=0;
-	//std::vector<double> weibull_cummulative(count, 0);
-	std::vector<double> weibull_probability(count, 0);
-	//std::vector<double> weibull_betz(count, 0);
-	//std::vector<double> weibull_cp(count, 0);
-	//std::vector<double> rayleigh(count, 0);
+	std::vector<double> weibull_cummulative(count, 0);
+	std::vector<double> weibull_bin(count, 0);
+	//std::vector<double> weibull_probability(count, 0);
 	std::vector<double> energy_turbine(count, 0);	// energy from turbine chosen from library
 
 	// double step = 0;
 	// weibull_k = 2.10; // used for testing: this is off in the 5th significant digit when passed into SSC from samwx
-	for (int i=0; i<count; i++)
+	weibull_cummulative[0] = 0.0;
+	weibull_bin[0] = 0.0;
+	energy_turbine[0] = 0.0;
+	for (int i=1; i<count; i++)
 	{
 		// step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
 
 		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
-		if (i>0) {
-			//weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
-			//weibull_probability[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
-			weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) );
-		}
-
-		//weibull_betz[i] = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * 16.0/27.0;
-		//weibull_cp[i]   = (( 0.5 * air_density * 0.25 * physics::PI * pow(rotor_diameter,2.0) * pow(wind_speed[i],3.0) ) * weibull_probability[i]/1000) * max_cp * hub_efficiency[i];
-		//rayleigh[i]		= ( (physics::PI * wind_speed[i]) / (2.0 * pow(hub_ht_windspeed,2.0) ) ) * exp( ((-physics::PI * pow(wind_speed[i],2.0) ) / ( 4.0*pow(hub_ht_windspeed,2.0) )) ) / (1.0/step);
+		weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
+		weibull_bin[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
+		// THIS IS NOT FOR THE BIN wind speed[i to i-1]: weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) );
 
 		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
-		energy_turbine[i] = (8760 * weibull_probability[i]) * power_curve[i];
+		energy_turbine[i] = (8760 * weibull_bin[i]) * power_curve[i];
 
 		// keep track of cummulative output
 		total_energy_turbine += energy_turbine[i];
