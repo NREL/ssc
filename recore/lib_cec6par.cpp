@@ -401,7 +401,9 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 		else
 		{ // calculate power at specified operating voltage
 			V = opvoltage;
-			I = current_194( V, 0.9*IL_oper, A_oper, IL_oper, IO_oper, Rs, Rsh_oper );
+			if (V >= V_oc) I = 0;
+			else I = current_194( V, 0.9*IL_oper, A_oper, IL_oper, IO_oper, Rs, Rsh_oper );
+
 			P = V*I;
 		}
 		

@@ -36,6 +36,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                      "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                              "Number of inverters",                                     "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	
+	{ SSC_INPUT,        SSC_NUMBER,      "enable_mismatch_vmax_calc",                   "Enable mismatched subarray Vmax calculation",             "",       "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt",                              "Sub-array 1 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray1_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt_eq_lat",                       "Sub-array 1 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray1_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_azimuth",                           "Sub-array 1 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "*",                        "MIN=0,MAX=359.9",               "" },
@@ -257,6 +259,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_soiling_derate",             "Subarray 1 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_celltemp",                   "Subarray 1 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_dc_gross",                   "Subarray 1 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_dc_voltage",                 "Subarray 1 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -270,6 +273,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_soiling_derate",             "Subarray 2 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_celltemp",                   "Subarray 2 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_dc_gross",                   "Subarray 2 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_dc_voltage",                 "Subarray 2 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -283,6 +287,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_soiling_derate",             "Subarray 3 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_celltemp",                   "Subarray 3 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_dc_gross",                   "Subarray 3 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_dc_voltage",                 "Subarray 3 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -296,6 +301,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_soiling_derate",             "Subarray 4 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_celltemp",                   "Subarray 4 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_dc_gross",                   "Subarray 4 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_dc_voltage",                 "Subarray 4 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 
 /* aggregate array level outputs */
@@ -353,6 +359,19 @@ struct subarray
 
 		for (size_t i=0;i<8760;i++)
 			shad_beam_factor[i] = 1.0;
+
+		poa.ibeam = 0;
+		poa.iskydiff = 0;
+		poa.ignddiff = 0;
+		poa.sunup = 0;
+		poa.aoi = 0;
+		poa.stilt = 0;
+		poa.sazi = 0;
+
+		module.dcpwr = 0;
+		module.dcv = 0;
+		module.dceff = 0;
+		module.tcell = 0;
 	}
 
 	bool enable;
@@ -371,6 +390,25 @@ struct subarray
 	shading_data shdat;
 	std::vector<double> shad_beam_factor;
 	double shad_skydiff_factor;
+
+	// calculated by irradiance processor
+	struct {
+		double ibeam;
+		double iskydiff;
+		double ignddiff;
+		int sunup;
+		double aoi;
+		double stilt;
+		double sazi;
+	} poa;
+
+	// calculated by module model
+	struct {
+		double dcpwr;
+		double dcv;
+		double dceff;
+		double tcell;
+	} module;
 
 };
 	
@@ -405,7 +443,8 @@ public:
 		int skymodel = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
 
 		// load the subarray parameter information
-		subarray sa[4];
+		subarray sa[4];		
+		int num_subarrays = 1;
 		for ( size_t nn=0;nn<4;nn++ )
 		{
 			sa[nn].enable = true;
@@ -419,6 +458,9 @@ public:
 				if (sa[nn].enable) sa[nn].nstrings = as_boolean( prefix+"nstrings" );
 
 				sa[0].nstrings -= sa[nn].nstrings;
+				
+				if (sa[nn].nstrings > 0 && sa[nn].enable)
+					num_subarrays++;
 			}
 
 			size_t soil_len = 0;
@@ -496,17 +538,19 @@ public:
 		}
 
 		int mod_type = as_integer("module_model");
-
-		double spe_area = 1, spe_rad[5], spe_eff[5], spe_a = 0, spe_b = 0, spe_dT = 0, spe_gamma = 0, spe_fd = 1.0;
-		int spe_ref = 0;
+		
+		spe_module_t spe;
+		sandia_celltemp_t spe_tc;
 
 		cec6par_module_t cec;
-		int cec_celltemp_mode = 0;
 		noct_celltemp_t noct_tc;
 		mcsp_celltemp_t mcsp_tc;
 
 		sandia_module_t snl;
-		sandia_celltemp_t snltc;
+		sandia_celltemp_t snl_tc;
+
+		pvcelltemp_t *celltemp_model = 0;
+		pvmodule_t *module_model = 0;		
 
 		double ref_area_m2 = 0;
 
@@ -514,60 +558,68 @@ public:
 
 		double module_watts_stc = -1.0;
 
+		bool enable_mismatch_vmax_calc = as_boolean("enable_mismatch_vmax_calc");
+		if (enable_mismatch_vmax_calc 
+			&& mod_type < 1 && mod_type > 2 )
+			throw exec_error( "pvsamv1", "String level subarray mismatch can only be calculated using the 5 parameter model.");
+
 		if ( mod_type == 0 )
 		{
-			spe_area = as_double("spe_area");
-			ref_area_m2 = spe_area;
+			spe.Area = as_double("spe_area");
+			ref_area_m2 = spe.Area;
 			for (int i=0;i<5;i++)
 			{
-				spe_rad[i] = as_double( util::format("spe_rad%d", i));
-				spe_eff[i] = as_double( util::format("spe_eff%d", i));
-				if (i > 0 && spe_rad[i] <= spe_rad[i-1])
+				spe.Rad[i] = as_double( util::format("spe_rad%d", i));
+				spe.Eff[i] = 0.01*as_double( util::format("spe_eff%d", i));
+				if (i > 0 && spe.Rad[i] <= spe.Rad[i-1])
 					throw exec_error( "pvsamv1", "SPE model radiation levels must increase monotonically");
 			}
 		
-			spe_gamma = as_double("spe_temp_coeff");
-			spe_ref = as_integer("spe_reference");
+			spe.Gamma = as_double("spe_temp_coeff");
+			spe.Reference = as_integer("spe_reference");
 		
 			switch(as_integer("spe_module_structure"))
 			{
 			case 0: //glass/cell/polymer sheet - open rack
-				spe_a = -3.56;
-				spe_b = -0.0750;
-				spe_dT = 3;
+				spe_tc.a = -3.56;
+				spe_tc.b = -0.0750;
+				spe_tc.DT0 = 3;
 				break;
 			case 1: //glass/cell/glass - open rack
-				spe_a = -3.47;
-				spe_b = -0.0594;
-				spe_dT = 3;
+				spe_tc.a = -3.47;
+				spe_tc.b = -0.0594;
+				spe_tc.DT0 = 3;
 				break;
 			case 2: //polymer/thin film/steel - open rack
-				spe_a = -3.58;
-				spe_b = -0.113;
-				spe_dT = 3;
+				spe_tc.a = -3.58;
+				spe_tc.b = -0.113;
+				spe_tc.DT0 = 3;
 				break;
 			case 3: //Insulated back (building-integrated PV)
-				spe_a = -2.81;
-				spe_b = -0.0455;
-				spe_dT = 0;
+				spe_tc.a = -2.81;
+				spe_tc.b = -0.0455;
+				spe_tc.DT0 = 0;
 				break;
 			case 4: //close roof mount
-				spe_a = -2.98;
-				spe_b = -0.0471;
-				spe_dT = 1;
+				spe_tc.a = -2.98;
+				spe_tc.b = -0.0471;
+				spe_tc.DT0 = 1;
 				break;
 			case 5: //user defined
-				spe_a = as_double("spe_a");
-				spe_b = as_double("spe_b");
-				spe_dT = as_double("spe_dT");
+				spe_tc.a = as_double("spe_a");
+				spe_tc.b = as_double("spe_b");
+				spe_tc.DT0 = as_double("spe_dT");
 				break;
 			default:
 				throw exec_error("pvsamv1", "invalid spe module structure and mounting");
 			}
 
-			spe_fd = as_double("spe_fd");
+			spe.fd = as_double("spe_fd");
+			spe_tc.fd = spe.fd;
 			
-			module_watts_stc = spe_eff[spe_ref]/100 * spe_rad[spe_ref] * spe_area;
+			celltemp_model = &spe_tc;
+			module_model = &spe;
+			module_watts_stc = spe.WattsStc();
 		}
 		else if ( mod_type == 1 )
 		{
@@ -588,8 +640,7 @@ public:
 
 			self_shading_fill_factor = cec.Vmp * cec.Imp / cec.Voc / cec.Isc;
 
-			cec_celltemp_mode = as_integer("cec_temp_corr_mode");
-			if ( cec_celltemp_mode == 0 )
+			if ( as_integer("cec_temp_corr_mode") == 0 )
 			{
 				noct_tc.Tnoct = as_double("cec_t_noct");
 				int standoff = as_integer("cec_standoff");
@@ -607,6 +658,8 @@ public:
 				noct_tc.ffv_wind = 0.51;
 				if ( height == 1 )
 					noct_tc.ffv_wind = 0.61;
+
+				celltemp_model = &noct_tc;
 			}
 			else
 			{
@@ -629,8 +682,11 @@ public:
 				mcsp_tc.Nrows = (int)as_integer("cec_array_rows");
 				mcsp_tc.Ncols = (int)as_integer("cec_array_cols");
 				mcsp_tc.TbackInteg = as_double("cec_backside_temp");
+
+				celltemp_model = &mcsp_tc;
 			}
 			
+			module_model = &cec;
 			module_watts_stc = cec.Vmp * cec.Imp;
 		}
 		else if ( mod_type == 3 )
@@ -716,11 +772,13 @@ public:
 				break;
 			}
 		
-			snltc.a = A;
-			snltc.b = B;
-			snltc.DT0 = DT;
-			snltc.fd = snl.fd;
+			snl_tc.a = A;
+			snl_tc.b = B;
+			snl_tc.DT0 = DT;
+			snl_tc.fd = snl.fd;
 			
+			celltemp_model = &snl_tc;
+			module_model = &snl;
 			module_watts_stc = snl.Vmp0 * snl.Imp0;
 		}
 		else if ( mod_type == 2 )
@@ -772,7 +830,6 @@ public:
 		
 			self_shading_fill_factor = cec.Vmp * cec.Imp / cec.Voc / cec.Isc;
 
-			cec_celltemp_mode = 0; // use NOCT model
 			noct_tc.Tnoct = as_double("6par_tnoct");
 			noct_tc.ffv_wind = 0.51; // less than 22ft high (1 story)
 			if ( as_integer("6par_mounting") == 1 ) noct_tc.ffv_wind = 0.61;  // greater than 22ft high (2 story)
@@ -787,8 +844,9 @@ public:
 			case 5: noct_tc.standoff_tnoct_adj = 18; break; // less than 0.5 inches
 			}
 			
+			celltemp_model = &noct_tc;
+			module_model = &cec;
 			module_watts_stc = cec.Vmp * cec.Imp;
-
 		}
 		else
 			throw exec_error("pvsamv1", "invalid pv module model type");
@@ -878,6 +936,7 @@ public:
 		ssc_number_t *p_shad[4];      	
 		ssc_number_t *p_tcell[4];     
 		ssc_number_t *p_modeff[4];    
+		ssc_number_t *p_dcv[4];
 		ssc_number_t *p_dcsubarray[4];
 
 		for (int nn=0;nn<4;nn++)
@@ -894,6 +953,7 @@ public:
 			p_shad[nn]       = allocate( prefix+"beam_shading_factor", 8760 );
 			p_tcell[nn]      = allocate( prefix+"celltemp", 8760 );
 			p_modeff[nn]     = allocate( prefix+"modeff", 8760 );
+			p_dcv[nn]        = allocate( prefix+"dc_voltage", 8760 );
 			p_dcsubarray[nn] = allocate( prefix+"dc_gross", 8760 );
 		}
 				
@@ -910,7 +970,7 @@ public:
 			if (!wf.read())
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string(istep+1) + " of 8760 in weather file");
 			
-			if ( istep % (nstep/10) == 0)
+			if ( istep % (nstep/20) == 0)
 				update( "calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep );
 			
 
@@ -921,7 +981,7 @@ public:
 			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_volts = 0.0;
 			double inprad_total = 0.0;
 			
-			// calculate energy from each subarray
+			// calculate incident irradiance on each subarray
 			for (int nn=0;nn<4;nn++)
 			{
 				if ( !sa[nn].enable
@@ -989,98 +1049,157 @@ public:
 					beam_shad_factor *= soiling_factor;
 				}
 
-				// compute dc power output
-				double dcpwr = 0, dceff = 0, tcell = wf.tdry;
-				if ( sunup > 0 )
-				{
-					// apply self-shading if enabled (subarray 1 only)
-					if ( self_shading_enabled && nn == 0 )
-					{
-						if ( sscalc.exec( solzen, solazi, wf.dn, wf.df, self_shading_fill_factor, alb ) )
-						{
-							p_ss_diffuse_derate[istep] = (ssc_number_t) sscalc.diffuse_derate();
-							p_ss_reflected_derate[istep] = (ssc_number_t) sscalc.reflected_derate();
-							p_ss_diffuse_loss[istep] = (ssc_number_t) sscalc.m_diffuse_loss_term/1000;
-							p_ss_derate[istep] = (ssc_number_t) sscalc.dc_derate();
-							iskydiff = sscalc.diffuse_derate() * iskydiff;
-							ignddiff = sscalc.reflected_derate() * ignddiff;
-						}
-						else
-							throw exec_error("pvsamv1", util::format("Self-shading calculation failed at hour %d", istep) ) ;
-					}
-
-
-					// compute dc power, voltage, efficiency, and cell temp of the whole array
-					if ( mod_type == 0)
-					{
-						double idiff = spe_fd*(iskydiff+ignddiff);
-						dceff = eff_interpolate( ibeam+idiff, spe_rad, spe_eff );
-						dcpwr = (dceff/100.0*(ibeam+idiff)*spe_area)*modules_per_string*sa[nn].nstrings;
-						dc_volts = 12 * modules_per_string;
-						double tmod = sandia_celltemp_t::sandia_module_temperature( ibeam, idiff, wf.wspd, wf.tdry, spe_fd, spe_a, spe_b );
-						tcell = sandia_celltemp_t::sandia_tcell_from_tmodule( tmod, ibeam, idiff, spe_fd, spe_dT );
-
-						dcpwr += dcpwr*(spe_gamma/100.0)*(tcell - 25.0);
-						if (dcpwr < 0) dcpwr = 0;
-
-					}
-					else if ( mod_type == 1 || mod_type == 2 ) 
-					{
-						pvinput_t in( ibeam, iskydiff, ignddiff, wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres, 
-							solzen, aoi, wf.elev, stilt, sazi, ((double)wf.hour) + wf.minute/60.0 );
-						pvoutput_t out;
-
-						if ( cec_celltemp_mode == 0 ) noct_tc( in, cec, -1, tcell );
-						else mcsp_tc( in, cec, -1, tcell );
-
-						cec( in, tcell, -1, out );
-
-						dceff = out.Efficiency*100;
-						dcpwr = out.Power * modules_per_string*sa[nn].nstrings;
-						dc_volts = out.Voltage * modules_per_string;
-						tcell = out.CellTemp;
-
-					}
-					else if ( mod_type == 3 )
-					{
-						pvinput_t in( ibeam, iskydiff, ignddiff, wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres, 
-							solzen, aoi, wf.elev, stilt, sazi, ((double)wf.hour) + wf.minute/60.0 );
-						pvoutput_t out;
-						snltc( in, snl, -1, tcell );
-						snl( in, tcell, -1, out );
-
-						dceff = out.Efficiency*100;
-						dcpwr = out.Power * modules_per_string*sa[nn].nstrings;
-						dc_volts = out.Voltage * modules_per_string;
-						tcell = out.CellTemp;
-
-					}
-
-					// apply self-shading derate
-					if (self_shading_enabled && nn == 0) dcpwr *= p_ss_derate[istep];
-					
-					// apply pre-inverter power derate
-					dcpwr_gross += dcpwr;
-					dcpwr_net += dcpwr * sa[nn].derate;
-
-				} // if (sunup)
-				
 				// record sub-array level outputs				
 				p_incbeam[nn][istep] = (ssc_number_t) ( ibeam * 0.001 );
 				p_incdiff[nn][istep] = (ssc_number_t) ( (iskydiff+ignddiff) * 0.001 );
 				p_inctotal[nn][istep] = (ssc_number_t) ( (ibeam+iskydiff+ignddiff) * 0.001 );
 				p_shad[nn][istep] = (ssc_number_t) beam_shad_factor;
-				p_tcell[nn][istep] = (ssc_number_t) tcell;
-				p_modeff[nn][istep] = (ssc_number_t) dceff;
 				p_rot[nn][istep] = (ssc_number_t) rot;
 				p_idealrot[nn][istep] = (ssc_number_t) ( rot-btd );
 				p_surftilt[nn][istep] = (ssc_number_t) stilt;
 				p_surfazi[nn][istep] = (ssc_number_t) sazi;
 				p_soiling[nn][istep] = (ssc_number_t) soiling_factor;
-				p_dcsubarray[nn][istep] = (ssc_number_t) ( dcpwr * 0.001 );		
-				
+
+				// save the required irradiance inputs on array plane for the module output calculations.
+				sa[nn].poa.ibeam = ibeam;
+				sa[nn].poa.iskydiff = iskydiff;
+				sa[nn].poa.ignddiff = ignddiff;
+				sa[nn].poa.aoi = aoi;
+				sa[nn].poa.sunup = sunup;
+				sa[nn].poa.stilt = stilt;
+				sa[nn].poa.sazi = sazi;
+								
 				// calculate total input radiaton to system (array-level output)
-				inprad_total += (ibeam+iskydiff+ignddiff) * ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
+				inprad_total += (sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff)
+					* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
+			}
+			
+			// apply self-shading if enabled (subarray 1 only)
+			if ( self_shading_enabled )
+			{
+				double alb = alb_const;
+				if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
+					alb = wf.albedo;
+
+				if ( sscalc.exec( solzen, solazi, wf.dn, wf.df, self_shading_fill_factor, alb ) )
+				{
+					p_ss_diffuse_derate[istep] = (ssc_number_t) sscalc.diffuse_derate();
+					p_ss_reflected_derate[istep] = (ssc_number_t) sscalc.reflected_derate();
+					p_ss_diffuse_loss[istep] = (ssc_number_t) sscalc.m_diffuse_loss_term/1000;
+					p_ss_derate[istep] = (ssc_number_t) sscalc.dc_derate();
+
+					// only diffuse irradiance for subarray 1 affected (other subarrays disabled)
+					sa[0].poa.iskydiff *= sscalc.diffuse_derate();
+					sa[0].poa.ignddiff *= sscalc.reflected_derate();
+				}
+				else
+					throw exec_error("pvsamv1", util::format("Self-shading calculation failed at hour %d", istep) ) ;
+
+			}
+			
+
+			// compute dc power output of one module in each subarray
+			double module_voltage = -1;
+
+
+			if ( enable_mismatch_vmax_calc && num_subarrays > 1 )
+			{
+				double vmax = module_model->VocRef()*1.2; // maximum voltage
+				double vmin = 0.3 * vmax; // minimum voltage
+				const int NP=100;
+				double V[NP], I[NP], P[NP];
+				double Pmax = 0;
+				// sweep voltage, calculating current for each subarray module, and adding
+				for( int i=0;i<NP;i++)
+				{
+					V[i] = vmin + (vmax-vmin)*i/((double)NP);
+					I[i] = 0;
+					for (int nn=0;nn<4;nn++)
+					{
+						if ( !sa[nn].enable	|| sa[nn].nstrings < 1 ) continue; // skip disabled subarrays
+
+						pvinput_t in( sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, 
+							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres, 
+							solzen, sa[nn].poa.aoi, wf.elev, 
+							sa[nn].poa.stilt, sa[nn].poa.sazi, 
+							((double)wf.hour) + wf.minute/60.0 );
+						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
+						if ( sa[nn].poa.sunup > 0 )
+						{	
+							double tcell = wf.tdry;
+							// calculate cell temperature using selected temperature model
+							(*celltemp_model)( in, *module_model, V[i], tcell );
+							// calculate module power output using conversion model previously specified
+							(*module_model)( in, tcell, V[i], out );
+						}
+						I[i] += out.Current;
+					}
+
+					P[i] = V[i]*I[i];
+					if (P[i] > Pmax)
+					{
+						Pmax = P[i];
+						module_voltage = V[i];
+					}
+				}
+			}
+
+			//  at this point we have 
+			// a array maximum power module voltage
+			for (int nn=0;nn<4;nn++)
+			{
+				if ( !sa[nn].enable
+					|| sa[nn].nstrings < 1 )
+					continue; // skip disabled subarrays
+				
+				pvinput_t in( sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, 
+					wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres, 
+					solzen, sa[nn].poa.aoi, wf.elev, 
+					sa[nn].poa.stilt, sa[nn].poa.sazi, 
+					((double)wf.hour) + wf.minute/60.0 );
+				pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
+
+				double tcell = wf.tdry;
+				if ( sa[nn].poa.sunup > 0 )
+				{	
+					// calculate cell temperature using selected temperature model
+					// calculate module power output using conversion model previously specified
+					(*celltemp_model)( in, *module_model, module_voltage, tcell );
+					(*module_model)( in, tcell, module_voltage, out );
+				}
+
+				// save DC module outputs for this subarray
+				sa[nn].module.dcpwr = out.Power;
+				sa[nn].module.dceff = out.Efficiency*100;
+				sa[nn].module.dcv = out.Voltage;
+				sa[nn].module.tcell = out.CellTemp;
+				module_voltage = out.Voltage;
+			}
+			
+			dc_volts = module_voltage * modules_per_string;
+			
+			// sum up all DC power from the whole array
+			for (int nn=0;nn<4;nn++)
+			{
+				if ( !sa[nn].enable
+					|| sa[nn].nstrings < 1 )
+					continue; // skip disabled subarrays
+
+				// apply self-shading derate
+				if (self_shading_enabled && nn == 0) sa[nn].module.dcpwr *= p_ss_derate[istep];
+				
+				// scale power and voltage to array dimensions
+				sa[nn].module.dcpwr *=  modules_per_string*sa[nn].nstrings;
+
+				// apply pre-inverter power derate
+				dcpwr_gross += sa[nn].module.dcpwr;
+				dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
+				
+				// save to SSC output arrays
+				p_tcell[nn][istep] = (ssc_number_t) sa[nn].module.tcell;
+				p_modeff[nn][istep] = (ssc_number_t) sa[nn].module.dceff;
+				p_dcv[nn][istep] = (ssc_number_t) sa[nn].module.dcv;
+				p_dcsubarray[nn][istep] = (ssc_number_t) ( sa[nn].module.dcpwr * 0.001 );		
 			}
 			
 			// inverter: runs at all hours of the day, even if no DC power.  important
@@ -1359,23 +1478,6 @@ public:
 			log( util::format("Inverter oversized: The maximum inverter output was %.2lf%% of the rated value %lg kWac.", 
 				100 * maxACOutput / ratedACOutput, ratedACOutput), 
 				SSC_WARNING);
-	}
-	
-	double eff_interpolate( double irrad, double rad[5], double eff[5] )
-	{
-		if ( irrad < rad[0] )
-			return eff[0];
-		else if ( irrad > rad[4] )
-			return eff[4];
-
-		int i = 1;
-		for ( i=1;i<5;i++ )
-			if ( irrad < rad[i] ) break;
-      
-		int i1 = i-1;
-
-		double wx=(irrad-rad[i1])/(rad[i]-rad[i1]);
-		return (1-wx)*eff[i1]+wx*eff[i];
 	}
 
 	void accumulate_monthly(const std::string &hourly_var, const std::string &monthly_var)

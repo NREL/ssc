@@ -36,6 +36,9 @@ class pvoutput_t
 {
 public:
 	pvoutput_t();
+	pvoutput_t( double p, double v,
+		double c, double e, 
+		double voc, double isc, double t );
 
 	double Power; // output power, Watts
 	double Voltage; // operating voltage, V
@@ -72,6 +75,31 @@ public:
 
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output ) = 0;
 	std::string error();
+};
+
+
+
+class spe_module_t : public pvmodule_t
+{
+public:
+	double Area; // m2
+	double Gamma; // temp coefficient %/'C
+	int Reference; // specification of reference condition.  valid values: 0..4
+	double fd; // diffuse fraction
+	double Eff[5]; // as fractions
+	double Rad[5]; // W/m2
+
+	spe_module_t( );	
+	static double eff_interpolate( double irrad, double rad[5], double eff[5] );
+	
+	double WattsStc() { return Eff[Reference] * Rad[Reference] * Area; }
+
+	virtual double AreaRef() { return Area; }
+	virtual double VmpRef() { return 30; }
+	virtual double ImpRef() { return WattsStc()/VmpRef(); }
+	virtual double VocRef() { return 36; }
+	virtual double IscRef() { return ImpRef()*1.3; }
+	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
 };
 
 
