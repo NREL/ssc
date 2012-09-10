@@ -259,7 +259,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_soiling_derate",             "Subarray 1 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_celltemp",                   "Subarray 1 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_dc_gross",                   "Subarray 1 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_dc_voltage",                 "Subarray 1 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_dc_voltage",                 "Subarray 1 DC string voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -273,7 +273,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_soiling_derate",             "Subarray 2 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_celltemp",                   "Subarray 2 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_dc_gross",                   "Subarray 2 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_dc_voltage",                 "Subarray 2 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_dc_voltage",                 "Subarray 2 DC string voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -287,7 +287,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_soiling_derate",             "Subarray 3 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_celltemp",                   "Subarray 3 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_dc_gross",                   "Subarray 3 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_dc_voltage",                 "Subarray 3 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_dc_voltage",                 "Subarray 3 DC string voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -301,7 +301,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_soiling_derate",             "Subarray 4 Soiling derate",                                         "frac",   "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_celltemp",                   "Subarray 4 Cell temperature",                                       "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_dc_gross",                   "Subarray 4 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_dc_voltage",                 "Subarray 4 DC Module Voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_dc_voltage",                 "Subarray 4 DC string voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 
 /* aggregate array level outputs */
@@ -309,7 +309,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_diffuse_derate",                    "Self-shading diffuse derate",                            "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_reflected_derate",                  "Self-shading reflected derate",                          "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_diffuse_loss",                      "Self-shading diffuse loss",                              "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_vmp",                                  "Array max power point voltage",                          "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inverter_dc_voltage",                  "Inverter dc input voltage",                              "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_gross",                             "Gross dc array output",                                  "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                               "Net dc array output",                                    "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_gross",                             "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -957,7 +957,7 @@ public:
 			p_dcsubarray[nn] = allocate( prefix+"dc_gross", 8760 );
 		}
 				
-		ssc_number_t *p_vmp = allocate( "hourly_vmp", 8760 );
+		ssc_number_t *p_inv_dc_voltage = allocate( "hourly_inverter_dc_voltage", 8760 );
 		ssc_number_t *p_inrad = allocate( "hourly_input_radiation", 8760 );
 		ssc_number_t *p_dcgross = allocate( "hourly_dc_gross", 8760 );
 		ssc_number_t *p_dcpwr = allocate( "hourly_dc_net", 8760 );
@@ -978,7 +978,7 @@ public:
 			if (self_shading_enabled) sa[0].tilt = sa[0].tilt - ssarr.slope_ns;
 			
 			double solazi=0, solzen=0, solalt=0;
-			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_volts = 0.0;
+			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
 			double inprad_total = 0.0;
 			
 			// calculate incident irradiance on each subarray
@@ -1101,11 +1101,10 @@ public:
 			// compute dc power output of one module in each subarray
 			double module_voltage = -1;
 
-
 			if ( enable_mismatch_vmax_calc && num_subarrays > 1 )
 			{
-				double vmax = module_model->VocRef()*1.2; // maximum voltage
-				double vmin = 0.3 * vmax; // minimum voltage
+				double vmax = module_model->VocRef()*1.3; // maximum voltage
+				double vmin = 0.4 * vmax; // minimum voltage
 				const int NP=100;
 				double V[NP], I[NP], P[NP];
 				double Pmax = 0;
@@ -1143,9 +1142,15 @@ public:
 					}
 				}
 			}
+			
 
 			//  at this point we have 
 			// a array maximum power module voltage
+
+			// for averaging voltage in the case that mismatch calcs are disabled.
+			int n_voltage_values = 0; 
+			double voltage_sum = 0.0;
+
 			for (int nn=0;nn<4;nn++)
 			{
 				if ( !sa[nn].enable
@@ -1173,10 +1178,16 @@ public:
 				sa[nn].module.dceff = out.Efficiency*100;
 				sa[nn].module.dcv = out.Voltage;
 				sa[nn].module.tcell = out.CellTemp;
-				module_voltage = out.Voltage;
+
+				voltage_sum += out.Voltage;
+				n_voltage_values++;
 			}
 			
-			dc_volts = module_voltage * modules_per_string;
+
+			if ( enable_mismatch_vmax_calc && num_subarrays > 1 )
+				dc_string_voltage = module_voltage * modules_per_string;
+			else // when mismatch calculation is disabled and subarrays are enabled, simply average the voltages together for the inverter input
+				dc_string_voltage = voltage_sum / n_voltage_values * modules_per_string;
 			
 			// sum up all DC power from the whole array
 			for (int nn=0;nn<4;nn++)
@@ -1198,7 +1209,7 @@ public:
 				// save to SSC output arrays
 				p_tcell[nn][istep] = (ssc_number_t) sa[nn].module.tcell;
 				p_modeff[nn][istep] = (ssc_number_t) sa[nn].module.dceff;
-				p_dcv[nn][istep] = (ssc_number_t) sa[nn].module.dcv;
+				p_dcv[nn][istep] = (ssc_number_t) sa[nn].module.dcv * modules_per_string;
 				p_dcsubarray[nn][istep] = (ssc_number_t) ( sa[nn].module.dcpwr * 0.001 );		
 			}
 			
@@ -1217,7 +1228,8 @@ public:
 			else if ( inv_type == 1 )
 			{
 				double _par, _plr;
-				snlinv.acpower( dcpwr_net/num_inverters, dc_volts, &acpwr_gross, &_par, &_plr, &aceff );
+				snlinv.acpower( dcpwr_net/num_inverters, dc_string_voltage, 
+					&acpwr_gross, &_par, &_plr, &aceff );
 				acpwr_gross *= num_inverters;
 				aceff *= 100;
 			}
@@ -1235,7 +1247,7 @@ public:
 			
 			p_inrad[istep] = (ssc_number_t) inprad_total;
 
-			p_vmp[istep] = (ssc_number_t) dc_volts;
+			p_inv_dc_voltage[istep] = (ssc_number_t) dc_string_voltage;
 			p_dcgross[istep] = (ssc_number_t) ( dcpwr_gross * 0.001 );
 			p_dcpwr[istep] = (ssc_number_t) ( dcpwr_net * 0.001 );
 
@@ -1392,7 +1404,7 @@ public:
 		if (vdcmax <=0) return;
 
 		size_t count;
-		ssc_number_t *da = as_array("hourly_vmp", &count);
+		ssc_number_t *da = as_array("hourly_inverter_dc_voltage", &count);
 		if (count == 8760)
 		{
 			for (size_t i=0; i < count;i++)
