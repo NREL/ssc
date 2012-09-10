@@ -13,9 +13,10 @@ static var_info _cm_vtab_annualoutput[] = {
 
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                    UNITS     META                                      GROUP                REQUIRED_IF                 CONSTRAINTS                     UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_years",              "Analyis period",                        "years",  "",                                       "AnnualOutput",      "?=30",                   "INTEGER,MIN=0,MAX=50",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "energy_net_annual",		   "Annual energy produced by system",      "kWh",    "",                                       "AnnualOutput",      "*",					    "",                              "" },
+//	{ SSC_INPUT,        SSC_NUMBER,     "energy_net_annual",		   "Annual energy produced by system",      "kWh",    "",                                       "AnnualOutput",      "*",					    "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		   "Annual energy availability",	        "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		   "Annual energy degradation",	            "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",  "Lifetime hourly system outputs",        "0/1",    "0=hourly first year,1=hourly lifetime",  "AnnualOutput",      "*",						"INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_ARRAY,		"energy_net_hourly",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
 
@@ -46,6 +47,8 @@ class cm_annualoutput : public compute_module
 {
 private:
 	util::matrix_t<double> cf;
+//	std::vector<double> hourly_curtailment;
+
 
 public:
 	cm_annualoutput()
@@ -62,7 +65,7 @@ public:
 
 
 		int i=0;
-		double first_year_energy = as_double("energy_net_annual");
+//		double first_year_energy = as_double("energy_net_annual");
 		size_t count_avail = 0;
 		ssc_number_t *avail = 0;
 		avail = as_array("energy_availability", &count_avail);
@@ -102,21 +105,81 @@ public:
 		}
 		else
 		{
-			for (i=1;i<=nyears;i++)
-				cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
+			compute_output(nyears);
 		}
 
 		save_cf( CF_energy_net, nyears,"cf_energy_net" );
 
 	}
 
+	bool compute_output(int nyears)
+	{
+		ssc_number_t *hourly_enet; // hourly energy output
+	
+		double hourly_curtailment[8760];
+		ssc_number_t *diurnal_curtailment;
 
+		int h;
+		size_t count;
+
+	// hourly energy
+		hourly_enet = as_array("energy_net_hourly", &count );
+		if ( (int)count != (8760))
+		{
+			std::stringstream outm;
+			outm <<  "Bad hourly energy output length (" << count << "), should be 8760.";
+			log( outm.str() );
+			return false;
+		}
+
+	// hourly curtailment
+		diurnal_curtailment = as_array("energy_curtailment", &count );
+		if ( (int)count != (290))
+		{
+			std::stringstream outm;
+			outm <<  "Bad diurnal curtailment length (" << count << "), should be 290.";
+			log( outm.str() );
+			return false;
+		}
+
+		int i=0;
+		for (int m=0;m<12;m++)
+		{
+			for (int d=0;d<util::nday[m];d++)
+			{
+				for (int h=0;h<24;h++)
+				{
+					if ((i<8760) && ((m*24+h)<288))
+					{
+						hourly_curtailment[i] = diurnal_curtailment[m*24+h+2];
+						i++;
+					}
+				}
+			}
+		}
+
+				
+		double first_year_energy = 0.0;
+		for (h=0;h<8760;h++)
+		{
+			first_year_energy += hourly_enet[h]*hourly_curtailment[h];
+		}
+
+		for (int y=1;y<=nyears;y++)
+		{
+			cf.at(CF_energy_net,y) += first_year_energy * cf.at(CF_Availability,y) * cf.at(CF_Degradation,y);
+		}
+
+		return true;
+
+	}
 
 	bool compute_lifetime_output(int nyears)
 	{
-	//Calculate energy dispatched in each dispatch period 
 		ssc_number_t *hourly_enet; // hourly energy output
 
+		double hourly_curtailment[8760];
+		ssc_number_t *diurnal_curtailment;
 
 		int h;
 		size_t count;
@@ -126,9 +189,36 @@ public:
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
+			outm <<  "Bad hourly lifetime energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
 			log( outm.str() );
 			return false;
+		}
+
+
+	// hourly curtailment
+		diurnal_curtailment = as_array("energy_curtailment", &count );
+		if ( (int)count != (290))
+		{
+			std::stringstream outm;
+			outm <<  "Bad diurnal curtailment length (" << count << "), should be 290.";
+			log( outm.str() );
+			return false;
+		}
+
+		int i=0;
+		for (int m=0;m<12;m++)
+		{
+			for (int d=0;d<util::nday[m];d++)
+			{
+				for (int h=0;h<24;h++)
+				{
+					if ((i<8760) && ((m*24+h)<288))
+					{
+						hourly_curtailment[i] = diurnal_curtailment[m*24+h+2];
+						i++;
+					}
+				}
+			}
 		}
 
 
@@ -136,7 +226,7 @@ public:
 		{
 			for (h=0;h<8760;h++)
 			{
-				cf.at(CF_energy_net,y) += hourly_enet[(y-1)*8760+h] * cf.at(CF_Availability,y) * cf.at(CF_Degradation,y);
+				cf.at(CF_energy_net,y) += hourly_enet[(y-1)*8760+h] * hourly_curtailment[h] * cf.at(CF_Availability,y) * cf.at(CF_Degradation,y);
 			}
 		}
 

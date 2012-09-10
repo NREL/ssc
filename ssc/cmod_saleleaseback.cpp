@@ -4032,9 +4032,6 @@ public:
 			return false;
 		}
 
-		// from TranslateSchedule
-		static int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
-
 
 		cf.at(CF_TODJanEnergy,1) = 0;
 		cf.at(CF_TODFebEnergy,1) = 0;
@@ -4169,7 +4166,7 @@ public:
 		int i=0;
 		for (int m=0;m<12;m++)
 		{
-			for (int d=0;d<nday[m];d++)
+			for (int d=0;d<util::nday[m];d++)
 			{
 				for (int h=0;h<24&&i<8760 && m*24+h<288;h++)
 				{
@@ -4968,9 +4965,6 @@ public:
 			return false;
 		}
 
-		// from TranslateSchedule
-		static int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
-
 
 		for (int y=1;y<=nyears;y++)
 		{
@@ -5107,7 +5101,7 @@ public:
 			int i=0;
 			for (int m=0;m<12;m++)
 			{
-				for (int d=0;d<nday[m];d++)
+				for (int d=0;d<util::nday[m];d++)
 				{
 					for (int h=0;h<24&&i<8760 && m*24+h<288;h++)
 					{
