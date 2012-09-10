@@ -245,6 +245,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_zen",                              "Solar zenith angle",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_alt",                              "Solar altitude angle",                                   "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_azi",                              "Solar azimuth angle",                                    "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_airmass",                              "Absolute air mass",                                      "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	
 /* sub-array level outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_surf_tilt",                  "Subarray 1 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -314,11 +315,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                               "Net dc array output",                                    "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_gross",                             "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_net",                               "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	
-	/*
+		
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_inc_total",                           "Total incident radiation",                               "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_inc_beam",                            "Beam incident radiation",                                "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
-	*/
+	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc_net",                              "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_ac_net",                              "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
 	
@@ -372,6 +372,9 @@ struct subarray
 		module.dcv = 0;
 		module.dceff = 0;
 		module.tcell = 0;
+
+		for (int i=0;i<12;i++)
+			monthly_inc_beam[i] = monthly_inc_total[i] = 0.0;
 	}
 
 	bool enable;
@@ -409,7 +412,9 @@ struct subarray
 		double dceff;
 		double tcell;
 	} module;
-
+	
+	double monthly_inc_total[12];
+	double monthly_inc_beam[12];
 };
 	
 class cm_pvsamv1 : public compute_module
@@ -924,6 +929,7 @@ public:
 		ssc_number_t *p_solzen = allocate("hourly_sol_zen", 8760);
 		ssc_number_t *p_solalt = allocate("hourly_sol_alt", 8760);
 		ssc_number_t *p_solazi = allocate("hourly_sol_azi", 8760);
+		ssc_number_t *p_airmass = allocate("hourly_airmass", 8760);
 		
 		ssc_number_t *p_surftilt[4];  
 		ssc_number_t *p_surfazi[4];   
@@ -1038,11 +1044,11 @@ public:
 				iskydiff *= sa[nn].shad_skydiff_factor;
 
 				// apply soiling derate to all components of irradiance
-				int midx = wf.month - 1;
+				int month_idx = wf.month - 1;
 				double soiling_factor = 1.0;
-				if ( midx >= 0 && midx < 12 )
+				if ( month_idx >= 0 && month_idx < 12 )
 				{
-					soiling_factor = sa[nn].soiling[midx];
+					soiling_factor = sa[nn].soiling[month_idx];
 					ibeam *= soiling_factor;
 					iskydiff *= soiling_factor;
 					ignddiff *= soiling_factor;
@@ -1068,6 +1074,10 @@ public:
 				sa[nn].poa.sunup = sunup;
 				sa[nn].poa.stilt = stilt;
 				sa[nn].poa.sazi = sazi;
+
+				// accumulate monthly incident total & beam
+				sa[nn].monthly_inc_total[ month_idx ] += ( (ibeam+iskydiff+ignddiff) * 0.001 );
+				sa[nn].monthly_inc_beam[ month_idx ] += ( ibeam * 0.001 );
 								
 				// calculate total input radiaton to system (array-level output)
 				inprad_total += (sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff)
@@ -1245,6 +1255,9 @@ public:
 			p_solalt[istep] = (ssc_number_t) solalt;
 			p_solazi[istep] = (ssc_number_t) solazi;
 			
+			// absolute relative airmass calculation as f(zenith angle, site elevation)
+			p_airmass[istep] = (ssc_number_t) ( exp(-0.0001184 * wf.elev)/(cos( solzen*3.1415926/180 )+0.5057*pow(96.080-solzen, -1.634)) );
+						
 			p_inrad[istep] = (ssc_number_t) inprad_total;
 
 			p_inv_dc_voltage[istep] = (ssc_number_t) dc_string_voltage;
@@ -1261,7 +1274,30 @@ public:
 		if (istep != 8760)
 			throw exec_error( "pvsamv1", "failed to simulate all 8760 hours, error in weather file?");
 	
-	
+		// calculate monthly_inc_total, monthly_inc_beam
+		// sum up monthly_inc for each subarray.  weight total it by relative area of each subarray to total pv system area.
+		ssc_number_t *p_monthly_inc_total = allocate( "monthly_inc_total", 12 );
+		ssc_number_t *p_monthly_inc_beam = allocate( "monthly_inc_beam", 12 );
+
+		for (int i=0;i<12;i++)
+		{
+			double total = 0;
+			double beam = 0;
+			double num_strings = 0;
+			for (int nn=0;nn<4;nn++)
+			{
+				if (sa[nn].enable && sa[nn].nstrings > 0)
+				{
+					total += sa[nn].monthly_inc_total[i] * sa[nn].nstrings;
+					beam += sa[nn].monthly_inc_beam[i] * sa[nn].nstrings;
+					num_strings += sa[nn].nstrings;
+				}
+			}
+
+			p_monthly_inc_total[i] = (ssc_number_t) ( total / num_strings );
+			p_monthly_inc_beam[i] = (ssc_number_t) ( beam / num_strings );
+		}
+
 		accumulate_monthly( "hourly_ac_net", "monthly_ac_net" );
 		accumulate_monthly( "hourly_dc_net", "monthly_dc_net" );
 
@@ -1341,8 +1377,6 @@ public:
 
 	double system_performance_factor( double nameplate_kw )
 	{
-		return -1.0;
-
 		//system performance factor AC out / (dc rating * incident radiation)
 		double radiation = 0.0;
 		double deratedOutput = 0.0;
@@ -1353,32 +1387,26 @@ public:
 		int mod_type = as_integer("module_model");
 
 		ACPower = as_array("monthly_ac_net", &count );
-		if ( count == 12 ) 
-		{
-			for(int i=0;i<12;i++)
-				deratedOutput += ACPower[i];
-		}
-		else
+		if (count != 12)
 			throw exec_error( "pvsamv1", "invalid monthly ACPower output variable length when calculating system performance factor" );
 
-
+		for(int i=0;i<12;i++)
+			deratedOutput += ACPower[i];
+		
 		switch (mod_type)
 		{
 		case 0: case 1: case 2: // SEM, CEC, User6par
 			incRad = as_array("monthly_inc_total", &count );
 			break;
 		case 3: // Sandia
-			if (as_integer("snl_fd") == 0) // CPV
-				incRad = as_array("monthly_inc_beam", &count );
-			else // flatplate
-				incRad = as_array("monthly_inc_total", &count );
+			if (as_double("snl_fd") == 0) incRad = as_array("monthly_inc_beam", &count ); // CPV
+			else incRad = as_array("monthly_inc_total", &count ); // flatplate
 			break;
 		}
 
 		if ( count != 12 ) 
 			throw exec_error( "pvsamv1", "invalid monthly incident radiation output variable length when calculating system performance factor" );
-
-
+		
 		for(int i=0;i<12;i++)
 			radiation += incRad[i];
 
