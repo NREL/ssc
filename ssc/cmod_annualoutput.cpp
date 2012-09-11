@@ -24,6 +24,9 @@ static var_info _cm_vtab_annualoutput[] = {
 /* output */
 	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_net",               "Net energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_energy_to_grid",               "Annual energy to grid",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_energy_to_grid",               "Monthly energy to grid",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_energy_to_grid",               "Hourly energy to grid",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 
 var_info_invalid };
 
@@ -109,6 +112,7 @@ public:
 		}
 
 		save_cf( CF_energy_net, nyears,"cf_energy_net" );
+		save_cf( CF_energy_net, nyears,"annual_energy_to_grid" );
 
 	}
 
@@ -116,10 +120,9 @@ public:
 	{
 		ssc_number_t *hourly_enet; // hourly energy output
 	
-		double hourly_curtailment[8760];
+//		double hourly_curtailment[8760];
 		ssc_number_t *diurnal_curtailment;
 
-		int h;
 		size_t count;
 
 	// hourly energy
@@ -142,16 +145,25 @@ public:
 			return false;
 		}
 
+		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_energy_to_grid", 12 );
+		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_energy_to_grid", 8760 );
+
+
+		double first_year_energy = 0.0;
 		int i=0;
 		for (int m=0;m<12;m++)
 		{
+			monthly_energy_to_grid[m] = 0;
 			for (int d=0;d<util::nday[m];d++)
 			{
 				for (int h=0;h<24;h++)
 				{
 					if ((i<8760) && ((m*24+h)<288))
 					{
-						hourly_curtailment[i] = diurnal_curtailment[m*24+h+2];
+//						hourly_curtailment[i] = diurnal_curtailment[m*24+h+2];
+						hourly_energy_to_grid[i] = diurnal_curtailment[m*24+h+2]*hourly_enet[i];
+						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
+						first_year_energy += hourly_energy_to_grid[i];
 						i++;
 					}
 				}
@@ -159,11 +171,10 @@ public:
 		}
 
 				
-		double first_year_energy = 0.0;
-		for (h=0;h<8760;h++)
-		{
-			first_year_energy += hourly_enet[h]*hourly_curtailment[h];
-		}
+//		for (h=0;h<8760;h++)
+//		{
+//			first_year_energy += hourly_enet[h]*hourly_curtailment[h];
+//		}
 
 		for (int y=1;y<=nyears;y++)
 		{
@@ -205,9 +216,14 @@ public:
 			return false;
 		}
 
+		// first year
+		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_energy_to_grid", 12 );
+		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_energy_to_grid", 8760 );
+
 		int i=0;
 		for (int m=0;m<12;m++)
 		{
+			monthly_energy_to_grid[m] = 0;
 			for (int d=0;d<util::nday[m];d++)
 			{
 				for (int h=0;h<24;h++)
@@ -215,6 +231,8 @@ public:
 					if ((i<8760) && ((m*24+h)<288))
 					{
 						hourly_curtailment[i] = diurnal_curtailment[m*24+h+2];
+						hourly_energy_to_grid[i] = diurnal_curtailment[m*24+h+2]*hourly_enet[i];
+						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
 						i++;
 					}
 				}
