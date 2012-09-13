@@ -13,7 +13,6 @@ static var_info _cm_vtab_annualoutput[] = {
 
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                    UNITS     META                                      GROUP                REQUIRED_IF                 CONSTRAINTS                     UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_years",              "Analyis period",                        "years",  "",                                       "AnnualOutput",      "?=30",                   "INTEGER,MIN=0,MAX=50",           "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "energy_net_annual",		   "Annual energy produced by system",      "kWh",    "",                                       "AnnualOutput",      "*",					    "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		   "Annual energy availability",	        "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		   "Annual energy degradation",	            "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
@@ -22,11 +21,9 @@ static var_info _cm_vtab_annualoutput[] = {
 
 
 /* output */
-	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_net",               "Net energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-
-	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_energy_to_grid",               "Annual energy to grid",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_energy_to_grid",               "Monthly energy to grid",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_energy_to_grid",               "Hourly energy to grid",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_e_net_delivered",               "Annual energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_e_net_delivered",               "Monthly energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_e_net_delivered",               "Hourly energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 
 var_info_invalid };
 
@@ -111,8 +108,7 @@ public:
 			compute_output(nyears);
 		}
 
-		save_cf( CF_energy_net, nyears,"cf_energy_net" );
-		save_cf( CF_energy_net, nyears,"annual_energy_to_grid" );
+		save_cf( CF_energy_net, nyears,"annual_e_net_delivered" );
 
 	}
 
@@ -145,8 +141,8 @@ public:
 			return false;
 		}
 
-		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_energy_to_grid", 12 );
-		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_energy_to_grid", 8760 );
+		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_e_net_delivered", 12 );
+		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_e_net_delivered", 8760 );
 
 
 		double first_year_energy = 0.0;
@@ -160,7 +156,6 @@ public:
 				{
 					if ((i<8760) && ((m*24+h)<288))
 					{
-//						hourly_curtailment[i] = diurnal_curtailment[m*24+h+2];
 						hourly_energy_to_grid[i] = diurnal_curtailment[m*24+h+2]*hourly_enet[i];
 						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
 						first_year_energy += hourly_energy_to_grid[i];
@@ -171,10 +166,6 @@ public:
 		}
 
 				
-//		for (h=0;h<8760;h++)
-//		{
-//			first_year_energy += hourly_enet[h]*hourly_curtailment[h];
-//		}
 
 		for (int y=1;y<=nyears;y++)
 		{
@@ -217,8 +208,8 @@ public:
 		}
 
 		// first year
-		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_energy_to_grid", 12 );
-		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_energy_to_grid", 8760 );
+		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_e_net_delivered", 12 );
+		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_e_net_delivered", 8760 );
 
 		int i=0;
 		for (int m=0;m<12;m++)
