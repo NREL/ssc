@@ -654,13 +654,20 @@ shading_data::shading_data()
 void shading_data::save( std::vector<double> &data )
 {
 	data.clear();
-	data.push_back( 1.0 ); // version number of data format - allows for expansion of options in future.
+	data.push_back( 2.0 ); // version number of data format - allows for expansion of options in future.
 
+	// in version 2.0, all enable flags stored upfront
 	data.push_back( (en_hourly && hourly.size() == 8760) ? 1.0 : 0.0 );
+	data.push_back( (en_mxh && mxh.nrows() == 12 && mxh.ncols() == 24 ) ? 1.0 : 0.0 );
+	data.push_back( en_azal ? 1.0 : 0.0 );
+	data.push_back( en_diff ? 1.0 : 0.0 );
+	data.push_back( -1.0 ); // currently unused
+	data.push_back( -1.0 ); // currently unused
+	data.push_back( -1.0 ); // currently unused
+
 	for (size_t i=0;i<8760;i++)
 		data.push_back( i < hourly.size() ? hourly[i] : 1.0 );
 	
-	data.push_back( (en_mxh && mxh.nrows() == 12 && mxh.ncols() == 24 ) ? 1.0 : 0.0 );
 	if ( mxh.nrows() != 12 || mxh.ncols() != 24 )
 	{
 		mxh.resize(12, 24);
@@ -671,14 +678,12 @@ void shading_data::save( std::vector<double> &data )
 		for (size_t c=0;c<24;c++)
 			data.push_back( mxh.at(r,c) );
 	
-	data.push_back( en_azal ? 1.0 : 0.0 );
 	data.push_back( azal.nrows() );
 	data.push_back( azal.ncols() );
 	for (size_t r=0;r<azal.nrows();r++)
 		for (size_t c=0;c<azal.ncols();c++)
 			data.push_back( azal.at(r,c) );
 	
-	data.push_back( en_diff ? 1.0 : 0.0 );
 	data.push_back( diff );
 
 	data.push_back( data.size() + 1 ); // verification flag that size is consistent
@@ -713,21 +718,25 @@ bool shading_data::load( const std::vector<double> &data )
 	size_t idx = 0; // indexer to step through data
 
 	int ver = (int)data[idx++];	
-	if (ver == 1)
+	if (ver == 2)
 	{
 		en_hourly = data[idx++] > 0 ? true : false;
+		en_mxh = data[idx++] > 0 ? true : false;
+		en_azal = data[idx++] > 0 ? true : false;
+		en_diff = data[idx++] > 0 ? true : false;
+		idx++; // skip unused -1.0
+		idx++; // skip unused -1.0
+		idx++; // skip unused -1.0
+
 		hourly.clear();
 		hourly.reserve(8760);
 		for (size_t i=0;i<8760;i++)
 			hourly.push_back( data[idx++] );
 
-		en_mxh = data[idx++] > 0 ? true : false;
 		for (size_t r=0;r<12;r++)
 			for (size_t c=0;c<24;c++)
 				mxh.at(r,c) = data[idx++];
 		
-		en_azal = data[idx++] > 0 ? true : false;
-
 		size_t nr = (size_t)data[idx++];
 		size_t nc = (size_t)data[idx++];
 		azal.resize( nr, nc );
@@ -735,7 +744,6 @@ bool shading_data::load( const std::vector<double> &data )
 			for (size_t c=0;c<nc;c++)
 				azal.at(r,c) = data[idx++];
 		
-		en_diff = data[idx++] > 0 ? true : false;
 		diff = data[idx++];
 		
 		int verify = (size_t)data[idx++];
