@@ -24,6 +24,8 @@ static var_info _cm_vtab_annualoutput[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_e_net_delivered",               "Annual energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_e_net_delivered",               "Monthly energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_e_net_delivered",               "Hourly energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_availability",               "Annual availability",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_degradation",               "Annual degradation",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 
 var_info_invalid };
 
@@ -36,8 +38,8 @@ extern var_info
 enum {
 	CF_energy_net,
 
-	CF_Availability,
-	CF_Degradation,
+	CF_availability,
+	CF_degradation,
 
 	CF_max };
 
@@ -78,24 +80,24 @@ public:
 		{
 			if (as_integer("system_use_lifetime_output"))
 			{
-				if (nyears>=1) cf.at(CF_Degradation,1) = 1.0;
-				for (i=2;i<=nyears;i++) cf.at(CF_Degradation,i) = 1.0 - degrad[0]/100.0;
+				if (nyears>=1) cf.at(CF_degradation,1) = 1.0;
+				for (i=2;i<=nyears;i++) cf.at(CF_degradation,i) = 1.0 - degrad[0]/100.0;
 			}
 			else
-				for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = pow((1.0 - degrad[0]/100.0),i-1);
+				for (i=1;i<=nyears;i++) cf.at(CF_degradation,i) = pow((1.0 - degrad[0]/100.0),i-1);
 		}
 		else if (count_degrad > 0)
 		{
-			for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = (1.0 - degrad[i]/100.0);
+			for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_degradation,i+1) = (1.0 - degrad[i]/100.0);
 		}
 
 		if (count_avail == 1)
 		{
-			for (i=1;i<=nyears;i++) cf.at(CF_Availability,i)  = avail[0]/100.0;
+			for (i=1;i<=nyears;i++) cf.at(CF_availability,i)  = avail[0]/100.0;
 		}
 		else if (count_avail > 0)
 		{
-			for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i]/100.0;
+			for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_availability,i+1) = avail[i]/100.0;
 		}
 
 		// dispatch
@@ -109,6 +111,8 @@ public:
 		}
 
 		save_cf( CF_energy_net, nyears,"annual_e_net_delivered" );
+		save_cf( CF_availability, nyears,"annual_availability" );
+		save_cf( CF_degradation, nyears,"annual_degradation" );
 
 	}
 
@@ -169,7 +173,7 @@ public:
 
 		for (int y=1;y<=nyears;y++)
 		{
-			cf.at(CF_energy_net,y) += first_year_energy * cf.at(CF_Availability,y) * cf.at(CF_Degradation,y);
+			cf.at(CF_energy_net,y) += first_year_energy * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
 		}
 
 		return true;
@@ -235,7 +239,7 @@ public:
 		{
 			for (h=0;h<8760;h++)
 			{
-				cf.at(CF_energy_net,y) += hourly_enet[(y-1)*8760+h] * hourly_curtailment[h] * cf.at(CF_Availability,y) * cf.at(CF_Degradation,y);
+				cf.at(CF_energy_net,y) += hourly_enet[(y-1)*8760+h] * hourly_curtailment[h] * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
 			}
 		}
 

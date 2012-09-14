@@ -10,10 +10,13 @@ using namespace libfin;
 static var_info vtab_ippppa[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Utility IPP or Commercial PPA",   "0/1",          "0=ipp,1=ppa", "ippppa",      "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+/* Dispatch */
+	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "ippppa",             "*",						   "INTEGER,MIN=0",                 "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_net_hourly",	"Hourly energy produced by the system",	"kWh",   "",                      "ippppa",             "*",						   "",                 "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "ippppa",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"%",   "",                      "ippppa",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "ippppa",             "*",						   "",                              "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "ippppa",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "ippppa",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "ippppa",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
@@ -41,9 +44,6 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "optimize_lcoe_wrt_debt_fraction","Optimize LCOE with respect to Debt Fraction",  "0/1",      "0=no,1=yes",                      "ippppa",      "?=0",                  "INTEGER,MIN=0,MAX=1",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "optimize_lcoe_wrt_ppa_escalation","Optimize LCOE with respect to PPA Escalation",  "0/1",      "0=no,1=yes",                      "ippppa",      "?=0",                  "INTEGER,MIN=0,MAX=1",                 "" },
 
-/* Dispatch */
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "ippppa",             "*",						   "INTEGER,MIN=0",                 "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_net_hourly",	"Hourly energy produced by the system",	"%",   "",                      "ippppa",             "*",						   "",                 "" },
 
 /* Recapitalization */
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_recapitalization",		"Recapitalization expenses",	"0/1",   "0=None,1=Recapitalize",                      "ippppa",             "?=0",						   "INTEGER,MIN=0",                 "" },
@@ -586,30 +586,12 @@ public:
 		ssc_number_t *degrad = 0;
 		degrad = as_array("energy_degradation", &count_degrad);
 
-		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
-		if (count_degrad == 1)
-		{
-			if (as_integer("system_use_lifetime_output"))
-			{
-				if (nyears>=1) cf.at(CF_Degradation,1) = 1.0;
-				for (i=2;i<=nyears;i++) cf.at(CF_Degradation,i) = 1.0 - degrad[0]/100.0;
-			}
-			else
-				for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = pow((1.0 - degrad[0]/100.0),i-1);
-		}
-		else if (count_degrad > 0)
-		{
-			for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = (1.0 - degrad[i]/100.0);
-		}
+		// degradation and availability set in cmod_annualoutput
+		for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = degrad[i];
+		for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i];
 
-		if (count_avail == 1)
-		{
-			for (i=1;i<=nyears;i++) cf.at(CF_Availability,i)  = avail[0]/100.0;
-		}
-		else if (count_avail > 0)
-		{
-			for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i]/100.0;
-		}
+
+
 
 		// dispatch
 		if (as_integer("system_use_lifetime_output"))
@@ -630,6 +612,10 @@ public:
 				cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
 			if ( !is_commercialppa) compute_dispatch_output(nyears);
 		}
+
+		first_year_energy = cf.at(CF_energy_net, 1);
+
+
 
 		if (!is_commercialppa)
 		{

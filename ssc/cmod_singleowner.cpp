@@ -11,10 +11,10 @@ static var_info _cm_vtab_singleowner[] = {
 
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	/* modify to apply availability and degradation until separate compute module constructed. */
-	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"%",   "",                      "DHF",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"%",   "",                      "DHF",             "*",						   "",                              "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_net_hourly",	"Hourly energy produced by the system",	"kWh",   "",                      "ippppa",             "*",						   "",                 "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "DHF",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
 /* Recapitalization */
@@ -1084,7 +1084,8 @@ public:
 		// initialize energy
 
 		int i=0;
-		double first_year_energy = as_double("energy_net");
+		//double first_year_energy = as_double("energy_net");
+		double first_year_energy = 0.0;
 		size_t count_avail = 0;
 		ssc_number_t *avail = 0;
 		avail = as_array("energy_availability", &count_avail);
@@ -1092,30 +1093,11 @@ public:
 		ssc_number_t *degrad = 0;
 		degrad = as_array("energy_degradation", &count_degrad);
 
-		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
-		if (count_degrad == 1)
-		{
-			if (as_integer("system_use_lifetime_output"))
-			{
-				if (nyears>=1) cf.at(CF_Degradation,1) = 1.0;
-				for (i=2;i<=nyears;i++) cf.at(CF_Degradation,i) = 1.0 - degrad[0]/100.0;
-			}
-			else
-				for (i=1;i<=nyears;i++) cf.at(CF_Degradation,i) = pow((1.0 - degrad[0]/100.0),i-1);
-		}
-		else if (count_degrad > 0)
-		{
-			for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = (1.0 - degrad[i]/100.0);
-		}
+		// degradation and availability set in cmod_annualoutput
+		for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = degrad[i];
+		for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i];
 
-		if (count_avail == 1)
-		{
-			for (i=1;i<=nyears;i++) cf.at(CF_Availability,i)  = avail[0]/100.0;
-		}
-		else if (count_avail > 0)
-		{
-			for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i]/100.0;
-		}
+
 
 		// dispatch
 		if (as_integer("system_use_lifetime_output"))
@@ -1124,10 +1106,18 @@ public:
 		}
 		else
 		{
+			size_t count_energy = 0;
+			ssc_number_t *energy = 0;
+			energy = as_array("energy_net_hourly", &count_energy);
+			for (i=0;i<(int)count_energy;i++) first_year_energy += energy[i]; // sum up hourly kWh to get total annual kWh first year production
+
 			for (i=1;i<=nyears;i++)
 				cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
 			compute_dispatch_output(nyears);
 		}
+
+		first_year_energy = cf.at(CF_energy_net, 1);
+
 
 		double dispatch_factor1 = as_double("dispatch_factor1");
 		double dispatch_factor2 = as_double("dispatch_factor2");
