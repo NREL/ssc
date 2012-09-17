@@ -17,7 +17,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cutin",                      "Cut-in wind speed",                "m/s",    "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossc",                      "Constant losses",                  "kW",     "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossp",                      "Percentage losses",                "%",      "",                      "WindPower",      "*",             "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                    "Height of resource measurement",   "m",      "",                      "WindPower",      "*",             "INTEGER",               "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                    "Height of resource measurement",   "m",      "",                      "WindPower",      "*",             "INTEGER",               "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,      "model_choice",               "Hourly or Weibull model",		   "0/1",    "",                      "WindPower",      "*",             "INTEGER",               "" },
@@ -27,11 +27,11 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",						   "m",      "",                      "WindPower",      "*",             "",		              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "hub_efficiency",             "Array of hub efficiencies",		   "%",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
 
-
-
 	{ SSC_OUTPUT,       SSC_ARRAY,       "farmpwr",                    "Net electric generation",          "kWhac",  "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "winddir",                    "Wind direction",                   "deg",    "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "windspd",                    "Wind speed",                       "m/s",    "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "temp",                       "Air temperature",                  "'C",     "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pres",                       "Pressure",                         "atm",    "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "wtpwr",                      "Power at each WT",                 "kWhac",  "",                      "WindPower",      "*",             "ROWS=8760",       "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "wteff",                      "Eff at each WT",                   "kWhac",  "",                      "WindPower",      "*",             "ROWS=8760",       "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "wtvel",                      "Wind speed at each WT",            "kWhac",  "",                      "WindPower",      "*",             "ROWS=8760",       "" },
@@ -57,7 +57,7 @@ public:
 		double turbul = as_double("turbul");
 		double hub_ht = as_double("hub_ht");
 		double rotor_di = as_double("rotor_di");
-		double meas_ht = as_double("meas_ht");
+		//double meas_ht = as_double("meas_ht");
 		double cutin = as_double("cutin");
 		double lossc = as_double("lossc");
 		double lossp = as_double("lossp");
@@ -74,6 +74,8 @@ public:
 		ssc_number_t *farmpwr = allocate( "farmpwr", 8760 );
 		ssc_number_t *wspd = allocate("windspd", 8760);
 		ssc_number_t *wdir = allocate("winddir", 8760);
+		ssc_number_t *air_temp = allocate("temp", 8760);
+		ssc_number_t *air_pres = allocate("pres", 8760);
 		util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", 8760, nwt );
@@ -121,9 +123,9 @@ public:
 
 		const char *file = as_string("file_name");
 		windfile wf(file);		
-		if (!wf.ok()) throw exec_error("windpower", "failed to read local weather file: " + std::string(file));
-		wf.resource_ht = as_integer("meas_ht");
-
+		if (!wf.ok()) 
+			throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wf.error());
+		
 		/* ctl_mode hardwired to '2'.  apparently not implemented 
 		  correctly for modes 0 and 1, so no point exposing it.
 		  apd 03jan11 */
@@ -140,34 +142,32 @@ public:
 		util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", 8760, nwt );
 		
-		
-		double last_wind, last_theta, last_tdry, last_pres, wind, theta, tdry, pres;
-		wf.read();
-		wind = last_wind = wf.wspd;
-		theta = last_theta = wf.wdir;
-		tdry = last_tdry = wf.tdry;
-		pres = last_pres = wf.pres;
-
 		for (i=0;i<8760;i++)
 		{
-			
+			double wind, dir, temp, pres, resource_ht;
+			if (!wf.read( hub_ht, &wind, &dir, &temp, &pres, &resource_ht))
+				exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wf.error() );
+
+			if ( fabs(resource_ht - hub_ht) > 35 )
+				exec_error( "windpower", util::format("the specified hub height is greater than 35 m different from the closest measured wind resource height in the file: %lg m", resource_ht ));
+
 			double farmp = 0;
 
 			if ( (int)nwt != wind_power( 
 						/* inputs */
-						wind,
-						theta,
+						wind, /* m/s */
+						dir, /* degrees */
 						shear,
 						turbul,
 						pres,  /* Atm */
-						tdry,
+						temp, /* deg C */
 						(int)nwt,
 						&X[0],
 						&Y[0],
 						(int)pc_len,
 						&dpcW[0],
 						&dpcP[0],
-						meas_ht, /* TFF - what if they're not using TMY2? 10.0, /*10 meter data measure height in TMY2 */
+						resource_ht,
 						hub_ht,
 						rotor_di,
 						ctl_mode,
@@ -191,8 +191,11 @@ public:
 
 			farmpwr[i] = (ssc_number_t) farmp;
 			wspd[i] = (ssc_number_t) wind;
-			wdir[i] = (ssc_number_t) theta;
+			wdir[i] = (ssc_number_t) dir;
+			air_temp[i] = (ssc_number_t) temp;
+			air_pres[i] = (ssc_number_t) pres;
 
+		
 			for (j=0;j<nwt;j++)
 			{
 				mat_dn.at(i,j) = (ssc_number_t)Dn[j];
@@ -201,23 +204,6 @@ public:
 				mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
 				mat_wtvel.at(i,j) = (ssc_number_t) Wind[j];
 			}
-
-			
-			if (i < 8759)
-			{
-				if (!wf.read())
-					throw exec_error("windpower", "could not read data line " + util::to_string((int)i+1) + " of 8760");
-				
-				wind = (last_wind+wf.wspd)/2.0;
-				theta = (last_theta+wf.wdir)/2.0;
-				tdry = (last_tdry+wf.tdry)/2.0;
-				pres = (last_pres+wf.pres)/2.0;
-				last_wind = wf.wspd;
-				last_theta = wf.wdir;
-				last_tdry = wf.tdry;
-				last_pres = wf.pres;
-			}
-
 		}
 	}
 

@@ -2,66 +2,59 @@
 #define __lib_windfile_h
 
 #include <string>
-
+#include "lib_util.h"
 
 class windfile
 {
 private:
 	FILE *m_fp;
-	int m_type;
+	char *m_buf;
+	std::string m_errorMsg;
 	std::string m_file;
-	int m_startYear;
-	double m_time;
+	std::vector<int> m_dataid;
+	std::vector<double> m_heights;
+
+	int find_closest( int id, double requested_height, double *hdiff );
 
 public:
+	enum { INVAL, 
+		TEMP,  /* degrees Celsius */
+		PRES,  /* atmospheres */
+		SPEED, /* m/s */
+		DIR  /* degrees */
+	};
+
 	windfile();
 	windfile( const std::string &file );
 	~windfile();
-	enum { INVALID, SWRF };
+
 	bool ok();
-	int type();
 	std::string filename();
 	void close();
+	std::string error() { return m_errorMsg; }
 	bool open( const std::string &file );
-	void rewind();
 
 	/******** header data *******/
-	std::string loc_id;
 	std::string city;
 	std::string state;
-	double tz;
+	std::string locid;
+	std::string country;
+	int year;
 	double lat;
 	double lon;
 	double elev;
-	double start; // start time in seconds, 0 = jan 1st midnight
-	double step; // step time in seconds
-	int nrecords; // number of data records in file
-	
 
-	// reads one more record
-	bool read();
+	std::vector<int> types() { return m_dataid; }
+	std::vector<double> heights() { return m_heights; }
 
-	/******** record data ********/
-	int year;
-	int month;
-	int day;
-	int hour;
-	double minute;
-	double gh;   /* global (Wh/m2) */
-	double dn;   /* direct (Wh/m2) */
-	double df;   /* diffuse (Wh/m2) */
-	double wspd; /* wind speed (m/s) */
-	double wdir; /* wind direction (deg: N = 0 or 360, E = 90, S = 180,W = 270 ) */
-	double tdry; /* dry bulb temp (C) */
-	double twet; /* wet bulb temp (C) */
-	double tdew; /* dew point temp (C) */
-	double rhum; /* relative humidity (%) */
-	double pres; /* pressure (mbar) */
-	double snow; /* snow depth (cm) 0-150 */
-	double albedo; /* ground reflectance 0-1.  values outside this range mean it is not included */
+	std::vector<double> read();
 
-	/******** swrf (SAM wind resource file) data ********/
-	int resource_ht;
+	bool read( double requested_height,
+		double *speed,
+		double *direction,
+		double *temperature,
+		double *pressure,
+		double *actual_height );
 };
 
 #endif
