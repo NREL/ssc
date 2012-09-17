@@ -2,6 +2,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <ctype.h>
 
 #if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)
@@ -14,7 +15,6 @@
 
 #include "lib_util.h"
 #include "lib_windfile.h"
-
 
 static int locate2(char *buf, char **colidx, int colmax, char delim)
 {
@@ -333,10 +333,10 @@ bool windfile::read( double requested_height,
 
 
 	bool found_all 
-		= !_isnan( *speed )
-		&& !_isnan( *direction )
-		&& !_isnan( *temperature )
-		&& !_isnan( *pressure );
+		= !std::isnan( *speed )
+		&& !std::isnan( *direction )
+		&& !std::isnan( *temperature )
+		&& !std::isnan( *pressure );
 
 	if (found_all)
 		*actual_height = speed_height_diff;
