@@ -39,6 +39,7 @@ public:
 	std::string state;
 	std::string locid;
 	std::string country;
+	std::string desc;
 	int year;
 	double lat;
 	double lon;

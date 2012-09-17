@@ -432,8 +432,12 @@ void DataView::OnCommand(wxCommandEvent &evt)
 		break;
 	case ID_DVIEW:
 		{
-			wxFrame *frm = new wxFrame(this, -1, "Timeseries Viewer", wxDefaultPosition, wxSize(900,600));
-			wxDVPlotCtrl *dv = new wxDVPlotCtrl( frm );
+			wxDialog dlg(this, -1, "Timeseries Viewer", wxDefaultPosition, wxSize(900,600), wxRESIZE_BORDER|wxDEFAULT_DIALOG_STYLE);
+			wxDVPlotCtrl *dv = new wxDVPlotCtrl( &dlg );
+			wxBoxSizer *sz = new wxBoxSizer(wxVERTICAL);
+			sz->Add( dv, 1, wxALL|wxEXPAND, 0 );
+			sz->Add( dlg.CreateButtonSizer(wxOK), 0, wxALL|wxEXPAND, 0 );
+			dlg.SetSizer(sz);
 			
 			Vector<double> da(8760);
 			int iadded = 0;
@@ -453,14 +457,11 @@ void DataView::OnCommand(wxCommandEvent &evt)
 			}
 			
 			if (iadded == 0)
-			{
-				frm->Destroy();
 				wxMessageBox("Please check one or more array variables with 8760 values to show in the timeseries viewer.");
-			}
 			else
 			{
 				dv->SelectDataOnBlankTabs();
-				frm->Show();
+				dlg.ShowModal();
 			}
 
 		}

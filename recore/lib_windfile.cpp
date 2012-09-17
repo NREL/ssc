@@ -16,6 +16,12 @@
 #include "lib_util.h"
 #include "lib_windfile.h"
 
+#ifdef _MSC_VER
+#define my_isnan(x) ::_isnan( x )
+#else
+#define my_isnan(x) std::isnan( x )
+#endif
+
 static int locate2(char *buf, char **colidx, int colmax, char delim)
 {
 	if (buf)
@@ -176,7 +182,10 @@ bool windfile::open( const std::string &file )
 	
 	// read line 2, description
 	fgets( m_buf, MBUFLEN-1, m_fp );
-
+	size_t len = strlen(m_buf);
+	if (len > 0 && m_buf[len-1] == '\n')
+		m_buf[len-1] = 0; // trim newline
+	desc = std::string(m_buf);
 	
 	// read line 3, column names (must be pressure, temperature, speed, direction)
 	fgets( m_buf, MBUFLEN-1, m_fp );
@@ -247,6 +256,7 @@ void windfile::close()
 	state.clear();
 	locid.clear();
 	country.clear();
+	desc.clear();
 	year = 1900;
 	lat = lon = elev = 0.0;
 }
@@ -333,10 +343,10 @@ bool windfile::read( double requested_height,
 
 
 	bool found_all 
-		= !std::isnan( *speed )
-		&& !std::isnan( *direction )
-		&& !std::isnan( *temperature )
-		&& !std::isnan( *pressure );
+		= !my_isnan( *speed )
+		&& !my_isnan( *direction )
+		&& !my_isnan( *temperature )
+		&& !my_isnan( *pressure );
 
 	if (found_all)
 		*actual_height = speed_height_diff;
