@@ -14,7 +14,7 @@ private:
 	std::vector<int> m_dataid;
 	std::vector<double> m_heights;
 
-	int find_closest( int id, double requested_height, double *hdiff );
+	int find_closest( int id, double requested_height, double *meas_height_found );
 
 public:
 	enum { INVAL, 
@@ -55,7 +55,8 @@ public:
 		double *direction,
 		double *temperature,
 		double *pressure,
-		double *actual_height );
+		double *speed_meas_height,
+		double *dir_meas_height);
 };
 
 #endif

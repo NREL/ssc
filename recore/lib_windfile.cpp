@@ -262,10 +262,10 @@ void windfile::close()
 }
 
 
-int windfile::find_closest( int id, double requested_height, double *hdiff )
+int windfile::find_closest( int id, double requested_height, double *meas_height_found )
 {
 	int closest_index = -1;
-	double height_diff = 1e99;
+	double height_diff = 1e99, meas_height = 0;
 	for ( size_t i=0;i<m_dataid.size();i++ )
 	{
 		if ( m_dataid[i] == id )
@@ -274,12 +274,13 @@ int windfile::find_closest( int id, double requested_height, double *hdiff )
 			{
 				closest_index = i;
 				height_diff = fabs(m_heights[i] - requested_height);
+				meas_height = m_heights[i];
 			}
 		}
 	}
 
-	if ( hdiff != 0 )
-		*hdiff = height_diff;
+	if ( meas_height_found != 0 )
+		*meas_height_found = meas_height;
 
 	return closest_index;
 }
@@ -307,7 +308,8 @@ bool windfile::read( double requested_height,
 	double *direction,
 	double *temperature,
 	double *pressure,
-	double *actual_height )
+	double *closest_speed_meas_height_in_file,
+	double *closest_dir_meas_height_in_file )
 {
 	char *cols[128];	
 	double values[128];
@@ -322,14 +324,15 @@ bool windfile::read( double requested_height,
 	for ( int i=0;i<ncols;i++ )
 		values[i] = atof( cols[i] );
 
-	*speed = *direction = *temperature = *pressure = *actual_height = std::numeric_limits<double>::quiet_NaN();
+	*speed = *direction = *temperature = *pressure = *closest_speed_meas_height_in_file = *closest_dir_meas_height_in_file = std::numeric_limits<double>::quiet_NaN();
 
-	double speed_height_diff;
-	int index = find_closest( SPEED, requested_height, &speed_height_diff );
+	double speed_meas_ht_found;
+	int index = find_closest( SPEED, requested_height, &speed_meas_ht_found );
 	if (index >= 0 && index < ncols)
 		*speed = values[index];
 
-	index = find_closest( DIR, requested_height, 0 );
+	double dir_meas_ht_found;
+	index = find_closest( DIR, requested_height, &dir_meas_ht_found );
 	if (index >= 0 && index < ncols)
 		*direction = values[index];
 
@@ -341,7 +344,6 @@ bool windfile::read( double requested_height,
 	if (index >= 0 && index < ncols)
 		*pressure = values[index];
 
-
 	bool found_all 
 		= !my_isnan( *speed )
 		&& !my_isnan( *direction )
@@ -349,8 +351,10 @@ bool windfile::read( double requested_height,
 		&& !my_isnan( *pressure );
 
 	if (found_all)
-		*actual_height = speed_height_diff;
-
+	{
+		*closest_speed_meas_height_in_file = speed_meas_ht_found;
+		*closest_dir_meas_height_in_file = dir_meas_ht_found;
+	}
 	return found_all;
 
 }

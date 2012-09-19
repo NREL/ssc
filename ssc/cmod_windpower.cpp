@@ -144,12 +144,15 @@ public:
 		
 		for (i=0;i<8760;i++)
 		{
-			double wind, dir, temp, pres, resource_ht;
-			if (!wf.read( hub_ht, &wind, &dir, &temp, &pres, &resource_ht))
-				exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wf.error() );
+			double wind, dir, temp, pres, closest_speed_meas_ht, closest_dir_meas_ht;
+			if (!wf.read( hub_ht, &wind, &dir, &temp, &pres, &closest_speed_meas_ht, &closest_dir_meas_ht))
+				throw exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wf.error() );
 
-			if ( fabs(resource_ht - hub_ht) > 35 )
-				exec_error( "windpower", util::format("the specified hub height is greater than 35 m different from the closest measured wind resource height in the file: %lg m", resource_ht ));
+			if ( fabs(closest_speed_meas_ht - hub_ht) > 35.0 )
+				throw exec_error( "windpower", util::format("the closest wind speed measurement height (%lg m) found in the resource file is more than 35 m from the hub height specified (%lg m)", closest_speed_meas_ht, hub_ht ));
+
+			if ( fabs(closest_dir_meas_ht - closest_speed_meas_ht) > 5.0 )
+				throw exec_error( "windpower", util::format("the closest wind speed and direction measurement heights were more than 5m apart in the file: %lg m", closest_speed_meas_ht ));
 
 			double farmp = 0;
 
@@ -167,7 +170,7 @@ public:
 						(int)pc_len,
 						&dpcW[0],
 						&dpcP[0],
-						resource_ht,
+						closest_speed_meas_ht,
 						hub_ht,
 						rotor_di,
 						ctl_mode,
