@@ -469,9 +469,6 @@ public:
 					num_subarrays++;
 			}
 
-
-			log( util::format( "sa[%d].nstrings = %d", nn, sa[nn].nstrings ) );
-
 			size_t soil_len = 0;
 			ssc_number_t *soiling = as_array(prefix+"soiling", &soil_len); // monthly soiling array
 			if (soil_len != 12) throw exec_error( "pvsamv1", "soiling derate must have 12 values: subarray " + util::to_string((int)(nn+1)) );
@@ -523,6 +520,9 @@ public:
 			}
 		}
 		
+		for ( size_t nn=0;nn<4;nn++ )
+			log( util::format( "sa[%d].nstrings = %d", nn, sa[nn].nstrings ) );
+
 		if (sa[0].nstrings < 0)
 			throw exec_error("pvsamv1", "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
 		
