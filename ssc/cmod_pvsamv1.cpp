@@ -450,6 +450,7 @@ public:
 		// load the subarray parameter information
 		subarray sa[4];		
 		int num_subarrays = 1;
+
 		for ( size_t nn=0;nn<4;nn++ )
 		{
 			sa[nn].enable = true;
@@ -460,13 +461,16 @@ public:
 			{
 				sa[nn].nstrings = 0;
 				sa[nn].enable = as_boolean( prefix+"enable" );
-				if (sa[nn].enable) sa[nn].nstrings = as_boolean( prefix+"nstrings" );
+				if (sa[nn].enable) sa[nn].nstrings = as_integer( prefix+"nstrings" );
 
 				sa[0].nstrings -= sa[nn].nstrings;
 				
 				if (sa[nn].nstrings > 0 && sa[nn].enable)
 					num_subarrays++;
 			}
+
+
+			log( util::format( "sa[%d].nstrings = %d", nn, sa[nn].nstrings ) );
 
 			size_t soil_len = 0;
 			ssc_number_t *soiling = as_array(prefix+"soiling", &soil_len); // monthly soiling array
