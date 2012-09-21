@@ -22,14 +22,21 @@
 #define my_isnan(x) std::isnan( x )
 #endif
 
+static void trim( char *buf )
+{
+	if (!buf) return;
+
+	size_t len = strlen(buf);
+	if (len > 0 && buf[len-1] == '\n') // strip newline
+		buf[len-1] = 0;
+
+	if (len > 1 && buf[len-2] == '\r') // strip carriage return
+		buf[len-2] = 0;
+}
+
 static int locate2(char *buf, char **colidx, int colmax, char delim)
 {
-	if (buf)
-	{
-		size_t len = strlen(buf);
-		if (len > 0 && buf[len-1] == '\n') // strip newline
-			buf[len-1] = 0;
-	}
+	trim(buf);
 
 	char *p = buf;
 	int i = 1;
@@ -182,9 +189,7 @@ bool windfile::open( const std::string &file )
 	
 	// read line 2, description
 	fgets( m_buf, MBUFLEN-1, m_fp );
-	size_t len = strlen(m_buf);
-	if (len > 0 && m_buf[len-1] == '\n')
-		m_buf[len-1] = 0; // trim newline
+	trim( m_buf );
 	desc = std::string(m_buf);
 	
 	// read line 3, column names (must be pressure, temperature, speed, direction)
