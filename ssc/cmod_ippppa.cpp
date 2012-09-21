@@ -1749,7 +1749,7 @@ public:
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
+			outm <<  "Bad hourly net energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
 			log( outm.str() );
 			return false;
 		}
@@ -2725,7 +2725,7 @@ public:
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
+			outm <<  "Bad hourly energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
 			log( outm.str() );
 			return false;
 		}
@@ -2817,7 +2817,7 @@ public:
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
+			outm <<  "Bad hourly energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
 			log( outm.str() );
 			return false;
 		}

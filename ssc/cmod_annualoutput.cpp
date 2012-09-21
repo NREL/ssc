@@ -184,7 +184,7 @@ public:
 	{
 		ssc_number_t *hourly_enet; // hourly energy output
 
-		double hourly_curtailment[8760];
+		//double hourly_curtailment[8760];
 		ssc_number_t *diurnal_curtailment;
 
 		int h;
@@ -211,36 +211,33 @@ public:
 			return false;
 		}
 
-		// first year
-		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_e_net_delivered", 12 );
-		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_e_net_delivered", 8760 );
 
-		int i=0;
-		for (int m=0;m<12;m++)
-		{
-			monthly_energy_to_grid[m] = 0;
-			for (int d=0;d<util::nday[m];d++)
-			{
-				for (int h=0;h<24;h++)
-				{
-					if ((i<8760) && ((m*24+h)<288))
-					{
-						hourly_curtailment[i] = diurnal_curtailment[m*24+h+2];
-						hourly_energy_to_grid[i] = diurnal_curtailment[m*24+h+2]*hourly_enet[i];
-						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
-						i++;
-					}
-				}
-			}
-		}
-
+		// all years
+		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_e_net_delivered", 12*nyears );
+		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_e_net_delivered", 8760*nyears );
 
 		for (int y=1;y<=nyears;y++)
 		{
-			for (h=0;h<8760;h++)
+			int i=0;
+			for (int m=0;m<12;m++)
 			{
-				cf.at(CF_energy_net,y) += hourly_enet[(y-1)*8760+h] * hourly_curtailment[h] * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
+				monthly_energy_to_grid[m] = 0;
+				for (int d=0;d<util::nday[m];d++)
+				{
+					for (int h=0;h<24;h++)
+					{
+						if ((i<8760) && ((m*24+h)<288))
+						{
+							hourly_energy_to_grid[(y-1)*8760+i] = diurnal_curtailment[m*24+h+2] * hourly_enet[(y-1)*8760+i] * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
+							monthly_energy_to_grid[m] += hourly_energy_to_grid[(y-1)*8760+i];
+							cf.at(CF_energy_net,y) += hourly_energy_to_grid[(y-1)*8760+i];
+							i++;
+						}
+					}
+				}
 			}
+
+
 		}
 
 
