@@ -520,8 +520,6 @@ public:
 			}
 		}
 		
-		for ( size_t nn=0;nn<4;nn++ )
-			log( util::format( "sa[%d].nstrings = %d", nn, sa[nn].nstrings ) );
 
 		if (sa[0].nstrings < 0)
 			throw exec_error("pvsamv1", "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
