@@ -4,6 +4,8 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <limits>
+#include <numeric>
 
 #if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)
 #define CASECMP(a,b) _stricmp(a,b)
