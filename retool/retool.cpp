@@ -293,7 +293,7 @@ void fcall_plot( lk::invoke_t &cxt )
 
 void fcall_plotopt( lk::invoke_t &cxt )
 {
-	LK_DOC("plotopt", "Modifies the current plot properties like title, coarse, fine, legend, legendpos, wpos, wsize", "(table:options):void");
+	LK_DOC("plotopt", "Modifies the current plot properties like title, coarse, fine, legend, legendpos, window", "(table:options):void");
 	WPPlotSurface2D *plot = PlotWin::Surface();
 	if (!plot) return;
 
