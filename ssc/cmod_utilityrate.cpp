@@ -162,11 +162,17 @@ static var_info vtab_utility_rate[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 hourly grid energy",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 hourly grid peak power",   "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_output",  "Year 1 hourly system output",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_demand",       "Year 1 hourly energy demand",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_demand",       "Year 1 hourly peak power demand", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 hourly electricity at grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_output",  "Year 1 hourly electricity from system",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_demand",       "Year 1 hourly electricity from grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak at grid ", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_demand",       "Year 1 subhourly peak from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Year 1 subhourly peak to load ", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_with_system",     "Year 1 Hourly revenue with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
@@ -279,7 +285,7 @@ public:
 		parr = as_array("load_escalation", &count);
 		if (count == 1)
 		{
-			// TODO: add in inflation rate
+			// add in inflation rate - added in interop layer
 			for (i=0;i<nyears;i++)
 				load_scale[i] = (ssc_number_t)pow( (double)(/*inflation_rate+*/1+parr[0]*0.01), (double)i );
 		}
@@ -432,17 +438,28 @@ public:
 				// output and demand per Paul's email 9/10/10
 				// positive demand indicates system does not produce enough electricity to meet load
 				// zero if the system produces more than the demand
-				std::vector<ssc_number_t> output(8760), edemand(8760), pdemand(8760);
+				std::vector<ssc_number_t> output(8760), edemand(8760), pdemand(8760), e_sys_to_grid(8760), e_sys_to_load(8760), p_sys_to_load(8760);
 				for (j=0;j<8760;j++)
 				{
 					output[j] = e_sys[j] * sys_scale[i];
 					edemand[j] = e_grid[j] < 0.0 ? -e_grid[j] : (ssc_number_t)0.0;
 					pdemand[j] = p_grid[j] < 0.0 ? -p_grid[j] : (ssc_number_t)0.0;
+
+					ssc_number_t sys_e_net = output[j] + e_load[j];// loads are assumed negative
+					e_sys_to_grid[j] = sys_e_net > 0 ? sys_e_net : (ssc_number_t)0.0;
+					e_sys_to_load[j] = sys_e_net > 0 ? -e_load[j] : output[j];
+
+					ssc_number_t sys_p_net = output[j] + p_load[j];// loads are assumed negative
+					p_sys_to_load[j] = sys_p_net > 0 ? -p_load[j] : output[j];
 				}
 
 				assign( "year1_hourly_system_output", var_data(&output[0], 8760) );
 				assign( "year1_hourly_e_demand", var_data(&edemand[0], 8760) );
 				assign( "year1_hourly_p_demand", var_data(&pdemand[0], 8760) );
+
+				assign( "year1_hourly_system_to_grid", var_data(&e_sys_to_grid[0], 8760) ); 
+				assign( "year1_hourly_system_to_load", var_data(&e_sys_to_load[0], 8760) ); 
+				assign( "year1_hourly_p_system_to_load", var_data(&p_sys_to_load[0], 8760) );
 				
 				assign( "year1_monthly_dc_fixed_with_system", var_data(&monthly_dc_fixed[0], 12) );
 				assign( "year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12) );
