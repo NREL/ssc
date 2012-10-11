@@ -150,8 +150,8 @@ bool windfile::open( const std::string &file )
 	close();
 	if (file.empty()) return false;
 	
-	/*  // don't be strict about requiring .wrf extensions for now
-	if ( !cmp_ext(file.c_str(), "wrf") )
+	/*  // don't be strict about requiring .srw extensions for now
+	if ( !cmp_ext(file.c_str(), "srw") )
 		return false;
 		*/
 		
@@ -170,9 +170,9 @@ bool windfile::open( const std::string &file )
 	char *cols[128];
 	int ncols = locate2(m_buf, cols, 128, ',');
 
-	if (ncols != 10)
+	if (ncols < 10) // TFF changed Oct 11, 2012. Excel may add extra commas at the end of the line - ignore them, but don't create error.
 	{
-		m_errorMsg = util::format("error reading header (line 1).  10 columns required, %d found.", ncols);
+		m_errorMsg = util::format("error reading header (line 1).  At least 10 columns required, %d found.", ncols);
 		fclose( m_fp );
 		m_fp = 0;
 		return false;
