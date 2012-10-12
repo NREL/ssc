@@ -1,0 +1,340 @@
+/* example script for running pvsamv1
+   for webservice, designed for concept3D requirements
+   
+   runs 1 sub-array, cec 5 par module, snl inverter */
+
+clear();
+
+
+/* ************* BEGIN WEB SERVICE INPUTS *********************** */
+
+// web service input variables
+latitude = 33;
+longitude = 104;
+
+// array parameters
+ac_derate = 0.99;
+num_modules = 80;
+
+// module parameters
+cec_area = 1.244;
+cec_alpha_sc = 2.651e-003;
+cec_beta_oc = -1.423e-001;
+cec_gamma_r = -4.070e-001;
+cec_i_mp_ref = 5.25;
+cec_i_sc_ref = 5.75;
+cec_n_s = 72;
+cec_t_noct = 49.2;
+cec_v_mp_ref = 41;
+cec_v_oc_ref = 47.7;
+cec_temp_corr_mode = 0;
+cec_standoff = 6;
+cec_height = 0;
+cec_r_s = 0.105;
+cec_r_sh_ref = 160.48;
+cec_i_o_ref = 1.919e-010;
+cec_i_l_ref = 5.754;
+cec_adjust = 20.8;
+cec_a_ref = 1.9816;
+
+// inverter parameters
+inv_snl_c0 = -6.57929e-006;
+inv_snl_c1 = 4.72925e-005;
+inv_snl_c2 = 0.00202195;
+inv_snl_c3 = 0.000285321;
+inv_snl_paco = 4000;
+inv_snl_pdco = 4186;
+inv_snl_pnt = 0.17;
+inv_snl_pso = 19.7391;
+inv_snl_vdco = 310.67;
+inv_snl_vdcmax = 0;
+inv_snl_vmin = 250;
+inv_snl_vmax = 480;
+
+tilt = 30;
+azimuth = 180;
+track_mode = 0;
+soiling = 0.95;
+dc_derate = 0.95558;
+
+// shading derate table
+shading_mxh =
+	[ [ 0,0,0,0,0,0,0,0,0.475,0.95,1,1,0.7875,0.2375,0.25,0.3625,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0,0.4875,1,1,1,0.925,0.6375,0.6625,0.225,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0.15,0.925,1,1,1,1,1,0.75,0.2,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0.45,0.9125,1,1,1,1,1,0.625,0.375,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0.075,0.05,0.7875,1,1,1,1,1,1,0.625,0.4875,0.025,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0.15,0.075,0.9,1,1,1,1,1,1,0.675,0.5,0.05,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0.1,0.0625,0.8375,1,1,1,1,1,1,0.6375,0.4875,0.025,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0.6625,0.9625,1,1,1,1,1,0.6125,0.4,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0.2,0.9125,1,1,1,1,1,0.7375,0.2125,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0.0625,0.7,1,1,1,0.9375,0.8,0.7,0.1875,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0,0.45,0.95,1,1,0.8125,0.3625,0.3625,0.375,0,0,0,0,0,0,0,0 ],
+	  [ 0,0,0,0,0,0,0,0.0125,0.525,0.95,1,0.9875,0.75,0.175,0.2125,0.275,0,0,0,0,0,0,0,0 ] ];
+	  
+/* ************* END WEB SERVICE INPUTS *********************** */
+
+
+
+// internal calculations to determine array electrical wiring
+mod_power = cec_v_mp_ref * cec_i_mp_ref;
+num_series = 0.5 * (inv_snl_vmin + inv_snl_vmax) / cec_v_mp_ref;
+
+if (inv_snl_vdcmax > 0)
+{
+	while ((num_series > 0) && ((num_series * cec_v_oc_ref) > inv_snl_vdcmax))
+		num_series--;
+}
+
+if (num_series < 1)
+	num_series = 1;
+
+num_series = to_int( num_series );
+
+num_parallel = num_modules / num_series;
+if (num_parallel < 1) 
+	num_parallel = 1;
+
+num_inverters = ceil(num_series * num_parallel * mod_power / inv_snl_paco);
+if (num_inverters < 1)
+	num_inverters = 1;
+
+num_parallel = to_int( num_parallel );
+num_inverters = to_int( num_inverters );
+
+
+outln( num_parallel );
+outln( num_series );
+outln( num_inverters );
+
+// convert 12x24 shading input matrix to weird
+// internal format for shading data.  this sucks
+// but is due to a limitation in the SAM user interface
+// with which SSC must interact...
+
+subarray1_shading = alloc(9076);
+subarray1_shading[0] = 2;
+subarray1_shading[1] = 0;
+subarray1_shading[2] = 1;
+subarray1_shading[3] = 0;
+subarray1_shading[4] = 0;
+subarray1_shading[5] = -1;
+subarray1_shading[6] = -1;
+subarray1_shading[7] = -1;
+
+index = 8768;
+for (i=8;i<index;i++)
+	subarray1_shading[i] = 1;
+
+for (r=0;r<12;r++)
+{
+	for (c=0;c<24;c++)
+	{
+		subarray1_shading[index] = shading_mxh[r][c];
+		index++;
+	}
+}
+
+subarray1_shading[9056] = 4;
+subarray1_shading[9057] = 4;
+subarray1_shading[9058] = 0;
+subarray1_shading[9059] = 20;
+subarray1_shading[9060] = 40;
+subarray1_shading[9061] = 60;
+subarray1_shading[9062] = 10;
+subarray1_shading[9063] = 1;
+subarray1_shading[9064] = 1;
+subarray1_shading[9065] = 1;
+subarray1_shading[9066] = 20;
+subarray1_shading[9067] = 1;
+subarray1_shading[9068] = 1;
+subarray1_shading[9069] = 1;
+subarray1_shading[9070] = 30;
+subarray1_shading[9071] = 1;
+subarray1_shading[9072] = 1;
+subarray1_shading[9073] = 1;
+subarray1_shading[9074] = 1;
+subarray1_shading[9075] = 9076;
+
+
+// set the weather file.  the web service should take a 
+// lat-long and use the perez satellite data or tmy2/3 data
+// in the same way that the PVWatts service specifies the weather data
+// --> essentially, this service and PVWatts should use exactly the same
+//     method to get weather data for a location request
+var( 'weather_file', 'c:/sam/2012.5.11/exelib/climate_files/TX Abilene.tm2' );
+
+var( 'ac_derate', ac_derate );
+var( 'modules_per_string', num_series );
+var( 'strings_in_parallel', num_parallel );
+var( 'inverter_count', num_inverters );
+var( 'subarray1_tilt', tilt );
+var( 'subarray1_azimuth', azimuth );
+var( 'subarray1_track_mode', track_mode );
+var( 'subarray1_shading', subarray1_shading );
+var( 'subarray1_soiling', [soiling, soiling, soiling, soiling, soiling, soiling,
+	soiling, soiling, soiling, soiling, soiling, soiling ] );
+var( 'subarray1_derate', dc_derate );
+
+// set up values for other sub arrays - not used (currently)
+var( 'subarray2_tilt', 0 );
+var( 'subarray3_tilt', 0 );
+var( 'subarray4_tilt', 0 );
+var( 'subarray2_azimuth', 0 );
+var( 'subarray3_azimuth', 0 );
+var( 'subarray4_azimuth', 0 );
+var( 'subarray2_soiling', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] );
+var( 'subarray3_soiling', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] );
+var( 'subarray4_soiling', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] );
+var( 'subarray2_derate', 0 );
+var( 'subarray3_derate', 0 );
+var( 'subarray4_derate', 0 );
+var( 'subarray2_track_mode', 0 );
+var( 'subarray3_track_mode', 0 );
+var( 'subarray4_track_mode', 0 );
+
+
+var( 'module_model', 1 );
+
+var( 'cec_area', cec_area );
+var( 'cec_a_ref', cec_a_ref );
+var( 'cec_adjust', cec_adjust );
+var( 'cec_alpha_sc', cec_alpha_sc );
+var( 'cec_beta_oc', cec_beta_oc );
+var( 'cec_gamma_r', cec_gamma_r );
+var( 'cec_i_l_ref', cec_i_l_ref );
+var( 'cec_i_mp_ref', cec_i_mp_ref );
+var( 'cec_i_o_ref', cec_i_o_ref );
+var( 'cec_i_sc_ref', cec_i_sc_ref );
+var( 'cec_n_s', cec_n_s );
+var( 'cec_r_s', cec_r_s );
+var( 'cec_r_sh_ref', cec_r_sh_ref );
+var( 'cec_t_noct', cec_t_noct );
+var( 'cec_v_mp_ref', cec_v_mp_ref );
+var( 'cec_v_oc_ref', cec_v_oc_ref );
+var( 'cec_temp_corr_mode', 0 );
+var( 'cec_standoff', cec_standoff );
+var( 'cec_height', cec_height );
+
+var( 'inverter_model', 1 );
+
+var( 'inv_snl_c0', inv_snl_c0 );
+var( 'inv_snl_c1', inv_snl_c1 );
+var( 'inv_snl_c2', inv_snl_c2 );
+var( 'inv_snl_c3', inv_snl_c3 );
+var( 'inv_snl_paco', inv_snl_paco );
+var( 'inv_snl_pdco', inv_snl_pdco );
+var( 'inv_snl_pnt', inv_snl_pnt );
+var( 'inv_snl_pso', inv_snl_pso );
+var( 'inv_snl_vdco', inv_snl_vdco );
+var( 'inv_snl_vdcmax', inv_snl_vdcmax );
+
+
+// all variables have been set up for pvsamv1
+// run the model
+run( 'pvsamv1' );
+
+
+// return the relevant outputs desired
+
+ac_hourly = var('hourly_ac_net');
+ac_monthly = var('monthly_ac_net');
+ac_annual = var('annual_ac_net');
+
+outln( 'ac_monthly (kWh) = ' + ac_monthly);
+outln( 'ac_annual (kWh) = ' + ac_annual);
+
+/*
+
+here are additional outputs that could be returned if desired:
+
+hourly_glob_horiz_rad
+hourly_beam
+hourly_diff
+hourly_windspd
+hourly_ambtemp
+hourly_input_radiation
+hourly_sol_zen
+hourly_sol_alt
+hourly_sol_azi
+hourly_airmass
+hourly_subarray1_surf_tilt
+hourly_subarray1_surf_azi
+hourly_subarray1_axisrot
+hourly_subarray1_idealrot
+hourly_subarray1_inc_beam
+hourly_subarray1_inc_diff
+hourly_subarray1_inc_total
+hourly_subarray1_beam_shading_factor
+hourly_subarray1_modeff
+hourly_subarray1_soiling_derate
+hourly_subarray1_celltemp
+hourly_subarray1_dc_gross
+hourly_subarray1_dc_voltage
+hourly_subarray2_surf_tilt
+hourly_subarray2_surf_azi
+hourly_subarray2_axisrot
+hourly_subarray2_idealrot
+hourly_subarray2_inc_beam
+hourly_subarray2_inc_diff
+hourly_subarray2_inc_total
+hourly_subarray2_beam_shading_factor
+hourly_subarray2_modeff
+hourly_subarray2_soiling_derate
+hourly_subarray2_celltemp
+hourly_subarray2_dc_gross
+hourly_subarray2_dc_voltage
+hourly_subarray3_surf_tilt
+hourly_subarray3_surf_azi
+hourly_subarray3_axisrot
+hourly_subarray3_idealrot
+hourly_subarray3_inc_beam
+hourly_subarray3_inc_diff
+hourly_subarray3_inc_total
+hourly_subarray3_beam_shading_factor
+hourly_subarray3_modeff
+hourly_subarray3_soiling_derate
+hourly_subarray3_celltemp
+hourly_subarray3_dc_gross
+hourly_subarray3_dc_voltage
+hourly_subarray4_surf_tilt
+hourly_subarray4_surf_azi
+hourly_subarray4_axisrot
+hourly_subarray4_idealrot
+hourly_subarray4_inc_beam
+hourly_subarray4_inc_diff
+hourly_subarray4_inc_total
+hourly_subarray4_beam_shading_factor
+hourly_subarray4_modeff
+hourly_subarray4_soiling_derate
+hourly_subarray4_celltemp
+hourly_subarray4_dc_gross
+hourly_subarray4_dc_voltage
+hourly_ss_derate
+hourly_ss_diffuse_derate
+hourly_ss_reflected_derate
+hourly_ss_diffuse_loss
+hourly_inverter_dc_voltage
+hourly_dc_gross
+hourly_dc_net
+hourly_ac_gross
+hourly_ac_net
+monthly_inc_total
+monthly_inc_beam
+monthly_dc_net
+monthly_ac_net
+annual_input_radiation
+annual_dc_nominal
+annual_dc_gross
+annual_dc_net
+annual_ac_gross
+annual_ac_net
+annual_performance_factor
+6par_a
+6par_Io
+6par_Il
+6par_Rs
+6par_Rsh
+6par_Adj
+
+*/
