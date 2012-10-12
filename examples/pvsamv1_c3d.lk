@@ -107,56 +107,6 @@ outln( num_parallel );
 outln( num_series );
 outln( num_inverters );
 
-// convert 12x24 shading input matrix to weird
-// internal format for shading data.  this sucks
-// but is due to a limitation in the SAM user interface
-// with which SSC must interact...
-
-subarray1_shading = alloc(9076);
-subarray1_shading[0] = 2;
-subarray1_shading[1] = 0;
-subarray1_shading[2] = 1;
-subarray1_shading[3] = 0;
-subarray1_shading[4] = 0;
-subarray1_shading[5] = -1;
-subarray1_shading[6] = -1;
-subarray1_shading[7] = -1;
-
-index = 8768;
-for (i=8;i<index;i++)
-	subarray1_shading[i] = 1;
-
-for (r=0;r<12;r++)
-{
-	for (c=0;c<24;c++)
-	{
-		subarray1_shading[index] = shading_mxh[r][c];
-		index++;
-	}
-}
-
-subarray1_shading[9056] = 4;
-subarray1_shading[9057] = 4;
-subarray1_shading[9058] = 0;
-subarray1_shading[9059] = 20;
-subarray1_shading[9060] = 40;
-subarray1_shading[9061] = 60;
-subarray1_shading[9062] = 10;
-subarray1_shading[9063] = 1;
-subarray1_shading[9064] = 1;
-subarray1_shading[9065] = 1;
-subarray1_shading[9066] = 20;
-subarray1_shading[9067] = 1;
-subarray1_shading[9068] = 1;
-subarray1_shading[9069] = 1;
-subarray1_shading[9070] = 30;
-subarray1_shading[9071] = 1;
-subarray1_shading[9072] = 1;
-subarray1_shading[9073] = 1;
-subarray1_shading[9074] = 1;
-subarray1_shading[9075] = 9076;
-
-
 // set the weather file.  the web service should take a 
 // lat-long and use the perez satellite data or tmy2/3 data
 // in the same way that the PVWatts service specifies the weather data
@@ -171,7 +121,7 @@ var( 'inverter_count', num_inverters );
 var( 'subarray1_tilt', tilt );
 var( 'subarray1_azimuth', azimuth );
 var( 'subarray1_track_mode', track_mode );
-var( 'subarray1_shading', subarray1_shading );
+var( 'subarray1_shading_mxh', shading_mxh );
 var( 'subarray1_soiling', [soiling, soiling, soiling, soiling, soiling, soiling,
 	soiling, soiling, soiling, soiling, soiling, soiling ] );
 var( 'subarray1_derate', dc_derate );
@@ -180,19 +130,6 @@ var( 'subarray1_derate', dc_derate );
 var( 'subarray2_tilt', 0 );
 var( 'subarray3_tilt', 0 );
 var( 'subarray4_tilt', 0 );
-var( 'subarray2_azimuth', 0 );
-var( 'subarray3_azimuth', 0 );
-var( 'subarray4_azimuth', 0 );
-var( 'subarray2_soiling', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] );
-var( 'subarray3_soiling', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] );
-var( 'subarray4_soiling', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] );
-var( 'subarray2_derate', 0 );
-var( 'subarray3_derate', 0 );
-var( 'subarray4_derate', 0 );
-var( 'subarray2_track_mode', 0 );
-var( 'subarray3_track_mode', 0 );
-var( 'subarray4_track_mode', 0 );
-
 
 var( 'module_model', 1 );
 

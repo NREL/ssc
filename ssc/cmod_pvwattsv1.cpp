@@ -3,8 +3,6 @@
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
-#include "lib_pvshade.h"
-
 
 #ifndef DTOR
 #define DTOR 0.0174532925
@@ -22,8 +20,11 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                        "PVWatts",      "na:tilt",                 "BOOLEAN",                                  "" },
 
 	/* shading inputs */
-	{ SSC_INPUT,        SSC_ARRAY,       "shading",                        "Shading input data array",                    "",       shading_data::format_doc,  "PVWatts",      "?",                       "",                                         "" },
-	
+	{ SSC_INPUT,        SSC_ARRAY,       "shading_hourly",                 "Hourly beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading_mxh",                    "Month x Hour beam shading factors",           "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading_azal",                   "Azimuth x altitude beam shading factors",     "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shading_diff",                   "Diffuse shading factor",                      "",       "",                        "PVWatts",      "?",                        "",                              "" },
+		
 	/* advanced parameters */
 	{ SSC_INPUT,        SSC_NUMBER,      "enable_user_poa",                "Enable user-defined POA irradiance input",    "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                                  "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "user_poa",                       "User-defined POA irradiance",                 "W/m2",   "",                        "PVWatts",      "enable_user_poa=1",       "LENGTH=8760",                              "" },
@@ -128,43 +129,58 @@ public:
 			tilt = wf.lat;
 		if( azimuth < 0 || azimuth > 360 )
 			azimuth = 180.0;
-
+						
 		
-		// load the shading data from the input vector
-		shading_data shad;
-		if (is_assigned("shading"))
+		std::vector<double> shad_beam_factor(8760, 1.0);
+		if ( is_assigned("shading_hourly" ) )
 		{
-			if (!shad.load( as_doublevec("shading") ))
-				throw exec_error("pvwattsv1", "error parsing shading data vector (shading) - see format in meta info");
-			else if (!shad.check_azal_monotonic_increase())
-				throw exec_error("pvwattsv1", "azimuth and altitude values must increase monotonically in shading table");
+			size_t len = 0;
+			ssc_number_t *vals = as_array( "shading_hourly", &len );
+			if ( len == 8760 )
+			{
+				for ( size_t j=0;j<8760;j++)
+					shad_beam_factor[j] = (double) vals[j];
+			}
+			else
+				throw exec_error("pvwattsv1", "hourly shading beam factors must have 8760 values");
 		}
 
-		
-		double shad_skydiff_factor = 1;
-		if ( shad.en_diff )
-			shad_skydiff_factor = shad.diff;
 
-		std::vector<double> shad_beam_factor(8760, 1.0);
-		if ( shad.en_hourly )
-			shad_beam_factor = shad.hourly;
-
-		if ( shad.en_mxh )
+		if ( is_assigned( "shading_mxh" ) )
 		{
+			size_t nrows, ncols;
+			ssc_number_t *mat = as_matrix( "shading_mxh", &nrows, &ncols );
+			if ( nrows != 12 || ncols != 24 )
+				throw exec_error("pvwattsv1", "month x hour shading factors must have 12 rows and 24 columns");
+
 			int c=0;
 			for (int m=0;m<12;m++)
 				for (int d=0;d<util::nday[m];d++)
 					for (int h=0;h<24;h++)
-						shad_beam_factor[c++] *= shad.mxh.at(m,h);
+						shad_beam_factor[c++] *= mat[ m*ncols + h ];
 		}
 
 		bool enable_azalt_beam_shading = false;
 		util::matrix_t<double> azaltvals;
-		if ( shad.en_azal)
+		if ( is_assigned( "shading_azal" ) )
 		{
-			azaltvals = shad.azal;
+			size_t nrows, ncols;
+			ssc_number_t *mat = as_matrix( "shading_azal", &nrows, &ncols );
+			if ( nrows < 3 || ncols < 3 )
+				throw exec_error("pvwattsv1", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
+
+			azaltvals.resize_fill( nrows, ncols, 1.0 );
+			for ( size_t r=0;r<nrows;r++ )
+				for ( size_t c=0;c<ncols;c++ )
+					azaltvals.at(r,c) = mat[r*ncols+c];
+
 			enable_azalt_beam_shading = true;
 		}
+
+		double shad_skydiff_factor = 1.0;
+		if ( is_assigned( "shading_diff" ) )
+			shad_skydiff_factor = as_double( "shading_diff" );
+
 		pvwatts_celltemp tccalc( inoct, height, 1.0 );
 	
 		int i=0;

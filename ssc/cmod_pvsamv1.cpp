@@ -46,7 +46,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_enable_backtracking",               "Sub-array 1 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_btwidth",                           "Sub-array 1 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_btspacing",                         "Sub-array 1 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading",                           "Sub-array 1 Detailed shading scene data",                 "",       shading_data::format_doc,        "pvsamv1",              "*",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading_hourly",                    "Sub-array 1 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading_mxh",                       "Sub-array 1 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading_azal",                      "Sub-array 1 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading_diff",                      "Sub-array 1 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_derate",                            "Sub-array 1 DC power derate",                             "0..1",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=1",                   "" },
 	
@@ -60,7 +63,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable_backtracking",               "Sub-array 2 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_btwidth",                           "Sub-array 2 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray2_enable_backtracking=1", "POSITIVE",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_btspacing",                         "Sub-array 2 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray2_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_shading",                           "Sub-array 2 Detailed shading scene data",                 "",       shading_data::format_doc,        "pvsamv1",              "subarray2_enable=1",       "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_shading_hourly",                    "Sub-array 2 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading_mxh",                       "Sub-array 2 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading_azal",                      "Sub-array 2 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shading_diff",                      "Sub-array 2 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_soiling",                           "Sub-array 2 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray2_enable=1",       "LENGTH=12",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_derate",                            "Sub-array 2 DC power derate",                             "0..1",   "",                              "pvsamv1",              "subarray2_enable=1",       "MIN=0,MAX=1",                   "" },
 	
@@ -74,7 +80,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_enable_backtracking",               "Sub-array 3 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_btwidth",                           "Sub-array 3 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray3_enable_backtracking=1", "POSITIVE",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_btspacing",                         "Sub-array 3 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray3_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_shading",                           "Sub-array 3 Detailed shading scene data",                 "",       shading_data::format_doc,        "pvsamv1",              "subarray3_enable=1",       "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_shading_hourly",                    "Sub-array 3 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading_mxh",                       "Sub-array 3 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading_azal",                      "Sub-array 3 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shading_diff",                      "Sub-array 3 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_soiling",                           "Sub-array 3 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray3_enable=1",       "LENGTH=12",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_derate",                            "Sub-array 3 DC power derate",                             "0..1",   "",                              "pvsamv1",              "subarray3_enable=1",       "MIN=0,MAX=1",                   "" },
 	
@@ -88,7 +97,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_enable_backtracking",               "Sub-array 4 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_btwidth",                           "Sub-array 4 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray4_enable_backtracking=1", "POSITIVE",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_btspacing",                         "Sub-array 4 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray4_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_shading",                           "Sub-array 4 Detailed shading scene data",                 "",       shading_data::format_doc,        "pvsamv1",              "subarray4_enable=1",       "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_shading_hourly",                    "Sub-array 4 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading_mxh",                       "Sub-array 4 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading_azal",                      "Sub-array 4 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shading_diff",                      "Sub-array 4 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_soiling",                           "Sub-array 4 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray4_enable=1",       "LENGTH=12",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_derate",                            "Sub-array 4 DC power derate",                             "0..1",   "",                              "pvsamv1",              "subarray4_enable=1",       "MIN=0,MAX=1",                   "" },
 
@@ -341,7 +353,6 @@ var_info_invalid };
 struct subarray
 {
 	subarray()
-		: shad_beam_factor( 8760 )
 	{
 		enable = false;
 		nstrings = 0;
@@ -352,13 +363,13 @@ struct subarray
 		en_backtrack = false;
 		btwidth = btspacing = -1;
 		derate = 1.0;
-		shad_skydiff_factor = 1.0;
-
+		
 		for (size_t i=0;i<12;i++)
 			soiling[i] = 1.0;
 
-		for (size_t i=0;i<8760;i++)
-			shad_beam_factor[i] = 1.0;
+		
+		shad_skydiff_factor = 1.0;
+		en_azal = false;
 
 		poa.ibeam = 0;
 		poa.iskydiff = 0;
@@ -390,8 +401,9 @@ struct subarray
 	double soiling[12];
 	double derate;
 	
-	shading_data shdat;
-	std::vector<double> shad_beam_factor;
+	std::vector<double> shad_beam_factor; // hourly factors as well as mxh
+	bool en_azal; // enable az x al shading factors
+	util::matrix_t<double> shad_azal;
 	double shad_skydiff_factor;
 
 	// calculated by irradiance processor
@@ -469,6 +481,11 @@ public:
 					num_subarrays++;
 			}
 
+			// don't read in all the other variables
+			// if the subarrays are disabled.
+			if ( !sa[nn].enable )
+				continue;
+			
 			size_t soil_len = 0;
 			ssc_number_t *soiling = as_array(prefix+"soiling", &soil_len); // monthly soiling array
 			if (soil_len != 12) throw exec_error( "pvsamv1", "soiling derate must have 12 values: subarray " + util::to_string((int)(nn+1)) );
@@ -494,29 +511,58 @@ public:
 				sa[nn].btwidth = as_double( prefix+"btwidth" );
 				sa[nn].btspacing = as_double( prefix+"btspacing" );
 			}
-			
-			if (is_assigned( prefix+"shading" ))
-			{
-				if (!sa[nn].shdat.load( as_doublevec("subarray1_shading") ))
-					throw exec_error("pvsamv1", "error parsing shading data vector (shading) - see format in meta info: subarray " + util::to_string((int)(nn+1)));
-				else if (!sa[nn].shdat.check_azal_monotonic_increase())
-					throw exec_error("pvsamv1", "azimuth and altitude values must increase monotonically in shading table: subarray " + util::to_string((int)(nn+1)));
-			}
 
 			sa[nn].shad_skydiff_factor = 1;
-			if ( sa[nn].shdat.en_diff )
-				sa[nn].shad_skydiff_factor = sa[nn].shdat.diff;
+			if ( is_assigned( prefix+"shading_diff" ) )
+				sa[nn].shad_skydiff_factor = as_double( prefix+"shading_diff" );
+			
+			sa[nn].shad_beam_factor.resize(8760);
+			for (size_t j=0;j<8760;j++)
+				sa[nn].shad_beam_factor[j] = 1.0;
 
-			if ( sa[nn].shdat.en_hourly )
-				sa[nn].shad_beam_factor = sa[nn].shdat.hourly;
-
-			if ( sa[nn].shdat.en_mxh )
+			if ( is_assigned( prefix+"shading_hourly" ) )
 			{
+				size_t len = 0;
+				ssc_number_t *vals = as_array( prefix+"shading_hourly", &len );
+				if ( len == 8760 )
+				{
+					for ( size_t j=0;j<8760;j++)
+						sa[nn].shad_beam_factor[j] = (double) vals[j];
+				}
+				else
+					throw exec_error("pvsamv1", "hourly shading beam factors must have 8760 values: subarray " + util::to_string((int)(nn+1)));
+			}
+
+			if ( is_assigned( prefix+"shading_mxh" ) )
+			{
+				size_t nrows, ncols;
+				ssc_number_t *mat = as_matrix( prefix+"shading_mxh", &nrows, &ncols );
+				if ( nrows != 12 || ncols != 24 )
+					throw exec_error("pvsamv1", "month x hour shading factors must have 12 rows and 24 columns: subarray " + util::to_string((int)(nn+1)));
+
 				int c=0;
 				for (int m=0;m<12;m++)
 					for (int d=0;d<util::nday[m];d++)
 						for (int h=0;h<24;h++)
-							sa[nn].shad_beam_factor[c++] *= sa[nn].shdat.mxh.at(m,h);
+							sa[nn].shad_beam_factor[c++] *= mat[ m*ncols + h ];
+			}
+
+			if ( is_assigned( prefix+"shading_azal" ) )
+			{
+				size_t nrows, ncols;
+				ssc_number_t *mat = as_matrix( prefix+"shading_azal", &nrows, &ncols );
+				if ( nrows < 3 || ncols < 3 )
+					throw exec_error("pvsamv1", "azimuth x altitude shading factors must have at least 3 rows and 3 columns: subarray " + util::to_string((int)(nn+1)));
+
+				sa[nn].shad_azal.resize_fill( nrows, ncols, 1.0 );
+				for ( size_t r=0;r<nrows;r++ )
+					for ( size_t c=0;c<ncols;c++ )
+						sa[nn].shad_azal.at(r,c) = mat[r*ncols+c];
+
+				if ( !check_azal_monotonic_increase( sa[nn].shad_azal ) )
+					throw exec_error("pvsamv1", "azimuth x altitude shading factor table row 1 and col 1 must increase monotonically: subarray " + util::to_string((int)(nn+1)));
+
+				sa[nn].en_azal = true;
 			}
 		}
 		
@@ -1035,9 +1081,9 @@ public:
 				ibeam *= sa[nn].shad_beam_factor[istep];	
 				
 				// apply beam shading based on solar azimuth/altitude table
-				if ( sa[nn].shdat.en_azal )
+				if ( sa[nn].en_azal )
 				{
-					double factor = util::bilinear( solalt, solazi, sa[nn].shdat.azal );		
+					double factor = util::bilinear( solalt, solazi, sa[nn].shad_azal );		
 					ibeam *= factor;
 					beam_shad_factor *= factor;
 				}
@@ -1325,6 +1371,22 @@ public:
 		assign( "6par_Rsh", var_data((ssc_number_t) cec.Rsh) );
 		assign( "6par_Adj", var_data((ssc_number_t) cec.Adj) );
 	}
+	
+	bool check_azal_monotonic_increase( const util::matrix_t<double> &azal )
+	{
+		if (azal.nrows() < 3 || azal.ncols() < 3) return false;
+
+		for (size_t i=2;i<azal.nrows();i++)
+			if (azal.at(i,0) < azal.at(i-1,0))				
+				return false;
+
+		for (size_t i=2;i<azal.ncols();i++)
+			if (azal.at(0,i) < azal.at(0,i-1))
+				return false;
+
+		return true;
+	}
+
 
 	double module_eff()
 	{

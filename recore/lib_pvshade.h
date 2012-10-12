@@ -95,30 +95,4 @@ private:
 	bool matrix_multiply(double a[][3], double b[][3], double c[][3]);
 };
 
-
-
-
-struct shading_data
-{
-	shading_data();
-	static const char *format_doc;  // documentation on the format of the array representation of this data
-
-	bool en_hourly;
-	std::vector<double> hourly;
-
-	bool en_mxh;
-	util::matrix_t<double> mxh;
-
-	bool en_azal;
-	util::matrix_t<double> azal;
-
-	bool en_diff;
-	double diff;
-
-	void clear();
-	void save( std::vector<double> &data );
-	bool load( const std::vector<double> &data );	
-	bool check_azal_monotonic_increase();
-};
-
 #endif
