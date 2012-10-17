@@ -141,9 +141,14 @@ public:
 
 		util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", 8760, nwt );
 		util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", 8760, nwt );
-		
+		size_t nstep = 8760;
+
 		for (i=0;i<8760;i++)
 		{
+			
+			if ( i % (nstep/20) == 0)
+				update( "calculating", 100.0f * ((float)i) / ((float)nstep), (float)i );
+
 			double wind, dir, temp, pres, closest_speed_meas_ht, closest_dir_meas_ht;
 			if (!wf.read( hub_ht, &wind, &dir, &temp, &pres, &closest_speed_meas_ht, &closest_dir_meas_ht))
 				throw exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wf.error() );
