@@ -204,29 +204,28 @@ bool windfile::open( const std::string &file )
 		m_fp = 0;
 		return false;
 	}
-
-	m_dataid.resize( ncols, INVAL );
-	m_heights.resize( ncols, -1  );
-
+	
 	for (int i=0;i<ncols;i++)
 	{
 		std::string ctype = util::lower_case( cols[i] );
 		if ( ctype == "temperature" || ctype == "temp" )
-			m_dataid[i] = TEMP;
+			m_dataid.push_back(TEMP);
 		else if ( ctype == "pressure" || ctype == "pres" )
-			m_dataid[i] = PRES;
+			m_dataid.push_back(PRES);
 		else if ( ctype == "speed" || ctype == "velocity" )
-			m_dataid[i] = SPEED;
+			m_dataid.push_back(SPEED);
 		else if ( ctype == "direction" || ctype == "dir" )
-			m_dataid[i] = DIR;
-		else
+			m_dataid.push_back(DIR);
+		else if ( ctype.length() > 0 )
 		{
-			m_errorMsg = util::format( "error reading data column type specifier in col %d of %d: '%s'", i+1, ncols, ctype.c_str() );
+			m_errorMsg = util::format( "error reading data column type specifier in col %d of %d: '%s' len: %d", i+1, ncols, ctype.c_str(), ctype.length() );
 			fclose( m_fp );
 			m_fp = 0;
 			return false;
 		}
 	}
+
+	m_heights.resize( m_dataid.size(), -1  );
 
 
 	// read line 4, units for each column (ignore this for now)
@@ -243,7 +242,7 @@ bool windfile::open( const std::string &file )
 		return false;
 	}
 
-	for (int i=0;i<ncols;i++)
+	for (int i=0;i<m_heights.size();i++)
 		m_heights[i] = atof( cols[i] );
 	
 	// ready to read line-by-line.  subsequent columns of data correspond to the
@@ -299,11 +298,11 @@ std::vector<double> windfile::read()
 	fgets( m_buf, MBUFLEN-1, m_fp );
 	int ncols = locate2( m_buf, cols, 128, ',' );
 	
-	if (ncols == m_heights.size() 
-		&& ncols == m_dataid.size())
+	if (ncols >= m_heights.size() 
+		&& ncols >= m_dataid.size())
 	{
-		values.resize( ncols, 0.0 );
-		for (int i=0;i<ncols;i++)
+		values.resize( m_heights.size(), 0.0 );
+		for (int i=0;i<m_heights.size();i++)
 			values[i] = atof( cols[i] );
 	}
 
@@ -327,6 +326,8 @@ bool windfile::read( double requested_height,
 
 	if (ncols < (int)m_heights.size() || ncols < (int)m_dataid.size())
 		return false;
+
+	ncols = m_heights.size();
 
 	for ( int i=0;i<ncols;i++ )
 		values[i] = atof( cols[i] );
