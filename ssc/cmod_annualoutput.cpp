@@ -15,7 +15,7 @@ static var_info _cm_vtab_annualoutput[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_years",              "Analyis period",                        "years",  "",                                       "AnnualOutput",      "?=30",                   "INTEGER,MIN=0,MAX=50",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		   "Annual energy availability",	        "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		   "Annual energy degradation",	            "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",  "Lifetime hourly system outputs",        "0/1",    "0=hourly first year,1=hourly lifetime",  "AnnualOutput",      "*",						"INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_ARRAY,		"energy_net_hourly",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
 
@@ -61,13 +61,11 @@ public:
 	void exec( ) throw( general_error )
 	{
 
-		// cash flow initialization
 		int nyears = as_integer("analysis_years");
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
 
 
 		int i=0;
-//		double first_year_energy = as_double("energy_net_annual");
 		size_t count_avail = 0;
 		ssc_number_t *avail = 0;
 		avail = as_array("energy_availability", &count_avail);
@@ -120,9 +118,6 @@ public:
 	{
 		ssc_number_t *hourly_enet; // hourly energy output
 	
-//		double hourly_curtailment[8760];
-		ssc_number_t *diurnal_curtailment;
-
 		size_t count;
 
 	// hourly energy
@@ -135,41 +130,27 @@ public:
 			return false;
 		}
 
-	// hourly curtailment
-		diurnal_curtailment = as_array("energy_curtailment", &count );
-		if ( (int)count != (290))
-		{
-			std::stringstream outm;
-			outm <<  "Bad diurnal curtailment length (" << count << "), should be 290.";
-			log( outm.str() );
-			return false;
-		}
-
 		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_e_net_delivered", 12 );
 		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_e_net_delivered", 8760 );
 
 
 		double first_year_energy = 0.0;
 		int i=0;
+		size_t nrows, ncols;
+		ssc_number_t *diurnal_curtailment = as_matrix( "energy_curtailment", &nrows, &ncols );
+		if ( nrows != 12 || ncols != 24 )
+			throw exec_error("annualoutput", "month x hour curtailment factors must have 12 rows and 24 columns");
+
 		for (int m=0;m<12;m++)
-		{
-			monthly_energy_to_grid[m] = 0;
 			for (int d=0;d<util::nday[m];d++)
-			{
 				for (int h=0;h<24;h++)
-				{
-					if ((i<8760) && ((m*24+h)<288))
+					if (i<8760)
 					{
-						hourly_energy_to_grid[i] = diurnal_curtailment[m*24+h+2]*hourly_enet[i];
+						hourly_energy_to_grid[i] = diurnal_curtailment[m*ncols+h]*hourly_enet[i];
 						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
 						first_year_energy += hourly_energy_to_grid[i];
 						i++;
 					}
-				}
-			}
-		}
-
-				
 
 		for (int y=1;y<=nyears;y++)
 		{
@@ -184,10 +165,6 @@ public:
 	{
 		ssc_number_t *hourly_enet; // hourly energy output
 
-		//double hourly_curtailment[8760];
-		ssc_number_t *diurnal_curtailment;
-
-		int h;
 		size_t count;
 
 	// hourly energy
@@ -200,17 +177,10 @@ public:
 			return false;
 		}
 
-
-	// hourly curtailment
-		diurnal_curtailment = as_array("energy_curtailment", &count );
-		if ( (int)count != (290))
-		{
-			std::stringstream outm;
-			outm <<  "Bad diurnal curtailment length (" << count << "), should be 290.";
-			log( outm.str() );
-			return false;
-		}
-
+		size_t nrows, ncols;
+		ssc_number_t *diurnal_curtailment = as_matrix( "energy_curtailment", &nrows, &ncols );
+		if ( nrows != 12 || ncols != 24 )
+			throw exec_error("annualoutput", "month x hour curtailment factors must have 12 rows and 24 columns");
 
 		// all years
 		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_e_net_delivered", 12*nyears );
@@ -226,9 +196,9 @@ public:
 				{
 					for (int h=0;h<24;h++)
 					{
-						if ((i<8760) && ((m*24+h)<288))
+						if (i<8760)
 						{
-							hourly_energy_to_grid[(y-1)*8760+i] = diurnal_curtailment[m*24+h+2] * hourly_enet[(y-1)*8760+i] * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
+							hourly_energy_to_grid[(y-1)*8760+i] = diurnal_curtailment[m*ncols+h] * hourly_enet[(y-1)*8760+i] * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
 							monthly_energy_to_grid[m] += hourly_energy_to_grid[(y-1)*8760+i];
 							cf.at(CF_energy_net,y) += hourly_energy_to_grid[(y-1)*8760+i];
 							i++;
@@ -239,7 +209,6 @@ public:
 
 
 		}
-
 
 	
 		return true;
