@@ -254,6 +254,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_windspd",                              "Wind speed",                                             "m/s",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ambtemp",                              "Ambient temperature",                                    "C",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_input_radiation",                      "Input radiation",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_input_radiation_beam",                 "Input radiation (beam only)",                            "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_zen",                              "Solar zenith angle",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_alt",                              "Solar altitude angle",                                   "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_azi",                              "Solar azimuth angle",                                    "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -335,12 +336,14 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_ac_net",                              "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
 	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation",                      "Input radiation",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation_beam",                 "Input radiation (beam only)",                            "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "Nominal dc energy",                                      "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_gross",                             "Gross dc output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                               "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_net",                               "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_performance_factor",                   "System performance factor",                              "%",      "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                         "Nameplate system dc rating",                             "kW",     "",                      "pvsamv1",       "*",                    "",                              "" },
 	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_a",                                      "CEC 6-parameter (a)",                                    "",       "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Io",                                     "CEC 6-parameter (Io)",                                   "",       "",                      "pvsamv1",       "*",                    "",                              "" },
@@ -1013,6 +1016,7 @@ public:
 				
 		ssc_number_t *p_inv_dc_voltage = allocate( "hourly_inverter_dc_voltage", 8760 );
 		ssc_number_t *p_inrad = allocate( "hourly_input_radiation", 8760 );
+		ssc_number_t *p_inradbeam = allocate( "hourly_input_radiation_beam", 8760 );
 		ssc_number_t *p_dcgross = allocate( "hourly_dc_gross", 8760 );
 		ssc_number_t *p_dcpwr = allocate( "hourly_dc_net", 8760 );
 		ssc_number_t *p_acgross = allocate( "hourly_ac_gross", 8760 );
@@ -1034,6 +1038,7 @@ public:
 			double solazi=0, solzen=0, solalt=0;
 			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
 			double inprad_total = 0.0;
+			double inprad_beam = 0.0;
 			
 			// calculate incident irradiance on each subarray
 			for (int nn=0;nn<4;nn++)
@@ -1130,6 +1135,8 @@ public:
 				// calculate total input radiaton to system (array-level output)
 				inprad_total += (sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff)
 					* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
+
+				inprad_beam += sa[nn].poa.ibeam * ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
 			}
 			
 			// apply self-shading if enabled (subarray 1 only)
@@ -1307,6 +1314,7 @@ public:
 			p_airmass[istep] = (ssc_number_t) ( exp(-0.0001184 * wf.elev)/(cos( solzen*3.1415926/180 )+0.5057*pow(96.080-solzen, -1.634)) );
 						
 			p_inrad[istep] = (ssc_number_t) inprad_total;
+			p_inradbeam[istep] = (ssc_number_t) inprad_beam;
 
 			p_inv_dc_voltage[istep] = (ssc_number_t) dc_string_voltage;
 			p_dcgross[istep] = (ssc_number_t) ( dcpwr_gross * 0.001 );
@@ -1350,15 +1358,31 @@ public:
 		accumulate_monthly( "hourly_dc_net", "monthly_dc_net" );
 
 		accumulate_annual( "hourly_input_radiation", "annual_input_radiation" );
+		accumulate_annual( "hourly_input_radiation_beam", "annual_input_radiation_beam" );
 		accumulate_annual( "hourly_dc_gross", "annual_dc_gross" );
 		accumulate_annual( "hourly_dc_net", "annual_dc_net" );
 		accumulate_annual( "hourly_ac_gross", "annual_ac_gross" );
 		accumulate_annual( "hourly_ac_net", "annual_ac_net" );
 	
-		double inp_rad = as_double("annual_input_radiation");
-		assign( "annual_dc_nominal", var_data( (ssc_number_t)( inp_rad * module_eff() / 100 ) ) );
+		bool is_cpv = false;
 
-		assign( "annual_performance_factor", var_data( (ssc_number_t) system_performance_factor( nameplate_kw ) ) );
+		if ( as_integer("module_model") == 3 /* sandia model */
+			&&  as_double("snl_fd") == 0 )
+			is_cpv = true;
+
+		double inp_rad = is_cpv ? as_double("annual_input_radiation_beam") : as_double("annual_input_radiation");
+		double ac_net = as_double("annual_ac_net");
+		double mod_eff = module_eff();
+
+		// calculate system performance factor
+		// reference: (http://files.sma.de/dl/7680/Perfratio-UEN100810.pdf)
+		// PR = net_ac (kWh) / ( total input radiation (kWh) * stc efficiency (%) )
+		assign( "annual_performance_factor", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
+
+		// calculate nominal dc input
+		assign( "annual_dc_nominal", var_data( (ssc_number_t)( inp_rad * mod_eff/100.0 ) ) );
+
+		assign( "nameplate_dc_rating", var_data( (ssc_number_t)nameplate_kw ) );
 
 		if (as_integer("inverter_model") == 1) inverter_vdcmax_check();
 		
@@ -1437,50 +1461,6 @@ public:
 
 		if (eff == 0.0) eff = -1;
 		return eff;
-	}
-
-	double system_performance_factor( double nameplate_kw )
-	{
-		//system performance factor AC out / (dc rating * incident radiation)
-		double radiation = 0.0;
-		double deratedOutput = 0.0;
-		size_t count = 0;
-		ssc_number_t *incRad=0; // incident radiation - total for pv and beam only for cpv
-		ssc_number_t *ACPower=0; // derated AC Power from TRNSYS output
-
-		int mod_type = as_integer("module_model");
-
-		ACPower = as_array("monthly_ac_net", &count );
-		if (count != 12)
-			throw exec_error( "pvsamv1", "invalid monthly ACPower output variable length when calculating system performance factor" );
-
-		for(int i=0;i<12;i++)
-			deratedOutput += ACPower[i];
-		
-		switch (mod_type)
-		{
-		case 0: case 1: case 2: // SEM, CEC, User6par
-			incRad = as_array("monthly_inc_total", &count );
-			break;
-		case 3: // Sandia
-			if (as_double("snl_fd") == 0) incRad = as_array("monthly_inc_beam", &count ); // CPV
-			else incRad = as_array("monthly_inc_total", &count ); // flatplate
-			break;
-		}
-
-		if ( count != 12 ) 
-			throw exec_error( "pvsamv1", "invalid monthly incident radiation output variable length when calculating system performance factor" );
-		
-		for(int i=0;i<12;i++)
-			radiation += incRad[i];
-
-		if ( radiation == 0 ) // no division by zero
-		{	
-			log( util::format("PV[%d] SystemPerformanceFactor - incident radiation is zero.", mod_type), SSC_WARNING );
-			radiation = 1.0;
-		}
-		
-		return deratedOutput / (nameplate_kw * radiation);
 	}
 
 	void inverter_vdcmax_check()

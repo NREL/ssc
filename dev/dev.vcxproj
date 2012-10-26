@@ -61,7 +61,7 @@
       <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(LKDIR);$(SolutionDir)\recore;$(SolutionDir)\ssc;$(WXMSW)\lib\vc_lib\mswd;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;__WX__;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;__USENOTEBOOK__;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;LK_USE_WXWIDGETS;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;NOPCH;_CRT_SECURE_NO_WARNINGS;__USENOTEBOOK__;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -82,10 +82,10 @@
       <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\mswd;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>wxmsw28d_adv.lib;wxbase28d_xml.lib;wxbase28d_net.lib;wxmsw28d_core.lib;wxmsw28d_stc.lib;wxmsw28d_html.lib;wxmsw28d_aui.lib;wxbase28d.lib;wxtiffd.lib;wxjpegd.lib;wxpngd.lib;wxzlibd.lib;wxregexd.lib;wxexpatd.lib;comlibd.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;lkd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>wxmsw28d_adv.lib;wxbase28d_xml.lib;wxbase28d_net.lib;wxmsw28d_core.lib;wxmsw28d_stc.lib;wxmsw28d_html.lib;wxmsw28d_aui.lib;wxbase28d.lib;wxtiffd.lib;wxjpegd.lib;wxpngd.lib;wxzlibd.lib;wxregexd.lib;wxexpatd.lib;comlibd.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;lkvc10wx28d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(LKDIR)\vc_build;$(CMLMSW);$(WXMSW)\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LKDIR);$(CMLMSW);$(WXMSW)\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -115,7 +115,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>$(LKDIR);$(SolutionDir)\recore;$(SolutionDir)\ssc;$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\contrib\include;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories);$(SSCDIR)\core</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;__WX__;__WXMSW__;_WINDOWS;NOPCH;__USENOTEBOOK__;_CRT_SECURE_NO_WARNINGS;__RELEASE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;LK_USE_WXWIDGETS;__WXMSW__;_WINDOWS;NOPCH;__USENOTEBOOK__;_CRT_SECURE_NO_WARNINGS;__RELEASE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -137,10 +137,10 @@
       <AdditionalIncludeDirectories>$(WXMSW)\lib\vc_lib\msw;$(WXMSW)\include;$(CMLMSW);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>wxmsw28_adv.lib;wxbase28_xml.lib;wxbase28_net.lib;wxmsw28_core.lib;wxmsw28_stc.lib;wxmsw28_aui.lib;wxmsw28_html.lib;wxbase28.lib;wxtiff.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregex.lib;wxexpat.lib;comlib.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;lk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>wxmsw28_adv.lib;wxbase28_xml.lib;wxbase28_net.lib;wxmsw28_core.lib;wxmsw28_stc.lib;wxmsw28_aui.lib;wxmsw28_html.lib;wxbase28.lib;wxtiff.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregex.lib;wxexpat.lib;comlib.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;odbc32.lib;gdiplus.lib;lkvc10wx28.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(LKDIR)\vc_build;$(CMLMSW);$(WXMSW)\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LKDIR);$(CMLMSW);$(WXMSW)\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(OutDir)\$(TargetName)_stripped.pdb</StripPrivateSymbols>
