@@ -148,7 +148,8 @@ namespace util
 		void clear()
 		{
 			if (t_array) delete [] t_array;
-			n_rows = n_cols = 0;
+			n_rows = n_cols = 1;
+			t_array = new T[1];
 		}
 		
 		void copy( const matrix_t &rhs )
