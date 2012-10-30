@@ -38,7 +38,8 @@ int wind_power(
 
 				);
 
-double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
+//double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
+double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class,
 						 int count, double wind_speed[], double power_curve[], double hub_efficiency[]);
 
 #endif

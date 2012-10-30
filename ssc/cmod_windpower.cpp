@@ -24,7 +24,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "weibullK",                   "Weibull K factor for wind resource","",      "",                      "WindPower",      "*",             "",		              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "max_cp",                     "Max cp",						   "",       "",                      "WindPower",      "*",             "",		              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "resource_class",             "Wind Resource Class",			   "",       "",                      "WindPower",      "*",             "",		              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",						   "m",      "",                      "WindPower",      "*",             "",		              "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",						   "m",      "",                      "WindPower",      "*",             "",		              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "hub_efficiency",             "Array of hub efficiencies",		   "%",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "farmpwr",                    "Net electric generation",          "kWhac",  "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
@@ -102,14 +102,15 @@ public:
 			double weibull_k = as_double("weibullK");
 			double max_cp = as_double("max_cp");
 			double resource_class = as_double("resource_class");
-			double elevation = as_double("elevation");
+			//double elevation = as_double("elevation");
 			
 			ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
 			std::vector<double> dp_hub_eff(pc_len);
 			for (i=0;i<pc_len;i++)
 				dp_hub_eff[i] = (double)hub_efficiency[i];
 
-			double turbine_kw = turbine_output_using_weibull(rotor_di, weibull_k, shear, max_cp, hub_ht, resource_class, elevation, (int)pc_len, &dpcW[0], &dpcP[0], &dp_hub_eff[0]);
+			//double turbine_kw = turbine_output_using_weibull(rotor_di, weibull_k, shear, max_cp, hub_ht, resource_class, elevation, (int)pc_len, &dpcW[0], &dpcP[0], &dp_hub_eff[0]);
+			double turbine_kw = turbine_output_using_weibull(rotor_di, weibull_k, shear, max_cp, hub_ht, resource_class, (int)pc_len, &dpcW[0], &dpcP[0], &dp_hub_eff[0]);
 			turbine_kw = turbine_kw * (1 - (lossp/100.0)) - lossc;
 
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * nwt;

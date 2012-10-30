@@ -447,7 +447,8 @@ double gammaln(double x)
 	return log(mantissa) + expo * log(10.0);
 }
 
-double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
+//double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
+double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class,
 						 int count, double wind_speed[], double power_curve[], double hub_efficiency[])
 {	// returns same units as 'power_curve'
 
@@ -455,7 +456,7 @@ double turbine_output_using_weibull(double rotor_diameter, double weibull_k, dou
 	double hub_ht_windspeed = pow((hub_ht/50.0),shear) * resource_class;
 	double denom = exp(gammaln(1+(1/hub_ht_windspeed)));
 	double lambda = hub_ht_windspeed/denom;
-	double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
+	//double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
 
 	// 'RUN' MODEL ****************************************************************************************
 	double total_energy_turbine=0;//, total_energy_generic=0;
