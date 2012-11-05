@@ -177,8 +177,6 @@ void selfshade_t::init()
 		m_A = m_arr.width * m_arr.nmody;
 
 	m_tilt_eff = m_arr.tilt - m_arr.slope_ns;
-//	m_tilt_eff = ( m_tilt_eff < 0 ) ? 0 : m_tilt_eff;
-//	m_tilt_eff = ( m_tilt_eff > 90 ) ? 90 : m_tilt_eff;
 
 	m_m = m_arr.nmody;
 	m_n = m_arr.nmodx;

@@ -947,11 +947,6 @@ public:
 			ssarr.row_space = as_double("self_shading_rowspace");
 			ssarr.mod_space = 0; // no ui input - assumed 0 in trnsys inputs
 			ssarr.slope_ns = as_double("self_shading_slopens");
-
-		//	ssarr.slope_ns = ( (ssarr.tilt - ssarr.slope_ns) < 0 ) ? ssarr.tilt : ssarr.slope_ns;
-		//	ssarr.slope_ns = ( (ssarr.tilt - ssarr.slope_ns) > 90 ) ? (ssarr.tilt - 90) : ssarr.slope_ns;
-
-
 			ssarr.slope_ew = as_double("self_shading_slopeew");
 			ssarr.mod_orient = as_integer("self_shading_mod_orient");
 			ssarr.str_orient = as_integer("self_shading_str_orient");
@@ -1036,16 +1031,7 @@ public:
 			if ( istep % (nstep/20) == 0)
 				update( "calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep );
 			
-/*
-			// 4/29/12 added for consistency with surface when self-shading present - see lib_pvshade in recore
-			if (self_shading_enabled) 
-			{
-				sa[0].tilt = sa[0].tilt - ssarr.slope_ns;
-				// 11/1/12 range check added to prevent code -108 from radiation processor
-				//sa[0].tilt = ( sa[0].tilt < 0 ) ? 0 : sa[0].tilt;
-				//sa[0].tilt = ( sa[0].tilt > 90 ) ? 90 : sa[0].tilt;
-			}
-*/			
+		
 			double solazi=0, solzen=0, solalt=0;
 			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
 			double inprad_total = 0.0;
