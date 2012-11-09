@@ -242,8 +242,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_nmody",                          "Number of modules along side",                            "",       "",                       "pvsamv1",       "self_shading_enabled=1",              "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_nrows",                          "Number of rows",                                          "",       "",                       "pvsamv1",       "self_shading_enabled=1",              "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_rowspace",                       "Row spacing",                                             "m",      "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_slopens",                        "North-south slope",                                       "deg",    "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_slopeew",                        "East-west slope",                                         "deg",    "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
+// removed per 11/7/12 meeting
+//	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_slopens",                        "North-south slope",                                       "deg",    "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_slopeew",                        "East-west slope",                                         "deg",    "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
 
 // outputs
 
@@ -946,8 +947,11 @@ public:
 			ssarr.width = as_double("self_shading_width");
 			ssarr.row_space = as_double("self_shading_rowspace");
 			ssarr.mod_space = 0; // no ui input - assumed 0 in trnsys inputs
-			ssarr.slope_ns = as_double("self_shading_slopens");
-			ssarr.slope_ew = as_double("self_shading_slopeew");
+			//ssarr.slope_ns = as_double("self_shading_slopens");
+			//ssarr.slope_ew = as_double("self_shading_slopeew");
+			// set to zero per 11/7/12 meeting
+			ssarr.slope_ns = 0;
+			ssarr.slope_ew = 0;
 			ssarr.mod_orient = as_integer("self_shading_mod_orient");
 			ssarr.str_orient = as_integer("self_shading_str_orient");
 			ssarr.nmodx = as_integer("self_shading_nmodx");
