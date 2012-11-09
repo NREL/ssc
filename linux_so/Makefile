@@ -2,7 +2,7 @@ VPATH=../ssc ../recore
 
 CC = gcc
 CXX = g++
-CFLAGS = -I../ssc -I../recore -D__UNIX__ -fPIC -Wall -O3
+CFLAGS = -fpermissive -I../ssc -I../recore -D__UNIX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
 
