@@ -242,7 +242,7 @@ bool windfile::open( const std::string &file )
 		return false;
 	}
 
-	for (int i=0;i<m_heights.size();i++)
+	for (size_t i=0;i<m_heights.size();i++)
 		m_heights[i] = atof( cols[i] );
 	
 	// ready to read line-by-line.  subsequent columns of data correspond to the
@@ -268,29 +268,6 @@ void windfile::close()
 }
 
 
-int windfile::find_closest( int id, double requested_height, double *meas_height_found )
-{
-	int closest_index = -1;
-	double height_diff = 1e99, meas_height = 0;
-	for ( size_t i=0;i<m_dataid.size();i++ )
-	{
-		if ( m_dataid[i] == id )
-		{
-			if ( fabs(m_heights[i] - requested_height) < height_diff )
-			{
-				closest_index = i;
-				height_diff = fabs(m_heights[i] - requested_height);
-				meas_height = m_heights[i];
-			}
-		}
-	}
-
-	if ( meas_height_found != 0 )
-		*meas_height_found = meas_height;
-
-	return closest_index;
-}
-
 std::vector<double> windfile::read()
 {
 	char *cols[128];	
@@ -302,7 +279,7 @@ std::vector<double> windfile::read()
 		&& ncols >= m_dataid.size())
 	{
 		values.resize( m_heights.size(), 0.0 );
-		for (int i=0;i<m_heights.size();i++)
+		for (size_t i=0;i<m_heights.size();i++)
 			values[i] = atof( cols[i] );
 	}
 
@@ -315,7 +292,8 @@ bool windfile::read( double requested_height,
 	double *temperature,
 	double *pressure,
 	double *closest_speed_meas_height_in_file,
-	double *closest_dir_meas_height_in_file )
+	double *closest_dir_meas_height_in_file,
+	bool bInterpolate /*= false*/)
 {
 	char *cols[128];	
 	double values[128];
@@ -334,23 +312,50 @@ bool windfile::read( double requested_height,
 
 	*speed = *direction = *temperature = *pressure = *closest_speed_meas_height_in_file = *closest_dir_meas_height_in_file = std::numeric_limits<double>::quiet_NaN();
 
-	double speed_meas_ht_found;
-	int index = find_closest( SPEED, requested_height, &speed_meas_ht_found );
-	if (index >= 0 && index < ncols)
-		*speed = values[index];
+	int index = -1, index2 = -1;
+	if ( find_closest(index, SPEED, ncols, requested_height) )
+	{
+		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, SPEED, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+		{
+			*speed = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+			*closest_speed_meas_height_in_file = requested_height;
+		}
+		else
+		{
+			*speed = values[index];
+			*closest_speed_meas_height_in_file = m_heights[index];
+		}
+	}
 
-	double dir_meas_ht_found;
-	index = find_closest( DIR, requested_height, &dir_meas_ht_found );
-	if (index >= 0 && index < ncols)
-		*direction = values[index];
+	if (find_closest(index, DIR, ncols, requested_height) )
+	{
+		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+		{
+			*direction = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+			*closest_dir_meas_height_in_file = requested_height;
+		}
+		else
+		{
+			*direction = values[index];
+			*closest_dir_meas_height_in_file = m_heights[index];
+		}
+	}
 
-	index = find_closest( TEMP, requested_height, 0 );
-	if (index >= 0 && index < ncols)
-		*temperature = values[index];
+	if ( find_closest(index, TEMP, ncols, requested_height) )
+	{
+		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, TEMP, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+			*temperature = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+		else
+			*temperature = values[index];
+	}
 
-	index = find_closest( PRES, requested_height, 0 );
-	if (index >= 0 && index < ncols)
-		*pressure = values[index];
+	if ( find_closest(index, PRES, ncols, requested_height) )
+	{
+		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, PRES, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+			*pressure = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+		else
+			*pressure = values[index];
+	}
 
 	bool found_all 
 		= !my_isnan( *speed )
@@ -358,11 +363,35 @@ bool windfile::read( double requested_height,
 		&& !my_isnan( *temperature )
 		&& !my_isnan( *pressure );
 
-	if (found_all)
-	{
-		*closest_speed_meas_height_in_file = speed_meas_ht_found;
-		*closest_dir_meas_height_in_file = dir_meas_ht_found;
-	}
 	return found_all;
 
+}
+
+bool windfile::find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude /* = -1 */ )
+{
+	closest_index = -1;
+	double height_diff = 1e99;
+	for ( size_t i=0;i<m_dataid.size();i++ )
+	{
+		if ( (m_dataid[i] == id) && (i != index_to_exclude) )
+		{
+			if ( fabs(m_heights[i] - requested_height) < height_diff )
+			{
+				closest_index = i;
+				height_diff = fabs(m_heights[i] - requested_height);
+			}
+		}
+	}
+
+	return (closest_index >= 0 && closest_index < ncols);
+}
+
+bool windfile::can_interpolate( int index1, int index2, int ncols, int requested_height )
+{
+	if ( index1<0 || index2<0 ) return false;
+	if ( index1>=ncols || index2>=ncols ) return false;
+	if ( m_heights[index1]<requested_height && requested_height<m_heights[index2] ) return true; // height 1 < height 2
+	if ( m_heights[index1]>requested_height && requested_height>m_heights[index2] ) return true; // height 1 > height 2
+
+	return false;
 }

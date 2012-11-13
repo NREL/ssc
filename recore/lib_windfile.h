@@ -14,7 +14,8 @@ private:
 	std::vector<int> m_dataid;
 	std::vector<double> m_heights;
 
-	int find_closest( int id, double requested_height, double *meas_height_found );
+	bool find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1 );
+	bool can_interpolate( int index1, int index2, int ncols, int requested_height );
 
 public:
 	enum { INVAL, 
@@ -56,7 +57,8 @@ public:
 		double *temperature,
 		double *pressure,
 		double *speed_meas_height,
-		double *dir_meas_height);
+		double *dir_meas_height,
+		bool bInterpolate = false);
 };
 
 #endif

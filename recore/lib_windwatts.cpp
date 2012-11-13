@@ -21,7 +21,7 @@ static inline double min_of(double a, double b)
 
 void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	double Spd_CtIn, double Rotor_Di,
-	double Air_Dens, double Rho_T, double Spd_Ratd, double Pwr_Ratd,
+	double Rho_T, double Spd_Ratd, double Pwr_Ratd,
 	int Ctl_Mode, double LossC, double LossP, double PC_wspd[], double PC_pwr[], int Num_Pair,
 	double *PWECS, double *CT, double *CP )
 {
@@ -53,8 +53,8 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	if ( V_Hub < Spd_CtIn) out_pwr = 0.0; // Check against turbine cut-in speed
 
 	// wind turbine output corrected for site air density
-	out_pwr *= Rho_T/Air_Dens;
-	double NewVRat = Spd_Ratd*pow(Rho_T/Air_Dens, 1.0/3.0);
+	out_pwr *= Rho_T/physics::AIR_DENSITY_SEA_LEVEL;
+	double NewVRat = Spd_Ratd*pow(Rho_T/physics::AIR_DENSITY_SEA_LEVEL, 1.0/3.0);
 
 	if (Ctl_Mode == 1) // pitch control
 	{
@@ -182,6 +182,8 @@ int wind_power(
 //	double BP_STP = 101350;                         //!Standard sea-level pressure,Pa
 //	double GAMMA = G/(R*B);                         //!Lapse Rate Manipulation
 //	double T_KELV = TdryC+273.15;                   //!Convert temperatures to absolute, deg.K
+
+	// convert barometric pressure in ATM to air density
 	double Rho_T = (BarPAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 	
 	//CPQ  SPATIAL DATA TRANSFORMATIONS AND SORTING
@@ -235,7 +237,6 @@ int wind_power(
 				Data_Ht,
 				Spd_CtIn,
 				Rotor_Di,
-				1.249,  // air density
 				Rho_T,
 				Spd_Ratd,
 				Pwr_Ratd,
@@ -322,7 +323,6 @@ int wind_power(
 					Data_Ht,
 					Spd_CtIn,
 					Rotor_Di,
-					1.249,
 					Rho_T,
 					Spd_Ratd,
 					Pwr_Ratd,

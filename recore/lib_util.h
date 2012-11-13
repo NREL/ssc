@@ -349,6 +349,7 @@ namespace util
 
 	
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
+	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
 };
 
 

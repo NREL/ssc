@@ -150,8 +150,10 @@ public:
 			if ( i % (nstep/20) == 0)
 				update( "calculating", 100.0f * ((float)i) / ((float)nstep), (float)i );
 
+			// if wf.read is set to interpolate (last input), and it's able to do so, then it will set closest_speed_meas_ht equal to hub_ht
+			// direction will not be interpolated, pressure and temperature will be if possible
 			double wind, dir, temp, pres, closest_speed_meas_ht, closest_dir_meas_ht;
-			if (!wf.read( hub_ht, &wind, &dir, &temp, &pres, &closest_speed_meas_ht, &closest_dir_meas_ht))
+			if (!wf.read( hub_ht, &wind, &dir, &temp, &pres, &closest_speed_meas_ht, &closest_dir_meas_ht, true))
 				throw exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wf.error() );
 
 			if ( fabs(closest_speed_meas_ht - hub_ht) > 35.0 )

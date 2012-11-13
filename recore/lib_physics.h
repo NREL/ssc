@@ -10,7 +10,7 @@ namespace physics
 	const double FT_PER_METER =			3.280839895;			// feet per meter
 	const double PSI_PER_BAR =		   14.50377373066;			// psi per bar
 	const double PSI_PER_INHG =			0.4911541474703;		// psi per inch of mercury
-	const double Pa_PER_Atm =	   101300.00	/*101325.0*/;	// pascals per atm;  101300.0 is value currently in fortran
+	const double Pa_PER_Atm =	   101325.00;					// pascals per atm;  101300.0 is value from FORTRAN code
 	const double Pa_PER_inHg =		 3386.00;
 	const double Atm_PER_Bar =			0.986923267;			// atmospheres per bar
 	const double KGM3_PER_LBF3 =	   16.01846337396;			// lbs/ft^3 per kg/m^3 
@@ -20,12 +20,11 @@ namespace physics
 	const double GRAVITY_FTS2 =		   32.174;					// ft per second^2
 	const double SPECIFIC_HEAT_LIQUID_WATER = 4.183 /*4.1813*/;	// J/g*K = joules per gram-degrees K; 4.183 is value currently in Fortran
 	const double WATER_DENSITY =	   62.4;					// lb/ft^3
-	const double R_Gas =              287.0;
+	const double R_Gas =              287.058;
 
 	const double GAS_CONSTANT_SUPER_HEATED_STEAM =		0.461522;		// kJ/kg-K
 	const double MIN_TEMP_FOR_SUPER_HEATED =		  647.073;			// deg K
 	const double MIN_TEMP_FOR_STEAM1 =				  623.15;			// K
-
 
 	inline double areaCircle(const double &radius) { return PI * pow(radius,2.0); }
 
@@ -55,6 +54,7 @@ namespace physics
 
 	bool EnthalpyFromTempAndPressure(double tempK, double pressureBar, double& enthalpy );
 
+	const double AIR_DENSITY_SEA_LEVEL = Pa_PER_Atm/(R_Gas * CelciusToKelvin(15)); // kg/m^3 at sea level (1 atm) and 15 C
 };
 
 

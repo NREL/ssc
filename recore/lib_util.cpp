@@ -842,3 +842,15 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 		+  mat.at(ridx-1, cidx  ) * (r2-rowval)*(colval-c1) / denom
 		+  mat.at(ridx,   cidx  ) * (rowval-r1)*(colval-c1) / denom;
 }
+
+// this will interpolate or extrapolate as necessary
+// if slope is infinite (x1 = x2), it will just return the first Y value
+double util::interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor)
+{
+	if (x1 == x2) return y1;
+	if (y1 == y2) return y1;
+
+	double slope = (y2 - y1)/(x2 - x1);
+	double inter = y1 - (slope * x1);
+	return (slope*xValueToGetYValueFor) + inter;
+}
