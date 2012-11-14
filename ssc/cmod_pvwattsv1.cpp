@@ -43,6 +43,7 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam normal irradiance",                      "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tdew",                           "Dew point temperature",                       "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
@@ -88,6 +89,7 @@ public:
 		ssc_number_t *p_dn = allocate("dn", 8760);
 		ssc_number_t *p_df = allocate("df", 8760);
 		ssc_number_t *p_tamb = allocate("tamb", 8760);
+		ssc_number_t *p_tdew = allocate("tdew", 8760);
 		ssc_number_t *p_wspd = allocate("wspd", 8760);
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
@@ -215,6 +217,7 @@ public:
 			p_dn[i] = (ssc_number_t)wf.dn;
 			p_df[i] = (ssc_number_t)wf.df;
 			p_tamb[i] = (ssc_number_t)wf.tdry;
+			p_tdew[i] = (ssc_number_t)wf.tdew;
 			p_wspd[i] = (ssc_number_t)wf.wspd;
 	
 			irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
