@@ -20,6 +20,7 @@ LDFLAGS += -arch i386
 endif
 
 OBJECTS = \
+	cmod_pvwattsfunc.o \
 	cmod_test_pvshade.o \
 	cmod_geothermalui.o \
 	cmod_6parsolve.o \

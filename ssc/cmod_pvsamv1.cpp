@@ -1068,7 +1068,7 @@ public:
 					sa[nn].btspacing );
 
 				int code = irr.calc();
-				if ( code < 0 )
+				if ( code != 0 )
 					throw exec_error( "pvsamv1", 
 						util::format("failed to compute irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]", 
 						nn+1, code, wf.year, wf.month, wf.day, wf.hour));

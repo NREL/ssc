@@ -187,6 +187,12 @@ double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2 )
 
 	return celltemp;
 }
+
+void pvwatts_celltemp::set_last_values( double Tc, double poa )
+{
+	tmodo = Tc+273.15;
+	suno = poa*absorb;
+}
 										/* Function to determine DC power */
 double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa,double pvt, double iref)
 {        /* Modified 8/22/07 to pass non-array variables */

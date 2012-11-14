@@ -34,6 +34,7 @@
     <ClCompile Include="cmod_pvsamv1.cpp" />
     <ClCompile Include="cmod_pvsandiainv.cpp" />
     <ClCompile Include="cmod_pvwatts.cpp" />
+    <ClCompile Include="cmod_pvwattsfunc.cpp" />
     <ClCompile Include="cmod_pvwattsv1.cpp" />
     <ClCompile Include="cmod_saleleaseback.cpp" />
     <ClCompile Include="cmod_singleowner.cpp" />

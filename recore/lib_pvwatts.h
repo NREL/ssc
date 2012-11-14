@@ -83,6 +83,7 @@ private:
 public:
 	pvwatts_celltemp( double _inoct, double _height, double _dTimeHrs);
 	double operator() ( double poa2, double ws2, double ambt2 );
+	void set_last_values( double Tc, double poa );
 };
 
 #endif

@@ -205,7 +205,8 @@ public:
 			double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
 			int sunup;		
 
-			if (!irr.calc())
+			int code = irr.calc();
+			if ( 0 != code )
 				sunup = 0; // if for some reason the irradiance processor fails, ignore this hour
 
 			p_tcell[i] = (ssc_number_t)wf.tdry;
