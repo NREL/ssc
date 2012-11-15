@@ -86,8 +86,7 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 		if (out_cp < 0.0)
 			out_ct = 0.0;
 		else
-			out_ct = max_of( 0.0, -1.453989e-2+1.473506*out_cp-2.330823*out_cp*out_cp+
-                     3.885123*out_cp*out_cp*out_cp );
+			out_ct = max_of( 0.0, -1.453989e-2+1.473506*out_cp-2.330823*out_cp*out_cp+3.885123*out_cp*out_cp*out_cp );
 	}
 	else
 	{
@@ -99,12 +98,17 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	// set output variables;
 	*PWECS = out_pwr;
 	*CT = out_ct;
-	*CP = out_cp;
+	*CP = out_cp; // TFF, Nov 14, 2012 - CP seems to be completely un-used as an output or input
 }
 
-void vel_delta_loc( double RR, double DD, double Sigma, double CT, 
-	double *SigLocal, double *Vdelta)
+void vel_delta_loc( double RR, double DD, double Sigma, double CT, double *SigLocal, double *Vdelta)
 {
+	// RR = distance from being straight downwind (distance 'crosswind') of the upwind turbine, measured in the number of upwind turbine radii
+	// DD = Distance Downwind, measured in the number of upwind turbine radii (e.g. 2.5 = 2.5 times the radius of the upwind turbine)
+	// Sigma = turbulence intensity
+	// CT = Thrust coeff
+
+
 	if (RR > 20.0 || Sigma <= 0.0 || DD <= 0.0 || CT <= 0.0)
 	{
 		*Vdelta = 0.0;
@@ -285,13 +289,14 @@ int wind_power(
 		wt_id[i] = wid;
 	}
 
-	// calculate downwind propagation of wind speed reduction due to upwind turbines
+	// Wake Model: calculate downwind propagation of wind speed reduction due to upwind turbines
 	for (i=0;i<NumWT-1;i++)
 	{
-		for (j=i+1;j<NumWT;j++)
+		for (j=i+1; j<NumWT; j++)
 		{
 			// 'i' represents up-wind turbine
 			// 'j' represents down-wind turbine
+			// All distances in these calculations have already been converted into units of wind turbine blade radii
 
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
 			double dd = Dn[j] - Dn[i]; 
@@ -318,7 +323,7 @@ int wind_power(
 			{
 				// call turbine power
 				turbine_power( Wind[j],
-					Alpha_T,
+					Alpha_T, // shear
 					Hub_Ht,
 					Data_Ht,
 					Spd_CtIn,
