@@ -101,13 +101,23 @@ void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
 	*CP = out_cp; // TFF, Nov 14, 2012 - CP seems to be completely un-used as an output or input
 }
 
+// wake modeling - calculating the change in wind speed due to wake effects of upwind turbine
 void vel_delta_loc( double RR, double DD, double Sigma, double CT, double *SigLocal, double *Vdelta)
 {
+	// vel_delta_loc() can return values > 1 for delt, which leads to negative wind speed at turbine j
+	// turbine_power() will handle a negative wind speed by setting power output, thrust, and turbulence to zero
+	// This seems prone to errors, Wind[j] should probably be limited to values >=0
+
 	// RR = distance from being straight downwind (distance 'crosswind') of the upwind turbine, measured in the number of upwind turbine radii
 	// DD = Distance Downwind, measured in the number of upwind turbine radii (e.g. 2.5 = 2.5 times the radius of the upwind turbine)
 	// Sigma = turbulence intensity
 	// CT = Thrust coeff
 
+	// The calculated value of SigLocal, passed out of function, will then be sent back in as the new Sigma input the next time
+	// this function is called for the same turbine.  So, Sigma can only increase due to influence of other (upwind) turbines,
+	// based on the equation for SigLocal (square root of two numbers squared, where one number is Sigma)
+	// Note that the calculation of SigLocal does NOT include RR - so it's only influenced by how far upwind the other turbine is,
+	// EVEN IF IT'S 19 ROTOR RADII TO THE SIDE!!!
 
 	if (RR > 20.0 || Sigma <= 0.0 || DD <= 0.0 || CT <= 0.0)
 	{
@@ -116,7 +126,7 @@ void vel_delta_loc( double RR, double DD, double Sigma, double CT, double *SigLo
 	}
 	else
 	{
-		double SigAdd = (CT/7.0)*(1.0-(2.0/5.0)*log(2*DD));
+		double SigAdd = (CT/7.0)*(1.0-(2.0/5.0)*log(2*DD)); // NOTE that this equation does not account for how far over the turbine is!!
 		*SigLocal = sqrt( SigAdd*SigAdd + Sigma*Sigma );
 		double AA = (*SigLocal)*(*SigLocal)*DD*DD;
 		double ArgExp = max_of( -99.0, (-(RR*RR)/(2*AA)) );
@@ -289,13 +299,18 @@ int wind_power(
 		wt_id[i] = wid;
 	}
 
-	// Wake Model: calculate downwind propagation of wind speed reduction due to upwind turbines
-	for (i=0;i<NumWT-1;i++)
+	// we calculated the output of the most upwind turbine above, now we have to go through the remaining turbines in the farm
+	// the i loop is going through the turbines, from first (most upwind) to last (most downwind)
+	// for each turbine i, if the output of all upwind turbines has already been calculated (j = i+1),
+	// then set this turbine's output.
+	// then go through the j loop, calculating this turbine's impact on the wind speed at each downwind turbine
+
+	for (i=0;i<NumWT-1;i++) // upwind turbines
 	{
-		for (j=i+1; j<NumWT; j++)
+		for (j=i+1; j<NumWT; j++) // downwind turbines
 		{
-			// 'i' represents up-wind turbine
-			// 'j' represents down-wind turbine
+			// Wake Model: calculate downwind propagation of wind speed reduction due to upwind turbines
+
 			// All distances in these calculations have already been converted into units of wind turbine blade radii
 
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
@@ -311,17 +326,18 @@ int wind_power(
 			double rr = Cs[j] - Cs[i];
 				
 			// Calculate the wind speed reduction and turbulence at turbine j, due to turbine i
-			// vel_delta_loc() can return values > 1 for delt, which leads to negative wind speed at turbine j
-			// turbine_power() will handle a negative wind speed by setting power output, thrust, and turbulence to zero
-			// This seems prone to errors, Wind[j] should probably be limited to values >=0
+			// turbulence coeff for turbine j will be impacted (always added to) by all the upwind turbines based on how far upwind they are.
 			double sig, delt;
 			vel_delta_loc( rr, dd, Turbul[j], Thrust[i], &sig, &delt);
 			Wind[j] = Wind[j]*(1-delt);
 			Turbul[j] = sig;
 
+			// when j = i+1, (first time through the j loop for each i loop) that means all the turbines upwind 
+			// of this one (j) have already had their outputs calculated
+			// so now we'll set this turbine's output, then we can calculate its contribution (wake impacts) for all
+			// of the downwind (j >= i+2) turbines
 			if (j==i+1)
 			{
-				// call turbine power
 				turbine_power( Wind[j],
 					Alpha_T, // shear
 					Hub_Ht,
