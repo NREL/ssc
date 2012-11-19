@@ -329,9 +329,22 @@ bool windfile::read( double requested_height,
 
 	if (find_closest(index, DIR, ncols, requested_height) )
 	{
-		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+		// interpolating direction is a little more complicated
+		double dir1, dir2, angle;
+		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
+		if ( interp_direction )
 		{
-			*direction = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+			dir1 = (values[index]<360) ? values[index] : 0;
+			dir2 = (values[index2]<360) ? values[index2] : 0;
+			angle = ( fabs(dir1-dir2) < 180 ) ? fabs(dir1-dir2) : 360 - fabs(dir1-dir2);
+			interp_direction &= (angle <= 90 ); // OK to interpolate between two directions at two different heights if they are < 90 deg apart
+		}
+		
+		if (interp_direction)
+		{
+			*direction = (dir2>dir1) ? dir2 : dir1;
+			*direction += angle/2;
+			if (*direction>=360) *direction -= 360;
 			*closest_dir_meas_height_in_file = requested_height;
 		}
 		else
