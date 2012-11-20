@@ -107,6 +107,8 @@ namespace util
 	private:
 		T *t_array;
 		size_t n_rows, n_cols;
+	protected:
+		T *Tarray(){return t_array;}	//mjw -- Added to provide derived classes with access to data
 	public:
 
 		matrix_t()
