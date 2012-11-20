@@ -331,20 +331,38 @@ bool windfile::read( double requested_height,
 	{
 		// interpolating direction is a little more complicated
 		double dir1, dir2, angle;
+		double ht1, ht2;
 		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
 		if ( interp_direction )
 		{
-			dir1 = (values[index]<360) ? values[index] : 0;
+			dir1 = (values[index]<360) ? values[index] : 0; // set any 360 deg values to zero
 			dir2 = (values[index2]<360) ? values[index2] : 0;
-			angle = ( fabs(dir1-dir2) < 180 ) ? fabs(dir1-dir2) : 360 - fabs(dir1-dir2);
+			ht1 = m_heights[index];
+			ht2 = m_heights[index2];
+			if (dir1>dir2)
+			{	// swap
+				double temp = dir2;
+				dir2=dir1;
+				dir1 = temp;
+				temp = ht2;
+				ht2 = ht1;
+				ht1 = temp;
+			}
+			angle = ( (dir2-dir1) < 180 ) ? (dir2-dir1) : 360.0 - (dir2-dir1);
 			interp_direction &= (angle <= 90 ); // OK to interpolate between two directions at two different heights if they are < 90 deg apart
 		}
 		
 		if (interp_direction)
 		{
-			*direction = (dir2>dir1) ? dir2 : dir1;
-			*direction += angle/2;
-			if (*direction>=360) *direction -= 360;
+			// special case when interpolating across straight north (0 degrees)
+			if (dir1<90 && dir2>270) 
+			{
+				*direction = util::interpolate(ht1, dir1+90.0, ht2, dir2-270.0, requested_height)-90.0;
+				if (*direction<0) *direction += 360.0;
+			}
+			else
+				*direction = util::interpolate(ht1, dir1, ht2, dir2, requested_height);
+
 			*closest_dir_meas_height_in_file = requested_height;
 		}
 		else
@@ -399,7 +417,7 @@ bool windfile::find_closest( int& closest_index, int id, int ncols, double reque
 	return (closest_index >= 0 && closest_index < ncols);
 }
 
-bool windfile::can_interpolate( int index1, int index2, int ncols, int requested_height )
+bool windfile::can_interpolate( int index1, int index2, int ncols, double requested_height )
 {
 	if ( index1<0 || index2<0 ) return false;
 	if ( index1>=ncols || index2>=ncols ) return false;

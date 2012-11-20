@@ -15,7 +15,7 @@ private:
 	std::vector<double> m_heights;
 
 	bool find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1 );
-	bool can_interpolate( int index1, int index2, int ncols, int requested_height );
+	bool can_interpolate( int index1, int index2, int ncols, double requested_height );
 
 public:
 	enum { INVAL, 
