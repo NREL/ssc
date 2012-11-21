@@ -408,9 +408,8 @@ bool windfile::find_closest( int& closest_index, int id, int ncols, double reque
 		{
 			if ( fabs(m_heights[i] - requested_height) < height_diff )
 			{
-				// can't be on the same side of requested_height as index_to_exclude
-				if ( index_to_exclude>=0 )
-				{
+				if ( index_to_exclude>=0 ) // we're looking for the next closest column for interpolation
+				{	// the next closest measurement height can't be on the same side of requested_height as index_to_exclude
 					if ( (m_heights[i] > requested_height) && (m_heights[index_to_exclude] > requested_height) ) continue;
 					if ( (m_heights[i] < requested_height) && (m_heights[index_to_exclude] < requested_height) ) continue;
 				}
