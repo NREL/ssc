@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <math.h>
+#include "lib_util.h"
+
 
 #ifndef DTOR
 #define DTOR 0.0174532925
@@ -19,92 +21,69 @@ static inline double min_of(double a, double b)
 }
 
 
-void turbine_power( double Vel_T, double Alpha_T, double Hub_Ht, double DataHt,
-	double Spd_CtIn, double Rotor_Di,
-	double Rho_T, double Spd_Ratd, double Pwr_Ratd,
-	int Ctl_Mode, double LossC, double LossP, double PC_wspd[], double PC_pwr[], int Num_Pair,
-	double *PWECS, double *CT, double *CP )
+void turbine_power( double fWindVelocityAtDataHeight, double fShearCoefficient, double Hub_Ht, double fDataHeight,
+	double fCutInSpeed, double Rotor_Di,
+	double fAirDensity, double Spd_Ratd, double Pwr_Ratd,
+	int Ctl_Mode, double LossC, double fPercentLoss, double afPowerCurve_Speeds[], double afPowerCurve_TurbineOutputs[], int Num_Pair,
+	double *fTurbineOutput, double *fThrustCoefficient )
 {
+	// default outputs to zero
+	*fThrustCoefficient = 0;
+	*fTurbineOutput = 0;
 
-	double out_pwr=0.0, out_ct=0.0, out_cp=0.0;
-
-	// CORRECT SITE WIND SPEED TO ROTOR CENTER HEIGHT 
-	if (Alpha_T > 1.0) Alpha_T = 1.0/7.0;
-
-	double V_Hub = Vel_T * pow(Hub_Ht/DataHt, Alpha_T);
+	// If the wind speed measurement height (fDataHeight) differs from the turbine hub height (Hub_Ht), use the shear to correct it. 
+	if (fShearCoefficient > 1.0) fShearCoefficient = 1.0/7.0;
+	double fWindSpeedAtHubHeight = fWindVelocityAtDataHeight * pow(Hub_Ht/fDataHeight, fShearCoefficient);
 	
-	// POWER OUTPUT CALCULATION
-
-	if (V_Hub < PC_wspd[0])	
-		out_pwr = 0.0; // power is 0 when winds are calm
-	else if (V_Hub > PC_wspd[Num_Pair-1]) 
-		out_pwr = PC_pwr[Num_Pair-1]; // wind speed greater than maximum: power output is last value
-	else 
+	// Find power from turbine power curve
+	double out_pwr=0.0;
+	if ( (fWindSpeedAtHubHeight > afPowerCurve_Speeds[0]) && (fWindSpeedAtHubHeight < afPowerCurve_Speeds[Num_Pair-1]) ) 
 	{
 		int j = 1;
-		while ( PC_wspd[j] <= V_Hub )
-			j++; // find first PC_wspd > V_Hub
+		while ( afPowerCurve_Speeds[j] <= fWindSpeedAtHubHeight )
+			j++; // find first afPowerCurve_Speeds > fWindSpeedAtHubHeight
 
-		out_pwr = PC_pwr[j-1] 
-				+  ( (V_Hub-PC_wspd[j-1])
-					* (PC_pwr[j] - PC_pwr[j-1])/( PC_wspd[j]-PC_wspd[j-1]) ); // !Linear interpolation
+		out_pwr = util::interpolate(afPowerCurve_Speeds[j-1], afPowerCurve_TurbineOutputs[j-1], afPowerCurve_Speeds[j], afPowerCurve_TurbineOutputs[j], fWindSpeedAtHubHeight);
 	}
+	else if (fWindSpeedAtHubHeight >= afPowerCurve_Speeds[Num_Pair-1]) 
+		out_pwr = afPowerCurve_TurbineOutputs[Num_Pair-1]; // wind speed greater than maximum in the power curve: power output is last value
 
-	if ( V_Hub < Spd_CtIn) out_pwr = 0.0; // Check against turbine cut-in speed
+	// Check against turbine cut-in speed
+	if ( fWindSpeedAtHubHeight < fCutInSpeed) out_pwr = 0.0; 
 
 	// wind turbine output corrected for site air density
-	out_pwr *= Rho_T/physics::AIR_DENSITY_SEA_LEVEL;
-	double NewVRat = Spd_Ratd*pow(Rho_T/physics::AIR_DENSITY_SEA_LEVEL, 1.0/3.0);
+	out_pwr *= fAirDensity/physics::AIR_DENSITY_SEA_LEVEL;
 
-	if (Ctl_Mode == 1) // pitch control
+	// stall control (Ctl_Mode == 2) defaults to simple density ratio
+	if ( (Ctl_Mode == 1)/*pitch control*/ || (Ctl_Mode == 0)/*var speed control*/ )
 	{
+		double NewVRat = Spd_Ratd*pow(fAirDensity/physics::AIR_DENSITY_SEA_LEVEL, 1.0/3.0);
 		if (out_pwr > Pwr_Ratd)
 			out_pwr = Pwr_Ratd;
-		else if (V_Hub > NewVRat)
+		else if (fWindSpeedAtHubHeight > NewVRat)
 			out_pwr = Pwr_Ratd;
-		//else
-		//	out_pwr *= Rho_T/Air_Dens; <- REMOVED BY TFF JULY 2012 SINCE THIS HAS ALREADY BEEN DONE ABOVE, and it should not be done twice
 	}
-	else if (Ctl_Mode == 0) // var speed control
-	{
-		if (out_pwr > Pwr_Ratd)
-			out_pwr = Pwr_Ratd;
-		else if (V_Hub > NewVRat)
-			out_pwr = Pwr_Ratd;
-		//else
-		//	out_pwr *= Rho_T/Air_Dens;  <- REMOVED BY TFF JULY 2012 SINCE THIS HAS ALREADY BEEN DONE ABOVE, and it should not be done twice
-	} // !stall defaults to simple density ratio
 
-	//C    Hours, Cp, and Adjustments by Number of WTs and by Loss Coefficient 
-
+	// if calculated power is > 1% of rating, set outputs
 	if (out_pwr > (Pwr_Ratd * 0.01))
 	{
-		out_pwr = out_pwr*(1.0-LossP)-LossC;
-		double pden = 0.5*Rho_T*pow(V_Hub, 3.0);
+		out_pwr = out_pwr*(1.0-fPercentLoss)-LossC;
+		double pden = 0.5*fAirDensity*pow(fWindSpeedAtHubHeight, 3.0);
 		double area = physics::PI/4.0*Rotor_Di*Rotor_Di;
-		out_cp = max_of( 0.0, 1000.0*out_pwr/(pden*area) );
-		if (out_cp < 0.0)
-			out_ct = 0.0;
-		else
-			out_ct = max_of( 0.0, -1.453989e-2+1.473506*out_cp-2.330823*out_cp*out_cp+3.885123*out_cp*out_cp*out_cp );
-	}
-	else
-	{
-		out_pwr = 0.0;
-		out_cp = 0.0;
-		out_ct = 0.0;
-	}
+		double fPowerCoefficient = max_of( 0.0, 1000.0*out_pwr/(pden*area) );
 
-	// set output variables;
-	*PWECS = out_pwr;
-	*CT = out_ct;
-	*CP = out_cp; // TFF, Nov 14, 2012 - CP seems to be completely un-used as an output or input
+		// set outputs to something other than zero
+		*fTurbineOutput = out_pwr;
+		if (fPowerCoefficient >= 0.0)
+			*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );
+	}
+	return;
 }
 
 // wake modeling - calculating the change in wind speed due to wake effects of upwind turbine
 void vel_delta_loc( double RR, double DD, double Sigma, double CT, double *SigLocal, double *Vdelta)
 {
-	// vel_delta_loc() can return values > 1 for delt, which leads to negative wind speed at turbine j
+	// vel_delta_loc() can return values > 1 for Vdelta, which leads to negative wind speed at turbine j
 	// turbine_power() will handle a negative wind speed by setting power output, thrust, and turbulence to zero
 	// This seems prone to errors, Wind[j] should probably be limited to values >=0
 
@@ -136,48 +115,48 @@ void vel_delta_loc( double RR, double DD, double Sigma, double CT, double *SigLo
 
 void coordtrans( double N, double E, double thetaRada, double *D, double *C)
 {
-//C     THIS SUBROUTINE TRANSFORMS THE MAP EAST,NORTH COORDINATE SYSTEM TO A 
-//C     DOWNWIND,CROSSWIND ORIENTATION ORTHOGONAL TO CURRENT WIND DIRECTION.
+	// This subroutine transforms the map east,north coordinate system to a 
+	// downwind,crosswind orientation orthogonal to current wind direction.
 	double thetaRadb = thetaRada +(physics::PI/2); //! Rotates to 270 deg (N,E) = 0 deg in (D,E)
 	*D = E*cos(thetaRadb)-N*sin(thetaRadb); //!northerly = FROM North"
 	*C = E*sin(thetaRadb)+N*cos(thetaRadb);
 }
 
 int wind_power(
-			// INPUTS
-				double Vel_T,		// wind velocity m/s
-				double Theta_T,		// wind direction 0-360, 0=N
-				double Alpha_T,		// shear exponent
-				double Sigma_T,		// turbulence intensity (%)
-				double BarPAtm,		// barometric pressure (Atm)
-				double TdryC,		// dry bulb temp ('C)
-				int NumWT,			// number of wind turbines
-				double WT_x[],		// x coordinates of wind turbines
-				double WT_y[],		// y coordinates of wind turbines
-				int PC_len,			// number of power curve points
-				double PC_w[],		// Power curve wind speeds m/s
-				double PC_p[],		// Power curve output power (kW)
-				double Data_Ht,		// Site data collection height (m)
-				double Hub_Ht,		// each turbine's hub height (m)
-				double Rotor_Di,	// turbine rotor diameter (m)
-				int Ctl_Mode,		// control mode 0=pitch, 1=variable, 2=simple
-				double Spd_CtIn,	// wind speed Cut in (m/s)
-				double Spd_Ratd,	// rated wind speed
-				double Pwr_Ratd,	// rated power
-				double LossC,		// constant loss
-				double LossP,		// loss as percent
+	// INPUTS
+		double Vel_T,		// wind velocity m/s
+		double Theta_T,		// wind direction 0-360, 0=N
+		double Alpha_T,		// shear exponent
+		double Sigma_T,		// turbulence intensity (%)
+		double BarPAtm,		// barometric pressure (Atm)
+		double TdryC,		// dry bulb temp ('C)
+		int NumWT,			// number of wind turbines
+		double WT_x[],		// x coordinates of wind turbines
+		double WT_y[],		// y coordinates of wind turbines
+		int PC_len,			// number of power curve points
+		double PC_w[],		// Power curve wind speeds m/s
+		double PC_p[],		// Power curve output power (kW)
+		double Data_Ht,		// Site data collection height (m)
+		double Hub_Ht,		// each turbine's hub height (m)
+		double Rotor_Di,	// turbine rotor diameter (m)
+		int Ctl_Mode,		// control mode 0=pitch, 1=variable, 2=simple
+		double Spd_CtIn,	// wind speed Cut in (m/s)
+		double Spd_Ratd,	// rated wind speed
+		double Pwr_Ratd,	// rated power
+		double LossC,		// constant loss
+		double LossP,		// loss as percent
 			
-			// OUTPUTS
-				double *FarmP,     // total farm power output
-				double Dn[],       // downwind coordinate of each WT
-				double Cs[],       // crosswind coordinate of each WT
-				double Power[],    // calculated power of each WT
-				double Thrust[],   // thrust calculation at each WT
-				double Eff[],      // downwind efficiency of each WT
-				double Wind[],     // wind speed at each WT
-				double Turbul[]    // turbulence coeff at each WT
+	// OUTPUTS
+		double *FarmP,     // total farm power output
+		double Dn[],       // downwind coordinate of each WT
+		double Cs[],       // crosswind coordinate of each WT
+		double Power[],    // calculated power of each WT
+		double Thrust[],   // thrust calculation at each WT
+		double Eff[],      // downwind efficiency of each WT
+		double Wind[],     // wind speed at each WT
+		double Turbul[]    // turbulence coeff at each WT
 
-				)
+		)
 {
 	if (NumWT > 256)
 		return 0;
@@ -261,8 +240,7 @@ int wind_power(
 				PC_p,
 				PC_len,
 				&pwecs,
-				&ct,
-				&cp );
+				&ct );
 
 	
 	// if there is only one turbine, we're done
@@ -329,7 +307,8 @@ int wind_power(
 			// turbulence coeff for turbine j will be impacted (always added to) by all the upwind turbines based on how far upwind they are.
 			double sig, delt;
 			vel_delta_loc( rr, dd, Turbul[j], Thrust[i], &sig, &delt);
-			Wind[j] = Wind[j]*(1-delt);
+			if (delt>1.0) delt = 1.0;
+			Wind[j] = Wind[j]*(1.0-delt);
 			Turbul[j] = sig;
 
 			// when j = i+1, (first time through the j loop for each i loop) that means all the turbines upwind 
@@ -354,8 +333,7 @@ int wind_power(
 					PC_p,
 					PC_len,
 					&pwecs,
-					&ct,
-					&cp );
+					&ct );
 
 				Power[j] = pwecs;
 				Thrust[j] = ct;
@@ -476,6 +454,7 @@ double turbine_output_using_weibull(double rotor_diameter, double weibull_k, dou
 
 	double hub_ht_windspeed = pow((hub_ht/50.0),shear) * resource_class;
 	double denom = exp(gammaln(1+(1/hub_ht_windspeed)));
+
 	double lambda = hub_ht_windspeed/denom;
 	//double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
 

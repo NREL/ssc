@@ -2,7 +2,6 @@
 #define __lib_windwatts_h
 
 int wind_power(
-
 			// INPUTS
 				double Vel_T,    // wind velocity m/s
 				double Theta_T,  // wind direction 0-360, 0=N
