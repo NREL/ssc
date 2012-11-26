@@ -705,18 +705,6 @@ public:
 		ibi_oth_per = as_double("ibi_oth_percent")*0.01*total_cost;
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue");
 
-		// itc fixed
-		itc_fed_amount = as_double("itc_fed_amount");
-		itc_sta_amount = as_double("itc_sta_amount");
-
-		// itc percent - max value used for comparison to qualifying costs
-		double itc_fed_frac = as_double("itc_fed_percent")*0.01;
-		itc_fed_per = itc_fed_frac * total_cost;
-		if (itc_fed_per > as_double("itc_fed_percent_maxvalue")) itc_fed_per = as_double("itc_fed_percent_maxvalue");
-		double itc_sta_frac = as_double("itc_sta_percent")*0.01;
-		itc_sta_per = itc_sta_frac * total_cost;
-		if (itc_sta_per > as_double("itc_sta_percent_maxvalue")) itc_sta_per = as_double("itc_sta_percent_maxvalue");
-
 		// cbi
 		cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
 		if (cbi_fed_amount > as_double("cbi_fed_maxvalue")) cbi_fed_amount = as_double("cbi_fed_maxvalue");
@@ -738,7 +726,8 @@ public:
 		compute_production_incentive_IRS_2010_37( CF_ptc_fed, nyears, "ptc_fed_amount", "ptc_fed_term", "ptc_fed_escal" );
 
 
-		double federal_depr_basis = total_cost
+		// reduce itc bases
+		double federal_itc_basis = total_cost
 			- ( as_boolean("ibi_fed_amount_deprbas_fed")  ? ibi_fed_amount : 0 )
 			- ( as_boolean("ibi_sta_amount_deprbas_fed")  ? ibi_sta_amount : 0 )
 			- ( as_boolean("ibi_uti_amount_deprbas_fed")  ? ibi_uti_amount : 0 )
@@ -750,13 +739,19 @@ public:
 			- ( as_boolean("cbi_fed_deprbas_fed")  ? cbi_fed_amount : 0 )
 			- ( as_boolean("cbi_sta_deprbas_fed")  ? cbi_sta_amount : 0 )
 			- ( as_boolean("cbi_uti_deprbas_fed")  ? cbi_uti_amount : 0 )
-			- ( as_boolean("cbi_oth_deprbas_fed")  ? cbi_oth_amount : 0 )
-			- ( as_boolean("itc_fed_amount_deprbas_fed")   ? 0.5*itc_fed_amount : 0 )
-			- ( as_boolean("itc_fed_percent_deprbas_fed")  ? 0.5*itc_fed_per : 0 )
-			- ( as_boolean("itc_sta_amount_deprbas_fed")   ? 0.5*itc_sta_amount : 0 )
-			- ( as_boolean("itc_sta_percent_deprbas_fed")  ? 0.5*itc_sta_per : 0 );
+			- ( as_boolean("cbi_oth_deprbas_fed")  ? cbi_oth_amount : 0 );
 
-		double state_depr_basis = total_cost
+
+		// itc fixed
+		double itc_fed_amount = as_double("itc_fed_amount");
+
+		// itc percent - max value used for comparison to qualifying costs
+		double itc_fed_frac = as_double("itc_fed_percent")*0.01;
+		double itc_fed_per = itc_fed_frac * federal_itc_basis;
+		if (itc_fed_per > as_double("itc_fed_percent_maxvalue")) itc_fed_per = as_double("itc_fed_percent_maxvalue");
+
+
+		double state_itc_basis = total_cost
 			- ( as_boolean("ibi_fed_amount_deprbas_sta")  ? ibi_fed_amount : 0 )
 			- ( as_boolean("ibi_sta_amount_deprbas_sta")  ? ibi_sta_amount : 0 )
 			- ( as_boolean("ibi_uti_amount_deprbas_sta")  ? ibi_uti_amount : 0 )
@@ -768,11 +763,32 @@ public:
 			- ( as_boolean("cbi_fed_deprbas_sta")  ? cbi_fed_amount : 0 )
 			- ( as_boolean("cbi_sta_deprbas_sta")  ? cbi_sta_amount : 0 )
 			- ( as_boolean("cbi_uti_deprbas_sta")  ? cbi_uti_amount : 0 )
-			- ( as_boolean("cbi_oth_deprbas_sta")  ? cbi_oth_amount : 0 )
+			- ( as_boolean("cbi_oth_deprbas_sta")  ? cbi_oth_amount : 0 );
+
+
+		// itc fixed
+		double itc_sta_amount = as_double("itc_sta_amount");
+
+		// itc percent - max value used for comparison to qualifying costs
+		double itc_sta_frac = as_double("itc_sta_percent")*0.01;
+		double itc_sta_per = itc_sta_frac * state_itc_basis;
+		if (itc_sta_per > as_double("itc_sta_percent_maxvalue")) itc_sta_per = as_double("itc_sta_percent_maxvalue");
+
+		double federal_depr_basis = federal_itc_basis
+			- ( as_boolean("itc_fed_amount_deprbas_fed")   ? 0.5*itc_fed_amount : 0 )
+			- ( as_boolean("itc_fed_percent_deprbas_fed")  ? 0.5*itc_fed_per : 0 )
+			- ( as_boolean("itc_sta_amount_deprbas_fed")   ? 0.5*itc_sta_amount : 0 )
+			- ( as_boolean("itc_sta_percent_deprbas_fed")  ? 0.5*itc_sta_per : 0 );
+
+
+		double state_depr_basis = state_itc_basis 
 			- ( as_boolean("itc_fed_amount_deprbas_sta")   ? 0.5*itc_fed_amount : 0 )
 			- ( as_boolean("itc_fed_percent_deprbas_sta")  ? 0.5*itc_fed_per : 0 )
 			- ( as_boolean("itc_sta_amount_deprbas_sta")   ? 0.5*itc_sta_amount : 0 )
 			- ( as_boolean("itc_sta_percent_deprbas_sta")  ? 0.5*itc_sta_per : 0 );
+
+
+
 
 		switch( as_integer("depr_sta_type") )
 		{
