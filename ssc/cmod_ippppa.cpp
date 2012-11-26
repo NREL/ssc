@@ -743,11 +743,11 @@ public:
 
 
 		// itc fixed
-		double itc_fed_amount = as_double("itc_fed_amount");
+		itc_fed_amount = as_double("itc_fed_amount");
 
 		// itc percent - max value used for comparison to qualifying costs
 		double itc_fed_frac = as_double("itc_fed_percent")*0.01;
-		double itc_fed_per = itc_fed_frac * federal_itc_basis;
+		itc_fed_per = itc_fed_frac * federal_itc_basis;
 		if (itc_fed_per > as_double("itc_fed_percent_maxvalue")) itc_fed_per = as_double("itc_fed_percent_maxvalue");
 
 
@@ -767,11 +767,11 @@ public:
 
 
 		// itc fixed
-		double itc_sta_amount = as_double("itc_sta_amount");
+		itc_sta_amount = as_double("itc_sta_amount");
 
 		// itc percent - max value used for comparison to qualifying costs
 		double itc_sta_frac = as_double("itc_sta_percent")*0.01;
-		double itc_sta_per = itc_sta_frac * state_itc_basis;
+		itc_sta_per = itc_sta_frac * state_itc_basis;
 		if (itc_sta_per > as_double("itc_sta_percent_maxvalue")) itc_sta_per = as_double("itc_sta_percent_maxvalue");
 
 		double federal_depr_basis = federal_itc_basis
