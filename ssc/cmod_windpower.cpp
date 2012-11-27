@@ -70,15 +70,15 @@ public:
 		ssc_number_t *wt_x = as_array( "wt_x", &nwt );
 		ssc_number_t *wt_y = as_array( "wt_y", NULL );
 
+		size_t nstep = 8760;
+
 		// have to be allocated to return without errors
-		ssc_number_t *farmpwr = allocate( "farmpwr", 8760 );
-		ssc_number_t *wspd = allocate("windspd", 8760);
-		ssc_number_t *wdir = allocate("winddir", 8760);
-		ssc_number_t *air_temp = allocate("temp", 8760);
-		ssc_number_t *air_pres = allocate("pres", 8760);
-		util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", 8760, nwt );
-		util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", 8760, nwt );
-		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", 8760, nwt );
+		ssc_number_t *farmpwr = allocate( "farmpwr", nstep );
+		ssc_number_t *wspd = allocate("windspd", nstep);
+		ssc_number_t *wdir = allocate("winddir", nstep);
+		ssc_number_t *air_temp = allocate("temp", nstep);
+		ssc_number_t *air_pres = allocate("pres", nstep);
+
 
 		std::vector<double> Dn(nwt), Cs(nwt), 
 			Power(nwt), Thrust(nwt), Eff(nwt), 
@@ -115,8 +115,8 @@ public:
 
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * nwt;
 
-			for (i=0;i<8760;i++)
-				farmpwr[i] = farm_kw/8760.0f;
+			for (i=0;i<nstep;i++)
+				farmpwr[i] = farm_kw/ (ssc_number_t) nstep;
 
 			return;
 		}
@@ -140,11 +140,14 @@ public:
 		}
 
 
-		util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", 8760, nwt );
-		util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", 8760, nwt );
-		size_t nstep = 8760;
+		// these won't be useful until matrix variables can be passed back as outputs
+		//util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", nstep, nwt );
+		//util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", nstep, nwt );
+		//util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", nstep, nwt );
+		//util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", nstep, nwt );
+		//util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", nstep, nwt );
 
-		for (i=0;i<8760;i++)
+		for (i=0;i<nstep;i++)
 		{
 			
 			if ( i % (nstep/20) == 0)
@@ -183,8 +186,8 @@ public:
 						rotor_di,
 						ctl_mode,
 						cutin,
-						0,
-						0,
+						0, // rated speed
+						0, // rated power
 						lossc,
 						lossp/100.0,
 
@@ -207,14 +210,14 @@ public:
 			air_pres[i] = (ssc_number_t) pres;
 
 		
-			for (j=0;j<nwt;j++)
-			{
-				mat_dn.at(i,j) = (ssc_number_t)Dn[j];
-				mat_cs.at(i,j) = (ssc_number_t)Cs[j];
-				mat_wtpwr.at(i,j) = (ssc_number_t) Power[j];
-				mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
-				mat_wtvel.at(i,j) = (ssc_number_t) Wind[j];
-			}
+			//for (j=0;j<nwt;j++)
+			//{
+			//	mat_dn.at(i,j) = (ssc_number_t)Dn[j];
+			//	mat_cs.at(i,j) = (ssc_number_t)Cs[j];
+			//	mat_wtpwr.at(i,j) = (ssc_number_t) Power[j];
+			//	mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
+			//	mat_wtvel.at(i,j) = (ssc_number_t) Wind[j];
+			//}
 		}
 	}
 
