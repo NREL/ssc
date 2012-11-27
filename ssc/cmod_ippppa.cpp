@@ -695,14 +695,14 @@ public:
 		ibi_uti_amount = as_double("ibi_uti_amount");
 		ibi_oth_amount = as_double("ibi_oth_amount");
 
-		// ibi percent
-		ibi_fed_per = as_double("ibi_fed_percent")*0.01*total_cost;
+		// ibi percent - // 4/25/11 NOTE DHF models include IDC for ITC and depr bases but not for IBI bases
+		ibi_fed_per = as_double("ibi_fed_percent")*0.01*(total_cost-constr_total_financing);
 		if (ibi_fed_per > as_double("ibi_fed_percent_maxvalue")) ibi_fed_per = as_double("ibi_fed_percent_maxvalue");
-		ibi_sta_per = as_double("ibi_sta_percent")*0.01*total_cost;
+		ibi_sta_per = as_double("ibi_sta_percent")*0.01*(total_cost-constr_total_financing);
 		if (ibi_sta_per > as_double("ibi_sta_percent_maxvalue")) ibi_sta_per = as_double("ibi_sta_percent_maxvalue");
-		ibi_uti_per = as_double("ibi_uti_percent")*0.01*total_cost;
+		ibi_uti_per = as_double("ibi_uti_percent")*0.01*(total_cost-constr_total_financing);
 		if (ibi_uti_per > as_double("ibi_uti_percent_maxvalue")) ibi_uti_per = as_double("ibi_uti_percent_maxvalue");
-		ibi_oth_per = as_double("ibi_oth_percent")*0.01*total_cost;
+		ibi_oth_per = as_double("ibi_oth_percent")*0.01*(total_cost-constr_total_financing);
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue");
 
 		// cbi
