@@ -50,8 +50,9 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",              "Shading factor for beam radiation",               "",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 
-var_info_invalid };
+	var_info_invalid };
 
 class cm_pvwattsv1 : public compute_module
 {
@@ -96,6 +97,8 @@ public:
 		ssc_number_t *p_ac = allocate("ac", 8760);
 		ssc_number_t *p_tcell = allocate("tcell", 8760);
 		ssc_number_t *p_poa = allocate("poa", 8760);
+
+		ssc_number_t *p_shad_beam_factor = allocate("shad_beam_factor", 8760);
 	
 		/* PV RELATED SPECIFICATIONS */
 		
@@ -133,7 +136,10 @@ public:
 			azimuth = 180.0;
 						
 		
-		std::vector<double> shad_beam_factor(8760, 1.0);
+//		initialize to no shading
+		for ( size_t j=0;j<8760;j++)
+			p_shad_beam_factor[j] = 1.0;
+
 		if ( is_assigned("shading_hourly" ) )
 		{
 			size_t len = 0;
@@ -141,7 +147,7 @@ public:
 			if ( len == 8760 )
 			{
 				for ( size_t j=0;j<8760;j++)
-					shad_beam_factor[j] = (double) vals[j];
+					p_shad_beam_factor[j] = vals[j];
 			}
 			else
 				throw exec_error("pvwattsv1", "hourly shading beam factors must have 8760 values");
@@ -159,7 +165,7 @@ public:
 			for (int m=0;m<12;m++)
 				for (int d=0;d<util::nday[m];d++)
 					for (int h=0;h<24;h++)
-						shad_beam_factor[c++] *= mat[ m*ncols + h ];
+						p_shad_beam_factor[c++] *= mat[ m*ncols + h ];
 		}
 
 		bool enable_azalt_beam_shading = false;
@@ -227,7 +233,7 @@ public:
 				irr.get_poa( &ibeam, &iskydiff, &ignddiff, 0, 0, 0);
 
 				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-				ibeam *= shad_beam_factor[i];
+				ibeam *= p_shad_beam_factor[i];
 				
 				// apply beam shading based on solar azimuth/altitude table
 				if ( enable_azalt_beam_shading )
