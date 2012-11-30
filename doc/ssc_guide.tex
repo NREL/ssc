@@ -1,0 +1,232 @@
+\documentclass{article}
+\usepackage{geometry} 
+\geometry{letterpaper} 
+%%%% Uncomment below to begin paragraphs with an empty line %%%%
+\usepackage[parfill]{parskip} 
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{moreverb}
+%\usepackage[section]{placeins}
+%\usepackage[below]{placeins}
+\usepackage{epstopdf}
+%\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+\newcommand\bslash{\char`\\}
+\newcommand\lt{\char`\<}
+\newcommand\gt{\char`\>}
+\newcommand{\tab}{\hspace*{2em}}
+\newcommand{\supers}[1]{\ensuremath{^\textrm{{\scriptsize #1}}}}
+\newcommand{\subs}[1]{\ensuremath{_\textrm{{\scriptsize #1}}}}
+\newcommand{\notebox}[1]{ \begin{center}\framebox[5.5in]{\begin{minipage}[t]{5.0in}\textbf{Note: }#1\end{minipage}}\end{center}}
+
+\title{SSC Reference Manual}
+\author{Aron P. Dobos}
+
+\begin{document}
+
+\maketitle
+\vspace{3in}
+\begin{abstract}
+The SSC (SAM Simulation Core) software library implements the underlying renewable energy system modeling calculation engine utilitized by the popular desktop System Advisor Model (SAM) tool.  SSC provides a simple and programmer-friendly application programming interface (API) that allows developers to directly integrate SAM calculations into other tools.  The API includes mechanisms to set input variable values, run simulations, and retrieve calculated outputs.  The library is provided to users as pre-compiled binary dynamic libraries for Windows, Mac OSX, and Linux, with the bare minimum system library dependencies.  While the native API language is ISO-standard C, language bindings for MATLAB, and Python are included.  The API and model implementations are thread-safe and reentrant, allowing the software to be efficiently utilized in a parallel computing environment.
+
+This document describes the software architecture of SSC, introduces the SSC Development Environment tool, explains how to set up simulations from code, query the library for variable information, and provides examples and ``case studies" in various programming languages to ease the adoption of SSC into other systems.  
+
+\textbf{Note.} The reader is assumed to have familiarity with the C programming language, as well as some level of proficiency using the System Advisor Model (SAM) tool.
+\end{abstract} 
+
+\newpage
+\tableofcontents
+%%\listoffigures
+%%\listoftables
+\newpage
+
+\section{Overview}
+
+The SSC software library provides a standard interface through which complex engineering and economic models of renewable energy systems can be configured and invoked.  The System Advisor Model (SAM) desktop application is essentially a user-friendly front-end for SSC, and uses SSC to perform all system performance and financial calculations.  It is assumed that the reader is well versed in SAM, its suite of models, typical inputs and outputs, and general usage.
+
+SSC is designed as a general simulation framework that is model agnostic.  For example, there is no specific \texttt{pvwatts(...)} function call in the API that accepts model parameters and returns a calculated result.  Rather, a generic mechanism is provided for sending a model data, running the model, and retrieving results from it.  
+
+The standard way to invoke a model in SSC involves three steps:
+
+\begin{enumerate}
+\item A generic data container is populated by the user with named variables and their values.  These variables are inputs to the model.
+\item A particular model (like \texttt{pvwattsv1}) is selected to \emph{process} the data container.  The model may run successfully using the input variables defined by the user, or fail with error messages.  If the model succeeds, it populates the data container with the calculated output variables.
+\item Calculated outputs are retrieved from the data container, or error messages are retrieved.
+\end{enumerate}
+
+Essentially, this sequence is no different than calling a function in a programming language.  Step~1 can be thought of as passing parameters to the function, step~2 as running the function, and step~3 as getting the calculated result returned.  In SSC, the ``function'' is called a \emph{module}, and the data container is simply \emph{data}.  The \emph{module} operates on the \emph{data} and transforms it by calculating new variables and adding them to the dataset.  In the API, these are represented by the \texttt{ssc\_module\_t} and \texttt{ssc\_data\_t} types, which will be covered in detail later.
+
+Different modules are available in SSC for each type of simulation possible in SAM.  A sample of modules is shown in Table~\ref{tab_sample_modules}.
+
+
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{ll}
+Module & Description \\
+\hline
+\texttt{pvwattsv1} & Implements the NREL PVWatts model for PV performance\\
+\texttt{pvsamv1} & Implements the component-based PV models in SAM\\
+\texttt{wfreader} & Reads standard format weather data files (TM2, TM3, EPW, SMW)\\
+\texttt{irradproc} & General purpose irradiance processor for calculating POA\\
+\texttt{windpower} & Implements the NREL wind turbine and simple wind farm model\\
+\texttt{cashloan} & Implements residential and commercial cashflow economic model\\
+\texttt{ippppa} & Commercial PPA and Independent Power Producer (IPP) financial models\\
+\texttt{annualoutput} & Calculates degraded out-years system output for the analysis period\\
+\texttt{utilityrate} & Calculates the value of energy using complex utility rate structures\\
+\end{tabular}
+\caption{Some commonly used SSC modules}
+\label{tab_sample_modules}
+\end{center}
+\end{table}
+
+To perform a complete technoeconomic systems analysis, multiple compute modules can be called in succession.  For example, when the PVWatts+Residential configuration is selected in SAM, several compute modules are called in to perform the calculation, as listed below.
+
+\begin{enumerate}
+\item \texttt{pvwattsv1}: The system parameters are used to calculate the hourly PV system performance.
+\item \texttt{annualoutput}: The availability and degradation factors are applied to the annual energy output for the duration of the specified analysis period.
+\item \texttt{utilityrate}: The value of the generated energy is calculated given the specifics of the complex utility rate structure, and the first year's hourly energy value is reported, along with the annual total value of energy at each year of the analysis period.
+\item \texttt{cashloan}: Given the amount of the energy produced each year and the dollar value of this energy, this module calculates the cost of energy, net present value, and other metrics of the system based on specified system cost, incentives, operation and maintainance costs, taxes, and loan parameters.
+\end{enumerate}
+
+In some cases, the output variables of one module have the right units and data points to feed directly into the next module in a sequence, but this is not enforced.  For example, the \texttt{pvwattsv1} module has an output variable \texttt{ac} which is the hourly energy in kWh produced by the system.   However, the \texttt{annualoutput} module requires an input with the name \texttt{energy\_net\_hourly}.  It is up to the user to ensure that variables are translated appropriately between the outputs of one module and the inputs of another, including any units conversions that may be necessary.  Luckily, SSC provides exhaustive documentation of all of the input variables required by a module and all of the outputs that will be calculated.  Working with input and output variables will be the topic of a subsequent chapter.
+
+\section{A Basic Example: PVWatts}
+
+In this section, we will write a simple command-line C program to calculate the monthly energy production of a 1 kW PV system at a particular location.  The complete source code for this example program is included with the SSC SDK in the file \texttt{example1\_pvwatts.c}.
+
+\subsection{Program Skeleton}
+
+The SSC API is defined a C header called \texttt{sscapi.h}, and this file must be included in your program before any SSC functions can be called.  We will assume that the weather file is specified as a command line argument, and is one of the types that the \texttt{pvwattsv1} can read (TM2, TM3, EPW, SMW).  The skeleton of our program might look like the listing below.
+
+\begin{verbatimtab}[4]
+#include <stdio.h>
+#include "sscapi.h"
+
+int main(int argc, char *argv[])
+{
+	if ( argc < 2 )
+	{
+		printf("usage: pvwatts.exe <weather-file>\n");
+		return -1;
+	}
+ 
+	// run PVWatts simulation for the specified weather file
+	
+	return 0;
+}
+\end{verbatimtab}
+
+\subsection{Setting up data inputs}
+
+Now we will fill in the comment in the middle of the code step-by-step.  Referring to the three step process outlined in the Overview, the first task is to create a data container.  This is done with the \texttt{ssc\_data\_create()} function call, which returns an \texttt{ssc\_data\_t} type.  If for some reason the function call fails due to the system having run out of memory, \texttt{NULL} will be returned.  It is important to check the result to make sure the data container was created successfully.
+
+\begin{verbatimtab}
+	ssc_data_t data = ssc_data_create();
+	if ( data == NULL )
+	{
+		printf("error: out of memory.\n");
+		return -1;
+	}
+\end{verbatimtab}
+
+Next, we assign the input variables required by the \texttt{pvwattsv1} module.  In Section~\ref{chap_variables}, we will show how to learn the data types, names, labels, and units of variables.  For now, it suffices to say that SSC supports data as numbers, text strings, arrays, matrices, and tables.
+
+\begin{verbatimtab}
+	ssc_data_set_string( data, "file_name", argv[1] ); // set the weather file name
+	ssc_data_set_number( data, "system_size", 1.0f );  // system size of 1 kW DC
+	ssc_data_set_number( data, "derate", 0.77f );      // system derate
+	ssc_data_set_number( data, "track_mode", 0 );      // fixed tilt system
+	ssc_data_set_number( data, "tilt", 20 );           // 20 degree tilt
+	ssc_data_set_number( data, "azimuth", 180 );       // south facing (180 degrees)
+\end{verbatimtab}
+
+At this point, we have a data container with six variables that are the input parameters to the module that we wish to run.  
+
+\subsection{Simulating and retrieving outputs}
+
+Next, an instance of the module itself must be created, per below.  The name of the desired module must be passed to the \texttt{ssc\_module\_create()} function.  If the specified module name is not recognized, or the system is out of memory, the function may return \texttt{NULL}.
+
+\begin{verbatimtab}
+	ssc_module_t module = ssc_module_create( "pvwattsv1" );
+	if ( NULL == module )
+	{
+		printf("error: could not create 'pvwattsv1' module.\n");
+		ssc_data_free( data );
+		return -1;
+	}
+\end{verbatimtab}
+
+Next, the simulation must be run.  If all the required input variables have been defined in the data container and have appropriate data types and values, the simulation should finish successfully.  Otherwise, an error will be flagged.  
+
+\begin{verbatimtab}
+	if ( ssc_module_exec( module, data ) == 0 )
+	{
+		printf("error during simulation.\n");
+		ssc_module_free( module );
+		ssc_data_free( data );
+		return -1;
+	}
+\end{verbatimtab}
+
+By default, the \texttt{ssc\_module\_exec()} function prints any log or error messages to standard output on the console.  There is a more complex way to run a simulation that can reroute messages somewhere else, for example if a program wanted to pop up a message box or collect all messages and return them to the sure.  This will be discussed in later sections.
+
+Assuming that the simulation succeeded, it is now time to extract the calculated results.  Modules may calculate hundreds of outputs, but for this example, we simply are interested in the total AC energy produced by the 1 kW PV system.  As it turns out, \texttt{pvwattsv1} only provides the hourly data, so it is up to us to sum up the hourly values.  The code snippet below shows how to query the data object for the \texttt{ac} variable and aggregate it.
+
+\begin{verbatimtab}
+	double ac_total = 0;
+	int len = 0;
+	ssc_number_t *ac = ssc_data_get_array( data, "ac", &len );
+	if ( ac != NULL )
+	{
+		int i;
+		for ( i=0; i<len; i++ )
+			ac_total += ac[i];
+		printf("ac: %lg kWh\n", ac_total*0.001 );
+	}
+	else
+	{
+		printf("variable 'ac' not found.\n");
+	}
+\end{verbatimtab}
+
+\subsection{Cleaning up}
+
+We're now finished simulating the PV system and retrieving the results.  To avoid filling up the computer's memory with unneeded data objects, it is important to free the memory when it is no longer needed.  To this end, the \texttt{ssc\_module\_free()} and \texttt{ssc\_data\_free()} functions are provided.  Note that after calling one of these functions, the \texttt{module} and \texttt{data} variables are invalidated and cannot be used unless reassigned to another or a new data object or module.
+
+\begin{verbatimtab}	
+	ssc_module_free( module );
+	ssc_data_free( data );
+\end{verbatimtab}
+
+\subsection{Compiling and running}
+
+Using the MinGW compiler toolchain on Windows, it is very straightforward to compile and run this example.  Simply issue the command below at the Windows command prompt (\texttt{cmd.exe} from Start/Run), assuming that the \texttt{sscapi.h} header file and 32-bit \texttt{ssc.dll} dynamic library is in the same folder as the source file.  The complete source code for this example is included in the SSC SDK.  This example was tested with MinGW gcc version 4.6.2.
+
+\begin{verbatim}
+c:\> gcc example1_pvwatts.c ssc.dll -o pvwatts.exe
+\end{verbatim}
+
+To run the program, specify a weather file on the command-line.  Here, we use TMY2 data for Daggett, CA, which is included in the SDK as \emph{daggett.tm2}.
+
+\begin{verbatim}
+c:\> pvwatts.exe daggett.tm2
+ac: 1468.54 kWh
+\end{verbatim}
+
+If all goes well, the total annual AC kWh for the system is printed on the console.
+
+
+\subsection{Some additional comments}
+
+The \texttt{ssc\_data\_t} and \texttt{ssc\_module\_t} data types are opaque references to internally defined data structures.  The only proper way to interact with variables of these types is using the defined SSC function calls.  As listed in the \texttt{sscapi.h} header file, both are typedef'd as \texttt{void*}.
+
+
+\section{Working with Modules and Variables}
+\label{chap_variables}
+
+\section{Handling Warnings and Errors}
+
+\section{C API Reference}
+
+%\input{ssc_functions.tex}
+
+\end{document}
