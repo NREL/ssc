@@ -59,7 +59,7 @@ The standard way to invoke a model in SSC involves three steps:
 Essentially, this sequence is no different than calling a function in a programming language.  Step~1 can be thought of as passing parameters to the function, step~2 as running the function, and step~3 as getting the calculated result returned.  In SSC, the ``function'' is called a \emph{module}, and the data container is simply \emph{data}.  The \emph{module} operates on the \emph{data} and transforms it by calculating new variables and adding them to the dataset.  In the API, these are represented by the \texttt{ssc\_module\_t} and \texttt{ssc\_data\_t} types, which will be covered in detail later.
 
 \subsection{Modeling Systems}
-
+\label{sec_modeling_systems}
 Different modules are available in SSC for each type of simulation possible in SAM.  A sample of modules is shown in Table~\ref{tab_sample_modules}.
 
 
@@ -543,12 +543,78 @@ Note that the \texttt{ssc\_data\_first()} and \texttt{ssc\_data\_next()} functio
 \section{Simulation Modules}
 \label{sec_modules}
 
-\subsection{Available Modules}
+The SSC framework exposes several different simulation modules that calculate outputs given inputs.  Each module can run independently of all the others, provided that all the input variables that are required are provided by the user.  The System Advisor Model (SAM) tool often runs several SSC modules in succession to simulate the whole system performance and economic evaluation.  In between successive calls to different SSC modules, SAM may change the names or scale the output variables of one module to set it up with appropriate inputs for the next one, as explained in \S\ref{sec_modeling_systems}.
+
+\subsection{Querying SSC for Available Modules}
 \label{sec_modules_querying}
 
-\section{Handling Warnings and Errors}
+SSC provides a programming interface by which the library can be queried about all of the modules contained within it.  The example below prints all of the available modules to the console along with their version numbers and descriptions:
 
-\section{Integrating with Other Software}
+\begin{verbatimtab}[4]
+ssc_entry_t entry;
+int index = 0;
+while( entry = ssc_module_entry( index++ ) )
+{
+	const char *module_name = ssc_entry_name( entry );
+	const char *description = ssc_entry_desc( entry );
+	int version = ssc_entry_version( entry );
+
+	printf( "Module %s, version %d: %s\n", module_name, version, description );
+}
+\end{verbatimtab}
+
+\subsection{Simple Method \#1}
+
+A simulation module can be invoked in one of several ways.  The simplest way to call a module is to use the \texttt{ssc\_module\_exec\_simple()} function.  This method prints any warnings or errors to the console, and simply returns true or false. The PVWatts example from earlier could be written as:
+
+\begin{verbatimtab}[4]
+ssc_data_t data = ssc_data_create();
+ssc_data_set_string( data, "file_name", "TX Abilene.tm2" );
+ssc_data_set_number( data, "system_size", 4 );
+ssc_data_set_number( data, "derate", 0.77f );
+ssc_data_set_number( data, "track_mode", 0 );
+ssc_data_set_number( data, "tilt", 20 );
+ssc_data_set_number( data, "azimuth", 180 );
+
+if( ssc_module_exec_simple( "pvwattsv1", data ) )
+{
+	int i, len;
+	ssc_number_t ac_sum = 0;
+	ssc_number_t *ac = ssc_data_get_array( data, "ac", &len );
+	for( i=0;i<len;i++ ) ac_sum += ac[i];
+	printf( "success, ac: %f Wh\n", ac_sum );
+
+}
+else
+	printf( "an error occured\n" );
+
+ssc_data_free( data );
+\end{verbatimtab}
+
+Note that there is no need to explicitly create an \texttt{ssc\_module\_t} object using \texttt{ssc\_module\_create()}; the function will return false if the module name specified could not be found or could not be created.
+
+The \texttt{ssc\_module\_exec\_simple()} function is thread-safe, provided that the module called is itself thread-safe.  It is intended that all SSC modules are implemented in a thread-safe manner.
+
+\subsection{Simple Method \#2}
+A similar function to run a module exists that returns to the caller the first error message encountered.  This variation of \emph{exec} function is not thread-safe, as indicated by its name.  Example:
+
+\begin{verbatimtab}[4]
+// ... set up a data container with inputs ...
+
+const char *result = ssc_module_exec_simple_nothread( "pvwattsv1", data );
+if( result == NULL )
+	printf("success!\n");
+else
+	printf( "module failed with error: %s\n", result );
+\end{verbatimtab}
+
+
+In this case, a \texttt{NULL} return value indicates that no error occurred.
+
+\subsection{Running with Progress Updates, Warnings, and Errors}
+
+The last (most complex) way to run a module is to provide a special handler that can reroute errors and warning messages, as well as provide progress updates to the controlling software.
+
 
 \section{Using the SSCdev Tool}
 \label{sec_sscdev}
