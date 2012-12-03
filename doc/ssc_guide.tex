@@ -40,8 +40,11 @@ This document describes the software architecture of SSC, introduces the SSC Dev
 \newpage
 
 \section{Overview}
+\label{sec_overview}
 
 The SSC software library provides a standard interface through which complex engineering and economic models of renewable energy systems can be configured and invoked.  The System Advisor Model (SAM) desktop application is essentially a user-friendly front-end for SSC, and uses SSC to perform all system performance and financial calculations.  It is assumed that the reader is well versed in SAM, its suite of models, typical inputs and outputs, and general usage.
+
+\subsection{Framework Description}
 
 SSC is designed as a general simulation framework that is model agnostic.  For example, there is no specific \texttt{pvwatts(...)} function call in the API that accepts model parameters and returns a calculated result.  Rather, a generic mechanism is provided for sending a model data, running the model, and retrieving results from it.  
 
@@ -54,6 +57,8 @@ The standard way to invoke a model in SSC involves three steps:
 \end{enumerate}
 
 Essentially, this sequence is no different than calling a function in a programming language.  Step~1 can be thought of as passing parameters to the function, step~2 as running the function, and step~3 as getting the calculated result returned.  In SSC, the ``function'' is called a \emph{module}, and the data container is simply \emph{data}.  The \emph{module} operates on the \emph{data} and transforms it by calculating new variables and adding them to the dataset.  In the API, these are represented by the \texttt{ssc\_module\_t} and \texttt{ssc\_data\_t} types, which will be covered in detail later.
+
+\subsection{Modeling Systems}
 
 Different modules are available in SSC for each type of simulation possible in SAM.  A sample of modules is shown in Table~\ref{tab_sample_modules}.
 
@@ -87,7 +92,7 @@ To perform a complete technoeconomic systems analysis, multiple compute modules 
 \item \texttt{cashloan}: Given the amount of the energy produced each year and the dollar value of this energy, this module calculates the cost of energy, net present value, and other metrics of the system based on specified system cost, incentives, operation and maintainance costs, taxes, and loan parameters.
 \end{enumerate}
 
-In some cases, the output variables of one module have the right units and data points to feed directly into the next module in a sequence, but this is not enforced.  For example, the \texttt{pvwattsv1} module has an output variable \texttt{ac} which is the hourly energy in kWh produced by the system.   However, the \texttt{annualoutput} module requires an input with the name \texttt{energy\_net\_hourly}.  It is up to the user to ensure that variables are translated appropriately between the outputs of one module and the inputs of another, including any units conversions that may be necessary.  Luckily, SSC provides exhaustive documentation of all of the input variables required by a module and all of the outputs that will be calculated.  Working with input and output variables will be the topic of a subsequent chapter.
+In some cases, the output variables of one module have the right units and number of data values to feed directly into the next module in a sequence, but this is not enforced.  For example, the \texttt{pvwattsv1} module has an output variable \texttt{ac} which is the hourly energy in kWh produced by the system.   However, the \texttt{annualoutput} module requires an input with the name \texttt{energy\_net\_hourly}.  It is up to the user to ensure that variables are translated appropriately between the outputs of one module and the inputs of another, including any units conversions that may be necessary.  Luckily, SSC provides exhaustive documentation of all of the input variables required by a module and all of the outputs that will be calculated.  Working with input and output variables will be the topic of a subsequent chapter.
 
 \section{A Basic Example: PVWatts}
 
@@ -117,7 +122,7 @@ int main(int argc, char *argv[])
 
 \subsection{Setting up data inputs}
 
-Now we will fill in the comment in the middle of the code step-by-step.  Referring to the three step process outlined in the Overview, the first task is to create a data container.  This is done with the \texttt{ssc\_data\_create()} function call, which returns an \texttt{ssc\_data\_t} type.  If for some reason the function call fails due to the system having run out of memory, \texttt{NULL} will be returned.  It is important to check the result to make sure the data container was created successfully.
+Now we will fill in the comment in the middle of the code step-by-step.  Referring to the three step process outlined in Section~\ref{sec_overview}, the first task is to create a data container.  This is done with the \texttt{ssc\_data\_create()} function call, which returns an \texttt{ssc\_data\_t} type.  If for some reason the function call fails due to the system having run out of memory, \texttt{NULL} will be returned.  It is important to check the result to make sure the data container was created successfully.
 
 \begin{verbatimtab}
 	ssc_data_t data = ssc_data_create();
@@ -128,7 +133,7 @@ Now we will fill in the comment in the middle of the code step-by-step.  Referri
 	}
 \end{verbatimtab}
 
-Next, we assign the input variables required by the \texttt{pvwattsv1} module.  In Section~\ref{chap_variables}, we will show how to learn the data types, names, labels, and units of variables.  For now, it suffices to say that SSC supports data as numbers, text strings, arrays, matrices, and tables.
+Next, we assign the input variables required by the \texttt{pvwattsv1} module.  In Section~\ref{chap_variables}, we will show how to obtain information about the data types, names, labels, and units of variables.  For now, it suffices to say that SSC supports data as numbers, text strings, arrays, matrices, and tables.
 
 \begin{verbatimtab}
 	ssc_data_set_string( data, "file_name", argv[1] ); // set the weather file name
@@ -142,6 +147,7 @@ Next, we assign the input variables required by the \texttt{pvwattsv1} module.  
 At this point, we have a data container with six variables that are the input parameters to the module that we wish to run.  
 
 \subsection{Simulating and retrieving outputs}
+\label{sec_ex_pvwatts_module}
 
 Next, an instance of the module itself must be created, per below.  The name of the desired module must be passed to the \texttt{ssc\_module\_create()} function.  If the specified module name is not recognized, or the system is out of memory, the function may return \texttt{NULL}.
 
@@ -220,10 +226,165 @@ If all goes well, the total annual AC kWh for the system is printed on the conso
 The \texttt{ssc\_data\_t} and \texttt{ssc\_module\_t} data types are opaque references to internally defined data structures.  The only proper way to interact with variables of these types is using the defined SSC function calls.  As listed in the \texttt{sscapi.h} header file, both are typedef'd as \texttt{void*}.
 
 
-\section{Working with Modules and Variables}
-\label{chap_variables}
+\section{Data Variables}
+\label{sec_variables}
+
+Simulation model inputs and outputs are stored in a data container of type \texttt{ssc\_data\_t}, which is simply a collection of named variables.  Internally, the data structure is an unordered map (hash table), permitted very fast lookup of variables by name.  Every input and output variable in SSC is designated a name, a \emph{variable type}, and a \emph{data type}, along with other meta data (labels, units, etc). 
+
+The variable name is mechanism by which data are identified by SSC, and the user is required to supply input variables with names that SSC has predefined.  Names can contain letters, numbers, and underscores.  Although names can be defined with upper and lower case letters, SSC does not distinguish between them internally: hence \texttt{Beam\_Irradiance} is the same variable as \texttt{beam\_irradiance}.
+
+\subsection{Variable Types}
+
+The \emph{variable type} identifies each variable as an input, output, or in-out variable.  In the SSC API, these values are defined by the constants reproduced below.
+
+\begin{verbatimtab}
+#define SSC_INPUT 1
+#define SSC_OUTPUT 2
+#define SSC_INOUT 3
+\end{verbatimtab}
+
+Input variables are required to be set by the user before a module is called, while output variables are calculated by the module and assigned to the data container when the module has finished running.  In-out variables are supplied by the user before the model runs, and the model transforms the value in some fashion.
+
+Note that from the perspective of the data container, inputs and outputs are stored without distinction in an equivalent manner.  Thus, it is impossible to tell simply from the contents of a data container whether a variable was an input or an output - it is just a pile of data.  It is only the simulation modules that specify the variable type.
+
+\subsection{Data Types}
+
+Every variable in SSC is assigned a particular data type, and each simulation module to specifies the data type of each variable required as input, as well as the data type of each output.  SSC can work with numbers, text strings, one-dimensional arrays, two-dimensional matrices, and tables.  The data type constants are listed below.
+
+\begin{verbatimtab}
+#define SSC_INVALID 0
+#define SSC_STRING 1
+#define SSC_NUMBER 2
+#define SSC_ARRAY 3
+#define SSC_MATRIX 4
+#define SSC_TABLE 5
+\end{verbatimtab}
+
+All numbers are stored using the \texttt{ssc\_number\_t} data type.  By default, this is a typedef of the 32-bit floating point C data type (\texttt{float}).  The purpose of using \texttt{float} instead of the 64-bit \texttt{double} is to save memory.  While a simulation module may perform all of its calculations internally using 64-bit precision floating point, the inputs and results are transferred into and out of SSC using the smaller data type.
+
+Arrays (1-D) and matrices (2-D) store numbers only - there is no provision for arrays or matrices of text strings, or arrays of tables.  Arrays and matrices are optimized for efficient storage and transfer of large amounts of numerical data.  For example, a photovoltaic system simulation at 1 second timesteps for a whole year would produce 525,600 data points, and potentially several such data vectors might be reported by a single simulation model.  This fact underscores the reasoning to use the 32-bit floating point data type: just 20 vectors of 525,600 values each would require 42 megabytes of computer memory.
+
+SSC does not provision separate storage for integers and floating point values - all numbers are stored internally as floating point.  However, a module may specific a numeric input with the \emph{integer} constraint which is checked automatically before the module is run.  Constraints will be discussed later.
+
+Text strings (\texttt{SSC\_STRING})  are stored as 8-bit characters.  SSC does not support multi-byte or wide-character string representations, and all variable names and labels use only the 7-bit ASCII Latin alphabet.  Consequently, text is stored as null ('\textbackslash 0') terminated \texttt{char*} C strings.  Weather file names are common input variables that use the \texttt{SSC\_STRING} data type.
+
+The table (\texttt{SSC\_TABLE}) data type is the only hierarchical data type in SSC.  Essentially, it allows a simulation module to receive or return outputs in a structured format with named fields.  A table is nothing more than a named variable that is itself a data container, which can store any number of named variables of any SSC data type.  Currently, most SSC modules do not make heavy use of tables, but they are fully implemented and supported for future complex modules that may be added.
+
+\subsection{Variable Documentation}
+
+As stated before, each module defines all of the input variables it requires and output variables it produces.  Since SSC is a model simulation framework that contains within it numerous calculation modules that each may have hundreds of variables, it is impractical to separate to the documentation of variables from their definitions.  Otherwise, the documentation would tend to be consistently out of date as modules are updated and new ones are added.
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{ll}
+Field & Description\\
+\hline
+Variable type & \texttt{SSC\_INPUT}, \texttt{SSC\_OUTPUT}, \texttt{SSC\_INOUT} \\
+Data type & \texttt{SSC\_NUMBER}, \texttt{SSC\_STRING}, \texttt{SSC\_ARRAY}, \texttt{SSC\_MATRIX}, \texttt{SSC\_TABLE} \\
+Name & Variable name (case insensitive) \\
+Label & A description of the variable's purpose \\
+Units & The units of the numerical value(s) \\
+Meta & Additional information. Could specify encoding of values, see below. \\
+Group & General category of variable, e.g. ``Weather'', ``System Input'' \\
+Required & Specifies whether the variable must be assigned a value. See \S\ref{sec_def_const} \\
+Constraints & Constraints on the values or number of values. See \S\ref{sec_def_const} \\
+UI Hints & Suggestions on how to display this variable.  Currently unused. \\
+\end{tabular}
+\caption{Variable information provided by SSC}
+\label{tab_varinfo}
+\end{center}
+\end{table}
+
+Consequently, SSC provides functions in the API to return information about all of the variables defined by a module.  Each variable specifies the information shown in Table~\ref{tab_varinfo}.
+
+
+To obtain information for a variable, a module is queried using the \texttt{ssc\_module\_var\_info()} function, which returns a \texttt{ssc\_info\_t} reference.  The \texttt{ssc\_module\_var\_info()} function is called repeatedly with an index variable that is incremented by the user to cycle through all of the variables defined by the module.  An example is shown below, assuming that the variable \texttt{module} has been successfully created for a particular simulation module (e.g., see \S\ref{sec_ex_pvwatts_module}).  Querying SSC for available modules is discussed in \S\ref{sec_modules_querying}.
+
+\begin{verbatimtab}
+int i=0;
+ssc_info_t p_inf = NULL;
+while ( p_inf = ssc_module_var_info( module, i++ ) )
+{
+	// var_type: SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+	int var_type = ssc_info_var_type( p_inf );
+
+	// data_type: SSC_STRING, SSC_NUMBER, SSC_ARRAY, SSC_MATRIX, SSC_TABLE   
+	int data_type = ssc_info_data_type( p_inf );
+      
+	const char *name = ssc_info_name( p_inf );
+	const char *label = ssc_info_label( p_inf );
+	const char *units = ssc_info_units( p_inf );
+	const char *meta = ssc_info_meta( p_inf );
+	const char *group = ssc_info_group( p_inf );
+	const char *required = ssc_info_required( p_inf );
+	const char *constraints = ssc_info_constrants( p_inf );
+
+	// here, you can print all of this data to text file
+	// or present it in another way to the user
+
+	printf( "%s %s (%s) %s\n", name, label, units, meta );
+}
+
+\end{verbatimtab}
+
+The interactive SSCdev tool provided with the SSC library automatically generates all of this documentation for all modules in an interactive GUI spreadsheet-style interface.  This utility will be discussed in more detail in \S\ref{sec_sscdev_vars}.
+
+\subsection{Default Values and Constraints}
+\label{sec_def_const}
+
+Sometimes there are so many input variables for a module that SSC assigns reasonable default values for some of the inputs if they are not explicitly specified by the user.  In other cases, some inputs may only have relevance for advanced users, and so a standard default value is provided that is recommended for the majority of simulations.  If a default value is provided, it is specified in the \emph{required} field of the variable information table.
+
+If the \emph{required} field contains \texttt{``*''}, this means that there is no default value and the user must specify one in all cases.  If the \emph{required} field begins with the character \texttt{``?''}, it means that the variable is optional, and that SSC will use the value assigned by the user if it is provided.  The manner in which an optional variable affects the calculation is specific to each module, and so cannot be expanded upon here.
+
+A default value is provided by SSC if the \emph{required} field appears as \texttt{``?=<value>''}, where \texttt{<value>} may be a number, a text string, or comma-separated array, depending on the data type of the variable.  In effect, this means that the variable always be given a value before simulation, but the user need not specify it.  For example, the \texttt{pvwattsv1} module specifies \texttt{rotlim} (tracker rotation limit) variable's \emph{required} field as \texttt{``?=45.0''}, meaning that unless the user specifies a different value, a rotation limit of 45 degrees is used.
+
+In addition to providing some default values, SSC performs some data input validation before running a simulation using the \emph{constraints} field.  This field may optionally define any number of flags recognized by SSC that may limit the valid range of a numeric input variable, or define the required length of an input array.  A selection of the flags used by SSC is listed in Table~\ref{tab_constraints}.  Note that these flags are defined internally by the modules, and are not editable by users.  Also, in the case that the \emph{constraints} field is empty, that does not necessarily imply that any values are acceptable - the module writer may have inadvertently omitted a constraint flag, and may instead manually check each variable when the module runs.
+
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{ll}
+Flag & Description\\
+\hline
+\texttt{MIN=<value>} & desc \\
+\texttt{MAX=<value>} & desc \\
+\texttt{BOOLEAN} & desc \\
+\texttt{INTEGER} & desc \\
+\texttt{POSITIVE} & desc \\
+\texttt{LOCAL\_FILE} & desc \\
+\end{tabular}
+\caption{Some constraints recognized by SSC}
+\label{tab_constraints}
+\end{center}
+\end{table}
+
+\subsection{Manipulating Data Containers}
+
+\subsection{Assigning and Retrieving Values}
+
+
+\section{Simulation Modules}
+\label{sec_modules}
+
+\subsection{Available Modules}
+\label{sec_modules_querying}
 
 \section{Handling Warnings and Errors}
+
+\section{Integrating with Other Software}
+
+\section{Using the SSCdev Tool}
+
+\subsection{Looking up Variables}
+\label{sec_sscdev_vars}
+
+\section{Language Interfaces}
+\subsection{Native C/C++}
+\subsection{MATLAB}
+\subsection{Visual Basic for Applications (VBA)}
+\subsection{Java via Native Interface}
+\subsection{C\# and .NET}
+\subsection{PHP}
+\subsection{Python}
+\subsection{Ruby-on-Rails}
 
 \section{C API Reference}
 
