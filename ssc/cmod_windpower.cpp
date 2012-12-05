@@ -163,9 +163,21 @@ public:
 				throw exec_error( "windpower", util::format("the closest wind speed measurement height (%lg m) found is more than 35 m from the hub height specified (%lg m)", closest_speed_meas_ht, hub_ht ));
 
 			if ( fabs(closest_dir_meas_ht - closest_speed_meas_ht) > 10.0 )
-				throw exec_error( "windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", closest_speed_meas_ht, closest_dir_meas_ht ));
+				if (i>0) // if this isn't the first hour, then it's probably because of interpolation
+				{
+					// probably interpolated wind speed, but could not interpolate wind direction because the directions were too far apart.
+					// first, verify:
+					if ( (closest_speed_meas_ht == hub_ht) && (closest_dir_meas_ht != hub_ht) )
+						// now, alert the user of this discrepancy
+						throw exec_error( "windpower", util::format("on hour %d, SAM interpolated the wind speed to an %lgm measurement height, but could not interpolate the wind direction from the two closest measurements because the directions encountered were too disparate", i+1, closest_speed_meas_ht ));
+					else
+						throw exec_error( "windpower", util::format("SAM encountered an error at hour %d: hub height = %lg, closest wind speed meas height = %lg, closest wind direction meas height = %lg ", i+1, hub_ht, closest_speed_meas_ht, closest_dir_meas_ht ));
+				}
+				else
+					throw exec_error( "windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", closest_speed_meas_ht, closest_dir_meas_ht ));
 
 			double farmp = 0;
+
 
 			if ( (int)nwt != wind_power( 
 						/* inputs */
