@@ -601,11 +601,11 @@ A similar function to run a module exists that returns to the caller the first e
 \begin{verbatimtab}[4]
 // ... set up a data container with inputs ...
 
-const char *result = ssc_module_exec_simple_nothread( "pvwattsv1", data );
-if( result == NULL )
+const char *error = ssc_module_exec_simple_nothread( "pvwattsv1", data );
+if( error == NULL )
 	printf("success!\n");
 else
-	printf( "module failed with error: %s\n", result );
+	printf( "module failed with error: %s\n", error );
 \end{verbatimtab}
 
 
@@ -613,7 +613,168 @@ In this case, a \texttt{NULL} return value indicates that no error occurred.
 
 \subsection{Running with Progress Updates, Warnings, and Errors}
 
-The last (most complex) way to run a module is to provide a special handler that can reroute errors and warning messages, as well as provide progress updates to the controlling software.
+The last (most complex) way to run a module is to provide a special handler that can reroute errors and warning messages, as well as provide progress updates to the controlling software.  To accomplish this, the client code must provide a \emph{handler} (aka \emph{callback}) function to SSC.  The handler function must have the signature below.
+
+\begin{verbatimtab}
+ssc_bool_t (*handler)( ssc_module_t module, 
+	ssc_handler_t handle, 
+	int action, 
+	float f0, 
+	float f1, 
+	const char *s0, 
+	const char *s1, 
+	void *user_data );
+\end{verbatimtab}
+
+
+\notebox{This documentation is specific to the C language API for SSC handler functions.  Not all programming language interfaces included with SSC (e.g. MATLAB, Python, VBA) support the custom handler mechanism described here.  However, log messages (notices, warnings, errors) can still be retrieved after a simulation is completed using the \texttt{ssc\_module\_log()} function (see \S\ref{sec_messages}, although real-time progress updates cannot be issued.}
+
+Supposing that such a function named \texttt{my\_ssc\_handler\_function()} has been defined, used the \texttt{ssc\_module\_exec\_with\_handler()} function to run the module.  You may pass an a generic data pointer to the function also, so that within the context of the handler the messages or progress updates can be routed accordingly.
+
+\begin{verbatimtab}[4]
+void *my_data = <some user data to send to the callback, or NULL>;
+
+if ( ssc_module_exec_with_handler( module, data, my_ssc_handler_function, my_data ) )
+	printf("success!\n");
+else
+	printf("fail!\n");
+\end{verbatimtab}
+
+The code below represents the default handler built into SSC.  Note that the handler function must return a boolean (0/1) value to indicate to SSC whether to continue simulating or not.  This provides the option to abort the simulation if a user has clicked a cancel button in the meantime, or similar.  The various parameters are used to convey SSC status information to the handler, and have different meanings (and data) depending on the \texttt{action\_type} parameter.
+
+\begin{verbatimtab}[4]
+static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_handler,
+	int action_type, float f0, float f1, 
+	const char *s0, const char *s1,
+	void *user_data )
+{
+	if (action_type == SSC_LOG)
+	{
+		// print log messages to console
+		std::cout << "Log ";
+		switch( (int)f0 ) // determines type
+		{
+		case SSC_NOTICE: 
+			std::cout << "Notice: " << s0 << " time " << f1 << std::endl; 
+			break;
+		case SSC_WARNING: 
+			std::cout << "Warning: " << s0 << " time " << f1 << std::endl; 
+			break;
+		case SSC_ERROR: 
+			std::cout << "Error: " << s0 << " time " << f1 << std::endl; 
+			break;
+		default: 
+			std::cout << "Unknown: " << f0 << " time " << f1 << std::endl; 
+			break;
+		}
+		return 1;
+	}
+	else if (action_type == SSC_UPDATE)
+	{
+		// print status update to console
+		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 << std::endl;
+		return 1; // return 0 to abort simulation as needed.
+	}
+	else
+		return 0;
+}
+\end{verbatimtab}
+
+As noted in previous sections, the default handler simply prints warnings, errors, and simulation progress updates to the standard output stream on the console.  To implement a custom handler, it is recommended to copy the structure of the handler above, but to replace the output to the console with specialized handling for the messages and progress.  For example, in a graphical user interface program, the \texttt{user\_data} pointer could be used to pass in a pointer to a dialog class containing a progress bar and a text box.  The messages could be sent to the text box, and the progress bar updated appropriately.  The custom SSC handler function implemented in the graphical SSCdev tool (based on the excellent wxWidgets GUI library) is reproduced below, showing how messages and progess can be reported to the user.
+
+\begin{verbatimtab}[4]
+static ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action, 
+	float f0, float f1, const char *s0, const char *s1, void *user_data )
+{
+	wxProgressDialog *dlg = (wxProgressDialog*) user_data;
+	if (action == SSC_LOG)
+	{
+		wxString msg;
+
+		switch( (int)f0 )
+		{
+		case SSC_NOTICE: msg << "Notice: " << s0 << " time " << f1; break;
+		case SSC_WARNING: msg << "Warning: " << s0 << " time " << f1; break;
+		case SSC_ERROR: msg << "Error: " << s0 << " time " << f1; break;
+		default: msg << "Unknown: " << f0 << " time " << f1; break;
+		}
+
+		// post the SSC message on the application-wide log window 
+		app_frame->Log(msg);
+
+		return 1;
+	}
+	else if (action == SSC_UPDATE)
+	{
+ 		// update progress dialog with percentage complete
+		dlg->Update( (int) f0, s0 );
+		wxGetApp().Yield(true);
+
+		return 1; // return 0 to abort simulation as needed.
+	}
+	else
+		return 0;
+}
+\end{verbatimtab}
+
+A third action type called \texttt{SSC\_EXECUTE} can be found in the SSC header file.  This is an advanced capability that is not described in this user guide, and is intended to be removed in the future from the SSC API.
+
+\subsection{Retrieving Messages}
+\label{sec_messages}
+
+During simulation, a module may generate any number of (hopefully) informative messages about warnings or errors encountered.  The custom handler approach allows these messages to be reported to the user as the simulation progresses, but they are also stored in the module for retrieval later.  The \texttt{ssc\_module\_log()} function allows the client code to retrieve all the messages, regardless of which execute function was used to run the module.  Example:
+
+\begin{verbatimtab}[4]
+const char *text;
+int type;
+float time;
+int index = 0;
+while( (text = ssc_module_log( module, index++, &type, &time )) )
+{
+	switch( type ) // determines type
+	{
+	case SSC_NOTICE: 
+		std::cout << "Notice: " << text << " time " << time << std::endl; 
+		break;
+	case SSC_WARNING: 
+		std::cout << "Warning: " << text << " time " << time << std::endl; 
+		break;
+	case SSC_ERROR: 
+		std::cout << "Error: " << text << " time " << time << std::endl; 
+		break;
+	default: 
+		std::cout << "Unknown: " << text << " time " << time << std::endl; 
+		break;
+	}
+}
+\end{verbatimtab}
+
+In essence, the \texttt{ssc\_module\_log()} is called repeatedly with an increasing index number until the function returns \texttt{NULL}, indicating that there are no more messages.  Along with the text of the message, information about the type (notice, warning, error) and the time that it was issued by the module are reported.
+
+\notebox{Do not free the C string returned by \texttt{ssc\_module\_log()}.  It is a reference to internally managed memory.}
+
+\section{Version Information}
+
+Functions are included in SSC to return version information and details about the particular build.  For example:
+
+\begin{verbatimtab}[4]
+int version = ssc_version();
+const char *build = ssc_build_info();
+
+printf( "ssc version %d: %s\n", version, build );
+\end{verbatimtab}
+
+On Windows, this code may print:
+
+\begin{verbatimtab}[4]
+	ssc version 22: Windows 32 bit Visual C++ Nov 13 2012 18:44:14
+\end{verbatimtab}
+
+On Linux, a newer version of SSC may report something like:
+\begin{verbatimtab}[4]
+	ssc version 24: Unix 64 bit GNU/C++ Dec  5 2012 11:42:51
+\end{verbatimtab}
+
 
 
 \section{Using the SSCdev Tool}
@@ -635,6 +796,6 @@ The last (most complex) way to run a module is to provide a special handler that
 \section{C API Reference}
 \label{sec_api_ref}
 
-%\input{ssc_functions.tex}
+%\input{ssc_api.tex}
 
 \end{document}
