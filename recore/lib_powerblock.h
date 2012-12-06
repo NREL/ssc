@@ -46,7 +46,7 @@ struct SPowerBlockInputs
 	SPowerBlockInputs()
 	{
 		mode = standby_control = TOU = 0;
-		T_htf_hot = m_dot_htf = T_wb = demand_var = T_db = P_amb = rel_humidity = f_restart = 0.0;
+		T_htf_hot = m_dot_htf = T_wb = demand_var = T_db = P_amb = rel_humidity = 0.0;
 	}
 
 	int mode;				// 1| mode                          | Cycle part load control, from plant controller						| none             | none
@@ -59,7 +59,7 @@ struct SPowerBlockInputs
 	double P_amb;			// 8| P_amb                         | Ambient pressure														| atm              | Pa
 	int TOU;				// 9| TOU                           | Current Time-of-use period (0-8, for hybrid cooling only)				| none             | none
 	double rel_humidity;	//10|								| Relative humidity of the ambient air								    | none             | none
-	double f_restart;		//11|								| Fraction of the hour that the turbine can operate during restart		| none             | none
+	// double f_restart;		//11|								| Fraction of the hour that the turbine can operate during restart		| none             | none
 };
 
 struct SPowerBlockOutputs

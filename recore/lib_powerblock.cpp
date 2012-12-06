@@ -435,7 +435,7 @@ bool CPowerBlock_Type224::Execute(const long lSecondsFromStart, const SPowerBloc
 	// 900 continue // MJW 12.10.2010
 	// Cycle power output
 	// OUT(1)=P_cycle/1000.  // Convert from kW to MW
-	m_pbo.P_cycle = m_pbo.P_cycle/1000.0*m_pbi.f_restart;
+	m_pbo.P_cycle = m_pbo.P_cycle/1000.0;
 
 	// Cycle thermal efficiency
 	// OUT(2)=eta
