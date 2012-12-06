@@ -183,7 +183,7 @@ public:
 		pbInputs.demand_var = pbInputs.m_dot_htf;
 		pbInputs.standby_control = 1;
 		pbInputs.rel_humidity = 0.7;
-		pbInputs.f_restart = 1.0;
+		// pbInputs.f_restart = 1.0;		// twn 12.6.12 - f_restart no longer used in Type 224
 
 		// hybrid dispatch schedule, which will set the value for pbInputs.TOU
 		const char *sched = as_string("hybrid_dispatch_schedule");
