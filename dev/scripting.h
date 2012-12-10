@@ -2,17 +2,18 @@
 #define __automation_h
 
 #include <wx/wx.h>
-#include <cml/codeedit.h>
 #include "dllinvoke.h"
 
 #include <lk_absyn.h>
 #include <lk_env.h>
 
+class wxStyledTextCtrl;
+
 class EditorWindow : public wxPanel
 {
 private:
 	lk::env_t *m_env;
-	CodeEdit *m_editor;
+	wxStyledTextCtrl *m_editor;
 	wxStaticText *m_statusLabel;
 	wxString m_fileName;
 	wxButton *m_stopButton;

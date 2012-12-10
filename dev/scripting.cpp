@@ -4,22 +4,13 @@
 #include <wx/filename.h>
 #include <wx/statline.h>
 #include <wx/html/htmlwin.h>
-#include <wx/aui/aui.h>
 #include <wx/tokenzr.h>
 #include <wx/busyinfo.h>
 
-#include <cml/codeedit.h>
-#include <cml/mtrand.h>
-#include <cml/util.h>
-#include <cml/wpplotdata.h>
-#include <cml/wpplotdataarray.h>
-#include <cml/wpbarplot.h>
-#include <cml/wplineplot.h>
-#include <cml/wpscatterplot.h>
-#include <cml/wpplotsurface2d.h>
+#include <wx/stc/stc.h>
 
-#include <cml/dview/wxdvplotctrl.h>
-#include <cml/dview/wxdvarraydataset.h>
+#include <wex/dview/dvplotctrl.h>
+#include <wex/dview/dvtimeseriesdataset.h>
 
 #include <lk_lex.h>
 #include <lk_parse.h>
@@ -35,7 +26,6 @@ void Output( const wxString &text )
 {
 	app_frame->Log( text, false );
 }
-
 
 void Output( const char *fmt, ... )
 {
@@ -56,7 +46,7 @@ void ClearOutput()
 	app_frame->ClearLog();
 }
 
-
+/*
 class PlotWin;
 
 static int _iplot = 1;
@@ -376,28 +366,6 @@ void fcall_axis( lk::invoke_t &cxt )
 	if (mod) plot->Refresh();
 }
 
-void fcall_out( lk::invoke_t &cxt )
-{
-	LK_DOC("out", "Output data to the console.", "(...):none");
-	
-	for (size_t i=0;i<cxt.arg_count();i++)
-		Output( cxt.arg(i).as_string() );
-}
-
-void fcall_outln( lk::invoke_t &cxt )
-{
-	LK_DOC("outln", "Output data to the console with a newline.", "(...):none");
-	
-	for (size_t i=0;i<cxt.arg_count();i++)
-		Output( cxt.arg(i).as_string()  + "\n" ); 
-}
-
-void fcall_in(  lk::invoke_t &cxt )
-{
-	LK_DOC("in", "Input text from the user.", "(none):string");
-	cxt.result().assign( wxGetTextFromUser("Standard Input:") );	
-}
-
 void fcall_rand( lk::invoke_t &cxt )
 {
 	LK_DOC("rand", "Generate a random number between 0 and 1.", "(none):number");
@@ -422,6 +390,30 @@ void fcall_decompress( lk::invoke_t &cxt )
 	LK_DOC("decompress", "Decompress a local archive file.", "(string:archive, string:target):boolean");
 	cxt.result().assign( DecompressFile( cxt.arg(0).as_string(), cxt.arg(1).as_string() ) );
 }
+*/
+
+
+void fcall_out( lk::invoke_t &cxt )
+{
+	LK_DOC("out", "Output data to the console.", "(...):none");
+	
+	for (size_t i=0;i<cxt.arg_count();i++)
+		Output( cxt.arg(i).as_string() );
+}
+
+void fcall_outln( lk::invoke_t &cxt )
+{
+	LK_DOC("outln", "Output data to the console with a newline.", "(...):none");
+	
+	for (size_t i=0;i<cxt.arg_count();i++)
+		Output( cxt.arg(i).as_string()  + "\n" ); 
+}
+
+void fcall_in(  lk::invoke_t &cxt )
+{
+	LK_DOC("in", "Input text from the user.", "(none):string");
+	cxt.result().assign( wxGetTextFromUser("Standard Input:") );	
+}
 
 lk::fcall_t* retool_funcs()
 {
@@ -429,6 +421,7 @@ lk::fcall_t* retool_funcs()
 		fcall_in,
 		fcall_out,
 		fcall_outln,
+		/*
 		fcall_httpget,
 		fcall_httpdownload,
 		fcall_decompress,
@@ -437,7 +430,7 @@ lk::fcall_t* retool_funcs()
 		fcall_plotopt,
 		fcall_plotpng,
 		fcall_axis,
-		fcall_rand,
+		fcall_rand, */
 		0 };
 		
 	return (lk::fcall_t*)vec;
@@ -574,13 +567,13 @@ void fcall_var( lk::invoke_t &cxt )
 	{
 		ssc_number_t val, *p;
 		int i, j;
-		var_data *vv = vt->lookup( name.c_str() );
+		var_data *vv = vt->lookup( name.ToStdString() );
 		if (vv)	sscvar_to_lkvar( cxt.result(), vv );
 	}
 	else if (cxt.arg_count() == 2)
 	{
 		lk::vardata_t &val = cxt.arg(1).deref();		
-		var_data *vv = vt->assign( name.c_str(), var_data() ); // create empty variable
+		var_data *vv = vt->assign( name.ToStdString(), var_data() ); // create empty variable
 		if (vv)
 		{
 			lkvar_to_sscvar( vv, val );		
@@ -633,7 +626,7 @@ void fcall_run( lk::invoke_t &cxt )
 
 	if (cxt.arg_count() > 0)
 	{
-		wxArrayString list = Split( cxt.arg(0).as_string(), "," );
+		wxArrayString list = wxStringTokenize( cxt.arg(0).as_string(), "," );
 		app_frame->ClearCMs();
 		for (size_t i=0;i<list.Count();i++)
 			app_frame->AddCM( list[i] );
@@ -650,11 +643,11 @@ void fcall_tsview( lk::invoke_t &cxt )
 	wxDVPlotCtrl *dv = new wxDVPlotCtrl( frm );
 	var_table *vt = app_frame->GetVarTable();	
 	int iadded = 0;	
-	Vector<double> da(8760);
+	std::vector<double> da(8760);
 
 	if (cxt.arg_count() == 1)
 	{
-		wxArrayString selections = Split(cxt.arg(0).as_string(), ",");
+		wxArrayString selections = wxStringTokenize(cxt.arg(0).as_string(), ",");
 
 		for (size_t i=0;i<selections.Count();i++)
 		{
@@ -755,6 +748,7 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	m_env->register_funcs( lk::stdlib_math() );
 	m_env->register_funcs( lk::stdlib_wxui() );
 
+/*
 	StringMap tips;
 	std::vector<lk_string> list = m_env->list_funcs();
 	wxString funclist;
@@ -771,27 +765,29 @@ EditorWindow::EditorWindow( wxWindow *parent )
 			funclist += d.func_name + " ";
 		}
 	}
-	
+*/	
 		
 	wxBoxSizer *szdoc = new wxBoxSizer( wxVERTICAL );
 	szdoc->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_SAVEAS, "Save as" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
+	//szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
+	//szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, ID_RUN, "Run" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" ), 0, wxALL|wxEXPAND, 2 );	
 	m_stopButton->SetForegroundColour( *wxRED );
 	m_stopButton->Hide();
 					
-	m_editor = new CodeEdit(this, ID_CODEEDITOR );
+	m_editor = new wxStyledTextCtrl(this, ID_CODEEDITOR );
+	/*
 	m_editor->ApplyLKStyling();
 	m_editor->EnableCallTips(true);
 	m_editor->SetCallTipData('(',')', false, tips);
 	m_editor->StyleSetForeground( wxSTC_C_WORD2, wxColour(0,128,192) );
 	m_editor->SetKeyWords( 1, funclist );
+	*/
 
 	wxBoxSizer *szedit = new wxBoxSizer( wxVERTICAL );
 	szedit->Add( m_editor, 1, wxALL|wxEXPAND, 1 );
@@ -833,8 +829,8 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 	case wxID_COPY: m_editor->Copy(); break;
 	case wxID_PASTE: m_editor->Paste(); break;
 	case wxID_SELECTALL: m_editor->SelectAll(); break;
-	case wxID_FIND: m_editor->ShowFindDialog(); break;
-	case wxID_FORWARD: m_editor->FindNext(); break;
+//	case wxID_FIND: m_editor->ShowFindDialog(); break;
+//	case wxID_FORWARD: m_editor->FindNext(); break;
 	case wxID_HELP:
 		{
 			wxFrame *frm = new wxFrame( this, wxID_ANY, "Scripting Reference", wxDefaultPosition, wxSize(800, 700) );

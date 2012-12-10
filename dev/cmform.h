@@ -2,26 +2,23 @@
 #define __CMForm_h
 
 #include <wx/wx.h>
-#include "formalizer.h"
 #include <wx/config.h>
-#include <wx/aui/aui.h>
+#include <wx/grid.h>
+
 #include "dllinvoke.h"
 #include "sscdev.h"
 
+class wxExtGridCtrl;
 
 class CMForm : public wxDialog
 {
 private:
 	wxButton *btnSendToExcel;
-	WFGridCtrl *grdCMVars;
+	wxExtGridCtrl *grdCMVars;
 	wxButton *btnAccept;
 	wxButton *btnClose;
-	AFLabel *Label6;
 	wxListBox *lstSelectedCMs;
-	AFLabel *Label3;
-	AFLabel *Label2;
 	wxCheckListBox *cklCMList;
-	AFLabel *Label1;
 
 public:
 	CMForm(wxWindow *parent);	

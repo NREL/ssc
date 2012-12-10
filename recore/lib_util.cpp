@@ -130,7 +130,7 @@ bool util::file_exists( const char *file )
 #ifdef _WIN32
 	// from wxWidgets: must use GetFileAttributes instead of ansi C 
 	// b/c can cope with network (unc) paths
-	DWORD ret = ::GetFileAttributes( file );
+	DWORD ret = ::GetFileAttributesA( file );
 	return (ret != (DWORD)-1) && !(ret & FILE_ATTRIBUTE_DIRECTORY);
 #else
 	struct stat st;
@@ -156,7 +156,7 @@ bool util::dir_exists( const char *path )
 		pos--;
 	}
 
-	DWORD ret = ::GetFileAttributes(wpath);
+	DWORD ret = ::GetFileAttributesA(wpath);
     bool exists =  (ret != (DWORD)-1) && (ret & FILE_ATTRIBUTE_DIRECTORY);
 
 	free( wpath );
@@ -329,7 +329,7 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 	
 	// prep and launch redirected child here
 	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
+	STARTUPINFOA si;
 
 	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
 	pi.hProcess = INVALID_HANDLE_VALUE;
@@ -351,7 +351,7 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 	// Child.exe). Make sure Child.exe is in the same directory as
 	// redirect.c launch redirect from a command line to prevent location
 	// confusion.
-	if (result == 0 && !CreateProcess(NULL,(char*)command.c_str(),NULL,NULL,TRUE,
+	if (result == 0 && !CreateProcessA(NULL,(char*)command.c_str(),NULL,NULL,TRUE,
 					 //CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|NORMAL_PRIORITY_CLASS
 					 //CREATE_NEW_CONSOLE
 					 CREATE_NO_WINDOW,

@@ -16,22 +16,23 @@
 #include <wx/statline.h>
 #include <wx/tglbtn.h>
 #include <wx/splitter.h>
+#include <wx/grid.h>
 
 #ifdef __WXMSW__
-#include <cml/xlautomation.h>
+#include <wex/ole/excelauto.h>
 #endif
-#include <cml/wpplotdataarray.h>
-#include <cml/wpplotsurface2d.h>
-#include <cml/wpbarplot.h>
-#include <cml/wplinearaxis.h>
-#include <cml/wplineplot.h>
 
-#include <cml/dview/wxdvplotctrl.h>
-#include <cml/dview/wxdvarraydataset.h>
+#include <wex/plot/plplotctrl.h>
+#include <wex/plot/pllineplot.h>
+#include <wex/plot/plhistplot.h>
+#include <wex/dview/dvplotctrl.h>
+#include <wex/dview/dvtimeseriesdataset.h>
+#include <wex/extgrid.h>
+#include <wex/numeric.h>
 
 #include "dataview.h"
-#include "editvariableform.h"
-#include "statform.h"
+#include "editvariable.h"
+#include "statdlg.h"
 
 
 class DataView::Table : public wxGridTableBase
@@ -276,7 +277,7 @@ DataView::DataView( wxWindow *parent )
 	left_panel->SetSizer( left_sizer );
 
 
-	m_grid = new WFGridCtrl(splitwin, ID_GRID);
+	m_grid = new wxExtGridCtrl(splitwin, ID_GRID);
 	m_grid->SetFont( wxFont(8, wxMODERN, wxNORMAL, wxNORMAL) );
 	m_grid->EnableEditing(false);
 	m_grid->EnableCopyPaste(false);
@@ -300,17 +301,17 @@ DataView::DataView( wxWindow *parent )
 
 }	
 
-Array<int> DataView::GetColumnWidths()
+std::vector<int> DataView::GetColumnWidths()
 {
-	Array<int> list;
-	for (int i=0;i<m_grid->GetNumberCols();i++)
-		list.append( m_grid->GetColumnWidth( i ) );
+	std::vector<int> list;
+	for (size_t i=0;i<m_grid->GetNumberCols();i++)
+		list.push_back( m_grid->GetColumnWidth( i ) );
 	return list;
 }
 
-void DataView::SetColumnWidths( const Array<int> &cwl )
+void DataView::SetColumnWidths( const std::vector<int> &cwl )
 {
-	for (int i=0;i<cwl.count() && i<m_grid->GetNumberCols();i++)
+	for (size_t i=0;i<cwl.size() && i<m_grid->GetNumberCols();i++)
 		m_grid->SetColumnWidth( i, cwl[i] );
 }
 
@@ -336,6 +337,32 @@ void DataView::SetSelections(const wxArrayString &sel)
 	for (unsigned int idx=0;idx<m_names.Count();idx++)
 		m_varlist->Check( idx, (m_selections.Index( m_names[idx] ) >= 0) );	
 }
+
+static void SortByLabels(wxArrayString &names, wxArrayString &labels)
+{
+	// sort the selections by labels
+	wxString buf;
+	int count = (int)labels.Count();
+	for (int i=0;i<count-1;i++)
+	{
+		int smallest = i;
+
+		for (int j=i+1;j<count;j++)
+			if ( labels[j] < labels[smallest] )
+				smallest = j;
+
+		// swap
+		buf = labels[i];
+		labels[i] = labels[smallest];
+		labels[smallest] = buf;
+
+		buf = names[i];
+		names[i] = names[smallest];
+		names[smallest] = buf;
+
+	}
+}
+
 
 void DataView::UpdateView()
 {
@@ -373,7 +400,7 @@ void DataView::UpdateView()
 
 				label += wxString(v->type_name());
 				if (v->type == SSC_NUMBER)
-					label += " " + FloatToStr( (ssc_number_t) v->num );				
+					label += " " + wxString::Format("%lg", (double) v->num );				
 				else if (v->type == SSC_STRING)
 					label += " " + wxString(v->str.c_str());
 				else if (v->type == SSC_ARRAY)
@@ -439,7 +466,7 @@ void DataView::OnCommand(wxCommandEvent &evt)
 			sz->Add( dlg.CreateButtonSizer(wxOK), 0, wxALL|wxEXPAND, 0 );
 			dlg.SetSizer(sz);
 			
-			Vector<double> da(8760);
+			std::vector<double> da(8760);
 			int iadded = 0;
 			for (size_t i=0;i<m_selections.Count();i++)
 			{
@@ -613,7 +640,7 @@ void DataView::EditVariable( wxString name )
 	}
 	else
 	{
-		EditVariableFormDialog dlg(this, "Edit Variable: " + name);
+		EditVariableDialog dlg(this, "Edit Variable: " + name);
 		dlg.SetVarData( *v );
 		if (dlg.ShowModal() == wxID_OK)
 		{
@@ -649,7 +676,7 @@ void DataView::ShowStats( wxString name )
 			return;
 		}
 
-		StatFormDialog dlg(this, "Stats for: " + name);
+		StatDialog dlg(this, "Stats for: " + name);
 		dlg.Compute( v->num );
 		dlg.ShowModal();
 	}
@@ -711,7 +738,7 @@ void DataView::OnPopup(wxCommandEvent &evt)
 			if ( v->num.length() == 8760 )
 			{
 				wxDVPlotCtrl *dv = new wxDVPlotCtrl( frm );
-				Vector<double> da(8760);
+				std::vector<double> da(8760);
 				for (int i=0;i<8760;i++)
 					da[i] = v->num[i];
 
@@ -719,22 +746,15 @@ void DataView::OnPopup(wxCommandEvent &evt)
 			}
 			else
 			{
-				WPPlotSurface2D *plotsurf = new WPPlotSurface2D( frm );
+				wxPLPlotCtrl *plotsurf = new wxPLPlotCtrl( frm, wxID_ANY );
 			
-				WPPlotDataArray *pdat = new WPPlotDataArray;
+				std::vector<wxRealPoint> pdat;
 				for (int i=0;i<v->num.length();i++)
-					pdat->append(  PointF( i, v->num[i] ) );
-			
-				WPPlottable2D *plot = NULL;
-				if (evt.GetId() == ID_POPUP_PLOT_BAR) plot = new WPBarPlot;					
-				else plot = new WPLinePlot;
-				plot->SetData( pdat );
-				plot->SetLabel( m_popup_var_name );
-
-				plotsurf->Add( plot );
+					pdat.push_back( wxRealPoint( i, v->num[i] ) );
+				
+				plotsurf->AddPlot( new wxPLLinePlot( pdat, m_popup_var_name ) );
 				plotsurf->SetTitle("Plot of: '" + m_popup_var_name + "'");
-
-				plotsurf->SetXAxis1( new WPLinearAxis( -1, v->num.length() ) );
+				plotsurf->SetXAxis1( new wxPLLinearAxis( -1, v->num.length() ) );
 			}
 
 			frm->Show();

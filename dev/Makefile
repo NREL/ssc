@@ -16,12 +16,12 @@ LKLIB = $(LKDIR)/wxosx_static/lk.a
 # The source files: regardless of where they reside in the source tree,
 # VPATH will locate them...
 sscdev_SRC = \
-	scripting.cpp\
-	cmform.cpp\
-	dataview.cpp\
-	dllinvoke.cpp\
-	editvariableform.cpp\
-	sscdev.cpp\
+	scripting.cpp \
+	cmform.cpp \
+	dataview.cpp \
+	dllinvoke.cpp \
+	editvariable.cpp \
+	sscdev.cpp \
 	statform.cpp
 
 # Build a Dependency list and an Object list, by replacing the .cpp

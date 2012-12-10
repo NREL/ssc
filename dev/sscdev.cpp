@@ -20,42 +20,12 @@
 #include <wx/stdpaths.h>
 #include <wx/generic/helpext.h>
 #include <wx/clipbrd.h>
-#include <wx/aui/aui.h>
 #include <wx/splitter.h>
 #include <wx/snglinst.h>
 #include <wx/statline.h>
 #include <wx/filepicker.h>
-
-#include <cml/util.h>
-#include <cml/painter.h>
-#include <cml/array.h>
-#include <cml/afeditctrls.h>
-#include <cml/afuiorgctrls.h>
-#include <cml/afdialogs.h>
-
-
-#include <cml/pixmaps/stock_save_24.xpm>
-#include <cml/pixmaps/stock_save_as_24.xpm>
-#include <cml/pixmaps/stock_open_24.xpm>
-#include <cml/pixmaps/stock_text_indent_16.xpm>
-#include <cml/pixmaps/stock_preferences_16.xpm>
-#include <cml/pixmaps/stock_convert_16.xpm>
-#include <cml/pixmaps/stock_convert_24.xpm>
-#include <cml/pixmaps/stock_exec_16.xpm>
-#include <cml/pixmaps/stock_exec_24.xpm>
-#include <cml/pixmaps/stock_help_16.xpm>
-#include <cml/pixmaps/stock_redo_24.xpm>
-#include <cml/pixmaps/stock_undo_rtl_24.xpm>
-#include <cml/pixmaps/stock_jump_to_24.xpm>
-#include <cml/pixmaps/stock_search_24.xpm>
-#include <cml/pixmaps/stock_refresh_24.xpm>
-#include <cml/pixmaps/stock_about_24.xpm>
-#include <cml/pixmaps/stock_preferences_24.xpm>
-#include <cml/pixmaps/stock_trash_24.xpm>
-#include <cml/pixmaps/stock_media_play_24.xpm>
-#include <cml/pixmaps/stock_media_record_24.xpm>
-#include <cml/pixmaps/stock_connect_24.xpm>
-#include <cml/pixmaps/stock_disconnect_24.xpm>
+#include <wx/grid.h>
+#include <wx/notebook.h>
 
 #include "sscdev.h"
 #include "dataview.h"
@@ -112,7 +82,7 @@ bool SCApp::OnInit()
 		app_frame->LoadBdat(app_args[1]);
 
 	bool first_load = true;
-	wxString fl_key = Format("FirstLoad_%d",
+	wxString fl_key = wxString::Format("FirstLoad_%d",
 		SC_major_ver*10000
 		+SC_minor_ver*100
 		+SC_micro_ver );
@@ -285,16 +255,15 @@ SCFrame::SCFrame()
 	wxSplitterWindow *split_win = new wxSplitterWindow( this, wxID_ANY,
 		wxPoint(0,0), wxSize(800,700), wxSP_LIVE_UPDATE|wxBORDER_NONE );
 
-	m_notebook = new wxAuiNotebook( split_win, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-		wxAUI_NB_TOP | wxAUI_NB_TAB_SPLIT | wxAUI_NB_TAB_MOVE | wxAUI_NB_SCROLL_BUTTONS);
+	m_notebook = new wxNotebook( split_win, wxID_ANY );
 
 	m_dataView = new DataView(m_notebook);
 	m_dataView->SetDataObject( m_varTable );
 
 	m_scriptWindow = new EditorWindow(m_notebook);
 
-	m_notebook->AddPage( m_dataView, "Variable Viewer", true, wxBitmap(stock_exec_16_xpm) );
-	m_notebook->AddPage( m_scriptWindow, "Scripting", false,  wxBitmap(stock_text_indent_16_xpm) );
+	m_notebook->AddPage( m_dataView, "Variable Viewer", true );
+	m_notebook->AddPage( m_scriptWindow, "Scripting", false );
 
 	m_txtOutput = new wxTextCtrl(split_win, ID_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize,
 		wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL | wxTE_DONTWRAP);
@@ -814,7 +783,7 @@ bool SCFrame::ReadVarTable( wxDataInputStream &o, var_table &vt, bool clear_firs
 			break;
 		}
 
-		vt.assign( key.c_str(), vv );
+		vt.assign( key.ToStdString(), vv );
 	}
 
 	return (o.Read16() == code);
@@ -859,7 +828,7 @@ bool SCFrame::LoadBdat( wxString fn )
 		m_cmList.Add( in.ReadString() );
 
 	wxArrayString sel_vars;
-	Array<int> cwl;
+	std::vector<int> cwl;
 
 	int nn = in.Read32();
 	for (int i=0;i<nn;i++)
@@ -867,7 +836,7 @@ bool SCFrame::LoadBdat( wxString fn )
 
 	nn = in.Read32();
 	for (int i=0;i<nn;i++)
-		cwl.append( in.Read32() );
+		cwl.push_back( in.Read32() );
 
 	bool vtok = ReadVarTable( in, *m_varTable, true );
 
@@ -901,9 +870,9 @@ bool SCFrame::WriteBdatToDisk(const wxString &fn)
 	for (size_t i=0;i<selvars.Count(); i++)
 		o.WriteString( selvars[i] );
 
-	Array<int> cwl = m_dataView->GetColumnWidths();
-	o.Write32( cwl.count() );
-	for (int i=0;i<cwl.count();i++)
+	std::vector<int> cwl = m_dataView->GetColumnWidths();
+	o.Write32( cwl.size() );
+	for (size_t i=0;i<cwl.size();i++)
 		o.Write32( cwl[i] );
 
 	WriteVarTable( o, *m_varTable );

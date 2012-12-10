@@ -6,14 +6,10 @@
 #include <wx/datstrm.h>
 
 #include "dllinvoke.h"
-
-class wxAuiToolBar;
-class wxSingleInstanceChecker;
-class AFLabel;
 class DataView;
-
 class SCFrame;
 class SCDocWin;
+class wxNotebook;
 class EditorWindow;
 
 extern SCFrame *app_frame;
@@ -124,7 +120,7 @@ private:
 
 	wxMenu *m_fileMenu, *m_helpMenu;
 
-	wxAuiNotebook *m_notebook;
+	wxNotebook *m_notebook;
 	DataView *m_dataView;
 	EditorWindow *m_scriptWindow;
 

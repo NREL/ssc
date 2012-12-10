@@ -1,21 +1,19 @@
+
+#include <wx/dirdlg.h>
+#include <wx/busyinfo.h>
+
+#include <wex/extgrid.h>
+#include <wex/ole/excelauto.h>
+
 #include "cmform.h"
 
-/*user.global.start*/
-#include <wx/dirdlg.h>
-#include <cml/xlautomation.h>
-#include <wx/busyinfo.h>
-/*user.global.end*/
 enum {
   ID_btnSendToExcel,
   ID_grdCMVars,
   ID_btnAccept,
   ID_btnClose,
-  ID_Label6,
   ID_lstSelectedCMs,
-  ID_Label3,
-  ID_Label2,
-  ID_cklCMList,
-  ID_Label1 };
+  ID_cklCMList };
 
 BEGIN_EVENT_TABLE( CMForm, wxDialog )
 	EVT_CHECKLISTBOX(ID_cklCMList, CMForm::OnCMListCheck )
@@ -24,9 +22,10 @@ BEGIN_EVENT_TABLE( CMForm, wxDialog )
 END_EVENT_TABLE()
 
 CMForm::CMForm(wxWindow *parent)
-	 : wxDialog( parent, wxID_ANY, "Module Browser", wxDefaultPosition, wxSize(800,600), wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER )
+	 : wxDialog( parent, wxID_ANY, "Module Browser", 
+		wxDefaultPosition, wxSize(1000,620), 
+		wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER )
 {
-	SetClientSize( 1006, 626 );
 
 	cklCMList = new wxCheckListBox(this, ID_cklCMList);
 	lstSelectedCMs = new wxListBox(this, ID_lstSelectedCMs);
@@ -44,7 +43,7 @@ CMForm::CMForm(wxWindow *parent)
 	szbtns->Add( new wxButton(this, wxID_OK, "OK"), 0, wxALL|wxEXPAND, 2 );
 	szbtns->Add( new wxButton(this, wxID_CANCEL, "Cancel"), 0, wxALL|wxEXPAND, 2 );
 
-	grdCMVars = new WFGridCtrl(this, ID_grdCMVars);
+	grdCMVars = new wxExtGridCtrl(this, ID_grdCMVars);
 	grdCMVars->CreateGrid(2,2);
 	grdCMVars->EnableEditing(false);
 	grdCMVars->DisableDragCell();
@@ -101,7 +100,7 @@ void CMForm::OnSendToExcel(wxCommandEvent &)
 	grdCMVars->Copy(true);
 	wxMilliSleep(150);
 
-	XLAutomation xl;
+	wxExcelAutomation xl;
 	if (!xl.StartExcel())
 	{
 		wxMessageBox("Could not start Excel.");
@@ -148,7 +147,7 @@ void CMForm::OnCMListCheck(wxCommandEvent &evt)
 	}
 }
 
-void CMForm::OnCMListSelect(wxCommandEvent &evt)
+void CMForm::OnCMListSelect(wxCommandEvent &)
 {
 	try {
 		wxString cm_name = cklCMList->GetStringSelection();
@@ -160,7 +159,7 @@ void CMForm::OnCMListSelect(wxCommandEvent &evt)
 			return;
 		}
 
-		Array<wxArrayString> vartab;
+		std::vector<wxArrayString> vartab;
 
 		int idx=0;
 		while( const ssc_info_t p_inf = ssc_module_var_info( p_mod, idx++ ) )
@@ -196,10 +195,10 @@ void CMForm::OnCMListSelect(wxCommandEvent &evt)
 			row.Add( ssc_info_required( p_inf ) );
 			row.Add( ssc_info_constraints( p_inf ) );
 
-			vartab.append(row);
+			vartab.push_back(row);
 		}
 
-		int nrows = vartab.count();
+		int nrows = (int)vartab.size();
 		int ncols = 9;
 		
 		grdCMVars->Freeze();
@@ -232,13 +231,13 @@ void CMForm::UpdateForm()
 {
 	wxArrayString list;
 	lstSelectedCMs->Clear();
-	for (int i=0;i<m_cmList.Count();i++)
+	for (size_t i=0;i<m_cmList.Count();i++)
 	{
 		lstSelectedCMs->Append( m_cmList[i] );
 		list.Add( m_cmList[i] );
 	}
 
-	for (int i=0;i<cklCMList->GetCount();i++)
+	for (size_t i=0;i<cklCMList->GetCount();i++)
 		cklCMList->Check( i, list.Index( cklCMList->GetString(i) ) != wxNOT_FOUND );
 
 }

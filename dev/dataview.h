@@ -1,12 +1,16 @@
 #ifndef __dataview_h
 #define __dataview_h
 
+#include <vector>
+
 #include <wx/panel.h>
-#include <cml/afeditctrls.h>
-#include <cml/wfgridctrl.h>
 #include <wx/checklst.h>
+#include <wx/treebase.h>
+#include <wx/grid.h>
 
 #include "dllinvoke.h"
+
+class wxExtGridCtrl;
 
 class DataView : public wxPanel
 {
@@ -24,8 +28,8 @@ public:
 	void UpdateGrid();
 
 
-	Array<int> GetColumnWidths();
-	void SetColumnWidths( const Array<int> &cwl );
+	std::vector<int> GetColumnWidths();
+	void SetColumnWidths( const std::vector<int> &cwl );
 	wxArrayString GetSelections();
 	void SetSelections(const wxArrayString &sel);
 
@@ -45,12 +49,12 @@ private:
 	void OnGridLabelRightClick(wxGridEvent &evt);
 	void OnGridLabelDoubleClick(wxGridEvent &evt);
 
-	WFGridCtrl *m_grid;
+	wxExtGridCtrl *m_grid;
 	Table *m_grid_table;
 	wxCheckListBox *m_varlist;
 
 	wxTreeItemId m_root_item;
-	Array<wxTreeItemId> m_tree_items;
+	std::vector<wxTreeItemId> m_tree_items;
 	wxArrayString m_names;
 	wxArrayString m_selections;
 
