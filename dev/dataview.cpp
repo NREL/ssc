@@ -35,6 +35,12 @@
 #include "statdlg.h"
 
 
+#ifdef __WXOSX__
+#define FONTSIZE 13
+#else
+#define FONTSIZE 10
+#endif
+
 class DataView::Table : public wxGridTableBase
 {
 public:
@@ -45,7 +51,7 @@ public:
 		m_attr = new wxGridCellAttr;
 		m_attr->SetBackgroundColour( wxColour( 240,240,240 ) );
 		m_attr->SetTextColour( "navy" );
-		m_attr->SetFont( wxFont(9, wxMODERN, wxNORMAL, wxNORMAL) );
+		m_attr->SetFont( wxFont(FONTSIZE, wxMODERN, wxNORMAL, wxNORMAL) );
 	}
 
 	virtual ~Table()
@@ -265,7 +271,7 @@ DataView::DataView( wxWindow *parent )
 	wxPanel *left_panel = new wxPanel(splitwin);
 
 	m_varlist = new wxCheckListBox( left_panel, ID_LIST );
-	m_varlist->SetFont( wxFont(9, wxMODERN, wxNORMAL, wxNORMAL) );
+	m_varlist->SetFont( wxFont(FONTSIZE, wxMODERN, wxNORMAL, wxNORMAL) );
 
 	wxBoxSizer *left_tool_sizer = new wxBoxSizer(wxHORIZONTAL);
 	// can add widgets with parent 'left_panel' into this sizer (empty for now)
@@ -278,7 +284,7 @@ DataView::DataView( wxWindow *parent )
 
 
 	m_grid = new wxExtGridCtrl(splitwin, ID_GRID);
-	m_grid->SetFont( wxFont(8, wxMODERN, wxNORMAL, wxNORMAL) );
+	m_grid->SetFont( wxFont(FONTSIZE, wxMODERN, wxNORMAL, wxNORMAL) );
 	m_grid->EnableEditing(false);
 	m_grid->EnableCopyPaste(false);
 	m_grid->DisableDragCell();

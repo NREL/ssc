@@ -78,5 +78,5 @@ $(TARGET) : $(OBJECTS)
 	./dltest ./$(TARGET)
 
 clean:
-	rm -rf $(OBJECTS) $(TARGET)
+	rm -rf $(OBJECTS) $(TARGET) ./dltest
 
