@@ -416,12 +416,14 @@ void DataView::UpdateView()
 			name = m_vt->next();
 		}
 
+		m_varlist->Freeze();
 		SortByLabels(m_names, labels );
 		for (int i=0;i<m_names.Count();i++)
 		{
 			int idx = m_varlist->Append( labels[i]);
 			m_varlist->Check( idx, false );
 		}
+		m_varlist->Thaw();
 	}
 	
 	SetSelections( sel_list );
