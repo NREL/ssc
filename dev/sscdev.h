@@ -6,6 +6,7 @@
 #include <wx/datstrm.h>
 
 #include "dllinvoke.h"
+
 class DataView;
 class SCFrame;
 class SCDocWin;
@@ -13,7 +14,6 @@ class wxNotebook;
 class EditorWindow;
 
 extern SCFrame *app_frame;
-extern wxArrayString app_args;
 extern wxConfig *app_config;
 
 void applog(const wxString &s);
@@ -22,8 +22,6 @@ void applog(const char *fmt, ...);
 extern int SC_major_ver;
 extern int SC_minor_ver;
 extern int SC_micro_ver;
-
-/***********************************************************/
 
 class SCApp : public wxApp
 {
@@ -34,34 +32,7 @@ public:
 
 DECLARE_APP(SCApp)
 
-/***********************************************************/
-
-class SCAbout : public wxDialog
-{
-public:
-	SCAbout(wxWindow *parent);
-	void OnClose(wxCommandEvent &evt);
-	void OnCloseFrame(wxCloseEvent &evt);
-
-private:
-	wxStaticText *mLblVersion;
-	wxStaticBitmap *mBitmap;
-	wxButton *mBtnClose;
-	wxTextCtrl *mText;
-
-	void OnCrash(wxCommandEvent &evt);
-
-	DECLARE_EVENT_TABLE()
-};
-
-
-/***********************************************************/
-
-// possible notifications to SCDocWin windows via 'virtual OnNotification(int)'
-enum { NOTIFY_SAVE, NOTIFY_TABCHANGE };
-
 #define MAX_RECENT 9
-
 class SCFrame : public wxFrame
 {
 public:
@@ -98,8 +69,8 @@ public:
 	void ClearCMs();
 	bool AddCM( const wxString &name );
 	void SetCMs( const wxArrayString &list );
-private:	
 
+private:	
 	void WriteVarTable( wxDataOutputStream &o, var_table &vt );
 	bool ReadVarTable( wxDataInputStream &o, var_table &vt, bool clear_first );
 

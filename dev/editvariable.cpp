@@ -1,25 +1,27 @@
-#include "editvariable.h"
+
+#include <wx/statline.h>
 
 #include <wex/numeric.h>
 #include <wex/extgrid.h>
 
-enum { ID_TYPE_STRING=4235,
-	   ID_TYPE_NUMBER,
-	   ID_TYPE_ARRAY,
-	   ID_TYPE_MATRIX,
-	   ID_FOCUS_STRING,
-	   ID_FOCUS_NUMBER };
+#include "editvariable.h"
 
-enum {
-  ID_numCols,
-  ID_rbgVarType,
-  ID_grdArrMat,
-  ID_btnCancel,
-  ID_btnAccept,
-  ID_btnChooseFile,
-  ID_txtValue,
-  ID_numValue,
-  ID_numRows };
+
+enum {  ID_TYPE_STRING=wxID_HIGHEST+333,
+		ID_TYPE_NUMBER,
+		ID_TYPE_ARRAY,
+		ID_TYPE_MATRIX,
+		ID_FOCUS_STRING,
+		ID_FOCUS_NUMBER,
+		ID_numCols,
+		ID_rbgVarType,
+		ID_grdArrMat,
+		ID_btnCancel,
+		ID_btnAccept,
+		ID_btnChooseFile,
+		ID_txtValue,
+		ID_numValue,
+		ID_numRows };
 
 BEGIN_EVENT_TABLE( EditVariableDialog, wxDialog )
 	EVT_MENU( ID_TYPE_STRING, EditVariableDialog::OnShortcut )
@@ -28,13 +30,14 @@ BEGIN_EVENT_TABLE( EditVariableDialog, wxDialog )
 	EVT_MENU( ID_TYPE_MATRIX, EditVariableDialog::OnShortcut )
 	EVT_MENU( ID_FOCUS_STRING, EditVariableDialog::OnShortcut )
 	EVT_MENU( ID_FOCUS_NUMBER, EditVariableDialog::OnShortcut )
+
 	EVT_NUMERIC( ID_numRows, EditVariableDialog::OnRowsColsChange )
 	EVT_NUMERIC( ID_numCols, EditVariableDialog::OnRowsColsChange )
-	EVT_TEXT_ENTER( ID_txtValue, EditVariableDialog::OnTextChange )
+	EVT_TEXT( ID_txtValue, EditVariableDialog::OnTextChange )
 	EVT_BUTTON( ID_btnChooseFile, EditVariableDialog::OnChooseFile )
 	EVT_NUMERIC( ID_numValue, EditVariableDialog::OnNumChange )
 	EVT_GRID_CMD_CELL_CHANGE( ID_grdArrMat, EditVariableDialog::OnGridCellChange )
-	EVT_RADIOBUTTON( ID_rbgVarType, EditVariableDialog::OnTypeChange )
+	EVT_RADIOBOX( ID_rbgVarType, EditVariableDialog::OnTypeChange )
 END_EVENT_TABLE()
 
 EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
@@ -46,7 +49,7 @@ EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
 	numCols = new wxNumericCtrl(this, ID_numCols, 4, wxNumericCtrl::INTEGER );
 		
 	numValue = new wxNumericCtrl(this, ID_numValue );
-	txtValue = new wxTextCtrl(this, ID_txtValue, wxEmptyString );
+	txtValue = new wxTextCtrl(this, ID_txtValue );
 
 	btnChooseFile = new wxButton(this, ID_btnChooseFile, "file..");
 
@@ -71,21 +74,23 @@ EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
 
 	
 	wxBoxSizer *sz_htop = new wxBoxSizer(wxHORIZONTAL);
-	sz_htop->Add( new wxStaticText(this, wxID_ANY, "Numeric value:"));
-	sz_htop->Add( numValue );
-	sz_htop->Add( new wxStaticText(this, wxID_ANY, "String value:" ));
-	sz_htop->Add( txtValue );	
+	sz_htop->Add( new wxStaticText(this, wxID_ANY, "Numeric value:"), 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 2);
+	sz_htop->Add( numValue, 0, wxALL|wxEXPAND, 2 );
+	sz_htop->Add( new wxStaticText(this, wxID_ANY, "String value:" ), 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 2);
+	sz_htop->Add( txtValue, 0, wxALL|wxEXPAND, 2 );	
 	sz_htop->Add( btnChooseFile );
-	sz_htop->Add( new wxStaticText(this, wxID_ANY, "# rows:" ));
-	sz_htop->Add( numRows );	
-	sz_htop->Add( new wxStaticText(this, wxID_ANY, "# cols:") );
-	sz_htop->Add( numCols );
+	sz_htop->Add( new wxStaticText(this, wxID_ANY, "# rows:" ), 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 2);
+	sz_htop->Add( numRows, 0, wxALL|wxEXPAND, 2 );	
+	sz_htop->Add( new wxStaticText(this, wxID_ANY, "# cols:"), 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 2);
+	sz_htop->Add( numCols, 0, wxALL|wxEXPAND, 2 );
 
 	wxBoxSizer *sz_main = new wxBoxSizer(wxVERTICAL);
-	sz_main->Add( new wxStaticText(this, wxID_ANY, "Shortcuts: F1=SSC_STRING, F2=SSC_NUMBER, F3=SSC_ARRAY, F4=SSC_MATRIX, F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog") );
 	sz_main->Add( rbgVarType );
 	sz_main->Add( sz_htop );
 	sz_main->Add( grdArrMat, 1, wxEXPAND|wxALL, 10 );
+	sz_main->Add( new wxStaticText(this, wxID_ANY, "Shortcuts: F1=SSC_STRING, F2=SSC_NUMBER, F3=SSC_ARRAY, F4=SSC_MATRIX,\n"
+		"F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog"), 0, wxALL|wxEXPAND, 4 );
+	sz_main->Add( new wxStaticLine( this, wxID_ANY ), 0, wxALL|wxEXPAND, 3 );
 	sz_main->Add( CreateButtonSizer( wxOK|wxCANCEL ), 0, wxALL|wxEXPAND, 10 );
 
 	SetSizer( sz_main );
@@ -99,7 +104,7 @@ EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
 	entries[3].Set(::wxACCEL_NORMAL, WXK_F4, ID_TYPE_MATRIX);
 	entries[4].Set(::wxACCEL_NORMAL, WXK_F5, ID_FOCUS_STRING);
 	entries[5].Set(::wxACCEL_NORMAL, WXK_F6, ID_FOCUS_NUMBER);
-	entries[6].Set(::wxACCEL_NORMAL, WXK_F10, ID_btnAccept);
+	entries[6].Set(::wxACCEL_NORMAL, WXK_F10, wxID_OK);
 	wxAcceleratorTable acceltab(7,entries);
 	SetAcceleratorTable(acceltab);
 }

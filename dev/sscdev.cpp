@@ -31,7 +31,7 @@
 #include "dataview.h"
 #include "cmform.h"
 #include "scripting.h"
-#include "splash.xpm"
+
 
 /* exported application global variables */
 
@@ -40,7 +40,6 @@ int SC_minor_ver = 0;
 int SC_micro_ver = 1;
 
 SCFrame *app_frame = NULL;
-wxArrayString app_args;
 wxConfig *app_config = NULL;
 
 void applog(const wxString &s)
@@ -58,28 +57,21 @@ bool SCApp::OnInit()
 {
 	SetAppName( "SSCdev" );
 	
-	// accumulate all the command line args
-	for (int i=0;i<argc;i++)
-		app_args.Add(argv[i]);
-
 	// set the current working directory to locate .pdb on crash
-	wxSetWorkingDirectory( wxPathOnly(app_args[0]) );
+	if ( argc > 0 )
+		wxSetWorkingDirectory( wxPathOnly(argv[0]) );
 
 	app_config = new wxConfig( "sscdev", "WXAPPS" );
 	
-	/* needed for the html help viewer */
-	wxImage::AddHandler(new wxBMPHandler);
-    wxImage::AddHandler(new wxPNGHandler);
-    wxImage::AddHandler(new wxJPEGHandler);
-	wxImage::AddHandler(new wxXPMHandler);
+	wxInitAllImageHandlers();
 
     wxFileSystem::AddHandler(new wxZipFSHandler);
 
 	app_frame = new SCFrame;
 	SetTopWindow(app_frame);
 
-	if ((int)app_args.Count() > 1)
-		app_frame->LoadBdat(app_args[1]);
+	if ( argc > 1 )
+		app_frame->LoadBdat( argv[1] );
 
 	bool first_load = true;
 	wxString fl_key = wxString::Format("FirstLoad_%d",
@@ -109,92 +101,37 @@ int SCApp::OnExit()
 	return 0;
 }
 
-/* ************************************************************
-   ************ SC 'About' Dialog ****************************
-   ************************************************************ */
-
-enum { ID_ABOUT_CLOSE, ID_ABOUT_TEXT,ID_ABOUT_CRASH};
-
-BEGIN_EVENT_TABLE(SCAbout, wxDialog)
-	EVT_CLOSE( SCAbout::OnCloseFrame )
-	EVT_BUTTON( ID_ABOUT_CLOSE,SCAbout::OnClose )
-	EVT_BUTTON( ID_ABOUT_CRASH,SCAbout::OnCrash )
-END_EVENT_TABLE()
-
+#include "splash.cpng"
 static char *SC_about_text = "SSCdev - System Simulator Core\n\n"
 "Developer interface for simulation, component development, validation, and basic visualization of SSC computation modules.";
 
-SCAbout::SCAbout(wxWindow *parent)
-: wxDialog(parent, -1, "SC", wxDefaultPosition, wxDefaultSize,wxBORDER_SIMPLE)
+class AboutDialog : public wxDialog
 {
-	wxBitmap pic;
-	
-	if (!pic.LoadFile( wxPathOnly(app_args[0]) + "/splash.bmp", wxBITMAP_TYPE_BMP ))
-		pic = wxBitmap(splash_xpm);
+public:
+	AboutDialog( wxWindow *parent )
+		: wxDialog( parent, wxID_ANY, "About SSCdev", wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE )
+	{
+		SetBackgroundColour( *wxWHITE );
+		wxString version_str = wxString::Format("Version %d.%d.%d", SC_major_ver, SC_minor_ver, SC_micro_ver );
+				
+		wxTextCtrl *text = new wxTextCtrl(this, wxID_ANY, SC_about_text, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY);
+		text->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "consolas"));
+		text->SetForegroundColour( wxColour(90,90,90) );
 
-	SetBackgroundColour( *wxWHITE );
-	mBitmap = new wxStaticBitmap(this, -1, pic);
-	mLblVersion = new wxStaticText(this, -1, "");
-	mLblVersion->SetBackgroundColour( *wxWHITE );
+		wxBoxSizer *sz_main = new wxBoxSizer( wxVERTICAL );
+		
+		sz_main->Add( new wxStaticBitmap( this, wxID_ANY, wxBITMAP_PNG_FROM_DATA(splash) ),
+			0, wxALL|wxEXPAND, 4 );
 
-	wxAcceleratorEntry entries[1];
-	entries[0].Set(::wxACCEL_CTRL, WXK_F7, ID_ABOUT_CRASH);
-	wxAcceleratorTable acceltab(1,entries);
-	SetAcceleratorTable(acceltab);
+		sz_main->Add( text, 0, wxALL|wxEXPAND, 4 );
 
-	mLblVersion->SetLabel( wxString::Format(" Version %d.%d.%d", 
-		SC_major_ver, SC_minor_ver, SC_micro_ver ));
+		sz_main->Add( new wxStaticText( this, wxID_ANY, version_str ), 0, wxALL|wxEXPAND, 4 );
+		sz_main->Add( CreateButtonSizer( wxOK ), 0, wxALL|wxEXPAND, 4 );
 
-	mBtnClose = new wxButton(this, ID_ABOUT_CLOSE, "Close");	
-
-	mText = new wxTextCtrl(this, ID_ABOUT_TEXT, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY);
-	mText->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "consolas"));
-	mText->SetForegroundColour( wxColour(90,90,90) );
-
-	mText->SetSize(4,pic.GetHeight()+4,pic.GetWidth()-8,126);
-	mText->SetValue(SC_about_text);
-	mLblVersion->SetSize(3,pic.GetHeight()+134,pic.GetWidth()-135,17);
-	mBtnClose->SetSize(pic.GetWidth()-74,pic.GetHeight()+134,70,21);
-
-	/* hidden button that can be 'clicked' or 
-	activated by the accelerator to cause a crash */
-	wxButton *cb = new wxButton(this, ID_ABOUT_CRASH, "SegF");
-	cb->SetSize( 10, 10,50,21);
-	cb->Show(false);
-
-#ifdef __WXMSW__
-	this->SetClientSize( pic.GetWidth(), pic.GetHeight()+130+29 );
-#else
-	this->SetClientSize( pic.GetWidth()-1, pic.GetHeight()+130+29 );
-#endif
-
-	this->CenterOnScreen();
-	SetEscapeId(ID_ABOUT_CLOSE);
-}
-
-void SCAbout::OnCloseFrame(wxCloseEvent &evt)
-{
-	EndModal(0);
-}
-
-void SCAbout::OnClose(wxCommandEvent &evt)
-{
-	EndModal(0);
-}
-
-void SCAbout::OnCrash(wxCommandEvent &evt)
-{
-	try {
-		__ssc_segfault();
-	}catch(sscdll_error& e){
-		wxMessageBox(wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()),"Error",wxICON_ERROR|wxOK);
+		SetSizer( sz_main );
+		Fit();
 	}
-}
-
-
-/* ************************************************************
-   ************ SC  Parent window class  ******************
-   ************************************************************ */
+};
 
 enum{   ID_START, ID_STOP, ID_SHOW_STATS,
 		ID_LOAD_UNLOAD_DLL,
@@ -651,7 +588,8 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		break;
 	case wxID_ABOUT:
 		{		
-			SCAbout dlg(this);
+			AboutDialog dlg(this);
+			dlg.CenterOnParent();
 			dlg.ShowModal();	
 		}
 		break;

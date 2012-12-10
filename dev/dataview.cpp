@@ -642,7 +642,7 @@ void DataView::EditVariable( wxString name )
 	{
 		EditVariableDialog dlg(this, "Edit Variable: " + name);
 		dlg.SetVarData( *v );
-		if (dlg.ShowModal() == wxID_OK)
+		if ( dlg.ShowModal() == wxID_OK )
 		{
 			dlg.GetVarData( *v );
 			UpdateView();
