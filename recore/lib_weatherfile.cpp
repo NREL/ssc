@@ -392,18 +392,63 @@ static double calc_twet( double T, double RH, double P )
 //% (mbar)
 //% see http://www.ejournal.unam.mx/atm/Vol07-3/ATM07304.pdf for eqns.
 
-    volatile double Twet = T*0.7;// initial guess
-    
+	/* 
+	Mike Wagner:
+	There is a units error here! The original reference specifies that pressure should be provided in 
+	hPa (hectoPascals), which is equivalent with millibar. However, the units SHOULD BE in kPa, or mbar/10.
+	Correct for the units issue here.
+
+	IMPACT:
+	This subroutine has been returning wet bulb temperatures much too high. This could adversely affect any
+	model that calls the method and whose performance is sensitive to the wet bulb temperature.
+	*/
+	double Pkpa = P/10.;	//Correct for units problem
+
+    //volatile double Twet = T*0.7;// initial guess
+	volatile double Twet = T - 5.;	//Initial guess [mjw -- negative values of T were causing problems here]
+	
+	//[mjw] Use a bisection method to solve for Twet. The previous iteration method is unstable.
+	bool
+		hiflag = false,
+		lowflag = false;
+	double
+		hival, lowval, err;
+	const double tol = 0.05;
+
     int i = 0;
     while( i++ < 250 )
 	{
-        double F = exp( (21.3 * Twet + 494.41) / (Twet+273.15) ) - RH / 100 * exp( (21.3 * T + 494.41) / (T+273.15) ) - (6.53*10e-4) * P * (T-Twet);
-        double G = exp( (21.3 * Twet + 494.41) / (Twet+273.15) ) * ( (21.4 * (Twet+273.15) - (21.4 * Twet+494.41)) / pow(Twet+273.15, 2) ) + 6.53*10e-4 * P * Twet;
-    
-        if (fabs(F) < 0.1)
-            break;
+        err = exp( (21.3 * Twet + 494.41) / (Twet+273.15) ) - RH / 100 * exp( (21.3 * T + 494.41) / (T+273.15) ) - (6.53*10e-4) * Pkpa * (T-Twet);
+        //double G = exp( (21.3 * Twet + 494.41) / (Twet+273.15) ) * ( (21.4 * (Twet+273.15) - (21.4 * Twet+494.41)) / pow(Twet+273.15, 2) ) + 6.53*10e-4 * Pkpa * Twet;
+		if(err < 0.){
+			lowval = Twet;
+			lowflag = true;
+		}
+		else if(err > 0.){
+			hival = Twet;
+			hiflag = true;
+		}
+		
+		if (abs(err) < tol) break;
 
-        Twet = Twet + -F/G;
+		//If the error is still too high, guess new values
+		if(hiflag && lowflag){
+			//Bisect
+			Twet = (hival + lowval)/2.;
+		}
+		else if(hiflag){
+			//A lower bound hasn't yet been found. Try decreasing by 5 C
+			Twet += -5;
+		}
+		else if(lowflag){
+			//An upper bound hasn't yet been found. Bisect the current Twet and the Tdry
+			Twet = (Twet + T)/2.;
+		}
+		else{
+			//Neither flags have been set. Guess a lower temp.
+			Twet += -5.;
+		}
+		
 	}
 
 	if ( Twet != Twet ) // check for NaN
