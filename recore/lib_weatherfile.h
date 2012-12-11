@@ -12,6 +12,30 @@ private:
 	std::string m_file;
 	int m_startYear;
 	double m_time;
+	bool
+		m_interp_mode,
+		m_first_call;
+	//Dynamic arrays for interpolation
+	int* YEAR;
+	int* MONTH;
+	int* DAY;
+	int* HOUR;
+	double* MINUTE;
+	double* GH;   /* global (Wh/m2) */
+	double* DN;   /* direct (Wh/m2) */
+	double* DF;   /* diffuse (Wh/m2) */
+	double* WSPD; /* wind speed (m/s) */
+	double* WDIR; /* wind direction (deg: N = 0 or 360, E = 90, S = 180,W = 270 ) */
+	double* TDRY; /* dry bulb temp (C) */
+	double* TWET; /* wet bulb temp (C) */
+	double* TDEW; /* dew point temp (C) */
+	double* RHUM; /* relative humidity (%) */
+	double* PRES; /* pressure (mbar) */
+	double* SNOW; /* snow depth (cm) 0-150 */
+	double* ALBEDO; /* ground reflectance 0-1.  values outside this range mean it is not included */
+	bool allocated;
+	int ncall;
+
 
 public:
 	weatherfile();
@@ -24,6 +48,7 @@ public:
 	void close();
 	bool open( const std::string &file );
 	void rewind();
+	void disable_interpolation();
 
 	/******** header data *******/
 	std::string loc_id;

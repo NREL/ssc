@@ -100,12 +100,20 @@ static int cmp_ext(const char *file, const char *ext)
 
 weatherfile::weatherfile()
 {
+	m_interp_mode = true;
+	m_first_call = true;
+	ncall = 0;
+	allocated = false;
 	m_fp = 0;
 	close();
 }
 
 weatherfile::weatherfile( const std::string &file )
 {
+	m_interp_mode = false;
+	m_first_call = true;
+	ncall = 0;
+	allocated = false;
 	m_fp = 0;
 	close();
 	open( file );
@@ -114,6 +122,28 @@ weatherfile::weatherfile( const std::string &file )
 weatherfile::~weatherfile()
 {
 	if (m_fp != 0) fclose( m_fp );
+
+	//Delete dynamic arrays
+	if(allocated){
+		delete [] YEAR;
+		delete [] MONTH;
+		delete [] DAY;
+		delete [] HOUR;
+		delete [] MINUTE;
+		delete [] GH;   /* global (Wh/m2) */
+		delete [] DN;   /* direct (Wh/m2) */
+		delete [] DF;   /* diffuse (Wh/m2) */
+		delete [] WSPD; /* wind speed (m/s) */
+		delete [] WDIR; /* wind direction (deg: N = 0 or 360, E = 90, S = 180,W = 270 ) */
+		delete [] TDRY; /* dry bulb temp (C) */
+		delete [] TWET; /* wet bulb temp (C) */
+		delete [] TDEW; /* dew point temp (C) */
+		delete [] RHUM; /* relative humidity (%) */
+		delete [] PRES; /* pressure (mbar) */
+		delete [] SNOW; /* snow depth (cm) 0-150 */
+		delete [] ALBEDO; /* ground reflectance 0-1.  values outside this range mean it is not included */
+	}
+
 }
 
 bool weatherfile::ok()
@@ -385,6 +415,11 @@ void weatherfile::close()
 
 }
 
+void weatherfile::disable_interpolation()
+{
+	m_interp_mode = false;
+}
+
 static double calc_twet( double T, double RH, double P )
 {
 //	function [Twet] = calctwet(T, RH, P)
@@ -402,7 +437,7 @@ static double calc_twet( double T, double RH, double P )
 	This subroutine has been returning wet bulb temperatures much too high. This could adversely affect any
 	model that calls the method and whose performance is sensitive to the wet bulb temperature.
 	*/
-	double Pkpa = P/10.;	//Correct for units problem
+	volatile double Pkpa = P/10.;	//Correct for units problem
 
     //volatile double Twet = T*0.7;// initial guess
 	volatile double Twet = T - 5.;	//Initial guess [mjw -- negative values of T were causing problems here]
@@ -492,67 +527,149 @@ bool  weatherfile::read()
 	
 	if ( m_type == TMY2 )
 	{
-		char *pret = fgets(buf, 1023, m_fp);
-		
 		int yr,mn,dy,hr,ethor,etdn;
 		int d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,d16,d17,d18,d19,d20,d21;      /* which of these are used? d3, d10, d15 & d20 */
 		int u1,u2,u3,u4,u5,u6,u7,u8,u9,u10,u11,u12,u13,u14,u15,u16,u17,u18,u19,u20,u21;  /* are any of these ever used?? */
 		int w1,w2,w3,w4,w5,w6,w7,w8,w9,w10;     
 		char f1[2],f2[2],f3[2],f4[2],f5[2],f6[2],f7[2],f8[2],f9[2],f10[2],f11[2],f12[2],f13[2],f14[2],f15[2],f16[2],f17[2],f18[2],f19[2],f20[2],f21[2];
-	
-		int nread = sscanf(buf,
-		 "%2d%2d%2d%2d"
-		 "%4d%4d"
-		 "%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d"
-		 "%2d%1s%1d%2d%1s%1d%4d%1s%1d%4d%1s%1d%3d%1s%1d%4d%1s%1d%3d%1s%1d"
-		 "%3d%1s%1d%4d%1s%1d%5d%1s%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%3d%1s%1d%3d%1s%1d%3d%1s%1d%2d%1s%1d\n",
-			 &yr,&mn,&dy,&hr,
-			 &ethor, /* extraterrestrial horizontal radiation */
-			 &etdn, /* extraterrestrial direct normal radiation */
-			 &d1,f1,&u1, /* GH data value 0-1415 Wh/m2, Source, Uncertainty */
-			 &d2,f2,&u2, /* DN data value 0-1200 Wh/m2, Source, Uncertainty */
-			 &d3,f3,&u3, /* DF data value 0-700 Wh/m2, Source, Uncertainty */
-			 &d4,f4,&u4, /* GH illum data value, Source, Uncertainty */
-			 &d5,f5,&u5, /* DN illum data value, Source, Uncertainty */
-			 &d6,f6,&u6, /* DF illum data value, Source, Uncertainty */
-			 &d7,f7,&u7, /* Zenith illum data value, Source, Uncertainty */
-			 &d8,f8,&u8, /* Total sky cover */
-			 &d9,f9,&u9, /* opaque sky cover */
-			 &d10,f10,&u10, /* dry bulb temp -500 to 500 = -50.0 to 50.0 'C */
-			 &d11,f11,&u11, /* dew point temp -600 to 300 = -60.0 to 30.0 'C */
-			 &d12,f12,&u12, /* relative humidity 0-100 */
-			 &d13,f13,&u13, /* pressure millibars */
-			 &d14,f14,&u14, /* wind direction */
-			 &d15,&f15,&u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
-			 &d16,&f16,&u16, // visibility
-			 &d17,&f17,&u17, // ceiling height
-			 &w1,&w2,&w3,&w4,&w5,&w6,&w7,&w8,&w9,&w10, // present weather
-			 &d18,&f18,&u18, // precipitable water
-			 &d19,&f19,&u19, // aerosol optical depth
-			 &d20,&f20,&u20, // snow depth 0-150 cm
-			 &d21,&f21,&u21 ); // days since last snowfall 0-88
-
-		year = yr + 1900;
-		month = mn;
-		day = dy;
-		hour = hr-1;  // hour goes 0-23, not 1-24
-		minute = 30;
-		gh = (double)d1*1.0;
-		dn=(double)d2;           /* Direct radiation */
-		df=(double)d3;           /* Diffuse radiation */
-		tdry=(double)d10/10.0;       /* Ambient dry bulb temperature(C) */
-		tdew = (double)d11/10.0; /* dew point temp */
-		wspd=(double)d15/10.0;       /* Wind speed(m/s) */
-		wdir=(double)d14; /* wind dir */
-		rhum = (double)d12;
-		pres = (double)d13;
-		snow = (double)d20;
-		albedo = -999; /* no albedo in TMY2 */
-
 		
-		twet = calc_twet( tdry, rhum, pres ); /* must calculate wet bulb */
+		if(m_first_call || !m_interp_mode){
 
-		return nread==79 && pret==buf;
+			if(! allocated && m_interp_mode){
+				YEAR = new int[nrecords];
+				MONTH = new int[nrecords];
+				DAY = new int[nrecords];
+				HOUR = new int[nrecords];
+				MINUTE = new double[nrecords];
+				GH = new double[nrecords];   /* global (Wh/m2) */
+				DN = new double[nrecords];   /* direct (Wh/m2) */
+				DF = new double[nrecords];   /* diffuse (Wh/m2) */
+				WSPD = new double[nrecords]; /* wind speed (m/s) */
+				WDIR = new double[nrecords]; /* wind direction (deg: N = 0 or 360, E = 90, S = 180,W = 270 ) */
+				TDRY = new double[nrecords]; /* dry bulb temp (C) */
+				TWET = new double[nrecords]; /* wet bulb temp (C) */
+				TDEW = new double[nrecords]; /* dew point temp (C) */
+				RHUM = new double[nrecords]; /* relative humidity (%) */
+				PRES = new double[nrecords]; /* pressure (mbar) */
+				SNOW = new double[nrecords]; /* snow depth (cm) 0-150 */
+				ALBEDO = new double[nrecords]; /* ground reflectance 0-1.  values outside this range mean it is not included */
+				allocated = true;
+			}
+
+			for(int i=0; i<nrecords; i++){		//Read in each record
+				
+
+				char *pret = fgets(buf, 1023, m_fp);
+		
+	
+				int nread = sscanf(buf,
+				 "%2d%2d%2d%2d"
+				 "%4d%4d"
+				 "%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d"
+				 "%2d%1s%1d%2d%1s%1d%4d%1s%1d%4d%1s%1d%3d%1s%1d%4d%1s%1d%3d%1s%1d"
+				 "%3d%1s%1d%4d%1s%1d%5d%1s%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%3d%1s%1d%3d%1s%1d%3d%1s%1d%2d%1s%1d\n",
+					 &yr,&mn,&dy,&hr,
+					 &ethor, /* extraterrestrial horizontal radiation */
+					 &etdn, /* extraterrestrial direct normal radiation */
+					 &d1,f1,&u1, /* GH data value 0-1415 Wh/m2, Source, Uncertainty */
+					 &d2,f2,&u2, /* DN data value 0-1200 Wh/m2, Source, Uncertainty */
+					 &d3,f3,&u3, /* DF data value 0-700 Wh/m2, Source, Uncertainty */
+					 &d4,f4,&u4, /* GH illum data value, Source, Uncertainty */
+					 &d5,f5,&u5, /* DN illum data value, Source, Uncertainty */
+					 &d6,f6,&u6, /* DF illum data value, Source, Uncertainty */
+					 &d7,f7,&u7, /* Zenith illum data value, Source, Uncertainty */
+					 &d8,f8,&u8, /* Total sky cover */
+					 &d9,f9,&u9, /* opaque sky cover */
+					 &d10,f10,&u10, /* dry bulb temp -500 to 500 = -50.0 to 50.0 'C */
+					 &d11,f11,&u11, /* dew point temp -600 to 300 = -60.0 to 30.0 'C */
+					 &d12,f12,&u12, /* relative humidity 0-100 */
+					 &d13,f13,&u13, /* pressure millibars */
+					 &d14,f14,&u14, /* wind direction */
+					 &d15,&f15,&u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
+					 &d16,&f16,&u16, // visibility
+					 &d17,&f17,&u17, // ceiling height
+					 &w1,&w2,&w3,&w4,&w5,&w6,&w7,&w8,&w9,&w10, // present weather
+					 &d18,&f18,&u18, // precipitable water
+					 &d19,&f19,&u19, // aerosol optical depth
+					 &d20,&f20,&u20, // snow depth 0-150 cm
+					 &d21,&f21,&u21 ); // days since last snowfall 0-88
+
+				year = yr + 1900;
+				month = mn;
+				day = dy;
+				hour = hr-1;  // hour goes 0-23, not 1-24
+				minute = 30;
+				gh = (double)d1*1.0;
+				dn=(double)d2;           /* Direct radiation */
+				df=(double)d3;           /* Diffuse radiation */
+				tdry=(double)d10/10.0;       /* Ambient dry bulb temperature(C) */
+				tdew = (double)d11/10.0; /* dew point temp */
+				wspd=(double)d15/10.0;       /* Wind speed(m/s) */
+				wdir=(double)d14; /* wind dir */
+				rhum = (double)d12;
+				pres = (double)d13;
+				snow = (double)d20;
+				albedo = -999; /* no albedo in TMY2 */
+						
+				twet = calc_twet( tdry, rhum, pres ); /* must calculate wet bulb */
+
+				if(allocated && m_interp_mode){
+					HOUR[i] = hour;
+					MINUTE[i] = minute;
+					GH[i] = gh;
+					DN[i] = dn;
+					DF[i] = df;
+					WSPD[i] = wspd;
+					WDIR[i] = wdir;
+					TDRY[i] = tdry;
+					TWET[i] = twet;
+					TDEW[i] = tdew;
+					RHUM[i] = rhum;
+					PRES[i] = pres;
+					SNOW[i] = snow;
+					ALBEDO[i] = albedo;
+				}
+
+				if(!(nread==79 && pret==buf)) return false;
+				if(! m_interp_mode) break;	//Don't read multiple records if we're not in interp mode
+			}
+		}
+		//if this is the first call, set to the backwards interpolation values of the first two time steps
+		if(m_interp_mode){
+				
+			hour = HOUR[ncall];
+			minute = MINUTE[ncall];
+			gh = GH[ncall];
+			dn = DN[ncall];
+			df = DF[ncall];
+
+			if(m_first_call){
+				wspd = WSPD[1] + 1.5*(WSPD[0] - WSPD[1]);
+				wdir = WDIR[1] + 1.5*(WDIR[0] - WDIR[1]);
+				tdry = TDRY[1] + 1.5*(TDRY[0] - TDRY[1]);
+				twet = TWET[1] + 1.5*(TWET[0] - TWET[1]);
+				tdew = TDEW[1] + 1.5*(TDEW[0] - TDEW[1]);
+				rhum = RHUM[1] + 1.5*(RHUM[0] - RHUM[1]);
+				pres = PRES[1] + 1.5*(PRES[0] - PRES[1]);
+				snow = SNOW[1] + 1.5*(SNOW[0] - SNOW[1]);
+				albedo = ALBEDO[1] + 1.5*(ALBEDO[0] - ALBEDO[1]);
+				m_first_call = false;
+			}
+			else{
+				wspd = 0.5*(WSPD[ncall] +WSPD[ncall-1]);
+				wdir = 0.5*(WDIR[ncall] +WDIR[ncall-1]);
+				tdry = 0.5*(TDRY[ncall] +TDRY[ncall-1]);
+				twet = 0.5*(TWET[ncall] +TWET[ncall-1]);
+				tdew = 0.5*(TDEW[ncall] +TDEW[ncall-1]);
+				rhum = 0.5*(RHUM[ncall] +RHUM[ncall-1]);
+				pres = 0.5*(PRES[ncall] +PRES[ncall-1]);
+				snow = 0.5*(SNOW[ncall] +SNOW[ncall-1]);
+				albedo = 0.5*(ALBEDO[ncall] +ALBEDO[ncall-1]);
+			}
+			ncall++;
+		}
+
+		return true;
 	}
 	else if ( m_type == TMY3)
 	{
