@@ -183,7 +183,10 @@ SCFrame::SCFrame()
 {
 	m_varTable = new var_table;
 	
+#ifdef __WXMSW__
 	SetIcon( wxIcon("appicon") );
+#endif
+
 	SetBackgroundColour( *wxWHITE );
 	wxStatusBar *sb = CreateStatusBar(2);
 	int widths[] = {-1, -3};
@@ -316,10 +319,10 @@ void SCFrame::UpdateUI()
 	if (sscdll_isloaded())
 	{
 		int ver = 0;
-		char * build = "no info";
+		wxString build = "no info";
 		try {
 			ver = ssc_version();
-			build = const_cast<char*>( ssc_build_info() );
+			build = ssc_build_info();
 		} catch (sscdll_error &e) {
 			status = wxString(e.text.c_str()) + " ";
 			ver = -999;
@@ -528,10 +531,13 @@ void SCFrame::ChooseDynamicLibrary()
 		
 	wxFileDialog fd(this, "Choose SSC dynamic library", m_currentAppDir, "ssc32.dll", 
 #ifdef __WXMSW__
-		"DLL Files (*.dll)|*.dll"
+		"Dynamic Link Libraries (*.dll)|*.dll"
 #endif
-#ifdef __WXMAC__
-		"DYLIB Files *.dylib|*.dylib"
+#ifdef __WXOSX__
+		"Dynamic Libraries (*.dylib)|*.dylib"
+#endif
+#ifdef __WXGTK__
+		"Shared Libraries (*.so)|*.so"
 #endif
 		, wxFD_OPEN);
 	if (fd.ShowModal() != wxID_OK) return;

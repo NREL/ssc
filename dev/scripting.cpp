@@ -834,7 +834,9 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 	case wxID_HELP:
 		{
 			wxFrame *frm = new wxFrame( this, wxID_ANY, "Scripting Reference", wxDefaultPosition, wxSize(800, 700) );
+#ifdef __WXMSW__
 			frm->SetIcon(wxIcon("appicon"));
+#endif
 			wxHtmlWindow *html = new wxHtmlWindow( frm, wxID_ANY, wxDefaultPosition, wxDefaultSize );
 
 			wxString data;
