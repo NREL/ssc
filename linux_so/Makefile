@@ -53,7 +53,6 @@ OBJECTS = \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
-	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
 	lib_windfile.o \
