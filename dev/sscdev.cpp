@@ -202,7 +202,10 @@ SCFrame::SCFrame()
 
 	m_scriptWindow = new EditorWindow(m_notebook);
 
-	m_notebook->AddPage( m_dataView, "Variable Viewer", true );
+	m_cmBrowser = new CMForm( m_notebook );
+
+	m_notebook->AddPage( m_cmBrowser, "Module Browser", true );
+	m_notebook->AddPage( m_dataView, "Variable Viewer", false );
 	m_notebook->AddPage( m_scriptWindow, "Scripting", false );
 
 	m_txtOutput = new wxTextCtrl(split_win, ID_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize,
@@ -236,16 +239,7 @@ SCFrame::SCFrame()
 	}
 
 	app_config->Read("CurrentDirectory", &m_currentAppDir);
-
-	wxString dll_path;
-	app_config->Read("DllPath", &dll_path);
-	if (wxFileExists(dll_path))
-	{
-		m_dllPath = dll_path;
-		sscdll_load( dll_path.c_str() );
-		m_lastLoadTime = wxNow();
-	}
-
+	
 	UpdateRecentMenu();	
 
 	m_fileMenu = new wxMenu;
@@ -260,7 +254,6 @@ SCFrame::SCFrame()
 	m_fileMenu->AppendSeparator();
 	m_fileMenu->Append( ID_START, "Start simulation...\tF5" );
 	m_fileMenu->Append( ID_RUN_SCRIPT, "Run script...\tF6");
-	m_fileMenu->Append( ID_MODULES, "Modules...\tF2" );
 	m_fileMenu->AppendSeparator();
 	m_fileMenu->Append( ID_LOAD_UNLOAD_DLL, "Load/unload SSC library\tF4");
 	m_fileMenu->Append( ID_CHOOSE_DLL, "Choose SSC library...\tF9");
@@ -305,6 +298,14 @@ SCFrame::SCFrame()
 
 	UpdateUI();
 	
+	wxString dll_path;
+	app_config->Read("DllPath", &dll_path);
+	if (wxFileExists(dll_path))
+	{
+		m_dllPath = dll_path;
+		m_lastLoadTime = wxNow();
+		LoadUnloadLibrary();
+	}
 }
 
 SCFrame::~SCFrame()
@@ -519,9 +520,14 @@ void SCFrame::LoadUnloadLibrary()
 		sscdll_load( m_dllPath.c_str() );
 
 		m_currentAppDir = wxPathOnly(m_dllPath);
+		m_cmBrowser->LoadCMs();
+		m_cmBrowser->UpdateForm();
 	}
 	else
+	{
 		sscdll_unload();
+		m_cmBrowser->UpdateForm();
+	}
 
 	UpdateUI();
 }
@@ -616,6 +622,7 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 			UpdateUI();
 		}
 		break;
+		/*
 	case ID_MODULES:
 		{
 			CMForm dlg( this );
@@ -627,6 +634,7 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 			UpdateUI();
 		}
 		break;
+		*/
 	}
 }
 
@@ -638,7 +646,7 @@ void SCFrame::ClearCMs()
 
 bool SCFrame::AddCM( const wxString &name )
 {
-	wxArrayString list = CMForm::GetAvailableCMs();
+	wxArrayString list = m_cmBrowser->GetAvailableCMs();
 	if (list.Index( name ) != wxNOT_FOUND)
 	{
 		m_cmList.Add( name );

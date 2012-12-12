@@ -10,7 +10,7 @@
 
 class wxExtGridCtrl;
 
-class CMForm : public wxDialog
+class CMForm : public wxPanel
 {
 private:
 	wxButton *btnSendToExcel;
@@ -19,9 +19,10 @@ private:
 	wxButton *btnClose;
 	wxListBox *lstSelectedCMs;
 	wxCheckListBox *cklCMList;
+	wxStaticText *m_lblStatus;
 
 public:
-	CMForm(wxWindow *parent);	
+	CMForm( wxWindow *parent );	
 	
 	void LoadCMs();
 	void OnCMListSelect(wxCommandEvent &evt);
@@ -29,10 +30,11 @@ public:
 		m_cmList = list; UpdateForm(); }
 	wxArrayString GetCMList() { return m_cmList; }
 
-	static wxArrayString GetAvailableCMs();
+	wxArrayString GetAvailableCMs();
 
-private:
 	void UpdateForm();
+private:
+
 	void OnSendToExcel(wxCommandEvent &);
 	void OnCMListCheck(wxCommandEvent &evt);
 

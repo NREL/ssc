@@ -1,6 +1,7 @@
 
 #include <wx/dirdlg.h>
 #include <wx/busyinfo.h>
+#include <wx/stattext.h>
 
 #include <wex/extgrid.h>
 #include <wex/ole/excelauto.h>
@@ -15,18 +16,15 @@ enum {
   ID_lstSelectedCMs,
   ID_cklCMList };
 
-BEGIN_EVENT_TABLE( CMForm, wxDialog )
+BEGIN_EVENT_TABLE( CMForm, wxPanel )
 	EVT_CHECKLISTBOX(ID_cklCMList, CMForm::OnCMListCheck )
 	EVT_LISTBOX(ID_cklCMList, CMForm::OnCMListSelect )
 	EVT_BUTTON(ID_btnSendToExcel, CMForm::OnSendToExcel )
 END_EVENT_TABLE()
 
 CMForm::CMForm(wxWindow *parent)
-	 : wxDialog( parent, wxID_ANY, "Module Browser", 
-		wxDefaultPosition, wxSize(1000,620), 
-		wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER )
+	 : wxPanel( parent, wxID_ANY )
 {
-
 	cklCMList = new wxCheckListBox(this, ID_cklCMList);
 	lstSelectedCMs = new wxListBox(this, ID_lstSelectedCMs);
 	
@@ -40,9 +38,14 @@ CMForm::CMForm(wxWindow *parent)
 	szbtns->Add( new wxButton(this, ID_btnSendToExcel, "Send table to Excel..."), 0, wxALL|wxEXPAND, 2);
 #endif
 	szbtns->AddStretchSpacer();
+	/*
 	szbtns->Add( new wxButton(this, wxID_OK, "OK"), 0, wxALL|wxEXPAND, 2 );
 	szbtns->Add( new wxButton(this, wxID_CANCEL, "Cancel"), 0, wxALL|wxEXPAND, 2 );
+	*/
+	m_lblStatus = new wxStaticText( this, wxID_ANY, wxEmptyString );
 
+	szbtns->Add( m_lblStatus, 1, wxALL|wxEXPAND, 4 );
+	
 	grdCMVars = new wxExtGridCtrl(this, ID_grdCMVars);
 	grdCMVars->CreateGrid(2,2);
 	grdCMVars->EnableEditing(false);
@@ -64,9 +67,6 @@ CMForm::CMForm(wxWindow *parent)
 	szmain->Add( szbtns, 0, wxALL|wxEXPAND, 0 );
 
 	SetSizer( szmain );
-
-	LoadCMs();
-	UpdateForm();
 }
 
 wxArrayString CMForm::GetAvailableCMs()
@@ -79,8 +79,10 @@ wxArrayString CMForm::GetAvailableCMs()
 			list.Add( ::ssc_entry_name(p_entry) );
 
 	} catch(sscdll_error &e) {
-		wxMessageBox("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
+		m_lblStatus->SetLabel("Dynamic library error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
+
+	m_lblStatus->SetLabel(wxEmptyString);
 
 	return list;
 }
@@ -155,7 +157,7 @@ void CMForm::OnCMListSelect(wxCommandEvent &)
 		ssc_module_t p_mod = ::ssc_module_create( (const char*)cm_name.c_str() );
 		if ( p_mod == 0 )
 		{
-			wxMessageBox("Could not create module of type: " + cm_name);
+			m_lblStatus->SetLabel("Could not create module of type: " + cm_name);
 			return;
 		}
 
@@ -217,13 +219,16 @@ void CMForm::OnCMListSelect(wxCommandEvent &)
 			for (int c=0;c<ncols;c++)
 				grdCMVars->SetCellValue( vartab[r][c], r, c );
 
+		grdCMVars->AutoSizeColumns(false);
 		grdCMVars->Thaw();
 
 		::ssc_module_free( p_mod );
 	
 	} catch(sscdll_error &e) {
-		wxMessageBox("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
+		m_lblStatus->SetLabel("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
+
+	m_lblStatus->SetLabel(wxEmptyString);
 }
 
 

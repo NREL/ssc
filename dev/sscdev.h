@@ -12,6 +12,7 @@ class SCFrame;
 class SCDocWin;
 class wxNotebook;
 class EditorWindow;
+class CMForm;
 
 extern SCFrame *app_frame;
 extern wxConfig *app_config;
@@ -92,6 +93,7 @@ private:
 	wxMenu *m_fileMenu, *m_helpMenu;
 
 	wxNotebook *m_notebook;
+	CMForm *m_cmBrowser;
 	DataView *m_dataView;
 	EditorWindow *m_scriptWindow;
 
