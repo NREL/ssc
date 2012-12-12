@@ -9,6 +9,44 @@
 %\usepackage[section]{placeins}
 %\usepackage[below]{placeins}
 \usepackage{epstopdf}
+
+% Begin from doxygen
+%\usepackage{makeidx}
+%\usepackage{natbib}
+\usepackage{graphicx}
+%\usepackage{multicol}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{color}
+%\usepackage{ifthen}
+\usepackage[table]{xcolor}
+\usepackage{textcomp}
+\usepackage{alltt}
+\usepackage[pdftex,
+                  linktocpage=true,
+                  pagebackref=true,
+                  colorlinks=true,
+                  linkcolor=blue,
+                  unicode
+                ]{hyperref}
+\usepackage{pspicture}
+%\fi
+%\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+%\usepackage[scaled=.90]{helvet}
+%\usepackage{courier}
+%\usepackage{sectsty}
+%\usepackage[titles]{tocloft}
+\usepackage{doxygen}
+\lstset{language=C++,inputencoding=utf8,basicstyle=\footnotesize,breaklines=true,breakatwhitespace=true,tabsize=8,numbers=left }
+%\makeindex
+%\renewcommand{\footrulewidth}{0.4pt}
+%\renewcommand{\familydefault}{\sfdefault}
+%\hfuzz=15pt
+%\setlength{\emergencystretch}{15pt}
+%\hbadness=750
+% End from doxygen
+
 %\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 \newcommand\bslash{\char`\\}
 \newcommand\lt{\char`\<}
@@ -795,7 +833,6 @@ On Linux, a newer version of SSC may report something like:
 
 \section{C API Reference}
 \label{sec_api_ref}
-
-%\input{ssc_api.tex}
+\include{sscapi_8h}
 
 \end{document}
