@@ -349,7 +349,230 @@ namespace util
 		}
 	};
 
-	
+	template< typename T >
+	class block_t
+	{
+	private:
+		T *t_array;
+		size_t n_rows, n_cols, n_layers;
+	public:
+
+		block_t()
+		{
+			t_array = new T[1];
+			n_rows = n_cols = n_layers = 1;
+		}
+		
+		block_t(size_t nr, size_t nc, size_t nl)
+		{
+			t_array = NULL;
+			if (nl < 1) nl = 1;
+			if (nr < 1) nr = 1;
+			if (nc < 1) nc = 1;
+			resize(nr,nc,nl);			
+		}
+
+		block_t(size_t nr, size_t nc, size_t nl, const T &val)
+		{
+			t_array = NULL;
+			if (nr < 1) nr = 1;
+			if (nc < 1) nc = 1;
+			if (nl < 1) nl = 1;
+			resize(nr,nc,nl);
+			fill(val);
+		}
+
+
+		virtual ~block_t()
+		{
+			if (t_array) delete [] t_array;
+		}
+		
+		void clear()
+		{	//Note: when Clear() is called before resize() or resize_fill(), it can cause a memory error.
+			//Do not use clear before calling these functions.
+			if (t_array) delete [] t_array;
+			n_layers = n_rows = n_cols = 0;
+		}
+		
+		void copy( const block_t &rhs )
+		{
+			if (this != &rhs)
+			{
+				resize( rhs.nlayers(), rhs.nrows(), rhs.ncols() );
+				size_t nn = n_layers*n_rows*n_cols;
+				for (size_t i=0;i<nn;i++)
+					t_array[i] = rhs.t_array[i];
+			}
+		}
+
+		void assign( const T *pvalues, size_t nr, size_t nc, size_t nl )
+		{
+			resize( nr, nc, nl );
+			if ( n_rows == nr && n_cols == nc && n_layers == nl)
+			{
+				size_t len = nr*nc*nl;
+				for (size_t i=0;i<len;i++)
+					t_array[i] = pvalues[i];
+			}
+		}
+
+		block_t &operator=(const block_t &rhs)
+		{
+			copy( rhs );
+			return *this;
+		}
+		
+		block_t &operator=(const T &val)
+		{
+			resize(1,1,1);
+			t_array[0] = val;
+			return *this;
+		}
+		
+		inline operator T()
+		{
+			return t_array[0];
+		}
+		
+		bool equals( const block_t & rhs )
+		{
+			if (n_rows != rhs.n_rows || n_cols != rhs.n_cols || n_layers != rhs.n_layers)
+				return false;
+			
+			size_t nn = n_rows*n_cols*n_layers;
+			for (size_t i=0;i<nn;i++)
+				if (t_array[i] != rhs.t_array[i])
+					return false;
+			
+			return true;
+		}
+		
+		inline bool is_single()
+		{
+			return (n_rows == 1 && n_cols == 1 && n_layers == 1);
+		}
+			
+		inline bool is_array()
+		{
+			return (n_rows == 1 && n_layers == 1);
+		}
+		
+		void fill( const T &val )
+		{
+			size_t ncells = n_rows*n_cols*n_layers;
+			for (size_t i=0;i<ncells;i++)
+				t_array[i] = val;
+		}
+
+		void resize(size_t nr, size_t nc, size_t nl)
+		{
+			if (nr < 1 || nc < 1 || nl < 1) return;
+			if (nr == n_rows && nc == n_cols && n_layers) return;
+			
+			if (t_array) delete [] t_array;
+			t_array = new T[ nr * nc * nl];
+			n_rows = nr;
+			n_cols = nc;
+			n_layers = nl;
+		}
+
+		void resize_fill(size_t nr, size_t nc, size_t nl, const T &val)
+		{
+			resize( nr, nc, nl);
+			fill( val );
+		}
+		
+		void resize(size_t len)
+		{
+			resize( 1, len, 1);
+		}
+		
+		void resize_fill(size_t len, const T &val)
+		{
+			resize_fill( 1, len, 1, val );
+		}
+		
+		inline T &at(size_t r, size_t c, size_t l)
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
+	#endif
+			return t_array[n_cols*(n_rows*l + r)+c];
+		}
+
+		inline const T &at(size_t r, size_t c, size_t l) const
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
+	#endif
+			return t_array[n_cols*(n_rows*l + r)+c];
+		}
+		
+		T operator[] (size_t i) const
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( i >= 0 && i < n_cols );
+	#endif
+			return t_array[i];
+		}
+		
+		T &operator[] (size_t i)
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( i >= 0 && i < n_cols );
+	#endif
+			return t_array[i];
+		}
+				
+		inline size_t nrows() const
+		{
+			return n_rows;
+		}
+		
+		inline size_t ncols() const
+		{
+			return n_cols;
+		}
+		
+		inline size_t nlayers() const
+		{
+			return n_layers;
+		}
+		
+		inline size_t ncells() const
+		{
+			return n_rows*n_cols*n_layers;
+		}
+		
+		inline size_t membytes() const
+		{
+			return n_rows*n_cols*n_layers*sizeof(T);
+		}
+		
+		void size(size_t &nr, size_t &nc, size_t &nl) const
+		{
+			nr = n_rows;
+			nc = n_cols;
+			nl = n_layers;
+		}
+		
+		size_t length() const
+		{
+			return n_cols;
+		}
+		
+		inline T *data()
+		{
+			return t_array;
+		}
+
+		inline T value() const
+		{
+			return t_array[0];
+		}
+	};
+
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
 };
