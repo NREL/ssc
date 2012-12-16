@@ -1800,6 +1800,8 @@ public:
 		bool ppa_interval_found=false;
 		bool ppa_too_large=false;
 		bool ppa_interval_reset=true;
+		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
+		double ppa_old=ppa;
 
 /***************** begin iterative solution *********************************************************************/
 
@@ -2314,10 +2316,19 @@ public:
 
 		}
 
+		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
+		ppa_old = ppa;
+
 		if (ppa_mode == 0)
 		{
+		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
+			double resid_denom = max(flip_target_percent,1);
+		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
+			double ppa_denom = max(x0, x1);
+			if (ppa_denom <= ppa_soln_tolerance) ppa_denom = 1;
 			double residual = cf.at(CF_tax_investor_aftertax_irr, flip_target_year) - flip_target_percent;
-			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
+			solved = (( fabs( residual )/resid_denom < ppa_soln_tolerance ) || ( fabs(x0-x1)/ppa_denom < ppa_soln_tolerance) );
+//			solved = (( fabs( residual ) < ppa_soln_tolerance ) || ( fabs(x0-x1) < ppa_soln_tolerance) );
 //			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
 			if (!solved)
 			{
@@ -2398,6 +2409,9 @@ public:
 
 	}	// target tax investor return in target year
 	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) && (ppa >= 0) );
+
+		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
+	if (ppa < 0) ppa = ppa_old;	
 
 /***************** end iterative solution *********************************************************************/
 
