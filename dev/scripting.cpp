@@ -9,6 +9,7 @@
 
 #include <wx/stc/stc.h>
 
+#include <wex/codeedit.h>
 #include <wex/dview/dvplotctrl.h>
 #include <wex/dview/dvtimeseriesdataset.h>
 
@@ -747,26 +748,7 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	m_env->register_funcs( lk::stdlib_string() );
 	m_env->register_funcs( lk::stdlib_math() );
 	m_env->register_funcs( lk::stdlib_wxui() );
-
-/*
-	StringMap tips;
-	std::vector<lk_string> list = m_env->list_funcs();
-	wxString funclist;
-	for (size_t i=0;i<list.size();i++)
-	{
-		lk::doc_t d;
-		if (lk::doc_t::info( m_env->lookup_func( list[i] ), d ))
-		{
-			wxString data = ::LimitColumnWidth( d.func_name + d.sig1 + "\n\n" + d.desc1, 90 );
-			if (d.has_2) data += ::LimitColumnWidth( "\n\n" + d.func_name + d.sig2 + "\n\n" + d.desc2, 90 );
-			if (d.has_3) data += ::LimitColumnWidth( "\n\n" + d.func_name + d.sig3 + "\n\n" + d.desc3, 90 );
-
-			tips[ d.func_name ] = data;			
-			funclist += d.func_name + " ";
-		}
-	}
-*/	
-		
+			
 	wxBoxSizer *szdoc = new wxBoxSizer( wxVERTICAL );
 	szdoc->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
@@ -780,15 +762,28 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	m_stopButton->SetForegroundColour( *wxRED );
 	m_stopButton->Hide();
 					
-	m_editor = new wxStyledTextCtrl(this, ID_CODEEDITOR );
-	/*
-	m_editor->ApplyLKStyling();
+	m_editor = new wxCodeEditCtrl(this, ID_CODEEDITOR );
+	m_editor->SetLanguage( wxCodeEditCtrl::LK );
 	m_editor->EnableCallTips(true);
-	m_editor->SetCallTipData('(',')', false, tips);
+	
+	std::vector<lk_string> list = m_env->list_funcs();
+	wxString funclist;
+	for (size_t i=0;i<list.size();i++)
+	{
+		lk::doc_t d;
+		if (lk::doc_t::info( m_env->lookup_func( list[i] ), d ))
+		{
+			wxString data = d.func_name + d.sig1 + "\n\n" + d.desc1;
+			if (d.has_2) data += "\n\n" + d.func_name + d.sig2 + "\n\n" + d.desc2;
+			if (d.has_3) data += "\n\n" + d.func_name + d.sig3 + "\n\n" + d.desc3;
+
+			m_editor->AddCallTip( d.func_name, data );
+			funclist += d.func_name + " ";
+		}
+	}
 	m_editor->StyleSetForeground( wxSTC_C_WORD2, wxColour(0,128,192) );
 	m_editor->SetKeyWords( 1, funclist );
-	*/
-
+	
 	wxBoxSizer *szedit = new wxBoxSizer( wxVERTICAL );
 	szedit->Add( m_editor, 1, wxALL|wxEXPAND, 1 );
 	szedit->Add( m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString ), 0, wxALL|wxEXPAND, 1 );
