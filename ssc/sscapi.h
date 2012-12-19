@@ -87,7 +87,7 @@ SSCEXPORT const char *ssc_build_info();
   the array size is nrows*ncols, and the array index is calculated by r*ncols+c.
 
   An ssc_data_t object holds all input and output variables for a simulation. It does not
-  distinguish between input, output, and inout variables - that is handled at the model
+  distinguish between input, output, and input variables - that is handled at the model
   context level.
 
   For convenience, a ssc_data_t can be written to a file on disk, and later retrieved.
