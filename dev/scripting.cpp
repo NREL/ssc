@@ -9,7 +9,7 @@
 
 #include <wx/stc/stc.h>
 
-#include <wex/codeedit.h>
+#include <wex/lkscript.h>
 #include <wex/dview/dvplotctrl.h>
 #include <wex/dview/dvtimeseriesdataset.h>
 
@@ -762,8 +762,8 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	m_stopButton->SetForegroundColour( *wxRED );
 	m_stopButton->Hide();
 					
-	m_editor = new wxCodeEditCtrl(this, ID_CODEEDITOR );
-	m_editor->SetLanguage( wxCodeEditCtrl::LK );
+	m_editor = new wxLKScriptCtrl(this, ID_CODEEDITOR );
+
 	m_editor->EnableCallTips(true);
 	
 	std::vector<lk_string> list = m_env->list_funcs();
@@ -781,7 +781,6 @@ EditorWindow::EditorWindow( wxWindow *parent )
 			funclist += d.func_name + " ";
 		}
 	}
-	m_editor->StyleSetForeground( wxSTC_C_WORD2, wxColour(0,128,192) );
 	m_editor->SetKeyWords( 1, funclist );
 	
 	wxBoxSizer *szedit = new wxBoxSizer( wxVERTICAL );

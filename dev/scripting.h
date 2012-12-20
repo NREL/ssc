@@ -7,13 +7,13 @@
 #include <lk_absyn.h>
 #include <lk_env.h>
 
-class wxCodeEditCtrl;
+class wxLKScriptCtrl;
 
 class EditorWindow : public wxPanel
 {
 private:
 	lk::env_t *m_env;
-	wxCodeEditCtrl *m_editor;
+	wxLKScriptCtrl *m_editor;
 	wxStaticText *m_statusLabel;
 	wxString m_fileName;
 	wxButton *m_stopButton;
