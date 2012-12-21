@@ -20,6 +20,7 @@
 #include <lk_stdlib.h>
 
 #include "sscdev.h"
+#include "cmform.h"
 #include "dataview.h"
 #include "scripting.h"
 
@@ -238,10 +239,9 @@ void fcall_run( lk::invoke_t &cxt )
 
 	if (cxt.arg_count() > 0)
 	{
-		wxArrayString list = wxStringTokenize( cxt.arg(0).as_string(), "," );
-		app_frame->ClearCMs();
-		for (size_t i=0;i<list.Count();i++)
-			app_frame->AddCM( list[i] );
+		CMForm *cm = app_frame->GetCMForm();
+		cm->SetCMList( wxStringTokenize( cxt.arg(0).as_string(), "," ) );
+
 	}
 
 	app_frame->Start();
@@ -344,6 +344,12 @@ public:
 	{
 	}
 
+	virtual bool OnEval( int line )
+	{
+		wxGetApp().Yield( true );
+		return true;
+	}
+
 	virtual void OnOutput( const wxString &tt )
 	{
 		Output( tt );
@@ -416,7 +422,7 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 		m_editor->ShowHelpDialog( this );
 		break;
 	case ID_RUN:
-		m_editor->Execute();
+		Exec();
 		break;
 	case wxID_STOP:
 		m_editor->Stop();
@@ -528,6 +534,7 @@ bool EditorWindow::Load( const wxString &file )
 	
 void EditorWindow::Exec()
 {
+	ClearOutput();
 	m_stopButton->Show();
 	Layout();
 	wxGetApp().Yield(true);

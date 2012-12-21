@@ -41,7 +41,7 @@ BEGIN_EVENT_TABLE( EditVariableDialog, wxDialog )
 END_EVENT_TABLE()
 
 EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
-	 : wxDialog( parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 
+	 : wxDialog( parent, wxID_ANY, title, wxDefaultPosition, wxSize(800,600), 
 		wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER )
 {
 
@@ -85,17 +85,15 @@ EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
 	sz_htop->Add( numCols, 0, wxALL|wxEXPAND, 2 );
 
 	wxBoxSizer *sz_main = new wxBoxSizer(wxVERTICAL);
-	sz_main->Add( rbgVarType );
-	sz_main->Add( sz_htop );
+	sz_main->Add( rbgVarType, 0, wxALL|wxEXPAND, 10 );
+	sz_main->Add( sz_htop, 0, wxALL|wxEXPAND, 10 );
 	sz_main->Add( grdArrMat, 1, wxEXPAND|wxALL, 10 );
 	sz_main->Add( new wxStaticText(this, wxID_ANY, "Shortcuts: F1=SSC_STRING, F2=SSC_NUMBER, F3=SSC_ARRAY, F4=SSC_MATRIX,\n"
-		"F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog"), 0, wxALL|wxEXPAND, 4 );
+		"F5=Change string value, F6=Change number value, F10=Accept changes, Esc=Cancel dialog"), 0, wxALL|wxEXPAND, 10	 );
 	sz_main->Add( new wxStaticLine( this, wxID_ANY ), 0, wxALL|wxEXPAND, 3 );
 	sz_main->Add( CreateButtonSizer( wxOK|wxCANCEL ), 0, wxALL|wxEXPAND, 10 );
 
 	SetSizer( sz_main );
-	Fit();
-
 
 	wxAcceleratorEntry entries[10];
 	entries[0].Set(::wxACCEL_NORMAL, WXK_F1, ID_TYPE_STRING);

@@ -27,6 +27,8 @@
 #include <wx/grid.h>
 #include <wx/notebook.h>
 
+#include <wex/lkscript.h>
+
 #include "sscdev.h"
 #include "dataview.h"
 #include "cmform.h"
@@ -170,6 +172,9 @@ BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 	EVT_TEXT_ENTER( ID_DLL_PATH,                SCFrame::OnCommand )
 	EVT_MENU( ID_CHOOSE_DLL,            SCFrame::OnCommand )
 	
+	EVT_TOOL( wxID_FIND,                 SCFrame::OnCommand )
+	EVT_TOOL( wxID_FORWARD,                  SCFrame::OnCommand )
+	
 	EVT_CLOSE( SCFrame::OnCloseFrame )
 	
 	// For recent file menu
@@ -187,13 +192,13 @@ SCFrame::SCFrame()
 	SetIcon( wxIcon("appicon") );
 #endif
 
-	wxStatusBar *sb = CreateStatusBar(2);
-	int widths[] = {-1, -3};
-	sb->SetStatusWidths( 2, widths );
-		
+	m_statusLabel = new wxStaticText( this, wxID_ANY, "Ready" );
+	m_progressBar = new wxGauge( this, wxID_ANY, 100 );
+	m_progressBar->Hide();
+	
 	wxSplitterWindow *split_win = new wxSplitterWindow( this, wxID_ANY,
 		wxPoint(0,0), wxSize(800,700), wxSP_LIVE_UPDATE|wxBORDER_NONE );
-
+	
 	m_notebook = new wxNotebook( split_win, wxID_ANY );
 
 	m_dataView = new DataView(m_notebook);
@@ -215,9 +220,15 @@ SCFrame::SCFrame()
 	split_win->SplitHorizontally( m_notebook, m_txtOutput, -180 );
 	split_win->SetSashGravity( 1 );
 
-	wxBoxSizer *sz_main = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer *sz_stat = new wxBoxSizer( wxHORIZONTAL );
+	sz_stat->Add( m_progressBar, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
+	sz_stat->Add( m_statusLabel, 5, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
+
+	wxBoxSizer *sz_main = new wxBoxSizer( wxVERTICAL );
 	sz_main->Add( split_win, 1, wxALL|wxEXPAND, 0 );
-	SetSizer(sz_main );
+	sz_main->Add( sz_stat, 0, wxALL|wxEXPAND, 0 );
+
+	SetSizer( sz_main );
 
 	m_recentMenu = new wxMenu;	
 	long ct = 0;
@@ -261,11 +272,16 @@ SCFrame::SCFrame()
 	m_fileMenu->AppendSeparator();
 	m_fileMenu->Append( wxID_EXIT, "Exit" );
 
+	m_editMenu = new wxMenu;
+	m_editMenu->Append( wxID_FIND, "Find\tCtrl-F");
+	m_editMenu->Append( wxID_FORWARD, "Find next\tF3");
+
 	m_helpMenu = new wxMenu;
 	m_helpMenu->Append( wxID_ABOUT, "About" );
 
 	wxMenuBar *mb = new wxMenuBar;
 	mb->Append( m_fileMenu, "File" );
+	mb->Append( m_editMenu, "Edit" );
 	mb->Append( m_helpMenu, "Help" );
 	SetMenuBar( mb );
 
@@ -312,6 +328,12 @@ SCFrame::~SCFrame()
 	delete m_varTable;
 }
 
+
+void SCFrame::SetProgress( int percent, const wxString &msg )
+{
+	m_progressBar->SetValue( percent );
+}
+
 void SCFrame::UpdateUI()
 {
 	wxString status;
@@ -327,12 +349,12 @@ void SCFrame::UpdateUI()
 			status = wxString(e.text.c_str()) + " ";
 			ver = -999;
 		}
-		status += m_dllPath + " ( " + m_lastLoadTime + " ) Version " + wxString::Format("%d [%s]", ver, build);
+		status += m_dllPath + /*" ( " + m_lastLoadTime + " )" */ " Version " + wxString::Format("%d, %s", ver, build);
 	}
 	else
 		status = "SSC dynamic library not loaded.";
 
-	SetStatusText( status, 1 );
+	m_statusLabel->SetLabel( status );
 }
 	
 void SCFrame::UpdateRecentMenu()
@@ -587,8 +609,10 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		SaveBdat();
 		break;
 	case wxID_FIND:
+		m_scriptWindow->GetEditor()->ShowFindDialog();
 		break;
 	case wxID_FORWARD:
+		m_scriptWindow->GetEditor()->FindNext();
 		break;
 	case wxID_EXIT:
 		this->Close();
@@ -618,25 +642,6 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		}
 		break;
 	}
-}
-
-void SCFrame::ClearCMs()
-{
-	m_cmList.clear();
-	UpdateUI();
-}
-
-bool SCFrame::AddCM( const wxString &name )
-{
-	wxArrayString list = m_cmBrowser->GetAvailableCMs();
-	if (list.Index( name ) != wxNOT_FOUND)
-	{
-		m_cmList.Add( name );
-		UpdateUI();
-		return true;
-	}
-	else
-		return false;
 }
 
 void SCFrame::WriteVarTable( wxDataOutputStream &o, var_table &vt )
@@ -845,7 +850,6 @@ public:
 ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action, 
 	float f0, float f1, const char *s0, const char *s1, void *user_data )
 {
-	wxProgressDialog *dlg = (wxProgressDialog*) user_data;
 	if (action == SSC_LOG)
 	{
 		// print log message to console
@@ -864,7 +868,7 @@ ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 	else if (action == SSC_UPDATE)
 	{
 		// print status update to console
-		dlg->Update( (int) f0, s0 );
+		app_frame->SetProgress( (int) f0, s0 );
 		wxGetApp().Yield(true);
 		return 1; // return 0 to abort simulation as needed.
 	}
@@ -959,10 +963,12 @@ void SCFrame::Copy( var_table *vt,  ssc_data_t p_data, bool clear_first )
 
 void SCFrame::Start()
 {
-	wxProgressDialog dlg("Simulation", "ready");
-	dlg.Show();
-	wxGetApp().Yield(true);
-	
+	m_progressBar->Show();
+	Layout();
+	wxGetApp().Yield();
+
+	m_cmList = m_cmBrowser->GetCMList();
+
 	try {
 
 		ssc_data_t p_data = ::ssc_data_create();
@@ -971,10 +977,6 @@ void SCFrame::Start()
 		
 		for (int i=0;i<m_cmList.Count();i++)
 		{
-			dlg.SetTitle("Status: " + m_cmList[i] );
-			dlg.Update(0);
-			wxGetApp().Yield(true);
-
 			ssc_module_t p_mod = ::ssc_module_create( (const char*) m_cmList[i].c_str() );
 			
 			if (p_mod == 0)
@@ -988,7 +990,7 @@ void SCFrame::Start()
 			wxStopWatch sw;
 			sw.Start();			
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
-				my_handler,	&dlg) )
+				my_handler, 0) )
 			{
 				Log("EXEC_FAIL: "+m_cmList[i]);
 				::ssc_module_free( p_mod );
@@ -1008,5 +1010,8 @@ void SCFrame::Start()
 	} catch(sscdll_error &e) {
 		wxMessageBox("Library error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
+
+	m_progressBar->Hide();
+	Layout();
 	
 }

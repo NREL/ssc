@@ -9,6 +9,7 @@
 
 class wxLKScriptCtrl;
 
+
 class EditorWindow : public wxPanel
 {
 private:
@@ -29,6 +30,8 @@ public:
 	bool Write( const wxString &file );
 	bool Load( const wxString &file );	
 	void Exec();
+
+	wxLKScriptCtrl *GetEditor() { return m_editor; }
 
 	DECLARE_EVENT_TABLE()
 };

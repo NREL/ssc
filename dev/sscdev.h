@@ -67,9 +67,9 @@ public:
 	DataView *GetDataView() { return m_dataView; }
 	var_table *GetVarTable() { return m_varTable; }
 
-	void ClearCMs();
-	bool AddCM( const wxString &name );
-	void SetCMs( const wxArrayString &list );
+	CMForm *GetCMForm() { return m_cmBrowser; }
+
+	void SetProgress( int percent, const wxString &msg = wxEmptyString );
 
 private:	
 	void WriteVarTable( wxDataOutputStream &o, var_table &vt );
@@ -81,6 +81,9 @@ private:
 	void OnRecent(wxCommandEvent &evt);
 	void OnCloseFrame(wxCloseEvent &evt);
 
+	wxStaticText *m_statusLabel;
+	wxGauge *m_progressBar;
+
 	wxMenu *m_recentMenu;
 	wxString m_currentAppDir;
 	wxString m_lastFile;
@@ -90,7 +93,7 @@ private:
 
 	wxTextCtrl *m_txtOutput;
 
-	wxMenu *m_fileMenu, *m_helpMenu;
+	wxMenu *m_fileMenu,  *m_editMenu, *m_helpMenu;
 
 	wxNotebook *m_notebook;
 	CMForm *m_cmBrowser;
