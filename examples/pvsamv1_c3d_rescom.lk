@@ -491,10 +491,10 @@ outln( 'ac_annual (kWh) = ' + ac_annual);
 // calculate annualized output of the system for each year of its life
 
 // setup curtailment schedule (no curtailment, factor=1)
-curtailment = alloc( 290 );
-curtailment[0] = 12;
-curtailment[1] = 24;
-for (i=2;i<290;i++) curtailment[i] = 1;
+curtailment = alloc( 12,24 );
+for (r=0;r<12;r++)
+	for (c=0;c<24;c++)
+		curtailment[r][c] = 1;
 
 
 var( 'analysis_years', analysis_years );
@@ -812,6 +812,6 @@ else
 
 run( 'cashloan' );
 
-outln( 'lcoe_real = ' + var('lcoe_real') ); 
+outln( 'lcoe_real = ' + var('lcoe_real') );
 outln( 'lcoe_nominal = ' + var('lcoe_nom') );
 outln( 'npv = ' + var('npv') );

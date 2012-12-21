@@ -187,7 +187,6 @@ SCFrame::SCFrame()
 	SetIcon( wxIcon("appicon") );
 #endif
 
-	SetBackgroundColour( *wxWHITE );
 	wxStatusBar *sb = CreateStatusBar(2);
 	int widths[] = {-1, -3};
 	sb->SetStatusWidths( 2, widths );
@@ -367,7 +366,7 @@ void SCFrame::OnRecent(wxCommandEvent &evt)
 			LoadBdat(m_lastFile);
 		else
 		{
-			m_notebook->SetSelection(1);
+			m_notebook->SetSelection(2);
 			if (m_scriptWindow->CloseDoc())
 				m_scriptWindow->Load( m_lastFile );
 		}
@@ -516,26 +515,22 @@ void SCFrame::LoadUnloadLibrary()
 	if (!sscdll_isloaded())
 	{
 		m_lastLoadTime = wxNow();
-
 		sscdll_load( m_dllPath.c_str() );
-
 		m_currentAppDir = wxPathOnly(m_dllPath);
-		m_cmBrowser->LoadCMs();
-		m_cmBrowser->UpdateForm();
 	}
 	else
 	{
 		sscdll_unload();
-		m_cmBrowser->UpdateForm();
 	}
-
+	
+	m_cmBrowser->UpdateForm();
+	m_cmBrowser->LoadCMs();
 	UpdateUI();
 }
 
 void SCFrame::ChooseDynamicLibrary()
 {
-		
-	wxFileDialog fd(this, "Choose SSC dynamic library", m_currentAppDir, "ssc32.dll", 
+	wxFileDialog fd(this, "Choose SSC dynamic library", wxPathOnly(m_dllPath), m_dllPath, 
 #ifdef __WXMSW__
 		"Dynamic Link Libraries (*.dll)|*.dll"
 #endif
@@ -550,9 +545,9 @@ void SCFrame::ChooseDynamicLibrary()
 	wxString file = fd.GetPath();
 	m_dllPath = file;
 	m_currentAppDir = wxPathOnly(file);
-	sscdll_load(file.c_str());
-	m_lastLoadTime = wxNow();
-	UpdateUI();	
+	sscdll_unload();
+
+	LoadUnloadLibrary();
 }
 
 void SCFrame::OnCommand(wxCommandEvent &evt)
@@ -567,19 +562,19 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		Start();
 		break;
 	case wxID_NEW:
-		m_notebook->SetSelection( 1 );
+		m_notebook->SetSelection( 2 );
 		m_scriptWindow->CloseDoc();
 		break;
 	case wxID_OPEN:
-		m_notebook->SetSelection( 1 );
+		m_notebook->SetSelection( 2 );
 		m_scriptWindow->Open();
 		break;
 	case wxID_SAVE:
-		m_notebook->SetSelection( 1 );
+		m_notebook->SetSelection( 2 );
 		m_scriptWindow->Save();
 		break;
 	case wxID_SAVEAS:		
-		m_notebook->SetSelection( 1 );
+		m_notebook->SetSelection( 2 );
 		m_scriptWindow->SaveAs();
 		break;
 	case ID_RUN_SCRIPT:
@@ -622,19 +617,6 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 			UpdateUI();
 		}
 		break;
-		/*
-	case ID_MODULES:
-		{
-			CMForm dlg( this );
-			dlg.CentreOnParent();
-			dlg.SetCMList( m_cmList );
-			if (dlg.ShowModal()==wxID_OK)
-				m_cmList = dlg.GetCMList();
-
-			UpdateUI();
-		}
-		break;
-		*/
 	}
 }
 

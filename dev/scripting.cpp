@@ -47,395 +47,6 @@ void ClearOutput()
 	app_frame->ClearLog();
 }
 
-/*
-class PlotWin;
-
-static int _iplot = 1;
-static PlotWin *_curplot = 0;
-
-class PlotWin : public wxFrame
-{
-	WPPlotSurface2D *m_plot;
-public:
-	PlotWin( wxWindow *parent )
-		: wxFrame( 0, wxID_ANY, 
-			wxString::Format("plot %d", _iplot++),
-			wxDefaultPosition, wxSize(500,400) )
-	{
-		m_plot = new WPPlotSurface2D( this );
-		m_plot->SetEnableDefaultRightClickMenu();
-		m_plot->SetBackgroundColour(*wxWHITE);
-		_curplot = this;
-		Show();
-	}
-
-	virtual ~PlotWin()
-	{
-		if ( _curplot == this )
-			_curplot = 0;
-	}
-
-	enum { BAR, LINE, SCATTER };
-	void Add( double *x, double *y, int len, int thick, wxColour &col, int type,
-		const wxString &xlab, const wxString &ylab, const wxString &series,
-		int xap, int yap)
-	{
-		if (len <= 0 ) return;
-		WPPlotDataArray *arr = new WPPlotDataArray;
-		arr->alloc( len );
-		for (int i=0;i<len;i++)
-			arr->append( PointF( x[i], y[i] ) );
-
-		WPPlottable2D *p = 0;
-
-		switch (type )
-		{
-		case BAR:
-			p = new WPBarPlot;
-			((WPBarPlot*)p)->FillColour = col;
-			((WPBarPlot*)p)->BarWidth = thick;
-			break;
-		case LINE:
-			p = new WPLinePlot;
-			((WPLinePlot*)p)->LineColour =  col;
-			((WPLinePlot*)p)->LineThickness = thick;
-			break;
-		case SCATTER:
-			p = new WPScatterPlot;
-			((WPScatterPlot*)p)->Colour = col;
-			((WPScatterPlot*)p)->PointSize = thick;
-			break;
-		}
-
-		if (!p)
-		{
-			delete arr;
-			return;
-		}
-		arr->SetXLabel( xlab );
-		arr->SetYLabel( ylab );
-		p->SetData( arr );
-		p->SetLabel( series );
-		m_plot->Add( p, (WPPlotSurface2D::AxisPosition) xap, (WPPlotSurface2D::AxisPosition) yap );
-		m_plot->Refresh();
-	}
-
-	static PlotWin *Current() { return _curplot; }
-	static void NewPlot( ) { _curplot = 0; }
-	static WPPlotSurface2D *Surface()
-	{
-		if ( Current() ) return Current()->m_plot;
-		else return 0;
-	}
-};
-
-
-void fcall_newplot( lk::invoke_t &cxt )
-{
-	LK_DOC("newplot", "Switches to a new plotting window on the next call to plot.", "([boolean:remove all]):none");
-	PlotWin::NewPlot(  );
-
-	if ( cxt.arg_count() == 1 && cxt.arg(0).as_boolean() )
-	{
-		wxWindowList wl = ::wxTopLevelWindows;
-		for (size_t i=0;i<wl.size();i++)
-			if ( PlotWin *p = dynamic_cast<PlotWin*>( wl[i] ))
-				p->Destroy();
-	}
-}
-
-void fcall_plot( lk::invoke_t &cxt )
-{
-	LK_DOC("plot", "Creates an XY line, bar, or scatter plot. Options include thick, type, color, xap, yap, xlabel, ylabel, series.", "(array:x, array:y, table:options):void");
-
-	PlotWin *plot = PlotWin::Current();
-	if ( plot == 0 )
-		plot = new PlotWin( 0 );
-
-	lk::vardata_t &a0 = cxt.arg(0).deref();
-	lk::vardata_t &a1 = cxt.arg(1).deref();
-
-	if ( a0.type() == lk::vardata_t::VECTOR
-		&& a1.type() == lk::vardata_t::VECTOR
-		&& a0.length() == a1.length()
-		&& a0.length() > 0 )
-	{
-		int thick = 1;
-		int type = PlotWin::LINE;
-		wxColour col = *wxBLUE;
-		wxString xlab = "x";
-		wxString ylab = "y";
-		wxString series = wxEmptyString;
-		int xap = WPPlotSurface2D::XAXIS_BOTTOM;
-		int yap = WPPlotSurface2D::YAXIS_LEFT;
-
-		if (cxt.arg_count() > 2 && cxt.arg(2).deref().type() == lk::vardata_t::HASH )
-		{
-			lk::vardata_t &t = cxt.arg(2).deref();
-			if ( lk::vardata_t *arg = t.lookup("thick") )
-			{
-				thick = arg->as_integer();
-				if (thick < 1) thick = 1;
-			}
-
-			if ( lk::vardata_t *arg = t.lookup("type") )
-			{
-				wxString stype = arg->as_string().c_str();
-				stype.Lower();
-				if (stype == "bar") type = PlotWin::BAR;
-				else if (stype == "scatter") type = PlotWin::SCATTER;
-			}
-			
-			if (lk::vardata_t *arg = t.lookup("color") )
-			{
-				if ( arg->type() == lk::vardata_t::VECTOR
-					&& arg->length() == 3 )
-				{
-					int r = arg->index(0)->as_integer();
-					int g = arg->index(1)->as_integer();
-					int b = arg->index(2)->as_integer();
-
-					col = wxColour(r,g,b);
-				}
-				else
-					col = wxColour( wxString(arg->as_string().c_str()));
-			}
-
-			if (lk::vardata_t *arg = t.lookup("xap"))
-			{
-				if (arg->as_string() == "top") xap = WPPlotSurface2D::XAXIS_TOP;
-			}
-
-			if ( lk::vardata_t *arg = t.lookup("yap"))
-			{
-				if (arg->as_string() == "right") yap = WPPlotSurface2D::YAXIS_RIGHT;
-			}
-
-			if ( lk::vardata_t *arg = t.lookup("series"))
-				series = arg->as_string().c_str();
-
-			if ( lk::vardata_t *arg = t.lookup("xlabel"))
-				xlab = arg->as_string().c_str();
-
-			if ( lk::vardata_t *arg = t.lookup("ylabel"))
-				ylab = arg->as_string().c_str();
-		}
-		
-		int len = cxt.arg(0).length();
-		double *x = new double[len];
-		double *y = new double[len];
-
-		for (int i=0;i<len;i++)
-		{
-			x[i] = a0.index(i)->as_number();
-			y[i] = a1.index(i)->as_number();
-		}
-
-		plot->Add( x, y, len, thick, col, type, xlab, ylab, series, xap, yap );
-
-		delete [] x;
-		delete [] y;
-	}
-}
-
-void fcall_plotopt( lk::invoke_t &cxt )
-{
-	LK_DOC("plotopt", "Modifies the current plot properties like title, coarse, fine, legend, legendpos, wpos, wsize", "(table:options):void");
-	WPPlotSurface2D *plot = PlotWin::Surface();
-	if (!plot) return;
-
-	bool mod = false;
-	if ( lk::vardata_t *arg = cxt.arg(0).lookup("title") )
-	{
-		plot->SetTitle( arg->as_string() );
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(0).lookup("coarse") )
-	{
-		plot->SetShowCoarseGrid( arg->as_boolean() );
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(0).lookup("fine") )
-	{
-		plot->SetShowFineGrid( arg->as_boolean() );
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(0).lookup("legend") )
-	{
-		plot->SetShowLegend( arg->as_boolean() );
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(0).lookup("legendpos") )
-	{
-		double xper = 90, yper = 10;
-		if (arg->type() == lk::vardata_t::VECTOR && arg->length() == 2 )
-		{
-			xper = arg->index(0)->as_number();
-			yper = arg->index(1)->as_number();
-			plot->SetLegendXYPercent( PointF(xper,yper) );
-			mod = true;
-		}
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(0).lookup("window") )
-	{
-		if (PlotWin::Current()
-			&& arg->type() == lk::vardata_t::VECTOR 
-			&& arg->length() == 4 )
-		{
-			int x = arg->index(0)->as_integer();
-			int y = arg->index(1)->as_integer();
-			int w = arg->index(2)->as_integer();
-			int h = arg->index(3)->as_integer();
-			if ( x >= 0 && y >= 0 )
-				PlotWin::Current()->SetPosition( wxPoint(x, y) );
-
-			if ( w > 0 && h > 0 )
-				PlotWin::Current()->SetClientSize( wxSize(w,h) );
-
-		}
-	}
-
-	if (mod)
-		plot->Refresh();
-}
-
-void fcall_plotpng( lk::invoke_t &cxt )
-{
-	LK_DOC( "plotpng", "Export the current plot as rendered on the screen to a PNG image file.", "(string:file name):boolean" );
-	WPPlotSurface2D *plot = PlotWin::Surface();
-	if (!plot) return;
-	cxt.result().assign( plot->ExportPng( cxt.arg(0).as_string() ) );
-}
-
-void fcall_axis( lk::invoke_t &cxt )
-{
-	LK_DOC("axis", "Modifies axis properties (label, showlabel, min, max, ticklabels) on the current plot.", "(string:axis name 'x1' 'y1' 'x2' 'y2', table:options):void");
-	lk_string axname = cxt.arg(0).as_string();
-	WPPlotSurface2D *plot = PlotWin::Surface();
-	if (!plot) return;
-	WPAxis *axis = 0;
-	if (axname == "x1") axis = plot->GetXAxis1();
-	if (axname == "x2") axis = plot->GetXAxis2();
-	if (axname == "y1") axis = plot->GetYAxis1();
-	if (axname == "y2") axis = plot->GetYAxis2();
-	if (!axis) return;
-
-	if (cxt.arg_count() < 2 || cxt.arg(1).type() != lk::vardata_t::HASH ) return;
-	bool mod = false;
-
-	if ( lk::vardata_t *arg = cxt.arg(1).lookup("label") )
-	{
-		axis->Label = arg->as_string();
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(1).lookup("min") )
-	{
-		double min, max;
-		axis->GetWorld(&min, &max);
-		min = arg->as_number();
-		axis->SetWorld(min, max);
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(1).lookup("max") )
-	{
-		double min, max;
-		axis->GetWorld(&min,&max);
-		max = arg->as_number();
-		axis->SetWorld(min,max);
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(1).lookup("ticklabels") )
-	{
-		axis->HideTickText = !arg->as_boolean();
-		mod = true;
-	}
-
-	if ( lk::vardata_t *arg = cxt.arg(1).lookup("showlabel") )
-	{
-		axis->HideLabel = !arg->as_boolean();
-		mod = true;
-	}
-
-	if (mod) plot->Refresh();
-}
-
-void fcall_rand( lk::invoke_t &cxt )
-{
-	LK_DOC("rand", "Generate a random number between 0 and 1.", "(none):number");
-static MTRand rng;
-	cxt.result().assign( rng.rand() );
-}
-
-void fcall_httpget( lk::invoke_t &cxt )
-{
-	LK_DOC("http_get", "Issue an HTTP GET request and return the text.", "(string:url):string");
-	cxt.result().assign( WebHttpGet( cxt.arg(0).as_string() ) );
-}
-
-void fcall_httpdownload( lk::invoke_t &cxt )
-{
-	LK_DOC("http_download", "Download a file using HTTP", "(string:url, string:local file):boolean");
-	cxt.result().assign( WebHttpDownload( cxt.arg(0).as_string(), cxt.arg(1).as_string(), "application/binary", false ) );
-}
-
-void fcall_decompress( lk::invoke_t &cxt )
-{
-	LK_DOC("decompress", "Decompress a local archive file.", "(string:archive, string:target):boolean");
-	cxt.result().assign( DecompressFile( cxt.arg(0).as_string(), cxt.arg(1).as_string() ) );
-}
-*/
-
-
-void fcall_out( lk::invoke_t &cxt )
-{
-	LK_DOC("out", "Output data to the console.", "(...):none");
-	
-	for (size_t i=0;i<cxt.arg_count();i++)
-		Output( cxt.arg(i).as_string() );
-}
-
-void fcall_outln( lk::invoke_t &cxt )
-{
-	LK_DOC("outln", "Output data to the console with a newline.", "(...):none");
-	
-	for (size_t i=0;i<cxt.arg_count();i++)
-		Output( cxt.arg(i).as_string()  + "\n" ); 
-}
-
-void fcall_in(  lk::invoke_t &cxt )
-{
-	LK_DOC("in", "Input text from the user.", "(none):string");
-	cxt.result().assign( wxGetTextFromUser("Standard Input:") );	
-}
-
-lk::fcall_t* retool_funcs()
-{
-	static const lk::fcall_t vec[] = {
-		fcall_in,
-		fcall_out,
-		fcall_outln,
-		/*
-		fcall_httpget,
-		fcall_httpdownload,
-		fcall_decompress,
-		fcall_newplot,
-		fcall_plot,
-		fcall_plotopt,
-		fcall_plotpng,
-		fcall_axis,
-		fcall_rand, */
-		0 };
-		
-	return (lk::fcall_t*)vec;
-}
 
 static bool sscvar_to_lkvar( lk::vardata_t &out, var_data *vv)
 {
@@ -725,64 +336,41 @@ lk::fcall_t* ssc_funcs()
 
 enum { ID_CODEEDITOR = wxID_HIGHEST+1, ID_RUN };
 
-static bool eval_callback( int line, void *cbdata )
+class MyScriptCtrl : public wxLKScriptCtrl
 {
-	wxGetApp().Yield(true);
-	return !((EditorWindow*)cbdata)->IsStopFlagSet();
-}
+public:
+	MyScriptCtrl( wxWindow *parent, int id = wxID_ANY )
+		: wxLKScriptCtrl( parent, id )
+	{
+	}
 
+	virtual void OnOutput( const wxString &tt )
+	{
+		Output( tt );
+	}
+};
 
 EditorWindow::EditorWindow( wxWindow *parent )
 		: wxPanel( parent )
 {
-	m_stopScriptFlag = false;	
-	m_scriptRunning = false;
-		
-	SetBackgroundColour( *wxWHITE );		
-		
-	m_env = new lk::env_t;
-		
-	m_env->register_funcs( retool_funcs() );	
-	m_env->register_funcs( ssc_funcs(), this );	
-	m_env->register_funcs( lk::stdlib_basic() );
-	m_env->register_funcs( lk::stdlib_string() );
-	m_env->register_funcs( lk::stdlib_math() );
-	m_env->register_funcs( lk::stdlib_wxui() );
 			
 	wxBoxSizer *szdoc = new wxBoxSizer( wxVERTICAL );
 	szdoc->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_SAVEAS, "Save as" ), 0, wxALL|wxEXPAND, 2  );
-	//szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
-	//szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, ID_RUN, "Run" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" ), 0, wxALL|wxEXPAND, 2 );	
 	m_stopButton->SetForegroundColour( *wxRED );
 	m_stopButton->Hide();
 					
-	m_editor = new wxLKScriptCtrl(this, ID_CODEEDITOR );
-
-	m_editor->EnableCallTips(true);
+	m_editor = new MyScriptCtrl(this, ID_CODEEDITOR );
 	
-	std::vector<lk_string> list = m_env->list_funcs();
-	wxString funclist;
-	for (size_t i=0;i<list.size();i++)
-	{
-		lk::doc_t d;
-		if (lk::doc_t::info( m_env->lookup_func( list[i] ), d ))
-		{
-			wxString data = d.func_name + d.sig1 + "\n\n" + d.desc1;
-			if (d.has_2) data += "\n\n" + d.func_name + d.sig2 + "\n\n" + d.desc2;
-			if (d.has_3) data += "\n\n" + d.func_name + d.sig3 + "\n\n" + d.desc3;
+	m_editor->RegisterLibrary( ssc_funcs(), "SSC Functions", this );	
 
-			m_editor->AddCallTip( d.func_name, data );
-			funclist += d.func_name + " ";
-		}
-	}
-	m_editor->SetKeyWords( 1, funclist );
-	
 	wxBoxSizer *szedit = new wxBoxSizer( wxVERTICAL );
 	szedit->Add( m_editor, 1, wxALL|wxEXPAND, 1 );
 	szedit->Add( m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString ), 0, wxALL|wxEXPAND, 1 );
@@ -798,7 +386,6 @@ EditorWindow::EditorWindow( wxWindow *parent )
 
 EditorWindow::~EditorWindow()
 {
-	delete m_env;
 }
 
 void EditorWindow::OnCommand( wxCommandEvent &evt )
@@ -823,32 +410,18 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 	case wxID_COPY: m_editor->Copy(); break;
 	case wxID_PASTE: m_editor->Paste(); break;
 	case wxID_SELECTALL: m_editor->SelectAll(); break;
-//	case wxID_FIND: m_editor->ShowFindDialog(); break;
-//	case wxID_FORWARD: m_editor->FindNext(); break;
+	case wxID_FIND: m_editor->ShowFindDialog(); break;
+	case wxID_FORWARD: m_editor->FindNext(); break;
 	case wxID_HELP:
-		{
-			wxFrame *frm = new wxFrame( this, wxID_ANY, "Scripting Reference", wxDefaultPosition, wxSize(800, 700) );
-#ifdef __WXMSW__
-			frm->SetIcon(wxIcon("appicon"));
-#endif
-			wxHtmlWindow *html = new wxHtmlWindow( frm, wxID_ANY, wxDefaultPosition, wxDefaultSize );
-
-			wxString data;
-			data += lk::html_doc( "SSC Variables and Control", ssc_funcs() );
-			data += lk::html_doc( "I/O and Plotting Functions", retool_funcs() );
-			data += lk::html_doc( "Standard Operations", lk::stdlib_basic() );
-			data += lk::html_doc( "String Functions", lk::stdlib_string() );
-			data += lk::html_doc( "Math Functions", lk::stdlib_math() );
-			data += lk::html_doc( "User Interface Functions", lk::stdlib_wxui() );		
-			html->SetPage( data );
-			frm->Show();
-		}
+		m_editor->ShowHelpDialog( this );
 		break;
 	case ID_RUN:
-		Exec();
+		m_editor->Execute();
 		break;
 	case wxID_STOP:
-		m_stopScriptFlag = true;
+		m_editor->Stop();
+		m_stopButton->Hide();
+		Layout();
 		break;
 	}
 }
@@ -892,10 +465,10 @@ bool EditorWindow::SaveAs()
 	
 bool EditorWindow::CloseDoc()
 {
-	if (m_scriptRunning)
+	if ( m_editor->IsScriptRunning() )
 	{
 		if (wxYES==wxMessageBox("A script is running. Cancel it?", "Query", wxYES_NO))
-			m_stopScriptFlag = true;
+			m_editor->Stop();
 
 		return false;
 	}
@@ -953,104 +526,19 @@ bool EditorWindow::Load( const wxString &file )
 	else return false;
 }
 	
-	
 void EditorWindow::Exec()
 {
-	if (m_scriptRunning)
-	{
-		wxMessageBox("A script is already running.");
-		return;
-	}
-		
-	m_env->clear_objs();
-	m_env->clear_vars();
-
-	m_scriptRunning = true;
-	m_stopScriptFlag = false;
-
 	m_stopButton->Show();
-
 	Layout();
-
-	wxString script = m_editor->GetText();
-	if (!m_fileName.IsEmpty())
-	{
-		wxString fn = m_fileName + "~";
-		FILE *fp = fopen( (const char*)fn.c_str(), "w" );
-		if (fp)
-		{
-			for (size_t i=0;i<script.Len();i++)
-				fputc( (char)script[i], fp );
-			fclose(fp);
-		}
-	}
-		
-	ClearOutput();
-	Output("Start: " + wxNow()  + "\n");
-
-	lk::input_string p( script );
-	lk::parser parse( p );
+	wxGetApp().Yield(true);
 	
-	lk::node_t *tree = parse.script();
-				
-	wxYield();
+	m_editor->Execute();
 
-	if ( parse.error_count() != 0 
-		|| parse.token() != lk::lexer::END)
+	if ( m_stopButton->IsShown() )
 	{
-		Output("parsing did not reach end of input\n");
+		m_stopButton->Hide();
+		Layout();
 	}
-	else
-	{
-		m_env->clear_vars();
-		m_env->clear_objs();
-
-		lk::vardata_t result;
-		unsigned int ctl_id = lk::CTL_NONE;
-		wxStopWatch sw;
-		std::vector<lk_string> errors;
-		if ( lk::eval( tree, m_env, errors, result, 0, ctl_id, eval_callback, this ) )
-		{
-			long time = sw.Time();
-			Output("elapsed time: %ld msec\n", time);
-
-			/*
-			lk_string key;
-			lk::vardata_t *value;
-			bool has_more = env.first( key, value );
-			while( has_more )
-			{
-				applog("env{%s}=%s\n", key, value->as_string().c_str());
-				has_more = env.next( key, value );
-			}
-			*/
-
-		}
-		else
-		{
-			Output("eval fail\n");
-			for (size_t i=0;i<errors.size();i++)
-				Output( wxString(errors[i].c_str()) + "\n");
-
-		}
-	}
-			
-	int i=0;
-	while ( i < parse.error_count() )
-		Output( parse.error(i++) );
-
-	if (tree) delete tree;
-		
-	m_stopButton->Hide();
-		
-	Layout();
-		
-	m_env->clear_objs();
-	m_env->clear_vars();
-
-	m_scriptRunning = false;
-	m_stopScriptFlag = false;
-
 }
 
 BEGIN_EVENT_TABLE( EditorWindow, wxPanel )

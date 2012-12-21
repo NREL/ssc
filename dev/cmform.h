@@ -13,13 +13,9 @@ class wxExtGridCtrl;
 class CMForm : public wxPanel
 {
 private:
-	wxButton *btnSendToExcel;
 	wxExtGridCtrl *grdCMVars;
-	wxButton *btnAccept;
-	wxButton *btnClose;
 	wxListBox *lstSelectedCMs;
 	wxCheckListBox *cklCMList;
-	wxStaticText *m_lblStatus;
 
 public:
 	CMForm( wxWindow *parent );	

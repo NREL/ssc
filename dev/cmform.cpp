@@ -27,25 +27,7 @@ CMForm::CMForm(wxWindow *parent)
 {
 	cklCMList = new wxCheckListBox(this, ID_cklCMList);
 	lstSelectedCMs = new wxListBox(this, ID_lstSelectedCMs);
-	
-	wxBoxSizer *szleft = new wxBoxSizer( wxVERTICAL );
-	szleft->Add( cklCMList, 3, wxALL|wxEXPAND, 0 );
-	szleft->Add( new wxStaticText( this, wxID_ANY, "Simulation sequence:" ), 0, wxALL|wxEXPAND, 2 );
-	szleft->Add( lstSelectedCMs, 1, wxALL|wxEXPAND, 0 );
-
-	wxBoxSizer *szbtns = new wxBoxSizer(wxHORIZONTAL );
-#ifdef __WXMSW__
-	szbtns->Add( new wxButton(this, ID_btnSendToExcel, "Send table to Excel..."), 0, wxALL|wxEXPAND, 2);
-#endif
-	szbtns->AddStretchSpacer();
-	/*
-	szbtns->Add( new wxButton(this, wxID_OK, "OK"), 0, wxALL|wxEXPAND, 2 );
-	szbtns->Add( new wxButton(this, wxID_CANCEL, "Cancel"), 0, wxALL|wxEXPAND, 2 );
-	*/
-	m_lblStatus = new wxStaticText( this, wxID_ANY, wxEmptyString );
-
-	szbtns->Add( m_lblStatus, 1, wxALL|wxEXPAND, 4 );
-	
+		
 	grdCMVars = new wxExtGridCtrl(this, ID_grdCMVars);
 	grdCMVars->CreateGrid(2,2);
 	grdCMVars->EnableEditing(false);
@@ -58,15 +40,17 @@ CMForm::CMForm(wxWindow *parent)
 	grdCMVars->SetColLabelSize(23);	
 	grdCMVars->EnableDragColSize();
 
+	wxBoxSizer *szleft = new wxBoxSizer( wxVERTICAL );
+	szleft->Add( cklCMList, 3, wxALL|wxEXPAND, 0 );
+	szleft->Add( new wxStaticText( this, wxID_ANY, "Simulation sequence:" ), 0, wxALL|wxEXPAND, 2 );
+	szleft->Add( lstSelectedCMs, 1, wxALL|wxEXPAND, 0 );
+	szleft->Add( new wxButton(this, ID_btnSendToExcel, "Send table to Excel..."), 0, wxALL|wxEXPAND, 2);
+
 	wxBoxSizer *szcenter = new wxBoxSizer(wxHORIZONTAL );
 	szcenter->Add( szleft, 1, wxALL|wxEXPAND, 0 );
 	szcenter->Add( grdCMVars, 5, wxALL|wxEXPAND, 0 );
 
-	wxBoxSizer *szmain = new wxBoxSizer(wxVERTICAL );
-	szmain->Add( szcenter, 1, wxALL|wxEXPAND, 0 );
-	szmain->Add( szbtns, 0, wxALL|wxEXPAND, 0 );
-
-	SetSizer( szmain );
+	SetSizer( szcenter );
 }
 
 wxArrayString CMForm::GetAvailableCMs()
@@ -79,16 +63,15 @@ wxArrayString CMForm::GetAvailableCMs()
 			list.Add( ::ssc_entry_name(p_entry) );
 
 	} catch(sscdll_error &e) {
-		m_lblStatus->SetLabel("Dynamic library error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
-
-	m_lblStatus->SetLabel(wxEmptyString);
 
 	return list;
 }
 
 void CMForm::LoadCMs()
 {
+	cklCMList->Clear();
+	grdCMVars->ClearGrid();
 	wxArrayString l = GetAvailableCMs();
 	for (size_t i=0;i<l.Count();i++)
 		cklCMList->Append( l[i] );
@@ -157,7 +140,7 @@ void CMForm::OnCMListSelect(wxCommandEvent &)
 		ssc_module_t p_mod = ::ssc_module_create( (const char*)cm_name.c_str() );
 		if ( p_mod == 0 )
 		{
-			m_lblStatus->SetLabel("Could not create module of type: " + cm_name);
+			wxMessageBox("Could not create a module of type: " + cm_name );
 			return;
 		}
 
@@ -225,10 +208,8 @@ void CMForm::OnCMListSelect(wxCommandEvent &)
 		::ssc_module_free( p_mod );
 	
 	} catch(sscdll_error &e) {
-		m_lblStatus->SetLabel("DLL error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
+		wxMessageBox("Dynamic library error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
 	}
-
-	m_lblStatus->SetLabel(wxEmptyString);
 }
 
 
@@ -244,5 +225,4 @@ void CMForm::UpdateForm()
 
 	for (size_t i=0;i<cklCMList->GetCount();i++)
 		cklCMList->Check( i, list.Index( cklCMList->GetString(i) ) != wxNOT_FOUND );
-
 }

@@ -12,21 +12,16 @@ class wxLKScriptCtrl;
 class EditorWindow : public wxPanel
 {
 private:
-	lk::env_t *m_env;
 	wxLKScriptCtrl *m_editor;
 	wxStaticText *m_statusLabel;
 	wxString m_fileName;
 	wxButton *m_stopButton;
-	bool m_stopScriptFlag;
-	bool m_scriptRunning;
 public:
 	EditorWindow( wxWindow *parent );
 	virtual ~EditorWindow();
 	
 	wxString GetFileName() { return m_fileName; }
 	void OnCommand( wxCommandEvent &evt );
-	bool IsStopFlagSet() { return m_stopScriptFlag; }	
-	bool IsScriptRunning() { return m_scriptRunning; }
 	void Open();
 	bool Save();
 	bool SaveAs();

@@ -248,8 +248,6 @@ DataView::DataView( wxWindow *parent )
 	m_root_item(0),
 	m_grid_table(0)
 {
-	SetBackgroundColour( *wxWHITE );
-
 	wxBoxSizer *tb_sizer = new wxBoxSizer(wxVERTICAL);
 	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add..."), 0, wxALL|wxEXPAND, 2);
 	tb_sizer->Add( new wxButton(this, ID_EDIT_VARIABLE, "Edit..."), 0, wxALL|wxEXPAND, 2);

@@ -53,7 +53,7 @@ bool sscdll_isloaded()
 
 #define CHECK_DLL_LOADED() \
 	static unsigned int f_access_id = 0; \
-	if (!sscdll_isloaded()) {f=NULL; throw sscdll_error("ssc32.dll not loaded", __FUNCTION__); } \
+	if (!sscdll_isloaded()) {f=NULL; throw sscdll_error("ssc not loaded", __FUNCTION__); } \
 	if (f_access_id!=ssc32_access_id) { f=NULL; f_access_id = ssc32_access_id; } \
 	static const char *func_name = __FUNCTION__
 
