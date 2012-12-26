@@ -7,7 +7,7 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
 
 ifeq ($(CFG),)
-CFG=32
+CFG=64
 endif
 
 ifeq ($(CFG),64)
@@ -49,7 +49,6 @@ OBJECTS = \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
-	cmod_geohourly.o \
 	cmod_trntrough.o \
 	core.o \
 	lib_windfile.o \
