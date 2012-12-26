@@ -39,7 +39,7 @@
 
 int SC_major_ver = 2;
 int SC_minor_ver = 0;
-int SC_micro_ver = 1;
+int SC_micro_ver = 3;
 
 SCFrame *app_frame = NULL;
 wxConfig *app_config = NULL;
@@ -90,6 +90,19 @@ bool SCApp::OnInit()
 		// on first load, maximize, and show help 'Getting Started'
 		app_frame->SetPosition(wxPoint(10,10));
 		app_frame->SetClientSize(700, 600);
+		
+		wxString dll_path;
+		app_config->Read("DllPath", &dll_path);
+		if (!wxFileExists(dll_path))
+		{
+			if ( wxYES==wxMessageBox("The SSC dynamic library is not loaded.  "
+				"Would you like to select the proper library?\n\n"
+				"Your selection will be saved for the next time you run SSCdev.", 
+				"Notice - first load", wxYES_NO, app_frame ) )
+				app_frame->ChooseDynamicLibrary();
+		}
+
+		
 	}
 
 	return true;

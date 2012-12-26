@@ -44,7 +44,9 @@ CMForm::CMForm(wxWindow *parent)
 	szleft->Add( cklCMList, 3, wxALL|wxEXPAND, 0 );
 	szleft->Add( new wxStaticText( this, wxID_ANY, "Simulation sequence:" ), 0, wxALL|wxEXPAND, 2 );
 	szleft->Add( lstSelectedCMs, 1, wxALL|wxEXPAND, 0 );
+#ifdef __WXMSW__
 	szleft->Add( new wxButton(this, ID_btnSendToExcel, "Send table to Excel..."), 0, wxALL|wxEXPAND, 2);
+#endif
 
 	wxBoxSizer *szcenter = new wxBoxSizer(wxHORIZONTAL );
 	szcenter->Add( szleft, 1, wxALL|wxEXPAND, 0 );

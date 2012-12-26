@@ -334,7 +334,7 @@ lk::fcall_t* ssc_funcs()
 }
 
 
-enum { ID_CODEEDITOR = wxID_HIGHEST+1, ID_RUN };
+enum { ID_CODEEDITOR = wxID_HIGHEST+1, ID_RUN, ID_HELP };
 
 class MyScriptCtrl : public wxLKScriptCtrl
 {
@@ -367,7 +367,7 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	szdoc->Add( new wxButton( this, wxID_SAVEAS, "Save as" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, ID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, ID_RUN, "Run" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" ), 0, wxALL|wxEXPAND, 2 );	
 	m_stopButton->SetForegroundColour( *wxRED );
@@ -418,7 +418,7 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 	case wxID_SELECTALL: m_editor->SelectAll(); break;
 	case wxID_FIND: m_editor->ShowFindDialog(); break;
 	case wxID_FORWARD: m_editor->FindNext(); break;
-	case wxID_HELP:
+	case ID_HELP:
 		m_editor->ShowHelpDialog( this );
 		break;
 	case ID_RUN:
@@ -563,7 +563,7 @@ BEGIN_EVENT_TABLE( EditorWindow, wxPanel )
 
 	EVT_BUTTON( wxID_STOP, EditorWindow::OnCommand )
 	EVT_BUTTON( ID_RUN, EditorWindow::OnCommand )
-	EVT_BUTTON( wxID_HELP, EditorWindow::OnCommand )
+	EVT_BUTTON( ID_HELP, EditorWindow::OnCommand )
 
 END_EVENT_TABLE()
 
