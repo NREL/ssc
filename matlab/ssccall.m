@@ -1,4 +1,4 @@
-function [result] = ssc(action, arg0, arg1, arg2 )
+function [result] = ssccall(action, arg0, arg1, arg2 )
 % SAM Simulation Core (SSC) MATLAB API
 % (c) 2012 National Renewable Energy Laboratory
 ssclib = 'ssc32';
@@ -125,11 +125,20 @@ elseif strcmp(action,'entry_version')
     
 elseif strcmp(action,'exec_simple')
     result = calllib(ssclib,'ssc_module_exec_simple',arg0,arg1);
+ 
+elseif strcmp(action,'module_create')
+    result = calllib(ssclib,'ssc_module_create',arg0);
+    
+elseif strcmp(action,'module_free')
+    result = calllib(ssclib,'ssc_module_free',arg0);
+    
+elseif strcmp(action,'module_exec')
+    result = calllib(ssclib,'ssc_module_exec',arg0,arg1);
     
 elseif strcmp(action,'module_log')
     p_type = libpointer('int32Ptr',1);
     p_time = libpointer('singlePtr',1);
-    result = calllib(ssclib,'ssc_module_log', arg0, p_type, p_time);
+    result = calllib(ssclib,'ssc_module_log', arg0, arg1, p_type, p_time);
    
 % elseif strcmp(action,'model_count')
 %     result = calllib(ssclib,'ssc_get_model_count');
