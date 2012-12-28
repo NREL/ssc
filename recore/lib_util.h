@@ -104,11 +104,9 @@ namespace util
 	template< typename T >
 	class matrix_t
 	{
-	private:
+	protected:
 		T *t_array;
 		size_t n_rows, n_cols;
-	protected:
-		T *Tarray(){return t_array;}	//mjw -- Added to provide derived classes with access to data
 	public:
 
 		matrix_t()
@@ -258,7 +256,7 @@ namespace util
 		{
 			resize_fill( 1, len, val );
 		}
-
+		
 		inline T &at(size_t i)
 		{
 	#ifdef _DEBUG
@@ -284,6 +282,22 @@ namespace util
 		}
 
 		inline const T &at(size_t r, size_t c) const
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+	#endif
+			return t_array[n_cols*r+c];
+		}
+		
+		inline T &operator()(size_t r, size_t c)
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+	#endif
+			return t_array[n_cols*r+c];
+		}
+
+		inline const T &operator()(size_t r, size_t c) const
 		{
 	#ifdef _DEBUG
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
