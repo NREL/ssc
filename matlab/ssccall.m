@@ -1,7 +1,9 @@
 function [result] = ssccall(action, arg0, arg1, arg2 )
 % SAM Simulation Core (SSC) MATLAB API
-% (c) 2012 National Renewable Energy Laboratory
+% Copyright (c) 2012 National Renewable Energy Laboratory
+% author: Aron P. Dobos
 
+    % automatically detect architecture to load proper dll.
     ssclib = 'ssc32';
     if ( strcmp(computer(), 'PCWIN64') )
         ssclib = 'ssc64';
@@ -25,6 +27,9 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
 
     elseif strcmp(action,'data_create')
         result = calllib(ssclib, 'ssc_data_create');
+        if ( isnullpointer(result) )
+            result = 0;
+        end
 
     elseif strcmp(action,'data_free')
         result = calllib(ssclib, 'ssc_data_free', arg0);
@@ -191,6 +196,9 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
 
     elseif strcmp(action,'module_create')
         result = calllib(ssclib,'ssc_module_create',arg0);
+        if ( isnullpointer(result) )
+            result = 0;
+        end
 
     elseif strcmp(action,'module_free')
         result = calllib(ssclib,'ssc_module_free',arg0);
@@ -213,7 +221,11 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
         elseif (p_type.Value == 3)
             typetext = 'error';
         end
-        result = [text, typetext, p_time.Value];
+        if ( strcmp(text,'') )
+            result = 0;
+        else
+            result = [text, typetext, p_time.Value];
+        end
         
     else
         disp( sprintf('ssccall: invalid action %s', action) );        
