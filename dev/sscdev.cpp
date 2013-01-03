@@ -120,6 +120,16 @@ int SCApp::OnExit()
 static char *SC_about_text = "SSCdev - System Simulator Core\n\n"
 "Developer interface for simulation, component development, validation, and basic visualization of SSC computation modules.";
 
+#ifdef _MSC_VER
+	#ifdef _WIN64
+	#define PLAT_BITS 64
+	#else
+	#define PLAT_BITS 32
+	#endif
+#else
+#define PLAT_BITS 64
+#endif
+
 class AboutDialog : public wxDialog
 {
 public:
@@ -127,7 +137,7 @@ public:
 		: wxDialog( parent, wxID_ANY, "About SSCdev", wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE )
 	{
 		SetBackgroundColour( *wxWHITE );
-		wxString version_str = wxString::Format("Version %d.%d.%d", SC_major_ver, SC_minor_ver, SC_micro_ver );
+		wxString version_str = wxString::Format("Version %d.%d.%d, %d bit", SC_major_ver, SC_minor_ver, SC_micro_ver, PLAT_BITS );
 				
 		wxTextCtrl *text = new wxTextCtrl(this, wxID_ANY, SC_about_text, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY);
 		text->SetFont( wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "consolas"));
