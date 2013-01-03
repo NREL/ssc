@@ -5,9 +5,9 @@ LKLIB = $(LKDIR)/lkuxwx3.a
 
 CC = gcc
 CXX = g++
-CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR) -I../ssc -I../recore -DLK_USE_WXWIDGETS `wx-config-3 --cflags`
+CFLAGS = -g -std=c++0x -I. -I$(WEXDIR)/include -I$(LKDIR) -I../ssc -I../recore -DWEX_USE_LK -DLK_USE_WXWIDGETS `wx-config-3 --cflags`
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lfontconfig $(WEXLIB) $(LKLIB) `wx-config-3 --libs stc` `wx-config-3 --libs aui` `wx-config-3 --libs` -lm 
+LDFLAGS = -std=c++0x -lfontconfig $(WEXLIB) $(LKLIB) `wx-config-3 --libs stc` `wx-config-3 --libs aui` `wx-config-3 --libs` -lm 
 
 OBJECTS  = cmform.o \
 	dataview.o \
