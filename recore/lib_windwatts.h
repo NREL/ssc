@@ -1,6 +1,8 @@
 #ifndef __lib_windwatts_h
 #define __lib_windwatts_h
 
+const int MAX_WIND_TURBINES = 256;
+
 int wind_power(
 			// INPUTS
 				double Vel_T,    // wind velocity m/s

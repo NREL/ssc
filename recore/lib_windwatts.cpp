@@ -158,11 +158,11 @@ int wind_power(
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 		)
 {
-	if (iNumWT > 256)
+	if (iNumWT > MAX_WIND_TURBINES)
 		return 0;
 
 	int i,j;
-	unsigned char wt_id[256], wid;
+	unsigned char wt_id[MAX_WIND_TURBINES], wid;
 
 	for (i=0; i<iNumWT; i++)
 		wt_id[i] = (unsigned char)i;
