@@ -69,6 +69,10 @@ public:
 		size_t nwt = 0;
 		ssc_number_t *wt_x = as_array( "wt_x", &nwt );
 		ssc_number_t *wt_y = as_array( "wt_y", NULL );
+		if (nwt < 1)
+			throw exec_error( "windpower", util::format("the number of wind turbines was zero.") );
+		if (nwt > 256)
+			throw exec_error( "windpower", util::format("the wind model is only configured to handle up to 256 turbines.") );
 
 		size_t nstep = 8760;
 
