@@ -16,19 +16,12 @@
 \usepackage{graphicx}
 %\usepackage{multicol}
 \usepackage{float}
+%\usepackage[table]{xcolor}
 \usepackage{listings}
 \usepackage{color}
 %\usepackage{ifthen}
-\usepackage[table]{xcolor}
 \usepackage{textcomp}
 \usepackage{alltt}
-\usepackage[pdftex,
-                  linktocpage=true,
-                  pagebackref=true,
-                  colorlinks=true,
-                  linkcolor=blue,
-                  unicode
-                ]{hyperref}
 \usepackage{pspicture}
 %\fi
 %\usepackage[utf8]{inputenc}
@@ -38,6 +31,14 @@
 %\usepackage{sectsty}
 %\usepackage[titles]{tocloft}
 \usepackage{doxygen}
+\usepackage[pdftex,
+                  linktocpage=true,
+                  pagebackref=true,
+                  colorlinks=true,
+                  linkcolor=blue,
+                  unicode
+                ]{hyperref}
+
 \lstset{language=C++,inputencoding=utf8,basicstyle=\footnotesize,breaklines=true,breakatwhitespace=true,tabsize=8,numbers=left }
 %\makeindex
 %\renewcommand{\footrulewidth}{0.4pt}
@@ -80,25 +81,23 @@ This document describes the software architecture of SSC, introduces the SSC Dev
 \section{Overview}
 \label{sec_overview}
 
-The SSC software library provides a standard interface through which complex engineering and economic models of renewable energy systems can be configured and invoked.  The System Advisor Model (SAM) desktop application is essentially a user-friendly front-end for SSC, and uses SSC to perform all system performance and financial calculations.  It is assumed that the reader is well versed in SAM, its suite of models, typical inputs and outputs, and general usage.
+The SSC software development kit (SDK) provides tools for creating models of renewable energy systems using the SSC library. The System Advisor Model (SAM) desktop application is a user-friendly front-end for the SSC library that uses SSC modules to perform all system performance and financial calculations. This manual assumes that the reader is familiar with SAM's suite of performance and financial models, input and output variables, and other capabilities. The SDK consists of the application programming interface (API), library, programming language wrappers, integrated development environment, and code samples.
 
 \subsection{Framework Description}
 
-SSC is designed as a general simulation framework that is model agnostic.  For example, there is no specific \texttt{pvwatts(...)} function call in the API that accepts model parameters and returns a calculated result.  Rather, a generic mechanism is provided for sending a model data, running the model, and retrieving results from it.  
+The SSC framework provides a generic mechanism for running modules, setting values of module inputs, and reading values of module outputs. The mechanisms are generic because they do not depend on the module. For example, the same mechanism provides access to the PVWatts (\texttt{pvwattsv1}) and Utility IPP ( \texttt{ippppa}) modules.  
 
-The standard way to invoke a model in SSC involves three steps:
+Using an SSC module is analogous to calling a function in a programming language: You pass parameter values to the function, run the function, and then read values returned by the function.  In SSC, you store input variables in a data container, run the module, and retrieve outputs from the data container:
 
 \begin{enumerate}
-\item A generic data container is populated by the user with named variables and their values.  These variables are inputs to the model.
-\item A particular model (like \texttt{pvwattsv1}) is selected to \emph{process} the data container.  The model may run successfully using the input variables defined by the user, or fail with error messages.  If the model succeeds, it populates the data container with the calculated output variables.
-\item Calculated outputs are retrieved from the data container, or error messages are retrieved.
+\item Create a data container of type \texttt{ssc\_data\_t} for model input variables.
+\item Call a simulation module such as \texttt{pvwattsv1} or \texttt{ippppa} of type \texttt{ssc\_module\_t} to process variables in the data container. If the module runs successfully, it populates the data container with output variables. If it fails, it generates error messages.\marginpar{Are error messages in the container?} 
+\item Retrieve output variable values or error messages from the data container.
 \end{enumerate}
 
-Essentially, this sequence is no different than calling a function in a programming language.  Step~1 can be thought of as passing parameters to the function, step~2 as running the function, and step~3 as getting the calculated result returned.  In SSC, the ``function'' is called a \emph{module}, and the data container is simply \emph{data}.  The \emph{module} operates on the \emph{data} and transforms it by calculating new variables and adding them to the dataset.  In the API, these are represented by the \texttt{ssc\_module\_t} and \texttt{ssc\_data\_t} types, which will be covered in detail later.
-
-\subsection{Modeling Systems}
+\subsection{Modeling an Energy System}
 \label{sec_modeling_systems}
-Different modules are available in SSC for each type of simulation possible in SAM.  A sample of modules is shown in Table~\ref{tab_sample_modules}.
+The SSC modules process weather data files, simulate energy system component performance, and calculate project cash flows. Table~\ref{tab_sample_modules} lists some of the SSC modules.\marginpar{For a complete list, see?}
 
 
 \begin{table}[ht]
@@ -121,7 +120,7 @@ Module & Description \\
 \end{center}
 \end{table}
 
-To perform a complete technoeconomic systems analysis, multiple compute modules can be called in succession.  For example, when the PVWatts+Residential configuration is selected in SAM, several compute modules are called in to perform the calculation, as listed below.
+Creating a technical model of a renewable energy system or a technoeconomic model of a renewable energy project in SSC involves choosing a set of modules. For example, a model of a residential photovoltaic project might use the following modules:\marginpar{Would this example require a weather reader too?}
 
 \begin{enumerate}
 \item \texttt{pvwattsv1}: The system parameters are used to calculate the hourly PV system performance.
@@ -130,7 +129,7 @@ To perform a complete technoeconomic systems analysis, multiple compute modules 
 \item \texttt{cashloan}: Given the amount of the energy produced each year and the dollar value of this energy, this module calculates the cost of energy, net present value, and other metrics of the system based on specified system cost, incentives, operation and maintainance costs, taxes, and loan parameters.
 \end{enumerate}
 
-In some cases, the output variables of one module have the right units and number of data values to feed directly into the next module in a sequence, but this is not enforced.  For example, the \texttt{pvwattsv1} module has an output variable \texttt{ac} which is the hourly energy in kWh produced by the system.   However, the \texttt{annualoutput} module requires an input with the name \texttt{energy\_net\_hourly}.  It is up to the user to ensure that variables are translated appropriately between the outputs of one module and the inputs of another, including any units conversions that may be necessary.  Luckily, SSC provides exhaustive documentation of all of the input variables required by a module and all of the outputs that will be calculated.  Working with input and output variables will be the topic of a subsequent chapter.
+In this example, the modules would run in the order shown above, with outputs of each module serving as inputs for the next. Because the modules do not necessarily use the same names or units for variables representing the same quantities, lines of code in the program calling the modules may be required to translate values.  For example, the \texttt{pvwattsv1} module has an output variable \texttt{ac} which is the hourly energy in kWh produced by the system, while the \texttt{annualoutput} module requires an input with the name \texttt{energy\_net\_hourly}./marginpar{Must all modules use the same data container, or can you set up a separate container for each module?}  It is up to the user to ensure that variables are translated appropriately between the outputs of one module and the inputs of another, including any units conversions that may be necessary.  Luckily, SSC provides exhaustive documentation of all of the input variables required by a module and all of the outputs that will be calculated.  Working with input and output variables will be the topic of a subsequent chapter./marginpar{Where is the documentation of input and output variables?}
 
 \section{A Basic Example: PVWatts}
 
@@ -813,13 +812,89 @@ On Linux, a newer version of SSC may report something like:
 	ssc version 24: Unix 64 bit GNU/C++ Dec  5 2012 11:42:51
 \end{verbatimtab}
 
-
-
-\section{Using the SSCdev Tool}
+\section{SSCdev}
 \label{sec_sscdev}
 
-\subsection{Looking up Variables}
-\label{sec_sscdev_vars}
+SSCdev is the developer interface for SSC. It allows you to explore the SSC library libraries, view and edit variable values, and run simulations. SSCdev also includes a scripting language for building models in the development environment.
+
+Use SSCdev before you start programming with the SSC API to understand how the modules you plan to use work. You can also use SSCdev while you program to test your algorithms.
+
+\subsection{Menus}
+\label{sec_sscdev_menus}
+
+\subsubsection{File}
+\label{sec_sscdev_menus_file}
+
+\begin{itemize}
+\item The New, Open, Save, and Save As commands are for working with scripting files (.lk). Clicking one of the commands switches to the Scripting tab.
+\item Binary data files (.bdat) ...
+\item Start Simulations runs the checked modules in the module browser in the order shown under Simulation sequence.
+\item Run Script runs the script in the Script Editor.
+\item Use the SSC Library commands to choose, load, and unload libraries. SSCdev displays the current library in the status bar at the bottom of the SSCdev window.
+\item Recent Files lists recently opened scripting files (.lk) and SSC data files (.sscdat).
+\item Exit closes SSCdev.
+\end{itemize}
+
+\subsubsection{Edit}
+\label{sec_sscdev_menus_edit}
+
+The two find commands search for text in the script editor.
+
+\subsubsection{Help}
+\label{sec_sscdev_menus_help}
+
+The About command displays information about the current version of SSCdev.
+
+\subsection{Module Browser}
+\label{sec_sscdev_module_browser}
+
+The module browser displays a list of modules in the current library and allows you to build a model and run simulations.
+
+The status bar at the bottom of the SSCdev window displays the current library. It displays "SSC dynamic library not loaded" when you have not loaded a library. 
+
+If the module browser is empty, you need to load a library. Click File, Choose SSC Library to load a library. 
+\marginpar Why does that not work with 64-bit dll on my computer?  
+
+To show a list of the module variables, click the module name.
+
+To start a simulation, build a model by checking each module in the model in the order that you want simulations to run. If you try to 
+
+\subsection{Variable Viewer}
+\label{sec_sscdev_variable_viewer}
+
+
+
+\subsection{A Simple Example without Scripting}
+\label{sec_sscdev_example_no_scripting}
+
+The following example shows how to use the module browser and variable viewer to build a simple model of a photovoltaic system using the pvwattsv1 and annualoutput modules. These two modules have a small number of input variables, which will allow you to quickly build a functional model.
+
+The pvwattsv1 module reads data from a weather file and calculates the system's AC electrical output for the 8,760 hours in a single year. The module has 22 inputs, of which only 6 are required and do not have default values.
+
+The annualoutput module calculates a system's electrical output over a multi-year period.
+
+In the module browser, click pvwattsv1 to display its variables. The 6 required variables are file\_name, system\_size, derate, track\_mode, azimuth, and tilt.
+
+Press the F5 key to start simulations. Nothing happens because you have to check a module to run it. Check the pvwatts1 module and press F5 again. This time, a message about the file\_name variable appears in the notification panel. That is because file\_name is a required variable, but we have not yet assigned it a value.
+
+In the variable viewer, click Add and create a file\_name variable with the SSC\_STRING data type and click file to assign it the value of one of the TMY2 files included in the SDK Examples folder (for example, daggett.tm2). Next, add the remaining 5 required variables shown in the module browser, using the data type and units shown in the table. For example, system\_size should be SSC\_NUMBER with a value in kilowatts.
+
+When you are finished, you should see a table similar to Table \ref{tab:a}:
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+file\_name & system\_size & derate & track\_mode & azimuth & tilt\\
+\hline
+F:/SSC/examples/daggett.tm2 & 4.000000 & 0.860000 & 1.000000 & 180.000000 & 25.000000\\
+\hline
+\end{tabular}
+\caption{The 6 required input variables for the pvwattsv1 module with their values}\label{tab:a}
+\end{table}
+
+\subsection{Scripting}
+\label{sec_sscdev_scripting}
+
 
 \section{Language Interfaces}
 \subsection{Native C/C++}
