@@ -32,7 +32,6 @@ namespace geothermal
 	const double CONST_CP = 0.000000000464;							//	"		"			"			"			"
 	const double EXCESS_PRESSURE_BAR = 3.5;							// default 3.5 bar, [2B.Resource&Well Input].D205
 	const double PRESSURE_AMBIENT_PSI = 14.7; // default
-	const double RESERVOIR_DELTA_PRESSURE = 0.35;					// default = .35 psi-h per 1000 lb [2B.Resource&Well Input].D171
 	const double WATER_LOSS_PERCENT = 0.02;							// 2%
 	const double EGS_TIME_INPUT = 3.076;							// years, not really explained - user is supposed to vary input until a calculated value equals plant design temp [7C.EGS Subsrfce HX].D42 (fTimeStar)
 	const double FRACTURE_LENGTH_ADJUSTMENT = 2;					// used for one instance of where the EGS fracture length is used.  All others use the original fracture length
@@ -1024,7 +1023,7 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 {	//  Only used in GetCalculatedPumpDepthInFeet
 
 	// [7B.Reservoir Hydraulics].G70
-    if (mo_geo_in.me_pc == ENTER_PC) return geothermal::RESERVOIR_DELTA_PRESSURE * flowRatePerWell() / 1000.0;
+    if (mo_geo_in.me_pc == ENTER_PC) return mo_geo_in.md_ReservoirDeltaPressure * flowRatePerWell() / 1000.0;
 	double md_PressureChangeAcrossReservoir = 0.0;
 
 	// if user didn't input the pressure change, we have to calculate it.  start with these
@@ -1039,8 +1038,7 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
 	double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC)/2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 
-	double dResourceTempF = physics::CelciusToFarenheit(GetResourceTemperatureC());
-	mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : dResourceTempF;	// G54 on [7B.Reservoir Hydraulics]
+	mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : physics::CelciusToFarenheit(GetResourceTemperatureC());	// G54 on [7B.Reservoir Hydraulics]
 
 	double density = geothermal::oDensityConstants.evaluate(mp_geo_out->md_AverageReservoirTemperatureF); // lbs per ft^3
 	double volumetricFlow =(flowRatePerWell() / density)/3600; // ft^3 per second
@@ -1762,11 +1760,11 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
 	mp_geo_out->md_PumpDepthFt = GetCalculatedPumpDepthInFeet();
+	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()
 	mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * geothermal::EFFICIENCY_PUMP_GF);
 
+	mp_geo_out->md_AverageReservoirTemperatureF = physics::CelciusToFarenheit(GetResourceTemperatureC());	// Set a default value, it might be recalculated in "GetPressureChangeAcrossReservoir()" if necessary
 	mp_geo_out->md_PressureChangeAcrossReservoir = GetPressureChangeAcrossReservoir();
-	// mp_geo_out->md_AverageReservoirTemperatureF is calculated in GetPressureChangeAcrossReservoir()
-	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()
 
 	if ( (mp_geo_out->md_NumberOfWells > 0) && (error().empty()) )
 		return true;
