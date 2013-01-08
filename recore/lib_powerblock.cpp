@@ -226,7 +226,7 @@ bool CPowerBlock_Type224::InitializeForParameters(const SPowerBlockParameters& p
     //prop = (/(T_htf_hot_ref - GetFieldToTurbineTemperatureDropC()),(P_boil*0.1d0),1.d0,1.d0,1.d0,1.d0,1.d0/)
     //call steam_props("SI",prop,12,ierr)
     //h_st_hot = prop(3) // Use the hot steam enthalpy
-	if(!physics::EnthalpyFromTempAndPressure(m_pbp.T_htf_hot_ref - GetFieldToTurbineTemperatureDropC(), m_pbp.P_boil, h_st_hot))
+	if(!physics::EnthalpyFromTempAndPressure((m_pbp.T_htf_hot_ref - GetFieldToTurbineTemperatureDropC())+273.15, m_pbp.P_boil, h_st_hot))
 	{
         m_strLastError = "Could not calculate the enthalpy for the given temperature and pressure.";
 		return false;
@@ -236,7 +236,7 @@ bool CPowerBlock_Type224::InitializeForParameters(const SPowerBlockParameters& p
     // Use the cold steam enthalpy at x=0, subtract subcooled enthalpy with specific heat. Cp is based
     // on an integral of specific heat for water in the slightly subcooled range of ~100degC
     //h_st_cold = prop(3) - 4.91*100.
-	if(!physics::EnthalpyFromTempAndPressure(274, m_pbp.P_boil, h_st_cold))
+	if(!physics::EnthalpyFromTempAndPressure(274+273.15, m_pbp.P_boil, h_st_cold))
 	{
         m_strLastError = "Could not calculate the enthalpy for the given temperature and pressure.";
 		return false;

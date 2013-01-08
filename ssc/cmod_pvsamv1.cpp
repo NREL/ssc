@@ -1564,44 +1564,6 @@ public:
 				100 * maxACOutput / ratedACOutput, ratedACOutput), 
 				SSC_WARNING);
 	}
-
-	void accumulate_monthly(const std::string &hourly_var, const std::string &monthly_var)
-	{
-		
-		size_t count = 0;
-		ssc_number_t *hourly = as_array(hourly_var, &count);
-
-		if (!hourly || count != 8760)
-			throw exec_error("pvsamv1", "Failed to accumulate hourly: " + hourly_var + " to monthly: " + monthly_var);
-
-	
-		ssc_number_t *monthly = allocate( monthly_var, 12 );
-
-		int c = 0;
-		for (int i=0;i<12;i++) // each month
-		{
-			monthly[i] = 0;
-			for (int d=0;d<util::nday[i];d++) // for each day in each month
-				for (int h=0;h<24;h++) // for each hour in each day
-					monthly[i] += hourly[c++];
-		}
-	}
-
-	void accumulate_annual(const std::string &hourly_var, const std::string &annual_var)
-	{
-		size_t count = 0;
-		ssc_number_t *hourly = as_array(hourly_var, &count);
-
-		if (!hourly || count != 8760)
-			throw exec_error("pvsamv1", "Failed to accumulate hourly: " + hourly_var + " to annual: " + annual_var);
-		
-		double annual = 0;
-		for (int i=0;i<8760;i++)
-			annual += hourly[i];
-
-		assign( annual_var, var_data( (ssc_number_t) annual ) );
-	}
-
 };
 
 DEFINE_MODULE_ENTRY( pvsamv1, "Photovoltaic performance model, SAM component models V.1", 1 )

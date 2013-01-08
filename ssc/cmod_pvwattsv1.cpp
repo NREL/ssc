@@ -50,7 +50,15 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",              "Shading factor for beam radiation",               "",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",               "",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",   "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC array output",                             "kWhdc",    "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC system output",                            "kWhac",    "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
+
+	{ SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day",    "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC system output",                     "kWhac",    "",                        "PVWatts",      "*",                       "",                          "" },
 
 	var_info_invalid };
 
@@ -202,8 +210,17 @@ public:
 			irr.set_location( wf.lat, wf.lon, wf.tz );
 				
 			double alb = 0.2;
-			if (wf.snow > 0 && wf.snow < 150)
-				alb = 0.6;
+
+			if ( wf.type() == weatherfile::TMY2 )
+			{
+				if (wf.snow > 0 && wf.snow < 150)
+					alb = 0.6;
+			}
+			else if ( wf.type() == weatherfile::TMY3 )
+			{
+				if ( wf.albedo >= 0 && wf.albedo < 1 )
+					alb = wf.albedo;
+			}
 
 			irr.set_sky_model( 2, alb );
 			irr.set_beam_diffuse( wf.dn, wf.df );
@@ -268,6 +285,22 @@ public:
 		
 			i++;
 		}
+
+		ssc_number_t *poam = accumulate_monthly( "poa", "poa_monthly", 0.001 );
+		accumulate_monthly( "dc", "dc_monthly", 0.001 );
+		accumulate_monthly( "ac", "ac_monthly", 0.001 );
+
+		ssc_number_t *solrad = allocate( "solrad_monthly", 12 );
+		ssc_number_t solrad_ann = 0;
+		for ( int m=0;m<12;m++ )
+		{
+			solrad[m] = poam[m]/util::nday[m];
+			solrad_ann += solrad[m];
+		}
+		assign( "solrad_annual", var_data( solrad_ann/12 ) );
+
+
+		accumulate_annual( "ac", "ac_annual", 0.001 );
 	}
 };
 
