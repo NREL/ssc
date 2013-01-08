@@ -14,20 +14,20 @@ void *dll_sym( void *handle, const char *name ) { return dlsym( handle, name ); 
 
 
 // to reference count unique dll loads so that local static caches can be cleared and reset
-static unsigned int ssc32_access_id = 0; 
+static unsigned int ssc_access_id = 0; 
 // dll access handle
-static void *ssc32_handle = 0;
+static void *ssc_handle = 0;
 
 bool sscdll_load( const char *path )
 {
 	sscdll_unload();
-	ssc32_handle = dll_open( path );
-	ssc32_access_id++;
+	ssc_handle = dll_open( path );
+	ssc_access_id++;
 	
-	if ( 0 != ssc32_handle && 0 == dll_sym(ssc32_handle, "ssc_version"))
+	if ( 0 == ssc_handle || 0 == dll_sym(ssc_handle, "ssc_version"))
 	{
-		dll_close( ssc32_handle );
-		ssc32_handle = 0;
+		dll_close( ssc_handle );
+		ssc_handle = 0;
 		return false;
 	}
 	else
@@ -36,17 +36,17 @@ bool sscdll_load( const char *path )
 
 void sscdll_unload()
 {
-	if (ssc32_handle!=0)
+	if (ssc_handle!=0)
 	{
-		ssc32_access_id++;
-		dll_close( ssc32_handle );
-		ssc32_handle = 0;
+		ssc_access_id++;
+		dll_close( ssc_handle );
+		ssc_handle = 0;
 	}
 }
 
 bool sscdll_isloaded()
 {
-	return (ssc32_handle!=0);
+	return (ssc_handle!=0);
 }
 
 /*  dynamically linked implementations */
@@ -54,13 +54,13 @@ bool sscdll_isloaded()
 #define CHECK_DLL_LOADED() \
 	static unsigned int f_access_id = 0; \
 	if (!sscdll_isloaded()) {f=NULL; throw sscdll_error("ssc not loaded", __FUNCTION__); } \
-	if (f_access_id!=ssc32_access_id) { f=NULL; f_access_id = ssc32_access_id; } \
+	if (f_access_id!=ssc_access_id) { f=NULL; f_access_id = ssc_access_id; } \
 	static const char *func_name = __FUNCTION__
 
 #define FAIL_ON_LOCATE() \
 	{ f=NULL; throw sscdll_error("lookup address fail", func_name); }
 
-#define PROCADDR() dll_sym(ssc32_handle, func_name)
+#define PROCADDR() dll_sym(ssc_handle, func_name)
 
 int ssc_version()
 {

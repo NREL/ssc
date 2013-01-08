@@ -134,7 +134,7 @@ class AboutDialog : public wxDialog
 {
 public:
 	AboutDialog( wxWindow *parent )
-		: wxDialog( parent, wxID_ANY, "About SSCdev", wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE )
+		: wxDialog( parent, wxID_ANY, "About", wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE )
 	{
 		SetBackgroundColour( *wxWHITE );
 		wxString version_str = wxString::Format("Version %d.%d.%d, %d bit", SC_major_ver, SC_minor_ver, SC_micro_ver, PLAT_BITS );
@@ -149,7 +149,6 @@ public:
 			0, wxALL|wxEXPAND, 4 );
 
 		sz_main->Add( text, 0, wxALL|wxEXPAND, 4 );
-
 		sz_main->Add( new wxStaticText( this, wxID_ANY, version_str ), 0, wxALL|wxEXPAND, 4 );
 		sz_main->Add( CreateButtonSizer( wxOK ), 0, wxALL|wxEXPAND, 4 );
 
@@ -173,30 +172,31 @@ enum{   ID_START, ID_STOP, ID_SHOW_STATS,
 };
 
 BEGIN_EVENT_TABLE(SCFrame, wxFrame)
-	EVT_TOOL( ID_ADD_VARIABLE,             SCFrame::OnCommand )
+	EVT_MENU( ID_ADD_VARIABLE,             SCFrame::OnCommand )
 
-	EVT_TOOL( wxID_OPEN,                   SCFrame::OnCommand )
-	EVT_TOOL( wxID_SAVE,                   SCFrame::OnCommand )
-	EVT_TOOL( wxID_FIND,                 SCFrame::OnCommand )
-	EVT_TOOL( wxID_FORWARD,                 SCFrame::OnCommand )
-	EVT_TOOL( ID_MODULES,            SCFrame::OnCommand )
-	
+	EVT_MENU( wxID_OPEN,                   SCFrame::OnCommand )
+	EVT_MENU( wxID_SAVE,                   SCFrame::OnCommand )
+	EVT_MENU( wxID_FIND,                 SCFrame::OnCommand )
+	EVT_MENU( wxID_FORWARD,                 SCFrame::OnCommand )
 	EVT_MENU(ID_RUN_SCRIPT, SCFrame::OnCommand)
+	
+	EVT_MENU( ID_MODULES,            SCFrame::OnCommand )
+
 	EVT_MENU(ID_LOAD_BDAT, SCFrame::OnCommand)
 	EVT_MENU(ID_SAVE_BDAT, SCFrame::OnCommand)
 
-	EVT_TOOL( wxID_EXIT,                 SCFrame::OnCommand )
-	EVT_TOOL( wxID_ABOUT,                 SCFrame::OnCommand )
-	EVT_TOOL( wxID_HELP,                  SCFrame::OnCommand )
+	EVT_MENU( wxID_EXIT,                 SCFrame::OnCommand )
+	EVT_MENU( wxID_ABOUT,                 SCFrame::OnCommand )
+	EVT_MENU( wxID_HELP,                  SCFrame::OnCommand )
 
-	EVT_TOOL( ID_START, SCFrame::OnCommand )
-	EVT_TOOL( ID_SHOW_STATS,              SCFrame::OnCommand )
-	EVT_TOOL( ID_LOAD_UNLOAD_DLL,              SCFrame::OnCommand )
+	EVT_MENU( ID_START, SCFrame::OnCommand )
+	EVT_MENU( ID_SHOW_STATS,              SCFrame::OnCommand )
+	EVT_MENU( ID_LOAD_UNLOAD_DLL,              SCFrame::OnCommand )
 	EVT_TEXT_ENTER( ID_DLL_PATH,                SCFrame::OnCommand )
 	EVT_MENU( ID_CHOOSE_DLL,            SCFrame::OnCommand )
 	
-	EVT_TOOL( wxID_FIND,                 SCFrame::OnCommand )
-	EVT_TOOL( wxID_FORWARD,                  SCFrame::OnCommand )
+	EVT_MENU( wxID_FIND,                 SCFrame::OnCommand )
+	EVT_MENU( wxID_FORWARD,                  SCFrame::OnCommand )
 	
 	EVT_CLOSE( SCFrame::OnCloseFrame )
 	
@@ -232,8 +232,8 @@ SCFrame::SCFrame()
 	m_cmBrowser = new CMForm( m_notebook );
 
 	m_notebook->AddPage( m_cmBrowser, "Module Browser", true );
-	m_notebook->AddPage( m_dataView, "Variable Viewer", false );
-	m_notebook->AddPage( m_scriptWindow, "Scripting", false );
+	m_notebook->AddPage( m_dataView, "Data Container", false );
+	m_notebook->AddPage( m_scriptWindow, "Script Editor", false );
 
 	m_txtOutput = new wxTextCtrl(split_win, ID_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize,
 		wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL | wxTE_DONTWRAP);
@@ -276,35 +276,33 @@ SCFrame::SCFrame()
 	UpdateRecentMenu();	
 
 	m_fileMenu = new wxMenu;
-	m_fileMenu->Append( wxID_NEW, "New\tCtrl-N" );
+	m_fileMenu->Append( ID_START, "Start simulation...\tF6" );
 	m_fileMenu->AppendSeparator();
-	m_fileMenu->Append( wxID_OPEN, "Open\tCtrl-O" );
-	m_fileMenu->Append( wxID_SAVE, "Save\tCtrl-S" );
-	m_fileMenu->Append( wxID_SAVEAS, "Save As" );
+	m_fileMenu->Append( ID_LOAD_UNLOAD_DLL, "Load/unload SSC library\tF7");
+	m_fileMenu->Append( ID_CHOOSE_DLL, "Choose SSC library...\tF8");
 	m_fileMenu->AppendSeparator();
-	m_fileMenu->Append( ID_LOAD_BDAT, "Load binary data file..\tF7" );
-	m_fileMenu->Append( ID_SAVE_BDAT, "Save binary data file...\tF8" );
-	m_fileMenu->AppendSeparator();
-	m_fileMenu->Append( ID_START, "Start simulation...\tF5" );
-	m_fileMenu->Append( ID_RUN_SCRIPT, "Run script...\tF6");
-	m_fileMenu->AppendSeparator();
-	m_fileMenu->Append( ID_LOAD_UNLOAD_DLL, "Load/unload SSC library\tF4");
-	m_fileMenu->Append( ID_CHOOSE_DLL, "Choose SSC library...\tF9");
+	m_fileMenu->Append( ID_LOAD_BDAT, "Load data file..\tCtrl-Shift-O" );
+	m_fileMenu->Append( ID_SAVE_BDAT, "Save data file...\tCtrl-Shift-S" );
 	m_fileMenu->AppendSeparator();
 	m_fileMenu->Append( wxID_ANY, "Recent files", m_recentMenu );
 	m_fileMenu->AppendSeparator();
 	m_fileMenu->Append( wxID_EXIT, "Exit" );
 
-	m_editMenu = new wxMenu;
-	m_editMenu->Append( wxID_FIND, "Find\tCtrl-F");
-	m_editMenu->Append( wxID_FORWARD, "Find next\tF3");
+	m_scriptMenu = new wxMenu;
+	m_scriptMenu->Append( wxID_OPEN, "Open\tCtrl-O" );
+	m_scriptMenu->Append( wxID_SAVE, "Save\tCtrl-S" );
+	m_scriptMenu->AppendSeparator();
+	m_scriptMenu->Append( wxID_FIND, "Find\tCtrl-F");
+	m_scriptMenu->Append( wxID_FORWARD, "Find next\tF3");
+	m_scriptMenu->AppendSeparator();
+	m_scriptMenu->Append( ID_RUN_SCRIPT, "Run script...\tF5");
 
 	m_helpMenu = new wxMenu;
 	m_helpMenu->Append( wxID_ABOUT, "About" );
 
 	wxMenuBar *mb = new wxMenuBar;
 	mb->Append( m_fileMenu, "File" );
-	mb->Append( m_editMenu, "Edit" );
+	mb->Append( m_scriptMenu, "Script" );
 	mb->Append( m_helpMenu, "Help" );
 	SetMenuBar( mb );
 
@@ -560,8 +558,13 @@ void SCFrame::LoadUnloadLibrary()
 	if (!sscdll_isloaded())
 	{
 		m_lastLoadTime = wxNow();
-		sscdll_load( m_dllPath.c_str() );
-		m_currentAppDir = wxPathOnly(m_dllPath);
+		if ( !sscdll_load( m_dllPath.c_str() ) )
+		{
+			wxMessageBox("Error loading " + m_dllPath + "\n\nCheck path, architecture (32/64 bit), and version.");			
+			m_dllPath.Empty();
+		}
+		else
+			m_currentAppDir = wxPathOnly(m_dllPath);
 	}
 	else
 	{
@@ -606,10 +609,6 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		m_txtOutput->Clear();
 		Start();
 		break;
-	case wxID_NEW:
-		m_notebook->SetSelection( 2 );
-		m_scriptWindow->CloseDoc();
-		break;
 	case wxID_OPEN:
 		m_notebook->SetSelection( 2 );
 		m_scriptWindow->Open();
@@ -618,24 +617,22 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		m_notebook->SetSelection( 2 );
 		m_scriptWindow->Save();
 		break;
-	case wxID_SAVEAS:		
-		m_notebook->SetSelection( 2 );
-		m_scriptWindow->SaveAs();
-		break;
-	case ID_RUN_SCRIPT:
-		m_scriptWindow->Exec();
-		break;
-	case ID_LOAD_BDAT:
-		LoadBdat();
-		break;
-	case ID_SAVE_BDAT:
-		SaveBdat();
-		break;
 	case wxID_FIND:
 		m_scriptWindow->GetEditor()->ShowFindDialog();
 		break;
 	case wxID_FORWARD:
 		m_scriptWindow->GetEditor()->FindNext();
+		break;
+	case ID_RUN_SCRIPT:
+		m_scriptWindow->Exec();
+		break;
+
+
+	case ID_LOAD_BDAT:
+		LoadBdat();
+		break;
+	case ID_SAVE_BDAT:
+		SaveBdat();
 		break;
 	case wxID_EXIT:
 		this->Close();
@@ -777,17 +774,19 @@ bool SCFrame::LoadBdat( wxString fn )
 	if (!fp.Ok()) return false;
 	wxDataInputStream in( fp );
 		
-	m_cmList.clear();
 	m_varTable->clear();
 	UpdateUI();
 	m_dataView->UpdateView();
 
 	int code = in.Read16(); // start header code, versioner
 
-
+	
+	wxArrayString cmlist;
 	int n_cmmods = in.Read32();
 	for (int i=0;i<n_cmmods;i++)
-		m_cmList.Add( in.ReadString() );
+		cmlist.Add( in.ReadString() );
+
+	m_cmBrowser->SetCMList( cmlist );
 
 	wxArrayString sel_vars;
 	std::vector<int> cwl;
@@ -823,9 +822,10 @@ bool SCFrame::WriteBdatToDisk(const wxString &fn)
 	wxDataOutputStream o( fp );
 	o.Write16( 0xe3 );
 
-	o.Write32( m_cmList.Count() );
-	for (int i=0;i<m_cmList.Count();i++)
-		o.WriteString( m_cmList[i] );
+	wxArrayString cmlist = m_cmBrowser->GetCMList();
+	o.Write32( cmlist.Count() );
+	for (int i=0;i<cmlist.Count();i++)
+		o.WriteString( cmlist[i] );
 
 	wxArrayString selvars = m_dataView->GetSelections();
 	o.Write32( selvars.Count() );
@@ -990,7 +990,12 @@ void SCFrame::Start()
 	Layout();
 	wxGetApp().Yield();
 
-	m_cmList = m_cmBrowser->GetCMList();
+	wxArrayString cmlist = m_cmBrowser->GetCMList();
+	if ( cmlist.Count() == 0 )
+	{
+		wxMessageBox("No compute modules selected for simulation.\n\nSelect one or more on the Module Browser tab.");
+		return;
+	}
 
 	try {
 
@@ -998,13 +1003,13 @@ void SCFrame::Start()
 
 		Copy( p_data, m_varTable, true );
 		
-		for (int i=0;i<m_cmList.Count();i++)
+		for (int i=0;i<cmlist.Count();i++)
 		{
-			ssc_module_t p_mod = ::ssc_module_create( (const char*) m_cmList[i].c_str() );
+			ssc_module_t p_mod = ::ssc_module_create( (const char*) cmlist[i].c_str() );
 			
 			if (p_mod == 0)
 			{
-				Log("CREATE_FAIL: " + m_cmList[i] );
+				Log("CREATE_FAIL: " + cmlist[i] );
 				break;
 			}
 			
@@ -1015,7 +1020,7 @@ void SCFrame::Start()
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
 				my_handler, 0) )
 			{
-				Log("EXEC_FAIL: "+m_cmList[i]);
+				Log("EXEC_FAIL: "+cmlist[i]);
 				::ssc_module_free( p_mod );
 				break;
 			}

@@ -29,11 +29,9 @@
     <ClCompile Include="cmod_ippppa.cpp" />
     <ClCompile Include="cmod_irradproc.cpp" />
     <ClCompile Include="cmod_levpartflip.cpp" />
-    <ClCompile Include="cmod_ptflux.cpp" />
     <ClCompile Include="cmod_pv6parmod.cpp" />
     <ClCompile Include="cmod_pvsamv1.cpp" />
     <ClCompile Include="cmod_pvsandiainv.cpp" />
-    <ClCompile Include="cmod_pvwatts.cpp" />
     <ClCompile Include="cmod_pvwattsfunc.cpp" />
     <ClCompile Include="cmod_pvwattsv1.cpp" />
     <ClCompile Include="cmod_saleleaseback.cpp" />
@@ -42,10 +40,6 @@
     <ClCompile Include="cmod_test_irr.cpp" />
     <ClCompile Include="cmod_test_pvshade.cpp" />
     <ClCompile Include="cmod_timeseq.cpp" />
-    <ClCompile Include="cmod_trnbase.cpp" />
-    <ClCompile Include="cmod_trndish.cpp" />
-    <ClCompile Include="cmod_trntower.cpp" />
-    <ClCompile Include="cmod_trntrough.cpp" />
     <ClCompile Include="cmod_utilityrate.cpp" />
     <ClCompile Include="cmod_wfreader.cpp" />
     <ClCompile Include="cmod_windpower.cpp" />
@@ -55,7 +49,6 @@
     <ClCompile Include="vtab_common.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cmod_trnbase.h" />
     <ClInclude Include="core.h" />
     <ClInclude Include="sscapi.h" />
     <ClInclude Include="vartab.h" />

@@ -93,14 +93,13 @@ private:
 
 	wxTextCtrl *m_txtOutput;
 
-	wxMenu *m_fileMenu,  *m_editMenu, *m_helpMenu;
+	wxMenu *m_fileMenu, *m_scriptMenu, *m_helpMenu;
 
 	wxNotebook *m_notebook;
 	CMForm *m_cmBrowser;
 	DataView *m_dataView;
 	EditorWindow *m_scriptWindow;
 
-	wxArrayString m_cmList;
 	var_table *m_varTable;
 
 	int m_recentCount;

@@ -36,10 +36,6 @@ OBJECTS = \
 	cmod_pvsamv1.o \
 	cmod_wfreader.o \
 	cmod_irradproc.o \
-	cmod_trntower.o \
-	cmod_trnbase.o \
-	cmod_trndish.o \
-	cmod_ptflux.o \
 	cmod_fossilgen.o \
 	cmod_cashloan.o \
 	cmod_pvwattsv1.o \
@@ -47,13 +43,11 @@ OBJECTS = \
 	cmod_levpartflip.o \
 	cmod_saleleaseback.o \
 	cmod_singleowner.o \
-	cmod_pvwatts.o \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
-	cmod_trntrough.o \
 	core.o \
 	lib_windfile.o \
 	lib_cec6par.o \
