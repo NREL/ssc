@@ -781,12 +781,8 @@ bool SCFrame::LoadBdat( wxString fn )
 	int code = in.Read16(); // start header code, versioner
 
 	
-	wxArrayString cmlist;
-	int n_cmmods = in.Read32();
-	for (int i=0;i<n_cmmods;i++)
-		cmlist.Add( in.ReadString() );
-
-	m_cmBrowser->SetCMList( cmlist );
+	wxString cm = in.ReadString();
+	m_cmBrowser->SetCurrentCM( cm );
 
 	wxArrayString sel_vars;
 	std::vector<int> cwl;
@@ -822,10 +818,8 @@ bool SCFrame::WriteBdatToDisk(const wxString &fn)
 	wxDataOutputStream o( fp );
 	o.Write16( 0xe3 );
 
-	wxArrayString cmlist = m_cmBrowser->GetCMList();
-	o.Write32( cmlist.Count() );
-	for (int i=0;i<cmlist.Count();i++)
-		o.WriteString( cmlist[i] );
+	wxString cm = m_cmBrowser->GetCurrentCM();
+	o.WriteString( cm );
 
 	wxArrayString selvars = m_dataView->GetSelections();
 	o.Write32( selvars.Count() );
@@ -990,8 +984,8 @@ void SCFrame::Start()
 	Layout();
 	wxGetApp().Yield();
 
-	wxArrayString cmlist = m_cmBrowser->GetCMList();
-	if ( cmlist.Count() == 0 )
+	wxString cm = m_cmBrowser->GetCurrentCM();
+	if ( cm.IsEmpty() )
 	{
 		wxMessageBox("No compute modules selected for simulation.\n\nSelect one or more on the Module Browser tab.");
 		return;
@@ -1002,17 +996,11 @@ void SCFrame::Start()
 		ssc_data_t p_data = ::ssc_data_create();
 
 		Copy( p_data, m_varTable, true );
-		
-		for (int i=0;i<cmlist.Count();i++)
-		{
-			ssc_module_t p_mod = ::ssc_module_create( (const char*) cmlist[i].c_str() );
+				
+		ssc_module_t p_mod = ::ssc_module_create( (const char*) cm.c_str() );
 			
-			if (p_mod == 0)
-			{
-				Log("CREATE_FAIL: " + cmlist[i] );
-				break;
-			}
-			
+		if (p_mod != 0)
+		{			
 			::wxSetWorkingDirectory( wxPathOnly(m_dllPath) );
 
 			wxStopWatch sw;
@@ -1020,15 +1008,13 @@ void SCFrame::Start()
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
 				my_handler, 0) )
 			{
-				Log("EXEC_FAIL: "+cmlist[i]);
-				::ssc_module_free( p_mod );
-				break;
+				Log("EXEC_FAIL: "+cm);
 			}
-			//else
-			//	Log("EXEC_SUCCESS: " + m_cmList[i] + " (" + wxString::Format("%.3lf", (double)sw.Time()/1000.0) + " sec)");
 
 			::ssc_module_free( p_mod );
 		}
+		else			
+			Log("CREATE_FAIL: " + cm );
 
 		Copy( m_varTable, p_data, false );
 		m_dataView->UpdateView();

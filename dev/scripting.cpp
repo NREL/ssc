@@ -240,7 +240,7 @@ void fcall_run( lk::invoke_t &cxt )
 	if (cxt.arg_count() > 0)
 	{
 		CMForm *cm = app_frame->GetCMForm();
-		cm->SetCMList( wxStringTokenize( cxt.arg(0).as_string(), "," ) );
+		cm->SetCurrentCM( cxt.arg(0).as_string() );
 
 	}
 

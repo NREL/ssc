@@ -9,48 +9,48 @@
 #include "cmform.h"
 
 enum {
-  ID_btnSendToExcel,
-  ID_grdCMVars,
-  ID_btnAccept,
-  ID_btnClose,
-  ID_lstSelectedCMs,
-  ID_cklCMList };
+  ID_btnSendToExcel = wxID_HIGHEST+132,
+  ID_list };
 
 BEGIN_EVENT_TABLE( CMForm, wxPanel )
-	EVT_CHECKLISTBOX(ID_cklCMList, CMForm::OnCMListCheck )
-	EVT_LISTBOX(ID_cklCMList, CMForm::OnCMListSelect )
+	EVT_LISTBOX(ID_list, CMForm::OnCMListSelect )
 	EVT_BUTTON(ID_btnSendToExcel, CMForm::OnSendToExcel )
 END_EVENT_TABLE()
 
 CMForm::CMForm(wxWindow *parent)
 	 : wxPanel( parent, wxID_ANY )
 {
-	cklCMList = new wxCheckListBox(this, ID_cklCMList);
-	lstSelectedCMs = new wxListBox(this, ID_lstSelectedCMs);
+	m_currentCM = new wxChoice( this, wxID_ANY );	
+	
+	m_list = new wxListBox(this, ID_list);
 		
-	grdCMVars = new wxExtGridCtrl(this, ID_grdCMVars);
-	grdCMVars->CreateGrid(2,2);
-	grdCMVars->EnableEditing(false);
-	grdCMVars->DisableDragCell();
-	grdCMVars->DisableDragColSize();
-	grdCMVars->DisableDragRowSize();
-	grdCMVars->DisableDragColMove();
-	grdCMVars->DisableDragGridSize();
-	grdCMVars->SetRowLabelSize(23);
-	grdCMVars->SetColLabelSize(23);	
-	grdCMVars->EnableDragColSize();
+	m_grid = new wxExtGridCtrl(this, wxID_ANY);
+	m_grid->CreateGrid(2,2);
+	m_grid->EnableEditing(false);
+	m_grid->DisableDragCell();
+	m_grid->DisableDragColSize();
+	m_grid->DisableDragRowSize();
+	m_grid->DisableDragColMove();
+	m_grid->DisableDragGridSize();
+	m_grid->SetRowLabelSize(23);
+	m_grid->SetColLabelSize(23);	
+	m_grid->EnableDragColSize();
+	
+	wxBoxSizer *szh_top = new wxBoxSizer( wxHORIZONTAL );
+	szh_top->Add( new wxStaticText( this, wxID_ANY, " Run:" ),0, wxALL|wxALIGN_CENTER_VERTICAL, 3);
+	szh_top->Add( m_currentCM, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
 
 	wxBoxSizer *szleft = new wxBoxSizer( wxVERTICAL );
-	szleft->Add( cklCMList, 3, wxALL|wxEXPAND, 0 );
-	szleft->Add( new wxStaticText( this, wxID_ANY, "Simulation sequence:" ), 0, wxALL|wxEXPAND, 2 );
-	szleft->Add( lstSelectedCMs, 1, wxALL|wxEXPAND, 0 );
+	szleft->Add( szh_top, 0, wxALL|wxEXPAND, 3 );
+	szleft->Add( new wxStaticText( this, wxID_ANY, " Available modules:" ), 0, wxALL|wxEXPAND|wxALIGN_BOTTOM, 1 );
+	szleft->Add( m_list, 1, wxALL|wxEXPAND, 3 );
 #ifdef __WXMSW__
-	szleft->Add( new wxButton(this, ID_btnSendToExcel, "Send table to Excel..."), 0, wxALL|wxEXPAND, 2);
+	szleft->Add( new wxButton(this, ID_btnSendToExcel, "Send table to Excel..."), 0, wxALL|wxEXPAND, 3);
 #endif
 
 	wxBoxSizer *szcenter = new wxBoxSizer(wxHORIZONTAL );
-	szcenter->Add( szleft, 1, wxALL|wxEXPAND, 0 );
-	szcenter->Add( grdCMVars, 5, wxALL|wxEXPAND, 0 );
+	szcenter->Add( szleft, 1, wxALL|wxEXPAND, 3 );
+	szcenter->Add( m_grid, 5, wxALL|wxEXPAND, 3 );
 
 	SetSizer( szcenter );
 }
@@ -72,11 +72,11 @@ wxArrayString CMForm::GetAvailableCMs()
 
 void CMForm::LoadCMs()
 {
-	cklCMList->Clear();
-	grdCMVars->ClearGrid();
+	m_list->Clear();
+	m_grid->ClearGrid();
 	wxArrayString l = GetAvailableCMs();
 	for (size_t i=0;i<l.Count();i++)
-		cklCMList->Append( l[i] );
+		m_list->Append( l[i] );
 }
 
 void CMForm::OnSendToExcel(wxCommandEvent &)
@@ -84,7 +84,7 @@ void CMForm::OnSendToExcel(wxCommandEvent &)
 #ifdef __WXMSW__
 
 	wxBusyInfo info("Sending data to excel...");
-	grdCMVars->Copy(true);
+	m_grid->Copy(true);
 	wxMilliSleep(150);
 
 	wxExcelAutomation xl;
@@ -109,35 +109,10 @@ void CMForm::OnSendToExcel(wxCommandEvent &)
 
 }
 
-void CMForm::OnCMListCheck(wxCommandEvent &evt)
-{
-	int idx = evt.GetSelection();
-	if (idx < 0) return;
-	wxString name = cklCMList->GetString( idx );
-	bool ischk = cklCMList->IsChecked( idx );
-
-	int cmsel_idx = -1;
-	for (size_t i=0;i<m_cmList.Count();i++)
-		if (m_cmList[i] == name)
-			cmsel_idx = i;
-
-	if (ischk && cmsel_idx < 0)
-	{
-		m_cmList.Add( name );
-		UpdateForm();
-	}
-
-	if (!ischk && cmsel_idx >= 0)
-	{
-		m_cmList.RemoveAt( cmsel_idx );
-		UpdateForm();
-	}
-}
-
 void CMForm::OnCMListSelect(wxCommandEvent &)
 {
 	try {
-		wxString cm_name = cklCMList->GetStringSelection();
+		wxString cm_name = m_list->GetStringSelection();
 	
 		ssc_module_t p_mod = ::ssc_module_create( (const char*)cm_name.c_str() );
 		if ( p_mod == 0 )
@@ -188,24 +163,24 @@ void CMForm::OnCMListSelect(wxCommandEvent &)
 		int nrows = (int)vartab.size();
 		int ncols = 9;
 		
-		grdCMVars->Freeze();
-		grdCMVars->ResizeGrid( nrows, ncols);
-		grdCMVars->SetColLabelValue( 0, "TYPE" );
-		grdCMVars->SetColLabelValue( 1, "DATA" );
-		grdCMVars->SetColLabelValue( 2, "NAME" );
-		grdCMVars->SetColLabelValue( 3, "LABEL" );
-		grdCMVars->SetColLabelValue( 4, "UNITS" );
-		grdCMVars->SetColLabelValue( 5, "META" );
-		grdCMVars->SetColLabelValue( 6, "GROUP" );
-		grdCMVars->SetColLabelValue( 7, "REQUIRE" );
-		grdCMVars->SetColLabelValue( 8, "CONSTRAINT" );
+		m_grid->Freeze();
+		m_grid->ResizeGrid( nrows, ncols);
+		m_grid->SetColLabelValue( 0, "TYPE" );
+		m_grid->SetColLabelValue( 1, "DATA" );
+		m_grid->SetColLabelValue( 2, "NAME" );
+		m_grid->SetColLabelValue( 3, "LABEL" );
+		m_grid->SetColLabelValue( 4, "UNITS" );
+		m_grid->SetColLabelValue( 5, "META" );
+		m_grid->SetColLabelValue( 6, "GROUP" );
+		m_grid->SetColLabelValue( 7, "REQUIRE" );
+		m_grid->SetColLabelValue( 8, "CONSTRAINT" );
 
 		for (int r=0;r<nrows;r++)
 			for (int c=0;c<ncols;c++)
-				grdCMVars->SetCellValue( vartab[r][c], r, c );
+				m_grid->SetCellValue( vartab[r][c], r, c );
 
-		grdCMVars->AutoSizeColumns(false);
-		grdCMVars->Thaw();
+		m_grid->AutoSizeColumns(false);
+		m_grid->Thaw();
 
 		::ssc_module_free( p_mod );
 	
@@ -217,14 +192,17 @@ void CMForm::OnCMListSelect(wxCommandEvent &)
 
 void CMForm::UpdateForm()
 {
-	wxArrayString list;
-	lstSelectedCMs->Clear();
-	for (size_t i=0;i<m_cmList.Count();i++)
-	{
-		lstSelectedCMs->Append( m_cmList[i] );
-		list.Add( m_cmList[i] );
-	}
+	wxString sel = m_list->GetStringSelection();
+	wxString run = m_currentCM->GetStringSelection();
 
-	for (size_t i=0;i<cklCMList->GetCount();i++)
-		cklCMList->Check( i, list.Index( cklCMList->GetString(i) ) != wxNOT_FOUND );
+	wxArrayString list = GetAvailableCMs();
+	m_list->Clear();
+	m_list->Append( list );
+	m_currentCM->Clear();
+	m_currentCM->Append( list );
+	if (list.Index( sel ) != wxNOT_FOUND )
+		m_list->SetStringSelection( sel );
+
+	if (list.Index( run ) != wxNOT_FOUND )
+		m_currentCM->SetStringSelection( run );
 }

@@ -13,29 +13,25 @@ class wxExtGridCtrl;
 class CMForm : public wxPanel
 {
 private:
-	wxExtGridCtrl *grdCMVars;
-	wxListBox *lstSelectedCMs;
-	wxCheckListBox *cklCMList;
+	wxExtGridCtrl *m_grid;
+	wxChoice *m_currentCM;
+	wxListBox *m_list;
 
 public:
 	CMForm( wxWindow *parent );	
 	
 	void LoadCMs();
-	void OnCMListSelect(wxCommandEvent &evt);
-	void SetCMList( const wxArrayString & list ) {
-		m_cmList = list; UpdateForm(); }
-	wxArrayString GetCMList() { return m_cmList; }
+	void SetCurrentCM( const wxString & cm ) { m_currentCM->SetStringSelection( cm ); }
+	wxString GetCurrentCM() { return m_currentCM->GetStringSelection(); }
 
 	wxArrayString GetAvailableCMs();
 
 	void UpdateForm();
 private:
-
+	
+	void OnCMListSelect(wxCommandEvent &evt);
 	void OnSendToExcel(wxCommandEvent &);
-	void OnCMListCheck(wxCommandEvent &evt);
-
-	wxArrayString m_cmList;
-
+	
 	DECLARE_EVENT_TABLE()
 };
 
