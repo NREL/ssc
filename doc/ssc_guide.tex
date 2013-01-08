@@ -91,14 +91,13 @@ Using an SSC module is analogous to calling a function in a programming language
 
 \begin{enumerate}
 \item Create a data container of type \texttt{ssc\_data\_t} for model input variables.
-\item Call a simulation module such as \texttt{pvwattsv1} or \texttt{ippppa} of type \texttt{ssc\_module\_t} to process variables in the data container. If the module runs successfully, it populates the data container with output variables. If it fails, it generates error messages.\marginpar{Are error messages in the container?} 
-\item Retrieve output variable values or error messages from the data container.
+\item Call a simulation module such as \texttt{pvwattsv1} or \texttt{ippppa} of type \texttt{ssc\_module\_t} to process variables in the data container. If the module runs successfully, it populates the data container with output variables. If it fails, it generates error messages.
+\item Retrieve output variable values from the data container, or error messages from the module.
 \end{enumerate}
 
 \subsection{Modeling an Energy System}
 \label{sec_modeling_systems}
 The SSC modules process weather data files, simulate energy system component performance, and calculate project cash flows. Table~\ref{tab_sample_modules} lists some of the SSC modules.\marginpar{For a complete list, see?}
-
 
 \begin{table}[ht]
 \begin{center}
@@ -863,23 +862,58 @@ To start a simulation, build a model by checking each module in the model in the
 \label{sec_sscdev_variable_viewer}
 
 
-
 \subsection{A Simple Example without Scripting}
 \label{sec_sscdev_example_no_scripting}
 
-The following example shows how to use the module browser and variable viewer to build a simple model of a photovoltaic system using the pvwattsv1 and annualoutput modules. These two modules have a small number of input variables, which will allow you to quickly build a functional model.
+The following example shows how to use SSCdev to build a simple model of a photovoltaic system using the pvwattsv1 and annualoutput modules. These two modules have a small number of input variables, which will allow you to quickly build a functional model. In this example, you set the input variable values by hand. In the next example, you will build the same model using LK, which is SSCdev's built-in scripting language.
 
-The pvwattsv1 module reads data from a weather file and calculates the system's AC electrical output for the 8,760 hours in a single year. The module has 22 inputs, of which only 6 are required and do not have default values.
+Required variables indicated by a \* in the Require column.
+Optional variables for which a value is provided indicated by ?=[value]
 
-The annualoutput module calculates a system's electrical output over a multi-year period.
+You can use the module browser to explore the pvwattsv1 and annualoutput modules:
 
-In the module browser, click pvwattsv1 to display its variables. The 6 required variables are file\_name, system\_size, derate, track\_mode, azimuth, and tilt.
+Click the pvwattsv1 name in the module browser to see the list of the module's 33 input and output variables. Of those variables, 22 are inputs (SSC\_INPUT), and only 6 are required and do not have default values (*).
 
-Press the F5 key to start simulations. Nothing happens because you have to check a module to run it. Check the pvwatts1 module and press F5 again. This time, a message about the file\_name variable appears in the notification panel. That is because file\_name is a required variable, but we have not yet assigned it a value.
+Now click the annualoutput name to see the module's 11 variables. It requires 6 input values.
 
-In the variable viewer, click Add and create a file\_name variable with the SSC\_STRING data type and click file to assign it the value of one of the TMY2 files included in the SDK Examples folder (for example, daggett.tm2). Next, add the remaining 5 required variables shown in the module browser, using the data type and units shown in the table. For example, system\_size should be SSC\_NUMBER with a value in kilowatts.
+This model will use the pvwattsv1 module to read data from a weather file, define the system's size, array orientation and type of tracking, and derating factor, and calcualte values for the 1 by 8760 array storing the system's hourly electricity output over a single year. The annualoutput module will use the array as input, and calculate the system's total annual electricity output over a multi-year period.
 
-When you are finished, you should see a table similar to Table \ref{tab:a}:
+In the module browser, click pvwattsv1 to display its variables. The 6 required variables are file\_name, system\_size, derate, track\_mode, azimuth, and tilt. These are the variables that SAM displays on the PVWatts Array input page.
+
+Press the F5 key to start simulations. Nothing happens because you have to check a module to run it. Check the pvwatts1 module and press F5 again. This time, a message about the file\_name variable appears in the SSCdev notification panel. That is because file\_name is a required variable, but it does not yet have a value.
+
+In the variable viewer, click Add, type "file\_name" for the variable name, assign it the SSC\_STRING data type, and click file to assign it the value of one of the TMY2 files included in the SDK Examples folder (for example, daggett.tm2).
+
+Next, add the remaining 5 required variables shown in the module browser, using the data type and units shown in the table. For example, system\_size should be SSC\_NUMBER with a value in kilowatts. Be sure to use variable names and data types that exactly match those in the module browser.
+
+When you are finished, you should see a table similar to Table \ref{table_ssc_dev_a}. This is the model's data container, which so far contains the input and output variables for the pvwattsv1 module.
+
+Press the F5 key. The data container now includes the original input variables from Table \ref{table_ssc_dev_a} and the output variables generated by the simulation. You can show the variable values by checking them. The system's hourly output over a single year is ac, which is an array of 8,760 values.
+
+To add the annualoutput module to the model, on the module browser, check annualoutput. Its name should appear second after pvwattsv1 in the simulation sequence to ensure that it runs after the pvwattsv1 module.\marginpar{have to use script to build a model because variable names do not match (eg, ac does not match energy\_bet\_net\_hourly)}
+
+Click the annualoutput module name to display its variables. Of the 6 input variables, only analysis\_years is optional, so we must add the 5 required values to the data container. (These input variables are the same ones that SAM displays on the Annual Performance input page. ) For example \ref{table_ssc_dev_b} shows the inputs to model the system's performance over 30 years with an annual degradation of 0.5\% and no other adjustments to the system's output. Some of the input variables are arrays because they can store a different value for each year.\marginpar{Need to make a note that reader must be familiar with SAM to use modules}
+
+
+
+Now we can expand our model to include two modules, the pvwattsv1 module and the annualoutput module.
+
+In the module browser, check annualoutput. To display its variables, click the module name. It has 6 required inputs, which we have to add to the data container:
+
+analysis\_years
+energy\_availability
+energy\_degradation
+
+
+
+
+
+shading\_hourly
+shading\_mxh
+shading\_azal
+shading\_diff
+
+
 
 \begin{table}
 \begin{tabular}{|c|c|c|c|c|c|}
@@ -889,7 +923,18 @@ file\_name & system\_size & derate & track\_mode & azimuth & tilt\\
 F:/SSC/examples/daggett.tm2 & 4.000000 & 0.860000 & 1.000000 & 180.000000 & 25.000000\\
 \hline
 \end{tabular}
-\caption{The 6 required input variables for the pvwattsv1 module with their values}\label{tab:a}
+\caption{The 6 required input variables for the pvwattsv1 module with their values}\label{table_ssc_dev_a}
+\end{table}
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+file\_name & system\_size & derate & track\_mode & azimuth & tilt\\
+\hline
+F:/SSC/examples/daggett.tm2 & 4.000000 & 0.860000 & 1.000000 & 180.000000 & 25.000000\\
+\hline
+\end{tabular}
+\caption{The 6 required input variables for the pvwattsv1 module with their values}\label{table_ssc_dev_b}
 \end{table}
 
 \subsection{Scripting}
