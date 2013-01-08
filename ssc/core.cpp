@@ -724,7 +724,7 @@ size_t compute_module::check_timestep_seconds( double t_start, double t_end, dou
 	return steps;
 }
 
-ssc_number_t *compute_module::accumulate_monthly(const std::string &hourly_var, const std::string &monthly_var, double scale)
+ssc_number_t *compute_module::accumulate_monthly(const std::string &hourly_var, const std::string &monthly_var, double scale) throw( exec_error )
 {
 		
 	size_t count = 0;
@@ -750,7 +750,7 @@ ssc_number_t *compute_module::accumulate_monthly(const std::string &hourly_var, 
 	return monthly;
 }
 
-ssc_number_t compute_module::accumulate_annual(const std::string &hourly_var, const std::string &annual_var, double scale)
+ssc_number_t compute_module::accumulate_annual(const std::string &hourly_var, const std::string &annual_var, double scale) throw( exec_error )
 {
 	size_t count = 0;
 	ssc_number_t *hourly = as_array(hourly_var, &count);
