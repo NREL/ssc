@@ -1,6 +1,6 @@
 Dynamic library dependencies: compiled on Fedora 16
 sscdev64.bin:
-	linux-vdso.so.1 =>  (0x00007fff823ff000)
+	linux-vdso.so.1 =>  (0x00007fffcf925000)
 	libfontconfig.so.1 => /usr/lib64/libfontconfig.so.1 (0x00000035b7e00000)
 	libdl.so.2 => /lib64/libdl.so.2 (0x00000035b0200000)
 	libm.so.6 => /lib64/libm.so.6 (0x00000035b0a00000)
@@ -15,7 +15,7 @@ sscdev64.bin:
 	libcairo.so.2 => /usr/lib64/libcairo.so.2 (0x00000035b9600000)
 	libpango-1.0.so.0 => /usr/lib64/libpango-1.0.so.0 (0x00000035bae00000)
 	libfreetype.so.6 => /usr/lib64/libfreetype.so.6 (0x00000035b7a00000)
-	libnotify.so.4 => /usr/lib64/libnotify.so.4 (0x00007fe00c71d000)
+	libnotify.so.4 => /usr/lib64/libnotify.so.4 (0x00007fe3563c5000)
 	libgdk_pixbuf-2.0.so.0 => /usr/lib64/libgdk_pixbuf-2.0.so.0 (0x00000035b6e00000)
 	libgio-2.0.so.0 => /lib64/libgio-2.0.so.0 (0x00000035b4a00000)
 	libgobject-2.0.so.0 => /lib64/libgobject-2.0.so.0 (0x00000035b3a00000)
@@ -49,9 +49,9 @@ sscdev64.bin:
 	libresolv.so.2 => /lib64/libresolv.so.2 (0x00000035b2e00000)
 	libXau.so.6 => /usr/lib64/libXau.so.6 (0x00000035b2200000)
 ssc64.so:
-	linux-vdso.so.1 =>  (0x00007fff5a375000)
-	libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00007f00744f0000)
-	libm.so.6 => /lib64/libm.so.6 (0x00007f007426c000)
-	libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007f0074056000)
-	libc.so.6 => /lib64/libc.so.6 (0x00007f0073c9e000)
+	linux-vdso.so.1 =>  (0x00007fffe15ff000)
+	libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00007f390b91a000)
+	libm.so.6 => /lib64/libm.so.6 (0x00007f390b696000)
+	libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007f390b480000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f390b0c8000)
 	/lib64/ld-linux-x86-64.so.2 (0x00000035afa00000)
