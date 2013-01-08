@@ -297,9 +297,9 @@ DataView::DataView( wxWindow *parent )
 
 
 	wxBoxSizer *szv_main = new wxBoxSizer(wxHORIZONTAL);
-	szv_main->Add( tb_sizer, 0, wxALL|wxEXPAND, 1 );
-	szv_main->Add( new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL ), 0, wxALL|wxEXPAND, 1);
-	szv_main->Add( splitwin, 1, wxALL|wxEXPAND, 1 );
+	szv_main->Add( tb_sizer, 0, wxALL|wxEXPAND, 2 );
+	//szv_main->Add( new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL ), 0, wxALL|wxEXPAND, 1);
+	szv_main->Add( splitwin, 1, wxALL|wxEXPAND, 2 );
 
 	SetSizer( szv_main );
 

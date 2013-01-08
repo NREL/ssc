@@ -382,9 +382,9 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	szedit->Add( m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString ), 0, wxALL|wxEXPAND, 1 );
 
 	wxBoxSizer *szmain = new wxBoxSizer( wxHORIZONTAL );
-	szmain->Add( szdoc, 0, wxALL|wxEXPAND, 0 );
-	szmain->Add( new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL ), 0, wxALL|wxEXPAND, 1 );
-	szmain->Add( szedit, 1, wxALL|wxEXPAND, 0 );
+	szmain->Add( szdoc, 0, wxALL|wxEXPAND, 2 );
+	//szmain->Add( new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL ), 0, wxALL|wxEXPAND, 1 );
+	szmain->Add( szedit, 1, wxALL|wxEXPAND, 2 );
 	SetSizer( szmain );
 		
 	m_editor->SetFocus();
