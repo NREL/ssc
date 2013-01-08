@@ -39,6 +39,7 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                         "Wind stow speed",                             "m/s",    "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
 	
 	/* outputs */
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam normal irradiance",                      "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
@@ -59,6 +60,15 @@ static var_info _cm_vtab_pvwattsv1[] = {
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day",    "",                        "PVWatts",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC system output",                     "kWhac",    "",                        "PVWatts",      "*",                       "",                          "" },
+
+	{ SSC_OUTPUT,       SSC_STRING,      "location",                      "Location ID",                                  "",    "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_STRING,      "city",                          "City",                                         "",    "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_STRING,      "state",                         "State",                                        "",    "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lat",                           "Latitude",                                     "deg", "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                           "Longitude",                                    "deg", "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                            "Time zone",                                    "hr",  "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                          "Site elevation",                               "m",   "",                        "PVWatts",      "*",                       "",                          "" },
+
 
 	var_info_invalid };
 
@@ -301,7 +311,15 @@ public:
 
 
 		accumulate_annual( "ac", "ac_annual", 0.001 );
+
+		assign( "location", var_data( wf.loc_id ) );
+		assign( "city", var_data( wf.city ) );
+		assign( "state", var_data( wf.state ) );
+		assign( "lat", var_data( (ssc_number_t)wf.lat ) );
+		assign( "lon", var_data( (ssc_number_t)wf.lon ) );
+		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
+		assign( "elev", var_data( (ssc_number_t)wf.elev ) );
 	}
 };
 
-DEFINE_MODULE_ENTRY( pvwattsv1, "PVWatts V.1 - integrated hourly weather reader and PV system simulator.", 1 )
+DEFINE_MODULE_ENTRY( pvwattsv1, "PVWatts V.1 - integrated hourly weather reader and PV system simulator.", 2 )
