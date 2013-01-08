@@ -15,13 +15,8 @@
 
   \copyright 2012 National Renewable Energy Laboratory
   \authors Aron Dobos, Steven Janzou
-*/
 
-/**********************************************************
-/* Style Guide for Doxygen-ready Notes                    *
-/**********************************************************
-
-/** One sentence brief description of function.
+--------- Doxygen notes ----------
 
   Detailed description of what the function does
   with any useful tips or warnings about using it
