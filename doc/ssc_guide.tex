@@ -256,7 +256,6 @@ ac: 1468.54 kWh
 
 If all goes well, the total annual AC kWh for the system is printed on the console.
 
-
 \subsection{Some additional comments}
 
 The \texttt{ssc\_data\_t} and \texttt{ssc\_module\_t} data types are opaque references to internally defined data structures.  The only proper way to interact with variables of these types is using the defined SSC function calls.  As listed in the \texttt{sscapi.h} header file, both are typedef'd as \texttt{void*}.
@@ -331,7 +330,6 @@ UI Hints & Suggestions on how to display this variable.  Currently unused. \\
 \end{table}
 
 Consequently, SSC provides functions in the API to return information about all of the variables defined by a module.  Each variable specifies the information shown in Table~\ref{tab_varinfo}.
-
 
 To obtain information for a variable, a module is queried using the \texttt{ssc\_module\_var\_info()} function, which returns a \texttt{ssc\_info\_t} reference.  The \texttt{ssc\_module\_var\_info()} function is called repeatedly with an index variable that is incremented by the user to cycle through all of the variables defined by the module.  An example is shown below, assuming that the variable \texttt{module} has been successfully created for a particular simulation module (e.g., see \S\ref{sec_ex_pvwatts_module}).  Querying SSC for available modules is discussed in \S\ref{sec_modules_querying}.
 
@@ -814,18 +812,20 @@ On Linux, a newer version of SSC may report something like:
 \section{SSCdev}
 \label{sec_sscdev}
 
-SSCdev is the developer interface for SSC. It allows you to explore the SSC modules and data container, and to run individual modules. SSCdev also includes a scripting language for building models in the development environment.
+SSCdev is the developer interface for SSC. It allows you to explore variables in the SSC modules, run individual modules, and write scripts to build and test your models. When you run modules in SSCdev, it displays all of the variables in the data container with their values.
 
-Use SSCdev before you start programming with the SSC API to understand how the modules you plan to use work. You can also use SSCdev while you program to test your algorithms.
+Use SSCdev for the following tasks:
 
-\subsection{Get Started with SSCdev}
+\begin{itemize}
+\item Learn how modules you plan to use in your model work before before you start programming.
+\item Troubleshoot problems with your implementation of SSC modules.
+\item Build and test models in the LK script using the SSCdev script editor.
+\end{itemize}
+
+\subsection{Using SSCdev}
 \label{sec_sscdev_get_started}
 
-Using SSCdev involves two steps: Running the executable, and loading the appropriate SSC library.
-
-\begin{minipage}[c]{5in}
-
-\textbf{SSC Tutorial 1: Start SSCdev and Load the Library}
+Using SSCdev involves running the executable, and loading the appropriate SSC library:
 
 \begin{enumerate}
 \item Run the executable file for your operating system shown in Table \ref{ssc_dev_table_versions}. For example, the 32-bit Windows executable \texttt{sscdev32.exe} is in the \texttt{win32} directory of the SDK package.
@@ -834,7 +834,6 @@ Using SSCdev involves two steps: Running the executable, and loading the appropr
 A list of modules should appear in the module browser, and the library path and name should appear in the status bar at the bottom of the SSCdev window. If the module browser is empty, try choosing the SSC library again.
 \item Click a module's name to see its variables. For example, click \texttt{pvwattsv1} to see a list of the PVWatts module's 46 variables.
 \end{enumerate}
-\end{minipage}
 
 \notebox{To see the SSCdev version information, on the \textbf{Help} menu, click \textbf{About}.}
 
@@ -850,15 +849,15 @@ A list of modules should appear in the module browser, and the library path and 
        Linux 64-bit & linux64 & sscdev64.bin & ssc64.so \\ 
       \hline
     \end{tabular}
-    \caption{SSC dev and Library Versions}\label{ssc_dev_table_versions}
+    \caption{SSCdev and Library Versions}\label{ssc_dev_table_versions}
   \end{center}
 \end{table}
 
-SSCdev displays a list of available modules, and lists each module's input and output variables, but does not provide enough information to completely understand the modules. You should be prepared to use the SAM user interface and documentation as a reference to help you understand how the modules and variables work. 
+SSCdev displays a list of available modules, and lists each module's input and output variables, but does not provide enough information to completely understand the modules. You should be prepared to use the SAM user interface and documentation together with SSCdev to help you understand how the modules and variables work. 
 
-For example, the \texttt{annualoutput} module includes a variable named \texttt{energy\_availability} that uses the data type \texttt{SSC\_ARRAY}. Why is the data type not \texttt{SSC\_NUMBER instead}? To find out, we can examine the \texttt{annualoutput} input variables in SAM, which displays them on the Performance Adjustment input page. The \texttt{energy\_availabilty} variable is labeled "Percent of annual output." SAM provides two options for entering the variable's value: As a single value or as an annual schedule. The array data type is necessary to store the annual values. The \texttt{annualoutput} module assumes that if there is a single non-zero value at the top of the array, that value represents a single adjustment factor that applies to all years. Otherwise it applies values from the array to each year.
+For example, the \texttt{annualoutput} module includes a variable named \texttt{energy\_availability} that uses the data type \texttt{SSC\_ARRAY}. Why is the data type not \texttt{SSC\_NUMBER instead}? To find out, we can examine the \texttt{annualoutput} input variables in SAM's user interface, which displays them on the Performance Adjustment input page. The \texttt{energy\_availabilty} variable is labeled "Percent of annual output." SAM provides two options for entering the variable's value: As a single value or as an annual schedule. The array data type is necessary to store the annual values. The \texttt{annualoutput} module assumes that if there is a single non-zero value at the top of the array, that value represents a single adjustment factor that applies to all years. Otherwise it applies values from the array to each year.
 
-For some variables, the SAM user interface may not be helpful. You can post questions about the SDK on the SAM website's SDK page. For example, the \texttt{annualoutput} module's \texttt{system\_use\_lifetime\_output} variable determines whether the module generates a single set of 8,760 hourly values for the \texttt{hourly\_e\_net\_delivered} variable, or whether it generates a set of 8,760 values for each year in the analysis period. All of SAM's performance models use a value of zero except for the geothermal model, which is a special case and requires lifecycle output data to accurately represent changes in resource over time as it is depleted and replenished. For most cases, you should set its value to zero.
+For some variables, even the SAM user interface may not be helpful. When you need help with an SSC module or variable, ask a question as a comment on the SAM website's SDK page. For example, you might wonder what the \texttt{annualoutput} module's \texttt{system\_use\_lifetime\_output} variable does. That variable is not on any of SAM's input pages, and the information in SSCdev does not explain its function. The variable determines whether the module generates a single set of 8,760 hourly values for the \texttt{hourly\_e\_net\_delivered} variable, or whether it generates a set of 8,760 values for each year in the analysis period. All of SAM's performance models use a value of zero except for the geothermal model, which is a special case and requires lifecycle output data to accurately represent changes in resource over time as it is depleted and replenished. For most cases, you should set its value to zero.
 
 \subsection{SSCdev Menus}
 \label{sec_sscdev_menus}
@@ -903,6 +902,7 @@ The module browser displays the modules available in the current SSC library. Wh
 \item Display a list of available SSC modules.
 \item Display module variables.
 \item Export a list of a module's variables to Excel.\marginpar{Windows only?}
+\item Run a single module using variable values defined in the data container.
 \end{itemize}
 
 \notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See Section \ref{sec_sscdev_get_started} for details.}
@@ -914,17 +914,58 @@ You can also use the module browser with the data container to manually set valu
 \subsection{Data Container}
 \label{sec_sscdev_data_container}
 
-The data container displays a list of variables that you add by hand, or from the most recent simulation run.
+The data container displays a list of variables for the current set of simulations. When you run a module from the data browser, you must add input variables to the data container by hand using the \textbf{Add} and \textbf{Edit} buttons. When you run modules from the script editor, the data container is automatically populated with variables from the script. You can use the data container commands for the following tasks:
+
+\begin{itemize}
+\item Add, edit, and remove variables from the data container.
+\item Copy a tab-delimited list of variable names and values to your computer's clipboard.
+\item Show graphs of time series data.
+\end{itemize}
+
+The data container commands act either on the current variable indicated with a blue highlight, or on selected variables indicated by a check mark:
+
+\begin{quote}
+\begin{description}
+\item[Add] Add a variable to the data container. If you add a module's input variable to the data container, be sure to use the variable's exact name and data type shown in the module browser.
+\item[Edit] Change the current variable's name, data type, or value.
+\item[Delete] Remove the current variable from the data container.
+\item[Del checked] Remove all selected variables from the data container.
+\item[Del unchecked] Remove all variables without check marks from the data container.
+\item[Del all] Delete all variables from the data container.
+\item[Select all]  Select (check) all variables in the data container. This command may take several seconds to complete.
+\item[Unselect all] Clear all variables in the data container.
+\item[Copy to clipboard] Copy a tab-delimited list of selected variables and their values to the clipboard.
+\item[Show stats] \marginpar{Show stats does not seem to work.}
+\item[Timeseries graph] Display graphs of all selected variables with 8,760 values in the time series data viewer.
+\end{description}
+\end{quote}
 
 \notebox{If you manually add variables to the data container before running a script that does not use the variables, they will be deleted from the data container.}
 
-\subsection{A Simple Example without Scripting}
+\subsection{Script Editor}
+\label{sec_sscdev_script_editor}
+
+The script editor allows you to write, edit, and run scripts in the LK scripting language to build and test models using the SSC modules.
+
+The script editor commands are:
+
+\begin{quote}
+\begin{description}
+\item[New] Clear the current script from the script editor.
+\item[Open]  (\textbf{Ctrl-O}) Open a script file (\texttt{.lk}).
+\item[Save] (\textbf{Ctrl-S}) Save the current script file (\texttt{.lk}).
+\item[Save as] Save the current script to a different file (\texttt{.lk}).
+\item[Find] (\textbf{Ctrl-F}) Find text in the current script.
+\item[Find next] (\textbf{F3}) Find the next instance of text in the current script.
+\item[Help] Display a list of script functions.
+\item[Run] (\textbf{F5}) Run the current script.
+\end{description}
+\end{quote}
+
+\subsection{SSC Dev Example 1: Run a Module without Scripting}
 \label{sec_sscdev_example_no_scripting}
 
 The following example shows how to use the module browser to expore and run the texttt{pvwattsv1} module.
-
-Required variables indicated by a \* in the Require column.
-Optional variables for which a value is provided indicated by ?=[value]
 
 You can use the module browser to explore the pvwattsv1 and annualoutput modules:
 
@@ -993,9 +1034,8 @@ F:/SSC/examples/daggett.tm2 & 4.000000 & 0.860000 & 1.000000 & 180.000000 & 25.0
 \caption{The 6 required input variables for the pvwattsv1 module with their values}\label{table_ssc_dev_b}
 \end{table}
 
-\subsection{Scripting}
-\label{sec_sscdev_scripting}
-
+\subsection{SSC Dev Example 2: Use a Script to Build a Model}
+\label{sec_sscdev_example_no_scripting}
 
 \section{Language Interfaces}
 \subsection{Native C/C++}
