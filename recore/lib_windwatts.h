@@ -1,7 +1,7 @@
 #ifndef __lib_windwatts_h
 #define __lib_windwatts_h
 
-const int MAX_WIND_TURBINES = 256;
+const int MAX_WIND_TURBINES = 300;
 
 int wind_power(
 			// INPUTS

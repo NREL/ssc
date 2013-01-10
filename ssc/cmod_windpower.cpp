@@ -72,7 +72,7 @@ public:
 		if (nwt < 1)
 			throw exec_error( "windpower", util::format("the number of wind turbines was zero.") );
 		if (nwt > MAX_WIND_TURBINES)
-			throw exec_error( "windpower", util::format("the wind model is only configured to handle up to 256 turbines.") );
+			throw exec_error( "windpower", util::format("the wind model is only configured to handle up to %d turbines.", MAX_WIND_TURBINES) );
 
 		size_t nstep = 8760;
 
