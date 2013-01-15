@@ -146,15 +146,18 @@ public:
 				for (int h=0;h<24;h++)
 					if (i<8760)
 					{
-						hourly_energy_to_grid[i] = diurnal_curtailment[m*ncols+h]*hourly_enet[i];
+						hourly_energy_to_grid[i] = diurnal_curtailment[m*ncols+h]*hourly_enet[i] * cf.at(CF_availability,1) ;
 						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
 						first_year_energy += hourly_energy_to_grid[i];
 						i++;
 					}
 
-		for (int y=1;y<=nyears;y++)
+
+		cf.at(CF_energy_net,1) += first_year_energy;
+
+		for (int y=2;y<=nyears;y++)
 		{
-			cf.at(CF_energy_net,y) += first_year_energy * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
+			cf.at(CF_energy_net,y) = first_year_energy * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
 		}
 
 		return true;
@@ -188,10 +191,11 @@ public:
 
 		for (int y=1;y<=nyears;y++)
 		{
+			cf.at(CF_energy_net,y)=0;
 			int i=0;
 			for (int m=0;m<12;m++)
 			{
-				monthly_energy_to_grid[m] = 0;
+				monthly_energy_to_grid[(y-1)*12+m] = 0;
 				for (int d=0;d<util::nday[m];d++)
 				{
 					for (int h=0;h<24;h++)
@@ -199,7 +203,7 @@ public:
 						if (i<8760)
 						{
 							hourly_energy_to_grid[(y-1)*8760+i] = diurnal_curtailment[m*ncols+h] * hourly_enet[(y-1)*8760+i] * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
-							monthly_energy_to_grid[m] += hourly_energy_to_grid[(y-1)*8760+i];
+							monthly_energy_to_grid[(y-1)*12+m] += hourly_energy_to_grid[(y-1)*8760+i];
 							cf.at(CF_energy_net,y) += hourly_energy_to_grid[(y-1)*8760+i];
 							i++;
 						}
