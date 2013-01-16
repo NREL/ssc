@@ -1,11 +1,13 @@
-WEXDIR = ../../wex
+VPATH = ..
+
+WEXDIR = ../../../wex
 WEXLIB = $(WEXDIR)/wexosxwx3.a
-LKDIR = ../../lk
+LKDIR = ../../../lk
 LKLIB = $(LKDIR)/lkosxwx3.a
 
 CC = gcc
 CXX = g++
-CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR) -I../ssc -I../recore -DWEX_USE_LK -DLK_USE_WXWIDGETS `wx-config-3 --cflags`
+CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR) -I../../ssc -I../../recore -DLK_USE_WXWIDGETS `wx-config-3 --cflags`
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(WEXLIB) $(LKLIB) `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
 
