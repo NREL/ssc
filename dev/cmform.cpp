@@ -2,19 +2,21 @@
 #include <wx/dirdlg.h>
 #include <wx/busyinfo.h>
 #include <wx/stattext.h>
+#include <wx/statline.h>
 
 #include <wex/extgrid.h>
-#include <wex/ole/excelauto.h>
 
 #include "cmform.h"
+#include "sscdev.h"
 
 enum {
-  ID_btnSendToExcel = wxID_HIGHEST+132,
+  ID_btnCopyToClipboard = wxID_HIGHEST+132,
   ID_list };
 
 BEGIN_EVENT_TABLE( CMForm, wxPanel )
+	EVT_BUTTON( wxID_EXECUTE, CMForm::OnRun )
 	EVT_LISTBOX(ID_list, CMForm::OnCMListSelect )
-	EVT_BUTTON(ID_btnSendToExcel, CMForm::OnSendToExcel )
+	EVT_BUTTON(ID_btnCopyToClipboard, CMForm::OnCopyToClipboard )
 END_EVENT_TABLE()
 
 CMForm::CMForm(wxWindow *parent)
@@ -36,17 +38,16 @@ CMForm::CMForm(wxWindow *parent)
 	m_grid->SetColLabelSize(23);	
 	m_grid->EnableDragColSize();
 	
-	wxBoxSizer *szh_top = new wxBoxSizer( wxHORIZONTAL );
-	szh_top->Add( new wxStaticText( this, wxID_ANY, " Run:" ),0, wxALL|wxALIGN_CENTER_VERTICAL, 3);
-	szh_top->Add( m_currentCM, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
-
+	wxBoxSizer *szh_run = new wxBoxSizer( wxHORIZONTAL );
+	szh_run->Add( m_currentCM, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
+	szh_run->Add( new wxButton( this, wxID_EXECUTE, "Run" ),0, wxALL|wxALIGN_CENTER_VERTICAL, 3);
+	
 	wxBoxSizer *szleft = new wxBoxSizer( wxVERTICAL );
-	szleft->Add( szh_top, 0, wxALL|wxEXPAND, 3 );
 	szleft->Add( new wxStaticText( this, wxID_ANY, " Available modules:" ), 0, wxALL|wxEXPAND|wxALIGN_BOTTOM, 1 );
-	szleft->Add( m_list, 1, wxALL|wxEXPAND, 3 );
-#ifdef __WXMSW__
-	szleft->Add( new wxButton(this, ID_btnSendToExcel, "Send table to Excel..."), 0, wxALL|wxEXPAND, 3);
-#endif
+	szleft->Add( m_list, 1, wxALL|wxEXPAND, 3 );	
+	szleft->Add( new wxButton(this, ID_btnCopyToClipboard, "Copy table to clipboard..."), 0, wxALL|wxEXPAND, 3);
+	szleft->Add( new wxStaticLine( this, wxID_ANY ), 0, wxALL|wxEXPAND, 2 );
+	szleft->Add( szh_run, 0, wxALL|wxEXPAND, 3 );
 
 	wxBoxSizer *szcenter = new wxBoxSizer(wxHORIZONTAL );
 	szcenter->Add( szleft, 1, wxALL|wxEXPAND, 3 );
@@ -79,34 +80,11 @@ void CMForm::LoadCMs()
 		m_list->Append( l[i] );
 }
 
-void CMForm::OnSendToExcel(wxCommandEvent &)
+void CMForm::OnCopyToClipboard(wxCommandEvent &)
 {
-#ifdef __WXMSW__
-
-	wxBusyInfo info("Sending data to excel...");
+	wxBusyInfo info("Copying data to clipboard...");
 	m_grid->Copy(true);
-	wxMilliSleep(150);
-
-	wxExcelAutomation xl;
-	if (!xl.StartExcel())
-	{
-		wxMessageBox("Could not start Excel.");
-		return;
-	}
-
-	xl.Show(true);
-
-	if (!xl.NewWorkbook())
-	{
-		wxMessageBox("Could not create a new Excel worksheet.");
-		return;
-	}
-	xl.PasteClipboard();
-	xl.AutoFitColumns();
-#else
-	wxMessageBox("Excel connection only available on Windows");
-#endif
-
+	wxMilliSleep(250);
 }
 
 void CMForm::OnCMListSelect(wxCommandEvent &)
@@ -205,4 +183,10 @@ void CMForm::UpdateForm()
 
 	if (list.Index( run ) != wxNOT_FOUND )
 		m_currentCM->SetStringSelection( run );
+}
+
+void CMForm::OnRun( wxCommandEvent & )
+{
+	app_frame->ClearLog();
+	app_frame->Start();
 }

@@ -18,10 +18,6 @@
 #include <wx/splitter.h>
 #include <wx/grid.h>
 
-#ifdef __WXMSW__
-#include <wex/ole/excelauto.h>
-#endif
-
 #include <wex/plot/plplotctrl.h>
 #include <wex/plot/pllineplot.h>
 #include <wex/plot/plhistplot.h>

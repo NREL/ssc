@@ -28,9 +28,9 @@ public:
 
 	void UpdateForm();
 private:
-	
+	void OnRun( wxCommandEvent & );
 	void OnCMListSelect(wxCommandEvent &evt);
-	void OnSendToExcel(wxCommandEvent &);
+	void OnCopyToClipboard(wxCommandEvent &);
 	
 	DECLARE_EVENT_TABLE()
 };

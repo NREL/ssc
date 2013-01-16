@@ -39,7 +39,7 @@
 
 int SC_major_ver = 2;
 int SC_minor_ver = 0;
-int SC_micro_ver = 3;
+int SC_micro_ver = 4;
 
 SCFrame *app_frame = NULL;
 wxConfig *app_config = NULL;
