@@ -17,20 +17,20 @@
 %\usepackage{multicol}
 \usepackage{float}
 %\usepackage[table]{xcolor}
-\usepackage{listings}
-\usepackage{color}
+%\usepackage{listings}
+%\usepackage{color}
 %\usepackage{ifthen}
-\usepackage{textcomp}
-\usepackage{alltt}
-\usepackage{pspicture}
+%\usepackage{textcomp}
+%\usepackage{alltt}
+%\usepackage{pspicture}
 %\fi
 %\usepackage[utf8]{inputenc}
-\usepackage{mathptmx}
+%\usepackage{mathptmx}
 %\usepackage[scaled=.90]{helvet}
 %\usepackage{courier}
 %\usepackage{sectsty}
 %\usepackage[titles]{tocloft}
-\usepackage{doxygen}
+%\usepackage{doxygen}
 \usepackage[pdftex,
                   linktocpage=true,
                   pagebackref=true,
@@ -39,7 +39,7 @@
                   unicode
                 ]{hyperref}
 
-\lstset{language=C++,inputencoding=utf8,basicstyle=\footnotesize,breaklines=true,breakatwhitespace=true,tabsize=8,numbers=left }
+%\lstset{language=C++,inputencoding=utf8,basicstyle=\footnotesize,breaklines=true,breakatwhitespace=true,tabsize=8,numbers=left }
 %\makeindex
 %\renewcommand{\footrulewidth}{0.4pt}
 %\renewcommand{\familydefault}{\sfdefault}
@@ -58,12 +58,12 @@
 \newcommand{\notebox}[1]{ \begin{center}\framebox[5.5in]{\begin{minipage}[t]{5.0in}\textbf{Note: }#1\end{minipage}}\end{center}}
 
 \title{SSC Reference Manual}
-\author{Aron P. Dobos}
+%\author{Aron Dobos \& Paul Gilman}
 
 \begin{document}
 
 \maketitle
-\vspace{3in}
+\vspace{2.5in}
 \begin{abstract}
 The SSC (SAM Simulation Core) software library implements the underlying renewable energy system modeling calculation engine utilitized by the popular desktop System Advisor Model (SAM) tool.  SSC provides a simple and programmer-friendly application programming interface (API) that allows developers to directly integrate SAM calculations into other tools.  The API includes mechanisms to set input variable values, run simulations, and retrieve calculated outputs.  The library is provided to users as pre-compiled binary dynamic libraries for Windows, Mac OSX, and Linux, with the bare minimum system library dependencies.  While the native API language is ISO-standard C, language bindings for MATLAB, and Python are included.  The API and model implementations are thread-safe and reentrant, allowing the software to be efficiently utilized in a parallel computing environment.
 
@@ -579,27 +579,11 @@ Note that the \texttt{ssc\_data\_first()} and \texttt{ssc\_data\_next()} functio
 
 The SSC framework exposes several different simulation modules that calculate outputs given inputs.  Each module can run independently of all the others, provided that all the input variables that are required are provided by the user.  The System Advisor Model (SAM) tool often runs several SSC modules in succession to simulate the whole system performance and economic evaluation.  In between successive calls to different SSC modules, SAM may change the names or scale the output variables of one module to set it up with appropriate inputs for the next one, as explained in \S\ref{sec_modeling_systems}.
 
-\subsection{Querying SSC for Available Modules}
-\label{sec_modules_querying}
-
-SSC provides a programming interface by which the library can be queried about all of the modules contained within it.  The example below prints all of the available modules to the console along with their version numbers and descriptions:
-
-\begin{verbatimtab}[4]
-ssc_entry_t entry;
-int index = 0;
-while( entry = ssc_module_entry( index++ ) )
-{
-	const char *module_name = ssc_entry_name( entry );
-	const char *description = ssc_entry_desc( entry );
-	int version = ssc_entry_version( entry );
-
-	printf( "Module %s, version %d: %s\n", module_name, version, description );
-}
-\end{verbatimtab}
+There are four different ways to invoke simulation modules.  Each method involves a different level of interaction during the execution of the model, differences in how errors and warnings are retrieved, and the appropriateness for use in a multithreaded environment.  The four methods are subsequently presented.
 
 \subsection{Simple Method \#1}
 
-A simulation module can be invoked in one of several ways.  The simplest way to call a module is to use the \texttt{ssc\_module\_exec\_simple()} function.  This method prints any warnings or errors to the console, and simply returns true or false. The PVWatts example from earlier could be written as:
+The simplest way to call a module is to use the \texttt{ssc\_module\_exec\_simple()} function.  This method prints any warnings or errors to the console, and simply returns true or false. The PVWatts example from earlier could be written as:
 
 \begin{verbatimtab}[4]
 ssc_data_t data = ssc_data_create();
@@ -627,10 +611,10 @@ ssc_data_free( data );
 
 Note that there is no need to explicitly create an \texttt{ssc\_module\_t} object using \texttt{ssc\_module\_create()}; the function will return false if the module name specified could not be found or could not be created.
 
-The \texttt{ssc\_module\_exec\_simple()} function is thread-safe, provided that the module called is itself thread-safe.  It is intended that all SSC modules are implemented in a thread-safe manner.
+The \texttt{ssc\_module\_exec\_simple()} function is thread-safe, provided that the module called is itself thread-safe.  It is intended that all SSC modules are implemented in a thread-safe manner.  The primary downside to using this simple invocation method is that the host program receives no progress updates, and the error messages and warnings cannot be programmatically retrieved after the module has finished running.
 
 \subsection{Simple Method \#2}
-A similar function to run a module exists that returns to the caller the first error message encountered.  This variation of \emph{exec} function is not thread-safe, as indicated by its name.  Example:
+The second module invocation method is very similar to the first, except that the first error message is returned to the caller.  Because this function uses a global variable to store the first error messages during the course of module execution, this invocation method should not be used in a multithreaded host environment.  This is explicitly indicated by the \texttt{\_nothread} suffix on the function name.  Example:
 
 \begin{verbatimtab}[4]
 // ... set up a data container with inputs ...
@@ -642,12 +626,15 @@ else
 	printf( "module failed with error: %s\n", error );
 \end{verbatimtab}
 
+In this case, a \texttt{NULL} return value indicates that no error occurred.  As with the simplest method 1, there is no way to retrieve additional errors or warnings after the module has finished running.  Progress updates are also not provided to the calling environment.
 
-In this case, a \texttt{NULL} return value indicates that no error occurred.
+\subsection{Explicit Module Instantiation}
+
+
 
 \subsection{Running with Progress Updates, Warnings, and Errors}
 
-The last (most complex) way to run a module is to provide a special handler that can reroute errors and warning messages, as well as provide progress updates to the controlling software.  To accomplish this, the client code must provide a \emph{handler} (aka \emph{callback}) function to SSC.  The handler function must have the signature below.
+The last (most complex) way to run a module is to provide a special function that can handles error and warning messages as they are generated, as well as provide progress updates to the controlling host software.  To accomplish this, the client code must provide a \emph{handler} (aka \emph{callback}) function to SSC.  The handler function must have the signature below.
 
 \begin{verbatimtab}
 ssc_bool_t (*handler)( ssc_module_t module, 
@@ -661,7 +648,7 @@ ssc_bool_t (*handler)( ssc_module_t module,
 \end{verbatimtab}
 
 
-\notebox{This documentation is specific to the C language API for SSC handler functions.  Not all programming language interfaces included with SSC (e.g. MATLAB, Python, VBA) support the custom handler mechanism described here.  However, log messages (notices, warnings, errors) can still be retrieved after a simulation is completed using the \texttt{ssc\_module\_log()} function (see \S\ref{sec_messages}, although real-time progress updates cannot be issued.}
+\notebox{This module invocation method is only supported in the native C language API for SSC.  The other programming language interfaces provided with SSC (MATLAB, Python, C\#, Java) do not support callback functions via the foreign-function-interface (FFI) wrappers.  However, log messages (notices, warnings, errors) can still be retrieved after a simulation is completed using the \texttt{ssc\_module\_log()} function (see \S\ref{sec_messages}), although real-time progress updates cannot be issued.}
 
 Supposing that such a function named \texttt{my\_ssc\_handler\_function()} has been defined, used the \texttt{ssc\_module\_exec\_with\_handler()} function to run the module.  You may pass an a generic data pointer to the function also, so that within the context of the handler the messages or progress updates can be routed accordingly.
 
@@ -786,6 +773,25 @@ while( (text = ssc_module_log( module, index++, &type, &time )) )
 In essence, the \texttt{ssc\_module\_log()} is called repeatedly with an increasing index number until the function returns \texttt{NULL}, indicating that there are no more messages.  Along with the text of the message, information about the type (notice, warning, error) and the time that it was issued by the module are reported.
 
 \notebox{Do not free the C string returned by \texttt{ssc\_module\_log()}.  It is a reference to internally managed memory.}
+
+
+\subsection{Querying SSC for Available Modules}
+\label{sec_modules_querying}
+
+SSC provides a programming interface by which the library can be queried about all of the modules contained within it.  The example below prints all of the available modules to the console along with their version numbers and descriptions:
+
+\begin{verbatimtab}[4]
+ssc_entry_t entry;
+int index = 0;
+while( entry = ssc_module_entry( index++ ) )
+{
+	const char *module_name = ssc_entry_name( entry );
+	const char *description = ssc_entry_desc( entry );
+	int version = ssc_entry_version( entry );
+
+	printf( "Module %s, version %d: %s\n", module_name, version, description );
+}
+\end{verbatimtab}
 
 \section{Version Information}
 
@@ -1038,17 +1044,13 @@ F:/SSC/examples/daggett.tm2 & 4.000000 & 0.860000 & 1.000000 & 180.000000 & 25.0
 \label{sec_sscdev_example_no_scripting}
 
 \section{Language Interfaces}
-\subsection{Native C/C++}
-\subsection{MATLAB}
-\subsection{Visual Basic for Applications (VBA)}
-\subsection{Java via Native Interface}
-\subsection{C\# and .NET}
-\subsection{PHP}
 \subsection{Python}
-\subsection{Ruby-on-Rails}
-
-\section{C API Reference}
-\label{sec_api_ref}
-\include{ssc_api_latex/sscapi_8h}
+\subsection{MATLAB}
+\subsection{Java JNI}
+\subsection{C\# and .NET}
+\
+%\section{C API Reference}
+%\label{sec_api_ref}
+%\include{ssc_api_latex/sscapi_8h}
 
 \end{document}
