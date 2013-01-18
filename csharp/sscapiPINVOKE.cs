@@ -73,7 +73,7 @@ class sscapiPINVOKE {
   public static extern string ssc_data_get_string(HandleRef jarg1, string jarg2);
 
   [DllImport("ssc.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_get_number")]
-  public static extern int ssc_data_get_number(HandleRef cxt_dat, string name, HandleRef number);
+  public static extern int ssc_data_get_number(HandleRef cxt_dat, string name, [Out, MarshalAs(UnmanagedType.LPArray)]float[] number);
 
   [DllImport("ssc.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_get_array")]
   public static extern IntPtr ssc_data_get_array(HandleRef cxt_data, string name, out int len);

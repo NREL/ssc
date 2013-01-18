@@ -51,17 +51,16 @@ namespace CS_SSC_API
       public float GetNumber(String name)
       {
           float result = 0;
-          HandleRef hr = new HandleRef();
-          int res = sscapiPINVOKE.ssc_data_get_number(ssc_data_ptr, name, hr);
+          float[] arr = new float[1];
+
+          int res = sscapiPINVOKE.ssc_data_get_number(ssc_data_ptr, name, arr);
           if (res == 0)
           {
               result = 0;
           }
           else
           {
-              IntPtr ip = HandleRef.ToIntPtr(hr);
-              float[] arr = new float[1];
-              Marshal.Copy( ip, arr, 0,1);
+              result = arr[0];
           }
           return result;
       }
