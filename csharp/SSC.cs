@@ -72,7 +72,7 @@ namespace CS_SSC_API
         public static extern void ssc_data_set_array(HandleRef cxtData, string name, [In, MarshalAs(UnmanagedType.LPArray)]float[] array, int length);
 
         [DllImport("ssc.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_set_matrix")]
-        public static extern void ssc_data_set_matrix(HandleRef cxtData, string name, [In, MarshalAs(UnmanagedType.LPArray)]float[][] matrix, int nRows, int nCols);
+        public static extern void ssc_data_set_matrix(HandleRef cxtData, string name, [In, MarshalAs(UnmanagedType.LPArray)]float[,] matrix, int nRows, int nCols);
 
         [DllImport("ssc.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_set_table")]
         public static extern void ssc_data_set_table(HandleRef cxtData, string name, HandleRef cxtTable);
@@ -264,7 +264,39 @@ namespace CS_SSC_API
           Marshal.Copy(res, arr, 0, len);
           return arr;
       }
-  
+
+      public void SetArray(String name, float[] arr)
+      {
+          int len = arr.Length;
+          sscapiPINVOKE.ssc_data_set_array(ssc_data_ptr, name, arr, len);
+      }
+
+      public float[,] GetMatrix(String name)
+      {
+          int nRows, nCols;
+          IntPtr res = sscapiPINVOKE.ssc_data_get_matrix(ssc_data_ptr, name, out nRows, out nCols);
+          float[] sscMat = new float[nRows*nCols];
+          Marshal.Copy(res, sscMat, 0, nRows * nCols);
+          float[,] mat = new float[nRows, nCols];
+          for (int i = 0; i < nRows; i++)
+          {
+              for (int j = 0; j < nCols; j++)
+              {
+                  mat[i , j] = sscMat[i*nCols+j];
+              }
+          }
+          return mat;
+      }
+
+      public void SetMatrix(String name, float[,] matrix)
+      {
+          int nRows = matrix.GetLength(0);
+          int nCols = matrix.GetLength(1);
+          sscapiPINVOKE.ssc_data_set_matrix(ssc_data_ptr, name, matrix, nRows, nCols);
+      }
+       
+
+        
       public bool Exec()
       {
           return (sscapiPINVOKE.ssc_module_exec(ssc_module_ptr, ssc_data_ptr) != 0);
