@@ -261,9 +261,9 @@ if __name__ == "__main__":
 
 
 		# run PV system simulation
-		mod = ssc.module_create("easywatts")
+		mod = ssc.module_create("pvwattsv1")
 		if ssc.module_exec(mod, dat) == 0:
-			print 'EasyWatts simulation error'
+			print 'PVWatts V1 simulation error'
 			idx = 1
 			msg = ssc.module_log(mod, 0)
 			while (msg != None):
@@ -276,7 +276,7 @@ if __name__ == "__main__":
 			for i in range(len(ac)):
 				ac[i] = ac[i]/1000
 				ann += ac[i]
-			print 'EasyWatts Simulation ok, e_net (annual kW)=', ann
+			print 'PVWatts V1 Simulation ok, e_net (annual kW)=', ann
 			ssc.data_set_array(dat, "e_with_system", ac) # copy over ac
 
 		ssc.module_free(mod)
@@ -324,8 +324,7 @@ if __name__ == "__main__":
 		ssc.data_set_number(dat, "sales_tax_rate", 3.2)
 		ssc.data_set_number(dat, "inflation_rate", 3)
 		ssc.data_set_number(dat, "system_capacity", 250)
-		ssc.data_set_number(dat, "total_hard_cost", 103810)
-		ssc.data_set_number(dat, "total_soft_cost", 7150)
+		ssc.data_set_number(dat, "total_installed_cost", 110810)
 		ssc.data_set_number(dat, "percent_of_cost_subject_sales_tax", 90)
 
 		ssc.data_set_number(dat, "market", 0) #0=residential, 1=commercial
@@ -334,7 +333,7 @@ if __name__ == "__main__":
 		ssc.data_set_number(dat, "loan_term", 30)
 		ssc.data_set_number(dat, "loan_rate", 4.95)
 		ssc.data_set_number(dat, "loan_debt", 80)
-		ssc.data_set_array(dat, "itc_fed_percent", [30])
+		ssc.data_set_number(dat, "itc_fed_percent", 30)
 
 		if ssc.module_exec(mod, dat) == 0:
 			print 'CashLoan simulation error'

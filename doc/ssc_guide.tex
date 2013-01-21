@@ -306,8 +306,10 @@ Text strings (\texttt{SSC\_STRING})  are stored as 8-bit characters.  SSC does n
 The table (\texttt{SSC\_TABLE}) data type is the only hierarchical data type in SSC.  Essentially, it allows a simulation module to receive or return outputs in a structured format with named fields.  A table is nothing more than a named variable that is itself a data container, which can store any number of named variables of any SSC data type.  Currently, most SSC modules do not make heavy use of tables, but they are fully implemented and supported for future complex modules that may be added.
 
 \subsection{Variable Documentation}
+\label{sec_variable_docs}
 
-As stated before, each module defines all of the input variables it requires and output variables it produces.  Since SSC is a model simulation framework that contains within it numerous calculation modules that each may have hundreds of variables, it is impractical to separate to the documentation of variables from their definitions.  Otherwise, the documentation would tend to be consistently out of date as modules are updated and new ones are added.
+As stated before, each module defines all of the input variables it requires and output variables it produces.  Since SSC is a model simulation framework that contains within it numerous calculation modules that each may have hundreds of variables, it is impractical to separate to the documentation of variables from their definitions.  Otherwise, the documentation would tend to be consistently out of date as modules are updated and new ones are added.  Section~\ref{sec_explicit_modules} details how to create modules that can be queried for this type of information.
+
 \begin{table}[ht]
 \begin{center}
 \begin{tabular}{ll}
@@ -579,7 +581,7 @@ Note that the \texttt{ssc\_data\_first()} and \texttt{ssc\_data\_next()} functio
 
 The SSC framework exposes several different simulation modules that calculate outputs given inputs.  Each module can run independently of all the others, provided that all the input variables that are required are provided by the user.  The System Advisor Model (SAM) tool often runs several SSC modules in succession to simulate the whole system performance and economic evaluation.  In between successive calls to different SSC modules, SAM may change the names or scale the output variables of one module to set it up with appropriate inputs for the next one, as explained in \S\ref{sec_modeling_systems}.
 
-There are four different ways to invoke simulation modules.  Each method involves a different level of interaction during the execution of the model, differences in how errors and warnings are retrieved, and the appropriateness for use in a multithreaded environment.  The four methods are subsequently presented.
+There are four different ways to invoke simulation modules.  Each method involves a different level of interaction during the execution of the model, differences in how errors and warnings are retrieved, and the appropriateness for use in a multithreaded environment.  The four methods are subsequently presented, followed by sections on retrieving error messages and querying the SSC library to learn the names of available compute modules.
 
 \subsection{Simple Method \#1}
 
@@ -629,8 +631,29 @@ else
 In this case, a \texttt{NULL} return value indicates that no error occurred.  As with the simplest method 1, there is no way to retrieve additional errors or warnings after the module has finished running.  Progress updates are also not provided to the calling environment.
 
 \subsection{Explicit Module Instantiation}
+\label{sec_explicit_modules}
 
+A third way to run a computation module is to explicitly create a module object, execute it with a data container, and then release it.  This method is introduced with the PVWatts example in Section~\ref{sec_ex_pvwatts_module}, and is discussed in more detail in this section.
 
+The SSC function \texttt{ssc\_module\_create(...)} function is used to create a new instance of a computation module.  The function returns an opaque reference of type \texttt{ssc\_module\_t} to the module object, or returns \texttt{NULL} if the module could not be created.  The single parameter required is the name of the module requested.  If a module is created successfully, it must eventually be released when it is no longer needed via the \texttt{ssc\_module\_free(...)} function.  Example:
+
+\begin{verbatimtab}[4]
+// ... set up a data container with inputs ...
+ssc_module_t module = ssc_module_create( "cashloan" );
+if ( NULL == module )
+	printf("could not create 'cashloan' module!\n");
+else
+{
+	// ... query the module for variable info or run it ...
+
+	// free the module when it is no longer needed
+	ssc_module_free( module );
+}
+\end{verbatimtab}
+
+The advantage of explicitly creating a module is that all errors, warnings, and log messages generated during the course of the module's execution will be saved and can be later retrieved using the \texttt{ssc\_module\_log(...)} function, which is described subsequently in detail in Section~\ref{sec_messages}.  Alternatively, if the goal is simply to obtain information about the input and output variables associated with a module as in Section~\ref{sec_variable_docs}, the module must be explicitly instantiated also.
+
+The next section describes a mechanism for running compute modules and providing real-time progress updates, reporting messages as they occur, and canceling a module's execution before it has finished.
 
 \subsection{Running with Progress Updates, Warnings, and Errors}
 
@@ -734,11 +757,11 @@ static ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int a
 		return 1; // return 0 to abort simulation as needed.
 	}
 	else
-		return 0;
+		return 0; // invalid action
 }
 \end{verbatimtab}
 
-A third action type called \texttt{SSC\_EXECUTE} can be found in the SSC header file.  This is an advanced capability that is not described in this user guide, and is intended to be removed in the future from the SSC API.
+The return value of the handler function is checked by compute modules to determine whether the calculations should proceed.  In the example above, no facility is provided for canceling a simulation as the handler function always returns 1 (true).  However, a dialog box with a cancel button could set a flag in the user data structure when pressed.  If the cancel flag is set to true, the handler function could return 0 (false) to abort the simulation.  It is left as an exercise to the user to implement such functionality in their host program.
 
 \subsection{Retrieving Messages}
 \label{sec_messages}
@@ -1044,11 +1067,216 @@ F:/SSC/examples/daggett.tm2 & 4.000000 & 0.860000 & 1.000000 & 180.000000 & 25.0
 \label{sec_sscdev_example_no_scripting}
 
 \section{Language Interfaces}
+
+The SSC software development kit (SDK) includes interfaces for using SSC directly from programming languages other than its native C language interface.  This section describes each language interface's system and software requirements, as well any limitations in functionality compared with the native C interface.
+
 \subsection{Python}
+Python is a popular object-oriented scripting language that is either interpreted directly from source code or compiled into an intermediate bytecode.  Most installations of the Python interpreter include the \emph{Ctypes} package, which provides a \emph{foreign function interface (FFI)} capability for directly utilizing dynamic libraries.
+
+The Python language interface has been tested on Windows using the popular ActivePython distribution, as well as on Linux and OSX using the pre-installed Python packages.
+
+The Python API is defined in the \texttt{sscapi.py} source file included in the SDK.  The file includes example code if it is invoked as the main souce program.
+
+\notebox{In the PySSC class constructor, a \emph{Ctypes} object is created by referencing the \texttt{ssc.dll} dynamic library.  It is up to the user to modify the file name and/or path of this library to be appropriate for the operating system and platform.}
+
+The structure of SSC API calls in Python is slightly different from the C interface, since an instance of the PySSC class must be created first.  Example:
+
+\begin{verbatimtab}[4]
+	ssc = PySSC()
+	dat = ssc.data_create()
+
+	ssc.data_set_string(dat, 'file_name', 'daggett.tm2')
+	ssc.data_set_number(dat, 'system_size', 4)
+	ssc.data_set_number(dat, 'derate', 0.77)
+	ssc.data_set_number(dat, 'track_mode', 0)
+	ssc.data_set_number(dat, 'azimuth', 180)
+	ssc.data_set_number(dat, 'tilt_eq_lat', 1)
+
+	# run PV system simulation
+	mod = ssc.module_create("pvwattsv1")
+
+	if ssc.module_exec(mod, dat) == 0:
+		print 'PVWatts V1 simulation error'
+		idx = 1
+		msg = ssc.module_log(mod, 0)
+		while (msg != None):
+			print '\t: ' + msg
+			msg = ssc.module_log(mod, idx)
+			idx = idx + 1
+	else:
+		ann = 0
+		ac = ssc.data_get_array(dat, "ac")
+		for i in range(len(ac)):
+			ac[i] = ac[i]/1000
+			ann += ac[i]
+		print 'PVWatts V1 Simulation ok, e_net (annual kW)=', ann
+		ssc.data_set_array(dat, "e_with_system", ac) # copy over ac
+
+	ssc.module_free(mod)
+
+	ssc.data_free( dat )
+\end{verbatimtab}
+
+Notice that the structure of creating and freeing data containers and modules is identical to the C language API, except that the functions are members of the PySSC class.  For more information, peruse the \texttt{sscapi.py} source file for additional examples and usage cases.
+
 \subsection{MATLAB}
-\subsection{Java JNI}
+
+MATLAB is a numerical computing language that is widely used for data processing, algorithm development, and plotting.  It is a proprietary product that is available on OSX, Linux, and Windows.  
+
+The SSC MATLAB interface has been tested with MATLAB 7.5 (2007b) 32-bit on Windows.  The built-in MATLAB \emph{foreign function interface (FFI)} library routines that are used to interface to SSC require a C compiler to be installed on the computer alongside MATLAB to automatically preprocess the SSC header file.  Some versions of MATLAB include a C compiler such as LCC installed by default, while other versions and/or platforms may require one to be installed separately.  See \texttt{http://www.mathworks.com/support/compilers/R2012b/win64.html} for more information.
+
+The SSC API is provided in the \texttt{ssccall.m} M-file.  The interface provides a single MATLAB function called \texttt{ssccall(...)} that accepts different parameter arguments to invoke the various SSC library calls.  The example below shows how to setup and run the \emph{pvwattsv1} module from MATLAB.
+
+\begin{verbatimtab}[4]
+ssccall('load');
+
+% create a data container to store all the variables
+data = ssccall('data_create');
+
+% setup the system parameters
+ssccall('data_set_string', data, 'file_name', 'abilene.tm2');
+ssccall('data_set_number', data, 'system_size', 4);
+ssccall('data_set_number', data, 'derate', 0.77);
+ssccall('data_set_number', data, 'track_mode', 0);
+ssccall('data_set_number', data, 'tilt', 30);
+ssccall('data_set_number', data, 'azimuth', 180);
+
+% create the PVWatts module
+module = ssccall('module_create', 'pvwattsv1');
+
+% run the module
+ok = ssccall('module_exec', module, data);
+if ok,
+    % if successful, retrieve the hourly AC generation data and print
+    % annual kWh on the screen
+    ac = ssccall('data_get_array', data, 'ac');
+    disp(sprintf('pvwatts: %.2f kWh',sum(ac)/1000.0));
+else
+    % if it failed, print all the errors
+    disp('pvwattsv1 errors:');
+    ii=0;
+    while 1,
+        err = ssccall('module_log', module, ii);
+        if strcmp(err,''),
+            break;
+        end
+        disp( err );
+        ii=ii+1;
+    end
+end
+
+% free the PVWatts module that we created
+ssccall('module_free', module);
+
+% release the data container and all of its variables
+ssccall('data_free', data);
+
+% unload the library
+ssccall('unload');
+\end{verbatimtab}
+
+The MATLAB language interface automatically attempts to detect the platform and load the correct SSC dynamic library.  You must ensure that the \texttt{sscapi.h} C language header file can be located by MATLAB, as well as the library appropriate for your system.  
+
+For additional information, consult the MATLAB code examples supplied with the SSC SDK, as well as the content of the \texttt{ssccall.m} file itself.
+
 \subsection{C\# and .NET}
-\
+
+The C\# language interface provides direct access to the SSC library from the Microsoft .NET software environment.  C\# is an object-oriented garbage-collected language that is compiled typically to an intermediate bytecode that is executed in a managed environment by the bytecode interpreter engine.  Objects and memory are directly managed by the interpreter, relieving programmers of the burdens of detailed memory management.  However, since SSC is implemented at its core in a native compiled machine code library, care must be taken by the typical C\# programmer to ensure that the interface to the unmanaged SSC library is properly utilized.
+
+The C\# SSC language interface is provided as a single source file called \texttt{SSC.cs}.  This file contains direct invocation mappings to the unmanaged C library API, as well as an easy-to-use wrapper around the low-level function calls.  This API has been tested using Visual Studio 2012 .NET on Win32 and x64.  .NET implementations on other platforms such as Mono have not been tested.
+
+To call the SSC library from C\#, include the \texttt{SSC.cs} file in your .NET project in Visual Studio.  Then, you should be able to create an instance of the \texttt{CS\_SSC\_API} class, as in the example below.
+
+\begin{verbatimtab}[4]
+private void btnPVWatts_Click(object sender, EventArgs e)
+{
+	CS_SSC_API.SSC sscobj = new CS_SSC_API.SSC("pvwattsv1");
+
+	txtData.Clear();
+
+	sscobj.SetString("file_name", "abilene.tm2" );
+	sscobj.SetNumber("system_size", 4.0f );
+	sscobj.SetNumber("derate", 0.77f );
+	sscobj.SetNumber("track_mode", 0 );
+	sscobj.SetNumber("tilt", 20 );
+	sscobj.SetNumber("azimuth", 180 );
+
+	if ( sscobj.Exec() )
+	{
+		float[] ac = sscobj.GetArray( "ac" );
+		float sum = 0;
+	
+		for( int i=0;i<ac.Count();i++)
+		{
+			sum += ac[i];
+		}
+
+		txtData.AppendText("length returned: " + ac.Count() + "\n");
+		txtData.AppendText("ac total (get array): " + sum + "\n");
+		txtData.AppendText("PVWatts example passed" + "\n");
+	}
+	else
+	{
+		txtData.AppendText("PVWatts example failed" + "\n");
+	}
+}
+
+\end{verbatimtab}
+
+For more information, consult the \texttt{SSC.cs} source file, as well as the example Visual Studio project provided with the SDK.
+
+\subsection{Java}
+
+The Java interface to SSC utilizes the low-level Java Native Interface (JNI) specification to directly access the SSC library.  The JNI wrapper consists of a C source file \texttt{jssc.c} that wraps the SSC native C language API into JNI methods that can be compiled and loaded by the Java Virtual Machine (JVM) at runtime.  The source code for the JNI wrapper is included in the SDK, as well as a more programmer-friendly high-level Java \texttt{SSC} class that invokes the JNI layer.
+
+The JNI interface marshals opaque C pointers as the 64-bit \texttt{jlong} data type, ensuring compatibility in both 32 and 64 bit implementations.
+
+Compiling the JNI interface layer requires a C compiler and the Java SDK (for the JNI header files).  The example included with the SSC SDK was tested using the freely downloadable MinGW gcc compiler on 32-bit Windows (\texttt{https://www.mingw.org}), and the Java JDK 1.7.  
+
+Once the JNI wrapper library has been compiled for your particular JDK version, the PVWatts example can be invoked from within Java as below:
+
+\begin{verbatimtab}[4]
+
+public class SSC_Java_Example {
+   
+    public static void main(String[] args)
+    {
+        System.loadLibrary("sscapiJNI32");
+		
+        SSC sscobj = new SSC("pvwattsv1");
+
+        sscobj.Set_String("file_name", "abilene.tm2" );
+        sscobj.Set_Number("system_size", 4.0f );
+        sscobj.Set_Number("derate", 0.77f );
+        sscobj.Set_Number("track_mode", 0 );
+        sscobj.Set_Number("tilt", 20 );
+        sscobj.Set_Number("azimuth", 180 );
+        
+		if ( sscobj.Exec() )
+        {
+            int len[] = {0};
+            float[] ac = sscobj.Get_Array( "ac", len );
+            float sum = 0;
+            for( int i=0;i<len[0];i++)
+            {
+                sum += ac[i];
+            }
+            System.out.println("length returned: " + len[0]);
+            System.out.println("ac total (get array): " + sum);
+            System.out.println("PVWatts example passed");
+        }
+        else
+        {
+            System.out.println("PVWatts example failed");
+        }
+    }    
+}
+
+\end{verbatimtab}
+
+For more information on utilizing the Java language layer, consult Java code examples provided in the SDK.
+
+
 %\section{C API Reference}
 %\label{sec_api_ref}
 %\include{ssc_api_latex/sscapi_8h}

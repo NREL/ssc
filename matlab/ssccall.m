@@ -4,9 +4,9 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
 % author: Aron P. Dobos
 
     % automatically detect architecture to load proper dll.
-    ssclib = 'ssc32';
-    if ( strcmp(computer(), 'PCWIN64') )
-        ssclib = 'ssc64';
+    ssclib = 'ssc64';
+    if ( strcmp(computer(), 'PCWIN32') )
+        ssclib = 'ssc32';
     end
 
     if strcmp(action,'load')
