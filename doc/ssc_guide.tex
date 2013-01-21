@@ -11,41 +11,42 @@
 \usepackage{epstopdf}
 
 % Begin from doxygen
+
+
 %\usepackage{makeidx}
 %\usepackage{natbib}
 \usepackage{graphicx}
-%\usepackage{multicol}
+\usepackage{multicol}
 \usepackage{float}
-%\usepackage[table]{xcolor}
-%\usepackage{listings}
-%\usepackage{color}
+\usepackage{listings}
+\usepackage{color}
 %\usepackage{ifthen}
-%\usepackage{textcomp}
-%\usepackage{alltt}
-%\usepackage{pspicture}
-%\fi
+\usepackage[table]{xcolor}
+\usepackage{textcomp}
+\usepackage{alltt}
+\usepackage[pdftex,
+            pagebackref=true,
+            colorlinks=true,
+            linkcolor=blue,
+            unicode
+           ]{hyperref}
 %\usepackage[utf8]{inputenc}
 %\usepackage{mathptmx}
 %\usepackage[scaled=.90]{helvet}
 %\usepackage{courier}
 %\usepackage{sectsty}
-%\usepackage[titles]{tocloft}
-%\usepackage{doxygen}
-\usepackage[pdftex,
-                  linktocpage=true,
-                  pagebackref=true,
-                  colorlinks=true,
-                  linkcolor=blue,
-                  unicode
-                ]{hyperref}
-
-%\lstset{language=C++,inputencoding=utf8,basicstyle=\footnotesize,breaklines=true,breakatwhitespace=true,tabsize=8,numbers=left }
+\usepackage[titles]{tocloft}
+\usepackage{doxygen}
+\lstset{language=C++,inputencoding=utf8,basicstyle=\footnotesize,breaklines=true,breakatwhitespace=true,tabsize=8,numbers=left }
 %\makeindex
+\setcounter{tocdepth}{3}
 %\renewcommand{\footrulewidth}{0.4pt}
 %\renewcommand{\familydefault}{\sfdefault}
 %\hfuzz=15pt
 %\setlength{\emergencystretch}{15pt}
 %\hbadness=750
+%\tolerance=750
+
 % End from doxygen
 
 %\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
@@ -1277,8 +1278,8 @@ public class SSC_Java_Example {
 For more information on utilizing the Java language layer, consult Java code examples provided in the SDK.
 
 
-%\section{C API Reference}
-%\label{sec_api_ref}
-%\include{ssc_api_latex/sscapi_8h}
+\section{C API Reference}
+\label{sec_api_ref}
+\include{ssc_api_latex/sscapi_8h}
 
 \end{document}
