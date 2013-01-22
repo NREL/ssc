@@ -35,13 +35,14 @@
             this.btnPVWattsFunc = new System.Windows.Forms.Button();
             this.btnArrayTest = new System.Windows.Forms.Button();
             this.btnTestMatrices = new System.Windows.Forms.Button();
+            this.txtModulesAndVariables = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtData
             // 
-            this.txtData.Location = new System.Drawing.Point(12, 78);
+            this.txtData.Location = new System.Drawing.Point(12, 105);
             this.txtData.Name = "txtData";
-            this.txtData.Size = new System.Drawing.Size(639, 422);
+            this.txtData.Size = new System.Drawing.Size(639, 395);
             this.txtData.TabIndex = 0;
             this.txtData.Text = "";
             // 
@@ -67,7 +68,7 @@
             // 
             // btnPVWatts
             // 
-            this.btnPVWatts.Location = new System.Drawing.Point(208, 5);
+            this.btnPVWatts.Location = new System.Drawing.Point(26, 64);
             this.btnPVWatts.Name = "btnPVWatts";
             this.btnPVWatts.Size = new System.Drawing.Size(75, 23);
             this.btnPVWatts.TabIndex = 3;
@@ -77,7 +78,7 @@
             // 
             // btnPVWattsFunc
             // 
-            this.btnPVWattsFunc.Location = new System.Drawing.Point(289, 5);
+            this.btnPVWattsFunc.Location = new System.Drawing.Point(107, 63);
             this.btnPVWattsFunc.Name = "btnPVWattsFunc";
             this.btnPVWattsFunc.Size = new System.Drawing.Size(110, 23);
             this.btnPVWattsFunc.TabIndex = 4;
@@ -105,11 +106,22 @@
             this.btnTestMatrices.UseVisualStyleBackColor = true;
             this.btnTestMatrices.Click += new System.EventHandler(this.btnTestMatrices_Click);
             // 
+            // txtModulesAndVariables
+            // 
+            this.txtModulesAndVariables.Location = new System.Drawing.Point(209, 4);
+            this.txtModulesAndVariables.Name = "txtModulesAndVariables";
+            this.txtModulesAndVariables.Size = new System.Drawing.Size(137, 23);
+            this.txtModulesAndVariables.TabIndex = 7;
+            this.txtModulesAndVariables.Text = "Modules and Variables";
+            this.txtModulesAndVariables.UseVisualStyleBackColor = true;
+            this.txtModulesAndVariables.Click += new System.EventHandler(this.txtModulesAndVariables_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(663, 512);
+            this.Controls.Add(this.txtModulesAndVariables);
             this.Controls.Add(this.btnTestMatrices);
             this.Controls.Add(this.btnArrayTest);
             this.Controls.Add(this.btnPVWattsFunc);
@@ -132,6 +144,7 @@
         private System.Windows.Forms.Button btnPVWattsFunc;
         private System.Windows.Forms.Button btnArrayTest;
         private System.Windows.Forms.Button btnTestMatrices;
+        private System.Windows.Forms.Button txtModulesAndVariables;
     }
 }
 

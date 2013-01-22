@@ -37,58 +37,34 @@ namespace CS_SSC_API
             return (System.IntPtr.Size == 8) ? ssc_build_info64() : ssc_build_info32();
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_INVALID_get")]
-        public static extern int SSC_INVALID_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_INVALID_get")]
-        public static extern int SSC_INVALID_get64();
         public static int SSC_INVALID_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_INVALID_get64() : SSC_INVALID_get32();
+            return 0;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_STRING_get")]
-        public static extern int SSC_STRING_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_STRING_get")]
-        public static extern int SSC_STRING_get64();
         public static int SSC_STRING_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_STRING_get64() : SSC_STRING_get32();
+            return 1;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_NUMBER_get")]
-        public static extern int SSC_NUMBER_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_NUMBER_get")]
-        public static extern int SSC_NUMBER_get64();
         public static int SSC_NUMBER_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_NUMBER_get64() : SSC_NUMBER_get32();
+            return 2;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_ARRAY_get")]
-        public static extern int SSC_ARRAY_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_ARRAY_get")]
-        public static extern int SSC_ARRAY_get64();
         public static int SSC_ARRAY_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_ARRAY_get64() : SSC_ARRAY_get32();
+            return 3;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_MATRIX_get")]
-        public static extern int SSC_MATRIX_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_MATRIX_get")]
-        public static extern int SSC_MATRIX_get64();
         public static int SSC_MATRIX_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_MATRIX_get64() : SSC_MATRIX_get32();
+            return 4;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_TABLE_get")]
-        public static extern int SSC_TABLE_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_TABLE_get")]
-        public static extern int SSC_TABLE_get64();
         public static int SSC_TABLE_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_TABLE_get64() : SSC_TABLE_get32();
+            return 5;
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_create")]
@@ -158,19 +134,19 @@ namespace CS_SSC_API
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_first")]
-        public static extern string ssc_data_first32(HandleRef cxtData);
+        public static extern IntPtr ssc_data_first32(HandleRef cxtData);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_first")]
-        public static extern string ssc_data_first64(HandleRef cxtData);
-        public static string ssc_data_first(HandleRef cxtData)
+        public static extern IntPtr ssc_data_first64(HandleRef cxtData);
+        public static IntPtr ssc_data_first(HandleRef cxtData)
         {
             return (System.IntPtr.Size == 8) ? ssc_data_first64(cxtData) : ssc_data_first32(cxtData);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_next")]
-        public static extern string ssc_data_next32(HandleRef cxtData);
+        public static extern IntPtr ssc_data_next32(HandleRef cxtData);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_next")]
-        public static extern string ssc_data_next64(HandleRef cxtData);
-        public static string ssc_data_next(HandleRef cxtData)
+        public static extern IntPtr ssc_data_next64(HandleRef cxtData);
+        public static IntPtr ssc_data_next(HandleRef cxtData)
         {
             return (System.IntPtr.Size == 8) ? ssc_data_next64(cxtData) : ssc_data_next32(cxtData);
         }
@@ -256,10 +232,10 @@ namespace CS_SSC_API
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_get_string")]
-        public static extern string ssc_data_get_string32(HandleRef cxtData, string name);
+        public static extern IntPtr ssc_data_get_string32(HandleRef cxtData, string name);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_get_string")]
-        public static extern string ssc_data_get_string64(HandleRef cxtData, string name);
-        public static string ssc_data_get_string(HandleRef cxtData, string name)
+        public static extern IntPtr ssc_data_get_string64(HandleRef cxtData, string name);
+        public static IntPtr ssc_data_get_string(HandleRef cxtData, string name)
         {
             return (System.IntPtr.Size == 8) ? ssc_data_get_string64(cxtData, name) : ssc_data_get_string32(cxtData, name);
         }
@@ -361,40 +337,28 @@ namespace CS_SSC_API
             }
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_INPUT_get")]
-        public static extern int SSC_INPUT_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_INPUT_get")]
-        public static extern int SSC_INPUT_get64();
         public static int SSC_INPUT_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_INPUT_get64() : SSC_INPUT_get32();
+            return 1;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_OUTPUT_get")]
-        public static extern int SSC_OUTPUT_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_OUTPUT_get")]
-        public static extern int SSC_OUTPUT_get64();
         public static int SSC_OUTPUT_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_OUTPUT_get64() : SSC_OUTPUT_get32();
+            return 2;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_INOUT_get")]
-        public static extern int SSC_INOUT_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_INOUT_get")]
-        public static extern int SSC_INOUT_get64();
         public static int SSC_INOUT_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_INOUT_get64() : SSC_INOUT_get32();
+            return 3;
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_var_info")]
-        public static extern IntPtr ssc_module_var_info32(HandleRef cxtInfo, int index);
+        public static extern IntPtr ssc_module_var_info32(HandleRef cxtModule, int index);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_var_info")]
-        public static extern IntPtr ssc_module_var_info64(HandleRef cxtInfo, int index);
-        public static IntPtr ssc_module_var_info(HandleRef cxtInfo, int index)
+        public static extern IntPtr ssc_module_var_info64(HandleRef cxtModule, int index);
+        public static IntPtr ssc_module_var_info(HandleRef cxtModule, int index)
         {
-            return (System.IntPtr.Size == 8) ? ssc_module_var_info64(cxtInfo, index) : ssc_module_var_info32(cxtInfo, index);
+            return (System.IntPtr.Size == 8) ? ssc_module_var_info64(cxtModule, index) : ssc_module_var_info32(cxtModule, index);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_var_type")]
@@ -416,73 +380,73 @@ namespace CS_SSC_API
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_name")]
-        public static extern string ssc_info_name32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_name32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_name")]
-        public static extern string ssc_info_name64(HandleRef cxtInfo);
-        public static string ssc_info_name(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_name64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_name(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_name64(cxtInfo) : ssc_info_name32(cxtInfo);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_label")]
-        public static extern string ssc_info_label32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_label32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_label")]
-        public static extern string ssc_info_label64(HandleRef cxtInfo);
-        public static string ssc_info_label(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_label64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_label(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_label64(cxtInfo) : ssc_info_label32(cxtInfo);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_units")]
-        public static extern string ssc_info_units32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_units32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_units")]
-        public static extern string ssc_info_units64(HandleRef cxtInfo);
-        public static string ssc_info_units(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_units64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_units(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_units64(cxtInfo) : ssc_info_units32(cxtInfo);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_meta")]
-        public static extern string ssc_info_meta32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_meta32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_meta")]
-        public static extern string ssc_info_meta64(HandleRef cxtInfo);
-        public static string ssc_info_meta(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_meta64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_meta(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_meta64(cxtInfo) : ssc_info_meta32(cxtInfo);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_group")]
-        public static extern string ssc_info_group32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_group32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_group")]
-        public static extern string ssc_info_group64(HandleRef cxtInfo);
-        public static string ssc_info_group(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_group64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_group(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_group64(cxtInfo) : ssc_info_group32(cxtInfo);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_required")]
-        public static extern string ssc_info_required32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_required32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_required")]
-        public static extern string ssc_info_required64(HandleRef cxtInfo);
-        public static string ssc_info_required(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_required64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_required(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_required64(cxtInfo) : ssc_info_required32(cxtInfo);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_constraints")]
-        public static extern string ssc_info_constraints32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_constraints32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_constraints")]
-        public static extern string ssc_info_constraints64(HandleRef cxtInfo);
-        public static string ssc_info_constraints(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_constraints64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_constraints(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_constraints64(cxtInfo) : ssc_info_constraints32(cxtInfo);
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_uihint")]
-        public static extern string ssc_info_uihint32(HandleRef cxtInfo);
+        public static extern IntPtr ssc_info_uihint32(HandleRef cxtInfo);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_info_uihint")]
-        public static extern string ssc_info_uihint64(HandleRef cxtInfo);
-        public static string ssc_info_uihint(HandleRef cxtInfo)
+        public static extern IntPtr ssc_info_uihint64(HandleRef cxtInfo);
+        public static IntPtr ssc_info_uihint(HandleRef cxtInfo)
         {
             return (System.IntPtr.Size == 8) ? ssc_info_uihint64(cxtInfo) : ssc_info_units32(cxtInfo);
         }
@@ -497,40 +461,30 @@ namespace CS_SSC_API
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_exec_simple_nothread")]
-        public static extern string ssc_module_exec_simple_nothread32(string moduleName, HandleRef cxtData);
+        public static extern IntPtr ssc_module_exec_simple_nothread32(string moduleName, HandleRef cxtData);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_exec_simple_nothread")]
-        public static extern string ssc_module_exec_simple_nothread64(string moduleName, HandleRef cxtData);
-        public static string ssc_module_exec_simple_nothread(string moduleName, HandleRef cxtData)
+        public static extern IntPtr ssc_module_exec_simple_nothread64(string moduleName, HandleRef cxtData);
+        public static IntPtr ssc_module_exec_simple_nothread(string moduleName, HandleRef cxtData)
         {
             return (System.IntPtr.Size == 8) ? ssc_module_exec_simple_nothread64(moduleName, cxtData) : ssc_module_exec_simple_nothread32(moduleName, cxtData);
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_LOG_get")]
-        public static extern int SSC_LOG_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_LOG_get")]
-        public static extern int SSC_LOG_get64();
         public static int SSC_LOG_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_LOG_get64() : SSC_LOG_get32();
+            return 0;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_UPDATE_get")]
-        public static extern int SSC_UPDATE_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_UPDATE_get")]
-        public static extern int SSC_UPDATE_get64();
         public static int SSC_UPDATE_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_UPDATE_get64() : SSC_UPDATE_get32();
+            return 1;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_EXECUTE_get")]
-        public static extern int SSC_EXECUTE_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_EXECUTE_get")]
-        public static extern int SSC_EXECUTE_get64();
+/* removed in ssc rev 578
         public static int SSC_EXECUTE_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_EXECUTE_get64() : SSC_EXECUTE_get32();
+            return 2;
         }
+ */
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_exec")]
         public static extern int ssc_module_exec32(HandleRef cxtModule, HandleRef cxtData);
@@ -550,6 +504,7 @@ namespace CS_SSC_API
             return (System.IntPtr.Size == 8) ? ssc_module_exec_with_handler64(cxtModule, cxtData, cxtHandler, cxtUserData) : ssc_module_exec_with_handler32(cxtModule, cxtData, cxtHandler, cxtUserData);
         }
 
+ /* removed in ssc rev 578 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_extproc_output")]
         public static extern void ssc_module_extproc_output32(HandleRef cxtModule, string outputLine);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_extproc_output")]
@@ -565,39 +520,28 @@ namespace CS_SSC_API
                 ssc_module_extproc_output32(cxtModule, outputLine);
             }
         }
+  */
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_NOTICE_get")]
-        public static extern int SSC_NOTICE_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_NOTICE_get")]
-        public static extern int SSC_NOTICE_get64();
         public static int SSC_NOTICE_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_NOTICE_get64() : SSC_NOTICE_get32();
+            return 1;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_WARNING_get")]
-        public static extern int SSC_WARNING_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_WARNING_get")]
-        public static extern int SSC_WARNING_get64();
         public static int SSC_WARNING_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_WARNING_get64() : SSC_WARNING_get32();
+            return 2;
         }
 
-        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_ERROR_get")]
-        public static extern int SSC_ERROR_get32();
-        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "SSC_ERROR_get")]
-        public static extern int SSC_ERROR_get64();
         public static int SSC_ERROR_get()
         {
-            return (System.IntPtr.Size == 8) ? SSC_ERROR_get64() : SSC_ERROR_get32();
+            return 3;
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_log")]
-        public static extern string ssc_module_log32(HandleRef cxtModule, int index, out int messageType, out float time);
+        public static extern IntPtr ssc_module_log32(HandleRef cxtModule, int index, out int messageType, out float time);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_log")]
-        public static extern string ssc_module_log64(HandleRef cxtModule, int index, out int messageType, out float time);
-        public static string ssc_module_log(HandleRef cxtModule, int index, out int messageType, out float time)
+        public static extern IntPtr ssc_module_log64(HandleRef cxtModule, int index, out int messageType, out float time);
+        public static IntPtr ssc_module_log(HandleRef cxtModule, int index, out int messageType, out float time)
         {
             return (System.IntPtr.Size == 8) ? ssc_module_log64(cxtModule, index, out messageType, out time) : ssc_module_log32(cxtModule, index, out messageType, out time);
         }
@@ -628,18 +572,35 @@ namespace CS_SSC_API
     {
         private HandleRef ssc_data_ptr;
         private HandleRef ssc_module_ptr;
-        private HandleRef ssc_info_ptr;
+//        private HandleRef ssc_info_ptr;
         private HandleRef ssc_entry_ptr;
 
       public SSC()
       {
-        ssc_data_ptr = new HandleRef(null, sscapiPINVOKE.ssc_data_create());
+          ssc_data_ptr = new HandleRef(this, sscapiPINVOKE.ssc_data_create());
       }
 
       public SSC( String module_name )
       {
-        ssc_data_ptr = new HandleRef(null, sscapiPINVOKE.ssc_data_create());
-        ssc_module_ptr = new HandleRef(null, sscapiPINVOKE.ssc_module_create(module_name));
+        ssc_data_ptr = new HandleRef(this, sscapiPINVOKE.ssc_data_create());
+        ssc_module_ptr = new HandleRef(this, sscapiPINVOKE.ssc_module_create(module_name));
+      }
+
+      ~SSC()
+      {
+          Clear();
+      }
+
+      public void Clear()
+      {
+          if (ssc_data_ptr.Handle != IntPtr.Zero)
+          {
+              sscapiPINVOKE.ssc_data_free(ssc_data_ptr);
+          }
+          if (ssc_module_ptr.Handle != IntPtr.Zero)
+          {
+              sscapiPINVOKE.ssc_module_free(ssc_module_ptr);
+          }
       }
   
       public int Version()
@@ -730,7 +691,7 @@ namespace CS_SSC_API
       public bool ModuleInfo(int index)
       {
           IntPtr ip  = sscapiPINVOKE.ssc_module_entry(index);
-          ssc_entry_ptr = new HandleRef(null,ip);
+          ssc_entry_ptr = new HandleRef(this,ip);
           return (ip != IntPtr.Zero);
       }
   
@@ -746,9 +707,168 @@ namespace CS_SSC_API
           return Marshal.PtrToStringAnsi(moduleDescription);
       }
 
-      public int Module_Version()
+      public int ModuleVersion()
       {
           return sscapiPINVOKE.ssc_entry_version(ssc_entry_ptr);
       }
+
+      public int NumberVariables(String moduleName)
+      {
+          int numVariables = 0;
+
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, numVariables));
+          while (varInfo.Handle != IntPtr.Zero)
+          {
+              numVariables++;
+              varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, numVariables));
+          }
+          return numVariables;
+      }
+
+
+      public String VariableType(int variableIndex)
+      {
+          String variableTypeString = "No variable type information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              int varType = sscapiPINVOKE.ssc_info_var_type(varInfo);
+              if (varType == sscapiPINVOKE.SSC_INPUT_get())
+              {
+                  variableTypeString = "INPUT";
+              }
+              else if (varType == sscapiPINVOKE.SSC_OUTPUT_get())
+              {
+                  variableTypeString = "OUTPUT";
+              }
+              else if (varType == sscapiPINVOKE.SSC_INOUT_get())
+              {
+                  variableTypeString = "INOUT";
+              }
+          }
+          return variableTypeString;
+      }
+
+      public String VariableData(int variableIndex)
+      {
+          String variableDataTypeString = "No variable data information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              int varDataType = sscapiPINVOKE.ssc_info_data_type(varInfo);
+              if (varDataType == sscapiPINVOKE.SSC_STRING_get())
+              {
+                  variableDataTypeString = "STRING";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_NUMBER_get())
+              {
+                  variableDataTypeString = "NUMBER";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_ARRAY_get())
+              {
+                  variableDataTypeString = "ARRAY";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_MATRIX_get())
+              {
+                  variableDataTypeString = "MATRIX";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_TABLE_get())
+              {
+                  variableDataTypeString = "TABLE";
+              }
+          }
+          return variableDataTypeString;
+      }
+
+  
+      public String VariableName(int variableIndex)
+      {
+          String variableNameString = "No variable name information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableNameString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_name(varInfo));
+          }
+          return variableNameString;
+      }
+
+      public String VariableLabel(int variableIndex)
+      {
+          String variableLabelString = "No variable label information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableLabelString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_label(varInfo));
+          }
+          return variableLabelString;
+      }
+
+      public String VariableUnits(int variableIndex)
+      {
+          String variableUnitsString = "No variable units information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableUnitsString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_units(varInfo));
+          }
+          return variableUnitsString;
+      }
+
+      public String VariableMeta(int variableIndex)
+      {
+          String variableMetaString = "No variable meta information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableMetaString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_meta(varInfo));
+          }
+          return variableMetaString;
+      }
+
+      public String VariableGroup(int variableIndex)
+      {
+          String variableGroupString = "No variable group information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableGroupString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_group(varInfo));
+          }
+          return variableGroupString;
+      }
+
+      public String VariableRequired(int variableIndex)
+      {
+          String variableRequiredString = "No variable required information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableRequiredString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_required(varInfo));
+          }
+          return variableRequiredString;
+      }
+
+      public String VariableConstraints(int variableIndex)
+      {
+          String variableConstraintsString = "No variable constraints information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableConstraintsString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_constraints(varInfo));
+          }
+          return variableConstraintsString;
+      }
+
+      public String VariableUIHint(int variableIndex)
+      {
+          String variableUIHintString = "No variable ui hints information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableUIHintString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_uihint(varInfo));
+          }
+          return variableUIHintString;
+      }
+    
+    
     }
 }

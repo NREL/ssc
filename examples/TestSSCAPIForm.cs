@@ -30,15 +30,15 @@ namespace TestApplication
         {
             CS_SSC_API.SSC sscobj = new CS_SSC_API.SSC();
             txtData.Clear();
-            int index = 0;
-            while( sscobj.ModuleInfo( index ) )
+            int moduleIndex = 0;
+            while (sscobj.ModuleInfo(moduleIndex))
             {
                 String module_name = sscobj.ModuleName();
                 String description = sscobj.ModuleDescription();
-                int version = sscobj.Module_Version();
+                int version = sscobj.ModuleVersion();
                 txtData.AppendText("Module: " + module_name + ", version: " + version + "\n");
                 txtData.AppendText("    " + description + "\n");
-                index++;
+                moduleIndex++;
             }        
          }
 
@@ -115,7 +115,7 @@ namespace TestApplication
                 txtData.AppendText("dc: " + dc + " W\n");
                 txtData.AppendText("ac: " + ac + " W\n");
             }
-
+            System.GC.Collect(); // call to immediately free underlying pointers - see SSC.Clear()
         }
 
         private void btnArrayTest_Click(object sender, EventArgs e)
@@ -155,6 +155,32 @@ namespace TestApplication
                     txtData.AppendText("\treturned matrix element: (" + i + "," + j + ") = " + retMatrix[i,j] + "\n");
                 }
             }
+        }
+
+        private void txtModulesAndVariables_Click(object sender, EventArgs e)
+        {
+            CS_SSC_API.SSC sscobj = new CS_SSC_API.SSC();
+            txtData.Clear();
+            int moduleIndex = 0;
+            while (sscobj.ModuleInfo(moduleIndex))
+            {
+                String moduleName = sscobj.ModuleName();
+                String description = sscobj.ModuleDescription();
+                int version = sscobj.ModuleVersion();
+                txtData.AppendText("\nModule: " + moduleName + ", version: " + version + "\n");
+                txtData.AppendText(" " + description + "\n");
+                moduleIndex++;
+
+                CS_SSC_API.SSC sscModule = new CS_SSC_API.SSC(moduleName);
+
+                int numberVariables = sscModule.NumberVariables(moduleName);
+                txtData.AppendText(" Number of variables: " + numberVariables + "\n");
+                for (int i = 0; i < numberVariables; i++)
+                {
+                    txtData.AppendText("\t" + sscModule.VariableType(i) + ": \"" + sscModule.VariableName(i) + "\" " + " [" + sscModule.VariableData(i) + "] " + sscModule.VariableLabel(i) + " (" + sscModule.VariableUnits(i) + ")\n");
+                }
+            }        
+ 
         }
     }
 }
