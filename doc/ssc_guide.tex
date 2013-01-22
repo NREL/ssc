@@ -858,7 +858,7 @@ Use SSCdev for the following tasks:
 Using SSCdev involves running the executable, and loading the appropriate SSC library:
 
 \begin{enumerate}
-\item Run the executable file for your operating system shown in Table \ref{ssc_dev_table_versions}. For example, the 32-bit Windows executable \texttt{sscdev32.exe} is in the \texttt{win32} directory of the SDK package.
+\item Run the executable file shown in Table \ref{ssc_dev_table_versions} for your operating system. For example, the 32-bit Windows executable \texttt{sscdev32.exe} is in the \texttt{win32} directory of the SDK package.
 \item On the \textbf{File} menu, click \textbf{Choose SSC library}. Be sure to choose the correct library for your version of SSCdev. For example, for 32-bit Windows, choose the \texttt{ssc32.dll} library.
 
 A list of modules should appear in the module browser, and the library path and name should appear in the status bar at the bottom of the SSCdev window. If the module browser is empty, try choosing the SSC library again.
@@ -885,7 +885,7 @@ A list of modules should appear in the module browser, and the library path and 
 
 SSCdev displays a list of available modules, and lists each module's input and output variables, but does not provide enough information to completely understand the modules. You should be prepared to use the SAM user interface and documentation together with SSCdev to help you understand how the modules and variables work. 
 
-For example, the \texttt{annualoutput} module includes a variable named \texttt{energy\_availability} that uses the data type \texttt{SSC\_ARRAY}. Why is the data type not \texttt{SSC\_NUMBER instead}? To find out, we can examine the \texttt{annualoutput} input variables in SAM's user interface, which displays them on the Performance Adjustment input page. The \texttt{energy\_availabilty} variable is labeled "Percent of annual output." SAM provides two options for entering the variable's value: As a single value or as an annual schedule. The array data type is necessary to store the annual values. The \texttt{annualoutput} module assumes that if there is a single non-zero value at the top of the array, that value represents a single adjustment factor that applies to all years. Otherwise it applies values from the array to each year.
+For example, the \texttt{annualoutput} module includes a variable named \texttt{energy\_availability} that uses the data type \texttt{SSC\_ARRAY}. Why is the data type not \texttt{SSC\_NUMBER instead}? To find out, we can examine the \texttt{annualoutput} input variables in SAM's user interface, which displays them on the Performance Adjustment input page. The \texttt{energy\_availabilty} variable appears with the label "Percent of annual output," and SAM provides two options for entering the variable's value: As a single value or as an annual schedule. The array data type is necessary to store the annual values. The \texttt{annualoutput} module assumes that if there is a single non-zero value at the top of the array, that value represents a single adjustment factor that applies to all years. Otherwise it applies values from the array to each year.
 
 For some variables, even the SAM user interface may not be helpful. When you need help with an SSC module or variable, ask a question as a comment on the SAM website's SDK page. For example, you might wonder what the \texttt{annualoutput} module's \texttt{system\_use\_lifetime\_output} variable does. That variable is not on any of SAM's input pages, and the information in SSCdev does not explain its function. The variable determines whether the module generates a single set of 8,760 hourly values for the \texttt{hourly\_e\_net\_delivered} variable, or whether it generates a set of 8,760 values for each year in the analysis period. All of SAM's performance models use a value of zero except for the geothermal model, which is a special case and requires lifecycle output data to accurately represent changes in resource over time as it is depleted and replenished. For most cases, you should set its value to zero.
 
@@ -898,8 +898,8 @@ For some variables, even the SAM user interface may not be helpful. When you nee
 \item[Start simulation] Runs the active module in the module browser.
 \item[Load/unload SSC library] Loads or unloads the current SSC library for troubleshooting. If a module does not run, you can try unloading and reloading the library.
 \item[Choose SSC library] Displays a file dialog where you can choose and load the SSC library. Be sure to choose the correct library for your version of SSCdev.
-\item[Load data file] Open a data container file (\texttt{.bdat}).
-\item[Save data file] Save the data container to a file (\texttt{.bdat}).
+\item[Load data file] Open a data container file. (\texttt{.bdat}).
+\item[Save data file] Save the data container to a file. (\texttt{.bdat}).
 \item[Recent files] Display a list of recent data (\texttt{.bdat}) and script (\texttt{.lk}) files.
 \item[Exit] Quit SSCdev.
 \end{description}
@@ -931,15 +931,20 @@ The module browser displays the modules available in the current SSC library. Wh
 \begin{itemize}
 \item Display a list of available SSC modules.
 \item Display module variables.
-\item Export a list of a module's variables to Excel.\marginpar{Windows only?}
+\item Copy a tab-delimited list of a module's variables to your computer's clipboard.
 \item Run a single module using variable values defined in the data container.
 \end{itemize}
 
-\notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See Section \ref{sec_sscdev_get_started} for details.}
+\notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See Section \ref{sec_sscdev_get_started} for instructions to load a library.}
 
 You can use the module browser as a reference while you are developing your model to help ensure that you assign values to all of the required input variables, and use the correct data types and units.
 
 You can also use the module browser with the data container to manually set values of input variables and run modules individually. This might be useful for learning how a module works, or for troubleshooting your model's implementation of a module.
+
+\subsubsection{Run a Simulation from the Module Browser}
+\label{sec_sscdev_module_browser_run_module}
+
+To run a simulation from the module browser, choose a module from the list and click \textbf{Run}. SSCdev displays information about the simulation in the notification pane.
 
 \subsection{Data Container}
 \label{sec_sscdev_data_container}
@@ -965,7 +970,8 @@ The data container commands act either on the current variable indicated with a 
 \item[Select all]  Select (check) all variables in the data container. This command may take several seconds to complete.
 \item[Unselect all] Clear all variables in the data container.
 \item[Copy to clipboard] Copy a tab-delimited list of selected variables and their values to the clipboard.
-\item[Show stats] \marginpar{Show stats does not seem to work.}
+\item[Show stats] Displays statistical summary data for variables of type \texttt{SSC\_ARRAY}. It is intended to display the annual and monthly minimum, maximum, mean, total, and total divided by 1000 of a data set representing time steps over a single year.
+\notebox{You can copy data from the monthly table by selecting the text and pressing the copy-to-clipboard shortcut keys for your computer (Ctrl-C in Windows).}
 \item[Timeseries graph] Display graphs of all selected variables with 8,760 values in the time series data viewer.
 \end{description}
 \end{quote}
