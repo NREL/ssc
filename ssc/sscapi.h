@@ -64,34 +64,33 @@ extern "C" {
 
 #endif // __SSCLINKAGECPP__
 	
-/** Returns the library version.  Version numbers start at 1.
+/** Returns the library version as an integer.  Version numbers start at 1.
 	\return SSC version number.
 */
 SSCEXPORT int ssc_version();
 
-/** Returns a ASCII text string that lists the compiler, platform, build date/time and other information.
+/** Returns a text string that lists the compiler, platform, build date/time and other information.
 	\return Information about the build configuration of this particular SSC library binary.
 */
 SSCEXPORT const char *ssc_build_info();
 
 
-/** An opaque reference to a structure that holds a collection of variables.
+/** An opaque reference to a structure that holds a collection of variables.  
 
   This structure can contain any number of variables referenced by name, and can hold
   strings, numbers, arrays, and matrices.  Matrices are stored in row-major order, where
-  the array size is nrows*ncols, and the array index is calculated by r*ncols+c.
-
-  An ssc_data_t object holds all input and output variables for a simulation. It does not
+  the array size is nrows*ncols, and the array index is calculated by r*ncols+c.  An ssc_data_t 
+  object holds all input and output variables for a simulation. It does not
   distinguish between input, output, and input variables - that is handled at the model
   context level.
-
-  For convenience, a ssc_data_t can be written to a file on disk, and later retrieved.
 */
 typedef void* ssc_data_t;
 
-/** The numeric type used internally in SSC.
+/** The numeric type used in the SSC API.
 
-   All numeric values are stored in this format. Do not change this without recompiling the library.
+   All numeric values are stored in this format. SSC uses 32-bit floating point numbers at the
+   library interface to minimize memory usage.  Calculations inside compute modules generally are
+   performed with double-precision 64-bit floating point internally.
 */
 typedef float ssc_number_t;
 
@@ -101,12 +100,7 @@ typedef float ssc_number_t;
 */
 typedef int ssc_bool_t;
 
-/** Possible data types for variables in an ssc_data_t:
-	SSC_INVALID
-	SSC_STRING
-	SSC_NUMBER
-	SSC_MATRIX
-	SSC_TABLE
+/** Possible data types for variables in an ssc_data_t.
 */
 #define SSC_INVALID 0
 #define SSC_STRING 1
@@ -200,23 +194,26 @@ SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name
 /** Returns the value of a @a SSC_TABLE variable with the given name. */
 SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name );
 
-/** Returns information of all computation modules built into ssc. Example:
+
+/** The opaque data structure that stores information about a compute module. */
+typedef void* ssc_entry_t;
+
+/** Returns compute module information for the i-th module in the SSC library.
+	\return 0 (NULL) for an invalid index. 
+
+	Example:
 
 	\code
 	int i=0;
 	ssc_entry_t p_entry;
 	while( p_entry = ssc_module_entry(i++) )
 	{
-		printf("Compute Module '%s': \n", ssc_entry_name(p_entry), ssc_entry_description(p_entry));
+		printf("Compute Module '%s': \n", 
+			ssc_entry_name(p_entry), 
+			ssc_entry_description(p_entry) );
 	}
 	\endcode
 */
-
-/** The opaque data structure that stores information about a compute module. */
-typedef void* ssc_entry_t;
-
-/** Returns compute module information for the i-th module in the SSC library.
-	\return 0 (NULL) for an invalid index. */
 SSCEXPORT ssc_entry_t ssc_module_entry( int index );
 
 /** Returns the name of a compute module.  This is the name that is used to create a new compute module. */
@@ -259,7 +256,11 @@ SSCEXPORT void ssc_module_free( ssc_module_t p_mod );
 #define SSC_INOUT 3
 
 /** Returns references to variable info objects. Example for a previously created 'p_mod' object:
+  \return Returns NULL for invalid index.
 
+  \note Note that the ssc_info_* functions that return strings may return NULL if the computation module
+  has not specified a value, i.e. no units or no grouping name.
+  
 	\code 
 	int i=0;
 	const ssc_info_t p_inf = NULL;
@@ -275,11 +276,6 @@ SSCEXPORT void ssc_module_free( ssc_module_t p_mod );
 		const char *group = ssc_info_group( p_inf );
 	}
 	\endcode
-
-  \return Returns NULL for invalid index.
-
-  \note Note that the ssc_info_* functions that return strings may return NULL if the computation module
-  has not specified a value, i.e. no units or no grouping name.
 */
 SSCEXPORT const ssc_info_t ssc_module_var_info( ssc_module_t p_mod, int index );
 
@@ -332,44 +328,33 @@ SSCEXPORT const char *ssc_module_exec_simple_nothread( const char *name, ssc_dat
 /** action/notification types that can be sent to a handler function 
 	SSC_LOG
 	SSC_UPDATE
-	SSC_EXECUTE */
-
-/** log a message. f0: (int)message type, f1: time, s0: message text, s1: unused */
+	SSC_EXECUTE
+	
+	Notes:
+		SSC_LOG: Log a message in the handler. f0: (int)message type, f1: time, s0: message text, s1: unused
+		SSC_UPDATE: Notify simulation progress update. f0: percent done, f1: time, s0: current action text, s1: unused
+*/
 #define SSC_LOG 0
-
-/** notify simulation progress update. f0: percent done, f1: time, s0: current action text, s1: unused */
 #define SSC_UPDATE 1
 
-/** request to run an external executable. f0: unused, f1: unused, s0: command line, s1: working directory 
-
-	\note On an external executable request, the handler function should:
-   1. save the current working directory
-   2. switch to the desired working directory (passed in arg2)
-   3. run the specified command synchronously, redirecting the standard output stream of the child process
-   4. for each line of output from the child process, call ssc_module_extproc_output( .. ) passing
-      the computation module reference and the process output text
-   5. when the process is done executing, restore the previously used working directory
-   6. return 1 if everything went fine, or 0 if there was an error executing the child process*/
-#define SSC_EXECUTE 2
-
-/** Runs a configured computation module over the specified data set.
-   Returns 1 or 0.  Detailed notices, warnings, and errors can be retrieved
-   either via a request_handler callback function, or using the ssc_module_message function. */
+/** Runs an instantiated computation module over the specified data set.
+   \return Boolean: 1 or 0.  
+   
+   Detailed notices, warnings, and errors can be retrieved using the ssc_module_log function. */
 SSCEXPORT ssc_bool_t ssc_module_exec( ssc_module_t p_mod, ssc_data_t p_data ); /* uses default internal built-in handler */
 
 /** An opaque pointer for transferring external executable output back to SSC */ 
 typedef void* ssc_handler_t;
 
-/** A full-featured way to run a compute module with a callback function to handle custom logging, progress updates, and external binary execute requests */
+/** A full-featured way to run a compute module with a callback function to handle 
+	custom logging, progress updates, and cancelation requests.
+	\return Boolean: 1 or 0 indicating success or failure. */
 SSCEXPORT ssc_bool_t ssc_module_exec_with_handler( 
 	ssc_module_t p_mod, 
 	ssc_data_t p_data, 
 	ssc_bool_t (*pf_handler)( ssc_module_t, ssc_handler_t, int action, float f0, float f1, const char *s0, const char *s1, void *user_data ),
 	void *pf_user_data );
 
-
-/** Helper function to be called from within a scc_exec_with_handler callback function to log binary output messages */
-SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_mod, const char *output_line );
 
 /** Messages types
 	SSC_NOTICE
@@ -379,9 +364,10 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_mod, const char *outpu
 #define SSC_WARNING 2
 #define SSC_ERROR 3
 
-/** Retrive notices, warnings, and error messages from the simulation */
+/** Retrive notices, warnings, and error messages from the simulation 
+	\return NULL-terminated ASCII C string with the message text, or NULL if the index passed in was invalid. 
+*/
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );
-
 
 /* DO NOT CALL THIS FUNCTION: immediately causes a segmentation fault within the library.
    This is only useful for testing crash handling from an external application that
