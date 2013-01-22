@@ -851,6 +851,7 @@ void SCFrame::ClearLog()
 	m_txtOutput->Clear();
 }
 
+/*
 class default_sync_proc : public util::sync_piped_process
 {
 private:
@@ -863,6 +864,7 @@ public:
 		::ssc_module_extproc_output( m_handler, line_text.c_str() );
 	}
 };
+*/
 
 ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action, 
 	float f0, float f1, const char *s0, const char *s1, void *user_data )
@@ -889,6 +891,7 @@ ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 		wxGetApp().Yield(true);
 		return 1; // return 0 to abort simulation as needed.
 	}
+/*
 	else if (action == SSC_EXECUTE)
 	{
 		// run the executable, pipe the output, and return output to p_mod
@@ -896,6 +899,7 @@ ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 		default_sync_proc exe( p_handler );
 		return exe.spawn( s0, s1 ) == 0;
 	}
+*/
 	else
 		return 0;
 }

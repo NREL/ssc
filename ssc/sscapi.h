@@ -328,7 +328,6 @@ SSCEXPORT const char *ssc_module_exec_simple_nothread( const char *name, ssc_dat
 /** action/notification types that can be sent to a handler function 
 	SSC_LOG
 	SSC_UPDATE
-	SSC_EXECUTE
 	
 	Notes:
 		SSC_LOG: Log a message in the handler. f0: (int)message type, f1: time, s0: message text, s1: unused

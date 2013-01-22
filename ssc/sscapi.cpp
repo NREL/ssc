@@ -326,6 +326,7 @@ SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf )
 	return vi ? vi->ui_hint : 0;
 }
 
+/*
 class default_sync_proc : public util::sync_piped_process
 {
 private:
@@ -338,6 +339,7 @@ public:
 		ssc_module_extproc_output( m_handler, line_text.c_str() );
 	}
 };
+*/
 
 static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_handler,
 	int action_type, float f0, float f1, 
@@ -363,6 +365,7 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 << std::endl;
 		return 1; // return 0 to abort simulation as needed.
 	}
+/*
 	else if (action_type == SSC_EXECUTE)
 	{
 		// run the executable, pipe the output, and return output to p_mod
@@ -370,6 +373,7 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 		default_sync_proc exe( p_handler );
 		return exe.spawn( s0, s1 ) == 0;
 	}
+*/
 	else
 		return 0;
 }
@@ -458,6 +462,7 @@ public:
 					SSC_UPDATE, percent, time, text.c_str(), 0, m_hdata ) ? 1 : 0;
 	}
 
+/*
 	virtual bool on_exec( const std::string &command, const std::string &workdir )
 	{
 		if (!m_hfunc) return false;
@@ -470,7 +475,7 @@ public:
 							m_hdata ) ? true : false;
 
 	}
-
+*/
 };
 
 SSCEXPORT ssc_bool_t ssc_module_exec_with_handler( 
