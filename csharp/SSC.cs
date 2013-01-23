@@ -1,6 +1,6 @@
 ﻿// SAM Simulation Core (SSC) MATLAB API
 // Copyright (c) 2012 National Renewable Energy Laboratory
-// author: Steven H. Janzou
+// author: Steven H. Janzou and Aron P. Dobos
 
 using System;
 using System.Collections.Generic;
@@ -578,12 +578,12 @@ namespace CS_SSC_API
                 sscapiPINVOKE.ssc_data_free(m_data);
         }
 
-        public void clear()
+        public void Clear()
         {
             sscapiPINVOKE.ssc_data_clear(m_data);
         }
 
-        public String first()
+        public String First()
         {
             IntPtr p = sscapiPINVOKE.ssc_data_first(m_data);
             if (p != IntPtr.Zero)
@@ -592,7 +592,7 @@ namespace CS_SSC_API
                 return null;
         }
 
-        public String next()
+        public String Next()
         {
             IntPtr p = sscapiPINVOKE.ssc_data_next(m_data);
             if (p != IntPtr.Zero)
@@ -601,40 +601,40 @@ namespace CS_SSC_API
                 return null;
         }
 
-        public int query(String name)
+        public int Query(String name)
         {
             return sscapiPINVOKE.ssc_data_query(m_data, name);
         }
 
-        public void setNumber(String name, float value)
+        public void SetNumber(String name, float value)
         {
             sscapiPINVOKE.ssc_data_set_number(m_data, name, value);
         }
 
-        public float getNumber(String name)
+        public float GetNumber(String name)
         {
             float val = float.NaN;
             sscapiPINVOKE.ssc_data_get_number(m_data, name, out val);
             return val;
         }
 
-        public void setString(String name, String value)
+        public void SetString(String name, String value)
         {
             sscapiPINVOKE.ssc_data_set_string(m_data, name, value);
         }
 
-        public String getString(String name)
+        public String GetString(String name)
         {
             IntPtr p = sscapiPINVOKE.ssc_data_get_string(m_data, name);
             return Marshal.PtrToStringAnsi(p);
         }
 
-        public void setArray(String name, float[] data)
+        public void SetArray(String name, float[] data)
         {
             sscapiPINVOKE.ssc_data_set_array(m_data, name, data, data.Length);
         }
 
-        public float[] getArray(String name)
+        public float[] GetArray(String name)
         {
             int len;
             IntPtr res = sscapiPINVOKE.ssc_data_get_array(m_data, name, out len);
@@ -647,14 +647,14 @@ namespace CS_SSC_API
             return arr;
         }
 
-        public void setMatrix(String name, float[,] mat)
+        public void SetMatrix(String name, float[,] mat)
         {
             int nRows = mat.GetLength(0);
             int nCols = mat.GetLength(1);
             sscapiPINVOKE.ssc_data_set_matrix(m_data, name, mat, nRows, nCols);
         }
 
-        public float[,] getMatrix(String name)
+        public float[,] GetMatrix(String name)
         {
             int nRows, nCols;
             IntPtr res = sscapiPINVOKE.ssc_data_get_matrix(m_data, name, out nRows, out nCols);
@@ -707,12 +707,12 @@ namespace CS_SSC_API
             return m_mod;
         }
 
-        bool Exec( SSCData data )
+        public bool Exec( SSCData data )
         {
             return (sscapiPINVOKE.ssc_module_exec(m_mod, data.GetDataHandle()) != 0);
         }
 
-        bool Log(int idx, out String msg, out int type, out float time)
+        public bool Log(int idx, out String msg, out int type, out float time)
         {
             msg = "";
             IntPtr p = sscapiPINVOKE.ssc_module_log(m_mod, idx, out type, out time);
@@ -732,22 +732,22 @@ namespace CS_SSC_API
         private HandleRef m_entry;
         private int m_idx;
 
-        SSCEntry()
+        public SSCEntry()
         {
             m_idx = 0;
         }
 
-        void reset()
+        public void Reset()
         {
             m_idx = 0;
         }
 
-        bool get()
+        public bool Get()
         {
             IntPtr p = sscapiPINVOKE.ssc_module_entry(m_idx);
             if (p == IntPtr.Zero)
             {
-                reset();
+                Reset();
                 return false;
             }
 
@@ -756,7 +756,7 @@ namespace CS_SSC_API
             return true;
         }
 
-        String name()
+        public String Name()
         {
             if (m_entry.Handle != IntPtr.Zero)
             {
@@ -766,7 +766,7 @@ namespace CS_SSC_API
             else return null;
         }
 
-        String description()
+        public String Description()
         {
             if (m_entry.Handle != IntPtr.Zero)
             {
@@ -777,7 +777,7 @@ namespace CS_SSC_API
                 return null;
         }
 
-        int version()
+        public int Version()
         {
             if (m_entry.Handle != IntPtr.Zero)
                 return sscapiPINVOKE.ssc_entry_version(m_entry);
@@ -798,17 +798,17 @@ namespace CS_SSC_API
             m_idx = 0;
         }
 
-        void reset()
+        public void Reset()
         {
             m_idx = 0;
         }
 
-        bool get()
+        public bool Get()
         {
             IntPtr p = sscapiPINVOKE.ssc_module_var_info(m_mod.GetModuleHandle(), m_idx);
             if (p == IntPtr.Zero)
             {
-                reset();
+                Reset();
                 return false;
             }
 
@@ -817,61 +817,61 @@ namespace CS_SSC_API
             return true;
         }
 
-        String name()
+        public String Name()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
             IntPtr p = sscapiPINVOKE.ssc_info_name(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
-        int vartype()
+        public int VarType()
         {
             if (m_inf.Handle == IntPtr.Zero) return -1;
             return sscapiPINVOKE.ssc_info_var_type(m_inf);
         }
 
-        int datatype()
+        public int DataType()
         {
             if (m_inf.Handle == IntPtr.Zero) return -1;
             return sscapiPINVOKE.ssc_info_data_type(m_inf);
         }
 
-        string label()
+        public string Label()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
             IntPtr p = sscapiPINVOKE.ssc_info_label(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
-        string units()
+        public string Units()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
             IntPtr p = sscapiPINVOKE.ssc_info_units(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
-        string meta()
+        public string Meta()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
             IntPtr p = sscapiPINVOKE.ssc_info_meta(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
-        string group()
+        public string Group()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
             IntPtr p = sscapiPINVOKE.ssc_info_group(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
-        string required()
+        public string Required()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
             IntPtr p = sscapiPINVOKE.ssc_info_required(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
-        string constraints()
+        public string Constraints()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
             IntPtr p = sscapiPINVOKE.ssc_info_constraints(m_inf);
@@ -879,7 +879,20 @@ namespace CS_SSC_API
         }
     }
 
-    
+    public class SSCMeta
+    {
+        public int Version()
+        {
+            return sscapiPINVOKE.ssc_version();
+        }
+
+        public String BuildInfo()
+        {
+            IntPtr buildInfo = sscapiPINVOKE.ssc_build_info();
+            return Marshal.PtrToStringAnsi(buildInfo);
+        }
+    }
+
     public class SSC 
     {
         private HandleRef ssc_data_ptr;
@@ -926,7 +939,7 @@ namespace CS_SSC_API
           return Marshal.PtrToStringAnsi(buildInfo);
       }
   
-      public void Set_String(String name, String value)
+      public void SetString(String name, String value)
       {
           sscapiPINVOKE.ssc_data_set_string(ssc_data_ptr, name, value);
       }
