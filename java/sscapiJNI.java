@@ -29,8 +29,8 @@ public class sscapiJNI {
   public final static native void ssc_data_set_matrix(long cxt, String name, float[] value, int nrow, int ncol);
   public final static native void ssc_data_set_table(long jarg1, String jarg2, long jarg3);
   public final static native String ssc_data_get_string(long jarg1, String jarg2);
-  public final static native int ssc_data_get_number(long jarg1, String jarg2, long jarg3);
-  public final static native float[] ssc_data_get_array(long cxt, String name, int[] len);
+  public final static native int ssc_data_get_number(long cxt, String name, float[] value);
+  public final static native float[] ssc_data_get_array(long cxt, String name);
   public final static native float[] ssc_data_get_matrix(long cxt, String name, int[] len);
   public final static native long ssc_data_get_table(long jarg1, String jarg2);
   public final static native long ssc_module_entry(int jarg1);

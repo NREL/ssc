@@ -65,9 +65,20 @@ public class SSC
       sscapiJNI.ssc_data_set_number(ssc_data_ptr, name, value);
   }
 
-  public float[] Get_Array(String name, int[] len)
+  public float[] Get_Array(String name)
   {
-      return sscapiJNI.ssc_data_get_array(ssc_data_ptr, name, len);
+      return sscapiJNI.ssc_data_get_array(ssc_data_ptr, name);
+  }
+
+  public float GetNumber(String name)
+  {
+      float[] value = {0};
+      int ret = sscapiJNI.ssc_data_get_number(ssc_data_ptr, name, value);
+      if (ret==0)
+      {
+          value[0] = Float.NaN;
+      }
+      return value[0];
   }
   
   public boolean Exec()
