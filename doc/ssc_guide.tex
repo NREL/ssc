@@ -59,7 +59,7 @@
 \newcommand{\notebox}[1]{ \begin{center}\framebox[5.5in]{\begin{minipage}[t]{5.0in}\textbf{Note: }#1\end{minipage}}\end{center}}
 
 \title{SSC Reference Manual}
-%\author{Aron Dobos \& Paul Gilman}
+\author{Aron Dobos \& Paul Gilman}
 
 \begin{document}
 
@@ -86,9 +86,9 @@ The SSC software development kit (SDK) provides tools for creating models of ren
 
 \subsection{Framework Description}
 
-The SSC framework provides a generic mechanism for running modules, setting values of module inputs, and reading values of module outputs. The mechanisms are generic because they do not depend on the module. For example, the same mechanism provides access to the PVWatts (\texttt{pvwattsv1}) and Utility IPP ( \texttt{ippppa}) modules.  
+The SSC framework provides a generic mechanism for running modules, setting values of module inputs, and reading values of module outputs. The mechanisms are generic because they do not depend on the module. For example, the same mechanism provides access to the PVWatts (\texttt{pvwattsv1}) and Utility IPP (\texttt{ippppa}) modules.  
 
-Using an SSC module is analogous to calling a function in a programming language: You pass parameter values to the function, run the function, and then read values returned by the function.  In SSC, you store input variables in a data container, run the module, and retrieve outputs from the data container:
+Using an SSC module is analogous to calling a function in a programming language: you pass parameter values to the function, run the function, and then read values returned by the function.  In SSC, you store input variables in a data container, run the module, and retrieve outputs from the same data container:
 
 \begin{enumerate}
 \item Create a data container of type \texttt{ssc\_data\_t} for model input variables.
@@ -871,7 +871,7 @@ A list of modules should appear in the module browser, and the library path and 
   \begin{center}
     \begin{tabular}{cccc}
        \hline
-       Operating System & Directory Name & SSCDev Version & Library \\
+       Operating System & Directory Name & SSCdev Version & Library \\
        \hline
        Windows 32-bit & win32 & sscdev32.exe & ssc32.dll \\
        Windows 64-bit & win32 & sscdev64.exe & ssc64.dll \\
@@ -885,7 +885,7 @@ A list of modules should appear in the module browser, and the library path and 
 
 SSCdev displays a list of available modules, and lists each module's input and output variables, but does not provide enough information to completely understand the modules. You should be prepared to use the SAM user interface and documentation together with SSCdev to help you understand how the modules and variables work. 
 
-For example, the \texttt{annualoutput} module includes a variable named \texttt{energy\_availability} that uses the data type \texttt{SSC\_ARRAY}. Why is the data type not \texttt{SSC\_NUMBER instead}? To find out, we can examine the \texttt{annualoutput} input variables in SAM's user interface, which displays them on the Performance Adjustment input page. The \texttt{energy\_availabilty} variable appears with the label "Percent of annual output," and SAM provides two options for entering the variable's value: As a single value or as an annual schedule. The array data type is necessary to store the annual values. The \texttt{annualoutput} module assumes that if there is a single non-zero value at the top of the array, that value represents a single adjustment factor that applies to all years. Otherwise it applies values from the array to each year.
+For example, the \texttt{annualoutput} module includes a variable named \texttt{energy\_availability} that uses the data type \texttt{SSC\_ARRAY}. Why is the data type not \texttt{SSC\_NUMBER} instead? To find out, we can examine the \texttt{annualoutput} input variables in SAM's user interface, which displays them on the Performance Adjustment input page. The \texttt{energy\_availabilty} variable appears with the label ``Percent of annual output,'' and SAM provides two options for entering the variable's value: As a single value or as an annual schedule. The array data type is necessary to store the annual values. The \texttt{annualoutput} module assumes that if there is a single non-zero value at the top of the array, that value represents a single adjustment factor that applies to all years. Otherwise it applies values from the array to each year.
 
 For some variables, even the SAM user interface may not be helpful. When you need help with an SSC module or variable, ask a question as a comment on the SAM website's SDK page. For example, you might wonder what the \texttt{annualoutput} module's \texttt{system\_use\_lifetime\_output} variable does. That variable is not on any of SAM's input pages, and the information in SSCdev does not explain its function. The variable determines whether the module generates a single set of 8,760 hourly values for the \texttt{hourly\_e\_net\_delivered} variable, or whether it generates a set of 8,760 values for each year in the analysis period. All of SAM's performance models use a value of zero except for the geothermal model, which is a special case and requires lifecycle output data to accurately represent changes in resource over time as it is depleted and replenished. For most cases, you should set its value to zero.
 
@@ -1160,43 +1160,57 @@ The C\# language interface provides direct access to the SSC library from the Mi
 
 The C\# SSC language interface is provided as a single source file called \texttt{SSC.cs}.  This file contains direct invocation mappings to the unmanaged C library API, as well as an easy-to-use wrapper around the low-level function calls.  This API has been tested using Visual Studio 2012 .NET on Win32 and x64.  .NET implementations on other platforms such as Mono have not been tested.
 
-To call the SSC library from C\#, include the \texttt{SSC.cs} file in your .NET project in Visual Studio.  Then, you should be able to create an instance of the \texttt{CS\_SSC\_API} class, as in the example below.
+To call the SSC library from C\#, include the \texttt{SSC.cs} file in your .NET project in Visual Studio. For each opaque data pointer type in the SSC native C API, there is a similarly named C\# class within the SSC namespace.  See the example below on how to create a data container and module to run PVWatts.  Additional examples of the other SSC API functions using the C\# wrapper classes is available in the included test program in the SDK.
 
 \begin{verbatimtab}[4]
 private void btnPVWatts_Click(object sender, EventArgs e)
 {
-	CS_SSC_API.SSC sscobj = new CS_SSC_API.SSC("pvwattsv1");
-
 	txtData.Clear();
 
-	sscobj.SetString("file_name", "abilene.tm2" );
-	sscobj.SetNumber("system_size", 4.0f );
-	sscobj.SetNumber("derate", 0.77f );
-	sscobj.SetNumber("track_mode", 0 );
-	sscobj.SetNumber("tilt", 20 );
-	sscobj.SetNumber("azimuth", 180 );
+	SSC.Data data = new SSC.Data();
 
-	if ( sscobj.Exec() )
+	data.SetString("file_name", "abilene.tm2");
+	data.SetNumber("system_size", 4.0f);
+	data.SetNumber("derate", 0.77f);
+	data.SetNumber("track_mode", 0);
+	data.SetNumber("tilt", 20);
+	data.SetNumber("azimuth", 180);
+
+	SSC.Module mod = new SSC.Module("pvwattsv1");
+
+	if (mod.Exec(data))
 	{
-		float[] ac = sscobj.GetArray( "ac" );
-		float sum = 0;
-	
-		for( int i=0;i<ac.Count();i++)
-		{
-			sum += ac[i];
-		}
-
-		txtData.AppendText("length returned: " + ac.Count() + "\n");
-		txtData.AppendText("ac total (get array): " + sum + "\n");
-		txtData.AppendText("PVWatts example passed" + "\n");
+		float tot = data.GetNumber("ac_annual");
+		float[] ac = data.GetArray("ac_monthly");
+		for (int i = 0; i < ac.Count(); i++)
+			txtData.AppendText("[" + i + "]: " + ac[i] + " kWh\n");
+		txtData.AppendText("AC total: " + tot + "\n");
+		txtData.AppendText("PVWatts test OK\n");
 	}
 	else
 	{
-		txtData.AppendText("PVWatts example failed" + "\n");
+		int idx = 0;
+		String msg;
+		int type;
+		float time;
+		while (mod.Log(idx, out msg, out type, out time))
+		{
+			String stype = "NOTICE";
+			if (type == SSC.API.WARNING) stype = "WARNING";
+			else if (type == SSC.API.ERROR) stype = "ERROR";
+
+			txtData.AppendText("[ " + stype + " at time:" + time + " ]: " + msg + "\n");
+			idx++;
+		}
+
+		txtData.AppendText("PVWatts example failed\n");
 	}
 }
 
+
 \end{verbatimtab}
+
+\notebox{The SSC C\# class library is designed to properly handle allocation and freeing of underlying native SSC data types.  However, due to the nature of the .NET runtime environment's garbage collector, it may appear that SSC objects are not freed right away.  While it is possible to invoke the garbage collector manually, it is generally not recommended to do so by the Visual Studio documentation.}
 
 For more information, consult the \texttt{SSC.cs} source file, as well as the example Visual Studio project provided with the SDK.
 
@@ -1206,7 +1220,7 @@ The Java interface to SSC utilizes the low-level Java Native Interface (JNI) spe
 
 The JNI interface marshals opaque C pointers as the 64-bit \texttt{jlong} data type, ensuring compatibility in both 32 and 64 bit implementations.
 
-Compiling the JNI interface layer requires a C compiler and the Java SDK (for the JNI header files).  The example included with the SSC SDK was tested using the freely downloadable MinGW gcc compiler on 32-bit Windows (\texttt{https://www.mingw.org}), and the Java JDK 1.7.  
+Compiling the JNI interface layer requires a C compiler and the Java SDK (for the JNI header files).  The example included with the SSC SDK was tested using the freely downloadable MinGW gcc compiler on 32-bit Windows (\texttt{https://www.mingw.org}), and the Java JDK 1.7.  Refer to the \texttt{README.txt} in the \texttt{[sdk]/languages/java/} folder for specific information on compiling the JNI interface layers for your particular SDK runtime environment.
 
 Once the JNI wrapper library has been compiled for your particular JDK version, the PVWatts example can be invoked from within Java as below:
 
@@ -1247,11 +1261,20 @@ public class SSC_Java_Example {
 
 \end{verbatimtab}
 
-For more information on utilizing the Java language layer, consult Java code examples provided in the SDK.
+For more information on utilizing the Java language layer, consult Java code examples provided in the SDK.  
 
 
 \section{C API Reference}
 \label{sec_api_ref}
 \include{ssc_api_latex/sscapi_8h}
+
+\section{Legal}
+
+The System Advisor Model (``Model'') is provided by the National Renewable Energy Laboratory (``NREL''), which is operated by the Alliance for Sustainable Energy, LLC (``Alliance'') for the U.S. Department Of Energy (``DOE'') and may be used for any purpose whatsoever.  
+
+The names DOE/NREL/ALLIANCE shall not be used in any representation, advertising, publicity or other manner whatsoever to endorse or promote any entity that adopts or uses the Model.  DOE/NREL/ALLIANCE shall not provide any support, consulting, training or assistance of any kind with regard to the use of the Model or any updates, revisions or new versions of the Model.
+
+YOU AGREE TO INDEMNIFY DOE/NREL/ALLIANCE, AND ITS AFFILIATES, OFFICERS, AGENTS, AND EMPLOYEES AGAINST ANY CLAIM OR DEMAND, INCLUDING REASONABLE ATTORNEYS' FEES, RELATED TO YOUR USE, RELIANCE, OR ADOPTION OF THE MODEL FOR ANY PURPOSE WHATSOEVER.  THE MODEL IS PROVIDED BY DOE/NREL/ALLIANCE "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE EXPRESSLY DISCLAIMED.  IN NO EVENT SHALL DOE/NREL/ALLIANCE BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER, INCLUDING BUT NOT LIMITED TO CLAIMS ASSOCIATED WITH THE LOSS OF DATA OR PROFITS, WHICH MAY RESULT FROM ANY ACTION IN CONTRACT, NEGLIGENCE OR OTHER TORTIOUS CLAIM THAT ARISES OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE MODEL.
+
 
 \end{document}

@@ -15,7 +15,9 @@
 
   \copyright 2012 National Renewable Energy Laboratory
   \authors Aron Dobos, Steven Janzou
-
+  */
+  
+/*
 --------- Doxygen notes ----------
 
   Detailed description of what the function does
@@ -112,7 +114,8 @@ typedef int ssc_bool_t;
 /** Creates a new data object in memory.  A data object stores a table of named values, where each value can be of any SSC datatype. */
 SSCEXPORT ssc_data_t ssc_data_create();
 
-/** Frees the memory associated with a data object. */
+/** Frees the memory associated with a data object. 
+	\param p_data The data container to free. */
 SSCEXPORT void ssc_data_free( ssc_data_t p_data );
 
 /** Clears all of the variables in a data object. */
