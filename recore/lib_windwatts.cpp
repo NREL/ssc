@@ -15,137 +15,16 @@ static inline double min_of(double a, double b)
 	return (a < b) ? a : b;
 }
 
-
-void turbine_power( double fWindVelocityAtDataHeight, double fShearCoefficient, double Hub_Ht, double fDataHeight,
-	double fCutInSpeed, double Rotor_Di,
-	double fAirDensity, double fRatedWindSpeed, double fRatedTurbineOutput,
-	int Ctl_Mode, double LossC, double fPercentLoss, double afPowerCurve_Speeds[], double afPowerCurve_TurbineOutputs[], int Num_Pair,
-	double *fTurbineOutput, double *fThrustCoefficient )
-{
-	// default outputs to zero
-	*fThrustCoefficient = 0;
-	*fTurbineOutput = 0;
-
-	// If the wind speed measurement height (fDataHeight) differs from the turbine hub height (Hub_Ht), use the shear to correct it. 
-	if (fShearCoefficient > 1.0) fShearCoefficient = 1.0/7.0;
-	double fWindSpeedAtHubHeight = fWindVelocityAtDataHeight * pow(Hub_Ht/fDataHeight, fShearCoefficient);
-	
-	// Find power from turbine power curve
-	double out_pwr=0.0;
-	if ( (fWindSpeedAtHubHeight > afPowerCurve_Speeds[0]) && (fWindSpeedAtHubHeight < afPowerCurve_Speeds[Num_Pair-1]) ) 
-	{
-		int j = 1;
-		while ( afPowerCurve_Speeds[j] <= fWindSpeedAtHubHeight )
-			j++; // find first afPowerCurve_Speeds > fWindSpeedAtHubHeight
-
-		out_pwr = util::interpolate(afPowerCurve_Speeds[j-1], afPowerCurve_TurbineOutputs[j-1], afPowerCurve_Speeds[j], afPowerCurve_TurbineOutputs[j], fWindSpeedAtHubHeight);
-	}
-	else if (fWindSpeedAtHubHeight >= afPowerCurve_Speeds[Num_Pair-1]) 
-		out_pwr = afPowerCurve_TurbineOutputs[Num_Pair-1]; // wind speed greater than maximum in the power curve: power output is last value
-
-	// Check against turbine cut-in speed
-	if ( fWindSpeedAtHubHeight < fCutInSpeed) out_pwr = 0.0; 
-
-	// wind turbine output corrected for site air density
-	out_pwr *= fAirDensity/physics::AIR_DENSITY_SEA_LEVEL;
-
-	// stall control (Ctl_Mode == 2) defaults to simple density ratio
-	if ( (Ctl_Mode == 1)/*pitch control*/ || (Ctl_Mode == 0)/*var speed control*/ )
-	{
-		double NewVRat = fRatedWindSpeed*pow(fAirDensity/physics::AIR_DENSITY_SEA_LEVEL, 1.0/3.0);
-		if (out_pwr > fRatedTurbineOutput)
-			out_pwr = fRatedTurbineOutput;
-		else if (fWindSpeedAtHubHeight > NewVRat)
-			out_pwr = fRatedTurbineOutput;
-	}
-
-	// if calculated power is > 1% of rating, set outputs
-	if (out_pwr > (fRatedTurbineOutput * 0.01))
-	{
-		out_pwr = out_pwr*(1.0-fPercentLoss)-LossC;
-		double pden = 0.5*fAirDensity*pow(fWindSpeedAtHubHeight, 3.0);
-		double area = physics::PI/4.0*Rotor_Di*Rotor_Di;
-		double fPowerCoefficient = max_of( 0.0, 1000.0*out_pwr/(pden*area) );
-
-		// set outputs to something other than zero
-		*fTurbineOutput = out_pwr;
-		if (fPowerCoefficient >= 0.0)
-			*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );
-	}
-	return;
-}
-
-// wake modeling - calculating the change in wind speed due to wake effects of upwind turbine
-void vel_delta_loc( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta)
-{
-	// vel_delta_loc() can return values > 1 for Vdelta, which leads to negative wind speed at turbine j
-	// turbine_power() will handle a negative wind speed by setting power output, thrust, and turbulence to zero
-	// This seems prone to errors, Wind[j] should probably be limited to values >=0
-
-	// fRadiiCrosswind = distance from being straight downwind (distance 'crosswind') of the upwind turbine, measured in the number of upwind turbine radii
-	// fRadiiDownwind = Distance Downwind, measured in the number of upwind turbine radii (e.g. 2.5 = 2.5 times the radius of the upwind turbine)
-	// fTurbulenceIntensity = turbulence intensity
-	// fThrustCoeff = Thrust coeff
-
-	// The calculated value of fNewTurbulenceIntensity, passed out of function, will then be sent back in as the new fTurbulenceIntensity input the next time
-	// this function is called for the same turbine.  So, fTurbulenceIntensity can only increase due to influence of other (upwind) turbines,
-	// based on the equation for fNewTurbulenceIntensity (square root of two numbers squared, where one number is fTurbulenceIntensity)
-	// Note that the calculation of fNewTurbulenceIntensity does NOT include fRadiiCrosswind - so it's only influenced by how far upwind the other turbine is,
-	// EVEN IF IT'S 19 ROTOR RADII TO THE SIDE!!!
-
-	if (fRadiiCrosswind > 20.0 || fTurbulenceIntensity <= 0.0 || fRadiiDownwind <= 0.0 || fThrustCoeff <= 0.0)
-	{
-		*fNewTurbulenceIntensity = fTurbulenceIntensity;
-		*Vdelta = 0.0;
-	}
-	else
-	{
-		double fAddedTurbulence = (fThrustCoeff/7.0)*(1.0-(2.0/5.0)*log(2.0*fRadiiDownwind)); // NOTE that this equation does not account for how far over the turbine is!!
-		*fNewTurbulenceIntensity = sqrt( pow(fAddedTurbulence,2.0) + pow(fTurbulenceIntensity,2.0) );
-
-		double AA = pow(*fNewTurbulenceIntensity,2.0) * pow(fRadiiDownwind,2.0);
-		double fExp = max_of( -99.0, (-pow(fRadiiCrosswind,2.0)/(2.0*AA)) );
-		*Vdelta = (fThrustCoeff/(4.0*AA))*exp(fExp);
-	}
-}
-
-// This subroutine transforms the map east,north coordinate system to a downwind,crosswind orientation orthogonal to current wind direction.
-void coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind)
-{
-	// rotate wind direction to match unit circle (where zero is East, not North)
-	fWind_dir_degrees += 90;
-
-	// convert degrees to radians
-	double fWind_dir_radians = fWind_dir_degrees*physics::PI/180.0;
-
-	// create downwind and crosswind coordinates
-	*fMetersDownWind = fMetersEast*cos(fWind_dir_radians) - ( fMetersNorth * sin(fWind_dir_radians) ); //!northerly = FROM North"
-	*fMetersCrosswind = fMetersEast*sin(fWind_dir_radians) + ( fMetersNorth * cos(fWind_dir_radians) );
-}
-
-int wind_power(
+int wind_power_calculator::wind_power(
 	// INPUTS
 		double fWind_speed,					// wind velocity m/s
 		double fWind_direction_degrees,		// wind direction 0-360, 0=N
-		double fShear_coeff,				// shear exponent
-		double fTurbulence_intensity,		// turbulence intensity (%)
 		double fAir_pressure_atm,			// barometric pressure (Atm)
 		double TdryC,		// dry bulb temp ('C)
-		int iNumWT,			// number of wind turbines
 		double WT_x[],		// x coordinates of wind turbines
 		double WT_y[],		// y coordinates of wind turbines
-		int PC_len,			// number of power curve points
 		double PC_w[],		// Power curve wind speeds m/s
 		double PC_p[],		// Power curve output power (kW)
-		double Data_Ht,		// Site data collection height (m)
-		double Hub_Ht,		// each turbine's hub height (m)
-		double Rotor_Di,	// turbine rotor diameter (m)
-		int Ctl_Mode,		// control mode 0=pitch, 1=variable, 2=simple
-		double Spd_CtIn,	// wind speed Cut in (m/s)
-		double Spd_Ratd,	// rated wind speed
-		double Pwr_Ratd,	// rated power
-		double LossC,		// constant loss
-		double LossP,		// loss as percent
 			
 	// OUTPUTS
 		double *FarmP,						// total farm power output
@@ -158,13 +37,13 @@ int wind_power(
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 		)
 {
-	if (iNumWT > MAX_WIND_TURBINES)
+	if (m_iNumberOfTurbinesInFarm > MAX_WIND_TURBINES)
 		return 0;
 
 	int i,j;
 	unsigned char wt_id[MAX_WIND_TURBINES], wid;
 
-	for (i=0; i<iNumWT; i++)
+	for (i=0; i<m_iNumberOfTurbinesInFarm; i++)
 		wt_id[i] = (unsigned char)i;
 
 	// convert barometric pressure in ATM to air density
@@ -172,7 +51,7 @@ int wind_power(
 	double d, c;
 	
 	//!Convert to d,c coordinates and initialize others
-	for (i=0;i<iNumWT;i++)
+	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 	{
 		coordtrans( WT_y[i], WT_x[i], fWind_direction_degrees, &d, &c );
 
@@ -184,56 +63,39 @@ int wind_power(
 		Eff[i] = 0.0;
 
 		aWind_speed[i] = fWind_speed;
-		aTurbulence_intensity[i] = fTurbulence_intensity;
+		aTurbulence_intensity[i] = m_dTurbulenceIntensity;
 	}
 		
  	double Dmin = aDistanceDownwind[0];
 	double Cmin = aDistanceCrosswind[0];
 
-	for (j=1;j<iNumWT;j++) //!Translate out of neg.#s 
+	for (j=1;j<m_iNumberOfTurbinesInFarm;j++) //!Translate out of neg.#s 
 	{
 		Dmin = min_of(aDistanceDownwind[j],Dmin);
 		Cmin = min_of(aDistanceCrosswind[j],Cmin);
 	}
 
-	for (j=0;j<iNumWT;j++)
+	for (j=0;j<m_iNumberOfTurbinesInFarm;j++)
 	{
 		aDistanceDownwind[j] = aDistanceDownwind[j]-Dmin; // Final downwind coordinates, meters
 		aDistanceCrosswind[j] = aDistanceCrosswind[j]-Cmin; // Final crosswind coordinates, meters
 	}
 
-	for (i=0;i<iNumWT;i++) // Convert from meteres to WT radii
+	for (i=0;i<m_iNumberOfTurbinesInFarm;i++) // Convert from meteres to WT radii
 	{
-		aDistanceDownwind[i] = 2.0*aDistanceDownwind[i]/Rotor_Di;
-		aDistanceCrosswind[i] = 2.0*aDistanceCrosswind[i]/Rotor_Di;
+		aDistanceDownwind[i] = 2.0*aDistanceDownwind[i]/m_dRotorDiameter;
+		aDistanceCrosswind[i] = 2.0*aDistanceCrosswind[i]/m_dRotorDiameter;
 	}
 	
 	// Calculate the output for the most upwind turbine
 	double fTurbine_output, fThrust_coeff;
-	turbine_power( fWind_speed,
-				fShear_coeff,
-				Hub_Ht,
-				Data_Ht,
-				Spd_CtIn,
-				Rotor_Di,
-				fAir_density,
-				Spd_Ratd,
-				Pwr_Ratd,
-				Ctl_Mode,
-				LossC,
-				LossP,
-				PC_w,
-				PC_p,
-				PC_len,
-				&fTurbine_output,
-				&fThrust_coeff );
-
+	turbine_power(fWind_speed, fAir_density, PC_w, PC_p, &fTurbine_output, &fThrust_coeff );
 	Power[0] = fTurbine_output;
 	Thrust[0] = fThrust_coeff;
 	Eff[0] = ( fTurbine_output < 1.0 ) ? 0.0 : 100.0;
 
 	// if there is only one turbine, we're done
-	if (iNumWT < 2)
+	if (m_iNumberOfTurbinesInFarm < 2)
 	{
 		*FarmP = fTurbine_output;
 		return 1;
@@ -241,7 +103,7 @@ int wind_power(
 
 	
 	// Sort aDistanceDownwind,aDistanceCrosswind arrays by downwind distance, aDistanceDownwind[0] is smallest downwind distance, presumably zero
-	for (j=1;j<iNumWT;j++) 
+	for (j=1;j<m_iNumberOfTurbinesInFarm;j++) 
 	{
 		d = aDistanceDownwind[j]; // pick out each element
 		c = aDistanceCrosswind[j];
@@ -267,9 +129,9 @@ int wind_power(
 	// then set this turbine's output.
 	// then go through the j loop, calculating this turbine's impact on the wind speed at each downwind turbine
 
-	for (i=0;i<iNumWT-1;i++) // upwind turbines
+	for (i=0;i<m_iNumberOfTurbinesInFarm-1;i++) // upwind turbines
 	{
-		for (j=i+1; j<iNumWT; j++) // downwind turbines
+		for (j=i+1; j<m_iNumberOfTurbinesInFarm; j++) // downwind turbines
 		{
 			// Wake Model: calculate downwind propagation of wind speed reduction due to upwind turbines
 
@@ -301,24 +163,7 @@ int wind_power(
 			// of the downwind (j >= i+2) turbines
 			if (j==i+1)
 			{
-				turbine_power( aWind_speed[j],
-					fShear_coeff, // shear
-					Hub_Ht,
-					Data_Ht,
-					Spd_CtIn,
-					Rotor_Di,
-					fAir_density,
-					Spd_Ratd,
-					Pwr_Ratd,
-					Ctl_Mode,
-					LossC,
-					LossP,
-					PC_w,
-					PC_p,
-					PC_len,
-					&fTurbine_output,
-					&fThrust_coeff );
-
+				turbine_power( aWind_speed[j], fAir_density, PC_w, PC_p, &fTurbine_output, &fThrust_coeff);
 				Power[j] = fTurbine_output;
 				Thrust[j] = fThrust_coeff;
 
@@ -333,14 +178,14 @@ int wind_power(
 
 	*FarmP = 0;
 
-	for (i=0;i<iNumWT;i++)
+	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 		*FarmP += Power[i];
 
 	double p,t,e,w,b;
 
 	// Resort output arrays by wind turbine ID (0..nwt-1)
 	// for consistent reporting
-	for (j=1;j<iNumWT;j++) 
+	for (j=1;j<m_iNumberOfTurbinesInFarm;j++) 
 	{
 		d = aDistanceDownwind[j]; // pick out each element
 		c = aDistanceCrosswind[j];
@@ -375,10 +220,195 @@ int wind_power(
 		wt_id[i] = wid;
 	}
 	
-	return iNumWT;
+	return m_iNumberOfTurbinesInFarm;
 }
 
-double gammaln(double x)
+
+double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double resource_class, double wind_speed[], double power_curve[], double hub_efficiency[])
+{	// returns same units as 'power_curve'
+
+	double hub_ht_windspeed = pow((m_dHubHeight/50.0),m_dShearExponent) * resource_class;
+	double denom = exp(gammaln(1+(1/hub_ht_windspeed)));
+
+	double lambda = hub_ht_windspeed/denom;
+	//double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
+
+	// 'RUN' MODEL ****************************************************************************************
+	double total_energy_turbine=0;//, total_energy_generic=0;
+	std::vector<double> weibull_cummulative(m_iLengthOfTurbinePowerCurveArray, 0);
+	std::vector<double> weibull_bin(m_iLengthOfTurbinePowerCurveArray, 0);
+	//std::vector<double> weibull_probability(m_iLengthOfTurbinePowerCurveArray, 0);
+	std::vector<double> energy_turbine(m_iLengthOfTurbinePowerCurveArray, 0);	// energy from turbine chosen from library
+
+	// double step = 0;
+	// weibull_k = 2.10; // used for testing: this is off in the 5th significant digit when passed into SSC from samwx
+	weibull_cummulative[0] = 0.0;
+	weibull_bin[0] = 0.0;
+	energy_turbine[0] = 0.0;
+	for (int i=1; i<m_iLengthOfTurbinePowerCurveArray; i++)
+	{
+		// step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
+
+		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
+		weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
+		weibull_bin[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
+		// THIS IS NOT FOR THE BIN wind speed[i to i-1]: weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) );
+
+		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
+		energy_turbine[i] = (8760.0 * weibull_bin[i]) * power_curve[i];
+
+		// keep track of cummulative output
+		total_energy_turbine += energy_turbine[i];
+	}
+
+	// calculate output accounting for losses
+	return  total_energy_turbine;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Private functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double afPowerCurve_Speeds[], double afPowerCurve_TurbineOutputs[], double *fTurbineOutput, double *fThrustCoefficient )
+{
+	// default outputs to zero
+	*fThrustCoefficient = 0;
+	*fTurbineOutput = 0;
+
+	// If the wind speed measurement height (fDataHeight) differs from the turbine hub height (Hub_Ht), use the shear to correct it. 
+	if (m_dShearExponent > 1.0) m_dShearExponent = 1.0/7.0;
+	double fWindSpeedAtHubHeight = fWindVelocityAtDataHeight * pow(m_dHubHeight/m_dMeasurementHeight, m_dShearExponent);
+	
+	// Find power from turbine power curve
+	double out_pwr=0.0;
+	if ( (fWindSpeedAtHubHeight > afPowerCurve_Speeds[0]) && (fWindSpeedAtHubHeight < afPowerCurve_Speeds[m_iLengthOfTurbinePowerCurveArray-1]) ) 
+	{
+		int j = 1;
+		while ( afPowerCurve_Speeds[j] <= fWindSpeedAtHubHeight )
+			j++; // find first afPowerCurve_Speeds > fWindSpeedAtHubHeight
+
+		out_pwr = util::interpolate(afPowerCurve_Speeds[j-1], afPowerCurve_TurbineOutputs[j-1], afPowerCurve_Speeds[j], afPowerCurve_TurbineOutputs[j], fWindSpeedAtHubHeight);
+	}
+	else if (fWindSpeedAtHubHeight >= afPowerCurve_Speeds[m_iLengthOfTurbinePowerCurveArray-1]) 
+		out_pwr = afPowerCurve_TurbineOutputs[m_iLengthOfTurbinePowerCurveArray-1]; // wind speed greater than maximum in the power curve: power output is last value
+
+	// Check against turbine cut-in speed
+	if ( fWindSpeedAtHubHeight < m_dCutInSpeed) out_pwr = 0.0; 
+
+	// wind turbine output corrected for site air density
+	out_pwr *= fAirDensity/physics::AIR_DENSITY_SEA_LEVEL;
+
+	// stall control (Ctl_Mode == 2) defaults to simple density ratio
+	if ( (m_iControlMode == 1)/*pitch control*/ || (m_iControlMode == 0)/*var speed control*/ )
+	{
+		double NewVRat = m_dRatedSpeed * pow(fAirDensity/physics::AIR_DENSITY_SEA_LEVEL, 1.0/3.0);
+		if (out_pwr > m_dRatedPower)
+			out_pwr = m_dRatedPower;
+		else if (fWindSpeedAtHubHeight > NewVRat)
+			out_pwr = m_dRatedPower;
+	}
+
+	// if calculated power is > 1% of rating, set outputs
+	if (out_pwr > (m_dRatedPower * 0.01))
+	{
+		out_pwr = out_pwr*(1.0-m_dLossesPercent) - m_dLossesAbsolute;
+		double pden = 0.5*fAirDensity*pow(fWindSpeedAtHubHeight, 3.0);
+		double area = physics::PI/4.0*m_dRotorDiameter*m_dRotorDiameter;
+		double fPowerCoefficient = max_of( 0.0, 1000.0*out_pwr/(pden*area) );
+
+		// set outputs to something other than zero
+		*fTurbineOutput = out_pwr;
+		if (fPowerCoefficient >= 0.0)
+			*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );
+	}
+	return;
+}
+
+// wake modeling - calculating the change in wind speed due to wake effects of upwind turbine
+void wind_power_calculator::vel_delta_loc( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta)
+{
+	// vel_delta_loc() can return values > 1 for Vdelta, which leads to negative wind speed at turbine j
+	// turbine_power() will handle a negative wind speed by setting power output, thrust, and turbulence to zero
+	// This seems prone to errors, Wind[j] should probably be limited to values >=0
+
+	// fRadiiCrosswind = distance from being straight downwind (distance 'crosswind') of the upwind turbine, measured in the number of upwind turbine radii
+	// fRadiiDownwind = Distance Downwind, measured in the number of upwind turbine radii (e.g. 2.5 = 2.5 times the radius of the upwind turbine)
+	// fTurbulenceIntensity = turbulence intensity
+	// fThrustCoeff = Thrust coeff
+
+	// The calculated value of fNewTurbulenceIntensity, passed out of function, will then be sent back in as the new fTurbulenceIntensity input the next time
+	// this function is called for the same turbine.  So, fTurbulenceIntensity can only increase due to influence of other (upwind) turbines,
+	// based on the equation for fNewTurbulenceIntensity (square root of two numbers squared, where one number is fTurbulenceIntensity)
+	// Note that the calculation of fNewTurbulenceIntensity does NOT include fRadiiCrosswind - so it's only influenced by how far upwind the other turbine is,
+	// EVEN IF IT'S 19 ROTOR RADII TO THE SIDE!!!
+
+	if (fRadiiCrosswind > 20.0 || fTurbulenceIntensity <= 0.0 || fRadiiDownwind <= 0.0 || fThrustCoeff <= 0.0)
+	{
+		*fNewTurbulenceIntensity = fTurbulenceIntensity;
+		*Vdelta = 0.0;
+	}
+	else
+	{
+		double fAddedTurbulence = (fThrustCoeff/7.0)*(1.0-(2.0/5.0)*log(2.0*fRadiiDownwind)); // NOTE that this equation does not account for how far over the turbine is!!
+		*fNewTurbulenceIntensity = sqrt( pow(fAddedTurbulence,2.0) + pow(fTurbulenceIntensity,2.0) );
+
+		double AA = pow(*fNewTurbulenceIntensity,2.0) * pow(fRadiiDownwind,2.0);
+		double fExp = max_of( -99.0, (-pow(fRadiiCrosswind,2.0)/(2.0*AA)) );
+		*Vdelta = (fThrustCoeff/(4.0*AA))*exp(fExp);
+	}
+}
+
+// wake modeling - Park model used to calculate the change in wind speed due to wake effects of upwind turbine
+void wind_power_calculator::vel_delta_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dConstK, double dThrustCoeff, double &dVdelta)
+{
+	if (dThrustCoeff>1)
+	{
+		dVdelta = 0;
+		return;
+	}
+	double dRadiusOfWake = (dRadiusUpstream) + dConstK * dDistDownWind; // radius of circle formed by wake from upwind rotor
+	double dAreaOverlap = circle_overlap(dDistCrossWind, dRadiusDownstream, dRadiusOfWake);
+	double dWakeDeficit = (1 - sqrt(1-dThrustCoeff)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream)); // 0=no deficit, up to 1 = 100%
+	dVdelta = 1 - dWakeDeficit; // change to velocity
+}
+
+
+// This subroutine transforms the map east,north coordinate system to a downwind,crosswind orientation orthogonal to current wind direction.
+void wind_power_calculator::coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind)
+{
+	// rotate wind direction to match unit circle (where zero is East, not North)
+	fWind_dir_degrees += 90;
+
+	// convert degrees to radians
+	double fWind_dir_radians = fWind_dir_degrees*physics::PI/180.0;
+
+	// create downwind and crosswind coordinates
+	*fMetersDownWind = fMetersEast*cos(fWind_dir_radians) - ( fMetersNorth * sin(fWind_dir_radians) ); //!northerly = FROM North"
+	*fMetersCrosswind = fMetersEast*sin(fWind_dir_radians) + ( fMetersNorth * cos(fWind_dir_radians) );
+}
+
+double wind_power_calculator::circle_overlap(double dist_center_to_center, double rad1, double rad2)
+{
+	if (dist_center_to_center<0 || rad1<0 || rad2<0)
+		return 0;
+
+	if (dist_center_to_center > rad1+rad2)
+		return 0;
+
+	if (rad1 >= dist_center_to_center + rad2)
+		return physics::PI * pow(rad2,2); // overlap = area of circle 2
+
+	if (rad2 >= dist_center_to_center + rad1)
+		return physics::PI * pow(rad1,2); // overlap = area of circle 1
+
+	double t1 = pow(rad1,2) * acos( (pow(dist_center_to_center,2) + pow(rad1,2) - pow(rad2,2) )/(2*dist_center_to_center*rad1));
+	double t2 = pow(rad2,2) * acos( (pow(dist_center_to_center,2) + pow(rad2,2) - pow(rad1,2) )/(2*dist_center_to_center*rad2));
+	double t3 = 0.5 * sqrt( (-dist_center_to_center+rad1+rad2) * (dist_center_to_center+rad2-rad2) * (dist_center_to_center-rad1+rad2) * (dist_center_to_center+rad1+rad2) );
+
+	return t1+t2-t3;
+}
+
+double wind_power_calculator::gammaln(double x)
 {
     // Based on VBA code in Xnumbers.xla v 5.6
 	// by Foxes Team, 2007
@@ -430,46 +460,3 @@ double gammaln(double x)
 	return log(mantissa) + expo * log(10.0);
 }
 
-//double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class, double elevation,
-double turbine_output_using_weibull(double rotor_diameter, double weibull_k, double shear, double max_cp, double hub_ht, double resource_class,
-						 int count, double wind_speed[], double power_curve[], double hub_efficiency[])
-{	// returns same units as 'power_curve'
-
-
-	double hub_ht_windspeed = pow((hub_ht/50.0),shear) * resource_class;
-	double denom = exp(gammaln(1+(1/hub_ht_windspeed)));
-
-	double lambda = hub_ht_windspeed/denom;
-	//double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
-
-	// 'RUN' MODEL ****************************************************************************************
-	double total_energy_turbine=0;//, total_energy_generic=0;
-	std::vector<double> weibull_cummulative(count, 0);
-	std::vector<double> weibull_bin(count, 0);
-	//std::vector<double> weibull_probability(count, 0);
-	std::vector<double> energy_turbine(count, 0);	// energy from turbine chosen from library
-
-	// double step = 0;
-	// weibull_k = 2.10; // used for testing: this is off in the 5th significant digit when passed into SSC from samwx
-	weibull_cummulative[0] = 0.0;
-	weibull_bin[0] = 0.0;
-	energy_turbine[0] = 0.0;
-	for (int i=1; i<count; i++)
-	{
-		// step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
-
-		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
-		weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
-		weibull_bin[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
-		// THIS IS NOT FOR THE BIN wind speed[i to i-1]: weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) );
-
-		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
-		energy_turbine[i] = (8760 * weibull_bin[i]) * power_curve[i];
-
-		// keep track of cummulative output
-		total_energy_turbine += energy_turbine[i];
-	}
-
-	// calculate output accounting for losses
-	return  total_energy_turbine;
-}
