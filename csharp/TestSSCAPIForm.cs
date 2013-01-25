@@ -31,7 +31,6 @@ namespace TestApplication
         {
             SSC.Entry sscEntry = new SSC.Entry();
             txtData.Clear();
-            int moduleIndex = 0;
             while (sscEntry.Get())
             {
                 String module_name = sscEntry.Name();
@@ -39,7 +38,6 @@ namespace TestApplication
                 int version = sscEntry.Version();
                 txtData.AppendText("\nModule: " + module_name + ", version: " + version + "\n");
                 txtData.AppendText("    " + description + "\n");
-                moduleIndex++;
             }        
         }
 
@@ -98,8 +96,8 @@ namespace TestApplication
             SSC.Module mod = new SSC.Module("pvwattsv1");
             if (mod.Exec(data))
             {
-                float tot = data.GetNumber("ac_annual");
-                float[] ac = data.GetArray("ac_monthly");
+                float tot = data.GetNumber("annual_ac_net");
+                float[] ac = data.GetArray("monthly_ac_net");
                 for (int i = 0; i < ac.Count(); i++)
                     txtData.AppendText("[" + i + "]: " + ac[i] + " kWh\n");
                 txtData.AppendText("AC total: " + tot + "\n");

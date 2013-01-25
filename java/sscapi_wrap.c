@@ -168,7 +168,7 @@ static void SWIGUNUSED SWIG_JavaThrowException(JNIEnv *jenv, SWIG_JavaExceptionC
 extern "C" {
 #endif
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1version(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1version(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -180,7 +180,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1version(JNIEnv *jenv, jclass jcls) {
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1build_1info(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1build_1info(JNIEnv *jenv, jclass jcls) {
   jstring jresult = 0 ;
   char *result = 0 ;
   
@@ -192,7 +192,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1build_1info(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1INVALID_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1INVALID_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -204,7 +204,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1INVALID_1get(JNIEnv *jenv, jclass jc
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1STRING_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1STRING_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -216,7 +216,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1STRING_1get(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1NUMBER_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1NUMBER_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -228,7 +228,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1NUMBER_1get(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1ARRAY_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1ARRAY_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -240,7 +240,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1ARRAY_1get(JNIEnv *jenv, jclass jcls
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1MATRIX_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1MATRIX_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -252,7 +252,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1MATRIX_1get(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1TABLE_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1TABLE_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -264,7 +264,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1TABLE_1get(JNIEnv *jenv, jclass jcls
 }
 
 
-SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1data_1create(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jlong JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1create(JNIEnv *jenv, jclass jcls) {
   jlong jresult = 0 ;
   ssc_data_t result;
   
@@ -276,7 +276,7 @@ SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1data_1create(JNIEnv *jenv, jclass j
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1free(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1free(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   
   (void)jenv;
@@ -286,7 +286,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1free(JNIEnv *jenv, jclass jcls
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1clear(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1clear(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   
   (void)jenv;
@@ -296,7 +296,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1clear(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1unassign(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1unassign(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *arg2 = (char *) 0 ;
   
@@ -313,7 +313,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1unassign(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1data_1query(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1query(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *arg2 = (char *) 0 ;
@@ -334,7 +334,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1data_1query(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1data_1first(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1first(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *result = 0 ;
@@ -348,7 +348,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1data_1first(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1data_1next(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1next(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *result = 0 ;
@@ -362,7 +362,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1data_1next(JNIEnv *jenv, jclass j
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1string(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1string(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3) {
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *arg2 = (char *) 0 ;
   char *arg3 = (char *) 0 ;
@@ -386,7 +386,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1string(JNIEnv *jenv, jcla
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1number(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jfloat jarg3) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1number(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jfloat jarg3) {
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *arg2 = (char *) 0 ;
   ssc_number_t arg3 ;
@@ -405,7 +405,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1number(JNIEnv *jenv, jcla
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1array(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint len) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1array(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint len) {
     int i, count;
     jfloat *j_data_array;
     jint j_count_len;
@@ -425,7 +425,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1array(JNIEnv *env, jclass
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1matrix(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint nrow, jint ncol) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1matrix(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint nrow, jint ncol) {
     int i, rows, cols;
     jfloat *j_data_array;
     jint j_count_len;
@@ -446,7 +446,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1matrix(JNIEnv *env, jclas
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1table(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jlong jarg3) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1table(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jlong jarg3) {
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *arg2 = (char *) 0 ;
   ssc_data_t arg3 = (ssc_data_t) 0 ;
@@ -465,7 +465,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1data_1set_1table(JNIEnv *jenv, jclas
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1data_1get_1string(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1string(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jstring jresult = 0 ;
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *arg2 = (char *) 0 ;
@@ -486,7 +486,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1data_1get_1string(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1data_1get_1number(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value) 
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1number(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value) 
 {
   jint jresult = 0 ;
   ssc_data_t sscCxt = (ssc_data_t) 0 ;
@@ -528,7 +528,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1data_1get_1number(JNIEnv *env, jclas
 }
 
 
-SWIGEXPORT jfloatArray JNICALL Java_sscapiJNI_ssc_1data_1get_1array(JNIEnv *env, jclass jcls, jlong cxt, jstring name) {
+SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1array(JNIEnv *env, jclass jcls, jlong cxt, jstring name) {
     int i, count;
     jfloatArray output;
     jint j_data_len;
@@ -555,7 +555,7 @@ SWIGEXPORT jfloatArray JNICALL Java_sscapiJNI_ssc_1data_1get_1array(JNIEnv *env,
 }
  
 
-SWIGEXPORT jfloatArray JNICALL Java_sscapiJNI_ssc_1data_1get_1matrix(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jintArray len) {
+SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1matrix(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jintArray len) {
    int i, row_count, col_count;
     jfloatArray output;
     jint j_row_len;
@@ -600,7 +600,7 @@ SWIGEXPORT jfloatArray JNICALL Java_sscapiJNI_ssc_1data_1get_1matrix(JNIEnv *env
 }
 
 
-SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1data_1get_1table(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
+SWIGEXPORT jlong JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1table(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jlong jresult = 0 ;
   ssc_data_t arg1 = (ssc_data_t) 0 ;
   char *arg2 = (char *) 0 ;
@@ -621,7 +621,7 @@ SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1data_1get_1table(JNIEnv *jenv, jcla
 }
 
 
-SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1module_1entry(JNIEnv *jenv, jclass jcls, jint jarg1) {
+SWIGEXPORT jlong JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1entry(JNIEnv *jenv, jclass jcls, jint jarg1) {
   jlong jresult = 0 ;
   int arg1 ;
   ssc_entry_t result;
@@ -635,7 +635,7 @@ SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1module_1entry(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1entry_1name(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1entry_1name(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_entry_t arg1 = (ssc_entry_t) 0 ;
   char *result = 0 ;
@@ -649,7 +649,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1entry_1name(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1entry_1description(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1entry_1description(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_entry_t arg1 = (ssc_entry_t) 0 ;
   char *result = 0 ;
@@ -663,7 +663,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1entry_1description(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1entry_1version(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1entry_1version(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   ssc_entry_t arg1 = (ssc_entry_t) 0 ;
   int result;
@@ -677,7 +677,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1entry_1version(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1module_1create(JNIEnv *jenv, jclass jcls, jstring jarg1) {
+SWIGEXPORT jlong JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1create(JNIEnv *jenv, jclass jcls, jstring jarg1) {
   jlong jresult = 0 ;
   char *arg1 = (char *) 0 ;
   ssc_module_t result;
@@ -696,7 +696,7 @@ SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1module_1create(JNIEnv *jenv, jclass
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1module_1free(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1free(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   ssc_module_t arg1 = (ssc_module_t) 0 ;
   
   (void)jenv;
@@ -706,7 +706,7 @@ SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1module_1free(JNIEnv *jenv, jclass jc
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1INPUT_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1INPUT_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -718,7 +718,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1INPUT_1get(JNIEnv *jenv, jclass jcls
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1OUTPUT_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1OUTPUT_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -730,7 +730,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1OUTPUT_1get(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1INOUT_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1INOUT_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -742,7 +742,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1INOUT_1get(JNIEnv *jenv, jclass jcls
 }
 
 
-SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1module_1var_1info(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1var_1info(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   ssc_module_t arg1 = (ssc_module_t) 0 ;
   int arg2 ;
@@ -758,7 +758,7 @@ SWIGEXPORT jlong JNICALL Java_sscapiJNI_ssc_1module_1var_1info(JNIEnv *jenv, jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1info_1var_1type(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1var_1type(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   int result;
@@ -772,7 +772,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1info_1var_1type(JNIEnv *jenv, jclass
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1info_1data_1type(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1data_1type(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   int result;
@@ -786,7 +786,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1info_1data_1type(JNIEnv *jenv, jclas
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1name(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1name(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -800,7 +800,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1name(JNIEnv *jenv, jclass j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1label(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1label(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -814,7 +814,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1label(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1units(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1units(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -828,7 +828,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1units(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1meta(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1meta(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -842,7 +842,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1meta(JNIEnv *jenv, jclass j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1group(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1group(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -856,7 +856,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1group(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1required(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1required(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -870,7 +870,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1required(JNIEnv *jenv, jcla
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1constraints(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1constraints(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -884,7 +884,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1constraints(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1uihint(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1info_1uihint(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   ssc_info_t arg1 = (ssc_info_t) 0 ;
   char *result = 0 ;
@@ -898,7 +898,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1info_1uihint(JNIEnv *jenv, jclass
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1module_1exec_1simple(JNIEnv *jenv, jclass jcls, jstring jarg1, jlong jarg2) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1exec_1simple(JNIEnv *jenv, jclass jcls, jstring jarg1, jlong jarg2) {
   jint jresult = 0 ;
   char *arg1 = (char *) 0 ;
   ssc_data_t arg2 = (ssc_data_t) 0 ;
@@ -919,7 +919,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1module_1exec_1simple(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1module_1exec_1simple_1nothread(JNIEnv *jenv, jclass jcls, jstring jarg1, jlong jarg2) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1exec_1simple_1nothread(JNIEnv *jenv, jclass jcls, jstring jarg1, jlong jarg2) {
   jstring jresult = 0 ;
   char *arg1 = (char *) 0 ;
   ssc_data_t arg2 = (ssc_data_t) 0 ;
@@ -940,7 +940,7 @@ SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1module_1exec_1simple_1nothread(JN
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1LOG_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1LOG_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -952,7 +952,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1LOG_1get(JNIEnv *jenv, jclass jcls) 
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1UPDATE_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1UPDATE_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -964,7 +964,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1UPDATE_1get(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1EXECUTE_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1EXECUTE_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -976,7 +976,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1EXECUTE_1get(JNIEnv *jenv, jclass jc
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1module_1exec(JNIEnv *jenv, jclass jcls, jlong cxt_module, jlong cxt_data) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1exec(JNIEnv *jenv, jclass jcls, jlong cxt_module, jlong cxt_data) {
   jint jresult = 0 ;
   ssc_module_t arg1 = (ssc_module_t) 0 ;
   ssc_data_t arg2 = (ssc_data_t) 0 ;
@@ -992,7 +992,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1module_1exec(JNIEnv *jenv, jclass jc
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1module_1exec_1with_1handler(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jlong jarg4) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1exec_1with_1handler(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jlong jarg4) {
   jint jresult = 0 ;
   ssc_module_t arg1 = (ssc_module_t) 0 ;
   ssc_data_t arg2 = (ssc_data_t) 0 ;
@@ -1012,24 +1012,8 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_ssc_1module_1exec_1with_1handler(JNIEnv *
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI_ssc_1module_1extproc_1output(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
-  ssc_handler_t arg1 = (ssc_handler_t) 0 ;
-  char *arg2 = (char *) 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = *(ssc_handler_t *)&jarg1; 
-  arg2 = 0;
-  if (jarg2) {
-    arg2 = (char *)(*jenv)->GetStringUTFChars(jenv, jarg2, 0);
-    if (!arg2) return ;
-  }
-  ssc_module_extproc_output(arg1,(char const *)arg2);
-  if (arg2) (*jenv)->ReleaseStringUTFChars(jenv, jarg2, (const char *)arg2);
-}
 
-
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1NOTICE_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1NOTICE_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -1041,7 +1025,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1NOTICE_1get(JNIEnv *jenv, jclass jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1WARNING_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1WARNING_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -1053,7 +1037,7 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1WARNING_1get(JNIEnv *jenv, jclass jc
 }
 
 
-SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1ERROR_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1ERROR_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -1065,27 +1049,40 @@ SWIGEXPORT jint JNICALL Java_sscapiJNI_SSC_1ERROR_1get(JNIEnv *jenv, jclass jcls
 }
 
 
-SWIGEXPORT jstring JNICALL Java_sscapiJNI_ssc_1module_1log(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jlong jarg3, jlong jarg4) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1log(JNIEnv *env, jclass jcls, jlong cxt, jint index, jintArray type, jfloatArray time) {
   jstring jresult = 0 ;
-  ssc_module_t arg1 = (ssc_module_t) 0 ;
-  int arg2 ;
-  int *arg3 = (int *) 0 ;
-  float *arg4 = (float *) 0 ;
   char *result = 0 ;
+  jint outTypeCount;
+  jint *outType;
+  jint outTimeCount;
+  jfloat *outTime;
+
+  outTypeCount = (*env)->GetArrayLength(env, type);
+  outType = (*env)->GetIntArrayElements(env, type, NULL);
+  outTimeCount = (*env)->GetArrayLength(env, time);
+  outTime = (*env)->GetFloatArrayElements(env, time, NULL);
   
-  (void)jenv;
-  (void)jcls;
-  arg1 = *(ssc_module_t *)&jarg1; 
-  arg2 = (int)jarg2; 
-  arg3 = *(int **)&jarg3; 
-  arg4 = *(float **)&jarg4; 
-  result = (char *)ssc_module_log(arg1,arg2,arg3,arg4);
-  if (result) jresult = (*jenv)->NewStringUTF(jenv, (const char *)result);
+  int ssc_log_type;
+  float ssc_time;
+  result = (char *)ssc_module_log((ssc_module_t *)cxt,index,&ssc_log_type,&ssc_time);
+      
+  if (result && (outTypeCount==1) && (outTimeCount==1))
+  {
+      jresult = (*env)->NewStringUTF(env, (const char *)result);
+      outType[0] = ssc_log_type;
+      (*env)->SetIntArrayRegion( env, type, 0, outTypeCount, outType );
+      outTime[0] = ssc_time;
+      (*env)->SetFloatArrayRegion( env, time, 0, outTimeCount, outTime );
+  }
+  else
+  {
+      jresult = 0;
+  }
   return jresult;
 }
 
 
-SWIGEXPORT void JNICALL Java_sscapiJNI__1_1ssc_1segfault(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI__1_1ssc_1segfault(JNIEnv *jenv, jclass jcls) {
   (void)jenv;
   (void)jcls;
   __ssc_segfault();
