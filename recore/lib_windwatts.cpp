@@ -1,7 +1,6 @@
 #include "lib_windwatts.h"
 #include "lib_physics.h"
 
-#include <vector>
 #include <math.h>
 #include "lib_util.h"
 
@@ -21,15 +20,11 @@ int wind_power_calculator::wind_power(
 		double fWind_direction_degrees,		// wind direction 0-360, 0=N
 		double fAir_pressure_atm,			// barometric pressure (Atm)
 		double TdryC,		// dry bulb temp ('C)
-		double WT_x[],		// x coordinates of wind turbines
-		double WT_y[],		// y coordinates of wind turbines
-		double PC_w[],		// Power curve wind speeds m/s
-		double PC_p[],		// Power curve output power (kW)
 			
 	// OUTPUTS
 		double *FarmP,						// total farm power output
 		double aDistanceDownwind[],			// downwind coordinate of each WT
-		double aDistanceCrosswind[],			// crosswind coordinate of each WT
+		double aDistanceCrosswind[],		// crosswind coordinate of each WT
 		double Power[],						// calculated power of each WT
 		double Thrust[],					// thrust calculation at each WT
 		double Eff[],						// downwind efficiency of each WT
@@ -53,7 +48,7 @@ int wind_power_calculator::wind_power(
 	//!Convert to d,c coordinates and initialize others
 	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 	{
-		coordtrans( WT_y[i], WT_x[i], fWind_direction_degrees, &d, &c );
+		coordtrans(m_adYCoords[i], m_adXCoords[i], fWind_direction_degrees, &d, &c );
 
 		aDistanceDownwind[i] = d;
 		aDistanceCrosswind[i] = c;
@@ -89,7 +84,7 @@ int wind_power_calculator::wind_power(
 	
 	// Calculate the output for the most upwind turbine
 	double fTurbine_output, fThrust_coeff;
-	turbine_power(fWind_speed, fAir_density, PC_w, PC_p, &fTurbine_output, &fThrust_coeff );
+	turbine_power(fWind_speed, fAir_density, &fTurbine_output, &fThrust_coeff );
 	Power[0] = fTurbine_output;
 	Thrust[0] = fThrust_coeff;
 	Eff[0] = ( fTurbine_output < 1.0 ) ? 0.0 : 100.0;
@@ -123,61 +118,11 @@ int wind_power_calculator::wind_power(
 		wt_id[i] = wid;
 	}
 
-	// we calculated the output of the most upwind turbine above, now we have to go through the remaining turbines in the farm
-	// the i loop is going through the turbines, from first (most upwind) to last (most downwind)
-	// for each turbine i, if the output of all upwind turbines has already been calculated (j = i+1),
-	// then set this turbine's output.
-	// then go through the j loop, calculating this turbine's impact on the wind speed at each downwind turbine
+	if (true)
+		wake_calculations_pat_quinlan(fAir_density, fTurbine_output, fThrust_coeff, aDistanceDownwind, aDistanceCrosswind, Power, Thrust, Eff, aWind_speed, aTurbulence_intensity);
 
-	for (i=0;i<m_iNumberOfTurbinesInFarm-1;i++) // upwind turbines
-	{
-		for (j=i+1; j<m_iNumberOfTurbinesInFarm; j++) // downwind turbines
-		{
-			// Wake Model: calculate downwind propagation of wind speed reduction due to upwind turbines
-
-			// All distances in these calculations have already been converted into units of wind turbine blade radii
-
-			// distance downwind = distance from turbine i to turbine j along axis of wind direction
-			double fDistanceDownwind = aDistanceDownwind[j] - aDistanceDownwind[i]; 
-
-			// separation crosswind between turbine i and turbine j
-
-			// EQN SIMPLIFIED B/C all hub heights the same currently
-			//  F: RR(j) = ((DA(4,j)-DA(4,i))**2.0+(DA(5,j)-DA(5,i))**2.0)**0.5
-			//
-			//  C: rr    = sqrt((aDistanceCrosswind[j]-aDistanceCrosswind[i])*(aDistanceCrosswind[j]-aDistanceCrosswind[i]) + (HtRad[j]-HtRad[i])*(HtRad[j]-HtRad[i]));
-			//    where HtRad = HubHt/Rotor_Di for each WT
-			double fDistanceCrosswind = aDistanceCrosswind[j] - aDistanceCrosswind[i];
-				
-			// Calculate the wind speed reduction and turbulence at turbine j, due to turbine i
-			// turbulence coeff for turbine j will be impacted (always added to) by all the upwind turbines based on how far upwind they are.
-			double fTurbIntensity, delt;
-			vel_delta_loc( fDistanceCrosswind, fDistanceDownwind, aTurbulence_intensity[j], Thrust[i], &fTurbIntensity, &delt);
-			if (delt>1.0) delt = 1.0;
-			aWind_speed[j] = aWind_speed[j]*(1.0-delt);
-			aTurbulence_intensity[j] = fTurbIntensity;
-
-			// when j = i+1, (first time through the j loop for each i loop) that means all the turbines upwind 
-			// of this one (j) have already had their outputs calculated
-			// so now we'll set this turbine's output, then we can calculate its contribution (wake impacts) for all
-			// of the downwind (j >= i+2) turbines
-			if (j==i+1)
-			{
-				turbine_power( aWind_speed[j], fAir_density, PC_w, PC_p, &fTurbine_output, &fThrust_coeff);
-				Power[j] = fTurbine_output;
-				Thrust[j] = fThrust_coeff;
-
-				if (Power[0] < 0.0)
-					Eff[j] = 0.0;
-				else
-					Eff[j] = 100.0*(fTurbine_output+0.0001)/(Power[0]+0.0001);
-			}
-
-		}
-	} 
 
 	*FarmP = 0;
-
 	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 		*FarmP += Power[i];
 
@@ -224,7 +169,7 @@ int wind_power_calculator::wind_power(
 }
 
 
-double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double resource_class, double wind_speed[], double power_curve[], double hub_efficiency[])
+double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double resource_class, double hub_efficiency[])
 {	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((m_dHubHeight/50.0),m_dShearExponent) * resource_class;
@@ -250,12 +195,12 @@ double wind_power_calculator::turbine_output_using_weibull(double weibull_k, dou
 		// step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
 
 		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
-		weibull_cummulative[i] = 1.0 - exp(-pow(wind_speed[i]/lambda,weibull_k));
+		weibull_cummulative[i] = 1.0 - exp(-pow(m_adPowerCurveWS[i]/lambda,weibull_k));
 		weibull_bin[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
 		// THIS IS NOT FOR THE BIN wind speed[i to i-1]: weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) );
 
 		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
-		energy_turbine[i] = (8760.0 * weibull_bin[i]) * power_curve[i];
+		energy_turbine[i] = (8760.0 * weibull_bin[i]) * m_adPowerCurveKW[i];
 
 		// keep track of cummulative output
 		total_energy_turbine += energy_turbine[i];
@@ -268,8 +213,79 @@ double wind_power_calculator::turbine_output_using_weibull(double weibull_k, dou
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void wind_power_calculator::wake_calculations_pat_quinlan(
+	/*INPUTS*/
+	double fAir_density,
+	double fTurbine_output,
+	double fThrust_coeff,
+	double aDistanceDownwind[],			// downwind coordinate of each WT
+	double aDistanceCrosswind[],		// crosswind coordinate of each WT
 
-void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double afPowerCurve_Speeds[], double afPowerCurve_TurbineOutputs[], double *fTurbineOutput, double *fThrustCoefficient )
+	/*OUTPUTS*/
+	double Power[],						// calculated power of each WT
+	double Thrust[],					// thrust calculation at each WT
+	double Eff[],						// downwind efficiency of each WT
+	double aWind_speed[],				// wind speed at each WT
+	double aTurbulence_intensity[]		// turbulence intensity at each WT
+)
+{
+	// we calculated the output of the most upwind turbine above, now we have to go through the remaining turbines in the farm
+	// the i loop is going through the turbines, from first (most upwind) to last (most downwind)
+	// for each turbine i, if the output of all upwind turbines has already been calculated (j = i+1),
+	// then set this turbine's output.
+	// then go through the j loop, calculating this turbine's impact on the wind speed at each downwind turbine
+
+	for (int i=0;i<m_iNumberOfTurbinesInFarm-1;i++) // upwind turbines
+	{
+		for (int j=i+1; j<m_iNumberOfTurbinesInFarm; j++) // downwind turbines
+		{
+			// Wake Model: calculate downwind propagation of wind speed reduction due to upwind turbines
+
+			// All distances in these calculations have already been converted into units of wind turbine blade radii
+
+			// distance downwind = distance from turbine i to turbine j along axis of wind direction
+			double fDistanceDownwind = aDistanceDownwind[j] - aDistanceDownwind[i]; 
+
+			// separation crosswind between turbine i and turbine j
+
+			// EQN SIMPLIFIED B/C all hub heights the same currently
+			//  F: RR(j) = ((DA(4,j)-DA(4,i))**2.0+(DA(5,j)-DA(5,i))**2.0)**0.5
+			//
+			//  C: rr    = sqrt((aDistanceCrosswind[j]-aDistanceCrosswind[i])*(aDistanceCrosswind[j]-aDistanceCrosswind[i]) + (HtRad[j]-HtRad[i])*(HtRad[j]-HtRad[i]));
+			//    where HtRad = HubHt/Rotor_Di for each WT
+			double fDistanceCrosswind = aDistanceCrosswind[j] - aDistanceCrosswind[i];
+				
+			// Calculate the wind speed reduction and turbulence at turbine j, due to turbine i
+			// turbulence coeff for turbine j will be impacted (always added to) by all the upwind turbines based on how far upwind they are.
+			double fTurbIntensity, delt;
+			vel_delta_loc( fDistanceCrosswind, fDistanceDownwind, aTurbulence_intensity[j], Thrust[i], &fTurbIntensity, &delt);
+			if (delt>1.0) delt = 1.0;
+			aWind_speed[j] = aWind_speed[j]*(1.0-delt);
+			aTurbulence_intensity[j] = fTurbIntensity;
+
+			// when j = i+1, (first time through the j loop for each i loop) that means all the turbines upwind 
+			// of this one (j) have already had their outputs calculated
+			// so now we'll set this turbine's output, then we can calculate its contribution (wake impacts) for all
+			// of the downwind (j >= i+2) turbines
+			if (j==i+1)
+			{
+				turbine_power( aWind_speed[j], fAir_density,  &fTurbine_output, &fThrust_coeff);
+				Power[j] = fTurbine_output;
+				Thrust[j] = fThrust_coeff;
+
+				if (Power[0] < 0.0)
+					Eff[j] = 0.0;
+				else
+					Eff[j] = 100.0*(fTurbine_output+0.0001)/(Power[0]+0.0001);
+			}
+
+		}
+	} 
+
+
+}
+
+void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient )
 {
 	// default outputs to zero
 	*fThrustCoefficient = 0;
@@ -281,16 +297,16 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 	
 	// Find power from turbine power curve
 	double out_pwr=0.0;
-	if ( (fWindSpeedAtHubHeight > afPowerCurve_Speeds[0]) && (fWindSpeedAtHubHeight < afPowerCurve_Speeds[m_iLengthOfTurbinePowerCurveArray-1]) ) 
+	if ( (fWindSpeedAtHubHeight > m_adPowerCurveWS[0]) && (fWindSpeedAtHubHeight < m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) ) 
 	{
 		int j = 1;
-		while ( afPowerCurve_Speeds[j] <= fWindSpeedAtHubHeight )
-			j++; // find first afPowerCurve_Speeds > fWindSpeedAtHubHeight
+		while ( m_adPowerCurveWS[j] <= fWindSpeedAtHubHeight )
+			j++; // find first m_adPowerCurveWS > fWindSpeedAtHubHeight
 
-		out_pwr = util::interpolate(afPowerCurve_Speeds[j-1], afPowerCurve_TurbineOutputs[j-1], afPowerCurve_Speeds[j], afPowerCurve_TurbineOutputs[j], fWindSpeedAtHubHeight);
+		out_pwr = util::interpolate(m_adPowerCurveWS[j-1], m_adPowerCurveKW[j-1], m_adPowerCurveWS[j], m_adPowerCurveKW[j], fWindSpeedAtHubHeight);
 	}
-	else if (fWindSpeedAtHubHeight >= afPowerCurve_Speeds[m_iLengthOfTurbinePowerCurveArray-1]) 
-		out_pwr = afPowerCurve_TurbineOutputs[m_iLengthOfTurbinePowerCurveArray-1]; // wind speed greater than maximum in the power curve: power output is last value
+	else if (fWindSpeedAtHubHeight >= m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) 
+		out_pwr = m_adPowerCurveKW[m_iLengthOfTurbinePowerCurveArray-1]; // wind speed greater than maximum in the power curve: power output is last value
 
 	// Check against turbine cut-in speed
 	if ( fWindSpeedAtHubHeight < m_dCutInSpeed) out_pwr = 0.0; 

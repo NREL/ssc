@@ -85,17 +85,19 @@ public:
 
 		std::vector<double> Dn(wpc.m_iNumberOfTurbinesInFarm), Cs(wpc.m_iNumberOfTurbinesInFarm), 
 			Power(wpc.m_iNumberOfTurbinesInFarm), Thrust(wpc.m_iNumberOfTurbinesInFarm), Eff(wpc.m_iNumberOfTurbinesInFarm), 
-			Wind(wpc.m_iNumberOfTurbinesInFarm), Turb(wpc.m_iNumberOfTurbinesInFarm), 
-			
-			X(wpc.m_iNumberOfTurbinesInFarm), Y(wpc.m_iNumberOfTurbinesInFarm),
-			dpcW(wpc.m_iLengthOfTurbinePowerCurveArray), dpcP(wpc.m_iLengthOfTurbinePowerCurveArray);
+			Wind(wpc.m_iNumberOfTurbinesInFarm), Turb(wpc.m_iNumberOfTurbinesInFarm);
+
+		wpc.m_adXCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
+		wpc.m_adYCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
 
 		size_t i,j;
 
+		wpc.m_adPowerCurveWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
+		wpc.m_adPowerCurveKW.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
 		{
-			dpcW[i] = (double)pc_w[i];
-			dpcP[i] = (double)pc_p[i];
+			wpc.m_adPowerCurveWS[i] = (double)pc_w[i];
+			wpc.m_adPowerCurveKW[i] = (double)pc_p[i];
 		}
 
 		// now choose which model to run
@@ -112,8 +114,7 @@ public:
 			for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
 				dp_hub_eff[i] = (double)hub_efficiency[i];
 
-			//double turbine_kw = turbine_output_using_weibull(rotor_di, weibull_k, shear, max_cp, hub_ht, resource_class, elevation, (int)wpc.m_iLengthOfTurbinePowerCurveArray, &dpcW[0], &dpcP[0], &dp_hub_eff[0]);
-			double turbine_kw = wpc.turbine_output_using_weibull(weibull_k, max_cp, resource_class, &dpcW[0], &dpcP[0], &dp_hub_eff[0]);
+			double turbine_kw = wpc.turbine_output_using_weibull(weibull_k, max_cp, resource_class, &dp_hub_eff[0]);
 			turbine_kw = turbine_kw * (1 - wpc.m_dLossesPercent) - wpc.m_dLossesAbsolute;
 
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
@@ -134,12 +135,14 @@ public:
 		  correctly for modes 0 and 1, so no point exposing it.
 		  apd 03jan11 */
 
-		int ctl_mode = 2; // as_integer("ctl_mode");
+		wpc.m_iControlMode = 2; // if control mode is changed from 2, rated power has to be set!
+		//wpc.m_dRatedPower = 0;
 
+		// X-Y coordinates are necessary for calculation of output from farm
 		for (i=0;i<wpc.m_iNumberOfTurbinesInFarm;i++)
 		{
-			X[i] = (double)wt_x[i];
-			Y[i] = (double)wt_y[i];
+			wpc.m_adXCoords[i] = (double)wt_x[i];
+			wpc.m_adYCoords[i] = (double)wt_y[i];
 		}
 
 
@@ -183,14 +186,10 @@ public:
 
 			if ( (int)wpc.m_iNumberOfTurbinesInFarm != wpc.wind_power( 
 						/* inputs */
-						wind, /* m/s */
-						dir, /* degrees */
-						pres,  /* Atm */
-						temp, /* deg C */
-						&X[0],
-						&Y[0],
-						&dpcW[0],
-						&dpcP[0],
+						wind,	/* m/s */
+						dir,	/* degrees */
+						pres,	/* Atm */
+						temp,	/* deg C */
 
 						/* outputs */
 						&farmp,
