@@ -592,7 +592,7 @@ SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1matrix(JNIEnv 
 
     j_data_array = (*env)->GetFloatArrayElements(env, output, NULL);
 
-    for( i=0; i<j_count_len;i++)
+    for( i=0; i<j_data_len;i++)
             j_data_array[i] = ssc_array[i];
 
     (*env)->SetFloatArrayRegion( env, output, 0, j_data_len, j_data_array );
