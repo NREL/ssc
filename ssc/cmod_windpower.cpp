@@ -13,9 +13,9 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "wt_y",                       "Turbine Y coordinates",            "m",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=wt_x",     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "hub_ht",                     "Hub height",                       "m",      "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotor_di",                   "Rotor diameter",                   "m",      "",                      "WindPower",      "*",             "",                      "" },
-	//{ SSC_INPUT,      SSC_NUMBER,      "ctl_mode",                   "Control mode",                     "0/1/2",  "",                      "WindPower",      "*",             "",                      "" },
+	//{ SSC_INPUT,      SSC_NUMBER,      "ctl_mode",                   "Control mode",                     "0/1/2",  "",                      "WindPower",      "*",             "INTEGER",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cutin",                      "Cut-in wind speed",                "m/s",    "",                      "WindPower",      "*",             "",                      "" },
-	//{ SSC_INPUT,        SSC_NUMBER,      "lossc",                      "Constant losses",                  "kW",     "",                      "WindPower",      "*",             "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "wake_model",                 "Wake Model",                       "0/1/2",  "",                      "WindPower",      "*",             "INTEGER",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "lossp",                      "Percentage losses",                "%",      "",                      "WindPower",      "*",             "",                      "" },
 	//{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                    "Height of resource measurement",   "m",      "",                      "WindPower",      "*",             "INTEGER",               "" },
 
@@ -62,7 +62,8 @@ public:
 		wpc.m_dCutInSpeed = as_double("cutin");
 		wpc.m_dLossesAbsolute = 0 ; // as_double("lossc");
 		wpc.m_dLossesPercent = as_double("lossp")/100.0;
-		wpc.m_dWakeDecayCoefficient = 0.07; // for Park model
+		wpc.m_dWakeDecayCoefficient = 0.07;							// necessary for Park model
+		wpc.m_iWakeModelChoice = as_integer("wake_model");
 
 		ssc_number_t *pc_w = as_array( "pc_wind", &wpc.m_iLengthOfTurbinePowerCurveArray );
 		ssc_number_t *pc_p = as_array( "pc_power", NULL );

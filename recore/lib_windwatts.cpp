@@ -123,10 +123,19 @@ int wind_power_calculator::wind_power(
 	}
 
 	// run the wake model
-	if (true)
+	switch (m_iWakeModelChoice)
+	{
+	case 0:
 		wake_calculations_pat_quinlan(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed, aTurbulence_intensity);
-	else
+		break;
+
+	case 1:
 		wake_calculations_Park(fAirDensity, m_dWakeDecayCoefficient, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
+		break;
+
+	case 2:
+		break;
+	}
 		
 	// calculate total farm power
 	*FarmP = 0;
@@ -316,7 +325,7 @@ void wind_power_calculator::wake_calculations_Park(
 
 		}
 		// use the max deficit found to calculate the turbine output
-		adWindSpeed[i] = adWindSpeed[i]*dDeficit;
+		adWindSpeed[i] = adWindSpeed[i]*(1-dDeficit);
 
 		double fTurbine_output=0, fThrust_coeff=0;
 		turbine_power(adWindSpeed[i], air_density,  &fTurbine_output, &fThrust_coeff);
@@ -421,13 +430,13 @@ void wind_power_calculator::vel_delta_PQ( double fRadiiCrosswind, double fRadiiD
 
 // wake modeling - Park model used to calculate the change in wind speed due to wake effects of upwind turbine
 double wind_power_calculator::wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dConstK, double dThrustCoeff)
-{
+{	// return the wind speed deficit due to wake effects. 0=no deficit, up to 1 = 100%
 	if (dThrustCoeff>1)
 		return 0;
 
 	double dRadiusOfWake = (dRadiusUpstream) + dConstK * dDistDownWind; // radius of circle formed by wake from upwind rotor
 	double dAreaOverlap = circle_overlap(dDistCrossWind, dRadiusDownstream, dRadiusOfWake);
-	return (1 - sqrt(1-dThrustCoeff)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream)); // 0=no deficit, up to 1 = 100%
+	return (1 - sqrt(1-dThrustCoeff)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream));
 }
 
 

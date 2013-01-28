@@ -23,6 +23,7 @@ public:
 	double m_dHubHeight;			// hub height of turbines (m)
 	double m_dRotorDiameter;		// rotor diameter (m)
 	int m_iControlMode;				// control mode 0=pitch, 1=variable, 2=simple/stall
+	int m_iWakeModelChoice;			// 0=Original Model (based on Pat Quinlan's thesis), 1=Park Model, 2=Eddy viscosity model
 	double m_dCutInSpeed;			// wind speed Cut in (m/s)
 	double m_dRatedSpeed;			// rated wind speed
 	double m_dRatedPower;			// rated power (kw)
