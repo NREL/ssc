@@ -262,20 +262,28 @@ namespace TestApplication
             sscData.SetNumber("azimuth", 180);
             if (sscModule.Exec(sscData))
             {
-                float[] ac = sscData.GetArray("ac");
-                float sum = 0;
-
-                for (int i = 0; i < ac.Count(); i++)
-                {
-                    sum += ac[i];
-                }
-                txtData.AppendText("length returned: " + ac.Count() + "\n");
-                txtData.AppendText("ac total (get array): " + sum + "\n");
-                txtData.AppendText("PVWatts example passed" + "\n");
+                float tot = sscData.GetNumber("ac_annual");
+                float[] ac = sscData.GetArray("ac_monthly");
+                for (int i = 0; i < ac.Length; i++)
+                    txtData.AppendText(("[" + i + "]: " + ac[i] + " kWh");
+                txtData.AppendText("AC total: " + tot);
+                txtData.AppendText("PVWatts test OK\n");
             }
             else
             {
-                txtData.AppendText("PVWatts example failed" + "\n");
+                int idx = 0;
+                String msg="";
+                int[] type={0};
+                float[] time={0};
+                while (mod.log(idx, msg, type, time))
+                {
+                    String stype = "NOTICE";
+                    if (type[0] == CS_SSC_API.SSC.WARNING) stype = "WARNING";
+                    else if (type[0] == CS_SSC_API.SSC.ERROR) stype = "ERROR";
+                   txtData.AppendText("[ " + stype + " at time:" + time[0] + " ]: " + msg);
+                    idx++;
+                }
+                txtData.AppendText("PVWatts example failed");
             }
         }
 
