@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
 \subsection{Setting up data inputs}
 
-Now we will fill in the comment in the middle of the code step-by-step.  Referring to the three step process outlined in Section~\ref{sec_overview}, the first task is to create a data container.  This is done with the \texttt{ssc\_data\_create()} function call, which returns an \texttt{ssc\_data\_t} type.  If for some reason the function call fails due to the system having run out of memory, \texttt{NULL} will be returned.  It is important to check the result to make sure the data container was created successfully.
+Now we will fill in the comment in the middle of the code step-by-step.  Referring to the three step process outlined in \S\ref{sec_overview}, the first task is to create a data container.  This is done with the \texttt{ssc\_data\_create()} function call, which returns an \texttt{ssc\_data\_t} type.  If for some reason the function call fails due to the system having run out of memory, \texttt{NULL} will be returned.  It is important to check the result to make sure the data container was created successfully.
 
 \begin{verbatimtab}[4]
 	ssc_data_t data = ssc_data_create();
@@ -309,7 +309,7 @@ The table (\texttt{SSC\_TABLE}) data type is the only hierarchical data type in 
 \subsection{Variable Documentation}
 \label{sec_variable_docs}
 
-As stated before, each module defines all of the input variables it requires and output variables it produces.  Since SSC is a model simulation framework that contains within it numerous calculation modules that each may have hundreds of variables, it is impractical to separate to the documentation of variables from their definitions.  Otherwise, the documentation would tend to be consistently out of date as modules are updated and new ones are added.  Section~\ref{sec_explicit_modules} details how to create modules that can be queried for this type of information.
+As stated before, each module defines all of the input variables it requires and output variables it produces.  Since SSC is a model simulation framework that contains within it numerous calculation modules that each may have hundreds of variables, it is impractical to separate to the documentation of variables from their definitions.  Otherwise, the documentation would tend to be consistently out of date as modules are updated and new ones are added.  \S\ref{sec_explicit_modules} details how to create modules that can be queried for this type of information.
 
 \begin{table}[ht]
 \begin{center}
@@ -634,7 +634,7 @@ In this case, a \texttt{NULL} return value indicates that no error occurred.  As
 \subsection{Explicit Module Instantiation}
 \label{sec_explicit_modules}
 
-A third way to run a computation module is to explicitly create a module object, execute it with a data container, and then release it.  This method is introduced with the PVWatts example in Section~\ref{sec_ex_pvwatts_module}, and is discussed in more detail in this section.
+A third way to run a computation module is to explicitly create a module object, execute it with a data container, and then release it.  This method is introduced with the PVWatts example in \S\ref{sec_ex_pvwatts_module}, and is discussed in more detail in this section.
 
 The SSC function \texttt{ssc\_module\_create(...)} function is used to create a new instance of a computation module.  The function returns an opaque reference of type \texttt{ssc\_module\_t} to the module object, or returns \texttt{NULL} if the module could not be created.  The single parameter required is the name of the module requested.  If a module is created successfully, it must eventually be released when it is no longer needed via the \texttt{ssc\_module\_free(...)} function.  Example:
 
@@ -652,7 +652,7 @@ else
 }
 \end{verbatimtab}
 
-The advantage of explicitly creating a module is that all errors, warnings, and log messages generated during the course of the module's execution will be saved and can be later retrieved using the \texttt{ssc\_module\_log(...)} function, which is described subsequently in detail in Section~\ref{sec_messages}.  Alternatively, if the goal is simply to obtain information about the input and output variables associated with a module as in Section~\ref{sec_variable_docs}, the module must be explicitly instantiated also.
+The advantage of explicitly creating a module is that all errors, warnings, and log messages generated during the course of the module's execution will be saved and can be later retrieved using the \texttt{ssc\_module\_log(...)} function, which is described subsequently in detail in \S\ref{sec_messages}.  Alternatively, if the goal is simply to obtain information about the input and output variables associated with a module as in \S\ref{sec_variable_docs}, the module must be explicitly instantiated also.
 
 The next section describes a mechanism for running compute modules and providing real-time progress updates, reporting messages as they occur, and canceling a module's execution before it has finished.
 
@@ -898,8 +898,8 @@ For some variables, even the SAM user interface may not be helpful. When you nee
 \item[Start simulation] Runs the active module in the module browser.
 \item[Load/unload SSC library] Loads or unloads the current SSC library for troubleshooting. If a module does not run, you can try unloading and reloading the library.
 \item[Choose SSC library] Displays a file dialog where you can choose and load the SSC library. Be sure to choose the correct library for your version of SSCdev.
-\item[Load data file] Open a data container file. (\texttt{.bdat}).
-\item[Save data file] Save the data container to a file. (\texttt{.bdat}).
+\item[Load data file] Open a data file. (\texttt{.bdat}).
+\item[Save data file] Save the variables in the data container to a data file. (\texttt{.bdat}).
 \item[Recent files] Display a list of recent data (\texttt{.bdat}) and script (\texttt{.lk}) files.
 \item[Exit] Quit SSCdev.
 \end{description}
@@ -935,7 +935,7 @@ The module browser displays the modules available in the current SSC library. Wh
 \item Run a single module using variable values defined in the data container.
 \end{itemize}
 
-\notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See Section \ref{sec_sscdev_get_started} for instructions to load a library.}
+\notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See \S\ref{sec_sscdev_get_started} for instructions to load a library.}
 
 You can use the module browser as a reference while you are developing your model to help ensure that you assign values to all of the required input variables, and use the correct data types and units.
 
@@ -957,26 +957,42 @@ The data container displays a list of variables for the current set of simulatio
 \item Show graphs of time series data.
 \end{itemize}
 
-The data container commands act either on the current variable indicated with a blue highlight, or on selected variables indicated by a check mark:
+The data container commands act either on the selected variable indicated with a blue highlight, or on variables with a check mark:
 
 \begin{quote}
 \begin{description}
-\item[Add] Add a variable to the data container. If you add a module's input variable to the data container, be sure to use the variable's exact name and data type shown in the module browser.
-\item[Edit] Change the current variable's name, data type, or value.
-\item[Delete] Remove the current variable from the data container.
-\item[Del checked] Remove all selected variables from the data container.
+\item[Add] Add a variable to the data container. If you add a module's input variable to the data container, be sure to use the variable's exact name and data type as it appears in the module browser.
+\item[Edit] Change the selected variable's name, data type, or value.
+\item[Delete] Remove the selected variable from the data container.
+\item[Del checked] Remove all variables with check marks from the data container.
 \item[Del unchecked] Remove all variables without check marks from the data container.
 \item[Del all] Delete all variables from the data container.
-\item[Select all]  Select (check) all variables in the data container. This command may take several seconds to complete.
-\item[Unselect all] Clear all variables in the data container.
-\item[Copy to clipboard] Copy a tab-delimited list of selected variables and their values to the clipboard.
-\item[Show stats] Displays statistical summary data for variables of type \texttt{SSC\_ARRAY}. It is intended to display the annual and monthly minimum, maximum, mean, total, and total divided by 1000 of a data set representing time steps over a single year.
-\notebox{You can copy data from the monthly table by selecting the text and pressing the copy-to-clipboard shortcut keys for your computer (Ctrl-C in Windows).}
-\item[Timeseries graph] Display graphs of all selected variables with 8,760 values in the time series data viewer.
+\item[Select all]  Check all variables in the data container. This command may take several seconds to complete.
+\item[Unselect all] Clear check marks from all variables in the data container.
+\item[Copy to clipboard] Copy the data container table as a tab-delimited list of selected variable names and their values to the clipboard.
+\item[Show stats] Display a table of statistics for the selected variable, which must be of type \texttt{SSC\_ARRAY} with 8,760 values.
+\item[Timeseries graph] Display time series and statistical graphs of variables with check marks, which must be of type \texttt{SSC\_ARRAY} with 8,760 values.
 \end{description}
 \end{quote}
 
 \notebox{If you manually add variables to the data container before running a script that does not use the variables, they will be deleted from the data container.}
+
+\subsubsection{Data Files}
+\label{sec_ssc_dev_data_container_files}
+
+You can save and open the contents of the data container in a data file (\texttt{.bdat}) using the \textbf{Save data file} and \textbf{Load data file} commands on the File menu. The data files use a binary format, and store all of the variables in the data container.
+
+\subsubsection{Time Series Graphs and Statistical Tables}
+\label{sec_ssc_dev_data_container_timeseries_statistical}
+
+When the data container includes hourly arrays with 8,760 values, you can display the hourly data and statistical summaries:
+
+Select an hourly array and click \textbf{Show stats} to display a statistical summary of the array data in a table. You can export data from the monthly table by selecting it using your computer's copy-to-clipboard keyboard shortcut (Ctrl-C) in windows.
+
+Check one or more hourly arrays and click \textbf{Timeseries graph} time series data and statistical summaries in graphs. You can export graph images and tables of graph data by right-clicking graphs and selecting commands in the shortcut menu.
+
+
+See \S\ref{sec_sscdev_example_no_scripting} for an example.
 
 \subsection{Script Editor}
 \label{sec_sscdev_script_editor}
@@ -1003,43 +1019,61 @@ The script editor commands are:
 
 The following example shows how to use the module browser to expore and run the \texttt{pvwattsv1} module. You can use the same steps to explore other simulation modules.
 
-\notebox{As described in Section \ref{??ref:sscdev overview}, the module browser can only a single simulation module at a time. It can not combine modules to build a model as described in Section \ref{??ref:sscdev build model in script"}.}
+\notebox{As described in \S\ref{sec_sscdev_module_browser}, the module browser can only a single simulation module at a time. To combine modules to build a model, you can write a script as described in \S\ref{sec_sscdev_example_scripting}.}
 
-As we saw in Section \ref{??ref:overview}, the \texttt{pvwattsv1} simulation module reads data from a weather file and inputs that define the system's size, array orientation and type of tracking, and derating factor, and calculates values for the 1 by 8760 array storing the system's hourly electricity output over a single year. 
+As we saw in \S\ref{sec_modeling_systems}, the \texttt{pvwattsv1} simulation module reads data from a weather file and inputs that define the system's size, array orientation and type of tracking, and derating factor, and calculates values for the 1 by 8760 array storing the system's hourly electricity output over a single year. \marginpar{improve description of pvwatts module above}
 
 To explore the \texttt{pvwattsv1} simulation module in the module browser:
 
 \begin{enumerate}
-\item Start SSCdev as described in Section \ref{??ref:overview}
+\item Start SSCdev and be sure the correct SSC library is loaded as described in \S\ref{sec_sscdev_get_started}
 
-\item On the \textbf{Module Browser} tab, click the \texttt{pvwattsv1} name to see a list of the module's variables. The inputs are of type (SSC\_INPUT). Of the inputs, only a subset indicated by (\texttt{*}) are required with no default values, as described in Section~\ref{sec_def_const}.
+\item On the \textbf{Module Browser} tab, click the \texttt{pvwattsv1} name to see a list of the module's variables. The inputs are of type \texttt{SSC\_INPUT}. Of the inputs, only a subset indicated by (\texttt{*}) are required and have no default value, as described in \S\ref{sec_def_const}. At a minimum, you must assign values to these variables to run the module.
 
-\item Press the \textbf{F6} key to start simulations. Nothing happens because you have to choose a module to run it.
+\item In the drop-down list under the list of available modules, choose the \texttt{pvwatts1} module and click \textbf{Run} (or press \textbf{F6}).
 
-\item In the drop-down list under the list of available modules, choose the \texttt{pvwatts1} module and press \textbf{F5} again, or click \textbf{Run}.
+A message about the \texttt{file\_name} variable appears in the SSCdev notification panel. That is because \texttt{file\_name} is a required variable, but it does not yet have a value.
 
-This time, a message about the \texttt{file\_name} variable appears in the SSCdev notification panel. That is because \texttt{file\_name} is a required variable, but it does not yet have a value.
-
-\item In the variable viewer, click \textbf{Add}, and type \textit{file\_name} for the variable name, assign it the \texttt{SSC\_STRING} data type, and click \textbf{file} to assign it the value of one of the TMY2 files included in the SDK Examples folder (for example, \textit{daggett.tm2}).
+\item In the variable viewer, click \textbf{Add}, and type "file\_name" for the variable name, assign it the \texttt{SSC\_STRING} data type, and click \textbf{file} to assign it the value of one of the TMY2 files included in the SDK Examples folder (for example, \textit{daggett.tm2}).
 
 \item Next, add the remaining 5 required variables shown in the module browser, using the data type and units shown in the table. For example, \texttt{system\_size} should be \texttt{SSC\_NUMBER} with a value in kilowatts. Be sure to use variable names and data types that exactly match those in the module browser.
+
+When you are finished, you should see a table similar to Table \ref{table_ssc_dev_a}. This is the model's data container, which so far contains the required input for the \texttt{pvwattsv1} simulation module.
+
+\item Press \textbf{F6}, or on the module browser, click \textbf{Run} to run the module. 
 \end{enumerate}
 
-When you are finished, you should see a table similar to Table \ref{table_ssc_dev_a}. This is the model's data container, which so far contains the input and output variables for the \texttt{pvwattsv1} simulation module.
+The data container should now show a table with all of the \texttt{pvwattsv1} module variables. You can edit and view the variable values:
+
+\begin{itemize}
+
+\item Use the check boxes to add or remove variables from the table. Double-click the variable's name to edit it (or select the variable and click \textbf{Edit}).
+
+\item Display graphs of any array with 8,760 values. For example, to view the cell temperature and AC output variables, clear all of the check boxes, check the \texttt{tcell} and \texttt{ac} variables, and click \textbf{Time series graph}.
+
+\item Display a table of statistical values for any variable with 8,760 values. For example, select the \texttt{poa} variable to show the plane-of-array irradiance minimum, maximum, total, mean, and monthly values, and click \textbf{Show stats}.
+
+\notebox{To display the statistical summary of an hourly variable, select it by clicking its name in the list rather than checking it.}
+
+\end{itemize}
 
 \begin{table}
+\begin{center}
 \begin{tabular}{|c|c|c|c|c|c|}
 \hline
 file\_name & system\_size & derate & track\_mode & azimuth & tilt\\
 \hline
-F:/SSC/examples/daggett.tm2 & 4.000000 & 0.860000 & 1.000000 & 180.000000 & 25.000000\\
+.../daggett.tm2 & 4 & 0.77 & 0 & 180 & 20\\
 \hline
 \end{tabular}
 \caption{The 6 required input variables for the pvwattsv1 module with their values}\label{table_ssc_dev_a}
+\end{center}
 \end{table}
 
 \subsection{SSCdev Example 2: Use a Script to Build a Model}
-\label{sec_sscdev_example_no_scripting}
+\label{sec_sscdev_example_scripting}
+
+This example runs the \texttt{pvwattsv1} simulation module as
 
 \section{Language Interfaces}
 
