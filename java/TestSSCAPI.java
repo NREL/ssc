@@ -1,5 +1,36 @@
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+
 public class TestSSCAPI {
 
+/**
+* Adds the specified path to the java library path
+*
+* @param pathToAdd the path to add
+* @throws Exception
+*/
+    public static void addLibraryPath(String pathToAdd) throws Exception{
+        final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+        usrPathsField.setAccessible(true);
+
+        //get array of paths
+        final String[] paths = (String[])usrPathsField.get(null);
+
+        //check if the path to add is already present
+        for(String path : paths) {
+            if(path.equals(pathToAdd)) {
+                return;
+            }
+        }
+
+        //add the new path
+        final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
+        newPaths[newPaths.length-1] = pathToAdd;
+        usrPathsField.set(null, newPaths);
+    }
+    
+    
     public static void TestArrays()
     {
         SSC.Data sscData = new SSC.Data();
@@ -52,8 +83,8 @@ public class TestSSCAPI {
         SSC.Module mod = new SSC.Module("pvwattsv1");
         if (mod.exec(data))
         {
-            float tot = data.getNumber("annual_ac_net");
-            float[] ac = data.getArray("monthly_ac_net");
+            float tot = data.getNumber("ac_annual");
+            float[] ac = data.getArray("ac_monthly");
             for (int i = 0; i < ac.length; i++)
                 System.out.println("[" + i + "]: " + ac[i] + " kWh");
             System.out.println("AC total: " + tot);
@@ -173,8 +204,10 @@ public class TestSSCAPI {
         }        
         System.out.println("Module list end");
     }
-    public static void main(String[] args) 
+    public static void main(String[] args) throws Exception 
     {
+        // address dll path issues
+        addLibraryPath( "C:\\Projects\\SAM\\documentation\\Wrappers\\ssc\\jni\\TestSSCAPI\\src\\SSC");
         System.loadLibrary("sscapiJNI64");
         Version();
         ModuleList();

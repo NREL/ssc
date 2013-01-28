@@ -9,12 +9,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
-namespace SSC
+namespace CS_SSC_API
 {
 
-    class sscapi
+    class sscapiPINVOKE
     {
-        static sscapi()
+
+        static sscapiPINVOKE()
         {
         }
 
@@ -34,6 +35,36 @@ namespace SSC
         public static IntPtr ssc_build_info()
         {
             return (System.IntPtr.Size == 8) ? ssc_build_info64() : ssc_build_info32();
+        }
+
+        public static int SSC_INVALID_get()
+        {
+            return 0;
+        }
+
+        public static int SSC_STRING_get()
+        {
+            return 1;
+        }
+
+        public static int SSC_NUMBER_get()
+        {
+            return 2;
+        }
+
+        public static int SSC_ARRAY_get()
+        {
+            return 3;
+        }
+
+        public static int SSC_MATRIX_get()
+        {
+            return 4;
+        }
+
+        public static int SSC_TABLE_get()
+        {
+            return 5;
         }
 
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_data_create")]
@@ -306,6 +337,21 @@ namespace SSC
             }
         }
 
+        public static int SSC_INPUT_get()
+        {
+            return 1;
+        }
+
+        public static int SSC_OUTPUT_get()
+        {
+            return 2;
+        }
+
+        public static int SSC_INOUT_get()
+        {
+            return 3;
+        }
+
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_var_info")]
         public static extern IntPtr ssc_module_var_info32(HandleRef cxtModule, int index);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_var_info")]
@@ -422,7 +468,24 @@ namespace SSC
         {
             return (System.IntPtr.Size == 8) ? ssc_module_exec_simple_nothread64(moduleName, cxtData) : ssc_module_exec_simple_nothread32(moduleName, cxtData);
         }
-        
+
+        public static int SSC_LOG_get()
+        {
+            return 0;
+        }
+
+        public static int SSC_UPDATE_get()
+        {
+            return 1;
+        }
+
+/* removed in ssc rev 578
+        public static int SSC_EXECUTE_get()
+        {
+            return 2;
+        }
+ */
+
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_exec")]
         public static extern int ssc_module_exec32(HandleRef cxtModule, HandleRef cxtData);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_exec")]
@@ -441,6 +504,39 @@ namespace SSC
             return (System.IntPtr.Size == 8) ? ssc_module_exec_with_handler64(cxtModule, cxtData, cxtHandler, cxtUserData) : ssc_module_exec_with_handler32(cxtModule, cxtData, cxtHandler, cxtUserData);
         }
 
+ /* removed in ssc rev 578 
+        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_extproc_output")]
+        public static extern void ssc_module_extproc_output32(HandleRef cxtModule, string outputLine);
+        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_extproc_output")]
+        public static extern void ssc_module_extproc_output64(HandleRef cxtModule, string outputLine);
+        public static void ssc_module_extproc_output(HandleRef cxtModule, string outputLine)
+        {
+            if (System.IntPtr.Size == 8)
+            {
+                ssc_module_extproc_output64(cxtModule, outputLine);
+            }
+            else
+            {
+                ssc_module_extproc_output32(cxtModule, outputLine);
+            }
+        }
+  */
+
+        public static int SSC_NOTICE_get()
+        {
+            return 1;
+        }
+
+        public static int SSC_WARNING_get()
+        {
+            return 2;
+        }
+
+        public static int SSC_ERROR_get()
+        {
+            return 3;
+        }
+
         [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_log")]
         public static extern IntPtr ssc_module_log32(HandleRef cxtModule, int index, out int messageType, out float time);
         [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ssc_module_log")]
@@ -449,41 +545,47 @@ namespace SSC
         {
             return (System.IntPtr.Size == 8) ? ssc_module_log64(cxtModule, index, out messageType, out time) : ssc_module_log32(cxtModule, index, out messageType, out time);
         }
+
+        [DllImport("ssc32.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "__ssc_segfault")]
+        public static extern void __ssc_segfault32();
+        [DllImport("ssc64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "__ssc_segfault")]
+        public static extern void __ssc_segfault64();
+        public static void __ssc_segfault()
+        {
+            if (System.IntPtr.Size == 8)
+            {
+                __ssc_segfault64();
+            }
+            else
+            {
+                __ssc_segfault32();
+            }
+        }
     }
 
-
-    public class Data
+    public class SSCData
     {
         private HandleRef m_data;
-        private bool m_owned;
 
-
-        public Data()
+        public SSCData()
         {
-            m_data = new HandleRef(this, sscapi.ssc_data_create());
-            m_owned = true;
+            m_data = new HandleRef(this, sscapiPINVOKE.ssc_data_create());
         }
 
-        public Data( IntPtr dataRefNotOwned )
+        ~SSCData()
         {
-            m_data = new HandleRef(this, dataRefNotOwned);
-            m_owned = false;
-        }
-
-        ~Data()
-        {
-            if (m_owned && m_data.Handle != IntPtr.Zero)
-                sscapi.ssc_data_free(m_data);
+            if (m_data.Handle != IntPtr.Zero)
+                sscapiPINVOKE.ssc_data_free(m_data);
         }
 
         public void Clear()
         {
-            sscapi.ssc_data_clear(m_data);
+            sscapiPINVOKE.ssc_data_clear(m_data);
         }
 
         public String First()
         {
-            IntPtr p = sscapi.ssc_data_first(m_data);
+            IntPtr p = sscapiPINVOKE.ssc_data_first(m_data);
             if (p != IntPtr.Zero)
                 return Marshal.PtrToStringAnsi(p);
             else
@@ -492,7 +594,7 @@ namespace SSC
 
         public String Next()
         {
-            IntPtr p = sscapi.ssc_data_next(m_data);
+            IntPtr p = sscapiPINVOKE.ssc_data_next(m_data);
             if (p != IntPtr.Zero)
                 return Marshal.PtrToStringAnsi(p);
             else
@@ -501,41 +603,41 @@ namespace SSC
 
         public int Query(String name)
         {
-            return sscapi.ssc_data_query(m_data, name);
+            return sscapiPINVOKE.ssc_data_query(m_data, name);
         }
 
         public void SetNumber(String name, float value)
         {
-            sscapi.ssc_data_set_number(m_data, name, value);
+            sscapiPINVOKE.ssc_data_set_number(m_data, name, value);
         }
 
         public float GetNumber(String name)
         {
             float val = float.NaN;
-            sscapi.ssc_data_get_number(m_data, name, out val);
+            sscapiPINVOKE.ssc_data_get_number(m_data, name, out val);
             return val;
         }
 
         public void SetString(String name, String value)
         {
-            sscapi.ssc_data_set_string(m_data, name, value);
+            sscapiPINVOKE.ssc_data_set_string(m_data, name, value);
         }
 
         public String GetString(String name)
         {
-            IntPtr p = sscapi.ssc_data_get_string(m_data, name);
+            IntPtr p = sscapiPINVOKE.ssc_data_get_string(m_data, name);
             return Marshal.PtrToStringAnsi(p);
         }
 
         public void SetArray(String name, float[] data)
         {
-            sscapi.ssc_data_set_array(m_data, name, data, data.Length);
+            sscapiPINVOKE.ssc_data_set_array(m_data, name, data, data.Length);
         }
 
         public float[] GetArray(String name)
         {
             int len;
-            IntPtr res = sscapi.ssc_data_get_array(m_data, name, out len);
+            IntPtr res = sscapiPINVOKE.ssc_data_get_array(m_data, name, out len);
             float[] arr = null;
             if (len > 0)
             {
@@ -549,13 +651,13 @@ namespace SSC
         {
             int nRows = mat.GetLength(0);
             int nCols = mat.GetLength(1);
-            sscapi.ssc_data_set_matrix(m_data, name, mat, nRows, nCols);
+            sscapiPINVOKE.ssc_data_set_matrix(m_data, name, mat, nRows, nCols);
         }
 
         public float[,] GetMatrix(String name)
         {
             int nRows, nCols;
-            IntPtr res = sscapi.ssc_data_get_matrix(m_data, name, out nRows, out nCols);
+            IntPtr res = sscapiPINVOKE.ssc_data_get_matrix(m_data, name, out nRows, out nCols);
             if (nRows * nCols > 0)
             {
                 float[] sscMat = new float[nRows * nCols];
@@ -574,40 +676,25 @@ namespace SSC
                 return null;
         }
 
-        public void SetTable(String name, Data table)
-        {
-            sscapi.ssc_data_set_table(m_data, name, table.GetDataHandle());
-        }
-
-        public Data GetTable(String name)
-        {
-            IntPtr p = sscapi.ssc_data_get_table(m_data, name);
-            if (IntPtr.Zero == p)
-                return null;
-            else
-                return new Data( p );
-        }
-
         public HandleRef GetDataHandle()
         {
             return m_data;
         }
     }
 
-
-    public class Module
+    public class SSCModule
     {
         private HandleRef m_mod;
 
-        public Module(String name)
+        public SSCModule(String name)
         {
-            m_mod = new HandleRef(this, sscapi.ssc_module_create(name) );
+            m_mod = new HandleRef(this, sscapiPINVOKE.ssc_module_create(name) );
         }
 
-        ~Module()
+        ~SSCModule()
         {
             if (m_mod.Handle != IntPtr.Zero)
-                sscapi.ssc_module_free(m_mod);
+                sscapiPINVOKE.ssc_module_free(m_mod);
         }
 
         public bool IsOk()
@@ -620,15 +707,15 @@ namespace SSC
             return m_mod;
         }
 
-        public bool Exec( Data data )
+        public bool Exec( SSCData data )
         {
-            return (sscapi.ssc_module_exec(m_mod, data.GetDataHandle()) != 0);
+            return (sscapiPINVOKE.ssc_module_exec(m_mod, data.GetDataHandle()) != 0);
         }
 
         public bool Log(int idx, out String msg, out int type, out float time)
         {
             msg = "";
-            IntPtr p = sscapi.ssc_module_log(m_mod, idx, out type, out time);
+            IntPtr p = sscapiPINVOKE.ssc_module_log(m_mod, idx, out type, out time);
             if (IntPtr.Zero != p)
             {
                 msg = Marshal.PtrToStringAnsi(p);
@@ -640,12 +727,12 @@ namespace SSC
     }
 
 
-    public class Entry
+    public class SSCEntry
     {
         private HandleRef m_entry;
         private int m_idx;
 
-        public Entry()
+        public SSCEntry()
         {
             m_idx = 0;
         }
@@ -657,7 +744,7 @@ namespace SSC
 
         public bool Get()
         {
-            IntPtr p = sscapi.ssc_module_entry(m_idx);
+            IntPtr p = sscapiPINVOKE.ssc_module_entry(m_idx);
             if (p == IntPtr.Zero)
             {
                 Reset();
@@ -673,7 +760,7 @@ namespace SSC
         {
             if (m_entry.Handle != IntPtr.Zero)
             {
-                IntPtr p = sscapi.ssc_entry_name(m_entry);
+                IntPtr p = sscapiPINVOKE.ssc_entry_name(m_entry);
                 return Marshal.PtrToStringAnsi(p);
             }
             else return null;
@@ -683,7 +770,7 @@ namespace SSC
         {
             if (m_entry.Handle != IntPtr.Zero)
             {
-                IntPtr p = sscapi.ssc_entry_description(m_entry);
+                IntPtr p = sscapiPINVOKE.ssc_entry_description(m_entry);
                 return Marshal.PtrToStringAnsi(p);
             }
             else
@@ -693,19 +780,19 @@ namespace SSC
         public int Version()
         {
             if (m_entry.Handle != IntPtr.Zero)
-                return sscapi.ssc_entry_version(m_entry);
+                return sscapiPINVOKE.ssc_entry_version(m_entry);
             else
                 return -1;
         }
     }
 
-    public class Info
+    public class SSCInfo
     {
         private HandleRef m_inf;
-        private Module m_mod;
+        private SSCModule m_mod;
         private int m_idx;
 
-        public Info(Module m)
+        public SSCInfo(SSCModule m)
         {
             m_mod = m;
             m_idx = 0;
@@ -718,7 +805,7 @@ namespace SSC
 
         public bool Get()
         {
-            IntPtr p = sscapi.ssc_module_var_info(m_mod.GetModuleHandle(), m_idx);
+            IntPtr p = sscapiPINVOKE.ssc_module_var_info(m_mod.GetModuleHandle(), m_idx);
             if (p == IntPtr.Zero)
             {
                 Reset();
@@ -733,96 +820,380 @@ namespace SSC
         public String Name()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
-            IntPtr p = sscapi.ssc_info_name(m_inf);
+            IntPtr p = sscapiPINVOKE.ssc_info_name(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
         public int VarType()
         {
             if (m_inf.Handle == IntPtr.Zero) return -1;
-            return sscapi.ssc_info_var_type(m_inf);
+            return sscapiPINVOKE.ssc_info_var_type(m_inf);
         }
 
         public int DataType()
         {
             if (m_inf.Handle == IntPtr.Zero) return -1;
-            return sscapi.ssc_info_data_type(m_inf);
+            return sscapiPINVOKE.ssc_info_data_type(m_inf);
         }
 
         public string Label()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
-            IntPtr p = sscapi.ssc_info_label(m_inf);
+            IntPtr p = sscapiPINVOKE.ssc_info_label(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
         public string Units()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
-            IntPtr p = sscapi.ssc_info_units(m_inf);
+            IntPtr p = sscapiPINVOKE.ssc_info_units(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
         public string Meta()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
-            IntPtr p = sscapi.ssc_info_meta(m_inf);
+            IntPtr p = sscapiPINVOKE.ssc_info_meta(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
         public string Group()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
-            IntPtr p = sscapi.ssc_info_group(m_inf);
+            IntPtr p = sscapiPINVOKE.ssc_info_group(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
         public string Required()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
-            IntPtr p = sscapi.ssc_info_required(m_inf);
+            IntPtr p = sscapiPINVOKE.ssc_info_required(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
 
         public string Constraints()
         {
             if (m_inf.Handle == IntPtr.Zero) return null;
-            IntPtr p = sscapi.ssc_info_constraints(m_inf);
+            IntPtr p = sscapiPINVOKE.ssc_info_constraints(m_inf);
             return Marshal.PtrToStringAnsi(p);
         }
     }
 
-    public class API
+    public class SSCMeta
     {
-        // constants for return value of Info.VarType() (see sscapi.h)
-        public const int INPUT = 1;
-        public const int OUTPUT = 2;
-        public const int INOUT = 3;
-
-
-        // constants for out integer type in Module.Log() method (see sscapi.h)
-        public const int NOTICE = 1;
-        public const int WARNING = 2;
-        public const int ERROR = 3;
-
-
-        // constants for return value of Data.Query() and Info.DataType() (see sscapi.h)
-        public const int INVALID = 0;
-        public const int STRING = 1;
-        public const int NUMBER = 2;
-        public const int ARRAY = 3;
-        public const int MATRIX = 4;
-        public const int TABLE = 5;
-
-        static public int Version()
+        public int Version()
         {
-            return sscapi.ssc_version();
+            return sscapiPINVOKE.ssc_version();
         }
 
-        static public String BuildInfo()
+        public String BuildInfo()
         {
-            IntPtr buildInfo = sscapi.ssc_build_info();
+            IntPtr buildInfo = sscapiPINVOKE.ssc_build_info();
             return Marshal.PtrToStringAnsi(buildInfo);
         }
+    }
+
+    public class SSC 
+    {
+        private HandleRef ssc_data_ptr;
+        private HandleRef ssc_module_ptr;
+//        private HandleRef ssc_info_ptr;
+        private HandleRef ssc_entry_ptr;
+
+      public SSC()
+      {
+          ssc_data_ptr = new HandleRef(this, sscapiPINVOKE.ssc_data_create());
+      }
+
+      public SSC( String module_name )
+      {
+        ssc_data_ptr = new HandleRef(this, sscapiPINVOKE.ssc_data_create());
+        ssc_module_ptr = new HandleRef(this, sscapiPINVOKE.ssc_module_create(module_name));
+      }
+
+      ~SSC()
+      {
+          Clear();
+      }
+
+      public void Clear()
+      {
+          if (ssc_data_ptr.Handle != IntPtr.Zero)
+          {
+              sscapiPINVOKE.ssc_data_free(ssc_data_ptr);
+          }
+          if (ssc_module_ptr.Handle != IntPtr.Zero)
+          {
+              sscapiPINVOKE.ssc_module_free(ssc_module_ptr);
+          }
+      }
+  
+      public int Version()
+      {
+          return sscapiPINVOKE.ssc_version();
+      }
+  
+      public String BuildInfo()
+      {
+          IntPtr buildInfo = sscapiPINVOKE.ssc_build_info();
+          return Marshal.PtrToStringAnsi(buildInfo);
+      }
+  
+      public void SetString(String name, String value)
+      {
+          sscapiPINVOKE.ssc_data_set_string(ssc_data_ptr, name, value);
+      }
+
+      public void SetNumber(String name, float value)
+      {
+          sscapiPINVOKE.ssc_data_set_number(ssc_data_ptr, name, value);
+      }
+
+      public float GetNumber(String name)
+      {
+          float result = 0;
+          float value=0;
+
+          int res = sscapiPINVOKE.ssc_data_get_number(ssc_data_ptr, name, out value);
+          if (res == 0)
+          {
+              result = float.NaN;
+          }
+          else
+          {
+              result = value;
+          }
+          return result;
+      }
+
+
+      public float[] GetArray(String name)
+      {
+          int len;
+          IntPtr res = sscapiPINVOKE.ssc_data_get_array(ssc_data_ptr, name,out len);
+          float[] arr = new float[len];
+          Marshal.Copy(res, arr, 0, len);
+          return arr;
+      }
+
+      public void SetArray(String name, float[] arr)
+      {
+          int len = arr.Length;
+          sscapiPINVOKE.ssc_data_set_array(ssc_data_ptr, name, arr, len);
+      }
+
+      public float[,] GetMatrix(String name)
+      {
+          int nRows, nCols;
+          IntPtr res = sscapiPINVOKE.ssc_data_get_matrix(ssc_data_ptr, name, out nRows, out nCols);
+          float[] sscMat = new float[nRows*nCols];
+          Marshal.Copy(res, sscMat, 0, nRows * nCols);
+          float[,] mat = new float[nRows, nCols];
+          for (int i = 0; i < nRows; i++)
+          {
+              for (int j = 0; j < nCols; j++)
+              {
+                  mat[i , j] = sscMat[i*nCols+j];
+              }
+          }
+          return mat;
+      }
+
+      public void SetMatrix(String name, float[,] matrix)
+      {
+          int nRows = matrix.GetLength(0);
+          int nCols = matrix.GetLength(1);
+          sscapiPINVOKE.ssc_data_set_matrix(ssc_data_ptr, name, matrix, nRows, nCols);
+      }
+       
+
+        
+      public bool Exec()
+      {
+          return (sscapiPINVOKE.ssc_module_exec(ssc_module_ptr, ssc_data_ptr) != 0);
+      }
+
+      public bool ModuleInfo(int index)
+      {
+          IntPtr ip  = sscapiPINVOKE.ssc_module_entry(index);
+          ssc_entry_ptr = new HandleRef(this,ip);
+          return (ip != IntPtr.Zero);
+      }
+  
+      public String ModuleName()
+      {
+          IntPtr moduleName = sscapiPINVOKE.ssc_entry_name(ssc_entry_ptr);
+          return Marshal.PtrToStringAnsi(moduleName);
+      }
+  
+      public String ModuleDescription()
+      {
+          IntPtr moduleDescription = sscapiPINVOKE.ssc_entry_description(ssc_entry_ptr);
+          return Marshal.PtrToStringAnsi(moduleDescription);
+      }
+
+      public int ModuleVersion()
+      {
+          return sscapiPINVOKE.ssc_entry_version(ssc_entry_ptr);
+      }
+
+      public int NumberVariables(String moduleName)
+      {
+          int numVariables = 0;
+
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, numVariables));
+          while (varInfo.Handle != IntPtr.Zero)
+          {
+              numVariables++;
+              varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, numVariables));
+          }
+          return numVariables;
+      }
+
+
+      public String VariableType(int variableIndex)
+      {
+          String variableTypeString = "No variable type information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              int varType = sscapiPINVOKE.ssc_info_var_type(varInfo);
+              if (varType == sscapiPINVOKE.SSC_INPUT_get())
+              {
+                  variableTypeString = "INPUT";
+              }
+              else if (varType == sscapiPINVOKE.SSC_OUTPUT_get())
+              {
+                  variableTypeString = "OUTPUT";
+              }
+              else if (varType == sscapiPINVOKE.SSC_INOUT_get())
+              {
+                  variableTypeString = "INOUT";
+              }
+          }
+          return variableTypeString;
+      }
+
+      public String VariableData(int variableIndex)
+      {
+          String variableDataTypeString = "No variable data information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              int varDataType = sscapiPINVOKE.ssc_info_data_type(varInfo);
+              if (varDataType == sscapiPINVOKE.SSC_STRING_get())
+              {
+                  variableDataTypeString = "STRING";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_NUMBER_get())
+              {
+                  variableDataTypeString = "NUMBER";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_ARRAY_get())
+              {
+                  variableDataTypeString = "ARRAY";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_MATRIX_get())
+              {
+                  variableDataTypeString = "MATRIX";
+              }
+              else if (varDataType == sscapiPINVOKE.SSC_TABLE_get())
+              {
+                  variableDataTypeString = "TABLE";
+              }
+          }
+          return variableDataTypeString;
+      }
+
+  
+      public String VariableName(int variableIndex)
+      {
+          String variableNameString = "No variable name information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableNameString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_name(varInfo));
+          }
+          return variableNameString;
+      }
+
+      public String VariableLabel(int variableIndex)
+      {
+          String variableLabelString = "No variable label information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableLabelString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_label(varInfo));
+          }
+          return variableLabelString;
+      }
+
+      public String VariableUnits(int variableIndex)
+      {
+          String variableUnitsString = "No variable units information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableUnitsString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_units(varInfo));
+          }
+          return variableUnitsString;
+      }
+
+      public String VariableMeta(int variableIndex)
+      {
+          String variableMetaString = "No variable meta information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableMetaString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_meta(varInfo));
+          }
+          return variableMetaString;
+      }
+
+      public String VariableGroup(int variableIndex)
+      {
+          String variableGroupString = "No variable group information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableGroupString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_group(varInfo));
+          }
+          return variableGroupString;
+      }
+
+      public String VariableRequired(int variableIndex)
+      {
+          String variableRequiredString = "No variable required information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableRequiredString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_required(varInfo));
+          }
+          return variableRequiredString;
+      }
+
+      public String VariableConstraints(int variableIndex)
+      {
+          String variableConstraintsString = "No variable constraints information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableConstraintsString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_constraints(varInfo));
+          }
+          return variableConstraintsString;
+      }
+
+      public String VariableUIHint(int variableIndex)
+      {
+          String variableUIHintString = "No variable ui hints information found.";
+          HandleRef varInfo = new HandleRef(this, sscapiPINVOKE.ssc_module_var_info(ssc_module_ptr, variableIndex));
+          if (varInfo.Handle != IntPtr.Zero)
+          {
+              variableUIHintString = Marshal.PtrToStringAnsi(sscapiPINVOKE.ssc_info_uihint(varInfo));
+          }
+          return variableUIHintString;
+      }
+    
+    
     }
 }

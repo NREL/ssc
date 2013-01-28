@@ -188,23 +188,23 @@ namespace TestApplication
         {
             // uses main ssc class - version and build info
             CS_SSC_API.SSCMeta sscMeta = new CS_SSC_API.SSCMeta();
-            txt4Data.Clear();
-            txt4Data.AppendText("ssc version = " + sscMeta.Version() + "\n");
-            txt4Data.AppendText("ssc build info = " + sscMeta.BuildInfo() + "\n");
+            txtData.Clear();
+            txtData.AppendText("ssc version = " + sscMeta.Version() + "\n");
+            txtData.AppendText("ssc build info = " + sscMeta.BuildInfo() + "\n");
         }
 
         private void btn4ModuleList_Click(object sender, EventArgs e)
         {
             CS_SSC_API.SSCEntry sscEntry = new CS_SSC_API.SSCEntry();
-            txt4Data.Clear();
+            txtData.Clear();
             int moduleIndex = 0;
             while (sscEntry.Get())
             {
                 String module_name = sscEntry.Name();
                 String description = sscEntry.Description();
                 int version = sscEntry.Version();
-                txt4Data.AppendText("\nModule: " + module_name + ", version: " + version + "\n");
-                txt4Data.AppendText("    " + description + "\n");
+                txtData.AppendText("\nModule: " + module_name + ", version: " + version + "\n");
+                txtData.AppendText("    " + description + "\n");
                 moduleIndex++;
             }        
         }
@@ -212,7 +212,7 @@ namespace TestApplication
         private void btn4ArrayTest_Click(object sender, EventArgs e)
         {
             CS_SSC_API.SSCData sscData = new CS_SSC_API.SSCData();
-            txt4Data.Clear();
+            txtData.Clear();
             float[] arr = new float[10];
             for (int i = 0; i < arr.Length; i++)
             {
@@ -222,10 +222,10 @@ namespace TestApplication
 
             float[] retArray = sscData.GetArray("TestArray");
 
-            txt4Data.AppendText("Testing SetArray and GetArray\n");
+            txtData.AppendText("Testing SetArray and GetArray\n");
             for (int i = 0; i < retArray.Length; i++)
             {
-                txt4Data.AppendText("\treturned array element: " + i + " = " + retArray[i] + "\n");
+                txtData.AppendText("\treturned array element: " + i + " = " + retArray[i] + "\n");
             }
 
         }
@@ -233,18 +233,18 @@ namespace TestApplication
         private void btn4TestMatrices_Click(object sender, EventArgs e)
         {
             CS_SSC_API.SSCData sscData = new CS_SSC_API.SSCData();
-            txt4Data.Clear();
+            txtData.Clear();
             float[,] matrix = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
             sscData.SetMatrix("TestMatrix", matrix);
 
             float[,] retMatrix = sscData.GetMatrix("TestMatrix");
 
-            txt4Data.AppendText("Testing SetMatrix and GetMatrix\n");
+            txtData.AppendText("Testing SetMatrix and GetMatrix\n");
             for (int i = 0; i < retMatrix.GetLength(0); i++)
             {
                 for (int j = 0; j < retMatrix.GetLength(1); j++)
                 {
-                    txt4Data.AppendText("\treturned matrix element: (" + i + "," + j + ") = " + retMatrix[i, j] + "\n");
+                    txtData.AppendText("\treturned matrix element: (" + i + "," + j + ") = " + retMatrix[i, j] + "\n");
                 }
             }
         }
@@ -253,7 +253,7 @@ namespace TestApplication
         {
             CS_SSC_API.SSCModule sscModule = new CS_SSC_API.SSCModule("pvwattsv1");
             CS_SSC_API.SSCData sscData = new CS_SSC_API.SSCData();
-            txt4Data.Clear();
+            txtData.Clear();
             sscData.SetString("file_name", "AZ Phoenix.tm2");
             sscData.SetNumber("system_size", 1.0f);
             sscData.SetNumber("derate", 0.77f);
@@ -269,13 +269,13 @@ namespace TestApplication
                 {
                     sum += ac[i];
                 }
-                txt4Data.AppendText("length returned: " + ac.Count() + "\n");
-                txt4Data.AppendText("ac total (get array): " + sum + "\n");
-                txt4Data.AppendText("PVWatts example passed" + "\n");
+                txtData.AppendText("length returned: " + ac.Count() + "\n");
+                txtData.AppendText("ac total (get array): " + sum + "\n");
+                txtData.AppendText("PVWatts example passed" + "\n");
             }
             else
             {
-                txt4Data.AppendText("PVWatts example failed" + "\n");
+                txtData.AppendText("PVWatts example failed" + "\n");
             }
         }
 
@@ -283,7 +283,7 @@ namespace TestApplication
         {
             CS_SSC_API.SSCModule sscModule = new CS_SSC_API.SSCModule("pvwattsfunc");
             CS_SSC_API.SSCData sscData = new CS_SSC_API.SSCData();
-            txt4Data.Clear();
+            txtData.Clear();
             sscData.SetNumber("year", 1970); // general year (tiny effect in sun position)
             sscData.SetNumber("month", 1); // 1-12
             sscData.SetNumber("day", 1); //1-number of days in month
@@ -319,10 +319,10 @@ namespace TestApplication
                 float tcell = sscData.GetNumber("tcell");
                 float dc = sscData.GetNumber("dc");
                 float ac = sscData.GetNumber("ac");
-                txt4Data.AppendText("poa: " + poa + " W/m2\n");
-                txt4Data.AppendText("tcell: " + tcell + " C\n");
-                txt4Data.AppendText("dc: " + dc + " W\n");
-                txt4Data.AppendText("ac: " + ac + " W\n");
+                txtData.AppendText("poa: " + poa + " W/m2\n");
+                txtData.AppendText("tcell: " + tcell + " C\n");
+                txtData.AppendText("dc: " + dc + " W\n");
+                txtData.AppendText("ac: " + ac + " W\n");
             }
             //System.GC.Collect(); // call to immediately free underlying pointers 
 
@@ -331,15 +331,15 @@ namespace TestApplication
         private void btn4ModulesAndVariables_Click(object sender, EventArgs e)
         {
             CS_SSC_API.SSCEntry sscEntry = new CS_SSC_API.SSCEntry();
-            txt4Data.Clear();
+            txtData.Clear();
             int moduleIndex = 0;
             while (sscEntry.Get())
             {
                 String moduleName = sscEntry.Name();
                 String description = sscEntry.Description();
                 int version = sscEntry.Version();
-                txt4Data.AppendText("\nModule: " + moduleName + ", version: " + version + "\n");
-                txt4Data.AppendText(" " + description + "\n");
+                txtData.AppendText("\nModule: " + moduleName + ", version: " + version + "\n");
+                txtData.AppendText(" " + description + "\n");
                 moduleIndex++;
 
                 CS_SSC_API.SSCModule sscModule = new CS_SSC_API.SSCModule(moduleName);
@@ -347,7 +347,7 @@ namespace TestApplication
 
                 while (sscInfo.Get())
                 {
-                    txt4Data.AppendText("\t" + sscInfo.VarType() + ": \"" + sscInfo.Name() + "\" " + " [" + sscInfo.DataType() + "] " + sscInfo.Label() + " (" + sscInfo.Units() + ")\n");
+                    txtData.AppendText("\t" + sscInfo.VarType() + ": \"" + sscInfo.Name() + "\" " + " [" + sscInfo.DataType() + "] " + sscInfo.Label() + " (" + sscInfo.Units() + ")\n");
                 }
             }
         }
