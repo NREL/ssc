@@ -62,6 +62,7 @@ public:
 		wpc.m_dCutInSpeed = as_double("cutin");
 		wpc.m_dLossesAbsolute = 0 ; // as_double("lossc");
 		wpc.m_dLossesPercent = as_double("lossp")/100.0;
+		wpc.m_dWakeDecayCoefficient = 0.07; // for Park model
 
 		ssc_number_t *pc_w = as_array( "pc_wind", &wpc.m_iLengthOfTurbinePowerCurveArray );
 		ssc_number_t *pc_p = as_array( "pc_power", NULL );
@@ -83,9 +84,8 @@ public:
 		ssc_number_t *air_pres = allocate("pres", nstep);
 
 
-		std::vector<double> Dn(wpc.m_iNumberOfTurbinesInFarm), Cs(wpc.m_iNumberOfTurbinesInFarm), 
-			Power(wpc.m_iNumberOfTurbinesInFarm), Thrust(wpc.m_iNumberOfTurbinesInFarm), Eff(wpc.m_iNumberOfTurbinesInFarm), 
-			Wind(wpc.m_iNumberOfTurbinesInFarm), Turb(wpc.m_iNumberOfTurbinesInFarm);
+		std::vector<double> Power(wpc.m_iNumberOfTurbinesInFarm), Thrust(wpc.m_iNumberOfTurbinesInFarm), 
+			Eff(wpc.m_iNumberOfTurbinesInFarm), Wind(wpc.m_iNumberOfTurbinesInFarm), Turb(wpc.m_iNumberOfTurbinesInFarm);
 
 		wpc.m_adXCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
 		wpc.m_adYCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
@@ -193,8 +193,6 @@ public:
 
 						/* outputs */
 						&farmp,
-						&Dn[0],
-						&Cs[0],
 						&Power[0],
 						&Thrust[0],
 						&Eff[0],

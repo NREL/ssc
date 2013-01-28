@@ -28,6 +28,7 @@ public:
 	double m_dRatedPower;			// rated power (kw)
 	double m_dLossesAbsolute;		// constant loss
 	double m_dLossesPercent;		// loss as percent
+	double m_dWakeDecayCoefficient; // wake decay coefficient (k)
 
 	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adXCoords, m_adYCoords;
 
@@ -42,8 +43,6 @@ public:
 			
 		// OUTPUTS
 			double *FarmP,   // total farm power output
-			double Dn[],     // downwind coordinate of each WT
-			double Cs[],     // crosswind coordinate of each WT
 			double Power[],  // calculated power of each WT
 			double Thrust[], // thrust calculation at each WT
 			double Eff[],    // downwind efficiency of each WT
@@ -62,8 +61,6 @@ private:
 	void wake_calculations_pat_quinlan(
 		/*INPUTS*/
 		double fAir_density,
-		double fTurbine_output,
-		double fThrust_coeff,
 		double aDistanceDownwind[],			// downwind coordinate of each WT
 		double aDistanceCrosswind[],		// crosswind coordinate of each WT
 
@@ -75,9 +72,23 @@ private:
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 	);
 
+	void wind_power_calculator::wake_calculations_Park(
+		/*INPUTS*/
+		double fAir_density,
+		double dWakeDecayK,					// wake decay coefficient (k)
+		double aDistanceDownwind[],			// downwind coordinate of each WT
+		double aDistanceCrosswind[],		// crosswind coordinate of each WT
+
+		/*OUTPUTS*/
+		double Power[],						// calculated power of each WT
+		double Thrust[],					// thrust calculation at each WT
+		double Eff[],						// downwind efficiency of each WT
+		double aWind_speed[]				// wind speed at each WT
+	);
+
 	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
-	void vel_delta_loc( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta);
-	void vel_delta_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dConstK, double dThrustCoeff, double &dVdelta);
+	void vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta);
+	double wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dConstK, double dThrustCoeff);
 	void coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
 	double gammaln(double x);
