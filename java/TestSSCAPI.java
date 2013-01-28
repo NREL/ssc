@@ -29,8 +29,8 @@ public class TestSSCAPI {
         newPaths[newPaths.length-1] = pathToAdd;
         usrPathsField.set(null, newPaths);
     }
-    
-    
+
+
     public static void TestArrays()
     {
         SSC.Data sscData = new SSC.Data();
@@ -154,7 +154,7 @@ public class TestSSCAPI {
             System.out.println("ac: " + ac + " W");
         }
     }
-        
+
     public static void ModulesAndVariables()
     {
         SSC.Entry sscEntry = new SSC.Entry();
@@ -177,8 +177,8 @@ public class TestSSCAPI {
             }
         }
     }
-            
-    
+
+
     public static void Version()
     {
         System.out.println("\nVersion begin");
@@ -189,26 +189,26 @@ public class TestSSCAPI {
     }
 
 
-    
+
     public static void ModuleList()
     {
         System.out.println("\nModule list begin");
         SSC.Entry sscEntry = new SSC.Entry();
         while( sscEntry.get())
-        {   
+        {
             String module_name = sscEntry.name();
             String description = sscEntry.description();
             int version = sscEntry.version();
             System.out.println( "Module: " + module_name + ", version: " + version);
             System.out.println( "    " + description );
-        }        
+        }
         System.out.println("Module list end");
     }
-    public static void main(String[] args) throws Exception 
+    public static void main(String[] args) throws Exception
     {
         // address dll path issues
-        addLibraryPath( "C:\\Projects\\SAM\\documentation\\Wrappers\\ssc\\jni\\TestSSCAPI\\src\\SSC");
-        System.loadLibrary("sscapiJNI64");
+        addLibraryPath( "C:\\Projects\\SAM\\VS2012\\ssc\\java\\SSC");
+        System.loadLibrary("sscapiJNI");
         Version();
         ModuleList();
         ModulesAndVariables();
