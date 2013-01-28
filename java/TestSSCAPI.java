@@ -206,9 +206,9 @@ public class TestSSCAPI {
     }
     public static void main(String[] args) throws Exception
     {
-        // address dll path issues
-        addLibraryPath( "C:\\Projects\\SAM\\VS2012\\ssc\\java\\SSC");
-        System.loadLibrary("sscapiJNI");
+        // address dll path issues (if necessary)
+        //addLibraryPath( "C:\\Projects\\SAM\\VS2012\\ssc\\java");
+        System.loadLibrary("SSCAPIJNI");
         Version();
         ModuleList();
         ModulesAndVariables();
