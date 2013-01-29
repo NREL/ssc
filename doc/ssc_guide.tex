@@ -82,7 +82,7 @@ This document describes the software architecture of SSC, introduces the SSC Dev
 \section{Overview}
 \label{sec_overview}
 
-The SSC software development kit (SDK) provides tools for creating models of renewable energy systems using the SSC library. The System Advisor Model (SAM) desktop application is a user-friendly front-end for the SSC library that uses SSC modules to perform all system performance and financial calculations. This manual assumes that the reader is familiar with SAM's suite of performance and financial models, input and output variables, and other capabilities. The SDK consists of the application programming interface (API), library, programming language wrappers, integrated development environment, and code samples.
+The SAM simulation core (SSC) software development kit (SDK) provides tools for creating models of renewable energy systems using the SSC library. The System Advisor Model (SAM) desktop application is a user-friendly front-end for the SSC library that uses SSC modules to perform all system performance and financial calculations. This manual assumes that the reader is familiar with SAM's suite of performance and financial models, input and output variables, and other capabilities. The SDK consists of the application programming interface (API), library, programming language wrappers, integrated development environment, code samples, and this manual.
 
 \subsection{Framework Description}
 
@@ -92,41 +92,51 @@ Using an SSC module is analogous to calling a function in a programming language
 
 \begin{enumerate}
 \item Create a data container of type \texttt{ssc\_data\_t} for model input variables.
-\item Call a simulation module such as \texttt{pvwattsv1} or \texttt{ippppa} of type \texttt{ssc\_module\_t} to process variables in the data container. If the module runs successfully, it populates the data container with output variables. If it fails, it generates error messages.
-\item Retrieve output variable values from the data container, or error messages from the module.
+\item Call a simulation module such as \texttt{pvwattsv1} or \texttt{ippppa}, both of type \texttt{ssc\_module\_t} to process variables in the data container. If the module runs successfully, it populates the data container with output variables. If it fails, it generates error messages.
+\item Retrieve results from the data container.
 \end{enumerate}
 
 \subsection{Modeling an Energy System}
 \label{sec_modeling_systems}
 The SSC modules process weather data files, simulate energy system component performance, and calculate project cash flows. Table~\ref{tab_sample_modules} lists some of the SSC modules.\marginpar{For a complete list, see?}
 
-\begin{table}[ht]
-\begin{center}
-\begin{tabular}{ll}
-Module & Description \\
-\hline
-\texttt{pvwattsv1} & Implements the NREL PVWatts model for PV performance\\
-\texttt{pvsamv1} & Implements the component-based PV models in SAM\\
-\texttt{wfreader} & Reads standard format weather data files (TM2, TM3, EPW, SMW)\\
-\texttt{irradproc} & General purpose irradiance processor for calculating POA\\
-\texttt{windpower} & Implements the NREL wind turbine and simple wind farm model\\
-\texttt{cashloan} & Implements residential and commercial cashflow economic model\\
-\texttt{ippppa} & Commercial PPA and Independent Power Producer (IPP) financial models\\
-\texttt{annualoutput} & Calculates degraded out-years system output for the analysis period\\
-\texttt{utilityrate} & Calculates the value of energy using complex utility rate structures\\
-\end{tabular}
-\caption{Some commonly used SSC modules}
-\label{tab_sample_modules}
-\end{center}
-\end{table}
+Most of the SSC modules are available in the SAM user interface as a performance or financial model option, or as an option for modeling a component of the system:
 
-Creating a technical model of a renewable energy system or a technoeconomic model of a renewable energy project in SSC involves choosing a set of modules. For example, a model of a residential photovoltaic project might use the following modules:\marginpar{Would this example require a weather reader too?}
+\begin{quote}
+\begin{description}
+\item[\texttt{6parsolve}] Calculates a set of parameters from manufacturer module specifications for the CEC module model
+\item[\texttt{annualoutput}] Calculates Year 1 hourly and monthly, and Years 2 and later total annual system output for use in cash flow calculations
+\item[\texttt{cashloan}] Residential and commercial financial model
+\item[\texttt{equpartflip}] Partnership flip financial models
+\item[\texttt{geothermal}] Geothermal power model
+\item[\texttt{geothermalui}] Calculates interim design values for the geothermal power model
+\item[\texttt{ippppa}] Commercial PPA and Independent Power Producer (IPP) financial models
+\item[\texttt{irradproc}] General purpose irradiance processor for calculating POA
+\item[\texttt{levpartflip}] Leveraged partnership flip financial model
+\item[\texttt{pv6parmod}] CEC module model
+\item[\texttt{pvsandiainv}] Sandia inverter model
+\item[\texttt{pvsamv1}] Flat-plate PV model
+\item[\texttt{pvwattsfunc}] Runs a the PVWatts model for a single timestep instead of as an 8760 hourly model
+\item[\texttt{pvwattsv1}] PVWatts model
+\item[\texttt{saleleaseback}] Sale lease back financial model
+\item[\texttt{singleowner}] Single owner financial model
+\item[\texttt{swh}] Solar water heating model
+\item[\texttt{test\_irr}] Internal rate of return calculator from utility financing models for testing
+\item[\texttt{test\_pvshade}] PV self-shading model for testing
+\item[\texttt{timeseq}] Converts start time, end time, and time step into arrays of time stamps (seconds, minutes, hours, days, months
+\item[\texttt{utilityrate}] Calculates the value of energy using complex utility rate structures
+\item[\texttt{wfreader}] Reads format weather data files in the following formats: TMY2, TMY3, EPW, SMW)
+\item[\texttt{windpower}] Wind power model
+\end{description}
+\end{quote}
+
+Creating a model of a renewable energy system in SSC involves running a set of modules to represent the physical system, and a financing structure. For example, a model of a residential photovoltaic system might use the following modules:
 
 \begin{enumerate}
-\item \texttt{pvwattsv1}: The system parameters are used to calculate the hourly PV system performance.
-\item \texttt{annualoutput}: The availability and degradation factors are applied to the annual energy output for the duration of the specified analysis period.
-\item \texttt{utilityrate}: The value of the generated energy is calculated given the specifics of the complex utility rate structure, and the first year's hourly energy value is reported, along with the annual total value of energy at each year of the analysis period.
-\item \texttt{cashloan}: Given the amount of the energy produced each year and the dollar value of this energy, this module calculates the cost of energy, net present value, and other metrics of the system based on specified system cost, incentives, operation and maintainance costs, taxes, and loan parameters.
+\item \texttt{pvwattsv1}: Defines the system's design parameters and calculates the hourly output over a single year.
+\item \texttt{annualoutput}: Calculates the system's annual output over the system's multi-year life.
+\item \texttt{utilityrate}: Calculates the value of energy generated by the system for each hour of the first year, and as an annual total for subsequent years.
+\item \texttt{cashloan}: Calculates financial metrics including the cost of energy, net present value, based on installation and operating costs, incentives, taxes, and loan parameters.
 \end{enumerate}
 
 In this example, the modules would run in the order shown above, with outputs of each module serving as inputs for the next. Because the modules do not necessarily use the same names or units for variables representing the same quantities, lines of code in the program calling the modules may be required to translate values.  For example, the \texttt{pvwattsv1} module has an output variable \texttt{ac} which is the hourly energy in kWh produced by the system, while the \texttt{annualoutput} module requires an input with the name \texttt{energy\_net\_hourly}./marginpar{Must all modules use the same data container, or can you set up a separate container for each module?}  It is up to the user to ensure that variables are translated appropriately between the outputs of one module and the inputs of another, including any units conversions that may be necessary.  Luckily, SSC provides exhaustive documentation of all of the input variables required by a module and all of the outputs that will be calculated.  Working with input and output variables will be the topic of a subsequent chapter./marginpar{Where is the documentation of input and output variables?}
@@ -170,7 +180,7 @@ Now we will fill in the comment in the middle of the code step-by-step.  Referri
 	}
 \end{verbatimtab}
 
-Next, we assign the input variables required by the \texttt{pvwattsv1} module.  In \S\ref{chap_variables}, we will show how to obtain information about the data types, names, labels, and units of variables.  For now, it suffices to say that SSC supports data as numbers, text strings, arrays, matrices, and tables.
+Next, we assign the input variables required by the \texttt{pvwattsv1} module.  In \S\ref{sec_variable_docs}, we will show how to obtain information about the data types, names, labels, and units of variables.  For now, it suffices to say that SSC supports data as numbers, text strings, arrays, matrices, and tables.
 
 \begin{verbatimtab}[4]
 	ssc_data_set_string( data, "file_name", argv[1] ); // set the weather file name
@@ -210,7 +220,7 @@ Next, the simulation must be run.  If all the required input variables have been
 	}
 \end{verbatimtab}
 
-By default, the \texttt{ssc\_module\_exec()} function prints any log or error messages to standard output on the console.  There is a more complex way to run a simulation that can reroute messages somewhere else, for example if a program wanted to pop up a message box or collect all messages and return them to the sure.  This will be discussed in later sections.
+By default, the \texttt{ssc\_module\_exec()} function prints any log or error messages to standard output on the console. For another way to run modules with more options for handling errors, see \S\ref{sec_errors}.
 
 Assuming that the simulation succeeded, it is now time to extract the calculated results.  Modules may calculate hundreds of outputs, but for this example, we simply are interested in the total AC energy produced by the 1 kW PV system.  As it turns out, \texttt{pvwattsv1} only provides the hourly data, so it is up to us to sum up the hourly values.  The code snippet below shows how to query the data object for the \texttt{ac} variable and aggregate it.
 
@@ -657,6 +667,7 @@ The advantage of explicitly creating a module is that all errors, warnings, and 
 The next section describes a mechanism for running compute modules and providing real-time progress updates, reporting messages as they occur, and canceling a module's execution before it has finished.
 
 \subsection{Running with Progress Updates, Warnings, and Errors}
+\label{sec_errors}
 
 The last (most complex) way to run a module is to provide a special function that can handles error and warning messages as they are generated, as well as provide progress updates to the controlling host software.  To accomplish this, the client code must provide a \emph{handler} (aka \emph{callback}) function to SSC.  The handler function must have the signature below.
 
@@ -853,7 +864,7 @@ Use SSCdev for the following tasks:
 \end{itemize}
 
 \subsection{Using SSCdev}
-\label{sec_sscdev_get_started}
+\label{sec_sscdev_run}
 
 Using SSCdev involves running the executable, and loading the appropriate SSC library:
 
@@ -879,7 +890,7 @@ A list of modules should appear in the module browser, and the library path and 
        Linux 64-bit & linux64 & sscdev64.bin & ssc64.so \\ 
       \hline
     \end{tabular}
-    \caption{SSCdev and Library Versions}\label{ssc_dev_table_versions}
+    \caption{SSCdev and Library Versions}\label{tab_sscdev_versions}
   \end{center}
 \end{table}
 
@@ -890,7 +901,7 @@ For example, the \texttt{annualoutput} module includes a variable named \texttt{
 For some variables, even the SAM user interface may not be helpful. When you need help with an SSC module or variable, ask a question as a comment on the SAM website's SDK page. For example, you might wonder what the \texttt{annualoutput} module's \texttt{system\_use\_lifetime\_output} variable does. That variable is not on any of SAM's input pages, and the information in SSCdev does not explain its function. The variable determines whether the module generates a single set of 8,760 hourly values for the \texttt{hourly\_e\_net\_delivered} variable, or whether it generates a set of 8,760 values for each year in the analysis period. All of SAM's performance models use a value of zero except for the geothermal model, which is a special case and requires lifecycle output data to accurately represent changes in resource over time as it is depleted and replenished. For most cases, you should set its value to zero.
 
 \subsection{SSCdev Menus}
-\label{sec_sscdev_menus}
+\label{sec_menus}
 
 \textbf{File}
 \begin{quote}
@@ -924,7 +935,7 @@ The Script menu commands duplicate the buttons in the Script Editor. They are im
 The \textbf{About} command displays information about the current version of SSCdev.
 
 \subsection{Module Browser}
-\label{sec_sscdev_module_browser}
+\label{sec_module_browser}
 
 The module browser displays the modules available in the current SSC library. When you choose a module from the list, it also shows a list of the module's variables. It can:
 
@@ -947,7 +958,7 @@ You can also use the module browser with the data container to manually set valu
 To run a simulation from the module browser, choose a module from the list and click \textbf{Run}. SSCdev displays information about the simulation in the notification pane.
 
 \subsection{Data Container}
-\label{sec_sscdev_data_container}
+\label{sec_data_container}
 
 The data container displays a list of variables for the current set of simulations. When you run a module from the data browser, you must add input variables to the data container by hand using the \textbf{Add} and \textbf{Edit} buttons. When you run modules from the script editor, the data container is automatically populated with variables from the script. You can use the data container commands for the following tasks:
 
@@ -978,12 +989,12 @@ The data container commands act either on the selected variable indicated with a
 \notebox{If you manually add variables to the data container before running a script that does not use the variables, they will be deleted from the data container.}
 
 \subsubsection{Data Files}
-\label{sec_ssc_dev_data_container_files}
+\label{sec_data_files}
 
 You can save and open the contents of the data container in a data file (\texttt{.bdat}) using the \textbf{Save data file} and \textbf{Load data file} commands on the File menu. The data files use a binary format, and store all of the variables in the data container.
 
 \subsubsection{Time Series Graphs and Statistical Tables}
-\label{sec_ssc_dev_data_container_timeseries_statistical}
+\label{sec_timeseries_statistical}
 
 When the data container includes hourly arrays with 8,760 values, you can display the hourly data and statistical summaries:
 
@@ -995,7 +1006,7 @@ Check one or more hourly arrays and click \textbf{Timeseries graph} time series 
 See \S\ref{sec_sscdev_example_no_scripting} for an example.
 
 \subsection{Script Editor}
-\label{sec_sscdev_script_editor}
+\label{sec_script_editor}
 
 The script editor allows you to write, edit, and run scripts in the LK scripting language to build and test models using the SSC modules.
 
@@ -1015,13 +1026,13 @@ The script editor commands are:
 \end{quote}
 
 \subsection{SSCdev Example 1: Run a Simulation Module without Scripting}
-\label{sec_sscdev_example_no_scripting}
+\label{sec_sscdev_example_1}
 
 The following example shows how to use the module browser to expore and run the \texttt{pvwattsv1} module. You can use the same steps to explore other simulation modules.
 
-\notebox{As described in \S\ref{sec_sscdev_module_browser}, the module browser can only a single simulation module at a time. To combine modules to build a model, you can write a script as described in \S\ref{sec_sscdev_example_scripting}.}
+\notebox{As described in \S\ref{sec_sscdev_module_browser}, the module browser can only run a single simulation module at a time. To combine modules to build a model, you can write a script as described in \S\ref{sec_sscdev_example_scripting}.}
 
-As we saw in \S\ref{sec_modeling_systems}, the \texttt{pvwattsv1} simulation module reads data from a weather file and inputs that define the system's size, array orientation and type of tracking, and derating factor, and calculates values for the 1 by 8760 array storing the system's hourly electricity output over a single year. \marginpar{improve description of pvwatts module above}
+As we saw in \S\ref{sec_modeling_systems}, the \texttt{pvwattsv1} simulation module reads data from a weather file and inputs from the data container that define the system's size, array orientation and type of tracking, and derating factor, and calculates values for the 1 by 8760 array storing the system's hourly electricity output over a single year. \marginpar{improve description of pvwatts module above}
 
 To explore the \texttt{pvwattsv1} simulation module in the module browser:
 
@@ -1038,7 +1049,7 @@ A message about the \texttt{file\_name} variable appears in the SSCdev notificat
 
 \item Next, add the remaining 5 required variables shown in the module browser, using the data type and units shown in the table. For example, \texttt{system\_size} should be \texttt{SSC\_NUMBER} with a value in kilowatts. Be sure to use variable names and data types that exactly match those in the module browser.
 
-When you are finished, you should see a table similar to Table \ref{table_ssc_dev_a}. This is the model's data container, which so far contains the required input for the \texttt{pvwattsv1} simulation module.
+When you are finished, you should see a table similar to Table \ref{tab_pvwattsv1}. This is the model's data container, which so far contains the required input for the \texttt{pvwattsv1} simulation module.
 
 \item Press \textbf{F6}, or on the module browser, click \textbf{Run} to run the module. 
 \end{enumerate}
@@ -1066,14 +1077,156 @@ file\_name & system\_size & derate & track\_mode & azimuth & tilt\\
 .../daggett.tm2 & 4 & 0.77 & 0 & 180 & 20\\
 \hline
 \end{tabular}
-\caption{The 6 required input variables for the pvwattsv1 module with their values}\label{table_ssc_dev_a}
+\caption{The 6 required input variables for the pvwattsv1 module with their values}\label{tab_pvwattsv1}
 \end{center}
 \end{table}
 
 \subsection{SSCdev Example 2: Use a Script to Build a Model}
-\label{sec_sscdev_example_scripting}
+\label{sec_sscdev_example_2}
 
-This example runs the \texttt{pvwattsv1} simulation module as
+This example first runs the \texttt{pvwattsv1} simulation module as we did in Example 1, and then combines it with the \texttt{annualoutput} module to create a simple model that estiimates a PV system's annual output over a multi-year period.
+
+The first part of the script performs three tasks:
+
+\begin{enumerate}
+\item Assign values to the required input variables for \texttt{pvwattsv1}.
+\item Run the module.
+\item Display the total annual output.
+\end{enumerate}
+
+The next part of the script uses the system's AC output calculated by the \texttt{pvwattsv1} module to estimate the system's total annual output over multiple years:
+
+\begin{enumerate}
+\item Assign values to the required input variables for \texttt{annualoutput}.
+\item Run the module.
+\item Display the year-by-year output.
+\end{enumerate}
+
+The \texttt{pvwattsv1} module's required input variables are shown in Table \ref{tab_pvwattsv1}. The module browser shows each variable's data type, units, and any constraints.
+
+\begin{verbatimtab}
+
+// Create variables for the six pvwattsv1 module required inputs
+weather_file = 'F:/SAM SDK/examples/daggett.tm2';
+nameplate_capacity = 4; // DC kW
+derating_factor = 0.77;
+tracking = 0; // fixed
+azimuth = 180; // due south
+tilt = 20; // from horizontal
+
+// Assign input values to the module inputs
+var('file_name',weather_file);
+var('system_size',nameplate_capacity);
+var('derate',derating_factor);
+var('track_mode',tracking);
+var('azimuth',azimuth);
+var('tilt',tilt);
+
+// Run module
+run('pvwattsv1');
+
+// Get results
+year_1_energy_total = var('ac_annual');
+year_1_energy_hourly = var('ac');
+
+sum_of_hourly = sum(year_1_energy_hourly);
+
+// Display results
+outln("Year 1 output: " + sprintf('%,',to_int(year_1_energy_total)) + " kWh");
+outln("  as sum of hourly output: " + sprintf('%,',to_int(sum_of_hourly)) + " Wh");
+outln();
+
+\end{verbatimtab}
+
+The next part of the script uses the \texttt{annualoutput} module to calculate the system's output over a multi-year period. It has the six required inputs shown in Table \ref{tab_annualoutput}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+Name & Data Type & Units \\
+\hline
+analysis\_years & \texttt{SSC\_NUMBER} & years \\
+\hline
+energy\_availability & \texttt{SSC\_ARRAY} & \% \\
+\hline
+energy\_degradation & \texttt{SSC\_ARRAY} & \% \\
+\hline
+energy\_curtailment & \texttt{SSC\_MATRIX} & none \\
+\hline
+system\_use\_lifetime\_output & \texttt{SSC\_NUMBER} &  none \\
+\hline
+energy\_net\_hourly & \texttt{SSC\_ARRAY} &  kW \\
+\hline
+\end{tabular}
+\caption{The six required input variables for the \texttt{annualoutput} module}\label{tab_annualoutput}
+\end{center}
+\end{table}
+
+The module browser does not provide information about the size of the \texttt{energy\_availability} and \texttt{energy\_degradation} arrays, or the \texttt{energy\_curtailment} matrix. We can refer to the SAM user interface to explore those variables further. SAM displays them on the Performance Adjustment page as shown in Table \ref{tab_performance_adjustment}.
+
+ \begin{table}
+\begin{center}
+\begin{tabular}{|l|l|c|}
+\hline
+Variable & Name in SAM & Size \\
+\hline
+energy\_availability & Percent of annual output & 1x1 to 1x50 \\
+\hline
+energy\_degradation & Year-to-year decline in output & 1x1 to 1x50 \\
+\hline
+energy\_curtailment & Hourly Factors & 24x12 \\
+\hline
+\end{tabular}
+\caption{Information from the SAM user interface's Performance Adjustment page about the size of the array and matrix inputs for the \texttt{annualoutput} module}\label{tab_performance_adjustment}
+\end{center}
+\end{table}
+
+The SAM user interface allows the \textbf{Percent of annual output} (\texttt{energy\_availability}) and \textbf{Year-to-year decline in output} (\texttt{energy\_degradation}) variables to be specified either as a single value or as an "annual schedule." The input table for the annual schedule has a maximum size of 50 rows, indicating the maximum size of the arrays. If the array has a single value, \texttt{annualoutput} applies that value to each year in the analysis period. This behavior is described in SAM's Help system.
+
+The 24 columns and 12 rows of the input table for the \textbf{Hourly Factors} variable shows the dimensions of the (\texttt{energy\_curtailment}) matrix.
+
+\begin{verbatimtab}
+
+// Create variables for the annualoutput module required inputs
+// system_output already defined above
+analysis_period = 25;
+availability = [98];
+degradation = [0.05];
+curtailment = [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,] ];
+hourly_mode = 0;
+
+// Assign input values to the module inputs
+var('analysis_years', analysis_period);
+var('energy_availability', availability);
+var('energy_degradation', degradation);
+var('energy_curtailment', curtailment);
+var('system_use_lifetime_output', hourly_mode);
+var('energy_net_hourly', year_1_energy_hourly);
+
+// Run module
+run('annualoutput');
+
+yearly_energy = var('annual_e_net_delivered');
+
+for ( i = 1; i <= analysis_period; i++)
+{
+  outln("Year " + i + " output: " + sprintf('%,',to_int(yearly_energy[i])) + ( " kWh"));
+}
+
+
+\end{verbatimtab}
 
 \section{Language Interfaces}
 
