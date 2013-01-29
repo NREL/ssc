@@ -73,7 +73,7 @@ private:
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 	);
 
-	void wind_power_calculator::wake_calculations_Park(
+	void wake_calculations_Park(
 		/*INPUTS*/
 		double fAir_density,
 		double dWakeDecayK,					// wake decay coefficient (k)
