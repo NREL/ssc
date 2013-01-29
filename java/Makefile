@@ -10,30 +10,32 @@ classes = $(sources:.java=.class)
 
 ifdef SystemRoot
 	RM = del /Q
+	CP = copy /y
 	EXT = dll
-	ifeq ($(CFG),64)
-		BITS = 64
-		CCCOMP = c:/MinGW64/bin/gcc.exe
-		CIFLAGS = -I"C:\Program Files\Java\jdk1.7.0_10\include"  -I"C:\Program Files\Java\jdk1.7.0_10\include\win32"
-		JC = C:\Program Files\Java\jdk1.7.0_10\bin\javac.exe
-		JAR = C:\Program Files\Java\jdk1.7.0_10\bin\jar.exe
-		JAVA = C:\Program Files\Java\jdk1.7.0_10\bin\java.exe
-		CP_DLL = copy /y ..\x64\Release\ssc.dll ssc.dll
-	else
+	ifeq ($(CFG),32)
 		BITS = 32
 		CCCOMP = c:/MinGW/bin/gcc.exe
 		CIFLAGS = -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include\win32"
 		JC = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\javac.exe
 		JAR = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\jar.exe
 		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\java.exe
-		CP_DLL = copy /y ..\Win32\Release\ssc.dll ssc.dll
+		CP_DLL = ..\Win32\Release\ssc.dll ssc.dll
+	else
+		BITS = 64
+		CCCOMP = c:/MinGW64/bin/gcc.exe
+		CIFLAGS = -I"C:\Program Files\Java\jdk1.7.0_10\include"  -I"C:\Program Files\Java\jdk1.7.0_10\include\win32"
+		JC = C:\Program Files\Java\jdk1.7.0_10\bin\javac.exe
+		JAR = C:\Program Files\Java\jdk1.7.0_10\bin\jar.exe
+		JAVA = C:\Program Files\Java\jdk1.7.0_10\bin\java.exe
+		CP_DLL = ..\x64\Release\ssc.dll ssc.dll
 	endif	
-	CP_H = copy /y ..\ssc\sscapi.h sscapi.h
-	CP_TM2 = copy /y ..\examples\abilene.tm2 abilene.tm2
+	CP_H = ..\ssc\sscapi.h sscapi.h
+	CP_TM2 = ..\examples\abilene.tm2 abilene.tm2
 	RM_JAVA = *.class SSC\\*.class *.jar 
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 else
 	RM = rm -f
+	CP = cp -f
 	EXT = dylib
 	ifeq ($(CFG),"32")
 		CFLAGS += -D__32BIT__ -m32 
@@ -42,9 +44,19 @@ else
 	else
 		CFLAGS += -D__64BIT__
 		BITS = 64
+		CIFLAGS = -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include\win32"
+		JC = javac
+		JAR = jar
+		JAVA = java
+		CP_DLL = ../mac_dylib/ssc64.dylib ./ssc.dylib
 	endif
 	CCCOMP = gcc
+	CP_H = ../ssc/sscapi.h ./sscapi.h
+	CP_TM2 = ../examples/abilene.tm2 ./abilene.tm2
+	RM_JAVA = *.class ./SSC/*.class *.jar 
+	RM_ALL = *.dll *.class ./SSC/*.class ./SSC/*.dll *.jar *.h  *.tm2
 endif
+
 
 
 
@@ -83,10 +95,10 @@ all: jar
 
 # $@ matches the target, $< matches the first dependancy
 dll : 
-	$(CP_H)
-	$(CP_TM2)
-	$(CP_DLL)
-	$(CCCOMP) -D_JNI_IMPLEMENTATION_ -Wl,--kill-at $(CIFLAGS) -shared sscapi_wrap.c -o SSCAPIJNI.dll ssc.dll
+	$(CP) $(CP_H)
+	$(CP) $(CP_TM2)
+	$(CP) $(CP_DLL)
+	$(CCCOMP) -D_JNI_IMPLEMENTATION_ -Wl,--kill-at $(CIFLAGS) -shared sscapi_wrap.c -o SSCAPIJNI.$(EXT) ssc.$(EXT)
 	
 	
 clean :
