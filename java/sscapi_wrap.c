@@ -386,52 +386,77 @@ SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1string(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1number(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jfloat jarg3) {
-  ssc_data_t arg1 = (ssc_data_t) 0 ;
-  char *arg2 = (char *) 0 ;
-  ssc_number_t arg3 ;
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1number(JNIEnv *jenv, jclass jcls, jlong cxt, jstring name, jfloat value) 
+{
+  ssc_data_t ssc_cxt = (ssc_data_t) 0 ;
+  char *ssc_name = (char *) 0 ;
+  ssc_number_t ssc_value ;
   
-  (void)jenv;
-  (void)jcls;
-  arg1 = *(ssc_data_t *)&jarg1; 
-  arg2 = 0;
-  if (jarg2) {
-    arg2 = (char *)(*jenv)->GetStringUTFChars(jenv, jarg2, 0);
-    if (!arg2) return ;
+  ssc_cxt = *(ssc_data_t *)&cxt; 
+  ssc_name = 0;
+  if (name) 
+  {
+    ssc_name = (char *)(*jenv)->GetStringUTFChars(jenv, name, 0);
+    if (!ssc_name) return ;
   }
-  arg3 = (ssc_number_t)jarg3; 
-  ssc_data_set_number(arg1,(char const *)arg2,arg3);
-  if (arg2) (*jenv)->ReleaseStringUTFChars(jenv, jarg2, (const char *)arg2);
+  ssc_value = (ssc_number_t)value; 
+  ssc_data_set_number(ssc_cxt,(char const *)ssc_name,ssc_value);
+  if (ssc_name) (*jenv)->ReleaseStringUTFChars(jenv, name, (const char *)ssc_name);
 }
 
 
-SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1array(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint len) {
-    int i, count;
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1array(JNIEnv *jenv, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint len) 
+{
+	ssc_data_t ssc_cxt = (ssc_data_t) 0 ;
+	char *ssc_name = (char *) 0 ;
+	ssc_number_t ssc_value ;
+  
+	ssc_cxt = *(ssc_data_t *)&cxt; 
+	ssc_name = 0;
+	if (name) 
+	{
+      ssc_name = (char *)(*jenv)->GetStringUTFChars(jenv, name, 0);
+	  if (!ssc_name) return ;
+	}
+    
+	int i, count;
     jfloat *j_data_array;
     jint j_count_len;
 
-    j_count_len = (*env)->GetArrayLength(env, value);
-    j_data_array = (*env)->GetFloatArrayElements(env, value, NULL);
+    j_count_len = (*jenv)->GetArrayLength(jenv, value);
+    j_data_array = (*jenv)->GetFloatArrayElements(jenv, value, NULL);
     // set data
     count = j_count_len;
     ssc_number_t ssc_array[count];
     for( i=0; i<count;i++)
         ssc_array[i] = j_data_array[i];
     
-    const char *cname = (*env)->GetStringUTFChars(env, name, 0);
-    ssc_data_set_array( (ssc_data_t)cxt, cname, ssc_array, count);
-    (*env)->ReleaseStringUTFChars(env, name, cname);
-    (*env)->ReleaseFloatArrayElements(env, value, j_data_array, 0);
+    ssc_data_set_array( ssc_cxt, ssc_name, ssc_array, count);
+    (*jenv)->ReleaseStringUTFChars(jenv, name, ssc_name);
+    (*jenv)->ReleaseFloatArrayElements(jenv, value, j_data_array, 0);
 }
 
 
-SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1matrix(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint nrow, jint ncol) {
-    int i, rows, cols;
+SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1matrix(JNIEnv *jenv, jclass jcls, jlong cxt, jstring name, jfloatArray value, jint nrow, jint ncol) 
+{
+	ssc_data_t ssc_cxt = (ssc_data_t) 0 ;
+	char *ssc_name = (char *) 0 ;
+	ssc_number_t ssc_value ;
+  
+	ssc_cxt = *(ssc_data_t *)&cxt; 
+	ssc_name = 0;
+	if (name) 
+	{
+      ssc_name = (char *)(*jenv)->GetStringUTFChars(jenv, name, 0);
+	  if (!ssc_name) return ;
+	}
+
+	int i, rows, cols;
     jfloat *j_data_array;
     jint j_count_len;
 
-    j_count_len = (*env)->GetArrayLength(env, value);
-    j_data_array = (*env)->GetFloatArrayElements(env, value, NULL);
+    j_count_len = (*jenv)->GetArrayLength(jenv, value);
+    j_data_array = (*jenv)->GetFloatArrayElements(jenv, value, NULL);
     // set data
     ssc_number_t ssc_array[j_count_len];
     for( i=0; i<j_count_len;i++)
@@ -439,10 +464,9 @@ SWIGEXPORT void JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1set_1matrix(JNIEnv *env, j
     
     rows = nrow;
     cols = ncol;
-    const char *cname = (*env)->GetStringUTFChars(env, name, 0);
-    ssc_data_set_matrix( (ssc_data_t)cxt, cname, ssc_array, rows, cols);
-    (*env)->ReleaseStringUTFChars(env, name, cname);
-    (*env)->ReleaseFloatArrayElements(env, value, j_data_array, 0);
+    ssc_data_set_matrix( ssc_cxt, ssc_name, ssc_array, rows, cols);
+    (*jenv)->ReleaseStringUTFChars(jenv, name, ssc_name);
+    (*jenv)->ReleaseFloatArrayElements(jenv, value, j_data_array, 0);
 }
 
 
@@ -528,35 +552,60 @@ SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1number(JNIEnv *env, j
 }
 
 
-SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1array(JNIEnv *env, jclass jcls, jlong cxt, jstring name) {
-    int i, count;
+SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1array(JNIEnv *jenv, jclass jcls, jlong cxt, jstring name) 
+{
+	ssc_data_t ssc_cxt = (ssc_data_t) 0 ;
+	char *ssc_name = (char *) 0 ;
+  
+	ssc_cxt = *(ssc_data_t *)&cxt; 
+	ssc_name = 0;
+	if (name) 
+	{
+      ssc_name = (char *)(*jenv)->GetStringUTFChars(jenv, name, 0);
+	  if (!ssc_name) return ;
+	}
+
+	
+	int i, count;
     jfloatArray output;
     jint j_data_len;
     jfloat *j_data_array;
 
     // retrieve data
-    const char *cname = (*env)->GetStringUTFChars(env, name, 0);
-    ssc_number_t *ssc_array = ssc_data_get_array( (ssc_data_t)cxt, cname, &count);
-    (*env)->ReleaseStringUTFChars(env, name, cname);
+    ssc_number_t *ssc_array = ssc_data_get_array( ssc_cxt, ssc_name, &count);
+    (*jenv)->ReleaseStringUTFChars(jenv, name, ssc_name);
 
     j_data_len = count;
  
     // return double array data
-    output = (*env)->NewFloatArray( env, j_data_len );
+    output = (*jenv)->NewFloatArray( jenv, j_data_len );
     if (output == NULL) return NULL;
 
-    j_data_array = (*env)->GetFloatArrayElements(env, output, NULL);
+    j_data_array = (*jenv)->GetFloatArrayElements(jenv, output, NULL);
 
     for( i=0; i<count;i++)
             j_data_array[i] = ssc_array[i];
 
-    (*env)->SetFloatArrayRegion( env, output, 0, j_data_len, j_data_array );
+    (*jenv)->SetFloatArrayRegion( jenv, output, 0, j_data_len, j_data_array );
     return output;
 }
  
 
-SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1matrix(JNIEnv *env, jclass jcls, jlong cxt, jstring name, jintArray len) {
-   int i, row_count, col_count;
+SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1matrix(JNIEnv *jenv, jclass jcls, jlong cxt, jstring name, jintArray len) 
+{
+	ssc_data_t ssc_cxt = (ssc_data_t) 0 ;
+	char *ssc_name = (char *) 0 ;
+  
+	ssc_cxt = *(ssc_data_t *)&cxt; 
+	ssc_name = 0;
+	if (name) 
+	{
+      ssc_name = (char *)(*jenv)->GetStringUTFChars(jenv, name, 0);
+	  if (!ssc_name) return ;
+	}
+
+
+    int i, row_count, col_count;
     jfloatArray output;
     jint j_row_len;
     jint j_col_len;
@@ -566,17 +615,16 @@ SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1matrix(JNIEnv 
     jint j_data_len;
 
     // retrieve data
-    const char *cname = (*env)->GetStringUTFChars(env, name, 0);
-    ssc_number_t *ssc_array = ssc_data_get_matrix( (ssc_data_t)cxt, cname, &row_count, &col_count);
-    (*env)->ReleaseStringUTFChars(env, name, cname);
+    ssc_number_t *ssc_array = ssc_data_get_matrix( ssc_cxt, ssc_name, &row_count, &col_count);
+    (*jenv)->ReleaseStringUTFChars(jenv, name, ssc_name);
 
     j_row_len=row_count;
     j_col_len=col_count;
     j_data_len = row_count*col_count;
     // return row_count of elements in len argument element 0
     // return col_count of elements in len argument element 1
-    j_count_len = (*env)->GetArrayLength(env, len);
-    j_count_array = (*env)->GetIntArrayElements(env, len, NULL);
+    j_count_len = (*jenv)->GetArrayLength(jenv, len);
+    j_count_array = (*jenv)->GetIntArrayElements(jenv, len, NULL);
 
     if ( j_count_len > 1)
     {
@@ -584,18 +632,18 @@ SWIGEXPORT jfloatArray JNICALL Java_SSC_SSCAPIJNI_ssc_1data_1get_1matrix(JNIEnv 
             j_count_array[1] = j_col_len;
     }
 
-    (*env)->SetIntArrayRegion( env, len, 0, j_count_len, j_count_array );
+    (*jenv)->SetIntArrayRegion( jenv, len, 0, j_count_len, j_count_array );
 
     // return double array data
-    output = (*env)->NewFloatArray( env, j_data_len );
+    output = (*jenv)->NewFloatArray( jenv, j_data_len );
     if (output == NULL) return NULL;
 
-    j_data_array = (*env)->GetFloatArrayElements(env, output, NULL);
+    j_data_array = (*jenv)->GetFloatArrayElements(jenv, output, NULL);
 
     for( i=0; i<j_data_len;i++)
             j_data_array[i] = ssc_array[i];
 
-    (*env)->SetFloatArrayRegion( env, output, 0, j_data_len, j_data_array );
+    (*jenv)->SetFloatArrayRegion( jenv, output, 0, j_data_len, j_data_array );
     return output;
 }
 
@@ -1049,7 +1097,12 @@ SWIGEXPORT jint JNICALL Java_SSC_SSCAPIJNI_SSC_1ERROR_1get(JNIEnv *jenv, jclass 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1log(JNIEnv *env, jclass jcls, jlong cxt, jint index, jintArray type, jfloatArray time) {
+SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1log(JNIEnv *jenv, jclass jcls, jlong cxt, jint index, jintArray type, jfloatArray time) 
+{
+  ssc_data_t ssc_cxt = (ssc_data_t) 0 ;
+  ssc_cxt = *(ssc_data_t *)&cxt; 
+
+	
   jstring jresult = 0 ;
   char *result = 0 ;
   jint outTypeCount;
@@ -1057,22 +1110,22 @@ SWIGEXPORT jstring JNICALL Java_SSC_SSCAPIJNI_ssc_1module_1log(JNIEnv *env, jcla
   jint outTimeCount;
   jfloat *outTime;
 
-  outTypeCount = (*env)->GetArrayLength(env, type);
-  outType = (*env)->GetIntArrayElements(env, type, NULL);
-  outTimeCount = (*env)->GetArrayLength(env, time);
-  outTime = (*env)->GetFloatArrayElements(env, time, NULL);
+  outTypeCount = (*jenv)->GetArrayLength(jenv, type);
+  outType = (*jenv)->GetIntArrayElements(jenv, type, NULL);
+  outTimeCount = (*jenv)->GetArrayLength(jenv, time);
+  outTime = (*jenv)->GetFloatArrayElements(jenv, time, NULL);
   
   int ssc_log_type;
   float ssc_time;
-  result = (char *)ssc_module_log((ssc_module_t *)cxt,index,&ssc_log_type,&ssc_time);
+  result = (char *)ssc_module_log(ssc_cxt,index,&ssc_log_type,&ssc_time);
       
   if (result && (outTypeCount==1) && (outTimeCount==1))
   {
-      jresult = (*env)->NewStringUTF(env, (const char *)result);
+      jresult = (*jenv)->NewStringUTF(jenv, (const char *)result);
       outType[0] = ssc_log_type;
-      (*env)->SetIntArrayRegion( env, type, 0, outTypeCount, outType );
+      (*jenv)->SetIntArrayRegion( jenv, type, 0, outTypeCount, outType );
       outTime[0] = ssc_time;
-      (*env)->SetFloatArrayRegion( env, time, 0, outTimeCount, outTime );
+      (*jenv)->SetFloatArrayRegion( jenv, time, 0, outTimeCount, outTime );
   }
   else
   {
