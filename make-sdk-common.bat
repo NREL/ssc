@@ -7,7 +7,7 @@ copy python\sscapi.py sdk-release\languages\python
 copy csharp\SSC.cs sdk-release\languages\csharp
 copy csharp\App.config sdk-release\languages\csharp
 copy csharp\Program.cs sdk-release\languages\csharp
-copy csharp\TestSSCAPI.csproj sdk-release\languages\csharp
+copy csharp\sdk_TestSSCAPI.csproj sdk-release\languages\csharp\TestSSCAPI.csproj
 copy csharp\TestSSCAPI.sln sdk-release\languages\csharp
 copy csharp\TestSSCAPI.v11.suo sdk-release\languages\csharp
 copy csharp\TestSSCAPIForm.cs sdk-release\languages\csharp
@@ -16,12 +16,17 @@ copy csharp\TestSSCAPIForm.resx sdk-release\languages\csharp
 copy csharp\Properties\AssemblyInfo.cs sdk-release\languages\csharp\Properties
 copy csharp\Properties\Resources.Designer.cs sdk-release\languages\csharp\Properties
 copy csharp\Properties\Resources.resx sdk-release\languages\csharp\Properties
-copy csharp\Properties\Settings.Designer.cs sdk-release\languages\csharp\Properties
 
-copy java\SSC.java sdk-release\languages\java
+copy java\sdk_Makefile sdk-release\languages\java\Makefile
+copy java\manifest.txt sdk-release\languages\java
 copy java\sscapi_wrap.c sdk-release\languages\java
-copy java\sscapiConstants.java sdk-release\languages\java
-copy java\sscapiJNI.java sdk-release\languages\java
+copy java\TestSSCAPI.java sdk-release\languages\java
+copy java\SSC\API.java sdk-release\languages\java\SSC
+copy java\SSC\Data.java sdk-release\languages\java\SSC
+copy java\SSC\Entry.java sdk-release\languages\java\SSC
+copy java\SSC\Info.java sdk-release\languages\java\SSC
+copy java\SSC\Module.java sdk-release\languages\java\SSC
+copy java\SSC\SSCAPIJNI.java sdk-release\languages\java\SSC
 
 copy examples\abilene.tm2 sdk-release\examples
 copy examples\daggett.tm2 sdk-release\examples

@@ -22,7 +22,7 @@ ifdef SystemRoot
 		JC = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\javac.exe
 		JAR = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\jar.exe
 		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\java.exe
-		CP_DLL = ..\Win32\Release\ssc.dll ssc.dll
+		CP_DLL = ..\..\Win32\ssc32.dll ssc.dll
 		SSCLIB = ssc.dll
 	else
 		BITS = 64
@@ -33,11 +33,12 @@ ifdef SystemRoot
 		JC = C:\Program Files\Java\jdk1.7.0_10\bin\javac.exe
 		JAR = C:\Program Files\Java\jdk1.7.0_10\bin\jar.exe
 		JAVA = C:\Program Files\Java\jdk1.7.0_10\bin\java.exe
-		CP_DLL = ..\x64\Release\ssc.dll ssc.dll
+		
+		CP_DLL = ..\..\Win64\ssc64.dll ssc.dll
 		SSCLIB = ssc.dll
 	endif	
-	CP_H = ..\ssc\sscapi.h sscapi.h
-	CP_TM2 = ..\examples\abilene.tm2 abilene.tm2
+	CP_H = ..\..\sscapi.h sscapi.h
+	CP_TM2 = ..\..\examples\abilene.tm2 abilene.tm2
 	RM_JAVA = *.class SSC\\*.class *.jar 
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 else
@@ -80,10 +81,12 @@ CLASSES = \
 	SSC/Info.java 
     
 
+
 run: all
 	$(JAVA) -jar TestSSCAPI.jar
 
 all: jar
+
 
 java_all:  classes
 
@@ -96,6 +99,8 @@ jar: java_classes dll
 java_clean:
 	$(RM) $(RM_JAVA)
 
+
+# $@ matches the target, $< matches the first dependancy
 dll : 
 	$(CP) $(CP_H)
 	$(CP) $(CP_TM2)
