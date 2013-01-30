@@ -54,7 +54,7 @@ else
 	JC = javac
 	JAR = jar
 	JAVA = java
-	CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
+	CP_DLL = ../../osx64/ssc64.dylib ./ssc64.dylib
 	SSCLIB = ssc64.dylib
 	CCCOMP = gcc
 	CP_H = ../../sscapi.h ./sscapi.h
