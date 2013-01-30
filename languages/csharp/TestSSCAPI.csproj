@@ -105,20 +105,26 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\Release\ssc32.dll
+copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\x86\Release\ssc32.dll
+copy /y $(SolutionDir)..\..\Win64\ssc64.dll $(SolutionDir)bin\x64\Release\ssc64.dll
+copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\Debug\ssc32.dll
+copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\x86\Debug\ssc32.dll
+copy /y $(SolutionDir)..\..\Win64\ssc64.dll $(SolutionDir)bin\x64\Debug\ssc64.dll
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Release\abilene.tm2
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Release\abilene.tm2 
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Release\abilene.tm2           
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Debug\abilene.tm2
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Debug\abilene.tm2
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Debug\abilene.tm2
+</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

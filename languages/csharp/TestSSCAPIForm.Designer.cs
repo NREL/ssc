@@ -28,86 +28,21 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.btn4PVWatts = new System.Windows.Forms.Button();
-            this.txtData = new System.Windows.Forms.RichTextBox();
-            this.btn4ArrayTest = new System.Windows.Forms.Button();
-            this.btn4Version = new System.Windows.Forms.Button();
-            this.btn4PVWattsFunc = new System.Windows.Forms.Button();
             this.btn4ModulesAndVariables = new System.Windows.Forms.Button();
             this.btn4TestMatrices = new System.Windows.Forms.Button();
+            this.btn4PVWattsFunc = new System.Windows.Forms.Button();
+            this.btn4PVWatts = new System.Windows.Forms.Button();
             this.btn4ModuleList = new System.Windows.Forms.Button();
+            this.btn4Version = new System.Windows.Forms.Button();
+            this.txtData = new System.Windows.Forms.RichTextBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btn4ArrayTest = new System.Windows.Forms.Button();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.btn4ModuleList);
-            this.groupBox2.Controls.Add(this.btn4TestMatrices);
-            this.groupBox2.Controls.Add(this.btn4ModulesAndVariables);
-            this.groupBox2.Controls.Add(this.btn4PVWattsFunc);
-            this.groupBox2.Controls.Add(this.btn4Version);
-            this.groupBox2.Controls.Add(this.btn4ArrayTest);
-            this.groupBox2.Controls.Add(this.txtData);
-            this.groupBox2.Controls.Add(this.btn4PVWatts);
-            this.groupBox2.Location = new System.Drawing.Point(12, 12);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(692, 451);
-            this.groupBox2.TabIndex = 16;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "SSC-C# Test Functions";
-            // 
-            // btn4PVWatts
-            // 
-            this.btn4PVWatts.Location = new System.Drawing.Point(122, 48);
-            this.btn4PVWatts.Name = "btn4PVWatts";
-            this.btn4PVWatts.Size = new System.Drawing.Size(137, 23);
-            this.btn4PVWatts.TabIndex = 12;
-            this.btn4PVWatts.Text = "PVWatts Example";
-            this.btn4PVWatts.UseVisualStyleBackColor = true;
-            this.btn4PVWatts.Click += new System.EventHandler(this.btn4PVWatts_Click);
-            // 
-            // txtData
-            // 
-            this.txtData.Location = new System.Drawing.Point(6, 106);
-            this.txtData.Name = "txtData";
-            this.txtData.Size = new System.Drawing.Size(680, 339);
-            this.txtData.TabIndex = 9;
-            this.txtData.Text = "";
-            // 
-            // btn4ArrayTest
-            // 
-            this.btn4ArrayTest.Location = new System.Drawing.Point(6, 48);
-            this.btn4ArrayTest.Name = "btn4ArrayTest";
-            this.btn4ArrayTest.Size = new System.Drawing.Size(110, 23);
-            this.btn4ArrayTest.TabIndex = 6;
-            this.btn4ArrayTest.Text = "Test Arrays";
-            this.btn4ArrayTest.UseVisualStyleBackColor = true;
-            this.btn4ArrayTest.Click += new System.EventHandler(this.btn4ArrayTest_Click);
-            // 
-            // btn4Version
-            // 
-            this.btn4Version.Location = new System.Drawing.Point(6, 77);
-            this.btn4Version.Name = "btn4Version";
-            this.btn4Version.Size = new System.Drawing.Size(110, 23);
-            this.btn4Version.TabIndex = 10;
-            this.btn4Version.Text = "Version";
-            this.btn4Version.UseVisualStyleBackColor = true;
-            this.btn4Version.Click += new System.EventHandler(this.btn4Version_Click);
-            // 
-            // btn4PVWattsFunc
-            // 
-            this.btn4PVWattsFunc.Location = new System.Drawing.Point(6, 19);
-            this.btn4PVWattsFunc.Name = "btn4PVWattsFunc";
-            this.btn4PVWattsFunc.Size = new System.Drawing.Size(110, 23);
-            this.btn4PVWattsFunc.TabIndex = 13;
-            this.btn4PVWattsFunc.Text = "PVWatts Func";
-            this.btn4PVWattsFunc.UseVisualStyleBackColor = true;
-            this.btn4PVWattsFunc.Click += new System.EventHandler(this.btn4PVWattsFunc_Click);
-            // 
             // btn4ModulesAndVariables
             // 
-            this.btn4ModulesAndVariables.Location = new System.Drawing.Point(122, 19);
+            this.btn4ModulesAndVariables.Location = new System.Drawing.Point(212, 34);
             this.btn4ModulesAndVariables.Name = "btn4ModulesAndVariables";
             this.btn4ModulesAndVariables.Size = new System.Drawing.Size(137, 23);
             this.btn4ModulesAndVariables.TabIndex = 15;
@@ -117,17 +52,37 @@
             // 
             // btn4TestMatrices
             // 
-            this.btn4TestMatrices.Location = new System.Drawing.Point(122, 77);
+            this.btn4TestMatrices.Location = new System.Drawing.Point(111, 64);
             this.btn4TestMatrices.Name = "btn4TestMatrices";
-            this.btn4TestMatrices.Size = new System.Drawing.Size(137, 23);
+            this.btn4TestMatrices.Size = new System.Drawing.Size(95, 23);
             this.btn4TestMatrices.TabIndex = 14;
             this.btn4TestMatrices.Text = "Test Matrices";
             this.btn4TestMatrices.UseVisualStyleBackColor = true;
             this.btn4TestMatrices.Click += new System.EventHandler(this.btn4TestMatrices_Click);
             // 
+            // btn4PVWattsFunc
+            // 
+            this.btn4PVWattsFunc.Location = new System.Drawing.Point(111, 93);
+            this.btn4PVWattsFunc.Name = "btn4PVWattsFunc";
+            this.btn4PVWattsFunc.Size = new System.Drawing.Size(110, 23);
+            this.btn4PVWattsFunc.TabIndex = 13;
+            this.btn4PVWattsFunc.Text = "PVWatts Func";
+            this.btn4PVWattsFunc.UseVisualStyleBackColor = true;
+            this.btn4PVWattsFunc.Click += new System.EventHandler(this.btn4PVWattsFunc_Click);
+            // 
+            // btn4PVWatts
+            // 
+            this.btn4PVWatts.Location = new System.Drawing.Point(30, 93);
+            this.btn4PVWatts.Name = "btn4PVWatts";
+            this.btn4PVWatts.Size = new System.Drawing.Size(75, 23);
+            this.btn4PVWatts.TabIndex = 12;
+            this.btn4PVWatts.Text = "PVWatts Example";
+            this.btn4PVWatts.UseVisualStyleBackColor = true;
+            this.btn4PVWatts.Click += new System.EventHandler(this.btn4PVWatts_Click);
+            // 
             // btn4ModuleList
             // 
-            this.btn4ModuleList.Location = new System.Drawing.Point(265, 19);
+            this.btn4ModuleList.Location = new System.Drawing.Point(111, 34);
             this.btn4ModuleList.Name = "btn4ModuleList";
             this.btn4ModuleList.Size = new System.Drawing.Size(95, 23);
             this.btn4ModuleList.TabIndex = 11;
@@ -135,11 +90,56 @@
             this.btn4ModuleList.UseVisualStyleBackColor = true;
             this.btn4ModuleList.Click += new System.EventHandler(this.btn4ModuleList_Click);
             // 
+            // btn4Version
+            // 
+            this.btn4Version.Location = new System.Drawing.Point(30, 34);
+            this.btn4Version.Name = "btn4Version";
+            this.btn4Version.Size = new System.Drawing.Size(75, 23);
+            this.btn4Version.TabIndex = 10;
+            this.btn4Version.Text = "Version";
+            this.btn4Version.UseVisualStyleBackColor = true;
+            this.btn4Version.Click += new System.EventHandler(this.btn4Version_Click);
+            // 
+            // txtData
+            // 
+            this.txtData.Location = new System.Drawing.Point(30, 137);
+            this.txtData.Name = "txtData";
+            this.txtData.Size = new System.Drawing.Size(615, 485);
+            this.txtData.TabIndex = 9;
+            this.txtData.Text = "";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.btn4PVWattsFunc);
+            this.groupBox2.Controls.Add(this.btn4ModulesAndVariables);
+            this.groupBox2.Controls.Add(this.btn4PVWatts);
+            this.groupBox2.Controls.Add(this.btn4ArrayTest);
+            this.groupBox2.Controls.Add(this.btn4TestMatrices);
+            this.groupBox2.Controls.Add(this.txtData);
+            this.groupBox2.Controls.Add(this.btn4Version);
+            this.groupBox2.Controls.Add(this.btn4ModuleList);
+            this.groupBox2.Location = new System.Drawing.Point(12, 23);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(821, 646);
+            this.groupBox2.TabIndex = 16;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "SSC API c# test";
+            // 
+            // btn4ArrayTest
+            // 
+            this.btn4ArrayTest.Location = new System.Drawing.Point(30, 64);
+            this.btn4ArrayTest.Name = "btn4ArrayTest";
+            this.btn4ArrayTest.Size = new System.Drawing.Size(75, 23);
+            this.btn4ArrayTest.TabIndex = 6;
+            this.btn4ArrayTest.Text = "Test Arrays";
+            this.btn4ArrayTest.UseVisualStyleBackColor = true;
+            this.btn4ArrayTest.Click += new System.EventHandler(this.btn4ArrayTest_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(716, 475);
+            this.ClientSize = new System.Drawing.Size(840, 693);
             this.Controls.Add(this.groupBox2);
             this.Name = "Form1";
             this.Text = "SSC Test Application";
@@ -150,17 +150,15 @@
 
         #endregion
 
-        private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Button btn4ModuleList;
-        private System.Windows.Forms.Button btn4TestMatrices;
         private System.Windows.Forms.Button btn4ModulesAndVariables;
+        private System.Windows.Forms.Button btn4TestMatrices;
         private System.Windows.Forms.Button btn4PVWattsFunc;
-        private System.Windows.Forms.Button btn4Version;
-        private System.Windows.Forms.Button btn4ArrayTest;
-        private System.Windows.Forms.RichTextBox txtData;
         private System.Windows.Forms.Button btn4PVWatts;
-
-
+        private System.Windows.Forms.Button btn4ModuleList;
+        private System.Windows.Forms.Button btn4Version;
+        private System.Windows.Forms.RichTextBox txtData;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Button btn4ArrayTest;
     }
 }
 
