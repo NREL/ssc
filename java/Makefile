@@ -7,7 +7,6 @@ vpath %.class $(CLASS_PATH)
 sources = $(wildcard *.java)
 classes = $(sources:.java=.class)
 
-
 ifdef SystemRoot
 	RM = del /Q
 	CP = copy /y
@@ -47,19 +46,30 @@ else
         CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
         SSCLIB = ssc64.dylib
         RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+	EXT = dylib
+	JNILIB = libSSCAPIJNI.jnilib
     endif
     ifeq ($(CFG),10.8)
         CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
         CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
         SSCLIB = ssc64.dylib
         RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+	EXT = dylib
+	JNILIB = libSSCAPIJNI.jnilib
+    endif
+    ifeq ($(CFG),linux)
+        CIFLAGS = -I/usr/java/jdk1.7.0_11/include -I/usr/java/jdk1.7.0_11/include/linux -fPIC 
+        CP_DLL = ../linux_so/ssc64.so ./ssc64.so
+        SSCLIB = ./ssc64.so
+        RM_ALL = *.so *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+	EXT = so
+	JNILIB = libSSCAPIJNI.so
+	LIBPATH = -Djava.library.path=.
     endif
 	RM = rm -f
 	CP = cp -f
-	EXT = dylib
-	JNILIB = libSSCAPIJNI.jnilib
 	CFLAGS += -D__64BIT__
-	BITS = 64
+	BITS = 64l
 	JC = javac
 	JAR = jar
 	JAVA = java
@@ -79,7 +89,7 @@ JFLAGS = -g
 
 CLASSES = \
 	TestSSCAPI.java \
-	SSC/sscapiJNI.java \
+	SSC/SSCAPIJNI.java \
 	SSC/API.java \
 	SSC/Data.java \
 	SSC/Module.java \
@@ -88,17 +98,17 @@ CLASSES = \
     
 
 run: all
-	$(JAVA) -jar TestSSCAPI.jar
+	$(JAVA) $(LIBPATH) -jar TestSSCAPI.jar 
 
 all: jar
 
-java_all:  classes
+java_all:  java_classes
 
 java_classes: $(CLASSES:.java=.class)
 
 
 jar: java_classes dll
-	$(JAR) cvfm TestSSCAPI.jar Manifest.txt TestSSCAPI.class SSC/*.class		
+	$(JAR) cvfm TestSSCAPI.jar manifest.txt TestSSCAPI.class SSC/*.class		
 
 java_clean:
 	$(RM) $(RM_JAVA)
