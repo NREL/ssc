@@ -464,7 +464,7 @@ static double calc_twet( double T, double RH, double P )
 			hiflag = true;
 		}
 		
-		if (abs(err) < tol) break;
+		if (fabs(err) < tol) break;
 
 		//If the error is still too high, guess new values
 		if(hiflag && lowflag){

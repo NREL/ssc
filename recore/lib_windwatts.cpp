@@ -313,10 +313,10 @@ void wind_power_calculator::wake_calculations_Park(
 		for (int j=0; j<i; j++) // upwind turbines
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
-			double fDistanceDownwind = dRadiusLength*abs(aDistanceDownwind[i] - aDistanceDownwind[j]); 
+			double fDistanceDownwind = dRadiusLength*fabs(aDistanceDownwind[i] - aDistanceDownwind[j]); 
 
 			// separation crosswind between turbine i and turbine j
-			double fDistanceCrosswind = dRadiusLength*abs(aDistanceCrosswind[i] - aDistanceCrosswind[j]);
+			double fDistanceCrosswind = dRadiusLength*fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j]);
 				
 			// Calculate the wind speed reduction at turbine i, due to all upwind turbines [j]
 			// The Park model uses the max deficit from all the upwind turbines and uses that to calculate the wind speed at this downwind turbine
