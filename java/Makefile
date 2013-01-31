@@ -41,25 +41,32 @@ ifdef SystemRoot
 	RM_JAVA = *.class SSC\\*.class *.jar 
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 else
+#Update based on your Java installation location		
+    ifeq ($(CFG),10.6)
+        CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
+        CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
+        SSCLIB = ssc64.dylib
+        RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+    endif
+    ifeq ($(CFG),10.8)
+        CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
+        CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
+        SSCLIB = ssc64.dylib
+        RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+    endif
 	RM = rm -f
 	CP = cp -f
 	EXT = dylib
 	JNILIB = libSSCAPIJNI.jnilib
 	CFLAGS += -D__64BIT__
 	BITS = 64
-#Update based on your Java installation location		
-	CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
-
 	JC = javac
 	JAR = jar
 	JAVA = java
-	CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
-	SSCLIB = ssc64.dylib
 	CCCOMP = gcc
-	CP_H = ../../sscapi.h ./sscapi.h
-	CP_TM2 = ../../examples/abilene.tm2 ./abilene.tm2
+	CP_H = ../ssc/sscapi.h ./sscapi.h
+	CP_TM2 = ../examples/abilene.tm2 ./abilene.tm2
 	RM_JAVA = *.class ./SSC/*.class *.jar 
-	RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
 endif
 
 
