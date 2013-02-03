@@ -1,11 +1,5 @@
 # Because %SystemRoot% is the path to the windows directory is should be set on all Windows computers but not on Linux/MacOS
 
-CLASS_PATH = ../bin
-# Define a virtual path for .class in the bin directory
-vpath %.class $(CLASS_PATH)
-
-sources = $(wildcard *.java)
-classes = $(sources:.java=.class)
 
 ifdef SystemRoot
 	RM = del /Q
@@ -15,7 +9,7 @@ ifdef SystemRoot
 	ifeq ($(CFG),32)
 		BITS = 32
 		CCCOMP = c:/MinGW/bin/gcc.exe
-#Update based on your Java installation location		
+#Update based on your Java installation location
 
 		CIFLAGS = -Wl,--kill-at -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include\win32"
 		JC = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\javac.exe
@@ -27,20 +21,20 @@ ifdef SystemRoot
 		BITS = 64
 		CCCOMP = c:/MinGW64/bin/gcc.exe
 
-#Update based on your Java installation location		
+#Update based on your Java installation location
  		CIFLAGS = -Wl,--kill-at -I"C:\Program Files\Java\jdk1.7.0_10\include"  -I"C:\Program Files\Java\jdk1.7.0_10\include\win32"
 		JC = C:\Program Files\Java\jdk1.7.0_10\bin\javac.exe
 		JAR = C:\Program Files\Java\jdk1.7.0_10\bin\jar.exe
 		JAVA = C:\Program Files\Java\jdk1.7.0_10\bin\java.exe
 		CP_DLL = ..\x64\Release\ssc.dll ssc.dll
 		SSCLIB = ssc.dll
-	endif	
+	endif
 	CP_H = ..\ssc\sscapi.h sscapi.h
 	CP_TM2 = ..\examples\abilene.tm2 abilene.tm2
 	RM_JAVA = *.class SSC\\*.class *.jar 
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 else
-#Update based on your Java installation location		
+#Update based on your Java installation location
     ifeq ($(CFG),10.6)
         CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
         CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
@@ -108,7 +102,7 @@ java_classes: $(CLASSES:.java=.class)
 
 
 jar: java_classes dll
-	$(JAR) cvfm TestSSCAPI.jar manifest.txt TestSSCAPI.class SSC/*.class		
+	$(JAR) cvfm TestSSCAPI.jar manifest.txt TestSSCAPI.class SSC/*.class
 
 java_clean:
 	$(RM) $(RM_JAVA)
@@ -118,8 +112,8 @@ dll :
 	$(CP) $(CP_TM2)
 	$(CP) $(CP_DLL)
 	$(CCCOMP) -D_JNI_IMPLEMENTATION_  $(CIFLAGS) -shared sscapi_wrap.c -o $(JNILIB) $(SSCLIB)
-	
-	
+
+
 clean :
 	$(RM) $(RM_ALL)
 
