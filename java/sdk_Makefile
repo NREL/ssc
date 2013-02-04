@@ -35,18 +35,6 @@ ifdef SystemRoot
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 
 else
-
-
-#Update based on your Java installation location		
-	CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
-	CP_DLL = ../../osx64/ssc64.dylib ./ssc64.dylib
-	SSCLIB = ssc64.dylib
-	RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	EXT = dylib
-	JNILIB = libSSCAPIJNI.jnilib
-
-
-
     PF = $(shell uname)
     ifneq (,$(findstring Darwin, $(PF)))
         VERS = $(shell sw_vers -productVersion)
@@ -115,7 +103,7 @@ JFLAGS = -g
 
 CLASSES = \
 	TestSSCAPI.java \
-	SSC/sscapiJNI.java \
+	SSC/SSCAPIJNI.java \
 	SSC/API.java \
 	SSC/Data.java \
 	SSC/Module.java \
