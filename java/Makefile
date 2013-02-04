@@ -6,18 +6,7 @@ ifdef SystemRoot
 	CP = copy /y
 	EXT = dll
 	JNILIB = SSCAPIJNI.dll
-	ifeq ($(CFG),32)
-		BITS = 32
-		CCCOMP = c:/MinGW/bin/gcc.exe
-#Update based on your Java installation location
-
-		CIFLAGS = -Wl,--kill-at -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include\win32"
-		JC = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\javac.exe
-		JAR = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\jar.exe
-		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\java.exe
-		CP_DLL = ..\Win32\Release\ssc.dll ssc.dll
-		SSCLIB = ssc.dll
-	else
+	ifneq (,$(findstring 64, $(value PROCESSOR_IDENTIFIER)))
 		BITS = 64
 		CCCOMP = c:/MinGW64/bin/gcc.exe
 
@@ -28,49 +17,79 @@ ifdef SystemRoot
 		JAVA = C:\Program Files\Java\jdk1.7.0_10\bin\java.exe
 		CP_DLL = ..\x64\Release\ssc.dll ssc.dll
 		SSCLIB = ssc.dll
+	else
+		BITS = 32
+		CCCOMP = c:/MinGW/bin/gcc.exe
+#Update based on your Java installation location
+
+		CIFLAGS = -Wl,--kill-at -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include\win32"
+		JC = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\javac.exe
+		JAR = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\jar.exe
+		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\java.exe
+		CP_DLL = ..\Win32\Release\ssc.dll ssc.dll
+		SSCLIB = ssc.dll
 	endif
 	CP_H = ..\ssc\sscapi.h sscapi.h
 	CP_TM2 = ..\examples\abilene.tm2 abilene.tm2
 	RM_JAVA = *.class SSC\\*.class *.jar 
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 else
+    ifeq (uname, "Darwin")
 #Update based on your Java installation location
-    ifeq ($(CFG),10.6)
-        CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
-        CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
-        SSCLIB = ssc64.dylib
-        RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	EXT = dylib
-	JNILIB = libSSCAPIJNI.jnilib
+        ifneq ($(findstring 10.8, $(value sw_vers -productVersion) )
+            CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
+            CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
+	    SSCLIB = ssc64.dylib
+	    RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+	    EXT = dylib
+	    JNILIB = libSSCAPIJNI.jnilib
+	else
+            ifneq ($(findstring 10.7, $(value sw_vers -productVersion) )
+                CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
+                CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
+	        SSCLIB = ssc64.dylib
+	        RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+	        EXT = dylib
+	        JNILIB = libSSCAPIJNI.jnilib
+	    else
+	        ifeq ($(findstring 10.6, $(value sw_vers -productVersion))
+	            CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
+                    CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
+                    SSCLIB = ssc64.dylib
+                    RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+	            EXT = dylib
+	            JNILIB = libSSCAPIJNI.jnilib
+	        else
+	            @$(MAKE) help
+	            @exit 2
+	        endif
+	    endif
+    	endif
+    else 
+	ifeq (uname,"Linux")
+	    CIFLAGS = -I/usr/java/jdk1.7.0_11/include -I/usr/java/jdk1.7.0_11/include/linux -fPIC 
+	    CP_DLL = ../linux_so/ssc64.so ./ssc64.so
+	    SSCLIB = ./ssc64.so
+	    RM_ALL = *.so *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+	    EXT = so
+	    JNILIB = libSSCAPIJNI.so
+	    LIBPATH = -Djava.library.path=.
+	else
+	    @$(MAKE) help
+	    @exit 2
+    	endif
     endif
-    ifeq ($(CFG),10.8)
-        CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
-        CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
-        SSCLIB = ssc64.dylib
-        RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	EXT = dylib
-	JNILIB = libSSCAPIJNI.jnilib
-    endif
-    ifeq ($(CFG),linux)
-        CIFLAGS = -I/usr/java/jdk1.7.0_11/include -I/usr/java/jdk1.7.0_11/include/linux -fPIC 
-        CP_DLL = ../linux_so/ssc64.so ./ssc64.so
-        SSCLIB = ./ssc64.so
-        RM_ALL = *.so *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	EXT = so
-	JNILIB = libSSCAPIJNI.so
-	LIBPATH = -Djava.library.path=.
-    endif
-	RM = rm -f
-	CP = cp -f
-	CFLAGS += -D__64BIT__
-	BITS = 64l
-	JC = javac
-	JAR = jar
-	JAVA = java
-	CCCOMP = gcc
-	CP_H = ../ssc/sscapi.h ./sscapi.h
-	CP_TM2 = ../examples/abilene.tm2 ./abilene.tm2
-	RM_JAVA = *.class ./SSC/*.class *.jar 
+    RM = rm -f
+    CP = cp -f
+    CFLAGS += -D__64BIT__
+    BITS = 64l
+    JC = javac
+    JAR = jar
+    JAVA = java
+    CCCOMP = gcc
+    CP_H = ../ssc/sscapi.h ./sscapi.h
+    CP_TM2 = ../examples/abilene.tm2 ./abilene.tm2
+    RM_JAVA = *.class ./SSC/*.class *.jar
 endif
 
 
@@ -118,5 +137,7 @@ clean :
 	$(RM) $(RM_ALL)
 
 
+help:
+	@echo "Please check the settings for your system. Your system may not be supported. Please contact sam.support@nrel.gov"
 
 
