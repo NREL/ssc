@@ -130,7 +130,7 @@ run: all
 all: jar
 
 
-java_all:  classes
+java_all:  java_classes
 
 java_classes: $(CLASSES:.java=.class)
 
