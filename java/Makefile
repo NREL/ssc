@@ -34,50 +34,46 @@ ifdef SystemRoot
 	RM_JAVA = *.class SSC\\*.class *.jar 
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 else
-    ifeq (uname, "Darwin")
+    PF = $(shell uname)
+    ifneq (,$(findstring Darwin, $(PF)))
+        VERS = $(shell sw_vers -productVersion)
 #Update based on your Java installation location
-        ifneq ($(findstring 10.8, $(value sw_vers -productVersion) )
+        ifneq (,$(findstring 10.8, $(VERS) ))
             CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
             CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
-	    SSCLIB = ssc64.dylib
-	    RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	    EXT = dylib
-	    JNILIB = libSSCAPIJNI.jnilib
-	else
-            ifneq ($(findstring 10.7, $(value sw_vers -productVersion) )
+            SSCLIB = ssc64.dylib
+            RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+            EXT = dylib
+            JNILIB = libSSCAPIJNI.jnilib
+        else
+            ifneq (,$(findstring 10.7, $(VERS) ))
                 CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
                 CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
-	        SSCLIB = ssc64.dylib
-	        RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	        EXT = dylib
-	        JNILIB = libSSCAPIJNI.jnilib
-	    else
-	        ifeq ($(findstring 10.6, $(value sw_vers -productVersion))
-	            CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
+                SSCLIB = ssc64.dylib
+                RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+                EXT = dylib
+                JNILIB = libSSCAPIJNI.jnilib
+            else
+                ifneq (,$(findstring 10.6, $(VERS)))
+                    CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
                     CP_DLL = ../mac_dylib/ssc64.dylib ./ssc64.dylib
                     SSCLIB = ssc64.dylib
                     RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	            EXT = dylib
-	            JNILIB = libSSCAPIJNI.jnilib
-	        else
-	            @$(MAKE) help
-	            @exit 2
-	        endif
-	    endif
+                    EXT = dylib
+                    JNILIB = libSSCAPIJNI.jnilib
+                endif
+            endif
     	endif
     else 
-	ifeq (uname,"Linux")
-	    CIFLAGS = -I/usr/java/jdk1.7.0_11/include -I/usr/java/jdk1.7.0_11/include/linux -fPIC 
-	    CP_DLL = ../linux_so/ssc64.so ./ssc64.so
-	    SSCLIB = ./ssc64.so
-	    RM_ALL = *.so *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
-	    EXT = so
-	    JNILIB = libSSCAPIJNI.so
-	    LIBPATH = -Djava.library.path=.
-	else
-	    @$(MAKE) help
-	    @exit 2
-    	endif
+        ifneq (,$findstring(Linux, $(PF)))
+            CIFLAGS = -I/usr/java/jdk1.7.0_11/include -I/usr/java/jdk1.7.0_11/include/linux -fPIC
+            CP_DLL = ../linux_so/ssc64.so ./ssc64.so
+            SSCLIB = ./ssc64.so
+            RM_ALL = *.so *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
+            EXT = so
+            JNILIB = libSSCAPIJNI.so
+            LIBPATH = -Djava.library.path=.
+        endif
     endif
     RM = rm -f
     CP = cp -f
@@ -92,6 +88,10 @@ else
     RM_JAVA = *.class ./SSC/*.class *.jar
 endif
 
+
+ifndef CP_DLL
+    $(error Please check the settings for your system. Your system may not be supported. Please contact sam.support@nrel.gov. System: $(PF) $(VERS))
+endif
 
 
 
@@ -126,7 +126,7 @@ jar: java_classes dll
 java_clean:
 	$(RM) $(RM_JAVA)
 
-dll : 
+dll:
 	$(CP) $(CP_H)
 	$(CP) $(CP_TM2)
 	$(CP) $(CP_DLL)
@@ -138,6 +138,6 @@ clean :
 
 
 help:
-	@echo "Please check the settings for your system. Your system may not be supported. Please contact sam.support@nrel.gov"
+	@echo "Please check the settings for your system. Your system may not be supported. Please contact sam.support@nrel.gov. System: $(PF) $(VERS)"
 
 
