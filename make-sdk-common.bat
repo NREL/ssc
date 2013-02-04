@@ -18,7 +18,7 @@ copy csharp\Properties\Resources.Designer.cs sdk-release\languages\csharp\Proper
 copy csharp\Properties\Resources.resx sdk-release\languages\csharp\Properties
 
 copy java\sdk_Makefile sdk-release\languages\java\Makefile
-copy java\manifest.txt sdk-release\languages\java
+copy java\Manifest.txt sdk-release\languages\java
 copy java\ReadMe.txt sdk-release\languages\java
 copy java\sscapi_wrap.c sdk-release\languages\java
 copy java\TestSSCAPI.java sdk-release\languages\java
