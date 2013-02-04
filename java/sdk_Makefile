@@ -156,3 +156,6 @@ clean :
 
 
 
+help:
+	@echo "Please check the settings for your system. Your system may not be supported. Please contact sam.support@nrel.gov. System: $(PF) $(VERS)"
+
