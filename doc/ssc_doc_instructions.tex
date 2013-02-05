@@ -46,9 +46,9 @@ Generating the SSC documentation involves a number of steps, some of which are a
 
 \item Run Doxygen to generate the LaTeX document from Doxygen-formatted comments in the \texttt{sscapi.h} header file.
 
-\item Run TeXworks to convert LaTex document to PDF.
+\item Run TeXworks to convert LaTex document to PDF. (Run it twice to generate TOC, cross references, etc.)
 
-\item Run HeVeA to convert PDF to HTML.
+\item \textbf{Skip this if not generating HTML:} Run HeVeA to convert PDF to HTML.
 
 \end{enumerate}
 
@@ -58,13 +58,13 @@ Generating the SSC documentation involves a number of steps, some of which are a
 
 \item Run Doxygen on \texttt{ssc\_api\_doxyconfig}. Doxygen creates the \texttt{ssc\_api\_latex} folder.
 
-\item Copy \texttt{doxygen.sty} from \texttt{ssc\_api\_latex} folder to the doc folder.
+\item Ignore \texttt{doxygen.sty} that doxygen creates in the in \texttt{ssc\_api\_latex} folder, and use the custom \texttt{doxygen.sty} in the SVN repository instead. It removes numbering of individual functions, and a few other minor formatting changes.
 
-\item Open \texttt{doxygen.sty} in a text editor, and comment out or delete the commands under "Setup fancy headings" so that the "Generated on date for SSC API by Doxygen" footer does not appear on pages.
+\textbf{Note.} If you use the \texttt{doxygen.sty} file that doxygen automatically generates instead of the customized one, open \texttt{doxygen.sty} in a text editor, and comment out or delete the commands under "Setup fancy headings" so that the "Generated on date for SSC API by Doxygen" footer does not appear on pages.
 
 \item Run TexWorks on \texttt{ssc\_guide.tex} to generate PDF. (Run twice to update table of contents.)
 
-\item Run HeVeA on \texttt{ssc\_guide.pdf} to generate HTML: hevea \texttt{ssc\_guide.tex}.
+\item \textbf{Skip this if not generating HTML:} Run HeVeA on \texttt{ssc\_guide.pdf} to generate HTML: hevea \texttt{ssc\_guide.tex}.
 
 \end{itemize}
 \section{Software Installation Instructions}

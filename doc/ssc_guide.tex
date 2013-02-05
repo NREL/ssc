@@ -292,7 +292,9 @@ To run the program, specify a weather file on the command line. Here, we use the
 c:\> pvwatts.exe daggett.tm2
 ac: 1668.23 kWh
 \end{verbatim}
-\marginpar{Current version requires renaming ssc32.dll to ssc.dll}
+
+\notebox{You may need to rename the \texttt{ssc32.dll} file to \texttt{ssc.dll} for the program to compile and run successfully.}
+
 \subsection{Some additional comments}
 
 The \texttt{ssc\_data\_t} and \texttt{ssc\_module\_t} data types are opaque references to internally defined data structures.  The only proper way to interact with variables of these types is using the defined SSC function calls.  As listed in the \texttt{sscapi.h} header file, both are typedef'd as \texttt{void*}.
