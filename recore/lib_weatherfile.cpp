@@ -616,6 +616,9 @@ bool  weatherfile::read()
 				if(allocated && m_interp_mode){
 					HOUR[i] = hour;
 					MINUTE[i] = minute;
+					DAY[i] = day;
+					MONTH[i] = month;
+					YEAR[i] = year;
 					GH[i] = gh;
 					DN[i] = dn;
 					DF[i] = df;
@@ -642,6 +645,8 @@ bool  weatherfile::read()
 			gh = GH[ncall];
 			dn = DN[ncall];
 			df = DF[ncall];
+			month = MONTH[ncall];
+			day = DAY[ncall];
 
 			if(m_first_call){
 				wspd = WSPD[1] + 1.5*(WSPD[0] - WSPD[1]);
@@ -665,6 +670,7 @@ bool  weatherfile::read()
 				pres = 0.5*(PRES[ncall] +PRES[ncall-1]);
 				snow = 0.5*(SNOW[ncall] +SNOW[ncall-1]);
 				albedo = 0.5*(ALBEDO[ncall] +ALBEDO[ncall-1]);
+
 			}
 			ncall++;
 		}
