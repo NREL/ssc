@@ -4,14 +4,20 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
 % author: Aron P. Dobos
 
     % automatically detect architecture to load proper dll.
-    ssclib = 'ssc64';
+    [pathstr, fn, fext] = fileparts(mfilename('fullpath'));
+    cd(pathstr);
+    cd('../..');
     if ( strcmp(computer(), 'PCWIN') )
-        ssclib = 'ssc32';
+        cd('win32');
+        ssclib = 'win32/ssc32';
+    else
+        cd('win64');
+        ssclib = 'ssc64';
     end
 
     if strcmp(action,'load')
         if ~libisloaded(ssclib)
-            loadlibrary(ssclib,'sscapi.h');
+            loadlibrary(ssclib,'../sscapi.h');
         end
 
     elseif strcmp(action,'unload')
