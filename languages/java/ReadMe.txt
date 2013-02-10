@@ -6,10 +6,8 @@ Windows
 2. install c, c++ and development tools
 
 64bit
-1. 32bit install 
+1. 32bit requirements as described above
 2. mingw64 install http://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win64/Personal Builds/rubenvb/gcc-4.7-release/x86_64-w64-mingw32-gcc-4.7.2-release-win64_rubenvb.7z
-
-
 
 All Platforms
 Appropriate JDK from Oracle Java SE 
