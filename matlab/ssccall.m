@@ -237,6 +237,7 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
         disp( sprintf('ssccall: invalid action %s', action) );        
         result = 0;
     end
+    cd(pathstr);
 
 end
 
