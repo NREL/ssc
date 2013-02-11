@@ -146,16 +146,15 @@ public:
 				for (int h=0;h<24;h++)
 					if (i<8760)
 					{
+						first_year_energy += diurnal_curtailment[m*ncols+h]*hourly_enet[i];
+						// first year availability applied
 						hourly_energy_to_grid[i] = diurnal_curtailment[m*ncols+h]*hourly_enet[i] * cf.at(CF_availability,1) ;
 						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
-						first_year_energy += hourly_energy_to_grid[i];
 						i++;
 					}
 
 
-		cf.at(CF_energy_net,1) += first_year_energy;
-
-		for (int y=2;y<=nyears;y++)
+		for (int y=1;y<=nyears;y++)
 		{
 			cf.at(CF_energy_net,y) = first_year_energy * cf.at(CF_availability,y) * cf.at(CF_degradation,y);
 		}
