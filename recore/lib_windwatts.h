@@ -2,17 +2,22 @@
 #define __lib_windwatts_h
 
 #include <vector>
+#include "lib_util.h"
 
 class wind_power_calculator
 {
 public:
 	wind_power_calculator() {
-		m_dShearExponent=1.0/7.0;
+		m_dShearExponent = 1.0/7.0;
+		m_fAxialResolution = 0.5; // default in openWind
+		m_fRadialResultion = 0.2; // default in openWind
+		m_fMaxRotorDiameters = 50; // default in openWind
 		m_iNumberOfTurbinesInFarm=m_iLengthOfTurbinePowerCurveArray=m_iControlMode=0;
 		m_dMeasurementHeight=m_dHubHeight=m_dRotorDiameter=m_dCutInSpeed=m_dRatedSpeed=m_dRatedPower=m_dLossesAbsolute=m_dLossesPercent=0;
 	}
 	
-	static const int MAX_WIND_TURBINES = 300;
+	static const int MAX_WIND_TURBINES = 300; // Max turbines in the farm
+	static const int MIN_DIAM_EV = 2; // Minimum number of rotor diameters between turbines for EV wake modeling to work
 
 
 	double m_dShearExponent;		// also referred to as Alpha
@@ -59,6 +64,11 @@ public:
 	);
 
 private:
+	double m_fAxialResolution;	// resolution for EV wake calculations along axial direction
+	double m_fRadialResultion;	// resolution for EV wake calculations along radial direction
+	double m_fMaxRotorDiameters; // how far down wind will EV calculations go
+	util::matrix_t<double> matEVWakeDeficits,matEVWakeWidths;
+
 	void wake_calculations_pat_quinlan(
 		/*INPUTS*/
 		double fAir_density,
@@ -76,7 +86,6 @@ private:
 	void wake_calculations_Park(
 		/*INPUTS*/
 		double fAir_density,
-		double dWakeDecayK,					// wake decay coefficient (k)
 		double aDistanceDownwind[],			// downwind coordinate of each WT
 		double aDistanceCrosswind[],		// crosswind coordinate of each WT
 
@@ -87,9 +96,26 @@ private:
 		double aWind_speed[]				// wind speed at each WT
 	);
 
+	 // Implements a simplified Eddy-Viscosity model as per "Simplified Soultion To The Eddy Viscosity Wake Model" - 2009 by Dr Mike Anderson of RES
+	void wake_calculations_EddyViscosity_Simple(
+		/*INPUTS*/
+		double fAir_density,
+		double aDistanceDownwind[],			// downwind coordinate of each WT
+		double aDistanceCrosswind[],		// crosswind coordinate of each WT
+
+		/*OUTPUTS*/
+		double Power[],						// calculated power of each WT
+		double Thrust[],					// thrust calculation at each WT
+		double Eff[],						// downwind efficiency of each WT
+		double aWind_speed[]				// wind speed at each WT
+	);
+
+	double wake_width_EV(int iUpwindTurbine, double dAxialDistanceUpwind, double dDiameterOfUpwindTurbine);
+
+
 	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
 	void vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta);
-	double wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dConstK, double dThrustCoeff);
+	double wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	void coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
 	double gammaln(double x);

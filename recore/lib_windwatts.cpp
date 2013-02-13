@@ -30,7 +30,7 @@ int wind_power_calculator::wind_power(
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 		)
 {
-	if (m_iNumberOfTurbinesInFarm > MAX_WIND_TURBINES)
+	if ( (m_iNumberOfTurbinesInFarm > MAX_WIND_TURBINES) || (m_iNumberOfTurbinesInFarm < 1) )
 		return 0;
 
 	int i,j;
@@ -130,10 +130,11 @@ int wind_power_calculator::wind_power(
 		break;
 
 	case 1:
-		wake_calculations_Park(fAirDensity, m_dWakeDecayCoefficient, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
+		wake_calculations_Park(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
 		break;
 
 	case 2:
+		wake_calculations_EddyViscosity_Simple(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
 		break;
 	}
 		
@@ -294,7 +295,6 @@ void wind_power_calculator::wake_calculations_pat_quinlan(
 void wind_power_calculator::wake_calculations_Park(
 	/*INPUTS*/
 	double air_density,
-	double dWakeDecayK,
 	double aDistanceDownwind[],			// downwind coordinate of each WT in radii from upwind turbine
 	double aDistanceCrosswind[],		// crosswind coordinate of each WT in radii from upwind turbine
 
@@ -321,7 +321,7 @@ void wind_power_calculator::wake_calculations_Park(
 			// Calculate the wind speed reduction at turbine i, due to all upwind turbines [j]
 			// The Park model uses the max deficit from all the upwind turbines and uses that to calculate the wind speed at this downwind turbine
 			// It ignores all other deficits
-			dDeficit = max_of(dDeficit, wake_deficit_Park(fDistanceCrosswind, fDistanceDownwind, dRadiusLength, dRadiusLength, dWakeDecayK, Thrust[j]));
+			dDeficit = max_of(dDeficit, wake_deficit_Park(fDistanceCrosswind, fDistanceDownwind, dRadiusLength, dRadiusLength, Thrust[j]));
 
 		}
 		// use the max deficit found to calculate the turbine output
@@ -338,6 +338,74 @@ void wind_power_calculator::wake_calculations_Park(
 			Eff[i] = 100.0*(fTurbine_output+0.0001)/(Power[0]+0.0001);
 	} 
 }
+
+
+// Implements a simplified Eddy-Viscosity model as per "Simplified Soultion To The Eddy Viscosity Wake Model" - 2009 by Dr Mike Anderson of RES
+void wind_power_calculator::wake_calculations_EddyViscosity_Simple(
+	/*INPUTS*/
+	double air_density,
+	double aDistanceDownwind[],			// downwind coordinate of each WT in radii from upwind turbine
+	double aDistanceCrosswind[],		// crosswind coordinate of each WT in radii from upwind turbine
+
+	/*OUTPUTS*/
+	double Power[],						// calculated power of each WT
+	double Thrust[],					// thrust calculation at each WT
+	double Eff[],						// downwind efficiency of each WT
+	double adWindSpeed[]				// wind speed at each WT
+)
+{
+	double dRadiusLength = m_dRotorDiameter/2;
+	matEVWakeDeficits.resize_fill(m_iNumberOfTurbinesInFarm, (int)m_fMaxRotorDiameters/m_fAxialResolution+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
+
+	for (int i=1; i<m_iNumberOfTurbinesInFarm; i++) // downwind turbines, but starting with most upwind and working downwind, i=0 has already been done
+	{
+		double dDeficit = 0;
+		for (int j=0; j<i; j++) // upwind turbines - turbines upwind of turbine[i]
+		{
+			// distance downwind = distance from turbine i to turbine j along axis of wind direction
+			double fDistanceDownwind = dRadiusLength*fabs(aDistanceDownwind[i] - aDistanceDownwind[j]); 
+
+			// separation crosswind between turbine i and turbine j
+			double fDistanceCrosswind = dRadiusLength*fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j]);
+				
+			// Calculate the wind speed reduction at turbine i, due to all upwind turbines [j]
+			// The Park model uses the max deficit from all the upwind turbines and uses that to calculate the wind speed at this downwind turbine
+			// It ignores all other deficits
+			dDeficit = max_of(dDeficit, wake_deficit_Park(fDistanceCrosswind, fDistanceDownwind, dRadiusLength, dRadiusLength, Thrust[j]));
+
+		}
+		// use the max deficit found to calculate the turbine output
+		adWindSpeed[i] = adWindSpeed[i]*(1-dDeficit);
+
+		double fTurbine_output=0, fThrust_coeff=0;
+		turbine_power(adWindSpeed[i], air_density,  &fTurbine_output, &fThrust_coeff);
+		Power[i] = fTurbine_output;
+		Thrust[i] = fThrust_coeff;
+
+		if (Power[0] < 0.0)
+			Eff[i] = 0.0;
+		else
+			Eff[i] = 100.0*(fTurbine_output+0.0001)/(Power[0]+0.0001);
+	} 
+}
+
+double wind_power_calculator::wake_width_EV(int iUpwindTurbine, double dAxialDistanceUpwind, double dDiameterOfUpwindTurbine)
+{
+	double x = dAxialDistanceUpwind - (MIN_DIAM_EV * dDiameterOfUpwindTurbine);
+	double fX = x / (dDiameterOfUpwindTurbine * m_fAxialResolution);
+	int nX1 = (int)fX;
+	int nX2 = nX1+1;
+	fX -= nX1;
+	
+	if(nX2 >= matEVWakeDeficits.ncols())
+		return 0.0;
+
+	if(nX1<0)
+		return dDiameterOfUpwindTurbine * matEVWakeDeficits.at(iUpwindTurbine,0);
+
+	return dDiameterOfUpwindTurbine * max_of(1.0,(matEVWakeDeficits.at(iUpwindTurbine, nX1) * (1.0-fX)+matEVWakeDeficits.at(iUpwindTurbine, nX2) * fX));	// in meters
+}
+
 
 void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient )
 {
@@ -429,12 +497,12 @@ void wind_power_calculator::vel_delta_PQ( double fRadiiCrosswind, double fRadiiD
 }
 
 // wake modeling - Park model used to calculate the change in wind speed due to wake effects of upwind turbine
-double wind_power_calculator::wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dConstK, double dThrustCoeff)
+double wind_power_calculator::wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff)
 {	// return the wind speed deficit due to wake effects. 0=no deficit, up to 1 = 100%
 	if (dThrustCoeff>1)
 		return 0;
 
-	double dRadiusOfWake = (dRadiusUpstream) + dConstK * dDistDownWind; // radius of circle formed by wake from upwind rotor
+	double dRadiusOfWake = (dRadiusUpstream) + m_dWakeDecayCoefficient * dDistDownWind; // radius of circle formed by wake from upwind rotor
 	double dAreaOverlap = circle_overlap(dDistCrossWind, dRadiusDownstream, dRadiusOfWake);
 	return (1 - sqrt(1-dThrustCoeff)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream));
 }
