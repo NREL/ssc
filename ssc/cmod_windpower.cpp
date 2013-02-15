@@ -146,13 +146,14 @@ public:
 			wpc.m_adYCoords[i] = (double)wt_y[i];
 		}
 
-
 		// these won't be useful until matrix variables can be passed back as outputs
 		//util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		//util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		//util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		//util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		//util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", nstep, wpc.m_iNumberOfTurbinesInFarm );
+
+		wpc.AllocateMemory(); // if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
 
 		for (i=0;i<nstep;i++)
 		{

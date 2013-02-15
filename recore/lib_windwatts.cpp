@@ -14,6 +14,16 @@ static inline double min_of(double a, double b)
 	return (a < b) ? a : b;
 }
 
+void wind_power_calculator::AllocateMemory()
+{
+	if (m_iWakeModelChoice == SIMPLE_EDDY_VISCOSITY_WAKE_MODEL)
+	{
+		matEVWakeDeficits.resize_fill(m_iNumberOfTurbinesInFarm, (int)m_fMaxRotorDiameters/m_fAxialResolution+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
+		matEVWakeWidths.resize_fill(m_iNumberOfTurbinesInFarm, (int)m_fMaxRotorDiameters/m_fAxialResolution+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
+	}
+}
+
+
 int wind_power_calculator::wind_power(
 	// INPUTS
 		double fWindSpeed,					// wind velocity m/s
@@ -41,13 +51,29 @@ int wind_power_calculator::wind_power(
 
 	// convert barometric pressure in ATM to air density
 	double fAirDensity = (dAirPressureAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
+	double fTurbine_output, fThrust_coeff;
 
+	// if there is only one turbine, we're done
+	if (m_iNumberOfTurbinesInFarm < 2)
+	{
+		turbine_power(fWindSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff );
+		*FarmP = fTurbine_output;
+		return 1;
+	}
 
+	// if power output of first turbine is zero, then it will be for the rest: we're done
+	if (fTurbine_output <= 0.0)
+	{
+		*FarmP = 0.0;
+		return m_iNumberOfTurbinesInFarm;
+	}
+
+	// ok, let's calculate the farm output
 	double d, c;
 	std::vector<double> aDistanceDownwind(m_iNumberOfTurbinesInFarm);	// downwind coordinate of each WT
 	std::vector<double> aDistanceCrosswind(m_iNumberOfTurbinesInFarm);	// crosswind coordinate of each WT
 
-	//!Convert to d,c coordinates and initialize others
+	//!Convert to d (downwind - axial), c (crosswind - radial) coordinates and initialize others
 	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 	{
 		coordtrans(m_adYCoords[i], m_adXCoords[i], fWindDirectionDegrees, &d, &c );
@@ -85,22 +111,12 @@ int wind_power_calculator::wind_power(
 		aDistanceCrosswind[i] = 2.0*aDistanceCrosswind[i]/m_dRotorDiameter;
 	}
 	
-	// Calculate the output for the most upwind turbine
-	double fTurbine_output, fThrust_coeff;
-	turbine_power(adWindSpeed[0], fAirDensity, &fTurbine_output, &fThrust_coeff );
+	// Record the output for the most upwind turbine (already calculated above)
 	Power[0] = fTurbine_output;
 	Thrust[0] = fThrust_coeff;
 	Eff[0] = ( fTurbine_output < 1.0 ) ? 0.0 : 100.0;
 
 
-	// if there is only one turbine, we're done
-	if (m_iNumberOfTurbinesInFarm < 2)
-	{
-		*FarmP = fTurbine_output;
-		return 1;
-	}
-
-	
 	// Sort aDistanceDownwind, aDistanceCrosswind arrays by downwind distance, aDistanceDownwind[0] is smallest downwind distance, presumably zero
 	for (j=1;j<m_iNumberOfTurbinesInFarm;j++) 
 	{
@@ -125,17 +141,20 @@ int wind_power_calculator::wind_power(
 	// run the wake model
 	switch (m_iWakeModelChoice)
 	{
-	case 0:
-		wake_calculations_pat_quinlan(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed, aTurbulence_intensity);
-		break;
+		case PAT_QUINLAN_WAKE_MODEL:
+			wake_calculations_pat_quinlan(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed, aTurbulence_intensity);
+			break;
 
-	case 1:
-		wake_calculations_Park(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
-		break;
+		case PARK_WAKE_MODEL:
+			wake_calculations_Park(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
+			break;
 
-	case 2:
-		wake_calculations_EddyViscosity_Simple(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
-		break;
+		case SIMPLE_EDDY_VISCOSITY_WAKE_MODEL:
+			wake_calculations_EddyViscosity_Simple(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
+			break;
+
+		default:
+			return 0;
 	}
 		
 	// calculate total farm power
@@ -355,7 +374,9 @@ void wind_power_calculator::wake_calculations_EddyViscosity_Simple(
 )
 {
 	double dRadiusLength = m_dRotorDiameter/2;
-	matEVWakeDeficits.resize_fill(m_iNumberOfTurbinesInFarm, (int)m_fMaxRotorDiameters/m_fAxialResolution+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
+	double dMinVelocity = adWindSpeed[0];
+	matEVWakeDeficits.fill(0.0);
+	matEVWakeWidths.fill(0.0);
 
 	for (int i=1; i<m_iNumberOfTurbinesInFarm; i++) // downwind turbines, but starting with most upwind and working downwind, i=0 has already been done
 	{
@@ -363,15 +384,21 @@ void wind_power_calculator::wake_calculations_EddyViscosity_Simple(
 		for (int j=0; j<i; j++) // upwind turbines - turbines upwind of turbine[i]
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
-			double fDistanceDownwind = dRadiusLength*fabs(aDistanceDownwind[i] - aDistanceDownwind[j]); 
+			double dDistAxialInDiameters = fabs(aDistanceDownwind[i] - aDistanceDownwind[j])/2.0;
 
 			// separation crosswind between turbine i and turbine j
-			double fDistanceCrosswind = dRadiusLength*fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j]);
-				
+			double dDistRadialInDiameters = fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j])/2.0;
+			
+			double wake_width_meters = GetEVWakeWidth(j, dDistAxialInDiameters);
+			if (wake_width_meters<=0)
+				continue;
+
+			dMinVelocity = min_of(dMinVelocity, GetEVImpactOfUpwindTurbine(j, adWindSpeed[0], dDistRadialInDiameters, dDistAxialInDiameters) );
+
 			// Calculate the wind speed reduction at turbine i, due to all upwind turbines [j]
 			// The Park model uses the max deficit from all the upwind turbines and uses that to calculate the wind speed at this downwind turbine
 			// It ignores all other deficits
-			dDeficit = max_of(dDeficit, wake_deficit_Park(fDistanceCrosswind, fDistanceDownwind, dRadiusLength, dRadiusLength, Thrust[j]));
+			//dDeficit = max_of(dDeficit, wake_deficit_Park(fDistanceCrosswind, fDistanceDownwind, dRadiusLength, dRadiusLength, Thrust[j]));
 
 		}
 		// use the max deficit found to calculate the turbine output
@@ -389,21 +416,66 @@ void wind_power_calculator::wake_calculations_EddyViscosity_Simple(
 	} 
 }
 
-double wind_power_calculator::wake_width_EV(int iUpwindTurbine, double dAxialDistanceUpwind, double dDiameterOfUpwindTurbine)
+double wind_power_calculator::GetEVImpactOfUpwindTurbine(int iUpwindTurbine, double dWindSpeed, double dDistCrossWind, double dDistDownWind)
 {
-	double x = dAxialDistanceUpwind - (MIN_DIAM_EV * dDiameterOfUpwindTurbine);
-	double fX = x / (dDiameterOfUpwindTurbine * m_fAxialResolution);
-	int nX1 = (int)fX;
-	int nX2 = nX1+1;
-	fX -= nX1;
-	
-	if(nX2 >= matEVWakeDeficits.ncols())
+	double dDef = this->GetEVVelocityDeficit(iUpwindTurbine, dDistDownWind);
+	if(dDef <= 0.0)
 		return 0.0;
 
-	if(nX1<0)
-		return dDiameterOfUpwindTurbine * matEVWakeDeficits.at(iUpwindTurbine,0);
+	double dSteps = 25.0;
+	double dCrossWindDistanceInMeters = dDistCrossWind * m_dRotorDiameter;
+	double dWidth = GetEVWakeWidth(iUpwindTurbine, dDistDownWind);
+	double dTotal = 0.0;
+	double dRadius = m_dRotorDiameter/2.0;
+	double dStep = m_dRotorDiameter/dSteps;
 
-	return dDiameterOfUpwindTurbine * max_of(1.0,(matEVWakeDeficits.at(iUpwindTurbine, nX1) * (1.0-fX)+matEVWakeDeficits.at(iUpwindTurbine, nX2) * fX));	// in meters
+	for(double y=dCrossWindDistanceInMeters-dRadius; y<=dCrossWindDistanceInMeters+dRadius; y+=dStep)
+	{
+		dTotal += dDef * exp(-3.56*((sqrt(y))/sqrt(dWidth)));
+	}	
+
+	dTotal /= (dSteps+1.0); // deficit
+
+	return (1.0 - dTotal) * dWindSpeed;
+}
+
+
+double wind_power_calculator::GetEVWakeWidth(int iUpwindTurbine, double dAxialDistanceInDiameters)
+{	// get the wake width from the upwind turbine's array describing its wake
+
+	// if we're too close, it's just the initial wake width
+	double dDistPastMin = dAxialDistanceInDiameters - MIN_DIAM_EV; // in diameters
+	if (dDistPastMin < 0.0)
+		return m_dRotorDiameter * matEVWakeWidths.at(iUpwindTurbine,0);
+
+	double dDistInResolutionUnits = dDistPastMin / m_fAxialResolution;
+	int iLowerIndex = (int)dDistInResolutionUnits;
+	int iUpperIndex = iLowerIndex+1;
+	dDistInResolutionUnits -= iLowerIndex;
+	
+	if(iUpperIndex >= matEVWakeWidths.ncols())
+		return 0.0;
+
+	return m_dRotorDiameter * max_of(1.0,(  matEVWakeWidths.at(iUpwindTurbine, iLowerIndex) * (1.0-dDistInResolutionUnits) + matEVWakeWidths.at(iUpwindTurbine, iUpperIndex) * dDistInResolutionUnits));	// in meters
+}
+
+double wind_power_calculator::GetEVVelocityDeficit(int iUpwindTurbine, double dAxialDistanceInDiameters)
+{	// get the wake width from the upwind turbine's array describing its wake
+
+	// if we're too close, it's just the initial wake width
+	double dDistPastMin = dAxialDistanceInDiameters - MIN_DIAM_EV; // in diameters
+	if (dDistPastMin < 0.0)
+		return m_dRotorDiameter * matEVWakeDeficits.at(iUpwindTurbine,0);
+
+	double dDistInResolutionUnits = dDistPastMin / m_fAxialResolution;
+	int iLowerIndex = (int)dDistInResolutionUnits;
+	int iUpperIndex = iLowerIndex+1;
+	dDistInResolutionUnits -= iLowerIndex;
+	
+	if(iUpperIndex >= matEVWakeDeficits.ncols())
+		return 0.0;
+
+	return (matEVWakeDeficits.at(iUpwindTurbine, iLowerIndex) * (1.0-dDistInResolutionUnits) ) + (matEVWakeDeficits.at(iUpwindTurbine, iUpperIndex) * dDistInResolutionUnits);	// in meters
 }
 
 

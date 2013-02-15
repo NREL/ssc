@@ -4,20 +4,23 @@
 #include <vector>
 #include "lib_util.h"
 
+enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL};
+
 class wind_power_calculator
 {
 public:
 	wind_power_calculator() {
 		m_dShearExponent = 1.0/7.0;
-		m_fAxialResolution = 0.5; // default in openWind
-		m_fRadialResultion = 0.2; // default in openWind
-		m_fMaxRotorDiameters = 50; // default in openWind
+		m_fAxialResolution = 0.5; // in rotor diameters, default in openWind=0.5
+		m_fRadialResultion = 0.2; // in rotor diameters, default in openWind=0.2
+		m_fMaxRotorDiameters = 50; // in rotor diameters, default in openWind=50
 		m_iNumberOfTurbinesInFarm=m_iLengthOfTurbinePowerCurveArray=m_iControlMode=0;
 		m_dMeasurementHeight=m_dHubHeight=m_dRotorDiameter=m_dCutInSpeed=m_dRatedSpeed=m_dRatedPower=m_dLossesAbsolute=m_dLossesPercent=0;
 	}
 	
 	static const int MAX_WIND_TURBINES = 300; // Max turbines in the farm
 	static const int MIN_DIAM_EV = 2; // Minimum number of rotor diameters between turbines for EV wake modeling to work
+
 
 
 	double m_dShearExponent;		// also referred to as Alpha
@@ -39,6 +42,7 @@ public:
 	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adXCoords, m_adYCoords;
 
 	int GetMaxTurbines() {return MAX_WIND_TURBINES;}
+	void AllocateMemory(); // if necessary, allocate memory in util::matrix arrays
 
 	int wind_power(
 		// INPUTS
@@ -67,7 +71,8 @@ private:
 	double m_fAxialResolution;	// resolution for EV wake calculations along axial direction
 	double m_fRadialResultion;	// resolution for EV wake calculations along radial direction
 	double m_fMaxRotorDiameters; // how far down wind will EV calculations go
-	util::matrix_t<double> matEVWakeDeficits,matEVWakeWidths;
+	util::matrix_t<double> matEVWakeDeficits; // wind velocity deficit behind each turbine, indexed by axial distance downwind
+	util::matrix_t<double> matEVWakeWidths; // width of wake (in diameters) for each turbine, indexed by axial distance downwind
 
 	void wake_calculations_pat_quinlan(
 		/*INPUTS*/
@@ -110,8 +115,9 @@ private:
 		double aWind_speed[]				// wind speed at each WT
 	);
 
-	double wake_width_EV(int iUpwindTurbine, double dAxialDistanceUpwind, double dDiameterOfUpwindTurbine);
-
+	double GetEVWakeWidth(int iUpwindTurbine, double dAxialDistanceInDiameters);
+	double GetEVVelocityDeficit(int iUpwindTurbine, double dAxialDistanceInDiameters);
+	double GetEVImpactOfUpwindTurbine(int iUpwindTurbine, double dWindSpeed, double dDistCrossWind, double dDistDownWind);
 
 	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
 	void vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta);
