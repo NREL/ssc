@@ -41,7 +41,7 @@ public:
 
 	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adXCoords, m_adYCoords;
 
-	int GetMaxTurbines() {return MAX_WIND_TURBINES;}
+	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
 	void AllocateMemory(); // if necessary, allocate memory in util::matrix arrays
 
 	int wind_power(
@@ -73,6 +73,23 @@ private:
 	double m_fMaxRotorDiameters; // how far down wind will EV calculations go
 	util::matrix_t<double> matEVWakeDeficits; // wind velocity deficit behind each turbine, indexed by axial distance downwind
 	util::matrix_t<double> matEVWakeWidths; // width of wake (in diameters) for each turbine, indexed by axial distance downwind
+
+	struct VMLN
+	{
+		VMLN(){}
+		virtual ~VMLN(){}
+	
+		double m;
+		double Ro;
+		double Xh;
+		double Xn;
+		double Rh;
+		double Rn;
+		double Xf;
+		double Rf;
+		double dUc_Uinf_Xn;
+		double diam;
+	};
 
 	void wake_calculations_pat_quinlan(
 		/*INPUTS*/
@@ -112,18 +129,22 @@ private:
 		double Power[],						// calculated power of each WT
 		double Thrust[],					// thrust calculation at each WT
 		double Eff[],						// downwind efficiency of each WT
-		double aWind_speed[]				// wind speed at each WT
+		double aWind_speed[],				// wind speed at each WT
+		double aTurbulence_intensity[]		// turbulence intensity at each WT
 	);
 
 	double GetEVWakeWidth(int iUpwindTurbine, double dAxialDistanceInDiameters);
 	double GetEVVelocityDeficit(int iUpwindTurbine, double dAxialDistanceInDiameters);
-	double GetEVImpactOfUpwindTurbine(int iUpwindTurbine, double dWindSpeed, double dDistCrossWind, double dDistDownWind);
+	double wake_deficit_EV(int iUpwindTurbine, double dDistCrossWind, double dDistDownWind);
+	double added_turbulence_intensity(double IatUpstreamTurbine, double Ct,double deltaX, VMLN& vmln);
+	double GetTotalTI(double ambientTI, double additionalTI, double Uo, double Uw, double partial);
 
 	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
 	void vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta);
 	double wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	void coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
+	double simple_intersect(double dist_center_to_center, double rad1, double rad2);
 	double gammaln(double x);
 
 };
