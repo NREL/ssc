@@ -9,6 +9,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "turbul",                     "Turbulence coefficient",           "frac",   "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "pc_wind",                    "Power curve wind speed array",     "0/1/2",  "",                      "WindPower",      "*",             "",                      "" }, 
 	{ SSC_INPUT,        SSC_ARRAY,       "pc_power",                   "Power curve turbine output array", "deg",    "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
+	//{ SSC_INPUT,        SSC_ARRAY,       "pc_rpm",	                   "Turbine RPM curve",                "rpm",    "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "wt_x",                       "Turbine X coordinates",            "m",      "",                      "WindPower",      "*",             "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "wt_y",                       "Turbine Y coordinates",            "m",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=wt_x",     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "hub_ht",                     "Hub height",                       "m",      "",                      "WindPower",      "*",             "",                      "" },
@@ -67,6 +68,7 @@ public:
 
 		ssc_number_t *pc_w = as_array( "pc_wind", &wpc.m_iLengthOfTurbinePowerCurveArray );
 		ssc_number_t *pc_p = as_array( "pc_power", NULL );
+		//ssc_number_t *pc_rpm = as_array( "pc_rpm", NULL );
 
 		ssc_number_t *wt_x = as_array( "wt_x", &wpc.m_iNumberOfTurbinesInFarm );
 		ssc_number_t *wt_y = as_array( "wt_y", NULL );
@@ -91,14 +93,16 @@ public:
 		wpc.m_adXCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
 		wpc.m_adYCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
 
-		size_t i,j;
-
 		wpc.m_adPowerCurveWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		wpc.m_adPowerCurveKW.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
+		wpc.m_adPowerCurveRPM.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
+
+		size_t i;
 		for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
 		{
 			wpc.m_adPowerCurveWS[i] = (double)pc_w[i];
 			wpc.m_adPowerCurveKW[i] = (double)pc_p[i];
+			wpc.m_adPowerCurveRPM[i] = 0.0;//(double)pc_rpm[i];
 		}
 
 		// now choose which model to run
@@ -200,7 +204,7 @@ public:
 						&Eff[0],
 						&Wind[0],
 						&Turb[0] ) ) 
-				throw exec_error( "windpower", util::format("error in wind calculation time %d", i) );
+				throw exec_error( "windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails()) );
 
 
 			farmpwr[i] = (ssc_number_t) farmp;

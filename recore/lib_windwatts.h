@@ -11,16 +11,23 @@ class wind_power_calculator
 public:
 	wind_power_calculator() {
 		m_dShearExponent = 1.0/7.0;
-		m_fAxialResolution = 0.5; // in rotor diameters, default in openWind=0.5
-		m_fRadialResultion = 0.2; // in rotor diameters, default in openWind=0.2
-		m_fMaxRotorDiameters = 50; // in rotor diameters, default in openWind=50
 		m_iNumberOfTurbinesInFarm=m_iLengthOfTurbinePowerCurveArray=m_iControlMode=0;
 		m_dMeasurementHeight=m_dHubHeight=m_dRotorDiameter=m_dCutInSpeed=m_dRatedSpeed=m_dRatedPower=m_dLossesAbsolute=m_dLossesPercent=0;
+		m_sErrDetails="";
+
+		// private member vars, acting like constants right now (no access to change them)
+		m_dAxialResolution = 0.5; // in rotor diameters, default in openWind=0.5
+		m_dRadialResultion = 0.2; // in rotor diameters, default in openWind=0.2
+		m_dMaxRotorDiameters = 50; // in rotor diameters, default in openWind=50
+		m_dMinThrustCoeff = 0.02;
+		m_dMinDeficit=0.0002;
+		m_bFilter = true;
+		m_iNumberOfBlades = 3;
 	}
 	
 	static const int MAX_WIND_TURBINES = 300; // Max turbines in the farm
 	static const int MIN_DIAM_EV = 2; // Minimum number of rotor diameters between turbines for EV wake modeling to work
-
+	static const int EV_SCALE = 1; // Uo or 1.0 depending on how you read Ainslie 1988
 
 
 	double m_dShearExponent;		// also referred to as Alpha
@@ -39,10 +46,11 @@ public:
 	double m_dLossesPercent;		// loss as percent
 	double m_dWakeDecayCoefficient; // wake decay coefficient (k)
 
-	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adXCoords, m_adYCoords;
+	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adPowerCurveRPM, m_adXCoords, m_adYCoords;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
 	void AllocateMemory(); // if necessary, allocate memory in util::matrix arrays
+	std::string GetErrorDetails() { return m_sErrDetails; }
 
 	int wind_power(
 		// INPUTS
@@ -68,11 +76,18 @@ public:
 	);
 
 private:
-	double m_fAxialResolution;	// resolution for EV wake calculations along axial direction
-	double m_fRadialResultion;	// resolution for EV wake calculations along radial direction
-	double m_fMaxRotorDiameters; // how far down wind will EV calculations go
+	std::string m_sErrDetails;
 	util::matrix_t<double> matEVWakeDeficits; // wind velocity deficit behind each turbine, indexed by axial distance downwind
 	util::matrix_t<double> matEVWakeWidths; // width of wake (in diameters) for each turbine, indexed by axial distance downwind
+
+	// private variables acting like constants
+	double m_dAxialResolution;	// resolution for EV wake calculations along axial direction
+	double m_dRadialResultion;	// resolution for EV wake calculations along radial direction
+	double m_dMaxRotorDiameters; // how far down wind will EV calculations go
+	double m_dMinThrustCoeff;	// limit lower bound of thrust coeff (Ct) for calculations
+	bool m_bFilter;
+	double m_dMinDeficit; // below this value, the simple EV model stops calculating deficits, so they are let at zero
+	int m_iNumberOfBlades;
 
 	struct VMLN
 	{
@@ -119,7 +134,7 @@ private:
 	);
 
 	 // Implements a simplified Eddy-Viscosity model as per "Simplified Soultion To The Eddy Viscosity Wake Model" - 2009 by Dr Mike Anderson of RES
-	void wake_calculations_EddyViscosity_Simple(
+	bool wake_calculations_EddyViscosity_Simple(
 		/*INPUTS*/
 		double fAir_density,
 		double aDistanceDownwind[],			// downwind coordinate of each WT
@@ -133,11 +148,14 @@ private:
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 	);
 
-	double GetEVWakeWidth(int iUpwindTurbine, double dAxialDistanceInDiameters);
-	double GetEVVelocityDeficit(int iUpwindTurbine, double dAxialDistanceInDiameters);
+	double get_EV_wake_width(int iUpwindTurbine, double dAxialDistanceInDiameters);
+	double get_EV_velocity_deficit(int iUpwindTurbine, double dAxialDistanceInDiameters);
 	double wake_deficit_EV(int iUpwindTurbine, double dDistCrossWind, double dDistDownWind);
-	double added_turbulence_intensity(double IatUpstreamTurbine, double Ct,double deltaX, VMLN& vmln);
-	double GetTotalTI(double ambientTI, double additionalTI, double Uo, double Uw, double partial);
+	double calc_EV_added_turbulence_intensity(double IatUpstreamTurbine, double Ct,double deltaX, VMLN& vmln);
+	double calc_EV_total_turbulence_intensity(double ambientTI, double additionalTI, double Uo, double Uw, double partial);
+	bool fill_turbine_wake_arrays_for_EV(int iTurbineNumber, double dAmbientVelocity, double dVelocityAtTurbine, double dPower, double dThrustCoeff, double dTurbulenceIntensity, double maxX);
+	void calc_EV_vm_for_turbine(double U, double Ii, double Ct, double airDensity, VMLN& vmln);
+	double tip_speed_ratio(double dWindSpeed);
 
 	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
 	void vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta);
