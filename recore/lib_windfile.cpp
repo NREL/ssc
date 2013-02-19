@@ -349,7 +349,7 @@ bool windfile::read( double requested_height,
 				ht1 = temp;
 			}
 			angle = ( (dir2-dir1) < 180 ) ? (dir2-dir1) : 360.0 - (dir2-dir1);
-			interp_direction &= (angle <= 90 ); // OK to interpolate between two directions at two different heights if they are < 90 deg apart
+			interp_direction &= (angle <= 180 ); // not sure if it makes sense to 'interpolate' between directions that are 180 deg apart?
 		}
 		
 		if (interp_direction)

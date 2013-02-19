@@ -55,11 +55,11 @@ int wind_power_calculator::wind_power(
 	// convert barometric pressure in ATM to air density
 	double fAirDensity = (dAirPressureAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 	double fTurbine_output, fThrust_coeff;
+	turbine_power(fWindSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff );
 
 	// if there is only one turbine, we're done
 	if (m_iNumberOfTurbinesInFarm < 2)
 	{
-		turbine_power(fWindSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff );
 		*FarmP = fTurbine_output;
 		return 1;
 	}
@@ -427,11 +427,12 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(
 		// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info
 		if (!fill_turbine_wake_arrays_for_EV(i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm-1] - aDistanceDownwind[i])*dTurbineRadius ) )
 		{
-			m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
+			if(m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
 			return false;
 		}
 
-		calc_EV_vm_for_turbine(adWindSpeed[i], aTurbulence_intensity[i], Thrust[i], air_density, vmln[i]);
+		// TFF, Feb 2013 - SKIPPING THE USE OF vmln.Xn, SINCE IT REQUIRES THE TURBINE RPMs TO CALCULATE, AND WE DON'T HAVE THOSE!!!!
+		// calc_EV_vm_for_turbine(adWindSpeed[i], aTurbulence_intensity[i], Thrust[i], air_density, vmln[i]);
 	}
 	return true;
 }
@@ -458,7 +459,6 @@ double wind_power_calculator::wake_deficit_EV(int iUpwindTurbine, double dDistCr
 
 	return dTotal;
 }
-
 
 double wind_power_calculator::get_EV_wake_width(int iUpwindTurbine, double dAxialDistanceInDiameters)
 {	// get the wake width from the upwind turbine's array describing its wake
@@ -501,13 +501,16 @@ double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double
 
 double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct,double deltaX, VMLN& vmln)
 {
+	// TFF, Feb 2013 - SKIPPING THE USE OF vmln.Xn, SINCE IT REQUIRES THE TURBINE RPMs TO CALCULATE, AND WE DON'T HAVE THOSE!!!!
+	return max_of(0.0, (Ct/7.0)*(1.0-(2.0/5.0)*log(deltaX/m_dRotorDiameter)) ); // this equation taken from Pat Quinlan's turbulence intensity calculations
+
+	// Original openWind code starts below
 	// Xn is in meters
 	double Xn = max_of(0.0000000001,vmln.Xn);
 	
 	// this formula can be found in Wind Energy Handbook by Bossanyi, page 36
 //	double Iadd = 5.7*pow(Ct,0.7)*pow(dTIAtUpstreamTurbine, 0.68)*pow(deltaX/Xn,-0.96);
 	double Iadd = 5.7*pow(Ct,0.7)*pow(dTIAtUpstreamTurbine, 0.68)*pow(max_of(1.5, deltaX/Xn),-0.96);// limits X>=Xn
-	
 	return max_of(0.0,Iadd);
 }
 
@@ -608,16 +611,12 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 		// now calculate wake width using Dm
 		Bw = sqrt(3.56*dThrustCoeff/(8.0*Dm*(1.0 - 0.5*Dm)));
 
-		// safety check
-		if (j > matEVWakeDeficits.ncols()-2)
-			return false;
-		
 		// ok now store the answers for later use	
 		matEVWakeDeficits.at(iTurbineNumber, j+1) = Dm; // fractional deficit
 		matEVWakeWidths.at(iTurbineNumber, j+1) = Bw; // diameters
 
-		// if the deficit is below min (a setting), or distance x is past the furthest downstream turbine, we're done
-		if(Dm <= m_dMinDeficit || x > dMetersToFurthestDownwindTurbine+m_dAxialResolution)
+		// if the deficit is below min (a setting), or distance x is past the furthest downstream turbine, or we're out of room to store answers, we're done
+		if(Dm <= m_dMinDeficit || x > dMetersToFurthestDownwindTurbine+m_dAxialResolution || j >= matEVWakeDeficits.ncols()-2)
 			break;
 	}
 
