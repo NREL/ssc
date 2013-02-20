@@ -120,6 +120,20 @@ private:
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 	);
 
+	void wake_calculations_pat_quinlan_tff(
+		/*INPUTS*/
+		double fAir_density,
+		double aDistanceDownwind[],			// downwind coordinate of each WT
+		double aDistanceCrosswind[],		// crosswind coordinate of each WT
+
+		/*OUTPUTS*/
+		double Power[],						// calculated power of each WT
+		double Thrust[],					// thrust calculation at each WT
+		double Eff[],						// downwind efficiency of each WT
+		double aWind_speed[],				// wind speed at each WT
+		double aTurbulence_intensity[]		// turbulence intensity at each WT
+	);
+
 	void wake_calculations_Park(
 		/*INPUTS*/
 		double fAir_density,

@@ -288,7 +288,7 @@ void wind_power_calculator::wake_calculations_pat_quinlan(
 			double fDistanceCrosswind = aDistanceCrosswind[j] - aDistanceCrosswind[i];
 				
 			// Calculate the wind speed reduction and turbulence at turbine j, due to turbine i
-			// turbulence coeff for turbine j will be impacted (always added to) by all the upwind turbines based on how far upwind they are.
+			// turbulence intensity for turbine j will be impacted (always added to) by all the upwind turbines based on how far upwind they are.
 			double fTurbIntensity, delt;
 			vel_delta_PQ( fDistanceCrosswind, fDistanceDownwind, aTurbulence_intensity[j], Thrust[i], &fTurbIntensity, &delt);
 			if (delt>1.0) delt = 1.0;
@@ -313,6 +313,58 @@ void wind_power_calculator::wake_calculations_pat_quinlan(
 			}
 
 		}
+	} 
+}
+
+void wind_power_calculator::wake_calculations_pat_quinlan_tff(
+	/*INPUTS*/
+	double air_density,
+	double aDistanceDownwind[],			// downwind coordinate of each WT
+	double aDistanceCrosswind[],		// crosswind coordinate of each WT
+
+	/*OUTPUTS*/
+	double Power[],						// calculated power of each WT
+	double Thrust[],					// thrust calculation at each WT
+	double Eff[],						// downwind efficiency of each WT
+	double adWindSpeed[],				// wind speed at each WT
+	double aTurbulence_intensity[]		// turbulence intensity at each WT
+)
+{	
+	// This is an attempt to change Pat Quinlan's model to use loops like the other wake models
+	
+	for (size_t i=1; i<m_iNumberOfTurbinesInFarm; i++) // loop through all turbines, starting with most upwind turbine. i=0 has already been done
+	{
+		double dDeficit = 0;
+		for (size_t j=0; j<i; j++) // loop through all turbines upwind of turbine[i]
+		{
+			// aDistanceDownwind and aDistanceCrosswind distances have already been converted into units of wind turbine blade radii
+
+			// distance downwind = distance from turbine i to turbine j along axis of wind direction
+			double fDistanceDownwind = fabs(aDistanceDownwind[j] - aDistanceDownwind[i]); 
+
+			// separation crosswind between turbine i and turbine j
+			double fDistanceCrosswind = fabs(aDistanceCrosswind[j] - aDistanceCrosswind[i]);
+				
+			// Calculate the wind speed reduction and turbulence at turbine j, due to turbine i
+			// turbulence intensity for turbine j will be impacted (always added to) by all the upwind turbines based on how far upwind they are.
+			double fTurbIntensity, delt;
+			vel_delta_PQ( fDistanceCrosswind, fDistanceDownwind, aTurbulence_intensity[j], Thrust[j], &fTurbIntensity, &dDeficit);
+			delt = min_of(delt,1.0);
+			dDeficit = dDeficit*(1.0-dDeficit);
+			aTurbulence_intensity[i] = fTurbIntensity;
+
+			// when j = i+1, (first time through the j loop for each i loop) that means all the turbines upwind 
+			// of this one (j) have already had their outputs calculated
+			// so now we'll set this turbine's output, then we can calculate its contribution (wake impacts) for all
+			// of the downwind (j >= i+2) turbines
+		}
+		adWindSpeed[i] = adWindSpeed[i]*(1.0-dDeficit);
+		turbine_power( adWindSpeed[i], air_density,  &Power[i], &Thrust[i]);
+
+		if (Power[0] < 0.0)
+			Eff[i] = 0.0;
+		else
+			Eff[i] = 100.0*(Power[i]+0.0001)/(Power[0]+0.0001);
 	} 
 }
 
