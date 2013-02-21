@@ -204,7 +204,7 @@ public:
 						&Eff[0],
 						&Wind[0],
 						&Turb[0] ) ) 
-				throw exec_error( "windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails()) );
+				throw exec_error( "windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()) );
 
 
 			farmpwr[i] = (ssc_number_t) farmp;

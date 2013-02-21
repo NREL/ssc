@@ -4,7 +4,7 @@
 #include <vector>
 #include "lib_util.h"
 
-enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL};
+enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
 
 class wind_power_calculator
 {
@@ -106,21 +106,7 @@ private:
 		double diam;
 	};
 
-	void wake_calculations_pat_quinlan(
-		/*INPUTS*/
-		double fAir_density,
-		double aDistanceDownwind[],			// downwind coordinate of each WT
-		double aDistanceCrosswind[],		// crosswind coordinate of each WT
-
-		/*OUTPUTS*/
-		double Power[],						// calculated power of each WT
-		double Thrust[],					// thrust calculation at each WT
-		double Eff[],						// downwind efficiency of each WT
-		double aWind_speed[],				// wind speed at each WT
-		double aTurbulence_intensity[]		// turbulence intensity at each WT
-	);
-
-	void wake_calculations_pat_quinlan_tff(
+	void wake_calculations_pat_quinlan_mod(
 		/*INPUTS*/
 		double fAir_density,
 		double aDistanceDownwind[],			// downwind coordinate of each WT
@@ -162,6 +148,22 @@ private:
 		double aTurbulence_intensity[]		// turbulence intensity at each WT
 	);
 
+	// original Pat Quinlan model, before other wake models added
+	void wake_calculations_pat_quinlan_old(
+		/*INPUTS*/
+		double fAir_density,
+		double aDistanceDownwind[],			// downwind coordinate of each WT
+		double aDistanceCrosswind[],		// crosswind coordinate of each WT
+
+		/*OUTPUTS*/
+		double Power[],						// calculated power of each WT
+		double Thrust[],					// thrust calculation at each WT
+		double Eff[],						// downwind efficiency of each WT
+		double aWind_speed[],				// wind speed at each WT
+		double aTurbulence_intensity[]		// turbulence intensity at each WT
+	);
+
+
 	double get_EV_wake_width(int iUpwindTurbine, double dAxialDistanceInDiameters);
 	double get_EV_velocity_deficit(int iUpwindTurbine, double dAxialDistanceInDiameters);
 	double wake_deficit_EV(int iUpwindTurbine, double dDistCrossWind, double dDistDownWind);
@@ -172,7 +174,7 @@ private:
 	double tip_speed_ratio(double dWindSpeed);
 
 	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
-	void vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fTurbulenceIntensity, double fThrustCoeff, double *fNewTurbulenceIntensity, double *Vdelta);
+	double vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fThrustCoeff, double *fNewTurbulenceIntensity);
 	double wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	void coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
