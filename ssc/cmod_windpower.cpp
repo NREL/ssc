@@ -150,12 +150,12 @@ public:
 			wpc.m_adYCoords[i] = (double)wt_y[i];
 		}
 
-		// these won't be useful until matrix variables can be passed back as outputs
-		//util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", nstep, wpc.m_iNumberOfTurbinesInFarm );
-		//util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", nstep, wpc.m_iNumberOfTurbinesInFarm );
-		//util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", nstep, wpc.m_iNumberOfTurbinesInFarm );
-		//util::matrix_t<ssc_number_t> &mat_dn = allocate_matrix("dn", nstep, wpc.m_iNumberOfTurbinesInFarm );
-		//util::matrix_t<ssc_number_t> &mat_cs = allocate_matrix("cs", nstep, wpc.m_iNumberOfTurbinesInFarm );
+		// these are only useful for debugging until matrix variables can be passed back as outputs
+		util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", nstep, wpc.m_iNumberOfTurbinesInFarm );
+		util::matrix_t<ssc_number_t> &mat_wteff = allocate_matrix( "wteff", nstep, wpc.m_iNumberOfTurbinesInFarm );
+		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", nstep, wpc.m_iNumberOfTurbinesInFarm );
+		util::matrix_t<ssc_number_t> &mat_thrust = allocate_matrix("dn", nstep, wpc.m_iNumberOfTurbinesInFarm );
+		util::matrix_t<ssc_number_t> &mat_turb = allocate_matrix("cs", nstep, wpc.m_iNumberOfTurbinesInFarm );
 
 		wpc.AllocateMemory(); // if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
 
@@ -214,17 +214,47 @@ public:
 			air_pres[i] = (ssc_number_t) pres;
 
 		
-			//for (j=0;j<nwt;j++)
-			//{
-			//	mat_dn.at(i,j) = (ssc_number_t)Dn[j];
-			//	mat_cs.at(i,j) = (ssc_number_t)Cs[j];
-			//	mat_wtpwr.at(i,j) = (ssc_number_t) Power[j];
-			//	mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
-			//	mat_wtvel.at(i,j) = (ssc_number_t) Wind[j];
-			//}
-		}
-	}
+			for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
+			{
+				mat_wtpwr.at(i,j) = (ssc_number_t) Power[j];
+				mat_wtvel.at(i,j) = (ssc_number_t) Wind[j];
+				mat_thrust.at(i,j) = (ssc_number_t)Thrust[j];
+				mat_turb.at(i,j) = (ssc_number_t)Turb[j];
+				mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
+			}
+		} // i = 0 to 8760
 
+		double tff = 4.0;
+		if (false)
+		{
+
+			std::string s = "wind_farm_output.txt";
+			//FILE *fp = fopen( s.c_str(), "w" );
+			//if (fp)
+			//{
+			//	fprintf(fp, "form width 650 height 250 nguiobjects 0\n");
+			//	fclose(fp);
+			//}
+
+			util::stdfile fdebug;
+			if (fdebug.open(s.c_str(),"w") )
+			{
+
+				//for (i=0;i<nstep;i++)
+				for (i=0;i<100;i++)
+				{
+					s = util::format("%d,",i); // hr
+					for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
+					{
+						s += util::format("%lg,",mat_wtvel.at(i,j));
+					}
+					fprintf(fdebug, "%s\n", s.c_str() );
+				}
+				fdebug.close();
+			}
+		}
+
+	}// exec
 };
 
 DEFINE_MODULE_ENTRY( windpower, "Utility scale wind farm model (ported from original TRNSYS P.Quinlan)", 2 );
