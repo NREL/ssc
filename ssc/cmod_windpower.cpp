@@ -213,7 +213,7 @@ public:
 			air_temp[i] = (ssc_number_t) temp;
 			air_pres[i] = (ssc_number_t) pres;
 
-		
+#ifndef __RELEASE__	// if in debug mode, save this info for use in creating output file
 			for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
 			{
 				mat_wtpwr.at(i,j) = (ssc_number_t) Power[j];
@@ -222,40 +222,55 @@ public:
 				mat_turb.at(i,j) = (ssc_number_t)Turb[j];
 				mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
 			}
-		} // i = 0 to 8760
+#endif
+		} // end hourly loop -> i = 0 to 8760
 
-		double tff = 4.0;
-		if (false)
+
+#ifndef __RELEASE__ // if we're in debug mode, create the wind farm diagnostic files
+
+		// make separate files so it's easy for Excel 2010 to automatically update sheets to display info
+		// files should get put into directory with .exe file
+
+		util::stdfile f1;
+		std::string s = "windfarm_diagnostic_turbine_locations.txt";
+		if (f1.open(s.c_str(),"w") )
 		{
-
-			std::string s = "wind_farm_output.txt";
-			//FILE *fp = fopen( s.c_str(), "w" );
-			//if (fp)
-			//{
-			//	fprintf(fp, "form width 650 height 250 nguiobjects 0\n");
-			//	fclose(fp);
-			//}
-
-			util::stdfile fdebug;
-			if (fdebug.open(s.c_str(),"w") )
-			{
-
-				//for (i=0;i<nstep;i++)
-				for (i=0;i<100;i++)
-				{
-					s = util::format("%d,",i); // hr
-					for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
-					{
-						s += util::format("%lg,",mat_wtvel.at(i,j));
-					}
-					fprintf(fdebug, "%s\n", s.c_str() );
-				}
-				fdebug.close();
-			}
+			// first, create a table of all the inputs to the farm
+			fprintf(f1, "Turbine#\tX\tY\n", s.c_str() );
+			for ( i=0; i<wpc.m_iNumberOfTurbinesInFarm; i++)
+				fprintf(f1, "%d\t%lg\t%lg\n", i, wpc.m_adXCoords[i], wpc.m_adYCoords[i] );
+			f1.close();
 		}
 
-	}// exec
+
+		s = "windfarm_diagnostic_weather_inputs.txt";
+		if (f1.open(s.c_str(),"w") )
+		{
+			fprintf(f1, "Hour\tFree Flow WS\tWind Direction\tAir Temperature\tAir Pressure\n" );
+			for ( i=0; i<nstep; i++)
+			{
+				if ( i % (nstep/10) == 0) update( "writing farm inputs", 100.0f * ((float)i) / ((float)nstep), (float)i );
+				fprintf(f1, "%d\t%lg\t%lg\t%lg\t%lg\n", i, wspd[i], wdir[i], air_temp[i], air_pres[i] );
+			}
+			f1.close();
+		}
+
+		s = "windfarm_diagnostic_turbine_info.txt";
+		if (f1.open(s.c_str(),"w") )
+		{
+			fprintf(f1, "Hour\tTurbine #\tWS at Turbine\tTurbine Output\tThrust\tTurbulence Intensity\n" );
+			for (i=0;i<nstep;i++)
+			{
+				if ( i % (nstep/20) == 0) update( "writing turbine specific outputs", 100.0f * ((float)i) / ((float)nstep), (float)i );
+				for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
+					fprintf(f1, "%d\t%d\t%lg\t%lg\t%lg\t%lg\n", i, j, mat_wtvel.at(i,j), mat_wtpwr.at(i,j), mat_thrust.at(i,j), mat_turb.at(i,j) );
+			}
+			f1.close();
+		}
+#endif
+
+	} // exec
 };
 
-DEFINE_MODULE_ENTRY( windpower, "Utility scale wind farm model (ported from original TRNSYS P.Quinlan)", 2 );
+DEFINE_MODULE_ENTRY( windpower, "Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)", 2 );
 
