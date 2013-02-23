@@ -3937,7 +3937,7 @@ void minimize_lcoe(bool wrtDebtFraction, bool wrtPPAEscalation)
 	}
 	
 
-	while ((itnum < maxIterations) && (abs(newMin - oldMin) > ppa_soln_tolerance))
+	while ((itnum < maxIterations) && (fabs(newMin - oldMin) > ppa_soln_tolerance))
 	{
 	// reset values and run
 		oldMin = newMin;

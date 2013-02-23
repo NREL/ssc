@@ -140,8 +140,11 @@ void compute_module::clear_log()
 
 bool compute_module::extproc( const std::string &command, const std::string &workdir )
 {
+/*
 	if (m_handler) return m_handler->on_exec( command, workdir);
 	else return false;
+*/
+	return false; // on_exec removed with rev 578
 }
 
 compute_module::log_item *compute_module::log(int index)
