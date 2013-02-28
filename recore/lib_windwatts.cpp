@@ -292,24 +292,14 @@ void wind_power_calculator::wake_calculations_pat_quinlan_mod(/*INPUTS */double 
 	} 
 }
 
-void wind_power_calculator::wake_calculations_Park(
-	/*INPUTS*/
-	double air_density,
-	double aDistanceDownwind[],			// downwind coordinate of each WT in radii from upwind turbine
-	double aDistanceCrosswind[],		// crosswind coordinate of each WT in radii from upwind turbine
-
-	/*OUTPUTS*/
-	double Power[],						// calculated power of each WT
-	double Thrust[],					// thrust calculation at each WT
-	double Eff[],						// downwind efficiency of each WT
-	double adWindSpeed[]				// wind speed at each WT
-)
+void wind_power_calculator::wake_calculations_Park(/*INPUTS */ double air_density, double aDistanceDownwind[], double aDistanceCrosswind[],
+												   /*OUTPUTS*/ double Power[], double Thrust[], double Eff[], double adWindSpeed[] )
 {
 	double dTurbineRadius = m_dRotorDiameter/2;
 
 	for (size_t i=1; i<m_iNumberOfTurbinesInFarm; i++) // downwind turbines, i=0 has already been done
 	{
-		double dDeficit = 0;
+		double dNewSpeed = adWindSpeed[0];
 		for (size_t j=0; j<i; j++) // upwind turbines
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
@@ -318,42 +308,27 @@ void wind_power_calculator::wake_calculations_Park(
 			// separation crosswind between turbine i and turbine j
 			double fDistanceCrosswindMeters = dTurbineRadius*fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j]);
 				
-			// Calculate the wind speed reduction at turbine i, due to all upwind turbines [j]
-			// The Park model uses the max deficit from all the upwind turbines and uses that to calculate the wind speed at this downwind turbine
-			// It ignores all other deficits
-			dDeficit = max_of(dDeficit, wake_deficit_Park(fDistanceCrosswindMeters, fDistanceDownwindMeters, dTurbineRadius, dTurbineRadius, Thrust[j]));
+			// Calculate the wind speed reduction at turbine i, due turbine [j]
+			// keep this new speed if it's less than any other calculated speed
+			dNewSpeed = min_of(dNewSpeed, delta_V_Park(adWindSpeed[0], adWindSpeed[j], fDistanceCrosswindMeters, fDistanceDownwindMeters, dTurbineRadius, dTurbineRadius, Thrust[j]) );
 
 		}
-		// use the max deficit found to calculate the turbine output
-		adWindSpeed[i] = adWindSpeed[i]*(1-dDeficit);
-
-		double fTurbine_output=0, fThrust_coeff=0;
-		turbine_power(adWindSpeed[i], air_density,  &fTurbine_output, &fThrust_coeff);
-		Power[i] = fTurbine_output;
-		Thrust[i] = fThrust_coeff;
+		// The Park model uses the minimum speed found from all the upwind turbine impacts
+		// It ignores all other deficits
+		adWindSpeed[i] = dNewSpeed;
+		turbine_power(adWindSpeed[i], air_density,  &Power[i], &Thrust[i]);
 
 		if (Power[0] < 0.0)
 			Eff[i] = 0.0;
 		else
-			Eff[i] = 100.0*(fTurbine_output+0.0001)/(Power[0]+0.0001);
+			Eff[i] = 100.0*(Power[i]+0.0001)/(Power[0]+0.0001);
 	} 
 }
 
 
 // Implements a simplified Eddy-Viscosity model as per "Simplified Soultion To The Eddy Viscosity Wake Model" - 2009 by Dr Mike Anderson of RES
-bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(
-	/*INPUTS*/
-	double air_density,
-	double aDistanceDownwind[],			// downwind coordinate of each WT in radii from upwind turbine
-	double aDistanceCrosswind[],		// crosswind coordinate of each WT in radii from upwind turbine
-
-	/*OUTPUTS*/
-	double Power[],						// calculated power of each WT
-	double Thrust[],					// thrust calculation at each WT
-	double Eff[],						// downwind efficiency of each WT
-	double adWindSpeed[],				// wind speed at each WT
-	double aTurbulence_intensity[]		// turbulence intensity at each WT
-)
+bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ double air_density, double aDistanceDownwind[], double aDistanceCrosswind[],
+																   /*OUTPUTS*/ double Power[], double Thrust[], double Eff[], double adWindSpeed[], double aTurbulence_intensity[] )
 {
 	double dTurbineRadius = m_dRotorDiameter/2;
 	matEVWakeDeficits.fill(0.0);
@@ -413,19 +388,8 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(
 	return true;
 }
 
-void wind_power_calculator::wake_calculations_pat_quinlan_old(
-	/*INPUTS*/
-	double air_density,
-	double aDistanceDownwind[],			// downwind coordinate of each WT
-	double aDistanceCrosswind[],		// crosswind coordinate of each WT
-
-	/*OUTPUTS*/
-	double Power[],						// calculated power of each WT
-	double Thrust[],					// thrust calculation at each WT
-	double Eff[],						// downwind efficiency of each WT
-	double adWindSpeed[],				// wind speed at each WT
-	double aTurbulence_intensity[]		// turbulence intensity at each WT
-)
+void wind_power_calculator::wake_calculations_pat_quinlan_old(/*INPUTS */double air_density, double aDistanceDownwind[], double aDistanceCrosswind[],
+															  /*OUTPUTS*/double Power[],double Thrust[],double Eff[],double adWindSpeed[],double aTurbulence_intensity[])
 {
 	// we calculated the output of the most upwind turbine above, now we have to go through the remaining turbines in the farm
 	// the i loop is going through the turbines, from first (most upwind) to last (most downwind)
@@ -798,7 +762,27 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 		// set outputs to something other than zero
 		*fTurbineOutput = out_pwr;
 		if (fPowerCoefficient >= 0.0)
-			*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );
+		{
+			if (IMITATE_OPENWIND)
+			{
+				*fThrustCoefficient =  0.02; // default value for low wind speeds
+
+				// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
+				double dThrustCurve[26] = {0.0, 0.0, 0.02, 0.8,0.8,0.82,0.84,0.79,0.72,0.66,0.59,0.53,0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
+				bool found=false;
+
+				int i = (int) fabs(fWindSpeedAtHubHeight);
+				if ( fabs(fWindSpeedAtHubHeight)>25 )
+					*fThrustCoefficient = 0;
+				else if (i==25)
+					*fThrustCoefficient = dThrustCurve[i];
+				else if (i>=2)
+					*fThrustCoefficient = util::interpolate(i,dThrustCurve[i],i+1,dThrustCurve[i+1],fWindSpeedAtHubHeight);
+			}
+			else
+				*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );
+		}
+
 	}
 	return;
 }
@@ -824,14 +808,23 @@ double wind_power_calculator::vel_delta_PQ( double fRadiiCrosswind, double fAxia
 }
 
 // wake modeling - Park model used to calculate the change in wind speed due to wake effects of upwind turbine
-double wind_power_calculator::wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff)
-{	// return the wind speed deficit due to wake effects. 0=no deficit, up to 1 = 100%
+double wind_power_calculator::delta_V_Park( double Uo, double Ui, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff)
+{	// returns the wind speed due to wake effects from upwind turbine
 	if (dThrustCoeff>1)
 		return 0;
 
 	double dRadiusOfWake = (dRadiusUpstream) + m_dWakeDecayCoefficient * dDistDownWind; // radius of circle formed by wake from upwind rotor
 	double dAreaOverlap = circle_overlap(dDistCrossWind, dRadiusDownstream, dRadiusOfWake);
-	return (1 - sqrt(1-dThrustCoeff)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream));
+	double dDef = (1 - sqrt(1-dThrustCoeff)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream));
+
+	if (IMITATE_OPENWIND)
+		return Uo * (1.0 - (Uo/Ui)*dDef);
+	else
+		return Ui * (1.0 - dDef);
+
+//	double Uw = Ui*(1.0-        ((1.0-sqrt(1.0-Ct))*sqr(diamUp/(diamUp+2.0*k*(ptDown.x-ptUp.x)))) *f);  // classic park
+//	double Uw = Uo*(1.0-((Uo/Ui)*(1.0-sqrt(1.0-Ct))*sqr(diamUp/(diamUp+2.0*k*(ptDown.x-ptUp.x)))) *f); // my park - same near wake but tends back to free stream
+//	double Uw = Uo*(1.0-        ((1.0-sqrt(1.0-Ct))*sqr(diamUp/(diamUp+2.0*k*(ptDown.x-ptUp.x)))) *f); 
 }
 
 

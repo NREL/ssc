@@ -6,6 +6,8 @@
 
 enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
 
+#define IMITATE_OPENWIND true
+
 class wind_power_calculator
 {
 public:
@@ -176,7 +178,7 @@ private:
 
 	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
 	double vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fThrustCoeff, double *fNewTurbulenceIntensity);
-	double wake_deficit_Park( double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
+	double delta_V_Park( double dVelFreeStream, double dVelUpwind, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	void coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
 	double simple_intersect(double dist_center_to_center, double rad1, double rad2);
