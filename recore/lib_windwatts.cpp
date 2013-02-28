@@ -23,6 +23,13 @@ void wind_power_calculator::AllocateMemory()
 	}
 }
 
+std::string wind_power_calculator::GetWakeModelName()
+{
+	if (m_iWakeModelChoice == PAT_QUINLAN_WAKE_MODEL) return "Pat Quinlan Model";
+	if (m_iWakeModelChoice == PARK_WAKE_MODEL) return "Park Wake Model";
+	if (m_iWakeModelChoice == SIMPLE_EDDY_VISCOSITY_WAKE_MODEL) return "Fast Eddy Viscosity";
+	if (m_iWakeModelChoice == OLD_PQ) return "Old Pat Quinlan Model";
+}
 
 int wind_power_calculator::wind_power(
 	// INPUTS

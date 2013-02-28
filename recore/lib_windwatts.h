@@ -50,6 +50,7 @@ public:
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
 	void AllocateMemory(); // if necessary, allocate memory in util::matrix arrays
+	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return m_sErrDetails; }
 
 	int wind_power(
