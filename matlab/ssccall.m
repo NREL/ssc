@@ -9,7 +9,7 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
     cd('../..');
     if ( strcmp(computer(), 'PCWIN') )
         cd('win32');
-        ssclib = 'win32/ssc32';
+        ssclib = 'ssc32';
     else
         cd('win64');
         ssclib = 'ssc64';
