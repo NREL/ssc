@@ -215,7 +215,7 @@ int wind_power_calculator::wind_power(
 }
 
 
-double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double resource_class, double hub_efficiency[])
+double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double resource_class, double energy_turbine[])
 {	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((m_dHubHeight/50.0),m_dShearExponent) * resource_class;
@@ -229,17 +229,14 @@ double wind_power_calculator::turbine_output_using_weibull(double weibull_k, dou
 	std::vector<double> weibull_cummulative(m_iLengthOfTurbinePowerCurveArray, 0);
 	std::vector<double> weibull_bin(m_iLengthOfTurbinePowerCurveArray, 0);
 	//std::vector<double> weibull_probability(m_iLengthOfTurbinePowerCurveArray, 0);
-	std::vector<double> energy_turbine(m_iLengthOfTurbinePowerCurveArray, 0);	// energy from turbine chosen from library
+	//std::vector<double> energy_turbine(m_iLengthOfTurbinePowerCurveArray, 0);	// energy from turbine chosen from library
 
-	// double step = 0;
 	// weibull_k = 2.10; // used for testing: this is off in the 5th significant digit when passed into SSC from samwx
 	weibull_cummulative[0] = 0.0;
 	weibull_bin[0] = 0.0;
 	energy_turbine[0] = 0.0;
 	for (size_t i=1; i<m_iLengthOfTurbinePowerCurveArray; i++)
 	{
-		// step = (i) ? wind_speed[i]-wind_speed[i-1] : 0;
-
 		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
 		weibull_cummulative[i] = 1.0 - exp(-pow(m_adPowerCurveWS[i]/lambda,weibull_k));
 		weibull_bin[i] = weibull_cummulative[i] - weibull_cummulative[i-1];

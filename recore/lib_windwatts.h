@@ -6,7 +6,7 @@
 
 enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
 
-#define IMITATE_OPENWIND true
+#define IMITATE_OPENWIND false
 
 class wind_power_calculator
 {
@@ -75,7 +75,7 @@ public:
 		double weibull_k, 
 		double max_cp, 
 		double resource_class, 
-		double hub_efficiency[]
+		double energy_turbine[]
 	);
 
 private:

@@ -26,8 +26,9 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "max_cp",                     "Max cp",						   "",       "",                      "WindPower",      "*",             "",		              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "resource_class",             "Wind Resource Class",			   "",       "",                      "WindPower",      "*",             "",		              "" },
 	//{ SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",						   "m",      "",                      "WindPower",      "*",             "",		              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "hub_efficiency",             "Array of hub efficiencies",		   "%",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
+	//{ SSC_INPUT,        SSC_ARRAY,       "hub_efficiency",             "Array of hub efficiencies",		   "%",      "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "turbine_output",             "Turbine output",                   "kW",     "",                      "WindPower",      "*",             "LENGTH_EQUAL=pc_wind",  "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "farmpwr",                    "Net electric generation",          "kWhac",  "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "winddir",                    "Wind direction",                   "deg",    "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "windspd",                    "Wind speed",                       "m/s",    "",                      "WindPower",      "*",             "LENGTH=8760",     "" },
@@ -80,12 +81,14 @@ public:
 		size_t nstep = 8760;
 
 		// have to be allocated to return without errors
+		ssc_number_t *turbine_output = allocate( "turbine_output", wpc.m_iLengthOfTurbinePowerCurveArray );
 		ssc_number_t *farmpwr = allocate( "farmpwr", nstep );
 		ssc_number_t *wspd = allocate("windspd", nstep);
 		ssc_number_t *wdir = allocate("winddir", nstep);
 		ssc_number_t *air_temp = allocate("temp", nstep);
 		ssc_number_t *air_pres = allocate("pres", nstep);
 
+		std::vector<double> turbine_outkW(wpc.m_iLengthOfTurbinePowerCurveArray); 
 
 		std::vector<double> Power(wpc.m_iNumberOfTurbinesInFarm), Thrust(wpc.m_iNumberOfTurbinesInFarm), 
 			Eff(wpc.m_iNumberOfTurbinesInFarm), Wind(wpc.m_iNumberOfTurbinesInFarm), Turb(wpc.m_iNumberOfTurbinesInFarm);
@@ -114,18 +117,21 @@ public:
 			double resource_class = as_double("resource_class");
 			//double elevation = as_double("elevation");
 			
-			ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
-			std::vector<double> dp_hub_eff(wpc.m_iLengthOfTurbinePowerCurveArray);
-			for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
-				dp_hub_eff[i] = (double)hub_efficiency[i];
+			//ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
+			//std::vector<double> dp_hub_eff(wpc.m_iLengthOfTurbinePowerCurveArray);
+			//for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
+			//	dp_hub_eff[i] = (double)hub_efficiency[i];
 
-			double turbine_kw = wpc.turbine_output_using_weibull(weibull_k, max_cp, resource_class, &dp_hub_eff[0]);
+			double turbine_kw = wpc.turbine_output_using_weibull(weibull_k, max_cp, resource_class, &turbine_outkW[0]);
 			turbine_kw = turbine_kw * (1 - wpc.m_dLossesPercent) - wpc.m_dLossesAbsolute;
 
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
 
 			for (i=0;i<nstep;i++)
 				farmpwr[i] = farm_kw/ (ssc_number_t) nstep;
+
+			for (i=0; i<wpc.m_iLengthOfTurbinePowerCurveArray; i++)
+				turbine_output[i] = (ssc_number_t) turbine_outkW[i];
 
 			return;
 		}
