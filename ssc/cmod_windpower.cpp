@@ -261,7 +261,7 @@ public:
 			f1.close();
 		}
 
-		s = "windfarm_diagnostic_turbine_info.txt";
+		s = "windfarm_diagnostic_turbine_info_" + wpc.GetWakeModelShortName() + ".txt";
 		if (f1.open(s.c_str(),"w") )
 		{
 			fprintf(f1, "Wake model:\t%s\n", wpc.GetWakeModelName().c_str() );
