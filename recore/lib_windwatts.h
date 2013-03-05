@@ -6,7 +6,7 @@
 
 enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
 
-#define IMITATE_OPENWIND false
+#define IMITATE_OPENWIND true
 
 class wind_power_calculator
 {
@@ -64,12 +64,14 @@ public:
 			double TdryC,    // dry bulb temp ('C)
 			
 		// OUTPUTS
-			double *FarmP,   // total farm power output
-			double Power[],  // calculated power of each WT
-			double Thrust[], // thrust calculation at each WT
-			double Eff[],    // downwind efficiency of each WT
-			double Wind[],   // wind speed at each WT
-			double Turbul[]  // turbulence coeff at each WT
+			double *FarmP,    // total farm power output
+			double aPower[],  // calculated power of each WT
+			double aThrust[], // thrust calculation at each WT
+			double aEff[],    // downwind efficiency of each WT
+			double aWind[],   // wind speed at each WT
+			double aTurbul[], // turbulence coeff at each WT
+			double aDistDown[], // distance down wind
+			double aDistCross[] // distance cross wind
 		);
 
 	double turbine_output_using_weibull(

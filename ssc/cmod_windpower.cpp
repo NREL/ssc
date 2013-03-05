@@ -88,18 +88,9 @@ public:
 		ssc_number_t *air_temp = allocate("temp", nstep);
 		ssc_number_t *air_pres = allocate("pres", nstep);
 
-		std::vector<double> turbine_outkW(wpc.m_iLengthOfTurbinePowerCurveArray); 
-
-		std::vector<double> Power(wpc.m_iNumberOfTurbinesInFarm), Thrust(wpc.m_iNumberOfTurbinesInFarm), 
-			Eff(wpc.m_iNumberOfTurbinesInFarm), Wind(wpc.m_iNumberOfTurbinesInFarm), Turb(wpc.m_iNumberOfTurbinesInFarm);
-
-		wpc.m_adXCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
-		wpc.m_adYCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
-
 		wpc.m_adPowerCurveWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		wpc.m_adPowerCurveKW.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		wpc.m_adPowerCurveRPM.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
-
 		size_t i;
 		for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
 		{
@@ -112,6 +103,8 @@ public:
 		int iModelType = as_integer("model_choice"); // 0=hourly farm model (8760 array outputs), 1=weibull statistical model (single outputs)
 		if (iModelType == 1) // doing a Weibull estimate, not an hourly simulation
 		{
+			std::vector<double> turbine_outkW(wpc.m_iLengthOfTurbinePowerCurveArray); 
+
 			double weibull_k = as_double("weibullK");
 			double max_cp = as_double("max_cp");
 			double resource_class = as_double("resource_class");
@@ -136,7 +129,6 @@ public:
 			return;
 		}
 
-
 		const char *file = as_string("file_name");
 		windfile wf(file);		
 		if (!wf.ok()) 
@@ -150,11 +142,17 @@ public:
 		//wpc.m_dRatedPower = 0;
 
 		// X-Y coordinates are necessary for calculation of output from farm
+		wpc.m_adXCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
+		wpc.m_adYCoords.resize(wpc.m_iNumberOfTurbinesInFarm);
 		for (i=0;i<wpc.m_iNumberOfTurbinesInFarm;i++)
 		{
 			wpc.m_adXCoords[i] = (double)wt_x[i];
 			wpc.m_adYCoords[i] = (double)wt_y[i];
 		}
+
+		std::vector<double> Power(wpc.m_iNumberOfTurbinesInFarm), Thrust(wpc.m_iNumberOfTurbinesInFarm), 
+							Eff(wpc.m_iNumberOfTurbinesInFarm), Wind(wpc.m_iNumberOfTurbinesInFarm), Turb(wpc.m_iNumberOfTurbinesInFarm),
+							DistDown(wpc.m_iNumberOfTurbinesInFarm), DistCross(wpc.m_iNumberOfTurbinesInFarm);
 
 		// these are only useful for debugging until matrix variables can be passed back as outputs
 		util::matrix_t<ssc_number_t> &mat_wtpwr = allocate_matrix( "wtpwr", nstep, wpc.m_iNumberOfTurbinesInFarm );
@@ -162,6 +160,8 @@ public:
 		util::matrix_t<ssc_number_t> &mat_wtvel = allocate_matrix( "wtvel", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		util::matrix_t<ssc_number_t> &mat_thrust = allocate_matrix("dn", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		util::matrix_t<ssc_number_t> &mat_turb = allocate_matrix("cs", nstep, wpc.m_iNumberOfTurbinesInFarm );
+		util::matrix_t<ssc_number_t> &mat_distdown = allocate_matrix("dist_d", nstep, wpc.m_iNumberOfTurbinesInFarm );
+		util::matrix_t<ssc_number_t> &mat_distcross = allocate_matrix("dist_c", nstep, wpc.m_iNumberOfTurbinesInFarm );
 
 		wpc.AllocateMemory(); // if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
 
@@ -209,7 +209,9 @@ public:
 						&Thrust[0],
 						&Eff[0],
 						&Wind[0],
-						&Turb[0] ) ) 
+						&Turb[0],
+						&DistDown[0],
+						&DistCross[0]) ) 
 				throw exec_error( "windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()) );
 
 
@@ -227,6 +229,9 @@ public:
 				mat_thrust.at(i,j) = (ssc_number_t)Thrust[j];
 				mat_turb.at(i,j) = (ssc_number_t)Turb[j];
 				mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
+
+				mat_distdown.at(i,j) = (ssc_number_t) DistDown[j];
+				mat_distcross.at(i,j) = (ssc_number_t) DistCross[j];
 			}
 #endif
 		} // end hourly loop -> i = 0 to 8760
@@ -265,12 +270,12 @@ public:
 		if (f1.open(s.c_str(),"w") )
 		{
 			fprintf(f1, "Wake model:\t%s\n", wpc.GetWakeModelName().c_str() );
-			fprintf(f1, "Hour\tTurbine #\tWS at Turbine\tTurbine Output\tThrust\tTurbulence Intensity\n" );
+			fprintf(f1, "Hour\tTurbine #\tWS at Turbine\tTurbine Output\tThrust\tTurbulence Intensity\tDistance Downwind\tDistance Crosswind\n" );
 			for (i=0;i<nstep;i++)
 			{
 				if ( i % (nstep/20) == 0) update( "writing turbine specific outputs", 100.0f * ((float)i) / ((float)nstep), (float)i );
 				for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
-					fprintf(f1, "%d\t%d\t%lg\t%lg\t%lg\t%lg\n", i, j, mat_wtvel.at(i,j), mat_wtpwr.at(i,j), mat_thrust.at(i,j), mat_turb.at(i,j) );
+					fprintf(f1, "%d\t%d\t%lg\t%lg\t%lg\t%lg\t%lg\t%lg\n", i, j, mat_wtvel.at(i,j), mat_wtpwr.at(i,j), mat_thrust.at(i,j), mat_turb.at(i,j), mat_distdown.at(i,j), mat_distcross.at(i,j) );
 			}
 			f1.close();
 		}

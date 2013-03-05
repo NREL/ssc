@@ -41,21 +41,9 @@ std::string wind_power_calculator::GetWakeModelName()
 	return "NO WAKE MODEL CHOSEN";
 }
 
-int wind_power_calculator::wind_power(
-	// INPUTS
-		double fWindSpeed,					// wind velocity m/s
-		double fWindDirectionDegrees,		// wind direction 0-360, 0=N
-		double dAirPressureAtm,			// barometric pressure (Atm)
-		double TdryC,		// dry bulb temp ('C)
-			
-	// OUTPUTS
-		double *FarmP,						// total farm power output
-		double Power[],						// calculated power of each WT
-		double Thrust[],					// thrust calculation at each WT
-		double Eff[],						// downwind efficiency of each WT
-		double adWindSpeed[],				// wind speed at each WT
-		double aTurbulence_intensity[]		// turbulence intensity at each WT
-		)
+int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWindDirDeg, double dAirPressureAtm, double TdryC,
+									  /*OUTPUTS*/ double *FarmP, double aPower[], double aThrust[], double aEff[], double adWindSpeed[], double aTI[],
+									  double aDistanceDownwind[], double aDistanceCrosswind[])
 {
 	if ( (m_iNumberOfTurbinesInFarm > MAX_WIND_TURBINES) || (m_iNumberOfTurbinesInFarm < 1) )
 	{
@@ -72,7 +60,17 @@ int wind_power_calculator::wind_power(
 	// convert barometric pressure in ATM to air density
 	double fAirDensity = (dAirPressureAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 	double fTurbine_output, fThrust_coeff;
-	turbine_power(fWindSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff );
+	turbine_power(dWindSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff );
+
+	// initialize values before possible exit from the function
+	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
+	{
+		aPower[i] = 0.0;
+		aThrust[i] = 0.0;
+		aEff[i] = 0.0;
+		adWindSpeed[i] = dWindSpeed;
+		aTI[i] = m_dTurbulenceIntensity;
+	}
 
 	// if there is only one turbine, we're done
 	if (m_iNumberOfTurbinesInFarm < 2)
@@ -89,24 +87,15 @@ int wind_power_calculator::wind_power(
 	}
 
 	// ok, let's calculate the farm output
+	//!Convert to d (downwind - axial), c (crosswind - radial) coordinates
 	double d, c;
-	std::vector<double> aDistanceDownwind(m_iNumberOfTurbinesInFarm);	// downwind coordinate of each WT
-	std::vector<double> aDistanceCrosswind(m_iNumberOfTurbinesInFarm);	// crosswind coordinate of each WT
-
-	//!Convert to d (downwind - axial), c (crosswind - radial) coordinates and initialize others
+	//std::vector<double> aDistanceDownwind(m_iNumberOfTurbinesInFarm);	// downwind coordinate of each WT
+	//std::vector<double> aDistanceCrosswind(m_iNumberOfTurbinesInFarm);	// crosswind coordinate of each WT
 	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 	{
-		coordtrans(m_adYCoords[i], m_adXCoords[i], fWindDirectionDegrees, &d, &c );
-
+		coordtrans(m_adYCoords[i], m_adXCoords[i], dWindDirDeg, &d, &c );
 		aDistanceDownwind[i] = d;
 		aDistanceCrosswind[i] = c;
-
-		Power[i] = 0.0;
-		Thrust[i] = 0.0;
-		Eff[i] = 0.0;
-
-		adWindSpeed[i] = fWindSpeed;
-		aTurbulence_intensity[i] = m_dTurbulenceIntensity;
 	}
 
 	 // Remove negative numbers from downwind, crosswind coordinates 	
@@ -132,9 +121,9 @@ int wind_power_calculator::wind_power(
 	}
 	
 	// Record the output for the most upwind turbine (already calculated above)
-	Power[0] = fTurbine_output;
-	Thrust[0] = fThrust_coeff;
-	Eff[0] = ( fTurbine_output < 1.0 ) ? 0.0 : 100.0;
+	aPower[0] = fTurbine_output;
+	aThrust[0] = fThrust_coeff;
+	aEff[0] = ( fTurbine_output < 1.0 ) ? 0.0 : 100.0;
 
 
 	// Sort aDistanceDownwind, aDistanceCrosswind arrays by downwind distance, aDistanceDownwind[0] is smallest downwind distance, presumably zero
@@ -162,20 +151,20 @@ int wind_power_calculator::wind_power(
 	switch (m_iWakeModelChoice)
 	{
 		case PAT_QUINLAN_WAKE_MODEL:
-			wake_calculations_pat_quinlan_mod(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed, aTurbulence_intensity);
+			wake_calculations_pat_quinlan_mod(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], aPower, aThrust, aEff, adWindSpeed, aTI);
 			break;
 
 		case PARK_WAKE_MODEL:
-			wake_calculations_Park(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed);
+			wake_calculations_Park(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], aPower, aThrust, aEff, adWindSpeed);
 			break;
 
 		case SIMPLE_EDDY_VISCOSITY_WAKE_MODEL:
-			if (!wake_calculations_EddyViscosity_Simple(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed, aTurbulence_intensity))
+			if (!wake_calculations_EddyViscosity_Simple(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], aPower, aThrust, aEff, adWindSpeed, aTI))
 				return 0;
 			break;
 
 		case OLD_PQ:
-			wake_calculations_pat_quinlan_old(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], Power, Thrust, Eff, adWindSpeed, aTurbulence_intensity);
+			wake_calculations_pat_quinlan_old(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], aPower, aThrust, aEff, adWindSpeed, aTI);
 			break;
 
 		default:
@@ -186,37 +175,47 @@ int wind_power_calculator::wind_power(
 	// calculate total farm power
 	*FarmP = 0;
 	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
-		*FarmP += Power[i];
+		*FarmP += aPower[i];
+
+	// Update down/cross wind distance units for turbine zero (convert from radii to meters)
+	aDistanceDownwind[0] *= m_dRotorDiameter/2;
+	aDistanceCrosswind[0] *= m_dRotorDiameter/2;
 
 	// Resort output arrays by wind turbine ID (0..nwt-1)
 	// for consistent reporting
-	double p,t,e,w,b;
+	double p,t,e,w,b,dd,dc;
 	for (j=1;j<m_iNumberOfTurbinesInFarm;j++) 
 	{
-		p = Power[j];// pick out each element
-		t = Thrust[j];
-		e = Eff[j];
+		p = aPower[j];// pick out each element
+		t = aThrust[j];
+		e = aEff[j];
 		w = adWindSpeed[j];
-		b = aTurbulence_intensity[j];
+		b = aTI[j];
+		dd = aDistanceDownwind[j] * m_dRotorDiameter/2; // convert back to meters from radii
+		dc = aDistanceCrosswind[j] * m_dRotorDiameter/2;
 		wid = wt_id[j];
 
 		i=j;
 		while (i > 0 && wt_id[i-1] > wid) // look for place to insert item
 		{
-			Power[i] = Power[i-1];
-			Thrust[i] = Thrust[i-1];
-			Eff[i] = Eff[i-1];
+			aPower[i] = aPower[i-1];
+			aThrust[i] = aThrust[i-1];
+			aEff[i] = aEff[i-1];
 			adWindSpeed[i] = adWindSpeed[i-1];
-			aTurbulence_intensity[i] = aTurbulence_intensity[i-1];
+			aTI[i] = aTI[i-1];
+			aDistanceDownwind[i] = aDistanceDownwind[i-1];
+			aDistanceCrosswind[i] = aDistanceCrosswind[i-1];
 			wt_id[i] = wt_id[i-1];
 			i--;
 		}
 
-		Power[i] = p;
-		Thrust[i] = t;
-		Eff[i] = e;
+		aPower[i] = p;
+		aThrust[i] = t;
+		aEff[i] = e;
 		adWindSpeed[i] = w;
-		aTurbulence_intensity[i] = b;
+		aTI[i] = b;
+		aDistanceDownwind[i] = dd;
+		aDistanceCrosswind[i] = dc;
 		wt_id[i] = wid;
 	}
 	
