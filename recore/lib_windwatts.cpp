@@ -815,12 +815,24 @@ double wind_power_calculator::vel_delta_PQ( double fRadiiCrosswind, double fAxia
 // wake modeling - Park model used to calculate the change in wind speed due to wake effects of upwind turbine
 double wind_power_calculator::delta_V_Park( double Uo, double Ui, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff)
 {	// returns the wind speed due to wake effects from upwind turbine
-	if (dThrustCoeff>1)
-		return 0;
+	
+	// bound the coeff of thrust
+	double Ct = max_of(min_of(0.999,dThrustCoeff),0.02);
 
-	double dRadiusOfWake = (dRadiusUpstream) + m_dWakeDecayCoefficient * dDistDownWind; // radius of circle formed by wake from upwind rotor
+	double k=0;
+	if (IMITATE_OPENWIND)
+		k = 0.5/log(m_dHubHeight/0.03);
+	else
+		k = m_dWakeDecayCoefficient;
+
+
+	double dRadiusOfWake = dRadiusUpstream + (k * dDistDownWind); // radius of circle formed by wake from upwind rotor
 	double dAreaOverlap = circle_overlap(dDistCrossWind, dRadiusDownstream, dRadiusOfWake);
-	double dDef = (1 - sqrt(1-dThrustCoeff)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream));
+
+	// if there is no overlap, no impact on wind speed
+	if (dAreaOverlap <= 0.0) return Uo;
+
+	double dDef = (1 - sqrt(1-Ct)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream));
 
 	if (IMITATE_OPENWIND)
 		return Uo * (1.0 - (Uo/Ui)*dDef);
@@ -849,11 +861,11 @@ void wind_power_calculator::coordtrans( double fMetersNorth, double fMetersEast,
 
 double wind_power_calculator::circle_overlap(double dist_center_to_center, double rad1, double rad2)
 {	// returns the area of overlap, NOT a fraction
-	// causing problems: dist = 90.386749546361997, rad1=35, rad2=89.976978399886363
+	// Source: http://mathworld.wolfram.com/Circle-CircleIntersection.html, equation 14
 	if (dist_center_to_center<0 || rad1<0 || rad2<0)
 		return 0;
 
-	if (dist_center_to_center > rad1+rad2)
+	if (dist_center_to_center >= rad1+rad2)
 		return 0;
 
 	if (rad1 >= dist_center_to_center + rad2)
@@ -864,9 +876,8 @@ double wind_power_calculator::circle_overlap(double dist_center_to_center, doubl
 
 	double t1 = pow(rad1,2) * acos( (pow(dist_center_to_center,2) + pow(rad1,2) - pow(rad2,2) )/(2*dist_center_to_center*rad1));
 	double t2 = pow(rad2,2) * acos( (pow(dist_center_to_center,2) + pow(rad2,2) - pow(rad1,2) )/(2*dist_center_to_center*rad2));
-	double t3 = 0.5 * sqrt( (-dist_center_to_center+rad1+rad2) * (dist_center_to_center+rad2-rad2) * (dist_center_to_center-rad1+rad2) * (dist_center_to_center+rad1+rad2) );
+	double t3 = 0.5 * sqrt( (-dist_center_to_center+rad1+rad2) * (dist_center_to_center+rad1-rad2) * (dist_center_to_center-rad1+rad2) * (dist_center_to_center+rad1+rad2) );
 
-	// t1=1670.9399105391828, t2=3161.8897261721336, t3=4946.6753960156802
 	return t1+t2-t3;
 }
 
