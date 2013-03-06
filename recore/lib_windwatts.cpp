@@ -849,6 +849,7 @@ void wind_power_calculator::coordtrans( double fMetersNorth, double fMetersEast,
 
 double wind_power_calculator::circle_overlap(double dist_center_to_center, double rad1, double rad2)
 {	// returns the area of overlap, NOT a fraction
+	// causing problems: dist = 90.386749546361997, rad1=35, rad2=89.976978399886363
 	if (dist_center_to_center<0 || rad1<0 || rad2<0)
 		return 0;
 
@@ -865,6 +866,7 @@ double wind_power_calculator::circle_overlap(double dist_center_to_center, doubl
 	double t2 = pow(rad2,2) * acos( (pow(dist_center_to_center,2) + pow(rad2,2) - pow(rad1,2) )/(2*dist_center_to_center*rad2));
 	double t3 = 0.5 * sqrt( (-dist_center_to_center+rad1+rad2) * (dist_center_to_center+rad2-rad2) * (dist_center_to_center-rad1+rad2) * (dist_center_to_center+rad1+rad2) );
 
+	// t1=1670.9399105391828, t2=3161.8897261721336, t3=4946.6753960156802
 	return t1+t2-t3;
 }
 
