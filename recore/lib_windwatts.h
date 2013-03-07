@@ -6,7 +6,11 @@
 
 enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
 
-#define IMITATE_OPENWIND true
+#ifndef __RELEASE__
+	#define IMITATE_OPENWIND true
+#else
+	#define IMITATE_OPENWIND false
+#endif
 
 class wind_power_calculator
 {
@@ -51,7 +55,7 @@ public:
 	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adPowerCurveRPM, m_adXCoords, m_adYCoords;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
-	void AllocateMemory(); // if necessary, allocate memory in util::matrix arrays
+	bool AllocateMemory(); // if necessary, allocate memory in util::matrix arrays
 	std::string GetWakeModelShortName();
 	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return m_sErrDetails; }

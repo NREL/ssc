@@ -14,13 +14,51 @@ static inline double min_of(double a, double b)
 	return (a < b) ? a : b;
 }
 
-void wind_power_calculator::AllocateMemory()
+bool wind_power_calculator::AllocateMemory()
 {
 	if (m_iWakeModelChoice == SIMPLE_EDDY_VISCOSITY_WAKE_MODEL)
 	{
 		matEVWakeDeficits.resize_fill(m_iNumberOfTurbinesInFarm, (int)(m_dMaxRotorDiameters/m_dAxialResolution)+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 		matEVWakeWidths.resize_fill(m_iNumberOfTurbinesInFarm, (int)(m_dMaxRotorDiameters/m_dAxialResolution)+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 	}
+
+	if(IMITATE_OPENWIND)
+	{
+		if(m_iLengthOfTurbinePowerCurveArray != 26)
+		{
+			m_sErrDetails = "supposed to be imitating openWind, but wrong turbine curve";
+			return false;
+		}
+		// fill m_adPowerCurveRPM with values for a specific turbine from openWind, just so we can compare to openWind
+		m_adPowerCurveRPM[0] = 0;
+		m_adPowerCurveRPM[1] = 0;
+		m_adPowerCurveRPM[2] = 0;
+		m_adPowerCurveRPM[3] = 11;
+		m_adPowerCurveRPM[4] = 12;
+		m_adPowerCurveRPM[5] = 13;
+		m_adPowerCurveRPM[6] = 14;
+		m_adPowerCurveRPM[7] = 15;
+		m_adPowerCurveRPM[8] = 16;
+		m_adPowerCurveRPM[9] = 17;
+		m_adPowerCurveRPM[10] = 18;
+		m_adPowerCurveRPM[11] = 19;
+		m_adPowerCurveRPM[12] = 20;
+		m_adPowerCurveRPM[13] = 20.16;
+		m_adPowerCurveRPM[14] = 20.32;
+		m_adPowerCurveRPM[15] = 20.48;
+		m_adPowerCurveRPM[16] = 20.64;
+		m_adPowerCurveRPM[17] = 20.8;
+		m_adPowerCurveRPM[18] = 20.96;
+		m_adPowerCurveRPM[19] = 21.12;
+		m_adPowerCurveRPM[20] = 21.28;
+		m_adPowerCurveRPM[21] = 21.44;
+		m_adPowerCurveRPM[22] = 21.6;
+		m_adPowerCurveRPM[23] = 21.76;
+		m_adPowerCurveRPM[24] = 21.92;
+		m_adPowerCurveRPM[25] = 22;		
+	}
+
+	return true;
 }
 
 std::string wind_power_calculator::GetWakeModelShortName()
@@ -342,7 +380,7 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 	std::vector<double> Iamb(m_iNumberOfTurbinesInFarm, m_dTurbulenceIntensity);
 
 	// Note that this 'i' loop starts with i=0, which is necessary to initialize stuff for turbine[0]
-	for (size_t i=0; i<m_iNumberOfTurbinesInFarm; i++) // downwind turbines, but starting with most upwind and working downwind, i=0 has already been done
+	for (size_t i=0; i<m_iNumberOfTurbinesInFarm; i++) // downwind turbines, but starting with most upwind and working downwind
 	{
 		double dDeficit = 0, Iadd = 0, dTotalTI = aTurbulence_intensity[i];
 		double dTOut=0, dThrustCoeff=0;
@@ -350,12 +388,14 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
 			double dDistAxialInDiameters = fabs(aDistanceDownwind[i] - aDistanceDownwind[j])/2.0;
+			if (dDistAxialInDiameters<=0.0)
+				continue; // if this turbine isn't really upwind, move on to the next
 
 			// separation crosswind between turbine i and turbine j
 			double dDistRadialInDiameters = fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j])/2.0;
 			
 			double dWakeRadiusMeters = get_EV_wake_width(j, dDistAxialInDiameters);  // the radius of the wake
-			if (dWakeRadiusMeters<=0)
+			if (dWakeRadiusMeters<=0.0)
 				continue;
 
 			// calculate the wake deficit
@@ -387,8 +427,9 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			return false;
 		}
 
-		// TFF, Feb 2013 - SKIPPING THE USE OF vmln.Xn, SINCE IT REQUIRES THE TURBINE RPMs TO CALCULATE, AND WE DON'T HAVE THOSE!!!!
-		// calc_EV_vm_for_turbine(adWindSpeed[i], aTurbulence_intensity[i], Thrust[i], air_density, vmln[i]);
+		if (IMITATE_OPENWIND)
+			calc_EV_vm_for_turbine(adWindSpeed[i], aTurbulence_intensity[i], Thrust[i], air_density, vmln[i]);
+			// TFF, Feb 2013 - if we're imitating openWind, then we fill a turbine RPM curve so this will work
 	}
 	return true;
 }
@@ -456,7 +497,7 @@ void wind_power_calculator::wake_calculations_pat_quinlan_old(/*INPUTS */double 
 
 double wind_power_calculator::wake_deficit_EV(int iUpwindTurbine, double dDistCrossWind, double dDistDownWind)
 {
-	double dDef = this->get_EV_velocity_deficit(iUpwindTurbine, dDistDownWind);
+	double dDef = get_EV_velocity_deficit(iUpwindTurbine, dDistDownWind);
 	if(dDef <= 0.0)
 		return 0.0;
 
@@ -500,7 +541,7 @@ double wind_power_calculator::get_EV_wake_width(int iUpwindTurbine, double dAxia
 double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double dAxialDistanceInDiameters)
 {	// get the velocity deficit from the upwind turbine's array describing its downwind velocity deficitys
 
-	// if we're too close, it's just the initial deficity (simplification, but model isn't valid closer than MIN_DIAM_EV to upwind turbine)
+	// if we're too close, it's just the initial deficit (simplification, but model isn't valid closer than MIN_DIAM_EV to upwind turbine)
 	double dDistPastMin = dAxialDistanceInDiameters - MIN_DIAM_EV; // in diameters
 	if (dDistPastMin < 0.0)
 		return m_dRotorDiameter * matEVWakeDeficits.at(iUpwindTurbine,0);
@@ -516,19 +557,24 @@ double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double
 	return (matEVWakeDeficits.at(iUpwindTurbine, iLowerIndex) * (1.0-dDistInResolutionUnits) ) + (matEVWakeDeficits.at(iUpwindTurbine, iUpperIndex) * dDistInResolutionUnits);	// in meters
 }
 
-double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct,double deltaX, VMLN& vmln)
+double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct, double deltaX, VMLN& vmln)
 {
-	// TFF, Feb 2013 - SKIPPING THE USE OF vmln.Xn, SINCE IT REQUIRES THE TURBINE RPMs TO CALCULATE, AND WE DON'T HAVE THOSE!!!!
-	return max_of(0.0, (Ct/7.0)*(1.0-(2.0/5.0)*log(deltaX/m_dRotorDiameter)) ); // this equation taken from Pat Quinlan's turbulence intensity calculations
+	if(!IMITATE_OPENWIND)
+	{
+		// TFF, Feb 2013 - if we're not imitating openWind then we use the Pat Quinlan method to get added TI
+		// So this function will return in one of the next two lines
+		if (deltaX==0) return 0.0; // if the distance downwind = 0, then no added turbulence
+		return max_of(0.0, (Ct/7.0)*(1.0-(2.0/5.0)*log(deltaX/m_dRotorDiameter)) ); // this equation taken from Pat Quinlan's turbulence intensity calculations
+	}
 
-	// Original openWind code starts below
+	// Original openWind code (calculation of vmln.Xn required knowing the RPM of the turbine at this wind speed)
 	// Xn is in meters
-	double Xn = max_of(0.0000000001,vmln.Xn);
+	double Xn = max_of(0.0000000001, vmln.Xn);
 	
 	// this formula can be found in Wind Energy Handbook by Bossanyi, page 36
 //	double Iadd = 5.7*pow(Ct,0.7)*pow(dTIAtUpstreamTurbine, 0.68)*pow(deltaX/Xn,-0.96);
 	double Iadd = 5.7*pow(Ct,0.7)*pow(dTIAtUpstreamTurbine, 0.68)*pow(max_of(1.5, deltaX/Xn),-0.96);// limits X>=Xn
-	return max_of(0.0,Iadd);
+	return max_of(0.0, Iadd);
 }
 
 double wind_power_calculator::calc_EV_total_turbulence_intensity(double ambientTI, double additionalTI, double Uo, double Uw, double partial)
@@ -550,8 +596,7 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 	if (dThrustCoeff<=0.0)
 		return true; // i.e. there is no wake (both arrays were initialized with zeros, so they just stay that way)
 
-	dThrustCoeff = min_of(0.999, dThrustCoeff); // limits dThrustCoeff to 1.0
-	dThrustCoeff = max_of(m_dMinThrustCoeff, dThrustCoeff); // in case of missing data
+	dThrustCoeff = max_of(min_of(0.999,dThrustCoeff), m_dMinThrustCoeff);
 	
 	dTurbulenceIntensity = min_of(dTurbulenceIntensity, 50.0); // to avoid turbines with high TIs having no wake
 	
@@ -575,7 +620,7 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 	double Km = F*K*K*dTurbulenceIntensity/100.0;  // also known as the ambient eddy viscosity???
 	
 	// calculate the initial centreline velocity deficit at 2 rotor diameters downstream
-	Dm = Dmi = max_of(0.0,dThrustCoeff - 0.05 - ((16.0*dThrustCoeff - 0.5)*dTurbulenceIntensity/1000.0));		// Ainslee 1988 (5)
+	Dm = Dmi = max_of(0.0, dThrustCoeff - 0.05 - ((16.0*dThrustCoeff - 0.5)*dTurbulenceIntensity/1000.0));		// Ainslee 1988 (5)
 	
 	if(Dmi<=0.0)
 		return true;
@@ -643,8 +688,7 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 void wind_power_calculator::calc_EV_vm_for_turbine(double U, double Ii, double Ct, double airDensity, VMLN& vmln)
 {
 	// Ii is incident TI in percent at upstream turbine
-	Ct = min_of(0.999,Ct); // limits Ct to 1.0
-	Ct = max_of(m_dMinThrustCoeff,Ct); // in case of missing data
+	Ct = max_of(min_of(0.999,Ct), m_dMinThrustCoeff);
 	
 	// these formulae can be found in Wind Energy Handbook by Bossanyi, pages 36 and 37
 	// although there are errors in that book so it has been supplemented from the original work  
@@ -770,7 +814,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 		{
 			if (IMITATE_OPENWIND)
 			{
-				*fThrustCoefficient =  0.02; // default value for low wind speeds
+				*fThrustCoefficient =  m_dMinThrustCoeff; // default value for low wind speeds
 
 				// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
 				double dThrustCurve[26] = {0.0, 0.0, 0.02, 0.8,0.8,0.82,0.84,0.79,0.72,0.66,0.59,0.53,0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
@@ -817,7 +861,7 @@ double wind_power_calculator::delta_V_Park( double Uo, double Ui, double dDistCr
 {	// returns the wind speed due to wake effects from upwind turbine
 	
 	// bound the coeff of thrust
-	double Ct = max_of(min_of(0.999,dThrustCoeff),0.02);
+	double Ct = max_of(min_of(0.999,dThrustCoeff),m_dMinThrustCoeff);
 
 	double k=0;
 	if (IMITATE_OPENWIND)

@@ -163,11 +163,20 @@ public:
 		util::matrix_t<ssc_number_t> &mat_distdown = allocate_matrix("dist_d", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		util::matrix_t<ssc_number_t> &mat_distcross = allocate_matrix("dist_c", nstep, wpc.m_iNumberOfTurbinesInFarm );
 
-		wpc.AllocateMemory(); // if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
+#ifndef __RELEASE__	// if in debug mode, save this info for use in creating output file
+		std::string cwd = util::get_cwd();
+#else
+		std::string cwd = "";
+#endif
+		bool bCreateFarmOutput = (cwd == "C:\\svn_NREL\\main\\samwx\\deploy");
 
+		// if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
+		if (!wpc.AllocateMemory() )
+			throw exec_error( "windpower", util::format("error allocating memory: %s",  wpc.GetErrorDetails().c_str() )  );
+		
+		// do the wind model
 		for (i=0;i<nstep;i++)
 		{
-			
 			if ( i % (nstep/20) == 0)
 				update( "calculating", 100.0f * ((float)i) / ((float)nstep), (float)i );
 
@@ -221,65 +230,64 @@ public:
 			air_temp[i] = (ssc_number_t) temp;
 			air_pres[i] = (ssc_number_t) pres;
 
-#ifndef __RELEASE__	// if in debug mode, save this info for use in creating output file
-			for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
+			if (bCreateFarmOutput)
 			{
-				mat_wtpwr.at(i,j) = (ssc_number_t) Power[j];
-				mat_wtvel.at(i,j) = (ssc_number_t) Wind[j];
-				mat_thrust.at(i,j) = (ssc_number_t)Thrust[j];
-				mat_turb.at(i,j) = (ssc_number_t)Turb[j];
-				mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
+				for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
+				{
+					mat_wtpwr.at(i,j) = (ssc_number_t) Power[j];
+					mat_wtvel.at(i,j) = (ssc_number_t) Wind[j];
+					mat_thrust.at(i,j) = (ssc_number_t)Thrust[j];
+					mat_turb.at(i,j) = (ssc_number_t)Turb[j];
+					mat_wteff.at(i,j) = (ssc_number_t) Eff[j];
 
-				mat_distdown.at(i,j) = (ssc_number_t) DistDown[j];
-				mat_distcross.at(i,j) = (ssc_number_t) DistCross[j];
+					mat_distdown.at(i,j) = (ssc_number_t) DistDown[j];
+					mat_distcross.at(i,j) = (ssc_number_t) DistCross[j];
+				}
 			}
-#endif
 		} // end hourly loop -> i = 0 to 8760
 
 
-#ifndef __RELEASE__ // if we're in debug mode, create the wind farm diagnostic files
-
-		// make separate files so it's easy for Excel 2010 to automatically update sheets to display info
-		// files should get put into directory with .exe file
-
-		util::stdfile f1;
-		std::string s = "windfarm_diagnostic_turbine_locations.txt";
-		if (f1.open(s.c_str(),"w") )
+		if (bCreateFarmOutput)
 		{
-			// first, create a table of all the inputs to the farm
-			fprintf(f1, "Turbine#\tX\tY\n", s.c_str() );
-			for ( i=0; i<wpc.m_iNumberOfTurbinesInFarm; i++)
-				fprintf(f1, "%d\t%lg\t%lg\n", i, wpc.m_adXCoords[i], wpc.m_adYCoords[i] );
-			f1.close();
-		}
-
-
-		s = "windfarm_diagnostic_weather_inputs.txt";
-		if (f1.open(s.c_str(),"w") )
-		{
-			fprintf(f1, "Hour\tFree Flow WS\tWind Direction\tAir Temperature\tAir Pressure\n" );
-			for ( i=0; i<nstep; i++)
+			// make separate files so it's easy for Excel 2010 to automatically update sheets to display info
+			// files should get put into directory with .exe file
+			util::stdfile f1;
+			std::string s = "windfarm_diagnostic_turbine_locations.txt";
+			if (f1.open(s.c_str(),"w") )
 			{
-				if ( i % (nstep/10) == 0) update( "writing farm inputs", 100.0f * ((float)i) / ((float)nstep), (float)i );
-				fprintf(f1, "%d\t%lg\t%lg\t%lg\t%lg\n", i, wspd[i], wdir[i], air_temp[i], air_pres[i] );
+				// first, create a table of all the inputs to the farm
+				fprintf(f1, "Turbine#\tX\tY\n", s.c_str() );
+				for ( i=0; i<wpc.m_iNumberOfTurbinesInFarm; i++)
+					fprintf(f1, "%d\t%lg\t%lg\n", i, wpc.m_adXCoords[i], wpc.m_adYCoords[i] );
+				f1.close();
 			}
-			f1.close();
-		}
 
-		s = "windfarm_diagnostic_turbine_info_" + wpc.GetWakeModelShortName() + ".txt";
-		if (f1.open(s.c_str(),"w") )
-		{
-			fprintf(f1, "Wake model:\t%s\n", wpc.GetWakeModelName().c_str() );
-			fprintf(f1, "Hour\tTurbine #\tWS at Turbine\tTurbine Output\tThrust\tTurbulence Intensity\tDistance Downwind\tDistance Crosswind\n" );
-			for (i=0;i<nstep;i++)
+			//s = "windfarm_diagnostic_weather_inputs.txt";
+			//if (f1.open(s.c_str(),"w") )
+			//{
+			//	fprintf(f1, "Hour\tFree Flow WS\tWind Direction\tAir Temperature\tAir Pressure\n" );
+			//	for ( i=0; i<nstep; i++)
+			//	{
+			//		if ( i % (nstep/10) == 0) update( "writing farm inputs", 100.0f * ((float)i) / ((float)nstep), (float)i );
+			//		fprintf(f1, "%d\t%lg\t%lg\t%lg\t%lg\n", i, wspd[i], wdir[i], air_temp[i], air_pres[i] );
+			//	}
+			//	f1.close();
+			//}
+
+			s = "windfarm_diagnostic_turbine_info_" + wpc.GetWakeModelShortName() + ".txt";
+			if (f1.open(s.c_str(),"w") )
 			{
-				if ( i % (nstep/20) == 0) update( "writing turbine specific outputs", 100.0f * ((float)i) / ((float)nstep), (float)i );
-				for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
-					fprintf(f1, "%d\t%d\t%lg\t%lg\t%lg\t%lg\t%lg\t%lg\n", i, j, mat_wtvel.at(i,j), mat_wtpwr.at(i,j), mat_thrust.at(i,j), mat_turb.at(i,j), mat_distdown.at(i,j), mat_distcross.at(i,j) );
+				fprintf(f1, "Wake model:\t%s\n", wpc.GetWakeModelName().c_str() );
+				fprintf(f1, "Hour\tFree Flow WS\tWind Direction\tTurbine #\tWS at Turbine\tTurbine Output\tThrust\tTurbulence Intensity\tDistance Downwind\tDistance Crosswind\n" );
+				for (i=0;i<nstep;i++)
+				{
+					if ( i % (nstep/20) == 0) update( "writing turbine specific outputs", 100.0f * ((float)i) / ((float)nstep), (float)i );
+					for (size_t j=0; j<wpc.m_iNumberOfTurbinesInFarm; j++)
+						fprintf(f1, "%d\t%lg\t%lg\t%d\t%lg\t%lg\t%lg\t%lg\t%lg\t%lg\n", i, wspd[i], wdir[i], j, mat_wtvel.at(i,j), mat_wtpwr.at(i,j), mat_thrust.at(i,j), mat_turb.at(i,j), mat_distdown.at(i,j), mat_distcross.at(i,j) );
+				}
+				f1.close();
 			}
-			f1.close();
-		}
-#endif
+		} // create wind farm debug output files
 
 	} // exec
 };
