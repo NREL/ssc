@@ -24,7 +24,7 @@ bool wind_power_calculator::AllocateMemory()
 
 	if(IMITATE_OPENWIND)
 	{
-		if(m_iLengthOfTurbinePowerCurveArray != 26)
+		if(m_iLengthOfTurbinePowerCurveArray < 26)
 		{
 			m_sErrDetails = "supposed to be imitating openWind, but wrong turbine curve";
 			return false;
@@ -559,7 +559,7 @@ double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double
 
 double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct, double deltaX, VMLN& vmln)
 {
-	if(!IMITATE_OPENWIND)
+	if(IMITATE_OPENWIND)
 	{
 		// TFF, Feb 2013 - if we're not imitating openWind then we use the Pat Quinlan method to get added TI
 		// So this function will return in one of the next two lines
