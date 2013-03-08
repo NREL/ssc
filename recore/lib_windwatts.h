@@ -55,7 +55,7 @@ public:
 	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adPowerCurveRPM, m_adXCoords, m_adYCoords;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
-	bool AllocateMemory(); // if necessary, allocate memory in util::matrix arrays
+	bool InitializeModel(); // if necessary, allocate memory in util::matrix arrays
 	std::string GetWakeModelShortName();
 	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return m_sErrDetails; }

@@ -57,7 +57,6 @@ public:
 		wind_power_calculator wpc;
 
 		wpc.m_dShearExponent =  as_double("shear");
-		wpc.m_dTurbulenceIntensity = as_double("turbul");
 		wpc.m_dHubHeight = as_double("hub_ht");
 		wpc.m_dRotorDiameter = as_double("rotor_di");
 		//double meas_ht = as_double("meas_ht");
@@ -66,6 +65,7 @@ public:
 		wpc.m_dLossesPercent = as_double("lossp")/100.0;
 		wpc.m_dWakeDecayCoefficient = 0.07;							// necessary for Park model
 		wpc.m_iWakeModelChoice = as_integer("wake_model");
+		wpc.m_dTurbulenceIntensity = as_double("turbul");
 
 		ssc_number_t *pc_w = as_array( "pc_wind", &wpc.m_iLengthOfTurbinePowerCurveArray );
 		ssc_number_t *pc_p = as_array( "pc_power", NULL );
@@ -171,7 +171,7 @@ public:
 		bool bCreateFarmOutput = (cwd == "C:\\svn_NREL\\main\\samwx\\deploy");
 
 		// if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
-		if (!wpc.AllocateMemory() )
+		if (!wpc.InitializeModel() )
 			throw exec_error( "windpower", util::format("error allocating memory: %s",  wpc.GetErrorDetails().c_str() )  );
 		
 		// do the wind model

@@ -14,12 +14,15 @@ static inline double min_of(double a, double b)
 	return (a < b) ? a : b;
 }
 
-bool wind_power_calculator::AllocateMemory()
+bool wind_power_calculator::InitializeModel()
 {
 	if (m_iWakeModelChoice == SIMPLE_EDDY_VISCOSITY_WAKE_MODEL)
 	{
 		matEVWakeDeficits.resize_fill(m_iNumberOfTurbinesInFarm, (int)(m_dMaxRotorDiameters/m_dAxialResolution)+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 		matEVWakeWidths.resize_fill(m_iNumberOfTurbinesInFarm, (int)(m_dMaxRotorDiameters/m_dAxialResolution)+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
+
+		// EV model expects the TI to be in units of % (0 to 100), not 0 to 1
+		m_dTurbulenceIntensity *= 100;
 	}
 
 	if(IMITATE_OPENWIND)
@@ -405,6 +408,8 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			// keep it if it's bigger
 			dDeficit = max_of(dDeficit, dDef);
 
+			double temp1 = Iamb[j];
+			double temp2 = aTurbulence_intensity[j];
 			Iadd = calc_EV_added_turbulence_intensity(Iamb[j], Thrust[j], dDistAxialInDiameters*m_dRotorDiameter, vmln[j]);
 			
 			double dFractionOfOverlap = simple_intersect(dDistRadialInDiameters*m_dRotorDiameter, dTurbineRadius, dWakeRadiusMeters);
@@ -428,8 +433,9 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 		}
 
 		if (IMITATE_OPENWIND)
-			calc_EV_vm_for_turbine(adWindSpeed[i], aTurbulence_intensity[i], Thrust[i], air_density, vmln[i]);
+			calc_EV_vm_for_turbine(adWindSpeed[i], Iamb[i], Thrust[i], air_density, vmln[i]);
 			// TFF, Feb 2013 - if we're imitating openWind, then we fill a turbine RPM curve so this will work
+			// TFF, Mar 8, 2013 - Iamb[i] never changes, it's always = m_dTurbulenceIntensity.  Really?
 	}
 	return true;
 }
@@ -559,7 +565,7 @@ double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double
 
 double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct, double deltaX, VMLN& vmln)
 {
-	if(IMITATE_OPENWIND)
+	if(!IMITATE_OPENWIND)
 	{
 		// TFF, Feb 2013 - if we're not imitating openWind then we use the Pat Quinlan method to get added TI
 		// So this function will return in one of the next two lines
@@ -781,8 +787,8 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 
 		out_pwr = util::interpolate(m_adPowerCurveWS[j-1], m_adPowerCurveKW[j-1], m_adPowerCurveWS[j], m_adPowerCurveKW[j], fWindSpeedAtHubHeight);
 	}
-	else if (fWindSpeedAtHubHeight >= m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) 
-		out_pwr = m_adPowerCurveKW[m_iLengthOfTurbinePowerCurveArray-1]; // wind speed greater than maximum in the power curve: power output is last value
+	else if (fWindSpeedAtHubHeight == m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) 
+		out_pwr = m_adPowerCurveKW[m_iLengthOfTurbinePowerCurveArray-1];
 
 	// Check against turbine cut-in speed
 	if ( fWindSpeedAtHubHeight < m_dCutInSpeed) out_pwr = 0.0; 
@@ -817,7 +823,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 				*fThrustCoefficient =  m_dMinThrustCoeff; // default value for low wind speeds
 
 				// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
-				double dThrustCurve[26] = {0.0, 0.0, 0.02, 0.8,0.8,0.82,0.84,0.79,0.72,0.66,0.59,0.53,0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
+				double dThrustCurve[26] = {0.0, 0.0, 0.02, 0.8, 0.8, 0.82, 0.84, 0.79, 0.72, 0.66, 0.59, 0.53, 0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
 				bool found=false;
 
 				int i = (int) fabs(fWindSpeedAtHubHeight);
