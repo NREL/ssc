@@ -1,4 +1,4 @@
-﻿// SAM Simulation Core (SSC) MATLAB API
+﻿// SAM Simulation Core (SSC) C# API
 // Copyright (c) 2012 National Renewable Energy Laboratory
 // author: Steven H. Janzou and Aron P. Dobos
 

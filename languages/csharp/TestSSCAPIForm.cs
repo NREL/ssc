@@ -1,4 +1,8 @@
-﻿using System;
+﻿// SAM Simulation Core (SSC) C# Example
+// Copyright (c) 2012 National Renewable Energy Laboratory
+// author: Steven H. Janzou and Aron P. Dobos
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,7 +11,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-//using namespace SSC;
 
 namespace TestApplication
 {

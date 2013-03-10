@@ -6,18 +6,20 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
     % automatically detect architecture to load proper dll.
     [pathstr, fn, fext] = fileparts(mfilename('fullpath'));
     cd(pathstr);
-    cd('../..');
+    %cd('../..');
     if ( strcmp(computer(), 'PCWIN') )
-        cd('win32');
+        %cd('win32');
+        ssclibpath = '../../win32/';
         ssclib = 'ssc32';
     else
-        cd('win64');
+        %cd('win64');
+        ssclibpath = '../../win64/';
         ssclib = 'ssc64';
     end
 
     if strcmp(action,'load')
         if ~libisloaded(ssclib)
-            loadlibrary(ssclib,'../sscapi.h');
+            loadlibrary(strcat(ssclibpath,ssclib),'../../sscapi.h');
         end
 
     elseif strcmp(action,'unload')
@@ -237,7 +239,7 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
         disp( sprintf('ssccall: invalid action %s', action) );        
         result = 0;
     end
-    cd(pathstr);
+   % cd(pathstr);
 
 end
 
