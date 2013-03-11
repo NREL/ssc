@@ -5,42 +5,42 @@
 % of all the input/output variables, names, data types, units, etc.
 
 clear
-ssccall('load');
+SSC.ssccall('load');
 
 i=0;
 while true,
     % get a pointer to information about the ith module
-    entry = ssccall('module_entry', i);
+    entry = SSC.ssccall('module_entry', i);
     if ( entry==0 ),
         break;
     end
     
     % if the ith entry was valid, get information about the module
-    name = ssccall('entry_name', entry);
-    desc = ssccall('entry_description', entry);
-    ver = ssccall('entry_version', entry);
+    name = SSC.ssccall('entry_name', entry);
+    desc = SSC.ssccall('entry_description', entry);
+    ver = SSC.ssccall('entry_version', entry);
     
     disp( sprintf('module: %s ver.%d [%s]', name, ver, desc) );
     
     % create an instance of the module
     % and iterate over all of the variables
-    mm = ssccall('module_create', name);    
+    mm = SSC.ssccall('module_create', name);    
     k=0;
     while true,
-        info = ssccall('module_var_info', mm, k);
+        info = SSC.ssccall('module_var_info', mm, k);
         if (info == 0),
             break;
         end
         
-        var_type = ssccall('info_var_type', info);
-        var_data = ssccall('info_data_type', info);
-        var_name = ssccall('info_name',info);
-        var_label = ssccall('info_label',info);
-        var_units = ssccall('info_units',info);
-        var_meta = ssccall('info_meta',info);
-        var_group = ssccall('info_group',info);
-        var_required = ssccall('info_required',info);
-        var_constraints = ssccall('info_constraints',info);
+        var_type = SSC.ssccall('info_var_type', info);
+        var_data = SSC.ssccall('info_data_type', info);
+        var_name = SSC.ssccall('info_name',info);
+        var_label = SSC.ssccall('info_label',info);
+        var_units = SSC.ssccall('info_units',info);
+        var_meta = SSC.ssccall('info_meta',info);
+        var_group = SSC.ssccall('info_group',info);
+        var_required = SSC.ssccall('info_required',info);
+        var_constraints = SSC.ssccall('info_constraints',info);
         
         disp(sprintf('  %s: "%s" [%s] %s (%s) ', var_type, var_name, var_data, var_label, var_units ));
         
@@ -48,16 +48,16 @@ while true,
     end
     
     % release the module that we created above
-    ssccall('module_free', mm);
+    SSC.ssccall('module_free', mm);
     
     i=i+1;
 end
 
 % get SSC version and build information
-ver = ssccall('version');
-bi = ssccall('build_info');
+ver = SSC.ssccall('version');
+bi = SSC.ssccall('build_info');
 
 disp( sprintf('[%d modules found in SSC Version %d %s]', i, ver, bi ) );
 
 % unload the library
-ssccall('unload');
+SSC.ssccall('unload');
