@@ -22,7 +22,7 @@ function varargout = UIExample(varargin)
 
 % Edit the above text to modify the response to help UIExample
 
-% Last Modified by GUIDE v2.5 10-Mar-2013 04:53:39
+% Last Modified by GUIDE v2.5 11-Mar-2013 04:41:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -101,7 +101,7 @@ function btnVersion_Callback(hObject, eventdata, handles)
 % hObject    handle to btnVersion (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-sscAPI = API();
+sscAPI = SSC.API();
 set(handles.txtData,'String',{sprintf('Version = %d',sscAPI.Version);sscAPI.BuildInfo});
 
 
@@ -110,7 +110,7 @@ function btnModuleList_Callback(hObject, eventdata, handles)
 % hObject    handle to btnModuleList (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-sscEntry = Entry();
+sscEntry = SSC.Entry();
 names = {};
 while (sscEntry.Get())
     module_name = sscEntry.Name();
@@ -120,3 +120,120 @@ while (sscEntry.Get())
     names{end+1} = description ;
 end        
 set(handles.txtData,'String',names);
+
+
+% --- Executes on button press in btnModuleAndVariables.
+function btnModuleAndVariables_Callback(hObject, eventdata, handles)
+% hObject    handle to btnModuleAndVariables (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+sscEntry = SSC.Entry();
+names = {};
+while (sscEntry.Get())
+    moduleName = sscEntry.Name();
+    description = sscEntry.Description();
+    version = sscEntry.Version();
+    names{end+1} = sprintf('Module: %s, version: %d', moduleName, version );
+    names{end+1} = description ;
+
+    sscModule = SSC.Module(moduleName);
+    sscInfo = SSC.Info(sscModule);
+
+    while (sscInfo.Get())
+        names{end+1} = sprintf('\t%s: "%s" ["%s"] %s (%s)\n',sscInfo.VarType(), sscInfo.Name(), sscInfo.DataType(), sscInfo.Label(), sscInfo.Units());
+    end
+end
+set(handles.txtData,'String',names);
+
+
+% --- Executes on button press in btnTestArrays.
+function btnTestArrays_Callback(hObject, eventdata, handles)
+% hObject    handle to btnTestArrays (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+names = {};
+sscData = SSC.Data();
+arr = [];
+for i = 1:10
+    arr(i) = i / 10.0;
+end
+sscData.SetArray('TestArray', arr);
+
+retArray = sscData.GetArray('TestArray');
+
+names{end+1} = 'Testing SetArray and GetArray';
+for i = 1:10
+    names{end+1} = sprintf('\treturned array element: %d = %g\n',i, retArray(i));
+end
+set(handles.txtData,'String',names);
+
+
+% --- Executes on button press in btnTestMatrices.
+function btnTestMatrices_Callback(hObject, eventdata, handles)
+% hObject    handle to btnTestMatrices (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+names = {};
+sscData = SSC.Data();
+matrix = [ 1 2 ; 3 4 ; 5 6 ; 7 8; 9 10];
+sscData.SetMatrix('TestMatrix', matrix);
+
+retMatrix = sscData.GetMatrix('TestMatrix');
+[nrows ncols] = size(retMatrix);
+names{end+1} = sprintf('Testing SetMatrix and GetMatrix size %d x %d', nrows,ncols);
+for i = 1: nrows
+    for j = 1: ncols
+        names{end+1} = sprintf('\treturned matrix element: (%d,%d) = %g\n', i,j, retMatrix(i,j));
+    end
+end
+set(handles.txtData,'String',names);
+
+
+% --- Executes on button press in btnPVWatts.
+function btnPVWatts_Callback(hObject, eventdata, handles)
+% hObject    handle to btnPVWatts (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+names = {};
+sscData = SSC.Data();
+sscData.SetString('file_name', '../../../abilene.tm2');
+sscData.SetNumber('system_size', 4.0);
+sscData.SetNumber('derate', 0.77);
+sscData.SetNumber('track_mode', 0);
+sscData.SetNumber('tilt', 20);
+sscData.SetNumber('azimuth', 180);
+
+mod = SSC.Module('pvwattsv1');
+if (mod.Exec(sscData)),
+    tot = data.GetNumber('ac_annual');
+    ac = data.GetArray('ac_monthly');
+    for i = 1:size(ac)
+        names{end+1} = sprintf('[%d]: %g kWh\n', i,ac(i));
+    end
+    names{end+1} = sprintf('AC total: %g\n', tot);
+    names{end+1} = 'PVWatts test OK\n';
+%else
+%     int idx = 0;
+%     String msg;
+%     int type;
+%     float time;
+%     while (mod.Log(idx, msg, type, time))
+%        String stype = 'NOTICE';
+%         if (type == SSC.API.WARNING),
+%             stype = 'WARNING';
+%         else
+%             if (type == SSC.API.ERROR) stype = 'ERROR';
+%         txtData.AppendText('[ ' + stype + ' at time:' + time + ' ]: ' + msg + '\n');
+%         idx++;
+%     txtData.AppendText('PVWatts example failed\n');
+%             end 
+%         end
+%     end
+end
+set(handles.txtData,'String',names);
+
+% --- Executes on button press in bntPVWattsFunc.
+function bntPVWattsFunc_Callback(hObject, eventdata, handles)
+% hObject    handle to bntPVWattsFunc (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

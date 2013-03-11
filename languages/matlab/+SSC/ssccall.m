@@ -5,21 +5,21 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
 
     % automatically detect architecture to load proper dll.
     [pathstr, fn, fext] = fileparts(mfilename('fullpath'));
-    cd(pathstr);
+    oldFolder = cd(pathstr);
     %cd('../..');
     if ( strcmp(computer(), 'PCWIN') )
         %cd('win32');
-        ssclibpath = '../../win32/';
+        ssclibpath = '../../../win32/';
         ssclib = 'ssc32';
     else
         %cd('win64');
-        ssclibpath = '../../win64/';
+        ssclibpath = '../../../win64/';
         ssclib = 'ssc64';
     end
 
     if strcmp(action,'load')
         if ~libisloaded(ssclib)
-            loadlibrary(strcat(ssclibpath,ssclib),'../../sscapi.h');
+            loadlibrary(strcat(ssclibpath,ssclib),'../../../sscapi.h');
         end
 
     elseif strcmp(action,'unload')
@@ -105,8 +105,8 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
         p_rows = libpointer('int32Ptr',0);
         p_cols = libpointer('int32Ptr',0);
         [xobj] = calllib(ssclib,'ssc_data_get_matrix',arg0,arg1,p_rows,p_cols);
-        setdatatype(xobj,'int32Ptr',p_rows.Value,1);
-        setdatatype(xobj,'int32Ptr',p_cols.Value,1);
+        setdatatype(xobj,'int32Ptr',p_rows.Value*p_cols.Value,1);
+%        setdatatype(xobj,'int32Ptr',p_cols.Value,1);
         nrows = p_rows.Value;
         ncols = p_cols.Value;
         if ( nrows*ncols > 0 )
@@ -239,7 +239,7 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
         disp( sprintf('ssccall: invalid action %s', action) );        
         result = 0;
     end
-   % cd(pathstr);
+    cd(oldFolder);
 
 end
 

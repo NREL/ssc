@@ -9,12 +9,12 @@ classdef API < handle
     
     methods
         function obj = API()
-            ssccall('load');
-            obj.Version =  ssccall('version');
-            obj.BuildInfo = ssccall('build_info');
+            SSC.ssccall('load');
+            obj.Version =  SSC.ssccall('version');
+            obj.BuildInfo = SSC.ssccall('build_info');
         end
         function delete(obj)
-            ssccall('unload');
+            SSC.ssccall('unload');
         end
     end
     
