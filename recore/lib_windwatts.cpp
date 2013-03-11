@@ -751,16 +751,16 @@ void wind_power_calculator::calc_EV_vm_for_turbine(double U, double Ii, double C
 double wind_power_calculator::tip_speed_ratio(double dWindSpeed)
 {	// find the rpm for this turbine at this wind speed
 	double rpm=0.0;
-	if ( (dWindSpeed > m_adPowerCurveRPM[0]) && (dWindSpeed < m_adPowerCurveRPM[m_iLengthOfTurbinePowerCurveArray-1]) ) 
+	if ( (dWindSpeed > m_adPowerCurveWS[0]) && (dWindSpeed < m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) ) 
 	{
 		int j = 1;
-		while ( m_adPowerCurveRPM[j] <= dWindSpeed )
+		while ( m_adPowerCurveWS[j] <= dWindSpeed )
 			j++; // find first m_adPowerCurveRPM > fWindSpeedAtHubHeight
 
-		rpm = util::interpolate(m_adPowerCurveRPM[j-1], m_adPowerCurveKW[j-1], m_adPowerCurveRPM[j], m_adPowerCurveKW[j], dWindSpeed);
+		rpm = util::interpolate(m_adPowerCurveWS[j-1], m_adPowerCurveRPM[j-1], m_adPowerCurveWS[j], m_adPowerCurveRPM[j], dWindSpeed);
 	}
-	else if (dWindSpeed >= m_adPowerCurveRPM[m_iLengthOfTurbinePowerCurveArray-1]) 
-		rpm = m_adPowerCurveKW[m_iLengthOfTurbinePowerCurveArray-1]; // wind speed greater than maximum in the array: rpm is last value
+	else if (dWindSpeed == m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) 
+		rpm = m_adPowerCurveRPM[m_iLengthOfTurbinePowerCurveArray-1]; // rpm -> zero if wind speed greater than maximum in the array
 	
 	// if rpm>0, calculate the tip speed ratio from it, otherwise, return a reasonable value
 	return (rpm>0) ? rpm * m_dRotorDiameter * physics::PI/(dWindSpeed*60.0) : 7.0;
