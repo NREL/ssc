@@ -15,11 +15,7 @@ classdef Entry < handle
     
     methods
         function obj = Entry()
-            SSC.ssccall('load');
             obj.m_idx = 0;
-        end
-        function delete(obj)
-            SSC.ssccall('unload');
         end
         function Reset(obj)
             obj.m_idx = 0;

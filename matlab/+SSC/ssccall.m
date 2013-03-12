@@ -1,25 +1,30 @@
 function [result] = ssccall(action, arg0, arg1, arg2 )
 % SAM Simulation Core (SSC) MATLAB API
 % Copyright (c) 2012 National Renewable Energy Laboratory
-% author: Aron P. Dobos
+% author: Aron P. Dobos and Steven H. Janzou
 
     % automatically detect architecture to load proper dll.
     [pathstr, fn, fext] = fileparts(mfilename('fullpath'));
-    oldFolder = cd(pathstr);
-    %cd('../..');
-    if ( strcmp(computer(), 'PCWIN') )
-        %cd('win32');
+    if ( strcmp(computer(), 'PCWIN') ) % Windows 32-bit
         ssclibpath = '../../../win32/';
         ssclib = 'ssc32';
-    else
-        %cd('win64');
+    elseif ( strcmp(computer(), 'PCWIN64') ) % Windows 64-bit
         ssclibpath = '../../../win64/';
         ssclib = 'ssc64';
     end
 
+    % load proper ssc library for all functions
+    if ~libisloaded(ssclib)
+        oldFolder = cd(pathstr);
+        loadlibrary(strcat(ssclibpath,ssclib),strcat(ssclibpath,'../sscapi.h'));
+        cd(oldFolder);
+    end
+    
     if strcmp(action,'load')
         if ~libisloaded(ssclib)
-            loadlibrary(strcat(ssclibpath,ssclib),'../../../sscapi.h');
+            oldFolder = cd(pathstr);
+            loadlibrary(strcat(ssclibpath,ssclib),strcat(ssclibpath,'../sscapi.h'));
+            cd(oldFolder);
         end
 
     elseif strcmp(action,'unload')
@@ -106,7 +111,6 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
         p_cols = libpointer('int32Ptr',0);
         [xobj] = calllib(ssclib,'ssc_data_get_matrix',arg0,arg1,p_rows,p_cols);
         setdatatype(xobj,'int32Ptr',p_rows.Value*p_cols.Value,1);
-%        setdatatype(xobj,'int32Ptr',p_cols.Value,1);
         nrows = p_rows.Value;
         ncols = p_cols.Value;
         if ( nrows*ncols > 0 )
@@ -232,14 +236,13 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
         if ( strcmp(text,'') )
             result = 0;
         else
-            result = [text, typetext, p_time.Value];
+            result = {text , typetext , p_time.Value};
         end
         
     else
         disp( sprintf('ssccall: invalid action %s', action) );        
         result = 0;
     end
-    cd(oldFolder);
 
 end
 

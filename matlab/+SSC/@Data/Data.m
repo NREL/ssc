@@ -9,7 +9,6 @@ classdef Data < handle
     
     methods
         function obj = Data(varargin)
-            SSC.ssccall('load');
             if nargin > 2,
                 obj.m_data = varargin{1};
                 obj.m_owned = false;
@@ -22,7 +21,6 @@ classdef Data < handle
             if ( obj.m_owned && (obj.m_data ~= 0)),
                 SSC.ssccall('data_free', obj.m_data);
             end
-            SSC.ssccall('unload');
         end
         function Clear(obj)
             SSC.ssccall('data_clear', obj.m_data);
@@ -42,7 +40,7 @@ classdef Data < handle
         end
         function result = GetNumber(obj, name)
             result = NaN('single');
-            SSC.ssccall('data_get_number', obj.m_data, name, result);
+            result = SSC.ssccall('data_get_number', obj.m_data, name);
         end
         function SetString(obj, name, value)
             SSC.ssccall('data_set_string', obj.m_data, name, value);
@@ -68,6 +66,9 @@ classdef Data < handle
         function result = GetTable(obj, name)
             result = SSC.ssccall('data_get_table', obj.m_data, name);
         end
+        function result = GetHandle(obj)
+            result = obj.m_data;
+        end         
     end
     
 end

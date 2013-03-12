@@ -22,18 +22,14 @@ classdef Info < handle
     
     methods
         function obj = Info(module)
-            SSC.ssccall('load');
             obj.m_idx = 0;
             obj.m_module = module;
-        end
-        function delete(obj)
-            SSC.ssccall('unload');
         end
         function Reset(obj)
             obj.m_idx = 0;
         end
         function result = Get(obj)
-            obj.m_info = SSC.ssccall('module_var_info', obj.m_module, obj.m_idx);
+            obj.m_info = SSC.ssccall('module_var_info', obj.m_module.GetHandle(), obj.m_idx);
             if (obj.m_info == 0),
                 obj.Reset;
                 result = false;

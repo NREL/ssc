@@ -140,7 +140,7 @@ while (sscEntry.Get())
     sscInfo = SSC.Info(sscModule);
 
     while (sscInfo.Get())
-        names{end+1} = sprintf('\t%s: "%s" ["%s"] %s (%s)\n',sscInfo.VarType(), sscInfo.Name(), sscInfo.DataType(), sscInfo.Label(), sscInfo.Units());
+        names{end+1} = sprintf('\t%s: "%s" ["%s"] %s (%s)',sscInfo.VariableType(), sscInfo.Name(), sscInfo.DataType(), sscInfo.Label(), sscInfo.Units());
     end
 end
 set(handles.txtData,'String',names);
@@ -163,7 +163,7 @@ retArray = sscData.GetArray('TestArray');
 
 names{end+1} = 'Testing SetArray and GetArray';
 for i = 1:10
-    names{end+1} = sprintf('\treturned array element: %d = %g\n',i, retArray(i));
+    names{end+1} = sprintf('\treturned array element: %d = %g',i, retArray(i));
 end
 set(handles.txtData,'String',names);
 
@@ -183,7 +183,7 @@ retMatrix = sscData.GetMatrix('TestMatrix');
 names{end+1} = sprintf('Testing SetMatrix and GetMatrix size %d x %d', nrows,ncols);
 for i = 1: nrows
     for j = 1: ncols
-        names{end+1} = sprintf('\treturned matrix element: (%d,%d) = %g\n', i,j, retMatrix(i,j));
+        names{end+1} = sprintf('\treturned matrix element: (%d,%d) = %g', i,j, retMatrix(i,j));
     end
 end
 set(handles.txtData,'String',names);
@@ -196,7 +196,7 @@ function btnPVWatts_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 names = {};
 sscData = SSC.Data();
-sscData.SetString('file_name', '../../../abilene.tm2');
+sscData.SetString('file_name', '../../examples/abilene.tm2');
 sscData.SetNumber('system_size', 4.0);
 sscData.SetNumber('derate', 0.77);
 sscData.SetNumber('track_mode', 0);
@@ -205,30 +205,22 @@ sscData.SetNumber('azimuth', 180);
 
 mod = SSC.Module('pvwattsv1');
 if (mod.Exec(sscData)),
-    tot = data.GetNumber('ac_annual');
-    ac = data.GetArray('ac_monthly');
+    tot = sscData.GetNumber('ac_annual');
+    ac = sscData.GetArray('ac_monthly');
     for i = 1:size(ac)
-        names{end+1} = sprintf('[%d]: %g kWh\n', i,ac(i));
+        names{end+1} = sprintf('[%d]: %g kWh', i,ac(i));
     end
-    names{end+1} = sprintf('AC total: %g\n', tot);
-    names{end+1} = 'PVWatts test OK\n';
-%else
-%     int idx = 0;
-%     String msg;
-%     int type;
-%     float time;
-%     while (mod.Log(idx, msg, type, time))
-%        String stype = 'NOTICE';
-%         if (type == SSC.API.WARNING),
-%             stype = 'WARNING';
-%         else
-%             if (type == SSC.API.ERROR) stype = 'ERROR';
-%         txtData.AppendText('[ ' + stype + ' at time:' + time + ' ]: ' + msg + '\n');
-%         idx++;
-%     txtData.AppendText('PVWatts example failed\n');
-%             end 
-%         end
-%     end
+    names{end+1} = sprintf('AC total: %g kWh', tot);
+    names{end+1} = 'PVWatts test OK';
+else
+    idx = 0;
+    [result, msg, type, time] = mod.Log(idx);
+    while (result)
+         names{end+1} = sprintf('[%s at time:%g ]: %s', type, time, msg);
+         idx = idx + 1;
+        [result, msg, type, time] = mod.Log(idx);
+    end
+    names{end+1} = 'PVWatts example failed';
 end
 set(handles.txtData,'String',names);
 
@@ -237,3 +229,46 @@ function bntPVWattsFunc_Callback(hObject, eventdata, handles)
 % hObject    handle to bntPVWattsFunc (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+names = {};
+sscData = SSC.Data();
+sscModule = SSC.Module('pvwattsfunc');
+sscData.SetNumber('year', 1970); % general year (tiny effect in sun position)
+sscData.SetNumber('month', 1); % 1-12
+sscData.SetNumber('day', 1); %1-number of days in month
+sscData.SetNumber('hour', 9); % 0-23
+sscData.SetNumber('minute', 30); % minute of the hour (typically 30 min for midpoint calculation)
+sscData.SetNumber('lat', 33.4); % latitude, degrees
+sscData.SetNumber('lon', -112); % longitude, degrees
+sscData.SetNumber('tz', -7); % timezone from gmt, hours
+sscData.SetNumber('time_step', 1); % time step, hours
+
+% solar and weather data
+sscData.SetNumber('beam', 824); % beam (DNI) irradiance, W/m2
+sscData.SetNumber('diffuse', 29); % diffuse (DHI) horizontal irradiance, W/m2
+sscData.SetNumber('tamb', 9.4); % ambient temp, degree C
+sscData.SetNumber('wspd', 2.1); % wind speed, m/s
+sscData.SetNumber('snow', 0); % snow depth, cm (0 is default - when there is snow, ground reflectance is increased.  assumes panels have been cleaned off)
+
+% system specifications
+sscData.SetNumber('system_size', 4); % system DC nameplate rating (kW)
+sscData.SetNumber('derate', 0.77); % derate factor
+sscData.SetNumber('track_mode', 0); % tracking mode 0=fixed, 1=1axis, 2=2axis
+sscData.SetNumber('azimuth', 180); % azimuth angle 0=north, 90=east, 180=south, 270=west
+sscData.SetNumber('tilt', 20); % tilt angle from horizontal 0=flat, 90=vertical
+
+
+% previous timestep values of cell temperature and POA
+sscData.SetNumber('tcell', 6.94); % calculated cell temperature from previous timestep, degree C, (can default to ambient for morning or if you don't know)
+sscData.SetNumber('poa', 84.5); % plane of array irradiance (W/m2) from previous time step
+
+if (sscModule.Exec(sscData))
+    poa = sscData.GetNumber('poa');
+    tcell = sscData.GetNumber('tcell');
+    dc = sscData.GetNumber('dc');
+    ac = sscData.GetNumber('ac');
+    names{end+1} = sprintf('poa: %g W/m2', poa);
+    names{end+1} = sprintf('tcell: %g C', tcell);
+    names{end+1} = sprintf('dc: %g W', dc);
+    names{end+1} = sprintf('ac: %g W', ac);
+end
+set(handles.txtData,'String',names);
