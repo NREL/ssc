@@ -1,6 +1,14 @@
-copy matlab\ssccall.m sdk-release\languages\matlab
+copy matlab\ReadMe.txt sdk-release\languages\matlab
 copy matlab\modules.m sdk-release\languages\matlab
 copy matlab\pvwatts.m sdk-release\languages\matlab
+copy matlab\UIExample.m sdk-release\languages\matlab
+copy matlab\UIExample.fig sdk-release\languages\matlab
+copy "matlab\+SSC\ssccall.m" "sdk-release\languages\matlab\+SSC"
+copy "matlab\+SSC\@API\API.m" "sdk-release\languages\matlab\+SSC\@API"
+copy "matlab\+SSC\@Data\Data.m" "sdk-release\languages\matlab\+SSC\@Data"
+copy "matlab\+SSC\@Entry\Entry.m" "sdk-release\languages\matlab\+SSC\@Entry"
+copy "matlab\+SSC\@Info\Info.m" "sdk-release\languages\matlab\+SSC\@Info"
+copy "matlab\+SSC\@Module\Module.m" "sdk-release\languages\matlab\+SSC\@Module"
 
 copy python\sscapi.py sdk-release\languages\python
 
