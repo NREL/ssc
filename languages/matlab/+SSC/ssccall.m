@@ -11,6 +11,9 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
     elseif ( strcmp(computer(), 'PCWIN64') ) % Windows 64-bit
         ssclibpath = '../../../win64/';
         ssclib = 'ssc64';
+    elseif ( strcmp(computer(), 'MACI64') ) % Mac Intel 64-bit
+        ssclibpath = '../../../osx64/';
+        ssclib = 'ssc64';
     end
 
     % load proper ssc library for all functions
