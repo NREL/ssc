@@ -10,7 +10,7 @@ SSC.ssccall('load');
 data = SSC.ssccall('data_create');
 
 % setup the system parameters
-SSC.ssccall('data_set_string', data, 'file_name', '../../../examples/abilene.tm2');
+SSC.ssccall('data_set_string', data, 'file_name', '../../examples/abilene.tm2');
 SSC.ssccall('data_set_number', data, 'system_size', 4);
 SSC.ssccall('data_set_number', data, 'derate', 0.77);
 SSC.ssccall('data_set_number', data, 'track_mode', 0);
