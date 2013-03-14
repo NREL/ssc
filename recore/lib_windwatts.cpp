@@ -806,8 +806,8 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 			out_pwr = m_dRatedPower;
 	}
 
-	// if calculated power is > 0.1% of rating, set outputs
-	if (out_pwr > (m_dRatedPower * 0.001))
+	//if (out_pwr > (m_dRatedPower * 0.001)) // if calculated power is > 0.1% of rating, set outputs
+	if (out_pwr > 0 )
 	{
 		out_pwr = out_pwr*(1.0-m_dLossesPercent) - m_dLossesAbsolute;
 		double pden = 0.5*fAirDensity*pow(fWindSpeedAtHubHeight, 3.0);
@@ -817,27 +817,25 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 		// set outputs to something other than zero
 		*fTurbineOutput = out_pwr;
 		if (fPowerCoefficient >= 0.0)
-		{
-			if (IMITATE_OPENWIND)
-			{
-				*fThrustCoefficient =  m_dMinThrustCoeff; // default value for low wind speeds
-
-				// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
-				double dThrustCurve[26] = {0.0, 0.0, 0.0, 0.8, 0.8, 0.82, 0.84, 0.79, 0.72, 0.66, 0.59, 0.53, 0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
-				bool found=false;
-
-				int i = (int) fabs(fWindSpeedAtHubHeight);
-				if ( fabs(fWindSpeedAtHubHeight)>25 )
-					*fThrustCoefficient = 0;
-				else if (i==25)
-					*fThrustCoefficient = dThrustCurve[i];
-				else if (i>=2)
-					*fThrustCoefficient = util::interpolate(i,dThrustCurve[i],i+1,dThrustCurve[i+1],fWindSpeedAtHubHeight);
-			}
-			else
-				*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );
-		}
+			*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );		
 	} // out_pwr > (rated power * 0.001)
+
+	if (IMITATE_OPENWIND) // even if there's no power output, calculate the thrust coefficient
+	{
+		*fThrustCoefficient =  m_dMinThrustCoeff; // default value for low wind speeds
+
+		// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
+		double dThrustCurve[26] = {0.0, 0.0, 0.0, 0.8, 0.8, 0.82, 0.84, 0.79, 0.72, 0.66, 0.59, 0.53, 0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
+		bool found=false;
+
+		int i = (int) fabs(fWindSpeedAtHubHeight);
+		if ( fabs(fWindSpeedAtHubHeight)>25 )
+			*fThrustCoefficient = 0;
+		else if (i==25)
+			*fThrustCoefficient = dThrustCurve[i];
+		else if (i>=2)
+			*fThrustCoefficient = util::interpolate(i,dThrustCurve[i],i+1,dThrustCurve[i+1],fWindSpeedAtHubHeight);
+	}
 	return;
 }
 
