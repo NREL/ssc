@@ -93,10 +93,11 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 	}
 
 	size_t i,j;
-	unsigned char wt_id[MAX_WIND_TURBINES], wid;
+	//unsigned char wt_id[MAX_WIND_TURBINES], wid; // unsigned char has 256 limit
+	size_t wt_id[MAX_WIND_TURBINES], wid;
 
 	for (i=0; i<m_iNumberOfTurbinesInFarm; i++)
-		wt_id[i] = (unsigned char)i;
+		wt_id[i] = i;
 
 	// convert barometric pressure in ATM to air density
 	double fAirDensity = (dAirPressureAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3

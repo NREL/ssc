@@ -168,7 +168,7 @@ public:
 #else
 		std::string cwd = "";
 #endif
-		bool bCreateFarmOutput = (cwd == "C:\\svn_NREL\\main\\samwx\\deploy");
+		bool bCreateFarmOutput = ( (cwd == "C:\\svn_NREL\\main\\samwx\\deploy") && (IMITATE_OPENWIND) );
 
 		// if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
 		if (!wpc.InitializeModel() )
