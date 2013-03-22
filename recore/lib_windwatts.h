@@ -6,7 +6,8 @@
 
 enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
 
-#ifndef __RELEASE__
+//#ifndef __RELEASE__
+#ifdef _DEBUG
 	#define IMITATE_OPENWIND true
 #else
 	#define IMITATE_OPENWIND false
