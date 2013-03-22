@@ -163,21 +163,14 @@ public:
 		util::matrix_t<ssc_number_t> &mat_distdown = allocate_matrix("dist_d", nstep, wpc.m_iNumberOfTurbinesInFarm );
 		util::matrix_t<ssc_number_t> &mat_distcross = allocate_matrix("dist_c", nstep, wpc.m_iNumberOfTurbinesInFarm );
 
-//#ifndef __RELEASE__	// if in debug mode, save this info for use in creating output file
-#ifdef _DEBUG
-		std::string cwd = util::get_cwd();
-#else
 		std::string cwd = "";
-#endif
-		bool bCreateFarmOutput = ( (cwd == "C:\\svn_NREL\\main\\samwx\\deploy") && (IMITATE_OPENWIND) );
+		if (IMITATE_OPENWIND) cwd = util::get_cwd(); // if we're trying to imitate openWind, we might want to create detailed debug files
+		bool bCreateFarmOutput = (cwd == "C:\\svn_NREL\\main\\samwx\\deploy"); // limit debug file creation to tom's computers
 
 		// if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
 		if (!wpc.InitializeModel() )
-#ifdef _DEBUG
 			throw exec_error( "windpower", util::format("error allocating memory: %s",  wpc.GetErrorDetails().c_str() )  );
-#else
-			throw exec_error( "windpower", util::format("error initializing model" )  );
-#endif
+
 		// do the wind model
 		for (i=0;i<nstep;i++)
 		{

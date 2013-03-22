@@ -25,7 +25,7 @@ bool wind_power_calculator::InitializeModel()
 		m_dTurbulenceIntensity *= 100;
 	}
 
-	if(IMITATE_OPENWIND)
+	if(IMITATE_OPENWIND) // should only be true if in debug mode
 	{
 		if(m_iLengthOfTurbinePowerCurveArray < 26)
 		{

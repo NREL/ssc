@@ -6,11 +6,10 @@
 
 enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
 
-//#ifndef __RELEASE__
 #ifdef _DEBUG
-	#define IMITATE_OPENWIND true
+	#define IMITATE_OPENWIND true // true or false, depending on whether or not you want to compare wind wake models with openWind
 #else
-	#define IMITATE_OPENWIND false
+	#define IMITATE_OPENWIND false // don't set this to true in release mode, it might show users unintelligible error messages
 #endif
 
 class wind_power_calculator
