@@ -142,7 +142,11 @@ public:
 		SPowerBlockParameters pbp;
 
 		// power block parameters NOT on the SAM power block input page
-		pbp.tech_type = as_integer("tech_type");			// flag for which coef set to use (1=tower,2=trough,3=Sliding pressure power cycle formulation, 4=geothermal) - set in interface, but no user input
+
+		// the geothermal model is only valid with tech type = 4.  if it's set to any other value, use it as a flag to use old code, then set it to 4
+		bool bUseNewCode = (as_integer("tech_type") == 4);
+
+		pbp.tech_type = 4; //as_integer("tech_type");			// flag for which coef set to use (1=tower,2=trough,3=Sliding pressure power cycle formulation, 4=geothermal) - set in interface, but no user input
 		pbp.T_htf_cold_ref = as_double("T_htf_cold_ref");	// design outlet fluid temp
 		pbp.T_htf_hot_ref = as_double("T_htf_hot_ref");		// design inlet fluid temp
 		pbp.HTF = as_integer("HTF");						// heat transfer fluid type - set in interface, but no user input
@@ -191,8 +195,7 @@ public:
 		if (!util::translate_schedule( tou, sched, sched, 0, 8))
 			throw general_error("could not translate schedule for time-of-use rate");
 
-//if (pbp.n_pl_inc == 8)
-if (true)
+if (bUseNewCode)
 {
 //New code ---------------------------------------------------------------------------------------------------------------------------------------
 

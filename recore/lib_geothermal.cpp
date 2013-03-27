@@ -6,7 +6,9 @@
 //     having the distance between wells be hardwired to 1000m regardless of what user enters.
 // 4 - Because this code stores values in constants rather than in member variables (that were never changed), the results changed slightly (at about the 4th significant digit)
 //     E.G., geothermal::EXCESS_PRESSURE_BAR returns 3.50000000000, but mpGBI->mdExcessPressureBar returned 3.4997786965077915, although it was set to 3.5 and never changed.
-
+// March 2013
+// 5 - pump efficiencies were used incorrectly in the old version (fix committed to svn March 1, 2012)
+// 6 - pump power calculations in the old version did not match GETEM
 
 #include "lib_physics.h"
 #include "lib_geothermal.h"
@@ -30,7 +32,7 @@ namespace geothermal
 	const double TEMPERATURE_EGS_AMBIENT_C = 15.0;					// Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
 	const double CONST_CT = 0.0009;									// these are both inputs that are shaded out in GETEM
 	const double CONST_CP = 0.000000000464;							//	"		"			"			"			"
-	const double EXCESS_PRESSURE_BAR = 3.5;							// default 3.5 bar, [2B.Resource&Well Input].D205
+	//const double EXCESS_PRESSURE_BAR = 3.5;						// default 3.5 bar, [2B.Resource&Well Input].D205
 	const double PRESSURE_AMBIENT_PSI = 14.7; // default
 	const double WATER_LOSS_PERCENT = 0.02;							// 2%
 	const double EGS_TIME_INPUT = 3.076;							// years, not really explained - user is supposed to vary input until a calculated value equals plant design temp [7C.EGS Subsrfce HX].D42 (fTimeStar)
@@ -1095,7 +1097,8 @@ double CGeothermalAnalyzer::pressureWellHeadPSI()
 {
 	double tempF = physics::CelciusToFarenheit(GetTemperaturePlantDesignC());
 	double pressureSaturation = geothermal::oPC.evaluate(tempF); // valid above boiling, I guess.
-	double pressureExcessPSI = geothermal::BarToPsi(geothermal::EXCESS_PRESSURE_BAR); // bar to psi
+	//double pressureExcessPSI = geothermal::BarToPsi(geothermal::EXCESS_PRESSURE_BAR); // bar to psi
+	double pressureExcessPSI = geothermal::BarToPsi(mo_geo_in.md_ExcessPressureBar); // bar to psi
 	return (GetTemperaturePlantDesignC() > 100) ? pressureSaturation + pressureExcessPSI : geothermal::PRESSURE_AMBIENT_PSI + pressureExcessPSI;
 }
 

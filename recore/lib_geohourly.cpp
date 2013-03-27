@@ -1010,6 +1010,7 @@ bool CMakeupAlgorithm::OpenWeatherFile(const char * fn)
 {
 	m_bWeatherFileOpen = false;
 	m_lReadCount = 0;
+	m_wf.disable_interpolation();
 	if (!m_wf.open(fn))
 		m_strMAError = "Could not open the weather file: " + std::string(fn);
 	else
