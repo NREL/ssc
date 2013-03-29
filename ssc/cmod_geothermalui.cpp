@@ -3,10 +3,6 @@
 #include "lib_physics.h"
 #include "lib_geothermal.h"
 
-//temporary for diagnostics
-#include "lib_geohourly_interface.h"
-
-
 static var_info _cm_vtab_geothermalui[] = {
 /*   VARTYPE           DATATYPE         NAME							LABEL								UNITS			META				GROUP          REQUIRED_IF			CONSTRAINTS             UI_HINTS*/
 
@@ -89,12 +85,6 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-
-
-//if (as_integer("hr_pl_nlev") == 8) // for testing new code against old code
-if (true)
-{
-// New code ---------------------------------------------------------------------------------------------------------------------------------------
 		// set the geothermal model inputs -------------------------------------
 		SGeothermal_Inputs geo_inputs;
 		geo_inputs.md_RatioInjectionToProduction = 0.5; // THIS SHOULD BE AN INPUT. ALTHOUGH IT'S FROM THE COST PAGE, IT'S USED IN NON-COST EQUATION
@@ -223,137 +213,7 @@ if (true)
 		assign("reservoir_pressure", var_data((ssc_number_t) geo_outputs.md_PressureChangeAcrossReservoir ) );
 		assign("reservoir_avg_temp", var_data((ssc_number_t) physics::FarenheitToCelcius(geo_outputs.md_AverageReservoirTemperatureF) ) );
 		assign("bottom_hole_pressure", var_data((ssc_number_t) geo_outputs.md_BottomHolePressure ) );
-}//-----------------------------------------------------------------------------------------------------------------------------------------------
-else
-{// Old code -------------------------------------------------------------------------------------------------------------------------------------
-		// Geothermal inputs **********************************************
-		CGeothermalInterface oGeo;
-		if ( as_integer("analysis_type") == 0)
-			oGeo.SetDesiredPlantSalesKW( as_double("nameplate") );		// automatically sets calculation basis to 'desired plant output'
-		else
-			oGeo.SetDesiredNumberOfWells( as_double("num_wells") );	// automatically sets calculation basis to 'desired number of wells'
-		oGeo.SetConversionType( 1+as_integer("conversion_type") );
-		oGeo.SetPlantEfficiency( as_double("plant_efficiency_input")/100 ); 
-		oGeo.SetFlashSubType( 1+as_integer("conversion_subtype") );
-
-		// temperature decline
-		oGeo.SetTemperatureDeclineMethod( 1+as_integer("decline_type") );
-		oGeo.SetTemperatureDeclineRate( as_double("temp_decline_rate")/100 );
-		oGeo.SetMaxTempDeclineC( as_double("temp_decline_max") );
-
-		// flash inputs	
-		oGeo.SetWetBulbTemperatureC( as_double("wet_bulb_temp") );
-		oGeo.SetPressureAmbientPSI( as_double("ambient_pressure" ) );
-
-		//pumping parameters
-		oGeo.SetProductionFlowRateKgPerS( as_double("well_flow_rate") );
-		oGeo.SetPumpEfficiency( as_double("pump_efficiency")/100 );
-		oGeo.SetPressureChangeAcrossSurfaceEquipment( as_double("delta_pressure_equip") );
-		oGeo.SetExcessPressurePSI( as_double("excess_pressure_pump") );
-		oGeo.SetProductionWellDiameter( as_double("well_diameter") );
-		oGeo.SetPumpCasingDiameter( as_double("casing_size") );
-		oGeo.SetInjectionWellDiameter( as_double("inj_well_diam") );
-		oGeo.SetCalculatePumpWork( 1 != as_integer("specify_pump_work") );
-		oGeo.SetUserSpecifiedPumpWorkMW( as_double("specified_pump_work_amount") );
-
-		//resource characterization
-		oGeo.SetResourceType( 1+as_integer("resource_type") );
-		oGeo.SetResourceDepthMeters( as_double("resource_depth") );
-		double resource_temp = as_double("resource_temp");
-		oGeo.SetResourceTemperatureCelcius( resource_temp );
-
-		oGeo.SetPlantDesignTemperatureCelcius( as_double("design_temp") );
-
-		//reservoir properties
-		oGeo.SetRockThermalConductivity( as_double("rock_thermal_conductivity") );
-		oGeo.SetRockSpecificHeat(  as_double("rock_specific_heat") );
-		oGeo.SetRockDensity(  as_double("rock_density") );
-		oGeo.SetPressureCalculationMethod( 1+as_integer("reservoir_pressure_change_type"));
-		switch(as_integer("reservoir_pressure_change_type"))
-		{
-			case 0: // pressure change entered by user
-				oGeo.SetReservoirPressureChange( as_double("reservoir_pressure_change") );
-				break;
-
-			case 1: // use fracture flow (EGS only)
-				break;
-
-			case 2: // permeability * area
-				oGeo.SetReservoirWidthM( as_double("reservoir_width") );
-				oGeo.SetReservoirHeightM( as_double("reservoir_height") );
-				oGeo.SetReservoirPermeability( as_double("reservoir_permeability") );
-				oGeo.SetWellDistance2( as_double("inj_prod_well_distance") );
-				break;
-		}
-		oGeo.SetSubsurfaceWaterLossRate( as_double("subsurface_water_loss")/100 );
-		oGeo.SetSubsurfaceFractureAperature( as_double("fracture_aperature") );
-		oGeo.SetNumberOfFractures( as_double("num_fractures") );
-		oGeo.SetSubsurfaceFractureWidth( as_double("fracture_width") );
-		oGeo.SetSubsurfaceFractureAngle( as_double("fracture_angle") );
-
-
-		// calculate output array sizes
-		oGeo.SetModelChoice(as_integer("model_choice")); // with model choice set, model then 'knows' whether this is hourly or monthly analysis
-		size_t iyears = as_integer("analysis_period");
-		if ( iyears == 0)
-			throw general_error("invalid analysis period specified in the geothermal hourly model");
-
-		// set geothermal inputs RE how analysis is done and for how long
-		oGeo.SetProjectLifeYears( iyears );
-
-		// allocate lifetime annual arrays (one element per year, over lifetime of project)
-		ssc_number_t *annual_replacements = allocate( "annual_replacements", iyears);
-
-		// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-		size_t monthly_array_size = 12 * iyears;
-		ssc_number_t *monthly_resource_temp = allocate( "monthly_resource_temperature", monthly_array_size);
-		ssc_number_t *monthly_power = allocate( "monthly_power", monthly_array_size);
-		ssc_number_t *monthly_energy = allocate( "monthly_energy", monthly_array_size);
-
-		// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
-		// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
-		size_t timestep_array_size = oGeo.GetTimeStepsInAnalysis();
-		ssc_number_t *timestep_resource_temp = allocate( "timestep_resource_temperature", timestep_array_size);
-		ssc_number_t *timestep_power = allocate( "timestep_power", timestep_array_size);
-		ssc_number_t *timestep_test_values = allocate( "timestep_test_values", timestep_array_size);
-
-		ssc_number_t *timestep_pressure = allocate( "timestep_pressure", timestep_array_size);
-		ssc_number_t *timestep_dry_bulb = allocate( "timestep_dry_bulb", timestep_array_size);
-		ssc_number_t *timestep_wet_bulb = allocate( "timestep_wet_bulb", timestep_array_size);
-
-		// set pointer to annual array
-		oGeo.SetPointerToReplacementArray(annual_replacements);
-
-		// set pointers to monthly arrays
-		oGeo.SetPointerToMonthlyTemperatureArray(monthly_resource_temp);
-		oGeo.SetPointerToMonthlyOutputArray(monthly_power);
-		oGeo.SetPointerToMonthlyPowerArray(monthly_energy);
-		
-		// set pointers for timestep arrays (for monthly analysis, these are redundant)
-		oGeo.SetPointerToTimeStepTemperatureArray(timestep_resource_temp);
-		oGeo.SetPointerToTimeStepOutputArray(timestep_power);
-		oGeo.SetPointerToTimeStepTestArray(timestep_test_values);
-
-		oGeo.SetPointerToTimeStepPressureArray(timestep_pressure);
-		oGeo.SetPointerToTimeStepDryBulbArray(timestep_dry_bulb);
-		oGeo.SetPointerToTimeStepWetBulbArray(timestep_wet_bulb);
-
-		assign("num_wells_getem", var_data((ssc_number_t) oGeo.ShowNumberOfWells() ) );
-		assign("plant_brine_eff", var_data((ssc_number_t) oGeo.ShowPlantBrineEffectiveness() ) );
-		assign("gross_output", var_data((ssc_number_t) oGeo.ShowGrossOutput() ) );
-		assign("pump_depth_ft", var_data((ssc_number_t) oGeo.ShowPumpDepthFeet() ) );
-		assign("pump_work", var_data((ssc_number_t) oGeo.ShowPumpWorkMW()) );
-		assign("pump_hp", var_data((ssc_number_t) oGeo.ShowPumpHorsePower() ) );
-		assign("reservoir_pressure", var_data((ssc_number_t) oGeo.ShowPressureChange() ) );
-		assign("reservoir_avg_temp", var_data((ssc_number_t) oGeo.ShowAverageReservoirTemperature() ) );
-		assign("bottom_hole_pressure", var_data((ssc_number_t) oGeo.ShowBottomHolePressure() ) );
-
-}//-----------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
 	}
 };
 
 DEFINE_MODULE_ENTRY( geothermalui, "Geothermal user interface calculations using GETEM model code.", 3 );
-

@@ -134,8 +134,6 @@
     <ClInclude Include="6par_solve.h" />
     <ClInclude Include="lib_cec6par.h" />
     <ClInclude Include="lib_financial.h" />
-    <ClInclude Include="lib_geohourly.h" />
-    <ClInclude Include="lib_geohourly_interface.h" />
     <ClInclude Include="lib_geothermal.h" />
     <ClInclude Include="lib_irradproc.h" />
     <ClInclude Include="lib_physics.h" />
@@ -152,7 +150,6 @@
   <ItemGroup>
     <ClCompile Include="lib_cec6par.cpp" />
     <ClCompile Include="lib_financial.cpp" />
-    <ClCompile Include="lib_geohourly.cpp" />
     <ClCompile Include="lib_geothermal.cpp" />
     <ClCompile Include="lib_irradproc.cpp" />
     <ClCompile Include="lib_physics.cpp" />

@@ -23,17 +23,17 @@ namespace geothermal
 	const double MAX_TEMP_RATIO = 1.134324;  // max valid value for (resource temp)/(plant design temp) where both are measured in Kelvin
 	const double DEFAULT_AMBIENT_TEMPC_BINARY = 10.0;			// degrees C
 	const double AMBIENT_TEMPC_FOR_GRADIENT = 10.0;				// degrees C, embedded in [2B.Resource&Well Input].D14
-	const double WET_BULB_TEMPERATURE_FOR_FLASH_CALCS = 15.0;	// degrees C, used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
+	//const double WET_BULB_TEMPERATURE_FOR_FLASH_CALCS = 15.0;	// degrees C, used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
 	const bool ADDITIONAL_PRESSURE_REQUIRED = false;
-	const double EFFICIENCY_PUMP_GF = 0.6;
+	//const double EFFICIENCY_PUMP_GF = 0.6;
 	const double EGS_THERMAL_CONDUCTIVITY = 3*3600*24;				// J/m-day-C
-	const double PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI = 25;	// 25 psi [2B.Resource&Well Input].D146, H146
+	//const double PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI = 25;	// 25 psi [2B.Resource&Well Input].D146, H146
 	const double TEMPERATURE_EGS_INJECTIONC = 76.1;					// degrees C, [7C.EGS Subsrfce HX].D11 [should be a function of plant design temperature]
 	const double TEMPERATURE_EGS_AMBIENT_C = 15.0;					// Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
 	const double CONST_CT = 0.0009;									// these are both inputs that are shaded out in GETEM
 	const double CONST_CP = 0.000000000464;							//	"		"			"			"			"
 	//const double EXCESS_PRESSURE_BAR = 3.5;						// default 3.5 bar, [2B.Resource&Well Input].D205
-	const double PRESSURE_AMBIENT_PSI = 14.7; // default
+	//const double PRESSURE_AMBIENT_PSI = 14.7; // default
 	const double WATER_LOSS_PERCENT = 0.02;							// 2%
 	const double EGS_TIME_INPUT = 3.076;							// years, not really explained - user is supposed to vary input until a calculated value equals plant design temp [7C.EGS Subsrfce HX].D42 (fTimeStar)
 	const double FRACTURE_LENGTH_ADJUSTMENT = 2;					// used for one instance of where the EGS fracture length is used.  All others use the original fracture length
@@ -56,7 +56,7 @@ namespace geothermal
 	const condenserTypes CONDENSER_TYPE = SURFACE;
 	const double INJECTION_PUMPING_CYCLES = 6.0;
 	const double ADDITIONAL_CW_PUMP_HEAD_SURFACE = 10 * 144 / physics::WATER_DENSITY;
-	const double MAX_TEMPERATURE_DECLINE_C = 30;
+	//const double MAX_TEMPERATURE_DECLINE_C = 30;
 	const double FINAL_YEARS_WITH_NO_REPLACEMENT = 5;
 
 
@@ -798,7 +798,8 @@ double CGeothermalAnalyzer::CalculatePumpWorkInKW(double dFlowLbPerHr, double dP
 
 double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 {	// Enter 1 for flow to Get power per lb of flow
-	double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, pumpHeadFt(), geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString);
+	//double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, pumpHeadFt(), geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString);
+	double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, pumpHeadFt(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
 	if (!ms_ErrorString.empty()) return 0;
 
 	double dInjectionPumpPower = 0;
@@ -825,7 +826,8 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 		}
 		double dInjectionPumpHeadFt = dInjectionPressure * 144 / InjectionDensity(); // G129
 
-		dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
+		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
+		dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
 	}
 	double retVal = dProductionPumpPower + dInjectionPumpPower; // watt-hr per lb of flow
 	if (retVal < 0)
@@ -1072,7 +1074,8 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 
 double CGeothermalAnalyzer::pressureInjectionWellBottomHolePSI() // [7B.Reservoir Hydraulics].G72, [7A.GF Pumps].G50
 {
-	double injectionWellSurfacePressurePSI = (mo_geo_in.me_ct == FLASH) ? 0 : (pressureWellHeadPSI() - geothermal::PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI); // [2B.Resource&Well Input].D149
+	//double injectionWellSurfacePressurePSI = (mo_geo_in.me_ct == FLASH) ? 0 : (pressureWellHeadPSI() - geothermal::PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI); // [2B.Resource&Well Input].D149
+	double injectionWellSurfacePressurePSI = (mo_geo_in.me_ct == FLASH) ? 0 : (pressureWellHeadPSI() - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI); // [2B.Resource&Well Input].D149
 	// this used to incorrectly convert PSI to bar - does this still work for Binary?????????????????????
 	double pMax = (pZero() > injectionWellSurfacePressurePSI) ? pZero() : injectionWellSurfacePressurePSI; //G18
 	double depthFt = geothermal::MetersToFeet(GetResourceDepthM()); //G22
@@ -1099,7 +1102,8 @@ double CGeothermalAnalyzer::pressureWellHeadPSI()
 	double pressureSaturation = geothermal::oPC.evaluate(tempF); // valid above boiling, I guess.
 	//double pressureExcessPSI = geothermal::BarToPsi(geothermal::EXCESS_PRESSURE_BAR); // bar to psi
 	double pressureExcessPSI = geothermal::BarToPsi(mo_geo_in.md_ExcessPressureBar); // bar to psi
-	return (GetTemperaturePlantDesignC() > 100) ? pressureSaturation + pressureExcessPSI : geothermal::PRESSURE_AMBIENT_PSI + pressureExcessPSI;
+	//return (GetTemperaturePlantDesignC() > 100) ? pressureSaturation + pressureExcessPSI : geothermal::PRESSURE_AMBIENT_PSI + pressureExcessPSI;
+	return (GetTemperaturePlantDesignC() > 100) ? pressureSaturation + pressureExcessPSI : mo_geo_in.md_PressureAmbientPSI + pressureExcessPSI;
 }
 
 double CGeothermalAnalyzer::pressureHydrostaticPSI()
@@ -1233,13 +1237,16 @@ double CGeothermalAnalyzer::pInter(int stage)
 	{
 		case 0: return pTotal();
 		case 1: return pTotal() * pRatio();
-		case 2: return (geothermal::NUMBER_OF_COOLING_STAGES > 2) ? pTotal() * pRatio() * pRatio()  : geothermal::PRESSURE_AMBIENT_PSI;
-		case 3: return geothermal::PRESSURE_AMBIENT_PSI;
+		//case 2: return (geothermal::NUMBER_OF_COOLING_STAGES > 2) ? pTotal() * pRatio() * pRatio()  : geothermal::PRESSURE_AMBIENT_PSI;
+		case 2: return (geothermal::NUMBER_OF_COOLING_STAGES > 2) ? pTotal() * pRatio() * pRatio()  : mo_geo_in.md_PressureAmbientPSI;
+		//case 3: return geothermal::PRESSURE_AMBIENT_PSI;
+		case 3: return mo_geo_in.md_PressureAmbientPSI;
 		default: { ms_ErrorString = ("Invalid stage in CGeothermalAnalyzer::pInter"); return 0; }
 	}
 }
 double CGeothermalAnalyzer::pTotal(void) { return (geothermal::IMITATE_GETEM) ? pressureSaturation() + (geothermal::PRESSURE_CONDENSER_NCG_PARTIAL_INHG * 0.49) : pressureCondenser(); } // calculated separately in spreadsheet, but mathematically equivalent to pressureCondenser					   D150,D74 - psi
-double CGeothermalAnalyzer::pRatio(void) { return exp(log(geothermal::PRESSURE_AMBIENT_PSI / (pTotal()))/geothermal::NUMBER_OF_COOLING_STAGES); }
+//double CGeothermalAnalyzer::pRatio(void) { return exp(log(geothermal::PRESSURE_AMBIENT_PSI / (pTotal()))/geothermal::NUMBER_OF_COOLING_STAGES); }
+double CGeothermalAnalyzer::pRatio(void) { return exp(log(mo_geo_in.md_PressureAmbientPSI / (pTotal()))/geothermal::NUMBER_OF_COOLING_STAGES); }
 double CGeothermalAnalyzer::ncgFlowLbsPerHour(void) { return geothermal::GEOTHERMAL_FLUID_FOR_FLASH * geothermal::NCG_LEVEL_PPM / 1000000; }
 double CGeothermalAnalyzer::ncgFlowMolesPerHour(void) { return ncgFlowLbsPerHour() / geothermal::MOLE_WEIGHT_NCG; }
 double CGeothermalAnalyzer::pSuction(int stage) { return pTotal() * pow(pRatio(),stage-1); }
@@ -1282,7 +1289,8 @@ double CGeothermalAnalyzer::FlashBrineEffectiveness(void)
 		double dGrossOutput = turbine1OutputKWh();
 		if (FlashCount() == 2) dGrossOutput += turbine2OutputKWh();
 		double dGrossPower = dGrossOutput * geothermal::EFFICIENCY_GENERATOR;
-		double deltaPressureCondenserFt = (geothermal::CONDENSER_TYPE == SURFACE) ? geothermal::ADDITIONAL_CW_PUMP_HEAD_SURFACE : physics::PSItoFT(geothermal::PRESSURE_AMBIENT_PSI + 1 - (pressureCondenser())); // O102
+		//double deltaPressureCondenserFt = (geothermal::CONDENSER_TYPE == SURFACE) ? geothermal::ADDITIONAL_CW_PUMP_HEAD_SURFACE : physics::PSItoFT(geothermal::PRESSURE_AMBIENT_PSI + 1 - (pressureCondenser())); // O102
+		double deltaPressureCondenserFt = (geothermal::CONDENSER_TYPE == SURFACE) ? geothermal::ADDITIONAL_CW_PUMP_HEAD_SURFACE : physics::PSItoFT(mo_geo_in.md_PressureAmbientPSI + 1 - (pressureCondenser())); // O102
 		double cwPumpHead = geothermal::BASE_CW_PUMP_HEAD_FT + deltaPressureCondenserFt; // D110 - ft
 
 		double mainCWPumpPowerKW = CalculatePumpWorkInKW(cwFlow(), cwPumpHead);	// part of I116
@@ -1351,9 +1359,11 @@ double CGeothermalAnalyzer::cwPumpWorkKW(void) { return cwPumpWorkKWByStage(1) +
 
 
 // Condensate Pump Power
-double CGeothermalAnalyzer::condensatePumpHead(void) { return geothermal::PSItoFTB(geothermal::PRESSURE_AMBIENT_PSI + 1 - pressureCondenser()) + geothermal::BASE_CW_PUMP_HEAD_FT; } // D121
+//double CGeothermalAnalyzer::condensatePumpHead(void) { return geothermal::PSItoFTB(geothermal::PRESSURE_AMBIENT_PSI + 1 - pressureCondenser()) + geothermal::BASE_CW_PUMP_HEAD_FT; } // D121
+double CGeothermalAnalyzer::condensatePumpHead(void) { return geothermal::PSItoFTB(mo_geo_in.md_PressureAmbientPSI + 1 - pressureCondenser()) + geothermal::BASE_CW_PUMP_HEAD_FT; } // D121
 double CGeothermalAnalyzer::condensatePumpPowerKW(void) { return CalculatePumpWorkInKW(overAllSteam(), condensatePumpHead()); } // D125->kw, part of I117
-double CGeothermalAnalyzer::condensatePumpHeadByStage(int st) { return geothermal::PSItoFTB(geothermal::PRESSURE_AMBIENT_PSI + 1 - pInter(st)); } // D201, D249, D297
+//double CGeothermalAnalyzer::condensatePumpHeadByStage(int st) { return geothermal::PSItoFTB(geothermal::PRESSURE_AMBIENT_PSI + 1 - pInter(st)); } // D201, D249, D297
+double CGeothermalAnalyzer::condensatePumpHeadByStage(int st) { return geothermal::PSItoFTB(mo_geo_in.md_PressureAmbientPSI + 1 - pInter(st)); } // D201, D249, D297
 double CGeothermalAnalyzer::condensatePumpWorkByStage(int st) { return CalculatePumpWorkInKW(condensedSteamLbPerHour(st), condensatePumpHeadByStage(st)); } // D203, ... kW
 double CGeothermalAnalyzer::totalCondensatePumpWorkKW(void) { return condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3); } // D306 - kW
 double CGeothermalAnalyzer::condensatePumpingKW(void) { return condensatePumpPowerKW() + totalCondensatePumpWorkKW(); } // I117 - kW
@@ -1380,7 +1390,8 @@ double CGeothermalAnalyzer:: vacuumPumpingKW(void) { return vacuumPumpWorkByStag
 // Condenser Injection Pump Power
 double CGeothermalAnalyzer:: injectionDeltaP(void)
 {	// D127 - psi (condensate injection delta pressure)
-	return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI : mp_geo_out->md_PressureLPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI; 
+	//return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI : mp_geo_out->md_PressureLPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI; 
+	return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - mo_geo_in.md_PressureAmbientPSI : mp_geo_out->md_PressureLPFlashPSI - mo_geo_in.md_PressureAmbientPSI; 
 }
 double CGeothermalAnalyzer:: injectionPumpHead(void) {return physics::PSItoFT(injectionDeltaP()); } // D128 - ft
 double CGeothermalAnalyzer:: injCoeffA(void) { return -0.0001769 * log(geothermal::DELTA_TEMPERATURE_CWF) + 0.0011083; }// R95
@@ -1421,7 +1432,8 @@ double CGeothermalAnalyzer::pressureSingleToTest(void)
 }
 double CGeothermalAnalyzer::pressureSingle(void)
 {	// O64
-	return (pressureSingleToTest() < geothermal::PRESSURE_AMBIENT_PSI) ? geothermal::PRESSURE_AMBIENT_PSI : pressureSingleToTest(); 
+	//return (pressureSingleToTest() < geothermal::PRESSURE_AMBIENT_PSI) ? geothermal::PRESSURE_AMBIENT_PSI : pressureSingleToTest(); 
+	return (pressureSingleToTest() < mo_geo_in.md_PressureAmbientPSI) ? mo_geo_in.md_PressureAmbientPSI : pressureSingleToTest(); 
 }							
 double CGeothermalAnalyzer::pressureDualHighNoConstraint()
 {	// R64
@@ -1451,7 +1463,8 @@ double CGeothermalAnalyzer::pressureDualLowToTest(void)
 }							
 double CGeothermalAnalyzer::pressureDualLow(void) 
 {	// P65
-	return  (pressureDualLowToTest() < geothermal::PRESSURE_AMBIENT_PSI) ? geothermal::PRESSURE_AMBIENT_PSI : pressureDualLowToTest(); 
+	//return  (pressureDualLowToTest() < geothermal::PRESSURE_AMBIENT_PSI) ? geothermal::PRESSURE_AMBIENT_PSI : pressureDualLowToTest(); 
+	return  (pressureDualLowToTest() < mo_geo_in.md_PressureAmbientPSI) ? mo_geo_in.md_PressureAmbientPSI : pressureDualLowToTest(); 
 }						
 
 
@@ -1714,7 +1727,8 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 			mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
 
 			// Is it possible and do we want to replace the reservoir in the next time step?
-			bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
+			//bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
+			bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC) ) ? true : false;
 			if (bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0/12) ) )
 			{
 				ReplaceReservoir(dElapsedTimeInYears); // this will 'reset' temperature back to original resource temp
@@ -1765,7 +1779,8 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
 	mp_geo_out->md_PumpDepthFt = GetCalculatedPumpDepthInFeet();
 	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()
-	mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * geothermal::EFFICIENCY_PUMP_GF);
+	//mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * geothermal::EFFICIENCY_PUMP_GF);
+	mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * mo_geo_in.md_GFPumpEfficiency);
 
 	mp_geo_out->md_AverageReservoirTemperatureF = physics::CelciusToFarenheit(GetResourceTemperatureC());	// Set a default value, it might be recalculated in "GetPressureChangeAcrossReservoir()" if necessary
 	mp_geo_out->md_PressureChangeAcrossReservoir = GetPressureChangeAcrossReservoir();
