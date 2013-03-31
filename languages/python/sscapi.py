@@ -1,7 +1,7 @@
 # #####################################################################
 #
 #   System Simulation Core (SSC) Python Wrapper
-#   Author: Aron Dobos @ NREL
+#   Author: Aron Dobos @ NREL and Steven Janzou @ NREL
 #
 # #####################################################################
 
@@ -16,13 +16,13 @@ class PySSC:
 		
 		if sys.platform == 'win32' or sys.platform == 'cygwin':
 			if 8*struct.calcsize("P") == 64:
-				self.pdll = CDLL("../../Win64/ssc64.dll") 
+				self.pdll = CDLL("../../win64/ssc64.dll") 
 			else:
-				self.pdll = CDLL("../../Win32/ssc32.dll") 
+				self.pdll = CDLL("../../win32/ssc32.dll") 
 		elif sys.platform == 'darwin':
-			self.pdll = CDLL("../../Win64/ssc64.dll") 
+			self.pdll = CDLL("../../osx64/ssc64.dylib") 
 		elif sys.platform == 'linux2':
-			self.pdll = CDLL("../../Win64/ssc64.dll") 
+			self.pdll = CDLL("../../linux64/ssc64.so") 
 		else:
 			print "Platform not supported ", sys.platform
 
