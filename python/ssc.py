@@ -1,7 +1,7 @@
 # #####################################################################
 #
-#   System Simulation Core (SSC) Python Wrapper
-#   Author: Aron Dobos @ NREL and Steven Janzou @ NREL
+#   System Simulation Core (SSC) Python Wrapper using Classes
+#   Author: Steven Janzou @ NREL and Aron Dobos @ NREL
 #
 # #####################################################################
 
@@ -10,76 +10,85 @@ import string, sys, struct
 from ctypes import *
 
 c_number = c_float # must be c_double or c_float depending on how defined in sscapi.h
-class PySSC:
+class SSCAPI:
 
-	def __init__(self):
-		
-		if sys.platform == 'win32' or sys.platform == 'cygwin':
-			if 8*struct.calcsize("P") == 64:
-				self.pdll = CDLL("../../win64/ssc64.dll") 
-			else:
-				self.pdll = CDLL("../../win32/ssc32.dll") 
-		elif sys.platform == 'darwin':
-			self.pdll = CDLL("../../osx64/ssc64.dylib") 
-		elif sys.platform == 'linux2':
-			self.pdll = CDLL("../../linux64/ssc64.so") 
+	if sys.platform == 'win32' or sys.platform == 'cygwin':
+		if 8*struct.calcsize("P") == 64:
+			pdll = CDLL("../../win64/ssc64.dll") 
 		else:
-			print "Platform not supported ", sys.platform
+			pdll = CDLL("../../win32/ssc32.dll") 
+#		return pdll
+	elif sys.platform == 'darwin':
+		pdll = CDLL("../../osx64/ssc64.dylib") 
+#		return pdll
+	elif sys.platform == 'linux2':
+		pdll = CDLL("../../linux64/ssc64.so") 
+#		return pdll
+	else:
+		print "Platform not supported ", sys.platform
+	
+	
 
+	@staticmethod
+	def ssc_version():
+		SSCAPI.pdll.ssc_version.restype = c_int
+		return SSCAPI.pdll.ssc_version()
 
-	INVALID=0
-	STRING=1
-	NUMBER=2
-	ARRAY=3
-	MATRIX=4
+	@staticmethod
+	def ssc_build_info():
+		SSCAPI.pdll.ssc_build_info.restype = c_char_p
+		return SSCAPI.pdll.ssc_build_info()
+	
+	@staticmethod
+	def ssc_data_create():
+		SSCAPI.pdll.ssc_data_create.restype = c_void_p
+		return SSCAPI.pdll.ssc_data_create()
 
-	INPUT=1
-	OUTPUT=2
-	INOUT=3
+	@staticmethod
+	def ssc_data_free( p_data):
+		SSCAPI.pdll.ssc_data_free( c_void_p(p_data) )
 
-	def version(self):
-		self.pdll.ssc_version.restype = c_int
-		return self.pdll.ssc_version()
+	@staticmethod
+	def ssc_data_clear( p_data):
+		SSCAPI.pdll.ssc_data_clear( c_void_p(p_data) )
 
-	def data_create(self):
-		self.pdll.ssc_data_create.restype = c_void_p
-		return self.pdll.ssc_data_create()
+	@staticmethod
+	def ssc_data_unassign( p_data, name):
+		SSCAPI.pdll.ssc_data_unassign( c_void_p(p_data), c_char_p(name) )
 
-	def data_free(self, p_data):
-		self.pdll.ssc_data_free( c_void_p(p_data) )
+	@staticmethod
+	def ssc_data_query( p_data, name):
+		SSCAPI.pdll.ssc_data_query.restype = c_int
+		return SSCAPI.pdll.ssc_data_query( c_void_p(p_data), c_char_p(name) )
 
-	def data_clear(self, p_data):
-		self.pdll.ssc_data_clear( c_void_p(p_data) )
+	@staticmethod
+	def ssc_data_first( p_data):
+		SSCAPI.pdll.ssc_data_first.restype = c_char_p
+		return SSCAPI.pdll.ssc_data_first( c_void_p(p_data) )
 
-	def data_unassign(self, p_data, name):
-		self.pdll.ssc_data_unassign( c_void_p(p_data), c_char_p(name) )
+	@staticmethod
+	def ssc_data_next( p_data):
+		SSCAPI.pdll.ssc_data_next.restype = c_char_p
+		return SSCAPI.pdll.ssc_data_next( c_void_p(p_data) )
 
-	def data_query(self, p_data, name):
-		self.pdll.ssc_data_query.restype = c_int
-		return self.pdll.ssc_data_query( c_void_p(p_data), c_char_p(name) )
+	@staticmethod
+	def data_set_string( p_data, name, value):
+		SSCAPI.pdll.ssc_data_set_string( c_void_p(p_data), c_char_p(name), c_char_p(value) )
 
-	def data_first(self, p_data):
-		self.pdll.ssc_data_first.restype = c_char_p
-		return self.pdll.ssc_data_first( c_void_p(p_data) )
+	@staticmethod
+	def ssc_data_set_number( p_data, name, value):
+		SSCAPI.pdll.ssc_data_set_number( c_void_p(p_data), c_char_p(name), c_number(value) )
 
-	def data_next(self, p_data):
-		self.pdll.ssc_data_next.restype = c_char_p
-		return self.pdll.ssc_data_next( c_void_p(p_data) )
-
-	def data_set_string(self, p_data, name, value):
-		self.pdll.ssc_data_set_string( c_void_p(p_data), c_char_p(name), c_char_p(value) )
-
-	def data_set_number(self, p_data, name, value):
-		self.pdll.ssc_data_set_number( c_void_p(p_data), c_char_p(name), c_number(value) )
-
-	def data_set_array(self,p_data,name,parr):
+	@staticmethod
+	def ssc_data_set_array(p_data,name,parr):
 		count = len(parr)
 		arr = (c_number*count)()
 		for i in range(count):
 			arr[i] = c_number(parr[i])
-		return self.pdll.ssc_data_set_array( c_void_p(p_data), c_char_p(name),pointer(arr), c_int(count))
+		return SSCAPI.pdll.ssc_data_set_array( c_void_p(p_data), c_char_p(name),pointer(arr), c_int(count))
 
-	def data_set_matrix(self,p_data,name,mat):
+	@staticmethod
+	def ssc_data_set_matrix(p_data,name,mat):
 		nrows = len(mat)
 		ncols = len(mat[0])
 		size = nrows*ncols
@@ -89,32 +98,36 @@ class PySSC:
 			for c in range(ncols):
 				arr[idx] = c_number(mat[r][c])
 				idx=idx+1
-		return self.pdll.ssc_data_set_matrix( c_void_p(p_data), c_char_p(name),pointer(arr), c_int(nrows), c_int(ncols))
+		return SSCAPI.pdll.ssc_data_set_matrix( c_void_p(p_data), c_char_p(name),pointer(arr), c_int(nrows), c_int(ncols))
 
 
-	def data_get_string(self, p_data, name):
-		self.pdll.ssc_data_get_string.restype = c_char_p
-		return self.pdll.ssc_data_get_string( c_void_p(p_data), c_char_p(name) )
+	@staticmethod
+	def ssc_data_get_string( p_data, name):
+		SSCAPI.pdll.ssc_data_get_string.restype = c_char_p
+		return SSCAPI.pdll.ssc_data_get_string( c_void_p(p_data), c_char_p(name) )
 
-	def data_get_number(self, p_data, name):
+	@staticmethod
+	def ssc_data_get_number( p_data, name):
 		val = c_number(0)
-		self.pdll.ssc_data_get_number( c_void_p(p_data), c_char_p(name), byref(val) )
+		SSCAPI.pdll.ssc_data_get_number( c_void_p(p_data), c_char_p(name), byref(val) )
 		return val.value
 
-	def data_get_array(self,p_data,name):
+	@staticmethod
+	def ssc_data_get_array(p_data,name):
 		count = c_int()
-		self.pdll.ssc_data_get_array.restype = POINTER(c_number)
-		parr = self.pdll.ssc_data_get_array( c_void_p(p_data), c_char_p(name), byref(count))
+		SSCAPI.pdll.ssc_data_get_array.restype = POINTER(c_number)
+		parr = SSCAPI.pdll.ssc_data_get_array( c_void_p(p_data), c_char_p(name), byref(count))
 		arr = []
 		for i in range(count.value):
 			arr.append( float(parr[i]) )
 		return arr
 
-	def data_get_matrix(self,p_data,name):
+	@staticmethod
+	def ssc_data_get_matrix(p_data,name):
 		nrows = c_int()
 		ncols = c_int()
-		self.pdll.ssc_data_get_matrix.restype = POINTER(c_number)
-		parr = self.pdll.ssc_data_get_matrix( c_void_p(p_data), c_char_p(name), byref(nrows), byref(ncols) )
+		SSCAPI.pdll.ssc_data_get_matrix.restype = POINTER(c_number)
+		parr = SSCAPI.pdll.ssc_data_get_matrix( c_void_p(p_data), c_char_p(name), byref(nrows), byref(ncols) )
 		idx = 0
 		mat = []
 		for r in range(nrows.value):
@@ -125,74 +138,129 @@ class PySSC:
 			mat.append(row)
 		return mat
 
-	def module_entry(self,index):
-		self.pdll.ssc_module_entry.restype = c_void_p
-		return self.pdll.ssc_module_entry( c_int(index) )
+	@staticmethod
+	def ssc_module_entry(index):
+		SSCAPI.pdll.ssc_module_entry.restype = c_void_p
+		return SSCAPI.pdll.ssc_module_entry( c_int(index) )
 
-	def entry_name(self,p_entry):
-		self.pdll.ssc_entry_name.restype = c_char_p
-		return self.pdll.ssc_entry_name( c_void_p(p_entry) )
+	@staticmethod
+	def ssc_entry_name(p_entry):
+		SSCAPI.pdll.ssc_entry_name.restype = c_char_p
+		return SSCAPI.pdll.ssc_entry_name( c_void_p(p_entry) )
 
-	def entry_description(self,p_entry):
-		self.pdll.ssc_entry_description.restype = c_char_p
-		return self.pdll.ssc_entry_description( c_void_p(p_entry) )
+	@staticmethod
+	def entry_description(p_entry):
+		SSCAPI.pdll.ssc_entry_description.restype = c_char_p
+		return SSCAPI.pdll.ssc_entry_description( c_void_p(p_entry) )
 
-	def entry_version(self,p_entry):
-		self.pdll.ssc_entry_version.restype = c_int
-		return self.pdll.ssc_entry_version( c_void_p(p_entry) )
+	@staticmethod
+	def ssc_entry_version(p_entry):
+		SSCAPI.pdll.ssc_entry_version.restype = c_int
+		return SSCAPI.pdll.ssc_entry_version( c_void_p(p_entry) )
 
-	def module_create(self,name):
-		self.pdll.ssc_module_create.restype = c_void_p
-		return self.pdll.ssc_module_create( c_char_p(name) )
+	@staticmethod
+	def ssc_module_create(name):
+		SSCAPI.pdll.ssc_module_create.restype = c_void_p
+		return SSCAPI.pdll.ssc_module_create( c_char_p(name) )
 
-	def module_free(self,p_mod):
-		self.pdll.ssc_module_free( c_void_p(p_mod) )
+	@staticmethod
+	def ssc_module_free(p_mod):
+		SSCAPI.pdll.ssc_module_free( c_void_p(p_mod) )
 
-	def module_var_info(self,p_mod,index):
-		self.pdll.ssc_module_var_info.restype = c_void_p
-		return self.pdll.ssc_module_var_info( c_void_p(p_mod), c_int(index) )
+	@staticmethod
+	def ssc_module_var_info(p_mod,index):
+		SSCAPI.pdll.ssc_module_var_info.restype = c_void_p
+		return SSCAPI.pdll.ssc_module_var_info( c_void_p(p_mod), c_int(index) )
 
-	def info_var_type( self, p_inf ):
-		return self.pdll.ssc_info_var_type( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_var_type( p_inf ):
+		return SSCAPI.pdll.ssc_info_var_type( c_void_p(p_inf) )
 
-	def info_data_type( self, p_inf ):
-		return self.pdll.ssc_info_data_type( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_data_type( p_inf ):
+		return SSCAPI.pdll.ssc_info_data_type( c_void_p(p_inf) )
 
-	def info_name( self, p_inf ):
-		self.pdll.ssc_info_name.restype = c_char_p
-		return self.pdll.ssc_info_name( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_name( p_inf ):
+		SSCAPI.pdll.ssc_info_name.restype = c_char_p
+		return SSCAPI.pdll.ssc_info_name( c_void_p(p_inf) )
 
-	def info_label( self, p_inf ):
-		self.pdll.ssc_info_label.restype = c_char_p
-		return self.pdll.ssc_info_label( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_label( p_inf ):
+		SSCAPI.pdll.ssc_info_label.restype = c_char_p
+		return SSCAPI.pdll.ssc_info_label( c_void_p(p_inf) )
 
-	def info_units( self, p_inf ):
-		self.pdll.ssc_info_units.restype = c_char_p
-		return self.pdll.ssc_info_units( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_units( p_inf ):
+		SSCAPI.pdll.ssc_info_units.restype = c_char_p
+		return SSCAPI.pdll.ssc_info_units( c_void_p(p_inf) )
 
-	def info_meta( self, p_inf ):
-		self.pdll.ssc_info_meta.restype = c_char_p
-		return self.pdll.ssc_info_meta( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_meta( p_inf ):
+		SSCAPI.pdll.ssc_info_meta.restype = c_char_p
+		return SSCAPI.pdll.ssc_info_meta( c_void_p(p_inf) )
 
-	def info_group( self, p_inf ):
-		self.pdll.ssc_info_group.restype = c_char_p
-		return self.pdll.ssc_info_group( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_group( p_inf ):
+		SSCAPI.pdll.ssc_info_group.restype = c_char_p
+		return SSCAPI.pdll.ssc_info_group( c_void_p(p_inf) )
 
-	def info_uihint( self, p_inf ):
-		self.pdll.ssc_info_uihint.restype = c_char_p
-		return self.pdll.ssc_info_uihint( c_void_p(p_inf) )
+	@staticmethod
+	def ssc_info_uihint( p_inf ):
+		SSCAPI.pdll.ssc_info_uihint.restype = c_char_p
+		return SSCAPI.pdll.ssc_info_uihint( c_void_p(p_inf) )
 
-	def module_exec( self, p_mod, p_data ):
-		self.pdll.ssc_module_exec.restype = c_int
-		return self.pdll.ssc_module_exec( c_void_p(p_mod), c_void_p(p_data) )
+	@staticmethod
+	def ssc_module_exec( p_mod, p_data ):
+		SSCAPI.pdll.ssc_module_exec.restype = c_int
+		return SSCAPI.pdll.ssc_module_exec( c_void_p(p_mod), c_void_p(p_data) )
 
-	def module_log( self, p_mod, index ):
+	@staticmethod
+	def ssc_module_log( p_mod, index ):
 		type = c_int()
 		time = c_float()
-		self.pdll.ssc_module_log.restype = c_char_p
-		return self.pdll.ssc_module_log( c_void_p(p_mod), c_int(index), byref(type), byref(time) )
+		SSCAPI.pdll.ssc_module_log.restype = c_char_p
+		return SSCAPI.pdll.ssc_module_log( c_void_p(p_mod), c_int(index), byref(type), byref(time) )
+	
+	
+	
+	
+	
+	
+	
+class API:
+	# constants for return value of Info.VarType() (see sscapi.h)
+	INPUT=1
+	OUTPUT=2
+	INOUT=3
+
+	# constants for out integer type in Module.Log() method (see sscapi.h)
+	NOTICE = 1
+	WARNING = 2
+	ERROR = 3
 
 
+	# constants for return value of Data.Query() and Info.DataType() (see sscapi.h)
+	INVALID=0
+	STRING=1
+	NUMBER=2
+	ARRAY=3
+	MATRIX=4
+	TABLE=5
+
+    
+    
+	def Version(self):
+		return SSCAPI.ssc_version()
+    
+	def BuildInfo(self):
+		return SSCAPI.ssc_build_info()
+	
+	
+	
+	
+
+################################################################################
 
 if __name__ == "__main__":
 
