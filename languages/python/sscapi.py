@@ -6,13 +6,26 @@
 # #####################################################################
 
 
-import string, sys
+import string, sys, struct
 from ctypes import *
 
 c_number = c_float # must be c_double or c_float depending on how defined in sscapi.h
 class PySSC:
+
 	def __init__(self):
-		self.pdll = CDLL("../../Win32/ssc32.dll") # Python windows 64 bit and 32 bit are both actually 32-bit see PC/pyconfig.h
+		
+		if sys.platform == 'win32' or sys.platform == 'cygwin':
+			if 8*struct.calcsize("P") == 64:
+				self.pdll = CDLL("../../Win64/ssc64.dll") 
+			else:
+				self.pdll = CDLL("../../Win32/ssc32.dll") 
+		elif sys.platform == 'darwin':
+			self.pdll = CDLL("../../Win64/ssc64.dll") 
+		elif sys.platform == 'linux2':
+			self.pdll = CDLL("../../Win64/ssc64.dll") 
+		else:
+			print "Platform not supported ", sys.platform
+
 
 	INVALID=0
 	STRING=1
