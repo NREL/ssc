@@ -6,7 +6,7 @@
 # #####################################################################
 
 
-import string, sys, struct
+import string, sys, struct, math
 from ctypes import *
 
 c_number = c_float # must be c_double or c_float depending on how defined in sscapi.h
@@ -100,6 +100,10 @@ class SSCAPI:
 				idx=idx+1
 		return SSCAPI._dll.ssc_data_set_matrix( c_void_p(p_data), c_char_p(name),pointer(arr), c_int(nrows), c_int(ncols))
 
+	@staticmethod
+	def ssc_data_set_table(p_data,name,table):
+		SSCAPI._dll.ssc_data_set_table( c_void_p(p_data), c_char_p(name), c_void_p(table) )
+
 
 	@staticmethod
 	def ssc_data_get_string( p_data, name):
@@ -137,6 +141,12 @@ class SSCAPI:
 				idx = idx + 1
 			mat.append(row)
 		return mat
+	
+	@staticmethod
+	def ssc_data_get_table(p_data,name):
+		SSCAPI._dll.ssc_data_get_table.restype = c_void_p
+		return SSCAPI._dll.ssc_data_get_table( c_void_p(p_data), c_char_p(name) )
+		
 
 	@staticmethod
 	def ssc_module_entry(index):
@@ -297,3 +307,73 @@ class Entry:
 
 	
 
+class Data:
+	    
+	def __init__(self, data = None):
+		if (data is None):
+			self._data = SSCAPI.ssc_data_create()
+			self._owned = True
+		else: # be careful of cyclic references - can use weakref.ref(data)
+			self._data = data
+			self._owned = False
+		
+		
+		
+	def __del__(self):
+		if (self._owned) and (self._data != None):
+			SSCAPI.ssc_data_free(self._data)
+	    
+	def clear(self):
+		SSCAPI.ssc_data_clear(self._data)
+	    
+	def first(self):
+		p = SSCAPI.ssc_data_first(self._data)
+		if (p is not None) and (len(p)>0):
+			return p
+		else:
+			return None
+	    
+	def next(self):
+		p = SSCAPI.ssc_data_next(self._data)
+		if (p is not None) and (len(p)>0):
+			return p
+		else:
+			return None
+    
+	def query(self, name):
+		return SSCAPI.ssc_data_query(self._data, name)
+	    
+	def set_number(self, name, value):
+		SSCAPI.ssc_data_set_number(self._data, name, value)
+	    
+	def get_number(self, name):
+		val = float('nan')
+		val = SSCAPI.ssc_data_get_number(self._data, name)
+		return val
+	    
+	def set_string(self, name, value):
+		SSCAPI.ssc_data_set_string(self._data, name, value)
+	    
+	def get_string(self, name):
+		return SSCAPI.ssc_data_get_string(self._data, name)
+	    
+	def set_array(self, name, data):
+		SSCAPI.ssc_data_set_array(self._data, name, data)
+	    
+	def get_array(self, name):
+		return SSCAPI.ssc_data_get_array(self._data, name)
+	    
+	def set_matrix(self, name, mat):
+		SSCAPI.ssc_data_set_matrix(self._data, name, mat)
+	    
+	def get_matrix(self, name):
+		return SSCAPI.ssc_data_get_matrix(self._data, name)
+	    
+	def set_table(self, name, table):
+		SSCAPI.ssc_data_set_table(self._data, name, table)
+	    
+	def get_table(self, name):
+		return SSCAPI.ssc_data_get_table(self._data, name)
+	    
+	def get_data_handle(self):
+		return self._data
