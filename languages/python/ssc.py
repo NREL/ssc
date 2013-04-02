@@ -72,7 +72,7 @@ class SSCAPI:
 		return SSCAPI._dll.ssc_data_next( c_void_p(p_data) )
 
 	@staticmethod
-	def data_set_string( p_data, name, value):
+	def ssc_data_set_string( p_data, name, value):
 		SSCAPI._dll.ssc_data_set_string( c_void_p(p_data), c_char_p(name), c_char_p(value) )
 
 	@staticmethod
@@ -455,7 +455,7 @@ class Info:
 
 
 
-class module:
+class Module:
 	
 	def __init__(self, name):
 		self._mod = SSCAPI.ssc_module_create(name)
@@ -464,7 +464,7 @@ class module:
 		
 	def __del__(self):
 		if (self._mod is not None):
-			SSCAPI.ssc_module_free(self._module)
+			SSCAPI.ssc_module_free(self._mod)
 	    
 
 	def is_ok(self):
@@ -476,12 +476,7 @@ class module:
 	def exec_(self, data):
 		return (SSCAPI.ssc_module_exec(self._mod, data.get_data_handle()) != 0);
 
-	def log(self, idx, msg, type_, time):
-		msg = ""
-		p = SSCAPI.ssc_module_log(self._mod, idx, type_, time)
-		if (p is not None):
-			msg = p;
-			return true
-		else:
-			return false
+	def log(self, idx):
+		msg = SSCAPI.ssc_module_log(self._mod, idx)
+		return msg
 	
