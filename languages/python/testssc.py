@@ -67,6 +67,15 @@ def module_and_variables_test():
  
 			  while (ssc_info.get()):
 				       print "\t" , ssc_info.var_type() , ": \"" , ssc_info.name() , "\" " , " [" , ssc_info.data_type() , "] " + ssc_info.label() , " (" , ssc_info.units() , ")"
+
+def variables_list(module):
+	     ssc_module = ssc.Module(module)
+	     ssc_info = ssc.Info(ssc_module)
+	     
+	     print "Variables for " , module
+	     while (ssc_info.get()):
+			  print "\t" , ssc_info.var_type() , ": \"" , ssc_info.name() , "\" " , " [" , ssc_info.data_type() , "] " + ssc_info.label() , " (" , ssc_info.units() , ")"
+	     
 	     
 
 def pvwatts_test():
@@ -149,4 +158,5 @@ version_test()
 #array_test()
 #matrix_test()
 #pvwatts_test()
-pvwatts_func_test()
+#pvwatts_func_test()
+variables_list("pvsamv1")
