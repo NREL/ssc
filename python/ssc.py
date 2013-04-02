@@ -72,7 +72,7 @@ class SSCAPI:
 		return SSCAPI._dll.ssc_data_next( c_void_p(p_data) )
 
 	@staticmethod
-	def data_set_string( p_data, name, value):
+	def ssc_data_set_string( p_data, name, value):
 		SSCAPI._dll.ssc_data_set_string( c_void_p(p_data), c_char_p(name), c_char_p(value) )
 
 	@staticmethod
@@ -280,27 +280,27 @@ class Entry:
     
 	def get(self):
 	        self._entry = SSCAPI.ssc_module_entry(self._idx)
-	        if (self._entry == None):
+	        if (self._entry is None):
 			self.reset()
 			return False
-    
-		self._idx = self._idx + 1
-		return True
+		else:
+			self._idx += 1
+			return True
     
 	def name(self):
-		if (self._entry != None):
+		if (self._entry is not None):
 			return SSCAPI.ssc_entry_name(self._entry)
 		else: 
 			return None
     
 	def description(self):
-		if (self._entry != None):
+		if (self._entry is not None):
 			return SSCAPI.ssc_entry_description(self._entry)
 		else:
 			return null
     
 	def version(self):
-		if (self._entry != None):
+		if (self._entry is not None):
 			return SSCAPI.ssc_entry_version(self._entry)
 		else:
 			return -1
@@ -377,3 +377,106 @@ class Data:
 	    
 	def get_data_handle(self):
 		return self._data
+
+
+
+class Info:
+	
+	def __init__(self, module):
+		self._mod = module
+		self._idx = 0
+		
+		
+	def reset(self):
+		self._idx = 0
+		
+	def get(self):
+		self._inf = SSCAPI.ssc_module_var_info(self._mod.get_module_handle(), self._idx)
+		if (self._inf is None):
+			self.reset()
+			return False
+		else:
+			self._idx += 1
+			return True
+		
+	def name(self):
+		if (self._inf is None):
+			return None
+		else:
+			return SSCAPI.ssc_info_name(self._inf)
+	
+	def var_type(self):
+		if (self._inf is None):
+			return -1
+		else:
+			return SSCAPI.ssc_info_var_type(self._inf)
+	
+	def data_type(self):
+		if (self._inf is None):
+			return -1
+		else:
+			return SSCAPI.ssc_info_data_type(self._inf)
+	 
+	def label(self):
+		if (self._inf is None):
+			return None
+		else:
+			return SSCAPI.ssc_info_label(self._inf)
+	
+	def units(self):
+		if (self._inf is None):
+			return None
+		else:
+			return SSCAPI.ssc_info_units(self._inf)
+	
+	def meta(self):
+		if (self._inf is None):
+			return None
+		else:
+			return SSCAPI.ssc_info_meta(self._inf)
+	
+	def group(self):
+		if (self._inf is None):
+			return None
+		else:
+			return SSCAPI.ssc_info_group(self._inf)
+	
+	def required(self):
+		if (self._inf is None):
+			return None
+		else:
+			return SSCAPI.ssc_info_required(self._inf)
+	
+	def constraints(self):
+		if (self._inf is None):
+			return None
+		else:
+			return SSCAPI.ssc_info_constraints(self._inf)
+
+
+
+class Module:
+	
+	def __init__(self, name):
+		self._mod = SSCAPI.ssc_module_create(name)
+		
+		
+		
+	def __del__(self):
+		if (self._mod is not None):
+			SSCAPI.ssc_module_free(self._mod)
+	    
+
+	def is_ok(self):
+		return self._mod is not None
+
+	def get_module_handle(self):
+		return self._mod
+
+	def exec_(self, data):
+		return (SSCAPI.ssc_module_exec(self._mod, data.get_data_handle()) != 0);
+
+	def log(self, idx):
+		msg = SSCAPI.ssc_module_log(self._mod, idx)
+		return msg
+	
