@@ -1047,7 +1047,7 @@ public:
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string(istep+1) + " of 8760 in weather file");
 
 
-
+// causing AV in all wrapppers - default handler not working through wrapper layer
 //			if ( istep % (nstep/20) == 0)
 //				update( "calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep );
 
