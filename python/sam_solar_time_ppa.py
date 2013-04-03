@@ -315,6 +315,29 @@ data.set_number( 'inverter_model', 0 )
 data.set_number( 'inv_spe_efficiency', 0.95 )
 data.set_number( 'inv_spe_power_ac', 4000 )
 
+data.set_number( 'module_model', 0 )
+data.set_number( 'spe_area', 1.4 )
+data.set_number( 'spe_rad0', 200 )
+data.set_number( 'spe_rad1', 400 )
+data.set_number( 'spe_rad2', 600 )
+data.set_number( 'spe_rad3', 800 )
+data.set_number( 'spe_rad4', 1000 )
+data.set_number( 'spe_eff0', 13.5 )
+data.set_number( 'spe_eff1', 13.5 )
+data.set_number( 'spe_eff2', 13.5 )
+data.set_number( 'spe_eff3', 13.5 )
+data.set_number( 'spe_eff4', 13.5 )
+data.set_number( 'spe_reference', 4 )
+data.set_number( 'spe_module_structure', 0 )
+data.set_number( 'spe_a', -3.56 )
+data.set_number( 'spe_b', -0.075 )
+data.set_number( 'spe_dT', 3 )
+data.set_number( 'spe_temp_coeff', -0.5 )
+data.set_number( 'spe_fd', 1 )
+
+
+
+
 # all variables have been set up for pvsamv1
 # run the model
 

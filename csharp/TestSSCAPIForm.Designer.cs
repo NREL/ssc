@@ -37,6 +37,7 @@
             this.txtData = new System.Windows.Forms.RichTextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.btn4ArrayTest = new System.Windows.Forms.Button();
+            this.btnPVSamV1 = new System.Windows.Forms.Button();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -110,6 +111,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btnPVSamV1);
             this.groupBox2.Controls.Add(this.btn4PVWattsFunc);
             this.groupBox2.Controls.Add(this.btn4ModulesAndVariables);
             this.groupBox2.Controls.Add(this.btn4PVWatts);
@@ -135,6 +137,16 @@
             this.btn4ArrayTest.UseVisualStyleBackColor = true;
             this.btn4ArrayTest.Click += new System.EventHandler(this.btn4ArrayTest_Click);
             // 
+            // btnPVSamV1
+            // 
+            this.btnPVSamV1.Location = new System.Drawing.Point(228, 92);
+            this.btnPVSamV1.Name = "btnPVSamV1";
+            this.btnPVSamV1.Size = new System.Drawing.Size(75, 23);
+            this.btnPVSamV1.TabIndex = 16;
+            this.btnPVSamV1.Text = "PV Sam V1";
+            this.btnPVSamV1.UseVisualStyleBackColor = true;
+            this.btnPVSamV1.Click += new System.EventHandler(this.btnPVSamV1_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -159,6 +171,7 @@
         private System.Windows.Forms.RichTextBox txtData;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button btn4ArrayTest;
+        private System.Windows.Forms.Button btnPVSamV1;
     }
 }
 

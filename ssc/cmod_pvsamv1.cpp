@@ -50,7 +50,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading_mxh",                       "Sub-array 1 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading_azal",                      "Sub-array 1 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading_diff",                      "Sub-array 1 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                     "" },
+
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
+
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_derate",                            "Sub-array 1 DC power derate",                             "0..1",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=1",                   "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable",                            "Sub-array 2 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -447,6 +449,9 @@ public:
 	void exec( ) throw( general_error )
 	{
 		// open the weather file
+
+		
+
 		weatherfile wf( as_string("weather_file") );
 		if ( !wf.ok() ) throw exec_error( "pvsamv1", "failed to open weather file for reading");
 			
@@ -466,6 +471,8 @@ public:
 		// load the subarray parameter information
 		subarray sa[4];		
 		int num_subarrays = 1;
+
+
 
 		for ( size_t nn=0;nn<4;nn++ )
 		{
@@ -619,6 +626,7 @@ public:
 		if (enable_mismatch_vmax_calc 
 			&& mod_type < 1 && mod_type > 2 )
 			throw exec_error( "pvsamv1", "String level subarray mismatch can only be calculated using the 5 parameter model.");
+
 
 		if ( mod_type == 0 )
 		{
@@ -933,7 +941,9 @@ public:
 			snlinv.C3 = as_double("inv_snl_c3");
 		}
 
-	
+
+
+
 		// self-shading
 		selfshade_t sscalc;
 		ssarrdat ssarr;
@@ -1026,15 +1036,21 @@ public:
 		ssc_number_t *p_acgross = allocate( "hourly_ac_gross", 8760 );
 		ssc_number_t *p_acpwr = allocate( "hourly_ac_net", 8760 );
 
+
+
+
+
 		int istep = 0, nstep = wf.nrecords;
 		while( istep < 8760 )
 		{
 			if (!wf.read())
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string(istep+1) + " of 8760 in weather file");
-			
-			if ( istep % (nstep/20) == 0)
-				update( "calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep );
-			
+
+
+
+//			if ( istep % (nstep/20) == 0)
+//				update( "calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep );
+
 		
 			double solazi=0, solzen=0, solalt=0;
 			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
@@ -1139,7 +1155,9 @@ public:
 
 				inprad_beam += sa[nn].poa.ibeam * ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
 			}
-			
+
+
+
 			// apply self-shading if enabled (subarray 1 only)
 			if ( self_shading_enabled )
 			{
@@ -1325,7 +1343,9 @@ public:
 			p_acpwr[istep] = (ssc_number_t) ( acpwr_gross*ac_derate * 0.001 );
 
 			istep++;
+
 		}
+
 
 
 		if (istep != 8760)
