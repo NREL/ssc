@@ -266,6 +266,14 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_pretax_dscr",            "Pre-tax DSCR",                     "",      "",                      "ippppa",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	
 
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+
+
+
 var_info_invalid };
 
 extern var_info
@@ -1024,13 +1032,35 @@ public:
 //					std::stringstream outm;
 //					outm << "real discount rate=" << real_discount_rate;
 //					log( outm.str() );
-		double x = npv( CF_energy_net, nyears, real_discount_rate );
-		if (x == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-		lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
+		double npv_energy_real = npv( CF_energy_net, nyears, real_discount_rate );
+		if (npv_energy_real == 0.0) throw general_error("lcoe real failed because energy npv is zero");
+		lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / npv_energy_real;
 
-		x = npv( CF_energy_net, nyears, nom_discount_rate );
-		if (x == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-		lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / x;
+		double npv_energy_nom = npv( CF_energy_net, nyears, nom_discount_rate );
+		if (npv_energy_nom == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
+		lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / npv_energy_nom;
+
+
+
+	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
+	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
+
+	double lcoptc_fed_nom=0.0;
+	if (npv_energy_nom != 0) lcoptc_fed_nom = npv_fed_ptc / npv_energy_nom * 100.0;
+	double lcoptc_fed_real=0.0;
+	if (npv_energy_real != 0) lcoptc_fed_real = npv_fed_ptc / npv_energy_real * 100.0;
+
+	double lcoptc_sta_nom=0.0;
+	if (npv_energy_nom != 0) lcoptc_sta_nom = npv_sta_ptc / npv_energy_nom * 100.0;
+	double lcoptc_sta_real=0.0;
+	if (npv_energy_real != 0) lcoptc_sta_real = npv_sta_ptc / npv_energy_real * 100.0;
+
+	assign("sv_lcoptc_fed_nom", var_data((ssc_number_t) lcoptc_fed_nom));
+	assign("sv_lcoptc_fed_real", var_data((ssc_number_t) lcoptc_fed_real));
+	assign("sv_lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
+	assign("sv_lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
+
+
 
 		net_present_value = cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate );
 

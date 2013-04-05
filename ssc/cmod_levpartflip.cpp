@@ -801,6 +801,14 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel O and M",				   "$",            "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of Insurance and Prop Tax",				   "$",            "",                      "DHF",      "*",                       "",                                         "" },
 
+	
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+
+
 
 var_info_invalid };
 
@@ -2595,6 +2603,27 @@ public:
 	double lcoe_real = 0;
 	double npv_energy_real = npv(CF_energy_net,nyears,disc_real);
 	if (npv_energy_real != 0) lcoe_real = npv_ppa_revenue / npv_energy_real * 100.0;
+
+
+	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
+	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
+
+	double lcoptc_fed_nom=0.0;
+	if (npv_energy_nom != 0) lcoptc_fed_nom = npv_fed_ptc / npv_energy_nom * 100.0;
+	double lcoptc_fed_real=0.0;
+	if (npv_energy_real != 0) lcoptc_fed_real = npv_fed_ptc / npv_energy_real * 100.0;
+
+	double lcoptc_sta_nom=0.0;
+	if (npv_energy_nom != 0) lcoptc_sta_nom = npv_sta_ptc / npv_energy_nom * 100.0;
+	double lcoptc_sta_real=0.0;
+	if (npv_energy_real != 0) lcoptc_sta_real = npv_sta_ptc / npv_energy_real * 100.0;
+
+	assign("sv_lcoptc_fed_nom", var_data((ssc_number_t) lcoptc_fed_nom));
+	assign("sv_lcoptc_fed_real", var_data((ssc_number_t) lcoptc_fed_real));
+	assign("sv_lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
+	assign("sv_lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
+
+
 
 	assign("sv_npv_ppa_revenue", var_data( (ssc_number_t) npv_ppa_revenue));
 	assign("sv_npv_energy_nom", var_data( (ssc_number_t) npv_energy_nom));
