@@ -791,6 +791,12 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_analysis_period_irr",                "Analysis Period IRR",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+
+
+
 
 var_info_invalid };
 
@@ -2526,6 +2532,10 @@ public:
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
 
+	double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
+	npv_fed_ptc /= (1.0 - effective_tax_rate);
+	npv_sta_ptc /= (1.0 - effective_tax_rate);
+
 	double lcoptc_fed_nom=0.0;
 	if (npv_energy_nom != 0) lcoptc_fed_nom = npv_fed_ptc / npv_energy_nom * 100.0;
 	double lcoptc_fed_real=0.0;
@@ -2540,6 +2550,23 @@ public:
 	assign("sv_lcoptc_fed_real", var_data((ssc_number_t) lcoptc_fed_real));
 	assign("sv_lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
 	assign("sv_lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
+
+	double analysis_period_irr = 0.0;
+	analysis_period_irr = cf.at(CF_tax_investor_aftertax_irr, nyears)/100.0; //fraction for calculations
+
+
+	double wacc = 0.0;
+	wacc = analysis_period_irr;
+
+	// percentages
+	wacc *= 100.0;
+	effective_tax_rate *= 100.0;
+	analysis_period_irr *= 100.0;
+
+
+	assign("sv_wacc", var_data( (ssc_number_t) wacc));
+	assign("sv_effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
+	assign("sv_analysis_period_irr", var_data( (ssc_number_t) analysis_period_irr));
 
 
 

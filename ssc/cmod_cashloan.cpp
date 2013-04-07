@@ -113,6 +113,10 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+
+
 var_info_invalid };
 
 extern var_info
@@ -263,7 +267,7 @@ public:
 		double salvage_frac = as_double("salvage_percentage")*0.01;
 		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
 		double state_tax_rate = as_double("state_tax_rate")*0.01;
-		double effective_tax_rate = federal_tax_rate + (1-federal_tax_rate)*state_tax_rate;
+		double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
 		
 		double real_discount_rate = as_double("real_discount_rate")*0.01;
 		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
@@ -668,6 +672,9 @@ public:
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
 
+	npv_fed_ptc /= (1.0 - effective_tax_rate);
+	npv_sta_ptc /= (1.0 - effective_tax_rate);
+
 	double lcoptc_fed_nom=0.0;
 	if (npv_energy_nom != 0) lcoptc_fed_nom = npv_fed_ptc / npv_energy_nom * 100.0;
 	double lcoptc_fed_real=0.0;
@@ -683,6 +690,17 @@ public:
 	assign("sv_lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
 	assign("sv_lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
 
+
+
+	double wacc = 0.0;
+	wacc = (1.0-debt_frac)*nom_discount_rate + debt_frac*loan_rate*(1.0-effective_tax_rate);
+
+	wacc *= 100.0;
+	effective_tax_rate *= 100.0;
+
+
+	assign("sv_wacc", var_data( (ssc_number_t) wacc));
+	assign("sv_effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
 
 
 
