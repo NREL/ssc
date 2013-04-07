@@ -2648,6 +2648,11 @@ public:
 	analysis_period_irr *= 100.0;
 
 
+	assign("sv_debt_fraction", var_data((ssc_number_t) debt_fraction ));
+	assign("sv_wacc", var_data( (ssc_number_t) wacc));
+	assign("sv_effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
+	assign("sv_analysis_period_irr", var_data( (ssc_number_t) analysis_period_irr));
+
 
 
 	assign("sv_npv_ppa_revenue", var_data( (ssc_number_t) npv_ppa_revenue));
