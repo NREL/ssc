@@ -2448,7 +2448,7 @@ public:
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
 
-	double effective_tax_rate = state_tax_rate + (1-federal_tax_rate)*state_tax_rate;
+	double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
 	npv_fed_ptc /= (1.0 - effective_tax_rate);
 	npv_sta_ptc /= (1.0 - effective_tax_rate);
 
@@ -2469,15 +2469,23 @@ public:
 	assign("sv_lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
 
 	double analysis_period_irr = 0.0;
-	analysis_period_irr = cf.at(CF_project_return_aftertax_irr, nyears);
+	analysis_period_irr = cf.at(CF_project_return_aftertax_irr, nyears)/100.0; //fraction for calculations
 
 	double debt_fraction =0.0;
-	if (cost_installed > 0) debt_fraction = 100.0 * (size_of_debt / cost_installed);
-	assign("sv_debt_fraction", var_data((ssc_number_t) debt_fraction ));
+	if (cost_installed > 0) debt_fraction = size_of_debt / cost_installed;
 
 
 	double wacc = 0.0;
 	wacc = (1.0-debt_fraction)*analysis_period_irr + debt_fraction*term_int_rate*(1.0-effective_tax_rate);
+
+	// percentages
+	debt_fraction *= 100.0;
+	wacc *= 100.0;
+	effective_tax_rate *= 100.0;
+	analysis_period_irr *= 100.0;
+
+
+	assign("sv_debt_fraction", var_data((ssc_number_t) debt_fraction ));
 	assign("sv_wacc", var_data( (ssc_number_t) wacc));
 	assign("sv_effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
 	assign("sv_analysis_period_irr", var_data( (ssc_number_t) analysis_period_irr));
