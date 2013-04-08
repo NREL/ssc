@@ -362,7 +362,10 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 	else if (action_type == SSC_UPDATE)
 	{
 		// print status update to console
-		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 << std::endl;
+// s1 = 0 in on_update event causing access violation in all wrappers when "update" called
+		// see pvsamv1 for example.
+//		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 << std::endl;
+		std::cout << "Progress " << f0 << "%:" << s0 << " time " << f1 << std::endl;
 		return 1; // return 0 to abort simulation as needed.
 	}
 /*
