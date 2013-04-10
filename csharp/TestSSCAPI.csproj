@@ -111,18 +111,18 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /y $(SolutionDir)..\Win32\Release\ssc.dll $(SolutionDir)bin\Release\ssc32.dll
-copy /y $(SolutionDir)..\Win32\Release\ssc.dll $(SolutionDir)bin\x86\Release\ssc32.dll
-copy /y $(SolutionDir)..\x64\Release\ssc.dll $(SolutionDir)bin\x64\Release\ssc64.dll
-copy /y $(SolutionDir)..\Win32\Debug\ssc.dll $(SolutionDir)bin\Debug\ssc32.dll
-copy /y $(SolutionDir)..\Win32\Debug\ssc.dll $(SolutionDir)bin\x86\Debug\ssc32.dll
-copy /y $(SolutionDir)..\x64\Debug\ssc.dll $(SolutionDir)bin\x64\Debug\ssc64.dll
-copy /y $(SolutionDir)..\examples\abilene.tm2 $(SolutionDir)bin\Release\abilene.tm2
-copy /y $(SolutionDir)..\examples\abilene.tm2 $(SolutionDir)bin\x86\Release\abilene.tm2 
-copy /y $(SolutionDir)..\examples\abilene.tm2 $(SolutionDir)bin\x64\Release\abilene.tm2           
-copy /y $(SolutionDir)..\examples\abilene.tm2 $(SolutionDir)bin\Debug\abilene.tm2
-copy /y $(SolutionDir)..\examples\abilene.tm2 $(SolutionDir)bin\x86\Debug\abilene.tm2
-copy /y $(SolutionDir)..\examples\abilene.tm2 $(SolutionDir)bin\x64\Debug\abilene.tm2
+    <PostBuildEvent>copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\Release\ssc32.dll
+copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\x86\Release\ssc32.dll
+copy /y $(SolutionDir)..\..\Win64\ssc64.dll $(SolutionDir)bin\x64\Release\ssc64.dll
+copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\Debug\ssc32.dll
+copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\x86\Debug\ssc32.dll
+copy /y $(SolutionDir)..\..\Win64\ssc64.dll $(SolutionDir)bin\x64\Debug\ssc64.dll
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Release\abilene.tm2
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Release\abilene.tm2 
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Release\abilene.tm2           
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Debug\abilene.tm2
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Debug\abilene.tm2
+copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Debug\abilene.tm2
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

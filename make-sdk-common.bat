@@ -11,11 +11,17 @@ copy "matlab\+SSC\@Info\Info.m" "sdk-release\languages\matlab\+SSC\@Info"
 copy "matlab\+SSC\@Module\Module.m" "sdk-release\languages\matlab\+SSC\@Module"
 
 copy python\sscapi.py sdk-release\languages\python
+copy python\ssc.py sdk-release\languages\python
+copy python\testssc.py sdk-release\languages\python
+copy python\sam_solar_time_ppa.py sdk-release\languages\python
+copy python\pvsamv1.py sdk-release\languages\python
+copy python\pvres.py sdk-release\languages\python
+copy python\pvcom.py sdk-release\languages\python
 
 copy csharp\SSC.cs sdk-release\languages\csharp
 copy csharp\App.config sdk-release\languages\csharp
 copy csharp\Program.cs sdk-release\languages\csharp
-copy csharp\sdk_TestSSCAPI.csproj sdk-release\languages\csharp\TestSSCAPI.csproj
+copy csharp\TestSSCAPI.csproj sdk-release\languages\csharp
 copy csharp\TestSSCAPI.sln sdk-release\languages\csharp
 copy csharp\TestSSCAPI.v11.suo sdk-release\languages\csharp
 copy csharp\TestSSCAPIForm.cs sdk-release\languages\csharp
@@ -25,7 +31,7 @@ copy csharp\Properties\AssemblyInfo.cs sdk-release\languages\csharp\Properties
 copy csharp\Properties\Resources.Designer.cs sdk-release\languages\csharp\Properties
 copy csharp\Properties\Resources.resx sdk-release\languages\csharp\Properties
 
-copy java\sdk_Makefile sdk-release\languages\java\Makefile
+copy java\Makefile sdk-release\languages\java
 copy java\Manifest.txt sdk-release\languages\java
 copy java\ReadMe.txt sdk-release\languages\java
 copy java\sscapi_wrap.c sdk-release\languages\java
