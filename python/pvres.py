@@ -4,7 +4,7 @@ import ssc
 data = ssc.Data()
 
 # pvsamv1 input variables
-data.set_string("file_name", "../../examples/AZ Phoenix.tm2") 
+data.set_string( 'weather_file', '../../examples/AZ Phoenix.tm2') 
 data.set_number( 'use_wf_albedo', 1 )
 data.set_number( 'albedo', 0.2 )
 data.set_number( 'irrad_mode', 0 )
