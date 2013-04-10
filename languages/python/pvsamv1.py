@@ -178,7 +178,7 @@ module = ssc.Module('pvsamv1')
 
 if (module.exec_(data)):
 # return the relevant outputs desired
-	ac_hourly = data.get_number('hourly_ac_net');
+	ac_hourly = data.get_array('hourly_ac_net');
 	ac_monthly = data.get_array('monthly_ac_net');
 	ac_annual = data.get_number('annual_ac_net');
 
