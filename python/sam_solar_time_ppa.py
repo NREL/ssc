@@ -311,30 +311,6 @@ data.set_number( 'inv_snl_pso', inv_snl_pso )
 data.set_number( 'inv_snl_vdco', inv_snl_vdco )
 data.set_number( 'inv_snl_vdcmax', inv_snl_vdcmax )
 
-data.set_number( 'inverter_model', 0 )
-data.set_number( 'inv_spe_efficiency', 0.95 )
-data.set_number( 'inv_spe_power_ac', 4000 )
-
-data.set_number( 'module_model', 0 )
-data.set_number( 'spe_area', 1.4 )
-data.set_number( 'spe_rad0', 200 )
-data.set_number( 'spe_rad1', 400 )
-data.set_number( 'spe_rad2', 600 )
-data.set_number( 'spe_rad3', 800 )
-data.set_number( 'spe_rad4', 1000 )
-data.set_number( 'spe_eff0', 13.5 )
-data.set_number( 'spe_eff1', 13.5 )
-data.set_number( 'spe_eff2', 13.5 )
-data.set_number( 'spe_eff3', 13.5 )
-data.set_number( 'spe_eff4', 13.5 )
-data.set_number( 'spe_reference', 4 )
-data.set_number( 'spe_module_structure', 0 )
-data.set_number( 'spe_a', -3.56 )
-data.set_number( 'spe_b', -0.075 )
-data.set_number( 'spe_dT', 3 )
-data.set_number( 'spe_temp_coeff', -0.5 )
-data.set_number( 'spe_fd', 1 )
-
 
 
 
@@ -343,6 +319,14 @@ data.set_number( 'spe_fd', 1 )
 
 mod = ssc.Module('pvsamv1')
 if (mod.exec_(data)):
+	# return the relevant outputs desired
+	ac_hourly = data.get_array('hourly_ac_net');
+	ac_monthly = data.get_array('monthly_ac_net');
+	ac_annual = data.get_number('annual_ac_net');
+
+	for i in range(len(ac_monthly)):
+		print 'ac_monthly [' , i, '](kWh) = ' , ac_monthly[i]
+	print 'ac_annual (kWh) = ' , ac_annual
 	print "sam_solar_time_ppa example ok"
 else:
 	idx = 0
@@ -355,13 +339,3 @@ else:
 	
 
 
-# return the relevant outputs desired
-
-# ac_hourly = var('hourly_ac_net')
-# ac_monthly = var('monthly_ac_net')
-# ac_annual = var('annual_ac_net')
-
-# outln( 'ac_monthly (kWh) = ' + ac_monthly)
-# outln( 'ac_annual (kWh) = ' + ac_annual)
-
-# end of PV performance calculations

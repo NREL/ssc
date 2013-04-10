@@ -153,10 +153,10 @@ def pvwatts_func_test():
 
 
 version_test()
-#module_list()
-#module_and_variables_test()
-#array_test()
-#matrix_test()
-#pvwatts_test()
-#pvwatts_func_test()
+module_list()
+module_and_variables_test()
+array_test()
+matrix_test()
+pvwatts_test()
+pvwatts_func_test()
 variables_list("pvsamv1")
