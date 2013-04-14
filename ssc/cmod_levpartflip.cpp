@@ -2766,7 +2766,20 @@ public:
 
 		assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 		double kWhperkW = 0.0;
-		if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
+		// add to address geothermal capacity factor issue 4/13/13
+		if (as_integer("system_use_lifetime_output"))
+		{
+			if ((nameplate > 0) && (nyears>0))
+			{
+				for (int i=0;i<=nyears;i++)
+					kWhperkW += cf.at(CF_energy_net,i);
+				kWhperkW /= (nyears * nameplate);
+			}
+		}
+		else
+		{
+			if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
+		}
 		assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
 		assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
 

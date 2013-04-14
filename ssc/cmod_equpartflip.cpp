@@ -2657,11 +2657,11 @@ public:
 		assign("ibi_total_oth", var_data((ssc_number_t) (ibi_oth_amount+ibi_oth_per)));
 		assign("ibi_total_uti", var_data((ssc_number_t) (ibi_uti_amount+ibi_uti_per)));
 		assign("ibi_total", var_data((ssc_number_t) ibi_total));
-	assign("ibi_fedtax_total", var_data((ssc_number_t) ibi_fedtax_total));
-	assign("ibi_statax_total", var_data((ssc_number_t) ibi_statax_total));
+		assign("ibi_fedtax_total", var_data((ssc_number_t) ibi_fedtax_total));
+		assign("ibi_statax_total", var_data((ssc_number_t) ibi_statax_total));
 		assign("cbi_total", var_data((ssc_number_t) cbi_total));
-	assign("cbi_fedtax_total", var_data((ssc_number_t) cbi_fedtax_total));
-	assign("cbi_statax_total", var_data((ssc_number_t) cbi_statax_total));
+		assign("cbi_fedtax_total", var_data((ssc_number_t) cbi_fedtax_total));
+		assign("cbi_statax_total", var_data((ssc_number_t) cbi_statax_total));
 		assign("cbi_total_fed", var_data((ssc_number_t) cbi_fed_amount));
 		assign("cbi_total_sta", var_data((ssc_number_t) cbi_sta_amount));
 		assign("cbi_total_oth", var_data((ssc_number_t) cbi_oth_amount));
@@ -2670,22 +2670,35 @@ public:
 		assign("itc_total_sta", var_data((ssc_number_t) itc_sta_total));
 		assign("itc_total", var_data((ssc_number_t) itc_total));
 
-	assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
-	double kWhperkW = 0.0;
-	if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
-	assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
-	assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
+		assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+		double kWhperkW = 0.0;
+		// add to address geothermal capacity factor issue 4/13/13
+		if (as_integer("system_use_lifetime_output"))
+		{
+			if ((nameplate > 0) && (nyears>0))
+			{
+				for (int i=0;i<=nyears;i++)
+					kWhperkW += cf.at(CF_energy_net,i);
+				kWhperkW /= (nyears * nameplate);
+			}
+		}
+		else
+		{
+			if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
+		}
+		assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
+		assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
 
-	assign("sv_tax_investor_aftertax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_irr, nyears)));
-	assign("sv_tax_investor_aftertax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_npv, nyears)));
-	assign("sv_tax_investor_pretax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_pretax_irr, nyears)));
-	assign("sv_tax_investor_pretax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_pretax_npv, nyears)));
-	assign("sv_debt_fraction", var_data((ssc_number_t)  0.0));
-	assign("sv_lcoe_nom", var_data((ssc_number_t) lcoe_nom));
-	assign("sv_lcoe_real", var_data((ssc_number_t) lcoe_real));
-	assign("ppa_price", var_data((ssc_number_t) ppa));
-	assign("sv_ppa_escalation", var_data((ssc_number_t) (ppa_escalation *100.0) ));
-	assign("sv_first_year_ppa", var_data((ssc_number_t) ppa));
+		assign("sv_tax_investor_aftertax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_irr, nyears)));
+		assign("sv_tax_investor_aftertax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_npv, nyears)));
+		assign("sv_tax_investor_pretax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_pretax_irr, nyears)));
+		assign("sv_tax_investor_pretax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_pretax_npv, nyears)));
+		assign("sv_debt_fraction", var_data((ssc_number_t)  0.0));
+		assign("sv_lcoe_nom", var_data((ssc_number_t) lcoe_nom));
+		assign("sv_lcoe_real", var_data((ssc_number_t) lcoe_real));
+		assign("ppa_price", var_data((ssc_number_t) ppa));
+		assign("sv_ppa_escalation", var_data((ssc_number_t) (ppa_escalation *100.0) ));
+		assign("sv_first_year_ppa", var_data((ssc_number_t) ppa));
 
 
 		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
