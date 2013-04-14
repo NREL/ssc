@@ -36,8 +36,9 @@
             this.btn4Version = new System.Windows.Forms.Button();
             this.txtData = new System.Windows.Forms.RichTextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.btn4ArrayTest = new System.Windows.Forms.Button();
             this.btnPVSamV1 = new System.Windows.Forms.Button();
+            this.btn4ArrayTest = new System.Windows.Forms.Button();
+            this.btnPVRes = new System.Windows.Forms.Button();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -53,7 +54,7 @@
             // 
             // btn4TestMatrices
             // 
-            this.btn4TestMatrices.Location = new System.Drawing.Point(111, 64);
+            this.btn4TestMatrices.Location = new System.Drawing.Point(436, 34);
             this.btn4TestMatrices.Name = "btn4TestMatrices";
             this.btn4TestMatrices.Size = new System.Drawing.Size(95, 23);
             this.btn4TestMatrices.TabIndex = 14;
@@ -63,7 +64,7 @@
             // 
             // btn4PVWattsFunc
             // 
-            this.btn4PVWattsFunc.Location = new System.Drawing.Point(111, 93);
+            this.btn4PVWattsFunc.Location = new System.Drawing.Point(113, 65);
             this.btn4PVWattsFunc.Name = "btn4PVWattsFunc";
             this.btn4PVWattsFunc.Size = new System.Drawing.Size(110, 23);
             this.btn4PVWattsFunc.TabIndex = 13;
@@ -73,7 +74,7 @@
             // 
             // btn4PVWatts
             // 
-            this.btn4PVWatts.Location = new System.Drawing.Point(30, 93);
+            this.btn4PVWatts.Location = new System.Drawing.Point(32, 65);
             this.btn4PVWatts.Name = "btn4PVWatts";
             this.btn4PVWatts.Size = new System.Drawing.Size(75, 23);
             this.btn4PVWatts.TabIndex = 12;
@@ -103,14 +104,15 @@
             // 
             // txtData
             // 
-            this.txtData.Location = new System.Drawing.Point(30, 137);
+            this.txtData.Location = new System.Drawing.Point(30, 94);
             this.txtData.Name = "txtData";
-            this.txtData.Size = new System.Drawing.Size(615, 485);
+            this.txtData.Size = new System.Drawing.Size(762, 528);
             this.txtData.TabIndex = 9;
             this.txtData.Text = "";
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btnPVRes);
             this.groupBox2.Controls.Add(this.btnPVSamV1);
             this.groupBox2.Controls.Add(this.btn4PVWattsFunc);
             this.groupBox2.Controls.Add(this.btn4ModulesAndVariables);
@@ -127,9 +129,19 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "SSC API c# test";
             // 
+            // btnPVSamV1
+            // 
+            this.btnPVSamV1.Location = new System.Drawing.Point(230, 64);
+            this.btnPVSamV1.Name = "btnPVSamV1";
+            this.btnPVSamV1.Size = new System.Drawing.Size(75, 23);
+            this.btnPVSamV1.TabIndex = 16;
+            this.btnPVSamV1.Text = "PV Sam V1";
+            this.btnPVSamV1.UseVisualStyleBackColor = true;
+            this.btnPVSamV1.Click += new System.EventHandler(this.btnPVSamV1_Click);
+            // 
             // btn4ArrayTest
             // 
-            this.btn4ArrayTest.Location = new System.Drawing.Point(30, 64);
+            this.btn4ArrayTest.Location = new System.Drawing.Point(355, 34);
             this.btn4ArrayTest.Name = "btn4ArrayTest";
             this.btn4ArrayTest.Size = new System.Drawing.Size(75, 23);
             this.btn4ArrayTest.TabIndex = 6;
@@ -137,15 +149,15 @@
             this.btn4ArrayTest.UseVisualStyleBackColor = true;
             this.btn4ArrayTest.Click += new System.EventHandler(this.btn4ArrayTest_Click);
             // 
-            // btnPVSamV1
+            // btnPVRes
             // 
-            this.btnPVSamV1.Location = new System.Drawing.Point(228, 92);
-            this.btnPVSamV1.Name = "btnPVSamV1";
-            this.btnPVSamV1.Size = new System.Drawing.Size(75, 23);
-            this.btnPVSamV1.TabIndex = 16;
-            this.btnPVSamV1.Text = "PV Sam V1";
-            this.btnPVSamV1.UseVisualStyleBackColor = true;
-            this.btnPVSamV1.Click += new System.EventHandler(this.btnPVSamV1_Click);
+            this.btnPVRes.Location = new System.Drawing.Point(312, 63);
+            this.btnPVRes.Name = "btnPVRes";
+            this.btnPVRes.Size = new System.Drawing.Size(98, 23);
+            this.btnPVRes.TabIndex = 17;
+            this.btnPVRes.Text = "PV Residential";
+            this.btnPVRes.UseVisualStyleBackColor = true;
+            this.btnPVRes.Click += new System.EventHandler(this.button1_Click);
             // 
             // Form1
             // 
@@ -172,6 +184,7 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button btn4ArrayTest;
         private System.Windows.Forms.Button btnPVSamV1;
+        private System.Windows.Forms.Button btnPVRes;
     }
 }
 
