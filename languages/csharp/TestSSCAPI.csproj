@@ -123,6 +123,12 @@ copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Release\a
 copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Debug\abilene.tm2
 copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Debug\abilene.tm2
 copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Debug\abilene.tm2
+copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\Release\AZ Phoenix.tm2"
+copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x86\Release\AZ Phoenix.tm2"
+copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x64\Release\AZ Phoenix.tm2"           
+copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\Debug\AZ Phoenix.tm2"
+copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x86\Debug\AZ Phoenix.tm2"
+copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x64\Debug\AZ Phoenix.tm2"
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
