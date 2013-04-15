@@ -36,9 +36,10 @@
             this.btn4Version = new System.Windows.Forms.Button();
             this.txtData = new System.Windows.Forms.RichTextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btnPVRes = new System.Windows.Forms.Button();
             this.btnPVSamV1 = new System.Windows.Forms.Button();
             this.btn4ArrayTest = new System.Windows.Forms.Button();
-            this.btnPVRes = new System.Windows.Forms.Button();
+            this.btnPVCom = new System.Windows.Forms.Button();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -112,6 +113,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btnPVCom);
             this.groupBox2.Controls.Add(this.btnPVRes);
             this.groupBox2.Controls.Add(this.btnPVSamV1);
             this.groupBox2.Controls.Add(this.btn4PVWattsFunc);
@@ -128,6 +130,16 @@
             this.groupBox2.TabIndex = 16;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "SSC API c# test";
+            // 
+            // btnPVRes
+            // 
+            this.btnPVRes.Location = new System.Drawing.Point(312, 63);
+            this.btnPVRes.Name = "btnPVRes";
+            this.btnPVRes.Size = new System.Drawing.Size(98, 23);
+            this.btnPVRes.TabIndex = 17;
+            this.btnPVRes.Text = "PV Residential";
+            this.btnPVRes.UseVisualStyleBackColor = true;
+            this.btnPVRes.Click += new System.EventHandler(this.button1_Click);
             // 
             // btnPVSamV1
             // 
@@ -149,15 +161,15 @@
             this.btn4ArrayTest.UseVisualStyleBackColor = true;
             this.btn4ArrayTest.Click += new System.EventHandler(this.btn4ArrayTest_Click);
             // 
-            // btnPVRes
+            // btnPVCom
             // 
-            this.btnPVRes.Location = new System.Drawing.Point(312, 63);
-            this.btnPVRes.Name = "btnPVRes";
-            this.btnPVRes.Size = new System.Drawing.Size(98, 23);
-            this.btnPVRes.TabIndex = 17;
-            this.btnPVRes.Text = "PV Residential";
-            this.btnPVRes.UseVisualStyleBackColor = true;
-            this.btnPVRes.Click += new System.EventHandler(this.button1_Click);
+            this.btnPVCom.Location = new System.Drawing.Point(416, 63);
+            this.btnPVCom.Name = "btnPVCom";
+            this.btnPVCom.Size = new System.Drawing.Size(111, 23);
+            this.btnPVCom.TabIndex = 18;
+            this.btnPVCom.Text = "PV Commercial";
+            this.btnPVCom.UseVisualStyleBackColor = true;
+            this.btnPVCom.Click += new System.EventHandler(this.btnPVCom_Click);
             // 
             // Form1
             // 
@@ -185,6 +197,7 @@
         private System.Windows.Forms.Button btn4ArrayTest;
         private System.Windows.Forms.Button btnPVSamV1;
         private System.Windows.Forms.Button btnPVRes;
+        private System.Windows.Forms.Button btnPVCom;
     }
 }
 

@@ -10,10 +10,10 @@ ifdef SystemRoot
 		BITS = 64
 		CCCOMP = c:/MinGW64/bin/gcc.exe
 #Update based on your Java installation location		
- 		CIFLAGS = -Wl,--kill-at -I"C:\Program Files\Java\jdk1.7.0_10\include"  -I"C:\Program Files\Java\jdk1.7.0_10\include\win32"
-		JC = C:\Program Files\Java\jdk1.7.0_10\bin\javac.exe
-		JAR = C:\Program Files\Java\jdk1.7.0_10\bin\jar.exe
-		JAVA = C:\Program Files\Java\jdk1.7.0_10\bin\java.exe
+ 		CIFLAGS = -Wl,--kill-at -I"C:\Program Files\Java\jdk1.7.0_11\include"  -I"C:\Program Files\Java\jdk1.7.0_11\include\win32"
+		JC = C:\Program Files\Java\jdk1.7.0_11\bin\javac.exe
+		JAR = C:\Program Files\Java\jdk1.7.0_11\bin\jar.exe
+		JAVA = C:\Program Files\Java\jdk1.7.0_11\bin\java.exe
 		
 		CP_DLL = ..\..\Win64\ssc64.dll ssc.dll
 		SSCLIB = ssc.dll
@@ -21,10 +21,10 @@ ifdef SystemRoot
 		BITS = 32
 		CCCOMP = c:/MinGW/bin/gcc.exe
 #Update based on your Java installation location		
-		CIFLAGS = -Wl,--kill-at -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_10\include\win32"
-		JC = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\javac.exe
-		JAR = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\jar.exe
-		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_10\bin\java.exe
+		CIFLAGS = -Wl,--kill-at -I"C:\Program Files (x86)\Java\jdk1.7.0_11\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_11\include\win32"
+		JC = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\javac.exe
+		JAR = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\jar.exe
+		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\java.exe
 
 		CP_DLL = ..\..\Win32\ssc32.dll ssc.dll
 		SSCLIB = ssc.dll
