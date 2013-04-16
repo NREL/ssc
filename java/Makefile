@@ -30,7 +30,7 @@ ifdef SystemRoot
 		SSCLIB = ssc.dll
 	endif	
 	CP_H = ..\..\sscapi.h sscapi.h
-	CP_TM2 = ..\..\examples\abilene.tm2 abilene.tm2
+	CP_TM2 = ..\..\examples\*.tm2
 	RM_JAVA = *.class SSC\\*.class *.jar 
 	RM_ALL = *.dll *.class SSC\\*.class SSC\\*.dll *.jar *.h  *.tm2
 
@@ -85,7 +85,7 @@ else
     JAVA = java
     CCCOMP = gcc
     CP_H = ../../sscapi.h ./sscapi.h
-    CP_TM2 = ../../examples/abilene.tm2 ./abilene.tm2
+    CP_TM2 = ../../examples/*.tm2 ./
     RM_JAVA = *.class ./SSC/*.class *.jar 
 endif
 
