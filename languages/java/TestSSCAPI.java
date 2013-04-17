@@ -398,7 +398,7 @@ public class TestSSCAPI {
         SSC.Data data = new SSC.Data();
 
         // pvsamv1 input variables
-        data.setString( "weather_file", "C:/Projects/SAM/trunk/SAMwx/deploy/exelib/climate_files/AZ Phoenix.tm2" );
+        data.setString( "weather_file", "AZ Phoenix.tm2" );
         data.setNumber( "use_wf_albedo", 1f );
         data.setNumber( "albedo", 0.2f );
         data.setNumber( "irrad_mode", 0f );
@@ -1000,7 +1000,6 @@ public class TestSSCAPI {
 
         // pvsamv1 input variables
         data.setString( "weather_file", "AZ Phoenix.tm2" );
-        data.setString( "weather_file", "C:/Projects/SAM/trunk/SAMwx/deploy/exelib/climate_files/AZ Phoenix.tm2" );
         data.setNumber( "use_wf_albedo", 1f );
         data.setNumber( "albedo", 0.2f );
         data.setNumber( "irrad_mode", 0f );
