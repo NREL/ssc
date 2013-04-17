@@ -43,6 +43,7 @@ copy java\SSC\Info.java sdk-release\languages\java\SSC
 copy java\SSC\Module.java sdk-release\languages\java\SSC
 copy java\SSC\SSCAPIJNI.java sdk-release\languages\java\SSC
 
+copy "examples\AZ Phoenix.tm2" sdk-release\examples
 copy examples\abilene.tm2 sdk-release\examples
 copy examples\daggett.tm2 sdk-release\examples
 copy examples\rocksprings.tm2 sdk-release\examples
