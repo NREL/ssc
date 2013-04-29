@@ -58,6 +58,8 @@ namespace util
 	int month_of(double time); /* hour: 0 = jan 1st 12am-1am, returns 1-12 */
 	int day_of_month(int month, double time); /* month: 1-12 time: hours, starting 0=jan 1st 12am, returns 1-nday*/
 
+	int schedule_char_to_int( char c );
+	std::string schedule_int_to_month( int m );
 	bool translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val);
 
 	bool file_exists( const char *file );

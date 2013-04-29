@@ -41,6 +41,7 @@
     <ClCompile Include="cmod_test_pvshade.cpp" />
     <ClCompile Include="cmod_timeseq.cpp" />
     <ClCompile Include="cmod_utilityrate.cpp" />
+    <ClCompile Include="cmod_utilityrate2.cpp" />
     <ClCompile Include="cmod_wfreader.cpp" />
     <ClCompile Include="cmod_windpower.cpp" />
     <ClCompile Include="core.cpp" />

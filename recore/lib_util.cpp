@@ -779,6 +779,80 @@ int util::day_of_month(int month, double time)
 	return daynum;
 }
 
+
+int util::schedule_char_to_int( char c )
+{
+	int ret = 0;
+	switch (c)
+	{
+		case '1':
+			ret = 1;
+			break;
+		case '2':
+			ret = 2;
+			break;
+		case '3':
+			ret = 3;
+			break;
+		case '4':
+			ret = 4;
+			break;
+		case '5':
+			ret = 5;
+			break;
+		case '6':
+			ret = 6;
+			break;
+		case '7':
+			ret = 7;
+			break;
+		case '8':
+			ret = 8;
+			break;
+		case '9':
+			ret = 9;
+			break;
+		case 'A':
+		case 'a':
+		case ':':
+			ret = 10;
+			break;
+		case 'B':
+		case 'b':
+		case '=':
+			ret = 11;
+			break;
+		case 'C':
+		case 'c':
+		case '<':
+			ret = 12;
+			break;
+	}
+	return ret;
+}
+
+
+std::string util::schedule_int_to_month( int m )
+{
+	std::string ret = "";
+	switch (m)
+	{
+		case 0: ret = "jan"; break;
+		case 1: ret = "feb"; break;
+		case 2: ret = "mar"; break;
+		case 3: ret = "apr"; break;
+		case 4: ret = "may"; break;
+		case 5: ret = "jun"; break;
+		case 6: ret = "jul"; break;
+		case 7: ret = "aug"; break;
+		case 8: ret = "sep"; break;
+		case 9: ret = "oct"; break;
+		case 10: ret = "nov"; break;
+		case 11: ret = "dec"; break;
+	}
+	return ret;
+}
+
 bool util::translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val)
 {
 	int i=0;
@@ -800,7 +874,9 @@ bool util::translate_schedule( int tod[8760], const char *wkday, const char *wke
 
 			for (int h=0;h<24;h++)
 			{
-				tod[i] = (int)( sptr[m*24+h] - '1' );
+//				tod[i] = (int)(sptr[ m*24 + h ]-'1');
+//				tod[i] = schedule_char_to_int(sptr[ m*24 + h ]-'1');
+				tod[i] = schedule_char_to_int(sptr[ m*24 + h ])-1;
 				if (tod[i] < min_val) tod[i] = min_val;
 				if (tod[i] > max_val) tod[i] = max_val;
 				i++;
