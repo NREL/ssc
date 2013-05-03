@@ -22,7 +22,7 @@ ssc.ssc_data_set_array(dat, 'month', data['month'])
 ssc.ssc_data_set_array(dat, 'day', data['day'])
 ssc.ssc_data_set_array(dat, 'hour', data['hour'])
 
-ssc.ssc_data_set_array(dat, 'minute', np.repeat(30,8760))
+ssc.ssc_data_set_array(dat, 'minute', np.repeat(29,8760))
 ssc.ssc_data_set_number(dat, 'lat', lat)
 ssc.ssc_data_set_number(dat, 'lon', lon)
 ssc.ssc_data_set_number(dat, 'tz', 5.5)
