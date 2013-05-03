@@ -41,6 +41,7 @@ OBJECTS = \
 	cmod_singleowner.o \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
+	cmod_utilityrate2.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
