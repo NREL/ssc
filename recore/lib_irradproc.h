@@ -20,6 +20,7 @@ class irrad
 private:
 	int year, month, day, hour;
 	double minute, delt;
+
 	double lat, lon, tz;
 	int radmode, skymodel, track;
 	double gh, dn, df, alb;
@@ -27,11 +28,13 @@ private:
 	double sun[9], angle[5], poa[3], diffc[3];
 	int tms[3];
 
+	
+
 public:
 
 	irrad();
 	int check();
-	
+
 	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
 	void set_location( double lat, double lon, double tz );
 	void set_sky_model( int skymodel, double albedo );
