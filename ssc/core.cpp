@@ -550,7 +550,8 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 
 			for (std::string::size_type i=0;i<dat.str.length();i++)
 			{
-				if ( dat.str[i] < '1' || dat.str[i] > '9' )
+//				if ( dat.str[i] < '1' || dat.str[i] > '9' )
+				if ( util::schedule_char_to_int(dat.str[i]) == 0 )
 					fail_constraint("all digits must be between 1 and 9, inclusive");
 			}
 		}
