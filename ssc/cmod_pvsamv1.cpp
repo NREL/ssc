@@ -261,9 +261,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_zen",                              "Solar zenith angle",                                                "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_alt",                              "Solar altitude angle",                                              "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_azi",                              "Solar azimuth angle",                                               "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sunup",                                "Sun up over horizon",                                               "0/1",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_airmass",                              "Absolute air mass",                                                 "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	
 /* sub-array level outputs */
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_aoi",                        "Subarray 1 Angle of incidence",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_surf_tilt",                  "Subarray 1 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_surf_azi",                   "Subarray 1 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_axisrot",                    "Subarray 1 Axis rotation for 1 axis trackers",                      "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -278,6 +280,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_dc_gross",                   "Subarray 1 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_dc_voltage",                 "Subarray 1 DC string voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_aoi",                        "Subarray 2 Angle of incidence",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_axisrot",                    "Subarray 2 Axis rotation for 1 axis trackers",                      "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -292,6 +295,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_dc_gross",                   "Subarray 2 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray2_dc_voltage",                 "Subarray 2 DC string voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_aoi",                        "Subarray 3 Angle of incidence",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_axisrot",                    "Subarray 3 Axis rotation for 1 axis trackers",                      "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -306,6 +310,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_dc_gross",                   "Subarray 3 Gross DC output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray3_dc_voltage",                 "Subarray 3 DC string voltage",                                      "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_aoi",                        "Subarray 4 Angle of incidence",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray4_axisrot",                    "Subarray 4 Axis rotation for 1 axis trackers",                      "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -995,7 +1000,9 @@ public:
 		ssc_number_t *p_solalt = allocate("hourly_sol_alt", 8760);
 		ssc_number_t *p_solazi = allocate("hourly_sol_azi", 8760);
 		ssc_number_t *p_airmass = allocate("hourly_airmass", 8760);
+		ssc_number_t *p_sunup = allocate("hourly_sunup", 8760);
 		
+		ssc_number_t *p_aoi[4];
 		ssc_number_t *p_surftilt[4];  
 		ssc_number_t *p_surfazi[4];   
 		ssc_number_t *p_rot[4];       
@@ -1013,6 +1020,7 @@ public:
 		for (int nn=0;nn<4;nn++)
 		{
 			std::string prefix = "hourly_subarray" + util::to_string( (int)(nn+1) ) + "_";
+			p_aoi[nn]        = allocate( prefix+"aoi", 8760 );
 			p_surftilt[nn]   = allocate( prefix+"surf_tilt", 8760);
 			p_surfazi[nn]    = allocate( prefix+"surf_azi", 8760);		
 			p_rot[nn]        = allocate( prefix+"axisrot", 8760 );
@@ -1053,6 +1061,7 @@ public:
 
 		
 			double solazi=0, solzen=0, solalt=0;
+			int sunup = 0;
 			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
 			double inprad_total = 0.0;
 			double inprad_beam = 0.0;
@@ -1091,7 +1100,6 @@ public:
 
 				double ibeam, iskydiff, ignddiff;
 				double aoi, stilt, sazi, rot, btd;
-				int sunup;
 
 				irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
 				irr.get_angles( &aoi, &stilt, &sazi, &rot, &btd );
@@ -1132,6 +1140,7 @@ public:
 				p_shad[nn][istep] = (ssc_number_t) beam_shad_factor;
 				p_rot[nn][istep] = (ssc_number_t) rot;
 				p_idealrot[nn][istep] = (ssc_number_t) ( rot-btd );
+				p_aoi[nn][istep] = (ssc_number_t) aoi;
 				p_surftilt[nn][istep] = (ssc_number_t) stilt;
 				p_surfazi[nn][istep] = (ssc_number_t) sazi;
 				p_soiling[nn][istep] = (ssc_number_t) soiling_factor;
@@ -1331,6 +1340,7 @@ public:
 			
 			// absolute relative airmass calculation as f(zenith angle, site elevation)
 			p_airmass[istep] = (ssc_number_t) ( exp(-0.0001184 * wf.elev)/(cos( solzen*3.1415926/180 )+0.5057*pow(96.080-solzen, -1.634)) );
+			p_sunup[istep] = (ssc_number_t) sunup;
 						
 			p_inrad[istep] = (ssc_number_t) inprad_total;
 			p_inradbeam[istep] = (ssc_number_t) inprad_beam;

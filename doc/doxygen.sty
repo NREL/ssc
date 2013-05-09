@@ -10,17 +10,38 @@
 \RequirePackage{longtable}
 \RequirePackage{verbatim}
 \RequirePackage{ifthen}
+\RequirePackage{xtab}
+\RequirePackage{multirow}
 \RequirePackage[table]{xcolor}
 
-%Use helvetica font instead of times roman
-\RequirePackage{helvet}
+% Use helvetica font instead of times roman
+%\RequirePackage{helvet}
 \RequirePackage{sectsty}
 \RequirePackage{tocloft}
 \providecommand{\rmdefault}{phv}
 \providecommand{\bfdefault}{bc}
 
 
-
+% Setup fancy headings
+\pagestyle{fancyplain}
+\newcommand{\clearemptydoublepage}{%
+  \newpage{\pagestyle{empty}\cleardoublepage}%
+}
+\renewcommand{\sectionmark}[1]{%
+  \markright{\thesection\ #1}%
+}
+\fancyhead[LE]{\fancyplain{}{\bfseries\thepage}}
+\fancyhead[CE]{\fancyplain{}{}}
+\fancyhead[RE]{\fancyplain{}{\bfseries\leftmark}}
+\fancyhead[LO]{\fancyplain{}{\bfseries\rightmark}}
+\fancyhead[CO]{\fancyplain{}{}}
+\fancyhead[RO]{\fancyplain{}{\bfseries\thepage}}
+\fancyfoot[LE]{\fancyplain{}{}}
+\fancyfoot[CE]{\fancyplain{}{}}
+%\fancyfoot[RE]{\fancyplain{}{\bfseries\scriptsize Generated on Mon Dec 31 2012 12\-:49\-:35 for S\-S\-C A\-P\-I by Doxygen }}
+%\fancyfoot[LO]{\fancyplain{}{\bfseries\scriptsize Generated on Mon Dec 31 2012 12\-:49\-:35 for S\-S\-C A\-P\-I by Doxygen }}
+\fancyfoot[CO]{\fancyplain{}{}}
+\fancyfoot[RO]{\fancyplain{}{}}
 %---------- Internal commands used in this style file ----------------
 
 \newcommand\tabfill[1]{%
@@ -73,11 +94,11 @@
 
 % Used by @code ... @endcode
 \newenvironment{DoxyCode}{%
-  \footnotesize%
-  \verbatim%
+
+
+\begin{scriptsize}\begin{alltt}%
 }{%
-  \endverbatim%
-  \normalsize%
+\end{alltt}\end{scriptsize}%
 }
 
 % Used by @example, @include, @includelineno and @dontinclude
@@ -312,7 +333,7 @@
       \item[] \hspace{\fill} \vspace{-25pt}%
       \setlength{\tabcolsep}{0.01\textwidth}%
       \begin{longtable}{|>{\raggedleft\hspace{0pt}}p{0.25\textwidth}|%
-                          p{0.77\textwidth}|}%
+                          p{0.705\textwidth}|}%
       \hline%
 }{%
       \end{longtable}%
@@ -330,7 +351,7 @@
       \arrayrulecolor{gray}%
       \setlength{\tabcolsep}{0.01\textwidth}%
       \begin{longtable}{|>{\raggedleft\hspace{0pt}}p{0.25\textwidth}|%
-                          p{0.77\textwidth}|}%
+                          p{0.705\textwidth}|}%
       \hline%
 }{%
       \end{longtable}%
@@ -348,7 +369,7 @@
       \arrayrulecolor{gray}%
       \setlength{\tabcolsep}{0.01\textwidth}%
       \begin{longtable}{|>{\raggedleft\hspace{0pt}}p{0.25\textwidth}|%
-                          p{0.77\textwidth}|}%
+                          p{0.705\textwidth}|}%
       \hline%
 }{%
       \end{longtable}%
@@ -380,10 +401,10 @@
 {
 \setlength{\tmplength}
      {\linewidth/(#1)-\tabcolsep*2-\arrayrulewidth*(#1+1)/(#1)}
-      \par\begin{tabular*}{\linewidth}
+      \par\begin{xtabular*}{\linewidth}
              {*{#1}{|>{\PBS\raggedright\hspace{0pt}}p{\the\tmplength}}|}
 }
-{\end{tabular*}\par}
+{\end{xtabular*}\par}
 \newcommand{\entrylabel}[1]{
    {\parbox[b]{\labelwidth-4pt}{\makebox[0pt][l]{%
    \usefont{OT1}{phv}{bc}{n}\color{darkgray}#1}\vspace{1.5\baselineskip}}}}
@@ -432,21 +453,21 @@
   {\unskip\end{list}}
 \setlength{\parindent}{0cm}
 \setlength{\parskip}{0.2cm}
-%\addtocounter{secnumdepth}{2}
+\addtocounter{secnumdepth}{2}
 \usepackage[T1]{fontenc}
 \makeatletter
 \renewcommand{\paragraph}{\@startsection{paragraph}{4}{0ex}%
    {-1.0ex}%
    {1.0ex}%
-   {\usefont{OT1}{ptm}{b}{n}\color{black}}}
+   {\usefont{OT1}{phv}{bc}{n}\color{darkgray}}}
 \renewcommand{\subparagraph}{\@startsection{subparagraph}{5}{0ex}%
    {-1.0ex}%
    {1.0ex}%
-   {\usefont{OT1}{ptm}{b}{n}\color{black}}}
+   {\usefont{OT1}{phv}{bc}{n}\color{darkgray}}}
 \makeatother
-\allsectionsfont{\usefont{OT1}{phv}{bc}{n}\selectfont\color{black}}
-%\stepcounter{secnumdepth}
-%\stepcounter{tocdepth}
+%\allsectionsfont{\usefont{OT1}{phv}{bc}{n}\selectfont\color{darkgray}}
+\stepcounter{secnumdepth}
+\stepcounter{tocdepth}
 \definecolor{comment}{rgb}{0.5,0.0,0.0}
 \definecolor{keyword}{rgb}{0.0,0.5,0.0}
 \definecolor{keywordtype}{rgb}{0.38,0.25,0.125}
