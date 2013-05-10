@@ -360,6 +360,11 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 				}
 	  /*    printf("rot=%6.1f azm=%6.1f xsazm=%6.1f xtilt=%6.1f zen=%6.1f\n",rot/DTOR,azm/DTOR,xsazm/DTOR,xtilt/DTOR,zen/DTOR);  */
 
+			if( rot < -rlim ) /* Do not let rotation exceed physical constraints */
+				rot = -rlim;
+			else if( rot > rlim )
+				rot = rlim;
+
 			// apd: added 21jan2012 to enable backtracking for 1 axis arrays using 3D iterative method
 			// coded originally by intern M.Kasberg summer 2011
 			if (btwidth > 0 && btspacing > 0)
@@ -381,12 +386,8 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 				rot = backrot * M_PI/180; // convert backtracked rotation angle to radians
 			}
 
-			if( rot < -rlim ) /* Do not let rotation exceed physical constraints */
-				rot = -rlim;
-			else if( rot > rlim )
-				rot = rlim;
 
-									/* Find tilt angle for the tracking surface */
+			/* Find tilt angle for the tracking surface */
 			arg = cos(xtilt)*cos(rot);
 			if( arg < -1.0 )
 				tilt = M_PI;
