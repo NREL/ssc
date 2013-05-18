@@ -25,7 +25,8 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "ippppa",         "?=100",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "ippppa",         "?=100",                     "INTEGER,MIN=1",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
+//	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
+	{ SSC_INPUT,        SSC_ARRAY,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
 	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
@@ -632,7 +633,7 @@ public:
 		int i=0;
 
 		is_commercialppa = (as_integer("market")==1);
-		ppa_soln_mode = as_integer("ppa_soln_mode");
+		ppa_soln_mode = as_integer("ppa_soln_mode"); // 0 for iterative, 1 for specified
 		ppa_soln_tolerance = as_double("ppa_soln_tolerance");
 		weighting_factor = 1.0; // binary search algorithm - updated in check constraints.
 
@@ -706,11 +707,12 @@ public:
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
 		}
 
-
-		ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
-
 		ppa_escalation = 0.01*as_double("ppa_escalation");
+//		ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
+		// precompute ppa price schedules or value+escalation $/kWh (SAM) to cents/kWh (ssc)
+		escal_or_annual( CF_ppa_price, nyears, "ppa_price_input", ppa_escalation, 100.0, false );
 
+		ppa = cf( CF_ppa_price, 1); // assignment in metrics table
 
 		year1_fuel_use = as_double("annual_fuel_usage"); // kWht
 
@@ -4106,7 +4108,9 @@ void compute_cashflow()
 	for (int i=1; i<=nyears; i++)
 	{
 
-		cf.at(CF_ppa_price,i) = ppa * pow( 1.0 + ppa_escalation, i-1 ); 
+		if (ppa_soln_mode == 0) // iterative method - otherwise pre-computed as schedule or escalated value
+			cf.at(CF_ppa_price,i) = ppa * pow( 1.0 + ppa_escalation, i-1 ); 
+
 		if (is_commercialppa)
 			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 		else
