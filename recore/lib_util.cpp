@@ -70,6 +70,32 @@ std::string util::join( const std::vector< std::string > &list, const std::strin
 	return str;		
 }
 
+size_t util::replace( std::string &s, const std::string &old_text, const std::string &new_text)
+{
+	const size_t uiOldLen = old_text.length();
+	const size_t uiNewLen = new_text.length();
+
+	std::string::size_type pos = 0;
+	size_t uiCount = 0;
+	while(1)
+	{
+		pos = s.find(old_text, pos);
+		if ( pos == std::string::npos )
+			break;
+
+		// replace this occurrence of the old string with the new one
+		s.replace(pos, uiOldLen, new_text.c_str(), uiNewLen);
+
+		// move past the string that was replaced
+		pos += uiNewLen;
+
+		// increase replace count
+		uiCount++;
+	}
+
+	return uiCount;
+}
+
 
 bool util::to_integer(const std::string &str, int *x)
 {

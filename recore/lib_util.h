@@ -39,6 +39,9 @@ namespace util
 
 	std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );
 	std::string join( const std::vector< std::string > &list, const std::string &delim );
+
+	size_t replace( std::string &s, const std::string &old_text, const std::string &new_text);
+
 		
 	bool to_integer(const std::string &str, int *x);
 	bool to_float(const std::string &str, float *x);
