@@ -138,6 +138,7 @@
     <ClInclude Include="lib_irradproc.h" />
     <ClInclude Include="lib_physics.h" />
     <ClInclude Include="lib_powerblock.h" />
+    <ClInclude Include="lib_pvinv.h" />
     <ClInclude Include="lib_pvmodel.h" />
     <ClInclude Include="lib_pvshade.h" />
     <ClInclude Include="lib_pvwatts.h" />
@@ -154,6 +155,7 @@
     <ClCompile Include="lib_irradproc.cpp" />
     <ClCompile Include="lib_physics.cpp" />
     <ClCompile Include="lib_powerblock.cpp" />
+    <ClCompile Include="lib_pvinv.cpp" />
     <ClCompile Include="lib_pvmodel.cpp" />
     <ClCompile Include="lib_pvshade.cpp" />
     <ClCompile Include="lib_pvwatts.cpp" />
