@@ -13,6 +13,7 @@ public:
 
 	double Paco;    /* Maximum AC power rating, upper limit value  (Wac) */
 	double Pdco;    /* DC power level at which Paco is achieved (Wdc) */
+	double Pntare;  /* AC power consumed by inverter at night as parasitic load (Wac) */
 	std::vector<double> Partload; /* Array of partload values (Pdc/Paco) for linear interpolation */
 	std::vector<double> Efficiency; /* Array of efficiencies corresponding to partload values */
 
@@ -22,6 +23,7 @@ public:
 		/* outputs */
 		double *Pac,    /* AC output power (Wac) */
 		double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+		double *Ppar,   /* AC parasitic power consumption (Wac) */
 		double *Eff	    /* Conversion efficiency (0..1) */
 		);
 

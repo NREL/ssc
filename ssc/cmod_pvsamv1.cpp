@@ -241,6 +241,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pdco",                                "DC input power at which ac-power rating is achieved",     "Wdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "inv_pd_partload",                                 "Partload curve partload values",                  "%",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "inv_pd_efficiency",                                 "Partload curve efficiency values",       "%",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pnt",                                 "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated ac-power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum dc input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 
@@ -1364,8 +1365,8 @@ public:
 			}
 			else if ( inv_type == 2 )
 			{
-				double _plr;
-				plinv.acpower( dcpwr_net/num_inverters,	&acpwr_gross, &_plr, &aceff );
+				double _par, _plr;
+				plinv.acpower( dcpwr_net/num_inverters,	&acpwr_gross, &_par, &_plr, &aceff );
 				acpwr_gross *= num_inverters;
 				aceff *= 100;
 			}

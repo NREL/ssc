@@ -7,7 +7,7 @@
 
 partload_inverter_t::partload_inverter_t( )
 {
-	Paco = Pdco = std::numeric_limits<double>::quiet_NaN();
+	Paco = Pdco = Pntare = std::numeric_limits<double>::quiet_NaN();
 }
 
 bool partload_inverter_t::acpower(
@@ -16,6 +16,7 @@ bool partload_inverter_t::acpower(
 
 	/* outputs */
 	double *Pac,    /* AC output power (Wac) */
+	double *Ppar,   /* AC parasitic power consumption (Wac) */
 	double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
 	double *Eff	    /* Conversion efficiency (0..1) */
 	)
@@ -71,6 +72,13 @@ bool partload_inverter_t::acpower(
 	*Eff /= 100.0; // user data in percentages
 
 	*Pac = *Eff * Pdc;
+	*Ppar = 0.0;
+
+	if (Pdc <= 0.0)
+	{
+		*Pac = -Pntare;
+		*Ppar = Pntare;
+	}
 
 	// clipping loss
 	if ( *Pac > Paco ) *Pac = Paco;
