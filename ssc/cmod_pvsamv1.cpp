@@ -353,6 +353,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_net",                               "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 		
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_eff",                               "Inverter efficiency",                                          "%",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_cliploss",                               "Inverter clipping loss",                                          "Wac",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_psoloss",                               "Inverter power consumption loss",                                          "Wdc",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_pntloss",                               "Inverter night time loss",                                          "Wac",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_inc_total",                           "Total incident radiation",                               "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
@@ -979,6 +982,7 @@ public:
 		{
 			plinv.Paco = as_double("inv_pd_paco");
 			plinv.Pdco = as_double("inv_pd_pdco");
+			plinv.Pntare = as_double("inv_pd_pnt");
 
 			std::vector<double> pl_pd = as_doublevec("inv_pd_partload");
 			std::vector<double> eff_pd = as_doublevec("inv_pd_efficiency");
@@ -1089,6 +1093,9 @@ public:
 		ssc_number_t *p_acgross = allocate( "hourly_ac_gross", 8760 );
 		ssc_number_t *p_acpwr = allocate( "hourly_ac_net", 8760 );
 		ssc_number_t *p_inveff = allocate( "hourly_inv_eff", 8760 );
+		ssc_number_t *p_invcliploss = allocate( "hourly_inv_cliploss", 8760 );
+		ssc_number_t *p_invpsoloss = allocate( "hourly_inv_psoloss", 8760 );
+		ssc_number_t *p_invpntloss = allocate( "hourly_inv_pntloss", 8760 );
 
 
 
@@ -1354,19 +1361,19 @@ public:
 			
 			// inverter: runs at all hours of the day, even if no DC power.  important
 			// for capturing tare losses			
-			double acpwr_gross=0, aceff = 0;
+			double acpwr_gross=0, aceff=0, pntloss=0, psoloss=0, cliploss=0;
 			if (( inv_type == 0 ) || ( inv_type == 1 ))
 			{
 				double _par, _plr;
 				snlinv.acpower( dcpwr_net/num_inverters, dc_string_voltage, 
-					&acpwr_gross, &_par, &_plr, &aceff );
+					&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss );
 				acpwr_gross *= num_inverters;
 				aceff *= 100;
 			}
 			else if ( inv_type == 2 )
 			{
 				double _par, _plr;
-				plinv.acpower( dcpwr_net/num_inverters,	&acpwr_gross, &_par, &_plr, &aceff );
+				plinv.acpower( dcpwr_net/num_inverters,	&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss );
 				acpwr_gross *= num_inverters;
 				aceff *= 100;
 			}
@@ -1396,6 +1403,9 @@ public:
 			p_acgross[istep] = (ssc_number_t) ( acpwr_gross * 0.001 );
 			p_acpwr[istep] = (ssc_number_t) ( acpwr_gross*ac_derate * 0.001 );
 			p_inveff[istep] = (ssc_number_t) ( aceff );
+			p_invcliploss[istep] = (ssc_number_t) ( cliploss );
+			p_invpsoloss[istep] = (ssc_number_t) ( psoloss );
+			p_invpntloss[istep] = (ssc_number_t) ( pntloss );
 
 			istep++;
 

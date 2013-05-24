@@ -320,7 +320,10 @@ bool sandia_inverter_t::acpower(
 	double *Pac,    /* AC output power (Wac) */
 	double *Ppar,   /* AC parasitic power consumption (Wac) */
 	double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
-	double *Eff	    /* Conversion efficiency (0..1) */
+	double *Eff,	    /* Conversion efficiency (0..1) */
+	double *Pcliploss, /* Power loss due to clipping loss (Wac) */
+	double *Psoloss, /* Power loss due to operating power consumption (Wdc) */
+	double *Pntloss /* Power loss due to night time tare loss (Wac) */
 	)
 {
 	double A = Pdco * ( 1.0 + C1*( Vdc - Vdco ));
@@ -330,13 +333,30 @@ bool sandia_inverter_t::acpower(
 	*Pac = ((Paco / (A-B)) - C*(A-B))*(Pdc-B) + C0*(Pdc-B)*(Pdc-B);
 	*Ppar = 0.0;
 
+
+	// operating power loss Wdc
+	*Psoloss = 0.0;
+	B = 0;
+	double PacNoPso = ((Paco / (A-B)) - C*(A-B))*(Pdc-B) + C0*(Pdc-B)*(Pdc-B);
+	*Psoloss = PacNoPso - *Pac;
+
+	// night time power loss Wac (note that if PacNoPso > Pso and Pac < Pso then the night time loss could be considered an operating power loss)
+	*Pntloss = 0.0;
 	if (Pdc <= Pso)
 	{
 		*Pac = -Pntare;
 		*Ppar = Pntare;
+		*Pntloss = Pntare;
 	}
-	// clipping loss
-	if ( *Pac > Paco ) *Pac = Paco;
+	
+	// clipping loss Wac (note that the Pso=0 may have no clipping)
+	*Pcliploss = 0.0;
+	double PacNoClip = *Pac;
+	if ( *Pac > Paco )
+	{
+		*Pac = Paco;
+		*Pcliploss = PacNoClip - *Pac;
+	}
 
 	*Plr = Pdc / Pdco;
 	*Eff = *Pac / Pdc;

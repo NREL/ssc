@@ -65,8 +65,8 @@ public:
 
 		for (size_t i = 0; i < arr_len; i++ )
 		{
-			double pac, ppar, plr, eta;
-			if ( !inv.acpower( p_dcp[i], p_dcv[i], &pac, &ppar, &plr, &eta ) ) throw general_error("sandia inverter model calculation error with given inputs", (float) i);
+			double pac, ppar, plr, eta, pcliploss, psoloss, pntloss;
+			if ( !inv.acpower( p_dcp[i], p_dcv[i], &pac, &ppar, &plr, &eta, &pcliploss, &psoloss, &pntloss ) ) throw general_error("sandia inverter model calculation error with given inputs", (float) i);
 
 			p_ac[i] = (ssc_number_t) pac;
 			p_acpar[i] = (ssc_number_t) ppar;

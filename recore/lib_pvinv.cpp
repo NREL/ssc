@@ -18,7 +18,9 @@ bool partload_inverter_t::acpower(
 	double *Pac,    /* AC output power (Wac) */
 	double *Ppar,   /* AC parasitic power consumption (Wac) */
 	double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
-	double *Eff	    /* Conversion efficiency (0..1) */
+	double *Eff,	    /* Conversion efficiency (0..1) */
+	double *Pcliploss, /* Power loss due to clipping loss (Wac) */
+	double *Pntloss /* Power loss due to night time tare loss (Wac) */
 	)
 {
 
@@ -74,14 +76,22 @@ bool partload_inverter_t::acpower(
 	*Pac = *Eff * Pdc;
 	*Ppar = 0.0;
 
+	// night time power loss Wac
+	*Pntloss = 0.0;
 	if (Pdc <= 0.0)
 	{
 		*Pac = -Pntare;
 		*Ppar = Pntare;
 	}
 
-	// clipping loss
-	if ( *Pac > Paco ) *Pac = Paco;
+	// clipping loss Wac (note that the Pso=0 may have no clipping)
+	*Pcliploss = 0.0;
+	double PacNoClip = *Pac;
+	if ( *Pac > Paco )	
+	{
+		*Pac = Paco;
+		*Pcliploss = PacNoClip - *Pac;
+	}
 
 	*Plr = Pdc / Pdco;
 

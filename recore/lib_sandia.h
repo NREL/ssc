@@ -82,7 +82,10 @@ public:
 		double *Pac,    /* AC output power (Wac) */
 		double *Ppar,   /* AC parasitic power consumption (Wac) */
 		double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
-		double *Eff	    /* Conversion efficiency (0..1) */
+		double *Eff,	    /* Conversion efficiency (0..1) */
+		double *Pcliploss, /* Power loss due to clipping loss (Wac) */
+		double *Psoloss, /* Power loss due to operating power consumption (Wdc) */
+		double *Pntloss /* Power loss due to night time tare loss (Wac) */
 		);
 
 } ;
