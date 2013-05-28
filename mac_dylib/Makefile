@@ -47,6 +47,7 @@ OBJECTS = \
 	cmod_geothermal.o \
 	core.o \
 	lib_windfile.o \
+	lib_pvinv.o \
 	lib_cec6par.o \
 	lib_pvshade.o \
 	lib_sandia.o \
@@ -60,7 +61,6 @@ OBJECTS = \
 	vartab.o \
 	lib_weatherfile.o \
 	lib_windwatts.o \
-	lib_geohourly.o \
 	lib_geothermal.o \
 	lib_sandia.o \
 	sscapi.o \

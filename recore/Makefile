@@ -6,11 +6,11 @@ CXXFLAGS = $(CFLAGS)
 OBJECTS = \
 	lib_cec6par.o \
 	lib_financial.o \
-	lib_geohourly.o \
 	lib_geothermal.o \
 	lib_irradproc.o \
 	lib_physics.o \
 	lib_powerblock.o \
+	lib_pvinv.o \
 	lib_pvmodel.o \
 	lib_pvshade.o \
 	lib_pvwatts.o \
