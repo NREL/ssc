@@ -908,7 +908,7 @@ public:
 			double gamma = as_double("6par_gpmp");
 			int nser = as_integer("6par_nser");
 		
-			module6par m(tech_id, Vmp, Imp, Voc, Isc, beta, alpha, gamma, nser);
+			module6par m(tech_id, Vmp, Imp, Voc, Isc, beta, alpha, gamma, nser, 298.15);
 			int err = m.solve_with_sanity_and_heuristics<double>( 300, 1e-7 );
 
 			if (err != 0)

@@ -31,18 +31,18 @@ class __Module6ParNonlinear
 {
 private:
 	notification_interface *m_notifyInterface;
-	Real Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, Egref;
+	Real Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, Egref, Tref;
 
 public:
 	
 	__Module6ParNonlinear( notification_interface *nif,
 		double _Vmp, double _Imp, double _Voc, double _Isc,
-		double _bVoc, double _aIsc, double _gPmp, double _Egref )
+		double _bVoc, double _aIsc, double _gPmp, double _Egref, double _Tref )
 		: m_notifyInterface(nif),
 			Vmp(_Vmp), Imp(_Imp), 
 			Voc(_Voc), Isc(_Isc),
 			bVoc(_bVoc), aIsc(_aIsc), gPmp(_gPmp),
-			Egref(_Egref)
+			Egref(_Egref), Tref(_Tref)
 	{
 	}
 
@@ -64,7 +64,6 @@ public:
 		 /( 1 + Io*Rs/a*exp( (Vmp + Imp*Rs)/a ) + Rs/Rsh ) ); 
 
 		const Real dT = 5;
-		const Real Tref = 298;	
 
 		const Real aT = a*(Tref+dT)/Tref;
 		const Real VocT = bVoc*(1+Adj/100.0)*dT + Voc;
@@ -75,7 +74,7 @@ public:
 		
 		
 		Real gamma = 0;
-		mod6par_gamma_approx<Real>( &gamma, Io, Il, a, aIsc, Adj, Vmp, Imp, Rs, Rsh, Egref );
+		mod6par_gamma_approx<Real>( &gamma, Io, Il, a, aIsc, Adj, Vmp, Imp, Rs, Rsh, Egref, Tref );
 		
 		f[5] = gamma - gPmp;
 	}
@@ -123,11 +122,11 @@ public:
 	enum { monoSi, multiSi, CdTe, CIS, CIGS, Amorphous };
 	
 	module6par() 
-		: Type(monoSi), Vmp(0), Imp(0), Voc(0), Isc(0), bVoc(0), aIsc(0), gPmp(0), Nser(0),
+		: Type(monoSi), Vmp(0), Imp(0), Voc(0), Isc(0), bVoc(0), aIsc(0), gPmp(0), Nser(0), Tref(0),
 			a(0.0), Il(0.0), Io(0.0), Rs(0.0), Rsh(0.0), Adj(0.0) {  }
 
-	module6par( int _type, double _vmp, double _imp, double _voc, double _isc, double _bvoc, double _aisc, double _gpmp, int _nser )
-		: Type(_type), Vmp(_vmp), Imp(_imp), Voc(_voc), Isc(_isc), bVoc(_bvoc), aIsc(_aisc), gPmp(_gpmp), Nser(_nser),
+	module6par( int _type, double _vmp, double _imp, double _voc, double _isc, double _bvoc, double _aisc, double _gpmp, int _nser, double _Tref )
+		: Type(_type), Vmp(_vmp), Imp(_imp), Voc(_voc), Isc(_isc), bVoc(_bvoc), aIsc(_aisc), gPmp(_gpmp), Nser(_nser), Tref(_Tref),
 			a(0.0), Il(0.0), Io(0.0), Rs(0.0), Rsh(0.0), Adj(0.0) {  }
 
 	std::string Name;
@@ -138,6 +137,8 @@ public:
 	double Voc, Isc;
 	double bVoc, aIsc, gPmp;
 	int Nser;
+
+	double Tref;
 	
 	double a, Il, Io, Rs, Rsh, Adj;
 
@@ -417,7 +418,7 @@ public:
 
 		__Module6ParNonlinear<Real> solver( nif,
 			Vmp, Imp, Voc, Isc,
-			bVoc, aIsc, gPmp, bandgap() );		
+			bVoc, aIsc, gPmp, bandgap(), Tref );		
 
 		Real _a = Real(a);
 		Real _Il = Real(Il);

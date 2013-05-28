@@ -23,6 +23,7 @@ static var_info _cm_vtab_6parsolve[] = {
 	{ SSC_INPUT,         SSC_NUMBER,      "beta_voc",               "Temp coeff of voltage at OC",    "V/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
 	{ SSC_INPUT,         SSC_NUMBER,      "gamma_pmp",              "Temp coeff of power at MP",      "%/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
 	{ SSC_INPUT,         SSC_NUMBER,      "Nser",                   "Number of cells in series",      "",        "",                      "6 Parameter Solver",      "*",                       "INTEGER,POSITIVE",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "Tref",                   "Reference cell temperature",     "'C",      "",                      "6 Parameter Solver",      "?",                       "",      "" },
 	
 // outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,      "a",                      "Modified nonideality factor",    "1/V",    "",                      "6 Parameter Solver",      "*",                        "",                      "" },
@@ -66,7 +67,11 @@ public:
 		double gPmp = as_double("gamma_pmp");
 		int nser = as_integer("Nser");
 
-		module6par m( tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser );
+		double Tref = 25;
+		if ( is_assigned("Tref") )
+			Tref = as_double("Tref");
+
+		module6par m( tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser, Tref+273.15 );
 		int err = m.solve_with_sanity_and_heuristics<double>(300,1e-7);
 		if (err < 0)
 			throw general_error("could not solve, check inputs");

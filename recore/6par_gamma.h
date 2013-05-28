@@ -7,9 +7,8 @@ private:
 	Real Vguess, Iguess;		
 
 public:
-	__PTnonlinear( Real _T, Real _Io, Real _Il, Real _a, Real _aIsc, Real _Adj, Real _V, Real _I, Real _Rs, Real _Rsh, Real Egref )
+	__PTnonlinear( Real _T, Real _Io, Real _Il, Real _a, Real _aIsc, Real _Adj, Real _V, Real _I, Real _Rs, Real _Rsh, Real Egref, Real Tref )
 	{	
-		const Real Tref = 298.15;
 		Tc = _T+273.15;
 		
 		Rs = _Rs;
@@ -59,7 +58,7 @@ public:
 template< typename Real >
 bool mod6par_gamma_approx( Real *result, 
 	Real Io, Real Il, Real a, 
-	Real aIsc, Real Adj, Real Vmp, Real Imp, Real Rs, Real Rsh, Real Egref )
+	Real aIsc, Real Adj, Real Vmp, Real Imp, Real Rs, Real Rsh, Real Egref, Real Tref )
 {
 	Real Tc_last=-999, Pmax_last=-999;
 	Real gamma, gamma_sum = 0.0;
@@ -70,7 +69,7 @@ bool mod6par_gamma_approx( Real *result,
 	for (Real Tc = -10; Tc <= 50.0; Tc += 3.0 )
 	{
 		__PTnonlinear<Real> power_t( Tc,
-			Io, Il, a, aIsc, Adj, Vmp, Imp, Rs, Rsh, Egref );
+			Io, Il, a, aIsc, Adj, Vmp, Imp, Rs, Rsh, Egref, Tref );
 		
 		Real Pmax = 0.0;
 		int niter = power_t.solve( &Pmax );
