@@ -66,7 +66,7 @@ public:
 
 
 
-struct btdat
+struct arr1x_data
 {
 	// angles in degrees
 	double solazi;
@@ -79,7 +79,7 @@ struct btdat
 	double rotlim;
 };
 	
-	
-double backtrack(btdat &arr, double rotation_ideal);
+double shade_fraction_1x( arr1x_data &arr, double rotation );
+double backtrack(arr1x_data &arr, double rotation_ideal);
 
 #endif

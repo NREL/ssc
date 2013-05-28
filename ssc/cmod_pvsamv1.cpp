@@ -45,15 +45,14 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_track_mode",                        "Sub-array 1 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rotlim",                            "Sub-array 1 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_enable_backtracking",               "Sub-array 1 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_btwidth",                           "Sub-array 1 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_btspacing",                         "Sub-array 1 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_width_1x",                          "Sub-array 1 Width of tracker row",                        "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_spacing_1x",                        "Sub-array 1 Spacing between edges of tracker rows",       "m",      "",                              "pvsamv1",              "subarray1_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shade_mode_1x",                     "Sub-array 1 Tracker self-shading mode",                   "0/1",    "0=none,1=derate beam by area",  "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading_hourly",                    "Sub-array 1 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading_mxh",                       "Sub-array 1 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading_azal",                      "Sub-array 1 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading_diff",                      "Sub-array 1 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
-
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_derate",                            "Sub-array 1 DC power derate",                             "0..1",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=1",                   "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable",                            "Sub-array 2 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -64,8 +63,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_track_mode",                        "Sub-array 2 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi", "pvsamv1",              "subarray2_enable=1",       "INTEGER,MIN=0,MAX=3",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_rotlim",                            "Sub-array 2 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable_backtracking",               "Sub-array 2 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_btwidth",                           "Sub-array 2 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray2_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_btspacing",                         "Sub-array 2 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray2_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_width_1x",                          "Sub-array 2 Width of tracker row",                        "m",      "",                              "pvsamv1",              "subarray2_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_spacing_1x",                        "Sub-array 2 Spacing between edges of tracker rows",       "m",      "",                              "pvsamv1",              "subarray2_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shade_mode_1x",                     "Sub-array 2 Tracker self-shading mode",                   "0/1",    "0=none,1=derate beam by area",  "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_shading_hourly",                    "Sub-array 2 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading_mxh",                       "Sub-array 2 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading_azal",                      "Sub-array 2 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
@@ -81,8 +81,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_track_mode",                        "Sub-array 3 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi", "pvsamv1",              "subarray3_enable=1",       "INTEGER,MIN=0,MAX=3",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_rotlim",                            "Sub-array 3 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_enable_backtracking",               "Sub-array 3 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_btwidth",                           "Sub-array 3 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray3_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_btspacing",                         "Sub-array 3 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray3_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_width_1x",                          "Sub-array 3 Width of tracker row",                        "m",      "",                              "pvsamv1",              "subarray3_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_spacing_1x",                        "Sub-array 3 Spacing between edges of tracker rows",       "m",      "",                              "pvsamv1",              "subarray3_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shade_mode_1x",                     "Sub-array 3 Tracker self-shading mode",                   "0/1",    "0=none,1=derate beam by area",  "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_shading_hourly",                    "Sub-array 3 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading_mxh",                       "Sub-array 3 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading_azal",                      "Sub-array 3 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
@@ -98,8 +99,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_track_mode",                        "Sub-array 4 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi", "pvsamv1",              "subarray4_enable=1",       "INTEGER,MIN=0,MAX=3",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_rotlim",                            "Sub-array 4 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_enable_backtracking",               "Sub-array 4 Enable backtracking for 1 axis trackers",     "0/1",    "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_btwidth",                           "Sub-array 4 Width of backtracking row",                   "m",      "",                              "pvsamv1",              "subarray4_enable_backtracking=1", "POSITIVE",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_btspacing",                         "Sub-array 4 Spacing between edges of backtracking rows",  "m",      "",                              "pvsamv1",              "subarray4_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_width_1x",                          "Sub-array 4 Width of tracker row",                        "m",      "",                              "pvsamv1",              "subarray4_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_spacing_1x",                        "Sub-array 4 Spacing between edges of tracker rows",       "m",      "",                              "pvsamv1",              "subarray4_enable_backtracking=1", "POSITIVE",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shade_mode_1x",                     "Sub-array 4 Tracker self-shading mode",                   "0/1",    "0=none,1=derate beam by area",  "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_shading_hourly",                    "Sub-array 4 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading_mxh",                       "Sub-array 4 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading_azal",                      "Sub-array 4 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
@@ -392,8 +394,10 @@ struct subarray
 		tilt = azimuth = 0;
 		track_mode = 0;
 		rotlim = 0;
-		en_backtrack = false;
-		btwidth = btspacing = -1;
+		en_backtrack_1x = false;
+		width_1x = spacing_1x = -1;
+		shade_mode_1x = 0; // 0=fully unshaded 1=geometric area derate on beam
+
 		derate = 1.0;
 		
 		for (size_t i=0;i<12;i++)
@@ -427,11 +431,14 @@ struct subarray
 	double azimuth;
 	int track_mode;
 	double rotlim;
-	bool en_backtrack;
-	double btwidth;
-	double btspacing;
 	double soiling[12];
 	double derate;
+	
+	int shade_mode_1x;
+	double width_1x;
+	double spacing_1x;
+	
+	bool en_backtrack_1x;
 	
 	std::vector<double> shad_beam_factor; // hourly factors as well as mxh
 	bool en_azal; // enable az x al shading factors
@@ -539,14 +546,17 @@ public:
 			sa[nn].azimuth = as_double( prefix+"azimuth" );
 			sa[nn].rotlim = as_double( prefix+"rotlim" );
 			
-			sa[nn].en_backtrack = false;
-			sa[nn].btwidth = -1;
-			sa[nn].btspacing = -1;
-			if ( as_integer( prefix+"enable_backtracking") )
+			sa[nn].en_backtrack_1x = (as_integer( prefix+"enable_backtracking") > 0);
+			sa[nn].width_1x = -1;
+			sa[nn].spacing_1x = -1;
+			sa[nn].shade_mode_1x = as_integer( prefix+"shade_mode_1x" );
+			if ( sa[nn].en_backtrack_1x || sa[nn].shade_mode_1x > 0 )
 			{
-				sa[nn].en_backtrack = true;
-				sa[nn].btwidth = as_double( prefix+"btwidth" );
-				sa[nn].btspacing = as_double( prefix+"btspacing" );
+				sa[nn].width_1x = as_double( prefix+"width_1x" );
+				sa[nn].spacing_1x = as_double( prefix+"spacing_1x" );
+
+				if (sa[nn].width_1x < 0.01 || sa[nn].spacing_1x < 0.01)
+					throw exec_error("pvsamv1", "1 axis tracked array width and spacing must be both be greater than 0.01");
 			}
 
 			sa[nn].shad_skydiff_factor = 1;
@@ -1138,12 +1148,17 @@ public:
 				if ( radmode == 0 ) irr.set_beam_diffuse( wf.dn, wf.df );
 				else if (radmode == 1) irr.set_global_beam( wf.gh, wf.dn );
 
+				double btwidth = sa[nn].width_1x;
+				double btspace = sa[nn].spacing_1x;
+				if ( sa[nn].en_backtrack_1x == false )
+					btwidth = btspace = -1;
+
 				irr.set_surface( sa[nn].track_mode,
 					sa[nn].tilt,
 					sa[nn].azimuth,
 					sa[nn].rotlim,
-					sa[nn].btwidth,
-					sa[nn].btspacing );
+					btwidth,
+					btspace );
 
 				int code = irr.calc();
 				if ( code != 0 )
@@ -1157,8 +1172,27 @@ public:
 				irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
 				irr.get_angles( &aoi, &stilt, &sazi, &rot, &btd );
 				irr.get_poa( &ibeam, &iskydiff, &ignddiff, 0, 0, 0);
-
+				
 				double beam_shad_factor = sa[nn].shad_beam_factor[istep]; // variable to accumulate total beam shading derate for this hour
+
+				if ( sa[nn].track_mode == 1
+					&& sa[nn].shade_mode_1x > 0 )
+				{	
+					arr1x_data arr1x;
+					arr1x.width = sa[nn].width_1x;
+					arr1x.length = 10*arr1x.width;
+					arr1x.row_spacing = sa[nn].spacing_1x;
+					arr1x.axis_azimuth = sa[nn].azimuth;
+					arr1x.axis_tilt = sa[nn].tilt;
+					arr1x.rotlim = sa[nn].rotlim;
+					arr1x.solazi = solazi;
+					arr1x.solzen = solzen;
+
+					double shad1xf = shade_fraction_1x( arr1x, rot );
+
+					ibeam *= (1-shad1xf);
+					beam_shad_factor *= (1-shad1xf);
+				}
 				
 				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
 				ibeam *= sa[nn].shad_beam_factor[istep];	

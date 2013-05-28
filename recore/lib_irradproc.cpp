@@ -369,7 +369,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 			// coded originally by intern M.Kasberg summer 2011
 			if (btwidth > 0 && btspacing > 0)
 			{
-				btdat arr;
+				arr1x_data arr;
 				arr.width = btwidth;
 				arr.length = 10*arr.width;
 				arr.row_spacing = btspacing;
@@ -963,7 +963,7 @@ static void vec_diff( double a[3], double b[3], double result[3] )
 	result[2] = a[2] - b[2];
 }
 
-static void get_vertices(btdat &arr, double vertices[3][4][3], double rotation)
+static void get_vertices(arr1x_data &arr, double vertices[3][4][3], double rotation)
 {
 	//Get panel vertices for flat panels, no tilt or azimuth, 
 	//ordered ccw starting from x+
@@ -1120,7 +1120,7 @@ static void sun_unit( double sazm, double szen, double sun[3] )
 //Pass a PV system, sun zenith, sun azimuth
 //Return true if system is shaded
 //False otherwise
-static bool is_shaded( btdat &arr, double rotation )
+double shade_fraction_1x( arr1x_data &arr, double rotation )
 {
 	//Get unit vector in direction of sun
 	
@@ -1177,7 +1177,7 @@ static bool is_shaded( btdat &arr, double rotation )
 	//Assume sun is at infinity in direction 'sun'.
 	//First make sure that this ray has a unique intersection point.
 	double sunDot = vec_dot(normal, sun);
-	if (fabs(sunDot) < 0.001) return true; //sun vector lies in plane
+	if (fabs(sunDot) < 0.001) return 0; //sun vector lies in plane
 	
 	//Now, vector pDir goes from midP to any point in the plane of iPanel.  Vertex 0, say.
 	//Project pDir onto the normal to iPanel, and project the sun vector onto the normal vector.
@@ -1186,7 +1186,7 @@ static bool is_shaded( btdat &arr, double rotation )
 	double pDir[3];
 	vec_diff(verts[iPanel][0], midP, pDir);
 	double t = vec_dot(normal, pDir) / vec_dot(normal, sun);
-	if (t < 0) return false; // sun has set (is behind array).
+	if (t < 0) return 0; // sun has set (is behind array).
 	
 	double intersectP[3];
 	for (int i=0; i<3; i++)
@@ -1203,23 +1203,41 @@ static bool is_shaded( btdat &arr, double rotation )
 	//Reuse a1 and a2 from above (as temporary vectors).
 	vec_diff(verts[iPanel][3], verts[iPanel][0], a1);
 	vec_diff(intersectP, verts[iPanel][0], a2);
-	if (vec_dot(a1, a2) < 0) return false; //intersect is outside panel bounds.
+	if (vec_dot(a1, a2) < 0) return 0; //intersect is outside panel bounds.
 	
 	vec_diff(verts[iPanel][0], verts[iPanel][3], a1);
 	vec_diff(intersectP, verts[iPanel][3], a2);
-	if (vec_dot(a1, a2) < 0) return false; //intersect is outside panel bounds.
+	if (vec_dot(a1, a2) < 0) return 0; //intersect is outside panel bounds.
 	
-	return true; //Intersect is inside panel bounds (ignoring length).*/
+	// Now we know the panel is shaded, so compute geometric shade fraction	
+	double mu[3] = { 0, 0, 0 }; // upper edge midpoint on adjacent panel
+	double ml[3] = { 0, 0, 0 }; // lower edge midpoint on adjacent panel
+	for (int i=0; i<3; i++)
+	{
+		if (iPanel == 2) mu[i] = (verts[iPanel][2][i] + verts[iPanel][3][i]) / 2;
+		else             mu[i] = (verts[iPanel][0][i] + verts[iPanel][1][i]) / 2;
+		
+		if (iPanel == 2) ml[i] = (verts[iPanel][0][i] + verts[iPanel][1][i]) / 2;
+		else             ml[i] = (verts[iPanel][2][i] + verts[iPanel][3][i]) / 2;
+		
+	}
+	
+	vec_diff(intersectP, mu, a1);
+	vec_diff(ml, mu, a2);
+	double maga2 = vec_dot(a2,a2);
+	double Ab = vec_dot(a1, a2)/maga2;  // geometric shading fraction [0..1]
+
+	return Ab;
 }
 
 
 //Find optimum angle using backtracking.
-double backtrack(btdat &arr, double rotation)
+double backtrack(arr1x_data &arr, double rotation)
 {
 	//Now do backtracking.
 	//This is very straightforward - decrease the rotation as long as we are in shade.
 	int iter = 0;
-	while(is_shaded(arr, rotation) && ++iter < 100)
+	while( shade_fraction_1x(arr, rotation) > 0 && ++iter < 100)
 	{
 		//Move closer to flat.
 		if (rotation > 0)
