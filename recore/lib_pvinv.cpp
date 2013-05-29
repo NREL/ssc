@@ -84,7 +84,7 @@ bool partload_inverter_t::acpower(
 		*Ppar = Pntare;
 	}
 
-	// clipping loss Wac (note that the Pso=0 may have no clipping)
+	// clipping loss Wac
 	*Pcliploss = 0.0;
 	double PacNoClip = *Pac;
 	if ( *Pac > Paco )	
