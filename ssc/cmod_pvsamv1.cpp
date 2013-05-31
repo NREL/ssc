@@ -27,7 +27,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_STRING,      "weather_file",                                "Weather file in TMY2, TMY3, EPW, or SMW.",                "",       "",                              "pvsamv1",              "*",                        "LOCAL_FILE",                    "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",                  "0/1",    "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                                      "User specified ground albedo",                            "0..1",   "",                              "pvsamv1",              "?=0.2",                    "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                            "0..1",   "",                              "pvsamv1",              "*",						  "LENGTH=12",					   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                       "",       "0=beam&diffuse,1=total&beam",   "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                       "",       "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
@@ -280,8 +280,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sol_azi",                              "Solar azimuth angle",                                               "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_sunup",                                "Sun up over horizon",                                               "0/1",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_airmass",                              "Absolute air mass",                                                 "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	
-/* sub-array level outputs */
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_albedo",                               "Albedo",							                                 "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+
+	/* sub-array level outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_aoi",                        "Subarray 1 Angle of incidence",                                     "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_surf_tilt",                  "Subarray 1 Surface tilt",                                           "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_subarray1_surf_azi",                   "Subarray 1 Surface azimuth",                                        "deg",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -482,7 +483,7 @@ public:
 	void exec( ) throw( general_error )
 	{
 		// open the weather file
-
+		// define variables consistent across subarrays
 		
 
 		weatherfile wf( as_string("weather_file") );
@@ -495,8 +496,10 @@ public:
 		int num_inverters = as_integer("inverter_count");
 		double ac_derate = as_double("ac_derate");
 
-		double alb_const = as_double("albedo");
-		bool use_wf_alb = (as_integer("use_wf_albedo") > 0);
+		size_t alb_len = 0;
+		ssc_number_t *alb_array = as_array("albedo", &alb_len); // monthly albedo array
+
+		bool use_wf_alb = (as_integer("use_wf_albedo") > 0); // weather file albedo
 
 		int radmode = as_integer("irrad_mode"); // 0=B&D, 1=G&B
 		int skymodel = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
@@ -506,7 +509,7 @@ public:
 		int num_subarrays = 1;
 
 
-
+		// loop over subarrays
 		for ( size_t nn=0;nn<4;nn++ )
 		{
 			sa[nn].enable = true;
@@ -1054,7 +1057,8 @@ public:
 		ssc_number_t *p_diff = allocate( "hourly_diff", 8760 );
 		ssc_number_t *p_wspd = allocate( "hourly_windspd", 8760 );
 		ssc_number_t *p_tdry = allocate( "hourly_ambtemp", 8760 );
-		
+		ssc_number_t *p_albedo = allocate( "hourly_albedo", 8760 );
+
 		ssc_number_t *p_solzen = allocate("hourly_sol_zen", 8760);
 		ssc_number_t *p_solalt = allocate("hourly_sol_alt", 8760);
 		ssc_number_t *p_solazi = allocate("hourly_sol_azi", 8760);
@@ -1128,7 +1132,18 @@ public:
 			double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
 			double inprad_total = 0.0;
 			double inprad_beam = 0.0;
-			
+			double alb = 0.2;
+					
+			int month_idx = wf.month - 1;
+
+			if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
+				alb = wf.albedo;
+			else if ( month_idx >= 0 && month_idx < 12 )
+				alb = alb_array[month_idx];
+			else
+				throw exec_error( "pvsamv1", 
+						util::format("Error retrieving albedo value: Invalid month in weather file or invalid albedo value in weather file"));
+	
 			// calculate incident irradiance on each subarray
 			for (int nn=0;nn<4;nn++)
 			{
@@ -1139,11 +1154,7 @@ public:
 				irrad irr;
 				irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600.0 );
 				irr.set_location( wf.lat, wf.lon, wf.tz );
-		
-				double alb = alb_const;
-				if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
-					alb = wf.albedo;
-				
+			
 				irr.set_sky_model( skymodel, alb );
 				if ( radmode == 0 ) irr.set_beam_diffuse( wf.dn, wf.df );
 				else if (radmode == 1) irr.set_global_beam( wf.gh, wf.dn );
@@ -1209,7 +1220,7 @@ public:
 				iskydiff *= sa[nn].shad_skydiff_factor;
 
 				// apply soiling derate to all components of irradiance
-				int month_idx = wf.month - 1;
+//				int month_idx = wf.month - 1;
 				double soiling_factor = 1.0;
 				if ( month_idx >= 0 && month_idx < 12 )
 				{
@@ -1257,9 +1268,9 @@ public:
 			// apply self-shading if enabled (subarray 1 only)
 			if ( self_shading_enabled )
 			{
-				double alb = alb_const;
-				if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
-					alb = wf.albedo;
+//				double alb = alb;
+				//if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
+					//alb = wf.albedo;
 
 				if ( sscalc.exec( solzen, solazi, wf.dn, wf.df, self_shading_fill_factor, alb ) )
 				{
@@ -1418,7 +1429,8 @@ public:
 			p_diff[istep] = (ssc_number_t) wf.df/1000;
 			p_wspd[istep] = (ssc_number_t) wf.wspd;
 			p_tdry[istep] = (ssc_number_t) wf.tdry;
-			
+			p_albedo[istep] = (ssc_number_t) alb;
+
 			p_solzen[istep] = (ssc_number_t) solzen;
 			p_solalt[istep] = (ssc_number_t) solalt;
 			p_solazi[istep] = (ssc_number_t) solazi;
