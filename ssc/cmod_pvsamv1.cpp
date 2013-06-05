@@ -360,6 +360,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_psoloss",                               "Inverter power consumption loss",                                          "Wdc",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_pntloss",                               "Inverter night time loss",                                          "Wac",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_inv_cliploss",                               "Inverter clipping loss",                                          "Wac",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_inv_psoloss",                               "Inverter power consumption loss",                                          "Wdc",    "",                      "pvsamv1",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_inv_pntloss",                               "Inverter night time loss",                                          "Wac",    "",                      "pvsamv1",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_inc_total",                           "Total incident radiation",                               "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_inc_beam",                            "Beam incident radiation",                                "kWh/m2", "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
@@ -1495,6 +1498,12 @@ public:
 		accumulate_annual( "hourly_dc_net", "annual_dc_net" );
 		accumulate_annual( "hourly_ac_gross", "annual_ac_gross" );
 		accumulate_annual( "hourly_ac_net", "annual_ac_net" );
+
+		accumulate_annual( "hourly_inv_cliploss", "annual_inv_cliploss" );
+		accumulate_annual( "hourly_inv_psoloss", "annual_inv_psoloss" );
+		accumulate_annual( "hourly_inv_pntloss", "annual_inv_pntloss" );
+
+
 	
 		bool is_cpv = false;
 
