@@ -82,6 +82,7 @@ bool partload_inverter_t::acpower(
 	{
 		*Pac = -Pntare;
 		*Ppar = Pntare;
+		*Pntloss = Pntare;
 	}
 
 	// clipping loss Wac
