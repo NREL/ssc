@@ -223,6 +223,7 @@ bool selfshade_t::exec(
 /*
 Chris Deline 4/9/2012 - updated 4/19/2012 - update 4/23/2012 
 see SAM shade geometry_v2.docx
+Updated 1/18/13 to match new published coefficients in Solar Energy "A simplified model of uniform shading in large photovoltaic arrays"
 
 Definitions of X and S in SAM for the four layout conditions – portrait, landscape and vertical / horizontal strings.
 Definitions:
@@ -413,24 +414,34 @@ phi_bar: average masking angle
 	if (inc_total != 0)
 		diffuse_globhoriz = inc_diff / inc_total;
 
-	c1 = 0.25 * exp(( 7.7 - 6.0 * FF0) * X);
+	// set self-shading coefficients based on C.Deline et al., "A simplified model of uniform shading in large photovoltaic arrays"
+	
+	double Xtemp = min( X , 0.65);  // X is limited to 0.65 for c2 calculation
+	
+	//c1 = 0.25 * exp(( 7.7 - 6.0 * FF0) * X);
+	c1 = (109 * FF0 - 54.3) * exp(-4.5 * X); // new c1 on 1/18/13
+	
+	//c2 = ( 0.145 - 0.095 * FF0) * exp(( 7.7 - 6.0 * FF0) * X);
+	c2 = -6 * pow(Xtemp,2) + 5 * Xtemp + 0.28; // new c2 on 1/18/13
 
-	c2 = ( 0.145 - 0.095 * FF0) * exp(( 7.7 - 6.0 * FF0) * X);
+	//don't have c4 anymore
+	//c4 = 0.17 * ( diffuse_globhoriz ) * ( diffuse_globhoriz	) - 0.16 * ( diffuse_globhoriz ) - 0.004; 
+	
 
-	c4 = 0.17 * ( diffuse_globhoriz ) * ( diffuse_globhoriz	) - 0.16 * ( diffuse_globhoriz ) - 0.004;
-
-	c3_0 = c4 * X + ( 0.74 * ( diffuse_globhoriz ) - 0.1 ) * FF0 - 0.65 * ( diffuse_globhoriz ) + 0.06;
+	//c3_0 = c4 * X + ( 0.74 * ( diffuse_globhoriz ) - 0.1 ) * FF0 - 0.65 * ( diffuse_globhoriz ) + 0.06;
+	c3_0 = (-0.05 * diffuse_globhoriz - 0.01) * X + (0.85 * FF0 - 0.7) * diffuse_globhoriz - 0.085 * FF0 + 0.05;  //new c3_0 on 1/18/13
 
 	c3 = max ( c3_0, ( diffuse_globhoriz ) - 1.0 );
 
-	if ( c2 != 0)
-	{
-		eqn5 = 1.0 - c1 * ( exp( S/c2 - 1.0 ) - 1.0 / exp(1.0) );
-	}
-	else
-	{
-		eqn5 = 0;
-	}
+//	if ( c2 != 0)  //don't need check for div by zero any more.
+//	{
+		//eqn5 = 1.0 - c1 * ( exp( S/c2 - 1.0 ) - 1.0 / exp(1.0) );
+		eqn5 = 1.0 - c1 * pow(S,2) - c2 * S;  // new eqn5 on 1/18/13
+//	}
+//	else
+//	{
+//		eqn5 = 0;
+//	}
 
 	if ( X != 0)
 	{
@@ -451,7 +462,7 @@ phi_bar: average masking angle
 	m_C2 = c2;
 	m_C3 = c3;
 	m_C3_0 = c3_0;
-	m_C4 = c4;
+	//m_C4 = c4; //no more c4
 	m_eqn14 = reduc;
 
 	reduc = X * reduc + (1.0 - X);
