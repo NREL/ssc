@@ -264,6 +264,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 // removed per 11/7/12 meeting
 //	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_slopens",                        "North-south slope",                                       "deg",    "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_slopeew",                        "East-west slope",                                         "deg",    "",                       "pvsamv1",       "self_shading_enabled=1",              "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "self_shading_mask_angle_calc_method",                     "Mask angle calculation method",                                      "",       "0=worst case,1=average", "pvsamv1",       "self_shading_enabled=1",              "INTEGER,MIN=0,MAX=1",           "" },
 
 // outputs
 
@@ -1058,6 +1059,7 @@ public:
 			ssarr.ncellx = as_integer("self_shading_ncellx");
 			ssarr.ncelly = as_integer("self_shading_ncelly");
 			ssarr.ndiode = as_integer("self_shading_ndiode");
+			ssarr.mask_angle_calc_method = as_integer("self_shading_mask_angle_calc_method");
 
 			sscalc = selfshade_t( ssarr );
 		}

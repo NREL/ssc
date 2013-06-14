@@ -202,9 +202,19 @@ void selfshade_t::init()
 
 	double a = 0.0, b = m_B;
 
-//	double mask_angle = qromb( mask_angle_func, a, b, m_R, m_B, m_tilt_eff) / m_B;
+	double mask_angle;
+
+	if ( m_arr.mask_angle_calc_method == 1 )
+	{
+	// average over entire array
+		mask_angle = qromb( mask_angle_func, a, b, m_R, m_B, m_tilt_eff) / m_B;
+	}
+	else
+	{
+	// worst case (default)
 	// updated to phi(0) per email from Chris Deline 5/2/12
-	double mask_angle = atan2( ( m_B * sind( m_tilt_eff ) ), ( m_R - m_B * cosd( m_tilt_eff ) ) );
+		mask_angle = atan2( ( m_B * sind( m_tilt_eff ) ), ( m_R - m_B * cosd( m_tilt_eff ) ) );
+	}
 
 	mask_angle *= 180.0/M_PI; 
 

@@ -17,6 +17,7 @@ struct ssarrdat
 	double row_space, mod_space;
 	int ncellx, ncelly, ndiode;
 	double slope_ns, slope_ew;
+	int mask_angle_calc_method;
 };
 
 
@@ -41,7 +42,6 @@ public:
 	double diffuse_derate() {return m_diffuse_derate;}
 	double reflected_derate() {return m_reflected_derate;}
 
-// testing - move to private variables - used in init
 	double m_X;
 	double m_S;
 	double m_Xe;
