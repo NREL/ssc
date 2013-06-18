@@ -1220,8 +1220,6 @@ public:
 				p_poanom[nn][istep] = (ssc_number_t) ( (ibeam + iskydiff + ignddiff) * 0.001 );
 				
 				//record sub-array contribution to total plane of array for this hour
-// Janine - isn't p_poanom already in kW/m2? seems like poa_nom_hr is in MWh if the 0.001 is applied again???
-//				poa_nom_hr += p_poanom[nn][istep]* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
 				poa_nom_hr += p_poanom[nn][istep]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 				//accumulate monthly nominal poa
@@ -1266,7 +1264,6 @@ public:
 				p_poashaded[nn][istep] = (ssc_number_t) ( (ibeam + iskydiff + ignddiff) * 0.001 );
 
 				//record sub-array contribution to total shaded plane of array for this hour
-//				poa_shaded_hr += p_poashaded[nn][istep]* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
 				poa_shaded_hr += p_poashaded[nn][istep]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 				// apply soiling derate to all components of irradiance
@@ -1303,7 +1300,6 @@ public:
 				sa[nn].poa.sazi = sazi;
 
 				// accumulate hourly incident total
-//				poa_eff_hr += p_poaeff[nn][istep]* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
 				poa_eff_hr += p_poaeff[nn][istep]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 				// accumulate monthly incident total & beam
