@@ -1266,7 +1266,8 @@ public:
 				p_poashaded[nn][istep] = (ssc_number_t) ( (ibeam + iskydiff + ignddiff) * 0.001 );
 
 				//record sub-array contribution to total shaded plane of array for this hour
-				poa_shaded_hr += p_poashaded[nn][istep]* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
+//				poa_shaded_hr += p_poashaded[nn][istep]* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
+				poa_shaded_hr += p_poashaded[nn][istep]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 				// apply soiling derate to all components of irradiance
 //				int month_idx = wf.month - 1;
@@ -1302,7 +1303,8 @@ public:
 				sa[nn].poa.sazi = sazi;
 
 				// accumulate hourly incident total
-				poa_eff_hr += p_poaeff[nn][istep]* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
+//				poa_eff_hr += p_poaeff[nn][istep]* ref_area_m2 * 0.001 * modules_per_string * sa[nn].nstrings;
+				poa_eff_hr += p_poaeff[nn][istep]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 				// accumulate monthly incident total & beam
 				sa[nn].monthly_poa_eff[ month_idx ] += ( (ibeam+iskydiff+ignddiff) * 0.001 );
