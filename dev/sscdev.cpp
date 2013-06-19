@@ -618,7 +618,7 @@ void SCFrame::OnCommand(wxCommandEvent &evt)
 		m_scriptWindow->Save();
 		break;
 	case wxID_FIND:
-		m_scriptWindow->GetEditor()->ShowFindDialog();
+		m_scriptWindow->GetEditor()->ShowFindReplaceDialog();
 		break;
 	case wxID_FORWARD:
 		m_scriptWindow->GetEditor()->FindNext();

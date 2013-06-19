@@ -17,6 +17,7 @@ private:
 	wxStaticText *m_statusLabel;
 	wxString m_fileName;
 	wxButton *m_stopButton;
+	wxString m_lastFindStr;
 public:
 	EditorWindow( wxWindow *parent );
 	virtual ~EditorWindow();
@@ -30,6 +31,7 @@ public:
 	bool Write( const wxString &file );
 	bool Load( const wxString &file );	
 	void Exec();
+
 
 	wxLKScriptCtrl *GetEditor() { return m_editor; }
 

@@ -415,9 +415,11 @@ void EditorWindow::OnCommand( wxCommandEvent &evt )
 	case wxID_CUT: m_editor->Cut(); break;
 	case wxID_COPY: m_editor->Copy(); break;
 	case wxID_PASTE: m_editor->Paste(); break;
-	case wxID_SELECTALL: m_editor->SelectAll(); break;
-	case wxID_FIND: m_editor->ShowFindDialog(); break;
-	case wxID_FORWARD: m_editor->FindNext(); break;
+	case wxID_SELECTALL: m_editor->SelectAll(); break;		
+	case wxID_FIND:
+		m_editor->ShowFindReplaceDialog(); break;
+	case wxID_FORWARD:
+		m_editor->FindNext(); break;
 	case ID_HELP:
 		m_editor->ShowHelpDialog( this );
 		break;
