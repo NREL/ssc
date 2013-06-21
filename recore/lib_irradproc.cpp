@@ -701,6 +701,7 @@ irrad::irrad()
 	poa[0]=poa[1]=poa[2]=diffc[0]=diffc[1]=diffc[2] = std::numeric_limits<double>::quiet_NaN();
 	tms[0]=tms[1]=tms[2] = -999;
 	btwidth=btspacing=std::numeric_limits<double>::quiet_NaN();
+	ghi = std::numeric_limits<double>::quiet_NaN();
 }
 
 int irrad::check()
@@ -716,6 +717,11 @@ int irrad::check()
 	if ( sazm < 0 || sazm >= 360 ) return -9;
 	if ( rlim < -90 || rlim > 90 ) return -10;
 	return 0;
+}
+
+double irrad::get_ghi()
+{
+	return ghi;
 }
 
 void irrad::get_sun( double *solazi,
@@ -889,6 +895,8 @@ int irrad::calc()
 	diffc[0]=diffc[1]=diffc[2] = 0;
 	angle[0]=angle[1]=angle[2]=angle[3]=angle[4] = 0;
 
+	ghi = 0;
+
 	// do irradiance calculations if sun is up
 	if (tms[2] > 0)
 	{				
@@ -929,6 +937,8 @@ int irrad::calc()
 			perez( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 			break;
 		}
+
+		ghi = idiff;
 	}
 
 	return 0;

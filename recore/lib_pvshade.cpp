@@ -397,7 +397,7 @@ phi_bar: average masking angle
 		- sqrt( pow(Y1,2)/pow(m_B,2) - 2*Y1/m_B * cosd(180 - m_tilt_eff) + 1.0 ) );
 	double F3 = 0.5 * albedo * ( 1.0 + m_R/m_B
 		- sqrt( pow(m_R,2)/pow(m_B,2) - 2*m_R/m_B * cosd(180 - m_tilt_eff) + 1.0 ) );
-
+	
 	m_F1 = F1;
 	m_Y1 = Y1;
 	m_F2 = F2;

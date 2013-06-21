@@ -27,6 +27,7 @@ private:
 	double tilt, sazm, rlim, btwidth, btspacing;
 	double sun[9], angle[5], poa[3], diffc[3];
 	int tms[3];
+	double ghi;
 
 	
 
@@ -61,6 +62,7 @@ public:
 		double *btdiff );
 	void get_poa( double *beam, double *skydiff, double *gnddiff,
 		double *isotrop, double *circum, double *horizon );
+	double get_ghi();
 };
 
 
