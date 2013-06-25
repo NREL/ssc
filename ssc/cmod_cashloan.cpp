@@ -36,6 +36,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Energy Value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
+	// real estate value added 6/24/13
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_value_added",      "Real Estate Value Added",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M Capacity-based expense",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -131,6 +134,7 @@ extern var_info
 enum {
 	CF_energy_net,
 	CF_energy_value,
+	CF_value_added,
 
 	CF_om_fixed_expense,
 	CF_om_production_expense,
@@ -726,6 +730,22 @@ public:
 		
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
+
+
+// real estate value added 6/24/13
+		for (int i=1;i<nyears+1;i++)
+		{
+			double rr = 1.0;
+			if (nom_discount_rate != -1.0) rr = 1.0/(1.0+nom_discount_rate);
+			double result = 0;
+			for (int j=nyears;j>=i;j--) 
+			result = rr * result + cf.at(CF_energy_value,j);
+			cf.at(CF_value_added,i) = result*rr + cf.at(CF_net_salvage_value,i);
+		}
+		save_cf( CF_value_added, nyears, "cf_value_added" );
+
+
+
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
