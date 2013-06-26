@@ -20,6 +20,28 @@ struct ssarrdat
 	int mask_angle_calc_method;
 };
 
+bool selfshade_simple(
+
+	/* system parameters */
+	int ncells, // number of cells in panel
+	double area, // panel area in m2
+	int orientation, // 0 = landscape, 1 = portrait
+	int panels_up, // number of panels along the edge of a row
+	double FF_stc, // fill factor @ STC = Pmp0 / Voc0 / Isc0;
+
+	/* current conditions */
+	double solzen, // solar zenith angle (deg)
+	double solazi, // solar azimuth angle (deg)
+	double beam_horiz, // beam irradiance on the horizontal surface (W/m2)
+	double diff_poa, // total diffuse irradiance on the tilted surface (W/m2)
+	double albedo, // ground reflectance [0..1]
+
+	/* calculated outputs */
+	double *dc_derate,
+	double *skydiff_derate,
+	double *gnddiff_derate );
+
+
 
 class selfshade_t
 {
@@ -28,10 +50,11 @@ public:
 	selfshade_t( ssarrdat &arr );
 
 	bool exec( 
-		double solzen,    // solar zenith
-		double solazi,    // solar azimuth
-		double nominalbeam,     // nominal beam
-		double nominaldiffuse,   // nominal diffuse
+		double solzen,    // solar zenith (deg)
+		double solazi,    // solar azimuth (deg)
+		double Gb_nor,    // beam normal irradiance (W/m2)
+		double Gb_poa,    // POA beam irradiance (W/m2)
+		double Gd_poa,    // POA diffuse, sky+gnd (W/m2)
 		double FF0,       // Fill Factor at STC = Pmp0 / Voc0 / Isc0;
 		double albedo);   // used to calculate reduced relected irradiance
 

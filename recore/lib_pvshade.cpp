@@ -225,8 +225,9 @@ void selfshade_t::init()
 bool selfshade_t::exec(
 		double solzen,
 		double solazi,
-		double nominalbeam,
-		double nominaldiffuse,
+		double Gb_nor,
+		double Gb_poa,
+		double Gd_poa,
 		double FF0,
 		double albedo)
 {
@@ -375,7 +376,7 @@ phi_bar: average masking angle
 	m_X = X;
 	m_S = S;
 
-	m_Gd = nominaldiffuse;
+	m_Gd = Gd_poa;
 	m_Gdh = m_Gd * 2 / ( 1.0 + cosd( m_tilt_eff ));
 
 	// diffuse loss term only
@@ -383,7 +384,7 @@ phi_bar: average masking angle
 	// reduced diffuse radiation
 	m_reduced_diffuse = m_Gd - m_diffuse_loss_term;
 	// diffuse derate
-	if (nominaldiffuse == 0)
+	if (Gd_poa == 0)
 		m_dc_derate = 1.0;
 	else
 		m_diffuse_derate = m_reduced_diffuse / m_Gd;
@@ -403,9 +404,8 @@ phi_bar: average masking angle
 	m_F2 = F2;
 	m_F3 = F3;
 
-
-	m_Gb = nominalbeam;
-	m_Gbh = m_Gb * 2 / ( 1.0 + cosd( m_tilt_eff ));
+	m_Gb = Gb_nor; // beam irradiance (normal to sun rays)
+	m_Gbh = m_Gb * cosd( solzen ); // beam on horizontal surface
 
 	m_Gr1 = F1 * (m_Gbh + m_Gdh);
 	m_Gr2 = F2 * m_Gbh + F3 * m_Gdh;
@@ -418,7 +418,7 @@ phi_bar: average masking angle
 	else
 		m_reflected_derate = m_reduced_reflected / m_Gr1;
 
-	double inc_total =  (nominalbeam + m_reduced_diffuse + m_reduced_reflected)/1000;
+	double inc_total =  ( Gb_poa + m_reduced_diffuse + m_reduced_reflected)/1000;
 	double inc_diff = (m_reduced_diffuse + m_reduced_reflected)/1000;
 	double diffuse_globhoriz = 0;
 	if (inc_total != 0)
