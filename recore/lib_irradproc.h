@@ -7,7 +7,7 @@
 	*/
 
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9]);
-void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm,double btwidth, double btspacing, double angle[5]);
+void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5]);
 void perez( double hextra, double dn,double df,double alb,double inc,double tilt,double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
@@ -24,7 +24,8 @@ private:
 	double lat, lon, tz;
 	int radmode, skymodel, track;
 	double gh, dn, df, alb;
-	double tilt, sazm, rlim, btwidth, btspacing;
+	double tilt, sazm, rlim, gcr;
+	bool en_backtrack;
 	double sun[9], angle[5], poa[3], diffc[3];
 	int tms[3];
 	double ghi;
@@ -39,7 +40,7 @@ public:
 	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
 	void set_location( double lat, double lon, double tz );
 	void set_sky_model( int skymodel, double albedo );
-	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, double bt_width, double bt_spacing );
+	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr );
 	void set_beam_diffuse( double beam, double diffuse );
 	void set_global_beam( double global, double beam );
 
@@ -68,20 +69,12 @@ public:
 
 
 
-struct arr1x_data
-{
-	// angles in degrees
-	double solazi;
-	double solzen;
-	double width;
-	double length;
-	double axis_tilt;
-	double axis_azimuth;
-	double row_spacing;
-	double rotlim;
-};
-	
-double shade_fraction_1x( arr1x_data &arr, double rotation );
-double backtrack(arr1x_data &arr, double rotation_ideal);
+double shade_fraction_1x( double solazi, double solzen, 
+						 double axis_tilt, double axis_azimuth, 
+						 double gcr, double rotation );
+
+double backtrack( double solazi, double solzen, 
+				 double axis_tilt, double axis_azimuth, 
+				 double rotlim, double gcr, double rotation_ideal);
 
 #endif

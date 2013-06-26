@@ -19,10 +19,12 @@
 #include "6par_solve.h"
 #include "lib_pvshade.h"
 
-#define sind(x) sin( (3.1415926/180.0)*(x) )
-#define cosd(x) cos( (3.1415926/180.0)*(x) )
-#define max(a,b) (((a) > (b))?(a):(b))
-#define min(a,b) (((a) < (b))?(a):(b))
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
+#define sind(x) sin( (M_PI/180.0)*(x) )
+#define cosd(x) cos( (M_PI/180.0)*(x) )
 
 static inline double to_double(double x) { return x; }
 
@@ -357,7 +359,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_derate",                            "Self-shading derate",                                    "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_diffuse_derate",                    "Self-shading diffuse derate",                            "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_reflected_derate",                  "Self-shading reflected derate",                          "",       "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ss_diffuse_loss",                      "Self-shading diffuse loss",                              "kW/m2",  "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inverter_dc_voltage",                  "Inverter dc input voltage",                              "V",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_gross",                             "Gross dc array output",                                  "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                               "Net dc array output",                                    "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -1061,8 +1062,7 @@ public:
 		ssc_number_t *p_ss_derate = allocate( "hourly_ss_derate", 8760 );
 		ssc_number_t *p_ss_diffuse_derate = allocate( "hourly_ss_diffuse_derate", 8760 );
 		ssc_number_t *p_ss_reflected_derate = allocate( "hourly_ss_reflected_derate", 8760 );
-		ssc_number_t *p_ss_diffuse_loss = allocate( "hourly_ss_diffuse_loss", 8760 );
-
+		
 		ssc_number_t *p_glob = allocate( "hourly_glob_horiz_rad", 8760 );
 		ssc_number_t *p_beam = allocate( "hourly_beam", 8760 );
 		ssc_number_t *p_diff = allocate( "hourly_diff", 8760 );
@@ -1179,19 +1179,13 @@ public:
 				irr.set_sky_model( skymodel, alb );
 				if ( radmode == 0 ) irr.set_beam_diffuse( wf.dn, wf.df );
 				else if (radmode == 1) irr.set_global_beam( wf.gh, wf.dn );
-
-				double gcr = sa[nn].gcr;
-				double btwidth = 1.0;
-				double btspace = btwidth/gcr - btwidth; // convert from gcr and assumed width to spacing (edge-to-edge btw rows)  recall:  GCR = W/(W+S)
-				if ( sa[nn].shade_mode_1x != 1 )
-					btwidth = btspace = -1;
-
+				
 				irr.set_surface( sa[nn].track_mode,
 					sa[nn].tilt,
 					sa[nn].azimuth,
 					sa[nn].rotlim,
-					btwidth,
-					btspace );
+					sa[nn].shade_mode_1x == 1, // mode 1 is backtracking
+					sa[nn].gcr );
 
 				int code = irr.calc();
 				if ( code != 0 )
@@ -1220,55 +1214,32 @@ public:
 				if ( sunup > 0 && sa[nn].track_mode == 1
 					&& sa[nn].shade_mode_1x == 0 )
 				{	
-					arr1x_data arr1x;
-					arr1x.width = 1.0;
-					arr1x.row_spacing = 1.0/gcr - 1.0; 
-					arr1x.length = 10*arr1x.width; // assume long trackers
-					arr1x.axis_azimuth = sa[nn].azimuth;
-					arr1x.axis_tilt = sa[nn].tilt;
-					arr1x.rotlim = sa[nn].rotlim;
-					arr1x.solazi = solazi;
-					arr1x.solzen = solzen;
-
-					double shad1xf = shade_fraction_1x( arr1x, rot );
+					double shad1xf = shade_fraction_1x( solazi, solzen, sa[nn].tilt, sa[nn].azimuth, sa[nn].gcr, rot );
 
 					ibeam *= (1-shad1xf);
 					beam_shad_factor *= (1-shad1xf);
 
 					if ( sa[nn].shade_mode_1x == 0 && iskydiff > 0 )
 					{
-						// view factor calculations assume isotropic sky
-						double Gd = iskydiff+ignddiff; // total plane-of-array diffuse
-						double Gdh = Gd * 2/(1+cosd(stilt)); // total
-						double Gbh = wf.dn * cosd( solzen ); // beam irradiance on horizontal surface
-						
-						// include diffuse reduction due to view factor
-						double B = arr1x.width; // row width
-						double R = arr1x.width + arr1x.row_spacing; // center-to-center row spacing
+						double gcr = sa[nn].gcr;
 
-						// worst-case mask angle using calculated surface tilt
-						double phi0 = atan2( B*sind( stilt ), R - B*cosd( stilt ) );
-
-						// sky diffuse reduction
-						double reduced_skydiff = Gd - Gdh*(1 - pow( cos(phi0/2), 2 ));
-						double Fskydiff = reduced_skydiff / Gd;
-						
-
-						// ground reflected reduction is not determined yet
-						double F1 = alb * pow( sind(stilt/2.0), 2);
-						double Y1 = R - B * sind( 180.0 - solalt - stilt ) / sind(solalt);
-						Y1 = max(0.00001, Y1); // constraint per Chris 4/23/12
-						double F2 = 0.5 * alb * ( 1.0 + Y1/B - sqrt( pow(Y1,2)/pow(B,2) - 2*Y1/B * cosd(180 - stilt) + 1.0 ) );
-						double F3 = 0.5 * alb * ( 1.0 + R/B - sqrt( pow(R,2)/pow(B,2) - 2*R/B * cosd(180 - stilt) + 1.0 ) );
-						
-						double Gr1 = F1 * (Gbh + Gdh);
-						double nr = 1000; // some large number of rows;
-						double reduced_gnddiff = ( (F1 + (nr-1)*F2)/ nr ) * Gbh
-							+ ( (F1 + (nr-1) * F3)/ nr ) * Gdh;
-
+						double reduced_skydiff = iskydiff;
+						double Fskydiff = 1.0;
+						double reduced_gnddiff = ignddiff;
 						double Fgnddiff = 1.0;
-						if ( Gr1 > 0 )
-							Fgnddiff = reduced_gnddiff / Gr1;
+						
+						// worst-case mask angle using calculated surface tilt
+						double phi0 = 180/3.1415926*atan2( sind( stilt ), 1/gcr - cosd( stilt ) );
+
+						// calculate sky and gnd diffuse derate factors
+						// based on view factor reductions from self-shading
+						diffuse_reduce( solzen, stilt,
+							wf.dn, iskydiff+ignddiff,
+							sa[nn].gcr, phi0, alb, 1000,
+							&reduced_skydiff,
+							&Fskydiff,
+							&reduced_gnddiff,
+							&Fgnddiff );
 
 						if ( Fskydiff >= 0 && Fskydiff <= 1 ) iskydiff *= Fskydiff;
 						else log( util::format("sky diffuse reduction factor invalid at hour %d: fskydiff=%lg, stilt=%lg", istep, Fskydiff, stilt), SSC_NOTICE, (float)istep );
@@ -1359,7 +1330,6 @@ public:
 				{
 					p_ss_diffuse_derate[istep] = (ssc_number_t) sscalc.diffuse_derate();
 					p_ss_reflected_derate[istep] = (ssc_number_t) sscalc.reflected_derate();
-					p_ss_diffuse_loss[istep] = (ssc_number_t) sscalc.m_diffuse_loss_term/1000;
 					p_ss_derate[istep] = (ssc_number_t) sscalc.dc_derate();
 
 					// only diffuse irradiance for subarray 1 affected (other subarrays disabled)

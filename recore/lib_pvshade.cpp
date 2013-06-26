@@ -11,30 +11,11 @@
 #define M_EPS 0.00001
 #endif
 
-double min( double a, double b )
-{
-	return (a < b) ? a : b;
-}
-
-double max( double a, double b )
-{
-	return (a > b) ? a : b;
-}
-
-double cosd( double degrees )
-{
-	return cos( degrees * M_PI / 180.0 );
-}
-
-double sind( double degrees )
-{
-	return sin( degrees * M_PI / 180.0 );
-}
-
-double tand( double degrees )
-{
-	return tan( degrees * M_PI / 180.0 );
-}
+#define sind(x) sin( (M_PI/180.0)*(x) )
+#define cosd(x) cos( (M_PI/180.0)*(x) )
+#define tand(x) tan( (M_PI/180.8)*(x) )
+#define max(a,b) (((a) > (b))?(a):(b))
+#define min(a,b) (((a) < (b))?(a):(b))
 
 double atand( double radians )
 {
@@ -222,6 +203,85 @@ void selfshade_t::init()
 
 }
 
+void diffuse_reduce( 
+		// inputs (angles in degrees)
+		double solzen,
+		double stilt,
+		double Gb_nor,
+		double Gd_poa,
+		double gcr,
+		double phi0, // mask angle
+		double alb,
+		double nrows,
+
+		// outputs
+		double *reduced_skydiff,
+		double *Fskydiff,  // derate factor on sky diffuse
+		double *reduced_gnddiff,
+		double *Fgnddiff ) // derate factor on ground diffuse
+{
+	if ( Gd_poa < 0.1 ) 
+	{
+		*Fskydiff = *Fgnddiff = 1.0;
+		return;
+	}
+
+	// view factor calculations assume isotropic sky
+	double Gd = Gd_poa; // total plane-of-array diffuse
+	double Gdh = Gd * 2/(1+cosd(stilt)); // total
+	double Gbh = Gb_nor * cosd( solzen ); // beam irradiance on horizontal surface
+						
+	// sky diffuse reduction
+	*reduced_skydiff = Gd - Gdh*(1 - pow( cosd(phi0/2), 2 ))*( nrows - 1.0) / nrows;
+	*Fskydiff = *reduced_skydiff / Gd;
+						
+	double B = 1.0;
+	double R = B/gcr;
+
+	double solalt = 90-solzen;
+
+	// ground reflected reduction 
+	double F1 = alb * pow( sind(stilt/2.0), 2);
+	double Y1 = R - B * sind( 180.0 - solalt - stilt ) / sind(solalt);
+	Y1 = max(0.00001, Y1); // constraint per Chris 4/23/12
+	double F2 = 0.5 * alb * ( 1.0 + Y1/B - sqrt( pow(Y1,2)/pow(B,2) - 2*Y1/B * cosd(180 - stilt) + 1.0 ) );
+	double F3 = 0.5 * alb * ( 1.0 + R/B - sqrt( pow(R,2)/pow(B,2) - 2*R/B * cosd(180 - stilt) + 1.0 ) );
+						
+	double Gr1 = F1 * (Gbh + Gdh);
+	*reduced_gnddiff = ( (F1 + (nrows-1)*F2)/ nrows ) * Gbh
+		+ ( (F1 + (nrows-1) * F3)/ nrows ) * Gdh;
+
+	*Fgnddiff = 1.0;
+	if ( Gr1 > 0 )
+		*Fgnddiff = *reduced_gnddiff / Gr1;
+}
+
+double selfshade_dc_derate( double X, double S, double FF0, double dbh_ratio )
+{
+	double Xtemp = min( X , 0.65);  // X is limited to 0.65 for c2 calculation
+	
+	double c1 = (109 * FF0 - 54.3) * exp(-4.5 * X); // new c1 on 1/18/13
+	double c2 = -6 * pow(Xtemp,2) + 5 * Xtemp + 0.28; // new c2 on 1/18/13
+	double c3_0 = (-0.05 * dbh_ratio - 0.01) * X + (0.85 * FF0 - 0.7) * dbh_ratio - 0.085 * FF0 + 0.05;  //new c3_0 on 1/18/13
+	double c3 = max ( c3_0, ( dbh_ratio ) - 1.0 );
+	double eqn5 = 1.0 - c1 * pow(S,2) - c2 * S;  // new eqn5 on 1/18/13
+	double eqn9 = 0;
+
+	if ( X != 0 ) eqn9 = (X - S) / X;
+
+	double eqn10 = c3 * ( S - 1.0 ) + ( dbh_ratio );
+
+	double reduc = max( eqn5, eqn9);
+	reduc = max( reduc, eqn10 );
+	reduc = X * reduc + (1.0 - X);
+
+	// check limits
+	if (reduc > 1) reduc = 1.0;
+	if (reduc < 0) reduc = 0.0;
+
+	return reduc;
+}
+
 bool selfshade_t::exec(
 		double solzen,
 		double solazi,
@@ -258,12 +318,12 @@ phi_bar: average masking angle
 */
 	
 	double px, py;//, xs, ys;
-	double reduc;
+//	double reduc;
 
-	//Cdeline_simplified model of uniform shading _v1.docx
 	double S,X;
-	double c1,c2,c3,c3_0,c4;
-	double eqn5, eqn9, eqn10;
+
+	//double c1,c2,c3,c3_0;
+	//double eqn5, eqn9, eqn10;
 
 	// AppelBaum Appendix A
 	double g, Hs;
@@ -376,8 +436,14 @@ phi_bar: average masking angle
 	m_X = X;
 	m_S = S;
 
-	m_Gd = Gd_poa;
-	m_Gdh = m_Gd * 2 / ( 1.0 + cosd( m_tilt_eff ));
+/* **********************************
+
+// MOVED TO SEPARATE FUNCTION 6/26/2013 (apd)
+
+	m_Gd = Gd_poa; // total plane-of-array diffuse
+	m_Gdh = m_Gd * 2 / ( 1.0 + cosd( m_tilt_eff )); // total diffuse on a horizontal surface
+	m_Gb = Gb_nor; // beam irradiance (normal to sun rays)
+	m_Gbh = m_Gb * cosd( solzen ); // beam on horizontal surface
 
 	// diffuse loss term only
 	m_diffuse_loss_term = m_Gdh * ( 1.0 - pow( cosd( m_mask_angle / 2.0), 2) ) * ( m_r - 1.0) / m_r;
@@ -404,8 +470,6 @@ phi_bar: average masking angle
 	m_F2 = F2;
 	m_F3 = F3;
 
-	m_Gb = Gb_nor; // beam irradiance (normal to sun rays)
-	m_Gbh = m_Gb * cosd( solzen ); // beam on horizontal surface
 
 	m_Gr1 = F1 * (m_Gbh + m_Gdh);
 	m_Gr2 = F2 * m_Gbh + F3 * m_Gdh;
@@ -413,10 +477,12 @@ phi_bar: average masking angle
 	m_reduced_reflected = ( (F1 + (m_r-1)*F2)/ m_r ) * m_Gbh
 		+ ( (F1 + (m_r-1) * F3)/ m_r ) * m_Gdh;
 
-	if (m_Gr1 == 0)
-		m_reflected_derate = 1.0;
-	else
-		m_reflected_derate = m_reduced_reflected / m_Gr1;
+*****************************************************/
+	
+	diffuse_reduce( solzen, m_tilt_eff, Gb_nor, Gd_poa, 
+		m_B/m_R, m_mask_angle, albedo, m_r,
+		&m_reduced_diffuse, &m_diffuse_derate,
+		&m_reduced_reflected, &m_reflected_derate );
 
 	double inc_total =  ( Gb_poa + m_reduced_diffuse + m_reduced_reflected)/1000;
 	double inc_diff = (m_reduced_diffuse + m_reduced_reflected)/1000;
@@ -426,6 +492,9 @@ phi_bar: average masking angle
 
 	// set self-shading coefficients based on C.Deline et al., "A simplified model of uniform shading in large photovoltaic arrays"
 	
+/***************************
+// MOVED TO SEPARATE FUNCTION 6/26/2013 (apd)
+
 	double Xtemp = min( X , 0.65);  // X is limited to 0.65 for c2 calculation
 	
 	//c1 = 0.25 * exp(( 7.7 - 6.0 * FF0) * X);
@@ -472,7 +541,6 @@ phi_bar: average masking angle
 	m_C2 = c2;
 	m_C3 = c3;
 	m_C3_0 = c3_0;
-	//m_C4 = c4; //no more c4
 	m_eqn14 = reduc;
 
 	reduc = X * reduc + (1.0 - X);
@@ -484,6 +552,10 @@ phi_bar: average masking angle
 	m_eqn5 = eqn5;
 	m_eqn9 = eqn9;
 	m_eqn10 = eqn10;
+
+	**************************/
+
+	m_dc_derate = selfshade_dc_derate( X, S, FF0, diffuse_globhoriz );
 
 	return true;
 }

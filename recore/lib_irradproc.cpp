@@ -246,7 +246,7 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 }
 
 
-void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm,double btwidth, double btspacing, double angle[5])
+void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5])
 {
 /* This function calculates the incident angle of direct beam radiation to a
 	surface for a given sun position, latitude, and surface orientation. The
@@ -254,19 +254,19 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 	Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
 
 	List of Parameters Passed to Function:
-	mode      = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking
-	tilt      = tilt angle of surface from horizontal in degrees (mode 0),
-				or tilt angle of tracker axis from horizontal in degrees (mode 1),
-				MUST BE FROM 0 to 90 degrees.
-	sazm      = surface azimuth in degrees of collector (mode 0), or surface
-				azimuth of tracker axis (mode 1) with axis azimuth directed from
-				raised to lowered end of axis if axis tilted.
-	rlim      = plus or minus rotation in degrees permitted by physical constraints
-				of tracker, range is 0 to 180 degrees.
-	zen       = sun zenith in radians, MUST BE LESS THAN PI/2
-	azm       = sun azimuth in radians, measured east from north
-	btwidth   = width of 1 axis tracking array, perp. to axis.  used for backtracking calculations.  use -1 to disable BT
-	btspacing = space between edges of adjacent rows at 0 rotation (not center-to-center axis distance)
+	mode         = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking
+	tilt         = tilt angle of surface from horizontal in degrees (mode 0),
+				   or tilt angle of tracker axis from horizontal in degrees (mode 1),
+				   MUST BE FROM 0 to 90 degrees.
+	sazm         = surface azimuth in degrees of collector (mode 0), or surface
+				   azimuth of tracker axis (mode 1) with axis azimuth directed from
+				   raised to lowered end of axis if axis tilted.
+	rlim         = plus or minus rotation in degrees permitted by physical constraints
+			      	of tracker, range is 0 to 180 degrees.
+	zen          = sun zenith in radians, MUST BE LESS THAN PI/2
+	azm          = sun azimuth in radians, measured east from north
+	en_backtrack = enable backtracking, using Ground coverage ratio ( below )
+	gcr          = ground coverage ratio ( used for backtracking )
 
 	Parameters Returned:
 	angle[]  = array of elements to return angles to calling function
@@ -367,20 +367,14 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 
 			// apd: added 21jan2012 to enable backtracking for 1 axis arrays using 3D iterative method
 			// coded originally by intern M.Kasberg summer 2011
-			if (btwidth > 0 && btspacing > 0)
+			if ( en_backtrack )
 			{
-				arr1x_data arr;
-				arr.width = btwidth;
-				arr.length = 10*arr.width;
-				arr.row_spacing = btspacing;
-				arr.axis_azimuth = sazm;
-				arr.axis_tilt = tilt;
-				arr.rotlim = rlim*180/M_PI;
-				arr.solazi = azm*180/M_PI;
-				arr.solzen = zen*180/M_PI;
-
 				// find backtracking rotation angle
-				double backrot = backtrack( arr, rot*180/M_PI );
+				double backrot = backtrack( azm*180/M_PI, zen*180/M_PI, // solar azimuth, zenith (deg)
+					tilt, sazm, // axis tilt, axis azimuth (deg)
+					rlim*180/M_PI, gcr, // rotation limit, GCR
+					rot*180/M_PI ); // ideal rotation angle
+
 				btdiff = backrot - rot*180/M_PI; // log the difference (degrees)
 				btdiff *= M_PI/180; // convert output to radians
 				rot = backrot * M_PI/180; // convert backtracked rotation angle to radians
@@ -700,7 +694,8 @@ irrad::irrad()
 	angle[0]=angle[1]=angle[2]=angle[3]=angle[4]= std::numeric_limits<double>::quiet_NaN();
 	poa[0]=poa[1]=poa[2]=diffc[0]=diffc[1]=diffc[2] = std::numeric_limits<double>::quiet_NaN();
 	tms[0]=tms[1]=tms[2] = -999;
-	btwidth=btspacing=std::numeric_limits<double>::quiet_NaN();
+	gcr=std::numeric_limits<double>::quiet_NaN();
+	en_backtrack = false;
 	ghi = std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -794,14 +789,14 @@ void irrad::set_sky_model( int skymodel, double albedo )
 	this->alb = albedo;
 }
 
-void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, double btwidth, double btspacing )
+void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr )
 {
 	this->track = tracking;
 	this->tilt = tilt_deg;
 	this->sazm = azimuth_deg;
 	this->rlim = rotlim_deg;
-	this->btwidth = btwidth;
-	this->btspacing = btspacing;
+	this->en_backtrack = en_backtrack;
+	this->gcr = gcr;
 }
 	
 void irrad::set_beam_diffuse( double beam, double diffuse )
@@ -901,7 +896,7 @@ int irrad::calc()
 	if (tms[2] > 0)
 	{				
 		// compute incidence angles onto fixed or tracking surface
-		incidence( track, tilt, sazm, rlim, sun[1], sun[0], btwidth, btspacing, angle );
+		incidence( track, tilt, sazm, rlim, sun[1], sun[0], en_backtrack, gcr, angle );
 
 
 		double hextra = sun[8];
@@ -973,7 +968,8 @@ static void vec_diff( double a[3], double b[3], double result[3] )
 	result[2] = a[2] - b[2];
 }
 
-static void get_vertices(arr1x_data &arr, double vertices[3][4][3], double rotation)
+static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,				 
+				 double vertices[3][4][3], double rotation)
 {
 	//Get panel vertices for flat panels, no tilt or azimuth, 
 	//ordered ccw starting from x+
@@ -981,21 +977,26 @@ static void get_vertices(arr1x_data &arr, double vertices[3][4][3], double rotat
 	//vertices[0][1] is corner 1 on panel 0
 	//vertices[0][1][2] is coordinate 2(z) for corner 1 on panel 0.
 	//All are 0-indexed.  0=x, 1=y, 2=z.
+
+	double width = 1.0;
+	double row_spacing = 1.0/gcr - 1.0;
+	double length = 10.0;
+
 	for (int i=0; i<3; i++)
 	{
-		vertices[i][0][0] = arr.width/2 + i*(arr.row_spacing + arr.width);
+		vertices[i][0][0] = width/2 + i*(row_spacing + width);
 		vertices[i][0][1] = 0;
 		vertices[i][0][2] = 0;
 		
-		vertices[i][1][0] = arr.width/2 + i*(arr.row_spacing + arr.width);
-		vertices[i][1][1] = arr.length;
+		vertices[i][1][0] = width/2 + i*(row_spacing + width);
+		vertices[i][1][1] = length;
 		vertices[i][1][2] = 0;
 			
-		vertices[i][2][0] = -arr.width/2 + i*(arr.row_spacing + arr.width);
-		vertices[i][2][1] = arr.length;
+		vertices[i][2][0] = -width/2 + i*(row_spacing + width);
+		vertices[i][2][1] = length;
 		vertices[i][2][2] = 0;
 		
-		vertices[i][3][0] = -arr.width/2 + i*(arr.row_spacing + arr.width);
+		vertices[i][3][0] = -width/2 + i*(row_spacing + width);
 		vertices[i][3][1] = 0;
 		vertices[i][3][2] = 0;
 	}
@@ -1006,7 +1007,7 @@ static void get_vertices(arr1x_data &arr, double vertices[3][4][3], double rotat
 	{
 		//Move so that we rotate about y-axis.
 		//Perform rotation, then move back.
-		double offset = i*(arr.row_spacing + arr.width);
+		double offset = i*(row_spacing + width);
 		
 		vertices[i][0][0] = vertices[i][0][0] - offset;
 		vertices[i][1][0] = vertices[i][1][0] - offset;
@@ -1040,7 +1041,7 @@ static void get_vertices(arr1x_data &arr, double vertices[3][4][3], double rotat
 	{
 		//Move to rotate about x axis.
 		//Perform rotation, then move back.
-		double offset = arr.length;
+		double offset = length;
 		
 		vertices[i][0][1] = vertices[i][0][1] - offset;
 		vertices[i][1][1] = vertices[i][1][1] - offset;
@@ -1057,8 +1058,8 @@ static void get_vertices(arr1x_data &arr, double vertices[3][4][3], double rotat
 			//When we do calculations for new coords, they all depend on old coords.
 			double oldVertY = vertices[i][j][1]; //Z coord depends on original y coord.
 			double oldVertZ = vertices[i][j][2];
-			vertices[i][j][1] = oldVertY * cosd(arr.axis_tilt) + oldVertZ * sind(arr.axis_tilt);
-			vertices[i][j][2] = oldVertY * -sind(arr.axis_tilt) + oldVertZ * cosd(arr.axis_tilt);
+			vertices[i][j][1] = oldVertY * cosd(axis_tilt) + oldVertZ * sind(axis_tilt);
+			vertices[i][j][2] = oldVertY * -sind(axis_tilt) + oldVertZ * cosd(axis_tilt);
 		}
 		
 		vertices[i][0][1] = vertices[i][0][1] + offset;
@@ -1083,8 +1084,8 @@ static void get_vertices(arr1x_data &arr, double vertices[3][4][3], double rotat
 			//When we do calculations for new coords, they all depend on old coords.
 			double oldVertX = vertices[i][j][0]; //Z coord depends on original y coord.
 			double oldVertY = vertices[i][j][1];
-			vertices[i][j][0] = oldVertX * cosd(arr.axis_azimuth) + oldVertY * sind(arr.axis_azimuth);
-			vertices[i][j][1] = oldVertX * -sind(arr.axis_azimuth) + oldVertY * cosd(arr.axis_azimuth);
+			vertices[i][j][0] = oldVertX * cosd(axis_azimuth) + oldVertY * sind(axis_azimuth);
+			vertices[i][j][1] = oldVertX * -sind(axis_azimuth) + oldVertY * cosd(axis_azimuth);
 		}
 	}
 }
@@ -1127,22 +1128,25 @@ static void sun_unit( double sazm, double szen, double sun[3] )
 }
 
 
+
 //Pass a PV system, sun zenith, sun azimuth
 //Return true if system is shaded
 //False otherwise
-double shade_fraction_1x( arr1x_data &arr, double rotation )
+double shade_fraction_1x( double solazi, double solzen, 
+						 double axis_tilt, double axis_azimuth, 
+						 double gcr, double rotation )
 {
 	//Get unit vector in direction of sun
 	
 	double sun[3];
-	sun_unit( arr.solazi, arr.solzen, sun );
+	sun_unit( solazi, solzen, sun );
 
 	//For now, assume array has at least 3 rows.
 	//This way we can use index 1 and it has a panel on both sides.
 	
 	//Get our vertices for our array.
 	double verts[3][4][3]; //To allocate
-	get_vertices(arr, verts, rotation);
+	get_vertices( axis_tilt, axis_azimuth, gcr, verts, rotation );
 	
 	//Find which panel is in the direction of the sun by using dot product.
 	//toPrev is a vector from panel 1 to panel 0.
@@ -1242,23 +1246,25 @@ double shade_fraction_1x( arr1x_data &arr, double rotation )
 
 
 //Find optimum angle using backtracking.
-double backtrack(arr1x_data &arr, double rotation)
+double backtrack( double solazi, double solzen, 
+				 double axis_tilt, double axis_azimuth, 
+				 double rotlim, double gcr, double rotation )
 {
 	//Now do backtracking.
 	//This is very straightforward - decrease the rotation as long as we are in shade.
 	int iter = 0;
-	while( shade_fraction_1x(arr, rotation) > 0 && ++iter < 100)
+	while( shade_fraction_1x( solazi, solzen, axis_tilt, axis_azimuth, gcr, rotation) > 0 && ++iter < 100)
 	{
 		//Move closer to flat.
 		if (rotation > 0)
 		{
-			if ( fabs(rotation-1) > fabs(arr.rotlim) )
+			if ( fabs(rotation-1) > fabs(rotlim) )
 				break;
 			rotation = rotation - 1;
 		}	
 		else
 		{
-			if ( fabs(rotation+1) > fabs(arr.rotlim) )
+			if ( fabs(rotation+1) > fabs(rotlim) )
 				break;
 			rotation = rotation + 1;
 		}

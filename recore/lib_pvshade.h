@@ -43,6 +43,28 @@ bool selfshade_simple(
 
 
 
+void diffuse_reduce( 
+		double solzen,
+		double stilt,
+		double Gb_nor,
+		double Gd_poa,
+		double gcr,
+		double phi0, // mask angle (degrees)
+		double alb,
+		double nrows,
+		
+		double *reduced_skydiff,
+		double *Fskydiff,
+		double *reduced_gnddiff,
+		double *Fgnddiff );
+
+
+
+double selfshade_dc_derate( double X, 
+						   double S, 
+						   double FF0, 
+						   double dbh_ratio );
+
 class selfshade_t
 {
 public:
@@ -69,19 +91,14 @@ public:
 	double m_S;
 	double m_Xe;
 	double m_Hs;
-	double m_C1;
-	double m_C2;
-	double m_C3;
-	double m_C3_0;
-	double m_C4;
+	//double m_C1;
+	//double m_C2;
+	//double m_C3;
+	//double m_C3_0;
+	//double m_C4;
 	double m_px;
 	double m_py;
 	double m_mask_angle;
-	double m_diffuse_loss_term;
-	double m_F1;
-	double m_Y1;
-	double m_F2;
-	double m_F3;
 	double m_tilt_eff;
 	double m_d;
 	double m_W;
@@ -94,16 +111,10 @@ public:
 	double m_n;
 	double m_azimuth_eff;
 	double m_zenith_eff;
-	double m_eqn5;
-	double m_eqn9;
-	double m_eqn10;
-	double m_eqn14;
-	double m_Gdh;
-	double m_Gd;
-	double m_Gbh;
-	double m_Gb;
-	double m_Gr1;
-	double m_Gr2;
+	//double m_eqn5;
+	//double m_eqn9;
+	//double m_eqn10;
+	//double m_eqn14;
 
 private:
 	ssarrdat m_arr;
