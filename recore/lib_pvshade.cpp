@@ -215,14 +215,14 @@ void diffuse_reduce(
 		double nrows,
 
 		// outputs
-		double *reduced_skydiff,
-		double *Fskydiff,  // derate factor on sky diffuse
-		double *reduced_gnddiff,
-		double *Fgnddiff ) // derate factor on ground diffuse
+		double &reduced_skydiff,
+		double &Fskydiff,  // derate factor on sky diffuse
+		double &reduced_gnddiff,
+		double &Fgnddiff ) // derate factor on ground diffuse
 {
 	if ( Gd_poa < 0.1 ) 
 	{
-		*Fskydiff = *Fgnddiff = 1.0;
+		Fskydiff = Fgnddiff = 1.0;
 		return;
 	}
 
@@ -232,8 +232,8 @@ void diffuse_reduce(
 	double Gbh = Gb_nor * cosd( solzen ); // beam irradiance on horizontal surface
 						
 	// sky diffuse reduction
-	*reduced_skydiff = Gd - Gdh*(1 - pow( cosd(phi0/2), 2 ))*( nrows - 1.0) / nrows;
-	*Fskydiff = *reduced_skydiff / Gd;
+	reduced_skydiff = Gd - Gdh*(1 - pow( cosd(phi0/2), 2 ))*( nrows - 1.0) / nrows;
+	Fskydiff = reduced_skydiff / Gd;
 						
 	double B = 1.0;
 	double R = B/gcr;
@@ -248,12 +248,12 @@ void diffuse_reduce(
 	double F3 = 0.5 * alb * ( 1.0 + R/B - sqrt( pow(R,2)/pow(B,2) - 2*R/B * cosd(180 - stilt) + 1.0 ) );
 						
 	double Gr1 = F1 * (Gbh + Gdh);
-	*reduced_gnddiff = ( (F1 + (nrows-1)*F2)/ nrows ) * Gbh
+	reduced_gnddiff = ( (F1 + (nrows-1)*F2)/ nrows ) * Gbh
 		+ ( (F1 + (nrows-1) * F3)/ nrows ) * Gdh;
 
-	*Fgnddiff = 1.0;
+	Fgnddiff = 1.0;
 	if ( Gr1 > 0 )
-		*Fgnddiff = *reduced_gnddiff / Gr1;
+		Fgnddiff = reduced_gnddiff / Gr1;
 }
 
 double selfshade_dc_derate( double X, double S, double FF0, double dbh_ratio )
@@ -280,6 +280,47 @@ double selfshade_dc_derate( double X, double S, double FF0, double dbh_ratio )
 	if (reduc < 0) reduc = 0.0;
 
 	return reduc;
+}
+
+void selfshade_xs_horstr( bool landscape, 
+						   double W,   // module width (short side)
+						   double L,   // module length (long side)
+						   int r,      // number of rows
+						   int m,      // number of modules along row edge (short side of assembly)
+						   int n,      // number of modules along (long side of assembly)
+						   int ndiode, // number of bypass diodes
+						   double Fshad, // Fraction of assembly shaded up from long edge
+
+						   // outputs (pass by reference)
+						   double &X, double &S)
+{
+	// if number of modules across bottom > number in string and horizontal wiring then g=0
+	double g = 0; // assume very long rows
+
+	if ( landscape ) // Landscape mode
+	{
+		double Hs = Fshad * m * W;
+
+
+		if ( Hs <= W )
+		{ // Situation 1a
+			X = ( ceil( Hs / W ) / (m * r) ) * ( r - 1.0 );
+			// updated to more conservative approach - email from Chris 4/10/12
+			S = ( ceil( Hs * ndiode / W ) / ndiode ) * ( 1.0 - floor( g / L ) / n);
+		}
+		else // Hs > m_arr.width
+		{  // Situation 1b
+			X = ( ceil( Hs / W ) / (m * r) ) * ( r - 1.0);
+			S = 1.0;
+		}
+	}
+	else // Portrait mode
+	{  // Situation 2
+		double Hs = Fshad * m * L;
+
+		X = ( ceil( Hs / L ) / (m * r) ) * ( r - 1.0);
+		S = 1.0 - ( floor( g * ndiode / W ) / ( ndiode * n) );
+	}
 }
 
 bool selfshade_t::exec(
@@ -481,8 +522,10 @@ phi_bar: average masking angle
 	
 	diffuse_reduce( solzen, m_tilt_eff, Gb_nor, Gd_poa, 
 		m_B/m_R, m_mask_angle, albedo, m_r,
-		&m_reduced_diffuse, &m_diffuse_derate,
-		&m_reduced_reflected, &m_reflected_derate );
+
+		// outputs
+		m_reduced_diffuse, m_diffuse_derate,
+		m_reduced_reflected, m_reflected_derate );
 
 	double inc_total =  ( Gb_poa + m_reduced_diffuse + m_reduced_reflected)/1000;
 	double inc_diff = (m_reduced_diffuse + m_reduced_reflected)/1000;

@@ -364,7 +364,18 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                               "Net dc array output",                                    "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_gross",                             "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_net",                               "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-		
+
+	// a couple debugging outputs
+	/*
+	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_dc_derate0",                      "SS1x dc derate",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_derate_X",                        "SS1x X",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_derate_S",                        "SS1x S",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_shad1xf",                         "SS1x shade fraction",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_Ee_ratio",                        "SS1x Ee ratio",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_skyd1xf",                         "SS1x skydiff derate",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_gndd1xf",                         "SS1x gnddiff derate",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	*/
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_eff",                              "Inverter efficiency",                                    "%",      "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_cliploss",                         "Inverter clipping loss",                                 "Wac",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_inv_psoloss",                          "Inverter power consumption loss",                        "Wdc",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -432,6 +443,7 @@ struct subarray
 		poa.aoi = 0;
 		poa.stilt = 0;
 		poa.sazi = 0;
+		poa.nonlinear_dc_shading_derate = 1.0;
 
 		module.dcpwr = 0;
 		module.dcv = 0;
@@ -469,6 +481,7 @@ struct subarray
 		double aoi;
 		double stilt;
 		double sazi;
+		double nonlinear_dc_shading_derate;
 	} poa;
 
 	// calculated by module model
@@ -1075,6 +1088,16 @@ public:
 		ssc_number_t *p_solazi = allocate("hourly_sol_azi", 8760);
 		ssc_number_t *p_airmass = allocate("hourly_airmass", 8760);
 		ssc_number_t *p_sunup = allocate("hourly_sunup", 8760);
+
+		/*
+		ssc_number_t *p_nonlinear_dc_derate0 = allocate("p_nonlinear_dc_derate0", 8760);
+		ssc_number_t *p_nonlinear_derate_X = allocate("p_nonlinear_derate_X", 8760);
+		ssc_number_t *p_nonlinear_derate_S = allocate("p_nonlinear_derate_S", 8760);
+		ssc_number_t *p_nonlinear_Ee_ratio = allocate("p_nonlinear_Ee_ratio", 8760);
+		ssc_number_t *p_nonlinear_shad1xf = allocate("p_nonlinear_shad1xf", 8760);
+		ssc_number_t *p_nonlinear_skyd1xf = allocate("p_nonlinear_skyd1xf", 8760);
+		ssc_number_t *p_nonlinear_gndd1xf = allocate("p_nonlinear_gndd1xf", 8760);
+		*/
 		
 		ssc_number_t *p_aoi[4];
 		ssc_number_t *p_surftilt[4];  
@@ -1210,12 +1233,26 @@ public:
 				sa[nn].monthly_poa_nom[ month_idx ] += ( (ibeam+iskydiff+ignddiff) * 0.001 );
 
 				double beam_shad_factor = sa[nn].shad_beam_factor[istep]; // variable to accumulate total beam shading derate for this hour
+								
+				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
+				ibeam *= sa[nn].shad_beam_factor[istep];	
+				
+				// apply beam shading based on solar azimuth/altitude table
+				if ( sa[nn].en_azal )
+				{
+					double factor = util::bilinear( solalt, solazi, sa[nn].shad_azal );		
+					ibeam *= factor;
+					beam_shad_factor *= factor;
+				}
+				
+				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
+				iskydiff *= sa[nn].shad_skydiff_factor;
 
 				if ( sunup > 0 && sa[nn].track_mode == 1
-					&& sa[nn].shade_mode_1x == 0 )
+					&& sa[nn].shade_mode_1x == 0 ) // selfshaded mode
 				{	
 					double shad1xf = shade_fraction_1x( solazi, solzen, sa[nn].tilt, sa[nn].azimuth, sa[nn].gcr, rot );
-
+					
 					ibeam *= (1-shad1xf);
 					beam_shad_factor *= (1-shad1xf);
 
@@ -1236,32 +1273,49 @@ public:
 						diffuse_reduce( solzen, stilt,
 							wf.dn, iskydiff+ignddiff,
 							sa[nn].gcr, phi0, alb, 1000,
-							&reduced_skydiff,
-							&Fskydiff,
-							&reduced_gnddiff,
-							&Fgnddiff );
+
+							// outputs (pass by reference)
+							reduced_skydiff, Fskydiff,
+							reduced_gnddiff, Fgnddiff );
 
 						if ( Fskydiff >= 0 && Fskydiff <= 1 ) iskydiff *= Fskydiff;
 						else log( util::format("sky diffuse reduction factor invalid at hour %d: fskydiff=%lg, stilt=%lg", istep, Fskydiff, stilt), SSC_NOTICE, (float)istep );
 
 						if ( Fgnddiff >= 0 && Fgnddiff <= 1 ) ignddiff *= Fgnddiff;
 						else log( util::format("gnd diffuse reduction factor invalid at hour %d: fgnddiff=%lg, stilt=%lg", istep, Fgnddiff, stilt), SSC_NOTICE, (float)istep );
+
+						/*
+						
+						// 1x self-shading code "in progress" below....
+
+						double X = 0, S = 0;
+						double W = 1.0;
+						double L = 1.5;
+						double m = 2;
+						double n = 1000;
+						double r = 1000;
+						double d = 3;
+
+						selfshade_xs_horstr( true, W, L, r, m, n, d, shad1xf, X, S );
+
+						// note: the ibeam here is not yet derated by the POA
+						double Ee_ratio = (iskydiff+ignddiff)/(ibeam/(1-shad1xf)+iskydiff+ignddiff);
+						double Hs = shad1xf*m*W;
+						X = ceil(Hs/W)/m;
+						S = 1.0;
+						sa[nn].poa.nonlinear_dc_shading_derate = selfshade_dc_derate( X, S, self_shading_fill_factor, Ee_ratio );
+
+						// save some debugging outputs
+						p_nonlinear_dc_derate0[istep] = (ssc_number_t) sa[nn].poa.nonlinear_dc_shading_derate;
+						p_nonlinear_derate_X[istep] = (ssc_number_t)X;
+						p_nonlinear_derate_S[istep] = (ssc_number_t)S;
+						p_nonlinear_Ee_ratio[istep] = (ssc_number_t) Ee_ratio;
+						p_nonlinear_shad1xf[istep] = (ssc_number_t)shad1xf;
+						p_nonlinear_skyd1xf[istep] = (ssc_number_t)Fskydiff;
+						p_nonlinear_gndd1xf[istep] = (ssc_number_t)Fgnddiff;
+						*/
 					}
 				}
-				
-				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-				ibeam *= sa[nn].shad_beam_factor[istep];	
-				
-				// apply beam shading based on solar azimuth/altitude table
-				if ( sa[nn].en_azal )
-				{
-					double factor = util::bilinear( solalt, solazi, sa[nn].shad_azal );		
-					ibeam *= factor;
-					beam_shad_factor *= factor;
-				}
-				
-				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-				iskydiff *= sa[nn].shad_skydiff_factor;
 
 				// record sub-array level output after shading, before soiling
 				p_poashaded[nn][istep] = (ssc_number_t) ( (ibeam + iskydiff + ignddiff) * 0.001 );
@@ -1335,6 +1389,7 @@ public:
 					// only diffuse irradiance for subarray 1 affected (other subarrays disabled)
 					sa[0].poa.iskydiff *= sscalc.diffuse_derate();
 					sa[0].poa.ignddiff *= sscalc.reflected_derate();
+					sa[0].poa.nonlinear_dc_shading_derate = sscalc.dc_derate();
 				}
 				else
 					throw exec_error("pvsamv1", util::format("Self-shading calculation failed at hour %d", istep) ) ;
@@ -1440,8 +1495,8 @@ public:
 					|| sa[nn].nstrings < 1 )
 					continue; // skip disabled subarrays
 
-				// apply self-shading derate
-				if (self_shading_enabled && nn == 0) sa[nn].module.dcpwr *= p_ss_derate[istep];
+				// apply self-shading derate (by default it is 1.0 if disbled)
+				sa[nn].module.dcpwr *= sa[nn].poa.nonlinear_dc_shading_derate;
 				
 				// scale power and voltage to array dimensions
 				sa[nn].module.dcpwr *=  modules_per_string*sa[nn].nstrings;

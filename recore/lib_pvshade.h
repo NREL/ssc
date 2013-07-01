@@ -53,10 +53,10 @@ void diffuse_reduce(
 		double alb,
 		double nrows,
 		
-		double *reduced_skydiff,
-		double *Fskydiff,
-		double *reduced_gnddiff,
-		double *Fgnddiff );
+		double &reduced_skydiff,
+		double &Fskydiff,
+		double &reduced_gnddiff,
+		double &Fgnddiff );
 
 
 
@@ -64,6 +64,19 @@ double selfshade_dc_derate( double X,
 						   double S, 
 						   double FF0, 
 						   double dbh_ratio );
+
+
+void selfshade_xs_horstr( bool landscape, // modules oriented in landscape/portrait on assembly
+						   double W,   // module width (short side)
+						   double L,   // module length (long side)
+						   int r,      // number of rows
+						   int m,      // number of modules along row edge (short side of assembly)
+						   int n,      // number of modules along (long side of assembly)
+						   int ndiode, // number of bypass diodes
+						   double Fshad, // Fraction of assembly shaded up from long edge
+
+						   // outputs
+						   double &X, double &S);
 
 class selfshade_t
 {
