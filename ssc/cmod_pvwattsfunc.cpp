@@ -24,7 +24,7 @@ static var_info _cm_vtab_pvwattsfunc[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "wspd",                     "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snow",                     "Snow cover",                                  "cm",     "",                        "PVWatts",      "?=0",                     "",                          "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",    "",                         "PVWatts",     "?=3600",                       "POSITIVE",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",    "",                         "PVWatts",      "?=1",                     "POSITIVE",                  "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",              "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                   "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
