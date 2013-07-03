@@ -148,7 +148,7 @@ public:
 					{
 						first_year_energy += diurnal_curtailment[m*ncols+h]*hourly_enet[i];
 						// first year availability applied
-						hourly_energy_to_grid[i] = diurnal_curtailment[m*ncols+h]*hourly_enet[i] * cf.at(CF_availability,1) ;
+						hourly_energy_to_grid[i] = diurnal_curtailment[m*ncols+h]*hourly_enet[i] * cf.at(CF_availability,1) * cf.at(CF_degradation,1);
 						monthly_energy_to_grid[m] += hourly_energy_to_grid[i];
 						i++;
 					}
