@@ -150,7 +150,7 @@ public:
 			throw exec_error( "pvwattsfunc", "failed to calculate POA irradiance with given input parameters" );
 	
 		double out_poa = 0;
-		double out_tcell =0;
+		double out_tcell = tamb;
 		double out_dc = 0;
 		double out_ac = 0;
 			
