@@ -601,22 +601,22 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_with_system",     "Year 1 Hourly revenue with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_with_system",     "Year 1 Hourly payment with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_with_system",      "Year 1 Hourly income with system",     "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_with_system",       "Year 1 Hourly price with system",      "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_with_system",       "Year 1 Hourly price with system",      "$/kWh", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_without_system",  "Year 1 Hourly revenue without system", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_without_system",  "Year 1 Hourly payment without system", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_without_system",   "Year 1 Hourly income without system",  "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_without_system",    "Year 1 Hourly price without system",   "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_without_system",    "Year 1 Hourly price without system",   "$/kWh", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Year 1 monthly demand charge (Fixed) with system",    "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_with_system",        "Year 1 monthly demand charge (TOU) with system",      "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_with_system",     "Year 1 monthly energy charge with system",            "$", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_with_system",       "Year 1 monthly energy rate with system",              "$", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_with_system",       "Year 1 monthly energy rate with system",              "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_without_system",   "Year 1 monthly demand charge (Fixed) without system", "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_without_system",     "Year 1 monthly demand charge (TOU) without system",   "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_without_system",  "Year 1 monthly energy charge without system",         "$", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_without_system",    "Year 1 monthly energy rate without system",           "$", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_without_system",    "Year 1 monthly energy rate without system",           "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jan",      "Demand Charge (Fixed) in Jan",    "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_feb",      "Demand Charge (Fixed) in Feb",    "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
@@ -1007,6 +1007,10 @@ public:
 		// compute revenue ( = income - payment )
 		for (i=0;i<8760;i++)
 			revenue[i] = income[i] - payment[i];
+
+		// compute price ( = revenue / energy )
+		for (i=0;i<8760;i++)
+			price[i] = (e_in[i] != 0) ? -revenue[i] / e_in[i] : 0.0;
 	}
 
 	void process_flat_rate( ssc_number_t e[8760],
@@ -1215,7 +1219,7 @@ public:
 				}
 				monthly_energy += energy_net[m][period];
 			}
-			ec_rate[m] = monthly_energy > 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
+			ec_rate[m] = monthly_energy != 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
 		}
 
 
