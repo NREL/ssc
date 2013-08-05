@@ -16,6 +16,7 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_sell_eq_buy",           "Force sell rate equal to buy",    "0/1",    "Enforce net metering",  "",             "?=1",                       "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_nm_yearend_sell_rate",        "Year end sell rate",                "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
@@ -1026,6 +1027,7 @@ public:
 		// calculate the monthly net energy and monthly hours
 		int m,d,h;
 		ssc_number_t energy_use[12]; // 12 months
+		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
 		int hours[12];
 		int c=0;
 		for (m=0;m<12;m++)
@@ -1046,6 +1048,15 @@ public:
 		}
 
 
+		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
+		double prev_value = 0;
+		for (m=0;m<12;m++)
+		{
+			prev_value = ( m > 0 ) ? cumulative_excess_energy[m-1] : 0;
+			cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
+		}
+
+
 		// back calculate hourly income and payments based on monthly values
 		// back out hourly values based on monthly reconciliation
 		c=0;
@@ -1057,14 +1068,30 @@ public:
 			{
 				for(h=0;h<24;h++)
 				{
+					// monthly rollover with year end sell at reduced rate
+					if ( cumulative_excess_energy[m] == 0 ) // buy from grid
+						payment[c] += -energy_use[m]/hours[m] * buy;
+					c++;
+
+
+/*
+// Monthly reconciliation
 					if ( energy_use[m] < 0 ) // buy from grid
 						payment[c] += -energy_use[m]/hours[m] * buy;
 					else // sell to grid
 						income[c] += energy_use[m]/hours[m] * sell;
 					c++;
+*/
 				}
 			}
 		}
+
+	// monthly rollover with year end sell at reduced rate
+		if ( cumulative_excess_energy[11] > 0 )
+			income[8760] = cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
+
+    // TODO: update monthly values
+
 
 	}
 
