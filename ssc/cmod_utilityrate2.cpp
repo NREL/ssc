@@ -1033,6 +1033,7 @@ public:
 		for (m=0;m<12;m++)
 		{
 			energy_use[m] = 0;
+			cumulative_excess_energy[m] = 0;
 			hours[m] = 0;
 			for (d=0;d<util::nday[m];d++)
 			{
@@ -1088,7 +1089,7 @@ public:
 
 	// monthly rollover with year end sell at reduced rate
 		if ( cumulative_excess_energy[11] > 0 )
-			income[8760] = cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
+			income[8759] = cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
 
     // TODO: update monthly values
 
