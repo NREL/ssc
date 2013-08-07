@@ -599,16 +599,20 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Year 1 subhourly peak to load ", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_with_system",     "Year 1 Hourly revenue with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_with_system",     "Year 1 Hourly payment with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_with_system",      "Year 1 Hourly income with system",     "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_with_system",       "Year 1 Hourly price with system",      "$/kWh", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_with_system",     "Year 1 hourly revenue with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_with_system",     "Year 1 hourly electricity purchases with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_with_system",      "Year 1 hourly electricity sales with system",     "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_with_system",       "Year 1 hourly energy charge with system",      "$/kWh", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_without_system",  "Year 1 Hourly revenue without system", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_without_system",  "Year 1 Hourly payment without system", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_without_system",   "Year 1 Hourly income without system",  "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_without_system",    "Year 1 Hourly price without system",   "$/kWh", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_without_system",  "Year 1 hourly revenue without system", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_without_system",  "Year 1 hourly electricity purchases without system", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_without_system",   "Year 1 hourly electricity sales without system",  "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_without_system",    "Year 1 hourly energy charge without system",   "$/kWh", "",          "",             "*",                         "LENGTH=8760",                   "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_with_system",       "Year 1 demand charge by hour with system",      "$/kW", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_without_system",       "Year 1 demand charge by hour without system",      "$/kW", "",          "",             "*",                         "LENGTH=8760",                   "" },
+
+
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Year 1 monthly demand charge (Fixed) with system",    "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_with_system",        "Year 1 monthly demand charge (TOU) with system",      "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_with_system",     "Year 1 monthly energy charge with system",            "$", "", "",          "*",                         "LENGTH=12",                     "" },
@@ -618,7 +622,18 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_without_system",     "Year 1 monthly demand charge (TOU) without system",   "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_without_system",  "Year 1 monthly energy charge without system",         "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_without_system",    "Year 1 monthly energy rate without system",           "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
-	
+
+
+	// monthly outputs from Sean 7/29/13 "Net Metering Accounting.xlsx"
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_load",    "Year 1 monthly load",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "Year 1 monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Year 1 monthly electricity to/from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Year 1 monthly cumulative excess generation",           "kWh", "", "",          "*",                         "LENGTH=12",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_utility_bill",    "Year 1 monthly utility bill",           "$", "", "",          "*",                         "LENGTH=12",                     "" },
+
+
+
+
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jan",      "Demand Charge (Fixed) in Jan",    "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_feb",      "Demand Charge (Fixed) in Feb",    "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_mar",      "Demand Charge (Fixed) in Mar",    "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
@@ -777,11 +792,13 @@ public:
 
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
-			payment(8760), income(8760), price(8760);
+			payment(8760), income(8760), price(8760), demand_charge(8760);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12),
 			monthly_dc_fixed(12), monthly_dc_tou(12),
-			monthly_ec_charges(12), monthly_ec_rates(12);
+			monthly_ec_charges(12), monthly_ec_rates(12),
+			monthly_load(12), monthly_system_generation(12),
+			monthly_elec_to_grid(12), monthly_cumulative_excess(12), monthly_utility_bill(12);
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("energy_value", nyears);
@@ -845,7 +862,7 @@ public:
 
 			// calculate revenue with solar system (using net grid energy & maxpower)
 			ur_calc( &e_grid[0], &p_grid[0],
-				&revenue_w_sys[0], &payment[0], &income[0], &price[0],
+				&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
 				&monthly_ec_charges[0], &monthly_ec_rates[0] );
@@ -856,9 +873,20 @@ public:
 				assign( "year1_hourly_payment_with_system", var_data( &payment[0], 8760 ) );
 				assign( "year1_hourly_income_with_system", var_data( &income[0], 8760 ) );
 				assign( "year1_hourly_price_with_system", var_data( &price[0], 8760 ) );
+				assign( "year1_hourly_dc_with_system", var_data( &demand_charge[0], 8760 ) );
 				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
 				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
 				
+				// monthly outputs - Paul and Sean 7/29/13
+				monthly_outputs( &e_load[0], &e_sys[0], &e_grid[0], &payment[0], &monthly_load[0], &monthly_system_generation[0],
+					&monthly_elec_to_grid[0], &monthly_cumulative_excess[0], &monthly_utility_bill[0]);
+
+				assign( "year1_monthly_load", var_data(&monthly_load[0], 12) );
+				assign( "year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12) );
+				assign( "year1_monthly_electricity_to_grid", var_data(&monthly_elec_to_grid[0], 12) );
+				assign( "year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess[0], 12) );
+				assign( "year1_monthly_utility_bill", var_data(&monthly_utility_bill[0], 12) );
+
 				// output and demand per Paul's email 9/10/10
 				// positive demand indicates system does not produce enough electricity to meet load
 				// zero if the system produces more than the demand
@@ -893,7 +921,7 @@ public:
 
 			// now recalculate revenue without solar system (using load only)
 			ur_calc( &e_load_cy[0], &p_load_cy[0],
-				&revenue_wo_sys[0], &payment[0], &income[0], &price[0],
+				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
 				&monthly_ec_charges[0], &monthly_ec_rates[0] );
@@ -904,7 +932,8 @@ public:
 				assign( "year1_hourly_payment_without_system", var_data( &payment[0], 8760 ) );
 				assign( "year1_hourly_income_without_system", var_data( &income[0], 8760 ) );
 				assign( "year1_hourly_price_without_system", var_data( &price[0], 8760 ) );
-								
+				assign( "year1_hourly_dc_without_system", var_data( &demand_charge[0], 8760 ) );
+							
 				assign( "year1_monthly_dc_fixed_without_system", var_data(&monthly_dc_fixed[0], 12) );
 				assign( "year1_monthly_dc_tou_without_system", var_data(&monthly_dc_tou[0], 12) );
 				assign( "year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12) );
@@ -969,12 +998,54 @@ public:
 			ch_ec_nov[i] = monthly_ec_charges[10] * rate_scale[i];
 			ch_ec_dec[i] = monthly_ec_charges[11] * rate_scale[i];			
 		}
-	
+
+
 	}
+
+	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760],  ssc_number_t payments[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12],
+		ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_utility_bill[12])
+	{
+		// calculate the monthly net energy and monthly hours
+		int m,d,h;
+		ssc_number_t energy_use[12]; // 12 months
+		int c=0;
+		for (m=0;m<12;m++)
+		{
+			energy_use[m] = 0;
+			monthly_load[m] = 0;
+			monthly_generation[m] = 0;
+			monthly_elec_to_grid[m] = 0;
+			monthly_cumulative_excess[m] = 0;
+			monthly_utility_bill[m] = 0;
+			for (d=0;d<util::nday[m];d++)
+			{
+				for(h=0;h<24;h++)
+				{
+					// net energy use per month
+					energy_use[m] += e_grid[c];
+					// Sean's sign convention
+					monthly_load[m] -= e_load[c];
+					monthly_generation[m] += e_sys[c];
+					monthly_elec_to_grid[m] -= e_grid[c];
+					monthly_utility_bill[m] += payments[c];
+					c++;
+				}
+			}
+		}
+		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
+		ssc_number_t prev_value = 0;
+		for (m=0;m<12;m++)
+		{
+			prev_value = ( m > 0 ) ? monthly_cumulative_excess[m-1] : 0;
+			monthly_cumulative_excess[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
+		}
+	}
+
 
 	void ur_calc( ssc_number_t e_in[8760], ssc_number_t p_in[8760],
 
-		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], ssc_number_t price[8760],
+		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], 
+		ssc_number_t price[8760], ssc_number_t demand_charge[8760], 
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12] ) throw(general_error)
@@ -982,7 +1053,7 @@ public:
 		int i;
 
 		for (i=0;i<8760;i++)
-			revenue[i] = payment[i] = income[i] = price[i] = 0.0;
+			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = 0.0;
 
 		for (i=0;i<12;i++)
 		{
@@ -999,19 +1070,16 @@ public:
 
 		// process demand charges
 		if (as_boolean("ur_dc_enable"))
-			process_demand_charge( p_in, payment, monthly_dc_fixed, monthly_dc_tou );
+			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou );
 
 		// process energy charges
 		if (as_boolean("ur_ec_enable"))
-			process_energy_charge( e_in, payment, income, monthly_ec_charges, monthly_ec_rates );
+			process_energy_charge( e_in, payment, income, price, monthly_ec_charges, monthly_ec_rates );
 
 		// compute revenue ( = income - payment )
 		for (i=0;i<8760;i++)
 			revenue[i] = income[i] - payment[i];
 
-		// compute price ( = revenue / energy )
-		for (i=0;i<8760;i++)
-			price[i] = (e_in[i] != 0) ? -revenue[i] / e_in[i] : 0.0;
 	}
 
 	void process_flat_rate( ssc_number_t e[8760],
@@ -1022,76 +1090,96 @@ public:
 		ssc_number_t buy = as_number("ur_flat_buy_rate");
 		ssc_number_t sell = as_number("ur_flat_sell_rate");
 
-		if (as_boolean("ur_sell_eq_buy")) sell = buy;
-
-		// calculate the monthly net energy and monthly hours
-		int m,d,h;
-		ssc_number_t energy_use[12]; // 12 months
-		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
-		int hours[12];
-		int c=0;
-		for (m=0;m<12;m++)
+		if (as_boolean("ur_sell_eq_buy"))
 		{
-			energy_use[m] = 0;
-			cumulative_excess_energy[m] = 0;
-			hours[m] = 0;
-			for (d=0;d<util::nday[m];d++)
+
+			// calculate the monthly net energy and monthly hours
+			int m,d,h;
+			ssc_number_t energy_use[12]; // 12 months
+			ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
+			int hours[12];
+			int c=0;
+			for (m=0;m<12;m++)
 			{
-				for(h=0;h<24;h++)
+				energy_use[m] = 0;
+				cumulative_excess_energy[m] = 0;
+				hours[m] = 0;
+				for (d=0;d<util::nday[m];d++)
 				{
-					// net energy use per month
-					energy_use[m] += e[c];
-					// hours per period per month
-					hours[m]++;
-					c++;
+					for(h=0;h<24;h++)
+					{
+						// net energy use per month
+						energy_use[m] += e[c];
+						// hours per period per month
+						hours[m]++;
+						c++;
+					}
 				}
+			}
+
+
+			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
+			ssc_number_t prev_value = 0;
+			for (m=0;m<12;m++)
+			{
+				prev_value = ( m > 0 ) ? cumulative_excess_energy[m-1] : 0;
+				cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
+			}
+
+
+			// back out hourly values based on monthly reconciliation
+			c=0;
+			for (m=0;m<12;m++)
+			{
+				if (hours[m] <= 0) break;
+
+				for (d=0;d<util::nday[m];d++)
+				{
+					for(h=0;h<24;h++)
+					{
+						if (d==util::nday[m]-1 && h==23)
+						{
+						// monthly rollover with year end sell at reduced rate
+							if ( cumulative_excess_energy[m] == 0 ) // buy from grid
+							{
+								if ( m > 0 )
+									payment[c] += -(energy_use[m]+cumulative_excess_energy[m-1]) * buy;
+								else
+									payment[c] += -energy_use[m] * buy;
+							}
+						}
+						c++;
+					}
+				}
+			}
+
+		// monthly rollover with year end sell at reduced rate
+			if ( cumulative_excess_energy[11] > 0 )
+				income[8759] += cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
+
+
+		}
+		else // no net metering 
+		{
+			for (int i=0;i<8760;i++)
+			{
+				if (e[i] < 0) // must buy from grid
+					payment[i] += -1.0f*e[i]*buy;
+				else
+					income[i] += e[i]*sell;
 			}
 		}
 
 
-		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
-		double prev_value = 0;
-		for (m=0;m<12;m++)
+		// calculate hourly energy charge regardless of scenario - email from Paul 7/29/13
+		for (int i=0;i<8760;i++)
 		{
-			prev_value = ( m > 0 ) ? cumulative_excess_energy[m-1] : 0;
-			cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
+			if (as_boolean("ur_sell_eq_buy")) sell = buy;
+			if (e[i] < 0) // must buy from grid
+				price[i] += buy;
+			else
+				price[i] += sell;
 		}
-
-
-		// back calculate hourly income and payments based on monthly values
-		// back out hourly values based on monthly reconciliation
-		c=0;
-		for (m=0;m<12;m++)
-		{
-			if (hours[m] <= 0) break;
-
-			for (d=0;d<util::nday[m];d++)
-			{
-				for(h=0;h<24;h++)
-				{
-					// monthly rollover with year end sell at reduced rate
-					if ( cumulative_excess_energy[m] == 0 ) // buy from grid
-						payment[c] += -energy_use[m]/hours[m] * buy;
-					c++;
-
-
-/*
-// Monthly reconciliation
-					if ( energy_use[m] < 0 ) // buy from grid
-						payment[c] += -energy_use[m]/hours[m] * buy;
-					else // sell to grid
-						income[c] += energy_use[m]/hours[m] * sell;
-					c++;
-*/
-				}
-			}
-		}
-
-	// monthly rollover with year end sell at reduced rate
-		if ( cumulative_excess_energy[11] > 0 )
-			income[8759] = cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
-
-    // TODO: update monthly values
 
 
 	}
@@ -1122,12 +1210,14 @@ public:
 	void process_energy_charge( ssc_number_t e[8760],
 			ssc_number_t payment[8760],
 			ssc_number_t income[8760],
+			ssc_number_t price[8760],
 			ssc_number_t ec_charge[12],
 			ssc_number_t ec_rate[12])
 	{
 		// 12 periods with 6 tiers each rates 3rd index = 0 = buy and 1=sell
 		ssc_number_t rates[12][6][2]; 
 		ssc_number_t energy_ub[12][6];
+
 
 		const char *schedwkday = as_string("ur_ec_sched_weekday");
 		const char *schedwkend = as_string("ur_ec_sched_weekend");
@@ -1137,7 +1227,7 @@ public:
 		if (!util::translate_schedule( tod, schedwkday, schedwkend, 0, 11))
 			throw general_error("could not translate weekday and weekend schedules for energy charges");
 
-	//	bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 
 
 		// tiered rates for all 6 tiers in each of the 12 periods
@@ -1159,6 +1249,8 @@ public:
 
 
 
+		ssc_number_t energy_use[12]; // 12 months
+		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
 		// calculate the monthly net energy per period
 		int m,d,h,period,tier;
 		ssc_number_t energy_net[12][12]; // 12 months, 12 periods
@@ -1166,6 +1258,8 @@ public:
 		int c=0;
 		for (m=0;m<12;m++)
 		{
+			energy_use[m]=0.0;
+			cumulative_excess_energy[m] = 0.0;
 			for (period=0;period<12;period++) 
 			{
 				energy_net[m][period] = 0;
@@ -1181,28 +1275,147 @@ public:
 					energy_net[m][todp] += e[c];
 					// hours per period per month
 					hours[m][todp]++;
+					energy_use[m] += e[c];
 					c++;
 				}
 			}
 		}
 
-		// go through each period and tier and calculate per SAM_V2_RATES.docx - Nathan Clark 3/6/13
-		// reconcile on monthly basis
-		ssc_number_t charge[12][12];
-		ssc_number_t credit[12][12];
-		c=0;
-		for (m=0;m<12;m++)
-		{
-			ssc_number_t monthly_energy = 0;
-			for (period=0;period<12;period++)
-			{
-				charge[m][period]=0;
-				credit[m][period]=0;
 
-				if (energy_net[m][period] >= 0.0)
+		if ( sell_eq_buy)
+		{
+			// go through each period and tier and calculate per SAM_V2_RATES.docx - Nathan Clark 3/6/13
+			// reconcile on monthly basis
+			ssc_number_t charge[12][12];
+			ssc_number_t credit[12][12];
+			c=0;
+			for (m=0;m<12;m++)
+			{
+				ssc_number_t monthly_energy = 0;
+				for (period=0;period<12;period++)
+				{
+					charge[m][period]=0;
+					credit[m][period]=0;
+
+					if (energy_net[m][period] >= 0.0)
+					{ // calculate income or credit
+						ssc_number_t credit_amt = 0;
+						ssc_number_t energy_surplus = energy_net[m][period];
+						tier=0;
+						while (tier<6)
+						{
+							// add up the charge amount for this block
+							ssc_number_t e_upper = energy_ub[period][tier];
+							ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
+
+							if (energy_surplus > e_upper)
+								credit_amt += (e_upper-e_lower)*rates[period][tier][1];
+							else
+								credit_amt += (energy_surplus-e_lower)*rates[period][tier][1];
+	
+							if ( energy_surplus < e_upper )
+								break;
+							tier++;
+						}
+						credit[m][period] = credit_amt;
+						ec_charge[m] -= credit_amt;
+					}
+					else
+					{ // calculate payment or charge
+						ssc_number_t charge_amt = 0;
+						ssc_number_t energy_deficit = -energy_net[m][period];
+						tier=0;
+						while (tier<6)
+						{
+							// add up the charge amount for this block
+							ssc_number_t e_upper = energy_ub[period][tier];
+							ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
+
+							if (energy_deficit > e_upper)
+								charge_amt += (e_upper-e_lower)*rates[period][tier][0];
+							else
+								charge_amt += (energy_deficit-e_lower)*rates[period][tier][0];
+	
+							if ( energy_deficit < e_upper )
+								break;
+							tier++;
+						}
+						charge[m][period] = charge_amt;
+						ec_charge[m] += charge_amt;
+					}
+					monthly_energy += energy_net[m][period];
+				}
+				ec_rate[m] = monthly_energy != 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
+			}
+
+			// back out hourly values based on monthly reconciliation
+			c=0;
+			for (m=0;m<12;m++)
+			{
+				for (d=0;d<util::nday[m];d++)
+				{
+					for(h=0;h<24;h++)
+					{
+						int todp = tod[c];
+						if (hours[m][todp] > 0)
+						{
+							payment[c] += charge[m][todp]/hours[m][todp];
+							income[c] += credit[m][todp]/hours[m][todp];
+						}
+						c++;
+					}
+				}
+			}
+
+
+
+			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
+			ssc_number_t prev_value = 0;
+			for (m=0;m<12;m++)
+			{
+				prev_value = ( m > 0 ) ? cumulative_excess_energy[m-1] : 0;
+				cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
+			}
+
+
+			// back out hourly values based on monthly reconciliation
+			c=0;
+			for (m=0;m<12;m++)
+			{
+				if (hours[m] <= 0) break;
+
+				for (d=0;d<util::nday[m];d++)
+				{
+					for(h=0;h<24;h++)
+					{
+						if (d==util::nday[m]-1 && h==23)
+						{
+						// monthly rollover with year end sell at reduced rate
+							if ( cumulative_excess_energy[m] == 0 ) // buy from grid
+							{
+								if ( m > 0 )
+									payment[c] += -(cumulative_excess_energy[m-1]-energy_use[m]) * ec_rate[m];
+								else
+									payment[c] += -energy_use[m] * ec_rate[m];
+							}
+						}
+						c++;
+					}
+				}
+			}
+		}
+
+		else
+
+		{
+			// non-net metering without monthly reconciliation
+			for (int i=0;i<8760;i++)
+			{
+				int period = tod[i];
+				if (e[i] >= 0.0)
 				{ // calculate income or credit
 					ssc_number_t credit_amt = 0;
-					ssc_number_t energy_surplus = energy_net[m][period];
+					ssc_number_t energy_surplus = e[i];
 					tier=0;
 					while (tier<6)
 					{
@@ -1219,7 +1432,7 @@ public:
 							break;
 						tier++;
 					}
-					credit[m][period] = credit_amt;
+					income[i] += credit_amt;
 					ec_charge[m] -= credit_amt;
 				}
 				else
@@ -1242,34 +1455,62 @@ public:
 							break;
 						tier++;
 					}
-					charge[m][period] = charge_amt;
+					payment[i] += charge_amt;
 					ec_charge[m] += charge_amt;
 				}
-				monthly_energy += energy_net[m][period];
 			}
-			ec_rate[m] = monthly_energy != 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
 		}
 
-
-		// back out hourly values based on monthly reconciliation
-		c=0;
-		for (m=0;m<12;m++)
+		// calculate energy charge for both scenarios
+		for (int i=0;i<8760;i++)
 		{
-			for (d=0;d<util::nday[m];d++)
-			{
-				for(h=0;h<24;h++)
+			int period = tod[i];
+			if (e[i] >= 0.0)
+			{ // calculate income or credit
+				ssc_number_t credit_amt = 0;
+				ssc_number_t energy_surplus = e[i];
+				tier=0;
+				while (tier<6)
 				{
-					int todp = tod[c];
-					if (hours[m][todp] > 0)
-					{
-						payment[c] += charge[m][todp]/hours[m][todp];
-						income[c] += credit[m][todp]/hours[m][todp];
-					}
-					c++;
-				}
-			}
-		}
+					// add up the charge amount for this block
+					ssc_number_t e_upper = energy_ub[period][tier];
+					ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
 
+					if (energy_surplus > e_upper)
+						credit_amt += (e_upper-e_lower)*rates[period][tier][1];
+					else
+						credit_amt += (energy_surplus-e_lower)*rates[period][tier][1];
+	
+					if ( energy_surplus < e_upper )
+						break;
+					tier++;
+				}
+				price[i] += credit_amt;
+			}
+			else
+			{ // calculate payment or charge
+				ssc_number_t charge_amt = 0;
+				ssc_number_t energy_deficit = -energy_net[m][period];
+				tier=0;
+				while (tier<6)
+				{
+					// add up the charge amount for this block
+					ssc_number_t e_upper = energy_ub[period][tier];
+					ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
+
+					if (energy_deficit > e_upper)
+						charge_amt += (e_upper-e_lower)*rates[period][tier][0];
+					else
+						charge_amt += (energy_deficit-e_lower)*rates[period][tier][0];
+	
+					if ( energy_deficit < e_upper )
+						break;
+					tier++;
+				}
+				price[i] += charge_amt;
+			}
+
+		}
 	}
 
 
@@ -1277,6 +1518,7 @@ public:
 
 	void process_demand_charge( ssc_number_t p[8760],
 			ssc_number_t payment[8760],
+			ssc_number_t demand_charge[8760],
 			ssc_number_t dc_fixed[12],
 			ssc_number_t dc_tou[12] )
 	{
@@ -1337,6 +1579,7 @@ public:
 
 						dc_fixed[m] = charge;
 						payment[c] += dc_fixed[m];
+						demand_charge[c] = charge;
 					}
 
 					c++;
