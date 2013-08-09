@@ -73,7 +73,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                         "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "Pumping power",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "P pump",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_dry",                 "T ambient",						  "C",		"",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold",                "T cold",                           "C",     "",                      "SWH",      "*",                        "LENGTH=8760",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_deliv",               "T delivered",                      "C",      "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
@@ -507,17 +507,11 @@ public:
 				T_tank = V_hot / V_tank * T_hot + V_cold / V_tank * T_cold;
 			}
 
-
-			// if the delivered water temperature from SHW is greater then set temp
-			// mix with cold mains to lower temp to setp temp
-			double Q_deliv = 0.0;
-			if (T_deliv > T_set_array[i])
-				Q_deliv = mdot_mix* Cp_water *(T_deliv - T_mains[i]);
-			else
-				Q_deliv = (draw[i] / dT) * Cp_water*(T_deliv - T_mains[i]);
-
 			// calculate pumping losses (pump size is user entered) -
 			double P_pump = (Q_useful > 0) ? pump_watts*pump_eff : 0.0;
+
+			// compute energy delivered
+			double Q_deliv = mdot_mix* Cp_water *(T_deliv - T_mains[i]) - P_pump ;
 
 			// amount of auxiliary energy needed to bring delivered water to set temperature
 			double Q_aux = draw[i] / dT * Cp_water * (T_set_array[i] - T_deliv);
@@ -549,11 +543,11 @@ public:
 			// save output variables - convert Q values to kWh 
 			out_Q_transmitted[i] = (ssc_number_t) (I_transmitted[i] * area);
 			out_Q_useful[i] = (ssc_number_t) (Q_useful * W2kW);
-			out_Q_deliv[i] = (ssc_number_t) (Q_deliv * W2kW);
+			out_Q_deliv[i] = (ssc_number_t) (Q_deliv * W2kW); //this is currently being output from a financial model as "Hourly Energy Delivered", they are equivalent
 			out_Q_loss[i] = (ssc_number_t) (Q_tankloss * W2kW);
 			out_T_tank[i] = (ssc_number_t) T_tank ;
 			out_T_deliv[i] = (ssc_number_t) T_deliv ;
-			out_P_pump[i] = (ssc_number_t) P_pump ;
+			out_P_pump[i] = (ssc_number_t) (P_pump * W2kW) ;
 			out_Q_aux[i] = (ssc_number_t) (Q_aux * W2kW);
 			out_Q_auxonly[i] = (ssc_number_t) (Q_auxonly* W2kW);
 			out_Q_saved[i] = (ssc_number_t) (Q_saved* W2kW);
