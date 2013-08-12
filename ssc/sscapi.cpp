@@ -44,6 +44,7 @@ extern module_entry_info
 	cm_entry_test_pvshade,
 	cm_entry_geothermal,
 	cm_entry_windpower,
+	cm_entry_poacalib,
 	cm_entry_geothermalui;
 
 /* official module table */
@@ -71,6 +72,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_test_pvshade,
 	&cm_entry_geothermal,
 	&cm_entry_windpower,
+	&cm_entry_poacalib,
 	&cm_entry_geothermalui,
 	0 };
 

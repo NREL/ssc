@@ -49,6 +49,7 @@ OBJECTS = \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
+	cmod_poacalib.o \
 	core.o \
 	lib_windfile.o \
 	lib_cec6par.o \

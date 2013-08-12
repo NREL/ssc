@@ -29,6 +29,7 @@
     <ClCompile Include="cmod_ippppa.cpp" />
     <ClCompile Include="cmod_irradproc.cpp" />
     <ClCompile Include="cmod_levpartflip.cpp" />
+    <ClCompile Include="cmod_poacalib.cpp" />
     <ClCompile Include="cmod_pv6parmod.cpp" />
     <ClCompile Include="cmod_pvsamv1.cpp" />
     <ClCompile Include="cmod_pvsandiainv.cpp" />
