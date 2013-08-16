@@ -24,8 +24,8 @@ static var_info vtab_utility_rate2[] = {
 	// Energy Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_enable",            "Enable energy charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 
-	{ SSC_INPUT,        SSC_STRING,     "ur_ec_sched_weekday",     "Energy Charge Weekday Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_ec_enable=1",           "TOUSCHED",                      "" },
-	{ SSC_INPUT,        SSC_STRING,     "ur_ec_sched_weekend",     "Energy Charge Weekend Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_ec_enable=1",           "TOUSCHED",                      "" },
+	{ SSC_INPUT,        SSC_STRING,     "ur_ec_sched_weekday",     "Energy Charge Weekday Schedule",            "",       "288 digits 1-C, 24x12", "",             "ur_ec_enable=1",           "TOUSCHED",                      "" },
+	{ SSC_INPUT,        SSC_STRING,     "ur_ec_sched_weekend",     "Energy Charge Weekend Schedule",            "",       "288 digits 1-C, 24x12", "",             "ur_ec_enable=1",           "TOUSCHED",                      "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_br",       "Period 1 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_sr",       "Period 1 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
@@ -612,6 +612,9 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_with_system",       "Year 1 demand charge by hour with system",      "$/kW", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_without_system",       "Year 1 demand charge by hour without system",      "$/kW", "",          "",             "*",                         "LENGTH=8760",                   "" },
 
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_ec_tou_schedule",       "Hourly energy charge TOU schedule",      "", "",          "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "Hourly demand charge TOU schedule",      "", "",          "",             "*",                         "LENGTH=8760",                   "" },
+
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Year 1 monthly demand charge (Fixed) with system",    "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_with_system",        "Year 1 monthly demand charge (TOU) with system",      "$", "", "",          "*",                         "LENGTH=12",                     "" },
@@ -793,7 +796,8 @@ public:
 
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
-			payment(8760), income(8760), price(8760), demand_charge(8760);
+			payment(8760), income(8760), price(8760), demand_charge(8760), 
+			ec_tou_sched(8760), dc_tou_sched(8760);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12),
 			monthly_dc_fixed(12), monthly_dc_tou(12),
@@ -866,7 +870,7 @@ public:
 				&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0] );
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0] );
 
 			if (i == 0)
 			{
@@ -877,6 +881,8 @@ public:
 				assign( "year1_hourly_dc_with_system", var_data( &demand_charge[0], 8760 ) );
 				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
 				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
+				assign( "year1_hourly_ec_tou_schedule", var_data( &ec_tou_sched[0], 8760) );
+				assign( "year1_hourly_dc_tou_schedule", var_data( &dc_tou_sched[0], 8760) );
 				
 				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13
 				monthly_outputs( &e_load[0], &e_sys[0], &e_grid[0], &payment[0], &income[0], &monthly_load[0], 
@@ -929,7 +935,7 @@ public:
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0] );
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0] );
 
 			if (i == 0)
 			{
@@ -1058,7 +1064,8 @@ public:
 		ssc_number_t price[8760], ssc_number_t demand_charge[8760], 
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
-		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12] ) throw(general_error)
+		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12],
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760] ) throw(general_error)
 	{
 		int i;
 
@@ -1080,11 +1087,11 @@ public:
 
 		// process demand charges
 		if (as_boolean("ur_dc_enable"))
-			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou );
+			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou, dc_tou_sched );
 
 		// process energy charges
 		if (as_boolean("ur_ec_enable"))
-			process_energy_charge( e_in, payment, income, price, monthly_ec_charges, monthly_ec_rates );
+			process_energy_charge( e_in, payment, income, price, monthly_ec_charges, monthly_ec_rates, ec_tou_sched );
 
 		// compute revenue ( = income - payment )
 		for (i=0;i<8760;i++)
@@ -1222,7 +1229,8 @@ public:
 			ssc_number_t income[8760],
 			ssc_number_t price[8760],
 			ssc_number_t ec_charge[12],
-			ssc_number_t ec_rate[12])
+			ssc_number_t ec_rate[12],
+			ssc_number_t ec_tou_sched[8760] )
 	{
 		// 12 periods with 6 tiers each rates 3rd index = 0 = buy and 1=sell
 		ssc_number_t rates[12][6][2]; 
@@ -1236,6 +1244,8 @@ public:
 
 		if (!util::translate_schedule( tod, schedwkday, schedwkend, 0, 11))
 			throw general_error("could not translate weekday and weekend schedules for energy charges");
+
+		for (int i=0;i<8760; i++) ec_tou_sched[i] = (ssc_number_t)(tod[i]+1);
 
 		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 
@@ -1530,7 +1540,8 @@ public:
 			ssc_number_t payment[8760],
 			ssc_number_t demand_charge[8760],
 			ssc_number_t dc_fixed[12],
-			ssc_number_t dc_tou[12] )
+			ssc_number_t dc_tou[12],
+			ssc_number_t dc_tou_sched[8760] )
 	{
 		int i,m,d,h,c,tier;
 
@@ -1609,6 +1620,9 @@ public:
 		int tod[8760];
 		if (!util::translate_schedule( tod, schedwkday, schedwkend, 0, 8))
 			throw general_error("could not translate weekday and weekend schedules for demand charge time-of-use rate");
+
+		for (int i=0;i<8760; i++) dc_tou_sched[i] = (ssc_number_t)(tod[i]+1);
+
 
 		// extract rate info
 
