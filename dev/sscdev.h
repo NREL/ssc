@@ -48,7 +48,7 @@ public:
 	void ChooseDynamicLibrary();
 	void LoadUnloadLibrary();
 
-	void Start();
+	std::vector<bool> Start();
 	void ClearLog();
 	void Log(const wxString &, bool wnl=true);
 	

@@ -1055,7 +1055,7 @@ int wfcsv::read_all( const std::string &file )
 			if ( arr.capacity() < m_numRecords )
 				arr.reserve( arr.capacity() + 1000 );
 
-			if ( i < ncols ) arr.push_back( atof( trimboth( cols[i] ) ) );
+			if ( i < ncols ) arr.push_back( (float)atof( trimboth(cols[i]) ) );
 			else arr.push_back( std::numeric_limits<float>::quiet_NaN() );
 		}
 	}

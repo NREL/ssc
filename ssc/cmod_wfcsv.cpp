@@ -138,7 +138,7 @@ public:
 			size_t n = in.num_records();
 			ssc_number_t *vec = allocate( in.get_canonical_name( cols[i] ), n );
 			for ( size_t j=0;j<n;j++ )
-				vec[i] = in.value( cols[i], j );
+				vec[j] = in.value( cols[i], j );
 		}
 
 	}

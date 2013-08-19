@@ -982,8 +982,10 @@ void SCFrame::Copy( var_table *vt,  ssc_data_t p_data, bool clear_first )
 	}
 }
 
-void SCFrame::Start()
+std::vector<bool> SCFrame::Start()
 {
+	std::vector<bool> ok;
+
 	m_progressBar->Show();
 	Layout();
 	wxGetApp().Yield();
@@ -992,7 +994,7 @@ void SCFrame::Start()
 	if ( cm.IsEmpty() )
 	{
 		wxMessageBox("No compute modules selected for simulation.\n\nSelect one or more on the Module Browser tab.");
-		return;
+		return ok;
 	}
 
 	try {
@@ -1013,7 +1015,10 @@ void SCFrame::Start()
 				my_handler, 0) )
 			{
 				Log("EXEC_FAIL: "+cm);
+				ok.push_back( false );
 			}
+			else
+				ok.push_back( true );
 
 			::ssc_module_free( p_mod );
 		}
@@ -1032,4 +1037,5 @@ void SCFrame::Start()
 	m_progressBar->Hide();
 	Layout();
 	
+	return ok;
 }

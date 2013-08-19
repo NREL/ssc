@@ -244,7 +244,10 @@ void fcall_run( lk::invoke_t &cxt )
 
 	}
 
-	app_frame->Start();
+	std::vector<bool> ok = app_frame->Start();
+	cxt.result().empty_vector();
+	for (size_t i=0;i<ok.size();i++)
+		cxt.result().vec_append( ok[i] ? 1 : 0 );
 }
 
 void fcall_tsview( lk::invoke_t &cxt )
