@@ -830,7 +830,10 @@ static char *trimboth( char *buf )
 	char *p = buf+len-1;
 	while ( p > buf && p && *p 
 		&& (*p == '\n' || *p == '\r' || *p == ' ' || *p == '\t') )
+	{
 		*p = 0;
+		p--;
+	}
 	
 	p = buf;
 	while ( p && *p && *p == ' ' || *p == '\t' )
@@ -1037,9 +1040,10 @@ int wfcsv::read_all( const std::string &file )
 	// read data lines
 	while( ! ::feof( fp ) )
 	{
+		buf[0] = 0;
 		fgets( buf, NBUF, fp );
 		pbuf = trimboth(buf);
-		if ( !pbuf || !*pbuf ) continue;
+		if ( !pbuf || !*pbuf ) break;
 
 		ncols = locate2( pbuf, cols, NCOL, ',' );		
 		if ( ncols < m_columns.size() ) return -7;
