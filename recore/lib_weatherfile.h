@@ -54,6 +54,7 @@ public:
 	std::string loc_id;
 	std::string city;
 	std::string state;
+	std::string country;
 	double tz;
 	double lat;
 	double lon;
@@ -84,6 +85,84 @@ public:
 	double pres; /* pressure (mbar) */
 	double snow; /* snow depth (cm) 0-150 */
 	double albedo; /* ground reflectance 0-1.  values outside this range mean it is not included */
+};
+
+
+class wfcsv
+{
+private:
+
+	struct column
+	{
+		std::string name;
+		std::string units;
+		size_t index;
+		int id;
+		std::vector<float> data;
+	};
+
+	int m_errorCode;
+	size_t m_numRecords;
+	int m_timeStepSeconds;
+	std::vector<column> m_columns;
+	
+	// possible header data fields
+	bool m_hdrInterpMet, m_hdrHasUnits;
+	std::string m_hdrLocId, m_hdrCity, m_hdrState, m_hdrCountry,
+		m_hdrSource, m_hdrDescription, m_hdrURL;
+	double m_hdrLatitude, m_hdrLongitude, m_hdrTimeZone, m_hdrElevation;
+	int m_hdrYear;
+
+	void reset();
+	int colindex( int id );
+
+public:
+	wfcsv();
+	wfcsv( const std::string &file );
+
+	bool ok();
+
+	// return 0 on success, or negative error code
+	int read_all( const std::string &file ); 
+		
+	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
+		GHI, DNI, DHI, 
+		TDRY, TWET, TDEW, 
+		WSPD, WDIR, 
+		RH, PRES, SNOW, ALB, AOD,
+	_MAXCOL_ };
+
+
+	int error() { return m_errorCode; }
+	int time_step_seconds();
+	float time_step_hours();
+	size_t num_records();
+	bool has_data( int id );
+	std::vector<int> get_columns();
+	std::string get_canonical_name( int id );
+
+	bool interpolate() { return m_hdrInterpMet; }
+	bool has_units() { return m_hdrHasUnits; }
+	std::string location() { return m_hdrLocId; }
+	std::string city() { return m_hdrCity; }
+	std::string state() { return m_hdrState; }
+	std::string country() { return m_hdrCountry; }
+	std::string source() { return m_hdrSource; }
+	std::string description() { return m_hdrDescription; }
+	std::string url() { return m_hdrURL; }
+	double lat() { return m_hdrLatitude; }
+	double lon() { return m_hdrLongitude; }
+	double tz() { return m_hdrTimeZone; }
+	double elev() { return m_hdrElevation; }
+	int year() { return m_hdrYear; }
+
+	 // returns NaN if value doesn't exist and can't be estimated from existing data
+	float value( int id, size_t index );
+
+
+	// converts a TMY2, TMY3, EPW, or SMW file to WFCSV format
+	static bool convert( const std::string &input, const std::string &output );
+
 };
 
 #endif

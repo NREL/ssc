@@ -45,7 +45,9 @@ extern module_entry_info
 	cm_entry_geothermal,
 	cm_entry_windpower,
 	cm_entry_poacalib,
-	cm_entry_geothermalui;
+	cm_entry_geothermalui,
+	cm_entry_wfcsvconv,
+	cm_entry_wfcsvread;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -74,6 +76,8 @@ static module_entry_info *module_table[] = {
 	&cm_entry_windpower,
 	&cm_entry_poacalib,
 	&cm_entry_geothermalui,
+	&cm_entry_wfcsvconv,
+	&cm_entry_wfcsvread,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )

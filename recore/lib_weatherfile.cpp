@@ -271,7 +271,7 @@ bool weatherfile::open( const std::string &file )
 		state = p!=0 ? p : "";
 		
 		p = gettoken( NULL, ",", &lasts );
-		/* skip COUNTRY */
+		country = p!=0 ? p: "";
 		
 		p = gettoken( NULL, ",", &lasts );
 		/* skip SOURCE */
@@ -339,6 +339,8 @@ bool weatherfile::open( const std::string &file )
 
 		p = gettoken( NULL, ",", &lasts );
 		m_startYear = atoi(p); // start year
+
+		year = m_startYear;
 
 		p = gettoken( NULL, ",", &lasts );
 
@@ -677,7 +679,7 @@ bool  weatherfile::read()
 
 		return true;
 	}
-	else if ( m_type == TMY3)
+	else if ( m_type == TMY3 )
 	{
 		char *pret = fgets(buf, 1023, m_fp);
 		int ncols = locate(buf, cols, 128, ',');
@@ -792,4 +794,523 @@ bool  weatherfile::read()
 	}
 	else
 		return false;
+}
+
+
+
+
+
+
+
+#ifdef _MSC_VER
+#define my_isnan(x) ::_isnan( x )
+#else
+#define my_isnan(x) std::isnan( x )
+#endif
+
+static void trimnlcr( char *buf )
+{
+	if (!buf) return;
+
+	size_t len = strlen(buf);
+	if (len > 0 && buf[len-1] == '\n') // strip newline
+		buf[len-1] = 0;
+
+	if (len > 1 && buf[len-2] == '\r') // strip carriage return
+		buf[len-2] = 0;
+}
+
+static char *trimboth( char *buf )
+{
+	if (!buf) return 0;
+
+	size_t len = strlen(buf);
+	if ( len == 0 ) return buf;
+
+	char *p = buf+len-1;
+	while ( p > buf && p && *p 
+		&& (*p == '\n' || *p == '\r' || *p == ' ' || *p == '\t') )
+		*p = 0;
+	
+	p = buf;
+	while ( p && *p && *p == ' ' || *p == '\t' )
+		p++;
+
+	return p;
+}
+
+static int locate2(char *buf, char **colidx, int colmax, char delim)
+{
+	trimnlcr(buf);
+
+	char *p = buf;
+	int i = 1;
+	int ncols = 0;
+	
+	colidx[0] = p;
+	while (p && *p && i < colmax)
+	{
+		p = strchr(p, delim);
+		if (p)
+		{
+			*p = 0;
+			colidx[i++] = ++p;
+		}
+	}
+
+	ncols = i;
+
+	while (i<colmax) colidx[i++] = 0;
+
+	return ncols;
+}
+
+
+wfcsv::wfcsv()
+{
+	reset();
+}
+
+wfcsv::wfcsv( const std::string &file )
+{
+	m_errorCode = read_all( file );
+}
+
+void wfcsv::reset()
+{
+	m_errorCode = -1;
+	m_numRecords = 0;
+	m_timeStepSeconds = 3600;
+	m_columns.clear();
+	m_hdrInterpMet = m_hdrHasUnits = false;
+	m_hdrLocId = m_hdrCity = m_hdrState = m_hdrCountry 
+		= m_hdrSource = m_hdrDescription = m_hdrURL = "";
+	m_hdrLatitude = m_hdrLongitude = m_hdrTimeZone = m_hdrElevation = std::numeric_limits<double>::quiet_NaN();
+	m_hdrYear = 0;
+}
+
+bool wfcsv::ok()
+{
+	return m_errorCode == 0;
+}
+
+int wfcsv::read_all( const std::string &file )
+{
+#define NBUF 2048
+#define NCOL 128
+
+	reset();
+
+	util::stdfile fp( file, "r" );
+	if ( !fp.ok() ) return -2;
+	char buf[NBUF+1], *pbuf, 
+		buf1[NBUF+1], *pbuf1, 
+		*cols[128], *cols1[128];
+
+	pbuf = fgets( buf, NBUF, fp );
+	int ncols = locate2( buf, cols, NCOL, ',' );
+	pbuf1 = fgets( buf1, NBUF, fp );
+	int ncols1 = locate2( buf1, cols1, NCOL, ',' );
+
+	if ( ncols != ncols1 
+		|| pbuf != buf 
+		|| pbuf1 != buf1 ) return -3; // first two lines must have same number of items
+
+	for ( size_t i=0;i<ncols; i++ )
+	{
+		std::string name = util::lower_case( trimboth( cols[i] ) );
+		char *value = trimboth(cols1[i]);
+
+		if ( name == "lat" || name == "latitude" )
+		{
+			m_hdrLatitude = atof( value );
+		}
+		else if ( name == "lon" || name == "long" || name == "longitude" )
+		{
+			m_hdrLongitude = atof( value );
+		}
+		else if ( name == "tz" || name == "timezone" || name == "time zone" )
+		{
+			m_hdrTimeZone = atof( value );
+		}
+		else if ( name == "el" || name == "elev" || name == "elevation" || name == "site elevation" )
+		{
+			m_hdrElevation = atof( value );
+		}
+		else if ( name == "year" )
+		{
+			m_hdrYear = atoi( value );
+		}
+		else if ( name == "id" || name == "location" || name == "location id" || name == "station" || name == "station id" || name == "wban" || name == "wban#" )
+		{
+			m_hdrLocId = value;
+		}
+		else if ( name == "city" )
+		{
+			m_hdrCity = value;
+		}
+		else if ( name == "state" || name == "province" || name == "region" )
+		{
+			m_hdrState = value;
+		}
+		else if ( name == "country" )
+		{
+			m_hdrCountry = value;
+		}
+		else if ( name == "source" || name == "src" )
+		{
+			m_hdrSource = value;
+		}
+		else if ( name == "description" || name == "desc" )
+		{
+			m_hdrDescription = value;
+		}
+		else if ( name == "url" )
+		{
+			m_hdrURL = value;
+		}
+		else if ( name == "hasunits" || name == "units" )
+		{
+			m_hdrHasUnits = ( util::lower_case( value ) == "yes"  || atoi( value ) != 0 );
+		}
+		else if ( name == "interpmet" )
+		{
+			m_hdrInterpMet = ( util::lower_case( value ) == "yes" || atoi( value ) != 0 );
+		}
+	}
+
+	pbuf = fgets( buf, NBUF, fp ); // read column names	
+	if ( pbuf != buf ) return -4;
+	ncols = locate2( buf, cols, NCOL, ',' );
+
+	if ( m_hdrHasUnits )
+	{
+		pbuf1 = fgets( buf1, NBUF, fp ); // read column units;
+		if ( pbuf1 != buf1 ) return -5;
+		ncols1 = locate2( buf1, cols1, NCOL, ',' );
+
+		if ( ncols != ncols1 ) return -6;
+	}
+
+	// determine columns
+	for( size_t i=0;i<ncols;i++ )
+	{
+		char *name_cstr = trimboth( cols[i] );
+		if ( name_cstr && strlen(name_cstr) > 0 )
+		{
+			m_columns.push_back( column() );
+			column &cc = m_columns[ m_columns.size()-1 ];
+			cc.name = name_cstr;
+			if ( m_hdrHasUnits )
+				cc.units = trimboth( cols[1] );
+
+			cc.index = i;
+
+			std::string lowname = util::lower_case( cc.name );
+			
+			if ( lowname == "yr" || lowname == "year" ) cc.id = YEAR;
+			else if ( lowname == "mo" || lowname == "month" ) cc.id = MONTH;
+			else if ( lowname == "day" ) cc.id = DAY;
+			else if ( lowname == "hour" || lowname == "hr" ) cc.id = HOUR;
+			else if ( lowname == "min" || lowname == "minute" ) cc.id = MINUTE;
+			else if ( lowname == "ghi" || lowname == "global" || lowname == "global horizontal" || lowname == "global horizontal irradiance" ) cc.id = GHI;
+			else if ( lowname == "dni" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance" ) cc.id = DNI;
+			else if ( lowname == "dhi" || lowname == "diffuse" || lowname == "diffuse horizontal" || lowname == "diffuse horizontal irradiance" ) cc.id = DHI;
+			else if ( lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temperature" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temperature" ) cc.id = TDRY;
+			else if ( lowname == "twet" || lowname == "wet bulb" || lowname == "wet bulb temperature" ) cc.id = TWET;
+			else if ( lowname == "tdew" || lowname == "dew point" || lowname == "dew point temperature" ) cc.id = TDEW;
+			else if ( lowname == "wspd" || lowname == "wind speed" ) cc.id = WSPD;
+			else if ( lowname == "wdir" || lowname == "wind direction" ) cc.id = WDIR;
+			else if ( lowname == "rh" || lowname == "relative humidity" || lowname == "humidity" ) cc.id = RH;
+			else if ( lowname == "pres" || lowname == "pressure" ) cc.id = PRES;
+			else if ( lowname == "snow" || lowname == "snow cover" || lowname == "snow depth" ) cc.id = SNOW;
+			else if ( lowname == "alb" || lowname == "albedo" ) cc.id = ALB;
+			else if ( lowname == "aod" || lowname == "aerosol" || lowname == "aerosol optical depth" ) cc.id = AOD;
+		}
+	}
+
+	// preallocate 8760 values for each column - most common.
+	for ( size_t i=0;i<ncols;i++ )
+		m_columns[i].data.reserve( 8760 );
+	
+	m_numRecords = 0;
+	// read data lines
+	while( ! ::feof( fp ) )
+	{
+		fgets( buf, NBUF, fp );
+		pbuf = trimboth(buf);
+		if ( !pbuf || !*pbuf ) continue;
+
+		ncols = locate2( pbuf, cols, NCOL, ',' );		
+		if ( ncols < m_columns.size() ) return -7;
+
+		m_numRecords++;
+		for ( size_t i=0;i<m_columns.size(); i++ )
+		{
+			std::vector<float> &arr = m_columns[i].data;
+			if ( arr.capacity() < m_numRecords )
+				arr.reserve( arr.capacity() + 1000 );
+
+			if ( i < ncols ) arr.push_back( atof( trimboth( cols[i] ) ) );
+			else arr.push_back( std::numeric_limits<float>::quiet_NaN() );
+		}
+	}
+	
+
+	// all the data has been read in now
+	fp.close(); // don't keep the file open any longer than we need to
+
+	// do the interpolation of meteorological data if requested in the header
+	if ( m_hdrInterpMet )
+	{
+		int met_indexes[] = { WSPD, WDIR, TDRY, TWET, TDEW, RH, PRES, SNOW, ALB, -1 };
+
+		// apply to all met data relevant ids
+		size_t j=0;
+		while( met_indexes[j] >= 0 )
+		{
+			int idx = colindex( met_indexes[j] ); // find column if it has been read in from the data file
+			if ( idx >= 0 )
+			{
+				for( size_t i=0;i<m_numRecords;i++ )
+				{
+					if ( i==0 && m_numRecords > 1 )
+					{
+						// first time step: set to the backwards interpolation values of the first two time steps
+						m_columns[idx].data[0] = m_columns[idx].data[1] 
+							+ 1.5f*( m_columns[idx].data[0] - m_columns[idx].data[1] );
+					}
+					else
+					{
+						// set to the average of the current and previous
+						m_columns[idx].data[i] = 0.5f*( m_columns[idx].data[i] 
+							+ m_columns[idx].data[i-1] );
+					}
+				}
+			}
+
+			j++;
+		}
+	}
+
+	// determine timestep as best as possible
+	int nmult = m_numRecords / 8760;
+	int minidx = colindex( MINUTE );
+	int hridx = colindex( HOUR );
+	if ( nmult*8760 == m_numRecords )
+	{
+		// multiple of 8760 records: assume 1 year of data
+		m_timeStepSeconds = 3600/nmult;
+	}
+	else if ( minidx >= 0 && hridx >= 0 && m_numRecords > 1 )
+	{
+		// unrecognized length: take time difference between first two records
+		float min0 = m_columns[minidx].data[0];
+		float min1 = m_columns[minidx].data[1];
+		float hr0 = m_columns[hridx].data[0];
+		float hr1 = m_columns[hridx].data[1];
+
+		int sec0 = (int)( hr0*3600 + min0*60 );
+		int sec1 = (int)( hr1*3600 + min1*60 );
+
+		m_timeStepSeconds = sec1 - sec0;
+	}
+	else
+		return -8;
+
+	return 0;
+}
+
+
+int wfcsv::time_step_seconds()
+{
+	return m_timeStepSeconds;
+}
+
+float wfcsv::time_step_hours()
+{
+	return m_timeStepSeconds / 3600.0f;
+}
+
+size_t wfcsv::num_records()
+{
+	return m_numRecords;
+}
+
+bool wfcsv::has_data( int id )
+{
+	return colindex(id) >= 0;
+}
+
+
+int wfcsv::colindex( int id )
+{
+	for ( size_t i=0;i<m_columns.size();i++ )
+		if ( m_columns[i].id == id )
+			return (int) i;
+
+	return -1;
+}
+
+float wfcsv::value( int id, size_t index )
+{
+	if ( index >= m_numRecords ) return std::numeric_limits<float>::quiet_NaN();
+
+	int col = colindex( id );
+	if ( col >= 0 )
+	{
+		return m_columns[col].data[index];
+	}
+	else
+	{
+		// special handling for certain columns that we can calculate from others
+		// if the data doesn't exist
+		if ( id == TWET )
+		{
+			int iT = colindex( TDRY );
+			int iP = colindex( PRES );
+			int iR = colindex( RH );
+			if ( iT >= 0 && iP >= 0 && iR >= 0 )
+				return (float)calc_twet( m_columns[iT].data[index],
+					m_columns[iR].data[index], 
+					m_columns[iP].data[index] );
+		}
+		else if ( id == TDEW )
+		{
+			int iT = colindex( TDRY );
+			int iR = colindex( RH );
+			if ( iT >= 0 && iR >= 0 )
+				return (float) wiki_dew_calc( m_columns[iT].data[index], m_columns[iR].data[index] );
+		}
+		else if ( id == YEAR && m_hdrYear > 0 ) 
+		{
+			return (float)m_hdrYear;
+		}
+		else if ( id == MONTH )
+		{
+			if ( m_timeStepSeconds == 3600 && m_numRecords == 8760 )
+				return util::month_of( index );
+		}
+		else if ( id == DAY )
+		{
+			if ( m_timeStepSeconds == 3600 && m_numRecords == 8760 )
+			{
+				int month = util::month_of( index );
+				return util::day_of_month( month, index );
+			}
+		}
+		else if ( id == HOUR )
+		{
+			if ( m_timeStepSeconds == 3600 && m_numRecords == 8760 )
+			{
+				int day = index / 24;
+				int start_of_day = day*24;
+				return index - start_of_day;
+			}
+		}
+		else if ( id == MINUTE && m_timeStepSeconds > 0 )
+		{
+			return (m_timeStepSeconds/2)/60;
+		}
+	}
+
+	// if all else fails, return NaN: data not 
+	// supplied and could not be reasonably guessed
+	return std::numeric_limits<float>::quiet_NaN();
+}
+
+std::vector<int> wfcsv::get_columns()
+{
+	std::vector<int> ids;
+	for( size_t i=0;i<m_columns.size();i++ )
+		ids.push_back( m_columns[i].id );
+	return ids;
+}
+
+std::string wfcsv::get_canonical_name( int id )
+{
+static const char *canonical_names[_MAXCOL_] = {
+		"year", "month", "day", "hour", "minute",
+		"gh", "dn", "df",
+		"tdry", "twet", "tdew",
+		"wspd", "wdir", "rh",
+		"pres", "snow", "alb", "aod" };
+
+	if ( id >= 0 && id < _MAXCOL_ ) return canonical_names[id];
+	else return "";
+}
+
+
+
+
+bool wfcsv::convert( const std::string &input, const std::string &output )
+{
+	weatherfile in( input );
+	if ( !in.ok() ) return false;
+
+	util::stdfile fp( output, "w" );
+	if ( !fp.ok() ) return false;
+
+	if ( in.type() == weatherfile::TMY2 )
+	{
+		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
+		fprintf(fp, "TMY2,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
+			in.city.c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
+		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Snow Depth\n" );
+		for( size_t i=0;i<8760;i++ )
+		{
+			if (!in.read()) return false;
+			fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+				in.year, in.month, in.day, in.hour,
+				in.gh, in.dn, in.df, in.tdry, in.tdew, in.rhum, in.pres, in.wspd, in.wdir, in.snow );
+		}
+	}
+	else if ( in.type() == weatherfile::TMY3 )
+	{
+		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
+		fprintf(fp, "TMY3,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
+			in.city.c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
+		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n" );
+		for( size_t i=0;i<8760;i++ )
+		{
+			if (!in.read()) return false;
+			fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+				in.year, in.month, in.day, in.hour,
+				in.gh, in.dn, in.df, in.tdry, in.twet, in.rhum, in.pres, in.wspd, in.wdir, in.albedo );
+		}
+	}
+	else if ( in.type() == weatherfile::EPW )
+	{
+		fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
+		fprintf(fp, "EPW,%s,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
+			in.city.c_str(), in.state.c_str(), in.country.c_str(), in.lat, in.lon, in.tz, in.elev );
+		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n" );
+		for( size_t i=0;i<8760;i++ )
+		{
+			if (!in.read()) return false;
+			fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+				in.year, in.month, in.day, in.hour,
+				in.gh, in.dn, in.df, in.tdry, in.twet, in.rhum, in.pres, in.wspd, in.wdir, in.albedo );
+		}
+	}
+	else if ( in.type() == weatherfile::SMW )
+	{
+		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation,Year\n");
+		fprintf(fp, "SMW,%s,%s,%s,%.6lf,%.6lf,%lg,%lg,%d\n", in.loc_id.c_str(),
+			in.city.c_str(), in.state.c_str(), in.country.c_str(), in.lat, in.lon, in.tz, in.elev, in.year );
+		fprintf(fp, "Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,Tdew,RH,Pres,Wspd,Wdir,Snow,Albedo\n" );
+		for( size_t i=0;i<8760;i++ )
+		{
+			if (!in.read()) return false;
+			fprintf(fp, "%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+				in.month, in.day, in.hour,
+				in.gh, in.dn, in.df, in.tdry, in.twet, in.tdew, in.rhum, in.pres, in.wspd, in.wdir, in.snow, in.albedo );
+		}
+	}
+	else
+		return false;
+
+
+	return true;
+
 }
