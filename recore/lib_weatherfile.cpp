@@ -928,7 +928,7 @@ int wfcsv::read_all( const std::string &file )
 		{
 			m_hdrLatitude = atof( value );
 		}
-		else if ( name == "lon" || name == "long" || name == "longitude" )
+		else if ( name == "lon" || name == "long" || name == "longitude" || name == "lng" )
 		{
 			m_hdrLongitude = atof( value );
 		}
@@ -1016,15 +1016,15 @@ int wfcsv::read_all( const std::string &file )
 			else if ( lowname == "day" ) cc.id = DAY;
 			else if ( lowname == "hour" || lowname == "hr" ) cc.id = HOUR;
 			else if ( lowname == "min" || lowname == "minute" ) cc.id = MINUTE;
-			else if ( lowname == "ghi" || lowname == "global" || lowname == "global horizontal" || lowname == "global horizontal irradiance" ) cc.id = GHI;
-			else if ( lowname == "dni" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance" ) cc.id = DNI;
-			else if ( lowname == "dhi" || lowname == "diffuse" || lowname == "diffuse horizontal" || lowname == "diffuse horizontal irradiance" ) cc.id = DHI;
-			else if ( lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temperature" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temperature" ) cc.id = TDRY;
+			else if ( lowname == "ghi" || lowname == "gh" || lowname == "global" || lowname == "global horizontal" || lowname == "global horizontal irradiance" ) cc.id = GHI;
+			else if ( lowname == "dni" || lowname == "dn" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance" ) cc.id = DNI;
+			else if ( lowname == "dhi" || lowname == "df" || lowname == "diffuse" || lowname == "diffuse horizontal" || lowname == "diffuse horizontal irradiance" ) cc.id = DHI;
+			else if ( lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp" ) cc.id = TDRY;
 			else if ( lowname == "twet" || lowname == "wet bulb" || lowname == "wet bulb temperature" ) cc.id = TWET;
 			else if ( lowname == "tdew" || lowname == "dew point" || lowname == "dew point temperature" ) cc.id = TDEW;
 			else if ( lowname == "wspd" || lowname == "wind speed" ) cc.id = WSPD;
 			else if ( lowname == "wdir" || lowname == "wind direction" ) cc.id = WDIR;
-			else if ( lowname == "rh" || lowname == "relative humidity" || lowname == "humidity" ) cc.id = RH;
+			else if ( lowname == "rh" || lowname == "rhum" && lowname == "relative humidity" || lowname == "humidity" ) cc.id = RH;
 			else if ( lowname == "pres" || lowname == "pressure" ) cc.id = PRES;
 			else if ( lowname == "snow" || lowname == "snow cover" || lowname == "snow depth" ) cc.id = SNOW;
 			else if ( lowname == "alb" || lowname == "albedo" ) cc.id = ALB;
