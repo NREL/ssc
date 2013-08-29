@@ -1429,13 +1429,20 @@ public:
 
 		{
 			// non-net metering without monthly reconciliation
-			for (int i=0;i<8760;i++)
+			c=0;
+			for (m=0;m<12;m++)
 			{
-				int period = tod[i];
-				if (e[i] >= 0.0)
+				for (d=0;d<util::nday[m];d++)
+				{
+					for(h=0;h<24;h++)
+					{
+//			for (int i=0;i<8760;i++)
+//			{
+				int period = tod[c];
+				if (e[c] >= 0.0)
 				{ // calculate income or credit
 					ssc_number_t credit_amt = 0;
-					ssc_number_t energy_surplus = e[i];
+					ssc_number_t energy_surplus = e[c];
 					tier=0;
 					while (tier<6)
 					{
@@ -1452,13 +1459,13 @@ public:
 							break;
 						tier++;
 					}
-					income[i] += credit_amt;
+					income[c] += credit_amt;
 					ec_charge[m] -= credit_amt;
 				}
 				else
 				{ // calculate payment or charge
 					ssc_number_t charge_amt = 0;
-					ssc_number_t energy_deficit = -energy_net[m][period];
+					ssc_number_t energy_deficit = -e[c];
 					tier=0;
 					while (tier<6)
 					{
@@ -1475,9 +1482,13 @@ public:
 							break;
 						tier++;
 					}
-					payment[i] += charge_amt;
+					payment[c] += charge_amt;
 					ec_charge[m] += charge_amt;
 				}
+
+					}
+				}
+				c++;
 			}
 		}
 
