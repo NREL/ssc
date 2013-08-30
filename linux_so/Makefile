@@ -66,9 +66,8 @@ OBJECTS = \
 	vartab.o \
 	lib_weatherfile.o \
 	lib_windwatts.o \
-	lib_geohourly.o \
 	lib_geothermal.o \
-	lib_sandia.o \
+	lib_pvinv.o \
 	sscapi.o \
 	vtab_common.o
 
