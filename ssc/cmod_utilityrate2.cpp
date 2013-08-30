@@ -1521,7 +1521,7 @@ public:
 			else
 			{ // calculate payment or charge
 				ssc_number_t charge_amt = 0;
-				ssc_number_t energy_deficit = -energy_net[m][period];
+				ssc_number_t energy_deficit = -e[i];
 				tier=0;
 				while (tier<6)
 				{
