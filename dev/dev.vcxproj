@@ -48,6 +48,14 @@
     <ClCompile Include="sscdev.cpp" />
     <ClCompile Include="statdlg.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\recore\recore_vc2012.vcxproj">
+      <Project>{794a2685-b70e-4504-9402-ac376d4eb459}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ssc\ssc_vc2012.vcxproj">
+      <Project>{46d1ee84-840b-4325-910a-bc205a0d4c08}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>dev</ProjectName>
     <ProjectGuid>{C6E66359-1F22-4C8F-AF47-0E7DB16EE825}</ProjectGuid>

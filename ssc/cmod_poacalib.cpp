@@ -21,10 +21,10 @@ static var_info _cm_vtab_poacalib[] =
 	{ SSC_INPUT,        SSC_NUMBER,      "year",              "Year",                  "",                 "",                  "POA Calibrate", "*",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",            "Albedo",                "",                 "",                  "POA Calibrate", "*",           "MIN=0,MAX=1",                   "" },
 
-	{ SSC_INPUT,        SSC_ARRAY,       "poa",               "Plane of Array",        "W/m^2",            "",                  "POA Calibrate", "*",           "",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "poa",               "Plane of Array",        "W/m^2",            "",                  "POA Calibrate", "*",           "LENGTH=8760",                   "" },
 
-	{ SSC_INOUT,        SSC_ARRAY,       "beam",              "Beam Irradiation",      "W/m^2",            "",                  "POA Calibrate", "*",           "",                   "" },
-	{ SSC_INOUT,        SSC_ARRAY,       "diffuse",           "Diffuse Irradiation",   "W/m^2",            "",                  "POA Calibrate", "*",           "",                   "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "beam",              "Beam Irradiation",      "W/m^2",            "",                  "POA Calibrate", "*",           "LENGTH=8760",                   "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "diffuse",           "Diffuse Irradiation",   "W/m^2",            "",                  "POA Calibrate", "*",           "LENGTH=8760",                   "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pcalc",            "Calculated POA",        "W/m^2",            "",                  "POA Calibrate", "*",           "",                   "" },
 
