@@ -2,6 +2,7 @@
 #define __lib_weatherfile_h
 
 #include <string>
+#include <vector>  // needed to compile in typelib_vc2012
 
 
 class weatherfile
