@@ -591,7 +591,8 @@ static var_info vtab_utility_rate2[] = {
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_demand",       "Year 1 hourly electricity from grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly electric load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 hourly electric load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_demand",       "Year 1 subhourly peak from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -797,7 +798,7 @@ public:
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
 			payment(8760), income(8760), price(8760), demand_charge(8760), 
-			ec_tou_sched(8760), dc_tou_sched(8760);
+			ec_tou_sched(8760), dc_tou_sched(8760), hr_load(8760);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12),
 			monthly_dc_fixed(12), monthly_dc_tou(12),
@@ -890,6 +891,8 @@ public:
 					&monthly_elec_needed_from_grid[0], &monthly_cumulative_excess[0], 
 					&monthly_utility_bill[0]);
 
+				for (int ii=0;ii<8760;ii++) hr_load[ii] = -e_load[ii];
+				assign( "year1_hourly_load", var_data(&hr_load[0], 8760) ); 
 				assign( "year1_monthly_load", var_data(&monthly_load[0], 12) );
 				assign( "year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12) );
 				assign( "year1_monthly_electricity_to_grid", var_data(&monthly_elec_to_grid[0], 12) );
