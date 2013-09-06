@@ -21,9 +21,9 @@ static var_info _cm_vtab_annualoutput[] = {
 
 
 /* output */
-	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_e_net_delivered",               "Annual energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_e_net_delivered",               "Monthly energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_e_net_delivered",               "Hourly energy delivered",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_e_net_delivered",               "Annual energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_e_net_delivered",               "Monthly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_e_net_delivered",               "Hourly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_availability",               "Annual availability",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_degradation",               "Annual degradation",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 
