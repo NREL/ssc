@@ -889,18 +889,18 @@ public:
 				assign( "year1_hourly_dc_tou_schedule", var_data( &dc_tou_sched[0], 8760) );
 				
 				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13
-				monthly_outputs( &e_load[0], &e_sys[0], &e_grid[0], &payment[0], &income[0], &monthly_load[0], 
-					&monthly_system_generation[0],	&monthly_elec_to_grid[0], 
+				monthly_outputs( &e_load[0], &e_sys[0], &e_grid[0], &payment[0], &income[0], &revenue_w_sys[0],
+					&monthly_load[0], &monthly_system_generation[0],	&monthly_elec_to_grid[0], 
 					&monthly_elec_needed_from_grid[0], &monthly_cumulative_excess[0], 
 					&monthly_utility_bill[0]);
 
-				// sign reversal based on 9/5/13 meeting
+				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
 				{
 					load[ii] = -e_load[ii];
-					e_tofromgrid[ii] = -e_grid[ii];
-					p_tofromgrid[ii] = -p_grid[ii];
-					salespurchases[ii] = -revenue_w_sys[ii];
+					e_tofromgrid[ii] = e_grid[ii];
+					p_tofromgrid[ii] = p_grid[ii];
+					salespurchases[ii] = revenue_w_sys[ii];
 				}
 				assign( "year1_hourly_e_tofromgrid", var_data( &e_tofromgrid[0], 8760 ) );
 				assign( "year1_hourly_p_tofromgrid", var_data( &p_tofromgrid[0], 8760 ) );
@@ -966,10 +966,10 @@ public:
 				assign( "year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12) );
 				assign( "year1_monthly_ec_rate_without_system", var_data(&monthly_ec_rates[0], 12) );
 
-				// sign reversal based on 9/5/13 meeting
+				// sign reversal based on 9/5/13 meeting, reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
 				{
-					salespurchases[ii] = -revenue_wo_sys[ii];
+					salespurchases[ii] = revenue_wo_sys[ii];
 				}
 				assign( "year1_hourly_salespurchases_without_system", var_data( &salespurchases[0], 8760 ) );
 			}
@@ -1036,12 +1036,15 @@ public:
 
 	}
 
-	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760],  ssc_number_t payments[8760], ssc_number_t income[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_utility_bill[12])
+	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760],  ssc_number_t payments[8760], ssc_number_t income[8760], ssc_number_t revenue[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_utility_bill[12])
 	{
 		// calculate the monthly net energy and monthly hours
 		int m,d,h;
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
+		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+
+
 		for (m=0;m<12;m++)
 		{
 			energy_use[m] = 0;
@@ -1059,15 +1062,22 @@ public:
 					// Sean's sign convention
 					monthly_load[m] -= e_load[c];
 					monthly_generation[m] += e_sys[c];
-					monthly_elec_to_grid[m] -= e_grid[c];
-					monthly_utility_bill[m] += payments[c];
-					monthly_utility_bill[m] -= income[c];
+					monthly_elec_to_grid[m] += e_grid[c];
+// 9/6/13 update from Paul
+					if (sell_eq_buy)
+					{
+						monthly_utility_bill[m] += payments[c];
+						monthly_utility_bill[m] -= income[c];
+					}
+					else
+					{
+						monthly_utility_bill[m] += revenue[c];
+					}
 					c++;
 				}
 			}
 		}
 		//
-		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 		
 		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
 		ssc_number_t prev_value = 0;
