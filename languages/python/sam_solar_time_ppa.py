@@ -51,6 +51,7 @@ tilt = 30
 azimuth = 180
 track_mode = 0
 soiling = 0.95
+albedo = 0.2
 dc_derate = 0.95558
 
 # shading derate table
@@ -260,6 +261,7 @@ import ssc
 data = ssc.Data()
 
 data.set_string( 'weather_file', '../../examples/daggett.tm2' )
+data.set_array( 'albedo', [albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo ] )
 data.set_number( 'ac_derate', ac_derate )
 data.set_number( 'modules_per_string', num_series )
 data.set_number( 'strings_in_parallel', num_parallel )
@@ -298,7 +300,7 @@ data.set_number( 'cec_temp_corr_mode', 0 )
 data.set_number( 'cec_standoff', cec_standoff )
 data.set_number( 'cec_height', cec_height )
 
-data.set_number( 'inverter_model', 1 )
+data.set_number( 'inverter_model', 0 )
 
 data.set_number( 'inv_snl_c0', inv_snl_c0 )
 data.set_number( 'inv_snl_c1', inv_snl_c1 )

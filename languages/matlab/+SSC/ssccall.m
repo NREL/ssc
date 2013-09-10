@@ -7,16 +7,16 @@ function [result] = ssccall(action, arg0, arg1, arg2 )
     [pathstr, fn, fext] = fileparts(mfilename('fullpath'));
     if ( strcmp(computer(), 'PCWIN') ) % Windows 32-bit
         ssclibpath = '../../../win32/';
-        ssclib = 'ssc32';
+        ssclib = 'ssc';
     elseif ( strcmp(computer(), 'PCWIN64') ) % Windows 64-bit
         ssclibpath = '../../../win64/';
-        ssclib = 'ssc64';
+        ssclib = 'ssc';
     elseif ( strcmp(computer(), 'MACI64') ) % Mac Intel 64-bit
         ssclibpath = '../../../osx64/';
-        ssclib = 'ssc64';
+        ssclib = 'ssc';
     elseif ( strcmp(computer(), 'GLNXA64') ) % Linux 64-bit
         ssclibpath = '../../../linux64/';
-        ssclib = 'ssc64';
+        ssclib = 'ssc';
     end
 
     % load proper ssc library for all functions

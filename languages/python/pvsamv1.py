@@ -157,7 +157,7 @@ data.set_number( 'cec_temp_corr_mode', 0 );
 data.set_number( 'cec_standoff', cec_standoff );
 data.set_number( 'cec_height', cec_height );
 
-data.set_number( 'inverter_model', 1 );
+data.set_number( 'inverter_model', 0 );
 
 data.set_number( 'inv_snl_c0', inv_snl_c0 );
 data.set_number( 'inv_snl_c1', inv_snl_c1 );

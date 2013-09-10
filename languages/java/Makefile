@@ -15,7 +15,7 @@ ifdef SystemRoot
 		JAR = C:\Program Files\Java\jdk1.7.0_11\bin\jar.exe
 		JAVA = C:\Program Files\Java\jdk1.7.0_11\bin\java.exe
 		
-		CP_DLL = ..\..\Win64\ssc64.dll ssc.dll
+		CP_DLL = ..\..\Win64\ssc.dll ssc.dll
 		SSCLIB = ssc.dll
 	else
 		BITS = 32
@@ -26,7 +26,7 @@ ifdef SystemRoot
 		JAR = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\jar.exe
 		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\java.exe
 
-		CP_DLL = ..\..\Win32\ssc32.dll ssc.dll
+		CP_DLL = ..\..\Win32\ssc.dll ssc.dll
 		SSCLIB = ssc.dll
 	endif	
 	CP_H = ..\..\sscapi.h sscapi.h
