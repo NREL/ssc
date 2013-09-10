@@ -164,7 +164,7 @@ public class TestSSCAPI {
         // pvsamv1 input variables
         data.setString( "weather_file", "AZ Phoenix.tm2" );
         data.setNumber( "use_wf_albedo", 1f );
-        data.setNumber( "albedo", 0.2f );
+        data.setArray( "albedo", new float[]{ 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f } );
         data.setNumber( "irrad_mode", 0f );
         data.setNumber( "sky_model", 2f );
         data.setNumber( "ac_derate", 0.99f );
@@ -181,17 +181,17 @@ public class TestSSCAPI {
         data.setNumber( "subarray1_btwidth", 2f );
         data.setNumber( "subarray1_btspacing", 1f );
         data.setMatrix( "subarray1_shading_mxh", new float[][]
-        { { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f }, 
+        { { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f },
         { 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.5f, 0.5f } } );
         data.setArray( "subarray1_soiling", new float[]{ 0.95f, 0.95f, 0.95f, 0.95f, 0.95f, 0.95f, 0.95f, 0.95f, 0.95f, 0.95f, 0.95f, 0.95f } );
         data.setNumber( "subarray1_derate", 0.955598f );
@@ -333,9 +333,8 @@ public class TestSSCAPI {
         data.setNumber( "snl_series_cells", 72f );
         data.setNumber( "snl_vmpo", 40f );
         data.setNumber( "snl_voco", 47.7f );
-        data.setNumber( "inverter_model", 1f );
-        data.setNumber( "inv_spe_efficiency", 95f );
-        data.setNumber( "inv_spe_power_ac", 4000f );
+        data.setNumber( "inverter_model", 0f );
+        data.setNumber( "inv_snl_paco", 4000f );
         data.setNumber( "inv_snl_c0", -6.57929e-006f );
         data.setNumber( "inv_snl_c1", 4.72925e-005f );
         data.setNumber( "inv_snl_c2", 0.00202195f );
@@ -386,21 +385,21 @@ public class TestSSCAPI {
                 }
                 System.out.println("pvsamv1 example failed\n");
         }
-    
+
     }
-    
-    
+
+
     public static void PVSamV1_Residential()
     {
         System.out.println("\nPVSamV1 with residential defaults");
-        
+
 
         SSC.Data data = new SSC.Data();
 
         // pvsamv1 input variables
         data.setString( "weather_file", "AZ Phoenix.tm2" );
         data.setNumber( "use_wf_albedo", 1f );
-        data.setNumber( "albedo", 0.2f );
+        data.setArray( "albedo", new float[]{ 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f } );
         data.setNumber( "irrad_mode", 0f );
         data.setNumber( "sky_model", 2f );
         data.setNumber( "ac_derate", 0.99f );
@@ -556,9 +555,8 @@ public class TestSSCAPI {
         data.setNumber( "snl_series_cells", 72f );
         data.setNumber( "snl_vmpo", 40f );
         data.setNumber( "snl_voco", 47.7f );
-        data.setNumber( "inverter_model", 1f );
-        data.setNumber( "inv_spe_efficiency", 95f );
-        data.setNumber( "inv_spe_power_ac", 4000f );
+        data.setNumber( "inverter_model", 0f );
+        data.setNumber( "inv_snl_paco", 4000f );
         data.setNumber( "inv_snl_c0", -6.57929e-006f );
         data.setNumber( "inv_snl_c1", 4.72925e-005f );
         data.setNumber( "inv_snl_c2", 0.00202195f );
@@ -584,7 +582,7 @@ public class TestSSCAPI {
         data.setNumber( "self_shading_rowspace", 5f );
 
         float[] ac_hourly = {0};
-        
+
         SSC.Module module = new SSC.Module("pvsamv1");
         if (module.exec(data))
         {
@@ -617,22 +615,22 @@ public class TestSSCAPI {
         data.setArray( "energy_availability", new float[]{ 100f } );
         data.setArray( "energy_degradation", new float[]{ 0.5f } );
         data.setMatrix( "energy_curtailment", new float[][]
-        { { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
+        { { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
         { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f } } );
         data.setNumber( "system_use_lifetime_output", 0f );
-        data.setArray( "energy_net_hourly", ac_hourly);       
-        
-        
+        data.setArray( "energy_net_hourly", ac_hourly);
+
+
         float[] net_hourly = {0};
         module = new SSC.Module("annualoutput");
         if (module.exec(data))
@@ -655,11 +653,11 @@ public class TestSSCAPI {
                 }
                 System.out.println("annualoutput example failed\n");
         }
-        
+
         // utilityrate input variables
         data.setNumber( "analysis_years", 25f );
         data.setArray( "e_with_system", net_hourly);
-        
+
         data.setArray( "system_availability", new float[]{ 100f } );
         data.setArray( "system_degradation", new float[]{ 0.5f } );
         data.setArray( "load_escalation", new float[]{ 2.5f } );
@@ -822,7 +820,7 @@ public class TestSSCAPI {
                 }
                 System.out.println("utilityrate example failed\n");
         }
-        
+
         // cashloan input variables
         data.setNumber( "analysis_years", 25f );
         data.setNumber( "federal_tax_rate", 28f );
@@ -987,21 +985,21 @@ public class TestSSCAPI {
                 }
                 System.out.println("cashloan example failed\n");
         }
-       
+
     }
-    
+
 
     public static void PVSamV1_Commercial()
     {
         System.out.println("\nPVSamV1 with commercial defaults");
-        
+
 
         SSC.Data data = new SSC.Data();
 
         // pvsamv1 input variables
         data.setString( "weather_file", "AZ Phoenix.tm2" );
         data.setNumber( "use_wf_albedo", 1f );
-        data.setNumber( "albedo", 0.2f );
+        data.setArray( "albedo", new float[]{ 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f } );
         data.setNumber( "irrad_mode", 0f );
         data.setNumber( "sky_model", 2f );
         data.setNumber( "ac_derate", 0.99f );
@@ -1157,9 +1155,8 @@ public class TestSSCAPI {
         data.setNumber( "snl_series_cells", 72f );
         data.setNumber( "snl_vmpo", 40f );
         data.setNumber( "snl_voco", 47.7f );
-        data.setNumber( "inverter_model", 1f );
-        data.setNumber( "inv_spe_efficiency", 95f );
-        data.setNumber( "inv_spe_power_ac", 4000f );
+        data.setNumber( "inverter_model", 0f );
+        data.setNumber( "inv_snl_paco", 4000f );
         data.setNumber( "inv_snl_c0", -3.55551e-008f );
         data.setNumber( "inv_snl_c1", 8.6927e-005f );
         data.setNumber( "inv_snl_c2", 0.000564748f );
@@ -1185,7 +1182,7 @@ public class TestSSCAPI {
         data.setNumber( "self_shading_rowspace", 5f );
 
         float[] ac_hourly = {0};
-        
+
         SSC.Module module = new SSC.Module("pvsamv1");
         if (module.exec(data))
         {
@@ -1218,22 +1215,22 @@ public class TestSSCAPI {
         data.setArray( "energy_availability", new float[]{ 100f } );
         data.setArray( "energy_degradation", new float[]{ 0.5f } );
         data.setMatrix( "energy_curtailment", new float[][]
-        { { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
-        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }, 
+        { { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
+        { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f },
         { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f } } );
         data.setNumber( "system_use_lifetime_output", 0f );
-        data.setArray( "energy_net_hourly", ac_hourly);       
-        
-        
+        data.setArray( "energy_net_hourly", ac_hourly);
+
+
         float[] net_hourly = {0};
         module = new SSC.Module("annualoutput");
         if (module.exec(data))
@@ -1256,7 +1253,7 @@ public class TestSSCAPI {
                 }
                 System.out.println("annualoutput example failed\n");
         }
-        
+
         // utilityrate input variables
         data.setNumber( "analysis_years", 25f );
         data.setArray( "e_with_system", net_hourly);
@@ -1422,7 +1419,7 @@ public class TestSSCAPI {
                 }
                 System.out.println("utilityrate example failed\n");
         }
-        
+
         // cashloan input variables
         data.setNumber( "analysis_years", 25f );
         data.setNumber( "federal_tax_rate", 28f );
@@ -1592,10 +1589,10 @@ public class TestSSCAPI {
                 }
                 System.out.println("cashloan example failed\n");
         }
-       
+
     }
-    
-    
+
+
     public static void ModulesAndVariables()
     {
         SSC.Entry sscEntry = new SSC.Entry();
