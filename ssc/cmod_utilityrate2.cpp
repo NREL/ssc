@@ -580,9 +580,15 @@ static var_info vtab_utility_rate2[] = {
 	// outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Net energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	
+
+
+		// outputs from Paul, Nate and Sean 9/9/13
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "elec_cost_with_system",      "Electricity cost with system",         "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "elec_cost_without_system",   "Electricity cost without system",      "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+
+
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 electricity to/from grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_tofromgrid",         "Year 1 electricity to/from grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_output",  "Year 1 hourly electricity from system",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -814,6 +820,8 @@ public:
 		ssc_number_t *energy_net = allocate("energy_net", nyears);
 		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears);
 		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears);
+		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears);
+		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears);
 
 		ssc_number_t *ch_dc_fixed_jan = allocate("charge_dc_fixed_jan", nyears );
 		ssc_number_t *ch_dc_fixed_feb = allocate("charge_dc_fixed_feb", nyears );
@@ -992,6 +1000,11 @@ public:
 			annual_net_revenue[i] *= rate_scale[i];
 			annual_revenue_w_sys[i] *= rate_scale[i];
 			annual_revenue_wo_sys[i] *= rate_scale[i];
+
+			//Outputs from Paul, Nate and Sean 9/9/13
+			annual_elec_cost_w_sys[i] = -annual_revenue_w_sys[i];
+			annual_elec_cost_wo_sys[i] = -annual_revenue_wo_sys[i];
+
 
 			ch_dc_fixed_jan[i] = monthly_dc_fixed[0] * rate_scale[i];
 			ch_dc_fixed_feb[i] = monthly_dc_fixed[1] * rate_scale[i];
