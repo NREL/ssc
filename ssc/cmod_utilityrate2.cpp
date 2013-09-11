@@ -627,12 +627,12 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Year 1 monthly demand charge (Fixed) with system",    "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_with_system",        "Year 1 monthly demand charge (TOU) with system",      "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_with_system",     "Year 1 monthly energy charge with system",            "$", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_with_system",       "Year 1 monthly energy rate with system",              "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_with_system",       "Year 1 monthly energy rate with system",              "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_without_system",   "Year 1 monthly demand charge (Fixed) without system", "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_without_system",     "Year 1 monthly demand charge (TOU) without system",   "$", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_without_system",  "Year 1 monthly energy charge without system",         "$", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_without_system",    "Year 1 monthly energy rate without system",           "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_without_system",    "Year 1 monthly energy rate without system",           "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 
 
 	// monthly outputs from Sean 7/29/13 "Net Metering Accounting.xlsx" updates from Paul and Sean 8/9/13 and 8/12/13
@@ -641,7 +641,7 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Year 1 monthly electricity to/from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Year 1 monthly net metering electricity credit",           "kWh", "", "",          "*",                         "LENGTH=12",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_utility_bill",    "Year 1 monthly sales/purchases with system",           "$", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases",    "Year 1 monthly sales/purchases with system",           "$", "", "",          "*",                         "LENGTH=12",                     "" },
 
 
 
@@ -813,7 +813,7 @@ public:
 			monthly_ec_charges(12), monthly_ec_rates(12), 
 			monthly_salespurchases(12),
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12), 
-			monthly_elec_needed_from_grid(12), monthly_cumulative_excess(12), monthly_utility_bill(12);
+			monthly_elec_needed_from_grid(12), monthly_cumulative_excess(12);
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("energy_value", nyears);
@@ -896,12 +896,6 @@ public:
 				assign( "year1_hourly_ec_tou_schedule", var_data( &ec_tou_sched[0], 8760) );
 				assign( "year1_hourly_dc_tou_schedule", var_data( &dc_tou_sched[0], 8760) );
 				
-				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13
-				monthly_outputs( &e_load[0], &e_sys[0], &e_grid[0], &payment[0], &income[0], &revenue_w_sys[0],
-					&monthly_load[0], &monthly_system_generation[0],	&monthly_elec_to_grid[0], 
-					&monthly_elec_needed_from_grid[0], &monthly_cumulative_excess[0], 
-					&monthly_utility_bill[0]);
-
 				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
 				{
@@ -910,6 +904,12 @@ public:
 					p_tofromgrid[ii] = p_grid[ii];
 					salespurchases[ii] = revenue_w_sys[ii];
 				}
+				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13 and 9/10/13
+				monthly_outputs( &e_load[0], &e_sys[0], &e_grid[0], &salespurchases[0],
+					&monthly_load[0], &monthly_system_generation[0],	&monthly_elec_to_grid[0], 
+					&monthly_elec_needed_from_grid[0], &monthly_cumulative_excess[0], 
+					&monthly_salespurchases[0]);
+
 				assign( "year1_hourly_e_tofromgrid", var_data( &e_tofromgrid[0], 8760 ) );
 				assign( "year1_hourly_p_tofromgrid", var_data( &p_tofromgrid[0], 8760 ) );
 				assign( "year1_hourly_load", var_data(&load[0], 8760) ); 
@@ -920,7 +920,7 @@ public:
 				assign( "year1_monthly_electricity_needed_from_grid", var_data(&monthly_elec_needed_from_grid[0], 12) );
 
 				assign( "year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess[0], 12) );
-				assign( "year1_monthly_utility_bill", var_data(&monthly_utility_bill[0], 12) );
+				assign( "year1_monthly_salespurchases", var_data(&monthly_salespurchases[0], 12) );
 
 				// output and demand per Paul's email 9/10/10
 				// positive demand indicates system does not produce enough electricity to meet load
@@ -951,7 +951,7 @@ public:
 				assign( "year1_monthly_dc_fixed_with_system", var_data(&monthly_dc_fixed[0], 12) );
 				assign( "year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12) );
 				assign( "year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12) );
-				assign( "year1_monthly_ec_rate_with_system", var_data(&monthly_ec_rates[0], 12) );
+				//assign( "year1_monthly_ec_rate_with_system", var_data(&monthly_ec_rates[0], 12) );
 			}
 
 			// now recalculate revenue without solar system (using load only)
@@ -972,7 +972,7 @@ public:
 				assign( "year1_monthly_dc_fixed_without_system", var_data(&monthly_dc_fixed[0], 12) );
 				assign( "year1_monthly_dc_tou_without_system", var_data(&monthly_dc_tou[0], 12) );
 				assign( "year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12) );
-				assign( "year1_monthly_ec_rate_without_system", var_data(&monthly_ec_rates[0], 12) );
+				//assign( "year1_monthly_ec_rate_without_system", var_data(&monthly_ec_rates[0], 12) );
 
 				// sign reversal based on 9/5/13 meeting, reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
@@ -1049,7 +1049,7 @@ public:
 
 	}
 
-	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760],  ssc_number_t payments[8760], ssc_number_t income[8760], ssc_number_t revenue[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_utility_bill[12])
+	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760], ssc_number_t salespurchases[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_salespurchases[12])
 	{
 		// calculate the monthly net energy and monthly hours
 		int m,d,h;
@@ -1065,7 +1065,7 @@ public:
 			monthly_generation[m] = 0;
 			monthly_elec_to_grid[m] = 0;
 			monthly_cumulative_excess[m] = 0;
-			monthly_utility_bill[m] = 0;
+			monthly_salespurchases[m] = 0;
 			for (d=0;d<util::nday[m];d++)
 			{
 				for(h=0;h<24;h++)
@@ -1076,16 +1076,8 @@ public:
 					monthly_load[m] -= e_load[c];
 					monthly_generation[m] += e_sys[c];
 					monthly_elec_to_grid[m] += e_grid[c];
-// 9/6/13 update from Paul
-					if (sell_eq_buy)
-					{
-						monthly_utility_bill[m] += payments[c];
-						monthly_utility_bill[m] -= income[c];
-					}
-					else
-					{
-						monthly_utility_bill[m] += revenue[c];
-					}
+// 9/10/13 update from Paul
+					monthly_salespurchases[m] += salespurchases[c];
 					c++;
 				}
 			}
