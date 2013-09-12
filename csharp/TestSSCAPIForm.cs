@@ -296,7 +296,7 @@ namespace TestApplication
 
             SSC.Data data = new SSC.Data();
             data.SetString("weather_file", "abilene.tm2");
-
+            data.SetArray("albedo", new float[] { 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f });
             data.SetNumber( "ac_derate", ac_derate );
             data.SetNumber("modules_per_string", num_series);
             data.SetNumber("strings_in_parallel", num_parallel);
@@ -338,7 +338,7 @@ namespace TestApplication
             data.SetNumber( "cec_standoff", cec_standoff );
             data.SetNumber( "cec_height", cec_height );
 
-            data.SetNumber( "inverter_model", 1 );
+            data.SetNumber( "inverter_model", 0 );
 
             data.SetNumber( "inv_snl_c0", inv_snl_c0 );
             data.SetNumber( "inv_snl_c1", inv_snl_c1 );
@@ -392,7 +392,7 @@ namespace TestApplication
             SSC.Data data = new SSC.Data();
             data.SetString( "weather_file", "AZ Phoenix.tm2" );
             data.SetNumber("use_wf_albedo", 1f);
-            data.SetNumber("albedo", 0.2f);
+            data.SetArray("albedo", new float[] { 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f });
             data.SetNumber("irrad_mode", 0f);
             data.SetNumber("sky_model", 2f);
             data.SetNumber("ac_derate", 0.99f);
@@ -548,9 +548,8 @@ namespace TestApplication
             data.SetNumber("snl_series_cells", 72f);
             data.SetNumber("snl_vmpo", 40f);
             data.SetNumber("snl_voco", 47.7f);
-            data.SetNumber("inverter_model", 1f);
-            data.SetNumber("inv_spe_efficiency", 95f);
-            data.SetNumber("inv_spe_power_ac", 4000f);
+            data.SetNumber("inverter_model", 0f);
+            data.SetNumber("inv_snl_paco", 4000f);
             data.SetNumber("inv_snl_c0", -6.57929e-006f);
             data.SetNumber("inv_snl_c1", 4.72925e-005f);
             data.SetNumber("inv_snl_c2", 0.00202195f);
@@ -990,7 +989,7 @@ namespace TestApplication
             // pvsamv1 input variables
             data.SetString("weather_file", "AZ Phoenix.tm2");
             data.SetNumber("use_wf_albedo", 1f);
-            data.SetNumber("albedo", 0.2f);
+            data.SetArray("albedo", new float[] { 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f });
             data.SetNumber("irrad_mode", 0f);
             data.SetNumber("sky_model", 2f);
             data.SetNumber("ac_derate", 0.99f);
@@ -1146,9 +1145,8 @@ namespace TestApplication
             data.SetNumber("snl_series_cells", 72f);
             data.SetNumber("snl_vmpo", 40f);
             data.SetNumber("snl_voco", 47.7f);
-            data.SetNumber("inverter_model", 1f);
-            data.SetNumber("inv_spe_efficiency", 95f);
-            data.SetNumber("inv_spe_power_ac", 4000f);
+            data.SetNumber("inverter_model", 0f);
+            data.SetNumber("inv_snl_paco", 4000f);
             data.SetNumber("inv_snl_c0", -3.55551e-008f);
             data.SetNumber("inv_snl_c1", 8.6927e-005f);
             data.SetNumber("inv_snl_c2", 0.000564748f);
