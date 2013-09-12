@@ -52,6 +52,7 @@ tilt = 30;
 azimuth = 180;
 track_mode = 0;
 soiling = 0.95;
+albedo = 0.2;
 dc_derate = 0.95558;
 
 // shading derate table
@@ -416,6 +417,8 @@ outln( num_inverters );
 // --> essentially, this service and PVWatts should use exactly the same
 //     method to get weather data for a location request
 var( 'weather_file', '../../examples/abilene.tm2' );
+var( 'albedo', [albedo, albedo, albedo, albedo, albedo, albedo,
+	albedo, albedo, albedo, albedo, albedo, albedo ] );
 
 var( 'ac_derate', ac_derate );
 var( 'modules_per_string', num_series );
@@ -456,7 +459,7 @@ var( 'cec_temp_corr_mode', 0 );
 var( 'cec_standoff', cec_standoff );
 var( 'cec_height', cec_height );
 
-var( 'inverter_model', 1 );
+var( 'inverter_model', 0 );
 
 var( 'inv_snl_c0', inv_snl_c0 );
 var( 'inv_snl_c1', inv_snl_c1 );
