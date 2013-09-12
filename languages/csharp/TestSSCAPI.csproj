@@ -111,12 +111,12 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\Release\ssc32.dll
-copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\x86\Release\ssc32.dll
-copy /y $(SolutionDir)..\..\Win64\ssc64.dll $(SolutionDir)bin\x64\Release\ssc64.dll
-copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\Debug\ssc32.dll
-copy /y $(SolutionDir)..\..\Win32\ssc32.dll $(SolutionDir)bin\x86\Debug\ssc32.dll
-copy /y $(SolutionDir)..\..\Win64\ssc64.dll $(SolutionDir)bin\x64\Debug\ssc64.dll
+    <PostBuildEvent>copy /y $(SolutionDir)..\..\Win32\ssc.dll $(SolutionDir)bin\Release\ssc32.dll
+copy /y $(SolutionDir)..\..\Win32\ssc.dll $(SolutionDir)bin\x86\Release\ssc32.dll
+copy /y $(SolutionDir)..\..\Win64\ssc.dll $(SolutionDir)bin\x64\Release\ssc64.dll
+copy /y $(SolutionDir)..\..\Win32\ssc.dll $(SolutionDir)bin\Debug\ssc32.dll
+copy /y $(SolutionDir)..\..\Win32\ssc.dll $(SolutionDir)bin\x86\Debug\ssc32.dll
+copy /y $(SolutionDir)..\..\Win64\ssc.dll $(SolutionDir)bin\x64\Debug\ssc64.dll
 copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Release\abilene.tm2
 copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Release\abilene.tm2 
 copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Release\abilene.tm2           
