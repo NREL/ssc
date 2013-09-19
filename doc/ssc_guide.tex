@@ -66,11 +66,9 @@
 \maketitle
 \vspace{2.5in}
 \begin{abstract}
-The SSC (SAM Simulation Core) software library implements the underlying renewable energy system modeling calculation engine utilitized by the popular desktop System Advisor Model (SAM) tool.  SSC provides a simple and programmer-friendly application programming interface (API) that allows developers to directly integrate SAM calculations into other tools.  The API includes mechanisms to set input variable values, run simulations, and retrieve calculated outputs.  The library is provided to users as pre-compiled binary dynamic libraries for Windows, Mac OSX, and Linux, with the bare minimum system library dependencies.  While the native API language is ISO-standard C, language bindings for MATLAB, and Python are included.  The API and model implementations are thread-safe and reentrant, allowing the software to be efficiently utilized in a parallel computing environment.
+The SSC (SAM Simulation Core) software library is the collection of simulation modules used by the National Renewable Energy Laboratory's  System Advisor Model (SAM).  The SSC application programming interface (API) allows software developers to integrate SAM's modules into other web and desktop applications. The API includes mechanisms to set input variable values, run simulations, and retrieve values of output variables. The SSC modules are available in pre-compiled binary dynamic libraries  with the bare minimum system library dependencies for Windows, Mac OSX, and Linux operating systems. The native API language is ISO-standard C, and language wrappers are available for C\#, Java, MATLAB, and Python. The API and model implementations are thread-safe and reentrant, allowing the software to be used in a parallel computing environment.
 
-This document describes the software architecture of SSC, introduces the SSC Development Environment tool, explains how to set up simulations from code, query the library for variable information, and provides examples and ``case studies" in various programming languages to ease the adoption of SSC into other systems.  
-
-\textbf{Note.} The reader is assumed to have familiarity with the C programming language, as well as some level of proficiency using the System Advisor Model (SAM) tool.
+This document describes the SSC software architecture, modules and data types, provides code samples, introduces the SSCDev development tool, and describes the language wrappers.  
 \end{abstract} 
 
 \newpage
@@ -364,7 +362,7 @@ Name & Variable name (case insensitive) \\
 Label & A description of the variable's purpose \\
 Units & The units of the numerical value(s) \\
 Meta & Additional information. Could specify encoding of values, see below. \\
-Group & General category of variable, e.g. ``Weather'', ``System Input'' \\
+Group & General category of variable, e.g. "Weather'', "System Input'' \\
 Required & Specifies whether the variable must be assigned a value. See \S\ref{sec_def_const} \\
 Constraints & Constraints on the values or number of values. See \S\ref{sec_def_const} \\
 UI Hints & Suggestions on how to display this variable.  Currently unused. \\
@@ -640,28 +638,32 @@ Table \ref{tab_modules} shows the SSC simulation modules at the time of this wri
 \begin{tabular}{p{1in}p{4.5in}}
 Module & Description\\\hline
 \texttt{6parsolve} & Calculates a set of parameters from manufacturer module specifications for the CEC module model\\
-\texttt{annualoutput} & Calculates Year 1 hourly and monthly, and Years 2 and later total annual system output for use in cash flow calculations\\
-\texttt{cashloan} & Residential and commercial financial model\\
-\texttt{equpartflip} & Partnership flip financial models\\
-\texttt{geothermal} & Geothermal power model\\
-\texttt{geothermalui} & Calculates interim design values for the geothermal power model\\
-\texttt{ippppa} & Commercial PPA and Independent Power Producer (IPP) financial models\\
-\texttt{irradproc} & General purpose irradiance processor for calculating POA\\
-\texttt{levpartflip} & Leveraged partnership flip financial model\\
 \texttt{pv6parmod} & CEC module model\\
-\texttt{pvsandiainv} & Sandia inverter model\\
 \texttt{pvsamv1} & Flat-plate PV model\\
 \texttt{pvwattsfunc} & Runs a the PVWatts model for a single timestep instead of as an 8760 hourly model\\
+\texttt{pvsandiainv} & Sandia inverter model\\
+\texttt{wfreader} & Reads format weather data files in the following formats: TMY2, TMY3, EPW, SMW)\\
+\texttt{irradproc} & General purpose irradiance processor for calculating POA\\
+\texttt{utilityrate} & Calculates the value of energy using complex utility rate structures. Designed to work with Version 1 of the OpenEI Utility Rate Database deprecated in January 2014\\
+\texttt{utilityrate2} & Calculates the value of energy using complex utility rate structures. Designed to work with Version 2 of the OpenEI Utility Rate Database\\
+\texttt{annualoutput} & Calculates Year 1 hourly and monthly, and Years 2 and later total annual system output for use in cash flow calculations\\
+\texttt{cashloan} & Residential and commercial financial model\\
+\texttt{ippppa} & Commercial PPA and Independent Power Producer (IPP) financial models\\
 \texttt{pvwattsv1} & PVWatts model\\
+\texttt{timeseq} & Converts start time, end time, and time step into arrays of time stamps (seconds, minutes, hours, days, months\\
+\texttt{levpartflip} & Leveraged partnership flip financial model\\
+\texttt{equpartflip} & Partnership flip financial models\\
 \texttt{saleleaseback} & Sale lease back financial model\\
 \texttt{singleowner} & Single owner financial model\\
 \texttt{swh} & Solar water heating model\\
 \texttt{test\_irr} & Internal rate of return calculator from utility financing models for testing\\
 \texttt{test\_pvshade} & PV self-shading model for testing\\
-\texttt{timeseq} & Converts start time, end time, and time step into arrays of time stamps (seconds, minutes, hours, days, months\\
-\texttt{utilityrate} & Calculates the value of energy using complex utility rate structures\\
-\texttt{wfreader} & Reads format weather data files in the following formats: TMY2, TMY3, EPW, SMW)\\
+\texttt{geothermal} & Geothermal power model\\
+\texttt{poacalib} & Calibrates plane-of-array irradiance data\\
+\texttt{geothermalui} & Calculates interim design values for the geothermal power model\\
 \texttt{windpower} & Wind power model\\
+\texttt{wfcsvconv} & Converts a weather file from TMY2, TMY3, INTL, EPW, or SMW format to CSV\\
+\texttt{wfcsvread} & Reads weather file in CSV format\\
 \end{tabular}
 \label{tab_modules}
 \caption{List of SSC simulation modules}
@@ -1021,7 +1023,7 @@ The module browser displays the modules available in the current SSC library. Wh
 \item Run a single module using variable values defined in the data container.
 \end{itemize}
 
-\notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See \S\ref{sec_sscdev_get_started} for instructions to load a library.}
+\notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See \S\ref{sec_sscdev_run} for instructions to load a library.}
 
 \begin{figure}
 \begin{center}
@@ -1093,8 +1095,7 @@ Select an hourly array and click \textbf{Show stats} to display a statistical su
 
 Check one or more hourly arrays and click \textbf{Timeseries graph} time series data and statistical summaries in graphs. You can export graph images and tables of graph data by right-clicking graphs and selecting commands in the shortcut menu.
 
-
-See \S\ref{sec_sscdev_example_no_scripting} for an example.
+See \S\ref{sec_sscdev_example_1} for an example.
 
 \subsection{Script Editor}
 \label{sec_script_editor}
@@ -1131,14 +1132,14 @@ The script editor commands are:
 
 The following example shows how to use the module browser to expore and run the \texttt{pvwattsv1} module. You can use the same steps to explore other simulation modules.
 
-\notebox{As described in \S\ref{sec_sscdev_module_browser}, the module browser can only run a single simulation module at a time. To combine modules to build a model, you can write a script as described in \S\ref{sec_sscdev_example_scripting}.}
+\notebox{As described in \S\ref{sec_module_browser}, the module browser can only run a single simulation module at a time. To combine modules to build a model, you can write a script as described in \S\ref{sec_sscdev_example_2}.}
 
 As we saw in \S\ref{sec_modeling_systems}, the \texttt{pvwattsv1} simulation module reads data from a weather file and inputs from the data container that define the system's size, array orientation and type of tracking, and derating factor, and calculates values for the 1 by 8760 array storing the system's hourly electricity output over a single year.
 
 To explore the \texttt{pvwattsv1} simulation module in the module browser:
 
 \begin{enumerate}
-\item Start SSCdev and be sure the correct SSC library is loaded as described in \S\ref{sec_sscdev_get_started}
+\item Start SSCdev and be sure the correct SSC library is loaded as described in \S\ref{sec_sscdev_run}
 
 \item On the \textbf{Module Browser} tab, click the \texttt{pvwattsv1} name to see a list of the module's variables. The inputs are of type \texttt{SSC\_INPUT}. Of the inputs, only a subset indicated by (\texttt{*}) are required and have no default value, as described in \S\ref{sec_def_const}. At a minimum, you must assign values to these variables to run the module.
 
@@ -1319,18 +1320,19 @@ for ( i = 1; i <= analysis_period; i++)
 \section{Language Interfaces}
 \label{sec_language_interfaces}
 
-The SSC software development kit (SDK) includes interfaces for using SSC directly from programming languages other than its native C language interface.  This section describes each language interface's system and software requirements, as well any limitations in functionality compared with the native C interface.
+The SSC software development kit (SDK) includes interfaces (or wrappers) for using SSC directly from programming languages other than its native C language interface.  This section describes each language interface and requirements, as well any limitations in functionality compared with the native C interface.
+
+Each language interface comes with a set of readme and example files that you should refer to in addition to the descriptions below to set up your system to run SSC with a language interface.
 
 \subsection{Python}
-Python is a popular object-oriented scripting language that is either interpreted directly from source code or compiled into an intermediate bytecode.  Most installations of the Python interpreter include the \emph{Ctypes} package, which provides a \emph{foreign function interface (FFI)} capability for directly utilizing dynamic libraries.
 
-The Python language interface has been tested on Windows using the popular ActivePython distribution, as well as on Linux and OSX using the pre-installed Python packages.
+The Python language interface has been tested on Windows with the ActivePython distribution, and on the Linux and OSX native Python packages.
 
-The Python API is defined in the \texttt{sscapi.py} source file included in the SDK.  The file includes example code if it is invoked as the main souce program.
+The Python API is defined in the \texttt{sscapi.py} source file included in the SDK.  The file includes example code if it is invoked as the main source program.
 
 \notebox{In the PySSC class constructor, a \emph{Ctypes} object is created by referencing the \texttt{ssc.dll} dynamic library.  It is up to the user to modify the file name and/or path of this library to be appropriate for the operating system and platform.}
 
-The structure of SSC API calls in Python is slightly different from the C interface, since an instance of the PySSC class must be created first.  Example:
+The structure of SSC API calls in Python is slightly different from the C interface because in Python, an instance of the PySSC class must be created first.  Example:
 
 \begin{verbatimtab}[4]
 	ssc = PySSC()
@@ -1368,13 +1370,19 @@ The structure of SSC API calls in Python is slightly different from the C interf
 	ssc.data_free( dat )
 \end{verbatimtab}
 
-Notice that the structure of creating and freeing data containers and modules is identical to the C language API, except that the functions are members of the PySSC class.  For more information, peruse the \texttt{sscapi.py} source file for additional examples and usage cases.
+Notice that the structure of creating and freeing data containers and modules is identical to the C language API, except that the functions are members of the PySSC class.  For more information, see the \texttt{sscapi.py} source file for additional examples and usage cases.
 
 \subsection{MATLAB}
 
 MATLAB is a numerical computing language that is widely used for data processing, algorithm development, and plotting.  It is a proprietary product that is available on OSX, Linux, and Windows.  
 
-The SSC MATLAB interface has been tested with MATLAB 7.5 (2007b) 32-bit on Windows.  The built-in MATLAB \emph{foreign function interface (FFI)} library routines that are used to interface to SSC require a C compiler to be installed on the computer alongside MATLAB to automatically preprocess the SSC header file.  Some versions of MATLAB include a C compiler such as LCC installed by default, while other versions and/or platforms may require one to be installed separately.  See \texttt{http://www.mathworks.com/support/compilers/R2012b/win64.html} for more information.
+The built-in MATLAB \emph{foreign function interface (FFI)} library routines that are used to interface to SSC require a C compiler to preprocess the SSC header file. Some versions of MATLAB include a C compiler such as LCC installed by default, while others may require that one to be installed separately.  See \texttt{http://www.mathworks.com/support/compilers/R2012b/win64.html} for more information.
+
+The MATLAB environment should also be configured to recognize the path containing the SSC MATLAB files.
+
+The MATLAB language interface automatically attempts to detect the platform and load the correct SSC dynamic library.  You must ensure that the \texttt{sscapi.h} C language header file can be located by MATLAB, as well as the library appropriate for your system.  
+
+For additional information, see the MATLAB code examples supplied with the SSC SDK, as well as the content of the \texttt{ssccall.m} file itself.
 
 The SSC API is provided in the \texttt{ssccall.m} M-file.  The interface provides a single MATLAB function called \texttt{ssccall(...)} that accepts different parameter arguments to invoke the various SSC library calls.  The example below shows how to setup and run the \emph{pvwattsv1} module from MATLAB.
 
@@ -1426,9 +1434,6 @@ ssccall('data_free', data);
 ssccall('unload');
 \end{verbatimtab}
 
-The MATLAB language interface automatically attempts to detect the platform and load the correct SSC dynamic library.  You must ensure that the \texttt{sscapi.h} C language header file can be located by MATLAB, as well as the library appropriate for your system.  
-
-For additional information, consult the MATLAB code examples supplied with the SSC SDK, as well as the content of the \texttt{ssccall.m} file itself.
 
 \subsection{C\# and .NET}
 
