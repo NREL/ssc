@@ -1,3 +1,4 @@
+VPATH = ../recore
 CC = gcc
 CXX = g++
 CFLAGS = -Wall -g -O2
