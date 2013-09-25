@@ -18,33 +18,77 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\recore\6par_gamma.h" />
+    <ClInclude Include="..\recore\6par_jacobian.h" />
+    <ClInclude Include="..\recore\6par_lu.h" />
+    <ClInclude Include="..\recore\6par_newton.h" />
+    <ClInclude Include="..\recore\6par_search.h" />
+    <ClInclude Include="..\recore\6par_solve.h" />
+    <ClInclude Include="..\recore\lib_cec6par.h" />
+    <ClInclude Include="..\recore\lib_financial.h" />
+    <ClInclude Include="..\recore\lib_geothermal.h" />
+    <ClInclude Include="..\recore\lib_irradproc.h" />
+    <ClInclude Include="..\recore\lib_physics.h" />
+    <ClInclude Include="..\recore\lib_powerblock.h" />
+    <ClInclude Include="..\recore\lib_pvinv.h" />
+    <ClInclude Include="..\recore\lib_pvmodel.h" />
+    <ClInclude Include="..\recore\lib_pvshade.h" />
+    <ClInclude Include="..\recore\lib_pvwatts.h" />
+    <ClInclude Include="..\recore\lib_sandia.h" />
+    <ClInclude Include="..\recore\lib_util.h" />
+    <ClInclude Include="..\recore\lib_weatherfile.h" />
+    <ClInclude Include="..\recore\lib_windfile.h" />
+    <ClInclude Include="..\recore\lib_windwatts.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\recore\lib_cec6par.cpp" />
+    <ClCompile Include="..\recore\lib_financial.cpp" />
+    <ClCompile Include="..\recore\lib_geothermal.cpp" />
+    <ClCompile Include="..\recore\lib_irradproc.cpp" />
+    <ClCompile Include="..\recore\lib_physics.cpp" />
+    <ClCompile Include="..\recore\lib_powerblock.cpp" />
+    <ClCompile Include="..\recore\lib_pvinv.cpp" />
+    <ClCompile Include="..\recore\lib_pvmodel.cpp" />
+    <ClCompile Include="..\recore\lib_pvshade.cpp" />
+    <ClCompile Include="..\recore\lib_pvwatts.cpp" />
+    <ClCompile Include="..\recore\lib_sandia.cpp" />
+    <ClCompile Include="..\recore\lib_util.cpp" />
+    <ClCompile Include="..\recore\lib_weatherfile.cpp" />
+    <ClCompile Include="..\recore\lib_windfile.cpp" />
+    <ClCompile Include="..\recore\lib_windwatts.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{794A2685-B70E-4504-9402-AC376D4EB459}</ProjectGuid>
     <RootNamespace>relib</RootNamespace>
-    <ProjectName>recore</ProjectName>
+    <ProjectName>recore_vc2012</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -65,6 +109,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>recore</TargetName>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>recore</TargetName>
@@ -73,6 +118,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetName>recore</TargetName>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>recore</TargetName>
@@ -121,47 +167,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="6par_gamma.h" />
-    <ClInclude Include="6par_jacobian.h" />
-    <ClInclude Include="6par_lu.h" />
-    <ClInclude Include="6par_newton.h" />
-    <ClInclude Include="6par_search.h" />
-    <ClInclude Include="6par_solve.h" />
-    <ClInclude Include="lib_cec6par.h" />
-    <ClInclude Include="lib_financial.h" />
-    <ClInclude Include="lib_geohourly.h" />
-    <ClInclude Include="lib_geohourly_interface.h" />
-    <ClInclude Include="lib_geothermal.h" />
-    <ClInclude Include="lib_irradproc.h" />
-    <ClInclude Include="lib_physics.h" />
-    <ClInclude Include="lib_powerblock.h" />
-    <ClInclude Include="lib_pvmodel.h" />
-    <ClInclude Include="lib_pvshade.h" />
-    <ClInclude Include="lib_pvwatts.h" />
-    <ClInclude Include="lib_sandia.h" />
-    <ClInclude Include="lib_util.h" />
-    <ClInclude Include="lib_weatherfile.h" />
-    <ClInclude Include="lib_windwatts.h" />
-    <ClInclude Include="lib_windfile.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="lib_cec6par.cpp" />
-    <ClCompile Include="lib_financial.cpp" />
-    <ClCompile Include="lib_geohourly.cpp" />
-    <ClCompile Include="lib_geothermal.cpp" />
-    <ClCompile Include="lib_irradproc.cpp" />
-    <ClCompile Include="lib_physics.cpp" />
-    <ClCompile Include="lib_powerblock.cpp" />
-    <ClCompile Include="lib_pvmodel.cpp" />
-    <ClCompile Include="lib_pvshade.cpp" />
-    <ClCompile Include="lib_pvwatts.cpp" />
-    <ClCompile Include="lib_sandia.cpp" />
-    <ClCompile Include="lib_util.cpp" />
-    <ClCompile Include="lib_weatherfile.cpp" />
-    <ClCompile Include="lib_windfile.cpp" />
-    <ClCompile Include="lib_windwatts.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

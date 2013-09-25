@@ -19,39 +19,42 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cmod_6parsolve.cpp" />
-    <ClCompile Include="cmod_annualoutput.cpp" />
-    <ClCompile Include="cmod_cashloan.cpp" />
-    <ClCompile Include="cmod_equpartflip.cpp" />
-    <ClCompile Include="cmod_fossilgen.cpp" />
-    <ClCompile Include="cmod_geothermal.cpp" />
-    <ClCompile Include="cmod_geothermalui.cpp" />
-    <ClCompile Include="cmod_ippppa.cpp" />
-    <ClCompile Include="cmod_irradproc.cpp" />
-    <ClCompile Include="cmod_levpartflip.cpp" />
-    <ClCompile Include="cmod_pv6parmod.cpp" />
-    <ClCompile Include="cmod_pvsamv1.cpp" />
-    <ClCompile Include="cmod_pvsandiainv.cpp" />
-    <ClCompile Include="cmod_pvwattsfunc.cpp" />
-    <ClCompile Include="cmod_pvwattsv1.cpp" />
-    <ClCompile Include="cmod_saleleaseback.cpp" />
-    <ClCompile Include="cmod_singleowner.cpp" />
-    <ClCompile Include="cmod_swh.cpp" />
-    <ClCompile Include="cmod_test_irr.cpp" />
-    <ClCompile Include="cmod_test_pvshade.cpp" />
-    <ClCompile Include="cmod_timeseq.cpp" />
-    <ClCompile Include="cmod_utilityrate.cpp" />
-    <ClCompile Include="cmod_wfreader.cpp" />
-    <ClCompile Include="cmod_windpower.cpp" />
-    <ClCompile Include="core.cpp" />
-    <ClCompile Include="sscapi.cpp" />
-    <ClCompile Include="vartab.cpp" />
-    <ClCompile Include="vtab_common.cpp" />
+    <ClCompile Include="..\ssc\cmod_6parsolve.cpp" />
+    <ClCompile Include="..\ssc\cmod_annualoutput.cpp" />
+    <ClCompile Include="..\ssc\cmod_cashloan.cpp" />
+    <ClCompile Include="..\ssc\cmod_equpartflip.cpp" />
+    <ClCompile Include="..\ssc\cmod_fossilgen.cpp" />
+    <ClCompile Include="..\ssc\cmod_geothermal.cpp" />
+    <ClCompile Include="..\ssc\cmod_geothermalui.cpp" />
+    <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
+    <ClCompile Include="..\ssc\cmod_irradproc.cpp" />
+    <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
+    <ClCompile Include="..\ssc\cmod_poacalib.cpp" />
+    <ClCompile Include="..\ssc\cmod_pv6parmod.cpp" />
+    <ClCompile Include="..\ssc\cmod_pvsamv1.cpp" />
+    <ClCompile Include="..\ssc\cmod_pvsandiainv.cpp" />
+    <ClCompile Include="..\ssc\cmod_pvwattsfunc.cpp" />
+    <ClCompile Include="..\ssc\cmod_pvwattsv1.cpp" />
+    <ClCompile Include="..\ssc\cmod_saleleaseback.cpp" />
+    <ClCompile Include="..\ssc\cmod_singleowner.cpp" />
+    <ClCompile Include="..\ssc\cmod_swh.cpp" />
+    <ClCompile Include="..\ssc\cmod_test_irr.cpp" />
+    <ClCompile Include="..\ssc\cmod_test_pvshade.cpp" />
+    <ClCompile Include="..\ssc\cmod_timeseq.cpp" />
+    <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
+    <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />
+    <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
+    <ClCompile Include="..\ssc\cmod_wfreader.cpp" />
+    <ClCompile Include="..\ssc\cmod_windpower.cpp" />
+    <ClCompile Include="..\ssc\core.cpp" />
+    <ClCompile Include="..\ssc\sscapi.cpp" />
+    <ClCompile Include="..\ssc\vartab.cpp" />
+    <ClCompile Include="..\ssc\vtab_common.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="core.h" />
-    <ClInclude Include="sscapi.h" />
-    <ClInclude Include="vartab.h" />
+    <ClInclude Include="..\ssc\core.h" />
+    <ClInclude Include="..\ssc\sscapi.h" />
+    <ClInclude Include="..\ssc\vartab.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{46D1EE84-840B-4325-910A-BC205A0D4C08}</ProjectGuid>
@@ -63,25 +66,27 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>Windows7.1SDK</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>Windows7.1SDK</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -213,7 +218,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>__DLL__;__32BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\recore</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\recore</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -234,7 +239,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>__DLL__;__64BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\recore</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\recore</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -249,7 +254,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>__DLL__;__32BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\recore</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\recore</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
@@ -260,7 +265,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>__DLL__;__64BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\recore</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\recore</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>

@@ -22,39 +22,30 @@
     <ResourceCompile Include="dev.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cmform.h" />
-    <ClInclude Include="dataview.h" />
-    <ClInclude Include="dllinvoke.h" />
-    <ClInclude Include="editvariable.h" />
-    <ClInclude Include="scripting.h" />
-    <ClInclude Include="sscdev.h" />
-    <ClInclude Include="statdlg.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="cmform.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </PrecompiledHeaderOutputFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </PrecompiledHeaderOutputFile>
-    </ClCompile>
-    <ClCompile Include="dataview.cpp" />
-    <ClCompile Include="dllinvoke.cpp" />
-    <ClCompile Include="editvariable.cpp" />
-    <ClCompile Include="scripting.cpp" />
-    <ClCompile Include="sscdev.cpp" />
-    <ClCompile Include="statdlg.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\recore\recore_vc2012.vcxproj">
       <Project>{794a2685-b70e-4504-9402-ac376d4eb459}</Project>
     </ProjectReference>
     <ProjectReference Include="..\ssc\ssc_vc2012.vcxproj">
       <Project>{46d1ee84-840b-4325-910a-bc205a0d4c08}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\dev\cmform.h" />
+    <ClInclude Include="..\dev\dataview.h" />
+    <ClInclude Include="..\dev\dllinvoke.h" />
+    <ClInclude Include="..\dev\editvariable.h" />
+    <ClInclude Include="..\dev\scripting.h" />
+    <ClInclude Include="..\dev\sscdev.h" />
+    <ClInclude Include="..\dev\statdlg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\dev\cmform.cpp" />
+    <ClCompile Include="..\dev\dataview.cpp" />
+    <ClCompile Include="..\dev\dllinvoke.cpp" />
+    <ClCompile Include="..\dev\editvariable.cpp" />
+    <ClCompile Include="..\dev\scripting.cpp" />
+    <ClCompile Include="..\dev\sscdev.cpp" />
+    <ClCompile Include="..\dev\statdlg.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>dev</ProjectName>
