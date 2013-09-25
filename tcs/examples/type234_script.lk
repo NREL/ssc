@@ -1,0 +1,182 @@
+clear();
+
+// **** Define tcs directory *******************
+tcs_dir = 'C:/Users/tneises/Documents/Projects';
+// *********************************************
+
+debug_mode = true;
+
+//Add weather file reader unit
+if(debug_mode) weather = add_unit("trnsys_weatherreader");
+else weather = add_unit("weatherreader");
+
+if(debug_mode)
+{
+	file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
+	set_value( weather, "file_name", file_loc );
+	set_value( weather, "i_hour", "TIME" );
+	set_value( weather, "i_month", "month" );
+	set_value( weather, "i_day", "day" );
+	set_value( weather, "i_global", "GlobalHorizontal" );
+	set_value( weather, "i_beam", "DNI" );
+	set_value( weather, "i_diff", "DiffuseHorizontal" );
+	set_value( weather, "i_tdry", "T_dry" );
+	set_value( weather, "i_twet", "T_wet" );
+	set_value( weather, "i_tdew", "T_dew" );
+	set_value( weather, "i_wspd", "WindSpeed" );
+	set_value( weather, "i_wdir", "WindDir" );
+	set_value( weather, "i_rhum", "RelHum" );
+	set_value( weather, "i_pres", "AtmPres" );
+	set_value( weather, "i_snow", "SnowCover" );
+	set_value( weather, "i_albedo", "GroundAlbedo" );
+	set_value( weather, "i_poa", "POA" );
+	set_value( weather, "i_solazi", "Azimuth" );
+	set_value( weather, "i_solzen", "Zenith" );
+	set_value( weather, "i_lat", "Latitude" );
+	set_value( weather, "i_lon", "Longitude" );
+	set_value( weather, "i_shift", "Shift" );
+}
+else
+{
+	//Set weather parameters
+	weather_file = "C:/SAM/2013.1.15/exelib/climate_files/CA Daggett.tm2";
+	//if (ostype() == 'osx64') weather_file = '/Users/adobos/Projects/ssc/examples/daggett.tm2';
+
+	set_value(weather, "file_name", weather_file);
+	set_value(weather, "track_mode", 1);
+	set_value(weather, "tilt", 0);
+	set_value(weather, "azimuth", 0);
+}
+
+powerblock = add_unit("sam_mw_type234");
+// **** Get Parameters from .trd ************
+//*********************** RECEIVER/TOWER FIELD PAGE **********************
+d_rec = 15.78;
+h_rec = 22.4;
+num_panels = 12;
+h_tower = 161.11;
+h_boiler = 9.2;
+h_SH = 8.4;
+h_RH = 4.8;
+d_boiler = 0.0254;
+th_boiler = 0.002159;
+emis_boiler = 0.88;
+abs_boiler = 0.94;
+Mat_boiler = 2;
+th_fin = 0.0015875;
+L_fin = 0;
+emis_fin = 0.88;
+abs_fin = 0.94;
+Mat_fin = 2;
+x_b_target = 0.5;
+d_SH = 0.01905;
+th_SH = 0.001651;
+emis_SH = 0.88;
+abs_SH = 0.94;
+Mat_SH = 2;
+T_SH_out_ref = 550;
+d_RH = 0.0381;
+th_RH = 0.002159;
+emis_RH = 0.88;
+abs_RH = 0.94;
+Mat_RH = 2;
+T_rh_out_ref = 500;
+flow_pattern = 2;
+f_rec_min = 0.25;
+Q_rec_des = 405.036;
+rec_su_delay = 0.3;
+rec_qf_delay = 0.2;
+hl_ffact = 1;
+nazm = 12;
+nrad = 12;
+Plant_lattitude = 34.8667;
+
+//****************Power Block page (.trd) ****************
+P_cycle_design = 111.25;
+Eff_cycle_design = 0.412;
+P_HP_in = 160;
+P_HP_out = 40;
+rh_frac_ref = 0.85;
+LHV_eff = 0.9;
+pb_bd_frac = 0.02;
+T_standby = 2;
+F_standby = 0.2;
+startup_time = 0.35;
+startup_frac = 0.35;
+cycle_cutoff_frac = 0.25;
+cycle_max_fraction = 1.05;
+T_amb_des = 43;
+dT_cooling_ref = 10;
+Cool_type = 2;
+T_approach = 5;
+T_ITD_des = 16;
+P_cond_ratio = 1.0028;
+min_cond_pres = 1.25;
+hr_pl_nlev = 8;
+HC_LOGIC0 = 0;
+HC_LOGIC1 = 0;
+HC_LOGIC2 = 0;
+HC_LOGIC3 = 0;
+HC_LOGIC4 = 0;
+HC_LOGIC5 = 0;
+HC_LOGIC6 = 0;
+HC_LOGIC7 = 0;
+HC_LOGIC8 = 0;
+fossil_mode = 1;
+NUMTOU = 9;
+FOSSILFI = 0;
+FOSSILF1 = 0;
+FOSSILF2 = 0;
+FOSSILF3 = 0;
+FOSSILF4 = 0;
+FOSSILF5 = 0;
+FOSSILF6 = 0;
+FOSSILF7 = 0;
+FOSSILF8 = 0;
+
+//**** in .trdsrc
+is_rh = 1;
+tech_type = 5;
+
+// Set Powerblock Parameters
+set_value(powerblock, "P_ref", P_cycle_design);
+set_value(powerblock, "eta_ref", Eff_cycle_design);
+set_value(powerblock, "T_hot_ref", T_SH_out_ref);
+set_value(powerblock, "T_cold_ref", -1.23);				// This value isn't used in DSG
+set_value(powerblock, "dT_cw_ref", dT_cooling_ref);
+set_value(powerblock, "T_amb_des", T_amb_des);
+set_value(powerblock, "q_sby_frac", F_standby);
+set_value(powerblock, "P_boil_des", P_HP_in);
+set_value(powerblock, "is_rh", is_rh);
+set_value(powerblock, "P_rh_ref", P_HP_out);
+set_value(powerblock, "T_rh_hot_ref", T_rh_out_ref);
+set_value(powerblock, "rh_frac_ref", rh_frac_ref);
+set_value(powerblock, "CT", Cool_type);
+set_value(powerblock, "startup_time", startup_time);
+set_value(powerblock, "startup_frac", startup_frac);
+set_value(powerblock, "tech_type", tech_type);
+set_value(powerblock, "T_approach", T_approach);
+set_value(powerblock, "T_ITD_des", T_ITD_des);
+set_value(powerblock, "P_cond_ratio", P_cond_ratio);
+set_value(powerblock, "pb_bd_frac", pb_bd_frac);
+set_value(powerblock, "P_cond_min", min_cond_pres);
+set_value(powerblock, "n_pl_inc", hr_pl_nlev);
+set_value(powerblock, "F_wc", [HC_LOGIC0, HC_LOGIC1, HC_LOGIC2, HC_LOGIC3, HC_LOGIC4, HC_LOGIC5, HC_LOGIC6, HC_LOGIC7, HC_LOGIC8]);
+
+
+// Set Input Parameters: from TRNSYS, time = 36.0
+set_value(powerblock, "mode", 2);
+set_value(powerblock, "T_hot", 550);
+set_value(powerblock, "m_dot_st", 353458.81);
+set_value(powerblock, "T_wb", 3.612 );
+set_value(powerblock, "demand_var", 353458.81);
+set_value(powerblock, "standby_control", 1);
+set_value(powerblock, "T_db", 10.3);
+set_value(powerblock, "P_amb", 0.9435);
+set_value(powerblock, "TOU", 1);
+set_value(powerblock, "relhum", 0.305);
+set_value(powerblock, "f_recSU", 1.0);
+set_value(powerblock, "dp_sh", 1102942.4);
+set_value(powerblock, "dp_rh", 258809.34);
+
+simulate(1,2000,1,30,false);

@@ -1,0 +1,17 @@
+clear();
+
+// **** Define tcs directory *******************
+tcs_dir = 'C:/Users/tneises/Documents/Projects';
+// *********************************************
+
+// Add TCS units
+iscc_pb = add_unit("sam_iscc_powerblock");
+
+set_value( iscc_pb, "HTF_code", 17 );
+set_value( iscc_pb, "T_amb", 20 );
+
+m_dot_ms = 4907.2 * 3600.0;			// kg/hr
+set_value( iscc_pb, "m_dot_ms", m_dot_ms ); 
+set_value( iscc_pb, "q_dot_rec", 303.96398 );		//MWt
+
+simulate(1,8760,1,30,false);

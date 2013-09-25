@@ -1,0 +1,245 @@
+clear();
+
+// **** Define tcs directory *******************
+tcs_dir = 'C:/Users/tneises/Documents/Projects';
+// *********************************************
+
+//********************************************************************************************
+// Pre-processing input files
+//Read in field efficiency files
+eff_array_loc = tcs_dir + '/tcs/typelib/Direct_Steam_Receiver/eff_array.dat';
+f = open( eff_array_loc, 'r' );
+
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+line = 'string';
+read_line(f, line);
+azimuth = split( line, ',' );
+read_line(f, line);
+zenith = split( line, ',' );
+
+num_azi = #azimuth;
+num_zen = #zenith;
+num_sol_pos = num_azi * num_zen;
+
+eta_field_map = alloc( num_sol_pos, 3 );
+
+for( i = 0; i < num_azi; i++ )
+	for( j = 0; j < num_zen; j++ )
+	{
+		eta_field_map[i*num_zen+j][1] = azimuth[i]; 
+		eta_field_map[i*num_zen+j][0] = zenith[j];
+	}
+
+for( i = 0; i < num_sol_pos; i++ )
+{
+	read_line(f, eta_field_map[i][2]);
+}
+close( f );
+
+//***** Read in flux file ********
+fluxmap_loc = tcs_dir + '/tcs/typelib/Direct_Steam_Receiver/fluxmap.csv';
+f = open( fluxmap_loc, 'r' );
+
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+i = 1;
+while( read_line(f, line) )
+{
+	if( line == ' Azimuth,Zenith' ) 	
+		break;
+	i++;
+	if( i > 200 ) 	
+	{
+		outln("Flux map is not using recognized formatting. Exiting..");
+		exit;
+	}
+}
+
+num_sol_pos = i - 5;
+arr_sol_pos = alloc( 2, num_sol_pos );
+
+close( f );
+f = open( fluxmap_loc, 'r' );
+
+for( i = 0; i < 4; i++ )
+{
+	read_line(f, line);
+}
+
+// Read and save azimuth and zenith angles
+for( i = 0; i < num_sol_pos; i++ )
+{
+	read_line( f, line );
+	parts = split( line, ',' );
+	arr_sol_pos[0][i] = parts[2];		// Azimuth 
+	arr_sol_pos[1][i] = parts[3];		// Zenith
+}
+
+// Read and save flux maps and each solar position [solar position],[flux]
+arr_flux = alloc( num_sol_pos, 12 );
+
+for( i = 0; i < 3; i++ )
+	read_line(f, line);
+
+for( i = 0; i < num_sol_pos; i++ )
+{
+	// Reading flux map for i_th solar position: 1 rows, 12 columns
+	read_line(f, line);
+	parts = split( line, ',' );
+	for( j = 0; j < 12; j++ )
+		arr_flux[i][j] = parts[j];
+	
+	// If there are solar positions remaining, skip blanks rows
+	if( i < (num_sol_pos - 1))
+	{
+		for( l = 0; l < 5; l++ )
+		{	
+			read_line( f, line );
+		}
+	}
+}
+outln( "read in flux map" );
+//********************************************************************************************
+//********************************************************************************************
+
+debug_mode = true;
+
+//Add weather file reader unit
+if(debug_mode) weather = add_unit("trnsys_weatherreader");
+else weather = add_unit("weatherreader");
+
+//Add the solar field collector unit
+dsg_controller = add_unit("sam_dsg_controller_type265");
+
+if(debug_mode)
+{
+	file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
+	set_value( weather, "file_name", file_loc );
+	set_value( weather, "i_hour", "TIME" );
+	set_value( weather, "i_month", "month" );
+	set_value( weather, "i_day", "day" );
+	set_value( weather, "i_global", "GlobalHorizontal" );
+	set_value( weather, "i_beam", "DNI" );
+	set_value( weather, "i_diff", "DiffuseHorizontal" );
+	set_value( weather, "i_tdry", "T_dry" );
+	set_value( weather, "i_twet", "T_wet" );
+	set_value( weather, "i_tdew", "T_dew" );
+	set_value( weather, "i_wspd", "WindSpeed" );
+	set_value( weather, "i_wdir", "WindDir" );
+	set_value( weather, "i_rhum", "RelHum" );
+	set_value( weather, "i_pres", "AtmPres" );
+	set_value( weather, "i_snow", "SnowCover" );
+	set_value( weather, "i_albedo", "GroundAlbedo" );
+	set_value( weather, "i_poa", "POA" );
+	set_value( weather, "i_solazi", "Azimuth" );
+	set_value( weather, "i_solzen", "Zenith" );
+	set_value( weather, "i_lat", "Latitude" );
+	set_value( weather, "i_lon", "Longitude" );
+	set_value( weather, "i_shift", "Shift" );
+}
+else
+{
+	//Set weather parameters
+	weather_file = "C:/SAM/2013.1.15/exelib/climate_files/CA Daggett.tm2";
+	//if (ostype() == 'osx64') weather_file = '/Users/adobos/Projects/ssc/examples/daggett.tm2';
+
+	set_value(weather, "file_name", weather_file);
+	set_value(weather, "track_mode", 1);
+	set_value(weather, "tilt", 0);
+	set_value(weather, "azimuth", 0);
+}
+
+//Set parameters
+set_value( dsg_controller, "fossil_mode", 1);
+set_value( dsg_controller, "q_pb_design", 270.02);
+set_value( dsg_controller, "q_aux_max", 270.02);
+set_value( dsg_controller, "lhv_eff", 0.9);
+set_value( dsg_controller, "h_tower", 161.11);
+set_value( dsg_controller, "n_panels", 12);
+set_value( dsg_controller, "flowtype", 2);
+set_value( dsg_controller, "d_rec", 15.78);
+set_value( dsg_controller, "q_rec_des", 405.036);
+set_value( dsg_controller, "f_rec_min", 0.25);
+set_value( dsg_controller, "rec_qf_delay", 0.2);
+set_value( dsg_controller, "rec_su_delay", 0.3);
+set_value( dsg_controller, "f_pb_cutoff", 0.25);
+set_value( dsg_controller, "f_pb_sb", 0.2);
+set_value( dsg_controller, "t_standby_ini", 2);
+set_value( dsg_controller, "x_b_target", 0.5);
+set_value( dsg_controller, "eta_rec_pump", 0.85);
+set_value( dsg_controller, "P_hp_in_des", 160);
+set_value( dsg_controller, "P_hp_out_des", 40);
+set_value( dsg_controller, "f_mdotrh_des", 0.85);
+set_value( dsg_controller, "p_cycle_design", 111.25);
+set_value( dsg_controller, "ct", 2);
+set_value( dsg_controller, "T_amb_des", 43);
+set_value( dsg_controller, "dT_cw_ref", 10);
+set_value( dsg_controller, "T_approach", 5);
+set_value( dsg_controller, "T_ITD_des", 16);
+set_value( dsg_controller, "hl_ffact", 1);
+set_value( dsg_controller, "h_boiler", 9.2);
+set_value( dsg_controller, "d_t_boiler", 0.0254);
+set_value( dsg_controller, "th_t_boiler", 0.002159);
+set_value( dsg_controller, "emis_boiler", 0.88);
+set_value( dsg_controller, "abs_boiler", 0.94);
+set_value( dsg_controller, "mat_boiler", 2);
+set_value( dsg_controller, "th_fin", 0.0015875);
+set_value( dsg_controller, "l_fin", 0);
+set_value( dsg_controller, "emis_fin", 0.88);
+set_value( dsg_controller, "abs_fin", 0.94);
+set_value( dsg_controller, "mat_fin", 2);
+set_value( dsg_controller, "h_sh", 8.4);
+set_value( dsg_controller, "d_sh", 0.01905);
+set_value( dsg_controller, "th_sh", 0.001651);
+set_value( dsg_controller, "emis_sh", 0.88);
+set_value( dsg_controller, "abs_sh", 0.94);
+set_value( dsg_controller, "mat_sh", 2);
+set_value( dsg_controller, "T_sh_out_des", 550);
+set_value( dsg_controller, "h_rh", 4.8);
+set_value( dsg_controller, "d_rh", 0.0381);
+set_value( dsg_controller, "th_rh", 0.002159);
+set_value( dsg_controller, "emis_rh", 0.88);
+set_value( dsg_controller, "abs_rh", 0.94);
+set_value( dsg_controller, "mat_rh", 2);
+set_value( dsg_controller, "T_rh_out_des", 500);
+set_value( dsg_controller, "cycle_max_frac", 1.05);
+num_helio = 5688;
+h_helio = 12;
+w_helio = 12;
+hel_dens = 0.97;
+A_sf = num_helio*h_helio*w_helio*hel_dens;
+set_value( dsg_controller, "A_sf", A_sf );
+set_value( dsg_controller, "fluxmap_angles", arr_sol_pos);
+set_value( dsg_controller, "fluxmap", arr_flux);
+
+//Connect inputs
+set_value( dsg_controller, "azimuth", -5.6913 + 180 );
+set_value( dsg_controller, "zenith", 58.027 );
+set_value( dsg_controller, "DNI", 3387.6/3.6 );
+set_value( dsg_controller, "T_amb", 10.3 );
+set_value( dsg_controller, "v_wind_10", 0.0 );
+set_value( dsg_controller, "P_atm", 0.9435*1013.25 );		//[atm]
+set_value( dsg_controller, "hour", 11.0 );			//[hr] *Subtract 1 due to tcs convention
+set_value( dsg_controller, "T_dp", -5.65 );
+set_value( dsg_controller, "field_eff", 0.5549 );
+set_value( dsg_controller, "P_b_in", 177.17 );		//[bar]
+set_value( dsg_controller, "f_mdot_rh", 0.8398 );
+set_value( dsg_controller, "P_hp_out", 41.8572 );	//[bar]
+set_value( dsg_controller, "T_hp_out", 344.593 );	//[C]
+set_value( dsg_controller, "T_rh_target", 500.0 );	//[C]
+set_value( dsg_controller, "T_fw", 232.76 );		//[C]
+set_value( dsg_controller, "P_cond", 4996.82 );		//[Pa]
+
+//connect( weather, "solazi", dsg_controller, "azimuth" );
+
+simulate(1,2000,1,30,false);
+

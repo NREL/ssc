@@ -1,0 +1,20 @@
+clear();
+
+u = add_unit("datatest");
+set_value(u,"input1", 1);
+set_value(u,"input2", 3);
+set_value(u,"input3", 5);
+set_value(u,"input4", 7);
+set_value(u,"scale", 0.6);
+set_value(u,"vec_in", [1,43,25,12,-2481, "123", "hwello world"]);
+set_value(u, "mat_in", [[1,2,3],[1,1],[4]]);
+connect( u, "sum", u, "input1" );
+
+out(netlist());
+simulate(1,8760,1);
+sum = get_result(u,"sum");
+
+outln("size of sum: " + #sum);
+for (i=0;i<10;i++)
+	outln("sum[" +i+"]=" + sum[i]);
+

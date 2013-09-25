@@ -1,0 +1,264 @@
+clear();
+
+// Define location of tcs directory
+tcs_dir = 'C:/Users/tneises/Documents/Projects';
+
+debug_mode = true;
+
+//Add weather file reader unit
+if(debug_mode) weather = add_unit("trnsys_weatherreader");
+else weather = add_unit("weatherreader");
+
+if(debug_mode)
+{
+	file_loc = tcs_dir + '/tcs/Conversion_Coordination/Debugging/tucson_trnsys_weather.out';
+	set_value( weather, "file_name", file_loc );
+	set_value( weather, "i_hour", "TIME" );
+	set_value( weather, "i_month", "month" );
+	set_value( weather, "i_day", "day" );
+	set_value( weather, "i_global", "GlobalHorizontal" );
+	set_value( weather, "i_beam", "DNI" );
+	set_value( weather, "i_diff", "DiffuseHorizontal" );
+	set_value( weather, "i_tdry", "T_dry" );
+	set_value( weather, "i_twet", "T_wet" );
+	set_value( weather, "i_tdew", "T_dew" );
+	set_value( weather, "i_wspd", "WindSpeed" );
+	set_value( weather, "i_wdir", "WindDir" );
+	set_value( weather, "i_rhum", "RelHum" );
+	set_value( weather, "i_pres", "AtmPres" );
+	set_value( weather, "i_snow", "SnowCover" );
+	set_value( weather, "i_albedo", "GroundAlbedo" );
+	set_value( weather, "i_poa", "POA" );
+	set_value( weather, "i_solazi", "Azimuth" );
+	set_value( weather, "i_solzen", "Zenith" );
+	set_value( weather, "i_lat", "Latitude" );
+	set_value( weather, "i_lon", "Longitude" );
+	set_value( weather, "i_shift", "Shift" );
+}
+else
+{
+	//Set weather parameters
+	weather_file = "C:/SAM/2012.5.11/exelib/climate_files/AZ Tucson.tm2";
+	if (ostype() == 'osx64') weather_file = '/Users/adobos/Projects/ssc/examples/daggett.tm2';
+
+	set_value(weather, "file_name", weather_file);
+	set_value(weather, "track_mode", 1);
+	set_value(weather, "tilt", 0);
+	set_value(weather, "azimuth", 0);
+}
+
+//Add collector unit
+collector = add_unit("sam_pf_dish_collector_type295");
+
+// ***************************************************
+// Parameters from .trd 
+// **************************************************
+d_ap = 0.184;
+reflectivity = 0.94;
+num_collect = 4000;
+NNS = 50;
+NEW = 80;
+NS_dish_sep = 15;
+EW_dish_sep = 15;
+wind_stow_speed = 16;
+slope_NS = 0;
+slope_EW = 0;
+width_slot_gap = 1;
+height_slot_gap = 1;
+proj_area = 87.7;
+total_area = 91;
+d_ap_TEST = 0.184;
+test_intercept_f = 0.995;
+test_focal_length = 7.45;
+i_cut_in = 200;
+
+rec_type = 1;
+trans_cover = 1;
+alpha_absorb = 0.9;
+A_absorb = 0.6;
+alpha_wall = 0.6;
+A_wall = 0.6;
+L_insul = 0.075;
+k_insul = 0.06;
+d_cav = 0.46;
+p_cav = 101;
+l_cav = 0.46;
+delta_T_DIR = 90;
+delta_T_reflux = 40;
+
+T_heater_head_high = 993;
+T_heater_head_low = 973;
+Beale_const_coef = 0.04247;
+Beale_first_coef = 1.682e-005;
+Beale_square_coef = -5.105e-010;
+Beale_third_coef = 7.073e-015;
+Beale_fourth_coef = -3.586e-020;
+Pressure_coef = 0.658769;
+Pressure_first = 0.00023496;
+engine_speed = 1800;
+V_displaced = 0.00038;
+
+SYS_AVAIL = 1.0;
+PUMPSPEED = 1800;
+FAN_SPD1 = 400;
+FAN_SPD2 = 550;
+FAN_SPD3 = 650;
+T_cool_speed2 = 20;
+T_cool_speed3 = 30;
+coolfluid = 2;
+P_controls = 150;
+EPS_COOL = 0.6;
+EPS_RADTR = 0.6;
+b_radiator = 0.7;
+b_cooler = 0.7;
+TEST_P_pump = 100;
+TEST_pump_speed = 1800;
+TEST_coolfluid = 2;
+TEST_T_fluid = 288;
+TEST_V_dot_Fluid = 9;
+TEST_P_fan = 1000;
+TEST_fan_speed = 890;
+TEST_fan_rho_air = 1.2;
+TEST_fan_CFM = 6000;
+
+// Set Collector Parameters
+set_value( collector, "d_ap", d_ap );
+set_value( collector, "rho", reflectivity );
+set_value( collector, "n_ns", NNS );
+set_value( collector, "n_ew", NEW );
+set_value( collector, "ns_dish_sep", NS_dish_sep );
+set_value( collector, "ew_dish_sep", EW_dish_sep );
+set_value( collector, "slope_ns", slope_NS );
+set_value( collector, "slope_ew", slope_EW );
+set_value( collector, "w_slot_gap", width_slot_gap );
+set_value( collector, "h_slot_gap", height_slot_gap );
+set_value( collector, "manufacturer", 5 );
+set_value( collector, "wind_stow_speed", wind_stow_speed );
+set_value( collector, "A_proj", proj_area );
+set_value( collector, "I_cut_in", i_cut_in );
+set_value( collector, "d_ap_test", d_ap_TEST );
+set_value( collector, "test_if", test_intercept_f );
+set_value( collector, "test_L_focal", test_focal_length );
+set_value( collector, "A_total", total_area );
+
+// Connect Collector Parameters
+connect( weather, "beam", collector, "I_beam" );
+connect( weather, "tdry", collector, "T_amb" );
+connect( weather, "wspd", collector, "wind_speed" );
+connect( weather, "solzen", collector, "zenith" );
+connect( weather, "pres", collector, "P_atm" );
+connect( weather, "solazi", collector, "azimuth" );
+
+// Add Receiver Unit
+receiver = add_unit("sam_pf_dish_receiver_type296");
+
+// Set Receiver Parameters
+set_value( receiver, "rec_type", rec_type );
+set_value( receiver, "transmittance_cover", trans_cover );
+set_value( receiver, "manufacturer", 5 );
+set_value( receiver, "alpha_absorber", alpha_absorb );
+set_value( receiver, "A_absorber", A_absorb );
+set_value( receiver, "alpha_wall", alpha_wall );
+set_value( receiver, "A_wall", A_wall );
+set_value( receiver, "L_insulation", L_insul );
+set_value( receiver, "k_insulation", k_insul );
+set_value( receiver, "d_cav", d_cav );
+set_value( receiver, "P_cav", p_cav );
+set_value( receiver, "L_cav", l_cav );
+set_value( receiver, "DELTA_T_DIR", delta_T_DIR );
+set_value( receiver, "DELTA_T_REFLUX", delta_T_reflux );
+set_value( receiver, "T_heater_head_high", T_heater_head_high );
+set_value( receiver, "T_heater_head_low", T_heater_head_low );
+
+// Connect Receiver Inputs
+connect( collector, "Power_in_rec", receiver, "Power_in_rec" );
+connect( weather, "tdry", receiver, "T_amb" );
+connect( weather, "pres", receiver, "P_atm" );
+connect( weather, "wspd", receiver, "wind_speed" );
+connect( weather, "solzen", receiver, "sun_angle" );
+connect( collector, "Number_of_collectors", receiver, "n_collectors" );
+connect( weather, "beam", receiver, "DNI" );
+connect( collector, "I_cut_in", receiver, "I_cut_in" );
+connect( collector, "d_ap_out", receiver, "d_ap" );
+
+// Add Engine Unit
+engine = add_unit("sam_pf_dish_engine_type297");
+// Add Parasitics Unit
+parasitics = add_unit("sam_pf_dish_parasitics_type298");
+
+// Set Engine Parameters
+set_value( engine, "manufacturer", 5 );
+set_value( engine, "T_heater_head_high", T_heater_head_high );
+set_value( engine, "T_heater_head_low", T_heater_head_low );
+set_value( engine, "Beale_const_coef", Beale_const_coef );
+set_value( engine, "Beale_first_coef", Beale_first_coef );
+set_value( engine, "Beale_square_coef", Beale_square_coef );
+set_value( engine, "Beale_third_coef", Beale_third_coef );
+set_value( engine, "Beale_fourth_coef", Beale_fourth_coef );
+set_value( engine, "Pressure_coef", Pressure_coef );
+set_value( engine, "Pressure_first", Pressure_first );
+set_value( engine, "engine_speed", engine_speed );
+set_value( engine, "V_displaced", V_displaced );
+
+// Connect Engine Parameters
+connect( receiver, "P_out_rec", engine, "P_SE" );
+connect( weather, "tdry", engine, "T_amb" );
+connect( collector, "Number_of_collectors", engine, "N_cols" );
+connect( parasitics, "T_compression", engine, "T_compression" );
+set_value( engine, "T_compression", 273.15 );
+connect( receiver, "T_heater_head_operate", engine, "T_heater_head_operate" );
+connect( collector, "Power_in_collector", engine, "P_in_collector" );
+
+// Set Parasitic Parameters
+set_value( parasitics, "cooling_tower_on", 0 );
+set_value( parasitics, "tower_mode", 1 );
+set_value( parasitics, "d_pipe_tower", 0.4 );
+set_value( parasitics, "tower_m_dot_water", 134000 );
+set_value( parasitics, "tower_m_dot_water_test", 134000 );
+set_value( parasitics, "tower_pipe_material", 1 );
+set_value( parasitics, "eta_tower_pump", 0.6 );
+set_value( parasitics, "fan_control_signal", 1 );
+set_value( parasitics, "epsilon_power_test", 0.7 );
+set_value( parasitics, "system_availability", SYS_AVAIL );
+set_value( parasitics, "pump_speed", PUMPSPEED );
+set_value( parasitics, "fan_speed1", FAN_SPD1 );
+set_value( parasitics, "fan_speed2", FAN_SPD2 );
+set_value( parasitics, "fan_speed3", FAN_SPD3 );
+set_value( parasitics, "T_cool_speed2", T_cool_speed2 );
+set_value( parasitics, "T_cool_speed3", T_cool_speed3 );
+set_value( parasitics, "epsilon_cooler_test", EPS_COOL );
+set_value( parasitics, "epsilon_radiator_test", EPS_RADTR );
+set_value( parasitics, "cooling_fluid", coolfluid );
+set_value( parasitics, "manufacturer", 5 );
+set_value( parasitics, "P_controls", P_controls );
+set_value( parasitics, "test_P_pump", TEST_P_pump );
+set_value( parasitics, "test_pump_speed", TEST_pump_speed );
+set_value( parasitics, "test_cooling_fluid", TEST_coolfluid );
+set_value( parasitics, "test_T_fluid", TEST_T_fluid );
+set_value( parasitics, "test_V_dot_fluid", TEST_V_dot_Fluid );
+set_value( parasitics, "test_P_fan", TEST_P_fan );
+set_value( parasitics, "test_fan_speed", TEST_fan_speed );
+set_value( parasitics, "test_fan_rho_air", TEST_fan_rho_air );
+set_value( parasitics, "test_fan_cfm", TEST_fan_CFM );
+set_value( parasitics, "b_radiator", b_radiator );
+set_value( parasitics, "b_cooler", b_cooler );
+
+// Connect Parasitics Inputs
+connect( engine, "P_out_SE", parasitics, "gross_power" );
+connect( weather, "tdry", parasitics, "T_amb" );
+connect( collector, "Number_of_collectors", parasitics, "N_cols" );
+connect( weather, "beam", parasitics, "DNI" );
+connect( engine, "T_heater_head_low", parasitics, "T_heater_head_low" );
+connect( engine, "V_displaced", parasitics, "V_swept" );
+connect( engine, "frequency", parasitics, "frequency" );
+connect( engine, "engine_pressure", parasitics, "engine_pressure" );
+set_value( parasitics, "I_cut_in", i_cut_in );
+connect( engine, "P_SE_losses", parasitics, "Q_reject" );
+set_value( parasitics, "Tower_water_outlet_temp", 0.0 );
+connect( weather, "pres", parasitics, "P_amb_Pa" );
+set_value( parasitics, "ns_dish_separation", NS_dish_sep );
+set_value( parasitics, "ew_dish_separation", NS_dish_sep );
+set_value( parasitics, "P_tower_fan", 0.0 );
+connect( collector, "Power_in_collector", parasitics, "power_in_collector" );
+
+simulate(1,8760,1,30,false);

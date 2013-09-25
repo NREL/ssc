@@ -1,0 +1,177 @@
+clear();
+
+debug_mode = true;
+
+//Add weather file reader unit
+if(debug_mode) weather = add_unit("trnsys_weatherreader");
+else weather = add_unit("weatherreader");
+
+//Add the solar field collector unit
+solarfield = add_unit("sam_mw_trough_type250");
+
+if(debug_mode)
+{
+	set_value( weather, "file_name", "C:/Users/tneises/Projects/tcs/Conversion_Coordination/Debugging/tucson_trnsys_weather.out" );
+	set_value( weather, "i_hour", "TIME" );
+	set_value( weather, "i_month", "month" );
+	set_value( weather, "i_day", "day" );
+	set_value( weather, "i_global", "GlobalHorizontal" );
+	set_value( weather, "i_beam", "DNI" );
+	set_value( weather, "i_diff", "DiffuseHorizontal" );
+	set_value( weather, "i_tdry", "T_dry" );
+	set_value( weather, "i_twet", "T_wet" );
+	set_value( weather, "i_tdew", "T_dew" );
+	set_value( weather, "i_wspd", "WindSpeed" );
+	set_value( weather, "i_wdir", "WindDir" );
+	set_value( weather, "i_rhum", "RelHum" );
+	set_value( weather, "i_pres", "AtmPres" );
+	set_value( weather, "i_snow", "SnowCover" );
+	set_value( weather, "i_albedo", "GroundAlbedo" );
+	set_value( weather, "i_poa", "POA" );
+	set_value( weather, "i_solazi", "Azimuth" );
+	set_value( weather, "i_solzen", "Zenith" );
+	set_value( weather, "i_lat", "Latitude" );
+	set_value( weather, "i_lon", "Longitude" );
+	set_value( weather, "i_shift", "Shift" );
+}
+else
+{
+	//Set weather parameters
+	weather_file = "C:/SAM/2012.5.11/exelib/climate_files/AZ Tucson.tm2";
+	if (ostype() == 'osx64') weather_file = '/Users/adobos/Projects/ssc/examples/daggett.tm2';
+
+	set_value(weather, "file_name", weather_file);
+	set_value(weather, "track_mode", 1);
+	set_value(weather, "tilt", 0);
+	set_value(weather, "azimuth", 0);
+}
+
+//Set parameters
+set_value(solarfield, "nSCA", 8);
+set_value(solarfield, "nHCEt", 4);
+set_value(solarfield, "nColt", 4);
+set_value(solarfield, "nHCEVar", 4);
+set_value(solarfield, "nLoops", 230);
+set_value(solarfield, "eta_pump", 0.85);
+set_value(solarfield, "HDR_rough", 4.57E-05);
+set_value(solarfield, "theta_stow", 170);
+set_value(solarfield, "theta_dep", 10);
+set_value(solarfield, "Row_Distance", 15);
+set_value(solarfield, "FieldConfig", 2);
+set_value(solarfield, "T_startup", 300);
+set_value(solarfield, "pb_rated_cap", 111);
+set_value(solarfield, "m_dot_htfmin", 1);
+set_value(solarfield, "m_dot_htfmax", 12);
+set_value(solarfield, "T_loop_in_des", 293);
+set_value(solarfield, "T_loop_out", 391);
+set_value(solarfield, "Fluid", 21);
+set_value(solarfield, "T_field_ini", 150);
+set_value(solarfield, "T_fp", 150);
+set_value(solarfield, "I_bn_des", 950);
+set_value(solarfield, "V_hdr_max", 3);
+set_value(solarfield, "V_hdr_min", 2);
+set_value(solarfield, "Pipe_hl_coef", 0.45);
+set_value(solarfield, "SCA_drives_elec", 125);
+set_value(solarfield, "fthrok", 1);
+set_value(solarfield, "fthrctrl", 2);
+set_value(solarfield, "ColTilt", 0);
+set_value(solarfield, "ColAz", 0);
+set_value(solarfield, "accept_mode", 0);
+set_value(solarfield, "accept_init", 0);
+set_value(solarfield, "accept_loc", 1);
+set_value(solarfield, "solar_mult", 2);
+set_value(solarfield, "mc_bal_hot", 0.2);
+set_value(solarfield, "mc_bal_cold", 0.2);
+set_value(solarfield, "mc_bal_sca", 4.5);
+set_value(solarfield, "OptCharType", [1,1,1,1]);
+set_value(solarfield, "CollectorType", [1,1,1,1]);
+set_value(solarfield, "W_aperture", [5,5,5,5]);
+set_value(solarfield, "A_aperture", [470.3,470.3,470.3,470.3]);
+set_value(solarfield, "IamF0", [1,1,1,1]);
+set_value(solarfield, "IamF1", [0.0506,0.0506,0.0506,0.0506]);
+set_value(solarfield, "IamF2", [-0.1763,-0.1763,-0.1763,-0.1763]);
+set_value(solarfield, "reflectivity", [1,1,1,1]);
+set_value(solarfield, "TrackingError", [0.994,0.994,0.994,0.994]);
+set_value(solarfield, "GeomEffects", [0.98,0.98,0.98,0.98]);
+set_value(solarfield, "Rho_mirror_clean", [0.935,0.935,0.935,0.935]);
+set_value(solarfield, "Dirt_mirror", [0.95,0.95,0.95,0.95]);
+set_value(solarfield, "Error", [0.99,0.99,0.99,0.99]);
+set_value(solarfield, "Ave_Focal_Length", [1.8,1.8,1.8,1.8]);
+set_value(solarfield, "L_SCA", [100,100,100,100]);
+set_value(solarfield, "L_aperture", [8.33333,8.33333,8.33333,8.33333]);
+set_value(solarfield, "ColperSCA", [12,12,12,12]);
+set_value(solarfield, "Distance_SCA", [1,1,1,1]);
+set_value(solarfield, "HCE_FieldFrac", [[0.985,0.01,0.005,0],[0.985,0.01,0.005,0],[0.985,0.01,0.005,0],[0.985,0.01,0.005,0]]);
+set_value(solarfield, "D_2", [[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066]]);
+set_value(solarfield, "D_3", [[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07]]);
+set_value(solarfield, "D_4", [[0.115,0.115,0.115,0.115],[0.115,0.115,0.115,0.115],[0.115,0.115,0.115,0.115],[0.115,0.115,0.115,0.115]]);
+set_value(solarfield, "D_5", [[0.12,0.12,0.12,0.12],[0.12,0.12,0.12,0.12],[0.12,0.12,0.12,0.12],[0.12,0.12,0.12,0.12]]);
+set_value(solarfield, "D_p", [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]);
+set_value(solarfield, "Flow_type", [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]);
+set_value(solarfield, "Rough", [[4.50E-05,4.50E-05,4.50E-05,4.50E-05],[4.50E-05,4.50E-05,4.50E-05,4.50E-05],[4.50E-05,4.50E-05,4.50E-05,4.50E-05],[4.50E-05,4.50E-05,4.50E-05,4.50E-05]]);
+set_value(solarfield, "alpha_env", [[0.02,0.02,0,0],[0.02,0.02,0,0],[0.02,0.02,0,0],[0.02,0.02,0,0]]);
+set_value(solarfield, "epsilon_3_11", [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
+set_value(solarfield, "epsilon_3_12", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_13", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_14", [[0],[0]]);
+set_value(solarfield, "epsilon_3_21", [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
+set_value(solarfield, "epsilon_3_22", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_23", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_24", [[0],[0]]);
+set_value(solarfield, "epsilon_3_31", [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
+set_value(solarfield, "epsilon_3_32", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_33", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_34", [[0],[0]]);
+set_value(solarfield, "epsilon_3_41", [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
+set_value(solarfield, "epsilon_3_42", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_43", [[0],[0.65]]);
+set_value(solarfield, "epsilon_3_44", [[0],[0]]);
+set_value(solarfield, "alpha_abs", [[0.96,0.96,0.8,0],[0.96,0.96,0.8,0],[0.96,0.96,0.8,0],[0.96,0.96,0.8,0]]);
+set_value(solarfield, "Tau_envelope", [[0.963,0.963,1,0],[0.963,0.963,1,0],[0.963,0.963,1,0],[0.963,0.963,1,0]]);
+set_value(solarfield, "EPSILON_4", [[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0]]);
+set_value(solarfield, "EPSILON_5", [[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0]]);
+set_value(solarfield, "GlazingIntactIn", [[1,1,0,1],[1,1,0,1],[1,1,0,1],[1,1,0,1]]);
+set_value(solarfield, "P_a", [[0.0001,750,750,0],[0.0001,750,750,0],[0.0001,750,750,0],[0.0001,750,750,0]]);
+set_value(solarfield, "AnnulusGas", [[27,1,1,27],[27,1,1,27],[27,1,1,27],[27,1,1,27]]);
+set_value(solarfield, "AbsorberMaterial", [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]);
+set_value(solarfield, "Shadowing", [[0.96,0.96,0.96,0.963],[0.96,0.96,0.96,0.963],[0.96,0.96,0.96,0.963],[0.96,0.96,0.96,0.963]]);
+set_value(solarfield, "Dirt_HCE", [[0.98,0.98,1,0.98],[0.98,0.98,1,0.98],[0.98,0.98,1,0.98],[0.98,0.98,1,0.98]]);
+set_value(solarfield, "Design_loss", [[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0]]);
+set_value(solarfield, "SCAInfoArray", [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]]);
+set_value(solarfield, "SCADefocusArray", [8,7,6,5,4,3,2,1]);
+
+//Set the initial values
+set_value(solarfield, "I_b", 0.);
+set_value(solarfield, "T_db", 15.);
+set_value(solarfield, "V_wind", 1.5);
+set_value(solarfield, "P_amb", 1.);
+set_value(solarfield, "T_dp", 10.);
+set_value(solarfield, "T_cold_in", 293.);
+set_value(solarfield, "m_dot_in", 0.0);
+set_value(solarfield, "defocus", 1.);
+set_value(solarfield, "SolarAz", 0.);
+
+//Set the inputs
+connect(weather, "beam", solarfield, "I_b");
+connect(weather, "tdry", solarfield, "T_db");
+connect(weather, "wspd", solarfield, "V_wind");
+connect(weather, "pres", solarfield, "P_amb");
+connect(weather, "tdew", solarfield, "T_dp");
+
+	//connect(controller, "T_field_in", solarfield, "T_cold_in");
+set_value(solarfield, "T_cold_in", 293.0);
+
+set_value(solarfield, "m_dot_in", 0.0);
+
+	//connect(controller, "defocus", solarfield, "defocus");
+set_value(solarfield, "defocus", 1.0);
+
+connect(weather, "solazi", solarfield, "SolarAz");
+connect(weather, "lat", solarfield, "latitude");
+connect(weather, "lon", solarfield, "longitude");
+connect(weather, "shift", solarfield, "shift");
+
+
+
+simulate(1,8760,1,30,false);
+

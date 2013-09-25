@@ -1,0 +1,41 @@
+clear( );
+
+weather = add_unit( "trnsys_weatherreader", "TRNSYS Weather Reader");
+
+set_value( weather, "file_name", "C:/Users/tneises/Projects/tcs/Conversion_Coordination/Debugging/tucson_trnsys_weather.out" );
+set_value( weather, "i_hour", "TIME" );
+set_value( weather, "i_month", "month" );
+set_value( weather, "i_day", "day" );
+set_value( weather, "i_global", "GlobalHorizontal" );
+set_value( weather, "i_beam", "DNI" );
+set_value( weather, "i_diff", "DiffuseHorizontal" );
+set_value( weather, "i_tdry", "T_dry" );
+set_value( weather, "i_twet", "T_wet" );
+set_value( weather, "i_tdew", "T_dew" );
+set_value( weather, "i_wspd", "WindSpeed" );
+set_value( weather, "i_wdir", "WindDir" );
+set_value( weather, "i_rhum", "RelHum" );
+set_value( weather, "i_pres", "AtmPres" );
+set_value( weather, "i_snow", "SnowCover" );
+set_value( weather, "i_albedo", "GroundAlbedo" );
+set_value( weather, "i_poa", "POA" );
+set_value( weather, "i_solazi", "Azimuth" );
+set_value( weather, "i_solzen", "Zenith" );
+set_value( weather, "i_lat", "Latitude" );
+set_value( weather, "i_lon", "Longitude" );
+set_value( weather, "i_shift", "Shift" );
+
+
+weather2 = add_unit( "weatherreader" );
+
+weather_file = "C:/SAM/2013.1.15/exelib/climate_files/AZ Tucson.tm2";
+
+set_value(weather2, "file_name", weather_file);
+set_value(weather2, "track_mode", 1);
+set_value(weather2, "tilt", 0);
+set_value(weather2, "azimuth", 0);
+
+start = 1;
+end = 8760;
+step = 1;
+simulate(start, end, step);

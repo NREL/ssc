@@ -1,0 +1,68 @@
+clear();
+
+//********************************************************************************************
+// Pre-processing input files
+//Read in field efficiency files
+f = open( 'C:/Documents and Settings/tneises/Desktop/Cavity Receiver - Soenke/eff_array.dat', 'r' );
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+line = 'string';
+read_line(f, line);
+azimuth = split( line, ',' );
+read_line(f, line);
+zenith = split( line, ',' );
+
+num_azi = #azimuth;
+num_zen = #zenith;
+num_sol_pos = num_azi * num_zen;
+
+eta_field_map = alloc( num_sol_pos, 3 );
+
+for( i = 0; i < num_azi; i++ )
+	for( j = 0; j < num_zen; j++ )
+	{
+		eta_field_map[i*num_zen+j][1] = azimuth[i]; 
+		eta_field_map[i*num_zen+j][0] = zenith[j];
+	}
+
+for( i = 0; i < num_sol_pos; i++ )
+{
+	read_line(f, eta_field_map[i][2]);
+	out( eta_field_map[i][0], eta_field_map[i][1], " ", eta_field_map[i][2], "\n" );
+}
+//********************************************************************************************
+//********************************************************************************************
+// Set up simulation
+
+weather = add_unit("weatherreader");
+hel_field = add_unit("sam_mw_pt_type221");
+
+set_value(weather, "file_name", "C:/SAM/2012.9.27/exelib/climate_files/CA Daggett.tm2");
+set_value(weather, "track_mode", 0);
+set_value(weather, "tilt", 0);
+set_value(weather, "azimuth", 0);
+
+set_value( hel_field, "eta_map", eta_field_map );
+set_value( hel_field, "n_zen", num_zen );
+set_value( hel_field, "n_azi", num_azi );
+set_value( hel_field, "n_hel", 6235 );
+set_value( hel_field, "q_start", 0.025 );
+set_value( hel_field, "p_run", 0.055 );
+set_value( hel_field, "v_wind_max", 15 );
+set_value( hel_field, "hel_stow_deploy", 8 );
+
+//Connect weather reader to hel_field model
+connect( weather, "wspd", hel_field, "vwind" );
+connect( weather, "solzen", hel_field, "theta" );
+connect( weather, "solazi", hel_field, "phi" );
+
+//set_value( hel_field, "vwind", 0.0 );
+set_value( hel_field, "field_control", 1.0 );
+//set_value( hel_field, "theta", 58.027 );
+//set_value( hel_field, "phi", 354.309 );
+
+simulate(1.0, 1000.0, 1.0);

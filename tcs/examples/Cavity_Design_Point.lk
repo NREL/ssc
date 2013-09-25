@@ -1,0 +1,194 @@
+clear();
+
+//********************************************************************************************
+// Pre-processing input files
+//Read in field efficiency files
+f = open( 'C:/Documents and Settings/tneises/Desktop/Cavity Receiver - Soenke/eff_array.dat', 'r' );
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+line = 'string';
+read_line(f, line);
+azimuth = split( line, ',' );
+read_line(f, line);
+zenith = split( line, ',' );
+
+num_azi = #azimuth;
+num_zen = #zenith;
+num_sol_pos = num_azi * num_zen;
+
+eta_field_map = alloc( num_sol_pos, 3 );
+
+for( i = 0; i < num_azi; i++ )
+	for( j = 0; j < num_zen; j++ )
+	{
+		eta_field_map[i*num_zen+j][1] = azimuth[i]; 
+		eta_field_map[i*num_zen+j][0] = zenith[j];
+	}
+
+for( i = 0; i < num_sol_pos; i++ )
+{
+	read_line(f, eta_field_map[i][2]);
+}
+close( f );
+
+//***** Read in flux file ********
+f = open( 'C:/Documents and Settings/tneises/Desktop/Cavity Receiver - Soenke/fluxmap.csv', 'r' );
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+i = 1;
+while( read_line(f, line) )
+{
+	if( line == ' Azimuth,Zenith' ) 	
+		break;
+	i++;
+	if( i > 200 ) 	
+	{
+		outln("Flux map is not using recognized formatting. Exiting..");
+		exit;
+	}
+}
+
+num_sol_pos = i - 5;
+arr_sol_pos = alloc( 2, num_sol_pos );
+
+close( f );
+f = open( 'C:/Documents and Settings/tneises/Desktop/Cavity Receiver - Soenke/fluxmap.csv', 'r' );
+
+for( i = 0; i < 4; i++ )
+{
+	read_line(f, line);
+}
+
+// Read and save azimuth and zenith angles
+for( i = 0; i < num_sol_pos; i++ )
+{
+	read_line( f, line );
+	parts = split( line, ',' );
+	arr_sol_pos[0][i] = parts[2];		// Azimuth 
+	arr_sol_pos[1][i] = parts[3];		// Zenith
+}
+
+// Read and save flux maps and each solar position [solar position],[flux]
+arr_flux = alloc( num_sol_pos, 120 );
+
+for( i = 0; i < 3; i++ )
+	read_line(f, line);
+
+for( i = 0; i < num_sol_pos; i++ )
+{
+	// Reading flux map for i_th solar position: 10 rows, 12 columns
+	for( j = 0; j < 10; j++ )
+	{
+		read_line( f, line );
+		parts = split( line, ',' );
+		for( k = 0; k < 12; k++ )
+		{
+			arr_flux[i][(j*12+k)] = to_real(parts[k]);
+		}
+	}
+	// If there are solar positions remaining, skip blanks rows
+	if( i < (num_sol_pos - 1))
+	{
+		for( l = 0; l < 5; l++ )
+		{	
+			read_line( f, line );
+		}
+	}
+}
+//********************************************************************************************
+//********************************************************************************************
+// Set up simulation
+
+//weather = add_unit("weatherreader");
+hel_field = add_unit("sam_mw_pt_type221");
+cav_rec = add_unit("sam_lf_st_pt_type232");
+
+// Set weather file parameters/inputs
+//set_value(weather, "file_name", "C:/SAM/2012.9.27/exelib/climate_files/CA Daggett.tm2");
+//set_value(weather, "track_mode", 0);
+//set_value(weather, "tilt", 0);
+//set_value(weather, "azimuth", 0);
+
+// Set heliostat field parameters
+	// Need to get field efficiency out, so only care about first 3 inputs
+set_value( hel_field, "eta_map", eta_field_map );
+set_value( hel_field, "n_zen", num_zen );
+set_value( hel_field, "n_azi", num_azi );
+set_value( hel_field, "n_hel", 6235 );
+set_value( hel_field, "q_start", 0.025 );
+set_value( hel_field, "p_run", 0.055 );
+set_value( hel_field, "v_wind_max", 15 );
+set_value( hel_field, "hel_stow_deploy", 8 );
+
+// Set heliostat field inputs
+//connect( weather, "wspd", hel_field, "vwind" );
+set_value( hel_field, "vwind", 0.0 );
+set_value( hel_field, "theta", 58.1 );
+set_value( hel_field, "phi", 174.5 );
+//connect( weather, "solzen", hel_field, "theta" );
+//connect( weather, "solazi", hel_field, "phi" );
+//connect( controller, "defocus", hel_field, "field_control" );
+set_value( hel_field, "field_control", 1 );
+
+// Set cavity receiver parameters
+set_value(cav_rec, "rec_d_spec", 8.55); 
+set_value(cav_rec, "h_rec", 7.02);
+set_value(cav_rec, "h_lip", 0.82);
+set_value(cav_rec, "h_tower", 287.91);
+set_value(cav_rec, "rec_angle", 180.0); 
+set_value(cav_rec, "d_tube_out", 40.0);
+set_value(cav_rec, "th_tube", 1.25);
+set_value(cav_rec, "eta_pump", 0.85);
+set_value(cav_rec, "hel_stow", 8.0); 
+set_value(cav_rec, "flow_pattern", 6);
+set_value(cav_rec, "htf", 17);
+set_value(cav_rec, "field_fl_props", [0]);
+set_value(cav_rec, "material", 2);
+set_value(cav_rec, "hl_ffact", 1.0);
+set_value(cav_rec, "T_htf_hot_des", 650.0);
+set_value(cav_rec, "T_htf_cold_des", 366.0);
+set_value(cav_rec, "f_rec_min", 0.25);
+set_value(cav_rec, "q_rec_des", 50.0);
+set_value(cav_rec, "rec_su_delay", 0.2);
+set_value(cav_rec, "rec_qf_delay", 0.25);
+set_value(cav_rec, "conv_model", 2);
+set_value(cav_rec, "m_dot_htf_max", 504000.0);
+set_value(cav_rec, "eps_wavelength", [[4, 0.95, 0.95], [100,0.95,0.95]]);
+set_value(cav_rec, "conv_coupled", 2);
+set_value(cav_rec, "conv_forced", 0);
+set_value(cav_rec, "h_wind_meas", 10.0);
+set_value(cav_rec, "conv_wind_dir", 0);
+set_value(cav_rec, "fluxmap_angles", arr_sol_pos);
+set_value(cav_rec, "fluxmap", arr_flux);
+
+// Set cavity receiver inputs
+//connect( weather, "solazi", cav_rec, "azimuth" );
+//connect( weather, "solzen", cav_rec, "zenith" );
+set_value( cav_rec, "azimuth", 174.5 );
+set_value( cav_rec, "zenith", 58.1 );
+set_value( cav_rec, "T_htf_hot", 650.0 );
+set_value( cav_rec, "T_htf_cold", 366.0 );
+set_value( cav_rec, "P_htf", 1.0 );
+set_value( cav_rec, "P_amb", 0.9435 );
+//connect( weather, "hour", cav_rec, "hour" );
+//connect( weather, "tdew", cav_rec, "T_dp" );
+set_value( cav_rec, "hour", 12.0 );
+set_value( cav_rec, "T_dp", 7.0 );
+set_value( cav_rec, "I_bn", 950.0 );
+connect( hel_field, "eta_field", cav_rec, "eta_field" );
+//connect(weather, "tdry", cav_rec, "T_amb");
+set_value( cav_rec, "T_amb", 10.6 );
+set_value( cav_rec, "u_wind", 0.0 );
+set_value( cav_rec, "deg_wind", 0.0 );
+//connect(weather, "wdir", cav_rec, "deg_wind");
+
+simulate(1907,1908,1,30,false);
+//simulate(1.0, 1000.0, 1.0);

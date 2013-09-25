@@ -1,0 +1,207 @@
+clear();
+
+// **** Define tcs directory *******************
+tcs_dir = 'C:/Users/tneises/Documents/Projects';
+// *********************************************
+
+//********************************************************************************************
+// Pre-processing input files
+//Read in field efficiency files
+eff_array_loc = tcs_dir + '/tcs/typelib/MS_Receiver/eff_array.dat';
+f = open( eff_array_loc, 'r' );
+
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+line = 'string';
+read_line(f, line);
+azimuth = split( line, ',' );
+read_line(f, line);
+zenith = split( line, ',' );
+
+num_azi = #azimuth;
+num_zen = #zenith;
+num_sol_pos = num_azi * num_zen;
+
+eta_field_map = alloc( num_sol_pos, 3 );
+
+for( i = 0; i < num_azi; i++ )
+	for( j = 0; j < num_zen; j++ )
+	{
+		eta_field_map[i*num_zen+j][1] = azimuth[i]; 
+		eta_field_map[i*num_zen+j][0] = zenith[j];
+	}
+
+for( i = 0; i < num_sol_pos; i++ )
+{
+	read_line(f, eta_field_map[i][2]);
+}
+close( f );
+
+//***** Read in flux file ********
+fluxmap_loc = tcs_dir + '/tcs/typelib/MS_Receiver/fluxmap.csv';
+f = open( fluxmap_loc, 'r' );
+
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+i = 1;
+while( read_line(f, line) )
+{
+	if( line == ' Azimuth,Zenith' ) 	
+		break;
+	i++;
+	if( i > 200 ) 	
+	{
+		outln("Flux map is not using recognized formatting. Exiting..");
+		exit;
+	}
+}
+
+num_sol_pos = i - 5;
+arr_sol_pos = alloc( 2, num_sol_pos );
+
+close( f );
+f = open( fluxmap_loc, 'r' );
+
+for( i = 0; i < 4; i++ )
+{
+	read_line(f, line);
+}
+
+// Read and save azimuth and zenith angles
+for( i = 0; i < num_sol_pos; i++ )
+{
+	read_line( f, line );
+	parts = split( line, ',' );
+	arr_sol_pos[0][i] = parts[2];		// Azimuth 
+	arr_sol_pos[1][i] = parts[3];		// Zenith
+}
+
+// Read and save flux maps and each solar position [solar position],[flux]
+arr_flux = alloc( num_sol_pos, 12 );
+
+for( i = 0; i < 3; i++ )
+	read_line(f, line);
+
+for( i = 0; i < num_sol_pos; i++ )
+{
+	// Reading flux map for i_th solar position: 1 rows, 12 columns
+	read_line(f, line);
+	parts = split( line, ',' );
+	for( j = 0; j < 12; j++ )
+		arr_flux[i][j] = parts[j];
+	
+	// If there are solar positions remaining, skip blanks rows
+	if( i < (num_sol_pos - 1))
+	{
+		for( l = 0; l < 5; l++ )
+		{	
+			read_line( f, line );
+		}
+	}
+}
+outln( "read in flux map" );
+//********************************************************************************************
+//********************************************************************************************
+
+debug_mode = true;
+
+//Add weather file reader unit
+if(debug_mode) weather = add_unit("trnsys_weatherreader");
+else weather = add_unit("weatherreader");
+
+if(debug_mode)
+{
+	file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
+	set_value( weather, "file_name", file_loc );
+	set_value( weather, "i_hour", "TIME" );
+	set_value( weather, "i_month", "month" );
+	set_value( weather, "i_day", "day" );
+	set_value( weather, "i_global", "GlobalHorizontal" );
+	set_value( weather, "i_beam", "DNI" );
+	set_value( weather, "i_diff", "DiffuseHorizontal" );
+	set_value( weather, "i_tdry", "T_dry" );
+	set_value( weather, "i_twet", "T_wet" );
+	set_value( weather, "i_tdew", "T_dew" );
+	set_value( weather, "i_wspd", "WindSpeed" );
+	set_value( weather, "i_wdir", "WindDir" );
+	set_value( weather, "i_rhum", "RelHum" );
+	set_value( weather, "i_pres", "AtmPres" );
+	set_value( weather, "i_snow", "SnowCover" );
+	set_value( weather, "i_albedo", "GroundAlbedo" );
+	set_value( weather, "i_poa", "POA" );
+	set_value( weather, "i_solazi", "Azimuth" );
+	set_value( weather, "i_solzen", "Zenith" );
+	set_value( weather, "i_lat", "Latitude" );
+	set_value( weather, "i_lon", "Longitude" );
+	set_value( weather, "i_shift", "Shift" );
+}
+else
+{
+	//Set weather parameters
+	weather_file = "C:/SAM/2013.1.15/exelib/climate_files/CA Daggett.tm2";
+	//if (ostype() == 'osx64') weather_file = '/Users/adobos/Projects/ssc/examples/daggett.tm2';
+
+	set_value(weather, "file_name", weather_file);
+	set_value(weather, "track_mode", 1);
+	set_value(weather, "tilt", 0);
+	set_value(weather, "azimuth", 0);
+}
+
+receiver = add_unit("sam_mw_pt_type222");
+
+// Set Parameters
+set_value( receiver, "N_panels", 20 );
+set_value( receiver, "D_rec", 17.67 );
+set_value( receiver, "H_rec", 20.41 );
+set_value( receiver, "THT", 203.33 );
+set_value( receiver, "d_tube_out", 40.0 );
+set_value( receiver, "th_tube", 1.25 );
+set_value( receiver, "mat_tube", 2 );
+set_value( receiver, "rec_htf", 17 );
+//set_value( receiver, "field_fl_props", {} );
+set_value( receiver, "Flow_type", 1 );
+set_value( receiver, "epsilon", 0.88 );
+set_value( receiver, "hl_ffact", 1 );
+set_value( receiver, "T_htf_hot_des", 574 );
+set_value( receiver, "T_htf_cold_des", 290 );
+set_value( receiver, "f_rec_min", 0.25 );
+set_value( receiver, "Q_rec_des", 669.903 );
+set_value( receiver, "rec_su_delay", 0.2 );
+set_value( receiver, "rec_qf_delay", 0.25 );
+set_value( receiver, "m_dot_htf_max", 6.764E6 );
+
+num_helio = 8929; 
+h_helio = 12.2;
+w_helio = 12.2;
+Hel_dens = 0.97;
+A_sf = num_helio*h_helio*w_helio*Hel_dens;
+set_value( receiver, "A_sf", A_sf );
+
+set_value( receiver, "fluxmap_angles", arr_sol_pos);
+set_value( receiver, "fluxmap", arr_flux);
+
+// Set Inputs
+set_value( receiver, "azimuth", 174.309 );
+set_value( receiver, "zenith", 58.0268 );
+set_value( receiver, "T_salt_hot_target", 574 ); 
+set_value( receiver, "T_salt_cold", 289.874 );
+set_value( receiver, "V_wind_10", 0.0 );
+set_value( receiver, "P_amb", 956.0 );
+set_value( receiver, "eta_pump", 0.85 );
+set_value( receiver, "T_dp", -5.65 );
+set_value( receiver, "I_bn", 941.0 );
+set_value( receiver, "field_eff", 0.535 );
+set_value( receiver, "T_db", 10.3 );
+set_value( receiver, "night_recirc", 0 );
+set_value( receiver, "hel_stow_deploy", 8 );
+
+simulate(1,2000,1,30,false);
+

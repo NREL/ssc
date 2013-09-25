@@ -1,0 +1,1 @@
+WARNING: The temperature for Salt (60% NaNO3, 40% KNO3) was outside of the fluid's operating range of  220.- 593. [C] for at least 50 time steps. The fluid temperature on the 50th occurrence was ***** [C] at timestep   28.0. Try changing the design parameters or fluid to ensure operating temperatures stay within the range.
