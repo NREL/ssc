@@ -106,6 +106,58 @@ namespace util
 		FILE *p;
 	};
 
+	template< typename T, size_t n_rows, size_t n_cols >
+	class matrix_static_t
+	{
+	protected:
+		T t_array[n_rows][n_cols];
+	public:
+		matrix_static_t( ) { /* nothing to do */ }
+		matrix_static_t( const T &fillval )
+		{
+			fill( fillval );
+		}
+
+		void fill( const T &fillval )
+		{
+			for( size_t i=0;i<n_rows;i++ )
+				for( size_t j=0;j<n_cols;j++ )
+					t_array[i][j] = fillval;
+		}
+
+		inline T &at(size_t r, size_t c)
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+	#endif
+			return t_array[r][c];
+		}
+
+		inline const T &at(size_t r, size_t c) const
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+	#endif
+			return t_array[r][c];
+		}
+		
+		inline T &operator()(size_t r, size_t c)
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+	#endif
+			return t_array[r][c];
+		}
+
+		inline const T &operator()(size_t r, size_t c) const
+		{
+	#ifdef _DEBUG
+			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+	#endif
+			return t_array[r][c];
+		}
+	};
+
 	template< typename T >
 	class matrix_t
 	{
@@ -122,6 +174,7 @@ namespace util
 		
 		matrix_t(size_t len)
 		{
+			n_rows = n_cols = 0;
 			t_array = NULL;
 			if (len < 1) len = 1;
 			resize( 1, len );
@@ -129,6 +182,7 @@ namespace util
 
 		matrix_t(size_t nr, size_t nc)
 		{
+			n_rows = n_cols = 0;
 			t_array = NULL;
 			if (nr < 1) nr = 1;
 			if (nc < 1) nc = 1;
@@ -137,6 +191,7 @@ namespace util
 		
 		matrix_t(size_t nr, size_t nc, const T &val)
 		{
+			n_rows = n_cols = 0;
 			t_array = NULL;
 			if (nr < 1) nr = 1;
 			if (nc < 1) nc = 1;
