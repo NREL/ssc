@@ -20,11 +20,11 @@ else
 	RM = rm -f
 	EXT = dylib
 	ifeq ($(CFG),"32")
-		CFLAGS += -D__32BIT__ -m32 
+		CFLAGS += -D__32BIT__ -m32 -fPIC
 		LDFLAGS += -arch i386 -m32
 		BITS = 32
 	else
-		CFLAGS += -D__64BIT__
+		CFLAGS += -D__64BIT__ -fPIC
 		BITS = 64
 	endif
 	GFORT = gfortran

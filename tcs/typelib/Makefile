@@ -1,8 +1,8 @@
-SSCDIR=../../ssc
+SSCDIR=../..
 
 CC = gcc
 CXX = g++
-CFLAGS=-I.. -I$(SSCDIR) -Wall -g -O3
+CFLAGS=-I.. -I$(SSCDIR)  -Wall -g -O3
 CXXFLAGS=$(CFLAGS)
 
 
