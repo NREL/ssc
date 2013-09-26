@@ -2,13 +2,9 @@
 #ifndef __STORAGE_HX_
 #define __STORAGE_HX_
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323
-#endif
-
 #include "htf_props.h"
-
 #include <recore/lib_util.h>
+#include "sam_csp_util.h"
 
 class Storage_HX
 {

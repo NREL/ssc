@@ -50,10 +50,10 @@ bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &flui
 
 	// Geometric Calculations
 	m_a_cs	= m_vol_des/(m_h_des*m_tank_pairs_des);		//[m2] Cross-sectional area of a single tank
-	m_dia	= pow( (m_a_cs/M_PI), 0.5)*2.;				//[m] The diameter of a single tank
+	m_dia	= pow( (m_a_cs/CSP::pi), 0.5)*2.;				//[m] The diameter of a single tank
 	
 	// Calculate heat loss coefficient
-	m_ua	= m_u_des*(m_a_cs + M_PI*m_dia*m_h_des)*m_tank_pairs_des;		// u [W/m2-K]
+	m_ua	= m_u_des*(m_a_cs + CSP::pi*m_dia*m_h_des)*m_tank_pairs_des;		// u [W/m2-K]
 
 	if( is_direct )
 		m_eff_des = m_UA_des = -1.2345;
@@ -146,10 +146,10 @@ bool Storage_HX::hx_size( HTFProperties &fluid_field, HTFProperties &fluid_store
 
 	// Geometric Calculations
 	m_a_cs	= m_vol_des/(m_h_des*m_tank_pairs_des);		//[m2] Cross-sectional area of a single tank
-	m_dia	= pow( (m_a_cs/M_PI), 0.5)*2.;				//[m] The diameter of a single tank
+	m_dia	= pow( (m_a_cs/CSP::pi), 0.5)*2.;				//[m] The diameter of a single tank
 	
 	// Calculate heat loss coefficient
-	m_ua	= m_u_des*(m_a_cs + M_PI*m_dia*m_h_des)*m_tank_pairs_des;		// u [W/m2-K]
+	m_ua	= m_u_des*(m_a_cs + CSP::pi*m_dia*m_h_des)*m_tank_pairs_des;		// u [W/m2-K]
 
 	double q_trans = duty_des;					//[W] heat exchanger duty
 	double T_ave = (T_h_in_des + T_h_out_des)/2.;	//[K] Average hot side temperature
