@@ -40,7 +40,7 @@ namespace CSP
 
 	void PipeFlow(double Re, double Pr, double LoverD, double relRough, double &Nusselt, double &f);
 
-	void flow_patterns( int n_panels, int flow_type, util::matrix_t<int> & flow_pattern );
+	void flow_patterns( int n_panels, int flow_type, int & n_lines, util::matrix_t<int> & flow_pattern );
 
 	// CSP Cooling functions
 	double P_sat4(double T_celcius);

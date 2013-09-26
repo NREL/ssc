@@ -403,10 +403,10 @@ public:
 		//Get flow pattern
 		//if(.not.allocated(Flow_pattern)) allocate(Flow_pattern(N_panels))
 		//call flowPatterns(N_panels,flowtype,Flow_pattern,salt_out,nlines)
-		m_n_lines = 2;	// Need remaining flow patterns
-		m_flow_pattern.resize( m_n_lines, m_n_panels/m_n_lines );		// Try to use flow pattern in direct steam receiver
+		//m_n_lines = 2;	// Need remaining flow patterns
+		//m_flow_pattern.resize( m_n_lines, m_n_panels/m_n_lines );		// Try to use flow pattern in direct steam receiver
 		
-		CSP::flow_patterns( m_n_panels, flowtype, m_flow_pattern );
+		CSP::flow_patterns( m_n_panels, flowtype, m_n_lines, m_flow_pattern );
 		
 		// ****** Is this necessary ?!? ******************
 		// Set outputs

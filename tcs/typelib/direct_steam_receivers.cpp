@@ -88,11 +88,11 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 
 	m_comb_nodes = m_nodes/m_n_comb;	//[-] Number of nodes considering # flow paths AND number of panels to be modeled together (m_n_comb)
 
-	int n_lines = 2;
-	flow_pattern.resize( n_lines, dsg_rec.Get_n_panels()/n_lines );
+	int n_lines = 0;
+	//flow_pattern.resize( n_lines, dsg_rec.Get_n_panels()/n_lines );
 
 	// Get flow pattern
-	CSP::flow_patterns( dsg_rec.Get_n_panels(), dsg_rec.Get_flowtype(), flow_pattern );
+	CSP::flow_patterns( dsg_rec.Get_n_panels(), dsg_rec.Get_flowtype(), n_lines, flow_pattern );
 
 	/* Sorted number of independent panels in each flow path - applied when m_n_comb > 1 and panels should be modeled together
 	/ Example: For 12 panel receiver with 2 parallel flow panels:*/

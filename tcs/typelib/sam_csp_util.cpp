@@ -1099,7 +1099,7 @@ double enth_lim::check( double h_in )
 		return h_in;
 }
 
-void CSP::flow_patterns( int n_panels, int flow_type, util::matrix_t<int> & flow_pattern )
+void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matrix_t<int> & flow_pattern )
 {
 	/* !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	! This subroutine takes the number of panels, the requested flow type, and 
@@ -1107,7 +1107,6 @@ void CSP::flow_patterns( int n_panels, int flow_type, util::matrix_t<int> & flow
 	! WF passes, this code is modified from the version in Type222
 	!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 	
-	int n_lines;
 	int n_p_quarter = n_panels/4;
 
 	switch( flow_type )
@@ -1118,7 +1117,7 @@ void CSP::flow_patterns( int n_panels, int flow_type, util::matrix_t<int> & flow
 		configuration that was used for SOLAR II
 		!Example = [13,14,15,16,17,18,6,5,4,3,2,1] [12,11,10,9,8,7,19,20,21,22,23,24] */
 		n_lines = 2;
-		//flow_pattern.resize( n_lines, n_panels/n_lines );
+		flow_pattern.resize( n_lines, n_panels/n_lines );
 
 		for( int i = 0; i < n_p_quarter; i++)
 		{
@@ -1133,7 +1132,7 @@ void CSP::flow_patterns( int n_panels, int flow_type, util::matrix_t<int> & flow
 		on the 2 southmost panels, crosses over, and exits on the 2 northmost panels.
 		Example = [1,2,3,4,5,6,17,16,15,14,13,12] [24,23,22,21,20,19,18,7,8,9,10,11,12] */
 		n_lines = 2;
-		//flow_pattern.resize( n_lines, n_panels/n_lines );
+		flow_pattern.resize( n_lines, n_panels/n_lines );
 
 		for( int i = 0; i < n_p_quarter; i++)
 		{
@@ -1142,6 +1141,72 @@ void CSP::flow_patterns( int n_panels, int flow_type, util::matrix_t<int> & flow
 			flow_pattern.at( 0, n_p_quarter + i ) = 3*n_p_quarter - 1 - i;		// SW Quadrant - final half of flow path 0
 			flow_pattern.at( 1, i ) = 4*n_p_quarter - 1 - i;					// NW Quadrant - first half of flow path 1
 		}
+		return;
+	case 3:
+		/* This flow pattern has 2 separate flows that enter in 2 of the northmost panels
+		  and flow around (without crossing over), exiting at the 2 southmost panels */
+		n_lines=2;
+		flow_pattern.resize( n_lines, n_panels/n_lines );
+
+		for( int i = 0; i < n_panels/2; i++ )
+		{
+			flow_pattern.at( 0, i ) = n_panels/2 - 1 - i;
+			flow_pattern.at( 1, i ) = n_panels/2 + i;
+		}
+		return;
+	case 4:
+		/* This flow pattern has 2 separate flows that enter in 2 of the southmost panels
+			and flow around (without crossing over), exiting at the 2 northmost panels */
+		n_lines = 2;
+		flow_pattern.resize( n_lines, n_panels/n_lines );
+
+		for( int i = 0; i < n_panels/2; i++ )
+		{
+			flow_pattern.at( 0, i ) = i;
+			flow_pattern.at( 1, i ) = n_panels - 1 - i;
+		}
+		return;
+	case 5:
+		/* This flow type enters on a panel at the southmost side of the receiver,
+			travels completely around the receiver in a clockwise direction,
+			and exits again on the south side */
+		n_lines = 1;
+		flow_pattern.resize( n_lines, n_panels/n_lines );
+
+		for( int i = 0; i < n_panels; i++ )
+		{
+			flow_pattern.at( 0, i ) = i;
+		}
+		return;
+	case 6:
+		/* This flow type enters on a panel at the southmost side of the receiver,
+			travels completely around the receiver in a counter-clockwise direction,
+			and exits again on the south side */
+		n_lines = 1;
+		flow_pattern.resize( n_lines, n_panels/n_lines );
+
+		for( int i = 0; i < n_panels; i++ )
+			flow_pattern.at( 0, i ) = n_panels - 1 - i;
+		return;
+	case 7:
+		/* This flow type enters on a panel at the northmost side of the receiver,
+			travels completely around the receiver in a clockwise direction,
+			and exits again on the north side */
+		n_lines = 1;
+		flow_pattern.resize( n_lines, n_panels/n_lines );
+
+		for( int i = 0; i < n_panels; i++ )
+			flow_pattern.at( 0, i ) = n_panels/2 + i - i/(n_panels/2)*n_panels;
+		return;
+	case 8:
+		/* This flow type enters on a panel at the northmost side of the receiver,
+			travels completely around the receiver in a counter-clockwise direction,
+			and exits again on the north side */
+		n_lines = 1;
+		flow_pattern.resize( n_lines, n_panels/n_lines );
+
+		for( int i = 0; i < n_panels; i++ )
+			flow_pattern.at( 0, i ) = n_panels/2 - 1 - i + i/(n_panels/2)*n_panels;
 		return;
 	};
 	return;
