@@ -1,8 +1,8 @@
 clear();
 
 // **** Define tcs directory *******************
-tcs_dir = 'C:/Users/tneises/Documents/Projects';
-//tcs_dir = 'C:/svn_NREL/main';
+//tcs_dir = 'C:/Users/tneises/Documents/Projects/ssc';
+tcs_dir = 'C:/svn_NREL/main/ssc';
 
 debug_mode = true;
 
@@ -127,7 +127,7 @@ fossil_mode	=	1;
 I_bn_des	=	950;
 is_sh	=	1;
 is_oncethru	=	0;
-is_multgeom	=	0;
+is_multgeom	=	1;
 nModBoil	=	12;
 nModSH	=	4;
 nLoops	=	105;
@@ -652,44 +652,22 @@ opt_eff_sh_file = tcs_dir + '/tcs/typelib/Steam_Linear_Fresnel/opteff_sh.dat';
 data = read_text_file(opt_eff_sh_file);
 lines = split(data, '\n');
 nrow = #lines;
-line = split(lines[0], ',');
+line = split(lines[1], '\t');
 ncol = #line;
 opt_data = alloc(nrow, ncol);
 for(i=0; i<nrow; i++)
 {
-	line = split(lines[i], ',');
+	line = split(lines[i], '\t');
 	for(j=0; j<ncol; j++)
 	{
-		opt_data[i][j] = to_real(line[j]);
+		if (i==0 && j==ncol-1)
+			opt_data[i][j] = -999.9;
+		else
+			opt_data[i][j] = to_real(line[j]);
 	}
 }
 
 set_value(solarfield, "sh_OpticalTable", opt_data);
-
-// Set Parameters for Direct Powerblock
-set_value(powerblock, "P_ref", P_ref);
-set_value(powerblock, "eta_ref", eta_ref);
-set_value(powerblock, "T_hot_ref", T_hot_ref);
-set_value(powerblock, "T_cold_ref", T_cold_ref);
-set_value(powerblock, "dT_cw_ref", dT_cw_ref);
-set_value(powerblock, "T_amb_des", T_amb_des);
-set_value(powerblock, "q_sby_frac", q_sby_frac);
-set_value(powerblock, "P_boil_des", P_boil_ref);
-set_value(powerblock, "is_rh", is_rh);
-set_value(powerblock, "P_rh_ref", P_rh_ref);
-set_value(powerblock, "T_rh_hot_ref", T_rh_hot_ref);
-set_value(powerblock, "rh_frac_ref", rh_frac_ref);
-set_value(powerblock, "CT", CT);
-set_value(powerblock, "startup_time", startup_time);
-set_value(powerblock, "startup_frac", startup_frac);
-set_value(powerblock, "tech_type", tech_type);
-set_value(powerblock, "T_approach", T_approach);
-set_value(powerblock, "T_ITD_des", T_ITD_des);
-set_value(powerblock, "P_cond_ratio", P_cond_ratio);
-set_value(powerblock, "pb_bd_frac", pb_bd_frac);
-set_value(powerblock, "P_cond_min", P_cond_min);
-set_value(powerblock, "n_pl_inc", n_pl_inc);
-set_value(powerblock, "F_wc", [F_wc_1, F_wc_2, F_wc_3, F_wc_4, F_wc_5, F_wc_6, F_wc_7, F_wc_8, F_wc_9]);
 
 // Set Inputs for Solarfield
 set_value(solarfield, "dnifc", 0.0);				//[W/m2] - not used
@@ -715,6 +693,32 @@ connect(weather, "solzen", solarfield, "SolarZen"); //[deg] - connect to weather
 connect(powerblock, "T_cold", solarfield, "T_pb_out");	//[C] - connect to powerblock
 	set_value(solarfield, "T_pb_out", 290.0);			//[C] - initial value
 set_value(solarfield, "TOUPeriod", 4);				//[-] - don't have TOU reader yet - all are same in default LF model though
+
+
+// Set Parameters for Direct Powerblock
+set_value(powerblock, "P_ref", P_ref);
+set_value(powerblock, "eta_ref", eta_ref);
+set_value(powerblock, "T_hot_ref", T_hot_ref);
+set_value(powerblock, "T_cold_ref", T_cold_ref);
+set_value(powerblock, "dT_cw_ref", dT_cw_ref);
+set_value(powerblock, "T_amb_des", T_amb_des);
+set_value(powerblock, "q_sby_frac", q_sby_frac);
+set_value(powerblock, "P_boil_des", P_boil_ref);
+set_value(powerblock, "is_rh", is_rh);
+set_value(powerblock, "P_rh_ref", P_rh_ref);
+set_value(powerblock, "T_rh_hot_ref", T_rh_hot_ref);
+set_value(powerblock, "rh_frac_ref", rh_frac_ref);
+set_value(powerblock, "CT", CT);
+set_value(powerblock, "startup_time", startup_time);
+set_value(powerblock, "startup_frac", startup_frac);
+set_value(powerblock, "tech_type", tech_type);
+set_value(powerblock, "T_approach", T_approach);
+set_value(powerblock, "T_ITD_des", T_ITD_des);
+set_value(powerblock, "P_cond_ratio", P_cond_ratio);
+set_value(powerblock, "pb_bd_frac", pb_bd_frac);
+set_value(powerblock, "P_cond_min", P_cond_min);
+set_value(powerblock, "n_pl_inc", n_pl_inc);
+set_value(powerblock, "F_wc", [F_wc_1, F_wc_2, F_wc_3, F_wc_4, F_wc_5, F_wc_6, F_wc_7, F_wc_8, F_wc_9]);
 
 // Set Inputs for Powerblock
 connect(solarfield, "cycle_pl_control", powerblock, "mode");	//[-] connect to LF solarfield
