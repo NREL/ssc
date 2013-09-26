@@ -1284,8 +1284,8 @@ public:
 			double *data1 = new double[(n_cols -1) * (n_rows -1)];
 		
 			//get the xaxis data values
-			for(int i=1; i < n_cols; i++){
-				xax1[i-1] = m_sh_OpticalTable.at(0, i)*m_d2r;
+			for(int i=0; i < n_cols-1; i++){
+				xax1[i] = m_sh_OpticalTable.at(0, i)*m_d2r;
 			}
 			//get the yaxis data values
 			for(int j=1; j < n_rows; j++){
