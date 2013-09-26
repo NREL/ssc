@@ -1,7 +1,8 @@
 clear();
 
 // **** Define tcs directory *******************
-tcs_dir = 'C:/Users/tneises/Documents/Projects';
+tcs_dir = 'C:/Users/tneises/Documents/Projects/ssc';
+//tcs_dir = 'C:/svn_NREL/main/ssc';
 // *********************************************
 
 //********************************************************************************************
@@ -211,17 +212,17 @@ set_value( receiver, "fluxmap", arr_flux);
 
 set_value( receiver, "azimuth", 174.309 );
 set_value( receiver, "zenith", 58.0268 );
-set_value( receiver, "T_salt_hot_target", 574 ); 
-set_value( receiver, "T_salt_cold", 289.874 );
+// doesn't do anything since value is reset below. set_value( receiver, "T_salt_hot_target", 574 ); 
+// doesn't do anything since value is reset below. set_value( receiver, "T_salt_cold", 289.874 );
 set_value( receiver, "V_wind_10", 0.0 );
 set_value( receiver, "P_amb", 956.0 );
-set_value( receiver, "eta_pump", 0.85 );
+// doesn't do anything since value is reset below. set_value( receiver, "eta_pump", 0.85 );
 set_value( receiver, "T_dp", -5.65 );
 set_value( receiver, "I_bn", 941.0 );
-set_value( receiver, "field_eff", 0.535 );
+// doesn't do anything since value is reset below. set_value( receiver, "field_eff", 0.535 );
 set_value( receiver, "T_db", 10.3 );
-set_value( receiver, "night_recirc", 0 );
-set_value( receiver, "hel_stow_deploy", 8 );
+// doesn't do anything since value is reset below. set_value( receiver, "night_recirc", 0 );
+// doesn't do anything since value is reset below. set_value( receiver, "hel_stow_deploy", 8 );
 
 // Connect the Receiver inputs to other types
 night_recirc = 0.0;
@@ -246,10 +247,10 @@ set_value( receiver, "field_eff", 0.0 );
 // Set Controller Parameters
 HTF_field = 17;
 set_value(controller, "field_fluid", HTF_field); 
-set_value(controller, "field_fl_props", [0]);
+set_value(controller, "field_fl_props", [[0]]); // two pairs of brackets are necessary to set a matrix value; otherwise this code is setting an array value, and the matrix value (which will be used in the code) will still contail undefined values.
 HTF_store = 17;
 set_value(controller, "store_fluid", HTF_store);
-set_value(controller, "user_fluid", [0]);
+set_value(controller, "user_fluid", [[0]]);  // two pairs of brackets are necessary to set a matrix value; otherwise this code is setting an array value, and the matrix value (which will be used in the code) will still contail undefined values.
 set_value(controller, "tshours", 10);
 set_value(controller, "is_hx", 0);
 set_value(controller, "dt_hot", 0);
