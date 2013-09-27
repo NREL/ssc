@@ -3,6 +3,7 @@
 #include "htf_props.h"
 #include "sam_csp_util.h"
 #include "storage_hx.h"
+#include "thermocline_tes.h"
 
 using namespace std;
 
@@ -320,6 +321,7 @@ private:
 	HTFProperties field_htfProps;		// Instance of HTFProperties class for field HTF
 	HTFProperties store_htfProps;		// Instance of HTFProperties class for storage HTF
 	Storage_HX hx_storage;				// Instance of Storage_HX class for heat exchanger between storage and field HTFs
+	Thermocline_TES thermocline;
 
 	// Parameters
 	double tshours;	
@@ -373,7 +375,7 @@ private:
 	//Thermocline Parameters
 	int tc_fill;
 	double tc_void;
-	double t_dis_ou_min;
+	double t_dis_out_min;
 	double t_ch_out_max;
 	int nodes;
 	double f_tc_cold;
@@ -473,7 +475,7 @@ public:
 		//Thermocline Parameters
 		tc_fill			= -1;
 		tc_void			= std::numeric_limits<double>::quiet_NaN();
-		t_dis_ou_min	= std::numeric_limits<double>::quiet_NaN();
+		t_dis_out_min	= std::numeric_limits<double>::quiet_NaN();
 		t_ch_out_max	= std::numeric_limits<double>::quiet_NaN();
 		nodes			= -1;
 		f_tc_cold		= std::numeric_limits<double>::quiet_NaN();
@@ -633,7 +635,7 @@ public:
 		//Thermocline Parameters
 		tc_fill		= (int) value(P_tc_fill);			//[-]
 		tc_void		= value(P_tc_void);					//[-]
-		t_dis_ou_min	= value(P_t_dis_out_min);		//[C]
+		t_dis_out_min	= value(P_t_dis_out_min);		//[C]
 		t_ch_out_max	= value(P_t_ch_out_max);		//[C]
 		nodes		= (int) value(P_nodes);				//[-]
 		f_tc_cold	= value(P_f_tc_cold);				//[-]
@@ -685,6 +687,18 @@ public:
 		//*********************************************************
 
 		V_tank_active	= vol_tank*(1.-2.*h_tank_min/h_tank);	//[m3] Active tank volume.. that is, volume above the minimum fluid level and below the maximum level
+
+		if(tes_type == 2)
+		{
+			if( !thermocline.Initialize_TC( h_tank, vol_tank/h_tank, tc_fill, u_tank*3.6, u_tank*3.6, u_tank*3.6, tc_void,
+				                        1.0, t_dis_out_min, t_ch_out_max, nodes, T_tank_hot_prev - 273.15, T_tank_cold_prev - 273.15,
+										f_tc_cold, cold_tank_Thtr - 273.15, tank_max_heat, tank_pairs, store_htfProps ) )
+			{
+				message( "Thermocline initialization failed" );
+				return -1;
+			}
+
+		}
 
 		// Set the convergence coefficient
 		if(tes_type == 1.)
@@ -800,8 +814,9 @@ public:
 					m_tank_charge_avail = max(V_tank_cold_avail, 0.0)*rho_tank_cold_avg/step;		//[kg/s] Available charge mass flow rate
 				}
 				else if(tes_type==2)
-				{
-					//thermocline stuff!
+				{					
+					thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 2.0, 0.0, 0.0, f_storage, step/3600.0,
+						                     m_tank_disch_avail, Ts_hot, m_tank_charge_avail, Ts_cold );
 				}
 				//********************************************************************
 		
