@@ -4,6 +4,7 @@
 #include <numeric>
 #include <limits>
 #include <algorithm>
+#include <cmath>
 
 #include "htf_props.h"
 

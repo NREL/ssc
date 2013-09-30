@@ -1,7 +1,10 @@
 #ifndef __CSP_UTIL_
 #define __CSP_UTIL_
-
+// fix compilation errors using gcc on linux
+#include <cmath>
+#include <limits>
 #include "recore/lib_util.h"
+
 
 using namespace std;
 

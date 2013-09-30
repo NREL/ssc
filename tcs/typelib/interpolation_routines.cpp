@@ -1,8 +1,11 @@
 // Functions for interpolation routines
 #include <algorithm>
 
+#include <cmath>
+
 #include "interpolation_routines.h"
 
+using namespace std;
 using std::min;
 using std::max;
 

@@ -2,7 +2,7 @@ SSCDIR=../..
 
 CC = gcc
 CXX = g++
-CFLAGS=-I.. -I$(SSCDIR)  -Wall -g -O3
+CFLAGS=-I.. -I$(SSCDIR) -fPIC -Wall -g -O3
 CXXFLAGS=$(CFLAGS)
 
 
@@ -20,7 +20,7 @@ OBJECTS= \
 	sam_lf_st_pt_type232.o \
 	sam_mw_csp_SumCalcs.o \
 	sam_mw_gen_Type260.o \
-	sam_mw_lf_Type261_steam.o \
+	sam_mw_lf_type261_steam.o \
 	sam_mw_lf_type262_salt.o \
 	sam_mw_pt_type221.o \
 	sam_mw_pt_type222.o \
@@ -47,7 +47,8 @@ OBJECTS= \
 TARGET= typelib.dylib
 
 $(TARGET):$(OBJECTS)
-	$(CXX) -shared -o $(TARGET) $(OBJECTS) $(SSCDIR)/recore/recore.a ../waterprop/waterprop64.dylib
+	$(CXX) -shared -o $(TARGET) $(OBJECTS) ../waterprop/waterprop64.dylib
+#	$(CXX) -shared -o $(TARGET) $(OBJECTS) $(SSCDIR)/recore/recore.a ../waterprop/waterprop64.dylib
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
