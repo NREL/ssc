@@ -183,6 +183,7 @@ protected:
 	
 	/* for working with input/output/inout variables during 'compute'*/
 	const var_info &info( const std::string &name ) throw( general_error );
+	bool is_ssc_array_output( const std::string &name ) throw( general_error );
 	var_data *lookup( const std::string &name ) throw( general_error );
 	var_data *assign( const std::string &name, const var_data &value ) throw( general_error );
 	ssc_number_t *allocate( const std::string &name, size_t length ) throw( general_error );
@@ -253,6 +254,11 @@ public:
 
 #define DEFINE_MODULE_ENTRY( name, desc, ver ) \
 	static compute_module *_create_ ## name () { return new cm_ ## name; } \
+	module_entry_info cm_entry_ ## name = { \
+		#name, desc, ver, _create_ ## name }; \
+
+#define DEFINE_TCS_MODULE_ENTRY( name, desc, ver ) \
+	static compute_module *_create_ ## name () { extern tcstypeprovider TCSTP; return new cm_ ## name ( &TCSTP ); } \
 	module_entry_info cm_entry_ ## name = { \
 		#name, desc, ver, _create_ ## name }; \
 

@@ -47,7 +47,13 @@ extern module_entry_info
 	cm_entry_poacalib,
 	cm_entry_geothermalui,
 	cm_entry_wfcsvconv,
-	cm_entry_wfcsvread;
+	cm_entry_wfcsvread,
+	cm_entry_tcstrough_empirical,
+	cm_entry_tcstrough_physical,
+	cm_entry_tcsgeneric_solar,
+	cm_entry_tcsmolten_salt,
+	cm_entry_tcsdirect_steam,
+	cm_entry_tcslinear_fresnel;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -78,6 +84,12 @@ static module_entry_info *module_table[] = {
 	&cm_entry_geothermalui,
 	&cm_entry_wfcsvconv,
 	&cm_entry_wfcsvread,
+	&cm_entry_tcstrough_empirical,
+	&cm_entry_tcstrough_physical,
+	&cm_entry_tcsgeneric_solar,
+	&cm_entry_tcsmolten_salt,
+	&cm_entry_tcsdirect_steam,
+	&cm_entry_tcslinear_fresnel,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
@@ -99,7 +111,7 @@ SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 SSCEXPORT void ssc_module_free( ssc_module_t p_mod )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);
-	if (cm) delete cm;
+	if (cm) delete cm; // calls destructors for compute_module and tcskernel if a ssc-tcs technology
 }
 
 /*************************** data object manipulation ***************************/

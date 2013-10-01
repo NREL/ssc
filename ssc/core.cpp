@@ -2,14 +2,22 @@
 #include <fstream>
 
 #include "core.h"
+#include "tcskernel.h"
 
 const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-
+tcstypeprovider TCSTP;
+bool bttp_set = false;
 
 compute_module::compute_module( )
 	:  m_infomap(NULL), m_handler(NULL), m_vartab(NULL)
 {
-	/* nothing to do */
+	if ( !bttp_set ) {
+		bttp_set = true;
+		// only want to do this once - where's the correct place for this code?
+		TCSTP.add_search_path("./");
+		TCSTP.load_library("typelib");
+	}
+
 }
 
 compute_module::~compute_module()
@@ -183,6 +191,31 @@ const var_info &compute_module::info( const std::string &name ) throw( general_e
 
 	throw general_error("variable information lookup fail: '" + name + "'");
 }
+
+bool compute_module::is_ssc_array_output( const std::string &name ) throw( general_error )
+{
+	// if there is an info lookup table, use it
+	if (m_infomap != NULL)
+	{
+		unordered_map<std::string, var_info*>::iterator pos = m_infomap->find(name);
+		if (pos != m_infomap->end())
+		{
+			if ( ( ((pos->second)->var_type == SSC_OUTPUT) || ((pos->second)->var_type == SSC_INOUT) ) && (pos->second)->data_type == SSC_ARRAY )
+				return true;
+		}
+	}
+
+	// otherwise search
+	std::vector< var_info* >::iterator it;
+	for (it = m_varlist.begin(); it != m_varlist.end(); ++it)
+	{
+		if ( ( ( (*it)->var_type == SSC_OUTPUT ) || ( (*it)->var_type == SSC_INOUT ) ) && (*it)->data_type == SSC_ARRAY )
+			if ( util::lower_case((*it)->name) == util::lower_case(name) ) return true;
+	}
+
+	return false;
+}
+
 
 var_data *compute_module::lookup( const std::string &name ) throw( general_error )
 {
