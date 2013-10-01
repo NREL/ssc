@@ -1,7 +1,8 @@
 clear( );
 
 //********** Define tcs directory here *********
-tcs_dir = 'C:/Users/tneises/Documents/Projects';
+//tcs_dir = 'C:/Users/tneises/Documents/Projects';
+tcs_dir = 'C:/svn_NREL/main/ssc';
 //**********************************************
 
 debug_mode = true;

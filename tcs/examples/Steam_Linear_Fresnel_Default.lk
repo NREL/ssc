@@ -619,12 +619,12 @@ opt_eff_b_file = tcs_dir + '/tcs/typelib/Steam_Linear_Fresnel/opteff.dat';
 data = read_text_file(opt_eff_b_file);
 lines = split(data, '\n');
 nrow = #lines;
-line = split(lines[0], '	'); 	// Tab delimited
+line = split(lines[0], '\t'); 	// Tab delimited
 ncol = #line + 1;
 opt_data = alloc(nrow, ncol);
 for(i=0; i<nrow; i++)
 {
-	line = split(lines[i], '	');	// Tab delimited
+	line = split(lines[i], '\t');	// Tab delimited
 	for(j=0; j<ncol; j++)
 	{
 		if( i==0 )

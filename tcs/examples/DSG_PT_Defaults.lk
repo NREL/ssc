@@ -1,7 +1,7 @@
 clear();
 
 // **** Define tcs directory *******************
-tcs_dir = 'C:/Users/tneises/Documents/Projects';
+tcs_dir = 'C:/svn_NREL/main/ssc';
 // *********************************************
 
 //********************************************************************************************
@@ -345,7 +345,7 @@ set_value( dsg_controller, "abs_rh", abs_RH);
 set_value( dsg_controller, "mat_rh", Mat_RH);
 set_value( dsg_controller, "T_rh_out_des", T_rh_out_ref);
 set_value( dsg_controller, "cycle_max_frac", cycle_max_fraction);
-A_sf = num_helio*h_helio*w_helio*hel_dens;
+A_sf = num_helio*h_helio*w_helio*hel_dens; //5688*12*12*.97=794,499.84
 set_value( dsg_controller, "A_sf", A_sf );
 set_value( dsg_controller, "fluxmap_angles", arr_sol_pos);
 set_value( dsg_controller, "fluxmap", arr_flux);
