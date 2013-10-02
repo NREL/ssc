@@ -22,7 +22,7 @@ enet = add_unit("sam_mw_csp_SumCalcs");
 
 if(debug_mode)
 {
-	file_loc = tcs_dir + '/tcs/Conversion_Coordination/Debugging/tucson_trnsys_weather.out';
+    file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out';
 	set_value( weather, "file_name", file_loc );
 	set_value( weather, "i_hour", "TIME" );
 	set_value( weather, "i_month", "month" );
