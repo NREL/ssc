@@ -160,6 +160,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "fc_on",             "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",        "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "t_standby_reset",   "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sf_type",           "Solar field type, 1 = trough, 2 = tower",                        "-",            "",             "controller",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_type",          "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "tslogic_a",         "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "tslogic_b",         "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
@@ -518,6 +519,7 @@ public:
 		set_unit_value_ssc_double(u2, "fc_on" ); // , 0);
 		set_unit_value_ssc_double(u2, "q_sby_frac" ); // , 0.2);
 		set_unit_value_ssc_double(u2, "t_standby_reset" ); // , 2);
+		set_unit_value_ssc_double(u2, "sf_type" ); // , 1);
 		set_unit_value_ssc_double(u2, "tes_type" ); // , 1);
 		set_unit_value_ssc_array(u2, "tslogic_a" ); // , [0,0,0,0,0,0,0,0,0]);
 		set_unit_value_ssc_array(u2, "tslogic_b" ); // , [0,0,0,0,0,0,0,0,0]);
