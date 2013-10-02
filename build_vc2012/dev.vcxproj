@@ -48,7 +48,7 @@
     <ClCompile Include="..\dev\statdlg.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>dev</ProjectName>
+    <ProjectName>dev_vc2012</ProjectName>
     <ProjectGuid>{C6E66359-1F22-4C8F-AF47-0E7DB16EE825}</ProjectGuid>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
