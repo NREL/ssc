@@ -410,6 +410,7 @@ private:
 	double m_tank_hot_fin;
 	double m_tank_cold_fin;
 	int pb_on;
+	double T_pb_in;
 
 	bool hx_err_flag;
 
@@ -509,6 +510,7 @@ public:
 		T_tank_cold_fin	= std::numeric_limits<double>::quiet_NaN();
 		m_tank_hot_fin	= std::numeric_limits<double>::quiet_NaN();
 		m_tank_cold_fin = std::numeric_limits<double>::quiet_NaN();
+		T_pb_in = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_mw_trough_type251()
@@ -663,6 +665,8 @@ public:
 		double c_pb_ref = field_htfProps.Cp( (T_field_in_des + T_field_out_des)/2.0 )*1000.;		//[J/kg-K] Reference power block specific heat 
 		m_dot_pb_max = cycle_max_frac * q_pb_design/(c_pb_ref*(T_field_out_des - T_field_in_des));	//[kg/s] Maximum power block mass flow rate
     
+		T_pb_in = T_field_out_des;
+
 		// Calculate the maximum charge/discharge rates for storage  MJW 7.13.2010
 		// Charge max is either the power block max flow, or the solar multiple-1 times the design PB mass flow rate
 		if(is_hx)
@@ -748,6 +752,9 @@ public:
 		}
 		double f_storage = tselect[touperiod];				//*** Need to be sure TOU schedule is provided with starting index of 0
 
+		if( ncall == 0 )
+			T_pb_in = T_field_out_des;
+
 		// Need to fill in iteration controls once inner loops are finished
 		
 		// Calculate available mass flow and volume from hot and cold tanks
@@ -765,7 +772,7 @@ public:
 		double T_field_in;
 		
 		//*********************************************************
-		double T_pb_in = T_field_out;	// This is different than TRNSYS because of a mistake in TRNSYS
+		//double T_pb_in = T_field_out;	// This is different than TRNSYS because of a mistake in TRNSYS
 		//T_pb_in = 664.63;				// So for testing, set to the value TRNSYS uses on the first iteration when time=39
 		//*********************************************************
 
@@ -814,9 +821,16 @@ public:
 					m_tank_charge_avail = max(V_tank_cold_avail, 0.0)*rho_tank_cold_avg/step;		//[kg/s] Available charge mass flow rate
 				}
 				else if(tes_type==2)
-				{					
+				{				
+					double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8;
+					dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = -999.9;
 					thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 2.0, 0.0, 0.0, f_storage, step/3600.0,
-						                     m_tank_disch_avail, Ts_hot, m_tank_charge_avail, Ts_cold );
+						                     m_tank_disch_avail, Ts_hot, m_tank_charge_avail, Ts_cold, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8 );
+					
+					m_tank_disch_avail /= 3600.0;		//[kg/s] Estimated discharge mass flow rate
+					Ts_hot += 273.15;					//[K] Estimated discharge temperature
+					m_tank_charge_avail /= 3600.0;		//[kg/s] Estimated charge mass flow rate
+					Ts_cold += 273.15;					//[K] Estimated charge temperature
 				}
 				//********************************************************************
 		
@@ -843,8 +857,12 @@ public:
 				}
 				else	// No heat exchanger, or thermocline
 				{
-					if(tes_type==2) {}		//Thermocline
-					else if(tes_type==1)	//2-tank
+					if(tes_type==2)         // Thermocline
+					{
+						ms_disch_avail = m_tank_disch_avail;		//[kg/s] Available mass flow rate during discharge cycle
+						ms_charge_avail = m_tank_charge_avail;		//[kg/s] Available mass flow rate druing charge cycle     
+					}		
+					else if(tes_type==1)	// 2-tank
 					{
 						T_tank_hot_out	= T_tank_hot_avg_guess;		//[K]
 						T_tank_cold_out = T_tank_cold_avg_guess;	//[K]
@@ -955,10 +973,20 @@ public:
 					// If energy is coming from the field, adjust the intermediate temperature
 					if(q_int > 0.) {T_int = T_field_out;}
 
-					// Next, try to add energy from storage    
+					// Next, try to add energy from thermocline 
 					if( (ms_disch_avail>0.0)&&(tes_type==2))   
 					{
-						//thermocline stuff
+						double q_TC_demand = q_pb_demand_guess - q_int;
+
+						double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9;
+						dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = -999.9;
+						thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, q_TC_demand, 0.0, f_storage, step/3600.0,
+						                        ms_disch_avail, Ts_hot, dummy1, dummy2, qs_disch_avail, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9 );
+
+						ms_disch_avail /= 3600.0;				//[kg/s]
+						Ts_hot += 273.15;						//[K]
+
+						called_TC = true;
 					}
 					// else: 2-tank, so use qs_disch_avail
 					if((q_field_avail + qs_disch_avail) < q_pb_demand_guess) 
@@ -1044,7 +1072,19 @@ public:
 			
 					if((ms_charge_avail>0.0)&&(tes_type==2))
 					{
-						//Thermocline stuff
+						//Thermocline
+						double q_charge_demand = q_field_avail - q_pb_demand_guess;
+
+						double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9;
+						dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = -999.9;
+
+						thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, q_charge_demand, f_storage, step/3600.0,
+							                   dummy1, dummy2, ms_charge_avail, Ts_cold, qs_charge_avail, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9 );
+
+						ms_charge_avail /= 3600.0;
+						Ts_cold += 273.15;
+
+						called_TC = true;
 					}
 			
 					// Check if the excess flow can be dropped into storage
@@ -1082,7 +1122,7 @@ public:
 					bool goto_shutdown = false;
 
 					// *** What if forecasting is not "on"??
-					if(dnifc <= 0.001) goto_shutdown = true;			//goto 11		// If solar radiation is not expected (Type 215 only); alternatively, if the sun is below the horizon (Type 15 only)
+					if(dnifc <= 0.001 && fc_on) goto_shutdown = true;			//goto 11		// If solar radiation is not expected (Type 215 only); alternatively, if the sun is below the horizon (Type 15 only)
 			
 					if(t_standby_prev <= 0.0) goto_shutdown = true;	//goto 11		// If the standby time has been exhausted
 					if(qs_disch_avail + q_field_avail < q_sby) goto_shutdown = true;	//goto 11   //!If the total available energy from the field+TES is less than the standby requirement
@@ -1102,6 +1142,15 @@ public:
 			    
 								if(tes_type == 2)	// thermocline code
 								{
+									double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9, dummy10;
+									dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8, dummy9, dummy10 = -999.9;
+
+									thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, q_sby_storage, 0.0, f_storage, step/3600.0,
+										                   ms_disch, Ts_hot, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9, dummy10 );
+									ms_disch /= 3600.0;
+									Ts_hot += 273.15;
+
+									called_TC = true;
 								}
 								else	// 2-tank
 								{ms_disch = q_sby_storage / (c_htf_disch * (Ts_hot - T_pb_out));}        //[kg/s]              
@@ -1115,7 +1164,17 @@ public:
 								ms_charge	= max(m_dot_field - q_sby/(c_htf_pb*(T_pb_in - T_pb_out)), 0.0);		//[kg/s] Calculate mass flow rate that is not used by PB in
 			                
 								if(tes_type == 2)	// thermocline code
-								{ 
+								{ 									
+									double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9;
+									dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = -999.9;
+
+									thermocline.Solve_TC( T_field_out - 273.15, ms_charge*3600.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, 0.0, f_storage, step/3600.0,
+										                     dummy1, dummy2, ms_charge, Ts_cold, qs_charge_avail, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9 );
+										       
+									ms_charge /= 3600.0;
+									Ts_cold += 273.15;
+									
+									called_TC = true;
 								}
 								else	// 2-tank
 								{
@@ -1155,10 +1214,19 @@ public:
 						if((m_dot_field>0.0)&&(ms_charge_avail>0.0)&&(tes_type==2))
 						{
 							// thermocline code
+							double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9;
+							dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = -999.9;
+
+							thermocline.Solve_TC( T_field_out - 273.15, m_dot_field*3600.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, 0.0, f_storage, step/3600.0,
+								                    ms_charge_avail, Ts_cold, qs_charge_avail, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9 );
+							ms_charge_avail /= 3600.0;
+							Ts_cold += 273.15;
+
+							called_TC = true;
 						}
 						else if((ms_disch>0.0)&&(tes_type==2))
 						{
-							// thermocline code	
+							called_TC = false;	
 						}
 
 						ms_charge	= max( min(ms_charge_avail, m_dot_field), 0.0);
@@ -1390,7 +1458,15 @@ public:
 			{
 				if(tes_type==2)
 				{
+					// Set hx_eff in outputs
 					//hx_eff = 0.d0
+
+					m_tank_charge = 0.0;
+					m_tank_disch = 0.0;
+					T_tank_cold_in = T_field_in_des;
+					T_tank_hot_in = T_field_out_des;
+					T_tank_hot_out = T_field_out_des;
+					T_tank_cold_out = T_field_in_des;
 				}
 				else
 				{
@@ -1503,9 +1579,28 @@ public:
 		}
 		else	q_to_tes = 0.0;
 
-		if(tes_type == 2)
+		// If packed bed model has not yet been called, call it under "idle" conditions to find losses and temperature profile at next timestep
+		// Would like to move this to final timestep call, but then couldn't report losses and the such to printer
+		// New TRNSYS may be able to do this.....
+		if( tes_type == 2 && !called_TC )
 		{
-			// thermocline stuff
+			double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9, dummy10, dummy11, dummy12;
+			dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = dummy10 = dummy11 = dummy12 = -999.9;
+
+			thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, 0.0, f_storage, step/3600.0, 
+				                   dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9, dummy10, dummy11, dummy12 );
+
+			called_TC = true;		//[-] Packed bed model has been called during timestep
+		}
+		if( tes_type == 2 )
+		{
+			q_htr_tank_cold = thermocline.GetHeaterLoad_kJ()/(1000.0*step);		//[kJ]*(1/1000)[MJ/kJ]*[1/s] => MWe Parasitic input
+			q_htr_tank_hot = 0.0;		//[kJ] Only one tank....
+			q_loss_tank_hot = thermocline.GetHeatLosses()/(1000.0*step);		//[kJ]*(1/1000)[MJ/kJ]*[1/s] => MWt Heat losses
+			q_loss_tank_cold = 0.0;		//[MWt] Only calculate losses from 1 tank
+
+			T_tank_hot_avg = vol_tank_hot_avg = T_tank_hot_fin = m_tank_hot_fin = 0.0;
+			T_tank_cold_avg = vol_tank_cold_avg = T_tank_cold_fin = m_tank_cold_fin = 0.0;
 		}
 
 		// Set outputs
@@ -1528,7 +1623,10 @@ public:
 		value( O_m_dot_aux, (m_dot_aux*3600.0) );
 		value( O_q_aux_heat, q_aux_delivered );
 		value( O_vol_tank_total, vol_tank_hot_fin + vol_tank_cold_fin );
-		value( O_hx_eff, max(eff_charge, eff_disch) );
+		if( tes_type == 2 )
+			value( O_hx_eff, 0.0 );
+		else
+			value( O_hx_eff, max(eff_charge, eff_disch) );
 		value( O_mass_tank_hot, m_tank_hot_fin );
 		value( O_mass_tank_cold, m_tank_cold_fin );
 		value( O_mass_tank_total, m_tank_hot_fin + m_tank_cold_fin );
@@ -1573,6 +1671,12 @@ public:
 
 		//Warn if the heat exchanger performance calculations are having problems at convergence
 		if(hx_err_flag) message( "Heat exchanger performance calculations failed" );
+
+		if(time > 3600.0)
+		{
+			if( tes_type == 2 )
+				thermocline.Converged(time);
+		}
 
 		return 0;
 	}

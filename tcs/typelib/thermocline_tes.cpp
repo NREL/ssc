@@ -46,7 +46,7 @@ bool Thermocline_TES::Initialize_TC( double H_m, double A_m2, int Fill_in, doubl
 
 	m_T_prev.resize(m_nodes,1);
 	m_T_start.resize(m_nodes,1);
-	m_T_middle.resize(m_nodes,1);
+	m_T_ave.resize(m_nodes,1);
 	m_T_end.resize(m_nodes,1);
 
 	// Define initial thermocline array based on initial hot and cold temperatures and cold fraction
@@ -63,10 +63,10 @@ bool Thermocline_TES::Initialize_TC( double H_m, double A_m2, int Fill_in, doubl
 	}
 
 	// Determine the average rockbed temperature
-	m_T_ave_prev = 0.0;
+	m_T_final_ave_prev = 0.0;
 	for( int i = 0; i < m_nodes; i++ )
-		m_T_ave_prev += m_T_prev.at(i,0);
-	m_T_ave_prev /= m_nodes;
+		m_T_final_ave_prev += m_T_prev.at(i,0);
+	m_T_final_ave_prev /= m_nodes;
 
 	if( !fillProps.Set_TC_Material( Fill ) )
 		return false;		// Invalid fill material number
@@ -102,7 +102,9 @@ bool Thermocline_TES::Initialize_TC( double H_m, double A_m2, int Fill_in, doubl
 
 bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_cold_in_C, double flow_c_kghr, double T_env_C, int mode_in,
 		              double Q_dis_target_W, double Q_cha_target_W, double f_storage_in, double time_hr,
-					  double & m_dis_avail_tot, double & T_dis_avail, double & m_ch_avail_tot, double & T_ch_avail )
+					  double & m_dis_avail_tot, double & T_dis_avail_C, double & m_ch_avail_tot, double & T_ch_avail_C,
+					  double & Q_dot_out_W, double & Q_dot_losses, double & T_hot_bed_C, double & T_cold_bed_C, double & T_max_bed_C,
+					  double & f_hot, double & f_cold, double & Q_dot_htr_kJ)
 {
 
 	double T_hot = T_hot_in_C;					//[C] Temperature into the top of the tank (charging)
@@ -112,13 +114,13 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	double T_env = T_env_C;						//[C] Environmental temperature
 	int mode = mode_in;							//[-] Flag for whether call is to check availability (=2 then only check availability)
 	double Q_dis_target = Q_dis_target_W/m_tank_pairs;	//[W] Discharge rate required by controller
-	double Q_cha_target = Q_dis_target_W/m_tank_pairs;  //[W] Charge rate required by controller
+	double Q_cha_target = Q_cha_target_W/m_tank_pairs;  //[W] Charge rate required by controller
 	double f_storage = f_storage_in;			//[-] Storage dispatch for timestep
 	double delt = time_hr;
 
 	// Reset beginning and middle TC node temperatures to previous timestep final values
 	m_T_start = m_T_prev;
-	m_T_middle = m_T_prev;
+	m_T_ave = m_T_prev;
 	m_T_end = m_T_prev;
 
 	int I_flow = -1;
@@ -245,9 +247,9 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	if( mode == 2 )
 	{
 		m_dis_avail_tot = m_disch_avail * m_tank_pairs;
-		T_dis_avail = m_T_start.at(0,0);
+		T_dis_avail_C = m_T_start.at(0,0);
 		m_ch_avail_tot = m_charge_avail * m_tank_pairs;
-		T_ch_avail = m_T_start.at(m_nodes-1,0);
+		T_ch_avail_C = m_T_start.at(m_nodes-1,0);
 		return true;
 	}
 	
@@ -262,7 +264,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	}
 	else if( I_flow == 2 )
 		m_dot = min( Q_dis_target, Qd_fill ) / (m_cp_a*max( Thtemp - T_cold, 1.0 ))*3.6;		//[kg/hr]
-	else if( I_flow == 3 )
+	else if( I_flow == 1 )
 		m_dot = min( Q_cha_target, Qc_fill ) / (m_cp_a*max( T_hot - Tctemp, 1.0 ))*3.6;			//[kg/hr]
 
 	
@@ -281,16 +283,23 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	bool lowflag = false;         //[-] Flag signaling that lower limit on mass flow has been found with a corresponding 'diff_q_target'
 	bool mdot_iter = false;       //[-] Flag signaling that allow a mass flow rate was specified, it must be iterated on (when = true)
 	
-	double q_tol = 0.01;          //[-] Relative tolerance for energy rate in/out
-	double t_tol = 3.0;			  //[C] Absolute tolerance for packed bed filling/depletion limits
+	double q_tol = 0.0001;          //[-] Relative tolerance for energy rate in/out
+	double t_tol = 0.050;			  //[C] Absolute tolerance for packed bed filling/depletion limits
 
 	double y_upper = std::numeric_limits<double>::quiet_NaN();
 	double y_lower = std::numeric_limits<double>::quiet_NaN();
+	double q_calc = std::numeric_limits<double>::quiet_NaN();
+
+	bool full;
+	int num_TC = -1;
+
+	double T_disch_avail = std::numeric_limits<double>::quiet_NaN();
+	double T_charge_avail = std::numeric_limits<double>::quiet_NaN();
 
 	while( (abs(diff_q_target)>q_tol || TC_limit != 0) && q_iter < 40 )
 	{
 		q_iter++;		//[-] Increase iteration counter
-		bool full = true;	//[-] Reset target energy flag
+		full = true;	//[-] Reset target energy flag
 
 		// After first run, begin to iterate on mass flow rate
 		if( q_iter > 1 )
@@ -373,336 +382,393 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		double tau = (0.632)*(m_cap/m_nodes) / max(flh,flc);		//[kJ/kg]*[hr-K/kJ] => hr
 		double TC_timestep = tau;		//[hr]
 
+		num_TC = -1;
 		// If calculated timestep is less than calling method timestep, adjust it so tht there is a whole number of TC timesteps
+		if( TC_timestep < delt )
+		{
+			// Okay, so if the simulation timestep is not divisible by the thermocline timestep then we need to adjust the TC timestep so it is.  Lower TC timestep to accomplish this
+			if( delt - (int)(delt/TC_timestep)*TC_timestep != 0.0 )
+				num_TC = ceil(delt/TC_timestep);		//[-] Number of thermocline timesteps per simulation timestep
+			else
+				num_TC = delt/TC_timestep;				//[-]
+
+			num_TC = min( m_num_TC_max, num_TC );
+			TC_timestep = delt / (double) num_TC;		//[hr] Corrected timestep (such that the number of TC timesteps in a sim timestep is an integer) at which to evaluate thermocline
+		}
+		else
+		{
+			num_TC = 1;				//[-]
+			TC_timestep = delt;		//[hr]
+		}
+
+		// Reset start, middle, and end temperature arrays to initial timestep values
+		m_T_start = m_T_prev;
+		m_T_ave = m_T_prev;
+		m_T_end = m_T_prev;
+
+		m_T_ts_ave.resize_fill( num_TC, 1, 0.0 );
+		m_Q_losses.resize_fill( num_TC, 1, 0.0 );
+		m_Q_htr.resize_fill( num_TC, 1, 0.0 );
+		m_T_cout_ave.resize_fill( num_TC, 1, 0.0 );
+		m_T_hout_ave.resize_fill( num_TC, 1, 0.0 );
+
+
+		// Okay, add outer loop for number of thermocline timesteps in a simulation timestep
+		for( int tcn = 0; tcn < num_TC; tcn++ )
+		{
+			// Set convergence parameters for current run of packed bed simulation
+			int iter = 0;				//[-]
+			double max_T_diff = 999.9;	//[-]
+
+			// Set coefficients for analytical solutions of individual nodes
+			while( iter < 30 && max_T_diff > m_tol_TC )
+			{
+				iter++;
+
+				m_T_ts_ave.at(tcn,0) = 0.0;		//[C] Array storing average packed bed temperature at each timestep
+				m_Q_losses.at(tcn,0) = 0.0;		//[kJ/hr] Array storing summed rate of heat loss at each timestep
+
+				max_T_diff = 0.0;		// Reset
+												
+				for( int j = 0; j < m_nodes; j++ )
+				{
+					double aa = std::numeric_limits<double>::quiet_NaN();
+					double bb = std::numeric_limits<double>::quiet_NaN();
+					double UA_hl = std::numeric_limits<double>::quiet_NaN();
+					int i = -1;
+
+					if( I_flow == 1 )	// Charging
+					{
+						i = j;
+						if( i == 0 )	// Top (hot) node 
+						{
+							aa = -(flh+m_UA+m_UA_top+m_ef_cond)/m_cap_node;
+							bb = (flh*T_hot+(m_UA+m_UA_top)*T_env+m_ef_cond*m_T_ave.at(i+1,0))/m_cap_node;
+							UA_hl = m_UA + m_UA_top;
+						}
+						else if( i == m_nodes - 1 )	// Bottom (cold) node
+						{
+							aa = -(flh+m_UA+m_UA_bot+m_ef_cond)/(m_cap_node*m_capfac);
+							bb = (flh*m_T_ave.at(i-1,0)+(m_UA+m_UA_bot)*T_env+m_ef_cond*m_T_ave.at(i-1,0))/(m_cap_node*m_capfac);
+							UA_hl = m_UA + m_UA_bot;
+						}
+						else	// Middle nodes
+						{
+							aa = -(flh+m_UA+2.0*m_ef_cond)/m_cap_node;
+							bb = (flh*m_T_ave.at(i-1,0)+m_UA*T_env+m_ef_cond*(m_T_ave.at(i-1,0)+m_T_ave.at(i+1,0)))/m_cap_node;
+							UA_hl = m_UA;
+						}
+					}
+					else   // Dischargning
+					{
+						i = m_nodes - 1 - j;
+						if( i == 0 )	// Top (hot) node
+						{
+							aa = -(flc+m_UA+m_UA_top+m_ef_cond)/m_cap_node;
+							bb = (flc*m_T_ave.at(i+1,0)+(m_UA+m_UA_top)*T_env+m_ef_cond*m_T_ave.at(i+1,0))/m_cap_node;
+							UA_hl = m_UA + m_UA_top;
+							
+						}
+						else if( i == m_nodes - 1 )	// Bottom (cold) node
+						{
+							aa = -(flc+m_UA+m_UA_bot+m_ef_cond)/(m_cap_node*m_capfac);
+							bb = (flc*T_cold+(m_UA+m_UA_bot)*T_env+m_ef_cond*m_T_ave.at(i-1,0))/(m_cap_node*m_capfac);
+							UA_hl = m_UA + m_UA_bot;
+						}
+						else	// Middle nodes
+						{
+							aa = -(flc+m_UA+2.0*m_ef_cond)/m_cap_node;
+							bb = (flc*m_T_ave.at(i+1,0)+m_UA*T_env+m_ef_cond*(m_T_ave.at(i+1,0)+m_T_ave.at(i-1,0)))/m_cap_node;
+							UA_hl = m_UA;
+						}
+					}
+					double T_node_initial = m_T_start.at(i,0);
+					// Solve analytical solution
+					double T_final;
+					double T_average;
+					if( aa != 0 )
+					{
+						T_final = (T_node_initial+bb/aa)*exp(aa*TC_timestep) - bb/aa;
+						T_average = (T_node_initial+bb/aa)/aa/TC_timestep*(exp(aa*TC_timestep)-1.0) - bb/aa;
+					}
+					else
+					{
+						T_final = bb*TC_timestep + T_node_initial;
+						T_average = (T_final + T_node_initial)/2.0;
+					}
+
+					// If final node temperature is below cold limit, then apply heater
+					double Q_htr_max = std::numeric_limits<double>::quiet_NaN();
+					if( T_final < m_T_htr_set )
+					{
+						Q_htr_max = m_tank_max_heat*1000.0*TC_timestep*3600.0;	//[MW]*1000(kJ/MJ)*dt(hr)*3600(s/hr)=>kg  Maximum heat rate of tank heater
+
+						// If heat has capacity to increase node temperature to setpoint
+						if( m_Q_htr.at(tcn,0) + m_cap_node*(m_T_htr_set - T_final) < m_tank_max_heat )
+						{
+							m_Q_htr.at(tcn,0) = m_Q_htr.at(tcn,0) + m_cap_node*(m_T_htr_set - T_final);		//[kJ]   Thermal energy required by heater to maintain cold limit in tank
+							T_final = m_T_htr_set;		//[C] Node hits setpoint
+						}
+						else	// If the heater does not have capacity
+						{
+							T_final = (m_tank_max_heat - m_Q_htr.at(tcn,0))/m_cap_node + T_final;
+						}
+					}
+
+					m_T_end.at(i,0) = T_final;
+					max_T_diff = max( max_T_diff, abs( m_T_ave.at(i,0) - T_average ) );		//[C] Difference between old average node temp and new average node temp
+					m_T_ave.at(i,0) = T_average;											//[C] Update guess on average node temp now that difference is calculated
+					m_T_ts_ave.at(tcn,0) += T_average;										//[C] Add average node temps
+					m_Q_losses.at(tcn,0) += UA_hl*(T_average - T_env);						//[kJ/hr-K]*[K] -> [kJ/hr] Heat loss
+				}	// End step through thermocline nodes
+
+				m_T_ts_ave.at(tcn,0) /= (double) m_nodes;				//[C] Spatial average of nodal time averaged temps
+				max_T_diff /= 290.0;									//[-] Max nodal relative temperature difference
+
+			}	// End iteration on average (time) nodal temperatures
+
+			m_T_cout_ave.at(tcn,0) = m_T_ave.at(m_nodes - 1,0);
+			m_T_hout_ave.at(tcn,0) = m_T_ave.at(0,0);
+
+			// After timestep has solved, set initial nodes of next timestep to end nodes of current timestep
+			m_T_start = m_T_end;
+		}
+
+		// Determine average rockbed temperatures and average derivatives
+		m_T_final_ave = 0.0;
+		for( int i = 0; i < m_nodes; i++ )
+			m_T_final_ave += m_T_end.at(i,0);
+		m_T_final_ave /= m_nodes;					//[C] Spatial average of temps at end of final timestep
+
+		// TN: Average rockbed temp is now the average (sub timesteps in simulation) of averages (nodal in each sub timestep) of averages ( time based in each timestep )
+		double T_ave = 0.0;
+		for( int i = 0; i < num_TC; i++ )
+			T_ave += m_T_ts_ave.at(i,0);
+		T_ave /= (double)num_TC;
+		// *************************************************
+
+		// TN: Outlet temperature to pass should be average (sub timesteps in simulation) of averages (time based in each sub timestep)
+		T_disch_avail = 0.0;
+		T_charge_avail = 0.0;
+		for( int i = 0; i < num_TC; i++ )
+		{
+			T_disch_avail += m_T_hout_ave.at(i,0);
+			T_charge_avail += m_T_cout_ave.at(i,0);
+		}
+		T_disch_avail /= (double)num_TC;		//[C] Time-averaged discharging OUTLET temperature (this is a CONFUSING name)
+		T_charge_avail /= (double)num_TC;		//[C] Time-averaged charging OUTLET temperature (this is a CONFUSING name)
+
+		double diff_Tcmax = std::numeric_limits<double>::quiet_NaN();
+		double diff_Thmin = std::numeric_limits<double>::quiet_NaN();
+		// Check if tank has been over-(dis)charged with current mass flow rate
+		if( I_flow == 1 )	// Charging, so look for min cold temp hotter than allowed
+			diff_Tcmax = m_T_end.at(m_nodes-1,0) - m_Tcmax;
+		else if( I_flow == 2 )	// Discharging, so look for max hot temp cooled than allowed
+			diff_Thmin = m_T_end.at(ChargeNodes,0) - m_Thmin;
+
+		TC_limit = 0;		// Reset Flag
+
+		// If solving thermocline for specified mass flow rate:
+		if( know_mdot )
+		{
+			full = false;
+
+			// Charging, specified mass flow rate
+			if( I_flow == 1 )
+			{
+				q_calc = m_dot*m_cp_a*(T_hot - T_charge_avail)/3.6;		//[W] Calculate rate of energy change
+
+				// If specified mass flow caused over-charging and thus iteration:
+				if( mdot_iter )
+				{
+					// If within tolerance on max cold temperature then get out
+					if( diff_Tcmax > -t_tol && diff_Tcmax <= 0.0 )
+					{
+						// Set convergence criteria to 0 to get out
+						diff_q_target = 0.0;
+						TC_limit = 0;
+					}
+					else if( diff_Tcmax > 0.0 )		// If min cold temp is greater than allowed:
+					{
+						TC_limit = 1;		//[-] Flag noting that upper limit on mass flow should be set
+					}
+					else		// Else, if tank is not "close enough" to being fully charged:
+					{  
+						TC_limit = 2;		//[-] Flag noting that lower limit on mass flow should be set
+					}
+				}
+				else	// If first iteration for a specified mass flow rate
+				{
+					// If tank does NOT overcharge, then get out
+					if( diff_Tcmax <= 0.0 )
+					{
+						// Set convergence criteria to 0 to get out
+						diff_q_target = 0.0;
+						TC_limit = 0;
+					}
+					else	// Else, know that mass flow rate is too high
+					{
+						mdot_iter = true;		//[-] Flag noting that correct mass flow rate must be found via iteration
+						TC_limit = 1;			//[-] Flag noting that upper limit on mass flow should be set
+					}
+				}
+			}
+			else	// Discharging, specified mass flow rate
+			{
+				q_calc = m_dot*m_cp_a*(T_disch_avail - T_cold)/3.6;	//[W] Calculated rate of energy discharge
+
+				// If specified mass flow caused over-charging and thus iteration:
+				if( mdot_iter ) 
+				{
+					// If within tolerance on min hot temperature then get out
+					if( diff_Thmin >= 0.0 && diff_Thmin < t_tol )
+					{
+						// Set convergence criteria to 0 to get out
+						diff_q_target = 0.0;
+						TC_limit = 0;
+					}
+					else if( diff_Thmin < 0.0 )
+					{
+						TC_limit = 1;		//[-] Flag noting that upper limit on mass flow should be set
+					}
+					else
+					{
+						TC_limit = 2;		//[-] Flag noting that lower limit on mass flow should be set
+					}
+				}
+				else
+				{
+					// If tank does NOT over-discharge, then get out
+					if( diff_Thmin >= 0.0 )
+					{
+						// Set convergence criteria to 0 to get out
+						diff_q_target = 0.0;
+						TC_limit = 0;
+					}
+					else	// Else, know that mass flow rate is too high
+					{
+						mdot_iter = true;		//[-] Flag noting that correct mass flow rate must be found through iteration
+						TC_limit = 1;			//[-] Flag noting that upper limit on mass flow should be set
+					}
+				}
+			}
+		}
+		else if( q_target == 0.0 )		// Only calling model to calculate new thermocline (dwelling, so still need to calculate losses and conduction), get out
+		{
+			// Set convergence criteria to 0 to get out
+			diff_q_target = 0.0;
+			TC_limit = 0;
+		}
+		else if( I_flow == 1 )		// Solving thermocline for specified charging energy
+		{
+			q_calc = m_dot*m_cp_a*(T_hot - T_charge_avail)/3.6;		//[kg/hr]*[kJ/kg-K]*[K]*(1000)[J/kJ]*(1/3600)[hr/s]->[W] Calculated rate of energy charge  
+
+			// If not removing enough energy and "close enough (but not going over)" to completely filling tank, then get out
+			if( q_calc < q_target && diff_Tcmax > -t_tol && diff_Tcmax <= 0.0 )
+			{
+				// Set convergence criteria to 0 to get out
+				diff_q_target = 0.0;		//[W]
+				TC_limit = 0;				//[-]
+				full = false;				//[-] Note that code did not result in target energy rate
+			}
+			else if( diff_Tcmax > 0.0 )		// Over-charging tank, flag to indicate mass flow is too high
+				TC_limit = 1;
+			else				// Not over-charging tank -> compare calculated to target
+				diff_q_target = (q_calc - q_target)/q_target;		//[W] Relative difference between calculated and required rate of energy
+		}
+		else	// Solving thermocline for specified discharging energy
+		{
+			q_calc = m_dot*m_cp_a*(T_disch_avail - T_cold)/3.6;	//[kg/hr]*[kJ/kg-K]*K*[W/kW][hr/s]=>[W]: Calculated rate of energy discharge
+
+			// If not getting enough energy and "close enough (but not going over)" to depleting tank, then get out
+			if( q_calc < q_target && diff_Thmin < t_tol && diff_Thmin >= 0.0 )
+			{
+				// Set convergence criteria to 0 to get out
+				diff_q_target = 0.0;		//[W]
+				TC_limit = 0;				//[-]
+				full = false;				//[-] Note that code did not result in target energy rate
+			}
+			else if( diff_Thmin < 0.0 )		// Over-discharing tank, flag to indicate mass flow is too high
+				TC_limit = 1;
+			else				// Not over-discharging tank -> compare calculated to target
+				diff_q_target = (q_calc - q_target)/q_target;	//[W] Relative difference between calculated and required rate of energy
+		}
+	}	// End of iteration on mass flow rate
+
+	if( q_iter == 40 && ( abs(diff_q_target) > q_tol || TC_limit != 0 ) )
+		full = false;
+
+	if( full )		// If within tolerance on target energy rate, then set to target => this is beneficial to the solver (Type 251)
+		q_calc = q_target;	//[W]
+
+	// Calculate some important outputs
+	double Q_losses_sum = 0.0;
+	for( int i = 0; i < num_TC; i++ )
+		Q_losses_sum += m_Q_losses.at(i,0);
+	double Q_loss_total = Q_losses_sum*delt/num_TC;
+
+	double q_charge = std::numeric_limits<double>::quiet_NaN();
+	double q_discharge = std::numeric_limits<double>::quiet_NaN();
+	double q_stored = std::numeric_limits<double>::quiet_NaN();
+	double q_error = std::numeric_limits<double>::quiet_NaN();
+	if( I_flow == 1)	// Charging
+	{
+		m_charge_avail = m_dot;		//[kg/hr]
+
+		// Energy Balance Calculations
+		q_charge = delt*m_dot*m_cp_a*(T_hot - T_charge_avail);		//[hr]*[kg/hr]*[kJ/kg-K]*[K]->[kJ] 
+		q_stored = m_cap*(m_T_final_ave - m_T_final_ave_prev);		//[kJ/K]*[K]->[kJ]
+		//[-] Relative difference. Scale by m_dot such that the losses don't create huge errors on timesteps with no mass flow rate
+		q_error = (q_charge - q_stored - Q_loss_total)/max(0.01,abs(q_stored));
+	}
+	else	// Discharging
+	{
+		m_disch_avail = m_dot;		//[kg/hr]
+
+		// Energy balance calculations
+		q_discharge = delt*m_dot*m_cp_a*(T_disch_avail - T_cold);		//[hr]*[kg/hr]*[kJ/kg-K]*[K]->[kJ]
+		q_stored = m_cap*(m_T_final_ave - m_T_final_ave_prev);			//[kJ/K]*[K]->[kJ]
+		q_error = (-q_stored - q_discharge - Q_loss_total)/max(0.01,abs(q_stored));
 	}
 
+	double Q_htr_total = 0.0;
+	for( int i = 0; i < num_TC; i++ )
+		Q_htr_total += m_Q_htr.at(i,0);		//[kJ] Total energy required by heater during timestep
 
+	m_dis_avail_tot = m_disch_avail * m_tank_pairs;		//[kg/hr]
+	T_dis_avail_C = T_disch_avail;						//[C] Discharge temp (HOT)
+	m_ch_avail_tot = m_charge_avail * m_tank_pairs;		//[kg/hr]
+	T_ch_avail_C = T_charge_avail;						//[C] Charge temp (COLD)
+	Q_dot_out_W = q_calc*m_tank_pairs;					//[W] Thermal power out of thermocline
+	Q_dot_losses = Q_loss_total*m_tank_pairs;			//[kJ] Heat losses
+	T_hot_bed_C = m_T_end.at(0,0);						//[C] Final temperature at hot node
+	T_cold_bed_C = m_T_end.at(m_nodes-1,0);				//[C] Final temperature at cold node
+	
+	double T_max_bed = 0.0;
+	for( int i = 0; i < m_nodes; i++ )
+		T_max_bed = max( T_max_bed, m_T_end.at(i,0) );
+	T_max_bed_C = T_max_bed;
 
-/*
-DO WHILE( ((abs(diff_q_target)>q_tol).or.(TC_limit/=0)) .and. (q_iter < 40) )
+	// Reset counters
+	ihlim = 0;
+	iclim = 0;
 
-    !If calculated timestep is less than TRNSYS timestep, adjust it so that there is a whole number of TC timesteps every TRNSYS timestep
-    IF(TC_timestep < DELT)THEN
-        !Okay, so if the simulation timestep is not divisible by the thermocline timestep then we need to adjust the TC timestep so it is.  Lower TC timestep to accomplish this
-        IF( (DELT - INT(DELT/TC_timestep)*TC_timestep) /= 0.d0 )THEN
-        !IF( mod(DELT,TC_timestep) /= 0)THEN
-            num_TC = jfix(DELT/TC_timestep) + 1     ![-] Number of thermocline timesteps per simulation timestep
-        ELSE
-            num_TC = DELT/TC_timestep               ![-]
-        ENDIF
+	for( int i = 0; i < m_nodes; i++ )
+	{
+		// Find the last node where the HTF temperature is above the hot side limit
+		if( m_T_end.at(i,0) > m_T_hot_in_min )
+			ihlim = i;
+		if( m_T_end.at( m_nodes-1-i, 0 ) < m_T_cold_in_max )
+			iclim = i;
+	}
 
-        num_TC = min(num_TC_max, num_TC)
-        TC_timestep = DELT / dble(num_TC)           ![hr] Corrected timestep (such that the number of TC timesteps in a sim timesteps is an integer) at which to evaluate thermocline 
-        
-    ELSE        !If calculated timestep is greater than TRNSYS timestep - Maximum TC timestep is the simulation timestep
+	f_hot = (double) (ihlim+1)/ (double) m_nodes;				//[-] Fraction of depth at which hot temperature decreases below minimum hot temperature limit
+	f_cold = (double) (m_nodes - iclim - 1) / (double) m_nodes;		//[-] Fraction of depth at which cold temperature increases above maximum cold temperature limit
+	Q_dot_htr_kJ = Q_htr_total*m_tank_pairs;					//[kJ] Total energy required by heater to keep tank above minimum cold temperature
 
-        num_TC = 1                  ![-] 
-        TC_timestep = DELT          ![hr]
-        
-    ENDIF
-
-    !Reset beginning, average, and end arrays to initial values
-    StoreTransfer(1:Nodes) = StoreTransfer0(:)
-    StoreTransfer(Nodes+1:2*Nodes) = StoreTransfer0(:)
-    StoreTransfer(2*Nodes+1:3*Nodes) = StoreTransfer0(:)
-    
-    T_ts_ave(:) = 0.d0          ![C] Array storing average packed bed temperature at each timestep
-    Q_losses(:) = 0.d0          ![kJ/hr] Array storing summed rate of heat loss at each timestep
-    Q_htr(:)    = 0.d0          ![kJ] Array storing summed (nodal) thermal energy required by heater
-
-    !Okay, add outer loop for number of thermocline timesteps in a simulation timestep
-    DO tcn = 1,num_TC
-
-        !Set convergence parameters for current run of packed bed simulation
-        iter = 0                ![-]
-        max_T_diff = 999.d0     ![-]
-    
-        ! SET COEFFICIENTS FOR ANALYTICAL SOLUTIONS OF INDIVIDUAL NODES
-        !0.0005d0
-        DO WHILE((iter < 30).and.(max_T_diff > tol_TC))
-
-            iter = iter + 1     ![-] Increase iteration counter
-            
-            T_ts_ave(tcn) = 0.d0          ![C] Array storing average packed bed temperature at each timestep
-            Q_losses(tcn) = 0.d0          ![kJ/hr] Array storing summed rate of heat loss at each timestep
-            
-            !This is only here for debugging........
-            !IF(iter == 30) THEN
-            !    continue
-            !ENDIF
-
-            !Orginal Type504 code to step through thermocline nodes           
-            DO J = 1,NODES
-                GO TO (100,150) ,IFLOW
-
-                ! FLOW IS DOWNWARD
-                100 continue
-                K = J
-                IF(K > 1) GO TO 110
-
-                !TOP NODE
-                ! gjk ADD UATOP TO AA and BB
-                AA = -(FLH+UA+UATOP+EFCOND)/CAPN
-                BB = (FLH*THOT+(UA+UATOP)*TENV+EFCOND*StoreTransfer(2*NODES+2))/CAPN
-                UA_HL = UA + UATOP      !3/6/12, TN: Keep UA term at every node so losses can be calculated once T_avg is known
-                GO TO 200
-                110 continue
-                IF(K < NODES) GO TO 120
-
-                !BOTTOM NODE
-                ! gjk ADD UABOT TO AA and BB
-                ! increase capacitance of bottom node BY CAPFAC
-                AA = -(FLH+UA+UABOT+EFCOND)/(CAPN*CAPFAC)
-                BB = (FLH*StoreTransfer(3*NODES-1)+(UA+UABOT)*TENV+EFCOND*StoreTransfer(3*NODES-1))/(CAPN*CAPFAC)
-                UA_HL = UA + UABOT      !3/6/12, TN: Keep UA term at every node so losses can be calculated once T_avg is known
-                GO TO 200
-
-                !MIDDLE NODES
-                120 continue
-                AA = -(FLH+UA+2.d0*EFCOND)/CAPN
-                BB = (FLH*StoreTransfer(2*NODES+K-1)+UA*TENV+EFCOND*(StoreTransfer(2*NODES+K-1)+StoreTransfer(2*NODES+K+1)))/CAPN
-                UA_HL = UA                 !3/6/12, TN: Keep UA term at every node so losses can be calculated once T_avg is known
-                GO TO 200
-
-                !FLOW IS UPWARD
-                150 continue
-                K = NODES - J + 1
-                IF(K < NODES) GO TO 160
-
-                !BOTTOM NODE
-                ! gjk ADD UABOT TO AA and BB
-                ! increase capacitance of bottom node BY CAPFAC
-                AA = -(FLC+UA+UABOT+EFCOND)/(CAPN*CAPFAC)
-                BB = (FLC*TCOLD+(UA+UABOT)*TENV+EFCOND*StoreTransfer(3*NODES-1))/(CAPN*CAPFAC)
-                UA_HL = UA + UABOT          !3/6/12, TN: Keep UA term at every node so losses can be calculated once T_avg is known
-                GO TO 200
-                160 continue
-                IF(K > 1) GO TO 170
-
-                !TOP NODE
-                ! gjk add UATOP TO AA and BB
-                AA = -(FLC+UA+UATOP+EFCOND)/CAPN
-                BB =  (FLC*StoreTransfer(2*NODES+2)+(UA+UATOP)*TENV+EFCOND*StoreTransfer(2*NODES+2))/CAPN
-                UA_HL = UA + UATOP      !3/6/12, TN: Keep UA term at every node so losses can be calculated once T_avg is known
-                GO TO 200
-
-                !MIDDLE NODES
-                170 continue
-                AA = -(FLC+UA+2.d0*EFCOND)/CAPN
-                BB = (FLC*StoreTransfer(2*NODES+K+1)+UA*TENV+EFCOND*(StoreTransfer(2*NODES+K+1)+StoreTransfer(2*NODES+K-1)))/CAPN
-                UA_HL = UA              !3/6/12, TN: Keep UA term at every node so losses can be calculated once T_avg is known
-
-                !ANALYTICAL SOLUTION
-                200 continue
-                TI = StoreTransfer(K)
-                CALL DIFF_EQ_SUBTS(TIME,TC_timestep,AA,BB,TI,TF,TBAR)
-                
-                !If final node temperature is below cold limit, then apply heater
-                IF(TF < T_htr_set)THEN
-                    Q_htr_max = tank_max_heat*1000.d0*TC_timestep*3600.d0   ![MW]*1000(kJ/MJ)*dt(hr)*3600(s/hr)=>kg  Maximum heat rate of tank heater
-                    
-                    !IF heat has capacity to increase node temperature to setpoint
-                    IF( (Q_htr(tcn) + (CAPN*(T_htr_set - TF))) < tank_max_heat )THEN
-                        Q_htr(tcn) = (Q_htr(tcn) + (CAPN*(T_htr_set - TF)))   ![kJ]   Thermal energy required by heater to maintain cold limit in tank
-                        TF = T_htr_set  ![C] Node hits setpoint
-                    
-                    !If heater does not have capacity
-                    ELSE
-                        !Q_htr_node = tank_max_heat - Q_htr(tcn)
-                        !CAPN*(TF_new - TF) = Q_htr_node
-                        !TF_new = Q_htr_node / CAPN + TF
-                        
-                        TF = (tank_max_heat - Q_htr(tcn))/CAPN + TF     ![C] Node does not hit setpoint
-                    ENDIF
-                ENDIF
-                
-                StoreTransfer(NODES+K) = TF
-                !250 continue
-                Diff_T_ave(K) = abs(StoreTransfer(2*NODES+K) - TBAR)    ![C] Difference between old average node temp and new average node temp
-                StoreTransfer(2*NODES+K) = TBAR                         ![C] Update guess on average node temp now that difference is calculated
-                T_ts_ave(tcn) = T_ts_ave(tcn) + TBAR                    ![C] Add average node temps
-                Q_losses(tcn) = Q_losses(tcn) + UA_HL * (TBAR - TENV)   ![kJ/hr-K]*[K] -> [kJ/hr] Heat loss
-            ENDDO       !End step through thermocline
-
-            T_ts_ave(tcn) = T_ts_ave(tcn)/dble(Nodes)                   ![C] Spatial average of nodal time averaged temps
-            max_T_diff = maxval(Diff_T_ave)/290.d0                      ![-] Max nodal relative temperature difference
-
-        ENDDO       !End iteration on average (time) nodal temperatures
-        
-        T_cout_ave(tcn) = StoreTransfer(3*Nodes)    ![C] Store the average cold outlet temperature of each sub timestep
-        T_hout_ave(tcn) = StoreTransfer(2*Nodes+1)  ![C] Store the average hot outlet temperature of each sub timestep
-        
-        !Check here for over(dis)charge?  Could save time when solving for correct mass flow rate
-        
-        !After timestep has solved, set initial nodes of next timestep to end nodes of current timestep
-        StoreTransfer(1:NODES) = StoreTransfer(NODES+1:2*NODES)
-        
-    ENDDO
-
-    ! DETERMINE AVERAGE ROCKBED TEMPERATURES AND AVERAGE DERIVATIVES
-    TFBAR = 0.d0
-    DO K = 1,NODES
-        TFBAR = TFBAR + StoreTransfer(NODES+K)  
-    ENDDO
-    TFBAR = TFBAR/DBLE(NODES)       ![C] Spatial average of temps at end of final timestep
-
-    !TN: Average rockbed temp is now the average (sub timesteps in simulation) of averages (nodal in each sub timestep) of averages (time based in each sub timestep)
-    TAVG = 0.d0
-    DO tcn=1,num_TC
-        TAVG = TAVG + T_ts_ave(tcn)
-    ENDDO
-    TAVG = TAVG/dble(num_TC)    ![C] Time-average, spatial averaged nodal temperature (how useful is this?)
-    !********************************************************************************
-
-    !TN: Outlet temperature to pass should be average (sub timesteps in simulation) of averages (time based in each sub timestep)
-    T_disch_avail = 0.d0
-    T_charge_avail = 0.d0
-    DO tcn=1,num_TC
-        T_disch_avail = T_disch_avail + T_hout_ave(tcn)
-        T_charge_avail = T_charge_avail + T_cout_ave(tcn)
-    ENDDO
-    T_disch_avail = T_disch_avail/dble(num_TC)      ![C] Time-averaged discharging OUTLET temperature (this is a CONFUSING name)
-    T_charge_avail = T_charge_avail/dble(num_TC)    ![C] Time-averaged charging OUTLET temperature (this is a CONFUSING name)
-
-    !Check if tank has been over-(dis)charged with current mass flow rate
-    IF(IFLOW==1)THEN        !Charging, so look for min cold temp hotter than allowed
-        diff_Tcmax = StoreTransfer(2*Nodes) - Tcmax
-
-    ELSEIF(IFLOW==2)THEN    !Discharging, so look for max hot temp cooler than allowed
-        !diff_Thmin = StoreTransfer(Nodes+1) - Thmin
-        !4/23/12, TN: Account for storage discharge fraction
-        diff_Thmin = StoreTransfer(Nodes+ChargeNodes) - Thmin
-
-    ENDIF
-       
-    TC_limit = 0    ![-] Reset Flag
-    
-    !If solving thermocline for specified mass flow rate:
-    IF(know_mdot)THEN
-        full = .false.      !Code did not result in target energy (dis)charge because in different solving mode
-        
-        !Charging, specified mass flow rate
-        IF(IFLOW==1)THEN
-            q_calc  = m_dot*CPA*(THOT - T_charge_avail)/3.6d0     ![W] Calculated rate of energy charge            
-            
-            !If specified mass flow caused over-charging and thus iteration:
-            IF(mdot_iter)THEN                   
-                
-                !If within tolerance on max cold temperature then get out
-                IF( (diff_Tcmax > -t_tol).and.(diff_Tcmax <= 0.d0) )THEN           
-                    !Set convergence criteria to 0 to get out
-                    diff_q_target = 0.d0
-                    TC_limit = 0
-                
-                !If min cold temp is greater than allowed then:
-                ELSEIF(diff_Tcmax > 0)THEN  
-                    TC_limit = 1    ![-] Flag noting that upper limit on mass flow should be set
-                
-                !Else, if tank is not "close enough" to being fully charged:
-                ELSE                        
-                    TC_limit = 2    ![-] Flag noting that lower limit on mass flow should be set
-                ENDIF
-            
-            !If first iteration for a specified mass flow rate
-            ELSE    
-                
-                !If tank does NOT overcharge, then get out
-                IF(diff_Tcmax <= 0.d0)THEN
-                    !Set convergence criteria to 0 to get out  
-                    diff_q_target = 0.d0
-                    TC_limit = 0
-                    
-                !Else, know that mass flow rate is too high    
-                ELSE    
-                    mdot_iter = .true.  ![-] Flag noting that correct mass flow rate must be found via iteration
-                    TC_limit = 1        ![-] Flag noting that upper limit on mass flow should be set
-                ENDIF
-            ENDIF                    
-        
-        !Discharging, specified mass flow rate
-        ELSE
-            q_calc  = m_dot*CPA*(T_disch_avail - TCOLD)/3.6d0     ![W]: Calculated rate of energy discharge
-            
-            !If specified mass flow caused over-charging and thus iteration:
-            IF(mdot_iter)THEN   !If specified mass flow caused over-discharging:
-            
-                !If within tolerance on min hot temperature then get out
-                IF( (diff_Thmin >= 0.d0).and.(diff_Thmin < t_tol) )THEN 
-                    !Set convergence criteria to 0 to get out
-                    diff_q_target = 0.d0
-                    TC_limit = 0.d0
-                    
-                !If max hot temp is less than allowed then:
-                ELSEIF(diff_Thmin < 0)THEN  
-                    TC_limit = 1    ![-] Flag noting that upper limit on mass flow should be set
-                    
-                !Else, if tank is not "close enough" to being fully discharged:    
-                ELSE                        
-                    TC_limit = 2    ![-] Flag noting that lower limit on mass flow should be set
-                ENDIF
-                
-            !If first iteration for a specified mass flow rate    
-            ELSE   
-            
-                !If tank does NOT over-discharge, then get out
-                IF(diff_Thmin >= 0.d0)THEN
-                    !Set convergence criteria to 0 to get out
-                    diff_q_target = 0.d0
-                    TC_limit = 0
-                    
-                !Else, know that mass flow rate is too high    
-                ELSE    
-                    mdot_iter = .true.  ![-] Flag noting that correct mass flow rate must be found via iteration
-                    TC_limit = 1        ![-] Flag noting that upper limit on mass flow should be set
-                ENDIF
-            ENDIF
-        ENDIF
-    
-    !Only calling model to calculate new thermocline (dwelling, so still need to calculate losses and conduction), get out
-    ELSEIF(q_target==0.d0)THEN
-        !Set convergence criteria to 0 to get out  
-        diff_q_target = 0.d0
-        TC_limit = 0
-    
-    !Solving thermocline for specified charging energy
-    ELSEIF(IFLOW==1)THEN
-        q_calc  = m_dot*CPA*(THOT - T_charge_avail)/3.6d0     ![kg/hr]*[kJ/kg-K]*[K]*(1000)[J/kJ]*(1/3600)[hr/s]->[W] Calculated rate of energy charge        
-        
-        !If not removing enough energy and "close enough (but not going over)" to completely filling tank, then get out
-        IF((q_calc < q_target).and.(diff_Tcmax > -t_tol).and.(diff_Tcmax <= 0.d0))THEN       
-            !Set convergence criteria to 0 to get out
-            diff_q_target = 0.d0        ![W]
-            TC_limit = 0                ![-]
-            full = .false.              ![-] Note that code did not result in target energy rate
-                
-        ELSEIF(diff_TCmax > 0.d0)THEN    ! Over-charging tank, flag to indicate mass flow is too high
-            TC_limit = 1
-            
-        ELSE        ! Not over-charging tank -> compare calculated to target        
-            diff_q_target = (q_calc - q_target)/q_target       ![W] Relative difference between calculated and required rate of energy
-        ENDIF            
-    
-    !Solving thermocline for specified discharging energy
-    ELSE
-        q_calc  = m_dot*CPA*(T_disch_avail - TCOLD)/3.6d0     ![kg/hr]*[kJ/kg-K]*K*[W/kW][hr/s]=>[W]: Calculated rate of energy discharge
-        
-        !If not getting enough energy and "close enough (but not going over)" to depleting tank, then get out
-        IF((q_calc < q_target).and.(diff_Thmin < t_tol).and.(diff_Thmin >= 0.d0))THEN
-            !Set convergence criteria to 0 to get out
-            diff_q_target = 0.d0        ![W]
-            TC_limit = 0                ![-] 
-            full = .false.              ![-] Note that code did not result in target energy rate
-        
-        ELSEIF(diff_Thmin < 0.d0)THEN   !Over-discharging tank, flag to indicate mass flow is too high
-            TC_limit = 1  
-                     
-        ELSE        ! Not over-discharging tank -> compare calculated to target
-            diff_q_target = (q_calc - q_target)/q_target       ![W] Relative difference between calculated and required rate of energy
-        ENDIF                    
-    ENDIF  
-    
-ENDDO       !End of iteration on mass flow rate */
-
+	// Set "saved" outputs for output-return method
+	m_Q_dot_htr_kJ = Q_dot_htr_kJ;
+	m_Q_dot_losses = Q_dot_losses;
 
 	return true;
 }

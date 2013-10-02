@@ -127,8 +127,23 @@ public:
 							HTFProperties & htf_fluid_props );
 
 	bool Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_cold_in_C, double flow_c_kghr, double T_env_C, int mode_in,
-		              double Q_dis_target_W, double Q_cha_target_W, double f_storage, double time_hr,
-					  double & m_dis_avail_tot, double & T_dis_avail, double & m_ch_avail_tot, double & T_ch_avail);
+		              double Q_dis_target_W, double Q_cha_target_W, double f_storage_in, double time_hr,
+					  double & m_dis_avail_tot, double & T_dis_avail_C, double & m_ch_avail_tot, double & T_ch_avail_C,
+					  double & Q_dot_out_W, double & Q_dot_losses, double & T_hot_bed_C, double & T_cold_bed_C, double & T_max_bed_C,
+					  double & f_hot, double & f_cold, double & Q_dot_htr_kJ);
+
+	void Converged( double time )
+	{
+		m_T_prev = m_T_end;
+		m_T_final_ave_prev = m_T_final_ave;
+		return;
+	};
+
+	double GetHeaterLoad_kJ()
+	{ return m_Q_dot_htr_kJ; };
+
+	double GetHeatLosses()
+	{ return m_Q_dot_losses; };
 
 private:
 
@@ -172,11 +187,22 @@ private:
 
 	util::matrix_t<double> m_T_prev;
 	util::matrix_t<double> m_T_start;
-	util::matrix_t<double> m_T_middle;
+	util::matrix_t<double> m_T_ave;
 	util::matrix_t<double> m_T_end;
+	util::matrix_t<double> m_T_ts_ave;
+	util::matrix_t<double> m_Q_losses;
+	util::matrix_t<double> m_Q_htr;
+	util::matrix_t<double> m_T_cout_ave;
+	util::matrix_t<double> m_T_hout_ave;
+
 
 	// Values from previous timestep
-	double m_T_ave_prev;
+	double m_T_final_ave_prev;
+	double m_T_final_ave;
+
+	// Ouputs accessible through class methods
+	double m_Q_dot_htr_kJ;
+	double m_Q_dot_losses;
 
 	// Constant Properties
 	double m_cond;
