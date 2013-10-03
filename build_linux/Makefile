@@ -1,8 +1,8 @@
-VPATH=../ssc ../recore
+VPATH=../ssc ../recore ../tcs/kernel
 
 CC = gcc
 CXX = g++
-CFLAGS = -fpermissive -I../ssc -I../recore -D__UNIX__ -fPIC -Wall -O3
+CFLAGS = -fpermissive -I../ssc -I../recore -I../tcs/kernel -I../tcs -D__UNIX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++
 
@@ -69,7 +69,16 @@ OBJECTS = \
 	lib_geothermal.o \
 	lib_pvinv.o \
 	sscapi.o \
-	vtab_common.o
+	vtab_common.o \
+        cmod_tcsdirect_steam.o \
+	cmod_tcsgeneric_solar.o \
+	cmod_tcslinear_fresnel.o \
+	cmod_tcsmolten_salt.o \
+	cmod_tcstrough_empirical.o \
+	cmod_tcstrough_physical.o \
+	tckernel.o \
+	tcskernel.o
+
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS)

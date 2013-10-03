@@ -1363,7 +1363,8 @@ public:
 		double DP_toField, DP_fromField;
 		double m_dot_header_in, m_dot_header, DP_hdr_cold, DP_hdr_hot;
 		double E_avail_tot, rho_ave, E_int_sum;
-		double q_abs_maxOT=0;
+		double q_abs_maxOT;
+		q_abs_maxOT=0;
 
 acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 
