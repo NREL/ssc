@@ -810,6 +810,13 @@ public:
 			{
 				switch(flow_pattern)
 				{
+				case 1:
+					if( i == 0 )
+						is_fd.at(i,j) = 1;
+					else
+						is_fd.at(i,j) = 0;
+					break;
+
 				case 6:
 					if( j < m_n_panels/2 )
 					{
@@ -829,6 +836,7 @@ public:
 						else
 							is_fd.at(i,j) = 0;
 					}
+					break;
 				}
 			}
 		}
@@ -1113,6 +1121,22 @@ public:
 
 				switch(flow_pattern)
 				{
+				case 1:
+					for( int j = 0; j < m_n_panels; j++ )
+					{
+						m_htf_guess.at(j,0) = m_eta_thermal_guess * q_solar_panel.at(j,0)/(c_htf*(T_htf_hot - T_htf_cold));
+						for( int i = 0; i < m_n_nodes; i++ )
+						{
+							// The heat transferred to the fluid increases the HTF temperature
+							T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + m_eta_thermal_guess*q_solar.at(i,j)/(m_htf_guess.at(j,0)*c_htf);
+
+							// Average node heat transfer temperature [K]
+							T_htf_ave_guess.at(i,j) = (T_htf_guess.at(i,j) + T_htf_guess.at(i+1,0))/2.0;
+						}
+					}
+
+					break; // End flow_pattern 1
+
 				case 6:
 					m_htf_guess.fill( 0.0 );
 					
@@ -1162,6 +1186,7 @@ public:
 								T_htf_ave_guess.at(i,m_n_panels-1-j) = (T_htf_guess.at(i+1,m_n_panels-1-j) + T_htf_guess.at(i,m_n_panels-1-j))/2.0;
 							}
 						}
+					break;	// End FlowPattern 6
 				}
 			}												
 
@@ -1253,27 +1278,27 @@ public:
 						// select case(FlowPattern)
 						if( flow_pattern < 5 )
 						{
-							u_htf_p.at(j,0) = m_htf.at(j,0)/(A_tube*rho_htf_p.at(j,0)*(double)n_tubes);
-							m_htf_p.at(j,0) = m_htf.at(j,0);
+							u_htf_p.at(j,0) = m_htf_guess.at(j,0)/(A_tube*rho_htf_p.at(j,0)*(double)n_tubes);
+							m_htf_p.at(j,0) = m_htf_guess.at(j,0);
 						}
 						else
 						{
 							if( j < m_n_panels/2 )
 							{
-								u_htf_p.at(j,0) = m_htf.at(0,0)/(A_tube*rho_htf_p.at(j,0)*(double)n_tubes);
-								m_htf_p.at(j,0) = m_htf.at(0,0);
+								u_htf_p.at(j,0) = m_htf_guess.at(0,0)/(A_tube*rho_htf_p.at(j,0)*(double)n_tubes);
+								m_htf_p.at(j,0) = m_htf_guess.at(0,0);
 							}
 							else
 							{
-								u_htf_p.at(j,0) = m_htf.at(1,0)/(A_tube*rho_htf_p.at(j,0)*(double)n_tubes);
-								m_htf_p.at(j,0) = m_htf.at(1,0);
+								u_htf_p.at(j,0) = m_htf_guess.at(1,0)/(A_tube*rho_htf_p.at(j,0)*(double)n_tubes);
+								m_htf_p.at(j,0) = m_htf_guess.at(1,0);
 							}
 						}
                 
 						double Re_htf_p = u_htf_p.at(j,0)*rho_htf_p.at(j,0)*d_tube_in/mu_htf_p;
 						double Nu_htf_dummy;
 						PipeFlowCavity( Re_htf_p, Pr_htf_p, L_over_D_p, relRough, q_solar_panel.at(j,0), 1, Nu_htf_dummy, f_htf_p.at(j,0) );
-						if( m_htf.at(j,0) == 0.0 )
+						if( m_htf_guess.at(j,0) == 0.0 )
 							f_htf_p.at(j,0) = 0.0;
 
 						for( int i = 0; i < m_n_nodes; i++ )
@@ -1377,6 +1402,34 @@ public:
 
 					switch(flow_pattern)
 					{
+					case 1:
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							// Absorbed thermal energy by the HTF in each panel [W]
+							double sum_q_htf = 0.0;
+							for( int i = 0; i < m_n_nodes; i++ )
+								sum_q_htf += q_htf.at(i,j);
+							q_htf_panel.at(j,0) = sum_q_htf;
+
+							// Calculate the mass flow rates [kg/s]
+							m_htf_guess.at(j,0) = q_htf_panel.at(j,0)/(c_htf*(T_htf_hot - T_htf_cold));
+
+							for( int i = 0; i < m_n_nodes; i++ )
+							{
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + q_htf.at(i,j)/(m_htf_guess.at(j,0)*c_htf);
+
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at(i,j) =(T_htf_guess.at(i+1,j) + T_htf_guess.at(i,j))/2.0;
+							}
+
+							// Update the panel outlet tmeperature [K]
+							T_htf_hot_guess.at(j,0) = T_htf_guess.at(m_n_nodes,j);
+						}
+
+
+						break;	// flow_pattern = 1
+
 					case 6:
 						for( int j = 0; j < m_n_panels; j++ )
 						{
@@ -1439,6 +1492,8 @@ public:
 							T_htf_hot_guess.at(0,0) = T_htf_guess.at( m_n_nodes, m_n_panels/2 - 1 );
 							T_htf_hot_guess.at(1,0) = T_htf_guess.at( m_n_nodes, m_n_panels/2 );
 						}	
+
+						break;	// flow_pattern = 6
 					}
 
 					for( int k = 0; k < m_n_panels; k++ )
@@ -1454,12 +1509,37 @@ public:
 					errorsum_flow = 0.0;		
 					switch(flow_pattern)
 					{
+					case 1 || 2:
+						
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							// Check if panel has a significant mass flow rate
+							if( m_htf_guess.at(j,0) == 0.0 )
+							{
+								// Don't include the inactive panels in the convergence calculation
+								error_temp.at(j,0) = 0.0;
+								error_flow.at(j,0) = 0.0;
+							}
+							else
+							{
+								// Temperature error for each flow path
+								error_temp.at(j,0) = abs( (T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot );
+								error_flow.at(j,0) = abs( (m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) );
+							}
+							errorsum_temp = max( errorsum_temp, error_temp.at(j,0) );
+							errorsum_flow = max( errorsum_flow, error_flow.at(j,0) );
+						}
+						
+
+						break;	// flow_pattern = 1
+
 					case 6:
 						for( int j = 0; j < 2; j++ )
 						{
 							errorsum_temp = max( errorsum_temp, abs((T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot) );
 							errorsum_flow = max( errorsum_flow, abs( abs(m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) ) );
 						}
+						break;	// flow_pattern = 6
 					}
 					// **************************************************************																				
 
@@ -1706,6 +1786,33 @@ public:
 		// Mass flow rate weighted averaged pressure drop in a tube [Pa]
 		switch( flow_pattern )
 		{
+		case 1:
+			{
+				double * deltaP_x_mhtf = new double [m_n_panels];
+				for( int j = 0; j < m_n_panels; j++ )
+				{
+					deltaP_x_mhtf[j] = 0.0;
+					for( int i = 0; i < m_n_nodes; i++ )
+						deltaP_x_mhtf[j] += deltaP_node.at(i,j) * m_htf.at(j,0);
+				}
+			
+			
+				double deltaP_sum = 0.0;
+				double m_dot_sum = 0.0;
+
+				for( int j = 0; j < m_n_panels; j++ )
+				{
+					deltaP_sum += deltaP_x_mhtf[j];
+					m_dot_sum += m_htf.at(j,0);
+				}
+
+				delete [] deltaP_x_mhtf;
+
+				deltaP_ave = deltaP_sum/m_dot_sum;
+			}
+
+			break;	// flow_pattern = 1
+
 		case 6:
 			double * deltaP_x_mhtf = new double[m_n_panels];
 			for( int j = 0; j < m_n_panels/2; j++ )
@@ -1724,6 +1831,8 @@ public:
 			for( int j = 0; j < m_n_panels; j++ )
 				deltaP_ave += deltaP_x_mhtf[j]/(m_htf.at(0,0) + m_htf.at(1,0));
 			delete [] deltaP_x_mhtf;
+
+			break;	// flow_pattern = 6
 		}
 		
 		// Density of the cold working fluid [kg/m3]
