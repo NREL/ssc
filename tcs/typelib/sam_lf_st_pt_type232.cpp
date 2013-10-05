@@ -817,6 +817,34 @@ public:
 						is_fd.at(i,j) = 0;
 					break;
 
+				case 2:
+					if( i == m_n_nodes )
+						is_fd.at(i,j) = 1;
+					else
+						is_fd.at(i,j) = 0;
+					break;
+
+				case 3:
+					if( (i == m_n_nodes - 1 && j%2 == 1) || (i == 0 && (j+1)%2 == 1) )
+						is_fd.at(i,j) = 1;
+					else 
+						is_fd.at(i,j) = 0;
+					break;
+
+				case 4:
+					if( (i == 0 && j%2 == 1) || (i == m_n_nodes - 1 && (j+1)%2 == 1) )
+						is_fd.at(i,j) = 1;
+					else
+						is_fd.at(i,j) = 0;
+					break;
+
+				case 5:
+					if( (i == 0 && (j == 0||j==3)) || (i == m_n_nodes - 1 && (j == 1||j==2)) )
+						is_fd.at(i,j) = 1;
+					else
+						is_fd.at(i,j) = 0;
+					break;
+
 				case 6:
 					if( j < m_n_panels/2 )
 					{
@@ -837,7 +865,22 @@ public:
 							is_fd.at(i,j) = 0;
 					}
 					break;
-				}
+
+				case 7:
+					if( (i == 0 && (j == 0||j==3)) || (i == m_n_nodes - 1 && (j == 1||j==2)) )
+						is_fd.at(i,j) = 1;
+					else
+						is_fd.at(i,j) = 0;
+					break;
+
+				case 8:
+					if( (i == 0 && (j == 1||j==2)) || (i == m_n_nodes - 1 && (j == 0||j==3)) )
+						is_fd.at(i,j) = 1;
+					else
+						is_fd.at(i,j) = 0;
+					break;
+
+				}																								
 			}
 		}
 
@@ -1137,18 +1180,159 @@ public:
 
 					break; // End flow_pattern 1
 
+				case 2:
+					for( int j = 0; j < m_n_panels; j++ )
+					{
+						m_htf_guess.at(j,0) = m_eta_thermal_guess * q_solar_panel.at(j,0)/(c_htf*(T_htf_hot - T_htf_cold));
+						for( int i = 0; i < m_n_nodes; i++ )
+						{
+							// The heat transferred to the fluid increases the HTF temperature
+							T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, j )/(m_htf_guess.at(j,0)*c_htf);
+
+							// Average node heat transfer temperature [K]
+							T_htf_ave_guess.at( m_n_nodes-1-i, j ) = ( T_htf_guess.at( m_n_nodes-i, j ) + T_htf_guess.at(m_n_nodes-1-i, j) )/2.0;
+						}
+					}
+
+					break; // End flow_pattern 2
+
+				case 3:
+					// Guess the value for the total mass flow rate through the receiver
+					m_htf_guess.fill(m_eta_thermal_guess*q_solar_total/(c_htf*(T_htf_hot-T_htf_cold)));
+
+					// Calculate the average HTF temperature for each node
+					for( int j = 0; j < m_n_panels; j++ )
+						for( int i = 0; i < m_n_nodes; i++ )
+						{
+							if( j%2 != 0 )
+							{
+								if( i == 0 )
+								{
+									// Set inlet temperature - flow from top to bottom
+									T_htf_guess.at( m_n_nodes, j ) = T_htf_guess.at( m_n_nodes, j-1);									
+								}
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, j )/(m_htf_guess.at(j,0)*c_htf);
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at( m_n_nodes-1-i, j ) = (T_htf_guess.at( m_n_nodes-1-i, j )+T_htf_guess.at( m_n_nodes-i, j ))/2.0;
+							}
+							else
+							{
+								if( i == 0 && j!=0 )
+								{
+									// Set inlet temperature - flow from bottom to top
+									T_htf_guess.at( 0, j ) = T_htf_guess.at( 0, j-1 );
+								}
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + m_eta_thermal_guess*q_solar.at(i,j)/(m_htf_guess.at(j,0)*c_htf);
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at(i,j) = (T_htf_guess.at(i,j) + T_htf_guess.at(i+1,j))/2.0;
+							}
+						}
+					break;	// End flow_pattern = 3
+
+				case 4:
+					// Guess the value for the total mass flow rate through the receiver
+					m_htf_guess.fill(m_eta_thermal_guess*q_solar_total/(c_htf*(T_htf_hot-T_htf_cold)));
+					
+					// Calculate the average HTF temperature for each node
+					for( int j = 0; j < m_n_panels; j++ )
+					{
+						for( int i = 0; i < m_n_nodes; i++ )
+						{
+							if( j&2 != 0 )	// flow from bottom to top
+							{
+								if( i == 0 )
+								{
+									// Set inlet temperature
+									T_htf_guess.at( 0, j ) = T_htf_guess.at( 0, j-1 );							
+								}
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + m_eta_thermal_guess*q_solar.at(i,j)/(m_htf_guess.at(j,0)*c_htf);
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at(i,j) = (T_htf_guess.at(i,j) + T_htf_guess.at(i+1,j))/2.0;
+							}
+							else		// flow from top to bottom
+							{
+								if( i == 0 && j != 0 )
+								{
+									// Set inlet temperature - flow from top to bottom
+									T_htf_guess.at( m_n_nodes, j ) = T_htf_guess.at( m_n_nodes, j-1);
+								}
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, j )/(m_htf_guess.at(j,0)*c_htf);
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at( m_n_nodes-1-i, j ) = (T_htf_guess.at( m_n_nodes-1-i, j )+T_htf_guess.at( m_n_nodes-i, j ))/2.0;
+							}
+						}
+					}
+					break;	// End flow_pattern = 4
+
+				case 5:
+
+					// Guess value for the total mass flow rate through the receiver
+					m_htf_guess.fill( 0.0 );
+					{
+						double q_sum_0 = 0.0;
+						double q_sum_1 = 0.0;
+						for( int j = 0; j < m_n_panels/2; j++ )
+						{
+							q_sum_0 += q_solar_panel.at(j,0);
+							q_sum_1 += q_solar_panel.at(m_n_panels-1-j,0);
+						}
+						m_htf_guess.at(0,0) = m_eta_thermal_guess*q_sum_0/(c_htf*(T_htf_hot - T_htf_cold));
+						m_htf_guess.at(1,0) = m_eta_thermal_guess*q_sum_1/(c_htf*(T_htf_hot - T_htf_cold));
+					}
+
+					for( int j = 0; j < m_n_panels/2; j++ )
+					{
+						for( int i = 0; i < m_n_nodes; i++ )
+						{
+							if( j == 0 )
+							{
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + m_eta_thermal_guess*q_solar.at(i,j)/(m_htf_guess.at(0,0)*c_htf);
+								T_htf_guess.at(i+1,m_n_panels-1-j) = T_htf_guess.at(i,m_n_panels-1-j) + m_eta_thermal_guess*q_solar.at(i,m_n_panels-1-j)/(m_htf_guess.at(1,0)*c_htf);
+								
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at(i,j) = (T_htf_guess.at(i,j) + T_htf_guess.at(i+1,j))/2.0;
+								T_htf_ave_guess.at(i,m_n_panels-1-j) = (T_htf_guess.at(i,m_n_panels-1-j) + T_htf_guess.at(i+1,m_n_panels-1-j))/2.0;
+							}
+							else
+							{
+								if( i == 0 )
+								{
+									// Set inlet temperature
+									T_htf_guess.at(m_n_nodes,j) = T_htf_guess.at(m_n_nodes,j-1);
+									T_htf_guess.at(m_n_nodes,m_n_panels-1-j) = T_htf_guess.at(m_n_nodes,m_n_panels-1-j+1);
+								}
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, j )/(m_htf_guess.at(0,0)*c_htf);
+								T_htf_guess.at( m_n_nodes-1-i, m_n_panels-1-j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels-1-j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, m_n_panels-1-j )/(m_htf_guess.at(1,0)*c_htf);
+
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at( m_n_nodes-1-i, j ) = (T_htf_guess.at( m_n_nodes-1-i, j )+T_htf_guess.at( m_n_nodes-i, j ))/2.0;
+								T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels-1-j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels-1-j )+T_htf_guess.at( m_n_nodes-i, m_n_panels-1-j ))/2.0;
+							}
+						}
+					}
+
+					break;	// End flow_pattern = 5
+
 				case 6:
 					m_htf_guess.fill( 0.0 );
 					
-					double sum_path = 0.0;
-					for( int i = 0; i < m_n_panels/2; i++ )
-						sum_path += q_solar_panel.at(i,0);
-					m_htf_guess.at(0,0) = m_eta_thermal_guess * sum_path / (c_htf*(T_htf_hot - T_htf_cold));		// [kg/s]
+					{
+						double sum_path = 0.0;
+						for( int i = 0; i < m_n_panels/2; i++ )
+							sum_path += q_solar_panel.at(i,0);
+						m_htf_guess.at(0,0) = m_eta_thermal_guess * sum_path / (c_htf*(T_htf_hot - T_htf_cold));		// [kg/s]
 					
-					sum_path = 0.0;
-					for( int i = m_n_panels/2; i < m_n_panels; i++ )
-						sum_path += q_solar_panel.at(i,0);
-					m_htf_guess.at(1,0) = m_eta_thermal_guess * sum_path / (c_htf*(T_htf_hot - T_htf_cold));		// [kg/s]
+						sum_path = 0.0;
+						for( int i = m_n_panels/2; i < m_n_panels; i++ )
+							sum_path += q_solar_panel.at(i,0);
+						m_htf_guess.at(1,0) = m_eta_thermal_guess * sum_path / (c_htf*(T_htf_hot - T_htf_cold));		// [kg/s]
+					}
 
 					// Average temperature rise in each node
 					deltaT_htfX = (T_htf_hot-T_htf_cold)/(double)(m_n_nodes*m_n_panels*0.5);		// [K]
@@ -1187,6 +1371,108 @@ public:
 							}
 						}
 					break;	// End FlowPattern 6
+
+				case 7:
+
+					// Guess value for the total mass flow rate through the receiver
+					m_htf_guess.fill( 0.0 );
+					{
+						double q_sum_0 = 0.0;
+						double q_sum_1 = 0.0;
+						for( int j = 0; j < m_n_panels/2; j++ )
+						{
+							q_sum_0 += q_solar_panel.at(j,0);
+							q_sum_1 += q_solar_panel.at(m_n_panels-1-j,0);
+						}
+						m_htf_guess.at(0,0) = m_eta_thermal_guess*q_sum_0/(c_htf*(T_htf_hot - T_htf_cold));
+						m_htf_guess.at(1,0) = m_eta_thermal_guess*q_sum_1/(c_htf*(T_htf_hot - T_htf_cold));
+					}
+
+					for( int j = 0; j < m_n_panels/2; j++ )
+					{
+						for( int i = 0; i < m_n_nodes; i++ )
+						{
+							if( j == 0 )
+							{
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, m_n_panels/2-1-j )/(m_htf_guess.at(0,0)*c_htf);
+								T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, m_n_panels/2+j )/(m_htf_guess.at(1,0)*c_htf);
+
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ))/2.0;
+								T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ))/2.0;
+							}
+							else
+							{
+								if( i == 0 )
+								{
+									T_htf_guess.at( 0, m_n_panels/2-1-j ) = T_htf_guess.at( 0, m_n_panels/2-1-j+1 );
+									T_htf_guess.at( 0, m_n_panels/2+j ) = T_htf_guess.at( 0, m_n_panels/2+j-1 );
+								}
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at(i+1,m_n_panels/2-1-j) = T_htf_guess.at(i,m_n_panels/2-1-j) + m_eta_thermal_guess*q_solar.at(i,m_n_panels/2-1-j)/(m_htf_guess.at(0,0)*c_htf);
+								T_htf_guess.at(i+1,m_n_panels/2+j) = T_htf_guess.at(i,m_n_panels/2+j) + m_eta_thermal_guess*q_solar.at(i,m_n_panels/2+j)/(m_htf_guess.at(1,0)*c_htf);
+								
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at(i,m_n_panels/2-1-j) = (T_htf_guess.at(i,m_n_panels/2-1-j) + T_htf_guess.at(i+1,m_n_panels/2-1-j))/2.0;
+								T_htf_ave_guess.at(i,m_n_panels/2+j) = (T_htf_guess.at(i,m_n_panels/2+j) + T_htf_guess.at(i+1,m_n_panels/2+j))/2.0;
+							}
+						}
+					}
+
+					break;	// End FlowPattern 7
+
+				case 8:
+					
+					// Guess value for the total mass flow rate through the receiver
+					m_htf_guess.fill( 0.0 );
+					{
+						double q_sum_0 = 0.0;
+						double q_sum_1 = 0.0;
+						for( int j = 0; j < m_n_panels/2; j++ )
+						{
+							q_sum_0 += q_solar_panel.at(j,0);
+							q_sum_1 += q_solar_panel.at(m_n_panels-1-j,0);
+						}
+						m_htf_guess.at(0,0) = m_eta_thermal_guess*q_sum_0/(c_htf*(T_htf_hot - T_htf_cold));
+						m_htf_guess.at(1,0) = m_eta_thermal_guess*q_sum_1/(c_htf*(T_htf_hot - T_htf_cold));
+					}
+
+					for( int j = 0; j < m_n_panels/2; j++ )
+					{
+						for( int i = 0; i < m_n_nodes; i++ )
+						{
+							if( j == 0 )
+							{
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at(i+1,m_n_panels/2-1-j) = T_htf_guess.at(i,m_n_panels/2-1-j) + m_eta_thermal_guess*q_solar.at(i,m_n_panels/2-1-j)/(m_htf_guess.at(0,0)*c_htf);
+								T_htf_guess.at(i+1,m_n_panels/2+j) = T_htf_guess.at(i,m_n_panels/2+j) + m_eta_thermal_guess*q_solar.at(i,m_n_panels/2+j)/(m_htf_guess.at(1,0)*c_htf);
+								
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at(i,m_n_panels/2-1-j) = (T_htf_guess.at(i,m_n_panels/2-1-j) + T_htf_guess.at(i+1,m_n_panels/2-1-j))/2.0;
+								T_htf_ave_guess.at(i,m_n_panels/2+j) = (T_htf_guess.at(i,m_n_panels/2+j) + T_htf_guess.at(i+1,m_n_panels/2+j))/2.0;
+							}
+							else
+							{
+								if( i == 0 )
+								{
+									T_htf_guess.at( m_n_nodes, m_n_panels/2-1-j ) = T_htf_guess.at( m_n_nodes, m_n_panels/2-1-j+1 );
+									T_htf_guess.at( m_n_nodes, m_n_panels/2+j ) = T_htf_guess.at( m_n_nodes, m_n_panels/2+j-1 );
+								}
+
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, m_n_panels/2-1-j )/(m_htf_guess.at(0,0)*c_htf);
+								T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ) + m_eta_thermal_guess*q_solar.at( m_n_nodes-1-i, m_n_panels/2+j )/(m_htf_guess.at(1,0)*c_htf);
+								
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ))/2.0;
+								T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ))/2.0;
+							}
+						}
+					}
+
+					break;	// End FlowPattern 8
+
 				}
 			}												
 
@@ -1400,6 +1686,11 @@ public:
 						for( int j = 0; j < m_n_panels; j++ )
 							q_htf_total += q_htf.at(i,j);
 
+					//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+					// Calculate the increase of temperature in the working fluid with regards to the different
+					// flow patterns 1 through 8.
+					//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 					switch(flow_pattern)
 					{
 					case 1:
@@ -1427,8 +1718,173 @@ public:
 							T_htf_hot_guess.at(j,0) = T_htf_guess.at(m_n_nodes,j);
 						}
 
-
 						break;	// flow_pattern = 1
+
+					case 2:
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							// Absorbed thermal energy by the HTF in each panel [W]
+							double sum_q_htf = 0.0;
+							for( int i = 0; i < m_n_nodes; i++ )
+								sum_q_htf += q_htf.at(i,j);
+							q_htf_panel.at(j,0) = sum_q_htf;
+							
+							// Calculate the mass flow rates [kg/s]
+							m_htf_guess.at(j,0) = q_htf_panel.at(j,0)/(c_htf*(T_htf_hot - T_htf_cold));
+
+							// Calculate the average HTF temperature for each node
+							for( int i = 0; i < m_n_nodes; i++ )
+							{
+								// The heat transferred to the fluid increases the HTF temperature
+								T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + q_htf.at( m_n_nodes-1-i, j )/(m_htf_guess.at(j,0)*c_htf);
+
+								// Average node heat transfer temperature [K]
+								T_htf_ave_guess.at( m_n_nodes-1-i, j ) = ( T_htf_guess.at( m_n_nodes-i, j ) + T_htf_guess.at(m_n_nodes-1-i, j) )/2.0;
+							}
+
+							// Update the panel outlet temperature [K]
+							T_htf_hot_guess.at(j,0) = T_htf_guess.at(0,j);
+						}
+
+						break;	// End flow_pattern 2
+					
+					case 3:
+						// Calculate the mass flow rates [kg/s]
+						m_htf_guess.fill( q_htf_total/(c_htf*(T_htf_hot - T_htf_cold)) );
+
+						// Calculate the average HTF temperature for each node
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							for( int i = 0; i < m_n_nodes; i++ )
+							{
+								if( j%2 != 0 )		// flow from top to bottom
+								{
+									if( i == 0 )
+									{
+										// Set inlet temperature
+										T_htf_guess.at( m_n_nodes, j ) = T_htf_guess.at( m_n_nodes, j-1);
+									}
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + q_htf.at( m_n_nodes-1-i, j )/(m_htf_guess.at(j,0)*c_htf);
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at( m_n_nodes-1-i, j ) = (T_htf_guess.at( m_n_nodes-1-i, j )+T_htf_guess.at( m_n_nodes-i, j ))/2.0;
+								}
+								else
+								{
+									if( i == 0 && j != 0 )		// Flow from bottom to top
+									{
+										// Set inlet temperature 
+										T_htf_guess.at( 0, j ) = T_htf_guess.at( 0, j-1 );
+									}
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + q_htf.at(i,j)/(m_htf_guess.at(j,0)*c_htf);
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at(i,j) = (T_htf_guess.at(i,j) + T_htf_guess.at(i+1,0))/2.0;
+								}
+							}
+						}
+
+						T_htf_hot_guess.fill( T_htf_guess.at( 0, m_n_panels-1 ) );
+
+						break;	// End flow_pattern = 3
+
+					case 4:
+						// Calculate the mass flow rate [kg/s]
+						m_htf_guess.fill( q_htf_total/(c_htf*(T_htf_hot - T_htf_cold)) );
+
+						// Calculate the average HTF temperature for each node
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							for( int i = 0; i < m_n_nodes; i++ )
+							{
+								if( j&2 != 0 )	// flow from bottom to top
+								{
+									if( i == 0 )
+									{
+										// Set inlet temperature
+										T_htf_guess.at( 0, j ) = T_htf_guess.at( 0, j-1 );							
+									}
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + q_htf.at(i,j)/(m_htf_guess.at(j,0)*c_htf);
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at(i,j) = (T_htf_guess.at(i,j) + T_htf_guess.at(i+1,j))/2.0;
+								}
+								else		// flow from top to bottom
+								{
+									if( i == 0 && j != 0 )
+									{
+										// Set inlet temperature - flow from top to bottom
+										T_htf_guess.at( m_n_nodes, j ) = T_htf_guess.at( m_n_nodes, j-1);
+									}
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + q_htf.at( m_n_nodes-1-i, j )/(m_htf_guess.at(j,0)*c_htf);
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at( m_n_nodes-1-i, j ) = (T_htf_guess.at( m_n_nodes-1-i, j )+T_htf_guess.at( m_n_nodes-i, j ))/2.0;
+								}
+							}
+						}
+						T_htf_hot_guess.fill( T_htf_guess.at( m_n_nodes, m_n_panels - 1 ) );
+
+						break;	// End flow_pattern = 4
+
+					case 5:
+						
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							q_htf_panel.at(j,0) = 0.0;
+							for( int i = 0; i < m_n_nodes; i++ )
+								q_htf_panel.at(j,0) += q_htf.at(i,j);
+						}
+
+						{
+							double sum_path = 0.0;
+							for( int i = 0; i < m_n_panels/2; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(0,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						
+							sum_path = 0.0;
+							for( int i = m_n_panels/2; i < m_n_panels; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(1,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						}
+					
+						for( int j = 0; j < m_n_panels/2; j++ )
+						{
+							for( int i = 0; i < m_n_nodes; i++ )
+							{
+								if( j == 0 )
+								{
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at(i+1,j) = T_htf_guess.at(i,j) + q_htf.at(i,j)/(m_htf_guess.at(0,0)*c_htf);
+									T_htf_guess.at(i+1,m_n_panels-1-j) = T_htf_guess.at(i,m_n_panels-1-j) + q_htf.at(i,m_n_panels-1-j)/(m_htf_guess.at(1,0)*c_htf);
+								
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at(i,j) = (T_htf_guess.at(i,j) + T_htf_guess.at(i+1,j))/2.0;
+									T_htf_ave_guess.at(i,m_n_panels-1-j) = (T_htf_guess.at(i,m_n_panels-1-j) + T_htf_guess.at(i+1,m_n_panels-1-j))/2.0;
+								}
+								else
+								{
+									if( i == 0 )
+									{
+										// Set inlet temperature
+										T_htf_guess.at(m_n_nodes,j) = T_htf_guess.at(m_n_nodes,j-1);
+										T_htf_guess.at(m_n_nodes,m_n_panels-1-j) = T_htf_guess.at(m_n_nodes,m_n_panels-1-j+1);
+									}
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at( m_n_nodes-1-i, j ) = T_htf_guess.at( m_n_nodes-i, j ) + q_htf.at( m_n_nodes-1-i, j )/(m_htf_guess.at(0,0)*c_htf);
+									T_htf_guess.at( m_n_nodes-1-i, m_n_panels-1-j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels-1-j ) + q_htf.at( m_n_nodes-1-i, m_n_panels-1-j )/(m_htf_guess.at(1,0)*c_htf);
+					
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at( m_n_nodes-1-i, j ) = (T_htf_guess.at( m_n_nodes-1-i, j )+T_htf_guess.at( m_n_nodes-i, j ))/2.0;
+									T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels-1-j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels-1-j )+T_htf_guess.at( m_n_nodes-i, m_n_panels-1-j ))/2.0;
+								}
+							}
+						}
+					
+						T_htf_hot_guess.at(0,0) = T_htf_guess.at(0,1);
+						T_htf_hot_guess.at(1,0) = T_htf_guess.at(0,2);
+
+						break;	// End flow_pattern = 5
 
 					case 6:
 						for( int j = 0; j < m_n_panels; j++ )
@@ -1438,15 +1894,17 @@ public:
 								q_htf_panel.at(j,0) += q_htf.at(i,j);
 						}
 
-						double sum_path = 0.0;
-						for( int i = 0; i < m_n_panels/2; i++ )
-							sum_path += q_htf_panel.at(i,0);
-						m_htf_guess.at(0,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						{
+							double sum_path = 0.0;
+							for( int i = 0; i < m_n_panels/2; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(0,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
 						
-						sum_path = 0.0;
-						for( int i = m_n_panels/2; i < m_n_panels; i++ )
-							sum_path += q_htf_panel.at(i,0);
-						m_htf_guess.at(1,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+							sum_path = 0.0;
+							for( int i = m_n_panels/2; i < m_n_panels; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(1,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						}
 
 						for( int j = 0; j < m_n_panels/2; j++ )
 							for( int i = 0; i < m_n_nodes; i++ )
@@ -1494,6 +1952,123 @@ public:
 						}	
 
 						break;	// flow_pattern = 6
+
+					case 7:
+
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							q_htf_panel.at(j,0) = 0.0;
+							for( int i = 0; i < m_n_nodes; i++ )
+								q_htf_panel.at(j,0) += q_htf.at(i,j);
+						}
+						
+						{
+							double sum_path = 0.0;
+							for( int i = 0; i < m_n_panels/2; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(0,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						
+							sum_path = 0.0;
+							for( int i = m_n_panels/2; i < m_n_panels; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(1,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						}
+
+						for( int j = 0; j < m_n_panels/2; j++ )
+						{
+							for( int i = 0; i < m_n_nodes; i++ )
+							{
+								if( j == 0 )
+								{
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ) + q_htf.at( m_n_nodes-1-i, m_n_panels/2-1-j )/(m_htf_guess.at(0,0)*c_htf);
+									T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ) + q_htf.at( m_n_nodes-1-i, m_n_panels/2+j )/(m_htf_guess.at(1,0)*c_htf);
+						
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ))/2.0;
+									T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ))/2.0;
+								}
+								else
+								{
+									if( i == 0 )
+									{
+										T_htf_guess.at( 0, m_n_panels/2-1-j ) = T_htf_guess.at( 0, m_n_panels/2-1-j+1 );
+										T_htf_guess.at( 0, m_n_panels/2+j ) = T_htf_guess.at( 0, m_n_panels/2+j-1 );
+									}
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at(i+1,m_n_panels/2-1-j) = T_htf_guess.at(i,m_n_panels/2-1-j) + q_htf.at(i,m_n_panels/2-1-j)/(m_htf_guess.at(0,0)*c_htf);
+									T_htf_guess.at(i+1,m_n_panels/2+j) = T_htf_guess.at(i,m_n_panels/2+j) + q_htf.at(i,m_n_panels/2+j)/(m_htf_guess.at(1,0)*c_htf);
+									
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at(i,m_n_panels/2-1-j) = (T_htf_guess.at(i,m_n_panels/2-1-j) + T_htf_guess.at(i+1,m_n_panels/2-1-j))/2.0;
+									T_htf_ave_guess.at(i,m_n_panels/2+j) = (T_htf_guess.at(i,m_n_panels/2+j) + T_htf_guess.at(i+1,m_n_panels/2+j))/2.0;
+								}
+							}
+						}
+
+						T_htf_hot_guess.at(0,0) = T_htf_guess.at(m_n_nodes,0);
+						T_htf_hot_guess.at(1,0) = T_htf_guess.at(m_n_nodes,m_n_panels-1);
+
+						break;	// flow_pattern = 7
+
+					case 8:
+
+						for( int j = 0; j < m_n_panels; j++ )
+						{
+							q_htf_panel.at(j,0) = 0.0;
+							for( int i = 0; i < m_n_nodes; i++ )
+								q_htf_panel.at(j,0) += q_htf.at(i,j);
+						}
+						
+						{
+							double sum_path = 0.0;
+							for( int i = 0; i < m_n_panels/2; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(0,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						
+							sum_path = 0.0;
+							for( int i = m_n_panels/2; i < m_n_panels; i++ )
+								sum_path += q_htf_panel.at(i,0);
+							m_htf_guess.at(1,0) = sum_path / (c_htf*(T_htf_hot - T_htf_cold));
+						}
+
+						for( int j = 0; j < m_n_panels/2; j++ )
+						{
+							for( int i = 0; i < m_n_nodes; i++ )
+							{
+								if( j == 0 )
+								{
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at(i+1,m_n_panels/2-1-j) = T_htf_guess.at(i,m_n_panels/2-1-j) + q_htf.at(i,m_n_panels/2-1-j)/(m_htf_guess.at(0,0)*c_htf);
+									T_htf_guess.at(i+1,m_n_panels/2+j) = T_htf_guess.at(i,m_n_panels/2+j) + q_htf.at(i,m_n_panels/2+j)/(m_htf_guess.at(1,0)*c_htf);
+									
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at(i,m_n_panels/2-1-j) = (T_htf_guess.at(i,m_n_panels/2-1-j) + T_htf_guess.at(i+1,m_n_panels/2-1-j))/2.0;
+									T_htf_ave_guess.at(i,m_n_panels/2+j) = (T_htf_guess.at(i,m_n_panels/2+j) + T_htf_guess.at(i+1,m_n_panels/2+j))/2.0;
+								}
+								else
+								{
+									if( i == 0 )
+									{
+										T_htf_guess.at( m_n_nodes, m_n_panels/2-1-j ) = T_htf_guess.at( m_n_nodes, m_n_panels/2-1-j+1 );
+										T_htf_guess.at( m_n_nodes, m_n_panels/2+j ) = T_htf_guess.at( m_n_nodes, m_n_panels/2+j-1 );
+									}
+						
+									// The heat transferred to the fluid increases the HTF temperature
+									T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ) + q_htf.at( m_n_nodes-1-i, m_n_panels/2-1-j )/(m_htf_guess.at(0,0)*c_htf);
+									T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ) + q_htf.at( m_n_nodes-1-i, m_n_panels/2+j )/(m_htf_guess.at(1,0)*c_htf);
+									
+									// Average node heat transfer temperature [K]
+									T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2-1-j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2-1-j ))/2.0;
+									T_htf_ave_guess.at( m_n_nodes-1-i, m_n_panels/2+j ) = (T_htf_guess.at( m_n_nodes-1-i, m_n_panels/2+j )+T_htf_guess.at( m_n_nodes-i, m_n_panels/2+j ))/2.0;
+								}
+							}
+						}
+
+						T_htf_hot_guess.at(0,0) = T_htf_guess.at(0,0);
+						T_htf_hot_guess.at(1,0) = T_htf_guess.at(0,3);
+
+						break;	// flow_pattern = 8
 					}
 
 					for( int k = 0; k < m_n_panels; k++ )
@@ -1509,7 +2084,8 @@ public:
 					errorsum_flow = 0.0;		
 					switch(flow_pattern)
 					{
-					case 1 || 2:
+					case 1:
+					case 2:
 						
 						for( int j = 0; j < m_n_panels; j++ )
 						{
@@ -1531,9 +2107,19 @@ public:
 						}
 						
 
-						break;	// flow_pattern = 1
+						break;	// flow_pattern = 1 & 2
 
+					case 3:
+					case 4:
+						errorsum_temp = abs( (T_htf_hot_guess.at(0,0) - T_htf_hot)/T_htf_hot );
+						errorsum_flow = abs( (m_htf.at(0,0) - m_htf_guess.at(0,0))/m_htf_guess.at(0,0) );
+
+						break;	// flow_pattern = 3 & 4
+
+					case 5:
 					case 6:
+					case 7:
+					case 8:
 						for( int j = 0; j < 2; j++ )
 						{
 							errorsum_temp = max( errorsum_temp, abs((T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot) );
@@ -1787,6 +2373,7 @@ public:
 		switch( flow_pattern )
 		{
 		case 1:
+		case 2:
 			{
 				double * deltaP_x_mhtf = new double [m_n_panels];
 				for( int j = 0; j < m_n_panels; j++ )
@@ -1811,9 +2398,23 @@ public:
 				deltaP_ave = deltaP_sum/m_dot_sum;
 			}
 
-			break;	// flow_pattern = 1
+			break;	// flow_pattern = 1 & 2
 
+		case 3:
+		case 4:
+
+			deltaP_ave = 0.0;
+			for( int j = 0; j < m_n_panels; j++ )
+			{
+				for( int i = 0; i < m_n_nodes; i++ )
+					deltaP_ave += deltaP_node.at(i,j);
+			}
+			break;	// flow_pattern = 3 & 4
+
+		case 5:
 		case 6:
+		case 7:
+		case 8:
 			double * deltaP_x_mhtf = new double[m_n_panels];
 			for( int j = 0; j < m_n_panels/2; j++ )
 			{
