@@ -642,6 +642,7 @@ static var_info vtab_utility_rate2[] = {
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Year 1 monthly net metering electricity credit",           "kWh", "", "",          "*",                         "LENGTH=12",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases",    "Year 1 monthly sales/purchases with system",           "$", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases_wo_sys",    "Year 1 monthly sales/purchases without system",           "$", "", "",          "*",                         "LENGTH=12",                     "" },
 
 
 
@@ -674,17 +675,17 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_dec",        "Demand Charge (TOU) in Dec",      "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jan",            "Energy Charge in Jan",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_feb",            "Energy Rate Charge in Feb",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_mar",            "Energy Rate Charge in Mar",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_apr",            "Energy Rate Charge in Apr",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_may",            "Energy Rate Charge in May",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jun",            "Energy Rate Charge in Jun",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jul",            "Energy Rate Charge in Jul",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_aug",            "Energy Rate Charge in Aug",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_sep",            "Energy Rate Charge in Sep",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_oct",            "Energy Rate Charge in Oct",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_nov",            "Energy Rate Charge in Nov",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_dec",            "Energy Rate Charge in Dec",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_feb",            "Energy Charge in Feb",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_mar",            "Energy Charge in Mar",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_apr",            "Energy Charge in Apr",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_may",            "Energy Charge in May",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jun",            "Energy Charge in Jun",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jul",            "Energy Charge in Jul",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_aug",            "Energy Charge in Aug",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_sep",            "Energy Charge in Sep",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_oct",            "Energy Charge in Oct",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_nov",            "Energy Charge in Nov",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_dec",            "Energy Charge in Dec",       "$",      "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 	
 var_info_invalid };
 
@@ -979,7 +980,21 @@ public:
 				{
 					salespurchases[ii] = revenue_wo_sys[ii];
 				}
+				int c = 0;
+				for (int m=0;m<12;m++)
+				{
+					monthly_salespurchases[m] = 0;
+					for (int d=0;d<util::nday[m];d++)
+					{
+						for(int h=0;h<24;h++)
+						{
+							monthly_salespurchases[m] += salespurchases[c];
+							c++;
+						}
+					}
+				}
 				assign( "year1_hourly_salespurchases_without_system", var_data( &salespurchases[0], 8760 ) );
+				assign( "year1_monthly_salespurchases_wo_sys", var_data(&monthly_salespurchases[0], 12) );
 			}
 
 			// determine net-revenue benefit due to solar for year 'i'
