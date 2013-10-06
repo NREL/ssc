@@ -1439,9 +1439,10 @@ public:
 
 			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
 			ssc_number_t prev_value = 0;
-			for (m=0;m<12;m++)
+			cumulative_excess_energy[0] = 0.0;
+			for (m=1;m<12;m++)
 			{
-				prev_value = ( m > 0 ) ? cumulative_excess_energy[m-1] : 0;
+				prev_value = cumulative_excess_energy[m-1];
 				cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
 			}
 
@@ -1464,7 +1465,7 @@ public:
 								if ( m > 0 )
 									payment[c] += -(cumulative_excess_energy[m-1]-energy_use[m]) * ec_rate[m];
 								else
-									payment[c] += -energy_use[m] * ec_rate[m];
+									payment[c] += energy_use[m] * ec_rate[m];
 							}
 						}
 						c++;
