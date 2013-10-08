@@ -7,7 +7,7 @@ tcs_dir = 'C:/Users/tneises/Documents/Projects';
 //********************************************************************************************
 // Pre-processing input files
 //Read in field efficiency files
-eff_array_loc = tcs_dir + '/tcs/typelib/MS_Receiver/eff_array.dat';
+eff_array_loc = tcs_dir + '/tcs/typelib/MS_External_Power_Tower/eff_array.dat';
 f = open( eff_array_loc, 'r' );
 
 if( !f )
@@ -42,7 +42,7 @@ for( i = 0; i < num_sol_pos; i++ )
 close( f );
 
 //***** Read in flux file ********
-fluxmap_loc = tcs_dir + '/tcs/typelib/MS_Receiver/fluxmap.csv';
+fluxmap_loc = tcs_dir + '/tcs/typelib/MS_External_Power_Tower/fluxmap.csv';
 f = open( fluxmap_loc, 'r' );
 
 if( !f )
