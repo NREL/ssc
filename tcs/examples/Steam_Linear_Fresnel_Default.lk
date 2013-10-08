@@ -1,0 +1,754 @@
+clear();
+
+// **** Define tcs directory *******************
+tcs_dir = 'C:/Users/tneises/Documents/Projects';
+//tcs_dir = 'C:/svn_NREL/main';
+
+debug_mode = true;
+
+//Add weather file reader unit
+if(debug_mode) weather = add_unit("trnsys_weatherreader");
+else weather = add_unit("weatherreader");
+
+if(debug_mode)
+{
+    file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out';
+	set_value( weather, "file_name", file_loc );
+	set_value( weather, "i_hour", "TIME" );
+	set_value( weather, "i_month", "month" );
+	set_value( weather, "i_day", "day" );
+	set_value( weather, "i_global", "GlobalHorizontal" );
+	set_value( weather, "i_beam", "DNI" );
+	set_value( weather, "i_diff", "DiffuseHorizontal" );
+	set_value( weather, "i_tdry", "T_dry" );
+	set_value( weather, "i_twet", "T_wet" );
+	set_value( weather, "i_tdew", "T_dew" );
+	set_value( weather, "i_wspd", "WindSpeed" );
+	set_value( weather, "i_wdir", "WindDir" );
+	set_value( weather, "i_rhum", "RelHum" );
+	set_value( weather, "i_pres", "AtmPres" );
+	set_value( weather, "i_snow", "SnowCover" );
+	set_value( weather, "i_albedo", "GroundAlbedo" );
+	set_value( weather, "i_poa", "POA" );
+	set_value( weather, "i_solazi", "Azimuth" );
+	set_value( weather, "i_solzen", "Zenith" );
+	set_value( weather, "i_lat", "Latitude" );
+	set_value( weather, "i_lon", "Longitude" );
+	set_value( weather, "i_shift", "Shift" );
+}
+else
+{
+	//Set weather parameters
+	weather_file = "C:/SAM/2012.5.11/exelib/climate_files/AZ Tucson.tm2";
+	if (ostype() == 'osx64') weather_file = '/Users/adobos/Projects/ssc/examples/daggett.tm2';
+
+	set_value(weather, "file_name", weather_file);
+	set_value(weather, "track_mode", 1);
+	set_value(weather, "tilt", 0);
+	set_value(weather, "azimuth", 0);
+}
+
+
+
+
+//Add the solar field collector unit
+solarfield = add_unit("sam_mw_lf_type261_steam");
+//Add direct powerblock unit
+powerblock = add_unit("sam_mw_type234");
+
+// Parameters from trnsys.linear_fresnel.trd
+P_ref	=	107;
+eta_ref	=	0.38;
+T_hot_ref	=	440;
+T_cold_ref	=	230;
+dT_cw_ref	=	10;
+T_amb_des	=	21;
+q_sby_frac	=	0.2;
+P_boil_ref	=	110;
+is_rh	=	0;			//	![none] flag for indicating whether reheat is used
+P_rh_ref	=	0;		//	![bar] Reheater operating pressure at design
+T_rh_hot_ref	=	0;	// ![C] Reheater design outlet temperature
+rh_frac_ref	=	0;		// ![none] Reheater flow fraction at design
+is_sh_pb	=	1;
+CT	=	1;
+startup_time	=	0.35;
+startup_frac	=	0.35;
+tech_type	=	3;		//	![none] Flag indicating which coef. set to use. (1=tower..2=trough..3=sliding pressure)
+T_approach	=	5;
+T_ITD_des	=	16;
+P_cond_ratio	=	1.0028;
+pb_bd_frac	=	0.02;
+P_cond_min	=	1.25;
+n_pl_inc	=	8;
+F_wc_1	=	0;
+F_wc_2	=	0;
+F_wc_3	=	0;
+F_wc_4	=	0;
+F_wc_5	=	0;
+F_wc_6	=	0;
+F_wc_7	=	0;
+F_wc_8	=	0;
+F_wc_9	=	0;
+NUMTOU	=	9;				// ![none] Number of time-of-use periods
+TSHOURS	=	0;				// ![hr] Equivalent full-load thermal storage hours
+q_max_aux	=	504.598;		// ![MW] Maximum heat rate of the auxiliary heater
+T_set_aux	=	440;			// ![C] Aux heater outlet temperature set point
+LHV_eff	=	0.9;
+T_field_in_des	=	230;
+T_field_out_des	=	440;
+x_b_des	=	0.75;
+P_turb_des	=	110;
+fP_hdr_c	=	0.01;
+fP_sf_boil	=	0.075;
+fP_boil_to_SH	=	0.005;
+fP_sf_sh	=	0.05;
+fP_hdr_h	=	0.025;
+q_pb_des	=	281.579;
+W_pb_des	=	107;
+cycle_max_fraction	=	1.05;
+cycle_cutoff_frac	=	0.25;
+t_sby	= 2;
+q_sby_frac1	=	0.2;
+solarm	=	1.8;
+PB_pump_coef	=	0;
+PB_fixed_par	=	0.0055;
+BOP_parVal	=	0;
+BOP_parPF	=	1;
+BOP_par0	=	0.483;
+BOP_par1	=	0.571;
+BOP_par2	=	0;
+Aux_parVal	=	0.023;
+Aux_parPF	=	1;
+Aux_par0	=	0.483;
+Aux_par1	=	0.571;
+Aux_par2	=	0;
+T_startup	=	440;
+fossil_mode	=	1;
+I_bn_des	=	950;
+is_sh	=	1;
+is_oncethru	=	0;
+is_multgeom	=	0;
+nModBoil	=	12;
+nModSH	=	4;
+nLoops	=	105;
+eta_pump	=	0.85;
+latitude	=	32.1167;
+theta_stow	=	10;
+theta_dep	=	10;
+m_dot_min	=	0.05;
+T_field_ini	=	230;
+T_fp	=	10;
+Pipe_hl_coef	=	0.0035;
+SCA_drives_elec	=	0.2;
+ColAz	=	0;
+e_startup	=	2.7;
+T_amb_des_sf	=	25;
+V_wind_max	=	20;
+LU_HL	=	70; 		//	![none] Logical unit specifying the location of the heat loss information file
+LU_OptTable	=	10;		//	![none] Logical unit for the optical table file
+LU_OptTable_sh	=	11;	//	![none] Logical unit for the optical table file in superheater
+FFRAC_1	=	0;
+FFRAC_2	=	0;
+FFRAC_3	=	0;
+FFRAC_4	=	0;
+FFRAC_5	=	0;
+FFRAC_6	=	0;
+FFRAC_7	=	0;
+FFRAC_8	=	0;
+FFRAC_9	=	0;
+
+// Now set TCS Parameters
+set_value( solarfield, "tes_hours", TSHOURS );
+set_value( solarfield, "q_max_aux", q_max_aux );
+set_value( solarfield, "LHV_eff", LHV_eff );
+set_value( solarfield, "T_set_aux", T_set_aux );
+set_value( solarfield, "T_field_in_des", T_field_in_des );
+set_value( solarfield, "T_field_out_des", T_field_out_des );
+set_value( solarfield, "x_b_des", x_b_des );
+set_value( solarfield, "P_turb_des", P_turb_des );
+set_value( solarfield, "fP_hdr_c", fP_hdr_c );
+set_value( solarfield, "fP_sf_boil", fP_sf_boil );
+set_value( solarfield, "fP_boil_to_sh", fP_boil_to_SH );
+set_value( solarfield, "fP_sf_sh", fP_sf_sh );
+set_value( solarfield, "fP_hdr_h", fP_hdr_h );
+Q_ref = P_ref/eta_ref;
+set_value( solarfield, "q_pb_des", Q_ref );
+set_value( solarfield, "W_pb_des", W_pb_des );
+set_value( solarfield, "cycle_max_fraction", cycle_max_fraction );
+set_value( solarfield, "cycle_cutoff_frac", cycle_cutoff_frac );
+set_value( solarfield, "t_sby", t_sby );
+set_value( solarfield, "q_sby_frac", q_sby_frac );
+set_value( solarfield, "solarm", solarm );
+set_value( solarfield, "PB_pump_coef", PB_pump_coef );
+set_value( solarfield, "PB_fixed_par", PB_fixed_par );
+set_value( solarfield, "bop_array", [BOP_parVal, BOP_parPF, BOP_par0, BOP_par1, BOP_par2] );
+set_value( solarfield, "aux_array", [Aux_parVal, Aux_parPF, Aux_par0, Aux_par1, Aux_par2] );
+set_value( solarfield, "T_startup", T_startup );
+set_value( solarfield, "fossil_mode", fossil_mode );
+set_value( solarfield, "I_bn_des", I_bn_des );
+set_value( solarfield, "is_sh", is_sh );
+set_value( solarfield, "is_oncethru", is_oncethru );
+set_value( solarfield, "is_multgeom", is_multgeom );
+set_value( solarfield, "nModBoil", nModBoil );
+set_value( solarfield, "nModSH", nModSH );
+set_value( solarfield, "nLoops", nLoops );
+set_value( solarfield, "eta_pump", eta_pump );
+set_value( solarfield, "latitude", latitude );
+set_value( solarfield, "theta_stow", theta_stow );
+set_value( solarfield, "theta_dep", theta_dep );
+set_value( solarfield, "m_dot_min", m_dot_min );
+set_value( solarfield, "T_field_ini", T_field_ini );
+set_value( solarfield, "T_fp", T_fp );
+set_value( solarfield, "Pipe_hl_coef", Pipe_hl_coef );
+set_value( solarfield, "SCA_drives_elec", SCA_drives_elec );
+set_value( solarfield, "ColAz", ColAz );
+set_value( solarfield, "e_startup", e_startup );
+set_value( solarfield, "T_amb_des_sf", T_amb_des_sf );
+set_value( solarfield, "V_wind_max", V_wind_max );
+set_value( solarfield, "ffrac", [FFRAC_1,FFRAC_2,FFRAC_3,FFRAC_4,FFRAC_5,FFRAC_6,FFRAC_7,FFRAC_8,FFRAC_9] );
+
+// *********************************************
+sys_geom_loc = tcs_dir + '/tcs/typelib/Steam_Linear_Fresnel/sys_geom.in';
+
+f = open( sys_geom_loc, 'r' );
+
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+nrows = 1;
+if( is_multgeom )
+	nrows = 2;
+
+HCE_FieldFrac = alloc(nrows,4);
+alpha_abs = alloc(nrows,4);
+alpha_env = alloc(nrows,4);
+EPSILON_4 = alloc(nrows,4);
+Tau_envelope = alloc(nrows,4);
+GlazingIntactIn = alloc(nrows,4);
+AnnulusGas = alloc(nrows,4);
+P_a = alloc(nrows,4);
+Design_loss = alloc(nrows,4);
+Shadowing = alloc(nrows,4);
+Dirt_HCE = alloc(nrows,4);
+
+a = alloc(nrows,1);
+
+A_aper = alloc( nrows, 1 );
+L_col = alloc( nrows, 1 );
+OptCharType = alloc( nrows, 1 );
+IAM_T = alloc(nrows,5);
+IAM_L = alloc(nrows,5);
+TrackingError = a;
+GeomEffects = a;
+rho_mirror_clean = a;
+dirt_mirror = a;
+error = a;
+HLCharType = a;
+HL_dT = alloc(nrows,5);
+HL_W = alloc(nrows,5);
+D_2 = a;
+D_3 = a;
+D_4 = a;
+D_5 = a;
+D_p = a;
+Rough = a;
+Flow_type = a;
+AbsorberMaterial = a;
+
+read_line(f, A_aper[0][0]);
+read_line(f, L_col[0][0]);
+read_line(f, OptCharType[0][0]);
+read_line(f,IAM_T[0][0]);
+read_line(f,IAM_T[0][1]);
+read_line(f,IAM_T[0][2]);
+read_line(f,IAM_T[0][3]);
+read_line(f,IAM_T[0][4]);
+read_line(f,IAM_L[0][0]);
+read_line(f,IAM_L[0][1]);
+read_line(f,IAM_L[0][2]);
+read_line(f,IAM_L[0][3]);
+read_line(f,IAM_L[0][4]);
+read_line(f,TrackingError[0][0]);
+read_line(f,GeomEffects[0][0]);
+read_line(f,rho_mirror_clean[0][0]);
+read_line(f,dirt_mirror[0][0]);
+read_line(f,error[0][0]);
+read_line(f,HLCharType[0][0]);
+read_line(f,HL_dT[0][0]);
+read_line(f,HL_dT[0][1]);
+read_line(f,HL_dT[0][2]);
+read_line(f,HL_dT[0][3]);
+read_line(f,HL_dT[0][4]);
+read_line(f,HL_W[0][0]);
+read_line(f,HL_W[0][1]);
+read_line(f,HL_W[0][2]);
+read_line(f,HL_W[0][3]);
+read_line(f,HL_W[0][4]);
+read_line(f,D_2[0][0]);
+read_line(f,D_3[0][0]);
+read_line(f,D_4[0][0]);
+read_line(f,D_5[0][0]);
+read_line(f,D_p[0][0]);
+read_line(f,Rough[0][0]);
+read_line(f,Flow_type[0][0]);
+read_line(f,AbsorberMaterial[0][0]);
+
+// Set Boiler Geometry
+for( ii = 0; ii < 4; ii++ )
+{
+	read_line(f,HCE_FieldFrac[0][ii]);
+	read_line(f,alpha_abs[0][ii]);
+
+	//Get optical table for boiler HCE 1
+	line = 'string';
+	read_line(f,line);
+	l_line = strlen(line);
+	symbol = left(line,1);
+	if(ii == 0)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			b_eps_HCE1 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				b_eps_HCE1[0][i] = opt_in[0];
+				b_eps_HCE1[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		b_eps_HCE1 = alloc(2,1);
+		b_eps_HCE1[0][0] = 0;
+		b_eps_HCE1[1][0] = to_real( line );
+		}
+	}
+	if(ii == 1)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			b_eps_HCE2 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				b_eps_HCE2[0][i] = opt_in[0];
+				b_eps_HCE2[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		b_eps_HCE2 = alloc(2,1);
+		b_eps_HCE2[0][0] = 0;
+		b_eps_HCE2[1][0] = to_real( line );
+		}
+	}            
+	if(ii == 2)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			b_eps_HCE3 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				b_eps_HCE3[0][i] = opt_in[0];
+				b_eps_HCE3[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		b_eps_HCE3 = alloc(2,1);
+		b_eps_HCE3[0][0] = 0;
+		b_eps_HCE3[1][0] = to_real( line );
+		}
+	}  
+	if(ii == 3)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			b_eps_HCE4 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				b_eps_HCE4[0][i] = opt_in[0];
+				b_eps_HCE4[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		b_eps_HCE4 = alloc(2,1);
+		b_eps_HCE4[0][0] = 0;
+		b_eps_HCE4[1][0] = to_real( line );
+		}
+	}	
+		
+	read_line(f,alpha_env[0][ii]);	
+	read_line(f,EPSILON_4[0][ii]);	
+	read_line(f,Tau_envelope[0][ii]);	
+	read_line(f,GlazingIntactIn[0][ii]);	
+	read_line(f,AnnulusGas[0][ii]);
+	read_line(f,P_a[0][ii]);
+	read_line(f,Design_loss[0][ii]);
+	read_line(f,Shadowing[0][ii]);
+	read_line(f,Dirt_HCE[0][ii]);
+}
+
+if(is_multgeom)
+{
+// Superheater geometry
+read_line(f, A_aper[1][0]);
+read_line(f, L_col[1][0]);
+read_line(f, OptCharType[1][0]);
+read_line(f,IAM_T[1][0]);
+read_line(f,IAM_T[1][1]);
+read_line(f,IAM_T[1][2]);
+read_line(f,IAM_T[1][3]);
+read_line(f,IAM_T[1][4]);
+read_line(f,IAM_L[1][0]);
+read_line(f,IAM_L[1][1]);
+read_line(f,IAM_L[1][2]);
+read_line(f,IAM_L[1][3]);
+read_line(f,IAM_L[1][4]);
+read_line(f,TrackingError[1][0]);
+read_line(f,GeomEffects[1][0]);
+read_line(f,rho_mirror_clean[1][0]);
+read_line(f,dirt_mirror[1][0]);
+read_line(f,error[1][0]);
+read_line(f,HLCharType[1][0]);
+read_line(f,HL_dT[1][0]);
+read_line(f,HL_dT[1][1]);
+read_line(f,HL_dT[1][2]);
+read_line(f,HL_dT[1][3]);
+read_line(f,HL_dT[1][4]);
+read_line(f,HL_W[1][0]);
+read_line(f,HL_W[1][1]);
+read_line(f,HL_W[1][2]);
+read_line(f,HL_W[1][3]);
+read_line(f,HL_W[1][4]);
+read_line(f,D_2[1][0]);
+read_line(f,D_3[1][0]);
+read_line(f,D_4[1][0]);
+read_line(f,D_5[1][0]);
+read_line(f,D_p[1][0]);
+read_line(f,Rough[1][0]);
+read_line(f,Flow_type[1][0]);
+read_line(f,AbsorberMaterial[1][0]);
+for( ii = 0; ii < 4; ii++ )
+{
+	read_line(f,HCE_FieldFrac[1][ii]);
+	read_line(f,alpha_abs[1][ii]);
+
+	//Get optical table for superheater HCE 1
+	line = 'string';
+	read_line(f,line);
+	l_line = strlen(line);
+	symbol = left(line,1);
+	if(ii == 0)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			s_eps_HCE1 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				s_eps_HCE1[0][i] = opt_in[0];
+				s_eps_HCE1[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		s_eps_HCE1 = alloc(2,1);
+		s_eps_HCE1[0][0] = 0;
+		s_eps_HCE1[1][0] = to_real( line );
+		}
+	}
+	if(ii == 1)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			s_eps_HCE2 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				s_eps_HCE2[0][i] = opt_in[0];
+				s_eps_HCE2[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		s_eps_HCE2 = alloc(2,1);
+		s_eps_HCE2[0][0] = 0;
+		s_eps_HCE2[1][0] = to_real( line );
+		}
+	}            
+	if(ii == 2)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			s_eps_HCE3 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				s_eps_HCE3[0][i] = opt_in[0];
+				s_eps_HCE3[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		s_eps_HCE3 = alloc(2,1);
+		s_eps_HCE3[0][0] = 0;
+		s_eps_HCE3[1][0] = to_real( line );
+		}
+	}  
+	if(ii == 3)
+	{
+		if( symbol == '&' )
+		{	
+			n_opt = right(line,l_line-1);
+			n_opt = to_real(n_opt);
+			s_eps_HCE4 = alloc(2,n_opt);
+			new_line = 'string';
+			for( i = 0; i < n_opt; i++ )
+			{
+				read_line(f,new_line);
+				opt_in = split(new_line, '	');		//tab delimited
+				s_eps_HCE4[0][i] = opt_in[0];
+				s_eps_HCE4[1][i] = opt_in[1];
+			}
+		}
+		else	
+		{
+		s_eps_HCE4 = alloc(2,1);
+		s_eps_HCE4[0][0] = 0;
+		s_eps_HCE4[1][0] = to_real( line );
+		}
+	}	
+		
+	read_line(f,alpha_env[1][ii]);	
+	read_line(f,EPSILON_4[1][ii]);	
+	read_line(f,Tau_envelope[1][ii]);	
+	read_line(f,GlazingIntactIn[1][ii]);	
+	read_line(f,AnnulusGas[1][ii]);
+	read_line(f,P_a[1][ii]);
+	read_line(f,Design_loss[1][ii]);
+	read_line(f,Shadowing[1][ii]);
+	outln(read_line(f,Dirt_HCE[1][ii]));
+}
+}
+
+// Set all matrix parameters
+set_value(solarfield,"A_aperture",A_aper);
+set_value(solarfield,"L_col",L_col);
+set_value(solarfield,"OptCharType",OptCharType);
+set_value(solarfield,"IAM_T",IAM_T);
+set_value(solarfield,"IAM_L",IAM_L);
+set_value(solarfield,"TrackingError",TrackingError);
+set_value(solarfield,"GeomEffects",GeomEffects);
+set_value(solarfield,"rho_mirror_clean",rho_mirror_clean);
+set_value(solarfield,"dirt_mirror",dirt_mirror);
+set_value(solarfield,"error",error);
+set_value(solarfield,"HLCharType",HLCharType);
+set_value(solarfield,"HL_dT",HL_dT);
+set_value(solarfield,"HL_W",HL_W);
+set_value(solarfield,"D_2",D_2);
+set_value(solarfield,"D_3",D_3);
+set_value(solarfield,"D_4",D_4);
+set_value(solarfield,"D_5",D_5);
+set_value(solarfield,"D_p",D_p);
+set_value(solarfield,"Rough",Rough);
+set_value(solarfield,"Flow_type",Flow_type);
+set_value(solarfield,"AbsorberMaterial",AbsorberMaterial);
+set_value(solarfield,"HCE_FieldFrac",HCE_FieldFrac);
+set_value(solarfield,"alpha_abs",alpha_abs);
+set_value(solarfield,"b_eps_HCE1",b_eps_HCE1);
+set_value(solarfield,"b_eps_HCE2",b_eps_HCE2);
+set_value(solarfield,"b_eps_HCE3",b_eps_HCE3);
+set_value(solarfield,"b_eps_HCE4",b_eps_HCE4);
+if(is_multgeom)
+{
+	set_value(solarfield,"sh_eps_HCE1",s_eps_HCE1);
+	set_value(solarfield,"sh_eps_HCE2",s_eps_HCE2);
+	set_value(solarfield,"sh_eps_HCE3",s_eps_HCE3);
+	set_value(solarfield,"sh_eps_HCE4",s_eps_HCE4);
+}
+set_value(solarfield,"alpha_env",alpha_env);
+set_value(solarfield,"EPSILON_4",EPSILON_4);
+set_value(solarfield,"Tau_envelope",Tau_envelope);
+set_value(solarfield,"GlazingIntactIn",GlazingIntactIn);
+set_value(solarfield,"AnnulusGas",AnnulusGas);
+set_value(solarfield,"P_a",P_a);
+set_value(solarfield,"Design_loss",Design_loss);
+set_value(solarfield,"Shadowing",Shadowing);
+set_value(solarfield,"Dirt_HCE",Dirt_HCE);
+//******************************************************
+
+//Load the optical efficiency files
+	//Boiler
+opt_eff_b_file = tcs_dir + '/tcs/typelib/Steam_Linear_Fresnel/opteff.dat';
+
+data = read_text_file(opt_eff_b_file);
+lines = split(data, '\n');
+nrow = #lines;
+line = split(lines[0], '	'); 	// Tab delimited
+ncol = #line + 1;
+opt_data = alloc(nrow, ncol);
+for(i=0; i<nrow; i++)
+{
+	line = split(lines[i], '	');	// Tab delimited
+	for(j=0; j<ncol; j++)
+	{
+		if( i==0 )
+		{
+			if( j==ncol-1 )
+			{
+				opt_data[i][j] = -999.9;		// Waste value here
+			}
+			else
+			{
+				opt_data[i][j] = to_real(line[j]);
+			}
+		}
+		else
+		{
+			opt_data[i][j] = to_real(line[j]);
+		}
+	}
+}
+set_value(solarfield, "b_OpticalTable", opt_data);
+
+	//Superheater
+opt_eff_sh_file = tcs_dir + '/tcs/typelib/Steam_Linear_Fresnel/opteff_sh.dat';
+
+data = read_text_file(opt_eff_sh_file);
+lines = split(data, '\n');
+nrow = #lines;
+line = split(lines[0], ',');
+ncol = #line;
+opt_data = alloc(nrow, ncol);
+for(i=0; i<nrow; i++)
+{
+	line = split(lines[i], ',');
+	for(j=0; j<ncol; j++)
+	{
+		opt_data[i][j] = to_real(line[j]);
+	}
+}
+
+set_value(solarfield, "sh_OpticalTable", opt_data);
+
+// Set Parameters for Direct Powerblock
+set_value(powerblock, "P_ref", P_ref);
+set_value(powerblock, "eta_ref", eta_ref);
+set_value(powerblock, "T_hot_ref", T_hot_ref);
+set_value(powerblock, "T_cold_ref", T_cold_ref);
+set_value(powerblock, "dT_cw_ref", dT_cw_ref);
+set_value(powerblock, "T_amb_des", T_amb_des);
+set_value(powerblock, "q_sby_frac", q_sby_frac);
+set_value(powerblock, "P_boil_des", P_boil_ref);
+set_value(powerblock, "is_rh", is_rh);
+set_value(powerblock, "P_rh_ref", P_rh_ref);
+set_value(powerblock, "T_rh_hot_ref", T_rh_hot_ref);
+set_value(powerblock, "rh_frac_ref", rh_frac_ref);
+set_value(powerblock, "CT", CT);
+set_value(powerblock, "startup_time", startup_time);
+set_value(powerblock, "startup_frac", startup_frac);
+set_value(powerblock, "tech_type", tech_type);
+set_value(powerblock, "T_approach", T_approach);
+set_value(powerblock, "T_ITD_des", T_ITD_des);
+set_value(powerblock, "P_cond_ratio", P_cond_ratio);
+set_value(powerblock, "pb_bd_frac", pb_bd_frac);
+set_value(powerblock, "P_cond_min", P_cond_min);
+set_value(powerblock, "n_pl_inc", n_pl_inc);
+set_value(powerblock, "F_wc", [F_wc_1, F_wc_2, F_wc_3, F_wc_4, F_wc_5, F_wc_6, F_wc_7, F_wc_8, F_wc_9]);
+
+// Set Inputs for Solarfield
+set_value(solarfield, "dnifc", 0.0);				//[W/m2] - not used
+connect(weather, "beam", solarfield, "I_bn");		//[W/m2] - connect to weather reader
+	set_value(solarfield, "I_bn", 0.0);			    //[W/m2] - initial value
+connect(weather, "tdry", solarfield, "T_db");		//[C] - connect to weather reader
+	set_value(solarfield, "T_db", 15.0);			//[C] - initial value
+connect(weather, "tdew", solarfield, "T_dp");		//[C] - connect to weather reader
+	set_value(solarfield, "T_dp", 10.0);			//[C] - connect to dew point
+connect(weather, "pres", solarfield, "P_amb");		//[mbar] - connect to weather reader
+	set_value(solarfield, "P_amb", 930.50);			//[mbar] - initial value
+connect(weather, "wspd", solarfield, "V_wind");		//[m/s] - connect to weather reader
+	set_value(solarfield, "V_wind", 0.0);			//[m/s] - initial value
+connect(powerblock, "m_dot_ref", solarfield, "m_dot_htf_ref");	//[kg/hr] connect to powerblock
+	set_value(solarfield, "m_dot_htf_ref", 0.0);	//[kg/hr] - initial value
+set_value(solarfield, "m_pb_demand", 0.0);			//[kg/hr] - not used
+connect(weather, "shift", solarfield, "shift");		//[deg] - connect to weather reader
+	set_value(solarfield, "shift", 0.0);			//[deg] - initial value
+connect(weather, "solazi", solarfield, "SolarAz");	//[deg] - connect to weather reader
+	set_value(solarfield, "SolarAz", 0.0);			//[deg] - initial value
+connect(weather, "solzen", solarfield, "SolarZen"); //[deg] - connect to weather reader
+	set_value(solarfield, "SolarZen", 0.0);			//[deg] - initial value
+connect(powerblock, "T_cold", solarfield, "T_pb_out");	//[C] - connect to powerblock
+	set_value(solarfield, "T_pb_out", 290.0);			//[C] - initial value
+set_value(solarfield, "TOUPeriod", 4);				//[-] - don't have TOU reader yet - all are same in default LF model though
+
+// Set Inputs for Powerblock
+connect(solarfield, "cycle_pl_control", powerblock, "mode");	//[-] connect to LF solarfield
+	set_value(powerblock, "mode", 1);							//[-] initial value
+connect(solarfield, "T_field_out", powerblock, "T_hot");		//[C] connect to LF solarfield
+	set_value(powerblock, "T_hot", T_hot_ref);					//[C] initial value
+connect(solarfield, "m_dot_to_pb", powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
+	set_value(powerblock, "m_dot_st", 0);						//[kg/hr] initial value
+connect(weather, "twet", powerblock, "T_wb");					//[C] connect to weather reader
+	set_value(powerblock, "T_wb", 12.8);						//[C] Initial value
+connect(solarfield, "m_dot_to_pb", powerblock, "demand_var");	//[kg/hr] 
+	set_value(powerblock, "demand_var", P_ref);					//[kg/hr]
+connect(solarfield, "standby_control", powerblock, "standby_control");
+	set_value(powerblock, "standby_control", 0);
+connect(weather, "tdry", powerblock, "T_db");
+	set_value(powerblock, "T_db", 12.8);
+connect(weather, "pres", powerblock, "P_amb");
+	set_value(powerblock, "P_amb", 960);
+set_value(powerblock, "TOU", 4);								//[-] No TOU reader yet
+connect(weather, "rhum", powerblock, "relhum");					//[-] connect to weather reader
+	set_value(powerblock, "relhum", 0.25);						//[-] Initial value
+set_value(powerblock, "f_recSU", 1);							//[-] Set to 1 for LF
+connect(solarfield, "dP_sf_sh", powerblock, "dp_sh");			//[Pa] Pressure drop in sh
+	set_value(powerblock, "dp_sh", 5.0);
+set_value(powerblock,"dp_rh", 0.0);								//[Pa] no rh in LF
+
+
+E_net_calcs = add_unit("sam_mw_lf_type261_Wnet");
+
+connect(powerblock, "P_cycle", E_net_calcs, "W_cycle_gross");
+connect(solarfield, "W_dot_par_tot", E_net_calcs, "W_par_sf_tot");
+connect(powerblock, "W_cool_par", E_net_calcs, "W_par_cooling");
+
+simulate(1,8760,1,30,false);
+
+
+
