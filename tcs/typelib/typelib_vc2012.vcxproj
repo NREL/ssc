@@ -148,6 +148,7 @@
     <ClCompile Include="direct_steam_receivers.cpp" />
     <ClCompile Include="htf_props.cpp" />
     <ClCompile Include="interpolation_routines.cpp" />
+    <ClCompile Include="ngcc_powerblock.cpp" />
     <ClCompile Include="powerblock.cpp" />
     <ClCompile Include="pump.cpp" />
     <ClCompile Include="sam_csp_util.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="direct_steam_receivers.h" />
     <ClInclude Include="htf_props.h" />
     <ClInclude Include="interpolation_routines.h" />
+    <ClInclude Include="ngcc_powerblock.h" />
     <ClInclude Include="powerblock.h" />
     <ClInclude Include="sam_csp_util.h" />
     <ClInclude Include="storage_hx.h" />
