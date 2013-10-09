@@ -207,7 +207,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// The names of the output variables should match the parameter names for the TCS units in order to signal to the TCS kernel to store the values by timestep
 
 	// VARTYPE          DATATYPE          NAME                 LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",            "Cycle power output",                                                "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",        "Cycle power output",                                                "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
     var_info_invalid };
 
