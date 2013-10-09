@@ -19,9 +19,10 @@ enum{	//Parameters
 		I_T_AMB,
 		I_P_AMB,
 		I_M_DOT_MS,
-		I_Q_DOT_REC,
+		I_Q_DOT_REC_SS,
 		I_T_REC_IN, 
 		I_T_REC_OUT,
+		I_F_TIMESTEP,
 
 		//Outputs
 		O_T_HTF_COLD,
@@ -42,9 +43,10 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	{TCS_INPUT, TCS_NUMBER, I_T_AMB,           "T_amb",             "Ambient temperature",                                  "C",     "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_P_AMB,           "P_amb",             "Ambient pressure",                                     "mbar",  "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_M_DOT_MS,        "m_dot_ms",          "Molten salt mass flow rate from receiver",             "kg/hr", "", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_Q_DOT_REC,       "q_dot_rec",         "Receiver thermal output",                              "MWt",   "", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_Q_DOT_REC_SS,    "q_dot_rec_ss",      "Receiver thermal output",                              "MWt",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_T_REC_IN,        "T_rec_in",          "Receiver inlet temperature",                           "C",     "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_T_REC_OUT,       "T_rec_out",         "Receiver outlet temperature",                          "C",     "", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_F_TIMESTEP,      "f_timestep",        "Fraction of timestep that receiver is operational (not starting-up)", "", "", ""},
 
 	//OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD,    "T_htf_cold",       "Outlet molten salt temp - inlet rec. temp",           "C",     "", "", ""},
@@ -248,18 +250,18 @@ public:
 	virtual int call( double time, double step, int ncall )
 	{	
 		// 1) Get inputs from receiver and weather reader
-		double T_amb = value( I_T_AMB );				//[C] Ambient temperature
-		double P_amb = value( I_P_AMB )/1000.0;			//[bar] Ambient pressure, convert from [mbar]
-		double m_dot_ms = value( I_M_DOT_MS )/3600.0;	//[kg/s] Molten salt mass flow rate from receiver, convert from [kg/hr]
-		double q_dot_rec = value( I_Q_DOT_REC )*1000.0;	//[kWt] Receiver thermal output, convert from [MWt]
+		double T_amb = value( I_T_AMB );					//[C] Ambient temperature
+		double P_amb = value( I_P_AMB )/1000.0;				//[bar] Ambient pressure, convert from [mbar]
+		double m_dot_ms_rec = value( I_M_DOT_MS )/3600.0;	//[kg/s] Molten salt mass flow rate from receiver, convert from [kg/hr]
+		double q_dot_rec = value( I_Q_DOT_REC_SS )*1000.0;		//[kWt] Receiver thermal output, convert from [MWt]
 		double T_rec_in_prev = value( I_T_REC_IN );			//[C] Receiver inlet molten salt temperature - used to solve previous call to tower model
-		double T_rec_out_prev = value( I_T_REC_OUT );		//[C] Receiver outlet molten salt temperature - used to solve previous call to tower model
+		double T_rec_out = value( I_T_REC_OUT );		    //[C] Receiver outlet molten salt temperature - used to solve previous call to tower model
 
 		if( q_dot_rec == 0 )
 		{
 			// No solar load - so no need to iterate - get out and calculate ngcc performance at fossil-only conditions
 			value( O_T_HTF_COLD, T_rec_in_prev );
-			value( O_T_HTF_HOT, T_rec_out_prev );
+			value( O_T_HTF_HOT, T_rec_out );
 
 			return 0;
 		}
@@ -282,19 +284,6 @@ public:
 		double h_st_extract = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_h );			// [kJ/kg]
 		double h_st_inject = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_h );			// [kJ/kg]
 		double m_dot_st = q_dot_rec / (h_st_inject - h_st_extract);
-		/*
-		// ********************************************************************************************************
-		// For now, use estimates...
-		// ********************************************************************************************************
-		double P_st_des = 10000.0;						//[kPa] Extraction/Injection at "full solar input"
-		water_PQ( P_st_des, 0.0, &wp );					// Steam props at design pressure and quality = 0
-		double T_st_des = wp.T;							//[C] Saturation temperature
-		
-		double T_st_econo_in = T_st_des - 15.0;			//[C] Extraction temperature FROM power cycle
-		double P_st_econo_in = P_st_des;				//[kPa] Extraction pressure FROM power cycle
-		double T_st_sh_out = T_st_des + 20.0;			//[C] Injection temperature TO power cycle
-		double P_st_sh_out = P_st_des;					//[kPa] Injection temperature TO power cycle		
-		// ******************************************************************************************************** */
 		
 		// 3) Calculate remaining steam cycle state points
 		double P_st_evap_in = P_st_extract;				//[kPa] Inlet pressure to evaporator
@@ -308,6 +297,8 @@ public:
 		double cp_st_sh_in = wp.Cp;						//[kJ/kg-K] Specific heat at superheater inlet
 		double T_st_sh_in = wp.T;						//[C] Temperature at superheater inlet
 		double cp_st_sh = (cp_st_sh_in + cp_st_sh_out)/2.0;	//[kJ/kg-K] Average specific heat in superheater
+		double C_dot_st_sh = cp_st_sh * m_dot_st;			//[kW/K] Capacitance rate of steam in superheater
+		double q_dot_sh = m_dot_st*(h_st_sh_out - h_st_sh_in);			//[kW] Superheater heater duty
 			// Economizer
 		water_PQ( P_st_evap_in, 0.0, &wp );				// Water props at evap inlet
 		double h_st_econo_out = wp.H;					//[kJ/kg] Enthalpy at evaporator inlet
@@ -316,119 +307,113 @@ public:
 		double h_st_econo_in = wp.H;					//[kJ/kg]
 		double cp_st_econo_in = wp.Cp;					//[kJ/kg-K]
 		double cp_st_econo = (cp_st_econo_in+cp_st_econo_out)/2.0;	//[kJ/kg-K]
-
-		// 4) Calculate steam mass flow rate and here if necessary (depends on final regression curves)
-		//water_TP( T_st_extract, P_st_extract, &wp );		// Water props at econo inlet
-		//double h_econo_in = wp.H;							//[kJ/kg] enthalpy at econo inlet
-		//water_TP( T_st_inject, P_st_sh_in, &wp );			// Water props at sh outlet
-		//double h_sh_out = wp.H;								//[kJ/kg] enthalpy at superheater outlet
-		//double m_dot_st = q_dot_rec/(h_sh_out - h_econo_in);	//[kg/s] Mass flow rate of steam
-
-		// 5) Calculate capacitance rates and duty
-		double C_dot_ms = m_dot_ms * m_cp_ms;				//[kW/K] Capacitance rate of molten salt
-			// Superheater
-		double C_dot_st_sh = cp_st_sh * m_dot_st;			//[kW/K] Capacitance rate of steam in superheater
-		double C_dot_min_sh = min( C_dot_ms, C_dot_st_sh );	//[kW/K] Minimum capacitance rate in superheater
-		double C_dot_max_sh = max( C_dot_ms, C_dot_st_sh );	//[kW/K] Maximum capacitance rate in superheater
-		double CR_sh = C_dot_min_sh / C_dot_max_sh;				//[-] Capacitance ratio of superheater
-		double q_dot_sh = m_dot_st*(h_st_sh_out - h_st_sh_in);	//[kW] Superheater heater duty
-			// Evaporator
-		double q_dot_evap = m_dot_st*(h_st_sh_in - h_st_econo_out);	//[kW] Evaporator duty
-			// Economizer
 		double C_dot_st_econo = cp_st_econo*m_dot_st;				//[kW/K]
-		double C_dot_min_econo = min( C_dot_ms, C_dot_st_econo );	//[kW/K]
-		double C_dot_max_econo = max( C_dot_ms, C_dot_st_econo );	//[kW/K]
-		double CR_econo = C_dot_min_econo/C_dot_max_econo;			//[-]
 		double q_dot_econo = m_dot_st*(h_st_econo_out-h_st_econo_in);	//[kW]
+			// Evaporator
+		double q_dot_evap = m_dot_st*(h_st_sh_in - h_st_econo_out);		//[kW] Evaporator duty
 
-		// 6) Update design point UAs
-			// UA = UA_ref*( (m1^0.8 * m2^0.8)/(m1_ref^0.8 * m2_ref^0.8) )*( (m1_ref^0.8+m2_ref^0.8)/(m1^0.8+m2^0.8) )
-		double UA_mult = ( (pow(m_dot_ms,0.8)*pow(m_dot_st,0.8))/(pow(m_m_dot_ms_des,0.8)*pow(m_m_dot_st_des,0.8)) )*( (pow(m_m_dot_ms_des,0.8)+pow(m_m_dot_st_des,0.8))/(pow(m_dot_ms,0.8)+pow(m_dot_st,0.8)));
-		double UA_econo_phys = m_UA_econo_des*UA_mult;
-		double UA_evap_phys = m_UA_evap_des*UA_mult;
-		double UA_sh_phys = m_UA_sh_des*UA_mult;
-		double UA_total_phys = UA_econo_phys + UA_evap_phys + UA_sh_phys;
+		// **************************************
+		// Guess T_ms_out
+		// **************************************
+		double T_ms_out_guess = T_st_sh_in;
 
-		// 7) Solve performance for HX train (assuming constant MS specific heat for all timesteps)	
-			// Set up iteration on molten salt inlet temperature
 		bool T_lowflag = true;
-		double T_lower = T_st_inject;						//[C]
-		bool T_upflag = false;
-		double T_upper = std::numeric_limits<double>::quiet_NaN();	//[C]
-
+		double T_lower = T_st_extract;				//[C]
+		bool T_upflag = true;
+		double T_upper = T_st_inject;				//[C]
+		
 		bool UAdiff_T_lowflag = false;
 		double UAdiff_T_lower = std::numeric_limits<double>::quiet_NaN();	//[C]
 		bool UAdiff_T_upflag = false;
 		double UAdiff_T_upper = std::numeric_limits<double>::quiet_NaN();	//[C]
-
+		
 		bool pinch_point_break = false;
-
+		
 		int iter_UA = 0;
 		double diff_UA = -999.9;	//[-]
 
-		// Update these with previous values?
-		double T_ms_in_guess = T_st_inject + m_T_approach;						//[C] Guess molten salt inlet temperature
-		double T_ms_out_guess = std::numeric_limits<double>::quiet_NaN();		//[C]
-		// *******************************************************************************
-
-		while( abs(diff_UA) > 0.005 && iter_UA < 50 )
+		//double m_dot_ms = std::numeric_limits<double>::quiet_NaN();	//[C]
+		
+		// ***************************************
+		// Calculate m_dot_ms
+		// ***************************************
+		while( abs(diff_UA) > 0.0001 && iter_UA < 50 )
 		{
 			iter_UA++;
+
 			if( iter_UA > 1 )
 			{
-
 				if( UAdiff_T_lowflag && UAdiff_T_upflag )
 				{
 					if( diff_UA > 0.0 )
 					{
-						T_lower = T_ms_in_guess;
+						T_lower = T_ms_out_guess;
 						UAdiff_T_lower = diff_UA;
 					}
 					else
 					{
-						T_upper = T_ms_in_guess;
+						T_upper = T_ms_out_guess;
 						UAdiff_T_upper = diff_UA;
 					}
-					T_ms_in_guess = UAdiff_T_upper/(UAdiff_T_upper-UAdiff_T_lower)*(T_lower-T_upper) + T_upper;		//[C] False position method
+					T_ms_out_guess = UAdiff_T_upper/(UAdiff_T_upper-UAdiff_T_lower)*(T_lower-T_upper) + T_upper;		//[C] False position method
 				}
 				else if( pinch_point_break )
 				{
 					pinch_point_break = false;
-					T_lower = T_ms_in_guess;
-					T_ms_in_guess += 15.0;			//[C] Don't have upper bound yet, so just temp until we get there
-				}
-				else if( diff_UA > 0.0 && !T_upflag )	// Not enough UA for temperature difference temperature -> increase inlet temperature
-				{
-					T_lower = T_ms_in_guess;
-					UAdiff_T_lower = diff_UA;
-					UAdiff_T_lowflag = true;
-					T_ms_in_guess += 15.0;			//[C] Don't have upper bound yet, so just temp until we get there
+					T_lower = T_ms_out_guess;
+					T_ms_out_guess = 0.5*T_lower + 0.5*T_upper;		//[C] Biscetion method
 				}
 				else
 				{
 					if( diff_UA > 0.0 )					// Not enough UA for temperature difference -> increase inlet temperature
 					{
-						T_lower = T_ms_in_guess;
+						T_lower = T_ms_out_guess;
 						UAdiff_T_lower = diff_UA;
 						UAdiff_T_lowflag = true;
 					}
 					else								// Too much UA for temperature difference -> decrease inlet temperature
 					{
-						T_upper = T_ms_in_guess;
+						T_upper = T_ms_out_guess;
 						T_upflag = true;
 						UAdiff_T_upper = diff_UA;
 						UAdiff_T_upflag = true;
 					}
 					if( UAdiff_T_lowflag && UAdiff_T_upflag )
-						T_ms_in_guess = UAdiff_T_upper/(UAdiff_T_upper-UAdiff_T_lower)*(T_lower-T_upper) + T_upper;		//[C] False position method
+						T_ms_out_guess = UAdiff_T_upper/(UAdiff_T_upper-UAdiff_T_lower)*(T_lower-T_upper) + T_upper;		//[C] False position method
 					else
-						T_ms_in_guess = 0.5*T_lower + 0.5*T_upper;		//[C] Biscetion method
+						T_ms_out_guess = 0.5*T_lower + 0.5*T_upper;		//[C] Biscetion method
 				}
 			}
-	
+
+			double m_dot_ms = q_dot_rec/((T_rec_out - T_ms_out_guess)*m_cp_ms);
+
+			// *********************************************
+			// *********** Calculate Off-design UAs
+			// *********************************************
+				// UA = UA_ref*( (m1^0.8 * m2^0.8)/(m1_ref^0.8 * m2_ref^0.8) )*( (m1_ref^0.8+m2_ref^0.8)/(m1^0.8+m2^0.8) )
+			double UA_mult = ( (pow(m_dot_ms,0.8)*pow(m_dot_st,0.8))/(pow(m_m_dot_ms_des,0.8)*pow(m_m_dot_st_des,0.8)) )*( (pow(m_m_dot_ms_des,0.8)+pow(m_m_dot_st_des,0.8))/(pow(m_dot_ms,0.8)+pow(m_dot_st,0.8)));
+			double UA_econo_phys = m_UA_econo_des*UA_mult;
+			double UA_evap_phys = m_UA_evap_des*UA_mult;
+			double UA_sh_phys = m_UA_sh_des*UA_mult;
+			double UA_total_phys = UA_econo_phys + UA_evap_phys + UA_sh_phys;
+			
+			// *****************************************************
+			// Calculate capacitance rates and HX duties
+			// *****************************************************
+			double C_dot_ms = m_dot_ms * m_cp_ms;							//[kW/K] Capacitance rate of molten salt
+				// Superheater
+			double C_dot_min_sh = min( C_dot_ms, C_dot_st_sh );				//[kW/K] Minimum capacitance rate in superheater
+			double C_dot_max_sh = max( C_dot_ms, C_dot_st_sh );				//[kW/K] Maximum capacitance rate in superheater
+			double CR_sh = C_dot_min_sh / C_dot_max_sh;						//[-] Capacitance ratio of superheater			
+				// Economizer
+			double C_dot_min_econo = min( C_dot_ms, C_dot_st_econo );		//[kW/K]
+			double C_dot_max_econo = max( C_dot_ms, C_dot_st_econo );		//[kW/K]
+			double CR_econo = C_dot_min_econo/C_dot_max_econo;				//[-]											
+
+			// 7) Solve performance for HX train (assuming constant MS specific heat for all timesteps)	
 				// Superheater performance
-			double T_ms_sh_out = T_ms_in_guess - q_dot_sh/(m_dot_ms*m_cp_ms);		//[C] Outlet temperature of superheater
-			double q_dot_max_sh = C_dot_min_sh*(T_ms_in_guess - T_st_sh_in);			//[kW] Maximum possible heat transfer in superheater
+			double T_ms_sh_out = T_rec_out - q_dot_sh/(m_dot_ms*m_cp_ms);			//[C] Outlet temperature of superheater
+			double q_dot_max_sh = C_dot_min_sh*(T_rec_out - T_st_sh_in);			//[kW] Maximum possible heat transfer in superheater
 			double epsilon_sh = q_dot_sh/q_dot_max_sh;								//[-] Superheater effectiveness
 			double NTU_sh = log( (epsilon_sh - 1.0)/(epsilon_sh*CR_sh - 1.0) )/(CR_sh - 1.0);		//[-] NTU
 			double UA_sh_guess = NTU_sh * C_dot_min_sh;								//[kW/K] Conductance of superheater
@@ -436,29 +421,28 @@ public:
 			double T_ms_evap_out = T_ms_sh_out - q_dot_evap/(m_dot_ms*m_cp_ms);		//[C]
 			if( T_ms_evap_out < T_st_sh_in )
 			{
-				T_lower = T_ms_in_guess;			//[C] Set lower limit on ms inlet temp
+				T_lower = T_rec_out;			//[C] Set lower limit on ms inlet temp
 				UAdiff_T_lower = false;				//[-] Don't have UA error for this
 				pinch_point_break = true;
 				continue;
 			}
-			double q_dot_max_evap = C_dot_ms*(T_ms_sh_out - T_st_sh_in);			//[kW] Maximum possible heat transfer in evap
-			double epsilon_evap = q_dot_evap/q_dot_max_evap;						//[-] Effectiveness of evaporator
-			double NTU_evap = -log(1 - epsilon_evap);								//[-] NTU of evaporator
-			double UA_evap_guess = NTU_evap * C_dot_ms;								//[kW/K] Conductance of evaporator
+			double q_dot_max_evap = C_dot_ms*(T_ms_sh_out - T_st_sh_in);				//[kW] Maximum possible heat transfer in evap
+			double epsilon_evap = q_dot_evap/q_dot_max_evap;							//[-] Effectiveness of evaporator
+			double NTU_evap = -log(1 - epsilon_evap);									//[-] NTU of evaporator
+			double UA_evap_guess = NTU_evap * C_dot_ms;									//[kW/K] Conductance of evaporator
 				// Economizer performance
 			double T_ms_econo_out = T_ms_evap_out - q_dot_econo/(m_dot_ms*m_cp_ms);		//[C]
 			double q_dot_max_econo = C_dot_min_econo*(T_ms_evap_out - T_st_extract);	//[kW]
 			double epsilon_econo = q_dot_econo/q_dot_max_econo;							//[-]
 			double NTU_econo = log( (epsilon_econo - 1.0)/(epsilon_econo*CR_econo - 1.0) )/(CR_econo - 1.0);		//[-] NTU
-			double UA_econo_guess = NTU_econo * C_dot_min_econo;						//[kW/K]
-			T_ms_out_guess = T_ms_econo_out;										//[C]
-				// Sum UAs
+			double UA_econo_guess = NTU_econo * C_dot_min_econo;						//[kW/K]																																	
+			
 			double UA_total_guess = UA_sh_guess + UA_evap_guess + UA_econo_guess;		//[kW/K]
 			diff_UA = (UA_total_guess - UA_total_phys)/UA_total_phys;			//[-]
 		}
 
 		value( O_T_HTF_COLD, T_ms_out_guess );
-		value( O_T_HTF_HOT, T_ms_in_guess );
+		value( O_T_HTF_HOT, T_rec_out );
 
 		return 0;
 
