@@ -1,0 +1,89 @@
+#ifndef __NGCC_PB_
+#define __NGCC_PB_
+
+#include "sam_csp_util.h"
+
+class ngcc_power_cycle
+{
+private:
+	int m_cycle_key;
+	double m_delta_P, m_delta_q, m_delta_T;
+	int m_N_P, m_N_q, m_N_T;
+	double m_P_amb_start, m_q_sf_start, m_T_amb_start;
+	double m_q_MW, m_T_amb_C, m_P_amb_bar;
+
+	// Performance data 3D tables
+	util::block_t<double> m_solar_steam_mass;
+	util::block_t<double> m_solar_extraction_p;
+	util::block_t<double> m_solar_injection_p;
+	util::block_t<double> m_solar_injection_t;
+	util::block_t<double> m_solar_extraction_t;
+	util::block_t<double> m_solar_extraction_h;
+	util::block_t<double> m_solar_injection_h;
+	
+	// Pointer to util::block_t that can be set to whatever performance metric current call wants
+	util::block_t<double> * p_current_table;
+
+	// Cycle 1 calls
+	void set_cycle1_table_props();
+	
+	// Generic Cycle Calls
+	double get_performance_results( util::block_t<double> * p_current_table );
+
+
+public:
+	ngcc_power_cycle(){};
+
+	~ngcc_power_cycle(){};
+
+	bool set_cycle_config( int cycle_key )
+	{
+		if( cycle_key == 1 )
+		{
+			m_cycle_key = cycle_key;
+			set_cycle1_table_props();
+			return true;
+		}
+		else
+			return false;
+	}
+
+	double get_ngcc_data( double q_MW, double T_amb_C, double P_amb_bar, int use_enum_data_descript )
+	{
+		m_q_MW = q_MW;     m_T_amb_C = T_amb_C;     m_P_amb_bar = P_amb_bar;
+
+		switch( use_enum_data_descript )
+		{
+		case E_solar_steam_mass:
+			return get_performance_results( &m_solar_steam_mass );
+		case E_solar_extraction_p:
+			return get_performance_results( &m_solar_extraction_p );
+		case E_solar_injection_p:
+			return get_performance_results( &m_solar_injection_p );
+		case E_solar_injection_t:
+			return get_performance_results( &m_solar_injection_t );
+		case E_solar_extraction_t:
+			return get_performance_results( &m_solar_extraction_t );
+		case E_solar_extraction_h:
+			return get_performance_results( &m_solar_extraction_h );
+		case E_solar_injection_h:
+			return get_performance_results( &m_solar_injection_h );
+		default:
+			return -999.9;
+		}
+	}
+
+	enum data_descript
+	{
+		E_solar_steam_mass,
+		E_solar_extraction_p,
+		E_solar_injection_p,
+		E_solar_injection_t,
+		E_solar_extraction_t,
+		E_solar_extraction_h,
+		E_solar_injection_h
+	};
+};
+
+
+#endif
