@@ -61,6 +61,9 @@ enum{	//Parameters
 		O_dP_total,
 		O_vel_htf,
 		O_T_salt_in,
+		O_M_DOT_SS, 
+		O_Q_DOT_SS,
+		O_F_TIMESTEP,
 
 		//N_MAX
 		N_MAX};
@@ -120,6 +123,9 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_dP_total,		"dP_total",			"Total receiver and tower pressure drop",									"bar",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_vel_htf,			"vel_htf",			"Heat transfer fluid average velocity",										"m/s",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_salt_in,       "T_salt_cold",      "Inlet salt temperature",                                                   "C",        "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_M_DOT_SS,        "m_dot_ss",	        "Mass flow rate at steady state - does not derate for startup",             "kg/hr",    "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_SS,        "q_dot_ss",         "Thermal at steady state - does not derate for startup",                    "MW",       "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_F_TIMESTEP,      "f_timestep",       "Fraction of timestep that receiver is operational (not starting-up)",      "-",        "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} 
@@ -500,7 +506,7 @@ public:
 		m_t_su_prev = 0.0;
 
 		m_itermode = 1;
-		m_od_control = 1.0;*/
+		m_od_control = 1.0; */
 		//******************************************************************
 		//******************************************************************
 		//******************************************************************
@@ -510,10 +516,16 @@ public:
 		double v_wind = log( (m_h_tower+m_h_rec/2)/0.003)/log(10.0/0.003)*v_wind_10;
 
 		double c_p_coolant, rho_coolant, f, u_coolant, q_conv_sum, q_rad_sum, q_dot_inc_sum; //q_inc_sum;
-		double eta_therm, m_dot_salt_tot, T_salt_hot_guess;
+		double eta_therm, m_dot_salt_tot, T_salt_hot_guess, m_dot_salt_tot_ss;
 		bool rec_is_off = false;
 		bool rec_is_defocusing = false;
 		double field_eff_adj = 0.0;
+
+		// ************* Outputs for ISCC model ****************
+		double q_thermal_ss = 0.0;
+		double f_rec_timestep = 1.0;
+		// *****************************************************
+
 		// Do an initial check to make sure the solar position called is valid
 		// If it's not, return the output equal to zeros. Also check to make sure
 		// the solar flux is at a certain level, otherwise the correlations aren't valid
@@ -565,18 +577,73 @@ public:
 			{
 				m_flux_in.fill(0.0);
 			}
-
-			// Translate to the number of panels, so each panel has its own linearly interpolated flux value
-			for( int i = 0; i < m_n_panels; i++ )
+			
+			if( m_n_panels >= 12 )
 			{
-				double ppos = (12.0/m_n_panels*i+6.0/m_n_panels);
-				double flo = floor( ppos );
-				double ceiling = ceil( ppos );
-				double ind = (ppos - flo)/max((ceiling - flo),1.e-6);
-				if( ceiling > 11 )	ceiling = 0;
-				double psp_field = (ind*(m_flux_in.at(ceiling,0)-m_flux_in.at(flo,0))+m_flux_in.at(flo,0));		//[kW/m^2] Average area-specific power for each node
-				m_q_dot_inc.at(i,0) = m_A_node*psp_field;	//[kW] The power incident on each node
+				// Translate to the number of panels, so each panel has its own linearly interpolated flux value
+				for( int i = 0; i < m_n_panels; i++ )
+				{
+					double ppos = (12.0/m_n_panels*i+6.0/m_n_panels);
+					double flo = floor( ppos );
+					double ceiling = ceil( ppos );
+					double ind = (ppos - flo)/max((ceiling - flo),1.e-6);
+					if( ceiling > 11 )	ceiling = 0;
+					double psp_field = (ind*(m_flux_in.at(ceiling,0)-m_flux_in.at(flo,0))+m_flux_in.at(flo,0));		//[kW/m^2] Average area-specific power for each node
+					m_q_dot_inc.at(i,0) = m_A_node*psp_field;	//[kW] The power incident on each node
+				}
 			}
+			else
+			{
+				double back_mult = 1.0; double front_mult = 0.0;
+				int index_start = -1; int index_stop = -1;
+				double q_flux_sum = 0.0;
+				bool is_div = false;
+				if( 12%m_n_panels == 0 )
+					is_div = true;
+
+				for( int i = 0; i < m_n_panels; i++ )
+				{
+					front_mult = 1.0 - back_mult;
+					index_start = index_stop;
+				
+					if( is_div )
+						index_stop = 12/m_n_panels*(i+1) - 1;
+					else
+						index_stop = ceil( ((double)(12/m_n_panels)*(i+1)) ) - 1;
+						
+					if( is_div )
+						back_mult = 1.0;
+					else
+						back_mult = (double)(12/m_n_panels)*(i+1) - (int)((double)(12/m_n_panels)*(i+1));
+									
+					double sum_fracs = 0.0; double sum_flux = 0.0;
+					for( int j = index_start; j <= index_stop; j++ )
+					{
+						if( j == index_start )
+						{
+							sum_fracs += front_mult;
+							if( j == -1 )
+								sum_flux += front_mult*m_flux_in.at(11,0);
+							else
+								sum_flux += front_mult*m_flux_in.at(j,0);
+						}
+						else if( j == index_stop )
+						{
+							sum_fracs += back_mult;
+							if( j == 12 )
+								sum_flux += back_mult*m_flux_in.at(0,0);
+							else
+								sum_flux += back_mult*m_flux_in.at(j,0);
+						}
+						else
+						{
+							sum_fracs += 1.0;
+							sum_flux += m_flux_in.at(j,0);
+						}
+					}
+					m_q_dot_inc.at(i,0) = sum_flux*m_A_node/sum_fracs;
+				}
+			}			
 
 			q_dot_inc_sum = 0.0;
 			for( int i = 0; i < m_n_panels; i++ )
@@ -825,9 +892,11 @@ public:
 		} while( rec_is_defocusing );
 
 		double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;
+
 		q_startup = 0.0;
 		if( !rec_is_off )
 		{			
+			m_dot_salt_tot_ss = m_dot_salt_tot;
 			if( m_E_su_prev > 0.0 || m_t_su_prev > 0.0 )
 			{
 				m_E_su = max( 0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step/3600.0 );
@@ -837,6 +906,7 @@ public:
 					m_mode = 1.0;		// If either are greater than 0, we're staring up but not finished
 					q_startup = (m_E_su_prev - m_E_su)/(step/3600.0)*1.E-6;	
 					rec_is_off = true;
+					f_rec_timestep = 0.0;
 					// GOTO 900
 				}
 				else
@@ -844,6 +914,7 @@ public:
 					m_mode = 2.0;
 					// Adjust the available mass flow to reflect startup
 					m_dot_salt_tot = min( (1.0 - m_t_su_prev/(step/3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev/((step/3600.0)*c_p_coolant*(T_salt_hot_guess-T_salt_cold_in)) );
+					f_rec_timestep = max( 0.0, min( 1.0 - m_t_su_prev/(step/3600.0), 1.0 - m_E_su_prev/(m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)) ) );
 				}
 				q_startup = (m_E_su_prev - m_E_su)/(step/3600.0)*1.E-6;
 			}
@@ -869,6 +940,7 @@ public:
 			double eta_pump_adj = eta_pump*(-2.8825E-9*pow(est_load,4)+6.0231E-7*pow(est_load,3)-1.3867E-4*pow(est_load,2)+2.0683E-2*est_load);	//[-] Adjusted pump efficiency
 			W_dot_pump = DELTAP_net*m_dot_salt_tot/rho_coolant/eta_pump_adj;
 			q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
+			q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
 
 			// After convergence, determine whether the mass flow rate falls below the lower limit
 			if( q_thermal < m_q_rec_min )
@@ -890,6 +962,8 @@ public:
 			DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
 			// Set receiver startup energy to 0
 			// q_startup = 0.0;
+			// ISCC outputs
+			m_dot_salt_tot_ss = 0.0; f_rec_timestep = 0.0; q_thermal_ss = 0.0;
 		}
 
 		// Set the outputs from this model in sequential order and get out
@@ -901,12 +975,15 @@ public:
 		value( O_Q_thermal, q_thermal/1.E6 );				//[MW] convert from W
 		value( O_T_salt_hot, T_salt_hot_guess - 273.15 );	//[C] convert from K
 		value( O_field_eff_adj, field_eff_adj );			//[-]
-		value( O_q_inc_sum, q_dot_inc_sum/1.E3 );				//[MW] convert from kW
+		value( O_q_inc_sum, q_dot_inc_sum/1.E3 );			//[MW] convert from kW
 		value( O_q_startup, q_startup );					//[MW]
 		value( O_dP_receiver, DELTAP*m_n_panels/m_n_lines/1.E5 );	//[bar] receiver pressure drop, convert from Pa
 		value( O_dP_total, Pres_D*10.0 );					//[bar] total pressure drop, convert from MPa
 		value( O_vel_htf, u_coolant );						//[m/s]
 		value( O_T_salt_in, T_salt_cold_in - 273.15 );		//[C]
+		value( O_M_DOT_SS, m_dot_salt_tot_ss*3600.0 );		//[kg/hr] convert from kg/s
+		value( O_Q_DOT_SS, q_thermal_ss/1.E6 );				//[MW] convert from W
+		value( O_F_TIMESTEP, f_rec_timestep );				//[-]
 
 		// OUT(8)=OUT(6)+abs(OUT(5)+OUT(4)) !Power before thermal  --- ?
 
