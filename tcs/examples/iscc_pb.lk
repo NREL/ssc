@@ -18,7 +18,8 @@ set_value( iscc_pb, "P_amb", 943.2 );
 
 m_dot_ms = 2256 * 3600.0;			// kg/hr
 set_value( iscc_pb, "m_dot_ms", m_dot_ms ); 
-set_value( iscc_pb, "q_dot_rec", 150 );		//MWt
+set_value( iscc_pb, "q_dot_rec_ss", 150 );		//MWt
+set_value( iscc_pb, "T_rec_out", 364.0 );	//C
 
 
 simulate(1,8760,1,30,false);
