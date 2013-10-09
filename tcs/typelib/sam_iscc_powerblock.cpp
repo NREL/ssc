@@ -27,6 +27,8 @@ enum{	//Parameters
 		//Outputs
 		O_T_HTF_COLD,
 		O_T_HTF_HOT, 
+		O_W_DOT_PC_BASE,
+		O_W_DOT_PC,     
 
 		//N_MAX
 		N_MAX};
@@ -51,6 +53,8 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	//OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD,    "T_htf_cold",       "Outlet molten salt temp - inlet rec. temp",           "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_HOT,     "T_htf_hot",        "Inlet molten salt temp - outlet rec. temp",           "C",     "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_BASE, "W_dot_pc_baseline","Plant power cycle output - no solar thermal input",   "MWe",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC,      "W_dot_pc_net",     "Plant power cycle output at timestep with solar",     "MWe",   "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
@@ -83,6 +87,18 @@ private:
 	double m_T_st_extract;
 	double m_T_st_inject;
 
+	double m_W_dot_pc_base;
+	double m_T_amb_low;
+	double m_T_amb_high;
+	double m_P_amb_low; 
+	double m_P_amb_high;
+
+	// Better convergence
+	bool m_T_lowflag_ncall;
+	bool m_T_upflag_ncall;
+	double m_T_low_ncall;
+	double m_T_up_ncall;
+
 public:
 	sam_iscc_powerblock( tcscontext *cst, tcstypeinfo *ti)
 		: tcstypeinterface( cst, ti)
@@ -105,6 +121,18 @@ public:
 		m_P_st_inject	     = std::numeric_limits<double>::quiet_NaN();
 		m_T_st_extract	     = std::numeric_limits<double>::quiet_NaN();
 		m_T_st_inject	     = std::numeric_limits<double>::quiet_NaN();
+
+		m_W_dot_pc_base = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_pc_base = std::numeric_limits<double>::quiet_NaN();
+		m_T_amb_low = std::numeric_limits<double>::quiet_NaN();
+		m_T_amb_high = std::numeric_limits<double>::quiet_NaN();
+		m_P_amb_low = std::numeric_limits<double>::quiet_NaN();
+		m_P_amb_high = std::numeric_limits<double>::quiet_NaN();
+
+		m_T_lowflag_ncall = false;
+		m_T_upflag_ncall = false;
+		m_T_low_ncall = std::numeric_limits<double>::quiet_NaN();
+		m_T_up_ncall = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_iscc_powerblock()
@@ -147,7 +175,11 @@ public:
 
 		// Set cycle configuration in class
 		int cycle_config = value( P_CYCLE_CONFIG );
-		cycle_calcs.set_cycle_config( cycle_config );	
+		cycle_calcs.set_cycle_config( cycle_config );
+
+		// Get table limits
+		cycle_calcs.get_table_range( m_T_amb_low, m_T_amb_high, m_P_amb_low, m_P_amb_high );		
+
 
 		// ********************************************************************************************************
 		// Get Steam Pressure, Extraction, Injection, and mass flow rate at design solar input from Regression Model
@@ -256,12 +288,24 @@ public:
 		double q_dot_rec = value( I_Q_DOT_REC_SS )*1000.0;		//[kWt] Receiver thermal output, convert from [MWt]
 		double T_rec_in_prev = value( I_T_REC_IN );			//[C] Receiver inlet molten salt temperature - used to solve previous call to tower model
 		double T_rec_out = value( I_T_REC_OUT );		    //[C] Receiver outlet molten salt temperature - used to solve previous call to tower model
+		double f_rec_timestep = value( I_F_TIMESTEP );		//[-] Fraction of timestep receiver is producing useful power
+
+		T_amb = max( m_T_amb_low, min( m_T_amb_high, T_amb ) );
+		P_amb = max( m_P_amb_low, min( m_P_amb_high, P_amb ) );
+
+		// Get Basline output - only depends on weather
+		if( ncall == 0 )
+		{
+			m_W_dot_pc_base = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
+			value( O_W_DOT_PC_BASE, m_W_dot_pc_base );
+		}
 
 		if( q_dot_rec == 0 )
 		{
 			// No solar load - so no need to iterate - get out and calculate ngcc performance at fossil-only conditions
 			value( O_T_HTF_COLD, T_rec_in_prev );
-			value( O_T_HTF_HOT, T_rec_out );
+			value( O_T_HTF_HOT, T_rec_out );			
+			value( O_W_DOT_PC, m_W_dot_pc_base );
 
 			return 0;
 		}
@@ -441,8 +485,31 @@ public:
 			diff_UA = (UA_total_guess - UA_total_phys)/UA_total_phys;			//[-]
 		}
 
+		if( T_ms_out_guess < T_rec_in_prev )
+		{
+			m_T_upflag_ncall = true;
+			m_T_up_ncall = T_rec_in_prev; 
+		}
+		else
+		{
+			m_T_lowflag_ncall = true;
+			m_T_low_ncall = T_rec_in_prev;
+		}
+
+		if( ncall > 8 && m_T_upflag_ncall && m_T_lowflag_ncall )
+			T_ms_out_guess = 0.5*m_T_up_ncall + 0.5*m_T_low_ncall;
+
 		value( O_T_HTF_COLD, T_ms_out_guess );
 		value( O_T_HTF_HOT, T_rec_out );
+
+		double W_dot_pc_f1 = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
+
+		double W_dot_pc = W_dot_pc_f1;
+		if( f_rec_timestep < 1.0 )
+			W_dot_pc = f_rec_timestep*W_dot_pc + (1.0 - f_rec_timestep)*m_W_dot_pc_base;
+
+		value( O_W_DOT_PC, W_dot_pc );
+	
 
 		return 0;
 
@@ -450,7 +517,9 @@ public:
 
 	virtual int converged( double time )
 	{
-		
+		m_T_lowflag_ncall = false;
+		m_T_upflag_ncall = false;
+
 		return 0;
 	}
 

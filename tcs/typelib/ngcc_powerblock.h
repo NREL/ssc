@@ -10,6 +10,7 @@ private:
 	double m_delta_P, m_delta_q, m_delta_T;
 	int m_N_P, m_N_q, m_N_T;
 	double m_P_amb_start, m_q_sf_start, m_T_amb_start;
+	double m_P_amb_end, m_q_sf_end, m_T_amb_end;
 	double m_q_MW, m_T_amb_C, m_P_amb_bar;
 
 	// Performance data 3D tables
@@ -20,6 +21,7 @@ private:
 	util::block_t<double> m_solar_extraction_t;
 	util::block_t<double> m_solar_extraction_h;
 	util::block_t<double> m_solar_injection_h;
+	util::block_t<double> m_plant_power_net;
 	
 	// Pointer to util::block_t that can be set to whatever performance metric current call wants
 	util::block_t<double> * p_current_table;
@@ -48,6 +50,16 @@ public:
 			return false;
 	}
 
+	void get_table_range(double & T_amb_low, double & T_amb_high, double & P_amb_low, double & P_amb_high )
+	{
+		T_amb_low = m_T_amb_start;
+		T_amb_high = m_T_amb_end;
+
+		P_amb_low = m_P_amb_start;
+		P_amb_high = m_P_amb_end;
+	}
+
+
 	double get_ngcc_data( double q_MW, double T_amb_C, double P_amb_bar, int use_enum_data_descript )
 	{
 		m_q_MW = q_MW;     m_T_amb_C = T_amb_C;     m_P_amb_bar = P_amb_bar;
@@ -68,6 +80,8 @@ public:
 			return get_performance_results( &m_solar_extraction_h );
 		case E_solar_injection_h:
 			return get_performance_results( &m_solar_injection_h );
+		case E_plant_power_net:
+			return get_performance_results( &m_plant_power_net );
 		default:
 			return -999.9;
 		}
@@ -81,7 +95,8 @@ public:
 		E_solar_injection_t,
 		E_solar_extraction_t,
 		E_solar_extraction_h,
-		E_solar_injection_h
+		E_solar_injection_h,
+		E_plant_power_net
 	};
 };
 
