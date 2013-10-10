@@ -12,7 +12,7 @@ endif
 
 ifeq ($(CFG),64)
 CFLAGS += -D__64BIT__
-TARGET = ssc64.dylib
+TARGET = ssc.dylib
 else
 CFLAGS += -D__32BIT__ -arch i386
 TARGET = ssc.dylib
