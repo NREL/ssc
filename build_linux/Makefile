@@ -13,7 +13,7 @@ endif
 
 ifeq ($(CFG),64)
 CFLAGS += -D__64BIT__
-TARGET=ssc64.so
+TARGET=ssc.so
 else
 CFLAGS += -D__32BIT__ -m32
 TARGET=ssc32.so
