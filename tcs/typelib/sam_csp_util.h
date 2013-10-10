@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include "recore/lib_util.h"
+#include "htf_props.h"
 
 
 using namespace std;
@@ -390,6 +391,111 @@ public:
 			return -999.9;
 	}
 
+};
+
+class Evacuated_Receiver
+{
+private:
+	emit_table m_eps3_boiler_or_first;
+	emit_table m_eps3_sh;
+	HTFProperties m_airProps;
+	HTFProperties * p_htfProps;
+
+	// Trough properties set during initialization call
+	// Need to figure out how to index boiler & superheater in main code
+	util::matrix_t<bool> m_Glazing_intact;
+	util::matrix_t<double> m_P_a;
+	util::matrix_t<double> m_D_5;
+	util::matrix_t<double> m_D_4;
+	util::matrix_t<double> m_D_3;
+	util::matrix_t<double> m_D_2;
+	util::matrix_t<double> m_D_p;
+	util::matrix_t<double> m_Dirt_HCE;
+	util::matrix_t<double> m_Shadowing;
+	util::matrix_t<double> m_tau_envelope;
+	util::matrix_t<double> m_alpha_abs;
+	util::matrix_t<double> m_alpha_env;
+	util::matrix_t<HTFProperties*> m_AnnulusGasMat;		// Need separate classes for boiler and SH?
+	util::matrix_t<AbsorberProps*> m_AbsorberPropMat;	// Need separate classes for boiler and SH?
+	util::matrix_t<double> m_epsilon_4;
+	util::matrix_t<double> m_epsilon_5;
+	util::matrix_t<double> m_L_actSCA;
+	util::matrix_t<double> m_A_cs;
+	util::matrix_t<double> m_D_h;
+	util::matrix_t<double> m_flowtype;
+
+	// Updated once per timestep
+	util::matrix_t<double> m_ColOptEff;
+
+	// Saved between calls
+	util::matrix_t<double> m_T_save;
+	
+
+public:
+	Evacuated_Receiver(){};
+
+	~Evacuated_Receiver(){};
+
+	void Initialize_Receiver( util::matrix_t<bool> & Glazing_intact, util::matrix_t<double> & P_a, util::matrix_t<double> & D_5, util::matrix_t<double> & D_4, util::matrix_t<double> & D_3,
+	                            util::matrix_t<double> & D_2, util::matrix_t<double> & D_p,
+								util::matrix_t<double> & ColOptEff, util::matrix_t<double> & Dirt_HCE, util::matrix_t<double> & Shadowing, util::matrix_t<double> tau_envelope,
+								util::matrix_t<double> & alpha_abs, util::matrix_t<double> & alpha_env, emit_table & eps3_boiler, emit_table & eps3_sh, util::matrix_t<HTFProperties*> & AnnulusGasMat,
+								util::matrix_t<AbsorberProps*> & AbsorberPropMat, util::matrix_t<double> & epsilon_4, util::matrix_t<double> & epsilon_5, util::matrix_t<double> & L_actSCA,
+								HTFProperties * htfProps, util::matrix_t<double> & A_cs, util::matrix_t<double> & D_h, util::matrix_t<double> & flowpattern)
+	{
+		m_Glazing_intact = Glazing_intact;
+		m_P_a = P_a;
+		m_D_5 = D_5;
+		m_D_4 = D_4;
+		m_D_3 = D_3;
+		m_D_2 = D_2;
+		m_D_p = D_p;
+		m_ColOptEff = ColOptEff;
+		m_Dirt_HCE = Dirt_HCE;
+		m_Shadowing = Shadowing;
+		m_tau_envelope = tau_envelope;
+		m_alpha_abs = alpha_abs;
+		m_alpha_env = alpha_env;
+		m_eps3_boiler_or_first = eps3_boiler;
+		m_eps3_sh = eps3_sh;
+		m_AnnulusGasMat = AnnulusGasMat;
+		m_AbsorberPropMat = AbsorberPropMat;
+		m_epsilon_4 = epsilon_4;
+		m_epsilon_5 = epsilon_5;
+		m_L_actSCA = L_actSCA;
+		m_A_cs = A_cs;
+		m_D_h = D_h;
+		m_flowtype = flowpattern;		
+
+		m_T_save.resize_fill(5,1,0.0);
+
+		m_airProps.SetFluid( HTFProperties::Air );
+
+		p_htfProps = htfProps;
+	}
+
+	void Update_Timestep_Properties( util::matrix_t<double> & ColOptEff )
+	{
+		m_ColOptEff = ColOptEff;
+	}
+
+
+	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i, 
+	int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, bool is_boiler, int sca_num, bool single_point,  int ncall, double time,
+	//outputs
+	double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, double reguess_args[3]);
+
+	void FQ_34CONV(double T_3, double T_4, double P_6, double v_6, double T_6, int hn, int hv, double & q_34conv, double & h_34);
+
+	void FQ_34RAD(double T_3, double T_4, double T_7, double epsilon_3_v, int hn, int hv, double & q_34rad, double & h_34);
+
+	void FQ_56CONV(double T_5, double T_6, double P_6, double v_6, int hn, int hv, double & q_56conv, double & h_6);
+
+	double FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int hn, int hv);
+
+	double fT_2(double q_12conv, double T_1, double T_2g, double v_1, int hn, int hv);
+
+	double FK_23(double T_2, double T_3, int hn, int hv);
 };
 
 #endif
