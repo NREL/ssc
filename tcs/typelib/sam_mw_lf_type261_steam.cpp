@@ -323,8 +323,7 @@ class sam_mw_lf_type261_steam : public tcstypeinterface
 {
 private:
 	// Class Instances
-	emit_table b_eps_abs;
-	emit_table sh_eps_abs;
+	emit_table eps_abs;
 	OpticalDataTable b_optical_table;
 	OpticalDataTable sh_optical_table;
 	TwoOptTables optical_tables;
@@ -1036,14 +1035,7 @@ public:
 		{
 			message( "Boiler epsilon HCE4 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 			return -1;
-		}
-		
-		// Organize the boiler emittance tables here
-		b_eps_abs.init(4);
-		b_eps_abs.addTable(&b_eps_HCE1);
-		b_eps_abs.addTable(&b_eps_HCE2);
-		b_eps_abs.addTable(&b_eps_HCE3);
-		b_eps_abs.addTable(&b_eps_HCE4);
+		}														
 
 		if( m_is_multgeom )
 		{
@@ -1091,12 +1083,25 @@ public:
 				return -1;
 			}
 
-			//[-] Organize the superheater emittance tables here
-			sh_eps_abs.init(4);
-			sh_eps_abs.addTable(&sh_eps_HCE1);
-			sh_eps_abs.addTable(&sh_eps_HCE2);
-			sh_eps_abs.addTable(&sh_eps_HCE3);
-			sh_eps_abs.addTable(&sh_eps_HCE4);
+			//[-] Organize the boiler/superheater emittance tables here
+			eps_abs.init( m_n_rows_matrix, 4 );
+			eps_abs.addTable(&b_eps_HCE1);
+			eps_abs.addTable(&b_eps_HCE2);
+			eps_abs.addTable(&b_eps_HCE3);
+			eps_abs.addTable(&b_eps_HCE4);
+			eps_abs.addTable(&sh_eps_HCE1);
+			eps_abs.addTable(&sh_eps_HCE2);
+			eps_abs.addTable(&sh_eps_HCE3);
+			eps_abs.addTable(&sh_eps_HCE4);
+		}
+		else
+		{
+			// Organize the boiler emittance tables here
+			eps_abs.init( m_n_rows_matrix, 4);
+			eps_abs.addTable(&b_eps_HCE1);
+			eps_abs.addTable(&b_eps_HCE2);
+			eps_abs.addTable(&b_eps_HCE3);
+			eps_abs.addTable(&b_eps_HCE4);
 		}
 
 		//[-] Envelope absorptance
@@ -2052,6 +2057,21 @@ public:
 						}
 						else if( m_HLCharType.at(gset,0) == 2 )
 						{
+							// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
+
+							m_q_loss.fill(0.0);
+							m_q_abs.fill(0.0);
+
+							for( int j = 0; j < 4; j++ )
+							{
+								// Only calculate if the HCE fraction is non-zero
+								if( m_HCE_FieldFrac.at(gset,j) <= 0.0 )
+									continue;
+
+								// Get emissivity properties 
+							}
+
+							
 							/*
 							!Calculate thermal loss from Forristall receiver model (algorithm is found in Type250)
 							q_rec_loss(:) = 0.d0
