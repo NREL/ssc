@@ -782,13 +782,16 @@ public:
 	}
 
 	virtual ~sam_mw_trough_type250(){
-		/* Clean up on simulation terminate 
-		for(int i=0; i<nHCEt; i++){
-			for(int j=0; j<nHCEVar; j++){
-				delete AbsorberPropMat(i,j);
-				delete AnnulusGasMat(i,j);
+		// Clean up on simulation terminate 
+		try{
+			for(int i=0; i<nHCEt; i++){
+				for(int j=0; j<nHCEVar; j++){
+					delete AbsorberPropMat(i,j);
+					delete AnnulusGasMat(i,j);
+				}
 			}
-		}*/
+		}
+		catch(...){};
 	}
 
 	virtual int init(){
