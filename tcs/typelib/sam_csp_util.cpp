@@ -1980,7 +1980,7 @@ double Evacuated_Receiver::FK_23(double T_2, double T_3, int hn, int hv)
 
 
 void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i, 
-	int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, bool is_boiler, int sca_num, bool single_point,  int ncall, double time,
+	int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point,  int ncall, double time,
 	//outputs
 	double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, double reguess_args[3] = NULL)
 {
@@ -2214,25 +2214,12 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 	bool is_e_table = false;
 	double eps_3 = std::numeric_limits<double>::quiet_NaN();
 
-	if( is_boiler )
-	{
-		if( m_eps3_boiler_or_first.getTableSize(hn,hv) < 2 )
-			eps_3 = m_eps3_boiler_or_first.getSingleValue(hn,hv);
-		else
-		{
-			eps_3 = m_eps3_boiler_or_first.interpolate(hn, hv, T_3 - 273.15);		// Set epsilon value for case that eps_mode = 1. Will reset inside temp if eps_mode > 1.
-			is_e_table = true;														// The emissivity is in tabular form
-		}
-	}
+	if( m_eps3.getTableSize(hn, hv) < 2 )
+		eps_3 = m_eps3.getSingleValue(hn, hv);
 	else
 	{
-		if( m_eps3_sh.getTableSize(hn,hv) < 2 )
-			eps_3 = m_eps3_sh.getSingleValue(hn,hv);
-		else
-		{
-			eps_3 = m_eps3_sh.interpolate(hn,hv, T_3 - 273.15);						// Set epsilon value for case that eps_mode = 1. Will reset inside temp loop if eps_mode > 1.
-			is_e_table = true;														// The emissivity is in tabular form
-		}
+		eps_3 = m_eps3.interpolate(hn, hv, T_3 - 273.15);						// Set epsilon value for case that eps_mode = 1. Will reset inside temp if eps_mode > 1.
+		is_e_table = true;														// The emissivity is in tabular form
 	}
 
 	double T3upflag = false;
@@ -2284,10 +2271,8 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 		}
 
 		//Calculate temperature sensitive emissivity using T_3, if required
-		if( is_boiler && is_e_table )
-			eps_3 = m_eps3_boiler_or_first.interpolate(hn, hv, (T_3-273.15));			//call interp((T_3-273.15),eps_mode,xx,yy,eps3old,eps_3)
-		else if( !is_boiler && is_e_table )
-			eps_3 = m_eps3_sh.interpolate(hn, hv, (T_3-273.15));			//call interp((T_3-273.15),eps_mode,xx,yy,eps3old,eps_3)
+		if( is_e_table )
+			eps_3 = m_eps3.interpolate(hn, hv, (T_3-273.15));			//call interp((T_3-273.15),eps_mode,xx,yy,eps3old,eps_3)
 
 		//Separate GlazingIntact = true and GlazingIntact = false  If true, T4 must be solved, if false then T4 is explicitly known (or doesn't exist, depending on how you want to look at it)
 		//Solving for correct T4 as it relates to current T3 value
@@ -2459,12 +2444,8 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 		q_cond_bracket = FQ_COND_BRACKET( T_3, T_6, P_6, v_6, hn, hv );
 
 		q_12conv = q_3SolAbs - (q_34tot+q_cond_bracket);         //[W/m] Energy transfer to/from fluid based on energy balance at T_3
-		
-		int gset_local = 0;
-		if( !is_boiler )
-			gset_local = 1;
 
-		double q_in_W  = q_12conv * m_L_actSCA.at(gset_local,ct);	//Convert [W/m] to [W] for some calculations
+		double q_in_W  = q_12conv * m_L_actSCA.at(hn,0);	//Convert [W/m] to [W] for some calculations
 
 		double T_1_out = std::numeric_limits<double>::quiet_NaN();
 		double T_1_ave = std::numeric_limits<double>::quiet_NaN();

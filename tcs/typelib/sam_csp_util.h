@@ -396,8 +396,7 @@ public:
 class Evacuated_Receiver
 {
 private:
-	emit_table m_eps3_boiler_or_first;
-	emit_table m_eps3_sh;
+	emit_table m_eps3;
 	HTFProperties m_airProps;
 	HTFProperties * p_htfProps;
 
@@ -439,7 +438,7 @@ public:
 	void Initialize_Receiver( util::matrix_t<bool> & Glazing_intact, util::matrix_t<double> & P_a, util::matrix_t<double> & D_5, util::matrix_t<double> & D_4, util::matrix_t<double> & D_3,
 	                            util::matrix_t<double> & D_2, util::matrix_t<double> & D_p,
 								util::matrix_t<double> & ColOptEff, util::matrix_t<double> & Dirt_HCE, util::matrix_t<double> & Shadowing, util::matrix_t<double> tau_envelope,
-								util::matrix_t<double> & alpha_abs, util::matrix_t<double> & alpha_env, emit_table & eps3_boiler, emit_table & eps3_sh, util::matrix_t<HTFProperties*> & AnnulusGasMat,
+								util::matrix_t<double> & alpha_abs, util::matrix_t<double> & alpha_env, emit_table & eps3, util::matrix_t<HTFProperties*> & AnnulusGasMat,
 								util::matrix_t<AbsorberProps*> & AbsorberPropMat, util::matrix_t<double> & epsilon_4, util::matrix_t<double> & epsilon_5, util::matrix_t<double> & L_actSCA,
 								HTFProperties * htfProps, util::matrix_t<double> & A_cs, util::matrix_t<double> & D_h, util::matrix_t<double> & flowpattern)
 	{
@@ -456,8 +455,7 @@ public:
 		m_tau_envelope = tau_envelope;
 		m_alpha_abs = alpha_abs;
 		m_alpha_env = alpha_env;
-		m_eps3_boiler_or_first = eps3_boiler;
-		m_eps3_sh = eps3_sh;
+		m_eps3 = eps3;
 		m_AnnulusGasMat = AnnulusGasMat;
 		m_AbsorberPropMat = AbsorberPropMat;
 		m_epsilon_4 = epsilon_4;
@@ -481,7 +479,7 @@ public:
 
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i, 
-	int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, bool is_boiler, int sca_num, bool single_point,  int ncall, double time,
+	int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point,  int ncall, double time,
 	//outputs
 	double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, double reguess_args[3]);
 
