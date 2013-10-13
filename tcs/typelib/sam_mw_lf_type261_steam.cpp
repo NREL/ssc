@@ -330,6 +330,8 @@ private:
 	P_max_check check_pressure;
 	enth_lim check_h;
 	property_info wp;
+	Evacuated_Receiver evac_tube_model;
+	HTFProperties htfProps;
 
 	// Parameters
 	double m_tes_hours;         
@@ -404,7 +406,7 @@ private:
 	util::matrix_t<double> m_D_p;				
 	util::matrix_t<double> m_Rough;			
 	util::matrix_t<double> m_Flow_type;		
-	util::matrix_t<double> m_AbsorberMaterial;	
+	util::matrix_t<AbsorberProps*> m_AbsorberMaterial;	
 	util::matrix_t<double> m_HCE_FieldFrac;    
 	util::matrix_t<double> m_alpha_abs;		
 
@@ -412,7 +414,7 @@ private:
 	util::matrix_t<double> m_EPSILON_4;		
 	util::matrix_t<double> m_Tau_envelope;		
 	util::matrix_t<bool> m_GlazingIntactIn;	
-	util::matrix_t<double> m_AnnulusGas;		
+	util::matrix_t<HTFProperties*> m_AnnulusGas;		
 	util::matrix_t<double> m_P_a;				
 	util::matrix_t<double> m_Design_loss;		
 	util::matrix_t<double> m_Shadowing;		
@@ -568,6 +570,27 @@ public:
 
 	virtual ~sam_mw_lf_type261_steam()
 	{
+		try
+		{
+			// Set up matrix_t of pointers to HTFproperties class
+			for( int i = 0; i < m_n_rows_matrix; i++ )
+			{
+				for( int j = 0; j < 4; j++ )
+				{
+					delete m_AnnulusGas.at(i,j);
+				}
+			}
+		}
+		catch(...){};
+
+		try
+		{
+			for( int i = 0; i < m_n_rows_matrix; i++ )
+			{
+				delete m_AbsorberMaterial.at(i,0);
+			}
+		}
+		catch(...){};
 	}
 
 	double turb_pres_frac( double m_dot_nd, int fmode, double ffrac, double fP_min )
@@ -964,12 +987,20 @@ public:
 
 		n_rows = n_cols = 0;
 		p_matrix_t = value( P_ABSORBER_MAT, &n_rows, &n_cols );
+		util::matrix_t<double> AbsorberMaterial;
+		m_AbsorberMaterial.resize( n_rows, n_cols );
 		if( p_matrix_t != 0 && n_rows == m_n_rows_matrix && n_cols == 1 )
-			m_AbsorberMaterial.assign( p_matrix_t, n_rows, n_cols );
+			AbsorberMaterial.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
 			message( "Absorber material type matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
+		}
+
+		for( int i = 0; i < m_n_rows_matrix; i++ )
+		{
+			m_AbsorberMaterial.at(i,0) = new AbsorberProps;
+			m_AbsorberMaterial.at(i,0)->setMaterial( AbsorberMaterial.at(i,0) );
 		}
 
 		n_rows = n_cols = 0;
@@ -1159,13 +1190,26 @@ public:
 		//[-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
 		n_rows = n_cols = 0;
 		p_matrix_t = value( P_ANNULUSGAS, &n_rows, &n_cols );
+		util::matrix_t<double> AnnulusGas;
+		m_AnnulusGas.resize( n_rows, n_cols );
 		if( p_matrix_t != 0 && n_rows == m_n_rows_matrix && n_cols == 4 )
-			m_AnnulusGas.assign( p_matrix_t, n_rows, n_cols );
+			AnnulusGas.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
 			message( "HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
+
+		// Set up matrix_t of pointers to HTFproperties class
+		for( int i = 0; i < m_n_rows_matrix; i++ )
+		{
+			for( int j = 0; j < 4; j++ )
+			{
+				m_AnnulusGas.at(i,j) = new HTFProperties;
+				m_AnnulusGas.at(i,j)->SetFluid( AnnulusGas.at(i,j) );
+			}
+		}
+
 
 		//[torr] Annulus gas pressure
 		n_rows = n_cols = 0;
@@ -1725,6 +1769,18 @@ public:
 		m_is_pb_on_prev = false;
 		m_T_sys_prev = m_T_field_ini;
 
+		// Initialize evacuated tube model if used
+		for( int i = 0; i < m_n_rows_matrix; i++ )
+		{
+			if( m_HLCharType.at(i,0) == 2 )
+			{
+				htfProps.SetFluid( 21 );
+				evac_tube_model.Initialize_Receiver( m_GlazingIntactIn, m_P_a, m_D_5, m_D_4, m_D_3, m_D_2, m_D_p, m_opteff_des, m_Dirt_HCE, m_Shadowing, m_Tau_envelope, m_alpha_abs,
+					                                      m_alpha_env, &eps_abs, m_AnnulusGas, m_AbsorberMaterial, m_EPSILON_4, m_EPSILON_5, m_L_col, &htfProps, m_A_cs, m_D_h, m_Flow_type );
+			}
+		}
+
+
 		return 0;
 	}
 
@@ -1919,6 +1975,8 @@ public:
 
 			// Reset the pressure check function
 			check_pressure.report_and_reset();
+
+			evac_tube_model.Update_Timestep_Properties( m_eta_optical );
 		}
 
 		//************************************************************
@@ -2068,49 +2126,29 @@ public:
 								if( m_HCE_FieldFrac.at(gset,j) <= 0.0 )
 									continue;
 
-								// Get emissivity properties 
+								/*Call the receiver performance model - single point mode
+								!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
+								!only use for the fluid type in the single point model is calculating the convective heat transfer
+								!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and 
+								!steam that substituting the HTF here introduces negligible error.*/
+
+								// For LF, HT = CT && sca_num = 0
+								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
+								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
+								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), m_dot, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+								                             time, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
+
+								if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
+								{
+									q_rec_loss = 0.0;
+									q_rec_abs = 0.0;
+								}
+
+								m_q_loss.at(i,0) += q_rec_loss*m_L_col.at(gset,0)*m_HCE_FieldFrac.at(gset,j)/1000.0;		//[kW]
+								m_q_abs.at(i,0) += q_rec_abs*m_L_col.at(gset,0)*m_HCE_FieldFrac.at(gset,j)/1000.0;		//[kW]
+
 							}
 
-							
-							/*
-							!Calculate thermal loss from Forristall receiver model (algorithm is found in Type250)
-							q_rec_loss(:) = 0.d0
-							q_rec_abs(:) = 0.d0
-							
-							do j=1,4
-							    
-							    !Only calculate if the HCE fraction is non-zero
-							    if(HCE_FieldFrac(gset,j)<=0.) cycle
-							
-							    !Get emissivity properties
-							    if(epsilon_3l(gset,j)>1) then
-							        xx(:)=epsilon_3t(gset,j,:)
-							        yy(:)=epsilon_3(gset,j,:)
-							    else
-							        eps_3 = epsilon_3(gset,j,1)
-							    endif                    
-							
-							    !Call the receiver performance model - single point mode
-							    !This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The 
-							    !only use for the fluid type in the single point model is calculating the convective heat transfer
-							    !coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and 
-							    !steam that substituting the HTF here introduces negligible error.
-							    call EvacReceiver(&  !Inputs
-							          T_ave(i), 10.d0, T_db, T_sky, v_wind, P_amb, q_inc(i)/L_col(gset)*1000.d0, A_cs(gset), D_2(gset), D_3(gset),D_4(gset), &
-							          D_5(gset), D_p(gset), D_h(gset),epsilon_3l(gset,j), xx, yy, nea, L_col(gset), .true., eps_3, Epsilon_4(gset,j), Epsilon_5(gset,j),& 
-							          Alpha_abs(gset,j), alpha_env(gset,j), (eta_optical(gset)*defocus_lim*Shadowing(gset,j)*Dirt_HCE(gset,j)), Tau_envelope(gset,j), P_a(gset,j), &
-							          Flow_type(gset), AbsorberMaterial(gset), annulusGas(gset,j), glazingIntact(gset,j), 21.d0, info,time,&
-							          q_rec_loss(j),q_rec_abs(j),dum(1),dum(2),dum(3))
-							    
-							    if(isnan(q_rec_abs(j))) then !if not a number, nip in the bud here
-							        q_rec_abs(j) = 0.d0
-							        q_rec_loss(j) = 0.d0
-							    endif
-							    
-							    !running totals
-							    q_loss(i) = q_loss(i) + q_rec_loss(j)*L_col(gset)*HCE_FieldFrac(gset,j)/1000.d0  ![kW]
-							    q_abs(i) = q_abs(i) + q_rec_abs(j)*L_col(gset)*HCE_FieldFrac(gset,j)/1000.d0   ![kW]
-							enddo */
 						}
 
 						// Set the inlet enthalpy equal to the outlet of the previous node
@@ -2325,45 +2363,40 @@ public:
 						}
 						else if( m_HLCharType.at(gset,0) == 2 )
 						{
-							/*
-							!Calculate thermal loss from Forristall receiver model (algorithm is found in Type250)
-							q_rec_loss(:) = 0.d0
-							q_rec_abs(:) = 0.d0
+							// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
 							
-							do j=1,4
-							    !Only calculate if the HCE fraction is non-zero
-							    if(HCE_FieldFrac(1,j)<=0.) cycle
-							    
-							    !Get emissivity properties
-							    if(epsilon_3l(1,j)>1) then
-							        xx(:)=epsilon_3t(1,j,:)
-							        yy(:)=epsilon_3(1,j,:)
-							    else
-							        eps_3 = epsilon_3(1,j,1)
-							    endif                    
+							m_q_loss.fill(0.0);
+							m_q_abs.fill(0.0);
 							
-							    !Call the receiver performance model - single point mode
-							    !This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The 
-							    !only use for the fluid type in the single point model is calculating the convective heat transfer
-							    !coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and 
-							    !steam that substituting the HTF here introduces negligible error.
-							    call EvacReceiver(&  !Inputs
-							          T_ave(i), 10.d0, T_db, T_sky, v_wind, P_amb, q_inc(i)/L_col(1)*1000.d0, A_cs(1), D_2(1), D_3(1),D_4(1), &
-							          D_5(1), D_p(1), D_h(1),epsilon_3l(1,j), xx, yy, nea, L_col(1), .true., eps_3, Epsilon_4(1,j), Epsilon_5(1,j),& 
-							          Alpha_abs(1,j), alpha_env(1,j), (eta_optical(1)*defocus_lim*Shadowing(1,j)*Dirt_HCE(1,j)), Tau_envelope(1,j), P_a(1,j), &
-							          Flow_type(1), AbsorberMaterial(1), annulusGas(1,j), glazingIntact(1,j), 21.d0, info,time,&
-							          q_rec_loss(j),q_rec_abs(j),dum(1),dum(2),dum(3))
-							    
-							    if(isnan(q_rec_abs(j))) then !if not a number, nip in the bud here
-							        q_rec_abs(j) = 0.d0
-							        q_rec_loss(j) = 0.d0 
-							    endif
+							for( int j = 0; j < 4; j++ )
+							{
+								// Only calculate if the HCE fraction is non-zero
+								if( m_HCE_FieldFrac.at(gset,j) <= 0.0 )
+									continue;
 							
-							    !running totals
-							    q_loss(i) = q_loss(i) + q_rec_loss(j)*L_col(1)*HCE_FieldFrac(1,j)/1000.d0  ![kW]
-							    q_abs(i) = q_abs(i) + q_rec_abs(j)*L_col(1)*HCE_FieldFrac(1,j)/1000.d0   ![kW]
-							enddo
-							*/
+								/*Call the receiver performance model - single point mode
+								!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
+								!only use for the fluid type in the single point model is calculating the convective heat transfer
+								!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and 
+								!steam that substituting the HTF here introduces negligible error.*/
+							
+								// For LF, HT = CT && sca_num = 0
+								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
+								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
+								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), m_dot, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+								                             time, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
+							
+								if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
+								{
+									q_rec_loss = 0.0;
+									q_rec_abs = 0.0;
+								}
+							
+								m_q_loss.at(i,0) += q_rec_loss*m_L_col.at(gset,0)*m_HCE_FieldFrac.at(gset,j)/1000.0;		//[kW]
+								m_q_abs.at(i,0) += q_rec_abs*m_L_col.at(gset,0)*m_HCE_FieldFrac.at(gset,j)/1000.0;		//[kW]
+							
+							}																																			
+							
 						}
 
 						// Set the inlet enthalpy equal to the outlet of the previous node
@@ -2553,43 +2586,39 @@ public:
 							}
 							else if( m_HLCharType.at(gset,0) == 2 )
 							{
-								/* !Calculate thermal loss from Forristall receiver model (algorithm is found in Type250)
-								q_rec_loss(:) = 0.d0
-								q_rec_abs(:) = 0.d0
-                    
-								do j=1,4
-									!Only calculate if the HCE fraction is non-zero
-									if(HCE_FieldFrac(gset,j)<=0.) cycle
-                        
-									!Get emissivity properties
-									if(epsilon_3l(gset,j)>1) then
-										xx(:)=epsilon_3t(gset,j,:)
-										yy(:)=epsilon_3(gset,j,:)
-									else
-										eps_3 = epsilon_3(gset,j,1)
-									endif                    
-                    
-									!Call the receiver performance model - single point mode
-									!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The 
+								// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
+								
+								m_q_loss.fill(0.0);
+                    			m_q_abs.fill(0.0);
+								
+								for( int j = 0; j < 4; j++ )
+								{
+                        			// Only calculate if the HCE fraction is non-zero
+									if( m_HCE_FieldFrac.at(gset,j) <= 0.0 )
+										continue;
+								
+									/*Call the receiver performance model - single point mode
+									!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
 									!only use for the fluid type in the single point model is calculating the convective heat transfer
 									!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and 
-									!steam that substituting the HTF here introduces negligible error.
-									call EvacReceiver(&  !Inputs
-											T_ave(i), 10.d0, T_db, T_sky, v_wind, P_amb, q_inc(i)/L_col(gset)*1000.d0, A_cs(gset), D_2(gset), D_3(gset),D_4(gset), &
-											D_5(gset), D_p(gset), D_h(gset),epsilon_3l(gset,j), xx, yy, nea, L_col(gset), .true., eps_3, Epsilon_4(gset,j), Epsilon_5(gset,j),& 
-											Alpha_abs(gset,j), alpha_env(gset,j), (eta_optical(gset)*defocus_lim*Shadowing(gset,j)*Dirt_HCE(gset,j)), Tau_envelope(gset,j), P_a(gset,j), &
-											Flow_type(gset), AbsorberMaterial(gset), annulusGas(gset,j), glazingIntact(gset,j), 21.d0, info,time,&
-											q_rec_loss(j),q_rec_abs(j),dum(1),dum(2),dum(3))
-
-									if(isnan(q_rec_abs(j))) then !if not a number, nip in the bud here
-										q_rec_abs(j) = 0.d0
-										q_rec_loss(j) = 0.d0
-									endif
-                        
-									!running totals
-									q_loss(i) = q_loss(i) + q_rec_loss(j)*L_col(gset)*HCE_FieldFrac(gset,j)/1000.d0  ![kW]
-									q_abs(i) = q_abs(i) + q_rec_abs(j)*L_col(gset)*HCE_FieldFrac(gset,j)/1000.d0   ![kW]
-								enddo */
+                    				!steam that substituting the HTF here introduces negligible error.*/
+								
+									// For LF, HT = CT && sca_num = 0
+									double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
+									q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
+									evac_tube_model.EvacReceiver( m_T_ave.at(i,0), m_dot, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+									                             time, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
+								
+									if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
+									{
+										q_rec_loss = 0.0;
+										q_rec_abs = 0.0;
+									}
+								
+									m_q_loss.at(i,0) += q_rec_loss*m_L_col.at(gset,0)*m_HCE_FieldFrac.at(gset,j)/1000.0;		//[kW]
+									m_q_abs.at(i,0) += q_rec_abs*m_L_col.at(gset,0)*m_HCE_FieldFrac.at(gset,j)/1000.0;		//[kW]
+								
+                        		}																																
 
 							}
 

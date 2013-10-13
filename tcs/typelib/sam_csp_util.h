@@ -396,7 +396,7 @@ public:
 class Evacuated_Receiver
 {
 private:
-	emit_table m_eps3;
+	emit_table * m_eps3;
 	HTFProperties m_airProps;
 	HTFProperties * p_htfProps;
 
@@ -423,6 +423,8 @@ private:
 	util::matrix_t<double> m_D_h;
 	util::matrix_t<double> m_flowtype;
 
+	double reguess_args[3];
+
 	// Updated once per timestep
 	util::matrix_t<double> m_ColOptEff;
 
@@ -438,7 +440,7 @@ public:
 	void Initialize_Receiver( util::matrix_t<bool> & Glazing_intact, util::matrix_t<double> & P_a, util::matrix_t<double> & D_5, util::matrix_t<double> & D_4, util::matrix_t<double> & D_3,
 	                            util::matrix_t<double> & D_2, util::matrix_t<double> & D_p,
 								util::matrix_t<double> & ColOptEff, util::matrix_t<double> & Dirt_HCE, util::matrix_t<double> & Shadowing, util::matrix_t<double> tau_envelope,
-								util::matrix_t<double> & alpha_abs, util::matrix_t<double> & alpha_env, emit_table & eps3, util::matrix_t<HTFProperties*> & AnnulusGasMat,
+								util::matrix_t<double> & alpha_abs, util::matrix_t<double> & alpha_env, emit_table * eps3, util::matrix_t<HTFProperties*> & AnnulusGasMat,
 								util::matrix_t<AbsorberProps*> & AbsorberPropMat, util::matrix_t<double> & epsilon_4, util::matrix_t<double> & epsilon_5, util::matrix_t<double> & L_actSCA,
 								HTFProperties * htfProps, util::matrix_t<double> & A_cs, util::matrix_t<double> & D_h, util::matrix_t<double> & flowpattern)
 	{
@@ -481,7 +483,7 @@ public:
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i, 
 	int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point,  int ncall, double time,
 	//outputs
-	double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, double reguess_args[3]);
+	double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave );
 
 	void FQ_34CONV(double T_3, double T_4, double P_6, double v_6, double T_6, int hn, int hv, double & q_34conv, double & h_34);
 
