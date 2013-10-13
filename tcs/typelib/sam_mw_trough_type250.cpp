@@ -565,8 +565,9 @@ private:
 		T_loop_outX, Runner_hl_hot, Header_hl_hot, Pipe_hl_hot, c_hdr_hot, time_hr, dt_hr;
 	int day_of_year, SolveMode, dfcount;
 	double HCEguessargs[3];
-	
 
+	double T_save[5];
+	
 public:
 
 	sam_mw_trough_type250( tcscontext *cxt, tcstypeinfo *ti ) 
@@ -778,6 +779,9 @@ public:
 		E_hdr_accum	= std::numeric_limits<double>::quiet_NaN();
 		E_tot_accum	= std::numeric_limits<double>::quiet_NaN();
 		E_field	= std::numeric_limits<double>::quiet_NaN();
+
+		for( int i = 0; i < 5; i++ )
+			T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
 	}
 
@@ -2476,7 +2480,7 @@ set_outputs_and_return:
 		bool reguess;
 		double T_2, T_3, T_4, T_5, T_6, T_7,v_1, k_23, q_34conv, q_34rad, h_34conv, h_34rad, q_23cond, 
 			k_45, q_45cond, q_56conv, h_56conv, q_57rad, q_3SolAbs, q_5solabs, q_cond_bracket, R_45cond,
-			T_save[5], T_2g, cp_1, T3_tol, q5_tol, T1_tol, T2_tol, Diff_T3, diff_q5, T_lower, T_upper, 
+			T_2g, cp_1, T3_tol, q5_tol, T1_tol, T2_tol, Diff_T3, diff_q5, T_lower, T_upper, 
 			q_5out, T_1_out, diff_T1, T_1_ave, T_1_out1, diff_T2, eps_3, q_in_W, T_upper_max, y_upper,
 			y_lower, upmult, q5_tol_1, T3_upper, T3_lower, y_T3_upper, y_T3_lower, abs_diffT3;
 
