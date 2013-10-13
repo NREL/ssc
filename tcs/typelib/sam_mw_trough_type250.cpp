@@ -564,9 +564,9 @@ private:
 		q_SCA_tot, m_dot_htfX, Header_hl_cold, Runner_hl_cold, Pipe_hl_cold, T_loop_in,
 		T_loop_outX, Runner_hl_hot, Header_hl_hot, Pipe_hl_hot, c_hdr_hot, time_hr, dt_hr;
 	int day_of_year, SolveMode, dfcount;
-	double HCEguessargs[3];
 
 	double T_save[5];
+	double reguess_args[3];
 	
 public:
 
@@ -783,6 +783,8 @@ public:
 		for( int i = 0; i < 5; i++ )
 			T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
+		for( int i = 0; i < 3; i++ )
+			reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_mw_trough_type250(){
@@ -1682,7 +1684,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					double c_htf_j, rho_htf_j;//                                               hn, hv
 					EvacReceiver(T_htf_in[i], m_dot_htf, T_db, T_sky, V_wind, P_amb, q_SCA[i], HT, j, CT, i, false,  ncall, time_hr,
 								 //outputs
-								 q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j, HCEguessargs);
+								 q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j );
 					
 					if(q_abs[j] != q_abs[j]) {	//cc--> Check for NaN
 						m_dot_htfX = m_dot_htfmax;
@@ -2470,7 +2472,7 @@ set_outputs_and_return:
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i, 
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point,  int ncall, double time,
 		//outputs
-		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, double reguess_args[3] = NULL)
+		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave )
 	{
 
 		//cc -- note that collector/hce geometry is part of the parent class. Only the indices specifying the
