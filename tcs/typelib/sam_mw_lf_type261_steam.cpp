@@ -2117,8 +2117,8 @@ public:
 						{
 							// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
 
-							m_q_loss.fill(0.0);
-							m_q_abs.fill(0.0);
+							m_q_loss.at(i,0) = 0.0;
+							m_q_abs.at(i,0) = 0.0;
 
 							for( int j = 0; j < 4; j++ )
 							{
@@ -2135,7 +2135,7 @@ public:
 								// For LF, HT = CT && sca_num = 0
 								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
 								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
 								                             time/3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
 
 								if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
@@ -2221,8 +2221,8 @@ public:
 							if( iter < 3 )
 							{
 								double q_abs_sum = 0.0;
-								for( int i = 0; i < m_nModTot; i++ )
-									q_abs_sum += m_q_abs.at(i,0);
+								for( int ii = 0; ii < m_nModTot; ii++ )
+									q_abs_sum += m_q_abs.at(ii,0);
 								m_dot_guess = q_abs_sum/(h_sh_out - h_b_in);
 								m_dot_guess = max( m_m_dot_min*0.5, min( m_dot_guess, m_m_dot_max*1.5 ) );
 							}
@@ -2364,9 +2364,9 @@ public:
 						else if( m_HLCharType.at(gset,0) == 2 )
 						{
 							// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
-							
-							m_q_loss.fill(0.0);
-							m_q_abs.fill(0.0);
+
+							m_q_loss.at(i,0) = 0.0;
+							m_q_abs.at(i,0) = 0.0;
 							
 							for( int j = 0; j < 4; j++ )
 							{
@@ -2383,7 +2383,7 @@ public:
 								// For LF, HT = CT && sca_num = 0
 								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
 								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
 								                             time/3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
 							
 								if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
@@ -2472,8 +2472,8 @@ public:
 							if( iter < 3 )
 							{
 								double q_abs_sum = 0.0;
-								for( int i = 0; i < m_nModBoil; i++ )
-									q_abs_sum += m_q_abs.at(i,0);
+								for( int ii = 0; ii < m_nModBoil; ii++ )
+									q_abs_sum += m_q_abs.at(ii,0);
 								m_dot_b_guess = q_abs_sum / (h_b_out - h_b_in);
 								m_dot_b_guess = max( m_m_dot_min/m_x_b_des*0.5, min( m_dot_b_guess, m_m_dot_b_max*1.5 ) );
 							}
@@ -2588,8 +2588,8 @@ public:
 							{
 								// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
 								
-								m_q_loss.fill(0.0);
-                    			m_q_abs.fill(0.0);
+								m_q_loss.at(i,0) = 0.0;
+                    			m_q_abs.at(i,0) = 0.0;
 								
 								for( int j = 0; j < 4; j++ )
 								{
@@ -2606,7 +2606,7 @@ public:
 									// For LF, HT = CT && sca_num = 0
 									double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
 									q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-									evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+									evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
 									                             time/3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
 								
 									if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
