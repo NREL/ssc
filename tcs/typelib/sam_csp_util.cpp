@@ -1384,7 +1384,7 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 			nu_36 = mu_36 / rho_36;  //[m**2/s] kinematic viscosity, AIR
 			alpha_36 = k_36 / (cp_36 * rho_36);  //[m**2/s], thermal diffusivity, AIR
 			beta_36 =  1.0 / T_36;  //[1/K]
-			Ra_D3 = grav * beta_36 * abs(T_3 - T_6) * pow(m_D_3.at(hn,hv),3) / (alpha_36 * nu_36);
+			Ra_D3 = grav * beta_36 * abs(T_3 - T_6) * pow(m_D_3.at(hn,0),3) / (alpha_36 * nu_36);
 
 			// Warning Statement if following Nusselt Number correlation is used out of recommended range //
 			//If ((Ra_D3 <= 1.e-5) || (Ra_D3 >= 1.e12)) continue
@@ -1393,8 +1393,8 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 			// Churchill and Chu correlation for natural convection from a long isothermal horizontal cylinder //
 			Pr_36 = nu_36 / alpha_36;
 			Nu_bar = pow(0.60 + (0.387 * pow(Ra_D3,0.1667)) / pow(1. + pow(0.559 / Pr_36,0.5625), 0.2963) , 2);
-			h_36 = Nu_bar * k_36 / m_D_3.at(hn,hv);  //[W/m**2-K]//
-			q_34conv = h_36 * CSP::pi * m_D_3.at(hn,hv) * (T_3 - T_6);  //[W/m]//
+			h_36 = Nu_bar * k_36 / m_D_3.at(hn,0);  //[W/m**2-K]//
+			q_34conv = h_36 * CSP::pi * m_D_3.at(hn,0) * (T_3 - T_6);  //[W/m]//
 			h_34 = h_36;  //Set output coefficient
 		}
 		else {
@@ -1410,7 +1410,7 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 			nu_3 = mu_3 / rho_3;  //[m**2/s]
 			Alpha_3 = k_3 / (cp_3 * rho_3);  //[m**2/s]
 			alpha_6 = k_6 / (Cp_6 * rho_6);  //[m**2/s]
-			Re_D3 = v_6 * m_D_3.at(hn,hv) / nu_6;
+			Re_D3 = v_6 * m_D_3.at(hn,0) / nu_6;
 			Pr_3 = nu_3 / Alpha_3;
 			Pr_6 = nu_6 / alpha_6;
 
@@ -1452,8 +1452,8 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 
 			// Zhukauskas's correlation for external forced convection flow normal to an isothermal cylinder 
 			Nu_bar = C * pow(Re_D3, m)  * pow(Pr_6, n) * pow(Pr_6 / Pr_3, 0.25);
-			h_36 = Nu_bar  *  k_6  /  m_D_3.at(hn,hv);  //[W/m**2-K]
-			q_34conv =  h_36  *  m_D_3.at(hn,hv)  *  CSP::pi  *  (T_3 - T_6);  //[W/m]	
+			h_36 = Nu_bar  *  k_6  /  m_D_3.at(hn,0);  //[W/m**2-K]
+			q_34conv =  h_36  *  m_D_3.at(hn,0)  *  CSP::pi  *  (T_3 - T_6);  //[W/m]	
 			h_34 = h_36;  //set output coefficient
 		}
 	}
@@ -1470,10 +1470,10 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 		Alpha_34 = k_34 /(Cp_34 * rho_34);  //[m**2/s]//
 		nu_34 = mu_34 / rho_34;  //[m**2/s]//
 		Beta_34 = 1. / max(T_34,1.0);  //[1/K]//
-		Ra_D3 = grav * Beta_34 * abs(T_3 - T_4) * pow(m_D_3.at(hn,hv),3) / (Alpha_34 * nu_34);
-		Ra_D4 = grav * Beta_34 * abs(T_3 - T_4) * pow(m_D_4.at(hn,hv),3) / (Alpha_34 * nu_34);
+		Ra_D3 = grav * Beta_34 * abs(T_3 - T_4) * pow(m_D_3.at(hn,0),3) / (Alpha_34 * nu_34);
+		Ra_D4 = grav * Beta_34 * abs(T_3 - T_4) * pow(m_D_4.at(hn,0),3) / (Alpha_34 * nu_34);
 		Pr_34 = nu_34 / Alpha_34;
-		Natq_34conv = 2.425 * k_34 * (T_3 - T_4) / pow(1 + pow(m_D_3.at(hn,hv)/ m_D_4.at(hn,hv), 0.6), 1.25) * pow(Pr_34 * Ra_D3 / (0.861 + Pr_34),0.25);  //[W/m]//	
+		Natq_34conv = 2.425 * k_34 * (T_3 - T_4) / pow(1 + pow(m_D_3.at(hn,0)/ m_D_4.at(hn,0), 0.6), 1.25) * pow(Pr_34 * Ra_D3 / (0.861 + Pr_34),0.25);  //[W/m]//	
 		P = m_P_a(hn,hv);  //[mmHg] (note that 1 torr = 1 mmHg by definition)
 		C1 = 2.331e-20;  //[mmHg-cm**3/K]//
 
@@ -1494,8 +1494,8 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 		Gamma = Cp_34 / Cv_34;
 		a = 1.;
 		b = (2. - a) / a * (9. * Gamma - 5.) / (2. * (Gamma + 1.));
-		h_34 = k_34 / (m_D_3.at(hn,hv) / 2. * log(m_D_4.at(hn,hv) / m_D_3.at(hn,hv)) + b * Lambda /100.* (m_D_3.at(hn,hv) / m_D_4.at(hn,hv) + 1.));  //[W/m**2-K]
-		Kineticq_34conv  = m_D_3.at(hn,hv) * CSP::pi * h_34 * (T_3 - T_4);  //[W/m]
+		h_34 = k_34 / (m_D_3.at(hn,0) / 2. * log(m_D_4.at(hn,0) / m_D_3.at(hn,0)) + b * Lambda /100.* (m_D_3.at(hn,0) / m_D_4.at(hn,0) + 1.));  //[W/m**2-K]
+		Kineticq_34conv  = m_D_3.at(hn,0) * CSP::pi * h_34 * (T_3 - T_4);  //[W/m]
 
 		// Following compares free-molecular heat transfer with natural convection heat transfer and uses the largest value for heat transfer in annulus 
 		if (Kineticq_34conv > Natq_34conv) {
@@ -1503,7 +1503,7 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 		}
 		else{
 			q_34conv = Natq_34conv;  //[W/m]
-			h_34 = q_34conv/(m_D_3.at(hn,hv)*CSP::pi*(T_3-T_4));  //Recalculate the convection coefficient for natural convection
+			h_34 = q_34conv/(m_D_3.at(hn,0)*CSP::pi*(T_3-T_4));  //Recalculate the convection coefficient for natural convection
 		}
 	}
 	return;
@@ -1549,12 +1549,12 @@ void Evacuated_Receiver::FQ_34RAD(double T_3, double T_4, double T_7, double eps
 	double T_ave;
 	T_ave = (T_3 + T_4)/2.;
 		if (! m_Glazing_intact.at(hn,hv)) {
-			q_34rad = epsilon_3_v * CSP::pi * m_D_3.at(hn,hv)  * CSP::sigma * (pow(T_3, 4) - pow(T_7, 4));  //[W/m]
-			h_34 = q_34rad/(CSP::pi*m_D_3.at(hn,hv)*(T_3 - T_7));
+			q_34rad = epsilon_3_v * CSP::pi * m_D_3.at(hn,0)  * CSP::sigma * (pow(T_3, 4) - pow(T_7, 4));  //[W/m]
+			h_34 = q_34rad/(CSP::pi*m_D_3.at(hn,0)*(T_3 - T_7));
 		}
 		else {
-			h_34 = CSP::sigma*(T_3*T_3 + T_4*T_4)*(T_3 + T_4)/ (1.0 / epsilon_3_v + m_D_3.at(hn,hv) / m_D_4.at(hn,hv) * ( 1.0 / m_epsilon_4(hn,hv) - 1.0)) ;
-			q_34rad = CSP::pi* m_D_3.at(hn,hv) * h_34 * (T_3 - T_4);
+			h_34 = CSP::sigma*(T_3*T_3 + T_4*T_4)*(T_3 + T_4)/ (1.0 / epsilon_3_v + m_D_3.at(hn,0) / m_D_4.at(hn,0) * ( 1.0 / m_epsilon_4(hn,0) - 1.0)) ;
+			q_34rad = CSP::pi* m_D_3.at(hn,0) * h_34 * (T_3 - T_4);
 		}
 	return;
 }
@@ -1607,7 +1607,7 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 			nu_56 = mu_56 / rho_56;  //[m^2/s]
 			alpha_56 = k_56 / (Cp_56 * rho_56 );  //[m^2/s]
 			beta_56 =  1.0 / T_56;  //[1/K]
-			Ra_D5 = CSP::grav *beta_56 * abs(T_5 - T_6) * pow(m_D_5.at(hn,hv),3) / (alpha_56 * nu_56);
+			Ra_D5 = CSP::grav *beta_56 * abs(T_5 - T_6) * pow(m_D_5.at(hn,0),3) / (alpha_56 * nu_56);
 
 			// Warning Statement if following Nusselt Number correlation is used out of range //
 			//If (Ra_D5 <= 10**(-5)) or (Ra_D5 >= 10**12) Then CALL WARNING('The result may not be accurate, 
@@ -1616,8 +1616,8 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 			// Churchill and Chu correlation for natural convection for a horizontal cylinder //
 			Pr_56 = nu_56 / alpha_56;
 			Nu_bar = pow(0.60 + (0.387 * pow(Ra_D5, 0.1667)) / pow(1.0 + pow(0.559 / Pr_56, 0.5625), 0.2963) , 2);
-			h_6 = Nu_bar * k_56 / m_D_5.at(hn,hv);  //[W/m**2-K]
-			q_56conv = h_6 * CSP::pi * m_D_5.at(hn,hv) * (T_5 - T_6);  //[W/m]
+			h_6 = Nu_bar * k_56 / m_D_5.at(hn,0);  //[W/m**2-K]
+			q_56conv = h_6 * CSP::pi * m_D_5.at(hn,0) * (T_5 - T_6);  //[W/m]
 		}
 		else {
 
@@ -1628,7 +1628,7 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 			nu_6 = mu_6 / rho_6;  //[m**2/s]
 			Pr_5 = nu_5 / alpha_5;
 			Pr_6 = nu_6 / alpha_6;
-			Re_D5 = v_6 * m_D_5.at(hn,hv) * rho_6 / mu_6;
+			Re_D5 = v_6 * m_D_5.at(hn,0) * rho_6 / mu_6;
 
 			// Warning Statement if following Nusselt Number correlation is used out of range //
 //			if (Pr_6 <= 0.7) or (Pr_6 >= 500) { CALL WARNING('The result may not be accurate, since 0.7 < Pr_6 < 500 does not hold. See Function fq_56conv. Pr_6 = XXXA1', Pr_6)
@@ -1666,8 +1666,8 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 			}
 
 			Nus_6 = C * pow(Re_D5,m) *  pow(Pr_6,n)  * pow(Pr_6/Pr_5, 0.25);
-			h_6 = Nus_6 * k_6 / m_D_5.at(hn,hv);  //[W/m**2-K]
-			q_56conv = h_6 * CSP::pi * m_D_5.at(hn,hv) * (T_5 - T_6);  //[W/m]
+			h_6 = Nus_6 * k_6 / m_D_5.at(hn,0);  //[W/m**2-K]
+			q_56conv = h_6 * CSP::pi * m_D_5.at(hn,0) * (T_5 - T_6);  //[W/m]
 		}
 	}
 	return;
@@ -1910,7 +1910,7 @@ double Evacuated_Receiver::fT_2(double q_12conv, double T_1, double T_2g, double
 
 	if(v_1 > 0.1) {
 
-		Re_D2 = (rho_1 * m_D_h.at(hn,hv) * v_1) / (mu_1);
+		Re_D2 = (rho_1 * m_D_h.at(hn,0) * v_1) / (mu_1);
 
 		// Nusselt Number for laminar flow case if option to include laminar flow model is chosen 
 		if (( includelaminar == true) && (Re_D2 <= 2300.)) {
@@ -1944,8 +1944,8 @@ double Evacuated_Receiver::fT_2(double q_12conv, double T_1, double T_2g, double
 			Nu_D2 = (f / 8.) * (Re_D2 - 1000.) * Pr_1 / (1. + 12.7 * sqrt(f / 8.) * (pow(Pr_1,0.6667) -1.)) * pow(Pr_1 / Pr_2, 0.11);
 		}
 
-		h_1 = Nu_D2 * k_1 / m_D_h.at(hn,hv);  //[W/m**2-K]
-		return T_1 + q_12conv/(h_1*m_D_2.at(hn,hv)*CSP::pi);
+		h_1 = Nu_D2 * k_1 / m_D_h.at(hn,0);  //[W/m**2-K]
+		return T_1 + q_12conv/(h_1*m_D_2.at(hn,0)*CSP::pi);
 		//q_12conv = h_1 * D_2 * PI  * (T_2 - T_1ave)  //[W/m]
 	}
 	else{
@@ -1971,7 +1971,7 @@ double Evacuated_Receiver::FK_23(double T_2, double T_3, int hn, int hv)
 	// (4)   B42 Copper Pipe
 
 	T_23 = (T_2 + T_3) / 2. - 273.15;  //[C]
-	return m_AbsorberPropMat.at(hn,hv)->cond(T_23);
+	return m_AbsorberPropMat.at(hn,0)->cond(T_23);
 		
 }
 
@@ -2174,7 +2174,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 
 	// Tolerance for iteration
 	double T3_tol = 1.5E-3;
-	double q5_tol = 1.0E-3;		// Since iterations are nested inside T3, make tolerance a bit tighter
+	double q5_tol = 1.0E-4;		// Since iterations are nested inside T3, make tolerance a bit tighter
 	double T1_tol = 1.0E-3;		
 	double T2_tol = 1.0E-3;
 
@@ -2191,7 +2191,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 
 	// Constants
 	double k_45 = 1.04;										//[W/m-K] Conductivity of glass
-	double R_45cond = log( m_D_5.at(hn,hv)/m_D_4.at(hn,hv) )/(2.0*CSP::pi*k_45);	//[K-m/W] Equation of thermal resistance for conduction through a cylinder
+	double R_45cond = log( m_D_5.at(hn,0)/m_D_4.at(hn,0) )/(2.0*CSP::pi*k_45);	//[K-m/W] Equation of thermal resistance for conduction through a cylinder
 
 	double colopteff_tot = m_ColOptEff.at(ct, sca_num)*m_Dirt_HCE.at(hn,hv)*m_Shadowing.at(hn,hv);	// The total optical efficiency
 
@@ -2234,6 +2234,10 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 	double abs_diffT3 = std::numeric_limits<double>::quiet_NaN();
 
 	double q_cond_bracket = std::numeric_limits<double>::quiet_NaN();
+
+	double T_lower  = std::numeric_limits<double>::quiet_NaN();
+	double T_upper  = std::numeric_limits<double>::quiet_NaN();
+	double q5_tol_1 = std::numeric_limits<double>::quiet_NaN();
 
 	while( ( (abs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2))
 	{    //Outer loop: Find T_3 such than energy balance is satisfied
@@ -2286,12 +2290,9 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 			//**********************************************
 			//************* SET UP T_4 ITERATION **********************
 			//**********************************************
-
-			double T_lower  = std::numeric_limits<double>::quiet_NaN();
-			double T_upper  = std::numeric_limits<double>::quiet_NaN();
+						
 			double y_lower = std::numeric_limits<double>::quiet_NaN();
-			double y_upper = std::numeric_limits<double>::quiet_NaN();
-			double q5_tol_1 = std::numeric_limits<double>::quiet_NaN();
+			double y_upper = std::numeric_limits<double>::quiet_NaN();			
 			double upmult = std::numeric_limits<double>::quiet_NaN();
 
 			if(qq==1)       // If first iteration, set T_4 bounds to phyiscal limits defined by T_3 and T_sky
@@ -2361,7 +2362,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 				//***************************************************************************
 				//********** Compare q_5out with q_45 cond***********************************
 				//***************************************************************************
-				double diff_q5 = (q_5out - q_45cond)/q_45cond;			// [W/m]
+				diff_q5 = (q_5out - q_45cond)/q_45cond;			// [W/m]
 
 				//Determine next guess for T_4.  Want to use false position method, but it requires that the *results* at both ends of the bracket are known.  We have
 				//defined a bracket but not the results.  Use the guess T_4 to get the results at one end of a new bracket.  Then calculate a new T_4 that is highly weighted 
@@ -2475,7 +2476,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 		}
 
 		rho_1ave = p_htfProps->dens(T_1_ave, 0.0);		//[kg/m^3] Density
-		double v_1 = m_dot/(rho_1ave*m_A_cs.at(hn,hv));	// HTF bulk velocity
+		double v_1 = m_dot/(rho_1ave*m_A_cs.at(hn,0));	// HTF bulk velocity
 
 		int q_conv_iter = 0;				// Set iteration counter
 		double diff_T2 = 1.0 + T2_tol;		// Set diff > tolerance
@@ -2500,7 +2501,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 		double k_23 = FK_23( T_2, T_3, hn, hv );
 
 		// Update the absorber surface temperature (T_3) according to new heat transfer rate
-		abs_diffT3 = T_3 - (T_2 - q_23cond*log(m_D_3.at(hn,hv)/m_D_2.at(hn,hv))/(2.0*CSP::pi*k_23));
+		abs_diffT3 = T_3 - (T_2 - q_23cond*log(m_D_3.at(hn,0)/m_D_2.at(hn,0))/(2.0*CSP::pi*k_23));
 
 		Diff_T3 = abs_diffT3 / T_3;
 	}

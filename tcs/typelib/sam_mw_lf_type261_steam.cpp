@@ -2135,8 +2135,8 @@ public:
 								// For LF, HT = CT && sca_num = 0
 								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
 								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), m_dot, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
-								                             time, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
+								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+								                             time/3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
 
 								if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
 								{
@@ -2383,8 +2383,8 @@ public:
 								// For LF, HT = CT && sca_num = 0
 								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
 								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), m_dot, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
-								                             time, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
+								evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+								                             time/3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
 							
 								if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
 								{
@@ -2606,8 +2606,8 @@ public:
 									// For LF, HT = CT && sca_num = 0
 									double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
 									q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-									evac_tube_model.EvacReceiver( m_T_ave.at(i,0), m_dot, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
-									                             time, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
+									evac_tube_model.EvacReceiver( m_T_ave.at(i,0), 10.0, T_db, T_sky, V_wind, P_amb, m_q_inc.at(i,0)/m_L_col.at(gset,0)*1000.0, gset, j, gset, 0, true, ncall,
+									                             time/3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3 );
 								
 									if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
 									{
