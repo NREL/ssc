@@ -110,7 +110,7 @@ set_value(gss, "OpticalTable", opt_data);
 
 //Set weather parameters
 set_value(weather, "file_name", weather_file);
-set_value(weather, "track_mode", 1);
+set_value(weather, "track_mode", 0);				// Need POA irradiance for horizontal plane
 set_value(weather, "tilt", 0);
 set_value(weather, "azimuth", 0);
 
@@ -172,6 +172,7 @@ set_value(gss, "vwind", 1.);	//	Wind velocity
 //Set the inputs
 connect(weather, "beam", gss, "ibn");
 connect(weather, "global", gss, "itoth");
+connect(weather, "poa_beam", gss, "ibh");
 //no ibh?
 connect(weather, "tdry", gss, "tdb");
 connect(weather, "twet", gss, "twb");
