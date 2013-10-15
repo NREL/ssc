@@ -97,7 +97,7 @@ tcsvarinfo sam_lf_st_pt_type232_variables[] = {
 	{ TCS_PARAM, TCS_NUMBER, P_hl_ffact,       "hl_ffact",       "Heat loss factor (thermal loss fudge factor)",                "-",     "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_T_htf_hot_des,  "T_htf_hot_des",  "Hot HTF outlet temperature at design",                        "C",     "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_T_htf_cold_des, "T_htf_cold_des", "Cold HTF outlet temperature at design",                       "C",     "",    "",  "" },
-	{ TCS_PARAM, TCS_NUMBER, P_f_rec_min,      "f_rec_min",      "Minimum receiver mass flow rate turndown fration",            "-",     "",    "",  "" },
+	{ TCS_PARAM, TCS_NUMBER, P_f_rec_min,      "f_rec_min",      "Minimum receiver mass flow rate turndown fraction",           "-",     "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_q_rec_des,      "q_rec_des",      "Design-point receiver thermal power output",                  "MWt",   "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_rec_su_delay,   "rec_su_delay",   "Fixed startup delay time for the receiver",                   "hr",    "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_rec_qf_delay,   "rec_qf_delay",   "Energy-based receiver startup delay (frac of rated power)",   "-",     "",    "",  "" },

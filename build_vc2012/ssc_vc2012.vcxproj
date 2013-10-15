@@ -61,6 +61,7 @@
   <ItemGroup>
     <ClInclude Include="..\ssc\core.h" />
     <ClInclude Include="..\ssc\sscapi.h" />
+    <ClInclude Include="..\ssc\tckernel.h" />
     <ClInclude Include="..\ssc\vartab.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
