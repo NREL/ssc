@@ -480,25 +480,25 @@ public:
 					rho_fluid = 692.604 + 2.2832*T_res - 0.00423412*pow(T_res,2);
 					cp_fluid = 2.14384E+06 - 34048.9*T_res + 216.467*pow(T_res,2) - 0.687249*pow(T_res,3) + 0.00108959*pow(T_res,4) - 6.90127E-07*pow(T_res,5);
 				}
-				else if( m_test_cooling_fluid == 2 )		// 50% Ethylene Glycol
+				else if( m_cooling_fluid == 2 )		// 50% Ethylene Glycol
 				{
 					mu_cool_fluid = 18.3853 - 0.238994*T_res + 0.00116489*pow(T_res,2) - 0.00000252199*pow(T_res,3) + 2.04562E-09*pow(T_res,4);
 					rho_fluid = 1026.4 + 0.80163*T_res - 0.00227397*pow(T_res,2);
 					cp_fluid = 1899.32 + 4.19104*T_res + 0.00194702*pow(T_res,2);
 				}
-				else if( m_test_cooling_fluid == 3 )	// !25% Ethylene Glycol
+				else if( m_cooling_fluid == 3 )	// !25% Ethylene Glycol
 				{
 					mu_cool_fluid = 5.33548 - 0.0686842*T_res + 0.000331949*pow(T_res,2) - 7.13336E-07*pow(T_res,3) + 5.74824E-10*pow(T_res,4);
 					rho_fluid = 823.536 + 1.76857*T_res - 0.00360812*pow(T_res,2);
 					cp_fluid = 3056.35 + 3.04401*T_res - 0.00126969*pow(T_res,2);
 				}
-				else if( m_test_cooling_fluid == 4 )	// 50% Propylene Glycol
+				else if( m_cooling_fluid == 4 )	// 50% Propylene Glycol
 				{
 					mu_cool_fluid = 29.2733 - 0.367285*T_res + 0.00172909*pow(T_res,2) - 0.00000361866*pow(T_res,3) + 2.83986E-09*pow(T_res,4);
 					rho_fluid = 1032.38 + 0.658226*T_res - 0.00217079*pow(T_res,2);
 					cp_fluid = 3501.54 - 2.12091*T_res + 0.00807326*pow(T_res,2);
 				}
-				else if( m_test_cooling_fluid == 5 )	// 25% Propylene Glycol
+				else if( m_cooling_fluid == 5 )	// 25% Propylene Glycol
 				{
 					mu_cool_fluid = 8.22884 - 0.104386*T_res + 0.000496931*pow(T_res,2) - 0.00000105157*pow(T_res,3) + 8.34276E-10*pow(T_res,4);
 					rho_fluid = 814.76 + 1.75047*T_res - 0.00358803*pow(T_res,2);

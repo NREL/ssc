@@ -241,8 +241,13 @@ public:
 			engine_pressure_fit = max(0.001, m_Pressure_coef + m_Pressure_first*P_SE*1000);
 		
 		//output gross power from engine
-		double P_SE_out = (Beale_max_fit*(engine_pressure_fit*10.0e6 
-			* m_V_displaced*frequency)*(1.0-pow(T_compression/T_heater_head_operate,0.5)))/1000.0;
+		//double P_SE_out = (Beale_max_fit*(engine_pressure_fit*pow(10,6) * m_V_displaced*frequency)*(1.0-pow(T_compression/T_heater_head_operate,0.5)))/1000.0;
+
+		
+		//output gross power from engine
+		double P_SE_out = (Beale_max_fit*(engine_pressure_fit*1.0e6 
+			              * m_V_displaced*frequency)*(1.0-pow(T_compression/T_heater_head_operate,0.5)))/1000.0;
+				
 		
 		// =================================================
 		// Gross output power from the Stirling engine
@@ -280,7 +285,7 @@ public:
 		value( O_T_HEATER_HEAD_LOW, m_T_heater_head_low );
 		value( O_V_DISPLACED, m_V_displaced );
 		value( O_FREQUENCY, frequency );
-		value( O_ENGINE_PRESSURE, engine_pressure_fit*10e6);
+		value( O_ENGINE_PRESSURE, engine_pressure_fit*1.0e6);
 		value( O_ETA_GROSS, value(O_P_OUT_SE)/(P_in_collector+0.00000001) );
 
 		return 0;
