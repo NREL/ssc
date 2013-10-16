@@ -8,16 +8,16 @@ VERSION 16
 *** BEGIN INCLUDE SECTION ***
 
 ASSIGN "C:\SAM\2013.1.15/exelib/climate_files/AZ Tucson.tm2" 30
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/touperiod.in" 53
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/opteff.dat" 10
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/opteff_sh.dat" 11
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/linfres.annual.out" 58
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/linfres.hourly.out" 54
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/My project STEP 60m ID 121291752.out" 61
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/linfres.monthly.out" 57
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/warnings.out" 96
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/pb_coeff.in" 65
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Steam_Linear_Fresnel/sys_geom.in" 70
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/touperiod.in" 53
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/opteff.dat" 10
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/opteff_sh.dat" 11
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/linfres.annual.out" 58
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/linfres.hourly.out" 54
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/step.out" 61
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/linfres.monthly.out" 57
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/warnings.out" 96
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/pb_coeff.in" 65
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Steam_Linear_Fresnel/sys_geom.in" 70
 
 * START, STOP and STEP
 EQUATIONS 9
