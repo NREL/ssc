@@ -341,7 +341,6 @@ public:
 
 	float GetPercent()
 	{
-		wxMutexLocker _lock(m_percentLock);
 		return m_percent;
 	}
 
@@ -375,7 +374,6 @@ public:
 			}
 		}
 		
-		wxMutexLocker _lock(m_cancelLock);
 		return !m_canceled;
 	}
 
@@ -529,7 +527,7 @@ void fcall_parallel( lk::invoke_t &cxt )
 				threads[i]->Cancel();
 		}
 
-		::wxMilliSleep( 50 );
+		::wxMilliSleep( 100 );
 	}
 
 	

@@ -132,7 +132,7 @@ pvwatts_celltemp::pvwatts_celltemp( double _inoct, double _height, double _dTime
 	dtime = _dTimeHrs; /* set time step */
 }
 
-double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2 )
+double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2, double fhconv )
 {
 	double celltemp = ambt2;
 		
@@ -160,7 +160,7 @@ double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2 )
 				hforce=0.0282/pow(reynld,0.2)*denair*windmd*1007.0/pow(0.71,0.4);
 			grashf=9.8/tave*fabs(tmod-tamb)*pow(xlen,3.0)/pow(visair,2.0)*0.5;
 			hfree=0.21*pow(grashf*0.71,0.32)*conair/xlen;
-			hconv=convrt*pow(pow(hfree,3.0)+pow(hforce,3.0),1.0/3.0);
+			hconv=fhconv*convrt*pow(pow(hfree,3.0)+pow(hforce,3.0),1.0/3.0);
 					/* Solve the heat transfer equation */
 			hsky=emmis*boltz*(pow(tmod,2.0)+pow(tsky,2.0))*(tmod+tsky);
 			tgrnd=tamb+tgrat*(tmod-tamb);
