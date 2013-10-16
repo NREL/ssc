@@ -153,6 +153,7 @@
     <ClCompile Include="pump.cpp" />
     <ClCompile Include="sam_csp_util.cpp" />
     <ClCompile Include="sam_dsg_controller_type265.cpp" />
+    <ClCompile Include="sam_iscc_parasitics.cpp" />
     <ClCompile Include="sam_iscc_powerblock.cpp" />
     <ClCompile Include="sam_lf_st_pt_type232.cpp" />
     <ClCompile Include="sam_mw_csp_SumCalcs.cpp" />

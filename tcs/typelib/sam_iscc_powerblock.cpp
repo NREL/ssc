@@ -28,7 +28,12 @@ enum{	//Parameters
 		O_T_HTF_COLD,
 		O_T_HTF_HOT, 
 		O_W_DOT_PC_BASE,
-		O_W_DOT_PC,     
+		O_W_DOT_PC,   
+		O_T_ST_COLD,
+		O_T_ST_HOT, 
+		O_P_ST_COLD,
+		O_P_ST_HOT, 
+		O_ETA_SOLAR_PC,
 
 		//N_MAX
 		N_MAX};
@@ -55,6 +60,11 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_HOT,     "T_htf_hot",        "Inlet molten salt temp - outlet rec. temp",           "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_BASE, "W_dot_pc_baseline","Plant power cycle output - no solar thermal input",   "MWe",   "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC,      "W_dot_pc_net",     "Plant power cycle output at timestep with solar",     "MWe",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_T_ST_COLD,     "T_st_cold",        "Steam extraction temp TO molten salt HX",             "C",     "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_T_ST_HOT,      "T_st_hot",         "Steam injection temp TO ngcc",                        "C",     "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_P_ST_COLD,     "P_st_cold",        "Steam extraction pressure TO molten salt HX",         "bar",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_P_ST_HOT,      "P_st_hot",         "Steam extraction pressure TO ngcc",                   "bar",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_ETA_SOLAR_PC,  "eta_solar_pc",     "Solar use efficiency - no solar parasitics",          "-",     "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
@@ -302,10 +312,16 @@ public:
 
 		if( q_dot_rec == 0 )
 		{
-			// No solar load - so no need to iterate - get out and calculate ngcc performance at fossil-only conditions
+			// No solar load - so no need to iterate - get out and calculate ngcc performance at fossil-only conditions 
+
 			value( O_T_HTF_COLD, T_rec_in_prev );
-			value( O_T_HTF_HOT, T_rec_out );			
+			value( O_T_HTF_HOT, T_rec_out );	
 			value( O_W_DOT_PC, m_W_dot_pc_base );
+			value( O_T_ST_COLD, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_t ) );
+			value( O_T_ST_HOT, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_t ) );
+			value( O_P_ST_COLD, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_p ) );
+			value( O_P_ST_HOT, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_p ) );
+			value( O_ETA_SOLAR_PC, 0.0 );
 
 			return 0;
 		}
@@ -509,7 +525,13 @@ public:
 			W_dot_pc = f_rec_timestep*W_dot_pc + (1.0 - f_rec_timestep)*m_W_dot_pc_base;
 
 		value( O_W_DOT_PC, W_dot_pc );
-	
+
+		value( O_T_ST_COLD, T_st_extract );
+		value( O_T_ST_HOT, T_st_inject  );
+		value( O_P_ST_COLD, P_st_extract  );
+		value( O_P_ST_HOT, P_st_inject  );
+
+		value( O_ETA_SOLAR_PC, (W_dot_pc - m_W_dot_pc_base)/(f_rec_timestep*q_dot_rec/1000.0) );
 
 		return 0;
 

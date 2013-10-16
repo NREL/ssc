@@ -53,12 +53,17 @@ public:
 	void get_table_range(double & T_amb_low, double & T_amb_high, double & P_amb_low, double & P_amb_high )
 	{
 		T_amb_low = m_T_amb_start;
-		T_amb_high = m_T_amb_end;
+		T_amb_high = m_T_amb_end - 0.001;
 
-		P_amb_low = m_P_amb_start;
-		P_amb_high = m_P_amb_end;
+		P_amb_low = m_P_amb_end;
+		P_amb_high = m_P_amb_start + 0.001;
 	}
 
+	/*
+	//output gross power from engine
+		double P_SE_out = (Beale_max_fit*(engine_pressure_fit*10.0e6 
+			* m_V_displaced*frequency)*(1.0-pow(T_compression/T_heater_head_operate,0.5)))/1000.0;
+			*/
 
 	double get_ngcc_data( double q_MW, double T_amb_C, double P_amb_bar, int use_enum_data_descript )
 	{
