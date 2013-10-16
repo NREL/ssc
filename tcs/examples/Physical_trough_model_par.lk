@@ -276,11 +276,11 @@ connect(controller, "q_aux_heat", enet, "Q_aux_backup");
 
 //simulate(1,8760,1,30,false);
 
-sims[0] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff - Copy (1).tm2' } ];
-sims[1] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff - Copy (2).tm2' } ];
-sims[2] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff - Copy (3).tm2' } ];
-sims[3] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff - Copy (4).tm2' } ];
+sims[0] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff.tm2' } ];
+sims[1] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff.tm2' } ];
+sims[2] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff.tm2' } ];
+sims[3] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff.tm2' } ];
 sims[3] = [ { 'unit'=weather, 'variable'='file_name', 'value'='c:/SAM/2013.1.15/exelib/climate_files/AZ Flagstaff.tm2' } ];
 
-parallel(sims, null, 1,8760,1,30,false, true,2);
+parallel(sims, null, 1,8760,1,30,false, true,1);
 

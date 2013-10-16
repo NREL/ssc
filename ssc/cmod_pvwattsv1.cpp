@@ -3,10 +3,16 @@
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
+#include "lib_pvshade.h"
 
 #ifndef DTOR
 #define DTOR 0.0174532925
 #endif
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
+#define sind(x) sin( (M_PI/180.0)*(x) )
+#define cosd(x) cos( (M_PI/180.0)*(x) )
 
 static var_info _cm_vtab_pvwattsv1[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -37,6 +43,12 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "i_ref",                          "Rating condition irradiance",                 "W/m2",   "",                        "PVWatts",      "?=1000",                  "POSITIVE",                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "poa_cutin",                      "Min reqd irradiance for operation",           "W/m2",   "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                         "Wind stow speed",                             "m/s",    "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "concen",                         "Concentration ratio",                         "",       "",                        "PVWatts",      "?=1",                     "MIN=1",                                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fhconv",                         "Convective heat transfer factor",             "",       "",                        "PVWatts",      "?=1",                     "MIN=0.1",                                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shade_mode_1x",                  "Tracker self-shading mode",                   "0/1/2",  "0=shading,1=backtrack,2=none","PVWatts",  "?=2",                     "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",   "",                            "PVWatts",  "?=0.3",                   "MIN=0,MAX=3",               "" },
+	
+
 	
 	/* outputs */
 
@@ -51,7 +63,8 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",               "",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",       "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",   "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
@@ -117,6 +130,7 @@ public:
 		ssc_number_t *p_poa = allocate("poa", 8760);
 
 		ssc_number_t *p_shad_beam_factor = allocate("shad_beam_factor", 8760);
+		ssc_number_t *p_sunup = allocate("sunup", 8760);
 	
 		/* PV RELATED SPECIFICATIONS */
 		
@@ -132,9 +146,15 @@ public:
 		double i_ref = as_double("i_ref"); // reference irradiance for rating condition
 		double poa_cutin = as_double("poa_cutin"); // minimum POA irradiance level required for any operation
 		double wind_stow = as_double("w_stow"); // maximum wind speed before stowing.  stowing causes all output to be lost
-		
-		
-		
+		double concen = 1.0;
+		if ( is_assigned("concen") ) concen = as_double("concen"); // concentration ratio.  used to increase incident irradiance on cells for thermal calculaton		
+		double fhconv = 1.0;
+		if ( is_assigned("fhconv") ) fhconv = as_double("fhconv"); // convective heat transfer coefficient factor.  used to approximate effect of a heatsink for lcpv
+		int shade_mode_1x = 2; // no self shading on 1 axis tracker
+		if ( is_assigned("shade_mode_1x") ) shade_mode_1x = as_integer("shade_mode_1x");
+		double gcr = 0.3;
+		if ( is_assigned("gcr") ) gcr = as_double("gcr");
+
 		// check system size
 		if ( dcrate < 0.1 ) dcrate = 0.1;
 
@@ -234,7 +254,9 @@ public:
 
 			irr.set_sky_model( 2, alb );
 			irr.set_beam_diffuse( wf.dn, wf.df );
-			irr.set_surface( track_mode, tilt, azimuth, rlim, -1, -1 );
+			irr.set_surface( track_mode, tilt, azimuth, rlim, 
+				shade_mode_1x == 1, // backtracking mode
+				gcr );
 			
 			double ibeam, iskydiff, ignddiff;
 			double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
@@ -243,6 +265,8 @@ public:
 			int code = irr.calc();
 			if ( 0 != code )
 				sunup = 0; // if for some reason the irradiance processor fails, ignore this hour
+
+			p_sunup[i] = (ssc_number_t)sunup;
 
 			p_tcell[i] = (ssc_number_t)wf.tdry;
 
@@ -258,6 +282,41 @@ public:
 			{
 				irr.get_angles( &aoi, &stilt, &sazi, &rot, &btd );
 				irr.get_poa( &ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+				
+				if ( sunup > 0 && track_mode == 1
+					&& shade_mode_1x == 0 ) // selfshaded mode
+				{	
+					double shad1xf = shade_fraction_1x( solazi, solzen, tilt, azimuth, gcr, rot );					
+					p_shad_beam_factor[i] *= (ssc_number_t)(1-shad1xf);
+
+					if ( fd > 0 && shade_mode_1x == 0 && iskydiff > 0 )
+					{
+						double reduced_skydiff = iskydiff;
+						double Fskydiff = 1.0;
+						double reduced_gnddiff = ignddiff;
+						double Fgnddiff = 1.0;
+						
+						// worst-case mask angle using calculated surface tilt
+						double phi0 = 180/3.1415926*atan2( sind( stilt ), 1/gcr - cosd( stilt ) );
+
+						// calculate sky and gnd diffuse derate factors
+						// based on view factor reductions from self-shading
+						diffuse_reduce( solzen, stilt,
+							wf.dn, iskydiff+ignddiff,
+							gcr, phi0, alb, 1000,
+
+							// outputs (pass by reference)
+							reduced_skydiff, Fskydiff,
+							reduced_gnddiff, Fgnddiff );
+
+						if ( Fskydiff >= 0 && Fskydiff <= 1 ) iskydiff *= Fskydiff;
+						else log( util::format("sky diffuse reduction factor invalid at hour %d: fskydiff=%lg, stilt=%lg", i, Fskydiff, stilt), SSC_NOTICE, (float)i );
+
+						if ( Fgnddiff >= 0 && Fgnddiff <= 1 ) ignddiff *= Fgnddiff;
+						else log( util::format("gnd diffuse reduction factor invalid at hour %d: fgnddiff=%lg, stilt=%lg", i, Fgnddiff, stilt), SSC_NOTICE, (float)i );
+					}
+
+				}
 
 				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
 				ibeam *= p_shad_beam_factor[i];
@@ -268,7 +327,7 @@ public:
 				
 				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
 				iskydiff *= shad_skydiff_factor;
-
+				
 				double poa = ibeam + fd*(iskydiff +ignddiff);
 
 				if ( p_user_poa != 0 )
@@ -283,7 +342,7 @@ public:
 					poa = 0;
 
 				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180);
-				double pvt = tccalc( poa, wspd_corr, wf.tdry );
+				double pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
 				double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
 				double ac = dctoac(pcrate,efffp,dc);
 			
