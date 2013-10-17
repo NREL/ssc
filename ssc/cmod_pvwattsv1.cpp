@@ -17,7 +17,8 @@
 static var_info _cm_vtab_pvwattsv1[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "file_name",                      "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
-		
+	
+	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                         "Albedo (ground reflectance)",                 "frac",   "",                        "PVWatts",      "?",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                     "Tracking mode",                               "0/1/2/3","Fixed,1Axis,2Axis,AziAxis","PVWatts",      "*",                       "MIN=0,MAX=3,INTEGER",                      "" }, 
@@ -228,6 +229,12 @@ public:
 			shad_skydiff_factor = as_double( "shading_diff" );
 
 		pvwatts_celltemp tccalc( inoct, height, 1.0 );
+		
+		double fixed_albedo = 0.2;
+		bool has_albedo = is_assigned( "albedo" );
+		if ( has_albedo )
+			fixed_albedo = as_double( "albedo" );
+
 	
 		int i=0;
 		while( i < 8760 )
@@ -240,8 +247,12 @@ public:
 			irr.set_location( wf.lat, wf.lon, wf.tz );
 				
 			double alb = 0.2;
-
-			if ( wf.type() == weatherfile::TMY2 )
+			
+			if ( has_albedo && fixed_albedo >= 0 && fixed_albedo <= 1.0 )
+			{
+				alb = fixed_albedo;
+			}
+			else if ( wf.type() == weatherfile::TMY2 )
 			{
 				if (wf.snow > 0 && wf.snow < 150)
 					alb = 0.6;
