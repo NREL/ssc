@@ -864,8 +864,17 @@ public:
 			water_TP( T_hot, check_pressure.P_check( P_turb_in )*100.0, &wp );
 			double h_hot = wp.H;
 			double h_cold = h_hot - Q_ND_tot*m_q_dot_st_ref/m_dot_st;
-			water_PH( check_pressure.P_check( P_turb_in )*100.0, h_cold, &wp );
-			T_cold = wp.T;
+			do
+			{
+				water_PH( check_pressure.P_check( P_turb_in )*100.0, h_cold, &wp );
+				T_cold = wp.T;
+				water_TP( T_cold, P_turb_in*100.0, &wp );
+				if( abs(wp.H - h_cold)/h_cold < 0.01 )
+				{					
+					break;
+				}
+				h_cold*=0.999;
+			} while( true );
 
 			eta = P_cycle/(Q_ND_tot*m_q_dot_st_ref + R_ND_tot*m_q_dot_rh_ref);
 			m_dot_demand = max( m_dot_ND*m_m_dot_ref, 0.00001 );	//[kg/s]
