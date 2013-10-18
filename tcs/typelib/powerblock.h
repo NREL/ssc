@@ -184,19 +184,6 @@ private:
 
 	double Interpolate(int YT, int XT, double X);
 
-	void evap_tower(double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle, 
-					double eta_ref, double T_db, double T_wb, double P_amb, double q_reject, double &m_dot_water, 
-					double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys);
-
-	void ACC(double P_cond_min, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref, 
-		 double T_db, double P_amb, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
-		 double& f_hrsys);
-
-	void HybridHR(/*double fcall,*/ double P_cond_min, int n_pl_inc, /*double time,*/ double F_wc, double F_wcmax, double F_wcmin, 
-				  double T_ITD_des, double T_approach, double dT_cw_ref, double P_cond_ratio, double P_cycle, double eta_ref, 
-				  double T_db, double T_wb, double P_amb, double q_reject, double& m_dot_water, double& W_dot_acfan, 
-				  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
-
 };
 
 #endif // __C_PB_Type224__
