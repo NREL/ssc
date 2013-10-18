@@ -740,6 +740,9 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 
 	double P_dem_ND, P_AB, P_CA, P_BC, Q_AB, Q_CA, Q_BC, P_ND_tot, Q_ND_tot, q_reject;
 	double P_ND[3], Q_ND[3];
+	double P_cond_guess = 0.0;
+	double P_cond_low = -1.0;
+	double P_cond_high = -1.0;
 	// Begin iterations
 	//do while ((err.gt.1.e-6).and.(qq.lt.100))
 	for (int qq = 1; qq<100; qq++)
@@ -808,7 +811,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 		T_htf_cold = T_htf_hot-Q_ND_tot*q_dot_ref/(m_dot_htf*c_htf);
 		eta = P_cycle/(Q_ND_tot*q_dot_ref);
 		m_dot_demand = dmax1(m_dot_htf_ND*m_dot_htf_ref, 0.00001);   // [kg/s]
-
+		
 		// Call the cooling tower model to update the condenser pressure
 		q_reject = (1.0 - eta)*q_dot_ref*Q_ND_tot*1000.0;
 		if (qq < 10) // MJW 10.31.2010
@@ -816,14 +819,14 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 			switch(m_pbp.CT)  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
 			{
 				case 1:
-					evap_tower(P_cond_min, m_pbp.n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
+					evap_tower(P_cond_min, m_pbp.n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 					break;
 				case 2:
-					ACC(P_cond_min, m_pbp.n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
+					ACC(P_cond_min, m_pbp.n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 					break;
 				case 3:
 					HybridHR(/*fcall, */P_cond_min, m_pbp.n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, T_wb,
-							  P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
+							  P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 					break;
 			}
 		}
@@ -841,6 +844,24 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 		}
 		else if(mode== 2)
 			err = 0.0;
+
+		err = (P_cond_guess - P_cond)/P_cond;
+
+		if( err > 0 )
+			P_cond_low = P_cond;
+		else
+			P_cond_high = P_cond;
+
+		if( P_cond_low > 0.0 && P_cond_high > 0.0 )
+		{
+			P_cond_guess = 0.5*P_cond_low + 0.5*P_cond_high;
+			if( (P_cond_high - P_cond_low)/P_cond_high < 1.E-6 )
+				err = 0.0;
+		}
+
+		P_cond = P_cond_guess;
+
+		err = abs(err);
 
 		if(qq == 99)
 		{
