@@ -8,15 +8,15 @@ VERSION 16
 *** BEGIN INCLUDE SECTION ***
 
 ASSIGN "C:\SAM\2013.1.15/exelib/climate_files/CA Daggett.tm2" 30
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/touperiod.in" 53
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/eff_array.dat" 10
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/flux_map.csv" 60
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/dst.annual.out" 58
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/dst.hourly.out" 54
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/step.out" 61
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/dst.monthly.out" 57
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/warnings.out" 96
-ASSIGN "C:\Users\tneises\Documents\Projects\tcs\typelib\Direct_Steam_Receiver/pb_coeff.in" 65
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/touperiod.in" 53
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/eff_array.dat" 10
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/flux_map.csv" 60
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/dst.annual.out" 58
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/dst.hourly.out" 54
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/step.out" 61
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/dst.monthly.out" 57
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/warnings.out" 96
+ASSIGN "C:\Users\tneises\Documents\Projects\ssc\tcs\typelib\Direct_Steam_Power_Tower/pb_coeff.in" 65
 
 * START, STOP and STEP
 EQUATIONS 9
