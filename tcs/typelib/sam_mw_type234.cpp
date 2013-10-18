@@ -782,6 +782,11 @@ public:
 		double Q_ND[3];
 		double R_ND[3] = {0,0,0};
 		double R_ND_tot;
+
+		double P_cond_guess = 0.0;
+		double P_cond_low = -1.0;
+		double P_cond_high = -1.0;
+
 		// Begin iterations
 		while( err > 1.E-6 && qq < 100 )
 		{
@@ -887,14 +892,14 @@ public:
 				switch( m_CT )
 				{
 				case 1:
-					CSP::evap_tower( m_tech_type, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys );
+					CSP::evap_tower( m_tech_type, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				case 2:
-					CSP::ACC( m_tech_type, m_P_cond_min, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys );
+					CSP::ACC( m_tech_type, m_P_cond_min, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				case 3:
 					CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, T_wb,
-										P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys );
+										P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				}
 			}
@@ -908,6 +913,26 @@ public:
 			}
 			else
 				err = 0.0;
+
+
+			err = (P_cond_guess - P_cond)/P_cond;
+
+			if( err > 0 )
+				P_cond_low = P_cond;
+			else
+				P_cond_high = P_cond;
+
+			if( P_cond_low > 0.0 && P_cond_high > 0.0 )
+			{
+				P_cond_guess = 0.5*P_cond_low + 0.5*P_cond_high;
+				if( (P_cond_high - P_cond_low)/P_cond_high < 1.E-6 )
+					err = 0.0;
+			}
+
+			P_cond = P_cond_guess;
+
+			err = abs(err);
+
 
 			if( qq == 99 )
 			{
