@@ -1503,7 +1503,8 @@ public:
 					bool lowflag = false;			// Has a lower result (temp difference) been established?
 					bool upguess = false;			// Has an upper bound (fraction) been established?
 					bool lowguess = false;			// Has a lower bound (fraction) been established?
-					int br_lower, br_upper = 0;
+					int br_lower = 0; 
+					int br_upper = 0;
 					fb_stuck = 0;
 
 					double tol_T_sh;
@@ -1580,7 +1581,7 @@ public:
 										// Know that boiler fraction needs to be increased, so make sure that happens
 										if( f_adjust - m_f_b < 0.0005 )		f_adjust = m_f_b + 0.001;
 										// Also, if we know upper bound, then make sure we stay within 10/16 (!?)
-										if( f_adjust - f_upper )			f_adjust = 0.8*f_upper + 0.2*f_lower;
+										if( f_adjust > f_upper )			f_adjust = 0.8*f_upper + 0.2*f_lower;
 									}
 									if( upflag && lowflag )
 										m_f_b = y_upper/(y_upper-y_lower)*(f_lower-f_upper)+f_upper;	//[-] False position method
