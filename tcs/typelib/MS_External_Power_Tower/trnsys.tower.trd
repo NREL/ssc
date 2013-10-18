@@ -8,16 +8,16 @@ VERSION 16
 *** BEGIN INCLUDE SECTION ***
 
 ASSIGN "C:\SAM\2013.1.15/exelib/climate_files/CA Daggett.tm2" 30
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/touperiod.in" 53
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/eff_array.dat" 10
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/flux_map.csv" 60
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/tower.annual.out" 58
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/tower.hourly.out" 54
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/tower.step.out" 61
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/tower.monthly.out" 57
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/fluidprop.dat" 95
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/warnings.out" 96
-ASSIGN "C:/Users/tneises/Documents/Projects/tcs/typelib/MS_External_Power_Tower/pb_coeff.in" 65
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/touperiod.in" 53
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/eff_array.dat" 10
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/flux_map.csv" 60
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/tower.annual.out" 58
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/tower.hourly.out" 54
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/tower.step.out" 61
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/tower.monthly.out" 57
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/fluidprop.dat" 95
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/warnings.out" 96
+ASSIGN "C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/MS_External_Power_Tower/pb_coeff.in" 65
 
 * START, STOP and STEP
 EQUATIONS 9
