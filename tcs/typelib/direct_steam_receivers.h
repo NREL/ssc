@@ -3,6 +3,7 @@
 
 #include "recore/lib_util.h"
 #include "htf_props.h"
+#include <waterprop/waterprop.h>
 
 // convert to class?
 class C_DSG_macro_receiver
@@ -59,6 +60,7 @@ private:
 	C_DSG_macro_receiver m_dsg_rec;
 	HTFProperties ambient_air;
 	HTFProperties tube_material;
+	property_info wp;
 
 	double m_h_rec;		//[m] Height of boiler
 	double m_d_tube;	//[m] O.D. of boiler tubes

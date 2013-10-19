@@ -956,11 +956,13 @@ public:
 			skip_rec_calcs = true;
 		// IF( (success==0) .and.(info(7)>0) ) GOTO 375    
 
-		double m_dot_sh, m_dot_rh, dp_sh, dp_rh, q_therm_in_b, q_therm_in_sh, q_therm_in_rh, q_therm_in_rec, deltaP1;
-		double W_dot_fw, W_dot_boost;
-		double eta_rh, eta_sh, eta_b, h_fw_Jkg, P_sh_in, P_hp_in, P_lp_in, q_boiler_abs, q_sh_abs, q_rh_abs, rho_fw, T_in, P_b_out;
-		double dp_b, T_boil, h_hp_in, h_lp_in, h_rh_in;
-		dp_b = 0.0;
+		double m_dot_sh, m_dot_rh, dp_sh, dp_rh, q_therm_in_b, q_therm_in_sh, q_therm_in_rh, q_therm_in_rec, deltaP1, W_dot_fw, W_dot_boost;
+		double eta_rh, eta_sh, eta_b, h_fw_Jkg, P_sh_in, P_hp_in, P_lp_in, q_boiler_abs, q_sh_abs, q_rh_abs, rho_fw, T_in, P_b_out, T_boil, h_hp_in, h_lp_in, h_rh_in;
+		
+		m_dot_sh, m_dot_rh, dp_sh, dp_rh, q_therm_in_b, q_therm_in_sh, q_therm_in_rh, q_therm_in_rec, deltaP1, W_dot_fw, W_dot_boost  = std::numeric_limits<double>::quiet_NaN();
+		eta_rh, eta_sh, eta_b, h_fw_Jkg, P_sh_in, P_hp_in, P_lp_in, q_boiler_abs, q_sh_abs, q_rh_abs, rho_fw, T_in, P_b_out, T_boil, h_hp_in, h_lp_in, h_rh_in  = std::numeric_limits<double>::quiet_NaN();
+		
+		double dp_b = 0.0;
 		double P_sh_out = 0.0;
 		double P_rh_out = 0.0;
 
@@ -1125,6 +1127,7 @@ public:
 				bool m_df_pred_ct = true;			//[-] Reset defocus prediction iteration counter
 
 				double q_b_pred, q_sh_pred, q_rh_pred, q_rec_pred_tot; 		
+				q_b_pred, q_sh_pred, q_rh_pred, q_rec_pred_tot = std::numeric_limits<double>::quiet_NaN();
 
 				for( int i = 0; i < 2; i++ )
 				{
@@ -1142,7 +1145,7 @@ public:
 
 					double q_therm_in_diff = (q_rec_pred_tot - m_q_pb_max)/m_q_pb_max;	//[-] Difference between predicted receiver thermal input and max pb thermal input
 
-					bool break_loop;
+					bool break_loop = true;
 					if( q_therm_in_diff > 0.1 && i == 0 )
 					{
 						m_defocus = min( 1.0, m_defocus*m_q_pb_max/q_rec_pred_tot );
@@ -1197,13 +1200,14 @@ public:
 
 			int rh_count=0, sh_count=0, boiler_count = 0;
 			int df_count = -1;		//[-] Defocus counter
-			bool defocus_mode;
+			bool defocus_mode = false;
 
 			eta_b = m_eta_b_ref;	eta_sh = m_eta_sh_ref; eta_rh = m_eta_rh_ref;	 // new for tcs -> initialize here - should overwrite before use
-			int iter_T_rh;				//[-] Number of iterations on reheater fraction
-			double diff_T_rh;			//[-] Difference between target and calculated reheat temperature		
+			int iter_T_rh = -1;				//[-] Number of iterations on reheater fraction
+			double diff_T_rh = std::numeric_limits<double>::quiet_NaN();				//[-] Difference between target and calculated reheat temperature		
 			double df_upper, y_df_upper, df_lower, y_df_lower;
-			bool break_rec_calcs;
+			df_upper, y_df_upper, df_lower, y_df_lower = std::numeric_limits<double>::quiet_NaN();
+			bool break_rec_calcs = false;
 			bool break_def_calcs = false;
 
 			do
@@ -1256,7 +1260,9 @@ public:
 				bool high_tol = true;			// True = use high tolerance to quickly get ballpark results. False = use tight tolerance for final answer
 				
 				int fb_stuck, rh_exit;
+				fb_stuck = -1; rh_exit = -1;
 				double y_rh_upper, y_rh_lower;
+				y_rh_upper = y_rh_lower = std::numeric_limits<double>::quiet_NaN();
 			
 				//*********** Reheater Loop ***************
 				//Iterate on reheater flux fraction WHILE:
@@ -1265,7 +1271,7 @@ public:
 				// - - - - - - - - AND - - - - - - - - 
 				// - - - Number of reheater iterations is "small"  
 
-				bool break_to_rh_iter;
+				bool break_to_rh_iter = false;
 				bool break_rec_calcs = false;
 				// 93
 				while( (abs(diff_T_rh) > m_tol_T_rh || (high_tol) ) && (iter_T_rh < 20) )
@@ -1281,7 +1287,7 @@ public:
 					{
 						if( fb_stuck == 0 && rh_exit == 0 )		// If reheater results are available, then we can try false position mode
 						{					
-							double f_rh_adjust;
+							double f_rh_adjust = std::numeric_limits<double>::quiet_NaN();
 							//Use relaxed tolerance until reheater solves once.  This will give updated an updated reheater efficiency and outlet enthalpy.
 							//Use these updated values to predict reheat fraction and boiler fraction
 							if(high_tol)
@@ -1513,8 +1519,10 @@ public:
 					else
 						tol_T_sh = m_tol_T_sh_base;
 
-					int sh_exit, boiler_exit;
-					double y_upper, y_lower, f_adjust;					
+					int sh_exit = -1; 
+					int boiler_exit = -1;
+					double y_upper, y_lower, f_adjust;		
+					y_upper, y_lower, f_adjust = std::numeric_limits<double>::quiet_NaN();
 					bool checkflux;
 					// *********************************************************************************************
 					// ***** Loop to determine the fraction of remaing flux on boiler, given a set reheater fraction
@@ -1808,6 +1816,8 @@ public:
 					rh_exit = 0;
 					rh_count++;
 					double rho_rh_out, h_rh_out;
+					rho_rh_out = h_rh_out = std::numeric_limits<double>::quiet_NaN();
+					
 
 					water_TP( T_rh_in - 273.15, m_P_rh_in, &wp );
 					h_rh_in = wp.H;
