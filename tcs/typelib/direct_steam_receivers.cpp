@@ -240,9 +240,13 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	double diff_Pout = 999.0;
 	int iter_P_out = 0;
 	int iter_x = -9;
-	double diff_x_out, h_n_out_total, h_in, x_n_out = 999.0;
-	property_info wp;
-	double P_out_avg=0, T_n_in, h_fw, rho_fw, T_in, T1_max;
+	double diff_x_out, h_n_out_total, h_in;
+	diff_x_out = h_n_out_total = h_in = std::numeric_limits<double>::quiet_NaN();
+	double x_n_out = 999.0;
+
+	double P_out_avg=0; 
+	double T_n_in, h_fw, rho_fw, T_in, T1_max;
+	T_n_in = h_fw = rho_fw = T_in = T1_max = std::numeric_limits<double>::quiet_NaN();
 	// Adjust steam drum pressure to equal calculated boiler outlet pressure
 	while ( abs(diff_Pout) > 0.01 && iter_P_out < 20 )
 	{
@@ -300,10 +304,11 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		bool mupflag = false;
 		bool mlowflag = false;
 		double y_m_upper, y_m_lower;
+		y_m_upper = y_m_lower = std::numeric_limits<double>::quiet_NaN();
 
 		// Adjust mass flow rate to reach target quality
 		// 297 -> TRNSYS GOTO
-		bool break_to_massflow_calc;
+		bool break_to_massflow_calc = false;
 		while( abs(diff_x_out) > 0.0035 && iter_x < 20 )
 		{
 			break_to_massflow_calc = false;
@@ -441,6 +446,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 				m_dot = m_m_dot_path.at(j,0);	//[kg/s] Use m_dot so we don't have to carry array through
 
 				double T_1, grav_mult;
+				T_1 = grav_mult = std::numeric_limits<double>::quiet_NaN();
 				for( int i = 0; i < m_comb_nodes; i++ )		// Now solve energy balance for each node (or panel) in flow path. Output of i is input to i+1
 				{
 					if(i==0)
@@ -468,6 +474,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 					int mdot_flag = 0;						//[-]
 					double P_b_min = 1.E6;					//[Pa] Minimum boiler outlet pressure
 					double rho_n_out,T_in1;
+					rho_n_out = T_in1 = std::numeric_limits<double>::quiet_NaN();
 
 					// An average pressure of the node is used as one independent variable to calculate additional properties
 					// After pressure drop through node is calculated, want to make sure calculated average pressure is within some % of average used for props
@@ -546,6 +553,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						double h_b_max = wp.H;		//[kJ/kg]
 						double T_2_guess, T_2;		//[K]
 						double q_wf,x_n_ave,mu_l,mu_v,rho_l,f_fd;				//[W]
+						q_wf = x_n_ave = mu_l = mu_v = rho_l = f_fd = std::numeric_limits<double>::quiet_NaN();
 
 						// This loop ensures that the outlet flow conditions for each panel are solved correctly by finding the correct T1 (outer surface temp)
 						while( abs(diff_T_1/T_1) > 0.0025 && iter_T_1 < 50 )
@@ -737,7 +745,8 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							}
 
 							double mu_n_ave, k_n_ave, c_n_ave;
-							bool props_succeed;
+							mu_n_ave = k_n_ave = c_n_ave = std::numeric_limits<double>::quiet_NaN();
+							bool props_succeed = true;
 							do
 							{
 								props_succeed = true;
@@ -755,9 +764,8 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							double q_t_flux = q_wf/m_A_n_in_act;		//[W/m^2] Heat FLUX transferred to working fluid: required for boiling heat transfer correlation
 							u_n = m_dot/(rho_n_ave*m_A_t_cs);	//[m/s] Velocity through tube
 
-							double h_l, k_l, c_l;
-							double h_v, rho_v, k_v, c_v;
-							double h_fluid;
+							double h_l, k_l, c_l, h_v, rho_v, k_v, c_v, h_fluid;
+							h_l = k_l = c_l = h_v = rho_v = k_v = c_v = h_fluid = std::numeric_limits<double>::quiet_NaN();
 							if( x_n_ave < 1.0 && x_n_ave > 0.0 )
 							{
 								// Need props at saturated liquid for boiling correlations
@@ -833,7 +841,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							rho_n_out = wp.dens; x_n_out = wp.Q;
 						}
 
-						double deltaP_tube;												
+						double deltaP_tube = std::numeric_limits<double>::quiet_NaN();;												
 						// Calculate the pressure drop through the panel
 						if( x_n_ave < 1.0 && x_n_ave > 0.0 )	// 2-Phase pressure drop
 						{
@@ -881,7 +889,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 					h_n_in = h_n_out;			//[J/kg] Set inlet enthalpy for next node
 					rho_n_in = rho_n_out;		//[kg/m^3] Set inlet density for next node
 										
-					bool props_succeed;
+					bool props_succeed = true;
 					do
 					{
 						props_succeed = true;
@@ -904,7 +912,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 				if( break_to_massflow_calc )
 						break;
 
-				double uplast_mult;
+				double uplast_mult = std::numeric_limits<double>::quiet_NaN();;
 				if( m_comb_nodes%2 == 0 )	uplast_mult = 1.0;
 				else						uplast_mult = 0.0;
 				
@@ -1052,10 +1060,19 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	// Mass flow rate in one tube * ASSUMING ONE FLOW PATH *
 	double m_dot_total = m_dot_in / ((double)m_n_par*(double)m_n_comb);		//[kg/s]
 
-	property_info wp;
+	
 
-	water_PH( P_in, h_in, &wp );
-	double T_in = wp.T + 273.15;	//[K]
+	double T_in = std::numeric_limits<double>::quiet_NaN();
+	do
+	{
+		water_PH( P_in, h_in, &wp );
+		T_in = wp.T + 273.15;	//[K]
+		if( abs(T_in) < 1.E4 )
+			break;
+		h_in *= 0.99;
+
+	} while(true);
+
 	h_in = h_in * 1000.0;			//[kJ/kg]
 	P_in = P_in * 1000.0;			//[Pa]
 
@@ -1172,6 +1189,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 			int Pave_flag = 0;
 			
 			double f_fd, rho_n_ave; 
+			f_fd = rho_n_ave = std::numeric_limits<double>::quiet_NaN();
 			// An average pressure of the node is used as one indepedent variable to calculate additional properties
 			// After pressure drop through node is calculated, want to make sure calculated average pressure is within some % of average used for props
 			while( abs(diff_P_ave) > 0.001 && iter_P_ave < 125 )
@@ -1276,7 +1294,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 				double cp_x1 = wp.Cp*1000.0;	//[J/kg-K]
 				double rho_x1 = wp.dens; double mu_x1 = wp.visc; double k_x1 = wp.cond;
 
-				double q_wf;
+				double q_wf = std::numeric_limits<double>::quiet_NaN();
 				// This loop ensures that the outlet flow conditions for each panel are solved correctly by finding the correct T1 (outer surface temp)
 				while( abs(diff_T_1/T_1)>0.0025 && iter_T_1 < 50 )
 				{
@@ -1428,7 +1446,8 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 					}
 
 					double mu_n_ave, k_n_ave, c_n_ave, x_n_ave;
-					bool props_succeed;
+					mu_n_ave = k_n_ave = c_n_ave = x_n_ave = std::numeric_limits<double>::quiet_NaN();
+					bool props_succeed = true;
 					do
 					{
 						water_PH( P_ave/1000.0, h_n_ave/1000.0, &wp );
