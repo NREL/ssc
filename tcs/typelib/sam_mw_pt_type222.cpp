@@ -515,8 +515,10 @@ public:
 
 		double v_wind = log( (m_h_tower+m_h_rec/2)/0.003)/log(10.0/0.003)*v_wind_10;
 
-		double c_p_coolant, rho_coolant, f, u_coolant, q_conv_sum, q_rad_sum, q_dot_inc_sum; //q_inc_sum;
+		double c_p_coolant, rho_coolant, f, u_coolant, q_conv_sum, q_rad_sum, q_dot_inc_sum;
+		c_p_coolant = rho_coolant = f = u_coolant = q_conv_sum = q_rad_sum = q_dot_inc_sum = std::numeric_limits<double>::quiet_NaN();
 		double eta_therm, m_dot_salt_tot, T_salt_hot_guess, m_dot_salt_tot_ss;
+		eta_therm = m_dot_salt_tot = T_salt_hot_guess = m_dot_salt_tot_ss = std::numeric_limits<double>::quiet_NaN();
 		bool rec_is_off = false;
 		bool rec_is_defocusing = false;
 		double field_eff_adj = 0.0;
@@ -664,7 +666,7 @@ public:
 			}
 
 			double c_guess = field_htfProps.Cp( (T_salt_hot_target + T_salt_cold_in)/2.0 );	//[kJ/kg-K] Estimate the specific heat of the fluid in receiver
-			double m_dot_salt_guess;
+			double m_dot_salt_guess = std::numeric_limits<double>::quiet_NaN();
 			if( I_bn > 1.E-6 )
 			{
 				double q_guess = 0.5*q_dot_inc_sum;		//[kW] Estimate the thermal power produced by the receiver				
@@ -679,7 +681,7 @@ public:
 			}
 			T_salt_hot_guess = 9999.9;		//[K] Initial guess value for error calculation
 			double err = -999.9;					//[-] Relative outlet temperature error
-			double tol;
+			double tol = std::numeric_limits<double>::quiet_NaN();
 			if( night_recirc == 1 )
 				tol = 0.0057;
 			else
@@ -689,7 +691,7 @@ public:
 			//                            ITERATION STARTS HERE
 			//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 			int qq_max = 50;
-			double m_dot_salt;
+			double m_dot_salt = std::numeric_limits<double>::quiet_NaN();
 			int qq = 0;
 
 			while( abs(err) > tol )
@@ -816,9 +818,17 @@ public:
 							m_T_panel_in_guess.at(i_fp,0) = m_T_panel_out.at(m_flow_pattern.at(j,i_comp),0);
 
 
-						m_T_panel_out_guess.at(i_fp,0) = m_T_panel_in_guess.at(i_fp,0) + m_q_dot_abs.at(i_fp,0)/(m_dot_salt*c_p_coolant);	//[K] Energy balance for each node
+						m_T_panel_out_guess.at(i_fp,0) = m_T_panel_in_guess.at(i_fp,0) + m_q_dot_abs.at(i_fp,0)/(m_dot_salt*c_p_coolant);	//[K] Energy balance for each node																																																
 						m_T_panel_ave_guess.at(i_fp,0) = (m_T_panel_out_guess.at(i_fp,0) + m_T_panel_in_guess.at(i_fp,0))/2.0;				//[K] Panel average temperature
 						m_T_s_guess.at(i_fp,0) = m_T_panel_ave_guess.at(i_fp,0) + m_q_dot_abs.at(i_fp,0)*(R_conv_inner+R_tube_wall);			//[K] Surface temperature based on the absorbed heat
+					
+						if( m_T_s_guess.at(i_fp,0) < 1.0 )
+						{
+							m_mode = 0.0;  // Set the startup mode
+							rec_is_off = true;
+							break;
+						}
+						
 					//}	// End of panels in flow path
 					//if( rec_is_off )
 					//	break;
@@ -892,6 +902,7 @@ public:
 		} while( rec_is_defocusing );
 
 		double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;
+		DELTAP = Pres_D = W_dot_pump = q_thermal = q_startup = std::numeric_limits<double>::quiet_NaN();
 
 		q_startup = 0.0;
 		if( !rec_is_off )
