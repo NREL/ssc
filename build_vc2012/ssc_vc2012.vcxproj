@@ -39,6 +39,7 @@
     <ClCompile Include="..\ssc\cmod_singleowner.cpp" />
     <ClCompile Include="..\ssc\cmod_swh.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsdirect_steam.cpp" />
+    <ClCompile Include="..\ssc\cmod_tcsdish.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsgeneric_solar.cpp" />
     <ClCompile Include="..\ssc\cmod_tcslinear_fresnel.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsmolten_salt.cpp" />

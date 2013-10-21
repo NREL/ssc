@@ -53,7 +53,8 @@ extern module_entry_info
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
 	cm_entry_tcsdirect_steam,
-	cm_entry_tcslinear_fresnel;
+	cm_entry_tcslinear_fresnel,
+	cm_entry_tcsdish;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -90,6 +91,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_tcsmolten_salt,
 	&cm_entry_tcsdirect_steam,
 	&cm_entry_tcslinear_fresnel,
+	&cm_entry_tcsdish,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
