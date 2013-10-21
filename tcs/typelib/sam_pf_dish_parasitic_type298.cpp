@@ -93,7 +93,7 @@ tcsvarinfo sam_pf_dish_parasitics_type298_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_T_COOL_SPEED3,         "T_cool_speed3",			  "Cooling Fluid Temp. For Fan Speed 3 Cut-In",                        "C", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_EPSILON_COOLER_TEST,   "epsilon_cooler_test",		  "Cooler effectiveness",                                              "-", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_EPSILON_RADIATOR_TEST, "epsilon_radiator_test",	  "Radiator effectiveness",                                            "-", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_COOLING_FLUID,         "cooling_fluid",          "Reference Condition Cooling Fluid: 0=Water,1=V50%EG,2=V25%EG,3=V40%PG,4=V25%PG", "-", "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_COOLING_FLUID,         "cooling_fluid",          "Reference Condition Cooling Fluid: 1=Water,2=V50%EG,3=V25%EG,4=V40%PG,5=V25%PG", "-", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_MANUFACTURER,          "manufacturer",              "Manufacturer (fixed as 5=other)",                           "-", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_P_CONTROLS,            "P_controls",				  "Control System Parasitic Power, Avg.",                      "W", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_TEST_P_PUMP,           "test_P_pump",				  "Reference Condition Pump Parasitic Power",                  "W", "", "", ""},
