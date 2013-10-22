@@ -18,7 +18,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "theta_stow",       "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",            "",             "",             "solarfield",    "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "theta_dep",        "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",            "",             "",             "solarfield",    "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "interp_arr",       "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",            "",             "",             "solarfield",    "*",                       "INTEGER",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "rad_type",         "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",            "",             "",             "solarfield",    "*",                       "INTEGER",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rad_type",         "Irradiation basis",                                              "",             "",             "solarfield",    "*",                       "INTEGER",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "solarm",           "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",            "",             "",             "solarfield",    "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "T_sfdes",          "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",            "",             "",             "solarfield",    "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "irr_des",          "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",            "",             "",             "solarfield",    "*",                       "",                      "" },
@@ -136,7 +136,7 @@ public:
 	{
 		//if ( 0 >= load_library("typelib") ) throw exec_error( "tcsgeneric_solar", util::format("could not load the tcs type library.") );
 
-		bool debug_mode = true; //(__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		bool debug_mode = false; //(__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
@@ -236,7 +236,7 @@ public:
 		// Connect the units
 		bool bConnected = connect(weather, "beam", gss, "ibn");
 		bConnected &= connect(weather, "global", gss, "itoth");
-		//no ibh?
+		bConnected &= connect(weather, "poa_beam", gss, "ibh");
 		bConnected &= connect(weather, "tdry", gss, "tdb");
 		bConnected &= connect(weather, "twet", gss, "twb");
 		bConnected &= connect(weather, "wspd", gss, "vwind");
