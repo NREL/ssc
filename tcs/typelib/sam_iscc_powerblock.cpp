@@ -102,12 +102,17 @@ private:
 	double m_T_amb_high;
 	double m_P_amb_low; 
 	double m_P_amb_high;
+	double m_q_dot_rec_max;
 
 	// Better convergence
 	bool m_T_lowflag_ncall;
 	bool m_T_upflag_ncall;
 	double m_T_low_ncall;
 	double m_T_up_ncall;
+
+	bool m_defocus_on;
+	double m_defocus;
+
 
 public:
 	sam_iscc_powerblock( tcscontext *cst, tcstypeinfo *ti)
@@ -141,8 +146,12 @@ public:
 
 		m_T_lowflag_ncall = false;
 		m_T_upflag_ncall = false;
+		m_defocus_on = false;
 		m_T_low_ncall = std::numeric_limits<double>::quiet_NaN();
 		m_T_up_ncall = std::numeric_limits<double>::quiet_NaN();
+
+		m_q_dot_rec_max = std::numeric_limits<double>::quiet_NaN();
+		m_defocus = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_iscc_powerblock()
@@ -308,6 +317,9 @@ public:
 		{
 			m_W_dot_pc_base = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
 			value( O_W_DOT_PC_BASE, m_W_dot_pc_base );
+			m_q_dot_rec_max = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_heat_max );
+			m_defocus = 1.0;
+			m_defocus_on = false;
 		}
 
 		if( q_dot_rec == 0 )
@@ -325,13 +337,31 @@ public:
 
 			return 0;
 		}
-		else if( q_dot_rec > 200000.0 )
+		else if( q_dot_rec > m_q_dot_rec_max )
 		{
-			// Over capacity - what to do?!?
+			// Set defocus flag if over-capacity
+			m_defocus_on = true;
 			
-			// For now, just set an upper limit
-			q_dot_rec = min( q_dot_rec, 200000.0 );
 		}
+
+		if( m_defocus_on )
+		{
+			double diff_defocus = (q_dot_rec - m_q_dot_rec_max)/m_q_dot_rec_max;
+			if( diff_defocus > 0.005 )
+			{
+				m_defocus = m_q_dot_rec_max/q_dot_rec;
+
+				q_dot_rec = m_q_dot_rec_max;
+			}
+			else
+			{
+				m_defocus = m_q_dot_rec_max/q_dot_rec;
+
+				q_dot_rec = m_q_dot_rec_max;
+			}
+			
+		}
+
 
 		// 2) Use regression curves to find steam state points in power cycle
 				// Either iterate on steam mass flow rate until q_dot_steam = q_dot_ms
