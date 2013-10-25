@@ -1570,7 +1570,7 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 
 		//TWN 6/14/11  if defous is < 1 { calculate defocus from previous call's q_abs and { come back to temperature loop.
 		if(defocus<1.) {
-			//dfcount = dfcount +1;	//cc--> Not sure why this counts.. the dfcount variable is always set to 0 when the simulation is called.. Ask Ty.
+			dfcount = dfcount +1;	//cc--> Not sure why this counts.. the dfcount variable is always set to 0 when the simulation is called.. Ask Ty.
 			goto post_convergence_flag; // goto 11;
 		}
 
