@@ -179,6 +179,7 @@
     <ClCompile Include="storage_hx.cpp" />
     <ClCompile Include="sumprod.cpp" />
     <ClCompile Include="thermocline_tes.cpp" />
+    <ClCompile Include="tou_translator.cpp" />
     <ClCompile Include="trnsys_weatherreader.cpp" />
     <ClCompile Include="typelib.cpp" />
     <ClCompile Include="weatherreader.cpp" />
