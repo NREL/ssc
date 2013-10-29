@@ -70,12 +70,13 @@ OBJECTS = \
 	lib_pvinv.o \
 	sscapi.o \
 	vtab_common.o \
-        cmod_tcsdirect_steam.o \
+	cmod_tcsdirect_steam.o \
 	cmod_tcsgeneric_solar.o \
 	cmod_tcslinear_fresnel.o \
 	cmod_tcsmolten_salt.o \
 	cmod_tcstrough_empirical.o \
 	cmod_tcstrough_physical.o \
+	cmod_tcsdish.o \
 	tckernel.o \
 	tcskernel.o
 

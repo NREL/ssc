@@ -73,6 +73,7 @@ OBJECTS = \
 	cmod_tcsmolten_salt.o \
 	cmod_tcstrough_empirical.o \
 	cmod_tcstrough_physical.o \
+	cmod_tcsdish.o \
 	tckernel.o \
 	tcskernel.o 
 
