@@ -15,6 +15,10 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                                       "",              "",            "Weather",        "*",                       "",                      "" },
 
+    // TOU
+    { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                                              "",             "",             "tou_translator", "*",                       "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                                          "",             "",             "tou_translator", "*",                       "",                      "" }, 
+
 	// Type 261 (solar field collector) parameters
     { SSC_INPUT,        SSC_NUMBER,      "tes_hours",         "Equivalent full-load thermal storage hours",                                          "hr",            "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_max_aux",         "Maximum heat rate of the auxiliary heater",                                           "MW",            "",            "solarfield",     "*",                       "",                      "" },
@@ -119,7 +123,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "SolarAz",           "Solar azimuth angle",                                                                 "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "SolarZen",          "Solar zenith angle",                                                                  "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_pb_out",          "Fluid temperature from the power block",                                              "C",             "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "TOUPeriod",         "Time of use period",                                                                  "none",          "",            "solarfield",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "TOUPeriod",         "Time of use period",                                                                  "none",          "",            "solarfield",     "*",                       "",                      "" },
 
 	// Type 234 (powerblock) parameters
     { SSC_INPUT,        SSC_NUMBER,      "P_ref",             "Reference output electric power at design condition",                                 "MW",            "",            "powerblock",     "*",                       "",                      "" },
