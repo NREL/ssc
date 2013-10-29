@@ -5,7 +5,7 @@
 
 #include "direct_steam_receivers.h"
 
-#include <waterprop/waterprop.h>
+#include "waterprop.h"
 
 enum {
 	P_fossil_mode,

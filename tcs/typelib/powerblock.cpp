@@ -4,7 +4,7 @@
 #include <math.h>
 
 #include "recore/lib_util.h"
-#include <waterprop/waterprop.h>
+#include "waterprop.h"
 #include "sam_csp_util.h"
 
 C_Indirect_PB::C_Indirect_PB()

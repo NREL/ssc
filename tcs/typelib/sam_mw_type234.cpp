@@ -1,6 +1,6 @@
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
-#include <waterprop/waterprop.h>
+#include "waterprop.h"
 #include "sam_csp_util.h"
 
 using namespace std;

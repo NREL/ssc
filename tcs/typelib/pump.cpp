@@ -26,7 +26,7 @@ tcsvarinfo pump_variables[] = {
 	{ TCS_INVALID, TCS_INVALID,  N_MAX,       0,            0, 0, 0, 0, 0 }
 };
 
-#include <waterprop/waterprop.h>
+#include "waterprop.h"
 
 class pump : public tcstypeinterface
 {

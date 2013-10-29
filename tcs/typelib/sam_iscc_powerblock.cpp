@@ -4,7 +4,7 @@
 #include "htf_props.h"
 #include "sam_csp_util.h"
 
-#include <waterprop/waterprop.h>
+#include "waterprop.h"
 
 using namespace std;
 
