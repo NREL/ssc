@@ -8,8 +8,9 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                     "",             "",            "Weather",        "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                  "",             "",            "Weather",        "*",                       "",                      "" }, 
 
-    // general
-    { SSC_INPUT,        SSC_NUMBER,      "TOUPeriod",         "Time of Use Period",                                             "",             "",            "other",          "*",                       "INTEGER",               "" }, 
+    // TOU
+    { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                         "",             "",            "tou_translator", "*",                       "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                     "",             "",            "tou_translator", "*",                       "",                      "" }, 
 
     // solar field
     { SSC_INPUT,        SSC_NUMBER,      "Site_Lat",          "Latitude of Solar Plant Site",                                   "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
@@ -235,12 +236,14 @@ public:
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
 		else weather = add_unit("weatherreader", "TCS weather reader");
+		// Add tou translator
+		int	tou = add_unit( "tou_translator", "Time of Use Translator" );
 		//Add Empirical Solar Field Model
-		int	u1 = add_unit( "sam_trough_model_type805", "Test Trough" );
+		int	type_805 = add_unit( "sam_trough_model_type805", "Test Trough" );
 		//Add Empirical Storage Model
-		int u2 = add_unit( "sam_trough_storage_type806", "Test Storage" );
+		int type_806 = add_unit( "sam_trough_storage_type806", "Test Storage" );
 		//Add Empirical Power Block Model
-		int u3 = add_unit( "sam_trough_plant_type807", "Test Plant" );
+		int type_807 = add_unit( "sam_trough_plant_type807", "Test Plant" );
 
 		if(debug_mode)
 		{
@@ -276,165 +279,171 @@ public:
 			set_unit_value_ssc_double( weather, "azimuth" );       //, 0 );
 		}
 
+		set_unit_value_ssc_matrix(tou, "weekday_schedule" );
+		set_unit_value_ssc_matrix(tou, "weekend_schedule" );
+
+
 		//Set Solar Field Parameters
-		set_unit_value_ssc_double( u1, "Site_Lat" );           //, 32.116667 );
-		set_unit_value_ssc_double( u1, "Site_LongD" );         //, -110.933333 );
-		set_unit_value_ssc_double( u1, "SHIFT" );              //, -7 );
+		set_unit_value_ssc_double( type_805, "Site_Lat" );           //, 32.116667 );
+		set_unit_value_ssc_double( type_805, "Site_LongD" );         //, -110.933333 );
+		set_unit_value_ssc_double( type_805, "SHIFT" );              //, -7 );
 		
-		set_unit_value_ssc_double( u1, "Solar_Field_Area" );   //, 877580 ); csp.tr.solf.dp.fieldarea
-		set_unit_value_ssc_double( u1, "Solar_Field_Mult" );   //, 2 ); csp.tr.solf.dp.solarmultiple
-		set_unit_value_ssc_double( u1, "HTFFluid" );           //, 21 ); TranslateHTFType( IVal("csp.tr.solf.fieldhtftype")
-		set_unit_value_ssc_double( u1, "NumHCETypes" );        //, 4 );
-        set_unit_value_ssc_array( u1, "HCEtype" );      //                      {1,1,1,1},
-        set_unit_value_ssc_array( u1, "HCEFrac" );      //                      {0.985,0.01,0.005,0},
-        set_unit_value_ssc_array( u1, "HCEdust" );      //, t[2], 4 );       // {0.98,0.98,0.98,0.98},
-        set_unit_value_ssc_array( u1, "HCEBelShad" );   //, t[3], 4  );      // {0.963,0.963,0.963,0.963},
-        set_unit_value_ssc_array( u1, "HCEEnvTrans" );  //, t[4], 4  );      // {0.963,0.963,1,0.963},
-        set_unit_value_ssc_array( u1, "HCEabs" );       //, t[5], 4  );      // {0.96,0.96,0.8,0.96},  
-        set_unit_value_ssc_array( u1, "HCEmisc" );      //, t[6], 4  );      // {1,1,1,1},   
-        set_unit_value_ssc_array( u1, "PerfFac" );      //, t[7], 4 );       // {1,1,1,1},                
-        set_unit_value_ssc_array( u1, "RefMirrAper" );  //, t[8], 4  );      // {5,5,5,5},   
-        set_unit_value_ssc_array( u1, "HCE_A0" );       //, t[9], 4  );      // {4.05,      50.8,      -9.95,     11.8},  
-        set_unit_value_ssc_array( u1, "HCE_A1" );       //, t[10], 4  );     // {0.247,     0.904,      0.465,    1.35},   
-        set_unit_value_ssc_array( u1, "HCE_A2" );       //, t[11], 4 );      // {-0.00146,  0.000579,  -0.000854, 0.0075} ,  
-        set_unit_value_ssc_array( u1, "HCE_A3" );       //, t[12], 4 );      // {5.65e-6,   1.13e-5,    1.85e-5,  4.07e-6},  
-        set_unit_value_ssc_array( u1, "HCE_A4" );       //, t[13], 4 );      // {7.62e-8,   1.73e-7,    6.89e-7,  5.85e-8} ,  
-        set_unit_value_ssc_array( u1, "HCE_A5" );       //, t[14], 4 );      // {-1.7,     -43.2,       24.7,     4.48},  
-        set_unit_value_ssc_array( u1, "HCE_A6" );       //, t[15], 4 );      // {0.0125,    0.524,      3.37,     0.285}      
-		set_unit_value_ssc_double( u1, "LU_Fl" );       //,             21.0 );   // necessary?      
-		set_unit_value_ssc_double( u1, "LuFlEr" );       //,            0.0 );    // necessary?
-		set_unit_value_ssc_double( u1, "i_SfTi" );       //,           -999 );           
-		set_unit_value_ssc_double( u1, "Stow_Angle" );       //, 	    170);     // csp.tr.solf.stowangle
-		set_unit_value_ssc_double( u1, "DepAngle" );       //, 	        10);      // csp.tr.solf.deployangle
-		set_unit_value_ssc_double( u1, "IamF0" );       //, 	        1);       // csp.tr.sca.iamc1
-		set_unit_value_ssc_double( u1, "IamF1" );       //, 	        0.0506);  // csp.tr.sca.iamc2
-		set_unit_value_ssc_double( u1, "IamF2" );       //, 	        -0.1763); // csp.tr.sca.iamc3
-		set_unit_value_ssc_double( u1, "Ave_Focal_Length" );       //,  1.8);     // csp.tr.sca.avg_focal_length
-		set_unit_value_ssc_double( u1, "Distance_SCA" );       //, 	    1);       // csp.tr.solf.distscas
-		set_unit_value_ssc_double( u1, "Row_Distance" );       //, 	    15);      // csp.tr.solf.distrows
-		set_unit_value_ssc_double( u1, "SCA_aper" );       //, 	        5);       // csp.tr.sca.aperture
-		set_unit_value_ssc_double( u1, "SfAvail" );       //, 	        0.99);    // csp.tr.sca.availability 
-		set_unit_value_ssc_double( u1, "ColTilt" );       //, 	        0.0);     // csp.tr.solf.tilt
-		set_unit_value_ssc_double( u1, "ColAz" );       //, 	        0.0);     // csp.tr.solf.azimuth
-		set_unit_value_ssc_double( u1, "NumScas" );       //, 	        4);       // csp.tr.solf.nscasperloop
-		set_unit_value_ssc_double( u1, "ScaLen" );       //, 	        100);     // csp.tr.sca.length
-		set_unit_value_ssc_double( u1, "MinHtfTemp" );       //, 	    50);      // csp.tr.solf.htfmintemp
-		set_unit_value_ssc_double( u1, "HtfGalArea" );       //, 	    0.614);   // csp.tr.solf.htfgallonsperarea
-		set_unit_value_ssc_double( u1, "SfPar" );       //, 	        0.233436);// csp.tr.par.sf.total
-		set_unit_value_ssc_double( u1, "SfParPF" );       //, 	        1);       // csp.tr.par.sf.partload
-		set_unit_value_ssc_double( u1, "ChtfPar" );       //, 	        9.23214); // csp.tr.par.htfpump.total
-		set_unit_value_ssc_double( u1, "ChtfParPF" );       //, 	    1);       // csp.tr.par.htfpump.partload
-		set_unit_value_ssc_double( u1, "CHTFParF0" );       //, 	    -0.036);  // csp.tr.par.htfpump.f0
-		set_unit_value_ssc_double( u1, "CHTFParF1" );       //, 	    0.242);   // csp.tr.par.htfpump.f1
-		set_unit_value_ssc_double( u1, "CHTFParF2" );       //, 	    0.794);   // csp.tr.par.htfpump.f2
-		set_unit_value_ssc_double( u1, "AntiFrPar" );       //, 	    0.923214);// csp.tr.par.antifreeze.total
-		set_unit_value_ssc_double( u1, "TurbOutG" );       //, 	       111);      // csp.tr.pwrb.design_gross_output
-		set_unit_value_ssc_double( u1, "TurbEffG" );       //, 	       0.3774);   // csp.tr.pwrb.effdesign
-		set_unit_value_ssc_double( u1, "SfInTempD" );       //, 	   293);      // csp.tr.solf.htfinlettemp
-		set_unit_value_ssc_double( u1, "SfOutTempD" );       //, 	   391);      // csp.tr.solf.htfoutlettemp
-		set_unit_value_ssc_double( u1, "ColType" );       //, 	       1);
-		set_unit_value_ssc_double( u1, "TrkTwstErr" );       //, 	   0.994);     // csp.tr.sca.track_twist_error
-		set_unit_value_ssc_double( u1, "GeoAcc" );       //, 	       0.98);      // csp.tr.sca.geometric_accuracy
-		set_unit_value_ssc_double( u1, "MirRef" );       //, 	       0.935);     // csp.tr.sca.reflectivity
-		set_unit_value_ssc_double( u1, "MirCln" );       //, 	       0.95);      // csp.tr.sca.cleanliness
-		set_unit_value_ssc_double( u1, "ConcFac" );       //, 	       1);         // csp.tr.sca.concentrator_factor
-		set_unit_value_ssc_double( u1, "SfPipeHl300" );       //, 	   10);        // csp.tr.solf.pipingheatlossatdesign
-		set_unit_value_ssc_double( u1, "SfPipeHl1" );       //, 	   0.001693);  // csp.tr.solf.pipingheatlosscoeff1
-		set_unit_value_ssc_double( u1, "SfPipeHl2" );       //, 	   -1.683e-5); // csp.tr.solf.pipingheatlosscoeff2
-		set_unit_value_ssc_double( u1, "SfPipeHl3" );       //, 	   6.78e-8);   // csp.tr.solf.pipingheatlosscoeff3
-		set_unit_value_ssc_double( u1, "SFTempInit" );       //,       100);	   // csp.tr.solf.htfinittemp
+		set_unit_value_ssc_double( type_805, "Solar_Field_Area" );   //, 877580 ); csp.tr.solf.dp.fieldarea
+		set_unit_value_ssc_double( type_805, "Solar_Field_Mult" );   //, 2 ); csp.tr.solf.dp.solarmultiple
+		set_unit_value_ssc_double( type_805, "HTFFluid" );           //, 21 ); TranslateHTFType( IVal("csp.tr.solf.fieldhtftype")
+		set_unit_value_ssc_double( type_805, "NumHCETypes" );        //, 4 );
+        set_unit_value_ssc_array( type_805, "HCEtype" );      //                      {1,1,1,1},
+        set_unit_value_ssc_array( type_805, "HCEFrac" );      //                      {0.985,0.01,0.005,0},
+        set_unit_value_ssc_array( type_805, "HCEdust" );      //, t[2], 4 );       // {0.98,0.98,0.98,0.98},
+        set_unit_value_ssc_array( type_805, "HCEBelShad" );   //, t[3], 4  );      // {0.963,0.963,0.963,0.963},
+        set_unit_value_ssc_array( type_805, "HCEEnvTrans" );  //, t[4], 4  );      // {0.963,0.963,1,0.963},
+        set_unit_value_ssc_array( type_805, "HCEabs" );       //, t[5], 4  );      // {0.96,0.96,0.8,0.96},  
+        set_unit_value_ssc_array( type_805, "HCEmisc" );      //, t[6], 4  );      // {1,1,1,1},   
+        set_unit_value_ssc_array( type_805, "PerfFac" );      //, t[7], 4 );       // {1,1,1,1},                
+        set_unit_value_ssc_array( type_805, "RefMirrAper" );  //, t[8], 4  );      // {5,5,5,5},   
+        set_unit_value_ssc_array( type_805, "HCE_A0" );       //, t[9], 4  );      // {4.05,      50.8,      -9.95,     11.8},  
+        set_unit_value_ssc_array( type_805, "HCE_A1" );       //, t[10], 4  );     // {0.247,     0.904,      0.465,    1.35},   
+        set_unit_value_ssc_array( type_805, "HCE_A2" );       //, t[11], 4 );      // {-0.00146,  0.000579,  -0.000854, 0.0075} ,  
+        set_unit_value_ssc_array( type_805, "HCE_A3" );       //, t[12], 4 );      // {5.65e-6,   1.13e-5,    1.85e-5,  4.07e-6},  
+        set_unit_value_ssc_array( type_805, "HCE_A4" );       //, t[13], 4 );      // {7.62e-8,   1.73e-7,    6.89e-7,  5.85e-8} ,  
+        set_unit_value_ssc_array( type_805, "HCE_A5" );       //, t[14], 4 );      // {-1.7,     -43.2,       24.7,     4.48},  
+        set_unit_value_ssc_array( type_805, "HCE_A6" );       //, t[15], 4 );      // {0.0125,    0.524,      3.37,     0.285}      
+		set_unit_value_ssc_double( type_805, "LU_Fl" );       //,             21.0 );   // necessary?      
+		set_unit_value_ssc_double( type_805, "LuFlEr" );       //,            0.0 );    // necessary?
+		set_unit_value_ssc_double( type_805, "i_SfTi" );       //,           -999 );           
+		set_unit_value_ssc_double( type_805, "Stow_Angle" );       //, 	    170);     // csp.tr.solf.stowangle
+		set_unit_value_ssc_double( type_805, "DepAngle" );       //, 	        10);      // csp.tr.solf.deployangle
+		set_unit_value_ssc_double( type_805, "IamF0" );       //, 	        1);       // csp.tr.sca.iamc1
+		set_unit_value_ssc_double( type_805, "IamF1" );       //, 	        0.0506);  // csp.tr.sca.iamc2
+		set_unit_value_ssc_double( type_805, "IamF2" );       //, 	        -0.1763); // csp.tr.sca.iamc3
+		set_unit_value_ssc_double( type_805, "Ave_Focal_Length" );       //,  1.8);     // csp.tr.sca.avg_focal_length
+		set_unit_value_ssc_double( type_805, "Distance_SCA" );       //, 	    1);       // csp.tr.solf.distscas
+		set_unit_value_ssc_double( type_805, "Row_Distance" );       //, 	    15);      // csp.tr.solf.distrows
+		set_unit_value_ssc_double( type_805, "SCA_aper" );       //, 	        5);       // csp.tr.sca.aperture
+		set_unit_value_ssc_double( type_805, "SfAvail" );       //, 	        0.99);    // csp.tr.sca.availability 
+		set_unit_value_ssc_double( type_805, "ColTilt" );       //, 	        0.0);     // csp.tr.solf.tilt
+		set_unit_value_ssc_double( type_805, "ColAz" );       //, 	        0.0);     // csp.tr.solf.azimuth
+		set_unit_value_ssc_double( type_805, "NumScas" );       //, 	        4);       // csp.tr.solf.nscasperloop
+		set_unit_value_ssc_double( type_805, "ScaLen" );       //, 	        100);     // csp.tr.sca.length
+		set_unit_value_ssc_double( type_805, "MinHtfTemp" );       //, 	    50);      // csp.tr.solf.htfmintemp
+		set_unit_value_ssc_double( type_805, "HtfGalArea" );       //, 	    0.614);   // csp.tr.solf.htfgallonsperarea
+		set_unit_value_ssc_double( type_805, "SfPar" );       //, 	        0.233436);// csp.tr.par.sf.total
+		set_unit_value_ssc_double( type_805, "SfParPF" );       //, 	        1);       // csp.tr.par.sf.partload
+		set_unit_value_ssc_double( type_805, "ChtfPar" );       //, 	        9.23214); // csp.tr.par.htfpump.total
+		set_unit_value_ssc_double( type_805, "ChtfParPF" );       //, 	    1);       // csp.tr.par.htfpump.partload
+		set_unit_value_ssc_double( type_805, "CHTFParF0" );       //, 	    -0.036);  // csp.tr.par.htfpump.f0
+		set_unit_value_ssc_double( type_805, "CHTFParF1" );       //, 	    0.242);   // csp.tr.par.htfpump.f1
+		set_unit_value_ssc_double( type_805, "CHTFParF2" );       //, 	    0.794);   // csp.tr.par.htfpump.f2
+		set_unit_value_ssc_double( type_805, "AntiFrPar" );       //, 	    0.923214);// csp.tr.par.antifreeze.total
+		set_unit_value_ssc_double( type_805, "TurbOutG" );       //, 	       111);      // csp.tr.pwrb.design_gross_output
+		set_unit_value_ssc_double( type_805, "TurbEffG" );       //, 	       0.3774);   // csp.tr.pwrb.effdesign
+		set_unit_value_ssc_double( type_805, "SfInTempD" );       //, 	   293);      // csp.tr.solf.htfinlettemp
+		set_unit_value_ssc_double( type_805, "SfOutTempD" );       //, 	   391);      // csp.tr.solf.htfoutlettemp
+		set_unit_value_ssc_double( type_805, "ColType" );       //, 	       1);
+		set_unit_value_ssc_double( type_805, "TrkTwstErr" );       //, 	   0.994);     // csp.tr.sca.track_twist_error
+		set_unit_value_ssc_double( type_805, "GeoAcc" );       //, 	       0.98);      // csp.tr.sca.geometric_accuracy
+		set_unit_value_ssc_double( type_805, "MirRef" );       //, 	       0.935);     // csp.tr.sca.reflectivity
+		set_unit_value_ssc_double( type_805, "MirCln" );       //, 	       0.95);      // csp.tr.sca.cleanliness
+		set_unit_value_ssc_double( type_805, "ConcFac" );       //, 	       1);         // csp.tr.sca.concentrator_factor
+		set_unit_value_ssc_double( type_805, "SfPipeHl300" );       //, 	   10);        // csp.tr.solf.pipingheatlossatdesign
+		set_unit_value_ssc_double( type_805, "SfPipeHl1" );       //, 	   0.001693);  // csp.tr.solf.pipingheatlosscoeff1
+		set_unit_value_ssc_double( type_805, "SfPipeHl2" );       //, 	   -1.683e-5); // csp.tr.solf.pipingheatlosscoeff2
+		set_unit_value_ssc_double( type_805, "SfPipeHl3" );       //, 	   6.78e-8);   // csp.tr.solf.pipingheatlosscoeff3
+		set_unit_value_ssc_double( type_805, "SFTempInit" );       //,       100);	   // csp.tr.solf.htfinittemp
 
 		//Connect Solar Field Inputs
-		bool bConnected = connect( weather, "solazi", u1, "SolarAz", 0.1, -1 );                
-		bConnected &= connect( weather, "beam", u1, "Insol_Beam_Normal", 0.1, -1 );
-		bConnected &= connect( weather, "tdry", u1, "AmbientTemperature", 0.1, -1 );
-		bConnected &= connect( weather, "wspd", u1, "WndSpd", 0.1, -1 );
+		bool bConnected = connect( weather, "solazi", type_805, "SolarAz", 0.1, -1 );                
+		bConnected &= connect( weather, "beam", type_805, "Insol_Beam_Normal", 0.1, -1 );
+		bConnected &= connect( weather, "tdry", type_805, "AmbientTemperature", 0.1, -1 );
+		bConnected &= connect( weather, "wspd", type_805, "WndSpd", 0.1, -1 );
 	
 		//Set Storage Parameters
-		set_unit_value_ssc_double(u2, "TSHOURS" );       //,6);          // csp.tr.tes.full_load_hours
-		set_unit_value_ssc_double(u2, "NUMTOU" );       //, 9);
-		set_unit_value_ssc_double(u2, "E2TPLF0" );       //, 0.03737);   // csp.tr.pwrb.tpl_tff0
-		set_unit_value_ssc_double(u2, "E2TPLF1" );       //, 0.98823);   // csp.tr.pwrb.tpl_tff1
-		set_unit_value_ssc_double(u2, "E2TPLF2" );       //, -0.064991); // csp.tr.pwrb.tpl_tff2
-		set_unit_value_ssc_double(u2, "E2TPLF3" );       //, 0.039388);  // csp.tr.pwrb.tpl_tff3
-		set_unit_value_ssc_double(u2, "E2TPLF4" );       //, 0.0);       // csp.tr.pwrb.tpl_tff4
+		set_unit_value_ssc_double(type_806, "TSHOURS" );       //,6);          // csp.tr.tes.full_load_hours
+		set_unit_value_ssc_double(type_806, "NUMTOU" );       //, 9);
+		set_unit_value_ssc_double(type_806, "E2TPLF0" );       //, 0.03737);   // csp.tr.pwrb.tpl_tff0
+		set_unit_value_ssc_double(type_806, "E2TPLF1" );       //, 0.98823);   // csp.tr.pwrb.tpl_tff1
+		set_unit_value_ssc_double(type_806, "E2TPLF2" );       //, -0.064991); // csp.tr.pwrb.tpl_tff2
+		set_unit_value_ssc_double(type_806, "E2TPLF3" );       //, 0.039388);  // csp.tr.pwrb.tpl_tff3
+		set_unit_value_ssc_double(type_806, "E2TPLF4" );       //, 0.0);       // csp.tr.pwrb.tpl_tff4
 
 		//double  t2[9][3] =  {{0.1,0.1,1.05},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1}};
-		//set_unit_value(u2, "TSLogic", &t2[0][0], 9, 3);  
-		set_unit_value_ssc_matrix(u2, "TSLogic" ); // csp.tr.tes.dispX.solar, csp.tr.tes.dispX.nosolar, csp.tr.tes.dispX.turbout,  where X = 1 to 9
+		//set_unit_value(type_806, "TSLogic", &t2[0][0], 9, 3);  
+		set_unit_value_ssc_matrix(type_806, "TSLogic" ); // csp.tr.tes.dispX.solar, csp.tr.tes.dispX.nosolar, csp.tr.tes.dispX.turbout,  where X = 1 to 9
 
-		set_unit_value_ssc_double(u2, "TOUPeriod" );       //, 1 );    
-		set_unit_value_ssc_double(u2, "TnkHL" );        //, 	 0.97);            // csp.tr.tes.tank_heatloss
-		set_unit_value_ssc_double(u2, "PTSmax" );       //,  294.118);	       // csp.tr.tes.max_to_power
-		set_unit_value_ssc_double(u2, "PFSmax" );       //,  297.999);	       // csp.tr.tes.max_from_power
-		set_unit_value_ssc_double(u2, "PTTMAX" );       //,  1.05);            // csp.tr.pwrb.maxoutput
-		set_unit_value_ssc_double(u2, "PTTMIN" );       //,  0.25);	           // csp.tr.pwrb.minoutput
-		set_unit_value_ssc_double(u2, "TurSUE" );       //,  0.2);	           // csp.tr.pwrb.startup_energy
-		set_unit_value_ssc_double(u2, "HhtfPar" );       //, 	 2.22);        // csp.tr.par.tes.total
-		set_unit_value_ssc_double(u2, "HhtfParPF" );       //,   1);           // csp.tr.par.tes.partload
-		set_unit_value_ssc_double(u2, "HhtfParF0" );       //,   -0.036);      // csp.tr.par.tes.f0
-		set_unit_value_ssc_double(u2, "HhtfParF1" );       //,    0.242);      // csp.tr.par.tes.f1
-		set_unit_value_ssc_double(u2, "HhtfParF2" );       //,    0.794);      // csp.tr.par.tes.f2
+		//set_unit_value_ssc_double(type_806, "TOUPeriod", 1 );       //, 1 );    
+		set_unit_value_ssc_double(type_806, "TnkHL" );        //, 	 0.97);            // csp.tr.tes.tank_heatloss
+		set_unit_value_ssc_double(type_806, "PTSmax" );       //,  294.118);	       // csp.tr.tes.max_to_power
+		set_unit_value_ssc_double(type_806, "PFSmax" );       //,  297.999);	       // csp.tr.tes.max_from_power
+		set_unit_value_ssc_double(type_806, "PTTMAX" );       //,  1.05);            // csp.tr.pwrb.maxoutput
+		set_unit_value_ssc_double(type_806, "PTTMIN" );       //,  0.25);	           // csp.tr.pwrb.minoutput
+		set_unit_value_ssc_double(type_806, "TurSUE" );       //,  0.2);	           // csp.tr.pwrb.startup_energy
+		set_unit_value_ssc_double(type_806, "HhtfPar" );       //, 	 2.22);        // csp.tr.par.tes.total
+		set_unit_value_ssc_double(type_806, "HhtfParPF" );       //,   1);           // csp.tr.par.tes.partload
+		set_unit_value_ssc_double(type_806, "HhtfParF0" );       //,   -0.036);      // csp.tr.par.tes.f0
+		set_unit_value_ssc_double(type_806, "HhtfParF1" );       //,    0.242);      // csp.tr.par.tes.f1
+		set_unit_value_ssc_double(type_806, "HhtfParF2" );       //,    0.794);      // csp.tr.par.tes.f2
 
 		//Connect Storage Inputs
-		bConnected &= connect( u1, "Qsf", u2, "Qsf", 0.1, -1);
-		bConnected &= connect( u1, "Qdesign", u2, "Qdesign", 0.1, -1);
-		bConnected &= connect( u1, "QhtfFreezeProt", u2, "QhtfFreezeProt", 0.1, -1);  	
+		bConnected &= connect( type_805, "Qsf", type_806, "Qsf", 0.1, -1);
+		bConnected &= connect( type_805, "Qdesign", type_806, "Qdesign", 0.1, -1);
+		bConnected &= connect( type_805, "QhtfFreezeProt", type_806, "QhtfFreezeProt", 0.1, -1);  	
+		bConnected &= connect( tou, "tou_value", type_806, "TOUPeriod");  	
 	
 		//Set Powerblock Parameters
-		set_unit_value_ssc_double(u3,"T2EPLF0" );       //, -0.037726);	    // csp.tr.pwrb.tpl_tef0
-		set_unit_value_ssc_double(u3,"T2EPLF1" );       //, 1.0062);	    // csp.tr.pwrb.tpl_tef1
-		set_unit_value_ssc_double(u3,"T2EPLF2" );       //, 0.076316);      // csp.tr.pwrb.tpl_tef2
-		set_unit_value_ssc_double(u3,"T2EPLF3" );       //, -0.044775);	    // csp.tr.pwrb.tpl_tef3
-		set_unit_value_ssc_double(u3,"T2EPLF4" );       //, 0.0);           // csp.tr.pwrb.tpl_tef4
-		set_unit_value_ssc_double(u3,"E2TPLF0" );       //, 0.03737);	    // csp.tr.pwrb.tpl_tff0
-		set_unit_value_ssc_double(u3,"E2TPLF1" );       //, 0.98823);       // csp.tr.pwrb.tpl_tff1
-		set_unit_value_ssc_double(u3,"E2TPLF2" );       //, -0.064991);     // csp.tr.pwrb.tpl_tff2
-		set_unit_value_ssc_double(u3,"E2TPLF3" );       //, 0.039388);      // csp.tr.pwrb.tpl_tff3
-		set_unit_value_ssc_double(u3,"E2TPLF4" );       //, 0.0);	        // csp.tr.pwrb.tpl_tff4
-		set_unit_value_ssc_double(u3,"TempCorrF" );     //, 1);     // csp.tr.pwrb.temp_corr_mode + 1
-		set_unit_value_ssc_double(u3,"TempCorr0" );       //, 1);           // csp.tr.pwrb.ctcf0
-		set_unit_value_ssc_double(u3,"TempCorr1" );       //, 0.0);         // csp.tr.pwrb.ctcf1
-		set_unit_value_ssc_double(u3,"TempCorr2" );       //, 0.0);         // csp.tr.pwrb.ctcf2
-		set_unit_value_ssc_double(u3,"TempCorr3" );       //, 0.0);         // csp.tr.pwrb.ctcf3
-		set_unit_value_ssc_double(u3,"TempCorr4" );       //, 0.0);         // csp.tr.pwrb.ctcf4
-		set_unit_value_ssc_double(u3,"TurTesEffAdj" );       //, 0.985);    // csp.tr.tes.adj_eff
-		set_unit_value_ssc_double(u3,"TurTesOutAdj" );       //, 0.998);    // csp.tr.tes.adj_output
-		set_unit_value_ssc_double(u3,"MinGrOut" );       //, 0.25);         // csp.tr.pwrb.minoutput
-		set_unit_value_ssc_double(u3,"MaxGrOut" );       //, 1.05);         // csp.tr.pwrb.maxoutput
+		set_unit_value_ssc_double(type_807,"T2EPLF0" );       //, -0.037726);	    // csp.tr.pwrb.tpl_tef0
+		set_unit_value_ssc_double(type_807,"T2EPLF1" );       //, 1.0062);	    // csp.tr.pwrb.tpl_tef1
+		set_unit_value_ssc_double(type_807,"T2EPLF2" );       //, 0.076316);      // csp.tr.pwrb.tpl_tef2
+		set_unit_value_ssc_double(type_807,"T2EPLF3" );       //, -0.044775);	    // csp.tr.pwrb.tpl_tef3
+		set_unit_value_ssc_double(type_807,"T2EPLF4" );       //, 0.0);           // csp.tr.pwrb.tpl_tef4
+		set_unit_value_ssc_double(type_807,"E2TPLF0" );       //, 0.03737);	    // csp.tr.pwrb.tpl_tff0
+		set_unit_value_ssc_double(type_807,"E2TPLF1" );       //, 0.98823);       // csp.tr.pwrb.tpl_tff1
+		set_unit_value_ssc_double(type_807,"E2TPLF2" );       //, -0.064991);     // csp.tr.pwrb.tpl_tff2
+		set_unit_value_ssc_double(type_807,"E2TPLF3" );       //, 0.039388);      // csp.tr.pwrb.tpl_tff3
+		set_unit_value_ssc_double(type_807,"E2TPLF4" );       //, 0.0);	        // csp.tr.pwrb.tpl_tff4
+		set_unit_value_ssc_double(type_807,"TempCorrF" );     //, 1);     // csp.tr.pwrb.temp_corr_mode + 1
+		set_unit_value_ssc_double(type_807,"TempCorr0" );       //, 1);           // csp.tr.pwrb.ctcf0
+		set_unit_value_ssc_double(type_807,"TempCorr1" );       //, 0.0);         // csp.tr.pwrb.ctcf1
+		set_unit_value_ssc_double(type_807,"TempCorr2" );       //, 0.0);         // csp.tr.pwrb.ctcf2
+		set_unit_value_ssc_double(type_807,"TempCorr3" );       //, 0.0);         // csp.tr.pwrb.ctcf3
+		set_unit_value_ssc_double(type_807,"TempCorr4" );       //, 0.0);         // csp.tr.pwrb.ctcf4
+		set_unit_value_ssc_double(type_807,"TurTesEffAdj" );       //, 0.985);    // csp.tr.tes.adj_eff
+		set_unit_value_ssc_double(type_807,"TurTesOutAdj" );       //, 0.998);    // csp.tr.tes.adj_output
+		set_unit_value_ssc_double(type_807,"MinGrOut" );       //, 0.25);         // csp.tr.pwrb.minoutput
+		set_unit_value_ssc_double(type_807,"MaxGrOut" );       //, 1.05);         // csp.tr.pwrb.maxoutput
 
-		set_unit_value_ssc_double(u3,"NUMTOU" );       //, 9);              // csp.tr.tes.dispX.fossil, where X = 1 to 9
+		set_unit_value_ssc_double(type_807,"NUMTOU" );       //, 9);              // csp.tr.tes.dispX.fossil, where X = 1 to 9
 		//double t4[9] = {0,0,0,0,0,0,0,0,0};
-		set_unit_value_ssc_array(u3, "FossilFill" ); //, t4, 9 );
-		set_unit_value_ssc_double(u3,"PbFixPar" );       //, 0.6105);       // csp.tr.par.fixedblock.total
-		set_unit_value_ssc_double(u3,"BOPPar" );       //, 	2.73837);       // csp.tr.par.bop.total
-		set_unit_value_ssc_double(u3,"BOPParPF" );       //, 1);            // csp.tr.par.bop.partload
-		set_unit_value_ssc_double(u3,"BOPParF0" );       //, 0.483);        // csp.tr.par.bop.f0
-		set_unit_value_ssc_double(u3,"BOPParF1" );       //, 0.517);        // csp.tr.par.bop.f1
-		set_unit_value_ssc_double(u3,"BOPParF2" );       //, 0.0);          // csp.tr.par.bop.f2
-		set_unit_value_ssc_double(u3,"CtPar" );       //,  1.892);	        // csp.tr.par.ct0.total
-		set_unit_value_ssc_double(u3,"CtParPF" );       //, 1); 	        // csp.tr.par.ct0.partload
-		set_unit_value_ssc_double(u3,"CtParF0" );       //, -0.036);	    // csp.tr.par.ct0.f0
-		set_unit_value_ssc_double(u3,"CtParF1" );       //, 0.242);	        // csp.tr.par.ct0.f1
-		set_unit_value_ssc_double(u3,"CtParF2" );       //, 0.794);	        // csp.tr.par.ct0.f2
-		set_unit_value_ssc_double(u3,"HtrPar" );       //, 2.52303);	    // csp.tr.par.hb.total
-		set_unit_value_ssc_double(u3,"HtrParPF" );       //, 1);            // csp.tr.par.hb.partload
-		set_unit_value_ssc_double(u3,"HtrParF0" );       //, 0.483);        // csp.tr.par.hb.f0
-		set_unit_value_ssc_double(u3,"HtrParF1" );       //, 0.517);        // csp.tr.par.hb.f1
-		set_unit_value_ssc_double(u3,"HtrParF2" );       //, 0.0);          // csp.tr.par.hb.f2
+		set_unit_value_ssc_array(type_807, "FossilFill" ); //, t4, 9 );
+		set_unit_value_ssc_double(type_807,"PbFixPar" );       //, 0.6105);       // csp.tr.par.fixedblock.total
+		set_unit_value_ssc_double(type_807,"BOPPar" );       //, 	2.73837);       // csp.tr.par.bop.total
+		set_unit_value_ssc_double(type_807,"BOPParPF" );       //, 1);            // csp.tr.par.bop.partload
+		set_unit_value_ssc_double(type_807,"BOPParF0" );       //, 0.483);        // csp.tr.par.bop.f0
+		set_unit_value_ssc_double(type_807,"BOPParF1" );       //, 0.517);        // csp.tr.par.bop.f1
+		set_unit_value_ssc_double(type_807,"BOPParF2" );       //, 0.0);          // csp.tr.par.bop.f2
+		set_unit_value_ssc_double(type_807,"CtPar" );       //,  1.892);	        // csp.tr.par.ct0.total
+		set_unit_value_ssc_double(type_807,"CtParPF" );       //, 1); 	        // csp.tr.par.ct0.partload
+		set_unit_value_ssc_double(type_807,"CtParF0" );       //, -0.036);	    // csp.tr.par.ct0.f0
+		set_unit_value_ssc_double(type_807,"CtParF1" );       //, 0.242);	        // csp.tr.par.ct0.f1
+		set_unit_value_ssc_double(type_807,"CtParF2" );       //, 0.794);	        // csp.tr.par.ct0.f2
+		set_unit_value_ssc_double(type_807,"HtrPar" );       //, 2.52303);	    // csp.tr.par.hb.total
+		set_unit_value_ssc_double(type_807,"HtrParPF" );       //, 1);            // csp.tr.par.hb.partload
+		set_unit_value_ssc_double(type_807,"HtrParF0" );       //, 0.483);        // csp.tr.par.hb.f0
+		set_unit_value_ssc_double(type_807,"HtrParF1" );       //, 0.517);        // csp.tr.par.hb.f1
+		set_unit_value_ssc_double(type_807,"HtrParF2" );       //, 0.0);          // csp.tr.par.hb.f2
 	
-		set_unit_value_ssc_double(u3,"LHVBoilEff" );       //, 0.9);       // csp.tr.pwrb.boiler_lhv_eff
-		set_unit_value_ssc_double(u3,"TOUPeriod" );       //, 1 );// uniform dispatch
-		set_unit_value_ssc_double(u3,"CtOpF" );       //, 1);              // csp.tr.par.operation_mode
+		set_unit_value_ssc_double(type_807,"LHVBoilEff" );       //, 0.9);       // csp.tr.pwrb.boiler_lhv_eff
+		//set_unit_value_ssc_double(type_807,"TOUPeriod", 1 );       //, 1 );// uniform dispatch
+		set_unit_value_ssc_double(type_807,"CtOpF" );       //, 1);              // csp.tr.par.operation_mode
 
-		bConnected &= connect(u1, "Qdesign", u3, "Qdesign", 0.1, -1);
-		bConnected &= connect(u1, "Edesign", u3,"Edesign", 0.1, -1);
-		bConnected &= connect(u2,"Qtpb", u3,"Qtpb", 0.1,-1);
-		bConnected &= connect(u2,"Qfts",u3,"Qfts", 0.1,-1);	   
-		bConnected &= connect(weather, "twet",u3,"Twetbulb", 0.1, -1 );    
-		bConnected &= connect( weather, "tdry", u3,"Tdrybulb", 0.1, -1 );		
-		bConnected &= connect(u1, "SFTotPar", u3,"SFTotPar", 0.1, -1 );  
-		bConnected &= connect(u2, "EparHhtf", u3,"EparHhtf", 0.1, -1 );      	  
+		bConnected &= connect(type_805, "Qdesign", type_807, "Qdesign", 0.1, -1);
+		bConnected &= connect(type_805, "Edesign", type_807,"Edesign", 0.1, -1);
+		bConnected &= connect(type_806,"Qtpb", type_807,"Qtpb", 0.1,-1);
+		bConnected &= connect(type_806,"Qfts",type_807,"Qfts", 0.1,-1);	   
+		bConnected &= connect(weather, "twet",type_807,"Twetbulb", 0.1, -1 );    
+		bConnected &= connect( weather, "tdry", type_807,"Tdrybulb", 0.1, -1 );		
+		bConnected &= connect(type_805, "SFTotPar", type_807,"SFTotPar", 0.1, -1 );  
+		bConnected &= connect(type_806, "EparHhtf", type_807,"EparHhtf", 0.1, -1 );      	  
+		bConnected &= connect( tou, "tou_value", type_807, "TOUPeriod");  	
 
 		// check if all connections worked
 		if ( !bConnected )

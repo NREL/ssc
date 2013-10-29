@@ -4,13 +4,14 @@
 static var_info _cm_vtab_tcstrough_physical[] = {
 //   weather reader inputs
 //   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
-    { SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                        "",             "",             "Weather",       "*",                       "LOCAL_FILE",            "" },
-    { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                  "",             "",             "Weather",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                     "",             "",             "Weather",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                  "",             "",             "Weather",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                        "",             "",             "Weather",        "*",                       "LOCAL_FILE",            "" },
+    { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                  "",             "",             "Weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                     "",             "",             "Weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                  "",             "",             "Weather",        "*",                       "",                      "" },
 
-    // general
-    { SSC_INPUT,        SSC_NUMBER,      "TOUPeriod",         "Time of Use Period",                                             "",             "",             "other",         "*",                       "INTEGER",               "" },
+    // TOU
+    { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                         "",             "",             "tou_translator", "*",                       "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                     "",             "",             "tou_translator", "*",                       "",                      "" }, 
 
 //   solar field (type 250) inputs
 //   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -214,7 +215,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_init",    "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "demand_var",        "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "standby_control",   "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "TOU",               "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "TOU",               "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
 
  //  enet calculator
     { SSC_INPUT,        SSC_NUMBER,      "eta_lhv",           "Label",                                                          "",             "",             "enet",          "*",                       "",                      "" },

@@ -9,6 +9,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                       "",             "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                    "",             "",            "Weather",        "*",                       "",                      "" },
 
+    // TOU
+    { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                           "",             "",            "tou_translator", "*",                       "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                       "",             "",            "tou_translator", "*",                       "",                      "" }, 
 
 	// Heliostat field (type 221) parameters
     { SSC_INPUT,        SSC_MATRIX,      "eta_map",           "Field efficiency matrix",                                          "-",            "",            "heliostat",      "*",                       "",                      "" },
@@ -166,7 +169,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "t_ch_out_max",      "Max allowable cold side outlet temp during charge",                "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nodes",             "Nodes modeled in the flow path",                                   "-",            "",            "controller",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "f_tc_cold",         "0=entire tank is hot, 1=entire tank is cold",                      "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "TOU_schedule",      "Annual hourly time-of-use schedule",                               "-",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_ARRAY,       "TOU_schedule",      "Annual hourly time-of-use schedule",                               "-",            "",            "controller",     "*",                       "",                      "" },
 
     // Controller (type 251) inputs
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",     "Reference HTF flow rate at design conditions",                     "kg/hr",        "",            "controller",     "*",                       "",                      "" },
