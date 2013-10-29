@@ -90,8 +90,8 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration);$(SolutionDir)..\tcs\waterprop</AdditionalLibraryDirectories>
-      <AdditionalDependencies>waterprop32.lib;recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -102,8 +102,8 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration);$(SolutionDir)\waterprop</AdditionalLibraryDirectories>
-      <AdditionalDependencies>waterprop64.lib;recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -115,13 +115,16 @@
       <AdditionalIncludeDirectories>$(SolutionDir)..\tcs;$(SSCDIR)</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration);$(SolutionDir)..\tcs\waterprop</AdditionalLibraryDirectories>
-      <AdditionalDependencies>waterprop32.lib;recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,8 +141,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration);$(SolutionDir)\waterprop</AdditionalLibraryDirectories>
-      <AdditionalDependencies>waterprop64.lib;recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SSCDIR)\build_vc2012\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>recore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -182,6 +185,7 @@
     <ClCompile Include="tou_translator.cpp" />
     <ClCompile Include="trnsys_weatherreader.cpp" />
     <ClCompile Include="typelib.cpp" />
+    <ClCompile Include="waterprop.cpp" />
     <ClCompile Include="weatherreader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -194,6 +198,11 @@
     <ClInclude Include="sam_csp_util.h" />
     <ClInclude Include="storage_hx.h" />
     <ClInclude Include="thermocline_tes.h" />
+    <ClInclude Include="waterprop.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="waterprop_critical.dat" />
+    <None Include="waterprop_saturated.dat" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

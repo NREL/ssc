@@ -2,7 +2,7 @@
 
 #include "sam_csp_util.h"
 #include "recore/lib_util.h"
-#include <waterprop/waterprop.h>
+#include "waterprop.h"
 
 // void flow_patterns_DSR( int n_panels, int flow_type, util::matrix_t<int> & flow_pattern );
 // double Nusselt_FC( double ksDin, double Re );

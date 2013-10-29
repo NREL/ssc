@@ -3,7 +3,7 @@
 
 #include "recore/lib_util.h"
 #include "htf_props.h"
-#include <waterprop/waterprop.h>
+#include "waterprop.h"
 
 // convert to class?
 class C_DSG_macro_receiver
