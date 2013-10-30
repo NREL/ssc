@@ -38,8 +38,8 @@
 /* exported application global variables */
 
 int SC_major_ver = 2;
-int SC_minor_ver = 0;
-int SC_micro_ver = 4;
+int SC_minor_ver = 1;
+int SC_micro_ver = 9;
 
 SCFrame *app_frame = NULL;
 wxConfig *app_config = NULL;
@@ -57,13 +57,13 @@ IMPLEMENT_APP(SCApp)
 
 bool SCApp::OnInit()
 {
-	SetAppName( "SSCdev" );
+	SetAppName( "SDKtool" );
 	
 	// set the current working directory to locate .pdb on crash
 	if ( argc > 0 )
 		wxSetWorkingDirectory( wxPathOnly(argv[0]) );
 
-	app_config = new wxConfig( "sscdev", "WXAPPS" );
+	app_config = new wxConfig( "ssc-sdk-tool", "WXAPPS" );
 	
 	wxInitAllImageHandlers();
 
@@ -97,7 +97,7 @@ bool SCApp::OnInit()
 		{
 			if ( wxYES==wxMessageBox("The SSC dynamic library is not loaded.  "
 				"Would you like to select the proper library?\n\n"
-				"Your selection will be saved for the next time you run SSCdev.", 
+				"Your selection will be saved for the next time you run SSC SDKtool.", 
 				"Notice - first load", wxYES_NO, app_frame ) )
 				app_frame->ChooseDynamicLibrary();
 		}
@@ -117,7 +117,7 @@ int SCApp::OnExit()
 }
 
 #include "splash.cpng"
-static char *SC_about_text = "SSCdev - System Simulator Core\n\n"
+static char *SC_about_text = "SSC SDKtool - System Simulator Core Developer Tool\n\n"
 "Developer interface for simulation, component development, validation, and basic visualization of SSC computation modules.";
 
 #ifdef _MSC_VER
@@ -206,7 +206,7 @@ BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 END_EVENT_TABLE()
 
 SCFrame::SCFrame()
-   : wxFrame(NULL, wxID_ANY, "SSCdev", wxDefaultPosition, wxSize(800,600)),
+   : wxFrame(NULL, wxID_ANY, wxString::Format("SSC SDKtool (%d bit)", PLAT_BITS ), wxDefaultPosition, wxSize(800,600)),
    m_recentCount(0)
 {
 	m_varTable = new var_table;
@@ -534,7 +534,7 @@ void SCFrame::OnCloseFrame( wxCloseEvent &evt )
 
 void SCFrame::SaveBdat()
 {
-	wxFileDialog dlg(this, "Save SSCdev State", wxPathOnly(m_lastFile),
+	wxFileDialog dlg(this, "Save SDKtool State", wxPathOnly(m_lastFile),
 		m_lastFile, "Binary Data File (*.bdat)|*.bdat", wxFD_SAVE);
 	
 	int ret = dlg.ShowModal();
@@ -753,7 +753,7 @@ bool SCFrame::LoadBdat( wxString fn )
 	if (fn.IsEmpty())
 	{
 	
-		wxFileDialog dlg(this, "Load SSCdev State",
+		wxFileDialog dlg(this, "Load SDKtool State",
 			wxPathOnly(m_lastFile),
 			m_lastFile,
 			"Binary Data File (*.bdat)|*.bdat",
