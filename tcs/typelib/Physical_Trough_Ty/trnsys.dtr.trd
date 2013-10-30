@@ -40,7 +40,7 @@ nSCA = 8
 nHCEt = 4
 nColt = 4
 nHCEVar = 4
-nLoops = 230
+nLoops = 198
 pi = 3.1415926
 CONSTANTS 30
 eta_pump = 0.85
