@@ -5,19 +5,12 @@
 #include "tcskernel.h"
 
 const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-tcstypeprovider TCSTP;
-bool bttp_set = false;
+tcstypeprovider sg_tcsTypeProvider;
 
 compute_module::compute_module( )
 	:  m_infomap(NULL), m_handler(NULL), m_vartab(NULL)
 {
-	if ( !bttp_set ) {
-		bttp_set = true;
-		// only want to do this once - where's the correct place for this code?
-		TCSTP.add_search_path("./");
-		TCSTP.load_library("typelib");
-	}
-
+	/* nothing to do */
 }
 
 compute_module::~compute_module()
