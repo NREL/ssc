@@ -97,7 +97,7 @@ inline double vapor_gap_ssnd(double sFraction, double pFraction, double dT, int 
 	return (dome + (grid-dome)*sFraction);
 }
 /// Returns cond in the vapor gap given the entropy fractional position
-inline inline double vapor_gap_cond(double sFraction, double pFraction, double dT, int TSatIndex, int firstCoefIndex)
+inline double vapor_gap_cond(double sFraction, double pFraction, double dT, int TSatIndex, int firstCoefIndex)
 {
 	/// linear indices using j = 3, k = 1
 	double dome = propDome( 3, 1, TSatIndex, dT);
@@ -329,12 +329,11 @@ WPEXPORT int water_TQ( double T, double Q, property_info *data )
 	
 	/// property check
 	double propValues[5] = {0.,0.,0.,0.,0.};
-	float Qf = static_cast<float>(Q);
-	if (std::real(Qf) == 0.0)
+	if ( Q == 0.0 )
 	{
 		for (int i = 0; i < 5; i++) propValues[i] = propDome(i,0,TSatIndex,dT);
 	}
-	else if (std::real(Qf) == 1.0)
+	else if ( Q == 1.0 )
 	{
 		for (int i = 0; i < 5; i++) propValues[i] = propDome(i,1,TSatIndex,dT);	
 	}
@@ -421,14 +420,12 @@ WPEXPORT int water_PQ( double P, double Q, property_info *data )
 	(*data).U = vhs_values[1] - P*vhs_values[0]; // U = H - PV
 
 	/// Check to see if properties are requested that are only valid if Q = 0 or 1
-	float Qf = static_cast<float>(Q);
-
 	double propValues[5] = {0,0,0,0,0};
-	if (std::real(Qf) == 0.0)
+	if (Q == 0.0)
 	{
 		for (int i = 0; i < 5; i++) propValues[i] = propDome(i,0,TSatIndex,dT);
 	}
-	else if (std::real(Qf) == 1.0)
+	else if ( Q == 1.0)
 	{
 		for (int i = 0; i < 5; i++) propValues[i] = propDome(i,1,TSatIndex,dT );
 	}
@@ -625,15 +622,15 @@ WPEXPORT int water_PH( double P, double H, property_info *data )
 
 			/// check to see if properties are requested that are only valid if Q = 0 or 1
 			double prop_values[5] = {0., 0. , 0. , 0., 0.};
-			float Qf = static_cast<float>((*data).Q);
-			if (std::real(Qf) == 0.0)
+			double Q = (*data).Q;
+			if (Q == 0.0)
 			{
 				for (int i = 0; i < 5; i++)
 				{
 					prop_values[i] = propDome(i,0,TSatIndex,dT);
 				}
 			}
-			else if (std::real(Qf) == 1.)
+			else if (Q == 1.)
 			{
 				for (int i = 0; i < 5; i++)
 				{
@@ -791,15 +788,14 @@ WPEXPORT int water_PS( double P, double S, property_info *data )
 			(*data).Q = Q;
 
 			double prop_values[5] = {0.,0.,0.,0.,0.};
-			float Qf = static_cast<float>(Q);
-			if (std::real(Qf) == 0.0)
+			if (Q == 0.0)
 			{
 				for (int i = 0; i < 5; i++)
 				{
 					prop_values[i] = propDome(i,0,TSatIndex,dT);
 				}
 			}
-			else if (std::real(Qf) == 1.0)
+			else if (Q == 1.0)
 			{
 				for (int i = 0; i < 5; i++)
 				{
