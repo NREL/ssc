@@ -258,7 +258,7 @@ public:
 		#name, desc, ver, _create_ ## name }; \
 
 #define DEFINE_TCS_MODULE_ENTRY( name, desc, ver ) \
-	static compute_module *_create_ ## name () { extern tcstypeprovider TCSTP; return new cm_ ## name ( &TCSTP ); } \
+	static compute_module *_create_ ## name() { extern tcstypeprovider sg_tcsTypeProvider; return new cm_ ## name(&sg_tcsTypeProvider); } \
 	module_entry_info cm_entry_ ## name = { \
 		#name, desc, ver, _create_ ## name }; \
 
