@@ -11,16 +11,20 @@ OBJECTS= \
 	cavity_calcs.o \
 	datatest.o \
 	direct_steam_receivers.o \
+	tou_translator.o \
 	htf_props.o \
 	interpolation_routines.o \
 	powerblock.o \
 	pump.o \
 	sam_csp_util.o \
+	thermocline_tes.o \
+	ngcc_powerblock.o \
 	sam_dsg_controller_type265.o \
 	sam_lf_st_pt_type232.o \
 	sam_mw_csp_SumCalcs.o \
 	sam_mw_gen_Type260.o \
 	sam_mw_lf_type261_steam.o \
+	sam_mw_lf_type261_Wnet.o \
 	sam_mw_lf_type262_salt.o \
 	sam_mw_pt_type221.o \
 	sam_mw_pt_type222.o \
@@ -29,6 +33,8 @@ OBJECTS= \
 	sam_mw_trough_type250.o \
 	sam_mw_trough_type251.o \
 	sam_mw_type234.o \
+	sam_iscc_powerblock.o \
+	sam_iscc_parasitics.o \
 	sam_pf_dish_collector_type295.o \
 	sam_pf_dish_engine_type297.o \
 	sam_pf_dish_parasitic_type298.o \
@@ -41,14 +47,14 @@ OBJECTS= \
 	sumprod.o \
 	trnsys_weatherreader.o \
 	typelib.o \
+	waterprop.o \
 	weatherreader.o
 
 
 TARGET= typelib.dylib
 
 $(TARGET):$(OBJECTS)
-	$(CXX) -shared -o $(TARGET) $(OBJECTS) ../waterprop/waterprop64.dylib
-#	$(CXX) -shared -o $(TARGET) $(OBJECTS) $(SSCDIR)/recore/recore.a ../waterprop/waterprop64.dylib
+	$(CXX) -shared -o $(TARGET) $(OBJECTS) $(SSCDIR)/build_osx/recore.a
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)

@@ -2,7 +2,6 @@
 #define _SAT_DATA_COL_BASED_H_
 
 /**********************************************************
-//**
 * Saturation data parsed from Fortran
 * Column based arrays in memory !!!
 **************************************************************/

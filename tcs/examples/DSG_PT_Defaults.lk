@@ -1,7 +1,7 @@
 clear();
 
 // **** Define tcs directory *******************
-tcs_dir = 'C:/Users/tneises/Documents/Projects/ssc';
+tcs_dir = '/Users/adobos/Projects/ssc';
 // *********************************************
 
 //********************************************************************************************
