@@ -1,10 +1,10 @@
-VPATH=../ssc ../recore ../tcs/kernel
+VPATH=../ssc
 
 CC = gcc
 CXX = g++
-CFLAGS = -I../ssc -I../recore -I../tcs/kernel -I../tcs -g -D__MACOSX__ -fPIC -Wall -O3
+CFLAGS = -I../shared -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++
+LDFLAGS = -lm -lstdc++ shared.a tcs.a
 
 ifeq ($(CFG),)
 CFG=64
@@ -48,23 +48,7 @@ OBJECTS = \
 	cmod_geothermal.o \
 	cmod_poacalib.o \
 	core.o \
-	lib_windfile.o \
-	lib_pvinv.o \
-	lib_cec6par.o \
-	lib_pvshade.o \
-	lib_sandia.o \
-	lib_pvmodel.o \
-	lib_irradproc.o \
-	lib_powerblock.o \
-	lib_financial.o \
-	lib_pvwatts.o \
-	lib_physics.o \
-	lib_util.o \
 	vartab.o \
-	lib_weatherfile.o \
-	lib_windwatts.o \
-	lib_geothermal.o \
-	lib_sandia.o \
 	sscapi.o \
 	vtab_common.o \
 	cmod_tcsdirect_steam.o \
@@ -74,8 +58,7 @@ OBJECTS = \
 	cmod_tcstrough_empirical.o \
 	cmod_tcstrough_physical.o \
 	cmod_tcsdish.o \
-	tckernel.o \
-	tcskernel.o 
+	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(LDFLAGS) -dynamiclib -flat_namespace -o $@ $^
