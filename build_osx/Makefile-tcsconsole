@@ -1,4 +1,4 @@
-VPATH = ../dev
+VPATH = ../tcsconsole
 
 WEXDIR = ../../wex
 WEXLIB = $(WEXDIR)/wexosxwx3.a
@@ -7,19 +7,15 @@ LKLIB = $(LKDIR)/lkosxwx3.a
 
 CC = gcc
 CXX = g++
-CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR) -I../ssc -I../recore -DLK_USE_WXWIDGETS `wx-config-3 --cflags`
+CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR) -I../tcs -DLK_USE_WXWIDGETS `wx-config-3 --cflags`
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = $(WEXLIB) $(LKLIB) `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
+LDFLAGS = $(WEXLIB) $(LKLIB) shared.a tcs.a `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
 
-OBJECTS  = cmform.o \
-	dataview.o \
-	dllinvoke.o \
-	editvariable.o \
-	scripting.o \
-	sscdev.o \
-	statdlg.o \
+OBJECTS  = tcsscript.o \
+	tcsmain.o \
+	tcslayout.o
 	
-TARGET = SSCdev
+TARGET = TCSConsole
 
 $(TARGET): $(OBJECTS) $(WEXLIB) 
 	$(CXX) -g -o $@ $^ $(LDFLAGS)
