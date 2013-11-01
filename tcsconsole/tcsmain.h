@@ -18,6 +18,7 @@ class wxTextCtrl;
 class wxDVPlotCtrl;
 class wxExtGridCtrl;
 class wxNumericCtrl;
+class wxMetroNotebook;
 
 // tcs
 class tcskernel;
@@ -103,7 +104,7 @@ private:
 	wxCheckListBox *m_varSelector;
 	tcVisualEditor *m_visualEditor;
 	tcScriptEditor *m_scriptEditor;
-	wxNotebook *m_notebook;
+	wxMetroNotebook *m_notebook;
 	
 	tcKernel *m_kernel;
 	tcstypeprovider m_provider;
