@@ -1,103 +1,13 @@
-VPATH=../ssc ../recore ../tcs/kernel
-
-CC = gcc
-CXX = g++
-CFLAGS = -fpermissive -I../ssc -I../recore -I../tcs/kernel -I../tcs -D__UNIX__ -fPIC -Wall -O3
-CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++
-
-ifeq ($(CFG),)
-CFG=64
-endif
-
-
-ifeq ($(CFG),64)
-CFLAGS += -D__64BIT__
-TARGET=ssc.so
-else
-CFLAGS += -D__32BIT__ -m32
-TARGET=ssc32.so
-LDFLAGS += -m32
-endif
-
-all: inform $(TARGET)
-
-
-OBJECTS = \
-	cmod_pvwattsfunc.o \
-	cmod_wfcsv.o \
-	cmod_test_pvshade.o \
-	cmod_geothermalui.o \
-	cmod_6parsolve.o \
-	cmod_windpower.o \
-	cmod_annualoutput.o \
-	cmod_test_irr.o \
-	cmod_pv6parmod.o \
-	cmod_pvsandiainv.o \
-	cmod_pvsamv1.o \
-	cmod_wfreader.o \
-	cmod_irradproc.o \
-	cmod_fossilgen.o \
-	cmod_cashloan.o \
-	cmod_pvwattsv1.o \
-	cmod_equpartflip.o \
-	cmod_levpartflip.o \
-	cmod_saleleaseback.o \
-	cmod_singleowner.o \
-	cmod_timeseq.o \
-	cmod_utilityrate.o \
-	cmod_utilityrate2.o \
-	cmod_ippppa.o \
-	cmod_swh.o \
-	cmod_geothermal.o \
-	cmod_poacalib.o \
-	core.o \
-	lib_windfile.o \
-	lib_cec6par.o \
-	lib_pvshade.o \
-	lib_sandia.o \
-	lib_pvmodel.o \
-	lib_irradproc.o \
-	lib_powerblock.o \
-	lib_financial.o \
-	lib_pvwatts.o \
-	lib_physics.o \
-	lib_util.o \
-	vartab.o \
-	lib_weatherfile.o \
-	lib_windwatts.o \
-	lib_geothermal.o \
-	lib_pvinv.o \
-	sscapi.o \
-	vtab_common.o \
-	cmod_tcsdirect_steam.o \
-	cmod_tcsgeneric_solar.o \
-	cmod_tcslinear_fresnel.o \
-	cmod_tcsmolten_salt.o \
-	cmod_tcstrough_empirical.o \
-	cmod_tcstrough_physical.o \
-	cmod_tcsdish.o \
-	tckernel.o \
-	tcskernel.o
-
-
-$(TARGET) : $(OBJECTS)
-	$(CXX) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS)
-	gcc $(CFLAGS) dltest.c -o dltest -ldl
-	./dltest ./$(TARGET)
-
-inform:
-ifneq ($(CFG),64)
-ifneq ($(CFG),32)
-	@echo "Invalid configuration "$(CFG)" specified."
-	@echo "You must specify a configuration when running make."
-	@echo  "make CFG=64"
-	@echo
-	@echo "Possible choices for CFG are '32' and '64'"
-	@exit 1
-endif
-endif
+all:
+	make -f Makefile-shared -j4
+	make -f Makefile-tcs -j4
+	make -f Makefile-ssc -j4
+	make -f Makefile-sdktool -j4
+	make -f Makefile-tcsconsole -j4
 
 clean:
-	rm -rf $(OBJECTS) ssc32.so ssc64.so 
-
+	make -f Makefile-shared clean
+	make -f Makefile-tcs clean
+	make -f Makefile-ssc clean
+	make -f Makefile-sdktool clean
+	make -f Makefile-tcsconsole clean

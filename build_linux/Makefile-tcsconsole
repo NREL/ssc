@@ -1,0 +1,24 @@
+VPATH = ../tcsconsole
+
+WEXDIR = ../../wex
+WEXLIB = $(WEXDIR)/wexuxwx3.a
+LKDIR = ../../lk
+LKLIB = $(LKDIR)/lkuxwx3.a
+
+CC = gcc
+CXX = g++
+CFLAGS = -g -O2 -std=c++0x -I. -I$(WEXDIR)/include -I$(LKDIR) -I../tcs -DLK_USE_WXWIDGETS `wx-config-3 --cflags`
+CXXFLAGS = $(CFLAGS)
+LDFLAGS = $(WEXLIB) $(LKLIB) tcs.a shared.a `wx-config-3 --libs stc` `wx-config-3 --libs aui` `wx-config-3 --libs` -lm 
+
+OBJECTS  = tcsscript.o \
+	tcsmain.o \
+	tcslayout.o
+	
+TARGET = TCSConsole
+
+$(TARGET): $(OBJECTS) $(WEXLIB) 
+	$(CXX) -g -o $@ $^ $(LDFLAGS)
+	
+clean:
+	rm -f $(TARGET) $(OBJECTS)

@@ -108,8 +108,6 @@ private:
 	tcKernel *m_kernel;
 	tcstypeprovider m_provider;
 
-	void OnHiddenCommand(wxCommandEvent &evt);
-
 public:
 	tcFrame();
 	virtual ~tcFrame();
