@@ -27,28 +27,18 @@
     <ResourceCompile Include="app.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\sdktool\cmform.cpp" />
     <ClCompile Include="..\sdktool\dataview.cpp" />
     <ClCompile Include="..\sdktool\dllinvoke.cpp" />
     <ClCompile Include="..\sdktool\editvariable.cpp" />
     <ClCompile Include="..\sdktool\scripting.cpp" />
     <ClCompile Include="..\sdktool\sscdev.cpp" />
-    <ClCompile Include="..\sdktool\statdlg.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\sdktool\cmform.h" />
     <ClInclude Include="..\sdktool\dataview.h" />
     <ClInclude Include="..\sdktool\dllinvoke.h" />
     <ClInclude Include="..\sdktool\editvariable.h" />
     <ClInclude Include="..\sdktool\scripting.h" />
     <ClInclude Include="..\sdktool\sscdev.h" />
-    <ClInclude Include="..\sdktool\statdlg.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\sdktool\splash.cpng" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\sdktool\splash.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>sdktool</ProjectName>
