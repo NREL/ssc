@@ -1,7 +1,7 @@
 clear();
 
 // **** Define tcs directory *******************
-tcs_dir = 'C:/Users/tneises/Documents/Projects/ssc/tcs/typelib/ISCC/';
+tcs_dir = 'C:/Users/tneises/Documents/Projects/ssc/tcsdata/typelib/ISCC/';
 // *********************************************
 
 //********************************************************************************************
@@ -128,6 +128,7 @@ set_value(weather, "azimuth", 0);
 hel_field = add_unit("sam_mw_pt_type221");
 receiver = add_unit("sam_mw_pt_type222");
 iscc_pb = add_unit("sam_iscc_powerblock");
+iscc_parasitics = add_unit("sam_iscc_parasitics");
 
 // From trd
 //*********************** HELIOSTAT FIELD PAGE **********************
@@ -206,7 +207,7 @@ set_value( hel_field, "hel_stow_deploy", hel_stow_deploy );
 connect( weather, "wspd", hel_field, "vwind" );
 connect( weather, "solzen", hel_field, "theta" );
 connect( weather, "solazi", hel_field, "phi" );
-set_value( hel_field, "field_control", 1.0 );
+set_value( hel_field, "field_control", 1.0 );			// Do we need to adjust defocus?
 
 // Set receiver parameters
 set_value( receiver, "N_panels", num_panels );
@@ -252,21 +253,34 @@ set_value( receiver, "hel_stow_deploy", hel_stow_deploy );
 set_value( iscc_pb, "HTF_code", HTF );
 set_value( iscc_pb, "Q_sf_des", Q_rec_des );
 set_value( iscc_pb, "plant_elevation", 600 );
-set_value( iscc_pb, "cycle_config", 1 );
+set_value( iscc_pb, "cycle_config", 1 );			// Only option presently available: triple pressure NGCC HP evap integration
 
 // Set NGCC Inputs
 connect( weather, "tdry", iscc_pb, "T_amb" );
 set_value( iscc_pb, "T_amb", 10.3 );
 connect( weather, "pres", iscc_pb, "P_amb" );
 set_value( iscc_pb, "P_amb", 943.2 );
-connect( receiver, "m_dot_salt_tot", iscc_pb, "m_dot_ms" );
+connect( receiver, "m_dot_salt_tot", iscc_pb, "m_dot_ms_ss" );
 m_dot_ms = 2256 * 3600.0;			// kg/hr
-set_value( iscc_pb, "m_dot_ms", m_dot_ms ); 
+set_value( iscc_pb, "m_dot_ms_ss", m_dot_ms ); 
 connect( receiver, "q_dot_ss", iscc_pb, "q_dot_rec_ss" );
 set_value( iscc_pb, "q_dot_rec_ss", 150 );		//MWt
 connect( receiver, "T_salt_cold", iscc_pb, "T_rec_in" );
 connect( receiver, "T_salt_hot", iscc_pb, "T_rec_out" );
 connect( receiver, "f_timestep", iscc_pb, "f_timestep" );
+
+// Set ISSC parasitic Parameters
+set_value( iscc_parasitics, "f_const_parasitic", pb_fixed_par );
+set_value( iscc_parasitics, "W_htf_pc_pump", PB_pump_coef );
+
+// Connect ISCC parasitic Inputs
+connect( hel_field, "pparasi", iscc_parasitics, "W_dot_tracking" );
+connect( receiver, "W_dot_pump", iscc_parasitics, "W_dot_rec_pump" );
+connect( receiver, "m_dot_ss", iscc_parasitics, "m_dot_htf_ss" );
+connect( iscc_pb, "W_dot_pc_net", iscc_parasitics, "W_dot_pc_net_solar" );
+connect( iscc_pb, "W_dot_pc_baseline", iscc_parasitics, "W_dot_pc_net_baseline" );
+connect( receiver, "f_timestep", iscc_parasitics, "f_timestep" );
+connect( receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss" );
 
 simulate(1,8760,1,30,false);
 
