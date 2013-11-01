@@ -49,8 +49,8 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_T_AMB,           "T_amb",             "Ambient temperature",                                  "C",     "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_P_AMB,           "P_amb",             "Ambient pressure",                                     "mbar",  "", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_M_DOT_MS,        "m_dot_ms",          "Molten salt mass flow rate from receiver",             "kg/hr", "", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_Q_DOT_REC_SS,    "q_dot_rec_ss",      "Receiver thermal output",                              "MWt",   "", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_M_DOT_MS,        "m_dot_ms_ss",       "Molten salt mass flow rate from rec. - no startup derate", "kg/hr", "", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_Q_DOT_REC_SS,    "q_dot_rec_ss",      "Receiver thermal output - no startup derate",          "MWt",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_T_REC_IN,        "T_rec_in",          "Receiver inlet temperature",                           "C",     "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_T_REC_OUT,       "T_rec_out",         "Receiver outlet temperature",                          "C",     "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_F_TIMESTEP,      "f_timestep",        "Fraction of timestep that receiver is operational (not starting-up)", "", "", ""},
@@ -317,7 +317,7 @@ public:
 		{
 			m_W_dot_pc_base = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
 			value( O_W_DOT_PC_BASE, m_W_dot_pc_base );
-			m_q_dot_rec_max = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_heat_max );
+			m_q_dot_rec_max = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_heat_max )*1000.0;	//[kWt] Convert from MWt
 			m_defocus = 1.0;
 			m_defocus_on = false;
 		}
