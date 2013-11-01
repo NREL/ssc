@@ -35,6 +35,7 @@
 #include <wex/extgrid.h>
 #include <wex/dview/dvplotctrl.h>
 #include <wex/numeric.h>
+#include <wex/metro.h>
 
 #include <tcskernel.h>
 
@@ -336,7 +337,7 @@ tcFrame::tcFrame()
 		
 	wxSplitterWindow *split = new wxSplitterWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE|wxSP_3DSASH );
 
-	m_notebook = new wxNotebook( split, wxID_ANY );
+	m_notebook = new wxMetroNotebook( split, wxID_ANY );
 
 	m_visualEditor = new tcVisualEditor( m_notebook );
 	m_notebook->AddPage( m_visualEditor, "Visual Editor" );
