@@ -282,13 +282,12 @@ void ResultsTable::ReleasePointers()
 	m_results.clear();
 }
 
-enum { ID_SIMULATE = 2324, ID_GRID, ID_VARSELECTOR, ID_SHOWHIDEVISUALEDITOR,
+enum { ID_SIMULATE = 2324, ID_GRID, ID_VARSELECTOR, 
 	ID_DVPLOT, ID_STARTTIME, ID_ENDTIME, ID_TIMESTEP, ID_MAXITER };
 
 BEGIN_EVENT_TABLE( tcFrame, wxFrame )
 	EVT_CHECKLISTBOX( ID_VARSELECTOR, tcFrame::OnSelectVar )
 	EVT_CLOSE( tcFrame::OnCloseFrame )
-	EVT_TOOL( ID_SHOWHIDEVISUALEDITOR, tcFrame::OnHiddenCommand )
 END_EVENT_TABLE()
 
 static tcFrame *__g_tcframe = 0;
@@ -331,15 +330,15 @@ tcFrame::tcFrame()
 {
 	__g_tcframe = this;
 	SetTitle( "TCS Console (" STR_BITS " bit)" );
+#ifdef __WXMSW__
 	SetIcon( wxIcon("appicon") );
-	//SetBackgroundColour( *wxWHITE );
+#endif
 		
 	wxSplitterWindow *split = new wxSplitterWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE|wxSP_3DSASH );
 
 	m_notebook = new wxNotebook( split, wxID_ANY );
 
 	m_visualEditor = new tcVisualEditor( m_notebook );
-	m_visualEditor->Hide();
 	m_notebook->AddPage( m_visualEditor, "Visual Editor" );
 
 	m_scriptEditor = new tcScriptEditor( m_notebook );
@@ -412,10 +411,6 @@ tcFrame::tcFrame()
 	if (cfg.Read( "tabsel", &sel ) && sel >= 0 && sel < (int)m_notebook->GetPageCount()) 
 		m_notebook->SetSelection( sel );
 
-	wxAcceleratorEntry entries[1];
-	//entries[0].Set( wxACCEL_SHIFT, WXK_F1, ID_HELPCONTEXT );
-	entries[0].Set( wxACCEL_SHIFT, WXK_F5,  ID_SHOWHIDEVISUALEDITOR );
-	SetAcceleratorTable( wxAcceleratorTable(1, entries));
 }
 
 tcFrame::~tcFrame()
@@ -462,30 +457,6 @@ void tcFrame::ShowTypeDataDialog( const wxString &type )
 		wxFRAME_FLOAT_ON_PARENT|wxFRAME_NO_TASKBAR|wxCAPTION|wxRESIZE_BORDER|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxSYSTEM_MENU );
 	tcLayoutCtrl::CreateUnitDataGrid( frame, types[i].info );
 	frame->Show();
-}
-
-void tcFrame::OnHiddenCommand( wxCommandEvent &evt )
-{
-	switch(evt.GetId())
-	{
-		case ID_SHOWHIDEVISUALEDITOR:
-			bool hidden = false;
-			for (int i=0; i<m_notebook->GetPageCount(); i++)
-			{
-				if ( m_notebook->GetPageText(i) == "Visual Editor")
-				{
-					m_notebook->RemovePage(i);
-					m_visualEditor->Hide();
-					hidden = true;
-				}
-			}
-			if (!hidden)
-			{
-				if (!m_visualEditor) m_visualEditor = new tcVisualEditor( m_notebook );
-				m_notebook->InsertPage(0, m_visualEditor, "Visual Editor" );
-			}
-			break;
-	}
 }
 
 class tcsDVDataSet : public wxDVTimeSeriesDataSet

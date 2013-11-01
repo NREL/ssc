@@ -1,0 +1,70 @@
+VPATH=../ssc
+
+CC = gcc
+CXX = g++
+CFLAGS = -fPIC -I../shared -I../tcs -I../ssc -g -D__UNIX__ -fPIC -Wall -O2
+CXXFLAGS = $(CFLAGS)
+LDFLAGS = -lm -lstdc++ shared.a tcs.a
+
+ifeq ($(CFG),)
+CFG=64
+endif
+
+ifeq ($(CFG),64)
+CFLAGS += -D__64BIT__
+TARGET = ssc.so
+else
+CFLAGS += -D__32BIT__ -arch i386
+TARGET = ssc.so
+LDFLAGS += -m32
+endif
+
+OBJECTS = \
+	cmod_pvwattsfunc.o \
+	cmod_wfcsv.o \
+	cmod_test_pvshade.o \
+	cmod_geothermalui.o \
+	cmod_6parsolve.o \
+	cmod_windpower.o \
+	cmod_annualoutput.o \
+	cmod_test_irr.o \
+	cmod_pv6parmod.o \
+	cmod_pvsandiainv.o \
+	cmod_pvsamv1.o \
+	cmod_wfreader.o \
+	cmod_irradproc.o \
+	cmod_fossilgen.o \
+	cmod_cashloan.o \
+	cmod_pvwattsv1.o \
+	cmod_equpartflip.o \
+	cmod_levpartflip.o \
+	cmod_saleleaseback.o \
+	cmod_singleowner.o \
+	cmod_timeseq.o \
+	cmod_utilityrate.o \
+	cmod_utilityrate2.o \
+	cmod_ippppa.o \
+	cmod_swh.o \
+	cmod_geothermal.o \
+	cmod_poacalib.o \
+	core.o \
+	vartab.o \
+	sscapi.o \
+	vtab_common.o \
+	cmod_tcsdirect_steam.o \
+	cmod_tcsgeneric_solar.o \
+	cmod_tcslinear_fresnel.o \
+	cmod_tcsmolten_salt.o \
+	cmod_tcstrough_empirical.o \
+	cmod_tcstrough_physical.o \
+	cmod_tcsdish.o \
+	tckernel.o 
+
+$(TARGET) : $(OBJECTS)
+	$(CXX) -shared -o $@ $^ $(LDFLAGS)
+	gcc $(CFLAGS) dltest.c -o dltest -ldl
+	./dltest ./$(TARGET)
+
+clean:
+	rm -rf $(OBJECTS) $(TARGET) ./dltest
+
