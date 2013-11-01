@@ -20,7 +20,6 @@
 #include <lk_stdlib.h>
 
 #include "sscdev.h"
-#include "cmform.h"
 #include "dataview.h"
 #include "scripting.h"
 
@@ -238,11 +237,7 @@ void fcall_run( lk::invoke_t &cxt )
 		"([string:compute modules list]):none");
 
 	if (cxt.arg_count() > 0)
-	{
-		CMForm *cm = app_frame->GetCMForm();
-		cm->SetCurrentCM( cxt.arg(0).as_string() );
-
-	}
+		app_frame->SetCurrentCM( cxt.arg(0).as_string() );
 
 	std::vector<bool> ok = app_frame->Start();
 	cxt.result().empty_vector();
@@ -363,7 +358,7 @@ EditorWindow::EditorWindow( wxWindow *parent )
 		: wxPanel( parent )
 {
 			
-	wxBoxSizer *szdoc = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer *szdoc = new wxBoxSizer( wxHORIZONTAL );
 	szdoc->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2  );
@@ -373,6 +368,7 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	szdoc->Add( new wxButton( this, ID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( new wxButton( this, ID_RUN, "Run" ), 0, wxALL|wxEXPAND, 2  );
 	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" ), 0, wxALL|wxEXPAND, 2 );	
+	szdoc->AddStretchSpacer();
 	m_stopButton->SetForegroundColour( *wxRED );
 	m_stopButton->Hide();
 					
@@ -380,15 +376,12 @@ EditorWindow::EditorWindow( wxWindow *parent )
 	
 	m_editor->RegisterLibrary( ssc_funcs(), "SSC Functions", this );	
 
-	wxBoxSizer *szedit = new wxBoxSizer( wxVERTICAL );
-	szedit->Add( m_editor, 1, wxALL|wxEXPAND, 1 );
-	szedit->Add( m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString ), 0, wxALL|wxEXPAND, 1 );
+	wxBoxSizer *szedit = new wxBoxSizer(wxVERTICAL);
+	szedit->Add(szdoc, 0, wxALL | wxEXPAND, 2);
+	szedit->Add( m_editor, 1, wxALL|wxEXPAND, 0 );
+	szedit->Add( m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString ), 0, wxALL|wxEXPAND, 0 );
 
-	wxBoxSizer *szmain = new wxBoxSizer( wxHORIZONTAL );
-	szmain->Add( szdoc, 0, wxALL|wxEXPAND, 2 );
-	//szmain->Add( new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL ), 0, wxALL|wxEXPAND, 1 );
-	szmain->Add( szedit, 1, wxALL|wxEXPAND, 2 );
-	SetSizer( szmain );
+	SetSizer(szedit);
 		
 	m_editor->SetFocus();
 }
@@ -445,12 +438,8 @@ void EditorWindow::Open()
 							wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_CHANGE_DIR);
 
 	if (dlg.ShowModal() == wxID_OK)
-	{									
 		if (!Load( dlg.GetPath() ))
 			wxMessageBox("Could not load file:\n\n" + dlg.GetPath());
-		else
-			app_frame->AddRecent( dlg.GetPath() );
-	}
 }
 
 bool EditorWindow::Save()
@@ -505,7 +494,7 @@ bool EditorWindow::CloseDoc()
 bool EditorWindow::Write( const wxString &file )
 {
 	wxBusyInfo info( "Saving script file...");
-	wxMilliSleep( 100 );
+	wxMilliSleep( 120 );
 
 	if ( ((wxStyledTextCtrl*)m_editor)->SaveFile( file ) )
 	{

@@ -204,7 +204,7 @@ depr_sta_macrs = 1;
 // in the same way that the PVWatts service specifies the weather data
 // --> essentially, this service and PVWatts should use exactly the same
 //     method to get weather data for a location request
-var( 'file_name', 'c:/sam/2012.5.11/exelib/climate_files/TX Abilene.tm2' );
+var( 'file_name', 'c:/sam/2013.9.20/weather/TX Abilene.tm2' );
 
 var( 'system_size', sizekw );
 var( 'track_mode', track_mode );

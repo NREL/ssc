@@ -12,7 +12,7 @@ class SCFrame;
 class SCDocWin;
 class wxNotebook;
 class EditorWindow;
-class CMForm;
+class wxConfig;
 
 extern SCFrame *app_frame;
 extern wxConfig *app_config;
@@ -33,7 +33,9 @@ public:
 
 DECLARE_APP(SCApp)
 
-#define MAX_RECENT 9
+class wxMetroNotebook;
+class wxExtGridCtrl;
+
 class SCFrame : public wxFrame
 {
 public:
@@ -52,11 +54,6 @@ public:
 	void ClearLog();
 	void Log(const wxString &, bool wnl=true);
 	
-	void AddRecent(const wxString &fn);
-	void RemoveRecent(const wxString &fn);
-	void UpdateRecentMenu();
-	wxArrayString GetRecentFiles();
-	
 	static void Copy( ssc_data_t p_data, var_table *vt, bool clear_first );
 	static void Copy( var_table *vt,  ssc_data_t p_data, bool clear_first );
 
@@ -67,10 +64,17 @@ public:
 	DataView *GetDataView() { return m_dataView; }
 	var_table *GetVarTable() { return m_varTable; }
 
-	CMForm *GetCMForm() { return m_cmBrowser; }
 
 	void SetProgress( int percent, const wxString &msg = wxEmptyString );
-
+	
+	wxArrayString GetAvailableCMs();
+	void LoadCMs();
+	void SetCurrentCM( const wxString & cm ) { m_currentCM->SetStringSelection( cm ); }
+	wxString GetCurrentCM() { return m_currentCM->GetStringSelection(); }
+	void UpdateCMForm();
+	void OnRun( wxCommandEvent & );
+	void OnCMListSelect(wxCommandEvent &evt);
+	void OnCopyToClipboard(wxCommandEvent &);
 private:	
 	void WriteVarTable( wxDataOutputStream &o, var_table &vt );
 	bool ReadVarTable( wxDataInputStream &o, var_table &vt, bool clear_first );
@@ -78,33 +82,27 @@ private:
 	void UpdateUI();
 
 	void OnCommand(wxCommandEvent &evt);
-	void OnRecent(wxCommandEvent &evt);
 	void OnCloseFrame(wxCloseEvent &evt);
+	
+	wxExtGridCtrl *m_gridCM;
+	wxChoice *m_currentCM;
+	wxListBox *m_listCM;
 
 	wxStaticText *m_statusLabel;
 	wxGauge *m_progressBar;
 
-	wxMenu *m_recentMenu;
 	wxString m_currentAppDir;
 	wxString m_lastFile;
-	
-	wxString m_lastLoadTime;
 	wxString m_dllPath;
 
 	wxTextCtrl *m_txtOutput;
 
-	wxMenu *m_fileMenu, *m_scriptMenu, *m_helpMenu;
-
-	wxNotebook *m_notebook;
-	CMForm *m_cmBrowser;
+	wxMetroNotebook *m_notebook;
 	DataView *m_dataView;
 	EditorWindow *m_scriptWindow;
 
 	var_table *m_varTable;
-
-	int m_recentCount;
-	wxString m_recentFiles[MAX_RECENT];
-	
+		
 	DECLARE_EVENT_TABLE()
 };
 

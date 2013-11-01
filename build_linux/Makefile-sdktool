@@ -11,13 +11,12 @@ CFLAGS = -g -O2 -std=c++0x -I. -I$(WEXDIR)/include -I$(LKDIR) -I../ssc -I../shar
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(WEXLIB) $(LKLIB) `wx-config-3 --libs stc` `wx-config-3 --libs aui` `wx-config-3 --libs` -lm 
 
-OBJECTS  = cmform.o \
+OBJECTS  = \
 	dataview.o \
 	dllinvoke.o \
 	editvariable.o \
 	scripting.o \
-	sscdev.o \
-	statdlg.o \
+	sscdev.o
 	
 TARGET = SDKtool
 
