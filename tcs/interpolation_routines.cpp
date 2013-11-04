@@ -244,3 +244,122 @@ int Linear_Interp::hunt( int col, double x )
 	m_lastIndex = jl;
 	return max(0, min(m_rows - m_m, jl - ((m_m - 2)/2)));
 }
+
+bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
+{
+	// Initialize class member data
+	m_3axis_table = table;
+
+	int nrows = table.nrows();
+	int nlayers = table.nlayers();
+
+	if( nrows < 9 || nlayers < 3)
+		return false;
+	
+	// Find number of x values in table
+	double first_val = table.at(0,0,0);
+	int i = 1;
+	for( i; i < table.nrows(); i++ )
+		if( table.at(i,0,0) == first_val )	break;
+	m_nx = i;
+	if( m_nx < 3 )
+		return false;
+
+	// Find number of y values in table
+	m_ny = 1;
+	i = 0;
+	for( int j = 0; j < nrows - 1; j++ )
+	{
+		if( table.at(j+1,1,0) != table.at(j,1,0))
+			m_ny++;
+	}
+	if( m_ny < 3 )
+		return false;
+
+	//we already know now many z values are in the table
+	m_nz = nlayers;
+
+	// Create 1D table for x values
+	util::matrix_t<double> x_matrix( m_nx, 1, 0.0 );
+	for( int j = 0; j < m_nx; j++ )
+		x_matrix.at(j,0) = table.at( j, 0, 0);
+
+	// Create 1D table for y values
+	util::matrix_t<double> y_matrix( m_ny, 1, 0.0 );
+	for( int j = 0; j < m_ny; j++ )
+		y_matrix.at(j,0) = table.at( m_nx*j, 1, 0 );
+
+	// Create 1D table for z values
+	util::matrix_t<double> z_matrix( m_nz, 1, 0.0 );
+	for( int j=0; j<m_nz; j++)
+		z_matrix.at(j,0) = table.at( 0, 0, j);
+
+	// Set up 1D interpolation class instances for x and y values
+	int ind_var_index[1] = {0};
+	int error_index = -99;
+	if( !x_vals.Set_1D_Lookup_Table( x_matrix, ind_var_index, 1, error_index ) )
+		return false;
+	if( !y_vals.Set_1D_Lookup_Table( y_matrix, ind_var_index, 1, error_index ) )
+		return false;
+	if( !z_vals.Set_1D_Lookup_Table( z_matrix, ind_var_index, 1, error_index ) )
+		return false;
+
+	return true;
+}
+
+double Trilinear_Interp::trilinear_3D_interp( double x, double y, double z )
+{
+	
+	/* 
+	This algorithm assumes that the X and Y values are identical in each layer
+	*/
+	
+	int i_x1 = x_vals.Get_Index( 0, x );
+	int i_y1 = y_vals.Get_Index( 0, y );
+	int i_z1 = z_vals.Get_Index( 0, z );
+
+	int i_x2 = i_x1 + 1;
+	int i_y2 = i_y1 + 1;
+	int i_z2 = i_z1 + 1;
+
+	int i1 = m_nx*i_y1 + i_x1;
+	double x1 = m_3axis_table.at( i1, 0, i_z1 );
+	double y1 = m_3axis_table.at( i1, 1, i_z1 );
+	double p1 = m_3axis_table.at( i1, 3, i_z1 );
+	double q1 = m_3axis_table.at( i1, 3, i_z2 );
+
+	int i2 = m_nx*i_y2 + i_x1;
+	double x2 = m_3axis_table.at( i2, 0, i_z1 );
+	double y2 = m_3axis_table.at( i2, 1, i_z1 );
+	double p2 = m_3axis_table.at( i2, 3, i_z1 );
+	double q2 = m_3axis_table.at( i2, 3, i_z2 );
+
+	int i3 = m_nx*i_y2 + i_x2;
+	double x3 = m_3axis_table.at( i3, 0, i_z1 );
+	double y3 = m_3axis_table.at( i3, 1, i_z1 );
+	double p3 = m_3axis_table.at( i3, 3, i_z1 );
+	double q3 = m_3axis_table.at( i3, 3, i_z2 );
+	
+	int i4 = m_nx*i_y1 + i_x2;
+	double x4 = m_3axis_table.at( i4, 0, i_z1 );
+	double y4 = m_3axis_table.at( i4, 1, i_z1 );
+	double p4 = m_3axis_table.at( i4, 3, i_z1 );
+	double q4 = m_3axis_table.at( i4, 3, i_z2 );
+	
+	double z1 = m_3axis_table.at( 0, 2, i_z1 );
+	double z2 = m_3axis_table.at( 0, 2, i_z2 );
+
+
+	double x_frac = (x - x1)/(x4 - x1);
+	double y_frac = (y - y1)/(y2 - y1);
+	double z_frac = (z - z1)/(z2 - z1);
+	if(z2 - z1 == 0.) z_frac = 1.;	//Check for index separation
+
+	double
+		m1 = (1.0-x_frac)*(1.0-y_frac),
+		m2 = (1.0-x_frac)*y_frac,
+		m3 = x_frac*y_frac,
+		m4 = x_frac*(1.0-y_frac);
+
+	return (m1*p1 + m2*p2 + m3*p3 + m4*p4) * z_frac + (m1*q1 + m2*q2 + m3*q3 + m4*q4) * (1.0 - z_frac);
+}

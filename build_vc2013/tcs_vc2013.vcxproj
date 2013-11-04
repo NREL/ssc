@@ -19,9 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\tcs\atmospheric_aod.cpp" />
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
+    <ClCompile Include="..\tcs\Heliostat_AzElAod.cpp" />
     <ClCompile Include="..\tcs\htf_props.cpp" />
     <ClCompile Include="..\tcs\interpolation_routines.cpp" />
     <ClCompile Include="..\tcs\ngcc_powerblock.cpp" />
@@ -63,6 +65,7 @@
     <ClCompile Include="..\tcs\weatherreader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\tcs\atmospheric_aod.h" />
     <ClInclude Include="..\tcs\cavity_calcs.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\htf_props.h" />

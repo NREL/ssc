@@ -30,6 +30,8 @@ TCS_DEFINE_TYPE( sam_iscc_powerblock )
 TCS_DEFINE_TYPE( sam_iscc_parasitics )
 TCS_DEFINE_TYPE( sam_mw_lf_type261_Wnet )
 TCS_DEFINE_TYPE( tou_translator )
+TCS_DEFINE_TYPE( atmospheric_aod )
+TCS_DEFINE_TYPE( Heliostat3DInterp )
 
 TCS_BEGIN_EXPORT()
 	TCS_EXPORT_TYPE( weatherreader )
@@ -62,6 +64,8 @@ TCS_BEGIN_EXPORT()
 	TCS_EXPORT_TYPE( sam_iscc_parasitics )
 	TCS_EXPORT_TYPE( sam_mw_lf_type261_Wnet )
 	TCS_EXPORT_TYPE( tou_translator )
+	TCS_EXPORT_TYPE( atmospheric_aod )
+	TCS_EXPORT_TYPE( Heliostat3DInterp )
 TCS_END_EXPORT()
 
 

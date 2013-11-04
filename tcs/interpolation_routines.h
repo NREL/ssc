@@ -50,4 +50,32 @@ private:
 	Linear_Interp y_vals;
 };
 
+class Trilinear_Interp
+{
+	// 4 columns by X rows
+	// 0 column: x value - [1..nx, 1..nx, 1..nx, -> repeat ny times ] 
+	// 1 column: y value - [1..1 (nx times), 2..2 (nx times), ... , ny..ny (nx times) ] 
+	// 2 column: z value - [1..1 (nx*ny) times]
+	// 3 column: result value	[(nx*ny) values]
+	// Repeat list for each layer
+
+public:
+	bool Set_3D_Lookup_Table( const util::block_t<double> &table );
+	double trilinear_3D_interp( double x, double y, double z);
+
+private:
+	util::block_t<double> m_3axis_table;
+
+	int 
+		m_nx,
+		m_ny,
+		m_nz;
+
+	Linear_Interp x_vals;
+	Linear_Interp y_vals;
+	Linear_Interp z_vals;
+
+};
+
+
 #endif

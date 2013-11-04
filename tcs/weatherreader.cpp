@@ -44,6 +44,7 @@ enum {	P_FILENAME,
 		O_LON,
 		O_TZ,
 		O_SHIFT,
+		O_ELEV,
 
 		// debugging outputs
 		D_POABEAM,
@@ -87,6 +88,7 @@ tcsvarinfo weatherreader_variables[] = {
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_LON,  "lon",       "Longitude", "DDD",    "", "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_TZ,  "tz",       "Timezone", "DDD",    "", "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_SHIFT,    "shift",       "shift in longitude from local standard meridian", "deg", "Solar", "", "" },
+	{ TCS_OUTPUT,  TCS_NUMBER,   O_ELEV,     "elev",        "Site elevation",                       "m",       "Meteo", "",     "" },
 
 	{ TCS_DEBUG,   TCS_NUMBER,   D_POABEAM,  "poa_beam",    "Plane-of-array beam irradiance",       "W/m2",    "Irrad", "",     "" },
 	{ TCS_DEBUG,   TCS_NUMBER,   D_POADIFF,  "poa_diff",    "Plane-of-array diffuse irradiance",    "W/m2",    "Irrad", "",     "" },
@@ -194,6 +196,7 @@ public:
 		value( O_LON, m_wf.lon );
 		value( O_TZ, m_wf.tz );
 		value( O_SHIFT, (m_wf.lon - m_wf.tz*15.0));
+		value( O_ELEV, m_wf.elev );
 
 		value( D_POABEAM, poa[0] );
 		value( D_POADIFF, poa[1] );
