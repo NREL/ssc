@@ -2,6 +2,7 @@
 #include "tcstype.h"
 #include "htf_props.h"
 #include "sam_csp_util.h"
+#include "ngcc_powerblock.h"
 
 
 enum{	//Parameters
@@ -25,6 +26,8 @@ enum{	//Parameters
 		P_rec_qf_delay,
 		P_m_dot_htf_max,
 		P_A_sf,
+		P_IS_DIRECT_ISCC,
+		P_CYCLE_CONFIG,
 		P_fluxmap_angles,
 		P_fluxmap,       
 
@@ -90,6 +93,8 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_rec_qf_delay,		"rec_qf_delay",		"Energy-based receiver startup delay (fraction of rated thermal power)",	"",			"", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_m_dot_htf_max,	"m_dot_htf_max",	"Maximum receiver mass flow rate",											"kg/hr",	"", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_A_sf,				"A_sf",				"Solar Field Area",                                                         "m^2",      "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_IS_DIRECT_ISCC,   "is_direct_iscc",   "Is receiver directly connected to an iscc power block",                    "-",        "", "", "-999"},
+	{TCS_PARAM, TCS_NUMBER, P_CYCLE_CONFIG,     "cycle_config",     "Configuration of ISCC power cycle",                                        "-",        "", "", "1"},
 	{TCS_PARAM, TCS_MATRIX, P_fluxmap_angles,   "fluxmap_angles",   "Matrix containing zenith and azimuth angles for flux maps",                "-",        "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided", "", "" },
 	{TCS_PARAM, TCS_MATRIX, P_fluxmap,          "fluxmap",          "Matrix containing flux map for various solar positions",                   "-",        "", "", "" },
 
@@ -138,6 +143,8 @@ private:
 	HTFProperties field_htfProps;		// Instance of HTFProperties class for field HTF
 	HTFProperties tube_material;		// Instance of HTFProperties class for receiver tube material
 	HTFProperties ambient_air;			// Instance of HTFProperties class for ambient air
+
+	ngcc_power_cycle cycle_calcs;
 
 	int m_n_panels;	
 	double m_d_rec;
@@ -207,6 +214,15 @@ private:
 	double m_LoverD;
 	double m_RelRough;
 
+	// ISCC-specific
+	bool m_is_iscc;
+	int m_cycle_config;
+	double m_T_amb_low;
+	double m_T_amb_high;
+	double m_P_amb_low;
+	double m_P_amb_high;
+	double m_q_iscc_max;
+
 public:
 	sam_mw_pt_type222( tcscontext *cst, tcstypeinfo *ti)
 			: tcstypeinterface( cst, ti)
@@ -260,6 +276,16 @@ public:
 		m_m_mixed = std::numeric_limits<double>::quiet_NaN();
 		m_LoverD = std::numeric_limits<double>::quiet_NaN();
 		m_RelRough = std::numeric_limits<double>::quiet_NaN();
+
+		m_is_iscc = false;
+		m_cycle_config = 1;
+
+		m_T_amb_low = std::numeric_limits<double>::quiet_NaN(); 
+		m_T_amb_high = std::numeric_limits<double>::quiet_NaN();
+		m_P_amb_low = std::numeric_limits<double>::quiet_NaN(); 
+		m_P_amb_high = std::numeric_limits<double>::quiet_NaN();
+
+		m_q_iscc_max = std::numeric_limits<double>::quiet_NaN();
 		
 	}
 
@@ -466,6 +492,20 @@ public:
 		m_LoverD = m_h_rec/m_id_tube;
 		m_RelRough = (4.5e-5)/m_id_tube;	//[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
 
+		// Are we modeling a direct ISCC case?
+		m_is_iscc = value(P_IS_DIRECT_ISCC) == 1;
+
+		// If so, get cycle information
+		if( m_is_iscc )
+		{
+			// Set cycle configuration in class
+			m_cycle_config = value(P_CYCLE_CONFIG);
+			cycle_calcs.set_cycle_config(m_cycle_config);
+
+			// Get table limits
+			cycle_calcs.get_table_range(m_T_amb_low, m_T_amb_high, m_P_amb_low, m_P_amb_high);
+		}
+
 		return 0;
 	}
 
@@ -491,7 +531,7 @@ public:
 		int night_recirc = (int) value( I_night_recirc );	//[-] Night recirculation control 0 = empty receiver, 1 = recirculate
 		double hel_stow_deploy = value( I_hel_stow_deploy );	//[deg] Solar elevation angle at which heliostats are stowed
 
-		double T_sky = CSP::skytemp( T_amb, T_dp, hour );
+		double T_sky = CSP::skytemp( T_amb, T_dp, hour );		
 
 		// Set current timestep stored values to NaN so we know that code solved for them
 		m_mode = -1;
@@ -546,6 +586,21 @@ public:
 		}
 		
 		double T_coolant_prop = (T_salt_hot_target + T_salt_cold_in)/2.0;		//[K] The temperature at which the coolant properties are evaluated. Validated as constant (mjw)
+		c_p_coolant = field_htfProps.Cp(T_coolant_prop)*1000.0;					//[kJ/kg-K] Specific heat of the coolant
+
+		double m_dot_htf_max = m_m_dot_htf_max;
+		if( m_is_iscc )
+		{
+			if( ncall == 0 )
+			{
+				double T_amb_C = max(m_P_amb_low, min(m_T_amb_high, T_amb - 273.15));
+				double P_amb_bar = max(m_P_amb_low, min(m_P_amb_high, P_amb / 1.E5));
+				m_q_iscc_max = cycle_calcs.get_ngcc_data(0.0, T_amb_C, P_amb_bar, ngcc_power_cycle::E_solar_heat_max)*1.E6;	// kWth, convert from MWth
+			}
+
+			double m_dot_iscc_max = m_q_iscc_max / (c_p_coolant*(T_salt_hot_target - T_salt_cold_in));		// [kg/s]
+			m_dot_htf_max = min(m_m_dot_htf_max, m_dot_iscc_max);
+		}
 
 		double err_od = 999.0;	// Reset error before iteration
 		
@@ -766,8 +821,7 @@ public:
 						double T_wall = (m_T_s.at(i_fp,0) + m_T_panel_ave.at(i_fp,0))/2.0;				//[K] The temperature at which the conductivity of the wall is evaluated
 						double k_tube = tube_material.cond( T_wall );								//[W/m-K] The conductivity of the wall
 						double R_tube_wall = m_th_tube/(k_tube*m_h_rec*m_d_rec*pow(CSP::pi,2)/2.0/(double)m_n_panels);	//[K/W] The thermal resistance of the wall
-						// Calculations for the inside of the tube
-						c_p_coolant = field_htfProps.Cp( T_coolant_prop )*1000.0;			//[kJ/kg-K] Specific heat of the coolant
+						// Calculations for the inside of the tube						
 						double mu_coolant = field_htfProps.visc( T_coolant_prop );					//[kg/m-s] Absolute viscosity of the coolant
 						double k_coolant = field_htfProps.cond( T_coolant_prop );					//[W/m-K] Conductivity of the coolant
 						rho_coolant = field_htfProps.dens( T_coolant_prop, 1.0 );			//[kg/m^3] Density of the coolant
@@ -882,9 +936,9 @@ public:
 			double m_dot_tube = m_dot_salt/(double)m_n_t;		//[kg/s] The mass flow through each individual tube
 
 			// Limit the HTF mass flow rate to the maximum, if needed
-			if( (m_dot_salt_tot > m_m_dot_htf_max) || m_itermode == 2 )
+			if( (m_dot_salt_tot > m_dot_htf_max) || m_itermode == 2 )
 			{
-				err_od = (m_dot_salt_tot - m_m_dot_htf_max)/m_m_dot_htf_max;
+				err_od = (m_dot_salt_tot - m_dot_htf_max)/m_dot_htf_max;
 				if( err_od < m_tol_od )
 				{
 					m_itermode = 1;
@@ -893,7 +947,7 @@ public:
 				}
 				else
 				{
-					m_od_control = m_od_control*pow( (m_m_dot_htf_max/m_dot_salt_tot), 0.8);	//[-] Adjust the over-design defocus control by modifying the current value
+					m_od_control = m_od_control*pow( (m_dot_htf_max/m_dot_salt_tot), 0.8);	//[-] Adjust the over-design defocus control by modifying the current value
 					m_itermode = 2;
 					rec_is_defocusing = true;
 					// GOTO 15
