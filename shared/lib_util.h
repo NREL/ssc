@@ -473,7 +473,7 @@ namespace util
 		{
 			if (this != &rhs)
 			{
-				resize( rhs.nlayers(), rhs.nrows(), rhs.ncols() );
+				resize(rhs.nrows(), rhs.ncols(), rhs.nlayers() );
 				size_t nn = n_layers*n_rows*n_cols;
 				for (size_t i=0;i<nn;i++)
 					t_array[i] = rhs.t_array[i];
