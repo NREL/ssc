@@ -26,6 +26,7 @@ OBJECTS = \
 	cmod_geothermalui.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
+	cmod_pvwattsfrompoa.o \
 	cmod_annualoutput.o \
 	cmod_test_irr.o \
 	cmod_pv6parmod.o \
