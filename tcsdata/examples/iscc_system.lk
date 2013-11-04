@@ -193,6 +193,10 @@ bop_par_f = 1;
 bop_par = 0;
 pb_fixed_par = 0.0055;
 
+// ISCC-specific inputs
+is_iscc = 1;
+cycle_config = 1;
+
 // Set heliostat field parameters
 set_value( hel_field, "eta_map", eta_field_map );
 set_value( hel_field, "n_zen", num_zen );
@@ -229,6 +233,8 @@ set_value( receiver, "rec_su_delay", rec_su_delay );
 set_value( receiver, "rec_qf_delay", rec_qf_delay );
 set_value( receiver, "m_dot_htf_max", Rec_HTF_max_flow );
 set_value( receiver, "A_sf", A_sf );
+set_value( receiver, "is_direct_iscc", is_iscc );
+set_value( receiver, "cycle_config", cycle_config );
 set_value( receiver, "fluxmap_angles", arr_sol_pos);
 set_value( receiver, "fluxmap", arr_flux);
 
