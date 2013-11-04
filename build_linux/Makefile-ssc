@@ -27,6 +27,7 @@ OBJECTS = \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
 	cmod_annualoutput.o \
+	cmod_pvwattsfrompoa.o \
 	cmod_test_irr.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
