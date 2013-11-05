@@ -234,7 +234,7 @@ public:
 	{
 
 		double Qsf = value(I_Qsf);
-		int TOUperiod = (int)value(I_TOUPeriod)-1;
+		int TOUperiod = (int)value(I_TOUPeriod)-1; // control value between 1 & 9, have to change to 0-8 for array index
 		double TnkHL = value(I_TnkHL);
 		double PTSMax = value(I_PTSmax);
 		double PFSMAX = value(I_PFSmax);
