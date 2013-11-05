@@ -68,7 +68,7 @@ enum {
 	P_t_ch_out_max,
 	P_nodes,
 	P_f_tc_cold,
-	P_TOU_schedule,
+	//P_TOU_schedule,
 	
 	//Inputs
 	I_I_bn,
@@ -80,6 +80,8 @@ enum {
 	I_m_pb_demand,
 	I_q_startup,
 	I_dnifc,
+	I_TOUPeriod,
+
 
 	//Outputs
 	O_defocus,
@@ -119,63 +121,63 @@ enum {
 	N_MAX };
 	
 tcsvarinfo sam_mw_trough_type251_variables[] = {
-	// vartype,        datatype,        index,                name,                label,                                                    units            meta    group   default_value
-	// PARAMETERS
-	{ TCS_PARAM,    TCS_NUMBER,        P_field_fl,           "field_fluid",        "Material number for the collector field",                "-",            "",        "",        ""},
-	{ TCS_PARAM,    TCS_MATRIX,        P_field_fl_props,     "field_fl_props",      "User defined field fluid property data",              "-",             "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},			
-	{ TCS_PARAM,    TCS_NUMBER,        P_store_fl,           "store_fluid",        "Material number for storage fluid",                    "-",            "",        "",        ""},
-	{ TCS_PARAM,    TCS_MATRIX,        P_store_fl_props,     "user_fluid",        "User defined fluid property data",                        "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
-	{ TCS_PARAM,    TCS_NUMBER,        P_tshours,            "tshours",            "Equivalent full-load thermal storage hours",            "hr",            "",        "",        ""},            
-    { TCS_PARAM,    TCS_NUMBER,        P_is_hx,              "is_hx",            "1=yes, 0=no"                                            "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_dt_hot,             "dt_hot",            "Hot side HX approach temp",                            "C",            "",        "",        ""},    
-    { TCS_PARAM,    TCS_NUMBER,        P_dt_cold,            "dt_cold",            "Cold side HX approach temp",                            "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_hx_config,          "hx_config",        "HX configuration",                                        "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_q_max_aux,          "q_max_aux",        "Max heat rate of auxiliary heater",                    "MWt",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_T_set_aux,          "T_set_aux",        "Aux heater outlet temp set point",                        "C",            "",        "",        ""},    
-    { TCS_PARAM,    TCS_NUMBER,        P_V_tank_hot_ini,     "V_tank_hot_ini",    "Initial hot tank fluid volume",                        "m3",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_ini,     "T_tank_hot_ini",    "Initial hot tank fluid temperature",                    "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_T_tank_cold_ini,    "T_tank_cold_ini",    "Initial cold tank fluid tmeperature",                    "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_vol_tank,           "vol_tank",            "Total tank volume, including unusable HTF at bottom",    "m3",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_h_tank,             "h_tank",            "Total height of tank (height of HTF when tank is full","m",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_h_tank_min,         "h_tank_min",        "Minimum allowable HTF height in storage tank",            "m",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_u_tank,             "u_tank",            "Loss coefficient from the tank",                        "W/m2-K",        "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_tank_pairs,         "tank_pairs",        "Number of equivalent tank pairs",                        "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_cold_tank_Thtr,     "cold_tank_Thtr",    "Minimum allowable cold tank HTF temp",                    "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_hot_tank_Thtr,      "hot_tank_Thtr",    "Minimum allowable hot tank HTF temp",                    "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_tank_max_heat,      "tank_max_heat",    "Rated heater capacity for tank heating",                "MW",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_T_field_in_des,     "T_field_in_des",    "Field design inlet temperature",                        "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_T_field_out_des,    "T_field_out_des",    "Field design outlet temperature",                        "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_q_pb_design,        "q_pb_design",        "Design heat input to power block",                        "MWt",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_W_pb_design,        "W_pb_design",        "Rated plant capacity",                                    "MWe",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_cycle_max_frac,     "cycle_max_frac",    "Maximum turbine over design operation fraction",        "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_cycle_cutoff_frac,  "cycle_cutoff_frac","Minimum turbine operation fraction before shutdown",    "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_solarm,             "solarm",            "Solar Multiple",                                        "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",        "Pumping power to move 1kg of HTF through PB loop",        "kW/kg",        "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",    "Pumping power to move 1kg of HTF through tes loop",    "kW/kg",        "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",        "Fraction of rated gross power constantly consumed",    "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",        "Coefficients for balance of plant parasitics calcs",    "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",        "Coefficients for auxiliary heater parasitics calcs",    "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_T_startup,          "T_startup",        "Startup temperature",                                    "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_fossil_mode,        "fossil_mode",        "Fossil backup mode 1=Normal 2=Topping",                "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_fthr_ok,            "fthr_ok",            "Does the defocus control allow partial defocusing",    "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_nSCA,               "nSCA",                "Number of SCAs in a single loop",                        "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_I_bn_des,           "I_bn_des",            "Design point irradiation value",                        "W/m2",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_fc_on,              "fc_on",            "DNI forecasting enabled",                                "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_q_sby_frac,         "q_sby_frac",        "Fraction of thermal power required for standby",        "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_t_standby_init,     "t_standby_reset",    "Maximum allowable time for PB standby operation",        "hr",            "",        "",        ""},
-	{ TCS_PARAM,    TCS_NUMBER,        P_sf_type,            "sf_type",            "Solar field type, 1 = trough, 2 = tower",               "-",             "",         "",        ""},
-	{ TCS_PARAM,    TCS_NUMBER,        P_tes_type,           "tes_type",            "1=2-tank, 2=thermocline",                                "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_tslogic_a,          "tslogic_a",        "Dispatch logic without solar",                            "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_tslogic_b,          "tslogic_b",        "Dispatch logic with solar",                            "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_tslogic_c,          "tslogic_c",        "Dispatch logic for turbine load fraction",                "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_ffrac,              "ffrac",            "Fossil dispatch logic",                                "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_tc_fill,            "tc_fill",            "Thermocline fill material",                            "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_tc_void,            "tc_void",            "Thermocline void fraction",                            "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_t_dis_out_min,      "t_dis_out_min",    "Min allowable hot side outlet temp during discharge",    "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_t_ch_out_max,       "t_ch_out_max",        "Max allowable cold side outlet temp during charge",    "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_nodes,              "nodes",            "Nodes modeled in the flow path",                        "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_f_tc_cold,          "f_tc_cold",        "0=entire tank is hot, 1=entire tank is cold",            "-",            "",        "",        ""},
-	{ TCS_PARAM,    TCS_ARRAY,		   P_TOU_schedule,       "TOU_schedule",     "Annual hourly time-of-use schedule",                      "-",           "",        "",
+	// vartype,        datatype,        index,                name,                  label,                                                    units            meta    group   default_value
+	// PARAMETERS																     
+	{ TCS_PARAM,    TCS_NUMBER,        P_field_fl,           "field_fluid",          "Material number for the collector field",                 "-",            "",        "",        ""},
+	{ TCS_PARAM,    TCS_MATRIX,        P_field_fl_props,     "field_fl_props",       "User defined field fluid property data",                  "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},			
+	{ TCS_PARAM,    TCS_NUMBER,        P_store_fl,           "store_fluid",          "Material number for storage fluid",                       "-",            "",        "",        ""},
+	{ TCS_PARAM,    TCS_MATRIX,        P_store_fl_props,     "user_fluid",           "User defined fluid property data",                        "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,        P_tshours,            "tshours",              "Equivalent full-load thermal storage hours",              "hr",           "",        "",        ""},            
+    { TCS_PARAM,    TCS_NUMBER,        P_is_hx,              "is_hx",                "1=yes, 0=no"                                              "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_dt_hot,             "dt_hot",               "Hot side HX approach temp",                               "C",            "",        "",        ""},    
+    { TCS_PARAM,    TCS_NUMBER,        P_dt_cold,            "dt_cold",              "Cold side HX approach temp",                              "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_hx_config,          "hx_config",            "HX configuration",                                        "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_q_max_aux,          "q_max_aux",            "Max heat rate of auxiliary heater",                       "MWt",          "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_set_aux,          "T_set_aux",            "Aux heater outlet temp set point",                        "C",            "",        "",        ""},    
+    { TCS_PARAM,    TCS_NUMBER,        P_V_tank_hot_ini,     "V_tank_hot_ini",       "Initial hot tank fluid volume",                           "m3",           "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_ini,     "T_tank_hot_ini",       "Initial hot tank fluid temperature",                      "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_tank_cold_ini,    "T_tank_cold_ini",      "Initial cold tank fluid tmeperature",                     "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_vol_tank,           "vol_tank",             "Total tank volume, including unusable HTF at bottom",     "m3",           "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_h_tank,             "h_tank",               "Total height of tank (height of HTF when tank is full",   "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_h_tank_min,         "h_tank_min",           "Minimum allowable HTF height in storage tank",            "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_u_tank,             "u_tank",               "Loss coefficient from the tank",                          "W/m2-K",       "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_tank_pairs,         "tank_pairs",           "Number of equivalent tank pairs",                         "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_cold_tank_Thtr,     "cold_tank_Thtr",       "Minimum allowable cold tank HTF temp",                    "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_hot_tank_Thtr,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                     "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_tank_max_heat,      "tank_max_heat",        "Rated heater capacity for tank heating",                  "MW",           "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_field_in_des,     "T_field_in_des",       "Field design inlet temperature",                          "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_field_out_des,    "T_field_out_des",      "Field design outlet temperature",                         "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_q_pb_design,        "q_pb_design",          "Design heat input to power block",                        "MWt",          "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_W_pb_design,        "W_pb_design",          "Rated plant capacity",                                    "MWe",          "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_cycle_max_frac,     "cycle_max_frac",       "Maximum turbine over design operation fraction",          "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_cycle_cutoff_frac,  "cycle_cutoff_frac",    "Minimum turbine operation fraction before shutdown",      "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_solarm,             "solarm",               "Solar Multiple",                                          "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",        "kW/kg",        "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",       "kW/kg",        "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",         "Fraction of rated gross power constantly consumed",       "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",            "Coefficients for balance of plant parasitics calcs",      "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",            "Coefficients for auxiliary heater parasitics calcs",      "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_startup,          "T_startup",            "Startup temperature",                                     "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_fossil_mode,        "fossil_mode",          "Fossil backup mode 1=Normal 2=Topping",                   "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_fthr_ok,            "fthr_ok",              "Does the defocus control allow partial defocusing",       "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_nSCA,               "nSCA",                 "Number of SCAs in a single loop",                         "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_I_bn_des,           "I_bn_des",             "Design point irradiation value",                          "W/m2",         "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_fc_on,              "fc_on",                "DNI forecasting enabled",                                 "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_q_sby_frac,         "q_sby_frac",           "Fraction of thermal power required for standby",          "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_t_standby_init,     "t_standby_reset",      "Maximum allowable time for PB standby operation",         "hr",           "",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,        P_sf_type,            "sf_type",              "Solar field type, 1 = trough, 2 = tower",                 "-",            "",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,        P_tes_type,           "tes_type",             "1=2-tank, 2=thermocline",                                 "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_tslogic_a,          "tslogic_a",            "Dispatch logic without solar",                            "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_tslogic_b,          "tslogic_b",            "Dispatch logic with solar",                               "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_tslogic_c,          "tslogic_c",            "Dispatch logic for turbine load fraction",                "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_ffrac,              "ffrac",                "Fossil dispatch logic",                                   "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_tc_fill,            "tc_fill",              "Thermocline fill material",                               "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_tc_void,            "tc_void",              "Thermocline void fraction",                               "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_t_dis_out_min,      "t_dis_out_min",        "Min allowable hot side outlet temp during discharge",     "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_t_ch_out_max,       "t_ch_out_max",         "Max allowable cold side outlet temp during charge",       "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_nodes,              "nodes",                "Nodes modeled in the flow path",                          "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_f_tc_cold,          "f_tc_cold",            "0=entire tank is hot, 1=entire tank is cold",             "-",            "",        "",        ""},
+  /*{ TCS_PARAM,    TCS_ARRAY,		   P_TOU_schedule,       "TOU_schedule",     "Annual hourly time-of-use schedule",                      "-",           "",        "",
         "5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,"
         "5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,"
         "3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,"
@@ -264,54 +266,55 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
         "5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,"
         "3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,"
         "4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4"
-		},
+		},*/
 
     // INPUTS
-    { TCS_INPUT,    TCS_NUMBER,        I_I_bn,               "I_bn",                "Direct beam irradiance",                                "W/m2",    "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_m_dot_field,        "m_dot_field",        "Mass flow rate from the field",                            "kg/hr",        "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_m_dot_htf_ref,      "m_dot_htf_ref",    "Reference HTF flow rate at design conditions",            "kg/hr",        "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_T_field_out,        "T_field_out",        "HTF temperature from the field",                        "C",            "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_T_pb_out,           "T_pb_out",            "Fluid temperature from the power block",                "C",            "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_T_amb,              "T_amb",            "Ambient temperature",                                    "C",            "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_m_pb_demand,        "m_pb_demand",        "Demand htf flow from the PB",                            "kg/hr",        "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_q_startup,          "q_startup",        "Startup energy reported by the collector field",        "MWt",            "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_dnifc,              "dnifc",            "Forecast DNI",                                            "W/m2",            "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_I_bn,               "I_bn",                 "Direct beam irradiance",                                  "W/m2",         "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_m_dot_field,        "m_dot_field",          "Mass flow rate from the field",                           "kg/hr",        "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_m_dot_htf_ref,      "m_dot_htf_ref",        "Reference HTF flow rate at design conditions",            "kg/hr",        "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_T_field_out,        "T_field_out",          "HTF temperature from the field",                          "C",            "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_T_pb_out,           "T_pb_out",             "Fluid temperature from the power block",                  "C",            "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_T_amb,              "T_amb",                "Ambient temperature",                                     "C",            "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_m_pb_demand,        "m_pb_demand",          "Demand htf flow from the PB",                             "kg/hr",        "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_q_startup,          "q_startup",            "Startup energy reported by the collector field",          "MWt",          "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_dnifc,              "dnifc",                "Forecast DNI",                                            "W/m2",         "",        "",        ""},
+	{ TCS_INPUT,    TCS_NUMBER,        I_TOUPeriod,          "TOUPeriod",            "The time-of-use period",                                  "",             "",        "",        ""},
 
     // OUTPUTS
-    { TCS_OUTPUT,    TCS_NUMBER,        O_defocus,           "defocus",            "Absolute defocus",                                        "-",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,		O_standby,           "standby_control",    "Standby control flag",                                    "-",            "",        "",        ""},
-    { TCS_OUTPUT,    TCS_NUMBER,        O_m_dot_pb,          "m_dot_pb",           "Mass flow rate of HTF to PB",                             "kg/hr",        "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_T_pb_in,           "T_pb_in",            "HTF temperature to power block",                          "C",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_T_field_in,        "T_field_in",         "HTF temperature into collector field header",             "C",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_charge_field,      "m_dot_charge_field", "Mass flow rate on field side of HX",                      "kg/hr",        "",        "",        ""}, 	
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_charge_tank,       "m_dot_discharge_tank","Mass flow rate on storage side of HX",                   "kg/hr",        "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_Ts_hot,            "Ts_hot",             "Hot HTF exiting storage HX",                              "C",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_Ts_cold,           "Ts_cold",            "Cold HTF exiting storage HX",                             "C",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_T_tank_hot_in,     "T_tank_hot_in",      "Hot tank HTF inlet temperature",                          "C",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_T_tank_cold_in,    "T_tank_cold_in",     "Cold tank HTF inlet temperature",                         "C",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_vol_tank_hot_fin,  "vol_tank_hot_fin",   "Hot tank HTF volume at end of timestep",                  "m3",           "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_vol_tank_cold_fin, "vol_tank_cold_fin",  "Cold tank HTF volume at end of timestep",                 "m3",           "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_T_tank_hot_fin,    "T_tank_hot_fin",     "Hot tank HTF temperature at end of timestep",             "K",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_T_tank_cold_fin,   "T_tank_cold_fin",    "Cold tank HTF temperature at end of timestep",            "K",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_q_par_fp,          "tank_fp_par",        "Total parasitic power required for tank freeze protect.", "MWe",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_m_dot_aux,         "m_dot_aux",          "Auxiliary heater mass flow rate",                         "kg/hr",        "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_q_aux_heat,        "q_aux_heat",         "Thermal energy provided to fluid by aux heater",          "MWt",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_vol_tank_total,    "vol_tank_total",     "Total HTF volume in storage",                             "m3",           "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_hx_eff,            "hx_eff",             "Heat exchanger effectiveness",                            "-",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_mass_tank_hot,     "mass_tank_hot",      "Mass of total fluid in the hot tank",                     "kg",           "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_mass_tank_cold,    "mass_tank_cold",     "Mass of total fluid in the cold tank",                    "kg",           "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_mass_tank_total,   "mass_tank_total",    "Total mass of fluid in tanks",                            "kg",           "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_htf_pump_power,    "htf_pump_power",     "Pumping power for storage, power block loops",            "MWe",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_bop_par,           "bop_par",            "Parasitic power as a function of power block load",       "MWe",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_fixed_par,         "fixed_par",          "Fixed parasitic power losses - every hour of operation",  "MWe",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_aux_par,           "aux_par",            "Parasitic power associated with auxiliary heater",        "MWe",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_q_pb,              "q_pb",               "Thermal energy to the power block",                       "MWt",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_tank_losses,       "tank_losses",        "Thermal losses from tank",                                "MWt",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_q_to_tes,          "q_to_tes",           "Thermal energy into storage",                             "MWt",          "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_mode,              "mode",               "Operation mode",                                          "-",            "",        "",        ""},
-	{ TCS_OUTPUT,    TCS_NUMBER,        O_TOU,               "TOU",                "Time of use period",                                      "-",            "",        "",        ""},
-
-    { TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
+    { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,	       O_standby,            "standby_control",      "Standby control flag",                                    "-",            "",        "",        ""},
+    { TCS_OUTPUT,   TCS_NUMBER,        O_m_dot_pb,           "m_dot_pb",             "Mass flow rate of HTF to PB",                             "kg/hr",        "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_pb_in,            "T_pb_in",              "HTF temperature to power block",                          "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_field_in,         "T_field_in",           "HTF temperature into collector field header",             "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_charge_field,       "m_dot_charge_field",   "Mass flow rate on field side of HX",                      "kg/hr",        "",        "",        ""}, 	
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_charge_tank,        "m_dot_discharge_tank", "Mass flow rate on storage side of HX",                    "kg/hr",        "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_Ts_hot,             "Ts_hot",               "Hot HTF exiting storage HX",                              "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_Ts_cold,            "Ts_cold",              "Cold HTF exiting storage HX",                             "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_tank_hot_in,      "T_tank_hot_in",        "Hot tank HTF inlet temperature",                          "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_tank_cold_in,     "T_tank_cold_in",       "Cold tank HTF inlet temperature",                         "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_vol_tank_hot_fin,   "vol_tank_hot_fin",     "Hot tank HTF volume at end of timestep",                  "m3",           "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_vol_tank_cold_fin,  "vol_tank_cold_fin",    "Cold tank HTF volume at end of timestep",                 "m3",           "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_tank_hot_fin,     "T_tank_hot_fin",       "Hot tank HTF temperature at end of timestep",             "K",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_tank_cold_fin,    "T_tank_cold_fin",      "Cold tank HTF temperature at end of timestep",            "K",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_par_fp,           "tank_fp_par",          "Total parasitic power required for tank freeze protect.", "MWe",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_m_dot_aux,          "m_dot_aux",            "Auxiliary heater mass flow rate",                         "kg/hr",        "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_aux_heat,         "q_aux_heat",           "Thermal energy provided to fluid by aux heater",          "MWt",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_vol_tank_total,     "vol_tank_total",       "Total HTF volume in storage",                             "m3",           "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_hx_eff,             "hx_eff",               "Heat exchanger effectiveness",                            "-",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_mass_tank_hot,      "mass_tank_hot",        "Mass of total fluid in the hot tank",                     "kg",           "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_mass_tank_cold,     "mass_tank_cold",       "Mass of total fluid in the cold tank",                    "kg",           "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_mass_tank_total,    "mass_tank_total",      "Total mass of fluid in tanks",                            "kg",           "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_htf_pump_power,     "htf_pump_power",       "Pumping power for storage, power block loops",            "MWe",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_bop_par,            "bop_par",              "Parasitic power as a function of power block load",       "MWe",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_fixed_par,          "fixed_par",            "Fixed parasitic power losses - every hour of operation",  "MWe",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_aux_par,            "aux_par",              "Parasitic power associated with auxiliary heater",        "MWe",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_pb,               "q_pb",                 "Thermal energy to the power block",                       "MWt",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_tank_losses,        "tank_losses",          "Thermal losses from tank",                                "MWt",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_to_tes,           "q_to_tes",             "Thermal energy into storage",                             "MWt",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_mode,               "mode",                 "Operation mode",                                          "-",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_TOU,                "TOU",                  "Time of use period",                                      "-",            "",        "",        ""},
+																				     
+    { TCS_INVALID,  TCS_INVALID,       N_MAX,                0,                      0,                                                         0,                0,        0,        0 }
 
 };
 
@@ -369,8 +372,8 @@ private:
 	double * tslogic_b;
 	double * tslogic_c;
 	double * ffrac;
-	double * TOU_schedule;
-	int nTOU_schedule;
+	//double * TOU_schedule;
+	//int nTOU_schedule;
 
 	//Thermocline Parameters
 	int tc_fill;
@@ -471,7 +474,7 @@ public:
 		tslogic_b	= 0;
 		tslogic_c	= 0;
 		ffrac		= 0;
-		TOU_schedule = NULL;
+		//TOU_schedule = NULL;
 
 		//Thermocline Parameters
 		tc_fill			= -1;
@@ -632,7 +635,7 @@ public:
 				return -1;
 			}
 		numtou = l_tslogic_a;
-		TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
+		//TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
 
 		//Thermocline Parameters
 		tc_fill		= (int) value(P_tc_fill);			//[-]
@@ -734,6 +737,7 @@ public:
 		double T_amb		= value(I_T_amb)+273.15;		// [K] convert from [C]
 		double m_pb_demand	= value(I_m_pb_demand)/3600.;	// [kg/s] convert from [kg/hr]
 		double q_startup	= value(I_q_startup);			// [MWt]
+		int touperiod       = (int)value(I_TOUPeriod) - 1; // control value between 1 & 9, have to change to 0-8 for array index
 		double dnifc;		
 		if( fc_on ) 
 			dnifc = value(I_dnifc);				// [W/m2]
@@ -745,7 +749,8 @@ public:
 		if(I_bn > 1.E6) {tselect = tslogic_b;}
 		else {tselect = tslogic_a;}
 		// *************************************************************************************************
-		int touperiod = CSP::TOU_Reader(TOU_schedule, time, nTOU_schedule);
+		//int touperiod = CSP::TOU_Reader(TOU_schedule, time, nTOU_schedule);
+
 		if(touperiod < 0){
 			message("The time-of-use (TOU) schedule reader returned with an invalid value of %d.", touperiod);
 			return -1;
@@ -1143,7 +1148,7 @@ public:
 								if(tes_type == 2)	// thermocline code
 								{
 									double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9, dummy10;
-									dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8, dummy9, dummy10 = -999.9;
+									dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = dummy10 = -999.9;
 
 									thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, q_sby_storage, 0.0, f_storage, step/3600.0,
 										                   ms_disch, Ts_hot, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9, dummy10 );
