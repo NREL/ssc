@@ -44,6 +44,7 @@
     <ClCompile Include="..\ssc\cmod_tcsgeneric_solar.cpp" />
     <ClCompile Include="..\ssc\cmod_tcslinear_fresnel.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsmolten_salt.cpp" />
+    <ClCompile Include="..\ssc\cmod_tcsmslf.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_empirical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcs_iscc.cpp" />
