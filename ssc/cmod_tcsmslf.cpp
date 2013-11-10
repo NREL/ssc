@@ -112,87 +112,163 @@ static var_info _cm_vtab_tcsmslf[] = {
 	{ SSC_INPUT, 	SSC_NUMBER,	"longitude", 		"Site longitude read from weather file", 	"deg", 	"", 	"", 	"" },
 	{ SSC_INPUT, 	SSC_NUMBER,	"timezone", 		"Time zone", 	"hr", 	"", 	"", 	"" },
 
-	// Type 262 outputs
-	{ SSC_OUTPUT, 	SSC_NUMBER, "T_sys_h", 			"Solar field HTF outlet temperature", 	"C", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "m_dot_avail", 		"HTF mass flow rate from the field", 	"kg/hr", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "q_avail", 			"Thermal power produced by the field", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "DP_tot", 			"Total HTF pressure drop", 	"bar", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "W_dot_pump", 		"Required solar field pumping power", 	"MWe", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "E_fp_tot", 		"Freeze protection energy", 	"MW", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "T_sys_c", 			"Collector inlet temperature", 	"C", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "eta_optical", 		"Collector total optical efficiency", 	"none", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "EqOptEff", 		"Total solar field optical efficiency - including receiver optical losses", 	"none", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "sf_def", 			"The fraction of the solar field that's on focus", 	"none", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "m_dot_htf_tot", 	"The actual flow rate through the field..", 	"kg/hr", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "E_bal_startup", 	"Startup energy consumed", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "q_inc_sf_tot", 	"Total power incident on the field", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "q_abs_tot", 		"Total absorbed energy", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "q_loss_tot", 		"Total receiver thermal and optical losses", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "m_dot_htf", 		"Flow rate in a single loop", 	"kg/s", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "q_loss_spec_tot", 	"Field-average receiver thermal losses (convection and radiation)", 	"W/m", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "track_par_tot", 	"Parasitic electric power consumed by the tracking drives", 	"MWe", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "Pipe_hl", 			"Pipe heat loss in the hot header and the hot runner", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "q_dump", 			"Dumped thermal energy", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "phi_t", 			"Solar incidence angle in the collector transversal plane", 	"deg", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "theta_L", 			"Solar incidence angle in the collector longitudinal plane", 	"deg", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "t_loop_outlet", 	"HTF temperature immediately subsequent to the loop outlet", 	"C", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "c_htf_ave", 		"Average solar field specific heat", 	"J/kg-K", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "q_field_delivered","Total solar field thermal power delivered", 	"MWt", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "eta_thermal", 		"Solar field thermal efficiency (power out/ANI)", 	"none", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "E_loop_accum", 	"Accumulated internal energy change rate in the loops ONLY", 	"MWht", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "E_hdr_accum", 		"Accumulated internal energy change rate in the headers/SGS", 	"MWht", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "E_tot_accum", 		"Total accumulated internal energy change rate", 	"MWht", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_NUMBER, "E_field", 			"Accumulated internal energy in the entire solar field", 	"MWht", 	"", 	"", 	"" },
-	{ SSC_OUTPUT, 	SSC_STRING, "piping_summary", 	"String containing description of field piping design", 	"none", 	"", 	"", 	"" },
+
+	//   controller (type 251) inputs
+	//   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
+	{ SSC_INPUT, SSC_NUMBER, "field_fluid", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "field_fl_props", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "store_fluid", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tshours", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "is_hx", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "dt_hot", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "dt_cold", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "hx_config", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "q_max_aux", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_set_aux", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "V_tank_hot_ini", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_tank_hot_ini", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_tank_cold_ini", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "vol_tank", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "h_tank", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "h_tank_min", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "u_tank", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tank_pairs", "Label", "", "", "controller", "*", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER, "cold_tank_Thtr", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "hot_tank_Thtr", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tank_max_heat", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_field_in_des", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_field_out_des", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "q_pb_design", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "W_pb_design", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "cycle_max_frac", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "cycle_cutoff_frac", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "solarm", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "pb_pump_coef", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tes_pump_coef", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "pb_fixed_par", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "bop_array", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "aux_array", "Label", "", "", "controller", "*", "", "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "T_startup",         "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
+	{ SSC_INPUT, SSC_NUMBER, "fossil_mode", "Label", "", "", "controller", "*", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER, "fthr_ok", "Label", "", "", "controller", "*", "INTEGER", "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "nSCA",              "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "I_bn_des",          "Label",                                                          "",             "",             "controller",    "*",                       "",                      "" },
+	{ SSC_INPUT, SSC_NUMBER, "fc_on", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "q_sby_frac", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "t_standby_reset", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "sf_type", "Solar field type, 1 = trough, 2 = tower", "-", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tes_type", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "tslogic_a", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "tslogic_b", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "tslogic_c", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "ffrac", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tc_fill", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tc_void", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "t_dis_out_min", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "t_ch_out_max", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "nodes", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "f_tc_cold", "Label", "", "", "controller", "*", "", "" },
+	// controller (type 251)  initial conditions
+	{ SSC_INPUT, SSC_NUMBER, "I_bn", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_amb", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "m_dot_field", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "m_dot_htf_ref", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_field_out", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_pb_out_init", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "m_pb_demand", "Label", "", "", "controller", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "q_startup", "Label", "", "", "controller", "*", "", "" },
 
 
-	// Type 234 (powerblock) parameters
-    { SSC_INPUT,        SSC_NUMBER,      "P_ref",             "Reference output electric power at design condition",                                 "MW",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "eta_ref",           "Reference conversion efficiency at design condition",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_hot_ref",         "Reference HTF inlet temperature at design",                                           "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_cold_ref",        "Reference HTF outlet temperature at design",                                          "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                               "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                                       "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",        "Fraction of thermal power required for standby mode",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_boil_des",        "Boiler operating pressure @ design",                                                  "bar",           "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_rh",             "Flag indicating whether reheat is used 0:no, 1:yes",                                  "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_rh_ref",          "Reheater operating pressure at design",                                               "bar",           "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_rh_hot_ref",      "Reheater design outlet temperature",                                                  "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "rh_frac_ref",       "Reheater flow fraction at design",                                                    "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                                    "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "startup_time",      "Time needed for power block startup",                                                 "hr",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "startup_frac",      "Fraction of design thermal power needed for startup",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tech_type",         "Flag indicating which coef. set to use. (1=tower,2=trough,3=user)",                   "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                                  "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",      "Condenser pressure ratio",                                                            "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_bd_frac",        "Power block blowdown steam fraction ",                                                "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",        "Minimum condenser pressure",                                                          "inHg",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",                        "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
-    { SSC_INPUT,        SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                               "none",          "",            "powerblock",     "*",                       "",                      "" },
-	// Type 234 (powerblock) inputs
-    { SSC_INPUT,        SSC_NUMBER,      "mode",              "Cycle part load control, from plant controller",                                      "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_hot",             "Hot HTF inlet temperature, from storage tank",                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "m_dot_st",          "HTF mass flow rate",                                                                  "kg/hr",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_wb",              "Ambient wet bulb temperature",                                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "demand_var",        "Control signal indicating operational mode",                                          "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "standby_control",   "Control signal indicating standby mode",                                              "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_db_pwb",          "Ambient dry bulb temperature",                                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_amb_pwb",         "Ambient pressure",                                                                    "atm",           "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "TOU",               "Current Time-of-use period",                                                          "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "relhum",            "Relative humidity of the ambient air",                                                "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "f_recSU",           "Fraction powerblock can run due to receiver startup",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dp_b",              "Pressure drop in boiler",                                                             "Pa",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dp_sh",             "Pressure drop in superheater",                                                        "Pa",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dp_rh",             "Pressure drop in reheater",                                                           "Pa",            "",            "powerblock",     "*",                       "",                      "" },
 
-    // OUTPUTS
+
+	//   powerblock (type 224) inputs
+	//   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
+	{ SSC_INPUT, SSC_NUMBER, "P_ref", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "eta_ref", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_htf_hot_ref", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_htf_cold_ref", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "dT_cw_ref", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_amb_des", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "HTF", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "q_sby_frac", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "P_boil", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "CT", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "startup_time", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "startup_frac", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "tech_type", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_approach", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_ITD_des", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "P_cond_ratio", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "pb_bd_frac", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "P_cond_min", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_pl_inc", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "F_wc", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "mode", "Label", "", "", "powerblock", "*", "", "" },
+	// powerblock (type 224) initial conditions
+	{ SSC_INPUT, SSC_NUMBER, "T_wb", "Label", "", "", "powerblock", "*", "", "" },
+	//	{ SSC_INPUT,        SSC_NUMBER,      "T_db",              "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
+	//	{ SSC_INPUT,        SSC_NUMBER,      "P_amb",             "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
+	{ SSC_INPUT, SSC_NUMBER, "rh", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_htf_hot", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "m_dot_htf_init", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "demand_var", "Label", "", "", "powerblock", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "standby_control", "Label", "", "", "powerblock", "*", "", "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "TOU",               "Label",                                                          "",             "",             "powerblock",    "*",                       "",                      "" },
+
+	//  enet calculator
+	{ SSC_INPUT, SSC_NUMBER, "eta_lhv", "Label", "", "", "enet", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "eta_tes_htr", "Label", "", "", "enet", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "fp_mode", "Label", "", "", "enet", "*", "", "" },
+
+
+	// OUTPUTS
 	// The names of the output variables should match the parameter names for the TCS units in order to signal to the TCS kernel to store the values by timestep
 
+	//weather file reader
+	{ SSC_OUTPUT, SSC_ARRAY, "beam", "Beam normal irradiance", "W/m2", "", "weather", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "hour", "Hour of Year", "", "", "weather", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "pres", "Pressure", "mbar", "", "weather", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "wspd", "Wind Speed", "m/s", "", "weather", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "solazi", "Solar Azimuth", "deg", "", "weather", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "solzen", "Solar Zenith", "deg", "", "weather", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "tdry", "Dry bulb temperature", "C", "", "weather", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "twet", "Wet bulb temperature", "C", "", "weather", "*", "LENGTH=8760", "" },
+
     // VARTYPE          DATATYPE          NAME                 LABEL                                                                                 UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
-	// Type 261 (net energy calculator) outputs
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_net",              "Net electricity generation (or usage) by the plant",                                 "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_cycle_gross",      "Electrical source - Power cycle gross output",                                       "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// Type 262 outputs
+	{ SSC_OUTPUT, SSC_NUMBER, "T_sys_h", "Solar field HTF outlet temperature", "C", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "m_dot_avail", "HTF mass flow rate from the field", "kg/hr", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "q_avail", "Thermal power produced by the field", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "DP_tot", "Total HTF pressure drop", "bar", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "W_dot_pump", "Required solar field pumping power", "MWe", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "E_fp_tot", "Freeze protection energy", "MW", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "T_sys_c", "Collector inlet temperature", "C", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "eta_optical", "Collector total optical efficiency", "none", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "EqOptEff", "Total solar field optical efficiency - including receiver optical losses", "none", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "sf_def", "The fraction of the solar field that's on focus", "none", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_tot", "The actual flow rate through the field..", "kg/hr", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "E_bal_startup", "Startup energy consumed", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "q_inc_sf_tot", "Total power incident on the field", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "q_abs_tot", "Total absorbed energy", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "q_loss_tot", "Total receiver thermal and optical losses", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "m_dot_htf", "Flow rate in a single loop", "kg/s", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "q_loss_spec_tot", "Field-average receiver thermal losses (convection and radiation)", "W/m", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "track_par_tot", "Parasitic electric power consumed by the tracking drives", "MWe", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "Pipe_hl", "Pipe heat loss in the hot header and the hot runner", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "q_dump", "Dumped thermal energy", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "phi_t", "Solar incidence angle in the collector transversal plane", "deg", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "theta_L", "Solar incidence angle in the collector longitudinal plane", "deg", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "t_loop_outlet", "HTF temperature immediately subsequent to the loop outlet", "C", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "c_htf_ave", "Average solar field specific heat", "J/kg-K", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "q_field_delivered", "Total solar field thermal power delivered", "MWt", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "eta_thermal", "Solar field thermal efficiency (power out/ANI)", "none", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "E_loop_accum", "Accumulated internal energy change rate in the loops ONLY", "MWht", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "E_hdr_accum", "Accumulated internal energy change rate in the headers/SGS", "MWht", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "E_tot_accum", "Total accumulated internal energy change rate", "MWht", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "E_field", "Accumulated internal energy in the entire solar field", "MWht", "", "", "" },
+	{ SSC_OUTPUT, SSC_STRING, "piping_summary", "String containing description of field piping design", "none", "", "", "" },
+
+
 
     var_info_invalid };
 
@@ -250,194 +326,264 @@ public:
 		}
 
 		//Add the solar field collector unit
-		int solarfield = add_unit("sam_mw_lf_type261_steam", "type 261 solarfield");
+		int solarfield = add_unit("sam_mw_lf_type262", "type 262 solarfield");
+		//Add controller unit
+		int controller = add_unit("sam_mw_trough_type251", "type 251 controller");
 		//Add direct powerblock unit
-		int powerblock = add_unit("sam_mw_type234", "type 234 powerblock");
+		int powerblock = add_unit("sam_mw_pt_type224", "type 224 powerblock");
 		//Add unit to that summarizes energy output
-		int E_net_calcs = add_unit("sam_mw_lf_type261_Wnet","type 261 enet calculator");
-
+		int enet = add_unit("sam_mw_csp_SumCalcs","type csp_SumCalcs enet calculator");
+		// Add tou translator
+		int	tou = add_unit("tou_translator", "Time of Use Translator");
 
 
 		// Now set solar field collector unit parameters
-		set_unit_value_ssc_double( solarfield, "tes_hours"); // TSHOURS );
-		set_unit_value_ssc_double( solarfield, "q_max_aux"); // q_max_aux );
-		set_unit_value_ssc_double( solarfield, "LHV_eff"); // LHV_eff );
-		set_unit_value_ssc_double( solarfield, "T_set_aux"); // T_set_aux );
-		set_unit_value_ssc_double( solarfield, "T_field_in_des"); // T_field_in_des );
-		set_unit_value_ssc_double( solarfield, "T_field_out_des"); // T_field_out_des );
-		set_unit_value_ssc_double( solarfield, "x_b_des"); // x_b_des );
-		set_unit_value_ssc_double( solarfield, "P_turb_des"); // P_turb_des );
-		set_unit_value_ssc_double( solarfield, "fP_hdr_c"); // fP_hdr_c );
-		set_unit_value_ssc_double( solarfield, "fP_sf_boil"); // fP_sf_boil );
-		set_unit_value_ssc_double( solarfield, "fP_boil_to_sh"); // fP_boil_to_SH );
-		set_unit_value_ssc_double( solarfield, "fP_sf_sh"); // fP_sf_sh );
-		set_unit_value_ssc_double( solarfield, "fP_hdr_h"); // fP_hdr_h );
-		set_unit_value_ssc_double( solarfield, "q_pb_des"); // Q_ref ); // = P_ref/eta_ref;
-		set_unit_value_ssc_double( solarfield, "W_pb_des"); // W_pb_des );
-		set_unit_value_ssc_double( solarfield, "cycle_max_fraction"); // cycle_max_fraction );
-		set_unit_value_ssc_double( solarfield, "cycle_cutoff_frac"); // cycle_cutoff_frac );
-		set_unit_value_ssc_double( solarfield, "t_sby"); // t_sby );
-		set_unit_value_ssc_double( solarfield, "q_sby_frac"); // q_sby_frac );
-		set_unit_value_ssc_double( solarfield, "solarm"); // solarm );
-		set_unit_value_ssc_double( solarfield, "PB_pump_coef"); // PB_pump_coef );
-		set_unit_value_ssc_double( solarfield, "PB_fixed_par"); // PB_fixed_par );
-		set_unit_value_ssc_array( solarfield, "bop_array"); // [BOP_parVal, BOP_parPF, BOP_par0, BOP_par1, BOP_par2] );
-		set_unit_value_ssc_array( solarfield, "aux_array"); // [Aux_parVal, Aux_parPF, Aux_par0, Aux_par1, Aux_par2] );
-		set_unit_value_ssc_double( solarfield, "T_startup"); // T_startup );
-		set_unit_value_ssc_double( solarfield, "fossil_mode"); // fossil_mode );
-		set_unit_value_ssc_double( solarfield, "I_bn_des"); // I_bn_des );
-		set_unit_value_ssc_double( solarfield, "is_sh"); // is_sh );
-		set_unit_value_ssc_double( solarfield, "is_oncethru"); // is_oncethru );
-		set_unit_value_ssc_double( solarfield, "is_multgeom"); // is_multgeom );
-		set_unit_value_ssc_double( solarfield, "nModBoil"); // nModBoil );
-		set_unit_value_ssc_double( solarfield, "nModSH"); // nModSH );
-		set_unit_value_ssc_double( solarfield, "nLoops"); // nLoops );
-		set_unit_value_ssc_double( solarfield, "eta_pump"); // eta_pump );
-		set_unit_value_ssc_double( solarfield, "latitude"); // latitude );
-		set_unit_value_ssc_double( solarfield, "theta_stow"); // theta_stow );
-		set_unit_value_ssc_double( solarfield, "theta_dep"); // theta_dep );
-		set_unit_value_ssc_double( solarfield, "m_dot_min"); // m_dot_min );
-		set_unit_value_ssc_double( solarfield, "T_field_ini"); // T_field_ini );
-		set_unit_value_ssc_double( solarfield, "T_fp"); // T_fp );
-		set_unit_value_ssc_double( solarfield, "Pipe_hl_coef"); // Pipe_hl_coef );
-		set_unit_value_ssc_double( solarfield, "SCA_drives_elec"); // SCA_drives_elec );
-		set_unit_value_ssc_double( solarfield, "ColAz"); // ColAz );
-		set_unit_value_ssc_double( solarfield, "e_startup"); // e_startup );
-		set_unit_value_ssc_double( solarfield, "T_amb_des_sf"); // T_amb_des_sf );
-		set_unit_value_ssc_double( solarfield, "V_wind_max"); // V_wind_max );
-		set_unit_value_ssc_array( solarfield, "ffrac"); // [FFRAC_1,FFRAC_2,FFRAC_3,FFRAC_4,FFRAC_5,FFRAC_6,FFRAC_7,FFRAC_8,FFRAC_9] );
-		// Set all matrix parameters
-		set_unit_value_ssc_matrix(solarfield,"A_aperture"); //A_aper);
-		set_unit_value_ssc_matrix(solarfield,"L_col"); //L_col);
-		set_unit_value_ssc_matrix(solarfield,"OptCharType"); //OptCharType);
-		set_unit_value_ssc_matrix(solarfield,"IAM_T"); //IAM_T);
-		set_unit_value_ssc_matrix(solarfield,"IAM_L"); //IAM_L);
-		set_unit_value_ssc_matrix(solarfield,"TrackingError"); //TrackingError);
-		set_unit_value_ssc_matrix(solarfield,"GeomEffects"); //GeomEffects);
-		set_unit_value_ssc_matrix(solarfield,"rho_mirror_clean"); //rho_mirror_clean);
-		set_unit_value_ssc_matrix(solarfield,"dirt_mirror"); //dirt_mirror);
-		set_unit_value_ssc_matrix(solarfield,"error"); //error);
-		set_unit_value_ssc_matrix(solarfield,"HLCharType"); //HLCharType);
-		set_unit_value_ssc_matrix(solarfield,"HL_dT"); //HL_dT);
-		set_unit_value_ssc_matrix(solarfield,"HL_W"); //HL_W);
-		set_unit_value_ssc_matrix(solarfield,"D_2"); //D_2);
-		set_unit_value_ssc_matrix(solarfield,"D_3"); //D_3);
-		set_unit_value_ssc_matrix(solarfield,"D_4"); //D_4);
-		set_unit_value_ssc_matrix(solarfield,"D_5"); //D_5);
-		set_unit_value_ssc_matrix(solarfield,"D_p"); //D_p);
-		set_unit_value_ssc_matrix(solarfield,"Rough"); //Rough);
-		set_unit_value_ssc_matrix(solarfield,"Flow_type"); //Flow_type);
-		set_unit_value_ssc_matrix(solarfield,"AbsorberMaterial"); //AbsorberMaterial);
-		set_unit_value_ssc_matrix(solarfield,"HCE_FieldFrac"); //HCE_FieldFrac);
-		set_unit_value_ssc_matrix(solarfield,"alpha_abs"); //alpha_abs);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE1"); //b_eps_HCE1);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE2"); //b_eps_HCE2);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE3"); //b_eps_HCE3);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE4"); //b_eps_HCE4);
-		if( as_integer("is_multgeom") != 0 )
-		{
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE1"); //s_eps_HCE1);
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE2"); //s_eps_HCE2);
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE3"); //s_eps_HCE3);
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE4"); //s_eps_HCE4);
-		}
-		set_unit_value_ssc_matrix(solarfield,"alpha_env"); //alpha_env);
-		set_unit_value_ssc_matrix(solarfield,"EPSILON_4"); //EPSILON_4);
-		set_unit_value_ssc_matrix(solarfield,"Tau_envelope"); //Tau_envelope);
-		set_unit_value_ssc_matrix(solarfield,"GlazingIntactIn"); //GlazingIntactIn);
-		set_unit_value_ssc_matrix(solarfield,"AnnulusGas"); //AnnulusGas);
-		set_unit_value_ssc_matrix(solarfield,"P_a"); //P_a);
-		set_unit_value_ssc_matrix(solarfield,"Design_loss"); //Design_loss);
-		set_unit_value_ssc_matrix(solarfield,"Shadowing"); //Shadowing);
-		set_unit_value_ssc_matrix(solarfield,"Dirt_HCE"); //Dirt_HCE);
-		set_unit_value_ssc_matrix(solarfield, "b_OpticalTable"); // opt_data);
-		set_unit_value_ssc_matrix(solarfield, "sh_OpticalTable"); // opt_data);
+		set_unit_value_ssc_double(solarfield, "nMod" ); // nMod);
+		set_unit_value_ssc_double(solarfield, "nRecVar" ); // 4);
+		set_unit_value_ssc_double(solarfield, "nLoops" ); // nLoops);
+		set_unit_value_ssc_double(solarfield, "eta_pump" ); // 0.85);
+		set_unit_value_ssc_double(solarfield, "HDR_rough" ); // 4.57E-05);
+		set_unit_value_ssc_double(solarfield, "theta_stow" ); // 170);
+		set_unit_value_ssc_double(solarfield, "theta_dep" ); // 10);
+		set_unit_value_ssc_double(solarfield, "FieldConfig" ); // 2);
+		set_unit_value_ssc_double(solarfield, "T_startup" ); // T_startup);
+		set_unit_value_ssc_double(solarfield, "pb_rated_cap" ); // E_gross);
+		set_unit_value_ssc_double(solarfield, "m_dot_htfmin" ); // m_dot_min);
+		set_unit_value_ssc_double(solarfield, "m_dot_htfmax" ); // m_dot_max);
+		set_unit_value_ssc_double(solarfield, "T_loop_in_des" ); // T_cold_des);
+		set_unit_value_ssc_double(solarfield, "T_loop_out" ); // T_hot_des);
+		set_unit_value_ssc_double(solarfield, "Fluid" ); // field_fluid);
+		set_unit_value_ssc_double(solarfield, "T_field_ini" ); // T_startup);
+		set_unit_value_ssc_double(solarfield, "T_fp" ); // T_cold_fp);
+		set_unit_value_ssc_double(solarfield, "I_bn_des" ); // I_bn_des);
+		set_unit_value_ssc_double(solarfield, "V_hdr_max" ); // 3);
+		set_unit_value_ssc_double(solarfield, "V_hdr_min" ); // 2);
+		set_unit_value_ssc_double(solarfield, "Pipe_hl_coef" ); // 0.45);
+		set_unit_value_ssc_double(solarfield, "SCA_drives_elec" ); // 125);
+		set_unit_value_ssc_double(solarfield, "fthrok" ); // 1);
+		set_unit_value_ssc_double(solarfield, "fthrctrl" ); // 2);
+		set_unit_value_ssc_double(solarfield, "ColAz" ); // ColAz);
+		set_unit_value_ssc_double(solarfield, "solar_mult" ); // SM);
+		set_unit_value_ssc_double(solarfield, "mc_bal_hot" ); // 0.2);
+		set_unit_value_ssc_double(solarfield, "mc_bal_cold" ); // 0.2);
+		set_unit_value_ssc_double(solarfield, "mc_bal_sca" ); // 4.5);
 
-		// Type 261 (solar field collector) inputs
-		set_unit_value_ssc_double(solarfield, "dnifc"); // , 0.0);				//[W/m2] - not used
-		set_unit_value_ssc_double(solarfield, "I_bn"); // 0.0);			    //[W/m2] - initial value
-		set_unit_value_ssc_double(solarfield, "T_db"); // 15.0);			//[C] - initial value
-		set_unit_value_ssc_double(solarfield, "T_dp"); // 10.0);			//[C] - connect to dew point
-		set_unit_value_ssc_double(solarfield, "P_amb"); // 930.50);			//[mbar] - initial value
-		set_unit_value_ssc_double(solarfield, "V_wind"); // 0.0);			//[m/s] - initial value
-		set_unit_value_ssc_double(solarfield, "m_dot_htf_ref"); // 0.0);	//[kg/hr] - initial value
-		set_unit_value_ssc_double(solarfield, "m_pb_demand"); // 0.0);			//[kg/hr] - not used
-		set_unit_value_ssc_double(solarfield, "shift"); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "SolarAz"); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "SolarZen"); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "T_pb_out"); // 290.0);			//[C] - initial value
-		set_unit_value_ssc_double(solarfield, "TOUPeriod"); // 4);				//[-] - don't have TOU reader yet - all are same in default LF model though
+		set_unit_value_ssc_double(solarfield, "opt_model" ); // opt_model);
+		set_unit_value_ssc_double(solarfield, "A_aperture" ); // A_aperture);
+		set_unit_value_ssc_double(solarfield, "reflectivity" ); // reflectivity);
+		set_unit_value_ssc_double(solarfield, "TrackingError" ); // TrackingError);
+		set_unit_value_ssc_double(solarfield, "GeomEffects" ); // GeomEffects);
+		set_unit_value_ssc_double(solarfield, "Dirt_mirror" ); // Dirt_mirror);
+		set_unit_value_ssc_double(solarfield, "Error" ); // Error);
+		set_unit_value_ssc_double(solarfield, "L_mod" ); // L_mod);
+		set_unit_value_ssc_array(solarfield, "IAM_T_coefs" ); // [0.9896, 0.044, -0.0721, -0.2327, 0.]);
+		set_unit_value_ssc_array(solarfield, "IAM_L_coefs" ); // [1.0031, -0.2259, 0.5368, -1.6434, 0.7222]);
 
-		// connect solar field
-		bool bConnected = connect(weather, "beam", solarfield, "I_bn");		//[W/m2] - connect to weather reader
-		bConnected = connect(weather, "tdry", solarfield, "T_db");		//[C] - connect to weather reader
-		bConnected = connect(weather, "tdew", solarfield, "T_dp");		//[C] - connect to weather reader
-		bConnected = connect(weather, "pres", solarfield, "P_amb");		//[mbar] - connect to weather reader
-		bConnected = connect(weather, "wspd", solarfield, "V_wind");		//[m/s] - connect to weather reader
-		bConnected = connect(powerblock, "m_dot_ref", solarfield, "m_dot_htf_ref");	//[kg/hr] connect to powerblock
-		bConnected = connect(weather, "shift", solarfield, "shift");		//[deg] - connect to weather reader
-		bConnected = connect(weather, "solazi", solarfield, "SolarAz");	//[deg] - connect to weather reader
-		bConnected = connect(weather, "solzen", solarfield, "SolarZen"); //[deg] - connect to weather reader
-		bConnected = connect(powerblock, "T_cold", solarfield, "T_pb_out");	//[C] - connect to powerblock
+		set_unit_value_ssc_double(solarfield, "rec_model" ); // rec_model);
+		set_unit_value_ssc_array(solarfield, "HCE_FieldFrac" ); // HCE_FieldFrac);
+		set_unit_value_ssc_array(solarfield, "D_abs_in" ); // [0.066, 0.066, 0.066, 0.066]);
+		set_unit_value_ssc_array(solarfield, "D_abs_out" ); // [0.07, 0.07, 0.07, 0.07]);
+		set_unit_value_ssc_array(solarfield, "D_glass_in" ); // [0.115, 0.115, 0.115, 0.115]);
+		set_unit_value_ssc_array(solarfield, "D_glass_out" ); // [0.12, 0.12, 0.12, 0.12]);
+		set_unit_value_ssc_array(solarfield, "D_plug" ); // [0, 0, 0, 0]);
+		set_unit_value_ssc_array(solarfield, "Flow_type" ); // [1, 1, 1, 1]);
+		set_unit_value_ssc_array(solarfield, "Rough" ); // [4.50E-05, 4.50E-05, 4.50E-05, 4.50E-05]);
+		set_unit_value_ssc_array(solarfield, "alpha_env" ); // [0.02, 0.02, 0, 0]);
+		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_1" ); // [[100, 150, 200, 250, 300, 350, 400, 450, 500], [0.064, 0.0665, 0.07, 0.0745, 0.08, 0.0865, 0.094, 0.1025, 0.112]]);
+		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_2" ); // [[0], [0.65]]);
+		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_3" ); // [[0], [0.65]]);
+		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_4" ); // [[0], [0]]);
+		set_unit_value_ssc_array(solarfield, "alpha_abs" ); // alpha_abs);
+		set_unit_value_ssc_array(solarfield, "Tau_envelope" ); // Tau_envelope);
+		set_unit_value_ssc_array(solarfield, "epsilon_glass" ); // [0.86, 0.86, 1, 0]);
+		set_unit_value_ssc_array(solarfield, "GlazingIntactIn" ); // [1, 1, 0, 1]);
+		set_unit_value_ssc_array(solarfield, "P_a" ); // [0.0001, 750, 750, 0]);
+		set_unit_value_ssc_array(solarfield, "AnnulusGas" ); // [27, 1, 1, 27]);
+		set_unit_value_ssc_array(solarfield, "AbsorberMaterial" ); // [1, 1, 1, 1]);
+		set_unit_value_ssc_array(solarfield, "Shadowing" ); // [0.96, 0.96, 0.96, 0.963]);
+		set_unit_value_ssc_array(solarfield, "dirt_env" ); // [0.98, 0.98, 1, 0.98]);
+		set_unit_value_ssc_array(solarfield, "Design_loss" ); // Design_loss);
+		set_unit_value_ssc_double(solarfield, "L_mod_spacing" ); // 1);
+		set_unit_value_ssc_double(solarfield, "L_crossover" ); // 15);
+		set_unit_value_ssc_array(solarfield, "HL_T_coefs" ); // HL_T_coefs);
+		set_unit_value_ssc_array(solarfield, "HL_w_coefs" ); // HL_w_coefs);
+		set_unit_value_ssc_double(solarfield, "DP_nominal" ); // 2.5);
+		set_unit_value_ssc_array(solarfield, "DP_coefs" ); // [0., 1., 0., 0.]);
+		set_unit_value_ssc_double(solarfield, "rec_htf_vol" ); // 1);
+		set_unit_value_ssc_double(solarfield, "T_amb_sf_des" ); // T_amb_des);
+		set_unit_value_ssc_double(solarfield, "V_wind_des" ); // V_wind_des);
 
 
-		// Set Parameters for Direct Powerblock (type 234)
-		set_unit_value_ssc_double(powerblock, "P_ref"); // P_ref);
-		set_unit_value_ssc_double(powerblock, "eta_ref"); // eta_ref);
-		set_unit_value_ssc_double(powerblock, "T_hot_ref"); // T_hot_ref);
-		set_unit_value_ssc_double(powerblock, "T_cold_ref"); // T_cold_ref);
-		set_unit_value_ssc_double(powerblock, "dT_cw_ref"); // dT_cw_ref);
-		set_unit_value_ssc_double(powerblock, "T_amb_des"); // T_amb_des);
-		set_unit_value_ssc_double(powerblock, "q_sby_frac"); // q_sby_frac);
-		set_unit_value_ssc_double(powerblock, "P_boil_des"); // P_boil_ref);
-		set_unit_value_ssc_double(powerblock, "is_rh"); // is_rh);
-		set_unit_value_ssc_double(powerblock, "P_rh_ref"); // P_rh_ref);
-		set_unit_value_ssc_double(powerblock, "T_rh_hot_ref"); // T_rh_hot_ref);
-		set_unit_value_ssc_double(powerblock, "rh_frac_ref"); // rh_frac_ref);
-		set_unit_value_ssc_double(powerblock, "CT"); // CT);
-		set_unit_value_ssc_double(powerblock, "startup_time"); // startup_time);
-		set_unit_value_ssc_double(powerblock, "startup_frac"); // startup_frac);
-		set_unit_value_ssc_double(powerblock, "tech_type"); // tech_type);
-		set_unit_value_ssc_double(powerblock, "T_approach"); // T_approach);
-		set_unit_value_ssc_double(powerblock, "T_ITD_des"); // T_ITD_des);
-		set_unit_value_ssc_double(powerblock, "P_cond_ratio"); // P_cond_ratio);
-		set_unit_value_ssc_double(powerblock, "pb_bd_frac"); // pb_bd_frac);
-		set_unit_value_ssc_double(powerblock, "P_cond_min"); // P_cond_min);
-		set_unit_value_ssc_double(powerblock, "n_pl_inc"); // n_pl_inc);
-		set_unit_value_ssc_array(powerblock, "F_wc"); // [F_wc_1, F_wc_2, F_wc_3, F_wc_4, F_wc_5, F_wc_6, F_wc_7, F_wc_8, F_wc_9]);
+		//Set the initial values
+		set_unit_value_ssc_double(solarfield, "I_b" ); // 0.);
+		set_unit_value_ssc_double(solarfield, "T_db" ); // 15.);
+		set_unit_value_ssc_double(solarfield, "V_wind" ); // 1.5);
+		set_unit_value_ssc_double(solarfield, "P_amb" ); // 1.);
+		set_unit_value_ssc_double(solarfield, "T_dp" ); // 10.);
+		set_unit_value_ssc_double(solarfield, "SolarAz" ); // 0.);
+		set_unit_value_ssc_double(solarfield, "defocus" ); // 1.);
+		set_unit_value_ssc_double(solarfield, "T_cold_in" ); // 293.);
+
+		//Set the inputs
+		bool bConnected = connect(weather, "beam", solarfield, "I_b");
+		bConnected &= connect(weather, "tdry", solarfield, "T_db");
+		bConnected &= connect(weather, "wspd", solarfield, "V_wind");
+		bConnected &= connect(weather, "pres", solarfield, "P_amb");
+		bConnected &= connect(weather, "tdew", solarfield, "T_dp");
+		bConnected &= connect(weather, "solazi", solarfield, "SolarAz");
+		bConnected &= connect(weather, "solzen", solarfield, "SolarZen");
+		bConnected &= connect(weather, "lat", solarfield, "latitude");
+		bConnected &= connect(weather, "lon", solarfield, "longitude");
+		bConnected &= connect(weather, "tz", solarfield, "timezone");
+		bConnected &= connect(controller, "defocus", solarfield, "defocus");
+		bConnected &= connect(controller, "T_field_in", solarfield, "T_cold_in");
+
+		//Set controller parameters type 251
+		set_unit_value_ssc_double(controller, "field_fluid" ); // field_fluid);
+		set_unit_value_ssc_array(controller, "field_fl_props" ); // [0]);
+		set_unit_value_ssc_double(controller, "store_fluid" ); // tes_fluid);
+		set_unit_value_ssc_double(controller, "tshours" ); // TES_hrs);
+		set_unit_value_ssc_double(controller, "is_hx" ); // is_hx);
+		set_unit_value_ssc_double(controller, "dt_hot" ); // hx_dt_hot);
+		set_unit_value_ssc_double(controller, "dt_cold" ); // hx_dt_cold);
+		set_unit_value_ssc_double(controller, "hx_config" ); // 2);
+		set_unit_value_ssc_double(controller, "q_max_aux" ); // Qsf);
+		set_unit_value_ssc_double(controller, "T_set_aux" ); // T_hot_des);
+		set_unit_value_ssc_double(controller, "V_tank_hot_ini" ); // TES_init_vol);
+		set_unit_value_ssc_double(controller, "T_tank_hot_ini" ); // T_hot_des);
+		set_unit_value_ssc_double(controller, "T_tank_cold_ini" ); // T_cold_des);
+		set_unit_value_ssc_double(controller, "vol_tank" ); // TES_tank_vol);
+		set_unit_value_ssc_double(controller, "h_tank" ); // 20);
+		set_unit_value_ssc_double(controller, "h_tank_min" ); // 1);
+		set_unit_value_ssc_double(controller, "u_tank" ); // 0.4);
+		set_unit_value_ssc_double(controller, "tank_pairs" ); // 1);
+		set_unit_value_ssc_double(controller, "cold_tank_Thtr" ); // T_cold_fp);
+		set_unit_value_ssc_double(controller, "hot_tank_Thtr" ); // T_hot_fp);
+		set_unit_value_ssc_double(controller, "tank_max_heat" ); // Q_TES_htr);
+		set_unit_value_ssc_double(controller, "T_field_in_des" ); // T_cold_des);
+		set_unit_value_ssc_double(controller, "T_field_out_des" ); // T_hot_des);
+		set_unit_value_ssc_double(controller, "q_pb_design" ); // Q_cycle_des);
+		set_unit_value_ssc_double(controller, "W_pb_design" ); // E_gross);
+		set_unit_value_ssc_double(controller, "cycle_max_frac" ); // 1.05);
+		set_unit_value_ssc_double(controller, "cycle_cutoff_frac" ); // 0.25);
+		set_unit_value_ssc_double(controller, "solarm" ); // SM);
+		set_unit_value_ssc_double(controller, "pb_pump_coef" ); // 0.55);
+		set_unit_value_ssc_double(controller, "tes_pump_coef" ); // 0.15);
+		set_unit_value_ssc_double(controller, "pb_fixed_par" ); // 0.0055);
+		set_unit_value_ssc_array(controller, "bop_array" ); // [0, 1, 0.483, 0.517, 0]);
+		set_unit_value_ssc_array(controller, "aux_array" ); // [0.02273, 1, 0.483, 0.517, 0]);
+		set_unit_value_ssc_double(controller, "T_startup" ); // T_sf_ave);
+		set_unit_value_ssc_double(controller, "fossil_mode" ); // 1);
+		set_unit_value_ssc_double(controller, "fthr_ok" ); // 1);
+		set_unit_value_ssc_double(controller, "nSCA" ); // nMod);
+		set_unit_value_ssc_double(controller, "I_bn_des" ); // I_bn_des);
+		set_unit_value_ssc_double(controller, "fc_on" ); // 0);
+		set_unit_value_ssc_double(controller, "q_sby_frac" ); // 0.2);
+		set_unit_value_ssc_double(controller, "t_standby_reset" ); // 2);
+		set_unit_value_ssc_double(controller, "tes_type" ); // 1);
+		set_unit_value_ssc_array(controller, "tslogic_a" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+		set_unit_value_ssc_array(controller, "tslogic_b" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+		set_unit_value_ssc_array(controller, "tslogic_c" ); // [1.05, 1, 1, 1, 1, 1, 1, 1, 1]);
+		set_unit_value_ssc_double(controller, "ffrac" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+		set_unit_value_ssc_double(controller, "tc_fill" ); // 7);
+		set_unit_value_ssc_double(controller, "tc_void" ); // 0.25);
+		set_unit_value_ssc_double(controller, "t_dis_out_min" ); // 500);
+		set_unit_value_ssc_double(controller, "t_ch_out_max" ); // 500);
+		set_unit_value_ssc_double(controller, "nodes" ); // 2000);
+		set_unit_value_ssc_double(controller, "f_tc_cold" ); // 2);
 
 
-		// Set Inputs for Powerblock (type 234)
-		set_unit_value_ssc_double(powerblock, "mode"); // 1);							//[-] initial value
-		set_unit_value_ssc_double(powerblock, "T_hot"); // T_hot_ref);					//[C] initial value
-		set_unit_value_ssc_double(powerblock, "m_dot_st"); // 0);						//[kg/hr] initial value
-		set_unit_value_ssc_double(powerblock, "T_wb"); // 12.8);						//[C] Initial value
-		set_unit_value_ssc_double(powerblock, "demand_var"); // P_ref);					//[kg/hr]
-		set_unit_value_ssc_double(powerblock, "standby_control"); // 0);
-		set_unit_value_ssc_double(powerblock, "T_db", as_double("T_db_pwb") ); // 12.8);
-		set_unit_value_ssc_double(powerblock, "P_amb", as_double("P_amb_pwb") ); // 960);
-		set_unit_value_ssc_double(powerblock, "TOU"); // 4);								//[-] No TOU reader yet
-		set_unit_value_ssc_double(powerblock, "relhum"); // 0.25);						//[-] Initial value
-		set_unit_value_ssc_double(powerblock, "f_recSU"); // 1);							//[-] Set to 1 for LF
-		set_unit_value_ssc_double(powerblock, "dp_sh"); // 5.0);
-		set_unit_value_ssc_double(powerblock,"dp_rh"); // 0.0);								//[Pa] no rh in LF
 
-		// connect the powerblock
-		bConnected = connect(solarfield, "cycle_pl_control", powerblock, "mode");	//[-] connect to LF solarfield
-		bConnected = connect(solarfield, "T_field_out", powerblock, "T_hot");		//[C] connect to LF solarfield
-		bConnected = connect(solarfield, "m_dot_to_pb", powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
-		bConnected = connect(weather, "twet", powerblock, "T_wb");					//[C] connect to weather reader
-		bConnected = connect(solarfield, "m_dot_to_pb", powerblock, "demand_var");	//[kg/hr] 
-		bConnected = connect(solarfield, "standby_control", powerblock, "standby_control");
-		bConnected = connect(weather, "tdry", powerblock, "T_db");
-		bConnected = connect(weather, "pres", powerblock, "P_amb");
-		bConnected = connect(weather, "rhum", powerblock, "relhum");					//[-] connect to weather reader
-		bConnected = connect(solarfield, "dP_sf_sh", powerblock, "dp_sh");			//[Pa] Pressure drop in sh
+		set_unit_value_ssc_matrix(tou, "weekday_schedule");
+		set_unit_value_ssc_matrix(tou, "weekend_schedule");
 
-		// connect the net energy output calculator
-		bConnected = connect(powerblock, "P_cycle", E_net_calcs, "W_cycle_gross");
-		bConnected = connect(solarfield, "W_dot_par_tot", E_net_calcs, "W_par_sf_tot");
-		bConnected = connect(powerblock, "W_cool_par", E_net_calcs, "W_par_cooling");
+
+//		for (i = 0; i<8760; i++){
+//			TOU[i] = '1';
+//		}
+//		set_unit_value_ssc_double(controller, "TOU_schedule" ); // TOU);
+		bConnected &= connect(tou, "tou_value", controller, "TOU_schedule");
+
+		//Connect weather reader to controller
+		bConnected &= connect(weather, "beam", controller, "I_bn");
+		bConnected &= connect(weather, "tdry", controller, "T_amb");
+		bConnected &= connect(solarfield, "m_dot_avail", controller, "m_dot_field");
+		bConnected &= connect(powerblock, "m_dot_htf_ref", controller, "m_dot_htf_ref");
+		bConnected &= connect(solarfield, "T_sys_h", controller, "T_field_out");
+		bConnected &= connect(powerblock, "T_htf_cold", controller, "T_pb_out");
+		bConnected &= connect(powerblock, "m_dot_demand", controller, "m_pb_demand");
+		bConnected &= connect(solarfield, "E_bal_startup", controller, "q_startup");
+
+		//Set initial values
+		set_unit_value_ssc_double(controller, "I_bn" ); // 0.);
+		set_unit_value_ssc_double(controller, "T_amb" ); // 15.);
+		set_unit_value_ssc_double(controller, "m_dot_field" ); // 0.);
+		set_unit_value_ssc_double(controller, "m_dot_htf_ref" ); // 0.);
+		set_unit_value_ssc_double(controller, "T_field_out" ); // T_hot_des);
+		set_unit_value_ssc_double(controller, "T_pb_out" ); // T_cold_des);
+		set_unit_value_ssc_double(controller, "m_pb_demand" ); // 100000.);
+		set_unit_value_ssc_double(controller, "q_startup" ); // 0.);
+
+
+		//Set the parameters for the power block type 224
+		set_unit_value_ssc_double(powerblock, "P_ref" ); // E_gross);
+		set_unit_value_ssc_double(powerblock, "eta_ref" ); // eta_cycle_des);
+		set_unit_value_ssc_double(powerblock, "T_htf_hot_ref" ); // T_hot_des);
+		set_unit_value_ssc_double(powerblock, "T_htf_cold_ref" ); // T_cold_des);
+		set_unit_value_ssc_double(powerblock, "dT_cw_ref" ); // 10);
+		set_unit_value_ssc_double(powerblock, "T_amb_des" ); // 20);
+		set_unit_value_ssc_double(powerblock, "HTF" ); // field_fluid);
+		set_unit_value_ssc_double(powerblock, "q_sby_frac" ); // 0.2);
+		set_unit_value_ssc_double(powerblock, "P_boil" ); // 100);
+		set_unit_value_ssc_double(powerblock, "CT" ); // 1);
+		set_unit_value_ssc_double(powerblock, "startup_time" ); // 0.5);
+		set_unit_value_ssc_double(powerblock, "startup_frac" ); // 0.2);
+		set_unit_value_ssc_double(powerblock, "tech_type" ); // 2);
+		set_unit_value_ssc_double(powerblock, "T_approach" ); // 5);
+		set_unit_value_ssc_double(powerblock, "T_ITD_des" ); // 16);
+		set_unit_value_ssc_double(powerblock, "P_cond_ratio" ); // 1.0028);
+		set_unit_value_ssc_double(powerblock, "pb_bd_frac" ); // 0.02);
+		set_unit_value_ssc_double(powerblock, "P_cond_min" ); // 1.25);
+		set_unit_value_ssc_double(powerblock, "n_pl_inc" ); // 2);
+		set_unit_value_ssc_array(powerblock, "F_wc" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+		//Connect inputs
+		connect(weather, "twet", powerblock, "T_wb");
+		connect(weather, "tdry", powerblock, "T_db");
+		connect(weather, "pres", powerblock, "P_amb");
+		connect(weather, "rhum", powerblock, "rh");
+		set_unit_value_ssc_double(powerblock, "mode", 2);	//Always set to 2 for type 251
+		connect(controller, "T_pb_in", powerblock, "T_htf_hot");
+		connect(controller, "m_dot_pb", powerblock, "m_dot_htf");
+		connect(controller, "m_dot_pb", powerblock, "demand_var");
+		connect(controller, "standby_control", powerblock, "standby_control");
+		connect(controller, "TOU", powerblock, "TOU");
+		//Set initial values
+		set_unit_value_ssc_double(powerblock, "T_wb" ); // 10.);
+		set_unit_value_ssc_double(powerblock, "T_db" ); // 15.);
+		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
+		set_unit_value_ssc_double(powerblock, "rh" ); // 0.25);
+		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
+		set_unit_value_ssc_double(powerblock, "m_dot_htf" ); // 0.);
+		set_unit_value_ssc_double(powerblock, "demand_var" ); // E_gross);
+		set_unit_value_ssc_double(powerblock, "standby_control" ); // 0);
+		set_unit_value_ssc_double(powerblock, "TOU" ); // 1);
+
+		//Connect the enet calculator to the parasitic values
+		set_unit_value_ssc_double(enet, "eta_lhv" ); // 0.9);
+		set_unit_value_ssc_double(enet, "eta_tes_htr" ); // 0.98);
+		set_unit_value_ssc_double(enet, "fp_mode" ); // freeze_prot_mode);
+		connect(powerblock, "P_cycle", enet, "W_cycle_gross");
+		connect(powerblock, "W_cool_par", enet, "W_par_heatrej");
+		connect(solarfield, "W_dot_pump", enet, "W_par_sf_pump");
+		connect(controller, "htf_pump_power", enet, "W_par_tes_pump");
+		connect(controller, "bop_par", enet, "W_par_BOP");
+		connect(controller, "fixed_par", enet, "W_par_fixed");
+		connect(solarfield, "track_par_tot", enet, "W_par_tracking");
+		connect(controller, "aux_par", enet, "W_par_aux_boiler");
+		connect(controller, "tank_fp_par", enet, "Q_par_tes_fp");
+		connect(solarfield, "E_fp_tot", enet, "Q_par_sf_fp");
+		connect(controller, "q_aux_heat", enet, "Q_aux_backup");
 
 
 
@@ -448,7 +594,7 @@ public:
 		// Run simulation
 		size_t hours = 8760;
 		if (0 > simulate(3600, hours*3600, 3600) )
-			throw exec_error( "tcsmslf", util::format("there was a problem simulating in the TCS linear fresnel model.") );
+			throw exec_error( "tcsmslf", util::format("there was a problem simulating in the TCS molten salt linear fresnel model.") );
 
 		// get the outputs
 		if (!set_all_output_arrays() )
