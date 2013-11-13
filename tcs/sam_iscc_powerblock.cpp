@@ -14,6 +14,8 @@ enum{	//Parameters
 		P_Q_SF_DES,
 		P_PLANT_ELEVATION,
 		P_CYCLE_CONFIG,
+		P_HOT_SIDE_DELTA_T,
+		P_PINCH_POINT,
 
 		//Inputs
 		I_T_AMB,
@@ -46,6 +48,8 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_Q_SF_DES,        "Q_sf_des",          "Design point solar field thermal output",              "MW",    "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_PLANT_ELEVATION, "plant_elevation",   "Plant Elevation",                                      "m",     "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_CYCLE_CONFIG,    "cycle_config",      "Cycle configuration code, 1 = HP evap injection",      "-",     "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_HOT_SIDE_DELTA_T,"hot_side_delta_t",  "Hot side temperature HX temperature difference",       "C",     "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_PINCH_POINT,     "pinch_point",       "Cold side HX pinch point",                             "C",     "", "", ""},
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_T_AMB,           "T_amb",             "Ambient temperature",                                  "C",     "", "", ""},
@@ -186,8 +190,8 @@ public:
 
 		// Cycle design-point conditions
 		m_q_sf_des = value( P_Q_SF_DES );		// [MWt]
-		m_T_amb_des = 20.0;					// [C]
-		m_P_amb_des = 101325.0*pow( 1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588 )/1.E5;	//[bar]
+		m_T_amb_des = 20.0;						// [C]
+		m_P_amb_des = 101325.0*pow( 1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588 )/1.E5;	//[bar] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html
 
 		// Set cycle configuration in class
 		int cycle_config = value( P_CYCLE_CONFIG );
@@ -248,9 +252,11 @@ public:
 		// *********************************************************************************************************
 
 		// Calculate MS temperatures
-		double T_pinch_point = 10.0;							//[C] Set pinch point at design in evaporator
+		double T_pinch_point = value(P_PINCH_POINT);			//[C] Get pinch point at design in evaporator
+		//double T_pinch_point = 10.0;							//[C] Set pinch point at design in evaporator
 		double T_ms_evap_out = T_sat + T_pinch_point;			//[C] Molten Salt evaporator outlet temperature
-		m_T_approach = 30.0;									//[C] Set molten salt approach temperature to superheater 
+		m_T_approach = value(P_HOT_SIDE_DELTA_T);				//[C] Get molten salt approach temperature to superheater
+		//m_T_approach = 30.0;									//[C] Set molten salt approach temperature to superheater 
 		double T_ms_sh_in = T_st_inject + m_T_approach;			//[C] Molten salt superheater inlet temperature = receiver outlet temperature + approach temperature
 			// m_dot_ms * cp_ms * delta_T_ms = m_dot_steam * delta_h_steam
 		m_cp_ms = htfProps.Cp( (T_ms_evap_out + T_ms_sh_in)/2.0 );				//[kJ/kg-K] Specific heat of molten salt
