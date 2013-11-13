@@ -59,7 +59,7 @@ OBJECTS = \
 	cmod_tcstrough_empirical.o \
 	cmod_tcstrough_physical.o \
 	cmod_tcsdish.o \
-	cmod_tcs_iscc.o \
+	cmod_tcsiscc.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
