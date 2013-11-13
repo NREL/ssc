@@ -33,6 +33,7 @@
     <ClCompile Include="cmod_pv6parmod.cpp" />
     <ClCompile Include="cmod_pvsamv1.cpp" />
     <ClCompile Include="cmod_pvsandiainv.cpp" />
+    <ClCompile Include="cmod_pvwattsfrompoa.cpp" />
     <ClCompile Include="cmod_pvwattsfunc.cpp" />
     <ClCompile Include="cmod_pvwattsv1.cpp" />
     <ClCompile Include="cmod_saleleaseback.cpp" />
