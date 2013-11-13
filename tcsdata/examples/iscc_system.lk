@@ -196,6 +196,8 @@ pb_fixed_par = 0.0055;
 // ISCC-specific inputs
 is_iscc = 1;
 cycle_config = 1;
+hot_side_delta_t = 30;
+pinch_point = 10;
 
 // Set heliostat field parameters
 set_value( hel_field, "eta_map", eta_field_map );
@@ -260,6 +262,8 @@ set_value( iscc_pb, "HTF_code", HTF );
 set_value( iscc_pb, "Q_sf_des", Q_rec_des );
 set_value( iscc_pb, "plant_elevation", 600 );
 set_value( iscc_pb, "cycle_config", 1 );			// Only option presently available: triple pressure NGCC HP evap integration
+set_value( iscc_pb, "hot_side_delta_t", hot_side_delta_t);
+set_value( iscc_pb, "pinch_point", pinch_point);
 
 // Set NGCC Inputs
 connect( weather, "tdry", iscc_pb, "T_amb" );
