@@ -209,6 +209,8 @@ outln( sprintf("---------------\nTotal cost: $%m\n\n", fixed_cost) );
 
 //Add weather file reader unit
 weather = add_unit("weatherreader");
+// tou translator
+tou_translator = add_unit("tou_translator");
 //Add the solar field collector unit
 solarfield = add_unit("sam_mw_lf_type262");
 //Add the controller unit
@@ -399,10 +401,42 @@ set_value(controller, "t_dis_out_min", 500);
 set_value(controller, "t_ch_out_max", 500);
 set_value(controller, "nodes", 2000);
 set_value(controller, "f_tc_cold", 2);
-for(i=0; i<8760; i++){
-	TOU[i] = '1';
-}
-set_value(controller, "TOU_schedule", TOU);
+
+//for(i=0; i<8760; i++){
+//	TOU[i] = '1';
+//}
+//set_value(controller, "TOU_schedule", TOU);
+
+// update to use tou_translator
+set_value(tou_translator, "weekday_schedule", [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+]);
+set_value(tou_translator, "weekend_schedule", [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+]);
+
 
 //Connect weather reader to controller
 connect(weather, "beam", controller, "I_bn");
@@ -413,6 +447,7 @@ connect(solarfield, "T_sys_h", controller, "T_field_out");
 connect(powerblock, "T_htf_cold", controller, "T_pb_out"); 
 connect(powerblock, "m_dot_demand", controller, "m_pb_demand");
 connect(solarfield, "E_bal_startup", controller, "q_startup");
+connect(tou_translator,"tou_value",controller,"TOUPeriod");
 //Set initial values
 set_value(controller, "I_bn", 0.);
 set_value(controller, "T_amb", 15.);
