@@ -15,8 +15,9 @@ static var_info vtab_utility_rate2[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "load_escalation",          "Annual load escalation",          "%/year", "",                      "",             "?=0",                       "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_sell_eq_buy",           "Force sell rate equal to buy",    "0/1",    "Enforce net metering",  "",             "?=1",                       "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_nm_yearend_sell_rate",        "Year end sell rate",                "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_enable_net_metering", "Enable net metering", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Force sell rate equal to buy", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
@@ -1070,7 +1071,8 @@ public:
 		int m,d,h;
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
-		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
 
 
 		for (m=0;m<12;m++)
@@ -1165,7 +1167,8 @@ public:
 		ssc_number_t buy = as_number("ur_flat_buy_rate");
 		ssc_number_t sell = as_number("ur_flat_sell_rate");
 
-		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
 
 		
 		if (sell_eq_buy)
@@ -1308,7 +1311,8 @@ public:
 
 		for (int i=0;i<8760; i++) ec_tou_sched[i] = (ssc_number_t)(tod[i]+1);
 
-		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
 
 
 		// tiered rates for all 6 tiers in each of the 12 periods
