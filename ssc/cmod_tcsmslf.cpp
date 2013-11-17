@@ -14,7 +14,7 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                                       "",              "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                                       "",              "",            "Weather",        "*",                       "",                      "" },
-
+	
     // TOU
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                                              "",             "",             "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                                          "",             "",             "tou_translator", "*",                       "",                      "" }, 
@@ -111,6 +111,12 @@ static var_info _cm_vtab_tcsmslf[] = {
 	{ SSC_INPUT, SSC_NUMBER, "longitude", "Site longitude read from weather file", "deg", "", "controller", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "timezone", "Time zone", "hr", "", "controller", "*", "", "" },
 
+
+
+
+
+
+	
 
 	//   controller (type 251) inputs
 	//   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -233,40 +239,46 @@ static var_info _cm_vtab_tcsmslf[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "solzen", "Solar Zenith", "deg", "", "weather", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "tdry", "Dry bulb temperature", "C", "", "weather", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "twet", "Wet bulb temperature", "C", "", "weather", "*", "LENGTH=8760", "" },
-
+	
     // VARTYPE          DATATYPE          NAME                 LABEL                                                                                 UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
 	// Type 262 outputs
-	{ SSC_OUTPUT, SSC_NUMBER, "T_sys_h", "Solar field HTF outlet temperature", "C", "", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "m_dot_avail", "HTF mass flow rate from the field", "kg/hr", "", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "q_avail", "Thermal power produced by the field", "MWt", "", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "DP_tot", "Total HTF pressure drop", "bar", "", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "W_dot_pump", "Required solar field pumping power", "MWe","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "E_fp_tot", "Freeze protection energy", "MW","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "T_sys_c", "Collector inlet temperature", "C","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "eta_optical", "Collector total optical efficiency", "none","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "EqOptEff", "Total solar field optical efficiency - including receiver optical losses", "none","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "sf_def", "The fraction of the solar field that's on focus", "none","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_tot", "The actual flow rate through the field..", "kg/hr","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "E_bal_startup", "Startup energy consumed", "MWt","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "q_inc_sf_tot", "Total power incident on the field", "MWt","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "q_abs_tot", "Total absorbed energy", "MWt","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "q_loss_tot", "Total receiver thermal and optical losses", "MWt","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "m_dot_htf", "Flow rate in a single loop", "kg/s","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "q_loss_spec_tot", "Field-average receiver thermal losses (convection and radiation)", "W/m","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "track_par_tot", "Parasitic electric power consumed by the tracking drives", "MWe","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "Pipe_hl", "Pipe heat loss in the hot header and the hot runner", "MWt","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "q_dump", "Dumped thermal energy", "MWt","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "phi_t", "Solar incidence angle in the collector transversal plane", "deg","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "theta_L", "Solar incidence angle in the collector longitudinal plane", "deg","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "t_loop_outlet", "HTF temperature immediately subsequent to the loop outlet", "C","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "c_htf_ave", "Average solar field specific heat", "J/kg-K","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "q_field_delivered", "Total solar field thermal power delivered", "MWt","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "eta_thermal", "Solar field thermal efficiency (power out/ANI)", "none","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "E_loop_accum", "Accumulated internal energy change rate in the loops ONLY", "MWht","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "E_hdr_accum", "Accumulated internal energy change rate in the headers/SGS", "MWht","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "E_tot_accum", "Total accumulated internal energy change rate", "MWht","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "E_field", "Accumulated internal energy in the entire solar field", "MWht","", "mslf", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_STRING, "piping_summary", "String containing description of field piping design", "none","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "T_sys_h", "Solar field HTF outlet temperature", "C", "", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "m_dot_avail", "HTF mass flow rate from the field", "kg/hr", "", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q_avail", "Thermal power produced by the field", "MWt", "", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "DP_tot", "Total HTF pressure drop", "bar", "", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "W_dot_pump", "Required solar field pumping power", "MWe","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "E_fp_tot", "Freeze protection energy", "MW","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "T_sys_c", "Collector inlet temperature", "C","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "eta_optical", "Collector total optical efficiency", "none","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "EqOptEff", "Total solar field optical efficiency - including receiver optical losses", "none","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "sf_def", "The fraction of the solar field that's on focus", "none","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "m_dot_htf_tot", "The actual flow rate through the field..", "kg/hr","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "E_bal_startup", "Startup energy consumed", "MWt","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q_inc_sf_tot", "Total power incident on the field", "MWt","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q_abs_tot", "Total absorbed energy", "MWt","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q_loss_tot", "Total receiver thermal and optical losses", "MWt","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "m_dot_htf", "Flow rate in a single loop", "kg/s","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q_loss_spec_tot", "Field-average receiver thermal losses (convection and radiation)", "W/m","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "track_par_tot", "Parasitic electric power consumed by the tracking drives", "MWe","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Pipe_hl", "Pipe heat loss in the hot header and the hot runner", "MWt","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q_dump", "Dumped thermal energy", "MWt","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "phi_t", "Solar incidence angle in the collector transversal plane", "deg","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "theta_L", "Solar incidence angle in the collector longitudinal plane", "deg","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "t_loop_outlet", "HTF temperature immediately subsequent to the loop outlet", "C","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "c_htf_ave", "Average solar field specific heat", "J/kg-K","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q_field_delivered", "Total solar field thermal power delivered", "MWt","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "eta_thermal", "Solar field thermal efficiency (power out/ANI)", "none","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "E_loop_accum", "Accumulated internal energy change rate in the loops ONLY", "MWht","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "E_hdr_accum", "Accumulated internal energy change rate in the headers/SGS", "MWht","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "E_tot_accum", "Total accumulated internal energy change rate", "MWht","", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "E_field", "Accumulated internal energy in the entire solar field", "MWht","", "mslf", "*", "LENGTH=8760", "" },
+//	{ SSC_OUTPUT, SSC_STRING, "piping_summary", "String containing description of field piping design", "none","", "mslf", "*", "LENGTH=8760", "" },
+// sum calcs
+	{ SSC_OUTPUT, SSC_ARRAY, "W_net", "Net electricity generation (or usage) by the plant", "MW", "", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "W_par_tot", "Total electrical parasitic consumption by all plant subsystems", "MW", "", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Fuel_usage", "Total fossil fuel usage by all plant subsystems", "MMBTU", "", "mslf", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Q_fp_tot", "Total freeze protection thermal energy requirement", "MW", "", "mslf", "*", "LENGTH=8760", "" },
+
 
 
 
@@ -285,7 +297,7 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		bool debug_mode = true; //(__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		bool debug_mode = false; //(__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
@@ -324,7 +336,9 @@ public:
 			set_unit_value_ssc_double( weather, "tilt" );
 			set_unit_value_ssc_double( weather, "azimuth" );
 		}
-
+		
+		// Add tou translator
+		int	tou = add_unit("tou_translator", "Time of Use Translator");
 		//Add the solar field collector unit
 		int solarfield = add_unit("sam_mw_lf_type262", "type 262 solarfield");
 		//Add controller unit
@@ -333,9 +347,6 @@ public:
 		int powerblock = add_unit("sam_mw_pt_type224", "type 224 powerblock");
 		//Add unit to that summarizes energy output
 		int enet = add_unit("sam_mw_csp_SumCalcs","type csp_SumCalcs enet calculator");
-		// Add tou translator
-		int	tou = add_unit("tou_translator", "Time of Use Translator");
-
 
 		// Now set solar field collector unit parameters
 		set_unit_value_ssc_double(solarfield, "nMod" ); // nMod);
@@ -437,7 +448,7 @@ public:
 		bConnected &= connect(weather, "tz", solarfield, "timezone");
 		if (!bConnected)
 			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of weather to inputs of solarfield for the simulation."));
-
+		
 		bConnected &= connect(controller, "defocus", solarfield, "defocus");
 		bConnected &= connect(controller, "T_field_in", solarfield, "T_cold_in");
 		if (!bConnected)
@@ -503,10 +514,6 @@ public:
 		set_unit_value_ssc_matrix(tou, "weekend_schedule");
 
 
-//		for (i = 0; i<8760; i++){
-//			TOU[i] = '1';
-//		}
-//		set_unit_value_ssc_double(controller, "TOU_schedule" ); // TOU);
 		bConnected &= connect(tou, "tou_value", controller, "TOUPeriod");
 		if (!bConnected)
 			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of tou to inputs of controller for the simulation."));
@@ -595,7 +602,7 @@ public:
 		bConnected &= connect(solarfield, "E_fp_tot", enet, "Q_par_sf_fp");
 		bConnected &= connect(controller, "q_aux_heat", enet, "Q_aux_backup");
 
-
+		
 
 		// check if all connections worked
 		if ( !bConnected )
@@ -603,8 +610,9 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
+		int error = simulate(3600, hours * 3600, 3600);
 		if (0 > simulate(3600, hours*3600, 3600) )
-			throw exec_error( "tcsmslf", util::format("there was a problem simulating in the TCS molten salt linear fresnel model.") );
+			throw exec_error( "tcsmslf", util::format("there was a problem simulating in the TCS molten salt linear fresnel model. Error %d", error) );
 
 		// get the outputs
 		if (!set_all_output_arrays() )
