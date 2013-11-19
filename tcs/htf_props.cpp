@@ -246,7 +246,7 @@ double HTFProperties::visc(double T_K)
 	case Nitrate_Salt:
 		return max((22.714 - 0.12 * T_C + 0.0002281 *T_C*T_C - 0.0000001474 * pow(T_C,3)) / 1000.0,1.e-6);
 	case Caloria_HT_43:		
-		return (0.040439268 * pow(T_C,-1.946401872)) * dens(T_K, 0.0); 
+		return (0.040439268 * pow(max(T_C,10.0),-1.946401872)) * dens(T_K, 0.0); 
 	case Hitec_XL:  
 		return 1372000. * pow(T_C,-3.364);
 	case Therminol_VP1:
