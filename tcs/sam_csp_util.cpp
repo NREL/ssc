@@ -2364,7 +2364,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 				//***************************************************************************
 				//********** Compare q_5out with q_45 cond***********************************
 				//***************************************************************************
-				diff_q5 = (q_5out - q_45cond)/q_45cond;			// [W/m]
+				diff_q5 = (q_5out - q_45cond)/abs(q_45cond);			// [W/m]
 
 				//Determine next guess for T_4.  Want to use false position method, but it requires that the *results* at both ends of the bracket are known.  We have
 				//defined a bracket but not the results.  Use the guess T_4 to get the results at one end of a new bracket.  Then calculate a new T_4 that is highly weighted 
@@ -2488,7 +2488,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 		{
 			q_conv_iter++;			// Increase iteration counter
 
-			T_2 = fT_2( q_12conv, T_1_ave, T_2g, v_1, hn, hv );		// Calculate T_2 (with previous T_2 as input)
+			T_2 = max(10.0, fT_2( q_12conv, T_1_ave, T_2g, v_1, hn, hv ) );		// Calculate T_2 (with previous T_2 as input)
 			diff_T2 = (T_2 - T_2g)/T_2;								// T_2 difference
 			T_2g = T_2 - 0.5*(T_2 - T_2g);							// Reset T_2
 
