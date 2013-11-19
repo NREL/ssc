@@ -389,6 +389,7 @@ public:
 		set_unit_value_ssc_double(solarfield, "L_mod" ); // L_mod);
 		set_unit_value_ssc_array(solarfield, "IAM_T_coefs" ); // [0.9896, 0.044, -0.0721, -0.2327, 0.]);
 		set_unit_value_ssc_array(solarfield, "IAM_L_coefs" ); // [1.0031, -0.2259, 0.5368, -1.6434, 0.7222]);
+		set_unit_value_ssc_matrix(solarfield, "OpticalTable");
 
 		set_unit_value_ssc_double(solarfield, "rec_model" ); // rec_model);
 		set_unit_value_ssc_array(solarfield, "HCE_FieldFrac" ); // HCE_FieldFrac);
@@ -426,14 +427,20 @@ public:
 
 
 		//Set the initial values
-		set_unit_value_ssc_double(solarfield, "I_b" ); // 0.);
-		set_unit_value_ssc_double(solarfield, "T_db" ); // 15.);
-		set_unit_value_ssc_double(solarfield, "V_wind" ); // 1.5);
-		set_unit_value_ssc_double(solarfield, "P_amb" ); // 1.);
-		set_unit_value_ssc_double(solarfield, "T_dp" ); // 10.);
-		set_unit_value_ssc_double(solarfield, "SolarAz" ); // 0.);
-		set_unit_value_ssc_double(solarfield, "defocus" ); // 1.);
-		set_unit_value_ssc_double(solarfield, "T_cold_in" ); // 293.);
+//		set_unit_value_ssc_double(solarfield, "I_b" ); // 0.);
+//		set_unit_value_ssc_double(solarfield, "T_db" ); // 15.);
+//		set_unit_value_ssc_double(solarfield, "V_wind" ); // 1.5);
+//		set_unit_value_ssc_double(solarfield, "P_amb" ); // 1.);
+//		set_unit_value_ssc_double(solarfield, "T_dp" ); // 10.);
+		set_unit_value_ssc_double(solarfield, "T_cold_in"); // 293.);
+// m_dot_in
+		set_unit_value_ssc_double(solarfield, "defocus"); // 1.);
+//		set_unit_value_ssc_double(solarfield, "SolarAz"); // 0.);
+// SolarZen
+// latitude
+// longitude
+// timezone
+
 
 		//Set the inputs
 		bool bConnected = connect(weather, "beam", solarfield, "I_b");
@@ -584,7 +591,6 @@ public:
 		set_unit_value_ssc_double(powerblock, "m_dot_htf_init" ); // 0.);
 		set_unit_value_ssc_double(powerblock, "demand_var" ); // E_gross);
 		set_unit_value_ssc_double(powerblock, "standby_control" ); // 0);
-//		set_unit_value(powerblock, "TOU", 1); // 1);
 
 		//Connect the enet calculator to the parasitic values
 		set_unit_value_ssc_double(enet, "eta_lhv" ); // 0.9);
