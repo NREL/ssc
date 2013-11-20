@@ -13,6 +13,8 @@
 
 #include "tcskernel.h"
 
+//#include "tcs_debug.h"
+
 #if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)||defined(__MINGW___)||defined(_MSC_VER)
 #include <Windows.h>
 void *dll_open(const char *name) { return (void*) ::LoadLibraryA( name ); }
@@ -984,6 +986,9 @@ int tcskernel::simulate( double start, double end, double step )
 			free_instances();
 			return -1;
 		}
+		// for debugging when running from SSC SDK Tool or SAM - include tcs_debug.h
+		//debug_log_init_call(m_units[i].type->name, m_units[i].values);
+
 	}
 	
 	for( m_currentTime = m_startTime;

@@ -292,6 +292,9 @@ public:
 	:tcKernel(prov)
 	{
 		add_var_info( _cm_vtab_tcsmslf );
+		// debugging
+		set_store_all_parameters(true);
+		set_store_array_matrix_data(true);
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 	}
 
@@ -338,7 +341,7 @@ public:
 		}
 		
 		// Add tou translator
-		int	tou = add_unit("tou_translator", "Time of Use Translator");
+		int	tou_translator = add_unit("tou_translator", "Time of Use Translator");
 		//Add the solar field collector unit
 		int solarfield = add_unit("sam_mw_lf_type262", "type 262 solarfield");
 		//Add controller unit
@@ -442,24 +445,7 @@ public:
 // timezone
 
 
-		//Set the inputs
-		bool bConnected = connect(weather, "beam", solarfield, "I_b");
-		bConnected &= connect(weather, "tdry", solarfield, "T_db");
-		bConnected &= connect(weather, "wspd", solarfield, "V_wind");
-		bConnected &= connect(weather, "pres", solarfield, "P_amb");
-		bConnected &= connect(weather, "tdew", solarfield, "T_dp");
-		bConnected &= connect(weather, "solazi", solarfield, "SolarAz");
-		bConnected &= connect(weather, "solzen", solarfield, "SolarZen");
-		bConnected &= connect(weather, "lat", solarfield, "latitude");
-		bConnected &= connect(weather, "lon", solarfield, "longitude");
-		bConnected &= connect(weather, "tz", solarfield, "timezone");
-		if (!bConnected)
-			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of weather to inputs of solarfield for the simulation."));
 		
-		bConnected &= connect(controller, "defocus", solarfield, "defocus");
-		bConnected &= connect(controller, "T_field_in", solarfield, "T_cold_in");
-		if (!bConnected)
-			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of controller to inputs of solarfield for the simulation."));
 
 		//Set controller parameters type 251
 		set_unit_value_ssc_double(controller, "field_fluid" ); // field_fluid);
@@ -517,32 +503,17 @@ public:
 
 
 
-		set_unit_value_ssc_matrix(tou, "weekday_schedule");
-		set_unit_value_ssc_matrix(tou, "weekend_schedule");
+		set_unit_value_ssc_matrix(tou_translator, "weekday_schedule");
+		set_unit_value_ssc_matrix(tou_translator, "weekend_schedule");
 
 
-		bConnected &= connect(tou, "tou_value", controller, "TOUPeriod");
-		if (!bConnected)
-			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of tou to inputs of controller for the simulation."));
-
-		//Connect weather reader to controller
-		bConnected &= connect(weather, "beam", controller, "I_bn");
-		bConnected &= connect(weather, "tdry", controller, "T_amb");
-		bConnected &= connect(solarfield, "m_dot_avail", controller, "m_dot_field");
-		bConnected &= connect(powerblock, "m_dot_htf_ref", controller, "m_dot_htf_ref");
-		bConnected &= connect(solarfield, "T_sys_h", controller, "T_field_out");
-		bConnected &= connect(powerblock, "T_htf_cold", controller, "T_pb_out");
-		bConnected &= connect(powerblock, "m_dot_demand", controller, "m_pb_demand");
-		bConnected &= connect(solarfield, "E_bal_startup", controller, "q_startup");
-		if (!bConnected)
-			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of some units to inputs of controller for the simulation."));
 
 
 		//Set initial values
 		set_unit_value_ssc_double(controller, "I_bn" ); // 0.);
 		set_unit_value_ssc_double(controller, "T_amb" ); // 15.);
 		set_unit_value_ssc_double(controller, "m_dot_field" ); // 0.);
-		set_unit_value_ssc_double(controller, "m_dot_htf_ref" ); // 0.);
+	//	set_unit_value_ssc_double(controller, "m_dot_htf_ref" ); // 0.);
 		set_unit_value_ssc_double(controller, "T_field_out" ); // T_hot_des);
 		set_unit_value_ssc_double(controller, "T_pb_out_init" ); // T_cold_des);
 		set_unit_value_ssc_double(controller, "m_pb_demand" ); // 100000.);
@@ -571,23 +542,13 @@ public:
 		set_unit_value_ssc_double(powerblock, "n_pl_inc" ); // 2);
 		set_unit_value_ssc_array(powerblock, "F_wc" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-		//Connect inputs
-		bConnected &= connect(weather, "twet", powerblock, "T_wb");
-		bConnected &= connect(weather, "tdry", powerblock, "T_db");
-		bConnected &= connect(weather, "pres", powerblock, "P_amb");
-		bConnected &= connect(weather, "rhum", powerblock, "rh");
 		set_unit_value_ssc_double(powerblock, "mode", 2);	//Always set to 2 for type 251
-		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot");
-		bConnected &= connect(controller, "m_dot_pb", powerblock, "m_dot_htf");
-		bConnected &= connect(controller, "m_dot_pb", powerblock, "demand_var");
-		bConnected &= connect(controller, "standby_control", powerblock, "standby_control");
-		bConnected &= connect(controller, "TOU", powerblock, "TOU");
 		//Set initial values
 		set_unit_value_ssc_double(powerblock, "T_wb" ); // 10.);
 		set_unit_value_ssc_double(powerblock, "T_db" ); // 15.);
 		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
 		set_unit_value_ssc_double(powerblock, "rh" ); // 0.25);
-		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
+//		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
 		set_unit_value_ssc_double(powerblock, "m_dot_htf_init" ); // 0.);
 		set_unit_value_ssc_double(powerblock, "demand_var" ); // E_gross);
 		set_unit_value_ssc_double(powerblock, "standby_control" ); // 0);
@@ -596,6 +557,57 @@ public:
 		set_unit_value_ssc_double(enet, "eta_lhv" ); // 0.9);
 		set_unit_value_ssc_double(enet, "eta_tes_htr" ); // 0.98);
 		set_unit_value_ssc_double(enet, "fp_mode" ); // freeze_prot_mode);
+
+
+		//Set the inputs
+		bool bConnected = connect(weather, "beam", solarfield, "I_b",0);
+		bConnected &= connect(weather, "tdry", solarfield, "T_db");
+		bConnected &= connect(weather, "wspd", solarfield, "V_wind");
+		bConnected &= connect(weather, "pres", solarfield, "P_amb");
+		bConnected &= connect(weather, "tdew", solarfield, "T_dp");
+		bConnected &= connect(weather, "solazi", solarfield, "SolarAz");
+		bConnected &= connect(weather, "solzen", solarfield, "SolarZen");
+		bConnected &= connect(weather, "lat", solarfield, "latitude");
+		bConnected &= connect(weather, "lon", solarfield, "longitude");
+		bConnected &= connect(weather, "tz", solarfield, "timezone");
+		if (!bConnected)
+			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of weather to inputs of solarfield for the simulation."));
+
+
+		bConnected &= connect(tou_translator, "tou_value", controller, "TOUPeriod");
+		if (!bConnected)
+			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of tou to inputs of controller for the simulation."));
+
+		//Connect weather reader to controller
+		bConnected &= connect(weather, "beam", controller, "I_bn");
+		bConnected &= connect(weather, "tdry", controller, "T_amb");
+		bConnected &= connect(solarfield, "m_dot_avail", controller, "m_dot_field");
+		bConnected &= connect(powerblock, "m_dot_htf_ref", controller, "m_dot_htf_ref");
+		bConnected &= connect(solarfield, "T_sys_h", controller, "T_field_out");
+		bConnected &= connect(powerblock, "T_htf_cold", controller, "T_pb_out");
+		bConnected &= connect(powerblock, "m_dot_demand", controller, "m_pb_demand");
+		bConnected &= connect(solarfield, "E_bal_startup", controller, "q_startup");
+		if (!bConnected)
+			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of some units to inputs of controller for the simulation."));
+
+
+		bConnected &= connect(controller, "defocus", solarfield, "defocus");
+		bConnected &= connect(controller, "T_field_in", solarfield, "T_cold_in");
+		if (!bConnected)
+			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of controller to inputs of solarfield for the simulation."));
+
+		//Connect inputs
+		bConnected &= connect(weather, "twet", powerblock, "T_wb");
+		bConnected &= connect(weather, "tdry", powerblock, "T_db");
+		bConnected &= connect(weather, "pres", powerblock, "P_amb");
+		bConnected &= connect(weather, "rhum", powerblock, "rh");
+
+		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot");
+		bConnected &= connect(controller, "m_dot_pb", powerblock, "m_dot_htf");
+		bConnected &= connect(controller, "m_dot_pb", powerblock, "demand_var");
+		bConnected &= connect(controller, "standby_control", powerblock, "standby_control");
+		bConnected &= connect(controller, "TOU", powerblock, "TOU");
+
 		bConnected &= connect(powerblock, "P_cycle", enet, "W_cycle_gross");
 		bConnected &= connect(powerblock, "W_cool_par", enet, "W_par_heatrej");
 		bConnected &= connect(solarfield, "W_dot_pump", enet, "W_par_sf_pump");
@@ -607,8 +619,7 @@ public:
 		bConnected &= connect(controller, "tank_fp_par", enet, "Q_par_tes_fp");
 		bConnected &= connect(solarfield, "E_fp_tot", enet, "Q_par_sf_fp");
 		bConnected &= connect(controller, "q_aux_heat", enet, "Q_aux_backup");
-
-		
+	
 
 		// check if all connections worked
 		if ( !bConnected )
@@ -617,7 +628,7 @@ public:
 		// Run simulation
 		size_t hours = 8760;
 		int error = simulate(3600, hours * 3600, 3600);
-		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0 > error )
 			throw exec_error( "tcsmslf", util::format("there was a problem simulating in the TCS molten salt linear fresnel model. Error %d", error) );
 
 		// get the outputs

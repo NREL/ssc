@@ -300,7 +300,8 @@ set_value(solarfield, "D_plug", [0,0,0,0]);
 set_value(solarfield, "Flow_type", [1,1,1,1]);
 set_value(solarfield, "Rough", [4.50E-05,4.50E-05,4.50E-05,4.50E-05]);
 set_value(solarfield, "alpha_env", [0.02,0.02,0,0]);
-set_value(solarfield, "epsilon_abs_1", [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
+set_value(solarfield, "epsilon_abs_1", [[100,150,200,250,300,350,400,450,500],
+							[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
 set_value(solarfield, "epsilon_abs_2", [[0],[0.65]]);
 set_value(solarfield, "epsilon_abs_3", [[0],[0.65]]);
 set_value(solarfield, "epsilon_abs_4", [[0],[0]]);
@@ -520,5 +521,5 @@ connect(solarfield, "E_fp_tot", enet, "Q_par_sf_fp");
 connect(controller, "q_aux_heat", enet, "Q_aux_backup");
 
 
-simulate(hr_start,hr_end,1,30,false);
+simulate(hr_start,hr_end,1,30,true);
 
