@@ -76,6 +76,7 @@
     <ClInclude Include="..\tcs\storage_hx.h" />
     <ClInclude Include="..\tcs\tcskernel.h" />
     <ClInclude Include="..\tcs\tcstype.h" />
+    <ClInclude Include="..\tcs\tcs_debug.h" />
     <ClInclude Include="..\tcs\thermocline_tes.h" />
     <ClInclude Include="..\tcs\waterprop.h" />
   </ItemGroup>
