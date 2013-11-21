@@ -21,7 +21,7 @@ private:
 };
 
 
-static void debug_log_init_call(const char* unit_name, std::vector<tcsvalue> &values)
+static void debug_log_init_call(const char* unit_name, tcstypeinfo *type, std::vector<tcsvalue> &values)
 {
 	std::string fn ("C:\\Projects\\SAM\\Documentation\\CSP\\Linear Fresnel\\Molten Salt\\tcsdbg.txt");
 	stdfile dbgout(fn, "a");
@@ -30,6 +30,7 @@ static void debug_log_init_call(const char* unit_name, std::vector<tcsvalue> &va
 
 	for (int i = 0; i < values.size(); i++)
 	{
+		fprintf(dbgout, "%s = ", type->variables[i].name);
 		switch (values[i].type)
 		{
 		case TCS_NUMBER:
