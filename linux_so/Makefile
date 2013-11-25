@@ -24,6 +24,7 @@ all: inform $(TARGET)
 
 
 OBJECTS = \
+	cmod_pvwattsfrompoa.o \
 	cmod_pvwattsfunc.o \
 	cmod_wfcsv.o \
 	cmod_test_pvshade.o \
