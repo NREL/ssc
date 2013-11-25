@@ -49,9 +49,8 @@ copy examples\daggett.tm2 sdk-release\examples
 copy examples\rocksprings.tm2 sdk-release\examples
 copy examples\example1_pvwatts.c sdk-release\examples
 copy examples\pvwattsfunc_example.c sdk-release\examples
-copy examples\ver.c sdk-release\examples
-copy examples\pvsamv1_comppa.lk sdk-release\examples
-copy examples\pvsamv1_rescom.lk sdk-release\examples
+copy examples\pvsamv1_c3d_comppa.lk sdk-release\examples
+copy examples\pvsamv1_c3d_rescom.lk sdk-release\examples
 copy examples\pvwattsfunc_test.lk sdk-release\examples
 
 copy ..\lk\docs\lk_guide.pdf sdk-release\
