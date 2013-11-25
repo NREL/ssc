@@ -53,7 +53,6 @@ azimuth = 180;
 track_mode = 0;
 soiling = 0.95;
 albedo = 0.2;
-albedo = 0.2;
 dc_derate = 0.95558;
 
 // shading derate table
