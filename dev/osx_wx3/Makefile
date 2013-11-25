@@ -1,6 +1,6 @@
 VPATH = ..
 
-WEXDIR = ../../../wex
+WEXDIR = ../../../../wex
 WEXLIB = $(WEXDIR)/wexosxwx3.a
 LKDIR = ../../../lk
 LKLIB = $(LKDIR)/lkosxwx3.a
