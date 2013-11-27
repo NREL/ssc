@@ -154,7 +154,7 @@ static var_info _cm_vtab_tcsmslf[] = {
 	{ SSC_INPUT, SSC_NUMBER, "pb_fixed_par", 			"Label", 			"", 			"", 			"controller", 			"*", 			"", 			"" },
 	{ SSC_INPUT, SSC_ARRAY, "bop_array", 			"Label", 			"", 			"", 			"controller", 			"*", 			"", 			"" },
 	{ SSC_INPUT, SSC_ARRAY, "aux_array", 			"Label", 			"", 			"", 			"controller", 			"*", 			"", 			"" },
-	//{ SSC_INPUT,        SSC_NUMBER,      "T_startup", 			        "Label", 			                                                         "", 			            "", 			            "controller", 			   "*", 			                      "", 			                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tes_temp", 			        "Label", 			                                                         "", 			            "", 			            "controller", 			   "*", 			                      "", 			                     "" },
 	{ SSC_INPUT, SSC_NUMBER, "fossil_mode", 			"Label", 			"", 			"", 			"controller", 			"*", 			"INTEGER", 			"" },
 	{ SSC_INPUT, SSC_NUMBER, "fthr_ok", 			"Label", 			"", 			"", 			"controller", 			"*", 			"INTEGER", 			"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "nSCA", 			             "Label", 			                                                         "", 			            "", 			            "controller", 			   "*", 			                      "", 			                     "" },
@@ -481,7 +481,9 @@ public:
 		set_unit_value_ssc_double(controller, "pb_fixed_par" ); // 0.0055);
 		set_unit_value_ssc_array(controller, "bop_array" ); // [0, 1, 0.483, 0.517, 0]);
 		set_unit_value_ssc_array(controller, "aux_array" ); // [0.02273, 1, 0.483, 0.517, 0]);
-		set_unit_value_ssc_double(controller, "T_startup" ); // T_sf_ave);
+		// tes_temp = T_sf_ave
+		// set_unit_value_ssc_double(controller, "T_startup" ); // T_sf_ave);
+		set_unit_value(controller, "T_startup", as_double("tes_temp"));
 		set_unit_value_ssc_double(controller, "fossil_mode" ); // 1);
 		set_unit_value_ssc_double(controller, "fthr_ok" ); // 1);
 		set_unit_value_ssc_double(controller, "nSCA" ); // nMod);

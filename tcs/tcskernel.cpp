@@ -987,7 +987,7 @@ int tcskernel::simulate( double start, double end, double step )
 			return -1;
 		}
 		// for debugging when running from SSC SDK Tool or SAM - include tcs_debug.h
-	//	debug_log_init_call(m_units[i].type->name, m_units[i].type, m_units[i].values);
+		//debug_log_init_call(m_units[i].type->name, m_units[i].type, m_units[i].values);
 
 	}
 	
