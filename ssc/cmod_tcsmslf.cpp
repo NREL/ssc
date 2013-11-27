@@ -215,7 +215,7 @@ static var_info _cm_vtab_tcsmslf[] = {
 	//	{ SSC_INPUT,        SSC_NUMBER,      "T_db", 			             "Label", 			                                                         "", 			            "", 			            "powerblock", 			   "*", 			                      "", 			                     "" },
 	//	{ SSC_INPUT,        SSC_NUMBER,      "P_amb", 			            "Label", 			                                                         "", 			            "", 			            "powerblock", 			   "*", 			                      "", 			                     "" },
 	{ SSC_INPUT, SSC_NUMBER, "rh", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
-	{ SSC_INPUT, SSC_NUMBER, "T_htf_hot", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
+//	{ SSC_INPUT, SSC_NUMBER, "T_htf_hot", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
 	{ SSC_INPUT, SSC_NUMBER, "m_dot_htf_init", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
 	{ SSC_INPUT, SSC_NUMBER, "demand_var", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
 	{ SSC_INPUT, SSC_NUMBER, "standby_control", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
@@ -466,10 +466,16 @@ public:
 		set_unit_value_ssc_double(controller, "h_tank_min" ); // 1);
 		set_unit_value_ssc_double(controller, "u_tank" ); // 0.4);
 		set_unit_value_ssc_double(controller, "tank_pairs" ); // 1);
-		set_unit_value_ssc_double(controller, "cold_tank_Thtr" ); // T_cold_fp);
-		set_unit_value_ssc_double(controller, "hot_tank_Thtr" ); // T_hot_fp);
-		set_unit_value_ssc_double(controller, "tank_max_heat" ); // Q_TES_htr);
-		set_unit_value_ssc_double(controller, "T_field_in_des" ); // T_cold_des);
+		// cold_tank_Thtr = T_cold_des - 30 = T_loop_in_des - 30
+		// set_unit_value_ssc_double(controller, "cold_tank_Thtr"); // T_cold_fp);
+		set_unit_value(controller, "cold_tank_Thtr", (as_double("T_loop_in_des") - 30.0) );
+		// hot_tank_Thtr = T_hot_des - 100 = T_loop_out - 100
+		//set_unit_value_ssc_double(controller, "hot_tank_Thtr"); // T_hot_fp);
+		set_unit_value(controller, "hot_tank_Thtr", (as_double("T_loop_out") - 100.0));
+		// Q_TES_htr = 1.5*TES_tank_vol/1000.;
+		//set_unit_value_ssc_double(controller, "tank_max_heat"); // Q_TES_htr);
+		set_unit_value(controller, "tank_max_heat", (1.5 * as_double("vol_Tank") / 1000.0));
+		set_unit_value_ssc_double(controller, "T_field_in_des"); // T_cold_des);
 		set_unit_value_ssc_double(controller, "T_field_out_des" ); // T_hot_des);
 		set_unit_value_ssc_double(controller, "q_pb_design" ); // Q_cycle_des);
 		set_unit_value_ssc_double(controller, "W_pb_design" ); // E_gross);
@@ -516,9 +522,13 @@ public:
 		set_unit_value_ssc_double(controller, "T_amb" ); // 15.);
 		set_unit_value_ssc_double(controller, "m_dot_field" ); // 0.);
 	//	set_unit_value_ssc_double(controller, "m_dot_htf_ref" ); // 0.);
-		set_unit_value_ssc_double(controller, "T_field_out" ); // T_hot_des);
-		set_unit_value_ssc_double(controller, "T_pb_out_init" ); // T_cold_des);
-		set_unit_value_ssc_double(controller, "m_pb_demand" ); // 100000.);
+		// T_hot_des=T_loop_out
+		//set_unit_value_ssc_double(controller, "T_field_out" ); // T_hot_des);
+		set_unit_value(controller, "T_field_out", as_double("T_loop_out"));
+		// T_cold_des=T_loop_in_des
+		//set_unit_value_ssc_double(controller, "T_pb_out_init"); // T_cold_des);
+		set_unit_value(controller, "T_pb_out", as_double("T_loop_in_des"));
+		set_unit_value_ssc_double(controller, "m_pb_demand"); // 100000.);
 		set_unit_value_ssc_double(controller, "q_startup" ); // 0.);
 
 
@@ -551,7 +561,8 @@ public:
 		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
 		set_unit_value_ssc_double(powerblock, "rh" ); // 0.25);
 //		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
-		set_unit_value_ssc_double(powerblock, "m_dot_htf_init" ); // 0.);
+		set_unit_value(controller, "T_htf_hot", as_double("T_loop_out"));
+		set_unit_value_ssc_double(powerblock, "m_dot_htf_init"); // 0.);
 		set_unit_value_ssc_double(powerblock, "demand_var" ); // E_gross);
 		set_unit_value_ssc_double(powerblock, "standby_control" ); // 0);
 
