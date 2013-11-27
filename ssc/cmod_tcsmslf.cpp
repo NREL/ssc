@@ -274,6 +274,7 @@ static var_info _cm_vtab_tcsmslf[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "E_field", "Accumulated internal energy in the entire solar field", "MWht","", "mslf", "*", "LENGTH=8760", "" },
 //	{ SSC_OUTPUT, SSC_STRING, "piping_summary", "String containing description of field piping design", "none","", "mslf", "*", "LENGTH=8760", "" },
 // sum calcs
+	{ SSC_OUTPUT, SSC_ARRAY, "P_cycle", "Gross electricity generation (or usage) by the plant", "MW", "", "mslf", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "W_net", "Net electricity generation (or usage) by the plant", "MW", "", "mslf", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "W_par_tot", "Total electrical parasitic consumption by all plant subsystems", "MW", "", "mslf", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Fuel_usage", "Total fossil fuel usage by all plant subsystems", "MMBTU", "", "mslf", "*", "LENGTH=8760", "" },
