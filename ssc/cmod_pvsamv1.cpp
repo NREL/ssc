@@ -570,7 +570,7 @@ public:
 			sa[nn].derate = as_double( prefix+"derate" );
 			sa[nn].track_mode = as_integer( prefix+"track_mode"); // 0=fixed, 1=1axis, 2=2axis, 3=aziaxis
 
-			sa[nn].tilt = wf.lat;
+			sa[nn].tilt = fabs(wf.lat);
 			if ( !lookup( prefix+"tilt_eq_lat" ) || !as_boolean( prefix+"tilt_eq_lat" ) )
 				sa[nn].tilt = fabs( as_double( prefix+"tilt" ) );
 
