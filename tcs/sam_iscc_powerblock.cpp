@@ -24,13 +24,12 @@ enum{	//Parameters
 		I_Q_DOT_REC_SS,
 		I_T_REC_IN, 
 		I_T_REC_OUT,
-		I_F_TIMESTEP,
 
 		//Outputs
 		O_T_HTF_COLD,
 		O_T_HTF_HOT, 
-		O_W_DOT_PC_BASE,
-		O_W_DOT_PC,   
+		O_W_DOT_PC_FOSSIL,
+		O_W_DOT_PC_HYBRID,   
 		O_T_ST_COLD,
 		O_T_ST_HOT, 
 		O_P_ST_COLD,
@@ -58,13 +57,12 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	{TCS_INPUT, TCS_NUMBER, I_Q_DOT_REC_SS,    "q_dot_rec_ss",      "Receiver thermal output - no startup derate",          "MWt",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_T_REC_IN,        "T_rec_in",          "Receiver inlet temperature",                           "C",     "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_T_REC_OUT,       "T_rec_out",         "Receiver outlet temperature",                          "C",     "", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_F_TIMESTEP,      "f_timestep",        "Fraction of timestep that receiver is operational (not starting-up)", "", "", ""},
 
 	//OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD,    "T_htf_cold",       "Outlet molten salt temp - inlet rec. temp",           "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_HOT,     "T_htf_hot",        "Inlet molten salt temp - outlet rec. temp",           "C",     "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_BASE, "W_dot_pc_baseline","Plant power cycle output - no solar thermal input",   "MWe",   "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC,      "W_dot_pc_net",     "Plant power cycle output at timestep with solar",     "MWe",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_FOSSIL,"W_dot_pc_fossil", "POWER CYCLE output - no solar thermal input",   "MWe",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_HYBRID,"W_dot_pc_hybrid", "POWER CYCLE output at timestep with solar",     "MWe",   "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_ST_COLD,     "T_st_cold",        "Steam extraction temp TO molten salt HX",             "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_ST_HOT,      "T_st_hot",         "Steam injection temp TO ngcc",                        "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_P_ST_COLD,     "P_st_cold",        "Steam extraction pressure TO molten salt HX",         "bar",   "", "", ""},
@@ -103,7 +101,7 @@ private:
 	double m_T_st_extract;
 	double m_T_st_inject;
 
-	double m_W_dot_pc_base;
+	double m_W_dot_pc_fossil;
 	double m_T_amb_low;
 	double m_T_amb_high;
 	double m_P_amb_low; 
@@ -140,8 +138,7 @@ public:
 		m_T_st_extract	     = std::numeric_limits<double>::quiet_NaN();
 		m_T_st_inject	     = std::numeric_limits<double>::quiet_NaN();
 
-		m_W_dot_pc_base = std::numeric_limits<double>::quiet_NaN();
-		m_W_dot_pc_base = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_pc_fossil = std::numeric_limits<double>::quiet_NaN();
 		m_T_amb_low = std::numeric_limits<double>::quiet_NaN();
 		m_T_amb_high = std::numeric_limits<double>::quiet_NaN();
 		m_P_amb_low = std::numeric_limits<double>::quiet_NaN();
@@ -310,16 +307,15 @@ public:
 		double q_dot_rec = value( I_Q_DOT_REC_SS )*1000.0;		//[kWt] Receiver thermal output, convert from [MWt]
 		double T_rec_in_prev = value( I_T_REC_IN );			//[C] Receiver inlet molten salt temperature - used to solve previous call to tower model
 		double T_rec_out = value( I_T_REC_OUT );		    //[C] Receiver outlet molten salt temperature - used to solve previous call to tower model
-		double f_rec_timestep = value( I_F_TIMESTEP );		//[-] Fraction of timestep receiver is producing useful power
 
-		T_amb = max( m_T_amb_low, min( m_T_amb_high, T_amb ) );
+		//T_amb = max( m_T_amb_low, min( m_T_amb_high, T_amb ) );
 		P_amb = max( m_P_amb_low, min( m_P_amb_high, P_amb ) );
 
 		// Get Basline output - only depends on weather
 		if( ncall == 0 )
 		{
-			m_W_dot_pc_base = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
-			value( O_W_DOT_PC_BASE, m_W_dot_pc_base );
+			m_W_dot_pc_fossil = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
+			value( O_W_DOT_PC_FOSSIL, m_W_dot_pc_fossil );
 			m_q_dot_rec_max = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_heat_max )*1000.0;	//[kWt] Convert from MWt
 			value(O_Q_DOT_MAX, m_q_dot_rec_max/1.E3);
 		}
@@ -330,7 +326,7 @@ public:
 
 			value( O_T_HTF_COLD, T_rec_in_prev );
 			value( O_T_HTF_HOT, T_rec_out );	
-			value( O_W_DOT_PC, m_W_dot_pc_base );
+			value( O_W_DOT_PC_HYBRID, m_W_dot_pc_fossil );
 			value( O_T_ST_COLD, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_t ) );
 			value( O_T_ST_HOT, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_t ) );
 			value( O_P_ST_COLD, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_p ) );
@@ -525,26 +521,24 @@ public:
 			m_T_low_ncall = T_rec_in_prev;
 		}
 
+		// MS inlet temp to receiver is only input to receiver model changing, so if successive substitution is not working,
+		// bound temperature and use bisection method to converge
 		if( ncall > 8 && m_T_upflag_ncall && m_T_lowflag_ncall )
 			T_ms_out_guess = 0.5*m_T_up_ncall + 0.5*m_T_low_ncall;
 
 		value( O_T_HTF_COLD, T_ms_out_guess );
 		value( O_T_HTF_HOT, T_rec_out );
 
-		double W_dot_pc_f1 = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
+		double W_dot_pc_hybrid = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_plant_power_net );
 
-		double W_dot_pc = W_dot_pc_f1;
-		if( f_rec_timestep < 1.0 )
-			W_dot_pc = f_rec_timestep*W_dot_pc + (1.0 - f_rec_timestep)*m_W_dot_pc_base;
-
-		value( O_W_DOT_PC, W_dot_pc );
+		value( O_W_DOT_PC_HYBRID, W_dot_pc_hybrid );
 
 		value( O_T_ST_COLD, T_st_extract );
 		value( O_T_ST_HOT, T_st_inject  );
 		value( O_P_ST_COLD, P_st_extract  );
 		value( O_P_ST_HOT, P_st_inject  );
 
-		value( O_ETA_SOLAR_PC, (W_dot_pc - m_W_dot_pc_base)/(f_rec_timestep*q_dot_rec/1000.0) );
+		value( O_ETA_SOLAR_PC, (W_dot_pc_hybrid - m_W_dot_pc_fossil)/(q_dot_rec/1000.0) );
 
 		return 0;
 
