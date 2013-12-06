@@ -889,39 +889,77 @@ void ngcc_power_cycle::set_cycle1_table_props()
 
 double ngcc_power_cycle::get_performance_results( util::block_t<double> * p_current_table )
 {
-	int x_q_low = (int) ( (m_q_MW - m_q_sf_start)/m_delta_q );
+
+	int x_q_low = (int)((m_q_MW - m_q_sf_start) / m_delta_q);
 	int x_q_high = x_q_low + 1;
-	double f_x_high = (m_q_MW - m_q_sf_start)/m_delta_q - x_q_low;
+	double f_x_high = (m_q_MW - m_q_sf_start) / m_delta_q - x_q_low;
 	double f_x_low = 1.0 - f_x_high;
-	int y_T_low = (int) ( (m_T_amb_C - m_T_amb_start)/m_delta_T );
-	int y_T_high = y_T_low + 1;
-	double f_y_high = (m_T_amb_C - m_T_amb_start)/m_delta_T - y_T_low;
-	double f_y_low = 1.0 - f_y_high;
-	int z_P_low = (int) ( (m_P_amb_bar -m_P_amb_start)/m_delta_P );
+	int z_P_low = (int)((m_P_amb_bar - m_P_amb_start) / m_delta_P);
 	int z_P_high = z_P_low + 1;
-	double f_z_high = (m_P_amb_bar -m_P_amb_start)/m_delta_P - z_P_low;
+	double f_z_high = (m_P_amb_bar - m_P_amb_start) / m_delta_P - z_P_low;
 	double f_z_low = 1.0 - f_z_high;
 
-	/*
-	double sum1 = 0.0;
-	sum1+=f_x_low*f_y_low*f_z_low;
-	sum1+=f_x_low*f_y_low*f_z_high;
-	sum1+=f_x_low*f_y_high*f_z_low;
-	sum1+=f_x_low*f_y_high*f_z_high;
-	sum1+=f_x_high*f_y_low*f_z_low;
-	sum1+=f_x_high*f_y_low*f_z_high;
-	sum1+=f_x_high*f_y_high*f_z_low;
-	sum1+=f_x_high*f_y_high*f_z_high;
-	// Check that sum1 = 1*/
+	if( m_T_amb_C >= m_T_amb_start && m_T_amb_C < m_T_amb_end )
+	{
+		int y_T_low = (int)((m_T_amb_C - m_T_amb_start) / m_delta_T);
+		int y_T_high = y_T_low + 1;
+		double f_y_high = (m_T_amb_C - m_T_amb_start) / m_delta_T - y_T_low;
+		double f_y_low = 1.0 - f_y_high;																
 
-	double cube1 = p_current_table->at( x_q_low, y_T_low, z_P_low )  *f_x_low*f_y_low*f_z_low;
-	double cube2 = p_current_table->at( x_q_low, y_T_low, z_P_high ) *f_x_low*f_y_low*f_z_high;
-	double cube3 = p_current_table->at( x_q_low, y_T_high, z_P_low ) *f_x_low*f_y_high*f_z_low;
-	double cube4 = p_current_table->at( x_q_low, y_T_high, z_P_high )*f_x_low*f_y_high*f_z_high;
-	double cube5 = p_current_table->at( x_q_high, y_T_low, z_P_low )   *f_x_high*f_y_low*f_z_low;
-	double cube6 = p_current_table->at( x_q_high, y_T_low, z_P_high )  *f_x_high*f_y_low*f_z_high;
-	double cube7 = p_current_table->at( x_q_high, y_T_high, z_P_low )  *f_x_high*f_y_high*f_z_low;
-	double cube8 = p_current_table->at( x_q_high, y_T_high, z_P_high ) *f_x_high*f_y_high*f_z_high;
-	
-	return (cube1 + cube2 + cube3 + cube4 + cube5 + cube6 + cube7 + cube8);
+		/*
+		double sum1 = 0.0;
+		sum1+=f_x_low*f_y_low*f_z_low;
+		sum1+=f_x_low*f_y_low*f_z_high;
+		sum1+=f_x_low*f_y_high*f_z_low;
+		sum1+=f_x_low*f_y_high*f_z_high;
+		sum1+=f_x_high*f_y_low*f_z_low;
+		sum1+=f_x_high*f_y_low*f_z_high;
+		sum1+=f_x_high*f_y_high*f_z_low;
+		sum1+=f_x_high*f_y_high*f_z_high;
+		// Check that sum1 = 1*/
+
+		double cube1 = p_current_table->at(x_q_low, y_T_low, z_P_low)  *f_x_low*f_y_low*f_z_low;
+		double cube2 = p_current_table->at(x_q_low, y_T_low, z_P_high) *f_x_low*f_y_low*f_z_high;
+		double cube3 = p_current_table->at(x_q_low, y_T_high, z_P_low) *f_x_low*f_y_high*f_z_low;
+		double cube4 = p_current_table->at(x_q_low, y_T_high, z_P_high)*f_x_low*f_y_high*f_z_high;
+		double cube5 = p_current_table->at(x_q_high, y_T_low, z_P_low)   *f_x_high*f_y_low*f_z_low;
+		double cube6 = p_current_table->at(x_q_high, y_T_low, z_P_high)  *f_x_high*f_y_low*f_z_high;
+		double cube7 = p_current_table->at(x_q_high, y_T_high, z_P_low)  *f_x_high*f_y_high*f_z_low;
+		double cube8 = p_current_table->at(x_q_high, y_T_high, z_P_high) *f_x_high*f_y_high*f_z_high;
+
+		return (cube1 + cube2 + cube3 + cube4 + cube5 + cube6 + cube7 + cube8);
+	}
+	else if(m_T_amb_C < m_T_amb_start)
+	{
+		double y[2];
+		for( int i = 0; i < 2; i++ )
+		{
+			double square1 = p_current_table->at(x_q_low, i, z_P_low)*f_x_low*f_z_low;
+			double square2 = p_current_table->at(x_q_low, i, z_P_high)*f_x_low*f_z_high;
+			double square3 = p_current_table->at(x_q_high, i, z_P_low)*f_x_high*f_z_low;
+			double square4 = p_current_table->at(x_q_high, i, z_P_high)*f_x_high*f_z_high;
+			
+			y[i] = square1 + square2 + square3 + square4;
+		}
+
+		return y[0] - (y[1]-y[0])/m_delta_T*(m_T_amb_start-m_T_amb_C);
+	}
+	else
+	{
+		double y[2];
+		for( int i = 0; i < 2; i++ )
+		{
+			double square1 = p_current_table->at(x_q_low, m_N_T-1-i, z_P_low)*f_x_low*f_z_low;
+			double square2 = p_current_table->at(x_q_low, m_N_T-1-i, z_P_high)*f_x_low*f_z_high;
+			double square3 = p_current_table->at(x_q_high, m_N_T-1-i, z_P_low)*f_x_high*f_z_low;
+			double square4 = p_current_table->at(x_q_high, m_N_T-1-i, z_P_high)*f_x_high*f_z_high;
+
+			y[i] = square1 + square2 + square3 + square4;
+		}
+
+		if( m_T_amb_C == m_T_amb_end )
+			return y[0];
+		else
+			return (y[0]-y[1])/m_delta_T*(m_T_amb_C - m_T_amb_end) + y[0];
+	}
 }

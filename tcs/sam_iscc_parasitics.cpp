@@ -21,47 +21,53 @@ enum{	//Parameters
 		I_W_DOT_TRACKING,
 		I_W_DOT_REC_PUMP,
 		I_M_DOT_HTF_SS,
-		I_W_DOT_PC_NET_SOLAR,
-		I_W_DOT_PC_NET_BASELINE,
+		I_W_DOT_PC_HYBRID,
+		I_W_DOT_PC_FOSSIL,
 		I_F_TIMESTEP,
 		I_Q_SOLAR_SS,
 
 		//Outputs
-		O_W_DOT_NET_SOLAR,   
-		O_W_DOT_NET_BASELINE,
-		O_ETA_SOLAR_NET,     
+		O_W_DOT_PC_HYBRID,
+		O_W_DOT_PC_FOSSIL,
+		O_W_DOT_PLANT_HYBRID,
+		O_W_DOT_PLANT_FOSSIL, 
+		O_W_DOT_PLANT_SOLAR,
+		O_ETA_SOLAR_USE,
 
 		//N_MAX
 		N_MAX};
 
 tcsvarinfo sam_iscc_parasitics_variables[] = {
 	//PARAMETERS
-	{TCS_PARAM, TCS_NUMBER, P_W_HTF_PC_PUMP,      "W_htf_pc_pump",          "Required pumping power for HTF through power block",       "kJ/kg", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_PIPING_LOSS,        "Piping_loss",            "Thermal loss per meter of piping",                         "Wt/m",  "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_PIPING_LENGTH,      "Piping_length",          "Total length of exposed piping",                           "m",     "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_Q_SF_DES,           "Q_sf_des",               "Design point solar field thermal output",                  "MW",    "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_W_HTF_PC_PUMP,      "W_htf_pc_pump",          "Required pumping power for HTF through power block",             "kJ/kg",     "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_PIPING_LOSS,        "Piping_loss",            "Thermal loss per meter of piping",                               "Wt/m",      "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_PIPING_LENGTH,      "Piping_length",          "Total length of exposed piping",                                 "m",         "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_Q_SF_DES,           "Q_sf_des",               "Design point solar field thermal output",                        "MW",        "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_PB_FIXED_PAR,       "pb_fixed_par",           "Fixed parasitic load - runs at all times",                       "MWe/MWcap", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR,            "bop_par",                "Balance of plant parasitic power fraction",                      "MWe/MWcap", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR_F,          "bop_par_f",              "Balance of plant parasitic power fraction - mult frac",          "none",      "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR_0,          "bop_par_0",              "Balance of plant parasitic power fraction - const coeff",        "none",      "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR_1,          "bop_par_1",              "Balance of plant parasitic power fraction - linear coeff",       "none",      "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR_2,          "bop_par_2",              "Balance of plant parasitic power fraction - quadratic coeff",    "none",      "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_W_DOT_FOSSIL_DES,   "W_dot_fossil_des",       "Fossil-only cycle output at design",                       "MWe",   "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_W_DOT_SOLAR_DES,    "W_dot_solar_des",        "Solar contribution to cycle output at design"              "MWe",   "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_W_DOT_FOSSIL_DES,   "W_dot_fossil_des",       "Fossil-only cycle output at design",                             "MWe",       "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_W_DOT_SOLAR_DES,    "W_dot_solar_des",        "Solar contribution to cycle output at design"                    "MWe",       "", "", ""},
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_W_DOT_TRACKING,     "W_dot_tracking",         "Heliostat tracking power",                                 "MWe",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_W_DOT_REC_PUMP,     "W_dot_rec_pump",         "Receiver pumping power",                                   "MWe",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_M_DOT_HTF_SS,       "m_dot_htf_ss",           "HTF mass flow rate through PC HX at steady state - no derate for startup",                         "kg/s",  "", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_W_DOT_PC_NET_SOLAR, "W_dot_pc_net_solar",     "Net PC power with solar",                                  "MWe",   "", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_W_DOT_PC_NET_BASELINE, "W_dot_pc_net_baseline", "Net PC power at no-solar baseline",                      "MWe",   "", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_W_DOT_PC_HYBRID,    "W_dot_pc_hybrid",        "Net PC power with solar",                                  "MWe",   "", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_W_DOT_PC_FOSSIL,    "W_dot_pc_fossil",        "Net PC power at no-solar baseline",                      "MWe",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_F_TIMESTEP,         "f_timestep",             "Fraction of timestep that receiver is operational (not starting-up)",      "-",        "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_Q_SOLAR_SS,         "q_solar_ss",             "Solar thermal power at steady state - no derate for startup", "MWe", "", "", ""},         
 
 	//OUTPUTS
-	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_NET_SOLAR,   "W_dot_net_solar",        "Net power output with solar",                              "MWe",   "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_NET_BASELINE,"W_dot_net_baseline",     "Net power output at baseline",                             "MWe",   "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_ETA_SOLAR_NET,     "eta_solar_net",          "Solar use efficiency considering parasitics",              "MWe",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_HYBRID,   "W_dot_pc_hybrid",        "Net POWER CYCLE power output with solar",                  "MWe",      "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_FOSSIL,   "W_dot_pc_fossil",        "Net POWER CYCLE power output at baseline",                 "MWe",      "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PLANT_HYBRID,"W_dot_plant_hybrid",     "Net PLANT power output with solar",                        "MWe",      "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PLANT_FOSSIL,"W_dot_plant_fossil",     "Net PLANT power output at baseline",                       "MWe",      "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PLANT_SOLAR, "W_dot_plant_solar",      "Net PLANT power output attributable",                      "MWe",      "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_ETA_SOLAR_USE,     "eta_solar_use",          "Solar use efficiency considering parasitics",              "",         "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
@@ -129,42 +135,66 @@ public:
 
 	virtual int call( double time, double step, int ncall )
 	{	
-		double W_dot_tracking = value( I_W_DOT_TRACKING );		//[MWe]
-		double W_dot_rec_pump = value( I_W_DOT_REC_PUMP );		//[MWe]
-		double m_dot_htf = value( I_M_DOT_HTF_SS );				//[kg/hr]
-		double W_dot_pc_net_solar = value( I_W_DOT_PC_NET_SOLAR );	//[MWe]
-		double W_dot_pc_net_baseline = value( I_W_DOT_PC_NET_BASELINE ); //[MWe]
-		double f_timestep = value( I_F_TIMESTEP );
-		double q_solar = value( I_Q_SOLAR_SS );					//[MWt]
+		double W_dot_tracking = value( I_W_DOT_TRACKING );		//[MWe] Solar field startup and tracking power
+		double W_dot_rec_pump = value( I_W_DOT_REC_PUMP );		//[MWe] Power required to pump HTF through receiver
+		double m_dot_htf = value( I_M_DOT_HTF_SS );				//[kg/hr] Steady-state mass flow rate through receiver and HX
+		double W_dot_pc_hybrid = value( I_W_DOT_PC_HYBRID );	//[MWe] Steady state power cycle fossil+solar output
+		double W_dot_pc_fossil = value( I_W_DOT_PC_FOSSIL );    //[MWe] Fossil-only power cycle output
+		double f_timestep = value( I_F_TIMESTEP );				//[-] Fracion of timestep that receiver is operating (not starting up)
+		double q_solar = value( I_Q_SOLAR_SS );					//[MWt] Steady-state receiver thermal power 
 
-		double P_ratio = W_dot_pc_net_solar / W_dot_total_des;	//[-]
+		// HTF power cycle HX pumping power
+		double W_dot_htf = W_htf_pc_pump*m_dot_htf/(3600.0)/1000.0;		//[kJ/kg]*[kg/hr]*[hr/s]*[MW/kW] = [MWe] HTF pumping power through power cycle heat exchanger
+		//double W_htf = f_timestep*W_dot_htf*step/3600.0;				//[MW]*[s]*[hr/s] = [MWe-hr] HTF pumping energy considering timestep and fraction receiver is operational							
 
-		double W_dot_htf = f_timestep*W_htf_pc_pump*m_dot_htf/(3600.0)/1000.0;		//[MWe] HTF pumping power through power cycle heat exchanger
-
+		// Electric-equivalent tower piping heat loss
 		double eta_cycle_base = 0.0;
 		double W_dot_piping_tot = 0.0;
 		if( q_solar > 0.0 )
 		{
-			eta_cycle_base = (W_dot_pc_net_solar - W_dot_pc_net_baseline) / (f_timestep*q_solar);
+			eta_cycle_base = (W_dot_pc_hybrid - W_dot_pc_fossil) / (f_timestep*q_solar);
 			W_dot_piping_tot = Piping_loss * Piping_length * eta_cycle_base * (q_solar / q_solar_design)*1.E-6;	//[MWe] Electric equivalent loss from receiver piping heat loss
 		}
+		//double W_piping_tot = f_timestep*W_dot_piping_tot*step / 3600.0;	//[MWe-hr] Energy considering timestep and fraction receiver operated
 
+		// Balance of plant parasitics
+		double P_ratio = (W_dot_pc_hybrid - W_dot_pc_fossil) / W_dot_solar_des;		//[-] Base on ratio of current and design solar contribution
 		double W_dot_BOP = 0.0;
 		if( P_ratio > 0.0 )
-			W_dot_BOP = W_dot_total_des * bop_par * bop_par_f * (bop_par_0 + bop_par_1*(P_ratio) + bop_par_2*pow(P_ratio, 2));
+			W_dot_BOP = W_dot_solar_des * bop_par * bop_par_f * (bop_par_0 + bop_par_1*(P_ratio) + bop_par_2*pow(P_ratio, 2));
+		//double W_BOP = f_timestep*W_dot_BOP*step/3600.0;		//[MWe-hr] Energy considering timestep and fraction receiver operated
 
+		// Fixed plant parasitic
 		double W_dot_fixed = pb_fixed_par * W_dot_total_des;		//[MWe]
+		//double W_fixed = W_dot_fixed*step/3600.0;					//[MWe-hr] Energy considering timestep - parasitic is incurred regardless of receiver operting fraction
 		
-		double W_dot_net_solar = W_dot_pc_net_solar - W_dot_rec_pump - W_dot_tracking - W_dot_htf - W_dot_piping_tot - W_dot_BOP - W_dot_fixed;	//[MWe] Net power output with solar
+		// Calculate plant electrical power output for timestep
+		double W_dot_plant_hybrid = f_timestep*W_dot_pc_hybrid + (1.0-f_timestep)*W_dot_pc_fossil
+			                        - W_dot_rec_pump - W_dot_tracking - W_dot_fixed 
+									- f_timestep*(W_dot_htf + W_dot_piping_tot + W_dot_BOP);
 
+		// Calculate plant fossil power output for timestep
+		double W_dot_plant_fossil = W_dot_pc_fossil - W_dot_fixed;
+
+		// Calculate solar use fraction with parasitics
 		double eta_solar_use = 0.0;
 		if( q_solar > 0.0 )
-			eta_solar_use = (W_dot_net_solar - W_dot_pc_net_baseline)/(f_timestep*q_solar);		//[-] Solar use fraction with parasitics
+			eta_solar_use = max(0.0, (W_dot_plant_hybrid - W_dot_plant_fossil) / (f_timestep*q_solar) );		//[-] Solar use fraction with parasitics
 
-		value( O_W_DOT_NET_SOLAR, W_dot_net_solar );		//[MWe]
-		value( O_W_DOT_NET_BASELINE, W_dot_pc_net_baseline );	//[MWe]
-		value( O_ETA_SOLAR_NET, eta_solar_use );			//[MWe]
+		//double W_pc_hybrid = (f_timestep*W_dot_pc_hybrid + (1.0-f_timestep)*W_dot_pc_fossil)*step/3600.0;							//[MWe-hr]
+		//double W_plant_hybrid = W_pc_hybrid - (W_dot_rec_pump+W_dot_tracking)*step/3600 - W_htf - W_piping_tot - W_BOP - W_fixed;	//[MWe-hr]
+		//double W_plant_fossil = W_dot_pc_fossil*step/3600.0 - W_fixed;							//[MWe-hr]
 
+		//double W_dot_plant_hybrid = W_dot_pc_hybrid - W_dot_rec_pump - W_dot_tracking - W_dot_htf - W_dot_piping_tot - W_dot_BOP - W_dot_fixed;	//[MWe] Net power output with solar
+		//double W_dot_plant_fossil = W_dot_pc_fossil - W_dot_fixed;
+		
+		value(O_W_DOT_PC_HYBRID, f_timestep*W_dot_pc_hybrid + (1.0 - f_timestep)*W_dot_pc_fossil);
+		value(O_W_DOT_PC_FOSSIL, W_dot_pc_fossil);
+		value( O_W_DOT_PLANT_HYBRID, W_dot_plant_hybrid );			//[MWe]
+		value( O_W_DOT_PLANT_FOSSIL, W_dot_plant_fossil );			//[MWe]
+		value(O_W_DOT_PLANT_SOLAR, W_dot_plant_hybrid - W_dot_plant_fossil);
+		value( O_ETA_SOLAR_USE, eta_solar_use );					//[MWe]
+		
 		return 0;
 
 	}
