@@ -200,14 +200,14 @@ hot_side_delta_t = 30;
 pinch_point = 10;
 
 // Set heliostat field parameters
-set_value( hel_field, "eta_map", eta_field_map );
-set_value( hel_field, "n_zen", num_zen );
-set_value( hel_field, "n_azi", num_azi );
-set_value( hel_field, "n_hel", num_helio );
-set_value( hel_field, "q_start", P_hel_start );
-set_value( hel_field, "p_run", P_hel_track );
-set_value( hel_field, "v_wind_max", wind_stow_speed );
-set_value( hel_field, "hel_stow_deploy", hel_stow_deploy );
+set_value( hel_field, "eta_map", eta_field_map );				// Added samwx
+set_value( hel_field, "n_zen", num_zen );						// Added samwx
+set_value( hel_field, "n_azi", num_azi );						// Added samwx
+set_value( hel_field, "n_hel", num_helio );						// Added samwx
+set_value( hel_field, "q_start", P_hel_start );					// Added samwx
+set_value( hel_field, "p_run", P_hel_track );					// Added samwx
+set_value( hel_field, "v_wind_max", wind_stow_speed );			// Added samwx
+set_value( hel_field, "hel_stow_deploy", hel_stow_deploy );		// Added samwx
 
 // Connect heliostat field inputs
 connect( weather, "wspd", hel_field, "vwind" );
@@ -216,25 +216,25 @@ connect( weather, "solazi", hel_field, "phi" );
 set_value( hel_field, "field_control", 1.0 );			// Do we need to adjust defocus?
 
 // Set receiver parameters
-set_value( receiver, "N_panels", num_panels );
-set_value( receiver, "D_rec", d_rec );
-set_value( receiver, "H_rec", h_rec );
-set_value( receiver, "THT", h_tower );
-set_value( receiver, "d_tube_out", d_tube );
-set_value( receiver, "th_tube", th_tube );
-set_value( receiver, "mat_tube", Material );
-set_value( receiver, "rec_htf", HTF );
-set_value( receiver, "Flow_type", flow_pattern );
-set_value( receiver, "epsilon", epsilon );
-set_value( receiver, "hl_ffact", hl_ffact );
-set_value( receiver, "T_htf_hot_des", HTF_rec_out );
+set_value( receiver, "N_panels", num_panels );				// Added samwx
+set_value( receiver, "D_rec", d_rec );						// Added samwx
+set_value( receiver, "H_rec", h_rec );						// Added samwx
+set_value( receiver, "THT", h_tower );						// Added samwx
+set_value( receiver, "d_tube_out", d_tube );				// Added samwx
+set_value( receiver, "th_tube", th_tube );					// Added samwx
+set_value( receiver, "mat_tube", Material );				// Added samwx
+set_value( receiver, "rec_htf", HTF );						// Added samwx
+set_value( receiver, "Flow_type", flow_pattern );			// Added samwx
+set_value( receiver, "epsilon", epsilon );					// Added samwx
+set_value( receiver, "hl_ffact", hl_ffact );				// Added samwx
+set_value( receiver, "T_htf_hot_des", HTF_rec_out );		
 set_value( receiver, "T_htf_cold_des", T_HTF_out_ref );
-set_value( receiver, "f_rec_min", f_rec_min );
+set_value( receiver, "f_rec_min", f_rec_min );				// Added samwx
 set_value( receiver, "Q_rec_des", Q_rec_des );
-set_value( receiver, "rec_su_delay", rec_su_delay );
-set_value( receiver, "rec_qf_delay", rec_qf_delay );
+set_value( receiver, "rec_su_delay", rec_su_delay );		// Added samwx
+set_value( receiver, "rec_qf_delay", rec_qf_delay );		// Added samwx
 set_value( receiver, "m_dot_htf_max", Rec_HTF_max_flow );
-set_value( receiver, "A_sf", A_sf );
+set_value( receiver, "A_sf", A_sf );						// Added samwx
 set_value( receiver, "is_direct_iscc", is_iscc );
 set_value( receiver, "cycle_config", cycle_config );
 set_value( receiver, "fluxmap_angles", arr_sol_pos);
@@ -267,28 +267,41 @@ set_value( iscc_pb, "pinch_point", pinch_point);
 
 // Set NGCC Inputs
 connect( weather, "tdry", iscc_pb, "T_amb" );
-set_value( iscc_pb, "T_amb", 10.3 );
+//set_value( iscc_pb, "T_amb", 10.3 );
 connect( weather, "pres", iscc_pb, "P_amb" );
-set_value( iscc_pb, "P_amb", 943.2 );
+//set_value( iscc_pb, "P_amb", 943.2 );
 connect( receiver, "m_dot_salt_tot", iscc_pb, "m_dot_ms_ss" );
-m_dot_ms = 2256 * 3600.0;			// kg/hr
-set_value( iscc_pb, "m_dot_ms_ss", m_dot_ms ); 
+//m_dot_ms = 2256 * 3600.0;			// kg/hr
+//set_value( iscc_pb, "m_dot_ms_ss", m_dot_ms ); 
 connect( receiver, "q_dot_ss", iscc_pb, "q_dot_rec_ss" );
-set_value( iscc_pb, "q_dot_rec_ss", 150 );		//MWt
+//set_value( iscc_pb, "q_dot_rec_ss", 150 );		//MWt
 connect( receiver, "T_salt_cold", iscc_pb, "T_rec_in" );
 connect( receiver, "T_salt_hot", iscc_pb, "T_rec_out" );
-connect( receiver, "f_timestep", iscc_pb, "f_timestep" );
+//connect( receiver, "f_timestep", iscc_pb, "f_timestep" );
 
 // Set ISSC parasitic Parameters
-set_value( iscc_parasitics, "f_const_parasitic", pb_fixed_par );
 set_value( iscc_parasitics, "W_htf_pc_pump", PB_pump_coef );
+set_value( iscc_parasitics, "Piping_loss", piping_loss );
+set_value( iscc_parasitics, "Piping_length", piping_length );
+//set_value( iscc_parasitics, "Piping_loss", 0.0 );
+//set_value( iscc_parasitics, "Piping_length", 0.0 );
+set_value( iscc_parasitics, "Q_sf_des", Q_rec_des );
+//set_value( iscc_parasitics, "pb_fixed_par", 0.0 );
+set_value( iscc_parasitics, "pb_fixed_par", pb_fixed_par );
+set_value( iscc_parasitics, "bop_par", bop_par );
+set_value( iscc_parasitics, "bop_par_f", bop_par_f );
+set_value( iscc_parasitics, "bop_par_0", bop_par_0 );
+set_value( iscc_parasitics, "bop_par_1", bop_par_1 );
+set_value( iscc_parasitics, "bop_par_2", bop_par_2 );
+set_value( iscc_parasitics, "W_dot_fossil_des", 465.198 );
+set_value( iscc_parasitics, "W_dot_solar_des", 64.5096 );
 
 // Connect ISCC parasitic Inputs
 connect( hel_field, "pparasi", iscc_parasitics, "W_dot_tracking" );
 connect( receiver, "W_dot_pump", iscc_parasitics, "W_dot_rec_pump" );
 connect( receiver, "m_dot_ss", iscc_parasitics, "m_dot_htf_ss" );
-connect( iscc_pb, "W_dot_pc_net", iscc_parasitics, "W_dot_pc_net_solar" );
-connect( iscc_pb, "W_dot_pc_baseline", iscc_parasitics, "W_dot_pc_net_baseline" );
+connect( iscc_pb, "W_dot_pc_hybrid", iscc_parasitics, "W_dot_pc_hybrid" );
+connect( iscc_pb, "W_dot_pc_fossil", iscc_parasitics, "W_dot_pc_fossil" );
 connect( receiver, "f_timestep", iscc_parasitics, "f_timestep" );
 connect( receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss" );
 
