@@ -185,18 +185,38 @@ public:
 			}
 		}
 
+		// Set cycle configuration in class
+		int cycle_config = value(P_CYCLE_CONFIG);
+		cycle_calcs.set_cycle_config(cycle_config);
+
+		// Get table limits
+		cycle_calcs.get_table_range(m_T_amb_low, m_T_amb_high, m_P_amb_low, m_P_amb_high);
+
 		// Cycle design-point conditions
 		m_q_sf_des = value( P_Q_SF_DES );		// [MWt]
 		m_T_amb_des = 20.0;						// [C]
-		m_P_amb_des = 101325.0*pow( 1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588 )/1.E5;	//[bar] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html
+		m_P_amb_des = 101325.0*pow( 1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588 )/1.E5;	//[bar] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html						
 
-		// Set cycle configuration in class
-		int cycle_config = value( P_CYCLE_CONFIG );
-		cycle_calcs.set_cycle_config( cycle_config );
+		// Check ambient pressure
+		if( m_P_amb_des < m_P_amb_low )
+		{
+			message("The design ambient pressure, %d, [bar] is lower than the lowest value of ambient pressure, %d [bar] in the cycle performance lookup table.", m_P_amb_des, m_P_amb_low);
+			return -1;
+		}
+		if( m_P_amb_des > m_P_amb_high )
+		{
+			message("The design ambient pressure, %d, [bar] is greater than the largest value of ambient pressure, %d [bar] in the cycle performance lookup table.", m_P_amb_des, m_P_amb_high);
+			return -1;
+		}
 
-		// Get table limits
-		cycle_calcs.get_table_range( m_T_amb_low, m_T_amb_high, m_P_amb_low, m_P_amb_high );		
-
+		// Check design solar thermal input
+		double q_dot_sf_max = cycle_calcs.get_ngcc_data(0.0, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_heat_max);				//[MWt]
+		if( m_q_sf_des > q_dot_sf_max )
+		{		
+			message("The design solar thermal input, %d MWt, is greater than the ngcc can accept, %d MWt at the design ambient pressure, %d bar, and designt ambient temperature",
+				    "20 C. The HTF-steam HX was sized using the maximum solar thermal input.", m_q_sf_des, q_dot_sf_max, m_P_amb_des);
+			m_q_sf_des = q_dot_sf_max;
+		}
 
 		// ********************************************************************************************************
 		// Get Steam Pressure, Extraction, Injection, and mass flow rate at design solar input from Regression Model
@@ -309,7 +329,14 @@ public:
 		double T_rec_out = value( I_T_REC_OUT );		    //[C] Receiver outlet molten salt temperature - used to solve previous call to tower model
 
 		//T_amb = max( m_T_amb_low, min( m_T_amb_high, T_amb ) );
-		P_amb = max( m_P_amb_low, min( m_P_amb_high, P_amb ) );
+		if( P_amb < m_P_amb_low || P_amb > m_P_amb_high )
+		{
+			message("The design ambient pressure, %d, is outside of the bounds",
+				    "for ambient pressure (%d, %d) [bar] in the cycle performance lookup table and has been set to the appropriate bound",
+					"for this timestep", m_P_amb_des, m_P_amb_low, m_P_amb_high);
+			P_amb = max(m_P_amb_low, min(m_P_amb_high, P_amb));
+		}
+		
 
 		// Get Basline output - only depends on weather
 		if( ncall == 0 )
@@ -338,7 +365,7 @@ public:
 		else if( q_dot_rec > m_q_dot_rec_max )
 		{
 			q_dot_rec = m_q_dot_rec_max;
-			
+			message("Solar thermal input from the receiver, %d MWt, is greater than the allowable maximum, %d MWt", q_dot_rec, m_q_dot_rec_max);			
 		}
 
 
