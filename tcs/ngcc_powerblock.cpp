@@ -787,7 +787,7 @@ void ngcc_power_cycle::set_cycle1_table_props()
         
         m_plant_power_net.assign( plant_power_net[0][0], 11, 8, 6 );
 
-		const double solar_heat_max[6][11][8] =   // solar injection heat max (kJ/kg) constrained by the maximum HP pressure: 103.5 bar
+		const double solar_heat_max[6][11][8] =   // solar injection heat max (MWt) constrained by the maximum HP pressure: 103.5 bar
         {   // blocks for constant ambient pressure
             // rows for constant solar heat
             // columns for constant ambient temperature
