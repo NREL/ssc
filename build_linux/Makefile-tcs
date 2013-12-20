@@ -6,6 +6,8 @@ CXXFLAGS = $(CFLAGS)
 
 OBJECTS = tcskernel.o \
     cavity_calcs.o \
+    atmospheric_aod.o \
+    Heliostat_AzElAod.o \
     datatest.o \
     direct_steam_receivers.o \
     tou_translator.o \

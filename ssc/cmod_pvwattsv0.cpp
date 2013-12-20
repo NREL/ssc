@@ -485,7 +485,7 @@ static int julian(int yr,int month,int day)    /* Calculates julian day of year 
 }
 
 
-static void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[8])
+static void solarpos_v0(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[8])
 {
 /* This function is based on a paper by Michalsky published in Solar Energy
 	Vol. 40, No. 3, pp. 227-235, 1988. It calculates solar position for the
@@ -1087,7 +1087,7 @@ public:
 				else
 					alb = 0.6;
 
-				solarpos(yr,mn,dy,12,0.0,lat,lng,tz,sunn);/* Find sunrise and sunset */
+				solarpos_v0(yr,mn,dy,12,0.0,lat,lng,tz,sunn);/* Find sunrise and sunset */
 				sunrise = sunn[4];       /* In local standard times */
 				sunset = sunn[5];        /* not corrected for refraction */
 			
@@ -1120,7 +1120,7 @@ public:
 							else if( i == endhr )
 								minute = 60.0*0.5*( sunset - (double)i );
 						
-							solarpos(yr,mn,dy,i,minute,lat,lng,tz,sunn);
+							solarpos_v0(yr,mn,dy,i,minute,lat,lng,tz,sunn);
 						}
 						else if( i == beghr && fabs(sunset-sunrise) > 0.01 ) /* Same sunup/sunset hour */
 						{  
@@ -1128,11 +1128,11 @@ public:
 							if( sunset > sunrise )  /* Rises and sets in same winter hour */
 							{                    /* For zenith at mid-height */
 								minute = 60.0*( sunrise + 0.25*( sunset - sunrise ) - (double)i );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sunn);
+								solarpos_v0(yr,mn,dy,i,minute,lat,lng,tz,sunn);
 								tmp = sunn[1];        /* Save zenith */
 															/* For azimuth at midpoint */
 								minute = 60.0*( sunrise + 0.5*( sunset - sunrise ) - (double)i );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sunn);
+								solarpos_v0(yr,mn,dy,i,minute,lat,lng,tz,sunn);
 								sunn[1] = tmp;
 							}
 							else     /* Sets and rises in same summer hour */
@@ -1140,13 +1140,13 @@ public:
 								tmp = 0.0;
 								tmp2 = 0.0;
 								minute = 60.0*( 1.0 - 0.5*( (double)i + 1.0 - sunrise ) );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sunn);
+								solarpos_v0(yr,mn,dy,i,minute,lat,lng,tz,sunn);
 								tmp += sunn[1];
 								if( sunn[0]/DTOR < 180.0 )
 									sunn[0] = sunn[0] + 360.0*DTOR;
 								tmp2 += sunn[0];
 								minute = 60.0*0.5*( sunset - (double)i );
-								solarpos(yr,mn,dy,i,minute,lat,lng,tz,sunn);
+								solarpos_v0(yr,mn,dy,i,minute,lat,lng,tz,sunn);
 								tmp += sunn[1];
 								tmp2 += sunn[0];
 								sunn[1] = tmp/2.0;    /* Zenith angle */
@@ -1156,7 +1156,7 @@ public:
 							}
 						}
 						else  /* Midnight sun or not a sunrise/sunup sunset hour */
-							solarpos(yr,mn,dy,i,minute,lat,lng,tz,sunn);
+							solarpos_v0(yr,mn,dy,i,minute,lat,lng,tz,sunn);
                     
 						incident2(mode,tilt,sazm,rlim,sunn[1],sunn[0],angle); /* Calculate incident angle */
 						poa[i] = perez( dn[i],df[i],alb,angle[0],angle[1],sunn[1] ); /* Incident solar radiation */
