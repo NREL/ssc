@@ -28,7 +28,7 @@ private:
 	util::block_t<double> * p_current_table;
 
 	// Cycle 1 calls
-	void set_cycle1_table_props();
+	void set_cycle_table_props();
 	
 	// Generic Cycle Calls
 	double get_performance_results( util::block_t<double> * p_current_table );
@@ -41,14 +41,17 @@ public:
 
 	bool set_cycle_config( int cycle_key )
 	{
-		if( cycle_key == 1 )
-		{
-			m_cycle_key = cycle_key;
-			set_cycle1_table_props();
-			return true;
-		}
-		else
+		// cycle_key == 1: NREL's NGCC model
+		// cycle_key == 2: GE's NGCC model
+
+		if( cycle_key > 2 || cycle_key < 1 )		// Check that cycle key is valid
 			return false;
+
+		m_cycle_key = cycle_key;
+
+		set_cycle_table_props();
+		return true;
+
 	}
 
 	void get_table_range(double & T_amb_low, double & T_amb_high, double & P_amb_low, double & P_amb_high )
