@@ -9,7 +9,7 @@
 #define PVWATTS_ROTLIM 45.0
 #define PVWATTS_ALBEDO 0.2
 
-double transpoa( double poa,double dn,double inc );
+double transpoa( double poa,double dn,double inc, bool ar_glass );
 double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa,double pvt, double iref);
 double dctoac(double pcrate,double efffp,double dc);
 

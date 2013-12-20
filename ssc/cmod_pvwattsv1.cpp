@@ -48,8 +48,8 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fhconv",                         "Convective heat transfer factor",             "",       "",                        "PVWatts",      "?=1",                     "MIN=0.1",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shade_mode_1x",                  "Tracker self-shading mode",                   "0/1/2",  "0=shading,1=backtrack,2=none","PVWatts",  "?=2",                     "INTEGER,MIN=0,MAX=2",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",   "",                            "PVWatts",  "?=0.3",                   "MIN=0,MAX=3",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable antireflective glass coating",         "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
 	
-
 	
 	/* outputs */
 
@@ -155,6 +155,9 @@ public:
 		if ( is_assigned("shade_mode_1x") ) shade_mode_1x = as_integer("shade_mode_1x");
 		double gcr = 0.3;
 		if ( is_assigned("gcr") ) gcr = as_double("gcr");
+
+		double use_ar_glass = false;
+		if ( is_assigned("ar_glass") ) use_ar_glass = as_boolean("ar_glass");
 
 		// check system size
 		if ( dcrate < 0.1 ) dcrate = 0.1;
@@ -353,7 +356,7 @@ public:
 				if (wind_stow > 0 && wf.wspd >= wind_stow)
 					poa = 0;
 
-				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180);
+				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180, use_ar_glass );
 				double pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
 				double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
 				double ac = dctoac(pcrate,efffp,dc);

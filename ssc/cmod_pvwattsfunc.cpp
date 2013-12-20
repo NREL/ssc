@@ -170,7 +170,7 @@ public:
 			if (wind_stow > 0 && wspd >= wind_stow)
 				poa = 0;
 
-			double tpoa = transpoa(poa, beam, aoi*3.14159265358979/180);
+			double tpoa = transpoa(poa, beam, aoi*3.14159265358979/180, false);
 			double pvt = tccalc( poa, wspd_corr, tamb );
 			double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
 			double ac = dctoac(pcrate,efffp,dc);

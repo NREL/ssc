@@ -56,26 +56,42 @@
 #define M_PI 3.1415926535
 #endif
 
-double transpoa( double poa,double dn,double inc )
-{  /* Calculates the irradiance transmitted thru a PV module cover. Uses King
+
+double transpoa( double poa, double dn, double inc, bool ar_glass )
+{  
+	/* Calculates the irradiance transmitted thru a PV module cover. Uses King
 		polynomial coefficients for glass from 2nd World Conference Paper,
 		July 6-10, 1998.                         Bill Marion 12/8/1998 */
+	double b0=1.0,
+		b1=-2.438e-3,
+		b2=3.103e-4,
+		b3=-1.246e-5,
+		b4=2.112e-7,
+		b5=-1.359e-9;
 
-	double b0=1.0,b1=-2.438e-3,b2=3.103e-4,b3=-1.246e-5,b4=2.112e-7,
-			b5=-1.359e-9,x,DTOR=0.017453293;
+	if ( ar_glass )
+	{
+		// SNL parameters for SPR-E20-327, ar glass
+		// added december 2013:  NOTE! need to update based on analysis of what is a "typical" AR glass coating
+		b0 = 1.0002;
+		b1 = -0.000213;
+		b2 = 3.63416e-005;
+		b3 = -2.175e-006;
+		b4 = 5.2796e-008;
+		b5 = -4.4351e-010;
+	}
 
-	inc = inc/DTOR;
+	inc = inc/0.017453293;
 	if( inc > 50.0 && inc < 90.0 ) /* Adjust for relection between 50 and 90 degrees */
 		{
-		x = b0 + b1*inc + b2*inc*inc + b3*inc*inc*inc + b4*inc*inc*inc*inc
+		double x = b0 + b1*inc + b2*inc*inc + b3*inc*inc*inc + b4*inc*inc*inc*inc
 			 + b5*inc*inc*inc*inc*inc;
-		poa = poa - ( 1.0 - x )*dn*cos(inc*DTOR);
+		poa = poa - ( 1.0 - x )*dn*cos(inc*0.017453293);
 		if( poa < 0.0 )
 			poa = 0.0;
 		}
 	return(poa);
 }
-
 pvwatts_celltemp::pvwatts_celltemp( double _inoct, double _height, double _dTimeHrs)
 {
 	/* constants */

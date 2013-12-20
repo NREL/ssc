@@ -84,7 +84,7 @@ public:
 			{
 				double tpoa = 0;
 				if (p_beam[i] > 0)	
-					tpoa = transpoa( poa, p_beam[i], p_inc[i]*M_PI/180.0 );  /* have valid poa and dn, calculate transmitted through glass cover */
+					tpoa = transpoa( poa, p_beam[i], p_inc[i]*M_PI/180.0, false );  /* have valid poa and dn, calculate transmitted through glass cover */
 				else
 					tpoa = poa; /* default to dn 0 or bad value - assume no glass cover on module */
 				
