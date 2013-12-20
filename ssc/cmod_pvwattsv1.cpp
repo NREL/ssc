@@ -48,7 +48,7 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fhconv",                         "Convective heat transfer factor",             "",       "",                        "PVWatts",      "?=1",                     "MIN=0.1",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shade_mode_1x",                  "Tracker self-shading mode",                   "0/1/2",  "0=shading,1=backtrack,2=none","PVWatts",  "?=2",                     "INTEGER,MIN=0,MAX=2",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",   "",                            "PVWatts",  "?=0.3",                   "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable antireflective glass coating",         "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable anti-reflective glass coating (beta)",         "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
 	
 	
 	/* outputs */
