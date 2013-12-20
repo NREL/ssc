@@ -5,7 +5,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 34;
+	return 35;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -23,6 +23,7 @@ extern module_entry_info
 /* extern declarations of modules for linking */
 	cm_entry_6parsolve,
 	cm_entry_pvsamv1,
+	cm_entry_pvwattsv0,
 	cm_entry_pvwattsv1,
 	cm_entry_pvwattsfunc,
 	cm_entry_pvwattsfrompoa,
@@ -64,6 +65,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_6parsolve,
 	&cm_entry_pv6parmod,
 	&cm_entry_pvsamv1,
+	//&cm_entry_pvwattsv0,
 	&cm_entry_pvwattsv1,
 	&cm_entry_pvwattsfunc,
 	&cm_entry_pvwattsfrompoa,
