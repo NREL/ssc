@@ -273,22 +273,23 @@ public:
 			double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
 			int sunup;		
 
-			int code = irr.calc();
-			if ( 0 != code )
-				sunup = 0; // if for some reason the irradiance processor fails, ignore this hour
-
-			p_sunup[i] = (ssc_number_t)sunup;
-
-			p_tcell[i] = (ssc_number_t)wf.tdry;
-
 			p_gh[i] = (ssc_number_t)wf.gh;
 			p_dn[i] = (ssc_number_t)wf.dn;
 			p_df[i] = (ssc_number_t)wf.df;
 			p_tamb[i] = (ssc_number_t)wf.tdry;
 			p_tdew[i] = (ssc_number_t)wf.tdew;
-			p_wspd[i] = (ssc_number_t)wf.wspd;
+			p_wspd[i] = (ssc_number_t)wf.wspd;			
+			p_tcell[i] = (ssc_number_t)wf.tdry;
 	
-			irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
+			int code = irr.calc();
+
+			if ( 0 != code )
+				sunup = 0; // if for some reason the irradiance processor fails, ignore this hour
+			else
+				irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
+			
+			p_sunup[i] = (ssc_number_t)sunup;
+
 			if (sunup > 0)
 			{
 				irr.get_angles( &aoi, &stilt, &sazi, &rot, &btd );
