@@ -61,6 +61,7 @@ OBJECTS = \
 	cmod_tcstrough_physical.o \
 	cmod_tcsdish.o \
 	cmod_tcsiscc.o \
+	cmod_tcsmslf.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
