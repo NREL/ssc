@@ -92,6 +92,7 @@ public:
 class wfcsv
 {
 private:
+	FILE *m_fp;
 
 	struct column
 	{
@@ -123,8 +124,12 @@ public:
 
 	bool ok();
 
+
 	// return 0 on success, or negative error code
-	int read_all( const std::string &file ); 
+	int read_all( const std::string &file );
+	int read_header( const std::string &file, bool leave_open = false );
+	int read_data(); // must follow a call to read_header()
+
 		
 	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
 		GHI, DNI, DHI, 
