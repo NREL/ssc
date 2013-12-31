@@ -96,7 +96,8 @@ DEFINE_MODULE_ENTRY( wfcsvconv, "Converter for TMY2, TMY3, INTL, EPW, SMW weathe
 static var_info _cm_vtab_wfcsvread[] = 
 {	
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP                     REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "file_name",               "Input weather file name",         "",       "wfcsv format",      "Weather File Converter", "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_STRING,      "file_name",               "Input weather file name",         "",       "wfcsv format",      "Weather File Reader", "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "scan_header_only",        "Scan all data or just header",    "",       "",                  "Weather File Reader", "?=0",                     "",                     "" },
 	
 var_info_invalid };
 
@@ -112,8 +113,10 @@ public:
 	void exec( ) throw( general_error )
 	{
 		std::string file = as_string("file_name");
-		wfcsv in( file );
-		if ( !in.ok() ) throw exec_error( "wfcsvread", util::format("error code %d when reading file ", in.error()) + file );
+
+		wfcsv in;
+		int code = in.read_header( file, true );
+		if ( code != 0 ) throw exec_error( "wfcsvread", util::format("error code %d when reading header ", in.error()) + file );
 
 		assign( "interpolate", var_data( in.interpolate() ? 1 : 0 ) );
 		if ( !in.location().empty() ) assign( "location", var_data(in.location()) );
@@ -131,6 +134,12 @@ public:
 
 		if ( in.year() > 0 )
 			assign( "year", var_data(in.year()) );
+
+		if ( as_boolean("scan_header_only") )
+			return;
+
+		code = in.read_data();
+		if ( code != 0 ) throw exec_error( "wfcsvread", util::format("error code %d when reading data ", in.error()) + file );
 
 		std::vector<int> cols = in.get_columns();
 		for( size_t i=0;i<cols.size();i++ )

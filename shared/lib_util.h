@@ -94,6 +94,7 @@ namespace util
 	{
 	public:
 		stdfile() : p(0) {  }
+		stdfile( FILE *ff ) : p(ff) { }
 		stdfile(const char *file, const char *mode) { p = fopen(file, mode); }
 		stdfile( const std::string &file, const char *mode ) { p = fopen(file.c_str(), mode); }
 		~stdfile() { close(); }
@@ -102,6 +103,7 @@ namespace util
 		bool ok() { return 0!=p; }
 		operator FILE*() const { return p; }
 		void close() { if (p) ::fclose(p); p=0; }
+		FILE *disown() { FILE *ff = p; p = 0; return ff; }
 	private:
 		FILE *p;
 	};

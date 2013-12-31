@@ -883,6 +883,7 @@ wfcsv::wfcsv( const std::string &file )
 
 void wfcsv::reset()
 {
+	m_fp = 0;
 	m_errorCode = -1;
 	m_numRecords = 0;
 	m_timeStepSeconds = 3600;
@@ -899,15 +900,18 @@ bool wfcsv::ok()
 	return m_errorCode == 0;
 }
 
-int wfcsv::read_all( const std::string &file )
-{
 #define NBUF 2048
 #define NCOL 128
 
+
+
+int wfcsv::read_header( const std::string &file, bool leave_open )
+{
 	reset();
 
 	util::stdfile fp( file, "r" );
 	if ( !fp.ok() ) return -2;
+
 	char buf[NBUF+1], *pbuf, 
 		buf1[NBUF+1], *pbuf1, 
 		*cols[128], *cols1[128];
@@ -984,15 +988,33 @@ int wfcsv::read_all( const std::string &file )
 		}
 	}
 
+	if ( leave_open )
+		m_fp = fp.disown();
+
+	return 0;
+}
+
+int wfcsv::read_data()
+{
+	util::stdfile fp( m_fp );
+	
+	m_fp = 0; // clear stored file pointer, reserved in stdfile above which took ownership of the pointer
+
+	if ( !fp.ok() ) return -99; // file is not open, exit
+
+	char buf[NBUF+1], *pbuf, 
+		buf1[NBUF+1], *pbuf1, 
+		*cols[128], *cols1[128];
+
 	pbuf = fgets( buf, NBUF, fp ); // read column names	
 	if ( pbuf != buf ) return -4;
-	ncols = locate2( buf, cols, NCOL, ',' );
+	int ncols = locate2( buf, cols, NCOL, ',' );
 
 	if ( m_hdrHasUnits )
 	{
 		pbuf1 = fgets( buf1, NBUF, fp ); // read column units;
 		if ( pbuf1 != buf1 ) return -5;
-		ncols1 = locate2( buf1, cols1, NCOL, ',' );
+		int ncols1 = locate2( buf1, cols1, NCOL, ',' );
 
 		if ( ncols != ncols1 ) return -6;
 	}
@@ -1125,6 +1147,15 @@ int wfcsv::read_all( const std::string &file )
 		return -8;
 
 	return 0;
+}
+
+int wfcsv::read_all( const std::string &file )
+{
+	int code = read_header( file, true );
+	if ( code < 0 )
+		return code;
+
+	return read_data();
 }
 
 
