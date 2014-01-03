@@ -124,6 +124,8 @@ public:
 
 	bool ok();
 
+	static std::string normalize_city( const std::string &in );
+
 
 	// return 0 on success, or negative error code
 	int read_all( const std::string &file );

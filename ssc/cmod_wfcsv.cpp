@@ -37,19 +37,8 @@ public:
 			if ( !hdr.ok() ) throw exec_error("wfcsvconv", "could not read input file: " + input );
 
 			std::string state = hdr.state;
-
-			std::string city = util::lower_case( hdr.city );
-			util::replace( city, "_", " " );
-			util::replace( city, "\"", "" );
-			util::replace( city, "/", " " );
-			util::replace( city, "\\", " " );
-
-			for ( size_t i=0;i<city.length();i++ )
-			{
-				if ( i==0 || city[i-1] == ' ' )
-					city[i] = toupper( city[i] );
-			}
-
+			std::string city = wfcsv::normalize_city( hdr.city );
+			
 			std::string country = hdr.country;
 			if ( !country.empty() ) country += " ";
 			std::string loc = hdr.loc_id;

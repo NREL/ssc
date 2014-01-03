@@ -900,6 +900,22 @@ bool wfcsv::ok()
 	return m_errorCode == 0;
 }
 
+std::string wfcsv::normalize_city( const std::string &in )
+{
+	std::string city = util::lower_case( in );
+	util::replace( city, "_", " " );
+	util::replace( city, "\"", "" );
+	util::replace( city, "/", " " );
+	util::replace( city, "\\", " " );
+
+	for ( size_t i=0;i<city.length();i++ )
+	{
+		if ( i==0 || city[i-1] == ' ' )
+			city[i] = toupper( city[i] );
+	}
+	return city;
+}
+
 #define NBUF 2048
 #define NCOL 128
 
@@ -1292,7 +1308,7 @@ bool wfcsv::convert( const std::string &input, const std::string &output )
 	{
 		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
 		fprintf(fp, "TMY2,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
-			in.city.c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
+			normalize_city(in.city).c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
 		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Snow Depth\n" );
 		for( size_t i=0;i<8760;i++ )
 		{
@@ -1306,7 +1322,7 @@ bool wfcsv::convert( const std::string &input, const std::string &output )
 	{
 		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
 		fprintf(fp, "TMY3,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
-			in.city.c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
+			normalize_city(in.city).c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
 		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n" );
 		for( size_t i=0;i<8760;i++ )
 		{
@@ -1320,7 +1336,7 @@ bool wfcsv::convert( const std::string &input, const std::string &output )
 	{
 		fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
 		fprintf(fp, "EPW,%s,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
-			in.city.c_str(), in.state.c_str(), in.country.c_str(), in.lat, in.lon, in.tz, in.elev );
+			normalize_city(in.city).c_str(), in.state.c_str(), in.country.c_str(), in.lat, in.lon, in.tz, in.elev );
 		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n" );
 		for( size_t i=0;i<8760;i++ )
 		{
@@ -1334,7 +1350,7 @@ bool wfcsv::convert( const std::string &input, const std::string &output )
 	{
 		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation,Year\n");
 		fprintf(fp, "SMW,%s,%s,%s,%.6lf,%.6lf,%lg,%lg,%d\n", in.loc_id.c_str(),
-			in.city.c_str(), in.state.c_str(), in.country.c_str(), in.lat, in.lon, in.tz, in.elev, in.year );
+			normalize_city(in.city).c_str(), in.state.c_str(), in.country.c_str(), in.lat, in.lon, in.tz, in.elev, in.year );
 		fprintf(fp, "Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,Tdew,RH,Pres,Wspd,Wdir,Snow,Albedo\n" );
 		for( size_t i=0;i<8760;i++ )
 		{
