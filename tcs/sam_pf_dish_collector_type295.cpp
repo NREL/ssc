@@ -78,7 +78,7 @@ tcsvarinfo sam_pf_dish_collector_type295_variables[] = {
 
 	// OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_POWER_OUT_COL,       "Power_out_col",           "Total power from the collector dish",          "kW",   "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_COLLECTOR_LOSSES,    "Collector_Losses",        "Total collector losses (Incident - P_out",     "kW",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_COLLECTOR_LOSSES,    "Collector_Losses",        "Total collector losses (Incident - P_out)",    "kW",   "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_ETA_COLLECTOR,       "eta_collector",           "Collector efficiency",                         "-",    "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_NUMBER_OF_COLLECTORS,"Number_of_collectors",    "Total number of collectors (n_es*n_ns)",       "-",    "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_I_CUT_IN,            "I_cut_in",                "The cut-in DNI value used in the simulation",  "W/m^2","", "", ""},

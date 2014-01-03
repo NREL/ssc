@@ -85,7 +85,7 @@ static var_info _cm_vtab_tcsdish[] = {
   //{ SSC_INPUT,        SSC_NUMBER,      "P_SE",                    "Receiver output power",                                                          "kW",           "",             "type297",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "T_amb",                   "Ambient temperature in Kelvin",                                                  "K",            "",             "type297",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "N_cols",                  "Number of collectors",                                                           "-",            "",             "type297",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_compression",           "Receiver efficiency",                                                            "C",            "",             "type297",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_compression_in",        "Receiver efficiency",                                                            "C",            "",             "type297",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "T_heater_head_operate",   "Receiver head operating temperature",                                            "K",            "",             "type297",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "P_in_collector",          "Power incident on the collector",                                                "kW",           "",             "type297",       "*",                       "",                      "" },
 
@@ -149,6 +149,29 @@ static var_info _cm_vtab_tcsdish[] = {
 //   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_OUTPUT,       SSC_ARRAY,       "net_power",         "Net system output power",                                        "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
 
+	{ SSC_OUTPUT, SSC_ARRAY, "tdry", "Dry bulb temperature", "C", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "wspd", "Wind speed", "m/s", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "beam", "Beam normal irradiance", "W/m2", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Power_in_collector", "Power incident on the collector", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Power_out_col", "Total power from the collector dish", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Power_in_rec", "Power entering the receiver from the collector", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_out_rec", "Receiver output power", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_out_SE", "Stirling engine gross output", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+  //{ SSC_OUTPUT, SSC_ARRAY, "net_power", "Net system output power", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "eta_net", "Net system efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Phi_shade", "Dish-to-dish shading performance factor", "-", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Collector_Losses", "Total collector losses (Incident - P_out)", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "eta_collector", "Collector efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Q_rec_losses", "Receiver thermal losses", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "eta_rec", "Receiver efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "T_heater_head_operate", "Receiver head operating temperature", "K", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_SE_losses", "Stirling engine losses", "-", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "eta_SE", "Stirling engine efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "engine_pressure", "Engine pressure", "Pa", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_parasitic", "Total parasitic power load", "W", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "T_compression", "Cold sink temperature / compression temperature", "K", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "T_tower_out", "Cooling fluid temperature into the cooler and out of the tower", "C", "", "Outputs", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "T_tower_in", "Cooling fluid temperature out of the cooling and into the tower", "C", "", "Outputs", "*", "LENGTH=8760", "" },
 	var_info_invalid };
 
 
@@ -183,7 +206,7 @@ public:
 		// set weather reader parameters/inputs
 		if(debug_mode)
 		{
-			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcs/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out" );
+			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out" );
 			set_unit_value( weather, "i_hour", "TIME" );
 			set_unit_value( weather, "i_month", "month" );
 			set_unit_value( weather, "i_day", "day" );
@@ -286,7 +309,7 @@ public:
 		set_unit_value_ssc_double( engine, "engine_speed"); //  engine_speed );
 		set_unit_value_ssc_double( engine, "V_displaced"); //  V_displaced );
 		// initial values
-		set_unit_value_ssc_double( engine, "T_compression"); //  273.15 );
+		set_unit_value_ssc_double( engine, "T_compression", as_double("T_compression_in") ); //  273.15 );
 
 		// Connect Engine Parameters
 		bConnected &= connect( receiver, "P_out_rec", engine, "P_SE" );
