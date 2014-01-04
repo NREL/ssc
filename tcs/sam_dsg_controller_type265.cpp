@@ -65,7 +65,7 @@ enum {
 	P_ffrac,
 	P_fluxmap_angles,
 	P_fluxmap,       
-	P_TOU_schedule,
+	//P_TOU_schedule,
 
 	I_azimuth,
 	I_zenith,     
@@ -82,6 +82,7 @@ enum {
 	I_T_rh_target,
 	I_T_fw,         
 	I_P_cond,     
+	I_TOUPeriod,
 
 	O_T_fw,
 	O_T_b_in,      
@@ -193,7 +194,7 @@ tcsvarinfo sam_dsg_controller_type265_variables[] = {
 	{ TCS_PARAM,  TCS_ARRAY,  P_ffrac,          "ffrac",                  "Fossil dispatch logic",                      "-",   "", "", "" },
 	{ TCS_PARAM,  TCS_MATRIX, P_fluxmap_angles, "fluxmap_angles",         "Matrix containing zenith and azimuth angles for flux maps",   "-",     "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided", "", "" },
 	{ TCS_PARAM,  TCS_MATRIX, P_fluxmap,        "fluxmap",                "Matrix containing flux map for various solar positions","-",     "",    "",  "" },
-	{ TCS_PARAM,  TCS_ARRAY,  P_TOU_schedule,   "TOU_schedule",           "Annual hourly time-of-use schedule",         "-",   "", "",
+	/*{ TCS_PARAM,  TCS_ARRAY,  P_TOU_schedule,   "TOU_schedule",           "Annual hourly time-of-use schedule",         "-",   "", "",
         "5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,"
         "5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,"
         "3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,"
@@ -282,7 +283,7 @@ tcsvarinfo sam_dsg_controller_type265_variables[] = {
         "5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,"
         "3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,"
         "4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4"
-		},
+		},*/
 
 	{ TCS_INPUT,  TCS_NUMBER, I_azimuth,     "azimuth",                "Solar azimuth",                   "deg",   "", "", "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_zenith,      "zenith",                 "Solar zenith",                    "deg",   "", "", "" },
@@ -299,6 +300,7 @@ tcsvarinfo sam_dsg_controller_type265_variables[] = {
 	{ TCS_INPUT,  TCS_NUMBER, I_T_rh_target, "T_rh_target",            "Target reheater outlet temp.",    "C",     "", "", "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_T_fw,        "T_fw",                   "Feedwater outlet temperature",    "C",     "", "", "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_P_cond,      "P_cond",                 "Condenser pressure",              "Pa",    "", "", "" },	
+	{ TCS_INPUT,  TCS_NUMBER, I_TOUPeriod,   "TOUPeriod",              "The time-of-use period",          "",      "", "", "" },
 
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_fw,        "T_fw",				   "Feedwater outlet temp",                  "C",     "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_b_in,      "T_b_in",                 "Boiler Inlet Temperature",               "C",     "", "", "" },
@@ -425,8 +427,8 @@ private:
 	double m_A_sf;
 	double * m_ffrac;
 	int m_numtou;
-	double * m_tou_schedule;
-	int m_l_tou_schedule;
+	//double * m_tou_schedule;
+	//int m_l_tou_schedule;
 
 	util::matrix_t<double> fluxmap_angles;	// matrix for fluxmap solar positions
 	util::matrix_t<double> fluxmap;         // matrix for flux values
@@ -567,8 +569,8 @@ public:
 
 		m_ffrac = 0;
 		m_numtou = -1;
-		m_tou_schedule = 0;
-		m_l_tou_schedule = -1;
+		//m_tou_schedule = 0;
+		//m_l_tou_schedule = -1;
 		
 		fluxmap_angles  = 0.0;
 		fluxmap         = 0.0;
@@ -794,7 +796,7 @@ public:
 		m_q_pb_max = m_cycle_max_frac * m_q_pb_design;	//[W] Maximum heat rate to power block.  Defocus if > 
 
 		m_ffrac = value(P_ffrac, &m_numtou);			//[-] Array of fossil fractions, index is time-of-use period
-		m_tou_schedule = value(P_TOU_schedule, &m_l_tou_schedule);	//[-] Array of time-of-use periods, index is hour of year
+		//m_tou_schedule = value(P_TOU_schedule, &m_l_tou_schedule);	//[-] Array of time-of-use periods, index is hour of year
 
 		property_info wp;
 		
@@ -946,6 +948,7 @@ public:
 		double T_rh_target = value( I_T_rh_target )+273.15;	//[K] Reheater outlet temp
 		double T_fw = value( I_T_fw )+273.15;		//[K] Feedwater outlet temp
 		double P_cond = value( I_P_cond );			//[Pa] Condenser pressure
+		m_touperiod = (int)value(I_TOUPeriod) - 1; // control value between 1 & 9, have to change to 0-8 for array index
 
 		// Need to set this here because if using fossil fuel in low irradiance cases, it will skip part of code that sets T_rh_in
 		double T_rh_in = T_hp_out;
@@ -986,7 +989,7 @@ public:
 				m_hour = time/3600.0;
 				//m_hour = 12.0;
 				m_T_dp = value( I_T_dp )+273.15;    //[K] Dew point temperature
-				m_touperiod = CSP::TOU_Reader( m_tou_schedule, time, m_l_tou_schedule );	//[-] Time of use period
+				//m_touperiod = CSP::TOU_Reader( m_tou_schedule, time, m_l_tou_schedule );	//[-] Time of use period
 				//m_touperiod = 1;
 				m_field_eff = value( I_field_eff ); //[-] field efficiency
 

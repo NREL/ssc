@@ -974,7 +974,8 @@ public:
 		double T_db = value( I_T_DB )+273.15;		//[K] Ambient dry bulb temperature, convert from C
 		//double P_amb = value( I_P_AMB )*101325.0;	//[Pa] Ambient pressure, convert from bar
 		double P_amb = value( I_P_AMB )*100.0;		//[Pa] Ambient pressure, convert from mbar
-		int tou = value( I_TOU );					//[-] Current Time-Of-Use period
+		//int tou = value( I_TOU );					//[-] Current Time-Of-Use period
+		int tou = (int)value(I_TOU) - 1;			// control value between 1 & 9, have to change to 0-8 for array index
 		double rh = value( I_RH )/100.0;			//[-] Relative humidity of the ambient air, convert from %
 
 		double F_wc_tou = m_F_wc[tou];				//[-] Hybrid fraction at current Time-Of-Use period

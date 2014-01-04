@@ -140,7 +140,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "standby_control", "Control signal indicating standby mode",                            "none",        "",            "powerblock",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "T_db",            "Ambient dry bulb temperature",                                      "C",           "",            "powerblock",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "P_amb",           "Ambient pressure",                                                  "atm",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "TOU",             "Current Time-of-use period",                                        "none",        "",            "powerblock",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "TOU",             "Current Time-of-use period",                                        "none",        "",            "powerblock",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "relhum",          "Relative humidity of the ambient air",                              "none",        "",            "powerblock",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "f_recSU",         "Fraction powerblock can run due to receiver startup",               "none",        "",            "powerblock",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "dp_b",            "Pressure drop in boiler",                                           "Pa",          "",            "powerblock",     "*",                       "",                      "" },
@@ -187,22 +187,40 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 // OUTPUTS
 // The names of the output variables should match the parameter names for the TCS units in order to signal to the TCS kernel to store the values by timestep
 
-//    VARTYPE           DATATYPE          NAME                 LABEL                                                            UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",      "Cycle power output",                                                "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-//    { SSC_OUTPUT,       SSC_ARRAY,       "Cycle_power",     "Cycle power output",                                                "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-/*
-
-// weather file reader
-    { SSC_OUTPUT,       SSC_ARRAY,       "month",             "Month",                                                          "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",            "Solar Azimuth",                                                  "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",            "Solar Zenith",                                                   "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Beam normal irradiance",                                         "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Dry bulb temperature",                                           "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Wind Speed",                                                     "m/s",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
-
-
-    { SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "type_???",       "*",                       "LENGTH=8760",           "" },
-*/
+//    VARTYPE           DATATYPE         NAME                 LABEL                                                             UNITS           META           GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Dry bulb temperature",                                           "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "twet",              "Wet bulb temperature",                                           "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Wind speed",                                                     "m/s",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Beam normal irradiance",                                         "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",         "Total field efficiency",                                         "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",           "Defocus fraction",                                               "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",         "Cycle power output",                                             "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "XXXXXXXXX",         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",       "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	var_info_invalid };
 
@@ -226,14 +244,15 @@ public:
 		else weather = add_unit("weatherreader", "TCS weather reader");
 
 		// Add units
-		int hel_field = add_unit("sam_mw_pt_type221");
-		int dsg_controller = add_unit("sam_dsg_controller_type265");
-		int powerblock = add_unit("sam_mw_type234");
-		int parasitics = add_unit("sam_mw_pt_type228");
+		int	tou = add_unit("tou_translator", "Time of Use Translator");
+		int type221_hel_field = add_unit("sam_mw_pt_type221");
+		int type265_dsg_controller = add_unit("sam_dsg_controller_type265");
+		int type234_powerblock = add_unit("sam_mw_type234");
+		int type228_parasitics = add_unit("sam_mw_pt_type228");
 
 		if(debug_mode)
 		{
-			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcs/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out" );
+			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out" );
 			set_unit_value( weather, "i_hour", "TIME" );
 			set_unit_value( weather, "i_month", "month" );
 			set_unit_value( weather, "i_day", "day" );
@@ -265,188 +284,193 @@ public:
 			set_unit_value_ssc_double( weather, "azimuth" );
 		}
 
+		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
+		set_unit_value_ssc_matrix(tou, "weekend_schedule");
+
 		// Set heliostat field parameters
-		set_unit_value_ssc_matrix( hel_field, "eta_map");//, eta_field_map );
-		set_unit_value_ssc_double( hel_field, "n_zen");//, num_zen );
-		set_unit_value_ssc_double( hel_field, "n_azi");//, num_azi );
-		set_unit_value_ssc_double( hel_field, "n_hel");//, num_helio );
-		set_unit_value_ssc_double( hel_field, "q_start");//, P_hel_start );
-		set_unit_value_ssc_double( hel_field, "p_run");//, P_hel_track );
-		set_unit_value_ssc_double( hel_field, "v_wind_max");//, wind_stow_speed );
-		set_unit_value_ssc_double( hel_field, "hel_stow_deploy");//, hel_stow_deploy );
-        set_unit_value_ssc_double( hel_field, "field_control" ); // INITIAL VALUE
+		set_unit_value_ssc_matrix( type221_hel_field, "eta_map");//, eta_field_map );
+		set_unit_value_ssc_double( type221_hel_field, "n_zen");//, num_zen );
+		set_unit_value_ssc_double( type221_hel_field, "n_azi");//, num_azi );
+		set_unit_value_ssc_double( type221_hel_field, "n_hel");//, num_helio );
+		set_unit_value_ssc_double( type221_hel_field, "q_start");//, P_hel_start );
+		set_unit_value_ssc_double( type221_hel_field, "p_run");//, P_hel_track );
+		set_unit_value_ssc_double( type221_hel_field, "v_wind_max");//, wind_stow_speed );
+		set_unit_value_ssc_double( type221_hel_field, "hel_stow_deploy");//, hel_stow_deploy );
+        set_unit_value_ssc_double( type221_hel_field, "field_control" ); // INITIAL VALUE
 
 		// Connect heliostat field inputs
-		bool bConnected = connect( weather, "wspd", hel_field, "vwind" );
-		bConnected = connect( weather, "solzen", hel_field, "theta" );
-		bConnected = connect( weather, "solazi", hel_field, "phi" );
+		bool bConnected = connect( weather, "wspd", type221_hel_field, "vwind" );
+		bConnected &= connect( weather, "solzen", type221_hel_field, "theta" );
+		bConnected &= connect( weather, "solazi", type221_hel_field, "phi" );
 
 		//Set DSG Controller Parameters
-		set_unit_value_ssc_double( dsg_controller, "fossil_mode"); //fossil_mode);
-        set_unit_value_ssc_double( dsg_controller, "q_pb_design"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design") );
-		set_unit_value_ssc_double( dsg_controller, "q_aux_max"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design")); //q_pb_design);
-		set_unit_value_ssc_double( dsg_controller, "lhv_eff"); //LHV_eff);
-		set_unit_value_ssc_double( dsg_controller, "h_tower"); //h_tower);
-		set_unit_value_ssc_double( dsg_controller, "n_panels"); //num_panels);
-		set_unit_value_ssc_double( dsg_controller, "flowtype"); //flow_pattern);
-		set_unit_value_ssc_double( dsg_controller, "d_rec"); //d_rec);
-		set_unit_value_ssc_double( dsg_controller, "q_rec_des"); //Q_rec_des);
-		set_unit_value_ssc_double( dsg_controller, "f_rec_min"); //f_rec_min);
-		set_unit_value_ssc_double( dsg_controller, "rec_qf_delay"); //rec_qf_delay);
-		set_unit_value_ssc_double( dsg_controller, "rec_su_delay"); //rec_su_delay);
-		set_unit_value_ssc_double( dsg_controller, "f_pb_cutoff"); //cycle_cutoff_frac);
-		set_unit_value_ssc_double( dsg_controller, "f_pb_sb"); //F_standby);
-		set_unit_value_ssc_double( dsg_controller, "t_standby_ini"); //T_standby);
-		set_unit_value_ssc_double( dsg_controller, "x_b_target"); //x_b_target);
-		set_unit_value_ssc_double( dsg_controller, "eta_rec_pump"); //eta_rec_pump);
-		set_unit_value_ssc_double( dsg_controller, "P_hp_in_des"); //P_HP_in);
-		set_unit_value_ssc_double( dsg_controller, "P_hp_out_des"); //P_HP_out);
-		set_unit_value_ssc_double( dsg_controller, "f_mdotrh_des"); //rh_frac_ref);
-		set_unit_value_ssc_double( dsg_controller, "p_cycle_design"); //P_cycle_design);
-		set_unit_value_ssc_double( dsg_controller, "ct"); //Cool_type);
-		set_unit_value_ssc_double( dsg_controller, "T_amb_des"); //T_amb_des);
-		set_unit_value_ssc_double( dsg_controller, "dT_cw_ref"); //dT_cooling_ref);
-		set_unit_value_ssc_double( dsg_controller, "T_approach"); //T_approach);
-		set_unit_value_ssc_double( dsg_controller, "T_ITD_des"); //T_ITD_des);
-		set_unit_value_ssc_double( dsg_controller, "hl_ffact"); //hl_ffact);
-		set_unit_value_ssc_double( dsg_controller, "h_boiler"); //h_boiler);
-		set_unit_value_ssc_double( dsg_controller, "d_t_boiler"); //d_boiler);
-		set_unit_value_ssc_double( dsg_controller, "th_t_boiler"); //th_boiler);
-		set_unit_value_ssc_double( dsg_controller, "emis_boiler"); //emis_boiler);
-		set_unit_value_ssc_double( dsg_controller, "abs_boiler"); //abs_boiler);
-		set_unit_value_ssc_double( dsg_controller, "mat_boiler"); //Mat_boiler);
-		set_unit_value_ssc_double( dsg_controller, "th_fin"); //th_fin);
-		set_unit_value_ssc_double( dsg_controller, "l_fin"); //L_fin);
-		set_unit_value_ssc_double( dsg_controller, "emis_fin"); //emis_fin);
-		set_unit_value_ssc_double( dsg_controller, "abs_fin"); //abs_fin);
-		set_unit_value_ssc_double( dsg_controller, "mat_fin"); //Mat_fin);
-		set_unit_value_ssc_double( dsg_controller, "h_sh"); //h_SH);
-		set_unit_value_ssc_double( dsg_controller, "d_sh"); //d_SH);
-		set_unit_value_ssc_double( dsg_controller, "th_sh"); //th_SH);
-		set_unit_value_ssc_double( dsg_controller, "emis_sh"); //emis_SH);
-		set_unit_value_ssc_double( dsg_controller, "abs_sh"); //abs_SH);
-		set_unit_value_ssc_double( dsg_controller, "mat_sh"); //Mat_SH);
-		set_unit_value_ssc_double( dsg_controller, "T_sh_out_des"); //T_SH_out_ref);
-		set_unit_value_ssc_double( dsg_controller, "h_rh"); //h_RH);
-		set_unit_value_ssc_double( dsg_controller, "d_rh"); //d_RH);
-		set_unit_value_ssc_double( dsg_controller, "th_rh"); //th_RH);
-		set_unit_value_ssc_double( dsg_controller, "emis_rh"); //emis_RH);
-		set_unit_value_ssc_double( dsg_controller, "abs_rh"); //abs_RH);
-		set_unit_value_ssc_double( dsg_controller, "mat_rh"); //Mat_RH);
-		set_unit_value_ssc_double( dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
-		set_unit_value_ssc_double( dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
-		set_unit_value_ssc_double( dsg_controller, "A_sf");//, A_sf );
-		set_unit_value_ssc_matrix( dsg_controller, "fluxmap_angles"); //arr_sol_pos);
-		set_unit_value_ssc_matrix( dsg_controller, "fluxmap"); //arr_flux);
-		set_unit_value_ssc_array( dsg_controller, "TOU_schedule");
+		set_unit_value_ssc_double( type265_dsg_controller, "fossil_mode"); //fossil_mode);
+        set_unit_value_ssc_double( type265_dsg_controller, "q_pb_design"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design") );
+		set_unit_value_ssc_double( type265_dsg_controller, "q_aux_max"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design")); //q_pb_design);
+		set_unit_value_ssc_double( type265_dsg_controller, "lhv_eff"); //LHV_eff);
+		set_unit_value_ssc_double( type265_dsg_controller, "h_tower"); //h_tower);
+		set_unit_value_ssc_double( type265_dsg_controller, "n_panels"); //num_panels);
+		set_unit_value_ssc_double( type265_dsg_controller, "flowtype"); //flow_pattern);
+		set_unit_value_ssc_double( type265_dsg_controller, "d_rec"); //d_rec);
+		set_unit_value_ssc_double( type265_dsg_controller, "q_rec_des"); //Q_rec_des);
+		set_unit_value_ssc_double( type265_dsg_controller, "f_rec_min"); //f_rec_min);
+		set_unit_value_ssc_double( type265_dsg_controller, "rec_qf_delay"); //rec_qf_delay);
+		set_unit_value_ssc_double( type265_dsg_controller, "rec_su_delay"); //rec_su_delay);
+		set_unit_value_ssc_double( type265_dsg_controller, "f_pb_cutoff"); //cycle_cutoff_frac);
+		set_unit_value_ssc_double( type265_dsg_controller, "f_pb_sb"); //F_standby);
+		set_unit_value_ssc_double( type265_dsg_controller, "t_standby_ini"); //T_standby);
+		set_unit_value_ssc_double( type265_dsg_controller, "x_b_target"); //x_b_target);
+		set_unit_value_ssc_double( type265_dsg_controller, "eta_rec_pump"); //eta_rec_pump);
+		set_unit_value_ssc_double( type265_dsg_controller, "P_hp_in_des"); //P_HP_in);
+		set_unit_value_ssc_double( type265_dsg_controller, "P_hp_out_des"); //P_HP_out);
+		set_unit_value_ssc_double( type265_dsg_controller, "f_mdotrh_des"); //rh_frac_ref);
+		set_unit_value_ssc_double( type265_dsg_controller, "p_cycle_design"); //P_cycle_design);
+		set_unit_value_ssc_double( type265_dsg_controller, "ct"); //Cool_type);
+		set_unit_value_ssc_double( type265_dsg_controller, "T_amb_des"); //T_amb_des);
+		set_unit_value_ssc_double( type265_dsg_controller, "dT_cw_ref"); //dT_cooling_ref);
+		set_unit_value_ssc_double( type265_dsg_controller, "T_approach"); //T_approach);
+		set_unit_value_ssc_double( type265_dsg_controller, "T_ITD_des"); //T_ITD_des);
+		set_unit_value_ssc_double( type265_dsg_controller, "hl_ffact"); //hl_ffact);
+		set_unit_value_ssc_double( type265_dsg_controller, "h_boiler"); //h_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "d_t_boiler"); //d_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "th_t_boiler"); //th_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler"); //emis_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_boiler"); //abs_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "mat_boiler"); //Mat_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "th_fin"); //th_fin);
+		set_unit_value_ssc_double( type265_dsg_controller, "l_fin"); //L_fin);
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_fin"); //emis_fin);
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_fin"); //abs_fin);
+		set_unit_value_ssc_double( type265_dsg_controller, "mat_fin"); //Mat_fin);
+		set_unit_value_ssc_double( type265_dsg_controller, "h_sh"); //h_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "d_sh"); //d_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "th_sh"); //th_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_sh"); //emis_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_sh"); //abs_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "mat_sh"); //Mat_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "T_sh_out_des"); //T_SH_out_ref);
+		set_unit_value_ssc_double( type265_dsg_controller, "h_rh"); //h_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "d_rh"); //d_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "th_rh"); //th_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_rh"); //emis_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_rh"); //abs_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "mat_rh"); //Mat_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
+		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
+		set_unit_value_ssc_double( type265_dsg_controller, "A_sf");//, A_sf );
+		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap_angles"); //arr_sol_pos);
+		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap"); //arr_flux);
+		//set_unit_value_ssc_array( type265_dsg_controller, "TOU_schedule");
 
 		// initial values for dsg controller
-		set_unit_value_ssc_double(dsg_controller, "P_b_in"); //P_HP_in);			// Initial value
-		set_unit_value_ssc_double(dsg_controller, "f_mdot_rh"); //rh_frac_ref);		// Initial value
-		set_unit_value_ssc_double(dsg_controller, "P_hp_out"); //P_HP_out);			// Initial value
-		set_unit_value_ssc_double(dsg_controller, "T_hp_out"); //300);				// Initial value
-		set_unit_value_ssc_double(dsg_controller, "T_rh_target"); //T_rh_out_ref);	// Initial value
-		set_unit_value_ssc_double(dsg_controller, "T_fw"); //340);					// Initial value
-		set_unit_value_ssc_double(dsg_controller, "P_cond"); //P_HP_out);			// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "P_b_in"); //P_HP_in);			// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "f_mdot_rh"); //rh_frac_ref);		// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "P_hp_out"); //P_HP_out);			// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "T_hp_out"); //300);				// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "T_rh_target"); //T_rh_out_ref);	// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "T_fw"); //340);					// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "P_cond"); //P_HP_out);			// Initial value
 
 
 		// Connect DSG Controller Inputs
-		bConnected = connect(weather, "solazi", dsg_controller, "azimuth");
-		bConnected = connect(weather, "solzen", dsg_controller, "zenith");
-		bConnected = connect(weather, "beam", dsg_controller, "DNI");
-		bConnected = connect(weather, "tdry", dsg_controller, "T_amb");
-		bConnected = connect(weather, "wspd", dsg_controller, "v_wind_10");
-		bConnected = connect(weather, "pres", dsg_controller, "P_atm");
-		bConnected = connect(weather, "tdew", dsg_controller, "T_dp");
-		bConnected = connect(hel_field, "eta_field", dsg_controller, "field_eff");
-		bConnected = connect(powerblock, "P_boiler_in", dsg_controller, "P_b_in");
-		bConnected = connect(powerblock, "f_rh", dsg_controller, "f_mdot_rh");
-		bConnected = connect(powerblock, "P_rh_in", dsg_controller, "P_hp_out");
-		bConnected = connect(powerblock, "T_rh_in", dsg_controller, "T_hp_out");
-		bConnected = connect(powerblock, "T_rh_out", dsg_controller, "T_rh_target");
-		bConnected = connect(powerblock, "T_cold", dsg_controller, "T_fw");
-		bConnected = connect(powerblock, "P_cond", dsg_controller, "P_cond");
+		bConnected &= connect(weather, "solazi", type265_dsg_controller, "azimuth");
+		bConnected &= connect(weather, "solzen", type265_dsg_controller, "zenith");
+		bConnected &= connect(weather, "beam", type265_dsg_controller, "DNI");
+		bConnected &= connect(weather, "tdry", type265_dsg_controller, "T_amb");
+		bConnected &= connect(weather, "wspd", type265_dsg_controller, "v_wind_10");
+		bConnected &= connect(weather, "pres", type265_dsg_controller, "P_atm");
+		bConnected &= connect(weather, "tdew", type265_dsg_controller, "T_dp");
+		bConnected &= connect(type221_hel_field, "eta_field", type265_dsg_controller, "field_eff");
+		bConnected &= connect(type234_powerblock, "P_boiler_in", type265_dsg_controller, "P_b_in");
+		bConnected &= connect(type234_powerblock, "f_rh", type265_dsg_controller, "f_mdot_rh");
+		bConnected &= connect(type234_powerblock, "P_rh_in", type265_dsg_controller, "P_hp_out");
+		bConnected &= connect(type234_powerblock, "T_rh_in", type265_dsg_controller, "T_hp_out");
+		bConnected &= connect(type234_powerblock, "T_rh_out", type265_dsg_controller, "T_rh_target");
+		bConnected &= connect(type234_powerblock, "T_cold", type265_dsg_controller, "T_fw");
+		bConnected &= connect(type234_powerblock, "P_cond", type265_dsg_controller, "P_cond");
+		bConnected &= connect(tou, "tou_value", type265_dsg_controller, "TOUPeriod");
 
 		// Set Powerblock Parameters
-		set_unit_value_ssc_double(powerblock, "P_ref"); //P_cycle_design);
-		set_unit_value_ssc_double(powerblock, "eta_ref"); //Eff_cycle_design);
-		set_unit_value_ssc_double(powerblock, "T_hot_ref"); //T_SH_out_ref);
-		set_unit_value_ssc_double(powerblock, "T_cold_ref"); //-1.23);				// This value isn't used in DSG
-		set_unit_value_ssc_double(powerblock, "dT_cw_ref"); //dT_cooling_ref);
-		set_unit_value_ssc_double(powerblock, "T_amb_des"); //T_amb_des);
-		set_unit_value_ssc_double(powerblock, "q_sby_frac"); //F_standby);
-		set_unit_value_ssc_double(powerblock, "P_boil_des"); //P_HP_in);
-		set_unit_value_ssc_double(powerblock, "is_rh"); //is_rh);
-		set_unit_value_ssc_double(powerblock, "P_rh_ref"); //P_HP_out);
-		set_unit_value_ssc_double(powerblock, "T_rh_hot_ref"); //T_rh_out_ref);
-		set_unit_value_ssc_double(powerblock, "rh_frac_ref"); //rh_frac_ref);
-		set_unit_value_ssc_double(powerblock, "CT"); //Cool_type);
-		set_unit_value_ssc_double(powerblock, "startup_time"); //startup_time);
-		set_unit_value_ssc_double(powerblock, "startup_frac"); //startup_frac);
-		set_unit_value_ssc_double(powerblock, "tech_type"); //tech_type);
-		set_unit_value_ssc_double(powerblock, "T_approach"); //T_approach);
-		set_unit_value_ssc_double(powerblock, "T_ITD_des"); //T_ITD_des);
-		set_unit_value_ssc_double(powerblock, "P_cond_ratio"); //P_cond_ratio);
-		set_unit_value_ssc_double(powerblock, "pb_bd_frac"); //pb_bd_frac);
-		set_unit_value_ssc_double(powerblock, "P_cond_min"); //min_cond_pres);
-		set_unit_value_ssc_double(powerblock, "n_pl_inc"); //hr_pl_nlev);
-		set_unit_value_ssc_array(powerblock, "F_wc"); //[HC_LOGIC0, HC_LOGIC1, HC_LOGIC2, HC_LOGIC3, HC_LOGIC4, HC_LOGIC5, HC_LOGIC6, HC_LOGIC7, HC_LOGIC8]);
+		set_unit_value_ssc_double(type234_powerblock, "P_ref"); //P_cycle_design);
+		set_unit_value_ssc_double(type234_powerblock, "eta_ref"); //Eff_cycle_design);
+		set_unit_value_ssc_double(type234_powerblock, "T_hot_ref"); //T_SH_out_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_cold_ref"); //-1.23);				// This value isn't used in DSG
+		set_unit_value_ssc_double(type234_powerblock, "dT_cw_ref"); //dT_cooling_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_amb_des"); //T_amb_des);
+		set_unit_value_ssc_double(type234_powerblock, "q_sby_frac"); //F_standby);
+		set_unit_value_ssc_double(type234_powerblock, "P_boil_des"); //P_HP_in);
+		set_unit_value_ssc_double(type234_powerblock, "is_rh"); //is_rh);
+		set_unit_value_ssc_double(type234_powerblock, "P_rh_ref"); //P_HP_out);
+		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); //T_rh_out_ref);
+		set_unit_value_ssc_double(type234_powerblock, "rh_frac_ref"); //rh_frac_ref);
+		set_unit_value_ssc_double(type234_powerblock, "CT"); //Cool_type);
+		set_unit_value_ssc_double(type234_powerblock, "startup_time"); //startup_time);
+		set_unit_value_ssc_double(type234_powerblock, "startup_frac"); //startup_frac);
+		set_unit_value_ssc_double(type234_powerblock, "tech_type"); //tech_type);
+		set_unit_value_ssc_double(type234_powerblock, "T_approach"); //T_approach);
+		set_unit_value_ssc_double(type234_powerblock, "T_ITD_des"); //T_ITD_des);
+		set_unit_value_ssc_double(type234_powerblock, "P_cond_ratio"); //P_cond_ratio);
+		set_unit_value_ssc_double(type234_powerblock, "pb_bd_frac"); //pb_bd_frac);
+		set_unit_value_ssc_double(type234_powerblock, "P_cond_min"); //min_cond_pres);
+		set_unit_value_ssc_double(type234_powerblock, "n_pl_inc"); //hr_pl_nlev);
+		set_unit_value_ssc_array(type234_powerblock, "F_wc"); //[HC_LOGIC0, HC_LOGIC1, HC_LOGIC2, HC_LOGIC3, HC_LOGIC4, HC_LOGIC5, HC_LOGIC6, HC_LOGIC7, HC_LOGIC8]);
 
 		// Set Powerblock initial values
-		set_unit_value_ssc_double(powerblock, "mode");//, 2);
-		set_unit_value_ssc_double(powerblock, "T_hot"); //T_SH_out_ref);
-		set_unit_value_ssc_double(powerblock, "TOU");//, 1);
+		set_unit_value_ssc_double(type234_powerblock, "mode");//, 2);
+		set_unit_value_ssc_double(type234_powerblock, "T_hot"); //T_SH_out_ref);
+		//set_unit_value_ssc_double(type234_powerblock, "TOU");//, 1);
 
 		// Connect Powerblock Inputs (and initial values?)
-		bConnected = connect(dsg_controller, "m_dot_toPB", powerblock, "m_dot_st");
-		bConnected = connect(weather, "twet", powerblock, "T_wb");
-		bConnected = connect(dsg_controller, "m_dot_toPB", powerblock, "m_dot_st");
-		bConnected = connect(dsg_controller, "standby_control", powerblock, "standby_control");
-		bConnected = connect(weather, "tdry", powerblock, "T_db");
-		bConnected = connect(weather, "pres", powerblock, "P_amb");
-		bConnected = connect(weather, "rhum", powerblock, "relhum");
-		bConnected = connect(dsg_controller, "f_timestep", powerblock, "f_recSU");
-		bConnected = connect(dsg_controller, "P_drop_b", powerblock, "dp_b");
-		bConnected = connect(dsg_controller, "dP_sh", powerblock, "dp_sh");
-		bConnected = connect(dsg_controller, "dP_rh", powerblock, "dp_rh");
+		bConnected &= connect(type265_dsg_controller, "m_dot_toPB", type234_powerblock, "m_dot_st");
+		bConnected &= connect(weather, "twet", type234_powerblock, "T_wb");
+		bConnected &= connect(type265_dsg_controller, "m_dot_toPB", type234_powerblock, "m_dot_st");
+		bConnected &= connect(type265_dsg_controller, "standby_control", type234_powerblock, "standby_control");
+		bConnected &= connect(weather, "tdry", type234_powerblock, "T_db");
+		bConnected &= connect(weather, "pres", type234_powerblock, "P_amb");
+		bConnected &= connect(weather, "rhum", type234_powerblock, "relhum");
+		bConnected &= connect(type265_dsg_controller, "f_timestep", type234_powerblock, "f_recSU");
+		bConnected &= connect(type265_dsg_controller, "P_drop_b", type234_powerblock, "dp_b");
+		bConnected &= connect(type265_dsg_controller, "dP_sh", type234_powerblock, "dp_sh");
+		bConnected &= connect(type265_dsg_controller, "dP_rh", type234_powerblock, "dp_rh");
+		bConnected &= connect(tou, "tou_value", type234_powerblock, "TOU");
 
 		// Set Parasitics Parameters
-		set_unit_value_ssc_double(parasitics, "P_storage_pump"); //P_storage_pump);
-		set_unit_value_ssc_double(parasitics, "Piping_loss"); //piping_loss );
-		set_unit_value_ssc_double(parasitics, "Piping_length"); //piping_length );
-		set_unit_value_ssc_double(parasitics, "Design_power"); //P_cycle_design );
-		set_unit_value_ssc_double(parasitics, "recirc_htr_eff"); //recirc_htr_eff );
-		set_unit_value_ssc_double(parasitics, "design_eff"); //Eff_cycle_design );
-		set_unit_value_ssc_double(parasitics, "night_recirc"); //night_recirc );
-		set_unit_value_ssc_double(parasitics, "pb_fixed_par"); //pb_fixed_par );
-		set_unit_value_ssc_double(parasitics, "aux_par"); //aux_par );
-		set_unit_value_ssc_double(parasitics, "aux_par_f"); //aux_par_f );
-		set_unit_value_ssc_double(parasitics, "aux_par_0"); //aux_par_0 );
-		set_unit_value_ssc_double(parasitics, "aux_par_1"); //aux_par_1 );
-		set_unit_value_ssc_double(parasitics, "aux_par_2"); //aux_par_2 );
-		set_unit_value_ssc_double(parasitics, "bop_par"); //bop_par );
-		set_unit_value_ssc_double(parasitics, "bop_par_f"); //bop_par_f );
-		set_unit_value_ssc_double(parasitics, "bop_par_0"); //bop_par_0 );
-		set_unit_value_ssc_double(parasitics, "bop_par_1"); //bop_par_1 );
-		set_unit_value_ssc_double(parasitics, "bop_par_2"); //bop_par_2 );
-		set_unit_value_ssc_double(parasitics, "storage_bypass"); //storage_bypass );
+		set_unit_value_ssc_double(type228_parasitics, "P_storage_pump"); //P_storage_pump);
+		set_unit_value_ssc_double(type228_parasitics, "Piping_loss"); //piping_loss );
+		set_unit_value_ssc_double(type228_parasitics, "Piping_length"); //piping_length );
+		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
+		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff"); //recirc_htr_eff );
+		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
+		set_unit_value_ssc_double(type228_parasitics, "night_recirc"); //night_recirc );
+		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
+		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_0"); //aux_par_0 );
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_1"); //aux_par_1 );
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_2"); //aux_par_2 );
+		set_unit_value_ssc_double(type228_parasitics, "bop_par"); //bop_par );
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_f"); //bop_par_f );
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); //bop_par_0 );
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); //bop_par_1 );
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); //bop_par_2 );
+		set_unit_value_ssc_double(type228_parasitics, "storage_bypass"); //storage_bypass );
 
 		// Set Parasitics Inputs (Initial values?)
-		set_unit_value_ssc_double(parasitics, "flow_from_storage", 0.0);
-		set_unit_value_ssc_double(parasitics, "P_cold_tank", 0.0);
-		set_unit_value_ssc_double(parasitics, "P_hot_tank", 0.0);
-		set_unit_value_ssc_double(parasitics, "P_tower_conv", 0.0);
-		set_unit_value_ssc_double(parasitics, "P_tower_rad", 0.0);
-		set_unit_value_ssc_double(parasitics, "recirc_source", 0.0);
-		set_unit_value_ssc_double(parasitics, "ref_htf_flow", 0.0);
-		set_unit_value_ssc_double(parasitics, "P_htf_pump", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "P_cold_tank", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "P_hot_tank", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "P_tower_conv", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "P_tower_rad", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "recirc_source", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "ref_htf_flow", 0.0);
+		set_unit_value_ssc_double(type228_parasitics, "P_htf_pump", 0.0);
 
-		bConnected = connect(powerblock, "W_cool_par", parasitics, "P_cooling_tower");
-		bConnected = connect(dsg_controller, "W_dot_boost", parasitics, "P_tower_pump");
-		bConnected = connect(hel_field, "pparasi", parasitics, "P_helio_track");
-		bConnected = connect(powerblock, "P_cycle", parasitics, "P_plant_output");
-		bConnected = connect(powerblock, "eta", parasitics, "eta_cycle");
-		bConnected = connect(dsg_controller, "q_aux", parasitics, "aux_power");
+		bConnected &= connect(type234_powerblock, "W_cool_par", type228_parasitics, "P_cooling_tower");
+		bConnected &= connect(type265_dsg_controller, "W_dot_boost", type228_parasitics, "P_tower_pump");
+		bConnected &= connect(type221_hel_field, "pparasi", type228_parasitics, "P_helio_track");
+		bConnected &= connect(type234_powerblock, "P_cycle", type228_parasitics, "P_plant_output");
+		bConnected &= connect(type234_powerblock, "eta", type228_parasitics, "eta_cycle");
+		bConnected &= connect(type265_dsg_controller, "q_aux", type228_parasitics, "aux_power");
 
 		// check if all connections worked
 		if ( !bConnected )
