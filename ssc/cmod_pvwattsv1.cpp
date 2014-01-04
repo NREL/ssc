@@ -234,7 +234,7 @@ public:
 
 			irr.set_sky_model( 2, alb );
 			irr.set_beam_diffuse( wf.dn, wf.df );
-			irr.set_surface( track_mode, tilt, azimuth, rlim, -1, -1 );
+			irr.set_surface( track_mode, tilt, azimuth, rlim, false, 0 );
 			
 			double ibeam, iskydiff, ignddiff;
 			double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
