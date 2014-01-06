@@ -304,7 +304,7 @@ tcsvarinfo sam_dsg_controller_type265_variables[] = {
 
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_fw,        "T_fw",				   "Feedwater outlet temp",                  "C",     "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_b_in,      "T_b_in",                 "Boiler Inlet Temperature",               "C",     "", "", "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_T_boil,      "T_boiling",              "Boiler temp (= recirc temp, drum temp",  "C",     "", "", "" }, 
+	{ TCS_OUTPUT, TCS_NUMBER, O_T_boil,      "T_boiling",              "Boiler temp (= recirc temp, drum temp)", "C",     "", "", "" }, 
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_b_in,      "P_b_in",                 "Boiler inlet pressure",                  "kPa",   "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_b_out,     "P_b_out",                "Boiler outlet pressure",                 "kPa",   "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_drop_b,    "P_drop_b",               "Boiler pressure drop",                   "Pa",    "", "", "" },
@@ -2132,7 +2132,7 @@ public:
 		if( m_success )
 		{
 			value( O_T_b_in, m_success*(T_in - 273.15) );	//[C] Boiler Inlet Temperature
-			value( O_T_boil, m_success*T_boil );			//[C] Boiler Temperature (= recirc temp, steam drum temp)			
+			value( O_T_boil, m_success*(T_boil - 273.15) );	//[C] Boiler Temperature (= recirc temp, steam drum temp)			
 			value( O_P_b_out, m_success*P_b_out );			//[kPa] Boiler Outlet Pressure
 			value( O_P_drop_b, m_success*dp_b );			//[Pa] Pressure drop through boiler
 			value( O_m_dot_b, m_success*b_m_dot*3600.0 );	//[kg/hr] Mass flow rate through boiler

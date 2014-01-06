@@ -39,20 +39,21 @@ tcsvarinfo sam_mw_pt_type221_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_q_start,			"q_start",			"Electric work for starting up one heliostat",			"kWe-hr",	"", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_p_run,			"p_run",			"Electric power for tracking one heliostat",			"kWe",		"", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_v_wind_max,		"v_wind_max",		"Maximum tolerable wind speed",							"m/s",		"", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_hel_stow_deploy,	"hel_stow_deploy",	"Heliostat field stow/deploy solar elevation angle",	"deg",			"", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_hel_stow_deploy,	"hel_stow_deploy",	"Heliostat field stow/deploy solar elevation angle",	"deg",		"", "", ""},
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_v_wind,			"vwind",			"Wind velocity",										"m/s",		"", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_field_control,	"field_control",	"Field defocus control",								"",			"", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_theta,			"theta",			"Solar zenith angle",									"deg",			"", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_phi,				"phi",				"Solar azimuth angle: 0 due north, clockwise to +360",									"deg",			"", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_theta,			"theta",			"Solar zenith angle",									"deg",	    "", "", ""},
+	{TCS_INPUT, TCS_NUMBER, I_phi,				"phi",				"Solar azimuth angle: 0 due north, clockwise to +360",	"deg",		"", "", ""},
 
 	//OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_pparasi,			"pparasi",			"Parasitic tracking/startup power",						"MWe",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_eta_field,		"eta_field",		"Total field efficiency",								"",			"", "", ""},
 
 	//N_MAX
-	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
+	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	}
+};
 	
 	
 class sam_mw_pt_type221 : public tcstypeinterface
