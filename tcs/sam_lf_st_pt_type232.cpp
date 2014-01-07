@@ -533,8 +533,8 @@ public:
 		// CALL THE VIEW FACTOR ROUTINES FOR CALCULATING VIEW FACTORS BETWEEN CAVITY SURFACES				
 		cavity.Define_Cavity( m_n_rays, h_rec, r_rec, rec_angle, h_lip );
 
-		double F_AF[cavity.m_n_nodes];
-		double F_BF[cavity.m_n_nodes];
+		double * F_AF = new double[m_n_nodes];
+		double * F_BF = new double[m_n_nodes];
 		double F_LCE = 0.0;
 		double F_LF = 0.0;
 		double F_OCE = 0.0;
@@ -552,10 +552,10 @@ public:
 		util::matrix_t<double> F_AC( cavity.m_n_nodes, cavity.m_n_nodes, 0.0 );
 		util::matrix_t<double> F_AD( cavity.m_n_nodes, cavity.m_n_nodes, 0.0 );
 		
-		double F_AO[cavity.m_n_nodes];
-		double F_AL[cavity.m_n_nodes];
-		double F_BO[cavity.m_n_nodes];
-		double F_BL[cavity.m_n_nodes];
+		double * F_AO = new double[m_n_nodes];
+		double * F_AL = new double[m_n_nodes];
+		double * F_BO = new double[m_n_nodes];
+		double * F_BL = new double[m_n_nodes];
 
 		cavity.PanelViewFactors( F_AB, F_AC, F_AD, F_AO, F_AL, F_BO, F_BL );
 		
@@ -883,6 +883,13 @@ public:
 				}																								
 			}
 		}
+
+		delete[] F_AF;
+		delete[] F_BF;
+		delete[] F_AO;
+		delete[] F_AL;
+		delete[] F_BO;
+		delete[] F_BL;
 
 		// 'matrix_t' from timestep 
 		flux_array_2D.resize_fill( 10, 12, 0.0 );
