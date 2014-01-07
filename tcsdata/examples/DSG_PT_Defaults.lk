@@ -1,13 +1,17 @@
 clear();
 
+//****** Get SSC directory ********
+file_dir = env('SSCDIR')+'/tcsdata/typelib/Direct_Steam_Power_Tower';
+//*********************************
+
 // **** Define tcs directory *******************
-tcs_dir = 'c:/Users/adobos/Projects/ssc';
+//tcs_dir = 'c:/Users/adobos/Projects/ssc';
 // *********************************************
 
 //********************************************************************************************
 // Pre-processing input files
 //Read in field efficiency files
-eff_array_loc = tcs_dir + '/tcs/typelib/Direct_Steam_Power_Tower/eff_array.dat';
+eff_array_loc = file_dir+'/eff_array.dat';
 f = open( eff_array_loc, 'r' );
 
 if( !f )
@@ -42,7 +46,7 @@ for( i = 0; i < num_sol_pos; i++ )
 close( f );
 
 //***** Read in flux file ********
-fluxmap_loc = tcs_dir + '/tcs/typelib/Direct_Steam_Power_Tower/fluxmap.csv';
+fluxmap_loc = file_dir+'/fluxmap.csv';
 f = open( fluxmap_loc, 'r' );
 
 if( !f )
@@ -119,7 +123,8 @@ else weather = add_unit("weatherreader");
 
 if(debug_mode)
 {
-	file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
+	//file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
+	file_loc = env('SSCDIR')+'/tcsdata/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
 	set_value( weather, "file_name", file_loc );
 	set_value( weather, "i_hour", "TIME" );
 	set_value( weather, "i_month", "month" );
