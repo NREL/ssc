@@ -356,6 +356,7 @@ public:
 				if (wind_stow > 0 && wf.wspd >= wind_stow)
 					poa = 0;
 
+				// check that the double to boolean conversion fo use_ar_glass works!
 				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180, use_ar_glass );
 				double pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
 				double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
