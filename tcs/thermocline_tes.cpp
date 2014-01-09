@@ -769,6 +769,11 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	// Set "saved" outputs for output-return method
 	m_Q_dot_htr_kJ = Q_dot_htr_kJ;
 	m_Q_dot_losses = Q_dot_losses;
+	m_T_hot_node = T_hot_bed_C;
+	m_T_cold_node = T_cold_bed_C;
+	m_T_max = T_max_bed_C;
+	m_f_hot = f_hot;
+	m_f_cold = f_cold;
 
 	return true;
 }
