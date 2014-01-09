@@ -117,7 +117,16 @@ private:
 class Thermocline_TES
 {
 public:
-	Thermocline_TES(){};
+	Thermocline_TES()
+	{
+		m_Q_dot_htr_kJ = std::numeric_limits<double>::quiet_NaN();
+		m_Q_dot_losses = std::numeric_limits<double>::quiet_NaN();
+		m_T_hot_node = std::numeric_limits<double>::quiet_NaN();
+		m_T_cold_node = std::numeric_limits<double>::quiet_NaN();
+		m_T_max = std::numeric_limits<double>::quiet_NaN();
+		m_f_hot = std::numeric_limits<double>::quiet_NaN();
+		m_f_cold = std::numeric_limits<double>::quiet_NaN();
+	};
 	
 	~Thermocline_TES(){};
 
@@ -144,6 +153,17 @@ public:
 
 	double GetHeatLosses()
 	{ return m_Q_dot_losses; };
+
+	void GetFinalOutputs( double & T_hot_node, double & T_cold_node, double & T_max, double & f_hot, double & f_cold )
+	{
+		T_hot_node = m_T_hot_node;
+		T_cold_node = m_T_cold_node;
+		T_max = m_T_max;
+		f_hot = m_f_hot;
+		f_cold = m_f_cold;
+		return;
+	}
+	
 
 private:
 
@@ -198,11 +218,16 @@ private:
 
 	// Values from previous timestep
 	double m_T_final_ave_prev;
-	double m_T_final_ave;
+	double m_T_final_ave;	
 
 	// Ouputs accessible through class methods
 	double m_Q_dot_htr_kJ;
 	double m_Q_dot_losses;
+	double m_T_hot_node;
+	double m_T_cold_node;
+	double m_T_max;
+	double m_f_hot;
+	double m_f_cold;
 
 	// Constant Properties
 	double m_cond;

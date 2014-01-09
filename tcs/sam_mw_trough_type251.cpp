@@ -24,6 +24,7 @@ enum {
 	P_dt_cold,
 	P_hx_config,
 	P_q_max_aux,
+	P_lhv_eff,
 	P_T_set_aux,	
 	P_V_tank_hot_ini,
 	P_T_tank_hot_ini,
@@ -101,7 +102,8 @@ enum {
 	O_T_tank_cold_fin,
 	O_q_par_fp,       
 	O_m_dot_aux,      
-	O_q_aux_heat,     
+	O_q_aux_heat,
+	O_q_aux_fuel,
 	O_vol_tank_total, 
 	O_hx_eff,         
 	O_mass_tank_hot,  
@@ -116,6 +118,11 @@ enum {
 	O_q_to_tes,       
 	O_mode,
 	O_TOU,
+	O_T_hot_node,
+	O_T_cold_node,
+	O_T_max,
+	O_f_hot,
+	O_f_cold,
 
 	//Include N_max
 	N_MAX };
@@ -133,6 +140,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_dt_cold,            "dt_cold",              "Cold side HX approach temp",                              "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_hx_config,          "hx_config",            "HX configuration",                                        "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_q_max_aux,          "q_max_aux",            "Max heat rate of auxiliary heater",                       "MWt",          "",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,        P_lhv_eff,            "lhv_eff",              "Fuel LHV efficiency (0..1)",                              "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_set_aux,          "T_set_aux",            "Aux heater outlet temp set point",                        "C",            "",        "",        ""},    
     { TCS_PARAM,    TCS_NUMBER,        P_V_tank_hot_ini,     "V_tank_hot_ini",       "Initial hot tank fluid volume",                           "m3",           "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_ini,     "T_tank_hot_ini",       "Initial hot tank fluid temperature",                      "C",            "",        "",        ""},
@@ -299,6 +307,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_par_fp,           "tank_fp_par",          "Total parasitic power required for tank freeze protect.", "MWe",          "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_m_dot_aux,          "m_dot_aux",            "Auxiliary heater mass flow rate",                         "kg/hr",        "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_aux_heat,         "q_aux_heat",           "Thermal energy provided to fluid by aux heater",          "MWt",          "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_aux_fuel,         "q_aux_fuel",           "Heat content of fuel required to provided aux heat",      "MMBTU",        "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_vol_tank_total,     "vol_tank_total",       "Total HTF volume in storage",                             "m3",           "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_hx_eff,             "hx_eff",               "Heat exchanger effectiveness",                            "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_mass_tank_hot,      "mass_tank_hot",        "Mass of total fluid in the hot tank",                     "kg",           "",        "",        ""},
@@ -313,6 +322,11 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_to_tes,           "q_to_tes",             "Thermal energy into storage",                             "MWt",          "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_mode,               "mode",                 "Operation mode",                                          "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_TOU,                "TOU",                  "Time of use period",                                      "-",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_hot_node,         "T_hot_node",           "Thermocline: Hot node temperature",                       "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_cold_node,        "T_cold_node",          "Thermocline: Cold node temperature",                      "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_max,              "T_max",                "Thermocline: Maximum temperature",                        "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_f_hot,              "f_hot",                "Thermocline: Hot depth fraction",                         "-",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_f_cold,             "f_cold",               "Thermocline: Cold depth fraction",                        "-",            "",        "",        ""},
 																				     
     { TCS_INVALID,  TCS_INVALID,       N_MAX,                0,                      0,                                                         0,                0,        0,        0 }
 
@@ -333,6 +347,7 @@ private:
 	double dt_cold;
 	int hx_config;
 	double q_max_aux;
+	double lhv_eff;
 	double T_set_aux;
 	int store_fl;
 	double vol_tank;
@@ -435,6 +450,7 @@ public:
 		dt_cold		= std::numeric_limits<double>::quiet_NaN();
 		hx_config	= -1;
 		q_max_aux	= std::numeric_limits<double>::quiet_NaN();
+		lhv_eff		= std::numeric_limits<double>::quiet_NaN();
 		T_set_aux	= std::numeric_limits<double>::quiet_NaN();
 		store_fl	= -1;
 		vol_tank	= std::numeric_limits<double>::quiet_NaN();
@@ -586,7 +602,8 @@ public:
 		dt_hot		= value(P_dt_hot);					//[K]
 		dt_cold		= value(P_dt_cold);					//[K]
 		hx_config	= (int) value(P_hx_config);			//[-]
-		q_max_aux	= value(P_q_max_aux)*1.E6;			//[W] convert from [MW]				
+		q_max_aux	= value(P_q_max_aux)*1.E6;			//[W] convert from [MW]	
+		lhv_eff     = value(P_lhv_eff);
 		T_set_aux	= value(P_T_set_aux)+273.15;		//[K] convert from [C]				
 		vol_tank		= value(P_vol_tank);			//[m3]
 		h_tank		= value(P_h_tank);					//[m]
@@ -1522,17 +1539,18 @@ public:
 
 		} while( iterate_tank_temp );
 
-		double T_aux_out, q_aux_delivered;
+		double T_aux_out, q_aux_delivered, q_aux_fuel;
 
 		if(q_aux_avail > 0.0)
 		{
 			double cp_aux = field_htfProps.Cp( (T_set_aux + T_pb_out)/2. )*1000.;		//[J/kg-K]
 			T_aux_out = min( T_set_aux, (T_pb_out + (q_max_aux)/(m_dot_aux*cp_aux)) );	//[K]
 			q_aux_delivered = m_dot_aux*cp_aux*(T_aux_out - T_pb_out)/1.e6;				//[MW]
+			q_aux_fuel = q_aux_delivered/lhv_eff*step/1055.06;							//[MMBTU]
 		}
 		else
 		{	
-			T_aux_out = q_aux_delivered = 0;
+			T_aux_out = q_aux_delivered = q_aux_fuel = 0.0;
 		}
 
 		defocus = min(defocus_prev_ncall*defocus, 1.0);
@@ -1627,6 +1645,7 @@ public:
 		value( O_q_par_fp, q_htr_tank_hot + q_htr_tank_cold);
 		value( O_m_dot_aux, (m_dot_aux*3600.0) );
 		value( O_q_aux_heat, q_aux_delivered );
+		value( O_q_aux_fuel, q_aux_fuel );
 		value( O_vol_tank_total, vol_tank_hot_fin + vol_tank_cold_fin );
 		if( tes_type == 2 )
 			value( O_hx_eff, 0.0 );
@@ -1645,7 +1664,29 @@ public:
 		value( O_mode, mode );
 		value( O_TOU, touperiod+1 );
 
-		return 0;	
+		if( tes_type == 2 )
+		{
+			double T_hot_node, T_cold_node, T_max, f_hot, f_cold;
+			T_hot_node = T_cold_node, T_max, f_hot, f_cold = std::numeric_limits<double>::quiet_NaN();
+
+			thermocline.GetFinalOutputs(T_hot_node, T_cold_node, T_max, f_hot, f_cold);
+
+			value(O_T_hot_node, T_hot_node);
+			value(O_T_cold_node, T_cold_node);
+			value(O_T_max, T_max);
+			value(O_f_hot, f_hot);
+			value(O_f_cold, f_cold);
+
+			return 0;
+		}
+		else
+		{
+			value(O_T_hot_node, 0.0);
+			value(O_T_cold_node, 0.0);
+			value(O_T_max, 0.0);
+			value(O_f_hot, 0.0);
+			value(O_f_cold, 0.0);
+		}
 	}
 
 	virtual int converged( double time )
