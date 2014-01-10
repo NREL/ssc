@@ -2184,7 +2184,7 @@ public:
 			value(O_q_abs_less_rad, q_abs_rec - q_rad_rec);					//[MW] Thermal power absorbed less radiation losses
 			value(O_q_therm_in_rec, q_therm_in_rec / 1.E6);		//[MW] Thermal power absorbed by steam in receiver
 			value(O_eta_rec, eta_therm_rec);			//[-] Receiver thermal efficiency
-
+			value(O_T_fw, (T_fw - 273.15)); // TFF added on Jan 10, 2014. This OK?
 		}
 		else if( PB_on )
 		{
