@@ -2132,26 +2132,26 @@ public:
 		
 		double sh_q_conv, sh_q_rad, sh_q_abs, sh_T_surf_max, sh_v_exit, sh_q_in;
 		if( m_success )
-		{
-			value( O_T_b_in, (T_in - 273.15) );	//[C] Boiler Inlet Temperature
+		{ 
+			value( O_T_b_in, (T_in - 273.15) );		//[C] Boiler Inlet Temperature
 			value( O_T_boil, (T_boil - 273.15) );	//[C] Boiler Temperature (= recirc temp, steam drum temp)			
-			value( O_P_b_out, P_b_out );			//[kPa] Boiler Outlet Pressure
-			value( O_P_drop_b, dp_b );			//[Pa] Pressure drop through boiler
-			value( O_m_dot_b, b_m_dot*3600.0 );	//[kg/hr] Mass flow rate through boiler
+			value( O_P_b_out, P_b_out / 1.E3 );		//[kPa] Boiler Outlet Pressure
+			value( O_P_drop_b, dp_b );				//[Pa] Pressure drop through boiler
+			value( O_m_dot_b, b_m_dot*3600.0 );		//[kg/hr] Mass flow rate through boiler
 			value( O_eta_b, eta_b );				//[-] Boiler thermal efficiency
-			value( O_q_b_conv, b_q_conv );		//[MW] Boiler convective losses
+			value( O_q_b_conv, b_q_conv );			//[MW] Boiler convective losses
 			value( O_q_b_rad, b_q_rad );			//[MW] Boiler radiative losses
 			value( O_q_b_abs, b_q_abs );			//[MW] Thermal power absorbed by boiler (before thermal losses)
 			value( O_T_max_b_surf, (b_T_max - 273.15) );		//[C] Maximum boiler tube surface temperature
 				// Superheater
-			value( O_m_dot_sh, m_dot_sh*3600.0 );			//[kg/hr] Mass flow rate through superheater
+			value( O_m_dot_sh, m_dot_sh*3600.0 );	//[kg/hr] Mass flow rate through superheater
 			value( O_P_sh_out, P_sh_out/1.E3 );		//[kPa] Outlet pressure of superheater
 			value( O_dP_sh, dp_sh );				//[Pa] Superheater pressure drop
-			value( O_eta_sh, eta_sh );			//[-] Thermal efficiency of superheater			
+			value( O_eta_sh, eta_sh );				//[-] Thermal efficiency of superheater			
 			superheater.Get_Other_Superheater_Outputs( sh_q_conv, sh_q_rad, sh_q_abs, sh_T_surf_max, sh_v_exit, sh_q_in );
 			value( O_q_sh_conv, sh_q_conv );		//[MW] Superheater Convective losses
-			value( O_q_sh_rad, sh_q_rad );		//[MW] Superheater Radiative losses
-			value( O_q_sh_abs, sh_q_abs );		//[MW] Thermal power absorbed by superheater (before thermal losses)
+			value( O_q_sh_rad, sh_q_rad );			//[MW] Superheater Radiative losses
+			value( O_q_sh_abs, sh_q_abs );			//[MW] Thermal power absorbed by superheater (before thermal losses)
 			value( O_T_max_sh_surf, (sh_T_surf_max - 273.15) );	//[C] Maximum superheater surface temperature
 			value( O_v_sh_max, sh_v_exit );					//[m/s] Superheater exit velocity
 
@@ -2174,20 +2174,66 @@ public:
 			double q_rad_rec = b_q_rad + sh_q_rad + rh_q_rad;		//[MW] Receiver radiative losses
 			double eta_therm_rec = q_therm_in_rec / (max(0.001, EnergyInComb));
 
-			value(O_q_inc_full, m_q_total / 1.E6);					//[MW] Total incident radiation on receiver before defocus
+			value(O_q_inc_full, m_q_total / 1.E6);		//[MW] Total incident radiation on receiver before defocus
 			value(O_q_inc_actual, EnergyInComb / 1.E6);	//[MW] Total energy incident on receiver
 			value(O_defocus, m_defocus);				//[-] Defocus fraction
-			value(O_field_eta_adj, field_eff_adj);				//[-] Adjusted field efficiency
-			value(O_q_abs_rec, q_abs_rec);						//[MW] Thermal power absorbed by receiver
-			value(O_q_conv_rec, q_conv_rec);					//[MW] Receiver convective losses
-			value(O_q_rad_rec, q_rad_rec);						//[MW] Receiver radiative losses
-			value(O_q_abs_less_rad, q_abs_rec - q_rad_rec);					//[MW] Thermal power absorbed less radiation losses
+			value(O_field_eta_adj, field_eff_adj);		//[-] Adjusted field efficiency
+			value(O_q_abs_rec, q_abs_rec);				//[MW] Thermal power absorbed by receiver
+			value(O_q_conv_rec, q_conv_rec);			//[MW] Receiver convective losses
+			value(O_q_rad_rec, q_rad_rec);				//[MW] Receiver radiative losses
+			value(O_q_abs_less_rad, q_abs_rec - q_rad_rec);		//[MW] Thermal power absorbed less radiation losses
 			value(O_q_therm_in_rec, q_therm_in_rec / 1.E6);		//[MW] Thermal power absorbed by steam in receiver
-			value(O_eta_rec, eta_therm_rec);			//[-] Receiver thermal efficiency
-			value(O_T_fw, (T_fw - 273.15)); // TFF added on Jan 10, 2014. This OK?
+			value(O_eta_rec, eta_therm_rec);					//[-] Receiver thermal efficiency
 		}
-		else if( PB_on )
+		else
 		{
+			// Boiler
+			value(O_T_b_in, 0.0);
+			value(O_T_boil, 0.0);
+			value(O_P_b_out, 0.0);
+			value(O_P_drop_b, 0.0);
+			value(O_m_dot_b, 0.0);
+			value(O_eta_b, 0.0);
+			value(O_q_b_conv, 0.0);
+			value(O_q_b_rad, 0.0);
+			value(O_q_b_abs, 0.0);
+			value(O_T_max_b_surf, 0.0);
+			// Superheater
+			value(O_m_dot_sh, 0.0);
+			value(O_P_sh_out, 0.0);
+			value(O_dP_sh, 0.0);
+			value(O_eta_sh, 0.0);
+			value(O_q_sh_conv, 0.0);
+			value(O_q_sh_rad, 0.0);
+			value(O_q_sh_abs, 0.0);
+			value(O_T_max_sh_surf, 0.0);
+			value(O_v_sh_max, 0.0);
+			// Reheater
+			value(O_P_rh_out, 0.0);
+			value(O_dP_rh, 0.0);
+			value(O_eta_rh, 0.0);
+			value(O_T_max_rh_surf, 0.0);
+			value(O_v_rh_max, 0.0);
+			value(O_q_rh_conv, 0.0);
+			value(O_q_rh_rad, 0.0);
+			value(O_q_rh_abs, 0.0);
+
+			value(O_q_inc_full, 0.0);
+			value(O_q_inc_actual, 0.0);
+			value(O_defocus, 0.0);
+			value(O_field_eta_adj, 0.0);
+			value(O_q_abs_rec, 0.0);
+			value(O_q_conv_rec, 0.0);
+			value(O_q_rad_rec, 0.0);
+			value(O_q_abs_less_rad, 0.0);
+			value(O_q_therm_in_rec, 0.0);
+			value(O_eta_rec, 0.0);
+
+		}
+
+		if( PB_on )
+		{
+				// Powerblock specific
 			value(O_T_fw, (T_fw - 273.15));			//[C] Feedwater Outlet Temperature
 			value(O_P_b_in, P_b_in / 1.E3);			//[kPa] Boiler Inlet Pressure
 			value(O_f_mdot_rh, f_mdotrh);			//[-] Reheater mass flow rate fraction
@@ -2203,42 +2249,7 @@ public:
 			value(O_f_mdot_rh, 0.0);
 			value(O_P_rh_in, 0.0);
 			value(O_T_rh_in, 0.0);
-			value(O_T_rh_out, 0.0);
-				// Boiler
-			value( O_T_b_in, 0.0 );
-			value( O_T_boil, 0.0 );
-			value( O_P_b_out, 0.0 );
-			value( O_P_drop_b, 0.0 );
-			value( O_m_dot_b, 0.0 );
-			value( O_eta_b, 0.0 );
-			value( O_q_b_conv, 0.0 );
-			value( O_q_b_rad, 0.0 );
-			value( O_q_b_abs, 0.0 );
-			value( O_T_max_b_surf, 0.0 );
-				// Superheater
-			value( O_m_dot_sh, 0.0 );
-			value( O_P_sh_out, 0.0 );
-			value( O_dP_sh, 0.0 );
-			value( O_eta_sh, 0.0 );
-			value( O_q_sh_conv, 0.0 );
-			value( O_q_sh_rad, 0.0 );
-			value( O_q_sh_abs, 0.0 );
-			value( O_T_max_sh_surf, 0.0 );
-			value( O_v_sh_max, 0.0 );
-				// Reheater
-			value(O_P_rh_out, 0.0);
-			value(O_dP_rh, 0.0);
-			value(O_eta_rh, 0.0);
-			value(O_q_inc_full, 0.0);
-			value(O_q_inc_actual, 0.0);
-			value(O_defocus, 0.0);
-			value(O_field_eta_adj, 0.0);
-			value(O_q_abs_rec, 0.0);
-			value(O_q_conv_rec, 0.0);
-			value(O_q_rad_rec, 0.0);
-			value(O_q_abs_less_rad, 0.0);
-			value(O_q_therm_in_rec, 0.0);
-			value(O_eta_rec, 0.0);
+			value(O_T_rh_out, 0.0);			
 		}
 
 		value( O_W_dot_boost, W_dot_boost/1.E6 );				//[MW] Feedwater booster pump power
