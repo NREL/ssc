@@ -1247,7 +1247,7 @@ public:
 					{
 						for( int i = 0; i < m_n_nodes; i++ )
 						{
-							if( j&2 != 0 )	// flow from bottom to top
+							if( (j&2) != 0 )	// flow from bottom to top
 							{
 								if( i == 0 )
 								{
@@ -1804,7 +1804,7 @@ public:
 						{
 							for( int i = 0; i < m_n_nodes; i++ )
 							{
-								if( j&2 != 0 )	// flow from bottom to top
+								if( (j&2) != 0 )	// flow from bottom to top
 								{
 									if( i == 0 )
 									{

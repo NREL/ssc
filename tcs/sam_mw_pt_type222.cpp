@@ -58,7 +58,7 @@ enum{	//Parameters
 		O_T_salt_hot,
 		//-not named-,
 		O_field_eff_adj,
-		O_q_inc_sum,
+		O_q_solar_total,
 		O_q_startup,
 		O_dP_receiver,
 		O_dP_total,
@@ -122,7 +122,7 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_Q_thermal,		"Q_thermal",		"Receiver thermal output",								                    "MWt",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_salt_hot,		"T_salt_hot",		"HTF outlet temperature",													"C",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_field_eff_adj,	"field_eff_adj",	"Adjusted heliostat field efficiency - includes overdesign adjustment",		"",			"", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_q_inc_sum,		"q_inc_sum",		"Total incident power on the receiver",										"MWt",		"", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_q_solar_total,	"Q_solar_total",	"Total incident power on the receiver",										"MWt",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_q_startup,		"q_startup",		"Startup energy consumed during the current time step",						"MWt",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_dP_receiver,		"dP_receiver",		"Receiver HTF pressure drop",												"bar",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_dP_total,		"dP_total",			"Total receiver and tower pressure drop",									"bar",		"", "", ""},
@@ -1040,7 +1040,7 @@ public:
 		value( O_Q_thermal, q_thermal/1.E6 );				//[MW] convert from W
 		value( O_T_salt_hot, T_salt_hot_guess - 273.15 );	//[C] convert from K
 		value( O_field_eff_adj, field_eff_adj );			//[-]
-		value( O_q_inc_sum, q_dot_inc_sum/1.E3 );			//[MW] convert from kW
+		value( O_q_solar_total, q_dot_inc_sum/1.E3 );			//[MW] convert from kW
 		value( O_q_startup, q_startup );					//[MW]
 		value( O_dP_receiver, DELTAP*m_n_panels/m_n_lines/1.E5 );	//[bar] receiver pressure drop, convert from Pa
 		value( O_dP_total, Pres_D*10.0 );					//[bar] total pressure drop, convert from MPa
