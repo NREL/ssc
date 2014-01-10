@@ -2487,7 +2487,7 @@ public:
 		value( O_T_htf_hot, T_htf_hot_out - 273.15 );    
 		value( O_Q_rec_abs, value( O_Q_thermal ) + abs( value( O_Q_rad_loss ) + value( O_Q_conv_loss ) ) );    
 		value( O_field_eff_adj, field_eff_adj );
-		value( O_Q_solar_total, q_solar_total/1.0E6 );
+		value( O_Q_solar_total, q_solar_total/1.0E6 );				// 1.10.14, twn: Change to pre-defocus?
 		value( O_Q_startup, q_startup );   
 		value( O_availability, availability ); 
 		value( O_Q_rad_solar, Q_radiation_loss_solar/1.0E6 );  
