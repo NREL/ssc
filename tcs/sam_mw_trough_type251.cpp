@@ -1667,7 +1667,7 @@ public:
 		if( tes_type == 2 )
 		{
 			double T_hot_node, T_cold_node, T_max, f_hot, f_cold;
-			T_hot_node = T_cold_node, T_max, f_hot, f_cold = std::numeric_limits<double>::quiet_NaN();
+			T_hot_node = T_cold_node = T_max = f_hot = f_cold = std::numeric_limits<double>::quiet_NaN();
 
 			thermocline.GetFinalOutputs(T_hot_node, T_cold_node, T_max, f_hot, f_cold);
 
@@ -1676,8 +1676,6 @@ public:
 			value(O_T_max, T_max);
 			value(O_f_hot, f_hot);
 			value(O_f_cold, f_cold);
-
-			return 0;
 		}
 		else
 		{
@@ -1687,6 +1685,7 @@ public:
 			value(O_f_hot, 0.0);
 			value(O_f_cold, 0.0);
 		}
+		return 0;
 	}
 
 	virtual int converged( double time )
