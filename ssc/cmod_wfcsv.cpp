@@ -40,19 +40,26 @@ public:
 			std::string city = wfcsv::normalize_city( hdr.city );
 			
 			std::string country = hdr.country;
-			if ( !country.empty() ) country += " ";
+
 			std::string loc = hdr.loc_id;
 			std::string type = "?";
 
 
 			switch( hdr.type() )
 			{
-			case weatherfile::TMY2: type = "TMY2"; break;
-			case weatherfile::TMY3: type = "TMY3"; break;
+			case weatherfile::TMY2: type = "TMY2"; 
+				if ( country.empty() ) country = "USA";
+				break;
+			case weatherfile::TMY3: type = "TMY3"; 
+				if ( country.empty() ) country = "USA";
+				break;
 			case weatherfile::EPW: type = "EPW"; break;
 			case weatherfile::SMW: type = "SMW"; break;
 			}
 			hdr.close();
+
+			
+			if ( !country.empty() ) country += " ";
 
 			std::string ofmt = "$country $state $city ($type)";
 			if ( is_assigned("output_file_format") )
