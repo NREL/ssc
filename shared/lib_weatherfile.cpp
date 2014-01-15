@@ -881,6 +881,12 @@ wfcsv::wfcsv( const std::string &file )
 	m_errorCode = read_all( file );
 }
 
+wfcsv::~wfcsv()
+{
+	if( m_fp != 0 )
+		fclose( m_fp );
+}
+
 void wfcsv::reset()
 {
 	m_fp = 0;
@@ -1294,8 +1300,6 @@ static const char *canonical_names[_MAXCOL_] = {
 }
 
 
-
-
 bool wfcsv::convert( const std::string &input, const std::string &output )
 {
 	weatherfile in( input );
@@ -1306,8 +1310,8 @@ bool wfcsv::convert( const std::string &input, const std::string &output )
 
 	if ( in.type() == weatherfile::TMY2 )
 	{
-		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
-		fprintf(fp, "TMY2,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
+		fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
+		fprintf(fp, "TMY2,%s,%s,%s,USA,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
 			normalize_city(in.city).c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
 		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Snow Depth\n" );
 		for( size_t i=0;i<8760;i++ )
@@ -1320,8 +1324,8 @@ bool wfcsv::convert( const std::string &input, const std::string &output )
 	}
 	else if ( in.type() == weatherfile::TMY3 )
 	{
-		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
-		fprintf(fp, "TMY3,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
+		fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
+		fprintf(fp, "TMY3,%s,%s,%s,USA,%.6lf,%.6lf,%lg,%lg\n", in.loc_id.c_str(),
 			normalize_city(in.city).c_str(), in.state.c_str(), in.lat, in.lon, in.tz, in.elev );
 		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n" );
 		for( size_t i=0;i<8760;i++ )

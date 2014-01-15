@@ -121,6 +121,7 @@ private:
 public:
 	wfcsv();
 	wfcsv( const std::string &file );
+	~wfcsv();
 
 	bool ok();
 
