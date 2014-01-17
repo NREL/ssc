@@ -329,6 +329,27 @@ ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, 
 	return x.num.data();
 }
 
+bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
+
+	size_t nrows, ncols;
+	ssc_number_t *arr = as_matrix(name, &nrows, &ncols);
+
+	if (nrows < 1 || ncols < 1)
+		return false;
+
+	mat.resize_fill(nrows, ncols, 1.0);
+	for (size_t r = 0; r<nrows; r++)
+		for (size_t c = 0; c<ncols; c++)
+			mat.at(r, c) = arr[r*ncols + c];
+
+	return true;
+}
+
+
+
 ssc_number_t compute_module::get_operand_value( const std::string &input, const std::string &cur_var_name) throw( general_error )
 {	
 	if (input.length() < 1) throw check_error(cur_var_name, "input is null to get_operand_value", input);
