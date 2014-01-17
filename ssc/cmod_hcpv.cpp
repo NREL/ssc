@@ -109,6 +109,12 @@ static var_info _cm_vtab_hcpv[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                               "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",                                    "XXXXX",  "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac",                                   "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",                                    "XXXXX",  "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_e_net",                                "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",                                    "XXXXX",  "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "tracker_nameplate_watts",                     "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",                                    "watts",  "",        "hcpv",          "*",                    "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "dc_loss_stowing_kwh",                         "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",                                    "kWh",    "",        "hcpv",          "*",                    "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ac_loss_tracker_kwh",                         "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",                                    "kWh",    "",        "hcpv",          "*",                    "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "modeff_ref",                                  "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",                                    "-",      "",        "hcpv",          "*",                    "",                                         "" },
+	
 var_info_invalid };
 
 class cm_hcpv : public compute_module
@@ -507,29 +513,19 @@ public:
 			p_beam[istep] = wf.dn;
 			p_tdry[istep] = wf.tdry;
 			p_wspd[istep] = wf.wspd;
-			//p_sf[istep] = shad_derate;
+			p_sf[istep] = shad_derate;
 
 			istep++;
 		}
 
-		//if (istep != 8760)
-		//	throw exec_error("hcpv", util::format("failed to simulate all 8760 hours"));
+		if (istep != 8760)
+			throw exec_error("hcpv", util::format("failed to simulate all 8760 hours"));
 
-		//util::matrix_t<ssc_number_t> &fQ = allocate_matrix("wtpwr", 2, 2);
-
-
-		//if (istep != 8760)
-			//throw exec_error( "hcpv", "failed to simulate all 8760 hours, error in weather file?");
-	
-		//accumulate_monthly( "hourly_ac_net", "monthly_ac_net" );
-
-		//accumulate_annual( "hourly_glob_horiz_rad", "annual_glob_horiz_rad" );
-		
-		//assign( "6par_Adj", var_data((ssc_number_t) cec.Adj) );
+		assign("tracker_nameplate_watts", var_data((ssc_number_t)tracker_nameplate_watts));
+		assign("dc_loss_stowing_kwh", var_data((ssc_number_t)dc_loss_stowing*0.001));
+		assign("ac_loss_tracker_kwh", var_data((ssc_number_t)ac_loss_tracker*0.001));
+		assign("modeff_ref", var_data((ssc_number_t)modeff_ref));
 	}
-	
-
-
 };
 
 DEFINE_MODULE_ENTRY( hcpv, "High-X Concentrating PV, SAM component models V.1", 1 )
