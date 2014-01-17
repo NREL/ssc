@@ -26,6 +26,7 @@
     <ClCompile Include="..\ssc\cmod_fossilgen.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermalui.cpp" />
+    <ClCompile Include="..\ssc\cmod_hcpv.cpp" />
     <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
     <ClCompile Include="..\ssc\cmod_irradproc.cpp" />
     <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
