@@ -416,7 +416,9 @@ outln( num_inverters );
 // in the same way that the PVWatts service specifies the weather data
 // --> essentially, this service and PVWatts should use exactly the same
 //     method to get weather data for a location request
-var( 'weather_file', '../../examples/abilene.tm2' );
+weather_file=choose_file(cwd(),'Choose weather file', 'TMY2 (*.tm2)|*.tm2');
+var('weather_file',weather_file);
+
 var( 'albedo', [albedo, albedo, albedo, albedo, albedo, albedo,
 	albedo, albedo, albedo, albedo, albedo, albedo ] );
 
