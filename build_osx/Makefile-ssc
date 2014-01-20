@@ -6,18 +6,9 @@ CFLAGS = -I../shared -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -lm -lstdc++ shared.a tcs.a
 
-ifeq ($(CFG),)
-CFG=64
-endif
-
-ifeq ($(CFG),64)
 CFLAGS += -D__64BIT__
 TARGET = ssc.dylib
-else
-CFLAGS += -D__32BIT__ -arch i386
-TARGET = ssc.dylib
-LDFLAGS += -arch i386
-endif
+
 
 OBJECTS = \
 	cmod_pvwattsfunc.o \
@@ -61,6 +52,7 @@ OBJECTS = \
 	cmod_tcstrough_physical.o \
 	cmod_tcsdish.o \
 	cmod_tcsiscc.o \
+	cmod_hcpv.o \
 	cmod_tcsmslf.o \
 	tckernel.o 
 
