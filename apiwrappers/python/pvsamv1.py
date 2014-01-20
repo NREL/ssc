@@ -53,6 +53,7 @@ tilt = 30;
 azimuth = 180;
 track_mode = 0;
 soiling = 0.95;
+albedo = 0.2;
 dc_derate = 0.95558;
 
 # shading derate table
@@ -118,7 +119,7 @@ data = ssc.Data()
 # --> essentially, this service and PVWatts should use exactly the same
 #     method to get weather data for a location request
 data.set_string( 'weather_file', '../../examples/abilene.tm2' );
-
+data.set_array( 'albedo', [albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo ] );
 data.set_number( 'ac_derate', ac_derate );
 data.set_number( 'modules_per_string', num_series );
 data.set_number( 'strings_in_parallel', num_parallel );

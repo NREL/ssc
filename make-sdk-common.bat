@@ -18,6 +18,9 @@ copy apiwrappers\python\pvsamv1.py sdk-release\languages\python
 copy apiwrappers\python\pvres.py sdk-release\languages\python
 copy apiwrappers\python\pvcom.py sdk-release\languages\python
 
+copy apiwrappers\php\ExtensionWin32Howto.pdf sdk-release\languages\php
+copy apiwrappers\php\ssimphp.cpp sdk-release\languages\php
+
 copy apiwrappers\csharp\SSC.cs sdk-release\languages\csharp
 copy apiwrappers\csharp\App.config sdk-release\languages\csharp
 copy apiwrappers\csharp\Program.cs sdk-release\languages\csharp

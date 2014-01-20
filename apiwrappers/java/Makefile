@@ -41,24 +41,24 @@ else
 #Update based on your Java installation location
         ifneq (,$(findstring 10.8, $(VERS) ))
             CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
-            CP_DLL = ../../osx64/ssc64.dylib ./ssc64.dylib
-	    SSCLIB = ssc64.dylib
+            CP_DLL = ../../osx64/ssc.dylib ./ssc.dylib
+	    SSCLIB = ssc.dylib
 	    RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
 	    EXT = dylib
 	    JNILIB = libSSCAPIJNI.jnilib
 	else
             ifneq (,$(findstring 10.7, $(VERS) ))
                 CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -I/System/Library/Frameworks/JavaVM.framework/Headers
-                CP_DLL = ../../osx64/ssc64.dylib ./ssc64.dylib
-	        SSCLIB = ssc64.dylib
+                CP_DLL = ../../osx64/ssc.dylib ./ssc.dylib
+	        SSCLIB = ssc.dylib
 	        RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
 	        EXT = dylib
 	        JNILIB = libSSCAPIJNI.jnilib
 	    else
                 ifneq (,$(findstring 10.6, $(VERS)))
 	            CIFLAGS = -I/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Headers -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
-                    CP_DLL = ../../osx64/ssc64.dylib ./ssc64.dylib
-                    SSCLIB = ssc64.dylib
+                    CP_DLL = ../../osx64/ssc.dylib ./ssc.dylib
+                    SSCLIB = ssc.dylib
                     RM_ALL = *.dylib *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
 	            EXT = dylib
 	            JNILIB = libSSCAPIJNI.jnilib
@@ -68,8 +68,8 @@ else
     else 
         ifneq (,$findstring(Linux, $(PF)))
 	    CIFLAGS = -I/usr/java/jdk1.7.0_11/include -I/usr/java/jdk1.7.0_11/include/linux -fPIC 
-	    CP_DLL = ../../linux64/ssc64.so ./ssc64.so
-	    SSCLIB = ./ssc64.so
+	    CP_DLL = ../../linux64/ssc.so ./ssc.so
+	    SSCLIB = ./ssc.so
 	    RM_ALL = *.so *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
 	    EXT = so
 	    JNILIB = libSSCAPIJNI.so
