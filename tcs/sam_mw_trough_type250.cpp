@@ -3589,8 +3589,8 @@ lab_keep_guess:
 			nu_6 = mu_6 / rho_6;  //[m**2/s]
 			Nu_brac = mu_brac / rho_brac;  //[m**2/s]
 
-			Alpha_brac = k_brac / (Cp_brac * rho_brac * 1000.0);  //[m**2/s]
-			alpha_6 = k_6 / (Cp_6 * rho_6 * 1000.0);  //[m**2/s]
+			Alpha_brac = k_brac / (Cp_brac * rho_brac);  //[m**2/s]	1.21.14 twn: Fixed unit conversion error
+			alpha_6 = k_6 / (Cp_6 * rho_6);  //[m**2/s] 1.21.14 twn: Fixed unit conversion error
 			Re_Dbrac = v_6 * D_brac / nu_6;
 			Pr_brac = Nu_brac / Alpha_brac;
 			Pr_6 = nu_6 / alpha_6;
