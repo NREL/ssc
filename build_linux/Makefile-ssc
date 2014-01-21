@@ -62,6 +62,7 @@ OBJECTS = \
 	cmod_tcsdish.o \
 	cmod_tcsiscc.o \
 	cmod_tcsmslf.o \
+	cmod_hcpv.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
