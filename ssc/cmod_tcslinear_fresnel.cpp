@@ -1,3 +1,4 @@
+// Steam Linear Fresnel
 #include "core.h"
 #include "tckernel.h"
 
@@ -120,9 +121,9 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",     "Reference HTF flow rate at design conditions",                                        "kg/hr",         "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_pb_demand",       "Demand htf flow from the power block",                                                "kg/hr",         "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "shift",             "Shift in longitude from local standard meridian",                                     "deg",           "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "SolarAz",           "Solar azimuth angle",                                                                 "deg",           "",            "solarfield",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "SolarAz_init",           "Solar azimuth angle",                                                                 "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "SolarZen",          "Solar zenith angle",                                                                  "deg",           "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_pb_out",          "Fluid temperature from the power block",                                              "C",             "",            "solarfield",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_pb_out_init",     "Fluid temperature from the power block",                                              "C",             "",            "solarfield",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "TOUPeriod",         "Time of use period",                                                                  "none",          "",            "solarfield",     "*",                       "",                      "" },
 
 	// Type 234 (powerblock) parameters
@@ -158,7 +159,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "standby_control",   "Control signal indicating standby mode",                                              "none",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_db_pwb",          "Ambient dry bulb temperature",                                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_amb_pwb",         "Ambient pressure",                                                                    "atm",           "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "TOU",               "Current Time-of-use period",                                                          "none",          "",            "powerblock",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "TOU",               "Current Time-of-use period",                                                          "none",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "relhum",            "Relative humidity of the ambient air",                                                "none",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "f_recSU",           "Fraction powerblock can run due to receiver startup",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dp_b",              "Pressure drop in boiler",                                                             "Pa",            "",            "powerblock",     "*",                       "",                      "" },
@@ -170,10 +171,54 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 
     // VARTYPE          DATATYPE          NAME                 LABEL                                                                                 UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
 	// Type 261 (net energy calculator) outputs
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_net",              "Net electricity generation (or usage) by the plant",                                 "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",               "Beam normal irradiance",                                                             "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",               "Wind speed",                                                                         "m/s",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",               "Dry bulb temperature",                                                               "'C",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "twet",               "Wet bulb temperature",                                                               "'C",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pres",               "Pressure",                                                                           "mbar",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "rhum",               "Relative humidity",                                                                  "%",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "SolarAlt",           "Solar altitude used in optical calculations",                             	         "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "SolarAz",            "Solar azimuth used in optical calculations",                              	         "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "f_bays",             "Fraction of operating heat rejection bays",                                          "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",  		   "The fraction of focused aperture area in the solar field",          	             "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_opt_ave",        "collector equivalent optical efficiency",                           	             "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_thermal",        "Solar field thermal efficiency (power out/ANI)",                    	             "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_sf",             "Total solar field collection efficiency",                           	             "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                "Cycle thermal efficiency",                                                           "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_aux",          "Auxiliary heater mass flow rate",                                               	 "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field",        "Flow rate from the field",                                                      	 "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_b_tot",        "Flow rate within the boiler section",                                           	 "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_to_pb",        "Flow rate delivered to the power block",                                        	 "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot",              "Flow rate in a single loop",                                                    	 "kg/s",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_makeup",       "Cooling water makeup flow rate",                                                     "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cond",             "Condenser pressure",                                                                 "Pa",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_turb_in",          "Pressure at the turbine inlet",                                     	             "bar",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_sf_in",            "Solar field inlet pressure",                                                         "bar",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dP_tot",             "Total HTF pressure drop",                                              	             "bar",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_loss_piping",      "Pipe heat loss in the hot header and the hot runner",               	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_aux_fluid",        "Thermal energy provided to the fluid passing through the aux heater",                "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_aux_fuel",         "Heat content of fuel required to provide aux firing",               	             "MMBTU",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "E_bal_startup",      "Startup energy consumed",                                           	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dump",             "Dumped thermal energy",                                             	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_field_delivered",  "Total solar field thermal power delivered",                         	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_inc_tot",          "Total power incident on the field",                                 	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_loss_rec",         "Total Receiver thermal losses",                                     	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_loss_sf",          "Total solar field thermal losses",                                  	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_to_pb",            "Thermal energy to the power block",                                 	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_out",           "Fluid temperature from the power block",                                             "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_field_in",         "HTF temperature into the collector field header",                   	             "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_loop_out",         "Loop outlet temperature",                                           	             "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_field_out",        "HTF Temperature from the field",                                    	             "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_in",            "HTF Temperature to the power block",                                	             "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_aux",          "Parasitic power associated with operation of the aux boiler",       	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_bop",          "parasitic power as a function of power block load",                 	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_col",          "Parasitic electric power consumed by the collectors",               	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_fixed",        "Fixed parasitic power losses.. for every hour of operation",        	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pump",         "Required solar field pumping power",                                	             "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_cool_par",         "Cooling system parasitic load",                                                      "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_net",              "Net electricity generation (or usage) by the plant",                                 "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "W_cycle_gross",      "Electrical source - Power cycle gross output",                                       "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-
-    var_info_invalid };
+	var_info_invalid };
 
 class cm_tcslinear_fresnel : public tcKernel
 {
@@ -196,7 +241,7 @@ public:
 
 		if(debug_mode)
 		{
-			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcs/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out" );
+			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out" );
 			set_unit_value( weather, "i_hour", "TIME" );
 			set_unit_value( weather, "i_month", "month" );
 			set_unit_value( weather, "i_day", "day" );
@@ -228,6 +273,8 @@ public:
 			set_unit_value_ssc_double( weather, "azimuth" );
 		}
 
+		// Add tou translator
+		int	tou = add_unit("tou_translator", "Time of Use Translator");
 		//Add the solar field collector unit
 		int solarfield = add_unit("sam_mw_lf_type261_steam", "type 261 solarfield");
 		//Add direct powerblock unit
@@ -235,7 +282,8 @@ public:
 		//Add unit to that summarizes energy output
 		int E_net_calcs = add_unit("sam_mw_lf_type261_Wnet","type 261 enet calculator");
 
-
+		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
+		set_unit_value_ssc_matrix(tou, "weekend_schedule");
 
 		// Now set solar field collector unit parameters
 		set_unit_value_ssc_double( solarfield, "tes_hours"); // TSHOURS );
@@ -342,22 +390,23 @@ public:
 		set_unit_value_ssc_double(solarfield, "m_dot_htf_ref"); // 0.0);	//[kg/hr] - initial value
 		set_unit_value_ssc_double(solarfield, "m_pb_demand"); // 0.0);			//[kg/hr] - not used
 		set_unit_value_ssc_double(solarfield, "shift"); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "SolarAz"); // 0.0);			//[deg] - initial value
+		set_unit_value_ssc_double(solarfield, "SolarAz", as_double("SolarAz_init")); // 0.0);			//[deg] - initial value
 		set_unit_value_ssc_double(solarfield, "SolarZen"); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "T_pb_out"); // 290.0);			//[C] - initial value
-		set_unit_value_ssc_double(solarfield, "TOUPeriod"); // 4);				//[-] - don't have TOU reader yet - all are same in default LF model though
+		set_unit_value_ssc_double(solarfield, "T_pb_out", as_double("T_pb_out_init")); // 290.0);			//[C] - initial value
+		//set_unit_value_ssc_double(solarfield, "TOUPeriod"); // 4);				//[-] - don't have TOU reader yet - all are same in default LF model though
 
 		// connect solar field
 		bool bConnected = connect(weather, "beam", solarfield, "I_bn");		//[W/m2] - connect to weather reader
-		bConnected = connect(weather, "tdry", solarfield, "T_db");		//[C] - connect to weather reader
-		bConnected = connect(weather, "tdew", solarfield, "T_dp");		//[C] - connect to weather reader
-		bConnected = connect(weather, "pres", solarfield, "P_amb");		//[mbar] - connect to weather reader
-		bConnected = connect(weather, "wspd", solarfield, "V_wind");		//[m/s] - connect to weather reader
-		bConnected = connect(powerblock, "m_dot_ref", solarfield, "m_dot_htf_ref");	//[kg/hr] connect to powerblock
-		bConnected = connect(weather, "shift", solarfield, "shift");		//[deg] - connect to weather reader
-		bConnected = connect(weather, "solazi", solarfield, "SolarAz");	//[deg] - connect to weather reader
-		bConnected = connect(weather, "solzen", solarfield, "SolarZen"); //[deg] - connect to weather reader
-		bConnected = connect(powerblock, "T_cold", solarfield, "T_pb_out");	//[C] - connect to powerblock
+		bConnected &= connect(weather, "tdry", solarfield, "T_db");		//[C] - connect to weather reader
+		bConnected &= connect(weather, "tdew", solarfield, "T_dp");		//[C] - connect to weather reader
+		bConnected &= connect(weather, "pres", solarfield, "P_amb");		//[mbar] - connect to weather reader
+		bConnected &= connect(weather, "wspd", solarfield, "V_wind");		//[m/s] - connect to weather reader
+		bConnected &= connect(powerblock, "m_dot_ref", solarfield, "m_dot_htf_ref");	//[kg/hr] connect to powerblock
+		bConnected &= connect(weather, "shift", solarfield, "shift");		//[deg] - connect to weather reader
+		bConnected &= connect(weather, "solazi", solarfield, "SolarAz");	//[deg] - connect to weather reader
+		bConnected &= connect(weather, "solzen", solarfield, "SolarZen"); //[deg] - connect to weather reader
+		bConnected &= connect(powerblock, "T_cold", solarfield, "T_pb_out");	//[C] - connect to powerblock
+		bConnected &= connect(tou, "tou_value", solarfield, "TOUPeriod");
 
 
 		// Set Parameters for Direct Powerblock (type 234)
@@ -395,28 +444,29 @@ public:
 		set_unit_value_ssc_double(powerblock, "standby_control"); // 0);
 		set_unit_value_ssc_double(powerblock, "T_db", as_double("T_db_pwb") ); // 12.8);
 		set_unit_value_ssc_double(powerblock, "P_amb", as_double("P_amb_pwb") ); // 960);
-		set_unit_value_ssc_double(powerblock, "TOU"); // 4);								//[-] No TOU reader yet
+		//set_unit_value_ssc_double(powerblock, "TOU"); // 4);								//[-] No TOU reader yet
 		set_unit_value_ssc_double(powerblock, "relhum"); // 0.25);						//[-] Initial value
 		set_unit_value_ssc_double(powerblock, "f_recSU"); // 1);							//[-] Set to 1 for LF
 		set_unit_value_ssc_double(powerblock, "dp_sh"); // 5.0);
 		set_unit_value_ssc_double(powerblock,"dp_rh"); // 0.0);								//[Pa] no rh in LF
 
 		// connect the powerblock
-		bConnected = connect(solarfield, "cycle_pl_control", powerblock, "mode");	//[-] connect to LF solarfield
-		bConnected = connect(solarfield, "T_field_out", powerblock, "T_hot");		//[C] connect to LF solarfield
-		bConnected = connect(solarfield, "m_dot_to_pb", powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
-		bConnected = connect(weather, "twet", powerblock, "T_wb");					//[C] connect to weather reader
-		bConnected = connect(solarfield, "m_dot_to_pb", powerblock, "demand_var");	//[kg/hr] 
-		bConnected = connect(solarfield, "standby_control", powerblock, "standby_control");
-		bConnected = connect(weather, "tdry", powerblock, "T_db");
-		bConnected = connect(weather, "pres", powerblock, "P_amb");
-		bConnected = connect(weather, "rhum", powerblock, "relhum");					//[-] connect to weather reader
-		bConnected = connect(solarfield, "dP_sf_sh", powerblock, "dp_sh");			//[Pa] Pressure drop in sh
+		bConnected &= connect(solarfield, "cycle_pl_control", powerblock, "mode");	//[-] connect to LF solarfield
+		bConnected &= connect(solarfield, "T_field_out", powerblock, "T_hot");		//[C] connect to LF solarfield
+		bConnected &= connect(solarfield, "m_dot_to_pb", powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
+		bConnected &= connect(weather, "twet", powerblock, "T_wb");					//[C] connect to weather reader
+		bConnected &= connect(solarfield, "m_dot_to_pb", powerblock, "demand_var");	//[kg/hr] 
+		bConnected &= connect(solarfield, "standby_control", powerblock, "standby_control");
+		bConnected &= connect(weather, "tdry", powerblock, "T_db");
+		bConnected &= connect(weather, "pres", powerblock, "P_amb");
+		bConnected &= connect(weather, "rhum", powerblock, "relhum");					//[-] connect to weather reader
+		bConnected &= connect(solarfield, "dP_sf_sh", powerblock, "dp_sh");			//[Pa] Pressure drop in sh
+		bConnected &= connect(tou, "tou_value", powerblock, "TOU");
 
 		// connect the net energy output calculator
-		bConnected = connect(powerblock, "P_cycle", E_net_calcs, "W_cycle_gross");
-		bConnected = connect(solarfield, "W_dot_par_tot", E_net_calcs, "W_par_sf_tot");
-		bConnected = connect(powerblock, "W_cool_par", E_net_calcs, "W_par_cooling");
+		bConnected &= connect(powerblock, "P_cycle", E_net_calcs, "W_cycle_gross");
+		bConnected &= connect(solarfield, "W_dot_par_tot", E_net_calcs, "W_par_sf_tot");
+		bConnected &= connect(powerblock, "W_cool_par", E_net_calcs, "W_par_cooling");
 
 
 
