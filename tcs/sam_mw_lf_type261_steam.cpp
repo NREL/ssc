@@ -1799,7 +1799,8 @@ public:
 		double SolarAz = value( I_SOLARAZ );				//[deg] Solar azimuth angle
 		double SolarZen = value(I_SOLARZEN)*0.0174533;;		//Solar zenith angle [deg]
 		double T_pb_out = value( I_T_PB_OUT )+273.15;		//[K] Fluid temperature from the power block, convert from C
-		int tou_period = (int) value( I_TOUPERIOD );		//[-] Time-of-use period
+	//  int tou_period = (int) value( I_TOUPERIOD );		//[-] Time-of-use period
+		int tou_period = (int) value( I_TOUPERIOD ) - 1;	// control value between 1 & 9, have to change to 0-8 for array index
 
 		SolarAz = (SolarAz - 180.0) * 0.0174533;			//[rad] Convert to TRNSYS convention, radians
 
