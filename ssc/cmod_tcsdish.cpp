@@ -1,3 +1,4 @@
+// Dish Stirling model
 #include "core.h"
 #include "tckernel.h"
 
@@ -198,10 +199,10 @@ public:
 		else weather = add_unit("weatherreader", "TCS weather reader");
 
 		//Add units
-		int collector = add_unit("sam_pf_dish_collector_type295");
-		int receiver = add_unit("sam_pf_dish_receiver_type296");
-		int engine = add_unit("sam_pf_dish_engine_type297");
-		int parasitics = add_unit("sam_pf_dish_parasitics_type298");
+		int type295_collector = add_unit("sam_pf_dish_collector_type295");
+		int type296_receiver = add_unit("sam_pf_dish_receiver_type296");
+		int type297_dishengine = add_unit("sam_pf_dish_engine_type297");
+		int type298_dishparasitics = add_unit("sam_pf_dish_parasitics_type298");
 
 		// set weather reader parameters/inputs
 		if(debug_mode)
@@ -239,138 +240,138 @@ public:
 		}
 
 		// Set Collector Parameters
-		set_unit_value_ssc_double( collector, "d_ap"); //  d_ap );
-		set_unit_value_ssc_double( collector, "rho"); //  reflectivity );
-		set_unit_value_ssc_double( collector, "n_ns"); //  NNS );
-		set_unit_value_ssc_double( collector, "n_ew"); //  NEW );
-		set_unit_value_ssc_double( collector, "ns_dish_sep"); //  NS_dish_sep );
-		set_unit_value_ssc_double( collector, "ew_dish_sep"); //  EW_dish_sep );
-		set_unit_value_ssc_double( collector, "slope_ns"); //  slope_NS );
-		set_unit_value_ssc_double( collector, "slope_ew"); //  slope_EW );
-		set_unit_value_ssc_double( collector, "w_slot_gap"); //  width_slot_gap );
-		set_unit_value_ssc_double( collector, "h_slot_gap"); //  height_slot_gap );
-		set_unit_value_ssc_double( collector, "manufacturer"); //  5 );
-		set_unit_value_ssc_double( collector, "wind_stow_speed"); //  wind_stow_speed );
-		set_unit_value_ssc_double( collector, "A_proj"); //  proj_area );
-		set_unit_value_ssc_double( collector, "I_cut_in"); //  i_cut_in );
-		set_unit_value_ssc_double( collector, "d_ap_test"); //  d_ap_TEST );
-		set_unit_value_ssc_double( collector, "test_if"); //  test_intercept_f );
-		set_unit_value_ssc_double( collector, "test_L_focal"); //  test_focal_length );
-		set_unit_value_ssc_double( collector, "A_total"); //  total_area );
+		set_unit_value_ssc_double( type295_collector, "d_ap"); //  d_ap );
+		set_unit_value_ssc_double( type295_collector, "rho"); //  reflectivity );
+		set_unit_value_ssc_double( type295_collector, "n_ns"); //  NNS );
+		set_unit_value_ssc_double( type295_collector, "n_ew"); //  NEW );
+		set_unit_value_ssc_double( type295_collector, "ns_dish_sep"); //  NS_dish_sep );
+		set_unit_value_ssc_double( type295_collector, "ew_dish_sep"); //  EW_dish_sep );
+		set_unit_value_ssc_double( type295_collector, "slope_ns"); //  slope_NS );
+		set_unit_value_ssc_double( type295_collector, "slope_ew"); //  slope_EW );
+		set_unit_value_ssc_double( type295_collector, "w_slot_gap"); //  width_slot_gap );
+		set_unit_value_ssc_double( type295_collector, "h_slot_gap"); //  height_slot_gap );
+		set_unit_value_ssc_double( type295_collector, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type295_collector, "wind_stow_speed"); //  wind_stow_speed );
+		set_unit_value_ssc_double( type295_collector, "A_proj"); //  proj_area );
+		set_unit_value_ssc_double( type295_collector, "I_cut_in"); //  i_cut_in );
+		set_unit_value_ssc_double( type295_collector, "d_ap_test"); //  d_ap_TEST );
+		set_unit_value_ssc_double( type295_collector, "test_if"); //  test_intercept_f );
+		set_unit_value_ssc_double( type295_collector, "test_L_focal"); //  test_focal_length );
+		set_unit_value_ssc_double( type295_collector, "A_total"); //  total_area );
 
 		// Connect Collector Parameters
-		bool bConnected = connect( weather, "beam", collector, "I_beam" );
-		bConnected &= connect( weather, "tdry", collector, "T_amb" );
-		bConnected &= connect( weather, "wspd", collector, "wind_speed" );
-		bConnected &= connect( weather, "solzen", collector, "zenith" );
-		bConnected &= connect( weather, "pres", collector, "P_atm" );
-		bConnected &= connect( weather, "solazi", collector, "azimuth" );
+		bool bConnected = connect( weather, "beam", type295_collector, "I_beam" );
+		bConnected &= connect( weather, "tdry", type295_collector, "T_amb" );
+		bConnected &= connect( weather, "wspd", type295_collector, "wind_speed" );
+		bConnected &= connect( weather, "solzen", type295_collector, "zenith" );
+		bConnected &= connect( weather, "pres", type295_collector, "P_atm" );
+		bConnected &= connect( weather, "solazi", type295_collector, "azimuth" );
 
 		// Set Receiver Parameters
-		set_unit_value_ssc_double( receiver, "rec_type"); //  rec_type );
-		set_unit_value_ssc_double( receiver, "transmittance_cover"); //  trans_cover );
-		set_unit_value_ssc_double( receiver, "manufacturer"); //  5 );
-		set_unit_value_ssc_double( receiver, "alpha_absorber"); //  alpha_absorb );
-		set_unit_value_ssc_double( receiver, "A_absorber"); //  A_absorb );
-		set_unit_value_ssc_double( receiver, "alpha_wall"); //  alpha_wall );
-		set_unit_value_ssc_double( receiver, "A_wall"); //  A_wall );
-		set_unit_value_ssc_double( receiver, "L_insulation"); //  L_insul );
-		set_unit_value_ssc_double( receiver, "k_insulation"); //  k_insul );
-		set_unit_value_ssc_double( receiver, "d_cav"); //  d_cav );
-		set_unit_value_ssc_double( receiver, "P_cav"); //  p_cav );
-		set_unit_value_ssc_double( receiver, "L_cav"); //  l_cav );
-		set_unit_value_ssc_double( receiver, "DELTA_T_DIR"); //  delta_T_DIR );
-		set_unit_value_ssc_double( receiver, "DELTA_T_REFLUX"); //  delta_T_reflux );
-		set_unit_value_ssc_double( receiver, "T_heater_head_high"); //  T_heater_head_high );
-		set_unit_value_ssc_double( receiver, "T_heater_head_low"); //  T_heater_head_low );
+		set_unit_value_ssc_double( type296_receiver, "rec_type"); //  rec_type );
+		set_unit_value_ssc_double( type296_receiver, "transmittance_cover"); //  trans_cover );
+		set_unit_value_ssc_double( type296_receiver, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type296_receiver, "alpha_absorber"); //  alpha_absorb );
+		set_unit_value_ssc_double( type296_receiver, "A_absorber"); //  A_absorb );
+		set_unit_value_ssc_double( type296_receiver, "alpha_wall"); //  alpha_wall );
+		set_unit_value_ssc_double( type296_receiver, "A_wall"); //  A_wall );
+		set_unit_value_ssc_double( type296_receiver, "L_insulation"); //  L_insul );
+		set_unit_value_ssc_double( type296_receiver, "k_insulation"); //  k_insul );
+		set_unit_value_ssc_double( type296_receiver, "d_cav"); //  d_cav );
+		set_unit_value_ssc_double( type296_receiver, "P_cav"); //  p_cav );
+		set_unit_value_ssc_double( type296_receiver, "L_cav"); //  l_cav );
+		set_unit_value_ssc_double( type296_receiver, "DELTA_T_DIR"); //  delta_T_DIR );
+		set_unit_value_ssc_double( type296_receiver, "DELTA_T_REFLUX"); //  delta_T_reflux );
+		set_unit_value_ssc_double( type296_receiver, "T_heater_head_high"); //  T_heater_head_high );
+		set_unit_value_ssc_double( type296_receiver, "T_heater_head_low"); //  T_heater_head_low );
 
 		// Connect Receiver Inputs
-		bConnected &= connect( collector, "Power_in_rec", receiver, "Power_in_rec" );
-		bConnected &= connect( weather, "tdry", receiver, "T_amb" );
-		bConnected &= connect( weather, "pres", receiver, "P_atm" );
-		bConnected &= connect( weather, "wspd", receiver, "wind_speed" );
-		bConnected &= connect( weather, "solzen", receiver, "sun_angle" );
-		bConnected &= connect( collector, "Number_of_collectors", receiver, "n_collectors" );
-		bConnected &= connect( weather, "beam", receiver, "DNI" );
-		bConnected &= connect( collector, "I_cut_in", receiver, "I_cut_in" );
-		bConnected &= connect( collector, "d_ap_out", receiver, "d_ap" );
+		bConnected &= connect( type295_collector, "Power_in_rec", type296_receiver, "Power_in_rec" );
+		bConnected &= connect( weather, "tdry", type296_receiver, "T_amb" );
+		bConnected &= connect( weather, "pres", type296_receiver, "P_atm" );
+		bConnected &= connect( weather, "wspd", type296_receiver, "wind_speed" );
+		bConnected &= connect( weather, "solzen", type296_receiver, "sun_angle" );
+		bConnected &= connect( type295_collector, "Number_of_collectors", type296_receiver, "n_collectors" );
+		bConnected &= connect( weather, "beam", type296_receiver, "DNI" );
+		bConnected &= connect( type295_collector, "I_cut_in", type296_receiver, "I_cut_in" );
+		bConnected &= connect( type295_collector, "d_ap_out", type296_receiver, "d_ap" );
 
 		// Set Engine Parameters
-		set_unit_value_ssc_double( engine, "manufacturer"); //  5 );
-		set_unit_value_ssc_double( engine, "T_heater_head_high"); //  T_heater_head_high );
-		set_unit_value_ssc_double( engine, "T_heater_head_low"); //  T_heater_head_low );
-		set_unit_value_ssc_double( engine, "Beale_const_coef"); //  Beale_const_coef );
-		set_unit_value_ssc_double( engine, "Beale_first_coef"); //  Beale_first_coef );
-		set_unit_value_ssc_double( engine, "Beale_square_coef"); //  Beale_square_coef );
-		set_unit_value_ssc_double( engine, "Beale_third_coef"); //  Beale_third_coef );
-		set_unit_value_ssc_double( engine, "Beale_fourth_coef"); //  Beale_fourth_coef );
-		set_unit_value_ssc_double( engine, "Pressure_coef"); //  Pressure_coef );
-		set_unit_value_ssc_double( engine, "Pressure_first"); //  Pressure_first );
-		set_unit_value_ssc_double( engine, "engine_speed"); //  engine_speed );
-		set_unit_value_ssc_double( engine, "V_displaced"); //  V_displaced );
+		set_unit_value_ssc_double( type297_dishengine, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type297_dishengine, "T_heater_head_high"); //  T_heater_head_high );
+		set_unit_value_ssc_double( type297_dishengine, "T_heater_head_low"); //  T_heater_head_low );
+		set_unit_value_ssc_double( type297_dishengine, "Beale_const_coef"); //  Beale_const_coef );
+		set_unit_value_ssc_double( type297_dishengine, "Beale_first_coef"); //  Beale_first_coef );
+		set_unit_value_ssc_double( type297_dishengine, "Beale_square_coef"); //  Beale_square_coef );
+		set_unit_value_ssc_double( type297_dishengine, "Beale_third_coef"); //  Beale_third_coef );
+		set_unit_value_ssc_double( type297_dishengine, "Beale_fourth_coef"); //  Beale_fourth_coef );
+		set_unit_value_ssc_double( type297_dishengine, "Pressure_coef"); //  Pressure_coef );
+		set_unit_value_ssc_double( type297_dishengine, "Pressure_first"); //  Pressure_first );
+		set_unit_value_ssc_double( type297_dishengine, "engine_speed"); //  engine_speed );
+		set_unit_value_ssc_double( type297_dishengine, "V_displaced"); //  V_displaced );
 		// initial values
-		set_unit_value_ssc_double( engine, "T_compression", as_double("T_compression_in") ); //  273.15 );
+		set_unit_value_ssc_double( type297_dishengine, "T_compression", as_double("T_compression_in") ); //  273.15 );
 
 		// Connect Engine Parameters
-		bConnected &= connect( receiver, "P_out_rec", engine, "P_SE" );
-		bConnected &= connect( weather, "tdry", engine, "T_amb" );
-		bConnected &= connect( collector, "Number_of_collectors", engine, "N_cols" );
-		bConnected &= connect( parasitics, "T_compression", engine, "T_compression" );
-		bConnected &= connect( receiver, "T_heater_head_operate", engine, "T_heater_head_operate" );
-		bConnected &= connect( collector, "Power_in_collector", engine, "P_in_collector" );
+		bConnected &= connect( type296_receiver, "P_out_rec", type297_dishengine, "P_SE" );
+		bConnected &= connect( weather, "tdry", type297_dishengine, "T_amb" );
+		bConnected &= connect( type295_collector, "Number_of_collectors", type297_dishengine, "N_cols" );
+		bConnected &= connect( type298_dishparasitics, "T_compression", type297_dishengine, "T_compression" );
+		bConnected &= connect( type296_receiver, "T_heater_head_operate", type297_dishengine, "T_heater_head_operate" );
+		bConnected &= connect( type295_collector, "Power_in_collector", type297_dishengine, "P_in_collector" );
 
 		// Set Parasitic Parameters
-		set_unit_value_ssc_double( parasitics, "cooling_tower_on"); //  0 );
-		set_unit_value_ssc_double( parasitics, "tower_mode"); //  1 );
-		set_unit_value_ssc_double( parasitics, "d_pipe_tower"); //  0.4 );
-		set_unit_value_ssc_double( parasitics, "tower_m_dot_water"); //  134000 );
-		set_unit_value_ssc_double( parasitics, "tower_m_dot_water_test"); //  134000 );
-		set_unit_value_ssc_double( parasitics, "tower_pipe_material"); //  1 );
-		set_unit_value_ssc_double( parasitics, "eta_tower_pump"); //  0.6 );
-		set_unit_value_ssc_double( parasitics, "fan_control_signal"); //  1 );
-		set_unit_value_ssc_double( parasitics, "epsilon_power_test"); //  0.7 );
-		set_unit_value_ssc_double( parasitics, "system_availability"); //  SYS_AVAIL );
-		set_unit_value_ssc_double( parasitics, "pump_speed"); //  PUMPSPEED );
-		set_unit_value_ssc_double( parasitics, "fan_speed1"); //  FAN_SPD1 );
-		set_unit_value_ssc_double( parasitics, "fan_speed2"); //  FAN_SPD2 );
-		set_unit_value_ssc_double( parasitics, "fan_speed3"); //  FAN_SPD3 );
-		set_unit_value_ssc_double( parasitics, "T_cool_speed2"); //  T_cool_speed2 );
-		set_unit_value_ssc_double( parasitics, "T_cool_speed3"); //  T_cool_speed3 );
-		set_unit_value_ssc_double( parasitics, "epsilon_cooler_test"); //  EPS_COOL );
-		set_unit_value_ssc_double( parasitics, "epsilon_radiator_test"); //  EPS_RADTR );
-		set_unit_value_ssc_double( parasitics, "cooling_fluid"); //  coolfluid );
-		set_unit_value_ssc_double( parasitics, "manufacturer"); //  5 );
-		set_unit_value_ssc_double( parasitics, "P_controls"); //  P_controls );
-		set_unit_value_ssc_double( parasitics, "test_P_pump"); //  TEST_P_pump );
-		set_unit_value_ssc_double( parasitics, "test_pump_speed"); //  TEST_pump_speed );
-		set_unit_value_ssc_double( parasitics, "test_cooling_fluid"); //  TEST_coolfluid );
-		set_unit_value_ssc_double( parasitics, "test_T_fluid"); //  TEST_T_fluid );
-		set_unit_value_ssc_double( parasitics, "test_V_dot_fluid"); //  TEST_V_dot_Fluid );
-		set_unit_value_ssc_double( parasitics, "test_P_fan"); //  TEST_P_fan );
-		set_unit_value_ssc_double( parasitics, "test_fan_speed"); //  TEST_fan_speed );
-		set_unit_value_ssc_double( parasitics, "test_fan_rho_air"); //  TEST_fan_rho_air );
-		set_unit_value_ssc_double( parasitics, "test_fan_cfm"); //  TEST_fan_CFM );
-		set_unit_value_ssc_double( parasitics, "b_radiator"); //  b_radiator );
-		set_unit_value_ssc_double( parasitics, "b_cooler"); //  b_cooler );
+		set_unit_value_ssc_double( type298_dishparasitics, "cooling_tower_on"); //  0 );
+		set_unit_value_ssc_double( type298_dishparasitics, "tower_mode"); //  1 );
+		set_unit_value_ssc_double( type298_dishparasitics, "d_pipe_tower"); //  0.4 );
+		set_unit_value_ssc_double( type298_dishparasitics, "tower_m_dot_water"); //  134000 );
+		set_unit_value_ssc_double( type298_dishparasitics, "tower_m_dot_water_test"); //  134000 );
+		set_unit_value_ssc_double( type298_dishparasitics, "tower_pipe_material"); //  1 );
+		set_unit_value_ssc_double( type298_dishparasitics, "eta_tower_pump"); //  0.6 );
+		set_unit_value_ssc_double( type298_dishparasitics, "fan_control_signal"); //  1 );
+		set_unit_value_ssc_double( type298_dishparasitics, "epsilon_power_test"); //  0.7 );
+		set_unit_value_ssc_double( type298_dishparasitics, "system_availability"); //  SYS_AVAIL );
+		set_unit_value_ssc_double( type298_dishparasitics, "pump_speed"); //  PUMPSPEED );
+		set_unit_value_ssc_double( type298_dishparasitics, "fan_speed1"); //  FAN_SPD1 );
+		set_unit_value_ssc_double( type298_dishparasitics, "fan_speed2"); //  FAN_SPD2 );
+		set_unit_value_ssc_double( type298_dishparasitics, "fan_speed3"); //  FAN_SPD3 );
+		set_unit_value_ssc_double( type298_dishparasitics, "T_cool_speed2"); //  T_cool_speed2 );
+		set_unit_value_ssc_double( type298_dishparasitics, "T_cool_speed3"); //  T_cool_speed3 );
+		set_unit_value_ssc_double( type298_dishparasitics, "epsilon_cooler_test"); //  EPS_COOL );
+		set_unit_value_ssc_double( type298_dishparasitics, "epsilon_radiator_test"); //  EPS_RADTR );
+		set_unit_value_ssc_double( type298_dishparasitics, "cooling_fluid"); //  coolfluid );
+		set_unit_value_ssc_double( type298_dishparasitics, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type298_dishparasitics, "P_controls"); //  P_controls );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_P_pump"); //  TEST_P_pump );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_pump_speed"); //  TEST_pump_speed );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_cooling_fluid"); //  TEST_coolfluid );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_T_fluid"); //  TEST_T_fluid );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_V_dot_fluid"); //  TEST_V_dot_Fluid );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_P_fan"); //  TEST_P_fan );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_fan_speed"); //  TEST_fan_speed );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_fan_rho_air"); //  TEST_fan_rho_air );
+		set_unit_value_ssc_double( type298_dishparasitics, "test_fan_cfm"); //  TEST_fan_CFM );
+		set_unit_value_ssc_double( type298_dishparasitics, "b_radiator"); //  b_radiator );
+		set_unit_value_ssc_double( type298_dishparasitics, "b_cooler"); //  b_cooler );
 		// initial values
-		set_unit_value_ssc_double( parasitics, "I_cut_in"); //  i_cut_in );
-		set_unit_value_ssc_double( parasitics, "Tower_water_outlet_temp"); //  0.0 );
-		set_unit_value_ssc_double( parasitics, "ns_dish_separation"); //  NS_dish_sep );
-		set_unit_value_ssc_double( parasitics, "ew_dish_separation"); //  NS_dish_sep );
-		set_unit_value_ssc_double( parasitics, "P_tower_fan"); //  0.0 );
+		set_unit_value_ssc_double( type298_dishparasitics, "I_cut_in"); //  i_cut_in );
+		set_unit_value_ssc_double( type298_dishparasitics, "Tower_water_outlet_temp"); //  0.0 );
+		set_unit_value_ssc_double( type298_dishparasitics, "ns_dish_separation"); //  NS_dish_sep );
+		set_unit_value_ssc_double( type298_dishparasitics, "ew_dish_separation"); //  NS_dish_sep );
+		set_unit_value_ssc_double( type298_dishparasitics, "P_tower_fan"); //  0.0 );
 
 		// Connect Parasitics Inputs
-		bConnected &= connect( engine, "P_out_SE", parasitics, "gross_power" );
-		bConnected &= connect( weather, "tdry", parasitics, "T_amb" );
-		bConnected &= connect( collector, "Number_of_collectors", parasitics, "N_cols" );
-		bConnected &= connect( weather, "beam", parasitics, "DNI" );
-		bConnected &= connect( engine, "T_heater_head_low", parasitics, "T_heater_head_low" );
-		bConnected &= connect( engine, "V_displaced", parasitics, "V_swept" );
-		bConnected &= connect( engine, "frequency", parasitics, "frequency" );
-		bConnected &= connect( engine, "engine_pressure", parasitics, "engine_pressure" );
-		bConnected &= connect( engine, "P_SE_losses", parasitics, "Q_reject" );
-		bConnected &= connect( weather, "pres", parasitics, "P_amb_Pa" );
-		bConnected &= connect( collector, "Power_in_collector", parasitics, "power_in_collector" );
+		bConnected &= connect( type297_dishengine, "P_out_SE", type298_dishparasitics, "gross_power" );
+		bConnected &= connect( weather, "tdry", type298_dishparasitics, "T_amb" );
+		bConnected &= connect( type295_collector, "Number_of_collectors", type298_dishparasitics, "N_cols" );
+		bConnected &= connect( weather, "beam", type298_dishparasitics, "DNI" );
+		bConnected &= connect( type297_dishengine, "T_heater_head_low", type298_dishparasitics, "T_heater_head_low" );
+		bConnected &= connect( type297_dishengine, "V_displaced", type298_dishparasitics, "V_swept" );
+		bConnected &= connect( type297_dishengine, "frequency", type298_dishparasitics, "frequency" );
+		bConnected &= connect( type297_dishengine, "engine_pressure", type298_dishparasitics, "engine_pressure" );
+		bConnected &= connect( type297_dishengine, "P_SE_losses", type298_dishparasitics, "Q_reject" );
+		bConnected &= connect( weather, "pres", type298_dishparasitics, "P_amb_Pa" );
+		bConnected &= connect( type295_collector, "Power_in_collector", type298_dishparasitics, "power_in_collector" );
 
 		// Example for changing an input variable name in the SSC interface
 		// set_unit_value( u3, "m_dot_htf", as_double("m_dot_htf_init") );

@@ -1,3 +1,4 @@
+// Integrated Solar Combined Cycle
 #include "core.h"
 #include "tckernel.h"
 
@@ -114,7 +115,7 @@ public:
 		int iscc_pb = add_unit("sam_iscc_powerblock");
 		int iscc_parasitics = add_unit("sam_iscc_parasitics");
 
-		int blah = as_integer("n_zen");
+		//int blah = as_integer("n_zen");
 
 		//Set weatherreader parameters
 		set_unit_value_ssc_string( weather, "file_name" );

@@ -276,197 +276,197 @@ public:
 		// Add tou translator
 		int	tou = add_unit("tou_translator", "Time of Use Translator");
 		//Add the solar field collector unit
-		int solarfield = add_unit("sam_mw_lf_type261_steam", "type 261 solarfield");
+		int type261_solarfield = add_unit("sam_mw_lf_type261_steam", "type 261 solarfield");
 		//Add direct powerblock unit
-		int powerblock = add_unit("sam_mw_type234", "type 234 powerblock");
+		int type234_powerblock = add_unit("sam_mw_type234", "type 234 powerblock");
 		//Add unit to that summarizes energy output
-		int E_net_calcs = add_unit("sam_mw_lf_type261_Wnet","type 261 enet calculator");
+		int type261_summarizer = add_unit("sam_mw_lf_type261_Wnet","type 261 enet calculator");
 
 		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
 		set_unit_value_ssc_matrix(tou, "weekend_schedule");
 
 		// Now set solar field collector unit parameters
-		set_unit_value_ssc_double( solarfield, "tes_hours"); // TSHOURS );
-		set_unit_value_ssc_double( solarfield, "q_max_aux"); // q_max_aux );
-		set_unit_value_ssc_double( solarfield, "LHV_eff"); // LHV_eff );
-		set_unit_value_ssc_double( solarfield, "T_set_aux"); // T_set_aux );
-		set_unit_value_ssc_double( solarfield, "T_field_in_des"); // T_field_in_des );
-		set_unit_value_ssc_double( solarfield, "T_field_out_des"); // T_field_out_des );
-		set_unit_value_ssc_double( solarfield, "x_b_des"); // x_b_des );
-		set_unit_value_ssc_double( solarfield, "P_turb_des"); // P_turb_des );
-		set_unit_value_ssc_double( solarfield, "fP_hdr_c"); // fP_hdr_c );
-		set_unit_value_ssc_double( solarfield, "fP_sf_boil"); // fP_sf_boil );
-		set_unit_value_ssc_double( solarfield, "fP_boil_to_sh"); // fP_boil_to_SH );
-		set_unit_value_ssc_double( solarfield, "fP_sf_sh"); // fP_sf_sh );
-		set_unit_value_ssc_double( solarfield, "fP_hdr_h"); // fP_hdr_h );
-		set_unit_value_ssc_double( solarfield, "q_pb_des"); // Q_ref ); // = P_ref/eta_ref;
-		set_unit_value_ssc_double( solarfield, "W_pb_des"); // W_pb_des );
-		set_unit_value_ssc_double( solarfield, "cycle_max_fraction"); // cycle_max_fraction );
-		set_unit_value_ssc_double( solarfield, "cycle_cutoff_frac"); // cycle_cutoff_frac );
-		set_unit_value_ssc_double( solarfield, "t_sby"); // t_sby );
-		set_unit_value_ssc_double( solarfield, "q_sby_frac"); // q_sby_frac );
-		set_unit_value_ssc_double( solarfield, "solarm"); // solarm );
-		set_unit_value_ssc_double( solarfield, "PB_pump_coef"); // PB_pump_coef );
-		set_unit_value_ssc_double( solarfield, "PB_fixed_par"); // PB_fixed_par );
-		set_unit_value_ssc_array( solarfield, "bop_array"); // [BOP_parVal, BOP_parPF, BOP_par0, BOP_par1, BOP_par2] );
-		set_unit_value_ssc_array( solarfield, "aux_array"); // [Aux_parVal, Aux_parPF, Aux_par0, Aux_par1, Aux_par2] );
-		set_unit_value_ssc_double( solarfield, "T_startup"); // T_startup );
-		set_unit_value_ssc_double( solarfield, "fossil_mode"); // fossil_mode );
-		set_unit_value_ssc_double( solarfield, "I_bn_des"); // I_bn_des );
-		set_unit_value_ssc_double( solarfield, "is_sh"); // is_sh );
-		set_unit_value_ssc_double( solarfield, "is_oncethru"); // is_oncethru );
-		set_unit_value_ssc_double( solarfield, "is_multgeom"); // is_multgeom );
-		set_unit_value_ssc_double( solarfield, "nModBoil"); // nModBoil );
-		set_unit_value_ssc_double( solarfield, "nModSH"); // nModSH );
-		set_unit_value_ssc_double( solarfield, "nLoops"); // nLoops );
-		set_unit_value_ssc_double( solarfield, "eta_pump"); // eta_pump );
-		set_unit_value_ssc_double( solarfield, "latitude"); // latitude );
-		set_unit_value_ssc_double( solarfield, "theta_stow"); // theta_stow );
-		set_unit_value_ssc_double( solarfield, "theta_dep"); // theta_dep );
-		set_unit_value_ssc_double( solarfield, "m_dot_min"); // m_dot_min );
-		set_unit_value_ssc_double( solarfield, "T_field_ini"); // T_field_ini );
-		set_unit_value_ssc_double( solarfield, "T_fp"); // T_fp );
-		set_unit_value_ssc_double( solarfield, "Pipe_hl_coef"); // Pipe_hl_coef );
-		set_unit_value_ssc_double( solarfield, "SCA_drives_elec"); // SCA_drives_elec );
-		set_unit_value_ssc_double( solarfield, "ColAz"); // ColAz );
-		set_unit_value_ssc_double( solarfield, "e_startup"); // e_startup );
-		set_unit_value_ssc_double( solarfield, "T_amb_des_sf"); // T_amb_des_sf );
-		set_unit_value_ssc_double( solarfield, "V_wind_max"); // V_wind_max );
-		set_unit_value_ssc_array( solarfield, "ffrac"); // [FFRAC_1,FFRAC_2,FFRAC_3,FFRAC_4,FFRAC_5,FFRAC_6,FFRAC_7,FFRAC_8,FFRAC_9] );
+		set_unit_value_ssc_double( type261_solarfield, "tes_hours"); // TSHOURS );
+		set_unit_value_ssc_double( type261_solarfield, "q_max_aux"); // q_max_aux );
+		set_unit_value_ssc_double( type261_solarfield, "LHV_eff"); // LHV_eff );
+		set_unit_value_ssc_double( type261_solarfield, "T_set_aux"); // T_set_aux );
+		set_unit_value_ssc_double( type261_solarfield, "T_field_in_des"); // T_field_in_des );
+		set_unit_value_ssc_double( type261_solarfield, "T_field_out_des"); // T_field_out_des );
+		set_unit_value_ssc_double( type261_solarfield, "x_b_des"); // x_b_des );
+		set_unit_value_ssc_double( type261_solarfield, "P_turb_des"); // P_turb_des );
+		set_unit_value_ssc_double( type261_solarfield, "fP_hdr_c"); // fP_hdr_c );
+		set_unit_value_ssc_double( type261_solarfield, "fP_sf_boil"); // fP_sf_boil );
+		set_unit_value_ssc_double( type261_solarfield, "fP_boil_to_sh"); // fP_boil_to_SH );
+		set_unit_value_ssc_double( type261_solarfield, "fP_sf_sh"); // fP_sf_sh );
+		set_unit_value_ssc_double( type261_solarfield, "fP_hdr_h"); // fP_hdr_h );
+		set_unit_value_ssc_double( type261_solarfield, "q_pb_des"); // Q_ref ); // = P_ref/eta_ref;
+		set_unit_value_ssc_double( type261_solarfield, "W_pb_des"); // W_pb_des );
+		set_unit_value_ssc_double( type261_solarfield, "cycle_max_fraction"); // cycle_max_fraction );
+		set_unit_value_ssc_double( type261_solarfield, "cycle_cutoff_frac"); // cycle_cutoff_frac );
+		set_unit_value_ssc_double( type261_solarfield, "t_sby"); // t_sby );
+		set_unit_value_ssc_double( type261_solarfield, "q_sby_frac"); // q_sby_frac );
+		set_unit_value_ssc_double( type261_solarfield, "solarm"); // solarm );
+		set_unit_value_ssc_double( type261_solarfield, "PB_pump_coef"); // PB_pump_coef );
+		set_unit_value_ssc_double( type261_solarfield, "PB_fixed_par"); // PB_fixed_par );
+		set_unit_value_ssc_array( type261_solarfield, "bop_array"); // [BOP_parVal, BOP_parPF, BOP_par0, BOP_par1, BOP_par2] );
+		set_unit_value_ssc_array( type261_solarfield, "aux_array"); // [Aux_parVal, Aux_parPF, Aux_par0, Aux_par1, Aux_par2] );
+		set_unit_value_ssc_double( type261_solarfield, "T_startup"); // T_startup );
+		set_unit_value_ssc_double( type261_solarfield, "fossil_mode"); // fossil_mode );
+		set_unit_value_ssc_double( type261_solarfield, "I_bn_des"); // I_bn_des );
+		set_unit_value_ssc_double( type261_solarfield, "is_sh"); // is_sh );
+		set_unit_value_ssc_double( type261_solarfield, "is_oncethru"); // is_oncethru );
+		set_unit_value_ssc_double( type261_solarfield, "is_multgeom"); // is_multgeom );
+		set_unit_value_ssc_double( type261_solarfield, "nModBoil"); // nModBoil );
+		set_unit_value_ssc_double( type261_solarfield, "nModSH"); // nModSH );
+		set_unit_value_ssc_double( type261_solarfield, "nLoops"); // nLoops );
+		set_unit_value_ssc_double( type261_solarfield, "eta_pump"); // eta_pump );
+		set_unit_value_ssc_double( type261_solarfield, "latitude"); // latitude );
+		set_unit_value_ssc_double( type261_solarfield, "theta_stow"); // theta_stow );
+		set_unit_value_ssc_double( type261_solarfield, "theta_dep"); // theta_dep );
+		set_unit_value_ssc_double( type261_solarfield, "m_dot_min"); // m_dot_min );
+		set_unit_value_ssc_double( type261_solarfield, "T_field_ini"); // T_field_ini );
+		set_unit_value_ssc_double( type261_solarfield, "T_fp"); // T_fp );
+		set_unit_value_ssc_double( type261_solarfield, "Pipe_hl_coef"); // Pipe_hl_coef );
+		set_unit_value_ssc_double( type261_solarfield, "SCA_drives_elec"); // SCA_drives_elec );
+		set_unit_value_ssc_double( type261_solarfield, "ColAz"); // ColAz );
+		set_unit_value_ssc_double( type261_solarfield, "e_startup"); // e_startup );
+		set_unit_value_ssc_double( type261_solarfield, "T_amb_des_sf"); // T_amb_des_sf );
+		set_unit_value_ssc_double( type261_solarfield, "V_wind_max"); // V_wind_max );
+		set_unit_value_ssc_array( type261_solarfield, "ffrac"); // [FFRAC_1,FFRAC_2,FFRAC_3,FFRAC_4,FFRAC_5,FFRAC_6,FFRAC_7,FFRAC_8,FFRAC_9] );
 		// Set all matrix parameters
-		set_unit_value_ssc_matrix(solarfield,"A_aperture"); //A_aper);
-		set_unit_value_ssc_matrix(solarfield,"L_col"); //L_col);
-		set_unit_value_ssc_matrix(solarfield,"OptCharType"); //OptCharType);
-		set_unit_value_ssc_matrix(solarfield,"IAM_T"); //IAM_T);
-		set_unit_value_ssc_matrix(solarfield,"IAM_L"); //IAM_L);
-		set_unit_value_ssc_matrix(solarfield,"TrackingError"); //TrackingError);
-		set_unit_value_ssc_matrix(solarfield,"GeomEffects"); //GeomEffects);
-		set_unit_value_ssc_matrix(solarfield,"rho_mirror_clean"); //rho_mirror_clean);
-		set_unit_value_ssc_matrix(solarfield,"dirt_mirror"); //dirt_mirror);
-		set_unit_value_ssc_matrix(solarfield,"error"); //error);
-		set_unit_value_ssc_matrix(solarfield,"HLCharType"); //HLCharType);
-		set_unit_value_ssc_matrix(solarfield,"HL_dT"); //HL_dT);
-		set_unit_value_ssc_matrix(solarfield,"HL_W"); //HL_W);
-		set_unit_value_ssc_matrix(solarfield,"D_2"); //D_2);
-		set_unit_value_ssc_matrix(solarfield,"D_3"); //D_3);
-		set_unit_value_ssc_matrix(solarfield,"D_4"); //D_4);
-		set_unit_value_ssc_matrix(solarfield,"D_5"); //D_5);
-		set_unit_value_ssc_matrix(solarfield,"D_p"); //D_p);
-		set_unit_value_ssc_matrix(solarfield,"Rough"); //Rough);
-		set_unit_value_ssc_matrix(solarfield,"Flow_type"); //Flow_type);
-		set_unit_value_ssc_matrix(solarfield,"AbsorberMaterial"); //AbsorberMaterial);
-		set_unit_value_ssc_matrix(solarfield,"HCE_FieldFrac"); //HCE_FieldFrac);
-		set_unit_value_ssc_matrix(solarfield,"alpha_abs"); //alpha_abs);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE1"); //b_eps_HCE1);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE2"); //b_eps_HCE2);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE3"); //b_eps_HCE3);
-		set_unit_value_ssc_matrix(solarfield,"b_eps_HCE4"); //b_eps_HCE4);
+		set_unit_value_ssc_matrix(type261_solarfield,"A_aperture"); //A_aper);
+		set_unit_value_ssc_matrix(type261_solarfield,"L_col"); //L_col);
+		set_unit_value_ssc_matrix(type261_solarfield,"OptCharType"); //OptCharType);
+		set_unit_value_ssc_matrix(type261_solarfield,"IAM_T"); //IAM_T);
+		set_unit_value_ssc_matrix(type261_solarfield,"IAM_L"); //IAM_L);
+		set_unit_value_ssc_matrix(type261_solarfield,"TrackingError"); //TrackingError);
+		set_unit_value_ssc_matrix(type261_solarfield,"GeomEffects"); //GeomEffects);
+		set_unit_value_ssc_matrix(type261_solarfield,"rho_mirror_clean"); //rho_mirror_clean);
+		set_unit_value_ssc_matrix(type261_solarfield,"dirt_mirror"); //dirt_mirror);
+		set_unit_value_ssc_matrix(type261_solarfield,"error"); //error);
+		set_unit_value_ssc_matrix(type261_solarfield,"HLCharType"); //HLCharType);
+		set_unit_value_ssc_matrix(type261_solarfield,"HL_dT"); //HL_dT);
+		set_unit_value_ssc_matrix(type261_solarfield,"HL_W"); //HL_W);
+		set_unit_value_ssc_matrix(type261_solarfield,"D_2"); //D_2);
+		set_unit_value_ssc_matrix(type261_solarfield,"D_3"); //D_3);
+		set_unit_value_ssc_matrix(type261_solarfield,"D_4"); //D_4);
+		set_unit_value_ssc_matrix(type261_solarfield,"D_5"); //D_5);
+		set_unit_value_ssc_matrix(type261_solarfield,"D_p"); //D_p);
+		set_unit_value_ssc_matrix(type261_solarfield,"Rough"); //Rough);
+		set_unit_value_ssc_matrix(type261_solarfield,"Flow_type"); //Flow_type);
+		set_unit_value_ssc_matrix(type261_solarfield,"AbsorberMaterial"); //AbsorberMaterial);
+		set_unit_value_ssc_matrix(type261_solarfield,"HCE_FieldFrac"); //HCE_FieldFrac);
+		set_unit_value_ssc_matrix(type261_solarfield,"alpha_abs"); //alpha_abs);
+		set_unit_value_ssc_matrix(type261_solarfield,"b_eps_HCE1"); //b_eps_HCE1);
+		set_unit_value_ssc_matrix(type261_solarfield,"b_eps_HCE2"); //b_eps_HCE2);
+		set_unit_value_ssc_matrix(type261_solarfield,"b_eps_HCE3"); //b_eps_HCE3);
+		set_unit_value_ssc_matrix(type261_solarfield,"b_eps_HCE4"); //b_eps_HCE4);
 		if( as_integer("is_multgeom") != 0 )
 		{
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE1"); //s_eps_HCE1);
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE2"); //s_eps_HCE2);
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE3"); //s_eps_HCE3);
-			set_unit_value_ssc_matrix(solarfield,"sh_eps_HCE4"); //s_eps_HCE4);
+			set_unit_value_ssc_matrix(type261_solarfield,"sh_eps_HCE1"); //s_eps_HCE1);
+			set_unit_value_ssc_matrix(type261_solarfield,"sh_eps_HCE2"); //s_eps_HCE2);
+			set_unit_value_ssc_matrix(type261_solarfield,"sh_eps_HCE3"); //s_eps_HCE3);
+			set_unit_value_ssc_matrix(type261_solarfield,"sh_eps_HCE4"); //s_eps_HCE4);
 		}
-		set_unit_value_ssc_matrix(solarfield,"alpha_env"); //alpha_env);
-		set_unit_value_ssc_matrix(solarfield,"EPSILON_4"); //EPSILON_4);
-		set_unit_value_ssc_matrix(solarfield,"Tau_envelope"); //Tau_envelope);
-		set_unit_value_ssc_matrix(solarfield,"GlazingIntactIn"); //GlazingIntactIn);
-		set_unit_value_ssc_matrix(solarfield,"AnnulusGas"); //AnnulusGas);
-		set_unit_value_ssc_matrix(solarfield,"P_a"); //P_a);
-		set_unit_value_ssc_matrix(solarfield,"Design_loss"); //Design_loss);
-		set_unit_value_ssc_matrix(solarfield,"Shadowing"); //Shadowing);
-		set_unit_value_ssc_matrix(solarfield,"Dirt_HCE"); //Dirt_HCE);
-		set_unit_value_ssc_matrix(solarfield, "b_OpticalTable"); // opt_data);
-		set_unit_value_ssc_matrix(solarfield, "sh_OpticalTable"); // opt_data);
+		set_unit_value_ssc_matrix(type261_solarfield,"alpha_env"); //alpha_env);
+		set_unit_value_ssc_matrix(type261_solarfield,"EPSILON_4"); //EPSILON_4);
+		set_unit_value_ssc_matrix(type261_solarfield,"Tau_envelope"); //Tau_envelope);
+		set_unit_value_ssc_matrix(type261_solarfield,"GlazingIntactIn"); //GlazingIntactIn);
+		set_unit_value_ssc_matrix(type261_solarfield,"AnnulusGas"); //AnnulusGas);
+		set_unit_value_ssc_matrix(type261_solarfield,"P_a"); //P_a);
+		set_unit_value_ssc_matrix(type261_solarfield,"Design_loss"); //Design_loss);
+		set_unit_value_ssc_matrix(type261_solarfield,"Shadowing"); //Shadowing);
+		set_unit_value_ssc_matrix(type261_solarfield,"Dirt_HCE"); //Dirt_HCE);
+		set_unit_value_ssc_matrix(type261_solarfield, "b_OpticalTable"); // opt_data);
+		set_unit_value_ssc_matrix(type261_solarfield, "sh_OpticalTable"); // opt_data);
 
 		// Type 261 (solar field collector) inputs
-		set_unit_value_ssc_double(solarfield, "dnifc"); // , 0.0);				//[W/m2] - not used
-		set_unit_value_ssc_double(solarfield, "I_bn"); // 0.0);			    //[W/m2] - initial value
-		set_unit_value_ssc_double(solarfield, "T_db"); // 15.0);			//[C] - initial value
-		set_unit_value_ssc_double(solarfield, "T_dp"); // 10.0);			//[C] - connect to dew point
-		set_unit_value_ssc_double(solarfield, "P_amb"); // 930.50);			//[mbar] - initial value
-		set_unit_value_ssc_double(solarfield, "V_wind"); // 0.0);			//[m/s] - initial value
-		set_unit_value_ssc_double(solarfield, "m_dot_htf_ref"); // 0.0);	//[kg/hr] - initial value
-		set_unit_value_ssc_double(solarfield, "m_pb_demand"); // 0.0);			//[kg/hr] - not used
-		set_unit_value_ssc_double(solarfield, "shift"); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "SolarAz", as_double("SolarAz_init")); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "SolarZen"); // 0.0);			//[deg] - initial value
-		set_unit_value_ssc_double(solarfield, "T_pb_out", as_double("T_pb_out_init")); // 290.0);			//[C] - initial value
-		//set_unit_value_ssc_double(solarfield, "TOUPeriod"); // 4);				//[-] - don't have TOU reader yet - all are same in default LF model though
+		set_unit_value_ssc_double(type261_solarfield, "dnifc"); // , 0.0);				//[W/m2] - not used
+		set_unit_value_ssc_double(type261_solarfield, "I_bn"); // 0.0);			    //[W/m2] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "T_db"); // 15.0);			//[C] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "T_dp"); // 10.0);			//[C] - connect to dew point
+		set_unit_value_ssc_double(type261_solarfield, "P_amb"); // 930.50);			//[mbar] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "V_wind"); // 0.0);			//[m/s] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "m_dot_htf_ref"); // 0.0);	//[kg/hr] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "m_pb_demand"); // 0.0);			//[kg/hr] - not used
+		set_unit_value_ssc_double(type261_solarfield, "shift"); // 0.0);			//[deg] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "SolarAz", as_double("SolarAz_init")); // 0.0);			//[deg] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "SolarZen"); // 0.0);			//[deg] - initial value
+		set_unit_value_ssc_double(type261_solarfield, "T_pb_out", as_double("T_pb_out_init")); // 290.0);			//[C] - initial value
+		//set_unit_value_ssc_double(type261_solarfield, "TOUPeriod"); // 4);				//[-] - don't have TOU reader yet - all are same in default LF model though
 
 		// connect solar field
-		bool bConnected = connect(weather, "beam", solarfield, "I_bn");		//[W/m2] - connect to weather reader
-		bConnected &= connect(weather, "tdry", solarfield, "T_db");		//[C] - connect to weather reader
-		bConnected &= connect(weather, "tdew", solarfield, "T_dp");		//[C] - connect to weather reader
-		bConnected &= connect(weather, "pres", solarfield, "P_amb");		//[mbar] - connect to weather reader
-		bConnected &= connect(weather, "wspd", solarfield, "V_wind");		//[m/s] - connect to weather reader
-		bConnected &= connect(powerblock, "m_dot_ref", solarfield, "m_dot_htf_ref");	//[kg/hr] connect to powerblock
-		bConnected &= connect(weather, "shift", solarfield, "shift");		//[deg] - connect to weather reader
-		bConnected &= connect(weather, "solazi", solarfield, "SolarAz");	//[deg] - connect to weather reader
-		bConnected &= connect(weather, "solzen", solarfield, "SolarZen"); //[deg] - connect to weather reader
-		bConnected &= connect(powerblock, "T_cold", solarfield, "T_pb_out");	//[C] - connect to powerblock
-		bConnected &= connect(tou, "tou_value", solarfield, "TOUPeriod");
+		bool bConnected = connect(weather, "beam", type261_solarfield, "I_bn");		//[W/m2] - connect to weather reader
+		bConnected &= connect(weather, "tdry", type261_solarfield, "T_db");		//[C] - connect to weather reader
+		bConnected &= connect(weather, "tdew", type261_solarfield, "T_dp");		//[C] - connect to weather reader
+		bConnected &= connect(weather, "pres", type261_solarfield, "P_amb");		//[mbar] - connect to weather reader
+		bConnected &= connect(weather, "wspd", type261_solarfield, "V_wind");		//[m/s] - connect to weather reader
+		bConnected &= connect(type234_powerblock, "m_dot_ref", type261_solarfield, "m_dot_htf_ref");	//[kg/hr] connect to powerblock
+		bConnected &= connect(weather, "shift", type261_solarfield, "shift");		//[deg] - connect to weather reader
+		bConnected &= connect(weather, "solazi", type261_solarfield, "SolarAz");	//[deg] - connect to weather reader
+		bConnected &= connect(weather, "solzen", type261_solarfield, "SolarZen"); //[deg] - connect to weather reader
+		bConnected &= connect(type234_powerblock, "T_cold", type261_solarfield, "T_pb_out");	//[C] - connect to powerblock
+		bConnected &= connect(tou, "tou_value", type261_solarfield, "TOUPeriod");
 
 
 		// Set Parameters for Direct Powerblock (type 234)
-		set_unit_value_ssc_double(powerblock, "P_ref"); // P_ref);
-		set_unit_value_ssc_double(powerblock, "eta_ref"); // eta_ref);
-		set_unit_value_ssc_double(powerblock, "T_hot_ref"); // T_hot_ref);
-		set_unit_value_ssc_double(powerblock, "T_cold_ref"); // T_cold_ref);
-		set_unit_value_ssc_double(powerblock, "dT_cw_ref"); // dT_cw_ref);
-		set_unit_value_ssc_double(powerblock, "T_amb_des"); // T_amb_des);
-		set_unit_value_ssc_double(powerblock, "q_sby_frac"); // q_sby_frac);
-		set_unit_value_ssc_double(powerblock, "P_boil_des"); // P_boil_ref);
-		set_unit_value_ssc_double(powerblock, "is_rh"); // is_rh);
-		set_unit_value_ssc_double(powerblock, "P_rh_ref"); // P_rh_ref);
-		set_unit_value_ssc_double(powerblock, "T_rh_hot_ref"); // T_rh_hot_ref);
-		set_unit_value_ssc_double(powerblock, "rh_frac_ref"); // rh_frac_ref);
-		set_unit_value_ssc_double(powerblock, "CT"); // CT);
-		set_unit_value_ssc_double(powerblock, "startup_time"); // startup_time);
-		set_unit_value_ssc_double(powerblock, "startup_frac"); // startup_frac);
-		set_unit_value_ssc_double(powerblock, "tech_type"); // tech_type);
-		set_unit_value_ssc_double(powerblock, "T_approach"); // T_approach);
-		set_unit_value_ssc_double(powerblock, "T_ITD_des"); // T_ITD_des);
-		set_unit_value_ssc_double(powerblock, "P_cond_ratio"); // P_cond_ratio);
-		set_unit_value_ssc_double(powerblock, "pb_bd_frac"); // pb_bd_frac);
-		set_unit_value_ssc_double(powerblock, "P_cond_min"); // P_cond_min);
-		set_unit_value_ssc_double(powerblock, "n_pl_inc"); // n_pl_inc);
-		set_unit_value_ssc_array(powerblock, "F_wc"); // [F_wc_1, F_wc_2, F_wc_3, F_wc_4, F_wc_5, F_wc_6, F_wc_7, F_wc_8, F_wc_9]);
+		set_unit_value_ssc_double(type234_powerblock, "P_ref"); // P_ref);
+		set_unit_value_ssc_double(type234_powerblock, "eta_ref"); // eta_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_hot_ref"); // T_hot_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_cold_ref"); // T_cold_ref);
+		set_unit_value_ssc_double(type234_powerblock, "dT_cw_ref"); // dT_cw_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_amb_des"); // T_amb_des);
+		set_unit_value_ssc_double(type234_powerblock, "q_sby_frac"); // q_sby_frac);
+		set_unit_value_ssc_double(type234_powerblock, "P_boil_des"); // P_boil_ref);
+		set_unit_value_ssc_double(type234_powerblock, "is_rh"); // is_rh);
+		set_unit_value_ssc_double(type234_powerblock, "P_rh_ref"); // P_rh_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); // T_rh_hot_ref);
+		set_unit_value_ssc_double(type234_powerblock, "rh_frac_ref"); // rh_frac_ref);
+		set_unit_value_ssc_double(type234_powerblock, "CT"); // CT);
+		set_unit_value_ssc_double(type234_powerblock, "startup_time"); // startup_time);
+		set_unit_value_ssc_double(type234_powerblock, "startup_frac"); // startup_frac);
+		set_unit_value_ssc_double(type234_powerblock, "tech_type"); // tech_type);
+		set_unit_value_ssc_double(type234_powerblock, "T_approach"); // T_approach);
+		set_unit_value_ssc_double(type234_powerblock, "T_ITD_des"); // T_ITD_des);
+		set_unit_value_ssc_double(type234_powerblock, "P_cond_ratio"); // P_cond_ratio);
+		set_unit_value_ssc_double(type234_powerblock, "pb_bd_frac"); // pb_bd_frac);
+		set_unit_value_ssc_double(type234_powerblock, "P_cond_min"); // P_cond_min);
+		set_unit_value_ssc_double(type234_powerblock, "n_pl_inc"); // n_pl_inc);
+		set_unit_value_ssc_array(type234_powerblock, "F_wc"); // [F_wc_1, F_wc_2, F_wc_3, F_wc_4, F_wc_5, F_wc_6, F_wc_7, F_wc_8, F_wc_9]);
 
 
 		// Set Inputs for Powerblock (type 234)
-		set_unit_value_ssc_double(powerblock, "mode"); // 1);							//[-] initial value
-		set_unit_value_ssc_double(powerblock, "T_hot"); // T_hot_ref);					//[C] initial value
-		set_unit_value_ssc_double(powerblock, "m_dot_st"); // 0);						//[kg/hr] initial value
-		set_unit_value_ssc_double(powerblock, "T_wb"); // 12.8);						//[C] Initial value
-		set_unit_value_ssc_double(powerblock, "demand_var"); // P_ref);					//[kg/hr]
-		set_unit_value_ssc_double(powerblock, "standby_control"); // 0);
-		set_unit_value_ssc_double(powerblock, "T_db", as_double("T_db_pwb") ); // 12.8);
-		set_unit_value_ssc_double(powerblock, "P_amb", as_double("P_amb_pwb") ); // 960);
-		//set_unit_value_ssc_double(powerblock, "TOU"); // 4);								//[-] No TOU reader yet
-		set_unit_value_ssc_double(powerblock, "relhum"); // 0.25);						//[-] Initial value
-		set_unit_value_ssc_double(powerblock, "f_recSU"); // 1);							//[-] Set to 1 for LF
-		set_unit_value_ssc_double(powerblock, "dp_sh"); // 5.0);
-		set_unit_value_ssc_double(powerblock,"dp_rh"); // 0.0);								//[Pa] no rh in LF
+		set_unit_value_ssc_double(type234_powerblock, "mode"); // 1);							//[-] initial value
+		set_unit_value_ssc_double(type234_powerblock, "T_hot"); // T_hot_ref);					//[C] initial value
+		set_unit_value_ssc_double(type234_powerblock, "m_dot_st"); // 0);						//[kg/hr] initial value
+		set_unit_value_ssc_double(type234_powerblock, "T_wb"); // 12.8);						//[C] Initial value
+		set_unit_value_ssc_double(type234_powerblock, "demand_var"); // P_ref);					//[kg/hr]
+		set_unit_value_ssc_double(type234_powerblock, "standby_control"); // 0);
+		set_unit_value_ssc_double(type234_powerblock, "T_db", as_double("T_db_pwb") ); // 12.8);
+		set_unit_value_ssc_double(type234_powerblock, "P_amb", as_double("P_amb_pwb") ); // 960);
+		//set_unit_value_ssc_double(type234_powerblock, "TOU"); // 4);								//[-] No TOU reader yet
+		set_unit_value_ssc_double(type234_powerblock, "relhum"); // 0.25);						//[-] Initial value
+		set_unit_value_ssc_double(type234_powerblock, "f_recSU"); // 1);							//[-] Set to 1 for LF
+		set_unit_value_ssc_double(type234_powerblock, "dp_sh"); // 5.0);
+		set_unit_value_ssc_double(type234_powerblock,"dp_rh"); // 0.0);								//[Pa] no rh in LF
 
 		// connect the powerblock
-		bConnected &= connect(solarfield, "cycle_pl_control", powerblock, "mode");	//[-] connect to LF solarfield
-		bConnected &= connect(solarfield, "T_field_out", powerblock, "T_hot");		//[C] connect to LF solarfield
-		bConnected &= connect(solarfield, "m_dot_to_pb", powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
-		bConnected &= connect(weather, "twet", powerblock, "T_wb");					//[C] connect to weather reader
-		bConnected &= connect(solarfield, "m_dot_to_pb", powerblock, "demand_var");	//[kg/hr] 
-		bConnected &= connect(solarfield, "standby_control", powerblock, "standby_control");
-		bConnected &= connect(weather, "tdry", powerblock, "T_db");
-		bConnected &= connect(weather, "pres", powerblock, "P_amb");
-		bConnected &= connect(weather, "rhum", powerblock, "relhum");					//[-] connect to weather reader
-		bConnected &= connect(solarfield, "dP_sf_sh", powerblock, "dp_sh");			//[Pa] Pressure drop in sh
-		bConnected &= connect(tou, "tou_value", powerblock, "TOU");
+		bConnected &= connect(type261_solarfield, "cycle_pl_control", type234_powerblock, "mode");	//[-] connect to LF solarfield
+		bConnected &= connect(type261_solarfield, "T_field_out", type234_powerblock, "T_hot");		//[C] connect to LF solarfield
+		bConnected &= connect(type261_solarfield, "m_dot_to_pb", type234_powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
+		bConnected &= connect(weather, "twet", type234_powerblock, "T_wb");					//[C] connect to weather reader
+		bConnected &= connect(type261_solarfield, "m_dot_to_pb", type234_powerblock, "demand_var");	//[kg/hr] 
+		bConnected &= connect(type261_solarfield, "standby_control", type234_powerblock, "standby_control");
+		bConnected &= connect(weather, "tdry", type234_powerblock, "T_db");
+		bConnected &= connect(weather, "pres", type234_powerblock, "P_amb");
+		bConnected &= connect(weather, "rhum", type234_powerblock, "relhum");					//[-] connect to weather reader
+		bConnected &= connect(type261_solarfield, "dP_sf_sh", type234_powerblock, "dp_sh");			//[Pa] Pressure drop in sh
+		bConnected &= connect(tou, "tou_value", type234_powerblock, "TOU");
 
 		// connect the net energy output calculator
-		bConnected &= connect(powerblock, "P_cycle", E_net_calcs, "W_cycle_gross");
-		bConnected &= connect(solarfield, "W_dot_par_tot", E_net_calcs, "W_par_sf_tot");
-		bConnected &= connect(powerblock, "W_cool_par", E_net_calcs, "W_par_cooling");
+		bConnected &= connect(type234_powerblock, "P_cycle", type261_summarizer, "W_cycle_gross");
+		bConnected &= connect(type261_solarfield, "W_dot_par_tot", type261_summarizer, "W_par_sf_tot");
+		bConnected &= connect(type234_powerblock, "W_cool_par", type261_summarizer, "W_par_cooling");
 
 
 
