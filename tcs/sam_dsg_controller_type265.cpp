@@ -2235,7 +2235,7 @@ public:
 		{
 				// Powerblock specific
 			value(O_T_fw, (T_fw - 273.15));			//[C] Feedwater Outlet Temperature
-			value(O_P_b_in, P_b_in / 1.E3);			//[kPa] Boiler Inlet Pressure
+			value(O_P_b_in, P_b_in / 1.E3);			//[kPa] Boiler Inlet Pressure [TFF, Jan 22 2014: I think this may already be in kPa and dividing by 1000 puts it in MPa)
 			value(O_f_mdot_rh, f_mdotrh);			//[-] Reheater mass flow rate fraction
 			value(O_P_rh_in, m_P_rh_in);			//[kPa] Reheater inlet pressure
 			value(O_T_rh_in, (T_rh_in - 273.15));	//[C] Reheater inlet temperature
