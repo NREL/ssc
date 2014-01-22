@@ -2132,10 +2132,10 @@ public:
 		
 		double sh_q_conv, sh_q_rad, sh_q_abs, sh_T_surf_max, sh_v_exit, sh_q_in;
 		if( m_success )
-		{ 
+		{  
 			value( O_T_b_in, (T_in - 273.15) );		//[C] Boiler Inlet Temperature
 			value( O_T_boil, (T_boil - 273.15) );	//[C] Boiler Temperature (= recirc temp, steam drum temp)			
-			value( O_P_b_out, P_b_out / 1.E3 );		//[kPa] Boiler Outlet Pressure
+			value( O_P_b_out, P_b_out );			//[kPa] Boiler Outlet Pressure
 			value( O_P_drop_b, dp_b );				//[Pa] Pressure drop through boiler
 			value( O_m_dot_b, b_m_dot*3600.0 );		//[kg/hr] Mass flow rate through boiler
 			value( O_eta_b, eta_b );				//[-] Boiler thermal efficiency
@@ -2145,7 +2145,7 @@ public:
 			value( O_T_max_b_surf, (b_T_max - 273.15) );		//[C] Maximum boiler tube surface temperature
 				// Superheater
 			value( O_m_dot_sh, m_dot_sh*3600.0 );	//[kg/hr] Mass flow rate through superheater
-			value( O_P_sh_out, P_sh_out/1.E3 );		//[kPa] Outlet pressure of superheater
+			value( O_P_sh_out, P_sh_out );			//[kPa] Outlet pressure of superheater
 			value( O_dP_sh, dp_sh );				//[Pa] Superheater pressure drop
 			value( O_eta_sh, eta_sh );				//[-] Thermal efficiency of superheater			
 			superheater.Get_Other_Superheater_Outputs( sh_q_conv, sh_q_rad, sh_q_abs, sh_T_surf_max, sh_v_exit, sh_q_in );
@@ -2156,7 +2156,7 @@ public:
 			value( O_v_sh_max, sh_v_exit );					//[m/s] Superheater exit velocity
 
 				// Reheater
-			value(O_P_rh_out, P_rh_out / 1.E3);		//[kPa] Reheater outlet pressure			
+			value(O_P_rh_out, P_rh_out);		//[kPa] Reheater outlet pressure			
 			value(O_dP_rh, dp_rh);				//[Pa] Reheater pressure drop
 			value(O_eta_rh, eta_rh);			//[-] Reheater thermal efficiency
 			double rh_q_conv, rh_q_rad, rh_q_abs, rh_T_surf, rh_v_exit, rh_q_in;
@@ -2235,7 +2235,7 @@ public:
 		{
 				// Powerblock specific
 			value(O_T_fw, (T_fw - 273.15));			//[C] Feedwater Outlet Temperature
-			value(O_P_b_in, P_b_in / 1.E3);			//[kPa] Boiler Inlet Pressure [TFF, Jan 22 2014: I think this may already be in kPa and dividing by 1000 puts it in MPa)
+			value(O_P_b_in, P_b_in);				//[kPa] Boiler Inlet Pressure
 			value(O_f_mdot_rh, f_mdotrh);			//[-] Reheater mass flow rate fraction
 			value(O_P_rh_in, m_P_rh_in);			//[kPa] Reheater inlet pressure
 			value(O_T_rh_in, (T_rh_in - 273.15));	//[C] Reheater inlet temperature
