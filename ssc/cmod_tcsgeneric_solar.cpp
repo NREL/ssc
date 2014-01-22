@@ -1,3 +1,4 @@
+// Generic solar model
 #include "core.h"
 #include "tckernel.h"
 
@@ -85,8 +86,8 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Wind velocity",                                                  "m/s",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hour_of_day",       "Hour of the day",                                                "hour",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "day_of_year",       "Day of the year",                                                "day",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",            "Solar elevation angle",                                          "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",            "Solar azimuth angle (-180..180, 0deg=South)",                    "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solalt",            "Solar elevation angle",                                          "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solaz",             "Solar azimuth angle (-180..180, 0deg=South)",                    "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "eta_opt_sf",        "Solar field optical efficiency",                                 "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_qdni",       "Solar field load-based thermal loss correction",                 "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_tamb",       "Solar field temp.-based thermal loss correction",                "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
@@ -140,17 +141,19 @@ public:
 	{
 		//if ( 0 >= load_library("typelib") ) throw exec_error( "tcsgeneric_solar", util::format("could not load the tcs type library.") );
 
-		bool debug_mode = false; //(__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
 		else weather = add_unit("weatherreader", "TCS weather reader");
+		// Add time-of-use reader
+		int	tou = add_unit("tou_translator", "Time of Use Translator");
 		//Add Physical Solar Field Model
-		int	gss = add_unit( "sam_mw_gen_type260", "Generic solar model" );
+		int	type260_genericsolar = add_unit( "sam_mw_gen_type260", "Generic solar model" );
 
 		if(debug_mode)
 		{
-			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcs/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out" );
+			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out" );
 			set_unit_value( weather, "i_hour", "TIME" );
 			set_unit_value( weather, "i_month", "month" );
 			set_unit_value( weather, "i_day", "day" );
@@ -182,72 +185,77 @@ public:
 			set_unit_value_ssc_double( weather, "azimuth" );       //, 0 );
 		}
 
+		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
+		set_unit_value_ssc_matrix(tou, "weekend_schedule");
+
 		//Set parameters
-        set_unit_value_ssc_double(gss, "latitude" ); //, 35);
-        set_unit_value_ssc_double(gss, "longitude" ); //, -117);
-		set_unit_value_ssc_matrix(gss, "OpticalTable" ); //, opt_data);
-        set_unit_value_ssc_double(gss, "timezone" ); //, -8);
-        set_unit_value_ssc_double(gss, "theta_stow" ); //, 170);
-        set_unit_value_ssc_double(gss, "theta_dep" ); //, 10);
-        set_unit_value_ssc_double(gss, "interp_arr" ); //, 1);
-        set_unit_value_ssc_double(gss, "rad_type" ); //, 1);
-        set_unit_value_ssc_double(gss, "solarm" ); //, solarm);
-        set_unit_value_ssc_double(gss, "T_sfdes" ); //, T_sfdes);
-        set_unit_value_ssc_double(gss, "irr_des" ); //, irr_des);
-        set_unit_value_ssc_double(gss, "eta_opt_soil" ); //, eta_opt_soil);
-        set_unit_value_ssc_double(gss, "eta_opt_gen" ); //, eta_opt_gen);
-        set_unit_value_ssc_double(gss, "f_sfhl_ref" ); //, f_sfhl_ref);
-        set_unit_value_ssc_array(gss, "sfhlQ_coefs" ); //, [1,-0.1,0,0]);
-        set_unit_value_ssc_array(gss, "sfhlT_coefs" ); //, [1,0.005,0,0]);
-        set_unit_value_ssc_array(gss, "sfhlV_coefs" ); //, [1,0.01,0,0]);
-        set_unit_value_ssc_double(gss, "qsf_des" ); //, q_sf);
-        set_unit_value_ssc_double(gss, "w_des" ); //, w_gr_des);
-        set_unit_value_ssc_double(gss, "eta_des" ); //, eta_cycle_des);
-        set_unit_value_ssc_double(gss, "f_wmax" ); //, 1.05);
-        set_unit_value_ssc_double(gss, "f_wmin" ); //, 0.25);
-        set_unit_value_ssc_double(gss, "f_startup" ); //, 0.2);
-        set_unit_value_ssc_double(gss, "eta_lhv" ); //, 0.9);
-        set_unit_value_ssc_array(gss, "etaQ_coefs" ); //, [0.9,0.1,0,0,0]);
-        set_unit_value_ssc_array(gss, "etaT_coefs" ); //, [1,-0.002,0,0,0]);
-        set_unit_value_ssc_double(gss, "T_pcdes" ); //, 21);
-        set_unit_value_ssc_double(gss, "PC_T_corr" ); //, 1);
-        set_unit_value_ssc_double(gss, "f_Wpar_fixed" ); //, f_Wpar_fixed);
-        set_unit_value_ssc_double(gss, "f_Wpar_prod" ); //, f_Wpar_prod);
-        set_unit_value_ssc_array(gss, "Wpar_prodQ_coefs" ); //, [1,0,0,0]);
-        set_unit_value_ssc_array(gss, "Wpar_prodT_coefs" ); //, [1,0,0,0]);
-        set_unit_value_ssc_double(gss, "hrs_tes" ); //, hrs_tes);
-        set_unit_value_ssc_double(gss, "f_charge" ); //, 0.98);
-        set_unit_value_ssc_double(gss, "f_disch" ); //, 0.98);
-        set_unit_value_ssc_double(gss, "f_etes_0" ); //, 0.1);
-        set_unit_value_ssc_double(gss, "f_teshl_ref" ); //, 0.35);
-        set_unit_value_ssc_array(gss, "teshlX_coefs" ); //, [1,0,0,0]);
-        set_unit_value_ssc_array(gss, "teshlT_coefs" ); //, [1,0,0,0]);
-        set_unit_value_ssc_double(gss, "ntod" ); //, 9);
-        set_unit_value_ssc_array(gss, "disws" ); //, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]);
-        set_unit_value_ssc_array(gss, "diswos" ); //, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]);
-        set_unit_value_ssc_array(gss, "qdisp" ); //, [1,1,1,1,1,1,1,1,1]);
-        set_unit_value_ssc_array(gss, "fdisp" ); //, [0,0,0,0,0,0,0,0,0]);
+        set_unit_value_ssc_double(type260_genericsolar, "latitude" ); //, 35);
+        set_unit_value_ssc_double(type260_genericsolar, "longitude" ); //, -117);
+		set_unit_value_ssc_matrix(type260_genericsolar, "OpticalTable" ); //, opt_data);
+        set_unit_value_ssc_double(type260_genericsolar, "timezone" ); //, -8);
+        set_unit_value_ssc_double(type260_genericsolar, "theta_stow" ); //, 170);
+        set_unit_value_ssc_double(type260_genericsolar, "theta_dep" ); //, 10);
+        set_unit_value_ssc_double(type260_genericsolar, "interp_arr" ); //, 1);
+        set_unit_value_ssc_double(type260_genericsolar, "rad_type" ); //, 1);
+        set_unit_value_ssc_double(type260_genericsolar, "solarm" ); //, solarm);
+        set_unit_value_ssc_double(type260_genericsolar, "T_sfdes" ); //, T_sfdes);
+        set_unit_value_ssc_double(type260_genericsolar, "irr_des" ); //, irr_des);
+        set_unit_value_ssc_double(type260_genericsolar, "eta_opt_soil" ); //, eta_opt_soil);
+        set_unit_value_ssc_double(type260_genericsolar, "eta_opt_gen" ); //, eta_opt_gen);
+        set_unit_value_ssc_double(type260_genericsolar, "f_sfhl_ref" ); //, f_sfhl_ref);
+        set_unit_value_ssc_array(type260_genericsolar, "sfhlQ_coefs" ); //, [1,-0.1,0,0]);
+        set_unit_value_ssc_array(type260_genericsolar, "sfhlT_coefs" ); //, [1,0.005,0,0]);
+        set_unit_value_ssc_array(type260_genericsolar, "sfhlV_coefs" ); //, [1,0.01,0,0]);
+        set_unit_value_ssc_double(type260_genericsolar, "qsf_des" ); //, q_sf);
+        set_unit_value_ssc_double(type260_genericsolar, "w_des" ); //, w_gr_des);
+        set_unit_value_ssc_double(type260_genericsolar, "eta_des" ); //, eta_cycle_des);
+        set_unit_value_ssc_double(type260_genericsolar, "f_wmax" ); //, 1.05);
+        set_unit_value_ssc_double(type260_genericsolar, "f_wmin" ); //, 0.25);
+        set_unit_value_ssc_double(type260_genericsolar, "f_startup" ); //, 0.2);
+        set_unit_value_ssc_double(type260_genericsolar, "eta_lhv" ); //, 0.9);
+        set_unit_value_ssc_array(type260_genericsolar, "etaQ_coefs" ); //, [0.9,0.1,0,0,0]);
+        set_unit_value_ssc_array(type260_genericsolar, "etaT_coefs" ); //, [1,-0.002,0,0,0]);
+        set_unit_value_ssc_double(type260_genericsolar, "T_pcdes" ); //, 21);
+        set_unit_value_ssc_double(type260_genericsolar, "PC_T_corr" ); //, 1);
+        set_unit_value_ssc_double(type260_genericsolar, "f_Wpar_fixed" ); //, f_Wpar_fixed);
+        set_unit_value_ssc_double(type260_genericsolar, "f_Wpar_prod" ); //, f_Wpar_prod);
+        set_unit_value_ssc_array(type260_genericsolar, "Wpar_prodQ_coefs" ); //, [1,0,0,0]);
+        set_unit_value_ssc_array(type260_genericsolar, "Wpar_prodT_coefs" ); //, [1,0,0,0]);
+        set_unit_value_ssc_double(type260_genericsolar, "hrs_tes" ); //, hrs_tes);
+        set_unit_value_ssc_double(type260_genericsolar, "f_charge" ); //, 0.98);
+        set_unit_value_ssc_double(type260_genericsolar, "f_disch" ); //, 0.98);
+        set_unit_value_ssc_double(type260_genericsolar, "f_etes_0" ); //, 0.1);
+        set_unit_value_ssc_double(type260_genericsolar, "f_teshl_ref" ); //, 0.35);
+        set_unit_value_ssc_array(type260_genericsolar, "teshlX_coefs" ); //, [1,0,0,0]);
+        set_unit_value_ssc_array(type260_genericsolar, "teshlT_coefs" ); //, [1,0,0,0]);
+        set_unit_value_ssc_double(type260_genericsolar, "ntod" ); //, 9);
+        set_unit_value_ssc_array(type260_genericsolar, "disws" ); //, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]);
+        set_unit_value_ssc_array(type260_genericsolar, "diswos" ); //, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]);
+        set_unit_value_ssc_array(type260_genericsolar, "qdisp" ); //, [1,1,1,1,1,1,1,1,1]);
+        set_unit_value_ssc_array(type260_genericsolar, "fdisp" ); //, [0,0,0,0,0,0,0,0,0]);
 
 
 		//Set the initial values
-        set_unit_value_ssc_double(gss, "ibn" ); //, 0.);	//Beam-normal (DNI) irradiation
-        set_unit_value_ssc_double(gss, "ibh" ); //, 0.);	//	Beam-horizontal irradiation
-        set_unit_value_ssc_double(gss, "itoth" ); //, 0.);	//	Total horizontal irradiation
-        set_unit_value_ssc_double(gss, "tdb" ); //, 15.);	//	Ambient dry-bulb temperature
-        set_unit_value_ssc_double(gss, "twb" ); //, 10.);	//	Ambient wet-bulb temperature
-        set_unit_value_ssc_double(gss, "vwind" ); //, 1.);	//	Wind velocity
+        set_unit_value_ssc_double(type260_genericsolar, "ibn" ); //, 0.);	//Beam-normal (DNI) irradiation
+        set_unit_value_ssc_double(type260_genericsolar, "ibh" ); //, 0.);	//	Beam-horizontal irradiation
+        set_unit_value_ssc_double(type260_genericsolar, "itoth" ); //, 0.);	//	Total horizontal irradiation
+        set_unit_value_ssc_double(type260_genericsolar, "tdb" ); //, 15.);	//	Ambient dry-bulb temperature
+        set_unit_value_ssc_double(type260_genericsolar, "twb" ); //, 10.);	//	Ambient wet-bulb temperature
+        set_unit_value_ssc_double(type260_genericsolar, "vwind" ); //, 1.);	//	Wind velocity
 
 		// Connect the units
-		bool bConnected = connect(weather, "beam", gss, "ibn");
-		bConnected &= connect(weather, "global", gss, "itoth");
-		bConnected &= connect(weather, "poa_beam", gss, "ibh");
-		bConnected &= connect(weather, "tdry", gss, "tdb");
-		bConnected &= connect(weather, "twet", gss, "twb");
-		bConnected &= connect(weather, "wspd", gss, "vwind");
+		bool bConnected = connect(weather, "beam", type260_genericsolar, "ibn");
+		bConnected &= connect(weather, "global", type260_genericsolar, "itoth");
+		bConnected &= connect(weather, "poa_beam", type260_genericsolar, "ibh");
+		bConnected &= connect(weather, "tdry", type260_genericsolar, "tdb");
+		bConnected &= connect(weather, "twet", type260_genericsolar, "twb");
+		bConnected &= connect(weather, "wspd", type260_genericsolar, "vwind");
 		//location
-		bConnected &= connect(weather, "lat", gss, "latitude");
-		bConnected &= connect(weather, "lon", gss, "longitude");
-		bConnected &= connect(weather, "tz", gss, "timezone");
+		bConnected &= connect(weather, "lat", type260_genericsolar, "latitude");
+		bConnected &= connect(weather, "lon", type260_genericsolar, "longitude");
+		bConnected &= connect(weather, "tz", type260_genericsolar, "timezone");
+		bConnected &= connect(tou, "tou_value", type260_genericsolar, "TOUPeriod");
+
 
 		// Example for changing an input variable name in the SSC interface
 		// set_unit_value( u3, "m_dot_htf", as_double("m_dot_htf_init") );

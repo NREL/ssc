@@ -60,7 +60,7 @@ enum{
 	P_TESHLX_COEFS,
 	P_TESHLT_COEFS,
 	P_NTOD,
-	P_TOD_SCHED,
+	//P_TOD_SCHED,
 	P_DISWS,
 	P_DISWOS,
 	P_QDISP,
@@ -73,6 +73,7 @@ enum{
 	I_TDB,
 	I_TWB,
 	I_VWIND,
+	I_TOUPeriod,
 
 	O_IRR_USED,
 	O_HOUR_OF_DAY,
@@ -160,7 +161,7 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
 	{ TCS_PARAM,           TCS_ARRAY,      P_TESHLX_COEFS,           "teshlX_coefs",                                   "Charge-based thermal loss adjustment - constant coef.","1/MWhr-stored",             "",             "",      "1,0,0,0" },
 	{ TCS_PARAM,           TCS_ARRAY,      P_TESHLT_COEFS,           "teshlT_coefs",                                    "Temp.-based thermal loss adjustment - constant coef.",          "1/C",             "",             "",      "1,0,0,0" },
 	{ TCS_PARAM,          TCS_NUMBER,              P_NTOD,                   "ntod",                             "Number of time-of-dispatch periods in the dispatch schedule",         "none",             "",             "",            "9" },
-	{ TCS_PARAM,           TCS_ARRAY,         P_TOD_SCHED,              "tod_sched",                                                                    "Array of TOD indices",         "none",             "",             "",
+	/*{ TCS_PARAM,           TCS_ARRAY,         P_TOD_SCHED,              "tod_sched",                                                                    "Array of TOD indices",         "none",             "",             "",
         "5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,"
         "5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,"
         "3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,"
@@ -249,7 +250,7 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
         "5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,"
         "3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,"
         "4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4"
-		},
+		},*/
 	{ TCS_PARAM,           TCS_ARRAY,             P_DISWS,                  "disws",                                      "Time-of-dispatch control for with-solar conditions",         "none",             "",             "","0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1" },
 	{ TCS_PARAM,           TCS_ARRAY,            P_DISWOS,                 "diswos",                                   "Time-of-dispatch control for without-solar conditions",         "none",             "",             "","0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1" },
 	{ TCS_PARAM,           TCS_ARRAY,             P_QDISP,                  "qdisp",                                                        "TOD power output control factors",         "none",             "",             "","1,1,1,1,1,1,1,1,1" },
@@ -262,6 +263,7 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,               I_TDB,                    "tdb",                                                            "Ambient dry-bulb temperature",            "C",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,               I_TWB,                    "twb",                                                            "Ambient wet-bulb temperature",            "C",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,             I_VWIND,                  "vwind",                                                                           "Wind velocity",          "m/s",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,         I_TOUPeriod,              "TOUPeriod",                                                                  "The time-of-use period",             "",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,          O_IRR_USED,               "irr_used",                                                    "Irradiation value used in simulation",         "W/m2",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_HOUR_OF_DAY,            "hour_of_day",                                                                         "Hour of the day",         "hour",             "",             "",             "" },
@@ -367,7 +369,7 @@ private:
 	double* teshlT_coefs;		//Temp.-based thermal loss adjustment - constant coef.
 	int nval_teshlT_coefs;
 	int ntod;		//Number of time-of-dispatch periods in the dispatch schedule
-	double* tod_sched;		//Array of touperiod indices
+	//double* tod_sched;		//Array of touperiod indices
 	int nval_tod_sched;
 	double* disws;		//Time-of-dispatch control for with-solar conditions
 	int nval_disws;
@@ -502,7 +504,7 @@ public:
 		teshlT_coefs	= NULL;
 		nval_teshlT_coefs = -1;
 		ntod	= -1;
-		tod_sched	= NULL;
+		//tod_sched	= NULL;
 		nval_tod_sched = -1;
 		disws	= NULL;
 		nval_disws = -1;
@@ -617,7 +619,8 @@ public:
 		teshlX_coefs = value(P_TESHLX_COEFS, &nval_teshlX_coefs);		//Charge-based thermal loss adjustment - constant coef. [1/MWhr-stored]
 		teshlT_coefs = value(P_TESHLT_COEFS, &nval_teshlT_coefs);		//Temp.-based thermal loss adjustment - constant coef. [1/C]
 		ntod = (int)value(P_NTOD);		//Number of time-of-dispatch periods in the dispatch schedule [none]
-		tod_sched = value(P_TOD_SCHED, &nval_tod_sched);		//Array of touperiod indices [none]
+		//tod_sched = value(P_TOD_SCHED, &nval_tod_sched);		//Array of touperiod indices [none]
+
 		disws = value(P_DISWS, &nval_disws);		//Time-of-dispatch control for with-solar conditions [none]
 		diswos = value(P_DISWOS, &nval_diswos);		//Time-of-dispatch control for without-solar conditions [none]
 		qdisp = value(P_QDISP, &nval_qdisp);		//touperiod power output control factors [none]
@@ -756,7 +759,8 @@ public:
 		vwind = value(I_VWIND);		//Wind velocity [m/s]
 
 		double shift = longitude - timezone*15.*d2r;
-		int touperiod = CSP::TOU_Reader(tod_sched, time, nval_tod_sched);
+	  //int touperiod = CSP::TOU_Reader(tod_sched, time, nval_tod_sched); 
+		int touperiod = (int)value(I_TOUPeriod) - 1; // control value between 1 & 9, have to change to 0-8 for array index
 
 		//Unit conversions
 		tdb += 273.15;
@@ -1104,7 +1108,7 @@ public:
 			if (q_to_pb<qttmin){
 				q_dump_umin = q_to_pb;
 				q_to_pb = 0.;
-				pbmode = 0.;
+				pbmode = 0;
 			}
 			else{
 				q_dump_umin = 0;
