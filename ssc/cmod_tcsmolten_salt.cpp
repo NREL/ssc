@@ -1,3 +1,4 @@
+// Power Tower - molten salt, cavity and external receiver models
 #include "core.h"
 #include "tckernel.h"
 
@@ -257,7 +258,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                 "Wind speed",                                                        "m/s",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                 "Beam normal irradiance",                                            "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "twet",                 "Wet bulb temperature",                                              "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "solazi",               "Solar Azimuth",                                                     "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "phi",                  "Solar Azimuth",                                                     "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solzen",               "Solar Zenith",                                                      "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",		         "Parasitic tracking/startup power",						          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",	         "Total field efficiency",                                            "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
@@ -265,7 +266,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// These outputs come from either type 222 (external), or type 232(cavity), depending on which receiver type the user chose.
 	// Therefore, these outputs have to have the same name in both types, or TCS will throw an error when trying to read the results.
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Thermal efficiency of the receiver",                                "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pump",           "Estimated power for pumping the working fluid",                     "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_pump",         "Estimated power for pumping the working fluid",                     "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,       "?????????????",        "Thermal energy incident on receiver",                               "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_solar_total",        "Thermal energy absorbed by the receiver",                           "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_conv",         "Thermal convection losses from the receiver",                       "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
@@ -280,7 +281,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "f_bays",               "Fraction of operating heat rejection bays",                         "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cond",               "Condenser pressure",                                                "Pa",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_cold_fin",    "Cold tank HTF volume at end of timestep",                           "m3",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_storage_pump_tot",   "Total storage pump parasitic power",                                "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "htf_pump_power",       "Pumping power for storage, power block loops",                      "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",  "Total balance of plant parasitic power",                            "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",  "Total cooling tower parasitic power",                               "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",         "Total piping loss parasitic power",                                 "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
@@ -327,7 +328,7 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		bool debug_mode = true; (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
