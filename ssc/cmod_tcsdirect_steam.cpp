@@ -32,7 +32,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "field_control",       "Field defocus control",                                            "",             "",            "heliostat",      "*",                       "",                      "" },
 														       
 	// Direct steam controller (type 265) parameters	       
-    { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",         "Fossil model: 1=Normal, 2=Supplemental",                           "-",            "",            "dsg_controller", "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",         "Fossil model: 1=Normal, 2=Supplemental",                           "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",         "Heat rate into powerblock at design",                              "MW",           "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_aux_max",           "Maximum heat rate of auxiliary heater",                            "MW",           "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "lhv_eff",             "Aux Heater lower heating value efficiency",                        "-",            "",            "dsg_controller", "*",                       "",                      "" },
@@ -132,7 +132,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",            "Number of part-load increments for the heat rejection system",      "none",        "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                "Fraction indicating wet cooling use for hybrid system",             "none",        "",            "powerblock",     "*",                       "",                      "" },
 	// Power block (type 234) inputs					       
-    { SSC_INPUT,        SSC_NUMBER,      "mode",                "Cycle part load control, from plant controller",                    "none",        "",            "powerblock",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "mode",                "Cycle part load control, from plant controller",                    "none",        "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_hot",               "Hot HTF inlet temperature, from storage tank",                      "C",           "",            "powerblock",     "*",                       "",                      "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_st",            "HTF mass flow rate",                                                "kg/hr",       "",            "powerblock",     "*",                       "",                      "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "T_wb",                "Ambient wet bulb temperature",                                      "C",           "",            "powerblock",     "*",                       "",                      "" },
