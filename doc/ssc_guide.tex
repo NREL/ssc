@@ -1,4 +1,5 @@
-\documentclass{article}
+\documentclass{scrartcl} %instead of article to allow for use of subtitle
+\setkomafont{disposition}{\normalfont\bfseries} %need this for scrartcl for title font to look normal
 \usepackage{geometry} 
 \geometry{letterpaper} 
 %%%% Uncomment below to begin paragraphs with an empty line %%%%
@@ -28,6 +29,7 @@
             pagebackref=true,
             colorlinks=true,
             linkcolor=blue,
+            urlcolor=blue,
             unicode
            ]{hyperref}
 %\usepackage[utf8]{inputenc}
@@ -58,17 +60,18 @@
 \newcommand{\subs}[1]{\ensuremath{_\textrm{{\scriptsize #1}}}}
 \newcommand{\notebox}[1]{ \begin{center}\framebox[5.5in]{\begin{minipage}[t]{5.0in}\textbf{Note: }#1\end{minipage}}\end{center}}
 
-\title{SSC Reference Manual}
-\author{Aron Dobos \& Paul Gilman}
+\title{SSC Reference Manual
+\subtitle{Version 36: 1/21/2014}}
+\author{Aron Dobos and Paul Gilman}
 
 \begin{document}
 
 \maketitle
 \vspace{2.5in}
 \begin{abstract}
-The SSC (SAM Simulation Core) software library is the collection of simulation modules used by the National Renewable Energy Laboratory's  System Advisor Model (SAM).  The SSC application programming interface (API) allows software developers to integrate SAM's modules into other web and desktop applications. The API includes mechanisms to set input variable values, run simulations, and retrieve values of output variables. The SSC modules are available in pre-compiled binary dynamic libraries  with the bare minimum system library dependencies for Windows, Mac OSX, and Linux operating systems. The native API language is ISO-standard C, and language wrappers are available for C\#, Java, MATLAB, and Python. The API and model implementations are thread-safe and reentrant, allowing the software to be used in a parallel computing environment.
+The SSC (SAM Simulation Core) software library is the collection of simulation modules used by the National Renewable Energy Laboratory's  System Advisor Model (SAM).  The SSC application programming interface (API) allows software developers to integrate SAM's modules into web and desktop applications. The API includes mechanisms to set input variable values, run simulations, and retrieve values of output variables. The SSC modules are available in pre-compiled binary dynamic libraries minimum system library dependencies for Windows, OS X, and Linux operating systems. The native API language is ISO-standard C, and language wrappers are available for C\#, Java, MATLAB, and Python. The API and model implementations are thread-safe and reentrant, allowing the software to be used in a parallel computing environment.
 
-This document describes the SSC software architecture, modules and data types, provides code samples, introduces the SSCDev development tool, and describes the language wrappers.  
+This document describes the SSC software architecture, modules and data types, provides code samples, introduces SDKtool, and describes the language wrappers.
 \end{abstract} 
 
 \newpage
@@ -146,7 +149,7 @@ The complete source code for this program is included with the SSC SDK in the fi
 
 This example is written in C, SSC's native language. The language interfaces included with the SDK and describe in \S\ref{sec_language_interfaces} allow you to use SSC in programs written in other languages.
 
-You can also use the scripting language included with SSCdev to run SSC modules and build models based on SSC as described in \S\ref{sec_sscdev}
+You can also use the scripting language included with SDKtool to run SSC modules and build models based on SSC as described in \S\ref{sec_sdktool}
 
 \subsection{Write the program skeleton}
 
@@ -191,7 +194,7 @@ If the function call fails due to the system having run out of memory, the funct
 
 \subsection{Assign values to the module input variables}
 
-The \texttt{pvwattsv1} module requires six input variables. You can use the approach described in \S\ref{sec_variable_docs} to list information about a module's input and output variables. You can also use the SSCdev module browser described in \S\ref{sec_sscdev} to explore the variables.
+The \texttt{pvwattsv1} module requires six input variables. You can use the approach described in \S\ref{sec_variable_docs} to list information about a module's input and output variables. You can also use the SDKtool module browser described in \S\ref{sec_sdktool} to explore the variables.
 
 The \texttt{pvwattsv1} input variables are numbers, except for the weather file name which is a string. SSC also supports array, matrix, and table data types.
 
@@ -401,7 +404,7 @@ while ( p_inf = ssc_module_var_info( module, i++ ) )
 
 \end{verbatimtab}
 
-Another option for exploring a module's variables is SSCdev. It displays the variables in an interactive GUI spreadsheet-style interface described in \S\ref{sec_module_browser}.
+Another option for exploring a module's variables is SDKtool. It displays the variables in an interactive GUI spreadsheet-style interface described in \S\ref{sec_module_browser}.
 
 \subsection{Required Variables, Constraints, and Default Values}
 \label{sec_def_const}
@@ -592,7 +595,7 @@ if( location != NULL )
 
 \subsubsection{Tables}
 
-Tables provide a way to communicate data to SSC in a hierarchical structure format. This data type is not used by any of the current SSC modules. (SSCdev (\S\ref{sec_sscdev}) fully supports tables.) Before a table can be assigned, it must be created and filled with variables.  A table is simply a normal data container.  Example:
+Tables provide a way to communicate data to SSC in a hierarchical structure format. This data type is not used by any of the current SSC modules. (SDKtool (\S\ref{sec_sdktool}) fully supports tables.) Before a table can be assigned, it must be created and filled with variables.  A table is simply a normal data container.  Example:
 
 \begin{verbatimtab}
 ssc_data_t table = ssc_data_create(); // create an empty table
@@ -635,38 +638,49 @@ Table \ref{tab_modules} shows the SSC simulation modules at the time of this wri
 
 \begin{table}
 \begin{center}
-\begin{tabular}{p{1in}p{4.5in}}
-Module & Description\\\hline
-\texttt{6parsolve} & Calculates a set of parameters from manufacturer module specifications for the CEC module model\\
-\texttt{pv6parmod} & CEC module model\\
+\begin{tabular}{ll}
+Module & Description\\ \hline
+\texttt{6parsolve*} & CEC module model with user inputs\\
+\texttt{pv6parmod*} & CEC module model\\
 \texttt{pvsamv1} & Flat-plate PV model\\
-\texttt{pvwattsfunc} & Runs a the PVWatts model for a single timestep instead of as an 8760 hourly model\\
-\texttt{pvsandiainv} & Sandia inverter model\\
-\texttt{wfreader} & Reads format weather data files in the following formats: TMY2, TMY3, EPW, SMW)\\
-\texttt{irradproc} & General purpose irradiance processor for calculating POA\\
-\texttt{utilityrate} & Calculates the value of energy using complex utility rate structures. Designed to work with Version 1 of the OpenEI Utility Rate Database deprecated in January 2014\\
-\texttt{utilityrate2} & Calculates the value of energy using complex utility rate structures. Designed to work with Version 2 of the OpenEI Utility Rate Database\\
-\texttt{annualoutput} & Calculates Year 1 hourly and monthly, and Years 2 and later total annual system output for use in cash flow calculations\\
-\texttt{cashloan} & Residential and commercial financial model\\
-\texttt{ippppa} & Commercial PPA and Independent Power Producer (IPP) financial models\\
 \texttt{pvwattsv1} & PVWatts model\\
-\texttt{timeseq} & Converts start time, end time, and time step into arrays of time stamps (seconds, minutes, hours, days, months\\
+\texttt{pvwattsfunc*} & PVWatts model for single timestep\\
+\texttt{pvwattsfrompoa*} & PVWatts with POA radiation as input\\
+\texttt{pvsandiainv*} & Sandia inverter model as a standalone module\\
+\texttt{wfreader} & Weather file reader\\
+\texttt{irradproc} & Irradiance processor for calculating POA irradiance\\
+\texttt{utilityrate*} & Retail electricity rate for Version 1 of the OpenEI URDB\\
+\texttt{utilityrate2} & Retail electricity rate for Version 2 of the OpenEI URDB\\
+\texttt{annualoutput} & Calculate annual output for cash flow calculations\\
+\texttt{cashloan} & Residential and commercial financial model\\
+\texttt{ippppa} & Commercial PPA and Utility IPP financial models\\
+\texttt{timeseq} & Convert start and end times, and time step into time stamp arrays\\
 \texttt{levpartflip} & Leveraged partnership flip financial model\\
 \texttt{equpartflip} & Partnership flip financial models\\
 \texttt{saleleaseback} & Sale lease back financial model\\
 \texttt{singleowner} & Single owner financial model\\
 \texttt{swh} & Solar water heating model\\
-\texttt{test\_irr} & Internal rate of return calculator from utility financing models for testing\\
-\texttt{test\_pvshade} & PV self-shading model for testing\\
+\texttt{test\_irr*} & IRR calculator from utility financing models for testing\\
+\texttt{test\_pvshade*} & PV self-shading model for testing\\
 \texttt{geothermal} & Geothermal power model\\
-\texttt{poacalib} & Calibrates plane-of-array irradiance data\\
-\texttt{geothermalui} & Calculates interim design values for the geothermal power model\\
 \texttt{windpower} & Wind power model\\
-\texttt{wfcsvconv} & Converts a weather file from TMY2, TMY3, INTL, EPW, or SMW format to CSV\\
-\texttt{wfcsvread} & Reads weather file in CSV format\\
+\texttt{poacalib*} & Calibrates plane-of-array irradiance data\\
+\texttt{geothermalui} & Calculates interim design values for the geothermal power model\\
+\texttt{wfcsvconv*} & Converts a weather file to CSV\\
+\texttt{wfcsvread*} & Reads weather file in CSV format\\
+\texttt{tcstrough\_empirical*} & Empirical trough model\\
+\texttt{tcstrough\_physical*} & Physical trough model\\
+\texttt{tcsgeneric\_solar*} & Generic solar system (CSP) model\\
+\texttt{tcsmolten\_salt*} & Molten salt power tower model\\
+\texttt{tcsdirect\_steam*} & Direct steam power tower model\\
+\texttt{tcslinear\_fresnel*} & Linear Fresnel model\\
+\texttt{tcsdish*} & Dish-Stirling model\\
+\texttt{tcsiscc*} & Integrated solar combined cycle model\\
+\texttt{tcsmslf*} & Molten salt linear Fresnel model\\
+\texttt{hcpv} & High-X concentrating photovoltaic model\\
 \end{tabular}
 \label{tab_modules}
-\caption{List of SSC simulation modules}
+\caption{List of SSC simulation modules. (*) Indicates modules not used in SAM 2014.1.14.}
 \end{center}
 \end{table}
 
@@ -814,7 +828,7 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 }
 \end{verbatimtab}
 
-As noted in previous sections, the default handler simply prints warnings, errors, and simulation progress updates to the standard output stream on the console.  To implement a custom handler, it is recommended to copy the structure of the handler above, but to replace the output to the console with specialized handling for the messages and progress.  For example, in a graphical user interface program, the \texttt{user\_data} pointer could be used to pass in a pointer to a dialog class containing a progress bar and a text box.  The messages could be sent to the text box, and the progress bar updated appropriately.  The custom SSC handler function implemented in the graphical SSCdev tool (based on the excellent wxWidgets GUI library) is reproduced below, showing how messages and progess can be reported to the user.
+As noted in previous sections, the default handler simply prints warnings, errors, and simulation progress updates to the standard output stream on the console.  To implement a custom handler, it is recommended to copy the structure of the handler above, but to replace the output to the console with specialized handling for the messages and progress.  For example, in a graphical user interface program, the \texttt{user\_data} pointer could be used to pass in a pointer to a dialog class containing a progress bar and a text box.  The messages could be sent to the text box, and the progress bar updated appropriately.  The custom SSC handler function implemented in SDKtool (based on the wxWidgets GUI library) is reproduced below, showing how messages and progess can be reported to the user.
 
 \begin{verbatimtab}[4]
 static ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action, 
@@ -928,70 +942,50 @@ On Linux, a newer version of SSC may report something like:
 	ssc version 24: Unix 64 bit GNU/C++ Dec  5 2012 11:42:51
 \end{verbatimtab}
 
-\section{SSCdev}
-\label{sec_sscdev}
+\section{SDKtool}
+\label{sec_sdktool}
 
-SSCdev is the developer interface for SSC. It allows you to explore variables in the SSC modules, run individual modules, and write scripts to build and test your models. When you run modules in SSCdev, it displays all of the variables in the data container with their values.
-
-Use SSCdev for the following tasks:
+SDKtool is the developer interface for SSC.  (SSCDev was renamed to SSC SDKtool with the January 24 release of the SDK.) SDKtool allows you to explore variables in the SSC modules, run individual modules, and write scripts to build and test your models. When you run modules in SDKtool, it displays all of the variables in the data container with their values. Use SDKtool for the following tasks:
 
 \begin{itemize}
 \item Learn how modules you plan to use in your model work before before you start programming.
 \item Troubleshoot problems with your implementation of SSC modules.
-\item Build and test models in the LK script using the SSCdev script editor.
+\item Build and test models in LK Script using the SDKtool script editor. LK Script is documented in \texttt{lk\_guide.pdf}, included in the SDK package.
 \end{itemize}
 
-\subsection{Using SSCdev}
-\label{sec_sscdev_run}
+\subsection{Using SDKtool}
+\label{sec_sdktool_run}
 
-Using SSCdev involves running the executable, and loading the appropriate SSC library:
+Using SDKtool involves running the executable, and loading the appropriate SSC library:
 
 \begin{enumerate}
-\item Run the executable file shown in Table \ref{tab_sscdev_versions} for your operating system. For example, the 32-bit Windows executable \texttt{sscdev32.exe} is in the \texttt{win32} directory of the SDK package.
-\item On the \textbf{File} menu, click \textbf{Choose SSC library}. Be sure to choose the correct library for your version of SSCdev. For example, for 32-bit Windows, choose the \texttt{ssc32.dll} library.
+\item Run the executable file shown in Table \ref{tab_sdktool_versions} for your operating system. For example, the 32-bit Windows executable. \texttt{sdktool.exe} is in the \texttt{win32} directory of the SDK package.
+\item Click \textbf{Choose SSC library} and choose the library for your version of SDKtool. For example, for 32-bit Windows, choose the \texttt{ssc.dll} library from the \texttt{win32} directory.
 
-A list of modules should appear in the module browser, and the library path and name should appear in the status bar at the bottom of the SSCdev window. If the module browser is empty, try choosing the SSC library again.
-\item Click a module's name to see its variables. For example, click \texttt{pvwattsv1} to see a list of the PVWatts module's 46 variables.
+A list of modules should appear in the module browser, and the library path, name, and version number should appear in the status bar at the bottom of the SDKtool window. If the module browser is empty, try choosing the SSC library again.
+\item Click a module's name to see its variables. For example, click \texttt{pvwattsv1} to see a list of the PVWatts module's 53 variables.
 \end{enumerate}
-
-\notebox{To see the SSCdev version information, on the \textbf{Help} menu, click \textbf{About}.}
 
 \begin{table}
   \begin{center}
     \begin{tabular}{llll}
-       Operating System & Directory Name & SSCdev Version & Library \\
+       Operating System & Directory Name & SDKtool & SSC Library \\
        \hline
-       Windows 32-bit & win32 & sscdev32.exe & ssc32.dll \\
-       Windows 64-bit & win32 & sscdev64.exe & ssc64.dll \\
-       OS X 64-bit & osx64 & sscdev.app & ssc64.dylib \\
-       Linux 64-bit & linux64 & sscdev64.bin & ssc64.so \\ 
+       Windows 32-bit & win32 & sdktool.exe & ssc.dll \\
+       Windows 64-bit & win32 & sdktool.exe & ssc.dll \\
+       OS X 64-bit & osx64 & SDKtool.app & ssc.dylib \\
+       Linux 64-bit & linux64 & SDKtool & ssc.so \\ 
       \hline
     \end{tabular}
-    \caption{SSCdev and Library Versions}\label{tab_sscdev_versions}
+    \caption{SDKtool and Library Versions}\label{tab_sdktool_versions}
   \end{center}
 \end{table}
 
-SSCdev displays a list of available modules, and lists each module's input and output variables, but does not provide enough information to completely understand the modules. You should be prepared to use the SAM user interface and documentation together with SSCdev to help you understand how the modules and variables work. 
+SDKtool displays a list of available modules, and lists each module's input and output variables, but does not provide enough information to completely understand the modules. You should be prepared to use the SAM user interface and documentation together with SDKtool to help you understand how the modules and variables work. 
 
 For example, the \texttt{annualoutput} module includes a variable named \texttt{energy\_availability} that uses the data type \texttt{SSC\_ARRAY}. Why is the data type not \texttt{SSC\_NUMBER} instead? To find out, we can examine the \texttt{annualoutput} input variables in SAM's user interface, which displays them on the Performance Adjustment input page. The \texttt{energy\_availabilty} variable appears with the label ``Percent of annual output,'' and SAM provides two options for entering the variable's value: As a single value or as an annual schedule. The array data type is necessary to store the annual values. The \texttt{annualoutput} module assumes that if there is a single non-zero value at the top of the array, that value represents a single adjustment factor that applies to all years. Otherwise it applies values from the array to each year.
 
-For some variables, even the SAM user interface may not be helpful. When you need help with an SSC module or variable, ask a question as a comment on the SAM website's SDK page. For example, you might wonder what the \texttt{annualoutput} module's \texttt{system\_use\_lifetime\_output} variable does. That variable is not on any of SAM's input pages, and the information in SSCdev does not explain its function. The variable determines whether the module generates a single set of 8,760 hourly values for the \texttt{hourly\_e\_net\_delivered} variable, or whether it generates a set of 8,760 values for each year in the analysis period. All of SAM's performance models use a value of zero except for the geothermal model, which is a special case and requires lifecycle output data to accurately represent changes in resource over time as it is depleted and replenished. For most cases, you should set its value to zero.
-
-\subsection{SSCdev Menus}
-\label{sec_menus}
-
-\textbf{File}
-\begin{quote}
-\begin{description}
-\item[Start simulation] Runs the active module in the module browser.
-\item[Load/unload SSC library] Loads or unloads the current SSC library for troubleshooting. If a module does not run, you can try unloading and reloading the library.
-\item[Choose SSC library] Displays a file dialog where you can choose and load the SSC library. Be sure to choose the correct library for your version of SSCdev.
-\item[Load data file] Open a data file. (\texttt{.bdat}).
-\item[Save data file] Save the variables in the data container to a data file. (\texttt{.bdat}).
-\item[Recent files] Display a list of recent data (\texttt{.bdat}) and script (\texttt{.lk}) files.
-\item[Exit] Quit SSCdev.
-\end{description}
-\end{quote}
+For some variables, even the SAM user interface may not be helpful. When you need help with an SSC module or variable, post a question about it on the SAM support forum at \url{https://sam.nrel.gov/forums/support-forum}. For example, you might wonder what the \texttt{annualoutput} module's \texttt{system\_use\_lifetime\_output} variable does. That variable is not on any of SAM's input pages, and the information in SDKtool does not explain its function. The variable determines whether the module generates a single set of 8,760 hourly values for the \texttt{hourly\_e\_net\_delivered} variable, or whether it generates a set of 8,760 values for each year in the analysis period. All of SAM's performance models use a value of zero except for the geothermal model, which is a special case and requires lifecycle output data to accurately represent changes in resource over time as it is depleted and replenished. For most cases, you should set its value to zero.
 
 \textbf{Script}
 
@@ -1007,45 +1001,57 @@ The Script menu commands duplicate the buttons in the Script Editor. They are im
 \end{description}
 \end{quote}
 
-\textbf{Help}
-
-The \textbf{About} command displays information about the current version of SSCdev.
 
 \subsection{Module Browser}
 \label{sec_module_browser}
 
-The module browser displays the modules available in the current SSC library. When you choose a module from the list, it also shows a list of the module's variables. It can:
-
-\begin{itemize}
-\item Display a list of available SSC modules.
-\item Display module variables.
-\item Copy a tab-delimited list of a module's variables to your computer's clipboard.
-\item Run a single module using variable values defined in the data container.
-\end{itemize}
-
-\notebox{If the module browser is empty, check the status bar at the bottom of the SSCdev window to see whether the correct SSCdev library is loaded. See \S\ref{sec_sscdev_run} for instructions to load a library.}
-
 \begin{figure}
 \begin{center}
-\scalebox{1}{\includegraphics{module_browser.png}}
+\includegraphics{modulebrowser}
 \end{center}
 \caption{Module browser}
 \label{fig_module_browser}
 \end{figure}
 
+The module browser displays the modules available in the SSC library. The module browser can:
+
+\begin{itemize}
+\item Display a list of available SSC modules.
+\item Display a module's variables.
+\item Copy a tab-delimited list of a module's variables to your computer's clipboard.
+\item Run a single module using the variable values defined in the data container.
+\end{itemize}
+
 You can use the module browser as a reference while you are developing your model to help ensure that you assign values to all of the required input variables, and use the correct data types and units.
 
 You can also use the module browser with the data container to manually set values of input variables and run modules individually. This might be useful for learning how a module works, or for troubleshooting your model's implementation of a module.
 
-\subsubsection{Run a Simulation from the Module Browser}
-\label{sec_sscdev_module_browser_run_module}
-
-To run a simulation from the module browser, choose a module from the list and click \textbf{Run}. SSCdev displays information about the simulation in the notification pane.
+Module browser commands:
+\begin{quote}
+\begin{description}
+\item[Load/unload library] Loads or unloads the current SSC library for troubleshooting. If a module does not run, you can try unloading and reloading the library.
+\item[Choose SSC library] Displays a file dialog where you can choose and load the SSC library. Be sure to choose the correct library for your version of SDKtool.
+\item[Load data file] Open a data file. (\texttt{.bdat}).
+\item[Save data file] Save the variables in the data container to a data file. (\texttt{.bdat}).
+\item[Copy table to clipboard] Copies the table of module variables as tab-delimited text to your computer's clipboard.
+\item[Run] Runs the active module in the module browser. (You must select a module from the dropdown list before you click \textbf{Run}.)
+\end{description}
+\end{quote}
 
 \subsection{Data Container}
 \label{sec_data_container}
 
-The data container displays a list of variables for the current set of simulations. When you run a module from the data browser, you must add input variables to the data container by hand using the \textbf{Add} and \textbf{Edit} buttons. When you run modules from the script editor, the data container is automatically populated with variables from the script. You can use the data container commands for the following tasks:
+\begin{figure}
+\begin{center}
+\includegraphics{datacontainer}
+\end{center}
+\caption{Data container}
+\label{fig_data_container}
+\end{figure}
+
+The data container displays a list of variables for the current set of simulations. When you run a module from the data browser, you must add input variables to the data container by hand using the \textbf{Add} and \textbf{Edit} buttons.
+
+When you run modules from the script editor, the data container is automatically populated with variables from the script. You can use the data container commands for the following tasks:
 
 \begin{itemize}
 \item Add, edit, and remove variables from the data container.
@@ -1053,15 +1059,7 @@ The data container displays a list of variables for the current set of simulatio
 \item Show graphs of time series data.
 \end{itemize}
 
-\begin{figure}
-\begin{center}
-\scalebox{1}{\includegraphics{data_container.png}}
-\end{center}
-\caption{Data container}
-\label{fig_data_container}
-\end{figure}
-
-The data container commands act either on the selected variable indicated with a blue highlight, or on variables with a check mark:
+The data container commands act either on the selected variable indicated with a blue highlight, or on variables with a check mark. You may need to maximize the SDKtool window to see all of the command buttons:
 
 \begin{quote}
 \begin{description}
@@ -1095,22 +1093,20 @@ Select an hourly array and click \textbf{Show stats} to display a statistical su
 
 Check one or more hourly arrays and click \textbf{Timeseries graph} time series data and statistical summaries in graphs. You can export graph images and tables of graph data by right-clicking graphs and selecting commands in the shortcut menu.
 
-See \S\ref{sec_sscdev_example_1} for an example.
+See \S\ref{sec_sdktool_example_1} for an example.
 
 \subsection{Script Editor}
 \label{sec_script_editor}
 
-The script editor allows you to write, edit, and run scripts in the LK scripting language to build and test models using the SSC modules.
-
-For a list of script functions, click \textbf{Help}.
-
 \begin{figure}
 \begin{center}
-\scalebox{1}{\includegraphics{script_editor.png}}
+\includegraphics{scripteditor}
 \end{center}
 \caption{Script editor}
 \label{fig_script_editor}
 \end{figure}
+
+The script editor allows you to write, edit, and run scripts in LK Script to build and test models using the SSC modules. Documentation of LK Script is included in the SDK package in \texttt{lk\_guide.pdf}.
 
 The script editor commands are:
 
@@ -1120,40 +1116,40 @@ The script editor commands are:
 \item[Open]  (\textbf{Ctrl-O}) Open a script file (\texttt{.lk}).
 \item[Save] (\textbf{Ctrl-S}) Save the current script file (\texttt{.lk}).
 \item[Save as] Save the current script to a different file (\texttt{.lk}).
-\item[Find] (\textbf{Ctrl-F}) Find text in the current script.
-\item[Find next] (\textbf{F3}) Find the next instance of text in the current script.
+\item[Find] Find text in the current script.
+\item[Find next] Find the next instance of text in the current script.
 \item[Help] Display a list of script functions.
-\item[Run] (\textbf{F5}) Run the current script.
+\item[Run] Run the current script.
 \end{description}
 \end{quote}
 
-\subsection{SSCdev Example 1: Run a Simulation Module without Scripting}
-\label{sec_sscdev_example_1}
+\subsection{SDKtool Example 1: Run a Module from the Module Browser}
+\label{sec_sdktool_example_1}
 
 The following example shows how to use the module browser to expore and run the \texttt{pvwattsv1} module. You can use the same steps to explore other simulation modules.
 
-\notebox{As described in \S\ref{sec_module_browser}, the module browser can only run a single simulation module at a time. To combine modules to build a model, you can write a script as described in \S\ref{sec_sscdev_example_2}.}
+\notebox{As described in \S\ref{sec_module_browser}, the module browser can only run a single simulation module at a time. To combine modules to build a model, you can write a script as described in \S\ref{sec_sdktool_example_2}.}
 
 As we saw in \S\ref{sec_modeling_systems}, the \texttt{pvwattsv1} simulation module reads data from a weather file and inputs from the data container that define the system's size, array orientation and type of tracking, and derating factor, and calculates values for the 1 by 8760 array storing the system's hourly electricity output over a single year.
 
 To explore the \texttt{pvwattsv1} simulation module in the module browser:
 
 \begin{enumerate}
-\item Start SSCdev and be sure the correct SSC library is loaded as described in \S\ref{sec_sscdev_run}
+\item Start SDKtool and be sure the correct SSC library is loaded as described in \S\ref{sec_sdktool_run}
 
-\item On the \textbf{Module Browser} tab, click the \texttt{pvwattsv1} name to see a list of the module's variables. The inputs are of type \texttt{SSC\_INPUT}. Of the inputs, only a subset indicated by (\texttt{*}) are required and have no default value, as described in \S\ref{sec_def_const}. At a minimum, you must assign values to these variables to run the module.
+\item In the \textbf{Module Browser}, click the \texttt{pvwattsv1} name to see a list of the module's variables. The inputs are of type \texttt{SSC\_INPUT}. Of the inputs, only a subset indicated by (\texttt{*}) are required and have no default value, as described in \S\ref{sec_def_const}. At a minimum, you must assign values to these variables to run the module.
 
-\item In the drop-down list under the list of available modules, choose the \texttt{pvwatts1} module and click \textbf{Run} (or press \textbf{F6}).
+\item In the drop-down list at the bottom of the window under the list of available modules, choose the \texttt{pvwatts1} module and click \textbf{Run}.
 
-A message about the \texttt{file\_name} variable appears in the SSCdev notification panel. That is because \texttt{file\_name} is a required variable, but it does not yet have a value.
+A message about the \texttt{file\_name} variable appears in the console. That is because \texttt{file\_name} is a required variable, but it does not yet have a value.
 
-\item In the variable viewer, click \textbf{Add}, and type "file\_name" for the variable name, assign it the \texttt{SSC\_STRING} data type, and click \textbf{file} to assign it the value of one of the TMY2 files included in the SDK Examples folder (for example, \textit{daggett.tm2}).
+\item In the \textbf{Data Container}, click \textbf{Add}, and type "file\_name" for the variable name, assign it the \texttt{SSC\_STRING} data type, and click \textbf{file} to assign it the value of one of the TMY2 files included in the SDK Examples folder (for example, \textit{daggett.tm2}).
 
-\item Next, add the remaining 5 required variables shown in the module browser, using the data type and units shown in the table. For example, \texttt{system\_size} should be \texttt{SSC\_NUMBER} with a value in kilowatts. Be sure to use variable names and data types that exactly match those in the module browser.
+\item Next, add the remaining 5 required variables shown in the module browser to the data container, using the data type and units shown in the table. For example, \texttt{system\_size} should be \texttt{SSC\_NUMBER} with a value in kilowatts. Be sure to use variable names and data types that exactly match those in the module browser.
 
 When you are finished, you should see a table similar to Table \ref{tab_pvwattsv1}. This is the model's data container, which so far contains the required input for the \texttt{pvwattsv1} simulation module.
 
-\item Press \textbf{F6}, or on the module browser, click \textbf{Run} to run the module. 
+\item In the \textbf{Module Browser}, click \textbf{Run} to run the module. 
 \end{enumerate}
 
 The data container should now show a table with all of the \texttt{pvwattsv1} module variables. You can edit and view the variable values:
@@ -1181,10 +1177,14 @@ file\_name & system\_size & derate & track\_mode & azimuth & tilt\\
 \end{center}
 \end{table}
 
-\subsection{SSCdev Example 2: Use a Script to Build a Model}
-\label{sec_sscdev_example_2}
+\subsection{SDKtool Example 2: Build a Model in LK Script}
+\label{sec_sdktool_example_2}
 
-This example first runs the \texttt{pvwattsv1} simulation module as we did in Example 1, and then combines it with the \texttt{annualoutput} module to create a simple model that estiimates a PV system's annual output over a multi-year period.
+This example uses a script to run the \texttt{pvwattsv1} simulation module as we did in Example 1, and combine it with the \texttt{annualoutput} module to create a simple model that estiimates a PV system's annual output over a multi-year period.
+
+Writing a script is a useful way to test your model before you implement it in C++ or another programming language. When you develop the model as a script in SDKtool, you can use the module browser and data container to help you troubleshoot your model within an environment designed specifically to run the modules. Once you get your model running as a script, you can easily translate it into another language.
+
+Copy or cut and paste the script examples below into the SDKtool's script editor.
 
 The first part of the script performs three tasks:
 
