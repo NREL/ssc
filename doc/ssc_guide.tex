@@ -199,12 +199,12 @@ The \texttt{pvwattsv1} module requires six input variables. You can use the appr
 The \texttt{pvwattsv1} input variables are numbers, except for the weather file name which is a string. SSC also supports array, matrix, and table data types.
 
 \begin{verbatimtab}[4]
-	ssc_data_set_string( data, "file_name", argv[1] ); // set the weather file name
-	ssc_data_set_number( data, "system_size", 1.0f );  // system size of 1 kW DC
+	ssc_data_set_string( data, "file_name", argv[1] ); // weather file name
+	ssc_data_set_number( data, "system_size", 1.0f );  // 1 kW DC system
 	ssc_data_set_number( data, "derate", 0.77f );      // system derate
 	ssc_data_set_number( data, "track_mode", 0 );      // fixed tilt system
 	ssc_data_set_number( data, "tilt", 20 );           // 20 degree tilt
-	ssc_data_set_number( data, "azimuth", 180 );       // south facing (180 degrees)
+	ssc_data_set_number( data, "azimuth", 180 );       // south facing
 \end{verbatimtab}
 
 \subsection{Run the module}
@@ -439,7 +439,7 @@ Flag & Description\\
 \texttt{BOOLEAN} & Requires the number to be equal to 0 (false) or 1 (true) \\
 \texttt{INTEGER} & Requires the number to be an integer value \\
 \texttt{POSITIVE} & Requires the number to have a positive, non-zero value \\
-\texttt{LOCAL\_FILE} & Requires the text string to be a local file on disk that is readable and exists \\
+\texttt{LOCAL\_FILE} & Requires the text string to be a readable local file that exists on disk \\
 \end{tabular}
 \caption{Some constraints recognized by SSC}
 \label{tab_constraints}
@@ -577,7 +577,8 @@ if( mat != NULL && nrows == 4 && ncols == 3 )
 
 SSC supports null-terminated ASCII text strings as a data type.  Setting a string value is straightforward.  SSC creates an internal copy of the string data.  Examples:
 \begin{verbatimtab}
-ssc_data_set_string( data, "weather_file", "c:/Data/Weather/TX Abilene.tm2" );
+ssc_data_set_string( data, "weather_file", 
+                     "c:/Data/Weather/TX Abilene.tm2" );
 
 const char *location = "Hawaii";
 ssc_data_set_string( data, "location", location );
@@ -654,7 +655,7 @@ Module & Description\\ \hline
 \texttt{annualoutput} & Calculate annual output for cash flow calculations\\
 \texttt{cashloan} & Residential and commercial financial model\\
 \texttt{ippppa} & Commercial PPA and Utility IPP financial models\\
-\texttt{timeseq} & Convert start and end times, and time step into time stamp arrays\\
+\texttt{timeseq} & Convert start/end times and time step to time stamp arrays\\
 \texttt{levpartflip} & Leveraged partnership flip financial model\\
 \texttt{equpartflip} & Partnership flip financial models\\
 \texttt{saleleaseback} & Sale lease back financial model\\
@@ -665,7 +666,7 @@ Module & Description\\ \hline
 \texttt{geothermal} & Geothermal power model\\
 \texttt{windpower} & Wind power model\\
 \texttt{poacalib*} & Calibrates plane-of-array irradiance data\\
-\texttt{geothermalui} & Calculates interim design values for the geothermal power model\\
+\texttt{geothermalui} & Calculates interim values for the geothermal power model\\
 \texttt{wfcsvconv*} & Converts a weather file to CSV\\
 \texttt{wfcsvread*} & Reads weather file in CSV format\\
 \texttt{tcstrough\_empirical*} & Empirical trough model\\
@@ -714,7 +715,7 @@ else
 ssc_data_free( data );
 \end{verbatimtab}
 
-Note that there is no need to explicitly create an \texttt{ssc\_module\_t} object using \texttt{ssc\_module\_create()}; the function will return false if the module name specified could not be found or could not be created.
+Note that there is no need to explicitly create an \texttt{ssc\_module\_t} object using \\*\texttt{ssc\_module\_create()}; the function will return false if the module name specified could not be found or could not be created.
 
 The \texttt{ssc\_module\_exec\_simple()} function is thread-safe, provided that the module called is itself thread-safe.  It is intended that all SSC modules are implemented in a thread-safe manner.  The primary downside to using this simple invocation method is that the host program receives no progress updates, and the error messages and warnings cannot be programmatically retrieved after the module has finished running.
 
@@ -782,7 +783,8 @@ Supposing that such a function named \texttt{my\_ssc\_handler\_function()} has b
 \begin{verbatimtab}[4]
 void *my_data = <some user data to send to the callback, or NULL>;
 
-if ( ssc_module_exec_with_handler( module, data, my_ssc_handler_function, my_data ) )
+if ( ssc_module_exec_with_handler( module, data, my_ssc_handler_function, 
+                                   my_data ) )
 	printf("success!\n");
 else
 	printf("fail!\n");
@@ -791,10 +793,12 @@ else
 The code below represents the default handler built into SSC.  Note that the handler function must return a boolean (0/1) value to indicate to SSC whether to continue simulating or not.  This provides the option to abort the simulation if a user has clicked a cancel button in the meantime, or similar.  The various parameters are used to convey SSC status information to the handler, and have different meanings (and data) depending on the \texttt{action\_type} parameter.
 
 \begin{verbatimtab}[4]
-static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_handler,
-	int action_type, float f0, float f1, 
-	const char *s0, const char *s1,
-	void *user_data )
+static ssc_bool_t default_internal_handler( ssc_module_t p_mod, 
+     ssc_handler_t p_handler,
+	 int action_type, 
+     float f0, float f1, 
+	 const char *s0, const char *s1,
+	 void *user_data )
 {
 	if (action_type == SSC_LOG)
 	{
@@ -820,7 +824,8 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 	else if (action_type == SSC_UPDATE)
 	{
 		// print status update to console
-		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 << std::endl;
+		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 
+             << std::endl;
 		return 1; // return 0 to abort simulation as needed.
 	}
 	else
@@ -831,8 +836,9 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 As noted in previous sections, the default handler simply prints warnings, errors, and simulation progress updates to the standard output stream on the console.  To implement a custom handler, it is recommended to copy the structure of the handler above, but to replace the output to the console with specialized handling for the messages and progress.  For example, in a graphical user interface program, the \texttt{user\_data} pointer could be used to pass in a pointer to a dialog class containing a progress bar and a text box.  The messages could be sent to the text box, and the progress bar updated appropriately.  The custom SSC handler function implemented in SDKtool (based on the wxWidgets GUI library) is reproduced below, showing how messages and progess can be reported to the user.
 
 \begin{verbatimtab}[4]
-static ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action, 
-	float f0, float f1, const char *s0, const char *s1, void *user_data )
+static ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, 
+     int action, float f0, float f1, const char *s0, const char *s1, 
+     void *user_data )
 {
 	wxProgressDialog *dlg = (wxProgressDialog*) user_data;
 	if (action == SSC_LOG)
@@ -916,7 +922,8 @@ while( entry = ssc_module_entry( index++ ) )
 	const char *description = ssc_entry_desc( entry );
 	int version = ssc_entry_version( entry );
 
-	printf( "Module %s, version %d: %s\n", module_name, version, description );
+	printf( "Module %s, version %d: %s\n", module_name, 
+            version, description );
 }
 \end{verbatimtab}
 
@@ -1007,7 +1014,7 @@ The Script menu commands duplicate the buttons in the Script Editor. They are im
 
 \begin{figure}
 \begin{center}
-\includegraphics{modulebrowser}
+\scalebox{0.95}{\includegraphics{modulebrowser}}
 \end{center}
 \caption{Module browser}
 \label{fig_module_browser}
@@ -1043,7 +1050,7 @@ Module browser commands:
 
 \begin{figure}
 \begin{center}
-\includegraphics{datacontainer}
+\scalebox{0.95}{\includegraphics{datacontainer}}
 \end{center}
 \caption{Data container}
 \label{fig_data_container}
@@ -1100,7 +1107,7 @@ See \S\ref{sec_sdktool_example_1} for an example.
 
 \begin{figure}
 \begin{center}
-\includegraphics{scripteditor}
+\scalebox{0.95}{\includegraphics{scripteditor}}
 \end{center}
 \caption{Script editor}
 \label{fig_script_editor}
@@ -1232,8 +1239,10 @@ year_1_energy_hourly = var('ac');
 sum_of_hourly = sum(year_1_energy_hourly);
 
 // Display results
-outln("Year 1 output: " + sprintf('%,',to_int(year_1_energy_total)) + " kWh");
-outln("  as sum of hourly output: " + sprintf('%,',to_int(sum_of_hourly)) + " Wh");
+outln("Year 1 output: " + sprintf('%,',to_int(year_1_energy_total)) 
+                                  + " kWh");
+outln("  as sum of hourly output: " + sprintf('%,',to_int(sum_of_hourly)) 
+                                              + " Wh");
 outln();
 
 \end{verbatimtab}
@@ -1311,7 +1320,8 @@ yearly_energy = var('annual_e_net_delivered');
 
 for ( i = 1; i <= analysis_period; i++)
 {
-  outln("Year " + i + " output: " + sprintf('%,',to_int(yearly_energy[i])) + ( " kWh"));
+  outln("Year " + i + " output: " + sprintf('%,',to_int(yearly_energy[i])) 
+                                            + ( " kWh"));
 }
 
 
@@ -1376,7 +1386,7 @@ Notice that the structure of creating and freeing data containers and modules is
 
 MATLAB is a numerical computing language that is widely used for data processing, algorithm development, and plotting.  It is a proprietary product that is available on OSX, Linux, and Windows.  
 
-The built-in MATLAB \emph{foreign function interface (FFI)} library routines that are used to interface to SSC require a C compiler to preprocess the SSC header file. Some versions of MATLAB include a C compiler such as LCC installed by default, while others may require that one to be installed separately.  See \texttt{http://www.mathworks.com/support/compilers/R2012b/win64.html} for more information.
+The built-in MATLAB \emph{foreign function interface (FFI)} library routines that are used to interface to SSC require a C compiler to preprocess the SSC header file. Some versions of MATLAB include a C compiler such as LCC installed by default, while others may require that one to be installed separately.  See \url{http://www.mathworks.com/support/compilers/R2012b/win64.html} for more information.
 
 The MATLAB environment should also be configured to recognize the path containing the SSC MATLAB files.
 
@@ -1480,7 +1490,8 @@ private void btnPVWatts_Click(object sender, EventArgs e)
 			if (type == SSC.API.WARNING) stype = "WARNING";
 			else if (type == SSC.API.ERROR) stype = "ERROR";
 
-			txtData.AppendText("[ " + stype + " at time:" + time + " ]: " + msg + "\n");
+			txtData.AppendText("[ " + stype + " at time:" + time + " ]: " 
+                               + msg + "\n");
 			idx++;
 		}
 
