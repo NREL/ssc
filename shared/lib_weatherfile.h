@@ -8,54 +8,59 @@
 class weatherfile
 {
 private:
-	FILE *m_fp;
+	bool m_ok;
 	int m_type;
 	std::string m_file;
 	int m_startYear;
 	double m_time;
-	bool
-		m_interp_mode,
-		m_first_call;
-	//Dynamic arrays for interpolation
-	int* YEAR;
-	int* MONTH;
-	int* DAY;
-	int* HOUR;
-	double* MINUTE;
-	double* GH;   /* global (Wh/m2) */
-	double* DN;   /* direct (Wh/m2) */
-	double* DF;   /* diffuse (Wh/m2) */
-	double* WSPD; /* wind speed (m/s) */
-	double* WDIR; /* wind direction (deg: N = 0 or 360, E = 90, S = 180,W = 270 ) */
-	double* TDRY; /* dry bulb temp (C) */
-	double* TWET; /* wet bulb temp (C) */
-	double* TDEW; /* dew point temp (C) */
-	double* RHUM; /* relative humidity (%) */
-	double* PRES; /* pressure (mbar) */
-	double* SNOW; /* snow depth (cm) 0-150 */
-	double* ALBEDO; /* ground reflectance 0-1.  values outside this range mean it is not included */
-	bool allocated;
-	int ncall;
+	int m_errorLine;
+	
+	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
+		GHI, DNI, DHI, 
+		TDRY, TWET, TDEW, 
+		WSPD, WDIR, 
+		RH, PRES, SNOW, ALB, AOD,
+	_MAXCOL_ };
 
+	struct column
+	{
+		int index; // used for wfcsv to get column index in CSV file from which to read
+		std::vector<float> data;
+	};
+	
+	column m_columns[_MAXCOL_];
+	size_t m_index;
+
+
+	void reset_record();
 
 public:
 	weatherfile();
-	weatherfile( const std::string &file );
-	~weatherfile();
-	enum { INVALID, TMY2, TMY3, EPW, SMW };
+	weatherfile( const std::string &file, bool header_only = false, bool interp = false );
+
+	void reset();
+
+	enum { INVALID, TMY2, TMY3, EPW, SMW, WFCSV };
+
 	bool ok();
 	int type();
 	std::string filename();
-	void close();
-	bool open( const std::string &file );
+	bool open( const std::string &file, bool header_only = false, bool interp = false );
 	void rewind();
-	void disable_interpolation();
+
+	static std::string normalize_city( const std::string &in );
+	static bool convert_to_wfcsv( const std::string &input, const std::string &output );
 
 	/******** header data *******/
-	std::string loc_id;
+	std::string location;
 	std::string city;
 	std::string state;
 	std::string country;
+	std::string source;
+	std::string description;
+	std::string url;
+	bool interpmet;
+	bool hasunits;
 	double tz;
 	double lat;
 	double lon;
@@ -86,93 +91,10 @@ public:
 	double pres; /* pressure (mbar) */
 	double snow; /* snow depth (cm) 0-150 */
 	double albedo; /* ground reflectance 0-1.  values outside this range mean it is not included */
-};
-
-
-class wfcsv
-{
-private:
-	FILE *m_fp;
-
-	struct column
-	{
-		std::string name;
-		std::string units;
-		size_t index;
-		int id;
-		std::vector<float> data;
-	};
-
-	int m_errorCode;
-	size_t m_numRecords;
-	int m_timeStepSeconds;
-	std::vector<column> m_columns;
-	
-	// possible header data fields
-	bool m_hdrInterpMet, m_hdrHasUnits;
-	std::string m_hdrLocId, m_hdrCity, m_hdrState, m_hdrCountry,
-		m_hdrSource, m_hdrDescription, m_hdrURL;
-	double m_hdrLatitude, m_hdrLongitude, m_hdrTimeZone, m_hdrElevation;
-	int m_hdrYear;
-
-	void reset();
-	int colindex( int id );
-
-public:
-	wfcsv();
-	wfcsv( const std::string &file );
-	~wfcsv();
-
-	bool ok();
-
-	static std::string normalize_city( const std::string &in );
-
-
-	// return 0 on success, or negative error code
-	int read_all( const std::string &file );
-	int read_header( const std::string &file, bool leave_open = false );
-	int read_data(); // must follow a call to read_header()
-
-		
-	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
-		GHI, DNI, DHI, 
-		TDRY, TWET, TDEW, 
-		WSPD, WDIR, 
-		RH, PRES, SNOW, ALB, AOD,
-	_MAXCOL_ };
-
-
-	int error() { return m_errorCode; }
-	int time_step_seconds();
-	float time_step_hours();
-	size_t num_records();
-	bool has_data( int id );
-	std::vector<int> get_columns();
-	std::string get_canonical_name( int id );
-
-	bool interpolate() { return m_hdrInterpMet; }
-	bool has_units() { return m_hdrHasUnits; }
-	std::string location() { return m_hdrLocId; }
-	std::string city() { return m_hdrCity; }
-	std::string state() { return m_hdrState; }
-	std::string country() { return m_hdrCountry; }
-	std::string source() { return m_hdrSource; }
-	std::string description() { return m_hdrDescription; }
-	std::string url() { return m_hdrURL; }
-	double lat() { return m_hdrLatitude; }
-	double lon() { return m_hdrLongitude; }
-	double tz() { return m_hdrTimeZone; }
-	double elev() { return m_hdrElevation; }
-	int year() { return m_hdrYear; }
-
-	 // returns NaN if value doesn't exist and can't be estimated from existing data
-	float value( int id, size_t index );
-
-
-	// converts a TMY2, TMY3, EPW, or SMW file to WFCSV format
-	static bool convert( const std::string &input, const std::string &output );
+	double aod; /* aerosol optical depth */
 
 };
+
 
 #endif
 

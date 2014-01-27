@@ -1474,7 +1474,6 @@ bool CGeothermalAnalyzer::OpenWeatherFile(const char * fn)
 {
 	mb_WeatherFileOpen = false;
 	ml_ReadCount = 0;
-	m_wf.disable_interpolation();
 	if (!m_wf.open(fn))
 		ms_ErrorString = "Could not open the weather file: " + std::string(fn);
 	else
