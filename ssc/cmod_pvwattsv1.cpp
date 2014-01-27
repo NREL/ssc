@@ -387,7 +387,7 @@ public:
 
 		accumulate_annual( "ac", "ac_annual", 0.001 );
 
-		assign( "location", var_data( wf.loc_id ) );
+		assign( "location", var_data( wf.location ) );
 		assign( "city", var_data( wf.city ) );
 		assign( "state", var_data( wf.state ) );
 		assign( "lat", var_data( (ssc_number_t)wf.lat ) );
