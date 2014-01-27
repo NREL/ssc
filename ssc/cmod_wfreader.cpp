@@ -61,9 +61,10 @@ public:
 	
 	void exec( ) throw( general_error )
 	{	
+		bool header_only = as_boolean("header_only");
 		const char *file = as_string("file_name");
 
-		weatherfile wf( file );
+		weatherfile wf( file, header_only );
 		if (!wf.ok()) throw exec_error("wfreader", "failed to read local weather file: " + std::string(file));
 
 		int records = wf.nrecords;
@@ -84,7 +85,7 @@ public:
 		assign( "step", var_data( (ssc_number_t)wf.step ) );
 		assign( "nrecords", var_data( (ssc_number_t)wf.nrecords ) );
 
-		if ( as_boolean("header_only") )
+		if ( header_only )
 			return;
 
 		ssc_number_t *p_year = allocate( "year", records );

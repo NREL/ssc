@@ -494,21 +494,6 @@ public:
 					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ), 
 					SSC_UPDATE, percent, time, text.c_str(), 0, m_hdata ) ? 1 : 0;
 	}
-
-/*
-	virtual bool on_exec( const std::string &command, const std::string &workdir )
-	{
-		if (!m_hfunc) return false;
-
-		return  (*m_hfunc)( static_cast<ssc_module_t>( module() ), 
-							static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ),
-							SSC_EXECUTE, 
-							0, 0, 
-							command.c_str(), workdir.c_str(), 
-							m_hdata ) ? true : false;
-
-	}
-*/
 };
 
 SSCEXPORT ssc_bool_t ssc_module_exec_with_handler( 
@@ -526,13 +511,7 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 		cm->log("invalid data object provided", SSC_ERROR);
 		return 0;
 	}
-
-	if (pf_handler == 0)
-	{
-		pf_handler = default_internal_handler;
-		pf_user_data = 0;
-	}
-
+	
 	default_exec_handler h( cm, pf_handler, pf_user_data );
 	return cm->compute( &h, vt ) ? 1 : 0;
 }

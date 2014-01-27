@@ -528,15 +528,19 @@ bool weatherfile::open( const std::string &file, bool header_only, bool interp )
 		if (p && *p) p++;
 		if (p && *p) start_sec = atoi(p);
 		
-		m_time = start_hour*3600 + start_min*60 + start_sec;
-		start = m_time;
 
-		nrecords = 0;
-		while (fgets(buf, NBUF, fp ) != 0)
-			nrecords ++;
+		if( !header_only )
+		{
+			m_time = start_hour*3600 + start_min*60 + start_sec;
+			start = m_time;
 
-		::rewind( fp );
-		fgets( buf, NBUF, fp );
+			nrecords = 0;
+			while (fgets(buf, NBUF, fp ) != 0)
+				nrecords ++;
+
+			::rewind( fp );
+			fgets( buf, NBUF, fp );
+		}
 	}
 	else if ( m_type == WFCSV )
 	{
@@ -617,42 +621,46 @@ bool weatherfile::open( const std::string &file, bool header_only, bool interp )
 				hdr_step_sec = atoi( value );
 			}
 		}
+			
+		
+		// only scan to determine # of records
+		// if we actually plan to read in the whole file
+		if ( !header_only )
+		{		
+			start = 1800;
+			step = 3600;
+			nrecords = 8760;
+		
+			fgets( buf, NBUF, fp ); // col names
+			if ( hasunits ) fgets( buf, NBUF, fp ); // col units
 
-		
-		
-		start = 1800;
-		step = 3600;
-		nrecords = 8760;
-		
-		
-		fgets( buf, NBUF, fp ); // col names
-		if ( hasunits ) fgets( buf, NBUF, fp ); // col units
+			nrecords = 0; // figure out how many records there are
+			while (fgets(buf, NBUF, fp ) != 0 && strlen(buf) > 0)
+				nrecords ++;
 
-		nrecords = 0; // figure out how many records there are
-		while (fgets(buf, NBUF, fp ) != 0 && strlen(buf) > 0)
-			nrecords ++;
-
-		// reposition to where we were
-		::rewind( fp );
-		fgets( buf, NBUF, fp ); // header names
-		fgets( buf, NBUF, fp ); // header values
+			// reposition to where we were
+			::rewind( fp );
+			fgets( buf, NBUF, fp ); // header names
+			fgets( buf, NBUF, fp ); // header values
 		
-		// now determine timestep as best as possible
-		int nmult = nrecords / 8760;
+			// now determine timestep as best as possible
+			int nmult = nrecords / 8760;
 
-		if ( hdr_step_sec > 0 )
-		{  // if explicitly specified in header?
-			step = hdr_step_sec;
-			start = step/2;
+			if ( hdr_step_sec > 0 )
+			{  // if explicitly specified in header?
+				step = hdr_step_sec;
+				start = step/2;
+			}
+			else if ( nmult*8760 == nrecords )
+			{
+				// multiple of 8760 records: assume 1 year of data
+				step = 3600/nmult;
+				start = step/2;
+			}
+			else
+				m_ok = false;
 		}
-		else if ( nmult*8760 == nrecords )
-		{
-			// multiple of 8760 records: assume 1 year of data
-			step = 3600/nmult;
-			start = step/2;
-		}
-		else
-			m_ok = false;
+
 	}
 	else
 	{	
