@@ -58,7 +58,8 @@ extern module_entry_info
 	cm_entry_tcsdish,
 	cm_entry_tcsiscc,
 	cm_entry_tcsmslf,
-	cm_entry_hcpv;
+	cm_entry_hcpv,
+	cm_entry_wind_file_reader;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -100,6 +101,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_tcsiscc,
 	&cm_entry_tcsmslf,
 	&cm_entry_hcpv,
+	&cm_entry_wind_file_reader,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
