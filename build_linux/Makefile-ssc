@@ -20,6 +20,7 @@ LDFLAGS += -m32
 endif
 
 OBJECTS = \
+	cmod_windfile.o \
 	cmod_pvwattsfunc.o \
 	cmod_wfcsv.o \
 	cmod_test_pvshade.o \
