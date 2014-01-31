@@ -25,6 +25,7 @@ enum{	//Parameters
 		I_W_DOT_PC_FOSSIL,
 		I_F_TIMESTEP,
 		I_Q_SOLAR_SS,
+		I_Q_DOT_FUEL,
 
 		//Outputs
 		O_W_DOT_PC_HYBRID,
@@ -33,6 +34,8 @@ enum{	//Parameters
 		O_W_DOT_PLANT_FOSSIL, 
 		O_W_DOT_PLANT_SOLAR,
 		O_ETA_SOLAR_USE,
+		O_ETA_FUEL,
+		O_SOLAR_FRACTION,
 
 		//N_MAX
 		N_MAX};
@@ -59,7 +62,8 @@ tcsvarinfo sam_iscc_parasitics_variables[] = {
 	{TCS_INPUT, TCS_NUMBER, I_W_DOT_PC_HYBRID,    "W_dot_pc_hybrid",        "Net PC power with solar",                                  "MWe",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_W_DOT_PC_FOSSIL,    "W_dot_pc_fossil",        "Net PC power at no-solar baseline",                      "MWe",   "", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_F_TIMESTEP,         "f_timestep",             "Fraction of timestep that receiver is operational (not starting-up)",      "-",        "", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_Q_SOLAR_SS,         "q_solar_ss",             "Solar thermal power at steady state - no derate for startup", "MWe", "", "", ""},         
+	{TCS_INPUT, TCS_NUMBER, I_Q_SOLAR_SS,         "q_solar_ss",             "Solar thermal power at steady state - no derate for startup", "MWe", "", "", ""},     
+	{TCS_INPUT, TCS_NUMBER, I_Q_DOT_FUEL,         "q_dot_fuel",             "Fuel thermal power into gas turbines",                      "kW",    "", "", ""},
 
 	//OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_HYBRID,   "W_dot_pc_hybrid",        "Net POWER CYCLE power output with solar",                  "MWe",      "", "", ""},
@@ -68,6 +72,8 @@ tcsvarinfo sam_iscc_parasitics_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PLANT_FOSSIL,"W_dot_plant_fossil",     "Net PLANT power output at baseline",                       "MWe",      "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PLANT_SOLAR, "W_dot_plant_solar",      "Net PLANT power output attributable",                      "MWe",      "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_ETA_SOLAR_USE,     "eta_solar_use",          "Solar use efficiency considering parasitics",              "",         "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_ETA_FUEL,          "eta_fuel",               "Electrical efficiency of fossil only operation",           "%",        "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_SOLAR_FRACTION,    "solar_fraction",         "Solar contribution to total electrical power",             "-",        "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
@@ -142,6 +148,7 @@ public:
 		double W_dot_pc_fossil = value( I_W_DOT_PC_FOSSIL );    //[MWe] Fossil-only power cycle output
 		double f_timestep = value( I_F_TIMESTEP );				//[-] Fracion of timestep that receiver is operating (not starting up)
 		double q_solar = value( I_Q_SOLAR_SS );					//[MWt] Steady-state receiver thermal power 
+		double q_dot_fuel = value(I_Q_DOT_FUEL);				//[kWt] Fuel thermal power
 
 		// HTF power cycle HX pumping power
 		double W_dot_htf = W_htf_pc_pump*m_dot_htf/(3600.0)/1000.0;		//[kJ/kg]*[kg/hr]*[hr/s]*[MW/kW] = [MWe] HTF pumping power through power cycle heat exchanger
@@ -176,6 +183,8 @@ public:
 		// Calculate plant fossil power output for timestep
 		double W_dot_plant_fossil = W_dot_pc_fossil - W_dot_fixed;
 
+		double eta_fuel = W_dot_plant_fossil * 1000 / q_dot_fuel * 100.0;	//[%] Electrical efficiency of fossil-only mode after fixed losses
+
 		// Calculate solar use fraction with parasitics
 		double eta_solar_use = 0.0;
 		if( q_solar > 0.0 )
@@ -194,6 +203,8 @@ public:
 		value( O_W_DOT_PLANT_FOSSIL, W_dot_plant_fossil );			//[MWe]
 		value(O_W_DOT_PLANT_SOLAR, W_dot_plant_hybrid - W_dot_plant_fossil);
 		value( O_ETA_SOLAR_USE, eta_solar_use );					//[MWe]
+		value(O_ETA_FUEL, eta_fuel);					//[%]
+		value(O_SOLAR_FRACTION, (W_dot_plant_hybrid - W_dot_plant_fossil) / W_dot_plant_hybrid);	//[-]
 		
 		return 0;
 

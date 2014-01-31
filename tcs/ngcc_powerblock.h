@@ -23,6 +23,7 @@ private:
 	util::block_t<double> m_solar_injection_h;
 	util::block_t<double> m_plant_power_net;
 	util::block_t<double> m_solar_heat_max;
+	util::block_t<double> m_plant_fuel_mass;
 	
 	// Pointer to util::block_t that can be set to whatever performance metric current call wants
 	util::block_t<double> * p_current_table;
@@ -91,6 +92,8 @@ public:
 			return get_performance_results( &m_solar_injection_h );
 		case E_plant_power_net:
 			return get_performance_results( &m_plant_power_net );
+		case E_plant_fuel_mass:
+			return get_performance_results( &m_plant_fuel_mass) ;
 		case E_solar_heat_max:
 			return get_performance_results( &m_solar_heat_max );
 		default:
@@ -108,6 +111,7 @@ public:
 		E_solar_extraction_h,
 		E_solar_injection_h,
 		E_plant_power_net,
+		E_plant_fuel_mass,
 		E_solar_heat_max
 	};
 };

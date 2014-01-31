@@ -36,6 +36,8 @@ enum{	//Parameters
 		O_P_ST_HOT, 
 		O_ETA_SOLAR_PC,
 		O_Q_DOT_MAX,
+		O_FUEL_USE,
+		O_Q_DOT_FUEL,
 
 		//N_MAX
 		N_MAX};
@@ -69,6 +71,8 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_P_ST_HOT,      "P_st_hot",         "Steam extraction pressure TO ngcc",                   "bar",   "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_ETA_SOLAR_PC,  "eta_solar_pc",     "Solar use efficiency - no solar parasitics",          "-",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_MAX,     "Q_dot_max",        "Maximum allowable thermal power to power cycle",      "MWt",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_FUEL_USE,      "fuel_use",         "Total fossil fuel used during timestep",              "MMBTU", "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_FUEL,    "q_dot_fuel",       "Fuel thermal power into gas turbines",                "kW",    "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
@@ -107,6 +111,8 @@ private:
 	double m_P_amb_low; 
 	double m_P_amb_high;
 	double m_q_dot_rec_max;
+	double m_plant_fuel_mass;
+	double m_q_dot_fuel;
 
 	// Better convergence
 	bool m_T_lowflag_ncall;
@@ -150,6 +156,8 @@ public:
 		m_T_up_ncall = std::numeric_limits<double>::quiet_NaN();
 
 		m_q_dot_rec_max = std::numeric_limits<double>::quiet_NaN();
+		m_plant_fuel_mass = std::numeric_limits<double>::quiet_NaN();
+		m_q_dot_fuel = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_iscc_powerblock()
@@ -345,6 +353,11 @@ public:
 			value( O_W_DOT_PC_FOSSIL, m_W_dot_pc_fossil );
 			m_q_dot_rec_max = cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_heat_max )*1000.0;	//[kWt] Convert from MWt
 			value(O_Q_DOT_MAX, m_q_dot_rec_max/1.E3);
+			double m_dot = cycle_calcs.get_ngcc_data(0.0, T_amb, P_amb, ngcc_power_cycle::E_plant_fuel_mass);				//[kg/s] Fuel mass flow rate
+			m_plant_fuel_mass = m_dot*0.045556*step;	//[MMBTU] Fuel use over time period (LHV = 48065 kJ/kg per IPSEpro model)
+			m_q_dot_fuel = m_dot * 48065;				//[kW] Fuel thermal power into system
+			value(O_FUEL_USE, m_plant_fuel_mass);
+			value(O_Q_DOT_FUEL, m_q_dot_fuel);
 		}
 
 		if( q_dot_rec == 0 )
