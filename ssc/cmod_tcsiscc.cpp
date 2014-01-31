@@ -84,7 +84,8 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_st_cold",         "Steam temp from NGCC to HX",                                             "C",             "",             "Outputs",        "*",                      "",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_st_hot",          "Steam temp from HX back to NGCC",                                        "C",             "",             "Outputs",        "*",                      "",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_dot_max",         "Max allowable thermal power to NGCC",                                    "MWt",           "",             "Outputs",        "*",                      "",                       "" },
-	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuel_use",          "Natural gas used during timestep",                                 "MMBTU",         "",             "Outputs",        "*",                      "",                       "" },
+
 	// sam_iscc_parasitics
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_hybrid",   "Net power cycle output including solar power",                           "MWe",           "",             "Outputs",        "*",                      "",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_fossil",   "Net power cycle output only considering fossil power",                   "MWe",           "",             "Outputs",        "*",                      "",                       "" },
@@ -92,6 +93,8 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_fossil","Net plant output only considering fossil power & parasitics",            "MWe",           "",             "Outputs",        "*",                      "",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_solar", "Net plant output attributable to solar",                                 "MWe",           "",             "Outputs",        "*",                      "",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_solar_use",     "Solar use efficiency considering parasitics",                            "",              "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_fuel",          "Electrical efficiency of fossil only operation",                         "%",             "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solar_fraction",    "Solar fraction",                                                         "",              "",             "Outputs",        "*",                      "",                       "" },
 
 	var_info_invalid };
 
@@ -223,6 +226,7 @@ public:
 		bConnected = connect(iscc_pb, "W_dot_pc_fossil", iscc_parasitics, "W_dot_pc_fossil");
 		bConnected = connect(receiver, "f_timestep", iscc_parasitics, "f_timestep");
 		bConnected = connect(receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss");
+		bConnected = connect(iscc_pb, "q_dot_fuel", iscc_parasitics, "q_dot_fuel");
 
 		// check if all connections worked
 		if ( !bConnected )
