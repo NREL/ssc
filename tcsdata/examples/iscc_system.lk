@@ -304,6 +304,7 @@ connect( iscc_pb, "W_dot_pc_hybrid", iscc_parasitics, "W_dot_pc_hybrid" );
 connect( iscc_pb, "W_dot_pc_fossil", iscc_parasitics, "W_dot_pc_fossil" );
 connect( receiver, "f_timestep", iscc_parasitics, "f_timestep" );
 connect( receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss" );
+connect(iscc_pb, "q_dot_fuel", iscc_parasitics, "q_dot_fuel");
 
 simulate(1,8760,1,30,false);
 
