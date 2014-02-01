@@ -16,7 +16,7 @@ Conduction Between Nodes: Off
 
 static var_info _cm_vtab_swh[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "file_name",             "local weather file path",          "",       "",                      "Weather",      "*",                         "LOCAL_FILE",                  "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",             "local weather file path",          "",       "",                      "Weather",      "*",                         "LOCAL_FILE",                  "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                   "kg/hr",  "",                      "SWH",      "*",                       "LENGTH=8760",						 "" },
 
@@ -99,7 +99,7 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		const char *file = as_string("file_name");
+		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf(file);
 		if (!wf.ok()) throw exec_error("swh", "failed to read local weather file: " + std::string(file));
