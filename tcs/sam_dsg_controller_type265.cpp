@@ -665,6 +665,13 @@ public:
 
 	virtual int init()
 	{
+		/*
+		util::matrix_t<double> test(3);
+		test[0] = 0.0;
+		test[1] = 1.0;
+		test[2] = 2.0;
+		*/
+
     // use_refprop = .false.				// Can't call refprop with current setup
 		m_fossil_mode = value( P_fossil_mode );			//[-] The fossil fill operation strategy mode
 		m_q_pb_design = value( P_q_pb_design )*1.0E6;	//[W] Heat rate into powerblock at design
@@ -740,14 +747,14 @@ public:
 		double mat_fin = value( P_mat_fin );			//[-] Numerical code for fin material (2:Stainless_AISI316, 28: T-91 Steel)
 		double A_cs_b = CSP::pi*0.25*pow(d_t_boiler,2);	//[m^2] Cross-sectional area of boiler tube
 
-		if( !dsg_rec.Initialize_Receiver( n_panels, d_rec, per_rec, hl_ffact, flowtype ))
+		if( !dsg_rec.Initialize_Receiver( n_panels, d_rec, per_rec, hl_ffact, flowtype, false, 0, 0.0 ))
 		{
 			message( "Receiver initialization failed" );
 			return -1;
 		}
 
 		if( !boiler.Initialize_Boiler( dsg_rec, m_h_boiler, d_t_boiler, th_t_boiler, emis_boiler, mat_boiler, 0.0,
-			th_fin, l_fin, emis_fin, mat_fin ) )
+			th_fin, l_fin, emis_fin, mat_fin, false ) )
 		{
 			message( "Boiler initialization failed" );
 			return -1;
@@ -764,7 +771,7 @@ public:
 		double A_cs_sh = CSP::pi*0.25*pow(m_th_sh, 2);	//[m^2] Cross-sectional area of superheating tube
 		double h_sh_max = 4658519.0;		//[J/kg] Corresponds to maximum possible temperature of lookup tables so steam code doesn't bug out
    
-		if( !superheater.Initialize_Boiler( dsg_rec, m_h_sh, m_d_sh, m_th_sh, m_emis_sh, m_mat_sh, h_sh_max, 0.0, 0.0, 0.0, 0.0 ) )
+		if( !superheater.Initialize_Boiler( dsg_rec, m_h_sh, m_d_sh, m_th_sh, m_emis_sh, m_mat_sh, h_sh_max, 0.0, 0.0, 0.0, 0.0, false ) )
 		{
 			message( "Superheater initialization failed" );
 			return -1;
@@ -781,7 +788,7 @@ public:
 		double A_cs_rh = CSP::pi*0.25*pow(m_th_rh, 2);	//[m^2] Cross-sectional area of reheater tube
 		double h_rh_max = 4658519.0;				//[J/kg]
 
-		if( !reheater.Initialize_Boiler( dsg_rec, m_h_rh, m_d_rh, m_th_rh, m_emis_rh, m_mat_rh, h_rh_max, 0.0, 0.0, 0.0, 0.0 ) )
+		if( !reheater.Initialize_Boiler( dsg_rec, m_h_rh, m_d_rh, m_th_rh, m_emis_rh, m_mat_rh, h_rh_max, 0.0, 0.0, 0.0, 0.0, false ) )
 		{
 			message( "Reheater initialization failed" );
 			return -1;
@@ -848,9 +855,9 @@ public:
 		water_PH( m_P_hp_in_des, h_fw_out_des, &wp );
 		double T_fw_out_des = wp.T + 273.15; double rho_fw_out_des = wp.dens;	//[K] Design feedwater outlet temp, [kg/m^3] Design feedwater outlet density
 
-		double m_dot_tube_b = (m_m_dot_des/m_x_b_target)/boiler.Get_n_flowpaths()/(per_rec/(double)dsg_rec.Get_n_panels()/d_t_boiler);	//[kg/s]
-		double m_dot_tube_sh = (m_m_dot_des/superheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels()/m_d_sh);				//[kg/s]
-		double m_dot_tube_rh = (m_m_dot_des/reheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels()/m_d_rh);					//[kg/s]
+		double m_dot_tube_b = (m_m_dot_des/m_x_b_target)/boiler.Get_n_flowpaths()/(per_rec/(double)dsg_rec.Get_n_panels_rec()/d_t_boiler);	//[kg/s]
+		double m_dot_tube_sh = (m_m_dot_des/superheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_sh);				//[kg/s]
+		double m_dot_tube_rh = (m_m_dot_des/reheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_rh);					//[kg/s]
 
 		//Helpful metrics - not used elsewhere in code
 		double v_boiler_in = (m_dot_tube_b/m_x_b_target)/(rho_fw_out_des*A_cs_b);	//[m/s] Design fluid entrance velocity in boiler tube
@@ -1039,7 +1046,7 @@ public:
 				}
 				// Translate to the number of panels, so each panel has its own linearly interpolated flux value
 				// Originally from Type 222
-				double n_panels = (double) dsg_rec.Get_n_panels();
+				double n_panels = (double) dsg_rec.Get_n_panels_rec();
 				for( int i = 0; i < n_panels; i++ )
 				{
 					double ppos = (12.0/n_panels*i+6.0/n_panels);
@@ -1219,7 +1226,7 @@ public:
 			{
 				defocus_mode = false;
 				df_count++;							//[-] Increase defocus iteration counter
-				for( int i = 0; i < dsg_rec.Get_n_panels(); i++ )
+				for( int i = 0; i < dsg_rec.Get_n_panels_rec(); i++ )
 					m_q_inc.at(i,0) = m_defocus*m_q_inc_base.at(i,0);		//[W/m^2] Defocused incident radiation on receiver
 				m_q_total_df = m_defocus*m_q_total; //[W] Defocused total power on receiver
 				
@@ -1492,7 +1499,7 @@ public:
 					// ******** End of reheater convergence logic ********************************************
 					// ***************************************************************************************
 					double sum_q_inc_rh = 0.0;
-					for( int i = 0; i < dsg_rec.Get_n_panels(); i++ )
+					for( int i = 0; i < dsg_rec.Get_n_panels_rec(); i++ )
 					{
 						m_q_inc_rh.at(i,0) = m_f_rh * m_q_inc.at(i,0) * m_h_total / m_h_rh;	//[W/m^2] Incident radiation on reheater
 						sum_q_inc_rh += m_q_inc_rh.at(i,0);
@@ -1682,7 +1689,7 @@ public:
 							}						
 						}
 					
-						for( int i = 0; i < dsg_rec.Get_n_panels(); i++ )
+						for( int i = 0; i < dsg_rec.Get_n_panels_rec(); i++ )
 						{
 							m_q_inc_b.at(i,0) = m_f_b*(1.0-m_f_rh)*m_q_inc.at(i,0)*m_h_total/m_h_boiler;
 							m_q_inc_sh.at(i,0) = (1.0 - m_f_b)*(1.0 - m_f_rh)*m_q_inc.at(i,0)*m_h_total/m_h_sh;

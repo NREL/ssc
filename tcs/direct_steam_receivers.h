@@ -10,19 +10,26 @@ class C_DSG_macro_receiver
 {
 public:
 
-	bool Initialize_Receiver( int n_panels, double d_rec, double per_rec, double hl_ffact, int flowtype );
-	int Get_n_panels() {return m_n_panels;};
+	bool Initialize_Receiver(int n_panels, double d_rec, double per_rec, double hl_ffact, int flowtype, bool is_iscc, int n_panels_sh, double sh_h_frac);
+	int Get_n_panels_rec() {return m_n_panels;};
 	double Get_d_rec() {return m_d_rec;};
 	double Get_per_rec() {return m_per_rec;};
+	double Get_per_panel() {return m_per_panel;};
 	double Get_hl_ffact() {return m_hl_ffact;};
 	int Get_flowtype() {return m_flowtype;};
+	bool is_iscc() {return m_is_iscc;};
+	int Get_n_panels_sh() {return m_n_panels_sh;};
 
 private:
 	int m_n_panels;		//[-] Number of panels
 	double m_d_rec;		//[m] Diameter of receiver
 	double m_per_rec;	//[m] Perimeter of receiver
+	double m_per_panel; //[m] Perimeter of one panel
 	double m_hl_ffact;	//[-] Heat Loss Fudge FACTor
-	int m_flowtype;		//[-] Code for flow pattern*/
+	int m_flowtype;		//[-] Code for flow pattern
+	int m_n_panels_sh;	//[-] Number of panels that contain superheat sections
+	double m_sh_h_frac;	//[-] Fraction of panel composed of superheater seection
+	bool m_is_iscc;		//[-] ISCC boiler-sh configuration
 };
 
 
@@ -34,7 +41,7 @@ public:
 
 	bool Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec, double d_tube, double th_tube,
 					   double eps_tube, double mat_tube, double h_sh_max, double th_fin,
-					   double L_fin, double eps_fin, double mat_fin);
+					   double L_fin, double eps_fin, double mat_fin, bool is_iscc_sh );
 	
 	int Get_n_flowpaths() {return m_n_fr;};
 
@@ -62,7 +69,11 @@ private:
 	HTFProperties tube_material;
 	property_info wp;
 
+	//util::matrix_t<double> m_h_rec;	//[m] Height of boiler - can differ per panel in iscc model
 	double m_h_rec;		//[m] Height of boiler
+
+	int m_n_panels;		//[-] Number of panels active for receiver type (i.e. N_boiler, N_sh, etc)
+	
 	double m_d_tube;	//[m] O.D. of boiler tubes
 	double m_th_tube;	//[m] Thickness of boiler tubes
 	double m_eps_tube;	//[-] Emissivity of boiler tubes
