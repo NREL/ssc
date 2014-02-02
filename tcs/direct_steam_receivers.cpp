@@ -12,28 +12,65 @@ double h_mixed( HTFProperties &air, double T_node_K, double T_amb_K, double v_wi
 double Flow_Boiling( double T_sat, double T_surf, double G, double d, double x_in, double q_t_flux, double rho_l, double rho_v, double k_l,
 					 double mu_l, double Pr_l, double enth_l, double h_diff, double grav, double mu_v, double c_v, double k_v, double RelRough );
 
-bool C_DSG_macro_receiver::Initialize_Receiver( int n_panels, double d_rec, double per_rec, double hl_ffact, int flowtype )
+bool C_DSG_macro_receiver::Initialize_Receiver( int n_panels, double d_rec, double per_rec, double hl_ffact, int flowtype, bool is_iscc, int n_panels_sh, double sh_h_frac )
 {  
 	m_n_panels = n_panels;
-	// Receiver panels should not be decreases below 12 due to flux interpolation
-	if( m_n_panels < 12 ) {return false;}
+	m_is_iscc = is_iscc;
+
+	// The number of receiver panels should not be less than 12
+	if( !is_iscc && m_n_panels < 12 ) {return false;}
 		// Pass message about error?
+		// ISCC can interpolate flux for less than 12 panels - can think about adding this for CSP-only DSG
 
 	m_d_rec = d_rec;
 	m_per_rec = per_rec;
 	m_hl_ffact = hl_ffact;
 	m_flowtype = flowtype;
+
+	m_per_panel = m_per_rec / (double)m_n_panels;
+
+	if(m_is_iscc)
+	{
+		m_sh_h_frac = sh_h_frac;
+		m_n_panels_sh = n_panels_sh;
+	}
+	else
+	{
+		m_sh_h_frac = 0.0;
+		m_n_panels_sh = 0;
+	}
 	
 	return true;
 }
 
 bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec, double d_tube, double th_tube,
 					   double eps_tube, double mat_tube, double h_sh_max, double th_fin,
-					   double L_fin, double eps_fin, double mat_fin )
+					   double L_fin, double eps_fin, double mat_fin, bool is_iscc_sh )
 { 
 	m_dsg_rec = dsg_rec;
-		
+
+	if( m_dsg_rec.is_iscc() )
+	{
+		if(is_iscc_sh)	// ISCC: Superheater
+		{
+			m_n_panels = m_dsg_rec.Get_n_panels_sh();		
+		}
+		else			// ISCC: Boiler
+		{
+			m_n_panels = m_dsg_rec.Get_n_panels_rec();
+		}	
+	}	// DSG
+	else
+	{
+		m_n_panels = m_dsg_rec.Get_n_panels_rec();
+	}
+
+	//if( dsg_rec.is_iscc() )
+	//
+	//else
 	m_h_rec = h_rec;
+
+
 	m_d_tube = d_tube;
 	m_th_tube = th_tube;
 	m_eps_tube = eps_tube;
@@ -45,7 +82,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	m_mat_fin = mat_fin;
 	m_h_sh_max = h_sh_max;
 
-	m_q_inc.resize( m_dsg_rec.Get_n_panels(), 1 );
+	m_q_inc.resize( m_n_panels, 1 );
 	m_q_inc.fill( 0.0 );
 
 	// DELSOL flux map has already included absorptance, so set to 1 here
@@ -56,8 +93,10 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
     m_m_mixed = 3.2;	//[-] Exponential for calculating mixed convection
     m_fin_nodes = 10;	//[-] Model fin with 10 nodes	
 
-	m_per_panel = m_dsg_rec.Get_per_rec()/(double) m_dsg_rec.Get_n_panels();  //[m] "Perimeter" of individual panel
-	m_nodes = m_dsg_rec.Get_n_panels()/m_n_fr;		//[-] Nodes (panels) per flow path: INTEGER    
+	//m_per_panel = m_dsg_rec.Get_per_rec()/(double) m_dsg_rec.Get_n_panels();  //[m] "Perimeter" of individual panel
+	m_per_panel = m_dsg_rec.Get_per_panel();
+	m_nodes = m_n_panels / m_n_fr;
+	//m_nodes = m_dsg_rec.Get_n_panels()/m_n_fr;		//[-] Nodes (panels) per flow path: INTEGER    
 
     double w_assem = m_d_tube + m_L_fin;	//[m] Total width of one tube/fin assembly
     m_n_par = (int) (m_per_panel/w_assem);	//[-] Number of parallel assemblies per panel
@@ -93,7 +132,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	//flow_pattern.resize( n_lines, dsg_rec.Get_n_panels()/n_lines );
 
 	// Get flow pattern
-	CSP::flow_patterns( dsg_rec.Get_n_panels(), dsg_rec.Get_flowtype(), n_lines, flow_pattern );
+	CSP::flow_patterns( m_n_panels, dsg_rec.Get_flowtype(), n_lines, flow_pattern );
 
 	/* Sorted number of independent panels in each flow path - applied when m_n_comb > 1 and panels should be modeled together
 	/ Example: For 12 panel receiver with 2 parallel flow panels:*/
@@ -182,7 +221,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	// *************************************************************
 
 	double energy_in = 0.0;
-	for( int i = 0; i < m_dsg_rec.Get_n_panels(); i++ )
+	for( int i = 0; i < m_n_panels; i++ )
 	{
 		m_q_inc.at(i,0) = I_q_inc_b.at(i,0);
 		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i,0);
@@ -1087,7 +1126,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double u_n_exit = 0.0;		//[m/s]
 
 	double energy_in = 0.0;
-	for( int i = 0; i < m_dsg_rec.Get_n_panels(); i++ )
+	for( int i = 0; i < m_n_panels; i++ )
 	{
 		m_q_inc.at(i,0) = I_q_inc_b.at(i,0);
 		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i,0);
