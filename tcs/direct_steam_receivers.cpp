@@ -89,10 +89,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 		for( int i = 0; i < m_nodes; i++ )
 			flow_pattern_adj.at( j, i ) = i + (m_nodes)*(j);   
 
-	m_h_rec = h_rec;
-
-	m_q_inc.resize( m_n_panels );
-	m_q_inc.fill( 0.0 );
+	m_h_rec.resize_fill(m_n_panels, h_rec);		
 
 	// DELSOL flux map has already included absorptance, so set to 1 here
 	m_abs_tube = m_abs_fin = 1.0;
@@ -105,7 +102,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 
     double w_assem = m_d_tube + m_L_fin;	//[m] Total width of one tube/fin assembly
     m_n_par = (int) (m_per_panel/w_assem);	//[-] Number of parallel assemblies per panel
-    m_L = m_h_rec;							//[m] Distance through one node
+    m_L = m_h_rec.at(0);					//[m] Distance through one node
 
     m_d_in = m_d_tube - 2.0*m_th_tube;		//[m] Inner diameter of tube
 	m_A_t_cs = CSP::pi*pow(m_d_in,2)/4.0;	//[m^2] Cross-sectional area of tubing
@@ -131,7 +128,9 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	}
 	m_L_fin_eff = 0.5*m_L_fin;			//[m] Half the distance between tubes = 1/2 fin length. Assuming symmetric, so it is all that needs to be modeled
 
-	  
+	 
+	m_q_inc.resize(m_n_panels);
+	m_q_inc.fill(0.0);
 	
 	m_q_adj.resize( m_n_fr*m_nodes );
 	m_q_adj.fill( 0.0 );
@@ -216,7 +215,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	for( int i = 0; i < m_n_panels; i++ )
 	{
 		m_q_inc.at(i) = I_q_inc_b.at(i,0);
-		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i);
+		energy_in += m_per_panel*m_h_rec.at(i)*m_q_inc.at(i);
 	}
 
 	// Create new flux arrays that allow for multiple panels in parallel flow
@@ -234,7 +233,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	double beta = 1.0 / T_amb;		//[1/K] Volumetric expansion coefficient
 
 		// [W/m^2-K] Calculates combined free and forced convection coefficient, same as used in fin HT model
-	double h_c = h_mixed( ambient_air, T_fw, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec, m_dsg_rec.Get_d_rec(), m_m_mixed );
+	double h_c = h_mixed( ambient_air, T_fw, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(0), m_dsg_rec.Get_d_rec(), m_m_mixed );
 	// Check if enough flux is available to produce positive net energy through each flow path
 	for( int j = 0; j < m_n_fr; j++ )
 	{
@@ -753,7 +752,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							{
 								// Add fin model
 							}
-							double h_c = h_mixed( ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec, m_dsg_rec.Get_d_rec(), m_m_mixed );	//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
+							double h_c = h_mixed(ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(flow_pattern_adj.at(j, i)), m_dsg_rec.Get_d_rec(), m_m_mixed);	//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
 							m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_1 - T_amb);	//[W] Convective heat transfer
 							m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground and ambient each 0.5
 							m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*m_A_n_proj + 2.0*m_q_fin*m_L;			//[W] Absorbed radiation + fin contributions
@@ -1115,7 +1114,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	for( int i = 0; i < m_n_panels; i++ )
 	{
 		m_q_inc.at(i) = I_q_inc_b.at(i,0);
-		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i);
+		energy_in += m_per_panel*m_h_rec.at(i)*m_q_inc.at(i);
 	}
 
 	// Create new flux arrays that allow for multiple panels in parallel flow
@@ -1138,7 +1137,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double iter_path_iter = 0;		//[-] Set iteration counter
 
 		// [W/m^2-K] Calculates combined free and forced convection coefficient, same as used in fin HT model
-	double h_c = h_mixed( ambient_air, T_in, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec, m_dsg_rec.Get_d_rec(), m_m_mixed );
+	double h_c = h_mixed(ambient_air, T_in, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(0), m_dsg_rec.Get_d_rec(), m_m_mixed);
 	// Check if enough flux is available to produce positive net energy through each flow path
 	for( int j = 0; j < m_n_fr; j++ )
 	{
@@ -1448,7 +1447,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 						}
 					} // end 'if diff_T1_g < 0.01' 
 						//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
-					double h_c = h_mixed( ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec, m_dsg_rec.Get_d_rec(), m_m_mixed );
+					double h_c = h_mixed(ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(flow_pattern_adj.at(j, i)), m_dsg_rec.Get_d_rec(), m_m_mixed);
 					m_q_conv.at(flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_1 - T_amb);		// Convective heat transfer
 					m_q_rad.at(flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer
 					m_q_abs.at(flow_pattern_adj.at(j,i)) = m_q_adj.at(flow_pattern_adj.at(j,i))*m_A_n_proj*m_abs_tube;
