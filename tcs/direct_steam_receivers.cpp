@@ -89,14 +89,11 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	m_abs_tube = m_abs_fin = 1.0;
 
 	m_n_fr	= 2;		//[-] Number of flow paths: Hardcode to 2 for steam receiver 
-    m_n_comb = 1;		//[-] Number of parallel panels in flow path. Hardcode to 1. Effectively reduces the number of receiver panels.
     m_m_mixed = 3.2;	//[-] Exponential for calculating mixed convection
     m_fin_nodes = 10;	//[-] Model fin with 10 nodes	
 
-	//m_per_panel = m_dsg_rec.Get_per_rec()/(double) m_dsg_rec.Get_n_panels();  //[m] "Perimeter" of individual panel
 	m_per_panel = m_dsg_rec.Get_per_panel();
 	m_nodes = m_n_panels / m_n_fr;
-	//m_nodes = m_dsg_rec.Get_n_panels()/m_n_fr;		//[-] Nodes (panels) per flow path: INTEGER    
 
     double w_assem = m_d_tube + m_L_fin;	//[m] Total width of one tube/fin assembly
     m_n_par = (int) (m_per_panel/w_assem);	//[-] Number of parallel assemblies per panel
@@ -126,28 +123,25 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	}
 	m_L_fin_eff = 0.5*m_L_fin;			//[m] Half the distance between tubes = 1/2 fin length. Assuming symmetric, so it is all that needs to be modeled
 
-	m_comb_nodes = m_nodes/m_n_comb;	//[-] Number of nodes considering # flow paths AND number of panels to be modeled together (m_n_comb)
-
 	int n_lines = 0;
-	//flow_pattern.resize( n_lines, dsg_rec.Get_n_panels()/n_lines );
 
 	// Get flow pattern
 	CSP::flow_patterns( m_n_panels, dsg_rec.Get_flowtype(), n_lines, flow_pattern );
 
 	/* Sorted number of independent panels in each flow path - applied when m_n_comb > 1 and panels should be modeled together
 	/ Example: For 12 panel receiver with 2 parallel flow panels:*/
-	flow_pattern_adj.resize( m_n_fr, m_comb_nodes );
+	flow_pattern_adj.resize( m_n_fr, m_nodes );
 	for( int j = 0; j < m_n_fr; j++ )
-		for( int i = 0; i < m_comb_nodes; i++ )
-			flow_pattern_adj.at( j, i ) = i + (m_nodes/m_n_comb)*(j);     
+		for( int i = 0; i < m_nodes; i++ )
+			flow_pattern_adj.at( j, i ) = i + (m_nodes)*(j);     
 	
-	m_q_adj.resize( m_n_fr*m_comb_nodes, 1 );
+	m_q_adj.resize( m_n_fr*m_nodes, 1 );
 	m_q_adj.fill( 0.0 );
-	m_q_conv.resize( m_n_fr*m_comb_nodes, 1 );
+	m_q_conv.resize( m_n_fr*m_nodes, 1 );
 	m_q_conv.fill( 0.0 );
-	m_q_rad.resize( m_n_fr*m_comb_nodes, 1 );
+	m_q_rad.resize( m_n_fr*m_nodes, 1 );
 	m_q_rad.fill( 0.0 );
-	m_q_abs.resize( m_n_fr*m_comb_nodes, 1 );
+	m_q_abs.resize( m_n_fr*m_nodes, 1 );
 	m_q_abs.fill( 0.0 );
 
 	m_x_path_out.resize( m_n_fr, 1 );
@@ -235,13 +229,15 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	{
 		for( int i = 0; i < m_nodes; i++ )
 		{
-			q_sum += m_q_inc.at( flow_pattern.at(j,i), 0 );
-			if( (i+1) % m_n_comb == 0 )
-			{
-				m_q_adj.at(k,0)		= q_sum / (double) m_n_comb;
-				q_sum = 0.0;
-				k++;
-			}
+			m_q_adj.at(k, 0) = m_q_inc.at(flow_pattern.at(j, i), 0);	
+			k++;
+			//q_sum += m_q_inc.at( flow_pattern.at(j,i), 0 );
+			//if( (i+1) % m_n_comb == 0 )
+			//{
+			//	m_q_adj.at(k,0)		= q_sum / (double) m_n_comb;
+			//	q_sum = 0.0;
+			//	k++;
+			//}
 		}
 	}
 	
@@ -253,7 +249,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	for( int j = 0; j < m_n_fr; j++ )
 	{
 		double q_wf_total = 0.0;
-		for( int i = 0; i < m_comb_nodes; i++ )
+		for( int i = 0; i < m_nodes; i++ )
 		{						
 			m_q_conv.at( flow_pattern_adj.at(j,i),0 ) = h_c*(m_A_n_proj + 2.0*m_A_fin)*(T_fw - T_amb);	//[W] Convective heat transfer
 			m_q_rad.at( flow_pattern_adj.at(j,i),0 ) = m_eps_tube*CSP::sigma*(m_A_n_proj+2.0*m_A_fin)*(0.5*(pow(T_fw,4) - pow(T_sky,4)) + 0.5*(pow(T_fw,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
@@ -469,7 +465,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 				}
 			}
 			// Mass flow rate in one tube - assuming one flow path (for m_dot_total)
-			double m_dot_total = m_dot_in /( (double) m_n_par * (double) m_n_comb );	//[kg/s]
+			double m_dot_total = m_dot_in /( (double) m_n_par );	//[kg/s]
 			m_m_dot_path.fill( m_dot_total / (double) m_n_fr );		//[kg/s] mass flow rate in each flow path
 
 			double h_n_in, rho_n_in, P_n_in, dp, diff_T_ht, m_dot;
@@ -487,7 +483,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 				double T_1, grav_mult;
 				T_1 = grav_mult = std::numeric_limits<double>::quiet_NaN();
-				for( int i = 0; i < m_comb_nodes; i++ )		// Now solve energy balance for each node (or panel) in flow path. Output of i is input to i+1
+				for( int i = 0; i < m_nodes; i++ )		// Now solve energy balance for each node (or panel) in flow path. Output of i is input to i+1
 				{
 					if(i==0)
 						T_1 = T_n_in + 45.0;
@@ -917,7 +913,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						break;
 
 					// Don't let boiler approach superheater: it affects the temperature limits on the energy balance
-					if( x_n_out > 0.85 && i < m_comb_nodes - 1 )
+					if( x_n_out > 0.85 && i < m_nodes - 1 )
 					{
 						mdot_flag = 1;
 						break_to_massflow_calc = true;
@@ -953,8 +949,8 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						break;
 
 				double uplast_mult = std::numeric_limits<double>::quiet_NaN();;
-				if( m_comb_nodes%2 == 0 )	uplast_mult = 1.0;
-				else						uplast_mult = 0.0;
+				if( m_nodes%2 == 0 )	uplast_mult = 1.0;
+				else					uplast_mult = 0.0;
 				
 				m_x_path_out.at(j,0) = x_n_out;		//[-] Outlet quality of path
 				m_h_path_out.at(j,0) = h_n_out;		//[J/kg] Keep track of enthalpy outlet of flow path
@@ -999,16 +995,16 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	
 	//m_q_conv.resize( m_n_fr*m_comb_nodes, 1 );
 	double q_conv_sum = 0.0, q_rad_sum = 0.0, q_abs_sum = 0.0;
-	for( int i = 0; i < m_n_fr*m_comb_nodes; i++ )
+	for( int i = 0; i < m_n_fr*m_nodes; i++ )
 	{
 		q_conv_sum += m_q_conv.at( i, 0 );
 		q_rad_sum += m_q_rad.at( i, 0 );
 		q_abs_sum += m_q_abs.at( i, 0 );
 	}
 
-	double q_conv_boiler = q_conv_sum*(double)m_n_par*(double)m_n_comb/1.E6;	//[MW] Total convective loss from boiler
-	double q_rad_boiler = q_rad_sum*(double)m_n_par*(double)m_n_comb/1.E6;		//[MW] Total radiative loss from boiler
-	double q_abs_boiler = q_abs_sum*(double)m_n_par*(double)m_n_comb/1.E6;		//[MW] Total energy rate absorbed by boiler
+	double q_conv_boiler = q_conv_sum*(double)m_n_par/1.E6;		//[MW] Total convective loss from boiler
+	double q_rad_boiler = q_rad_sum*(double)m_n_par/1.E6;		//[MW] Total radiative loss from boiler
+	double q_abs_boiler = q_abs_sum*(double)m_n_par/1.E6;		//[MW] Total energy rate absorbed by boiler
 
 	double eta_rec = energy_out / energy_in;			//[-] Efficiency of receiver
 
@@ -1098,7 +1094,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	O_q_out_W = -999.9;
 
 	// Mass flow rate in one tube * ASSUMING ONE FLOW PATH *
-	double m_dot_total = m_dot_in / ((double)m_n_par*(double)m_n_comb);		//[kg/s]
+	double m_dot_total = m_dot_in / ((double)m_n_par);		//[kg/s]
 
 	
 
@@ -1140,13 +1136,16 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	{
 		for( int i = 0; i < m_nodes; i++ )
 		{
-			q_sum += m_q_inc.at( flow_pattern.at(j,i), 0 );
-			if( i % m_n_comb == 0 )
-			{
-				m_q_adj.at(k,0)		= q_sum / (double) m_n_comb;
-				q_sum = 0.0;
-				k++;
-			}
+			m_q_adj.at(k, 0) = m_q_inc.at(flow_pattern.at(j, i), 0);
+			k++;
+
+			//q_sum += m_q_inc.at( flow_pattern.at(j,i), 0 );
+			//if( i % m_n_comb == 0 )
+			//{
+			//	m_q_adj.at(k,0)		= q_sum / (double) m_n_comb;
+			//	q_sum = 0.0;
+			//	k++;
+			//}
 		}
 	}
 
@@ -1163,7 +1162,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	for( int j = 0; j < m_n_fr; j++ )
 	{
 		m_q_wf_total.at(j,0) = 0.0;
-		for( int i = 0; i < m_comb_nodes; i++ )
+		for( int i = 0; i < m_nodes; i++ )
 		{						
 			m_q_conv.at( flow_pattern_adj.at(j,i),0 ) = h_c*m_A_n_proj*(T_in - T_amb);	//[W] Convective heat transfer
 			m_q_rad.at( flow_pattern_adj.at(j,i),0 ) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_in,4) - pow(T_sky,4)) + 0.5*(pow(T_in,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
@@ -1211,7 +1210,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 		double m_dot = m_m_dot_path.at(j,0);	//[kg/s] Use m_dot so we don't have to carry array through
 
 		double T_n_ave, h_n_out, P_out, u_n;
-		for( int i = 0; i < m_comb_nodes; i++ )
+		for( int i = 0; i < m_nodes; i++ )
 		{
 			if(i==0)	T_1 = T_n_in + 45.0;
 			else		T_1 = T_n_in + 1.5*diff_T_ht;
@@ -1544,7 +1543,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 			T_n_in = wp.T + 273.15;		//[K]
 
 			//if( T_n_in > T_target_out+50.0 && iter_P_ave < 125 )
-			if( T_n_in > T_target_out+50.0 && i < m_comb_nodes - 1 )
+			if( T_n_in > T_target_out+50.0 && i < m_nodes - 1 )
 			{
 				sh_exit = 3;
 				return false;
@@ -1584,16 +1583,16 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double q_rad_sh_sum = 0.0;
 	double q_conv_sh_sum = 0.0;
 	double q_abs_sh_sum = 0.0;
-	for( int j = 0; j < m_n_fr*m_comb_nodes; j++ )
+	for( int j = 0; j < m_n_fr*m_nodes; j++ )
 	{
 		q_rad_sh_sum += m_q_rad.at(j,0);
 		q_conv_sh_sum += m_q_conv.at(j,0);
 		q_abs_sh_sum += m_q_abs.at(j,0);
 	}
 
-	double q_rad_sh = q_rad_sh_sum*(double)m_n_par*(double)m_n_comb/1.E6;	//[MW] Total radiative loss from superheater
-	double q_conv_sh = q_conv_sh_sum*(double)m_n_par*(double)m_n_comb/1.E6;	//[MW] Total convective loss from superheater
-	double q_abs_sh = q_abs_sh_sum*(double)m_n_par*(double)m_n_comb/1.E6;	//[MW] Total energy rate absorbed by superheater
+	double q_rad_sh = q_rad_sh_sum*(double)m_n_par/1.E6;	//[MW] Total radiative loss from superheater
+	double q_conv_sh = q_conv_sh_sum*(double)m_n_par/1.E6;	//[MW] Total convective loss from superheater
+	double q_abs_sh = q_abs_sh_sum*(double)m_n_par/1.E6;	//[MW] Total energy rate absorbed by superheater
 
 	O_P_sh_out_kPa = P_out_avg;			//[kPa]
 	O_eta_rec = eta_rec;

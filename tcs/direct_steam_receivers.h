@@ -87,7 +87,6 @@ private:
 	double m_abs_fin;	//[-] Absorptivity of fin material
 
 	int m_n_fr;			//[-] Number of flow paths: Hardcode to 2
-	int m_n_comb;		//[-] Number of parallel panels in flow path. Hardcode to 1. Effectively reduces the number of receiver panels.
 	double m_m_mixed;	//[-] Exponential for calculating mixed convection
 	int m_fin_nodes;	//[-] Number of nodes used to model fin
 	double m_per_panel;	//[m] Perimeter of one panel
@@ -108,8 +107,6 @@ private:
 	double m_dx_fin;		//[m] !Distance between nodes in numerical fin model
 	double m_L_fin_eff;	//[m] Half the distance between tubes = 1/2 fin length. Assuming symmetric, so it is all that needs to be modeled
 	double m_q_fin;		//[W] Heat transfer contribution from fins separating boiler
-
-	int m_comb_nodes;	//[-] Number of nodes considering # flow paths AND number of panels to be modeled together (m_n_comb)
 
 	util::matrix_t<int> flow_pattern;	//[-] matrix defining order of panels that flow travels through for each flow path
 	util::matrix_t<int> flow_pattern_adj;	//[-] Sorted number of independent panels in each flow path - applied when m_n_comb > 1 and panels should be modeled together
