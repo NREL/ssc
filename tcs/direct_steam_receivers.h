@@ -69,8 +69,8 @@ private:
 	HTFProperties tube_material;
 	property_info wp;
 
-	//util::matrix_t<double> m_h_rec;	//[m] Height of boiler - can differ per panel in iscc model
-	double m_h_rec;		//[m] Height of boiler
+	util::matrix_t<double> m_h_rec;	//[m] Height of boiler - can differ per panel in iscc model
+	//double m_h_rec;		//[m] Height of boiler
 
 	int m_n_panels;		//[-] Number of panels active for receiver type (i.e. N_boiler, N_sh, etc)
 	
