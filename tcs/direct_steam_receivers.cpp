@@ -49,6 +49,17 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 { 
 	m_dsg_rec = dsg_rec;
 
+	m_d_tube = d_tube;
+	m_th_tube = th_tube;
+	m_eps_tube = eps_tube;
+	m_mat_tube = mat_tube;
+	tube_material.SetFluid(m_mat_tube);
+	m_th_fin = th_fin;
+	m_L_fin = L_fin;
+	m_eps_fin = eps_fin;
+	m_mat_fin = mat_fin;
+	m_h_sh_max = h_sh_max;
+
 	if( m_dsg_rec.is_iscc() )
 	{
 		if(is_iscc_sh)	// ISCC: Superheater
@@ -64,31 +75,28 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	{
 		m_n_panels = m_dsg_rec.Get_n_panels_rec();
 	}
+	
+	int n_lines = 0;
+	// Get flow pattern
+	CSP::flow_patterns( m_n_panels, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern );
+	m_n_fr = n_lines;
+	m_nodes = m_n_panels / m_n_fr;
 
-	//if( dsg_rec.is_iscc() )
-	//
-	//else
+	/* Sorted number of independent panels in each flow path - applied when m_n_comb > 1 and panels should be modeled together
+	/ Example: For 12 panel receiver with 2 parallel flow panels:*/
+	flow_pattern_adj.resize( m_n_fr, m_nodes );
+	for( int j = 0; j < m_n_fr; j++ )
+		for( int i = 0; i < m_nodes; i++ )
+			flow_pattern_adj.at( j, i ) = i + (m_nodes)*(j);   
+
 	m_h_rec = h_rec;
 
-
-	m_d_tube = d_tube;
-	m_th_tube = th_tube;
-	m_eps_tube = eps_tube;
-	m_mat_tube = mat_tube;
-	tube_material.SetFluid(m_mat_tube);
-	m_th_fin = th_fin;
-	m_L_fin = L_fin;
-	m_eps_fin = eps_fin;
-	m_mat_fin = mat_fin;
-	m_h_sh_max = h_sh_max;
-
-	m_q_inc.resize( m_n_panels, 1 );
+	m_q_inc.resize( m_n_panels );
 	m_q_inc.fill( 0.0 );
 
 	// DELSOL flux map has already included absorptance, so set to 1 here
 	m_abs_tube = m_abs_fin = 1.0;
 
-	m_n_fr	= 2;		//[-] Number of flow paths: Hardcode to 2 for steam receiver 
     m_m_mixed = 3.2;	//[-] Exponential for calculating mixed convection
     m_fin_nodes = 10;	//[-] Model fin with 10 nodes	
 
@@ -123,38 +131,28 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	}
 	m_L_fin_eff = 0.5*m_L_fin;			//[m] Half the distance between tubes = 1/2 fin length. Assuming symmetric, so it is all that needs to be modeled
 
-	int n_lines = 0;
-
-	// Get flow pattern
-	CSP::flow_patterns( m_n_panels, dsg_rec.Get_flowtype(), n_lines, flow_pattern );
-
-	/* Sorted number of independent panels in each flow path - applied when m_n_comb > 1 and panels should be modeled together
-	/ Example: For 12 panel receiver with 2 parallel flow panels:*/
-	flow_pattern_adj.resize( m_n_fr, m_nodes );
-	for( int j = 0; j < m_n_fr; j++ )
-		for( int i = 0; i < m_nodes; i++ )
-			flow_pattern_adj.at( j, i ) = i + (m_nodes)*(j);     
+	  
 	
-	m_q_adj.resize( m_n_fr*m_nodes, 1 );
+	m_q_adj.resize( m_n_fr*m_nodes );
 	m_q_adj.fill( 0.0 );
-	m_q_conv.resize( m_n_fr*m_nodes, 1 );
+	m_q_conv.resize( m_n_fr*m_nodes );
 	m_q_conv.fill( 0.0 );
-	m_q_rad.resize( m_n_fr*m_nodes, 1 );
+	m_q_rad.resize( m_n_fr*m_nodes );
 	m_q_rad.fill( 0.0 );
-	m_q_abs.resize( m_n_fr*m_nodes, 1 );
+	m_q_abs.resize( m_n_fr*m_nodes );
 	m_q_abs.fill( 0.0 );
 
-	m_x_path_out.resize( m_n_fr, 1 );
+	m_x_path_out.resize( m_n_fr );
 	m_x_path_out.fill( 0.0 );
-	m_h_path_out.resize( m_n_fr, 1 );
+	m_h_path_out.resize( m_n_fr );
 	m_h_path_out.fill( 0.0 );
-	m_P_path_out.resize( m_n_fr, 1 );
+	m_P_path_out.resize( m_n_fr );
 	m_P_path_out.fill( 0.0 );
 
-	m_m_dot_path.resize( m_n_fr, 1 );
+	m_m_dot_path.resize( m_n_fr );
 	m_m_dot_path.fill( 0.0 );
 
-	m_q_wf_total.resize( m_n_fr, 1 );
+	m_q_wf_total.resize( m_n_fr );
 	m_q_wf_total.fill( 0.0 );
 
 	ambient_air.SetFluid( ambient_air.Air );
@@ -217,8 +215,8 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	double energy_in = 0.0;
 	for( int i = 0; i < m_n_panels; i++ )
 	{
-		m_q_inc.at(i,0) = I_q_inc_b.at(i,0);
-		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i,0);
+		m_q_inc.at(i) = I_q_inc_b.at(i,0);
+		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i);
 	}
 
 	// Create new flux arrays that allow for multiple panels in parallel flow
@@ -229,15 +227,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	{
 		for( int i = 0; i < m_nodes; i++ )
 		{
-			m_q_adj.at(k, 0) = m_q_inc.at(flow_pattern.at(j, i), 0);	
-			k++;
-			//q_sum += m_q_inc.at( flow_pattern.at(j,i), 0 );
-			//if( (i+1) % m_n_comb == 0 )
-			//{
-			//	m_q_adj.at(k,0)		= q_sum / (double) m_n_comb;
-			//	q_sum = 0.0;
-			//	k++;
-			//}
+			m_q_adj.at(flow_pattern_adj.at(j, i)) = m_q_inc.at(flow_pattern.at(j, i));
 		}
 	}
 	
@@ -251,10 +241,10 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		double q_wf_total = 0.0;
 		for( int i = 0; i < m_nodes; i++ )
 		{						
-			m_q_conv.at( flow_pattern_adj.at(j,i),0 ) = h_c*(m_A_n_proj + 2.0*m_A_fin)*(T_fw - T_amb);	//[W] Convective heat transfer
-			m_q_rad.at( flow_pattern_adj.at(j,i),0 ) = m_eps_tube*CSP::sigma*(m_A_n_proj+2.0*m_A_fin)*(0.5*(pow(T_fw,4) - pow(T_sky,4)) + 0.5*(pow(T_fw,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
-			m_q_abs.at( flow_pattern_adj.at(j,i),0 ) = m_q_adj.at( flow_pattern_adj.at(j,i),0 )*m_abs_tube*(m_A_n_proj+2.0*m_A_fin);	//[W] Irradiance absorbed by panel
-			q_wf_total += m_q_abs.at( flow_pattern_adj.at(j,i),0 ) - m_q_conv.at( flow_pattern_adj.at(j,i),0 ) - m_q_rad.at( flow_pattern_adj.at(j,i),0 );	//[W] Heat transfer to working fluid
+			m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*(m_A_n_proj + 2.0*m_A_fin)*(T_fw - T_amb);	//[W] Convective heat transfer
+			m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*(m_A_n_proj+2.0*m_A_fin)*(0.5*(pow(T_fw,4) - pow(T_sky,4)) + 0.5*(pow(T_fw,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
+			m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*(m_A_n_proj+2.0*m_A_fin);	//[W] Irradiance absorbed by panel
+			q_wf_total += m_q_abs.at( flow_pattern_adj.at(j,i)) - m_q_conv.at( flow_pattern_adj.at(j,i)) - m_q_rad.at( flow_pattern_adj.at(j,i));	//[W] Heat transfer to working fluid
 		}
 		if( q_wf_total < 0.0 )
 		{
@@ -479,7 +469,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 				P_n_in = P_in*1000.0;		//[Pa] Inlet pressure of first node
 				dp = 2.4E4;					//[Pa] Guess small pressure drop
 				diff_T_ht = 45.0;			//[K] Estimate of difference between surface temp and inlet temp
-				m_dot = m_m_dot_path.at(j,0);	//[kg/s] Use m_dot so we don't have to carry array through
+				m_dot = m_m_dot_path.at(j);	//[kg/s] Use m_dot so we don't have to carry array through
 
 				double T_1, grav_mult;
 				T_1 = grav_mult = std::numeric_limits<double>::quiet_NaN();
@@ -764,10 +754,10 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Add fin model
 							}
 							double h_c = h_mixed( ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec, m_dsg_rec.Get_d_rec(), m_m_mixed );	//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
-							m_q_conv.at( flow_pattern_adj.at(j,i),0 ) = h_c*m_A_n_proj*(T_1 - T_amb);	//[W] Convective heat transfer
-							m_q_rad.at( flow_pattern_adj.at(j,i),0 ) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground and ambient each 0.5
-							m_q_abs.at( flow_pattern_adj.at(j,i),0 ) = m_q_adj.at( flow_pattern_adj.at(j,i),0 )*m_abs_tube*m_A_n_proj + 2.0*m_q_fin*m_L;			//[W] Absorbed radiation + fin contributions
-							q_wf = m_q_abs.at(flow_pattern_adj.at(j,i),0) - m_q_conv.at(flow_pattern_adj.at(j,i),0) - m_q_rad.at(flow_pattern_adj.at(j,i),0);	//[W] Thermal power transferred to working fluid
+							m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_1 - T_amb);	//[W] Convective heat transfer
+							m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground and ambient each 0.5
+							m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*m_A_n_proj + 2.0*m_q_fin*m_L;			//[W] Absorbed radiation + fin contributions
+							q_wf = m_q_abs.at(flow_pattern_adj.at(j,i)) - m_q_conv.at(flow_pattern_adj.at(j,i)) - m_q_rad.at(flow_pattern_adj.at(j,i));	//[W] Thermal power transferred to working fluid
 
 							// Equation: m_dot*(h_out - h_in) = q_wf
 							h_n_out = q_wf/m_dot + h_n_in;		//[J/kg] Calculate outlet enthalpy according to calculated energy addition to working fluid
@@ -952,9 +942,9 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 				if( m_nodes%2 == 0 )	uplast_mult = 1.0;
 				else					uplast_mult = 0.0;
 				
-				m_x_path_out.at(j,0) = x_n_out;		//[-] Outlet quality of path
-				m_h_path_out.at(j,0) = h_n_out;		//[J/kg] Keep track of enthalpy outlet of flow path
-				m_P_path_out.at(j,0) = P_out - uplast_mult*rho_n_ave*CSP::grav*m_L;	//[Pa] Keep track of pressure outlet of flow path
+				m_x_path_out.at(j) = x_n_out;		//[-] Outlet quality of path
+				m_h_path_out.at(j) = h_n_out;		//[J/kg] Keep track of enthalpy outlet of flow path
+				m_P_path_out.at(j) = P_out - uplast_mult*rho_n_ave*CSP::grav*m_L;	//[Pa] Keep track of pressure outlet of flow path
 			}	// End evaluation of flow paths
 
 			if( break_to_massflow_calc )
@@ -962,14 +952,14 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 			double P_path_out_sum = 0.0;
 			for( int i = 0; i < m_n_fr; i++ )
-				P_path_out_sum += m_P_path_out.at(i,0);
+				P_path_out_sum += m_P_path_out.at(i);
 
 			P_out_avg = min( P_path_out_sum/((double)m_n_fr)/1.E3, 19.E3 );		//[kPa] Average (flow paths) outlet pressure
 			
 			// All flow paths have been solved (with equal pressure drops), so complete cumulative calculations to determine final mixed enthalpy
 			double h_by_m = 0.0;		//[W] Enthalpy-mass flow rate product
 			for( int i = 0; i < m_n_fr; i++ )
-				h_by_m = h_by_m + m_h_path_out.at(i,0)*m_m_dot_path.at(i,0);
+				h_by_m = h_by_m + m_h_path_out.at(i)*m_m_dot_path.at(i);
 
 			h_n_out_total = h_by_m / m_dot_total;		//[J/kg] Total mass flow rate / mixed enthalpy product
 
@@ -997,9 +987,9 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	double q_conv_sum = 0.0, q_rad_sum = 0.0, q_abs_sum = 0.0;
 	for( int i = 0; i < m_n_fr*m_nodes; i++ )
 	{
-		q_conv_sum += m_q_conv.at( i, 0 );
-		q_rad_sum += m_q_rad.at( i, 0 );
-		q_abs_sum += m_q_abs.at( i, 0 );
+		q_conv_sum += m_q_conv.at( i );
+		q_rad_sum += m_q_rad.at( i );
+		q_abs_sum += m_q_abs.at( i );
 	}
 
 	double q_conv_boiler = q_conv_sum*(double)m_n_par/1.E6;		//[MW] Total convective loss from boiler
@@ -1124,8 +1114,8 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double energy_in = 0.0;
 	for( int i = 0; i < m_n_panels; i++ )
 	{
-		m_q_inc.at(i,0) = I_q_inc_b.at(i,0);
-		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i,0);
+		m_q_inc.at(i) = I_q_inc_b.at(i,0);
+		energy_in += m_per_panel*m_h_rec*m_q_inc.at(i);
 	}
 
 	// Create new flux arrays that allow for multiple panels in parallel flow
@@ -1136,16 +1126,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	{
 		for( int i = 0; i < m_nodes; i++ )
 		{
-			m_q_adj.at(k, 0) = m_q_inc.at(flow_pattern.at(j, i), 0);
-			k++;
-
-			//q_sum += m_q_inc.at( flow_pattern.at(j,i), 0 );
-			//if( i % m_n_comb == 0 )
-			//{
-			//	m_q_adj.at(k,0)		= q_sum / (double) m_n_comb;
-			//	q_sum = 0.0;
-			//	k++;
-			//}
+			m_q_adj.at(flow_pattern_adj.at(j, i)) = m_q_inc.at(flow_pattern.at(j, i));
 		}
 	}
 
@@ -1161,15 +1142,15 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	// Check if enough flux is available to produce positive net energy through each flow path
 	for( int j = 0; j < m_n_fr; j++ )
 	{
-		m_q_wf_total.at(j,0) = 0.0;
+		m_q_wf_total.at(j) = 0.0;
 		for( int i = 0; i < m_nodes; i++ )
 		{						
-			m_q_conv.at( flow_pattern_adj.at(j,i),0 ) = h_c*m_A_n_proj*(T_in - T_amb);	//[W] Convective heat transfer
-			m_q_rad.at( flow_pattern_adj.at(j,i),0 ) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_in,4) - pow(T_sky,4)) + 0.5*(pow(T_in,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
-			m_q_abs.at( flow_pattern_adj.at(j,i),0 ) = m_q_adj.at( flow_pattern_adj.at(j,i),0 )*m_abs_tube*m_A_n_proj;	//[W] Irradiance absorbed by panel
-			m_q_wf_total.at(j,0) += m_q_abs.at( flow_pattern_adj.at(j,i),0 ) - m_q_conv.at( flow_pattern_adj.at(j,i),0 ) - m_q_rad.at( flow_pattern_adj.at(j,i),0 );	//[W] Heat transfer to working fluid
+			m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_in - T_amb);	//[W] Convective heat transfer
+			m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_in,4) - pow(T_sky,4)) + 0.5*(pow(T_in,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
+			m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*m_A_n_proj;	//[W] Irradiance absorbed by panel
+			m_q_wf_total.at(j) += m_q_abs.at( flow_pattern_adj.at(j,i)) - m_q_conv.at( flow_pattern_adj.at(j,i)) - m_q_rad.at( flow_pattern_adj.at(j,i));	//[W] Heat transfer to working fluid
 		}
-		if( m_q_wf_total.at(j,0) < 0.0 )
+		if( m_q_wf_total.at(j) < 0.0 )
 		{
 			sh_exit = 2;		// Set flag for controller
 			return false;
@@ -1189,7 +1170,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 
 	double sum_q_wf_total = 0;
 	for( int i = 0; i < m_n_fr; i++ )
-		sum_q_wf_total += m_q_wf_total.at(i,0);
+		sum_q_wf_total += m_q_wf_total.at(i);
 
 	if( sum_q_wf_total < q_wf_min )
 	{
@@ -1207,7 +1188,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 		double P_n_in = P_in;		//[Pa] Inlet pressure of first node
 		double dp = 2.E4;			//[Pa] Guess small pressure drop
 		double diff_T_ht = 45.0;	//[K] Estimate of difference between surface temp and inlet temp
-		double m_dot = m_m_dot_path.at(j,0);	//[kg/s] Use m_dot so we don't have to carry array through
+		double m_dot = m_m_dot_path.at(j);	//[kg/s] Use m_dot so we don't have to carry array through
 
 		double T_n_ave, h_n_out, P_out, u_n;
 		for( int i = 0; i < m_nodes; i++ )
@@ -1468,10 +1449,10 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 					} // end 'if diff_T1_g < 0.01' 
 						//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
 					double h_c = h_mixed( ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec, m_dsg_rec.Get_d_rec(), m_m_mixed );
-					m_q_conv.at(flow_pattern_adj.at(j,i),0) = h_c*m_A_n_proj*(T_1 - T_amb);		// Convective heat transfer
-					m_q_rad.at(flow_pattern_adj.at(j,i),0) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer
-					m_q_abs.at(flow_pattern_adj.at(j,i),0) = m_q_adj.at(flow_pattern_adj.at(j,i),0)*m_A_n_proj*m_abs_tube;
-					q_wf = m_q_abs.at(flow_pattern_adj.at(j,i),0) - m_q_conv.at(flow_pattern_adj.at(j,i),0) - m_q_rad.at(flow_pattern_adj.at(j,i),0);
+					m_q_conv.at(flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_1 - T_amb);		// Convective heat transfer
+					m_q_rad.at(flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer
+					m_q_abs.at(flow_pattern_adj.at(j,i)) = m_q_adj.at(flow_pattern_adj.at(j,i))*m_A_n_proj*m_abs_tube;
+					q_wf = m_q_abs.at(flow_pattern_adj.at(j,i)) - m_q_conv.at(flow_pattern_adj.at(j,i)) - m_q_rad.at(flow_pattern_adj.at(j,i));
 
 					// Equation: m_dot*(h_out - h_in) = q_wf
 					h_n_out = q_wf/m_dot + h_n_in;		//[J/kg] Calculate outlet enthalpy according to calculated energy addition to working fluid
@@ -1555,22 +1536,22 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 			T1_max = max( T1_max, T_n_in + (T_1 - T_n_ave) );
 		}	// End loop to solve for a flow path
 
-		m_h_path_out.at(j,0) = h_n_out;		//[J/kg] Keep track of enthalpy outlet of flow path
-		m_P_path_out.at(j,0) = P_out;		//[Pa] Keep track of pressure outlet of flow path
+		m_h_path_out.at(j) = h_n_out;		//[J/kg] Keep track of enthalpy outlet of flow path
+		m_P_path_out.at(j) = P_out;		//[Pa] Keep track of pressure outlet of flow path
 		u_n_exit = max(u_n_exit, u_n);		//[m/s] Maximum outlet velocity
 	} // End for loop to solve for each flow path
 
 	// Energy balance to combine outlet flows (if more than 1): m1h1 + m2h2 = m3h3
 	double mh_sum = 0.0;
 	for( int j = 0; j < m_n_fr; j++ )
-		mh_sum += m_m_dot_path.at(j,0)*m_h_path_out.at(j,0);	//[W] Total mh products for flow routes
+		mh_sum += m_m_dot_path.at(j)*m_h_path_out.at(j);	//[W] Total mh products for flow routes
 
 	double h_out_comb = mh_sum / m_dot_total;			//[J/kg] Calculate final combined outlet enthalpy
 	h_out_comb = min(h_out_comb, m_h_sh_max);	//[J/kg]
 
 	double P_path_out_sum = 0.0;
 	for( int j = 0; j < m_n_fr; j++ )
-		P_path_out_sum += m_P_path_out.at(j,0);
+		P_path_out_sum += m_P_path_out.at(j);
 
 	double P_out_avg = min( P_path_out_sum/(double)m_n_fr/1.E3, 19.0E3 );	//[kPa] Average (flow paths) outlet pressure
 
@@ -1585,9 +1566,9 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double q_abs_sh_sum = 0.0;
 	for( int j = 0; j < m_n_fr*m_nodes; j++ )
 	{
-		q_rad_sh_sum += m_q_rad.at(j,0);
-		q_conv_sh_sum += m_q_conv.at(j,0);
-		q_abs_sh_sum += m_q_abs.at(j,0);
+		q_rad_sh_sum += m_q_rad.at(j);
+		q_conv_sh_sum += m_q_conv.at(j);
+		q_abs_sh_sum += m_q_abs.at(j);
 	}
 
 	double q_rad_sh = q_rad_sh_sum*(double)m_n_par/1.E6;	//[MW] Total radiative loss from superheater
