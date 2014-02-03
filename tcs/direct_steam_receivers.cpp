@@ -89,7 +89,14 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 		for( int i = 0; i < m_nodes; i++ )
 			flow_pattern_adj.at( j, i ) = i + (m_nodes)*(j);   
 
-	m_h_rec.resize_fill(m_n_panels, h_rec);		
+	m_d_in = m_d_tube - 2.0*m_th_tube;		//[m] Inner diameter of tube
+		
+	m_h_rec.resize_fill(m_n_panels, h_rec);	//[m] Height of receiver section - can vary per panel in iscc model
+	m_L = m_h_rec;							//[m] Distance through one node
+	//m_L = m_h_rec.at(0);					//[m] Distance through one node
+	m_A_n_proj = m_d_tube * m_L.at(0);			//[m^2] Projected Area ** Node **
+	m_A_n_in_act = CSP::pi*m_d_in*0.5*m_L.at(0); //[m^2] ACTIVE inside surface area - nodal
+	m_A_fin = m_L_fin*0.5*m_L.at(0);				//[m^2] Area of 1/2 of fin
 
 	// DELSOL flux map has already included absorptance, so set to 1 here
 	m_abs_tube = m_abs_fin = 1.0;
@@ -102,13 +109,9 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 
     double w_assem = m_d_tube + m_L_fin;	//[m] Total width of one tube/fin assembly
     m_n_par = (int) (m_per_panel/w_assem);	//[-] Number of parallel assemblies per panel
-    m_L = m_h_rec.at(0);					//[m] Distance through one node
-
-    m_d_in = m_d_tube - 2.0*m_th_tube;		//[m] Inner diameter of tube
-	m_A_t_cs = CSP::pi*pow(m_d_in,2)/4.0;	//[m^2] Cross-sectional area of tubing
-    m_A_n_proj = m_d_tube * m_L;			//[m^2] Projected Area ** Node **
-    m_A_n_in_act  = CSP::pi*m_d_in*0.5*m_L; //[m^2] ACTIVE inside surface area - nodal
-    m_A_fin = m_L_fin*0.5*m_L;				//[m^2] Area of 1/2 of fin
+        
+	m_A_t_cs = CSP::pi*pow(m_d_in,2)/4.0;	//[m^2] Cross-sectional area of tubing        
+   
 	m_ksD = (m_d_tube/2.0)/m_dsg_rec.Get_d_rec();			//[-] The effective roughness of the cylinder [Siebers, Kraabel 1984]
 	m_rel_rough = (4.5E-5)/m_d_in;			//[-] Relative roughness of the tubes: http.www.efunda/formulae/fluids/roughness.cfm
 
@@ -309,7 +312,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		//P(kPa),T(C),enth(kJ/kg),dens(kg/m3),inte(kJ/kg),entr(kJ/kg-K),cp(kJ/kg-K),cond(W/m-K),visc(kg/m-s)
 		water_PH( P_in_pb, h_in, &wp );
 		double rho_in = wp.dens;					//[kg/m^3] Find density of mixture
-		double deltaP_in = rho_in*CSP::grav*m_L;	//[Pa] Hydrostatic pressure assuming water level is at top of tubes
+		double deltaP_in = rho_in*CSP::grav*m_L.at(flow_pattern_adj.at(0,0));	//[Pa] Hydrostatic pressure assuming water level is at top of tubes
 
 		//8/20/11 Need to account for the gravity head so we don't observe large pressure drops while not exceeding Dyreby props pressure limits
 		double P_in = (P_in_pb + deltaP_in/1000.0);	//[kPa] Inlet pressure adding gravity head from steam drum
@@ -750,12 +753,12 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							// Calculate energy inputs and outputs on surface (with guessed T_1)
 							if(m_model_fin)
 							{
-								// Add fin model
+								// Add fin model 
 							}
 							double h_c = h_mixed(ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(flow_pattern_adj.at(j, i)), m_dsg_rec.Get_d_rec(), m_m_mixed);	//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
 							m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_1 - T_amb);	//[W] Convective heat transfer
 							m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground and ambient each 0.5
-							m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*m_A_n_proj + 2.0*m_q_fin*m_L;			//[W] Absorbed radiation + fin contributions
+							m_q_abs.at(flow_pattern_adj.at(j, i)) = m_q_adj.at(flow_pattern_adj.at(j, i))*m_abs_tube*m_A_n_proj + 2.0*m_q_fin*m_L.at(flow_pattern_adj.at(j, i));			//[W] Absorbed radiation + fin contributions
 							q_wf = m_q_abs.at(flow_pattern_adj.at(j,i)) - m_q_conv.at(flow_pattern_adj.at(j,i)) - m_q_rad.at(flow_pattern_adj.at(j,i));	//[W] Thermal power transferred to working fluid
 
 							// Equation: m_dot*(h_out - h_in) = q_wf
@@ -841,7 +844,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							double R_conv = 1.0 / (h_fluid * m_A_n_in_act);		//[K/W] Thermal resistance to convection
 							T_2 = q_wf*R_conv + T_in1;							//[K] Calculate T_2
 							double k_n = tube_material.cond( (T_1+T_2)/2.0 );	//[W/m-K] Conductivity of tube using average temperature
-							double R_n = log( m_d_tube/m_d_in )/(k_n*2.0*CSP::pi*m_L/2.0);	//[K/W] Thermal resistance of ACTIVE tube
+							double R_n = log(m_d_tube / m_d_in) / (k_n*2.0*CSP::pi*m_L.at(flow_pattern_adj.at(j, i)) / 2.0);	//[K/W] Thermal resistance of ACTIVE tube
 							diff_T_1 = T_1 - (T_2 + q_wf*R_n);					//[K] Calculate difference between assumed T_1 and calculated T_1
 						}	// End tube energy balance iteration
 
@@ -886,12 +889,12 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							double dpdx_grav = grav_mult*rho_n_ave*CSP::grav;	//[Pa/m] Pressure due to elevation
 							double dp_acc = G*G*(1.0/rho_n_out - 1.0/rho_n_in); //[Pa/m] Pressure loss due to acceleration of fluid
 
-							deltaP_tube = (dpdx_fTP+dpdx_grav)*m_L + dp_acc + (dpdx_fTP*m_L_eff_90*m_d_in*4.0 + dpdx_fTP*m_L_eff_45*m_d_in*2.0);	//[Pa] Pressure loss through tube
+							deltaP_tube = (dpdx_fTP + dpdx_grav)*m_L.at(flow_pattern_adj.at(j, i)) + dp_acc + (dpdx_fTP*m_L_eff_90*m_d_in*4.0 + dpdx_fTP*m_L_eff_45*m_d_in*2.0);	//[Pa] Pressure loss through tube
 						}	// End 2-phase pressure drop calcs
 						else
 						{
-							deltaP_tube = (f_fd*m_L*rho_n_ave*pow(u_n,2)/(2.0*m_d_in)) + 2.0*(f_fd*m_L_eff_45*rho_n_ave*pow(u_n,2)/2.0) + 4.0*(f_fd*m_L_eff_90*rho_n_ave*pow(u_n,2)/2.0);	//[Pa] Pressure loss through tube
-							deltaP_tube = deltaP_tube + grav_mult*rho_n_ave*CSP::grav*m_L;
+							deltaP_tube = (f_fd*m_L.at(flow_pattern_adj.at(j, i))*rho_n_ave*pow(u_n, 2) / (2.0*m_d_in)) + 2.0*(f_fd*m_L_eff_45*rho_n_ave*pow(u_n, 2) / 2.0) + 4.0*(f_fd*m_L_eff_90*rho_n_ave*pow(u_n, 2) / 2.0);	//[Pa] Pressure loss through tube
+							deltaP_tube = deltaP_tube + grav_mult*rho_n_ave*CSP::grav*m_L.at(flow_pattern_adj.at(j, i));
 						}
 						
 						P_out = P_n_in - deltaP_tube;							//[Pa] Outlet pressure
@@ -943,7 +946,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 				
 				m_x_path_out.at(j) = x_n_out;		//[-] Outlet quality of path
 				m_h_path_out.at(j) = h_n_out;		//[J/kg] Keep track of enthalpy outlet of flow path
-				m_P_path_out.at(j) = P_out - uplast_mult*rho_n_ave*CSP::grav*m_L;	//[Pa] Keep track of pressure outlet of flow path
+				m_P_path_out.at(j) = P_out - uplast_mult*rho_n_ave*CSP::grav*m_L.at(flow_pattern_adj.at(j, m_nodes-1));	//[Pa] Keep track of pressure outlet of flow path
 			}	// End evaluation of flow paths
 
 			if( break_to_massflow_calc )
@@ -1500,12 +1503,12 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 					// Equation: q_wf = h_fluid*Area*(T_2 - T_n_ave)
 					double T_2 = q_wf/(h_fluid*m_A_n_in_act) + T_n_ave;		//[K] Temperature of inner tube surface
 					double k_n = tube_material.cond( (T_1 + T_2)/2.0 );		//[W/m-K] Conductivity of tube using average temperature
-					double R_n = log( m_d_tube/m_d_in )/(k_n*2.0*CSP::pi*m_L/2.0);	//[K/W] Thermal resistance of ACTIVE tube
+					double R_n = log(m_d_tube / m_d_in) / (k_n*2.0*CSP::pi*m_L.at(flow_pattern_adj.at(j, i)) / 2.0);	//[K/W] Thermal resistance of ACTIVE tube
 					diff_T_1 = T_1 - (T_2 + q_wf*R_n);						//[K] Calculate difference between guessed and calculated T_1					
 				} // end loop solving tube energy balance (key on T_1)
 
 				//DELTAP [Pa] =                DELTAP_tube                                     DELTAP_45                                   DELTAP_90
-				dp = (f_fd*m_L*rho_n_ave*pow(u_n,2)/(2.0*m_d_in)) + 2.0*(f_fd*m_L_eff_45*rho_n_ave*pow(u_n,2)/2.0) + 4.0*(f_fd*m_L_eff_90*rho_n_ave*pow(u_n,2)/2.0);
+				dp = (f_fd*m_L.at(flow_pattern_adj.at(j, i))*rho_n_ave*pow(u_n, 2) / (2.0*m_d_in)) + 2.0*(f_fd*m_L_eff_45*rho_n_ave*pow(u_n, 2) / 2.0) + 4.0*(f_fd*m_L_eff_90*rho_n_ave*pow(u_n, 2) / 2.0);
 				P_out = P_n_in - dp;				//[Pa] Calculate node outlet pressure
 				diff_P_ave = (P_ave-(P_n_in+P_out)/2.0)/P_in;	//[Pa] Difference between guessed and calculated average pressure
 
