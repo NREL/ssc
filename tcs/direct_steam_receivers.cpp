@@ -93,10 +93,20 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 		
 	m_h_rec.resize_fill(m_n_panels, h_rec);	//[m] Height of receiver section - can vary per panel in iscc model
 	m_L = m_h_rec;							//[m] Distance through one node
-	//m_L = m_h_rec.at(0);					//[m] Distance through one node
-	m_A_n_proj = m_d_tube * m_L.at(0);			//[m^2] Projected Area ** Node **
-	m_A_n_in_act = CSP::pi*m_d_in*0.5*m_L.at(0); //[m^2] ACTIVE inside surface area - nodal
-	m_A_fin = m_L_fin*0.5*m_L.at(0);				//[m^2] Area of 1/2 of fin
+
+	m_A_n_proj.resize(m_n_panels);
+	m_A_n_in_act.resize(m_n_panels);
+	m_A_fin.resize(m_n_panels);
+	for( int i = 0; i < m_n_panels; i++ )
+	{
+		m_A_n_proj[i] = m_d_tube * m_L[i];	//[m^2] Projected Area ** Node ** - can vary per panel in iscc model
+		m_A_n_in_act[i] = CSP::pi*m_d_in*0.5*m_L[i];	//[m^2] ACTIVE inside surface area - nodal - can vary per panl in iscc model
+		m_A_fin[i] = m_L_fin*0.5*m_L[i];	//[m^2] Area of 1/2 of fin - can vary per panel in iscc model
+	}
+
+	//m_A_n_proj = m_d_tube * m_L.at(0);			//[m^2] Projected Area ** Node **
+	//m_A_n_in_act = CSP::pi*m_d_in*0.5*m_L.at(0); //[m^2] ACTIVE inside surface area - nodal
+	//m_A_fin = m_L_fin*0.5*m_L.at(0);				//[m^2] Area of 1/2 of fin
 
 	// DELSOL flux map has already included absorptance, so set to 1 here
 	m_abs_tube = m_abs_fin = 1.0;
@@ -243,9 +253,9 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		double q_wf_total = 0.0;
 		for( int i = 0; i < m_nodes; i++ )
 		{						
-			m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*(m_A_n_proj + 2.0*m_A_fin)*(T_fw - T_amb);	//[W] Convective heat transfer
-			m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*(m_A_n_proj+2.0*m_A_fin)*(0.5*(pow(T_fw,4) - pow(T_sky,4)) + 0.5*(pow(T_fw,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
-			m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*(m_A_n_proj+2.0*m_A_fin);	//[W] Irradiance absorbed by panel
+			m_q_conv.at(flow_pattern_adj.at(j, i)) = h_c*(m_A_n_proj[flow_pattern_adj.at(j,i)] + 2.0*m_A_fin[flow_pattern_adj.at(j,i)])*(T_fw - T_amb);	//[W] Convective heat transfer
+			m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*(m_A_n_proj[flow_pattern_adj.at(j,i)]+2.0*m_A_fin[flow_pattern_adj.at(j,i)])*(0.5*(pow(T_fw,4) - pow(T_sky,4)) + 0.5*(pow(T_fw,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
+			m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*(m_A_n_proj[flow_pattern_adj.at(j,i)]+2.0*m_A_fin[flow_pattern_adj.at(j,i)]);	//[W] Irradiance absorbed by panel
 			q_wf_total += m_q_abs.at( flow_pattern_adj.at(j,i)) - m_q_conv.at( flow_pattern_adj.at(j,i)) - m_q_rad.at( flow_pattern_adj.at(j,i));	//[W] Heat transfer to working fluid
 		}
 		if( q_wf_total < 0.0 )
@@ -756,9 +766,9 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Add fin model 
 							}
 							double h_c = h_mixed(ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(flow_pattern_adj.at(j, i)), m_dsg_rec.Get_d_rec(), m_m_mixed);	//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
-							m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_1 - T_amb);	//[W] Convective heat transfer
-							m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground and ambient each 0.5
-							m_q_abs.at(flow_pattern_adj.at(j, i)) = m_q_adj.at(flow_pattern_adj.at(j, i))*m_abs_tube*m_A_n_proj + 2.0*m_q_fin*m_L.at(flow_pattern_adj.at(j, i));			//[W] Absorbed radiation + fin contributions
+							m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj[flow_pattern_adj.at(j,i)]*(T_1 - T_amb);	//[W] Convective heat transfer
+							m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj[flow_pattern_adj.at(j,i)]*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground and ambient each 0.5
+							m_q_abs.at(flow_pattern_adj.at(j, i)) = m_q_adj.at(flow_pattern_adj.at(j, i))*m_abs_tube*m_A_n_proj[flow_pattern_adj.at(j,i)] + 2.0*m_q_fin*m_L.at(flow_pattern_adj.at(j, i));			//[W] Absorbed radiation + fin contributions
 							q_wf = m_q_abs.at(flow_pattern_adj.at(j,i)) - m_q_conv.at(flow_pattern_adj.at(j,i)) - m_q_rad.at(flow_pattern_adj.at(j,i));	//[W] Thermal power transferred to working fluid
 
 							// Equation: m_dot*(h_out - h_in) = q_wf
@@ -789,7 +799,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								}
 							} while( !props_succeed );
 
-							double q_t_flux = q_wf/m_A_n_in_act;		//[W/m^2] Heat FLUX transferred to working fluid: required for boiling heat transfer correlation
+							double q_t_flux = q_wf/m_A_n_in_act[flow_pattern_adj.at(j,i)];		//[W/m^2] Heat FLUX transferred to working fluid: required for boiling heat transfer correlation
 							u_n = m_dot/(rho_n_ave*m_A_t_cs);	//[m/s] Velocity through tube
 
 							double h_l, k_l, c_l, h_v, rho_v, k_v, c_v, h_fluid;
@@ -823,7 +833,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 										else					T_2_guess = T_2;
 										h_fluid = Flow_Boiling( T_in1,T_2_guess,G,m_d_in,x_n_ave,q_t_flux,rho_l,rho_v,k_l,mu_l,Pr_l,h_l,h_diff,CSP::grav,mu_v,c_v,k_v,m_rel_rough );
 										h_fluid = max( k_n_ave/m_d_in, h_fluid );
-										double R_conv = 1.0/(h_fluid * m_A_n_in_act);	//[K/W] Thermal resistance to convection
+										double R_conv = 1.0/(h_fluid * m_A_n_in_act[flow_pattern_adj.at(j,i)]);	//[K/W] Thermal resistance to convection
 										T_2 = q_wf*R_conv + T_in1;
 										diff_T_2 = (T_2_guess - T_2)/T_2;		//[-]
 									}	// End iteration on T_2 and h_fluid for condensing flow
@@ -841,7 +851,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 							h_fluid = max( k_n_ave/m_d_in, h_fluid );
 
-							double R_conv = 1.0 / (h_fluid * m_A_n_in_act);		//[K/W] Thermal resistance to convection
+							double R_conv = 1.0 / (h_fluid * m_A_n_in_act[flow_pattern_adj.at(j,i)]);		//[K/W] Thermal resistance to convection
 							T_2 = q_wf*R_conv + T_in1;							//[K] Calculate T_2
 							double k_n = tube_material.cond( (T_1+T_2)/2.0 );	//[W/m-K] Conductivity of tube using average temperature
 							double R_n = log(m_d_tube / m_d_in) / (k_n*2.0*CSP::pi*m_L.at(flow_pattern_adj.at(j, i)) / 2.0);	//[K/W] Thermal resistance of ACTIVE tube
@@ -1147,9 +1157,9 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 		m_q_wf_total.at(j) = 0.0;
 		for( int i = 0; i < m_nodes; i++ )
 		{						
-			m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_in - T_amb);	//[W] Convective heat transfer
-			m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_in,4) - pow(T_sky,4)) + 0.5*(pow(T_in,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
-			m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*m_A_n_proj;	//[W] Irradiance absorbed by panel
+			m_q_conv.at( flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj[flow_pattern_adj.at(j,i)]*(T_in - T_amb);	//[W] Convective heat transfer
+			m_q_rad.at( flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj[flow_pattern_adj.at(j,i)]*(0.5*(pow(T_in,4) - pow(T_sky,4)) + 0.5*(pow(T_in,4) - pow(T_amb,4)));	//[W] Radiative heat transfer: 8/10/11, view factor to ground ~ ambient (1/2) 
+			m_q_abs.at( flow_pattern_adj.at(j,i)) = m_q_adj.at( flow_pattern_adj.at(j,i))*m_abs_tube*m_A_n_proj[flow_pattern_adj.at(j,i)];	//[W] Irradiance absorbed by panel
 			m_q_wf_total.at(j) += m_q_abs.at( flow_pattern_adj.at(j,i)) - m_q_conv.at( flow_pattern_adj.at(j,i)) - m_q_rad.at( flow_pattern_adj.at(j,i));	//[W] Heat transfer to working fluid
 		}
 		if( m_q_wf_total.at(j) < 0.0 )
@@ -1451,9 +1461,9 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 					} // end 'if diff_T1_g < 0.01' 
 						//[W/m^2-K] Function calculates combined free and forced convection coefficient, same as used in fin HT model
 					double h_c = h_mixed(ambient_air, T_1, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(flow_pattern_adj.at(j, i)), m_dsg_rec.Get_d_rec(), m_m_mixed);
-					m_q_conv.at(flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj*(T_1 - T_amb);		// Convective heat transfer
-					m_q_rad.at(flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer
-					m_q_abs.at(flow_pattern_adj.at(j,i)) = m_q_adj.at(flow_pattern_adj.at(j,i))*m_A_n_proj*m_abs_tube;
+					m_q_conv.at(flow_pattern_adj.at(j,i)) = h_c*m_A_n_proj[flow_pattern_adj.at(j,i)]*(T_1 - T_amb);		// Convective heat transfer
+					m_q_rad.at(flow_pattern_adj.at(j,i)) = m_eps_tube*CSP::sigma*m_A_n_proj[flow_pattern_adj.at(j,i)]*(0.5*(pow(T_1,4)-pow(T_sky,4))+0.5*(pow(T_1,4)-pow(T_amb,4)));	//[W] Radiative heat transfer
+					m_q_abs.at(flow_pattern_adj.at(j,i)) = m_q_adj.at(flow_pattern_adj.at(j,i))*m_A_n_proj[flow_pattern_adj.at(j,i)]*m_abs_tube;
 					q_wf = m_q_abs.at(flow_pattern_adj.at(j,i)) - m_q_conv.at(flow_pattern_adj.at(j,i)) - m_q_rad.at(flow_pattern_adj.at(j,i));
 
 					// Equation: m_dot*(h_out - h_in) = q_wf
@@ -1501,7 +1511,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 					double h_fluid = max( k_n_ave/m_d_in, Nusselt*k_n_ave/m_d_in );	//[W/m^2-K] Convective heat transfer coefficient - set minimum to conductive ht
 
 					// Equation: q_wf = h_fluid*Area*(T_2 - T_n_ave)
-					double T_2 = q_wf/(h_fluid*m_A_n_in_act) + T_n_ave;		//[K] Temperature of inner tube surface
+					double T_2 = q_wf/(h_fluid*m_A_n_in_act[flow_pattern_adj.at(j,i)]) + T_n_ave;		//[K] Temperature of inner tube surface
 					double k_n = tube_material.cond( (T_1 + T_2)/2.0 );		//[W/m-K] Conductivity of tube using average temperature
 					double R_n = log(m_d_tube / m_d_in) / (k_n*2.0*CSP::pi*m_L.at(flow_pattern_adj.at(j, i)) / 2.0);	//[K/W] Thermal resistance of ACTIVE tube
 					diff_T_1 = T_1 - (T_2 + q_wf*R_n);						//[K] Calculate difference between guessed and calculated T_1					

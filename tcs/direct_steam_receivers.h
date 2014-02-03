@@ -71,8 +71,15 @@ private:
 
 	util::matrix_t<double> m_h_rec;	//[m] Height of boiler - can differ per panel in iscc model
 	util::matrix_t<double> m_L;		//[m] Length of flow path through one noe - can vary per panel in iscc model
+	util::matrix_t<double> m_A_n_proj;		//[m2] Projected Area ** Node ** - can vary per panel in iscc model
+	util::matrix_t<double> m_A_n_in_act;	//[m^2] ACTIVE inside surface area - nodal - can vary per panl in iscc model
+	util::matrix_t<double> m_A_fin;	//[m^2] Area of 1/2 of fin - can vary per panel in iscc model
+
 	//double m_h_rec;		//[m] Height of boiler
 	//double m_L;			//[m] Length of flow path through one node
+	//double m_A_n_proj;	//[m^2] Projected Area ** Node **
+	//double m_A_n_in_act; //[m^2] ACTIVE inside surface area - nodal
+	//double m_A_fin;		//[m^2] Area of 1/2 of fin
 
 	int m_n_panels;		//[-] Number of panels active for receiver type (i.e. N_boiler, N_sh, etc)
 	
@@ -98,9 +105,9 @@ private:
 	
 	double m_d_in;		//[m] I.D. of boiler tube
 	double m_A_t_cs;	//[m^2] Cross-sectional area of tubing
-	double m_A_n_proj;	//[m^2] Projected Area ** Node **
-	double m_A_n_in_act; //[m^2] ACTIVE inside surface area - nodal
-    double m_A_fin;		//[m^2] Area of 1/2 of fin
+	
+	
+    
     double m_ksD;		//[-] The effective roughness of the cylinder [Siebers, Kraabel 1984]
 	double m_L_eff_90;  //[m] Effective length for pressure drop for 90 degree bend
     double m_L_eff_45;	//[m] Effective length for pressure drop for 45 degree bend
