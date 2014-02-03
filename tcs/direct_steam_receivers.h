@@ -70,7 +70,9 @@ private:
 	property_info wp;
 
 	util::matrix_t<double> m_h_rec;	//[m] Height of boiler - can differ per panel in iscc model
+	util::matrix_t<double> m_L;		//[m] Length of flow path through one noe - can vary per panel in iscc model
 	//double m_h_rec;		//[m] Height of boiler
+	//double m_L;			//[m] Length of flow path through one node
 
 	int m_n_panels;		//[-] Number of panels active for receiver type (i.e. N_boiler, N_sh, etc)
 	
@@ -93,7 +95,7 @@ private:
 	int m_nodes;		//[m] Nodes per flow path
 	double m_rel_rough;	//[-] Relative roughness of tubes
 	int m_n_par;		//[-] Number of parallel assemblies per panel
-	double m_L;			//[m] Length of flow path through one node
+	
 	double m_d_in;		//[m] I.D. of boiler tube
 	double m_A_t_cs;	//[m^2] Cross-sectional area of tubing
 	double m_A_n_proj;	//[m^2] Projected Area ** Node **
