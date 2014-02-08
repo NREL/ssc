@@ -70,7 +70,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                 "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                      "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                           "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "energy_net",               "Energy net",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                         "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
@@ -205,7 +205,7 @@ public:
 		ssc_number_t *out_P_pump = allocate("P_pump", 8760);
 		ssc_number_t *out_Q_aux = allocate("Q_aux", 8760);
 		ssc_number_t *out_Q_auxonly = allocate("Q_auxonly", 8760);
-		ssc_number_t *out_Q_saved = allocate("Q_saved", 8760);
+//		ssc_number_t *out_Q_saved = allocate("Q_saved", 8760);
 		ssc_number_t *out_energy_net = allocate("energy_net", 8760);
 
 		ssc_number_t *out_V_hot = allocate("V_hot", 8760);
@@ -381,7 +381,7 @@ public:
 		double T_deliv_prev_hour = 0.0;
 
 		/* *********************************************************************************************
-		Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, Q_saved
+		Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, energy_net (Q_saved)
 		*********************************************************************************************** */	
 		for ( i=0; i < 8760; i++ )
 		{
@@ -552,8 +552,8 @@ public:
 			out_P_pump[i] = (ssc_number_t) (P_pump * W2kW) ;
 			out_Q_aux[i] = (ssc_number_t) (Q_aux * W2kW);
 			out_Q_auxonly[i] = (ssc_number_t) (Q_auxonly* W2kW);
-			out_Q_saved[i] = (ssc_number_t) (Q_saved* W2kW);
-			out_energy_net[i] = out_Q_saved[i];
+//			out_Q_saved[i] = (ssc_number_t) (Q_saved* W2kW);
+			out_energy_net[i] =(ssc_number_t) (Q_saved* W2kW);
 			out_T_hot[i] = (ssc_number_t) T_hot;
 			out_T_cold[i] = (ssc_number_t) T_cold;
 			out_V_hot[i] = (ssc_number_t) V_hot;
