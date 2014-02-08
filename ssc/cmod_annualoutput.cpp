@@ -17,7 +17,7 @@ static var_info _cm_vtab_annualoutput[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		   "Annual energy degradation",	            "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",  "Lifetime hourly system outputs",        "0/1",    "0=hourly first year,1=hourly lifetime",  "AnnualOutput",      "*",						"INTEGER,MIN=0",                 "" },
-	{ SSC_INPUT,        SSC_ARRAY,		"energy_net_hourly",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,		"energy_net",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
 
 
 /* output */
@@ -121,7 +121,7 @@ public:
 		size_t count;
 
 	// hourly energy
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("energy_net", &count );
 		if ( (int)count != (8760))
 		{
 			std::stringstream outm;
@@ -170,7 +170,7 @@ public:
 		size_t count;
 
 	// hourly energy
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("energy_net", &count );
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
