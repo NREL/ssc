@@ -139,7 +139,12 @@ public:
 		size_t nrows, ncols;
 		ssc_number_t *diurnal_curtailment = as_matrix( "energy_curtailment", &nrows, &ncols );
 		if ( nrows != 12 || ncols != 24 )
-			throw exec_error("annualoutput", "month x hour curtailment factors must have 12 rows and 24 columns");
+		{
+			std::ostringstream stream_error;
+			stream_error << "month x hour curtailment factors must have 12 rows and 24 columns, input has " << nrows << " rows and " << ncols << " columns." ;
+			std::string const str_error = stream_error.str();
+			throw exec_error("annualoutput", str_error);
+		}
 
 		for (int m=0;m<12;m++)
 			for (int d=0;d<util::nday[m];d++)
