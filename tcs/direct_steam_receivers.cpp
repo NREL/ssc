@@ -43,7 +43,7 @@ bool C_DSG_macro_receiver::Initialize_Receiver( int n_panels, double d_rec, doub
 	return true;
 }
 
-bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec, double d_tube, double th_tube,
+bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec_full, double d_tube, double th_tube,
 					   double eps_tube, double mat_tube, double h_sh_max, double th_fin,
 					   double L_fin, double eps_fin, double mat_fin, bool is_iscc_sh )
 { 
@@ -77,10 +77,53 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	}
 	
 	int n_lines = 0;
-	// Get flow pattern
-	CSP::flow_patterns( m_n_panels, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern );
-	m_n_fr = n_lines;
-	m_nodes = m_n_panels / m_n_fr;
+				
+	if( m_dsg_rec.is_iscc() )
+	{
+		if( is_iscc_sh )	// ISCC superheater
+		{
+			util::matrix_t<int> flow_pattern_temp;
+			// Get full-receiver flow pattern
+			CSP::flow_patterns(m_dsg_rec.Get_n_panels_rec(), m_dsg_rec.Get_flowtype(), n_lines, flow_pattern_temp);
+			m_n_fr = n_lines;
+			m_nodes = m_n_panels / m_n_fr;			
+			flow_pattern.resize_fill(m_n_fr, m_nodes, -1);
+			for( int i = 0; i < m_n_fr; i++ )
+			{
+				for( int j = 0; j < m_nodes; j++ )
+				{
+					flow_pattern[i, j] = flow_pattern_temp[i, (m_dsg_rec.Get_n_panels_rec() - m_n_panels)/2 + j];
+				}
+			}
+			m_h_rec.resize_fill(m_n_panels, h_rec_full*m_dsg_rec.Get_sh_h_frac());
+		}
+		else				// ISCC Boiler
+		{
+			CSP::flow_patterns(m_n_panels, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern);
+			m_n_fr = n_lines;
+			m_nodes = m_n_panels / m_n_fr;
+			int m_nodes_sh = m_dsg_rec.Get_n_panels_sh() / m_n_fr;
+			m_h_rec.resize(m_n_panels);
+			for( int j = 0; j < m_n_fr; j++ )
+			{
+				for( int i = 0; i < m_nodes; i++ )
+				{
+					if(i >= m_nodes - m_nodes_sh)
+						m_h_rec[i + m_nodes*j] = h_rec_full*(1.0 - m_dsg_rec.Get_sh_h_frac());						
+					else
+						m_h_rec[i + m_nodes*j] = h_rec_full;
+				}
+			}
+		}
+	}
+	else
+	{
+		// Get flow pattern
+		CSP::flow_patterns(m_n_panels, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern);
+		m_n_fr = n_lines;
+		m_nodes = m_n_panels / m_n_fr;
+		m_h_rec.resize_fill(m_n_panels, h_rec_full);	//[m] Height of receiver section - can vary per panel in iscc model
+	}
 
 	/* Sorted number of independent panels in each flow path - applied when m_n_comb > 1 and panels should be modeled together
 	/ Example: For 12 panel receiver with 2 parallel flow panels:*/
@@ -91,7 +134,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 
 	m_d_in = m_d_tube - 2.0*m_th_tube;		//[m] Inner diameter of tube
 		
-	m_h_rec.resize_fill(m_n_panels, h_rec);	//[m] Height of receiver section - can vary per panel in iscc model
+	
 	m_L = m_h_rec;							//[m] Distance through one node
 
 	m_A_n_proj.resize(m_n_panels);
