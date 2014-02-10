@@ -1,13 +1,17 @@
 clear();
 
 // **** Define tcs directory *******************
-tcs_dir = 'C:/Users/tneises/Documents/Projects/ssc';
+//tcs_dir = 'C:/Users/tneises/Documents/Projects/ssc';
 // *********************************************
+
+//****** Get SSC directory ********
+file_dir = env('SSCDIR')+'/tcsdata/typelib/MS_Cavity_Power_Tower';
+//*********************************
 
 //********************************************************************************************
 // Pre-processing input files
 //Read in field efficiency files
-f = open( tcs_dir + '/tcs/typelib/MS_Cavity_Power_Tower/eff_array.dat', 'r' );
+f = open( file_dir+'/eff_array.dat', 'r' );
 if( !f )
 {
 	outln("Could not open file 1 for reading");
@@ -40,7 +44,7 @@ for( i = 0; i < num_sol_pos; i++ )
 close( f );
 
 //***** Read in flux file ********
-f = open( tcs_dir + '/tcs/typelib/MS_Cavity_Power_Tower/flux_map.csv', 'r' );
+f = open( file_dir +'/flux_map.csv', 'r' );
 if( !f )
 {
 	outln("Could not open file 2 for reading");
@@ -64,7 +68,13 @@ num_sol_pos = i - 5;
 arr_sol_pos = alloc( 2, num_sol_pos );
 
 close( f );
-f = open( tcs_dir + '/tcs/typelib/MS_Cavity_Power_Tower/flux_map.csv', 'r' );
+
+f = open( file_dir +'/flux_map.csv', 'r' );
+if( !f )
+{
+	outln("Could not open file 2 for reading");
+	exit;
+}
 
 for( i = 0; i < 4; i++ )
 {
@@ -107,6 +117,382 @@ for( i = 0; i < num_sol_pos; i++ )
 		}
 	}
 }
+
+// ******** Read in Time-of-Use file **********
+f = open( file_dir + '/touperiod.in', 'r' );
+if( !f )
+{
+	outln("Could not open file 2 for reading");
+	exit;
+}
+read_line(f, line);
+
+tou_week = alloc( 12, 24 );
+tou_end = alloc( 12, 24 );
+
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[1-1][j]);
+	out(tou_week[1-1][j]);
+}
+outln();
+
+for( i = 2; i < 6; i++ )
+{	
+	for( j = 0; j < 24; j++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Jan 6th - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[1-1][j]);
+	out(tou_end[1-1][j]);
+}
+outln();
+outln();
+
+// Jan 7th -31st Wednesday
+for( j = 7; j < 32; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Feb 1st Thursday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[2-1][j]);
+	out(tou_week[2-1][j]);
+}
+outln();
+
+// Feb 2nd Friday
+for( j = 0; j < 1; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Feb 3rd - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[2-1][j]);
+	out(tou_end[2-1][j]);
+}
+outln();
+outln();
+
+// Feb 4th - 28th - Wednesday
+for( j = 4; j < 29; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Mar 1 - Thursday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[3-1][j]);
+	out(tou_week[3-1][j]);
+}
+outln();
+
+// Feb 2nd Friday
+for( j = 0; j < 1; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Mar 3rd - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[3-1][j]);
+	out(tou_end[3-1][j]);
+}
+outln();
+outln();
+
+// Mar 4th - 31st - Saturday
+for( j = 4; j < 32; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Apr 1st - Sunday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[4-1][j]);
+	out(tou_end[4-1][j]);
+}
+outln();
+
+// Apr 2nd - Monday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[4-1][j]);
+	out(tou_week[4-1][j]);
+}
+outln();
+outln();
+
+// Apr 3rd - 30th - Monday
+for( j = 3; j < 31; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// May 1st - Tuesday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[5-1][j]);
+	out(tou_week[5-1][j]);
+}
+outln();
+
+// May 2nd - 4th - Friday
+for( j = 2; j < 5; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// May 5th - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[5-1][j]);
+	out(tou_end[5-1][j]);
+}
+outln();
+outln();
+
+// May 6th - May 31st - Thursday
+for( j = 6; j < 32; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// June 1st - Friday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[6-1][j]);
+	out(tou_week[6-1][j]);
+}
+outln();
+
+// June 2nd - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[6-1][j]);
+	out(tou_end[6-1][j]);
+}
+outln();
+outln();
+
+// June 3rd - June 30th - Saturday
+for( j = 3; j < 31; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// July 1st - Sunday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[7-1][j]);
+	out(tou_end[7-1][j]);
+}
+outln();
+
+// July 2nd - Monday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[7-1][j]);
+	out(tou_week[7-1][j]);
+}
+outln();
+outln();
+
+// July 3rd - July 31st - Tuesday
+for( j = 3; j < 32; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Aug 1 - Wednesday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[8-1][j]);
+	out(tou_week[8-1][j]);
+}
+outln();
+
+// Augst 2 - 3 Friday
+for( j = 2; j < 4; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// August 4th - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[8-1][j]);
+	out(tou_end[8-1][j]);
+}
+outln();
+outln();
+
+// Augst 5 - 31 Friday
+for( j = 5; j < 32; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Sep 1 - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[9-1][j]);
+	out(tou_end[9-1][j]);
+}
+outln();
+
+// Sep 2 - Sunday
+for( j = 2; j < 3; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Sep 3 - Monday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[9-1][j]);
+	out(tou_week[9-1][j]);
+}
+outln();
+outln();
+
+// Sep 4 - 30 Sunday
+for( j = 4; j < 31; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Oct 1 - Monday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[10-1][j]);
+	out(tou_week[10-1][j]);
+}
+outln();
+
+// Oct 2 - 5 - Friday
+for( j = 2; j < 6; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Oct 6 - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[10-1][j]);
+	out(tou_end[10-1][j]);
+}
+outln();
+outln();
+
+// Oct 7 - 31 - Wednesday + Thursday
+for( j = 7; j < 32+1; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Nov 2 - Friday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[11-1][j]);
+	out(tou_week[11-1][j]);
+}
+outln();
+
+// Nov 3 - Saturday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[11-1][j]);
+	out(tou_end[11-1][j]);
+}
+outln();
+outln();
+
+// Nov 4 - Nov 30 Friday + Saturday
+for( j = 4; j < 31+1; j++ )
+{
+	for( i = 0; i < 24; i++ )
+	{
+		read_line(f, line);
+	}
+}
+
+// Dec 2 - Sunday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_end[12-1][j]);
+	out(tou_end[12-1][j]);
+}
+outln();
+
+// Dec 3 - Monday
+for( j = 0; j < 24; j++ )
+{
+	read_line(f, tou_week[12-1][j]);
+	out(tou_week[12-1][j]);
+}
+outln();
+
 //********************************************************************************************
 //********************************************************************************************
 // Set up simulation
@@ -119,7 +505,7 @@ else weather = add_unit("weatherreader");
 
 if(debug_mode)
 {
-	file_loc = tcs_dir + '/tcs/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
+	file_loc = env('SSCDIR') + '/tcsdata/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out';
 	set_value( weather, "file_name", file_loc );
 	set_value( weather, "i_hour", "TIME" );
 	set_value( weather, "i_month", "month" );
@@ -314,6 +700,11 @@ pb_fixed_par = 0.0055;
 //****************************************************
 //*******************************************************
 
+tou_reader = add_unit("tou_translator");
+
+set_value( tou_reader, "weekday_schedule", tou_week );
+set_value( tou_reader, "weekend_schedule", tou_end );
+
 hel_field = add_unit("sam_mw_pt_type221");
 cav_rec = add_unit("sam_lf_st_pt_type232");
 controller = add_unit("sam_mw_trough_type251");
@@ -493,6 +884,7 @@ connect( powerblock, "T_htf_cold", controller, "T_pb_out" );
 connect( weather, "tdry", controller, "T_amb" );
 connect( powerblock, "m_dot_demand", controller, "m_pb_demand" );
 connect( cav_rec, "Q_startup", controller, "q_startup" );
+connect( tou_reader, "tou_value", controller, "TOUPeriod" );
 //******* "dnifc" forecasted DNI is an input, use default for now
 // Set initial values for inputs
 set_value( controller, "I_bn", 0.0 );
