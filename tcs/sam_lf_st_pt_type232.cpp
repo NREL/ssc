@@ -439,7 +439,7 @@ public:
 		rec_qf_delay	= value( P_rec_qf_delay );
 		conv_model		= (int) value( P_conv_model );
 		m_dot_htf_max	= value( P_m_dot_htf_max ) / 3600.0;	// Convert from kg/hr to hg/s
-		conv_coupled	= (int) value( P_conv_coupled );
+		conv_coupled	= (int) value( P_conv_coupled );		// 1=coupled, 2=uncoupled
 		conv_forced		= (int) value( P_conv_forced );
 		h_wind_meas		= value( P_h_wind_meas );   
 		conv_wind_dir	= (int) value( P_conv_wind_dir );
