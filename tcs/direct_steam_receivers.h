@@ -19,6 +19,7 @@ public:
 	int Get_flowtype() {return m_flowtype;};
 	bool is_iscc() {return m_is_iscc;};
 	int Get_n_panels_sh() {return m_n_panels_sh;};
+	double Get_sh_h_frac() {return m_sh_h_frac;};
 
 private:
 	int m_n_panels;		//[-] Number of panels
@@ -39,7 +40,7 @@ class C_DSG_Boiler
 public:
 	~C_DSG_Boiler() {};
 
-	bool Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec, double d_tube, double th_tube,
+	bool Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec_full, double d_tube, double th_tube,
 					   double eps_tube, double mat_tube, double h_sh_max, double th_fin,
 					   double L_fin, double eps_fin, double mat_fin, bool is_iscc_sh );
 	
