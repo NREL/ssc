@@ -3,7 +3,7 @@ clear();
 //********************************************************************************************
 // Pre-processing input files
 //Read in field efficiency files
-f = open( 'C:/Documents and Settings/tneises/Desktop/Cavity Receiver - Soenke/eff_array.dat', 'r' );
+f = open( 'C:/Users/tneises/Documents/Projects/ssc/tcsdata/typelib/MS_Cavity_Power_Tower/eff_array.dat', 'r' );
 if( !f )
 {
 	outln("Could not open file for reading");
@@ -36,7 +36,7 @@ for( i = 0; i < num_sol_pos; i++ )
 close( f );
 
 //***** Read in flux file ********
-f = open( 'C:/Documents and Settings/tneises/Desktop/Cavity Receiver - Soenke/fluxmap.csv', 'r' );
+f = open( 'C:/Users/tneises/Documents/Projects/ssc/tcsdata/typelib/MS_Cavity_Power_Tower/flux_map.csv', 'r' );
 if( !f )
 {
 	outln("Could not open file for reading");
@@ -60,7 +60,7 @@ num_sol_pos = i - 5;
 arr_sol_pos = alloc( 2, num_sol_pos );
 
 close( f );
-f = open( 'C:/Documents and Settings/tneises/Desktop/Cavity Receiver - Soenke/fluxmap.csv', 'r' );
+f = open( 'C:/Users/tneises/Documents/Projects/ssc/tcsdata/typelib/MS_Cavity_Power_Tower/flux_map.csv', 'r' );
 
 for( i = 0; i < 4; i++ )
 {
@@ -139,9 +139,9 @@ set_value( hel_field, "phi", 174.5 );
 set_value( hel_field, "field_control", 1 );
 
 // Set cavity receiver parameters
-set_value(cav_rec, "rec_d_spec", 8.55); 
-set_value(cav_rec, "h_rec", 7.02);
-set_value(cav_rec, "h_lip", 0.82);
+set_value(cav_rec, "rec_d_spec", 16); 
+set_value(cav_rec, "h_rec", 12.8);
+set_value(cav_rec, "h_lip", 1.6);
 set_value(cav_rec, "h_tower", 287.91);
 set_value(cav_rec, "rec_angle", 180.0); 
 set_value(cav_rec, "d_tube_out", 40.0);
@@ -156,7 +156,7 @@ set_value(cav_rec, "hl_ffact", 1.0);
 set_value(cav_rec, "T_htf_hot_des", 650.0);
 set_value(cav_rec, "T_htf_cold_des", 366.0);
 set_value(cav_rec, "f_rec_min", 0.25);
-set_value(cav_rec, "q_rec_des", 50.0);
+set_value(cav_rec, "q_rec_des", 100.0);
 set_value(cav_rec, "rec_su_delay", 0.2);
 set_value(cav_rec, "rec_qf_delay", 0.25);
 set_value(cav_rec, "conv_model", 2);
@@ -175,12 +175,12 @@ set_value(cav_rec, "fluxmap", arr_flux);
 set_value( cav_rec, "azimuth", 174.5 );
 set_value( cav_rec, "zenith", 58.1 );
 set_value( cav_rec, "T_htf_hot", 650.0 );
-set_value( cav_rec, "T_htf_cold", 366.0 );
+set_value( cav_rec, "T_htf_cold", 470.0 );
 set_value( cav_rec, "P_htf", 1.0 );
 set_value( cav_rec, "P_amb", 0.9435 );
 //connect( weather, "hour", cav_rec, "hour" );
 //connect( weather, "tdew", cav_rec, "T_dp" );
-set_value( cav_rec, "hour", 12.0 );
+//set_value( cav_rec, "hour", 12.0 );
 set_value( cav_rec, "T_dp", 7.0 );
 set_value( cav_rec, "I_bn", 950.0 );
 connect( hel_field, "eta_field", cav_rec, "eta_field" );
