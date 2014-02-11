@@ -5,7 +5,8 @@ static var_info vtab_utility_rate2[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_years",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "e_with_system",            "Net energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+//	{ SSC_INPUT,        SSC_ARRAY,      "e_with_system",            "Net energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "financing_hourly_energy",            "Net energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "p_with_system",            "Max power at grid with system",                 "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "e_without_system",            "Net energy at grid without system (load only)", "kWh",    "",                      "",             "?",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "p_without_system",         "Max power at grid without system (load only)",  "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
@@ -579,8 +580,11 @@ static var_info vtab_utility_rate2[] = {
 
 	
 	// outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Net energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "financing_annual_energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
+
+	// use output from annualoutput not scaled output from here
+	//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Net energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_years",   "" },
 
 
 		// outputs from Paul, Nate and Sean 9/9/13
@@ -769,7 +773,7 @@ public:
 			e_grid(8760), p_grid(8760),
 			e_load_cy(8760), p_load_cy(8760); // current year load (accounts for escal)
 		
-		parr = as_array("e_with_system", &count);
+		parr = as_array("financing_hourly_energy", &count);
 		for (i=0;i<8760;i++)
 		{
 			e_sys[i] = p_sys[i] = parr[i]; // by default p_sys = e_sys (since it's hourly)
@@ -818,8 +822,8 @@ public:
 			monthly_elec_needed_from_grid(12), monthly_cumulative_excess(12);
 
 		/* allocate outputs */		
-		ssc_number_t *annual_net_revenue = allocate("energy_value", nyears);
-		ssc_number_t *energy_net = allocate("energy_net", nyears);
+		ssc_number_t *annual_net_revenue = allocate("financing_annual_energy_value", nyears);
+		ssc_number_t *energy_net = allocate("financing_scaled_annual_energy", nyears);
 		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears);
 		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears);
 		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears);
