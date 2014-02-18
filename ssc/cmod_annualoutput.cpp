@@ -23,11 +23,11 @@ static var_info _cm_vtab_annualoutput[] = {
 
 /* output */
 //	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_e_net_delivered",               "Annual energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "financing_annual_energy",               "Annual energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_energy",               "Annual energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 //	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_e_net_delivered",               "Monthly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "financing_monthly_energy",               "Monthly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_energy",               "Monthly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 //	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_e_net_delivered",               "Hourly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "financing_hourly_energy",               "Hourly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_energy",               "Hourly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_availability",               "Annual availability",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_degradation",               "Annual degradation",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 
@@ -112,7 +112,7 @@ public:
 			compute_output(nyears);
 		}
 
-		save_cf( CF_energy_net, nyears,"financing_annual_energy" );
+		save_cf( CF_energy_net, nyears,"annual_energy" );
 		
 		save_cf( CF_availability, nyears,"annual_availability" );
 		save_cf( CF_degradation, nyears,"annual_degradation" );
@@ -136,8 +136,8 @@ public:
 			return false;
 		}
 
-		ssc_number_t *monthly_energy_to_grid = allocate( "financing_monthly_energy", 12 );
-		ssc_number_t *hourly_energy_to_grid = allocate( "financing_hourly_energy", 8760 );
+		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_energy", 12 );
+		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_energy", 8760 );
 
 
 		double first_year_energy = 0.0;
@@ -196,8 +196,8 @@ public:
 			throw exec_error("annualoutput", "month x hour curtailment factors must have 12 rows and 24 columns");
 
 		// all years
-		ssc_number_t *monthly_energy_to_grid = allocate( "financing_monthly_energy", 12*nyears );
-		ssc_number_t *hourly_energy_to_grid = allocate( "financing_hourly_energy", 8760*nyears );
+		ssc_number_t *monthly_energy_to_grid = allocate( "monthly_energy", 12*nyears );
+		ssc_number_t *hourly_energy_to_grid = allocate( "hourly_energy", 8760*nyears );
 
 		for (int y=1;y<=nyears;y++)
 		{

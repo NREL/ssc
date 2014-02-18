@@ -12,9 +12,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Cashloan",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 	
 //	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "financing_annual_energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "energy_net",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "financing_annual_energy",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
 
 	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "Cashloan",      "*",                       "INTEGER",                                  "" },
@@ -247,7 +247,7 @@ public:
 		size_t count = 0;
 		ssc_number_t *arrp = 0;
 		
-		arrp = as_array("financing_annual_energy", &count);
+		arrp = as_array("annual_energy", &count);
 		i=0;
 		while ( i < nyears && i < (int)count )
 		{
@@ -255,7 +255,7 @@ public:
 			i++;
 		}
 
-		arrp = as_array("financing_annual_energy_value", &count);
+		arrp = as_array("annual_energy_value", &count);
 		i=0;
 		while ( i < nyears && i < (int)count )
 		{
