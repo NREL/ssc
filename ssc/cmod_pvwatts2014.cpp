@@ -209,6 +209,7 @@ public:
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
 		ssc_number_t *p_ac = allocate("ac", 8760);
+		ssc_number_t *p_ac2 = allocate("ac_2", 8760);
 		ssc_number_t *p_tcell = allocate("tcell", 8760);
 		ssc_number_t *p_poa = allocate("poa", 8760);
 		ssc_number_t *p_tpoa = allocate("tpoa", 8760);
@@ -400,10 +401,16 @@ public:
 				dc *= derate;
 
 				// inverter efficiency
+				/*
 				double etanom = 0.97;
 				double A =  -0.0109;
 				double B =  -0.0051;
 				double C =   0.9888;
+				*/
+				double etanom = 0.96;
+				double A =  -0.0162;
+				double B = -0.0059;
+				double C =  0.9858;
 				double pdc0 = ac_nameplate/etanom;
 				double plr = dc / pdc0;
 				double ac = 0;
@@ -416,12 +423,15 @@ public:
 
 				if ( ac > ac_nameplate ) // clipping
 					ac = ac_nameplate;
+
+				double ac2 = dctoac( ac_nameplate, 0.96, dc );
 							
 				p_poa[i] = (ssc_number_t)poa;
 				p_tpoa[i] = (ssc_number_t)tpoa;
 				p_tcell[i] = (ssc_number_t)pvt;
 				p_dc[i] = (ssc_number_t)dc;
 				p_ac[i] = (ssc_number_t)ac;
+				p_ac2[i] = (ssc_number_t)ac2;
 
 			}
 		
