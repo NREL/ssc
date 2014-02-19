@@ -12,10 +12,10 @@ static var_info _cm_vtab_annualoutput[] = {
 
 
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                    UNITS     META                                      GROUP                REQUIRED_IF                 CONSTRAINTS                     UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,     "analysis_years",              "Analyis period",                        "years",  "",                                       "AnnualOutput",      "?=30",                   "INTEGER,MIN=0,MAX=50",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",              "Analyis period",                        "years",  "",                                       "AnnualOutput",      "?=30",                   "INTEGER,MIN=0,MAX=50",           "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		   "Annual energy availability",	        "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		   "Annual energy degradation",	            "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",  "Lifetime hourly system outputs",        "0/1",    "0=hourly first year,1=hourly lifetime",  "AnnualOutput",      "*",						"INTEGER,MIN=0",                 "" },
 //	{ SSC_INPUT,        SSC_ARRAY,		"energy_net",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,		"system_hourly_energy",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
@@ -65,7 +65,7 @@ public:
 	void exec( ) throw( general_error )
 	{
 
-		int nyears = as_integer("analysis_years");
+		int nyears = as_integer("analysis_period");
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
 
 
