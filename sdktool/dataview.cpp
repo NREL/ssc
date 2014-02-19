@@ -392,9 +392,9 @@ void DataView::UpdateView()
 				else if (v->type == SSC_STRING)
 					label += " " + wxString(v->str.c_str());
 				else if (v->type == SSC_ARRAY)
-					label += wxString::Format( " [%d]", v->num.length() );
+					label += wxString::Format( " [%d]", (int)v->num.length() );
 				else if (v->type == SSC_MATRIX)
-					label += wxString::Format(" [%d,%d]", v->num.nrows(), v->num.ncols() );
+					label += wxString::Format(" [%d,%d]", (int)v->num.nrows(), (int)v->num.ncols() );
 				else if (v->type == SSC_TABLE)
 					label += wxString::Format(" { %d }", (int) v->table.size() );
 			}
