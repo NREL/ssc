@@ -13,18 +13,20 @@
 #endif
 #define sind(x) sin( (M_PI/180.0)*(x) )
 #define cosd(x) cos( (M_PI/180.0)*(x) )
+#define tand(x) tan( (M_PI/180.0)*(x) )
+#define asind(x) (180/M_PI*asin(x))
 
-static var_info _cm_vtab_pvwattsv1[] = {
+static var_info _cm_vtab_pvwatts2014[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "file_name",                      "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
-	
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                      "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                         "Albedo (ground reflectance)",                 "frac",   "",                        "PVWatts",      "?",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",  "",                        "PVWatts",      "?=1.1",                   "POSITIVE",                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                     "Tracking mode",                               "0/1/2/3","Fixed,1Axis,2Axis,AziAxis","PVWatts",      "*",                       "MIN=0,MAX=3,INTEGER",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",    "E=90,S=180,W=270",        "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",    "H=0,V=90",                "PVWatts",      "naof:tilt_eq_lat",        "MIN=0,MAX=90",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                        "PVWatts",      "na:tilt",                 "BOOLEAN",                                  "" },
 
 	/* shading inputs */
 	{ SSC_INPUT,        SSC_ARRAY,       "shading_hourly",                 "Hourly beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
@@ -33,22 +35,16 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "shading_diff",                   "Diffuse shading factor",                      "",       "",                        "PVWatts",      "?",                        "",                              "" },
 		
 	/* advanced parameters */
-	{ SSC_INPUT,        SSC_NUMBER,      "enable_user_poa",                "Enable user-defined POA irradiance input",    "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                                  "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "user_poa",                       "User-defined POA irradiance",                 "W/m2",   "",                        "PVWatts",      "enable_user_poa=1",       "LENGTH=8760",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation limit (+/- 1 axis)",         "deg",    "",                        "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inoct",                          "Nominal operating cell temperature",          "C",      "",                        "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tref",                           "Reference cell temperature",                  "C",      "",                        "PVWatts",      "?=25.0",                  "POSITIVE",                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                          "Max power temperature coefficient",           "%/C",    "",                        "PVWatts",      "?=-0.5",                  "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "frac",   "",                        "PVWatts",      "?=0.92",                  "MIN=0,MAX=1",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fd",                             "Diffuse fraction",                            "0..1",   "",                        "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "i_ref",                          "Rating condition irradiance",                 "W/m2",   "",                        "PVWatts",      "?=1000",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "poa_cutin",                      "Min reqd irradiance for operation",           "W/m2",   "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                         "Wind stow speed",                             "m/s",    "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "concen",                         "Concentration ratio",                         "",       "",                        "PVWatts",      "?=1",                     "MIN=1",                                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fhconv",                         "Convective heat transfer factor",             "",       "",                        "PVWatts",      "?=1",                     "MIN=0.1",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shade_mode_1x",                  "Tracker self-shading mode",                   "0/1/2",  "0=shading,1=backtrack,2=none","PVWatts",  "?=2",                     "INTEGER,MIN=0,MAX=2",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",   "",                            "PVWatts",  "?=0.3",                   "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable anti-reflective glass coating (beta)",         "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",   "",                            "PVWatts",  "?=0.4",                   "MIN=0,MAX=3",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable anti-reflective glass coating",        "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
 	
 	
 	/* outputs */
@@ -87,38 +83,123 @@ static var_info _cm_vtab_pvwattsv1[] = {
 
 	var_info_invalid };
 
-class cm_pvwattsv1 : public compute_module
+class cm_pvwatts2014 : public compute_module
 {
 public:
 	
-	cm_pvwattsv1()
+	cm_pvwatts2014()
 	{
-		add_var_info( _cm_vtab_pvwattsv1 );
+		add_var_info( _cm_vtab_pvwatts2014 );
+	}
+
+	double transmittance( double theta1, double n_material, double n_incoming, double k, double l, double *theta2_ret = 0 )
+	{
+		double theta2 = asind( n_incoming / n_material * sind(theta1 ) ); // % snell's law, assuming n_air = 1.0
+		if ( theta2_ret != 0 ) *theta2_ret = theta2;
+
+		// fresnel's equation for non-reflected unpolarized radiation as an average of perpendicular and parallel components
+		double tr0 = 1 - 0.5 *
+			( pow( sind(theta2-theta1), 2 )/pow( sind(theta2+theta1), 2)
+			+ pow( tand(theta2-theta1), 2 )/pow( tand(theta2+theta1), 2 ) );
+
+		return tr0; //* exp( -k * l / cosd(theta2) );
+	}
+
+	double iam( double theta, bool ar_glass )
+	{
+		double normal = iam_nonorm( 1, ar_glass );
+		double actual = iam_nonorm( theta, ar_glass );
+		return actual/normal;	
+	}
+
+	double iam_nonorm( double theta, bool ar_glass )
+	{
+		double n_air = 1.0;
+
+		double n_g = 1.526;
+		double k_g = 4;
+		double l_g = 0.002;
+
+		double n_arc = 1.3;
+		double k_arc = 4;
+		double l_arc = l_g*0.01;  // assume 1/100th thickness of glass for AR coating
+
+		if ( theta < 1 ) theta = 1;
+		if ( theta > 89 ) theta = 89;
+
+		if ( ar_glass )
+		{
+			double theta2 = 1;
+			double tau_coating = transmittance( theta, n_arc, n_air, k_arc, l_arc, &theta2 );
+			double tau_glass = transmittance( theta2, n_g, n_arc, k_g, l_g );
+			return tau_coating*tau_glass;
+		}
+		else
+		{
+			return transmittance(theta, n_g, n_air, k_g, l_g );
+		}
 	}
 
 	void exec( ) throw( general_error )
 	{
-		const char *file = as_string("file_name");
+		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwattsv1", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("pvwatts2014", "failed to read local weather file: " + std::string(file));
 					
-		double dcrate = as_double("system_size");
 		double derate = as_double("derate");
+		if ( derate < 0.0 || derate > 1.0 ) // Use if default ac to dc derate factor out of range
+			derate = 0.86;
+        
 		int track_mode = as_integer("track_mode"); // 0, 1, 2, 3
+		
 		double azimuth = as_double("azimuth");
 		double tilt = fabs(wf.lat);
-		if ( !lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat") )
-			tilt = fabs( as_double("tilt") );
 		
-		ssc_number_t *p_user_poa = 0;
-		if ( as_boolean("enable_user_poa") )
-		{
-			size_t count = 0;
-			p_user_poa = as_array("user_poa", &count);
-			if (count != 8760) p_user_poa = 0;
-		}
+		double t_ref = 25;
+		double i_ref = 1000;
+		
+		double inoct = as_double("inoct") + 273.15; // PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
+		double gamma = as_double("gamma") / 100.0; // PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
+	
+		double height = PVWATTS_HEIGHT;                 /* Average array height (meters) */
+		double rlim = as_double("rotlim");             /* +/- rotation in degrees permitted by physical constraint of tracker */
+		double fd = as_double("fd"); // diffuse fraction
+		double wind_stow = as_double("w_stow"); // maximum wind speed before stowing.  stowing causes all output to be lost
 
+		double concen = 1.0;
+		if ( is_assigned("concen") ) concen = as_double("concen"); // concentration ratio.  used to increase incident irradiance on cells for thermal calculaton		
+		
+		double fhconv = 1.0;
+		if ( is_assigned("fhconv") ) fhconv = as_double("fhconv"); // convective heat transfer coefficient factor.  used to approximate effect of a heatsink for lcpv
+		
+		int shade_mode_1x = 2; // no self shading on 1 axis tracker
+		if ( is_assigned("shade_mode_1x") ) shade_mode_1x = as_integer("shade_mode_1x");
+		
+		double gcr = 0.3;
+		if ( is_assigned("gcr") ) gcr = as_double("gcr");
+
+		bool use_ar_glass = false;
+		if ( is_assigned("ar_glass") ) use_ar_glass = as_boolean("ar_glass");
+
+		
+		double dc_nameplate = as_double("system_size")*1000;
+		double dc_ac_ratio = as_double("dc_ac_ratio");
+
+		// check system size
+		if ( dc_nameplate < 0.1 ) dc_nameplate = 0.1;
+
+		double ac_nameplate = dc_nameplate / dc_ac_ratio;      // rated output of inverter in a.c. watts; 6/29/2005
+
+		if( track_mode < 0 || track_mode > 3 )
+			track_mode = 0;
+		if( tilt < 0 || tilt > 90 )
+			tilt = wf.lat;
+		if( azimuth < 0 || azimuth > 360 )
+			azimuth = 180.0;
+
+		/* allocate hourly output arrays */
+		
 		ssc_number_t *p_gh = allocate("gh", 8760);
 		ssc_number_t *p_dn = allocate("dn", 8760);
 		ssc_number_t *p_df = allocate("df", 8760);
@@ -135,49 +216,6 @@ public:
 		ssc_number_t *p_shad_beam_factor = allocate("shad_beam_factor", 8760);
 		ssc_number_t *p_sunup = allocate("sunup", 8760);
 	
-		/* PV RELATED SPECIFICATIONS */
-		
-		double inoct = as_double("inoct") + 273.15; // PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
-		double reftem = as_double("tref"); // PVWATTS_REFTEM;                /* Reference module temperature (deg C) */
-		double pwrdgr = as_double("gamma") / 100.0; // PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
-		double efffp = as_double("inv_eff"); // PVWATTS_EFFFP;                 /* Efficiency of inverter at rated output (decimal fraction) */
-
-		double height = PVWATTS_HEIGHT;                 /* Average array height (meters) */
-		double tmloss = 1.0 - derate/efffp;  /* All losses except inverter,decimal */
-		double rlim = as_double("rotlim");             /* +/- rotation in degrees permitted by physical constraint of tracker */
-		double fd = as_double("fd"); // diffuse fraction
-		double i_ref = as_double("i_ref"); // reference irradiance for rating condition
-		double poa_cutin = as_double("poa_cutin"); // minimum POA irradiance level required for any operation
-		double wind_stow = as_double("w_stow"); // maximum wind speed before stowing.  stowing causes all output to be lost
-		double concen = 1.0;
-		if ( is_assigned("concen") ) concen = as_double("concen"); // concentration ratio.  used to increase incident irradiance on cells for thermal calculaton		
-		double fhconv = 1.0;
-		if ( is_assigned("fhconv") ) fhconv = as_double("fhconv"); // convective heat transfer coefficient factor.  used to approximate effect of a heatsink for lcpv
-		int shade_mode_1x = 2; // no self shading on 1 axis tracker
-		if ( is_assigned("shade_mode_1x") ) shade_mode_1x = as_integer("shade_mode_1x");
-		double gcr = 0.3;
-		if ( is_assigned("gcr") ) gcr = as_double("gcr");
-
-		double use_ar_glass = false;
-		if ( is_assigned("ar_glass") ) use_ar_glass = as_boolean("ar_glass");
-
-		// check system size
-		if ( dcrate < 0.1 ) dcrate = 0.1;
-
-	// bounds of (0,09999, 0.99001) are consistent with online PVWatts http://rredc.nrel.gov/solar/codes_algs/PVWATTS/version1/US/code/pvwattsv1.cgi
-	//    if ( derate < 0.09999 || derate > 0.99001 ) // Use if default ac to dc derate factor out of range
-		if ( derate < 0.0 || derate > 1.0 ) // Use if default ac to dc derate factor out of range
-			derate = 0.77;
-        
-		double pcrate = dcrate * 1000.0;      // rated output of inverter in a.c. watts; 6/29/2005
-		double refpwr = dcrate * 1000.0;      // nameplate in watts; 6/29/2005
-
-		if( track_mode < 0 || track_mode > 3 )
-			track_mode = 0;
-		if( tilt < 0 || tilt > 90 )
-			tilt = wf.lat;
-		if( azimuth < 0 || azimuth > 360 )
-			azimuth = 180.0;
 						
 		
 //		initialize to no shading
@@ -245,24 +283,20 @@ public:
 		while( i < 8760 )
 		{
 			if (!wf.read())
-				throw exec_error("pvwattsv1", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
+				throw exec_error("pvwatts2014", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
 
 			irrad irr;
 			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600.0 );
 			irr.set_location( wf.lat, wf.lon, wf.tz );
 				
-			double alb = 0.2;
+			double alb = 0.2; // do not increase albedo if snow exists in TMY2
 			
 			if ( has_albedo && fixed_albedo >= 0 && fixed_albedo <= 1.0 )
 			{
 				alb = fixed_albedo;
 			}
-			else if ( wf.type() == weatherfile::TMY2 )
-			{
-				if (wf.snow > 0 && wf.snow < 150)
-					alb = 0.6;
-			}
-			else if ( wf.type() == weatherfile::TMY3 )
+			else if ( wf.type() == weatherfile::TMY3 
+				|| wf.type() == weatherfile::WFCSV )
 			{
 				if ( wf.albedo >= 0 && wf.albedo < 1 )
 					alb = wf.albedo;
@@ -346,29 +380,49 @@ public:
 				iskydiff *= shad_skydiff_factor;
 				
 				double poa = ibeam + fd*(iskydiff +ignddiff);
-
-				if ( p_user_poa != 0 )
-					poa = p_user_poa[i];
-
-				if (poa_cutin > 0 && poa < poa_cutin)
-					poa = 0;
-
+				
 				double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd;
 
 				if (wind_stow > 0 && wf.wspd >= wind_stow)
 					poa = 0;
-
-				// check that the double to boolean conversion fo use_ar_glass works!
-				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180, use_ar_glass );
-				double pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
-				double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
-				double ac = dctoac(pcrate,efffp,dc);
+				
+				// module cover
+				double tpoa = poa - ( 1.0 - iam( aoi, use_ar_glass ) )*wf.dn*cosd(aoi);
+				if( tpoa < 0.0 ) tpoa = 0.0;
 			
+				// cell temperature
+				double pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
+
+				// dc power output
+				double dc = dc_nameplate*(1.0+gamma*(pvt-t_ref))*tpoa/i_ref;
+
+				// dc losses
+				dc *= derate;
+
+				// inverter efficiency
+				double etanom = 0.97;
+				double A =  -0.0109;
+				double B =  -0.0051;
+				double C =   0.9888;
+				double pdc0 = ac_nameplate/etanom;
+				double plr = dc / pdc0;
+				double ac = 0;
+
+				if ( plr > 0 )
+				{ // normal operation
+					double eta = A*plr + B/plr + C;
+					ac = dc*eta;
+				}
+
+				if ( ac > ac_nameplate ) // clipping
+					ac = ac_nameplate;
+							
 				p_poa[i] = (ssc_number_t)poa;
 				p_tpoa[i] = (ssc_number_t)tpoa;
 				p_tcell[i] = (ssc_number_t)pvt;
 				p_dc[i] = (ssc_number_t)dc;
 				p_ac[i] = (ssc_number_t)ac;
+
 			}
 		
 			i++;
@@ -400,4 +454,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( pvwattsv1, "PVWatts V.1 - integrated hourly weather reader and PV system simulator.", 2 )
+DEFINE_MODULE_ENTRY( pvwatts2014, "PVWatts 2014 - integrated hourly weather reader and PV system simulator.", 2 )
