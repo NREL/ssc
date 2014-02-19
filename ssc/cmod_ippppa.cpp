@@ -637,7 +637,7 @@ public:
 		ppa_soln_tolerance = as_double("ppa_soln_tolerance");
 		weighting_factor = 1.0; // binary search algorithm - updated in check constraints.
 
-		nyears = as_integer("analysis_years");
+		nyears = as_integer("analysis_period");
 
 		// initialize cashflow matrix
 		cf.resize_fill( CF_max, nyears+1, 0.0 );

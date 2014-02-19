@@ -1,5 +1,6 @@
 #include "core.h"
 #include "lib_financial.h"
+#include <sstream>
 using namespace libfin;
 
 static var_info vtab_cashloan[] = {
@@ -14,7 +15,10 @@ static var_info vtab_cashloan[] = {
 //	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "energy_net",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
+//	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
+	{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Net energy at grid with system", "kWh", "", "", "*", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "energy_degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "AnnualOutput", "*", "INTEGER,MIN=0", "" },
 
 	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "Cashloan",      "*",                       "INTEGER",                                  "" },
@@ -134,6 +138,7 @@ extern var_info
 	vtab_payment_incentives[];
 
 enum {
+	CF_degradation,
 	CF_energy_net,
 	CF_energy_value,
 	CF_value_added,
@@ -238,7 +243,7 @@ public:
 		if (is_mortgage) log("mortgage loan"); else log("standard loan");
 		*/
 
-		int nyears = as_integer("analysis_years");
+		int nyears = as_integer("analysis_period");
 
 		// initialize cashflow matrix
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
@@ -247,6 +252,72 @@ public:
 		size_t count = 0;
 		ssc_number_t *arrp = 0;
 		
+
+		// degradation
+		size_t count_degrad = 0;
+		ssc_number_t *degrad = 0;
+		degrad = as_array("energy_degradation", &count_degrad);
+
+		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
+		if (count_degrad == 1)
+		{
+			if (as_integer("system_use_lifetime_output"))
+			{
+				if (nyears >= 1) cf.at(CF_degradation, 1) = 1.0;
+				for (i = 2; i <= nyears; i++) cf.at(CF_degradation, i) = 1.0 - degrad[0] / 100.0;
+			}
+			else
+				for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = pow((1.0 - degrad[0] / 100.0), i - 1);
+		}
+		else if (count_degrad > 0)
+		{
+			for (i = 0; i<nyears && i<(int)count_degrad; i++) cf.at(CF_degradation, i + 1) = (1.0 - degrad[i] / 100.0);
+		}
+		// energy
+		ssc_number_t *hourly_energy;
+		if (as_integer("system_use_lifetime_output"))
+		{
+			hourly_energy = as_array("hourly_energy", &count); 
+			if ((int)count != (8760))
+			{
+				std::stringstream outm;
+				outm << "Bad hourly energy output length (" << count << "), should be 8760.";
+				throw(outm.str());
+				return;
+			}
+			double first_year_energy = 0.0;
+			for (int i = 0; i < 8760; i++) 
+				first_year_energy += hourly_energy[i];
+			for (int y = 1; y <= nyears; y++)
+				cf.at(CF_energy_net, y) = first_year_energy * cf.at(CF_degradation, y);
+		}
+		else
+		{
+			hourly_energy = as_array("hourly_energy", &count);
+			if ((int)count != (8760 * nyears))
+			{
+				std::stringstream outm;
+				outm << "Bad hourly lifetime energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760 * nyears << ")";
+				throw(outm.str());
+				return;
+			}
+			for (int y = 1; y <= nyears; y++)
+			{
+				cf.at(CF_energy_net, y) = 0;
+				int i = 0;
+				for (int m = 0; m<12; m++)
+					for (int d = 0; d<util::nday[m]; d++)
+						for (int h = 0; h<24; h++)
+							if (i<8760)
+							{
+								cf.at(CF_energy_net, y) += hourly_energy[(y - 1) * 8760 + i] * cf.at(CF_degradation, y);
+								i++;
+							}
+			}
+
+		}
+
+		/*
 		arrp = as_array("annual_energy", &count);
 		i=0;
 		while ( i < nyears && i < (int)count )
@@ -254,7 +325,7 @@ public:
 			cf.at(CF_energy_net, i+1) = (double) arrp[i];
 			i++;
 		}
-
+		*/
 		arrp = as_array("annual_energy_value", &count);
 		i=0;
 		while ( i < nyears && i < (int)count )

@@ -1209,7 +1209,7 @@ public:
 	{
 
 		// cash flow initialization
-		int nyears = as_integer("analysis_years");
+		int nyears = as_integer("analysis_period");
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
 
 		// assign inputs

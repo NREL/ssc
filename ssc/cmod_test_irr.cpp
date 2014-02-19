@@ -10,7 +10,7 @@ static var_info _cm_vtab_test_irr[] = {
 
 /*test and validation of irr function used in ssc financial models */
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_years",			"years in test",	"years",   "",                      "DHF",             "*",						   "INTEGER",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",			"years in test",	"years",   "",                      "DHF",             "*",						   "INTEGER",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "cf_length",			"length of cash flow items",	"",   "",                      "DHF",             "*",						   "INTEGER",                              "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "max_iterations",			"maximum number of iterations",	"",   "",                      "DHF",             "*",						   "INTEGER",                              "" },
@@ -58,7 +58,7 @@ public:
 	{
 
 		// cash flow initialization
-		int nyears = as_integer("analysis_years");
+		int nyears = as_integer("analysis_period");
 		int cf_length = nyears+1;
 		int max_iterations = as_integer("max_iterations");
 		double tolerance = as_number("tolerance");
