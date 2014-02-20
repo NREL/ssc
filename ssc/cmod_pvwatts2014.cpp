@@ -18,33 +18,32 @@
 
 static var_info _cm_vtab_pvwatts2014[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                      "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "local weather file path",                     "",          "",                                             "Weather",      "*",                       "LOCAL_FILE",      "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                         "Albedo (ground reflectance)",                 "frac",   "",                        "PVWatts",      "?",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",  "",                        "PVWatts",      "?=1.1",                   "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                     "Tracking mode",                               "0/1/2/3","Fixed,1Axis,2Axis,AziAxis","PVWatts",      "*",                       "MIN=0,MAX=3,INTEGER",                      "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",    "E=90,S=180,W=270",        "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",    "H=0,V=90",                "PVWatts",      "naof:tilt_eq_lat",        "MIN=0,MAX=90",                             "" },
-
-	/* shading inputs */
-	{ SSC_INPUT,        SSC_ARRAY,       "shading_hourly",                 "Hourly beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading_mxh",                    "Month x Hour beam shading factors",           "",       "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading_azal",                   "Azimuth x altitude beam shading factors",     "",       "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading_diff",                   "Diffuse shading factor",                      "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",        "",                                             "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "PVWatts",      "*",                       "MIN=0,MAX=2,INTEGER",                      "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "PVWatts",      "?=1.1",                   "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",      "",                                             "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis",  "PVWatts",      "*",                       "MIN=0,MAX=4,INTEGER",                      "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "PVWatts",      "*",                       "MIN=0,MAX=90",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "PVWatts",      "?=0.4",                   "MIN=0,MAX=3",               "" },
+	
+	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",                 "Hourly beam shading factors",                 "",          "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading factors",           "",          "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading factors",     "",          "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading factor",                      "",          "",                        "PVWatts",      "?",                        "",                              "" },
 		
 	/* advanced parameters */
-	{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation limit (+/- 1 axis)",         "deg",    "",                        "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inoct",                          "Nominal operating cell temperature",          "C",      "",                        "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "gamma",                          "Max power temperature coefficient",           "%/C",    "",                        "PVWatts",      "?=-0.5",                  "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fd",                             "Diffuse fraction",                            "0..1",   "",                        "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                         "Wind stow speed",                             "m/s",    "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "concen",                         "Concentration ratio",                         "",       "",                        "PVWatts",      "?=1",                     "MIN=1",                                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fhconv",                         "Convective heat transfer factor",             "",       "",                        "PVWatts",      "?=1",                     "MIN=0.1",                                  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shade_mode_1x",                  "Tracker self-shading mode",                   "0/1/2",  "0=shading,1=backtrack,2=none","PVWatts",  "?=2",                     "INTEGER,MIN=0,MAX=2",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",   "",                            "PVWatts",  "?=0.4",                   "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable anti-reflective glass coating",        "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation limit (+/- 1 axis)",         "deg",    "",                        "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "inoct",                          "Nominal operating cell temperature",          "C",      "",                        "PVWatts",      "?=45.0",                  "POSITIVE",                                 "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "gamma",                          "Max power temperature coefficient",           "%/C",    "",                        "PVWatts",      "?=-0.5",                  "",                                         "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "fd",                             "Diffuse fraction",                            "0..1",   "",                        "PVWatts",      "?=1.0",                   "MIN=0,MAX=1",                              "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "w_stow",                         "Wind stow speed",                             "m/s",    "",                        "PVWatts",      "?=0",                     "MIN=0",                                    "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "concen",                         "Concentration ratio",                         "",       "",                        "PVWatts",      "?=1",                     "MIN=1",                                    "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "fhconv",                         "Convective heat transfer factor",             "",       "",                        "PVWatts",      "?=1",                     "MIN=0.1",                                  "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "shade_mode_1x",                  "Tracker self-shading mode",                   "0/1/2",  "0=shading,1=backtrack,2=none","PVWatts",  "?=2",                     "INTEGER,MIN=0,MAX=2",           "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable anti-reflective glass coating",        "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
 	
 	
 	/* outputs */
@@ -146,57 +145,53 @@ public:
 
 		weatherfile wf( file );
 		if (!wf.ok()) throw exec_error("pvwatts2014", "failed to read local weather file: " + std::string(file));
-					
-		double derate = as_double("derate");
-		if ( derate < 0.0 || derate > 1.0 ) // Use if default ac to dc derate factor out of range
-			derate = 0.86;
-        
-		int track_mode = as_integer("track_mode"); // 0, 1, 2, 3
-		
-		double azimuth = as_double("azimuth");
-		double tilt = fabs(wf.lat);
-		
-		double t_ref = 25;
-		double i_ref = 1000;
-		
-		double inoct = as_double("inoct") + 273.15; // PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
-		double gamma = as_double("gamma") / 100.0; // PVWATTS_PWRDGR;              /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
-	
-		double height = PVWATTS_HEIGHT;                 /* Average array height (meters) */
-		double rlim = as_double("rotlim");             /* +/- rotation in degrees permitted by physical constraint of tracker */
-		double fd = as_double("fd"); // diffuse fraction
-		double wind_stow = as_double("w_stow"); // maximum wind speed before stowing.  stowing causes all output to be lost
-
-		double concen = 1.0;
-		if ( is_assigned("concen") ) concen = as_double("concen"); // concentration ratio.  used to increase incident irradiance on cells for thermal calculaton		
-		
-		double fhconv = 1.0;
-		if ( is_assigned("fhconv") ) fhconv = as_double("fhconv"); // convective heat transfer coefficient factor.  used to approximate effect of a heatsink for lcpv
-		
-		int shade_mode_1x = 2; // no self shading on 1 axis tracker
-		if ( is_assigned("shade_mode_1x") ) shade_mode_1x = as_integer("shade_mode_1x");
-		
-		double gcr = 0.3;
-		if ( is_assigned("gcr") ) gcr = as_double("gcr");
-
-		bool use_ar_glass = false;
-		if ( is_assigned("ar_glass") ) use_ar_glass = as_boolean("ar_glass");
-
-		
+										
 		double dc_nameplate = as_double("system_size")*1000;
 		double dc_ac_ratio = as_double("dc_ac_ratio");
+		double ac_nameplate = dc_nameplate / dc_ac_ratio;
+		
+		double derate = as_double("derate");        
+		double tilt = as_double("tilt");
+		double azimuth = as_double("azimuth");
 
-		// check system size
-		if ( dc_nameplate < 0.1 ) dc_nameplate = 0.1;
+		double gamma = 0;
+		bool use_ar_glass = false;
 
-		double ac_nameplate = dc_nameplate / dc_ac_ratio;      // rated output of inverter in a.c. watts; 6/29/2005
+		int module_type = as_integer("module_type");
+		switch( module_type )
+		{
+		case 0: // standard module
+			gamma = -0.0047; use_ar_glass = false; break;
+		case 1: // premium module
+			gamma = -0.0033; use_ar_glass = true; break;
+		case 2: // thin film module
+			gamma = -0.0023; use_ar_glass = false; break;
+		}
 
-		if( track_mode < 0 || track_mode > 3 )
-			track_mode = 0;
-		if( tilt < 0 || tilt > 90 )
-			tilt = wf.lat;
-		if( azimuth < 0 || azimuth > 360 )
-			azimuth = 180.0;
+		int track_mode =  0;
+		double inoct = 45;
+		int shade_mode_1x = 0; // self shaded
+		
+		int array_type = as_integer("array_type"); // 0, 1, 2, 3, 4		
+		switch( array_type )
+		{
+		case 0: // fixed open rack
+			track_mode = 0; inoct = 45; shade_mode_1x = 0; break;
+		case 1: // fixed roof mount
+			track_mode = 0; inoct = 50; shade_mode_1x = 0; break;
+		case 2: // 1 axis self-shaded
+			track_mode = 1; inoct = 45; shade_mode_1x = 0; break;
+		case 3: // 1 axis backtracked
+			track_mode = 1; inoct = 45; shade_mode_1x = 1; break;
+		case 4: // 2 axis
+			track_mode = 2; inoct = 45; shade_mode_1x = 0; break;
+		case 5: // azimuth axis
+			track_mode = 3; inoct = 45; shade_mode_1x = 0; break;
+		}
+
+		
+		double gcr = 0.4;
+		if ( track_mode == 1 && is_assigned("gcr") ) gcr = as_double("gcr");
 
 		/* allocate hourly output arrays */
 		
@@ -209,7 +204,6 @@ public:
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
 		ssc_number_t *p_ac = allocate("ac", 8760);
-		ssc_number_t *p_ac2 = allocate("ac_2", 8760);
 		ssc_number_t *p_tcell = allocate("tcell", 8760);
 		ssc_number_t *p_poa = allocate("poa", 8760);
 		ssc_number_t *p_tpoa = allocate("tpoa", 8760);
@@ -223,26 +217,26 @@ public:
 		for ( size_t j=0;j<8760;j++)
 			p_shad_beam_factor[j] = 1.0;
 
-		if ( is_assigned("shading_hourly" ) )
+		if ( is_assigned("shading:hourly" ) )
 		{
 			size_t len = 0;
-			ssc_number_t *vals = as_array( "shading_hourly", &len );
+			ssc_number_t *vals = as_array( "shading:hourly", &len );
 			if ( len == 8760 )
 			{
 				for ( size_t j=0;j<8760;j++)
 					p_shad_beam_factor[j] = vals[j];
 			}
 			else
-				throw exec_error("pvwattsv1", "hourly shading beam factors must have 8760 values");
+				throw exec_error("pvwatts2014", "hourly shading beam factors must have 8760 values");
 		}
 
 
-		if ( is_assigned( "shading_mxh" ) )
+		if ( is_assigned( "shading:mxh" ) )
 		{
 			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading_mxh", &nrows, &ncols );
+			ssc_number_t *mat = as_matrix( "shading:mxh", &nrows, &ncols );
 			if ( nrows != 12 || ncols != 24 )
-				throw exec_error("pvwattsv1", "month x hour shading factors must have 12 rows and 24 columns");
+				throw exec_error("pvwatts2014", "month x hour shading factors must have 12 rows and 24 columns");
 
 			int c=0;
 			for (int m=0;m<12;m++)
@@ -253,12 +247,12 @@ public:
 
 		bool enable_azalt_beam_shading = false;
 		util::matrix_t<double> azaltvals;
-		if ( is_assigned( "shading_azal" ) )
+		if ( is_assigned( "shading:azal" ) )
 		{
 			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading_azal", &nrows, &ncols );
+			ssc_number_t *mat = as_matrix( "shading:azal", &nrows, &ncols );
 			if ( nrows < 3 || ncols < 3 )
-				throw exec_error("pvwattsv1", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
+				throw exec_error("pvwatts2014", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
 
 			azaltvals.resize_fill( nrows, ncols, 1.0 );
 			for ( size_t r=0;r<nrows;r++ )
@@ -269,17 +263,11 @@ public:
 		}
 
 		double shad_skydiff_factor = 1.0;
-		if ( is_assigned( "shading_diff" ) )
-			shad_skydiff_factor = as_double( "shading_diff" );
+		if ( is_assigned( "shading:diff" ) )
+			shad_skydiff_factor = as_double( "shading:diff" );
 
-		pvwatts_celltemp tccalc( inoct, height, 1.0 );
-		
-		double fixed_albedo = 0.2;
-		bool has_albedo = is_assigned( "albedo" );
-		if ( has_albedo )
-			fixed_albedo = as_double( "albedo" );
-
-	
+		pvwatts_celltemp tccalc( inoct+273.15, PVWATTS_HEIGHT, 1.0 );
+			
 		int i=0;
 		while( i < 8760 )
 		{
@@ -292,11 +280,7 @@ public:
 				
 			double alb = 0.2; // do not increase albedo if snow exists in TMY2
 			
-			if ( has_albedo && fixed_albedo >= 0 && fixed_albedo <= 1.0 )
-			{
-				alb = fixed_albedo;
-			}
-			else if ( wf.type() == weatherfile::TMY3 
+			if ( wf.type() == weatherfile::TMY3 
 				|| wf.type() == weatherfile::WFCSV )
 			{
 				if ( wf.albedo >= 0 && wf.albedo < 1 )
@@ -305,7 +289,7 @@ public:
 
 			irr.set_sky_model( 2, alb );
 			irr.set_beam_diffuse( wf.dn, wf.df );
-			irr.set_surface( track_mode, tilt, azimuth, rlim, 
+			irr.set_surface( track_mode, tilt, azimuth, 45.0, 
 				shade_mode_1x == 1, // backtracking mode
 				gcr );
 			
@@ -341,7 +325,7 @@ public:
 					double shad1xf = shade_fraction_1x( solazi, solzen, tilt, azimuth, gcr, rot );					
 					p_shad_beam_factor[i] *= (ssc_number_t)(1-shad1xf);
 
-					if ( fd > 0 && shade_mode_1x == 0 && iskydiff > 0 )
+					if ( shade_mode_1x == 0 && iskydiff > 0 )
 					{
 						double reduced_skydiff = iskydiff;
 						double Fskydiff = 1.0;
@@ -380,33 +364,25 @@ public:
 				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
 				iskydiff *= shad_skydiff_factor;
 				
-				double poa = ibeam + fd*(iskydiff +ignddiff);
+				double poa = ibeam + iskydiff +ignddiff;
 				
 				double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd;
-
-				if (wind_stow > 0 && wf.wspd >= wind_stow)
-					poa = 0;
-				
+								
 				// module cover
 				double tpoa = poa - ( 1.0 - iam( aoi, use_ar_glass ) )*wf.dn*cosd(aoi);
 				if( tpoa < 0.0 ) tpoa = 0.0;
 			
 				// cell temperature
-				double pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
+				double pvt = tccalc( poa, wspd_corr, wf.tdry );
 
 				// dc power output
-				double dc = dc_nameplate*(1.0+gamma*(pvt-t_ref))*tpoa/i_ref;
+				double dc = dc_nameplate*(1.0+gamma*(pvt-25.0))*tpoa/1000.0;
 
 				// dc losses
 				dc *= derate;
 
 				// inverter efficiency
-				/*
-				double etanom = 0.97;
-				double A =  -0.0109;
-				double B =  -0.0051;
-				double C =   0.9888;
-				*/
+
 				double etanom = 0.96;
 				double A =  -0.0162;
 				double B = -0.0059;
@@ -423,16 +399,12 @@ public:
 
 				if ( ac > ac_nameplate ) // clipping
 					ac = ac_nameplate;
-
-				double ac2 = dctoac( ac_nameplate, 0.96, dc );
-							
+			
 				p_poa[i] = (ssc_number_t)poa;
 				p_tpoa[i] = (ssc_number_t)tpoa;
 				p_tcell[i] = (ssc_number_t)pvt;
 				p_dc[i] = (ssc_number_t)dc;
 				p_ac[i] = (ssc_number_t)ac;
-				p_ac2[i] = (ssc_number_t)ac2;
-
 			}
 		
 			i++;

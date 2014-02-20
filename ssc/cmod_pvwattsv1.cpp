@@ -16,7 +16,7 @@
 
 static var_info _cm_vtab_pvwattsv1[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "file_name",                      "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",             "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                         "Albedo (ground reflectance)",                 "frac",   "",                        "PVWatts",      "?",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
@@ -27,10 +27,10 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                        "PVWatts",      "na:tilt",                 "BOOLEAN",                                  "" },
 
 	/* shading inputs */
-	{ SSC_INPUT,        SSC_ARRAY,       "shading_hourly",                 "Hourly beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading_mxh",                    "Month x Hour beam shading factors",           "",       "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading_azal",                   "Azimuth x altitude beam shading factors",     "",       "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading_diff",                   "Diffuse shading factor",                      "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",                 "Hourly beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading factors",           "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading factors",     "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading factor",                      "",       "",                        "PVWatts",      "?",                        "",                              "" },
 		
 	/* advanced parameters */
 	{ SSC_INPUT,        SSC_NUMBER,      "enable_user_poa",                "Enable user-defined POA irradiance input",    "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                                  "" },
@@ -98,7 +98,7 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		const char *file = as_string("file_name");
+		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf( file );
 		if (!wf.ok()) throw exec_error("pvwattsv1", "failed to read local weather file: " + std::string(file));
@@ -187,7 +187,7 @@ public:
 		if ( is_assigned("shading_hourly" ) )
 		{
 			size_t len = 0;
-			ssc_number_t *vals = as_array( "shading_hourly", &len );
+			ssc_number_t *vals = as_array( "shading:hourly", &len );
 			if ( len == 8760 )
 			{
 				for ( size_t j=0;j<8760;j++)
@@ -198,10 +198,10 @@ public:
 		}
 
 
-		if ( is_assigned( "shading_mxh" ) )
+		if ( is_assigned( "shading:mxh" ) )
 		{
 			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading_mxh", &nrows, &ncols );
+			ssc_number_t *mat = as_matrix( "shading:mxh", &nrows, &ncols );
 			if ( nrows != 12 || ncols != 24 )
 				throw exec_error("pvwattsv1", "month x hour shading factors must have 12 rows and 24 columns");
 
@@ -214,10 +214,10 @@ public:
 
 		bool enable_azalt_beam_shading = false;
 		util::matrix_t<double> azaltvals;
-		if ( is_assigned( "shading_azal" ) )
+		if ( is_assigned( "shading:azal" ) )
 		{
 			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading_azal", &nrows, &ncols );
+			ssc_number_t *mat = as_matrix( "shading:azal", &nrows, &ncols );
 			if ( nrows < 3 || ncols < 3 )
 				throw exec_error("pvwattsv1", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
 
@@ -230,8 +230,8 @@ public:
 		}
 
 		double shad_skydiff_factor = 1.0;
-		if ( is_assigned( "shading_diff" ) )
-			shad_skydiff_factor = as_double( "shading_diff" );
+		if ( is_assigned( "shading:diff" ) )
+			shad_skydiff_factor = as_double( "shading:diff" );
 
 		pvwatts_celltemp tccalc( inoct, height, 1.0 );
 		
