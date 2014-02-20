@@ -580,7 +580,7 @@ public:
 			std::string const str_error = stream_error.str();
 			throw exec_error("annualoutput", str_error);
 		}
-
+		i = 0;
 		for (int m = 0; m < 12; m++)
 			for (int d = 0; d < util::nday[m]; d++)
 				for (int h = 0; h < 24; h++)
