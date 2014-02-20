@@ -275,7 +275,7 @@ public:
 		}
 		// energy
 		ssc_number_t *hourly_energy;
-		if (as_integer("system_use_lifetime_output"))
+		if (as_integer("system_use_lifetime_output")==0)
 		{
 			hourly_energy = as_array("hourly_energy", &count); 
 			if ((int)count != (8760))
