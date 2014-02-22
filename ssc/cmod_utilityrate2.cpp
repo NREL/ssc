@@ -8,8 +8,10 @@ static var_info vtab_utility_rate2[] = {
 //	{ SSC_INPUT,        SSC_ARRAY,      "e_with_system",            "Net energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",            "Net energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "p_with_system",            "Max power at grid with system",                 "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "e_without_system",            "Net energy at grid without system (load only)", "kWh",    "",                      "",             "?",                         "LENGTH=8760",                   "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "p_without_system",         "Max power at grid without system (load only)",  "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
+//	{ SSC_INPUT, SSC_ARRAY, "e_without_system", "Net energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "e_load", "Net energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "p_without_system", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "p_load", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
 
 //	{ SSC_INPUT,        SSC_ARRAY,      "system_availability",       "Annual availability of system",    "%/year", "",                      "",             "?=100",                       "",                              "" },
 //	{ SSC_INPUT,        SSC_ARRAY,      "system_degradation",       "Annual degradation of system",    "%/year", "",                      "",             "?=0",                       "",                              "" },
@@ -792,10 +794,12 @@ public:
 				p_sys[i] = parr[i];
 		}
 
-		if (is_assigned("e_without_system"))
-		{
-			parr = as_array("e_without_system", &count);
-			if (count != 8760) throw general_error("e_without_system must have 8760 values");
+//		if (is_assigned("e_without_system"))
+		if (is_assigned("e_load"))
+			{
+//			parr = as_array("e_without_system", &count);
+			parr = as_array("e_load", &count);
+			if (count != 8760) throw general_error("e_load must have 8760 values");
 			for (i=0;i<8760;i++)
 			{
 				e_load[i] = parr[i];
@@ -803,10 +807,11 @@ public:
 			}
 		}
 
-		if (is_assigned("p_without_system"))
-		{
-			parr = as_array("p_without_system", &count);
-			if (count != 8760) throw general_error("p_without_system must have 8760 values");
+//		if (is_assigned("p_without_system"))
+		if (is_assigned("p_load"))
+			{
+			parr = as_array("p_load", &count);
+			if (count != 8760) throw general_error("p_load must have 8760 values");
 			for (i=0;i<8760;i++)
 				p_load[i] = parr[i];
 		}
