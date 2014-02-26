@@ -16,7 +16,7 @@
 #define tand(x) tan( (M_PI/180.0)*(x) )
 #define asind(x) (180/M_PI*asin(x))
 
-static var_info _cm_vtab_pvwatts2014[] = {
+static var_info _cm_vtab_pvwattsv5[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "local weather file path",                     "",          "",                                             "Weather",      "*",                       "LOCAL_FILE",      "" },
 
@@ -82,13 +82,13 @@ static var_info _cm_vtab_pvwatts2014[] = {
 
 	var_info_invalid };
 
-class cm_pvwatts2014 : public compute_module
+class cm_pvwattsv5 : public compute_module
 {
 public:
 	
-	cm_pvwatts2014()
+	cm_pvwattsv5()
 	{
-		add_var_info( _cm_vtab_pvwatts2014 );
+		add_var_info( _cm_vtab_pvwattsv5 );
 	}
 
 	double transmittance( double theta1, double n_material, double n_incoming, double k, double l, double *theta2_ret = 0 )
@@ -144,7 +144,7 @@ public:
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwatts2014", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("pvwattsv5", "failed to read local weather file: " + std::string(file));
 										
 		double dc_nameplate = as_double("system_size")*1000;
 		double dc_ac_ratio = as_double("dc_ac_ratio");
@@ -227,7 +227,7 @@ public:
 					p_shad_beam_factor[j] = vals[j];
 			}
 			else
-				throw exec_error("pvwatts2014", "hourly shading beam factors must have 8760 values");
+				throw exec_error("pvwattsv5", "hourly shading beam factors must have 8760 values");
 		}
 
 
@@ -236,7 +236,7 @@ public:
 			size_t nrows, ncols;
 			ssc_number_t *mat = as_matrix( "shading:mxh", &nrows, &ncols );
 			if ( nrows != 12 || ncols != 24 )
-				throw exec_error("pvwatts2014", "month x hour shading factors must have 12 rows and 24 columns");
+				throw exec_error("pvwattsv5", "month x hour shading factors must have 12 rows and 24 columns");
 
 			int c=0;
 			for (int m=0;m<12;m++)
@@ -252,7 +252,7 @@ public:
 			size_t nrows, ncols;
 			ssc_number_t *mat = as_matrix( "shading:azal", &nrows, &ncols );
 			if ( nrows < 3 || ncols < 3 )
-				throw exec_error("pvwatts2014", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
+				throw exec_error("pvwattsv5", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
 
 			azaltvals.resize_fill( nrows, ncols, 1.0 );
 			for ( size_t r=0;r<nrows;r++ )
@@ -272,7 +272,7 @@ public:
 		while( i < 8760 )
 		{
 			if (!wf.read())
-				throw exec_error("pvwatts2014", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
+				throw exec_error("pvwattsv5", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
 
 			irrad irr;
 			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600.0 );
@@ -436,4 +436,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( pvwatts2014, "PVWatts 2014 - integrated hourly weather reader and PV system simulator.", 2 )
+DEFINE_MODULE_ENTRY( pvwattsv5, "PVWatts V5 - integrated hourly weather reader and PV system simulator.", 2 )
