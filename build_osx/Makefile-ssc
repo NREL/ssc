@@ -11,7 +11,7 @@ TARGET = ssc.dylib
 
 
 OBJECTS = \
-	cmod_pvwatts2014.o \
+	cmod_pvwattsv5.o \
 	cmod_windfile.o \
 	cmod_pvwattsfunc.o \
 	cmod_wfcsv.o \
