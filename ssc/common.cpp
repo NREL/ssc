@@ -1,4 +1,4 @@
-#include "core.h"
+#include "common.h"
 
 var_info vtab_standard_financial[] = {
 
@@ -206,3 +206,70 @@ var_info vtab_payment_incentives[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_tax_sta",               "Other PBI Sta. Taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
 
 var_info_invalid };
+
+
+var_info vtab_adjustment_factors[] = {
+/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+	{ SSC_INPUT,        SSC_NUMBER,      "adjust:factor",                 "Constant adjustment factor",                "0..1",    "",                                     "Adjustment factors",      "*",                     "POSITIVE",                     "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly adjustment factors",                 "0..1",    "",                                     "Adjustment factors",      "?",                     "LENGTH=8760",                "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period based adjustment factors",           "0..1",    "n x 3 matrix [ start, end, factor ]",  "Adjustment factors",      "?",                     "COLS=3",                     "" },
+	
+var_info_invalid };
+
+
+adjustment_factors::adjustment_factors( compute_module *cm )
+	: m_cm(cm)
+{	
+}
+
+bool adjustment_factors::setup()
+{
+	float f = (float)m_cm->as_number( "adjust:factor" );
+	m_factors.resize( 8760, f );
+
+	if ( m_cm->is_assigned("adjust:hourly") )
+	{
+		size_t n;
+		ssc_number_t *p = m_cm->as_array( "adjust:hourly", &n );
+		if ( p != 0 && n == 8760 )
+		{
+			for( size_t i=0;i<8760;i++ )
+				m_factors[i] *= p[i];
+		}
+	}
+
+	if ( m_cm->is_assigned("adjust:periods") )
+	{
+		size_t nr, nc;
+		ssc_number_t *mat = m_cm->as_matrix( "adjust:periods", &nr, &nc );
+		if ( mat != 0 && nc == 3 )
+		{
+			for( size_t r=0;r<nr;r++ )
+			{
+				int start = (int) mat[ nc*r ];
+				int end = (int) mat[ nc*r + 1 ];
+				float factor = (float) mat[ nc*r + 2 ];
+				
+				if ( start < 0 || start >= 8760 || end < start )
+				{
+					m_error = util::format( "period %d is invalid ( start: %d, end %d )", (int)r, start, end );
+					continue;
+				}
+
+				if ( end >= 8760 ) end = 8759;
+
+				for( int i=start;i<=end;i++ )
+					m_factors[i] *= factor;
+			}
+		}
+	}
+
+	return m_error.length() == 0;
+}
+
+float adjustment_factors::operator()( size_t time )
+{
+	if ( time < m_factors.size() ) return m_factors[time];
+	else return 0.0;
+}

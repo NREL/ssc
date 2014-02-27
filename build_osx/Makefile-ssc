@@ -45,7 +45,7 @@ OBJECTS = \
 	core.o \
 	vartab.o \
 	sscapi.o \
-	vtab_common.o \
+	common.o \
 	cmod_tcsdirect_steam.o \
 	cmod_tcsgeneric_solar.o \
 	cmod_tcslinear_fresnel.o \

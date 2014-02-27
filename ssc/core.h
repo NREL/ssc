@@ -180,7 +180,7 @@ protected:
 	void build_info_map();
 	bool has_info_map() { return m_infomap!=NULL; }
 	
-	
+public:
 	/* for working with input/output/inout variables during 'compute'*/
 	const var_info &info( const std::string &name ) throw( general_error );
 	bool is_ssc_array_output( const std::string &name ) throw( general_error );
