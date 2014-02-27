@@ -4,6 +4,7 @@
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
+#include <sstream>
 
 #ifndef DTOR
 #define DTOR 0.0174532925
@@ -18,9 +19,12 @@
 
 static var_info _cm_vtab_pvwattsv5[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "local weather file path",                     "",          "",                                             "Weather",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT, SSC_NUMBER, "energy_availability", "First year energy availability", "%", "", "AnnualOutput", "*", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "energy_curtailment", "First year energy curtailment", "", "(0..1)", "AnnualOutput", "*", "", "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",        "",                                             "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
+	{ SSC_INPUT, SSC_STRING, "solar_resource_file", "local weather file path", "", "", "Weather", "*", "LOCAL_FILE", "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                    "Nameplate capacity",                          "kW",        "",                                             "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "PVWatts",      "*",                       "MIN=0,MAX=2,INTEGER",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "PVWatts",      "?=1.1",                   "POSITIVE",                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",      "",                                             "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
@@ -59,8 +63,9 @@ static var_info _cm_vtab_pvwattsv5[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",       "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "ac", "AC system output", "Wac", "", "PVWatts", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "Wac", "", "PVWatts", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shad_beam_factor", "Shading factor for beam radiation", "", "", "PVWatts", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",   "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
@@ -146,7 +151,7 @@ public:
 		weatherfile wf( file );
 		if (!wf.ok()) throw exec_error("pvwattsv5", "failed to read local weather file: " + std::string(file));
 										
-		double dc_nameplate = as_double("system_size")*1000;
+		double dc_nameplate = as_double("system_capacity")*1000;
 		double dc_ac_ratio = as_double("dc_ac_ratio");
 		double ac_nameplate = dc_nameplate / dc_ac_ratio;
 		
@@ -204,6 +209,7 @@ public:
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
 		ssc_number_t *p_ac = allocate("ac", 8760);
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
 		ssc_number_t *p_tcell = allocate("tcell", 8760);
 		ssc_number_t *p_poa = allocate("poa", 8760);
 		ssc_number_t *p_tpoa = allocate("tpoa", 8760);
@@ -433,6 +439,32 @@ public:
 		assign( "lon", var_data( (ssc_number_t)wf.lon ) );
 		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
 		assign( "elev", var_data( (ssc_number_t)wf.elev ) );
+
+
+		// finished with calculations.
+
+		// availability and curtailment - standard application to hourly_energy
+		ssc_number_t avail = as_number("energy_availability") / 100;
+		size_t nrows, ncols;
+		ssc_number_t *diurnal_curtailment = as_matrix("energy_curtailment", &nrows, &ncols);
+		if ((nrows != 12) || (ncols != 24))
+		{
+			std::ostringstream stream_error;
+			stream_error << "month x hour curtailment factors must have 12 rows and 24 columns, input has " << nrows << " rows and " << ncols << " columns.";
+			std::string const str_error = stream_error.str();
+			throw exec_error("annualoutput", str_error);
+		}
+		i = 0;
+		for (int m = 0; m < 12; m++)
+			for (int d = 0; d < util::nday[m]; d++)
+				for (int h = 0; h < 24; h++)
+					if (i < 8760)
+					{
+						// first year availability applied
+						p_hourly_energy[i] = p_ac[i] * diurnal_curtailment[m*ncols + h] * avail;
+						i++;
+					}
+
 	}
 };
 
