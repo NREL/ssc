@@ -15,7 +15,7 @@ static var_info vtab_utility_rate2[] = {
 
 //	{ SSC_INPUT,        SSC_ARRAY,      "system_availability",       "Annual availability of system",    "%/year", "",                      "",             "?=100",                       "",                              "" },
 //	{ SSC_INPUT,        SSC_ARRAY,      "system_degradation",       "Annual degradation of system",    "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_ARRAY, "energy_degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
@@ -716,7 +716,7 @@ public:
 		// compute annual system output degradation multipliers
 		std::vector<ssc_number_t> sys_scale(nyears);
 //		parr = as_array("system_degradation", &count);
-		parr = as_array("energy_degradation", &count);
+		parr = as_array("degradation", &count);
 		if (count == 1)
 		{
 			for (i=0;i<nyears;i++)

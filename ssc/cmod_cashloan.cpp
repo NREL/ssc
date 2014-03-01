@@ -17,7 +17,7 @@ static var_info vtab_cashloan[] = {
 //	{ SSC_INPUT,        SSC_ARRAY,       "energy_net",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Net energy at grid with system", "kWh", "", "", "*", "LENGTH=8760", "" },
-	{ SSC_INPUT, SSC_ARRAY, "energy_degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "AnnualOutput", "*", "INTEGER,MIN=0", "" },
 
 	/* financial outputs */
@@ -256,7 +256,7 @@ public:
 		// degradation
 		size_t count_degrad = 0;
 		ssc_number_t *degrad = 0;
-		degrad = as_array("energy_degradation", &count_degrad);
+		degrad = as_array("degradation", &count_degrad);
 
 		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
 		if (count_degrad == 1)

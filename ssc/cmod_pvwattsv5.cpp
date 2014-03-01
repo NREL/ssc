@@ -6,7 +6,6 @@
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
-#include <sstream>
 
 #ifndef DTOR
 #define DTOR 0.0174532925
