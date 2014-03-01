@@ -15,7 +15,7 @@ static var_info _cm_vtab_levpartflip[] = {
 //	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_net_hourly",	"Hourly energy produced by the system",	"kWh",   "",                      "DHF",             "*",						   "",                 "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "DHF",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"",   "",                      "DHF",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
 /* Recapitalization */
@@ -1267,7 +1267,7 @@ public:
 		avail = as_array("energy_availability", &count_avail);
 		size_t count_degrad = 0;
 		ssc_number_t *degrad = 0;
-		degrad = as_array("energy_degradation", &count_degrad);
+		degrad = as_array("degradation", &count_degrad);
 
 		// degradation and availability set in cmod_annualoutput
 		for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = degrad[i];

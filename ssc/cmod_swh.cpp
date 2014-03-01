@@ -1,9 +1,11 @@
 #include <math.h>
+
+#include "common.h"
+
 #include "core.h"
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
 #include "lib_util.h"
-#include <sstream>
 
 /* -------------------------------------
 2 Mode Model
@@ -17,10 +19,6 @@ Conduction Between Nodes: Off
 
 static var_info _cm_vtab_swh[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT, SSC_NUMBER, "energy_availability", "First year energy availability", "%", "", "AnnualOutput", "*", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "energy_curtailment", "First year energy curtailment", "", "(0..1)", "AnnualOutput", "*", "", "" },
-
-	
 	
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",             "local weather file path",          "",       "",                      "Weather",      "*",                         "LOCAL_FILE",                  "" },
 
@@ -102,6 +100,7 @@ public:
 	cm_swh()
 	{
 		add_var_info(_cm_vtab_swh);
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec() throw(general_error)
@@ -386,6 +385,12 @@ public:
 		double T_tank_prev_hour = V_hot_prev_hour / V_tank*T_hot_prev_hour + V_cold_prev_hour / V_tank*T_cold_prev_hour; // weighted average tank temperature (initial)
 		double T_deliv_prev_hour = 0.0;
 
+
+		/* performance adjustment factors */
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("swh", "failed to setup adjustment factors: " + haf.error());
+
 		/* *********************************************************************************************
 		Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, energy_net (Q_saved)
 		*********************************************************************************************** */
@@ -559,7 +564,7 @@ public:
 			out_Q_aux[i] = (ssc_number_t)(Q_aux * W2kW);
 			out_Q_auxonly[i] = (ssc_number_t)(Q_auxonly* W2kW);
 			//			out_Q_saved[i] = (ssc_number_t) (Q_saved* W2kW);
-			out_hourly_energy[i] = (ssc_number_t)(Q_saved* W2kW);
+			out_hourly_energy[i] = (ssc_number_t)(Q_saved * W2kW * haf(i));
 			out_T_hot[i] = (ssc_number_t)T_hot;
 			out_T_cold[i] = (ssc_number_t)T_cold;
 			out_V_hot[i] = (ssc_number_t)V_hot;
@@ -567,29 +572,6 @@ public:
 			out_Draw[i] = draw[i]; // pass to outputs for visualization
 		}
 
-		// finished with calculations.
-
-		// availability and curtailment - standard application to hourly_energy
-		ssc_number_t avail = as_number("energy_availability") / 100;
-		size_t nrows, ncols;
-		ssc_number_t *diurnal_curtailment = as_matrix("energy_curtailment", &nrows, &ncols);
-		if ((nrows != 12) || (ncols != 24))
-		{
-			std::ostringstream stream_error;
-			stream_error << "month x hour curtailment factors must have 12 rows and 24 columns, input has " << nrows << " rows and " << ncols << " columns.";
-			std::string const str_error = stream_error.str();
-			throw exec_error("annualoutput", str_error);
-		}
-		i = 0;
-		for (int m = 0; m < 12; m++)
-			for (int d = 0; d < util::nday[m]; d++)
-				for (int h = 0; h < 24; h++)
-					if (i < 8760)
-					{
-						// first year availability applied
-						out_hourly_energy[i] *= diurnal_curtailment[m*ncols + h] * avail;
-						i++;
-					}
 
 	}
 

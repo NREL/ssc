@@ -16,7 +16,7 @@ static var_info vtab_ippppa[] = {
 
 //	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "ippppa",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		"Annual energy degradation",	"",   "",                      "ippppa",             "*",						   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "ippppa",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
@@ -655,7 +655,7 @@ public:
 		avail = as_array("energy_availability", &count_avail);
 		size_t count_degrad = 0;
 		ssc_number_t *degrad = 0;
-		degrad = as_array("energy_degradation", &count_degrad);
+		degrad = as_array("degradation", &count_degrad);
 
 		// degradation and availability set in cmod_annualoutput
 		for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = degrad[i];
