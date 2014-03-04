@@ -63,7 +63,7 @@ namespace util
 
 	int schedule_char_to_int( char c );
 	std::string schedule_int_to_month( int m );
-	bool translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val);
+	bool translate_schedule(int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val);
 
 	bool file_exists( const char *file );
 	bool dir_exists( const char *path );
@@ -651,6 +651,7 @@ namespace util
 
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
+	bool translate_schedule(int tod[8760], const matrix_t<float> &wkday, const matrix_t<float> &wkend, int min_val, int max_val);
 };
 
 
