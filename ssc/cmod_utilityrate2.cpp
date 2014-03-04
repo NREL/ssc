@@ -1,5 +1,5 @@
-	#include "core.h"
-
+#include "core.h"
+#include <sstream>
 
 static var_info vtab_utility_rate2[] = {
 
@@ -29,9 +29,11 @@ static var_info vtab_utility_rate2[] = {
 	// Energy Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_enable",            "Enable energy charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 
-	{ SSC_INPUT,        SSC_STRING,     "ur_ec_sched_weekday",     "Energy Charge Weekday Schedule",            "",       "288 digits 1-C, 24x12", "",             "ur_ec_enable=1",           "TOUSCHED",                      "" },
-	{ SSC_INPUT,        SSC_STRING,     "ur_ec_sched_weekend",     "Energy Charge Weekend Schedule",            "",       "288 digits 1-C, 24x12", "",             "ur_ec_enable=1",           "TOUSCHED",                      "" },
-	
+//	{ SSC_INPUT, SSC_STRING, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "288 digits 1-C, 24x12", "", "ur_ec_enable=1", "TOUSCHED", "" },
+//	{ SSC_INPUT, SSC_STRING, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "288 digits 1-C, 24x12", "", "ur_ec_enable=1", "TOUSCHED", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_br",       "Period 1 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_sr",       "Period 1 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_ub",       "Period 1 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
@@ -265,8 +267,10 @@ static var_info vtab_utility_rate2[] = {
 	// Demand Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable Demand Charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 
-	{ SSC_INPUT,        SSC_STRING,     "ur_dc_sched_weekday",     "Demand Charge Weekday Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_dc_enable=1",           "TOUSCHED",                      "" },
-	{ SSC_INPUT,        SSC_STRING,     "ur_dc_sched_weekend",     "Demend Charge Weekend Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_dc_enable=1",           "TOUSCHED",                      "" },
+//	{ SSC_INPUT,        SSC_STRING,     "ur_dc_sched_weekday",     "Demand Charge Weekday Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_dc_enable=1",           "TOUSCHED",                      "" },
+//	{ SSC_INPUT,        SSC_STRING,     "ur_dc_sched_weekend",     "Demend Charge Weekend Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_dc_enable=1",           "TOUSCHED",                      "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demend Charge Weekday Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demend Charge Weekend Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t1_dc",       "Period 1 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t1_ub",       "Period 1 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
@@ -1313,15 +1317,35 @@ public:
 		ssc_number_t energy_ub[12][6];
 
 
-		const char *schedwkday = as_string("ur_ec_sched_weekday");
-		const char *schedwkend = as_string("ur_ec_sched_weekend");
+//		const char *schedwkday = as_string("ur_ec_sched_weekday");
+//		const char *schedwkend = as_string("ur_ec_sched_weekend");
+
+		size_t nrows, ncols;
+		ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+		if (nrows != 12 || ncols != 24)
+		{
+			std::ostringstream ss;
+			ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
+			throw exec_error("utilityrate2", ss.str());
+		}
+		ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+		if (nrows != 12 || ncols != 24)
+		{
+			std::ostringstream ss;
+			ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
+			throw exec_error("utilityrate2", ss.str());
+		}
+		util::matrix_t<float> schedwkday(12,24);
+		schedwkday.assign(dc_weekday, nrows, ncols);
+		util::matrix_t<float> schedwkend(12, 24);
+		schedwkend.assign(dc_weekend, nrows, ncols);
 
 		int tod[8760];
 
-		if (!util::translate_schedule( tod, schedwkday, schedwkend, 0, 11))
+		if (!util::translate_schedule( tod, schedwkday, schedwkend, 1, 12))
 			throw general_error("could not translate weekday and weekend schedules for energy charges");
 
-		for (int i=0;i<8760; i++) ec_tou_sched[i] = (ssc_number_t)(tod[i]+1);
+		for (int i=0;i<8760; i++) ec_tou_sched[i] = (ssc_number_t)(tod[i]);
 
 		//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
@@ -1703,13 +1727,36 @@ public:
 		// 2. multiply each period's peak demand by period price and add to payment for that month
 
 		// extract schedules
-		const char *schedwkday = as_string("ur_dc_sched_weekday");
-		const char *schedwkend = as_string("ur_dc_sched_weekend");
+		//const char *schedwkday = as_string("ur_dc_sched_weekday");
+		//const char *schedwkend = as_string("ur_dc_sched_weekend");
+
+		size_t nrows, ncols;
+		ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+		if (nrows != 12 || ncols != 24)
+		{
+			std::ostringstream ss;
+			ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
+			throw exec_error("utilityrate2", ss.str());
+		}
+		ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+		if (nrows != 12 || ncols != 24)
+		{
+			std::ostringstream ss;
+			ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
+			throw exec_error("utilityrate2", ss.str());
+		}
+		util::matrix_t<float> schedwkday(12, 24);
+		schedwkday.assign(dc_weekday, nrows, ncols);
+		util::matrix_t<float> schedwkend(12, 24);
+		schedwkend.assign(dc_weekend, nrows, ncols);
+
+
+
 		int tod[8760];
-		if (!util::translate_schedule( tod, schedwkday, schedwkend, 0, 8))
+		if (!util::translate_schedule( tod, schedwkday, schedwkend, 1, 12))
 			throw general_error("could not translate weekday and weekend schedules for demand charge time-of-use rate");
 
-		for (int i=0;i<8760; i++) dc_tou_sched[i] = (ssc_number_t)(tod[i]+1);
+		for (int i=0;i<8760; i++) dc_tou_sched[i] = (ssc_number_t)(tod[i]);
 
 
 		// extract rate info
