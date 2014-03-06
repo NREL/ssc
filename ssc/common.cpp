@@ -273,3 +273,102 @@ float adjustment_factors::operator()( size_t time )
 	if ( time < m_factors.size() ) return m_factors[time];
 	else return 0.0;
 }
+
+
+
+var_info vtab_dispatch_periods[] = {
+	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor1", "Dispatch period 1 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor2", "Dispatch period 2 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor3", "Dispatch period 3 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor4", "Dispatch period 4 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor5", "Dispatch period 5 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor6", "Dispatch period 6 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor7", "Dispatch period 7 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor8", "Dispatch period 8 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor9", "Dispatch period 9 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
+	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekday", "Diurnal weekday dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekend", "Diurnal weekend dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
+
+	var_info_invalid };
+
+
+dispatch_periods::dispatch_periods(compute_module *cm)
+: m_cm(cm)
+{
+}
+
+bool dispatch_periods::setup()
+{
+	size_t nrows, ncols;
+	ssc_number_t *disp_weekday = m_cm->as_matrix("dispatch_sched_weekday", &nrows, &ncols);
+	if (nrows != 12 || ncols != 24)
+	{
+		m_error = util::format("dispatch values weekday schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
+		throw compute_module::exec_error("dispatch_values", m_error);
+	}
+	ssc_number_t *disp_weekend = m_cm->as_matrix("dispatch_sched_weekend", &nrows, &ncols);
+	if (nrows != 12 || ncols != 24)
+	{
+		m_error = util::format("dispatch values weekend schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
+		throw compute_module::exec_error("dispatch_values", m_error);
+	}
+	util::matrix_t<float> schedwkday(12, 24);
+	schedwkday.assign(disp_weekday, nrows, ncols);
+	util::matrix_t<float> schedwkend(12, 24);
+	schedwkend.assign(disp_weekend, nrows, ncols);
+
+	int tod[8760];
+
+	if (!util::translate_schedule(tod, schedwkday, schedwkend, 1, 9))
+	{
+		m_error = "could not translate weekday and weekend schedules for dispatch values";
+		throw compute_module::general_error(m_error);
+	}
+
+	m_factors.resize(8760, 1.0);
+	for (int i = 0; i < 8760; i++)
+		m_factors[i] = tod[i];
+//	{
+		//switch (tod[i])
+		//{
+		//case 1:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor1");
+		//	break;
+		//case 2:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor2");
+		//	break;
+		//case 3:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor3");
+		//	break;
+		//case 4:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor4");
+		//	break;
+		//case 5:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor5");
+		//	break;
+		//case 6:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor6");
+		//	break;
+		//case 7:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor7");
+		//	break;
+		//case 8:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor8");
+		//	break;
+		//case 9:
+		//	m_factors[i] = m_cm->as_number("dispatch_factor9");
+		//	break;
+		//}
+//	}
+
+
+	return m_error.length() == 0;
+}
+
+int dispatch_periods::operator()(size_t time)
+{
+	if (time < m_factors.size()) return m_factors[time];
+	else return 1;
+}

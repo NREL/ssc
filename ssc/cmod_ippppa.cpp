@@ -1,4 +1,5 @@
 #include "core.h"
+#include "common.h"
 #include "lib_financial.h"
 using namespace libfin;
 #include <sstream>
@@ -29,7 +30,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_ARRAY,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
-	{ SSC_INPUT,       SSC_NUMBER,      "constr_total_financing",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
+	{ SSC_INPUT,       SSC_NUMBER,      "const_per_total",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
 
 
 
@@ -54,8 +55,9 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_recapitalization",	"Recapitalization operating expense",	"$",   "",                      "ippppa",             "system_use_recapitalization=1",						   "LENGTH_EQUAL=cf_length",                 "" },
 
 
-
+	/* in common.cpp dispatch_values class
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_hourly",		"Hourly dispatch schedule for the system (1-9)",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
+	*/
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor1",		"Dispatch payment factor 1",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor2",		"Dispatch payment factor 2",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor3",		"Dispatch payment factor 3",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
@@ -65,7 +67,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor7",		"Dispatch payment factor 7",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor8",		"Dispatch payment factor 8",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor9",		"Dispatch payment factor 9",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
-
+	
 /* outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jan",	"Energy produced by the system in January",	"",   "",                      "ippppa",             "market=0",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jan",		"Revenue from the system in January",	"",   "",                      "ippppa",             "market=0",				   "LENGTH_EQUAL=cf_length",                 "" },
@@ -289,6 +291,7 @@ extern var_info
 	vtab_utility_rate[],
 	vtab_tax_credits[],
 	vtab_payment_incentives[];
+
 
 enum {
 	CF_energy_net,
@@ -624,7 +627,7 @@ public:
 		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
-
+		add_var_info(vtab_dispatch_periods);
 		add_var_info( vtab_ippppa );
 	}
 
@@ -742,7 +745,7 @@ public:
 			positive_cashflow_required =0;
 		}
 
-		double constr_total_financing = as_double("constr_total_financing");
+		double constr_total_financing = as_double("const_per_total");
 
 		double total_cost = as_double("total_installed_cost")+constr_total_financing;
 		double property_tax_assessed_value = (total_cost-constr_total_financing) * as_double("prop_tax_cost_assessed_percent") * 0.01;
@@ -2323,7 +2326,7 @@ public:
 	bool compute_dispatch_output(int nyears)
 	{
 	//Calculate energy dispatched in each dispatch period 
-		ssc_number_t *hourly_dispatch; // tou period 
+		//ssc_number_t *hourly_dispatch; // tou period 
 		ssc_number_t *hourly_enet; // hourly energy output
 
 
@@ -2341,14 +2344,9 @@ public:
 		}
 
 	// hourly dispatch
-		hourly_dispatch = as_array("dispatch_hourly", &count );
-		if ( count != 8760)
-		{
-			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be 8760 value";
-			log( outm.str() );
-			return false;
-		}
+		dispatch_periods hourly_dispatch(this);
+		if (!hourly_dispatch.setup())
+			throw exec_error("ippppa", "failed to setup dispatch periods: " + hourly_dispatch.error());
 	
 		cf.at(CF_TOD1Energy,1) = 0;
 		cf.at(CF_TOD2Energy,1) = 0;
@@ -2371,33 +2369,33 @@ public:
 
 		for (h=0;h<8760;h++)
 		{
-			switch ((int)hourly_dispatch[h])
+			switch (hourly_dispatch(h))
 			{
-				case 0:
+				case 1:
 					cf.at(CF_TOD1Energy,1) += hourly_enet[h];
 					break;
-				case 1:
+				case 2:
 					cf.at(CF_TOD2Energy,1) += hourly_enet[h];
 					break;
-				case 2:
+				case 3:
 					cf.at(CF_TOD3Energy,1) += hourly_enet[h];
 					break;
-				case 3:
+				case 4:
 					cf.at(CF_TOD4Energy,1) += hourly_enet[h];
 					break;
-				case 4:
+				case 5:
 					cf.at(CF_TOD5Energy,1) += hourly_enet[h];
 					break;
-				case 5:
+				case 6:
 					cf.at(CF_TOD6Energy,1) += hourly_enet[h];
 					break;
-				case 6:
+				case 7:
 					cf.at(CF_TOD7Energy,1) += hourly_enet[h];
 					break;
-				case 7:
+				case 8:
 					cf.at(CF_TOD8Energy,1) += hourly_enet[h];
 					break;
-				case 8:
+				case 9:
 					cf.at(CF_TOD9Energy,1) += hourly_enet[h];
 					break;
 			}
@@ -2462,7 +2460,6 @@ public:
 	bool process_dispatch_output(int nyears)
 	{
 	//Calculate energy dispatched in each dispatch period 
-		ssc_number_t *hourly_dispatch; // tou period 
 		ssc_number_t *hourly_enet; // hourly energy output
 
 		size_t count;
@@ -2477,16 +2474,10 @@ public:
 			return false;
 		}
 
-	// hourly dispatch
-		hourly_dispatch = as_array("dispatch_hourly", &count );
-		if ( count != 8760)
-		{
-			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be 8760 value";
-			log( outm.str() );
-			return false;
-		}
-
+		// hourly dispatch
+		dispatch_periods hourly_dispatch(this);
+		if (!hourly_dispatch.setup())
+			throw exec_error("ippppa", "failed to setup dispatch periods: " + hourly_dispatch.error());
 
 
 		cf.at(CF_TODJanEnergy,1) = 0;
@@ -2630,396 +2621,396 @@ public:
 					{
 						case 0:
 							cf.at(CF_TODJanEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8JanEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9JanEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 1:
 							cf.at(CF_TODFebEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8FebEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9FebEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 2:
 							cf.at(CF_TODMarEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8MarEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9MarEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 3:
 							cf.at(CF_TODAprEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8AprEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9AprEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 4:
 							cf.at(CF_TODMayEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8MayEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9MayEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 5:
 							cf.at(CF_TODJunEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8JunEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9JunEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 6:
 							cf.at(CF_TODJulEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8JulEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9JulEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 7:
 							cf.at(CF_TODAugEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8AugEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9AugEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 8:
 							cf.at(CF_TODSepEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8SepEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9SepEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 9:
 							cf.at(CF_TODOctEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8OctEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9OctEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 10:
 							cf.at(CF_TODNovEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8NovEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9NovEnergy,1) +=  hourly_enet[i];
 									break;
 							}
 							break;
 						case 11:
 							cf.at(CF_TODDecEnergy,1) +=  hourly_enet[i];
-							switch ((int)hourly_dispatch[i])
+							switch (hourly_dispatch(i))
 							{
-								case 0:
+								case 1:
 									cf.at(CF_TOD1DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 1:
+								case 2:
 									cf.at(CF_TOD2DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 2:
+								case 3:
 									cf.at(CF_TOD3DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 3:
+								case 4:
 									cf.at(CF_TOD4DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 4:
+								case 5:
 									cf.at(CF_TOD5DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 5:
+								case 6:
 									cf.at(CF_TOD6DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 6:
+								case 7:
 									cf.at(CF_TOD7DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 7:
+								case 8:
 									cf.at(CF_TOD8DecEnergy,1) +=  hourly_enet[i];
 									break;
-								case 8:
+								case 9:
 									cf.at(CF_TOD9DecEnergy,1) +=  hourly_enet[i];
 									break;
 							}
@@ -3568,7 +3559,6 @@ public:
 	bool compute_lifetime_dispatch_output(int nyears)
 	{
 	//Calculate energy dispatched in each dispatch period 
-		ssc_number_t *hourly_dispatch; // tou period 
 		ssc_number_t *hourly_enet; // hourly energy output
 
 
@@ -3585,15 +3575,10 @@ public:
 			return false;
 		}
 
-	// hourly dispatch
-		hourly_dispatch = as_array("dispatch_hourly", &count );
-		if ( (int)count != 8760)
-		{
-			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be 8760";
-			log( outm.str() );
-			return false;
-		}
+		// hourly dispatch
+		dispatch_periods hourly_dispatch(this);
+		if (!hourly_dispatch.setup())
+			throw exec_error("ippppa", "failed to setup dispatch periods: " + hourly_dispatch.error());
 
 
 
@@ -3611,33 +3596,33 @@ public:
 
 			for (h=0;h<8760;h++)
 			{
-				switch ((int)hourly_dispatch[h])
+				switch (hourly_dispatch(h))
 				{
-					case 0:
+					case 1:
 						cf.at(CF_TOD1Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 1:
+					case 2:
 						cf.at(CF_TOD2Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 2:
+					case 3:
 						cf.at(CF_TOD3Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 3:
+					case 4:
 						cf.at(CF_TOD4Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 4:
+					case 5:
 						cf.at(CF_TOD5Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 5:
+					case 6:
 						cf.at(CF_TOD6Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 6:
+					case 7:
 						cf.at(CF_TOD7Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 7:
+					case 8:
 						cf.at(CF_TOD8Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
-					case 8:
+					case 9:
 						cf.at(CF_TOD9Energy,y) += hourly_enet[(y-1)*8760+h];
 						break;
 				}
@@ -3662,7 +3647,6 @@ public:
 	bool process_lifetime_dispatch_output(int nyears)
 	{
 	//Calculate energy dispatched in each dispatch period 
-		ssc_number_t *hourly_dispatch; // tou period 
 		ssc_number_t *hourly_enet; // hourly energy output
 
 		size_t count;
@@ -3677,15 +3661,10 @@ public:
 			return false;
 		}
 
-	// hourly dispatch
-		hourly_dispatch = as_array("dispatch_hourly", &count );
-		if ( count != 8760)
-		{
-			std::stringstream outm;
-			outm <<  "Bad hourly dispatch output length (" << count << "), should be 8760";
-			log( outm.str() );
-			return false;
-		}
+		// hourly dispatch
+		dispatch_periods hourly_dispatch(this);
+		if (!hourly_dispatch.setup())
+			throw exec_error("ippppa", "failed to setup dispatch periods: " + hourly_dispatch.error());
 
 
 		for (int y=1;y<=nyears;y++)
@@ -3831,396 +3810,396 @@ public:
 						{
 							case 0:
 								cf.at(CF_TODJanEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9JanEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 1:
 								cf.at(CF_TODFebEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9FebEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 2:
 								cf.at(CF_TODMarEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9MarEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 3:
 								cf.at(CF_TODAprEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9AprEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 4:
 								cf.at(CF_TODMayEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9MayEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 5:
 								cf.at(CF_TODJunEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9JunEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 6:
 								cf.at(CF_TODJulEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9JulEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 7:
 								cf.at(CF_TODAugEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9AugEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 8:
 								cf.at(CF_TODSepEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9SepEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 9:
 								cf.at(CF_TODOctEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9OctEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 10:
 								cf.at(CF_TODNovEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9NovEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
 								break;
 							case 11:
 								cf.at(CF_TODDecEnergy,y) += hourly_enet[(y-1)*8760+i];
-								switch ((int)hourly_dispatch[i])
+								switch (hourly_dispatch(i))
 								{
-									case 0:
+									case 1:
 										cf.at(CF_TOD1DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 1:
+									case 2:
 										cf.at(CF_TOD2DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 2:
+									case 3:
 										cf.at(CF_TOD3DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 3:
+									case 4:
 										cf.at(CF_TOD4DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 4:
+									case 5:
 										cf.at(CF_TOD5DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 5:
+									case 6:
 										cf.at(CF_TOD6DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 6:
+									case 7:
 										cf.at(CF_TOD7DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 7:
+									case 8:
 										cf.at(CF_TOD8DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
-									case 8:
+									case 9:
 										cf.at(CF_TOD9DecEnergy,y) += hourly_enet[(y-1)*8760+i];
 										break;
 								}
