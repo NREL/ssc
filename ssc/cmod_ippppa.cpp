@@ -12,10 +12,10 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Utility IPP or Commercial PPA",   "0/1",          "0=ipp,1=ppa", "ippppa",      "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
 /* Dispatch */
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "ippppa",             "*",						   "INTEGER,MIN=0",                 "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_net_hourly",	"Hourly energy produced by the system",	"kWh",   "",                      "ippppa",             "*",						   "",                 "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",	"Hourly energy produced by the system",	"kWh",   "",                      "ippppa",             "*",						   "",                 "" },
 
 //	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "ippppa",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "ippppa",             "*",						   "",                              "" },
+	//{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
 
@@ -529,7 +529,7 @@ enum {
 	CF_energy_net_monthly_firstyear_TOD9,	
 	
 
-	CF_Availability,
+	//CF_Availability,
 	CF_Degradation,
 
 	CF_recapitalization,
@@ -650,16 +650,16 @@ public:
 		double first_year_energy = 0.0;
 
 
-		size_t count_avail = 0;
-		ssc_number_t *avail = 0;
-		avail = as_array("energy_availability", &count_avail);
+//		size_t count_avail = 0;
+//		ssc_number_t *avail = 0;
+//		avail = as_array("energy_availability", &count_avail);
 		size_t count_degrad = 0;
 		ssc_number_t *degrad = 0;
 		degrad = as_array("degradation", &count_degrad);
 
 		// degradation and availability set in cmod_annualoutput
 		for (i=0;i<nyears && i<(int)count_degrad;i++) cf.at(CF_Degradation,i+1) = degrad[i];
-		for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i];
+//		for (i=0;i<nyears && i<(int)count_avail;i++) cf.at(CF_Availability,i+1) = avail[i];
 
 
 
@@ -676,14 +676,14 @@ public:
 		{
 			size_t count_energy = 0;
 			ssc_number_t *energy = 0;
-			energy = as_array("energy_net_hourly", &count_energy);
-			for (i=0;i<(int)count_energy;i++) first_year_energy += energy[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability and degradation - see cmod_annual output
+			energy = as_array("hourly_energy", &count_energy);
+			for (i=0;i<(int)count_energy;i++) first_year_energy += energy[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability and degradation - availability is only first year values and not out year schedule.
 			cf.at(CF_energy_net,1) = first_year_energy;
 			// remove first year availability so schedules and single values can be applied properly
-			if (cf.at(CF_Availability,1) !=0) first_year_energy /= cf.at(CF_Availability,1);
-			if (cf.at(CF_Degradation,1) !=0) first_year_energy /= cf.at(CF_Degradation,1);
-			for (i=1;i<=nyears;i++)
-				cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
+//			if (cf.at(CF_Availability,1) !=0) first_year_energy /= cf.at(CF_Availability,1);
+//			if (cf.at(CF_Degradation,1) !=0) first_year_energy /= cf.at(CF_Degradation,1);
+			for (i = 1; i <= nyears; i++)
+				cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_Degradation, i); //*cf.at(CF_Availability, i);
 			if ( !is_commercialppa) compute_dispatch_output(nyears);
 		}
 
@@ -2296,7 +2296,7 @@ public:
 		size_t count;
 
 	// hourly energy
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
@@ -2331,7 +2331,7 @@ public:
 		size_t count;
 
 	// hourly energy
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( count != 8760)
 		{
 			std::stringstream outm;
@@ -2414,6 +2414,7 @@ public:
 		double year1_TOD8Energy = cf.at(CF_TOD8Energy,1);
 		double year1_TOD9Energy = cf.at(CF_TOD9Energy,1);
 
+		/*
 		if (cf.at(CF_Availability,1) !=0) 
 		{
 			year1_TOD1Energy /= cf.at(CF_Availability,1);
@@ -2438,20 +2439,20 @@ public:
 			year1_TOD8Energy /= cf.at(CF_Degradation,1);
 			year1_TOD9Energy /= cf.at(CF_Degradation,1);
 		}
-
+		*/
 
 		for (int y=2;y<=nyears;y++)
 		{
 	// compute energy dispatched
-			cf.at(CF_TOD1Energy,y) = year1_TOD1Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2Energy,y) = year1_TOD2Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3Energy,y) = year1_TOD3Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4Energy,y) = year1_TOD4Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5Energy,y) = year1_TOD5Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6Energy,y) = year1_TOD6Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7Energy,y) = year1_TOD7Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8Energy,y) = year1_TOD8Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9Energy,y) = year1_TOD9Energy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1Energy, y) = year1_TOD1Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD2Energy, y) = year1_TOD2Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD3Energy, y) = year1_TOD3Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD4Energy, y) = year1_TOD4Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD5Energy, y) = year1_TOD5Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD6Energy, y) = year1_TOD6Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD7Energy, y) = year1_TOD7Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD8Energy, y) = year1_TOD8Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
+			cf.at(CF_TOD9Energy, y) = year1_TOD9Energy * cf.at(CF_Degradation, y); //*cf.at(CF_Availability, y);
 		}
 
 
@@ -2467,7 +2468,7 @@ public:
 		size_t count;
 
 	// hourly energy
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( count != 8760)
 		{
 			std::stringstream outm;
@@ -3160,6 +3161,7 @@ public:
 		double year1_TOD9NovEnergy = cf.at(CF_TOD9NovEnergy,1);
 		double year1_TOD9DecEnergy = cf.at(CF_TOD9DecEnergy,1);
 
+		/*
 		if (cf.at(CF_Availability,1) !=0) 
 		{
 			year1_TODJanEnergy /= cf.at(CF_Availability,1);
@@ -3424,140 +3426,140 @@ public:
 			year1_TOD9NovEnergy /= cf.at(CF_Degradation,1);
 			year1_TOD9DecEnergy /= cf.at(CF_Degradation,1);
 		}
-
+		*/
 
 		for (int y=2;y<=nyears;y++)
 		{
 	// compute energy dispatched
-			cf.at(CF_TODJanEnergy,y) = year1_TODJanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODFebEnergy,y) = year1_TODFebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODMarEnergy,y) = year1_TODMarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODAprEnergy,y) = year1_TODAprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODMayEnergy,y) = year1_TODMayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODJunEnergy,y) = year1_TODJunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODJulEnergy,y) = year1_TODJulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODAugEnergy,y) = year1_TODAugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODSepEnergy,y) = year1_TODSepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODOctEnergy,y) = year1_TODOctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODNovEnergy,y) = year1_TODNovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TODDecEnergy,y) = year1_TODDecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TODJanEnergy, y) = year1_TODJanEnergy * cf.at(CF_Degradation, y); // *cf.at(CF_Availability, y);
+			cf.at(CF_TODFebEnergy, y) = year1_TODFebEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODMarEnergy, y) = year1_TODMarEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODAprEnergy, y) = year1_TODAprEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODMayEnergy, y) = year1_TODMayEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODJunEnergy, y) = year1_TODJunEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODJulEnergy, y) = year1_TODJulEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODAugEnergy, y) = year1_TODAugEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODSepEnergy, y) = year1_TODSepEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODOctEnergy, y) = year1_TODOctEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODNovEnergy, y) = year1_TODNovEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TODDecEnergy, y) = year1_TODDecEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD1JanEnergy,y) = year1_TOD1JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1FebEnergy,y) = year1_TOD1FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1MarEnergy,y) = year1_TOD1MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1AprEnergy,y) = year1_TOD1AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1MayEnergy,y) = year1_TOD1MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1JunEnergy,y) = year1_TOD1JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1JulEnergy,y) = year1_TOD1JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1AugEnergy,y) = year1_TOD1AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1SepEnergy,y) = year1_TOD1SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1OctEnergy,y) = year1_TOD1OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1NovEnergy,y) = year1_TOD1NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD1DecEnergy,y) = year1_TOD1DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1JanEnergy, y) = year1_TOD1JanEnergy * cf.at(CF_Degradation, y); //  * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1FebEnergy, y) = year1_TOD1FebEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1MarEnergy, y) = year1_TOD1MarEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1AprEnergy, y) = year1_TOD1AprEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1MayEnergy, y) = year1_TOD1MayEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1JunEnergy, y) = year1_TOD1JunEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1JulEnergy, y) = year1_TOD1JulEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1AugEnergy, y) = year1_TOD1AugEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1SepEnergy, y) = year1_TOD1SepEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1OctEnergy, y) = year1_TOD1OctEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1NovEnergy, y) = year1_TOD1NovEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD1DecEnergy, y) = year1_TOD1DecEnergy * cf.at(CF_Degradation, y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD2JanEnergy,y) = year1_TOD2JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2FebEnergy,y) = year1_TOD2FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2MarEnergy,y) = year1_TOD2MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2AprEnergy,y) = year1_TOD2AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2MayEnergy,y) = year1_TOD2MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2JunEnergy,y) = year1_TOD2JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2JulEnergy,y) = year1_TOD2JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2AugEnergy,y) = year1_TOD2AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2SepEnergy,y) = year1_TOD2SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2OctEnergy,y) = year1_TOD2OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2NovEnergy,y) = year1_TOD2NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD2DecEnergy,y) = year1_TOD2DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2JanEnergy,y) = year1_TOD2JanEnergy * cf.at(CF_Degradation,y); //,y);
+			cf.at(CF_TOD2FebEnergy,y) = year1_TOD2FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2MarEnergy,y) = year1_TOD2MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2AprEnergy,y) = year1_TOD2AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2MayEnergy,y) = year1_TOD2MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2JunEnergy,y) = year1_TOD2JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2JulEnergy,y) = year1_TOD2JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2AugEnergy,y) = year1_TOD2AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2SepEnergy,y) = year1_TOD2SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2OctEnergy,y) = year1_TOD2OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2NovEnergy,y) = year1_TOD2NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD2DecEnergy,y) = year1_TOD2DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD3JanEnergy,y) = year1_TOD3JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3FebEnergy,y) = year1_TOD3FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3MarEnergy,y) = year1_TOD3MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3AprEnergy,y) = year1_TOD3AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3MayEnergy,y) = year1_TOD3MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3JunEnergy,y) = year1_TOD3JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3JulEnergy,y) = year1_TOD3JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3AugEnergy,y) = year1_TOD3AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3SepEnergy,y) = year1_TOD3SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3OctEnergy,y) = year1_TOD3OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3NovEnergy,y) = year1_TOD3NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD3DecEnergy,y) = year1_TOD3DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3JanEnergy,y) = year1_TOD3JanEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3FebEnergy,y) = year1_TOD3FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3MarEnergy,y) = year1_TOD3MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3AprEnergy,y) = year1_TOD3AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3MayEnergy,y) = year1_TOD3MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3JunEnergy,y) = year1_TOD3JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3JulEnergy,y) = year1_TOD3JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3AugEnergy,y) = year1_TOD3AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3SepEnergy,y) = year1_TOD3SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3OctEnergy,y) = year1_TOD3OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3NovEnergy,y) = year1_TOD3NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD3DecEnergy,y) = year1_TOD3DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD4JanEnergy,y) = year1_TOD4JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4FebEnergy,y) = year1_TOD4FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4MarEnergy,y) = year1_TOD4MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4AprEnergy,y) = year1_TOD4AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4MayEnergy,y) = year1_TOD4MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4JunEnergy,y) = year1_TOD4JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4JulEnergy,y) = year1_TOD4JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4AugEnergy,y) = year1_TOD4AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4SepEnergy,y) = year1_TOD4SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4OctEnergy,y) = year1_TOD4OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4NovEnergy,y) = year1_TOD4NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD4DecEnergy,y) = year1_TOD4DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4JanEnergy,y) = year1_TOD4JanEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4FebEnergy,y) = year1_TOD4FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4MarEnergy,y) = year1_TOD4MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4AprEnergy,y) = year1_TOD4AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4MayEnergy,y) = year1_TOD4MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4JunEnergy,y) = year1_TOD4JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4JulEnergy,y) = year1_TOD4JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4AugEnergy,y) = year1_TOD4AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4SepEnergy,y) = year1_TOD4SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4OctEnergy,y) = year1_TOD4OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4NovEnergy,y) = year1_TOD4NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD4DecEnergy,y) = year1_TOD4DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD5JanEnergy,y) = year1_TOD5JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5FebEnergy,y) = year1_TOD5FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5MarEnergy,y) = year1_TOD5MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5AprEnergy,y) = year1_TOD5AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5MayEnergy,y) = year1_TOD5MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5JunEnergy,y) = year1_TOD5JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5JulEnergy,y) = year1_TOD5JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5AugEnergy,y) = year1_TOD5AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5SepEnergy,y) = year1_TOD5SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5OctEnergy,y) = year1_TOD5OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5NovEnergy,y) = year1_TOD5NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD5DecEnergy,y) = year1_TOD5DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5JanEnergy,y) = year1_TOD5JanEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5FebEnergy,y) = year1_TOD5FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5MarEnergy,y) = year1_TOD5MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5AprEnergy,y) = year1_TOD5AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5MayEnergy,y) = year1_TOD5MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5JunEnergy,y) = year1_TOD5JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5JulEnergy,y) = year1_TOD5JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5AugEnergy,y) = year1_TOD5AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5SepEnergy,y) = year1_TOD5SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5OctEnergy,y) = year1_TOD5OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5NovEnergy,y) = year1_TOD5NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD5DecEnergy,y) = year1_TOD5DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD6JanEnergy,y) = year1_TOD6JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6FebEnergy,y) = year1_TOD6FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6MarEnergy,y) = year1_TOD6MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6AprEnergy,y) = year1_TOD6AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6MayEnergy,y) = year1_TOD6MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6JunEnergy,y) = year1_TOD6JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6JulEnergy,y) = year1_TOD6JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6AugEnergy,y) = year1_TOD6AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6SepEnergy,y) = year1_TOD6SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6OctEnergy,y) = year1_TOD6OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6NovEnergy,y) = year1_TOD6NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD6DecEnergy,y) = year1_TOD6DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6JanEnergy,y) = year1_TOD6JanEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6FebEnergy,y) = year1_TOD6FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6MarEnergy,y) = year1_TOD6MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6AprEnergy,y) = year1_TOD6AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6MayEnergy,y) = year1_TOD6MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6JunEnergy,y) = year1_TOD6JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6JulEnergy,y) = year1_TOD6JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6AugEnergy,y) = year1_TOD6AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6SepEnergy,y) = year1_TOD6SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6OctEnergy,y) = year1_TOD6OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6NovEnergy,y) = year1_TOD6NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD6DecEnergy,y) = year1_TOD6DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD7JanEnergy,y) = year1_TOD7JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7FebEnergy,y) = year1_TOD7FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7MarEnergy,y) = year1_TOD7MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7AprEnergy,y) = year1_TOD7AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7MayEnergy,y) = year1_TOD7MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7JunEnergy,y) = year1_TOD7JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7JulEnergy,y) = year1_TOD7JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7AugEnergy,y) = year1_TOD7AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7SepEnergy,y) = year1_TOD7SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7OctEnergy,y) = year1_TOD7OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7NovEnergy,y) = year1_TOD7NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD7DecEnergy,y) = year1_TOD7DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7JanEnergy,y) = year1_TOD7JanEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7FebEnergy,y) = year1_TOD7FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7MarEnergy,y) = year1_TOD7MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7AprEnergy,y) = year1_TOD7AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7MayEnergy,y) = year1_TOD7MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7JunEnergy,y) = year1_TOD7JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7JulEnergy,y) = year1_TOD7JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7AugEnergy,y) = year1_TOD7AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7SepEnergy,y) = year1_TOD7SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7OctEnergy,y) = year1_TOD7OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7NovEnergy,y) = year1_TOD7NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD7DecEnergy,y) = year1_TOD7DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD8JanEnergy,y) = year1_TOD8JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8FebEnergy,y) = year1_TOD8FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8MarEnergy,y) = year1_TOD8MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8AprEnergy,y) = year1_TOD8AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8MayEnergy,y) = year1_TOD8MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8JunEnergy,y) = year1_TOD8JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8JulEnergy,y) = year1_TOD8JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8AugEnergy,y) = year1_TOD8AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8SepEnergy,y) = year1_TOD8SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8OctEnergy,y) = year1_TOD8OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8NovEnergy,y) = year1_TOD8NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD8DecEnergy,y) = year1_TOD8DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8JanEnergy,y) = year1_TOD8JanEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8FebEnergy,y) = year1_TOD8FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8MarEnergy,y) = year1_TOD8MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8AprEnergy,y) = year1_TOD8AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8MayEnergy,y) = year1_TOD8MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8JunEnergy,y) = year1_TOD8JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8JulEnergy,y) = year1_TOD8JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8AugEnergy,y) = year1_TOD8AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8SepEnergy,y) = year1_TOD8SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8OctEnergy,y) = year1_TOD8OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8NovEnergy,y) = year1_TOD8NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD8DecEnergy,y) = year1_TOD8DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 
-			cf.at(CF_TOD9JanEnergy,y) = year1_TOD9JanEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9FebEnergy,y) = year1_TOD9FebEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9MarEnergy,y) = year1_TOD9MarEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9AprEnergy,y) = year1_TOD9AprEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9MayEnergy,y) = year1_TOD9MayEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9JunEnergy,y) = year1_TOD9JunEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9JulEnergy,y) = year1_TOD9JulEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9AugEnergy,y) = year1_TOD9AugEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9SepEnergy,y) = year1_TOD9SepEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9OctEnergy,y) = year1_TOD9OctEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9NovEnergy,y) = year1_TOD9NovEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
-			cf.at(CF_TOD9DecEnergy,y) = year1_TOD9DecEnergy * cf.at(CF_Degradation,y) * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9JanEnergy,y) = year1_TOD9JanEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9FebEnergy,y) = year1_TOD9FebEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9MarEnergy,y) = year1_TOD9MarEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9AprEnergy,y) = year1_TOD9AprEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9MayEnergy,y) = year1_TOD9MayEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9JunEnergy,y) = year1_TOD9JunEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9JulEnergy,y) = year1_TOD9JulEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9AugEnergy,y) = year1_TOD9AugEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9SepEnergy,y) = year1_TOD9SepEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9OctEnergy,y) = year1_TOD9OctEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9NovEnergy,y) = year1_TOD9NovEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
+			cf.at(CF_TOD9DecEnergy,y) = year1_TOD9DecEnergy * cf.at(CF_Degradation,y); // * cf.at(CF_Availability,y);
 		}
 		return true;
 	}
@@ -3574,7 +3576,7 @@ public:
 		size_t count;
 
 	// hourly energy includes all curtailment, availability and degradation - see cmod_annualoutput
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
@@ -3666,7 +3668,7 @@ public:
 		size_t count;
 
 	// hourly energy include all curtailment, availability and degradation - see cmod_annualoutput
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
