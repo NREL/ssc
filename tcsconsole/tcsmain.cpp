@@ -482,12 +482,6 @@ public:
 		else return wxRealPoint( (m_start + i*m_step)/3600.0, 0.0 );
 	}
 
-	virtual void SetDataValue(size_t i, double newYValue)
-	{
-		m_pData->values[i].dval = newYValue;
-	}
-
-
 	virtual size_t Length() const
 	{
 		return m_pData->values.size();
