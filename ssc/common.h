@@ -20,9 +20,23 @@ class adjustment_factors
 	std::vector<float> m_factors;
 	std::string m_error;
 public:
-	adjustment_factors( compute_module *cm );
+	adjustment_factors(compute_module *cm);
 	bool setup();
-	float operator()( size_t time );
+	float operator()(size_t time);
+	std::string error() { return m_error; }
+};
+
+extern var_info vtab_dispatch_periods[];
+
+class dispatch_periods
+{
+	compute_module *m_cm;
+	std::vector<int> m_factors;
+	std::string m_error;
+public:
+	dispatch_periods(compute_module *cm);
+	bool setup();
+	int operator()(size_t time);
 	std::string error() { return m_error; }
 };
 
