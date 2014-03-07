@@ -19,6 +19,7 @@ OBJECTS = \
 	cmod_geothermalui.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
+	cmod_windbos.o \
 	cmod_pvwattsfrompoa.o \
 	cmod_annualoutput.o \
 	cmod_test_irr.o \
