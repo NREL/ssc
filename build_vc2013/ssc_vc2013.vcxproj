@@ -58,6 +58,7 @@
     <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
     <ClCompile Include="..\ssc\cmod_wfreader.cpp" />
+    <ClCompile Include="..\ssc\cmod_windbos.cpp" />
     <ClCompile Include="..\ssc\cmod_windfile.cpp" />
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
