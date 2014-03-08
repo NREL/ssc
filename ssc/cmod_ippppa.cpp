@@ -20,17 +20,17 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "ippppa",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "ippppa",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "ippppa",         "?=1e-3",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "ippppa",         "?=0",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "ippppa",         "?=100",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "ippppa",         "?=100",                     "INTEGER,MIN=1",            "" },
 
 //	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
-	{ SSC_INPUT,        SSC_ARRAY,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,        SSC_ARRAY,     "bid_price",			"Initial year PPA price",			"$/kWh",	 "",			  "ippppa",			 "?=0.10",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "bid_price_esc",           "PPA escalation",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
-	{ SSC_INPUT,       SSC_NUMBER,      "const_per_total",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
+	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	"Construction financing total",	"$",	 "",					  "ippppa",			 "*",                         "",                             "" },
 
 
 
@@ -636,7 +636,7 @@ public:
 		int i=0;
 
 		is_commercialppa = (as_integer("market")==1);
-		ppa_soln_mode = as_integer("ppa_soln_mode"); // 0 for iterative, 1 for specified
+		ppa_soln_mode = as_integer("soln_mode"); // 0 for iterative, 1 for specified
 		ppa_soln_tolerance = as_double("ppa_soln_tolerance");
 		weighting_factor = 1.0; // binary search algorithm - updated in check constraints.
 
@@ -668,7 +668,7 @@ public:
 
 
 		// dispatch
-		if (as_integer("system_use_lifetime_output"))
+		if (as_integer("system_use_lifetime_output")==1)
 		{
 			if ( is_commercialppa)
 				compute_lifetime_output(nyears);
@@ -713,10 +713,13 @@ public:
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
 		}
 
-		ppa_escalation = 0.01*as_double("ppa_escalation");
-//		ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
+		if (ppa_soln_mode == 0)
+			ppa_escalation = 0.01*as_double("ppa_escalation");
+		else
+			ppa_escalation = 0.01*as_double("bid_price_esc");
+		//		ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 		// precompute ppa price schedules or value+escalation $/kWh (SAM) to cents/kWh (ssc)
-		escal_or_annual( CF_ppa_price, nyears, "ppa_price_input", ppa_escalation, 100.0, false );
+		escal_or_annual( CF_ppa_price, nyears, "bid_price", ppa_escalation, 1.0, false );
 
 		ppa = cf( CF_ppa_price, 1); // assignment in metrics table
 
@@ -745,7 +748,7 @@ public:
 			positive_cashflow_required =0;
 		}
 
-		double constr_total_financing = as_double("const_per_total");
+		double constr_total_financing = as_double("construction_financing_cost");
 
 		double total_cost = as_double("total_installed_cost")+constr_total_financing;
 		double property_tax_assessed_value = (total_cost-constr_total_financing) * as_double("prop_tax_cost_assessed_percent") * 0.01;
