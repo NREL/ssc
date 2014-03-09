@@ -345,6 +345,7 @@ enum {
 
 	CF_sta_and_fed_tax_savings,
 	CF_after_tax_net_equity_cash_flow,
+	CF_after_tax_net_equity_cost_flow,
 	CF_after_tax_cash_flow,
 
 	// Dispatch
@@ -1052,9 +1053,9 @@ public:
 //					outm << "real discount rate=" << real_discount_rate;
 //					log( outm.str() );
 		double npv_energy_real = npv( CF_energy_net, nyears, real_discount_rate );
-//		if (npv_energy_real == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-//		lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / npv_energy_real;
-		double lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100;
+		// change to cost flow lcoe calculation
+//		double lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100;
+		double lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
 		if (npv_energy_real == 0.0) 
 		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
@@ -1065,10 +1066,10 @@ public:
 		}
 
 		double npv_energy_nom = npv( CF_energy_net, nyears, nom_discount_rate );
-//		if (npv_energy_nom == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-//		lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate)  * 100 / npv_energy_nom;
-		double lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate)  * 100;
-		if (npv_energy_nom == 0.0) 
+		// change to cost flow lcoe calculation
+//		double lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate) * 100;
+		double lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
+		if (npv_energy_nom == 0.0)
 		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -1222,8 +1223,9 @@ public:
 		save_cf( CF_fed_income_taxes, nyears, "cf_fed_income_taxes" );
 
 		save_cf( CF_sta_and_fed_tax_savings, nyears, "cf_sta_and_fed_tax_savings" );
-		save_cf( CF_after_tax_net_equity_cash_flow, nyears, "cf_after_tax_net_equity_cash_flow" );
-		save_cf( CF_after_tax_cash_flow, nyears, "cf_after_tax_cash_flow" );
+		save_cf(CF_after_tax_net_equity_cash_flow, nyears, "cf_after_tax_net_equity_cash_flow");
+		save_cf(CF_after_tax_net_equity_cost_flow, nyears, "cf_after_tax_net_equity_cost_flow");
+		save_cf(CF_after_tax_cash_flow, nyears, "cf_after_tax_cash_flow");
 
 		save_cf( CF_ppa_price,nyears,"cf_ppa_price");
 
@@ -4496,6 +4498,14 @@ void compute_cashflow()
 			- cf.at(CF_debt_payment_total, i)
 			+ cf.at(CF_pbi_total, i);
 
+// added for updated LCOE calcualtions 3/8/14
+		cf.at(CF_after_tax_net_equity_cost_flow, i) =
+			+ cf.at(CF_deductible_expenses, i)
+			- cf.at(CF_debt_payment_total, i)
+			+ cf.at(CF_pbi_total, i)
+			+ cf.at(CF_sta_and_fed_tax_savings, i);
+
+
 		if (cf.at(CF_debt_payment_total,i) !=0.0)
 			cf.at(CF_pretax_dscr,i) = cf.at(CF_operating_income,i) / cf.at(CF_debt_payment_total,i);
 		if (i > loan_term)
@@ -4507,8 +4517,9 @@ void compute_cashflow()
 
 	}
 
-	aftertax_irr = irr( CF_after_tax_net_equity_cash_flow, nyears);
-	min_dscr = min_cashflow_value( CF_pretax_dscr, nyears);
+//	aftertax_irr = irr(CF_after_tax_net_equity_cash_flow, nyears);
+	aftertax_irr = irr(CF_after_tax_net_equity_cost_flow, nyears);
+	min_dscr = min_cashflow_value(CF_pretax_dscr, nyears);
 	min_after_tax_cash_flow=min_cashflow_value(CF_after_tax_net_equity_cash_flow,nyears);
 
 }
