@@ -180,9 +180,11 @@ static var_info vtab_ippppa[] = {
 	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "ippppa",      "*",                       "INTEGER",                                  "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcoe_real", "Real LCOE", "cents/kWh", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcoe_nom", "Nominal LCOE", "cents/kWh", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Real LPPA", "cents/kWh", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Nominal LPPA", "cents/kWh", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "npv", "Net present value", "$", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                      "First year PPA",				   "cents/kWh",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_cashflow",                      "Minimum cash flow value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
@@ -1054,28 +1056,32 @@ public:
 //					log( outm.str() );
 		double npv_energy_real = npv( CF_energy_net, nyears, real_discount_rate );
 		// change to cost flow lcoe calculation
-//		double lcoe_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100;
+		double lppa_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100;
 		double lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
 		if (npv_energy_real == 0.0) 
 		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
+			lppa_real = std::numeric_limits<double>::quiet_NaN();
 		}
 		else
 		{
 			lcoe_real /= npv_energy_real;
+			lppa_real /= npv_energy_real;
 		}
 
 		double npv_energy_nom = npv( CF_energy_net, nyears, nom_discount_rate );
 		// change to cost flow lcoe calculation
-//		double lcoe_nom = npv(CF_energy_value, nyears, nom_discount_rate) * 100;
+		double lppa_nom = npv(CF_energy_value, nyears, nom_discount_rate) * 100;
 		double lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
 		if (npv_energy_nom == 0.0)
 		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
+			lppa_nom = std::numeric_limits<double>::quiet_NaN();
 		}
 		else
 		{
 			lcoe_nom /= npv_energy_nom;
+			lppa_nom /= npv_energy_nom;
 		}
 
 
@@ -1119,9 +1125,11 @@ public:
 
 		net_present_value = cf.at(CF_after_tax_net_equity_cash_flow,0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate );
 
-		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
-		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
-		assign( "npv",  var_data((ssc_number_t)net_present_value) );
+		assign("lcoe_real", var_data((ssc_number_t)lcoe_real));
+		assign("lcoe_nom", var_data((ssc_number_t)lcoe_nom));
+		assign("lppa_real", var_data((ssc_number_t)lppa_real));
+		assign("lppa_nom", var_data((ssc_number_t)lppa_nom));
+		assign("npv", var_data((ssc_number_t)net_present_value));
 		assign( "ppa",  var_data((ssc_number_t)ppa) );
 
 		assign( "min_cashflow",  var_data((ssc_number_t)min_after_tax_cash_flow) );
