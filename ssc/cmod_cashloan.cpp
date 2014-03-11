@@ -359,7 +359,7 @@ public:
 
 		int loan_term = as_integer("loan_term");
 		double loan_rate = as_double("loan_rate")*0.01;
-		double debt_frac = as_double("loan_debt")*0.01;
+		double debt_frac = as_double("debt_fraction")*0.01;
 				
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
