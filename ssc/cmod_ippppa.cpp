@@ -186,10 +186,13 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Nominal LPPA", "cents/kWh", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv", "Net present value", "$", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                      "First year PPA",				   "cents/kWh",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_cashflow",                      "Minimum cash flow value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "irr",                      "Internal rate of return",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "min_dscr",                      "Minimum DSCR",				   "",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "irr", "Internal rate of return", "%", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "irr_ev", "IRR (energy value)", "%", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "irr_eq_cash", "IRR (net cash flow)", "%", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "irr_eq_cost", "IRR (net cost flow)", "%", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "irr_cash", "IRR (cash flow)", "%", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_debt_frac",                      "Calculated debt fraction",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_ppa_escalation",                      "Calculated ppa escalation",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 
@@ -247,6 +250,8 @@ static var_info vtab_ippppa[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_fed_total",         "Federal ITC income",                 "$",            "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_sta_total",         "State ITC income",                   "$",            "",                      "ippppa",      "*",                     "",                "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "itc_total", "Total ITC income", "$", "", "ippppa", "*", "", "" },
+
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depr_sched",                        "State depreciation schedule",              "%",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depreciation",                      "State depreciation",                       "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -265,8 +270,9 @@ static var_info vtab_ippppa[] = {
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_and_fed_tax_savings",               "Total tax savings (Federal & State)",      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cash_flow",        "After tax net equity cash flow",           "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After tax cash flow",                      "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_after_tax_net_equity_cash_flow", "After tax net equity cash flow", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_after_tax_net_equity_cost_flow", "After tax net equity cost flow", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_after_tax_cash_flow", "After tax cash flow", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "ippppa",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_pretax_dscr",            "Pre-tax DSCR",                     "",      "",                      "ippppa",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	
@@ -1041,8 +1047,22 @@ public:
 
 		// save outputs
 
+		double irr_ev, irr_eq_cost, irr_eq_cash, irr_cash;
+
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
-		if (ppa_soln_mode==0) aftertax_irr = irr( CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
+		if (ppa_soln_mode == 0)
+		{
+			aftertax_irr = irr(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
+			irr_cash = irr(CF_after_tax_cash_flow, nyears, min_irr_target);
+			irr_eq_cash = irr(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
+			irr_eq_cost = irr(CF_after_tax_net_equity_cost_flow, nyears, min_irr_target);
+			irr_ev = irr(CF_energy_value, nyears, min_irr_target);
+		}
+
+		assign("irr_cash", var_data((ssc_number_t)(irr_cash*100.0)));
+		assign("irr_eq_cash", var_data((ssc_number_t)(irr_eq_cash*100.0)));
+		assign("irr_eq_cost", var_data((ssc_number_t)(irr_eq_cost*100.0)));
+		assign("irr_ev", var_data((ssc_number_t)(irr_ev*100.0)));
 
 /*
 					std::stringstream outm;
@@ -1215,6 +1235,10 @@ public:
 
 		assign( "itc_fed_total", var_data((ssc_number_t) itc_fed_total));
 		assign( "itc_sta_total", var_data((ssc_number_t) itc_sta_total));
+
+		assign("itc_total", var_data((ssc_number_t)(itc_fed_total + itc_sta_total)));
+
+
 
 		save_cf( CF_sta_depr_sched, nyears, "cf_sta_depr_sched" );
 		save_cf( CF_sta_depreciation, nyears, "cf_sta_depreciation" );
@@ -4243,7 +4267,8 @@ void update_loan_amount()
 
 	first_cost = adjusted_installed_cost - loan_amount;
 	cf.at(CF_after_tax_net_equity_cash_flow,0) = 0.0 - first_cost + cf.at(CF_sta_tax_savings,0) + cf.at(CF_fed_tax_savings,0);
-	cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cash_flow,0);
+	cf.at(CF_after_tax_cash_flow, 0) = cf.at(CF_after_tax_net_equity_cash_flow, 0);
+	cf.at(CF_after_tax_net_equity_cost_flow, 0) = cf.at(CF_after_tax_net_equity_cash_flow, 0);
 
 	for (int i=1;i<=nyears;i++)
 	{
