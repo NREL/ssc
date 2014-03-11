@@ -21,6 +21,7 @@ enum{
 	I_Q_AUX_BACKUP,
 
 	O_W_NET,
+	O_HOURLY_ENERGY,
 	O_W_PAR_TOT,
 	O_FUEL_USAGE,
 	O_Q_FP_TOT,
@@ -44,14 +45,15 @@ tcsvarinfo sam_mw_csp_SumCalcs_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,  I_W_PAR_AUX_BOILER,       "W_par_aux_boiler",     "Electrical parasitic - Electrical power required to operate auxiliary fossil system",           "MW",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,      I_Q_PAR_TES_FP,           "Q_par_tes_fp",                      "Modal parasitic - Thermal energy used for freeze protection in TES",           "MW",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,       I_Q_PAR_SF_FP,            "Q_par_sf_fp", "Modal parasitic - Thermal energy used for freeze protection in the receiver/solar field",           "MW",             "",             "",             "" },
-	{ TCS_INPUT,          TCS_NUMBER,      I_Q_AUX_BACKUP,           "Q_aux_backup","Thermal source - Thermal power provided by the auxiliary fossil backup system for generation",           "MW",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,      I_Q_AUX_BACKUP,           "Q_aux_backup","Thermal source - Thermal power provided by the auxiliary fossil backup system for generation",       "MW",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,             O_W_NET,                  "W_net",                                      "Net electricity generation (or usage) by the plant",           "MW",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_NUMBER,     O_HOURLY_ENERGY,          "hourly_energy",                                      "Net electricity generation (or usage) by the plant",           "kW",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,         O_W_PAR_TOT,              "W_par_tot",                          "Total electrical parasitic consumption by all plant subsystems",           "MW",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,        O_FUEL_USAGE,             "Fuel_usage",                                         "Total fossil fuel usage by all plant subsystems",        "MMBTU",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,          O_Q_FP_TOT,               "Q_fp_tot",                                      "Total freeze protection thermal energy requirement",           "MW",             "",             "",             "" },
 
-	{ TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
+	{ TCS_INVALID,        TCS_INVALID,               N_MAX,                         0,                                                                                        0,              0,                0,            0,              0 }
 };
 
 class sam_mw_csp_SumCalcs : public tcstypeinterface
@@ -184,10 +186,11 @@ public:
 
 
 		//------ Set outputs and return -------------
-		value(O_W_NET, W_net);		//[MW] Net electricity generation (or usage) by the plant
-		value(O_W_PAR_TOT, W_par_tot);		//[MW] Total electrical parasitic consumption by all plant subsystems
+		value(O_W_NET, W_net);		            //[MW] Net electricity generation (or usage) by the plant
+		value(O_HOURLY_ENERGY, W_net*1000);		//[kW] Net electricity generation (or usage) by the plant
+		value(O_W_PAR_TOT, W_par_tot);		    //[MW] Total electrical parasitic consumption by all plant subsystems
 		value(O_FUEL_USAGE, Fuel_usage);		//[MMBTU] Total fossil fuel usage by all plant subsystems
-		value(O_Q_FP_TOT, Q_fp_tot);		//[MW] Total freeze protection thermal energy requirement
+		value(O_Q_FP_TOT, Q_fp_tot);		    //[MW] Total freeze protection thermal energy requirement
 
 		
 		return 0;
