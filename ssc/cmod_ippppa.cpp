@@ -726,7 +726,7 @@ public:
 			ppa_escalation = 0.01*as_double("bid_price_esc");
 		//		ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 		// precompute ppa price schedules or value+escalation $/kWh (SAM) to cents/kWh (ssc)
-		escal_or_annual( CF_ppa_price, nyears, "bid_price", ppa_escalation, 1.0, false );
+		escal_or_annual( CF_ppa_price, nyears, "bid_price", ppa_escalation, 100.0, false );
 
 		ppa = cf( CF_ppa_price, 1); // assignment in metrics table
 
@@ -762,7 +762,7 @@ public:
 
 		loan_term = as_integer("loan_term");
 		loan_rate = as_double("loan_rate")*0.01;
-		debt_frac = as_double("loan_debt")*0.01;
+		debt_frac = as_double("debt_fraction")*0.01;
 
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
