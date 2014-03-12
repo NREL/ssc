@@ -240,7 +240,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Dry bulb temperature",                                           "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "twet",              "Wet bulb temperature",                                           "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Net electric generation",                                        "kW",           "",            "Net_E_Calc",     "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kW",           "",            "Net_E_Calc",     "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "EqOpteff",          "Collector equivalent optical efficiency",                        "none",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",         "Field average theta value",                                      "deg",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",         "Field average costheta value",                                   "none",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
