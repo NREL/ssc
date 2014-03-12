@@ -1050,7 +1050,7 @@ public:
 		double irr_ev, irr_eq_cost, irr_eq_cash, irr_cash;
 
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
-		if (ppa_soln_mode == 0)
+		if (ppa_soln_mode == 1)
 		{
 			aftertax_irr = irr(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
 			irr_cash = irr(CF_after_tax_cash_flow, nyears, min_irr_target);
@@ -4533,7 +4533,7 @@ void compute_cashflow()
 
 // added for updated LCOE calcualtions 3/8/14
 		cf.at(CF_after_tax_net_equity_cost_flow, i) =
-			+ cf.at(CF_deductible_expenses, i)
+			+ cf.at(CF_operating_expenses, i)
 			- cf.at(CF_debt_payment_total, i)
 			+ cf.at(CF_pbi_total, i)
 			+ cf.at(CF_sta_and_fed_tax_savings, i);
