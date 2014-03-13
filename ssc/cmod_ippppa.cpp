@@ -188,10 +188,10 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                      "First year PPA",				   "cents/kWh",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_cashflow",                      "Minimum cash flow value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "irr", "Internal rate of return", "%", "", "ippppa", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "irr_ev", "IRR (energy value)", "%", "", "ippppa", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "irr_eq_cash", "IRR (net cash flow)", "%", "", "ippppa", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "irr_eq_cost", "IRR (net cost flow)", "%", "", "ippppa", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "irr_cash", "IRR (cash flow)", "%", "", "ippppa", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "irr_ev", "IRR (energy value)", "%", "", "ippppa", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "irr_eq_cash", "IRR (net cash flow)", "%", "", "ippppa", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "irr_eq_cost", "IRR (net cost flow)", "%", "", "ippppa", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "irr_cash", "IRR (cash flow)", "%", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_debt_frac",                      "Calculated debt fraction",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "actual_ppa_escalation",                      "Calculated ppa escalation",				   "%",            "",                      "ippppa",      "*",                       "",                                         "" },
@@ -1053,18 +1053,20 @@ public:
 		if (ppa_soln_mode == 1)
 		{
 			aftertax_irr = irr(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
+			/*
 			irr_cash = irr(CF_after_tax_cash_flow, nyears, min_irr_target);
 			irr_eq_cash = irr(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target);
 			irr_eq_cost = irr(CF_after_tax_net_equity_cost_flow, nyears, min_irr_target);
 			irr_ev = irr(CF_energy_value, nyears, min_irr_target);
+			*/
 		}
-
+		/*
 		assign("irr_cash", var_data((ssc_number_t)(irr_cash*100.0)));
 		assign("irr_eq_cash", var_data((ssc_number_t)(irr_eq_cash*100.0)));
 		assign("irr_eq_cost", var_data((ssc_number_t)(irr_eq_cost*100.0)));
 		assign("irr_ev", var_data((ssc_number_t)(irr_ev*100.0)));
 
-/*
+
 					std::stringstream outm;
 					outm << "iteration=" << its  << ", irr=" << aftertax_irr  << ", use_target_irr=" << use_target_irr
 						//  << ", npvactual=" << itnpv_actual  << ", npvactual_delta=" << itnpv_target_delta  
@@ -4550,8 +4552,7 @@ void compute_cashflow()
 
 	}
 
-//	aftertax_irr = irr(CF_after_tax_net_equity_cash_flow, nyears);
-	aftertax_irr = irr(CF_after_tax_net_equity_cost_flow, nyears);
+	aftertax_irr = irr(CF_after_tax_net_equity_cash_flow, nyears);
 	min_dscr = min_cashflow_value(CF_pretax_dscr, nyears);
 	min_after_tax_cash_flow=min_cashflow_value(CF_after_tax_net_equity_cash_flow,nyears);
 
