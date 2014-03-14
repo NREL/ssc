@@ -22,10 +22,11 @@ static var_info _cm_vtab_pvwattsv5[] = {
 /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "local weather file path",                     "",          "",                       "Weather", "*", "LOCAL_FILE", "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                "Nameplate capacity",                          "kW",        "",                                             "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "PVWatts",      "*",                       "MIN=0,MAX=2,INTEGER",                      "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "PVWatts",      "?=1.1",                   "POSITIVE",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",      "",                                             "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                "Nameplate capacity",                          "kW",        "",                           "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film", "PVWatts",      "?=0",                       "MIN=0,MAX=2,INTEGER",                      "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                           "PVWatts",      "?=1.1",                   "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "%",         "",                           "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "losses",                         "System losses",                               "%",         "Total system losses",                               "PVWatts",      "*",                       "MIN=0,MAX=50",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis",  "PVWatts",      "*",                       "MIN=0,MAX=4,INTEGER",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "PVWatts",      "*",                       "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
@@ -156,8 +157,9 @@ public:
 		double dc_nameplate = as_double("system_capacity")*1000;
 		double dc_ac_ratio = as_double("dc_ac_ratio");
 		double ac_nameplate = dc_nameplate / dc_ac_ratio;
+		double inv_eff_percent = as_double("inv_eff");
 		
-		double derate = as_double("derate");        
+		double loss_percent = as_double("losses");        
 		double tilt = as_double("tilt");
 		double azimuth = as_double("azimuth");
 
@@ -170,9 +172,9 @@ public:
 		case 0: // standard module
 			gamma = -0.0047; use_ar_glass = false; break;
 		case 1: // premium module
-			gamma = -0.0033; use_ar_glass = true; break;
+			gamma = -0.0035; use_ar_glass = true; break;
 		case 2: // thin film module
-			gamma = -0.0023; use_ar_glass = false; break;
+			gamma = -0.0020; use_ar_glass = false; break;
 		}
 
 		int track_mode =  0;
@@ -185,7 +187,7 @@ public:
 		case 0: // fixed open rack
 			track_mode = 0; inoct = 45; shade_mode_1x = 0; break;
 		case 1: // fixed roof mount
-			track_mode = 0; inoct = 50; shade_mode_1x = 0; break;
+			track_mode = 0; inoct = 49; shade_mode_1x = 0; break;
 		case 2: // 1 axis self-shaded
 			track_mode = 1; inoct = 45; shade_mode_1x = 0; break;
 		case 3: // 1 axis backtracked
@@ -392,21 +394,22 @@ public:
 				double dc = dc_nameplate*(1.0+gamma*(pvt-25.0))*tpoa/1000.0;
 
 				// dc losses
-				dc *= derate;
+				dc = dc*(1-loss_percent/100);
 
 				// inverter efficiency
 
-				double etanom = 0.96;
+				double etanom = inv_eff_percent/100.0;
+				double etaref = 0.9637;
 				double A =  -0.0162;
 				double B = -0.0059;
 				double C =  0.9858;
 				double pdc0 = ac_nameplate/etanom;
 				double plr = dc / pdc0;
 				double ac = 0;
-
+				
 				if ( plr > 0 )
 				{ // normal operation
-					double eta = A*plr + B/plr + C;
+					double eta = (A*plr + B/plr + C)*etanom/etaref;
 					ac = dc*eta;
 				}
 
