@@ -34,8 +34,8 @@ static var_info vtab_ippppa[] = {
 
 
 
-	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",                          "Total installed cost",                               "$",      "",                      "Cashloan",            "*",                      "MIN=0",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Cashloan",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",                          "Total installed cost",                               "$",      "",                      "ippppa",            "*",                      "MIN=0",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "ippppa",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,      "min_dscr_target",                       "Minimum required DSCR",        "",      "",                      "ippppa",      "?=1.4",                  "",                 "" },
@@ -67,7 +67,9 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor7",		"Dispatch payment factor 7",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor8",		"Dispatch payment factor 8",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor9",		"Dispatch payment factor 9",	"",   "",                      "ippppa",             "market=0",						   "",                 "" },
-	
+	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekday", "Diurnal weekday dispatch periods", "1..9", "12 x 24 matrix", "ippppa", "market=0", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekend", "Diurnal weekend dispatch periods", "1..9", "12 x 24 matrix", "ippppa", "market=0", "", "" },
+
 /* outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jan",	"Energy produced by the system in January",	"",   "",                      "ippppa",             "market=0",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jan",		"Revenue from the system in January",	"",   "",                      "ippppa",             "market=0",				   "LENGTH_EQUAL=cf_length",                 "" },
@@ -634,7 +636,7 @@ public:
 		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
-		add_var_info(vtab_dispatch_periods);
+//		add_var_info(vtab_dispatch_periods);
 		add_var_info( vtab_ippppa );
 	}
 
