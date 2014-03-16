@@ -13,7 +13,7 @@ static var_info _cm_vtab_levpartflip[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 //	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "DHF",             "*",						   "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "energy_net_hourly",	"Hourly energy produced by the system",	"kWh",   "",                      "DHF",             "*",						   "",                 "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",	"Hourly energy produced by the system",	"kWh",   "",                      "DHF",             "*",						   "",                 "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "DHF",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
@@ -1284,15 +1284,15 @@ public:
 		{
 			size_t count_energy = 0;
 			ssc_number_t *energy = 0;
-			energy = as_array("energy_net_hourly", &count_energy);
+			energy = as_array("hourly_energy", &count_energy);
 			for (i=0;i<(int)count_energy;i++) first_year_energy += energy[i]; // sum up hourly kWh to get total annual kWh first year production  includes first year curtailment, availability and degradation - see cmod_annual output
 			cf.at(CF_energy_net,1) = first_year_energy;
 			// remove first year availability so schedules and single values can be applied properly
 			if (cf.at(CF_Availability,1) !=0) first_year_energy /= cf.at(CF_Availability,1);
 			if (cf.at(CF_Degradation,1) !=0) first_year_energy /= cf.at(CF_Degradation,1);
 
-			for (i=1;i<=nyears;i++)
-				cf.at(CF_energy_net,i) = first_year_energy * cf.at(CF_Degradation,i) * cf.at(CF_Availability,i);
+			for (i = 1; i <= nyears; i++)
+				cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_Degradation, i); //* cf.at(CF_Availability,i);
 			compute_dispatch_output(nyears);
 		}
 
@@ -4527,7 +4527,7 @@ public:
 		size_t count;
 
 	// hourly energy
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( count != 8760)
 		{
 			std::stringstream outm;
@@ -4663,7 +4663,7 @@ public:
 		size_t count;
 
 	// hourly energy
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( count != 8760)
 		{
 			std::stringstream outm;
@@ -5770,7 +5770,7 @@ public:
 		size_t count;
 
 	// hourly energy includes all curtailment, availability and degradation - see cmod_annualoutput
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;
@@ -5862,7 +5862,7 @@ public:
 		size_t count;
 
 	// hourly energy include all curtailment, availability and degradation - see cmod_annualoutput
-		hourly_enet = as_array("energy_net_hourly", &count );
+		hourly_enet = as_array("hourly_energy", &count );
 		if ( (int)count != (8760*nyears))
 		{
 			std::stringstream outm;

@@ -26,21 +26,6 @@ public:
 	std::string error() { return m_error; }
 };
 
-extern var_info vtab_dispatch_periods[];
-
-class dispatch_periods
-{
-	compute_module *m_cm;
-	std::vector<int> m_factors;
-	std::string m_error;
-public:
-	dispatch_periods(compute_module *cm);
-	bool setup();
-	int operator()(size_t time);
-	std::string error() { return m_error; }
-};
-
-
 
 #endif
 
