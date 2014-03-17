@@ -954,22 +954,31 @@ double dispatch_calculations::tod_energy(int period, int year)
 	{
 	case 1:
 		energy = m_cf.at(CF_TOD1Energy, year);
+		break;
 	case 2:
 		energy = m_cf.at(CF_TOD2Energy, year);
+		break;
 	case 3:
 		energy = m_cf.at(CF_TOD3Energy, year);
+		break;
 	case 4:
 		energy = m_cf.at(CF_TOD4Energy, year);
+		break;
 	case 5:
 		energy = m_cf.at(CF_TOD5Energy, year);
+		break;
 	case 6:
 		energy = m_cf.at(CF_TOD6Energy, year);
+		break;
 	case 7:
 		energy = m_cf.at(CF_TOD7Energy, year);
+		break;
 	case 8:
 		energy = m_cf.at(CF_TOD8Energy, year);
+		break;
 	case 9:
 		energy = m_cf.at(CF_TOD9Energy, year);
+		break;
 	}
 	return energy;
 }
@@ -977,36 +986,56 @@ double dispatch_calculations::tod_energy(int period, int year)
 double dispatch_calculations::tod_energy_value(int period, int year)
 {
 	double energy_value = 0;
+
+
 	switch (period)
 	{
 	case 1:
 		energy_value = m_cf.at(CF_TOD1Energy, year)
 			* m_cm->as_double("dispatch_factor1");
+		break;
 	case 2:
 		energy_value = m_cf.at(CF_TOD2Energy, year)
 			* m_cm->as_double("dispatch_factor2");
+		break;
 	case 3:
 		energy_value = m_cf.at(CF_TOD3Energy, year)
 			* m_cm->as_double("dispatch_factor3");
+		break;
 	case 4:
 		energy_value = m_cf.at(CF_TOD4Energy, year)
 			* m_cm->as_double("dispatch_factor4");
+		break;
 	case 5:
 		energy_value = m_cf.at(CF_TOD5Energy, year)
 			* m_cm->as_double("dispatch_factor5");
+		break;
 	case 6:
 		energy_value = m_cf.at(CF_TOD6Energy, year)
 			* m_cm->as_double("dispatch_factor6");
+		break;
 	case 7:
 		energy_value = m_cf.at(CF_TOD7Energy, year)
 			* m_cm->as_double("dispatch_factor7");
+		break;
 	case 8:
 		energy_value = m_cf.at(CF_TOD8Energy, year)
 			* m_cm->as_double("dispatch_factor8");
+		break;
 	case 9:
 		energy_value = m_cf.at(CF_TOD9Energy, year)
 			* m_cm->as_double("dispatch_factor9");
+		break;
 	}
+
+
+	std::stringstream outm;
+	outm << "tod_energy_value (" << period << ", " << year << ") = " << energy_value;
+	m_cm->log(outm.str());
+	//throw compute_module::exec_error("dispatch calcs",outm.str());
+
+
+
 	return energy_value;
 }
 
