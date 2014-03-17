@@ -148,8 +148,8 @@ static var_info vtab_ippppa[] = {
 
 
 // first year monthly output for each TOD period
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_monthly_firstyear",		"First year revenue from the system by month",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_monthly_firstyear",		"First year energy from the system by month",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_monthly_firstyear",		"First year revenue from the system by month",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_monthly_firstyear",		"First year energy from the system by month",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_monthly_firstyear_TOD1",		"First year revenue from the system by month for TOD1",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_monthly_firstyear_TOD1",		"First year energy from the system by month for TOD1",	"",   "",                      "ippppa",             "market=0",				   "",                 "" },
@@ -1737,7 +1737,7 @@ void compute_cashflow()
 			//cf.at(CF_TOD7Energy, i) * dispatch_factor7 +
 			//cf.at(CF_TOD8Energy, i) * dispatch_factor8 +
 			//cf.at(CF_TOD9Energy, i) * dispatch_factor9);
-			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 * (
+			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
 									m_disp_calcs.tod_energy_value(1, i) +
 									m_disp_calcs.tod_energy_value(2, i) +
 									m_disp_calcs.tod_energy_value(3, i) +
