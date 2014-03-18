@@ -1027,15 +1027,6 @@ double dispatch_calculations::tod_energy_value(int period, int year)
 			* m_cm->as_double("dispatch_factor9");
 		break;
 	}
-
-
-	std::stringstream outm;
-	outm << "tod_energy_value (" << period << ", " << year << ") = " << energy_value;
-	m_cm->log(outm.str());
-	//throw compute_module::exec_error("dispatch calcs",outm.str());
-
-
-
 	return energy_value;
 }
 

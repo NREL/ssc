@@ -1,5 +1,3 @@
-#include "core.h"
-//#include "common.h"
 #include "common_financial.h"
 #include "lib_financial.h"
 using namespace libfin;
@@ -16,8 +14,6 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "ippppa",             "*",						   "INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",	"Hourly energy produced by the system",	"kWh",   "",                      "ippppa",             "*",						   "",                 "" },
 
-//	{ SSC_INPUT,        SSC_NUMBER,      "energy_net",				"Annual energy produced by system",	"kWh",   "",                      "ippppa",             "*",						   "",                              "" },
-	//{ SSC_INPUT,        SSC_ARRAY,      "energy_availability",		"Annual energy availability",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
 
@@ -477,8 +473,7 @@ public:
 
 		// degradation
 		size_t count_degrad = 0;
-		ssc_number_t *degrad = 0;
-		degrad = as_array("degradation", &count_degrad);
+		ssc_number_t *degrad = as_array("degradation", &count_degrad);
 
 		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
 		if (count_degrad == 1)
@@ -546,8 +541,6 @@ public:
 				degrade_cf.push_back(cf.at(CF_degradation, i));
 			}
 			m_disp_calcs.init(this, degrade_cf);
-
-
 		}
 
 		for (i=1;i<=nyears;i++)
@@ -1695,16 +1688,6 @@ void compute_cashflow()
 			cf.at(CF_energy_value, i) = cf.at(CF_energy_net, i) * cf.at(CF_ppa_price, i) / 100.0;
 		else
 			// dispatch
-			//cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 * (
-			//cf.at(CF_TOD1Energy, i) * dispatch_factor1 +
-			//cf.at(CF_TOD2Energy, i) * dispatch_factor2 +
-			//cf.at(CF_TOD3Energy, i) * dispatch_factor3 +
-			//cf.at(CF_TOD4Energy, i) * dispatch_factor4 +
-			//cf.at(CF_TOD5Energy, i) * dispatch_factor5 +
-			//cf.at(CF_TOD6Energy, i) * dispatch_factor6 +
-			//cf.at(CF_TOD7Energy, i) * dispatch_factor7 +
-			//cf.at(CF_TOD8Energy, i) * dispatch_factor8 +
-			//cf.at(CF_TOD9Energy, i) * dispatch_factor9);
 			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
 									m_disp_calcs.tod_energy_value(1, i) +
 									m_disp_calcs.tod_energy_value(2, i) +
