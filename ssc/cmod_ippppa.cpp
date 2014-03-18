@@ -505,29 +505,33 @@ public:
 		// dispatch
 		if (as_integer("system_use_lifetime_output")==1)
 		{
-			if ( is_commercialppa)
-				compute_lifetime_output(nyears);
-			else
+			if ((int)count_energy != (8760 * nyears))
 			{
-//				compute_lifetime_dispatch_output(nyears);
-				for (size_t y = 1; y <= (size_t)nyears; y++)
+				std::stringstream outm;
+				outm << "Bad hourly net energy output length (" << count_energy << "), should be (analysis period-1) * 8760 value (" << 8760 * nyears << ")";
+				log(outm.str());
+			}
+			// hourly_enet includes all curtailment, availability
+			for (size_t y = 1; y <= (size_t)nyears; y++)
+			{
+				for (size_t h = 0; h<8760; h++)
 				{
-					cf.at(CF_energy_net, y) = 0;
-					for (size_t h = 0; h<8760; h++)
-						{
-						if (((y - 1) * 8760 + h ) < count_energy)
-							cf.at(CF_energy_net, y) += energy[(y - 1) * 8760 + h];
-						}
-					}
+					cf.at(CF_energy_net, y) += energy[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+				}
 			}
 		}
 		else
 		{
-			for (i=0;i<(int)count_energy;i++) first_year_energy += energy[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability and degradation - availability is only first year values and not out year schedule.
+			if ((int)count_energy != 8760)
+			{
+				std::stringstream outm;
+				outm << "Bad hourly net energy output length (" << count_energy << "), should be 8760";
+				log(outm.str());
+			}
+			for (i = 0; i<(int)count_energy; i++) first_year_energy += energy[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability 
 			cf.at(CF_energy_net,1) = first_year_energy;
 			for (i = 1; i <= nyears; i++)
 				cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
-//			if ( !is_commercialppa) compute_dispatch_output(nyears);
 		}
 
 		first_year_energy = cf.at(CF_energy_net, 1);
@@ -1485,41 +1489,6 @@ public:
 	{
 		return (a > b) ? a : b;
 	}
-
-
-	bool compute_lifetime_output(int nyears)
-	{
-	//Calculate energy dispatched in each dispatch period 
-		ssc_number_t *hourly_enet; // hourly energy output
-
-
-		int h;
-		size_t count;
-
-	// hourly energy
-		hourly_enet = as_array("hourly_energy", &count );
-		if ( (int)count != (8760*nyears))
-		{
-			std::stringstream outm;
-			outm <<  "Bad hourly net energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760*nyears << ")";
-			log( outm.str() );
-			return false;
-		}
-		// hourly_enet includes all curtailment, availability
-		for (int y=1;y<=nyears;y++)
-		{
-			for (h=0;h<8760;h++)
-			{
-				cf.at(CF_energy_net,y) += hourly_enet[(y-1)*8760+h] * cf.at(CF_degradation,y);
-			}
-		}
-
-
-	
-		return true;
-	}
-
-
 
 
 
