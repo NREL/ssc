@@ -536,11 +536,10 @@ public:
 
 		if (!is_commercialppa)
 		{
-			std::vector<double> degrade_cf, ppa_cf;
+			std::vector<double> degrade_cf;
 			for (i = 0; i < nyears; i++)
 			{
 				degrade_cf.push_back(cf.at(CF_degradation, i));
-//				ppa_cf.push_back(cf.at(CF_ppa_price, i));
 			}
 			m_disp_calcs.init(this, degrade_cf);
 
