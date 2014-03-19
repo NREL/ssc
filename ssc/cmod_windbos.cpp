@@ -15,7 +15,7 @@ static var_info _cm_vtab_windbos[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "soil_condition",                "Soil Condition",                                          "",       "",                      "wind_bos",      "*",                       "INTEGER",                       "" },
 		
 	// Calculated Values - Entering in Data will Override Program
-	{ SSC_INPUT,        SSC_NUMBER,      "constructio_time",              "Construction Time(months)",                               "months", "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "construction_time",              "Construction Time(months)",                               "months", "",                      "wind_bos",      "*",                       "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "om_building_size",              "O&M Building Size(ft2)",                                  "ft^2",   "",                      "wind_bos",      "*",                       "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "quantity_test_met_towers",      "Quantity of Temporary Meteorological Towers for Testing", "",       "",                      "wind_bos",      "*",                       "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "quantity_permanent_met_towers", "Quantity of Permanent Meteorological Towers for Testing", "",       "",                      "wind_bos",      "*",                       "",                              "" },
