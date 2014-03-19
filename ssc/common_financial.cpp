@@ -2691,3 +2691,42 @@ bool dispatch_calculations::process_lifetime_dispatch_output()
 
 	return true;
 }
+
+
+/*
+advanced_financing_cost::advanced_financing_cost(compute_module *cm)
+: m_cm(cm)
+{
+	compute_cost();
+}
+
+
+bool advanced_financing_cost::compute_cost()
+{
+	double installed_cost = m_cm->as_double("total_installed_cost");
+	double direct_cost = m_cm->as_double("total_direct_cost");
+	double indirect_cost = installed_cost - direct_cost;
+	ssc_number_t val;
+	ssc_data_get_number(get_ssc_data(), "cost_installed", &val);
+	double project_cost = (double)val;
+
+	m_cm->assign("direct_cost", direct_cost);
+	m_cm->assign("indirect_cost", indirect_cost);
+	m_cm->assign("financing_cost", project_cost - indirect_cost - direct_cost);
+
+	// rounding on debt/equity
+	ssc_data_get_number(get_ssc_data(), "size_of_equity", &val);
+	double equity = (double)val;
+	ssc_data_get_number(get_ssc_data(), "size_of_debt", &val);
+	double debt = (double)val;
+	ssc_data_get_number(get_ssc_data(), "cbi_total", &val);
+	double cbi_total = (double)val;
+	ssc_data_get_number(get_ssc_data(), "ibi_total", &val);
+	double ibi_total = (double)val;
+	if (project_cost != (ibi_total + cbi_total + debt + equity))
+	{
+		equity = project_cost - ibi_total - cbi_total - debt;
+		samsim_set_d(long(this), "sv.total_equity", equity);
+	}
+}
+*/

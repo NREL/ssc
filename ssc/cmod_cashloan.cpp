@@ -34,9 +34,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of Insurance and Prop Tax",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_capacity_factor",    "Capacity factor",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_kwh_per_kw",    "First year kWh/kW",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor",    "Capacity factor",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "kwh_per_kw",    "First year kWh/kW",  "", "",                      "DHF",      "*",                     "",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -117,13 +117,13 @@ static var_info vtab_cashloan[] = {
 	
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
 
 var_info_invalid };
@@ -780,10 +780,10 @@ public:
 	double lcoptc_sta_real=0.0;
 	if (npv_energy_real != 0) lcoptc_sta_real = npv_sta_ptc / npv_energy_real * 100.0;
 
-	assign("sv_lcoptc_fed_nom", var_data((ssc_number_t) lcoptc_fed_nom));
-	assign("sv_lcoptc_fed_real", var_data((ssc_number_t) lcoptc_fed_real));
-	assign("sv_lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
-	assign("sv_lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
+	assign("lcoptc_fed_nom", var_data((ssc_number_t) lcoptc_fed_nom));
+	assign("lcoptc_fed_real", var_data((ssc_number_t) lcoptc_fed_real));
+	assign("lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
+	assign("lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
 
 
 
@@ -794,8 +794,8 @@ public:
 	effective_tax_rate *= 100.0;
 
 
-	assign("sv_wacc", var_data( (ssc_number_t) wacc));
-	assign("sv_effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
+	assign("wacc", var_data( (ssc_number_t) wacc));
+	assign("effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
 
 
 
@@ -806,11 +806,11 @@ public:
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 
-		assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 		double kWhperkW = 0.0;
 		if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
-		assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
-		assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
+		assign( "capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
+		assign( "kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
 
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));

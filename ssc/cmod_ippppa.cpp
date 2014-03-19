@@ -204,12 +204,12 @@ static var_info vtab_ippppa[] = {
 
 
 	// metrics table 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_capacity_factor",    "Capacity factor",  "", "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_kwh_per_kw",    "First year kWh/kW",  "", "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_first_year_ppa",                 "PPA price",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_ppa_escalation",                 "PPA price escalation",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sv_debt_fraction",    "Debt fraction",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor",    "Capacity factor",  "", "",                      "ippppa",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "kwh_per_kw",    "First year kWh/kW",  "", "",                      "ippppa",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                 "PPA price",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "", "",                      "DHF",      "*",                     "",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -277,13 +277,13 @@ static var_info vtab_ippppa[] = {
 	
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "sv_effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
 
 
@@ -948,10 +948,10 @@ public:
 	double lcoptc_sta_real=0.0;
 	if (npv_energy_real != 0) lcoptc_sta_real = npv_sta_ptc / npv_energy_real * 100.0;
 
-	assign("sv_lcoptc_fed_nom", var_data((ssc_number_t) lcoptc_fed_nom));
-	assign("sv_lcoptc_fed_real", var_data((ssc_number_t) lcoptc_fed_real));
-	assign("sv_lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
-	assign("sv_lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
+	assign("lcoptc_fed_nom", var_data((ssc_number_t) lcoptc_fed_nom));
+	assign("lcoptc_fed_real", var_data((ssc_number_t) lcoptc_fed_real));
+	assign("lcoptc_sta_nom", var_data((ssc_number_t) lcoptc_sta_nom));
+	assign("lcoptc_sta_real", var_data((ssc_number_t) lcoptc_sta_real));
 
 
 
@@ -962,8 +962,8 @@ public:
 	effective_tax_rate *= 100.0;
 
 
-	assign("sv_wacc", var_data( (ssc_number_t) wacc));
-	assign("sv_effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
+	assign("wacc", var_data( (ssc_number_t) wacc));
+	assign("effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
 
 
 
@@ -984,7 +984,7 @@ public:
 		assign( "actual_debt_frac",  var_data((ssc_number_t)(100.0*debt_frac)) );
 		assign( "actual_ppa_escalation",  var_data((ssc_number_t)(100.0*ppa_escalation)) );
 
-		assign("sv_first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
 
 		double kWhperkW = 0.0;
@@ -1002,12 +1002,12 @@ public:
 		{
 			if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
 		}
-		assign( "sv_capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
-		assign( "sv_kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
+		assign( "capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
+		assign( "kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
  
-		assign( "sv_first_year_ppa",var_data((ssc_number_t) ppa) );
-		assign( "sv_ppa_escalation",var_data((ssc_number_t) ppa_escalation) );
-		assign( "sv_debt_fraction",var_data((ssc_number_t) debt_frac) );
+		assign( "ppa",var_data((ssc_number_t) ppa) );
+		assign( "ppa_escalation",var_data((ssc_number_t) ppa_escalation) );
+		assign( "debt_fraction",var_data((ssc_number_t) debt_frac) );
 
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));

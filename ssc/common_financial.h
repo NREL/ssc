@@ -36,6 +36,17 @@ public:
 	double tod_energy_value(int period, int year);
 };
 
+/*
+class advanced_financing_cost
+{
+private:
+	compute_module *m_cm;
+
+public:
+	advanced_financing_cost(compute_module *cm);
+	bool compute_cost();
+};
+*/
 
 
 #endif
