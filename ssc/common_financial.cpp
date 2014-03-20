@@ -2693,40 +2693,38 @@ bool dispatch_calculations::process_lifetime_dispatch_output()
 }
 
 
-/*
+var_info vtab_advanced_financing_cost[] = {
+/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+{ SSC_INPUT, SSC_NUMBER, "total_direct_cost", "Total Direct Cost", "", "", "advanced_financing_costs", "*", "", "" },
+{ SSC_OUTPUT, SSC_NUMBER, "direct_cost", "Total Direct Cost", "", "", "advanced_financing_cost", "*", "", "" },
+{ SSC_OUTPUT, SSC_NUMBER, "indirect_cost", "Total Indirect Cost", "", "", "advanced_financing_cost", "*", "", "" },
+{ SSC_OUTPUT, SSC_NUMBER, "financing_cost", "Total Financing Cost", "", "", "advanced_financing_cost", "*", "", "" },
+
+	var_info_invalid };
+
+
 advanced_financing_cost::advanced_financing_cost(compute_module *cm)
 : m_cm(cm)
 {
-	compute_cost();
 }
 
 
-bool advanced_financing_cost::compute_cost()
+bool advanced_financing_cost::compute_cost(double cost_installed, double equity, double debt, double cbi, double ibi)
 {
 	double installed_cost = m_cm->as_double("total_installed_cost");
 	double direct_cost = m_cm->as_double("total_direct_cost");
 	double indirect_cost = installed_cost - direct_cost;
-	ssc_number_t val;
-	ssc_data_get_number(get_ssc_data(), "cost_installed", &val);
-	double project_cost = (double)val;
+	double project_cost = cost_installed;
 
-	m_cm->assign("direct_cost", direct_cost);
-	m_cm->assign("indirect_cost", indirect_cost);
-	m_cm->assign("financing_cost", project_cost - indirect_cost - direct_cost);
+	m_cm->assign("direct_cost", var_data((ssc_number_t)direct_cost));
+	m_cm->assign("indirect_cost", var_data((ssc_number_t)indirect_cost));
+	m_cm->assign("financing_cost", var_data((ssc_number_t)(project_cost - indirect_cost - direct_cost)));
 
 	// rounding on debt/equity
-	ssc_data_get_number(get_ssc_data(), "size_of_equity", &val);
-	double equity = (double)val;
-	ssc_data_get_number(get_ssc_data(), "size_of_debt", &val);
-	double debt = (double)val;
-	ssc_data_get_number(get_ssc_data(), "cbi_total", &val);
-	double cbi_total = (double)val;
-	ssc_data_get_number(get_ssc_data(), "ibi_total", &val);
-	double ibi_total = (double)val;
-	if (project_cost != (ibi_total + cbi_total + debt + equity))
-	{
-		equity = project_cost - ibi_total - cbi_total - debt;
-		samsim_set_d(long(this), "sv.total_equity", equity);
-	}
+//	if (project_cost != (ibi + cbi + debt + equity))
+//	{
+		m_cm->assign("size_of_equity", var_data((ssc_number_t)(project_cost - ibi - cbi - debt)));
+//	}
+	return true;
 }
-*/
