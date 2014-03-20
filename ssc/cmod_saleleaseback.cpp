@@ -761,7 +761,10 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_irr",    "IRR in target year",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                 "PPA price",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Real LPPA", "", "", "DHF", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Nominal LPPA", "", "", "DHF", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "ppa", "PPA price", "", "", "DHF", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_ppa_revenue",                "NPV of PPA revenue",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
@@ -987,8 +990,8 @@ public:
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
-
-		add_var_info( _cm_vtab_saleleaseback );
+		add_var_info(vtab_advanced_financing_cost);
+		add_var_info(_cm_vtab_saleleaseback);
 	}
 
 	void exec( ) throw( general_error )
@@ -2431,14 +2434,18 @@ public:
 	if (flip_year > -1) actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
 	assign("flip_actual_irr", var_data((ssc_number_t) actual_flip_irr ));
 
-	// LCOE
-	double npv_ppa_revenue = npv(CF_energy_value,nyears,nom_discount_rate);
-	double npv_energy_nom = npv(CF_energy_net,nyears,nom_discount_rate);
-	double lcoe_nom = 0;
-	if (npv_energy_nom != 0) lcoe_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
-	double lcoe_real = 0;
-	double npv_energy_real = npv(CF_energy_net,nyears,disc_real);
-	if (npv_energy_real != 0) lcoe_real = npv_ppa_revenue / npv_energy_real * 100.0;
+	// LPPA
+	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_net, nyears, nom_discount_rate);
+	double lppa_nom = 0;
+	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
+	double lppa_real = 0;
+	double npv_energy_real = npv(CF_energy_net, nyears, disc_real);
+	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
+
+	// TODO - update LCOE calculations 
+	double lcoe_nom = lppa_nom;
+	double lcoe_real = lppa_real;
 
 
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
@@ -2515,8 +2522,13 @@ public:
 	assign("cost_financing", var_data((ssc_number_t) cost_financing));
 
 	assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
-	assign( "size_of_equity", var_data((ssc_number_t) (cost_installed - ibi_total - cbi_total)) );
-	assign( "cost_installedperwatt", var_data((ssc_number_t)( cost_installed / nameplate / 1000.0 ) ));
+	double size_of_equity = cost_installed - ibi_total - cbi_total;
+	assign("size_of_equity", var_data((ssc_number_t)size_of_equity));
+	assign("cost_installedperwatt", var_data((ssc_number_t)(cost_installed / nameplate / 1000.0)));
+
+	advanced_financing_cost adv(this);
+	adv.compute_cost(cost_installed, size_of_equity, 0, cbi_total, ibi_total);
+
 
  		assign( "itc_fed_qual_macrs_5", var_data((ssc_number_t) itc_fed_qual_macrs_5 ) );
 		assign( "itc_fed_qual_macrs_15", var_data((ssc_number_t) itc_fed_qual_macrs_15 ) );
@@ -2607,7 +2619,9 @@ public:
 	assign("debt_fraction", var_data((ssc_number_t)  0.0));
 	assign("lcoe_nom", var_data((ssc_number_t) lcoe_nom));
 	assign("lcoe_real", var_data((ssc_number_t) lcoe_real));
-	assign("ppa_price", var_data((ssc_number_t) ppa));
+	assign("lppa_nom", var_data((ssc_number_t)lppa_nom));
+	assign("lppa_real", var_data((ssc_number_t)lppa_real));
+	assign("ppa_price", var_data((ssc_number_t)ppa));
 	assign("ppa_escalation", var_data((ssc_number_t) (ppa_escalation *100.0) ));
 	assign("ppa", var_data((ssc_number_t) ppa));
 
