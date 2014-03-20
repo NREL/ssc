@@ -242,14 +242,27 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_principal","Principal payment",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_total",    "Total P&I debt payment",             "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive income",         "$",            "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive income",         "$",            "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "ibi_total_fed", "Total federal IBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "ibi_total_sta", "Total state IBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "ibi_total_oth", "Total other IBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "ibi_total_uti", "Total utility IBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "ibi_total", "Total IBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "cbi_total_fed", "Total federal CBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "cbi_total_sta", "Total state CBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "cbi_total_oth", "Total other CBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "cbi_total_uti", "Total utility CBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "cbi_total", "Total CBI incentive income", "$", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_pbi_total_fed", "Total federal PBI incentive income", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_pbi_total_sta", "Total state PBI incentive income", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_pbi_total_oth", "Total other PBI incentive income", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_pbi_total_uti", "Total utility PBI incentive income", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_pbi_total", "Total PBI incentive income", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_fed_total",         "Federal ITC income",                 "$",            "",                      "ippppa",      "*",                     "",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_ptc_total", "Total PTC income", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "itc_fed_total", "Federal ITC income", "$", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_sta_total",         "State ITC income",                   "$",            "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "itc_total", "Total ITC income", "$", "", "ippppa", "*", "", "" },
 
@@ -339,6 +352,7 @@ enum {
 
 	CF_ptc_fed,
 	CF_ptc_sta,
+	CF_ptc_total,
 
 	CF_sta_depr_sched,
 	CF_sta_depreciation,
@@ -830,6 +844,9 @@ public:
 			// compute pbi total
 			cf.at(CF_pbi_total, i) = cf.at(CF_pbi_fed, i) + cf.at(CF_pbi_sta, i) + cf.at(CF_pbi_uti, i) + cf.at(CF_pbi_oth, i);
 
+			// compute ptc total		
+			cf.at(CF_ptc_total, i) = cf.at(CF_ptc_fed, i) + cf.at(CF_ptc_sta, i);
+
 			// compute depreciation from basis and precalculated schedule
 			cf.at(CF_sta_depreciation,i) = cf.at(CF_sta_depr_sched,i)*state_depr_basis;
 			cf.at(CF_fed_depreciation,i) = cf.at(CF_fed_depr_sched,i)*federal_depr_basis;
@@ -1062,11 +1079,35 @@ public:
 		save_cf( this, cf,  CF_debt_payment_total, nyears, "cf_debt_payment_total" );
 
 		assign( "ibi_total", var_data((ssc_number_t) ibi_total));
-		assign( "cbi_total", var_data((ssc_number_t) cbi_total));
+		assign("ibi_total_fed", var_data((ssc_number_t)(ibi_fed_amount + ibi_fed_per)));
+		assign("ibi_total_sta", var_data((ssc_number_t)(ibi_sta_amount + ibi_sta_per)));
+		assign("ibi_total_oth", var_data((ssc_number_t)(ibi_oth_amount + ibi_oth_per)));
+		assign("ibi_total_uti", var_data((ssc_number_t)(ibi_uti_amount + ibi_uti_per)));
+		assign("ibi_total", var_data((ssc_number_t)ibi_total));
+//		assign("ibi_fedtax_total", var_data((ssc_number_t)ibi_fedtax_total));
+//		assign("ibi_statax_total", var_data((ssc_number_t)ibi_statax_total));
+		assign("cbi_total", var_data((ssc_number_t)cbi_total));
+//		assign("cbi_fedtax_total", var_data((ssc_number_t)cbi_fedtax_total));
+//		assign("cbi_statax_total", var_data((ssc_number_t)cbi_statax_total));
+		assign("cbi_total_fed", var_data((ssc_number_t)cbi_fed_amount));
+		assign("cbi_total_sta", var_data((ssc_number_t)cbi_sta_amount));
+		assign("cbi_total_oth", var_data((ssc_number_t)cbi_oth_amount));
+		assign("cbi_total_uti", var_data((ssc_number_t)cbi_uti_amount));
+		assign("itc_total_fed", var_data((ssc_number_t)itc_fed_total));
+		assign("itc_total_sta", var_data((ssc_number_t)itc_sta_total));
+		assign("itc_total", var_data((ssc_number_t)(itc_sta_total+itc_fed_total)));
+		assign("cbi_total", var_data((ssc_number_t)cbi_total));
+
+		save_cf(this, cf, CF_pbi_fed, nyears, "cf_pbi_total_fed");
+		save_cf(this, cf, CF_pbi_sta, nyears, "cf_pbi_total_sta");
+		save_cf(this, cf, CF_pbi_oth, nyears, "cf_pbi_total_oth");
+		save_cf(this, cf, CF_pbi_uti, nyears, "cf_pbi_total_uti");
+
 		save_cf( this, cf,  CF_pbi_total, nyears, "cf_pbi_total" );
 
 		save_cf( this, cf,  CF_ptc_fed, nyears, "cf_ptc_fed" );
-		save_cf( this, cf,  CF_ptc_sta, nyears, "cf_ptc_sta" );
+		save_cf(this, cf, CF_ptc_sta, nyears, "cf_ptc_sta");
+		save_cf(this, cf, CF_ptc_total, nyears, "cf_ptc_total");
 
 		assign( "itc_fed_total", var_data((ssc_number_t) itc_fed_total));
 		assign( "itc_sta_total", var_data((ssc_number_t) itc_sta_total));
