@@ -183,6 +183,8 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "lcoe_nom", "Nominal LCOE", "cents/kWh", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Real LPPA", "cents/kWh", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Nominal LPPA", "cents/kWh", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "latcf_real", "Real LATCF", "cents/kWh", "", "ippppa", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "latcf_nom", "Nominal LATCF", "cents/kWh", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv", "Net present value", "$", "", "ippppa", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                      "First year PPA",				   "cents/kWh",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "min_cashflow",                      "Minimum cash flow value",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
@@ -536,7 +538,7 @@ public:
 		if (!is_commercialppa)
 		{
 			std::vector<double> degrade_cf;
-			for (i = 0; i < nyears; i++)
+			for (i = 1; i <= nyears; i++)
 			{
 				degrade_cf.push_back(cf.at(CF_degradation, i));
 			}
@@ -903,30 +905,36 @@ public:
 		// change to cost flow lcoe calculation
 		double lppa_real = npv(CF_energy_value, nyears, nom_discount_rate)  * 100;
 		double lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
-		if (npv_energy_real == 0.0) 
+		double latcf_real = -(cf.at(CF_after_tax_net_equity_cash_flow, 0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate)) * 100;
+		if (npv_energy_real == 0.0)
 		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
 			lppa_real = std::numeric_limits<double>::quiet_NaN();
+			latcf_real = std::numeric_limits<double>::quiet_NaN();
 		}
 		else
 		{
 			lcoe_real /= npv_energy_real;
 			lppa_real /= npv_energy_real;
+			latcf_real /= npv_energy_real;
 		}
 
 		double npv_energy_nom = npv( CF_energy_net, nyears, nom_discount_rate );
 		// change to cost flow lcoe calculation
 		double lppa_nom = npv(CF_energy_value, nyears, nom_discount_rate) * 100;
 		double lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
+		double latcf_nom = -(cf.at(CF_after_tax_net_equity_cash_flow, 0) + npv(CF_after_tax_net_equity_cash_flow, nyears, nom_discount_rate)) * 100;
 		if (npv_energy_nom == 0.0)
 		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
 			lppa_nom = std::numeric_limits<double>::quiet_NaN();
+			latcf_nom = std::numeric_limits<double>::quiet_NaN();
 		}
 		else
 		{
 			lcoe_nom /= npv_energy_nom;
 			lppa_nom /= npv_energy_nom;
+			latcf_nom /= npv_energy_nom;
 		}
 
 
@@ -974,6 +982,8 @@ public:
 		assign("lcoe_nom", var_data((ssc_number_t)lcoe_nom));
 		assign("lppa_real", var_data((ssc_number_t)lppa_real));
 		assign("lppa_nom", var_data((ssc_number_t)lppa_nom));
+		assign("latcf_real", var_data((ssc_number_t)latcf_real));
+		assign("latcf_nom", var_data((ssc_number_t)latcf_nom));
 		assign("npv", var_data((ssc_number_t)net_present_value));
 		assign( "ppa",  var_data((ssc_number_t)ppa) );
 
@@ -1094,7 +1104,7 @@ public:
 			//else
 			//	process_dispatch_output(nyears);
 			std::vector<double> ppa_cf;
-			for (i = 0; i < nyears; i++)
+			for (i = 1; i <= nyears; i++)
 			{
 				ppa_cf.push_back(cf.at(CF_ppa_price, i));
 			}
