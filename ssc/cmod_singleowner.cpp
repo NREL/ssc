@@ -2586,7 +2586,7 @@ public:
 
 		// dispatch
 		std::vector<double> ppa_cf;
-		for (i = 0; i < nyears; i++)
+		for (i = 1; i <= nyears; i++)
 		{
 			ppa_cf.push_back(cf.at(CF_ppa_price, i));
 		}
