@@ -1811,7 +1811,7 @@ void compute_cashflow()
 
 // added for updated LCOE calcualtions 3/8/14
 		cf.at(CF_after_tax_net_equity_cost_flow, i) =
-			+ cf.at(CF_operating_expenses, i)
+			- cf.at(CF_operating_expenses, i)
 			- cf.at(CF_debt_payment_total, i)
 			+ cf.at(CF_pbi_total, i)
 			+ cf.at(CF_sta_and_fed_tax_savings, i);
