@@ -50,6 +50,10 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",   "",                            "PVWatts",  "?=0.3",                   "MIN=0,MAX=3",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ar_glass",                       "Enable anti-reflective glass coating (beta)",         "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                   "" },
 	
+	{ SSC_INPUT,        SSC_NUMBER,      "u0",                           "thermal model coeff U0",                                  "",    "",                "PVWatts",      "?",        "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "u1",                           "thermal model coeff U0",                                  "",    "",                "PVWatts",      "?",        "",                             "" },
+	
+
 	
 	/* outputs */
 
@@ -135,6 +139,17 @@ public:
 		ssc_number_t *p_shad_beam_factor = allocate("shad_beam_factor", 8760);
 		ssc_number_t *p_sunup = allocate("sunup", 8760);
 	
+		
+		double U0 = std::numeric_limits<double>::quiet_NaN();
+		double U1 = std::numeric_limits<double>::quiet_NaN();
+		bool use_faiman_model = false;
+		if ( is_assigned("u0") && is_assigned("u1") )
+		{
+			use_faiman_model = true;
+			U0 = as_double("u0");
+			U1 = as_double("u1");
+		}
+
 		/* PV RELATED SPECIFICATIONS */
 		
 		double inoct = as_double("inoct") + 273.15; // PVWATTS_INOCT;        /* Installed normal operating cell temperature (deg K) */
@@ -360,7 +375,13 @@ public:
 
 				// check that the double to boolean conversion fo use_ar_glass works!
 				double tpoa = transpoa(poa, wf.dn, aoi*3.14159265358979/180, use_ar_glass );
-				double pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
+				double pvt = wf.tdry;
+				
+				if ( use_faiman_model )
+					pvt = wf.tdry + poa*concen/(U0+U1*wspd_corr);
+				else
+					pvt = tccalc( poa*concen, wspd_corr, wf.tdry, fhconv );
+				
 				double dc = dcpowr(reftem,refpwr,pwrdgr,tmloss,tpoa,pvt,i_ref);
 				double ac = dctoac(pcrate,efffp,dc);
 			
