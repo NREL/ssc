@@ -4,19 +4,19 @@ static var_info _cm_vtab_windbos[] = {
 /*   VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 																	      								                             
 	// Inputs														      								                             
-	{ SSC_INPUT,        SSC_NUMBER,      "machine_rating",                "Machine Rating(kWs)",                                     "kW",     "",                      "wind_bos",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "rotor_diameter",                "Rotor Diameter(meters)",                                  "m",      "",                      "wind_bos",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hub_height",                    "Hub Height(meters)",                                      "m",      "",                      "wind_bos",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "number_of_turbines",            "Number of Turbines",                                      "",       "",                      "wind_bos",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "interconnect_voltage",          "Interconnect Voltage(kV)",                                "kV",     "",                      "wind_bos",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "distance_to_interconnect",      "Distance to Interconnect(mi)",                            "miles",  "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "machine_rating",                "Machine Rating",                                          "kW",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rotor_diameter",                "Rotor Diameter",                                          "m",      "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hub_height",                    "Hub Height",                                              "m",      "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "number_of_turbines",            "Number of Turbines",                                      "",       "",                      "wind_bos",      "*",                       "INTEGER",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "interconnect_voltage",          "Interconnect Voltage",                                    "kV",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "distance_to_interconnect",      "Distance to Interconnect",                                "miles",  "",                      "wind_bos",      "*",                       "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "site_terrain",                  "Site Terrain",                                            "",       "",                      "wind_bos",      "*",                       "INTEGER",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "turbine_layout",                "Turbine Layout",                                          "",       "",                      "wind_bos",      "*",                       "INTEGER",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "soil_condition",                "Soil Condition",                                          "",       "",                      "wind_bos",      "*",                       "INTEGER",                       "" },
 		
-	// Calculated Values - Entering in Data will Override Program
-	{ SSC_INPUT,        SSC_NUMBER,      "construction_time",              "Construction Time(months)",                               "months", "",                      "wind_bos",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_building_size",              "O&M Building Size(ft2)",                                  "ft^2",   "",                      "wind_bos",      "*",                       "",                              "" },
+	// Values that can be calculated in UI, or can be entered directly by the user
+	{ SSC_INPUT,        SSC_NUMBER,      "construction_time",             "Construction Time",                                       "months", "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_building_size",              "O&M Building Size",                                       "ft^2",   "",                      "wind_bos",      "*",                       "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "quantity_test_met_towers",      "Quantity of Temporary Meteorological Towers for Testing", "",       "",                      "wind_bos",      "*",                       "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "quantity_permanent_met_towers", "Quantity of Permanent Meteorological Towers for Testing", "",       "",                      "wind_bos",      "*",                       "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "weather_delay_days",            "Wind / Weather delay days",                               "",       "",                      "wind_bos",      "*",                       "",                              "" },
@@ -45,6 +45,22 @@ static var_info _cm_vtab_windbos[] = {
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,       "e_net",                         "AC Generation",                                           "kWh",    "",                      "wind_bos",      "*",                       "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "project_total_budgeted_cost",   "Project Total Budgeted Cost",                             "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "transportation_cost",           "Transportation Cost",                                     "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "insurance_cost",                "Insurance Cost",                                          "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "engineering_cost",              "Engineering Cost",                                        "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "power_performance_cost",        "Power Performance Cost",                                  "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "site_compound_security_cost",   "Site Compound & Security Cost",                           "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "building_cost",                 "Building Cost",                                           "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "transmission_cost",             "Transmission Cost",                                       "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "markup_cost",                   "Markup Cost",                                             "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "development_cost",              "Development Cost",                                        "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "access_roads_cost",             "Access Roads Cost",                                       "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "foundation_cost",               "Foundation Cost",                                         "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "erection_cost",                 "Turbine Erection Cost",                                   "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "electrical_materials_cost",     "MV Electrical Materials Cost",                            "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "electrical_installation_cost",  "MV Electrical Installation Cost",                         "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "substation_cost",               "Substation Cost",                                         "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "project_mgmt_cost",             "Project Management Cost",                                 "$s",     "",                      "wind_bos",      "*",                       "",                              "" },
 
 var_info_invalid };
 
@@ -80,72 +96,72 @@ public:
 		return (number >= 0) ? (int)(number + 0.5) : (int)(number - 0.5);
 	}
 
+	// wind farm size in MW
 	double farmSize(double rating, int nTurb){
 		return rating * nTurb / 1000.0;
 	}
 
 	// Construction Time (months)
-	int defaultConstructionTime(int nTurb){
-		return round_bos(0.0001*nTurb*nTurb + 0.0963*nTurb + 2.7432);
-	}
+	//int defaultConstructionTime(int nTurb){
+	//	return round_bos(0.0001*nTurb*nTurb + 0.0963*nTurb + 2.7432);
+	//}
 
 	// Access road entrances
-	int defaultAccessRoadEntrances(int nTurb){
-		return fmax(1, round_bos(nTurb / 20.0));
-	}
+	//int defaultAccessRoadEntrances(int nTurb){
+	//	return fmax(1, round_bos(nTurb / 20.0));
+	//}
 
 	// O&M Building Size (ft2)
-	double defaultBuildingSize(double farmSize){
-		double buildingSize;
-		// O&M Building Size (ft2)
-		if (farmSize < 200){
-			buildingSize = 3000;
-		}
-		else if (farmSize < 500){
-			buildingSize = 5000;
-		}
-		else if (farmSize < 800){
-			buildingSize = 7000;
-		}
-		else if (farmSize < 1000){
-			buildingSize = 9000;
-		}
-		else{
-			buildingSize = 12000;
-		}
-
-		return buildingSize;
-	}
+	//double defaultBuildingSize(double farmSize){
+	//	double buildingSize;
+	//	// O&M Building Size (ft2)
+	//	if (farmSize < 200){
+	//		buildingSize = 3000;
+	//	}
+	//	else if (farmSize < 500){
+	//		buildingSize = 5000;
+	//	}
+	//	else if (farmSize < 800){
+	//		buildingSize = 7000;
+	//	}
+	//	else if (farmSize < 1000){
+	//		buildingSize = 9000;
+	//	}
+	//	else{
+	//		buildingSize = 12000;
+	//	}
+	//	return buildingSize;
+	//}
 
 	// Quantity of Temporary Meteorological Towers for Testing
-	double defaultTempMetTowers(double farmSize){
-		return round_bos(farmSize / 75.0);
-	}
+	//double defaultTempMetTowers(double farmSize){
+	//	return round_bos(farmSize / 75.0);
+	//}
 
 	// Quantity of Permanent Meteorological Towers for Testing
-	double defaultPermanentMetTowers(double farmSize){
-		int permanent;
-		if (farmSize < 100){
-			permanent = 1;
-		}
-		else if (farmSize < 200){
-			permanent = 2;
-		}
-		else{
-			permanent = (int)(farmSize / 100.0);
-		}
-		return permanent;
-	}
+	//double defaultPermanentMetTowers(double farmSize){
+	//	int permanent;
+	//	if (farmSize < 100){
+	//		permanent = 1;
+	//	}
+	//	else if (farmSize < 200){
+	//		permanent = 2;
+	//	}
+	//	else{
+	//		permanent = (int)(farmSize / 100.0);
+	//	}
+	//	return permanent;
+	//}
 
 	// Wind/Weather delay days
-	int defaultWeatherDelayDays(int nTurb){
-		return round_bos(nTurb / 5.0);
-	}
+	//int defaultWeatherDelayDays(int nTurb){
+	//	return round_bos(nTurb / 5.0);
+	//}
 
 	// Crane breakdowns
-	int defaultCraneBreakdowns(int nTurb){
-		return round_bos(nTurb / 20.0);
-	}
+	//int defaultCraneBreakdowns(int nTurb){
+	//	return round_bos(nTurb / 20.0);
+	//}
 
 	double transportationCost(double tcc, double rating, int nTurb,	double hubHt, double transportDist){
 		double cost = tcc * rating * nTurb;
@@ -155,6 +171,7 @@ public:
 		else {
 			cost += 1867 * pow(transportDist, 0.726) * nTurb;
 		}
+		assign("transportation_cost", var_data(cost));
 		return cost;
 	}
 
@@ -167,6 +184,7 @@ public:
 		if (farmSize < 200) multiplier = 1.0;
 		cost += multiplier * 161675;
 		cost += 4000;
+		assign("engineering_cost", var_data(cost));
 		return cost;
 	}
 
@@ -178,6 +196,7 @@ public:
 			multiplier2 = 92600;
 		}
 		double cost = 200000 + permanent*multiplier1 + temporary*multiplier2;
+		assign("power_performance_cost", var_data(cost));
 		return cost;
 	}
 
@@ -219,6 +238,7 @@ public:
 			+ constructionTime * 55500
 			+ accessRoadEntrances * 3800)*1.05;
 
+		assign("access_roads_cost", var_data(cost));
 		return cost;
 	}
 
@@ -241,12 +261,14 @@ public:
 			cost += 90000;
 		}
 		cost += farmSize * 60 + 62400;
+		assign("site_compound_security_cost", var_data(cost));
 		return cost;
 	}
 
 
 	double buildingCost(double buildingSize){
 		double cost = buildingSize * 125 + 176125;
+		assign("building_cost", var_data(cost));
 		return cost;
 	}
 
@@ -259,6 +281,7 @@ public:
 			cost += 20000;
 		}
 		cost *= nTurb;
+		assign("foundation_cost", var_data(cost));
 		return cost;
 	}
 
@@ -270,6 +293,7 @@ public:
 			cost += 60000 * nTurb;
 		}
 		cost += 20000 * weatherDelayDays + 35000 * craneBreakdowns + 181 * nTurb + 1834;
+		assign("erection_cost", var_data(cost));
 		return cost;
 	}
 
@@ -323,9 +347,10 @@ public:
 		else{
 			cost = nTurb*factor2;
 		}
-		cost += round_bos(farmSize / 25.0) * 35375 + round_bos(farmSize / 100.0) * 50000
+		cost += floor(farmSize / 25.0) * 35375 + floor(farmSize / 100.0) * 50000
 			+ diameter*nTurb*factor3 + thermalBackfill * 5 + 41945;
 
+		assign("electrical_materials_cost", var_data(cost));
 		return cost;
 	}
 
@@ -381,6 +406,7 @@ public:
 		cost += nTurb*(factor1 + diameter*(factor2 + factor3*rockTrenchingLength / 100.0))
 			+ overheadCollector * 200000 + 10000;
 
+		assign("electrical_installation_cost", var_data(cost));
 		return cost;
 	}
 
@@ -388,6 +414,7 @@ public:
 	double substationCost(double voltage, double farmSize)
 	{
 		double cost = 11652 * (voltage + farmSize) + 11795 * pow(farmSize, 0.3549) + 1526800;
+		assign("substation_cost", var_data(cost));
 		return cost;
 	}
 
@@ -397,6 +424,7 @@ public:
 		if (newSwitchyardRequired){
 			cost += 18115 * voltage + 165944;
 		}
+		assign("transmission_cost", var_data(cost));
 		return cost;
 	}
 
@@ -410,13 +438,16 @@ public:
 		else{
 			cost = (constructionTime + 2) * 155000;
 		}
+		assign("project_mgmt_cost", var_data(cost));
 		return cost;
 	}
 
 
 	double developmentCost(double developmentFee)
 	{
-		return developmentFee * 1000000;
+		double cost = developmentFee * 1000000;
+		assign("development_cost", var_data(cost));
+		return cost;
 	}
 
 
@@ -434,7 +465,6 @@ public:
 
 		result.alpha /= 1000.0;
 		result.cost += 0.02*foundationCost + 20000;
-
 		return result;
 	}
 
@@ -461,7 +491,6 @@ public:
 		double developmentFee, double transportDist)
 	{
 		double cost = 0.0;
-		double alpha = 0.0;
 		double transCost = transportationCost(tcc, rating, nTurb, hubHt, transportDist);
 		cost += transCost;
 		cost += engineeringCost(nTurb, farmSize);
@@ -479,17 +508,21 @@ public:
 		cost += substationCost(voltage, farmSize);
 		cost += projectMgmtCost(constructionTime);
 
-		MultCost result;
-		result = insuranceMultiplierAndCost(tcc, farmSize, foundCost, performanceBond);
-		cost += result.cost;
-		alpha += result.alpha;
 
-		result = markupMultiplierAndCost(transCost, contingency, warranty, useTax, overhead, profitMargin);
-		cost += result.cost;
-		alpha += result.alpha;
+		double alpha = 0.0;
+		MultCost result_ins = insuranceMultiplierAndCost(tcc, farmSize, foundCost, performanceBond);
+		cost += result_ins.cost;
+		alpha += result_ins.alpha;
 
-		// multiplier
+		MultCost result_mu = markupMultiplierAndCost(transCost, contingency, warranty, useTax, overhead, profitMargin);
+		cost += result_mu.cost; // negative value
+		alpha += result_mu.alpha;
+
+		// multipliers
 		cost /= (1.0 - alpha);
+		assign("markup_cost", var_data((cost - transCost)*result_mu.alpha));
+
+		assign("insurance_cost", var_data(cost*result_ins.alpha + result_ins.cost));
 		return cost;
 	}
 
@@ -499,12 +532,24 @@ public:
 		double rating = (double) as_number("machine_rating");
 		double diameter = (double)as_number("rotor_diameter");
 		double hubHt = (double)as_number("hub_height");
-		double nTurb = (double)as_number("number_of_turbines");
+		int nTurb = as_integer("number_of_turbines");
 		double voltage = (double)as_number("interconnect_voltage");
 		double distInter = (double)as_number("distance_to_interconnect");
 		SiteTerrain terrain = (SiteTerrain) as_integer("site_terrain");
 		TurbineLayout layout = (TurbineLayout)as_integer("turbine_layout");
 		SoilCondition soil = (SoilCondition)as_integer("soil_condition");
+
+		double farmSize = cm_windbos::farmSize(rating, nTurb);
+
+		int constructionTime = (int)as_number("construction_time");
+		double buildingSize = (double)as_number("om_building_size");
+		double temporary = (double)as_number("quantity_test_met_towers");
+		double permanent = (double)as_number("quantity_permanent_met_towers");
+		int weatherDelayDays = (int)as_number("weather_delay_days");
+		int craneBreakdowns = (int)as_number("crane_breakdowns");
+		int accessRoadEntrances = (int)as_number("access_road_entrances");
+
+
 		double tcc = (double)as_number("turbine_capital_cost");
 		double topMass = (double)as_number("tower_top_mass");
 		int deliveryAssistRequired = as_integer("delivery_assist_required");
@@ -522,16 +567,8 @@ public:
 		double developmentFee = (double)as_number("development_fee");
 		double transportDist = (double)as_number("turbine_transportation");
 
-		double farmSize = cm_windbos::farmSize(rating, nTurb);
-		int constructionTime = cm_windbos::defaultConstructionTime(nTurb);
-		double buildingSize = cm_windbos::defaultBuildingSize(farmSize);
-		double temporary = cm_windbos::defaultTempMetTowers(farmSize);
-		double permanent = cm_windbos::defaultPermanentMetTowers(farmSize);
-		int weatherDelayDays = cm_windbos::defaultWeatherDelayDays(nTurb);
-		int craneBreakdowns = cm_windbos::defaultCraneBreakdowns(nTurb);
-		int accessRoadEntrances = cm_windbos::defaultAccessRoadEntrances(nTurb);
 
-		// run model (do math)
+		// run model (execute functions)
 		ssc_number_t output = totalCost(rating, diameter, hubHt, nTurb, voltage, distInter, terrain, layout, soil,
 			farmSize, tcc, topMass, constructionTime, buildingSize, temporary, permanent, weatherDelayDays, craneBreakdowns, accessRoadEntrances,
 			deliveryAssistRequired, padMountTransformer, newSwitchyardRequired, rockTrenchingLength, thermalBackfill, overheadCollector,
