@@ -209,14 +209,15 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor",    "Capacity factor",  "", "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "kwh_per_kw",    "First year kWh/kW",  "", "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                 "PPA price",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                 "PPA price",                       "",    "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "",    "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "", "",                      "ippppa",      "*",                     "",                "" },
 
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Energy Value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_price",      "Energy Price",                  "$/kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net", "Energy", "kWh", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_degradation", "Energy degradation", "kWh", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_value", "Energy Value", "$", "", "ippppa", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_price",      "Energy Price",                  "$/kWh",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -224,8 +225,8 @@ static var_info vtab_ippppa[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M Capacity-based expense",         "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M Fuel expense",                   "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",       "O&M Optional Fuel 1 expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",       "O&M Optional Fuel 2 expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",       "O&M Optional Fuel 1 expense",                   "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",       "O&M Optional Fuel 2 expense",                   "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "ippppa",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -1056,8 +1057,9 @@ public:
 		save_cf( this, cf,  CF_energy_price, nyears, "cf_energy_price" );
 		save_cf( this, cf,  CF_ppa_price, nyears, "cf_ppa_price" );
 		save_cf( this, cf,  CF_pretax_dscr, nyears, "cf_pretax_dscr" );
-		save_cf( this, cf,  CF_energy_net, nyears, "cf_energy_net" );
-		save_cf( this, cf,  CF_energy_value, nyears, "cf_energy_value" );
+		save_cf(this, cf, CF_energy_net, nyears, "cf_energy_net");
+		save_cf(this, cf, CF_degradation, nyears, "cf_degradation");
+		save_cf(this, cf, CF_energy_value, nyears, "cf_energy_value");
 		save_cf( this, cf,  CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( this, cf,  CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( this, cf,  CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
