@@ -301,6 +301,13 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_cold_fin", "Cold tank HTF volume at end of timestep",                        "m3",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_hot_fin",  "Hot tank HTF volume at end of timestep",                         "m3",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_total",    "Total HTF volume in storage",                                    "m3",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+	
+	// Monthly Outputs
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy",                                                 "kW",           "",            "Net_E_Calc",     "*",                       "LENGTH=12",             "" },
+
+	// Annual Outputs
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Energy",                                                  "kW",           "",            "Net_E_Calc",     "*",                       "",                      "" },
+
 	var_info_invalid };
 
 
@@ -636,6 +643,9 @@ public:
 		// get the outputs
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcstrough_physical", util::format("there was a problem returning the results from the simulation.") );
+
+		accumulate_monthly("hourly_energy", "monthly_energy");
+		accumulate_annual("hourly_energy", "annual_energy");
 
 
 		//set_output_array("i_SfTi",8760);

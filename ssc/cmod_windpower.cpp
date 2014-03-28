@@ -40,6 +40,9 @@ static var_info _cm_vtab_windpower[] = {
 //	{ SSC_OUTPUT,       SSC_MATRIX,      "wteff",                                   "Eff at each WT",                      "kWhac",  "",      "WindPower",      "*",                                        "ROWS=8760",                                        "" },
 //	{ SSC_OUTPUT,       SSC_MATRIX,      "wtvel",                                   "Wind speed at each WT",               "kWhac",  "",      "WindPower",      "*",                                        "ROWS=8760",                                        "" },
 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                          "Monthly Energy",                      "kW",     "",      "WindPower",      "*",                                        "LENGTH=12",                                        "" },
+
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                           "Annual Energy",                       "kW",     "",      "WindPower",      "*",                                        "",                                                 "" },
 
 
 var_info_invalid };
@@ -245,6 +248,8 @@ public:
 			}
 		} // end hourly loop -> i = 0 to 8760
 
+		accumulate_monthly("hourly_energy", "monthly_energy");
+		accumulate_annual("hourly_energy", "annual_energy");
 
 		if (bCreateFarmOutput)
 		{
