@@ -166,7 +166,166 @@ std::string weatherfile::normalize_city( const std::string &in )
 	return city;
 }
 
-static double calc_twet( double T, double RH, double P )
+
+/***************************************************************************\
+
+   Function humidity()
+	This function calculates the relative humidity(%) based on the drybulb
+	temperature(C) and the dewpoint temperature.  It uses equations and
+	procedures presented in the 1993 ASHRAE Fundamentals Handbook, p6.7-10.
+	If humidity cannot be calculated an error value of 999 is returned.
+														  1/4/00
+	List of Parameters Passed to Function:
+	db     = dry bulb temperature in degrees C
+	dpt    = dew point temperature in degrees C
+
+	Variable Returned
+	rh    = relative humidity in %, or error value of 999  
+
+\***************************************************************************/
+
+int calc_humidity(float db,float dpt)  /* Function to find relative humidity */
+{
+					  /* Local variables */
+	double c1=-5.6745359e+3,c2=-0.51523058,c3=-9.6778430e-3,c4=6.2215701e-7,
+			 c5=2.0747825e-9,c6=-9.484024e-13,c7=4.1635019,c8=-5.8002206e+3,
+			 c9=-5.516256,c10=-4.8640239e-2,c11=4.1764768e-5,c12=-1.4452093e-8,
+			 c13=6.5459673;
+	double arg,t,pres,pres_dew;
+	int rh;
+
+	if( db > 90.0 || dpt > 90.0 || dpt > db )    /* Check for valid input data */
+		rh = 999;                   /* Missing data value */
+	else
+		{  /* Find water vapor saturation pressure (kPa) for drybulb temperature */
+		t = db + 273.15;           /* Absolute temperature (deg K) */
+		if( db < 0.0 )             /* Use equation 3 if drybulb less than 0 */
+			{
+			arg = c1/t + c2 + c3*t + c4*pow(t,2.0) + c5*pow(t,3.0) +
+					c6*pow(t,4.0) + c7*log(t);
+			pres = exp(arg);
+			}
+		else
+			{
+			arg = c8/t + c9 + c10*t + c11*pow(t,2.0) + c12*pow(t,3.0) +
+					c13*log(t);
+			pres = exp(arg);
+			}
+				/* Find water vapor saturation pressure (kPa) for dewpoint temperature */
+		t = dpt + 273.15;           /* Absolute temperature (deg K) */
+		if( dpt < 0.0 )             /* Use equation 3 if dewpoint less than 0 */
+			{
+			arg = c1/t + c2 + c3*t + c4*pow(t,2.0) + c5*pow(t,3.0) +
+					c6*pow(t,4.0) + c7*log(t);
+			pres_dew = exp(arg);
+			}
+		else
+			{
+			arg = c8/t + c9 + c10*t + c11*pow(t,2.0) + c12*pow(t,3.0) +
+					c13*log(t);
+			pres_dew = exp(arg);
+			}
+
+		rh = (int)(100.0*pres_dew/pres + 0.5); /* Relative humidity */
+		}
+	return(rh);
+}
+
+float calc_dewpt(float db,float rh)  /* Function to find dewpoint temperature */
+{
+/* This function calculates the dewpoint temperature(C) based on the drybulb
+	temperature(C) and the relative humidity(%).  It uses equations and
+	procedures presented in the 1993 ASHRAE Fundamentals Handbook, p6.7-10.
+	If dewpoint cannot be calculated an error value of 99.9 is returned.
+
+	List of Parameters Passed to Function:
+	db     = dry bulb temperature in degrees C
+	rh     = relative humidity in %
+
+	Variable Returned
+	dpt    = dew point temperature in degrees C, or error value of 99.9   */
+
+					  /* Local variables */
+	double c1=-5.6745359e+3,c2=-0.51523058,c3=-9.6778430e-3,c4=6.2215701e-7,
+			 c5=2.0747825e-9,c6=-9.484024e-13,c7=4.1635019,c8=-5.8002206e+3,
+			 c9=-5.516256,c10=-4.8640239e-2,c11=4.1764768e-5,c12=-1.4452093e-8,
+			 c13=6.5459673,c14=6.54,c15=14.526,c16=0.7389,c17=0.09486,
+			 c18=0.4569;
+	double arg,t,pres,pres_dew,pta,ptb,ptc;
+	float dpt;
+
+	if( db > 90.0 || rh > 100.0 || rh < 1.0 )    /* Check for valid input data */
+		dpt = 99.9;                   /* Missing data value */
+	else
+		{  /* Find water vapor saturation pressure (kPa) for drybulb temperature */
+		t = db + 273.15;           /* Absolute temperature (deg K) */
+		if( db < 0.0 )             /* Use equation 3 if drybulb less than 0 */
+			{
+			arg = c1/t + c2 + c3*t + c4*pow(t,2.0) + c5*pow(t,3.0) +
+					c6*pow(t,4.0) + c7*log(t);
+			pres = exp(arg);
+			}
+		else
+			{
+			arg = c8/t + c9 + c10*t + c11*pow(t,2.0) + c12*pow(t,3.0) +
+					c13*log(t);
+			pres = exp(arg);
+			}
+		pres = pres*rh/100.0;      /* Partial pressure (kPa) of water vapor */
+		arg = log(pres);
+		if( db >= 0.0 )            /* Use equation 35 from ASHRAE */
+			dpt = c14 + c15*arg + c16*pow(arg,2.0) + c17*pow(arg,3.0) +
+					c18*pow(pres,0.1984);
+		if( db < 0.0 || dpt < 0 )  /* Use eqn 36 if drybulb or dewpoint < 0 */
+			dpt = 6.09 + 12.608*arg + 0.4959*arg*arg;
+
+		/* For dewpoint temperatures below -20C, check to see that the dewpoint
+		temperature gives the correct vapor saturation pressure.  If not, iterate
+		the correct dew point temperature */
+
+		if( dpt < -20.0 )
+			{
+			t = dpt + 273.15;       /* Absolute temperature (deg K) */
+			arg = c1/t + c2 + c3*t + c4*pow(t,2.0) + c5*pow(t,3.0) +
+					c6*pow(t,4.0) + c7*log(t);
+			pres_dew = exp(arg);
+			if( pres < pres_dew )   /* Set initial iteration points */
+				{
+				pta = t - 10.0;
+				ptb = t;
+				ptc = (pta+ptb)/2.0;
+				}
+			else
+				{
+				pta = t;
+				ptb = t + 10.0;
+				ptc = (pta+ptb)/2.0;
+				}
+			while( fabs(pres-pres_dew) > 0.00001 && fabs(pta-ptb) > 0.05 )
+				{
+				dpt = ptc - 273.15;
+				t = ptc;
+				arg = c1/t + c2 + c3*t + c4*pow(t,2.0) + c5*pow(t,3.0) +
+						c6*pow(t,4.0) + c7*log(t);
+				pres_dew = exp(arg);
+				if( pres < pres_dew )   /* Reset iteration points */
+					{
+					ptb = ptc;
+					ptc = (pta+ptb)/2.0;
+					}
+				else
+					{
+					pta = ptc;
+					ptc = (pta+ptb)/2.0;
+					}
+				}
+			}
+		}
+	return(dpt);
+}
+
+
+double calc_twet( double T, double RH, double P )
 {
 //	function [Twet] = calctwet(T, RH, P)
 //% calculate wet bulb temperature from T (dry bulb, 'C), RH (%), Pressure

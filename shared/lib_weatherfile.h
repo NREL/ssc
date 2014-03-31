@@ -5,6 +5,43 @@
 #include <vector>  // needed to compile in typelib_vc2012
 
 
+
+/***************************************************************************\
+
+   Function humidity()
+	This function calculates the relative humidity(%) based on the drybulb
+	temperature(C) and the dewpoint temperature.  It uses equations and
+	procedures presented in the 1993 ASHRAE Fundamentals Handbook, p6.7-10.
+	If humidity cannot be calculated an error value of 999 is returned.
+														  1/4/00
+	List of Parameters Passed to Function:
+	db     = dry bulb temperature in degrees C
+	dpt    = dew point temperature in degrees C
+
+	Variable Returned
+	rh    = relative humidity in %, or error value of 999  
+
+\***************************************************************************/
+int calc_humidity(float db,float dpt);
+
+/* This function calculates the dewpoint temperature(C) based on the drybulb
+	temperature(C) and the relative humidity(%).  It uses equations and
+	procedures presented in the 1993 ASHRAE Fundamentals Handbook, p6.7-10.
+	If dewpoint cannot be calculated an error value of 99.9 is returned.
+
+	List of Parameters Passed to Function:
+	db     = dry bulb temperature in degrees C
+	rh     = relative humidity in %
+
+	Variable Returned
+	dpt    = dew point temperature in degrees C, or error value of 99.9   */
+float calc_dewpt(float db,float rh);
+
+// Calculate wet bulb temperature from T (dry bulb, 'C), RH (%), Pressure (mbar)
+// see http://www.ejournal.unam.mx/atm/Vol07-3/ATM07304.pdf for eqns.
+double calc_twet( double T, double RH, double P );
+
+
 class weatherfile
 {
 private:

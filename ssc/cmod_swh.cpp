@@ -70,14 +70,14 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "I_incident",            "Irradiance - Incident",              "W/m2",  "",                      "SWH",      "*",                        "LENGTH=8760",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "I_transmitted",         "Irradiance - Transmitted",           "W/m2",  "",                      "SWH",      "*",                        "LENGTH=8760",                     "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                      "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                 "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                      "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                           "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",		  "System energy",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                         "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                      "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                           "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                      "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                 "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "P pump",                          "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_dry",                 "T ambient",						  "C",		"",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold",                "T cold",                           "C",     "",                      "SWH",      "*",                        "LENGTH=8760",                       "" },
@@ -85,12 +85,26 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_hot",                 "T hot",                            "C",     "",                      "SWH",      "*",                        "LENGTH=8760",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_mains",               "T mains",						  "C",      "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tank",                "T tank",                           "C",      "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
-
 	{ SSC_OUTPUT,       SSC_ARRAY,       "V_hot",                 "V hot",                            "m3",    "",                      "SWH",      "*",                        "LENGTH=8760",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "V_cold",                "V cold",                           "m3",    "",                      "SWH",      "*",                        "LENGTH=8760",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                   "kg/hr",  "",                      "SWH",      "*",                       "LENGTH=8760",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                   "",      "1,2,3,4",               "SWH",      "*",                         "LENGTH=8760",                      "" },
 
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",		  "System energy",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
+	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_deliv",		  "Q delivered",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=12",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_aux",		  "Q auxiliary",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=12",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_auxonly",	  "Q auxiliary only",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=12",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",		  "System energy",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=12",                      "" },
+	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_deliv",		  "Q delivered",                    "kWh",    "",                      "SWH",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_aux",		  "Q auxiliary",                    "kWh",    "",                      "SWH",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_auxonly",	  "Q auxiliary only",                    "kWh",    "",                      "SWH",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",		  "System energy",                    "kWh",    "",                      "SWH",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                    "frac",    "",                      "SWH",      "*",                        "",                      "" },
+
+	
 	var_info_invalid };
 
 class cm_swh : public compute_module
@@ -210,7 +224,8 @@ public:
 		ssc_number_t *out_P_pump = allocate("P_pump", 8760);
 		ssc_number_t *out_Q_aux = allocate("Q_aux", 8760);
 		ssc_number_t *out_Q_auxonly = allocate("Q_auxonly", 8760);
-		//		ssc_number_t *out_Q_saved = allocate("Q_saved", 8760);
+		ssc_number_t *out_Q_saved = allocate("Q_saved", 8760);
+		
 		ssc_number_t *out_hourly_energy = allocate("hourly_energy", 8760);
 
 		ssc_number_t *out_V_hot = allocate("V_hot", 8760);
@@ -563,7 +578,7 @@ public:
 			out_P_pump[i] = (ssc_number_t)(P_pump * W2kW);
 			out_Q_aux[i] = (ssc_number_t)(Q_aux * W2kW);
 			out_Q_auxonly[i] = (ssc_number_t)(Q_auxonly* W2kW);
-			//			out_Q_saved[i] = (ssc_number_t) (Q_saved* W2kW);
+			out_Q_saved[i] = (ssc_number_t) (Q_saved* W2kW);
 			out_hourly_energy[i] = (ssc_number_t)(Q_saved * W2kW * haf(i));
 			out_T_hot[i] = (ssc_number_t)T_hot;
 			out_T_cold[i] = (ssc_number_t)T_cold;
@@ -571,8 +586,21 @@ public:
 			out_V_cold[i] = (ssc_number_t)V_cold;
 			out_Draw[i] = draw[i]; // pass to outputs for visualization
 		}
+				
+		accumulate_monthly( "Q_deliv", "monthly_Q_deliv" );
+		accumulate_monthly( "Q_aux", "monthly_Q_aux" );
+		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly");
+		accumulate_monthly( "hourly_energy", "monthly_energy" );
+				
+		accumulate_annual( "Q_deliv", "annual_Q_deliv" );
+		accumulate_annual( "Q_aux", "annual_Q_aux" );
+		accumulate_annual( "Q_auxonly", "annual_Q_auxonly" );
+		accumulate_annual( "hourly_energy", "annual_energy" );
 
+		double deliv = as_number("annual_energy");
+		double auxonly = as_number("annual_Q_auxonly");
 
+		assign("solar_fraction", var_data( (ssc_number_t)(deliv/auxonly) ));
 	}
 
 };
