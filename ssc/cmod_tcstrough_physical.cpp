@@ -303,10 +303,31 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_total",    "Total HTF volume in storage",                                    "m3",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
 	
 	// Monthly Outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy",                                                 "kW",           "",            "Net_E_Calc",     "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",        "Monthly Energy",                                             "kW",           "",            "Net_E_Calc",     "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_W_cycle_gross", "Electrical source - Power cycle gross output",               "MWe",          "",            "Net_E_Calc",     "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_inc_sf_tot",  "Total power incident on the field",                          "MWt",          "",            "Type250",        "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_abs_tot",     "Total absorbed energy",                                      "MWt",          "",            "Type250",        "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_avail",       "Thermal power produced by the field",                        "MWt",          "",            "Type250",        "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Fuel_usage",    "Total fossil fuel usage by all plant subsystems",            "MMBTU",        "",            "SumCalc",        "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_dump",        "Dumped thermal energy",                                      "MWt",          "",            "Type250",        "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_m_dot_makeup",  "Cooling water makeup flow rate",                             "kg/hr",        "",            "Type250",        "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_pb",          "Thermal energy to the power block",                          "MWt",          "",            "Type251",        "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_to_tes",      "Thermal energy into storage",                                "MWt",          "",            "Type251",        "*",                       "LENGTH=12",             "" },
 
 	// Annual Outputs
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Energy",                                                  "kW",           "",            "Net_E_Calc",     "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",         "Annual Energy",                                              "kW",           "",            "Net_E_Calc",     "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross",  "Electrical source - Power cycle gross output",               "MWe",          "",            "Net_E_Calc",     "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_inc_sf_tot",   "Total power incident on the field",                          "MWt",          "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_abs_tot",      "Total absorbed energy",                                      "MWt",          "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_avail",        "Thermal power produced by the field",                        "MWt",          "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Fuel_usage",     "Total fossil fuel usage by all plant subsystems",            "MMBTU",        "",            "SumCalc",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_dump",         "Dumped thermal energy",                                      "MWt",          "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_m_dot_makeup",   "Cooling water makeup flow rate",                             "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_pb",           "Thermal energy to the power block",                          "MWt",          "",            "Type251",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_to_tes",       "Thermal energy into storage",                                "MWt",          "",            "Type251",        "*",                       "",                      "" },
+
+	// Other single value outputs
+	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",     "Gross to Net Conversion Factor",                             "%",            "",            "Calculated",     "*",                       "",                      "" },
 
 	var_info_invalid };
 
@@ -643,12 +664,38 @@ public:
 		// get the outputs
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcstrough_physical", util::format("there was a problem returning the results from the simulation.") );
-
-		accumulate_monthly("hourly_energy", "monthly_energy");
-		accumulate_annual("hourly_energy", "annual_energy");
-
-
 		//set_output_array("i_SfTi",8760);
+
+		// Monthly accumulations
+		accumulate_monthly("hourly_energy", "monthly_energy"); // already in kWh
+		accumulate_monthly("W_cycle_gross", "monthly_W_cycle_gross", 1000); // convert from MWh to kWh
+		accumulate_monthly("q_inc_sf_tot", "monthly_q_inc_sf_tot");
+		accumulate_monthly("q_abs_tot", "monthly_q_abs_tot");
+		accumulate_monthly("q_avail", "monthly_q_avail");
+		accumulate_monthly("Fuel_usage", "monthly_Fuel_usage");
+		accumulate_monthly("q_dump", "monthly_q_dump");
+		accumulate_monthly("m_dot_makeup", "monthly_m_dot_makeup");
+		accumulate_monthly("q_pb", "monthly_q_pb");
+		accumulate_monthly("q_to_tes", "monthly_q_to_tes");
+
+		// Annual accumulations
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross", 1000); // convert from MWh to kWh
+		accumulate_annual("q_inc_sf_tot", "annual_q_inc_sf_tot");
+		accumulate_annual("q_abs_tot", "annual_q_abs_tot");
+		accumulate_annual("q_avail", "annual_q_avail");
+		accumulate_annual("Fuel_usage", "annual_Fuel_usage");
+		accumulate_annual("q_dump", "annual_q_dump");
+		accumulate_annual("m_dot_makeup", "annual_m_dot_makeup");
+		accumulate_annual("q_pb", "annual_q_pb");
+		accumulate_annual("q_to_tes", "annual_q_to_tes");
+
+		// Calculated outputs
+		ssc_number_t ae = as_number("annual_energy");
+		ssc_number_t pg = as_number("annual_W_cycle_gross");
+		ssc_number_t convfactor = (pg != 0) ? 100*ae / pg : 0;
+		assign("conversion_factor", convfactor);
+
 	}
 
 };
