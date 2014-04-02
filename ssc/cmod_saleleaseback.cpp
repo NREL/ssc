@@ -1220,17 +1220,17 @@ public:
 
 		for (i=1;i<=nyears;i++)
 		{
-			if (i%equip1_reserve_freq == 0)
+			if ((equip1_reserve_freq != 0) && (i%equip1_reserve_freq == 0))
 			{
 				major_equipment_depreciation(CF_disbursement_equip1,feddepr_me1,i,nyears,CF_feddepr_me1);
 				major_equipment_depreciation(CF_disbursement_equip1,stadepr_me1,i,nyears,CF_stadepr_me1);
 			}
-			if (i%equip2_reserve_freq == 0)
+			if ((equip2_reserve_freq != 0) && (i%equip2_reserve_freq == 0))
 			{
 				major_equipment_depreciation(CF_disbursement_equip2,feddepr_me2,i,nyears,CF_feddepr_me2);
 				major_equipment_depreciation(CF_disbursement_equip2,stadepr_me2,i,nyears,CF_stadepr_me2);
 			}
-			if (i%equip3_reserve_freq == 0)
+			if ((equip3_reserve_freq != 0) && (i%equip3_reserve_freq == 0))
 			{
 				major_equipment_depreciation(CF_disbursement_equip3,feddepr_me3,i,nyears,CF_feddepr_me3);
 				major_equipment_depreciation(CF_disbursement_equip3,stadepr_me3,i,nyears,CF_stadepr_me3);
