@@ -66,7 +66,8 @@ static var_info _cm_vtab_pvwattsv5[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                  "Hourly energy",                               "kWh",  "",                          "PVWatts", "*", "LENGTH=8760", "" },
-	
+	{ SSC_OUTPUT, SSC_NUMBER, "system_use_lifetime_output", "Use lifetime output", "0/1", "", "PVWatts", "*", "INTEGER", "" },
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",   "",                      "PVWatts",      "*",                       "LENGTH=12",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                     "PVWatts",      "*",                       "LENGTH=12",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC array output",                             "kWhdc",    "",                      "PVWatts",      "*",                       "LENGTH=12",                          "" },
@@ -445,6 +446,7 @@ public:
 		accumulate_annual( "ac", "ac_annual", 0.001 );
 		accumulate_annual( "hourly_energy", "annual_energy" ); 
 
+		assign("system_use_lifetime_output", 0);
 		assign( "location", var_data( wf.location ) );
 		assign( "city", var_data( wf.city ) );
 		assign( "state", var_data( wf.state ) );

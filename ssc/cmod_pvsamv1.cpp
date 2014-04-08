@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "core.h"
+#include "common.h"
 
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
@@ -363,7 +364,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_gross",                             "Gross dc array output",                                  "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                               "Net dc array output",                                    "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_gross",                             "Gross ac output",                                        "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac_net",                               "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_ac_net", "Net ac output", "kWh", "", "pvsamv1", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "pvsamv1", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "system_use_lifetime_output", "Use lifetime output", "0/1", "", "pvsamv1", "*", "INTEGER", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "pvsamv1", "*", "", "" },
+
 
 	// a couple debugging outputs
 	/*
@@ -504,6 +510,7 @@ public:
 	cm_pvsamv1()
 	{
 		add_var_info( _cm_vtab_pvsamv1 );
+		add_var_info(vtab_adjustment_factors);
 	}
 
 
@@ -1146,14 +1153,18 @@ public:
 		ssc_number_t *p_dcgross = allocate( "hourly_dc_gross", 8760 );
 		ssc_number_t *p_dcpwr = allocate( "hourly_dc_net", 8760 );
 		ssc_number_t *p_acgross = allocate( "hourly_ac_gross", 8760 );
-		ssc_number_t *p_acpwr = allocate( "hourly_ac_net", 8760 );
-		ssc_number_t *p_inveff = allocate( "hourly_inv_eff", 8760 );
+		ssc_number_t *p_acpwr = allocate("hourly_ac_net", 8760);
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		ssc_number_t *p_inveff = allocate("hourly_inv_eff", 8760);
 		ssc_number_t *p_invcliploss = allocate( "hourly_inv_cliploss", 8760 );
 		ssc_number_t *p_invpsoloss = allocate( "hourly_inv_psoloss", 8760 );
 		ssc_number_t *p_invpntloss = allocate( "hourly_inv_pntloss", 8760 );
 
 
-
+		// hourly adjustement factors
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
 
 
 		int istep = 0, nstep = wf.nrecords;
@@ -1568,6 +1579,7 @@ public:
 
 			p_acgross[istep] = (ssc_number_t) ( acpwr_gross * 0.001 );
 			p_acpwr[istep] = (ssc_number_t) ( acpwr_gross*ac_derate * 0.001 );
+			p_hourly_energy[istep] = p_acpwr[istep] * haf(istep);
 			p_inveff[istep] = (ssc_number_t) ( aceff );
 			p_invcliploss[istep] = (ssc_number_t) ( cliploss );
 			p_invpsoloss[istep] = (ssc_number_t) ( psoloss );
@@ -1653,6 +1665,10 @@ public:
 		inverter_vdcmax_check();
 		
 		inverter_size_check();
+
+		assign("system_use_lifetime_output", 0);
+		accumulate_annual("hourly_energy", "annual_energy");
+
 		
 		assign( "6par_a", var_data((ssc_number_t) cec.a) );
 		assign( "6par_Io", var_data((ssc_number_t) cec.Io) );
