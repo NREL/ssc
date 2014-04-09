@@ -22,6 +22,7 @@ endif
 OBJECTS = \
 	cmod_pvwattsfrompoa.o \
 	cmod_pvwattsfunc.o \
+	cmod_pvwattsv5.o \
 	cmod_wfcsv.o \
 	cmod_test_pvshade.o \
 	cmod_geothermalui.o \

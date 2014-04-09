@@ -36,6 +36,7 @@
     <ClCompile Include="cmod_pvwattsfrompoa.cpp" />
     <ClCompile Include="cmod_pvwattsfunc.cpp" />
     <ClCompile Include="cmod_pvwattsv1.cpp" />
+    <ClCompile Include="cmod_pvwattsv5.cpp" />
     <ClCompile Include="cmod_saleleaseback.cpp" />
     <ClCompile Include="cmod_singleowner.cpp" />
     <ClCompile Include="cmod_swh.cpp" />
