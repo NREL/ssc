@@ -110,7 +110,8 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "NUMTOU",            "Label",                                                          "",             "",            "tes",            "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "TSLogic",           "Label",                                                          "",             "",            "tes",            "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_ARRAY,       "FossilFill",        "Label",                                                          "",             "",            "tes",            "*",                       "",                      "" }, 
-  //{ SSC_INPUT,        SSC_NUMBER,      "TimeOfDay",         "Label",                                                          "",             "",            "tes",            "*",                       "",                      "" }, 
+	{ SSC_INPUT,		SSC_NUMBER,      "E_tes_ini",         "Initial TES energy - fraction of max",							"",				"",			   "tes",            "*",                       "",                      "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "TimeOfDay",         "Label",                                                          "",             "",            "tes",            "*",                       "",                      "" }, 
                                                             
     // parasitics
     { SSC_INPUT,        SSC_NUMBER,      "SfPar",             "Label",                                                          "",             "",            "parasitic",      "*",                       "",                      "" }, 
@@ -371,6 +372,9 @@ public:
 		//double  t2[9][3] =  {{0.1,0.1,1.05},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1},{0.1,0.1,1}};
 		//set_unit_value(type806_storage, "TSLogic", &t2[0][0], 9, 3);  
 		set_unit_value_ssc_matrix(type806_storage, "TSLogic" ); // csp.tr.tes.dispX.solar, csp.tr.tes.dispX.nosolar, csp.tr.tes.dispX.turbout,  where X = 1 to 9
+		
+		// 4.17.14, twn
+		set_unit_value_ssc_double(type806_storage, "E_tes_ini");	
 
 		//set_unit_value_ssc_double(type806_storage, "TOUPeriod", 1 );       //, 1 );    
 		set_unit_value_ssc_double(type806_storage, "TnkHL" );        //, 	 0.97);            // csp.tr.tes.tank_heatloss
