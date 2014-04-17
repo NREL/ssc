@@ -21,6 +21,7 @@ enum {
 	I_E2TPLF4,
 	// matrix - first index is dispatch periods (9) and second is type of dispatch  without solar (,1), with solar (,2), turbine load (,3)
 	I_TSLOGIC,  
+	I_E_TES_INI,
 
 	I_Qsf,
 	I_TOUPeriod,
@@ -101,6 +102,7 @@ tcsvarinfo sam_trough_storage_type806_variables[] = {
 	{ TCS_INPUT,  TCS_NUMBER,  I_E2TPLF3,	    "E2TPLF3", 	      "Turbine part-load electric to thermal conversion (fossil) - cubic",     "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER,  I_E2TPLF4,	    "E2TPLF4", 	      "Turbine part-load electric to thermal conversion(fossil) - quartic",    "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_MATRIX,  I_TSLOGIC,	    "TSLogic", 	      "Dispatch logic without solar (,1), with solar (,2), turbine load (,3)",    "",      "",      "",     "" },
+	{ TCS_PARAM,  TCS_NUMBER,  I_E_TES_INI,     "E_tes_ini",      "Initial amount of energy in thermal storage - fraction of max storage energy", "-",     "",      "",     "" },
 	
 	// inputs
 	{ TCS_INPUT,  TCS_NUMBER,  I_Qsf,	       "Qsf", 	         "Thermal energy available from the solar field", 			       "MWt",      "",      "",     "" },
@@ -206,7 +208,26 @@ public:
 		// implicit initializations in TRSNYS
 		m_PBMode0 = 0; 
 		m_TurSuE0 = 0;
-		m_Ets0 = 0;
+		//m_Ets0 = 0;
+
+		// 4.17.14, twn: initial storage energy should be initialized from UI value
+		m_TSHOURS = value(I_TsHours);			//  Hours of Thermal Storage
+		double Qdesign = value(I_Qdesign);		// [MWth] Design thermal input to power cycle
+		double E_tes_max = Qdesign*m_TSHOURS;	// [MWth-hr] Maximum stored thermal energy
+		double f_tes_ini = value(I_E_TES_INI);	// [-] Fraction of max stored thermal energy at initialization
+		if( f_tes_ini < 0.0 )
+		{
+			message("Fraction of TES at initialization was less than 0: %d. It was reset to the minimum of 0 for this simulation", f_tes_ini);
+			f_tes_ini = 0.0;
+		}
+		else if( f_tes_ini > 1.0)
+		{
+			message("Fraction of TES at initialization was greater than 1: %d. It was reset to the maximum of 1 for this simulation", f_tes_ini);
+			f_tes_ini = 1.0;
+		}
+		m_Ets0 = f_tes_ini*E_tes_max;	// [MWth-hr] Initial stored thermal energy
+		//***********************************************************************************************
+		//***********************************************************************************************
 
 		m_TSLogicin = var( I_TSLOGIC );
 		int tsl_rows = 0, tsl_cols = 0;
@@ -218,8 +239,7 @@ public:
 		m_PTTMAXin = value(I_PTTMAX);
 		m_PTTMINin = value(I_PTTMIN);
 
-		//  Always Read parameters
-		m_TSHOURS = value(I_TsHours);       //  Hours of Thermal Storage
+		//  Always Read parameters		
 		m_NUMTOU = (int)value(I_NumTOU);
 		m_E2TPLF0 = value(I_E2TPLF0);       //  | Turbine Part Load Elec  to Thermal (for fossil backup)  | Dimensionless  | Dimensionless
 		m_E2TPLF1 = value(I_E2TPLF1);       //  | Turbine Part Load Elec  to Thermal (for fossil backup)  | Dimensionless  | Dimensionless
