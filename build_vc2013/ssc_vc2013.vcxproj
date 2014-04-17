@@ -51,8 +51,6 @@
     <ClCompile Include="..\ssc\cmod_tcsmslf.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_empirical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical.cpp" />
-    <ClCompile Include="..\ssc\cmod_test_irr.cpp" />
-    <ClCompile Include="..\ssc\cmod_test_pvshade.cpp" />
     <ClCompile Include="..\ssc\cmod_timeseq.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />
