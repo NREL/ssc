@@ -1376,10 +1376,12 @@ public:
 		int m,d,h,period,tier;
 		ssc_number_t energy_net[12][12]; // 12 months, 12 periods
 		int hours[12][12];
+		int hours_per_month[12];
 		int c=0;
 		for (m=0;m<12;m++)
 		{
 			energy_use[m]=0.0;
+			hours_per_month[m] = 0;
 			cumulative_excess_energy[m] = 0.0;
 			for (period=0;period<12;period++) 
 			{
@@ -1402,95 +1404,74 @@ public:
 			}
 		}
 
-
-		if ( sell_eq_buy)
+		// go through each period and tier and calculate per SAM_V2_RATES.docx - Nathan Clark 3/6/13
+		// reconcile on monthly basis
+		ssc_number_t charge[12][12];
+		ssc_number_t credit[12][12];
+		c=0;
+		for (m=0;m<12;m++)
 		{
-			// go through each period and tier and calculate per SAM_V2_RATES.docx - Nathan Clark 3/6/13
-			// reconcile on monthly basis
-			ssc_number_t charge[12][12];
-			ssc_number_t credit[12][12];
-			c=0;
-			for (m=0;m<12;m++)
+			ssc_number_t monthly_energy = 0;
+			for (period=0;period<12;period++)
 			{
-				ssc_number_t monthly_energy = 0;
-				for (period=0;period<12;period++)
-				{
-					charge[m][period]=0;
-					credit[m][period]=0;
+				charge[m][period]=0;
+				credit[m][period]=0;
 
-					if (energy_net[m][period] >= 0.0)
-					{ // calculate income or credit
-						ssc_number_t credit_amt = 0;
-						ssc_number_t energy_surplus = energy_net[m][period];
-						tier=0;
-						while (tier<6)
-						{
-							// add up the charge amount for this block
-							ssc_number_t e_upper = energy_ub[period][tier];
-							ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
+				if (energy_net[m][period] >= 0.0)
+				{ // calculate income or credit
+					ssc_number_t credit_amt = 0;
+					ssc_number_t energy_surplus = energy_net[m][period];
+					tier=0;
+					while (tier<6)
+					{
+						// add up the charge amount for this block
+						ssc_number_t e_upper = energy_ub[period][tier];
+						ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
 
-							if (energy_surplus > e_upper)
-								credit_amt += (e_upper-e_lower)*rates[period][tier][1];
-							else
-								credit_amt += (energy_surplus-e_lower)*rates[period][tier][1];
+						if (energy_surplus > e_upper)
+							credit_amt += (e_upper-e_lower)*rates[period][tier][1];
+						else
+							credit_amt += (energy_surplus-e_lower)*rates[period][tier][1];
 	
-							if ( energy_surplus < e_upper )
-								break;
-							tier++;
-						}
-						credit[m][period] = credit_amt;
-						ec_charge[m] -= credit_amt;
+						if ( energy_surplus < e_upper )
+							break;
+						tier++;
 					}
-					else
-					{ // calculate payment or charge
-						ssc_number_t charge_amt = 0;
-						ssc_number_t energy_deficit = -energy_net[m][period];
-						tier=0;
-						while (tier<6)
-						{
-							// add up the charge amount for this block
-							ssc_number_t e_upper = energy_ub[period][tier];
-							ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
-
-							if (energy_deficit > e_upper)
-								charge_amt += (e_upper-e_lower)*rates[period][tier][0];
-							else
-								charge_amt += (energy_deficit-e_lower)*rates[period][tier][0];
-	
-							if ( energy_deficit < e_upper )
-								break;
-							tier++;
-						}
-						charge[m][period] = charge_amt;
-						ec_charge[m] += charge_amt;
-					}
-					monthly_energy += energy_net[m][period];
+					credit[m][period] = credit_amt;
+					ec_charge[m] -= credit_amt;
 				}
-				ec_rate[m] = monthly_energy != 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
+				else
+				{ // calculate payment or charge
+					ssc_number_t charge_amt = 0;
+					ssc_number_t energy_deficit = -energy_net[m][period];
+					tier=0;
+					while (tier<6)
+					{
+						// add up the charge amount for this block
+						ssc_number_t e_upper = energy_ub[period][tier];
+						ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
+
+						if (energy_deficit > e_upper)
+							charge_amt += (e_upper-e_lower)*rates[period][tier][0];
+						else
+							charge_amt += (energy_deficit-e_lower)*rates[period][tier][0];
+	
+						if ( energy_deficit < e_upper )
+							break;
+						tier++;
+					}
+					charge[m][period] = charge_amt;
+					ec_charge[m] += charge_amt;
+				}
+				monthly_energy += energy_net[m][period];
 			}
+			ec_rate[m] = monthly_energy != 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
+		}
 
 
-			// hourly based on monthly values for net metering case
-			//// back out hourly values based on monthly reconciliation
-			//c=0;
-			//for (m=0;m<12;m++)
-			//{
-			//	for (d=0;d<util::nday[m];d++)
-			//	{
-			//		for(h=0;h<24;h++)
-			//		{
-			//			int todp = tod[c];
-			//			if (hours[m][todp] > 0)
-			//			{
-			//				payment[c] += charge[m][todp]/hours[m][todp];
-			//				income[c] += credit[m][todp]/hours[m][todp];
-			//			}
-			//			c++;
-			//		}
-			//	}
-			//}
 
-
+		if (sell_eq_buy)
+		{ // net metering reconciliation with excess rollover
 
 			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
 			ssc_number_t prev_value = 0;
@@ -1506,8 +1487,6 @@ public:
 			c=0;
 			for (m=0;m<12;m++)
 			{
-				if (hours[m] <= 0) break;
-
 				for (d=0;d<util::nday[m];d++)
 				{
 					for(h=0;h<24;h++)
@@ -1536,56 +1515,20 @@ public:
 			c=0;
 			for (m=0;m<12;m++)
 			{
+				if (hours_per_month[m] <= 0) continue; 
 				for (d=0;d<util::nday[m];d++)
 				{
 					for(h=0;h<24;h++)
 					{
-						int period = tod[c];
-						if (e[c] >= 0.0)
+						if (ec_charge[m] < 0.0)
 						{ // calculate income or credit
-							ssc_number_t credit_amt = 0;
-							ssc_number_t energy_surplus = e[c];
-							tier=0;
-							while (tier<6)
-							{
-								// add up the charge amount for this block
-								ssc_number_t e_upper = energy_ub[period][tier];
-								ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
-
-								if (energy_surplus > e_upper)
-									credit_amt += (e_upper-e_lower)*rates[period][tier][1];
-								else
-									credit_amt += (energy_surplus-e_lower)*rates[period][tier][1];
-	
-								if ( energy_surplus < e_upper )
-									break;
-								tier++;
-							}
+							ssc_number_t credit_amt = -ec_charge[m] / hours_per_month[m];
 							income[c] += credit_amt;
-							ec_charge[m] -= credit_amt;
 						}
 						else
 						{ // calculate payment or charge
-							ssc_number_t charge_amt = 0;
-							ssc_number_t energy_deficit = -e[c];
-							tier=0;
-							while (tier<6)
-							{
-								// add up the charge amount for this block
-								ssc_number_t e_upper = energy_ub[period][tier];
-								ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier-1] : (ssc_number_t)0.0;
-
-								if (energy_deficit > e_upper)
-									charge_amt += (e_upper-e_lower)*rates[period][tier][0];
-								else
-									charge_amt += (energy_deficit-e_lower)*rates[period][tier][0];
-	
-								if ( energy_deficit < e_upper )
-									break;
-								tier++;
-							}
+							ssc_number_t charge_amt = ec_charge[m] / hours_per_month[m];
 							payment[c] += charge_amt;
-							ec_charge[m] += charge_amt;
 						}
 						c++;
 					}
