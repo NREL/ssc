@@ -1207,8 +1207,10 @@ bool weatherfile::open( const std::string &file, bool header_only, bool interp )
 
 void weatherfile::rewind()
 {
-	if( !m_ok ) return;
-
+	// The if(!m_ok) XXX line defeats the purpose of this function. If you don't want to rewind, don't call this function.
+	// Un-commenting the line below will break the geothermal performance model, the
+	// only model that currently needs to rewind a weather files.
+	// if( !m_ok ) return;
 	m_index = 0;
 }
 
