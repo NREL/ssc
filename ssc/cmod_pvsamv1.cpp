@@ -1286,8 +1286,11 @@ public:
 						p_ss_reflected_derate[nn][istep] = (ssc_number_t)sa[nn].ssout.m_reflected_derate;
 						p_ss_derate[nn][istep] = (ssc_number_t)sa[nn].ssout.m_dc_derate;
 
-						iskydiff *= sa[nn].ssout.m_diffuse_derate;
-						ignddiff *= sa[nn].ssout.m_reflected_derate;
+						//iskydiff *= sa[nn].ssout.m_diffuse_derate;
+						//ignddiff *= sa[nn].ssout.m_reflected_derate;
+						// CHECK WITH CHRIS DELINE ABOUT THESE ABOVE LINES, THINK WE WERE DOING IT WRONG!!!!!!!!!!!!!!!!!!
+						// beam is not derated because shading is boolean for beam: it's either blocked or it's not 
+						// the fraction of the array for which it is blocked is taken into account geometrically in calculation of the nonlinear_dc_shading_derate
 						sa[nn].poa.nonlinear_dc_shading_derate = sa[nn].ssout.m_dc_derate;
 					}
 					else
