@@ -106,6 +106,7 @@ struct SGeothermal_Outputs
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
+		maf_hourly_power = NULL;
 	}
 
 	// single values used in calculations, some also used in UI
@@ -129,16 +130,17 @@ struct SGeothermal_Outputs
 	double md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
 	// output arrays
-	float * maf_ReplacementsByYear;							// array of ones and zero's over time, ones representing years where reservoirs are replaced
+	float * maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
 	float * maf_monthly_resource_temp;
-	float * maf_monthly_power;
+	float * maf_monthly_power;				// monthly values, even if timestep is hourly
 	float * maf_monthly_energy;
 	float * maf_timestep_resource_temp;
-	float * maf_timestep_power;
+	float * maf_timestep_power;				// could be hourly or monthly, depending on timestep
 	float * maf_timestep_test_values;
 	float * maf_timestep_pressure;
 	float * maf_timestep_dry_bulb;
 	float * maf_timestep_wet_bulb;
+	float * maf_hourly_power;				// hourly values even if the timestep is monthly
 };
 
 int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, std::string &err_msg, 
