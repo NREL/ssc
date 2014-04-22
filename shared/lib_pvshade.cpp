@@ -456,18 +456,21 @@ bool ss_exec(
 		S = 1;
 	}
 	
-	//call supporting functions
+	//Chris Deline's self-shading algorithm
+
+	// 1. determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because shading is boolean for beam: it's either shaded or it's not, and that's taken into account in X and S)
 	diffuse_reduce( solzen, tilt, Gb_nor, Gd_poa, m_B/m_R, mask_angle, albedo, m_r,
 		// outputs
 		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
 
+	// 2. Calculate the "Reduced Irradiance Fraction" (Ee in Chris' paper)
 	double inc_total =  ( Gb_poa + outputs.m_reduced_diffuse + outputs.m_reduced_reflected)/1000;
 	double inc_diff = (outputs.m_reduced_diffuse + outputs.m_reduced_reflected)/1000;
 	double diffuse_globhoriz = 0;
 	if (inc_total != 0)
 		diffuse_globhoriz = inc_diff / inc_total;
 
-	// set self-shading coefficients based on C.Deline et al., "A simplified model of uniform shading in large photovoltaic arrays" (separate function)
+	// 3. Calculate the dc power derate based on C.Deline et al., "A simplified model of uniform shading in large photovoltaic arrays" (Psys/Psys0 in the paper, which is equivalent to a derate)
 	outputs.m_dc_derate = selfshade_dc_derate( X, S, inputs.FF0, diffuse_globhoriz );
 
 	return true;
