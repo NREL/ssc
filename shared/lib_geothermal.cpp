@@ -1657,7 +1657,7 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 
 	// Go through time step (hours or months) one by one
     bool bReDrill = false;
-	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0;
+	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours=0;
 	float fMonthlyPowerTotal;
 	for (unsigned int year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)
 	{
@@ -1672,10 +1672,10 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 			fMonthlyPowerTotal = 0;
 			for (unsigned int hour=0; hour < (unsigned int)util::hours_in_month(month); hour++)
 			{
-				if ( IsHourly() || (hour==0) )
+				if (IsHourly() || (hour == 0))
 				{
 					// Error check
-					if (iElapsedTimeSteps >= mo_geo_in.mi_TotalMakeupCalculations )
+					if (iElapsedTimeSteps >= mo_geo_in.mi_TotalMakeupCalculations)
 					{
 						ms_ErrorString = "Time step exceded the array size in CGeoHourlyAnalysis::RunAnalysis().";
 						return false;
@@ -1683,14 +1683,14 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 
 					// Read weather file info (function is smart enough to average for month if tis is a monthly analysis)
 					// The call to ReadWeatherForTimeStep increments the hour counter (over whole life), and file read counter [0 to 8760(=# lines in weather file]
-					if(!ReadWeatherForTimeStep(IsHourly(), iElapsedTimeSteps)) return false;
+					if (!ReadWeatherForTimeStep(IsHourly(), iElapsedTimeSteps)) return false;
 
 					// Set inputs that change for each timestep, weather data into power block inputs
 					mo_pb_in.T_htf_hot = md_WorkingTemperatureC;
 					mo_pb_in.T_wb = m_wf.twet;
 					mo_pb_in.T_db = m_wf.tdry;
 					mo_pb_in.P_amb = physics::mBarToAtm(m_wf.pres);
-					mo_pb_in.TOU = mo_geo_in.mia_tou[ml_ReadCount-1];
+					mo_pb_in.TOU = mo_geo_in.mia_tou[ml_ReadCount - 1];
 
 					// record current temperature (temperature changes monthly, but this is an hourly record of it)
 					mp_geo_out->maf_timestep_resource_temp[iElapsedTimeSteps] = (float)md_WorkingTemperatureC; // NOTE: If EGS temp drop is being calculated, then PlantGrossPowerkW must be called.  No production = no temp change
@@ -1699,25 +1699,32 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 					mp_geo_out->maf_timestep_wet_bulb[iElapsedTimeSteps] = (float)mo_pb_in.T_wb;
 
 					// record outputs based on current inputs
-					if ( mo_geo_in.mi_ModelChoice == 0 ) // model choice 0 = GETEM
-						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float) MAX(PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW, 0);
+					if (mo_geo_in.mi_ModelChoice == 0) // model choice 0 = GETEM
+						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW, 0);
 					else
 					{	// run power block model
-						if (!mo_PowerBlock.Execute((ml_HourCount-1)*3600, mo_pb_in))
+						if (!mo_PowerBlock.Execute((ml_HourCount - 1) * 3600, mo_pb_in))
 							ms_ErrorString = "There was an error running the power block model: " + mo_PowerBlock.GetLastError();
-						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float) MAX(mo_PowerBlock.GetOutputkW() - mp_geo_out->md_PumpWorkKW, 0);
+						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(mo_PowerBlock.GetOutputkW() - mp_geo_out->md_PumpWorkKW, 0);
 						//fJunk = (float)moMA->PlantGrossPowerkW(); // kinda works, but not quite the same
 					}
 
-					mp_geo_out->maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1)*1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
+					mp_geo_out->maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1) * 1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
 
 					fMonthlyPowerTotal += mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
-		
+
+					// record hourly power which = hourly energy
+					mp_geo_out->maf_hourly_power[iElapsedHours] = mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
+
 					//md_ElapsedTimeInYears = year + util::percent_of_year(month,hour);
 					if (!ms_ErrorString.empty()) { return false; }
 					iElapsedTimeSteps++;
-					dElapsedTimeInYears = iElapsedTimeSteps * (1.0/mo_geo_in.mi_MakeupCalculationsPerYear);  //moved to be after iElapsedTimeSteps++;
+					dElapsedTimeInYears = iElapsedTimeSteps * (1.0 / mo_geo_in.mi_MakeupCalculationsPerYear);  //moved to be after iElapsedTimeSteps++;
 				}
+				else
+					mp_geo_out->maf_hourly_power[iElapsedHours] = fMonthlyPowerTotal;
+
+				iElapsedHours++;
 			}//hours
 
 			mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month

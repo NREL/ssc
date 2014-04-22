@@ -117,23 +117,24 @@ static var_info _cm_vtab_geothermal[] = {
     // The array outputs are only meaningful when the model is run (not UI calculations)																											             
     // User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.																             
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.														             
-	{ SSC_OUTPUT,       SSC_ARRAY,       "annual_replacements",                "Resource replacement? (1=yes)",                       "kWhac",   "",             "GeoHourly",        "*",                        "",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "annual_replacements",                "Resource replacement? (1=yes)",                       "kWhac",   "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
-    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "*",                        "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "*",                        "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                     "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                     "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
-    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_resource_temperature",      "Resource temperature in each time step",              "C",       "",             "GeoHourly",        "*",                        "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_power",                     "Power in each time step",                             "kW",      "",             "GeoHourly",        "*",                        "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_test_values",               "Test output values in each time step",                "",        "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_resource_temperature",      "Resource temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_power",                     "Power in each time step",                             "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_test_values",               "Test output values in each time step",                "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
-    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_pressure",                  "Atmospheric pressure in each time step",              "atm",     "",             "GeoHourly",        "*",                        "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_dry_bulb",                  "Dry bulb temperature in each time step",              "C",       "",             "GeoHourly",        "*",                        "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_wet_bulb",                  "Wet bulb temperature in each time step",              "C",       "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_pressure",                  "Atmospheric pressure in each time step",              "atm",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_dry_bulb",                  "Dry bulb temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_wet_bulb",                  "Wet bulb temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																																	             
-    { SSC_OUTPUT,       SSC_NUMBER,      "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "*",                        "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "first_year_output",                  "First Year Output",                                   "kWh",     "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "first_year_output",                  "First Year Output",                                   "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                      "Hourly energy",                                       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
 var_info_invalid };
 
@@ -246,29 +247,6 @@ public:
 		// Create output object
 		SGeothermal_Outputs geo_outputs;
 
-		// allocate lifetime annual arrays (one element per year, over lifetime of project)
-		geo_outputs.maf_ReplacementsByYear = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
-		//ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
-
-		// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-		geo_outputs.maf_monthly_resource_temp = allocate( "monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
-		geo_outputs.maf_monthly_power = allocate( "monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
-		geo_outputs.maf_monthly_energy = allocate( "monthly_energy", 12 * geo_inputs.mi_ProjectLifeYears);
-
-		// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
-		// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
-		geo_inputs.mi_MakeupCalculationsPerYear = (geo_inputs.mi_ModelChoice == 2) ? 8760 : 12; 
-		geo_inputs.mi_TotalMakeupCalculations = geo_inputs.mi_ProjectLifeYears * geo_inputs.mi_MakeupCalculationsPerYear; 
-
-		geo_outputs.maf_timestep_resource_temp = allocate( "timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
-		geo_outputs.maf_timestep_power = allocate( "timestep_power", geo_inputs.mi_TotalMakeupCalculations);
-		geo_outputs.maf_timestep_test_values = allocate( "timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
-
-		geo_outputs.maf_timestep_pressure = allocate( "timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
-		geo_outputs.maf_timestep_dry_bulb = allocate( "timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
-		geo_outputs.maf_timestep_wet_bulb = allocate( "timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
-
-
 		// --------------------------------------------------------------------------------------------------------------------------
 		std::string err_msg;
 
@@ -276,6 +254,18 @@ public:
 			// just doing calculations for the UI, not running the model
 			if (FillOutputsForUI(err_msg, geo_inputs, geo_outputs) != 0)
 				throw general_error("input error: " + err_msg + ".");
+
+			// assign values for UI results
+			assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
+			assign("plant_brine_eff", var_data((ssc_number_t)geo_outputs.md_PlantBrineEffectiveness));
+			assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
+
+			assign("pump_depth_ft", var_data((ssc_number_t)geo_outputs.md_PumpDepthFt));
+			assign("pump_hp", var_data((ssc_number_t)geo_outputs.md_PumpHorsePower));
+
+			assign("reservoir_pressure", var_data((ssc_number_t)geo_outputs.md_PressureChangeAcrossReservoir));
+			assign("reservoir_avg_temp", var_data((ssc_number_t)physics::FarenheitToCelcius(geo_outputs.md_AverageReservoirTemperatureF)));
+			assign("bottom_hole_pressure", var_data((ssc_number_t)geo_outputs.md_BottomHolePressure));
 		}
 		else {
 			// running the model, we need to specify other inputs
@@ -344,38 +334,51 @@ public:
 			pbp.F_wc[7] = as_double("hc_ctl8");
 			pbp.F_wc[8] = as_double("hc_ctl9");
 
+			// since we're going to run the model, we have to allocate the arrays
+
+			// allocate lifetime annual arrays (one element per year, over lifetime of project)
+			geo_outputs.maf_ReplacementsByYear = allocate("annual_replacements", geo_inputs.mi_ProjectLifeYears);
+			//ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
+
+			// allocate lifetime monthly arrays (one element per month, over lifetime of project)
+			geo_outputs.maf_monthly_resource_temp = allocate("monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
+			geo_outputs.maf_monthly_power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
+			geo_outputs.maf_monthly_energy = allocate("monthly_energy", 12 * geo_inputs.mi_ProjectLifeYears);
+
+			// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
+			// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
+			geo_inputs.mi_MakeupCalculationsPerYear = (geo_inputs.mi_ModelChoice == 2) ? 8760 : 12;
+			geo_inputs.mi_TotalMakeupCalculations = geo_inputs.mi_ProjectLifeYears * geo_inputs.mi_MakeupCalculationsPerYear;
+
+			geo_outputs.maf_timestep_resource_temp = allocate("timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_power = allocate("timestep_power", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_test_values = allocate("timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
+
+			geo_outputs.maf_timestep_pressure = allocate("timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
+
+			geo_outputs.maf_hourly_power = allocate("hourly_energy", geo_inputs.mi_ProjectLifeYears * 8760);
+
 			if (RunGeothermalAnalysis(my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs) != 0)
 				throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
+
+			// Summary calculations
+			ssc_number_t total_energy = 0;
+			for (size_t i = 0; i < 12 * geo_inputs.mi_ProjectLifeYears; ++i) {
+				total_energy += geo_outputs.maf_monthly_energy[i];
+			}
+			assign("lifetime_output", var_data(total_energy));
+
+			total_energy = 0;
+			for (size_t i = 0; i < 12; ++i) {
+				total_energy += geo_outputs.maf_monthly_energy[i];
+			}
+			assign("first_year_output", var_data(total_energy));
 		}
 
-		if (iControl == 1) {
-			assign("num_wells_getem_output", var_data((ssc_number_t) geo_outputs.md_NumberOfWells ) );
-			assign("plant_brine_eff", var_data((ssc_number_t) geo_outputs.md_PlantBrineEffectiveness ) );
-			assign("gross_output", var_data((ssc_number_t) geo_outputs.md_GrossPlantOutputMW ) );
-
-			assign("pump_depth_ft", var_data((ssc_number_t) geo_outputs.md_PumpDepthFt ) );
-			assign("pump_hp", var_data((ssc_number_t) geo_outputs.md_PumpHorsePower ) );
-
-			assign("reservoir_pressure", var_data((ssc_number_t) geo_outputs.md_PressureChangeAcrossReservoir ) );
-			assign("reservoir_avg_temp", var_data((ssc_number_t) physics::FarenheitToCelcius(geo_outputs.md_AverageReservoirTemperatureF) ) );
-			assign("bottom_hole_pressure", var_data((ssc_number_t) geo_outputs.md_BottomHolePressure ) );
-		}
-
+		// this assignment happens in UI calculations and model run
 		assign("pump_work", var_data((ssc_number_t) geo_outputs.md_PumpWorkKW/1000 ) ); // kW must be converted to MW
-
-		// Energy calculations
-		ssc_number_t total_energy = 0;
-		for (size_t i = 0; i < 12 * geo_inputs.mi_ProjectLifeYears; ++i) {
-			total_energy += geo_outputs.maf_monthly_energy[i];
-		}
-		assign("lifetime_output", var_data(total_energy));
-
-		total_energy = 0;
-		for (size_t i = 0; i < 12; ++i) {
-			total_energy += geo_outputs.maf_monthly_energy[i];
-		}
-		assign("first_year_output", var_data(total_energy));
-
 	}
 };
 
