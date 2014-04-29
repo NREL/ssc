@@ -24,6 +24,7 @@
     <ClCompile Include="..\ssc\cmod_cashloan.cpp" />
     <ClCompile Include="..\ssc\cmod_equpartflip.cpp" />
     <ClCompile Include="..\ssc\cmod_fossilgen.cpp" />
+    <ClCompile Include="..\ssc\cmod_generic_system.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal.cpp" />
     <ClCompile Include="..\ssc\cmod_hcpv.cpp" />
     <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
