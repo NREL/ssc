@@ -128,12 +128,12 @@ tcsvarinfo trnsys_weatherreader_variables[] = {
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_ALBEDO,   "albedo",      "Ground albedo",                        "0..1",    "Meteo", "valid (0,1)",     "" },
 	
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_POA,      "poa",         "Plane-of-array total incident irradiance", "W/m2",    "Irrad", "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER,   O_SOLAZI,  "solazi",       "Solar Azimuth", "deg",    "", "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER,   O_SOLZEN,  "solzen",       "Solar Zenith", "deg",    "", "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER,   O_LAT,  "lat",       "Latitude", "DDD",    "", "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER,   O_LON,  "lon",       "Longitude", "DDD",    "", "",     "" },
+	{ TCS_OUTPUT,  TCS_NUMBER,   O_SOLAZI,   "solazi",      "Solar Azimuth", "deg",    "", "",     "" },
+	{ TCS_OUTPUT,  TCS_NUMBER,   O_SOLZEN,   "solzen",      "Solar Zenith", "deg",    "", "",     "" },
+	{ TCS_OUTPUT,  TCS_NUMBER,   O_LAT,      "lat",         "Latitude", "DDD",    "", "",     "" },
+	{ TCS_OUTPUT,  TCS_NUMBER,   O_LON,      "lon",         "Longitude", "DDD",    "", "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_SHIFT,    "shift",       "shift in longitude from local standard meridian", "deg", "Solar", "", "" },
-	{ TCS_OUTPUT,  TCS_NUMBER,   O_TZ,  "tz",       "Timezone", "DDD",    "", "",     "" },
+	{ TCS_OUTPUT,  TCS_NUMBER,   O_TZ,       "tz",          "Timezone", "DDD",    "", "",     "" },
 	
 
 	// testing - check indices assigned

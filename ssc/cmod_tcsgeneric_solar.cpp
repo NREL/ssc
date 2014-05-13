@@ -119,12 +119,39 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_online",      "Online parasitics",                                              "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_offline",     "Offline parasitics",                                             "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "enet",              "Net electric output",                                            "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+
+	// monthly outputs
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_w_gr",      "Total gross power production",                                   "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_sf",      "Solar field delivered thermal power",                            "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_to_pb",   "Thermal energy to the power conversion system",                  "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_to_tes",  "Thermal energy into storage",                                    "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_from_tes","Thermal energy from storage",                                    "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_hl_sf",   "Solar field thermal losses",                                     "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_hl_tes",  "Thermal losses from storage",                                    "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_dump_tot","Total dumped energy",                                            "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_startup", "Power conversion startup energy",                                "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_fossil",  "Thermal energy supplied from aux firing",                        "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
 
 
+	// annual outputs
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Energy",                                                  "kWh",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_w_gr",       "Total gross power production",                                   "kWh",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_sf",       "Solar field delivered thermal power",                            "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_to_pb",    "Thermal energy to the power conversion system",                  "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_to_tes",   "Thermal energy into storage",                                    "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_from_tes", "Thermal energy from storage",                                    "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_hl_sf",    "Solar field thermal losses",                                     "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_hl_tes",   "Thermal losses from storage",                                    "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_dump_tot", "Total dumped energy",                                            "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_startup",  "Power conversion startup energy",                                "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_fossil",   "Thermal energy supplied from aux firing",                        "MWt",          "",            "Generic CSP",    "*",                       "",                    "" },
+
+	// Other single value outputs
+	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor", "Gross to Net Conversion Factor",                                 "%",            "",            "Calculated",     "*",                       "",                      "" },
 
 	var_info_invalid };
-
-
 
 class cm_tcsgeneric_solar : public tcKernel
 {
@@ -141,11 +168,15 @@ public:
 	{
 		//if ( 0 >= load_library("typelib") ) throw exec_error( "tcsgeneric_solar", util::format("could not load the tcs type library.") );
 
-		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		//bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		// type260_genericsolar uses 'poa_beam' from the weather reader, which is not available from a "trnsys_weatherreader", so this must be set to false
+		bool debug_mode = false;
+
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
 		else weather = add_unit("weatherreader", "TCS weather reader");
+		
 		// Add time-of-use reader
 		int	tou = add_unit("tou_translator", "Time of Use Translator");
 		//Add Physical Solar Field Model
@@ -274,8 +305,45 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsgeneric_solar", util::format("there was a problem returning the results from the simulation.") );
 
+		// annual accumulations
+		size_t count = 0;
+		ssc_number_t *enet = as_array("enet", &count);
+		if (!enet || count != 8760)
+			throw exec_error("tcsgeneric_solar", "Failed to retrieve hourly net energy");
 
-		//set_output_array("i_SfTi",8760);
+		ssc_number_t *hourly = allocate("hourly_energy", count);
+		for (int i = 0; i<count; i++)
+			hourly[i]= enet[i]*1000; // convert from MWh to kWh
+
+		accumulate_monthly("hourly_energy",       "monthly_energy");
+		accumulate_monthly("w_gr",                "monthly_w_gr",1000); // convert from MWh to kWh
+		accumulate_monthly("q_sf",                "monthly_q_sf");
+		accumulate_monthly("q_to_pb",             "monthly_q_to_pb");
+		accumulate_monthly("q_to_tes",            "monthly_q_to_tes");
+		accumulate_monthly("q_from_tes",          "monthly_q_from_tes");
+		accumulate_monthly("q_hl_sf",             "monthly_q_hl_sf");
+		accumulate_monthly("q_hl_tes",            "monthly_q_hl_tes");
+		accumulate_monthly("q_dump_tot",          "monthly_q_dump_tot");
+		accumulate_monthly("q_startup",           "monthly_q_startup");
+		accumulate_monthly("q_fossil",            "monthly_q_fossil");
+
+		// monthly accumulations
+		accumulate_annual("hourly_energy",        "annual_energy");
+		accumulate_annual("w_gr",                 "annual_w_gr",1000); // convert from MWh to kWh
+		accumulate_annual("q_sf",                 "annual_q_sf");
+		accumulate_annual("q_to_pb",              "annual_q_to_pb");
+		accumulate_annual("q_to_tes",             "annual_q_to_tes");
+		accumulate_annual("q_from_tes",           "annual_q_from_tes");
+		accumulate_annual("q_hl_sf",              "annual_q_hl_sf");
+		accumulate_annual("q_hl_tes",             "annual_q_hl_tes");
+		accumulate_annual("q_dump_tot",           "annual_q_dump_tot");
+		accumulate_annual("q_startup",            "annual_q_startup");
+		accumulate_annual("q_fossil",             "annual_q_fossil");
+
+		ssc_number_t ae = as_number("annual_energy");
+		ssc_number_t pg = as_number("annual_w_gr");
+		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
+		assign("conversion_factor", convfactor);
 	}
 
 };
