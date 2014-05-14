@@ -13,7 +13,7 @@
 
 static var_info _cm_vtab_hcpv[] = {
 	/*VARTYPE           DATATYPE         NAME                               LABEL                                                              UNITS          META       GROUP            REQUIRED_IF             CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "weather_file",                    "Weather file in TMY2, TMY3, EPW, or SMW.",                        "",            "",        "hcpv",          "*",                    "LOCAL_FILE",                    "" },
+	{ SSC_INPUT,        SSC_STRING,      "file_name",                       "Weather file in TMY2, TMY3, EPW, or SMW.",                        "",            "",        "hcpv",          "*",                    "LOCAL_FILE",                    "" },
 																													      
 	{ SSC_INPUT,        SSC_NUMBER,      "module_cell_area",                "Single cell area",                                                "cm^2",        "",        "hcpv",          "*",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "module_concentration",            "Concentration ratio",                                             "none",        "",        "hcpv",          "*",                    "",                              "" },
@@ -44,16 +44,16 @@ static var_info _cm_vtab_hcpv[] = {
 
 	// sandia grid connected inverter parameters
 	//VARTYPE           DATATYPE         NAME                               LABEL                                                                                                                                                                                              UNITS     META       GROUP            REQUIRED_IF             CONSTRAINTS                      UI_HINTS
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_c0",                   "Parameter defining the curvature (parabolic) of the relationship between ac-power and dc-power at the reference operating condition, default value of zero gives a linear relationship, (1/W)",   "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_c1",                   "Empirical coefficient allowing Pdco to vary linearly with dc-voltage input, default value is zero, (1/V)",                                                                                        "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_c2",                   "Empirical coefficient allowing Pso to vary linearly with dc-voltage input, default value is zero, (1/V)",                                                                                         "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_c3",                   "Empirical coefficient allowing Co to vary linearly with dc-voltage input, default value is zero, (1/V)",                                                                                           "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_paco",                 "W maximum ac-power ‘rating’ for inverter at reference or nominal operating condition, assumed to be an upper limit value, (W)",                                                                   "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_pdco",                 "W dc-power level at which the ac-power rating is achieved at the reference operating condition, (W)",                                                                                            "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_pnt",                  "W ac-power consumed by inverter at night (night tare) to maintain circuitry required to sense PV array voltage, (W)",                                                                             "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_pso",                  "W dc-power required to start the inversion process, or self-consumption by inverter, strongly influences inverter efficiency at low power levels, (W)",                                           "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_vdco",                 "V (Vnom) dc-voltage level at which the ac-power rating is achieved at the reference operating condition, (V)",                                                                                    "xxx",    "",        "hcpv",          "*",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_sandia_vdcmax",               "V (Vdcmax) dc-voltage maximum operating voltage, (V)",                                                                                                                                            "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c0",                      "Parameter defining the curvature (parabolic) of the relationship between ac-power and dc-power at the reference operating condition, default value of zero gives a linear relationship, (1/W)",   "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c1",                      "Empirical coefficient allowing Pdco to vary linearly with dc-voltage input, default value is zero, (1/V)",                                                                                        "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c2",                      "Empirical coefficient allowing Pso to vary linearly with dc-voltage input, default value is zero, (1/V)",                                                                                         "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c3",                      "Empirical coefficient allowing Co to vary linearly with dc-voltage input, default value is zero, (1/V)",                                                                                           "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_paco",                    "W maximum ac-power ‘rating’ for inverter at reference or nominal operating condition, assumed to be an upper limit value, (W)",                                                                   "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_pdco",                    "W dc-power level at which the ac-power rating is achieved at the reference operating condition, (W)",                                                                                            "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_pnt",                     "W ac-power consumed by inverter at night (night tare) to maintain circuitry required to sense PV array voltage, (W)",                                                                             "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_pso",                     "W dc-power required to start the inversion process, or self-consumption by inverter, strongly influences inverter efficiency at low power levels, (W)",                                           "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdco",                    "V (Vnom) dc-voltage level at which the ac-power rating is achieved at the reference operating condition, (V)",                                                                                    "xxx",    "",        "hcpv",          "*",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdcmax",                  "V (Vdcmax) dc-voltage maximum operating voltage, (V)",                                                                                                                                            "xxx",    "",        "hcpv",          "*",                    "",                              "" },
 
 	// array parameters
 	//VARTYPE           DATATYPE         NAME                               LABEL                                                              UNITS     META       GROUP            REQUIRED_IF             CONSTRAINTS                      UI_HINTS
@@ -103,13 +103,31 @@ static var_info _cm_vtab_hcpv[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc",                       "DC gross",                                                        "kWh",    "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                   "DC net",                                                          "kWh",    "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac",                       "AC gross",                                                        "kWh",    "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_e_net",                    "Hourly Energy",                                                   "kWh",    "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                   "Hourly Energy",                                                   "kWh",    "",        "hcpv",          "*",                    "LENGTH=8760",                              "" },
 	
+	// monthly outputs
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                  "Monthly Energy",                                                  "kWh",    "",        "hcpv",          "*",                   "LENGTH=12",                                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_beam",                    "Beam irradiance",                                                 "kW/m2",  "",        "hcpv",          "*",                   "LENGTH=12",                                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_input_radiation",         "Input radiation",                                                 "kWh",    "",        "hcpv",          "*",                   "LENGTH=12",                                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc_net",                  "DC net",                                                          "kWh",    "",        "hcpv",          "*",                   "LENGTH=12",                                 "" },
+
+
+	// annual outputs
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_energy",                   "Annual Energy",                                                   "kWh",    "",        "hcpv",          "*",                   "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_beam",                     "Beam irradiance",                                                 "kW/m2",  "",        "hcpv",          "*",                   "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation",          "Input radiation",                                                 "kWh",    "",        "hcpv",          "*",                   "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc",                       "DC gross",                                                        "kWh",    "",        "hcpv",          "*",                   "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                   "DC net",                                                          "kWh",    "",        "hcpv",          "*",                   "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac",                       "AC gross",                                                        "kWh",    "",        "hcpv",          "*",                   "",                                         "" },
+
+	// Other single value outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,     "tracker_nameplate_watts",         "Tracker nameplate",                                               "watts",  "",        "hcpv",          "*",                    "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "dc_loss_stowing_kwh",             "Annual stowing power loss",                                       "kWh",    "",        "hcpv",          "*",                    "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ac_loss_tracker_kwh",             "Annual tracker power loss",                                       "kWh",    "",        "hcpv",          "*",                    "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "modeff_ref",                      "Module efficiency",                                                "-",      "",        "hcpv",          "*",                    "",                                         "" },
-	
+	{ SSC_OUTPUT,        SSC_NUMBER,     "modeff_ref",                      "Module efficiency",                                               "-",      "",        "hcpv",          "*",                    "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "dc_nominal",                      "Annual DC nominal",                                               "kWh",    "",        "hcpv",          "*",                    "",                                         "" },
+
+
 var_info_invalid };
 
 class cm_hcpv : public compute_module
@@ -225,7 +243,7 @@ public:
 		// open the weather file
 		// define variables consistent across subarrays
 
-		weatherfile wf( as_string("weather_file") );
+		weatherfile wf( as_string("file_name") );
 		if ( !wf.ok() ) throw exec_error( "hcpv", "failed to open weather file for reading");
 			
 		if ( wf.nrecords != 8760 ) throw exec_error("hcpv", "pv simulator only accepts hourly weather data");
@@ -300,15 +318,15 @@ public:
 
 		// inverter
 		sandia_inverter_t snlinv;
-		snlinv.Paco = as_double("inv_sandia_paco");
-		snlinv.Pdco = as_double("inv_sandia_pdco");
-		snlinv.Vdco = as_double("inv_sandia_vdco");
-		snlinv.Pso = as_double("inv_sandia_pso");
-		snlinv.Pntare = as_double("inv_sandia_pnt");
-		snlinv.C0 = as_double("inv_sandia_c0");
-		snlinv.C1 = as_double("inv_sandia_c1");
-		snlinv.C2 = as_double("inv_sandia_c2");
-		snlinv.C3 = as_double("inv_sandia_c3");
+		snlinv.Paco = as_double("inv_snl_paco");
+		snlinv.Pdco = as_double("inv_snl_pdco");
+		snlinv.Vdco = as_double("inv_snl_vdco");
+		snlinv.Pso = as_double("inv_snl_pso");
+		snlinv.Pntare = as_double("inv_snl_pnt");
+		snlinv.C0 = as_double("inv_snl_c0");
+		snlinv.C1 = as_double("inv_snl_c1");
+		snlinv.C2 = as_double("inv_snl_c2");
+		snlinv.C3 = as_double("inv_snl_c3");
 
 		ssc_number_t *p_solazi = allocate("hourly_solazi", 8760);
 		ssc_number_t *p_solzen = allocate("hourly_solzen", 8760);
@@ -329,7 +347,7 @@ public:
 		ssc_number_t *p_dc = allocate("hourly_dc", 8760);
 		ssc_number_t *p_dcnet = allocate("hourly_dc_net", 8760);
 		ssc_number_t *p_ac = allocate("hourly_ac", 8760);
-		ssc_number_t *p_enet = allocate("hourly_e_net", 8760); // kWh
+		ssc_number_t *p_enet = allocate("hourly_energy", 8760); // kWh
 
 		double dc_loss_stowing = 0;
 		double ac_loss_tracker = 0;
@@ -516,10 +534,30 @@ public:
 		if (istep != 8760)
 			throw exec_error("hcpv", util::format("failed to simulate all 8760 hours"));
 
+		// annual accumulations
+		accumulate_annual("hourly_energy", "annual_energy");
+		accumulate_annual("hourly_beam", "annual_beam");
+		accumulate_annual("hourly_input_radiation", "annual_input_radiation");
+		accumulate_annual("hourly_dc", "annual_dc");
+		accumulate_annual("hourly_dc_net", "annual_dc_net");
+		accumulate_annual("hourly_ac", "annual_ac");
+
+		// monthly accumulations
+		accumulate_monthly("hourly_energy", "monthly_energy");
+		accumulate_monthly("hourly_beam", "monthly_beam");
+		accumulate_monthly("hourly_input_radiation", "monthly_input_radiation");
+		accumulate_monthly("hourly_dc_net", "monthly_dc_net");
+
+		// Other single value outputs
 		assign("tracker_nameplate_watts", var_data((ssc_number_t)tracker_nameplate_watts));
 		assign("dc_loss_stowing_kwh", var_data((ssc_number_t)dc_loss_stowing*0.001));
 		assign("ac_loss_tracker_kwh", var_data((ssc_number_t)ac_loss_tracker*0.001));
 		assign("modeff_ref", var_data((ssc_number_t)modeff_ref));
+
+		ssc_number_t inp_rad = as_number("annual_input_radiation");
+		assign("dc_nominal", var_data((ssc_number_t)modeff_ref * inp_rad / 100.0));
+
+
 	}
 };
 

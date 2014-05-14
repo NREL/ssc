@@ -315,19 +315,6 @@ public:
 		for (int i = 0; i<count; i++)
 			hourly[i]= enet[i]*1000; // convert from MWh to kWh
 
-		accumulate_monthly("hourly_energy",       "monthly_energy");
-		accumulate_monthly("w_gr",                "monthly_w_gr",1000); // convert from MWh to kWh
-		accumulate_monthly("q_sf",                "monthly_q_sf");
-		accumulate_monthly("q_to_pb",             "monthly_q_to_pb");
-		accumulate_monthly("q_to_tes",            "monthly_q_to_tes");
-		accumulate_monthly("q_from_tes",          "monthly_q_from_tes");
-		accumulate_monthly("q_hl_sf",             "monthly_q_hl_sf");
-		accumulate_monthly("q_hl_tes",            "monthly_q_hl_tes");
-		accumulate_monthly("q_dump_tot",          "monthly_q_dump_tot");
-		accumulate_monthly("q_startup",           "monthly_q_startup");
-		accumulate_monthly("q_fossil",            "monthly_q_fossil");
-
-		// monthly accumulations
 		accumulate_annual("hourly_energy",        "annual_energy");
 		accumulate_annual("w_gr",                 "annual_w_gr",1000); // convert from MWh to kWh
 		accumulate_annual("q_sf",                 "annual_q_sf");
@@ -339,6 +326,20 @@ public:
 		accumulate_annual("q_dump_tot",           "annual_q_dump_tot");
 		accumulate_annual("q_startup",            "annual_q_startup");
 		accumulate_annual("q_fossil",             "annual_q_fossil");
+
+
+		// monthly accumulations
+		accumulate_monthly("hourly_energy",       "monthly_energy");
+		accumulate_monthly("w_gr",                "monthly_w_gr",1000); // convert from MWh to kWh
+		accumulate_monthly("q_sf",                "monthly_q_sf");
+		accumulate_monthly("q_to_pb",             "monthly_q_to_pb");
+		accumulate_monthly("q_to_tes",            "monthly_q_to_tes");
+		accumulate_monthly("q_from_tes",          "monthly_q_from_tes");
+		accumulate_monthly("q_hl_sf",             "monthly_q_hl_sf");
+		accumulate_monthly("q_hl_tes",            "monthly_q_hl_tes");
+		accumulate_monthly("q_dump_tot",          "monthly_q_dump_tot");
+		accumulate_monthly("q_startup",           "monthly_q_startup");
+		accumulate_monthly("q_fossil",            "monthly_q_fossil");
 
 		ssc_number_t ae = as_number("annual_energy");
 		ssc_number_t pg = as_number("annual_w_gr");
