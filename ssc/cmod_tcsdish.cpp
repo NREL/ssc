@@ -143,36 +143,70 @@ static var_info _cm_vtab_tcsdish[] = {
   //{ SSC_INPUT,        SSC_NUMBER,      "power_in_collector",      "Power incident on the collector",                                                "kW",           "",             "type298",       "*",                       "",                      "" },
 
 
-
 // OUTPUTS
 // The names of the output variables should match the parameter names for the TCS units in order to signal the TCS kernel to store the values by timestep
 
-//   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
-    { SSC_OUTPUT,       SSC_ARRAY,       "net_power",         "Net system output power",                                        "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+//   VARTYPE            DATATYPE          NAME                       LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
 
-	{ SSC_OUTPUT, SSC_ARRAY, "tdry", "Dry bulb temperature", "C", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "wspd", "Wind speed", "m/s", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "beam", "Beam normal irradiance", "W/m2", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Power_in_collector", "Power incident on the collector", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Power_out_col", "Total power from the collector dish", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Power_in_rec", "Power entering the receiver from the collector", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "P_out_rec", "Receiver output power", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "P_out_SE", "Stirling engine gross output", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-  //{ SSC_OUTPUT, SSC_ARRAY, "net_power", "Net system output power", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "eta_net", "Net system efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Phi_shade", "Dish-to-dish shading performance factor", "-", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Collector_Losses", "Total collector losses (Incident - P_out)", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "eta_collector", "Collector efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Q_rec_losses", "Receiver thermal losses", "kW", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "eta_rec", "Receiver efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "T_heater_head_operate", "Receiver head operating temperature", "K", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "P_SE_losses", "Stirling engine losses", "-", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "eta_SE", "Stirling engine efficiency", "-", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "engine_pressure", "Engine pressure", "Pa", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "P_parasitic", "Total parasitic power load", "W", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "T_compression", "Cold sink temperature / compression temperature", "K", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "T_tower_out", "Cooling fluid temperature into the cooler and out of the tower", "C", "", "Outputs", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "T_tower_in", "Cooling fluid temperature out of the cooling and into the tower", "C", "", "Outputs", "*", "LENGTH=8760", "" },
+	// output per collector
+	{ SSC_OUTPUT,       SSC_ARRAY,       "net_power",                "Net power output per collector",                                    "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",                     "Dry bulb temperature",                                              "C",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                     "Wind speed",                                                        "m/s",          "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                     "Beam normal irradiance",                                            "W/m2",         "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Power_in_collector",       "Power incident on the collector per collector",                     "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Power_out_col",            "Total power from the collector dish per collector",                 "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Power_in_rec",             "Power entering the receiver from the collector per collector",      "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_out_rec",                "Receiver output power per collector",                               "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_out_SE",                 "Stirling engine gross output per collector",                        "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_net",                  "Net system efficiency",                                             "-",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Phi_shade",                "Dish-to-dish shading performance factor",                           "-",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Collector_Losses",         "Total collector losses (Incident - P_out) per collector",           "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_collector",            "Collector efficiency",                                              "-",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_rec_losses",             "Receiver thermal losses per collector",                             "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_rec",                  "Receiver efficiency",                                               "-",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_heater_head_operate",    "Receiver head operating temperature",                               "K",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_SE_losses",              "Stirling engine losses",                                            "-",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_SE",                   "Stirling engine efficiency",                                        "-",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "engine_pressure",          "Engine pressure",                                                   "Pa",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_parasitic",              "Total parasitic power load per collector",                          "W",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_compression",            "Cold sink temperature / compression temperature",                   "K",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tower_out",              "Cooling fluid temperature into the cooler and out of the tower",    "C",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tower_in",               "Cooling fluid temperature out of the cooling and into the tower",   "C",            "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    
+	// totaled for all collectors
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",            "Hourly Energy",                                                     "kW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_Power_in_collector","Power incident on the collector",                                   "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_Power_out_col",     "Total power from the collector dish",                               "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_Power_in_rec",      "Power entering the receiver from the collector",                    "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_P_out_rec",         "Receiver output power",                                             "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_P_out_SE",          "Stirling engine gross output",                                      "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_Collector_Losses",  "Total collector losses (Incident - P_out)",                         "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_P_parasitic",       "Total parasitic power load",                                        "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_Q_rec_losses",      "Receiver thermal losses",                                           "MW",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+
+	// annual outputs
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",            "Annual Energy",                                                     "kW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_Power_in_collector","Power incident on the collector",                                   "MW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_Power_out_col",     "Total power from the collector dish",                               "MW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_Power_in_rec",      "Power entering the receiver from the collector",                    "MW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_P_out_rec",         "Receiver output power",                                             "MW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_P_out_SE",          "Stirling engine gross output",                                      "MW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_Collector_Losses",  "Total collector losses (Incident - P_out)",                         "MW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_P_parasitic",       "Total parasitic power load",                                        "MW",           "",             "Outputs",        "*",                       "",                    "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_rec_losses",      "Receiver thermal losses",                                           "MW",           "",             "Outputs",        "*",                       "",                    "" },
+
+	// monthly outputs
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",            "Monthly Energy",                                                   "kW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Power_in_collector","Power incident on the collector",                                  "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Power_out_col",     "Total power from the collector dish",                              "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Power_in_rec",      "Power entering the receiver from the collector",                   "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_P_out_rec",         "Receiver output power",                                            "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_P_out_SE",          "Stirling engine gross output",                                     "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Collector_Losses",  "Total collector losses (Incident - P_out)",                        "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_P_parasitic",       "Total parasitic power load",                                       "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_rec_losses",      "Receiver thermal losses",                                          "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+
+
 	var_info_invalid };
 
 
@@ -391,15 +425,67 @@ public:
 			throw exec_error( "tcsdish", util::format("there was a problem returning the results from the simulation.") );
 
 
-		//set_output_array("i_SfTi",8760);
+		// annual accumulations
+		size_t count = 0;
+		ssc_number_t *enet = as_array("net_power", &count);
+		ssc_number_t *p1 = as_array("Power_in_collector", &count);
+		ssc_number_t *p2 = as_array("Power_out_col", &count);
+		ssc_number_t *p3 = as_array("Power_in_rec", &count);
+		ssc_number_t *p4 = as_array("P_out_rec", &count);
+		ssc_number_t *p5 = as_array("P_out_SE", &count);
+		ssc_number_t *p6 = as_array("Collector_Losses", &count);
+		ssc_number_t *p7 = as_array("P_parasitic", &count); // in Watts
+		ssc_number_t *p8 = as_array("Q_rec_losses", &count);
+		if (!enet || !p1 || !p2 || !p3 || !p4 || !p5 || !p6 || !p7 || !p8 || count != 8760)
+			throw exec_error("tcsdish", "Failed to retrieve hourly data");
+
+		ssc_number_t collectors = as_number("n_ns") * as_number("n_ew");
+		ssc_number_t converter = collectors * 0.001; // convert from kWh per collector to MWh for the field
+
+		ssc_number_t *hourly = allocate("hourly_energy", count);
+		ssc_number_t *po1 = allocate("hourly_Power_in_collector", count);
+		ssc_number_t *po2 = allocate("hourly_Power_out_col", count);
+		ssc_number_t *po3 = allocate("hourly_Power_in_rec", count);
+		ssc_number_t *po4 = allocate("hourly_P_out_rec", count);
+		ssc_number_t *po5 = allocate("hourly_P_out_SE", count);
+		ssc_number_t *po6 = allocate("hourly_Collector_Losses", count);
+		ssc_number_t *po7 = allocate("hourly_P_parasitic", count);
+		ssc_number_t *po8 = allocate("hourly_Q_rec_losses", count);
+
+		for (int i = 0; i < count; i++) {
+			hourly[i] = enet[i] * collectors;
+			po1[i] = p1[i] * converter;
+			po2[i] = p2[i] * converter;
+			po3[i] = p3[i] * converter;
+			po4[i] = p4[i] * converter;
+			po5[i] = p5[i] * converter;
+			po6[i] = p6[i] * converter;
+			po7[i] = p7[i] * converter/1000; // Watts to MWatts
+			po8[i] = p8[i] * converter;
+		}
+		accumulate_annual("hourly_energy",             "annual_energy");
+		accumulate_annual("hourly_Power_in_collector", "annual_Power_in_collector");
+		accumulate_annual("hourly_Power_out_col",      "annual_Power_out_col");
+		accumulate_annual("hourly_Power_in_rec",       "annual_Power_in_rec");
+		accumulate_annual("hourly_P_out_rec",          "annual_P_out_rec");
+		accumulate_annual("hourly_P_out_SE",           "annual_P_out_SE");
+		accumulate_annual("hourly_Collector_Losses",   "annual_Collector_Losses");
+		accumulate_annual("hourly_P_parasitic",        "annual_P_parasitic");
+		accumulate_annual("hourly_Q_rec_losses",       "annual_Q_rec_losses");
+
+		// monthly accumulations
+		accumulate_monthly("hourly_energy",             "monthly_energy");
+		accumulate_monthly("hourly_Power_in_collector", "monthly_Power_in_collector");
+		accumulate_monthly("hourly_Power_out_col",      "monthly_Power_out_col");
+		accumulate_monthly("hourly_Power_in_rec",       "monthly_Power_in_rec");
+		accumulate_monthly("hourly_P_out_rec",          "monthly_P_out_rec");
+		accumulate_monthly("hourly_P_out_SE",           "monthly_P_out_SE");
+		accumulate_monthly("hourly_Collector_Losses",   "monthly_Collector_Losses");
+		accumulate_monthly("hourly_P_parasitic",        "monthly_P_parasitic");
+		accumulate_monthly("hourly_Q_rec_losses",       "monthly_Q_rec_losses");
+
 	}
 
 };
 
 DEFINE_TCS_MODULE_ENTRY( tcsdish, "Dish Stirling model using the TCS types.", 4 )
-
-//static compute_module *_create_tcsdish() {
-//	extern tcstypeprovider TCSTP;
-//	return new cm_tcsdish( &TCSTP, I_TEST );
-//}
-//module_entry_info cm_entry_tcsdish = { "tcsdish", "rtrrt", 4, _create_tcsdish };
