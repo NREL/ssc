@@ -497,10 +497,14 @@ public:
 		return wxString(m_pData->name.c_str());
 	}
 
-
 	virtual wxString GetUnits() const
 	{
 		return m_pData->units.c_str();
+	}
+
+	virtual double GetOffset() const
+	{
+		return m_start;
 	}
 };
 
