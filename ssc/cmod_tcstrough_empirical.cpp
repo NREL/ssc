@@ -489,7 +489,7 @@ public:
 		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
-		ssc_number_t *hourly_energy = as_array("Enet", &count);
+		ssc_number_t *hourly_energy = as_array("Enet", &count);//MWh
 		if (count != 8760)
 			throw exec_error("tcstrough_empirical", "hourly_energy count incorrect (should be 8760): " + count);
 		// apply performance adjustments and convert from MWh to kWh
