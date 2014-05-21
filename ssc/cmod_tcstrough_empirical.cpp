@@ -1,6 +1,8 @@
 // Trough CSP - empirical model
 #include "core.h"
 #include "tckernel.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_tcstrough_empirical[] = {
 /*   VARTYPE            DATATYPE          NAME                 LABEL                                                            UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS  */
@@ -201,6 +203,7 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "EgrFos",            "Gross electric production from the fossil resource",             "MWe",          "",            "type_807",       "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Qgas",              "Gas Thermal Energy Input",                                       "MW",           "",            "type_807",       "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "Egr",               "Gross electricity produced, before parasitic loss",              "MWe",          "",            "type_807",       "*",                       "LENGTH=8760",           "" },
+	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Enet",              "Net electricity produced, after parasitic loss",                 "MWe",          "",            "type_807",       "*",                       "LENGTH=8760",           "" },
 
 	// parasitics
@@ -220,6 +223,15 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Ftrack",            "Fraction of time period that the field is tracking",             "",             "",            "other",          "*",                       "LENGTH=8760",           "" },
   //{ SSC_OUTPUT,       SSC_ARRAY,       "TSLogic",           "Dispatch logic w/o solar(1),with solar(2),turbine load(3)",      "",             "",            "other",          "*",                       "LENGTH=8760",           "" },
 
+  // for connection to other ssc modules
+	{ SSC_OUTPUT, SSC_NUMBER, "system_use_lifetime_output", "Use lifetime output", "0/1", "", "tcs_trough_empirical", "*", "INTEGER", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "tcs_trough_empirical", "*", "LENGTH=8760", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "tcs_trough_empirical", "*", "", "" },
+
+
+
     var_info_invalid };
 class cm_tcstrough_empirical : public tcKernel
 {
@@ -229,6 +241,9 @@ public:
 	:tcKernel(prov)
 	{
 		add_var_info( _cm_vtab_tcstrough_empirical );
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
+
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 	}
 
@@ -464,8 +479,25 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcstrough_empirical", util::format("there was a problem returning the results from the simulation.") );
 
+		// outputs for other compute modules
+		assign("system_use_lifetime_output", 0);
+		// performance adjustement factors
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("tcstrough_empirical", "failed to setup adjustment factors: " + haf.error());
+		// hourly_energy output
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		// set hourly energy = tcs output Enet
+		size_t count;
+		ssc_number_t *hourly_energy = as_array("Enet", &count);
+		if (count != 8760)
+			throw exec_error("tcstrough_empirical", "hourly_energy count incorrect (should be 8760): " + count);
+		// apply performance adjustments and convert from MWh to kWh
+		for (size_t i = 0; i < count; i++)
+			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
 
-		//set_output_array("i_SfTi",8760);
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
 	}
 
 };
