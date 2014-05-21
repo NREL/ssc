@@ -66,6 +66,7 @@ static var_info _cm_vtab_pvwattsv5[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                  "Hourly energy",                               "kWh",  "",                          "PVWatts", "*", "LENGTH=8760", "" },
+
 	{ SSC_OUTPUT, SSC_NUMBER, "system_use_lifetime_output", "Use lifetime output", "0/1", "", "PVWatts", "*", "INTEGER", "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",   "",                      "PVWatts",      "*",                       "LENGTH=12",                          "" },
