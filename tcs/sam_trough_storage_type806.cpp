@@ -232,7 +232,7 @@ public:
 		m_TSLogicin = var( I_TSLOGIC );
 		int tsl_rows = 0, tsl_cols = 0;
 		value( I_TSLOGIC, &tsl_rows, &tsl_cols );
-		m_TSLogic.resize( tsl_rows, tsl_cols );
+		m_TSLogic.resize( tsl_rows, tsl_cols-1 );
 
 		
 
@@ -276,12 +276,20 @@ public:
 
 		for (int p = 0; p<m_NUMTOU; p++)
 		{
-			m_TSLogic.at(p,0) = TCS_MATRIX_INDEX(m_TSLogicin,p,0) * m_ESMAX;
-			m_TSLogic.at(p,1) = TCS_MATRIX_INDEX(m_TSLogicin,p,1) * m_ESMAX;
-			m_TSLogic.at(p,2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * TCS_MATRIX_INDEX(m_TSLogicin,p,2) + m_E2TPLF2 * pow(TCS_MATRIX_INDEX(m_TSLogicin,p,2),2) + m_E2TPLF3 * pow(TCS_MATRIX_INDEX(m_TSLogicin,p,2),3) + m_E2TPLF4 * pow(TCS_MATRIX_INDEX(m_TSLogicin,p,2),4));
-		//  Check to make sure that dispatch logic operates within the turbine max and min
-			if (TCS_MATRIX_INDEX(m_TSLogicin,p,2)>m_PTTMAXin) m_TSLogic.at(p,2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * m_PTTMAXin + m_E2TPLF2 * pow(m_PTTMAXin,2) + m_E2TPLF3 * pow(m_PTTMAXin,3) + m_E2TPLF4 * pow(m_PTTMAXin,4));
-			if (TCS_MATRIX_INDEX(m_TSLogicin,p,2)<m_PTTMINin) m_TSLogic.at(p,2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * m_PTTMINin + m_E2TPLF2 * pow(m_PTTMINin,2) + m_E2TPLF3 * pow(m_PTTMINin,3) + m_E2TPLF4 * pow(m_PTTMINin,4));
+/*
+			m_TSLogic.at(p, 0) = TCS_MATRIX_INDEX(m_TSLogicin, p, 0) * m_ESMAX;
+			m_TSLogic.at(p, 1) = TCS_MATRIX_INDEX(m_TSLogicin, p, 1) * m_ESMAX;
+			m_TSLogic.at(p, 2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * TCS_MATRIX_INDEX(m_TSLogicin, p, 2) + m_E2TPLF2 * pow(TCS_MATRIX_INDEX(m_TSLogicin, p, 2), 2) + m_E2TPLF3 * pow(TCS_MATRIX_INDEX(m_TSLogicin, p, 2), 3) + m_E2TPLF4 * pow(TCS_MATRIX_INDEX(m_TSLogicin, p, 2), 4));
+			//  Check to make sure that dispatch logic operates within the turbine max and min
+			if (TCS_MATRIX_INDEX(m_TSLogicin, p, 2)>m_PTTMAXin) m_TSLogic.at(p, 2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * m_PTTMAXin + m_E2TPLF2 * pow(m_PTTMAXin, 2) + m_E2TPLF3 * pow(m_PTTMAXin, 3) + m_E2TPLF4 * pow(m_PTTMAXin, 4));
+			if (TCS_MATRIX_INDEX(m_TSLogicin, p, 2)<m_PTTMINin) m_TSLogic.at(p, 2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * m_PTTMINin + m_E2TPLF2 * pow(m_PTTMINin, 2) + m_E2TPLF3 * pow(m_PTTMINin, 3) + m_E2TPLF4 * pow(m_PTTMINin, 4));
+*/
+			m_TSLogic.at(p, 0) = TCS_MATRIX_INDEX(m_TSLogicin, p, 1) * m_ESMAX;
+			m_TSLogic.at(p, 1) = TCS_MATRIX_INDEX(m_TSLogicin, p, 2) * m_ESMAX;
+			m_TSLogic.at(p, 2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * TCS_MATRIX_INDEX(m_TSLogicin, p, 3) + m_E2TPLF2 * pow(TCS_MATRIX_INDEX(m_TSLogicin, p, 3), 2) + m_E2TPLF3 * pow(TCS_MATRIX_INDEX(m_TSLogicin, p, 3), 3) + m_E2TPLF4 * pow(TCS_MATRIX_INDEX(m_TSLogicin, p, 3), 4));
+			//  Check to make sure that dispatch logic operates within the turbine max and min
+			if (TCS_MATRIX_INDEX(m_TSLogicin, p, 3)>m_PTTMAXin) m_TSLogic.at(p, 2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * m_PTTMAXin + m_E2TPLF2 * pow(m_PTTMAXin, 2) + m_E2TPLF3 * pow(m_PTTMAXin, 3) + m_E2TPLF4 * pow(m_PTTMAXin, 4));
+			if (TCS_MATRIX_INDEX(m_TSLogicin, p, 3)<m_PTTMINin) m_TSLogic.at(p, 2) = Qdesign * (m_E2TPLF0 + m_E2TPLF1 * m_PTTMINin + m_E2TPLF2 * pow(m_PTTMINin, 2) + m_E2TPLF3 * pow(m_PTTMINin, 3) + m_E2TPLF4 * pow(m_PTTMINin, 4));
 		}
 
 		//int nrows, ncols;
@@ -503,11 +511,16 @@ public:
 			else        //  Power block operated last period or was starting up
 			{
 				// MJW 7/09 Determine the current fractional thermal storage dispatch control
-				if (Qsf>0)
+/*				if (Qsf>0)
 					TStemp = TCS_MATRIX_INDEX( m_TSLogicin, p,0 );
 				else
 					TStemp = TCS_MATRIX_INDEX( m_TSLogicin,p,1);
-			    
+				*/
+				if (Qsf>0)
+					TStemp = TCS_MATRIX_INDEX(m_TSLogicin, p, 1);
+				else
+					TStemp = TCS_MATRIX_INDEX(m_TSLogicin, p, 2);
+
 				if ( (Qsf + max(0.,m_Ets0-m_ESMAX*TStemp) * TimeSteps) > m_TSLogic.at(p,2) ) 
 				{
 				//  If there is sufficient energy to operate at dispatch target output

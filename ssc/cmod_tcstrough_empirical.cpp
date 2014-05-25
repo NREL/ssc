@@ -11,18 +11,21 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                     "",             "",            "Weather",        "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                  "",             "",            "Weather",        "*",                       "",                      "" }, 
 
-    // TOU
+//	{ SSC_INPUT, SSC_NUMBER, "SolarAz", "Solar azimuth angle reported by the Type15 weather file", "deg", "", "solarfield", "*", "", "" },
+
+	
+	// TOU
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                         "",             "",            "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                     "",             "",            "tou_translator", "*",                       "",                      "" }, 
 
     // solar field
-    { SSC_INPUT,        SSC_NUMBER,      "Site_Lat",          "Latitude of Solar Plant Site",                                   "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "Site_LongD",        "Longitude of Solar Plant Site",                                  "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "SHIFT",             "Longitude of Standard Meridian",                                 "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "LU_Fl",             "Fluid property file logical unit",                               "",             "",            "solarfield",     "*",                       "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "LuFlEr",            "Fluid property error file logical unit",                         "",             "",            "solarfield",     "*",                       "",                      "" }, 
+  //  { SSC_INPUT,        SSC_NUMBER,      "Site_Lat",          "Latitude of Solar Plant Site",                                   "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
+ //   { SSC_INPUT,        SSC_NUMBER,      "Site_LongD",        "Longitude of Solar Plant Site",                                  "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
+//    { SSC_INPUT,        SSC_NUMBER,      "SHIFT",             "Longitude of Standard Meridian",                                 "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
+//    { SSC_INPUT,        SSC_NUMBER,      "LU_Fl",             "Fluid property file logical unit",                               "",             "",            "solarfield",     "*",                       "",                      "" }, 
+ //   { SSC_INPUT,        SSC_NUMBER,      "LuFlEr",            "Fluid property error file logical unit",                         "",             "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "i_SfTi",            "Solar Field HTF inlet Temperature (if -999, calculated)",        "C",            "",            "solarfield",     "*",                       "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "ColType",           "Collector Type",                                                 "",             "",            "solarfield",     "*",                       "",                      "" }, 
+//    { SSC_INPUT,        SSC_NUMBER,      "ColType",           "Collector Type",                                                 "",             "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "SfPipeHl300",       "Solar field piping heat loss at design",                         "W/m2",         "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "SfPipeHl1",         "Solar field piping heat loss at reduced temp. - linear term",    "C^(-1)",       "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "SfPipeHl2",         "Solar field piping heat loss at reduced temp. - quadratic term", "C^(-2)",       "",            "solarfield",     "*",                       "",                      "" }, 
@@ -38,8 +41,8 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "SfOutTempD",        "Solar Field Design Outlet Temperature",                          "C",            "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "MinHtfTemp",        "Minimum Heat Transfer Fluid Temperature",                        "C",            "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "HtfGalArea",        "HTF Fluids in Gallons per Field Area",                           "gal/m2",       "",            "solarfield",     "*",                       "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "ColTilt",           "Collector Axis Tilt",                                            "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "ColAz",             "Azimuthal Angle of Collector Axis",                              "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
+//    { SSC_INPUT,        SSC_NUMBER,      "ColTilt",           "Collector Axis Tilt",                                            "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
+ //   { SSC_INPUT,        SSC_NUMBER,      "ColAz",             "Azimuthal Angle of Collector Axis",                              "deg",          "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "SFTempInit",        "Solar Field Initial Temperature",                                "C",            "",            "solarfield",     "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "HTFFluid",          "Type of Heat Transfer Fluid used",                               "",             "",            "solarfield",     "*",                       "INTEGER",               "" }, 
 
@@ -252,6 +255,7 @@ public:
 		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
 		//Add weather file reader unit
 		int weather = 0;
+		debug_mode = false;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
 		else weather = add_unit("weatherreader", "TCS weather reader");
 		// Add tou translator
@@ -302,9 +306,9 @@ public:
 
 
 		//Set Solar Field Parameters
-		set_unit_value_ssc_double( type805_solarfield, "Site_Lat" );           //, 32.116667 );
-		set_unit_value_ssc_double( type805_solarfield, "Site_LongD" );         //, -110.933333 );
-		set_unit_value_ssc_double( type805_solarfield, "SHIFT" );              //, -7 );
+//		set_unit_value_ssc_double( type805_solarfield, "Site_Lat" );           //, 32.116667 );
+//		set_unit_value_ssc_double( type805_solarfield, "Site_LongD" );         //, -110.933333 );
+//		set_unit_value_ssc_double( type805_solarfield, "SHIFT" );              //, -7 );
 		
 		set_unit_value_ssc_double( type805_solarfield, "Solar_Field_Area" );   //, 877580 ); csp.tr.solf.dp.fieldarea
 		set_unit_value_ssc_double( type805_solarfield, "Solar_Field_Mult" );   //, 2 ); csp.tr.solf.dp.solarmultiple
@@ -326,8 +330,8 @@ public:
         set_unit_value_ssc_array( type805_solarfield, "HCE_A4" );       //, t[13], 4 );      // {7.62e-8,   1.73e-7,    6.89e-7,  5.85e-8} ,  
         set_unit_value_ssc_array( type805_solarfield, "HCE_A5" );       //, t[14], 4 );      // {-1.7,     -43.2,       24.7,     4.48},  
         set_unit_value_ssc_array( type805_solarfield, "HCE_A6" );       //, t[15], 4 );      // {0.0125,    0.524,      3.37,     0.285}      
-		set_unit_value_ssc_double( type805_solarfield, "LU_Fl" );       //,             21.0 );   // necessary?      
-		set_unit_value_ssc_double( type805_solarfield, "LuFlEr" );       //,            0.0 );    // necessary?
+//		set_unit_value_ssc_double( type805_solarfield, "LU_Fl" );       //,             21.0 );   // necessary?      
+//		set_unit_value_ssc_double( type805_solarfield, "LuFlEr" );       //,            0.0 );    // necessary?
 		set_unit_value_ssc_double( type805_solarfield, "i_SfTi" );       //,           -999 );           
 		set_unit_value_ssc_double( type805_solarfield, "Stow_Angle" );       //, 	    170);     // csp.tr.solf.stowangle
 		set_unit_value_ssc_double( type805_solarfield, "DepAngle" );       //, 	        10);      // csp.tr.solf.deployangle
@@ -339,8 +343,10 @@ public:
 		set_unit_value_ssc_double( type805_solarfield, "Row_Distance" );       //, 	    15);      // csp.tr.solf.distrows
 		set_unit_value_ssc_double( type805_solarfield, "SCA_aper" );       //, 	        5);       // csp.tr.sca.aperture
 		set_unit_value_ssc_double( type805_solarfield, "SfAvail" );       //, 	        0.99);    // csp.tr.sca.availability 
-		set_unit_value_ssc_double( type805_solarfield, "ColTilt" );       //, 	        0.0);     // csp.tr.solf.tilt
-		set_unit_value_ssc_double( type805_solarfield, "ColAz" );       //, 	        0.0);     // csp.tr.solf.azimuth
+		set_unit_value_ssc_double(type805_solarfield, "ColTilt", as_double("tilt"));       
+		//, 	        		set_unit_value_ssc_double( type805_solarfield, "ColTilt" );       //, 	        0.0);     // csp.tr.solf.tilt
+		set_unit_value_ssc_double(type805_solarfield, "ColAz", as_double("azimuth"));      
+		//, 	        		set_unit_value_ssc_double( type805_solarfield, "ColAz" );       //, 	        0.0);     // csp.tr.solf.azimuth
 		set_unit_value_ssc_double( type805_solarfield, "NumScas" );       //, 	        4);       // csp.tr.solf.nscasperloop
 		set_unit_value_ssc_double( type805_solarfield, "ScaLen" );       //, 	        100);     // csp.tr.sca.length
 		set_unit_value_ssc_double( type805_solarfield, "MinHtfTemp" );       //, 	    50);      // csp.tr.solf.htfmintemp
@@ -357,7 +363,7 @@ public:
 		set_unit_value_ssc_double( type805_solarfield, "TurbEffG" );       //, 	       0.3774);   // csp.tr.pwrb.effdesign
 		set_unit_value_ssc_double( type805_solarfield, "SfInTempD" );       //, 	   293);      // csp.tr.solf.htfinlettemp
 		set_unit_value_ssc_double( type805_solarfield, "SfOutTempD" );       //, 	   391);      // csp.tr.solf.htfoutlettemp
-		set_unit_value_ssc_double( type805_solarfield, "ColType" );       //, 	       1);
+//		set_unit_value_ssc_double( type805_solarfield, "ColType" );       //, 	       1);
 		set_unit_value_ssc_double( type805_solarfield, "TrkTwstErr" );       //, 	   0.994);     // csp.tr.sca.track_twist_error
 		set_unit_value_ssc_double( type805_solarfield, "GeoAcc" );       //, 	       0.98);      // csp.tr.sca.geometric_accuracy
 		set_unit_value_ssc_double( type805_solarfield, "MirRef" );       //, 	       0.935);     // csp.tr.sca.reflectivity
@@ -373,7 +379,12 @@ public:
 		bool bConnected = connect( weather, "solazi", type805_solarfield, "SolarAz", 0.1, -1 );                
 		bConnected &= connect( weather, "beam", type805_solarfield, "Insol_Beam_Normal", 0.1, -1 );
 		bConnected &= connect( weather, "tdry", type805_solarfield, "AmbientTemperature", 0.1, -1 );
-		bConnected &= connect( weather, "wspd", type805_solarfield, "WndSpd", 0.1, -1 );
+		bConnected &= connect(weather, "wspd", type805_solarfield, "WndSpd", 0.1, -1);
+		bConnected &= connect(weather, "shift", type805_solarfield, "SHIFT", 0.1, -1);
+		bConnected &= connect(weather, "lat", type805_solarfield, "Site_Lat", 0.1, -1);
+		bConnected &= connect(weather, "lon", type805_solarfield, "Site_LongD", 0.1, -1);
+
+
 	
 		//Set Storage Parameters
 		set_unit_value_ssc_double(type806_storage, "TSHOURS" );       //,6);          // csp.tr.tes.full_load_hours
