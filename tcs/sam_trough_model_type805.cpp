@@ -40,8 +40,8 @@ enum {
 	I_HCE_A4,
 	I_HCE_A5,
 	I_HCE_A6,
-	I_LU_Fl,
-	I_LuFlEr,
+//	I_LU_Fl,
+//	I_LuFlEr,
 
 	I_SfTi,
 	I_SolarAz,
@@ -79,7 +79,7 @@ enum {
 	I_TurbEffG,
 	I_SfInTempD,
 	I_SfOutTempD,
-	I_ColType,
+//	I_ColType,
 	I_TrkTwstErr,
 	I_GeoAcc,
 	I_MirRef,
@@ -130,13 +130,13 @@ enum {
 	O_Qsfnipcosth,
 	O_Qdesign,
 	O_Edesign,
-	O_SolarAz,
-	O_HCEFieldErr,
-	O_ColFieldErr,
-	O_HCEFactor0,
-	O_HCEFactor1,
-	O_HCEFactor2,
-	O_HCEFactor3,
+//	O_SolarAz,
+//	O_HCEFieldErr,
+//	O_ColFieldErr,
+//	O_HCEFactor0,
+//	O_HCEFactor1,
+//	O_HCEFactor2,
+//	O_HCEFactor3,
 
 	N_MAX };
 
@@ -165,8 +165,8 @@ tcsvarinfo sam_trough_model_type805_variables[] = {
 	{ TCS_INPUT,  TCS_ARRAY,  I_HCE_A5,                 "HCE_A5",                   "Heat loss calculated coefficient", "",     "",      "",     "" },
 	{ TCS_INPUT,  TCS_ARRAY,  I_HCE_A6,                 "HCE_A6",                   "Heat loss calculated coefficient", "",     "",      "",     "" },
 
-	{ TCS_INPUT,  TCS_NUMBER, I_LU_Fl,                  "LU_Fl",                    "Fluid property file logical unit", "",      "",      "",     "" },
-	{ TCS_INPUT,  TCS_NUMBER, I_LuFlEr,                 "LuFlEr",                   "Fluid property error file logical unit", "",      "",      "",     "" },
+//	{ TCS_INPUT,  TCS_NUMBER, I_LU_Fl,                  "LU_Fl",                    "Fluid property file logical unit", "",      "",      "",     "" },
+//	{ TCS_INPUT,  TCS_NUMBER, I_LuFlEr,                 "LuFlEr",                   "Fluid property error file logical unit", "",      "",      "",     "" },
 
 
 	// inputs
@@ -212,7 +212,7 @@ tcsvarinfo sam_trough_model_type805_variables[] = {
 	{ TCS_INPUT,  TCS_NUMBER, I_TurbEffG,	            "TurbEffG", 	            "Gross Turbine Eff (SETS THE DESIGN POINT)", 			     "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_SfInTempD,	            "SfInTempD", 	            "Solar Field DesignInlet  Temperature", 			     "C",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_SfOutTempD,	            "SfOutTempD", 	            "Solar Field Design Outlet Temperature", 			     "C",      "",      "",     "" },
-	{ TCS_INPUT,  TCS_NUMBER, I_ColType,	            "ColType", 	                "Collector Type", 						     "",      "",      "",     "" },
+//	{ TCS_INPUT,  TCS_NUMBER, I_ColType,	            "ColType", 	                "Collector Type", 						     "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_TrkTwstErr,	            "TrkTwstErr", 	            "Tracking Error and Twist", 					     "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_GeoAcc,	                "GeoAcc", 	                "Geometric Accuracy", 					     "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_MirRef,	                "MirRef", 	                "Mirror Reflectivity", 					     "",      "",      "",     "" },
@@ -265,13 +265,13 @@ tcsvarinfo sam_trough_model_type805_variables[] = {
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_Qsfnipcosth,	        "Qsfnipcosth",              "Total inc. radiation scaled by the cosine loss", 			            "MWt",    "",      "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_Qdesign,	            "Qdesign",                  "Power block thermal design", 			                                "MWt",    "",      "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_Edesign,	            "Edesign",                  "Power block electric design", 			                                "MWe",    "",      "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER, O_SolarAz,               "O_SolarAz",                "Solar Azimuthal Angle (TRNSYS)",                                       "deg",      "",      "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFieldErr,           "O_HCEFieldErr",            "HCE field Error",                                                      "",      "",      "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER, O_ColFieldErr,           "O_ColFieldErr",            "Collector Field Error",                                                "",      "",      "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor0,            "O_HCEFactor0",             "HCE field factor 0",                                                   "",      "",      "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor1,            "O_HCEFactor1",             "HCE field factor 1",                                                   "",      "",      "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor2,            "O_HCEFactor2",             "HCE field factor 2",                                                   "",      "",      "",     "" },
-	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor3,            "O_HCEFactor3",             "HCE field factor 3",                                                   "",      "",      "",     "" },
+//	{ TCS_OUTPUT,  TCS_NUMBER, O_SolarAz,               "O_SolarAz",                "Solar Azimuthal Angle (TRNSYS)",                                       "deg",      "",      "",     "" },
+//	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFieldErr,           "O_HCEFieldErr",            "HCE field Error",                                                      "",      "",      "",     "" },
+//	{ TCS_OUTPUT,  TCS_NUMBER, O_ColFieldErr,           "O_ColFieldErr",            "Collector Field Error",                                                "",      "",      "",     "" },
+//	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor0,            "O_HCEFactor0",             "HCE field factor 0",                                                   "",      "",      "",     "" },
+//	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor1,            "O_HCEFactor1",             "HCE field factor 1",                                                   "",      "",      "",     "" },
+//	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor2,            "O_HCEFactor2",             "HCE field factor 2",                                                   "",      "",      "",     "" },
+//	{ TCS_OUTPUT,  TCS_NUMBER, O_HCEFactor3,            "O_HCEFactor3",             "HCE field factor 3",                                                   "",      "",      "",     "" },
 
 
 
@@ -685,8 +685,8 @@ public:
 		double Solar_Field_Area = value(I_Solar_Field_Area);
 		double Solar_Field_Mult = value(I_Solar_Field_Mult);	//NB Added on 9-11-06
 		int HTFFluid         = (int)value(I_HTFFluid);
-		int LU_FL            = (int)value(I_LU_Fl);  //MJW 7/09
-		int LuFlEr           = (int)value(I_LuFlEr);  //MJW 7/09
+//		int LU_FL            = (int)value(I_LU_Fl);  //MJW 7/09
+//		int LuFlEr           = (int)value(I_LuFlEr);  //MJW 7/09
 
 		double HCEfieldErr = 0.0;
 		
@@ -769,7 +769,7 @@ public:
 		double SfInTempD = value(I_SfInTempD);
 		double SfOutTempD = value(I_SfOutTempD);
 		double AveSfTempD = (SfOutTempD + SfInTempD)/2.0;
-		double ColType = value(I_ColType);
+//		double ColType = value(I_ColType);
 		double TrkTwstErr= value(I_TrkTwstErr);
 		double GeoAcc = value(I_GeoAcc);
 		double MirRef = value(I_MirRef);
@@ -1353,13 +1353,13 @@ public:
 		value(O_Edesign, TurbOutG);
 
 		// testing TRNSYS conventions
-		value(O_SolarAz, SolarAz*180.0/M_PI);
-		value(O_HCEFieldErr, HCEfieldErr);
-		value(O_ColFieldErr, ColFieldErr);
-		value(O_HCEFactor0, m_HCEfactor[0]);
-		value(O_HCEFactor1, m_HCEfactor[1]);
-		value(O_HCEFactor2, m_HCEfactor[2]);
-		value(O_HCEFactor3, m_HCEfactor[3]);
+//		value(O_SolarAz, SolarAz*180.0/M_PI);
+//		value(O_HCEFieldErr, HCEfieldErr);
+//		value(O_ColFieldErr, ColFieldErr);
+//		value(O_HCEFactor0, m_HCEfactor[0]);
+//		value(O_HCEFactor1, m_HCEfactor[1]);
+//		value(O_HCEFactor2, m_HCEfactor[2]);
+//		value(O_HCEFactor3, m_HCEfactor[3]);
 		 
 
 /* shj - port the code here
