@@ -39,7 +39,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                       "",       "0=beam&diffuse,1=total&beam",   "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                       "",       "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "ac_derate",                                   "Interconnection AC derate",                               "0..1",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=1",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ac_loss",                                   "Interconnection AC loss",                               "%",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "modules_per_string",                          "Modules per string",                                      "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                      "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
@@ -59,7 +59,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_derate",                            "Sub-array 1 DC power derate",                             "0..1",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=1",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 DC power loss",                             "%",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmodx",                             "Sub-array 1 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmody",                             "Sub-array 1 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
@@ -80,7 +80,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:azal",                      "Sub-array 2 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shading:diff",                      "Sub-array 2 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_soiling",                           "Sub-array 2 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray2_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_derate",                            "Sub-array 2 DC power derate",                             "0..1",   "",                              "pvsamv1",              "subarray2_enable=1",       "MIN=0,MAX=1",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_dcloss",                            "Sub-array 2 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray2_enable=1",       "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mod_orient",                        "Sub-array 2 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmodx",                             "Sub-array 2 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmody",                             "Sub-array 2 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
@@ -101,7 +101,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:azal",                      "Sub-array 3 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shading:diff",                      "Sub-array 3 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_soiling",                           "Sub-array 3 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray3_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_derate",                            "Sub-array 3 DC power derate",                             "0..1",   "",                              "pvsamv1",              "subarray3_enable=1",       "MIN=0,MAX=1",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_dcloss",                            "Sub-array 3 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray3_enable=1",       "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mod_orient",                        "Sub-array 3 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmodx",                             "Sub-array 3 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmody",                             "Sub-array 3 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
@@ -122,7 +122,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:azal",                      "Sub-array 4 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shading:diff",                      "Sub-array 4 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_soiling",                           "Sub-array 4 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray4_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_derate",                            "Sub-array 4 DC power derate",                             "0..1",   "",                              "pvsamv1",              "subarray4_enable=1",       "MIN=0,MAX=1",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_dcloss",                            "Sub-array 4 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray4_enable=1",       "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mod_orient",                        "Sub-array 4 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmodx",                             "Sub-array 4 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmody",                             "Sub-array 4 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
@@ -545,7 +545,7 @@ public:
 		int modules_per_string = as_integer("modules_per_string");
 		int strings_in_parallel = as_integer("strings_in_parallel");
 		int num_inverters = as_integer("inverter_count");
-		double ac_derate = as_double("ac_derate");
+		double ac_derate = 1 - as_double("ac_loss")/100;	//convert from loss to derate
 
 		size_t alb_len = 0;
 		ssc_number_t *alb_array = as_array("albedo", &alb_len); // monthly albedo array
@@ -590,7 +590,7 @@ public:
 			for (int k=0;k<12;k++)
 				sa[nn].soiling[k] = (double) soiling[k];
 	
-			sa[nn].derate = as_double( prefix+"derate" );
+			sa[nn].derate = 1 - as_double( prefix+"dcloss" )/100;	// convert from % (passed in) to derate
 			sa[nn].track_mode = as_integer( prefix+"track_mode"); // 0=fixed, 1=1axis, 2=2axis, 3=aziaxis
 
 			sa[nn].tilt = fabs(wf.lat);
