@@ -2,7 +2,7 @@
 
 #include "core.h"
 #include "lib_weatherfile.h"
-#include "lib_irradproc.h";
+#include "lib_irradproc.h"
 #include "lib_util.h"
 
 static var_info _cm_vtab_wfcheck[] = 
