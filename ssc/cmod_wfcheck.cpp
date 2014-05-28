@@ -66,7 +66,7 @@ public:
 			if ( std::isnan( gh_est ) )
 				gh_est = wf.gh;
 
-			if ( !std::isnan( wf.dn ) && !isnan( wf.df ) && !isnan( wf.gh ) )
+			if ( !std::isnan( wf.dn ) && !std::isnan( wf.df ) && !std::isnan( wf.gh ) )
 			{
 				if ( gh_est > 500 && (gh_est-wf.gh)/wf.gh > 0.2 )
 					warn( "beam+diffuse (%lg) inconsistent with global (%lg) at record %d by greater than 20 percent", gh_est, wf.gh, i );

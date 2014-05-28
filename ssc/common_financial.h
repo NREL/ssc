@@ -37,7 +37,7 @@ public:
 };
 
 
-var_info vtab_advanced_financing_cost[];
+extern var_info vtab_advanced_financing_cost[];
 
 
 class advanced_financing_cost

@@ -11,19 +11,17 @@ TARGET = ssc.dylib
 
 
 OBJECTS = \
+	cmod_annualoutput.o \
+	cmod_generic_system.o \
 	cmod_wfcheck.o \
 	cmod_pvwattsv5.o \
 	cmod_windfile.o \
 	cmod_pvwattsfunc.o \
 	cmod_wfcsv.o \
-	cmod_test_pvshade.o \
-	cmod_geothermalui.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
 	cmod_windbos.o \
 	cmod_pvwattsfrompoa.o \
-	cmod_annualoutput.o \
-	cmod_test_irr.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
 	cmod_pvsamv1.o \
@@ -48,6 +46,7 @@ OBJECTS = \
 	vartab.o \
 	sscapi.o \
 	common.o \
+	common_financial.o \
 	cmod_tcsdirect_steam.o \
 	cmod_tcsgeneric_solar.o \
 	cmod_tcslinear_fresnel.o \
