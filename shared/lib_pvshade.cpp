@@ -318,25 +318,17 @@ bool ss_exec(
 	double m_r = inputs.nrows;
 	double m_R = inputs.row_space;
 
-	// assign other parameters per Chris' paper
-	double m_A;
-	double m_B;	
-	if (inputs.mod_orient == 0) // Portrait Mode
-	{
-		m_A = m_W * m_n;
-		m_B = m_L * m_m;
-	}
-	else // Landscape Mode
-	{
-		m_A = m_L * m_n;
-		m_B = m_W * m_m;
-	}
-	double a = 0.0, b = m_B;
-
 	// check for divide by zero issues with Row spacing per email from Chris 5/2/12
 	if (m_R < M_EPS) m_R = M_EPS;
 
-	// calculate mask angle	
+	// calculate the mask angle
+	// NOTE THAT B HERE IS PER CHRIS DELINE'S PAPER: B IS THE LENGTH OF THE SIDE OF A ROW
+	double m_B;
+	if (inputs.mod_orient == 0) m_B = m_L * m_m;	// Portrait Mode
+	else m_B = m_W * m_m;	// Landscape Mode
+
+	double a = 0.0, b = m_B;
+	
 	double mask_angle;
 	if (inputs.mask_angle_calc_method == 1)
 	{
@@ -352,8 +344,13 @@ bool ss_exec(
 	mask_angle *= 180.0/M_PI; // change to degrees to pass into functions later
 
 	// ***********************************
-	// CALCULATIONS
+	// SHADOW DIMENSION CALCULATIONS
 	// ***********************************
+	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
+
+	double m_A; //NOTE THAT THIS IS APPLEBAUM A, WHICH IS THE ROW SIDE WIDTH, NOT DELINE A, WHICH IS THE ROW LENGTH
+	// APPLEBAUM A IS EQUAL TO DELINE B
+	m_A = m_B;
 
 	double px, py;
 	double S,X;
@@ -361,15 +358,20 @@ bool ss_exec(
 	// AppelBaum Appendix A
 	double g, Hs;
 
-	// Calculate Shading Dimensions
-	// Reference Appelbaum and Bany "Shadow effect of adjacent solar collectors in large scale systems" Solar Energy 1979 Vol 23. No. 6
-	// if no effective tilt then no array self-shading
-	if ( ( (solzen < 90.0) && (fabs(solazi) < 90.0) ) && ( tilt != 0 ) )
+	/* two assumptions in Applebaum paper:
+		1. Azimuth = 0 is facing toward sun (south in northern hemisphere)
+		2. Array azimuth is 0 degrees
+	   to reconcile these assumptions, use an effective azimuth (az_eff) that is the difference between array az and solar az
+	*/
+	double az_eff = solazi - azimuth;
+
+	// if no effective tilt, or sun is down, then no array self-shading
+	if ((solzen < 90.0) && (tilt != 0) )// && (fabs(solazi) < 90.0) )
 	{ 
 		// Appelbaum eqn (12)
-		py = m_A * (cosd(tilt) + ( cosd(solazi) * sind(tilt) /tand(90.0-solzen) ) );
+		py = m_A * (cosd(tilt) + ( cosd(az_eff) * sind(tilt) /tand(90.0-solzen) ) );
 		// Appelbaum eqn (11)
-		px = m_A * sind(tilt) * sind(solazi) / tand(90.0-solzen);
+		px = m_A * sind(tilt) * sind(az_eff) / tand(90.0-solzen);
 	}
 	else //! Otherwise the sun has set
 	{
@@ -458,7 +460,7 @@ bool ss_exec(
 	
 	//Chris Deline's self-shading algorithm
 
-	// 1. determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because shading is boolean for beam: it's either shaded or it's not, and that's taken into account in X and S)
+	// 1. determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
 	diffuse_reduce( solzen, tilt, Gb_nor, Gd_poa, m_B/m_R, mask_angle, albedo, m_r,
 		// outputs
 		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );

@@ -660,7 +660,7 @@ public:
 			}
 
 			// shading mode- only required for fixed tilt or one-axis, not backtracking systems
-			if (sa[nn].shade_mode == 0 || (sa[nn].shade_mode == 1 && sa[nn].backtrack == 0))
+			if (sa[nn].track_mode == 0 || (sa[nn].track_mode == 1 && sa[nn].backtrack == 0))
 			{
 				sa[nn].shade_mode = as_integer(prefix + "shade_mode");
 
@@ -1013,12 +1013,13 @@ public:
 		else
 			throw exec_error("pvsamv1", "invalid pv module model type");
 
-		// SELF-SHADING MODULE DIMENSIONS
+		// SELF-SHADING MODULE INFORMATION
 		double width = sqrt((ref_area_m2 / aspect_ratio));
 		for (size_t nn = 0; nn < 4; nn++)
 		{
 			sa[nn].sscalc.width = width;
 			sa[nn].sscalc.length = width * aspect_ratio;
+			sa[nn].sscalc.FF0 = self_shading_fill_factor;
 		}
 		
 		double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc/1000.0;
