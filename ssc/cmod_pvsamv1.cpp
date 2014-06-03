@@ -407,7 +407,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc_net",                              "Net dc output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_ac_net",                              "Net ac output",                                          "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
-	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "Monthly energy",                                         "kWh",    "",                      "pvsamv1",       "*",                    "LENGTH=12",                              "" },
+
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_glob_horiz_rad",                       "Global horizontal irradiance",                           "kWh/m2", "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation",                      "Input radiation",                                        "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation_beam",                 "Beam input radiation",                                   "kWh",    "",                      "pvsamv1",       "*",                    "",                              "" },
@@ -1608,6 +1609,7 @@ public:
 
 		accumulate_monthly( "hourly_ac_net", "monthly_ac_net" );
 		accumulate_monthly( "hourly_dc_net", "monthly_dc_net" );
+		accumulate_monthly("hourly_energy", "monthly_energy");
 
 		accumulate_annual( "hourly_glob_horiz_rad", "annual_glob_horiz_rad" );
 		accumulate_annual( "hourly_input_radiation", "annual_input_radiation" );
