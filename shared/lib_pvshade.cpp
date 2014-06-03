@@ -366,7 +366,7 @@ bool ss_exec(
 	double az_eff = solazi - azimuth;
 
 	// if no effective tilt, or sun is down, then no array self-shading
-	if ((solzen < 90.0) && (tilt != 0) )// && (fabs(solazi) < 90.0) )
+	if ((solzen < 90.0) && (tilt != 0) && (fabs(az_eff) < 90.0) )
 	{ 
 		// Appelbaum eqn (12)
 		py = m_A * (cosd(tilt) + ( cosd(az_eff) * sind(tilt) /tand(90.0-solzen) ) );
