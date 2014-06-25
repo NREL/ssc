@@ -18,8 +18,8 @@
 #define min(a,b) (((a) < (b))?(a):(b))
 
 // SUPPORTING MATH AND INTEGRATION FUNCTIONS
-
-double atand( double radians )
+/*
+static double atand( double radians )
 {
 	// return angle in radians (-pi/2, pi/2) or in degrees (-90,90)
 	double arctan_val = atan( radians );
@@ -27,12 +27,12 @@ double atand( double radians )
 	while ( arctan_val < -M_PI/2.0) arctan_val += M_PI;
 	return (180.0/ M_PI) * arctan_val; //convert angle from radians to degrees
 }
+*/
 
-
-double round(double number)
+/*static double round(double number)
 {
     return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
-}
+}*/
 
 
 
