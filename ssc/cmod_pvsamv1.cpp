@@ -54,10 +54,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rotlim",                            "Sub-array 1 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray1_shade_mode",				     	"Sub-array 1 shading mode (fixed tilt or 1x tracking)",	   "0/1",	 "0=selfshaded,1=none",			  "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=1",		   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_gcr",                               "Sub-array 1 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=1",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading:hourly",                    "Sub-array 1 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:mxh",                       "Sub-array 1 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading:hourly",                    "Sub-array 1 Hourly beam shading losses",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:mxh",                       "Sub-array 1 Month x Hour beam shading losses",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading losses",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading loss",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 DC power loss",                             "%",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
@@ -75,10 +75,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_rotlim",                            "Sub-array 2 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray2_shade_mode",				     	"Sub-array 2 shading mode (fixed tilt or 1x tracking)",	   "0/1",	 "0=selfshaded,1=none",			  "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=1",		   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_gcr",                               "Sub-array 2 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=1",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_shading:hourly",                    "Sub-array 2 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:mxh",                       "Sub-array 2 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:azal",                      "Sub-array 2 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shading:diff",                      "Sub-array 2 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_shading:hourly",                    "Sub-array 2 Hourly beam shading losses",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:mxh",                       "Sub-array 2 Month x Hour beam shading losses",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:azal",                      "Sub-array 2 Azimuth x altitude beam shading losses",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shading:diff",                      "Sub-array 2 Diffuse shading loss",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_soiling",                           "Sub-array 2 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray2_enable=1",       "LENGTH=12",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_dcloss",                            "Sub-array 2 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray2_enable=1",       "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mod_orient",                        "Sub-array 2 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
@@ -96,10 +96,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_rotlim",                            "Sub-array 3 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray3_shade_mode",				     	"Sub-array 3 shading mode (fixed tilt or 1x tracking)",	   "0/1",	 "0=selfshaded,1=none",			  "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=1",		   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_gcr",                               "Sub-array 3 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=1",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_shading:hourly",                    "Sub-array 3 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:mxh",                       "Sub-array 3 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:azal",                      "Sub-array 3 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shading:diff",                      "Sub-array 3 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_shading:hourly",                    "Sub-array 3 Hourly beam shading losses",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:mxh",                       "Sub-array 3 Month x Hour beam shading losses",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:azal",                      "Sub-array 3 Azimuth x altitude beam shading losses",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shading:diff",                      "Sub-array 3 Diffuse shading loss",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_soiling",                           "Sub-array 3 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray3_enable=1",       "LENGTH=12",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_dcloss",                            "Sub-array 3 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray3_enable=1",       "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mod_orient",                        "Sub-array 3 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
@@ -117,10 +117,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_rotlim",                            "Sub-array 4 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray4_shade_mode",				     	"Sub-array 4 shading mode (fixed tilt or 1x tracking)",	   "0/1",	 "0=selfshaded,1=none",			  "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=1",		   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_gcr",                               "Sub-array 4 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_shading:hourly",                    "Sub-array 4 Hourly beam shading factors",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:mxh",                       "Sub-array 4 Month x Hour beam shading factors",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:azal",                      "Sub-array 4 Azimuth x altitude beam shading factors",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shading:diff",                      "Sub-array 4 Diffuse shading factor",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_shading:hourly",                    "Sub-array 4 Hourly beam shading losses",                 "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:mxh",                       "Sub-array 4 Month x Hour beam shading losses",           "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:azal",                      "Sub-array 4 Azimuth x altitude beam shading losses",     "",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shading:diff",                      "Sub-array 4 Diffuse shading loss",                      "",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_soiling",                           "Sub-array 4 Monthly soiling derate",                      "0..1",   "",                              "pvsamv1",              "subarray4_enable=1",       "LENGTH=12",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_dcloss",                            "Sub-array 4 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray4_enable=1",       "MIN=0,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mod_orient",                        "Sub-array 4 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
@@ -603,7 +603,7 @@ public:
 			
 			sa[nn].shad_skydiff_factor = 1;
 			if ( is_assigned( prefix+"shading:diff" ) )
-				sa[nn].shad_skydiff_factor = as_double( prefix+"shading:diff" );
+				sa[nn].shad_skydiff_factor = 1 - as_double( prefix+"shading:diff" )/100;
 			
 			sa[nn].shad_beam_factor.resize(8760);
 			for (size_t j=0;j<8760;j++)
@@ -616,7 +616,7 @@ public:
 				if ( len == 8760 )
 				{
 					for ( size_t j=0;j<8760;j++)
-						sa[nn].shad_beam_factor[j] = (double) vals[j];
+						sa[nn].shad_beam_factor[j] = 1 - (double) vals[j]/100;
 				}
 				else
 					throw exec_error("pvsamv1", "hourly shading beam factors must have 8760 values: subarray " + util::to_string((int)(nn+1)));
@@ -633,7 +633,7 @@ public:
 				for (int m=0;m<12;m++)
 					for (int d=0;d<util::nday[m];d++)
 						for (int h=0;h<24;h++)
-							sa[nn].shad_beam_factor[c++] *= mat[ m*ncols + h ];
+							sa[nn].shad_beam_factor[c++] *= 1- mat[ m*ncols + h ]/100;
 			}
 
 			if ( is_assigned( prefix+"shading:azal" ) )
@@ -645,8 +645,13 @@ public:
 
 				sa[nn].shad_azal.resize_fill( nrows, ncols, 1.0 );
 				for ( size_t r=0;r<nrows;r++ )
-					for ( size_t c=0;c<ncols;c++ )
-						sa[nn].shad_azal.at(r,c) = mat[r*ncols+c];
+				for (size_t c = 0; c < ncols; c++)
+				{
+					if (r==0 || c==0)	//first row and first column give azimuth and altitude coordinates, don't need to translate into derates
+						sa[nn].shad_azal.at(r, c) = mat[r*ncols + c];
+					else
+						sa[nn].shad_azal.at(r, c) = 1 - mat[r*ncols + c] / 100;
+				}
 
 				if ( !check_azal_monotonic_increase( sa[nn].shad_azal ) )
 					throw exec_error("pvsamv1", "azimuth x altitude shading factor table row 1 and col 1 must increase monotonically: subarray " + util::to_string((int)(nn+1)));
