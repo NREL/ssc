@@ -245,17 +245,17 @@ DataView::DataView( wxWindow *parent )
 	m_grid_table(0)
 {
 	wxBoxSizer *tb_sizer = new wxBoxSizer(wxHORIZONTAL);
-	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add..."), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_EDIT_VARIABLE, "Edit..."), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_VARIABLE, "Delete"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_CHECKED, "Del checked"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_UNCHECKED, "Del unchecked"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_DELETE_ALL_VARIABLES, "Del all"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_SELECT_ALL, "Select all"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton(this, ID_UNSELECT_ALL, "Unselect all"), 0, wxALL|wxEXPAND, 2);
-	tb_sizer->Add( new wxButton( this, ID_COPY_CLIPBOARD, "Copy to clipboard"), 0, wxEXPAND|wxALL, 2);
-	tb_sizer->Add( new wxButton( this, ID_SHOW_STATS, "Show stats..."), 0, wxEXPAND|wxALL, 2);
-	tb_sizer->Add( new wxButton( this, ID_DVIEW, "Timeseries graph..."), 0, wxEXPAND|wxALL, 2);
+	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_EDIT_VARIABLE, "Edit...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_VARIABLE, "Delete", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_CHECKED, "Del checked", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_UNCHECKED, "Del unchecked", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_DELETE_ALL_VARIABLES, "Del all", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_SELECT_ALL, "Select all", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton(this, ID_UNSELECT_ALL, "Unselect all", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
+	tb_sizer->Add( new wxButton( this, ID_COPY_CLIPBOARD, "Copy to clipboard", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxEXPAND|wxALL, 2);
+	tb_sizer->Add( new wxButton( this, ID_SHOW_STATS, "Show stats...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxEXPAND|wxALL, 2);
+	tb_sizer->Add( new wxButton( this, ID_DVIEW, "Timeseries graph...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxEXPAND|wxALL, 2);
 	tb_sizer->AddStretchSpacer(1);
 
 	wxSplitterWindow *splitwin = new wxSplitterWindow(this, wxID_ANY, 
@@ -622,7 +622,7 @@ void DataView::EditVariable( wxString name )
 		DataView *dv = new DataView( &dlg );
 		wxSizer *sz = new wxBoxSizer(wxVERTICAL);
 		sz->Add(dv, 1, wxALL|wxEXPAND, 0 );
-		sz->Add( new wxButton( &dlg, wxID_OK, "Close" ),0,wxALL,3 );
+		sz->Add( new wxButton( &dlg, wxID_OK, "Close" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT),0,wxALL,3 );
 		dv->SetDataObject( &v->table );
 		dlg.SetSizer( sz );
 		dlg.ShowModal();

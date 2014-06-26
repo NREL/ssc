@@ -51,7 +51,7 @@ EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
 	numValue = new wxNumericCtrl(this, ID_numValue );
 	txtValue = new wxTextCtrl(this, ID_txtValue );
 
-	btnChooseFile = new wxButton(this, ID_btnChooseFile, "file..");
+	btnChooseFile = new wxButton(this, ID_btnChooseFile, "file..", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
 
 	wxArrayString type_choices;
 	type_choices.Add("SSC_STRING");

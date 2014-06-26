@@ -192,12 +192,12 @@ SCFrame::SCFrame()
 	
 	wxBoxSizer *szh_run = new wxBoxSizer( wxHORIZONTAL );
 	szh_run->Add( m_currentCM, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
-	szh_run->Add( new wxButton( cm_browser, wxID_EXECUTE, "Run" ),0, wxALL|wxALIGN_CENTER_VERTICAL, 3);
+	szh_run->Add( new wxButton( cm_browser, wxID_EXECUTE, "Run" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT),0, wxALL|wxALIGN_CENTER_VERTICAL, 3);
 	
 	wxBoxSizer *szleft = new wxBoxSizer( wxVERTICAL );
 	szleft->Add( new wxStaticText( cm_browser, wxID_ANY, " Available modules:" ), 0, wxALL|wxEXPAND|wxALIGN_BOTTOM, 1 );
 	szleft->Add( m_listCM, 1, wxALL|wxEXPAND, 3 );	
-	szleft->Add( new wxButton(cm_browser, ID_CopyToClipboardCM, "Copy table to clipboard..."), 0, wxALL|wxEXPAND, 3);
+	szleft->Add( new wxButton(cm_browser, ID_CopyToClipboardCM, "Copy table to clipboard...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 3);
 	szleft->Add( new wxStaticLine( cm_browser, wxID_ANY ), 0, wxALL|wxEXPAND, 2 );
 	szleft->Add( szh_run, 0, wxALL|wxEXPAND, 3 );
 
@@ -207,10 +207,10 @@ SCFrame::SCFrame()
 
 	wxBoxSizer *szmaintools = new wxBoxSizer( wxHORIZONTAL );
 
-	szmaintools->Add( new wxButton( cm_browser, ID_LOAD_UNLOAD_DLL, "Load/unload library" ), 0, wxALL|wxEXPAND, 2 );
-	szmaintools->Add( new wxButton( cm_browser, ID_CHOOSE_DLL, "Choose SSC library..." ), 0, wxALL|wxEXPAND, 2 );
-	szmaintools->Add( new wxButton( cm_browser, ID_LOAD_BDAT, "Load data file..." ), 0, wxALL|wxEXPAND, 2 );
-	szmaintools->Add( new wxButton( cm_browser, ID_SAVE_BDAT, "Save data file..." ), 0, wxALL|wxEXPAND, 2 );
+	szmaintools->Add( new wxButton( cm_browser, ID_LOAD_UNLOAD_DLL, "Load/unload library", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT ), 0, wxALL|wxEXPAND, 2 );
+	szmaintools->Add( new wxButton( cm_browser, ID_CHOOSE_DLL, "Choose SSC library...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT ), 0, wxALL|wxEXPAND, 2 );
+	szmaintools->Add( new wxButton( cm_browser, ID_LOAD_BDAT, "Load data file...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT ), 0, wxALL|wxEXPAND, 2 );
+	szmaintools->Add( new wxButton( cm_browser, ID_SAVE_BDAT, "Save data file...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT ), 0, wxALL|wxEXPAND, 2 );
 	szmaintools->AddStretchSpacer();
 	
 	wxBoxSizer *szvertmain = new wxBoxSizer( wxVERTICAL );

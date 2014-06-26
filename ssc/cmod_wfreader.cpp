@@ -20,6 +20,7 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_STRING,      "description",             "Description",                      "",       "",                      "Weather Reader",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "source",                  "Source",                           "",       "",                      "Weather Reader",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "url",                     "URL",                              "",       "",                      "Weather Reader",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "format",                  "File format",                      "",       "tmy2,tmy3,epw,smw,wfcsv", "Weather Reader",    "*",                        "",                      "" },
 	
 	{ SSC_OUTPUT,        SSC_NUMBER,      "start",                   "Start",                            "sec",    "",                      "Weather Reader",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "step",                    "Step",                             "sec",    "",                      "Weather Reader",      "*",                       "",                          "" },
@@ -84,6 +85,16 @@ public:
 		assign( "start", var_data( (ssc_number_t)wf.start ) );
 		assign( "step", var_data( (ssc_number_t)wf.step ) );
 		assign( "nrecords", var_data( (ssc_number_t)wf.nrecords ) );
+
+		switch( wf.type() )
+		{
+		case weatherfile::TMY2: assign("format", var_data("tmy2") ); break;
+		case weatherfile::TMY3: assign("format", var_data("tmy3") ); break;
+		case weatherfile::EPW: assign("format", var_data("epw") ); break;
+		case weatherfile::SMW: assign("format", var_data("smw") ); break;
+		case weatherfile::WFCSV: assign("format", var_data("wfcsv") ); break;
+		default: assign("format", var_data("invalid")); break;
+		}
 
 		if ( header_only )
 			return;
