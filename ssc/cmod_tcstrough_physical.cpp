@@ -367,8 +367,9 @@ public:
 
 		if(debug_mode)
 		{
-			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out" );
-			set_unit_value( weather, "i_hour", "TIME" );
+//			set_unit_value(weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out");
+			set_unit_value(weather, "file_name", "C:/Projects/SAM/trunk/ssc/tcsdata/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out");
+			set_unit_value(weather, "i_hour", "TIME");
 			set_unit_value( weather, "i_month", "month" );
 			set_unit_value( weather, "i_day", "day" );
 			set_unit_value( weather, "i_global", "GlobalHorizontal" );
@@ -661,7 +662,7 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0 > simulate(3600, hours * 3600, 3600))
 			throw exec_error( "tcstrough_physical", util::format("there was a problem simulating in tcstrough_physical.") );
 
 		// get the outputs
