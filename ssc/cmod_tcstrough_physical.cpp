@@ -497,12 +497,12 @@ public:
         set_unit_value_ssc_matrix(type250_solarfield, "SCAInfoArray" ); // , [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]]);
         set_unit_value_ssc_array(type250_solarfield, "SCADefocusArray" ); // , [8,7,6,5,4,3,2,1]);
 		//Set the initial values
-        set_unit_value_ssc_double(type250_solarfield, "I_b" ); // , 0.);
-        set_unit_value_ssc_double(type250_solarfield, "T_db" ); // , 15.);
-        set_unit_value_ssc_double(type250_solarfield, "V_wind" ); // , 1.5);
-        set_unit_value_ssc_double(type250_solarfield, "P_amb" ); // , 1.);
-        set_unit_value_ssc_double(type250_solarfield, "T_dp" ); // , 10.);
-        set_unit_value_ssc_double(type250_solarfield, "SolarAz" ); // , 0.);
+        //set_unit_value_ssc_double(type250_solarfield, "I_b" ); // , 0.);
+        //set_unit_value_ssc_double(type250_solarfield, "T_db" ); // , 15.);
+        //set_unit_value_ssc_double(type250_solarfield, "V_wind" ); // , 1.5);
+        //set_unit_value_ssc_double(type250_solarfield, "P_amb" ); // , 1.);
+        //set_unit_value_ssc_double(type250_solarfield, "T_dp" ); // , 10.);
+        //set_unit_value_ssc_double(type250_solarfield, "SolarAz" ); // , 0.);
         set_unit_value_ssc_double(type250_solarfield, "defocus" ); // , 1.);
         set_unit_value_ssc_double(type250_solarfield, "T_cold_in" ); // , 293.);
 		//Connect Solar Field Inputs
