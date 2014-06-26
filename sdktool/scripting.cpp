@@ -359,15 +359,15 @@ EditorWindow::EditorWindow( wxWindow *parent )
 {
 			
 	wxBoxSizer *szdoc = new wxBoxSizer( wxHORIZONTAL );
-	szdoc->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_SAVEAS, "Save as" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, ID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( new wxButton( this, ID_RUN, "Run" ), 0, wxALL|wxEXPAND, 2  );
-	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" ), 0, wxALL|wxEXPAND, 2 );	
+	szdoc->Add( new wxButton( this, wxID_NEW, "New" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_OPEN, "Open" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_SAVE, "Save" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_SAVEAS, "Save as" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_FIND, "Find" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, wxID_FORWARD, "Find next" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, ID_HELP, "Help" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( new wxButton( this, ID_RUN, "Run" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	szdoc->Add( m_stopButton = new wxButton( this, wxID_STOP, "Stop" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2 );	
 	szdoc->AddStretchSpacer();
 	m_stopButton->SetForegroundColour( *wxRED );
 	m_stopButton->Hide();

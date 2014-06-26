@@ -675,12 +675,12 @@ tcVisualEditor::tcVisualEditor( wxWindow *parent )
 	m_typeChoice = new wxComboBox( this, wxID_PROPERTIES, wxEmptyString, wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY );
 	m_statusLabel = new wxStaticText( this, wxID_ANY, wxEmptyString );
 	wxBoxSizer *sztools = new wxBoxSizer( wxHORIZONTAL );
-	sztools->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2 );
-	sztools->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2 );
-	sztools->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2 );
-	sztools->Add( new wxButton( this, wxID_SAVEAS, "Save as" ), 0, wxALL|wxEXPAND, 2 );
-	sztools->Add( new wxButton( this, wxID_FORWARD, "Simulate" ), 0, wxALL|wxEXPAND, 2 );
-	sztools->Add( new wxButton( this, wxID_APPLY, "Script" ), 0, wxALL|wxEXPAND, 2 );
+	sztools->Add( new wxButton( this, wxID_NEW, "New" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2 );
+	sztools->Add( new wxButton( this, wxID_OPEN, "Open" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2 );
+	sztools->Add( new wxButton( this, wxID_SAVE, "Save" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2 );
+	sztools->Add( new wxButton( this, wxID_SAVEAS, "Save as" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2 );
+	sztools->Add( new wxButton( this, wxID_FORWARD, "Simulate" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2 );
+	sztools->Add( new wxButton( this, wxID_APPLY, "Script", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT ), 0, wxALL|wxEXPAND, 2 );
 	sztools->Add( m_statusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 2 );
 
 	wxBoxSizer *szsetup = new wxBoxSizer( wxHORIZONTAL );

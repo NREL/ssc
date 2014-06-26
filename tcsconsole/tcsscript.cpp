@@ -255,7 +255,7 @@ public:
 		wxSize(700, 600), wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER )
 	{
 		m_canceled = false;
-		wxButton *btnCancel = new wxButton(this, wxID_CANCEL, "Cancel");
+		wxButton *btnCancel = new wxButton(this, wxID_CANCEL, "Cancel", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
 
 		wxBoxSizer *szv = new wxBoxSizer(wxVERTICAL);
 
@@ -608,20 +608,20 @@ tcScriptEditor::tcScriptEditor( wxWindow *p )
 	//SetBackgroundColour( *wxWHITE );
 
 	wxBoxSizer *sztools = new wxBoxSizer( wxHORIZONTAL );
-	sztools->Add( new wxButton( this, wxID_NEW, "New" ), 0, wxALL|wxEXPAND, 2 );
-	sztools->Add( new wxButton( this, wxID_OPEN, "Open" ), 0, wxALL|wxEXPAND, 2  );
-	sztools->Add( new wxButton( this, wxID_SAVE, "Save" ), 0, wxALL|wxEXPAND, 2  );
-	sztools->Add( new wxButton( this, wxID_SAVEAS, "Save as"), 0, wxALL|wxEXPAND, 2  );
-	sztools->Add( new wxButton( this, wxID_FORWARD, "Run" ), 0, wxALL|wxEXPAND, 2  );
+	sztools->Add( new wxButton( this, wxID_NEW, "New" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2 );
+	sztools->Add( new wxButton( this, wxID_OPEN, "Open" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	sztools->Add( new wxButton( this, wxID_SAVE, "Save", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT ), 0, wxALL|wxEXPAND, 2  );
+	sztools->Add( new wxButton( this, wxID_SAVEAS, "Save as", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	sztools->Add( new wxButton( this, wxID_FORWARD, "Run" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
 
-	m_stopButton = new wxButton( this, wxID_STOP, "Stop" );
+	m_stopButton = new wxButton( this, wxID_STOP, "Stop" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
 	m_stopButton->SetForegroundColour( *wxRED );
 	sztools->Add( m_stopButton, 0, wxALL|wxEXPAND, 2 );
 	m_stopButton->Show( false );
 
-	sztools->Add( new wxButton( this, wxID_FIND, "Find" ), 0, wxALL|wxEXPAND, 2  );
-	sztools->Add( new wxButton( this, ID_FIND_NEXT, "Find next" ), 0, wxALL|wxEXPAND, 2  );
-	sztools->Add( new wxButton( this, wxID_HELP, "Help" ), 0, wxALL|wxEXPAND, 2  );
+	sztools->Add( new wxButton( this, wxID_FIND, "Find" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	sztools->Add( new wxButton( this, ID_FIND_NEXT, "Find next" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
+	sztools->Add( new wxButton( this, wxID_HELP, "Help" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2  );
 	sztools->Add( m_statusLabel = new wxStaticText(this,wxID_ANY,wxEmptyString), 0, wxALL|wxALIGN_CENTER_VERTICAL, 2 );
 
 	m_editor = new MyScriptCtrl( this, wxID_ANY );

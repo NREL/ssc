@@ -515,6 +515,22 @@ bool weatherfile::open( const std::string &file, bool header_only, bool interp )
 		m_type = INVALID;
 		return false;
 	}
+
+	if ( m_type == WFCSV )
+	{
+		// if we opened a csv file, it could be SAM/WFCSV format or TMY3
+		// try to autodetect a TMY3
+		fgets(buf, NBUF, fp );
+		fgets(buf1, NBUF, fp );
+		int ncols = locate( buf, cols, NCOL, ',' );
+		int ncols1 = locate( buf1, cols1, NCOL, ',' );
+
+		if ( ncols == 7 && ncols1 == 68 )
+			m_type = TMY3;
+
+		::rewind( fp );
+	}
+
 	
 	m_startYear = 1900;
 	m_time = 1800;	
