@@ -169,7 +169,8 @@ public:
 		//Get the dimensions of the table thats up for addition
 		int nr = table->nrows();
 		int nc = table->ncols();
-		if( nr != 2) return false;
+//		if (nr != 2) return false;
+		if (nc != 2) return false;
 
 		//if we need to add space, copy data to a new array
 		if(datasize + nc > memsize){
