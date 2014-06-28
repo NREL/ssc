@@ -191,14 +191,28 @@ void tcKernel::set_unit_value_ssc_array( int id, const char *name )
 	return;
 }
 
-void tcKernel::set_unit_value_ssc_matrix( int id, const char *name )
+void tcKernel::set_unit_value_ssc_matrix(int id, const char *name)
 {
-	size_t nr,nc;
+	size_t nr, nc;
 	ssc_number_t *p = as_matrix(name, &nr, &nc);
 	double *pt = new double[nr*nc];
-	for ( size_t i=0;i<nr*nc;i++ ) pt[i] = (double) p[i];
-	set_unit_value(id, name, pt, nr, nc); 
-	delete [] pt;
+	for (size_t i = 0; i<nr*nc; i++) pt[i] = (double)p[i];
+	set_unit_value(id, name, pt, nr, nc);
+	delete[] pt;
+	return;
+}
+
+void tcKernel::set_unit_value_ssc_matrix_transpose(int id, const char *name)
+{
+	size_t nr, nc;
+	ssc_number_t *p = as_matrix(name, &nr, &nc);
+	double *pt = new double[nr*nc];
+	size_t i = 0;
+		for (size_t c = 0; c< nc; c++)
+			for (size_t r = 0; r < nr; r++)
+				pt[i++] = (double)p[r*nc + c];
+	set_unit_value(id, name, pt, nc, nr);
+	delete[] pt;
 	return;
 }
 
