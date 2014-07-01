@@ -116,12 +116,12 @@ static var_info _cm_vtab_biomass[] = {
 	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.plant.boiler.steam_pressure",        "",                                               "",              "",      "biopower",          "*",               "",                    "" },
 
 
-	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.biomass_fuel_used",     "Annual biomass used",                           "dry tons/year", "",      "biopower",          "*",               "",                    "" },
-	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.biomass_fuel_cost",     "Annual biomass fuel cost",                      "$",             "",      "biopower",          "*",               "",                    "" },
-	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.biomass_fuel_cost_esc", "Annual biomass fuel cost escalation",           "%",             "",      "biopower",          "*",               "",                    "" },
-	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.coal_fuel_used",        "Annual coal used",                              "dry tons/year", "",      "biopower",          "*",               "",                    "" },
-	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.coal_fuel_cost",        "Annual coal fuel cost",                         "$",             "",      "biopower",          "*",               "",                    "" },
-	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.coal_fuel_cost_esc",    "Annual coal fuel cost escalation",              "%",             "",      "biopower",          "*",               "",                    "" },
+	//{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.biomass_fuel_used",     "Annual biomass used",                           "dry tons/year", "",      "biopower",          "*",               "",                    "" },
+	//{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.biomass_fuel_cost",     "Annual biomass fuel cost",                      "$",             "",      "biopower",          "*",               "",                    "" },
+	//{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.biomass_fuel_cost_esc", "Annual biomass fuel cost escalation",           "%",             "",      "biopower",          "*",               "",                    "" },
+	//{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.coal_fuel_used",        "Annual coal used",                              "dry tons/year", "",      "biopower",          "*",               "",                    "" },
+	//{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.coal_fuel_cost",        "Annual coal fuel cost",                         "$",             "",      "biopower",          "*",               "",                    "" },
+	//{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstockcost.coal_fuel_cost_esc",    "Annual coal fuel cost escalation",              "%",             "",      "biopower",          "*",               "",                    "" },
 
 
 
@@ -157,12 +157,12 @@ static var_info _cm_vtab_biomass[] = {
 	// single values
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                        "Annual Energy",                              "kWh",           "",      "biomass",           "*",               "",                    "" },
 																															   
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.opt_fuel_1_usage",       "Annual biomass used",                        "dry tons/year", "",      "biomass",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_1_cost",                "Annual biomass fuel cost",                   "$",             "",      "biomass",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_1_cost.escalation",     "Annual biomass fuel cost escalation",        "%",             "",      "biomass",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.opt_fuel_2_usage",       "Annual coal used",                           "dry tons/year", "",      "biomass",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_2_cost",                "Annual coal fuel cost",                      "$",             "",      "biomass",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_2_cost.escalation",     "Annual coal fuel cost escalation",           "%",             "",      "biomass",           "*",               "",                    "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.opt_fuel_1_usage",       "Annual biomass used",                        "dry tons/year", "",      "biomass",           "*",               "",                    "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_1_cost",                "Annual biomass fuel cost",                   "$",             "",      "biomass",           "*",               "",                    "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_1_cost.escalation",     "Annual biomass fuel cost escalation",        "%",             "",      "biomass",           "*",               "",                    "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.opt_fuel_2_usage",       "Annual coal used",                           "dry tons/year", "",      "biomass",           "*",               "",                    "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_2_cost",                "Annual coal fuel cost",                      "$",             "",      "biomass",           "*",               "",                    "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "oandm.opt_fuel_2_cost.escalation",     "Annual coal fuel cost escalation",           "%",             "",      "biomass",           "*",               "",                    "" },
 
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.e_net",                  "Gross Annual Energy (kWh)",                  "kWh",           "",      "biomass",           "*",               "",                    "" },
@@ -538,7 +538,7 @@ public:
 		ssc_number_t *_boiler_eff = allocate("hourly_boiler_eff", 8760);
 
 
-		ssc_number_t * _etaa = allocate("system.monthly.pb_eta", 12);
+		ssc_number_t * _etaa = allocate("monthly_pb_eta", 12);
 
 		_twet[1] = 1000; /*this is slightly "kludgy", but will be used to check if _twet was populated by the weather files or not. This will remain until I think of something more sophisticated.*/
 		for (int i = 0; i<12; i++)
@@ -1291,18 +1291,18 @@ public:
 		assign("system.hhv_heatrate", var_data((ssc_number_t)annual_heatrate_hhv));
 		assign("system.total_moisture", var_data((ssc_number_t)as_double("biopwr.feedstock.total_moisture")));
 
-		double opt_fuel_1_used = as_double("biopwr.feedstockcost.biomass_fuel_used");
-		assign("system.annual.opt_fuel_1_usage", var_data((ssc_number_t)opt_fuel_1_used));
-		double opt_fuel_1_cost = as_double("biopwr.feedstockcost.biomass_fuel_cost");
-		assign("oandm.opt_fuel_1_cost", var_data((ssc_number_t)opt_fuel_1_cost));
-		double opt_fuel_1_cost_esc = as_double("biopwr.feedstockcost.biomass_fuel_cost_esc") / 100.0;
-		assign("oandm.opt_fuel_1_cost.escalation", var_data((ssc_number_t)opt_fuel_1_cost_esc));//
-		double opt_fuel_2_used = as_double("biopwr.feedstockcost.coal_fuel_used");
-		assign("system.annual.opt_fuel_2_usage", var_data((ssc_number_t)opt_fuel_2_used));
-		double opt_fuel_2_cost = as_double("biopwr.feedstockcost.coal_fuel_cost");
-		assign("oandm.opt_fuel_2_cost", var_data((ssc_number_t)opt_fuel_2_cost));
-		double opt_fuel_2_cost_esc = as_double("biopwr.feedstockcost.coal_fuel_cost_esc") / 100.0;
-		assign("oandm.opt_fuel_2_cost.escalation", var_data((ssc_number_t)opt_fuel_2_cost_esc));//
+		//double opt_fuel_1_used = as_double("biopwr.feedstockcost.biomass_fuel_used");
+		//assign("system.annual.opt_fuel_1_usage", var_data((ssc_number_t)opt_fuel_1_used));
+		//double opt_fuel_1_cost = as_double("biopwr.feedstockcost.biomass_fuel_cost");
+		//assign("oandm.opt_fuel_1_cost", var_data((ssc_number_t)opt_fuel_1_cost));
+		//double opt_fuel_1_cost_esc = as_double("biopwr.feedstockcost.biomass_fuel_cost_esc") / 100.0;
+		//assign("oandm.opt_fuel_1_cost.escalation", var_data((ssc_number_t)opt_fuel_1_cost_esc));//
+		//double opt_fuel_2_used = as_double("biopwr.feedstockcost.coal_fuel_used");
+		//assign("system.annual.opt_fuel_2_usage", var_data((ssc_number_t)opt_fuel_2_used));
+		//double opt_fuel_2_cost = as_double("biopwr.feedstockcost.coal_fuel_cost");
+		//assign("oandm.opt_fuel_2_cost", var_data((ssc_number_t)opt_fuel_2_cost));
+		//double opt_fuel_2_cost_esc = as_double("biopwr.feedstockcost.coal_fuel_cost_esc") / 100.0;
+		//assign("oandm.opt_fuel_2_cost.escalation", var_data((ssc_number_t)opt_fuel_2_cost_esc));//
 
 		// modify heat rate to use here (MMBTU/MWhe)
 		assign("system.heat_rate", var_data((ssc_number_t)3.4123)); // thermal to electric conversion
