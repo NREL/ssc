@@ -110,9 +110,9 @@ public:
 		{
 			std::vector<double> turbine_outkW(wpc.m_iLengthOfTurbinePowerCurveArray); 
 
-			double weibull_k = as_double("wind_resource_weibullK");
+			double weibull_k = as_double("wind_characteristics_weibullK");
 			double max_cp = as_double("wind_turbine_max_cp");
-			double resource_class = as_double("wind_resource_class");
+			double resource_class = as_double("wind_characteristics_class");
 			//double elevation = as_double("elevation");
 			
 			//ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
