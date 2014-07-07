@@ -126,10 +126,13 @@ public:
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
 
 			for (i=0;i<nstep;i++)
-				farmpwr[i] = farm_kw/ (ssc_number_t) nstep;
+				farmpwr[i] = farm_kw/ (ssc_number_t) nstep; // fill "hourly_energy"
 
 			for (i=0; i<wpc.m_iLengthOfTurbinePowerCurveArray; i++)
 				turbine_output[i] = (ssc_number_t) turbine_outkW[i];
+
+			accumulate_monthly("hourly_energy", "monthly_energy");
+			accumulate_annual("hourly_energy", "annual_energy");
 
 			return;
 		}
