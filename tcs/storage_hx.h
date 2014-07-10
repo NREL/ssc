@@ -22,10 +22,10 @@ public:
 		double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des,
 		double max_q_htr, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des );
 
-	bool hx_size( HTFProperties &fluid_field, HTFProperties &fluid_store, 
-		int config, double duty_des, double vol_des, double h_des, 
-		double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des, 
-		double max_q_htr, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des );
+	//bool hx_size( HTFProperties &fluid_field, HTFProperties &fluid_store, 
+	//	int config, double duty_des, double vol_des, double h_des, 
+	//	double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des, 
+	//	double max_q_htr, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des );
 
 	bool mixed_tank( bool is_hot_tank, double dt, double m_prev, double T_prev, double m_dot_in, double m_dot_out, 
 						double T_in, double T_amb, double &T_ave, double &vol_ave, 
@@ -50,6 +50,7 @@ private:
 	double m_a_cs;
 	double m_dia;
 	double m_ua;
+	double m_dot_des;			//[kg/s]  7/9/14 twn: added
 	double m_max_q_htr;
 
 	// HX properties

@@ -20,6 +20,7 @@ Storage_HX::Storage_HX()
 	m_a_cs = std::numeric_limits<double>::quiet_NaN();
 	m_dia = std::numeric_limits<double>::quiet_NaN();
 	m_ua = std::numeric_limits<double>::quiet_NaN();
+	m_dot_des = std::numeric_limits<double>::quiet_NaN();
 	m_max_q_htr = std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -69,6 +70,7 @@ bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &flui
 		// Mass flow rates
 		double m_dot_h = q_trans/(c_h*(T_h_in_des - T_h_out_des));	//[kg/s]
 		double m_dot_c = q_trans/(c_c*(T_c_out - T_c_in));	//[kg/s]
+		m_dot_des = 0.5*(m_dot_h + m_dot_c);		//[kg/s] 7/9/14, twn: added
 		// Capacitance rates
 		double c_dot_h = m_dot_h * c_h;			//[W/K]
 		double c_dot_c = m_dot_c * c_c;			//[W/K]
@@ -118,96 +120,96 @@ bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &flui
 	return true;
 }
 
-bool Storage_HX::hx_size( HTFProperties &fluid_field, HTFProperties &fluid_store, 
-		int config, double duty_des, double vol_des, double h_des, 
-		double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des,
-		double max_q_htr, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des )
-{	
-	/* Author: Michael J. Wagner
-	Converted from Fortran (sam_mw_trough_Type251) to c++ in November 2012 by Ty Neises	*/
-
-	//Inputs: Hot fliud instance, cold fluid instance, heat exchanger configuration [-]
-	//			duty [W], dt_hot [K], dt_cold [K], T_h_in [K]
-	//Output: HX effectiveness [-], HX UA [W/K]
-
-	// Set member data
-	m_field_htfProps = fluid_field;
-	m_store_htfProps = fluid_store;
-	m_config = config;
-	m_vol_des = vol_des;
-	m_h_des = h_des;
-	m_u_des = u_des;
-	m_tank_pairs_des = tank_pairs_des;
-	m_Thtr_hot_des = hot_htr_set_point_des;
-	m_Thtr_cold_des = cold_htr_set_point_des;
-	m_dt_cold_des = dt_cold_des;
-	m_dt_hot_des = dt_hot_des;
-	m_max_q_htr = max_q_htr;
-
-	// Geometric Calculations
-	m_a_cs	= m_vol_des/(m_h_des*m_tank_pairs_des);		//[m2] Cross-sectional area of a single tank
-	m_dia	= pow( (m_a_cs/CSP::pi), 0.5)*2.;				//[m] The diameter of a single tank
-	
-	// Calculate heat loss coefficient
-	m_ua	= m_u_des*(m_a_cs + CSP::pi*m_dia*m_h_des)*m_tank_pairs_des;		// u [W/m2-K]
-
-	double q_trans = duty_des;					//[W] heat exchanger duty
-	double T_ave = (T_h_in_des + T_h_out_des)/2.;	//[K] Average hot side temperature
-	double c_h = m_field_htfProps.Cp(T_ave)*1000.;	//[J/kg-K] Specific heat of hot side fluid at hot side average temperature 
-	double c_c = m_store_htfProps.Cp(T_ave)*1000.;	//[J/kg-K] Specific heat of cold side fluid at hot side average temperature (estimate, but should be close)
-	// HX inlet and outlet temperatures
-	double T_c_out = T_h_in_des - dt_hot_des;	//[K]
-	double T_c_in = T_h_out_des - dt_cold_des;	//[K]
-	// Mass flow rates
-	double m_dot_h = q_trans/(c_h*(T_h_in_des - T_h_out_des));	//[kg/s]
-	double m_dot_c = q_trans/(c_c*(T_c_out - T_c_in));	//[kg/s]
-	// Capacitance rates
-	double c_dot_h = m_dot_h * c_h;			//[W/K]
-	double c_dot_c = m_dot_c * c_c;			//[W/K]
-	double c_dot_max = max(c_dot_h, c_dot_c);	//[W/K]
-	double c_dot_min = min(c_dot_h, c_dot_c);	//[W/K]
-	double cr = c_dot_min / c_dot_max;			//[W/K]
-	// Maximum possible energy flow rate
-	double q_max = c_dot_min * (T_h_in_des - T_c_in);	//[W]
-	// Effectiveness
-	m_eff_des = q_trans/q_max;							//[-]
-
-	// Check for realistic conditions
-	if(cr > 1. || cr < 0.) {return false;}		// cr > 1 is a problem
-	// xx = (1.-m_eff*cr)/(1.-m_eff);
-
-	double NTU,ff,ee1,ee;
-	switch( config )
-	{
-	case Counter_flow:				
-		if(cr < 1.) 
-		{
-			NTU = log( (1.-m_eff_des*cr)/(1.-m_eff_des) ) / (1. - cr);
-		}
-		else
-		{
-			NTU = m_eff_des / (1. - m_eff_des);
-		}
-		break;
-	case Parallel_flow:
-		NTU = log(1.-m_eff_des*(1.+cr))/(1.+cr);
-		break;
-	case Cross_flow_unmixed:
-		// This is actually the relationship for c_min unmixed, c_max mixed
-		NTU = -log(1.+log(1.-m_eff_des*cr)/cr);
-		break;
-	case Shell_and_tube:
-		ff = (m_eff_des*cr - 1.)/(m_eff_des-1.);
-		ee1 = (ff-1.)/(ff-cr);
-		ee = (2.-ee1*(1.+cr))/(ee1*pow( (1.+cr*cr),0.5 ));
-		NTU = log( (ee+1.)/(ee-1.) ) / pow( (1.+cr*cr),0.5 );
-		break;
-	default:
-		return false;
-	}
-	m_UA_des = NTU * c_dot_min;		//[W/K]
-	return true;
-}
+//bool Storage_HX::hx_size( HTFProperties &fluid_field, HTFProperties &fluid_store, 
+//		int config, double duty_des, double vol_des, double h_des, 
+//		double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des,
+//		double max_q_htr, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des )
+//{	
+//	/* Author: Michael J. Wagner
+//	Converted from Fortran (sam_mw_trough_Type251) to c++ in November 2012 by Ty Neises	*/
+//
+//	//Inputs: Hot fliud instance, cold fluid instance, heat exchanger configuration [-]
+//	//			duty [W], dt_hot [K], dt_cold [K], T_h_in [K]
+//	//Output: HX effectiveness [-], HX UA [W/K]
+//
+//	// Set member data
+//	m_field_htfProps = fluid_field;
+//	m_store_htfProps = fluid_store;
+//	m_config = config;
+//	m_vol_des = vol_des;
+//	m_h_des = h_des;
+//	m_u_des = u_des;
+//	m_tank_pairs_des = tank_pairs_des;
+//	m_Thtr_hot_des = hot_htr_set_point_des;
+//	m_Thtr_cold_des = cold_htr_set_point_des;
+//	m_dt_cold_des = dt_cold_des;
+//	m_dt_hot_des = dt_hot_des;
+//	m_max_q_htr = max_q_htr;
+//
+//	// Geometric Calculations
+//	m_a_cs	= m_vol_des/(m_h_des*m_tank_pairs_des);		//[m2] Cross-sectional area of a single tank
+//	m_dia	= pow( (m_a_cs/CSP::pi), 0.5)*2.;				//[m] The diameter of a single tank
+//	
+//	// Calculate heat loss coefficient
+//	m_ua	= m_u_des*(m_a_cs + CSP::pi*m_dia*m_h_des)*m_tank_pairs_des;		// u [W/m2-K]
+//
+//	double q_trans = duty_des;					//[W] heat exchanger duty
+//	double T_ave = (T_h_in_des + T_h_out_des)/2.;	//[K] Average hot side temperature
+//	double c_h = m_field_htfProps.Cp(T_ave)*1000.;	//[J/kg-K] Specific heat of hot side fluid at hot side average temperature 
+//	double c_c = m_store_htfProps.Cp(T_ave)*1000.;	//[J/kg-K] Specific heat of cold side fluid at hot side average temperature (estimate, but should be close)
+//	// HX inlet and outlet temperatures
+//	double T_c_out = T_h_in_des - dt_hot_des;	//[K]
+//	double T_c_in = T_h_out_des - dt_cold_des;	//[K]
+//	// Mass flow rates
+//	double m_dot_h = q_trans/(c_h*(T_h_in_des - T_h_out_des));	//[kg/s]
+//	double m_dot_c = q_trans/(c_c*(T_c_out - T_c_in));	//[kg/s]
+//	// Capacitance rates
+//	double c_dot_h = m_dot_h * c_h;			//[W/K]
+//	double c_dot_c = m_dot_c * c_c;			//[W/K]
+//	double c_dot_max = max(c_dot_h, c_dot_c);	//[W/K]
+//	double c_dot_min = min(c_dot_h, c_dot_c);	//[W/K]
+//	double cr = c_dot_min / c_dot_max;			//[W/K]
+//	// Maximum possible energy flow rate
+//	double q_max = c_dot_min * (T_h_in_des - T_c_in);	//[W]
+//	// Effectiveness
+//	m_eff_des = q_trans/q_max;							//[-]
+//
+//	// Check for realistic conditions
+//	if(cr > 1. || cr < 0.) {return false;}		// cr > 1 is a problem
+//	// xx = (1.-m_eff*cr)/(1.-m_eff);
+//
+//	double NTU,ff,ee1,ee;
+//	switch( config )
+//	{
+//	case Counter_flow:				
+//		if(cr < 1.) 
+//		{
+//			NTU = log( (1.-m_eff_des*cr)/(1.-m_eff_des) ) / (1. - cr);
+//		}
+//		else
+//		{
+//			NTU = m_eff_des / (1. - m_eff_des);
+//		}
+//		break;
+//	case Parallel_flow:
+//		NTU = log(1.-m_eff_des*(1.+cr))/(1.+cr);
+//		break;
+//	case Cross_flow_unmixed:
+//		// This is actually the relationship for c_min unmixed, c_max mixed
+//		NTU = -log(1.+log(1.-m_eff_des*cr)/cr);
+//		break;
+//	case Shell_and_tube:
+//		ff = (m_eff_des*cr - 1.)/(m_eff_des-1.);
+//		ee1 = (ff-1.)/(ff-cr);
+//		ee = (2.-ee1*(1.+cr))/(ee1*pow( (1.+cr*cr),0.5 ));
+//		NTU = log( (ee+1.)/(ee-1.) ) / pow( (1.+cr*cr),0.5 );
+//		break;
+//	default:
+//		return false;
+//	}
+//	m_UA_des = NTU * c_dot_min;		//[W/K]
+//	return true;
+//}
 
 
 
@@ -216,7 +218,9 @@ bool Storage_HX::hx_performance( bool is_hot_side_mdot, bool is_storage_side,  d
 {
 	/* Author: Michael J. Wagner
 	Converted from Fortran (sam_mw_trough_Type251) to c++ in November 2012 by Ty Neises
-	This function combines "hx_perf" and "hx_reverse" fortran subroutines */
+	This function combines "hx_perf" and "hx_reverse" fortran subroutines 
+	7/19/14, twn: Modified performance calcs so UA is fixed, not deltaTs */
+
 
 	// Subroutine for storage heat exchanger performance
 	// Pass a flag to determine whether mass flow rate is cold side or hot side. Return mass flow rate will be the other
@@ -225,27 +229,33 @@ bool Storage_HX::hx_performance( bool is_hot_side_mdot, bool is_storage_side,  d
 	// Outputs: HX effectiveness [-], hot side outlet temp [K], cold side outlet temp [K], 
 	//				Heat transfer between fluids [MWt], cold side mass flow rate [kg/s]
 	
-	double m_dot_hot, m_dot_cold, c_hot, c_cold;
+	double m_dot_hot, m_dot_cold, c_hot, c_cold, c_dot;
 
-	T_hot_out	= T_cold_in + m_dt_cold_des;	//[K]
-	T_cold_out	= T_hot_in - m_dt_hot_des;		//[K]
+	// T_hot_out	= T_cold_in + m_dt_cold_des;	//[K]
+	// T_cold_out	= T_hot_in - m_dt_hot_des;		//[K]
 	double T_ave	= (T_hot_in + T_cold_in)/2.;			//[K]
 
 	if( is_hot_side_mdot )	//know hot side mass flow rate - assuming always know storage side and solving for field
 	{
 		if(is_storage_side)
 		{
-		c_cold	= m_field_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
-		c_hot	= m_store_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
+			c_cold	= m_field_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
+			c_hot	= m_store_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
 		}
 		else
 		{
 			c_hot	= m_field_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
 			c_cold	= m_store_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
 		}
-		m_dot_hot	= m_dot_known;
-		q_trans		= max( m_dot_hot*c_hot*(T_hot_in-T_hot_out), 0.0 );	//[W]
-		m_dot_cold	= q_trans / (c_cold*(T_cold_out - T_cold_in));		//[kg/s]
+		
+		m_dot_hot = m_dot_known;
+		// Calculate flow capacitance of hot stream
+		double c_dot_hot = m_dot_hot*c_hot;
+		c_dot = c_dot_hot;
+		// Choose a cold stream mass flow rate that results in c_dot_h = c_dot_c
+		m_dot_cold = c_dot_hot / c_cold;
+		// q_trans		= max( m_dot_hot*c_hot*(T_hot_in-T_hot_out), 0.0 );	//[W]
+		// m_dot_cold	= q_trans / (c_cold*(T_cold_out - T_cold_in));		//[kg/s]
 		m_dot_solved= m_dot_cold;
 	}
 	else						//know cold side mass flow rate - assuming always know storage side and solving for field
@@ -257,46 +267,36 @@ bool Storage_HX::hx_performance( bool is_hot_side_mdot, bool is_storage_side,  d
 		}
 		else
 		{
-		c_cold	= m_field_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
-		c_hot	= m_store_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
+			c_cold	= m_field_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
+			c_hot	= m_store_htfProps.Cp( T_ave )*1000.;	//[J/kg-K]
 		}
 		m_dot_cold	= m_dot_known;
-		q_trans		= max( m_dot_cold*c_cold*(T_cold_out - T_cold_in), 1.e-6);	//[W]
-		m_dot_hot	= q_trans/(c_hot*(T_hot_in - T_hot_out));	//[kg/s]
+		// Calculate flow capacitance of cold stream
+		double c_dot_cold = m_dot_cold*c_cold;
+		c_dot = c_dot_cold;
+		// Choose a cold stream mass flow rate that results in c_dot_c = c_dot_h
+		m_dot_hot = c_dot_cold / c_hot;
+		// q_trans		= max( m_dot_cold*c_cold*(T_cold_out - T_cold_in), 1.e-6);	//[W]
+		// m_dot_hot	= q_trans/(c_hot*(T_hot_in - T_hot_out));	//[kg/s]
 		m_dot_solved= m_dot_hot;
 	}
 
-	double c_dot_cold	= m_dot_cold * c_cold;		//[W/K]
-	double c_dot_hot	= m_dot_hot * c_hot;		//[W/K]
+	// Scale UA
+	double m_dot_od = 0.5*(m_dot_cold + m_dot_hot);
+	double UA = m_UA_des*pow(m_dot_od / m_dot_des, 0.8);
 
-	double c_dot_min	= min( c_dot_cold, c_dot_hot );	//[W/K]
-	double c_dot_max	= max( c_dot_cold, c_dot_hot );	//[W/K]
-	double cr	= c_dot_min / c_dot_max;	//[W/K]
+	// Calculate effectiveness
+	double NTU = UA / c_dot;
+	eff = NTU / (1.0 + NTU);
 
-	double NTU	= m_UA_des / c_dot_min;		//[W/K]
+	// Calculate heat transfer in HX
+	double q_dot_max = c_dot*(T_hot_in - T_cold_in);
+	q_trans = eff*q_dot_max;
 
-	q_trans		= q_trans * 1.e-6;			//[MWt]
+	T_hot_out = T_hot_in - q_trans / c_dot;
+	T_cold_out = T_cold_in + q_trans / c_dot;
 
-	double eff1;
-	switch( m_config )
-	{
-	case( Counter_flow ):
-		if( cr < 1.)	{eff = (1.-exp(-NTU*(1.-cr)))/(1.-cr*exp(-NTU*(1.-cr)));}
-		else		{eff = NTU/(1.+NTU);}
-		break;
-	case( Parallel_flow ):
-		eff = (1.-exp(-NTU*(1.+cr)))/(1.+cr);
-		break;
-	case( Cross_flow_unmixed ):
-		eff = 1.-exp(pow(NTU,0.22)/cr*(exp(-cr*pow(NTU,0.78))-1.));
-		break;
-	case( Shell_and_tube ):
-		eff1 = 2.*pow( (1.+cr+sqrt(1.+cr*cr)*((1.+exp(-NTU*sqrt(1.+cr*cr)))/(1.-exp(-NTU*sqrt(1.+cr*cr))))), -1);
-		eff = ((1.-eff1*cr)/(1.-eff1)-1.)/((1.-eff1*cr)/(1.-eff1)-cr);
-		break;
-	default:
-		eff = std::numeric_limits<double>::quiet_NaN();
-	}
+	q_trans		= q_trans * 1.e-6;			//[MWt] 
 
 	if( eff <= 0. || eff > 1. )		{return false;}
 	else	{return true;}
