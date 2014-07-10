@@ -1453,6 +1453,9 @@ public:
 						return -1;
 					}
 					eff_disch = -9.99; T_tank_cold_in = T_tank_cold_prev; q_disch = 0; m_tank_disch = 0.;
+
+					// 7/9/14 twn: Calculate the specific heat with the same temps as 'hx_perf' uses so that reported energy in / energy out is consistent
+					c_htf_charge = field_htfProps.Cp(0.5*(T_field_out+T_tank_cold_out))*1000.0;
 				}
 			
 				// Discharging cycle: Tanks are hot side - Collector loop is cold side
@@ -1464,6 +1467,9 @@ public:
 						return -1;
 					}
 					eff_charge = -9.99; T_tank_hot_in = T_tank_hot_prev; q_charge = 0; m_tank_charge = 0.;
+
+					// 7/9/14 twn: Calculate the specific heat with the same temps as 'hx_reverse' uses so that reported energy in / energy out is consistent
+					c_htf_disch = field_htfProps.Cp(0.5*(T_tank_hot_out+T_pb_out))*1000.0;
 				}
 				else
 				{
