@@ -1522,6 +1522,9 @@ public:
 				snlinv.acpower( dcpwr_net/num_inverters, dc_string_voltage, 
 					&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss );
 				acpwr_gross *= num_inverters;
+				cliploss *= num_inverters;
+				psoloss *= num_inverters;
+				pntloss *= num_inverters;
 				aceff *= 100;
 			}
 			else if ( inv_type == 2 )
@@ -1529,6 +1532,9 @@ public:
 				double _par, _plr;
 				plinv.acpower( dcpwr_net/num_inverters,	&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss );
 				acpwr_gross *= num_inverters;
+				cliploss *= num_inverters;
+				psoloss *= num_inverters;
+				pntloss *= num_inverters;
 				aceff *= 100;
 			}
 			
