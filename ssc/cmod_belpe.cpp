@@ -57,10 +57,17 @@ public:
 		add_var_info(_cm_vtab_belpe);
 	}
 
-	double sum( double *a, int n )
+	double sum(double *a, int n)
 	{
 		double acc = 0;
-		for( int i=0;i<n;i++ ) acc+=a[i];
+		for (int i = 0; i<n; i++) acc += a[i];
+		return acc;
+	}
+
+	double sumsub(double *a, int m, int n)
+	{
+		double acc = 0;
+		for (int i = m; i<=n; i++) acc += a[i];
 		return acc;
 	}
 
@@ -86,18 +93,18 @@ public:
 		weatherfile wf(file);
 		if (!wf.ok()) throw exec_error("belpe", "failed to read local weather file: " + std::string(file));
 
-		ssc_number_t *T_ambF = allocate( "T_ambF", 8760 );
-		ssc_number_t *VwindMPH = allocate( "VwindMPH", 8760 );
-		for( size_t i=0;i<8760;i++ )
+		ssc_number_t *T_ambF = allocate("T_ambF", 8760);
+		ssc_number_t *VwindMPH = allocate("VwindMPH", 8760);
+		for (size_t i = 0; i < 8760; i++)
 		{
 			if (!wf.read()) throw exec_error(" belpe", "error reading record in weather file");
 
-			T_ambF[i] = (ssc_number_t)( wf.tdry*1.8+32 );
-			VwindMPH[i] = (ssc_number_t)( wf.wspd * 2.237 );			
+			T_ambF[i] = (ssc_number_t)(wf.tdry*1.8 + 32);
+			VwindMPH[i] = (ssc_number_t)(wf.wspd * 2.237);
 		}
 
 		double T_ambFavg = 0;
-		for( size_t i=0;i<8760;i++ )
+		for (size_t i = 0; i < 8760; i++)
 			T_ambFavg += T_ambF[i];
 
 		T_ambFavg /= 8760;
@@ -111,7 +118,7 @@ public:
 		size_t len_Occ_Schedule = 0;
 		ssc_number_t *Occ_Schedule = as_array("Occ_Schedule", &len_Occ_Schedule);
 
-		if ( len_Occ_Schedule != 24 )
+		if (len_Occ_Schedule != 24)
 			throw exec_error("belpe", "occupancy schedule needs to have 24 values");
 
 		double THeat = as_double("THeat");
@@ -120,11 +127,11 @@ public:
 		double TCoolSB = as_double("TCoolSB");
 		size_t len_T_Sched = 0;
 		ssc_number_t* T_Sched = as_array("T_Sched", &len_T_Sched);
-		
-		if ( len_T_Sched != 24 ) throw exec_error( "belpe", "temperature schedule must have 24 values");
-		
+
+		if (len_T_Sched != 24) throw exec_error("belpe", "temperature schedule must have 24 values");
+
 		// allocate output array
-		ssc_number_t *load = allocate( "load", 8760 );  // WHERE IS THE ALLOCATE FUNCTION??
+		ssc_number_t *load = allocate("load", 8760);  // WHERE IS THE ALLOCATE FUNCTION??
 
 		//// loop through and 
 		//for (int i = 0; i < 8760; i++)
@@ -144,10 +151,10 @@ public:
 		double EnergyRetrofits = 0; // 1 = yes, 0 = no.Governs building construction for older bldgs.
 		//% If calibrating to util bills need user to be able to enter vacation.
 		//%These are bldg AM.defaults -- could also be default in the tool.
-		
+
 		const int N_vacation = 14;
-		double VacationMonths[N_vacation] = {5,  5,  5,  8,  8,  8,  8,  8,  8,  8,  12, 12, 12, 12};
-		double VacationDays[N_vacation]   = {26, 27, 28, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25};
+		double VacationMonths[N_vacation] = { 5, 5, 5, 8, 8, 8, 8, 8, 8, 8, 12, 12, 12, 12 };
+		double VacationDays[N_vacation] = { 26, 27, 28, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25 };
 
 		//%Possible other options include color, construction, WWR, bldg L&W, wall
 		//%height per floor
@@ -159,38 +166,38 @@ public:
 
 		//%Get ACH using Normalized Leakage area as per Persily, 2006.  As well as
 		//%LBL leakage model.
-		if ( A_Floor<=1600 )
+		if (A_Floor <= 1600)
 		{
-			if ( YrBuilt<1940 )
-				NL=1.29;
-			else if ( YrBuilt<1970 )
-				NL=1.03;
-			else if ( YrBuilt<1990 )
-				NL=0.65;
+			if (YrBuilt < 1940)
+				NL = 1.29;
+			else if (YrBuilt < 1970)
+				NL = 1.03;
+			else if (YrBuilt < 1990)
+				NL = 0.65;
 			else
-				NL=0.31;
+				NL = 0.31;
 		}
 		else
 		{
-			if (YrBuilt<1940)
-				NL=0.58;
-			else if (YrBuilt<1970)
-				NL=0.49;
-			else if (YrBuilt<1990)
-				NL=0.36;
+			if (YrBuilt < 1940)
+				NL = 0.58;
+			else if (YrBuilt < 1970)
+				NL = 0.49;
+			else if (YrBuilt < 1990)
+				NL = 0.36;
 			else
-				NL=0.24;
+				NL = 0.24;
 		}
 
 		double ELA = NL*A_Floor*0.0929 / 1000 / pow(Stories, 0.3); //This ? estimated leakage area" is in m^2
 		ELA = 1550 * ELA;  //Now it's inches
 		double Cs, Cw;
-		if ( 1 == Stories )
+		if (1 == Stories)
 		{
 			Cs = 0.015;
 			Cw = 0.0065;
 		}
-		else if(Stories == 2)
+		else if (Stories == 2)
 		{
 			Cs = 0.0299;
 			Cw = 0.0086;
@@ -211,10 +218,10 @@ public:
 		if (YrBuilt > 1990 || EnergyRetrofits == 1)
 		{
 			Renv = 16; //%These are in IP Units hr*ft ^ 2 * degF / BTU
-				//Uwin = 0.4;
+			//Uwin = 0.4;
 			SHGC = 0.25;
 		}
-		else if(YrBuilt > 1980)
+		else if (YrBuilt > 1980)
 		{
 			Renv = 12;
 			//Uwin = 0.4;
@@ -226,18 +233,18 @@ public:
 			//Uwin = 1;
 			SHGC = 0.53; //This basically matches BEOPT 0.76.WHY ? ? ? ? Possibly Bldg AM 0.7 factor for internal shading.MJB suggests shading or diffuse.Says 0.5, 025 fine!
 		}
-	
+
 		double Cenv = 2; //BTU / ft^2degF    Note that this is stick frame - more like 10 for masonry, or 18 for heavy masonry(comm)
 		double hsurf = 0.68; //Same units as Renv hr*ft ^ 2 * degF / Btu
 		double Cmass = 1.6; //BTU / ft^2degF --doesn't change much!
-		double TGnd = (T_ambFavg-32)/1.8; //Deg C because used just for the avg exterior envelope T.
+		double TGnd = (T_ambFavg - 32) / 1.8; //Deg C because used just for the avg exterior envelope T.
 
 		// C*1.8 + 32 = F
 
 		//Those are sort of all the default values(above)
 
 		ssc_number_t TambFAvg[12];
-		monthly_averages( T_ambF, TambFAvg );
+		monthly_averages(T_ambF, TambFAvg);
 
 		/* Is it heating or cooling season ? ? This methodology taken entirely from
 		%Building America guidelines */
@@ -246,7 +253,7 @@ public:
 		for (int m = 0; m < 12; m++)
 		{
 			if (TambFAvg[m] <= 66)
-				HtEn[m] = 1; 
+				HtEn[m] = 1;
 			else
 				ClEn[m] = 1;
 		}
@@ -255,26 +262,26 @@ public:
 
 		double HtEnNew[13];
 		double ClEnNew[13];
-	
-		for( int i=0;i<13;i++ )
+
+		for (int i = 0; i < 13; i++)
 		{
 			HtEnNew[i] = HtEn[i];
 			ClEnNew[i] = ClEn[i];
 		}
 
-		for ( int m=0;m<12;m++ )
+		for (int m = 0; m < 12; m++)
 		{
-			if ( ClEn[m]==0 && ClEn[m+1]==1 )
+			if (ClEn[m] == 0 && ClEn[m + 1] == 1)
 			{
-				HtEnNew[m+1]=1;
-				ClEnNew[m]=1;
+				HtEnNew[m + 1] = 1;
+				ClEnNew[m] = 1;
 			}
-			else if ( HtEn[m]==0 && HtEn[m+1]==1 )
-				ClEnNew[m+1]=1;
+			else if (HtEn[m] == 0 && HtEn[m + 1] == 1)
+				ClEnNew[m + 1] = 1;
 		}
-	
-	
-		for( int i=0;i<13;i++ )
+
+
+		for (int i = 0; i < 13; i++)
 		{
 			HtEn[i] = HtEnNew[i];
 			ClEn[i] = ClEnNew[i];
@@ -284,7 +291,7 @@ public:
 		//much to the walls
 		double SolMassFrac = 0.2;
 		double SolEnvFrac = 1 - SolMassFrac;
-			
+
 		//BUILDING DIMENSIONMS
 		//A_wins = A_Floor*WFR; %Assumed distributed evenly on walls
 		double A_Wins = sqrt(A_Floor / Stories) * 4 * H_ceiling*Stories*WWR;
@@ -295,17 +302,17 @@ public:
 		double AIntMass = 0.4*A_Floor; //Bldg AM default for internal mass
 		double AIntTot = A_Wins + Aenv + AIntWall + AIntMass;
 		double Cair = 0.075*0.245*V_bldg * 10; //BTU / degF  Note adjust factor of 10 --MJB
-			
+
 		//INTERNAL LOADS	
 		double PerPersonLoad = 220 / 3412.142; //BTU / hr / person to kWh / person(BLDG America for single zone) --sensible only
 		//Divide into radiative and convective(heat transfer to mass vs.transfer to air)
 
 		double PPL_rad[24], PPL_conv[24];
-		for( int i=0;i<24;i++ )
+		for (int i = 0; i < 24; i++)
 		{
-			PPL_rad[i] = 0.6*PerPersonLoad*ceil( Occupants*Occ_Schedule[i] );
-			PPL_conv[i] = 0.4*PerPersonLoad*ceil( Occupants*Occ_Schedule[i] );
-		}			
+			PPL_rad[i] = 0.6*PerPersonLoad*ceil(Occupants*Occ_Schedule[i]);
+			PPL_conv[i] = 0.4*PerPersonLoad*ceil(Occupants*Occ_Schedule[i]);
+		}
 
 		ssc_number_t en_heat = as_number("en_heat"); // boolean, so will be 0 or 1
 		ssc_number_t en_cool = as_number("en_cool"); // boolean, so will be 0 or 1
@@ -326,64 +333,104 @@ public:
 		double Load_wash = (38.8 + 12.9*NBR)*en_wash;
 		double Load_dry = (538.2 + 179.4*NBR)*en_dry;
 		double Load_mels = 1595 + 248 * NBR + .426*A_Floor*en_mels;
-			
+
 		//Now the HOURLY plug loads, weekday and weekend!These painstakingly
 		//scaled from BeOpt and Bldg America.The loads are separated out because
 		//user could have some and not others in house
-		double FridgeFrac[24] = {4, 3.9, 3.8, 3.7, 3.6, 3.6, 3.7, 4, 4.1, 4.2, 4, 4, 4.2, 4.2, 4.2, 4.2, 4.5, 4.8, 5, 4.8, 4.6, 4.5, 4.4, 4.2};
-		double FridgeHrFrac = Load_fridge / (sum(FridgeFrac,24)*(1 + 0.1 * 2 / 7));
-		/*
-		double FridgeHourly = FridgeFrac*FridgeHrFrac;
-		double FridgeHourlyWkend = FridgeHourly*1.1;
-		double DWFrac = [17, 14, 13, 12, 12, 15, 20, 30, 60, 64, 57, 50, 40, 48, 38, 35, 38, 50, 88, 110, 90, 68, 46, 33];
-		double DWHrFrac = Load_dw / (sum(DWFrac)*(1 + 0.1 * 2 / 7));
-		double DWHourly = DWFrac*DWHrFrac;
-		double DWHourlyWkend = DWHourly*1.1;
-		double RangeFrac = [8, 8, 5, 5, 8, 10, 26, 44, 48, 50, 44, 50, 57, 48, 45, 55, 85, 150, 120, 60, 40, 25, 15, 10];
-		double RangeHrFrac = Load_range / (sum(RangeFrac)*(1 + 0.1 * 2 / 7));
-		double RangeHourly = RangeFrac*RangeHrFrac;
-		double RangeHourlyWkend = RangeHourly*1.1;
-		double WasherFrac = [10, 8, 5, 5, 8, 10, 20, 50, 70, 85, 85, 75, 68, 60, 52, 50, 50, 50, 50, 50, 50, 47, 30, 17];
-		double WasherHrFrac = Load_wash / (sum(WasherFrac)*(1 + 0.1 * 2 / 7));
-		double WasherHourly = WasherFrac*WasherHrFrac;
-		double WasherHourlyWkend = WasherHourly*1.1;
-		double DryerFrac = [10, 8, 5, 5, 8, 10, 10, 20, 50, 70, 85, 85, 75, 68, 60, 52, 50, 50, 50, 50, 50, 47, 30, 17];
-		double DryerHrFrac = Load_dry / (sum(DryerFrac)*(1 + 0.1 * 2 / 7));
-		double DryerHourly = DryerFrac*DryerHrFrac;
-		double DryerHourlyWkend = DryerHourly*1.1;
+		double FridgeFrac[24] = { 4, 3.9, 3.8, 3.7, 3.6, 3.6, 3.7, 4, 4.1, 4.2, 4, 4, 4.2, 4.2, 4.2, 4.2, 4.5, 4.8, 5, 4.8, 4.6, 4.5, 4.4, 4.2 };
+		double DWFrac[24] = { 17, 14, 13, 12, 12, 15, 20, 30, 60, 64, 57, 50, 40, 48, 38, 35, 38, 50, 88, 110, 90, 68, 46, 33 };
+		double RangeFrac[24] = { 8, 8, 5, 5, 8, 10, 26, 44, 48, 50, 44, 50, 57, 48, 45, 55, 85, 150, 120, 60, 40, 25, 15, 10 };
+		double WasherFrac[24] = { 10, 8, 5, 5, 8, 10, 20, 50, 70, 85, 85, 75, 68, 60, 52, 50, 50, 50, 50, 50, 50, 47, 30, 17 };
+		double DryerFrac[24] = { 10, 8, 5, 5, 8, 10, 10, 20, 50, 70, 85, 85, 75, 68, 60, 52, 50, 50, 50, 50, 50, 47, 30, 17 };
+
+		double FridgeHrFrac = Load_fridge / (sum(FridgeFrac, 24)*(1 + 0.1 * 2 / 7));
+		double DWHrFrac = Load_dw / (sum(DWFrac, 24)*(1 + 0.1 * 2 / 7));
+		double RangeHrFrac = Load_range / (sum(RangeFrac, 24)*(1 + 0.1 * 2 / 7));
+		double WasherHrFrac = Load_wash / (sum(WasherFrac, 24)*(1 + 0.1 * 2 / 7));
+		double DryerHrFrac = Load_dry / (sum(DryerFrac, 24)*(1 + 0.1 * 2 / 7));
+
+		double FridgeHourly[24];
+		double FridgeHourlyWkend[24];
+		double DWHourly[24];
+		double DWHourlyWkend[24];
+		double RangeHourly[24];
+		double RangeHourlyWkend[24];
+		double WasherHourly[24];
+		double WasherHourlyWkend[24];
+		double DryerHourly[24];
+		double DryerHourlyWkend[24];
+
+		for (int i = 0; i < 24; i++)
+		{
+			FridgeHourly[i] = FridgeFrac[i] * FridgeHrFrac;
+			FridgeHourlyWkend[i] = FridgeHourly[i] * 1.1;
+			DWHourly[i] = DWFrac[i] * DWHrFrac;
+			DWHourlyWkend[i] = DWHourly[i] * 1.1;
+			RangeHourly[i] = RangeFrac[i] * RangeHrFrac;
+			RangeHourlyWkend[i] = RangeHourly[i] * 1.1;
+			WasherHourly[i] = WasherFrac[i] * WasherHrFrac;
+			WasherHourlyWkend[i] = WasherHourly[i] * 1.1;
+			DryerHourly[i] = DryerFrac[i] * DryerHrFrac;
+			DryerHourlyWkend[i] = DryerHourly[i] * 1.1;
+
+		}
 
 		//Weekday and weekend loads, summed and assumed half radiative / half
 		//convective
-		double TotalPlugHourlyWkday = (FridgeHourly + DWHourly + RangeHourly + WasherHourly + DryerHourly) / 365;
-		double SensibleEquipRadorConvWkday = 0.5*(FridgeHourly + DWHourly*0.6 + RangeHourly*0.4 + WasherHourly*0.8 + DryerHourly*0.15) / 365;
-		double SensibleEquipRadorConvWkend = SensibleEquipRadorConvWkday*1.1;   //These are just 50 / 50 rad and conv, but the multipliers are BLDG AM sensible load fractions
-		double TotalPlugHourlyWkend = (FridgeHourlyWkend + DWHourlyWkend + RangeHourlyWkend + WasherHourlyWkend + DryerHourlyWkend) / 365;
-			
+		double TotalPlugHourlyWkday[24], SensibleEquipRadorConvWkday[24], SensibleEquipRadorConvWkend[24], TotalPlugHourlyWkend[24];
+		for (int i = 0; i < 24; i++)
+		{
+			TotalPlugHourlyWkday[i] = (FridgeHourly[i] + DWHourly[i] + RangeHourly[i] + WasherHourly[i] + DryerHourly[i]) / 365;
+			SensibleEquipRadorConvWkday[i] = 0.5*(FridgeHourly[i] + DWHourly[i] * 0.6 + RangeHourly[i] * 0.4 + WasherHourly[i] * 0.8 + DryerHourly[i] * 0.15) / 365;
+			SensibleEquipRadorConvWkend[i] = SensibleEquipRadorConvWkday[i] * 1.1;   //These are just 50 / 50 rad and conv, but the multipliers are BLDG AM sensible load fractions
+			TotalPlugHourlyWkend[i] = (FridgeHourlyWkend[i] + DWHourlyWkend[i] + RangeHourlyWkend[i] + WasherHourlyWkend[i] + DryerHourlyWkend[i]) / 365;
+		}
+
 		//Vacation!affects ONLY THE LARGE APPLIANCES AND OCCUPANCY as per Bldg AM
 		//But why would DW, etc run if nobody home ? I set to just fridge for
 		//appliances.
-		TotalPlugHourlyVacay = FridgeHourly / 365;
-		SensibleEquipRadorConvVacay = 0.5*FridgeHourly / 365;
-			
-			
+		double TotalPlugHourlyVacay[24], SensibleEquipRadorConvVacay[24];
+		for (int i = 0; i < 24; i++)
+		{
+			TotalPlugHourlyVacay[i] = FridgeHourly[i] / 365;
+			SensibleEquipRadorConvVacay[i] = 0.5*FridgeHourly[i] / 365;
+		}
+
 		//Now the Hourly MELS; these use the January BeOpt and then vary
 		// (imprecisely)by month based on other months' BeOpts.   They do NOT vary
 		//weekday vs.weekend, as per BeOpt.
-		MELSFrac = [0.441138000000000, 0.406172000000000, 0.401462000000000, 0.395811000000000, 0.380859000000000, 0.425009000000000, 0.491056000000000, 0.521783000000000, 0.441138000000000, 0.375444000000000, 0.384274000000000, 0.384391000000000, 0.377916000000000, 0.390984000000000, 0.413000000000000, 0.435957000000000, 0.515661000000000, 0.626446000000000, 0.680131000000000, 0.702029000000000, 0.726164000000000, 0.709211000000000, 0.613731000000000, 0.533321000000000];
-		MELSMonthly = [1 1 .88 .88 .88 .77 .77 .77 .77 .85 .85 1];
-		DaysInMonths = [31 28 31 30 31 30 31 31 30 31 30 31];
-		MELSHrFrac = Load_mels / sum(sum(MELSFrac)*MELSMonthly.*DaysInMonths);
-		MELSHourlyJan = MELSHrFrac*MELSFrac;
-			
+		//MELSFrac = [0.441138000000000, 0.406172000000000, 0.401462000000000, 0.395811000000000, 0.380859000000000, 0.425009000000000, 0.491056000000000, 0.521783000000000, 0.441138000000000, 0.375444000000000, 0.384274000000000, 0.384391000000000, 0.377916000000000, 0.390984000000000, 0.413000000000000, 0.435957000000000, 0.515661000000000, 0.626446000000000, 0.680131000000000, 0.702029000000000, 0.726164000000000, 0.709211000000000, 0.613731000000000, 0.533321000000000];
+		//MELSMonthly = [1 1 .88 .88 .88 .77 .77 .77 .77 .85 .85 1];
+		//DaysInMonths = [31 28 31 30 31 30 31 31 30 31 30 31];
+		//MELSHrFrac = Load_mels / sum(sum(MELSFrac)*MELSMonthly.*DaysInMonths);
+		//MELSHourlyJan = MELSHrFrac*MELSFrac;
+		double MELSFrac[24] = { 0.441138, 0.406172, 0.401462, 0.395811, 0.380859, 0.425, 0.491056, 0.521783, 0.441138, 0.375444, 0.384274, 0.384391, 0.377916, 0.390984, 0.4130, 0.435957, 0.515661, 0.626446, 0.680131, 0.702029, 0.726164, 0.709211, 0.613731, 0.533321 };
+		double MELSMonthly[12] = { 1, 1, .88, .88, .88, .77, .77, .77, .77, .85, .85, 1 };
+		double DaysInMonths[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+		double MELSHourlyJan[24];
+		double MELSHrFrac;
+		double MELSMonthSum[12];
+		double MELSFracSum = sum(MELSFrac, 24);
+
+		for (int i = 0; i < 12; i++)
+		{
+			MELSMonthSum[i] = MELSFracSum * MELSMonthly[i] * DaysInMonths[i];
+		}
+		MELSHrFrac = Load_mels / sum(MELSMonthSum, 12);
+
+		for (int i = 0; i < 24; i++)
+		{
+			MELSHourlyJan[i] = MELSHrFrac*MELSFrac[i];
+		}
 		//And then the lighting.These again use Jan.BeOpt as a basis, but the
 		//fractions vary by hour AND by month.This may be climate dependent but
 		//that is ignored for now.The matrix will be rows are months and colums are the time
 		//periods, ie 9 - 6, 7 - 3, 4 - 8.
-		LightFrac = [0.175868000000000, 0.105521000000000, 0.0703470000000000, 0.0703470000000000, 0.0703470000000000, 0.0769920000000000, 0.165661000000000, 0.345977000000000, 0.330648000000000, 0.169731000000000, 0.138290000000000, 0.137022000000000, 0.137272000000000, 0.140247000000000, 0.158163000000000, 0.230715000000000, 0.418541000000000, 0.710948000000000, 0.931195000000000, 0.883060000000000, 0.790511000000000, 0.675746000000000, 0.509894000000000, 0.354185000000000];
-		L96 = sum(LightFrac(1:6)) + sum(LightFrac(21:24));
-		L73 = sum(LightFrac(7:15));
-		L48 = sum(LightFrac(16:20));
-		Lightz = [L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48; L96 L73 L48];
+		double LightFrac[24] = { 0.1758680, 0.1055210, 0.070347, 0.070347, 0.070347, 0.076992, 0.165661, 0.345977, 0.330648, 0.169731, 0.13829, 0.137022, 0.137272, 0.140247, 0.158163, 0.230715, 0.418541, 0.710948, 0.931195, 0.88306, 0.790511, 0.675746, 0.509894, 0.354185 };
+		double L96 = sumsub(LightFrac, 0, 5) + sumsub(LightFrac,20,23);
+		double L73 = sumsub(LightFrac, 6, 14);
+		double L48 = sumsub(LightFrac,15,19);
+		double Lightz[12][3] = { { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 }, { L96, L73, L48 } };
 		//LightMonHr = [1	1	1
 		// 1	0.77	0.76
 		// 1	0.52	0.55
@@ -397,34 +444,62 @@ public:
 		// 1	0.84	1.02
 		// 1	1.04	1.14
 		//];
-		LightMonHr = [1	1.05	1.05
-		1	0.9	1
-		1	0.6	    0.75
-		1	0.61	0.3
-		1	0.45	0.10
-		1	0.42	0.10
-		1	0.43	0.10
-		1	0.51	0.14
-		1	0.62	0.38
-		1	0.82	0.52
-		1	0.84	1.02
-		1	1.04	1.14
-		];
+		double LightMonHr[12][3] = {
+			{ 1, 1.05, 1.05 },
+			{ 1, 0.9, 1 },
+			{1, 0.6, 0.75},
+			{1, 0.61, 0.3},
+			{1, 0.45, 0.10},
+			{1, 0.42, 0.10},
+			{1, 0.43, 0.10},
+			{1, 0.51, 0.14},
+			{1, 0.62, 0.38},
+			{1, 0.82, 0.52},
+			{1, 0.84, 1.02},
+			{1, 1.04, 1.14}
+		};
 			
-		LightUse = Lightz.*LightMonHr;
-		MonthlyDailyLightUse = sum(LightUse, 2);
-		AnnualLightUseHrs = sum(MonthlyDailyLightUse.*DaysInMonths');
-			LightHrFrac = Load_light / AnnualLightUseHrs;
-		LightHourlyJan = LightHrFrac*LightFrac;
+//		LightUse = Lightz.*LightMonHr;
+		double LightUse[12][3];
+		for (int i = 0; i < 12; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				LightUse[i][j] = Lightz[i][j] * LightMonHr[i][j];
+			}
+		}
+		
+		double MonthlyDailyLightUse[12];
+
+		for (int i = 0; i < 12; i++)
+		{
+			MonthlyDailyLightUse[i] = sum(LightUse[i],1);
+		}
+		//????
+//		double AnnualLightUseHrs = sum(MonthlyDailyLightUse.*DaysInMonths');
+		double AnnualLightUseHrs = 0;
+		for (int i = 0; i < 12; i++)
+		{
+			AnnualLightUseHrs += MonthlyDailyLightUse[i] * DaysInMonths[i];
+		}
+
+		double  LightHrFrac = Load_light / AnnualLightUseHrs;
+		double LightHourlyJan[24];
+		for (int i = 0; i < 24; i++)
+		{
+			LightHourlyJan[i] = LightHrFrac*LightFrac[i];
+		}
+
 		//NEED UNITS!!!!!!
 		//END INTERNAL ELEC LOADS
 			
 		//THIS IS TO FIGURE OUT THE HVAC FAN USAGE WITH GAS HEATER
 		//Capacity of gas heater....really should be more climate - dependent
+		double n_heat, GasHeat_capacity;
 		if (YrBuilt > 1980 || EnergyRetrofits == 1)
 		{
-			n_heat = 0.78; //HVAC sys efficiency for gas forced air
-			GasHeat_capacity = 35 * A_Floor / 1000; //kBTU / h
+		      n_heat = 0.78; //HVAC sys efficiency for gas forced air
+			  GasHeat_capacity = 35 * A_Floor / 1000; //kBTU / h
 		}
 		else
 		{
@@ -883,7 +958,7 @@ DEFINE_MODULE_ENTRY( belpe, "Estimates an electric load profile given basic buil
 //%Now the HOURLY plug loads, weekday and weekend!These painstakingly
 //%scaled from BeOpt and Bldg America.The loads are separated out because
 //%user could have some and not others in house
-//FridgeFrac = [4, 3.90000000000000, 3.80000000000000, 3.70000000000000, 3.60000000000000, 3.60000000000000, 3.70000000000000, 4, 4.10000000000000, 4.20000000000000, 4, 4, 4.20000000000000, 4.20000000000000, 4.20000000000000, 4.20000000000000, 4.50000000000000, 4.80000000000000, 5, 4.80000000000000, 4.60000000000000, 4.50000000000000, 4.40000000000000, 4.20000000000000];
+//FridgeFrac = [4, 3.9 00000, 3.80000000000000, 3.70000000000000, 3.60000000000000, 3.60000000000000, 3.70000000000000, 4, 4.10000000000000, 4.20000000000000, 4, 4, 4.20000000000000, 4.20000000000000, 4.20000000000000, 4.20000000000000, 4.50000000000000, 4.80000000000000, 5, 4.80000000000000, 4.60000000000000, 4.50000000000000, 4.40000000000000, 4.20000000000000];
 //FridgeHrFrac = Load_fridge / (sum(FridgeFrac)*(1 + 0.1 * 2 / 7));
 //FridgeHourly = FridgeFrac*FridgeHrFrac;
 //FridgeHourlyWkend = FridgeHourly*1.1;
