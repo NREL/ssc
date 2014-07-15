@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\ssc\cmod_6parsolve.cpp" />
     <ClCompile Include="..\ssc\cmod_annualoutput.cpp" />
+    <ClCompile Include="..\ssc\cmod_belpe.cpp" />
     <ClCompile Include="..\ssc\cmod_biomass.cpp" />
     <ClCompile Include="..\ssc\cmod_cashloan.cpp" />
     <ClCompile Include="..\ssc\cmod_equpartflip.cpp" />
