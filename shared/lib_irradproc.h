@@ -39,6 +39,7 @@ public:
 
 	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
 	void set_location( double lat, double lon, double tz );
+	//skymodel: 0 is isotropic, 1 is hdkr, 2 is perez
 	void set_sky_model( int skymodel, double albedo );
 	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr );
 	void set_beam_diffuse( double beam, double diffuse );
