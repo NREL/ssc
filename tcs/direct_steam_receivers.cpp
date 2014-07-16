@@ -1018,7 +1018,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 			h_n_out_total = h_by_m / m_dot_total;		//[J/kg] Total mass flow rate / mixed enthalpy product
 
-			water_PH( P_out_avg, h_n_out_total, &wp );
+			water_PH( P_out_avg, h_n_out_total/1000.0, &wp );
 			x_n_out = wp.Q;
 
 			diff_x_out = x_out_target - x_n_out;
