@@ -16,35 +16,33 @@
 
 static var_info _cm_vtab_belpe[] = 
 {	
-/*   VARTYPE           DATATYPE         NAME                 LABEL                     UNITS               META                 GROUP                     REQUIRED_IF    CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,  "weather_file",    "Weather Data file",       "n/a",              "",                  "Load Profile Estimator", "*",           "LOCAL_FILE",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,  "tstep",            "time step",               "hrs",              "",                    "Load Profile Estimator", "*", "", "Time Step" },
-	{ SSC_INPUT,        SSC_NUMBER,  "floor_area", "Building floor area", "m2", "", "Load Profile Estimator", "*", "", "Floor area" },
-	{ SSC_INPUT,        SSC_NUMBER,  "Stories", "Number of stories", "#", "", "Load Profile Estimator", "*", "", "Stories" },
+/*   VARTYPE			DATATYPE        NAME                LABEL								UNITS		META	GROUP                     REQUIRED_IF	CONSTRAINTS		UI_HINTS*/
+	{ SSC_INPUT,        SSC_STRING,		"weather_file",		"Weather Data file",				"n/a",		"",		"Load Profile Estimator", "*",			"LOCAL_FILE",	"" },
+	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",		"Load Profile Estimator", "*",			"",				"Time Step" },
+	{ SSC_INPUT,        SSC_NUMBER,		"floor_area",		"Building floor area",				"m2",		"",		"Load Profile Estimator", "*",			"",				"Floor area" },
+	{ SSC_INPUT,        SSC_NUMBER,		"Stories",			"Number of stories",				"#",		"",		"Load Profile Estimator", "*",			"",				"Stories" },
 
-	{ SSC_INPUT,		SSC_NUMBER,	 "YrBuilt", "Year Built", "yr", "", "Load Profile Estimator", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,	 "Occupants", "Occupants", "#", "", "Load Profile Estimator", "*", "", "" },
-	{ SSC_INPUT,		SSC_ARRAY,   "Occ_Schedule", "Hourly occupant schedule", "%/hr", "", "Load Profile Estimator", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,  "THeat", "heating setpoint", "degF", "", "Load Profile Estimator", "*", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,  "TCool", "Cooling SetPoint", "degF", "", "Load Profile Estimator", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "THeatSB", "heating setpoint SetBack", "degf", "", "Load Profile Estimator", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "TCoolSB", "cooling setpoint SetBack", "degF", "", "Load Profile Estimator", "*", "", "" },
-	{ SSC_INPUT,		SSC_ARRAY, "T_Sched", "Temperature schedule", "degF", "", "Load Profile Estimator", "*", "LENGTH=24", "" },
-//	{ SSC_INPUT,		SSC_ARRAY, "VacationMonths", "Months in which Vacations Happen", "months", "", "Load Profile Estimator", "*", "LENGTH=*", "" },
-//	{ SSC_INPUT,		SSC_ARRAY, "VAcDays", "DAys in month for vacation", "days", "", "Load Profile Estimator", "*", "LENGTH=*", "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",		"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",		"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"%/hr",		"",		"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",		"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",		"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",		"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"cooling setpoint SetBack",			"degF",		"",		"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"degF",		"",		"Load Profile Estimator", "*",			"LENGTH=24",	"" },
+//	{ SSC_INPUT,		SSC_ARRAY,		"VacationMonths",	"Months in which Vacations Happen",	"months",	"",		"Load Profile Estimator", "*",			"LENGTH=*",		"" },
+//	{ SSC_INPUT,		SSC_ARRAY,		"VAcDays",			"DAys in month for vacation",		"days",		"",		"Load Profile Estimator", "*",			"LENGTH=*",		"" },
 	
-	{ SSC_INPUT,		SSC_NUMBER, "en_heat", "Enable electric heat", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "en_cool", "Enable electric cool", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "en_fridge", "Enable electric fridge", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "en_range", "Enable electric range", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "en_dish", "Enable electric dishwasher", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "en_wash", "Enable electric washer", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "en_dry", "Enable electric dryer", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "en_mels", "Enable electric mels", "0/1", "", "ELPE", "*", "BOOLEAN", "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_heat",			"Enable electric heat",				"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_cool",			"Enable electric cool",				"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_fridge",		"Enable electric fridge",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_range",			"Enable electric range",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_dish",			"Enable electric dishwasher",		"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_wash",			"Enable electric washer",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_dry",			"Enable electric dryer",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable electric mels",				"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
-	{ SSC_INPUT,		SSC_ARRAY, "ElecUse", "Do key appliances use Electricity (heat, cool, fridge, Range, Dishwash, Washer, Dryer,MELS) ", "digital", "", "Load Profile Estimator", "*", "LENGTH=8", "" },
-
-	{ SSC_OUTPUT,       SSC_ARRAY,     "load",            "Electric Load",           "Wh",               "",                  "Load Profile Estimator", "*",           "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"load",				"Electric Load",					"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 
 
 var_info_invalid };
@@ -56,7 +54,7 @@ private:
 public:
 	cm_belpe()
 	{
-		add_var_info(_cm_vtab_belpe);
+		add_var_info(_cm_vtab_belpe); 
 	}
 
 	//////////////////////////////SUPPORTING FUNCTIONS///////////////////////////////////////////
@@ -93,15 +91,15 @@ public:
 
 	//////////////////////////////MAIN FUNCTION///////////////////////////////////////////
 	void exec() throw(general_error)
-	{
+	{		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
-		int month[8760], day[8760], hour[8760];
+		int month[8761], day[8761], hour[8761];
 		int i = 0;
-		for (int m = 1; m <= 12; m++)
+		for (int m = 0; m < 12; m++)
 		{
-			for (int d = 1; d <= util::nday[m]; d++)
+			for (int d = 0; d < util::nday[m]; d++)
 			{
-				for (int h = 1; h <= 24; h++)
+				for (int h = 0; h <= 23; h++)
 				{
 					month[i] = m;
 					day[i] = d;
@@ -110,16 +108,18 @@ public:
 				}
 			}
 		}
+		//add hour 8761 for the euler forward later
+		month[8760] = 0; day[8760] = 0; hour[8760] = 0;
 
 		// read weather file inputs 		
 		const char *file = as_string("weather_file");
 		weatherfile wf(file);
 		if (!wf.ok()) throw exec_error("belpe", "failed to read local weather file: " + std::string(file));
 
-		ssc_number_t *T_ambF = allocate("T_ambF", 8760);
-		ssc_number_t *VwindMPH = allocate("VwindMPH", 8760);
-		ssc_number_t *GHI = allocate("GHI", 8760);
-		double RadWallN[8760], RadWallS[8760], RadWallE[8760], RadWallW[8760];
+		ssc_number_t *T_ambF = allocate("T_ambF", 8761);
+		ssc_number_t *VwindMPH = allocate("VwindMPH", 8761);
+		ssc_number_t *GHI = allocate("GHI", 8761);
+		std::vector<double> RadWallN(8761), RadWallS(8761), RadWallE(8761), RadWallW(8761);
 
 		for (size_t i = 0; i < 8760; i++)
 		{
@@ -155,6 +155,14 @@ public:
 			VwindMPH[i] = (ssc_number_t)(wf.wspd * 2.237);
 			GHI[i] = (ssc_number_t)wf.gh;
 		}
+		//add 8761 hour for the euler forward later
+		RadWallN[8760] = RadWallN[0]; 
+		RadWallS[8760] = RadWallS[0]; 
+		RadWallE[8760] = RadWallE[0]; 
+		RadWallW[8760] = RadWallW[0];
+		T_ambF[8760] = T_ambF[0];
+		VwindMPH[8760] = VwindMPH[0];
+		GHI[8760] = GHI[0];
 
 		// calculate average annual temperature
 		double T_annual_avg = 0;
@@ -165,7 +173,7 @@ public:
 
 		//radiation pre-processing
 		double alphaho_wall = 0.15 / 5.6783;  //From ASHRAE for light colors(dark is x2).Converted to SI units
-		double T_solair_walls[8761], T_solair_roof[8761], T_solair[8761], T_solairF[8761];
+		std::vector<double> T_solair_walls(8761), T_solair_roof(8761), T_solair(8761), T_solairF(8761);
 		for (int i = 0; i < 8761; i++)
 		{
 			T_solair_walls[i] = 4 * ((T_ambF[i] - 32) / 1.8 + alphaho_wall * (RadWallN[i] + RadWallS[i] + RadWallE[i] + RadWallW[i]) / 4); //N, S, E, W averaged
@@ -320,8 +328,8 @@ public:
 		ClEn[12] = ClEn[0];
 		HtEn[12] = HtEn[0];
 
-		double HtEnNew[13];
-		double ClEnNew[13];
+		std::vector<double> HtEnNew(13);
+		std::vector<double> ClEnNew(13);
 
 		for (int i = 0; i < 13; i++)
 		{
@@ -399,16 +407,16 @@ public:
 		double WasherHrFrac = Load_wash / (sum(WasherFrac, 24)*(1 + 0.1 * 2 / 7));
 		double DryerHrFrac = Load_dry / (sum(DryerFrac, 24)*(1 + 0.1 * 2 / 7));
 
-		double FridgeHourly[24];
-		double FridgeHourlyWkend[24];
-		double DWHourly[24];
-		double DWHourlyWkend[24];
-		double RangeHourly[24];
-		double RangeHourlyWkend[24];
-		double WasherHourly[24];
-		double WasherHourlyWkend[24];
-		double DryerHourly[24];
-		double DryerHourlyWkend[24];
+		std::vector<double> FridgeHourly(24);
+		std::vector<double> FridgeHourlyWkend(24);
+		std::vector<double> DWHourly(24);
+		std::vector<double> DWHourlyWkend(24);
+		std::vector<double> RangeHourly(24);
+		std::vector<double> RangeHourlyWkend(24);
+		std::vector<double> WasherHourly(24);
+		std::vector<double> WasherHourlyWkend(24);
+		std::vector<double> DryerHourly(24);
+		std::vector<double> DryerHourlyWkend(24);
 
 		for (int i = 0; i < 24; i++)
 		{
@@ -427,7 +435,7 @@ public:
 
 		//Weekday and weekend loads, summed and assumed half radiative / half
 		//convective
-		double TotalPlugHourlyWkday[24], SensibleEquipRadorConvWkday[24], SensibleEquipRadorConvWkend[24], TotalPlugHourlyWkend[24];
+		std::vector<double> TotalPlugHourlyWkday(24), SensibleEquipRadorConvWkday(24), SensibleEquipRadorConvWkend(24), TotalPlugHourlyWkend(24);
 		for (int i = 0; i < 24; i++)
 		{
 			TotalPlugHourlyWkday[i] = (FridgeHourly[i] + DWHourly[i] + RangeHourly[i] + WasherHourly[i] + DryerHourly[i]) / 365;
@@ -439,7 +447,7 @@ public:
 		//Vacation!affects ONLY THE LARGE APPLIANCES AND OCCUPANCY as per Bldg AM
 		//But why would DW, etc run if nobody home ? I set to just fridge for
 		//appliances.
-		double TotalPlugHourlyVacay[24], SensibleEquipRadorConvVacay[24];
+		std::vector<double> TotalPlugHourlyVacay(24), SensibleEquipRadorConvVacay(24);
 		for (int i = 0; i < 24; i++)
 		{
 			TotalPlugHourlyVacay[i] = FridgeHourly[i] / 365;
@@ -451,7 +459,7 @@ public:
 		//weekday vs.weekend, as per BeOpt.
 		double MELSFrac[24] = { 0.441138, 0.406172, 0.401462, 0.395811, 0.380859, 0.425, 0.491056, 0.521783, 0.441138, 0.375444, 0.384274, 0.384391, 0.377916, 0.390984, 0.4130, 0.435957, 0.515661, 0.626446, 0.680131, 0.702029, 0.726164, 0.709211, 0.613731, 0.533321 };
 		double MELSMonthly[12] = { 1, 1, .88, .88, .88, .77, .77, .77, .77, .85, .85, 1 };
-		double MELSHourlyJan[24];
+		std::vector<double> MELSHourlyJan(24);
 		double MELSHrFrac;
 		double MELSMonthSum[12];
 		double MELSFracSum = sum(MELSFrac, 24);
@@ -502,7 +510,7 @@ public:
 			{1, 0.84, 1.02},
 			{1, 1.04, 1.14}
 		};
-			
+
 		double LightUse[12][3];
 		for (int i = 0; i < 12; i++)
 		{
@@ -512,7 +520,7 @@ public:
 			}
 		}
 		
-		double MonthlyDailyLightUse[12];
+		std::vector<double> MonthlyDailyLightUse(12);
 
 		for (int i = 0; i < 12; i++)
 		{
@@ -526,7 +534,7 @@ public:
 		}
 
 		double  LightHrFrac = Load_light / AnnualLightUseHrs;
-		double LightHourlyJan[24];
+		std::vector<double> LightHourlyJan(24);
 		for (int i = 0; i < 24; i++)
 		{
 			LightHourlyJan[i] = LightHrFrac*LightFrac[i];
@@ -571,23 +579,26 @@ public:
 		int D = 1; //somehow I am one day off BEOPT so compensating here(this is days of the week)
 		// TMY DEFAULT IS MONDAY!!!!!!!
 		//Sol - Air -- This part is ALL SI -- get effective envelope temperatures for the heat transfer.
-		double Vacay[8761], Hset[8761], Cset[8761];
-		double Tmass[8761], Tair[8761], Tsurf[8761], Heaton[8761];
+		std::vector<double> Vacay(8761), Hset(8761), Cset(8761);
+		std::vector<double> Tmass(8761), Tair(8761), Tsurf(8761), Heaton(8761);
 		//All the initial loads - divided into radiatinve & convective
-		double EquipElecHrLoad[8761], EquipRadHrLoad[8761], EquipConvHrLoad[8761], MELSElecHrLoad[8761], MELSRadHrLoad[8761];
-		double MELSConvHrLoad[8761], LightElecHrLoad[8761], LightRadHrLoad[8761], LightConvHrLoad[8761], PPLRadHrLoad[8761], PPLConvHrLoad[8761];
-		double TAnew[8761], TSnew[8761], TMnew[8761];
-		double QInt_Rad[8761], QInt_Conv[8761], Q_SolWin[8761];
-		double CFM[8761], UAInf[8761], QInf[8761], QG[8761];
-		double QN[8761], QHV2[8761], Tdiff[8761];
-		double HourlyNonHVACLoad[8761];
+		
+		std::vector<double> EquipElecHrLoad(8761), EquipRadHrLoad(8761), EquipConvHrLoad(8761), MELSElecHrLoad(8761), MELSRadHrLoad(8761);
+		std::vector<double> MELSConvHrLoad(8761), LightElecHrLoad(8761), LightRadHrLoad(8761), LightConvHrLoad(8761), PPLRadHrLoad(8761), PPLConvHrLoad(8761);
+		std::vector<double> TAnew(8761), TSnew(8761), TMnew(8761);
+		std::vector<double> QInt_Rad(8761), QInt_Conv(8761), Q_SolWin(8761);
+		std::vector<double> CFM(8761), UAInf(8761), QInf(8761), QG(8761);
+		std::vector<double> QN(8761), QHV2(8761), Tdiff(8761);
+		
+		
+		std::vector<double> HourlyNonHVACLoad(8761);
 
-		for (int i = 0; i <= 8760; i++)
+		for (int i = 0; i < 8760; i++)
 		{
 			Vacay[i] = 0; //Initialize vacation to zero
 			int Hr = hour[i];
 			int NextHr = hour[i + 1];
-
+			
 			//The day of the week (to figure out weekends)
 			if (Hr == 1)
 				D = D + 1;
@@ -601,10 +612,10 @@ public:
 			//Are we on vacation ?
 			for (int v = 0; v < N_vacation; v++)
 			{
-				if (Mon == VacationMonths[v] && Dy == VacationDays[v])
+				if (Mon == (VacationMonths[v]-1) && Dy == (VacationDays[v]-1)) //need to subtract 1 from VacationMonths and VacationDays because Mon and Dy are 0 subscripted (Jan is Mon[0])
 					Vacay[i] = 1;
 
-				if (NextMon == VacationMonths[v] && NextDay == VacationDays[v])
+				if (NextMon == (VacationMonths[v]-1) && NextDay == (VacationDays[v]-1))
 					Vacay[i + 1] = 1;
 			}
 
@@ -792,7 +803,7 @@ public:
 			double HourlyNonHVACLoad = (LightElecHrLoad[i] + MELSElecHrLoad[i] + EquipElecHrLoad[i]); //kWh
 			load[i] = (ssc_number_t)HourlyNonHVACLoad;
 		}
-
+		/*
 		//Aux heating fans(if gas heat)
 		double HrsHeat = sum(Heaton, 8760);
 		double AuxHeatPerHr;
@@ -802,7 +813,7 @@ public:
 			AuxHeatPerHr = AuxHeat / HrsHeat; //This is kWh
 		//double Q_NONHVAC = HourlyNonHVACLoad + AuxHeatPerHr.*Heaton; //Hourly	?????????????????????????????????????????????????????????????????????????????????????????????
 		//FANZ = AuxHeatPerHr.*Heaton;			?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-
+		*/
 	}
 };
 

@@ -62,7 +62,8 @@ extern module_entry_info
 	cm_entry_wind_file_reader,
 	cm_entry_wfcheck,
 	cm_entry_windbos,
-	cm_entry_biomass;
+	cm_entry_biomass,
+	cm_entry_belpe;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -108,6 +109,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_wfcheck,
 	&cm_entry_windbos,
 	&cm_entry_biomass,
+	&cm_entry_belpe,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
