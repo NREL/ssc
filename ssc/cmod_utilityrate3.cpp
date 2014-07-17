@@ -1298,7 +1298,7 @@ public:
 	*/
 	void process_annual_min(ssc_number_t payment[8760], ssc_number_t charges[12])
 	{
-		int m, d, h, c;
+		int m, d, h, c=0;
 		ssc_number_t annual_charge = 0;
 
 		ssc_number_t min_charge = as_number("ur_annual_min_charge");
