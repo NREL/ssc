@@ -1178,6 +1178,11 @@ public:
 		if (as_boolean("ur_ec_enable"))
 			process_energy_charge( e_in, payment, income, price, monthly_ec_charges, monthly_ec_rates, ec_tou_sched );
 
+		// process min charges
+		process_monthly_min(payment, monthly_fixed_charges);
+		process_annual_min(payment, monthly_fixed_charges);
+
+
 		// compute revenue ( = income - payment )
 		for (i=0;i<8760;i++)
 			revenue[i] = income[i] - payment[i];
@@ -1291,6 +1296,70 @@ public:
 
 	}
 	*/
+	void process_annual_min(ssc_number_t payment[8760], ssc_number_t charges[12])
+	{
+		int m, d, h, c;
+		ssc_number_t annual_charge = 0;
+
+		ssc_number_t min_charge = as_number("ur_annual_min_charge");
+		for (m = 0; m<12; m++)
+			for (d = 0; d<util::nday[m]; d++)
+				for (h = 0; h<24; h++)
+					annual_charge += payment[c];
+		// check against min charge
+		if (annual_charge < min_charge)
+		{
+			// if less then apply charge to last month and last hour
+			ssc_number_t add_annual_charge = min_charge - annual_charge;
+			charges[11] += add_annual_charge;
+			payment[8759] += add_annual_charge;
+		}
+
+	}
+
+	void process_monthly_min(ssc_number_t payment[8760], ssc_number_t charges[12])
+	{
+		int m, d, h, c;
+		ssc_number_t monthly_charge[12];
+
+		ssc_number_t min_charge = as_number("ur_monthly_min_charge");
+		c = 0;
+		for (m = 0; m<12; m++)
+		{
+			monthly_charge[m] = 0;
+			for (d = 0; d<util::nday[m]; d++)
+			{
+				for (h = 0; h<24; h++)
+				{
+					monthly_charge[m] += payment[c];
+					c++;
+				}
+			}
+		}
+		// check each month against minimum charge
+		c = 0;
+		for (m = 0; m < 12; m++)
+		{
+			ssc_number_t add_monthly_charge = 0;
+			// if less then add difference to end of month
+			if (monthly_charge[m] < min_charge)
+			{
+				add_monthly_charge = min_charge - monthly_charge[m];
+			}
+			for (d = 0; d<util::nday[m]; d++)
+			{
+				for (h = 0; h<24; h++)
+				{
+					if (d == util::nday[m] - 1 && h == 23)
+					{
+						charges[m] += add_monthly_charge;
+						payment[c] += add_monthly_charge;
+					}
+					c++;
+				}
+			}
+		}
+	}
 
 
 	void process_monthly_charge( ssc_number_t payment[8760], ssc_number_t charges[12] )
