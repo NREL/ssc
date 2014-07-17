@@ -26,9 +26,15 @@ static var_info vtab_utility_rate3[] = {
 //	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Force sell rate equal to buy", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
-	
+//	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
+//	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",      "" },
+
+	// urdb minimums
+	{ SSC_INPUT, SSC_NUMBER, "ur_monthly_min_charge", "Monthly minimum charge", "$", "", "", "?=0.0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_annual_min_charge", "Annual minimum charge", "$", "", "", "?=0.0", "", "" },
+
+
+
 	// Energy Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_enable",            "Enable energy charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 
@@ -1158,8 +1164,8 @@ public:
 				= monthly_ec_charges[i] = monthly_ec_rates[i] = 0.0;
 		}
 
-		// process basic flat rate
-		process_flat_rate( e_in, payment, income, price );
+		// process basic flat rate - V3 handled in energy charge
+//		process_flat_rate( e_in, payment, income, price );
 
 		// process monthly fixed charges
 		process_monthly_charge( payment, monthly_fixed_charges );
@@ -1178,6 +1184,7 @@ public:
 
 	}
 
+	/*
 	void process_flat_rate( ssc_number_t e[8760],
 			ssc_number_t payment[8760],
 			ssc_number_t income[8760],
@@ -1283,6 +1290,8 @@ public:
 
 
 	}
+	*/
+
 
 	void process_monthly_charge( ssc_number_t payment[8760], ssc_number_t charges[12] )
 	{
