@@ -1,6 +1,7 @@
 #include "thermocline_tes.h"
 //#include "sam_csp_util.h"
 #include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -51,21 +52,21 @@ bool Thermocline_TES::Initialize_TC( double H_m, double A_m2, int Fill_in, doubl
 
 	// Define initial thermocline array based on initial hot and cold temperatures and cold fraction
 	if( nodes_break <= 0 )
-		m_T_prev.fill( m_T_hot_init );
+		m_T_prev.assign(m_T_prev.size(), m_T_cold_init);
 	else if( nodes_break >= m_nodes - 1 )
-		m_T_prev.fill( m_T_cold_init );
+		m_T_prev.assign(m_T_prev.size(), m_T_hot_init);
 	else
 	{
 		for( int i = 0; i < nodes_break; i++ )
-			m_T_prev.at(i,0) = m_T_hot_init;
+			m_T_prev[i] = m_T_hot_init;
 		for( int i = nodes_break; i < m_nodes; i++ )
-			m_T_prev.at(i,0) = m_T_cold_init;
+			m_T_prev[i] = m_T_cold_init;
 	}
 
 	// Determine the average rockbed temperature
 	m_T_final_ave_prev = 0.0;
 	for( int i = 0; i < m_nodes; i++ )
-		m_T_final_ave_prev += m_T_prev.at(i,0);
+		m_T_final_ave_prev += m_T_prev[i];   // .at(i, 0);
 	m_T_final_ave_prev /= m_nodes;
 
 	if( !fillProps.Set_TC_Material( Fill ) )
@@ -174,16 +175,16 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	for( int k = 0; k < m_nodes; k++ )
 	{
 		// Find the last node where the HTF temperature is above the hot side limit
-		if( m_T_start.at(k,0) > m_Th_avail_min )
+		if( m_T_start[k] > m_Th_avail_min )
 		{
 			ihlim = k;						//[-]
-			Thtemp += m_T_start.at(k,0);	//[C]
+			Thtemp += m_T_start[k];	//[C]
 		}
 		// Find the last node where the HTF temperature is below the cold side limit
-		if( m_T_start.at(m_nodes-1-k,0) < m_Tc_avail_max )
+		if( m_T_start[m_nodes-1-k] < m_Tc_avail_max )
 		{
 			iclim = k;						//[-]
-			Tctemp += m_T_start.at(m_nodes-1-k,0);
+			Tctemp += m_T_start[m_nodes-1-k];
 		}
 	}
 
@@ -199,7 +200,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	fhlim = (fhlim+1)/m_nodes;
 	fclim = (fclim+1)/m_nodes;
 
-	int ChargeNodes = max( 0, (int)floor(f_storage*m_nodes) );
+	int ChargeNodes = min(m_nodes-1, max( 0, (int)floor(f_storage*m_nodes) ) );
 
 	double Qd_fill = std::numeric_limits<double>::quiet_NaN();
 	double flc = std::numeric_limits<double>::quiet_NaN();
@@ -247,9 +248,9 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	if( mode == 2 )
 	{
 		m_dis_avail_tot = m_disch_avail * m_tank_pairs;
-		T_dis_avail_C = m_T_start.at(0,0);
+		T_dis_avail_C = m_T_start[0];
 		m_ch_avail_tot = m_charge_avail * m_tank_pairs;
-		T_ch_avail_C = m_T_start.at(m_nodes-1,0);
+		T_ch_avail_C = m_T_start[m_nodes-1];
 		return true;
 	}
 	
@@ -406,13 +407,21 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		m_T_ave = m_T_prev;
 		m_T_end = m_T_prev;
 
-		m_T_ts_ave.resize_fill( num_TC, 1, 0.0 );
-		m_Q_losses.resize_fill( num_TC, 1, 0.0 );
-		m_Q_htr.resize_fill( num_TC, 1, 0.0 );
-		m_T_cout_ave.resize_fill( num_TC, 1, 0.0 );
-		m_T_hout_ave.resize_fill( num_TC, 1, 0.0 );
+		m_T_ts_ave.clear();
+		m_T_ts_ave.assign(num_TC, 0.0);
 
+		m_Q_losses.clear();
+		m_Q_losses.assign(num_TC, 0.0);
 
+		m_Q_htr.clear();
+		m_Q_htr.assign(num_TC, 0.0);
+
+		m_T_cout_ave.clear();
+		m_T_cout_ave.assign(num_TC, 0.0);
+
+		m_T_hout_ave.clear();
+		m_T_hout_ave.assign(num_TC, 0.0);
+		
 		// Okay, add outer loop for number of thermocline timesteps in a simulation timestep
 		for( int tcn = 0; tcn < num_TC; tcn++ )
 		{
@@ -425,8 +434,8 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 			{
 				iter++;
 
-				m_T_ts_ave.at(tcn,0) = 0.0;		//[C] Array storing average packed bed temperature at each timestep
-				m_Q_losses.at(tcn,0) = 0.0;		//[kJ/hr] Array storing summed rate of heat loss at each timestep
+				m_T_ts_ave[tcn] = 0.0;		//[C] Array storing average packed bed temperature at each timestep
+				m_Q_losses[tcn] = 0.0;		//[kJ/hr] Array storing summed rate of heat loss at each timestep
 
 				max_T_diff = 0.0;		// Reset
 												
@@ -443,19 +452,19 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 						if( i == 0 )	// Top (hot) node 
 						{
 							aa = -(flh+m_UA+m_UA_top+m_ef_cond)/m_cap_node;
-							bb = (flh*T_hot+(m_UA+m_UA_top)*T_env+m_ef_cond*m_T_ave.at(i+1,0))/m_cap_node;
+							bb = (flh*T_hot+(m_UA+m_UA_top)*T_env+m_ef_cond*m_T_ave[i+1])/m_cap_node;
 							UA_hl = m_UA + m_UA_top;
 						}
 						else if( i == m_nodes - 1 )	// Bottom (cold) node
 						{
 							aa = -(flh+m_UA+m_UA_bot+m_ef_cond)/(m_cap_node*m_capfac);
-							bb = (flh*m_T_ave.at(i-1,0)+(m_UA+m_UA_bot)*T_env+m_ef_cond*m_T_ave.at(i-1,0))/(m_cap_node*m_capfac);
+							bb = (flh*m_T_ave[i-1]+(m_UA+m_UA_bot)*T_env+m_ef_cond*m_T_ave[i-1])/(m_cap_node*m_capfac);
 							UA_hl = m_UA + m_UA_bot;
 						}
 						else	// Middle nodes
 						{
 							aa = -(flh+m_UA+2.0*m_ef_cond)/m_cap_node;
-							bb = (flh*m_T_ave.at(i-1,0)+m_UA*T_env+m_ef_cond*(m_T_ave.at(i-1,0)+m_T_ave.at(i+1,0)))/m_cap_node;
+							bb = (flh*m_T_ave[i-1]+m_UA*T_env+m_ef_cond*(m_T_ave[i-1]+m_T_ave[i+1]))/m_cap_node;
 							UA_hl = m_UA;
 						}
 					}
@@ -465,24 +474,24 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 						if( i == 0 )	// Top (hot) node
 						{
 							aa = -(flc+m_UA+m_UA_top+m_ef_cond)/m_cap_node;
-							bb = (flc*m_T_ave.at(i+1,0)+(m_UA+m_UA_top)*T_env+m_ef_cond*m_T_ave.at(i+1,0))/m_cap_node;
+							bb = (flc*m_T_ave[i+1]+(m_UA+m_UA_top)*T_env+m_ef_cond*m_T_ave[i+1])/m_cap_node;
 							UA_hl = m_UA + m_UA_top;
 							
 						}
 						else if( i == m_nodes - 1 )	// Bottom (cold) node
 						{
 							aa = -(flc+m_UA+m_UA_bot+m_ef_cond)/(m_cap_node*m_capfac);
-							bb = (flc*T_cold+(m_UA+m_UA_bot)*T_env+m_ef_cond*m_T_ave.at(i-1,0))/(m_cap_node*m_capfac);
+							bb = (flc*T_cold+(m_UA+m_UA_bot)*T_env+m_ef_cond*m_T_ave[i-1])/(m_cap_node*m_capfac);
 							UA_hl = m_UA + m_UA_bot;
 						}
 						else	// Middle nodes
 						{
 							aa = -(flc+m_UA+2.0*m_ef_cond)/m_cap_node;
-							bb = (flc*m_T_ave.at(i+1,0)+m_UA*T_env+m_ef_cond*(m_T_ave.at(i+1,0)+m_T_ave.at(i-1,0)))/m_cap_node;
+							bb = (flc*m_T_ave[i+1]+m_UA*T_env+m_ef_cond*(m_T_ave[i+1]+m_T_ave[i-1]))/m_cap_node;
 							UA_hl = m_UA;
 						}
 					}
-					double T_node_initial = m_T_start.at(i,0);
+					double T_node_initial = m_T_start[i];
 					// Solve analytical solution
 					double T_final;
 					double T_average;
@@ -504,31 +513,31 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 						Q_htr_max = m_tank_max_heat*1000.0*TC_timestep*3600.0;	//[MW]*1000(kJ/MJ)*dt(hr)*3600(s/hr)=>kg  Maximum heat rate of tank heater
 
 						// If heat has capacity to increase node temperature to setpoint
-						if( m_Q_htr.at(tcn,0) + m_cap_node*(m_T_htr_set - T_final) < m_tank_max_heat )
+						if( m_Q_htr[tcn] + m_cap_node*(m_T_htr_set - T_final) < m_tank_max_heat )
 						{
-							m_Q_htr.at(tcn,0) = m_Q_htr.at(tcn,0) + m_cap_node*(m_T_htr_set - T_final);		//[kJ]   Thermal energy required by heater to maintain cold limit in tank
+							m_Q_htr[tcn] = m_Q_htr[tcn] + m_cap_node*(m_T_htr_set - T_final);		//[kJ]   Thermal energy required by heater to maintain cold limit in tank
 							T_final = m_T_htr_set;		//[C] Node hits setpoint
 						}
 						else	// If the heater does not have capacity
 						{
-							T_final = (m_tank_max_heat - m_Q_htr.at(tcn,0))/m_cap_node + T_final;
+							T_final = (m_tank_max_heat - m_Q_htr[tcn])/m_cap_node + T_final;
 						}
 					}
 
-					m_T_end.at(i,0) = T_final;
-					max_T_diff = max( max_T_diff, abs( m_T_ave.at(i,0) - T_average ) );		//[C] Difference between old average node temp and new average node temp
-					m_T_ave.at(i,0) = T_average;											//[C] Update guess on average node temp now that difference is calculated
-					m_T_ts_ave.at(tcn,0) += T_average;										//[C] Add average node temps
-					m_Q_losses.at(tcn,0) += UA_hl*(T_average - T_env);						//[kJ/hr-K]*[K] -> [kJ/hr] Heat loss
+					m_T_end[i] = T_final;
+					max_T_diff = max( max_T_diff, abs( m_T_ave[i] - T_average ) );		//[C] Difference between old average node temp and new average node temp
+					m_T_ave[i] = T_average;											//[C] Update guess on average node temp now that difference is calculated
+					m_T_ts_ave[tcn] += T_average;										//[C] Add average node temps
+					m_Q_losses[tcn] += UA_hl*(T_average - T_env);						//[kJ/hr-K]*[K] -> [kJ/hr] Heat loss
 				}	// End step through thermocline nodes
 
-				m_T_ts_ave.at(tcn,0) /= (double) m_nodes;				//[C] Spatial average of nodal time averaged temps
+				m_T_ts_ave[tcn] /= (double) m_nodes;				//[C] Spatial average of nodal time averaged temps
 				max_T_diff /= 290.0;									//[-] Max nodal relative temperature difference
 
 			}	// End iteration on average (time) nodal temperatures
 
-			m_T_cout_ave.at(tcn,0) = m_T_ave.at(m_nodes - 1,0);
-			m_T_hout_ave.at(tcn,0) = m_T_ave.at(0,0);
+			m_T_cout_ave[tcn] = m_T_ave[m_nodes - 1];
+			m_T_hout_ave[tcn] = m_T_ave[0];
 
 			// After timestep has solved, set initial nodes of next timestep to end nodes of current timestep
 			m_T_start = m_T_end;
@@ -537,13 +546,13 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		// Determine average rockbed temperatures and average derivatives
 		m_T_final_ave = 0.0;
 		for( int i = 0; i < m_nodes; i++ )
-			m_T_final_ave += m_T_end.at(i,0);
+			m_T_final_ave += m_T_end[i];
 		m_T_final_ave /= m_nodes;					//[C] Spatial average of temps at end of final timestep
 
 		// TN: Average rockbed temp is now the average (sub timesteps in simulation) of averages (nodal in each sub timestep) of averages ( time based in each timestep )
 		double T_ave = 0.0;
 		for( int i = 0; i < num_TC; i++ )
-			T_ave += m_T_ts_ave.at(i,0);
+			T_ave += m_T_ts_ave[i];
 		T_ave /= (double)num_TC;
 		// *************************************************
 
@@ -552,8 +561,8 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		T_charge_avail = 0.0;
 		for( int i = 0; i < num_TC; i++ )
 		{
-			T_disch_avail += m_T_hout_ave.at(i,0);
-			T_charge_avail += m_T_cout_ave.at(i,0);
+			T_disch_avail += m_T_hout_ave[i];
+			T_charge_avail += m_T_cout_ave[i];
 		}
 		T_disch_avail /= (double)num_TC;		//[C] Time-averaged discharging OUTLET temperature (this is a CONFUSING name)
 		T_charge_avail /= (double)num_TC;		//[C] Time-averaged charging OUTLET temperature (this is a CONFUSING name)
@@ -562,9 +571,9 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		double diff_Thmin = std::numeric_limits<double>::quiet_NaN();
 		// Check if tank has been over-(dis)charged with current mass flow rate
 		if( I_flow == 1 )	// Charging, so look for min cold temp hotter than allowed
-			diff_Tcmax = m_T_end.at(m_nodes-1,0) - m_Tcmax;
+			diff_Tcmax = m_T_end[m_nodes-1] - m_Tcmax;
 		else if( I_flow == 2 )	// Discharging, so look for max hot temp cooled than allowed
-			diff_Thmin = m_T_end.at(ChargeNodes,0) - m_Thmin;
+			diff_Thmin = m_T_end[ChargeNodes] - m_Thmin;
 
 		TC_limit = 0;		// Reset Flag
 
@@ -704,7 +713,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	// Calculate some important outputs
 	double Q_losses_sum = 0.0;
 	for( int i = 0; i < num_TC; i++ )
-		Q_losses_sum += m_Q_losses.at(i,0);
+		Q_losses_sum += m_Q_losses[i];
 	double Q_loss_total = Q_losses_sum*delt/num_TC;
 
 	double q_charge = std::numeric_limits<double>::quiet_NaN();
@@ -733,7 +742,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 
 	double Q_htr_total = 0.0;
 	for( int i = 0; i < num_TC; i++ )
-		Q_htr_total += m_Q_htr.at(i,0);		//[kJ] Total energy required by heater during timestep
+		Q_htr_total += m_Q_htr[i];		//[kJ] Total energy required by heater during timestep
 
 	m_dis_avail_tot = m_disch_avail * m_tank_pairs;		//[kg/hr]
 	T_dis_avail_C = T_disch_avail;						//[C] Discharge temp (HOT)
@@ -741,12 +750,12 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	T_ch_avail_C = T_charge_avail;						//[C] Charge temp (COLD)
 	Q_dot_out_W = q_calc*m_tank_pairs;					//[W] Thermal power out of thermocline
 	Q_dot_losses = Q_loss_total*m_tank_pairs;			//[kJ] Heat losses
-	T_hot_bed_C = m_T_end.at(0,0);						//[C] Final temperature at hot node
-	T_cold_bed_C = m_T_end.at(m_nodes-1,0);				//[C] Final temperature at cold node
+	T_hot_bed_C = m_T_end[0];						//[C] Final temperature at hot node
+	T_cold_bed_C = m_T_end[m_nodes-1];				//[C] Final temperature at cold node
 	
 	double T_max_bed = 0.0;
 	for( int i = 0; i < m_nodes; i++ )
-		T_max_bed = max( T_max_bed, m_T_end.at(i,0) );
+		T_max_bed = max( T_max_bed, m_T_end[i] );
 	T_max_bed_C = T_max_bed;
 
 	// Reset counters
@@ -756,9 +765,9 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	for( int i = 0; i < m_nodes; i++ )
 	{
 		// Find the last node where the HTF temperature is above the hot side limit
-		if( m_T_end.at(i,0) > m_T_hot_in_min )
+		if( m_T_end[i] > m_T_hot_in_min )
 			ihlim = i;
-		if( m_T_end.at( m_nodes-1-i, 0 ) < m_T_cold_in_max )
+		if( m_T_end[m_nodes-1-i] < m_T_cold_in_max )
 			iclim = i;
 	}
 

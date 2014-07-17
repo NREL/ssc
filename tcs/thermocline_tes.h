@@ -4,6 +4,7 @@
 
 #include "sam_csp_util.h"
 #include "htf_props.h"
+#include <vector>
 
 class TC_Fill_Props
 {
@@ -205,15 +206,17 @@ private:
 	double m_T_hot_in_min; 
 	double m_T_cold_in_max;
 
-	util::matrix_t<double> m_T_prev;
-	util::matrix_t<double> m_T_start;
-	util::matrix_t<double> m_T_ave;
-	util::matrix_t<double> m_T_end;
-	util::matrix_t<double> m_T_ts_ave;
-	util::matrix_t<double> m_Q_losses;
-	util::matrix_t<double> m_Q_htr;
-	util::matrix_t<double> m_T_cout_ave;
-	util::matrix_t<double> m_T_hout_ave;
+	vector<double> m_T_prev, m_T_start, m_T_ave, m_T_end, m_T_ts_ave, m_Q_losses, m_Q_htr, m_T_cout_ave, m_T_hout_ave;
+
+	//util::matrix_t<double> m_T_prev;
+	//util::matrix_t<double> m_T_start;
+	//util::matrix_t<double> m_T_ave;
+	//util::matrix_t<double> m_T_end;
+	//util::matrix_t<double> m_T_ts_ave;
+	//util::matrix_t<double> m_Q_losses;
+	//util::matrix_t<double> m_Q_htr;
+	//util::matrix_t<double> m_T_cout_ave;
+	//util::matrix_t<double> m_T_hout_ave;
 
 
 	// Values from previous timestep

@@ -1,7 +1,8 @@
 #include <algorithm>
 
 #include "sam_csp_util.h"
-#include "waterprop.h"
+//#include "waterprop.h"
+#include "water_properties.h"
 
 using namespace std;
 
@@ -535,9 +536,9 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	double mass_ratio_fan = 1.01;      // Ratio of air flow to water flow in the cooling tower
 
 	// Cooling water specific heat
-	property_info wp;
-	water_TP( max( T_wb, 10.0 ), P_amb/1000.0, &wp );
-	double c_cw = wp.Cp * 1000.0;		// Convert to J/kg-K
+	water_state wp;
+	water_TP( max( T_wb, 10.0 )+273.15, P_amb/1000.0, &wp );
+	double c_cw = wp.cp * 1000.0;		// Convert to J/kg-K
 
 	// **** Calculations for design conditions
 	double q_reject_des = P_cycle*(1./eta_ref-1.0);    	    // Heat rejection from the cycle
@@ -555,8 +556,8 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	// Condenser back pressure
 	if(tech_type != 4)
 	{	
-		water_TQ( T_cond, 1.0, &wp );
-		P_cond = wp.P * 1000.0;
+		water_TQ(T_cond + 273.15, 1.0, &wp);
+		P_cond = wp.pres * 1000.0;
 	}
 	else
 		P_cond = CSP::P_sat4(T_cond); // isopentane
@@ -575,8 +576,8 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 			deltat_cw = q_reject/(m_dot_cw*c_cw);
 			T_cond = T_wb + deltat_cw + dt_out + T_approach;
 
-			water_TQ( T_cond, 1.0, &wp );
-			P_cond = wp.P * 1000.0;
+			water_TQ(T_cond + 273.15, 1.0, &wp);
+			P_cond = wp.pres * 1000.0;
 			
 			if(P_cond > P_cond_min) break;
 		}
@@ -587,15 +588,15 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 			P_cond = P_cond_min;
 
 			water_PQ( P_cond/1000.0, 1.0, &wp );
-			T_cond = wp.T;
+			T_cond = wp.temp-273.15;
 			
 			deltat_cw = T_cond - (T_wb + dt_out + T_approach);
 			m_dot_cw = q_reject/(deltat_cw * c_cw);
 		}
 	}
-	water_TP( T_cond - 3.0, P_amb/1000.0, &wp );
-	double h_pcw_in = wp.H*1000.0;
-	double s_pcw_in = wp.S*1000.0;
+	water_TP( T_cond - 3.0 + 273.15, P_amb/1000.0, &wp );
+	double h_pcw_in = wp.enth*1000.0;
+	double s_pcw_in = wp.entr*1000.0;
 	double rho_cw = wp.dens;	
 	
 	double h_pcw_out_s = (dp_evap/rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
@@ -625,9 +626,9 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 	//deltah_evap = f_dh_evap(P_amb);
 	water_PQ( P_amb/1000.0, 0.0, &wp );
-	double dh_low = wp.H;
+	double dh_low = wp.enth;
 	water_PQ( P_amb/1000.0, 1.0, &wp );
-	double dh_high = wp.H;
+	double dh_high = wp.enth;
 	double deltah_evap = (dh_high - dh_low)*1000.0;	// [J/kg]
 
 	// Evaporative water loss
@@ -693,12 +694,12 @@ void CSP::ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des,
 	// Calculated output
 	T_cond = T_db + T_ITD;		// Condensation temperature
 
-	property_info wp;
+	water_state wp;
 	// Turbine back pressure
 	if(tech_type != 4)
 	{	
-		water_TQ( T_cond, 1.0, &wp );
-		P_cond = wp.P * 1000.0;
+		water_TQ(T_cond + 273.15, 1.0, &wp);
+		P_cond = wp.pres * 1000.0;
 	}
 	else
 		P_cond = CSP::P_sat4(T_cond); // isopentane
@@ -717,8 +718,8 @@ void CSP::ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des,
 			dT_air = q_reject/(m_dot_air*c_air);
 			T_cond = T_db + T_hot_diff + dT_air;
 
-			water_TQ( T_cond, 1.0, &wp );
-			P_cond = wp.P * 1000.0;
+			water_TQ(T_cond + 273.15, 1.0, &wp);
+			P_cond = wp.pres * 1000.0;
 			
 			if(P_cond > P_cond_min) break;
 		}
@@ -728,7 +729,7 @@ void CSP::ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des,
 			P_cond = P_cond_min;
 
 			water_PQ( P_cond/1000.0, 1.0, &wp );
-			T_cond = wp.T;
+			T_cond = wp.temp-273.15;
 			
 			dT_air = T_cond - (T_db + T_hot_diff);
 			m_dot_air = q_reject/(dT_air*c_air);
@@ -842,9 +843,9 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 	
 	// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 	// c_cw = f_c_psat(P_amb);      //Cooling water specific heat (TFF, this is also calculated above.)
-	property_info wp;
-	water_TP( max(T_wb, 10.0), P_amb/1000.0, &wp );
-	double c_cw = wp.Cp * 1000.0;		// [J/kg-K]
+	water_state wp;
+	water_TP( max(T_wb, 10.0) + 273.15, P_amb/1000.0, &wp );
+	double c_cw = wp.cp * 1000.0;		// [J/kg-K]
 
 	double m_dot_cw_des = q_wc_des/(c_cw*dT_cw_ref);	//Mass flow rate of cooling water required to absorb the rejected heat 
 
@@ -873,8 +874,8 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 	{	
 		// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 		// P_cond =  f_psat_T(T_cond); // steam
-		water_TQ( T_cond, 1.0, &wp );
-		P_cond = wp.P * 1000.0;
+		water_TQ(T_cond + 273.15, 1.0, &wp);
+		P_cond = wp.pres * 1000.0;
 	}
 	else
 		P_cond = CSP::P_sat4(T_cond); // isopentane
@@ -922,8 +923,8 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 			
 			// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 			// P_cond = f_psat_T(T_cond);
-			water_TQ( T_cond, 1.0, &wp );
-			P_cond = wp.P * 1000.0;
+			water_TQ(T_cond + 273.15, 1.0, &wp);
+			P_cond = wp.pres * 1000.0;
 
 			//if(P_cond > P_cond_min) goto 100
 			if((i >= n_pl_inc) || (j >= n_pl_inc) ) break;
@@ -938,7 +939,7 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 			// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 			// T_cond = f_Tsat_p(P_cond);
 			water_PQ( P_cond/1000.0, 1.0, &wp );
-			T_cond = wp.T;
+			T_cond = wp.temp-273.15;
 			
 			if(T_condwc > T_condair)
 			{
@@ -980,9 +981,9 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 		// h_pcw_in = f_hw_psat(P_amb);     //[J/kg] cw pump inlet enthalpy
 		// s_pcw_in = f_s_hw_psat(P_amb);     //[J/kg-K] cw pump inlet entropy
 		// rho_cw = f_rho_P(P_amb);         //[kg/m3] cooling water density in the pump
-		water_TP( T_cond - 3.0, P_amb/1000.0, &wp );
-		double h_pcw_in = wp.H * 1000.0;
-		double s_pcw_in = wp.S * 1000.0;
+		water_TP( T_cond - 3.0 + 273.15, P_amb/1000.0, &wp );
+		double h_pcw_in = wp.enth * 1000.0;
+		double s_pcw_in = wp.entr * 1000.0;
 		double rho_cw = wp.dens;
 		
 		double h_pcw_out_s = dP_evap/rho_cw + h_pcw_in;                         //[J/kg] isentropic outlet enthalpy.. incompressible fluid
@@ -1009,9 +1010,9 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 		// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 		// deltaH_evap = f_dh_evap(P_amb);
 		water_PQ( P_amb/1000.0, 0.0, &wp );
-		double dh_low = wp.H;
+		double dh_low = wp.enth;
 		water_PQ( P_amb/1000.0, 1.0, &wp );
-		double dh_high = wp.H;
+		double dh_high = wp.enth;
 		double deltaH_evap = (dh_high - dh_low)*1000.0;
 
 		//Evaporative water loss

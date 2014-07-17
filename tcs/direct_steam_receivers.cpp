@@ -3,7 +3,8 @@
 
 #include "sam_csp_util.h"
 #include <shared/lib_util.h>
-#include "waterprop.h"
+//#include "waterprop.h"
+#include "water_properties.h"
 
 // void flow_patterns_DSR( int n_panels, int flow_type, util::matrix_t<int> & flow_pattern );
 // double Nusselt_FC( double ksDin, double Re );
@@ -356,9 +357,9 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		}
 		
 		water_PQ( P_out_guess, 0.0, &wp );
-		double h_x0 = wp.H;		//[kJ/kg] Enthalpy of saturated liquid recirculating to steam drum
-		water_TP( T_fw - 273.15, P_out_guess, &wp );
-		h_fw = wp.H; rho_fw = wp.dens;	//[kJ/kg] Enthalpy and [kg/m^3] density of feedwater entering steam drum
+		double h_x0 = wp.enth;		//[kJ/kg] Enthalpy of saturated liquid recirculating to steam drum
+		water_TP( T_fw, P_out_guess, &wp );
+		h_fw = wp.enth; rho_fw = wp.dens;	//[kJ/kg] Enthalpy and [kg/m^3] density of feedwater entering steam drum
 
 		h_in = x_out_target*h_fw + (1.0 - x_out_target)*h_x0;	//[kJ/kg] Energy balance to find enthalpy of feedwater/recirc mixture
 
@@ -370,7 +371,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		//8/20/11 Need to account for the gravity head so we don't observe large pressure drops while not exceeding Dyreby props pressure limits
 		double P_in = (P_in_pb + deltaP_in/1000.0);	//[kPa] Inlet pressure adding gravity head from steam drum
 		water_PH( P_in, h_in, &wp );				
-		T_in = wp.T + 273.15;		//[K] Temperature at first panel inlet
+		T_in = wp.temp;		//[K] Temperature at first panel inlet
 		h_in = h_in*1000.0;					//[J/kg] convert from kJ/kg
 
 		double diff_P_path = 999999.0;		//[Pa] Set difference > tolerance
@@ -631,7 +632,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 						// Need properties at saturated vapor in case some guess in energy balance results in x<1
 						water_PQ( min(P_ave/1000.0,19.E3),1.0, &wp );
-						double h_b_max = wp.H;		//[kJ/kg]
+						double h_b_max = wp.enth;		//[kJ/kg]
 						double T_2_guess, T_2;		//[K]
 						double q_wf,x_n_ave,mu_l,mu_v,rho_l,f_fd;				//[W]
 						q_wf = x_n_ave = mu_l = mu_v = rho_l = f_fd = std::numeric_limits<double>::quiet_NaN();
@@ -832,7 +833,11 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							{
 								props_succeed = true;
 								water_PH( min(P_ave/1000.0,19.E3),h_n_ave/1000.0, &wp );
-								rho_n_ave = wp.dens; x_n_ave = wp.Q; mu_n_ave = wp.visc; k_n_ave = wp.cond; c_n_ave = wp.Cp*1000.0; T_in1 = wp.T + 273.15;
+								rho_n_ave = wp.dens; x_n_ave = wp.qual; 
+								mu_n_ave = water_visc(wp.dens, wp.temp)*1.E-6;
+								k_n_ave = water_cond(wp.dens, wp.temp);
+								c_n_ave = wp.cp*1000.0; 
+								T_in1 = wp.temp;
 
 								// Check for Dyreby props failing near vapor dome
 								if( c_n_ave < 0.0 || k_n_ave < 0.0 )
@@ -851,11 +856,17 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							{
 								// Need props at saturated liquid for boiling correlations
 								water_PQ( min(P_ave/1000.0,19.E3), 0.0, &wp );
-								h_l = wp.H*1000.0; rho_l = wp.dens; mu_l = wp.visc; k_l = wp.cond; c_l = wp.Cp*1000.0;
+								h_l = wp.enth*1000.0; rho_l = wp.dens; 
+								mu_l = water_visc(wp.dens, wp.temp)*1.E-6;
+								k_l = water_cond(wp.dens, wp.temp);
+								c_l = wp.cp*1000.0;
 
 								// Need props at saturated vapor for boiling correlations
 								water_PQ( min(P_ave/1000.0,19.E3), 1.0, &wp );
-								h_v = wp.H*1000.0; rho_v = wp.dens; mu_v = wp.visc; k_v = wp.cond; c_v = wp.Cp*1000.0;
+								h_v = wp.enth*1000.0; rho_v = wp.dens; 
+								mu_v = water_visc(wp.dens, wp.temp)*1.E-6;
+								k_v = water_cond(wp.dens, wp.temp);
+								c_v = wp.cp*1000.0;
 
 								double h_diff = h_v - h_l;			//[J/kg] Heat of Vaporization
 								double alpha_l = k_l/(rho_l*c_l);	//[m^2/s] Thermal diffusivity of saturated liquid
@@ -919,7 +930,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						else
 						{
 							water_PH( min(P_out/1000.0,19.E3),h_n_out/1000.0,&wp );
-							rho_n_out = wp.dens; x_n_out = wp.Q;
+							rho_n_out = wp.dens; x_n_out = wp.qual;
 						}
 
 						double deltaP_tube = std::numeric_limits<double>::quiet_NaN();;												
@@ -975,7 +986,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 					{
 						props_succeed = true;
 						water_PH( min(P_out/1000.0,19.E3),h_n_in/1000.0,&wp);
-						T_n_in = wp.T + 273.15;		//[K] Calculate temperature corresponding to outlet enthalpy and pressure
+						T_n_in = wp.temp;		//[K] Calculate temperature corresponding to outlet enthalpy and pressure
 					
 						// Check for Dyreby props failing near vapor dome
 						if( T_n_in < 0.0 )
@@ -1018,8 +1029,9 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 			h_n_out_total = h_by_m / m_dot_total;		//[J/kg] Total mass flow rate / mixed enthalpy product
 
-			water_PH( P_out_avg, h_n_out_total/1000.0, &wp );
-			x_n_out = wp.Q;
+			// 7.15.14, twn: add report for water error code
+			int water_error = water_PH( P_out_avg, h_n_out_total/1000.0, &wp );
+			x_n_out = wp.qual;
 
 			diff_x_out = x_out_target - x_n_out;
 
@@ -1054,7 +1066,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	double eta_rec = energy_out / energy_in;			//[-] Efficiency of receiver
 
 	water_PQ( P_out_avg, 1.0, &wp );
-	double h_x1 = wp.H;					//[kJ/kg] Superheater inlet enthalpy
+	double h_x1 = wp.enth;					//[kJ/kg] Superheater inlet enthalpy
 
 	O_eta_b = eta_rec;
 	O_T_boil_K = T_n_in;
@@ -1147,7 +1159,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	do
 	{
 		water_PH( P_in, h_in, &wp );
-		T_in = wp.T + 273.15;	//[K]
+		T_in = wp.temp;	//[K]
 		if( abs(T_in) < 1.E4 )
 			break;
 		h_in *= 0.99;
@@ -1161,7 +1173,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	//double h_in = wp.H*1000.0;	//[J/kg]
 	//P_in = P_in*1.E3;			//[Pa]
 	
-	water_TQ( T_in - 273.15, 1.0, &wp );
+	water_TQ( T_in, 1.0, &wp );
 	double rho_x1 = wp.dens;	//[kg/m^3]
 
 	double u_n_exit = 0.0;		//[m/s]
@@ -1217,8 +1229,8 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 		return true;
 	}
 
-	water_TP( T_target_out - 273.15, P_in/1.E3, &wp );
-	double h_out_target = wp.H * 1000.0;		//[J/kg]
+	water_TP( T_target_out, P_in/1.E3, &wp );
+	double h_out_target = wp.enth * 1000.0;		//[J/kg]
 	// -> Required rate of energy addition [W] = mass flow rate [kg/s] * (enthalpy rise [J/kg])
 	// q_wf_min = m_dot_total*(h_out_target - h_in)
 	double q_wf_min = m_dot_total*(h_out_target - h_in);
@@ -1366,8 +1378,10 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 
 				// Need properties at saturated vapor in case some guess in energy balalnce results in x<1
 				water_PQ( P_ave/1000.0, 1.0, &wp );
-				double cp_x1 = wp.Cp*1000.0;	//[J/kg-K]
-				double rho_x1 = wp.dens; double mu_x1 = wp.visc; double k_x1 = wp.cond;
+				double cp_x1 = wp.cp*1000.0;	//[J/kg-K]
+				double rho_x1 = wp.dens; 
+				double mu_x1 = water_visc(wp.dens, wp.temp)*1.E-6;
+				double k_x1 = water_cond(wp.dens, wp.temp);
 
 				double q_wf = std::numeric_limits<double>::quiet_NaN();
 				// This loop ensures that the outlet flow conditions for each panel are solved correctly by finding the correct T1 (outer surface temp)
@@ -1526,7 +1540,10 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 					do
 					{
 						water_PH( P_ave/1000.0, h_n_ave/1000.0, &wp );
-						rho_n_ave = wp.dens; T_n_ave = wp.T + 273.15; mu_n_ave = wp.visc; k_n_ave = wp.cond; c_n_ave = wp.Cp*1000.0; x_n_ave = wp.Q;
+						rho_n_ave = wp.dens; T_n_ave = wp.temp; 
+						mu_n_ave = water_visc(wp.dens, wp.temp)*1.E-6;
+						k_n_ave = water_cond(wp.dens, wp.temp); 
+						c_n_ave = wp.cp*1000.0; x_n_ave = wp.qual;
 
 						props_succeed = true;
 						if( c_n_ave < 0.0 || k_n_ave < 0.0 )
@@ -1576,7 +1593,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 			h_n_in = h_n_out;	//[J/kg] Set inlet enthalpy for next node
 
 			water_PH( P_out/1000.0, h_n_in/1000.0, &wp );
-			T_n_in = wp.T + 273.15;		//[K]
+			T_n_in = wp.temp;		//[K]
 
 			//if( T_n_in > T_target_out+50.0 && iter_P_ave < 125 )
 			if( T_n_in > T_target_out+50.0 && i < m_nodes - 1 )
@@ -1611,7 +1628,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double P_out_avg = min( P_path_out_sum/(double)m_n_fr/1.E3, 19.0E3 );	//[kPa] Average (flow paths) outlet pressure
 
 	water_PH( P_out_avg, h_out_comb/1000.0, &wp );
-	double T_out = wp.T + 273.15;	double rho_out = wp.dens;
+	double T_out = wp.temp;	double rho_out = wp.dens;
 
 	double energy_out = m_dot_in * (h_out_comb - h_in);	//[W]
 	double eta_rec = energy_out / energy_in;			//[-]

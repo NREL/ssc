@@ -4,7 +4,8 @@
 #include "htf_props.h"
 #include "sam_csp_util.h"
 
-#include "waterprop.h"
+//#include "waterprop.h"
+#include "water_properties.h"
 
 using namespace std;
 
@@ -82,7 +83,7 @@ class sam_iscc_powerblock : public tcstypeinterface
 {
 private:
 
-	property_info wp;
+	water_state wp;
 	HTFProperties htfProps;			// Instance of HTFProperties class for receiver/HX htf
 	ngcc_power_cycle cycle_calcs;
 
@@ -256,18 +257,18 @@ public:
 
 		// Calculate evaporator and superheater duty
 		water_PQ( P_st_extract, 0.0, &wp );					// Steam props at design pressure and quality = 0
-		double h_x0 = wp.H;									//[kJ/kg] Steam enthalpy at evaporator inlet
-		double cp_x0 = wp.Cp;								//[kJ/kg-K] Thermal capacitance at evap inlet
+		double h_x0 = wp.enth;									//[kJ/kg] Steam enthalpy at evaporator inlet
+		double cp_x0 = wp.cp;								//[kJ/kg-K] Thermal capacitance at evap inlet
 		water_PQ( P_st_extract, 1.0, &wp );					// Steam props at design pressure and quality = 1
-		double T_sat = wp.T;								// [C] Saturation temperature
-		double h_x1 = wp.H;									// [kJ/kg] Steam enthalpy at evaporator exit
-		double cp_x1 = wp.Cp;								//[kJ/kg-K] Thermal capacitance at evap outlet
-		water_TP( T_st_inject, P_st_inject, &wp );			// Steam props at superheater exit
-		double h_sh_out = wp.H;								//[kJ/kg] Steam enthalpy at sh exit
-		double cp_sh_out =wp.Cp;							//[kJ/kg-k] Thermal capacitance at sh exit
-		water_TP( T_st_extract, P_st_extract, &wp );		// Steam props at economizer inlet
-		double h_econo_in = wp.H;							//[kJ/kg] Steam enthalpy at econo inlet
-		double cp_econo_in = wp.Cp;							//[kJ/kg-K] Thermal capacitance at econo inlet
+		double T_sat = wp.temp - 273.15;								// [C] Saturation temperature
+		double h_x1 = wp.enth;									// [kJ/kg] Steam enthalpy at evaporator exit
+		double cp_x1 = wp.cp;								//[kJ/kg-K] Thermal capacitance at evap outlet
+		water_TP( T_st_inject + 273.15, P_st_inject, &wp );			// Steam props at superheater exit
+		double h_sh_out = wp.enth;								//[kJ/kg] Steam enthalpy at sh exit
+		double cp_sh_out =wp.cp;							//[kJ/kg-k] Thermal capacitance at sh exit
+		water_TP(T_st_extract + 273.15, P_st_extract, &wp);		// Steam props at economizer inlet
+		double h_econo_in = wp.enth;							//[kJ/kg] Steam enthalpy at econo inlet
+		double cp_econo_in = wp.cp;							//[kJ/kg-K] Thermal capacitance at econo inlet
 		double q_dot_econo = m_m_dot_st_des*(h_x0 - h_econo_in);				//[kW] design point duty of economizer
 		double cp_st_econo = (cp_x0 + cp_econo_in)/2.0;							//[kJ/kg-K] Average thermal capacitance of steam in economizer
 		double q_dot_evap = m_m_dot_st_des*(h_x1 - h_x0);					//[kW] design point duty of evaporator
@@ -398,23 +399,23 @@ public:
 		double P_st_evap_in = P_st_extract;				//[kPa] Inlet pressure to evaporator
 		double P_st_sh_in = P_st_extract;				//[kPa] Inlet pressure to superheater	
 			// Superheater
-		water_TP( T_st_inject, P_st_inject, &wp );		// Water props at sh outlet
-		double h_st_sh_out = wp.H;						//[kJ/kg] Enthalpy at superheater outlet
-		double cp_st_sh_out = wp.Cp;					//[kJ/kg-K] Specific heat at superheater outlet
+		water_TP(T_st_inject + 273.15, P_st_inject, &wp);		// Water props at sh outlet
+		double h_st_sh_out = wp.enth;						//[kJ/kg] Enthalpy at superheater outlet
+		double cp_st_sh_out = wp.cp;					//[kJ/kg-K] Specific heat at superheater outlet
 		water_PQ( P_st_sh_in, 1.0, &wp );				// Water props at sh inlet
-		double h_st_sh_in = wp.H;						//[kJ/kg] Enthalpy at superheater inlet
-		double cp_st_sh_in = wp.Cp;						//[kJ/kg-K] Specific heat at superheater inlet
-		double T_st_sh_in = wp.T;						//[C] Temperature at superheater inlet
+		double h_st_sh_in = wp.enth;						//[kJ/kg] Enthalpy at superheater inlet
+		double cp_st_sh_in = wp.cp;						//[kJ/kg-K] Specific heat at superheater inlet
+		double T_st_sh_in = wp.temp - 273.15;						//[C] Temperature at superheater inlet
 		double cp_st_sh = (cp_st_sh_in + cp_st_sh_out)/2.0;	//[kJ/kg-K] Average specific heat in superheater
 		double C_dot_st_sh = cp_st_sh * m_dot_st;			//[kW/K] Capacitance rate of steam in superheater
 		double q_dot_sh = m_dot_st*(h_st_sh_out - h_st_sh_in);			//[kW] Superheater heater duty
 			// Economizer
 		water_PQ( P_st_evap_in, 0.0, &wp );				// Water props at evap inlet
-		double h_st_econo_out = wp.H;					//[kJ/kg] Enthalpy at evaporator inlet
-		double cp_st_econo_out = wp.Cp;					//[kJ/kg-K]
-		water_TP( T_st_extract, P_st_extract, &wp );	// Water props at econo inlet
-		double h_st_econo_in = wp.H;					//[kJ/kg]
-		double cp_st_econo_in = wp.Cp;					//[kJ/kg-K]
+		double h_st_econo_out = wp.enth;					//[kJ/kg] Enthalpy at evaporator inlet
+		double cp_st_econo_out = wp.cp;					//[kJ/kg-K]
+		water_TP(T_st_extract + 273.15, P_st_extract, &wp);	// Water props at econo inlet
+		double h_st_econo_in = wp.enth;					//[kJ/kg]
+		double cp_st_econo_in = wp.cp;					//[kJ/kg-K]
 		double cp_st_econo = (cp_st_econo_in+cp_st_econo_out)/2.0;	//[kJ/kg-K]
 		double C_dot_st_econo = cp_st_econo*m_dot_st;				//[kW/K]
 		double q_dot_econo = m_dot_st*(h_st_econo_out-h_st_econo_in);	//[kW]

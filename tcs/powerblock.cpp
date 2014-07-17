@@ -5,7 +5,8 @@
 
 #include <shared/lib_util.h>
 
-#include "waterprop.h"
+//#include "waterprop.h"
+#include "water_properties.h"
 #include "sam_csp_util.h"
 
 C_Indirect_PB::C_Indirect_PB()
@@ -250,11 +251,11 @@ bool C_Indirect_PB::InitializeForParameters(const S_Indirect_PB_Parameters& pbp)
 	*/
 
 	// 1.3.13 twn: Use FIT water props to calculate enthalpy rise over economizer/boiler/superheater
-	property_info wp;
-	water_TP( m_pbp.T_htf_hot_ref - GetFieldToTurbineTemperatureDropC(), m_pbp.P_boil*100.0, &wp );	// Get hot side enthalpy [kJ/kg] using Steam Props
-	h_st_hot = wp.H;
+	water_state wp;
+	water_TP( m_pbp.T_htf_hot_ref - GetFieldToTurbineTemperatureDropC() + 273.15, m_pbp.P_boil*100.0, &wp );	// Get hot side enthalpy [kJ/kg] using Steam Props
+	h_st_hot = wp.enth;
 	water_PQ( m_pbp.P_boil*100.0, 0.0, &wp );
-	h_st_cold = wp.H;
+	h_st_cold = wp.enth;
 	m_dDeltaEnthalpySteam = h_st_hot - h_st_cold + 4.91*100.0;
 
     // 8.30.2010 :: Calculate the startup energy needed
@@ -625,7 +626,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 	// that is part of the power block regression coefficients. I.e. if the user provides a ref. ambient temperature
 	// of 25degC, but the power block coefficients indicate that the normalized efficiency equals 1.0 at an ambient
 	// temp of 20degC, we have to adjust the user's efficiency value back to the coefficient set.
-	property_info wp; 
+	water_state wp; 
 	if (m_bFirstCall)
 	{
 		double Psat_ref = 0;
@@ -636,8 +637,8 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 				{	
 					// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 					// Psat_ref = f_psat_T(dT_cw_ref + 3.0 + T_approach + T_amb_des); // Steam
-					water_TQ( dT_cw_ref + 3.0 + T_approach + T_amb_des, 1.0, &wp );
-					Psat_ref = wp.P * 1000.0;
+					water_TQ( dT_cw_ref + 3.0 + T_approach + T_amb_des + 273.15, 1.0, &wp );
+					Psat_ref = wp.pres * 1000.0;
 				}
 
 				else
@@ -650,8 +651,8 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 				{
 					// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 					// Psat_ref = f_psat_T(T_ITD_des + T_amb_des); // Steam
-					water_TQ( T_ITD_des + T_amb_des, 1.0, &wp );
-					Psat_ref = wp.P * 1000.0;
+					water_TQ( T_ITD_des + T_amb_des + 273.15, 1.0, &wp );
+					Psat_ref = wp.pres * 1000.0;
 				}
 				else
 					Psat_ref = CSP::P_sat4(T_ITD_des + T_amb_des); // Isopentane
@@ -687,7 +688,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 		// 1/28/13, twn: replace with steam props call
 		// T_ref = T_sat(P_boil);  // Sat temp for water
 		water_PQ( P_boil*100, 1.0, &wp );
-		T_ref = wp.T + 273.15;
+		T_ref = wp.temp;
 	}
 	// Calculate the htf hot temperature, in non-dimensional form
 	if (T_ref>=T_htf_hot)
