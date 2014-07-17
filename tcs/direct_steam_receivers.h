@@ -3,7 +3,8 @@
 
 #include <shared/lib_util.h>
 #include "htf_props.h"
-#include "waterprop.h"
+//#include "waterprop.h"
+#include "water_properties.h"
 
 // convert to class?
 class C_DSG_macro_receiver
@@ -68,7 +69,7 @@ private:
 	C_DSG_macro_receiver m_dsg_rec;
 	HTFProperties ambient_air;
 	HTFProperties tube_material;
-	property_info wp;
+	water_state wp;
 
 	util::matrix_t<double> m_h_rec;	//[m] Height of boiler - can differ per panel in iscc model
 	util::matrix_t<double> m_L;		//[m] Length of flow path through one noe - can vary per panel in iscc model

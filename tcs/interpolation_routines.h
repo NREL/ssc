@@ -4,7 +4,7 @@
 
 #include <shared/lib_util.h>
 
-#include "cavity_calcs.h"		// for access to "block_t"
+//#include "cavity_calcs.h"		// for access to "block_t"
 
 class Linear_Interp
 {

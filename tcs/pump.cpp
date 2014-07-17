@@ -26,7 +26,8 @@ tcsvarinfo pump_variables[] = {
 	{ TCS_INVALID, TCS_INVALID,  N_MAX,       0,            0, 0, 0, 0, 0 }
 };
 
-#include "waterprop.h"
+//#include "waterprop.h"
+#include "water_properties.h"
 
 class pump : public tcstypeinterface
 {
@@ -59,10 +60,10 @@ public:
 			value( O_MDOT, 0.0 );
 		}
 		
-		property_info wp;
+		water_state wp;
 		water_PS( 600, 5.5, &wp );
 
-		value( O_ENTHALPY, wp.H );
+		value( O_ENTHALPY, wp.enth );
 
 		return 0;
 	}

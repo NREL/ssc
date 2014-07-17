@@ -5,7 +5,8 @@
 
 #include "direct_steam_receivers.h"
 
-#include "waterprop.h"
+//#include "waterprop.h"
+#include "water_properties.h"
 
 enum {
 	P_fossil_mode,
@@ -807,38 +808,38 @@ public:
 		m_ffrac = value(P_ffrac, &m_numtou);			//[-] Array of fossil fractions, index is time-of-use period
 		//m_tou_schedule = value(P_TOU_schedule, &m_l_tou_schedule);	//[-] Array of time-of-use periods, index is hour of year
 
-		property_info wp;
+		water_state wp;
 		
-		water_TP( m_T_sh_out_des - 273.15, m_P_hp_in_des, &wp ); 
-		double h_hp_in_des = wp.H;	double s_hp_in_des = wp.S; double rho_hp_in_des = wp.dens;	//Design high pressure turbine inlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density (kg/m^3)
+		water_TP( m_T_sh_out_des, m_P_hp_in_des, &wp ); 
+		double h_hp_in_des = wp.enth;	double s_hp_in_des = wp.entr; double rho_hp_in_des = wp.dens;	//Design high pressure turbine inlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density (kg/m^3)
 		
 		water_PS( m_P_hp_out_des, s_hp_in_des, &wp );
-		double h_hp_out_isen = wp.H;		//[kJ/kg] Design reheat extraction enthalpy assuming isentropic expansion
+		double h_hp_out_isen = wp.enth;		//[kJ/kg] Design reheat extraction enthalpy assuming isentropic expansion
 		double h_hp_out_des = h_hp_in_des - (h_hp_in_des - h_hp_out_isen)*0.88;	//[kJ/kg] Design reheat inlet enthlapy (isentropic efficiency = 88%)
 
 		water_PH( m_P_hp_out_des, h_hp_out_des, &wp );
-		double T_rh_in_des = wp.T + 273.15;		//[K] Design reheat inlet temperature
+		double T_rh_in_des = wp.temp;		//[K] Design reheat inlet temperature
 
-		water_TP( m_T_rh_out_des - 273.15, m_P_hp_out_des, &wp );
-		double h_rh_out_des = wp.H; double s_rh_out_des = wp.S; double rho_lp_in_des = wp.dens;	//Reheater outlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density [kg/m^3]
+		water_TP( m_T_rh_out_des, m_P_hp_out_des, &wp );
+		double h_rh_out_des = wp.enth; double s_rh_out_des = wp.entr; double rho_lp_in_des = wp.dens;	//Reheater outlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density [kg/m^3]
 
 		//Design Condenser Pressure [kPa]
 		if(m_ct==1)
 		{
-			water_TQ( m_dT_cw_ref + 3.0 + m_T_approach + m_T_amb_des - 273.15, 0.0, &wp );
+			water_TQ( m_dT_cw_ref + 3.0 + m_T_approach + m_T_amb_des, 0.0, &wp );
 		}
 		else if(m_ct==2 || m_ct==3)
 		{
-			water_TQ( m_T_ITD_des + m_T_amb_des - 273.15, 0.0, &wp );
+			water_TQ( m_T_ITD_des + m_T_amb_des, 0.0, &wp );
 		}
-		m_Psat_des = wp.P;
+		m_Psat_des = wp.pres;
 
 		water_PS( m_Psat_des, s_rh_out_des, &wp );
-		double h_lp_out_isen = wp.H;		//[kJ/kg] Design low pressure outlet enthalpy assuming isentropic expansion
+		double h_lp_out_isen = wp.enth;		//[kJ/kg] Design low pressure outlet enthalpy assuming isentropic expansion
 		double h_lp_out_des = h_rh_out_des - (h_rh_out_des - h_lp_out_isen)*0.88;	//[kJ/kg] Design low pressure outlet enthalpy 
 
 		water_PQ( m_P_hp_in_des, 1.0, &wp );
-		double h_sh_in_des = wp.H; double T_boil_des = wp.T + 273.15;	//[kJ/kg] Design SH inlet enthalpy; [C] Design SH inlet temperature
+		double h_sh_in_des = wp.enth; double T_boil_des = wp.temp;	//[kJ/kg] Design SH inlet enthalpy; [C] Design SH inlet temperature
 
 		//Calculate design mass flow rate based on design setpoints
 		//Governing equation: P_cycle = m_dot*(h_hp_in_des - h_hp_out_des) + m_dot*m_f_mdotrh_des*(h_rh_out_des - h_lp_out_des)
@@ -853,7 +854,7 @@ public:
 		//Governing equation: q_b_des = (h_sh_in_des - h_fw_out_des)*m_dot_des
 		double h_fw_out_des = h_sh_in_des - q_b_des/m_m_dot_des;
 		water_PH( m_P_hp_in_des, h_fw_out_des, &wp );
-		double T_fw_out_des = wp.T + 273.15; double rho_fw_out_des = wp.dens;	//[K] Design feedwater outlet temp, [kg/m^3] Design feedwater outlet density
+		double T_fw_out_des = wp.temp; double rho_fw_out_des = wp.dens;	//[K] Design feedwater outlet temp, [kg/m^3] Design feedwater outlet density
 
 		double m_dot_tube_b = (m_m_dot_des/m_x_b_target)/boiler.Get_n_flowpaths()/(per_rec/(double)dsg_rec.Get_n_panels_rec()/d_t_boiler);	//[kg/s]
 		double m_dot_tube_sh = (m_m_dot_des/superheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_sh);				//[kg/s]
@@ -978,7 +979,7 @@ public:
 		double P_sh_out = 0.0;
 		double P_rh_out = 0.0;
 
-		property_info wp;
+		water_state wp;
 
 		while( !skip_rec_calcs )	// 'while' loop around receiver calcs allows code to break out if certain flags are tripped. Only go through once, so reset 'skip_rec_calcs' upon entry
 		{
@@ -1112,15 +1113,15 @@ public:
 
 				// Always recalculate the feedwater temperature
 				water_PQ(P_b_in, 1.0, &wp);
-				m_h_sh_in_ref = wp.H;					//[kJ/kg]
-				m_T_boil_pred = wp.T;					//[C]
+				m_h_sh_in_ref = wp.enth;					//[kJ/kg]
+				m_T_boil_pred = wp.temp - 273.15;					//[C]
 				T_fw = m_T_boil_pred - m_deltaT_fw_des + 273.15;	//[C]
 
 				// Calculate reheat inlet temperature
-				water_TP( m_T_sh_out_des - 273.15, P_b_in, &wp );
-				m_h_sh_out_ref = wp.H; m_s_sh_out_ref = wp.S;			//Predict high pressure turbine inlet enthalpy[kJ/kg] and entropy[kJ/kg-K]
+				water_TP( m_T_sh_out_des, P_b_in, &wp );
+				m_h_sh_out_ref = wp.enth; m_s_sh_out_ref = wp.entr;			//Predict high pressure turbine inlet enthalpy[kJ/kg] and entropy[kJ/kg-K]
 				water_PS( P_hp_out, m_s_sh_out_ref, &wp );			//[kJ/kg] Predict isentropic outlet enthalpy at tower base
-				m_h_lp_isen_ref = wp.H;
+				m_h_lp_isen_ref = wp.enth;
 				m_h_rh_in_ref = m_h_sh_out_ref - (m_h_sh_out_ref - m_h_lp_isen_ref)*0.88;	//[kJ/kg] Predict outlet enthalpy at tower base
 
 				water_PH( P_hp_out, m_h_rh_in_ref, &wp );
@@ -1129,12 +1130,12 @@ public:
 				m_P_rh_in = P_hp_out - m_dp_rh_up/1.E3;				//[kPa] Reheater inlet pressure at receiver
 
 				water_PH( m_P_rh_in, m_h_rh_in_ref, &wp );				//[C] Predict reheat inlet temperature
-				T_rh_in = wp.T + 273.15;								//[K] Convert from C
+				T_rh_in = wp.temp;								//[K] Convert from C
 
-				water_TP( m_T_rh_out_des - 273.15, m_P_rh_in, &wp );	
-				m_h_rh_out_ref = wp.H;									//[kJ/kg] Reheat outlet enthalpy
-				water_TP( T_fw - 273.15, P_b_in, &wp );				
-				m_h_fw = wp.H;											//[kJ/kg] Feedwater enthalpy
+				water_TP( m_T_rh_out_des, m_P_rh_in, &wp );	
+				m_h_rh_out_ref = wp.enth;									//[kJ/kg] Reheat outlet enthalpy
+				water_TP( T_fw, P_b_in, &wp );				
+				m_h_fw = wp.enth;											//[kJ/kg] Feedwater enthalpy
 
 				bool m_df_pred_ct = true;			//[-] Reset defocus prediction iteration counter
 
@@ -1192,22 +1193,22 @@ public:
 			if(ncall > 0)		//4/4/13, twn: haven't debugged this
 			{
 				P_b_in = min( 19.E3, P_b_in );		//[kPa]
-				water_TP( m_T_sh_out_des - 273.15, P_b_in, &wp );
-				m_h_sh_out_ref = wp.H;		//[kJ/kg] Predict superheater outlet enthalpy
+				water_TP( m_T_sh_out_des, P_b_in, &wp );
+				m_h_sh_out_ref = wp.enth;		//[kJ/kg] Predict superheater outlet enthalpy
 
 				// Calculate temperature and pressure at reheater inlet
-				water_TP( T_hp_out - 273.15, P_hp_out, &wp );
-				m_rho_hp_out = wp.dens; m_h_hp_out = wp.H;	//[kg/m^3] density and [kJ/kg] enthalpy at HP outlet
+				water_TP( T_hp_out, P_hp_out, &wp );
+				m_rho_hp_out = wp.dens; m_h_hp_out = wp.enth;	//[kg/m^3] density and [kJ/kg] enthalpy at HP outlet
 				// By convention here, is m_h_hp_out = m_h_rh_in_ref ?
 				m_dp_rh_up = m_rho_hp_out*9.81*m_h_tower;	//[Pa] Pressure loss due to elevation rise
 				m_P_rh_in = P_hp_out - m_dp_rh_up/1000.0;	//[kPa] Reheater inlet pressure
 				water_PH( m_P_rh_in, m_h_hp_out, &wp );
-				T_rh_in = wp.T + 273.15;					//[C] Inlet temperature to reheater - convert from C
+				T_rh_in = wp.temp;					//[K] Inlet temperature to reheater - convert from C
 				// **************************************************************************************************
 
 				m_h_rh_in_ref = m_h_hp_out;							//[kJ/kg] Predict reheater inlet enthlapy
-				water_TP( T_rh_target - 273.15, m_P_rh_in, &wp );	
-				m_h_rh_out_ref = wp.H;								//[kJ/kg] Predict reheat outlet enthalpy
+				water_TP( T_rh_target, m_P_rh_in, &wp );	
+				m_h_rh_out_ref = wp.enth;								//[kJ/kg] Predict reheat outlet enthalpy
 			}
 
 			int rh_count=0, sh_count=0, boiler_count = 0;
@@ -1714,9 +1715,9 @@ public:
 
 							// If code reaches this point, check superheater
 							sh_exit = 0;
-							water_TQ( m_T_boil_pred - 273.15, 0.0, &wp );
-							double h_sh_in_dummy = wp.H;
-							double P_sh_in_dummy = wp.P;
+							water_TQ( m_T_boil_pred, 0.0, &wp );
+							double h_sh_in_dummy = wp.enth;
+							double P_sh_in_dummy = wp.pres;
 
 							superheater.Solve_Superheater( m_T_amb, m_T_sky, m_v_wind, m_P_atm, P_sh_in_dummy, 1.0, h_sh_in_dummy, 1.0, checkflux, m_q_inc_sh,
 															sh_exit, 1.0, dum1, dum2, dum3, dum4, dum5 );
@@ -1728,8 +1729,8 @@ public:
 							}
 
 							rh_exit = 0;
-							water_TP( T_hp_out - 273.15, m_P_rh_in, &wp );
-							double h_rh_in_dummy = wp.H;
+							water_TP( T_hp_out, m_P_rh_in, &wp );
+							double h_rh_in_dummy = wp.enth;
 
 							reheater.Solve_Superheater( m_T_amb, m_T_sky, m_v_wind, m_P_atm, m_P_rh_in, 1.0, h_rh_in_dummy, 1.0, checkflux, m_q_inc_rh,
 															rh_exit, 1.0, dum1, dum2, dum3, dum4, dum5 );
@@ -1778,9 +1779,9 @@ public:
 						sh_count++;
 
 						double T_sh_in = T_boil;		//[K] Inlet temperature to superheater is boiling temperature from boiler
-						water_TQ( T_sh_in - 273.15, 1.0, &wp );
-						P_sh_in = wp.P;			//[kPa] Inlet pressure to superheater
-						double h_sh_in = wp.H;
+						water_TQ( T_sh_in, 1.0, &wp );
+						P_sh_in = wp.pres;			//[kPa] Inlet pressure to superheater
+						double h_sh_in = wp.enth;
 					
 						double rho_sh_out, h_sh_out;
 						superheater.Solve_Superheater( m_T_amb, m_T_sky, m_v_wind, m_P_atm, P_sh_in, m_dot_sh, h_sh_in, m_P_sh_out_min, checkflux, m_q_inc_sh, sh_exit, m_T_sh_out_des,
@@ -1792,14 +1793,14 @@ public:
 							// GOTO 184		! If SH did not solve, don't need following calcs
 						}
 
-						water_TP( m_T_sh_out_des - 273.15, P_sh_out, &wp );
-						m_h_sh_out_ref = wp.H;		//[kJ/kg] Update reference outlet enthalpy used in setting flux and mass flow guess rates - this is why target and not actual SH outlet temp is used
+						water_TP( m_T_sh_out_des, P_sh_out, &wp );
+						m_h_sh_out_ref = wp.enth;		//[kJ/kg] Update reference outlet enthalpy used in setting flux and mass flow guess rates - this is why target and not actual SH outlet temp is used
 
 						double dp_sh_down = rho_sh_out*CSP::grav*m_h_tower;		//[Pa] Pressure due to tower elevations
 
 						P_hp_in = P_sh_out + dp_sh_down/1.E3;			//[kPa] Pressure at HP inlet turbine (bottom of tower)
 						water_PH( P_hp_in, h_sh_out, &wp );
-						double T_sh_out = wp.T + 273.15;			//[K] Outlet temperature at bottom of tower assuming adiabatic piping
+						double T_sh_out = wp.temp;			//[K] Outlet temperature at bottom of tower assuming adiabatic piping
 						h_hp_in = h_sh_out;							//[kJ/kg]
 
 						diff_T_sh = (m_T_sh_out_des - T_sh_out) / m_T_sh_out_des;	//[K]
@@ -1831,8 +1832,8 @@ public:
 					rho_rh_out = h_rh_out = std::numeric_limits<double>::quiet_NaN();
 					
 
-					water_TP( T_rh_in - 273.15, m_P_rh_in, &wp );
-					h_rh_in = wp.H;
+					water_TP( T_rh_in, m_P_rh_in, &wp );
+					h_rh_in = wp.enth;
 
 					reheater.Solve_Superheater( m_T_amb, m_T_sky, m_v_wind, m_P_atm, m_P_rh_in, m_dot_rh, h_rh_in, m_P_rh_out_min, checkflux, m_q_inc_rh, rh_exit, m_T_rh_out_des, 
 												P_rh_out, eta_rh, rho_rh_out, h_rh_out, q_rh_abs );
@@ -1843,14 +1844,14 @@ public:
 						// GOTO 93
 					}
 
-					water_TP( m_T_rh_out_des - 273.15, P_rh_out, &wp );
-					m_h_rh_out_ref = wp.H;				//[kJ/kg]
+					water_TP( m_T_rh_out_des, P_rh_out, &wp );
+					m_h_rh_out_ref = wp.enth;				//[kJ/kg]
 
 					double dp_rh_down = rho_rh_out*CSP::grav*m_h_tower;		//[Pa] Pressure due to tower elevation
 
 					P_lp_in = P_rh_out + dp_rh_down/1.e3;			//[kPa] Pressure at LP turbine outlet (bottom of tower)
 					water_PH( P_lp_in, h_rh_out, &wp );
-					double T_rh_out = wp.T + 273.15;			//[K] Outlet temperature at bottom of tower assuming adiabatic piping
+					double T_rh_out = wp.temp;			//[K] Outlet temperature at bottom of tower assuming adiabatic piping
 					h_lp_in = h_rh_out;						//[kJ/kg]
 
 					diff_T_rh = (m_T_rh_out_des - T_rh_out)/m_T_rh_out_des;	//[K]
@@ -1966,7 +1967,7 @@ public:
 			deltaP1 = rho_fw*CSP::grav*m_h_tower;	//[Pa] Pressure drop due to pumping feedwater up tower
 			W_dot_fw = (deltaP1 + max(0.0,dp_sh))*m_dot_sh/rho_fw;		//[W] Power required to pump feedwater up tower AND increase pressure from HP turbine inlet to steam drum pressure
 
-			water_TQ( T_boil - 273.15, 0, &wp );
+			water_TQ( T_boil, 0, &wp );
 			double rho_x0 = wp.dens;
 			double W_dot_sd = max(0.0, dp_b)*(m_dot_sh/m_x_b_target)/rho_x0;		//[W] Power required to pump boiler flow from steam drum pressure to boiler inlet pressure
 
@@ -1992,18 +1993,18 @@ public:
 				h_hp_in = h_hp_in*1000.0;
 				h_lp_in = h_lp_in*1000.0;
 				water_TP( T_rh_in, m_P_rh_in, &wp );
-				h_rh_in = wp.H*1000.0;
+				h_rh_in = wp.enth*1000.0;
 			}
 			else	// If receiver does not solve, use type inputs to define a fossil cycle
 			{
-				water_TP( m_T_sh_out_des - 273.15, P_b_in, &wp );
-				h_hp_in = wp.H*1000.0;
-				water_TP( T_fw - 273.15, m_P_b_in_min, &wp );
-				h_fw_Jkg = wp.H*1000.0; rho_fw = wp.dens;
-				water_TP( m_T_rh_out_des - 273.15, P_hp_out, &wp );
-				h_lp_in = wp.H*1000.0;
-				water_TP( T_rh_in - 273.15, P_hp_out, &wp );
-				h_rh_in = wp.H*1000.0;
+				water_TP( m_T_sh_out_des, P_b_in, &wp );
+				h_hp_in = wp.enth*1000.0;
+				water_TP( T_fw, m_P_b_in_min, &wp );
+				h_fw_Jkg = wp.enth*1000.0; rho_fw = wp.dens;
+				water_TP( m_T_rh_out_des, P_hp_out, &wp );
+				h_lp_in = wp.enth*1000.0;
+				water_TP( T_rh_in, P_hp_out, &wp );
+				h_rh_in = wp.enth*1000.0;
 			}
 
 			if( m_fossil_mode == 1 )
