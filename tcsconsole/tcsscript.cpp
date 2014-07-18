@@ -586,7 +586,7 @@ class MyScriptCtrl : public wxLKScriptCtrl
 {
 public:
 	MyScriptCtrl( wxWindow *parent, int id = wxID_ANY )
-		: wxLKScriptCtrl( parent, id )
+		: wxLKScriptCtrl( parent, id, wxDefaultPosition, wxDefaultSize, wxLK_STDLIB_ALL|wxLK_STDLIB_BIOS )
 	{
 	}
 
