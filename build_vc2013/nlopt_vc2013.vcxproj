@@ -124,12 +124,12 @@
     <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)\nlopt</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <SourcePath>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</SourcePath>
+    <SourcePath>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</SourcePath>
     <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(VC_LibraryPath_x86);</ExcludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -146,10 +146,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -163,7 +163,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -180,10 +180,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -193,7 +193,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -210,10 +210,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -223,7 +223,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>Release/</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -240,10 +240,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -253,7 +253,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>MinSizeRel/</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -270,10 +270,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -283,7 +283,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>MinSizeRel/</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -300,10 +300,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -313,7 +313,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>RelWithDebInfo/</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -329,10 +329,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -342,7 +342,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt-2.4.1;$(SolutionDir);$(SolutionDir)\..\nlopt-2.4.1\stogo;$(SolutionDir)\..\nlopt-2.4.1\util;$(SolutionDir)\..\nlopt-2.4.1\direct;$(SolutionDir)\..\nlopt-2.4.1\cdirect;$(SolutionDir)\..\nlopt-2.4.1\praxis;$(SolutionDir)\..\nlopt-2.4.1\luksan;$(SolutionDir)\..\nlopt-2.4.1\crs;$(SolutionDir)\..\nlopt-2.4.1\mlsl;$(SolutionDir)\..\nlopt-2.4.1\mma;$(SolutionDir)\..\nlopt-2.4.1\cobyla;$(SolutionDir)\..\nlopt-2.4.1\newuoa;$(SolutionDir)\..\nlopt-2.4.1\neldermead;$(SolutionDir)\..\nlopt-2.4.1\auglag;$(SolutionDir)\..\nlopt-2.4.1\bobyqa;$(SolutionDir)\..\nlopt-2.4.1\isres;$(SolutionDir)\..\nlopt-2.4.1\slsqp;$(SolutionDir)\..\nlopt-2.4.1\esch;$(SolutionDir)\..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>RelWithDebInfo/</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -358,10 +358,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt-2.4.1;..\build_vc2013;..\nlopt-2.4.1\stogo;..\nlopt-2.4.1\util;..\nlopt-2.4.1\direct;..\nlopt-2.4.1\cdirect;..\nlopt-2.4.1\praxis;..\nlopt-2.4.1\luksan;..\nlopt-2.4.1\crs;..\nlopt-2.4.1\mlsl;..\nlopt-2.4.1\mma;..\nlopt-2.4.1\cobyla;..\nlopt-2.4.1\newuoa;..\nlopt-2.4.1\neldermead;..\nlopt-2.4.1\auglag;..\nlopt-2.4.1\bobyqa;..\nlopt-2.4.1\isres;..\nlopt-2.4.1\slsqp;..\nlopt-2.4.1\esch;..\nlopt-2.4.1\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -370,38 +370,38 @@
     </Midl>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\nlopt-2.4.1\direct\direct-internal.h" />
-    <ClInclude Include="..\nlopt-2.4.1\direct\direct.h" />
-    <ClInclude Include="..\nlopt-2.4.1\cdirect\cdirect.h" />
-    <ClInclude Include="..\nlopt-2.4.1\praxis\praxis.h" />
-    <ClInclude Include="..\nlopt-2.4.1\luksan\luksan.h" />
-    <ClInclude Include="..\nlopt-2.4.1\crs\crs.h" />
-    <ClInclude Include="..\nlopt-2.4.1\mlsl\mlsl.h" />
-    <ClInclude Include="..\nlopt-2.4.1\mma\mma.h" />
-    <ClInclude Include="..\nlopt-2.4.1\cobyla\cobyla.h" />
-    <ClInclude Include="..\nlopt-2.4.1\newuoa\newuoa.h" />
-    <ClInclude Include="..\nlopt-2.4.1\neldermead\neldermead.h" />
-    <ClInclude Include="..\nlopt-2.4.1\auglag\auglag.h" />
-    <ClInclude Include="..\nlopt-2.4.1\bobyqa\bobyqa.h" />
-    <ClInclude Include="..\nlopt-2.4.1\isres\isres.h" />
-    <ClInclude Include="..\nlopt-2.4.1\slsqp\slsqp.h" />
-    <ClInclude Include="..\nlopt-2.4.1\esch\esch.h" />
-    <ClInclude Include="..\nlopt-2.4.1\api\nlopt-internal.h" />
-    <ClInclude Include="..\nlopt-2.4.1\api\nlopt.h" />
-    <ClInclude Include="..\nlopt-2.4.1\api\f77funcs.h" />
-    <ClInclude Include="..\nlopt-2.4.1\api\f77funcs_.h" />
-    <ClInclude Include="..\nlopt-2.4.1\api\nlopt.hpp" />
-    <ClInclude Include="..\nlopt-2.4.1\api\nlopt-in.hpp" />
-    <ClInclude Include="..\nlopt-2.4.1\util\soboldata.h" />
-    <ClInclude Include="..\nlopt-2.4.1\util\nlopt-util.h" />
-    <ClInclude Include="..\nlopt-2.4.1\util\redblack.h" />
-    <ClInclude Include="..\nlopt-2.4.1\stogo\global.h" />
-    <ClInclude Include="..\nlopt-2.4.1\stogo\linalg.h" />
-    <ClInclude Include="..\nlopt-2.4.1\stogo\local.h" />
-    <ClInclude Include="..\nlopt-2.4.1\stogo\stogo_config.h" />
-    <ClInclude Include="..\nlopt-2.4.1\stogo\stogo.h" />
-    <ClInclude Include="..\nlopt-2.4.1\stogo\tools.h" />
-    <ClCompile Include="..\nlopt-2.4.1\direct\DIRect.c">
+    <ClInclude Include="..\nlopt\direct\direct-internal.h" />
+    <ClInclude Include="..\nlopt\direct\direct.h" />
+    <ClInclude Include="..\nlopt\cdirect\cdirect.h" />
+    <ClInclude Include="..\nlopt\praxis\praxis.h" />
+    <ClInclude Include="..\nlopt\luksan\luksan.h" />
+    <ClInclude Include="..\nlopt\crs\crs.h" />
+    <ClInclude Include="..\nlopt\mlsl\mlsl.h" />
+    <ClInclude Include="..\nlopt\mma\mma.h" />
+    <ClInclude Include="..\nlopt\cobyla\cobyla.h" />
+    <ClInclude Include="..\nlopt\newuoa\newuoa.h" />
+    <ClInclude Include="..\nlopt\neldermead\neldermead.h" />
+    <ClInclude Include="..\nlopt\auglag\auglag.h" />
+    <ClInclude Include="..\nlopt\bobyqa\bobyqa.h" />
+    <ClInclude Include="..\nlopt\isres\isres.h" />
+    <ClInclude Include="..\nlopt\slsqp\slsqp.h" />
+    <ClInclude Include="..\nlopt\esch\esch.h" />
+    <ClInclude Include="..\nlopt\api\nlopt-internal.h" />
+    <ClInclude Include="..\nlopt\api\nlopt.h" />
+    <ClInclude Include="..\nlopt\api\f77funcs.h" />
+    <ClInclude Include="..\nlopt\api\f77funcs_.h" />
+    <ClInclude Include="..\nlopt\api\nlopt.hpp" />
+    <ClInclude Include="..\nlopt\api\nlopt-in.hpp" />
+    <ClInclude Include="..\nlopt\util\soboldata.h" />
+    <ClInclude Include="..\nlopt\util\nlopt-util.h" />
+    <ClInclude Include="..\nlopt\util\redblack.h" />
+    <ClInclude Include="..\nlopt\stogo\global.h" />
+    <ClInclude Include="..\nlopt\stogo\linalg.h" />
+    <ClInclude Include="..\nlopt\stogo\local.h" />
+    <ClInclude Include="..\nlopt\stogo\stogo_config.h" />
+    <ClInclude Include="..\nlopt\stogo\stogo.h" />
+    <ClInclude Include="..\nlopt\stogo\tools.h" />
+    <ClCompile Include="..\nlopt\direct\DIRect.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -411,7 +411,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\direct\direct_wrap.c">
+    <ClCompile Include="..\nlopt\direct\direct_wrap.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -421,7 +421,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\direct\DIRserial.c">
+    <ClCompile Include="..\nlopt\direct\DIRserial.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -431,7 +431,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\direct\DIRsubrout.c">
+    <ClCompile Include="..\nlopt\direct\DIRsubrout.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -441,7 +441,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\cdirect\cdirect.c">
+    <ClCompile Include="..\nlopt\cdirect\cdirect.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -451,7 +451,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\cdirect\hybrid.c">
+    <ClCompile Include="..\nlopt\cdirect\hybrid.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -461,7 +461,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\praxis\praxis.c">
+    <ClCompile Include="..\nlopt\praxis\praxis.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -471,7 +471,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\luksan\plis.c">
+    <ClCompile Include="..\nlopt\luksan\plis.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -481,7 +481,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\luksan\plip.c">
+    <ClCompile Include="..\nlopt\luksan\plip.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -491,7 +491,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\luksan\pnet.c">
+    <ClCompile Include="..\nlopt\luksan\pnet.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -501,7 +501,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\luksan\mssubs.c">
+    <ClCompile Include="..\nlopt\luksan\mssubs.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -511,7 +511,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\luksan\pssubs.c">
+    <ClCompile Include="..\nlopt\luksan\pssubs.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -521,7 +521,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\crs\crs.c">
+    <ClCompile Include="..\nlopt\crs\crs.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -531,7 +531,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\mlsl\mlsl.c">
+    <ClCompile Include="..\nlopt\mlsl\mlsl.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -541,7 +541,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\mma\mma.c">
+    <ClCompile Include="..\nlopt\mma\mma.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -551,7 +551,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\mma\ccsa_quadratic.c">
+    <ClCompile Include="..\nlopt\mma\ccsa_quadratic.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -561,7 +561,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\cobyla\cobyla.c">
+    <ClCompile Include="..\nlopt\cobyla\cobyla.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -571,7 +571,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\newuoa\newuoa.c">
+    <ClCompile Include="..\nlopt\newuoa\newuoa.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -581,7 +581,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\neldermead\nldrmd.c">
+    <ClCompile Include="..\nlopt\neldermead\nldrmd.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -591,7 +591,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\neldermead\sbplx.c">
+    <ClCompile Include="..\nlopt\neldermead\sbplx.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -601,7 +601,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\auglag\auglag.c">
+    <ClCompile Include="..\nlopt\auglag\auglag.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -611,7 +611,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\bobyqa\bobyqa.c">
+    <ClCompile Include="..\nlopt\bobyqa\bobyqa.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -621,7 +621,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\isres\isres.c">
+    <ClCompile Include="..\nlopt\isres\isres.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -631,7 +631,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\slsqp\slsqp.c">
+    <ClCompile Include="..\nlopt\slsqp\slsqp.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -641,7 +641,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\esch\esch.c">
+    <ClCompile Include="..\nlopt\esch\esch.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -651,7 +651,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\api\general.c">
+    <ClCompile Include="..\nlopt\api\general.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -661,7 +661,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\api\options.c">
+    <ClCompile Include="..\nlopt\api\options.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -671,7 +671,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\api\optimize.c">
+    <ClCompile Include="..\nlopt\api\optimize.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -681,7 +681,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\api\deprecated.c">
+    <ClCompile Include="..\nlopt\api\deprecated.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -691,7 +691,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\api\f77api.c">
+    <ClCompile Include="..\nlopt\api\f77api.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -701,7 +701,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\util\mt19937ar.c">
+    <ClCompile Include="..\nlopt\util\mt19937ar.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -711,7 +711,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\util\sobolseq.c">
+    <ClCompile Include="..\nlopt\util\sobolseq.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -721,7 +721,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\util\timer.c">
+    <ClCompile Include="..\nlopt\util\timer.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -731,7 +731,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\util\stop.c">
+    <ClCompile Include="..\nlopt\util\stop.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -741,7 +741,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\util\redblack.c">
+    <ClCompile Include="..\nlopt\util\redblack.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -751,7 +751,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\util\qsort_r.c">
+    <ClCompile Include="..\nlopt\util\qsort_r.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -761,7 +761,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\util\rescale.c">
+    <ClCompile Include="..\nlopt\util\rescale.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
@@ -771,11 +771,11 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\nlopt-2.4.1\stogo\global.cc" />
-    <ClCompile Include="..\nlopt-2.4.1\stogo\linalg.cc" />
-    <ClCompile Include="..\nlopt-2.4.1\stogo\local.cc" />
-    <ClCompile Include="..\nlopt-2.4.1\stogo\stogo.cc" />
-    <ClCompile Include="..\nlopt-2.4.1\stogo\tools.cc" />
+    <ClCompile Include="..\nlopt\stogo\global.cc" />
+    <ClCompile Include="..\nlopt\stogo\linalg.cc" />
+    <ClCompile Include="..\nlopt\stogo\local.cc" />
+    <ClCompile Include="..\nlopt\stogo\stogo.cc" />
+    <ClCompile Include="..\nlopt\stogo\tools.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

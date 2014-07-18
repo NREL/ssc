@@ -1,0 +1,256 @@
+#ifndef _API_STRUCTURES_
+#define _API_STRUCTURES_ 1
+#include "mod_base.h"
+#include <vector>
+using namespace std;
+
+struct sp_optimize
+{
+private:
+
+public:
+	void LoadDefaults(var_set &V);
+
+	struct METHOD { enum { SUBPLEX, DIRECT_L, EVOLUTIONARY }; };
+	int method;
+	double range_tht[2];	//[m] {min, max}
+	double range_rec_aspect[2];	//[m] {min, max}
+	double range_rec_height[2];	//[m] {min, max}
+	double range_land_bound[2]; //[tht or m] {min, max} Allowable maximum land extent. Must be consistent with sp_layout::LAND_BOUND_TYPE. Not compatible with polygonal spec.
+	double flux_max;	//[kw/m2] Maximum allowable flux
+	
+	bool is_optimize_tht;	//Allow tower height optimization
+	bool is_optimize_rec_aspect;		//Allow receiver aspect (H/W) optimization
+	bool is_optimize_rec_height;	//Allow receiver height optimization
+	bool is_optimize_bound;		//Allow land bound (max radius) optimization. Used to balance flux intensity.
+	
+	bool is_range_constr_tht;	//Constrain allowable range for tower height
+	bool is_range_constr_aspect;	//Constrain allowable range for receiver aspect ratio
+	bool is_range_constr_rech;	//Constrain allowable range for receiver height
+	bool is_range_constr_bound;	//Constrain allowable range for max land bound
+
+	double max_step_size;	//maximum relative step size. Default is 0.05
+	double converge_tol;	//convergence tolerance. Converge when relative change in objective is less than this value for maximum step. Default is 0.005
+
+};
+
+struct sp_ambient
+{
+private:
+	struct weather_step
+	{
+		int day_of_month;	//1..[29-31]
+		int month_of_year;	//1..12
+		double time_hours;	//0..24, fractional time. Midpoint of the step
+		double dni;		//W/m2
+		double tdb;		//C
+		double vwind;	//m/s
+		double pres;	//bar
+		double step_weight;	//[-]	relative duration of this time step
+		string get_formatted_entry();
+	};
+	struct user_sun_step
+	{
+		double angle;
+		double intensity;
+	};
+	struct sun_type_settings
+	{
+		double circumsolar_ratio;
+		double gaussian_stdev;
+		double pillbox_width;
+		sun_type_settings(){
+			//initialize to nonsense to check later whether these values are actually set
+			circumsolar_ratio = std::numeric_limits<double>::quiet_NaN();
+			gaussian_stdev = std::numeric_limits<double>::quiet_NaN();
+			pillbox_width = std::numeric_limits<double>::quiet_NaN();
+		};
+	};
+	
+public:
+	void LoadDefaults(var_set &V);
+
+	double site_elevation;	//[m]
+	double site_latitude;	//(+) North, (-) South
+	double site_longitude;	//(-) West, (+) East
+	double site_time_zone;	//(-) West, (+) East
+
+	vector<weather_step> weather_data;
+	void AddWeatherStep( int Day_of_month, int month_of_year, double Time_hours, double DNI, 
+		double Tdb, double Vwind, double Pres, double Step_weight)
+	{
+		weather_data.push_back({Day_of_month, month_of_year, Time_hours, DNI, Tdb, Vwind, Pres, Step_weight});	
+	};
+
+	struct SUN_TYPE { enum A { PILLBOX=2, GAUSSIAN=4, LIMB_DARKENED=1, POINT=0, BUIE=5, USER=3 }; };
+	int sun_type;
+	sun_type_settings  sun_type_params;
+	vector<user_sun_step> user_sun_data;
+	void AddUserSunStep( double Angle, double Intens ){
+		user_sun_data.push_back({Angle, Intens});
+	}
+	struct ATTEN_MODEL { enum A { DELSOL_CLEAR_DAY, DELSOL_HAZY_DAY, USER_DEFINED }; };
+	
+	int atten_model;
+	vector<double> user_atten_coefs;
+
+};
+
+struct sp_heliostat
+{
+private:
+	struct Cant_settings
+	{
+		int point_day;	//1..365 (AT_DAY_HOUR)
+		int point_hour;	//0..23  (AT_DAY_HOUR)
+		Vect point_vector;	// (USER_VECTOR)
+		bool scale_with_slant;	// (USER_VECTOR)
+	};
+public:
+	void LoadDefaults(var_set &V);
+
+	struct FOCUS_TYPE { enum A { FLAT, AT_SLANT, USER_DEFINED }; };
+	struct CANT_TYPE { enum A {FLAT, AT_SLANT, AT_DAY_HOUR, USER_VECTOR }; };
+	int focus_type;
+	int cant_type;	
+	Cant_settings cant_settings;
+	double user_focal_length;	//[m] (focus_type == USER_DEFINED)
+	double width, height;
+	int npanels_w, npanels_h;
+	double optical_error;  /* [rad] single-axis error ** SLOPE ** */
+	double active_fraction; /* The fraction of the area width*height that reflects light */
+	double reflectance;
+
+};
+typedef vector<sp_heliostat> sp_heliostats;
+
+
+struct sp_receiver
+{
+	void LoadDefaults(var_set &V);
+
+	struct TYPE { enum A { FLAT, CYLINDRICAL, CAVITY }; };
+	int type;
+	Point offset;
+	double aspect, height;
+	double absorptance;
+	double q_hl_perm2;	//Receiver Heat loss [kWt] per square meter aperture area
+	double 
+		azimuth,	//[optional]
+		elevation;	//[optional]
+	
+};
+typedef vector<sp_receiver> sp_receivers;
+
+
+struct sp_layout
+{
+
+	void LoadDefaults(var_set &V);
+
+	struct h_position
+	{
+		Point location;
+		Point aimpoint;
+		int template_number; //0 based
+		bool user_optics;	//Indicate whether the user will provide a cant/focus vector
+		Vect cant_vector;	//[optional] Canting aim vector of total magnitude equal to the cant radius
+		double focal_length;	//[optional] Heliostat focal length
+	};
+
+	struct land_table
+	{
+	private:
+		struct coord { double x,y; };
+		typedef vector<coord> polygon;
+
+	public:
+		vector<polygon> inclusions, exclusions;
+		void add_point(double x, double y, polygon &poly);
+		void add_point(Point &P, polygon &poly);
+	};
+
+	struct LAND_BOUND_TYPE { enum A {SCALED, FIXED, POLYGON }; };
+	vector<h_position> heliostat_positions;
+	double q_design;	//Design power [MWt]
+	unsigned int land_bound_type; //See enum LAND_BOUND_TYPE
+	double 
+		land_max,	//Land maximum radial extent [tht || m]
+		land_min;	//Land minimum radial extent [tht || m]
+	double h_tower;	//tower height [m]
+	double 
+		span_cw, //[optional] default=+180, field span in clockwise direction 
+		span_ccw;	//[optional] default=-180, field span in counterclockwise direction
+	land_table 
+		landtable;	//[optional] object specifying land bounds
+};
+
+struct sp_cost
+{
+	void LoadDefaults(var_set &V);
+
+	double tower_fixed_cost;
+	double tower_exp;
+	double rec_ref_cost;
+	double rec_ref_area;
+	double rec_cost_exp;
+	double site_spec_cost;
+	double heliostat_spec_cost;
+	double wiring_user_spec;
+	double plant_spec_cost;
+	double tes_spec_cost;
+	double land_spec_cost;
+	double contingency_rate;
+	double sales_tax_rate;
+	double sales_tax_frac;
+	double sales_tax_cost;
+};
+
+
+struct sp_optical_table 
+{
+	/* 
+	Optical table stores whole-field optical efficiency as a function of 
+	solar azimuth and zenith angles.
+	*/
+	sp_optical_table();
+	bool is_user_positions;		//user will specify azimuths and zeniths
+	vector<double> zeniths;
+	vector<double> azimuths;
+	vector<vector<double>> eff_data;
+};
+
+struct sp_flux_map
+{
+	struct sp_flux_stack
+	{
+		string map_name;
+		vector<double> xpos;
+		vector<double> ypos;
+		block_t<double> flux_data;
+	};
+	vector<sp_flux_stack> flux_surfaces;  
+
+};
+
+struct sp_flux_table : sp_flux_map
+{
+	/* 
+	Flux table stores flux maps for each receiver & receiver surface (if applicable) 
+	for the annual set of sun azimuth and zenith angles. 
+	*/
+	
+	sp_flux_table();
+
+	bool is_user_spacing;	//user will specify data in 'n_flux_days' and 'delta_flux_hours'
+	int n_flux_days;		//How many days are used to calculate flux maps? (default = 8)
+	double delta_flux_hrs;		//How much time (hrs) between each flux map? (default = 1)
+	//-- data calculated by the algorithm:
+	
+	vector<double> azimuths;
+	vector<double> zeniths;
+	//---
+};
+
+
+#endif
