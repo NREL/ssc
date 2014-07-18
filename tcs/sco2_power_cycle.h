@@ -172,7 +172,8 @@ struct cycle_off_des_inputs
 struct S_off_design_performance
 {
 	double m_eta_thermal;		//[-] Cycle thermal efficiency
-	double m_W_dot_net;			//[-] Power output
+	double m_W_dot_net;			//[kW] Power output
+	double m_q_dot_in;			//[kW] Thermal input to cycle
 	double m_min_DT_LT;			//[-] Minimum temperature difference in LT recup
 	double m_min_DT_HT;			//[-] Minimum temperature difference in HT recup
 	double m_N_rc;				//[-] Shaft speed - recompressor
@@ -183,7 +184,7 @@ struct S_off_design_performance
 
 	S_off_design_performance()
 	{
-		m_eta_thermal = m_W_dot_net = m_min_DT_LT = m_min_DT_HT = m_N_rc = m_m_dot_PHX = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal = m_W_dot_net = m_q_dot_in = m_min_DT_LT = m_min_DT_HT = m_N_rc = m_m_dot_PHX = std::numeric_limits<double>::quiet_NaN();
 		// Size vectors when they are assigned to values from the RecompCycle class?
 	}
 
@@ -484,13 +485,14 @@ private:
 	// member off-design data from latest solution of 'off_design' method
 	std::vector<double> m_temp_od_last, m_pres_od_last, m_enth_od_last, m_entr_od_last, m_dens_od_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
 	double m_W_dot_net_od_last;
+	double m_q_dot_in_od_last;
 	double m_eta_thermal_od_last;
 
 	// member off-design data
 	std::vector<double> m_temp_od, m_pres_od, m_enth_od, m_entr_od, m_dens_od;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
 	double m_eta_thermal_od;												  // thermal efficiency of the cycle (-)
 	double m_W_dot_net_od;												  // net power output of the cycle (kW)
-
+	double m_q_dot_in_od;												// thermal input to cycle
 
 	bool design();
 
@@ -530,6 +532,7 @@ private:
 		// Set structure member data
 		m_cycle_od_performance.m_eta_thermal = m_eta_thermal_od;
 		m_cycle_od_performance.m_W_dot_net = m_W_dot_net_od;
+		m_cycle_od_performance.m_q_dot_in = m_q_dot_in_od;
 		m_cycle_od_performance.m_min_DT_HT = m_HT.get_od_outputs()->m_min_DT;
 		m_cycle_od_performance.m_min_DT_LT = m_LT.get_od_outputs()->m_min_DT;
 		m_cycle_od_performance.m_N_rc = m_rc.get_N_off_design();
@@ -587,8 +590,8 @@ public:
 		std::fill(m_dens_od.begin(), m_dens_od.end(), std::numeric_limits<double>::quiet_NaN());
 		m_W_dot_net_last = m_eta_thermal_last = 
 			m_W_dot_net_des = m_eta_thermal_des = 
-			m_W_dot_net_od_last = m_eta_thermal_od_last = 
-			m_W_dot_net_od = m_eta_thermal_od = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_net_od_last = m_q_dot_in_od_last = m_eta_thermal_od_last = 
+			m_W_dot_net_od = m_q_dot_in_od = m_eta_thermal_od = std::numeric_limits<double>::quiet_NaN();
 
 		m_eta_thermal_autodes = -HUGE_VAL;
 		m_PR_mc_autodes = m_recomp_frac_autodes = m_LT_frac_autodes = m_P_high_autodes = std::numeric_limits<double>::quiet_NaN();	

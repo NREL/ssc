@@ -1302,6 +1302,7 @@ bool RecompCycle::optimal_off_design(const cycle_opt_off_des_inputs & cycle_opt_
 	{
 		m_eta_thermal_od = 0.0;
 		m_W_dot_net_od = 0.0;
+		m_q_dot_in_od = 0.0;
 		m_errors.SetError(9999);		// Need to add this error message "Error at optimal off-design solution - perhaps target is not possible"
 		return false;
 	}
@@ -2020,7 +2021,7 @@ bool RecompCycle::off_design(const cycle_off_des_inputs & cycle_off_des_in_in)
 	if( prop_error_code != 0 )
 	{
 		m_errors.SetError(62);
-		return false;
+		return false; 
 	}
 	h_hot_ideal = co2_props.enth;
 	HT_outputs.m_eff = Q_dot_HT / (m_dot_t*(m_enth_od_last[7 - cpp_offset] - h_hot_ideal));
@@ -2040,6 +2041,7 @@ bool RecompCycle::off_design(const cycle_off_des_inputs & cycle_off_des_in_in)
 
 	m_W_dot_net_od_last = m_mc.get_w()*m_dot_mc + m_rc.get_w()*m_dot_rc + m_t.get_w()*m_dot_t;
 	m_eta_thermal_od_last = m_W_dot_net_od_last / Q_dot_PHX;
+	m_q_dot_in_od_last = Q_dot_PHX;
 
 	// 3/24/14, twn: already saved during performance method calls?
 	//	cycle%t%m_dot = m_dot_t

@@ -1,0 +1,354 @@
+#define _TCSTYPEINTERFACE_
+#include "tcstype.h"
+#include "sco2_power_cycle.h"
+#include "htf_props.h"
+//#include <vector>
+#include "CO2_properties.h"
+
+using namespace std;
+
+enum{	//Parameters
+	P_W_dot_net_des,
+	P_T_mc_in_des,
+	P_T_t_in_des,
+	P_N_t_des,
+	P_eta_c,
+	P_eta_t,
+	P_P_high_limit,
+
+	P_T_rec_hot,
+	P_T_rec_cold,
+	P_Q_dot_rec_des,
+	P_rec_fl,
+	P_rec_fl_props,
+
+	//Inputs
+	I_1,
+
+	//Outputs
+	O_1,
+
+	//N_MAX
+	N_MAX
+};
+
+tcsvarinfo sam_sco2_recomp_type424_variables[] = {
+	//PARAMETERS
+		// Cycle Design Parameters
+	{ TCS_PARAM, TCS_NUMBER, P_W_dot_net_des,  "W_dot_net_des",   "Design cycle power output",                      "MW",   "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_T_mc_in_des,    "T_mc_in_des",     "Main compressor inlet temp at design",           "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_T_t_in_des,     "T_t_in_des",      "Turbine inlet temp at design",                   "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_N_t_des,        "N_t_des",         "Design turbine speed, negative links to comp.",  "rpm",  "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_eta_c,          "eta_c",           "Design compressor(s) isentropic efficiency",     "-",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_eta_t,          "eta_t",           "Design turbine isentropic efficiency",           "-",    "", "", "" },	
+	{ TCS_PARAM, TCS_NUMBER, P_P_high_limit,   "P_high_limit",    "High pressure limit in cycle",                   "MPa",  "", "", "" },
+		// Solar Receiver Design Parameters
+	{ TCS_PARAM, TCS_NUMBER, P_T_rec_hot,      "T_rec_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_T_rec_cold,     "T_rec_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_Q_dot_rec_des,  "Q_dot_rec_des",   "Receiver design thermal input",                  "MWt",  "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_rec_fl,         "rec_htf",         "The name of the HTF used in the receiver",       "",     "", "", "" },
+	{ TCS_PARAM, TCS_MATRIX, P_rec_fl_props,   "rec_fl_props",    "User defined rec fluid property data",           "-", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "" },
+
+	//INPUTS
+	{ TCS_INPUT, TCS_NUMBER, I_1, "vwind", "Wind velocity", "m/s", "", "", "" },
+
+	//OUTPUTS
+	{ TCS_OUTPUT, TCS_NUMBER, O_1, "pparasi", "Parasitic tracking/startup power", "MWe", "", "", "" },
+
+	//N_MAX
+	{ TCS_INVALID, TCS_INVALID, N_MAX, 0, 0, 0, 0, 0, 0 }
+};
+
+
+class sam_sco2_recomp_type424 : public tcstypeinterface
+{
+private:
+	// Classes and Structures
+	cycle_design_parameters rc_des_par;
+	RecompCycle * rc_cycle;
+	HTFProperties rec_htfProps;		// Instance of HTFProperties class for field HTF
+	CO2_state co2_props;
+	int co2_error;
+	
+	// Cycle Design Parameters
+	double m_W_dot_net_des;            // "Design cycle power output",                      "MW",  
+	double m_T_mc_in_des;			   // "Main compressor inlet temp at design",           "C",   
+	double m_T_t_in_des;			   // "Turbine inlet temp at design",                   "C",   
+	double m_N_t_des;				   // "Design turbine speed, negative links to comp.",  "rpm", 
+	double m_eta_c;					   // "Design compressor(s) isentropic efficiency",     "-",   
+	double m_eta_t;					   // "Design turbine isentropic efficiency",           "-",   	
+	double m_P_high_limit;			   // "High pressure limit in cycle",                   "MPa", 
+
+	// Hardcoded Cycle Design Parameters
+	double m_tol;                      // "Convergence tolerance for performance calcs", "-", "",
+	double m_opt_tol;				   // "Convergence tolerance - optimization calcs", "-", "", 
+	int m_mc_type;                     // May someday have multiple compressor maps to choose from
+	int m_rc_type;                     // May someday have multiple compressor maps to choose from
+	vector<double> m_DP_LT;            // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	vector<double> m_DP_HT;		       // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	vector<double> m_DP_PC;		       // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	vector<double> m_DP_PHX;		   // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	int m_N_sub_hxrs;                  // [-] Number of sections to model in heat exchangers
+
+	// Calculated Cycle Design Parameters
+	double m_UA_total_des;			   // "Total UA allocatable to recuperators",           "kW/K",
+	double m_T_PHX_in;                 // [K] CO2 cold inlet to Primary Heat Exchanger
+
+	// Solar Receiver Design Parameters
+	double m_T_rec_hot;              // [K] Tower design outlet temperature
+	double m_T_rec_cold;             // [K] Tower design inlet temperature
+	double m_Q_dot_rec_des;          // [MWt] Receiver design thermal input
+
+	// Calculated Receiver Design Parameters
+	double m_dot_rec_des;				// [kg/s] Receiver design point mass flow rate
+
+public:
+	sam_sco2_recomp_type424(tcscontext *cst, tcstypeinfo *ti)
+		: tcstypeinterface(cst, ti)
+	{
+		// Parameters
+		m_W_dot_net_des = std::numeric_limits<double>::quiet_NaN();
+		m_T_mc_in_des = std::numeric_limits<double>::quiet_NaN();
+		m_T_t_in_des = std::numeric_limits<double>::quiet_NaN();
+		m_N_t_des = std::numeric_limits<double>::quiet_NaN();
+		m_eta_c = std::numeric_limits<double>::quiet_NaN();
+		m_eta_t = std::numeric_limits<double>::quiet_NaN();		
+		m_P_high_limit = std::numeric_limits<double>::quiet_NaN();
+
+		// Hardcoded values
+		m_tol = 1.E-6;
+		m_opt_tol = m_tol;
+		m_mc_type = 1;
+		m_rc_type = 1;
+		m_DP_LT.resize(2);
+		fill(m_DP_LT.begin(), m_DP_LT.end(), 0.0);
+		m_DP_HT.resize(2);
+		fill(m_DP_HT.begin(), m_DP_HT.end(), 0.0);
+		m_DP_PC.resize(2);
+		fill(m_DP_PC.begin(), m_DP_PC.end(), 0.0);
+		m_DP_PHX.resize(2);
+		fill(m_DP_PHX.begin(), m_DP_PHX.end(), 0.0);
+		m_N_sub_hxrs = 20;
+
+		// Calculated Cycle Design Parameters
+		m_UA_total_des = std::numeric_limits<double>::quiet_NaN();
+
+		// Solar Receiver Design Parameters
+		m_T_rec_hot = std::numeric_limits<double>::quiet_NaN();
+		m_T_rec_cold = std::numeric_limits<double>::quiet_NaN();
+		m_Q_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
+
+		// Calculated Receiver Design Parameters
+		m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
+	}
+
+	virtual ~sam_sco2_recomp_type424()
+	{
+		delete rc_cycle;
+	}
+
+	virtual int init()
+	{
+		// Set parameters to member data
+		m_W_dot_net_des = value(P_W_dot_net_des)*1000.0;		//[kW] Design cycle power outpt
+		m_T_mc_in_des = value(P_T_mc_in_des) + 273.15;		    //[K] Compressor inlet temp at design, convert from C
+		m_T_t_in_des = value(P_T_t_in_des) + 273.15;			//[K] Turbine inlet temp at design, convert from C
+		m_N_t_des = value(P_N_t_des);                           // "Design turbine speed, negative links to comp.",  "rpm",  
+		m_eta_c = value(P_eta_c);								// "Design compressor(s) isentropic efficiency",     "-",    
+		m_eta_t = value(P_eta_t);								// "Design turbine isentropic efficiency",           "-",    		
+		m_P_high_limit = value(P_P_high_limit);					// "High pressure limit in cycle",                   "MPa",  
+
+		// Set up cycle_design_parameters structure
+		// Integers for compressor maps (hardcoded)
+		rc_des_par.m_mc_type = m_mc_type;
+		rc_des_par.m_rc_type = m_rc_type;
+
+		// Net output and temperatures
+		rc_des_par.m_W_dot_net = m_W_dot_net_des;		//[kW]
+		rc_des_par.m_T_mc_in = m_T_mc_in_des;           //[K]
+		rc_des_par.m_T_t_in = m_T_t_in_des;				//[K]
+
+		// Pressure Drops (hardcoded)
+		rc_des_par.m_DP_LT = m_DP_LT;
+		rc_des_par.m_DP_HT = m_DP_HT;
+		rc_des_par.m_DP_PC = m_DP_PC;
+		rc_des_par.m_DP_PHX = m_DP_PHX;
+
+		// Turbine Speed
+		rc_des_par.m_N_t = m_N_t_des;
+
+		// Turbomachinery isentropic efficiency
+		rc_des_par.m_eta_mc = m_eta_c;
+		rc_des_par.m_eta_rc = m_eta_c;
+		rc_des_par.m_eta_t = m_eta_t;
+
+		// Number of heat exchanger sections (hardcoded)
+		rc_des_par.m_N_sub_hxrs = m_N_sub_hxrs;
+
+		// Convergence tolerances (hardcoded)
+		rc_des_par.m_tol = m_tol;
+		rc_des_par.m_opt_tol = m_opt_tol;
+
+		// Upper pressure limit
+		rc_des_par.m_P_high_limit = m_P_high_limit*1000.0;		// Convert to kPa
+		//************************************************
+		// cycle_design_parameters structure fully defined
+		// EXCEPT recup UA, which must be solved with iteration below
+		//************************************************
+
+
+		// **************************************************************************
+		// Solar Receiver Parameters
+		// Receiver inlet/outlet temps and thermal input
+		m_T_rec_hot = value(P_T_rec_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
+		m_T_rec_cold = value(P_T_rec_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
+		m_Q_dot_rec_des = value(P_Q_dot_rec_des);		//[MWt] Receiver thermal input at design
+
+		// Declare instance of fluid class for FIELD fluid.
+		int rec_fl = (int)value(P_rec_fl);
+		if( rec_fl != HTFProperties::User_defined && rec_fl < HTFProperties::End_Library_Fluids )
+		{
+			rec_htfProps.SetFluid(rec_fl); // field_fl should match up with the constants
+		}
+		else if( rec_fl = HTFProperties::User_defined )
+		{
+			int nrows = 0, ncols = 0;
+			double *fl_mat = value(P_rec_fl_props, &nrows, &ncols);
+			if( fl_mat != 0 && nrows > 2 && ncols == 7 )
+			{
+				util::matrix_t<double> mat(nrows, ncols, 0.0);
+				for( int r = 0; r < nrows; r++ )
+				for( int c = 0; c < ncols; c++ )
+					mat.at(r, c) = TCS_MATRIX_INDEX(var(P_rec_fl_props), r, c);
+
+				if( !rec_htfProps.SetUserDefinedFluid(mat) )
+				{
+					//message( "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
+					message(rec_htfProps.UserFluidErrMessage(), nrows, ncols);
+					return -1;
+				}
+			}
+		}
+		else
+		{
+			message("Receiver HTF code is not recognized");
+			return -1;
+		}
+		// ********************************************************************************
+		// ********************************************************************************
+
+		// Solar receiver to power cycle heat exchanger
+		// Will need design mass flow rate to calculate HX off-design UA
+		double T_rec_ave = 0.5*(m_T_rec_cold + m_T_rec_hot);		//[K]
+		double cp_rec = rec_htfProps.Cp(T_rec_ave);					//[kJ/kg-K]
+		m_dot_rec_des = m_Q_dot_rec_des*1.E3 / (cp_rec*(m_T_rec_hot - m_T_rec_cold));	//[kg/s]
+
+		double deltaT_co2_hot = m_T_rec_hot - m_T_t_in_des;			//[K]
+		m_T_PHX_in = m_T_rec_cold - deltaT_co2_hot;					//[K]
+
+		// Now need to vary UA_recup until m_T_PHX_in is achieved. This could be slow...
+		// Is there a good way to calculate a decent guess???
+		// 1) Estimate co2 mass flow rate from PHX energy balance
+		double T_PHX_cold_ave = 0.5*(m_T_PHX_in + m_T_t_in_des);
+		co2_error = CO2_TP(T_PHX_cold_ave, m_P_high_limit*1.E3, &co2_props);
+		double cp_cold_ave = co2_props.cp;			//[kJ/kg-K]
+		double m_dot_co2_guess = m_Q_dot_rec_des*1.E3 / (cp_cold_ave*(m_T_t_in_des - m_T_PHX_in));	//[kg/s]
+		// 2) Guess a reasonable pressure ratio and assume operating at upper pressure limit
+		double PR_guess = 2.5;
+		double P_low_guess = m_P_high_limit / PR_guess;	//[MPa] Guess of lower pressure based on Pressure Ratio guess
+		// 3) Calculate turbine outlet temperature
+		int turbo_error = 0;
+		double dummy[7];
+		double T_t_out_guess = -999.9;
+		double h_t_out_guess = -999.9;
+		calculate_turbomachinery_outlet(m_T_t_in_des, m_P_high_limit*1.E3, P_low_guess*1.E3, m_eta_t, false, turbo_error,
+			dummy[0], dummy[1], dummy[2], T_t_out_guess, h_t_out_guess, dummy[4], dummy[5], dummy[6]);
+		// 4) Calculate compressor outlet temperature
+		double T_c_out_guess = -999.9;
+		calculate_turbomachinery_outlet(m_T_mc_in_des, P_low_guess*1.E3, m_P_high_limit*1.E3, m_eta_c, true, turbo_error,
+			dummy[0], dummy[1], dummy[2], T_c_out_guess, dummy[3], dummy[4], dummy[5], dummy[6]);
+		// 5) Guess hot side recups outlet temp
+		double T_recup_hot_outlet_guess = T_c_out_guess + 0.5*(T_t_out_guess - m_T_PHX_in);	// 0.5 multiplier is estimate
+		co2_error = CO2_TP(T_recup_hot_outlet_guess, P_low_guess*1.E3, &co2_props);
+		double h_recup_hot_outlet_guess = co2_props.enth;
+		// 6) Estimate heat transfer rate in recuperators
+		double q_dot_recups_guess = m_dot_co2_guess*(h_t_out_guess - h_recup_hot_outlet_guess);		//[kW]
+		// 7) Estimate UA
+		double UA_recups_guess = q_dot_recups_guess / (0.5*(T_t_out_guess - m_T_PHX_in));		//[kW/K] 0.5 multiplier is estimate
+
+		// **********************************************************************
+		// **********************************************************************
+		// Solve design point model with guessed recups UA
+		m_UA_total_des = UA_recups_guess;
+		rc_des_par.m_UA_rec_total = m_UA_total_des;
+		// Create new instance of RecompCycle class and assign to member point
+		rc_cycle = new RecompCycle(rc_des_par);
+		bool auto_cycle_success = rc_cycle->auto_optimal_design();
+		double T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
+		// **********************************************************************
+
+		// Now need to iterate UA_total_des until T_PHX_in_calc = m_T_PHX_in
+		double diff_T_PHX_in = (T_PHX_in_calc - m_T_PHX_in)/m_T_PHX_in;			//[-]
+		bool low_flag = false;
+		bool high_flag = true;
+		double y_upper = numeric_limits<double>::quiet_NaN();
+		double y_lower = numeric_limits<double>::quiet_NaN();
+		int opt_des_calls = 1;
+
+		while( abs(diff_T_PHX_in) > m_tol )
+		{
+			opt_des_calls++;
+
+			if(diff_T_PHX_in > 0.0)		// Calc > target, UA is too large, decrease UA
+			{
+				low_flag = true;
+				y_lower = diff_T_PHX_in;
+
+				if(high_flag)	// Upper and lower bounds set, use false positon interpolation method
+				{
+					
+				}
+				else			// No upper bound set, try to get there
+				{
+					UA_recups_guess *= 1.4;
+				}
+			}
+			else						// Calc < target, UA is too small, decrease UA
+			{
+				high_flag = true;
+				y_upper = diff_T_PHX_in;
+				
+				if(low_flag)
+				{
+				
+				}
+				else
+				{
+					UA_recups_guess *= 0.6;
+				}
+			}
+
+
+		}
+
+
+		double design_eta = rc_cycle->get_cycle_design_metrics()->m_eta_thermal;
+
+		return 0;
+	}
+
+	virtual int call(double time, double step, int ncall)
+	{
+		return 0;
+	}
+
+	virtual int converged(double time)
+	{
+
+		return 0;
+	}
+
+};
+
+TCS_IMPLEMENT_TYPE(sam_sco2_recomp_type424, "Integrated sco2 powerblock", "Ty Neises", 1, sam_sco2_recomp_type424_variables, NULL, 1)
+
