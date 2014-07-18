@@ -1220,7 +1220,28 @@ public:
 				if ( !sa[nn].enable
 					|| sa[nn].nstrings < 1 )
 					continue; // skip disabled subarrays
+
+#define IRRMAX 1500
 				
+				if ( wf.gh < 0 || wf.gh > IRRMAX )
+				{
+					log( util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+						wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, istep );
+					wf.gh = 0;
+				}
+				if ( wf.dn < 0 || wf.dn > IRRMAX )
+				{
+					log( util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+						wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, istep );
+					wf.dn = 0;
+				}
+				if ( wf.df < 0 || wf.df > IRRMAX )
+				{
+					log( util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+						wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, istep );
+					wf.df = 0;
+				}
+
 				irrad irr;
 				irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600.0 );
 				irr.set_location( wf.lat, wf.lon, wf.tz );
@@ -1239,7 +1260,7 @@ public:
 				int code = irr.calc();
 				if ( code != 0 )
 					throw exec_error( "pvsamv1", 
-						util::format("failed to compute irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]", 
+						util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]", 
 						nn+1, code, wf.year, wf.month, wf.day, wf.hour));
 
 				double ibeam, iskydiff, ignddiff;
