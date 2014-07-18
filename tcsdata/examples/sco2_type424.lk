@@ -1,0 +1,31 @@
+clear();
+
+// Change Log
+// 7/17/14: Removed UA_recup_des as parameter. Will be calculated based on PHX cold and hot side temps
+
+// Values from ssc example (7/17/14)
+W_dot_net_des = 35.0;		//[MW] Design cycle power output
+T_mc_in_des = 50.0;			//[C] Main compressor inlet temp at design
+T_t_in_des = 650.0;			//[C] Turbine inlet temperature at design
+N_t_des = 3600.0;			//[rpm] Turbine shaft speed
+tol = 1.E-6;				//[-] Convergence tolerance for performance calcs
+opt_tol = 1.E-6;			//[-] Convergence tolerance for optimization calcs
+P_high_limit = 25.0;		//[MPa] High pressure limit in cycle
+eta_c = 0.89;				//[-] Compressor Isentropic Efficiency
+eta_t = 0.93;				//[-] Turbine Isentropic Efficiency
+
+powercycle = add_unit("sam_sco2_recomp_type424");
+set_value(powercycle, "W_dot_net_des", W_dot_net_des);
+set_value(powercycle, "T_mc_in_des", T_mc_in_des);
+set_value(powercycle, "T_t_in_des", T_t_in_des);
+set_value(powercycle, "N_t_des", N_t_des);
+set_value(powercycle, "eta_c", eta_c);
+set_value(powercycle, "eta_t", eta_t);
+set_value(powercycle, "P_high_limit", P_high_limit);
+
+set_value(powercycle, "T_rec_hot", 574.0);		//[C]
+set_value(powercycle, "T_rec_cold", 290.0);     //[C]
+set_value(powercycle, "Q_dot_rec_des", 100.0);	//[C]
+set_value(powercycle, "rec_htf", 17);           //[-]
+
+simulate(1.0, 1000.0, 1.0);
