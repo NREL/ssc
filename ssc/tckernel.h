@@ -9,7 +9,8 @@ class tcKernel : public tcskernel, public compute_module
 public:
 	tcKernel(tcstypeprovider *prov);
 	virtual ~tcKernel();
-
+	
+	virtual void log( const std::string & text );
 	virtual bool converged( double time );
 	void set_store_array_matrix_data( bool b ) { m_storeArrMatData = b; }
 	void set_store_all_parameters( bool b ) { m_storeAllParameters = b; }

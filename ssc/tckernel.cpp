@@ -20,6 +20,11 @@ tcKernel::~tcKernel()
 #endif
 
 
+void tcKernel::log( const std::string & text )
+{
+	compute_module::log( text, SSC_NOTICE, (float)tcskernel::current_time() );
+}
+
 bool tcKernel::converged( double time )
 {
 	if (m_step != 0.0 )
@@ -31,9 +36,9 @@ bool tcKernel::converged( double time )
 		if (istep % nnsteps == 0)
 		{
 			double percent = 100 * (((double)istep) / ((double)nstep) );
-			//double elapsed = m_watch.Time() * 0.001;
-			update( "calculating", percent, (float)istep );
-			//if ( !m_progressDialog->Update( (int) percent, wxString::Format("%.1lf %% complete, %.2lf seconds elapsed, hour %.1lf", percent, elapsed, time/3600 )) )
+
+			if ( !compute_module::update( "calculating", percent, (float)istep ) )
+				return false; // abort simulation if compute_module update returned false from controller
 		}
 	}
 
@@ -150,12 +155,7 @@ int tcKernel::simulate( double start, double end, double step )
 		}
 	}
 	
-	//wxGetApp().Yield( true );
-
-	//m_watch.Start();
-	int code = tcskernel::simulate( start, end, step );
-	//if (time_sec) *time_sec = ((double)m_watch.Time())*0.001;
-	return code;
+	return tcskernel::simulate( start, end, step );
 }
 
 tcKernel::dataset *tcKernel::get_results(int idx)

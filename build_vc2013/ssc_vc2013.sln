@@ -11,6 +11,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ssc", "ssc_vc2013.vcxproj",
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdktool", "sdktool_vc2013.vcxproj", "{C6E66359-1F22-4C8F-AF47-0E7DB16EE825}"
+	ProjectSection(ProjectDependencies) = postProject
+		{84021BC1-C2DB-4F98-8B7D-7A03A53C5533} = {84021BC1-C2DB-4F98-8B7D-7A03A53C5533}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcsconsole", "tcsconsole_vc2013.vcxproj", "{CC86C00E-6BA9-47E1-8CEB-4702FD5CF5F7}"
 	ProjectSection(ProjectDependencies) = postProject
