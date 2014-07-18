@@ -54,6 +54,7 @@
     <ClCompile Include="..\tcs\sam_pf_dish_engine_type297.cpp" />
     <ClCompile Include="..\tcs\sam_pf_dish_parasitic_type298.cpp" />
     <ClCompile Include="..\tcs\sam_pf_dish_receiver_type296.cpp" />
+    <ClCompile Include="..\tcs\sam_sco2_recomp_type424.cpp" />
     <ClCompile Include="..\tcs\sam_trough_model_type805.cpp" />
     <ClCompile Include="..\tcs\sam_trough_plant_type807.cpp" />
     <ClCompile Include="..\tcs\sam_trough_storage_type806.cpp" />
