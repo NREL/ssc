@@ -1178,7 +1178,7 @@ public:
 		// hourly adjustement factors
 		adjustment_factors haf(this);
 		if (!haf.setup())
-			throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+			throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
 
 
 		// begin 8760 loop through each timestep
@@ -1189,9 +1189,13 @@ public:
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string(istep+1) + " of 8760 in weather file");
 
 
-// causing AV in all wrapppers - default handler not working through wrapper layer
-			if ( istep % (nstep/20) == 0)
-				update( "calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep );
+#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
+			if ( istep % (nstep/NSTATUS_UPDATES) == 0)
+			{
+				float percent = 100.0f * ((float)istep+1) / ((float)nstep);
+				if ( !update( "calculating", percent , (float)istep ) )
+					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(istep+1) );
+			}
 
 		
 			double solazi=0, solzen=0, solalt=0;
