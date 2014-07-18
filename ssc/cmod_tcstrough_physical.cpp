@@ -627,7 +627,7 @@ public:
 		bConnected &= connect(type251_controller, "standby_control", type224_powerblock, "standby_control");
 		//bConnected &= connect(type251_controller, "TOU", type224_powerblock, "TOU");
 		bConnected &= connect(tou, "tou_value", type224_powerblock, "TOU");
-
+		
 		//Set initial values
 		set_unit_value_ssc_double(type224_powerblock, "T_wb" ); // , 10.);
 		set_unit_value_ssc_double(type224_powerblock, "T_db" ); // , 15.);
@@ -658,16 +658,16 @@ public:
 
 		// check if all connections worked
 		if ( !bConnected )
-			throw exec_error( "tcstrough_physical", util::format("there was a problem connecting outputs of one unit to inputs of another for the simulation.") );
+			throw exec_error( "tcstrough_physical", "there was a problem connecting outputs of one unit to inputs of another for the simulation." );
 
 		// Run simulation
 		size_t hours = 8760;
-		if (0 > simulate(3600, hours * 3600, 3600))
-			throw exec_error( "tcstrough_physical", util::format("there was a problem simulating in tcstrough_physical.") );
+		if ( 0 != simulate(3600, hours * 3600, 3600))
+			throw exec_error( "tcstrough_physical", "there was a problem simulating in tcskernel(physical trough)" );
 
 		// get the outputs
 		if (!set_all_output_arrays() )
-			throw exec_error( "tcstrough_physical", util::format("there was a problem returning the results from the simulation.") );
+			throw exec_error( "tcstrough_physical", "there was a problem returning the results from the simulation." );
 		//set_output_array("i_SfTi",8760);
 
 		// Monthly accumulations
