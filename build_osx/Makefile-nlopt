@@ -5,8 +5,48 @@ CFLAGS = -Wall -g -O3 -I../ -D__64BIT__
 CXXFLAGS = $(CFLAGS)
 
 OBJECTS = \
+    direct/DIRect.o \
+    direct/direct_wrap.o \
+    direct/DIRserial.o \
     direct/DIRsubrout.o \
-	cdirect/cdirect.o 
+    cdirect/cdirect.o \
+    cdirect/hybrid.o \
+    praxis/praxis.o \
+    luksan/plis.o \
+    luksan/plip.o \
+    luksan/pnet.o \
+    luksan/mssubs.o \
+    luksan/pssubs.o \
+    crs/crs.o \
+    mlsl/mlsl.o \
+    mma/mma.o \
+    mma/ccsa_quadratic.o \
+    cobyla/cobyla.o \
+    newuoa/newuoa.o \
+    neldermead/nldrmd.o \
+    neldermead/sbplx.o \
+    auglag/auglag.o \
+    bobyqa/bobyqa.o \
+    isres/isres.o \
+    slsqp/slsqp.o \
+    esch/esch.o \
+    api/general.o \
+    api/options.o \
+    api/optimize.o \
+    api/deprecated.o \
+    api/f77api.o \
+    util/mt19937ar.o \
+    util/sobolseq.o \
+    util/timer.o \
+    util/stop.o \
+    util/redblack.o \
+    util/qsort_r.o \
+    util/rescale.o \
+    stogo/global.o \
+    stogo/linalg.o \
+    stogo/local.o \
+    stogo/stogo.o \
+    stogo/tools.o
 
 
 TARGET=nlopt.a
