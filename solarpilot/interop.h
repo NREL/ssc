@@ -2,7 +2,6 @@
 #define _INTEROP_ 1
 
 #include <string>
-#include <unordered_map>
 #include <map>
 #include <vector>
 #include <stdio.h>

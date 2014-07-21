@@ -6,8 +6,8 @@
 simulation_info::simulation_info(){ 
 	_is_active = false; 
 	Reset(); 
-	_callback = nullptr;
-	_callback_data = nullptr;
+	_callback = 0;
+	_callback_data = 0;
 }
 	
 bool simulation_info::isEnabled(){return _is_active;}	//Indicates whether any simulation is currently in progress (that's being tracked)
@@ -103,7 +103,7 @@ mod_base::mod_base(){
 void mod_base::setVar(string varname, int &variable, var_map &V, int def, string range)
 {
 	if(V.find(varname) != V.end()) {
-		to_integer(V.at(varname).value, &variable);
+		to_integer(V[varname].value, &variable);
 		//if(!checkRange(range, variable)){error_range(variable, varname, range);};
 	} 
 	else 
@@ -115,7 +115,7 @@ void mod_base::setVar(string varname, int &variable, var_map &V, int def, string
 void mod_base::setVar(string varname, double &variable, var_map &V, double def, string range)
 {
 	if(V.find(varname) != V.end()) {
-		to_double(V.at(varname).value, &variable);
+		to_double(V[varname].value, &variable);
 		//if(!checkRange(range, variable)){error_range(variable, varname, range);};
 	} 
 	else {
@@ -126,7 +126,7 @@ void mod_base::setVar(string varname, double &variable, var_map &V, double def, 
 void mod_base::setVar(string varname, string &variable, var_map &V, string def, string range)
 {
 	if(V.find(varname) != V.end()) {
-		variable = V.at(varname).value;
+		variable = V[varname].value;
 	} 
 	else {
 		variable = def;
@@ -136,7 +136,7 @@ void mod_base::setVar(string varname, string &variable, var_map &V, string def, 
 void mod_base::setVar(string varname, bool &variable, var_map &V, bool def, string range)
 {
 	if(V.find(varname) != V.end()) {
-		to_bool(V.at(varname).value, variable);
+		to_bool(V[varname].value, variable);
 	}
 	else {
 		variable = def;
@@ -147,7 +147,7 @@ void mod_base::setVar(string varname, matrix_t<double> &variable, var_map &V, st
 {
 	//converts a string with comma-separated values in sequence into a 2-D matrix of doubles
 	if(V.find(varname) != V.end()) {
-		vector<string> content = split(V.at(varname).value, ";");
+		vector<string> content = split(V[varname].value, ";");
 		int nrows = content.size();
 		if(nrows == 0) { variable.resize_fill(1,2,0.0); return; }
 		vector<string> line;
@@ -170,7 +170,7 @@ void mod_base::setVar(string varname, matrix_t<int> &variable, var_map &V, strin
 {
 	//converts a string with comma-separated values in sequence into a 2-D matrix of integers
 	if(V.find(varname) != V.end()) {
-		vector<string> content = split(V.at(varname).value, ";");
+		vector<string> content = split(V[varname].value, ";");
 		int nrows = content.size();
 		if(nrows == 0){ variable.resize_fill(1,2,0); return; }
 		vector<string> line;
@@ -194,7 +194,7 @@ void mod_base::setVar(string varname, vector<Point> &variable, var_map &V, strin
 	//splits a set of 3d points into a vector<Point>
 	//should be [P]x1,y1,z1[P]x2,y2,z2...
 	if(V.find(varname) != V.end()) {
-		vector<string> content = split(V.at(varname).value, "[P]");
+		vector<string> content = split(V[varname].value, "[P]");
 		vector<string> line;
 		double x, y, z;
 		int nrows = content.size();
@@ -218,7 +218,7 @@ void mod_base::setVar(string varname, bounds_array &variable, var_map &V){
 	//Specifically loads the field boundary arrays
 	//The format should be [POLY][P]x1,y1,z1[P]x2,y2,z2...[POLY][P]...
 	if(V.find(varname) != V.end()) {
-		vector<string> spolys = split(V.at(varname).value, "[POLY]");
+		vector<string> spolys = split(V[varname].value, "[POLY]");
 		vector<string> line, pnt;
 		double x, y, z;
 		int npoly = spolys.size();
@@ -252,7 +252,7 @@ void mod_base::setVar(string varname, WeatherData &WD, var_map &V){
 	if(V.find(varname) != V.end()){
 		vector<string>
 			vals,
-			entries = split(V.at(varname).value, "[P]");
+			entries = split(V[varname].value, "[P]");
 		int nrows = entries.size();
 		int nv, i, j;
 		WD.resizeAll(nrows, 0.0);
@@ -346,12 +346,19 @@ double var_data::value_double(){
 	else{ return 0.; }
 }
 
+#include <sstream>
+template<typename T> string to_string(const T &value) {
+	ostringstream x;
+	x << value;
+	return x.str();
+}
+
 void var_data::set(double val){
-	value = std::to_string(val);
+	value = to_string(val);
 }
 
 void var_data::set(int val){
-	value = std::to_string(val);
+	value = to_string(val);
 }
 
 void var_data::set(bool val){
@@ -361,8 +368,8 @@ void var_data::set(bool val){
 
 //-------------------- simulation error ------------
 simulation_error::simulation_error(){ 
-	_callback = nullptr; 
-	_callback_data = nullptr;
+	_callback = 0; 
+	_callback_data = 0;
 	_is_fatal = false; 
 	_force_display = false;
 	_terminate_status = false;

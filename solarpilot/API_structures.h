@@ -79,7 +79,16 @@ public:
 	void AddWeatherStep( int Day_of_month, int month_of_year, double Time_hours, double DNI, 
 		double Tdb, double Vwind, double Pres, double Step_weight)
 	{
-		weather_data.push_back({Day_of_month, month_of_year, Time_hours, DNI, Tdb, Vwind, Pres, Step_weight});	
+		weather_step x;
+		x.day_of_month = Day_of_month;
+		x.month_of_year = month_of_year;
+		x.time_hours = Time_hours;
+		x.dni = DNI;
+		x.tdb = Tdb;
+		x.vwind = Vwind;
+		x.pres = Pres;
+		x.step_weight = Step_weight;
+		weather_data.push_back( x );
 	};
 
 	struct SUN_TYPE { enum A { PILLBOX=2, GAUSSIAN=4, LIMB_DARKENED=1, POINT=0, BUIE=5, USER=3 }; };
@@ -87,7 +96,10 @@ public:
 	sun_type_settings  sun_type_params;
 	vector<user_sun_step> user_sun_data;
 	void AddUserSunStep( double Angle, double Intens ){
-		user_sun_data.push_back({Angle, Intens});
+		user_sun_step x;
+		x.angle = Angle;
+		x.intensity = Intens;
+		user_sun_data.push_back( x );
 	}
 	struct ATTEN_MODEL { enum A { DELSOL_CLEAR_DAY, DELSOL_HAZY_DAY, USER_DEFINED }; };
 	
@@ -217,7 +229,7 @@ struct sp_optical_table
 	bool is_user_positions;		//user will specify azimuths and zeniths
 	vector<double> zeniths;
 	vector<double> azimuths;
-	vector<vector<double>> eff_data;
+	vector<vector<double> > eff_data;
 };
 
 struct sp_flux_map

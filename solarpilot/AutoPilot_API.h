@@ -43,7 +43,7 @@ protected:
 	void PostProcessLayout();
 	void PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int flux_layer = 0);
 	
-	void GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double>> &sim_points, double tolerance = 0.05 );
+	void GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double> > &sim_points, double tolerance = 0.05 );
 	
 	simulation_info *_local_siminfo;
 
@@ -79,6 +79,8 @@ public:
 	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 };
 
+#ifdef SP_USE_THREADS
+
 class AutoPilot_MT : public AutoPilot
 {
 	int _n_threads;	//the maximum number of threads to simulate
@@ -101,5 +103,7 @@ public:
 
 	void CancelMTSimulation();
 };
+
+#endif // SP_USE_THREADS
 
 #endif

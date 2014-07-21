@@ -9,7 +9,7 @@ testoptclass::testoptclass(){
 
 void testoptclass::reset_counter(){call_count = 0;}
 
-void testoptclass::random_start(vector<double> &x, vector<vector<double>> &range){
+void testoptclass::random_start(vector<double> &x, vector<vector<double> > &range){
 	int n = (int)x.size();
 	for(int i=0; i<n; i++){
 		double 
@@ -53,7 +53,7 @@ double testoptclass::matyas_test(unsigned n, const double *x, double *grad, void
 	call_count++;
 	double y=0.;
 	for(int i=0; i<n; i++){
-		y+= 0.26 * pow(abs(x[i]),n);
+		y+= 0.26 * pow(fabs(x[i]),(double)n);
 	}
 	double xx=0.48;
 	for(int i=0; i<n; i++){

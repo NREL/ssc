@@ -1,0 +1,18 @@
+VPATH = ../nlopt
+CC = gcc
+CXX = g++
+CFLAGS = -Wall -g -O3 -I../ -D__64BIT__
+CXXFLAGS = $(CFLAGS)
+
+OBJECTS = \
+    direct/DIRsubrout.o \
+	cdirect/cdirect.o 
+
+
+TARGET=nlopt.a
+
+$(TARGET):$(OBJECTS)
+	ar rs $(TARGET) $(OBJECTS)
+
+clean:
+	rm -rf $(TARGET) $(OBJECTS)

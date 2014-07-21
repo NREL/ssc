@@ -137,6 +137,31 @@ const Comparable & median3( vector<Comparable> & a, int left, int right )
 }
 
 /**
+ * Internal insertion sort routine for subarrays
+ * that is used by quicksort.
+ * a is an array of Comparable items.
+ * left is the left-most index of the subarray.
+ * right is the right-most index of the subarray.
+ */
+template <typename Comparable>
+void insertionSort( vector<Comparable> & a, int left, int right )
+{
+    for( int p = left + 1; p <= right; p++ )
+    {
+        Comparable tmp = a[ p ];
+		
+        int j;
+
+        for( j = p; j > left && tmp < a[ j - 1 ]; j-- ){
+            a[ j ] = a[ j - 1 ];
+			
+		}
+        a[ j ] = tmp;
+		
+    }
+}
+
+/**
  * Internal quicksort method that makes recursive calls.
  * Uses median-of-three partitioning and a cutoff of 10.
  * a is an array of Comparable items.
@@ -174,28 +199,4 @@ void quicksort( vector<Comparable> & a, int left, int right )
 	}
 }
 
-/**
- * Internal insertion sort routine for subarrays
- * that is used by quicksort.
- * a is an array of Comparable items.
- * left is the left-most index of the subarray.
- * right is the right-most index of the subarray.
- */
-template <typename Comparable>
-void insertionSort( vector<Comparable> & a, int left, int right )
-{
-    for( int p = left + 1; p <= right; p++ )
-    {
-        Comparable tmp = a[ p ];
-		
-        int j;
-
-        for( j = p; j > left && tmp < a[ j - 1 ]; j-- ){
-            a[ j ] = a[ j - 1 ];
-			
-		}
-        a[ j ] = tmp;
-		
-    }
-}
 #endif

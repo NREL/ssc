@@ -3,6 +3,8 @@
 
 
 #include "SolarField.h"
+
+#ifdef SP_USE_THREADS
 #include <thread>
 #include <mutex>
 
@@ -69,5 +71,6 @@ public:
 };
 
 
+#endif // SP_USE_THREADS
 
 #endif

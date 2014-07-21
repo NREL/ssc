@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <string>
+#include <stdexcept>
 
 class spexception : public std::runtime_error
 {

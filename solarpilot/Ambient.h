@@ -108,7 +108,7 @@ class Ambient : public mod_base
 	static bool readWeatherFile(WeatherData &data, string &file_name, Ambient *Amb = (Ambient*)NULL /*Optional - Pointer to class*/);
 	double calcAttenuation(double &len);
 	void setDefaults();
-	static void calcSpacedDaysHours(double lat, double lon, double tmz, int nday, double delta_hr, vector<vector<double>> &utime, vector<int> &uday); //calculate days and times that produce evenly spaced sun positions over the year
+	static void calcSpacedDaysHours(double lat, double lon, double tmz, int nday, double delta_hr, vector<vector<double> > &utime, vector<int> &uday); //calculate days and times that produce evenly spaced sun positions over the year
 	enum CLRSKY_MODEL { MEINEL, HOTTEL, CONSTANT, MOON, ALLEN, WEATHER=-1 };
 	double calcInsolation(double azimuth, double zenith); //calculate clear-sky radiation using one of the DELSOL models
 

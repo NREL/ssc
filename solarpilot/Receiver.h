@@ -39,7 +39,7 @@ struct FluxPoint {
 
 };
 
-typedef vector<vector<FluxPoint>> FluxGrid;
+typedef vector<vector<FluxPoint> > FluxGrid;
 
 //The FluxSurface class
 class FluxSurface : public mod_base

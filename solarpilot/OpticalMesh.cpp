@@ -55,7 +55,7 @@ double derivatives::int_eval(double r, double lf){
 	double lfmls = lf-ls;
 
 	//Check whether the focal length is equal to the slant length. Handle separately.
-	if(abs(lfmls) < .1){
+	if(fabs(lfmls) < .1){
 		//Use the formulation for only Gaussian error contributions.
 		return -r*Data.w_rec/(sqt2*sqtpi*ls*ls*ls*Data.s_h)*exp(-Data.w_rec*Data.w_rec/(8.*ls*ls*Data.s_h*Data.s_h));
 	}
@@ -173,7 +173,7 @@ tree_node *tree_node::m_proc(string &key, int index){
 	}
 	
 	throw spexception("Invalid key index while parsing optical mesh.");
-	return nullptr;
+	return 0;
 }
 vector<tree_node*> tree_node::m_get_children(){
 	vector<tree_node*> kids;
@@ -242,7 +242,7 @@ vector<opt_element*> opt_element::get_children(){
 	vector<opt_element*> children;
 	vector<tree_node*> m_children = m_get_children();
 	for( vector<tree_node*>::iterator it = m_children.begin(); it != m_children.end(); it++)
-		children.push_back((opt_element*)it._Ptr);
+		children.push_back( (opt_element*) *it );
 	return children;
 }
 
@@ -296,7 +296,7 @@ void optical_hash_tree::create_mesh(LayoutData *data){
 		sprintf(msg, "An error occurred while allocating memory for the optical mesh elements. This"
 			" can occur when the field layout zone settings are configured incorrectly or when insufficient "
 			"memory is available. Attempting %d nodes.", nmaxnodes);
-		throw exception(msg);
+		throw spexception( (const char*)msg );
 	}
 	
 	//define a new head node
@@ -328,8 +328,8 @@ void optical_hash_tree::create_node(opt_element &node, bool rad_direction, int r
 	ddr = res.at(0);
 	ddB = res.at(1);
 
-	double dr = abs(ddr*(xr1 - xr0));
-    double dB = abs(ddB*(yr1 - yr0));
+	double dr = fabs(ddr*(xr1 - xr0));
+    double dB = fabs(ddB*(yr1 - yr0));
         
 	//Calculate the azimuthal zone size limits for this radius
 	int max_rec_level_a = (int)floor( log2inv*log(C0*max_rec_level_a_dr) );
@@ -499,7 +499,7 @@ void optical_hash_tree::add_object(void* object, double locx, double locy, doubl
     element->get_array()->push_back(object);  
 }
 void optical_hash_tree::reset(){
-	Data = nullptr;
+	Data = 0;
 	head_node = opt_element();
 	nodes.clear();
 	divs_updated = false;

@@ -387,7 +387,7 @@ double Ambient::calcAttenuation(double &len){
 
 }
 
-void Ambient::calcSpacedDaysHours(double lat, double lon, double tmz, int nday, double delta_hr, vector<vector<double>> &utime, vector<int> &uday){
+void Ambient::calcSpacedDaysHours(double lat, double lon, double tmz, int nday, double delta_hr, vector<vector<double> > &utime, vector<int> &uday){
 	//Method taken from PTGen code (Wagner 2008 thesis)
 	double pi = acos(-1.);
 	uday.resize(nday);

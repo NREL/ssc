@@ -99,7 +99,7 @@ bool SolarField::CheckCancelStatus(){
 //Constructor / destructor
 SolarField::SolarField(){
 	//_flux = new Flux();
-	_flux = nullptr;
+	_flux = 0;
 	_is_created = false;	//The Create() method hasn't been called yet.
 	_estimated_annual_power = 0.;
 };		//The flux object must have a default constructor associated with the SolarField init method
@@ -178,15 +178,15 @@ SolarField::SolarField( const SolarField &sf )
 		_helio_extents[i] = sf._helio_extents[i]; 
 	}
 	//Create a map between the original heliostat object addresses and the new address
-	unordered_map<const Heliostat*, Heliostat*> hp_map;
+	unordered_map<Heliostat*, Heliostat*> hp_map;
 	for(unsigned int i=0; i<_helio_objects.size(); i++){
-		hp_map[ &sf._helio_objects.at(i) ] = &_helio_objects.at(i);
+		hp_map[ const_cast<Heliostat*>( &sf._helio_objects.at(i) ) ] = &_helio_objects.at(i);
 	}
 
 	//Create a temporary pointer map between the old and new heliostat template objects
-	unordered_map<const Heliostat*,Heliostat*> htemp_ptr_map;
+	unordered_map<Heliostat*,Heliostat*> htemp_ptr_map;
 	for(int i=0; i<(int)_helio_template_objects.size(); i++){	
-		htemp_ptr_map[ &(sf._helio_template_objects.at(i)) ] = &(_helio_template_objects.at(i));
+		htemp_ptr_map[ const_cast<Heliostat*>( &(sf._helio_template_objects.at(i)) ) ] = &(_helio_template_objects.at(i));
 	}
 
 	//Reassign the integer->Heliostat* map
@@ -204,12 +204,12 @@ SolarField::SolarField( const SolarField &sf )
 	_heliostats.resize(npos);
 	for(int i=0; i<npos; i++){
 		_heliostats.at(i) = hp_map[ sf._heliostats.at(i) ];
-		_heliostats.at(i)->setMasterTemplate( htemp_ptr_map.at(_heliostats.at(i)->getMasterTemplate()) );
+		_heliostats.at(i)->setMasterTemplate( htemp_ptr_map[ _heliostats.at(i)->getMasterTemplate()] );
 	}
 	_helio_by_id.clear();
 	for(unsigned int i=0; i<sf._helio_by_id.size(); i++){	//Do a separate loop for ID's since they are not necessarily assigned right away
 		int id = sf._heliostats.at(i)->getId();
-		_helio_by_id[ id ] = hp_map[ sf._helio_by_id.at(id) ];
+		_helio_by_id[ id ] = hp_map[ const_cast<Heliostat*>( const_cast<SolarField*>(&sf)->_helio_by_id[id] ) ];
 	}
 
 	//Heliostat groups
@@ -300,7 +300,7 @@ void SolarField::Create(var_set &V, int var_index){
 	Clean();
 	
 	//Create the flux object
-	if(_flux != nullptr ){ delete _flux; }	//If the flux object already exists, delete and start over
+	if(_flux != 0 ){ delete _flux; }	//If the flux object already exists, delete and start over
 	_flux = new Flux();
 	_flux->Setup();
 	
@@ -664,7 +664,7 @@ bool SolarField::UpdateLayoutGroups(double lims[4]){
 	
 	//mesh separately for each heliostat template
 	int ntemp = (int)_helio_templates.size();
-	vector<vector<opt_element>> all_nodes(ntemp);
+	vector<vector<opt_element> > all_nodes(ntemp);
 	_layout_groups.clear();
 
 	for(htemp_map::iterator it=_helio_templates.begin(); it!=_helio_templates.end(); it++){
@@ -725,7 +725,7 @@ bool SolarField::UpdateLayoutGroups(double lims[4]){
 		for( vector<Heliostat>::iterator hit = _helio_objects.begin(); hit != _helio_objects.end(); hit++){
 			if( hit->getMasterTemplate() != it->second ) continue;
 			Point *loc = hit->getLocation();
-			_optical_mesh.add_object(hit._Ptr, loc->x, loc->y);
+			_optical_mesh.add_object( &(*hit), loc->x, loc->y);
 		}
 
 		//Now add all of the layout groups with heliostats to the main array
@@ -1076,7 +1076,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		//Save the heliostats in an array by ID#
 		helio_by_id->clear();
 		for(int i=0; i<Npos; i++){
-			helio_by_id->insert({heliostats->at(i)->getId(), heliostats->at(i)});
+			(*helio_by_id)[ heliostats->at(i)->getId() ] = heliostats->at(i);
 		}
 	}
 	else if(des_sim_detail != LAYOUT_DETAIL::NO_FILTER){	
@@ -1097,7 +1097,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		}
 		else{
 			//if needed, determine clear sky DNI and replace the weather file DNI
-			if (ambient->getInsolType() != Ambient::CLRSKY_MODEL::WEATHER ){
+			if (ambient->getInsolType() != Ambient::WEATHER ){
 
 				DateTime *dtc = ambient->getDateTimeObj();
 				DateTime dt;
@@ -1542,7 +1542,7 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 			int hid = it->first;
 			double zdat[3];
 			for(int j=0; j<3; j++)
-				zdat[j] = resmap[j]->at(hid).getDataByIndex( rindex );
+				zdat[j] = (*resmap[j])[hid].getDataByIndex( rindex );
 
 			t1.Set( rm_az[1] - rm_az[0], rm_zen[1] - rm_zen[0], zdat[1] - zdat[0]); 
 			t2.Set( rm_az[2] - rm_az[0], rm_zen[2] - rm_zen[0], zdat[2] - zdat[0]);
@@ -2386,7 +2386,7 @@ void SolarField::RefactorHeliostatImages(){
 
 }
 
-bool SolarField::SimulateTime(string &data){
+bool SolarField::SimulateTime(const string &data){
 	/* 
 	Simulate a particular date/time for the current solar field geometry.
 
@@ -3346,7 +3346,12 @@ void SolarField::clouds::Create(var_map &V, double extents[2]){
 	}
 	else{
 		//Single cloud
-		_all_locs.push_back({_cloud_loc_x, _cloud_loc_y, 0.});
+		
+		Point p;
+		p.x = _cloud_loc_x;
+		p.y = _cloud_loc_y;
+		p.z = 0.;
+		_all_locs.push_back(p);
 	}
 
 }
@@ -3397,3 +3402,4 @@ double SolarField::clouds::ShadowLoss(Point &hloc){
 }
 
 bool SolarField::clouds::isCloudy(){return _is_cloudy;}
+

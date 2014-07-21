@@ -1,12 +1,26 @@
 #include "AutoPilot_API.h"
 #include "LayoutSimulateThread.h"
 #include "IOUtil.h"
+
+#ifdef SP_USE_THREADS
 #include <thread>
+#endif
+
+#include <sstream>
+#include <string>
 #include <algorithm>
 
 #include <nlopt.hpp>
 
 using namespace std;
+
+
+template<typename T> std::string to_string( T value )
+{
+	std::ostringstream os;
+	os << value;
+	return os.str();
+}
 
 class response_surface_data
 {
@@ -14,7 +28,7 @@ public:
 	int N_vars;
 	int Order;
 	vector<double> Y;
-	vector<vector<double>> X;
+	vector<vector<double> > X;
 	vector<double> cur_pos;
 	vector<double> Beta;
 	int ncalls;
@@ -151,15 +165,15 @@ AutoPilot::AutoPilot()
 {
 	_has_callback = false;
 	_is_solarfield_external = false;
-	_SF = nullptr;
-	_callback = nullptr;
-	_callback_data = nullptr;
-	_local_siminfo = nullptr;
+	_SF = 0;
+	_callback = 0;
+	_callback_data = 0;
+	_local_siminfo = 0;
 }
 
 AutoPilot::~AutoPilot()
 {
-	if( _SF != nullptr ){
+	if( _SF != 0 ){
 		//quietly try to delete the solar field
 		try{
 			delete _SF;
@@ -167,7 +181,7 @@ AutoPilot::~AutoPilot()
 		catch(...){}
 	}
 
-	if( _local_siminfo != nullptr && _has_callback && !_is_deep_callback)
+	if( _local_siminfo != 0 && _has_callback && !_is_deep_callback)
 	{
 		//quietly try to delete the simulation info object
 		try{
@@ -321,7 +335,7 @@ void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
 	case sp_ambient::ATTEN_MODEL::USER_DEFINED:
 		avals.clear();
 		for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++){
-			avals.append( std::to_string(ambient.user_atten_coefs.at(i)) );
+			avals.append( to_string(ambient.user_atten_coefs.at(i)) );
 			if( i == ambient.user_atten_coefs.size() ) avals.append(",");
 		}
 		
@@ -373,9 +387,9 @@ void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
 		valptr = &_variables["ambient"][0]["user_sun"].value;
 		valptr->clear();
 		for(int i=0; i<(int)ambient.user_sun_data.size(); i++){
-			valptr->append(std::to_string(ambient.user_sun_data.at(i).angle) );
+			valptr->append(to_string(ambient.user_sun_data.at(i).angle) );
 			valptr->append(",");
-			valptr->append(std::to_string(ambient.user_sun_data.at(i).intensity) );
+			valptr->append(to_string(ambient.user_sun_data.at(i).intensity) );
 			valptr->append(";");
 		}
 		break;
@@ -417,10 +431,10 @@ void AutoPilot::update_cost(var_set &vset, sp_cost &cost){
 
 void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 	//set the one-off values
-	vset["solarfield"][0]["q_des"].value = std::to_string(layout.q_design);
-	vset["solarfield"][0]["accept_max"].value = std::to_string(layout.span_cw);
-	vset["solarfield"][0]["accept_min"].value = std::to_string(layout.span_ccw);
-	vset["solarfield"][0]["tht"].value = std::to_string(layout.h_tower);
+	vset["solarfield"][0]["q_des"].value = to_string(layout.q_design);
+	vset["solarfield"][0]["accept_max"].value = to_string(layout.span_cw);
+	vset["solarfield"][0]["accept_min"].value = to_string(layout.span_ccw);
+	vset["solarfield"][0]["tht"].value = to_string(layout.h_tower);
 
 	//Handle land restrictions here
 	switch (layout.land_bound_type)
@@ -452,8 +466,8 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 			incs.append("[POLY]");
 			for( int j = 0; j<layout.landtable.inclusions.at(i).size(); j++){
 				incs.append("[P]" + 
-					std::to_string(layout.landtable.inclusions.at(i).at(j).x) + "," +
-					std::to_string(layout.landtable.inclusions.at(i).at(j).y));
+					to_string(layout.landtable.inclusions.at(i).at(j).x) + "," +
+					to_string(layout.landtable.inclusions.at(i).at(j).y));
 			}
 		}
 		//exclusions
@@ -461,8 +475,8 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 			incs.append("[POLY]");
 			for( int j = 0; j<layout.landtable.exclusions.at(i).size(); j++){
 				incs.append("[P]" + 
-					std::to_string(layout.landtable.exclusions.at(i).at(j).x) + "," +
-					std::to_string(layout.landtable.exclusions.at(i).at(j).y));
+					to_string(layout.landtable.exclusions.at(i).at(j).x) + "," +
+					to_string(layout.landtable.exclusions.at(i).at(j).y));
 			}
 		}
 
@@ -482,21 +496,21 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 		for(vector<sp_layout::h_position>::iterator hpos = layout.heliostat_positions.begin(); 
 			hpos != layout.heliostat_positions.end(); hpos ++){
 					layout_data.append( 
-						std::to_string(hpos->template_number) + "," + 
-						std::to_string(hpos->location.x) + "," +
-						std::to_string(hpos->location.y) + "," +
-						std::to_string(hpos->location.z) + ",");
+						to_string(hpos->template_number) + "," + 
+						to_string(hpos->location.x) + "," +
+						to_string(hpos->location.y) + "," +
+						to_string(hpos->location.z) + ",");
 			//if the user provides optics, use them here. Otherwise set values to null
 			if(hpos->user_optics){
 				layout_data.append(
-					std::to_string(hpos->focal_length) + "," + 
-					std::to_string(hpos->focal_length) + "," + 
-					std::to_string(hpos->cant_vector.i) + "," +
-					std::to_string(hpos->cant_vector.j) + "," +
-					std::to_string(hpos->cant_vector.k) + "," +
-					std::to_string(hpos->aimpoint.x) + "," + 
-					std::to_string(hpos->aimpoint.y) + "," + 
-					std::to_string(hpos->aimpoint.z) );
+					to_string(hpos->focal_length) + "," + 
+					to_string(hpos->focal_length) + "," + 
+					to_string(hpos->cant_vector.i) + "," +
+					to_string(hpos->cant_vector.j) + "," +
+					to_string(hpos->cant_vector.k) + "," +
+					to_string(hpos->aimpoint.x) + "," + 
+					to_string(hpos->aimpoint.y) + "," + 
+					to_string(hpos->aimpoint.z) );
 			}
 			else{
 				layout_data.append("NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL");
@@ -511,42 +525,42 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 	int h=0;
 	for( sp_heliostats::iterator helio = helios.begin(); helio != helios.end(); helio++){
-		_variables["heliostat"][h]["width"].value = std::to_string(helio->width);
-		_variables["heliostat"][h]["height"].value = std::to_string(helio->height);
-		_variables["heliostat"][h]["n_cant_x"].value = std::to_string(helio->npanels_w);
-		_variables["heliostat"][h]["n_cant_y"].value = std::to_string(helio->npanels_h);
+		_variables["heliostat"][h]["width"].value = to_string(helio->width);
+		_variables["heliostat"][h]["height"].value = to_string(helio->height);
+		_variables["heliostat"][h]["n_cant_x"].value = to_string(helio->npanels_w);
+		_variables["heliostat"][h]["n_cant_y"].value = to_string(helio->npanels_h);
 		_variables["heliostat"][h]["err_elevation"].value = "0.";
 		_variables["heliostat"][h]["err_azimuth"].value = "0.";
-		_variables["heliostat"][h]["err_surface_x"].value = std::to_string(helio->optical_error);
-		_variables["heliostat"][h]["err_surface_y"].value = std::to_string(helio->optical_error);
+		_variables["heliostat"][h]["err_surface_x"].value = to_string(helio->optical_error);
+		_variables["heliostat"][h]["err_surface_y"].value = to_string(helio->optical_error);
 		_variables["heliostat"][h]["err_reflect_x"].value = "0.";
 		_variables["heliostat"][h]["err_reflect_y"].value = "0.";
-		_variables["heliostat"][h]["reflectivity"].value = std::to_string(helio->reflectance);
+		_variables["heliostat"][h]["reflectivity"].value = to_string(helio->reflectance);
 		_variables["heliostat"][h]["soiling"].value = "1.";
 
 		//Canting
-		_variables["heliostat"][h]["cant_method"].value = std::to_string(helio->cant_type);
+		_variables["heliostat"][h]["cant_method"].value = to_string(helio->cant_type);
 		switch (helio->focus_type)
 		{
 		case sp_heliostat::CANT_TYPE::FLAT:
 		case sp_heliostat::CANT_TYPE::AT_SLANT:
 			break;
 		case sp_heliostat::CANT_TYPE::AT_DAY_HOUR:
-			_variables["heliostat"][h]["cant_day"].value = std::to_string(helio->cant_settings.point_day);
-			_variables["heliostat"][h]["cant_hour"].value = std::to_string(helio->cant_settings.point_hour);
+			_variables["heliostat"][h]["cant_day"].value = to_string(helio->cant_settings.point_day);
+			_variables["heliostat"][h]["cant_hour"].value = to_string(helio->cant_settings.point_hour);
 			break;
 		case sp_heliostat::CANT_TYPE::USER_VECTOR:
 			_variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
-			_variables["heliostat"][h]["cant_vect_i"].value = std::to_string(helio->cant_settings.point_vector.i);
-			_variables["heliostat"][h]["cant_vect_j"].value = std::to_string(helio->cant_settings.point_vector.j);
-			_variables["heliostat"][h]["cant_vect_k"].value = std::to_string(helio->cant_settings.point_vector.k);
+			_variables["heliostat"][h]["cant_vect_i"].value = to_string(helio->cant_settings.point_vector.i);
+			_variables["heliostat"][h]["cant_vect_j"].value = to_string(helio->cant_settings.point_vector.j);
+			_variables["heliostat"][h]["cant_vect_k"].value = to_string(helio->cant_settings.point_vector.k);
 			break;
 		default:
 			break;
 		}
 
 		//Focusing
-		_variables["heliostat"][h]["focus_method"].value = std::to_string(helio->focus_type);
+		_variables["heliostat"][h]["focus_method"].value = to_string(helio->focus_type);
 		_variables["heliostat"][h]["is_focal_equal"].value = "TRUE";
 		switch (helio->focus_type)
 		{
@@ -555,7 +569,7 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 			_variables["heliostat"][h]["is_yfocus"].value = "FALSE";
 			break;
 		case sp_heliostat::FOCUS_TYPE::USER_DEFINED:
-			_variables["heliostat"][h]["x_focal_length"].value = std::to_string(helio->user_focal_length);
+			_variables["heliostat"][h]["x_focal_length"].value = to_string(helio->user_focal_length);
 			//don't break.. also set the x and y focus bools to true
 		case sp_heliostat::FOCUS_TYPE::AT_SLANT:
 			_variables["heliostat"][h]["is_xfocus"].value = "TRUE";
@@ -572,19 +586,19 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 void AutoPilot::update_receivers(var_set &vset, sp_receivers &recs){
 	int r=0;
 	for(sp_receivers::iterator rec = recs.begin(); rec != recs.end(); rec++){
-		_variables["receiver"][r]["rec_type"].value = std::to_string(rec->type);
+		_variables["receiver"][r]["rec_type"].value = to_string(rec->type);
 
-		_variables["receiver"][r]["rec_offset_x"].value = std::to_string(rec->offset.x);
-		_variables["receiver"][r]["rec_offset_y"].value = std::to_string(rec->offset.y);
-		_variables["receiver"][r]["rec_offset_z"].value = std::to_string(rec->offset.z);
+		_variables["receiver"][r]["rec_offset_x"].value = to_string(rec->offset.x);
+		_variables["receiver"][r]["rec_offset_y"].value = to_string(rec->offset.y);
+		_variables["receiver"][r]["rec_offset_z"].value = to_string(rec->offset.z);
 
-		_variables["receiver"][r]["absorptance"].value = std::to_string( rec->absorptance );
-		_variables["receiver"][r]["therm_loss_base"].value = std::to_string( rec->q_hl_perm2 );
+		_variables["receiver"][r]["absorptance"].value = to_string( rec->absorptance );
+		_variables["receiver"][r]["therm_loss_base"].value = to_string( rec->q_hl_perm2 );
 		
 		double rw = rec->height / rec->aspect;
-		_variables["receiver"][r]["rec_width"].value = std::to_string( rw );
-		_variables["receiver"][r]["rec_aspect"].value = std::to_string( rec->aspect ); 
-		_variables["receiver"][r]["rec_diameter"].value = std::to_string( rw );
+		_variables["receiver"][r]["rec_width"].value = to_string( rw );
+		_variables["receiver"][r]["rec_aspect"].value = to_string( rec->aspect ); 
+		_variables["receiver"][r]["rec_diameter"].value = to_string( rw );
 		
 		r++;
 	}
@@ -678,7 +692,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	//------------ 
 
 	vector<int> uday;
-	vector<vector<double>> utime;
+	vector<vector<double> > utime;
 	Ambient *amb =_SF->getAmbientObject();
 
 	if(! fluxtab.is_user_spacing){
@@ -748,7 +762,7 @@ void AutoPilot::PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int fl
 			int nrecsurf = (int)rec->getFluxSurfaces()->size();
 			for( int isurf=0; isurf<nrecsurf; isurf++){
 				//transfer data from the result flux map to the sp_flux_table data structure
-				fluxmap.flux_surfaces.at(itot).map_name = *rec->getReceiverName() + " surface " + std::to_string(isurf+1);
+				fluxmap.flux_surfaces.at(itot).map_name = *rec->getReceiverName() + " surface " + to_string(isurf+1);
 				FluxSurface *fs = &result.flux_surfaces.at(irec).at(isurf);
 				int 
 					nflux_x = fs->getFluxNX(),
@@ -820,7 +834,7 @@ bool AutoPilot::SimulateFlux(sp_flux_map &fluxmap)
 	return true;
 }
 
-void AutoPilot::GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double>> &sim_points, double tolerance)
+void AutoPilot::GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double> > &sim_points, double tolerance)
 {
 	/* 
 	Take a current point (vector of doubles) that is normalized, and calculate a design of experiments run that 
@@ -832,20 +846,20 @@ void AutoPilot::GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<
 
 	sim_points.clear();
 
-	int nruns = pow(2, nvars);
+	int nruns = pow(2.0, (double)nvars);
 
 	vector<int> divisors;
 	for(int i=0; i<nvars; i++)
-		divisors.push_back( pow(2, i) );
+		divisors.push_back( pow(2.0, (double)i) );
 
-	vector<vector<int>> design;
+	vector<vector<int> > design;
 	design.push_back( vector<int>(nvars, 1) );
 	
 	for(int i=1; i<nruns; i++){
 		vector<int> newline;
 		for(int j=0; j<nvars; j++){
 			//newline.push_back( point.at(j) * (1. + tolerance * (sim_points.at(i-1).at(j) * (fmod( i, divisors.at(j)) == 0 ? -1 : 1) ) ) );
-			newline.push_back( design.at(i-1).at(j) * (int)(fmod(i, divisors.at(j) ) == 0 ? -1 : 1 ) );
+			newline.push_back( design.at(i-1).at(j) * (int)(fmod((double)i, (double)divisors.at(j) ) == 0 ? -1 : 1 ) );
 		}
 		design.push_back(newline);
 	}
@@ -940,18 +954,18 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		bool converged = false;
 	int opt_iter = 0;
 
-	vector<vector<double>> all_sim_points; //keep track of all of the positions simulated
+	vector<vector<double> > all_sim_points; //keep track of all of the positions simulated
 	vector<double> objective;
 	vector<double> max_flux;
 
 	while( ! converged ){
 
 		
-		vector<vector<double>> runs;
+		vector<vector<double> > runs;
 
 
 		//Start iteration by evaluating the current point
-		_local_siminfo->addSimulationNotice("[Iter " + std::to_string(opt_iter+1) + "] Simulating base point");
+		_local_siminfo->addSimulationNotice("[Iter " + to_string(opt_iter+1) + "] Simulating base point");
 		for(int i=0; i<(int)optvars.size(); i++)
 			*optvars.at(i) = current.at(i) * normalizers.at(i);
 		all_sim_points.push_back( current );
@@ -966,7 +980,7 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 
 		//Run the evaluation points
 		_local_siminfo->setTotalSimulationCount((int)runs.size());
-		_local_siminfo->addSimulationNotice("[Iter " + std::to_string(opt_iter+1) + "]" + "Creating local response surface");
+		_local_siminfo->addSimulationNotice("[Iter " + to_string(opt_iter+1) + "]" + "Creating local response surface");
 		for(int i=0; i<(int)runs.size(); i++){
 			_local_siminfo->setCurrentSimulation(i);
 
@@ -1236,7 +1250,7 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	
 	sim_results results;
 	results.resize(neff_tot);
-	string neff_tot_str = std::to_string(neff_tot);
+	string neff_tot_str = to_string(neff_tot);
 	int k=0;
 	for(int j=0; j<neff_zen; j++){
 		for(int i=0; i<neff_az; i++){
@@ -1377,7 +1391,12 @@ bool AutoPilot_S::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout
 
 
 	//----- temp for testing -----
-	vector<double*> optvars = {&layout.h_tower, &recs.front().aspect, &recs.front().height, &layout.land_max};
+	vector<double*> optvars;
+	optvars.push_back( &layout.h_tower );
+	optvars.push_back( &recs.front().aspect );
+	optvars.push_back( &recs.front().height );
+	optvars.push_back( &layout.land_max );
+
 	TestQuadSurface(optvars, obj_metric, flux_max);
 	return true;
 	//------------------------------
@@ -1463,7 +1482,7 @@ bool AutoPilot_S::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout
 
 	
 	//Set the aiming method back to the original value
-	_variables["fluxsim"][0]["aim_method"].value = std::to_string( aim_method_save );
+	_variables["fluxsim"][0]["aim_method"].value = to_string( aim_method_save );
 
 	//Set the flux resolution back to the original values
 	_variables["fluxsim"][0]["x_res"].set( flux_x_save );
@@ -1473,13 +1492,15 @@ bool AutoPilot_S::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout
 
 //---------------- API_MT --------------------------
 
+#ifdef SP_USE_THREADS
+
 AutoPilot_MT::AutoPilot_MT()
 {
 	_in_mt_simulation = false;	//initialize
 	_cancel_simulation = false;
-	_callback = nullptr;
-	_callback_data = nullptr;
-	_local_siminfo = nullptr;
+	_callback = 0;
+	_callback_data = 0;
+	_local_siminfo = 0;
 	//initialize with the maximum number of threads
 	SetMaxThreadCount(3); //999999);
 }
@@ -1516,7 +1537,7 @@ bool AutoPilot_MT::CreateLayout()
 
 				//update progress
 				if(_has_callback)
-					_local_siminfo->addSimulationNotice("Preparing " + std::to_string(_n_threads) + " threads for simulation");
+					_local_siminfo->addSimulationNotice("Preparing " + to_string(_n_threads) + " threads for simulation");
 				
 				
 				//Duplicate SF objects in memory
@@ -1596,7 +1617,7 @@ bool AutoPilot_MT::CreateLayout()
 				}
 				delete [] SFarr;
 				delete [] _simthread;
-				_simthread = nullptr;
+				_simthread = 0;
 
 				//If the simulation was cancelled per the check above, exit out
 				if(cancelled){
@@ -1771,7 +1792,7 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	}
 	delete [] SFarr;
 	delete [] _simthread;
-	_simthread = nullptr;
+	_simthread = 0;
 
 	//If the simulation was cancelled per the check above, exit out
 	if(cancelled){
@@ -1915,7 +1936,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 	}
 	delete [] SFarr;
 	delete [] _simthread;
-	_simthread = nullptr;
+	_simthread = 0;
 
 	//If the simulation was cancelled per the check above, exit out
 	if(cancelled){
@@ -1944,3 +1965,6 @@ void AutoPilot_MT::CancelMTSimulation()
 		}
 	}
 }
+
+#endif // SP_USE_THREADS
+
