@@ -24,9 +24,18 @@
 
 /*************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 nlopt_algorithm nlopt_local_search_alg_deriv = NLOPT_LD_MMA;
 nlopt_algorithm nlopt_local_search_alg_nonderiv = NLOPT_LN_COBYLA;
 int nlopt_local_search_maxeval = -1; /* no maximum by default */
+int nlopt_stochastic_population = 0;
+
+#ifdef __cplusplus
+}
+#endif
 
 void
 NLOPT_STDCALL nlopt_get_local_search_algorithm(nlopt_algorithm *deriv,
@@ -50,7 +59,6 @@ NLOPT_STDCALL nlopt_set_local_search_algorithm(nlopt_algorithm deriv,
 
 /*************************************************************************/
 
-int nlopt_stochastic_population = 0;
 
 int
 NLOPT_STDCALL nlopt_get_stochastic_population(void) { 

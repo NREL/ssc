@@ -15,7 +15,7 @@
 using namespace std;
 
 
-template<typename T> std::string to_string( T value )
+template<typename T> static std::string my_to_string( T value )
 {
 	std::ostringstream os;
 	os << value;
@@ -335,7 +335,7 @@ void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
 	case sp_ambient::ATTEN_MODEL::USER_DEFINED:
 		avals.clear();
 		for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++){
-			avals.append( to_string(ambient.user_atten_coefs.at(i)) );
+			avals.append( my_to_string(ambient.user_atten_coefs.at(i)) );
 			if( i == ambient.user_atten_coefs.size() ) avals.append(",");
 		}
 		
@@ -387,9 +387,9 @@ void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
 		valptr = &_variables["ambient"][0]["user_sun"].value;
 		valptr->clear();
 		for(int i=0; i<(int)ambient.user_sun_data.size(); i++){
-			valptr->append(to_string(ambient.user_sun_data.at(i).angle) );
+			valptr->append(my_to_string(ambient.user_sun_data.at(i).angle) );
 			valptr->append(",");
-			valptr->append(to_string(ambient.user_sun_data.at(i).intensity) );
+			valptr->append(my_to_string(ambient.user_sun_data.at(i).intensity) );
 			valptr->append(";");
 		}
 		break;
@@ -431,10 +431,10 @@ void AutoPilot::update_cost(var_set &vset, sp_cost &cost){
 
 void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 	//set the one-off values
-	vset["solarfield"][0]["q_des"].value = to_string(layout.q_design);
-	vset["solarfield"][0]["accept_max"].value = to_string(layout.span_cw);
-	vset["solarfield"][0]["accept_min"].value = to_string(layout.span_ccw);
-	vset["solarfield"][0]["tht"].value = to_string(layout.h_tower);
+	vset["solarfield"][0]["q_des"].value = my_to_string(layout.q_design);
+	vset["solarfield"][0]["accept_max"].value = my_to_string(layout.span_cw);
+	vset["solarfield"][0]["accept_min"].value = my_to_string(layout.span_ccw);
+	vset["solarfield"][0]["tht"].value = my_to_string(layout.h_tower);
 
 	//Handle land restrictions here
 	switch (layout.land_bound_type)
@@ -466,8 +466,8 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 			incs.append("[POLY]");
 			for( int j = 0; j<layout.landtable.inclusions.at(i).size(); j++){
 				incs.append("[P]" + 
-					to_string(layout.landtable.inclusions.at(i).at(j).x) + "," +
-					to_string(layout.landtable.inclusions.at(i).at(j).y));
+					my_to_string(layout.landtable.inclusions.at(i).at(j).x) + "," +
+					my_to_string(layout.landtable.inclusions.at(i).at(j).y));
 			}
 		}
 		//exclusions
@@ -475,8 +475,8 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 			incs.append("[POLY]");
 			for( int j = 0; j<layout.landtable.exclusions.at(i).size(); j++){
 				incs.append("[P]" + 
-					to_string(layout.landtable.exclusions.at(i).at(j).x) + "," +
-					to_string(layout.landtable.exclusions.at(i).at(j).y));
+					my_to_string(layout.landtable.exclusions.at(i).at(j).x) + "," +
+					my_to_string(layout.landtable.exclusions.at(i).at(j).y));
 			}
 		}
 
@@ -496,21 +496,21 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 		for(vector<sp_layout::h_position>::iterator hpos = layout.heliostat_positions.begin(); 
 			hpos != layout.heliostat_positions.end(); hpos ++){
 					layout_data.append( 
-						to_string(hpos->template_number) + "," + 
-						to_string(hpos->location.x) + "," +
-						to_string(hpos->location.y) + "," +
-						to_string(hpos->location.z) + ",");
+						my_to_string(hpos->template_number) + "," + 
+						my_to_string(hpos->location.x) + "," +
+						my_to_string(hpos->location.y) + "," +
+						my_to_string(hpos->location.z) + ",");
 			//if the user provides optics, use them here. Otherwise set values to null
 			if(hpos->user_optics){
 				layout_data.append(
-					to_string(hpos->focal_length) + "," + 
-					to_string(hpos->focal_length) + "," + 
-					to_string(hpos->cant_vector.i) + "," +
-					to_string(hpos->cant_vector.j) + "," +
-					to_string(hpos->cant_vector.k) + "," +
-					to_string(hpos->aimpoint.x) + "," + 
-					to_string(hpos->aimpoint.y) + "," + 
-					to_string(hpos->aimpoint.z) );
+					my_to_string(hpos->focal_length) + "," + 
+					my_to_string(hpos->focal_length) + "," + 
+					my_to_string(hpos->cant_vector.i) + "," +
+					my_to_string(hpos->cant_vector.j) + "," +
+					my_to_string(hpos->cant_vector.k) + "," +
+					my_to_string(hpos->aimpoint.x) + "," + 
+					my_to_string(hpos->aimpoint.y) + "," + 
+					my_to_string(hpos->aimpoint.z) );
 			}
 			else{
 				layout_data.append("NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL");
@@ -525,42 +525,42 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 	int h=0;
 	for( sp_heliostats::iterator helio = helios.begin(); helio != helios.end(); helio++){
-		_variables["heliostat"][h]["width"].value = to_string(helio->width);
-		_variables["heliostat"][h]["height"].value = to_string(helio->height);
-		_variables["heliostat"][h]["n_cant_x"].value = to_string(helio->npanels_w);
-		_variables["heliostat"][h]["n_cant_y"].value = to_string(helio->npanels_h);
+		_variables["heliostat"][h]["width"].value = my_to_string(helio->width);
+		_variables["heliostat"][h]["height"].value = my_to_string(helio->height);
+		_variables["heliostat"][h]["n_cant_x"].value = my_to_string(helio->npanels_w);
+		_variables["heliostat"][h]["n_cant_y"].value = my_to_string(helio->npanels_h);
 		_variables["heliostat"][h]["err_elevation"].value = "0.";
 		_variables["heliostat"][h]["err_azimuth"].value = "0.";
-		_variables["heliostat"][h]["err_surface_x"].value = to_string(helio->optical_error);
-		_variables["heliostat"][h]["err_surface_y"].value = to_string(helio->optical_error);
+		_variables["heliostat"][h]["err_surface_x"].value = my_to_string(helio->optical_error);
+		_variables["heliostat"][h]["err_surface_y"].value = my_to_string(helio->optical_error);
 		_variables["heliostat"][h]["err_reflect_x"].value = "0.";
 		_variables["heliostat"][h]["err_reflect_y"].value = "0.";
-		_variables["heliostat"][h]["reflectivity"].value = to_string(helio->reflectance);
+		_variables["heliostat"][h]["reflectivity"].value = my_to_string(helio->reflectance);
 		_variables["heliostat"][h]["soiling"].value = "1.";
 
 		//Canting
-		_variables["heliostat"][h]["cant_method"].value = to_string(helio->cant_type);
+		_variables["heliostat"][h]["cant_method"].value = my_to_string(helio->cant_type);
 		switch (helio->focus_type)
 		{
 		case sp_heliostat::CANT_TYPE::FLAT:
 		case sp_heliostat::CANT_TYPE::AT_SLANT:
 			break;
 		case sp_heliostat::CANT_TYPE::AT_DAY_HOUR:
-			_variables["heliostat"][h]["cant_day"].value = to_string(helio->cant_settings.point_day);
-			_variables["heliostat"][h]["cant_hour"].value = to_string(helio->cant_settings.point_hour);
+			_variables["heliostat"][h]["cant_day"].value = my_to_string(helio->cant_settings.point_day);
+			_variables["heliostat"][h]["cant_hour"].value = my_to_string(helio->cant_settings.point_hour);
 			break;
 		case sp_heliostat::CANT_TYPE::USER_VECTOR:
 			_variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
-			_variables["heliostat"][h]["cant_vect_i"].value = to_string(helio->cant_settings.point_vector.i);
-			_variables["heliostat"][h]["cant_vect_j"].value = to_string(helio->cant_settings.point_vector.j);
-			_variables["heliostat"][h]["cant_vect_k"].value = to_string(helio->cant_settings.point_vector.k);
+			_variables["heliostat"][h]["cant_vect_i"].value = my_to_string(helio->cant_settings.point_vector.i);
+			_variables["heliostat"][h]["cant_vect_j"].value = my_to_string(helio->cant_settings.point_vector.j);
+			_variables["heliostat"][h]["cant_vect_k"].value = my_to_string(helio->cant_settings.point_vector.k);
 			break;
 		default:
 			break;
 		}
 
 		//Focusing
-		_variables["heliostat"][h]["focus_method"].value = to_string(helio->focus_type);
+		_variables["heliostat"][h]["focus_method"].value = my_to_string(helio->focus_type);
 		_variables["heliostat"][h]["is_focal_equal"].value = "TRUE";
 		switch (helio->focus_type)
 		{
@@ -569,7 +569,7 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 			_variables["heliostat"][h]["is_yfocus"].value = "FALSE";
 			break;
 		case sp_heliostat::FOCUS_TYPE::USER_DEFINED:
-			_variables["heliostat"][h]["x_focal_length"].value = to_string(helio->user_focal_length);
+			_variables["heliostat"][h]["x_focal_length"].value = my_to_string(helio->user_focal_length);
 			//don't break.. also set the x and y focus bools to true
 		case sp_heliostat::FOCUS_TYPE::AT_SLANT:
 			_variables["heliostat"][h]["is_xfocus"].value = "TRUE";
@@ -586,19 +586,19 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 void AutoPilot::update_receivers(var_set &vset, sp_receivers &recs){
 	int r=0;
 	for(sp_receivers::iterator rec = recs.begin(); rec != recs.end(); rec++){
-		_variables["receiver"][r]["rec_type"].value = to_string(rec->type);
+		_variables["receiver"][r]["rec_type"].value = my_to_string(rec->type);
 
-		_variables["receiver"][r]["rec_offset_x"].value = to_string(rec->offset.x);
-		_variables["receiver"][r]["rec_offset_y"].value = to_string(rec->offset.y);
-		_variables["receiver"][r]["rec_offset_z"].value = to_string(rec->offset.z);
+		_variables["receiver"][r]["rec_offset_x"].value = my_to_string(rec->offset.x);
+		_variables["receiver"][r]["rec_offset_y"].value = my_to_string(rec->offset.y);
+		_variables["receiver"][r]["rec_offset_z"].value = my_to_string(rec->offset.z);
 
-		_variables["receiver"][r]["absorptance"].value = to_string( rec->absorptance );
-		_variables["receiver"][r]["therm_loss_base"].value = to_string( rec->q_hl_perm2 );
+		_variables["receiver"][r]["absorptance"].value = my_to_string( rec->absorptance );
+		_variables["receiver"][r]["therm_loss_base"].value = my_to_string( rec->q_hl_perm2 );
 		
 		double rw = rec->height / rec->aspect;
-		_variables["receiver"][r]["rec_width"].value = to_string( rw );
-		_variables["receiver"][r]["rec_aspect"].value = to_string( rec->aspect ); 
-		_variables["receiver"][r]["rec_diameter"].value = to_string( rw );
+		_variables["receiver"][r]["rec_width"].value = my_to_string( rw );
+		_variables["receiver"][r]["rec_aspect"].value = my_to_string( rec->aspect ); 
+		_variables["receiver"][r]["rec_diameter"].value = my_to_string( rw );
 		
 		r++;
 	}
@@ -762,7 +762,7 @@ void AutoPilot::PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int fl
 			int nrecsurf = (int)rec->getFluxSurfaces()->size();
 			for( int isurf=0; isurf<nrecsurf; isurf++){
 				//transfer data from the result flux map to the sp_flux_table data structure
-				fluxmap.flux_surfaces.at(itot).map_name = *rec->getReceiverName() + " surface " + to_string(isurf+1);
+				fluxmap.flux_surfaces.at(itot).map_name = *rec->getReceiverName() + " surface " + my_to_string(isurf+1);
 				FluxSurface *fs = &result.flux_surfaces.at(irec).at(isurf);
 				int 
 					nflux_x = fs->getFluxNX(),
@@ -965,7 +965,7 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 
 
 		//Start iteration by evaluating the current point
-		_local_siminfo->addSimulationNotice("[Iter " + to_string(opt_iter+1) + "] Simulating base point");
+		_local_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "] Simulating base point");
 		for(int i=0; i<(int)optvars.size(); i++)
 			*optvars.at(i) = current.at(i) * normalizers.at(i);
 		all_sim_points.push_back( current );
@@ -980,7 +980,7 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 
 		//Run the evaluation points
 		_local_siminfo->setTotalSimulationCount((int)runs.size());
-		_local_siminfo->addSimulationNotice("[Iter " + to_string(opt_iter+1) + "]" + "Creating local response surface");
+		_local_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "]" + "Creating local response surface");
 		for(int i=0; i<(int)runs.size(); i++){
 			_local_siminfo->setCurrentSimulation(i);
 
@@ -1250,7 +1250,7 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	
 	sim_results results;
 	results.resize(neff_tot);
-	string neff_tot_str = to_string(neff_tot);
+	string neff_tot_str = my_to_string(neff_tot);
 	int k=0;
 	for(int j=0; j<neff_zen; j++){
 		for(int i=0; i<neff_az; i++){
@@ -1482,7 +1482,7 @@ bool AutoPilot_S::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout
 
 	
 	//Set the aiming method back to the original value
-	_variables["fluxsim"][0]["aim_method"].value = to_string( aim_method_save );
+	_variables["fluxsim"][0]["aim_method"].value = my_to_string( aim_method_save );
 
 	//Set the flux resolution back to the original values
 	_variables["fluxsim"][0]["x_res"].set( flux_x_save );
@@ -1537,7 +1537,7 @@ bool AutoPilot_MT::CreateLayout()
 
 				//update progress
 				if(_has_callback)
-					_local_siminfo->addSimulationNotice("Preparing " + to_string(_n_threads) + " threads for simulation");
+					_local_siminfo->addSimulationNotice("Preparing " + my_to_string(_n_threads) + " threads for simulation");
 				
 				
 				//Duplicate SF objects in memory
