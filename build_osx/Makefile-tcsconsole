@@ -9,7 +9,7 @@ CC = gcc
 CXX = g++
 CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR) -I../tcs -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -D__64BIT__
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = $(WEXLIB) $(LKLIB) shared.a tcs.a `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
+LDFLAGS = $(WEXLIB) $(LKLIB) shared.a nlopt.a solarpilot.a tcs.a `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
 
 OBJECTS  = tcsscript.o \
 	tcsmain.o \

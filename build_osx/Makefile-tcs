@@ -1,10 +1,22 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-CFLAGS = -Wall -g -O3 -I../ -D__64BIT__
+CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt
 CXXFLAGS = $(CFLAGS)
 
 OBJECTS = tcskernel.o \
+	fmin_callbacks.o \
+	fmin.o \
+	direct_steam_receivers.o \
+	CO2_properties.o \
+	co2_compressor_library.o \
+	nlopt_callbacks.o \
+	sco2_rec_util.o \
+	sco2_power_cycle.o \
+	water_properties.o \
+	tc_test_type402.o \
+	sam_sco2_recomp_type424.o \
+	sco2_test_type401.o \
     cavity_calcs.o \
 	atmospheric_aod.o \
 	Heliostat_AzElAod.o \

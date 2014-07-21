@@ -4,13 +4,14 @@ CC = gcc
 CXX = g++
 CFLAGS = -I../shared -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++ shared.a tcs.a
+LDFLAGS = -lm -lstdc++ shared.a nlopt.a solarpilot.a tcs.a
 
 CFLAGS += -D__64BIT__
 TARGET = ssc.dylib
 
 
 OBJECTS = \
+	cmod_belpe.o \
 	cmod_biomass.o \
 	cmod_annualoutput.o \
 	cmod_generic_system.o \

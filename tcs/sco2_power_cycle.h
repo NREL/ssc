@@ -7,6 +7,7 @@
 //#include "co2props.h"
 //#include "co2props_nn.h"
 #include "CO2_properties.h"
+#include <math.h>
 
 class TrackErrors   
 {
