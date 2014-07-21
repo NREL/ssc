@@ -5,7 +5,14 @@
 Forms the base class for the various components of the solar field. 
 These components can use the methods and variable declarations provided here.
 */
+#ifdef _MSC_VER
 #include <unordered_map>
+using std::tr1::unordered_map;
+#else
+#include <tr1/unordered_map>
+using std::tr1::unordered_map;
+#endif
+
 #include <map>
 #include <vector>
 #include <string>
@@ -185,7 +192,7 @@ struct var_data
 //Create a standard variable map type
 typedef unordered_map<string, var_data> var_map;
 //The variable set is an unordered map/map of form [Module type][instance][variable name]
-typedef unordered_map<string, map<int,var_map>> var_set;
+typedef unordered_map<string, map<int,var_map> > var_set;
 
 static var_data *getVarByString(var_set &V, std::string path){
 	vector<string> txt = split(path, ".");
@@ -201,7 +208,7 @@ static var_data *getVarByString(var_set &V, std::string path){
 };
 //----------------
 //The land boundary arrays should be described with sets of polygons for inclusions and exclusions
-typedef vector<vector<Point>> bounds_array;
+typedef vector<vector<Point> > bounds_array;
 
 
 

@@ -10,19 +10,19 @@ class testoptclass
 {
 	int call_count;
 public:
-	testoptclass::testoptclass();
+	testoptclass();
 
 	void reset_counter();
 
-	void random_start(vector<double> &x, vector<vector<double>> &range);
+	void random_start(vector<double> &x, vector<vector<double> > &range);
 
-	double testoptclass::memfunc(unsigned n, const double *x, double *grad, void *my_func_data);
+	double memfunc(unsigned n, const double *x, double *grad, void *my_func_data);
 	
-	double testoptclass::styb_tang_test(unsigned n, const double *x, double *grad, void *data);
+	double styb_tang_test(unsigned n, const double *x, double *grad, void *data);
 
-	double testoptclass::rosenbrock_test(unsigned n, const double *x, double *grad, void *data);
+	double rosenbrock_test(unsigned n, const double *x, double *grad, void *data);
 
-	double testoptclass::matyas_test(unsigned n, const double *x, double *grad, void *data);
+	double matyas_test(unsigned n, const double *x, double *grad, void *data);
 
 	int get_call_count();
 };
@@ -77,7 +77,7 @@ void test_optimization(){
 	opt.set_xtol_abs(.001);
 	
 	std::vector<double> x(ndim);
-	vector<vector<double>> xrange;
+	vector<vector<double> > xrange;
 	for(int i=0; i<ndim; i++){
 		vector<double> trange(2);
 		trange.at(0) = lb.at(i);
@@ -88,7 +88,7 @@ void test_optimization(){
 
 	int nstart = 20;
 
-	vector<vector<double>> xopts;
+	vector<vector<double> > xopts;
 	vector<double> fopts;
 	vector<int> ncalls;
 

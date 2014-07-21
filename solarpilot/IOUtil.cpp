@@ -64,6 +64,8 @@ bool ioutil::remove_file( const char *path )
 	return 0 == ::remove( path );
 }
 
+#ifdef SP_USE_MKDIR
+
 #ifdef _WIN32
 #define make_dir(x) ::_mkdir(x)
 #else
@@ -95,6 +97,7 @@ bool ioutil::mkdir( const char *path, bool make_full )
 	else
 		return 0 == make_dir( path );
 }
+#endif // SP_USE_MKDIR
 
 std::string ioutil::path_only( const std::string &path )
 {
@@ -190,13 +193,12 @@ bool ioutil::read_line( FILE *fp, std::string &buf, int prealloc )
 
 	return !(buf.length() == 0 && c == EOF);
 }
-
 void ioutil::read_file( const string &fname, string &file, string &eol_marker)
 {
 	
 	file.clear();
 	string line;
-	ifstream fin(fname);
+	ifstream fin(fname.c_str());
 	
 	eol_marker = "\n";
 
@@ -583,9 +585,10 @@ void ioutil::parseDefinitionArray(var_set &V, string disabled_mods)
 //	
 //}
 
+
 bool ioutil::saveXMLInputFile(const string &fname, var_set &V, var_set &Defs, parametric &par_data, const string &version){
 
-	ofstream fobj(fname);
+	ofstream fobj(fname.c_str());
 	if(fobj.is_open())
 	{
 
@@ -610,7 +613,7 @@ bool ioutil::saveXMLInputFile(const string &fname, var_set &V, var_set &Defs, pa
 		for(var_set::iterator it0 = V.begin(); it0 != V.end(); it0++){
 			module = it0->first;
 			for(map<int, var_map>::iterator it1 = it0->second.begin(); it1 != it0->second.end(); it1++){
-				inst = std::to_string(it1->first);
+				inst = to_string(it1->first);
 				for(var_map::iterator it2 = it1->second.begin(); it2 != it1->second.end(); it2++){
 					varname = it2->first;
 

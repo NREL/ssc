@@ -11,6 +11,7 @@ TARGET = ssc.dylib
 
 
 OBJECTS = \
+	cmod_biomass.o \
 	cmod_annualoutput.o \
 	cmod_generic_system.o \
 	cmod_wfcheck.o \
@@ -38,6 +39,7 @@ OBJECTS = \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
 	cmod_utilityrate2.o \
+	cmod_utilityrate3.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \

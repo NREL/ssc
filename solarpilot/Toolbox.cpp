@@ -453,7 +453,7 @@ std::vector<std::vector<double>*> *WeatherData::getEntryPointers()
 
 //misc
 double Toolbox::round(double x){
-	return abs(x - ceil(x)) > 0.5 ? floor(x) : ceil(x);
+	return fabs(x - ceil(x)) > 0.5 ? floor(x) : ceil(x);
 }
 
 void Toolbox::writeMatD(string dir, string name, matrix_t<double> &mat, bool clear){
@@ -467,10 +467,10 @@ void Toolbox::writeMatD(string dir, string name, matrix_t<double> &mat, bool cle
 
 
 	if( clear ) {
-		fopen_s(&file, path.c_str(), "w");
+		file = fopen(path.c_str(), "w");
 	}
 	else{
-		fopen_s(&file, path.c_str(), "a");
+		file =	fopen(path.c_str(), "a");
 	}
 
 	int nr = mat.nrows();
@@ -500,10 +500,10 @@ void Toolbox::writeMatD(string dir, string name, block_t<double> &mat, bool clea
 
 
 	if( clear ) {
-		fopen_s(&file, path.c_str(), "w");
+		file =fopen(path.c_str(), "w");
 	}
 	else{
-		fopen_s(&file, path.c_str(), "a");
+		file =fopen(path.c_str(), "a");
 	}
 
 	int nr = mat.nrows();
@@ -689,9 +689,9 @@ int Toolbox::polywind( const vector<Point> &vt, const Point &pt) {
 	//if (pn.k >= pn.j) {which_ign=2;}
 	//if (pn.i >= pn.k) {which_ign=0;}
 	which_ign = 1;
-	if(abs(pn.j) > abs(pn.i)) {which_ign=1;}
-	if(abs(pn.k) > abs(pn.j)) {which_ign=2;}
-	if(abs(pn.i) > abs(pn.k)) {which_ign=0;}
+	if(fabs(pn.j) > fabs(pn.i)) {which_ign=1;}
+	if(fabs(pn.k) > fabs(pn.j)) {which_ign=2;}
+	if(fabs(pn.i) > fabs(pn.k)) {which_ign=0;}
 
 	/* Return the winding number of a polygon (specified by a vector of vertex points vt) 
 	around an arbitrary point pt.*/

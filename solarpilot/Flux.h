@@ -7,7 +7,11 @@
 //#include "Ambient.h"
 //#include "Land.h"
 #include <time.h>
+#ifdef _MSC_VER
 #include <random>
+#else
+#include <tr1/random>
+#endif
 
 using namespace std;
 
@@ -131,7 +135,7 @@ class Flux
 
 	//-------------End DELSOL3 methods--------------------
 
-	void calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh=nullptr);
+	void calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh=0);
 
 	void simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF);
 	void simpleAimPoint(Heliostat &H, SolarField &SF);	//Method for quick calculation of the aim point to maximize intercept

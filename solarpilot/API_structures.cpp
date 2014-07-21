@@ -137,11 +137,17 @@ void sp_layout::LoadDefaults(var_set &V)
 }
 
 void sp_layout::land_table::add_point(double x, double y, polygon &poly){
-	poly.push_back({x,y});
+	coord p;
+	p.x = x;
+	p.y = y;
+	poly.push_back(p);
 }
 
 void sp_layout::land_table::add_point(Point &P, polygon &poly){
-	poly.push_back({P.x, P.y});
+	coord pp;
+	pp.x = P.x;
+	pp.y = P.y;
+	poly.push_back(pp);
 }
 
 // ----------------- cost --------------------

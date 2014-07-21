@@ -75,14 +75,14 @@ Random *Flux::getRandomObject(){return _random; }
 //Constructor 
 Flux::Flux(){ 
 	_random = new Random();
-	_jmin = nullptr;
-	_jmax = nullptr;
+	_jmin = 0;
+	_jmax = 0;
 }; 
 
 Flux::~Flux(){ 
 	delete _random;
-	if( _jmin != nullptr ) delete[] _jmin;
-	if( _jmax != nullptr ) delete[] _jmax;
+	if( _jmin != 0 ) delete[] _jmin;
+	if( _jmax != 0 ) delete[] _jmax;
 		
 };
 	
@@ -2685,7 +2685,7 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
 		}
 	}
 	
-	if(rtoh != nullptr){
+	if(rtoh != 0){
 		rtoh->i = r_to_h.i;
 		rtoh->j = r_to_h.j;
 		rtoh->k = r_to_h.k;

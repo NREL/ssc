@@ -1,6 +1,8 @@
 #include "LayoutSimulateThread.h"
 #include "SolarField.h"
 
+#ifdef SP_USE_THREADS
+
 using namespace std;
 	
 void LayoutSimThread::Setup(SolarField *SF, var_set *vset, sim_results *results, WeatherData *wdata, 
@@ -226,3 +228,4 @@ void LayoutSimThread::StartThread() //Entry()
 };
 
 	
+#endif // SP_USE_THREADS

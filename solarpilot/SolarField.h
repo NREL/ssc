@@ -2,7 +2,6 @@
 #define _SOLARFIELD_H_ 1
 
 #include <vector>
-#include <unordered_map>
 #include <string>
 
 #include "string_util.h"
@@ -306,7 +305,7 @@ public:
 	void Simulate(double args[], int nargs=8, bool is_layout = false);		//Method to simulate the performance of the field
 	bool SimulateTime(int hour, int day_of_month, int month, double *args, int nargs);
 	//void SimulateTime(string data){ string tdat = data; SimulateTime(tdat); };
-	bool SimulateTime(string &data);
+	bool SimulateTime(const string &data);
 	bool SimulateTime(double sun_elevation, double sun_azimuth, double *args, int nargs);
 	static void SimulateHeliostatEfficiency(SolarField *SF, Vect *sunvector, Heliostat *helio, double &dni, double &payfactor, bool is_layout = false);
 	double calcShadowBlock(Heliostat *H, Heliostat *HS, int mode);	//Calculate the shadowing or blocking between two heliostats
