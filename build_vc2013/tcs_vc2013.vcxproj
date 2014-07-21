@@ -164,7 +164,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt\api;$(SolutionDir)\..\tcs\FIT_props</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt;$(SolutionDir)\..\tcs\FIT_props</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -175,7 +175,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt\api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -188,7 +188,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt\api;$(SolutionDir)\..\tcs\FIT_props</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt;$(SolutionDir)\..\tcs\FIT_props</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -205,7 +205,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt\api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

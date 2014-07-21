@@ -347,18 +347,18 @@ double var_data::value_double(){
 }
 
 #include <sstream>
-template<typename T> string to_string(const T &value) {
+template<typename T> static string my_to_string(const T &value) {
 	ostringstream x;
 	x << value;
 	return x.str();
 }
 
 void var_data::set(double val){
-	value = to_string(val);
+	value = my_to_string(val);
 }
 
 void var_data::set(int val){
-	value = to_string(val);
+	value = my_to_string(val);
 }
 
 void var_data::set(bool val){

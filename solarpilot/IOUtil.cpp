@@ -585,6 +585,15 @@ void ioutil::parseDefinitionArray(var_set &V, string disabled_mods)
 //	
 //}
 
+#include <sstream>
+template<typename T> static std::string my_to_string( T value )
+{
+	std::ostringstream os;
+	os << value;
+	return os.str();
+}
+
+
 
 bool ioutil::saveXMLInputFile(const string &fname, var_set &V, var_set &Defs, parametric &par_data, const string &version){
 
@@ -613,7 +622,7 @@ bool ioutil::saveXMLInputFile(const string &fname, var_set &V, var_set &Defs, pa
 		for(var_set::iterator it0 = V.begin(); it0 != V.end(); it0++){
 			module = it0->first;
 			for(map<int, var_map>::iterator it1 = it0->second.begin(); it1 != it0->second.end(); it1++){
-				inst = to_string(it1->first);
+				inst = my_to_string(it1->first);
 				for(var_map::iterator it2 = it1->second.begin(); it2 != it1->second.end(); it2++){
 					varname = it2->first;
 

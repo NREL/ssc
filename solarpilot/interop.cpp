@@ -8,7 +8,7 @@
 #include <sstream>
 
 
-template<typename T> std::string to_string( T value )
+template<typename T> static std::string my_to_string( T value )
 {
 	std::ostringstream os;
 	os << value;
@@ -80,7 +80,7 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		to_double(V["heliostat"][ind]["height"].value, &hm);
 		to_double(V["heliostat"][ind]["width"].value, &wm);
 		double dc = 2. * sqrt( pow(hm/2., 2) + pow(wm/2., 2) );
-		V["heliostat"][ind]["r_collision"].value = to_string( dc);
+		V["heliostat"][ind]["r_collision"].value = my_to_string( dc);
 		
 		//Heliostat cant radius
 		int cant_type = V["heliostat"][ind]["cant_method"].value_int(); 
@@ -98,7 +98,7 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			
 			if(is_scaled){ cant_radius = cant_rad_scaled * tht; }
 			else{ cant_radius = cant_rad_scaled; }
-			V["heliostat"][ind]["cant_radius"].value = to_string( cant_radius );
+			V["heliostat"][ind]["cant_radius"].value = my_to_string( cant_radius );
 		}
 		else if(cant_type == 3){	//Off-axis, day and hour
 			/* Calculate the sun position at this day and hour */
@@ -145,8 +145,8 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			hrs[0] += -12.;
 			hrs[1] += -12.;
 
-			V["heliostat"][ind]["cant_sun_el"].value = to_string( 90. - SP.zenetr);
-			V["heliostat"][ind]["cant_sun_az"].value = to_string( SP.azim );
+			V["heliostat"][ind]["cant_sun_el"].value = my_to_string( 90. - SP.zenetr);
+			V["heliostat"][ind]["cant_sun_az"].value = my_to_string( SP.azim );
 
 		}
 		else if(cant_type == 4){	//User-defined vector
@@ -156,13 +156,13 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			to_double(V["heliostat"][ind]["cant_vect_j"].value, &j);
 			to_double(V["heliostat"][ind]["cant_vect_k"].value, &k);
 			cmag = sqrt( pow(i, 2) + pow(j, 2) + pow(k, 2) );
-			V["heliostat"][ind]["cant_norm_i"].value = to_string( i/cmag );
-			V["heliostat"][ind]["cant_norm_j"].value = to_string( j/cmag );
-			V["heliostat"][ind]["cant_norm_k"].value = to_string( k/cmag );
+			V["heliostat"][ind]["cant_norm_i"].value = my_to_string( i/cmag );
+			V["heliostat"][ind]["cant_norm_j"].value = my_to_string( j/cmag );
+			V["heliostat"][ind]["cant_norm_k"].value = my_to_string( k/cmag );
 			to_double(V["heliostat"][ind]["cant_vect_scale"].value, &scale);
-			V["heliostat"][ind]["cant_mag_i"].value = to_string( i/cmag*scale );
-			V["heliostat"][ind]["cant_mag_j"].value = to_string( j/cmag*scale );
-			V["heliostat"][ind]["cant_mag_k"].value = to_string( k/cmag*scale );
+			V["heliostat"][ind]["cant_mag_i"].value = my_to_string( i/cmag*scale );
+			V["heliostat"][ind]["cant_mag_j"].value = my_to_string( j/cmag*scale );
+			V["heliostat"][ind]["cant_mag_k"].value = my_to_string( k/cmag*scale );
 		}
 
 		//calculate the total error
@@ -175,13 +175,13 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		to_double(V["heliostat"][ind]["err_reflect_y"].value, &err_reflect_y);
 		double err_tot = sqrt( pow(2.*err_elevation, 2) + pow(2.*err_azimuth, 2) + pow(2.*err_surface_x, 2) + 
 			pow(2.*err_surface_y, 2) + pow(err_reflect_x, 2) + pow(err_reflect_y, 2));
-		V["heliostat"][ind]["err_total"].value = to_string( err_tot );
+		V["heliostat"][ind]["err_total"].value = my_to_string( err_tot );
 
 		//Reflectance
 		double ref, soil;
 		to_double(V["heliostat"][ind]["reflectivity"].value, &ref);
 		to_double(V["heliostat"][ind]["soiling"].value, &soil);
-		V["heliostat"][ind]["ref_total"].value = to_string( ref*soil );
+		V["heliostat"][ind]["ref_total"].value = my_to_string( ref*soil );
 
 		//Aperture area
 		bool 
@@ -204,7 +204,7 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			to_double(V["heliostat"][ind]["diameter"].value, &dm);
 			a_tot = Pi * pow(dm/2., 2) * reflect_ratio;
 		}
-		V["heliostat"][ind]["a_total"].value = to_string( a_tot );
+		V["heliostat"][ind]["a_total"].value = my_to_string( a_tot );
 
 	}
 	//--end of all helistat templates----
@@ -238,7 +238,7 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			area = rec_cav_rad * 2.* acos(rec_cav_cdepth/rec_cav_rad) * height;	//area should be scaled according to the arc length of the cavity
 			//check to see if the cavity curvature radius is less than the aperture width. if so, warn the user
 			if(rec_cav_rad*2.<width){
-				it->second["rec_cav_rad"].value = to_string( width/2. );
+				it->second["rec_cav_rad"].value = my_to_string( width/2. );
 			}
 
 
@@ -248,14 +248,14 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			aspect = height/width;
 			area = height*width;
 		}
-		it->second["rec_aspect"].value = to_string(aspect);
-		it->second["absorber_area"].value = to_string(area);
+		it->second["rec_aspect"].value = my_to_string(aspect);
+		it->second["absorber_area"].value = my_to_string(area);
 		rec_area_total += area;	//keep track of the total receiver area for later
 
 		//receiver optical height
 		double zoff;
 		to_double(it->second["rec_offset_z"].value, &zoff);
-		it->second["optical_height"].value = to_string(tht+zoff);
+		it->second["optical_height"].value = my_to_string(tht+zoff);
 
 
 		//Estimated heat loss
@@ -269,10 +269,10 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		for(int i=0; i<nt; i++){ tp += tval.at(i); }
 		
 		double therm_loss_base = it->second["therm_loss_base"].value_double();
-		it->second["therm_loss"].value = to_string(therm_loss_base * area/1.e3 * tp);
+		it->second["therm_loss"].value = my_to_string(therm_loss_base * area/1.e3 * tp);
 
 		//Piping loss
-		it->second["piping_loss"].value = to_string( (it->second["piping_loss_coef"].value_double() * tht + it->second["piping_loss_const"].value_double())/1.e3, "%.3f" );
+		it->second["piping_loss"].value = my_to_string( (it->second["piping_loss_coef"].value_double() * tht + it->second["piping_loss_const"].value_double())/1.e3 );
 		
 
 
@@ -287,13 +287,13 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 	to_double(V["plant"][0]["solar_mult"].value, &sm);
 	to_double(V["plant"][0]["eta_cycle"].value, &eta);
 	double pgr = qdes / sm * eta;
-	V["plant"][0]["power_gross"].value = to_string(pgr);
+	V["plant"][0]["power_gross"].value = my_to_string(pgr);
 
 	//net electric output
 	double fact, pnet;
 	to_double(V["plant"][0]["par_factor"].value, &fact);
 	pnet = pgr * fact;
-	V["plant"][0]["power_net"].value = to_string( pnet );
+	V["plant"][0]["power_net"].value = my_to_string( pnet );
 	
 	//Min and max optimization levels
 	double qmin, qmax;
@@ -301,10 +301,10 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 	to_double(V["solarfield"][0]["q_des_opt_max"].value, &qmax);
 	qmin *= eta/sm;
 	qmax *= eta/sm;
-	V["plant"][0]["power_net_min"].value = to_string(qmin);
-	V["plant"][0]["power_net_max"].value = to_string(qmax);
-	V["plant"][0]["q_sf_des_display"].value = to_string(pgr/eta*sm);
-	V["plant"][0]["q_pb_des_display"].value = to_string(pgr/eta);
+	V["plant"][0]["power_net_min"].value = my_to_string(qmin);
+	V["plant"][0]["power_net_max"].value = my_to_string(qmax);
+	V["plant"][0]["q_sf_des_display"].value = my_to_string(pgr/eta*sm);
+	V["plant"][0]["q_pb_des_display"].value = my_to_string(pgr/eta);
 
 
 	//--------end of plant page-----
@@ -315,25 +315,25 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 	to_double(V["financial"][0]["tower_fixed_cost"].value, &tower_fixed_cost);
 	to_double(V["financial"][0]["tower_exp"].value, &tower_exp);
 	tower_cost = tower_fixed_cost * exp( tht * tower_exp );
-	V["financial"][0]["tower_cost"].value = to_string( tower_cost );
+	V["financial"][0]["tower_cost"].value = my_to_string( tower_cost );
 	
 	double rec_ref_cost, rec_ref_area, rec_cost_exp, rec_cost;
 	to_double(V["financial"][0]["rec_ref_cost"].value, &rec_ref_cost);
 	to_double(V["financial"][0]["rec_ref_area"].value, &rec_ref_area);
 	to_double(V["financial"][0]["rec_cost_exp"].value, &rec_cost_exp);
 	rec_cost = rec_ref_cost * pow( rec_area_total / rec_ref_area, rec_cost_exp );
-	V["financial"][0]["rec_cost"].value = to_string( rec_cost );
+	V["financial"][0]["rec_cost"].value = my_to_string( rec_cost );
 
 	double plant_cost, plant_spec_cost;
 	to_double(V["financial"][0]["plant_spec_cost"].value, &plant_spec_cost);
 	plant_cost = plant_spec_cost * pgr;
-	V["financial"][0]["plant_cost"].value = to_string( plant_cost );
+	V["financial"][0]["plant_cost"].value = my_to_string( plant_cost );
 
 	double tes_cost, hours_tes, tes_spec_cost;
 	to_double(V["financial"][0]["tes_spec_cost"].value, &tes_spec_cost);
 	to_double(V["plant"][0]["hours_tes"].value, &hours_tes);
 	tes_cost = hours_tes * qdes * 1000. * tes_spec_cost;
-	V["financial"][0]["tes_cost"].value = to_string( tes_cost );
+	V["financial"][0]["tes_cost"].value = my_to_string( tes_cost );
 
 
 	//-- flux simulation page --
@@ -346,8 +346,8 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		az *= d2r;
 		to_double(V["fluxsim"][0]["flux_solalr_el_in"].value, &zen); 
 		zen *= d2r;	//convert to radians
-		V["fluxsim"][0]["flux_solar_az"].value = to_string(az);
-		V["fluxsim"][0]["flux_solar_el"].value = to_string(zen);
+		V["fluxsim"][0]["flux_solar_az"].value = my_to_string(az);
+		V["fluxsim"][0]["flux_solar_el"].value = my_to_string(zen);
 	}
 	else{
 		//hour/day are provided, calculate the solar position
@@ -392,8 +392,8 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		az = SP.azim;
 		zen = SP.zenetr;
 
-		V["fluxsim"][0]["flux_solar_az"].value = to_string(az*d2r);
-		V["fluxsim"][0]["flux_solar_el"].value = to_string(Pi/2. - zen*d2r);
+		V["fluxsim"][0]["flux_solar_az"].value = my_to_string(az*d2r);
+		V["fluxsim"][0]["flux_solar_el"].value = my_to_string(Pi/2. - zen*d2r);
 
 	}
 	//-- end flux simulation page --
@@ -1550,7 +1550,7 @@ void parametric::addVar(var_data *var){
 		bool withlow, withhi;
 		interop::parseRange(var->range, imin, imax, withlow, withhi);
 		for(int i=(withlow?imin:imin+1); i<(withhi?imax:imax-1); i++){
-			vback->choices.push_back( to_string(i) );
+			vback->choices.push_back( my_to_string(i) );
 		}
 
 	}

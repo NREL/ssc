@@ -34,10 +34,9 @@ static double randcauchy(const double params[7]) {
 	  t = params[4], band = params[5];
      limit_inf = mi - (band/2);
      limit_sup = mi + (band/2);
-	 double M_PI = 3.1416;
      do {
 	  na_unif = nlopt_urand(0,1); // ran2(0,1);
-	  cauchy_mit = t*tan((na_unif-(1/2))*M_PI) + mi;
+	  cauchy_mit = t*tan((na_unif-(1/2))*3.1416) + mi;
      } while ( (cauchy_mit<limit_inf) || (cauchy_mit>limit_sup) );   
      
      if (cauchy_mit < 0)
