@@ -16,32 +16,34 @@
 
 static var_info _cm_vtab_belpe[] = 
 {	
-/*   VARTYPE			DATATYPE        NAME                LABEL								UNITS		META	GROUP                     REQUIRED_IF	CONSTRAINTS		UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,		"weather_file",		"Weather Data file",				"n/a",		"",		"Load Profile Estimator", "*",			"LOCAL_FILE",	"" },
-	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",		"Load Profile Estimator", "*",			"",				"Time Step" },
-	{ SSC_INPUT,        SSC_NUMBER,		"floor_area",		"Building floor area",				"m2",		"",		"Load Profile Estimator", "*",			"",				"Floor area" },
-	{ SSC_INPUT,        SSC_NUMBER,		"Stories",			"Number of stories",				"#",		"",		"Load Profile Estimator", "*",			"",				"Stories" },
+/*   VARTYPE			DATATYPE        NAME                LABEL								UNITS		META			GROUP                     REQUIRED_IF	CONSTRAINTS		UI_HINTS*/
+	{ SSC_INPUT,        SSC_STRING,		"weather_file",		"Weather Data file",				"n/a",		"",				"Load Profile Estimator", "*",			"LOCAL_FILE",	"" },
+//	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "*",			"",				"Time Step" },
+	{ SSC_INPUT,        SSC_NUMBER,		"floor_area",		"Building floor area",				"m2",		"",				"Load Profile Estimator", "*",			"",				"Floor area" },
+	{ SSC_INPUT,        SSC_NUMBER,		"Stories",			"Number of stories",				"#",		"",				"Load Profile Estimator", "*",			"",				"Stories" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",		"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",		"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"%/hr",		"",		"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",		"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",		"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",		"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"cooling setpoint SetBack",			"degF",		"",		"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"degF",		"",		"Load Profile Estimator", "*",			"LENGTH=24",	"" },
-//	{ SSC_INPUT,		SSC_ARRAY,		"VacationMonths",	"Months in which Vacations Happen",	"months",	"",		"Load Profile Estimator", "*",			"LENGTH=*",		"" },
-//	{ SSC_INPUT,		SSC_ARRAY,		"VAcDays",			"DAys in month for vacation",		"days",		"",		"Load Profile Estimator", "*",			"LENGTH=*",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"Retrofits",		"Energy Retrofitted",				"0/1",		"0=No, 1=Yes",	"Load Profile Estimator", "*",			"",				"" },//energy retrofits
+	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"%/hr",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"cooling setpoint SetBack",			"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"degF",		"",				"Load Profile Estimator", "*",			"LENGTH=24",	"" },
 	
-	{ SSC_INPUT,		SSC_NUMBER,		"en_heat",			"Enable electric heat",				"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_cool",			"Enable electric cool",				"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_fridge",		"Enable electric fridge",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_range",			"Enable electric range",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_dish",			"Enable electric dishwasher",		"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_wash",			"Enable electric washer",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_dry",			"Enable electric dryer",			"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable electric mels",				"0/1",		"",		"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_heat",			"Enable electric heat",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_cool",			"Enable electric cool",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_fridge",		"Enable electric fridge",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_range",			"Enable electric range",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_dish",			"Enable electric dishwasher",		"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_wash",			"Enable electric washer",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_dry",			"Enable electric dryer",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable electric mels",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
+	//ADD HVAC AND NONHVAC LOADS AS OUTPUTS ETC
+	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,		"load",				"Electric Load",					"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 
 
@@ -183,14 +185,15 @@ public:
 		}
 
 		//Timestep is hourly for now.
+		//double tstep = as_double("tstep");
 		double dT = 1;
 
 		// read building parameter inputs
 		double A_Floor = as_double("floor_area");
-		double tstep = as_double("tstep");
 		double Stories = as_double("Stories");
 		double YrBuilt = as_double("YrBuilt");
 		double Occupants = as_double("Occupants");
+		bool EnergyRetrofits = as_boolean("Retrofits"); // 1 = yes, 0 = no. Governs building construction for older bldgs.
 
 		size_t len_Occ_Schedule = 0;
 		ssc_number_t *Occ_Schedule = as_array("Occ_Schedule", &len_Occ_Schedule);
@@ -219,10 +222,9 @@ public:
 		//Possible other input options include color, construction, WWR, bldg L&W, wall
 		//height per floor
 
-		// building parameter assumption- should this be an input??????????????????????????????????????????????????????????????????????????????????????????????????????????????
-		double EnergyRetrofits = 0; // 1 = yes, 0 = no.Governs building construction for older bldgs.
-
 		// allocate output array
+		ssc_number_t *hvac_load = allocate("HVAC_load", 8760);
+		ssc_number_t *non_hvac_load = allocate("non_HVAC_load", 8760);
 		ssc_number_t *load = allocate("load", 8760);
 
 		// If calibrating to util bills need user to be able to enter vacation.
@@ -580,7 +582,8 @@ public:
 		// TMY DEFAULT IS MONDAY!!!!!!!
 		//Sol - Air -- This part is ALL SI -- get effective envelope temperatures for the heat transfer.
 		std::vector<double> Vacay(8761), Hset(8761), Cset(8761);
-		std::vector<double> Tmass(8761), Tair(8761), Tsurf(8761), Heaton(8761);
+		std::vector<double> Tmass(8761), Tair(8761), Tsurf(8761);
+		double Heaton[8761];
 		//All the initial loads - divided into radiatinve & convective
 		
 		std::vector<double> EquipElecHrLoad(8761), EquipRadHrLoad(8761), EquipConvHrLoad(8761), MELSElecHrLoad(8761), MELSRadHrLoad(8761);
@@ -765,6 +768,10 @@ public:
 			double TAnewTop = Tair[i] + dT / Cair*(QInt_Conv[i + 1] + UAInf[i + 1] * T_ambF[i + 1]) + dT*AIntMass*(Tmass[i] + SolMassFrac*(Q_SolWin[i + 1] / AIntMass + QInt_Rad[i + 1] / AIntMass)) / Cair / hsurf / bardub + Aenv*dT / Cair / hsurf / bar*(Tsurf[i] + dT*T_solairF[i + 1] / Cenv / Renv + SolEnvFrac*(Q_SolWin[i + 1] / Aenv + QInt_Rad[i + 1] / Aenv));
 			TAnew[i] = TAnewTop / TAnewBot;
 
+			//Plug loads (non-HVAC)
+			double HourlyNonHVACLoad = (LightElecHrLoad[i] + MELSElecHrLoad[i] + EquipElecHrLoad[i]); //kWh
+			non_hvac_load[i] = (ssc_number_t)HourlyNonHVACLoad * 1000; //Wh
+
 			//Now for the HVAC controls
 			if (Cset[i] <= TAnew[i]) // Cooling temperature requirement met
 			{
@@ -800,22 +807,31 @@ public:
 			TMnew[i] = (Tmass[i] + dT / Cmass*(TAnew[i] / hsurf + SolMassFrac*(Q_SolWin[i] + QInt_Rad[i]) / AIntMass)) / bardub;
 			TSnew[i] = (Tsurf[i] + dT / Cenv*(SolEnvFrac*(Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[i + 1] / Renv + TAnew[i] / hsurf)) / bar;
 
-			//HVAC Loads completed, now need plug loads
+			//HVAC Loads completed
+			hvac_load[i] = QHV2[i]; //Wh
 
-			double HourlyNonHVACLoad = (LightElecHrLoad[i] + MELSElecHrLoad[i] + EquipElecHrLoad[i]); //kWh
-			load[i] = (ssc_number_t)HourlyNonHVACLoad;
+			//Total load for the hour
+			load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
+
 		}
-		/*
+
+		//Must modify the HVAC load for gas heat
+
 		//Aux heating fans(if gas heat)
 		double HrsHeat = sum(Heaton, 8760);
 		double AuxHeatPerHr;
-		if (HrsHeat == 0)
-			AuxHeatPerHr = 0;
-		else
-			AuxHeatPerHr = AuxHeat / HrsHeat; //This is kWh
-		//double Q_NONHVAC = HourlyNonHVACLoad + AuxHeatPerHr.*Heaton; //Hourly	?????????????????????????????????????????????????????????????????????????????????????????????
-		//FANZ = AuxHeatPerHr.*Heaton;			?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-		*/
+		if (HrsHeat != 0)
+		{
+			AuxHeatPerHr = AuxHeat / HrsHeat / 1000; //This is Wh
+			for (i = 0; i < 8760; i++)
+			{
+				if (Heaton[i])
+				{
+					hvac_load[i] += AuxHeatPerHr; //Wh
+					load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
+				}				
+			}
+		}
 	}
 };
 
