@@ -88,16 +88,16 @@ double N_sco2_rec::C_rec_des_props::creep_life(double sigma_MPa, double T_C)
 	{
 	case Haynes_230:	// Data from Haynes
 		
-		double T_start = haynes230_enum_creep_temps(E_haynes230_creep_temps::T_1050F);
-		double T_end = haynes230_enum_creep_temps(E_haynes230_creep_temps::T_1800F);
+		double T_start = haynes230_enum_creep_temps(T_1050F);
+		double T_end = haynes230_enum_creep_temps(T_1800F);
 
 		if( T_F <= T_start )
-			return haynes230_creep_life(E_haynes230_creep_temps::T_1050F, sigma_ksi);
+			return haynes230_creep_life(T_1050F, sigma_ksi);
 		else if( T_F >= T_end )
-			return haynes230_creep_life(E_haynes230_creep_temps::T_1800F, sigma_ksi);
+			return haynes230_creep_life(T_1800F, sigma_ksi);
 		else
 		{
-			for( int temps_int = E_haynes230_creep_temps::T_1050F; temps_int != E_haynes230_creep_temps::T_1800F; temps_int++ )
+			for( int temps_int = T_1050F; temps_int != T_1800F; temps_int++ )
 			{
 				double T_high = haynes230_enum_creep_temps(temps_int + 1);
 				if(T_F < T_high)
@@ -123,23 +123,23 @@ double N_sco2_rec::C_rec_des_props::haynes230_enum_creep_temps(int enum_T_F)
 {
 	switch( enum_T_F )
 	{
-	case E_haynes230_creep_temps::T_1050F:
+	case T_1050F:
 		return 1050.0;
-	case E_haynes230_creep_temps::T_1100F:
+	case T_1100F:
 		return 1100.0;
-	case E_haynes230_creep_temps::T_1200F:
+	case T_1200F:
 		return 1200.0;
-	case E_haynes230_creep_temps::T_1300F:
+	case T_1300F:
 		return 1300.0;
-	case E_haynes230_creep_temps::T_1400F:
+	case T_1400F:
 		return 1400.0;
-	case E_haynes230_creep_temps::T_1500F:
+	case T_1500F:
 		return 1500.0;
-	case E_haynes230_creep_temps::T_1600F:
+	case T_1600F:
 		return 1600.0;
-	case E_haynes230_creep_temps::T_1700F:
+	case T_1700F:
 		return 1700.0;
-	case E_haynes230_creep_temps::T_1800F:
+	case T_1800F:
 		return 1800.0;
 	}
 }
@@ -148,10 +148,10 @@ double N_sco2_rec::C_rec_des_props::haynes230_creep_life(int enum_T_F, double si
 {
 	switch(enum_T_F)
 	{
-	case E_haynes230_creep_temps::T_1050F:
+	case T_1050F:
 		return 1.E8;
 
-	case E_haynes230_creep_temps::T_1100F:
+	case T_1100F:
 		// This is the one call for Haynes creep life that uses MPa units for stress
 		// Equation is from Katcher paper
 		{
@@ -162,31 +162,31 @@ double N_sco2_rec::C_rec_des_props::haynes230_creep_life(int enum_T_F, double si
 			return 1.E8;
 		}
 
-	case E_haynes230_creep_temps::T_1200F:
+	case T_1200F:
 		// Equation taken from curve fit in creep life rupture data charts from Haynes
 		return min(1.E8, pow(10, -7.3368*log10(sigma_ksi) + 14.8349));
 
-	case E_haynes230_creep_temps::T_1300F:
+	case T_1300F:
 		// Equation taken from curve fit in creep life rupture data charts from Haynes
 		return min(1.E8, pow(10, -6.8634*log10(sigma_ksi) + 13.1366));
 
-	case E_haynes230_creep_temps::T_1400F:
+	case T_1400F:
 		// Equation taken from curve fit in creep life rupture data charts from Haynes
 		return min(1.E8, pow(10, -7.6453*log10(sigma_ksi) + 12.9472));
 
-	case E_haynes230_creep_temps::T_1500F:
+	case T_1500F:
 		// Equation taken from curve fit in creep life rupture data charts from Haynes
 		return min(1.E8, pow(10, -7.2307*log10(sigma_ksi) + 11.2307));
 
-	case E_haynes230_creep_temps::T_1600F:
+	case T_1600F:
 		// Equation taken from curve fit in creep life rupture data charts from Haynes
 		return min(1.E8, pow(10, -6.2657*log10(sigma_ksi) + 9.0733));
 
-	case E_haynes230_creep_temps::T_1700F:
+	case T_1700F:
 		// Equation taken from curve fit in creep life rupture data charts from Haynes
 		return min(1.E8, pow(10, -4.5434*log10(sigma_ksi) + 6.5797));
 
-	case E_haynes230_creep_temps::T_1800F:
+	case T_1800F:
 		// Equation taken from curve fit in creep life rupture data charts from Haynes
 		return min(1.E8, pow(10, -3.7908*log10(sigma_ksi) + 4.9022));
 
@@ -200,17 +200,17 @@ double N_sco2_rec::C_rec_des_props::haynes230_enum_cycle_temps(int enum_T_C)
 {
 	switch( enum_T_C )
 	{
-	case E_haynes230_cycle_temps::T_427C:
+	case T_427C:
 		return 427.0;
-	case E_haynes230_cycle_temps::T_538C:
+	case T_538C:
 		return 538.0;
-	case E_haynes230_cycle_temps::T_649C:
+	case T_649C:
 		return 649.0;
-	case E_haynes230_cycle_temps::T_760C:
+	case T_760C:
 		return 760.0;
-	case E_haynes230_cycle_temps::T_871C:
+	case T_871C:
 		return 871.0;
-	case E_haynes230_cycle_temps::T_982C:
+	case T_982C:
 		return 982.0;
 	}
 }
@@ -220,26 +220,26 @@ double N_sco2_rec::C_rec_des_props::cycles_to_failure(double epsilon_equiv, doub
 	switch( m_material )
 	{
 	case Haynes_230:
-		double T_start = haynes230_enum_cycle_temps(E_haynes230_cycle_temps::T_427C);
-		double T_end = haynes230_enum_cycle_temps(E_haynes230_cycle_temps::T_982C);
+		double T_start = haynes230_enum_cycle_temps(T_427C);
+		double T_end = haynes230_enum_cycle_temps(T_982C);
 
 		if( T_C <= T_start )
 		{
-			if( epsilon_equiv < haynes230_eps_min(E_haynes230_cycle_temps::T_427C) )
+			if( epsilon_equiv < haynes230_eps_min(T_427C) )
 				return 100000.0;
 			else
-				return haynes230_cycles_to_failure(E_haynes230_cycle_temps::T_427C, epsilon_equiv);
+				return haynes230_cycles_to_failure(T_427C, epsilon_equiv);
 		}
 		else if( T_C >= T_end )
 		{
-			if( epsilon_equiv < haynes230_eps_min(E_haynes230_cycle_temps::T_982C) )
+			if( epsilon_equiv < haynes230_eps_min(T_982C) )
 				return 100000.0;
 			else
-				return haynes230_cycles_to_failure(E_haynes230_cycle_temps::T_982C, epsilon_equiv);
+				return haynes230_cycles_to_failure(T_982C, epsilon_equiv);
 		}
 		else
 		{
-			for( int temps_int = E_haynes230_cycle_temps::T_427C; temps_int != E_haynes230_cycle_temps::T_982C; temps_int++ )
+			for( int temps_int = T_427C; temps_int != T_982C; temps_int++ )
 			{
 				double T_high = haynes230_enum_cycle_temps(temps_int + 1);
 				if( T_C < T_high )
@@ -260,17 +260,17 @@ double N_sco2_rec::C_rec_des_props::haynes230_eps_min(int enum_T_C)
 {
 	switch( enum_T_C )
 	{
-	case E_haynes230_cycle_temps::T_427C:
+	case T_427C:
 		return 0.55;
-	case E_haynes230_cycle_temps::T_538C:
+	case T_538C:
 		return 0.52;
-	case E_haynes230_cycle_temps::T_649C:
+	case T_649C:
 		return 0.45;
-	case E_haynes230_cycle_temps::T_760C:
+	case T_760C:
 		return 0.38;
-	case E_haynes230_cycle_temps::T_871C:
+	case T_871C:
 		return 0.29;
-	case E_haynes230_cycle_temps::T_982C:
+	case T_982C:
 		return 0.27;
 	default:
 		return -999.9;
@@ -284,37 +284,37 @@ double N_sco2_rec::C_rec_des_props::haynes230_cycles_to_failure(int enum_T_C, do
 
 	switch( enum_T_C )
 	{
-	case E_haynes230_cycle_temps::T_427C:
+	case T_427C:
 		OF_E = 0.2;
 		b    = 0.01;
 		e_f  = 18.0;
 		c    = 0.45;
 		break;
-	case E_haynes230_cycle_temps::T_538C:
+	case T_538C:
 		OF_E = 0.2;
 		b    = 0.0005;
 		e_f  = 45.0;
 		c    = 0.60;
 		break;
-	case E_haynes230_cycle_temps::T_649C:
+	case T_649C:
 		OF_E = 0.2;
 		b    = 0.001;
 		e_f  = 45.0;
 		c    = 0.65;
 		break;
-	case E_haynes230_cycle_temps::T_760C:
+	case T_760C:
 		OF_E = 0.2;
 		b    = 0.02;
 		e_f  = 45.0;
 		c    = 0.70;
 		break;
-	case E_haynes230_cycle_temps::T_871C:
+	case T_871C:
 		OF_E = 0.15;
 		b    = 0.02;
 		e_f  = 12.0;
 		c    = 0.55;
 		break;
-	case E_haynes230_cycle_temps::T_982C:
+	case T_982C:
 		OF_E = 0.22;
 		b    = 0.05;
 		e_f  = 45.0;
@@ -815,12 +815,9 @@ void N_sco2_rec::C_tube_slice::reset_SFs_and_design_targets()
 	m_F_avg = 0.67;		// Page 928: BIPV - safety factor/multiplier for creep stress"
 
 	// Safety factor for equivalent strain
-	// D. C. Smith, “DESIGN AND OPTIMIZATION OF TUBE-TYPE RECEIVER PANELS FOR MOLTEN SALT APPLICATION,” ASME J. Sol. Eng., vol. 2, 1992.
 	m_SF_fatigue = 0.5;	
 	
 	// "Multplier to estimate inelastic strain from elastic calculations"
-	// T. V. Narayanan, M. S. M. Rao, and G. Carli, “Structural Design and Life Assessment of a Molten Salt Solar Receiver,” 
-	// J. Sol. Energy Eng., vol. 107, pp. 258–263, 1985
 	m_F_inelastic = 1.1;	
 
 	m_N_design_cycles = 10000.0;	// [-] Number of design cycles: Kistler
