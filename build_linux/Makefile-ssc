@@ -2,37 +2,29 @@ VPATH=../ssc
 
 CC = gcc
 CXX = g++
-CFLAGS = -fPIC -I../shared -I../tcs -I../ssc -g -D__UNIX__ -fPIC -Wall -O2
+CFLAGS = -I../shared -I../tcs -I../ssc -g -D__UNIX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++ shared.a tcs.a
+LDFLAGS = solarpilot.a tcs.a nlopt.a shared.a -lm -lstdc++
 
-ifeq ($(CFG),)
-CFG=64
-endif
 
-ifeq ($(CFG),64)
 CFLAGS += -D__64BIT__
 TARGET = ssc.so
-else
-CFLAGS += -D__32BIT__ -arch i386
-TARGET = ssc.so
-LDFLAGS += -m32
-endif
+
 
 OBJECTS = \
+	cmod_belpe.o \
+	cmod_biomass.o \
+	cmod_annualoutput.o \
+	cmod_generic_system.o \
 	cmod_wfcheck.o \
 	cmod_pvwattsv5.o \
 	cmod_windfile.o \
 	cmod_pvwattsfunc.o \
 	cmod_wfcsv.o \
-	cmod_test_pvshade.o \
-	cmod_geothermalui.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
 	cmod_windbos.o \
-	cmod_annualoutput.o \
 	cmod_pvwattsfrompoa.o \
-	cmod_test_irr.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
 	cmod_pvsamv1.o \
@@ -49,6 +41,7 @@ OBJECTS = \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
 	cmod_utilityrate2.o \
+	cmod_utilityrate3.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
@@ -57,6 +50,7 @@ OBJECTS = \
 	vartab.o \
 	sscapi.o \
 	common.o \
+	common_financial.o \
 	cmod_tcsdirect_steam.o \
 	cmod_tcsgeneric_solar.o \
 	cmod_tcslinear_fresnel.o \
@@ -65,8 +59,8 @@ OBJECTS = \
 	cmod_tcstrough_physical.o \
 	cmod_tcsdish.o \
 	cmod_tcsiscc.o \
-	cmod_tcsmslf.o \
 	cmod_hcpv.o \
+	cmod_tcsmslf.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)

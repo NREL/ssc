@@ -2,6 +2,7 @@
 #define _OPTICAL_MESH_ 1
 
 #include <vector>
+#include <string>
 using namespace std;
 
 struct LayoutData

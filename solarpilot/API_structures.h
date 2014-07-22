@@ -2,6 +2,8 @@
 #define _API_STRUCTURES_ 1
 #include "mod_base.h"
 #include <vector>
+#include <numeric>
+#include <limits>
 using namespace std;
 
 struct sp_optimize
