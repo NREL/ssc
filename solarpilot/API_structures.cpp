@@ -1,5 +1,6 @@
 #include "API_structures.h"
 //#include <limits>
+#include <stdio.h>
 
 // ----------------- optimize --------------------
 void sp_optimize::LoadDefaults(var_set &V)

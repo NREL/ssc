@@ -1,7 +1,7 @@
 VPATH = ../shared
 CC = gcc
 CXX = g++
-CFLAGS = -fPIC -Wall -g -O3
+CFLAGS = -Wall -g -O3 -D__64BIT__ -fPIC
 CXXFLAGS = $(CFLAGS)
 
 OBJECTS = \

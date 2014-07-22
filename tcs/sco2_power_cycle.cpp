@@ -5,6 +5,7 @@
 #include <algorithm>
 //#include "sam_csp_util.h"
 #include <numeric>
+#include <limits>
 #include "nlopt.hpp"
 #include "nlopt_callbacks.h"
 

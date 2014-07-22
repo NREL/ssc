@@ -1,5 +1,5 @@
 #include "Receiver.h"
-#include "math.h"
+#include <math.h>
 #include "exceptions.hpp"
 #include <vector>
 using namespace std;
@@ -837,7 +837,7 @@ void Receiver::CalculateAbsorberArea(){
 		break;
 	case Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN:
 	case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV:
-		_absorber_area = _h * _d * abs(_span_max - _span_min)/2.;
+		_absorber_area = _h * _d * fabs(_span_max - _span_min)/2.;
 		break;
 	case Receiver::REC_GEOM_TYPE::PLANE_RECT:
 		_absorber_area = _h * _w;
@@ -850,7 +850,7 @@ void Receiver::CalculateAbsorberArea(){
 		break;
 	case Receiver::REC_GEOM_TYPE::POLYGON_OPEN:
 	case Receiver::REC_GEOM_TYPE::POLYGON_CAV:
-		_absorber_area = _h * (double)_n_panels * _d/2.*tan(abs(_span_max - _span_min)/(double)(_n_panels-1));
+		_absorber_area = _h * (double)_n_panels * _d/2.*tan(fabs(_span_max - _span_min)/(double)(_n_panels-1));
 		break;
 	default:
 		break;
@@ -910,7 +910,7 @@ double Receiver::CalculateApparentDiameter(Point &Hloc){
 	{
 		//First determine the azimuthal span between the heliostat location vector and the receiver 
 		//main panel normal vector
-		double alpha = abs(atan2(Hloc.x, Hloc.y) - _rec_az);
+		double alpha = fabs(atan2(Hloc.x, Hloc.y) - _rec_az);
 		//Calculate the difference between the angle and the nearest panel normal
 		double theta_hat = fmod(alpha, 2.*pi/_n_panels);
 		//finally the width is:

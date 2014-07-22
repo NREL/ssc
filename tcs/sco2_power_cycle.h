@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <limits>
 #include "co2_compressor_library.h"
 //#include "co2props.h"
 //#include "co2props_nn.h"

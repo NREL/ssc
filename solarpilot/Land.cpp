@@ -2,6 +2,7 @@
 #include "math.h"
 #include "Toolbox.h"
 #include <vector>
+#include <math.h>
 using namespace std;
 
 //accessors
@@ -116,7 +117,7 @@ void Land::getExtents(double rval[], var_set &V)
 			//For each polygon in the inclusions
 			for(unsigned int j=0; j<inclusions.at(i).size(); j++){
 				rad = sqrt( pow(inclusions.at(i).at(j).x, 2) + pow(inclusions.at(i).at(j).y, 2) );
-				if(abs(rad) > trmax) trmax = rad;
+				if(fabs(rad) > trmax) trmax = rad;
 			}
 		}
 		if(trmax < 0.) trmax = tht*7.5;	//use the default if nothing is set
@@ -147,7 +148,7 @@ void Land::getExtents(double rval[], var_set &V)
 
 				//Find the closest point on the line defined by pt1 and pt0 to 'T'.
 				Toolbox::line_norm_intersect(_inclusions.at(i).at(j), pt1, T, N, rad);
-				if(abs(rad < trmin)) trmin = rad;
+				if(fabs(rad < trmin)) trmin = rad;
 
 			}
 		}
@@ -172,7 +173,7 @@ void Land::getExtents(double rval[], var_set &V)
 				//Find the closest point on the line defined by ex0 and ex1 to 'T'. This point
 				//is 'N' with a distance 'rad' from T.
 				Toolbox::line_norm_intersect(_exclusions.at(i).at(j), ex1, T, N, rad);
-				if(abs(rad) < excheck) excheck = rad;
+				if(fabs(rad) < excheck) excheck = rad;
 			}
 		}
 		if(excheck > trmin && excheck < 9.e9) trmin = excheck;		if(trmin > radmax) trmin = 0.001;	//Use a small number larger than zero if nothing is set
@@ -217,7 +218,7 @@ void Land::getExtents(double rval[], double tht)
 				
 				//Find the maximum radius depending on the inclusions vectors
 				rad = sqrt( pow(_inclusions.at(i).at(j).x, 2) + pow(_inclusions.at(i).at(j).y, 2) );
-				if(abs(rad) > trmax) trmax = rad;
+				if(fabs(rad) > trmax) trmax = rad;
 			}
 		}
 		if(trmax < 0.) trmax = tht*7.5;	//use the default if nothing is set
@@ -247,7 +248,7 @@ void Land::getExtents(double rval[], double tht)
 
 				//Find the closest point on the line defined by pt1 and pt0 to 'T'.
 				Toolbox::line_norm_intersect(_inclusions.at(i).at(j), pt1, T, N, rad);
-				if(abs(rad < trmin)) trmin = rad;
+				if(fabs(rad < trmin)) trmin = rad;
 
 			}
 		}
@@ -272,7 +273,7 @@ void Land::getExtents(double rval[], double tht)
 				//Find the closest point on the line defined by ex0 and ex1 to 'T'. This point
 				//is 'N' with a distance 'rad' from T.
 				Toolbox::line_norm_intersect(_exclusions.at(i).at(j), ex1, T, N, rad);
-				if(abs(rad) < excheck) excheck = rad;
+				if(fabs(rad) < excheck) excheck = rad;
 			}
 		}
 		if(excheck > trmin && excheck < 9.e9) trmin = excheck;
@@ -328,7 +329,7 @@ double Land::calcPolyLandArea(){
 			j = k;
 		}
 	}
-	area = abs(area);
+	area = fabs(area);
 
 	//Now subtract the area of the exclusions
 	double excs = 0.;
@@ -343,7 +344,7 @@ double Land::calcPolyLandArea(){
 			j = k;
 		}
 	}	
-	excs = abs(excs);
+	excs = fabs(excs);
 
 	return area-excs;
 

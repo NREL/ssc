@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <string.h>
 #include "rapidxml.hpp"
 #include "definitions.h"
 
