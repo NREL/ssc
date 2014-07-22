@@ -322,14 +322,14 @@ void mod_base::setWorkingDir(string &dir){_working_dir = dir;}
 //   var data
 //--------------
 
-bool var_data::value_bool(){
+bool spvar::value_bool(){
 	if(dattype == "bool")
 		return lower_case(value) == "true";
 	else
 		return false;
 }
 
-int var_data::value_int(){
+int spvar::value_int(){
 	if(dattype == "int"){
 		int d;
 		to_integer(value, &d);
@@ -338,7 +338,7 @@ int var_data::value_int(){
 	else{ return 0; }
 }
 
-double var_data::value_double(){
+double spvar::value_double(){
 	if(dattype == "double"){
 		double d;
 		to_double(value, &d);
@@ -354,15 +354,15 @@ template<typename T> static string my_to_string(const T &value) {
 	return x.str();
 }
 
-void var_data::set(double val){
+void spvar::set(double val){
 	value = my_to_string(val);
 }
 
-void var_data::set(int val){
+void spvar::set(int val){
 	value = my_to_string(val);
 }
 
-void var_data::set(bool val){
+void spvar::set(bool val){
 	value = val ? "true" : "false";
 }
 

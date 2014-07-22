@@ -122,10 +122,10 @@ public:
 };
 
 
-struct var_data
+struct spvar
 {
 
-	var_data(){};
+	spvar(){};
 	unordered_map<int, string> index_map;	//<selection ID, selection name> | Maps the integer associated with a combo choice to the string name
 	
 	string
@@ -153,9 +153,9 @@ struct var_data
 	
 };
 
-//struct var_map : public unordered_map<string, var_data>
+//struct var_map : public unordered_map<string, spvar>
 //{
-//	var_data& at(const string &key){
+//	spvar& at(const string &key){
 //		iterator _where = this->lower_bound(key);
 //		if(_where == this->end()){
 //			char msg[150];
@@ -166,7 +166,7 @@ struct var_data
 //		return(_where->second);
 //	};
 //
-//	const var_data& at(const string &key) const{
+//	const spvar& at(const string &key) const{
 //		const_iterator _where = this->lower_bound(key);
 //		if(_where == this->end()){
 //			char msg[150];
@@ -176,13 +176,13 @@ struct var_data
 //		return (_where->second);
 //	};
 //
-//	var_data& operator[](const string& key){
+//	spvar& operator[](const string& key){
 //		iterator _where = this->lower_bound(key);
 //		if(_where == this->end())
 //			_where = this->insert(
-//				pair<string, var_data>(
+//				pair<string, spvar>(
 //					key,
-//					var_data() ) ).first;
+//					spvar() ) ).first;
 //		return(_where->second);
 //	};
 //
@@ -190,11 +190,11 @@ struct var_data
 
 
 //Create a standard variable map type
-typedef unordered_map<string, var_data> var_map;
+typedef unordered_map<string, spvar> var_map;
 //The variable set is an unordered map/map of form [Module type][instance][variable name]
 typedef unordered_map<string, map<int,var_map> > var_set;
 
-static var_data *getVarByString(var_set &V, std::string path){
+static spvar *getVarByString(var_set &V, std::string path){
 	vector<string> txt = split(path, ".");
 	string
 		cls = txt.at(0),
