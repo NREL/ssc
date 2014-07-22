@@ -69,7 +69,7 @@ public:
 		return acc;
 	}
 
-	//sums a vector a of length n from starting point m
+	//sums the elements in vector a from position m to position n
 	double sumsub(double *a, int m, int n)
 	{
 		double acc = 0;
@@ -459,7 +459,7 @@ public:
 		//Now the Hourly MELS; these use the January BeOpt and then vary
 		// (imprecisely)by month based on other months' BeOpts.   They do NOT vary
 		//weekday vs.weekend, as per BeOpt.
-		double MELSFrac[24] = { 0.441138, 0.406172, 0.401462, 0.395811, 0.380859, 0.425, 0.491056, 0.521783, 0.441138, 0.375444, 0.384274, 0.384391, 0.377916, 0.390984, 0.4130, 0.435957, 0.515661, 0.626446, 0.680131, 0.702029, 0.726164, 0.709211, 0.613731, 0.533321 };
+		double MELSFrac[24] = { 0.441138, 0.406172, 0.401462, 0.395811, 0.380859, 0.425009, 0.491056, 0.521783, 0.441138, 0.375444, 0.384274, 0.384391, 0.377916, 0.390984, 0.4130, 0.435957, 0.515661, 0.626446, 0.680131, 0.702029, 0.726164, 0.709211, 0.613731, 0.533321 };
 		double MELSMonthly[12] = { 1, 1, .88, .88, .88, .77, .77, .77, .77, .85, .85, 1 };
 		std::vector<double> MELSHourlyJan(24);
 		double MELSHrFrac;
@@ -561,7 +561,7 @@ public:
 			
 		//Aux elec for gas heater(fans, etc)
 		double AuxHeat;
-		if (en_heat == 0) // assume gas heater at this point
+		if (en_heat == 0) // assume gas heater if user says heat is not electric
 		//This is Bldg AM number :
 			AuxHeat = 9.2*GasHeat_capacity; //kWh annual, should divide over running hours in the end
 		else 
@@ -578,6 +578,7 @@ public:
 			SEER = 10;
 		//END COOLING SEER
 		
+		//day of the week: Days 1-7.
 		int D = 1; //somehow I am one day off BEOPT so compensating here(this is days of the week)
 		// TMY DEFAULT IS MONDAY!!!!!!!
 		//Sol - Air -- This part is ALL SI -- get effective envelope temperatures for the heat transfer.
@@ -605,8 +606,8 @@ public:
 			int NextHr = hour[i + 1];
 			
 			//The day of the week (to figure out weekends)
-			if (Hr == 1)
-				D = D + 1;
+			if (Hr == 0) //first hour of a new day
+				D = D + 1; //increment the day of the week
 			if (D > 7)
 				D = 1;
 			int Mon = month[i];
@@ -704,7 +705,7 @@ public:
 				EquipRadHrLoad[i + 1] = SensibleEquipRadorConvVacay[NextHr];
 				EquipConvHrLoad[i + 1] = SensibleEquipRadorConvVacay[NextHr];
 			}
-			else if ((D == 2 && Hr < 24) || (D == 7 && Hr == 24) || D == 1) // weekend!(hour i + 1)
+			else if ((D == 2 && Hr < 23) || (D == 7 && Hr == 23) || D == 1) // weekend!(hour i + 1)
 			{
 				EquipElecHrLoad[i + 1] = TotalPlugHourlyWkend[NextHr];
 				EquipRadHrLoad[i + 1] = SensibleEquipRadorConvWkend[NextHr];   //These are just 50 / 50 rad and conv, but the multipliers are BLDG AM sensible load fractions
@@ -724,9 +725,9 @@ public:
 
 			//And the lighting
 			int ind = 0;
-			if (NextHr > 20 || NextHr<7)
+			if (NextHr > 19 || NextHr<6)
 				ind = 0;
-			else if (NextHr>6 && NextHr < 16)
+			else if (NextHr>5 && NextHr < 15)
 				ind = 1;
 			else ind = 2;
 
