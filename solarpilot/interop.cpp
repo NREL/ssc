@@ -1485,7 +1485,7 @@ void parametric::SetWeatherFileList(ArrayString &list){
 	wf_are_set = true;
 }
 
-void parametric::addVar(var_data *var){
+void parametric::addVar(spvar *var){
 	/* 
 	Add a new variable to the parametric analysis. If the variable already exists, overwrite it.
 	*/

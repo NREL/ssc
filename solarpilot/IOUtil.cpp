@@ -237,7 +237,7 @@ For example:
 
 
 --The data structure returned is a set of maps 'V' where:
-V[<module type, str>][<instance, int>][<variable name, str>] = var_data{name, units, value}
+V[<module type, str>][<instance, int>][<variable name, str>] = spvar{name, units, value}
 
 */
 	//Read in the file to a string
@@ -259,7 +259,7 @@ V[<module type, str>][<instance, int>][<variable name, str>] = var_data{name, un
 	std::vector<std::string> vline, vardef;
 	bool inrec=false;
 	bool multiline = false;
-	//var_data vd; 
+	//spvar vd; 
 
 	for (unsigned int i=0; i<lines.size(); i++){
 		line = lines.at(i);
@@ -374,7 +374,7 @@ void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, pa
 	</data>
 
 	--The data structure returned is a set of maps 'V' where:
-	V[<module type, str>][<instance, int>][<variable name, str>] = var_data{name, units, value}
+	V[<module type, str>][<instance, int>][<variable name, str>] = spvar{name, units, value}
 
 	*/
 	
@@ -497,7 +497,7 @@ void ioutil::parseDefinitionArray(var_set &V, string disabled_mods)
 		if( varmodule == "--end--" ) break;
 
 		var = variable_definition_array[i].name; //Variable name
-		var_data *vdat = &V[varmodule][0][var];
+		spvar *vdat = &V[varmodule][0][var];
 		vdat->varpath = varmodule + ".0." + var;
 
 		//Get the information for this variable
@@ -555,7 +555,7 @@ void ioutil::parseDefinitionArray(var_set &V, string disabled_mods)
 //		line = split(lines.at(i), "\t", true);
 //		varmodule = line.at(VMAP::VDOMAIN);	//Variable grouping (solarfield, heliostat...)
 //		var = line.at(VMAP::STRING_NAME);	//Variable name
-//		var_data *vdat = &V[varmodule][0][var];
+//		spvar *vdat = &V[varmodule][0][var];
 //		vdat->varpath = varmodule + ".0." + var;
 //
 //		//Get the information for this variable

@@ -88,7 +88,7 @@ class parametric
 	//wxArrayStr _weather_files;
 public:
 	parametric();
-	void addVar(var_data *var);	//Add a variable by reference to its variable map object
+	void addVar(spvar *var);	//Add a variable by reference to its variable map object
 	int size();
 	void clear();
 	void SetWeatherFileList(ArrayString &list);

@@ -63,6 +63,7 @@ extern module_entry_info
 	cm_entry_wfcheck,
 	cm_entry_windbos,
 	cm_entry_biomass,
+	cm_entry_solarpilot,
 	cm_entry_belpe;
 
 /* official module table */
@@ -109,6 +110,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_wfcheck,
 	&cm_entry_windbos,
 	&cm_entry_biomass,
+	&cm_entry_solarpilot,
 	&cm_entry_belpe,
 	0 };
 
