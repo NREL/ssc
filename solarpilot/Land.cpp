@@ -148,7 +148,7 @@ void Land::getExtents(double rval[], var_set &V)
 
 				//Find the closest point on the line defined by pt1 and pt0 to 'T'.
 				Toolbox::line_norm_intersect(_inclusions.at(i).at(j), pt1, T, N, rad);
-				if(fabs(rad < trmin)) trmin = rad;
+				if(fabs(rad) < trmin) trmin = rad;
 
 			}
 		}
@@ -248,7 +248,7 @@ void Land::getExtents(double rval[], double tht)
 
 				//Find the closest point on the line defined by pt1 and pt0 to 'T'.
 				Toolbox::line_norm_intersect(_inclusions.at(i).at(j), pt1, T, N, rad);
-				if(fabs(rad < trmin)) trmin = rad;
+				if(fabs(rad) < trmin) trmin = rad;
 
 			}
 		}
