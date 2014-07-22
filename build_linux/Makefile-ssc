@@ -2,7 +2,7 @@ VPATH=../ssc
 
 CC = gcc
 CXX = g++
-CFLAGS = -I../shared -I../tcs -I../ssc -g -D__UNIX__ -fPIC -Wall -O3
+CFLAGS = -I../shared -I../nlopt -I../solarpilot -I../tcs -I../ssc -g -D__UNIX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = solarpilot.a tcs.a nlopt.a shared.a -lm -lstdc++
 
@@ -12,6 +12,7 @@ TARGET = ssc.so
 
 
 OBJECTS = \
+	cmod_solarpilot.o \
 	cmod_belpe.o \
 	cmod_biomass.o \
 	cmod_annualoutput.o \
