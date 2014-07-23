@@ -1,4 +1,6 @@
 #include "core.h"
+#include "lib_weatherfile.h"
+#include "lib_util.h"
 
 // solarpilot header files
 #include "AutoPilot_API.h"
@@ -20,9 +22,6 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "flux_max",                  "Maximum flux",                               "kW/m2",  "",         "SolarPILOT",   "*",                "",                "" },
 	*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "site_latitude",             "Latitude",                                   "deg",    "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "site_longitude",            "Longitude",                                  "deg",    "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "site_time_zone",            "Time zone",                                  "hours",  "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",       "Solar weather data file",                    "",       "",         "SolarPILOT",   "*",                "LOCAL_FILE",      "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "width",                     "Heliostat width",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -58,6 +57,12 @@ static var_info _cm_vtab_solarpilot[] = {
 	var_info_invalid };
 
 static void solarpilot_callback( simulation_info *siminfo, void *data );
+
+#ifdef _MSC_VER
+#define mysnprintf _snprintf
+#else
+#define mysnprintf snprintf
+#endif
 
 class cm_solarpilot : public compute_module
 {
@@ -112,9 +117,6 @@ public:
 		opt.flux_max = as_double("flux_max");
 		*/
 
-		amb.site_latitude = as_double("site_latitude");
-		amb.site_longitude = as_double("site_longitude");
-		amb.site_time_zone = as_double("site_time_zone");
 
 		helios.front().width = as_double("width");
 		helios.front().height = as_double("height");
@@ -146,15 +148,34 @@ public:
 		
 	
 		//set up the weather data for simulation
-		const char *wf = as_string("solar_resource_file" );
-		if ( !wf ) throw exec_error( "solarpilot", "no weather file specified" );
-		vector<string> wdata;
-		wdata.push_back( std::string(wf) );
-	
-		sapi.GenerateDesignPointSimulations( amb, V, wdata );
-	
+		const char *wffile = as_string("solar_resource_file" );
+		if ( !wffile ) throw exec_error( "solarpilot", "no weather file specified" );
+		weatherfile wf( wffile );
+		if ( !wf.ok() || wf.type() == weatherfile::INVALID ) throw exec_error("solarpilot", "could not open weather file or invalid weather file format");
+
+		
+		amb.site_latitude = wf.lat;
+		amb.site_longitude = wf.lon;
+		amb.site_time_zone = wf.tz;
+
+		vector<string> wfdata;
+		wfdata.reserve( 8760 );
+		char buf[1024];
+		for( int i=0;i<8760;i++ )
+		{
+			if( !wf.read() )
+				throw exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
+
+			mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
+			wfdata.push_back( std::string(buf) );
+		}
+
 		sapi.SetCallback( solarpilot_callback, (void*)this, false);
+			
+		sapi.GenerateDesignPointSimulations( amb, V, wfdata );
+	
 		sapi.Setup(amb, cost, layout, helios, recs);
+
 		sapi.CreateLayout();
 
 		//	sapi.Optimize(opt, recs, layout);
