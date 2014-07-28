@@ -481,6 +481,10 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 	poa[1] = isohor+cir;
 	poa[2] = (hb+df)*alb*(1.0-cos(tilt))/2.0;
 
+	//prevent from returning negative poa values, added by jmf 7/28/14
+	if (poa[0] < 0) poa[0] = 0;
+	if (poa[1] < 0) poa[1] = 0;
+	if (poa[2] < 0) poa[2] = 0;
 	
 	if (diffc != 0)
 	{
@@ -519,6 +523,11 @@ void isotropic( double hextra, double dn, double df, double alb, double inc, dou
 	poa[0] = dn*cos(inc);
 	poa[1] = df*(1.0+cos(tilt))/2.0;
 	poa[2] = (dn*cos(zen)+df)*alb*(1.0-cos(tilt))/2.0;
+
+	//prevent from returning negative poa values, added by jmf 7/28/14
+	if (poa[0] < 0) poa[0] = 0;
+	if (poa[1] < 0) poa[1] = 0;
+	if (poa[2] < 0) poa[2] = 0;
 
 	if (diffc != 0)
 	{
