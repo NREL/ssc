@@ -85,9 +85,9 @@ public:
 		{
 			monthly[i] = 0;
 			for (int d=0;d<util::nday[i];d++) // for each day in each month
-				for (int h=0;h<24;h++) // for each hour in each day
+				for (int h = 0; h < 24; h++) // for each hour in each day
 					monthly[i] += hourly[c++];
-			monthly[i] /= util::nday[i]; //divide the monthly sum by the number of days in the month for an average
+			monthly[i] /= (util::nday[i]*24); //divide the monthly sum by the number of hours in the month for an average temp
 		}			
 	}
 
@@ -137,18 +137,22 @@ public:
 			double beam, sky, gnd;
 			//North wall
 			irr.set_surface(0, 90, 0, 0, 0, 0);
+			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallN[i] = beam + sky + gnd;
 			//East wall
 			irr.set_surface(0, 90, 90, 0, 0, 0);
+			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallE[i] = beam + sky + gnd;
 			//South wall
 			irr.set_surface(0, 90, 180, 0, 0, 0);
+			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallS[i] = beam + sky + gnd;
 			//West wall
 			irr.set_surface(0, 90, 270, 0, 0, 0);
+			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallW[i] = beam + sky + gnd;
 			
@@ -607,9 +611,11 @@ public:
 			
 			//The day of the week (to figure out weekends)
 			if (Hr == 0) //first hour of a new day
+			{
 				D = D + 1; //increment the day of the week
-			if (D > 7)
-				D = 1;
+				if (D > 7)
+					D = 1;
+			}	
 			int Mon = month[i];
 			int Dy = day[i];
 			int NextMon = month[i + 1];
@@ -618,7 +624,7 @@ public:
 			//Are we on vacation ?
 			for (int v = 0; v < N_vacation; v++)
 			{
-				if (Mon == (VacationMonths[v]-1) && Dy == (VacationDays[v]-1)) //need to subtract 1 from VacationMonths and VacationDays because Mon and Dy are 0 subscripted (Jan is Mon[0])
+				if (Mon == (VacationMonths[v]-1) && Dy == (VacationDays[v]-1)) //need to subtract 1 from VacationMonths and VacationDays because Mon and Dy are 0 subscripted (Jan=0)
 					Vacay[i] = 1;
 
 				if (NextMon == (VacationMonths[v]-1) && NextDay == (VacationDays[v]-1))
@@ -655,15 +661,14 @@ public:
 				LightConvHrLoad[i] = LightElecHrLoad[i] * 0.3;
 				PPLRadHrLoad[i] = PPL_rad[Hr];
 				PPLConvHrLoad[i] = PPL_conv[Hr];
-			}
-
-			if (Vacay[i] == 1) // Less loads if on vacation
-			{
-				EquipElecHrLoad[i] = TotalPlugHourlyVacay[Hr];
-				EquipRadHrLoad[i] = SensibleEquipRadorConvVacay[Hr];
-				EquipConvHrLoad[i] = EquipRadHrLoad[i];
-				PPLRadHrLoad[i] = 0;
-				PPLConvHrLoad[i] = 0;
+				if (Vacay[i] == 1) // Less loads if on vacation
+				{
+					EquipElecHrLoad[i] = TotalPlugHourlyVacay[Hr];
+					EquipRadHrLoad[i] = SensibleEquipRadorConvVacay[Hr];
+					EquipConvHrLoad[i] = EquipRadHrLoad[i];
+					PPLRadHrLoad[i] = 0;
+					PPLConvHrLoad[i] = 0;
+				}
 			}
 
 			if (i == 8760) // assign vals for hour "8761" which is just part of the euler forward calculation
@@ -679,18 +684,20 @@ public:
 				LightConvHrLoad[i + 1] = LightElecHrLoad[1] * 0.3;
 				PPLRadHrLoad[i + 1] = PPL_rad[1];
 				PPLConvHrLoad[i + 1] = PPL_conv[1];
+				// assign i+1 values for hour 8760 if Jan 1 is a vacation day
+				for (int v = 0; v < N_vacation; v++)
+				{
+					if (VacationMonths[v] == 1 && VacationDays[v] == 1)
+					{
+						EquipElecHrLoad[i + 1] = TotalPlugHourlyVacay[1];
+						EquipRadHrLoad[i + 1] = SensibleEquipRadorConvVacay[1];
+						PPLRadHrLoad[i + 1] = 0;
+						PPLConvHrLoad[i + 1] = 0;
+					}
+				}
 			}
-
-			for (int v = 0; v < N_vacation; v++)
-			{
-				if (VacationMonths[v] == 1 && VacationDays[v] == 1)
-					EquipElecHrLoad[i + 1] = TotalPlugHourlyVacay[1];
-				EquipRadHrLoad[i + 1] = SensibleEquipRadorConvVacay[1];
-				PPLRadHrLoad[i + 1] = 0;
-				PPLConvHrLoad[i + 1] = 0;
-			}
-
-			if (i > 1) // These are the new values for each temperature, which were determined previous timestep
+			
+			if (i > 0) // These are the new values for each temperature, which were determined previous timestep
 			{
 				Tair[i] = TAnew[i - 1];
 				Tsurf[i] = TSnew[i - 1];
@@ -774,7 +781,13 @@ public:
 			non_hvac_load[i] = (ssc_number_t)HourlyNonHVACLoad * 1000; //Wh
 
 			//Now for the HVAC controls
-			if (Cset[i] <= TAnew[i]) // Cooling temperature requirement met
+			if (Cset[i] >= TAnew[i] && Hset[i] <= TAnew[i]) // Temperature is ok, no HVAC
+			{
+				Heaton[i] = 0;
+				QN[i + 1] = 0;
+				QHV2[i + 1] = 0;
+			}				
+			else if (Cset[i] <= TAnew[i]) // Cooling temperature requirement met
 			{
 				if (ClEn[Mon] == 0) // This is if not in cooling season!
 				{
@@ -807,6 +820,17 @@ public:
 			}
 			TMnew[i] = (Tmass[i] + dT / Cmass*(TAnew[i] / hsurf + SolMassFrac*(Q_SolWin[i] + QInt_Rad[i]) / AIntMass)) / bardub;
 			TSnew[i] = (Tsurf[i] + dT / Cenv*(SolEnvFrac*(Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[i + 1] / Renv + TAnew[i] / hsurf)) / bar;
+			//debugging
+			double TairD = Tair[i]; //DEBUGGING
+			double TAnewP;
+			if(i>0) TAnewP = TAnew[i - 1];
+			double TAnewN = TAnew[i + 1];
+			double QSolWin = Q_SolWin[i];
+			double CFMD = CFM[i];
+			double LightElecHrLoadD = LightElecHrLoad[i];
+			double EquipElecHrLoadD = EquipElecHrLoad[i];
+			double MELSD = MELSElecHrLoad[i];
+			double hourlynonhvac = non_hvac_load[i];
 
 			//HVAC Loads completed
 			hvac_load[i] = QHV2[i]; //Wh
