@@ -5,11 +5,8 @@
 static var_info _cm_vtab_tcsmolten_salt[] = {
 
 //    VARTYPE           DATATYPE          NAME                   LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
-    { SSC_INPUT,        SSC_STRING,      "file_name",            "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
-    { SSC_INPUT,        SSC_NUMBER,      "track_mode",           "Tracking mode",                                                     "",             "",            "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",                 "Tilt angle of surface/axis",                                        "",             "",            "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth",              "Azimuth angle of surface/axis",                                     "",             "",            "Weather",        "*",                       "",                      "" },
-															     																	  
+    { SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
+    														     																	  
     // TOU													     																	  
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",     "12x24 Time of Use Values for week days",                            "",             "",            "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",     "12x24 Time of Use Values for week end days",                        "",             "",            "tou_translator", "*",                       "",                      "" }, 
@@ -64,7 +61,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_dp",                 "Ambient dew point temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn",                 "Direct (beam) normal radiation",                                    "W/m^2-K",      "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "field_eff",            "Heliostat field efficiency",                                        "",             "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_db",                 "Ambient dry bulb temperature",                                      "C",            "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_db",                 "Ambient dry bulb temperature",                                      "C",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "night_recirc",         "Flag to indicate night recirculation through the rec.",             "",             "",            "receiver",       "*",                       "INTEGER",               "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "hel_stow_deploy",      "Heliostat field stow/deploy solar angle",                           "deg",          "",            "receiver",       "*",                       "",                      "" },
 															     																	  
@@ -328,13 +325,56 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		
 		//Add weather file reader unit
 		int weather = 0;
-		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
-		else weather = add_unit("weatherreader", "TCS weather reader");
+		double avg_temp=0, avg_wind_v=0;
 
-		// Add units
+#ifdef DEBUG_WITH_TRNSYS_READER
+		weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
+		set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out" );
+		set_unit_value( weather, "i_hour", "TIME" );
+		set_unit_value( weather, "i_month", "month" );
+		set_unit_value( weather, "i_day", "day" );
+		set_unit_value( weather, "i_global", "GlobalHorizontal" );
+		set_unit_value( weather, "i_beam", "DNI" );
+		set_unit_value( weather, "i_diff", "DiffuseHorizontal" );
+		set_unit_value( weather, "i_tdry", "T_dry" );
+		set_unit_value( weather, "i_twet", "T_wet" );
+		set_unit_value( weather, "i_tdew", "T_dew" );
+		set_unit_value( weather, "i_wspd", "WindSpeed" );
+		set_unit_value( weather, "i_wdir", "WindDir" );
+		set_unit_value( weather, "i_rhum", "RelHum" );
+		set_unit_value( weather, "i_pres", "AtmPres" );
+		set_unit_value( weather, "i_snow", "SnowCover" );
+		set_unit_value( weather, "i_albedo", "GroundAlbedo" );
+		set_unit_value( weather, "i_poa", "POA" );
+		set_unit_value( weather, "i_solazi", "Azimuth" );
+		set_unit_value( weather, "i_solzen", "Zenith" );
+		set_unit_value( weather, "i_lat", "Latitude" );
+		set_unit_value( weather, "i_lon", "Longitude" );
+		set_unit_value( weather, "i_shift", "Shift" );
+
+		//avg_temp = ( as_integer("receiver_type") == 0 ) ? 10.3 : 15;
+		//avg_wind_v = 0;
+#else
+		weather = add_unit("weatherreader", "TCS weather reader");
+
+		//Set weatherreader parameters
+		set_unit_value( weather, "file_name", as_string("solar_resource_file") );
+		set_unit_value( weather, "track_mode", 0.0 );
+		set_unit_value( weather, "tilt", 0.0 );
+		set_unit_value( weather, "azimuth", 0.0 );
+
+		//avg_temp = as_double("T_db");
+		//avg_wind_v = as_double("V_wind_10");
+#endif
+
+		// need to check on what to do with these values
+		avg_temp = ( as_integer("receiver_type") == 0 ) ? 10.3 : 15;
+		avg_wind_v = 0;
+
+		// add other units		
 		int	tou = add_unit("tou_translator", "Time of Use Translator");
 		int type221_hel_field = add_unit("sam_mw_pt_type221");
 		int type222_receiver = 0, type232_cav_rec = 0;
@@ -346,47 +386,6 @@ public:
 		int type224_powerblock = add_unit("sam_mw_pt_type224");
 		int type228_parasitics = add_unit("sam_mw_pt_type228");
 
-		double avg_temp=0, avg_wind_v=0;
-
-		if(debug_mode)
-		{
-			set_unit_value( weather, "file_name", "C:/svn_NREL/main/ssc/tcsdata/typelib/TRNSYS_weather_outputs/daggett_trnsys_weather.out" );
-			set_unit_value( weather, "i_hour", "TIME" );
-			set_unit_value( weather, "i_month", "month" );
-			set_unit_value( weather, "i_day", "day" );
-			set_unit_value( weather, "i_global", "GlobalHorizontal" );
-			set_unit_value( weather, "i_beam", "DNI" );
-			set_unit_value( weather, "i_diff", "DiffuseHorizontal" );
-			set_unit_value( weather, "i_tdry", "T_dry" );
-			set_unit_value( weather, "i_twet", "T_wet" );
-			set_unit_value( weather, "i_tdew", "T_dew" );
-			set_unit_value( weather, "i_wspd", "WindSpeed" );
-			set_unit_value( weather, "i_wdir", "WindDir" );
-			set_unit_value( weather, "i_rhum", "RelHum" );
-			set_unit_value( weather, "i_pres", "AtmPres" );
-			set_unit_value( weather, "i_snow", "SnowCover" );
-			set_unit_value( weather, "i_albedo", "GroundAlbedo" );
-			set_unit_value( weather, "i_poa", "POA" );
-			set_unit_value( weather, "i_solazi", "Azimuth" );
-			set_unit_value( weather, "i_solzen", "Zenith" );
-			set_unit_value( weather, "i_lat", "Latitude" );
-			set_unit_value( weather, "i_lon", "Longitude" );
-			set_unit_value( weather, "i_shift", "Shift" );
-
-			avg_temp = ( as_integer("receiver_type") == 0 ) ? 10.3 : 15;
-			avg_wind_v = 0;
-		}
-		else
-		{
-			//Set weatherreader parameters
-			set_unit_value_ssc_string( weather, "file_name" );
-			set_unit_value_ssc_double( weather, "track_mode" );
-			set_unit_value_ssc_double( weather, "tilt" );
-			set_unit_value_ssc_double( weather, "azimuth" );
-
-			avg_temp = as_double("T_db");
-			avg_wind_v = as_double("V_wind_10");
-		}
 
 		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
 		set_unit_value_ssc_matrix(tou, "weekend_schedule");
@@ -710,4 +709,4 @@ public:
 
 };
 
-DEFINE_TCS_MODULE_ENTRY( tcsmolten_salt, "CSP model using the motlen salt power tower TCS types.", 4 )
+DEFINE_TCS_MODULE_ENTRY( tcsmolten_salt, "CSP model using the molten salt power tower TCS types.", 4 )
