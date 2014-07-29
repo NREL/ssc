@@ -170,8 +170,8 @@ public:
 			wfdata.push_back( std::string(buf) );
 		}
 
-		sapi.SetCallback( solarpilot_callback, (void*)this, false);
-			
+		sapi.SetCallback( solarpilot_callback, (void*)this, true);
+		
 		sapi.GenerateDesignPointSimulations( amb, V, wfdata );
 	
 		sapi.Setup(amb, cost, layout, helios, recs);
@@ -182,7 +182,7 @@ public:
 	
 		sp_optical_table opttab;
 		sp_flux_table fluxtab;
-	
+		
 		sapi.CalculateOpticalEfficiencyTable(opttab);
 
 		if ( opttab.zeniths.size() > 0 && opttab.azimuths.size() > 0
@@ -216,9 +216,9 @@ static void solarpilot_callback( simulation_info *siminfo, void *data )
 {
 	cm_solarpilot *cm = static_cast<cm_solarpilot*>( data );
 	if ( !cm ) return;
-
+	float simprogress = (float)siminfo->getCurrentSimulation()/(float)(max(siminfo->getTotalSimulationCount(),1));
 	cm->update( *siminfo->getSimulationNotices(),
-		(float)siminfo->getSimulationProgress()*100.0f );
+		simprogress*100.0f );
 
 }
 
