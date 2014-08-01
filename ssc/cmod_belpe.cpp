@@ -25,12 +25,12 @@ static var_info _cm_vtab_belpe[] =
 	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"Retrofits",		"Energy Retrofitted",				"0/1",		"0=No, 1=Yes",	"Load Profile Estimator", "*",			"",				"" },//energy retrofits
 	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"%/hr",		"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"frac/hr",	"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"cooling setpoint SetBack",			"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"degF",		"",				"Load Profile Estimator", "*",			"LENGTH=24",	"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"0/1",		"",				"Load Profile Estimator", "*",			"LENGTH=24",	"" },
 	
 	{ SSC_INPUT,		SSC_NUMBER,		"en_heat",			"Enable electric heat",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"en_cool",			"Enable electric cool",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
@@ -39,12 +39,18 @@ static var_info _cm_vtab_belpe[] =
 	{ SSC_INPUT,		SSC_NUMBER,		"en_dish",			"Enable electric dishwasher",		"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"en_wash",			"Enable electric washer",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"en_dry",			"Enable electric dryer",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable electric mels",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable misc electric loads",		"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
-	//ADD HVAC AND NONHVAC LOADS AS OUTPUTS ETC
+	//OUTPUTS
 	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,		"load",				"Electric Load",					"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+
+	//DEBUGGING OUTPUTS
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_E",		"Radiation on East wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_S",		"Radiation on South wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_W",		"Radiation on West wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 
 
 var_info_invalid };
@@ -118,10 +124,20 @@ public:
 		weatherfile wf(file);
 		if (!wf.ok()) throw exec_error("belpe", "failed to read local weather file: " + std::string(file));
 
+		//allocate input arrays
 		ssc_number_t *T_ambF = allocate("T_ambF", 8761);
 		ssc_number_t *VwindMPH = allocate("VwindMPH", 8761);
 		ssc_number_t *GHI = allocate("GHI", 8761);
 		std::vector<double> RadWallN(8761), RadWallS(8761), RadWallE(8761), RadWallW(8761);
+
+		// allocate output arrays
+		ssc_number_t *hvac_load = allocate("HVAC_load", 8760);
+		ssc_number_t *non_hvac_load = allocate("non_HVAC_load", 8760);
+		ssc_number_t *load = allocate("load", 8760);
+		ssc_number_t *radn = allocate("Rad_N", 8760);
+		ssc_number_t *rade = allocate("Rad_E", 8760);
+		ssc_number_t *rads = allocate("Rad_S", 8760);
+		ssc_number_t *radw = allocate("Rad_W", 8760);
 
 		for (size_t i = 0; i < 8760; i++)
 		{
@@ -132,7 +148,7 @@ public:
 			irr.set_location(wf.lat, wf.lon, wf.tz);
 			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600);
 			irr.set_global_beam(wf.gh, wf.dn);	//CHANGE THIS WHEN OPTION TO USE GLOBAL AND DIFFUSE IS INTRODUCED
-			irr.set_sky_model(2, 0.2); //using Perez model and default albedo
+			irr.set_sky_model(1, 0.2); //using HDKR model and default albedo
 			//variables to store irradiance info
 			double beam, sky, gnd;
 			//North wall
@@ -155,6 +171,12 @@ public:
 			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallW[i] = beam + sky + gnd;
+
+			//store in output arrays
+			radn[i] = RadWallN[i];
+			rade[i] = RadWallE[i];
+			rads[i] = RadWallS[i];
+			radw[i] = RadWallW[i];
 			
 			//read and store other weather variables needed in calculations
 			T_ambF[i] = (ssc_number_t)(wf.tdry*1.8 + 32);
@@ -225,11 +247,6 @@ public:
 
 		//Possible other input options include color, construction, WWR, bldg L&W, wall
 		//height per floor
-
-		// allocate output array
-		ssc_number_t *hvac_load = allocate("HVAC_load", 8760);
-		ssc_number_t *non_hvac_load = allocate("non_HVAC_load", 8760);
-		ssc_number_t *load = allocate("load", 8760);
 
 		// If calibrating to util bills need user to be able to enter vacation.
 		//These are bldg AM.defaults -- could also be default in the tool.
@@ -369,7 +386,7 @@ public:
 		//BUILDING DIMENSIONMS
 		//A_wins = A_Floor*WFR; %Assumed distributed evenly on walls
 		double A_Wins = sqrt(A_Floor / Stories) * 4 * H_ceiling*Stories*WWR;
-		double A_Walls = sqrt(A_Floor / Stories) * 4 * (H_ceiling + 2)*Stories - A_Wins;   //It's a cube with a bit of a plenum
+		double A_Walls = sqrt(A_Floor / Stories) * 4 * (H_ceiling)*Stories - A_Wins;   //It's a cube
 		double Aenv = A_Walls + 2 * A_Floor; //This one includes floor
 		double V_bldg = A_Floor * H_ceiling * Stories; //Exclude the plenum from conditioned volume
 		double AIntWall = A_Floor / 2; //Interior partition walls - typical default
@@ -820,20 +837,9 @@ public:
 			}
 			TMnew[i] = (Tmass[i] + dT / Cmass*(TAnew[i] / hsurf + SolMassFrac*(Q_SolWin[i] + QInt_Rad[i]) / AIntMass)) / bardub;
 			TSnew[i] = (Tsurf[i] + dT / Cenv*(SolEnvFrac*(Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[i + 1] / Renv + TAnew[i] / hsurf)) / bar;
-			//debugging
-			double TairD = Tair[i]; //DEBUGGING
-			double TAnewP;
-			if(i>0) TAnewP = TAnew[i - 1];
-			double TAnewN = TAnew[i + 1];
-			double QSolWin = Q_SolWin[i];
-			double CFMD = CFM[i];
-			double LightElecHrLoadD = LightElecHrLoad[i];
-			double EquipElecHrLoadD = EquipElecHrLoad[i];
-			double MELSD = MELSElecHrLoad[i];
-			double hourlynonhvac = non_hvac_load[i];
 
 			//HVAC Loads completed
-			hvac_load[i] = QHV2[i]; //Wh
+			hvac_load[i] = abs(QHV2[i]); //Wh
 
 			//Total load for the hour
 			load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
