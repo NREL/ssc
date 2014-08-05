@@ -449,12 +449,12 @@ void tcskernel::log( int unit, const char *message )
 	char tbuf[768];
 	if (unit >= 0 && unit < (int) m_units.size())
 	{
-		my_snprintf( tbuf, 766, "time %.2lf { %s %d }:\n\t%s\n", current_time(),
+		my_snprintf( tbuf, 766, "time %.2lf { %s %d }:\n\t%s", current_time(),
 			m_units[unit].name.c_str(), unit, message );
 	}
 	else
 	{
-		my_snprintf( tbuf, 766, "time %.2lf { invalid unit %d }:\n\t%s\n", current_time(),
+		my_snprintf( tbuf, 766, "time %.2lf { invalid unit %d }:\n\t%s", current_time(),
 			 unit, message );
 	}
 
@@ -623,7 +623,7 @@ int tcskernel::add_unit( const std::string &type, const std::string &name )
 	tcstypeinfo *t = m_provider->find_type(type);
 	if ( t == 0 )
 	{
-		notice("could not add unit of type '%s': type information not found.\n", type.c_str());
+		notice("could not add unit of type '%s': type information not found.", type.c_str());
 		return -1;
 	}
 	
@@ -751,7 +751,7 @@ int tcskernel::find_var( int unit, const char *name )
 			return idx;
 		idx++;
 	}
-	notice("notice: could not locate variable '%s' in unit %d (%s), type %s\n",
+	notice("notice: could not locate variable '%s' in unit %d (%s), type %s",
 		name, unit, m_units[unit].name.c_str(), m_units[unit].type->name );
 	return -1;
 }
@@ -818,7 +818,7 @@ int tcskernel::solve( double time, double step )
 	{
 		if (iterations++ >= m_maxIterations )
 		{
-			notice("kernel exceeded maximum iterations of %d, at time %lf\n", m_maxIterations, time);
+			notice("kernel exceeded maximum iterations of %d, at time %lf", m_maxIterations, time);
 			if ( m_proceedAnyway )
 				return iterations;
 			else
@@ -839,7 +839,7 @@ int tcskernel::solve( double time, double step )
 					&m_units[i].values[0], m_units[i].values.size(),
 					time, step, m_units[i].ncall ) < 0 )
 			{
-				notice( "unit %d (%s) type '%s' failed at time %.2lf\n", i, m_units[i].name.c_str(),
+				notice( "unit %d (%s) type '%s' failed at time %.2lf", i, m_units[i].name.c_str(),
 					m_units[i].type->name, time );
 				return -2;
 			}
@@ -924,7 +924,7 @@ int tcskernel::solve( double time, double step )
 						// type mismatch,
 						// dimension mismatch,
 						// or cannot compare strings for convergence
-						notice("kernel could not check connection between [%d,%d] and [%d,%d]: type mismatch, dimension mismatch, or invalid type connection\n",
+						notice("kernel could not check connection between [%d,%d] and [%d,%d]: type mismatch, dimension mismatch, or invalid type connection",
 							i, j, c.target_unit, c.target_index);
 						return -3;						
 					}
@@ -964,7 +964,7 @@ int tcskernel::simulate( double start, double end, double step )
 {
 	if ( end <= start || step <= 0 ) 
 	{
-		notice("invalid time sequence specified (start: %lf end: %lf step: %lf)\n", start, end, step);
+		notice("invalid time sequence specified (start: %lf end: %lf step: %lf)", start, end, step);
 		return -1;
 	}
 
@@ -981,7 +981,7 @@ int tcskernel::simulate( double start, double end, double step )
 				&m_units[i].values[0], m_units[i].values.size(),
 				-1, step, -1 )  < 0 )
 		{
-			notice( "unit %d (%s) type '%s' failed at initialization\n", i, 
+			notice( "unit %d (%s) type '%s' failed at initialization", i, 
 				m_units[i].name.c_str(), m_units[i].type->name );
 			free_instances();
 			return -1;
@@ -1014,7 +1014,7 @@ int tcskernel::simulate( double start, double end, double step )
 					m_currentTime, m_timeStep, -2 ) < 0 )
 				{
 					free_instances();
-					notice( "unit %d (%s) type '%s' failed at post-convergence at time %lf\n", i, 
+					notice( "unit %d (%s) type '%s' failed at post-convergence at time %lf", i, 
 						m_units[i].name.c_str(), m_units[i].type->name, m_currentTime );
 					return -3;
 				}
@@ -1026,7 +1026,7 @@ int tcskernel::simulate( double start, double end, double step )
 		// simulation progress (and potentially cancel the simulation loop)
 		if( !converged( m_currentTime ) ) 
 		{
-			notice( "simulation aborted at time %.2lf\n", m_currentTime );
+			notice( "simulation aborted at time %.2lf", m_currentTime );
 			break;
 		}
 		
