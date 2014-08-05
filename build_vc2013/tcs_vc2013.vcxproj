@@ -22,6 +22,7 @@
     <ClCompile Include="..\tcs\atmospheric_aod.cpp" />
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
     <ClCompile Include="..\tcs\co2_compressor_library.cpp" />
+    <ClCompile Include="..\tcs\compact_hx_discretized.cpp" />
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
@@ -76,6 +77,7 @@
     <ClInclude Include="..\tcs\atmospheric_aod.h" />
     <ClInclude Include="..\tcs\cavity_calcs.h" />
     <ClInclude Include="..\tcs\co2_compressor_library.h" />
+    <ClInclude Include="..\tcs\compact_hx_discretized.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
     <ClInclude Include="..\tcs\water_properties.h" />
