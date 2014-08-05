@@ -4,6 +4,7 @@
 #include "htf_props.h"
 //#include <vector>
 #include "CO2_properties.h"
+#include "compact_hx_discretized.h"
 
 using namespace std;
 
@@ -68,6 +69,7 @@ private:
 	RecompCycle * rc_cycle;
 	HTFProperties rec_htfProps;		// Instance of HTFProperties class for field HTF
 	CO2_state co2_props;
+	compact_hx ACC;
 	int co2_error;
 	
 	// Cycle Design Parameters
@@ -236,13 +238,6 @@ public:
 		}
 		// ********************************************************************************
 		// ********************************************************************************
-
-		// Solar receiver to power cycle heat exchanger
-		// Will need design mass flow rate to calculate HX off-design UA
-		double T_rec_ave = 0.5*(m_T_rec_cold + m_T_rec_hot);		//[K]
-		double cp_rec = rec_htfProps.Cp(T_rec_ave);					//[kJ/kg-K]
-		m_dot_rec_des = m_Q_dot_rec_des*1.E3 / (cp_rec*(m_T_rec_hot - m_T_rec_cold));	//[kg/s]
-
 		double deltaT_co2_hot = m_T_rec_hot - m_T_t_in_des;			//[K]
 		m_T_PHX_in = m_T_rec_cold - deltaT_co2_hot;					//[K]
 
@@ -268,13 +263,13 @@ public:
 		calculate_turbomachinery_outlet(m_T_mc_in_des, P_low_guess*1.E3, m_P_high_limit*1.E3, m_eta_c, true, turbo_error,
 			dummy[0], dummy[1], dummy[2], T_c_out_guess, dummy[3], dummy[4], dummy[5], dummy[6]);
 		// 5) Guess hot side recups outlet temp
-		double T_recup_hot_outlet_guess = T_c_out_guess + 0.5*(T_t_out_guess - m_T_PHX_in);	// 0.5 multiplier is estimate
+		double T_recup_hot_outlet_guess = T_c_out_guess + 0.75*(T_t_out_guess - m_T_PHX_in);	// 0.5 multiplier is estimate
 		co2_error = CO2_TP(T_recup_hot_outlet_guess, P_low_guess*1.E3, &co2_props);
 		double h_recup_hot_outlet_guess = co2_props.enth;
 		// 6) Estimate heat transfer rate in recuperators
 		double q_dot_recups_guess = m_dot_co2_guess*(h_t_out_guess - h_recup_hot_outlet_guess);		//[kW]
 		// 7) Estimate UA
-		double UA_recups_guess = q_dot_recups_guess / (0.5*(T_t_out_guess - m_T_PHX_in));		//[kW/K] 0.5 multiplier is estimate
+		double UA_recups_guess = q_dot_recups_guess / (0.75*(T_t_out_guess - m_T_PHX_in));		//[kW/K] 0.5 multiplier is estimate
 
 		// **********************************************************************
 		// **********************************************************************
@@ -290,9 +285,11 @@ public:
 		// Now need to iterate UA_total_des until T_PHX_in_calc = m_T_PHX_in
 		double diff_T_PHX_in = (T_PHX_in_calc - m_T_PHX_in)/m_T_PHX_in;			//[-]
 		bool low_flag = false;
-		bool high_flag = true;
+		bool high_flag = false;
 		double y_upper = numeric_limits<double>::quiet_NaN();
 		double y_lower = numeric_limits<double>::quiet_NaN();
+		double x_upper = numeric_limits<double>::quiet_NaN();
+		double x_lower = numeric_limits<double>::quiet_NaN();
 		int opt_des_calls = 1;
 
 		while( abs(diff_T_PHX_in) > m_tol )
@@ -302,37 +299,105 @@ public:
 			if(diff_T_PHX_in > 0.0)		// Calc > target, UA is too large, decrease UA
 			{
 				low_flag = true;
+				x_lower = UA_recups_guess;
 				y_lower = diff_T_PHX_in;
 
 				if(high_flag)	// Upper and lower bounds set, use false positon interpolation method
 				{
-					
+					UA_recups_guess = -y_upper*(x_lower-x_upper)/(y_lower-y_upper) + x_upper;
 				}
 				else			// No upper bound set, try to get there
 				{
-					UA_recups_guess *= 1.4;
+					UA_recups_guess *= 0.6;
 				}
 			}
 			else						// Calc < target, UA is too small, decrease UA
 			{
 				high_flag = true;
+				x_upper = UA_recups_guess;
 				y_upper = diff_T_PHX_in;
 				
 				if(low_flag)
 				{
-				
+					UA_recups_guess = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
 				}
 				else
 				{
-					UA_recups_guess *= 0.6;
+					UA_recups_guess *= 1.1;
 				}
 			}
 
+			// Solve design point model with guessed recups UA
+			m_UA_total_des = UA_recups_guess;
+			rc_des_par.m_UA_rec_total = m_UA_total_des;
+			// Create new instance of RecompCycle class and assign to member point
+			rc_cycle = new RecompCycle(rc_des_par);
+			auto_cycle_success = rc_cycle->auto_optimal_design();
+			T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
+			// **********************************************************************
 
+			// Now need to iterate UA_total_des until T_PHX_in_calc = m_T_PHX_in
+			diff_T_PHX_in = (T_PHX_in_calc - m_T_PHX_in) / m_T_PHX_in;			//[-]
 		}
 
-
+		// Design metrics
 		double design_eta = rc_cycle->get_cycle_design_metrics()->m_eta_thermal;
+		double W_dot_net_des_calc = rc_cycle->get_cycle_design_metrics()->m_W_dot_net;		// Can compare to target net output to check convergence
+		double q_dot_des = m_W_dot_net_des/design_eta;							//[kW]
+		double m_dot_des = rc_cycle->get_cycle_design_metrics()->m_m_dot_PHX;		//[kg/s]
+		double P_PHX_out = rc_cycle->get_cycle_design_metrics()->m_P[6 - 1];	//[kPa]
+		double P_PHX_in = rc_cycle->get_cycle_design_metrics()->m_P[5 - 1];		//[kPa]
+
+		// Can give PHX inlet --or-- HX UA, but there is going to be a conflict between
+		// 1) Assumed thermal input to cycle
+		// -- and --
+		// 2) Calculated thermal input to cycle: W_dot_net/eta_thermal
+		// 
+		// So, solar multiple in UI will also depend on estimating the cycle thermal efficiency
+		// Should also revisit UA guess assumptions, but probably still OK
+
+		// ***************************************************************
+		// Calculate Design UA of PHX
+		// Assumes properties behave well here, which is reasonable given distance from critical point
+		// Also assumes that CR = 1
+		// ***************************************************************
+			// Receiver/hot side
+		double T_rec_ave = 0.5*(m_T_rec_cold + m_T_rec_hot);		//[K]
+		double cp_rec = rec_htfProps.Cp(T_rec_ave);					//[kJ/kg-K]
+		double m_dot_hot = q_dot_des / (cp_rec*(m_T_rec_hot - m_T_rec_cold));	//[kg/s]
+		
+			// Cycle/cold side
+		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + m_T_PHX_in);		//[K]
+		co2_error = CO2_TP(T_PHX_co2_ave, P_PHX_in, &co2_props);	
+		double cp_PHX_co2 = q_dot_des/ (m_dot_des*(m_T_t_in_des - m_T_PHX_in));
+
+			// Because C_dot_c = C_dot_h, q_dot_max = 
+		double q_dot_max = m_dot_hot*cp_rec*(m_T_rec_hot - m_T_PHX_in);		//[kW]
+
+			// Effectiveness & NTU
+		double eff_des = q_dot_des / q_dot_max;
+		double NTU = eff_des/(1.0 - eff_des);
+
+			// UA
+		double UA_PHX_des = NTU * m_dot_hot * cp_rec;
+
+		// *****************************************************************
+		// Call Air Cooled Condenser
+		// *****************************************************************
+		double T_amb_cycle_des = 32.0+273.15;		//[K]
+		double P_amb_cycle_des = 101325.0;			//[Pa]
+
+		double T_acc_in = rc_cycle->get_cycle_design_metrics()->m_T[9 - 1];
+		double P_acc_in = rc_cycle->get_cycle_design_metrics()->m_P[9 - 1];
+		double m_dot_acc_in = rc_cycle->get_cycle_design_metrics()->m_m_dot_PC;
+
+		double W_dot_fan_des = 0.01*m_W_dot_net_des / 1000.0;	//[MW]
+		double deltaP_des = 0.002*rc_cycle->get_cycle_design_metrics()->m_P[2 - 1];
+		double T_acc_out = m_T_mc_in_des;
+
+		ACC.design_hx(T_amb_cycle_des, P_amb_cycle_des, T_acc_in, P_acc_in, m_dot_acc_in,
+			W_dot_fan_des, deltaP_des, T_acc_out);
+
 
 		return 0;
 	}
