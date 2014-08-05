@@ -116,13 +116,14 @@ struct S_cycle_design_metrics
 	double m_min_DT_HT;			//[-] Minimum temperature difference in HT recup
 	double m_N_mc;				//[rpm] Main compressor speed
 	double m_m_dot_PHX;			//[kg/s] Mass flow rate through primary heat exchanger
+	double m_m_dot_PC;			//[kg/s] Mass flow rate through pre-cooler
 
 	std::vector<double> m_T;	//[K] Temperature at cycle state points
 	std::vector<double> m_P;	//[kPa] Pressure at cycle state points
 
 	S_cycle_design_metrics()
 	{
-		m_eta_thermal = m_W_dot_net = m_min_DT_LT = m_min_DT_HT = m_m_dot_PHX = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal = m_W_dot_net = m_min_DT_LT = m_min_DT_HT = m_m_dot_PHX = m_m_dot_PC = std::numeric_limits<double>::quiet_NaN();
 		// Size vectors when they are assigned to values from the RecompCycle class?
 	}
 };
@@ -180,13 +181,14 @@ struct S_off_design_performance
 	double m_min_DT_HT;			//[-] Minimum temperature difference in HT recup
 	double m_N_rc;				//[-] Shaft speed - recompressor
 	double m_m_dot_PHX;			//[kg/s] Mass flow rate through primary heat exchanger
+	double m_m_dot_PC;			//[kg/s] Mass flow rate through pre-cooler
 
 	std::vector<double> m_T;	//[K] Temperature at cycle state points
 	std::vector<double> m_P;	//[kPa] Pressure at cycle state points
 
 	S_off_design_performance()
 	{
-		m_eta_thermal = m_W_dot_net = m_q_dot_in = m_min_DT_LT = m_min_DT_HT = m_N_rc = m_m_dot_PHX = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal = m_W_dot_net = m_q_dot_in = m_min_DT_LT = m_min_DT_HT = m_N_rc = m_m_dot_PHX = m_m_dot_PC = std::numeric_limits<double>::quiet_NaN();
 		// Size vectors when they are assigned to values from the RecompCycle class?
 	}
 
@@ -514,6 +516,7 @@ private:
 		m_cycle_des_metrics.m_T = m_temp_des;
 		m_cycle_des_metrics.m_P = m_pres_des;
 		m_cycle_des_metrics.m_m_dot_PHX = m_PHX.get_design_parameters()->m_m_dot_design[0];
+		m_cycle_des_metrics.m_m_dot_PC = m_PC.get_design_parameters()->m_m_dot_design[1];
 	}
 	
 	void set_autodes_opts()
@@ -539,6 +542,7 @@ private:
 		m_cycle_od_performance.m_min_DT_LT = m_LT.get_od_outputs()->m_min_DT;
 		m_cycle_od_performance.m_N_rc = m_rc.get_N_off_design();
 		m_cycle_od_performance.m_m_dot_PHX = m_PHX.get_od_outputs()->m_m_dot_calc[0];
+		m_cycle_od_performance.m_m_dot_PC = m_PC.get_od_outputs()->m_m_dot_calc[1];
 
 		m_cycle_od_performance.m_T = m_temp_od;
 		m_cycle_od_performance.m_P = m_pres_od;
