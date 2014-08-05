@@ -17,7 +17,7 @@
 static var_info _cm_vtab_belpe[] = 
 {	
 /*   VARTYPE			DATATYPE        NAME                LABEL								UNITS		META			GROUP                     REQUIRED_IF	CONSTRAINTS		UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,		"weather_file",		"Weather Data file",				"n/a",		"",				"Load Profile Estimator", "*",			"LOCAL_FILE",	"" },
+	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "*",			"LOCAL_FILE",	"" },
 //	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "*",			"",				"Time Step" },
 	{ SSC_INPUT,        SSC_NUMBER,		"floor_area",		"Building floor area",				"m2",		"",				"Load Profile Estimator", "*",			"",				"Floor area" },
 	{ SSC_INPUT,        SSC_NUMBER,		"Stories",			"Number of stories",				"#",		"",				"Load Profile Estimator", "*",			"",				"Stories" },
@@ -25,7 +25,7 @@ static var_info _cm_vtab_belpe[] =
 	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"Retrofits",		"Energy Retrofitted",				"0/1",		"0=No, 1=Yes",	"Load Profile Estimator", "*",			"",				"" },//energy retrofits
 	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"frac/hr",	"",				"Load Profile Estimator", "*",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"frac/hr",	"",				"Load Profile Estimator", "*",			"LENGTH=24",	"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",				"Load Profile Estimator", "*",			"",				"" },
@@ -41,10 +41,15 @@ static var_info _cm_vtab_belpe[] =
 	{ SSC_INPUT,		SSC_NUMBER,		"en_dry",			"Enable electric dryer",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable misc electric loads",		"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
+	{ SSC_INPUT,		SSC_ARRAY,		"Monthly_util",		"Monthly consumption from utility bill",	"kWh",	"",			"Load Profile Estimator", "*",			"LENGTH=12",	"" },
+
+
 	//OUTPUTS
 	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"load",				"Electric Load",					"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Electric Load",					"kWh",      "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Peak Electric Load",				"kW",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+
 
 	//DEBUGGING OUTPUTS
 	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
@@ -65,7 +70,7 @@ public:
 		add_var_info(_cm_vtab_belpe); 
 	}
 
-	//////////////////////////////SUPPORTING FUNCTIONS///////////////////////////////////////////
+	//SUPPORTING FUNCTIONS********************************************************************************************************************************************************************
 
 	//sums a vector a of length n
 	double sum(double *a, int n)
@@ -83,21 +88,30 @@ public:
 		return acc;
 	}
 
-	//averages an 8760 array ("hourly") into a 12 array ("monthly") of monthly averages
-	void monthly_averages( ssc_number_t *hourly, ssc_number_t *monthly )
+	//sums an 8760 array ("hourly") into an array of 12 monthly sums ("monthly")
+	void monthly_sums(ssc_number_t *hourly, ssc_number_t *monthly)
 	{
-		int c = 0;
-		for (int i=0;i<12;i++) // each month
+		int c = 0; //8760 counter
+		for (int i = 0; i < 12; i++) //each month
 		{
 			monthly[i] = 0;
-			for (int d=0;d<util::nday[i];d++) // for each day in each month
+			for (int d = 0; d<util::nday[i]; d++) // for each day in each month
 				for (int h = 0; h < 24; h++) // for each hour in each day
 					monthly[i] += hourly[c++];
-			monthly[i] /= (util::nday[i]*24); //divide the monthly sum by the number of hours in the month for an average temp
-		}			
+		}
 	}
 
-	//////////////////////////////MAIN FUNCTION///////////////////////////////////////////
+	//averages an 8760 array ("hourly") into an array of 12 monthly averages ("monthly")
+	void monthly_averages( ssc_number_t *hourly, ssc_number_t *monthly )
+	{
+		int c = 0; //8760 counter
+		monthly_sums(hourly, monthly);
+		for (int i=0;i<12;i++) 
+			monthly[i] /= (util::nday[i]*24); //divide the monthly sum by the number of hours in the month for an hourly average		
+	}
+
+
+	//MAIN FUNCTION*******************************************************************************************************************************************************************************
 	void exec() throw(general_error)
 	{		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
@@ -120,7 +134,7 @@ public:
 		month[8760] = 0; day[8760] = 0; hour[8760] = 0;
 
 		// read weather file inputs 		
-		const char *file = as_string("weather_file");
+		const char *file = as_string("solar_resource_file");
 		weatherfile wf(file);
 		if (!wf.ok()) throw exec_error("belpe", "failed to read local weather file: " + std::string(file));
 
@@ -133,7 +147,8 @@ public:
 		// allocate output arrays
 		ssc_number_t *hvac_load = allocate("HVAC_load", 8760);
 		ssc_number_t *non_hvac_load = allocate("non_HVAC_load", 8760);
-		ssc_number_t *load = allocate("load", 8760);
+		ssc_number_t *load = allocate("e_load", 8760);
+		ssc_number_t *p_load = allocate("p_load", 8760);
 		ssc_number_t *radn = allocate("Rad_N", 8760);
 		ssc_number_t *rade = allocate("Rad_E", 8760);
 		ssc_number_t *rads = allocate("Rad_S", 8760);
@@ -236,6 +251,10 @@ public:
 
 		if (len_T_Sched != 24) throw exec_error("belpe", "temperature schedule must have 24 values");
 
+		size_t len_monthly_util = 0;
+		ssc_number_t* monthly_util = as_array("Monthly_util", &len_monthly_util);
+		if (len_monthly_util != 12) throw exec_error("belpe", "Monthly consumption from utility bill must have 12 values");
+
 		ssc_number_t en_heat = as_number("en_heat"); // boolean, so will be 0 or 1
 		ssc_number_t en_cool = as_number("en_cool"); // boolean, so will be 0 or 1
 		ssc_number_t en_fridge = as_number("en_fridge"); // boolean, so will be 0 or 1
@@ -305,7 +324,8 @@ public:
 
 		//This is the end of getting the air changes, for this part of the code
 
-		//Default is stick frame construction. Renv started as defaults from Building America, based solely on age. But then was scaled to fit BeOpt for the older case (R increase from 4 to 5)
+		//Default is stick frame construction. Renv started as defaults from Building America, based solely on age. 
+		// But then was scaled to fit BeOpt for the older case (R increase from 4 to 5)
 		// Windows are NOT separated out for conduction calcs but I put them here just in case (UWin)
 		double Renv, SHGC;
 		if (YrBuilt > 1990 || EnergyRetrofits == 1)
@@ -618,7 +638,7 @@ public:
 		
 		std::vector<double> HourlyNonHVACLoad(8761);
 
-		//MAIN 8760 LOOP STARTS HERE*************************************************************************************************************
+		//MAIN 8760 LOOP STARTS HERE********************************************************************************************************************************************************************
 
 		for (int i = 0; i < 8760; i++)
 		{
@@ -846,11 +866,10 @@ public:
 
 		}
 
-		//Must modify the HVAC load for gas heat
-
 		//Aux heating fans(if gas heat)
 		double HrsHeat = sum(Heaton, 8760);
 		double AuxHeatPerHr;
+		std::vector<double> fan_load(8760);
 		if (HrsHeat != 0)
 		{
 			AuxHeatPerHr = AuxHeat / HrsHeat / 1000; //This is Wh
@@ -858,11 +877,61 @@ public:
 			{
 				if (Heaton[i])
 				{
-					hvac_load[i] += AuxHeatPerHr; //Wh
-					load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
+					//hvac_load[i] += AuxHeatPerHr; //Wh
+					//load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
+					fan_load[i] = AuxHeatPerHr; //Wh
 				}				
 			}
 		}
+
+		//SCALING FUNCTION STARTS HERE********************************************************************************************************************************************************************
+		ssc_number_t monthly_load[12], monthly_hvac_load[12];
+		std::vector<double> monthly_diff(12), monthly_scale(12);
+		//compute monthly load sums for scaling
+		monthly_sums(load, monthly_load);
+		monthly_sums(hvac_load, monthly_hvac_load);
+		// compute the monthly difference in load and the load scaling factor for that month
+		for (int i = 0; i < 12; i++)
+		{
+			monthly_diff[i] = monthly_load[i] - monthly_util[i];
+			if (monthly_load[i] != 0)
+				monthly_scale[i] = monthly_diff[i] / monthly_load[i];
+			else //avoid divide by zero issues
+				monthly_scale[i] = 0;
+		}
+		int min_diff_month = 0; 
+		double min_diff = abs(monthly_diff[0]);
+		for (i = 1; i < 12; i++)
+		{
+			if (abs(monthly_diff[i]) < min_diff)
+			{
+				min_diff = abs(monthly_diff[i]); //lowest energy difference of the months
+				min_diff_month = i; //and the month that it happens in
+			}
+		}
+		double closest_scale_avg = monthly_scale[min_diff_month]; //scaling factor corresponding to the lowest energy difference month
+		std::vector<double> x_hvac(12); 
+		for (int i = 0; i < 12; i++)
+		{
+			x_hvac[i] = (monthly_diff[i] - (monthly_load[i] * closest_scale_avg)) / monthly_hvac_load[i]; //hvac fraction of scaling
+		}
+		//loop through 8760 and scale according to what month it's in
+		for (int i = 0; i < 8760; i++)
+		{
+			if (monthly_hvac_load[month[i]] > 0)
+			{
+				load[i] = load[i] * (1 - closest_scale_avg) - x_hvac[month[i]] * hvac_load[i];
+			}
+		}
+		
+		//CONVERT LOADS TO KWH AND ASSIGN PEAK LOAD*********************************************************************************************************************************************************
+		for (int i = 0; i < 8760; i++)
+		{
+			load[i] /= 1000; //kWh
+			p_load[i] = load[i]; //kW (because timestep is hourly)
+			
+		}
+
 	}
 };
 
