@@ -257,8 +257,21 @@ namespace N_sco2_rec
 				return m_m_dot_tube;
 			}
 
-			bool calc_th_1Dmaxflux(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+			double get_T_out_C()
+			{
+				return m_T_fluid_out;
+			}
+
+			double get_deltaP_kPa()
+			{
+				return m_deltaP_kPa;
+			}
+
+			bool calc_th_1Dmaxflux_Tout(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
 				double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa);
+
+			bool calc_th_1Dmaxflux_mdot(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+				double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs);
 
 		private:
 			CO2_state co2_props;
@@ -272,6 +285,8 @@ namespace N_sco2_rec
 			double m_P_fluid_in;		//[MPa]
 			double m_e_roughness;		//[m] Absolute tube roughness
 			double m_L_tube;			//[m] Length of tube
+			double m_m_dot_tube;		//[kg/s]
+			bool m_know_T_out;			// true = set T_out calc m_dot... false = set m_dot calc T_out
 
 			int m_n_tube_elements;		//[-] Number of axial elements in flux arrays
 
@@ -280,7 +295,7 @@ namespace N_sco2_rec
 			// Calculated geometries/properties
 			double m_d_in;
 			double m_L_node;
-			double m_m_dot_tube;		//[kg/s]
+			double m_deltaP_kPa;
 
 			vector<double> m_Temp, m_Pres, m_Enth, m_h_conv_ave;
 			
@@ -295,6 +310,9 @@ namespace N_sco2_rec
 			// matrix_t stresses
 
 			util::matrix_t<double> m_element_results_temp;
+
+			bool calc_th_1Dmaxflux(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+				double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, double m_dot_tube, bool know_Tout);
 
 			bool calc_min_thick_general();
 

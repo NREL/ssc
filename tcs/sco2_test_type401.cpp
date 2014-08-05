@@ -186,13 +186,24 @@ public:
 		for( int i = 0; i < n_tube_nodes; i++ )
 			max_flux_in[i] = q_abs_total_input - 0.1*q_abs_total_input*(i);		//[W/m2]
 		
-		bool is_tube_feasible = calc_min_th.calc_th_1Dmaxflux(
+		bool is_tube_feasible = calc_min_th.calc_th_1Dmaxflux_Tout(
 			                    max_flux_in, L_tube, d_out, T_fluid_in, T_fluid_out, P_fluid_in);
 
 		double d_in_min = calc_min_th.get_min_d_in();
 		double m_dot_class = calc_min_th.get_m_dot_tube_kgsec();
+		double deltaP = calc_min_th.get_deltaP_kPa();
 
 		double check = 1.23;
+
+		for( int i = 0; i < n_tube_nodes; i++ )
+			max_flux_in[i] *= 0.9;
+
+		bool is_tube2_feasible = calc_min_th.calc_th_1Dmaxflux_mdot(
+								max_flux_in, L_tube, d_out, T_fluid_in, P_fluid_in, m_dot_class);
+
+		double d_in_min2 = calc_min_th.get_min_d_in();
+		double T_out_C = calc_min_th.get_T_out_C();
+		double deltaP2 = calc_min_th.get_deltaP_kPa();
 		
 		// Know flux and tube surface area, so calculate total absorbed flux
 		double A_surf_total = d_out*CSP::pi*tube_length;			//[m^2] Total tube surface area

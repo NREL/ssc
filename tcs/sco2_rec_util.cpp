@@ -377,16 +377,32 @@ double N_sco2_rec::C_rec_des_props::interpolate_cycles_to_failure(int enum_T_low
 // Constructor
 N_sco2_rec::C_calc_tube_min_th::C_calc_tube_min_th()
 {
-	m_d_out = m_T_fluid_in = m_T_fluid_out = m_P_fluid_in = m_L_tube = m_d_in = m_L_node = m_m_dot_tube = std::numeric_limits<double>::quiet_NaN();
+	m_d_out = m_T_fluid_in = m_T_fluid_out = m_P_fluid_in = m_L_tube = m_d_in = m_L_node = m_m_dot_tube = m_deltaP_kPa = std::numeric_limits<double>::quiet_NaN();
 
 	m_e_roughness = 4.5E-5;
 
 	m_n_tube_elements = m_n_temps = m_n_results_cols - 1;
+
+	m_know_T_out = true;
 };
+
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_Tout(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+	double d_out_m,
+	double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa)
+{
+	return calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, T_fluid_out_C, P_fluid_in_MPa, -999.0, true);
+}
+
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_mdot(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+	double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs)
+{
+	return calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
+}
+
 
 bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
 	double d_out_m,
-	double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa)
+	double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, double m_dot_tube, bool know_Tout)
 {
 	// Initialize member data
 	m_d_out = d_out_m;					//[m]
@@ -394,6 +410,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> max_
 	m_T_fluid_out = T_fluid_out_C;		//[C]
 	m_P_fluid_in = P_fluid_in_MPa;		//[MPa]
 	m_L_tube = L_tube_m;				//[m]
+	m_know_T_out = know_Tout;			//[-]
 
 	// Could check T_out > T_in and that pressure is in MPa...
 
@@ -459,7 +476,11 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 	int iter_d_in = -1;						// Count (starting at 0) d_in (= thickness) iterations
 
 	// Declare values that will be calculated in iterative loops
-	double m_dot_tube = std::numeric_limits<double>::quiet_NaN();
+	if( m_know_T_out )
+		m_m_dot_tube = std::numeric_limits<double>::quiet_NaN();
+	else
+		m_T_fluid_out = std::numeric_limits<double>::quiet_NaN();
+
 	m_d_in = std::numeric_limits<double>::quiet_NaN();
 	
 	// Initialize 'matrix_t' for all 2D results (# elements x # of diameters evaluated)
@@ -518,12 +539,22 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 			if( P_tube_out_guess < P_tube_out_min )
 				P_tube_out_guess = P_tube_out_min;
 
-			// Get co2 props at tube outlet
-			CO2_TP(m_T_fluid_out + 273.15, P_tube_out_guess, &co2_props);
-			double h_tube_out = co2_props.enth*1000.0;
+			if(m_know_T_out)	// Know outlet temperature - calculate mass flow rate
+			{
+				// Get co2 props at tube outlet
+				CO2_TP(m_T_fluid_out + 273.15, P_tube_out_guess, &co2_props);
+				double h_tube_out = co2_props.enth*1000.0;
 
-			// Energy balance to calculate mass flow rate
-			m_dot_tube = q_abs_total / (h_tube_out - m_Enth[0]);
+				// Energy balance to calculate mass flow rate
+				m_m_dot_tube = q_abs_total / (h_tube_out - m_Enth[0]);
+			}
+			else	// Know mass flow rate - calculate outlet temperature
+			{
+				double h_tube_out = q_abs_total/m_m_dot_tube + m_Enth[0];
+				CO2_PH(P_tube_out_guess, h_tube_out/1000.0, &co2_props);
+
+				m_T_fluid_out = co2_props.temp - 273.15;
+			}
 
 			// Set up iteration constants for converging on local pressure
 			double P_node_out_tolerance = P_tube_out_tolerance;		// Set nodal pressure convergence tolerance to tube's
@@ -581,7 +612,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 
 					// Calculate outlet enthalpy
 					//h_out = h_in + q_abs/m_dot
-					m_Enth[i] = m_Enth[i - 1] + m_q_abs_array[i - 1] / m_dot_tube;
+					m_Enth[i] = m_Enth[i - 1] + m_q_abs_array[i - 1] / m_m_dot_tube;
 
 					// Know enthalpy and guessed pressure, so get props
 					// ***
@@ -597,7 +628,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 					CO2_PH(P_ave, h_ave / 1000.0, &co2_props);
 
 					double visc_dyn = CO2_visc(co2_props.dens, co2_props.temp)*1.E-6;
-					double Re = m_dot_tube*m_d_in / (A_cs*visc_dyn);
+					double Re = m_m_dot_tube*m_d_in / (A_cs*visc_dyn);
 
 					double rho = co2_props.dens;
 					double visc_kin = visc_dyn / rho;
@@ -614,7 +645,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 
 					m_h_conv_ave[i - 1] = Nusselt*cond / m_d_in;
 
-					double u_m = m_dot_tube / (rho*A_cs);
+					double u_m = m_m_dot_tube / (rho*A_cs);
 					m_Pres[i] = m_Pres[i - 1] - f*m_L_node*rho*pow(u_m, 2) / (2.0*m_d_in) / 1000.0;
 
 					P_node_out_diff = (m_Pres[i] - P_node_out_guess) / P_node_out_guess;
@@ -687,7 +718,9 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 	} while( search_min_th );
 
 	// Write other member data (eventually go back and hardcode this to get rid of local copy...)
-	m_m_dot_tube = m_dot_tube;
+	// m_m_dot_tube = m_dot_tube;
+
+	m_deltaP_kPa = m_Pres[m_n_temps - 1] - m_Pres[0];
 
 	if( is_deltaP_too_large )
 		return false;
