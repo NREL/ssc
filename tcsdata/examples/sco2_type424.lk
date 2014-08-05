@@ -6,7 +6,7 @@ clear();
 // Values from ssc example (7/17/14)
 W_dot_net_des = 35.0;		//[MW] Design cycle power output
 T_mc_in_des = 50.0;			//[C] Main compressor inlet temp at design
-T_t_in_des = 650.0;			//[C] Turbine inlet temperature at design
+T_t_in_des = 569.0;			//[C] Turbine inlet temperature at design
 N_t_des = 3600.0;			//[rpm] Turbine shaft speed
 tol = 1.E-6;				//[-] Convergence tolerance for performance calcs
 opt_tol = 1.E-6;			//[-] Convergence tolerance for optimization calcs
