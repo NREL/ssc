@@ -17,45 +17,47 @@
 static var_info _cm_vtab_belpe[] = 
 {	
 /*   VARTYPE			DATATYPE        NAME                LABEL								UNITS		META			GROUP                     REQUIRED_IF	CONSTRAINTS		UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "*",			"LOCAL_FILE",	"" },
-//	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "*",			"",				"Time Step" },
-	{ SSC_INPUT,        SSC_NUMBER,		"floor_area",		"Building floor area",				"m2",		"",				"Load Profile Estimator", "*",			"",				"Floor area" },
-	{ SSC_INPUT,        SSC_NUMBER,		"Stories",			"Number of stories",				"#",		"",				"Load Profile Estimator", "*",			"",				"Stories" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_belpe",			"Enable building load calculator",	"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"Retrofits",		"Energy Retrofitted",				"0/1",		"0=No, 1=Yes",	"Load Profile Estimator", "*",			"",				"" },//energy retrofits
-	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"frac/hr",	"",				"Load Profile Estimator", "*",			"LENGTH=24",	"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"cooling setpoint SetBack",			"degF",		"",				"Load Profile Estimator", "*",			"",				"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"0/1",		"",				"Load Profile Estimator", "*",			"LENGTH=24",	"" },
+	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "en_belpe=1",			"LOCAL_FILE",	"" },
+//	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "en_belpe=1",			"",				"Time Step" },
+	{ SSC_INPUT,        SSC_NUMBER,		"floor_area",		"Building floor area",				"m2",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"Floor area" },
+	{ SSC_INPUT,        SSC_NUMBER,		"Stories",			"Number of stories",				"#",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"Stories" },
+
+	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"Retrofits",		"Energy Retrofitted",				"0/1",		"0=No, 1=Yes",	"Load Profile Estimator", "en_belpe=1",			"",				"" },//energy retrofits
+	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"frac/hr",	"",				"Load Profile Estimator", "en_belpe=1",			"LENGTH=24",	"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"cooling setpoint SetBack",			"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"LENGTH=24",	"" },
 	
-	{ SSC_INPUT,		SSC_NUMBER,		"en_heat",			"Enable electric heat",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_cool",			"Enable electric cool",				"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_fridge",		"Enable electric fridge",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_range",			"Enable electric range",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_dish",			"Enable electric dishwasher",		"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_wash",			"Enable electric washer",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_dry",			"Enable electric dryer",			"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable misc electric loads",		"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_heat",			"Enable electric heat",				"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_cool",			"Enable electric cool",				"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_fridge",		"Enable electric fridge",			"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_range",			"Enable electric range",			"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_dish",			"Enable electric dishwasher",		"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_wash",			"Enable electric washer",			"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_dry",			"Enable electric dryer",			"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"en_mels",			"Enable misc electric loads",		"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
 
-	{ SSC_INPUT,		SSC_ARRAY,		"Monthly_util",		"Monthly consumption from utility bill",	"kWh",	"",			"Load Profile Estimator", "*",			"LENGTH=12",	"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"Monthly_util",		"Monthly consumption from utility bill",	"kWh",	"",			"Load Profile Estimator", "en_belpe=1",			"LENGTH=12",	"" },
 
 
 	//OUTPUTS
-	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Electric Load",					"kWh",      "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Peak Electric Load",				"kW",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Electric Load",					"kWh",      "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Peak Electric Load",				"kW",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 
 
 	//DEBUGGING OUTPUTS
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_E",		"Radiation on East wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_S",		"Radiation on South wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_W",		"Radiation on West wall",		"W/m2",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_E",		"Radiation on East wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_S",		"Radiation on South wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_W",		"Radiation on West wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 
 
 var_info_invalid };
@@ -114,6 +116,15 @@ public:
 	//MAIN FUNCTION*******************************************************************************************************************************************************************************
 	void exec() throw(general_error)
 	{		
+		//This compute module is going to automatically be run in series between pvsamv1 and utilityrate3 for residential and commercial systems.
+		//However, the building load profile option will not be selected by default.
+		//The enable flag allows us to exit the program without doing any calculations if the user hasn't selected to use it.
+		ssc_number_t en_belpe = as_boolean("en_belpe");
+		if (!en_belpe)
+			return;
+
+		//Program continues here if the user HAS selected the building load calculator.
+		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
 		int month[8761], day[8761], hour[8761];
 		int i = 0;
@@ -893,7 +904,7 @@ public:
 		// compute the monthly difference in load and the load scaling factor for that month
 		for (int i = 0; i < 12; i++)
 		{
-			monthly_diff[i] = monthly_load[i] - monthly_util[i];
+			monthly_diff[i] = monthly_load[i] - monthly_util[i]*1000; //load is input as kWh, needs to be converted to Wh for comparison
 			if (monthly_load[i] != 0)
 				monthly_scale[i] = monthly_diff[i] / monthly_load[i];
 			else //avoid divide by zero issues
