@@ -11,6 +11,7 @@ OBJECTS = tcskernel.o \
 	CO2_properties.o \
 	co2_compressor_library.o \
 	nlopt_callbacks.o \
+	compact_hx_discretized.o \
 	sco2_rec_util.o \
 	sco2_power_cycle.o \
 	water_properties.o \
