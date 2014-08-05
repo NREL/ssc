@@ -8,6 +8,8 @@
 //#include "co2props_nn.h"
 #include "CO2_properties.h"
 
+#include "compact_hx_discretized.h"
+
 using namespace std;
 
 enum{	//Parameters
