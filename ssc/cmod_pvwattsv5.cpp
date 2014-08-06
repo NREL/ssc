@@ -32,10 +32,10 @@ static var_info _cm_vtab_pvwattsv5[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "PVWatts",      "?=0.4",                   "MIN=0,MAX=3",               "" },
 	
-	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",                 "Hourly beam shading factors",                 "",          "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading factors",           "",          "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading factors",     "",          "",                        "PVWatts",      "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading factor",                      "",          "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",                 "Hourly beam shading loss",                    "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
 		
 	/* advanced parameters */
 	//{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation limit (+/- 1 axis)",         "deg",    "",                        "PVWatts",      "?=45.0",                  "MIN=1,MAX=90",                             "" },
@@ -241,7 +241,7 @@ public:
 			if ( len == 8760 )
 			{
 				for ( size_t j=0;j<8760;j++)
-					p_shad_beam_factor[j] = vals[j];
+					p_shad_beam_factor[j] = 1-vals[j]/100;
 			}
 			else
 				throw exec_error("pvwattsv5", "hourly shading beam factors must have 8760 values");
@@ -259,7 +259,7 @@ public:
 			for (int m=0;m<12;m++)
 				for (int d=0;d<util::nday[m];d++)
 					for (int h=0;h<24;h++)
-						p_shad_beam_factor[c++] *= mat[ m*ncols + h ];
+						p_shad_beam_factor[c++] *= 1-mat[ m*ncols + h ]/100;
 		}
 
 		bool enable_azalt_beam_shading = false;
@@ -274,14 +274,14 @@ public:
 			azaltvals.resize_fill( nrows, ncols, 1.0 );
 			for ( size_t r=0;r<nrows;r++ )
 				for ( size_t c=0;c<ncols;c++ )
-					azaltvals.at(r,c) = mat[r*ncols+c];
+					azaltvals.at(r,c) = 1-mat[r*ncols+c]/100;
 
 			enable_azalt_beam_shading = true;
 		}
 
 		double shad_skydiff_factor = 1.0;
 		if ( is_assigned( "shading:diff" ) )
-			shad_skydiff_factor = as_double( "shading:diff" );
+			shad_skydiff_factor = 1-as_double( "shading:diff" )/100;
 
 		pvwatts_celltemp tccalc( inoct+273.15, PVWATTS_HEIGHT, 1.0 );
 			
