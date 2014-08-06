@@ -1165,7 +1165,7 @@ public:
 		}
 
 		// process basic flat rate - V3 handled in energy charge
-//		process_flat_rate( e_in, payment, income, price );
+		process_flat_rate( e_in, payment, income, price );
 
 		// process monthly fixed charges
 		process_monthly_charge( payment, monthly_fixed_charges );
