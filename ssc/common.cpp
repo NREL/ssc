@@ -276,3 +276,102 @@ float adjustment_factors::operator()( size_t time )
 
 
 
+
+shading_losses::shading_losses( compute_module *cm, const std::string &prefix )
+{
+	m_setupOk = true;
+	m_diffFactor = 1.0;
+	m_beamFactors.resize( 8760, 1.0 );
+
+	
+	for ( size_t j=0;j<8760;j++)
+		m_beamFactors[j] = 1.0;
+
+	if ( cm->is_assigned( prefix+"shading:hourly" ) )
+	{
+		size_t len = 0;
+		ssc_number_t *vals = cm->as_array( prefix+"shading:hourly", &len );
+		if ( len == 8760 )
+		{
+			for ( size_t j=0;j<8760;j++)
+				m_beamFactors[j] = 1-vals[j]/100;
+		}
+		else
+		{
+			m_setupOk = false;
+			m_errors.push_back("hourly shading beam factors must have 8760 values");
+		}
+	}
+
+
+	if ( cm->is_assigned( prefix+"shading:mxh" ) )
+	{
+		size_t nrows, ncols;
+		ssc_number_t *mat = cm->as_matrix( prefix+"shading:mxh", &nrows, &ncols );
+		if ( nrows != 12 || ncols != 24 )
+		{
+			m_setupOk = false;
+			m_errors.push_back("month x hour shading factors must have 12 rows and 24 columns");
+		}
+		else
+		{
+			int c=0;
+			for (int m=0;m<12;m++)
+				for (int d=0;d<util::nday[m];d++)
+					for (int h=0;h<24;h++)
+						m_beamFactors[c++] *= 1-mat[ m*ncols + h ]/100;
+		}
+	}
+
+	m_enAzAlt = false;
+	if ( cm->is_assigned( prefix+"shading:azal" ) )
+	{
+		size_t nrows, ncols;
+		ssc_number_t *mat = cm->as_matrix( prefix+"shading:azal", &nrows, &ncols );
+		if ( nrows < 3 || ncols < 3 )
+		{
+			m_setupOk = false;
+			m_errors.push_back("azimuth x altitude shading factors must have at least 3 rows and 3 columns");
+		}
+
+		m_azaltvals.resize_fill( nrows, ncols, 1.0 );
+		for ( size_t r=0;r<nrows;r++ )
+			for ( size_t c=0;c<ncols;c++ )
+				m_azaltvals.at(r,c) = 1-mat[r*ncols+c]/100;
+
+		m_enAzAlt = true;
+	}
+
+	if ( cm->is_assigned( prefix+"shading:diff" ) )
+		m_diffFactor = 1-cm->as_double( prefix+"shading:diff" )/100;
+
+}
+
+bool shading_losses::ok()
+{
+	return m_setupOk;
+}
+
+std::string shading_losses::get_error(size_t i)
+{
+	if( i < m_errors.size() ) return m_errors[i];
+	else return std::string("");
+}
+
+double shading_losses::fbeam( size_t hour, double solalt, double solazi )
+{
+	if ( hour >= 0 && hour < m_beamFactors.size() )
+	{
+		double factor = m_beamFactors[hour];
+		if ( m_enAzAlt )
+			factor *= util::bilinear( solalt, solazi, m_azaltvals );
+		return factor;
+	}
+	else
+		return 1.0;
+}
+
+double shading_losses::fdiff()
+{
+	return m_diffFactor;
+}

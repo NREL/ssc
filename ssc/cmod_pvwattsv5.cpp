@@ -225,63 +225,13 @@ public:
 		ssc_number_t *p_poa = allocate("poa", 8760);
 		ssc_number_t *p_tpoa = allocate("tpoa", 8760);
 
-		ssc_number_t *p_shad_beam_factor = allocate("shad_beam_factor", 8760);
 		ssc_number_t *p_sunup = allocate("sunup", 8760);
-	
-						
-		
-//		initialize to no shading
-		for ( size_t j=0;j<8760;j++)
-			p_shad_beam_factor[j] = 1.0;
+		ssc_number_t *p_shad_beam = allocate("shad_beam_factor", 8760); // just for reporting output
 
-		if ( is_assigned("shading:hourly" ) )
-		{
-			size_t len = 0;
-			ssc_number_t *vals = as_array( "shading:hourly", &len );
-			if ( len == 8760 )
-			{
-				for ( size_t j=0;j<8760;j++)
-					p_shad_beam_factor[j] = 1-vals[j]/100;
-			}
-			else
-				throw exec_error("pvwattsv5", "hourly shading beam factors must have 8760 values");
-		}
-
-
-		if ( is_assigned( "shading:mxh" ) )
-		{
-			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading:mxh", &nrows, &ncols );
-			if ( nrows != 12 || ncols != 24 )
-				throw exec_error("pvwattsv5", "month x hour shading factors must have 12 rows and 24 columns");
-
-			int c=0;
-			for (int m=0;m<12;m++)
-				for (int d=0;d<util::nday[m];d++)
-					for (int h=0;h<24;h++)
-						p_shad_beam_factor[c++] *= 1-mat[ m*ncols + h ]/100;
-		}
-
-		bool enable_azalt_beam_shading = false;
-		util::matrix_t<double> azaltvals;
-		if ( is_assigned( "shading:azal" ) )
-		{
-			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading:azal", &nrows, &ncols );
-			if ( nrows < 3 || ncols < 3 )
-				throw exec_error("pvwattsv5", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
-
-			azaltvals.resize_fill( nrows, ncols, 1.0 );
-			for ( size_t r=0;r<nrows;r++ )
-				for ( size_t c=0;c<ncols;c++ )
-					azaltvals.at(r,c) = 1-mat[r*ncols+c]/100;
-
-			enable_azalt_beam_shading = true;
-		}
-
-		double shad_skydiff_factor = 1.0;
-		if ( is_assigned( "shading:diff" ) )
-			shad_skydiff_factor = 1-as_double( "shading:diff" )/100;
+		// read all the shading input data and calculate the hourly factors for use subsequently
+		shading_losses shad( this, "" );
+		if ( !shad.ok() )
+			throw exec_error( "pvwattsv5", shad.get_error() );
 
 		pvwatts_celltemp tccalc( inoct+273.15, PVWATTS_HEIGHT, 1.0 );
 			
@@ -330,6 +280,7 @@ public:
 				irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
 			
 			p_sunup[i] = (ssc_number_t)sunup;
+			p_shad_beam[i] = (ssc_number_t) shad.fbeam(i, solalt, solazi);
 
 			if (sunup > 0)
 			{
@@ -340,7 +291,7 @@ public:
 					&& shade_mode_1x == 0 ) // selfshaded mode
 				{	
 					double shad1xf = shade_fraction_1x( solazi, solzen, tilt, azimuth, gcr, rot );					
-					p_shad_beam_factor[i] *= (ssc_number_t)(1-shad1xf);
+					p_shad_beam[i] *= (ssc_number_t)(1-shad1xf);
 
 					if ( shade_mode_1x == 0 && iskydiff > 0 )
 					{
@@ -372,14 +323,10 @@ public:
 				}
 
 				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-				ibeam *= p_shad_beam_factor[i];
-				
-				// apply beam shading based on solar azimuth/altitude table
-				if ( enable_azalt_beam_shading )
-					ibeam *= util::bilinear( solalt, solazi, azaltvals );
+				ibeam *= p_shad_beam[i];
 				
 				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-				iskydiff *= shad_skydiff_factor;
+				iskydiff *= shad.fdiff();
 				
 				double poa = ibeam + iskydiff +ignddiff;
 				
