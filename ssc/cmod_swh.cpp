@@ -29,7 +29,13 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                "deg",    "90=E,180=S",            "SWH",      "*",                       "MIN=0,MAX=360",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                "Ground reflectance factor",        "0..1",   "",                      "SWH",      "*",                       "FACTOR",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",            "Irradiance input mode",            "0/1",    "Beam+Diff,Global+Beam", "SWH",      "?=0",                     "INTEGER,MIN=0,MAX=1",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",             "Tilted surface irradiance model",  "0/1/2",  "Isotropic,HDKR,Perez",  "SWH",      "?=2",                     "INTEGER,MIN=0,MAX=2",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",             "Tilted surface irradiance model",  "0/1/2",  "Isotropic,HDKR,Perez",  "SWH",      "?=1",                     "INTEGER,MIN=0,MAX=2",               "" },
+
+	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",        "Hourly beam shading loss",             "%",         "",               "SWH",      "?",                       "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",           "Month x Hour beam shading loss",       "%",         "",               "SWH",      "?",                       "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",          "Azimuth x altitude beam shading loss", "%",         "",               "SWH",      "?",                       "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",          "Diffuse shading loss",                 "%",         "",               "SWH",      "?",                       "",                              "" },
+
 
 	{ SSC_INPUT,        SSC_NUMBER,      "mdot",                  "Total system mass flow rate",      "kg/s",   "",                      "SWH",      "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ncoll",                 "Number of collectors",             "",       "",                      "SWH",      "*",                       "POSITIVE,INTEGER",                  "" },
@@ -69,6 +75,8 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "diffuse",               "Irradiance - Diffuse",               "W/m2",  "",                      "SWH",      "*",                        "LENGTH=8760",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "I_incident",            "Irradiance - Incident",              "W/m2",  "",                      "SWH",      "*",                        "LENGTH=8760",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "I_transmitted",         "Irradiance - Transmitted",           "W/m2",  "",                      "SWH",      "*",                        "LENGTH=8760",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "shading_loss",          "Shading losses",                     "%",     "",                      "SWH",      "*",                        "LENGTH=8760",                     "" },
+
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                    "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                         "kWh",    "",                      "SWH",      "*",                        "LENGTH=8760",                      "" },
@@ -128,6 +136,10 @@ public:
 		Read user specified system parameters from compute engine
 		********************************************************************** */
 
+		shading_losses shad( this, "" );
+		if ( !shad.ok() )
+			throw exec_error( "swh", shad.get_error() );
+
 		/* constant fluid properties */
 		double Cp_water = 4182.; // Cp_water@40'C (J/kg.K)
 		double rho_water = 1000.; // 992.2; // density of water, kg/m3 @ 40'C
@@ -147,8 +159,10 @@ public:
 		size_t len;
 		ssc_number_t *draw = as_array("scaled_draw", &len);
 		if (len != 8760) throw exec_error("swh", "draw profile must have 8760 values");
+
 		ssc_number_t *custom_mains = as_array("custom_mains", &len);
 		if (len != 8760) throw exec_error("swh", "custom mains profile must have 8760 values");
+
 		ssc_number_t *custom_set = as_array("custom_set", &len);
 		if (len != 8760) throw exec_error("swh", "custom set temperature profile must have 8760 values");
 
@@ -214,6 +228,7 @@ public:
 		ssc_number_t *out_Draw = allocate("draw", 8760);
 		ssc_number_t *I_incident = allocate("I_incident", 8760);
 		ssc_number_t *I_transmitted = allocate("I_transmitted", 8760);
+		ssc_number_t *shading_loss = allocate("shading_loss", 8760);
 
 		ssc_number_t *out_Q_transmitted = allocate("Q_transmitted", 8760);
 		ssc_number_t *out_Q_useful = allocate("Q_useful", 8760);
@@ -270,6 +285,10 @@ public:
 			double poa[3];
 			tt.get_poa(&poa[0], &poa[1], &poa[2], 0, 0, 0);
 			I_incident[i] = (ssc_number_t)(poa[0] + poa[1] + poa[2]); // total PoA on surface
+			
+			double solalt = 0;
+			double solazi = 0;
+			tt.get_sun( &solazi, 0, &solalt, 0, 0, 0, 0, 0, 0, 0 );
 
 			double aoi = 0;
 			tt.get_angles(&aoi, 0, 0, 0, 0); // note: angles returned in degrees
@@ -305,8 +324,14 @@ public:
 			else if (theta_eff_ground > M_PI / 3 && theta_eff_ground <= M_PI / 2) Kta_g = (1 - iam)*(theta_eff_ground - M_PI / 2.);
 			if (Kta_g < 0) Kta_g = 0;
 
+			double beam_loss_factor = shad.fbeam( i, solalt, solazi );
 
-			I_transmitted[i] = (ssc_number_t)(Kta_b*poa[0] + Kta_d*poa[1] + Kta_g*poa[2]);
+			shading_loss[i] = (ssc_number_t) (1-beam_loss_factor)*100;
+
+			I_transmitted[i] = (ssc_number_t)(
+				Kta_b*poa[0]*beam_loss_factor + 
+				Kta_d*poa[1]*shad.fdiff() + 
+				Kta_g*poa[2]);
 
 
 		}
@@ -318,9 +343,7 @@ public:
 		if (use_custom_mains)
 		{
 			for (i = 0; i < 8760; i++)
-			{
 				T_mains[i] = (ssc_number_t)(custom_mains[i]);
-			}
 		}
 		else
 		{

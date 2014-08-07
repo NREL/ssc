@@ -27,5 +27,24 @@ public:
 };
 
 
+class shading_losses
+{
+	bool m_setupOk;
+	std::vector<std::string> m_errors;
+	std::vector<double> m_beamFactors;
+	util::matrix_t<double> m_azaltvals;
+	bool m_enAzAlt;
+	double m_diffFactor;
+
+public:
+	shading_losses( compute_module *cm, const std::string &prefix = "" );
+	bool ok();
+	std::string get_error(size_t i=0);
+	
+	// beam and diffuse loss factors (0: full loss, 1: no loss )
+	double fbeam( size_t hour /* 0-8759 */, double solalt, double solazi );
+	double fdiff();
+};
+
 #endif
 
