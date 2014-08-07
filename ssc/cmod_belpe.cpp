@@ -904,7 +904,7 @@ public:
 		// compute the monthly difference in load and the load scaling factor for that month
 		for (int i = 0; i < 12; i++)
 		{
-			monthly_diff[i] = monthly_load[i] - monthly_util[i]*1000; //load is input as kWh, needs to be converted to Wh for comparison
+			monthly_diff[i] = monthly_load[i] - monthly_util[i]*1000; //utility bill is input as kWh, needs to be converted to Wh for comparison
 			if (monthly_load[i] != 0)
 				monthly_scale[i] = monthly_diff[i] / monthly_load[i];
 			else //avoid divide by zero issues
@@ -930,17 +930,16 @@ public:
 		for (int i = 0; i < 8760; i++)
 		{
 			if (monthly_hvac_load[month[i]] > 0)
-			{
 				load[i] = load[i] * (1 - closest_scale_avg) - x_hvac[month[i]] * hvac_load[i];
-			}
+			else
+				load[i] = load[i] * (1 - monthly_scale[month[i]]);
 		}
 		
 		//CONVERT LOADS TO KWH AND ASSIGN PEAK LOAD*********************************************************************************************************************************************************
 		for (int i = 0; i < 8760; i++)
 		{
 			load[i] /= 1000; //kWh
-			p_load[i] = load[i]; //kW (because timestep is hourly)
-			
+			p_load[i] = load[i]; //kW (because timestep is hourly). peak load is equal to hourly load for this hourly calculator.
 		}
 
 	}
