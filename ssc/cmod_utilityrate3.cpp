@@ -15,6 +15,7 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_INPUT, SSC_ARRAY, "e_load", "Net energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
 //	{ SSC_INPUT, SSC_ARRAY, "p_without_system", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
 	{ SSC_INPUT, SSC_ARRAY, "p_load", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
 
 //	{ SSC_INPUT,        SSC_ARRAY,      "system_availability",       "Annual availability of system",    "%/year", "",                      "",             "?=100",                       "",                              "" },
 //	{ SSC_INPUT,        SSC_ARRAY,      "system_degradation",       "Annual degradation of system",    "%/year", "",                      "",             "?=0",                       "",                              "" },
@@ -710,6 +711,9 @@ static var_info vtab_utility_rate3[] = {
 	
 var_info_invalid };
 
+
+
+
 class cm_utilityrate3 : public compute_module
 {
 private:
@@ -725,6 +729,7 @@ public:
 		size_t count, i, j;
 
 		size_t nyears = (size_t)as_integer("analysis_period");
+		double inflation_rate = as_double("inflation_rate")*0.01;
 
 		// compute annual system output degradation multipliers
 		std::vector<ssc_number_t> sys_scale(nyears);
@@ -760,9 +765,8 @@ public:
 		parr = as_array("load_escalation", &count);
 		if (count == 1)
 		{
-			// add in inflation rate - added in interop layer
 			for (i=0;i<nyears;i++)
-				load_scale[i] = (ssc_number_t)pow( (double)(/*inflation_rate+*/1+parr[0]*0.01), (double)i );
+				load_scale[i] = (ssc_number_t)pow( (double)(1+parr[0]*0.01), (double)i );
 		}
 		else
 		{
@@ -776,7 +780,7 @@ public:
 		if (count == 1)
 		{
 			for (i=0;i<nyears;i++)
-				rate_scale[i] = (ssc_number_t)pow( (double)(/*inflation_rate+*/1+parr[0]*0.01), (double)i );
+				rate_scale[i] = (ssc_number_t)pow( (double)(inflation_rate+1+parr[0]*0.01), (double)i );
 		}
 		else
 		{
