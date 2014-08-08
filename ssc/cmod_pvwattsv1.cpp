@@ -1,4 +1,5 @@
 #include "core.h"
+#include "common.h"
 
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
@@ -57,36 +58,40 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	
 	/* outputs */
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam irradiance",                             "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tdew",                           "Dew point temperature",                       "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam irradiance",                             "W/m2",   "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",      "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tdew",                           "Dew point temperature",                       "C",      "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",    "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",   "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",       "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "PVWatts",      "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",   "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "Wdc",    "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "Wac",    "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                  "Hourly energy",                               "kWh",  "",                          "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",       "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "Hourly",        "*",                       "LENGTH=8760",                          "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",   "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC array output",                             "kWhdc",    "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC system output",                            "kWhac",    "",                        "PVWatts",      "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",   "",                      "Monthly",       "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                     "Monthly",       "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC array output",                             "kWhdc",    "",                      "Monthly",       "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC system output",                            "kWhac",    "",                      "Monthly",       "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",      "",                      "Monthly",      "*",                        "LENGTH=12",                          "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day",    "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC system output",                     "kWhac",    "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day",    "",                 "Annual",        "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC system output",                     "kWhac",    "",                      "Annual",        "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",    "",                        "Annual",        "*",                       "",                          "" },
 
-	{ SSC_OUTPUT,       SSC_STRING,      "location",                      "Location ID",                                  "",    "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_STRING,      "city",                          "City",                                         "",    "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_STRING,      "state",                         "State",                                        "",    "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "lat",                           "Latitude",                                     "deg", "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                           "Longitude",                                    "deg", "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                            "Time zone",                                    "hr",  "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                          "Site elevation",                               "m",   "",                        "PVWatts",      "*",                       "",                          "" },
+																																																					          
+	{ SSC_OUTPUT,       SSC_STRING,      "location",                      "Location ID",                                  "",    "",                           "Location",      "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_STRING,      "city",                          "City",                                         "",    "",                           "Location",      "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_STRING,      "state",                         "State",                                        "",    "",                           "Location",      "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lat",                           "Latitude",                                     "deg", "",                           "Location",      "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                           "Longitude",                                    "deg", "",                           "Location",      "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                            "Time zone",                                    "hr",  "",                           "Location",      "*",                       "",                                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                          "Site elevation",                               "m",   "",                           "Location",      "*",                       "",                                   "" },
 
 
 	var_info_invalid };
@@ -98,6 +103,7 @@ public:
 	cm_pvwattsv1()
 	{
 		add_var_info( _cm_vtab_pvwattsv1 );
+		add_var_info( vtab_adjustment_factors );
 	}
 
 	void exec( ) throw( general_error )
@@ -131,12 +137,13 @@ public:
 		ssc_number_t *p_wspd = allocate("wspd", 8760);
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
-		ssc_number_t *p_ac = allocate("ac", 8760);
+		ssc_number_t *p_ac = allocate("ac", 8760);		
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
 		ssc_number_t *p_tcell = allocate("tcell", 8760);
 		ssc_number_t *p_poa = allocate("poa", 8760);
 		ssc_number_t *p_tpoa = allocate("tpoa", 8760);
 
-		ssc_number_t *p_shad_beam_factor = allocate("shad_beam_factor", 8760);
+		ssc_number_t *p_shad_beam = allocate("shad_beam_factor", 8760);
 		ssc_number_t *p_sunup = allocate("sunup", 8760);
 	
 		
@@ -195,58 +202,15 @@ public:
 			azimuth = 180.0;
 						
 		
-//		initialize to no shading
-		for ( size_t j=0;j<8760;j++)
-			p_shad_beam_factor[j] = 1.0;
+		// read all the shading input data and calculate the hourly factors for use subsequently
+		shading_factor_calculator shad;
+		if ( !shad.setup( this, "" ) )
+			throw exec_error( "pvwattsv1", shad.get_error() );
 
-		if ( is_assigned("shading_hourly" ) )
-		{
-			size_t len = 0;
-			ssc_number_t *vals = as_array( "shading:hourly", &len );
-			if ( len == 8760 )
-			{
-				for ( size_t j=0;j<8760;j++)
-					p_shad_beam_factor[j] = vals[j];
-			}
-			else
-				throw exec_error("pvwattsv1", "hourly shading beam factors must have 8760 values");
-		}
+		adjustment_factors haf( this );
+		if ( !haf.setup() )
+			throw exec_error("pvwattsv1", "failed to setup adjustment factors: " + haf.error() );
 
-
-		if ( is_assigned( "shading:mxh" ) )
-		{
-			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading:mxh", &nrows, &ncols );
-			if ( nrows != 12 || ncols != 24 )
-				throw exec_error("pvwattsv1", "month x hour shading factors must have 12 rows and 24 columns");
-
-			int c=0;
-			for (int m=0;m<12;m++)
-				for (int d=0;d<util::nday[m];d++)
-					for (int h=0;h<24;h++)
-						p_shad_beam_factor[c++] *= mat[ m*ncols + h ];
-		}
-
-		bool enable_azalt_beam_shading = false;
-		util::matrix_t<double> azaltvals;
-		if ( is_assigned( "shading:azal" ) )
-		{
-			size_t nrows, ncols;
-			ssc_number_t *mat = as_matrix( "shading:azal", &nrows, &ncols );
-			if ( nrows < 3 || ncols < 3 )
-				throw exec_error("pvwattsv1", "azimuth x altitude shading factors must have at least 3 rows and 3 columns");
-
-			azaltvals.resize_fill( nrows, ncols, 1.0 );
-			for ( size_t r=0;r<nrows;r++ )
-				for ( size_t c=0;c<ncols;c++ )
-					azaltvals.at(r,c) = mat[r*ncols+c];
-
-			enable_azalt_beam_shading = true;
-		}
-
-		double shad_skydiff_factor = 1.0;
-		if ( is_assigned( "shading:diff" ) )
-			shad_skydiff_factor = as_double( "shading:diff" );
 
 		pvwatts_celltemp tccalc( inoct, height, 1.0 );
 		
@@ -309,6 +273,7 @@ public:
 				irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
 			
 			p_sunup[i] = (ssc_number_t)sunup;
+			p_shad_beam[i] = (ssc_number_t) shad.fbeam(i, solalt, solazi );
 
 			if (sunup > 0)
 			{
@@ -319,7 +284,7 @@ public:
 					&& shade_mode_1x == 0 ) // selfshaded mode
 				{	
 					double shad1xf = shade_fraction_1x( solazi, solzen, tilt, azimuth, gcr, rot );					
-					p_shad_beam_factor[i] *= (ssc_number_t)(1-shad1xf);
+					p_shad_beam[i] *= (ssc_number_t)(1-shad1xf);
 
 					if ( fd > 0 && shade_mode_1x == 0 && iskydiff > 0 )
 					{
@@ -351,14 +316,10 @@ public:
 				}
 
 				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-				ibeam *= p_shad_beam_factor[i];
-				
-				// apply beam shading based on solar azimuth/altitude table
-				if ( enable_azalt_beam_shading )
-					ibeam *= util::bilinear( solalt, solazi, azaltvals );
-				
+				ibeam *= p_shad_beam[i];
+								
 				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-				iskydiff *= shad_skydiff_factor;
+				iskydiff *= shad.fdiff();
 				
 				double poa = ibeam + fd*(iskydiff +ignddiff);
 
@@ -390,6 +351,7 @@ public:
 				p_tcell[i] = (ssc_number_t)pvt;
 				p_dc[i] = (ssc_number_t)dc;
 				p_ac[i] = (ssc_number_t)ac;
+				p_hourly_energy[i] = (ssc_number_t)( ac*haf(i) * 0.001f );
 			}
 		
 			i++;
@@ -397,7 +359,8 @@ public:
 
 		ssc_number_t *poam = accumulate_monthly( "poa", "poa_monthly", 0.001 );
 		accumulate_monthly( "dc", "dc_monthly", 0.001 );
-		accumulate_monthly( "ac", "ac_monthly", 0.001 );
+		accumulate_monthly( "ac", "ac_monthly", 0.001 );		
+		accumulate_monthly( "hourly_energy", "monthly_energy" );
 
 		ssc_number_t *solrad = allocate( "solrad_monthly", 12 );
 		ssc_number_t solrad_ann = 0;
@@ -410,6 +373,7 @@ public:
 
 
 		accumulate_annual( "ac", "ac_annual", 0.001 );
+		accumulate_annual( "hourly_energy", "annual_energy" ); 
 
 		assign( "location", var_data( wf.location ) );
 		assign( "city", var_data( wf.city ) );

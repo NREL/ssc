@@ -229,8 +229,8 @@ public:
 		ssc_number_t *p_shad_beam = allocate("shad_beam_factor", 8760); // just for reporting output
 
 		// read all the shading input data and calculate the hourly factors for use subsequently
-		shading_losses shad( this, "" );
-		if ( !shad.ok() )
+		shading_factor_calculator shad;
+		if ( !shad.setup( this, "" ) )
 			throw exec_error( "pvwattsv5", shad.get_error() );
 
 		pvwatts_celltemp tccalc( inoct+273.15, PVWATTS_HEIGHT, 1.0 );

@@ -136,8 +136,8 @@ public:
 		Read user specified system parameters from compute engine
 		********************************************************************** */
 
-		shading_losses shad( this, "" );
-		if ( !shad.ok() )
+		shading_factor_calculator shad;
+		if ( !shad.setup( this, "" ) )
 			throw exec_error( "swh", shad.get_error() );
 
 		/* constant fluid properties */
