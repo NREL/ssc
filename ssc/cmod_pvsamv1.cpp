@@ -450,11 +450,7 @@ struct subarray
 		
 		for (size_t i=0;i<12;i++)
 			soiling[i] = 1.0;
-
 		
-		shad_skydiff_factor = 1.0;
-		en_azal = false;
-
 		poa.ibeam = 0;
 		poa.iskydiff = 0;
 		poa.ignddiff = 0;
@@ -490,10 +486,7 @@ struct subarray
 	ssinputs sscalc;
 	ssoutputs ssout;
 	
-	std::vector<double> shad_beam_factor; // hourly factors as well as mxh
-	bool en_azal; // enable az x al shading factors
-	util::matrix_t<double> shad_azal;
-	double shad_skydiff_factor;
+	shading_factor_calculator shad;
 
 	// calculated by irradiance processor
 	struct {
@@ -601,63 +594,9 @@ public:
 			sa[nn].azimuth = as_double( prefix+"azimuth" );
 			sa[nn].rotlim = as_double( prefix+"rotlim" );
 			
-			sa[nn].shad_skydiff_factor = 1;
-			if ( is_assigned( prefix+"shading:diff" ) )
-				sa[nn].shad_skydiff_factor = 1 - as_double( prefix+"shading:diff" )/100;
-			
-			sa[nn].shad_beam_factor.resize(8760);
-			for (size_t j=0;j<8760;j++)
-				sa[nn].shad_beam_factor[j] = 1.0;
 
-			if ( is_assigned( prefix+"shading:hourly" ) )
-			{
-				size_t len = 0;
-				ssc_number_t *vals = as_array( prefix+"shading:hourly", &len );
-				if ( len == 8760 )
-				{
-					for ( size_t j=0;j<8760;j++)
-						sa[nn].shad_beam_factor[j] = 1 - (double) vals[j]/100;
-				}
-				else
-					throw exec_error("pvsamv1", "hourly shading beam factors must have 8760 values: subarray " + util::to_string((int)(nn+1)));
-			}
-
-			if ( is_assigned( prefix+"shading:mxh" ) )
-			{
-				size_t nrows, ncols;
-				ssc_number_t *mat = as_matrix( prefix+"shading:mxh", &nrows, &ncols );
-				if ( nrows != 12 || ncols != 24 )
-					throw exec_error("pvsamv1", "month x hour shading factors must have 12 rows and 24 columns: subarray " + util::to_string((int)(nn+1)));
-
-				int c=0;
-				for (int m=0;m<12;m++)
-					for (int d=0;d<util::nday[m];d++)
-						for (int h=0;h<24;h++)
-							sa[nn].shad_beam_factor[c++] *= 1- mat[ m*ncols + h ]/100;
-			}
-
-			if ( is_assigned( prefix+"shading:azal" ) )
-			{
-				size_t nrows, ncols;
-				ssc_number_t *mat = as_matrix( prefix+"shading:azal", &nrows, &ncols );
-				if ( nrows < 3 || ncols < 3 )
-					throw exec_error("pvsamv1", "azimuth x altitude shading factors must have at least 3 rows and 3 columns: subarray " + util::to_string((int)(nn+1)));
-
-				sa[nn].shad_azal.resize_fill( nrows, ncols, 1.0 );
-				for ( size_t r=0;r<nrows;r++ )
-				for (size_t c = 0; c < ncols; c++)
-				{
-					if (r==0 || c==0)	//first row and first column give azimuth and altitude coordinates, don't need to translate into derates
-						sa[nn].shad_azal.at(r, c) = mat[r*ncols + c];
-					else
-						sa[nn].shad_azal.at(r, c) = 1 - mat[r*ncols + c] / 100;
-				}
-
-				if ( !check_azal_monotonic_increase( sa[nn].shad_azal ) )
-					throw exec_error("pvsamv1", "azimuth x altitude shading factor table row 1 and col 1 must increase monotonically: subarray " + util::to_string((int)(nn+1)));
-
-				sa[nn].en_azal = true;
-			}
+			if (!sa[nn].shad.setup( this, prefix ))
+				throw exec_error("pvsamv1", prefix + "_shading: " + sa[nn].shad.get_error() );
 
 			//backtracking- only required if one-axis tracker
 			if (sa[nn].track_mode == 1)
@@ -1283,21 +1222,13 @@ public:
 				//accumulate monthly nominal poa
 				sa[nn].monthly_poa_nom[ month_idx ] += ( (ibeam+iskydiff+ignddiff) * 0.001 );
 
-				double beam_shad_factor = sa[nn].shad_beam_factor[istep]; // variable to accumulate total beam shading derate for this hour
+				double beam_shad_factor = sa[nn].shad.fbeam( istep, solalt, solazi );
 								
 				// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-				ibeam *= sa[nn].shad_beam_factor[istep];	
-				
-				// apply beam shading based on solar azimuth/altitude table
-				if ( sa[nn].en_azal )
-				{
-					double factor = util::bilinear( solalt, solazi, sa[nn].shad_azal );		
-					ibeam *= factor;
-					beam_shad_factor *= factor;
-				}
-				
+				ibeam *= beam_shad_factor;
+								
 				// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-				iskydiff *= sa[nn].shad_skydiff_factor;
+				iskydiff *= sa[nn].shad.fdiff();
 
 				//self-shading calculations
 				if ((sa[nn].track_mode == 0 && sa[nn].shade_mode == 0) //fixed tilt, self-shading OR
@@ -1609,8 +1540,6 @@ public:
 			istep++;
 
 		}
-
-
 
 		if (istep != 8760)
 			throw exec_error( "pvsamv1", "failed to simulate all 8760 hours, error in weather file?");

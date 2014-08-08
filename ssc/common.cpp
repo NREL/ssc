@@ -275,11 +275,15 @@ float adjustment_factors::operator()( size_t time )
 }
 
 
-
-
-shading_losses::shading_losses( compute_module *cm, const std::string &prefix )
+shading_factor_calculator::shading_factor_calculator()
 {
-	m_setupOk = true;
+	m_enAzAlt = false;
+	m_diffFactor = 1.0;
+}
+
+bool shading_factor_calculator::setup( compute_module *cm, const std::string &prefix )
+{
+	bool ok = true;
 	m_diffFactor = 1.0;
 	m_beamFactors.resize( 8760, 1.0 );
 
@@ -298,7 +302,7 @@ shading_losses::shading_losses( compute_module *cm, const std::string &prefix )
 		}
 		else
 		{
-			m_setupOk = false;
+			ok = false;
 			m_errors.push_back("hourly shading beam factors must have 8760 values");
 		}
 	}
@@ -310,7 +314,7 @@ shading_losses::shading_losses( compute_module *cm, const std::string &prefix )
 		ssc_number_t *mat = cm->as_matrix( prefix+"shading:mxh", &nrows, &ncols );
 		if ( nrows != 12 || ncols != 24 )
 		{
-			m_setupOk = false;
+			ok = false;
 			m_errors.push_back("month x hour shading factors must have 12 rows and 24 columns");
 		}
 		else
@@ -330,7 +334,7 @@ shading_losses::shading_losses( compute_module *cm, const std::string &prefix )
 		ssc_number_t *mat = cm->as_matrix( prefix+"shading:azal", &nrows, &ncols );
 		if ( nrows < 3 || ncols < 3 )
 		{
-			m_setupOk = false;
+			ok = false;
 			m_errors.push_back("azimuth x altitude shading factors must have at least 3 rows and 3 columns");
 		}
 
@@ -345,20 +349,17 @@ shading_losses::shading_losses( compute_module *cm, const std::string &prefix )
 	if ( cm->is_assigned( prefix+"shading:diff" ) )
 		m_diffFactor = 1-cm->as_double( prefix+"shading:diff" )/100;
 
+
+	return ok;
 }
 
-bool shading_losses::ok()
-{
-	return m_setupOk;
-}
-
-std::string shading_losses::get_error(size_t i)
+std::string shading_factor_calculator::get_error(size_t i)
 {
 	if( i < m_errors.size() ) return m_errors[i];
 	else return std::string("");
 }
 
-double shading_losses::fbeam( size_t hour, double solalt, double solazi )
+double shading_factor_calculator::fbeam( size_t hour, double solalt, double solazi )
 {
 	if ( hour >= 0 && hour < m_beamFactors.size() )
 	{
@@ -371,7 +372,7 @@ double shading_losses::fbeam( size_t hour, double solalt, double solazi )
 		return 1.0;
 }
 
-double shading_losses::fdiff()
+double shading_factor_calculator::fdiff()
 {
 	return m_diffFactor;
 }

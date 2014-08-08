@@ -27,9 +27,8 @@ public:
 };
 
 
-class shading_losses
+class shading_factor_calculator
 {
-	bool m_setupOk;
 	std::vector<std::string> m_errors;
 	std::vector<double> m_beamFactors;
 	util::matrix_t<double> m_azaltvals;
@@ -37,8 +36,8 @@ class shading_losses
 	double m_diffFactor;
 
 public:
-	shading_losses( compute_module *cm, const std::string &prefix = "" );
-	bool ok();
+	shading_factor_calculator();
+	bool setup( compute_module *cm, const std::string &prefix = "" );
 	std::string get_error(size_t i=0);
 	
 	// beam and diffuse loss factors (0: full loss, 1: no loss )
