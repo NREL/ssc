@@ -159,7 +159,7 @@ void Ambient::setDateTime(double day_hour, double year_day, double year){
 	_date_time.SetSecond(int(sec));
 	_date_time.SetYearDay(int(year_day));
 	_date_time.SetYear(int(year));
-	double month, dom;
+	int month, dom;
 	_date_time.hours_to_date((year_day-1)*24.+day_hour, month, dom);
 	_date_time.SetMonth(int(month));
 	_date_time.SetMonthDay(int(dom));
@@ -223,7 +223,6 @@ void Ambient::calcSunPosition(double sp[2], double lat, double lon, double timez
 		latitude, longitude, timezone, interval
 	*/
 	
-
 	//Instantiate the solpos object
 	struct posdata SP, *pdat;
 	pdat = &SP;	//point to structure for convenience
@@ -400,21 +399,22 @@ void Ambient::calcSpacedDaysHours(double lat, double lon, double tmz, int nday, 
 		hours(nday);
 	
 	DateTime DT;
-	double month, dom;
+	int month, dom;
 
 	for(int i=0; i<nday; i++){
 		//Calculate the day number - The days are evenly distributed over the cosine wave of the year
 		uday[i] = 355 - (int)floor(acos(-1.+2.*i/(float)(nday-1))/pi*(float)(355-172));
 		
 		DT.hours_to_date(uday[i]*24 +12., month, dom);
-		DT.SetHour(12.);
+		DT.SetHour(12);
 		DT.SetDate(2011, month, dom);
 		DT.SetYearDay(uday[i]);
 		double hrs[2];
 		Ambient::calcDaytimeHours(hrs, lat, lon, tmz, DT);
 
 		noons.at(i) = (hrs[0]+hrs[1])/2.;
-		ntstep[i] = (int)floor( (hrs[1]-noons.at(i))/delta_hr );
+		//shorten the time by 0.9 so we don't get stuff really close to the horizon
+		ntstep[i] = (int)floor( (hrs[1]-noons.at(i))*.9/delta_hr );
 		
 		//For the calculated day, determine the solar declination angle and the number of daylight hours
 		//delta[i] = asin(23.45*d2r*cos((float)(uday[i]-173)*d2r)); 

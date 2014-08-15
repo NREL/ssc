@@ -29,7 +29,7 @@ void LayoutSimThread::Setup(SolarField *SF, var_set *vset, sim_results *results,
 };
 
 void LayoutSimThread::Setup(SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
-	double args[4], int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail)
+	double *args, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail)
 {
 	/* 
 	overload to allow specification of simulation sun positions. 
@@ -191,26 +191,48 @@ void LayoutSimThread::StartThread() //Entry()
 				args[j] = _user_args[j];
 		}
 
-		if(_is_shadow_detail || _is_flux_detail)
+		bool is_cancel;
+
+		StatusLock.lock();
+		is_cancel = this->CancelFlag; 
+		StatusLock.unlock();
+
+		if( (_is_shadow_detail || _is_flux_detail ) && !is_cancel)
 			interop::AimpointUpdateHandler(*_SF, *_vset);
-			
-		if(_is_flux_detail)
-			_SF->HermiteFluxSimulation( *_SF->getHeliostats() );
-		else
-			_SF->Simulate(args, 5, !_is_shadow_detail);
-			
-		//store the _results
-		_results->at(i).process_analytical_simulation(*_SF, _is_flux_detail ? 2 : 0); //2);
 		
+		StatusLock.lock();
+		is_cancel = this->CancelFlag; 
+		StatusLock.unlock();
+
+		if(! is_cancel)
+			_SF->Simulate(args, 5, !_is_shadow_detail);
+
+		if((! is_cancel) && _is_flux_detail)
+			_SF->HermiteFluxSimulation( *_SF->getHeliostats() );
+							
+		
+
+		StatusLock.lock();
+		is_cancel = this->CancelFlag; 
+		StatusLock.unlock();
+
+		//store the _results
+		if(! is_cancel)
+			_results->at(i).process_analytical_simulation(*_SF, _is_flux_detail ? 2 : 0); //2);
+		
+		StatusLock.lock();
+		is_cancel = this->CancelFlag; 
+		StatusLock.unlock();
+
 		//optionally post-process the flux results as well
-		if(_is_flux_detail)
+		if(_is_flux_detail && !is_cancel)
 			_results->at(i).process_flux(_SF, _is_flux_normalized);
 
 		//Update progress
 		UpdateStatus(i-_sim_first+1,nsim);
 		//Check for user cancel
 		StatusLock.lock();
-		bool is_cancel = this->CancelFlag; 
+		is_cancel = this->CancelFlag; 
 		StatusLock.unlock();
 		if(is_cancel){
 			FinishedLock.lock();

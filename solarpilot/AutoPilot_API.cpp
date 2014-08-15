@@ -63,7 +63,7 @@ public:
 			Beta.resize(nbeta, 1.);*/
 
 		double yret = 0.;
-		double ib=0;
+		int ib=0;
 		for(int i=0; i<N_vars+1; i++){
 			double xi = i==0 ? 1. : xpt.at(i-1);
 			for(int j=i; j<N_vars+1; j++){
@@ -76,7 +76,6 @@ public:
 	};
 	
 };
-
 
 double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *data)
 {
@@ -95,10 +94,10 @@ double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *da
 		D->Beta.at(i) = x[i];
 	
 	double ss=0.;
-	double ave=0.;
+	//double ave=0.;
 	for(int i=0; i<(int)D->X.size(); i++){
 		double y = D->EvaluateBiLinearResponse(D->X.at(i));
-		ave += y;
+		//ave += y;
 		double ssv = (y - D->Y.at(i));
 		ss += ssv * ssv;
 	}
@@ -155,20 +154,24 @@ void TestQuadSurface(vector<double*> &vptrs, double &opt, double &flux)
 	//something random but regressable.
 	opt = 0.;
 	for(int i=0; i<(int)vptrs.size(); i++)
-		opt += sin(*vptrs.at(i) );
-		//opt += i * (*vptrs.at(i) ) + (*vptrs.at(i))*(*vptrs.at(max(i-1,0)));
+		//opt += sin(*vptrs.at(i) );
+		opt += i * (*vptrs.at(i) ) + (*vptrs.at(i))*(*vptrs.at(max(i-1,0))) + (*vptrs.at(i))*(*vptrs.at(i))*i;
 	flux = 2 * opt;
 
 };
 
 AutoPilot::AutoPilot()
 {
-	_has_callback = false;
+	_has_summary_callback = false;
+	_has_detail_callback = false;
 	_is_solarfield_external = false;
 	_SF = 0;
-	_callback = 0;
-	_callback_data = 0;
-	_local_siminfo = 0;
+	_summary_callback = 0;
+	_detail_callback = 0;
+	_summary_callback_data = 0;
+	_detail_callback_data = 0;
+	_summary_siminfo = 0;
+	_detail_siminfo = 0;
 }
 
 AutoPilot::~AutoPilot()
@@ -181,18 +184,18 @@ AutoPilot::~AutoPilot()
 		catch(...){}
 	}
 
-	if( _local_siminfo != 0 && _has_callback && !_is_deep_callback)
+	if( _summary_siminfo != 0)
 	{
 		//quietly try to delete the simulation info object
 		try{
-			delete _local_siminfo;
+			delete _summary_siminfo;
 		}
 		catch(...){}
 	}
 	return;
 }
 
-bool AutoPilot::CreateLayout()
+bool AutoPilot::CreateLayout(bool do_post_process)
 {
 	
 	//override in inherited class
@@ -214,12 +217,30 @@ bool AutoPilot::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int fl
 	return false;
 };
 
-void AutoPilot::SetCallback( void (*callback)(simulation_info* siminfo, void *data), void *cdata, bool is_deep_callback)
+void AutoPilot::SetSummaryCallback( bool (*callback)(simulation_info* siminfo, void *data), void *cdata)
 {
-	_has_callback = true;
-	_callback = callback;
-	_callback_data = cdata;
-	_is_deep_callback = is_deep_callback;
+	_has_summary_callback = true;
+	_summary_callback = callback;
+	_summary_callback_data = cdata;
+}
+
+void AutoPilot::SetDetailCallback( bool (*callback)(simulation_info* siminfo, void *data), void *cdata)
+{
+	_has_detail_callback = true;
+	_detail_callback = callback;
+	_detail_callback_data = cdata;
+}
+
+void AutoPilot::SetSummaryCallbackStatus(bool is_enabled)
+{
+	_has_summary_callback = is_enabled;
+}
+
+void AutoPilot::SetDetailCallbackStatus(bool is_enabled)
+{
+	_has_detail_callback = is_enabled;
+	if(_SF != 0)
+		_SF->getSimInfoObject()->isEnabled(is_enabled);
 }
 
 void AutoPilot::SetExternalSFObject( SolarField *SF )
@@ -275,41 +296,91 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 		_SF = new SolarField();
 	}
 
+	//---Set a couple of parameters here that should be consistent for simple API use
+	
+	//make sure the aiming strategy is correct
+	if(recs.front().type == sp_receiver::TYPE::CYLINDRICAL)
+		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::SIMPLE );
+	else
+		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::IMAGE_SIZE );
+
+	//set the receiver flux surfaces to the correct resolution to balance run time with accuracy
+	if( _variables["receiver"][0]["rec_type"].value_int() == 0 ){
+		//external receiver
+		_variables["fluxsim"][0]["x_res"].set(12);
+		_variables["fluxsim"][0]["y_res"].set(20);
+	
+	}
+	else{
+		//flat plate receiver
+		_variables["fluxsim"][0]["x_res"].set(15);
+		_variables["fluxsim"][0]["y_res"].set(15);
+	}
+	
 	//Create the solar field object
 	_SF->Create(_variables);
 	
 	//pass the callback along to the solar field, if applicable
-	if(_has_callback && _is_deep_callback){
-		_local_siminfo = _SF->getSimInfoObject();
-		_SF->getSimInfoObject()->setCallbackFunction(_callback, _callback_data);
+	if(_has_detail_callback){
+		_detail_siminfo = _SF->getSimInfoObject();
+		_SF->getSimInfoObject()->setCallbackFunction(_detail_callback, _detail_callback_data);
 		_SF->getSimInfoObject()->isEnabled(true);
 	}
-	if(_has_callback && !_is_deep_callback){
-		_local_siminfo = new simulation_info();
-		_local_siminfo->ResetValues();
-		_local_siminfo->setCallbackFunction(_callback, _callback_data);
+	if(_has_summary_callback){
+		_summary_siminfo = new simulation_info();
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->setCallbackFunction(_summary_callback, _summary_callback_data);
 	}
 	_setup_ok = true;
 	
 	return true;
 }
 
-void AutoPilot::SetupExpert(var_set &vset)
+bool AutoPilot::SetupExpert(var_set &vset, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, vector<string> &weather_data)
 {
 	_cancel_simulation = false;
+
+	//load the values from the var_set into the input structures
+	ambient.LoadDefaults(vset);
+	cost.LoadDefaults(vset);
+	layout.LoadDefaults(vset);
+	helios.resize(1);
+	for(int i=0; i<(int)helios.size(); i++)
+		helios.at(i).LoadDefaults(vset);
+	recs.resize(1);
+	for(int i=0; i<(int)recs.size(); i++)
+		recs.at(i).LoadDefaults(vset);
+	opt.LoadDefaults(vset);
+
+	//set up the weather data for simulation
+	GenerateDesignPointSimulations(ambient, vset, weather_data);
 
 	//Dynamically allocate the solar field object, if needed
 	if(! _is_solarfield_external ){
 		_SF = new SolarField();
 	}
 	_variables = vset;	//copy
-	_SF->Create(_variables);
+	
+	//update any calculated values
+	interop::UpdateCalculatedMapValues(_variables);
 
-	if(_has_callback && _is_deep_callback){
-		_SF->getSimInfoObject()->setCallbackFunction(_callback, _callback_data);
-		_SF->getSimInfoObject()->isEnabled(true);
+	//Create the solar field object
+	_SF->Create(_variables);
+	
+	//pass the callback along to the solar field, if applicable
+	if(_has_detail_callback){
+		_detail_siminfo = _SF->getSimInfoObject();
+		_detail_siminfo->setCallbackFunction(_detail_callback, _detail_callback_data);
+		_detail_siminfo->isEnabled(true);
+	}
+	if(_has_summary_callback){
+		_summary_siminfo = new simulation_info();
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->setCallbackFunction(_summary_callback, _summary_callback_data);
 	}
 	_setup_ok = true;
+	return true;
+		
 };
 
 void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
@@ -345,8 +416,8 @@ void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
 		_variables["ambient"][0]["atm_coefs"].choices.at(2) = avals;
 		break;
 	default:
-		if( _has_callback ){
-			_local_siminfo->addSimulationNotice("Invalid atmospheric model number provided. Options are 0=Delsol clear day, 1=Delsol hazy day, 2=user coefs");
+		if( _has_summary_callback ){
+			_summary_siminfo->addSimulationNotice("Invalid atmospheric model number provided. Options are 0=Delsol clear day, 1=Delsol hazy day, 2=user coefs");
 			return;
 		}
 		break;
@@ -394,8 +465,8 @@ void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
 		}
 		break;
 	default:
-		if( _has_callback )
-			_local_siminfo->addSimulationNotice("The specified sun shape model is invalid. Options are "
+		if( _has_summary_callback )
+			_summary_siminfo->addSimulationNotice("The specified sun shape model is invalid. Options are "
 			"Pillbox sun=2;Gaussian sun=4;Limb-darkened sun=1;Point sun=0;Buie CSR=5;User sun=3;");
 		break;
 	}
@@ -485,8 +556,8 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 		break;
 	}
 	default:
-		if( _has_callback )
-			_local_siminfo->addSimulationNotice("The specified land bound type is invalid. Options are Scaled=0, Fixed=1, Polygon=2.");
+		if( _has_summary_callback )
+			_summary_siminfo->addSimulationNotice("The specified land bound type is invalid. Options are Scaled=0, Fixed=1, Polygon=2.");
 		break;
 	}
 
@@ -586,19 +657,20 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 void AutoPilot::update_receivers(var_set &vset, sp_receivers &recs){
 	int r=0;
 	for(sp_receivers::iterator rec = recs.begin(); rec != recs.end(); rec++){
-		_variables["receiver"][r]["rec_type"].value = my_to_string(rec->type);
+		_variables["receiver"][r]["rec_type"].set(rec->type);
 
-		_variables["receiver"][r]["rec_offset_x"].value = my_to_string(rec->offset.x);
-		_variables["receiver"][r]["rec_offset_y"].value = my_to_string(rec->offset.y);
-		_variables["receiver"][r]["rec_offset_z"].value = my_to_string(rec->offset.z);
+		_variables["receiver"][r]["rec_offset_x"].set(rec->offset.x);
+		_variables["receiver"][r]["rec_offset_y"].set(rec->offset.y);
+		_variables["receiver"][r]["rec_offset_z"].set(rec->offset.z);
 
-		_variables["receiver"][r]["absorptance"].value = my_to_string( rec->absorptance );
-		_variables["receiver"][r]["therm_loss_base"].value = my_to_string( rec->q_hl_perm2 );
+		_variables["receiver"][r]["absorptance"].set( rec->absorptance );
+		_variables["receiver"][r]["therm_loss_base"].set( rec->q_hl_perm2 );
 		
 		double rw = rec->height / rec->aspect;
-		_variables["receiver"][r]["rec_width"].value = my_to_string( rw );
-		_variables["receiver"][r]["rec_aspect"].value = my_to_string( rec->aspect ); 
-		_variables["receiver"][r]["rec_diameter"].value = my_to_string( rw );
+		_variables["receiver"][r]["rec_height"].set( rec->height );
+		_variables["receiver"][r]["rec_width"].set( rw );
+		_variables["receiver"][r]["rec_aspect"].set( rec->aspect ); 
+		_variables["receiver"][r]["rec_diameter"].set( rw );
 		
 		r++;
 	}
@@ -636,7 +708,7 @@ void AutoPilot::GenerateDesignPointSimulations(sp_ambient &amb, var_set &variabl
 	*/
 
 	amb.weather_data.clear();
-	interop::GenerateSimulationWeatherData(variables, LAYOUT_DETAIL::AVG_PROFILES, wdata);	//LAYOUT_DETAIL::SINGLE_POINT
+	interop::GenerateSimulationWeatherData(variables, LAYOUT_DETAIL::FOR_OPTIMIZATION, wdata);	
 	vector<double> stepdat;
 	vector<string> sim_step_data = split(variables["solarfield"][0]["sim_step_data"].value, "[P]");
 	for(int i=0; i<(int)sim_step_data.size(); i++){
@@ -684,6 +756,9 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	int fluxmap_format;
 	to_integer(_variables["parametric"][0]["fluxmap_format"].value, &fluxmap_format);
 	
+	if(flux_res_y > 1)
+		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::IMAGE_SIZE );
+
 	//Shape the flux surface files to match
 	for(unsigned int i=0; i<rec_to_sim.size(); i++){
 		rec_to_sim.at(i)->DefineReceiverGeometry(flux_res_x, flux_res_y);	//Flux map should match spec
@@ -804,10 +879,10 @@ bool AutoPilot::SimulateFlux(sp_flux_map &fluxmap)
 	}
 
 	//provide an update if we aren't expecting one from the SF object
-	if(_has_callback && !_is_deep_callback){
-		_local_siminfo->ResetValues();
-		_local_siminfo->addSimulationNotice("Simulating receiver flux profile");
-	}
+	/*if(_has_summary_callback){
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->addSimulationNotice("Simulating receiver flux profile");
+	}*/
 
 	sim_result result;
 	try{
@@ -817,13 +892,13 @@ bool AutoPilot::SimulateFlux(sp_flux_map &fluxmap)
 	}
 	catch( std::exception &e ){
 		string emsg = e.what();
-		if(_has_callback)
-			_local_siminfo->addSimulationNotice( "Caught an exception during the flux simulation: " + emsg );
+		if(_has_summary_callback)
+			_summary_siminfo->addSimulationNotice( "Caught an exception during the flux simulation: " + emsg );
 		return false;
 	}
 	catch( ... ){
-		if(_has_callback)
-			_local_siminfo->addSimulationNotice( "Caught an unhandled exception during the flux simulation. The simulation terminated unsuccessfully.");
+		if(_has_summary_callback)
+			_summary_siminfo->addSimulationNotice( "Caught an unhandled exception during the flux simulation. The simulation terminated unsuccessfully.");
 		return false;
 	}
 
@@ -846,11 +921,11 @@ void AutoPilot::GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<
 
 	sim_points.clear();
 
-	int nruns = pow(2.0, (double)nvars);
+	int nruns = (int)pow(2, nvars);
 
 	vector<int> divisors;
 	for(int i=0; i<nvars; i++)
-		divisors.push_back( pow(2.0, (double)i) );
+		divisors.push_back( (int)pow(2, i) );
 
 	vector<vector<int> > design;
 	design.push_back( vector<int>(nvars, 1) );
@@ -873,10 +948,114 @@ void AutoPilot::GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<
 		
 }
 
-bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max){
-	//override in inherited class
-	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
-	return false;
+bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max)
+{
+	/* 
+	Create a layout and evaluate the optimization objective function value with as little 
+	computation as possible. This method is called by the optimization algorithm.
+
+	The 'obj_metric' is evaluated and set in this algorithm. If the simulation fails, the method 
+	returns FALSE.
+	*/
+
+
+	//----- temp for testing -----
+	//
+	//vector<double*> optvars = {&layout.h_tower, &recs.front().aspect, &recs.front().height, &layout.land_max};
+	//double doubvars[] = {
+	//	layout.h_tower/_variables["solarfield"][0]["tht"].value_double(), 
+	//	recs.front().aspect, 
+	//	recs.front().height/_variables["receiver"][0]["rec_height"].value_double(), 
+	//	layout.land_max/_variables["land"][0]["max_scaled_rad"].value_double()};
+
+	//obj_metric = _Test_Opt.rosenbrock_test(4, doubvars, nullptr, nullptr);
+	//flux_max = 0.;
+
+	////TestQuadSurface(optvars, obj_metric, flux_max);
+	//return true;
+	//
+	//------------------------------
+
+
+	_cancel_simulation = false;
+	
+	//Update the variable map
+	if(opt.is_optimize_rec_height || opt.is_optimize_rec_aspect)
+		update_receivers(_variables, recs);
+	if(opt.is_optimize_tht || opt.is_optimize_bound)
+		update_layout(_variables, layout);
+	//update any calculated values
+	interop::UpdateCalculatedMapValues(_variables);
+
+	//create the solar field object
+	if(! _cancel_simulation){
+		_SF->Create(_variables);	if(_SF->ErrCheck()){return false;}
+	}
+	//Do the layout simulation
+	bool layout_success;
+	if(! _cancel_simulation){
+		layout_success = CreateLayout(false);
+		if(_SF->ErrCheck()){return false;}
+	}
+	//Do the flux simulation at the design point
+	if(! _cancel_simulation){
+		//update the flux simulation sun position to match the layout reference point sun position
+		double pos[2];
+		_SF->getSunPositionDesign(pos);
+		double d2r = acos(-1.)/180.;
+		_SF->getAmbientObject()->setSolarPosition( pos[0]*d2r, (90.-pos[1])*d2r );
+		_variables["fluxsim"][0]["flux_solar_az_in"].set( pos[0] );	//[deg]
+		_variables["fluxsim"][0]["flux_solar_el_in"].set( pos[1] );
+		_variables["fluxsim"][0]["flux_time_type"].set( 0 );	//sun position specified
+
+		//prep for performance simulation (aim points, etc.)
+		interop::PerformanceSimulationPrep(*_SF, _variables, *_SF->getHeliostats(), 0 /*analytical*/);
+		
+		//do flux simulation
+		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), _variables["fluxsim"][0]["aim_method"].value_int() == Flux::AIM_STRATEGY::IMAGE_SIZE);	
+		if(_SF->ErrCheck()){return false;}		
+	}
+	
+	//get the annual optical power estimate
+	double optical_power = _SF->getAnnualPowerApproximation();
+	//power cycle efficiency
+	double cycle_eff = _SF->getPlantObject()->getCycleEfficiency() * _SF->getPlantObject()->getGrossToNetFactor();
+	double power = optical_power * cycle_eff*1.e-6;		//MW-h
+
+	//calculate the total plant cost
+	_SF->getFinancialObject()->calcPlantCapitalCost(*_SF);
+	double cost = _SF->getFinancialObject()->getTotalInstalledCost();
+	
+	//Get the maximum flux value
+	flux_max=0.;
+	for(int i=0; i<_SF->getReceivers()->size(); i++){
+		for(int j=0; j<_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++){
+			double ff = _SF->getReceivers()->at(i)->getFluxSurfaces()->at(j).getMaxObservedFlux();
+			if( ff > flux_max )
+				flux_max = ff;
+		}
+	}
+
+	//check to make sure we're producing enough power, otherwise we'll have to penalize
+	double qminimum = _SF->getDesignThermalPowerWithLoss();
+	double qactual = _SF->getActualThermalPowerWithLoss();
+	double power_shortage_ratio = min(qactual/qminimum, 1.);
+
+	//Set the optimization objective value
+	double flux_overage_ratio = max(flux_max/opt.flux_max, 1.);
+	obj_metric = cost/power 
+		* (1. + (flux_overage_ratio - 1.) * opt.flux_penalty) 
+		* (1. + (1. - power_shortage_ratio)*opt.power_penalty);
+	//Additive? may cause too much interaction
+	
+	//Set the aiming method back to the original value
+	//_variables["fluxsim"][0]["aim_method"].value = std::to_string( aim_method_save );
+
+	//Set the flux resolution back to the original values
+	/*_variables["fluxsim"][0]["x_res"].set( flux_x_save );
+	_variables["fluxsim"][0]["y_res"].set( flux_y_save );*/
+
+	return true;
 }
 
 bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout)
@@ -951,78 +1130,124 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 	//the initial normalized point is '1'
 	vector<double> current(nvars, 1.);
 
-		bool converged = false;
+	bool converged = false;
 	int opt_iter = 0;
 
 	vector<vector<double> > all_sim_points; //keep track of all of the positions simulated
 	vector<double> objective;
 	vector<double> max_flux;
-
+	double objective_old=9.e22;
+	double objective_new=9.e21;
+	int sim_count_begin = 0;
+	_summary_siminfo->addSimulationNotice("\n\n\n---------------Beginning simulation ------------------");
 	while( ! converged ){
+		sim_count_begin = objective.size() - 1;	//keep track of the simulation number at the beginning of the main iteration
 
-		
-		vector<vector<double> > runs;
-
+		//Choose the current point to the the best of all simulations in the previous iteration
+		if(opt_iter > 0){
+			double zbest = 9.e23;
+			int ibest = sim_count_begin;
+			for(int i=sim_count_begin; i<(int)objective.size(); i++){
+				if(objective.at(i) < zbest){
+					zbest = objective.at(i);
+					ibest = i;
+				}
+			}
+			current = all_sim_points.at(ibest);
+		}
 
 		//Start iteration by evaluating the current point
-		_local_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "] Simulating base point");
+		_summary_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "] Simulating base point");
 		for(int i=0; i<(int)optvars.size(); i++)
 			*optvars.at(i) = current.at(i) * normalizers.at(i);
 		all_sim_points.push_back( current );
 		double base_obj, base_flux;
 		EvaluateDesign(opt, recs, layout, base_obj, base_flux);			
+		PostEvaluationUpdate(opt_iter, current, normalizers, base_obj, base_flux);
+		if(_cancel_simulation) return false;
 		objective.push_back( base_obj );
 		max_flux.push_back( base_flux );
+		vector<double> surface_objective;
+		vector<vector<double> > surface_eval_points;
+		surface_objective.push_back( base_obj );
+		surface_eval_points.push_back( current );
 		//-- 
 
+		//Check to see if no further improvement has been made in the objective function
+		objective_new = base_obj;
+		if( (objective_old - objective_new)/objective_old < opt.converge_tol ){
+			converged = true;
+
+			//Find the best point simulated and return that
+			double zbest = 9.e23;
+			int ibest = (int)objective.size()-1;	//initialize as the last value just in case
+			for(int i=0; i<(int)objective.size(); i++){
+				if( objective.at(i) < zbest ){
+					zbest = objective.at(i);
+					ibest = i;
+				}
+			}
+			for(int i=0; i<(int)optvars.size(); i++)
+				*optvars.at(i) = all_sim_points.at(ibest).at(i) * normalizers.at(i);
+			
+			break;
+		}
+		objective_old = objective_new;
+
+
 		//Generate the set of points required for the response surface characterization
-		GenerateSurfaceEvalPoints( current, runs, opt.max_step_size);
+		vector<vector<double> > runs;
+		GenerateSurfaceEvalPoints( current, runs, opt.max_step);
 
 		//Run the evaluation points
-		_local_siminfo->setTotalSimulationCount((int)runs.size());
-		_local_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "]" + "Creating local response surface");
+		_summary_siminfo->setTotalSimulationCount((int)runs.size());
+		_summary_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "]" + "Creating local response surface");
 		for(int i=0; i<(int)runs.size(); i++){
-			_local_siminfo->setCurrentSimulation(i);
+			_summary_siminfo->setCurrentSimulation(i);
 
 			//update the data structures
 			for(int j=0; j<(int)optvars.size(); j++)
 				*optvars.at(j) = runs.at(i).at(j) * normalizers.at(j);
-
+			
 			//Evaluate the design
 			double obj, flux;
-			all_sim_points.push_back( current );
+			all_sim_points.push_back( runs.at(i) );
 			EvaluateDesign(opt, recs, layout, obj, flux);
-			
+			PostEvaluationUpdate(opt_iter, runs.at(i), normalizers, obj, flux);
+			if(_cancel_simulation) return false;
+			surface_objective.push_back(obj);
+			surface_eval_points.push_back( runs.at(i) );
 			objective.push_back( obj);
 			max_flux.push_back(flux);
 		}
 
 		//construct a bilinear regression model
+		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + 
+			" Generating regression fit");
 		response_surface_data Reg;
 		Reg.N_vars = nvars;
-		Reg.Y = objective;
-		Reg.X = runs;
+		Reg.Y = surface_objective;
+		Reg.X = surface_eval_points;
 		int nbeta = Reg.CalcNumberBetas();
-		Reg.Beta.resize( nbeta, .1);
+		Reg.Beta.resize( nbeta, 1.);
 		nlopt::opt surf(nlopt::LN_SBPLX, nbeta);		//subplex seems to work better than COBYLA
 		surf.set_min_objective( optimize_leastsq_eval, &Reg);
 		surf.set_xtol_rel(1.e-4);
-
+		
 		double min_dummy;
 		try{
 			nlopt::result sres = surf.optimize(Reg.Beta, min_dummy);
 			
-			converged = true;
 		}
 		catch( std::exception &e ){
-			_local_siminfo->addSimulationNotice( e.what() );
+			_summary_siminfo->addSimulationNotice( e.what() );
 			return false;
 		}
-
+		_summary_siminfo->addSimulationNotice("... r^2 = " + my_to_string(min_dummy/objective_new) );
 		
 		//now we have a response surface described by BETA coefficients. we need to choose the steepest descent
 		Reg.ncalls = 0;
-		Reg.max_step_size = opt.max_step_size;
+		Reg.max_step_size = opt.max_step;
 		Reg.big_M = 1000*(*std::max_element(Reg.Beta.begin(), Reg.Beta.end()) );
 		nlopt::opt steep(nlopt::LN_COBYLA, nvars);		//optimize with constraint on step size - use COBYLA
 		steep.set_min_objective( optimize_stdesc_eval, &Reg);
@@ -1043,12 +1268,16 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 		catch( std::exception &e )
 		{
-			_local_siminfo->addSimulationNotice( e.what() );
+			_summary_siminfo->addSimulationNotice( e.what() );
 			return false;
 		}
 		
 		//Check to see whether the regression surface minimum is significantly better than the current point
-		if((base_obj - Reg.EvaluateBiLinearResponse(stepto))/base_obj < opt.converge_tol){
+		double checktol = (base_obj - min_val)/base_obj;
+		if(fabs(checktol) < opt.converge_tol){
+			_summary_siminfo->addSimulationNotice(
+				"\nConvergence in the objective function value has been achieved. Final step variation: "
+				+ std::to_string(checktol) );
 			converged = true;
 			break;
 		}
@@ -1060,9 +1289,16 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 
 		
 		//move in max steps along the steepest descent vector until the objective function begins to increase
+		_summary_siminfo->ResetValues();
 		int minmax_iter = 0;
 		bool steep_converged = false;
+		double prev_obj = base_obj;
+		_summary_siminfo->setTotalSimulationCount(opt.max_desc_iter);
+		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + 
+				" Moving along steepest descent");
 		while( true ){
+			_summary_siminfo->setCurrentSimulation(minmax_iter);
+
 			//update the variable values
 			for(int i=0; i<(int)optvars.size(); i++){
 				current.at(i) += step_vector.at(i);
@@ -1073,7 +1309,10 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			double obj, flux;
 			all_sim_points.push_back( current );
 			EvaluateDesign(opt, recs, layout, obj, flux);
-			double prev_obj = objective.back();
+			PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+			if(_cancel_simulation) return false;
+			if(minmax_iter > 0)
+				prev_obj = objective.back();	//update the latest objective function value
 			objective.push_back( obj );
 			max_flux.push_back( flux );
 
@@ -1081,43 +1320,49 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			Reg.cur_pos = current;
 			stepto = current;	//initialize
 			minmax_iter++;
+			if(minmax_iter >= opt.max_desc_iter)
+				break;
 
 			//break here if the objective has increased
 			if(obj > prev_obj){
 				//is the overall steepest descent loop converged?
-				if(abs(obj/prev_obj - 1.) < opt.converge_tol)
+				if(fabs(obj/prev_obj - 1.) < opt.converge_tol)
 					steep_converged = true;
 				break;
 			}
 
-			try{
-				dres = steep.optimize(stepto, min_val);
-			}
-			catch( std::exception &e )
-			{
-				_local_siminfo->addSimulationNotice( e.what() );
-				return false;
-			}
+			//try{
+			//	dres = steep.optimize(stepto, min_val);
+			//}
+			//catch( std::exception &e )
+			//{
+			//	_summary_siminfo->addSimulationNotice( e.what() );
+			//	return false;
+			//}
 
-			//update the steepest descent vector
-			for(int i=0; i<(int)step_vector.size(); i++)
-				step_vector.at(i) = stepto.at(i) - current.at(i);
+			////update the steepest descent vector
+			//for(int i=0; i<(int)step_vector.size(); i++)
+			//	step_vector.at(i) = stepto.at(i) - current.at(i);
 
 			//break if the step size is very small
 			double step_mag = 0.;
 			for(int i=0; i<(int)step_vector.size(); i++)
 				step_mag += step_vector.at(i) * step_vector.at(i);
 			step_mag = sqrt(step_mag);
-			if(step_mag < opt.max_step_size/10.){
+			if(step_mag < opt.max_step/10.){
 				steep_converged = true;
 				break;
 			}
 			
-				
+			
 		}
-		//did we manage to converge the steepest descent in the inner loop? If so, break.
-		if(steep_converged)
-			break;
+		//did we manage to converge the steepest descent in the inner loop? If so, skip the golden section refinement.
+		if(steep_converged){
+			opt_iter++;
+			if( opt_iter >= opt.max_iter )
+				break;
+			continue;
+		}
 
 		/* 
 		Now we have isolated the approximate bottom region of the steepest descent curve. Do a golden section in 
@@ -1130,12 +1375,16 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 				lower_gs = all_sim_points.at( nsimpts - min( 3, minmax_iter ) ),
 				upper_gs = all_sim_points.back(),
 				site_a_gs, site_b_gs;
-
-		for(int gsiter=0; gsiter<5; gsiter++)
+		
+		_summary_siminfo->setTotalSimulationCount(opt.max_gs_iter*2);
+		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + " Refining with golden section");
+		for(int gsiter=0; gsiter<opt.max_gs_iter; gsiter++)
 		{
+			_summary_siminfo->setCurrentSimulation(gsiter*2);
+
 			//lower and upper points for golden section
-			site_a_gs = interpolate_vectors(lower_gs, upper_gs, golden_ratio);
-			site_b_gs = interpolate_vectors(lower_gs, upper_gs, 1. - golden_ratio);
+			site_a_gs = interpolate_vectors(lower_gs, upper_gs, 1. - golden_ratio);
+			site_b_gs = interpolate_vectors(lower_gs, upper_gs, golden_ratio);
 				
 			double za, zb;
 			double obj, flux;
@@ -1145,19 +1394,28 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 				*optvars.at(i) = current.at(i) * normalizers.at(i);
 			all_sim_points.push_back( current );
 			EvaluateDesign(opt, recs, layout, obj, flux);			
+			PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+			if(_cancel_simulation) return false;
 			za = obj;
 			objective.push_back( obj );
 			max_flux.push_back( flux );
 
 			//Evaluate at the upper point
+			_summary_siminfo->setCurrentSimulation(gsiter*2 + 1);
 			current = site_b_gs;
 			for(int i=0; i<(int)optvars.size(); i++)
 				*optvars.at(i) = current.at(i) * normalizers.at(i);
 			all_sim_points.push_back( current );
 			EvaluateDesign(opt, recs, layout, obj, flux);			
+			PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+			if(_cancel_simulation) return false;
 			zb = obj;
 			objective.push_back( obj );
 			max_flux.push_back( flux );
+
+			//if there's no difference between the two objective functions, don't keep iterating
+			if( fabs((za - zb)/za) < opt.converge_tol)
+				break;
 
 			//Decide how to shift the bounds
 			if( za > zb ){
@@ -1168,26 +1426,75 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			}
 				
 		}
-
+		if(_cancel_simulation) return false;
 		//update the current point
 		current = interpolate_vectors(lower_gs, upper_gs, 0.5);
-				
 		opt_iter++;
+		if( opt_iter >= opt.max_iter )
+			break;
 	}
+	
+	if(_cancel_simulation) return false;
+
+	//redimensionalize the simulation points
+	for(int i=0; i<(int)all_sim_points.size(); i++){
+		for(int j=0; j<(int)normalizers.size(); j++){
+			all_sim_points.at(i).at(j) *= normalizers.at(j);
+		}
+	}
+
+	_summary_siminfo->ResetValues();
+
+
+	//Choose the current point to the the best of all simulations in the previous iteration
+	double zbest = 9.e23;
+	vector<double> best_point;
+	int ibest = (int)objective.size()-1;
+	for(int i=0; i<(int)objective.size(); i++){
+		if(objective.at(i) < zbest){
+			zbest = objective.at(i);
+			ibest = i;
+		}
+	}
+	best_point = all_sim_points.at(ibest);
+	_summary_siminfo->addSimulationNotice("\nBest point found:");
+	vector<double> ones(best_point.size(), 1.);
+	PostEvaluationUpdate(opt_iter, best_point, ones, zbest, max_flux.at(ibest));
+
+	_summary_siminfo->addSimulationNotice("\n\nOptimization complete!");
+	
+
+	//copy the optimization data to the optimization structure
+	opt.setOptimizationSimulationHistory(all_sim_points, objective, max_flux);
 
 	return true;
 
 }
 
+bool AutoPilot::IsSimulationCancelled()
+{
+	return _cancel_simulation;
+}
+
+void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux)
+{
+	string msg = "[Iter " + std::to_string(iter+1) + "] ";
+	for(int i=0; i<(int)pos.size(); i++){
+		msg.append( std::to_string( pos.at(i) * normalizers.at(i) ) + " | " );
+	}
+	msg.append( "| Obj = " + std::to_string(obj) + " | Flux = " + std::to_string( flux ) );
+	_summary_siminfo->addSimulationNotice( (string)msg );
+}
+
 //---------------- API_S --------------------------
-bool AutoPilot_S::CreateLayout()
+bool AutoPilot_S::CreateLayout(bool do_post_process)
 {
 	/* 
 	Create a layout using the variable structure that has been created
 	*/
 	_cancel_simulation = false;
 	
-	_local_siminfo->addSimulationNotice("Creating solar field layout...");
+	int nsim_req = _SF->calcNumRequiredSimulations();
 
 	if(! _SF->isSolarFieldCreated()){
 		throw spexception("The solar field Create() method must be called before generating the field layout.");
@@ -1195,14 +1502,16 @@ bool AutoPilot_S::CreateLayout()
 	if(! _cancel_simulation){
 		_SF->FieldLayout();			if(_SF->ErrCheck()){return false;}
 	}
+	if(do_post_process){
+		if(! _cancel_simulation)
+			_SF->calcHeliostatShadows();	if(_SF->ErrCheck()){return false;}
 
-	if(! _cancel_simulation)
-		_SF->calcHeliostatShadows();	if(_SF->ErrCheck()){return false;}
-
-	if(! _cancel_simulation)
-		PostProcessLayout();
+		if(! _cancel_simulation)
+			PostProcessLayout();
+	}
 
 	return true;
+
 }
 
 bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
@@ -1242,10 +1551,10 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	
 	_sim_total = neff_tot;	//set the total simulation counter
 
-	if(_has_callback){
-		_local_siminfo->ResetValues();
-		_local_siminfo->setTotalSimulationCount(_sim_total);
-		_local_siminfo->addSimulationNotice("Simulating optical efficiency points");
+	if(_has_summary_callback){
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->setTotalSimulationCount(_sim_total);
+		_summary_siminfo->addSimulationNotice("Simulating optical efficiency points");
 	}
 	
 	sim_results results;
@@ -1257,8 +1566,11 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 			//update the progress counter
 			_sim_complete = k;
 			
-			if(_has_callback)
-				_local_siminfo->setCurrentSimulation(_sim_complete);
+			if(_has_summary_callback)
+				if( ! 
+					_summary_siminfo->setCurrentSimulation(_sim_complete) 
+					) 
+					CancelSimulation();
 			
 			//Update the solar position
 			if(! _cancel_simulation)
@@ -1270,7 +1582,7 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 			if(! _cancel_simulation)
 				_SF->Simulate(args, 4);
 			if(! _cancel_simulation)
-				results.at(k++).process_analytical_simulation(*_SF, 2);	
+				results.at(k++).process_analytical_simulation(*_SF, 0);	
 
 
 			if(_cancel_simulation)
@@ -1334,18 +1646,21 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	_sim_total = fluxtab.azimuths.size();	//update the expected number of simulations
 	_sim_complete = 0;
 
-	if(_has_callback){
-		_local_siminfo->ResetValues();
-		_local_siminfo->setTotalSimulationCount(_sim_total);
-		_local_siminfo->addSimulationNotice("Simulating flux maps");
+	if(_has_summary_callback){
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->setTotalSimulationCount(_sim_total);
+		_summary_siminfo->addSimulationNotice("Simulating flux maps");
 	}
 
 	//From the day and time array, produce an azimuth/zenith array
 	for(int i=0; i<_sim_total; i++){
 		_sim_complete++;  //increment
 
-		if(_has_callback)
-			_local_siminfo->setCurrentSimulation(_sim_complete);
+		if(_has_summary_callback)
+			if( ! 
+				_summary_siminfo->setCurrentSimulation(_sim_complete) 
+				) 
+				CancelSimulation();
 
 		if(! _cancel_simulation){
 			_SF->getAmbientObject()->setSolarPosition( fluxtab.azimuths.at(i), fluxtab.zeniths.at(i) );
@@ -1379,117 +1694,6 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	return true;
 }
 
-bool AutoPilot_S::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max)
-{
-	/* 
-	Create a layout and evaluate the optimization objective function value with as little 
-	computation as possible. This method is called by the optimization algorithm.
-
-	The 'obj_metric' is evaluated and set in this algorithm. If the simulation fails, the method 
-	returns FALSE.
-	*/
-
-
-	//----- temp for testing -----
-	vector<double*> optvars;
-	optvars.push_back( &layout.h_tower );
-	optvars.push_back( &recs.front().aspect );
-	optvars.push_back( &recs.front().height );
-	optvars.push_back( &layout.land_max );
-
-	TestQuadSurface(optvars, obj_metric, flux_max);
-	return true;
-	//------------------------------
-
-
-	_cancel_simulation = false;
-	
-	//make sure the aiming strategy is simple aimpoints
-	int aim_method_save = _variables["fluxsim"][0]["aim_method"].value_int();
-	//_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::SIMPLE );
-
-	//set the receiver flux surfaces to the correct resolution to balance run time with accuracy
-	int flux_x_save = _variables["fluxsim"][0]["x_res"].value_int();
-	int flux_y_save = _variables["fluxsim"][0]["y_res"].value_int();
-	int flux_x, flux_y;
-	if( _variables["receiver"][0]["rec_type"].value_int() == 0 ){
-		//external receiver
-		flux_x = 10;
-		flux_y = 11;
-	}
-	else{
-		//flat plate receiver
-		flux_x = 11;
-		flux_y = 11;
-	}
-	_variables["fluxsim"][0]["x_res"].set( flux_x );
-	_variables["fluxsim"][0]["y_res"].set( flux_y );
-
-	//Update the variable map
-	if(opt.is_optimize_rec_height || opt.is_optimize_rec_aspect)
-		update_receivers(_variables, recs);
-	if(opt.is_optimize_tht || opt.is_optimize_bound)
-		update_layout(_variables, layout);
-
-	//create the solar field object
-	if(! _cancel_simulation){
-		_SF->Create(_variables);	if(_SF->ErrCheck()){return false;}
-	}
-	//Do the layout simulation
-	if(! _cancel_simulation){
-		_SF->FieldLayout();			if(_SF->ErrCheck()){return false;}
-	}
-	//Do the flux simulation at the design point
-	if(! _cancel_simulation){
-		//update the flux simulation sun position to match the layout reference point sun position
-		double pos[2];
-		_SF->getSunPositionDesign(pos);
-		double d2r = acos(-1.)/180.;
-		_SF->getAmbientObject()->setSolarPosition( pos[0]*d2r, (90.-pos[1])*d2r );
-		_variables["fluxsim"][0]["flux_solar_az_in"].set( pos[0] );	//[deg]
-		_variables["fluxsim"][0]["flux_solar_el_in"].set( pos[1] );
-		_variables["fluxsim"][0]["flux_time_type"].set( 0 );	//sun position specified
-
-		//prep for performance simulation (aim points, etc.)
-		interop::PerformanceSimulationPrep(*_SF, _variables, *_SF->getHeliostats(), 0 /*analytical*/);
-		
-		//do flux simulation
-		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), _variables["fluxsim"][0]["aim_method"].value_int() == Flux::AIM_STRATEGY::IMAGE_SIZE);	
-		if(_SF->ErrCheck()){return false;}		
-	}
-	
-	//get the annual optical power estimate
-	double optical_power = _SF->getAnnualPowerApproximation();
-	//power cycle efficiency
-	double cycle_eff = _SF->getPlantObject()->getCycleEfficiency() * _SF->getPlantObject()->getGrossToNetFactor();
-	double power = optical_power * cycle_eff*1.e-6;		//MW-h
-
-	//calculate the total plant cost
-	_SF->getFinancialObject()->calcPlantCapitalCost(*_SF);
-	double cost = _SF->getFinancialObject()->getTotalInstalledCost();
-	
-	obj_metric = cost/power;
-	
-	//Get the maximum flux value
-	flux_max=0.;
-	for(int i=0; i<_SF->getReceivers()->size(); i++){
-		for(int j=0; j<_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++){
-			double ff = _SF->getReceivers()->at(i)->getFluxSurfaces()->at(j).getMaxObservedFlux();
-			if( ff > flux_max )
-				flux_max = ff;
-		}
-	}
-
-	
-	//Set the aiming method back to the original value
-	_variables["fluxsim"][0]["aim_method"].value = my_to_string( aim_method_save );
-
-	//Set the flux resolution back to the original values
-	_variables["fluxsim"][0]["x_res"].set( flux_x_save );
-	_variables["fluxsim"][0]["y_res"].set( flux_y_save );
-}
-
-
 //---------------- API_MT --------------------------
 
 #ifdef SP_USE_THREADS
@@ -1498,14 +1702,19 @@ AutoPilot_MT::AutoPilot_MT()
 {
 	_in_mt_simulation = false;	//initialize
 	_cancel_simulation = false;
-	_callback = 0;
-	_callback_data = 0;
-	_local_siminfo = 0;
+	_has_summary_callback = false;
+	_has_detail_callback = false;
+	_summary_callback = 0;
+	_detail_callback = 0;
+	_summary_callback_data = 0;
+	_detail_callback_data = 0;
+	_summary_siminfo = 0;
+	_SF = 0;
 	//initialize with the maximum number of threads
 	SetMaxThreadCount(3); //999999);
 }
 
-bool AutoPilot_MT::CreateLayout()
+bool AutoPilot_MT::CreateLayout(bool do_post_process)
 {
 	/* 
 	Create a layout using the variable structure that has been created
@@ -1517,10 +1726,10 @@ bool AutoPilot_MT::CreateLayout()
 	{
 		//Is it possible to run a multithreaded simulation?
 		int nsim_req = _SF->calcNumRequiredSimulations();
-		if(_has_callback){
-			_local_siminfo->ResetValues();
-			_local_siminfo->setTotalSimulationCount(nsim_req);
-			_local_siminfo->addSimulationNotice("Creating field layout");
+		if(_has_detail_callback){
+			_detail_siminfo->ResetValues();
+			_detail_siminfo->setTotalSimulationCount(nsim_req);
+			_detail_siminfo->addSimulationNotice("Creating field layout");
 		}
 
 		if(_n_threads > 1 && nsim_req > 1){
@@ -1536,8 +1745,8 @@ bool AutoPilot_MT::CreateLayout()
 				int nthreads = min(nsim_req, _n_threads);
 
 				//update progress
-				if(_has_callback)
-					_local_siminfo->addSimulationNotice("Preparing " + my_to_string(_n_threads) + " threads for simulation");
+				if(_has_detail_callback)
+					_detail_siminfo->addSimulationNotice("Preparing " + std::to_string(_n_threads) + " threads for simulation");
 				
 				
 				//Duplicate SF objects in memory
@@ -1568,10 +1777,10 @@ bool AutoPilot_MT::CreateLayout()
 					sim_last = min(sim_last+npert, nsim_req);
 				}
 				
-				if(_has_callback){
-					_local_siminfo->setTotalSimulationCount(nsim_req);
-					_local_siminfo->setCurrentSimulation(0);
-					_local_siminfo->addSimulationNotice("Simulating layout design-point hours...");
+				if(_has_detail_callback){
+					_detail_siminfo->setTotalSimulationCount(nsim_req);
+					_detail_siminfo->setCurrentSimulation(0);
+					_detail_siminfo->addSimulationNotice("Simulating layout design-point hours...");
 				}
 				
 				//Run
@@ -1596,8 +1805,8 @@ bool AutoPilot_MT::CreateLayout()
 					_sim_total = nsim_req;
 					_sim_complete = nsim_done;
 
-					if(_has_callback)
-						_local_siminfo->setCurrentSimulation(nsim_done);
+					if(_has_detail_callback)
+						_detail_siminfo->setCurrentSimulation(nsim_done);
 					
 				
 					if(nthread_done == nthreads) break;
@@ -1641,18 +1850,19 @@ bool AutoPilot_MT::CreateLayout()
 			if(! _cancel_simulation)
 				_SF->FieldLayout();			if(_SF->ErrCheck()){return false;}
 		}
-		if(! _cancel_simulation)
-			_SF->calcHeliostatShadows();	if(_SF->ErrCheck()){return false;}
-		if(! _cancel_simulation)
-			PostProcessLayout();
-
+		if(do_post_process){
+			if(! _cancel_simulation)
+				_SF->calcHeliostatShadows();	if(_SF->ErrCheck()){return false;}
+			if(! _cancel_simulation)
+				PostProcessLayout();
+		}
 	}
 	catch(std::exception &e){
-		_local_siminfo->addSimulationNotice(e.what());
+		_summary_siminfo->addSimulationNotice(e.what());
 		return false;
 	}
 	catch(...){
-		_local_siminfo->addSimulationNotice("Caught unhandled exception in layout simulation. Simulation unsuccessful.");
+		_summary_siminfo->addSimulationNotice("Caught unhandled exception in layout simulation. Simulation unsuccessful.");
 		return false;
 	}
 	return true;
@@ -1711,10 +1921,10 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	
 	_sim_total = neff_tot;	//set the total simulation counter
 
-	if(_has_callback){
-		_local_siminfo->ResetValues();
-		_local_siminfo->setTotalSimulationCount(_sim_total);
-		_local_siminfo->addSimulationNotice("Simulating optical efficiency points");
+	if(_has_summary_callback){
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->setTotalSimulationCount(_sim_total);
+		_summary_siminfo->addSimulationNotice("Simulating optical efficiency points");
 	}
 
 	//load the sun positions into a matrix_t
@@ -1722,7 +1932,7 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	int k=0;
 	for(int j=0; j<neff_zen; j++){
 		for(int i=0; i<neff_az; i++){
-			sunpos.at(k,0) = opttab.azimuths.at(i)*d2r;
+			sunpos.at(k,0) = (opttab.azimuths.at(i) - 180.)*d2r;
 			sunpos.at(k++,1) = opttab.zeniths.at(j)*d2r;
 		}
 	}
@@ -1774,8 +1984,10 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 					
 					
 		}
-		if(_has_callback)
-			_local_siminfo->setCurrentSimulation(nsim_done);
+		if(_has_summary_callback){
+			if( ! _summary_siminfo->setCurrentSimulation(nsim_done) )
+				CancelSimulation();
+		}
 		if(nthread_done == _n_threads) break;
 		std::this_thread::sleep_for(std::chrono::milliseconds(75));
 	}
@@ -1863,10 +2075,10 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 		sunpos.at(i,1) = fluxtab.zeniths.at(i);
 	}
 
-	if(_has_callback){
-		_local_siminfo->ResetValues();
-		_local_siminfo->setTotalSimulationCount(_sim_total);
-		_local_siminfo->addSimulationNotice("Simulating flux maps");
+	if(_has_summary_callback){
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->setTotalSimulationCount(_sim_total);
+		_summary_siminfo->addSimulationNotice("Simulating flux maps");
 	}
 
 
@@ -1918,8 +2130,10 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 					
 					
 		}
-		if(_has_callback)
-			_local_siminfo->setCurrentSimulation(nsim_done);
+		if(_has_summary_callback){
+			if( ! _summary_siminfo->setCurrentSimulation(nsim_done) ) 
+				CancelSimulation();
+		}
 		if(nthread_done == _n_threads) break;
 		std::this_thread::sleep_for(std::chrono::milliseconds(75));
 	}
@@ -1950,16 +2164,15 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 	return true;
 }
 
-bool AutoPilot_MT::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max){
-	
-	
-	return false;
+void AutoPilot_MT::CancelSimulation()
+{
+	CancelMTSimulation();
 }
 
 void AutoPilot_MT::CancelMTSimulation()
 {
 	_cancel_simulation = true;
-	if(_in_mt_simulation){
+	if(_in_mt_simulation && _simthread != 0){
 		for(int i=0; i<_n_threads_active; i++){
 			_simthread[i].CancelSimulation();
 		}

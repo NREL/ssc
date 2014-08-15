@@ -1531,16 +1531,16 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 		double rx_ip = rxn*r11 + ryn*r12;	//Receiver half-width projected into the image plane
 		double ry_ip = rxn*r21 + ryn*r22;	//Receiver half-height projected into the image plane
 		
-		if(abs(rx_ip) > sig_x5 || abs(ry_ip) > sig_y5){
+		if(fabs(rx_ip) > sig_x5 || fabs(ry_ip) > sig_y5){
 			double 
 				aimx = aim->x/tht,			//Original aim point in receiver plane coordinates
 				aimy = aim->y/tht;
 			double
-				rxn_l = -fmin(sig_x5, abs(-rxn - aimx)),		//Left and right bounds of the integration region
-				rxn_r = fmin(sig_x5, abs(rxn - aimx)),
+				rxn_l = -fmin(sig_x5, fabs(-rxn - aimx)),		//Left and right bounds of the integration region
+				rxn_r = fmin(sig_x5, fabs(rxn - aimx)),
 				rxn_adj = rxn_r - rxn_l,					//Width of the integration region in receiver plane coordinates
-				ryn_l = -fmin(sig_y5, abs(-ryn - aimy)),		//Lower and upper bounds of the integration region
-				ryn_u = fmin(sig_y5, abs(ryn - aimy)),
+				ryn_l = -fmin(sig_y5, fabs(-ryn - aimy)),		//Lower and upper bounds of the integration region
+				ryn_u = fmin(sig_y5, fabs(ryn - aimy)),
 				ryn_adj = ryn_u - ryn_l;					//Height of the integration region in receiver plane coordinates
 			
 			double 
@@ -1574,7 +1574,7 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 				xmax = dd*pow(bb,2)/aa/term_1,
 				xmin = sqrt(xmax);
 			if(bb > 0) xmin = - xmin;
-			xmax = abs(-bb*xmin/2./cc + sqrt(xmax*term_1 - 4.*cc*dd)/2./cc);
+			xmax = fabs(-bb*xmin/2./cc + sqrt(xmax*term_1 - 4.*cc*dd)/2./cc);
 			xmin = -xmax;
 			G[0] = 0.;
 			F[0] = 0.;
@@ -1792,10 +1792,10 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 			h.at(2,k-1) = x[2]*h.at(2,k-2) - fk*h.at(2,k-3);
 		}
 		s2 = 1.; s3 = 1.;
-		sign2 = (x[1]+dsmall)/abs(x[1]+dsmall);
-		sign3 = (x[2]+dsmall)/abs(x[2]+dsmall);
-		x[1] = abs(x[1]);
-		x[2] = abs(x[2]);
+		sign2 = (x[1]+dsmall)/fabs(x[1]+dsmall);
+		sign3 = (x[2]+dsmall)/fabs(x[2]+dsmall);
+		x[1] = fabs(x[1]);
+		x[2] = fabs(x[2]);
 		for(j=1; j<5; j++){
 			s2 += _ci[j-1]*pow(x[1], j);
 			s3 += _ci[j-1]*pow(x[2], j);
@@ -2169,7 +2169,7 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 		Toolbox::rotation(Pi-view_az,2,aimpos);
 		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
 		//The z component should be very small, so zero out
-		if( abs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
+		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
 		//The X and Y coordinates now indicate the image plane position
 		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
 		break;
@@ -2303,7 +2303,7 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 		Toolbox::rotation(Pi-view_az,2,aimpos);
 		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
 		//The z component should be very small, so zero out
-		if( abs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
+		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
 		//The X and Y coordinates now indicate the image plane position
 		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
 		break;
@@ -2485,7 +2485,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		Toolbox::rotation(Pi-view_az,2,aimpos);
 		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
 		//The z component should be very small, so zero out
-		if( abs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
+		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
 		//The X and Y coordinates now indicate the image plane position
 		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
 
@@ -2604,7 +2604,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		Toolbox::rotation(Pi-rec->getReceiverAzimuth(),2,aimpos);
 		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
 		//The z component should be very small, so zero out
-		if( abs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
+		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
 		//The X and Y coordinates now indicate the image plane position
 		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
 		

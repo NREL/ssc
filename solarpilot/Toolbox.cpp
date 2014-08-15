@@ -307,7 +307,7 @@ int DateTime::GetHourOfYear(){
 	return hr;
 };
 
-void DateTime::hours_to_date(double hours, double &month, double &day_of_month){
+void DateTime::hours_to_date(double hours, int &month, int &day_of_month){
 	/*
 	Take hour of the year (0-8759) and convert it to month and day of the month. 
 	If the year is not provided, the default is 2011 (no leap year)
@@ -324,9 +324,9 @@ void DateTime::hours_to_date(double hours, double &month, double &day_of_month){
 	int dsum=0; 
 	for(int i=0; i<12; i++){
 		dsum += monthLength[i];
-		if(days <= dsum){month = double(i)+1.; break;}
+		if(days <= dsum){month = i+1; break;}
 	}
-	day_of_month = floor(days - (dsum - monthLength[int(month)-1]))+1.;
+	day_of_month = (int)floor(days - (dsum - monthLength[month-1]))+1;
 
 }
 

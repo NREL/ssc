@@ -3,6 +3,7 @@
 #include "STObject.h"
 #include "solpos00.h"
 #include <stdio.h>
+#include <algorithm>
 #include "sort_method.h"
 
 #include <sstream>
@@ -102,15 +103,15 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		}
 		else if(cant_type == 3){	//Off-axis, day and hour
 			/* Calculate the sun position at this day and hour */
-			double cant_day, cant_hour, lat, lon, tmz;
-			to_double( V["heliostat"][ind]["cant_day"].value, &cant_day);
+			double cant_hour, lat, lon, tmz;
+			int cant_day =  V["heliostat"][ind]["cant_day"].value_int();
 			to_double( V["heliostat"][ind]["cant_hour"].value, &cant_hour);
 			to_double( V["ambient"][0]["latitude"].value, &lat);
 			to_double( V["ambient"][0]["longitude"].value, &lon);
 			to_double( V["ambient"][0]["time_zone"].value, &tmz);
 
 			DateTime DT;
-			double month, dom;
+			int month, dom;
 			DT.hours_to_date((cant_day-1)*24+cant_hour+12, month, dom);
 
 			//Instantiate the solpos object
@@ -118,6 +119,11 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			pdat = &SP;	//point to structure for convenience
 			S_init(pdat);		//Initialize the values
 	
+			//get hours and minutes from the cant hour
+			int cant_hour_int, cant_min_int;
+			cant_hour_int = (int)floor(cant_hour + .001);
+			cant_min_int = (int)(floor( (cant_hour - (double)cant_hour_int)*60. ) );
+			
 			pdat->latitude = float(lat);		//[deg] {float} North is positive
 			pdat->longitude = float(lon);		//[deg] {float} Degrees east. West is negative
 			pdat->timezone = float(tmz);			//[hr] {float} Time zone, east pos. west negative. Mountain -7, Central -6, etc..
@@ -125,8 +131,8 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			pdat->month = month;	//[mo] {int} (1-12)
 			pdat->day = dom;		//[day] {int} Day of the month
 			pdat->daynum = cant_day;	//[day] {int} Day of the year
-			pdat->hour = cant_hour+12;		//[hr] {int} 0-23
-			pdat->minute = 0;	//[min] {int} 0-59
+			pdat->hour = cant_hour_int+12;		//[hr] {int} 0-23
+			pdat->minute = cant_min_int;	//[min] {int} 0-59
 			pdat->second = 0;	//[sec]	{int} 0-59
 			pdat->interval = 0;		//[sec] {int} Measurement interval. See solpos documentation.
 
@@ -398,6 +404,14 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 	}
 	//-- end flux simulation page --
 
+	//optimization page
+	V["optimize"][0]["aspect_display"].set(
+		V["receiver"][0]["rec_aspect"].value_double()
+		);
+
+	V["optimize"][0]["gs_refine_ratio"].set(
+		pow(1./1.61803398875, V["optimize"][0]["max_gs_iter"].value_int()) );
+
 	//end calculations
 }
 
@@ -464,7 +478,8 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 			nflux_sim += utime.at(i).size();
 		
 		DateTime dt;
-		double month, dom, hoy, hod;
+		double hoy, hod;
+		int month, dom;
 		for(int i=0; i<nday; i++){
 			int doy = uday.at(i);	//because of the doy calcluation used before, this is actually [0..364]
 			for(int j=0; j<(int)utime.at(i).size(); j++){
@@ -473,7 +488,7 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 				dt.hours_to_date( hoy, month, dom );	//midnight on the month/day
 								
 				char ts[150];
-						sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dni_des, 25., 1., 1., 1.);
+						sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", dom, hod, month, dni_des, 25., 1., 1., 1.);
 						wdatvar->append(ts);
 			}
 		}
@@ -482,6 +497,7 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 	}
 	case LAYOUT_DETAIL::LIMITED_ANNUAL:
 	case LAYOUT_DETAIL::AVG_PROFILES:
+	case LAYOUT_DETAIL::FOR_OPTIMIZATION:
 	{	//5) Limited annual simulation=4 || Representative profiles=5
 		*tstepvar = "0";  //calculate sun position at time specified
 		wdatvar->clear();
@@ -493,8 +509,16 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 			lng = vset["ambient"][0]["longitude"].value_double(),
 			tmz = vset["ambient"][0]["time_zone"].value_double();
 
-		int nday = vset["solarfield"][0]["des_sim_ndays"].value_int();
-		int nskip = vset["solarfield"][0]["des_sim_nhours"].value_int();
+		int nday, nskip;
+		if( design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION ){
+			nday = 4;
+			nskip = 2;
+		}
+		else{
+			nday = vset["solarfield"][0]["des_sim_ndays"].value_int();
+			nskip = vset["solarfield"][0]["des_sim_nhours"].value_int();
+		}
+		
 
 		double delta_day = 365./float(nday);
 		double doffset;
@@ -517,7 +541,8 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 		double d2r = acos(-1.)/180.;
 		vector<string> tsdat;
 		for(int i=0; i<nday; i++){
-			double month, dom, hoy;
+			int month, dom;
+			double hoy;
 			int doy = simdays.at(i);	//because of the doy calcluation used before, this is actually [0..364]
 			hoy = double( doy ) * 24.;
 			dt.hours_to_date( hoy, month, dom );	//midnight on the month/day
@@ -538,11 +563,13 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 			double tdry, pres, wind;
 			
 			double hrmid = (hrs[0] + hrs[1])/2. + hoy;
-			int nhrs = (int)(floor(hrs[1] - hrs[0]));
-			
+			int nhrs = (int)(floor((hrs[1] - hrs[0])/(double)nskip))*nskip;
+			int nsteps = nhrs/nskip + 1; //total number of simulation points in the day
+
 			//make sure the start and end hours are symmetric about solar noon
-			double nmidspan = (double)nskip*floor(nhrs/(2.*(double)nskip));
-			double hr_st = hrmid - nmidspan;
+			double nmidspan = (double)nhrs/2.;
+			//double nmidspan = (double)nskip*floor(nhrs/(2.*(double)nskip));
+			double hr_st = hrmid - nmidspan; 
 			double hr_end = hrmid + nmidspan;
 				
 
@@ -646,8 +673,14 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 				int nwf = wf_entries.size();
 				double dnicomp;
 				double jd=hr_st;
-				while(jd < hr_end + 0.001){
-					double tdry_per = 0., pres_per = 0., wind_per = 0., dni_per = 0.;
+				double hr_end_choose;
+				if( design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION )
+					hr_end_choose = hrmid;
+				else
+					hr_end_choose = hr_end;
+
+				while(jd < hr_end_choose + 0.001){
+					double tdry_per = 0., pres_per = 0., wind_per = 0., dni_per = 0., dni_per2 = 0.;
 					for(int k=range_start; k<range_end; k++){
 						int ind = (int)floor(jd)+k*24;
 						if(ind < 0) ind += 8760;
@@ -660,7 +693,7 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 						to_double(tsdat.at(6), &wind);
 
 						//get the complement dni data
-						tsdat = split(wf_entries.at( fmin( fmax(ind+iind, 0), nwf-1) ), ",");
+						tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
 						to_double(tsdat.at(3), &dnicomp);
 
 
@@ -670,9 +703,31 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 						pres_per += pres;
 						wind_per += wind;
 
+						//if it's for optimization, also add the symmetric afternoon hour
+						if(design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION){
+							double jdhi = hrmid + hrmid - jd;
+							int indhi = (int)floor(jdhi)+k*24;
+							if(indhi < 0) indhi += 8760;
+							if(indhi > 8759) indhi += -8760;
+
+							if(indhi == ind)
+								continue;
+
+							tsdat = split(wf_entries.at(indhi), ",");
+							to_double(tsdat.at(3), &dni);
+
+							//get the complement dni data
+							tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
+							to_double(tsdat.at(3), &dnicomp);
+
+
+							//
+							dni_per2 += dni * fthis + dnicomp * fcomp;							
+						}
+
 					}
 
-					dni_per *= 1./(double)range;
+					dni_per = (dni_per + dni_per2)/(double)range;
 					tdry_per *= 1./(double)range;
 					pres_per *= 1./(double)range;
 					wind_per *= 1./(double)range;
@@ -1295,11 +1350,15 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, Hv
 	case sim_result::SIM_TYPE::PARAMETRIC:
 	case sim_result::SIM_TYPE::OPTIMIZATION:
 	case sim_result::SIM_TYPE::LAYOUT:
-		//process only the ranking metric for each heliostat
+	{
+		//process only the ranking metric for each heliostat and the field avg. eff
 		initialize();
-		for(unsigned int i=0; i<helios.size(); i++)
+		double effsum = 0.;
+		for(unsigned int i=0; i<helios.size(); i++){
+			effsum += helios.at(i)->getEfficiencyTotal();
 			add_heliostat(*helios.at(i));
-		
+		}
+		eff_total_sf.ave = effsum / (double)helios.size() ;
 		total_receiver_area = SF.getReceiverTotalArea();
 		dni =  SF.getDesignPointDNI()/1000.;
 		power_on_field = total_heliostat_area * dni;	//[kW]
@@ -1309,8 +1368,9 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, Hv
 
 
 		break;
+	}
 	case sim_result::SIM_TYPE::FLUX_SIMULATION:
-
+	{
 		initialize();
 		for(unsigned int i=0; i<helios.size(); i++)
 			add_heliostat(*helios.at(i));
@@ -1330,6 +1390,7 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, Hv
 		process_flux_stats(SF);
 
 		break;
+	}
 	default:
 		break;
 	}

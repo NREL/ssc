@@ -44,7 +44,7 @@ class simulation_info
 	This object provides information to the calling program on the status of the 
 	simulations underway.
 	*/
-	void (*_callback)(simulation_info* siminfo, void *data);
+	bool (*_callback)(simulation_info* siminfo, void *data);
 	void *_callback_data;
 
 	//void (SPFrame::*_fupdate)(simulation_info* siminfo);	//Pointer to the parent's update function
@@ -73,13 +73,12 @@ public:
 	void Reset();
 
 	//Sets
-	void setCallbackFunction(void (*updateFunc)(simulation_info* siminfo, void *data), void *cdata);
-	void setCurrentSimulation(int val);
-	void setTotalSimulationCount(int val);
-	void setSimulationProgress(double val);
+	void setCallbackFunction(bool (*updateFunc)(simulation_info* siminfo, void *data), void *cdata);
+	bool setCurrentSimulation(int val);
+	bool setTotalSimulationCount(int val);
 	void clearSimulationNotices();
-	void addSimulationNotice(string &notice);
-	void addSimulationNotice(string notice);
+	bool addSimulationNotice(string &notice);
+	bool addSimulationNotice(string notice);
 	void isEnabled(bool state);
 };
 

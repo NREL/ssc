@@ -42,7 +42,8 @@ double testoptclass::rosenbrock_test(unsigned n, const double *x, double *grad, 
 	double y=0.;
 
 	for(int i=1; i<n; i++){
-		y += 100. * pow(x[i] - pow(x[i-1],2),2) + pow(x[i-1]-1.,2);
+		//y += 100. * pow(x[i] - pow(x[i-1],2),2) + pow(x[i-1]-1.,2);
+		y += pow(x[i] - pow(x[i-1],2),2) + pow(x[i-1]-1.,2);
 	}
 	call_count ++;
 	return y;

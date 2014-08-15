@@ -135,7 +135,6 @@ SolarField::SolarField( const SolarField &sf )
 	_is_power_opt( sf._is_power_opt ),
 	_is_power_restrict( sf._is_power_restrict ),
 	_is_tht_restrict( sf._is_tht_restrict ),
-	_is_opt_disabled( sf._is_opt_disabled ),
 	_is_aimpoints_updated( sf._is_aimpoints_updated ),
 	_cancel_flag( sf._cancel_flag ),
 	_is_created( sf._is_created ),
@@ -166,6 +165,7 @@ SolarField::SolarField( const SolarField &sf )
 	_min_zone_size_az( sf._min_zone_size_az ),
 	_zone_div_tol( sf._zone_div_tol ),
 	_estimated_annual_power( sf._estimated_annual_power ),
+	_q_des_withloss( sf._q_des_withloss ),
 
 	//classes
 	_ambient( sf._ambient ),
@@ -316,21 +316,26 @@ void SolarField::Create(var_set &V, int var_index){
 	setVar("sun_loc_des", _sun_loc_des, V["solarfield"][var_index], 0);		//Sun location when thermal power rating is achieved
 	setVar("sun_loc_des_az", _sun_loc_des_az, V["solarfield"][var_index], 180., "[-180.,180.]");		//Solar azimuth angle at the design point
 	setVar("sun_loc_des_el", _sun_loc_des_el, V["solarfield"][var_index], 85., "[0.,90]");		//Solar elevation angle at the design point
-	setVar("az_spacing", _az_spacing, V["solarfield"][var_index], 1.9, "[1.,1000.]");		//Azimuthal spacing factor for the first row of heliostats after a reset. Heliostats separated by heliostat width times this factor.
+	setVar("az_spacing", _az_spacing, V["solarfield"][var_index], 2., "[1.,1000.]");		//Azimuthal spacing factor for the first row of heliostats after a reset. Heliostats separated by heliostat width times this factor.
 	setVar("spacing_reset", _spacing_reset, V["solarfield"][var_index], 1.33, "(1.,1000.]");		//For heliostat layout - ratio of maximum to initial azimuthal spacing before starting new compressed row
 	setVar("layout_method", _layout_method, V["solarfield"][var_index], 1, "[0,99]");		//Field layout method
-	setVar("is_prox_filter", _is_prox_filter, V["solarfield"][var_index], true);		//Post-process the layout to select heliostats that are closer to the tower.
-	setVar("prox_filter_frac", _prox_filter_frac, V["solarfield"][var_index], 0.02, "[0.,1)");		//Fraction of heliostats to subject to proximity filter.
 	setVar("layout_data", _layout_data, V["solarfield"][var_index], "");		//Layout data in string form
+	setVar("max_zone_size_rad", _max_zone_size_rad, V["solarfield"][var_index], 1., "(0,100]");		//Maximum zone size (radial direction) for grouping optical intercept factor calculations
+	setVar("max_zone_size_az", _max_zone_size_az, V["solarfield"][var_index], 1., "(0,100]");		//Maximum zone size (azimuthal direction) for grouping optical intercept factor calculations
+	setVar("min_zone_size_rad", _min_zone_size_rad, V["solarfield"][var_index], 0.1, "(0,100]");		//Minimum zone size (radial direction) for grouping optical intercept factor calculations
+	setVar("min_zone_size_az", _min_zone_size_az, V["solarfield"][var_index], 0.1, "(0,100]");		//Minimum zone size (azimuthal direction) for grouping optical intercept factor calculations
+	setVar("zone_div_tol", _zone_div_tol, V["solarfield"][var_index], 0.001, "[0.001,1]");		//Allowable variation in optical intercept factor within a layout zone
+	setVar("is_opt_zoning", _is_opt_zoning, V["solarfield"][var_index], true);		//Enables grouping of heliostats into zones for intercept factor calculation during layout only
 	setVar("rad_spacing_method", _rad_spacing_method, V["solarfield"][var_index], 2, "[1,3]");		//Method for determining radial spacing during field layout for radial-stagger
 	setVar("row_spacing_x", _row_spacing_x, V["solarfield"][var_index], 1.1, "(1,1000.]");		//Separation between adjacent heliostats in the X-direction, multiplies heliostat radius
 	setVar("row_spacing_y", _row_spacing_y, V["solarfield"][var_index], 1.1, "(1,1000.]");		//Separation between adjacent heliostats in the Y-direction, multiplies heliostat radius
 	setVar("xy_field_shape", _xy_field_shape, V["solarfield"][var_index], 0, "[0,2]");		//Enforced shape of the heliostat field
 	setVar("xy_rect_aspect", _xy_rect_aspect, V["solarfield"][var_index], 1., "(0.,1000.]");		//Aspect ratio of the rectangular field layout (height in Y / width in X)
-	setVar("is_opt_disabled", _is_opt_disabled, V["solarfield"][var_index], true);		//Disables all optimization flags for this run
-	setVar("des_sim_detail", _des_sim_detail, V["solarfield"][var_index], 1, "[0,4]");		//Simulation detail for placing heliostats (see definitions in options spreadsheet)
-	setVar("des_sim_ndays", _des_sim_ndays, V["solarfield"][var_index], 12, "(1,365]");		//For limited annual simulation, the number of evenly spaced days to simulate
-	setVar("des_sim_nhours", _des_sim_nhours, V["solarfield"][var_index], 0, "[1,5]");		//Simulation will run with the specified hourly frequency (1=every hour, 2=every other hour…)
+	setVar("is_prox_filter", _is_prox_filter, V["solarfield"][var_index], false);		//Post-process the layout to select heliostats that are closer to the tower.
+	setVar("prox_filter_frac", _prox_filter_frac, V["solarfield"][var_index], 0.03, "[0.,1)");		//Fraction of heliostats to subject to proximity filter.
+	setVar("des_sim_detail", _des_sim_detail, V["solarfield"][var_index], 5, "[0,4]");		//Simulation detail for placing heliostats (see definitions in options spreadsheet)
+	setVar("des_sim_ndays", _des_sim_ndays, V["solarfield"][var_index], 4, "(1,365]");		//For limited annual simulation, the number of evenly spaced days to simulate
+	setVar("des_sim_nhours", _des_sim_nhours, V["solarfield"][var_index], 2, "[1,5]");		//Simulation will run with the specified hourly frequency (1=every hour, 2=every other hour...)
 	setVar("sim_step_data", _sim_step_data, V["solarfield"][var_index]);		//Data used for design simulations
 	setVar("sim_time_step", _sim_time_step, V["solarfield"][var_index], 3600.);		//Simulation weather data time step
 	setVar("tht", _tht, V["solarfield"][var_index], 180., "(0.,1000.]");		//Average height of the tower receiver centerline above the base heliostat pivot point elevation
@@ -341,15 +346,9 @@ void SolarField::Create(var_set &V, int var_index){
 	setVar("is_power_opt", _is_power_opt, V["solarfield"][var_index], false);		//Vary the power output during optimization to identify optimal level?
 	setVar("is_tht_opt", _is_tht_opt, V["solarfield"][var_index], true);		//Vary the tower height during optimization to identify optimal level?
 	setVar("is_power_restrict", _is_power_restrict, V["solarfield"][var_index], false);		//Restrict the search range for power output to the indicated limits
-	setVar("is_tht_restrict", _is_tht_restrict, V["solarfield"][var_index], false);		//Restrict the search range for tower height to the indicated limits
+	setVar("is_tht_restrict", _is_tht_restrict, V["solarfield"][var_index], true);		//Restrict the search range for tower height to the indicated limits
 	setVar("template_rule", _template_rule, V["solarfield"][var_index], 0);		//Method for distributing heliostat geometry templates in the field
 	setVar("hsort_method", _hsort_method, V["solarfield"][var_index], 7);		//Select the criteria by which heliostats will be included in the solar field layout.
-	setVar("max_zone_size_rad", _max_zone_size_rad, V["solarfield"][var_index], 1.);		//Maximum zone size (radial direction) for grouping optical intercept factor calculations
-	setVar("max_zone_size_az", _max_zone_size_az, V["solarfield"][var_index], 1.);		//Maximum zone size (azimuthal direction) for grouping optical intercept factor calculations
-	setVar("min_zone_size_rad", _min_zone_size_rad, V["solarfield"][var_index], 0.05);		//Minimum zone size (radial direction) for grouping optical intercept factor calculations
-	setVar("min_zone_size_az", _min_zone_size_az, V["solarfield"][var_index], 0.05);		//Minimum zone size (azimuthal direction) for grouping optical intercept factor calculations
-	setVar("zone_div_tol", _zone_div_tol, V["solarfield"][var_index], 0.01);		//Allowable variation in optical intercept factor within a layout zone
-	setVar("is_opt_zoning", _is_opt_zoning, V["solarfield"][var_index], true);		//Enables grouping of heliostats into zones for intercept factor calculation during layout only
 
 	//Unit conversions
 	_accept_max *= d2r;
@@ -1304,6 +1303,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	}
 
 	double q_inc_des = _q_des + q_loss_tot;
+	_q_des_withloss = q_inc_des; //save this
 
 	//Check that the total power available is at least as much as the design point requirement. If not, notify
 	//the user that their specified design power is too high for the layout parameters.
@@ -1330,8 +1330,9 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 			"The maximum available power for this field layout is %.2f %s, and the required design power is %.2f %s."
 			"The field cannot generate sufficient power to meet the design requirement. Consider adjusting design point conditions "
 			"to generate a satisfactory design.", (float)(_q_to_rec*1.e-6*xmult), units.c_str(), (float)(q_inc_des*xmult), units.c_str());
-		_sim_error.addSimulationError(string(msg), true, true);
-		return;
+		_q_des_withloss = q_inc_des;
+		_sim_error.addSimulationError(string(msg)); //, true, true);
+		//return;
 	}
 
 	double filter_frac = _is_prox_filter ? _prox_filter_frac : 0.;
@@ -2072,7 +2073,7 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 			tan_phi_0sX = 999.; err=999.; tol = 0.00001; iter=0;
 			//Guess the next radial position
 			r_c = r_0 + 3.*H2;
-			while(abs(err) > tol && iter<25){
+			while(fabs(err) > tol && iter<25){
 				double xslant = sqrt(_tht*_tht + r_c*r_c);
 				//Equation to calculte r_c implicitly
 				//tan_phi_0sX = (z_0u + H2*cos(atan(_tht/r_c)))/(r_c - H2*sin(atan(_tht/r_c)) - r_0u);
@@ -2624,7 +2625,7 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect *sunvector, He
 		acc_x *= 0.5;
 		acc_y *= 0.5;
 		if(Rec->getAcceptAngleType() == 0){ //Rectangular
-			if(! (abs(theta_x) < acc_x && abs(theta_y) < acc_y))
+			if(! (fabs(theta_x) < acc_x && fabs(theta_y) < acc_y))
 				eta_rec_acc = 0.;
 		}
 		else{	//Elliptical
@@ -2823,7 +2824,7 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode){
 			if(hits.at(0) && hits.at(1)) {
 				//Both corners are active in interfering (i.e. the shadow image is contained within the shadowed heliostat
 				dy_inter = ( Hh - (ints_trans.at(0).y + ints_trans.at(1).y) ) / (2. * Hh);	//Use the average z position of both points
-				dx_inter = abs(ints_trans.at(0).x - ints_trans.at(1).x ) / Hw;
+				dx_inter = fabs(ints_trans.at(0).x - ints_trans.at(1).x ) / Hw;
 
 				return dy_inter * dx_inter;
 			}
@@ -3269,6 +3270,9 @@ double SolarField::getAnnualPowerApproximation()
 	return _estimated_annual_power;
 }
 
+double SolarField::getDesignThermalPowerWithLoss(){ return _q_des_withloss; }
+
+double SolarField::getActualThermalPowerWithLoss(){ return _q_to_rec/1.e6; }
 // --- clouds ---
 
 void SolarField::clouds::Create(var_map &V, double extents[2]){
@@ -3380,7 +3384,7 @@ double SolarField::clouds::ShadowLoss(Point &hloc){
 			break;
 		}
 		case SolarField::clouds::SHAPE::RECTANGULAR:
-			if( abs(hloc_rot.x) < _cloud_width/2. && abs(hloc_rot.y) < _cloud_depth/2.)
+			if( fabs(hloc_rot.x) < _cloud_width/2. && abs(hloc_rot.y) < _cloud_depth/2.)
 				shadowed = true;
 
 			break;

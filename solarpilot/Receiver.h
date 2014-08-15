@@ -131,10 +131,8 @@ class Receiver : public mod_base
 		_span_min,	//Minimum (CCW) bound of the arc defining the receiver surface
 		_span_max,	//Maximum (CW) bound of the arc defining the receiver surface
 		_panel_rotation,	//Azimuth angle between the normal vector to the primary "north" panel and North
-		_width_opt_max,	//Maximum receiver width during optimization
-		_width_opt_min,	//Minimum receiver width during optimization
-		_diam_opt_max,	//Maximum receiver diameter during optimization
-		_diam_opt_min,	//Minimum receiver diameter during optimization
+		_aspect_opt_max,	//Maximum receiver aspect ratio during optimization
+		_aspect_opt_min,	//Minimum receiver aspect ratio during optimization
 		_height_opt_max,	//Maximum receiver height during optimization
 		_height_opt_min,	//Minimum receiver height during optimization
 		_h,				//Height of the absorbing component
@@ -162,11 +160,9 @@ class Receiver : public mod_base
 
 		
 	bool
-		_is_width_opt, 		//Optimize aperture width
-		_is_diam_opt, 		//Optimize receiver diameter
+		_is_aspect_opt, 		//Optimize aspect ratio (h/w)
+		_is_aspect_restrict, 		//Restrict aperture aspect ratio range
 		_is_height_opt, 		//Optimize receiver height
-		_is_width_restrict, 		//Restrict aperture width range
-		_is_diam_restrict, 		//Restrict receiver diameter range
 		_is_height_restrict,		//Restrict receiver height range
 		_is_enabled,		//Is template enabled?
 		_is_open_geom,		//If true, the receiver is represented by an arc rather than a closed circle/polygon
@@ -228,7 +224,7 @@ public:
 	double getReceiverThermalLoss();
 	double getReceiverPipingLoss();
 	double getReceiverThermalEfficiency();
-	double getNumberPanels();
+	int getNumberPanels();
 	double getPanelRotation();
 	void getAcceptAngles(double &theta_x, double &theta_y);
 	void getReceiverOffset(Point &offset);

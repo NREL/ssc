@@ -36,34 +36,26 @@ void simulation_info::Reset(){
 };
 
 //Sets
-void simulation_info::setCallbackFunction(void (*updateFunc)(simulation_info* siminfo, void *data), void *cdata){
+void simulation_info::setCallbackFunction(bool (*updateFunc)(simulation_info* siminfo, void *data), void *cdata){
 	_callback = updateFunc;
 	_callback_data = cdata;
 	_is_active = true;
 }
 
-void simulation_info::setCurrentSimulation(int val)
+bool simulation_info::setCurrentSimulation(int val)
 {
-	if(!_is_active) return; 
+	if(!_is_active) return true; 
 	_current_simulation = val; 
-	(*_callback)(this, _callback_data);
-	//(*_parent.*_fupdate)(this);
+	return (*_callback)(this, _callback_data);
+	
 }
 
-void simulation_info::setTotalSimulationCount(int val)
+bool simulation_info::setTotalSimulationCount(int val)
 {
-	if(!_is_active) return; 
+	if(!_is_active) return true; 
 	_total_sim_count = val; 
-	(*_callback)(this, _callback_data);
-	//(*_parent.*_fupdate)(this);
-}
-
-void simulation_info::setSimulationProgress(double val)
-{
-	if(!_is_active) return; 
-	_sim_progress = val; 
-	(*_callback)(this, _callback_data);
-	//(*_parent.*_fupdate)(this);
+	return (*_callback)(this, _callback_data);
+	
 }
 
 void simulation_info::clearSimulationNotices()
@@ -72,20 +64,20 @@ void simulation_info::clearSimulationNotices()
 	_sim_notice.clear();
 }
 
-void simulation_info::addSimulationNotice(string &notice)
+bool simulation_info::addSimulationNotice(string &notice)
 {
-	if(!_is_active) return; 
+	if(!_is_active) return true; 
 	_sim_notice =  notice; 
-	(*_callback)(this, _callback_data);
-	//(*_parent.*_fupdate)(this);
+	return (*_callback)(this, _callback_data);
+	
 }
 
-void simulation_info::addSimulationNotice(string notice)
+bool simulation_info::addSimulationNotice(string notice)
 {
-	if(!_is_active) return; 
+	if(!_is_active) return true; 
 	_sim_notice = notice; 
-	(*_callback)(this, _callback_data);
-	//(*_parent.*_fupdate)(this);
+	return (*_callback)(this, _callback_data);
+	
 }
 
 void simulation_info::isEnabled(bool state){_is_active = state;}

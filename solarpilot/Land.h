@@ -20,14 +20,19 @@ class Land : public mod_base
 		_max_scaled_rad,	//_bound_type = 1
 		_min_scaled_rad,	//_bound_type = 1
 		_max_fixed_rad,		//_bound_type = 2
-		_min_fixed_rad;		//_bound_type = 2
+		_min_fixed_rad,		//_bound_type = 2
+		_land_max_opt_max,
+		_land_max_opt_min;
 	bool 
 		_is_bounds_scaled,		//Land boundary scales with tower hight value
 		_is_bounds_fixed,		//Land boundary has fixed limits (not more than | not less than)
-		_is_bounds_array;		//Land boundaries is specified by points array
+		_is_bounds_array,		//Land boundaries is specified by points array
+		_is_land_max_opt,
+		_is_land_max_restrict;
+
 	vector<Point> 
 		_topo_grid;	//Grid with regularly spaced x-y points describing the topology in the z direction
-	bounds_array		//--- vector<vector<double>> ----
+	bounds_array		//--- vector<vector<double> > ----
 		_inclusions,	//Vector of land inclusion maps
 		_exclusions;	//Vector of exclusion maps 
 
