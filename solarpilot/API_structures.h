@@ -9,12 +9,16 @@ using namespace std;
 struct sp_optimize
 {
 private:
+	vector<vector<double> > _optimization_sim_points;
+	vector<double>
+		_optimization_objectives,
+		_optimization_fluxes;
 
 public:
 	void LoadDefaults(var_set &V);
 
-	struct METHOD { enum { SUBPLEX, DIRECT_L, EVOLUTIONARY }; };
-	int method;
+	//struct METHOD { enum { SUBPLEX, DIRECT_L, EVOLUTIONARY }; };
+	//int method;
 	double range_tht[2];	//[m] {min, max}
 	double range_rec_aspect[2];	//[m] {min, max}
 	double range_rec_height[2];	//[m] {min, max}
@@ -31,9 +35,16 @@ public:
 	bool is_range_constr_rech;	//Constrain allowable range for receiver height
 	bool is_range_constr_bound;	//Constrain allowable range for max land bound
 
-	double max_step_size;	//maximum relative step size. Default is 0.05
-	double converge_tol;	//convergence tolerance. Converge when relative change in objective is less than this value for maximum step. Default is 0.005
+	double converge_tol;	// Relative change in the objective function below which convergence is achieved
+	double flux_penalty;	// Relative weight in the objective function given to flux intensity over the allowable limit
+	int max_desc_iter;		// Maximum number of steps along the direction of steepest descent before recalculating the response surface
+	int max_gs_iter;		// Maximum number of golden section iterations to refine the position of a local minimum
+	int max_iter;			// Maximum number of times the optimization can iterate
+	double max_step;		// Maximum total relative step size during optimization
+	double power_penalty;  // Relative weight in the objective function given to power to the receiver below the required minimum
 
+	void getOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values);
+	void setOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values);
 };
 
 struct sp_ambient
@@ -143,7 +154,7 @@ struct sp_receiver
 {
 	void LoadDefaults(var_set &V);
 
-	struct TYPE { enum A { FLAT, CYLINDRICAL, CAVITY }; };
+	struct TYPE { enum A { CYLINDRICAL, CAVITY, FLAT}; };
 	int type;
 	Point offset;
 	double aspect, height;

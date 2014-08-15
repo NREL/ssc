@@ -56,7 +56,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	
 	var_info_invalid };
 
-static void solarpilot_callback( simulation_info *siminfo, void *data );
+static bool solarpilot_callback( simulation_info *siminfo, void *data );
 
 #ifdef _MSC_VER
 #define mysnprintf _snprintf
@@ -170,7 +170,7 @@ public:
 			wfdata.push_back( std::string(buf) );
 		}
 
-		sapi.SetCallback( solarpilot_callback, (void*)this, true);
+		sapi.SetSummaryCallback( solarpilot_callback, (void*)this);
 		
 		sapi.GenerateDesignPointSimulations( amb, V, wfdata );
 	
@@ -212,12 +212,12 @@ public:
 	}
 };
 
-static void solarpilot_callback( simulation_info *siminfo, void *data )
+static bool solarpilot_callback( simulation_info *siminfo, void *data )
 {
 	cm_solarpilot *cm = static_cast<cm_solarpilot*>( data );
-	if ( !cm ) return;
+	if ( !cm ) return false;
 	float simprogress = (float)siminfo->getCurrentSimulation()/(float)(max(siminfo->getTotalSimulationCount(),1));
-	cm->update( *siminfo->getSimulationNotices(),
+	return cm->update( *siminfo->getSimulationNotices(),
 		simprogress*100.0f );
 
 }

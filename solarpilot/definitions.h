@@ -12,11 +12,13 @@
 //Sandbox mode
 #define _SANDBOX 0
 //demo only
-#define _DEMO 0	//Is this a demo version?
-const int _demo_date[] = {2014,4,30};
-//Include Coretrace (relevant to fieldcore only! Disabling this option will cause SolarPILOT compilation to fail.)
-//#define _USE_SOLTRACE 1
-
+#define _DEMO 1	//Is this a demo version?
+const int _demo_date[] = {2014,8,1};
+//Include Coretrace (relevant to fieldcore only! Disabling this option will cause SolarPILOT compilation to fail.).
+//Comment out to remove soltrace
+//#define _USE_SOLTRACE
+//Compile without threading functionality? Comment out to remove.
+//#define SP_USE_THREADS
 
 //enum VMAP
 //{
@@ -39,8 +41,9 @@ const int _demo_date[] = {2014,4,30};
 
 struct vardefs
 {
-     const char *domain, *name, *vname, *type, *value, *units, *range, *isparam, *control, *special, *disable, *label, *description;
+     const char *domain, *name, *vname, *type, *value, *units, *range, 
+				*isparam, *control, *special, *disable, *label, *description;
 };
 
-extern vardefs variable_definition_array[299];
+extern vardefs variable_definition_array[307];
 #endif

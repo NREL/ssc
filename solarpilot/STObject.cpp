@@ -1002,7 +1002,7 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 				height = rec->getReceiverHeight();
 			//For the elliptical cavity, SolTrace can only handle circular apertures. Check to make sure and return an error if necessary.
 			bool is_ellipse = recgeom == 4;
-			if(is_ellipse && abs(width - height) > 1.e-4){
+			if(is_ellipse && fabs(width - height) > 1.e-4){
 				//PopMessage(wxT("SolTrace is not currently able to model elliptical apertures. Consider setting the aperture width equal to the aperture height."), wxT("Error"), wxICON_ERROR|wxOK);
 				//Release context
 				//st_free_context(cxt);

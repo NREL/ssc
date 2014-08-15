@@ -30,7 +30,8 @@ struct LAYOUT_DETAIL
 	FULL_ANNUAL,
 	LIMITED_ANNUAL,
 	AVG_PROFILES,
-	MAP_TO_ANNUAL
+	MAP_TO_ANNUAL,
+	FOR_OPTIMIZATION
 	};
 };
 
@@ -112,7 +113,8 @@ protected:
 		_min_zone_size_rad,		//Minimum zone size (radial direction) for grouping optical intercept factor calculations
 		_min_zone_size_az, 		//Minimum zone size (azimuthal direction) for grouping optical intercept factor calculations
 		_zone_div_tol,		//Allowable variation in optical intercept factor within a layout zone
-		_estimated_annual_power;	//Calculated in ProcessLayoutResults().. Estimate of total annual heliostat power output
+		_estimated_annual_power,	//Calculated in ProcessLayoutResults().. Estimate of total annual heliostat power output
+		_q_des_withloss;			//[MW] The design point thermal power that must be met
 
 	
 	bool
@@ -120,7 +122,6 @@ protected:
 		_is_tht_opt,		//Vary the tower height during optimization to identify optimal level?
 		_is_power_restrict,		//Restrict the search range for power output to the indicated limits
 		_is_tht_restrict,		//Restrict the search range for tower height to the indicated limits
-		_is_opt_disabled,		//Disables all optimization flags for this run
 		_is_aimpoints_updated,	//Are the heliostat field aim points up to date?
 		_is_prox_filter,		//Post-process the layout to select heliostats that are closer to the tower.
 		_cancel_flag,	//Flag indicating the current simulation should be cancelled
@@ -243,6 +244,8 @@ public:
 	void copySimulationStepData(WeatherData &wdata);
 	void getSunPositionDesign(double pos[2]);	//fills pos={azimuth, elevation} [deg]
 	double getAnnualPowerApproximation();
+	double getDesignThermalPowerWithLoss();
+	double getActualThermalPowerWithLoss();
 	
 	simulation_info *getSimInfoObject();
 	simulation_error *getSimErrorObject();

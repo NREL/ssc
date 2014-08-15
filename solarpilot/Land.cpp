@@ -28,6 +28,10 @@ void Land::Create(var_map &V)
 	setVar("is_bounds_scaled", _is_bounds_scaled, V, true);		//Land boundary scales with tower hight value
 	setVar("is_bounds_fixed", _is_bounds_fixed, V, false);		//Land boundary has fixed limits (not more than | not less than)
 	setVar("is_bounds_array", _is_bounds_array, V, false);		//Land boundary is specified by points array
+	setVar("is_land_max_opt", _is_land_max_opt, V, true);		//Optimize outer land boundary
+	setVar("is_land_max_restrict", _is_land_max_restrict, V, true);		//Restrict outer land boundary range
+	setVar("land_max_opt_max", _land_max_opt_max, V, 6., "[1,20]");		//Maximum outer boundary value
+	setVar("land_max_opt_min", _land_max_opt_min, V, 23., "[1,20]");		//Minimum outer boundary value
 
 }
 

@@ -390,22 +390,18 @@ void Receiver::Create(var_map &V)
 	setVar("rec_type", _rec_type, V, 0, "[0,5]");		//Receiver geometrical configuration
 	setVar("is_open_geom", _is_open_geom, V, false);		//If true, the receiver is represented by an arc rather than a closed circle/polygon
 	setVar("is_polygon", _is_polygon, V, false);		//Receiver geometry is represented as discrete polygon of N panels rather than continuous arc
-	setVar("is_width_opt", _is_width_opt, V, false);		//Optimize aperture width
-	setVar("is_diam_opt", _is_diam_opt, V, false);		//Optimize receiver diameter
+	setVar("is_aspect_opt", _is_aspect_opt, V, true);		//Optimize receiver aspect ratio (height / width)
+	setVar("is_aspect_restrict", _is_aspect_restrict, V, true);		//Restrict aspect ratio range (height / width)
+	setVar("aspect_opt_max", _aspect_opt_max, V, 2., "[0.,1000.]");		//Maximum receiver aspect ratio during optimization
+	setVar("aspect_opt_min", _aspect_opt_min, V, 0.5, "[0.,1000.]");		//Minimum receiver aspect ratio during optimization
 	setVar("is_height_opt", _is_height_opt, V, false);		//Optimize receiver height
-	setVar("is_width_restrict", _is_width_restrict, V, false);		//Restrict aperture width range
-	setVar("is_diam_restrict", _is_diam_restrict, V, false);		//Restrict receiver diameter range
 	setVar("is_height_restrict", _is_height_restrict, V, false);		//Restrict receiver height range
+	setVar("height_opt_max", _height_opt_max, V, 30., "[0.,1000.]");		//Maximum receiver height during optimization
+	setVar("height_opt_min", _height_opt_min, V, 5., "[0.,1000.]");		//Minimum receiver height during optimization
 	setVar("aperture_type", _aperture_type, V, 0);		//The shape of the receiver aperture
 	setVar("span_min", _span_min, V, -180., "[-180.,180.]");		//Minimum (CCW) bound of the arc defining the receiver surface
 	setVar("span_max", _span_max, V, 180., "[-180.,180.]");		//Maximum (CW) bound of the arc defining the receiver surface
-	setVar("panel_rotation", _panel_rotation, V, 0., "[-180.,180.]");		//Azimuth angle between the normal vector to the primary "north" panel and North
-	setVar("width_opt_max", _width_opt_max, V, 30., "[0.,1000.]");		//Maximum receiver width during optimization
-	setVar("width_opt_min", _width_opt_min, V, 5., "[0.,1000.]");		//Minimum receiver width during optimization
-	setVar("diam_opt_max", _diam_opt_max, V, 30., "[0.,1000.]");		//Maximum receiver diameter during optimization
-	setVar("diam_opt_min", _diam_opt_min, V, 5., "[0.,1000.]");		//Minimum receiver diameter during optimization
-	setVar("height_opt_max", _height_opt_max, V, 30., "[0.,1000.]");		//Maximum receiver height during optimization
-	setVar("height_opt_min", _height_opt_min, V, 5., "[0.,1000.]");		//Minimum receiver height during optimization
+	setVar("panel_rotation", _panel_rotation, V, 0., "[-180.,180.]");		//Azimuth angle between the normal vector to the primary 'north' panel and North
 	setVar("rec_height", _h, V, 22., "(0.,1000.]");		//Height of the absorbing component
 	setVar("rec_aspect", _rec_aspect, V, 1.2, "(0.,9e9]");		//Ratio of receiver height to width
 	setVar("rec_diameter", _d, V, 15.5, "[0.,1000.]");		//Receiver diameter for cylindrical receivers
@@ -468,7 +464,7 @@ double Receiver::getReceiverAbsorberArea(){return _absorber_area;}
 double Receiver::getReceiverThermalLoss(){return _therm_loss;}
 double Receiver::getReceiverPipingLoss(){return _piping_loss;}
 double Receiver::getReceiverThermalEfficiency(){return _thermal_eff;}
-double Receiver::getNumberPanels(){return _is_polygon ? _n_panels : 0; }
+int Receiver::getNumberPanels(){return _is_polygon ? _n_panels : 0; }
 double Receiver::getPanelRotation(){return _panel_rotation; }
 void Receiver::getAcceptAngles(double &theta_x, double &theta_y){theta_x = _accept_ang_x; theta_y = _accept_ang_y;};
 void Receiver::getReceiverOffset(Point &offset){offset.x = _rec_offset_x; offset.y = _rec_offset_y; offset.z = _rec_offset_z;}

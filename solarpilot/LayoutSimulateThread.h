@@ -49,7 +49,7 @@ public:
 		int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
 	void Setup(SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
-		double args[4], int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
+		double *args, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
 	void IsFluxmapNormalized(bool is_normal);	//set whether the fluxmap should be normalized (default TRUE)
 

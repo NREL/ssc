@@ -21,31 +21,55 @@ void sp_optimize::LoadDefaults(var_set &V)
 	if( is_bounds_array )
 		is_optimize_bound = false;
 	else
-		is_optimize_bound = true;
+		is_optimize_bound = V["land"][0]["is_land_max_opt"].value_bool();
 
 	//collect other range settings
-	method = METHOD::DIRECT_L;
-	double hmax,hmin;
+	//method = METHOD::DIRECT_L;
 	range_tht[0] = V["solarfield"][0]["tht_opt_min"].value_double();	//[m] {min, max}
 	range_tht[1] = V["solarfield"][0]["tht_opt_max"].value_double();
-	range_rec_height[0] = hmin = V["receiver"][0]["height_opt_min"].value_double();	//[m] {min, max}
-	range_rec_height[1] = hmax = V["receiver"][0]["height_opt_max"].value_double();
-	range_rec_aspect[0] = hmin/V["receiver"][0]["width_opt_max"].value_double();	//[m] {min, max}
-	range_rec_aspect[1] = hmax/V["receiver"][0]["width_opt_min"].value_double();	//min and max aspect, respectively, use min height/max width, and max height/min width
+	range_rec_height[0] = V["receiver"][0]["height_opt_min"].value_double();	//[m] {min, max}
+	range_rec_height[1] = V["receiver"][0]["height_opt_max"].value_double();
+	range_rec_aspect[0] = V["receiver"][0]["aspect_opt_min"].value_double();	//[m] {min, max}
+	range_rec_aspect[1] = V["receiver"][0]["aspect_opt_max"].value_double();	
 		
 	flux_max = V["receiver"][0]["peak_flux"].value_double();	//[kw/m2] Maximum allowable flux
 	
-	is_optimize_tht = true;
-	is_optimize_rec_aspect = true;
-	is_optimize_rec_height = true;
+	is_optimize_tht = V["solarfield"][0]["is_tht_opt"].value_bool();
+	is_optimize_rec_aspect = V["receiver"][0]["is_aspect_opt"].value_bool();
+	is_optimize_rec_height = V["receiver"][0]["is_height_opt"].value_bool();
 	
-	is_range_constr_tht = false;
-	is_range_constr_aspect = false;
-	is_range_constr_rech = false;
-	is_range_constr_bound = false;
 
-	max_step_size = 0.05;
-	converge_tol = 0.005;
+	is_range_constr_tht = V["solarfield"][0]["is_tht_restrict"].value_bool();
+	is_range_constr_aspect = V["receiver"][0]["is_aspect_restrict"].value_bool();
+	is_range_constr_rech = V["receiver"][0]["is_height_restrict"].value_bool();
+	is_range_constr_bound = V["land"][0]["is_land_max_restrict"].value_bool();
+
+	converge_tol = V["optimize"][0]["converge_tol"].value_double();
+	flux_penalty = V["optimize"][0]["flux_penalty"].value_double();
+	max_desc_iter = V["optimize"][0]["max_desc_iter"].value_int();
+	max_gs_iter = V["optimize"][0]["max_gs_iter"].value_int();
+	max_iter = V["optimize"][0]["max_iter"].value_int();
+	max_step = V["optimize"][0]["max_step"].value_double();
+	power_penalty = V["optimize"][0]["power_penalty"].value_double();
+
+}
+
+void sp_optimize::getOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
+{
+	/* 
+	Return the addresses of the optimization simulation history data, if applicable.
+	*/
+	sim_points = _optimization_sim_points;
+	obj_values = _optimization_objectives;
+	flux_values = _optimization_fluxes;
+}
+
+void sp_optimize::setOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
+{
+	//Create local copies
+	_optimization_sim_points = sim_points;
+	_optimization_objectives = obj_values;
+	_optimization_fluxes = flux_values;
 }
 
 // ----------------- ambient --------------------

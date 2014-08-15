@@ -629,7 +629,7 @@ public:
 	//Scripts
 	void SetMonthLengths(const int year);
 	void setDefaults();
-	void hours_to_date(double hours, double &month, double &day_of_month);
+	void hours_to_date(double hours, int &month, int &day_of_month);
 
 	int GetDayOfYear();
 	int GetDayOfYear(int year, int month, int mday);
