@@ -28,7 +28,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                   "deg",    "",                      "SWH",      "*",                       "MIN=0,MAX=90",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                "deg",    "90=E,180=S",            "SWH",      "*",                       "MIN=0,MAX=360",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                "Ground reflectance factor",        "0..1",   "",                      "SWH",      "*",                       "FACTOR",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",            "Irradiance input mode",            "0/1",    "Beam+Diff,Global+Beam", "SWH",      "?=0",                     "INTEGER,MIN=0,MAX=1",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",            "Irradiance input mode",            "0/1/2",    "Beam+Diff,Global+Beam,Global+Diff", "SWH",      "?=0",                     "INTEGER,MIN=0,MAX=2",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",             "Tilted surface irradiance model",  "0/1/2",  "Isotropic,HDKR,Perez",  "SWH",      "?=1",                     "INTEGER,MIN=0,MAX=2",               "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",        "Hourly beam shading loss",             "%",         "",               "SWH",      "?",                       "",                              "" },
@@ -152,7 +152,7 @@ public:
 		double albedo = as_double("albedo"); // ground reflectance fraction
 		double tilt = as_double("tilt"); // collector tilt in degrees
 		double azimuth = as_double("azimuth"); // collector azimuth in degrees  (180=south, 90=east)
-		int irrad_mode = as_integer("irrad_mode"); // 0=beam&diffuse, 1=total&beam
+		int irrad_mode = as_integer("irrad_mode"); // 0=beam&diffuse, 1=total&beam, 2=total&diffuse
 		int sky_model = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
 
 		/* extract arrays */
@@ -275,6 +275,7 @@ public:
 			********************************************************************** */
 			irrad tt;
 			if (irrad_mode == 0) tt.set_beam_diffuse(wf.dn, wf.df);
+			else if (irrad_mode == 2) tt.set_global_diffuse(wf.gh, wf.df);
 			else tt.set_global_beam(wf.gh, wf.dn);
 			tt.set_location(wf.lat, wf.lon, wf.tz);
 			tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, 1);

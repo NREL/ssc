@@ -9,11 +9,11 @@
 static var_info _cm_vtab_irradproc[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                              UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                 "Irradiance input mode",           "0/1",   "Beam+Diff,Global+Beam",  "Irradiance Processor",      "?=0",                     "INTEGER,MIN=0,MAX=1", ""},
+	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                 "Irradiance input mode",           "0/1/2",   "Beam+Diff,Global+Beam, Global+Diff",  "Irradiance Processor",      "?=0",                     "INTEGER,MIN=0,MAX=2", ""},
 
-	{ SSC_INPUT,        SSC_ARRAY,       "beam",                       "Beam normal irradiance",          "W/m2",   "",                      "Irradiance Processor",      "*",                        "",                      "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "diffuse",                    "Diffuse horizontal irradiance",   "W/m2",   "",                      "Irradiance Processor",      "irrad_mode=0",             "LENGTH_EQUAL=beam",     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "global",                     "Global horizontal irradiance",    "W/m2",   "",                      "Irradiance Processor",      "irrad_mode=1",              "LENGTH_EQUAL=beam",     "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "beam",                       "Beam normal irradiance",          "W/m2",   "",                      "Irradiance Processor",      "irrad_mode!=2",                        "",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "diffuse",                    "Diffuse horizontal irradiance",   "W/m2",   "",                      "Irradiance Processor",      "irrad_mode!=1",             "LENGTH_EQUAL=beam",     "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "global",                     "Global horizontal irradiance",    "W/m2",   "",                      "Irradiance Processor",      "irrad_mode!=0",              "LENGTH_EQUAL=beam",     "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                     "Ground reflectance (time depend.)","frac",  "0..1",                   "Irradiance Processor",      "?",                        "LENGTH_EQUAL=beam",     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo_const",               "Ground reflectance (single value)","frac",  "0..1",                   "Irradiance Processor",      "?=0.2",                    "",                      "" },
@@ -72,16 +72,26 @@ public:
 	void exec( ) throw( general_error )
 	{
 		size_t count;
-		ssc_number_t *beam = as_array("beam", &count);
-
-		if (count < 2) throw general_error("need at least 2 data points in irradproc");
-		
-		ssc_number_t *diff = 0, *glob = 0;
+		ssc_number_t *beam = 0, *glob = 0, *diff = 0;
 		int irrad_mode = as_integer("irrad_mode");
-		if ( irrad_mode == 1 )
-			glob = as_array("global", &count );
-		else
-			diff = as_array("diffuse", &count );
+		if (irrad_mode == 0) //beam and diffuse
+		{
+			beam = as_array("beam", &count);
+			if (count < 2) throw general_error("need at least 2 data points in irradproc");
+			diff = as_array("diffuse", &count);
+		}
+		if (irrad_mode == 1) //global and beam
+		{
+			beam = as_array("beam", &count);
+			if (count < 2) throw general_error("need at least 2 data points in irradproc");
+			glob = as_array("global", &count);
+		}
+		else //global and diffuse
+		{
+			diff = as_array("diffuse", &count);
+			if (count < 2) throw general_error("need at least 2 data points in irradproc");
+			glob = as_array("global", &count);
+		}			
 
 		ssc_number_t *year = as_array("year", &count);		
 		ssc_number_t *month = as_array("month", &count);
@@ -167,6 +177,7 @@ public:
 			x.set_location( lat, lon, tz );
 			x.set_sky_model( sky_model, alb );
 			if ( irrad_mode == 1 ) x.set_global_beam( glob[i], beam[i] );
+			else if (irrad_mode == 2) x.set_global_diffuse(glob[i], diff[i]);
 			else x.set_beam_diffuse( beam[i], diff[i] );
 			x.set_surface( track_mode, tilt, azimuth, rotlim, en_backtrack, gcr );
 			
