@@ -712,7 +712,7 @@ int irrad::check()
 {
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt < 0 || delt > 1) return -1;
 	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
-	if ( radmode < 0 || radmode > 1 || skymodel < 0 || skymodel > 2 ) return -3;
+	if ( radmode < 0 || radmode > 2 || skymodel < 0 || skymodel > 2 ) return -3;
 	if ( track < 0 || track > 3 ) return -4;
 	if ( radmode == 0 && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
 	if ( radmode == 1 && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
@@ -720,6 +720,7 @@ int irrad::check()
 	if ( tilt < 0 || tilt > 90 ) return -8;
 	if ( sazm < 0 || sazm >= 360 ) return -9;
 	if ( rlim < -90 || rlim > 90 ) return -10;
+	if ( radmode == 2 && (gh < 0 || gh > 1500 || df < 0 || df > 1500)) return -11;
 	return 0;
 }
 
@@ -822,6 +823,13 @@ void irrad::set_global_beam( double global, double beam )
 	this->radmode = 1;
 }
 
+void irrad::set_global_diffuse(double global, double diffuse)
+{
+	this->gh = global;
+	this->df = diffuse;
+	this->radmode = 2;
+}
+
 int irrad::calc()
 {
 	int code = check();
@@ -888,7 +896,11 @@ int irrad::calc()
 		tms[2] = 1;
 	}
 	else
-	{			
+	{	
+		// sun is down, assign sundown values
+		sun[0] = -999*DTOR; //avoid returning a junk azimuth angle (return in radians)
+		sun[1] = -999*DTOR; //avoid returning a junk zenith angle (return in radians)
+		sun[2] = -999*DTOR; //avoid returning a junk elevation angle (return in radians)
 		tms[0] = -1;
 		tms[1] = -1;
 		tms[2] = 0;
@@ -921,12 +933,26 @@ int irrad::calc()
 		// compute beam and diffuse inputs based on irradiance inputs mode
 		double ibeam = dn;
 		double idiff = 0.0;
-		if ( radmode == 0 )  // Beam+Diffuse
+		if (radmode == 0)  // Beam+Diffuse
+		{
 			idiff = df;
-		else if ( radmode == 1 ) // Total+Beam
+			ibeam = dn;
+		}
+		else if (radmode == 1) // Total+Beam
+		{
 			idiff = gh - hbeam;
+			ibeam = dn;
+		}
+		else if (radmode == 2) //Total+Diffuse
+		{
+			idiff = df;
+			ibeam = (gh - df) / cos(sun[1]); //compute beam from total, diffuse, and zenith angle
+			if (ibeam > 1500) ibeam = 1500; //error checking on computation
+			if (ibeam < 0) ibeam = 0; //error checking on computation
+		}
+
 		else
-			return -2; // diffuse or global must be given in additional to beam irradiance
+			return -2; // just in case of a weird error
 
 		// compute incident irradiance on tilted surface
 		switch( skymodel )

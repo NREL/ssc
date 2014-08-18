@@ -44,6 +44,7 @@ public:
 	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr );
 	void set_beam_diffuse( double beam, double diffuse );
 	void set_global_beam( double global, double beam );
+	void set_global_diffuse(double global, double diffuse);
 
 	int calc();
 	
