@@ -193,7 +193,7 @@ void diffuse_reduce(
 		Fgnddiff = reduced_gnddiff / Gr1;
 }
 
-double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio)
+double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio, double m_d, double Vmp)
 {
 	double Xtemp = min(X, 0.65);  // X is limited to 0.65 for c2 calculation
 
@@ -204,7 +204,7 @@ double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio)
 	double eqn5 = 1.0 - c1 * pow(S, 2) - c2 * S;  // new eqn5 on 1/18/13
 	double eqn9 = 0;
 
-	if (X != 0) eqn9 = (X - S) / X;
+	if (X != 0) eqn9 = (X - S * (1 + 0.5 / (Vmp / m_d))) / X; //updated 8/7/14 jmf per Chris Deline to match published paper
 
 	double eqn10 = c3 * (S - 1.0) + (dbh_ratio);
 
@@ -473,7 +473,7 @@ bool ss_exec(
 		diffuse_globhoriz = inc_diff / inc_total;
 
 	// 3. Calculate the dc power derate based on C.Deline et al., "A simplified model of uniform shading in large photovoltaic arrays" (Psys/Psys0 in the paper, which is equivalent to a derate)
-	outputs.m_dc_derate = selfshade_dc_derate( X, S, inputs.FF0, diffuse_globhoriz );
+	outputs.m_dc_derate = selfshade_dc_derate( X, S, inputs.FF0, diffuse_globhoriz, m_d, inputs.Vmp );
 
 	return true;
 }
