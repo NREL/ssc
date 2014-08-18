@@ -36,7 +36,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",                  "0/1",    "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                            "0..1",   "",                              "pvsamv1",              "*",						  "LENGTH=12",					   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                       "",       "0=beam&diffuse,1=total&beam",   "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=1",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                       "",       "0=beam&diffuse,1=total&beam,2=total&diffuse",   "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=2",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                       "",       "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "ac_loss",                                   "Interconnection AC loss",                               "%",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
@@ -546,7 +546,7 @@ public:
 
 		bool use_wf_alb = (as_integer("use_wf_albedo") > 0); // weather file albedo
 
-		int radmode = as_integer("irrad_mode"); // 0=B&D, 1=G&B
+		int radmode = as_integer("irrad_mode"); // 0=B&D, 1=G&B, 2=G&D
 		int skymodel = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
 
 		// load the subarray parameter information
@@ -661,6 +661,7 @@ public:
 		double ref_area_m2 = 0;
 
 		double self_shading_fill_factor = 0;
+		double ssVmp = 0;
 
 		double module_watts_stc = -1.0;
 
@@ -746,6 +747,7 @@ public:
 			cec.Adj = as_double("cec_adjust");
 
 			self_shading_fill_factor = cec.Vmp * cec.Imp / cec.Voc / cec.Isc;
+			ssVmp = cec.Vmp;
 
 			if ( as_integer("cec_temp_corr_mode") == 0 )
 			{
@@ -836,6 +838,7 @@ public:
 			snl.Voc0 = as_double("snl_voco");
 
 			self_shading_fill_factor = snl.Vmp0 * snl.Imp0 / snl.Voc0 / snl.Isc0;
+			ssVmp = snl.Vmp0;
 
 			// by default, use database values
 			double A = as_double("snl_a");
@@ -936,6 +939,7 @@ public:
 			cec.Adj = m.Adj;
 		
 			self_shading_fill_factor = cec.Vmp * cec.Imp / cec.Voc / cec.Isc;
+			ssVmp = cec.Vmp;
 
 			noct_tc.Tnoct = as_double("6par_tnoct");
 			noct_tc.ffv_wind = 0.51; // less than 22ft high (1 story)
@@ -965,6 +969,7 @@ public:
 			sa[nn].sscalc.width = width;
 			sa[nn].sscalc.length = width * aspect_ratio;
 			sa[nn].sscalc.FF0 = self_shading_fill_factor;
+			sa[nn].sscalc.Vmp = ssVmp;
 		}
 		
 		double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc/1000.0;
@@ -1192,6 +1197,7 @@ public:
 				irr.set_sky_model( skymodel, alb );
 				if ( radmode == 0 ) irr.set_beam_diffuse( wf.dn, wf.df );
 				else if (radmode == 1) irr.set_global_beam( wf.gh, wf.dn );
+				else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);
 				
 				irr.set_surface( sa[nn].track_mode,
 					sa[nn].tilt,
