@@ -52,8 +52,10 @@ void diffuse_reduce(
 
 double selfshade_dc_derate( double X, 
 						   double S, 
-						   double FF0, 
-						   double dbh_ratio );
+						   double FF0, //fill factor
+						   double dbh_ratio,
+						   double m_d, //number of diodes
+						   double Vmp); //module Vmp
 
 
 void selfshade_xs_horstr( bool landscape, // modules oriented in landscape/portrait on assembly
@@ -78,11 +80,12 @@ struct ssinputs
 	int mod_orient, str_orient;
 	double row_space;
 	int ndiode;
+	double Vmp;
 	int mask_angle_calc_method;
 	double FF0;						// Fill Factor at STC = Pmp0 / Voc0 / Isc0;
 
 	//constructor for ssarrdat structure- set all values to zero
-	ssinputs() : nstrx(0), nmodx(0), nmody(0), nrows(0), length(0), width(0), mod_orient(0), str_orient(0), row_space(0), ndiode(0), mask_angle_calc_method(0), FF0(0) {}
+	ssinputs() : nstrx(0), nmodx(0), nmody(0), nrows(0), length(0), width(0), mod_orient(0), str_orient(0), row_space(0), ndiode(0), Vmp(0), mask_angle_calc_method(0), FF0(0) {}
 };
 
 struct ssoutputs	// self-shading outputs
