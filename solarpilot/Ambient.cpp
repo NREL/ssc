@@ -373,7 +373,7 @@ double Ambient::calcAttenuation(double &len){
 		
 	if(_atm_model < 3){ //Barstow 25k or 5km visibility from DELSOL, user coefs
 		double rkm = len*.001;
-		int nc = _atm_coefs.ncells();
+		int nc = (int)_atm_coefs.ncells();
 		for(int i=0; i<nc; i++){ att += _atm_coefs.at(i)*pow(rkm, i); }
 	}
 	else if(_atm_model == 3){

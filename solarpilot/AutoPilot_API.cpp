@@ -76,6 +76,16 @@ public:
 		return yret;
 	};
 	
+	void AddGenerator(vector<vector<int> > &design, int a, int b = 0, int c = 0, int d = 0, int e = 0)
+	{
+		vector<int> newgen;
+		if(a>0) newgen.push_back(a);
+		if(b>0) newgen.push_back(b);
+		if(c>0) newgen.push_back(c);
+		if(d>0) newgen.push_back(d);
+		if(e>0) newgen.push_back(e);
+	}
+
 	void GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double> > &sim_points, double tolerance)
 	{
 		/* 
@@ -91,12 +101,12 @@ public:
 		sim_points.clear();
 
 		//allow up to a 32-run table
-		int nruns = (int)pow(2.0, (double)min(nvars,5));
+		int nruns = (int)pow(2., min(nvars,5));
 
 		//values that determine when each variable toggles value
 		vector<int> divisors;
 		for(int i=0; i<nvars; i++)
-			divisors.push_back( (int)pow(2.0, (double)i) );
+			divisors.push_back( (int)pow(2., i) );
 		//create a design with either +1 or -1 as high/low value
 		vector<vector<int> > design;
 		design.push_back( vector<int>(nvars, 1) );
@@ -120,29 +130,29 @@ public:
 			break;
 
 		case 6:
-			generators.push_back( {1,2,3,4,5} );
+			AddGenerator( generators, 1,2,3,4,5 );
 			break;
 		case 7:
-			generators.push_back( {1,2,3} );
-			generators.push_back( {1,2,4,5} );
+			AddGenerator( generators, 1,2,3 );
+			AddGenerator( generators, 1,2,4,5 );
 			break;
 		case 8:
-			generators.push_back( {1,2,3} );
-			generators.push_back( {1,2,4} );
-			generators.push_back( {1,3,4,5} );
+			AddGenerator( generators, 1,2,3 );
+			AddGenerator( generators, 1,2,4 );
+			AddGenerator( generators, 1,3,4,5 );
 			break;
 		case 9:
-			generators.push_back( {1,2,3} );
-			generators.push_back( {1,2,4} );
-			generators.push_back( {1,2,5} );
-			generators.push_back( {1,3,4,5} );
+			AddGenerator( generators, 1,2,3 );
+			AddGenerator( generators, 1,2,4 );
+			AddGenerator( generators, 1,2,5 );
+			AddGenerator( generators, 1,3,4,5 );
 			break;
 		case 10:
-			generators.push_back( {1,2,3} );
-			generators.push_back( {1,2,4} );
-			generators.push_back( {1,2,5} );
-			generators.push_back( {1,3,4,5} );
-			generators.push_back( {2,3,4,5} );
+			AddGenerator( generators, 1,2,3 );
+			AddGenerator( generators, 1,2,4 );
+			AddGenerator( generators, 1,2,5 );
+			AddGenerator( generators, 1,3,4,5 );
+			AddGenerator( generators, 2,3,4,5 );
 			break;
 		case 11:
 		case 12:
@@ -150,22 +160,22 @@ public:
 		case 14:
 		case 15:
 		case 16:
-			generators.push_back( {1,2,3} );
-			generators.push_back( {1,2,4} );
-			generators.push_back( {1,3,4} );
-			generators.push_back( {2,3,4} );
-			generators.push_back( {1,2,5} );
-			generators.push_back( {1,3,5} );
+			AddGenerator( generators, 1,2,3 );
+			AddGenerator( generators, 1,2,4 );
+			AddGenerator( generators, 1,3,4 );
+			AddGenerator( generators, 2,3,4 );
+			AddGenerator( generators, 1,2,5 );
+			AddGenerator( generators, 1,3,5 );
 			if(nvars == 11) break;
-			generators.push_back( {2,3,5} );
+			AddGenerator( generators, 2,3,5 );
 			if(nvars == 12) break;
-			generators.push_back( {1,4,5} );
+			AddGenerator( generators, 1,4,5 );
 			if(nvars == 13) break;
-			generators.push_back( {2,4,5} );
+			AddGenerator( generators, 2,4,5 );
 			if(nvars == 14) break;
-			generators.push_back( {3,4,5} );
+			AddGenerator( generators, 3,4,5 );
 			if(nvars == 15) break;
-			generators.push_back( {1,2,3,4,5} );
+			AddGenerator( generators, 1,2,3,4,5 );
 			break;
 
 		}
@@ -217,12 +227,12 @@ double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *da
 		D->Beta.resize(n,1.);
 	}
 
-	for(int i=0; i<n; i++)
+	for(unsigned i=0; i<n; i++)
 		D->Beta.at(i) = x[i];
 
 	double ssres=0.;
 
-	for(int i=0; i<D->X.size(); i++){
+	for(int i=0; i<(int)D->X.size(); i++){
 		double y = D->EvaluateBiLinearResponse(D->X.at(i));
 		double ssrv = (y - D->Y.at(i));
 		ssres += ssrv * ssrv;	//residual sum of squares
@@ -242,7 +252,7 @@ double optimize_stdesc_eval(unsigned n, const double *x, double *grad, void *dat
 	D->ncalls ++;
 	vector<double> xpt;
 	//double ssize = 0.;
-	for(int i=0; i<n; i++){
+	for(unsigned i=0; i<n; i++){
 		xpt.push_back(x[i]);
 		//double xistep = x[i] - D->cur_pos.at(i);
 		//D->cur_pos.at(i) = x[i];
@@ -263,7 +273,7 @@ double optimize_maxstep_eval(unsigned n, const double *x, double *grad, void *da
 
 	vector<double> xpt;
 	double ssize = 0.;
-	for(int i=0; i<n; i++){
+	for(unsigned i=0; i<n; i++){
 		xpt.push_back(x[i]);
 		double xistep = x[i] - D->cur_pos.at(i);
 		//D->cur_pos.at(i) = x[i];
@@ -1116,7 +1126,7 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 	//Additive? may cause too much interaction
 	
 	//Set the aiming method back to the original value
-	//_variables["fluxsim"][0]["aim_method"].value = std::to_string( aim_method_save );
+	//_variables["fluxsim"][0]["aim_method"].value = my_to_string( aim_method_save );
 
 	//Set the flux resolution back to the original values
 	/*_variables["fluxsim"][0]["x_res"].set( flux_x_save );
@@ -1491,9 +1501,13 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 						vector<double> new_step_vector( step_vector );
 
 						//go back and try to move in the factorial point direction
+						double new_step_size = 0.;
 						for(int i=0; i<(int)step_vector.size(); i++){
-							new_step_vector.at(i) = surface_eval_points.at(i_best_fact).at(i) - start_point.at(i);
+							double ds = surface_eval_points.at(i_best_fact).at(i) - start_point.at(i);
+							new_step_vector.at(i) = ds;
+							new_step_size += ds * ds;
 						}
+						new_step_size = sqrt(new_step_size);
 
 						//check to make sure the new step vector is different from the previous
 						double step_diff = 0.;
@@ -1501,7 +1515,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 							double ds = new_step_vector.at(i) - step_vector.at(i);
 							step_diff += ds * ds;
 						}
-						if( sqrt(step_diff) > opt.max_step/100. ){
+						if( sqrt(step_diff) > opt.max_step/100. && new_step_size > 1.e-8){
 							tried_steep_mod = true;
 							_summary_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "]" + 
 								"Moving back to original point.. trying alternate descent direction.");

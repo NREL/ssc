@@ -4,7 +4,7 @@
 
 testoptclass::testoptclass(){
 	call_count = 0;
-	srand( time(NULL) );
+	srand( (unsigned int)time(NULL) );
 }
 
 void testoptclass::reset_counter(){call_count = 0;}
@@ -30,7 +30,7 @@ double testoptclass::memfunc(unsigned n, const double *x, double *grad, void *my
 double testoptclass::styb_tang_test(unsigned n, const double *x, double *grad, void *data){
 	/* x* = {-2.903534, .....}, f(x*) = -39.16599*n */
 	double y=0.;
-	for(int i=0; i<n; i++){
+	for(unsigned i=0; i<n; i++){
 		y+= pow(x[i],4)-16.*pow(x[i],2) + 5*x[i];
 	}
 	y *= 0.5;
@@ -41,7 +41,7 @@ double testoptclass::styb_tang_test(unsigned n, const double *x, double *grad, v
 double testoptclass::rosenbrock_test(unsigned n, const double *x, double *grad, void *data){
 	double y=0.;
 
-	for(int i=1; i<n; i++){
+	for(unsigned i=1; i<n; i++){
 		//y += 100. * pow(x[i] - pow(x[i-1],2),2) + pow(x[i-1]-1.,2);
 		y += pow(x[i] - pow(x[i-1],2),2) + pow(x[i-1]-1.,2);
 	}
@@ -53,11 +53,11 @@ double testoptclass::matyas_test(unsigned n, const double *x, double *grad, void
 	/* Convex.. Valid from -10..10. */
 	call_count++;
 	double y=0.;
-	for(int i=0; i<n; i++){
+	for(unsigned i=0; i<n; i++){
 		y+= 0.26 * pow(fabs(x[i]),(double)n);
 	}
 	double xx=0.48;
-	for(int i=0; i<n; i++){
+	for(unsigned i=0; i<n; i++){
 		xx *= x[i];
 	}
 	y += - xx;

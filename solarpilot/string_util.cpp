@@ -17,7 +17,7 @@ vector< string > split( const string &str, const string &delim, bool ret_empty, 
 	char cur_delim[2] = {0,0};
 	string::size_type m_pos = 0;
 	string token;
-	int dsize = delim.size();
+	int dsize = (int)delim.size();
 	
 	while (m_pos < str.length())
 	{

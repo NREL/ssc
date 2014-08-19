@@ -473,8 +473,8 @@ void Toolbox::writeMatD(string dir, string name, matrix_t<double> &mat, bool cle
 		file =	fopen(path.c_str(), "a");
 	}
 
-	int nr = mat.nrows();
-	int nc = mat.ncols();
+	int nr = (int)mat.nrows();
+	int nc = (int)mat.ncols();
 	
 	fprintf(file, "%s\n", name.c_str());
 	
@@ -506,9 +506,9 @@ void Toolbox::writeMatD(string dir, string name, block_t<double> &mat, bool clea
 		file =fopen(path.c_str(), "a");
 	}
 
-	int nr = mat.nrows();
-	int nc = mat.ncols();
-	int nl = mat.nlayers();
+	int nr = (int)mat.nrows();
+	int nc = (int)mat.ncols();
+	int nl = (int)mat.nlayers();
 
 	fprintf(file, "%s\n", name.c_str());
 	
@@ -642,7 +642,7 @@ vector<Point> Toolbox::projectPolygon(vector<Point> &poly, PointVect &plane) {
 	Point pt; 
 
 	//Declare a new polygon of type vector
-	int Lpoly = poly.size(); 
+	int Lpoly = (int)poly.size(); 
 	vector< Point > FPoly(Lpoly);
 	
 
@@ -695,7 +695,7 @@ int Toolbox::polywind( const vector<Point> &vt, const Point &pt) {
 
 	/* Return the winding number of a polygon (specified by a vector of vertex points vt) 
 	around an arbitrary point pt.*/
-	np = vt.size();
+	np = (int)vt.size();
 	switch (which_ign) {
 	case 0:
 		pt0 = pt.y; pt1 = pt.z;
@@ -1180,10 +1180,10 @@ double Toolbox::intersect_ellipse_rect(double rect[4], double ellipse[2]){
 	//Construct 4 separate possible rectangles
 	double A[4], B[4], C[4], D[4];
 	for(int i=1; i<5; i++){
-		A[i-1] = max(0., pow(-1, (pow(i,2)-i)/2)*rect[0] - c/2.);
-		B[i-1] = max(0., pow(-1, (pow(i,2)+i-2)/2)*rect[1] - d/2.);
-		C[i-1] = max(0., pow(-1, (pow(i,2)-i)/2)*rect[0]+c/d-A[i-1]);
-		D[i-1] = max(0., pow(-1, (pow(i,2)+i-2)/2)*rect[1]+d/2.-B[i-1]);
+		A[i-1] = max(0., pow(-1, (pow((double)i,2)-i)/2)*rect[0] - c/2.);
+		B[i-1] = max(0., pow(-1, (pow((double)i,2)+i-2)/2)*rect[1] - d/2.);
+		C[i-1] = max(0., pow(-1, (pow((double)i,2)-i)/2)*rect[0]+c/d-A[i-1]);
+		D[i-1] = max(0., pow(-1, (pow((double)i,2)+i-2)/2)*rect[1]+d/2.-B[i-1]);
 	}
 
 	double atot=0.;
@@ -1241,7 +1241,7 @@ string Toolbox::getDelimiter(std::string &text){
 	int ns=0;
 	for(int i=0; i<4; i++){
 		vector<string> data = Toolbox::split(text, delims[i]);
-		if(data.size()>ns){ delim = delims[i]; ns = data.size(); }	//pick the delimiter that returns the most entries
+		if(data.size()>ns){ delim = delims[i]; ns = (int)data.size(); }	//pick the delimiter that returns the most entries
 	}
 	return delim;
 }
@@ -1254,7 +1254,7 @@ vector< string > Toolbox::split( const string &str, const string &delim, bool re
 	char cur_delim[2] = {0,0};
 	string::size_type m_pos = 0;
 	string token;
-	int dsize = delim.size();
+	int dsize = (int)delim.size();
 	
 	while (m_pos < str.length())
 	{
