@@ -91,12 +91,12 @@ public:
 		sim_points.clear();
 
 		//allow up to a 32-run table
-		int nruns = (int)pow(2, min(nvars,5));
+		int nruns = (int)pow(2.0, (double)min(nvars,5));
 
 		//values that determine when each variable toggles value
 		vector<int> divisors;
 		for(int i=0; i<nvars; i++)
-			divisors.push_back( (int)pow(2, i) );
+			divisors.push_back( (int)pow(2.0, (double)i) );
 		//create a design with either +1 or -1 as high/low value
 		vector<vector<int> > design;
 		design.push_back( vector<int>(nvars, 1) );
@@ -1305,7 +1305,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		}
 
 		//construct a bilinear regression model
-		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + 
+		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + 
 			" Generating regression fit");
 		
 		//----------------------
@@ -1430,7 +1430,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		if(fabs(checktol) < opt.converge_tol){
 			_summary_siminfo->addSimulationNotice(
 				"\nConvergence in the objective function value has been achieved. Final step variation: "
-				+ std::to_string(checktol) );
+				+ my_to_string(checktol) );
 			converged = true;
 			break;
 		}
@@ -1446,7 +1446,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		bool steep_converged = false;
 		double prev_obj = base_obj;
 		_summary_siminfo->setTotalSimulationCount(opt.max_desc_iter);
-		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + 
+		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + 
 				" Moving along steepest descent");
 		
 		vector<double> start_point = current;
@@ -1503,7 +1503,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 						}
 						if( sqrt(step_diff) > opt.max_step/100. ){
 							tried_steep_mod = true;
-							_summary_siminfo->addSimulationNotice("[Iter " + std::to_string(opt_iter+1) + "]" + 
+							_summary_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "]" + 
 								"Moving back to original point.. trying alternate descent direction.");
 						
 							//correct the step to maintain the maximum step size
@@ -1568,7 +1568,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				site_a_gs, site_b_gs;
 		
 		_summary_siminfo->setTotalSimulationCount(opt.max_gs_iter*2);
-		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + " Refining with golden section");
+		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + " Refining with golden section");
 
 		bool site_a_sim_ok = false;
 		bool site_b_sim_ok = false;
@@ -1687,11 +1687,11 @@ bool AutoPilot::IsSimulationCancelled()
 
 void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux)
 {
-	string msg = "[Iter " + std::to_string(iter+1) + "] ";
+	string msg = "[Iter " + my_to_string(iter+1) + "] ";
 	for(int i=0; i<(int)pos.size(); i++){
-		msg.append( std::to_string( pos.at(i) * normalizers.at(i) ) + " | " );
+		msg.append( my_to_string( pos.at(i) * normalizers.at(i) ) + " | " );
 	}
-	msg.append( "| Obj = " + std::to_string(obj) + " | Flux = " + std::to_string( flux ) );
+	msg.append( "| Obj = " + my_to_string(obj) + " | Flux = " + my_to_string( flux ) );
 	_summary_siminfo->addSimulationNotice( (string)msg );
 }
 
@@ -2001,7 +2001,7 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 
 				//update progress
 				if(_has_detail_callback)
-					_detail_siminfo->addSimulationNotice("Preparing " + std::to_string(_n_threads) + " threads for simulation");
+					_detail_siminfo->addSimulationNotice("Preparing " + my_to_string(_n_threads) + " threads for simulation");
 				
 				
 				//Duplicate SF objects in memory

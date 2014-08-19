@@ -22,9 +22,11 @@ using std::tr1::unordered_map;
 
 using namespace std;
 
+#ifdef _MSC_VER
 #pragma warning(disable:4503)	//warning for name length - VS2010 compiler
 #pragma warning(disable:4505)	//warning for removing unused method
- 
+#endif
+
 /* 
 Forward-declare the class that will be calling the performance code simulation. This 
 is used to provide a callback option from the simulation code to the GUI/calling class
