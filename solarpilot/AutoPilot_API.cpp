@@ -27,12 +27,13 @@ class response_surface_data
 public:
 	int N_vars;
 	int Order;
+	vector<vector<int> > generators;
 	vector<double> Y;
 	vector<vector<double> > X;
 	vector<double> cur_pos;
 	vector<double> Beta;
 	int ncalls;
-	double big_M;
+	//double big_M;
 	double max_step_size;
 
 	response_surface_data(){
@@ -75,12 +76,138 @@ public:
 		return yret;
 	};
 	
+	void GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double> > &sim_points, double tolerance)
+	{
+		/* 
+		Take a current point (vector of doubles) that is normalized, and calculate a design of experiments run that 
+		would produce a linear estimate of the local surface. Parameters are varied up/down by the tolerance. The
+		runs required are returned in the "sim_points" array.
+
+		2-level fractional factorial design information is from Wu & Hamada (2000) "Experiments" Appendix 4a Tab 4A.3
+		*/
+	
+		int nvars = (int)point.size();
+
+		sim_points.clear();
+
+		//allow up to a 32-run table
+		int nruns = (int)pow(2, min(nvars,5));
+
+		//values that determine when each variable toggles value
+		vector<int> divisors;
+		for(int i=0; i<nvars; i++)
+			divisors.push_back( (int)pow(2, i) );
+		//create a design with either +1 or -1 as high/low value
+		vector<vector<int> > design;
+		design.push_back( vector<int>(nvars, 1) );
+	
+		//Create the base table
+		for(int i=1; i<nruns; i++){
+			vector<int> newline(nvars, 0);
+			for(int j=0; j<min(nvars,5); j++)
+				newline.at(j) =  design.at(i-1).at(j) * (int)(fmod((double)i, (double)divisors.at(j) ) == 0 ? -1 : 1 ) ;
+			design.push_back(newline);
+		}
+	
+		//if there are more than 5 variables, create a fractional factorial design with 32 runs
+		generators.clear();
+		switch(nvars)
+		{
+		default:
+			if(nvars > 16)
+				throw spexception("Optimization is supported for up to 16 independent variables. "
+				"Please reduce the number of optimization variables and try again.");
+			break;
+
+		case 6:
+			generators.push_back( {1,2,3,4,5} );
+			break;
+		case 7:
+			generators.push_back( {1,2,3} );
+			generators.push_back( {1,2,4,5} );
+			break;
+		case 8:
+			generators.push_back( {1,2,3} );
+			generators.push_back( {1,2,4} );
+			generators.push_back( {1,3,4,5} );
+			break;
+		case 9:
+			generators.push_back( {1,2,3} );
+			generators.push_back( {1,2,4} );
+			generators.push_back( {1,2,5} );
+			generators.push_back( {1,3,4,5} );
+			break;
+		case 10:
+			generators.push_back( {1,2,3} );
+			generators.push_back( {1,2,4} );
+			generators.push_back( {1,2,5} );
+			generators.push_back( {1,3,4,5} );
+			generators.push_back( {2,3,4,5} );
+			break;
+		case 11:
+		case 12:
+		case 13:
+		case 14:
+		case 15:
+		case 16:
+			generators.push_back( {1,2,3} );
+			generators.push_back( {1,2,4} );
+			generators.push_back( {1,3,4} );
+			generators.push_back( {2,3,4} );
+			generators.push_back( {1,2,5} );
+			generators.push_back( {1,3,5} );
+			if(nvars == 11) break;
+			generators.push_back( {2,3,5} );
+			if(nvars == 12) break;
+			generators.push_back( {1,4,5} );
+			if(nvars == 13) break;
+			generators.push_back( {2,4,5} );
+			if(nvars == 14) break;
+			generators.push_back( {3,4,5} );
+			if(nvars == 15) break;
+			generators.push_back( {1,2,3,4,5} );
+			break;
+
+		}
+
+		//Use the design generators to fill in additional variable columns, if needed
+		for(int j=5; j<nvars; j++){
+			for(int i=0; i<nruns; i++){
+
+				int val = 1;
+				for(int k=0; k<(int)generators.at(j-5).size(); k++)
+					val *= design.at(i).at( generators.at(j-5).at(k) - 1 );
+				design.at(i).at(j) = val;
+			
+			}
+		}
+
+		//Add central composite runs
+		for(int i=0; i<nvars; i++){
+			vector<int> row(nvars, 0);
+			row.at(i) = 1;
+			design.push_back(row);
+			row.at(i) = -1;
+			design.push_back(row);
+		}
+		nruns = (int)design.size();
+
+		//create the sim_points array with actual non-dimensionalized simulation values rather than integer surrogates
+		for(int i=0; i<nruns; i++){
+			sim_points.push_back( vector<double>(nvars) );
+			for(int j=0; j<nvars; j++){
+				sim_points.at(i).at(j) = point.at(j) * (1. + tolerance * (double)design.at(i).at(j) );
+			}
+		}
+		
+	}
+
 };
 
 double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *data)
 {
 	/* 
-	Evaluate the sum of squares of the fit
+	Evaluate the residual sum of squares
 	*/
 	
 	response_surface_data *D = static_cast<response_surface_data*>( data );
@@ -92,17 +219,16 @@ double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *da
 
 	for(int i=0; i<n; i++)
 		D->Beta.at(i) = x[i];
-	
-	double ss=0.;
-	//double ave=0.;
-	for(int i=0; i<(int)D->X.size(); i++){
+
+	double ssres=0.;
+
+	for(int i=0; i<D->X.size(); i++){
 		double y = D->EvaluateBiLinearResponse(D->X.at(i));
-		//ave += y;
-		double ssv = (y - D->Y.at(i));
-		ss += ssv * ssv;
+		double ssrv = (y - D->Y.at(i));
+		ssres += ssrv * ssrv;	//residual sum of squares
 	}
 
-	return ss;
+	return ssres; 
 
 };
 
@@ -909,45 +1035,6 @@ bool AutoPilot::SimulateFlux(sp_flux_map &fluxmap)
 	return true;
 }
 
-void AutoPilot::GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double> > &sim_points, double tolerance)
-{
-	/* 
-	Take a current point (vector of doubles) that is normalized, and calculate a design of experiments run that 
-	would produce a linear estimate of the local surface. Parameters are varied up/down by the tolerance. The
-	runs required are returned in the "sim_points" array.
-	*/
-	
-	int nvars = (int)point.size();
-
-	sim_points.clear();
-
-	int nruns = (int)pow(2, nvars);
-
-	vector<int> divisors;
-	for(int i=0; i<nvars; i++)
-		divisors.push_back( (int)pow(2, i) );
-
-	vector<vector<int> > design;
-	design.push_back( vector<int>(nvars, 1) );
-	
-	for(int i=1; i<nruns; i++){
-		vector<int> newline;
-		for(int j=0; j<nvars; j++){
-			//newline.push_back( point.at(j) * (1. + tolerance * (sim_points.at(i-1).at(j) * (fmod( i, divisors.at(j)) == 0 ? -1 : 1) ) ) );
-			newline.push_back( design.at(i-1).at(j) * (int)(fmod((double)i, (double)divisors.at(j) ) == 0 ? -1 : 1 ) );
-		}
-		design.push_back(newline);
-	}
-
-	for(int i=0; i<nruns; i++){
-		sim_points.push_back( vector<double>(nvars) );
-		for(int j=0; j<nvars; j++){
-			sim_points.at(i).at(j) = point.at(j) * (1. + tolerance * design.at(i).at(j) );
-		}
-	}
-		
-}
-
 bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max)
 {
 	/* 
@@ -959,26 +1046,6 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 	*/
 
 
-	//----- temp for testing -----
-	//
-	//vector<double*> optvars = {&layout.h_tower, &recs.front().aspect, &recs.front().height, &layout.land_max};
-	//double doubvars[] = {
-	//	layout.h_tower/_variables["solarfield"][0]["tht"].value_double(), 
-	//	recs.front().aspect, 
-	//	recs.front().height/_variables["receiver"][0]["rec_height"].value_double(), 
-	//	layout.land_max/_variables["land"][0]["max_scaled_rad"].value_double()};
-
-	//obj_metric = _Test_Opt.rosenbrock_test(4, doubvars, nullptr, nullptr);
-	//flux_max = 0.;
-
-	////TestQuadSurface(optvars, obj_metric, flux_max);
-	//return true;
-	//
-	//------------------------------
-
-
-	_cancel_simulation = false;
-	
 	//Update the variable map
 	if(opt.is_optimize_rec_height || opt.is_optimize_rec_aspect)
 		update_receivers(_variables, recs);
@@ -1120,6 +1187,13 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			upper_range.push_back( 10. );
 		}
 	}
+
+	return Optimize(optvars, upper_range, lower_range, opt, recs, layout);
+
+}
+
+bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout)
+{
 	//Number of variables to be optimized
 	int nvars = (int)optvars.size();
 	//Store the initial dimensional value of each variable
@@ -1156,8 +1230,12 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			current = all_sim_points.at(ibest);
 		}
 
+		//----------------------
+		//	Current point
+		//----------------------
+
 		//Start iteration by evaluating the current point
-		_summary_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "] Simulating base point");
+		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "] Simulating base point");
 		for(int i=0; i<(int)optvars.size(); i++)
 			*optvars.at(i) = current.at(i) * normalizers.at(i);
 		all_sim_points.push_back( current );
@@ -1195,13 +1273,18 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		objective_old = objective_new;
 
 
+		//----------------------
+		//	Response surface
+		//----------------------
+		response_surface_data Reg;
+
 		//Generate the set of points required for the response surface characterization
 		vector<vector<double> > runs;
-		GenerateSurfaceEvalPoints( current, runs, opt.max_step);
+		Reg.GenerateSurfaceEvalPoints( current, runs, opt.max_step);
 
 		//Run the evaluation points
 		_summary_siminfo->setTotalSimulationCount((int)runs.size());
-		_summary_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "]" + "Creating local response surface");
+		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + "Creating local response surface");
 		for(int i=0; i<(int)runs.size(); i++){
 			_summary_siminfo->setCurrentSimulation(i);
 
@@ -1224,40 +1307,71 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		//construct a bilinear regression model
 		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + 
 			" Generating regression fit");
-		response_surface_data Reg;
+		
+		//----------------------
+		//	Descent vector
+		//----------------------
+
 		Reg.N_vars = nvars;
 		Reg.Y = surface_objective;
 		Reg.X = surface_eval_points;
 		int nbeta = Reg.CalcNumberBetas();
 		Reg.Beta.resize( nbeta, 1.);
-		nlopt::opt surf(nlopt::LN_SBPLX, nbeta);		//subplex seems to work better than COBYLA
-		surf.set_min_objective( optimize_leastsq_eval, &Reg);
-		surf.set_xtol_rel(1.e-4);
+		//calculate the average Y value
+		double yave = 0.;
+		for(int i=0; i<(int)Reg.Y.size(); i++)
+			yave += Reg.Y.at(i);
+		yave *= 1./(double)Reg.Y.size();
+		//Set the first beta (the constant) to the average as  an initial guess
+		Reg.Beta.front() = yave;
 		
-		double min_dummy;
+		nlopt::opt surf(nlopt::LN_NELDERMEAD, nbeta);	//with higher iteration limits, NELDER MEAD does very well compared to sbplex and cobyla
+		surf.set_min_objective( optimize_leastsq_eval, &Reg);
+		surf.set_xtol_rel(1.e-7);
+		surf.set_ftol_rel(1.e-7);
+		surf.set_maxtime(5.);
+		
+		double min_ss;
 		try{
-			nlopt::result sres = surf.optimize(Reg.Beta, min_dummy);
+			nlopt::result sres = surf.optimize(Reg.Beta, min_ss);
 			
 		}
 		catch( std::exception &e ){
 			_summary_siminfo->addSimulationNotice( e.what() );
 			return false;
 		}
-		_summary_siminfo->addSimulationNotice("... r^2 = " + my_to_string(min_dummy/objective_new) );
+
+		//calculate total sum of squares
+		double sstot = 0.;
+		for(int i=0; i<(int)Reg.Y.size(); i++){
+			double ssval = Reg.Y.at(i) - Reg.Beta.front();
+			sstot += ssval * ssval;
+		}
+		//report the coefficient of determination
+		_summary_siminfo->addSimulationNotice("... r^2 = " + my_to_string(1.-min_ss/sstot) );
 		
 		//now we have a response surface described by BETA coefficients. we need to choose the steepest descent
 		Reg.ncalls = 0;
 		Reg.max_step_size = opt.max_step;
-		Reg.big_M = 1000*(*std::max_element(Reg.Beta.begin(), Reg.Beta.end()) );
-		nlopt::opt steep(nlopt::LN_COBYLA, nvars);		//optimize with constraint on step size - use COBYLA
+		//nlopt::opt steep(nlopt::LN_COBYLA, nvars);		//optimize with constraint on step size - use COBYLA
+		nlopt::opt steep(nlopt::GN_ESCH, nvars);
 		steep.set_min_objective( optimize_stdesc_eval, &Reg);
+		steep.set_maxtime(2.);
 		//add an inequality constraint to find the minimum within a maximum step
-		steep.add_inequality_constraint( optimize_maxstep_eval, &Reg, 1.e-3);
+		//steep.add_inequality_constraint( optimize_maxstep_eval, &Reg, 1.e-3);
 		//add range constraints for the variables
-		steep.set_upper_bounds( upper_range );
-		steep.set_lower_bounds( lower_range );
+		vector<double>
+			range_max, range_min;
+		for(int i=0; i<nvars; i++){
+			range_max.push_back( fmin(upper_range.at(i), current.at(i) + opt.max_step) );
+			range_min.push_back( fmax(lower_range.at(i), current.at(i) - opt.max_step) );
+		}
+
+		steep.set_upper_bounds( range_max );
+		steep.set_lower_bounds( range_min );
 
 		steep.set_xtol_rel(1.e-4);
+		steep.set_ftol_rel(1.e-5);
 		
 		Reg.cur_pos = current;
 		vector<double> stepto(current);
@@ -1272,7 +1386,46 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			return false;
 		}
 		
-		//Check to see whether the regression surface minimum is significantly better than the current point
+		//Calculate the vector from the current point to the point we'd like to step to
+		vector<double> step_vector(stepto);
+		for(int i=0; i<(int)step_vector.size(); i++)
+			step_vector.at(i) += -current.at(i);
+
+
+		//is the surface regression optimum value better than the best simulated point in the factorial analyis?
+		double best_fact_obj = 9.e9;
+		int i_best_fact = 0;
+		for(int i=0; i<(int)surface_objective.size(); i++){
+			if( surface_objective.at(i) < best_fact_obj ){
+				best_fact_obj = surface_objective.at(i);
+				i_best_fact = i;
+			}
+		}
+		_summary_siminfo->addSimulationNotice("... Best regression objective value = " + my_to_string(min_val) ); 
+
+		//if so, use the best simulated point
+		if(best_fact_obj < min_val ){
+			_summary_siminfo->addSimulationNotice(
+				"\n[Iter " + my_to_string(opt_iter+1) + "] Correcting step direction to use best response surface point."
+				);
+
+			step_vector.resize( stepto.size() );
+			for(int i=0; i<(int)current.size(); i++){
+				step_vector.at(i) = surface_eval_points.at(i_best_fact).at(i) - current.at(i);
+			}
+			//correct the step to maintain the maximum step size
+			double step_size = 0.;
+			for(int i=0; i<(int)step_vector.size(); i++)
+				step_size += step_vector.at(i) * step_vector.at(i);
+			step_size = sqrt(step_size);
+			for(int i=0; i<(int)step_vector.size(); i++)
+				step_vector.at(i) *= Reg.max_step_size / step_size;
+			//update the minimum value to be the value at the best point
+			min_val = best_fact_obj;
+		}
+
+
+		//Check to see whether the projected minimum is significantly better than the current point
 		double checktol = (base_obj - min_val)/base_obj;
 		if(fabs(checktol) < opt.converge_tol){
 			_summary_siminfo->addSimulationNotice(
@@ -1282,12 +1435,11 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			break;
 		}
 
-		//Calculate the vector
-		vector<double> step_vector(stepto);
-		for(int i=0; i<(int)step_vector.size(); i++)
-			step_vector.at(i) += -current.at(i);
-
 		
+		//----------------------
+		//	Steepest descent
+		//----------------------
+
 		//move in max steps along the steepest descent vector until the objective function begins to increase
 		_summary_siminfo->ResetValues();
 		int minmax_iter = 0;
@@ -1296,6 +1448,10 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		_summary_siminfo->setTotalSimulationCount(opt.max_desc_iter);
 		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + 
 				" Moving along steepest descent");
+		
+		vector<double> start_point = current;
+		vector<double> all_steep_objs;
+		bool tried_steep_mod = false;
 		while( true ){
 			_summary_siminfo->setCurrentSimulation(minmax_iter);
 
@@ -1314,35 +1470,68 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			if(minmax_iter > 0)
 				prev_obj = objective.back();	//update the latest objective function value
 			objective.push_back( obj );
+			all_steep_objs.push_back( obj );
 			max_flux.push_back( flux );
 
-			//update the local steepest gradient
-			Reg.cur_pos = current;
-			stepto = current;	//initialize
 			minmax_iter++;
 			if(minmax_iter >= opt.max_desc_iter)
 				break;
 
 			//break here if the objective has increased
 			if(obj > prev_obj){
+				if(! tried_steep_mod){
+					//did the steepest descent at least do better than any of the response surface simulations?
+					double best_steep_obj = 9.e9;
+					for(int i=0; i<(int)all_steep_objs.size(); i++)
+						if( all_steep_objs.at(i) < best_steep_obj ) best_steep_obj = all_steep_objs.at(i);
+					if(best_fact_obj < best_steep_obj){
+						double zero=0.;
+						
+						//Calculate a new step vector
+						vector<double> new_step_vector( step_vector );
+
+						//go back and try to move in the factorial point direction
+						for(int i=0; i<(int)step_vector.size(); i++){
+							new_step_vector.at(i) = surface_eval_points.at(i_best_fact).at(i) - start_point.at(i);
+						}
+
+						//check to make sure the new step vector is different from the previous
+						double step_diff = 0.;
+						for(int i=0; i<(int)step_vector.size(); i++){
+							double ds = new_step_vector.at(i) - step_vector.at(i);
+							step_diff += ds * ds;
+						}
+						if( sqrt(step_diff) > opt.max_step/100. ){
+							tried_steep_mod = true;
+							_summary_siminfo->addSimulationNotice("[Iter " + std::to_string(opt_iter+1) + "]" + 
+								"Moving back to original point.. trying alternate descent direction.");
+						
+							//correct the step to maintain the maximum step size
+							step_vector = new_step_vector;
+							double step_size = 0.;
+							for(int i=0; i<(int)step_vector.size(); i++)
+								step_size += step_vector.at(i) * step_vector.at(i);
+							step_size = sqrt(step_size);
+							for(int i=0; i<(int)step_vector.size(); i++)
+								step_vector.at(i) *= Reg.max_step_size / step_size;
+					
+							//move back to the starting point
+							current = start_point;
+							obj = base_obj;
+							prev_obj = base_obj;
+							continue;
+						}
+												
+					}
+				}
+
 				//is the overall steepest descent loop converged?
 				if(fabs(obj/prev_obj - 1.) < opt.converge_tol)
 					steep_converged = true;
+				//Move the current point back to the lowest value
+				current = all_sim_points.at( all_sim_points.size() - 2);
 				break;
 			}
-
-			//try{
-			//	dres = steep.optimize(stepto, min_val);
-			//}
-			//catch( std::exception &e )
-			//{
-			//	_summary_siminfo->addSimulationNotice( e.what() );
-			//	return false;
-			//}
-
-			////update the steepest descent vector
-			//for(int i=0; i<(int)step_vector.size(); i++)
-			//	step_vector.at(i) = stepto.at(i) - current.at(i);
 
 			//break if the step size is very small
 			double step_mag = 0.;
@@ -1354,8 +1543,10 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 				break;
 			}
 			
-			
 		}
+		
+
+
 		//did we manage to converge the steepest descent in the inner loop? If so, skip the golden section refinement.
 		if(steep_converged){
 			opt_iter++;
@@ -1372,12 +1563,17 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		double alpha = 0.;
 		int nsimpts = (int)all_sim_points.size();
 		vector<double>
-				lower_gs = all_sim_points.at( nsimpts - min( 3, minmax_iter ) ),
+				lower_gs = all_sim_points.at( nsimpts - 1 - min( 2, minmax_iter ) ),
 				upper_gs = all_sim_points.back(),
 				site_a_gs, site_b_gs;
 		
 		_summary_siminfo->setTotalSimulationCount(opt.max_gs_iter*2);
 		_summary_siminfo->addSimulationNotice("\n[Iter " + std::to_string(opt_iter+1) + "]" + " Refining with golden section");
+
+		bool site_a_sim_ok = false;
+		bool site_b_sim_ok = false;
+		double za, zb;
+
 		for(int gsiter=0; gsiter<opt.max_gs_iter; gsiter++)
 		{
 			_summary_siminfo->setCurrentSimulation(gsiter*2);
@@ -1386,49 +1582,62 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 			site_a_gs = interpolate_vectors(lower_gs, upper_gs, 1. - golden_ratio);
 			site_b_gs = interpolate_vectors(lower_gs, upper_gs, golden_ratio);
 				
-			double za, zb;
 			double obj, flux;
 			//Evaluate at the lower point
-			current = site_a_gs;
-			for(int i=0; i<(int)optvars.size(); i++)
-				*optvars.at(i) = current.at(i) * normalizers.at(i);
-			all_sim_points.push_back( current );
-			EvaluateDesign(opt, recs, layout, obj, flux);			
-			PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
-			if(_cancel_simulation) return false;
-			za = obj;
-			objective.push_back( obj );
-			max_flux.push_back( flux );
+			if(! site_a_sim_ok ){
+				current = site_a_gs;
+				for(int i=0; i<(int)optvars.size(); i++)
+					*optvars.at(i) = current.at(i) * normalizers.at(i);
+				all_sim_points.push_back( current );
+				EvaluateDesign(opt, recs, layout, obj, flux);			
+				PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+				if(_cancel_simulation) return false;
+				za = obj;
+				objective.push_back( obj );
+				max_flux.push_back( flux );
+			}
+
+			_summary_siminfo->setCurrentSimulation(gsiter*2 + 1);
 
 			//Evaluate at the upper point
-			_summary_siminfo->setCurrentSimulation(gsiter*2 + 1);
-			current = site_b_gs;
-			for(int i=0; i<(int)optvars.size(); i++)
-				*optvars.at(i) = current.at(i) * normalizers.at(i);
-			all_sim_points.push_back( current );
-			EvaluateDesign(opt, recs, layout, obj, flux);			
-			PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
-			if(_cancel_simulation) return false;
-			zb = obj;
-			objective.push_back( obj );
-			max_flux.push_back( flux );
+			if(! site_b_sim_ok){
+				current = site_b_gs;
+				for(int i=0; i<(int)optvars.size(); i++)
+					*optvars.at(i) = current.at(i) * normalizers.at(i);
+				all_sim_points.push_back( current );
+				EvaluateDesign(opt, recs, layout, obj, flux);			
+				PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+				if(_cancel_simulation) return false;
+				zb = obj;
+				objective.push_back( obj );
+				max_flux.push_back( flux );
+			}
 
 			//if there's no difference between the two objective functions, don't keep iterating
 			if( fabs((za - zb)/za) < opt.converge_tol)
 				break;
 
 			//Decide how to shift the bounds
+			if( gsiter == opt.max_gs_iter -1 ) break;
 			if( za > zb ){
 				lower_gs = site_a_gs;
+				//the lower bound moves up and site a becomes the old site b location
+				site_a_sim_ok = true;
+				site_b_sim_ok = false;
+				za = zb;
 			}
 			else{
 				upper_gs = site_b_gs;
+				//the upper bound moves down and site b becomes the old site a location
+				site_a_sim_ok = false;
+				site_b_sim_ok = true;
+				zb = za;
 			}
 				
 		}
 		if(_cancel_simulation) return false;
 		//update the current point
-		current = interpolate_vectors(lower_gs, upper_gs, 0.5);
+		current = za < zb ? site_a_gs : site_b_gs;
 		opt_iter++;
 		if( opt_iter >= opt.max_iter )
 			break;
@@ -1484,6 +1693,47 @@ void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<doubl
 	}
 	msg.append( "| Obj = " + std::to_string(obj) + " | Flux = " + std::to_string( flux ) );
 	_summary_siminfo->addSimulationNotice( (string)msg );
+}
+
+bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+{
+	/* 
+	overload to provide the flux data in a simple 2D vector arrangement. Each flux map is provided 
+	in a continuous sequence, and it is up to the user to separate out the data based on knowledge
+	of the number of flux maps and dimension of each flux map.
+	*/
+
+	//Call the main algorithm
+	sp_flux_table fluxtab;
+	if(! CalculateFluxMaps(fluxtab, flux_res_x, flux_res_y, is_normalized) )
+		return false;
+
+	block_t<double> *flux_data = &fluxtab.flux_surfaces.front().flux_data;
+
+	//convert data structure
+	efficiency.clear();
+	for(int i=0; i<(int)flux_data->nlayers(); i++){
+		sunpos.push_back( vector<double>(2) );
+		sunpos.back().at(0) = fluxtab.azimuths.at(i);
+		sunpos.back().at(1) = fluxtab.zeniths.at(i);
+
+		for(int j=0; j<flux_res_y; j++){
+			vector<double> newline;
+			for(int k=0; k<flux_res_x; k++){
+				newline.push_back(flux_data->at(j, k, i));
+			}
+			efficiency.push_back( newline );
+		}
+	}
+
+	return true;
+}
+
+bool AutoPilot::CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+{
+	//override in inherited class
+	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
+	return false;
 }
 
 //---------------- API_S --------------------------
@@ -1692,6 +1942,11 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	}
 	
 	return true;
+}
+
+bool AutoPilot_S::CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+{
+	return CalculateFluxMapsOV1(efficiency, sunpos, flux_res_x, flux_res_y, is_normalized);
 }
 
 //---------------- API_MT --------------------------
@@ -2162,6 +2417,11 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 
 
 	return true;
+}
+
+bool AutoPilot_MT::CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+{
+	return CalculateFluxMapsOV1(efficiency, sunpos, flux_res_x, flux_res_y, is_normalized);
 }
 
 void AutoPilot_MT::CancelSimulation()

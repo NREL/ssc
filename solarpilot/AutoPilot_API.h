@@ -45,9 +45,9 @@ protected:
 	void PostProcessLayout();
 	void PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int flux_layer = 0);
 	
-	void GenerateSurfaceEvalPoints( vector<double> &point, vector<vector<double> > &sim_points, double tolerance = 0.05 );
-	
 	void PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux);
+
+	bool CalculateFluxMapsOV1(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 
 	simulation_info *_summary_siminfo;
 	simulation_info *_detail_siminfo;
@@ -72,7 +72,9 @@ public:
 	virtual bool CreateLayout(bool do_post_process = true);
 	virtual bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	virtual bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
+	virtual bool CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 	bool Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout);
+	bool Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout);
 	//cancellation methods
 	void CancelSimulation();
 	bool IsSimulationCancelled();
@@ -89,6 +91,8 @@ public:
 	bool CreateLayout(bool do_post_process = true);
 	bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
+	bool CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
+
 };
 
 #ifdef SP_USE_THREADS
@@ -109,6 +113,7 @@ public:
 	bool CreateLayout(bool do_post_process = true);
 	bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
+	bool CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 
 	//other methods
 	bool SetMaxThreadCount(int nt);

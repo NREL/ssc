@@ -9,7 +9,7 @@
 #include "mod_base.h"
 #include "heliodata.h"
 #include "definitions.h"
-#ifdef _USE_SOLTRACE
+#ifdef SP_USE_SOLTRACE
 #include "stapi.h"
 #endif
 
@@ -135,7 +135,7 @@ namespace interop
 	//Simulation setup methods
 	void AimpointUpdateHandler(SolarField &SF, var_set &vset);
 	bool PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &helios, int sim_method);
-#ifdef _USE_SOLTRACE
+#ifdef SP_USE_SOLTRACE
 	bool SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, var_set &vset, Hvector &helios,
 							   int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
 							   void *par);

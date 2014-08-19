@@ -11,7 +11,7 @@
 #include "Receiver.h"
 //#include "procs.h"
 
-#ifdef _USE_SOLTRACE
+#ifdef SP_USE_SOLTRACE
 
 ST_OpticalProperties::ST_OpticalProperties()
 {

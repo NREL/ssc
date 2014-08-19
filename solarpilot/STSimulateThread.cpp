@@ -1,7 +1,7 @@
 #include "STSimulateThread.h"
 #include "definitions.h"
 
-#ifdef _USE_SOLTRACE
+#ifdef SP_USE_SOLTRACE
 using namespace std;
 
 int STSimThread::GetResultCode(){ return ResultCode; }

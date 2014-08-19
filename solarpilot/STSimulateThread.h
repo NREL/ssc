@@ -2,7 +2,7 @@
 #define _ST_SIMTHREAD_ 1
 #include "definitions.h"
 
-#ifdef _USE_SOLTRACE
+#ifdef SP_USE_SOLTRACE
 
 //#include <wx/wx.h>
 #include <thread>
