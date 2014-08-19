@@ -1017,7 +1017,7 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &
 			
 }
 
-#ifdef _USE_SOLTRACE
+#ifdef SP_USE_SOLTRACE
 bool interop::SolTraceFluxSimulation_ST(st_context_t cxt, int seed, ST_System &ST,
 										int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
 										void *par)

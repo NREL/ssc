@@ -2,7 +2,7 @@
 #define _ST_OBJECT_ 1
 #include "definitions.h"
 
-#ifdef _USE_SOLTRACE
+#ifdef SP_USE_SOLTRACE
 
 #include <vector>
 #include <string>
