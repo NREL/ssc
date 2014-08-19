@@ -17,7 +17,7 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 
 	switch(enum_compact_hx_config)
 	{
-	case compact_hx_configs::fc_tubes_s80_38T:
+	case fc_tubes_s80_38T:
 		d_out = 0.0102;		//[m] Outer tube diameter
 		fin_pitch = 315;	//[1/m] Number of fins per meter of tube
 		D_h = 0.003632;		//[m] Hydraulic diameter of air side
@@ -30,7 +30,7 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 
 		return true;
 
-	case compact_hx_configs::fc_tubes_sCF_88_10Jb:
+	case fc_tubes_sCF_88_10Jb:
 		d_out = 0.02601;		//[m] Outer tube diameter
 		fin_pitch = 346;	//[1/m] Number of fins per meter of tube
 		D_h = 0.01321;		//[m] Hydraulic diameter of air side
@@ -51,16 +51,16 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 
 bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, double & j_H)
 {
-	double Re_mm = max(0.001, Re*pow(10,-3));
+	double Re_mm = max(0.001, Re*10e-3);
 
 	switch( enum_compact_hx_config )
 	{
-	case compact_hx_configs::fc_tubes_s80_38T:
+	case fc_tubes_s80_38T:
 		f = 0.02949346*pow(Re_mm, -0.208110211);
 		j_H = 0.0105331507*pow(Re_mm, -0.400092073);
 		return true;
 
-	case compact_hx_configs::fc_tubes_sCF_88_10Jb:
+	case fc_tubes_sCF_88_10Jb:
 		f = 0.0606753986*pow(Re_mm, -0.256298233);
 		j_H = 0.0148711552*pow(Re_mm, -0.382144871);
 		return true;
@@ -87,8 +87,8 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	// double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, double m_dot_hot_kg_s
 	// double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K
 
-	//m_enum_compact_hx_config = compact_hx_configs::fc_tubes_s80_38T;
-	m_enum_compact_hx_config = compact_hx_configs::fc_tubes_sCF_88_10Jb;
+	//m_enum_compact_hx_config = fc_tubes_s80_38T;
+	m_enum_compact_hx_config = fc_tubes_sCF_88_10Jb;
 
 	// Get HX Geometry
 	get_compact_hx_geom(m_enum_compact_hx_config, m_d_out, m_fin_pitch, m_D_h, m_fin_thk,

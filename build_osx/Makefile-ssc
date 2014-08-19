@@ -4,7 +4,7 @@ CC = gcc
 CXX = g++
 CFLAGS = -I../shared -I../nlopt -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++ shared.a nlopt.a solarpilot.a tcs.a
+LDFLAGS = -lm -lstdc++ shared.a solarpilot.a tcs.a nlopt.a
 
 CFLAGS += -D__64BIT__
 TARGET = ssc.dylib
