@@ -310,7 +310,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "f_hot",                "Thermocline: Hot depth fraction",                                   "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "f_cold",               "Thermocline: Cold depth fraction",                                  "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
-    var_info_invalid };
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly Energy", "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
+
+	// Annual Outputs
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kW", "", "Net_E_Calc", "*", "", "" },
+
+	var_info_invalid };
 
 class cm_tcsmolten_salt : public tcKernel
 {
@@ -385,6 +390,8 @@ public:
 		int type251_controller = add_unit("sam_mw_trough_type251");
 		int type224_powerblock = add_unit("sam_mw_pt_type224");
 		int type228_parasitics = add_unit("sam_mw_pt_type228");
+		//E_net calculator
+		int sum_calculator = add_unit("sam_mw_csp_SumCalcs", "Net Energy Calculator");
 
 
 		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
@@ -689,6 +696,23 @@ public:
 		bConnected &= connect(type251_controller, "q_aux_heat", type228_parasitics, "aux_power");
 		bConnected &= connect(type251_controller, "htf_pump_power", type228_parasitics, "P_htf_pump");
 
+		/* TODO
+		//Set enet calculator inputs and connect it to the parasitic values ===========================================
+		set_unit_value_ssc_double(sum_calculator, "eta_lhv", 0.9);
+		set_unit_value_ssc_double(sum_calculator, "eta_tes_htr", 0.98);
+		set_unit_value_ssc_double(sum_calculator, "fp_mode" , 1);
+		bConnected &= connect(type224_powerblock, "P_cycle", sum_calculator, "W_cycle_gross");
+		bConnected &= connect(type224_powerblock, "W_cool_par", sum_calculator, "W_par_heatrej");
+		bConnected &= connect(type221_hel_field, "W_dot_pump", sum_calculator, "W_par_sf_pump");
+		bConnected &= connect(type251_controller, "htf_pump_power", sum_calculator, "W_par_tes_pump");
+		bConnected &= connect(type251_controller, "bop_par", sum_calculator, "W_par_BOP");
+		bConnected &= connect(type251_controller, "fixed_par", sum_calculator, "W_par_fixed");
+	//	bConnected &= connect(type221_hel_field, "SCA_par_tot", sum_calculator, "W_par_tracking");
+		bConnected &= connect(type251_controller, "aux_par", sum_calculator, "W_par_aux_boiler");
+		bConnected &= connect(type251_controller, "tank_fp_par", sum_calculator, "Q_par_tes_fp");
+	//	bConnected &= connect(type221_hel_field, "E_fp_tot", sum_calculator, "Q_par_sf_fp");
+		bConnected &= connect(type251_controller, "q_aux_heat", sum_calculator, "Q_aux_backup");
+		*/
 
 		// check if all connections worked
 		if ( !bConnected )
@@ -705,6 +729,8 @@ public:
 
 
 		//set_output_array("i_SfTi",8760);
+		// Annual accumulations
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
 	}
 
 };
