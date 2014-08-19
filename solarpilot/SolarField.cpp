@@ -528,10 +528,10 @@ bool SolarField::UpdateNeighborList(double lims[4], double zen){
 	for(int i=0; i<Npos; i++){
 		Heliostat *hptr = &_helio_objects.at(i);
 		//Find which node to add this heliostat to
-		row = int(floor((hptr->getLocation()->y - ymin)/drow));
-		row = fmax(0, fmin(row, nrow-1));
-		col = int(floor((hptr->getLocation()->x - xmin)/dcol));
-		col = fmax(0, fmin(col, ncol-1));
+		row = (int)(floor((hptr->getLocation()->y - ymin)/drow));
+		row = (int)fmax(0., fmin(row, nrow-1));
+		col = (int)(floor((hptr->getLocation()->x - xmin)/dcol));
+		col = (int)fmax(0., fmin(col, ncol-1));
 		//Add the heliostat ID to the mesh node
 		_helio_groups.at(row,col).push_back(hptr); 
 		//Add the mesh node ID to the heliostat information

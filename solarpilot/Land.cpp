@@ -139,7 +139,7 @@ void Land::getExtents(double rval[], var_set &V)
 				break;
 			}
 					
-			int nincpt = _inclusions.at(i).size();
+			int nincpt = (int)_inclusions.at(i).size();
 			for(int j=0; j<nincpt; j++){
 				
 				//Find the minimum radius depending on the inclusions vectors
@@ -165,7 +165,7 @@ void Land::getExtents(double rval[], var_set &V)
 			//check whether the tower lies within the polygon. If not, we don't need to adjust
 			if(! Toolbox::pointInPolygon(_exclusions.at(i), T) ) continue;
 
-			int nex = _exclusions.at(i).size();
+			int nex = (int)_exclusions.at(i).size();
 			for(int j=0; j<nex; j++){
 				
 				if(j<nex-1) {
@@ -217,7 +217,7 @@ void Land::getExtents(double rval[], double tht)
 		//values for finding the maximum radius
 		double rad, trmax = -1.;
 		for(unsigned int i=0; i<_inclusions.size(); i++){	//For each polygon in the inclusions
-			int nincpt = _inclusions.at(i).size();
+			int nincpt = (int)_inclusions.at(i).size();
 			for(int j=0; j<nincpt; j++){
 				
 				//Find the maximum radius depending on the inclusions vectors
@@ -239,7 +239,7 @@ void Land::getExtents(double rval[], double tht)
 				break;
 			}
 					
-			int nincpt = _inclusions.at(i).size();
+			int nincpt = (int)_inclusions.at(i).size();
 			for(int j=0; j<nincpt; j++){
 				
 				//Find the minimum radius depending on the inclusions vectors
@@ -265,7 +265,7 @@ void Land::getExtents(double rval[], double tht)
 			//check whether the tower lies within the polygon. If not, we don't need to adjust
 			if(! Toolbox::pointInPolygon(_exclusions.at(i), T) ) continue;
 
-			int nex = _exclusions.at(i).size();
+			int nex = (int)_exclusions.at(i).size();
 			for(int j=0; j<nex; j++){
 				
 				if(j<nex-1) {
@@ -323,7 +323,7 @@ double Land::calcPolyLandArea(){
 	double area = 0.;
 
 	for(unsigned int i=0; i<_inclusions.size(); i++){
-		int np = _inclusions.at(i).size();
+		int np = (int)_inclusions.at(i).size();
 		int j=np-1;
 		for(int k=0; k<np; k++){
 			Point 
@@ -338,7 +338,7 @@ double Land::calcPolyLandArea(){
 	//Now subtract the area of the exclusions
 	double excs = 0.;
 	for(unsigned int i=0; i<_exclusions.size(); i++){
-		int np = _exclusions.at(i).size();
+		int np = (int)_exclusions.at(i).size();
 		int j=np-1;
 		for(int k=0; k<np; k++){
 			Point 

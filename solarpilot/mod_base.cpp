@@ -141,11 +141,11 @@ void mod_base::setVar(string varname, matrix_t<double> &variable, var_map &V, st
 	//converts a string with comma-separated values in sequence into a 2-D matrix of doubles
 	if(V.find(varname) != V.end()) {
 		vector<string> content = split(V[varname].value, ";");
-		int nrows = content.size();
+		int nrows = (int)content.size();
 		if(nrows == 0) { variable.resize_fill(1,2,0.0); return; }
 		vector<string> line;
 		line = split(content.at(0), ",");
-		int rowlen = line.size();
+		int rowlen = (int)line.size();
 		variable.resize(nrows, rowlen);
 		for (int i=0; i<nrows; i++){
 			line = split(content.at(i), ",");
@@ -164,11 +164,11 @@ void mod_base::setVar(string varname, matrix_t<int> &variable, var_map &V, strin
 	//converts a string with comma-separated values in sequence into a 2-D matrix of integers
 	if(V.find(varname) != V.end()) {
 		vector<string> content = split(V[varname].value, ";");
-		int nrows = content.size();
+		int nrows = (int)content.size();
 		if(nrows == 0){ variable.resize_fill(1,2,0); return; }
 		vector<string> line;
 		line = split(content.at(0), ",");
-		int rowlen = line.size();
+		int rowlen = (int)line.size();
 		variable.resize(nrows, rowlen);
 		for (int i=0; i<nrows; i++){
 			line = split(content.at(i), ",");
@@ -190,7 +190,7 @@ void mod_base::setVar(string varname, vector<Point> &variable, var_map &V, strin
 		vector<string> content = split(V[varname].value, "[P]");
 		vector<string> line;
 		double x, y, z;
-		int nrows = content.size();
+		int nrows = (int)content.size();
 		variable.resize(nrows);
 		for(int i=0; i<nrows; i++) {
 			//split each text by comma
@@ -214,12 +214,12 @@ void mod_base::setVar(string varname, bounds_array &variable, var_map &V){
 		vector<string> spolys = split(V[varname].value, "[POLY]");
 		vector<string> line, pnt;
 		double x, y, z;
-		int npoly = spolys.size();
+		int npoly = (int)spolys.size();
 		variable.resize(npoly);
 		for(int i=0; i<npoly; i++){
 			line.clear();
 			line = split(spolys.at(i), "[P]");
-			int npt = line.size();	//The number of points in the polygon
+			int npt = (int)line.size();	//The number of points in the polygon
 			variable.at(i).resize(npt);	//Resize the polygon container
 
 			for(int j=0; j<npt; j++){
@@ -246,14 +246,14 @@ void mod_base::setVar(string varname, WeatherData &WD, var_map &V){
 		vector<string>
 			vals,
 			entries = split(V[varname].value, "[P]");
-		int nrows = entries.size();
+		int nrows = (int)entries.size();
 		int nv, i, j;
 		WD.resizeAll(nrows, 0.0);
 		vector<vector<double>*> *wdvars = WD.getEntryPointers();
 
 		for(i=0; i<nrows; i++){
 			vals = split(entries.at(i), ",");
-			nv = min(vals.size(), wdvars->size());
+			nv = min((int)vals.size(), (int)wdvars->size());
 			for(j=0; j<nv; j++){
 				to_double(vals.at(j), &wdvars->at(j)->at(i));
 			}

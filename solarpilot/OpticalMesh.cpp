@@ -277,14 +277,14 @@ void optical_hash_tree::create_mesh(LayoutData *data){
 	derivs = derivatives(*Data);
     
 	//estimate the maximum number of nodes and reserve memory
-	int nmaxdivr = pow(2, max_rec_level_r);		//maximum number of zones radially
+	int nmaxdivr = (int)pow(2., max_rec_level_r);		//maximum number of zones radially
 	int maxreclevela = (int)floor( log(max_rec_level_a_dr*(Data->extents_r[1]+Data->extents_r[0])*.5)*log2inv);  //max azimuthal recursion
-	int nmaxdiva = pow(2, maxreclevela);	//max azimuthal zones (estimate)
+	int nmaxdiva = (int)pow(2., maxreclevela);	//max azimuthal zones (estimate)
 	int nmaxterm =  nmaxdivr * nmaxdiva;	//total max number of zones
 	int maxreclevel = max(max_rec_level_r, maxreclevela); //worst case max recursion level
 	int nmaxnodes = 0;
 	for(int i=0; i<maxreclevel; i++)
-		nmaxnodes += nmaxterm/pow(2,i);		//Add each level in the node tree
+		nmaxnodes += nmaxterm/(int)pow(2.,i);		//Add each level in the node tree
 	
 	//Try reserving the number of required nodes, catch any memory error
 	try

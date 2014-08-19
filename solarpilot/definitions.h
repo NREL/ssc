@@ -48,5 +48,5 @@ struct vardefs
 				*isparam, *control, *special, *disable, *label, *description;
 };
 
-extern vardefs variable_definition_array[307];
+extern vardefs variable_definition_array[379];
 #endif

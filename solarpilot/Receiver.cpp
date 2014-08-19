@@ -278,7 +278,6 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 		}
 
 		double faz;
-		Point floc;
 		Vect fnorm;
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
@@ -362,9 +361,7 @@ void FluxSurface::Reshape(int nx, int ny){
 
 	double
 		ifact_x = (float)nx/(float)nx_old,
-		ifact_y = (float)ny/(float)ny_old,
-		fstep_x,
-		fstep_y;
+		ifact_y = (float)ny/(float)ny_old;
 
 	//FluxGrid grid_temp(nx,ny);
 
