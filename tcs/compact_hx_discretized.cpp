@@ -29,6 +29,19 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 		s_v = 0.0254;		//[m] Distance between tubes perpendicular to air flow direction
 
 		return true;
+
+	case compact_hx_configs::fc_tubes_sCF_88_10Jb:
+		d_out = 0.02601;		//[m] Outer tube diameter
+		fin_pitch = 346;	//[1/m] Number of fins per meter of tube
+		D_h = 0.01321;		//[m] Hydraulic diameter of air side
+		fin_thk = 0.000305;//[m] Fin thickness
+		sigma = 0.642;		//[-] Ratio of free-flow to frontal area
+		alpha = 191;		//[1/m] Ratio of gas-side heat transfer area to core volume
+		A_fin_to_surf = 0.825;	//[-] Ratio of finned to total surface area on gas-side
+		s_h = 0.0524;		//[m] Distance between tubes in air flow direction
+		s_v = 0.07818;		//[m] Distance between tubes perpendicular to air flow direction
+
+		return true;
 	
 	default:
 		return false;
@@ -45,6 +58,11 @@ bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, doubl
 	case compact_hx_configs::fc_tubes_s80_38T:
 		f = 0.02949346*pow(Re_mm, -0.208110211);
 		j_H = 0.0105331507*pow(Re_mm, -0.400092073);
+		return true;
+
+	case compact_hx_configs::fc_tubes_sCF_88_10Jb:
+		f = 0.0606753986*pow(Re_mm, -0.256298233);
+		j_H = 0.0148711552*pow(Re_mm, -0.382144871);
 		return true;
 
 	default:
@@ -69,17 +87,21 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	// double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, double m_dot_hot_kg_s
 	// double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K
 
-	m_enum_compact_hx_config = compact_hx_configs::fc_tubes_s80_38T;
-	
+	//m_enum_compact_hx_config = compact_hx_configs::fc_tubes_s80_38T;
+	m_enum_compact_hx_config = compact_hx_configs::fc_tubes_sCF_88_10Jb;
+
 	// Get HX Geometry
 	get_compact_hx_geom(m_enum_compact_hx_config, m_d_out, m_fin_pitch, m_D_h, m_fin_thk,
 		m_sigma, m_alpha, m_A_fin_to_surf, m_s_h, m_s_v);
+
+	// Thickness should really be tied to HX config
+	//m_th = 0.001;		//fc_tubes_s80-38T
+	m_th = 0.0024;		//fc_tubes_sCF-88-10Jb
 
 	// Get Remaining Design Info: hardcode for now, but eventually will be inputs
 		// Air-Cooler Specs
 	m_N_loops = 3;
 	m_N_nodes = 5;
-	m_th = 0.001;
 	m_eta_fan = 0.5;
 	m_d_in = m_d_out - 2 * m_th;
 	m_roughness = 4.5E-5;					//[m] absolute roughness of material

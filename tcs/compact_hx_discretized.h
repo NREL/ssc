@@ -21,7 +21,8 @@ using namespace std;
 
 enum compact_hx_configs
 {
-	fc_tubes_s80_38T = 1
+	fc_tubes_s80_38T = 1,
+	fc_tubes_sCF_88_10Jb
 };
 
 bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
