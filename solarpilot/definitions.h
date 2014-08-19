@@ -2,7 +2,9 @@
 #ifndef _VARDEFS_
 #define _VARDEFS_ 1
 
+#ifdef _MSC_VER
 #pragma warning(disable : 4267)
+#endif
 
 //Enumeration of data columns in the variable map file
 
