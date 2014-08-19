@@ -69,6 +69,9 @@ private:
 	double m_delta_P_des;		//[kPa]
 	double m_T_hot_out_des;		//[K]
 
+	// Calculated Performance Target
+	double m_P_hot_out_des;		//[kPa]
+
 	// HX geometry
 		// Input
 	int m_enum_compact_hx_config;

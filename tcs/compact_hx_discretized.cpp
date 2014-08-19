@@ -73,10 +73,11 @@ bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, doubl
 
 compact_hx::compact_hx()
 {
-	m_th = m_eta_fan = m_roughness = m_d_in = m_A_cs = m_relRough = m_Depth = m_W_par = m_N_par =
-		m_N_tubes = m_L_tube = m_L_path = m_A_surf_total = m_UA_total = m_T_amb_des = m_P_amb_des =
-		m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total = m_d_out = m_fin_pitch = m_D_h = m_fin_thk =
-		m_sigma = m_alpha = m_A_fin_to_surf = m_s_h = m_s_v = numeric_limits<double>::quiet_NaN();
+	m_th = m_eta_fan = m_roughness = 
+		m_d_in = m_A_cs = m_relRough = m_Depth = m_W_par = m_N_par = m_N_tubes = m_L_tube = m_L_path = m_A_surf_total = m_UA_total = m_V_total =
+		m_T_amb_des = m_P_amb_des =
+		m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total = m_W_dot_fan_des = m_delta_P_des = m_T_hot_out_des = m_P_hot_out_des = 
+		m_d_out = m_fin_pitch = m_D_h = m_fin_thk = m_sigma = m_alpha = m_A_fin_to_surf = m_s_h = m_s_v = numeric_limits<double>::quiet_NaN();
 
 	m_N_loops = m_N_nodes = m_enum_compact_hx_config = -1;
 }
@@ -134,6 +135,8 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	m_delta_P_des = deltaP_kPa;
 	m_T_hot_out_des = T_hot_out_K;
 
+	m_P_hot_out_des = m_P_hot_in_des - m_delta_P_des;
+	double P_hot_ave = 0.5*(m_P_hot_out_des + m_P_hot_in_des);
 		// Set up 'matrix_t's for temperature and pressure
 		// Using index 1 for m_N_nodes, so 0 index remains undefined
 		// Also, each node requires inlet&outlet temp, so in total, m_N_nodes + 2 required
@@ -158,7 +161,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 
 		// Calculate the required heat rejection
 	CO2_state co2_props;
-	CO2_TP(m_T_hot_in_des, m_P_hot_in_des, &co2_props);
+	CO2_TP(m_T_hot_in_des, P_hot_ave, &co2_props);
 	double h_in_des = co2_props.enth*1000.0;					//[J/kg]
 	CO2_TP(m_T_hot_out_des, m_P_hot_in_des, &co2_props);
 	double h_out_des = co2_props.enth*1000.0;					//[J/kg]
@@ -187,10 +190,14 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	
 	double N_par_g = m_m_dot_total/m_dot_tube_g1;	//[-] Number of parallel flow paths required to contain all mass flow
 	
-	double W_par = N_par_g * m_s_v;		//[-] Dimension perpendicular to air AND hot fluid flow... parallel paths dimension
+	double W_par = N_par_g * m_s_v;		//[m] Dimension perpendicular to air AND hot fluid flow... parallel paths dimension
 
 	//**********************************************************************************
 	//**********************************************************************************
+	//**********************************************************************************
+		// Overwrite here to test against EES code
+		W_par = 171.8;
+		// ***************************************
 	//**********************************************************************************
 
 	double tol = 0.001;		//[-] Relative tolerance for convergence
@@ -221,7 +228,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 		// Guess new W_parallel!
 		if(iter_W_par > 1)
 		{
-			if( diff_T_hot_out < 0.0 )	// Calculated outlet temperature is too low, decrease length
+			if( diff_T_hot_out > 0.0 )	// Calculated inlet temperature is too high, decrease length
 			{
 				is_upbound_W_par = true;
 				x_upper_W_par = W_par;
@@ -235,7 +242,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 					W_par *= 0.5;
 				}
 			}
-			else						// Calculated outlet tempearture is too high, increase length
+			else						// Calculated inlet tempearture is too low, increase length
 			{
 				is_lowbound_W_par = true;
 				x_lower_W_par = W_par;
@@ -263,7 +270,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 		// ********************************************************************************
 		// ** Try to estimate length required to hit pressure drop **
 		// ********************************************************************************
-		CO2_TP(T_co2_deltaP_eval, m_P_hot_in_des, &co2_props);
+		CO2_TP(T_co2_deltaP_eval, P_hot_ave, &co2_props);
 		double visc_dyn_co2_g = CO2_visc(co2_props.dens, co2_props.temp)*1.E-6;
 		double Re_co2_g = m_dot_tube*m_d_in / (m_A_cs*visc_dyn_co2_g);
 
@@ -285,6 +292,10 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 		L_tube = m_delta_P_des*1000.0*(2.0*m_d_in)/(f_co2_g*rho_co2_g*pow(u_m,2))/m_N_loops;
 		//**********************************************************************************
 		//**********************************************************************************
+		//**********************************************************************************
+			// Overwrite here to test against EES code
+		L_tube = 8.871;
+			// ***************************************
 		//**********************************************************************************
 
 		// Want to set increasingly tight tolerances to help convergence of outer loops
@@ -431,8 +442,8 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 			double UA_node = A_surf_node*h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
 
 			// Set known inlet conditions: iteration thru # of loops needs previous loop info
-			T_co2(1, 0) = m_T_hot_in_des;
-			P_co2(1, 0) = m_P_hot_in_des;
+			T_co2(1, 0) = m_T_hot_out_des;
+			P_co2(1, 0) = m_P_hot_in_des - m_delta_P_des;
 			for( int i = 1; i < m_N_nodes + 2; i++ )
 				T_air(i, 0) = m_T_amb_des;
 
@@ -443,13 +454,13 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 			for( int j = 1; j < m_N_loops + 1; j++ )
 			{
 				// Set up constants and multipliers to switch direction of flow
-				double mult_const = (j + 1) % 2;
+				double mult_const = (j+1) % 2;
 				double constant = m_N_nodes + 2;
 				double mult_index = 1.0 - 2.0*mult_const;
 				double out_const = mult_index;
 			
 				// Set inlet temperatures & pressures of current row
-				double mult_inlet = mult_const;
+				double mult_inlet = (j+1) % 2;
 				double const_inlet = m_N_nodes;
 				double inlet = mult_inlet*const_inlet + 1;
 
@@ -468,9 +479,9 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 					// Guess outlet temperature
 					double T_out_guess = numeric_limits<double>::quiet_NaN();
 					if(deltaT_prev != deltaT_prev)
-						T_out_guess = T_co2(in,j) - 1.5*deltaT_hot/(N_par*m_N_nodes);
+						T_out_guess = T_co2(in,j) + 0.5*deltaT_hot/(m_N_loops*m_N_nodes);
 					else
-						T_out_guess = T_co2(in,j) - 0.8*deltaT_prev;
+						T_out_guess = T_co2(in,j) + 0.8*deltaT_prev;					
 
 					double tol_T_out = tol_m_dot / 5.0;		//[-] Relative tolerance for convergence
 					double diff_T_out = 2.0*tol_T_out;		//[-] Set diff > tol
@@ -524,21 +535,23 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 
 						}
 
-						CO2_TP(T_out_guess, m_P_hot_in_des, &co2_props);
+						double T_out_ave = 0.5*(T_out_guess + T_co2(in, j));
+
+						CO2_TP(T_out_ave, P_hot_ave, &co2_props);
 						double cp_co2_ave = co2_props.cp*1000.0;
 
 						// Capacitance rates
 						double C_dot_co2 = cp_co2_ave*m_dot_tube;
 						double C_dot_min = min(C_dot_air, C_dot_co2);
 						double C_dot_max = max(C_dot_air, C_dot_co2);
-						double Q_dot_max = C_dot_min*(T_co2(in, j) - T_air(air_in, j - 1));
+						double Q_dot_max = C_dot_min*(T_co2(out, j) - T_air(air_in, j - 1));
 						double NTU = UA_node / C_dot_min;
 						double CR = C_dot_min / C_dot_max;
 						// Unmixed cross-flow
 						double epsilon = 1 - exp(pow(NTU, 0.22) / CR*(exp(-CR*pow(NTU, 0.78)) - 1));
 						Q_dot_node = epsilon*Q_dot_max;
-						T_co2(out, j) = T_co2(in, j) - Q_dot_node / C_dot_co2;
-						deltaT_prev = T_co2(in,j) - T_co2(out,j);
+						T_co2(out, j) = T_co2(in, j) + Q_dot_node / C_dot_co2;
+						deltaT_prev = T_co2(out, j) - T_co2(in, j);
 
 						diff_T_out = (T_out_guess - T_co2(out, j)) / T_co2(out, j);
 
@@ -565,20 +578,20 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 					CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
 
 					double u_m = m_dot_tube / (rho_co2*m_A_cs);
-					P_co2(out, j) = P_co2(in, j) - f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*m_d_in) / 1000.0;
+					P_co2(out, j) = P_co2(in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*m_d_in) / 1000.0;
 
 				}	// End iteration through nodes in flow path				
 			}	// End iteration through loop in flow path
 
-			double T_co2_out_calc = T_co2(final_outlet_index, m_N_loops);
+			double T_co2_hot_calc = T_co2(final_outlet_index, m_N_loops);
 
-			double deltaP_co2_calc = m_P_hot_in_des - P_co2(final_outlet_index, m_N_loops);
+			double deltaP_co2_calc = P_co2(final_outlet_index, m_N_loops) - m_P_hot_out_des;
 
 			diff_deltaP = (deltaP_co2_calc - m_delta_P_des) / m_delta_P_des;
 
 		}	// Iteration on length of 1 tube length
 
-		diff_T_hot_out = (T_co2(final_outlet_index,m_N_loops)-m_T_hot_out_des)/m_T_hot_out_des;
+		diff_T_hot_out = (T_co2(final_outlet_index,m_N_loops)- m_T_hot_in_des)/m_T_hot_in_des;
 
 	};
 
