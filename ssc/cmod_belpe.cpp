@@ -126,7 +126,7 @@ public:
 		//Program continues here if the user HAS selected the building load calculator.
 		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
-		int month[8761], day[8761], hour[8761];
+		int month[8760], day[8760], hour[8760];
 		int i = 0;
 		for (int m = 0; m < 12; m++)
 		{
@@ -141,8 +141,6 @@ public:
 				}
 			}
 		}
-		//add hour 8761 for the euler forward later
-		month[8760] = 0; day[8760] = 0; hour[8760] = 0;
 
 		// read weather file inputs 		
 		const char *file = as_string("solar_resource_file");
@@ -150,10 +148,10 @@ public:
 		if (!wf.ok()) throw exec_error("belpe", "failed to read local weather file: " + std::string(file));
 
 		//allocate input arrays
-		ssc_number_t *T_ambF = allocate("T_ambF", 8761);
-		ssc_number_t *VwindMPH = allocate("VwindMPH", 8761);
-		ssc_number_t *GHI = allocate("GHI", 8761);
-		std::vector<double> RadWallN(8761), RadWallS(8761), RadWallE(8761), RadWallW(8761);
+		ssc_number_t *T_ambF = allocate("T_ambF", 8760);
+		ssc_number_t *VwindMPH = allocate("VwindMPH", 8760);
+		ssc_number_t *GHI = allocate("GHI", 8760);
+		std::vector<double> RadWallN(8760), RadWallS(8760), RadWallE(8760), RadWallW(8760);
 
 		// allocate output arrays
 		ssc_number_t *hvac_load = allocate("HVAC_load", 8760);
@@ -209,14 +207,6 @@ public:
 			VwindMPH[i] = (ssc_number_t)(wf.wspd * 2.237);
 			GHI[i] = (ssc_number_t)wf.gh;
 		}
-		//add 8761 hour for the euler forward later
-		RadWallN[8760] = RadWallN[0]; 
-		RadWallS[8760] = RadWallS[0]; 
-		RadWallE[8760] = RadWallE[0]; 
-		RadWallW[8760] = RadWallW[0];
-		T_ambF[8760] = T_ambF[0];
-		VwindMPH[8760] = VwindMPH[0];
-		GHI[8760] = GHI[0];
 
 		// calculate average annual temperature
 		double T_annual_avg = 0;
@@ -227,8 +217,8 @@ public:
 
 		//radiation pre-processing
 		double alphaho_wall = 0.15 / 5.6783;  //From ASHRAE for light colors(dark is x2).Converted to SI units
-		std::vector<double> T_solair_walls(8761), T_solair_roof(8761), T_solair(8761), T_solairF(8761);
-		for (int i = 0; i < 8761; i++)
+		std::vector<double> T_solair_walls(8760), T_solair_roof(8760), T_solair(8760), T_solairF(8760);
+		for (int i = 0; i < 8760; i++)
 		{
 			T_solair_walls[i] = 4 * ((T_ambF[i] - 32) / 1.8 + alphaho_wall * (RadWallN[i] + RadWallS[i] + RadWallE[i] + RadWallW[i]) / 4); //N, S, E, W averaged
 			T_solair_roof[i] = (T_ambF[i] - 32) / 1.8 + alphaho_wall * GHI[i] - 7;
@@ -241,7 +231,7 @@ public:
 		double dT = 1;
 
 		// read building parameter inputs
-		double A_Floor = as_double("floor_area");
+		double A_Floor = as_double("floor_area"); //ft^2
 		double Stories = as_double("Stories");
 		double YrBuilt = as_double("YrBuilt");
 		double Occupants = as_double("Occupants");
@@ -634,28 +624,55 @@ public:
 		int D = 1; //somehow I am one day off BEOPT so compensating here(this is days of the week)
 		// TMY DEFAULT IS MONDAY!!!!!!!
 		//Sol - Air -- This part is ALL SI -- get effective envelope temperatures for the heat transfer.
-		std::vector<double> Vacay(8761), Hset(8761), Cset(8761);
-		std::vector<double> Tmass(8761), Tair(8761), Tsurf(8761);
-		double Heaton[8761];
+		std::vector<double> Vacay(8760), Hset(8760), Cset(8760);
+		std::vector<double> Tmass(8760), Tair(8760), Tsurf(8760);
+		double Heaton[8760];
 		//All the initial loads - divided into radiatinve & convective
 		
-		std::vector<double> EquipElecHrLoad(8761), EquipRadHrLoad(8761), EquipConvHrLoad(8761), MELSElecHrLoad(8761), MELSRadHrLoad(8761);
-		std::vector<double> MELSConvHrLoad(8761), LightElecHrLoad(8761), LightRadHrLoad(8761), LightConvHrLoad(8761), PPLRadHrLoad(8761), PPLConvHrLoad(8761);
-		std::vector<double> TAnew(8761), TSnew(8761), TMnew(8761);
-		std::vector<double> QInt_Rad(8761), QInt_Conv(8761), Q_SolWin(8761);
-		std::vector<double> CFM(8761), UAInf(8761), QInf(8761), QG(8761);
-		std::vector<double> QN(8761), QHV2(8761), Tdiff(8761);
+		std::vector<double> EquipElecHrLoad(8760), EquipRadHrLoad(8760), EquipConvHrLoad(8760), MELSElecHrLoad(8760), MELSRadHrLoad(8760);
+		std::vector<double> MELSConvHrLoad(8760), LightElecHrLoad(8760), LightRadHrLoad(8760), LightConvHrLoad(8760), PPLRadHrLoad(8760), PPLConvHrLoad(8760);
+		std::vector<double> TAnew(8760), TSnew(8760), TMnew(8760);
+		std::vector<double> QInt_Rad(8760), QInt_Conv(8760), Q_SolWin(8760);
+		std::vector<double> CFM(8760), UAInf(8760), QInf(8760), QG(8760);
+		std::vector<double> QN(8760), QHV2(8760), Tdiff(8760);
 		
 		
-		std::vector<double> HourlyNonHVACLoad(8761);
+		std::vector<double> HourlyNonHVACLoad(8760);
 
 		//MAIN 8760 LOOP STARTS HERE********************************************************************************************************************************************************************
 
-		for (int i = 0; i < 8760; i++)
+		for (int j = 0; j < 8763; j++) //need to re-run the first three hours, since they depend on previous hours. Therefore, run this loop **8762** times.
 		{
-			Vacay[i] = 0; //Initialize vacation to zero
+			//counters to enable re-running the first two hours
+			int i = j;
+			int iprev = i - 1;
+			int inext = i + 1;
+			bool flag = false; //flag to pre-set first hour ONLY the first time 
+			if (i == 8759) //hour 8760
+				inext = 0; //loop back to first hour
+			else if (i == 8760) //re-running first hour
+			{
+				iprev = 8759; //loop back to last hour
+				inext = 1;
+				i = 0; //overwrite first hour values
+				flag = true; //do not pre-set first hour this time
+			}
+			else if (i == 8761) //re-running second hour
+			{
+				iprev = 0;
+				inext = 2;
+				i = 1; //overwrite second hour values
+			}
+			else if (i == 8762) //re-running third hour
+			{
+				iprev = 1;
+				inext = 3;
+				i = 2; //overwrite third hour values
+			}
+
+			//start the actual algorithm
 			int Hr = hour[i];
-			int NextHr = hour[i + 1];
+			int NextHr = hour[inext];
 			
 			//The day of the week (to figure out weekends)
 			if (Hr == 0) //first hour of a new day
@@ -666,8 +683,8 @@ public:
 			}	
 			int Mon = month[i];
 			int Dy = day[i];
-			int NextMon = month[i + 1];
-			int NextDay = day[i + 1];
+			int NextMon = month[inext];
+			int NextDay = day[inext];
 
 			//Are we on vacation ?
 			for (int v = 0; v < N_vacation; v++)
@@ -676,7 +693,7 @@ public:
 					Vacay[i] = 1;
 
 				if (NextMon == (VacationMonths[v]-1) && NextDay == (VacationDays[v]-1))
-					Vacay[i + 1] = 1;
+					Vacay[inext] = 1;
 			}
 
 			//First the setpoints for heating / cooling
@@ -691,7 +708,7 @@ public:
 				Cset[i] = TCoolSB;
 			};
 
-			if (i == 0) // First hour has to be preset.It's January so I assume it's heating.
+			if (i == 0 && flag == false) // First hour has to be preset.It's January so I assume it's heating. ONLY PRESET FIRST HOUR ON THE FIRST RUN THROUGH.
 			{
 				Tmass[i] = Hset[i];
 				Tair[i] = Hset[i];
@@ -718,65 +735,65 @@ public:
 					PPLConvHrLoad[i] = 0;
 				}
 			}
-
+			/*
 			if (i == 8760) // assign vals for hour "8761" which is just part of the euler forward calculation
 			{
-				EquipElecHrLoad[i + 1] = EquipElecHrLoad[1];
-				EquipRadHrLoad[i + 1] = SensibleEquipRadorConvWkend[1];
-				EquipConvHrLoad[i + 1] = SensibleEquipRadorConvWkend[1];
-				MELSElecHrLoad[i + 1] = MELSHourlyJan[1];
-				MELSRadHrLoad[i + 1] = MELSElecHrLoad[1] * 0.5*0.734;
-				MELSConvHrLoad[i + 1] = MELSElecHrLoad[1] * 0.5*0.734;
-				LightElecHrLoad[i + 1] = LightHourlyJan[1];
-				LightRadHrLoad[i + 1] = LightElecHrLoad[1] * 0.7;
-				LightConvHrLoad[i + 1] = LightElecHrLoad[1] * 0.3;
-				PPLRadHrLoad[i + 1] = PPL_rad[1];
-				PPLConvHrLoad[i + 1] = PPL_conv[1];
+				EquipElecHrLoad[inext] = EquipElecHrLoad[1];
+				EquipRadHrLoad[inext] = SensibleEquipRadorConvWkend[1];
+				EquipConvHrLoad[inext] = SensibleEquipRadorConvWkend[1];
+				MELSElecHrLoad[inext] = MELSHourlyJan[1];
+				MELSRadHrLoad[inext] = MELSElecHrLoad[1] * 0.5*0.734;
+				MELSConvHrLoad[inext] = MELSElecHrLoad[1] * 0.5*0.734;
+				LightElecHrLoad[inext] = LightHourlyJan[1];
+				LightRadHrLoad[inext] = LightElecHrLoad[1] * 0.7;
+				LightConvHrLoad[inext] = LightElecHrLoad[1] * 0.3;
+				PPLRadHrLoad[inext] = PPL_rad[1];
+				PPLConvHrLoad[inext] = PPL_conv[1];
 				// assign i+1 values for hour 8760 if Jan 1 is a vacation day
 				for (int v = 0; v < N_vacation; v++)
 				{
 					if (VacationMonths[v] == 1 && VacationDays[v] == 1)
 					{
-						EquipElecHrLoad[i + 1] = TotalPlugHourlyVacay[1];
-						EquipRadHrLoad[i + 1] = SensibleEquipRadorConvVacay[1];
-						PPLRadHrLoad[i + 1] = 0;
-						PPLConvHrLoad[i + 1] = 0;
+						EquipElecHrLoad[inext] = TotalPlugHourlyVacay[1];
+						EquipRadHrLoad[inext] = SensibleEquipRadorConvVacay[1];
+						PPLRadHrLoad[inext] = 0;
+						PPLConvHrLoad[inext] = 0;
 					}
 				}
 			}
-			
-			if (i > 0) // These are the new values for each temperature, which were determined previous timestep
+			*/
+			if (i > 0 || flag == true) // These are the new values for each temperature, which were determined previous timestep. USE PREVIOUS TIMESTEP VALUES FOR RE-RUNNING FIRST TWO HOURS.
 			{
-				Tair[i] = TAnew[i - 1];
-				Tsurf[i] = TSnew[i - 1];
-				Tmass[i] = TMnew[i - 1];
+				Tair[i] = TAnew[iprev];
+				Tsurf[i] = TSnew[iprev];
+				Tmass[i] = TMnew[iprev];
 			}
 
 			//Interior gains
 			//Equipment load -- depends on whether weekday or weekend
-			if (Vacay[i + 1] == 1) // Vacation
+			if (Vacay[inext] == 1) // Vacation
 			{
-				EquipElecHrLoad[i + 1] = TotalPlugHourlyVacay[NextHr];
-				EquipRadHrLoad[i + 1] = SensibleEquipRadorConvVacay[NextHr];
-				EquipConvHrLoad[i + 1] = SensibleEquipRadorConvVacay[NextHr];
+				EquipElecHrLoad[inext] = TotalPlugHourlyVacay[NextHr];
+				EquipRadHrLoad[inext] = SensibleEquipRadorConvVacay[NextHr];
+				EquipConvHrLoad[inext] = SensibleEquipRadorConvVacay[NextHr];
 			}
-			else if ((D == 2 && Hr < 23) || (D == 7 && Hr == 23) || D == 1) // weekend!(hour i + 1)
+			else if ((D == 2 && Hr < 23) || (D == 7 && Hr == 23) || D == 1) // weekend!(hour inext)
 			{
-				EquipElecHrLoad[i + 1] = TotalPlugHourlyWkend[NextHr];
-				EquipRadHrLoad[i + 1] = SensibleEquipRadorConvWkend[NextHr];   //These are just 50 / 50 rad and conv, but the multipliers are BLDG AM sensible load fractions
-				EquipConvHrLoad[i + 1] = SensibleEquipRadorConvWkend[NextHr];
+				EquipElecHrLoad[inext] = TotalPlugHourlyWkend[NextHr];
+				EquipRadHrLoad[inext] = SensibleEquipRadorConvWkend[NextHr];   //These are just 50 / 50 rad and conv, but the multipliers are BLDG AM sensible load fractions
+				EquipConvHrLoad[inext] = SensibleEquipRadorConvWkend[NextHr];
 			}
-			else //weekday(hour i + 1)
+			else //weekday(hour inext)
 			{
-				EquipElecHrLoad[i + 1] = TotalPlugHourlyWkday[NextHr];
-				EquipRadHrLoad[i + 1] = SensibleEquipRadorConvWkday[NextHr];   //These are just 50 / 50 rad and conv, but the multipliers are BLDG AM sensible load fractions
-				EquipConvHrLoad[i + 1] = SensibleEquipRadorConvWkday[NextHr];
+				EquipElecHrLoad[inext] = TotalPlugHourlyWkday[NextHr];
+				EquipRadHrLoad[inext] = SensibleEquipRadorConvWkday[NextHr];   //These are just 50 / 50 rad and conv, but the multipliers are BLDG AM sensible load fractions
+				EquipConvHrLoad[inext] = SensibleEquipRadorConvWkday[NextHr];
 			}
 
 			//Next the MELS
-			MELSElecHrLoad[i + 1] = MELSHourlyJan[NextHr] * MELSMonthly[NextMon];
-			MELSRadHrLoad[i + 1] = MELSElecHrLoad[i + 1] * 0.734*0.5;
-			MELSConvHrLoad[i + 1] = MELSElecHrLoad[i + 1] * 0.734*0.5;
+			MELSElecHrLoad[inext] = MELSHourlyJan[NextHr] * MELSMonthly[NextMon];
+			MELSRadHrLoad[inext] = MELSElecHrLoad[inext] * 0.734*0.5;
+			MELSConvHrLoad[inext] = MELSElecHrLoad[inext] * 0.734*0.5;
 
 			//And the lighting
 			int ind = 0;
@@ -786,88 +803,89 @@ public:
 				ind = 1;
 			else ind = 2;
 
-			LightElecHrLoad[i + 1] = LightHourlyJan[NextHr] * LightMonHr[NextMon][ind];
-			LightRadHrLoad[i + 1] = LightElecHrLoad[i + 1] * 0.7;
-			LightConvHrLoad[i + 1] = LightElecHrLoad[i + 1] * 0.3;
+			LightElecHrLoad[inext] = LightHourlyJan[NextHr] * LightMonHr[NextMon][ind];
+			LightRadHrLoad[inext] = LightElecHrLoad[inext] * 0.7;
+			LightConvHrLoad[inext] = LightElecHrLoad[inext] * 0.3;
 
 			//And finally the people!
-			if (Vacay[i + 1] == 1)
+			if (Vacay[inext] == 1)
 			{
-				PPLRadHrLoad[i + 1] = 0;
-				PPLConvHrLoad[i + 1] = 0;
+				PPLRadHrLoad[inext] = 0;
+				PPLConvHrLoad[inext] = 0;
 			}
 			else
 			{
-				PPLRadHrLoad[i + 1] = PPL_rad[NextHr];
-				PPLConvHrLoad[i + 1] = PPL_conv[NextHr];
+				PPLRadHrLoad[inext] = PPL_rad[NextHr];
+				PPLConvHrLoad[inext] = PPL_conv[NextHr];
 			}
 
 			//Convert internal gains to BTU / hr(radiative and convective)
-			QInt_Rad[i + 1] = 3412.142*(PPLRadHrLoad[i + 1] + LightRadHrLoad[i + 1] + MELSRadHrLoad[i + 1] + EquipRadHrLoad[i + 1]);
-			QInt_Conv[i + 1] = 3412.142*(PPLConvHrLoad[i + 1] + LightConvHrLoad[i + 1] + MELSConvHrLoad[i + 1] + EquipConvHrLoad[i + 1]);
+			QInt_Rad[inext] = 3412.142*(PPLRadHrLoad[inext] + LightRadHrLoad[inext] + MELSRadHrLoad[inext] + EquipRadHrLoad[inext]);
+			QInt_Conv[inext] = 3412.142*(PPLConvHrLoad[inext] + LightConvHrLoad[inext] + MELSConvHrLoad[inext] + EquipConvHrLoad[inext]);
 
 			//Solar Gains - distributed to envelope evenly(all walls, ceil, floor)
 			// and to internal mass, with fractions of each denoted above.
-			Q_SolWin[i + 1] = SHGC*(RadWallE[i + 1] + RadWallW[i + 1] + RadWallN[i + 1] + RadWallS[i + 1]) / 4 * A_Wins / 10.764; //This is now Watts
-			Q_SolWin[i + 1] = Q_SolWin[i + 1] * 3.412;  //And now it's BTU/hr
+			Q_SolWin[inext] = SHGC*(RadWallE[inext] + RadWallW[inext] + RadWallN[inext] + RadWallS[inext]) / 4 * A_Wins / 10.764; //This is now Watts
+			Q_SolWin[inext] = Q_SolWin[inext] * 3.412;  //And now it's BTU/hr
 
 			//Get the infiltration(cheating - using this hr's Tair; is assumed similar to prev hour's)
-			CFM[i + 1] = ELA * sqrt(Cs*abs(T_ambF[i + 1] - Tair[i]) + Cw*pow(VwindMPH[i + 1], 2)) * 0.67;
-			UAInf[i + 1] = CFM[i + 1] * 60 * 0.018;
+			CFM[inext] = ELA * sqrt(Cs*abs(T_ambF[inext] - Tair[i]) + Cw*pow(VwindMPH[inext], 2)) * 0.67;
+			UAInf[inext] = CFM[inext] * 60 * 0.018;
 			QInf[i] = UAInf[i] * (T_ambF[i] - Tair[i]); //This would be BTU / hr -- all convective
 			QG[i] = QInt_Conv[i] + QInf[i]; //Same!
 
 			//Calculate the new air temperature in the space(euler forward)
 			double bar = 1 + dT / Cenv / Renv + dT / hsurf / Cenv;
 			double bardub = 1 + dT / Cmass / hsurf;
-			double TAnewBot = 1 + UAInf[i + 1] * dT / Cair + dT / Cair*AIntMass / hsurf - pow(dT, 2) * AIntMass / Cair / Cmass / hsurf / hsurf / bardub + Aenv*dT / Cair / hsurf - dT*Aenv / Cair / Cenv / hsurf / hsurf / bar;
-			double TAnewTop = Tair[i] + dT / Cair*(QInt_Conv[i + 1] + UAInf[i + 1] * T_ambF[i + 1]) + dT*AIntMass*(Tmass[i] + SolMassFrac*(Q_SolWin[i + 1] / AIntMass + QInt_Rad[i + 1] / AIntMass)) / Cair / hsurf / bardub + Aenv*dT / Cair / hsurf / bar*(Tsurf[i] + dT*T_solairF[i + 1] / Cenv / Renv + SolEnvFrac*(Q_SolWin[i + 1] / Aenv + QInt_Rad[i + 1] / Aenv));
+			double TAnewBot = 1 + UAInf[inext] * dT / Cair + dT / Cair*AIntMass / hsurf - pow(dT, 2) * AIntMass / Cair / Cmass / hsurf / hsurf / bardub + Aenv*dT / Cair / hsurf - dT*Aenv / Cair / Cenv / hsurf / hsurf / bar;
+			double TAnewTop = Tair[i] + dT / Cair*(QInt_Conv[inext] + UAInf[inext] * T_ambF[inext]) + dT*AIntMass*(Tmass[i] + SolMassFrac*(Q_SolWin[inext] / AIntMass + QInt_Rad[inext] / AIntMass)) / Cair / hsurf / bardub + Aenv*dT / Cair / hsurf / bar*(Tsurf[i] + dT*T_solairF[inext] / Cenv / Renv + SolEnvFrac*(Q_SolWin[inext] / Aenv + QInt_Rad[inext] / Aenv));
 			TAnew[i] = TAnewTop / TAnewBot;
 
 			//Plug loads (non-HVAC)
 			double HourlyNonHVACLoad = (LightElecHrLoad[i] + MELSElecHrLoad[i] + EquipElecHrLoad[i]); //kWh
-			non_hvac_load[i] = (ssc_number_t)HourlyNonHVACLoad * 1000; //Wh
+			if (j < 8760) //do not reassign non_hvac load on the second loop through
+				non_hvac_load[i] = (ssc_number_t)HourlyNonHVACLoad * 1000; //Wh
 
 			//Now for the HVAC controls
 			if (Cset[i] >= TAnew[i] && Hset[i] <= TAnew[i]) // Temperature is ok, no HVAC
 			{
 				Heaton[i] = 0;
-				QN[i + 1] = 0;
-				QHV2[i + 1] = 0;
+				QN[inext] = 0;
+				QHV2[inext] = 0;
 			}				
 			else if (Cset[i] <= TAnew[i]) // Cooling temperature requirement met
 			{
 				if (ClEn[Mon] == 0) // This is if not in cooling season!
 				{
 					Heaton[i] = 0;
-					QN[i + 1] = 0;
-					QHV2[i + 1] = 0;
+					QN[inext] = 0;
+					QHV2[inext] = 0;
 				}
 				else    //Actually Cooling
 				{
 					Heaton[i] = 0;
 					Tdiff[i] = TAnew[i] - Cset[i];
 					TAnew[i] = Cset[i];
-					QN[i + 1] = Cair / dT / 1 * (TAnew[i] * TAnewBot - TAnewTop);  //BTU
-					QHV2[i + 1] = QN[i] / SEER*en_cool;
+					QN[inext] = Cair / dT / 1 * (TAnew[i] * TAnewBot - TAnewTop);  //BTU
+					QHV2[inext] = QN[i] / SEER*en_cool;
 				}
 			}
 			else if (HtEn[Mon] == 0) // Heating temperature met, but not in season
 			{
 				Heaton[i] = 0;
-				QN[i + 1] = 0;
-				QHV2[i + 1] = 0;
+				QN[inext] = 0;
+				QHV2[inext] = 0;
 			}
 			else //really heating
 			{
 				Heaton[i] = 1;
 				Tdiff[i] = Hset[i] - TAnew[i];
 				TAnew[i] = Hset[i];
-				QN[i + 1] = Cair / dT*(TAnew[i] * TAnewBot - TAnewTop);  //BTU
-				QHV2[i + 1] = (QN[i] * 0.2931)*en_heat; //Wh
+				QN[inext] = Cair / dT*(TAnew[i] * TAnewBot - TAnewTop);  //BTU
+				QHV2[inext] = (QN[i] * 0.2931)*en_heat; //Wh
 			}
 			TMnew[i] = (Tmass[i] + dT / Cmass*(TAnew[i] / hsurf + SolMassFrac*(Q_SolWin[i] + QInt_Rad[i]) / AIntMass)) / bardub;
-			TSnew[i] = (Tsurf[i] + dT / Cenv*(SolEnvFrac*(Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[i + 1] / Renv + TAnew[i] / hsurf)) / bar;
+			TSnew[i] = (Tsurf[i] + dT / Cenv*(SolEnvFrac*(Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[inext] / Renv + TAnew[i] / hsurf)) / bar;
 
 			//HVAC Loads completed
 			hvac_load[i] = abs(QHV2[i]); //Wh
