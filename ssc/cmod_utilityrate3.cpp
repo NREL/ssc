@@ -1406,18 +1406,18 @@ public:
 //		const char *schedwkend = as_string("ur_ec_sched_weekend");
 
 		size_t nrows, ncols;
-		ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+		ssc_number_t *dc_weekday = as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
 		if (nrows != 12 || ncols != 24)
 		{
 			std::ostringstream ss;
-			ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
+			ss << "energy charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
 			throw exec_error("utilityrate3", ss.str());
 		}
-		ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+		ssc_number_t *dc_weekend = as_matrix("ur_ec_sched_weekend", &nrows, &ncols);
 		if (nrows != 12 || ncols != 24)
 		{
 			std::ostringstream ss;
-			ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
+			ss << "energy charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
 			throw exec_error("utilityrate3", ss.str());
 		}
 		util::matrix_t<float> schedwkday(12,24);
@@ -1478,7 +1478,7 @@ public:
 			{
 				for(h=0;h<24;h++)
 				{
-					int todp = tod[c];
+					int todp = tod[c]-1;
 					// net energy use per period per month
 					energy_net[m][todp] += e[c];
 					// hours per period per month
@@ -1624,7 +1624,7 @@ public:
 		// calculate energy charge for both scenarios
 		for (int i=0;i<8760;i++)
 		{
-			int period = tod[i];
+			int period = tod[i]-1;
 			if (e[i] >= 0.0)
 			{ // calculate income or credit
 				ssc_number_t credit_amt = 0;
@@ -1814,7 +1814,7 @@ public:
 			{
 				for(h=0;h<24;h++)
 				{
-					int todp = tod[c];
+					int todp = tod[c]-1;
 					if (p[c] < 0 && p[c] < ppeaks[todp])
 						ppeaks[todp] = p[c];
 
