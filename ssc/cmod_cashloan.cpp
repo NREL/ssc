@@ -7,7 +7,8 @@ static var_info vtab_cashloan[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Residential or Commercial Market",   "0/1",          "0=residential,1=comm.", "Cashloan",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "mortgage",		         "Use mortgage style loan (res. only)","0/1",          "0=standard loan,1=mortgage",                      "Cashloan",      "?=0",                     "BOOLEAN",                        "" },
+//	{ SSC_INPUT, SSC_NUMBER, "mortgage", "Use mortgage style loan (res. only)", "0/1", "0=standard loan,1=mortgage", "Cashloan", "?=0", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_NUMBER, "mortgage", "Use mortgage style loan (res. only)", "0/1", "0=standard loan,1=mortgage", "Cashloan", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",                          "Total installed cost",                               "$",      "",                      "Cashloan",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Cashloan",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
@@ -238,10 +239,11 @@ public:
 		bool is_commercial = (as_integer("market")==1);
 		bool is_mortgage = (as_integer("mortgage")==1);
 
-		/*
-		if (is_commercial) log("commercial market"); else log("residential market");
-		if (is_mortgage) log("mortgage loan"); else log("standard loan");
-		*/
+
+//		throw exec_error("cmod_cashloan", "mortgage = " + util::to_string(as_integer("mortgage")));
+//		if (is_commercial) log("commercial market"); else log("residential market");
+//		if (is_mortgage) log("mortgage loan"); else log("standard loan");
+		
 
 		int nyears = as_integer("analysis_period");
 
