@@ -607,8 +607,13 @@ static var_info vtab_utility_rate3[] = {
 		// outputs from Paul, Nate and Sean 9/9/13
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "elec_cost_with_system",      "Electricity cost with system",         "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "elec_cost_without_system",   "Electricity cost without system",      "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_with_system", "Electricity cost with system", "$/yr", "", "", "*", "LENGTH_EQUAL=analysis_period", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_without_system", "Electricity cost without system", "$/yr", "", "", "*", "LENGTH_EQUAL=analysis_period", "" },
+
+	// year 1 values for metrics
+	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1", "Electricity cost with system", "$/yr", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity cost without system", "$/yr", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1", "Year 1 Savings", "$", "", "", "*", "", "" },
 
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 electricity to/from grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -1091,7 +1096,9 @@ public:
 			ch_ec_dec[i] = monthly_ec_charges[11] * rate_scale[i];			
 		}
 
-
+		assign("elec_cost_with_system_year1", annual_elec_cost_w_sys[0]);
+		assign("elec_cost_without_system_year1", annual_elec_cost_wo_sys[0]);
+		assign("savings_year1", annual_elec_cost_wo_sys[0] - annual_elec_cost_w_sys[0]);
 	}
 
 	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760], ssc_number_t salespurchases[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_salespurchases[12])
