@@ -26,6 +26,7 @@
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_pt_type221B.cpp" />
     <ClCompile Include="..\tcs\water_properties.cpp" />
     <ClCompile Include="..\tcs\fmin.cpp" />
     <ClCompile Include="..\tcs\Heliostat_AzElAod.cpp" />

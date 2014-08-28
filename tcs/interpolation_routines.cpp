@@ -37,89 +37,6 @@ bool Linear_Interp::Set_1D_Lookup_Table( const util::matrix_t<double> &table, in
 	return true;
 }
 
-bool Bilinear_Interp::Set_2D_Lookup_Table( const util::matrix_t<double> &table )
-{
-	// Initialize class member data
-	m_2axis_table = table;
-	double nrows = table.nrows();
-	if( nrows < 9 )
-		return false;
-	
-	// Find number of x values in table
-	double first_val = table.at(0,0);
-	int i = 1;
-	for( i; i < table.nrows(); i++ )
-		if( table.at(i,0) == first_val )	break;
-	m_nx = i;
-	if( m_nx < 3 )
-		return false;
-
-	// Find number of y values in table
-	m_ny = 1;
-	i = 0;
-	for( int j = 0; j < nrows - 1; j++ )
-	{
-		if( table.at(j+1,1) != table.at(j,1))
-			m_ny++;
-	}
-	if( m_ny < 3 )
-		return false;
-
-	// Create 1D table for x values
-	util::matrix_t<double> x_matrix( m_nx, 1, 0.0 );
-	for( int j = 0; j < m_nx; j++ )
-		x_matrix.at(j,0) = table.at( j, 0 );
-
-	// Create 1D table for y values
-	util::matrix_t<double> y_matrix( m_ny, 1, 0.0 );
-	for( int j = 0; j < m_ny; j++ )
-		y_matrix.at(j,0) = table.at( m_nx*j, 1 );
-
-	// Set up 1D interpolation class instances for x and y values
-	int ind_var_index[1] = {0};
-	int error_index = -99;
-	if( !x_vals.Set_1D_Lookup_Table( x_matrix, ind_var_index, 1, error_index ) )
-		return false;
-	if( !y_vals.Set_1D_Lookup_Table( y_matrix, ind_var_index, 1, error_index ) )
-		return false;
-
-	return true;
-}
-
-double Bilinear_Interp::bilinear_2D_interp( double x, double y )
-{
-	int i_x1 = x_vals.Get_Index( 0, x );
-	int i_y1 = y_vals.Get_Index( 0, y );
-
-	int i_x2 = i_x1 + 1;
-	int i_y2 = i_y1 + 1;
-
-	int i1 = m_nx*i_y1 + i_x1;
-	double x1 = m_2axis_table.at( i1, 0 );
-	double y1 = m_2axis_table.at( i1, 1 );
-	double z1 = m_2axis_table.at( i1, 2 );
-
-	int i2 = m_nx*i_y2 + i_x1;
-	double x2 = m_2axis_table.at( i2, 0 );
-	double y2 = m_2axis_table.at( i2, 1 );
-	double z2 = m_2axis_table.at( i2, 2 );
-
-	int i3 = m_nx*i_y2 + i_x2;
-	double x3 = m_2axis_table.at( i3, 0 );
-	double y3 = m_2axis_table.at( i3, 1 );
-	double z3 = m_2axis_table.at( i3, 2 );
-
-	int i4 = m_nx*i_y1 + i_x2;
-	double x4 = m_2axis_table.at( i4, 0 );
-	double y4 = m_2axis_table.at( i4, 1 );
-	double z4 = m_2axis_table.at( i4, 2 );
-
-	double x_frac = (x - x1)/(x4 - x1);
-	double y_frac = (y - y1)/(y2 - y1);
-
-	return (1.0-x_frac)*(1.0-y_frac)*z1 + (1.0-x_frac)*y_frac*z2 + x_frac*y_frac*z3 + x_frac*(1.0-y_frac)*z4;
-}
-
 double Linear_Interp::linear_1D_interp( int x_col, int y_col, double x )
 {
 	/*Given a value x, return an interpolated value y, using data xx and yy of size n. Save   **
@@ -143,6 +60,16 @@ int Linear_Interp::Get_Index( int x_col, double x )
 	else {j = locate( x_col, x );}
 	
 	return j;
+}
+
+double Linear_Interp::Get_Value( int col, int index)
+{
+	/* 
+	Return the value in the data array for column "col" and index "index"
+	*/
+
+	return m_userTable.at(index, col);
+
 }
 
 int Linear_Interp::locate( int col, double x )
@@ -245,6 +172,113 @@ int Linear_Interp::hunt( int col, double x )
 	return max(0, min(m_rows - m_m, jl - ((m_m - 2)/2)));
 }
 
+double Bilinear_Interp::bilinear_2D_interp( double x, double y )
+{
+
+	/*int i = x_vals.m_cor ? x_vals.hunt(0, x) : x_vals.locate(0, y);
+	int j = y_vals.m_cor ? y_vals.hunt(0, y) : y_vals.locate(0, y);
+
+	double yy, t, u;
+
+	//find the grid square
+	double 
+		xlo = x_vals.Get_Value(0, i),
+		xhi = x_vals.Get_Value(0, i+1),
+		ylo = y_vals.Get_Value(0, j),
+		yhi = y_vals.Get_Value(0, j+1);
+
+	t = (x - xlo) / (xhi - xlo);
+	u = (y - ylo) / (yhi - ylo);
+
+	*/
+
+
+
+
+
+	
+	int i_x1 = x_vals.Get_Index( 0, x );
+	int i_y1 = y_vals.Get_Index( 0, y );
+
+	int i_x2 = i_x1 + 1;
+	int i_y2 = i_y1 + 1;
+
+	int i1 = m_nx*i_y1 + i_x1;
+	double x1 = m_2axis_table.at( i1, 0 );
+	double y1 = m_2axis_table.at( i1, 1 );
+	double z1 = m_2axis_table.at( i1, 2 );
+
+	int i2 = m_nx*i_y2 + i_x1;
+	double x2 = m_2axis_table.at( i2, 0 );
+	double y2 = m_2axis_table.at( i2, 1 );
+	double z2 = m_2axis_table.at( i2, 2 );
+
+	int i3 = m_nx*i_y2 + i_x2;
+	double x3 = m_2axis_table.at( i3, 0 );
+	double y3 = m_2axis_table.at( i3, 1 );
+	double z3 = m_2axis_table.at( i3, 2 );
+
+	int i4 = m_nx*i_y1 + i_x2;
+	double x4 = m_2axis_table.at( i4, 0 );
+	double y4 = m_2axis_table.at( i4, 1 );
+	double z4 = m_2axis_table.at( i4, 2 );
+
+	double x_frac = (x - x1)/(x4 - x1);
+	double y_frac = (y - y1)/(y2 - y1);
+
+	return (1.0-x_frac)*(1.0-y_frac)*z1 + (1.0-x_frac)*y_frac*z2 + x_frac*y_frac*z3 + x_frac*(1.0-y_frac)*z4;
+	
+}
+
+bool Bilinear_Interp::Set_2D_Lookup_Table( const util::matrix_t<double> &table )
+{
+	// Initialize class member data
+	m_2axis_table = table;
+	double nrows = table.nrows();
+	if( nrows < 9 )
+		return false;
+	
+	// Find number of x values in table
+	double first_val = table.at(0,0);
+	int i = 1;
+	for( i; i < table.nrows(); i++ )
+		if( table.at(i,0) == first_val )	break;
+	m_nx = i;
+	if( m_nx < 3 )
+		return false;
+
+	// Find number of y values in table
+	m_ny = 1;
+	i = 0;
+	for( int j = 0; j < nrows - 1; j++ )
+	{
+		if( table.at(j+1,1) != table.at(j,1))
+			m_ny++;
+	}
+	if( m_ny < 3 )
+		return false;
+
+	// Create 1D table for x values
+	util::matrix_t<double> x_matrix( m_nx, 1, 0.0 );
+	for( int j = 0; j < m_nx; j++ )
+		x_matrix.at(j,0) = table.at( j, 0 );
+
+	// Create 1D table for y values
+	util::matrix_t<double> y_matrix( m_ny, 1, 0.0 );
+	for( int j = 0; j < m_ny; j++ )
+		y_matrix.at(j,0) = table.at( m_nx*j, 1 );
+
+	// Set up 1D interpolation class instances for x and y values
+	int ind_var_index[1] = {0};
+	int error_index = -99;
+	if( !x_vals.Set_1D_Lookup_Table( x_matrix, ind_var_index, 1, error_index ) )
+		return false;
+	if( !y_vals.Set_1D_Lookup_Table( y_matrix, ind_var_index, 1, error_index ) )
+		return false;
+
+	return true;
+}
+
 bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
 {
 	// Initialize class member data
@@ -292,7 +326,7 @@ bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
 	// Create 1D table for z values
 	util::matrix_t<double> z_matrix( m_nz, 1, 0.0 );
 	for( int j=0; j<m_nz; j++)
-		z_matrix.at(j,0) = table.at( 0, 0, j);
+		z_matrix.at(j,0) = table.at( 0, 2, j);
 
 	// Set up 1D interpolation class instances for x and y values
 	int ind_var_index[1] = {0};
@@ -362,4 +396,207 @@ double Trilinear_Interp::trilinear_3D_interp( double x, double y, double z )
 		m4 = x_frac*(1.0-y_frac);
 
 	return (m1*p1 + m2*p2 + m3*p3 + m4*p4) * z_frac + (m1*q1 + m2*q2 + m3*q3 + m4*q4) * (1.0 - z_frac);
+}
+
+LUdcmp::LUdcmp(MatDoub &a) 
+{
+	n = (int)a.size(); 
+	lu = a;
+	aref = a;
+	indx.resize(n);
+
+    const double TINY=1.0e-40;
+    int i,imax,j,k;
+    double big,temp;
+    VectDoub vv(n);
+    d=1.0;
+    for (i=0;i<n;i++) {
+        big=0.0;
+        for (j=0;j<n;j++)
+            if ((temp=abs(lu.at(i).at(j))) > big) big=temp;
+        if (big == 0.0) throw("Singular matrix in LUdcmp");
+        vv[i]=1.0/big;
+    }
+    for (k=0;k<n;k++) {
+        big=0.0;
+        for (i=k;i<n;i++) {
+            temp=vv[i]*abs(lu.at(i).at(k));
+            if (temp > big) {
+                big=temp;
+                imax=i;
+            }
+        }
+        if (k != imax) {
+            for (j=0;j<n;j++) {
+                temp=lu.at(imax).at(j);
+                lu.at(imax).at(j)=lu.at(k).at(j);
+                lu.at(k).at(j)=temp;
+            }
+            d = -d;
+            vv[imax]=vv[k];
+        }
+        indx[k]=imax;
+        if (lu.at(k).at(k) == 0.0) lu.at(k).at(k)=TINY;
+        for (i=k+1;i<n;i++) {
+            temp=lu.at(i).at(k) /= lu.at(k).at(k);
+            for (j=k+1;j<n;j++)
+                lu.at(i).at(j) -= temp*lu.at(k).at(j);
+        }
+    }
+}
+
+void LUdcmp::solve(VectDoub &b, VectDoub &x)
+{
+    int i,ii=0,ip,j;
+    double sum;
+    if (b.size() != n || x.size() != n)
+        throw("LUdcmp::solve bad sizes");
+    for (i=0;i<n;i++) x[i] = b[i];
+    for (i=0;i<n;i++) {
+        ip=indx[i];
+        sum=x[ip];
+        x[ip]=x[i];
+        if (ii != 0)
+            for (j=ii-1;j<i;j++) sum -= lu.at(i).at(j)*x[j];
+        else if (sum != 0.0)
+            ii=i+1;
+        x[i]=sum;
+    }
+    for (i=n-1;i>=0;i--) {
+        sum=x[i];
+        for (j=i+1;j<n;j++) sum -= lu.at(i).at(j)*x[j];
+        x[i]=sum/lu.at(i).at(i);
+    }
+}
+
+void LUdcmp::solve(MatDoub &b, MatDoub &x)
+{
+    int i,j,m=b.front().size();
+    if (b.size() != n || x.size() != n || b.front().size() != x.front().size())
+        throw("LUdcmp::solve bad sizes");
+    VectDoub xx(n);
+    for (j=0;j<m;j++) {
+        for (i=0;i<n;i++) xx[i] = b.at(i).at(j);
+        solve(xx,xx);
+        for (i=0;i<n;i++) x.at(i).at(j) = xx[i];
+    }
+}
+
+void LUdcmp::inverse(MatDoub &ainv)
+{
+    int i,j;
+	ainv.resize(n, VectDoub(n));
+	for (i=0;i<n;i++) {
+        for (j=0;j<n;j++) ainv.at(i).at(j) = 0.;
+        ainv.at(i).at(i) = 1.;
+    }
+    solve(ainv,ainv);
+}
+
+double LUdcmp::det()
+{
+    double dd = d;
+    for (int i=0;i<n;i++) dd *= lu.at(i).at(i);
+    return dd;
+}
+
+void LUdcmp::mprove(VectDoub &b, VectDoub &x)
+{
+    int i,j;
+    VectDoub r(n);
+    for (i=0;i<n;i++) {
+        double sdp = -b[i];
+        for (j=0;j<n;j++)
+            sdp += (double)aref.at(i).at(j) * (double)x[j];
+        r[i]=sdp;
+    }
+    solve(r,r);
+    for (i=0;i<n;i++) x[i] -= r[i];
+}
+
+double Powvargram::SQR( const double a ) { return a*a; };  // a squared
+	
+Powvargram::Powvargram(){};
+
+Powvargram::Powvargram(MatDoub &x, VectDoub &y, const double beta, const double nug)
+{
+	bet = beta;
+	nugsq = nug*nug;
+
+	int i,j,k,npt=x.size(),ndim=x.front().size();
+	double rb,num=0.,denom=0.;
+	for (i=0;i<npt;i++) {
+		for (j=i+1;j<npt;j++) {
+			rb = 0.;
+			for (k=0;k<ndim;k++) rb += SQR(x.at(i).at(k)-x.at(j).at(k));
+			rb = pow(rb,0.5*beta);
+			num += rb*(0.5*SQR(y[i]-y[j]) - nugsq);
+			denom += SQR(rb);
+		}
+	}
+	alph = num/denom;
+}
+
+double Powvargram::operator() (const double r) const 
+{
+	return nugsq+alph*pow(r,bet);
+}
+
+double GaussMarkov::SQR( const double a ) { return a*a; };
+
+GaussMarkov::GaussMarkov(MatDoub &xx, VectDoub &yy, Powvargram &vargram, const double *err)
+{
+
+	//create local copies as needed
+	vgram = vargram;
+	x = xx;
+	npt = xx.size();
+	ndim = xx.front().size();
+	dstar.resize(npt+1);
+	vstar.resize(npt+1);
+	v.resize(npt+1,VectDoub(npt+1));
+	y.resize(npt+1);
+	yvi.resize(npt+1); 
+	//---------------
+
+	int i,j;
+	for (i=0;i<npt;i++) {
+		y[i] = yy[i];
+		for (j=i;j<npt;j++) {
+			v.at(i).at(j) = v.at(j).at(i) = vgram(rdist(&x.at(i),&x.at(j)));
+		}
+		v.at(i).at(npt) = v.at(npt).at(i) = 1.;
+	}
+	v.at(npt).at(npt) = y[npt] = 0.;
+	if (err) for (i=0;i<npt;i++) v.at(i).at(i) -= SQR(err[i]);
+	vi = new LUdcmp(v);
+	vi->solve(y,yvi);
+}
+
+GaussMarkov::~GaussMarkov() { 
+	delete vi; 
+}
+
+double GaussMarkov::interp(VectDoub &xstar) {
+    int i;
+    for (i=0;i<npt;i++) vstar[i] = vgram(rdist(&xstar,&x.at(i)));
+    vstar[npt] = 1.;
+    lastval = 0.;
+    for (i=0;i<=npt;i++) lastval += yvi[i]*vstar[i];
+    return lastval;
+}
+
+double GaussMarkov::interp(VectDoub &xstar, double &esterr) {
+    lastval = interp(xstar);
+    vi->solve(vstar,dstar);
+    lasterr = 0;
+    for (int i=0;i<=npt;i++) lasterr += dstar[i]*vstar[i];
+    esterr = lasterr = sqrt(fmax(0.,lasterr));
+    return lastval;
+}
+
+double GaussMarkov::rdist(VectDoub *x1, VectDoub *x2) {
+    double d=0.;
+    for (int i=0;i<ndim;i++) d += SQR(x1->at(i)-x2->at(i));
+    return sqrt(d);
 }

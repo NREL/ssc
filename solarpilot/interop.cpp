@@ -673,13 +673,13 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 				int nwf = wf_entries.size();
 				double dnicomp;
 				double jd=hr_st;
-				double hr_end_choose;
+				/*double hr_end_choose;
 				if( design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION )
 					hr_end_choose = hrmid;
 				else
-					hr_end_choose = hr_end;
+					hr_end_choose = hr_end;*/
 
-				while(jd < hr_end_choose + 0.001){
+				while(jd < hr_end + 0.001){
 					double tdry_per = 0., pres_per = 0., wind_per = 0., dni_per = 0., dni_per2 = 0.;
 					for(int k=range_start; k<range_end; k++){
 						int ind = (int)floor(jd)+k*24;
@@ -704,26 +704,26 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 						wind_per += wind;
 
 						//if it's for optimization, also add the symmetric afternoon hour
-						if(design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION){
-							double jdhi = hrmid + hrmid - jd;
-							int indhi = (int)floor(jdhi)+k*24;
-							if(indhi < 0) indhi += 8760;
-							if(indhi > 8759) indhi += -8760;
+						//if(design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION){
+						//	double jdhi = hrmid + hrmid - jd;
+						//	int indhi = (int)floor(jdhi)+k*24;
+						//	if(indhi < 0) indhi += 8760;
+						//	if(indhi > 8759) indhi += -8760;
 
-							if(indhi == ind)
-								continue;
+						//	if(indhi == ind)
+						//		continue;
 
-							tsdat = split(wf_entries.at(indhi), ",");
-							to_double(tsdat.at(3), &dni);
+						//	tsdat = split(wf_entries.at(indhi), ",");
+						//	to_double(tsdat.at(3), &dni);
 
-							//get the complement dni data
-							tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
-							to_double(tsdat.at(3), &dnicomp);
+						//	//get the complement dni data
+						//	tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
+						//	to_double(tsdat.at(3), &dnicomp);
 
 
-							//
-							dni_per2 += dni * fthis + dnicomp * fcomp;							
-						}
+						//	//
+						//	dni_per2 += dni * fthis + dnicomp * fcomp;							
+						//}
 
 					}
 
