@@ -5,12 +5,12 @@ clear();
 // **** Define tcs directory *******************
 data_dir = 'C:\\Users\\mwagner\\Documents\\NREL\\Work for others\\KACARE\\Annual simulation\\';
 //Set weather parameters
-weather_file = "C:/SAM/2013.9.20/weather/CA Daggett.tm2";
+weather_file = "C:/SAM/2013.9.20/weather/AZ Phoenix Sky Harbor 722780TY.csv"; //ESP_Almeria_SWEC.epw"; //CA Daggett.tm2";  Note that almeria is a good example of a consistent AOD
 
 //********* Heliostat field parameters *********
-aod = [0.1, 0.2, 0.3]; 	//Aerosol optical depth corresponding with each eff_array file (in order)
+aod = [0.05, 0.1, 0.2, 0.4, 0.6]; 	//Aerosol optical depth corresponding with each eff_array file (in order)
 n_helio = 8929;			//Number of heliostats in the field
-cs_cutoff = 0.65;		//The fraction of observed DNI to clear-sky DNI above which AOD is recalculated.
+cs_cutoff = 0.6;		//The fraction of observed DNI to clear-sky DNI above which AOD is recalculated.
 
 //********* Receiver parameters ******************
 D_rec = 17.67;			//[m] Receiver diameter
@@ -24,7 +24,7 @@ f_rec_max = 1.2;		//[-] Maximum receiver thermal load fraction
 
 //********* Controller parameters ******************
 solarm = 2.4;
-tshours = 10.;			//[hr] Hours of full-load thermal storage
+tshours = 20.;			//[hr] Hours of full-load thermal storage
 tank_pairs = 1;
 h_tank = 20.0;
 cycle_max_fraction = 1.05;
@@ -164,6 +164,7 @@ for(nf = 0; nf < nfiles; nf++ ){
 	}
 	close( f );
 }
+
 //***** Read in flux file ********
 fluxmap_loc = data_dir + 'fluxmap.csv';
 f = open( fluxmap_loc, 'r' );
@@ -247,12 +248,14 @@ set_value(weather, "azimuth", 0);
 
 
 //hel_field = add_unit("sam_mw_pt_type221");
+tou_translator = add_unit("tou_translator");
 hel_field = add_unit("Heliostat3DInterp");
 receiver = add_unit("sam_mw_pt_type222");
 controller = add_unit("sam_mw_trough_type251");
 powerblock = add_unit("sam_mw_pt_type224");
 parasitics = add_unit("sam_mw_pt_type228");
 aod_calc = add_unit("atmospheric_aod");
+sumcalcs = add_unit("sam_mw_csp_SumCalcs");
 
 //Set AOD calculator parameters
 set_value( aod_calc, "cs_cutoff", cs_cutoff);
@@ -340,6 +343,36 @@ set_value( receiver, "T_salt_cold", 290.0 );
 set_value( receiver, "field_eff", 0.0 );
 // **** End of Receiver Inputs ********
 
+// update to use tou_translator
+set_value(tou_translator, "weekday_schedule", [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+]);
+set_value(tou_translator, "weekend_schedule", [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+]);
+
 // Set Controller Parameters
 set_value(controller, "field_fluid", HTF_type); 
 set_value(controller, "field_fl_props", [0]);
@@ -372,9 +405,9 @@ set_value(controller, "cycle_cutoff_frac", cycle_cutoff_frac);
 set_value(controller, "solarm", solarm);
 set_value(controller, "pb_pump_coef", pb_pump_coef);
 set_value(controller, "tes_pump_coef", tes_pump_coef);
-set_value(controller, "pb_fixed_par", 0.0);
-set_value(controller, "bop_array", [0.0,0.0,0.0,0.0,0.0]);
-set_value(controller, "aux_array", [0.0,0.0,0.0,0.0,0.0]);
+set_value(controller, "pb_fixed_par", pb_fixed_par);
+set_value(controller, "aux_array", [aux_par,aux_par_f,aux_par_0,aux_par_1,aux_par_2]);
+set_value(controller, "bop_array", [bop_par,bop_par_f,bop_par_0,bop_par_1,bop_par_2]);
 set_value(controller, "T_startup", Cycle_min_inlet_temp);
 set_value(controller, "fossil_mode", fossil_mode);
 set_value(controller, "fthr_ok", 1);
@@ -416,6 +449,7 @@ connect( receiver, "q_startup", controller, "q_startup" );		// This input is not
 // Set initial values for inputs generated from subsequently called types
 set_value( controller, "m_dot_htf_ref", 1.0 );
 set_value( controller, "T_pb_out", T_HTF_cold_ref ); 
+connect(tou_translator,"tou_value",controller,"TOUPeriod");
 // ******* End Controller Inputs
 
 // Set Powerblock Parameters
@@ -491,5 +525,19 @@ set_value(parasitics, "recirc_source", 0.0);
 connect(powerblock, "m_dot_htf_ref", parasitics, "ref_htf_flow");
 connect(controller, "q_aux_heat", parasitics, "aux_power");
 connect(controller, "htf_pump_power", parasitics, "P_htf_pump");
+
+//Connect values for summary calculations
+set_value(sumcalcs, "eta_lhv", 0.9);
+set_value(sumcalcs, "eta_tes_htr", 0.99);
+set_value(sumcalcs, "fp_mode", 2); 		//Fossil heating
+connect(powerblock, "P_cycle", sumcalcs, "W_cycle_gross");
+connect(powerblock, "W_cool_par", sumcalcs, "W_par_heatrej");
+connect(receiver, "W_dot_pump", sumcalcs, "W_par_sf_pump");
+connect(parasitics, "P_storage_pump_tot", sumcalcs, "W_par_tes_pump");
+connect(parasitics, "P_plant_balance_tot", sumcalcs, "W_par_BOP");
+connect(parasitics, "P_fixed", sumcalcs, "W_par_fixed");
+connect(hel_field, "pparasi", sumcalcs, "W_par_tracking");
+connect(parasitics, "P_aux", sumcalcs, "W_par_aux_boiler");
+
 
 simulate(1,8760,1,30,false);

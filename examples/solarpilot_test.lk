@@ -2,17 +2,19 @@
 
 clear();
 var('solar_resource_file', 'c:/sam/2013.1.15/exelib/climate_files/CA Daggett.tm2');
-var('width', 12);
-var('height', 12);
-var('optical_error', 0.00153);
-var('active_fraction', 0.97);
-var('reflectance', 0.9);
-var('absorptance', 0.1);
-var('q_hl_perm2', 30);
-var('q_design', 100);
+var('helio_width', 12);
+var('helio_height', 12);
+var('helio_optical_error', 0.00153);
+var('helio_active_fraction', 0.97);
+var('helio_reflectance', 0.9025);
+var('rec_absorptance', 0.94);
+var('rec_height', 22.);
+var('rec_aspect', 1.42);
+var('rec_hl_perm2', 30);
+var('q_design', 500);
 var('land_max', 7.5);
 var('land_min', 0.75);
-var('h_tower', 200);
+var('h_tower', 180);
 var('tower_fixed_cost', 3000000);
 var('tower_exp', 0.0113);
 var('rec_ref_cost', 110000000);
@@ -28,3 +30,4 @@ var('sales_tax_rate', 5);
 var('sales_tax_frac', 80);
 
 run('solarpilot');
+

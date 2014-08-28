@@ -9,10 +9,15 @@
 class Linear_Interp
 {
 public:
+	bool m_cor;			// Boolean value for interpolation routine
+	
 	bool Set_1D_Lookup_Table( const util::matrix_t<double> &table, int * ind_var_index, int n_ind_var, int & error_index );	
 	double linear_1D_interp( int x_col, int y_col, double x );
 	int Get_Index( int x_col, double x );	
+	double Get_Value( int col, int index );
 
+	int locate( int col, double T_C );		// Function for interpolation routine
+	int hunt( int col, double x );			// Function for interpolation routine
 private:
 	static const int m_m = 2;		// Integer for interpolation routine
 
@@ -21,10 +26,7 @@ private:
 	int m_rows;			// Number of rows in table
 	int m_lastIndex;	// Integer tracking index used by interpolation routine
 	int m_dj;			// Integer for interpolation routine
-	bool m_cor;			// Boolean value for interpolation routine
 
-	int locate( int col, double T_C );		// Function for interpolation routine
-	int hunt( int col, double x );			// Function for interpolation routine
 };
 
 class Bilinear_Interp
@@ -76,6 +78,69 @@ private:
 	Linear_Interp z_vals;
 
 };
+
+typedef std::vector<double> VectDoub;
+typedef std::vector<VectDoub >  MatDoub;
+
+struct LUdcmp
+{
+	/* 
+	LU Decomposition (solution to matrix equation A . x = b)
+	*/
+
+	int n;
+
+	MatDoub lu;
+	MatDoub aref;
+	
+	std::vector<int> indx;
+	double d;
+
+	LUdcmp(MatDoub &a);
+	void solve(VectDoub &b, VectDoub &x);
+	void solve(MatDoub &b, MatDoub &x);
+	void inverse(MatDoub &ainv);
+	double det();
+	void mprove(VectDoub &b, VectDoub &x);
+};
+
+
+
+struct Powvargram {
+	double alph, bet, nugsq;
+	
+	double SQR( const double a );  // a squared
+	
+	Powvargram();
+
+	Powvargram(MatDoub &x, VectDoub &y, const double beta = 1.5, const double nug=0.);
+
+	double operator() (const double r) const;
+};
+
+struct GaussMarkov {
+    MatDoub x;
+    Powvargram vgram;
+    int ndim, npt;
+    double lastval, lasterr;
+    VectDoub y,dstar,vstar,yvi;
+    MatDoub v;
+    LUdcmp *vi;
+    
+	double SQR( const double a );
+
+    GaussMarkov(MatDoub &xx, VectDoub &yy, Powvargram &vargram, const double *err=NULL);
+
+    ~GaussMarkov();
+
+    double interp(VectDoub &xstar);
+
+    double interp(VectDoub &xstar, double &esterr);
+
+    double rdist(VectDoub *x1, VectDoub *x2);
+};
+
+
 
 
 #endif

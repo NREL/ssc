@@ -24,13 +24,15 @@ static var_info _cm_vtab_solarpilot[] = {
 
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",       "Solar weather data file",                    "",       "",         "SolarPILOT",   "*",                "LOCAL_FILE",      "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "width",                     "Heliostat width",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "height",                    "Heliostat height",                           "m",      "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "optical_error",             "Optical error",                              "rad",    "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "active_fraction",           "Active fraction of reflective area",         "frac",   "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "reflectance",               "Mirror reflectance",                         "frac",   "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "absorptance",               "Absorptance",                                "frac",   "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "q_hl_perm2",                "Heat loss",                                  "kW/m2",  "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "helio_width",               "Heliostat width",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "helio_height",              "Heliostat height",                           "m",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "helio_optical_error",       "Optical error",                              "rad",    "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "helio_active_fraction",     "Active fraction of reflective area",         "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",         "Mirror reflectance",                         "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",           "Absorptance",                                "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_height",                "Receiver height",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_aspect",                "Receiver aspect ratio (H/W)",                "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_hl_perm2",              "Receiver design heat loss",                  "kW/m2",  "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_max",                  "Max heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_min",                  "Min heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
@@ -52,7 +54,10 @@ static var_info _cm_vtab_solarpilot[] = {
 	/* outputs */
 	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_zeniths",            "Optical efficiency table zenith angles",     "deg",    "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_azimuths",           "Optical efficiency table azimuth angles",    "deg",    "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_OUTPUT,       SSC_MATRIX,      "opteff_table",              "Optical efficiency (azi x zen)",             "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_table",              "Optical efficiency (azi x zen)",             "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "flux_table",                "Flux intensity table (flux(X) x (flux(y) x position)",  "frac", "", "SolarPILOT",  "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "heliostat_positions",       "Heliostat positions (x,y)",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "number_heliostats",         "Number of heliostats",                       "",        "",        "SolarPILOT",   "*",                "",                "" },
 	
 	var_info_invalid };
 
@@ -117,15 +122,17 @@ public:
 		opt.flux_max = as_double("flux_max");
 		*/
 
-
-		helios.front().width = as_double("width");
-		helios.front().height = as_double("height");
-		helios.front().optical_error = as_double("optical_error");
-		helios.front().active_fraction = as_double("active_fraction");
-		helios.front().reflectance = as_double("reflectance");
+		helios.front().width = as_double("helio_width");
+		helios.front().height = as_double("helio_height");
+		helios.front().optical_error = as_double("helio_optical_error");
+		helios.front().active_fraction = as_double("helio_active_fraction");
+		helios.front().reflectance = as_double("helio_reflectance");
 		
-		recs.front().absorptance = as_double("absorptance");
-		recs.front().q_hl_perm2 = as_double("q_hl_perm2");
+
+		recs.front().absorptance = as_double("rec_absorptance");
+		recs.front().height = as_double("rec_height");
+		recs.front().aspect = as_double("rec_aspect");
+		recs.front().q_hl_perm2 = as_double("rec_hl_perm2");
 		
 		layout.q_design = as_double("q_design");
 		layout.land_max = as_double("land_max");
@@ -170,44 +177,85 @@ public:
 			wfdata.push_back( std::string(buf) );
 		}
 
-		sapi.SetSummaryCallback( solarpilot_callback, (void*)this);
-		
+		sapi.SetDetailCallback( solarpilot_callback, (void*)this);
+		sapi.SetSummaryCallbackStatus(false);
+
 		sapi.GenerateDesignPointSimulations( amb, V, wfdata );
 	
 		sapi.Setup(amb, cost, layout, helios, recs);
 
 		sapi.CreateLayout();
 
+		//Collect the heliostat position data
+		if( layout.heliostat_positions.size() > 0 )
+		{
+			ssc_number_t *hpos = allocate( "heliostat_positions", layout.heliostat_positions.size(), 2 );
+			for(size_t i=0; i<layout.heliostat_positions.size(); i++){
+				hpos[ i*2     ] = (float)layout.heliostat_positions.at(i).location.x;
+				hpos[ i*2 + 1 ] = (float)layout.heliostat_positions.at(i).location.y;
+			}
+		}
+		else
+			throw exec_error("solarpilot", "failed to generate a heliostat field layout");
+
+		//return the number of heliostats
+		assign("number_heliostats", layout.heliostat_positions.size() ); 
+		// Steve, ^^^^^^^^^^^^ is this the right call?? ^^^^^^^^^^^^^^^
+
+
+		sapi.SetDetailCallbackStatus(false);
+		sapi.SetSummaryCallbackStatus(true);
+		sapi.SetSummaryCallback( solarpilot_callback, (void*)this);
+		
 		//	sapi.Optimize(opt, recs, layout);
 	
-		sp_optical_table opttab;
+		//sp_optical_table opttab;
 		sp_flux_table fluxtab;
 		
-		sapi.CalculateOpticalEfficiencyTable(opttab);
-
-		if ( opttab.zeniths.size() > 0 && opttab.azimuths.size() > 0
-			&& opttab.eff_data.size() > 0 && opttab.eff_data[0].size() > 0 )
+		int nflux_x = 12, nflux_y = 1;
+		sapi.CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true);
+		
+		//collect the optical efficiency data and sun positions
+		if ( fluxtab.zeniths.size() > 0 && fluxtab.azimuths.size() > 0
+			&& fluxtab.efficiency.size() > 0 )
 		{
-			ssc_number_t *zeniths = allocate( "opteff_zeniths", opttab.zeniths.size() );
-			for( size_t i=0;i<opttab.zeniths.size();i++ )
-				zeniths[i] = (float)opttab.zeniths[i];
+			ssc_number_t *zeniths = allocate( "opteff_zeniths", fluxtab.zeniths.size() );
+			for( size_t i=0;i<fluxtab.zeniths.size();i++ )
+				zeniths[i] = (float)fluxtab.zeniths[i];
 
-			ssc_number_t *azimuths = allocate( "opteff_azimuths", opttab.azimuths.size() );
-			for( size_t i=0;i<opttab.azimuths.size();i++ )
-				azimuths[i] = (float)opttab.azimuths[i];
+			ssc_number_t *azimuths = allocate( "opteff_azimuths", fluxtab.azimuths.size() );
+			for( size_t i=0;i<fluxtab.azimuths.size();i++ )
+				azimuths[i] = (float)fluxtab.azimuths[i];
 
-			size_t nrows = opttab.eff_data.size();
-			size_t ncols = opttab.eff_data[0].size();
-			ssc_number_t *opteff = allocate( "opteff_table", nrows, ncols );
-			for( size_t i=0;i<nrows;i++ )
-				for( size_t j=0;j<ncols;j++ )
-					opteff[ i*ncols + j ] = (ssc_number_t)opttab.eff_data[i][j];
+			size_t nvals = fluxtab.efficiency.size();
+			ssc_number_t *opteff = allocate( "opteff_table", nvals );
+			for( size_t i=0;i<nvals;i++ )
+				opteff[ i ] = (float)fluxtab.efficiency[i];
 		}
 		else
 			throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+		
+		//collect the flux map data
+		block_t<double> *flux_data = &fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
+		if( flux_data->ncols() > 0 && flux_data->nlayers() > 0 ){
+			
+			ssc_number_t *fluxdata = allocate( "flux_table", nflux_y * flux_data->nlayers(), nflux_x );
+			
+			int cur_row=0;
+			
+			for( size_t i=0; i<flux_data->nlayers(); i++){
+				for( int j=0; j<nflux_y; j++){
+					for( int k=0; k<nflux_x; k++){
+						fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+					}
+					cur_row++;
+				}
+			}
+		}
+		else
+			throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
 		
-		sapi.CalculateFluxMaps(fluxtab);
 
 	}
 };

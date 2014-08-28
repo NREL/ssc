@@ -694,6 +694,7 @@ namespace Toolbox
 	double dotprod(const Vect &A, const Vect &B);
 	double dotprod(const Vect &A, const Point &B);
 	Vect crossprod(const Vect &A, const Vect &B); 
+	double crossprod(const Point &O, const Point &A, const Point &B);
 	void unitvect(Vect &A); 
 	double vectmag(double i, double j, double k);
 	double vectmag(const Vect &A);
@@ -712,6 +713,8 @@ namespace Toolbox
 	double intersect_ellipse_rect(double rect[4], double ellipse[2]);
 	//Axis-aligned bounding box of a rotated ellipse
 	void ellipse_bounding_box(double &A, double &B, double &phi, double sides[4], double cx = 0., double cy = 0.);
+	//Calculate the convex hull surrounding a set of points
+	void convex_hull(std::vector<Point*> &points, std::vector<Point> &hull);
 	//Rotation of a point about an arbitrary axis centered at point 'axloc'
 	Point rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point &pt);
 	//Calculate the z-rotation angle of a heliostat that's undergone a normal-vector transform

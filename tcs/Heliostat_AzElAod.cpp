@@ -198,15 +198,16 @@ public:
 
 		//transpose data into a block structure
 		util::block_t<double> eta_map( n_zen*n_azi, 4, n_layer, 0.0);
-		int k=0;
+		int k=0, kk=0;
 		
 		//zenith, azimuth, layer, value
 		for( int l = 0; l < n_layer; l++){
 			for( int r = 0; r < n_zen*n_azi; r++ ){
 				for( int c = 0; c < 4; c++ ){
-					eta_map.at(k,c,l) = TCS_MATRIX_INDEX( var( P_eta_map ), k, c );
+					eta_map.at(k,c,l) = TCS_MATRIX_INDEX( var( P_eta_map ), kk, c );
 				}
 				k++;
+				kk++;
 			}
 			k=0;
 		}

@@ -2892,6 +2892,14 @@ double SolarField::calcLandArea(){
 	}
 	else
 	{
+
+		//collect the heliostat locations
+		vector<Point*> hlocs;
+		for(int i=0; i<(int)_heliostats.size(); i++){
+			hlocs.push_back( _heliostats.at(i)->getLocation() );
+		}
+
+
 		return (_helio_extents[0] - _helio_extents[1])*(_helio_extents[2] - _helio_extents[3]);
 	}
 

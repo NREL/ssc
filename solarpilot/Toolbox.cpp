@@ -744,6 +744,13 @@ Vect Toolbox::crossprod(const Vect &A, const Vect &B) {
 	return res;
 };
 
+double Toolbox::crossprod(const Point &O, const Point &A, const Point &B)
+{
+	//2D cross-product of vectors OA and OB. 
+	return (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x);
+
+}
+
 void Toolbox::unitvect(Vect &A) {
 	/*Take a vector that may or may not be in unit vector form and scale the magnitude to 
 	make it a unit vector*/
@@ -1031,6 +1038,39 @@ void Toolbox::ellipse_bounding_box(double &A, double &B, double &phi, double sid
 	
 
 
+}
+
+void Toolbox::convex_hull(std::vector<Point*> &points, std::vector<Point> &hull)
+{
+	/* 
+	Returns a list of points on the convex hull in counter-clockwise order.
+	Note: the last point in the returned list is the same as the first one.
+	
+	Source: http://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain
+
+	*/
+	int n = points.size(), k = 0;
+	vector<Point> H(2*n);
+ 
+	// Sort points lexicographically
+	sort(points.begin(), points.end());
+ 
+	// Build lower hull
+	for (int i = 0; i < n; ++i) {
+		while (k >= 2 && crossprod(H.at(k-2), H.at(k-1), *points.at(i)) <= 0) k--;
+		H.at(k++) = *points[i];
+	}
+ 
+	// Build upper hull
+	for (int i = n-2, t = k+1; i >= 0; i--) {
+		while (k >= t && crossprod(H.at(k-2), H.at(k-1), *points.at(i)) <= 0) k--;
+		H.at(k++) = *points[i];
+	}
+ 
+	hull = H;
+
+	//H.resize(k);
+	//return H;
 }
 
 Point Toolbox::rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point &pt){

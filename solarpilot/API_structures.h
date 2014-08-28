@@ -274,6 +274,7 @@ struct sp_flux_table : sp_flux_map
 	
 	vector<double> azimuths;
 	vector<double> zeniths;
+	vector<double> efficiency;
 	//---
 };
 

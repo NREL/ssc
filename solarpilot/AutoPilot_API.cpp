@@ -456,17 +456,7 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	//Create the solar field object
 	_SF->Create(_variables);
 	
-	//pass the callback along to the solar field, if applicable
-	if(_has_detail_callback){
-		_detail_siminfo = _SF->getSimInfoObject();
-		_SF->getSimInfoObject()->setCallbackFunction(_detail_callback, _detail_callback_data);
-		_SF->getSimInfoObject()->isEnabled(true);
-	}
-	if(_has_summary_callback){
-		_summary_siminfo = new simulation_info();
-		_summary_siminfo->ResetValues();
-		_summary_siminfo->setCallbackFunction(_summary_callback, _summary_callback_data);
-	}
+	PreSimCallbackUpdate();
 	_setup_ok = true;
 	
 	return true;
@@ -860,6 +850,22 @@ void AutoPilot::GenerateDesignPointSimulations(sp_ambient &amb, var_set &variabl
 			fdata.at(4), fdata.at(6), fdata.at(5), fdata.at(7));
 	}
 
+}
+
+void AutoPilot::PreSimCallbackUpdate()
+{
+	//pass the callback along to the solar field, if applicable
+	if(_has_detail_callback){
+		_detail_siminfo = _SF->getSimInfoObject();
+		_SF->getSimInfoObject()->setCallbackFunction(_detail_callback, _detail_callback_data);
+		_SF->getSimInfoObject()->isEnabled(true);
+	}
+	if(_has_summary_callback){
+		if(! _summary_siminfo )
+			_summary_siminfo = new simulation_info();
+		_summary_siminfo->ResetValues();
+		_summary_siminfo->setCallbackFunction(_summary_callback, _summary_callback_data);
+	}
 }
 
 void AutoPilot::PostProcessLayout()
@@ -1709,7 +1715,7 @@ void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<doubl
 	_summary_siminfo->addSimulationNotice( (string)msg );
 }
 
-bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
 {
 	/* 
 	overload to provide the flux data in a simple 2D vector arrangement. Each flux map is provided 
@@ -1718,32 +1724,34 @@ bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &efficiency, vector
 	*/
 
 	//Call the main algorithm
-	sp_flux_table fluxtab;
-	if(! CalculateFluxMaps(fluxtab, flux_res_x, flux_res_y, is_normalized) )
+	sp_flux_table fluxtab_s;
+	if(! CalculateFluxMaps(fluxtab_s, flux_res_x, flux_res_y, is_normalized) )
 		return false;
 
-	block_t<double> *flux_data = &fluxtab.flux_surfaces.front().flux_data;
+	block_t<double> *flux_data = &fluxtab_s.flux_surfaces.front().flux_data;
 
 	//convert data structure
+	fluxtab.clear();
 	efficiency.clear();
 	for(int i=0; i<(int)flux_data->nlayers(); i++){
 		sunpos.push_back( vector<double>(2) );
-		sunpos.back().at(0) = fluxtab.azimuths.at(i);
-		sunpos.back().at(1) = fluxtab.zeniths.at(i);
+		sunpos.back().at(0) = fluxtab_s.azimuths.at(i);
+		sunpos.back().at(1) = fluxtab_s.zeniths.at(i);
+		efficiency.push_back( fluxtab_s.efficiency.at(i) );
 
 		for(int j=0; j<flux_res_y; j++){
 			vector<double> newline;
 			for(int k=0; k<flux_res_x; k++){
 				newline.push_back(flux_data->at(j, k, i));
 			}
-			efficiency.push_back( newline );
+			fluxtab.push_back( newline );
 		}
 	}
 
 	return true;
 }
 
-bool AutoPilot::CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
 {
 	//override in inherited class
 	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
@@ -1757,7 +1765,8 @@ bool AutoPilot_S::CreateLayout(bool do_post_process)
 	Create a layout using the variable structure that has been created
 	*/
 	_cancel_simulation = false;
-	
+	PreSimCallbackUpdate();
+
 	int nsim_req = _SF->calcNumRequiredSimulations();
 
 	if(! _SF->isSolarFieldCreated()){
@@ -1781,6 +1790,7 @@ bool AutoPilot_S::CreateLayout(bool do_post_process)
 bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 {
 	_cancel_simulation = false;
+	PreSimCallbackUpdate();
 	double pi = acos(-1.);
 	double d2r = pi/180.;
 
@@ -1897,7 +1907,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 
 	*/
 
-
+	PreSimCallbackUpdate();
 	_cancel_simulation = false;
 	
 	PrepareFluxSimulation(fluxtab, flux_res_x, flux_res_y, is_normalized);
@@ -1917,6 +1927,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	}
 
 	//From the day and time array, produce an azimuth/zenith array
+	fluxtab.efficiency.clear();
 	for(int i=0; i<_sim_total; i++){
 		_sim_complete++;  //increment
 
@@ -1937,8 +1948,10 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 			_SF->HermiteFluxSimulation( *_SF->getHeliostats() );
 			
 		sim_result result;
-		if(! _cancel_simulation)
-			result.process_analytical_simulation(*_SF, 2);	//TO DO: #2
+		if(! _cancel_simulation){
+			result.process_analytical_simulation(*_SF, 2);	
+			fluxtab.efficiency.push_back( result.eff_total_sf.ave );
+		}
 						
 		//Collect flux results here
 		if(! _cancel_simulation)
@@ -1958,9 +1971,10 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	return true;
 }
 
-bool AutoPilot_S::CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot_S::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
 {
-	return CalculateFluxMapsOV1(efficiency, sunpos, flux_res_x, flux_res_y, is_normalized);
+	PreSimCallbackUpdate();
+	return CalculateFluxMapsOV1(sunpos, fluxtab, efficiency, flux_res_x, flux_res_y, is_normalized);
 }
 
 //---------------- API_MT --------------------------
@@ -1990,7 +2004,7 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 	*/
 	_cancel_simulation = false;
 	_in_mt_simulation = false;
-	
+	PreSimCallbackUpdate();
 	try
 	{
 		//Is it possible to run a multithreaded simulation?
@@ -2156,6 +2170,7 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 {
 	
 	_cancel_simulation = false;
+	PreSimCallbackUpdate();
 	double pi = acos(-1.);
 	double d2r = pi/180.;
 
@@ -2326,7 +2341,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 
 
 	_cancel_simulation = false;
-	
+	PreSimCallbackUpdate();
 	PrepareFluxSimulation(fluxtab, flux_res_x, flux_res_y, is_normalized);
 	
 	//ambient conditions
@@ -2343,6 +2358,8 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 		sunpos.at(i,0) = fluxtab.azimuths.at(i);
 		sunpos.at(i,1) = fluxtab.zeniths.at(i);
 	}
+	fluxtab.efficiency.clear();
+	fluxtab.efficiency.resize(_sim_total);
 
 	if(_has_summary_callback){
 		_summary_siminfo->ResetValues();
@@ -2426,16 +2443,19 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 		return false;
 	}
 
-	for(int i=0; i<_sim_total; i++)
+	for(int i=0; i<_sim_total; i++){
 		PostProcessFlux(results.at(i), fluxtab, i);
+		fluxtab.efficiency.at(i) = results.at(i).eff_total_sf.ave;
+	}
 
 
 	return true;
 }
 
-bool AutoPilot_MT::CalculateFluxMaps(vector<vector<double> > &efficiency, vector<vector<double> > &sunpos, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot_MT::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
 {
-	return CalculateFluxMapsOV1(efficiency, sunpos, flux_res_x, flux_res_y, is_normalized);
+	PreSimCallbackUpdate();
+	return CalculateFluxMapsOV1(sunpos, fluxtab, efficiency, flux_res_x, flux_res_y, is_normalized);
 }
 
 void AutoPilot_MT::CancelSimulation()
