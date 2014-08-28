@@ -118,7 +118,7 @@ public:
 		m_P_high_limit = std::numeric_limits<double>::quiet_NaN();
 
 		// Hardcoded values
-		m_tol = 1.E-6;
+		m_tol = 1.E-3;
 		m_opt_tol = m_tol;
 		m_mc_type = 1;
 		m_rc_type = 1;
