@@ -214,7 +214,7 @@ public:
 			sunpos.push_back(theta/zen_scale);
 
 			eta_field = field_efficiency_table->interp( sunpos ) * eff_scale;
-			//eta_field = min( max ( eta_field, 0.0 ), 1.0 ) * field_control;		// Ensure physical behavior 
+			eta_field = min( max ( eta_field, 0.0 ), 1.0 ) * field_control;		// Ensure physical behavior 
 		}
 		
 
