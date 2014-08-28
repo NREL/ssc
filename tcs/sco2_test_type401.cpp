@@ -60,6 +60,18 @@ public:
 
 	virtual int init()
 	{
+		// ****************************************
+		// ** Test Air-Cooler Model **
+		// ****************************************
+		compact_hx air_cooler;
+
+		//bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
+		//	double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);
+		bool air_cooler_success = air_cooler.design_hx(32.0+273.15, 101325.0, 100.0+273.15, 8000.0,
+			938.9, 0.35, 62.5, 48.0+273.15);
+
+		bool gblah = air_cooler_success;
+
 		// ************************************
 		// ** Test procedure to find Haynes Allowable Cycles for Fatige Cycles and Creept Life ***
 		// ************************************
