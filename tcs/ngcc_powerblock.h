@@ -114,6 +114,13 @@ public:
 		E_plant_fuel_mass,
 		E_solar_heat_max
 	};
+
+	enum iscc_cycle_config
+	{
+		E_nrel_hp_evap,
+		E_ge	
+	};
+
 };
 
 
