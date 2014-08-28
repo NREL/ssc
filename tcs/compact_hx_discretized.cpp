@@ -51,7 +51,7 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 
 bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, double & j_H)
 {
-	double Re_mm = max(0.001, Re*10e-3);
+	double Re_mm = max(0.001, Re*1e-3);
 
 	switch( enum_compact_hx_config )
 	{
@@ -196,7 +196,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	//**********************************************************************************
 	//**********************************************************************************
 		// Overwrite here to test against EES code
-		W_par = 171.8;
+		// W_par = 218.1;
 		// ***************************************
 	//**********************************************************************************
 
@@ -294,7 +294,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 		//**********************************************************************************
 		//**********************************************************************************
 			// Overwrite here to test against EES code
-		L_tube = 8.871;
+			// L_tube = 7.04;
 			// ***************************************
 		//**********************************************************************************
 
@@ -354,12 +354,19 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 			double V_node = L_node*m_s_v*m_s_h;		//[m^3] Volume of one node
 			V_total = L_tube*m_Depth*W_par;	//[m^3] Total HX volume
 
+			bool reguess_length = false;
+
 			// 2.5) Iterative loop to find air mass flow rate resulting in target fan power
 			//double m_dot_air_total = 3668.0;
 				// Try reasonably overestimating air mass flow rate by energy balance assuming small increase in air temp
 				// Q_dot_des = m_dot_air_total*cp_air*deltaT
 				// *** After 1st iteration can do something smarter here ****
 			double m_dot_air_total = Q_dot_des / (5.0*cp_air);		// Assume 5K temp difference
+			//**********************************************************************************
+			// Overwrite here to test against EES code
+				// m_dot_air_total = 6165;
+			// ***************************************
+			//**********************************************************************************
 
 			bool is_lowbound_m_dot = false;
 			double x_lower_m_dot = numeric_limits<double>::quiet_NaN();
@@ -478,14 +485,15 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 
 					// Guess outlet temperature
 					double T_out_guess = numeric_limits<double>::quiet_NaN();
-					if(deltaT_prev != deltaT_prev)
-						T_out_guess = T_co2(in,j) + 0.5*deltaT_hot/(m_N_loops*m_N_nodes);
-					else
-						T_out_guess = T_co2(in,j) + 0.8*deltaT_prev;					
+					//if(deltaT_prev != deltaT_prev)
+					//	T_out_guess = T_co2(in,j) + 0.5*deltaT_hot/(m_N_loops*m_N_nodes);
+					//else
+					//	T_out_guess = T_co2(in,j) + 0.8*deltaT_prev;						
+					T_out_guess = T_co2(in, j) + 1.0;
 
-					double tol_T_out = tol_m_dot / 5.0;		//[-] Relative tolerance for convergence
-					double diff_T_out = 2.0*tol_T_out;		//[-] Set diff > tol
-					int iter_T_out = 0;
+					double tol_T_in = tol_m_dot / 5.0;		//[-] Relative tolerance for convergence
+					double diff_T_in = 2.0*tol_T_in;		//[-] Set diff > tol
+					int iter_T_in = 0;
 
 					bool is_lowbound_T_out = false;
 					double x_lower_T_out = numeric_limits<double>::quiet_NaN();
@@ -498,65 +506,87 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 					// Values solved in inner nest required later in code
 					double Q_dot_node = numeric_limits<double>::quiet_NaN();
 
-					while( abs(diff_T_out) > tol_T_out )
+					while( abs(diff_T_in) > tol_T_in )
 					{
-						iter_T_out++;
+						iter_T_in++;
 
-						if(iter_T_out > 1)
+						if(iter_T_in > 1)
 						{
-							if( diff_T_out > 0.0 )	// Guessed temperature too high - reduce guess
+							if( diff_T_in > 0.0 )		// Guessed temperature too high - reduce guess
 							{
 								is_upbound_T_out = true;
 								x_upper_T_out = T_out_guess;
-								y_upper_T_out = diff_T_out;
+								y_upper_T_out = diff_T_in;
 								if( is_lowbound_T_out )
 								{
 									T_out_guess = -y_upper_T_out*(x_lower_T_out - x_upper_T_out) / (y_lower_T_out - y_upper_T_out) + x_upper_T_out;
 								}
 								else
 								{
-									T_out_guess = T_co2(out, j);
+									T_out_guess = 0.5*(T_out_guess + T_co2(in, j));
 								}
 							}
 							else						// Calculated fan power too low - increase m_dot
 							{
 								is_lowbound_T_out = true;
 								x_lower_T_out = T_out_guess;
-								y_lower_T_out = diff_T_out;
+								y_lower_T_out = diff_T_in;
 								if( is_upbound_T_out )
 								{
 									T_out_guess = -y_upper_T_out*(x_lower_T_out - x_upper_T_out) / (y_lower_T_out - y_upper_T_out) + x_upper_T_out;
 								}
 								else
 								{
-									T_out_guess = T_co2(out, j);
+									T_out_guess = T_out_guess + (T_out_guess - T_co2(in, j));
 								}
 							}
 
 						}
+						T_out_guess = min(700.0 + 273.15, T_out_guess);
+
+						if( x_lower_T_out >= 700.0 )
+						{
+							break;
+						}
+
+						//if( x_lower_T_out > m_T_hot_in_des + 100.0 )
+						//{
+						//	reguess_length = true;
+						//	T_co2(final_outlet_index, m_N_loops) = T_out_guess;
+						//	P_co2(final_outlet_index, m_N_loops) = 1.05*m_P_hot_in_des;
+						//	break;
+						//}
 
 						double T_out_ave = 0.5*(T_out_guess + T_co2(in, j));
 
-						CO2_TP(T_out_ave, P_hot_ave, &co2_props);
+						int co2_prop_error = CO2_TP(T_out_ave, P_hot_ave, &co2_props);
 						double cp_co2_ave = co2_props.cp*1000.0;
 
 						// Capacitance rates
 						double C_dot_co2 = cp_co2_ave*m_dot_tube;
 						double C_dot_min = min(C_dot_air, C_dot_co2);
 						double C_dot_max = max(C_dot_air, C_dot_co2);
-						double Q_dot_max = C_dot_min*(T_co2(out, j) - T_air(air_in, j - 1));
+						double Q_dot_max = C_dot_min*(T_out_guess - T_air(air_in, j - 1));
 						double NTU = UA_node / C_dot_min;
 						double CR = C_dot_min / C_dot_max;
 						// Unmixed cross-flow
 						double epsilon = 1 - exp(pow(NTU, 0.22) / CR*(exp(-CR*pow(NTU, 0.78)) - 1));
 						Q_dot_node = epsilon*Q_dot_max;
-						T_co2(out, j) = T_co2(in, j) + Q_dot_node / C_dot_co2;
+
+						double T_in_check = T_out_guess - Q_dot_node / C_dot_co2;
+
+						//T_co2(out, j) = min(700.0 + 273.15, T_co2(in, j) + Q_dot_node / C_dot_co2 );
+						m_L_tube = T_out_guess;
 						deltaT_prev = T_co2(out, j) - T_co2(in, j);
 
-						diff_T_out = (T_out_guess - T_co2(out, j)) / T_co2(out, j);
+						diff_T_in = (T_in_check - T_co2(in, j)) / T_co2(in, j);
 
 					}	// **** End T_out (node) iteration ***********************
 					
+					if( reguess_length )
+						break;
+
+					T_co2(out, j) = min(700.0 + 273.15, T_out_guess);
 					T_air(air_in,j) = T_air(air_in,j-1) + Q_dot_node/C_dot_air;
 
 					// Add pressure drop calcs (co2_props is up-to-date)
@@ -575,12 +605,23 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 					double f_co2 = -999.9;
 
 					// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
-					CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
+					// CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
+					CSP::PipeFlow(Re_co2, Pr_co2, L_node/m_d_in, m_relRough, Nusselt_co2, f_co2);
 
 					double u_m = m_dot_tube / (rho_co2*m_A_cs);
 					P_co2(out, j) = P_co2(in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*m_d_in) / 1000.0;
 
-				}	// End iteration through nodes in flow path				
+					double deltaP_node = P_co2(out, j) - P_co2(in, j);
+
+					m_V_total = P_co2(out, j);
+
+					P_co2(out, j) = min(25000.0, max(1000.0, P_co2(out, j)));
+					
+				}	// End iteration through nodes in flow path		
+
+				if( reguess_length )
+					break;
+
 			}	// End iteration through loop in flow path
 
 			double T_co2_hot_calc = T_co2(final_outlet_index, m_N_loops);
@@ -590,7 +631,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 			diff_deltaP = (deltaP_co2_calc - m_delta_P_des) / m_delta_P_des;
 
 		}	// Iteration on length of 1 tube length
-
+		
 		diff_T_hot_out = (T_co2(final_outlet_index,m_N_loops)- m_T_hot_in_des)/m_T_hot_in_des;
 
 	};
