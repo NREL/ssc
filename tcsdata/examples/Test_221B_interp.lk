@@ -1,0 +1,72 @@
+clear();
+
+//****** Get SSC directory ********
+file_dir = env('SSCDIR')+'/tcsdata/typelib/MS_External_Power_Tower';
+//*********************************
+
+//********************************************************************************************
+// Pre-processing input files
+//Read in field efficiency files
+eff_array_loc = file_dir + '/Type221B_eff_input.csv';
+f = open( eff_array_loc, 'r' );
+
+if( !f )
+{
+	outln("Could not open file for reading");
+	exit;
+}
+
+line = 'string';
+num_sol_pos = 88;
+
+eta_field_map = alloc( num_sol_pos, 3 );
+
+for( i=0; i<num_sol_pos; i++){
+	read_line(f, line);
+	linedat = split( line, ',' );
+	azimuth = linedat[0];
+	zenith = linedat[1];
+	eff = linedat[2];
+	
+	eta_field_map[i][0] = azimuth;
+	eta_field_map[i][1] = zenith;
+	eta_field_map[i][2] = eff;
+}
+
+close( f );
+
+
+//********************************************************************************************
+//********************************************************************************************
+//Add weather file reader unit
+weather = add_unit("weatherreader");
+
+//Set weather parameters
+weather_file = "C:/SAM/2013.1.15/exelib/climate_files/CA Daggett.tm2";
+//if (ostype() == 'osx64') weather_file = '/Users/adobos/Projects/ssc/examples/daggett.tm2';
+
+set_value(weather, "file_name", weather_file);
+set_value(weather, "track_mode", 1);
+set_value(weather, "tilt", 0);
+set_value(weather, "azimuth", 0);
+
+hel_field = add_unit("sam_mw_pt_type221B");
+
+// Set heliostat field parameters
+num_helio = 8929; 
+set_value( hel_field, "eta_map", eta_field_map );
+set_value( hel_field, "n_hel", num_helio );
+set_value( hel_field, "q_start", 0.025 );
+set_value( hel_field, "p_run", 0.055 );
+set_value( hel_field, "v_wind_max", 90.0 );
+set_value( hel_field, "hel_stow_deploy", 8 );
+set_value( hel_field, "field_control", 1.);
+//set_value( hel_field, "interp_beta", 0.2);
+//set_value( hel_field, "interp_nug", 0.8);
+
+// Set heliostat field inputs
+connect( weather, "wspd", hel_field, "vwind" );
+connect( weather, "solzen", hel_field, "theta" );
+connect( weather, "solazi", hel_field, "phi" );
+
+simulate(1,8760,1,30,false);
