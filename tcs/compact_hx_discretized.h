@@ -1,6 +1,8 @@
 #ifndef __compact_hx_dis_
 #define __compact_hx_dis_
 
+#include <limits>
+
 /* 8.3.14 twn: The goal here is to model a multi-pass cross-flow air-cooler. Model is discretized
 to account for varying properties of carbon dioxide around the critical.
 Design Parameters:
@@ -27,12 +29,24 @@ enum compact_hx_configs
 
 bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
 	double & fin_thk, double & sigma, double & alpha, double & A_fin_to_surf,
-	double & s_h, double & s_v);
+	double & s_h, double & s_v, double & fin_V_per_m);
 
 bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, double & j_H);
 
 class compact_hx
 {
+
+public:
+	struct S_hx_design_solved
+	{
+		double m_material_V;	//[m^3]		Total Material volume - no headers
+
+		S_hx_design_solved()
+		{
+			m_material_V = numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 private:
 	// Remaining Air-Cooler Specs
 		// Inputs
@@ -54,6 +68,7 @@ private:
 	double m_A_surf_total;	//[m^2]		Total air-side surface area
 	double m_UA_total;		//[W/K]		Total air-side conductance at design
 	double m_V_total;		//[m^3]		Total HX volume
+	double m_material_V;	//[m^3]		Total Material volume - no headers
 
 	// Design Ambient Conditions
 	double m_T_amb_des;		//[K]
@@ -85,15 +100,25 @@ private:
 	double m_A_fin_to_surf;	//[-]
 	double m_s_h;		//[m]
 	double m_s_v;		//[m]
+	double m_fin_V_per_m;	//[1/m]
 
-public:
+	// Structures
+	S_hx_design_solved m_hx_design_solved;
+
+public:	
 
 	compact_hx();
 
 	bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, 
 		double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);
 
+	const S_hx_design_solved * get_hx_design_solved()
+	{
+		if( m_hx_design_solved.m_material_V != m_hx_design_solved.m_material_V )
+			m_hx_design_solved.m_material_V = m_material_V;
 
+		return &m_hx_design_solved;
+	}
 
 };
 
