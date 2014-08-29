@@ -12,7 +12,7 @@ using namespace std;
 
 bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
 	double & fin_thk, double & sigma, double & alpha, double & A_fin_to_surf,
-	double & s_h, double & s_v)
+	double & s_h, double & s_v, double & fin_V_per_m)
 {
 
 	switch(enum_compact_hx_config)
@@ -27,6 +27,7 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 		A_fin_to_surf = 0.913;	//[-] Ratio of finned to total surface area on gas-side
 		s_h = 0.022;		//[m] Distance between tubes in air flow direction
 		s_v = 0.0254;		//[m] Distance between tubes perpendicular to air flow direction
+		fin_V_per_m = (s_h*s_v - 0.25*CSP::pi*pow(d_out,2))*fin_thk*fin_pitch;
 
 		return true;
 
@@ -40,6 +41,7 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 		A_fin_to_surf = 0.825;	//[-] Ratio of finned to total surface area on gas-side
 		s_h = 0.0524;		//[m] Distance between tubes in air flow direction
 		s_v = 0.07818;		//[m] Distance between tubes perpendicular to air flow direction
+		fin_V_per_m = 0.25*CSP::pi*(pow(0.04412,2)-pow(d_out,2))*fin_thk*fin_pitch;
 
 		return true;
 	
@@ -77,7 +79,7 @@ compact_hx::compact_hx()
 		m_d_in = m_A_cs = m_relRough = m_Depth = m_W_par = m_N_par = m_N_tubes = m_L_tube = m_L_path = m_A_surf_total = m_UA_total = m_V_total =
 		m_T_amb_des = m_P_amb_des =
 		m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total = m_W_dot_fan_des = m_delta_P_des = m_T_hot_out_des = m_P_hot_out_des = 
-		m_d_out = m_fin_pitch = m_D_h = m_fin_thk = m_sigma = m_alpha = m_A_fin_to_surf = m_s_h = m_s_v = numeric_limits<double>::quiet_NaN();
+		m_d_out = m_fin_pitch = m_D_h = m_fin_thk = m_sigma = m_alpha = m_A_fin_to_surf = m_s_h = m_s_v = m_fin_V_per_m = numeric_limits<double>::quiet_NaN();
 
 	m_N_loops = m_N_nodes = m_enum_compact_hx_config = -1;
 }
@@ -93,7 +95,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 
 	// Get HX Geometry
 	get_compact_hx_geom(m_enum_compact_hx_config, m_d_out, m_fin_pitch, m_D_h, m_fin_thk,
-		m_sigma, m_alpha, m_A_fin_to_surf, m_s_h, m_s_v);
+		m_sigma, m_alpha, m_A_fin_to_surf, m_s_h, m_s_v, m_fin_V_per_m);
 
 	// Thickness should really be tied to HX config
 	//m_th = 0.001;		//fc_tubes_s80-38T
@@ -644,8 +646,11 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	m_L_path = L_tube*m_N_loops;	//[m] Total flow path length
 	m_A_surf_total = V_total*m_alpha;			//[-] Air-side surface area of node
 	m_UA_total = m_A_surf_total*h_conv_air;		//[W/K] Total HX Conductance
-	m_V_total = V_total;		//[m^3] Total HX Volume
+	m_V_total = V_total;		//[m^3] Total HX "footprint" Volume
 
+	double L_tube_total = m_L_tube*m_N_tubes;
+	double tube_volume = 0.25*CSP::pi*(pow(m_d_out,2)-pow(m_d_in,2))*L_tube_total;
+	m_material_V = tube_volume + m_fin_V_per_m*L_tube_total;	
 
 	return true;
 };
