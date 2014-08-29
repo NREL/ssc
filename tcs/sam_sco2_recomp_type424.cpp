@@ -128,7 +128,7 @@ public:
 	sam_sco2_recomp_type424(tcscontext *cst, tcstypeinfo *ti)
 		: tcstypeinterface(cst, ti)
 	{
-		// Classes and Structures
+		// Pointers
 		rc_cycle = NULL;
 
 		// Parameters
@@ -187,8 +187,14 @@ public:
 		// Check cycle parameter values are reasonable
 		if(m_T_mc_in_des <= N_co2_props::T_crit)
 		{
-			message("Only single phase cycle operation is allowed in this model. The compressor inlet temperature must be great than the critical temperature = %d [C]", ((N_co2_props::T_crit)-273.15));
+			message("Only single phase cycle operation is allowed in this model. The compressor inlet temperature must be great than the critical temperature: %lg [C]", ((N_co2_props::T_crit)-273.15));
 			return -1;
+		}
+		double T_mc_in_max = 70.0 + 273.15;			//[K] Arbitrary value for max compressor inlet temperature
+		if(m_T_mc_in_des > T_mc_in_max)
+		{
+			message("The compressor inlet temperature input was %lg. This value was reset internally to the max allowable inlet temperature: %lg", m_T_mc_in_des, T_mc_in_max);
+			m_T_mc_in_des = T_mc_in_max;
 		}
 
 		// Set up cycle_design_parameters structure
