@@ -17,6 +17,10 @@ enum{	//Parameters
 	P_eta_t,
 	P_P_high_limit,
 
+	P_T_AMB_DES,
+	P_FAN_POWER_PERC,
+	P_DELTAP_COOL_DES,
+
 	P_T_rec_hot,
 	P_T_rec_cold,
 	P_Q_dot_rec_des,
@@ -27,7 +31,13 @@ enum{	//Parameters
 	I_1,
 
 	//Outputs
-	O_1,
+	O_ETA_CYCLE_DES,
+	O_P_LOW_DES,
+	O_F_RECOMP_DES,
+	O_Q_DOT_CALC_DES,
+	O_UA_RECUP_DES,
+	O_T_COOLER_IN_DES,
+	O_COOLER_VOLUME,
 
 	//N_MAX
 	N_MAX
@@ -43,6 +53,10 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_PARAM, TCS_NUMBER, P_eta_c,          "eta_c",           "Design compressor(s) isentropic efficiency",     "-",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_eta_t,          "eta_t",           "Design turbine isentropic efficiency",           "-",    "", "", "" },	
 	{ TCS_PARAM, TCS_NUMBER, P_P_high_limit,   "P_high_limit",    "High pressure limit in cycle",                   "MPa",  "", "", "" },
+		// Air-cooler Design Parameters
+	{ TCS_PARAM, TCS_NUMBER, P_T_AMB_DES,      "T_amb_des",       "Design: Ambient temperature for air cooler",     "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_FAN_POWER_PERC, "fan_power_perc",  "Percent of net cycle power used for fan",        "%",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_DELTAP_COOL_DES,"deltaP_cool_des", "Design: CO2 deltaP thru air cooler wrt Phigh",   "%",    "", "", "" },
 		// Solar Receiver Design Parameters
 	{ TCS_PARAM, TCS_NUMBER, P_T_rec_hot,      "T_rec_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_T_rec_cold,     "T_rec_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
@@ -54,7 +68,13 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_INPUT, TCS_NUMBER, I_1, "vwind", "Wind velocity", "m/s", "", "", "" },
 
 	//OUTPUTS
-	{ TCS_OUTPUT, TCS_NUMBER, O_1, "pparasi", "Parasitic tracking/startup power", "MWe", "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_ETA_CYCLE_DES,   "eta_cycle_des",       "Design: Power cycle efficiency",           "%",    "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_P_LOW_DES,       "P_low_des",           "Design: Compressor inlet pressure",        "kPa",  "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_F_RECOMP_DES,    "f_recomp_des",        "Design: Recompression fraction",           "-",    "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_CALC_DES,  "Q_dot_calc_des",      "Design: Calculated thermal",               "MWt",  "", "", "" },	
+	{ TCS_OUTPUT, TCS_NUMBER, O_UA_RECUP_DES,    "UA_recup_des",        "Design: Recuperator conductance UA",       "kW/K", "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_T_COOLER_IN_DES, "T_cooler_in_des",     "Design: Cooler CO2 inlet temp",            "K",    "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_COOLER_VOLUME,   "cooler_volume",       "Estimated required cooler material vol.",  "m^3",  "", "", "" },
 
 	//N_MAX
 	{ TCS_INVALID, TCS_INVALID, N_MAX, 0, 0, 0, 0, 0, 0 }
@@ -108,6 +128,9 @@ public:
 	sam_sco2_recomp_type424(tcscontext *cst, tcstypeinfo *ti)
 		: tcstypeinterface(cst, ti)
 	{
+		// Classes and Structures
+		rc_cycle = NULL;
+
 		// Parameters
 		m_W_dot_net_des = std::numeric_limits<double>::quiet_NaN();
 		m_T_mc_in_des = std::numeric_limits<double>::quiet_NaN();
@@ -146,7 +169,8 @@ public:
 
 	virtual ~sam_sco2_recomp_type424()
 	{
-		delete rc_cycle;
+		if(NULL != rc_cycle)
+			delete rc_cycle;
 	}
 
 	virtual int init()
@@ -159,6 +183,13 @@ public:
 		m_eta_c = value(P_eta_c);								// "Design compressor(s) isentropic efficiency",     "-",    
 		m_eta_t = value(P_eta_t);								// "Design turbine isentropic efficiency",           "-",    		
 		m_P_high_limit = value(P_P_high_limit);					// "High pressure limit in cycle",                   "MPa",  
+
+		// Check cycle parameter values are reasonable
+		if(m_T_mc_in_des <= N_co2_props::T_crit)
+		{
+			message("Only single phase cycle operation is allowed in this model. The compressor inlet temperature must be great than the critical temperature = %d [C]", ((N_co2_props::T_crit)-273.15));
+			return -1;
+		}
 
 		// Set up cycle_design_parameters structure
 		// Integers for compressor maps (hardcoded)
@@ -198,6 +229,11 @@ public:
 		// EXCEPT recup UA, which must be solved with iteration below
 		//************************************************
 
+		// ************************************************************************************
+		// Air-cooler specific parameters
+		double T_amb_cycle_des = value(P_T_AMB_DES) + 273.15;		//[K] Ambient temperature at power cycle design, convert from C
+		double fan_power_frac = value(P_FAN_POWER_PERC) / 100.0;			//[-] Fraction of cycle net power output used by cooler air fan, convert from %
+		double deltaP_cooler_frac = value(P_DELTAP_COOL_DES) / 100.0;		//[-] Fraction of P_high allowed as CO2 pressure drop in air cooler design
 
 		// **************************************************************************
 		// Solar Receiver Parameters
@@ -384,20 +420,34 @@ public:
 		// *****************************************************************
 		// Call Air Cooled Condenser
 		// *****************************************************************
-		double T_amb_cycle_des = 32.0+273.15;		//[K]
+
 		double P_amb_cycle_des = 101325.0;			//[Pa]
 
 		double T_acc_in = rc_cycle->get_cycle_design_metrics()->m_T[9 - 1];
 		double P_acc_in = rc_cycle->get_cycle_design_metrics()->m_P[9 - 1];
 		double m_dot_acc_in = rc_cycle->get_cycle_design_metrics()->m_m_dot_PC;
-
-		double W_dot_fan_des = 0.01*m_W_dot_net_des / 1000.0;	//[MW]
-		double deltaP_des = 0.002*rc_cycle->get_cycle_design_metrics()->m_P[2 - 1];
+		
+		double W_dot_fan_des = fan_power_frac*m_W_dot_net_des/1000.0;	//[MW] Cooler air fan power at design
+		
+		double deltaP_des = deltaP_cooler_frac*rc_cycle->get_cycle_design_metrics()->m_P[2 - 1];
+				
 		double T_acc_out = m_T_mc_in_des;
 
+		// Call air-cooler design method
 		ACC.design_hx(T_amb_cycle_des, P_amb_cycle_des, T_acc_in, P_acc_in, m_dot_acc_in,
 			W_dot_fan_des, deltaP_des, T_acc_out);
 
+		// Get air-cooler design parameters
+		// compact_hx::S_hx_design_solved s_hx_design_solved;
+		
+		// Write outputs
+		value(O_ETA_CYCLE_DES, design_eta);
+		value(O_P_LOW_DES, rc_cycle->get_cycle_design_metrics()->m_P[1 - 1]);
+		value(O_F_RECOMP_DES, rc_cycle->get_cycle_design_parameters()->m_recomp_frac);
+		value(O_Q_DOT_CALC_DES, q_dot_des);
+		value(O_UA_RECUP_DES, m_UA_total_des);
+		value(O_T_COOLER_IN_DES, T_acc_in);
+		value(O_COOLER_VOLUME, ACC.get_hx_design_solved()->m_material_V);
 
 		return 0;
 	}
