@@ -212,7 +212,7 @@ int tcKernel::simulate( double start, double end, double step, wxProgressDialog 
 		{
 			dataset &d = m_results[ idataset++ ];
 			char buf[32];
-			sprintf(buf, "%d", i);
+			sprintf(buf, "%d", (int)i);
 			d.u = &m_units[i];
 			d.uidx = i;
 			d.idx = idx;
