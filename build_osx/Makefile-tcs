@@ -39,6 +39,7 @@ OBJECTS = tcskernel.o \
     sam_mw_lf_type261_Wnet.o \
     sam_mw_lf_type262_salt.o \
     sam_mw_pt_type221.o \
+    sam_mw_pt_type221B.o \
     sam_mw_pt_type222.o \
     sam_mw_pt_type224.o \
     sam_mw_pt_type228.o \
