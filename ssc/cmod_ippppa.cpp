@@ -207,8 +207,6 @@ static var_info vtab_ippppa[] = {
 
 	// metrics table 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor",    "Capacity factor",  "", "",                      "ippppa",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "kwh_per_kw",    "First year kWh/kW",  "", "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                 "PPA price",                       "",    "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "",    "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "", "",                      "ippppa",      "*",                     "",                "" },
@@ -1014,25 +1012,6 @@ public:
 
 		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
-
-		double kWhperkW = 0.0;
-		// add to address geothermal capacity factor issue 4/13/13
-		if (as_integer("system_use_lifetime_output"))
-		{
-			if ((nameplate > 0) && (nyears>0))
-			{
-				for (int i=0;i<=nyears;i++)
-					kWhperkW += cf.at(CF_energy_net,i);
-				kWhperkW /= (nyears * nameplate);
-			}
-		}
-		else
-		{
-			if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
-		}
-		assign( "capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
-		assign( "kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
- 
 		assign( "ppa",var_data((ssc_number_t) ppa) );
 		assign( "ppa_escalation",var_data((ssc_number_t) ppa_escalation) );
 		assign( "debt_fraction",var_data((ssc_number_t) debt_frac) );

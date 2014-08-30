@@ -35,9 +35,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of Insurance and Prop Tax",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor",    "Capacity factor",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "kwh_per_kw",    "First year kWh/kW",  "", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "",      "*",                     "",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -809,11 +807,6 @@ public:
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 
 		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
-		double kWhperkW = 0.0;
-		if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
-		assign( "capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
-		assign( "kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
-
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
