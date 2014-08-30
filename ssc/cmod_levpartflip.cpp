@@ -778,8 +778,6 @@ static var_info _cm_vtab_levpartflip[] = {
 
 	// metrics table 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor",    "Capacity factor",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "kwh_per_kw",    "First year kWh/kW",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "", "",                      "DHF",      "*",                     "",                "" },
@@ -2621,23 +2619,6 @@ public:
 		assign("itc_total", var_data((ssc_number_t) itc_total));
 
 		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
-		double kWhperkW = 0.0;
-		// add to address geothermal capacity factor issue 4/13/13
-		if (as_integer("system_use_lifetime_output"))
-		{
-			if ((nameplate > 0) && (nyears>0))
-			{
-				for (int i=0;i<=nyears;i++)
-					kWhperkW += cf.at(CF_energy_net,i);
-				kWhperkW /= (nyears * nameplate);
-			}
-		}
-		else
-		{
-			if (nameplate > 0) kWhperkW = cf.at(CF_energy_net,1) / nameplate;
-		}
-		assign( "capacity_factor", var_data((ssc_number_t) (kWhperkW / 87.6)) );
-		assign( "kwh_per_kw", var_data((ssc_number_t) kWhperkW) );
 
 		assign("tax_investor_aftertax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_irr, nyears)));
 		assign("tax_investor_aftertax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_npv, nyears)));

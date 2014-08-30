@@ -1,7 +1,7 @@
 // solarpilot compute module test script
 
 clear();
-var('solar_resource_file', 'c:/sam/2013.1.15/exelib/climate_files/CA Daggett.tm2');
+var('solar_resource_file', 'c:/sam/2014.1.14/weather/CA Daggett.tm2');
 var('helio_width', 12);
 var('helio_height', 12);
 var('helio_optical_error', 0.00153);

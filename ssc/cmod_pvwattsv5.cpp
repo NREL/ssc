@@ -86,6 +86,9 @@ static var_info _cm_vtab_pvwattsv5[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                           "Longitude",                                    "deg", "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                            "Time zone",                                    "hr",  "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                          "Site elevation",                               "m",   "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
 
 
 	var_info_invalid };
@@ -390,7 +393,6 @@ public:
 		}
 		assign( "solrad_annual", var_data( solrad_ann/12 ) );
 
-
 		accumulate_annual( "ac", "ac_annual", 0.001 );
 		accumulate_annual( "hourly_energy", "annual_energy" ); 
 
@@ -403,6 +405,18 @@ public:
 		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
 		assign( "elev", var_data( (ssc_number_t)wf.elev ) );
 		
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i<8760; i++)
+			annual_energy += p_ac[i]*0.001; // W to kW
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+
 	}
 };
 
