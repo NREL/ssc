@@ -32,7 +32,8 @@ static inline double to_double(double x) { return x; }
 
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                         "Weather file in TMY2, TMY3, EPW, or SMW.",                "",       "",                              "pvsamv1",              "*",                        "LOCAL_FILE",                    "" },
+		{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "pvsamv1", "*", "MIN=0.05,MAX=500000", "" },
+		{ SSC_INPUT, SSC_STRING, "solar_resource_file", "Weather file in TMY2, TMY3, EPW, or SMW.", "", "", "pvsamv1", "*", "LOCAL_FILE", "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",                  "0/1",    "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                            "0..1",   "",                              "pvsamv1",              "*",						  "LENGTH=12",					   "" },
@@ -429,6 +430,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rs",                                     "CEC 6-parameter: Rs",                                    "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rsh",                                    "CEC 6-parameter: Rsh",                                   "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Adj",                                    "CEC 6-parameter: Adj",                                   "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
+
 var_info_invalid };
 
 struct subarray
@@ -1633,6 +1639,19 @@ public:
 		assign( "6par_Rs", var_data((ssc_number_t) cec.Rs) );
 		assign( "6par_Rsh", var_data((ssc_number_t) cec.Rsh) );
 		assign( "6par_Adj", var_data((ssc_number_t) cec.Adj) );
+
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += p_hourly_energy[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+
 	}
 	
 	bool check_azal_monotonic_increase( const util::matrix_t<double> &azal )
