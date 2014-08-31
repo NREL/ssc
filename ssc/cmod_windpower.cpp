@@ -7,6 +7,9 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_STRING,      "wind_resource_filename",                  "local SWRF file path",		           "",       "",      "WindPower",      "*",                                        "LOCAL_FILE",                                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_shear",                     "Shear exponent",                      "",       "",      "WindPower",      "*",                                        "",                                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_turbulence_coeff",          "Turbulence coefficient",              "%",      "",      "WindPower",      "*",                                        "",                                                 "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "PVWatts", "*", "MIN=0.05,MAX=500000", "" },
+
+
 //	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                                 "Height of resource measurement",      "m",      "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "elevation",                               "Elevation",                           "m",      "",      "WindPower",      "*",                                        "",		                                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_model_choice",              "Hourly or Weibull model",		       "0/1",    "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
@@ -43,6 +46,9 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                          "Monthly Energy",                      "kW",     "",      "WindPower",      "*",                                        "LENGTH=12",                                        "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                           "Annual Energy",                       "kW",     "",      "WindPower",      "*",                                        "",                                                 "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
 
 
 var_info_invalid };
@@ -254,6 +260,17 @@ public:
 		accumulate_monthly("hourly_energy", "monthly_energy");
 		accumulate_annual("hourly_energy", "annual_energy");
 
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += farmpwr[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+
 		if (bCreateFarmOutput)
 		{
 			// make separate files so it's easy for Excel 2010 to automatically update sheets to display info
@@ -295,6 +312,8 @@ public:
 				f1.close();
 			}
 		} // create wind farm debug output files
+
+
 
 	} // exec
 };

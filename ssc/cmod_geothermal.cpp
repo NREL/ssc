@@ -15,7 +15,9 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "resource_type",                      "Type of Resource",                             "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_temp",                      "Resource Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_depth",                     "Resource Depth",                               "m",              "",             "GeoHourly",        "*",                        "",                "" },
-										 								       											   				     
+										 								       						
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "GeoHourly", "*", "MIN=0.05,MAX=500000", "" },
+
     // Other inputs						 								       											   				     
     { SSC_INPUT,        SSC_NUMBER,      "geothermal_analysis_period",         "Analysis Lifetime",                            "years",          "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "model_choice",                       "Which model to run (0,1,2)",                   "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
@@ -135,6 +137,11 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "first_year_output",                  "First Year Output",                                   "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                      "Hourly energy",                                       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
+
 
 var_info_invalid };
 
@@ -375,11 +382,26 @@ public:
 				total_energy += geo_outputs.maf_monthly_energy[i];
 			}
 			assign("first_year_output", var_data(total_energy));
+
+			// metric outputs moved to technology
+			double kWhperkW = 0.0;
+			double nameplate = as_double("system_capacity");
+			double annual_energy = 0.0;
+			for (int i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)
+				annual_energy += geo_outputs.maf_hourly_power[i];
+			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
+			assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+
 		}
 
 		// this assignment happens in UI calculations and model run
 		assign("pump_work", var_data((ssc_number_t) geo_outputs.md_PumpWorkKW/1000 ) ); // kW must be converted to MW
+
 	}
+
 };
 
 DEFINE_MODULE_ENTRY( geothermal, "Geothermal monthly and hourly models using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code.", 3 );

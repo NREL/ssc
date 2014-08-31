@@ -5,7 +5,10 @@
 static var_info _cm_vtab_biomass[] = {
 //	  VARTYPE          DATATYPE          NAME                                          LABEL                                            UNITS            META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
     { SSC_INPUT,       SSC_STRING,       "file_name",                                 "Local weather file path",                        "",              "",      "biopower",          "*",               "LOCAL_FILE",          "" },
-																																						 
+																								
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "biopower", "*", "MIN=0.05,MAX=500000", "" },
+
+
 	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstock.total",                    "Total fuel resource (dt/yr)",                    "",              "",      "biopower",          "*",               "",                    "" },
 	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstock.total_biomass",            "Total biomass resource (dt/yr)",                 "",              "",      "biopower",          "*",               "",                    "" },
 	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstock.total_moisture",           "Overall Moisture Content (dry %)",               "",              "",      "biopower",          "*",               "",                    "" },
@@ -228,6 +231,10 @@ static var_info _cm_vtab_biomass[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.boiler_loss_total",      "Energy lost in boiler - total",                 "%",          "",      "biomass",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.qtoboil_tot",            "Q to Boiler",                                   "kWh",        "",      "biomass",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.qtopb_tot",              "Q to Power Block",                              "kWh",        "",      "biomass",           "*",               "",                    "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
 
 
 var_info_invalid };
@@ -1312,6 +1319,17 @@ public:
 
 		ssc_number_t * da = allocate("oandm.fuel_cost", 1);
 		da[0] = 0.0;
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += _enet[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
 
 	} // exec
 };

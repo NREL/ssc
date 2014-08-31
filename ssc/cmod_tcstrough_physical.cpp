@@ -9,7 +9,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "track_mode",                "Tracking mode",                                                                    "none",         "",             "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tilt",                      "Tilt angle of surface/axis",                                                       "none",         "",             "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",                   "Azimuth angle of surface/axis",                                                    "none",         "",             "Weather",        "*",                       "",                      "" },
-																																		                  
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "trough", "*", "MIN=0.05,MAX=500000", "" },
+
 //   solar field (type 250) inputs							          																	                  
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_NUMBER,      "nSCA",                      "Number of SCAs in a loop",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -331,6 +332,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 
 	// Other single value outputs
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",     "Gross to Net Conversion Factor",                             "%",            "",            "Calculated",     "*",                       "",                      "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
 
 	var_info_invalid };
 
@@ -699,6 +703,26 @@ public:
 		ssc_number_t pg = as_number("annual_W_cycle_gross");
 		ssc_number_t convfactor = (pg != 0) ? 100*ae / pg : 0;
 		assign("conversion_factor", convfactor);
+
+
+		size_t count;
+		ssc_number_t *hourly_energy = as_array("hourly_energy", &count);//MWh
+		if (count != 8760)
+			throw exec_error("tcstrough_empirical", "hourly_energy count incorrect (should be 8760): " + count);
+		// apply performance adjustments and convert from MWh to kWh - should be done in sum calcs
+		//for (size_t i = 0; i < count; i++)
+		//	p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
+
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += hourly_energy[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
 	}
 
