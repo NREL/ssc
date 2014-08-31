@@ -14,7 +14,8 @@
 static var_info _cm_vtab_hcpv[] = {
 	/*VARTYPE           DATATYPE         NAME                               LABEL                                                              UNITS          META       GROUP            REQUIRED_IF             CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "file_name",                       "Weather file in TMY2, TMY3, EPW, or SMW.",                        "",            "",        "hcpv",          "*",                    "LOCAL_FILE",                    "" },
-																													      
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "PVWatts", "*", "MIN=0.05,MAX=500000", "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "module_cell_area",                "Single cell area",                                                "cm^2",        "",        "hcpv",          "*",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "module_concentration",            "Concentration ratio",                                             "none",        "",        "hcpv",          "*",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "module_optical_error",            "Optical error factor",                                            "0..1",        "",        "hcpv",          "*",                    "",                              "" },
@@ -126,6 +127,9 @@ static var_info _cm_vtab_hcpv[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ac_loss_tracker_kwh",             "Annual tracker power loss",                                       "kWh",    "",        "hcpv",          "*",                    "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "modeff_ref",                      "Module efficiency",                                               "-",      "",        "hcpv",          "*",                    "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "dc_nominal",                      "Annual DC nominal",                                               "kWh",    "",        "hcpv",          "*",                    "",                                         "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 
 
 var_info_invalid };
@@ -557,6 +561,15 @@ public:
 		ssc_number_t inp_rad = as_number("annual_input_radiation");
 		assign("dc_nominal", var_data((ssc_number_t)modeff_ref * inp_rad / 100.0));
 
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += p_enet[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
 	}
 };
