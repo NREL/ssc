@@ -10,6 +10,7 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                  "",             "",            "Weather",        "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                     "",             "",            "Weather",        "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                  "",             "",            "Weather",        "*",                       "",                      "" }, 
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "trough", "*", "MIN=0.05,MAX=500000", "" },
 
 //	{ SSC_INPUT, SSC_NUMBER, "SolarAz", "Solar azimuth angle reported by the Type15 weather file", "deg", "", "solarfield", "*", "", "" },
 
@@ -232,6 +233,10 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "tcs_trough_empirical", "*", "LENGTH=8760", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "tcs_trough_empirical", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
 
 
 
@@ -508,6 +513,16 @@ public:
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
 
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += p_hourly_energy[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
 	}
 

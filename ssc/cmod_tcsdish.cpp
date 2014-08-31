@@ -10,6 +10,8 @@ static var_info _cm_vtab_tcsdish[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",                    "Tilt angle of surface/axis",                                                     "",             "",             "Weather",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",                 "Azimuth angle of surface/axis",                                                  "",             "",             "Weather",       "*",                       "",                      "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "dish", "*", "MIN=0.05,MAX=500000", "" },
+
 
 	// sam_pf_dish_collector_type295_variables
 	//PARAMETERS
@@ -205,6 +207,9 @@ static var_info _cm_vtab_tcsdish[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Collector_Losses",  "Total collector losses (Incident - P_out)",                        "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_P_parasitic",       "Total parasitic power load",                                       "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_rec_losses",      "Receiver thermal losses",                                          "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 
 
 	var_info_invalid };
@@ -483,6 +488,16 @@ public:
 		accumulate_monthly("hourly_Collector_Losses",   "monthly_Collector_Losses");
 		accumulate_monthly("hourly_P_parasitic",        "monthly_P_parasitic");
 		accumulate_monthly("hourly_Q_rec_losses",       "monthly_Q_rec_losses");
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += hourly[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
 	}
 
