@@ -23,6 +23,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",             "local weather file path",          "",       "",                      "Weather",      "*",                         "LOCAL_FILE",                  "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                   "kg/hr",  "",                      "SWH",      "*",                       "LENGTH=8760",						 "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "SWH", "*", "MIN=0.05,MAX=500000", "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                   "deg",    "",                      "SWH",      "*",                       "MIN=0,MAX=90",                      "" },
@@ -111,6 +112,9 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_auxonly",	  "Q auxiliary only",                    "kWh",    "",                      "SWH",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",		  "System energy",                    "kWh",    "",                      "SWH",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                    "frac",    "",                      "SWH",      "*",                        "",                      "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 
 	
 	var_info_invalid };
@@ -625,6 +629,17 @@ public:
 		double auxonly = as_number("annual_Q_auxonly");
 
 		assign("solar_fraction", var_data( (ssc_number_t)(deliv/auxonly) ));
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += out_hourly_energy[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
 	}
 
 };
