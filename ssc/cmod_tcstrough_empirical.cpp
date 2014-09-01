@@ -497,6 +497,8 @@ public:
 
 		// outputs for other compute modules
 		assign("system_use_lifetime_output", 0);
+
+
 		// performance adjustement factors
 		adjustment_factors haf(this);
 		if (!haf.setup())

@@ -1,12 +1,15 @@
 // Power Tower - molten salt, cavity and external receiver models
 #include "core.h"
 #include "tckernel.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_tcsmolten_salt[] = {
 
 //    VARTYPE           DATATYPE          NAME                   LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
-    														     																	  
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "molten salt tower", "*", "MIN=0.05,MAX=500000", "" },
+
     // TOU													     																	  
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",     "12x24 Time of Use Values for week days",                            "",             "",            "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",     "12x24 Time of Use Values for week end days",                        "",             "",            "tou_translator", "*",                       "",                      "" }, 
@@ -315,6 +318,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// Annual Outputs
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kW", "", "Net_E_Calc", "*", "", "" },
 
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
+
+
 	var_info_invalid };
 
 class cm_tcsmolten_salt : public tcKernel
@@ -326,6 +334,8 @@ public:
 	{
 		add_var_info( _cm_vtab_tcsmolten_salt );
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -735,6 +745,34 @@ public:
 		// Annual accumulations
 
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		// performance adjustement factors
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("tcstrough_empirical", "failed to setup adjustment factors: " + haf.error());
+		// hourly_energy output
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		// set hourly energy = tcs output Enet
+		size_t count;
+		ssc_number_t *hourly_energy = as_array("P_out_net", &count);//MWh
+		if (count != 8760)
+			throw exec_error("tcstrough_empirical", "hourly_energy count incorrect (should be 8760): " + count);
+		// apply performance adjustments and convert from MWh to kWh
+		for (size_t i = 0; i < count; i++)
+			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
+
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += p_hourly_energy[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
 	}
 
 };

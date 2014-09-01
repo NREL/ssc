@@ -10,6 +10,9 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",             "Tilt angle of surface/axis",                                     "",                 "",             "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",          "Azimuth angle of surface/axis",                                  "",                 "",             "Weather",        "*",                       "",                      "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "generic solar", "*", "MIN=0.05,MAX=500000", "" },
+
+
 	// TOU
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule", "12x24 Time of Use Values for week days",                         "",                 "",             "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule", "12x24 Time of Use Values for week end days",                     "",                 "",             "tou_translator", "*",                       "",                      "" }, 
@@ -150,6 +153,12 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 
 	// Other single value outputs
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor", "Gross to Net Conversion Factor",                                 "%",            "",            "Calculated",     "*",                       "",                      "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
+
+
 
 	var_info_invalid };
 
@@ -345,7 +354,21 @@ public:
 		ssc_number_t pg = as_number("annual_w_gr");
 		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
 		assign("conversion_factor", convfactor);
+
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += hourly[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+
 	}
+
 
 };
 
