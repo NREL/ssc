@@ -1,5 +1,7 @@
 #include "core.h"
 #include "lib_weatherfile.h"
+// for adjustment factors
+#include "common.h"
 
 
 static var_info _cm_vtab_biomass[] = {
@@ -246,6 +248,8 @@ public:
 	cm_biomass()
 	{
 		add_var_info( _cm_vtab_biomass );
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -912,6 +916,13 @@ public:
 		double Qtopb_tot = 0;
 		double press_adj = (steam_pressure - 900.0) / 14.2857143*0.1 / 100.0; /*rule of thumb that says for every 14.2847 increase in psi of steam pressure, efficiency increases 0.1%*/
 		rated_eff += press_adj;
+
+
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("biopower", "failed to setup adjustment factors: " + haf.error());
+
+
 		for (int i = 0; i<8760; i++)
 		{
 			int iMonth = util::month_of(i) - 1;
@@ -987,7 +998,7 @@ public:
 			_etaa[iMonth] += eta_adj*100.0 / (nday[iMonth] * 24.0);
 			total_etaa += eta_adj / 8760.0; //for loss diagram
 			_qtpb[i] = Qtopb;
-			_enet[i] = Wnet;
+			_enet[i] = Wnet*haf(i);
 			_tnorm[i] = Tnorm;
 			capfactor[iMonth] += capfact / (nday[iMonth] * 24.0);
 			heatrate_hhv[iMonth] += heatrat_hhv / (nday[iMonth] * 24.0);

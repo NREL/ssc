@@ -1,6 +1,8 @@
 #include "core.h"
 #include "lib_windfile.h"
 #include "lib_windwatts.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_windpower[] = {
 //	  VARTYPE           DATATYPE         NAME                                       LABEL                                  UNITS     META     GROUP             REQUIRED_IF                                 CONSTRAINTS                                        UI_HINTS
@@ -61,6 +63,8 @@ public:
 	cm_windpower()
 	{
 		add_var_info( _cm_vtab_windpower );
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -185,6 +189,12 @@ public:
 		if (!wpc.InitializeModel() )
 			throw exec_error( "windpower", util::format("error allocating memory: %s",  wpc.GetErrorDetails().c_str() )  );
 
+
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
+
+
 		// do the wind model
 		for (i=0;i<nstep;i++)
 		{
@@ -235,7 +245,7 @@ public:
 				throw exec_error( "windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()) );
 
 
-			farmpwr[i] = (ssc_number_t) farmp;
+			farmpwr[i] = (ssc_number_t) farmp*haf(i);
 			wspd[i] = (ssc_number_t) wind;
 			wdir[i] = (ssc_number_t) dir;
 			air_temp[i] = (ssc_number_t) temp;

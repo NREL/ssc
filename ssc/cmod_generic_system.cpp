@@ -1,6 +1,8 @@
 #include "core.h"
 #include "lib_windfile.h"
 #include "lib_windwatts.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_generic_system[] = {
 //	  VARTYPE           DATATYPE         NAME                           LABEL                                 UNITS           META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
@@ -36,6 +38,8 @@ public:
 	cm_generic_system()
 	{
 		add_var_info( _cm_vtab_generic_system );
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -46,6 +50,10 @@ public:
 		double derate = (1 - (double)as_number("derate") / 100);
 		double annual_output = 0;
 
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+
 		if (spec_mode == 0)
 		{
 			double output = (double)as_number("system_capacity")
@@ -55,7 +63,7 @@ public:
 			annual_output = 8760 * output;
 
 			for (int i = 0; i<8760; i++)
-				enet[i] = output;
+				enet[i] = output*haf(i);
 		}
 		else
 		{
@@ -80,7 +88,7 @@ public:
 					i++;
 				}
 
-				enet[c] = integ*derate;
+				enet[c] = integ*derate*haf(c);
 				annual_output += enet[c];
 				c++;
 			}
@@ -112,5 +120,5 @@ public:
 	} // exec
 };
 
-DEFINE_MODULE_ENTRY( generic_system, "Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)", 2 );
+DEFINE_MODULE_ENTRY( generic_system, "Generic System", 1 );
 

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "core.h"
+// for adjustment factors
 #include "common.h"
 
 #include "lib_weatherfile.h"

@@ -1,6 +1,8 @@
 // Generic solar model
 #include "core.h"
 #include "tckernel.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_tcsgeneric_solar[] = {
 //   weather reader inputs
@@ -171,6 +173,8 @@ public:
 	{
 		add_var_info( _cm_vtab_tcsgeneric_solar );
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -320,9 +324,14 @@ public:
 		if (!enet || count != 8760)
 			throw exec_error("tcsgeneric_solar", "Failed to retrieve hourly net energy");
 
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("tcsgeneric_solar", "failed to setup adjustment factors: " + haf.error());
+
+
 		ssc_number_t *hourly = allocate("hourly_energy", count);
 		for (int i = 0; i<count; i++)
-			hourly[i]= enet[i]*1000; // convert from MWh to kWh
+			hourly[i]= enet[i]*1000*haf(i); // convert from MWh to kWh
 
 		accumulate_annual("hourly_energy",        "annual_energy");
 		accumulate_annual("w_gr",                 "annual_w_gr",1000); // convert from MWh to kWh
