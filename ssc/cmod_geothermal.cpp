@@ -2,6 +2,8 @@
 #include "lib_weatherfile.h"
 #include "lib_physics.h"
 #include "lib_geothermal.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_geothermal[] = {
 //   VARTYPE           DATATYPE         NAME                                   LABEL                                           UNITS             META            GROUP              REQUIRED_IF                 CONSTRAINTS      UI_HINTS
@@ -159,6 +161,8 @@ public:
 	cm_geothermal()
 	{
 		add_var_info( _cm_vtab_geothermal );
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -367,6 +371,14 @@ public:
 
 			geo_outputs.maf_hourly_power = allocate("hourly_energy", geo_inputs.mi_ProjectLifeYears * 8760);
 
+
+			// TODO - implement performance factors 
+			adjustment_factors haf(this);
+			if (!haf.setup())
+				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
+
+
+			// running
 			if (RunGeothermalAnalysis(my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs) != 0)
 				throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
 

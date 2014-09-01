@@ -1,6 +1,8 @@
 // Trough CSP - physical model
 #include "core.h"
 #include "tckernel.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_tcstrough_physical[] = {
 //   weather reader inputs
@@ -349,6 +351,8 @@ public:
 	{
 		add_var_info( _cm_vtab_tcstrough_physical );
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -674,6 +678,19 @@ public:
 			throw exec_error( "tcstrough_physical", "there was a problem returning the results from the simulation." );
 		//set_output_array("i_SfTi",8760);
 
+		size_t count;
+		ssc_number_t *hourly_energy = as_array("hourly_energy", &count);//already kWh
+		if (count != 8760)
+			throw exec_error("tcstrough_physical", "hourly_energy count incorrect (should be 8760): " + count);
+		// performance adjustement factors
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
+		// hourly_energy output - overwrite with performance adjustments
+		// apply performance adjustments
+		for (size_t i = 0; i < count; i++)
+			hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i));
+	
 		// Monthly accumulations
 		accumulate_monthly("hourly_energy", "monthly_energy"); // already in kWh
 		accumulate_monthly("W_cycle_gross", "monthly_W_cycle_gross", 1000); // convert from MWh to kWh
@@ -703,15 +720,6 @@ public:
 		ssc_number_t pg = as_number("annual_W_cycle_gross");
 		ssc_number_t convfactor = (pg != 0) ? 100*ae / pg : 0;
 		assign("conversion_factor", convfactor);
-
-
-		size_t count;
-		ssc_number_t *hourly_energy = as_array("hourly_energy", &count);//MWh
-		if (count != 8760)
-			throw exec_error("tcstrough_empirical", "hourly_energy count incorrect (should be 8760): " + count);
-		// apply performance adjustments and convert from MWh to kWh - should be done in sum calcs
-		//for (size_t i = 0; i < count; i++)
-		//	p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
 
 
 		// metric outputs moved to technology

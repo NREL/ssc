@@ -1,6 +1,8 @@
 // Dish Stirling model
 #include "core.h"
 #include "tckernel.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_tcsdish[] = {
 //   weather reader inputs
@@ -225,6 +227,8 @@ public:
 	{
 		add_var_info( _cm_vtab_tcsdish );
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -457,8 +461,14 @@ public:
 		ssc_number_t *po7 = allocate("hourly_P_parasitic", count);
 		ssc_number_t *po8 = allocate("hourly_Q_rec_losses", count);
 
+
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("dish", "failed to setup adjustment factors: " + haf.error());
+
+
 		for (int i = 0; i < count; i++) {
-			hourly[i] = enet[i] * collectors;
+			hourly[i] = enet[i] * collectors*haf(i);
 			po1[i] = p1[i] * converter;
 			po2[i] = p2[i] * converter;
 			po3[i] = p3[i] * converter;

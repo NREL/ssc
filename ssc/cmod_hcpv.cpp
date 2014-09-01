@@ -7,6 +7,10 @@
 #include "lib_sandia.h"
 #include "lib_irradproc.h"
 
+// for adjustment factors
+#include "common.h"
+
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
@@ -141,6 +145,8 @@ public:
 	cm_hcpv()
 	{
 		add_var_info( _cm_vtab_hcpv );
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 	
 	double eff_interpolate(double irrad, ssc_number_t *rad, ssc_number_t *eff, int count)
@@ -357,6 +363,12 @@ public:
 		double ac_loss_tracker = 0;
 
 
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+
+
+
 		double dTS = 1.0; // hourly timesteps
 		int istep = 0, nstep = wf.nrecords;
 		while (wf.read() && istep < 8760)
@@ -522,7 +534,7 @@ public:
 				p_dc[istep] = (ssc_number_t)dcgross * 0.001; // kwh
 				p_dcnet[istep] = (ssc_number_t)dcpwr * 0.001; // kwh
 				p_ac[istep] = (ssc_number_t)acgross * 0.001; // kwh
-				p_enet[istep] = (ssc_number_t)acpwr * 0.001; // kwh
+				p_enet[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
 
 			}
 
