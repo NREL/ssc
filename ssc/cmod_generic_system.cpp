@@ -6,8 +6,8 @@ static var_info _cm_vtab_generic_system[] = {
 //	  VARTYPE           DATATYPE         NAME                           LABEL                                 UNITS           META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
 	{ SSC_INPUT,        SSC_NUMBER,      "spec_mode",                  "Spec mode: 0=constant CF,1=profile",  "",             "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                     "Derate",                              "%",            "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "nameplate_capacity",         "Nameplace Capcity",                   "kW",           "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "capacity_factor",            "Capacity Factor",                     "%",            "",      "generic_system",      "*",               "",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",         "Nameplace Capcity",                   "kW",           "",      "generic_system",      "*",               "",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "user_capacity_factor",            "Capacity Factor",                     "%",            "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "heat_rate",                  "Heat Rate",                           "MMBTUs/MWhe",  "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "conv_eff",                   "Conversion Efficiency",               "%",            "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kWh",          "",      "generic_system",      "*",               "",                    "" }, 
@@ -21,6 +21,10 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "fuel_usage",                 "Annual Fuel Usage",                    "kWht",         "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual Water Usage",                   "",             "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "heat_rate_output",           "Heat Rate Conversion Factor",          "MMBTUs/MWhe",  "",      "generic_system",      "*",               "",                    "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+
 
 var_info_invalid };
 
@@ -44,8 +48,8 @@ public:
 
 		if (spec_mode == 0)
 		{
-			double output = (double)as_number("nameplate_capacity")
-				* (double)as_number("capacity_factor") / 100
+			double output = (double)as_number("system_capacity")
+				* (double)as_number("user_capacity_factor") / 100
 				* derate;
 
 			annual_output = 8760 * output;
@@ -59,11 +63,11 @@ public:
 			ssc_number_t *data = as_array("energy_output_array", &count);
 
 			if (!data)
-				throw exec_error("windpower", util::format("energy_output_array variable had no values."));
+				throw exec_error("generic", util::format("energy_output_array variable had no values."));
 
 			int nmult = count / 8760;
 			if (nmult * 8760 != count)
-				throw exec_error("windpower", util::format("energy_output_array not a multiple of 8760: len=%d.", count));
+				throw exec_error("generic", util::format("energy_output_array not a multiple of 8760: len=%d.", count));
 
 			int c = 0;
 			int i = 0;
@@ -93,6 +97,18 @@ public:
 
 		assign("water_usage", 0.0);
 		assign("heat_rate_output", as_double("heat_rate") *  as_double("conv_eff") / 100.0);
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += enet[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+
 	} // exec
 };
 
