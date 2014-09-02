@@ -1496,6 +1496,20 @@ public:
 			}
 		}
 
+		// update 9/1/14 based on feedback from Peter Jeavons 8/28/14
+		bool monthly_reconciliation = sell_eq_buy; // can be user input 
+
+		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
+		ssc_number_t prev_value = 0;
+		cumulative_excess_energy[0] = 0.0;
+		for (m=1;m<12;m++)
+		{
+			prev_value = cumulative_excess_energy[m-1];
+			cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
+		}
+
+
+
 		// go through each period and tier and calculate per SAM_V2_RATES.docx - Nathan Clark 3/6/13
 		// reconcile on monthly basis
 		ssc_number_t charge[12][12];
@@ -1528,7 +1542,7 @@ public:
 						if ( energy_surplus < e_upper )
 							break;
 						tier++;
-					}
+			 		}
 					credit[m][period] = credit_amt;
 					ec_charge[m] -= credit_amt;
 				}
@@ -1536,6 +1550,11 @@ public:
 				{ // calculate payment or charge
 					ssc_number_t charge_amt = 0;
 					ssc_number_t energy_deficit = -energy_net[m][period];
+
+					// update 9/1/14 based on feedback from Peter Jeavons 8/28/14
+					if ((m>0) && monthly_reconciliation) // reduce energy used to calculate charge
+						energy_deficit += cumulative_excess_energy[m - 1];
+
 					tier=0;
 					while (tier<6)
 					{
@@ -1564,7 +1583,7 @@ public:
 
 		if (sell_eq_buy)
 		{ // net metering reconciliation with excess rollover
-
+			/* update 9/1/14 based on feedback from Peter Jeavons 8/28/14
 			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
 			ssc_number_t prev_value = 0;
 			cumulative_excess_energy[0] = 0.0;
@@ -1574,7 +1593,7 @@ public:
 				cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
 			}
 
-
+			*/
 			// back out hourly values based on monthly reconciliation
 			c=0;
 			for (m=0;m<12;m++)
