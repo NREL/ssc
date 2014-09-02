@@ -23,9 +23,37 @@ set_value(powercycle, "eta_c", eta_c);
 set_value(powercycle, "eta_t", eta_t);
 set_value(powercycle, "P_high_limit", P_high_limit);
 
+set_value(powercycle, "T_amb_des", 30.0);		//[C]
+set_value(powercycle, "fan_power_perc", 1.0);	//[%]
+//set_value(powercycle, "deltaP_cool_des", 0.2);	//[%]
+
 set_value(powercycle, "T_rec_hot", 574.0);		//[C]
 set_value(powercycle, "T_rec_cold", 290.0);     //[C]
 set_value(powercycle, "Q_dot_rec_des", 100.0);	//[C]
 set_value(powercycle, "rec_htf", 17);           //[-]
 
-simulate(1.0, 1000.0, 1.0);
+//N_rec_in_temps = (570-290)/5 + 1;
+//delta_T_rec_in = 123;
+
+//**********************
+N_rec_in_temps = 2;
+
+T_rec_hot = alloc(N_rec_in_temps);
+eta_cycle_des = alloc(N_rec_in_temps);
+P_low_des = alloc(N_rec_in_temps);
+f_recomp_des = alloc(N_rec_in_temps);
+Q_dot_calc_des = alloc(N_rec_in_temps);
+UA_recup_des = alloc(N_rec_in_temps);
+T_cooler_in_des = alloc(N_rec_in_temps);
+cooler_volume = alloc(N_rec_in_temps);
+
+for(i=0;i<N_rec_in_temps;i++)
+{
+	T_rec_hot = 290;
+
+	simulate(1.0, 2.0, 1.0);
+
+	eta_cycle_design_timestep = get_result(powercycle, "eta_cycle_des");
+	eta_cycle_des[i] = eta_cycle_design_timestep[0];
+	outln(eta_cycle_des[i]);
+}
