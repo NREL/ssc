@@ -19,7 +19,7 @@ enum{	//Parameters
 
 	P_T_AMB_DES,
 	P_FAN_POWER_PERC,
-	P_DELTAP_COOL_DES,
+	//P_DELTAP_COOL_DES,
 
 	P_T_rec_hot,
 	P_T_rec_cold,
@@ -56,7 +56,7 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 		// Air-cooler Design Parameters
 	{ TCS_PARAM, TCS_NUMBER, P_T_AMB_DES,      "T_amb_des",       "Design: Ambient temperature for air cooler",     "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_FAN_POWER_PERC, "fan_power_perc",  "Percent of net cycle power used for fan",        "%",    "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_DELTAP_COOL_DES,"deltaP_cool_des", "Design: CO2 deltaP thru air cooler wrt Phigh",   "%",    "", "", "" },
+	//{ TCS_PARAM, TCS_NUMBER, P_DELTAP_COOL_DES,"deltaP_cool_des", "Design: CO2 deltaP thru air cooler wrt Phigh",   "%",    "", "", "" },
 		// Solar Receiver Design Parameters
 	{ TCS_PARAM, TCS_NUMBER, P_T_rec_hot,      "T_rec_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_T_rec_cold,     "T_rec_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
@@ -185,17 +185,74 @@ public:
 		m_P_high_limit = value(P_P_high_limit);					// "High pressure limit in cycle",                   "MPa",  
 
 		// Check cycle parameter values are reasonable
+			// Can't operate compressor in 2-phase region
 		if(m_T_mc_in_des <= N_co2_props::T_crit)
 		{
-			message("Only single phase cycle operation is allowed in this model. The compressor inlet temperature must be great than the critical temperature: %lg [C]", ((N_co2_props::T_crit)-273.15));
+			message("Only single phase cycle operation is allowed in this model. The compressor inlet temperature (%lg [C]) must be great than the critical temperature: %lg [C]", m_T_mc_in_des-273.15, ((N_co2_props::T_crit)-273.15));
 			return -1;
 		}
+			// "Reasonable" ceiling on compressor inlet temp
 		double T_mc_in_max = 70.0 + 273.15;			//[K] Arbitrary value for max compressor inlet temperature
 		if(m_T_mc_in_des > T_mc_in_max)
 		{
-			message("The compressor inlet temperature input was %lg. This value was reset internally to the max allowable inlet temperature: %lg", m_T_mc_in_des, T_mc_in_max);
+			message("The compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]", m_T_mc_in_des-273.15, T_mc_in_max-273.15);
 			m_T_mc_in_des = T_mc_in_max;
 		}
+			// "Reasonable" floor on turbine inlet temp
+		double T_t_in_min = 300.0 + 273.15;			//[K] Arbitrary value for min turbine inlet temperature
+		if(m_T_t_in_des < T_t_in_min)
+		{
+			message("The turbine inlet temperature input was %lg [C]. This value was reset internally to the min allowable inlet temperature: %lg [C]", m_T_t_in_des-273.15, T_t_in_min-273.15);
+			m_T_t_in_des = T_t_in_min;
+		}
+			// Turbine inlet temperature must be hotter than compressor outlet temperature
+		if(m_T_t_in_des <= m_T_mc_in_des)
+		{
+			message("The turbine inlet temperature, %lg [C], is colder than the specified compressor inlet temperature %lg [C]", m_T_t_in_des-273.15, m_T_mc_in_des-273.15);
+			return -1;
+		}
+			// Turbine inlet temperature must be colder than property limits
+		if(m_T_t_in_des >= N_co2_props::T_upper_limit)
+		{
+			message("The turbine inlet temperature, %lg [C], is hotter than the maximum allow temperature in the CO2 property code %lg [C]", m_T_t_in_des-273.15, N_co2_props::T_upper_limit-273.15);
+			return -1;
+		}
+			// Check for realistic isentropic efficiencies
+		if(m_eta_c > 1.0)
+		{
+			message("The compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0", m_eta_c);
+			m_eta_c = 1.0;
+		}
+		if( m_eta_t > 1.0 )
+		{
+			message("The turbine isentropic efficiency, %lg, was reset to theoretical maximum 1.0", m_eta_t);
+			m_eta_t = 1.0;
+		}
+		if(m_eta_c < 0.1)
+		{
+			message("The compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability", m_eta_c);
+			m_eta_c = 0.1;
+		}
+		if( m_eta_t < 0.1 )
+		{
+			message("The turbine isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability", m_eta_t);
+			m_eta_t = 0.1;
+		}
+			// Limits on high pressure limit
+		if(m_P_high_limit >= N_co2_props::P_upper_limit/1.E3)
+		{
+			message("The upper pressure limit, %lg [MPa], was set to the internal limit in the CO2 properties code %lg [MPa]", m_P_high_limit, N_co2_props::P_upper_limit/1.E3);
+			m_P_high_limit = N_co2_props::P_upper_limit / 1.E3;
+		}
+		double P_high_limit_min = 10.0;
+		if(m_P_high_limit <= P_high_limit_min)
+		{
+			message("The upper pressure limit, %lg [MPa], must be greater than %lg [MPa] to ensure solution stability", m_P_high_limit, P_high_limit_min);
+			return -1;
+		}
+		// ******************************************************************************************
+		// ******************************************************************************************
+		// ******************************************************************************************
 
 		// Set up cycle_design_parameters structure
 		// Integers for compressor maps (hardcoded)
@@ -239,7 +296,37 @@ public:
 		// Air-cooler specific parameters
 		double T_amb_cycle_des = value(P_T_AMB_DES) + 273.15;		//[K] Ambient temperature at power cycle design, convert from C
 		double fan_power_frac = value(P_FAN_POWER_PERC) / 100.0;			//[-] Fraction of cycle net power output used by cooler air fan, convert from %
-		double deltaP_cooler_frac = value(P_DELTAP_COOL_DES) / 100.0;		//[-] Fraction of P_high allowed as CO2 pressure drop in air cooler design
+		//double deltaP_cooler_frac = value(P_DELTAP_COOL_DES) / 100.0;		//[-] Fraction of P_high allowed as CO2 pressure drop in air cooler design
+			// Hardcode deltaP_cooler_frac
+		double deltaP_cooler_frac = 0.002;
+
+		// Check air-cooler parameters are within limits
+			// Ambient temperature must be cooler than compressor inlet temperature
+		if(T_amb_cycle_des > m_T_mc_in_des - 2.0)
+		{
+			message("The ambient temperature used for the air cooler design, %lg [C], must be 2 [C] less than the specified compressor inlet temperature %lg [C]", T_amb_cycle_des-273.15, m_T_mc_in_des-273.15);
+			return -1;
+		}
+			// Also need some "reasonable" lower limit on the ambient temperature
+		if(T_amb_cycle_des < 273.15)
+		{
+			message("The ambient temperature used for the air cooler design, %lg [C], was reset to 0 [C] to improve solution stability", T_amb_cycle_des-273.15);
+			T_amb_cycle_des = 273.15;
+		}
+			// Set an upper limit on the fraction of cycle net power allocated to the fan on the air cooler
+		double fan_power_frac_max = 0.1;
+		if(fan_power_frac > fan_power_frac_max)
+		{
+			message("The fraction of cycle net power used by the cooling fan, %lg, is greater than the internal maximum %lg", fan_power_frac, fan_power_frac_max);
+			return -1;
+		}
+		double fan_power_frac_min = 0.001;
+		if(fan_power_frac < fan_power_frac_min)
+		{
+			message("The fraction of cycle net power used by the cooling fan, %lg, is less than the internal minimum %lg", fan_power_frac, fan_power_frac_min);
+			return -1;
+		}
+
 
 		// **************************************************************************
 		// Solar Receiver Parameters
@@ -247,6 +334,38 @@ public:
 		m_T_rec_hot = value(P_T_rec_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
 		m_T_rec_cold = value(P_T_rec_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
 		m_Q_dot_rec_des = value(P_Q_dot_rec_des);		//[MWt] Receiver thermal input at design
+
+		// Check that receiver parameters are within limits
+			// Receiver outlet temperature should be greater than turbine inlet temperature
+		if(m_T_rec_hot < m_T_t_in_des + 1.0)
+		{
+			message("The receiver hot outlet temperature, %lg [C], must be at least 1 [C] greater than the turbine inlet temperature %lg [C]", m_T_rec_hot-273.15, m_T_t_in_des-273.15);
+			return -1;
+		}
+			// Receiver inlet temperature must be less than the turbine inlet temperature
+		if(m_T_rec_cold > m_T_t_in_des - 1.0)
+		{
+			message("The receiver cold inlet temperature, %lg [C], must be at least 1 [C] less than the turbine inlet temperature %lg [C]", m_T_rec_cold-273.15, m_T_t_in_des-273.15);
+			return -1;
+		}
+			// Set a "reasonable" lower limit for the receiver inlet temperature
+		double T_rec_cold_min = 150.0 + 273.15;
+		if(m_T_rec_cold < T_rec_cold_min)
+		{
+			message("The receiver cold inlet temperature, %lg [C], must be greater than the internal limit for solution stability: %lg [C]", m_T_rec_cold-273.15, T_rec_cold_min-273.15);
+			return -1;
+		}
+			// Receiver inlet temperature must be greater than the compressor inlet temperature
+		if(m_T_rec_cold <= m_T_mc_in_des)
+		{
+			message("The receiver cold inlet temperature, %lg [C], must be greater than the specified compressor inlet temperature: %lg [C]", m_T_rec_cold-273.15, m_T_mc_in_des-273.15);
+			return -1;
+		}
+			// Receiver thermal input should be at least as large as the net cycle electric output, but, this input is only an estimate and is recalculated in the code
+		if(m_Q_dot_rec_des <= m_W_dot_net_des/1.E3)
+		{
+			m_Q_dot_rec_des = m_W_dot_net_des / 1.E3;
+		}
 
 		// Declare instance of fluid class for FIELD fluid.
 		int rec_fl = (int)value(P_rec_fl);
@@ -332,6 +451,9 @@ public:
 		double y_lower = numeric_limits<double>::quiet_NaN();
 		double x_upper = numeric_limits<double>::quiet_NaN();
 		double x_lower = numeric_limits<double>::quiet_NaN();
+		double UA_net_power_ratio = numeric_limits<double>::quiet_NaN();
+		double UA_net_power_ratio_max = 1.E5;
+		double UA_net_power_ratio_min = 1.E-5;
 		int opt_des_calls = 1;
 
 		while( abs(diff_T_PHX_in) > m_tol )
@@ -350,7 +472,16 @@ public:
 				}
 				else			// No upper bound set, try to get there
 				{
-					UA_recups_guess *= 0.6;
+					if( opt_des_calls > 5 )
+						UA_recups_guess = UA_net_power_ratio_min;
+					else
+						UA_recups_guess *= 0.6;
+				}
+
+				if(x_lower <= UA_net_power_ratio_min)
+				{
+					message("The receiver inlet temperature, %lg [C], is too cold to achieve with the available cycle model", m_T_rec_cold-273.15);
+					return -1;
 				}
 			}
 			else						// Calc < target, UA is too small, decrease UA
@@ -365,7 +496,16 @@ public:
 				}
 				else
 				{
-					UA_recups_guess *= 1.1;
+					if( opt_des_calls > 5 )
+						UA_recups_guess = UA_net_power_ratio_max;
+					else
+						UA_recups_guess *= 1.1;
+				}
+
+				if(x_upper >= UA_net_power_ratio_max)
+				{
+					message("The receiver inlet temperature, %lg [C], is too hot to achieve with the available cycle model", m_T_rec_cold-273.15);
+					return -1;
 				}
 			}
 
