@@ -73,7 +73,7 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER, O_F_RECOMP_DES,    "f_recomp_des",        "Design: Recompression fraction",           "-",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_CALC_DES,  "Q_dot_calc_des",      "Design: Calculated thermal",               "MWt",  "", "", "" },	
 	{ TCS_OUTPUT, TCS_NUMBER, O_UA_RECUP_DES,    "UA_recup_des",        "Design: Recuperator conductance UA",       "kW/K", "", "", "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_T_COOLER_IN_DES, "T_cooler_in_des",     "Design: Cooler CO2 inlet temp",            "K",    "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_T_COOLER_IN_DES, "T_cooler_in_des",     "Design: Cooler CO2 inlet temp",            "C",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_COOLER_VOLUME,   "cooler_volume",       "Estimated required cooler material vol.",  "m^3",  "", "", "" },
 
 	//N_MAX
@@ -513,7 +513,7 @@ public:
 			m_UA_total_des = UA_recups_guess;
 			rc_des_par.m_UA_rec_total = m_UA_total_des;
 			// Create new instance of RecompCycle class and assign to member point
-			rc_cycle = new RecompCycle(rc_des_par);
+			rc_cycle->set_design_parameters(rc_des_par);
 			auto_cycle_success = rc_cycle->auto_optimal_design();
 			T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
 			// **********************************************************************
@@ -592,7 +592,7 @@ public:
 		value(O_F_RECOMP_DES, rc_cycle->get_cycle_design_parameters()->m_recomp_frac);
 		value(O_Q_DOT_CALC_DES, q_dot_des);
 		value(O_UA_RECUP_DES, m_UA_total_des);
-		value(O_T_COOLER_IN_DES, T_acc_in);
+		value(O_T_COOLER_IN_DES, T_acc_in-273.15);
 		value(O_COOLER_VOLUME, ACC.get_hx_design_solved()->m_material_V);
 
 		return 0;
