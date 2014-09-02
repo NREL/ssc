@@ -540,7 +540,7 @@ int tcFrame::Simulate( double start, double end, double step, int iter, bool sto
 	m_kernel->set_max_iterations( iter, proceed_anyway );
 	m_kernel->set_store_array_matrix_data( store_arrmat );
 
-	wxProgressDialog progdlg("Simulation", "In Progress", 100, this, wxPD_CAN_ABORT );
+	wxProgressDialog progdlg("Simulation", "In progress...", 100, this, wxPD_CAN_ABORT|wxPD_AUTO_HIDE );
 	progdlg.SetClientSize( 400, 130 );
 	wxPoint pt = GetPosition();
 	pt.x += 20;
