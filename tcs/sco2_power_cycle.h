@@ -548,12 +548,8 @@ private:
 		m_cycle_od_performance.m_P = m_pres_od;
 	}
 
-public:
-	~RecompCycle(){};
-
-	RecompCycle(const cycle_design_parameters & cycle_des_par_in)
+	void clear_member_data()
 	{
-		m_cycle_des_par = cycle_des_par_in;
 		m_temp_last.resize(10);
 		m_pres_last.resize(10);
 		m_enth_last.resize(10);
@@ -594,13 +590,28 @@ public:
 		std::fill(m_enth_od.begin(), m_enth_od.end(), std::numeric_limits<double>::quiet_NaN());
 		std::fill(m_entr_od.begin(), m_entr_od.end(), std::numeric_limits<double>::quiet_NaN());
 		std::fill(m_dens_od.begin(), m_dens_od.end(), std::numeric_limits<double>::quiet_NaN());
-		m_W_dot_net_last = m_eta_thermal_last = 
-			m_W_dot_net_des = m_eta_thermal_des = 
-			m_W_dot_net_od_last = m_q_dot_in_od_last = m_eta_thermal_od_last = 
+		m_W_dot_net_last = m_eta_thermal_last =
+			m_W_dot_net_des = m_eta_thermal_des =
+			m_W_dot_net_od_last = m_q_dot_in_od_last = m_eta_thermal_od_last =
 			m_W_dot_net_od = m_q_dot_in_od = m_eta_thermal_od = std::numeric_limits<double>::quiet_NaN();
 
 		m_eta_thermal_autodes = -HUGE_VAL;
-		m_PR_mc_autodes = m_recomp_frac_autodes = m_LT_frac_autodes = m_P_high_autodes = std::numeric_limits<double>::quiet_NaN();	
+		m_PR_mc_autodes = m_recomp_frac_autodes = m_LT_frac_autodes = m_P_high_autodes = std::numeric_limits<double>::quiet_NaN();
+	}
+
+public:
+	~RecompCycle(){};
+
+	RecompCycle(const cycle_design_parameters & cycle_des_par_in)
+	{
+		m_cycle_des_par = cycle_des_par_in;
+		clear_member_data();
+	}
+
+	void set_design_parameters(const cycle_design_parameters & cycle_des_par_in)
+	{
+		m_cycle_des_par = cycle_des_par_in;
+		clear_member_data();
 	}
 
 	const cycle_design_parameters * get_cycle_design_parameters()
