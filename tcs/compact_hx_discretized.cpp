@@ -356,8 +356,6 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 			double V_node = L_node*m_s_v*m_s_h;		//[m^3] Volume of one node
 			V_total = L_tube*m_Depth*W_par;	//[m^3] Total HX volume
 
-			bool reguess_length = false;
-
 			// 2.5) Iterative loop to find air mass flow rate resulting in target fan power
 			//double m_dot_air_total = 3668.0;
 				// Try reasonably overestimating air mass flow rate by energy balance assuming small increase in air temp
@@ -546,7 +544,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 						}
 						T_out_guess = min(700.0 + 273.15, T_out_guess);
 
-						if( x_lower_T_out >= 700.0 )
+						if( x_lower_T_out >= 700.0 + 273.15 )
 						{
 							break;
 						}
@@ -584,9 +582,6 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 						diff_T_in = (T_in_check - T_co2(in, j)) / T_co2(in, j);
 
 					}	// **** End T_out (node) iteration ***********************
-					
-					if( reguess_length )
-						break;
 
 					T_co2(out, j) = min(700.0 + 273.15, T_out_guess);
 					T_air(air_in,j) = T_air(air_in,j-1) + Q_dot_node/C_dot_air;
@@ -620,9 +615,6 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 					P_co2(out, j) = min(25000.0, max(1000.0, P_co2(out, j)));
 					
 				}	// End iteration through nodes in flow path		
-
-				if( reguess_length )
-					break;
 
 			}	// End iteration through loop in flow path
 
