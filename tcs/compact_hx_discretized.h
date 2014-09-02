@@ -114,8 +114,7 @@ public:
 
 	const S_hx_design_solved * get_hx_design_solved()
 	{
-		if( m_hx_design_solved.m_material_V != m_hx_design_solved.m_material_V )
-			m_hx_design_solved.m_material_V = m_material_V;
+		m_hx_design_solved.m_material_V = m_material_V;
 
 		return &m_hx_design_solved;
 	}
