@@ -27,6 +27,10 @@ enum{	//Parameters
 	P_rec_fl,
 	P_rec_fl_props,
 
+	P_STARTUP_TIME,
+	P_STARTUP_FRAC,
+	P_Q_SBY_FRAC,
+
 	//Inputs
 	I_1,
 
@@ -63,6 +67,10 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_PARAM, TCS_NUMBER, P_Q_dot_rec_des,  "Q_dot_rec_des",   "Receiver design thermal input",                  "MWt",  "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_rec_fl,         "rec_htf",         "The name of the HTF used in the receiver",       "",     "", "", "" },
 	{ TCS_PARAM, TCS_MATRIX, P_rec_fl_props,   "rec_fl_props",    "User defined rec fluid property data",           "-", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "" },
+		// Cycle Controller Parameters
+	{ TCS_PARAM, TCS_NUMBER, P_STARTUP_TIME,   "startup_time",    "Time needed for power block startup",                   "hr",   "", "", "0.5" },
+	{ TCS_PARAM, TCS_NUMBER, P_STARTUP_FRAC,   "startup_frac",    "Fraction of design thermal power needed for startup",   "none", "", "", "0.2" },
+	{ TCS_PARAM, TCS_NUMBER, P_Q_SBY_FRAC,     "q_sby_frac",      "Fraction of thermal power required for standby mode",   "none", "", "", "0.2" },
 
 	//INPUTS
 	{ TCS_INPUT, TCS_NUMBER, I_1, "vwind", "Wind velocity", "m/s", "", "", "" },
@@ -124,6 +132,20 @@ private:
 	// Calculated Receiver Design Parameters
 	double m_dot_rec_des;				// [kg/s] Receiver design point mass flow rate
 
+	// Cycle Control Parameters
+	double m_startup_time;			//[hr] Time needed for power block startup
+	double m_startup_frac;			//[-] Fraction of design thermal power needed for startup
+	double m_startup_energy;		//[kWt] Startup energy
+	double m_q_sby_frac;			//[-] Fraction of thermal power required for standby mode
+
+	// Stored Variables
+	int    m_standby_control_prev;
+	int    m_standby_control;
+	double m_time_su_prev;
+	double m_time_su;
+	double m_E_su_prev;
+	double m_E_su;
+
 public:
 	sam_sco2_recomp_type424(tcscontext *cst, tcstypeinfo *ti)
 		: tcstypeinterface(cst, ti)
@@ -165,6 +187,20 @@ public:
 
 		// Calculated Receiver Design Parameters
 		m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
+
+		// Cycle Control Parameters
+		m_startup_time = numeric_limits<double>::quiet_NaN();
+		m_startup_frac = numeric_limits<double>::quiet_NaN();
+		m_startup_energy = numeric_limits<double>::quiet_NaN();
+		m_q_sby_frac = numeric_limits<double>::quiet_NaN();
+
+		// Stored Variables
+		m_standby_control_prev = -1;
+		m_standby_control = -1;
+		m_time_su_prev = std::numeric_limits<double>::quiet_NaN();
+		m_time_su = std::numeric_limits<double>::quiet_NaN();
+		m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
+		m_E_su = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_sco2_recomp_type424()
@@ -594,6 +630,21 @@ public:
 		value(O_UA_RECUP_DES, m_UA_total_des);
 		value(O_T_COOLER_IN_DES, T_acc_in-273.15);
 		value(O_COOLER_VOLUME, ACC.get_hx_design_solved()->m_material_V);
+
+		m_startup_time = value(P_STARTUP_TIME);		//[hr] Time needed for power block startup
+		m_startup_frac = value(P_STARTUP_FRAC);		//[-] Fraction of design thermal power needed for startup
+		m_q_sby_frac	= value( P_Q_SBY_FRAC );	//[-] Fraction of thermal power required for standby mode
+
+		// Calculate the startup energy needed
+		m_startup_energy = m_startup_frac*m_W_dot_net_des / design_eta;		//[kWt]
+
+		// Initialize stored variables
+		m_standby_control_prev = 3;
+		m_time_su_prev = m_startup_time;
+		m_E_su_prev = m_startup_energy;
+
+		m_time_su = m_time_su_prev;
+		m_E_su = m_E_su_prev;		
 
 		return 0;
 	}
