@@ -1545,6 +1545,7 @@ public:
 			 		}
 					credit[m][period] = credit_amt;
 					ec_charge[m] -= credit_amt;
+					monthly_energy += energy_surplus;
 				}
 				else
 				{ // calculate payment or charge
@@ -1553,7 +1554,7 @@ public:
 
 					// update 9/1/14 based on feedback from Peter Jeavons 8/28/14
 					if ((m>0) && monthly_reconciliation) // reduce energy used to calculate charge
-						energy_deficit += cumulative_excess_energy[m - 1];
+						energy_deficit -= fabs(cumulative_excess_energy[m - 1] * energy_net[m][period]/energy_use[m]);
 
 					tier=0;
 					while (tier<6)
@@ -1573,8 +1574,9 @@ public:
 					}
 					charge[m][period] = charge_amt;
 					ec_charge[m] += charge_amt;
+					monthly_energy -= energy_deficit;
 				}
-				monthly_energy += energy_net[m][period];
+				//monthly_energy += energy_net[m][period];
 			}
 			ec_rate[m] = monthly_energy != 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
 		}
@@ -1607,10 +1609,11 @@ public:
 						// monthly rollover with year end sell at reduced rate
 							if ( cumulative_excess_energy[m] == 0 ) // buy from grid
 							{
-								if ( m > 0 )
-									payment[c] += -(cumulative_excess_energy[m-1]-energy_use[m]) * ec_rate[m];
-								else
-									payment[c] += energy_use[m] * ec_rate[m];
+								payment[c] += ec_charge[m];
+							//	if ( m > 0 )
+							//		payment[c] += (energy_use[m] - cumulative_excess_energy[m - 1]) * ec_rate[m];
+							//	else
+							//		payment[c] += energy_use[m] * ec_rate[m];
 							}
 						}
 						c++;
@@ -1647,7 +1650,7 @@ public:
 			}
 		}
 
-		// calculate energy charge for both scenarios
+		// calculate energy charge for both scenarios hour by hour basis
 		for (int i=0;i<8760;i++)
 		{
 			int period = tod[i]-1;
