@@ -138,7 +138,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,         SSC_NUMBER,    "total_installed_cost",                   "Installed cost",                                                "$",     "",					  "System Costs",			 "*",                         "",                             "" },
 	{ SSC_INPUT,         SSC_NUMBER,    "reserves_interest",                      "Interest on reserves",				                           "%",	 "",					  "Reserve Accounts",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
                                                                                   
-/* DHF replacement reserve on top of regar o and m */                             
+/* DHF replacement reserve on top of regular o and m */                             
 	{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_cost",                    "Major equipment reserve 1 cost",	                               "$/W",	        "",				  "Reserve Accounts",             "?=0.25",               "MIN=0",                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_freq",                    "Major equipment reserve 1 frequency",	                       "years",	 "",			  "Reserve Accounts",             "?=12",               "INTEGER,MIN=0",                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "equip2_reserve_cost",                    "Major equipment reserve 2 cost",	                               "$/W",	 "",				  "Reserve Accounts",             "?=0",               "MIN=0",                         "" },
