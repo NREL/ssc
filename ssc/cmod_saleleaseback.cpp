@@ -149,15 +149,13 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,       SSC_NUMBER,      "total_installed_cost",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "DHF",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
 
-/* DHF replacement reserve on top of regular o and m */
-	{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_cost",      "Major equipment reserve1 cost",	"$/Wdc",	 "",				  "DHF",             "?=0.25",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_freq",      "Major equipment reserve1 frequency",	"years",	 "",			  "DHF",             "?=12",               "INTEGER,MIN=0",                         "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,     "equip2_reserve_cost",      "Major equipment reserve2 cost",	"$/Wdc",	 "",				  "DHF",             "?=0",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip2_reserve_freq",      "Major equipment reserve2 frequency",	"years",	 "",			  "DHF",             "?=15",               "INTEGER,MIN=0",                         "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,     "equip3_reserve_cost",      "Major equipment reserve3 cost",	"$/Wdc",	 "",				  "DHF",             "?=0",               "MIN=0",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip3_reserve_freq",      "Major equipment reserve3 frequency",	"years",	 "",			  "DHF",             "?=20",               "INTEGER,MIN=0",                         "" },
+	/* DHF replacement reserve on top of regular o and m */
+	{ SSC_INPUT, SSC_NUMBER, "equip1_reserve_cost", "Major equipment reserve 1 cost", "$/W", "", "Reserve Accounts", "?=0.25", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "equip1_reserve_freq", "Major equipment reserve 1 frequency", "years", "", "Reserve Accounts", "?=12", "INTEGER,MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "equip2_reserve_cost", "Major equipment reserve 2 cost", "$/W", "", "Reserve Accounts", "?=0", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "equip2_reserve_freq", "Major equipment reserve 2 frequency", "years", "", "Reserve Accounts", "?=15", "INTEGER,MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "equip3_reserve_cost", "Major equipment reserve 3 cost", "$/W", "", "Reserve Accounts", "?=0", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "equip3_reserve_freq", "Major equipment reserve 3 frequency", "years", "", "Reserve Accounts", "?=20", "INTEGER,MIN=0", "" },
 
 /* major equipment depreciation schedules - can extend to three different schedules */
 	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",   "Major equipment reserve state depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
