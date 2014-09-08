@@ -27,6 +27,7 @@
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type221B.cpp" />
+    <ClCompile Include="..\tcs\sco2_pc_core.cpp" />
     <ClCompile Include="..\tcs\water_properties.cpp" />
     <ClCompile Include="..\tcs\fmin.cpp" />
     <ClCompile Include="..\tcs\Heliostat_AzElAod.cpp" />
@@ -81,6 +82,7 @@
     <ClInclude Include="..\tcs\compact_hx_discretized.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
+    <ClInclude Include="..\tcs\sco2_pc_core.h" />
     <ClInclude Include="..\tcs\water_properties.h" />
     <ClInclude Include="..\tcs\fmin.h" />
     <ClInclude Include="..\tcs\htf_props.h" />
