@@ -10,6 +10,8 @@
 
 #include "compact_hx_discretized.h"
 
+#include "sco2_pc_core.h"
+
 using namespace std;
 
 enum{	//Parameters
@@ -60,6 +62,117 @@ public:
 
 	virtual int init()
 	{
+		// ****************************************
+		// ** Test update sCO2 power cycle code ***
+		// ****************************************
+		CO2_state co2_props_1;
+		double T_in = 800.0;
+		double P_in = 20000.0;
+		CO2_TP(T_in, P_in, &co2_props_1);
+		double ssnd_in = co2_props_1.ssnd;
+		double P_out = 10000.0;
+		double poly_eta = 0.75;
+		int error_code = 0;
+		double isen_eta = -999.9;
+
+		double enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out, spec_work;
+		enth_in = entr_in = dens_in = temp_out = enth_out = entr_out = dens_out = spec_work = std::numeric_limits<double>::quiet_NaN();
+
+		isen_eta_from_poly_eta(T_in, P_in, P_out, poly_eta, false, error_code, isen_eta);
+		calculate_turbomachinery_outlet_1(T_in, P_in, P_out, poly_eta, false, error_code, enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out, spec_work);
+
+		C_turbine::S_design_parameters t_des_par;
+		t_des_par.m_D_in = dens_in;
+		t_des_par.m_h_in = enth_in;
+		t_des_par.m_h_out = enth_out;
+		t_des_par.m_m_dot = 35000.0 / spec_work;
+		t_des_par.m_N_comp_design_if_linked = 123.456;
+		t_des_par.m_N_design = 3600.0;
+		t_des_par.m_P_in = P_in;
+		t_des_par.m_P_out = P_out;
+		t_des_par.m_ssnd_in = ssnd_in;
+		t_des_par.m_s_in = entr_in;
+		t_des_par.m_T_in = T_in;
+
+		C_turbine turbine;
+
+		turbine.turbine_sizing(t_des_par, error_code);
+		
+		double m_dot_t, T_t_out;
+		m_dot_t = T_t_out = -999.9;
+		turbine.off_design_turbine(T_in, 0.75*P_in, P_out, 3600.0, error_code, m_dot_t, T_t_out);
+
+		// ************************************************
+		// Test compressor
+		T_in = 310.0;
+		P_in = 10000.0;
+		P_out = 20000.0;
+		isen_eta = 0.75;
+
+		calculate_turbomachinery_outlet_1(T_in, P_in, P_out, isen_eta, true, error_code, enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out, spec_work);
+
+		CO2_TD(temp_out, dens_out, &co2_props_1);
+
+		C_compressor::S_design_parameters mc_des_par;
+		mc_des_par.m_D_in = dens_in;
+		mc_des_par.m_D_out = dens_out;
+		mc_des_par.m_h_in = enth_in;
+		mc_des_par.m_h_out = enth_out;
+		mc_des_par.m_m_dot = t_des_par.m_m_dot;
+		mc_des_par.m_P_out = P_out;
+		mc_des_par.m_ssnd_out = co2_props_1.ssnd;
+		mc_des_par.m_s_in = entr_in;
+		mc_des_par.m_T_out = temp_out;
+
+		C_compressor mc;
+
+		mc.compressor_sizing(mc_des_par, error_code);
+
+		double T_c_od_out = std::numeric_limits<double>::quiet_NaN();
+		double P_c_od_out = std::numeric_limits<double>::quiet_NaN();
+		mc.off_design_compressor(T_in, P_in, 0.75*m_dot_t, mc.get_design_solved()->m_N_design, error_code, T_c_od_out, P_c_od_out);
+
+
+
+		// ************************************************
+		// Test HX
+
+		int N_sub_hxrs = 10;
+		double Q_dot = 30000.0;
+		double m_dot_c = 57.0;
+		double m_dot_h = 57.0;
+		double T_c_in = 330.0;
+		double T_h_in = 800.0;
+		double P_c_in = 20000.0;
+		double P_h_in = 10000.0;
+		double P_c_out = P_c_in;
+		double P_h_out = P_h_in;
+
+		double UA_des = -999.9;
+		double min_DT_des = -999.9;
+
+		calculate_hxr_UA_1(N_sub_hxrs, Q_dot, m_dot_c, m_dot_h, T_c_in, T_h_in, P_c_in, P_c_out, P_h_in, P_h_out, error_code, UA_des, min_DT_des);
+
+		C_HeatExchanger::S_design_parameters hx_des_par;
+		hx_des_par.m_m_dot_design[0] = m_dot_c;
+		hx_des_par.m_m_dot_design[1] = m_dot_h;
+		hx_des_par.m_UA_design = UA_des;
+		hx_des_par.m_DP_design[0] = 0.0;
+		hx_des_par.m_DP_design[1] = 0.0;
+
+		C_HeatExchanger hx;
+		hx.initialize(hx_des_par);
+
+		std::vector<double> m_dots_od(2);
+		m_dots_od[0] = m_dot_c*0.75;
+		m_dots_od[1] = m_dot_h*0.75;
+
+		double UA_od = -999.9;
+		hx.hxr_conductance(m_dots_od, UA_od);
+
+		std::vector<double> deltaP_od;
+		hx.hxr_pressure_drops(m_dots_od, deltaP_od);
+
 		// ****************************************
 		// ** Test Air-Cooler Model **
 		// ****************************************
