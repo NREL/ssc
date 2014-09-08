@@ -117,7 +117,7 @@ public:
 
 	enum iscc_cycle_config
 	{
-		E_nrel_hp_evap,
+		E_nrel_hp_evap = 1,
 		E_ge	
 	};
 
