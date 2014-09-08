@@ -18,6 +18,7 @@ OBJECTS = tcskernel.o \
 	tc_test_type402.o \
 	sam_sco2_recomp_type424.o \
 	sco2_test_type401.o \
+	sco2_pc_core.o \
     cavity_calcs.o \
 	atmospheric_aod.o \
 	Heliostat_AzElAod.o \
