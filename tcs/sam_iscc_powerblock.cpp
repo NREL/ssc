@@ -332,6 +332,7 @@ public:
 		// 1) Get inputs from receiver and weather reader
 		double T_amb = value( I_T_AMB );					//[C] Ambient temperature
 		double P_amb = value( I_P_AMB )/1000.0;				//[bar] Ambient pressure, convert from [mbar]
+			// This input (m_dot_ms_rec, isn't used anywhere: is it necessary??)
 		double m_dot_ms_rec = value( I_M_DOT_MS )/3600.0;	//[kg/s] Molten salt mass flow rate from receiver, convert from [kg/hr]
 		double q_dot_rec = value( I_Q_DOT_REC_SS )*1000.0;		//[kWt] Receiver thermal output, convert from [MWt]
 		double T_rec_in_prev = value( I_T_REC_IN );			//[C] Receiver inlet molten salt temperature - used to solve previous call to tower model
