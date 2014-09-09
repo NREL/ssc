@@ -810,6 +810,9 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "analysis_period_irr",                "Analysis Period IRR",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
 
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "NPV of annual costs", "", "", "LCOE calculations", "*", "", "" },
+
 
 var_info_invalid };
 
@@ -996,6 +999,8 @@ enum {
 
 	CF_Recapitalization,
 	CF_Recapitalization_boolean,
+
+	CF_Annual_Costs,
 
 	CF_max };
 
@@ -2453,9 +2458,29 @@ public:
 	double npv_energy_real = npv(CF_energy_net, nyears, disc_real);
 	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
-	// TODO - update LCOE calculations 
+	// update LCOE calculations 
 	double lcoe_nom = lppa_nom;
 	double lcoe_real = lppa_real;
+
+	// from single_owner.xlsm
+	cf.at(CF_Annual_Costs, 0) = cf.at(CF_project_investing_activities, 0);
+	for (i = 1; i < nyears; i++)
+	{
+		cf.at(CF_Annual_Costs, i) =
+			cf.at(CF_pbi_total, i) + cf.at(CF_sta_tax_savings, i) + cf.at(CF_fed_tax_savings, i)
+			- cf.at(CF_operating_expenses, i) - cf.at(CF_debt_payment_interest, i)
+			- cf.at(CF_debt_payment_principal, i);
+	}
+	double npv_annual_costs = npv(CF_Annual_Costs, nyears, nom_discount_rate)
+		- cf.at(CF_Annual_Costs, 0);
+	if (npv_energy_nom != 0) lcoe_nom = npv_annual_costs / npv_energy_nom * 100.0;
+	if (npv_energy_real != 0) lcoe_real = npv_annual_costs / npv_energy_real * 100.0;
+
+	assign("npv_annual_costs", var_data((ssc_number_t)npv_annual_costs));
+	save_cf(CF_Annual_Costs, nyears, "cf_annual_costs");
+
+
+
 
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
