@@ -596,7 +596,9 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_om",    "O and M disbursement",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip1",    "Major equipment disbursement 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Major equipment disbursement 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip3",    "Major equipment disbursement 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip3", "Major equipment disbursement 3", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_merr", "Release of Major Equipment Replacement Reserves", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
 	// Lessee (Sponsor) cash flow
@@ -835,6 +837,7 @@ enum {
 	CF_reserve_equip3,
 	CF_funding_equip3,
 	CF_disbursement_equip3,
+	CF_disbursement_merr,
 	CF_reserve_total,
 	CF_reserve_interest,
 
@@ -2787,6 +2790,16 @@ public:
 	save_cf( CF_disbursement_equip1, nyears, "cf_disbursement_equip1" );
 	save_cf( CF_disbursement_equip2, nyears, "cf_disbursement_equip2" );
 	save_cf( CF_disbursement_equip3, nyears, "cf_disbursement_equip3" );
+
+	for (i = 0; i <= nyears; i++)
+	{
+		cf.at(CF_disbursement_merr, i) = cf.at(CF_sponsor_mecs, i) 
+			- (	cf.at(CF_disbursement_equip1, i)
+			+ cf.at(CF_disbursement_equip2, i)
+			+ cf.at(CF_disbursement_equip3,i)			);
+	}
+	save_cf(CF_disbursement_merr, nyears, "cf_disbursement_merr");
+
 
 	save_cf( CF_reserve_total, nyears, "cf_reserve_total" );
 	save_cf( CF_reserve_interest, nyears, "cf_reserve_interest" );
