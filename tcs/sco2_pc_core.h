@@ -143,7 +143,7 @@ public:
 
 	C_turbine(){};
 
-	const double m_nu_design = 0.7476;
+	static const double m_nu_design = 0.7476;
 
 	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
@@ -327,9 +327,9 @@ public:
 
 	C_compressor(){};
 
-	const double m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	const double m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
-	const double m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
+	static const double m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+	static const double m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
+	static const double m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
 
 	const S_design_solved * get_design_solved()
 	{
@@ -487,9 +487,9 @@ public:
 
 	C_recompressor(){};
 
-	const double m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	const double m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
-	const double m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
+	static const double m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+	static const double m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
+	static const double m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
 
 	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
@@ -579,13 +579,13 @@ public:
 			double residual = m_snl_phi_design - phi;
 			if(residual < 0.0)		// P_int guess is too high
 			{
-				if(-residual <= tolerance && abs(eta_stage-eta_2_req) <= tolerance)
+				if(-residual <= tolerance && fabs(eta_stage-eta_2_req) <= tolerance)
 					break;
 				upper_bound = P_int;
 			}
 			else					// P_int guess is too low
 			{
-				if( -residual <= tolerance && abs(eta_stage - eta_2_req) <= tolerance )
+				if( -residual <= tolerance && fabs(eta_stage - eta_2_req) <= tolerance )
 					break;
 				lower_bound = P_int;
 			}
@@ -596,7 +596,7 @@ public:
 			last_residual = residual;
 			if( P_secant <= lower_bound || P_secant >= upper_bound )		// secant method overshot
 				P_int = 0.5*(lower_bound + upper_bound);
-			else if(abs(secant_step) > abs(0.5*(upper_bound-lower_bound)))	// take the smaller step to ensure convergence
+			else if(fabs(secant_step) > fabs(0.5*(upper_bound-lower_bound)))	// take the smaller step to ensure convergence
 				P_int = 0.5*(lower_bound + upper_bound);
 			else
 				P_int = P_secant;		// Use secant guess
