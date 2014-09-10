@@ -963,13 +963,13 @@ enum {
 	CF_sta_depreciation,
 	CF_sta_incentive_income_less_deductions,
 	CF_sta_taxable_income_less_deductions,
-	CF_sta_tax_savings,
+//	CF_sta_tax_savings,
 	
 	CF_fed_depr_sched,
 	CF_fed_depreciation,
 	CF_fed_incentive_income_less_deductions,
 	CF_fed_taxable_income_less_deductions,
-	CF_fed_tax_savings,
+//	CF_fed_tax_savings,
 
 	CF_degradation,
 
@@ -2381,8 +2381,13 @@ public:
 	for (i = 1; i < nyears; i++)
 	{
 		cf.at(CF_Annual_Costs, i) =
-			cf.at(CF_pbi_total, i) + cf.at(CF_sta_tax_savings, i) + cf.at(CF_fed_tax_savings, i)
+			cf.at(CF_pbi_total, i)
+			+ cf.at(CF_statax, i)
+			+ cf.at(CF_fedtax, i)
 			- cf.at(CF_operating_expenses, i);
+//		cf.at(CF_Annual_Costs, i) =
+//			cf.at(CF_pbi_total, i) + cf.at(CF_sta_tax_savings, i) + cf.at(CF_fed_tax_savings, i)
+//			- cf.at(CF_operating_expenses, i);
 	}
 	double npv_annual_costs = npv(CF_Annual_Costs, nyears, nom_discount_rate)
 		- cf.at(CF_Annual_Costs, 0);
