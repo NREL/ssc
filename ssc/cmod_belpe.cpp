@@ -47,8 +47,8 @@ static var_info _cm_vtab_belpe[] =
 
 
 	//OUTPUTS
-	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Electric Load",					"kWh",      "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Peak Electric Load",				"kW",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 
@@ -846,6 +846,11 @@ public:
 			if (j < 8760) //do not reassign non_hvac load on the second loop through
 				non_hvac_load[i] = (ssc_number_t)HourlyNonHVACLoad * 1000; //Wh
 
+			//Set HVAC max to avoid weird spikes in the calculated load.
+			//These are educated guesses.They only apply to 1 - 2 hours per year so I think it's ok that they're not particularly detailed
+			double HeatMaxBTU = (A_Floor * 60 > 10000) ? A_Floor * 60 : 10000;
+			double CoolMaxBTU = (A_Floor * 20 > 10000) ? A_Floor * 20 : 10000;
+
 			//Now for the HVAC controls
 			if (Cset[i] >= TAnew[i] && Hset[i] <= TAnew[i]) // Temperature is ok, no HVAC
 			{
@@ -855,7 +860,7 @@ public:
 			}				
 			else if (Cset[i] <= TAnew[i]) // Cooling temperature requirement met
 			{
-				if (ClEn[Mon] == 0) // This is if not in cooling season!
+				if (ClEn[NextMon] == 0) // This is if not in cooling season!
 				{
 					Heaton[i] = 0;
 					QN[inext] = 0;
@@ -867,10 +872,12 @@ public:
 					Tdiff[i] = TAnew[i] - Cset[i];
 					TAnew[i] = Cset[i];
 					QN[inext] = Cair / dT / 1 * (TAnew[i] * TAnewBot - TAnewTop);  //BTU
+					if (ClEn[Mon] == 0 && ClEn[NextMon] == 1)
+						QN[inext] = -1 * (abs(QN[i + 1]) < CoolMaxBTU) ? abs(QN[inext]) : CoolMaxBTU;
 					QHV2[inext] = QN[i] / SEER*en_cool;
 				}
 			}
-			else if (HtEn[Mon] == 0) // Heating temperature met, but not in season
+			else if (HtEn[NextMon] == 0) // Heating temperature met, but not in season
 			{
 				Heaton[i] = 0;
 				QN[inext] = 0;
@@ -882,6 +889,8 @@ public:
 				Tdiff[i] = Hset[i] - TAnew[i];
 				TAnew[i] = Hset[i];
 				QN[inext] = Cair / dT*(TAnew[i] * TAnewBot - TAnewTop);  //BTU
+				if (HtEn[Mon] == 0 && HtEn[NextMon] == 1)
+					QN[inext] = (QN[inext] < HeatMaxBTU) ? QN[i + 1] : HeatMaxBTU;
 				QHV2[inext] = (QN[i] * 0.2931)*en_heat; //Wh
 			}
 			TMnew[i] = (Tmass[i] + dT / Cmass*(TAnew[i] / hsurf + SolMassFrac*(Q_SolWin[i] + QInt_Rad[i]) / AIntMass)) / bardub;
@@ -943,6 +952,7 @@ public:
 		for (int i = 0; i < 12; i++)
 		{
 			x_hvac[i] = (monthly_diff[i] - (monthly_load[i] * closest_scale_avg)) / monthly_hvac_load[i]; //hvac fraction of scaling
+			x_hvac[i] = (x_hvac[i] < 1) ? x_hvac[i] : 1; //error checking to avoid crazy negative values
 		}
 		//loop through 8760 and scale according to what month it's in
 		for (int i = 0; i < 8760; i++)
@@ -954,12 +964,21 @@ public:
 		}
 		
 		//CONVERT LOADS TO KWH AND ASSIGN PEAK LOAD*********************************************************************************************************************************************************
+		int count = 0;
 		for (int i = 0; i < 8760; i++)
 		{
+			if (load[i] < 0) //error checking for negative loads
+			{
+				load[i] = 0;
+				count++;
+			}
 			load[i] /= 1000; //kWh
 			p_load[i] = load[i]; //kW (because timestep is hourly). peak load is equal to hourly load for this hourly calculator.
+			
 		}
-
+		if (count > 0)
+			log(util::format("The building electric load profile estimator calculated negative loads for %d hours. Loads for these hours were set to zero; however, this may indicate a problem with your inputs.",
+			count), SSC_WARNING);
 	}
 };
 
