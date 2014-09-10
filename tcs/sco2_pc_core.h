@@ -143,7 +143,9 @@ public:
 
 	C_turbine(){};
 
-	static const double m_nu_design = 0.7476;
+	static const double m_nu_design;
+	
+	
 
 	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
@@ -327,9 +329,9 @@ public:
 
 	C_compressor(){};
 
-	static const double m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	static const double m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
-	static const double m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
+	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
+	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
 
 	const S_design_solved * get_design_solved()
 	{
@@ -438,6 +440,7 @@ public:
 
 };
 
+
 class C_recompressor
 {
 public:
@@ -487,9 +490,9 @@ public:
 
 	C_recompressor(){};
 
-	static const double m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	static const double m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
-	static const double m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
+	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
+	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
 
 	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
@@ -622,5 +625,7 @@ public:
 
 
 };
+
+
 
 #endif
