@@ -20,9 +20,9 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy",                       "kWh",          "",      "generic_system",      "*",               "LENGTH=12",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual Energy",                        "kWh",          "",      "generic_system",      "*",               "",                    "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "fuel_usage",                 "Annual Fuel Usage",                    "kWht",         "",      "generic_system",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                 "Annual Fuel Usage",                    "kWht",         "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual Water Usage",                   "",             "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "heat_rate_output",           "Heat Rate Conversion Factor",          "MMBTUs/MWhe",  "",      "generic_system",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",           "Heat Rate Conversion Factor",          "MMBTUs/MWhe",  "",      "generic_system",      "*",               "",                    "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
@@ -101,10 +101,10 @@ public:
 		double fuel_usage = 0.0;
 		if (as_double("conv_eff") != 0.0)
 			fuel_usage = annual_output * 100.0 / as_double("conv_eff");
-		assign("fuel_usage", fuel_usage);
+		assign("annual_fuel_usage", fuel_usage);
 
 		assign("water_usage", 0.0);
-		assign("heat_rate_output", as_double("heat_rate") *  as_double("conv_eff") / 100.0);
+		assign("system_heat_rate", as_double("heat_rate") *  as_double("conv_eff") / 100.0);
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
