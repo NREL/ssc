@@ -510,6 +510,8 @@ public:
 
 	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
+		ms_des_par = des_par_in;
+
 		CO2_state co2_props;
 
 		int prop_error_code = CO2_TD(ms_des_par.m_T_out, ms_des_par.m_D_out, &co2_props);
@@ -546,7 +548,6 @@ public:
 		double D_rotor_2 = -999.9;
 		double N_design = -999.9;
 
-		double end_stage = -999.9;
 		int i = -1;
 		for( i = 0; i < max_iter; i++ )
 		{
@@ -585,6 +586,7 @@ public:
 				error_code = prop_error_code;
 				return;
 			}
+			h_s_out = co2_props.enth;
 
 			w_i = h_s_out - h_int;			// positive isentropic specific work of second stage
 			double U_tip_2 = sqrt(1000.0*w_i/psi_design);
@@ -618,7 +620,7 @@ public:
 			else
 				P_int = P_secant;		// Use secant guess
 
-			end_stage = 0.5*(eta_stage + eta_2_req);		// Update guess for stage efficiency
+			eta_stage = 0.5*(eta_stage + eta_2_req);		// Update guess for stage efficiency
 		}
 
 	// Check for convergence
@@ -631,7 +633,7 @@ public:
 	// Set recompressor variables
 	ms_des_solved.m_D_rotor = D_rotor_1;
 	ms_des_solved.m_D_rotor_2 = D_rotor_2;
-	ms_des_solved.m_eta_design = end_stage;
+	ms_des_solved.m_eta_design = eta_stage;
 	ms_des_solved.m_N_design = N_design;
 
 	}
@@ -752,7 +754,7 @@ public:
 
 			// Check for convergence and adjust phi_1 guess
 			double residual = P_out - P_out_calc;
-			if( abs(residual) / P_out <= rel_tol )
+			if( fabs(residual) / P_out <= rel_tol )
 				break;
 			
 			double next_phi = std::numeric_limits<double>::quiet_NaN();			
@@ -793,7 +795,7 @@ public:
 			error_code = prop_error_code;
 			return;
 		}
-		double h_s_out;
+		double h_s_out = co2_props.enth;
 
 		// Set relevant recompressor variables
 		ms_od_solved.m_N = N;
