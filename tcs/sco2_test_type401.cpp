@@ -113,12 +113,13 @@ public:
 
 		CO2_TD(temp_out, dens_out, &co2_props_1);
 
+		double f_recomp = 0.2;
 		C_compressor::S_design_parameters mc_des_par;
 		mc_des_par.m_D_in = dens_in;
 		mc_des_par.m_D_out = dens_out;
 		mc_des_par.m_h_in = enth_in;
 		mc_des_par.m_h_out = enth_out;
-		mc_des_par.m_m_dot = t_des_par.m_m_dot;
+		mc_des_par.m_m_dot = t_des_par.m_m_dot*(1.0-f_recomp);
 		mc_des_par.m_P_out = P_out;
 		mc_des_par.m_ssnd_out = co2_props_1.ssnd;
 		mc_des_par.m_s_in = entr_in;
@@ -127,6 +128,25 @@ public:
 		C_compressor mc;
 
 		mc.compressor_sizing(mc_des_par, error_code);
+
+		double T_rc_in = 370.0;
+		calculate_turbomachinery_outlet_1(T_rc_in, P_in, P_out, isen_eta, true, error_code, enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out, spec_work);
+		C_recompressor::S_design_parameters rc_des_par;
+		rc_des_par.m_P_in = P_in;
+		rc_des_par.m_D_in = dens_in;
+		rc_des_par.m_D_out = dens_out;
+		rc_des_par.m_h_in = enth_in;
+		rc_des_par.m_h_out = enth_out;
+		rc_des_par.m_m_dot = t_des_par.m_m_dot*f_recomp;
+		rc_des_par.m_P_out = P_out;
+		rc_des_par.m_s_in = entr_in;
+		rc_des_par.m_T_out = temp_out;
+		
+		C_recompressor rc;
+		rc.recompressor_sizing(rc_des_par, error_code);
+
+		double T_rc_od_out = -999.9;
+		rc.off_design_recompressor(T_rc_in, 0.8*P_in, 0.85*rc_des_par.m_m_dot, P_out, error_code, T_rc_od_out);
 
 		double T_c_od_out = std::numeric_limits<double>::quiet_NaN();
 		double P_c_od_out = std::numeric_limits<double>::quiet_NaN();
@@ -587,7 +607,7 @@ public:
 		// **************************************************************
 		// **************************************************************
 
-
+		/*
 		cycle_design_parameters rc_des_par;
 
 		rc_des_par.m_mc_type = 1;
@@ -663,6 +683,7 @@ public:
 		rc_opt_off_des_in.m_tol = rc_cycle.get_cycle_design_parameters()->m_tol;
 		rc_opt_off_des_in.m_opt_tol = rc_cycle.get_cycle_design_parameters()->m_opt_tol;
 		bool od_opt_cycle_success = rc_cycle.optimal_off_design(rc_opt_off_des_in);
+		*/
 
 		return 0;
 	}
