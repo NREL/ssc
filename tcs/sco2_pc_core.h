@@ -472,11 +472,24 @@ public:
 		double m_D_rotor_2;
 		double m_N_design;
 		double m_eta_design;
-		double m_surge;
 
 		S_design_solved()
 		{
 			m_D_rotor = m_D_rotor_2 = m_N_design = m_eta_design = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+	struct S_od_solved
+	{
+		double m_N;
+		double m_eta;
+		double m_phi;
+		double m_phi_2;
+		double m_w_tip_ratio;
+		bool m_surge;
+
+		S_od_solved()
+		{
+			m_N = m_eta = m_phi = m_phi_2 = m_w_tip_ratio = std::numeric_limits<double>::quiet_NaN();
 			m_surge = false;
 		}
 	};
@@ -484,6 +497,7 @@ public:
 private:
 	S_design_parameters ms_des_par;
 	S_design_solved ms_des_solved;
+	S_od_solved ms_od_solved;
 
 public:
 	~C_recompressor(){};
@@ -619,11 +633,176 @@ public:
 	ms_des_solved.m_D_rotor_2 = D_rotor_2;
 	ms_des_solved.m_eta_design = end_stage;
 	ms_des_solved.m_N_design = N_design;
-	ms_des_solved.m_surge = false;
 
 	}
 
+	void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out)
+	{
+		/* code from John Dyreby, converted to C++ by Ty Neises
+		! Solve for the outlet state (and shaft speed) of 'comp' given its inlet conditions, mass flow rate, and outlet pressure.
+		!
+		! Inputs:
+		!   comp -- a Compressor object, with design-point values and sizing set
+		!   T_in -- compressor inlet temperature (K)
+		!   P_in -- compressor inlet pressure (kPa)
+		!   m_dot -- mass flow rate through compressor (kg/s)
+		!   P_out -- compressor outlet pressure (kPa)
+		!
+		! Outputs:
+		!   error_trace -- an ErrorTrace object
+		!   T_out -- compressor outlet temperature (K)
+		!
+		! Notes:
+		!   1) This subroutine also sets the following values in 'comp': N, surge, eta, w, w_tip_ratio, phi
+		!   2) In order to solve the compressor, the value for flow coefficient (phi) is varied until convergence.
+		!   3) Surge is not allowed; if the corresponding flow coefficient is not between phi_min and phi_max an error is raised.
+		!   4) Two-stage recompressor; surge is true if either stages are in surge conditions; w_tip_ratio is max of the two stages.
+		*/
 
+		CO2_state co2_props;
+		
+		// Fully define the inlet state of the compressor
+		int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+		if( prop_error_code != 0 )
+		{
+			error_code = prop_error_code;
+			return;
+		}
+		double rho_in = co2_props.dens;
+		double h_in = co2_props.enth;
+		double s_in = co2_props.entr;
+
+		// Iterate on first-stage phi
+		double phi_1 = m_snl_phi_design;		// start with design-point value
+		bool first_pass = true;
+		
+		int max_iter = 100;
+		double rel_tol = 1.0E-9;
+
+		double last_phi_1 = std::numeric_limits<double>::quiet_NaN();
+		double last_residual = std::numeric_limits<double>::quiet_NaN();
+		double P_out_calc = std::numeric_limits<double>::quiet_NaN();
+		double h_out = std::numeric_limits<double>::quiet_NaN();
+		double N = std::numeric_limits<double>::quiet_NaN();
+		double phi_2 = std::numeric_limits<double>::quiet_NaN();
+		double U_tip_1 = std::numeric_limits<double>::quiet_NaN();
+		double ssnd_int = std::numeric_limits<double>::quiet_NaN();
+		double U_tip_2 = std::numeric_limits<double>::quiet_NaN();
+
+		int i = -1;
+		for( i = 0; i < max_iter; i++ )
+		{
+			// First stage - dh_s and eta_stage_1
+			U_tip_1 = m_dot / (phi_1*rho_in*pow(ms_des_solved.m_D_rotor, 2));		//[m/s]
+			N = (U_tip_1*2.0 / ms_des_solved.m_D_rotor)*9.549296590;					//[rpm] shaft spped
+			double phi_star = phi_1*pow( (N/ms_des_solved.m_N_design), 0.2);				//[-] Modified flow coefficient
+			double psi_star = ((((-498626.0*phi_star) + 53224.0)*phi_star - 2505.0)*phi_star + 54.6)*phi_star + 0.04049;		//[-] from dimensionless modified head curve
+			double psi = psi_star/( pow(ms_des_solved.m_N_design/N,pow(20.0*phi_star,3.0)));
+			double dh_s = psi*pow(U_tip_1, 2)*0.001;										//[kJ/kg] Calculated ideal enthalpy rise in first stage of compressor
+			double eta_star = ((((-1.638e6*phi_star) + 182725.0)*phi_star - 8089.0)*phi_star + 168.6)*phi_star - 0.7069;		//[-] from dimensionless modified efficiency curve
+			double eta_0 = eta_star*1.47528/pow( (ms_des_solved.m_N_design/N), pow(20.0*phi_star,5) );		//[-] Stage efficiency is normalized so it equals 1.0 at snl_phi_design
+			double eta_stage_1 = max(eta_0*ms_des_solved.m_eta_design, 0.0);				//[-] The actual stage efficiency, not allowed to go negative
+
+			// Calculate first - stage outlet (second - stage inlet) state
+			double dh = dh_s / eta_stage_1;		//[kJ/kg] Actual enthalpy rise in first stage
+			double h_s_out = h_in + dh_s;		//[kJ/kg] Ideal enthalpy between stages
+			double h_int = h_in + dh;			//[kJ/kg] Actual enthalpy between stages
+
+			prop_error_code = CO2_HS(h_s_out, s_in, &co2_props);
+			if(prop_error_code != 0)
+			{
+				error_code = prop_error_code;
+				return;
+			}
+			double P_int = co2_props.pres;
+
+			prop_error_code = CO2_PH(P_int, h_int, &co2_props);
+			if(prop_error_code != 0)
+			{
+				error_code = prop_error_code;
+				return;
+			}
+			double D_int = co2_props.dens;
+			double s_int = co2_props.entr;
+			ssnd_int = co2_props.ssnd;
+
+			// Second stage - dh_s and eta_stage_2
+			U_tip_2 = ms_des_solved.m_D_rotor_2*0.5*N*0.104719755;				// second-stage tip speed in m/s
+			phi_2 = m_dot / (D_int*U_tip_2*pow(ms_des_solved.m_D_rotor_2, 2));	// second-stage flow coefficient
+			phi_star = phi_2*pow((N / ms_des_solved.m_N_design), 0.2);					// modified flow coefficient
+			psi_star = ((((-498626.0*phi_star) + 53224.0)*phi_star - 2505.0)*phi_star + 54.6)*phi_star + 0.04049;	// from dimensionless modified head curve
+			psi = psi_star / (pow(ms_des_solved.m_N_design / N, pow(20.0*phi_star, 3.0)));
+			eta_star = ((((-1.638e6*phi_star) + 182725.0)*phi_star - 8089.0)*phi_star + 168.6)*phi_star - 0.7069;		//[-] from dimensionless modified efficiency curve
+			eta_0 = eta_star*1.47528 / pow((ms_des_solved.m_N_design / N), pow(20.0*phi_star, 5));		//[-] Stage efficiency is normalized so it equals 1.0 at snl_phi_design
+			double eta_stage_2 = max(eta_0*ms_des_solved.m_eta_design, 0.0);			// the actual stage efficiency, not allowed to go negative
+
+			// Calculate second-stage outlet state
+			dh = dh_s / eta_stage_2;			// actual enthalpy rise in second stage
+			h_s_out = h_int + dh_s;				// ideal enthalpy at compressor outlet
+			h_out = h_int + dh;					// actual enthalpy at compressor outlet
+
+			// Get the calculated compressor outlet pressure
+			prop_error_code = CO2_HS(h_s_out, s_int, &co2_props);
+			if(prop_error_code != 0)
+			{
+				error_code = prop_error_code;
+				return;
+			}
+			P_out_calc = co2_props.pres;
+
+			// Check for convergence and adjust phi_1 guess
+			double residual = P_out - P_out_calc;
+			if( abs(residual) / P_out <= rel_tol )
+				break;
+			
+			double next_phi = std::numeric_limits<double>::quiet_NaN();			
+			if( first_pass )
+			{
+				next_phi = phi_1*1.0001;		// take a small step
+				first_pass = false;
+			}
+			else
+				next_phi = phi_1 - residual*(last_phi_1 - phi_1) / (last_residual - residual);		// next guess predicted using secant method
+
+			last_phi_1 = phi_1;
+			last_residual = residual;
+			phi_1 = next_phi;
+		}
+
+		// Check for convergence
+		if(i == max_iter)		// did not converge
+		{
+			error_code = 1;
+			return;
+		}
+
+		// Determine outlet temperature and speed of sound
+		prop_error_code = CO2_PH(P_out_calc, h_out, &co2_props);
+		if( prop_error_code != 0 )
+		{
+			error_code = prop_error_code;
+			return;
+		}
+		T_out = co2_props.temp;
+		double ssnd_out = co2_props.ssnd;
+
+		// Outlet specific enthalpy after isentropic compression
+		prop_error_code = CO2_PS(P_out_calc, s_in, &co2_props);
+		if(prop_error_code != 0)
+		{
+			error_code = prop_error_code;
+			return;
+		}
+		double h_s_out;
+
+		// Set relevant recompressor variables
+		ms_od_solved.m_N = N;
+		ms_od_solved.m_eta = (h_s_out - h_in) / (h_out - h_in);		// use overall isentropic efficiency
+		ms_od_solved.m_phi = phi_1;
+		ms_od_solved.m_phi_2 = phi_2;
+		ms_od_solved.m_w_tip_ratio = max(U_tip_1/ssnd_int, U_tip_2/ssnd_out);	// store ratio
+		ms_od_solved.m_surge = phi_1 < m_snl_phi_min || phi_2 < m_snl_phi_min;		
+	}
 };
 
 
