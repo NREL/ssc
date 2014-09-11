@@ -229,6 +229,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "pbi_oth_for_ds",                         "Other PBI available for debt service",     "0/1",      "",                      "Cash Incentives",      "?=0",                       "BOOLEAN",                                         "" },
                                                                                   
 /* intermediate outputs */                                                        
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_closing_total",                "Total debt closing cost",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancingperwatt",               "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Total project cost",                   "",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
@@ -605,7 +606,7 @@ static var_info _cm_vtab_singleowner[] = {
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_operating_activities",        "Cash flow from operating activities",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,     "purchase_of_property",	                  "Purchase of property cost",	"$",	 "",					  "Cash Flow Pre Tax",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "purchase_of_property",	                  "Purchase of property",	"$",	 "",					  "Cash Flow Pre Tax",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_dsra",                        "Debt service reserve account (increase)/decrease",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_wcra",                        "Working capital reserve account (increase)/decrease",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_me1ra",                       "Major equipment reserve account 1 (increase)/decrease",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -951,6 +952,8 @@ public:
 		double cost_debt_closing = as_double("cost_debt_closing");
 		double cost_debt_fee_frac = as_double("cost_debt_fee")*0.01;
 		double cost_other_financing = as_double("cost_other_financing");
+		double cost_debt_closing_total;
+
 
 		double constr_total_financing = as_double("construction_financing_cost");
 
@@ -1758,6 +1761,8 @@ public:
 			constr_total_financing +
 			cf.at(CF_reserve_om,0);
 
+
+		cost_debt_closing_total = cost_debt_closing + cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 		cost_installed = cost_prefinancing + cost_financing;
 
 		depr_alloc_total = depr_alloc_total_frac * cost_installed;
@@ -2373,7 +2378,7 @@ public:
 
 
 		assign("cost_financing", var_data((ssc_number_t) cost_financing));
-
+		assign("cost_debt_closing_total", var_data((ssc_number_t) cost_debt_closing_total));
 		assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
 
 		double size_of_equity = cost_installed - ibi_total - cbi_total - size_of_debt;
