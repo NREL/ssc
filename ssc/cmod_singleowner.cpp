@@ -560,8 +560,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",                 "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",               "O&M optional fuel 1 expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_2_expense",               "O&M optional fuel 2 expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",               "O&M biomass feedstock expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_2_expense",               "O&M coal feedstock expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_assessed_value",         "Property tax net assessed value", "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_expense",                "Property tax expense",               "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },

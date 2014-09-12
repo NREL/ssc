@@ -42,12 +42,12 @@ var_info vtab_oandm[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "O&M",      "?=0",                     "MIN=0",                                         "" },
 
 	// optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_usage",           "Optional fuel 1 usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_1_cost",                 "Optional fuel 1 cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_cost_escal",           "Optional fuel 1 cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_usage",           "Optional fuel 2 usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_2_cost",                 "Optional fuel 2 cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_cost_escal",           "Optional fuel 2 cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_usage",           "Biomass feedstock usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_1_cost",                 "Biomass feedstock cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_cost_escal",           "Biomass feedstock cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_usage",           "Coal feedstock usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_2_cost",                 "Coal feedstock cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_cost_escal",           "Coal feedstock cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 
 
 var_info_invalid };
