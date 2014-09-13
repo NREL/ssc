@@ -326,7 +326,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_inc_sf_tot",   "Total power incident on the field",                          "MWt",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_abs_tot",      "Total absorbed energy",                                      "MWt",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_avail",        "Thermal power produced by the field",                        "MWt",          "",            "Type250",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Fuel_usage",     "Total fossil fuel usage by all plant subsystems",            "MMBTU",        "",            "SumCalc",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",     "Total fossil fuel usage by all plant subsystems",            "MMBTU",        "",            "SumCalc",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_dump",         "Dumped thermal energy",                                      "MWt",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_m_dot_makeup",   "Cooling water makeup flow rate",                             "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_pb",           "Thermal energy to the power block",                          "MWt",          "",            "Type251",        "*",                       "",                      "" },
@@ -709,7 +709,7 @@ public:
 		accumulate_annual("q_inc_sf_tot", "annual_q_inc_sf_tot");
 		accumulate_annual("q_abs_tot", "annual_q_abs_tot");
 		accumulate_annual("q_avail", "annual_q_avail");
-		accumulate_annual("Fuel_usage", "annual_Fuel_usage");
+		accumulate_annual("Fuel_usage", "annual_fuel_usage");
 		accumulate_annual("q_dump", "annual_q_dump");
 		accumulate_annual("m_dot_makeup", "annual_m_dot_makeup");
 		accumulate_annual("q_pb", "annual_q_pb");
