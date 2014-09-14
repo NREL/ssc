@@ -623,7 +623,7 @@ static var_info vtab_utility_rate3[] = {
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 hourly electric load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 Hourly Electric Load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -824,8 +824,8 @@ public:
 			if (count != 8760) throw general_error("e_load must have 8760 values");
 			for (i=0;i<8760;i++)
 			{
-				e_load[i] = parr[i];
-				p_load[i] = parr[i]; // by default p_load = e_load
+				e_load[i] = -parr[i]; // input sign change 9/12/14
+				p_load[i] = -parr[i]; // by default p_load = e_load
 			}
 		}
 
@@ -835,7 +835,7 @@ public:
 			parr = as_array("p_load", &count);
 			if (count != 8760) throw general_error("p_load must have 8760 values");
 			for (i=0;i<8760;i++)
-				p_load[i] = parr[i];
+				p_load[i] = parr[i]; // input sign change 9/12/14
 		}
 
 		/* allocate intermediate data arrays */

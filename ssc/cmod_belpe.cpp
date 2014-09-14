@@ -53,8 +53,8 @@ static var_info _cm_vtab_belpe[] =
 	//OUTPUTS
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Year 1 Electric Load",				"kWh",      "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Year 1 Peak Electric Load",		"kW",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Year 1 Electric Load",				"kWh",      "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Year 1 Peak Electric Load",		"kW",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 
 
 	//DEBUGGING OUTPUTS
