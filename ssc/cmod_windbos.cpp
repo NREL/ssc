@@ -86,11 +86,6 @@ public:
 	typedef enum { SIMPLE, COMPLEX } TurbineLayout;
 	typedef enum { STANDARD, BOUYANT } SoilCondition;
 
-	typedef struct{
-		double alpha;
-		double cost;
-	} MultCost;
-
 	int round_bos(double number)
 	{
 		return (number >= 0) ? (int)(number + 0.5) : (int)(number - 0.5);
@@ -451,29 +446,27 @@ public:
 	}
 
 
-	MultCost insuranceMultiplierAndCost(double tcc, double farmSize, double foundationCost, int performanceBond)
+	double insuranceMultiplierAndCost(double cost, double tcc, double farmSize, double foundationCost, int performanceBond)
 	{
-		MultCost result;
-
-		result.alpha = 3.5 + 0.7 + 0.4 + 1.0;
-		result.cost = (0.7 + 0.4 + 1.0) * tcc * farmSize;
-
-		if (performanceBond){
-			result.alpha += 10.0;
-			result.cost += 10.0 * tcc * farmSize;
-		}
-
-		result.alpha /= 1000.0;
-		result.cost += 0.02*foundationCost + 20000;
-		return result;
+		double ins;
+		double pb_rate = 0;
+		if (performanceBond)
+			pb_rate = 10.0;
+			
+		ins = cost / 1000 * (3.5 + 0.7 + 0.4 + 1.0 + pb_rate) //rates are per $1000
+			+ (tcc * farmSize) * (0.7 + 0.4 + 1.0 + pb_rate) //tcc in $/kW times farmSize in MW is equal to per $1000
+			+ 0.02 * foundationCost
+			+ 20000;
+		assign("insurance_cost", var_data(ins));
+		return ins;
 	}
 
-	MultCost markupMultiplierAndCost(double transportationCost, double contingency, double warranty, double useTax, double overhead, double profitMargin)
+	double markupMultiplierAndCost(double cost, double contingency, double warranty, double useTax, double overhead, double profitMargin)
 	{
-		MultCost result;
-		result.alpha = (contingency + warranty + useTax + overhead + profitMargin) / 100.0;
-		result.cost = -result.alpha * transportationCost;
-		return result;
+		double markup;
+		markup = cost * (contingency + warranty + useTax + overhead + profitMargin) / 100.0; //convert from percentages to decimal
+		assign("markup_cost", var_data(markup));
+		return markup;
 	}
 
 	double totalCost(double rating, double diameter, double hubHt,
@@ -490,9 +483,8 @@ public:
 		double useTax, double overhead, double profitMargin,
 		double developmentFee, double transportDist)
 	{
+		//compute cost for all items EXCEPT turbine & transport- markup and insurance do not apply to turbine & transport costs
 		double cost = 0.0;
-		double transCost = transportationCost(tcc, rating, nTurb, hubHt, transportDist);
-		cost += transCost;
 		cost += engineeringCost(nTurb, farmSize);
 		cost += powerPerformanceCost(hubHt, permanent, temporary);
 		cost += siteCompoundCost(accessRoadEntrances, constructionTime, farmSize);
@@ -508,21 +500,15 @@ public:
 		cost += substationCost(voltage, farmSize);
 		cost += projectMgmtCost(constructionTime);
 
+		//now find insurance costs and markup costs using the current cost (before including turbine & transport)
+		double ins = insuranceMultiplierAndCost(cost, tcc, farmSize, foundCost, performanceBond);
+		double markup = markupMultiplierAndCost(cost, contingency, warranty, useTax, overhead, profitMargin);
+		cost += ins + markup;
 
-		double alpha = 0.0;
-		MultCost result_ins = insuranceMultiplierAndCost(tcc, farmSize, foundCost, performanceBond);
-		cost += result_ins.cost;
-		alpha += result_ins.alpha;
+		//finally, add turbine & transport cost
+		cost += transportationCost(tcc, rating, nTurb, hubHt, transportDist);
 
-		MultCost result_mu = markupMultiplierAndCost(transCost, contingency, warranty, useTax, overhead, profitMargin);
-		cost += result_mu.cost; // negative value
-		alpha += result_mu.alpha;
-
-		// multipliers
-		cost /= (1.0 - alpha);
-		assign("markup_cost", var_data((cost - transCost)*result_mu.alpha));
-
-		assign("insurance_cost", var_data(cost*result_ins.alpha + result_ins.cost));
+		//return the total cost
 		return cost;
 	}
 
