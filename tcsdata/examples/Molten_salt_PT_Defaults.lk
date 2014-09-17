@@ -644,6 +644,7 @@ q_pb_design = P_cycle_design/eff_cycle_design;
 set_value(controller, "q_max_aux", q_pb_design);
 T_set_aux = 594.0;
 set_value(controller, "T_set_aux", T_set_aux);
+set_value(controller, "lhv_eff", 0.9);
 V_store_hot_initial = 3895.75;
 set_value(controller, "V_tank_hot_ini", V_store_hot_initial);
 T_store_hot_initial = 574.0;
