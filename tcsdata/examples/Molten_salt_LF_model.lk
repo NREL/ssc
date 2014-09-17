@@ -359,6 +359,7 @@ set_value(controller, "dt_hot", hx_dt_hot);
 set_value(controller, "dt_cold", hx_dt_cold);
 set_value(controller, "hx_config", 2);
 set_value(controller, "q_max_aux", Qsf);
+set_value(controller, "lhv_eff", 0.9);
 set_value(controller, "T_set_aux", T_hot_des);
 set_value(controller, "V_tank_hot_ini", TES_init_vol);
 set_value(controller, "T_tank_hot_ini", T_hot_des);
