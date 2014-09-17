@@ -152,7 +152,93 @@ public:
 		double P_c_od_out = std::numeric_limits<double>::quiet_NaN();
 		mc.off_design_compressor(T_in, P_in, 0.75*m_dot_t, mc.get_design_solved()->m_N_design, error_code, T_c_od_out, P_c_od_out);
 
+		C_RecompCycle::S_design_parameters cycle_des_par;
+			// Based on "dry" cycle in Dyreby recap
+		cycle_des_par.m_W_dot_net = 10000.0;
+		cycle_des_par.m_T_mc_in = 55.0 + 273.15;
+		cycle_des_par.m_T_t_in = 700.0 + 273.15;
+		cycle_des_par.m_P_mc_out = 20000.0;
+		double pressure_ratio = 2.6;
+		cycle_des_par.m_P_mc_in = cycle_des_par.m_P_mc_out / pressure_ratio;
+		cycle_des_par.m_DP_LT[0] = 0.0;
+		cycle_des_par.m_DP_LT[1] = 0.0;
+		cycle_des_par.m_DP_HT[0] = 0.0;
+		cycle_des_par.m_DP_HT[1] = 0.0;
+		cycle_des_par.m_DP_PC[0] = 0.0;
+		cycle_des_par.m_DP_PC[1] = 0.0;
+		cycle_des_par.m_DP_PHX[0] = 0.0;
+		cycle_des_par.m_DP_PHX[1] = 0.0;
+		cycle_des_par.m_UA_LT = 250.0;
+		cycle_des_par.m_UA_HT = 250.0;
+		cycle_des_par.m_recomp_frac = 0.0;
+		cycle_des_par.m_eta_mc = 0.89;
+		cycle_des_par.m_eta_rc = 0.89;
+		cycle_des_par.m_eta_t = 0.9;
+		cycle_des_par.m_N_sub_hxrs = 10;
+		cycle_des_par.m_P_high_limit = 20000.0;
+		cycle_des_par.m_tol = 1.E-3;
 
+		C_RecompCycle rc_cycle;
+
+		//rc_cycle.design(cycle_des_par, error_code);
+
+		C_RecompCycle::S_opt_design_parameters cycle_opt_des_par;
+		cycle_opt_des_par.m_W_dot_net = 10000.0;
+		cycle_opt_des_par.m_T_mc_in = 55.0 + 273.15;
+		cycle_opt_des_par.m_T_t_in = 700.0 + 273.15;
+		cycle_opt_des_par.m_DP_LT[0] = 0.0;
+		cycle_opt_des_par.m_DP_LT[1] = 0.0;
+		cycle_opt_des_par.m_DP_HT[0] = 0.0;
+		cycle_opt_des_par.m_DP_HT[1] = 0.0;
+		cycle_opt_des_par.m_DP_PC[0] = 0.0;
+		cycle_opt_des_par.m_DP_PC[1] = 0.0;
+		cycle_opt_des_par.m_DP_PHX[0] = 0.0;
+		cycle_opt_des_par.m_DP_PHX[1] = 0.0;
+		cycle_opt_des_par.m_UA_rec_total = 5000.0;
+		cycle_opt_des_par.m_eta_mc = 0.89;
+		cycle_opt_des_par.m_eta_rc = 0.89;
+		cycle_opt_des_par.m_eta_t = 0.9;
+		cycle_opt_des_par.m_N_sub_hxrs = 10;
+		cycle_opt_des_par.m_P_high_limit = 20000.0;
+		cycle_opt_des_par.m_tol = 1.E-3;
+		cycle_opt_des_par.m_opt_tol = 1.E-3;
+
+		cycle_opt_des_par.m_P_mc_out_guess = 20000.0;
+		cycle_opt_des_par.m_fixed_P_mc_out = true;
+
+		cycle_opt_des_par.m_PR_mc_guess = 2.6;
+		cycle_opt_des_par.m_fixed_PR_mc = true;
+
+		cycle_opt_des_par.m_recomp_frac_guess = 0.0;
+		cycle_opt_des_par.m_fixed_recomp_frac = false;
+
+		cycle_opt_des_par.m_LT_frac_guess = 0.5;
+		cycle_opt_des_par.m_fixed_LT_frac = false;
+
+		//rc_cycle.opt_design(cycle_opt_des_par, error_code);
+
+		C_RecompCycle::S_auto_opt_design_parameters cycle_auto_opt_des_par;
+		cycle_auto_opt_des_par.m_W_dot_net = 10000.0;
+		cycle_auto_opt_des_par.m_T_mc_in = 55.0 + 273.15;
+		cycle_auto_opt_des_par.m_T_t_in = 700.0 + 273.15;
+		cycle_auto_opt_des_par.m_DP_LT[0] = 0.0;
+		cycle_auto_opt_des_par.m_DP_LT[1] = 0.0;
+		cycle_auto_opt_des_par.m_DP_HT[0] = 0.0;
+		cycle_auto_opt_des_par.m_DP_HT[1] = 0.0;
+		cycle_auto_opt_des_par.m_DP_PC[0] = 0.0;
+		cycle_auto_opt_des_par.m_DP_PC[1] = 0.0;
+		cycle_auto_opt_des_par.m_DP_PHX[0] = 0.0;
+		cycle_auto_opt_des_par.m_DP_PHX[1] = 0.0;
+		cycle_auto_opt_des_par.m_UA_rec_total = 5000.0;
+		cycle_auto_opt_des_par.m_eta_mc = 0.89;
+		cycle_auto_opt_des_par.m_eta_rc = 0.89;
+		cycle_auto_opt_des_par.m_eta_t = 0.9;
+		cycle_auto_opt_des_par.m_N_sub_hxrs = 10;
+		cycle_auto_opt_des_par.m_P_high_limit = 20000.0;
+		cycle_auto_opt_des_par.m_tol = 1.E-3;
+		cycle_auto_opt_des_par.m_opt_tol = 1.E-3;
+
+		rc_cycle.auto_opt_design(cycle_auto_opt_des_par, error_code);
 
 		// ************************************************
 		// Test HX
