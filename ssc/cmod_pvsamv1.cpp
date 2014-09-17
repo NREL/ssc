@@ -62,6 +62,36 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading loss",                       "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling loss",                       "%",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 DC power loss",                              "%",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
+
+	// loss diagram outputs
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_mismatch_derate", "Sub-array 1 DC mismatch loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_diodeconn_derate", "Sub-array 1 DC diodes and connections loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_dcwiring_derate", "Sub-array 1 DC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_tracking_derate", "Sub-array 1 DC tracking error loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_nameplate_derate", "Sub-array 1 DC nameplate loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_mismatch_derate", "Sub-array 2 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_diodeconn_derate", "Sub-array 2 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_dcwiring_derate", "Sub-array 2 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_tracking_derate", "Sub-array 2 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_nameplate_derate", "Sub-array 2 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_mismatch_derate", "Sub-array 3 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_diodeconn_derate", "Sub-array 3 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_dcwiring_derate", "Sub-array 3 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_tracking_derate", "Sub-array 3 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_nameplate_derate", "Sub-array 3 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_mismatch_derate", "Sub-array 4 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_diodeconn_derate", "Sub-array 4 DC diodes and connections loss", "%", "?", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_dcwiring_derate", "Sub-array 4 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_tracking_derate", "Sub-array 4 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_nameplate_derate", "Sub-array 4 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+
+	{ SSC_INPUT, SSC_NUMBER, "acwiring_derate", "AC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "transformer_derate", "AC step-up transformer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	//
+
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmodx",                             "Sub-array 1 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmody",                             "Sub-array 1 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,POSITIVE",              "" },
@@ -383,6 +413,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual", "*", "", "" },
 
 
+
+
 	// a couple debugging outputs
 	/*
 	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_dc_derate0",                      "SS1x dc derate",                                          "",    "",                      "pvsamv1",       "*",                    "LENGTH=8760",                              "" },
@@ -424,7 +456,66 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_net",                               "Net ac output",                                          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_performance_factor",                   "System performance factor",                              "%",      "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                         "Nameplate system dc rating",                             "kW",     "",                      "Miscellaneous",       "*",                    "",                              "" },
-	
+
+
+	// loss diagram - order applied
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_gross", "Subarray 1 gross DC output", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_mismatch_loss", "Subarray 1 DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_diodes_loss", "Subarray 1 DC diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_wiring_loss", "Subarray 1 DC wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_tracking_loss", "Subarray 1 DC tracking loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_nameplate_loss", "Subarray 1 DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_gross", "Subarray 2 gross DC output", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_mismatch_loss", "Subarray 2 DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_diodes_loss", "Subarray 2 DC diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_wiring_loss", "Subarray 2 DC wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_tracking_loss", "Subarray 2 DC tracking loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_nameplate_loss", "Subarray 2 DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_gross", "Subarray 3 gross DC output", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_mismatch_loss", "Subarray 3 DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_diodes_loss", "Subarray 3 DC diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_wiring_loss", "Subarray 3 DC wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_tracking_loss", "Subarray 3 DC tracking loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_nameplate_loss", "Subarray 3 DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_gross", "Subarray 4 gross DC output", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_mismatch_loss", "Subarray 4 DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_diodes_loss", "Subarray 4 DC diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_wiring_loss", "Subarray 4 DC wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_tracking_loss", "Subarray 4 DC tracking loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_nameplate_loss", "Subarray 4 DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss", "DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss", "DC diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss", "DC wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss", "DC tracking loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss", "DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_mismatch_loss", "DC output after mismatch loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_diodes_loss", "DC output after diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_wiring_loss", "DC output after wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_tracking_loss", "DC output after tracking loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_nameplate_loss", "DC output after nameplate loss", "kWh", "", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_cliploss", "AC output after inverter clipping loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_psoloss", "AC output after inverter power consumption loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_pntloss", "AC output after inverter night tare loss", "kWh", "", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_transformer_loss", "AC output after step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
+
+
+	//
+
+
+
+
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_a",                                      "CEC 6-parameter: a",                                     "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Io",                                     "CEC 6-parameter: Io",                                    "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Il",                                     "CEC 6-parameter: Il",                                    "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
@@ -1595,14 +1686,14 @@ public:
 		accumulate_annual( "hourly_poa_nom", "annual_poa_nom" );
 		accumulate_annual( "hourly_poa_shaded", "annual_poa_shaded" );
 		accumulate_annual( "hourly_poa_eff", "annual_poa_eff" );
-		accumulate_annual( "hourly_dc_gross", "annual_dc_gross" );
-		accumulate_annual( "hourly_dc_net", "annual_dc_net" );
-		accumulate_annual( "hourly_ac_gross", "annual_ac_gross" );
-		accumulate_annual( "hourly_ac_net", "annual_ac_net" );
+		double annual_dc_gross1 = accumulate_annual( "hourly_dc_gross", "annual_dc_gross" );
+		double annual_dc_net = accumulate_annual("hourly_dc_net", "annual_dc_net");
+		double annual_ac_gross = accumulate_annual( "hourly_ac_gross", "annual_ac_gross" );
+		double annual_ac_net = accumulate_annual("hourly_ac_net", "annual_ac_net");
 
-		accumulate_annual( "hourly_inv_cliploss", "annual_inv_cliploss" );
-		accumulate_annual( "hourly_inv_psoloss", "annual_inv_psoloss" );
-		accumulate_annual( "hourly_inv_pntloss", "annual_inv_pntloss" );
+		double annual_inv_cliploss = accumulate_annual("hourly_inv_cliploss", "annual_inv_cliploss");
+		double annual_inv_psoloss = accumulate_annual("hourly_inv_psoloss", "annual_inv_psoloss");
+		double annual_inv_pntloss = accumulate_annual("hourly_inv_pntloss", "annual_inv_pntloss");
 
 
 	
@@ -1632,6 +1723,141 @@ public:
 
 		assign("system_use_lifetime_output", 0);
 		accumulate_annual("hourly_energy", "annual_energy");
+
+
+
+		// dc gross to dc net
+		// loss diagram values generate entire dcloss value for each sub array
+		// percentages
+		/*
+		double mismatch = as_double("subarray1_mismatch_derate");
+		double diodes = as_double("subarray1_diodeconn_derate");
+		double wiring = as_double("subarray1_dcwiring_derate");
+		double tracking = as_double("subarray1_tracking_derate");
+		double nameplate = as_double("subarray1_nameplate_derate");
+		double total_percent = mismatch + diodes + wiring + tracking + nameplate;
+		double mismatch_loss = 0;
+		double diode_loss = 0;
+		double wiring_loss = 0;
+		double tracking_loss = 0;
+		double nameplate_loss = 0;
+		double dc_loss = *p_dcsubarray[0] * (1.0 - sa[0].derate);
+		if (total_percent != 0)
+		{
+			mismatch_loss = mismatch / total_percent * dc_loss;
+			diode_loss = diodes / total_percent * dc_loss;
+			wiring_loss = wiring / total_percent * dc_loss;
+			tracking_loss = tracking / total_percent * dc_loss;
+			nameplate_loss = nameplate / total_percent * dc_loss;
+		}
+		assign("annual_subarray1_dc_mismatch_loss", var_data((ssc_number_t)mismatch_loss));
+		assign("annual_subarray1_dc_diodes_loss", var_data((ssc_number_t)diode_loss));
+		assign("annual_subarray1_dc_wiring_loss", var_data((ssc_number_t)wiring_loss));
+		assign("annual_subarray1_dc_tracking_loss", var_data((ssc_number_t)tracking_loss));
+		assign("annual_subarray1_dc_nameplate_loss", var_data((ssc_number_t)nameplate_loss));
+		*/
+
+		double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0;
+		double annual_dc_gross = 0;
+		// loop over subarrays
+		for (size_t nn = 0; nn < 4; nn++)
+		{
+			std::string prefix = "subarray" + util::to_string((int)(nn + 1)) + "_";
+			double mismatch = as_double(prefix + "mismatch_derate");
+			double diodes = as_double(prefix + "diodeconn_derate");
+			double wiring = as_double(prefix + "dcwiring_derate");
+			double tracking = as_double(prefix + "tracking_derate");
+			double nameplate = as_double(prefix + "nameplate_derate");
+			double total_percent = mismatch + diodes + wiring + tracking + nameplate;
+			double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0;
+			double dc_gross = 0;
+			dc_gross = accumulate_annual("hourly_" + prefix + "dc_gross", "annual_" + prefix + "dc_gross");
+			double dc_loss = dc_gross * (1.0 - sa[nn].derate);
+			annual_dc_gross += dc_gross;
+			if (total_percent != 0)
+			{
+				mismatch_loss = mismatch / total_percent * dc_loss;
+				diode_loss = diodes / total_percent * dc_loss;
+				wiring_loss = wiring / total_percent * dc_loss;
+				tracking_loss = tracking / total_percent * dc_loss;
+				nameplate_loss = nameplate / total_percent * dc_loss;
+			}
+			annual_mismatch_loss += mismatch_loss;
+			annual_diode_loss += diode_loss;
+			annual_wiring_loss += wiring_loss;
+			annual_tracking_loss += tracking_loss;
+			annual_nameplate_loss += nameplate_loss;
+			
+			assign("annual_" + prefix + "dc_mismatch_loss", var_data((ssc_number_t)mismatch_loss));
+			assign("annual_" + prefix + "dc_diodes_loss", var_data((ssc_number_t)diode_loss));
+			assign("annual_" + prefix + "dc_wiring_loss", var_data((ssc_number_t)wiring_loss));
+			assign("annual_" + prefix + "dc_tracking_loss", var_data((ssc_number_t)tracking_loss));
+			assign("annual_" + prefix + "dc_nameplate_loss", var_data((ssc_number_t)nameplate_loss));
+		}
+
+		assign("annual_dc_mismatch_loss", var_data((ssc_number_t)annual_mismatch_loss));
+		assign("annual_dc_diodes_loss", var_data((ssc_number_t)annual_diode_loss));
+		assign("annual_dc_wiring_loss", var_data((ssc_number_t)annual_wiring_loss));
+		assign("annual_dc_tracking_loss", var_data((ssc_number_t)annual_tracking_loss));
+		assign("annual_dc_nameplate_loss", var_data((ssc_number_t)annual_nameplate_loss));
+
+		// dc user input losses
+		// order taken from ui
+		double sys_output = annual_dc_gross;
+		sys_output -= annual_mismatch_loss;
+		assign("annual_dc_after_mismatch_loss", var_data((ssc_number_t)sys_output));
+		sys_output -= annual_diode_loss;
+		assign("annual_dc_after_diodes_loss", var_data((ssc_number_t)sys_output));
+		sys_output -= annual_wiring_loss;
+		assign("annual_dc_after_wiring_loss", var_data((ssc_number_t)sys_output));
+		sys_output -= annual_tracking_loss;
+		assign("annual_dc_after_tracking_loss", var_data((ssc_number_t)sys_output));
+		sys_output -= annual_nameplate_loss;
+		assign("annual_dc_after_nameplate_loss", var_data((ssc_number_t)sys_output));
+
+		// check that sys_output=dc_net
+		//assert(fabs(annual_dc_net - sys_output) < 1e-3);
+
+		// dc to ac losses
+		sys_output -= annual_inv_cliploss*0.001;
+		assign("annual_ac_after_inv_cliploss", var_data((ssc_number_t)sys_output));
+		sys_output -= annual_inv_psoloss*0.001;
+		assign("annual_ac_after_inv_psoloss", var_data((ssc_number_t)sys_output));
+		sys_output -= annual_inv_pntloss*0.001;
+		assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
+
+
+		// check that ac_gross = sys_output at this point
+		//assert(fabs(annual_ac_gross - sys_output) < 1e-3);
+
+
+		double acwiring = as_double("acwiring_derate");
+		double transformer = as_double("transformer_derate");
+		double total_percent = acwiring + transformer;
+		double acwiring_loss = 0, transformer_loss = 0;
+
+		double ac_loss = sys_output*(1.0 - ac_derate);
+
+		if (total_percent != 0)
+		{
+			acwiring_loss = acwiring / total_percent * ac_loss;
+			transformer_loss = transformer / total_percent * ac_loss;
+		}
+
+		assign("annual_ac_wiring_loss", var_data((ssc_number_t)acwiring_loss));
+		assign("annual_ac_transformer_loss", var_data((ssc_number_t)transformer_loss));
+
+		// ac losses
+		sys_output -= acwiring_loss;
+		assign("annual_ac_after_wiring_loss", var_data((ssc_number_t)sys_output));
+		sys_output -= transformer_loss;
+		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)transformer_loss));
+
+
+		// check that ac_net = sys_output at this point
+		//assert(fabs(annual_ac_net - sys_output) < 1e-3);
+
+		// end of losses
 
 		
 		assign( "6par_a", var_data((ssc_number_t) cec.a) );
