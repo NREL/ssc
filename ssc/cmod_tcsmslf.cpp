@@ -458,6 +458,7 @@ public:
 		set_unit_value_ssc_double(controller, "dt_cold" ); // hx_dt_cold);
 		set_unit_value_ssc_double(controller, "hx_config" ); // 2);
 		set_unit_value_ssc_double(controller, "q_max_aux" ); // Qsf);
+		set_unit_value_ssc_double(controller, "lhv_eff", as_double("eta_lhv"));			// 9.17.14 twn: input lhv here to calculate fuel usage
 		set_unit_value_ssc_double(controller, "T_set_aux" ); // T_hot_des);
 		set_unit_value_ssc_double(controller, "V_tank_hot_ini" ); // TES_init_vol);
 		set_unit_value_ssc_double(controller, "T_tank_hot_ini" ); // T_hot_des);
