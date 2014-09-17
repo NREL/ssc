@@ -384,6 +384,7 @@ set_value(controller, "dt_hot", 0);
 set_value(controller, "dt_cold", 0);
 set_value(controller, "hx_config", 0);
 set_value(controller, "q_max_aux", q_pb_design);
+set_value(controller, "lhv_eff", 0.9);
 set_value(controller, "T_set_aux", T_set_aux);
 set_value(controller, "V_tank_hot_ini", V_store_hot_initial);
 set_value(controller, "T_tank_hot_ini", T_store_hot_initial);
