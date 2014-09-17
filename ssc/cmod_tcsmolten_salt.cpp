@@ -175,7 +175,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // Controller (type 251) inputs							     																	  
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",        "Reference HTF flow rate at design conditions",                      "kg/hr",        "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_pb_out",             "Fluid temperature from the power block",                            "C",            "",            "controller",     "*",                       "",                      "" },
-															     																	  
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_lhv",              "Fossil fuel lower heating value - Thermal power generated per unit fuel",   "MW/MMBTU",     "",    "controller",     "*",                       "",                      "" },													     																	  
 															     																	  
     // Powerblock (type 224) parameters						     																	  
     { SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "powerblock",     "*",                       "",                      "" },
@@ -570,6 +570,7 @@ public:
 		set_unit_value_ssc_double(type251_controller, "dt_cold" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "hx_config" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "q_max_aux" ); //, 115/0.412);
+		set_unit_value_ssc_double(type251_controller, "lhv_eff", as_double("eta_lhv"));			// 9.17.14 twn: input lhv here to calculate fuel usage
 
 		if ( as_integer("receiver_type") == 0 )
 			set_unit_value_ssc_double(type251_controller, "T_set_aux" ); //, 594);

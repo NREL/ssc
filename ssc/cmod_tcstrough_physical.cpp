@@ -358,6 +358,7 @@ public:
 	void exec( ) throw( general_error )
 	{
 		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
@@ -536,6 +537,7 @@ public:
 		set_unit_value_ssc_double(type251_controller, "dt_cold" ); // , 7);
 		set_unit_value_ssc_double(type251_controller, "hx_config" ); // , 2);
 		set_unit_value_ssc_double(type251_controller, "q_max_aux" ); // , 294.118);
+		set_unit_value_ssc_double(type251_controller, "lhv_eff", as_double("eta_lhv") );			// 9.17.14 twn: input lhv here to calculate fuel usage
 		set_unit_value_ssc_double(type251_controller, "T_set_aux" ); // , 391);
 		set_unit_value_ssc_double(type251_controller, "V_tank_hot_ini" ); // , 1313.43);
 		set_unit_value_ssc_double(type251_controller, "T_tank_hot_ini", as_double("T_tank_cold_ini") ); // , 300);
