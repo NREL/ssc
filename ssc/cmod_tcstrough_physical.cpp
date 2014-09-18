@@ -336,6 +336,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",     "Gross to Net Conversion Factor",                             "%",            "",            "Calculated",     "*",                       "",                      "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+	// TODO - consistent fuel usage and o and m caclulations
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate (conversion MWh to kWh if fuel in MMBTU)", "", "", "", "*", "", "" },
 
 
 	var_info_invalid };
@@ -733,7 +735,7 @@ public:
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
-
+		assign("system_heat_rate", 1000);
 	}
 
 };
