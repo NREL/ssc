@@ -1851,7 +1851,7 @@ public:
 		sys_output -= acwiring_loss;
 		assign("annual_ac_after_wiring_loss", var_data((ssc_number_t)sys_output));
 		sys_output -= transformer_loss;
-		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)transformer_loss));
+		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)sys_output));
 
 
 		// check that ac_net = sys_output at this point
