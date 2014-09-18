@@ -964,6 +964,24 @@ public:
 		}
 	};
 
+	struct S_od_parameters
+	{
+		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_T_t_in;		//[K] Turbine inlet temperature
+		double m_P_mc_in;		//[kPa] Compressor inlet pressure
+		double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
+		double m_N_mc;			//[rpm] Main compressor shaft speed
+		double m_N_t;			//[rpm] Turbine shaft speed
+		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
+		double m_tol;			//[-] Convergence tolerance
+
+		S_od_parameters()
+		{
+			m_T_mc_in = m_T_t_in = m_P_mc_in = m_recomp_frac = m_N_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
+			m_N_sub_hxrs = -1;
+		}
+	};
+
 private:
 		// Component classes
 	C_turbine m_t;
@@ -976,6 +994,7 @@ private:
 	S_opt_design_parameters ms_opt_des_par;
 	S_auto_opt_design_parameters ms_auto_opt_des_par;
 	S_design_solved ms_des_solved;
+	S_od_parameters ms_od_par;
 
 		// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
@@ -990,6 +1009,9 @@ private:
 		// Structures and data for auto-optimization
 	double m_eta_thermal_auto_opt;	
 	S_design_parameters ms_des_par_auto_opt;
+
+		// Results from last off-design solution
+	std::vector<double> m_temp_od, m_pres_od, m_enth_od, m_entr_od, m_dens_od;					// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
 
 	void design_core(int & error_code);	
 
@@ -1021,6 +1043,8 @@ public:
 		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
 			
 		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
+
+		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
 	}
 
 	~C_RecompCycle(){}
@@ -1030,6 +1054,8 @@ public:
 	void opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code);
 
 	void auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code);
+
+	void off_design(S_od_parameters & od_par_in, int & error_code);
 
 	const S_design_solved * get_design_solved()
 	{
