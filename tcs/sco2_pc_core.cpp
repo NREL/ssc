@@ -847,23 +847,51 @@ void C_RecompCycle::design_core(int & error_code)
 	PC_des_par.m_Q_dot_design = m_dot_mc*(m_enth_last[9-cpp_offset] - m_enth_last[1-cpp_offset]);
 	m_PC.initialize(PC_des_par);
 
-	// Calculate cycle performance metrics
+	// Calculate/set cycle performance metrics
 	m_W_dot_net_last = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;
+
+	m_m_dot_mc = m_dot_mc;
+	m_m_dot_rc = m_dot_rc;
+	m_m_dot_t = m_dot_t;
 }
 
 void C_RecompCycle::design(S_design_parameters & des_par_in, int & error_code)
 {
 	ms_des_par = des_par_in;
 
-	design_core(error_code);
+	int design_error_code = 0;
+	
+	design_core(design_error_code);
+
+	if(design_error_code != 0)
+	{
+		error_code = design_error_code;
+		return;
+	}
+
+	finalize_design(design_error_code);
+
+	error_code = design_error_code;
 }
 
 void C_RecompCycle::opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code)
 {
 	ms_opt_des_par = opt_des_par_in;
 
+	int opt_design_error_code = 0;
+
 	opt_design_core(error_code);
+
+	if(opt_design_error_code != 0)
+	{
+		error_code = opt_design_error_code;
+		return;
+	}
+
+	finalize_design(opt_design_error_code);
+
+	error_code = opt_design_error_code;
 }
 
 void C_RecompCycle::opt_design_core(int & error_code)
@@ -882,6 +910,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	ms_des_par.m_N_sub_hxrs = ms_opt_des_par.m_N_sub_hxrs;
 	ms_des_par.m_P_high_limit = ms_opt_des_par.m_P_high_limit;
 	ms_des_par.m_tol = ms_opt_des_par.m_tol;
+	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;
 
 	// ms_des_par members to be defined by optimizer and set in 'design_point_eta':
 		// m_P_mc_in
@@ -980,6 +1009,8 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LT_frac_guess);
 		
 		design_core(no_opt_error_code);
+
+		ms_des_par_optimal = ms_des_par;
 	}
 
 }
@@ -1059,13 +1090,7 @@ double C_RecompCycle::design_point_eta(const std::vector<double> &x)
 		if( m_eta_thermal_last > m_eta_thermal_opt )
 		{
 			ms_des_par_optimal = ms_des_par;
-			m_W_dot_net_opt = m_W_dot_net_last;
 			m_eta_thermal_opt = m_eta_thermal_last;
-			m_temp_opt = m_temp_last;
-			m_pres_opt = m_pres_last;
-			m_enth_opt = m_enth_last;
-			m_entr_opt = m_entr_last;
-			m_dens_opt = m_dens_last;
 		}
 	}
 
@@ -1092,6 +1117,7 @@ void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_
 	ms_opt_des_par.m_P_high_limit = ms_auto_opt_des_par.m_P_high_limit;
 	ms_opt_des_par.m_tol = ms_auto_opt_des_par.m_tol;
 	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;
+	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;
 
 	// Outer optimization loop
 	m_eta_thermal_auto_opt = 0.0;
@@ -1120,7 +1146,6 @@ void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_
 	{
 		ms_des_par_auto_opt = ms_des_par_optimal;
 		m_eta_thermal_auto_opt = m_eta_thermal_opt;
-		m_W_dot_net_auto_opt = m_W_dot_net_opt;
 	}
 
 	// Complete 'ms_opt_des_par' for simple cycle
@@ -1141,12 +1166,22 @@ void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_
 	{
 		ms_des_par_auto_opt = ms_des_par_optimal;
 		m_eta_thermal_auto_opt = m_eta_thermal_opt;
-		m_W_dot_net_auto_opt = m_W_dot_net_opt;
 	}
 
-	ms_des_par = ms_des_par_optimal = ms_des_par_auto_opt;
-	m_W_dot_net_last = m_W_dot_net_opt = m_W_dot_net_auto_opt;
-	m_eta_thermal_last = m_eta_thermal_opt = m_eta_thermal_auto_opt;
+	ms_des_par = ms_des_par_auto_opt;
+
+	int optimal_design_error_code = 0;
+	design_core(optimal_design_error_code);
+
+	if(optimal_design_error_code != 0)
+	{
+		error_code = optimal_design_error_code;
+		return;
+	}
+
+	finalize_design(optimal_design_error_code);
+
+	error_code = optimal_design_error_code;
 }
 
 double C_RecompCycle::opt_eta(double P_high_opt)
@@ -1176,7 +1211,6 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 	{
 		ms_des_par_auto_opt = ms_des_par_optimal;
 		m_eta_thermal_auto_opt = m_eta_thermal_opt;
-		m_W_dot_net_auto_opt = m_W_dot_net_opt;
 	}
 
 	// Complete 'ms_opt_des_par' for simple cycle
@@ -1200,11 +1234,102 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 	{
 		ms_des_par_auto_opt = ms_des_par_optimal;
 		m_eta_thermal_auto_opt = m_eta_thermal_opt;
-		m_W_dot_net_auto_opt = m_W_dot_net_opt;
 	}
 
 	return -max(local_eta_rc, local_eta_s);
 
+}
+
+void C_RecompCycle::finalize_design(int & error_code)
+{
+	int cpp_offset = 1;
+
+	// Size main compressor
+	C_compressor::S_design_parameters  mc_des_par;
+		// Compressor inlet conditions
+	mc_des_par.m_D_in = m_dens_last[1-cpp_offset];
+	mc_des_par.m_h_in = m_enth_last[1-cpp_offset];
+	mc_des_par.m_s_in = m_entr_last[1-cpp_offset];
+		// Compressor outlet conditions
+	mc_des_par.m_T_out = m_temp_last[2-cpp_offset];
+	mc_des_par.m_P_out = m_pres_last[2-cpp_offset];
+	mc_des_par.m_h_out = m_enth_last[2-cpp_offset];
+	mc_des_par.m_D_out = m_dens_last[2-cpp_offset];
+		// Mass flow
+	mc_des_par.m_m_dot = m_m_dot_mc;
+
+	int comp_size_error_code = 0;
+	m_mc.compressor_sizing(mc_des_par, comp_size_error_code);
+	if(comp_size_error_code != 0)
+	{
+		error_code = comp_size_error_code;
+		return;
+	}
+
+	if( ms_des_par.m_recomp_frac > 0.01 )
+	{
+		// Size recompressor
+		C_recompressor::S_design_parameters  rc_des_par;
+		// Compressor inlet conditions
+		rc_des_par.m_P_in = m_pres_last[9 - cpp_offset];
+		rc_des_par.m_D_in = m_dens_last[9 - cpp_offset];
+		rc_des_par.m_h_in = m_enth_last[9 - cpp_offset];
+		rc_des_par.m_s_in = m_entr_last[9 - cpp_offset];
+		// Compressor outlet conditions
+		rc_des_par.m_T_out = m_temp_last[10 - cpp_offset];
+		rc_des_par.m_P_out = m_pres_last[10 - cpp_offset];
+		rc_des_par.m_h_out = m_enth_last[10 - cpp_offset];
+		rc_des_par.m_D_out = m_dens_last[10 - cpp_offset];
+		// Mass flow
+		rc_des_par.m_m_dot = m_m_dot_rc;
+
+		int recomp_size_error_code = 0;
+		m_rc.recompressor_sizing(rc_des_par, recomp_size_error_code);
+		if( recomp_size_error_code != 0 )
+		{
+			error_code = recomp_size_error_code;
+			return;
+		}
+	}
+	
+	// Size turbine
+	C_turbine::S_design_parameters  t_des_par;
+		// Set turbine shaft speed
+	t_des_par.m_N_design = ms_des_par.m_N_turbine;
+	t_des_par.m_N_comp_design_if_linked = m_mc.get_design_solved()->m_N_design;
+		// Turbine inlet state
+	t_des_par.m_P_in = m_pres_last[6-cpp_offset];
+	t_des_par.m_T_in = m_temp_last[6-cpp_offset];
+	t_des_par.m_D_in = m_dens_last[6-cpp_offset];
+	t_des_par.m_h_in = m_enth_last[6-cpp_offset];
+	t_des_par.m_s_in = m_entr_last[6-cpp_offset];
+		// Turbine outlet state
+	t_des_par.m_P_out = m_pres_last[7-cpp_offset];
+	t_des_par.m_h_out = m_enth_last[7-cpp_offset];
+		// Mass flow
+	t_des_par.m_m_dot = m_m_dot_t;
+
+	int turb_size_error_code = 0;
+	m_t.turbine_sizing(t_des_par, turb_size_error_code);
+	if(turb_size_error_code != 0)
+	{
+		error_code = turb_size_error_code;
+		return;
+	}
+
+	// Set solved design point metrics
+	ms_des_solved.m_temp = m_temp_last;
+	ms_des_solved.m_pres = m_pres_last;
+	ms_des_solved.m_enth = m_enth_last;
+	ms_des_solved.m_entr = m_entr_last;
+	ms_des_solved.m_dens = m_dens_last;
+
+	ms_des_solved.m_eta_thermal = m_eta_thermal_last;
+	ms_des_solved.m_W_dot_net = m_W_dot_net_last;
+	ms_des_solved.m_m_dot_mc = m_m_dot_mc;
+	ms_des_solved.m_m_dot_rc = m_m_dot_rc;
+	ms_des_solved.m_m_dot_t = m_m_dot_t;
+	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
 }
 
 double fmin_callback_opt_eta_1(double x, void *data)

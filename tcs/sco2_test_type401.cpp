@@ -90,7 +90,6 @@ public:
 		t_des_par.m_N_design = 3600.0;
 		t_des_par.m_P_in = P_in;
 		t_des_par.m_P_out = P_out;
-		t_des_par.m_ssnd_in = ssnd_in;
 		t_des_par.m_s_in = entr_in;
 		t_des_par.m_T_in = T_in;
 
@@ -121,7 +120,6 @@ public:
 		mc_des_par.m_h_out = enth_out;
 		mc_des_par.m_m_dot = t_des_par.m_m_dot*(1.0-f_recomp);
 		mc_des_par.m_P_out = P_out;
-		mc_des_par.m_ssnd_out = co2_props_1.ssnd;
 		mc_des_par.m_s_in = entr_in;
 		mc_des_par.m_T_out = temp_out;
 
@@ -177,6 +175,7 @@ public:
 		cycle_des_par.m_N_sub_hxrs = 10;
 		cycle_des_par.m_P_high_limit = 20000.0;
 		cycle_des_par.m_tol = 1.E-3;
+		cycle_des_par.m_N_turbine = 3600.0;
 
 		C_RecompCycle rc_cycle;
 
@@ -202,6 +201,7 @@ public:
 		cycle_opt_des_par.m_P_high_limit = 20000.0;
 		cycle_opt_des_par.m_tol = 1.E-3;
 		cycle_opt_des_par.m_opt_tol = 1.E-3;
+		cycle_opt_des_par.m_N_turbine = 3600.0;
 
 		cycle_opt_des_par.m_P_mc_out_guess = 20000.0;
 		cycle_opt_des_par.m_fixed_P_mc_out = true;
@@ -237,6 +237,7 @@ public:
 		cycle_auto_opt_des_par.m_P_high_limit = 20000.0;
 		cycle_auto_opt_des_par.m_tol = 1.E-3;
 		cycle_auto_opt_des_par.m_opt_tol = 1.E-3;
+		cycle_auto_opt_des_par.m_N_turbine = 3600.0;
 
 		rc_cycle.auto_opt_design(cycle_auto_opt_des_par, error_code);
 
