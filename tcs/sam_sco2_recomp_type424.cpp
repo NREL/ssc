@@ -6,6 +6,8 @@
 #include "CO2_properties.h"
 #include "compact_hx_discretized.h"
 
+#include "sco2_pc_core.h"
+
 using namespace std;
 
 enum{	//Parameters
@@ -93,8 +95,13 @@ class sam_sco2_recomp_type424 : public tcstypeinterface
 {
 private:
 	// Classes and Structures
-	cycle_design_parameters rc_des_par;
-	RecompCycle * rc_cycle;
+		// Old sco2 cycle code
+	// cycle_design_parameters rc_des_par;
+	// RecompCycle * rc_cycle;
+		// New sco2 cycle code
+	C_RecompCycle ms_rc_cycle;
+	C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
+
 	HTFProperties rec_htfProps;		// Instance of HTFProperties class for field HTF
 	CO2_state co2_props;
 	compact_hx ACC;
@@ -151,7 +158,7 @@ public:
 		: tcstypeinterface(cst, ti)
 	{
 		// Pointers
-		rc_cycle = NULL;
+		// rc_cycle = NULL;
 
 		// Parameters
 		m_W_dot_net_des = std::numeric_limits<double>::quiet_NaN();
@@ -205,8 +212,8 @@ public:
 
 	virtual ~sam_sco2_recomp_type424()
 	{
-		if(NULL != rc_cycle)
-			delete rc_cycle;
+		//if(NULL != rc_cycle)
+		//	delete rc_cycle;
 	}
 
 	virtual int init()
@@ -292,37 +299,57 @@ public:
 
 		// Set up cycle_design_parameters structure
 		// Integers for compressor maps (hardcoded)
-		rc_des_par.m_mc_type = m_mc_type;
-		rc_des_par.m_rc_type = m_rc_type;
+		// rc_des_par.m_mc_type = m_mc_type;
+		// rc_des_par.m_rc_type = m_rc_type;
+
+		// Setup recompressoin cycle autodes parameter structure
+		ms_rc_autodes_par.m_DP_HT = m_DP_HT;
+		ms_rc_autodes_par.m_DP_LT = m_DP_LT;
+		ms_rc_autodes_par.m_DP_PC = m_DP_PC;
+		ms_rc_autodes_par.m_DP_PHX = m_DP_PHX;
+
+		ms_rc_autodes_par.m_eta_mc = m_eta_c;
+		ms_rc_autodes_par.m_eta_rc = m_eta_c;
+		ms_rc_autodes_par.m_eta_t = m_eta_t;
+
+		ms_rc_autodes_par.m_N_sub_hxrs = m_N_sub_hxrs;
+		ms_rc_autodes_par.m_N_turbine = m_N_t_des;
+
+		ms_rc_autodes_par.m_opt_tol = m_opt_tol;
+		ms_rc_autodes_par.m_P_high_limit = m_P_high_limit*1000.0;		// Convert to kPa
+		ms_rc_autodes_par.m_tol = m_tol;
+		ms_rc_autodes_par.m_T_mc_in = m_T_mc_in_des;
+		ms_rc_autodes_par.m_T_t_in = m_T_t_in_des;
+		ms_rc_autodes_par.m_W_dot_net = m_W_dot_net_des;
 
 		// Net output and temperatures
-		rc_des_par.m_W_dot_net = m_W_dot_net_des;		//[kW]
-		rc_des_par.m_T_mc_in = m_T_mc_in_des;           //[K]
-		rc_des_par.m_T_t_in = m_T_t_in_des;				//[K]
-
-		// Pressure Drops (hardcoded)
-		rc_des_par.m_DP_LT = m_DP_LT;
-		rc_des_par.m_DP_HT = m_DP_HT;
-		rc_des_par.m_DP_PC = m_DP_PC;
-		rc_des_par.m_DP_PHX = m_DP_PHX;
-
-		// Turbine Speed
-		rc_des_par.m_N_t = m_N_t_des;
-
-		// Turbomachinery isentropic efficiency
-		rc_des_par.m_eta_mc = m_eta_c;
-		rc_des_par.m_eta_rc = m_eta_c;
-		rc_des_par.m_eta_t = m_eta_t;
-
-		// Number of heat exchanger sections (hardcoded)
-		rc_des_par.m_N_sub_hxrs = m_N_sub_hxrs;
-
-		// Convergence tolerances (hardcoded)
-		rc_des_par.m_tol = m_tol;
-		rc_des_par.m_opt_tol = m_opt_tol;
-
-		// Upper pressure limit
-		rc_des_par.m_P_high_limit = m_P_high_limit*1000.0;		// Convert to kPa
+		// rc_des_par.m_W_dot_net = m_W_dot_net_des;		//[kW]
+		// rc_des_par.m_T_mc_in = m_T_mc_in_des;           //[K]
+		// rc_des_par.m_T_t_in = m_T_t_in_des;				//[K]
+		// 
+		// // Pressure Drops (hardcoded)
+		// rc_des_par.m_DP_LT = m_DP_LT;
+		// rc_des_par.m_DP_HT = m_DP_HT;
+		// rc_des_par.m_DP_PC = m_DP_PC;
+		// rc_des_par.m_DP_PHX = m_DP_PHX;
+		// 
+		// // Turbine Speed
+		// rc_des_par.m_N_t = m_N_t_des;
+		// 
+		// // Turbomachinery isentropic efficiency
+		// rc_des_par.m_eta_mc = m_eta_c;
+		// rc_des_par.m_eta_rc = m_eta_c;
+		// rc_des_par.m_eta_t = m_eta_t;
+		// 
+		// // Number of heat exchanger sections (hardcoded)
+		// rc_des_par.m_N_sub_hxrs = m_N_sub_hxrs;
+		// 
+		// // Convergence tolerances (hardcoded)
+		// rc_des_par.m_tol = m_tol;
+		// rc_des_par.m_opt_tol = m_opt_tol;
+		// 
+		// // Upper pressure limit
+		// rc_des_par.m_P_high_limit = m_P_high_limit*1000.0;		// Convert to kPa
 		//************************************************
 		// cycle_design_parameters structure fully defined
 		// EXCEPT recup UA, which must be solved with iteration below
@@ -472,11 +499,23 @@ public:
 		// **********************************************************************
 		// Solve design point model with guessed recups UA
 		m_UA_total_des = UA_recups_guess;
-		rc_des_par.m_UA_rec_total = m_UA_total_des;
+		// rc_des_par.m_UA_rec_total = m_UA_total_des;
+		ms_rc_autodes_par.m_UA_rec_total = m_UA_total_des;
 		// Create new instance of RecompCycle class and assign to member point
-		rc_cycle = new RecompCycle(rc_des_par);
-		bool auto_cycle_success = rc_cycle->auto_optimal_design();
-		double T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
+		// rc_cycle = new RecompCycle(rc_des_par);
+		// bool auto_cycle_success = rc_cycle->auto_optimal_design();
+
+		int auto_opt_error_code = 0;
+		ms_rc_cycle.auto_opt_design(ms_rc_autodes_par, auto_opt_error_code);
+		if(auto_opt_error_code != 0)
+		{
+			message("Can't optimize sCO2 power cycle with current inputs");
+			return -1;
+		}
+
+		// double T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
+		double T_PHX_in_calc = ms_rc_cycle.get_design_solved()->m_temp[5-1];
+
 		// **********************************************************************
 
 		// Now need to iterate UA_total_des until T_PHX_in_calc = m_T_PHX_in
@@ -547,11 +586,21 @@ public:
 
 			// Solve design point model with guessed recups UA
 			m_UA_total_des = UA_recups_guess;
-			rc_des_par.m_UA_rec_total = m_UA_total_des;
+			//rc_des_par.m_UA_rec_total = m_UA_total_des;
+			ms_rc_autodes_par.m_UA_rec_total = m_UA_total_des;
 			// Create new instance of RecompCycle class and assign to member point
-			rc_cycle->set_design_parameters(rc_des_par);
-			auto_cycle_success = rc_cycle->auto_optimal_design();
-			T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
+			//rc_cycle->set_design_parameters(rc_des_par);
+			//auto_cycle_success = rc_cycle->auto_optimal_design();
+			
+			ms_rc_cycle.auto_opt_design(ms_rc_autodes_par,auto_opt_error_code);
+			if( auto_opt_error_code != 0 )
+			{
+				message("Can't optimize sCO2 power cycle with current inputs");
+				return -1;
+			}
+			
+			//T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
+			T_PHX_in_calc = ms_rc_cycle.get_design_solved()->m_temp[5 - 1];
 			// **********************************************************************
 
 			// Now need to iterate UA_total_des until T_PHX_in_calc = m_T_PHX_in
@@ -559,12 +608,12 @@ public:
 		}
 
 		// Design metrics
-		double design_eta = rc_cycle->get_cycle_design_metrics()->m_eta_thermal;
-		double W_dot_net_des_calc = rc_cycle->get_cycle_design_metrics()->m_W_dot_net;		// Can compare to target net output to check convergence
+		double design_eta = ms_rc_cycle.get_design_solved()->m_eta_thermal;
+		double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
 		double q_dot_des = m_W_dot_net_des/design_eta;							//[kW]
-		double m_dot_des = rc_cycle->get_cycle_design_metrics()->m_m_dot_PHX;		//[kg/s]
-		double P_PHX_out = rc_cycle->get_cycle_design_metrics()->m_P[6 - 1];	//[kPa]
-		double P_PHX_in = rc_cycle->get_cycle_design_metrics()->m_P[5 - 1];		//[kPa]
+		double m_dot_des = ms_rc_cycle.get_design_solved()->m_m_dot_t;			//[kg/s]
+		double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
+		double P_PHX_in = ms_rc_cycle.get_design_solved()->m_pres[5-1];			//[kPa]
 
 		// Can give PHX inlet --or-- HX UA, but there is going to be a conflict between
 		// 1) Assumed thermal input to cycle
@@ -605,13 +654,13 @@ public:
 
 		double P_amb_cycle_des = 101325.0;			//[Pa]
 
-		double T_acc_in = rc_cycle->get_cycle_design_metrics()->m_T[9 - 1];
-		double P_acc_in = rc_cycle->get_cycle_design_metrics()->m_P[9 - 1];
-		double m_dot_acc_in = rc_cycle->get_cycle_design_metrics()->m_m_dot_PC;
+		double T_acc_in = ms_rc_cycle.get_design_solved()->m_temp[9 - 1];
+		double P_acc_in = ms_rc_cycle.get_design_solved()->m_pres[9 - 1];
+		double m_dot_acc_in = ms_rc_cycle.get_design_solved()->m_m_dot_mc;
 		
 		double W_dot_fan_des = fan_power_frac*m_W_dot_net_des/1000.0;	//[MW] Cooler air fan power at design
 		
-		double deltaP_des = deltaP_cooler_frac*rc_cycle->get_cycle_design_metrics()->m_P[2 - 1];
+		double deltaP_des = deltaP_cooler_frac*ms_rc_cycle.get_design_solved()->m_pres[2-1];
 				
 		double T_acc_out = m_T_mc_in_des;
 
@@ -624,8 +673,8 @@ public:
 		
 		// Write outputs
 		value(O_ETA_CYCLE_DES, design_eta);
-		value(O_P_LOW_DES, rc_cycle->get_cycle_design_metrics()->m_P[1 - 1]);
-		value(O_F_RECOMP_DES, rc_cycle->get_cycle_design_parameters()->m_recomp_frac);
+		value(O_P_LOW_DES, ms_rc_cycle.get_design_solved()->m_pres[1-1]);
+		value(O_F_RECOMP_DES, ms_rc_cycle.get_design_solved()->m_recomp_frac);
 		value(O_Q_DOT_CALC_DES, q_dot_des);
 		value(O_UA_RECUP_DES, m_UA_total_des);
 		value(O_T_COOLER_IN_DES, T_acc_in-273.15);

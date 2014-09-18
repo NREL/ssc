@@ -85,14 +85,13 @@ public:
 	{
 		double m_N_design;					//[rpm] turbine shaft speed
 		double m_N_comp_design_if_linked;	//[rpm] compressor shaft speed
-			// Compressor inlet state
+			// Turbine inlet state
 		double m_P_in;						//[kPa]
 		double m_T_in;						//[K] 
 		double m_D_in;						//[kg/m^3] 
 		double m_h_in;						//[kJ/kg]
 		double m_s_in;						//[kJ/kg-K]
-		double m_ssnd_in;					//[m/s] Speed of sound
-			// Compressor outlet pressure
+			// Turbine outlet state
 		double m_P_out;						//[kPa]
 		double m_h_out;						//[kJ/kg]
 			// Mass flow rate
@@ -101,7 +100,7 @@ public:
 		S_design_parameters()
 		{
 			m_N_design = m_N_comp_design_if_linked =
-			m_P_in = m_T_in = m_D_in = m_h_in = m_s_in = m_ssnd_in = m_P_out = m_h_out =
+			m_P_in = m_T_in = m_D_in = m_h_in = m_s_in = m_P_out = m_h_out =
 			m_m_dot = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -178,8 +177,17 @@ public:
 			}
 		}
 
+		// Get speed of sound at inlet
+		int prop_error_code = CO2_TD(ms_des_par.m_T_in, ms_des_par.m_D_in, &co2_props);
+		if(prop_error_code != 0)
+		{
+			error_code = prop_error_code;
+			return;
+		}
+		double ssnd_in = co2_props.ssnd;
+
 		// Outlet specific enthalpy after isentropic expansion
-		int prop_error_code = CO2_PS(ms_des_par.m_P_out, ms_des_par.m_s_in, &co2_props);
+		prop_error_code = CO2_PS(ms_des_par.m_P_out, ms_des_par.m_s_in, &co2_props);
 		if(prop_error_code != 0)
 		{
 			error_code = prop_error_code;
@@ -196,7 +204,7 @@ public:
 		ms_des_solved.m_A_nozzle = ms_des_par.m_m_dot/(C_s*ms_des_par.m_D_in);		//[m^2]
 
 		// Set other turbine variables
-		ms_des_solved.m_w_tip_ratio = U_tip / ms_des_par.m_ssnd_in;				//[-]
+		ms_des_solved.m_w_tip_ratio = U_tip / ssnd_in;				//[-]
 		ms_des_solved.m_eta = (ms_des_par.m_h_in - ms_des_par.m_h_out) / w_i;	//[-] Isentropic efficiency
 	}
 
@@ -283,14 +291,13 @@ public:
 		double m_P_out;			//[kPa]
 		double m_h_out;			//[kJ/kg]
 		double m_D_out;			//[kg/m^3]
-		double m_ssnd_out;		//[m/s]
 			// Mass flow
 		double m_m_dot;			//[kg/s]
 
 		S_design_parameters()
 		{
 			m_D_in = m_h_in = m_s_in =
-			m_T_out = m_P_out = m_h_out = m_D_out = m_ssnd_out = std::numeric_limits<double>::quiet_NaN();
+			m_T_out = m_P_out = m_h_out = m_D_out = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	struct S_design_solved
@@ -344,7 +351,15 @@ public:
 
 		CO2_state co2_props;
 
-		int prop_error_code = CO2_PS(ms_des_par.m_P_out, ms_des_par.m_s_in, &co2_props);
+		int prop_error_code = CO2_TD(ms_des_par.m_T_out, ms_des_par.m_D_out, &co2_props);
+		if(prop_error_code != 0)
+		{
+			error_code = prop_error_code;
+			return;
+		}
+		double ssnd_out = co2_props.ssnd;
+
+		prop_error_code = CO2_PS(ms_des_par.m_P_out, ms_des_par.m_s_in, &co2_props);
 		if(prop_error_code != 0)
 		{
 			error_code = prop_error_code;
@@ -364,7 +379,7 @@ public:
 		ms_des_solved.m_N_design = N_rad_s * 9.549296590;			//[rpm] shaft speed
 
 		// Set other compressor member data
-		ms_des_solved.m_w_tip_ratio = U_tip / ms_des_par.m_ssnd_out;
+		ms_des_solved.m_w_tip_ratio = U_tip / ssnd_out;
 		ms_des_solved.m_eta_design = w_i / (ms_des_par.m_h_out - ms_des_par.m_h_in);
 	}
 
@@ -830,10 +845,11 @@ public:
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_tol;						//[-] Convergence tolerance
+		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 		S_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_t_in = m_P_mc_in = m_P_mc_out = m_UA_LT = m_UA_HT = m_recomp_frac = m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_net = m_T_mc_in = m_T_t_in = m_P_mc_in = m_P_mc_out = m_UA_LT = m_UA_HT = m_recomp_frac = m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
 			m_DP_LT.resize(2);
@@ -864,6 +880,7 @@ public:
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
+		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 		double m_P_mc_out_guess;			//[kPa] Initial guess for main compressor outlet pressure
 		bool m_fixed_P_mc_out;				//[-] if true, P_mc_out is fixed at P_mc_out_guess
@@ -879,7 +896,7 @@ public:
 
 		S_opt_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_opt_tol =
+			m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
 				m_P_mc_out_guess = m_PR_mc_guess = m_recomp_frac_guess = m_LT_frac_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
@@ -912,10 +929,11 @@ public:
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
+		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 		S_auto_opt_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_opt_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
@@ -930,6 +948,22 @@ public:
 		}
 	};
 
+	struct S_design_solved
+	{
+		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
+		double m_eta_thermal;
+		double m_W_dot_net;
+		double m_m_dot_mc;
+		double m_m_dot_rc;
+		double m_m_dot_t;
+		double m_recomp_frac;
+
+		S_design_solved()
+		{
+			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 private:
 		// Component classes
 	C_turbine m_t;
@@ -941,26 +975,27 @@ private:
 	S_design_parameters ms_des_par;
 	S_opt_design_parameters ms_opt_des_par;
 	S_auto_opt_design_parameters ms_auto_opt_des_par;
+	S_design_solved ms_des_solved;
 
 		// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-	double m_W_dot_net_last;
 	double m_eta_thermal_last;
-
+	double m_W_dot_net_last;
+	double m_m_dot_mc, m_m_dot_rc, m_m_dot_t;
+	
 		// Structures and data for optimization
 	S_design_parameters ms_des_par_optimal;
-	std::vector<double> m_temp_opt, m_pres_opt, m_enth_opt, m_entr_opt, m_dens_opt;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-	double m_W_dot_net_opt;
 	double m_eta_thermal_opt;
 
 		// Structures and data for auto-optimization
-	double m_W_dot_net_auto_opt;
 	double m_eta_thermal_auto_opt;	
 	S_design_parameters ms_des_par_auto_opt;
 
 	void design_core(int & error_code);	
 
 	void opt_design_core(int & error_code);
+
+	void finalize_design(int & error_code);
 
 public:
 
@@ -980,13 +1015,12 @@ public:
 		std::fill(m_entr_last.begin(), m_entr_last.end(), std::numeric_limits<double>::quiet_NaN());
 		m_dens_last.resize(10);
 		std::fill(m_dens_last.begin(), m_dens_last.end(), std::numeric_limits<double>::quiet_NaN());
-		*/
+		*/		
 
-		m_temp_opt = m_pres_opt = m_enth_opt = m_entr_opt = m_dens_opt = m_temp_last;
-
-		m_W_dot_net_last = m_eta_thermal_last = 
-			m_W_dot_net_opt = m_eta_thermal_opt = 
-			m_W_dot_net_auto_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
+			
+		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	~C_RecompCycle(){}
@@ -996,6 +1030,11 @@ public:
 	void opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code);
 
 	void auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code);
+
+	const S_design_solved * get_design_solved()
+	{
+		return &ms_des_solved;
+	}
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_point_eta(const std::vector<double> &x);
