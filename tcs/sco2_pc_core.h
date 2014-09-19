@@ -112,10 +112,11 @@ public:
 		double m_A_nozzle;					//[m^2] Effective nozzle area
 		double m_w_tip_ratio;				//[-] ratio of tip speed to local speed of sound
 		double m_eta;						//[-] 
+		double m_N_design;					//[rpm] shaft speed
 
 		S_design_solved()
 		{
-			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio = m_eta = std::numeric_limits<double>::quiet_NaN();
+			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio = m_eta = m_N_design = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -144,7 +145,10 @@ public:
 
 	static const double m_nu_design;
 	
-	
+	const S_design_solved * get_design_solved()
+	{
+		return &ms_des_solved;
+	}
 
 	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
@@ -169,13 +173,15 @@ public:
 		// Check that a design-point shaft speed is available
 		if( ms_des_par.m_N_design <= 0.0 )	// Link shafts
 		{
-			ms_des_par.m_N_design = ms_des_par.m_N_comp_design_if_linked;
+			ms_des_solved.m_N_design = ms_des_par.m_N_comp_design_if_linked;
 			if( ms_des_par.m_N_design <= 0.0 )
 			{
 				error_code = 7;
 				return;
 			}
 		}
+		else
+			ms_des_solved.m_N_design = ms_des_par.m_N_design;
 
 		// Get speed of sound at inlet
 		int prop_error_code = CO2_TD(ms_des_par.m_T_in, ms_des_par.m_D_in, &co2_props);
@@ -200,7 +206,7 @@ public:
 		double w_i = ms_des_par.m_h_in - h_s_out;			//[kJ/kg] Isentropic specific work of turbine
 		double C_s = sqrt(2.0*w_i*1000.0);					//[m/s] Spouting velocity
 		double U_tip = ms_des_solved.m_nu_design*C_s;		//[m/s] Tip speed
-		ms_des_solved.m_D_rotor = U_tip/(0.5*ms_des_par.m_N_design*0.104719755);	//[m]
+		ms_des_solved.m_D_rotor = U_tip/(0.5*ms_des_solved.m_N_design*0.104719755);	//[m]
 		ms_des_solved.m_A_nozzle = ms_des_par.m_m_dot/(C_s*ms_des_par.m_D_in);		//[m^2]
 
 		// Set other turbine variables
@@ -957,10 +963,12 @@ public:
 		double m_m_dot_rc;
 		double m_m_dot_t;
 		double m_recomp_frac;
+		double m_N_mc;
+		double m_N_t;
 
 		S_design_solved()
 		{
-			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
+			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = m_N_mc = m_N_t = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

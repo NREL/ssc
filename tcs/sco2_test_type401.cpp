@@ -241,6 +241,18 @@ public:
 
 		rc_cycle.auto_opt_design(cycle_auto_opt_des_par, error_code);
 
+		C_RecompCycle::S_od_parameters cycle_od_par;
+		cycle_od_par.m_T_mc_in = cycle_auto_opt_des_par.m_T_mc_in;
+		cycle_od_par.m_T_t_in = cycle_auto_opt_des_par.m_T_t_in - 50.0;
+		cycle_od_par.m_P_mc_in = rc_cycle.get_design_solved()->m_pres[1-1];
+		cycle_od_par.m_recomp_frac = rc_cycle.get_design_solved()->m_recomp_frac;
+		cycle_od_par.m_N_mc = rc_cycle.get_design_solved()->m_N_mc;
+		cycle_od_par.m_N_t = rc_cycle.get_design_solved()->m_N_t;
+		cycle_od_par.m_N_sub_hxrs = cycle_auto_opt_des_par.m_N_sub_hxrs;
+		cycle_od_par.m_tol = cycle_auto_opt_des_par.m_tol;
+
+		rc_cycle.off_design(cycle_od_par, error_code);
+
 		// ************************************************
 		// Test HX
 

@@ -1330,6 +1330,9 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.m_m_dot_rc = m_m_dot_rc;
 	ms_des_solved.m_m_dot_t = m_m_dot_t;
 	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
+
+	ms_des_solved.m_N_mc = m_mc.get_design_solved()->m_N_design;
+	ms_des_solved.m_N_t = m_t.get_design_solved()->m_N_design;
 }
 
 void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
@@ -1341,9 +1344,9 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 	int cpp_offset = 1;
 
 	// Initialize a few variables
-	m_temp_od[1-cpp_offset];
-	m_pres_od[1-cpp_offset];
-	m_temp_od[6-cpp_offset];
+	m_temp_od[1-cpp_offset] = ms_od_par.m_T_mc_in;
+	m_pres_od[1-cpp_offset] = ms_od_par.m_P_mc_in;
+	m_temp_od[6-cpp_offset] = ms_od_par.m_T_t_in;
 
 	// mc.N          t.N           tol
 
@@ -1441,11 +1444,11 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 		double m_dot_residual = m_dot_t - m_dot_t_allowed;
 		
 		// twn: during the first iteration 'last_m_dot_guess' won't be initialized
-		double secant_guess = m_dot_t - m_dot_residual*(last_m_dot_guess-m_dot_t)/(last_m_dot_guess-m_dot_residual);		// next guess predicted using secant method
+		double secant_guess = m_dot_t - m_dot_residual*(last_m_dot_guess-m_dot_t)/(last_m_dot_residual-m_dot_residual);		// next guess predicted using secant method
 		
 		if(m_dot_residual > 0.0)	// pressure rise is too small, so m_dot_t is too big
 		{
-			if( m_dot_residual / m_dot_t )		// residual is positive; check for convergence
+			if( m_dot_residual / m_dot_t < ms_od_par.m_tol )		// residual is positive; check for convergence
 				break;
 
 			m_dot_upper_bound = m_dot_t;		// reset upper bound
@@ -1558,6 +1561,7 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 	int T8_iter = -1;
 
 	double Q_dot_LT = std::numeric_limits<double>::quiet_NaN();
+	double Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
 
 	for( T8_iter = 0; T8_iter < max_iter; T8_iter++ )
 	{
@@ -1589,8 +1593,8 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 		}
 		else
 		{
-			T9_upper_bound = m_temp_od[2-cpp_offset];		// the absolute lowest temp(9) could be
-			T9_lower_bound = m_temp_od[8-cpp_offset];		// the absolute highest temp(9) could be
+			T9_lower_bound = m_temp_od[2-cpp_offset];		// the absolute lowest temp(9) could be
+			T9_upper_bound = m_temp_od[8-cpp_offset];		// the absolute highest temp(9) could be
 			m_temp_od[9-cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);	// bisect bounds for first guess
 			UA_LT_calc = -1.0;
 			last_LT_residual = UA_LT;			// know a priori that with T9=T8, UA_calc = 0 therefore residual is UA_LT - 0
@@ -1756,7 +1760,7 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 		}
 
 		// Calculate the UA value of the high-temperature recuperator
-		double Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
+		Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
 		if( UA_HT < 1.E-12 )		// no high-temp recuperator (this check is necessary to prevent pressure drops with UA=0 from causing problems)
 			Q_dot_HT = 0.0;
 		else
@@ -1827,13 +1831,32 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 		return;
 	}
 
-	/*
-		
+	// State 5 can now be fully defined
+	m_enth_od[5-cpp_offset] = m_enth_od[4-cpp_offset] + Q_dot_HT/m_dot_t;		//[kJ/kg] Energy balance on cold stream of high-temp recuperator
+	prop_error_code = CO2_PH(m_pres_od[5-cpp_offset], m_enth_od[5-cpp_offset], &co2_props);
+	if(prop_error_code != 0)
+	{
+		error_code = prop_error_code;
+		return;
+	}
+	m_temp_od[5-cpp_offset] = co2_props.temp;
+	m_entr_od[5-cpp_offset] = co2_props.entr;
+	m_dens_od[5-cpp_offset] = co2_props.dens;
 
+	// Calculate cycle performance metrics
+	double w_mc = m_enth_od[1-cpp_offset] - m_enth_od[2-cpp_offset];		//[kJ/kg] (negative) specific work of compressor
+	double w_t = m_enth_od[6-cpp_offset] - m_enth_od[7-cpp_offset];			//[kJ/kg] (positive) specific work of turbine
 
-	*/
+	double w_rc = 0.0;
+	if(ms_od_par.m_recomp_frac > 0.0)
+		w_rc = m_enth_od[9-cpp_offset] - m_enth_od[10-cpp_offset];			//[kJ/kg] (negative) specific work of recompressor
 
+	double Q_dot_PHX = m_dot_t*(m_enth_od[6-cpp_offset] - m_enth_od[5-cpp_offset]);
 
+	double W_dot_net = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;			
+	double eta_thermal = W_dot_net / Q_dot_PHX;
+
+	return;
 }
 
 double fmin_callback_opt_eta_1(double x, void *data)
