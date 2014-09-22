@@ -493,7 +493,33 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss", "DC tracking loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss", "DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
 
+	// loss diagram energy outputs nominal poa, nominal array at STC, net dc, net ac, system output
+	// annual_poa_nom, annual_dc_nominal, annual_dc_net, annual_ac_net, annual_energy
+	// loss diagram % losses 
+	// annual_poa_nom
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA Shading loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA Soiling loss", "%", "", "Loss", "*", "", "" },
+	// annual_dc_nominal
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module modeled loss", "%", "", "Loss", "*", "", "" },
+	// annual_dc_gross
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss_percent", "DC mismatch loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss_percent", "DC diodes and connections loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss_percent", "DC wiring loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss_percent", "DC tracking loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss_percent", "DC nameplate loss", "%", "", "Loss", "*", "", "" },
+	//annual_dc_net
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter clipping loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pnt_loss_percent", "AC inverter night tare loss", "%", "", "Loss", "*", "", "" },
+	// annual_ac_gross
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
+	// annual_ac_net
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "*", "", "" },
+	// annual_energy
 
+	/*
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_mismatch_loss", "DC output after mismatch loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_diodes_loss", "DC output after diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_wiring_loss", "DC output after wiring loss", "kWh", "", "Annual", "*", "", "" },
@@ -503,13 +529,14 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_cliploss", "AC output after inverter clipping loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_psoloss", "AC output after inverter power consumption loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_pntloss", "AC output after inverter night tare loss", "kWh", "", "Annual", "*", "", "" },
-
+	*/
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
 
+	/*
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_transformer_loss", "AC output after step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
-
+	*/
 
 	//
 
@@ -1690,18 +1717,22 @@ public:
 		accumulate_annual( "hourly_glob_horiz_rad", "annual_glob_horiz_rad" );
 		accumulate_annual( "hourly_input_radiation", "annual_input_radiation" );
 		accumulate_annual( "hourly_input_radiation_beam", "annual_input_radiation_beam" );
-		accumulate_annual( "hourly_poa_nom", "annual_poa_nom" );
-		accumulate_annual( "hourly_poa_shaded", "annual_poa_shaded" );
-		accumulate_annual( "hourly_poa_eff", "annual_poa_eff" );
+		double annual_poa_nom = accumulate_annual("hourly_poa_nom", "annual_poa_nom");
+		double annual_poa_shaded = accumulate_annual("hourly_poa_shaded", "annual_poa_shaded");
+		double annual_poa_eff = accumulate_annual("hourly_poa_eff", "annual_poa_eff");
 		double annual_dc_gross1 = accumulate_annual( "hourly_dc_gross", "annual_dc_gross" );
 		double annual_dc_net = accumulate_annual("hourly_dc_net", "annual_dc_net");
 		double annual_ac_gross = accumulate_annual( "hourly_ac_gross", "annual_ac_gross" );
 		double annual_ac_net = accumulate_annual("hourly_ac_net", "annual_ac_net");
 
+
 		double annual_inv_cliploss = accumulate_annual("hourly_inv_cliploss", "annual_inv_cliploss");
 		double annual_inv_psoloss = accumulate_annual("hourly_inv_psoloss", "annual_inv_psoloss");
 		double annual_inv_pntloss = accumulate_annual("hourly_inv_pntloss", "annual_inv_pntloss");
-
+		// W to kW
+		annual_inv_cliploss *= 0.001;
+		annual_inv_psoloss *= 0.001;
+		annual_inv_pntloss *= 0.001;
 
 	
 		bool is_cpv = false;
@@ -1720,7 +1751,8 @@ public:
 		assign( "annual_performance_factor", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
 
 		// calculate nominal dc input
-		assign( "annual_dc_nominal", var_data( (ssc_number_t)( inp_rad * mod_eff/100.0 ) ) );
+		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
+		assign( "annual_dc_nominal", var_data( (ssc_number_t) annual_dc_nominal) );
 
 		assign( "nameplate_dc_rating", var_data( (ssc_number_t)nameplate_kw ) );
 
@@ -1729,7 +1761,7 @@ public:
 		inverter_size_check();
 
 		assign("system_use_lifetime_output", 0);
-		accumulate_annual("hourly_energy", "annual_energy");
+		double annual_energy = accumulate_annual("hourly_energy", "annual_energy");
 
 
 
@@ -1778,7 +1810,9 @@ public:
 			double total_percent = mismatch + diodes + wiring + tracking + nameplate;
 			double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0;
 			double dc_gross = 0;
+			// gross for each subarray
 			dc_gross = accumulate_annual("hourly_" + prefix + "dc_gross", "annual_" + prefix + "dc_gross");
+			// dc derate for each sub array
 			double dc_loss = dc_gross * (1.0 - sa[nn].derate);
 			annual_dc_gross += dc_gross;
 			if (total_percent != 0)
@@ -1809,7 +1843,7 @@ public:
 		assign("annual_dc_nameplate_loss", var_data((ssc_number_t)annual_nameplate_loss));
 
 		// dc user input losses
-		// order taken from ui
+		// order taken from ui - meaningless if out of order - use percentages per 9/18/14 meeting
 		double sys_output = annual_dc_gross;
 		sys_output -= annual_mismatch_loss;
 		assign("annual_dc_after_mismatch_loss", var_data((ssc_number_t)sys_output));
@@ -1826,11 +1860,11 @@ public:
 		//assert(fabs(annual_dc_net - sys_output) < 1e-3);
 
 		// dc to ac losses
-		sys_output -= annual_inv_cliploss*0.001;
+		sys_output -= annual_inv_cliploss;
 		assign("annual_ac_after_inv_cliploss", var_data((ssc_number_t)sys_output));
-		sys_output -= annual_inv_psoloss*0.001;
+		sys_output -= annual_inv_psoloss;
 		assign("annual_ac_after_inv_psoloss", var_data((ssc_number_t)sys_output));
-		sys_output -= annual_inv_pntloss*0.001;
+		sys_output -= annual_inv_pntloss;
 		assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
 
 
@@ -1863,6 +1897,61 @@ public:
 
 		// check that ac_net = sys_output at this point
 		//assert(fabs(annual_ac_net - sys_output) < 1e-3);
+		double percent = 0;
+		if (annual_poa_nom > 0) percent = 100 * (annual_poa_nom - annual_poa_shaded) / annual_poa_nom;
+		assign("annual_poa_shading_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_poa_shaded > 0) percent = 100 * (annual_poa_shaded - annual_poa_eff) / annual_poa_shaded;
+		assign("annual_poa_soiling_loss_percent", var_data((ssc_number_t)percent));
+		// annual_dc_nominal
+		percent = 0;
+		if (annual_dc_nominal > 0) percent = 100 * (annual_dc_nominal - annual_dc_gross) / annual_dc_nominal;
+		assign("annual_dc_module_loss_percent", var_data((ssc_number_t)percent));
+		// annual_dc_gross
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * annual_mismatch_loss / annual_dc_gross;
+		assign("annual_dc_mismatch_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * annual_diode_loss / annual_dc_gross;
+		assign("annual_dc_diodes_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * annual_wiring_loss / annual_dc_gross;
+		assign("annual_dc_wiring_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * annual_tracking_loss / annual_dc_gross;
+		assign("annual_dc_tracking_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * annual_nameplate_loss / annual_dc_gross;
+		assign("annual_dc_nameplate_loss_percent", var_data((ssc_number_t)percent));
+		//annual_dc_net
+		percent = 0;
+		if (annual_dc_net > 0) percent = 100 *annual_inv_cliploss / annual_dc_net;
+		assign("annual_ac_inv_clip_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_dc_net > 0) percent = 100 * annual_inv_psoloss / annual_dc_net;
+		assign("annual_ac_inv_pso_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_dc_net > 0) percent = 100 * annual_inv_pntloss / annual_dc_net;
+		assign("annual_ac_inv_pnt_loss_percent", var_data((ssc_number_t)percent));
+		sys_output = annual_dc_net;
+		sys_output -= (annual_inv_cliploss + annual_inv_pntloss + annual_inv_psoloss);
+		percent = 0;
+		if (sys_output > 0) percent = 100 * (sys_output - annual_ac_gross) / sys_output;
+		assign("annual_ac_inv_eff_loss_percent", var_data((ssc_number_t)percent));
+		// annual_ac_gross
+		percent = 0;
+		if (annual_ac_gross > 0) percent = 100 * acwiring_loss / annual_ac_gross;
+		assign("annual_ac_wiring_loss_percent", var_data((ssc_number_t)percent));
+		percent = 0;
+		if (annual_ac_gross > 0) percent = 100 * transformer_loss / annual_ac_gross;
+		assign("annual_ac_transformer_loss_percent", var_data((ssc_number_t)percent));
+		// annual_ac_net
+		percent = 0;
+		if (annual_ac_net > 0) percent = 100 * (annual_ac_net - annual_energy) / annual_ac_net;
+		assign("annual_ac_perf_adj_loss_percent", var_data((ssc_number_t)percent));
+		// system_output
+
+
 
 		// end of losses
 
@@ -1878,9 +1967,9 @@ public:
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
-		double annual_energy = 0.0;
-		for (int i = 0; i < 8760; i++)
-			annual_energy += p_hourly_energy[i];
+//		double annual_energy = 0.0;
+//		for (int i = 0; i < 8760; i++)
+//			annual_energy += p_hourly_energy[i];
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
