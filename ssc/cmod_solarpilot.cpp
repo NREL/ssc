@@ -200,9 +200,7 @@ public:
 
 		//return the number of heliostats
 		assign("number_heliostats", layout.heliostat_positions.size() ); 
-		// Steve, ^^^^^^^^^^^^ is this the right call?? ^^^^^^^^^^^^^^^
-
-
+		
 		sapi.SetDetailCallbackStatus(false);
 		sapi.SetSummaryCallbackStatus(true);
 		sapi.SetSummaryCallback( solarpilot_callback, (void*)this);

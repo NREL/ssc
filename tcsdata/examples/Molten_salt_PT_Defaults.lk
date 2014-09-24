@@ -7,7 +7,7 @@ file_dir = env('SSCDIR')+'/tcsdata/typelib/MS_External_Power_Tower';
 //********************************************************************************************
 // Pre-processing input files
 //Read in field efficiency files
-eff_array_loc = file_dir + '/eff_array.dat';
+eff_array_loc = file_dir + '/Type221B_eff_input.csv';
 f = open( eff_array_loc, 'r' );
 
 if( !f )
@@ -17,28 +17,22 @@ if( !f )
 }
 
 line = 'string';
-read_line(f, line);
-azimuth = split( line, ',' );
-read_line(f, line);
-zenith = split( line, ',' );
-
-num_azi = #azimuth;
-num_zen = #zenith;
-num_sol_pos = num_azi * num_zen;
+num_sol_pos = 88;
 
 eta_field_map = alloc( num_sol_pos, 3 );
 
-for( i = 0; i < num_azi; i++ )
-	for( j = 0; j < num_zen; j++ )
-	{
-		eta_field_map[i*num_zen+j][1] = azimuth[i]; 
-		eta_field_map[i*num_zen+j][0] = zenith[j];
-	}
-
-for( i = 0; i < num_sol_pos; i++ )
-{
-	read_line(f, eta_field_map[i][2]);
+for( i=0; i<num_sol_pos; i++){
+	read_line(f, line);
+	linedat = split( line, ',' );
+	azimuth = linedat[0];
+	zenith = linedat[1];
+	eff = linedat[2];
+	
+	eta_field_map[i][0] = azimuth;
+	eta_field_map[i][1] = zenith;
+	eta_field_map[i][2] = eff;
 }
+
 close( f );
 
 //***** Read in flux file ********
@@ -538,7 +532,7 @@ tou_reader = add_unit("tou_translator");
 set_value( tou_reader, "weekday_schedule", tou_week );
 set_value( tou_reader, "weekend_schedule", tou_end );
 
-hel_field = add_unit("sam_mw_pt_type221");
+hel_field = add_unit("sam_mw_pt_type221B");
 receiver = add_unit("sam_mw_pt_type222");
 controller = add_unit("sam_mw_trough_type251");
 powerblock = add_unit("sam_mw_pt_type224");
@@ -546,8 +540,6 @@ parasitics = add_unit("sam_mw_pt_type228");
 
 // Set heliostat field parameters
 set_value( hel_field, "eta_map", eta_field_map );
-set_value( hel_field, "n_zen", 8 );
-set_value( hel_field, "n_azi", 13 );
 set_value( hel_field, "n_hel", 8929 );
 set_value( hel_field, "q_start", 0.025 );
 set_value( hel_field, "p_run", 0.055 );
