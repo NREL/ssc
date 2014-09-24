@@ -2114,7 +2114,7 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 		index++;
 	}
 
-	double largest_value = 0.0;
+	m_W_dot_net_max = 0.0;
 	bool solution_found = false;
 	if(index > 0)		// need to call subplex
 	{
@@ -2170,6 +2170,76 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 	if( ms_od_par.m_N_t <= 0.0 )
 		ms_od_par.m_N_t = ms_od_par.m_N_mc;		// link turbine and main compressor shafts
 
+	// Check inputs
+	if(ms_od_par.m_recomp_frac < 0.0)
+	{
+		return 0.0;
+	}
+
+	// Call off_design subroutine
+		// 'ms_od_par' has been defined here and in 'optimal_off_design_core'
+	int od_error_code = 0;
+	off_design_core(od_error_code);
+
+	if( od_error_code != 0 )
+		return 0.0;
+
+	double off_design_point_value = 0.0;
+	if( ms_tar_od_par.m_is_target_Q )
+		off_design_point_value = m_Q_dot_PHX_od;
+	else
+		off_design_point_value = m_W_dot_net_od;
+
+	// Hardcode some compressor checks to 'true', per John's code. Could revisit later
+	bool surge_allowed = true;
+	bool supersonic_tip_speed_allowed = true;
+	
+	// Check validity
+	if( m_pres_od[2 - 1] > ms_des_par.m_P_high_limit )		// above high-pressure limit; provide optimizer with more information
+		off_design_point_value = off_design_point_value / (10.0 + m_pres_od[2 - 1] - ms_des_par.m_P_high_limit);
+
+	if(!surge_allowed)		// twn: Note that 'surge_allowed' is currently hardcoded to true so this won't be executed
+	{
+		if( m_mc.get_od_solved()->m_surge )
+			off_design_point_value = 0.0;
+		
+		if( ms_od_par.m_recomp_frac > 0.0 && m_rc.get_od_solved()->m_surge )
+			off_design_point_value = 0.0;
+	}
+
+	if(!supersonic_tip_speed_allowed)
+	{
+		if( m_mc.get_od_solved()->m_w_tip_ratio > 1.0 )
+			off_design_point_value = 0.0;
+
+		if( ms_od_par.m_recomp_frac > 0.0 && m_rc.get_od_solved()->m_w_tip_ratio > 1.0 )
+			off_design_point_value = 0.0;
+
+		if( m_t.get_od_solved()->m_w_tip_ratio > 1.0 )
+			off_design_point_value = 0.0;
+	}
+
+	// Check if this is the optimal cycle?
+
+
+	/*
+	if (.not. surge_allowed) then
+	    if (recomp_cycle%mc%surge) off_design_point_value = 0.0_dp
+	    if (recomp_cycle%recomp_frac > 0.0_dp .and. recomp_cycle%rc%surge) off_design_point_value = 0.0_dp
+	end if
+	if (.not. supersonic_tip_speed_allowed) then
+	    if (recomp_cycle%mc%w_tip_ratio > 1.0_dp) off_design_point_value = 0.0_dp
+	    if (recomp_cycle%recomp_frac > 0.0_dp .and. recomp_cycle%rc%w_tip_ratio > 1.0_dp) off_design_point_value = 0.0_dp
+	    if (recomp_cycle%t%w_tip_ratio > 1.0_dp) off_design_point_value = 0.0_dp
+	end if
+	
+	! Check if this is the optimal cycle.
+	if (abs(off_design_point_value) > largest_value) then
+	    solution_found = .true.
+	    optimal_cycle = recomp_cycle
+	    largest_value = abs(off_design_point_value)
+	end if
+	*/
 
 }
 
