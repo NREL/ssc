@@ -326,7 +326,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_inc_sf_tot",   "Total power incident on the field",                          "MWt",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_abs_tot",      "Total absorbed energy",                                      "MWt",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_avail",        "Thermal power produced by the field",                        "MWt",          "",            "Type250",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",     "Total fossil fuel usage by all plant subsystems",            "MMBTU",        "",            "SumCalc",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_aux",     "Total fossil fuel usage by all plant subsystems",            "MMBTU",        "",            "SumCalc",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_dump",         "Dumped thermal energy",                                      "MWt",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_m_dot_makeup",   "Cooling water makeup flow rate",                             "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_pb",           "Thermal energy to the power block",                          "MWt",          "",            "Type251",        "*",                       "",                      "" },
@@ -337,7 +337,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 	// TODO - consistent fuel usage and o and m caclulations
-	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate (conversion MWh to kWh if fuel in MMBTU)", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage", "Annual fuel usage", "kWh", "", "", "*", "", "" },
 
 
 	var_info_invalid };
@@ -713,7 +714,7 @@ public:
 		accumulate_annual("q_inc_sf_tot", "annual_q_inc_sf_tot");
 		accumulate_annual("q_abs_tot", "annual_q_abs_tot");
 		accumulate_annual("q_avail", "annual_q_avail");
-		accumulate_annual("Fuel_usage", "annual_fuel_usage");
+		double fuel_usage_mmbtu = accumulate_annual("Fuel_usage", "annual_q_aux");
 		accumulate_annual("q_dump", "annual_q_dump");
 		accumulate_annual("m_dot_makeup", "annual_m_dot_makeup");
 		accumulate_annual("q_pb", "annual_q_pb");
@@ -735,7 +736,9 @@ public:
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
-		assign("system_heat_rate", 1000);
+		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
+		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_usage_mmbtu * 293.297)));
 	}
 
 };

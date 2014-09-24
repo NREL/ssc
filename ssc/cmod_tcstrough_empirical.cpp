@@ -237,6 +237,10 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 
+	// TODO - consistent fuel usage and o and m caclulations
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage", "Annual fuel usage", "kWh", "", "", "*", "", "" },
+
 
 
 
@@ -525,6 +529,9 @@ public:
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		// TODO from samsim interop
+		assign("annual_fuel_usage", 0);
 
 	}
 
