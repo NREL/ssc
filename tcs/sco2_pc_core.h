@@ -150,6 +150,11 @@ public:
 		return &ms_des_solved;
 	}
 
+	const S_od_solved * get_od_solved()
+	{
+		return &ms_od_solved;
+	}
+
 	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
 		/* 9.4.14: code from John Dyreby, converted to C++ by Ty Neises
@@ -351,6 +356,11 @@ public:
 		return &ms_des_solved;
 	}
 
+	const S_od_solved * get_od_solved()
+	{
+		return &ms_od_solved;
+	}
+
 	void compressor_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
 		ms_des_par = des_par_in;
@@ -528,6 +538,11 @@ public:
 	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
 	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+
+	const S_od_solved * get_od_solved()
+	{
+		return &ms_od_solved;
+	}
 
 	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code)
 	{
@@ -1124,6 +1139,10 @@ private:
 	double m_W_dot_net_od;
 	double m_Q_dot_PHX_od;
 
+		// Structures and data for off-design optimization
+	S_od_parameters ms_od_par_optimal;
+	double m_W_dot_net_max;
+
 	void design_core(int & error_code);	
 
 	void opt_design_core(int & error_code);
@@ -1164,6 +1183,8 @@ public:
 		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
 
 		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
+
+		m_W_dot_net_max = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	~C_RecompCycle(){}
