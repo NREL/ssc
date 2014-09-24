@@ -1418,13 +1418,24 @@ void C_RecompCycle::off_design_core(int & error_code)
 
 		// Calculate scaled pressure drops through heat exchangers.
 		std::vector<double> DP_LT, DP_HT, DP_PHX, DP_PC;
-		std::vector<double> m_dot_LT = {m_dot_mc, m_dot_t};
+		std::vector<double> m_dot_LT;
+		m_dot_LT.push_back( m_dot_mc );
+		m_dot_LT.push_back( m_dot_t );
 		m_LT.hxr_pressure_drops(m_dot_LT, DP_LT);
-		std::vector<double> m_dot_HT = {m_dot_t, m_dot_t};
+
+		std::vector<double> m_dot_HT;
+		m_dot_HT.push_back( m_dot_t );
+		m_dot_HT.push_back( m_dot_t );
 		m_HT.hxr_pressure_drops(m_dot_HT, DP_HT);
-		std::vector<double> m_dot_PHX = {m_dot_t, 0.0};
+		
+		std::vector<double> m_dot_PHX;
+		m_dot_PHX.push_back( m_dot_t );
+		m_dot_PHX.push_back( 0.0 );
 		m_PHX.hxr_pressure_drops(m_dot_PHX, DP_PHX);
-		std::vector<double> m_dot_PC = {0.0, m_dot_mc};
+		
+		std::vector<double> m_dot_PC;
+		m_dot_PC.push_back( 0.0 );
+		m_dot_PC.push_back( m_dot_mc);
 		m_PC.hxr_pressure_drops(m_dot_PC, DP_PC);
 
 		// Apply pressure drops to heat exchangers, fully defining the pressure at all states
@@ -1537,8 +1548,12 @@ void C_RecompCycle::off_design_core(int & error_code)
 	// Get the recuperator conductances corresponding to the converged mass flow rates
 	double UA_LT, UA_HT;
 	UA_LT = UA_HT = std::numeric_limits<double>::quiet_NaN();
-	std::vector<double> m_dot_LT = { m_dot_mc, m_dot_t };
-	std::vector<double> m_dot_HT = { m_dot_t, m_dot_t };
+	std::vector<double> m_dot_LT;
+	m_dot_LT.push_back( m_dot_mc );
+	m_dot_LT.push_back( m_dot_t );
+	std::vector<double> m_dot_HT;
+	m_dot_HT.push_back( m_dot_t );
+	m_dot_HT.push_back( m_dot_t );
 	m_LT.hxr_conductance(m_dot_LT, UA_LT);
 	m_HT.hxr_conductance(m_dot_HT, UA_HT);
 
