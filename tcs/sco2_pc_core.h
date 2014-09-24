@@ -990,6 +990,103 @@ public:
 		}
 	};
 
+	struct S_opt_od_parameters
+	{
+		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+		bool m_is_max_W_dot;	//[-] Value to maximize: true = W_dot, false = eta
+
+		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
+
+		double m_P_mc_in_guess;	//[kPa] Initial guess for P_mc_in when iterating to hit target
+		bool m_fixed_P_mc_in;	//[-] if true, P_mc_in is fixed at P_mc_in_guess
+
+		double m_recomp_frac_guess;		//[-] Initial guess for recompression fraction
+		bool m_fixed_recomp_frac;		//[-] If true, recomp_frac is fixed at recomp_frac_guess
+
+		double m_N_mc_guess;			//[rpm] Initial guess for main compressor shaft speed
+		bool m_fixed_N_mc;				//[-]   If true, N_mc is fixed at N_mc_guess
+
+		double m_N_t_guess;				//[rpm] Initial guess for turbine shaft speed (negative value links it to N_mc)
+		bool m_fixed_N_t;				//[-]   If true, N_t is fixed at N_t_guess
+
+		double m_tol;					//[-] Convergence tolerance
+		double m_opt_tol;				//[-] Optimization convergence tolerance
+
+		S_opt_od_parameters()
+		{
+			m_T_mc_in = m_T_t_in = m_P_mc_in_guess = m_recomp_frac_guess = m_N_mc_guess =
+				m_N_t_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
+
+			m_N_sub_hxrs = -1;
+
+			m_fixed_P_mc_in = m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_t = false;
+		}
+	};
+
+	struct S_target_od_parameters
+	{
+		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_T_t_in;		//[K] Turbine inlet temperature
+		double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
+		double m_N_mc;			//[rpm] Main compressor shaft speed
+		double m_N_t;			//[rpm] Turbine shaft speed
+		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
+		double m_tol;			//[-] Convergence tolerance
+		
+		double m_target;		//[kW] type of target: 1) W_dot 2) Q_dot_PHX
+		bool m_is_target_Q;		//[-] true = solve for Q_dot_PHX, false = solve for W_dot
+
+		double m_lowest_pressure;	//[-] lowest pressure to check
+		double m_highest_pressure;	//[-] highest pressure to check
+
+		S_target_od_parameters()
+		{
+			m_T_mc_in = m_T_t_in = m_recomp_frac = m_N_mc = m_N_t = m_tol =
+				m_target = m_lowest_pressure = m_highest_pressure = std::numeric_limits<double>::quiet_NaN();
+
+			m_is_target_Q = true;
+
+			m_N_sub_hxrs = -1;
+		}
+	};
+
+	struct S_opt_target_od_parameters
+	{
+		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+		double m_target;		//[kW] type of target: 1) W_dot 2) Q_dot_PHX
+		bool m_is_target_Q;		//[-] true = solve for Q_dot_PHX, false = solve for W_dot
+
+		int m_N_sub_hxrs;				//[-] Number of sub heat exchangers
+		double m_lowest_pressure;		//[-] lowest pressure to check
+		double m_highest_pressure;		//[-] highest pressure to check
+
+		double m_recomp_frac_guess;		//[-] Initial guess for recompression fraction
+		bool m_fixed_recomp_frac;		//[-] If true, recomp_frac is fixed at recomp_frac_guess
+
+		double m_N_mc_guess;			//[rpm] Initial guess for main compressor shaft speed
+		bool m_fixed_N_mc;				//[-]   If true, N_mc is fixed at N_mc_guess
+
+		double m_N_t_guess;				//[rpm] Initial guess for turbine shaft speed (negative value links it to N_mc)
+		bool m_fixed_N_t;				//[-]   If true, N_t is fixed at N_t_guess
+
+		double m_tol;					//[-] Convergence tolerance
+		double m_opt_tol;				//[-] Optimization convergence tolerance
+
+		S_opt_target_od_parameters()
+		{
+			m_T_mc_in = m_T_t_in = m_target = m_lowest_pressure = m_highest_pressure = m_recomp_frac_guess =
+				m_N_mc_guess = m_N_t_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
+
+			m_N_sub_hxrs = -1;
+			
+			m_is_target_Q = m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_t = true;
+		}
+	};
+
 private:
 		// Component classes
 	C_turbine m_t;
@@ -1003,6 +1100,9 @@ private:
 	S_auto_opt_design_parameters ms_auto_opt_des_par;
 	S_design_solved ms_des_solved;
 	S_od_parameters ms_od_par;
+	S_opt_od_parameters ms_opt_od_par;
+	S_target_od_parameters ms_tar_od_par;
+	S_opt_target_od_parameters ms_opt_tar_od_par;
 
 		// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
@@ -1020,12 +1120,21 @@ private:
 
 		// Results from last off-design solution
 	std::vector<double> m_temp_od, m_pres_od, m_enth_od, m_entr_od, m_dens_od;					// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
+	double m_eta_thermal_od;
+	double m_W_dot_net_od;
+	double m_Q_dot_PHX_od;
 
 	void design_core(int & error_code);	
 
 	void opt_design_core(int & error_code);
 
-	void finalize_design(int & error_code);
+	void finalize_design(int & error_code);	
+
+	void off_design_core(int & error_code);
+
+	void optimal_off_design_core(int & error_code);
+
+	void target_off_design_core(int & error_code);
 
 public:
 
@@ -1053,6 +1162,8 @@ public:
 		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
 
 		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
+
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	~C_RecompCycle(){}
@@ -1065,16 +1176,25 @@ public:
 
 	void off_design(S_od_parameters & od_par_in, int & error_code);
 
+	void optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code);
+
+	void target_off_design(S_target_od_parameters & tar_od_par_in, int & error_code);
+
+	void optimal_target_off_design(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
+
 	const S_design_solved * get_design_solved()
 	{
 		return &ms_des_solved;
-	}
+	}	
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_point_eta(const std::vector<double> &x);
 
 	// Called by 'fmin_callback_opt_eta', so needs to be public
 	double opt_eta(double P_high_opt);
+
+	// Called by 'nlopt_callback.... , so needs to be public
+	double off_design_point_value(const std::vector<double> &x);
 	
 };
 

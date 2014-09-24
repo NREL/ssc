@@ -1339,6 +1339,15 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 {
 	ms_od_par = od_par_in;
 
+	int od_error_code = 0;
+
+	off_design_core(od_error_code);
+
+	error_code = od_error_code;
+}
+
+void C_RecompCycle::off_design_core(int & error_code)
+{	
 	CO2_state co2_props;
 
 	int cpp_offset = 1;
@@ -1851,12 +1860,319 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 	if(ms_od_par.m_recomp_frac > 0.0)
 		w_rc = m_enth_od[9-cpp_offset] - m_enth_od[10-cpp_offset];			//[kJ/kg] (negative) specific work of recompressor
 
-	double Q_dot_PHX = m_dot_t*(m_enth_od[6-cpp_offset] - m_enth_od[5-cpp_offset]);
 
-	double W_dot_net = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;			
-	double eta_thermal = W_dot_net / Q_dot_PHX;
+	m_Q_dot_PHX_od = m_dot_t*(m_enth_od[6-cpp_offset] - m_enth_od[5-cpp_offset]);
+	m_W_dot_net_od = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;			
+	m_eta_thermal_od = m_W_dot_net_od / m_Q_dot_PHX_od;
 
 	return;
+}
+
+void C_RecompCycle::target_off_design(S_target_od_parameters & tar_od_par_in, int & error_code)
+{
+	ms_tar_od_par = tar_od_par_in;
+
+	int tar_od_error_code = 0;
+
+	target_off_design_core(tar_od_error_code);
+
+	error_code = tar_od_error_code;
+}
+
+void C_RecompCycle::target_off_design_core(int & error_code)
+{
+	int max_iter = 100;
+	int search_intervals = 20;		// number of intervals to check for valid bounds before starting secant loop
+
+	// Determine the interval containing the solution
+	bool lower_bound_found = false;
+	bool upper_bound_found = false;
+
+	double left_residual = -1.E12;		// Initialized to large negative value
+	double right_residual = 1.E12;		// Initialized to large positive value
+
+	double P_low = ms_tar_od_par.m_lowest_pressure;
+	double P_high = ms_tar_od_par.m_highest_pressure;
+
+	std::vector<double> P_guesses(search_intervals+1);
+	for( int i = 0; i <= search_intervals; i++ )
+		P_guesses[i] = P_low + i*(P_high-P_low)/double(search_intervals);
+
+	double biggest_value = 0.0;
+	double biggest_cycle = 0.0;			// Track pressure instead of 'cycle'
+
+	// Set 'ms_od_par' that are known
+	ms_od_par.m_T_mc_in = ms_tar_od_par.m_T_mc_in;
+	ms_od_par.m_T_t_in = ms_tar_od_par.m_T_t_in;
+	ms_od_par.m_recomp_frac = ms_tar_od_par.m_recomp_frac;
+	ms_od_par.m_N_mc = ms_tar_od_par.m_N_mc;
+	ms_od_par.m_N_t = ms_tar_od_par.m_N_t;
+	ms_od_par.m_N_sub_hxrs = ms_tar_od_par.m_N_sub_hxrs;
+	ms_od_par.m_tol = ms_tar_od_par.m_tol;
+
+	for( int i = 0; i <= search_intervals; i++ )
+	{
+		double P_guess = P_guesses[i];
+
+		ms_od_par.m_P_mc_in = P_guess;
+
+		int od_error_code = 0;
+		off_design_core(od_error_code);
+
+		if(od_error_code == 0)
+		{
+			if( m_pres_last[2 - 1] > ms_des_par.m_P_high_limit*1.2 )
+				break;		// Compressor inlet pressure is getting too big
+
+			double target_value = -999.9;
+			if( ms_tar_od_par.m_is_target_Q )
+				target_value = m_Q_dot_PHX_od;
+			else
+				target_value = m_W_dot_net_od;
+
+			double residual = target_value - ms_tar_od_par.m_target;
+
+			if(target_value > biggest_value)		// keep track of the largest value seen
+			{
+				biggest_value = target_value;
+				biggest_cycle = P_guess;
+			}
+
+			if( residual >= 0.0 )					// value is above target
+			{
+				if( residual < right_residual )	// first rightbound or a better bound, use it
+				{
+					P_high = P_guess;
+					right_residual = residual;
+					upper_bound_found = true;
+				}
+			}
+			else									// value is below target
+			{
+				if( residual > left_residual )	// note: residual and left_residual are negative
+				{
+					P_low = P_guess;
+					left_residual = residual;
+					lower_bound_found = true;
+				}
+			}		
+		}		// End od_error_code = 0 loop
+		if( lower_bound_found && upper_bound_found )
+			break;
+	}
+
+	if( !lower_bound_found || !upper_bound_found )
+	{
+		error_code = 26;
+		// return biggest cycle??
+		return;
+	}
+
+	// Enter secant / bisection loop
+	double P_guess = (P_low + P_high)*0.5;		// start with bisection (note: could use left and right bounds and residuals to get a better first guess)
+
+	double last_P_guess = 1.E12;				// twn: set to some large value here???
+	double last_residual = 1.23;				// twn: set to some small value here???
+
+	int iter = 0;
+	for( iter = 1; iter <= max_iter; iter++ )
+	{
+		ms_od_par.m_P_mc_in = P_guess;
+
+		int od_error_code = 0;
+		off_design_core(od_error_code);
+		
+		if( od_error_code != 0 )			// results not valid; choose a random value between P_low and P_high for next guess
+		{
+			double P_frac = rand() / (double)(RAND_MAX);
+			P_guess = P_low + (P_high - P_low)*P_guess;
+			continue;
+		}
+
+		// Check residual
+		double residual = std::numeric_limits<double>::quiet_NaN();
+		if( ms_tar_od_par.m_is_target_Q )
+			residual = m_Q_dot_PHX_od - ms_tar_od_par.m_target;
+		else
+			residual = m_W_dot_net_od - ms_tar_od_par.m_target;
+	
+		if( residual >= 0.0 )		// value is above target
+		{
+			if( residual / ms_tar_od_par.m_target <= ms_tar_od_par.m_tol )		// converged
+				break;
+			P_high = P_guess;
+		}
+		else						// value is below target
+		{
+			if( -residual / ms_tar_od_par.m_target <= ms_tar_od_par.m_tol )
+				break;
+			P_low = P_guess;
+		}
+
+		if( fabs(P_high - P_low) < 0.1 )		// Interval is tiny; consider it converged
+			break;
+
+		// Determine next guess
+		double P_secant = P_guess - residual*(last_P_guess-P_guess)/(last_residual-residual);		// next guess predicted using secant method
+		last_P_guess = P_guess;
+		last_residual = residual;
+		P_guess = P_secant;
+
+		if( P_guess <= P_low || P_guess >= P_high )
+			P_guess = (P_low + P_high)*0.5;				// Secant overshot, use bisection
+
+	}
+
+	// Check for convergence
+	if( iter >= max_iter )
+	{
+		error_code = 82;
+		return;
+	}
+
+}
+
+void C_RecompCycle::optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code)
+{
+	ms_opt_od_par = opt_od_par_in;
+
+	int opt_od_error_code = 0;
+
+	optimal_off_design_core(opt_od_error_code);
+
+	error_code = opt_od_error_code;
+}
+
+void C_RecompCycle::optimal_off_design_core(int & error_code)
+{
+	// Set known values for ms_od_par
+	ms_od_par.m_T_mc_in = ms_opt_od_par.m_T_mc_in;
+	ms_od_par.m_T_t_in = ms_opt_od_par.m_T_t_in;
+	ms_od_par.m_N_sub_hxrs = ms_opt_od_par.m_N_sub_hxrs;
+	ms_od_par.m_tol = ms_opt_od_par.m_tol;
+
+	// Initialize guess array
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+
+	if( !ms_opt_od_par.m_fixed_P_mc_in )
+	{
+		x.push_back(ms_opt_od_par.m_P_mc_in_guess);
+		lb.push_back(100.0);
+		ub.push_back(ms_des_par.m_P_high_limit);
+		scale.push_back(50.0);
+
+		index++;
+	}
+
+	if( !ms_opt_od_par.m_fixed_recomp_frac )
+	{
+		x.push_back(ms_opt_od_par.m_recomp_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.01);
+
+		index++;
+	}
+
+	if( !ms_opt_od_par.m_fixed_N_mc )
+	{
+		x.push_back(ms_opt_od_par.m_N_mc_guess);
+		lb.push_back(1.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(100.0);
+
+		index++;
+	}
+
+	if( !ms_opt_od_par.m_fixed_N_t )
+	{
+		x.push_back(ms_opt_od_par.m_N_t_guess);
+		lb.push_back(1.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(100.0);
+
+		index++;
+	}
+
+	double largest_value = 0.0;
+	bool solution_found = false;
+	if(index > 0)		// need to call subplex
+	{
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+	}
+	else		// Just call off design subroutine (with fixed inputs)
+	{
+		double blah = 1.23;
+	}
+
+}
+
+double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
+{
+	// 'x' is array of inputs either being adjusted by optimizer or set constant
+	// Finish defining 'ms_od_par' based on current 'x' values
+
+	int index = 0;
+
+	if( !ms_opt_od_par.m_fixed_P_mc_in )
+	{
+		ms_od_par.m_P_mc_in = x[index];
+		index++;
+	}
+	else
+		ms_od_par.m_P_mc_in = ms_opt_od_par.m_P_mc_in_guess;
+
+	if( !ms_opt_od_par.m_fixed_recomp_frac )
+	{
+		ms_od_par.m_recomp_frac = x[index];
+		index++;
+	}
+	else
+		ms_od_par.m_recomp_frac = ms_opt_od_par.m_recomp_frac_guess;
+
+	if( !ms_opt_od_par.m_fixed_N_mc )
+	{
+		ms_od_par.m_N_mc = x[index];
+		index++;
+	}
+	else
+		ms_od_par.m_N_mc = ms_opt_od_par.m_N_mc_guess;
+
+	if( !ms_opt_od_par.m_fixed_N_t )
+	{
+		ms_od_par.m_N_t = x[index];
+		index++;
+	}
+	else
+		ms_od_par.m_N_t = ms_opt_od_par.m_N_t_guess;
+
+	if( ms_od_par.m_N_t <= 0.0 )
+		ms_od_par.m_N_t = ms_od_par.m_N_mc;		// link turbine and main compressor shafts
+
+
+}
+
+
+void C_RecompCycle::optimal_target_off_design(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code)
+{
+	ms_opt_tar_od_par = opt_tar_od_par_in;
+
+	// Determine the largest possible power output of the cycle
+	bool point_found = false;
+	double P_low = ms_opt_tar_od_par.m_lowest_pressure;
+
+	do
+	{
+
+
+	} while( true );
+
 }
 
 double fmin_callback_opt_eta_1(double x, void *data)
