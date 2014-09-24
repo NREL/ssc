@@ -88,8 +88,8 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_total",               "Total PTC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_fed_total",         "Federal ITC income",                 "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_sta_total",         "State ITC income",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_fed",         "Federal ITC income",                 "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_sta",         "State ITC income",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",         "Total ITC income",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
 	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depr_sched",                        "State depreciation schedule",              "%",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -534,8 +534,8 @@ public:
 
 		double ibi_total = ibi_fed_amount + ibi_fed_per + ibi_sta_amount + ibi_sta_per + ibi_uti_amount + ibi_uti_per + ibi_oth_amount + ibi_oth_per;
 		double cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
-		double itc_fed_total = itc_fed_amount + itc_fed_per;
-		double itc_sta_total = itc_sta_amount + itc_sta_per;
+		double itc_total_fed = itc_fed_amount + itc_fed_per;
+		double itc_total_sta = itc_sta_amount + itc_sta_per;
 
 		for (i=1; i<=nyears; i++)
 		{			
@@ -874,9 +874,9 @@ public:
 		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
 		save_cf( CF_ptc_total, nyears, "cf_ptc_total" );
 
-		assign( "itc_fed_total", var_data((ssc_number_t) itc_fed_total));
-		assign( "itc_sta_total", var_data((ssc_number_t) itc_sta_total));
-		assign( "itc_total", var_data((ssc_number_t) (itc_fed_total+itc_sta_total)));
+		assign( "itc_total_fed", var_data((ssc_number_t) itc_total_fed));
+		assign( "itc_total_sta", var_data((ssc_number_t) itc_total_sta));
+		assign( "itc_total", var_data((ssc_number_t) (itc_total_fed+itc_total_sta)));
 	
 		save_cf( CF_sta_depr_sched, nyears, "cf_sta_depr_sched" );
 		save_cf( CF_sta_depreciation, nyears, "cf_sta_depreciation" );
