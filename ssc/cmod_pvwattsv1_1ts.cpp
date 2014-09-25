@@ -8,7 +8,7 @@
 #define DTOR 0.0174532925
 #endif
 
-static var_info _cm_vtab_pvwattsfunc[] = {
+static var_info _cm_vtab_pvwattsv1_1ts[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,      "year",                     "Year",                                        "yr",     "",                        "PVWatts",      "*",                       "",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "month",                    "Month",                                       "mn",     "1-12",                    "PVWatts",      "*",                       "",                          "" },
@@ -54,13 +54,13 @@ static var_info _cm_vtab_pvwattsfunc[] = {
 
 var_info_invalid };
 
-class cm_pvwattsfunc : public compute_module
+class cm_pvwattsv1_1ts : public compute_module
 {
 public:
 	
-	cm_pvwattsfunc()
+	cm_pvwattsv1_1ts()
 	{
-		add_var_info( _cm_vtab_pvwattsfunc );
+		add_var_info( _cm_vtab_pvwattsv1_1ts );
 	}
 
 	void exec( ) throw( general_error )
@@ -147,7 +147,7 @@ public:
 
 		int code = irr.calc();
 		if ( code != 0 )
-			throw exec_error( "pvwattsfunc", "failed to calculate POA irradiance with given input parameters" );
+			throw exec_error( "pvwattsv1_1ts", "failed to calculate POA irradiance with given input parameters" );
 	
 		double out_poa = 0;
 		double out_tcell = tamb;
@@ -189,4 +189,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( pvwattsfunc, "pvwattsfunc- single timestep calculation of PV system performance.", 1 )
+DEFINE_MODULE_ENTRY( pvwattsv1_1ts, "pvwattsv1_1ts- single timestep calculation of PV system performance.", 1 )

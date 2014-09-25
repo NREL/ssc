@@ -420,7 +420,7 @@ void DataView::UpdateView()
 	
 void DataView::UpdateGrid()
 {
-//	Array<int> cwl = GetColumnWidths();
+	std::vector<int> cwl = GetColumnWidths();
 	m_grid->Freeze();
 	
 	if (m_grid_table) m_grid_table->Detach();
@@ -429,14 +429,14 @@ void DataView::UpdateGrid()
 	m_grid_table->SetData( m_selections, m_vt, true );
 	m_grid->SetTable( m_grid_table, true );
 	m_grid->SetRowLabelSize(60);
-	m_grid->SetColLabelSize( wxGRID_AUTOSIZE );
+	//m_grid->SetColLabelSize( wxGRID_AUTOSIZE );
 	m_grid->Thaw();
 	
 	m_grid->Layout();
 	m_grid->GetParent()->Layout();
-//	SetColumnWidths(cwl);
+	SetColumnWidths(cwl);
 	m_grid->ForceRefresh();
-	m_grid->AutoSizeColumns();
+//	m_grid->AutoSizeColumns();
 
 }
 
