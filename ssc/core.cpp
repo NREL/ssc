@@ -775,43 +775,48 @@ size_t compute_module::check_timestep_seconds( double t_start, double t_end, dou
 	return steps;
 }
 
-ssc_number_t *compute_module::accumulate_monthly(const std::string &hourly_var, const std::string &monthly_var, double scale) throw( exec_error )
+ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, const std::string &monthly_var, double scale) throw( exec_error )
 {
 		
 	size_t count = 0;
-	ssc_number_t *hourly = as_array(hourly_var, &count);
+	ssc_number_t *ts = as_array(ts_var, &count);
 
-	if (!hourly || count != 8760)
-		throw exec_error("generic", "Failed to accumulate hourly: " + hourly_var + " to monthly: " + monthly_var);
+	size_t step_per_hour = count/8760;
+	
+	if (!ts || step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != count)
+		throw exec_error("generic", "Failed to accumulate time series (hourly or subhourly): " + ts_var + " to monthly: " + monthly_var);
 
 	
 	ssc_number_t *monthly = allocate( monthly_var, 12 );
 
-	int c = 0;
-	for (int i=0;i<12;i++) // each month
+	size_t c = 0;
+	for (int m=0;m<12;m++) // each month
 	{
-		monthly[i] = 0;
-		for (int d=0;d<util::nday[i];d++) // for each day in each month
+		monthly[m] = 0;
+		for (int d=0;d<util::nday[m];d++) // for each day in each month
 			for (int h=0;h<24;h++) // for each hour in each day
-				monthly[i] += hourly[c++];
+				for( size_t j=0;j<step_per_hour;j++ )
+					monthly[m] += ts[c++];
 
-		monthly[i] *= scale;
+		monthly[m] *= scale;
 	}
 
 	return monthly;
 }
 
-ssc_number_t compute_module::accumulate_annual(const std::string &hourly_var, const std::string &annual_var, double scale) throw( exec_error )
+ssc_number_t compute_module::accumulate_annual(const std::string &ts_var, const std::string &annual_var, double scale) throw( exec_error )
 {
 	size_t count = 0;
-	ssc_number_t *hourly = as_array(hourly_var, &count);
+	ssc_number_t *ts = as_array(ts_var, &count);
 
-	if (!hourly || count != 8760)
-		throw exec_error("generic", "Failed to accumulate hourly: " + hourly_var + " to annual: " + annual_var);
+	size_t step_per_hour = count/8760;
+
+	if (!ts || step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != count)
+		throw exec_error("generic", "Failed to accumulate time series (hourly or subhourly): " + ts_var + " to annual: " + annual_var);
 		
 	double annual = 0;
-	for (int i=0;i<8760;i++)
-		annual += hourly[i];
+	for ( size_t i=0;i<count;i++ )
+		annual += ts[i];
 
 	assign( annual_var, var_data( (ssc_number_t) (annual*scale) ) );
 

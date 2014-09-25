@@ -34,11 +34,11 @@ static var_info _cm_vtab_pvwatts[] = {
 
 var_info_invalid };
 
-class cm_pvwattsfrompoa : public compute_module
+class cm_pvwattsv1_poa : public compute_module
 {
 private:
 public:
-	cm_pvwattsfrompoa()
+	cm_pvwattsv1_poa()
 	{
 		add_var_info( _cm_vtab_pvwatts );
 	}
@@ -107,4 +107,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( pvwattsfrompoa, "PVWatts system performance calculator.  Does not include weather file reading or irradiance processing.", 1 )
+DEFINE_MODULE_ENTRY( pvwattsv1_poa, "PVWatts system performance calculator.  Does not include weather file reading or irradiance processing - user must supply arrays of precalculated POA irradiance data.", 1 )
