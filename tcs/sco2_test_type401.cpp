@@ -243,19 +243,22 @@ public:
 
 		C_RecompCycle::S_od_parameters cycle_od_par;
 		cycle_od_par.m_T_mc_in = cycle_auto_opt_des_par.m_T_mc_in;
-		cycle_od_par.m_T_t_in = cycle_auto_opt_des_par.m_T_t_in - 50.0;
+		cycle_od_par.m_T_t_in = cycle_auto_opt_des_par.m_T_t_in;
 		cycle_od_par.m_P_mc_in = rc_cycle.get_design_solved()->m_pres[1-1];
+			cycle_od_par.m_P_mc_in = 7698.8;
 		cycle_od_par.m_recomp_frac = rc_cycle.get_design_solved()->m_recomp_frac;
+			cycle_od_par.m_recomp_frac = 0.2452;
 		cycle_od_par.m_N_mc = rc_cycle.get_design_solved()->m_N_mc;
+			cycle_od_par.m_N_mc = 30181.0;
 		cycle_od_par.m_N_t = rc_cycle.get_design_solved()->m_N_t;
 		cycle_od_par.m_N_sub_hxrs = cycle_auto_opt_des_par.m_N_sub_hxrs;
 		cycle_od_par.m_tol = cycle_auto_opt_des_par.m_tol;
 
-		// rc_cycle.off_design(cycle_od_par, error_code);
+		//rc_cycle.off_design(cycle_od_par, error_code);
 
 		C_RecompCycle::S_target_od_parameters cycle_tar_od_par;
 		cycle_tar_od_par.m_T_mc_in = cycle_auto_opt_des_par.m_T_mc_in;
-		cycle_tar_od_par.m_T_t_in = cycle_auto_opt_des_par.m_T_t_in - 50.0;
+		cycle_tar_od_par.m_T_t_in = cycle_auto_opt_des_par.m_T_t_in;
 		cycle_tar_od_par.m_recomp_frac = rc_cycle.get_design_solved()->m_recomp_frac;
 		cycle_tar_od_par.m_N_mc = rc_cycle.get_design_solved()->m_N_mc;
 		cycle_tar_od_par.m_N_t = rc_cycle.get_design_solved()->m_N_t;
@@ -268,8 +271,52 @@ public:
 		cycle_tar_od_par.m_lowest_pressure = 3000.0;
 		cycle_tar_od_par.m_highest_pressure = 25000.0;
 
-		rc_cycle.target_off_design(cycle_tar_od_par, error_code);
+		C_RecompCycle::S_opt_target_od_parameters cycle_opt_tar_od_par;
+		cycle_opt_tar_od_par.m_T_mc_in = cycle_auto_opt_des_par.m_T_mc_in;
+		cycle_opt_tar_od_par.m_T_t_in = cycle_auto_opt_des_par.m_T_t_in;
+		cycle_opt_tar_od_par.m_target = cycle_tar_od_par.m_target;
+		cycle_opt_tar_od_par.m_is_target_Q = true;
+		cycle_opt_tar_od_par.m_N_sub_hxrs = cycle_auto_opt_des_par.m_N_sub_hxrs;
+		cycle_opt_tar_od_par.m_lowest_pressure = cycle_tar_od_par.m_lowest_pressure;
+		cycle_opt_tar_od_par.m_highest_pressure = cycle_tar_od_par.m_highest_pressure;
+		cycle_opt_tar_od_par.m_recomp_frac_guess = rc_cycle.get_design_solved()->m_recomp_frac;
+		cycle_opt_tar_od_par.m_fixed_recomp_frac = false;
+		cycle_opt_tar_od_par.m_N_mc_guess = rc_cycle.get_design_solved()->m_N_mc;
+		cycle_opt_tar_od_par.m_fixed_N_mc = false;
+		cycle_opt_tar_od_par.m_N_t_guess = rc_cycle.get_design_solved()->m_N_t;
+		cycle_opt_tar_od_par.m_fixed_N_t = true;
+		cycle_opt_tar_od_par.m_tol = cycle_auto_opt_des_par.m_tol;
+		cycle_opt_tar_od_par.m_opt_tol = cycle_auto_opt_des_par.m_opt_tol;
+
+		rc_cycle.optimal_target_off_design(cycle_opt_tar_od_par, error_code);
+
+		//rc_cycle.target_off_design(cycle_tar_od_par, error_code);
 		//rc_cycle.target_off_design(error_code);
+
+		C_RecompCycle::S_opt_od_parameters   cycle_opt_od_par;
+		cycle_opt_od_par.m_T_mc_in = cycle_tar_od_par.m_T_mc_in;
+		cycle_opt_od_par.m_T_t_in = cycle_tar_od_par.m_T_t_in;
+
+		cycle_opt_od_par.m_is_max_W_dot = true;
+
+		cycle_opt_od_par.m_N_sub_hxrs = cycle_tar_od_par.m_N_sub_hxrs;
+
+		cycle_opt_od_par.m_P_mc_in_guess = cycle_od_par.m_P_mc_in;
+		cycle_opt_od_par.m_fixed_P_mc_in = false;
+
+		cycle_opt_od_par.m_recomp_frac_guess = rc_cycle.get_design_solved()->m_recomp_frac;
+		cycle_opt_od_par.m_fixed_recomp_frac = false;
+
+		cycle_opt_od_par.m_N_mc_guess = rc_cycle.get_design_solved()->m_N_mc;
+		cycle_opt_od_par.m_fixed_N_mc = false;
+
+		cycle_opt_od_par.m_N_t_guess = rc_cycle.get_design_solved()->m_N_t;
+		cycle_opt_od_par.m_fixed_N_t = true;
+
+		cycle_opt_od_par.m_tol = cycle_tar_od_par.m_tol;
+		cycle_opt_od_par.m_opt_tol = cycle_tar_od_par.m_tol;
+
+		//rc_cycle.optimal_off_design(cycle_opt_od_par, error_code);
 
 		// ************************************************
 		// Test HX
