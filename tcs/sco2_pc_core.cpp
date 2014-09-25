@@ -2079,6 +2079,7 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 		x.push_back(ms_opt_od_par.m_P_mc_in_guess);
 		lb.push_back(100.0);
 		ub.push_back(ms_des_par.m_P_high_limit);
+		//scale.push_back(0.25*ms_opt_od_par.m_P_mc_in_guess);
 		scale.push_back(50.0);
 
 		index++;
@@ -2089,7 +2090,7 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 		x.push_back(ms_opt_od_par.m_recomp_frac_guess);
 		lb.push_back(0.0);
 		ub.push_back(1.0);
-		scale.push_back(0.01);
+		scale.push_back(0.05);
 
 		index++;
 	}
@@ -2099,7 +2100,8 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 		x.push_back(ms_opt_od_par.m_N_mc_guess);
 		lb.push_back(1.0);
 		ub.push_back(HUGE_VAL);
-		scale.push_back(100.0);
+		scale.push_back(0.25*ms_opt_od_par.m_N_mc_guess);
+		//scale.push_back(100.0);
 
 		index++;
 	}
@@ -2119,7 +2121,36 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 	if(index > 0)		// need to call subplex
 	{
 		// Set up instance of nlopt class and set optimization parameters
-		nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+		nlopt::opt		opt_od_cycle(nlopt::LN_SBPLX, index);
+		opt_od_cycle.set_lower_bounds(lb);
+		opt_od_cycle.set_upper_bounds(ub);
+		opt_od_cycle.set_initial_step(scale);
+		opt_od_cycle.set_xtol_rel(ms_opt_od_par.m_opt_tol*1.E-3);
+
+		// Set max objective function
+		opt_od_cycle.set_max_objective(nlopt_cb_opt_od, this);
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result   result_od_cycle = opt_od_cycle.optimize(x, max_f);
+
+		int opt_od_error_code = 0;
+		if(m_W_dot_net_max > 0.0)
+		{
+			ms_od_par = ms_od_par_optimal;
+			off_design_core(opt_od_error_code);
+			error_code = 0;
+		}
+		else
+		{
+			error_code = 111;
+			return;
+		}
+
+		if( opt_od_error_code != 0 )
+		{
+			error_code = opt_od_error_code;
+			return;
+		}
+
 	}
 	else		// Just call off design subroutine (with fixed inputs)
 	{
@@ -2185,10 +2216,10 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 		return 0.0;
 
 	double off_design_point_value = 0.0;
-	if( ms_tar_od_par.m_is_target_Q )
-		off_design_point_value = m_Q_dot_PHX_od;
-	else
+	if( ms_opt_od_par.m_is_max_W_dot )
 		off_design_point_value = m_W_dot_net_od;
+	else
+		off_design_point_value = m_eta_thermal_od;
 
 	// Hardcode some compressor checks to 'true', per John's code. Could revisit later
 	bool surge_allowed = true;
@@ -2196,7 +2227,12 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 	
 	// Check validity
 	if( m_pres_od[2 - 1] > ms_des_par.m_P_high_limit )		// above high-pressure limit; provide optimizer with more information
-		off_design_point_value = off_design_point_value / (10.0 + m_pres_od[2 - 1] - ms_des_par.m_P_high_limit);
+	{
+		//off_design_point_value = max(1.0, off_design_point_value / (10.0 + m_pres_od[2 - 1] - ms_des_par.m_P_high_limit, 4.0));
+		double penalty = 5.0;
+		//off_design_point_value = off_design_point_value * (1.0 - max(0.0, 1.0 - penalty*(ms_des_par.m_P_high_limit / m_pres_od[2 - 1])));
+		off_design_point_value = off_design_point_value*(1.0 - penalty*max(0.0,(m_pres_od[2-1] - ms_des_par.m_P_high_limit)/ms_des_par.m_P_high_limit));
+	}
 
 	if(!surge_allowed)		// twn: Note that 'surge_allowed' is currently hardcoded to true so this won't be executed
 	{
@@ -2220,26 +2256,13 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 	}
 
 	// Check if this is the optimal cycle?
+	if(off_design_point_value > m_W_dot_net_max)
+	{
+		ms_od_par_optimal = ms_od_par;
+		m_W_dot_net_max = off_design_point_value;
+	}
 
-
-	/*
-	if (.not. surge_allowed) then
-	    if (recomp_cycle%mc%surge) off_design_point_value = 0.0_dp
-	    if (recomp_cycle%recomp_frac > 0.0_dp .and. recomp_cycle%rc%surge) off_design_point_value = 0.0_dp
-	end if
-	if (.not. supersonic_tip_speed_allowed) then
-	    if (recomp_cycle%mc%w_tip_ratio > 1.0_dp) off_design_point_value = 0.0_dp
-	    if (recomp_cycle%recomp_frac > 0.0_dp .and. recomp_cycle%rc%w_tip_ratio > 1.0_dp) off_design_point_value = 0.0_dp
-	    if (recomp_cycle%t%w_tip_ratio > 1.0_dp) off_design_point_value = 0.0_dp
-	end if
-	
-	! Check if this is the optimal cycle.
-	if (abs(off_design_point_value) > largest_value) then
-	    solution_found = .true.
-	    optimal_cycle = recomp_cycle
-	    largest_value = abs(off_design_point_value)
-	end if
-	*/
+	return off_design_point_value;
 
 }
 
@@ -2252,12 +2275,270 @@ void C_RecompCycle::optimal_target_off_design(S_opt_target_od_parameters & opt_t
 	bool point_found = false;
 	double P_low = ms_opt_tar_od_par.m_lowest_pressure;
 
+	// Define known members of 'ms_opt_od_par' from 'ms_opt_tar_od_par'
+	ms_opt_od_par.m_T_mc_in = ms_opt_tar_od_par.m_T_mc_in;
+	ms_opt_od_par.m_T_t_in = ms_opt_tar_od_par.m_T_t_in;
+		// .m_is_max_W_dot   --- need to define in loop
+	ms_opt_od_par.m_N_sub_hxrs = ms_opt_tar_od_par.m_N_sub_hxrs;
+		// m_P_mc_in_guess   --- need to define in loop
+		// m_fixed_P_mc_in   --- should be 'false', but define in loop
+	ms_opt_od_par.m_recomp_frac_guess = ms_opt_tar_od_par.m_recomp_frac_guess;
+	ms_opt_od_par.m_fixed_recomp_frac = ms_opt_tar_od_par.m_fixed_recomp_frac;
+
+	ms_opt_od_par.m_N_mc_guess = ms_opt_tar_od_par.m_N_mc_guess*1.25;		// twn: Start with assuming at max power the compressor speed will be greater than design
+	ms_opt_od_par.m_fixed_N_mc = ms_opt_tar_od_par.m_fixed_N_mc;
+
+	ms_opt_od_par.m_N_t_guess = ms_opt_tar_od_par.m_N_t_guess;
+	ms_opt_od_par.m_fixed_N_t = ms_opt_tar_od_par.m_fixed_N_t;
+
+	ms_opt_od_par.m_tol = ms_opt_tar_od_par.m_tol;
+	ms_opt_od_par.m_opt_tol = ms_opt_tar_od_par.m_opt_tol;
+
 	do
 	{
+		ms_opt_od_par.m_is_max_W_dot = true;
+		ms_opt_od_par.m_P_mc_in_guess = P_low;
+		ms_opt_od_par.m_fixed_P_mc_in = false;
 
+		// Try fixing inlet pressure and see if f_recomp and N_mc are modified
+		// ms_opt_od_par.m_P_mc_in_guess = 8700.0;
+		// ms_opt_od_par.m_fixed_P_mc_in = true;
+
+		int od_error_code = 0;
+
+		optimal_off_design_core(od_error_code);
+
+		if(od_error_code == 0)
+		{									
+
+			// Update guess parameters
+			ms_opt_od_par.m_recomp_frac_guess = ms_od_par.m_recomp_frac;
+			ms_opt_od_par.m_N_mc_guess = ms_od_par.m_N_mc;
+			ms_opt_od_par.m_N_t_guess = ms_od_par.m_N_t;
+			ms_opt_od_par.m_P_mc_in_guess = ms_od_par.m_P_mc_in;
+
+			if( point_found )		// exit only after testing two starting points (prevents optimization near-misses)
+				break;
+
+			point_found = true; 
+		}
+
+		P_low = 1.1*ms_opt_od_par.m_P_mc_in_guess;
+
+		if( P_low > ms_opt_tar_od_par.m_highest_pressure )
+			break;
 
 	} while( true );
 
+	if( !point_found )
+	{
+		error_code = 99;
+		return;
+	}
+
+	double biggest_target = std::numeric_limits<double>::quiet_NaN();
+	if( ms_opt_tar_od_par.m_is_target_Q )
+		biggest_target = m_Q_dot_PHX_od;
+	else
+		biggest_target = m_W_dot_net_od;
+
+	// If the target is not possible, return the cycle with the largest (based on power output)
+	if( biggest_target < ms_opt_tar_od_par.m_target )
+	{
+		error_code = 0;
+		return;
+	}
+
+	// Populate 'ms_tar_od_par' from info in 'ms_opt_tar_od_par'
+	ms_tar_od_par.m_T_mc_in = ms_opt_tar_od_par.m_T_mc_in;
+	ms_tar_od_par.m_T_t_in = ms_opt_tar_od_par.m_T_t_in;
+		// ms_tar_od_par.m_recomp_frac ... Defined by optimizer
+		// ms_tar_od_par.m_N_mc ... Defined by optimizer
+		// ms_tar_od_par.m_N_t  ... Defined by optimizer
+	ms_tar_od_par.m_N_sub_hxrs = ms_opt_tar_od_par.m_N_sub_hxrs;
+	ms_tar_od_par.m_tol = ms_opt_tar_od_par.m_tol;
+	ms_tar_od_par.m_target = ms_opt_tar_od_par.m_target;
+	ms_tar_od_par.m_is_target_Q = ms_opt_tar_od_par.m_is_target_Q;
+	ms_tar_od_par.m_lowest_pressure = ms_opt_tar_od_par.m_lowest_pressure;
+	ms_tar_od_par.m_highest_pressure = ms_opt_tar_od_par.m_highest_pressure;
+
+	// Initialize guess array
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+
+	if(!ms_opt_tar_od_par.m_fixed_recomp_frac)
+	{
+		x.push_back(ms_opt_tar_od_par.m_recomp_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.01);
+
+		index++;
+	}
+
+	if(!ms_opt_tar_od_par.m_fixed_N_mc)
+	{
+		x.push_back(ms_opt_tar_od_par.m_N_mc_guess);
+		lb.push_back(1.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(0.25*ms_opt_tar_od_par.m_N_mc_guess);
+
+		index++;
+	}
+
+	if(!ms_opt_tar_od_par.m_fixed_N_t)
+	{
+		x.push_back(ms_opt_tar_od_par.m_N_t_guess);
+		lb.push_back(1.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(100.0);
+	}
+
+	bool solution_found = false;
+	m_eta_best = 0.0;
+
+	if(index > 0)
+	{
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt		opt_tar_od_cycle(nlopt::LN_SBPLX, index);
+		opt_tar_od_cycle.set_lower_bounds(lb);
+		opt_tar_od_cycle.set_upper_bounds(ub);
+		opt_tar_od_cycle.set_initial_step(scale);
+		opt_tar_od_cycle.set_xtol_rel(ms_opt_tar_od_par.m_opt_tol);
+
+		// Set max objective function
+		opt_tar_od_cycle.set_max_objective(nlopt_cb_eta_at_target, this);
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result     result_tar_od_cycle = opt_tar_od_cycle.optimize(x, max_f);
+	}
+	else
+	{
+		eta_at_target(x);
+	}
+
+	// Final call to off-design model using 'ms_od_par_tar_optimal'
+	int od_error_code = 0;
+	if(m_eta_best > 0.0)
+	{
+		ms_od_par = ms_od_par_tar_optimal;
+		off_design_core(od_error_code);
+		error_code = 0;
+	}
+	else
+	{
+		error_code = 98;
+		return;
+	}
+
+	if(od_error_code != 0)
+	{
+		error_code = od_error_code;
+		return;
+	}
+
+}
+
+double C_RecompCycle::eta_at_target(const std::vector<double> &x)
+{
+	// Get input variables from 'x'
+	int index = 0;
+
+	if( !ms_opt_tar_od_par.m_fixed_recomp_frac )
+	{
+		ms_tar_od_par.m_recomp_frac = x[index];
+		index++;
+	}
+	else
+		ms_tar_od_par.m_recomp_frac = ms_opt_tar_od_par.m_recomp_frac_guess;
+
+	if( !ms_opt_tar_od_par.m_fixed_N_mc )
+	{
+		ms_tar_od_par.m_N_mc = x[index];
+		index++;
+	}
+	else
+		ms_tar_od_par.m_N_mc = ms_opt_tar_od_par.m_N_mc_guess;
+
+	if( !ms_opt_tar_od_par.m_fixed_N_t )
+	{
+		ms_tar_od_par.m_N_t = x[index];
+		index++;
+	}
+	else
+		ms_tar_od_par.m_N_t = ms_opt_tar_od_par.m_N_t_guess;
+
+	if( ms_tar_od_par.m_N_t <= 0.0 )
+		ms_tar_od_par.m_N_t = ms_tar_od_par.m_N_mc;
+
+	// Check inputs
+	if( ms_tar_od_par.m_recomp_frac < 0.0 )
+	{
+		return 0.0;
+	}
+
+	int target_od_error_code = 0;
+
+	// Call target_off_design subroutine
+	target_off_design_core(target_od_error_code);
+
+	double eta_at_target = std::numeric_limits<double>::quiet_NaN();
+	if(target_od_error_code==26)
+	{
+		return 1.0 / (100.0 + m_W_dot_net_od);
+	}
+	else if(target_od_error_code != 0)
+	{
+		return 0.0;
+	}
+	else
+		eta_at_target = m_eta_thermal_od;
+
+	// Check validity
+	if( m_pres_od[2 - 1] > ms_des_par.m_P_high_limit )		// above high-pressure limit; provide optimizer with more information
+	{
+		//off_design_point_value = max(1.0, off_design_point_value / (10.0 + m_pres_od[2 - 1] - ms_des_par.m_P_high_limit, 4.0));
+		double penalty = 5.0;
+		//off_design_point_value = off_design_point_value * (1.0 - max(0.0, 1.0 - penalty*(ms_des_par.m_P_high_limit / m_pres_od[2 - 1])));
+		eta_at_target = eta_at_target*(1.0 - penalty*max(0.0, (m_pres_od[2 - 1] - ms_des_par.m_P_high_limit) / ms_des_par.m_P_high_limit));
+	}
+
+	// Hardcode some compressor checks to 'true', per John's code. Could revisit later
+	bool surge_allowed = true;
+	bool supersonic_tip_speed_allowed = true;
+
+	if( !surge_allowed )		// twn: Note that 'surge_allowed' is currently hardcoded to true so this won't be executed
+	{
+		if( m_mc.get_od_solved()->m_surge )
+			eta_at_target = 0.0;
+
+		if( ms_od_par.m_recomp_frac > 0.0 && m_rc.get_od_solved()->m_surge )
+			eta_at_target = 0.0;
+	}
+
+	if( !supersonic_tip_speed_allowed )
+	{
+		if( m_mc.get_od_solved()->m_w_tip_ratio > 1.0 )
+			eta_at_target = 0.0;
+
+		if( ms_od_par.m_recomp_frac > 0.0 && m_rc.get_od_solved()->m_w_tip_ratio > 1.0 )
+			eta_at_target = 0.0;
+
+		if( m_t.get_od_solved()->m_w_tip_ratio > 1.0 )
+			eta_at_target = 0.0;
+	}
+
+	// Check if this is the optimal cycle?
+	if( eta_at_target > m_eta_best)
+	{
+		ms_od_par_tar_optimal = ms_od_par;
+		m_eta_best = eta_at_target;
+	}
+
+	return eta_at_target;
 }
 
 double fmin_callback_opt_eta_1(double x, void *data)
@@ -2271,6 +2552,18 @@ double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) return frame->design_point_eta(x);
+}
+
+double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
+	if( frame != NULL ) return frame->off_design_point_value(x);
+}
+
+double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
+	if( frame != NULL ) return frame->eta_at_target(x);
 }
 
 double P_pseudocritical_1(double T_K)

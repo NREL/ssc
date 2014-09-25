@@ -770,6 +770,7 @@ public:
 			phi_star = phi_2*pow((N / ms_des_solved.m_N_design), 0.2);					// modified flow coefficient
 			psi_star = ((((-498626.0*phi_star) + 53224.0)*phi_star - 2505.0)*phi_star + 54.6)*phi_star + 0.04049;	// from dimensionless modified head curve
 			psi = psi_star / (pow(ms_des_solved.m_N_design / N, pow(20.0*phi_star, 3.0)));
+			dh_s = psi*pow(U_tip_2, 2)*0.001;									// [kJ/kg] Calculated ideal enthalpy rise in second stage of compressor, from definition of head coefficient
 			eta_star = ((((-1.638e6*phi_star) + 182725.0)*phi_star - 8089.0)*phi_star + 168.6)*phi_star - 0.7069;		//[-] from dimensionless modified efficiency curve
 			eta_0 = eta_star*1.47528 / pow((ms_des_solved.m_N_design / N), pow(20.0*phi_star, 5));		//[-] Stage efficiency is normalized so it equals 1.0 at snl_phi_design
 			double eta_stage_2 = max(eta_0*ms_des_solved.m_eta_design, 0.0);			// the actual stage efficiency, not allowed to go negative
@@ -1072,7 +1073,7 @@ public:
 		double m_T_mc_in;		//[K] Compressor inlet temperature
 		double m_T_t_in;		//[K] Turbine inlet temperature
 
-		double m_target;		//[kW] type of target: 1) W_dot 2) Q_dot_PHX
+		double m_target;		//[kW] target value
 		bool m_is_target_Q;		//[-] true = solve for Q_dot_PHX, false = solve for W_dot
 
 		int m_N_sub_hxrs;				//[-] Number of sub heat exchangers
@@ -1143,6 +1144,10 @@ private:
 	S_od_parameters ms_od_par_optimal;
 	double m_W_dot_net_max;
 
+		// Structures and data for optimal target off-design
+	S_od_parameters ms_od_par_tar_optimal;
+	double m_eta_best;
+
 	void design_core(int & error_code);	
 
 	void opt_design_core(int & error_code);
@@ -1184,7 +1189,7 @@ public:
 
 		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
 
-		m_W_dot_net_max = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_net_max = m_eta_best = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	~C_RecompCycle(){}
@@ -1214,14 +1219,21 @@ public:
 	// Called by 'fmin_callback_opt_eta', so needs to be public
 	double opt_eta(double P_high_opt);
 
-	// Called by 'nlopt_callback.... , so needs to be public
+	// Called by 'nlopt_cb_opt_od', so needs to be public
 	double off_design_point_value(const std::vector<double> &x);
+
+	// Called by 'nlopt...', so needs to be public
+	double eta_at_target(const std::vector<double> &x);
 	
 };
 
 double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double fmin_callback_opt_eta_1(double x, void *data);
+
+double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
+
+double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double P_pseudocritical_1(double T_K);
 
