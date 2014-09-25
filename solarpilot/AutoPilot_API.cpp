@@ -455,6 +455,14 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	
 	//Create the solar field object
 	_SF->Create(_variables);
+
+	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
+	if(layout.heliostat_positions.size() > 0){
+		WeatherData empty;
+		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
+		_SF->calcHeliostatShadows();
+	}
+
 	
 	PreSimCallbackUpdate();
 	_setup_ok = true;
@@ -879,9 +887,17 @@ void AutoPilot::PostProcessLayout()
 	_layout->heliostat_positions.clear();
 	for(int i=0; i<(int)hpos->size(); i++){
 		sp_layout::h_position hp;
-		hp.location.Set( *hpos->at(i)->getLocation() );
+		//hp.location.Set( *hpos->at(i)->getLocation() );
+		hp.location.x = hpos->at(i)->getLocation()->x;
+		hp.location.y = hpos->at(i)->getLocation()->y;
+		hp.location.z = hpos->at(i)->getLocation()->z;
+
 		hp.cant_vector.Set( *hpos->at(i)->getCantVector() );
-		hp.aimpoint.Set( *hpos->at(i)->getAimPoint() );
+		//hp.aimpoint.Set( *hpos->at(i)->getAimPoint() );
+		hp.aimpoint.x = hpos->at(i)->getAimPoint()->x;
+		hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
+		hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
+
 		hp.focal_length = hpos->at(i)->getFocalX();
 		hp.template_number = -1;
 		hp.user_optics = false;

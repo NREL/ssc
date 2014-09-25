@@ -539,11 +539,14 @@ public:
 				*/
 				layout.heliostat_positions.clear();
 				layout.heliostat_positions.resize(N_hel);
+				
 				for( int i=0; i<N_hel; i++){
-					layout.heliostat_positions.at(i).location.x = (double)TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 );
-					layout.heliostat_positions.at(i).location.y = (double)TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 );
+
+					layout.heliostat_positions.at(i).location.x = TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 );
+					layout.heliostat_positions.at(i).location.y = TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 );
 					if(pos_dim==3)
 						layout.heliostat_positions.at(i).location.z = TCS_MATRIX_INDEX( var(P_helio_positions), i, 2);
+					
 				}
 
 				sapi.Setup(amb, cost, layout, helios, recs);

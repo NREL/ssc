@@ -53,7 +53,7 @@ set_value(weather, "tilt", 0);
 set_value(weather, "azimuth", 0);
 
 
-set_value(field, "run_type", 1);
+set_value(field, "run_type", 0);	//0=auto, 1=user-field, 2=user data
 set_value(field, "helio_width", 12.);
 set_value(field, "helio_height", 12.);
 set_value(field, "helio_optical_error", 0.00153);
@@ -63,8 +63,8 @@ set_value(field, "rec_absorptance", 0.94);
 set_value(field, "rec_height", 22.);
 set_value(field, "rec_aspect", 1.2);
 set_value(field, "rec_hl_perm2", 30.);
-set_value(field, "q_design", 100.);
-set_value(field, "h_tower", 130);
+set_value(field, "q_design", 500.);
+set_value(field, "h_tower", 190);
 set_value(field, "weather_file", wfile);
 set_value(field, "land_bound_type", 0);
 set_value(field, "land_max", 7.5);
