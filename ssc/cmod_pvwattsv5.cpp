@@ -52,11 +52,11 @@ static var_info _cm_vtab_pvwattsv5[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",   "",                        "Time series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "Time series",      "*",                       "",                          "" },	
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array output",                             "W",     "",                         "Time series",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC system output",                            "W",     "",                         "Time series",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",     "",                         "Time series",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",     "",                         "Time series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                         "Net system energy",                           "Wh",     "",                        "Time series",      "*",                       "",                          "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                  "Hourly energy",                               "kWh",    "",                        "Hourly",           "*",                       "LENGTH=8760",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                  "Hourly energy",                               "kWh",    "",                        "Time series",      "*",                       "LENGTH=8760",                          "" },
 	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
