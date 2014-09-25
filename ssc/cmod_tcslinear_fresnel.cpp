@@ -10,7 +10,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_MATRIX,      "XXXXXXXXXXX",       "Label",                                                                               "",              "",            "tes",            "*",                       "",                      "" },
 */
 
-//    VARTYPE           DATATYPE          NAME                 LABEL                                                                                 UNITS            META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
+//    VARTYPE           DATATYPE          NAME                 LABEL                                                                                   UNITS            META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                                             "",              "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
     { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                                       "",              "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "Weather",        "*",                       "",                      "" },
@@ -24,9 +24,9 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_hours",         "Equivalent full-load thermal storage hours",                                          "hr",            "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_max_aux",         "Maximum heat rate of the auxiliary heater",                                           "MW",            "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "LHV_eff",           "Fuel LHV efficiency (0..1)",                                                          "none",          "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_set_aux",         "Aux heater outlet temperature set point",                                             "C",             "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_in_des",    "Field design inlet temperature",                                                      "C",             "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",   "Field loop outlet design temperature",                                                "C",             "",            "solarfield",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_set_aux",         "Aux heater outlet temperature set point",                                             "C",             "",            "solarfield",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_field_in_des",    "Field design inlet temperature",                                                      "C",             "",            "solarfield",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",   "Field loop outlet design temperature",                                                "C",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "x_b_des",           "Design point boiler outlet steam quality",                                            "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_turb_des",        "Design-point turbine inlet pressure",                                                 "bar",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fP_hdr_c",          "Average design-point cold header pressure drop fraction",                             "none",          "",            "solarfield",     "*",                       "",                      "" },
@@ -35,7 +35,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "fP_sf_sh",          "Design-point pressure drop across the solar field superheater frac",                  "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fP_hdr_h",          "Average design-point hot header pressure drop fraction",                              "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_des",          "Design heat input to the power block",                                                "MW",            "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "W_pb_des",          "Rated plant capacity",                                                                "MW",            "",            "solarfield",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "W_pb_des",          "Rated plant capacity",                                                                "MW",            "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_fraction","Maximum turbine over design operation fraction",                                      "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_cutoff_frac", "Minimum turbine operation fraction before shutdown",                                  "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "t_sby",             "Low resource standby period",                                                         "hr",            "",            "solarfield",     "*",                       "",                      "" },
@@ -45,7 +45,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "PB_fixed_par",      "fraction of rated gross power consumed at all hours of the year",                     "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",         "BOP_parVal, BOP_parPF, BOP_par0, BOP_par1, BOP_par2",                                 "-",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",         "Aux_parVal, Aux_parPF, Aux_par0, Aux_par1, Aux_par2",                                 "-",             "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_startup",         "Startup temperature (same as field startup)",                                         "C",             "",            "solarfield",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_startup",         "Startup temperature (same as field startup)",                                         "C",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",       "Operation mode for the fossil backup {1=Normal,2=supp,3=toppin}",                     "none",          "",            "solarfield",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",          "Design point irradiation value",                                                      "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_sh",             "Does the solar field include a superheating section",                                 "none",          "",            "solarfield",     "*",                       "INTEGER",               "" },
@@ -55,11 +55,11 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "nModSH",            "Number of modules in the superheater section",                                        "none",          "",            "solarfield",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "nLoops",            "Number of loops",                                                                     "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_pump",          "Feedwater pump efficiency",                                                           "none",          "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "latitude",          "Site latitude read from weather file",                                                "deg",           "",            "solarfield",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "latitude",          "Site latitude resource page",                                                         "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "theta_stow",        "stow angle",                                                                          "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "theta_dep",         "deploy angle",                                                                        "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_min",         "Minimum loop flow rate",                                                              "kg/s",          "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_ini",       "Initial field temperature",                                                           "C",             "",            "solarfield",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_field_ini",       "Initial field temperature",                                                           "C",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_fp",              "Freeze protection temperature (heat trace activation temperature)",                   "C",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",      "Loss coefficient from the header.. runner pipe.. and non-HCE pipin",                  "W/m2-K",        "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",   "Tracking power.. in Watts per SCA drive",                                             "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
@@ -111,7 +111,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_MATRIX,      "b_OpticalTable",    "Values of the optical efficiency table",                                              "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "sh_OpticalTable",   "Values of the optical efficiency table",                                              "none",          "",            "solarfield",     "*",                       "",                      "" },
 
-	// Type 261 (solar field collector) inputs
+	// Type 261 (solar field collector) initial values
     { SSC_INPUT,        SSC_NUMBER,      "dnifc",             "Forecast DNI",                                                                        "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn",              "Beam normal radiation (input kJ/m2-hr)",                                              "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_db",              "Dry bulb air temperature",                                                            "C",             "",            "solarfield",     "*",                       "",                      "" },
@@ -121,15 +121,15 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",     "Reference HTF flow rate at design conditions",                                        "kg/hr",         "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_pb_demand",       "Demand htf flow from the power block",                                                "kg/hr",         "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "shift",             "Shift in longitude from local standard meridian",                                     "deg",           "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "SolarAz_init",           "Solar azimuth angle",                                                                 "deg",           "",            "solarfield",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "SolarAz_init",      "Solar azimuth angle",                                                                 "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "SolarZen",          "Solar zenith angle",                                                                  "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_pb_out_init",     "Fluid temperature from the power block",                                              "C",             "",            "solarfield",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "TOUPeriod",         "Time of use period",                                                                  "none",          "",            "solarfield",     "*",                       "",                      "" },
 
 	// Type 234 (powerblock) parameters
-    { SSC_INPUT,        SSC_NUMBER,      "P_ref",             "Reference output electric power at design condition",                                 "MW",            "",            "powerblock",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "P_ref",             "Reference output electric power at design condition",                                 "MW",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_ref",           "Reference conversion efficiency at design condition",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_hot_ref",         "Reference HTF inlet temperature at design",                                           "C",             "",            "powerblock",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_hot_ref",         "Reference HTF inlet temperature at design",                                           "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_cold_ref",        "Reference HTF outlet temperature at design",                                          "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                               "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                                       "C",             "",            "powerblock",     "*",                       "",                      "" },
@@ -151,7 +151,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",                        "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                               "none",          "",            "powerblock",     "*",                       "",                      "" },
 	// Type 234 (powerblock) inputs
-    { SSC_INPUT,        SSC_NUMBER,      "mode",              "Cycle part load control, from plant controller",                                      "none",          "",            "powerblock",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "pc_mode",           "Cycle part load control, from plant controller",                                      "none",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_hot",             "Hot HTF inlet temperature, from storage tank",                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_st",          "HTF mass flow rate",                                                                  "kg/hr",         "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_wb",              "Ambient wet bulb temperature",                                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
@@ -218,6 +218,15 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_cool_par",         "Cooling system parasitic load",                                                      "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_net",              "Net electricity generation (or usage) by the plant",                                 "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "W_cycle_gross",      "Electrical source - Power cycle gross output",                                       "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",      "Net electricity generation (or usage) by the plant",                                 "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+
+	// monthly values
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly Energy",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
+
+
+	// single values
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",               "Annual Energy",                                                             "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
+  //{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",  "Use lifetime output",                                                       "0/1",          "",            "Linear Fresnel", "*",                       "INTEGER",               "" },
 	var_info_invalid };
 
 class cm_tcslinear_fresnel : public tcKernel
@@ -289,9 +298,9 @@ public:
 		set_unit_value_ssc_double( type261_solarfield, "tes_hours"); // TSHOURS );
 		set_unit_value_ssc_double( type261_solarfield, "q_max_aux"); // q_max_aux );
 		set_unit_value_ssc_double( type261_solarfield, "LHV_eff"); // LHV_eff );
-		set_unit_value_ssc_double( type261_solarfield, "T_set_aux"); // T_set_aux );
-		set_unit_value_ssc_double( type261_solarfield, "T_field_in_des"); // T_field_in_des );
-		set_unit_value_ssc_double( type261_solarfield, "T_field_out_des"); // T_field_out_des );
+		set_unit_value_ssc_double( type261_solarfield, "T_set_aux", as_double("T_hot"));
+		set_unit_value_ssc_double( type261_solarfield, "T_field_in_des", as_double("T_cold_ref"));
+		set_unit_value_ssc_double( type261_solarfield, "T_field_out_des", as_double("T_hot"));
 		set_unit_value_ssc_double( type261_solarfield, "x_b_des"); // x_b_des );
 		set_unit_value_ssc_double( type261_solarfield, "P_turb_des"); // P_turb_des );
 		set_unit_value_ssc_double( type261_solarfield, "fP_hdr_c"); // fP_hdr_c );
@@ -300,7 +309,7 @@ public:
 		set_unit_value_ssc_double( type261_solarfield, "fP_sf_sh"); // fP_sf_sh );
 		set_unit_value_ssc_double( type261_solarfield, "fP_hdr_h"); // fP_hdr_h );
 		set_unit_value_ssc_double( type261_solarfield, "q_pb_des"); // Q_ref ); // = P_ref/eta_ref;
-		set_unit_value_ssc_double( type261_solarfield, "W_pb_des"); // W_pb_des );
+		set_unit_value_ssc_double( type261_solarfield, "W_pb_des", as_double("demand_var"));
 		set_unit_value_ssc_double( type261_solarfield, "cycle_max_fraction"); // cycle_max_fraction );
 		set_unit_value_ssc_double( type261_solarfield, "cycle_cutoff_frac"); // cycle_cutoff_frac );
 		set_unit_value_ssc_double( type261_solarfield, "t_sby"); // t_sby );
@@ -310,7 +319,7 @@ public:
 		set_unit_value_ssc_double( type261_solarfield, "PB_fixed_par"); // PB_fixed_par );
 		set_unit_value_ssc_array( type261_solarfield, "bop_array"); // [BOP_parVal, BOP_parPF, BOP_par0, BOP_par1, BOP_par2] );
 		set_unit_value_ssc_array( type261_solarfield, "aux_array"); // [Aux_parVal, Aux_parPF, Aux_par0, Aux_par1, Aux_par2] );
-		set_unit_value_ssc_double( type261_solarfield, "T_startup"); // T_startup );
+		set_unit_value_ssc_double( type261_solarfield, "T_startup", as_double("T_hot"));
 		set_unit_value_ssc_double( type261_solarfield, "fossil_mode"); // fossil_mode );
 		set_unit_value_ssc_double( type261_solarfield, "I_bn_des"); // I_bn_des );
 		set_unit_value_ssc_double( type261_solarfield, "is_sh"); // is_sh );
@@ -324,7 +333,7 @@ public:
 		set_unit_value_ssc_double( type261_solarfield, "theta_stow"); // theta_stow );
 		set_unit_value_ssc_double( type261_solarfield, "theta_dep"); // theta_dep );
 		set_unit_value_ssc_double( type261_solarfield, "m_dot_min"); // m_dot_min );
-		set_unit_value_ssc_double( type261_solarfield, "T_field_ini"); // T_field_ini );
+		set_unit_value_ssc_double( type261_solarfield, "T_field_ini", as_double("T_cold_ref"));
 		set_unit_value_ssc_double( type261_solarfield, "T_fp"); // T_fp );
 		set_unit_value_ssc_double( type261_solarfield, "Pipe_hl_coef"); // Pipe_hl_coef );
 		set_unit_value_ssc_double( type261_solarfield, "SCA_drives_elec"); // SCA_drives_elec );
@@ -410,9 +419,9 @@ public:
 
 
 		// Set Parameters for Direct Powerblock (type 234)
-		set_unit_value_ssc_double(type234_powerblock, "P_ref"); // P_ref);
+		set_unit_value_ssc_double(type234_powerblock, "P_ref", as_double("demand_var"));
 		set_unit_value_ssc_double(type234_powerblock, "eta_ref"); // eta_ref);
-		set_unit_value_ssc_double(type234_powerblock, "T_hot_ref"); // T_hot_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_hot_ref", as_double("T_hot"));
 		set_unit_value_ssc_double(type234_powerblock, "T_cold_ref"); // T_cold_ref);
 		set_unit_value_ssc_double(type234_powerblock, "dT_cw_ref"); // dT_cw_ref);
 		set_unit_value_ssc_double(type234_powerblock, "T_amb_des"); // T_amb_des);
@@ -436,11 +445,11 @@ public:
 
 
 		// Set Inputs for Powerblock (type 234)
-		set_unit_value_ssc_double(type234_powerblock, "mode"); // 1);							//[-] initial value
+		set_unit_value_ssc_double(type234_powerblock, "mode", as_double("pc_mode")); // 1);	    //[-] initial value
 		set_unit_value_ssc_double(type234_powerblock, "T_hot"); // T_hot_ref);					//[C] initial value
 		set_unit_value_ssc_double(type234_powerblock, "m_dot_st"); // 0);						//[kg/hr] initial value
 		set_unit_value_ssc_double(type234_powerblock, "T_wb"); // 12.8);						//[C] Initial value
-		set_unit_value_ssc_double(type234_powerblock, "demand_var"); // P_ref);					//[kg/hr]
+		set_unit_value_ssc_double(type234_powerblock, "demand_var");							//[kg/hr]
 		set_unit_value_ssc_double(type234_powerblock, "standby_control"); // 0);
 		set_unit_value_ssc_double(type234_powerblock, "T_db", as_double("T_db_pwb") ); // 12.8);
 		set_unit_value_ssc_double(type234_powerblock, "P_amb", as_double("P_amb_pwb") ); // 960);
@@ -483,8 +492,18 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcslinear_fresnel", util::format("there was a problem returning the results from the simulation.") );
 
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		// set hourly energy = tcs output Enet
+		size_t count;
+		ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
+		if (count != 8760)
+			throw exec_error("tcslinear_fresnel", "hourly_energy count incorrect (should be 8760): " + count);
+		// apply performance adjustments and convert from MWh to kWh
+		for (size_t i = 0; i < count; i++)
+			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(1000.0);
 
-		//set_output_array("i_SfTi",8760);
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+		accumulate_monthly("hourly_energy", "monthly_energy"); // already in kWh
 	}
 
 };
