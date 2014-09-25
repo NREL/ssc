@@ -171,32 +171,21 @@ typedef vector<sp_receiver> sp_receivers;
 struct sp_layout
 {
 
-	void LoadDefaults(var_set &V);
-
 	struct h_position
 	{
-		Point location;
-		Point aimpoint;
+		struct { 
+			double x; 
+			double y; 
+			double z; 
+		} location, aimpoint;
 		int template_number; //0 based
 		bool user_optics;	//Indicate whether the user will provide a cant/focus vector
 		Vect cant_vector;	//[optional] Canting aim vector of total magnitude equal to the cant radius
 		double focal_length;	//[optional] Heliostat focal length
 	};
 
-	struct land_table
-	{
-	private:
-		struct coord { double x,y; };
-		typedef vector<coord> polygon;
+	void LoadDefaults(var_set &V);
 
-	public:
-		vector<polygon> inclusions, exclusions;
-		void add_point(double x, double y, polygon &poly);
-		void add_point(Point &P, polygon &poly);
-	};
-
-	struct LAND_BOUND_TYPE { enum A {SCALED, FIXED, POLYGON }; };
-	vector<h_position> heliostat_positions;
 	double q_design;	//Design power [MWt]
 	unsigned int land_bound_type; //See enum LAND_BOUND_TYPE
 	double 
@@ -206,8 +195,22 @@ struct sp_layout
 	double 
 		span_cw, //[optional] default=+180, field span in clockwise direction 
 		span_ccw;	//[optional] default=-180, field span in counterclockwise direction
-	land_table 
-		landtable;	//[optional] object specifying land bounds
+	
+	struct LAND_BOUND_TYPE { enum A {SCALED, FIXED, POLYGON }; };
+	
+	vector<h_position> heliostat_positions;
+	
+	struct land_table
+	{
+	private:
+		struct coord { double x,y; };
+		typedef vector<coord> polygon;
+		
+	public:
+		vector<polygon> inclusions, exclusions;
+		void add_point(double x, double y, polygon &poly);
+		void add_point(Point &P, polygon &poly);
+	} landtable;	//[optional] object specifying land bounds
 };
 
 struct sp_cost
