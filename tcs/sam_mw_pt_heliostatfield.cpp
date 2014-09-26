@@ -7,6 +7,7 @@
 #include "interpolation_routines.h"
 #include "solarpilot/AutoPilot_API.h"
 #include "solarpilot/IOUtil.h"
+#include "solarpilot/sort_method.h"
 
 using namespace std;
 
@@ -291,6 +292,7 @@ private:
 	int n_flux_y;
 	double* flux_positions;
 	double* flux_maps;
+	double* flux_map;
 
 	
 	//Stored Variables
@@ -340,6 +342,8 @@ public:
 		n_flux_y	=0;
 		flux_positions	= NULL;
 		flux_maps	= NULL;
+		flux_map = NULL;
+
 		
 		eta_prev = std::numeric_limits<double>::quiet_NaN();
 		v_wind_prev = std::numeric_limits<double>::quiet_NaN();
@@ -576,6 +580,8 @@ public:
 
 			//collect flux's
 			flux_maps = allocate( P_flux_maps, n_flux_y * npos, n_flux_x );
+			//size the output
+			flux_map = allocate( O_flux_map, n_flux_y, n_flux_x );
 
 			block_t<double> *f = &fluxtab.flux_surfaces.front().flux_data;
 
@@ -667,7 +673,10 @@ public:
 			field_control = 0.0;		// No tracking before sunrise of after sunset
 		double solaz = value( I_solaz )*pi/180.;	
 		
-
+		//clear out the existing flux map
+		for(int j=0; j<n_flux_y; j++)
+			for(int i=0; i<n_flux_x; i++)
+				TCS_MATRIX_INDEX( var(O_flux_map), j, i) = 0.;
       
 		// Parasitics for startup or shutdown
 		double pparasi = 0.0; 
@@ -685,7 +694,7 @@ public:
 
 		double eta_field = 0.;
 
-		if( solzen > (pi/2 - .001 - hel_stow_deploy) || v_wind > v_wind_max ){
+		if( solzen > (pi/2 - .001 - hel_stow_deploy) || v_wind > v_wind_max || time < 3601){
 			eta_field = 1.e-6;
 		}
 		else{
@@ -697,15 +706,55 @@ public:
 
 			eta_field = field_efficiency_table->interp( sunpos ) * eff_scale;
 			eta_field = min( max ( eta_field, 0.0 ), 1.0 ) * field_control;		// Ensure physical behavior 
+
+			//Set the active flux map
+			MatDoub *map_sunpos = &field_efficiency_table->x;
+			VectDoub pos_now(sunpos);
+			/*VectDoub pos_now(2);
+			pos_now.at(0) = solaz/az_scale;
+			pos_now.at(1) = solzen/zen_scale;*/
+			//find the nearest neighbors to the current point
+			vector<double> distances;
+			vector<int> indices;
+			for(int i=0; i<(int)map_sunpos->size(); i++){
+				distances.push_back( rdist( & pos_now, &map_sunpos->at(i) ) );
+				indices.push_back( i );
+			}
+			quicksort(distances, indices);
+			//calculate weights for the nearest 6 points
+			double avepoints = 0.;
+			const int npt = 6;
+			for(int i=0; i<npt; i++)
+				avepoints += distances.at(i);
+			avepoints *= 1./(double)npt;
+			VectDoub weights(npt);
+			double normalizer = 0.;
+			for(int i=0; i<npt; i++){
+				double w = exp( - pow(distances.at(i)/avepoints, 2) );
+				weights.at(i) = w;
+				normalizer += w;
+			}
+			for(int i=0; i<npt; i++)
+				weights.at(i) *= 1./normalizer;
+
+			//set the values
+			for(int k=0; k<npt; k++){
+				int imap = indices.at(k);
+				for(int j=0; j<n_flux_y; j++){
+					for(int i=0; i<n_flux_x; i++){
+						TCS_MATRIX_INDEX( var(O_flux_map), j, i) += 
+							TCS_MATRIX_INDEX( var(P_flux_maps), imap*n_flux_y + j, i ) * weights.at(k);
+					}
+				}
+			}
+			
 		}
 		
-
+		
 		// Set output parameters
 		value( O_pparasi, pparasi/3.6e6 );	// [MW], convert from kJ/hr: Parasitic power for tracking
 		value( O_eta_field, eta_field );	// [-], field efficiency
-		double *flux_ptr = allocate(P_flux_maps, n_flux_y, n_flux_x);
-		TCS_MATRIX_INDEX( var(P_flux_maps), 0,0) = 3333.;
-
+		
 		return 0;
 	}
 
@@ -717,9 +766,18 @@ public:
 		return 0;
 	}
 
-	virtual int relay_message( string &msg, double progress ){
+	int relay_message( string &msg, double progress ){
 		message("SolarPILOT progress (%s): %.1f%s\n", msg.c_str(), progress, "%");
 		return 0;
+	}
+
+	double rdist(VectDoub *p1, VectDoub *p2, int dim=2){
+		double d=0;
+		for(int i=0; i<dim; i++){
+			double rd = p1->at(i) - p2->at(i);
+			d += rd * rd;
+		}
+		return sqrt(d);
 	}
 
 };
