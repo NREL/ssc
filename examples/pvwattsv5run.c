@@ -5,6 +5,10 @@
 #include <ctype.h>
 #include "sscapi.h"
 
+#ifndef MAX_PATH
+#define MAX_PATH 1024
+#endif
+
 typedef struct { 
 	const char *var;
 	const char *shortname;
@@ -75,11 +79,11 @@ int main(int argc, char *argv[])
 		char arg[256],sval[MAX_PATH];
 		if ( argv[j][0] == '-' )
 		{
-			const char *eq = strchr(argv[j], '=');
+			const char *eq = strchr((char*)argv[j], '=');
 			if ( !eq ) continue;
 			strncpy( arg, argv[j]+1, eq-argv[j]-1 );
 			arg[ eq-argv[j]-1 ] = 0;			
-			strcpy( sval, eq+1 );
+			strcpy( (char*)sval, (char*)(eq+1) );
 		}
 		
 		found = 0;
@@ -92,7 +96,7 @@ int main(int argc, char *argv[])
 				if ( variables[i].min == variables[i].max
 					&& variables[i].value == -99 )
 				{
-					strcpy( variables[i].file, sval );
+					strcpy( (char*)variables[i].file, (char*)sval );
 				}
 				else
 				{
@@ -168,7 +172,7 @@ int main(int argc, char *argv[])
 		i=0;
 		while( variables[i].var )
 		{
-			fprintf(fp, variables[i].shortname );
+			fputs( variables[i].shortname, fp );
 			fputc( ',', fp );
 			i++;
 		}
