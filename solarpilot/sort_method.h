@@ -9,12 +9,6 @@ using namespace std;
 
  /*------------------ Quicksort for two vectors -------------------- */
 
-template <typename Comparable, typename Tag>
-void quicksort( vector<Comparable> & a, vector<Tag> & b)
-{
-    quicksort( a, b, 0, a.size( ) - 1 );
-}
-
 
 /**
  * Return median of left, center, and right.
@@ -198,5 +192,12 @@ void quicksort( vector<Comparable> & a, int left, int right )
         insertionSort( a, left, right );
 	}
 }
+
+template <typename Comparable, typename Tag>
+void quicksort( vector<Comparable> & a, vector<Tag> & b)
+{
+    quicksort( a, b, 0, a.size( ) - 1 );
+}
+
 
 #endif

@@ -251,6 +251,12 @@ tcsvarinfo sam_mw_pt_heliostatfield_variables[] = {
 #define mysnprintf snprintf
 #endif
 
+
+#define pi 3.141592654
+#define az_scale 6.283125908 
+#define zen_scale 1.570781477 
+#define eff_scale 0.7
+
 class sam_mw_pt_heliostatfield : public tcstypeinterface
 {
 private:
@@ -298,10 +304,6 @@ private:
 	//Stored Variables
 	double eta_prev;
 	double v_wind_prev;
-	const double pi = acos(-1.);
-	const double az_scale = 2.*pi;
-	const double zen_scale = pi/2.;
-	const double eff_scale = 0.7;
 
 public:
 
@@ -720,7 +722,7 @@ public:
 				distances.push_back( rdist( & pos_now, &map_sunpos->at(i) ) );
 				indices.push_back( i );
 			}
-			quicksort(distances, indices);
+			quicksort<double,int>( distances, indices );
 			//calculate weights for the nearest 6 points
 			double avepoints = 0.;
 			const int npt = 6;
