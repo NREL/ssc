@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <cstring>
 
 #include "core.h"
@@ -383,6 +384,16 @@ public:
 };
 */
 
+static ssc_bool_t default_internal_handler_no_print( ssc_module_t p_mod, ssc_handler_t p_handler,
+	int action_type, float f0, float f1, 
+	const char *s0, const char *s1,
+	void *p_data )
+{
+	// ignore all warnings and errors
+	// don't print progress updates
+	return 1;
+}
+
 static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_handler,
 	int action_type, float f0, float f1, 
 	const char *s0, const char *s1,
@@ -404,21 +415,9 @@ static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_
 	else if (action_type == SSC_UPDATE)
 	{
 		// print status update to console
-// s1 = 0 in on_update event causing access violation in all wrappers when "update" called
-		// see pvsamv1 for example.
-//		std::cout << "Progress " << f0 << "%:" << s1 << " time " << f1 << std::endl;
-		std::cout << "Progress " << f0 << "%:" << s0 << " time " << f1 << std::endl;
+		printf( "%5.2f %% %s @ %g\n", f0, s0, f1 );
 		return 1; // return 0 to abort simulation as needed.
 	}
-/*
-	else if (action_type == SSC_EXECUTE)
-	{
-		// run the executable, pipe the output, and return output to p_mod
-		// **TODO**
-		default_sync_proc exe( p_handler );
-		return exe.spawn( s0, s1 ) == 0;
-	}
-*/
 	else
 		return 0;
 }
@@ -466,10 +465,16 @@ static char p_internal_buf[256];
 	return result ? 0 : p_internal_buf;
 }
 
+static int sg_defaultPrint = 1;
+
+SSCEXPORT void ssc_module_exec_set_print( int print )
+{
+	sg_defaultPrint = print;
+}
 
 SSCEXPORT ssc_bool_t ssc_module_exec( ssc_module_t p_mod, ssc_data_t p_data )
 {
-	return ssc_module_exec_with_handler( p_mod, p_data, default_internal_handler, 0 );
+	return ssc_module_exec_with_handler( p_mod, p_data, sg_defaultPrint ? default_internal_handler : default_internal_handler_no_print, 0 );
 }
 
 class default_exec_handler : public handler_interface

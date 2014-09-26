@@ -231,6 +231,9 @@ SSCEXPORT const char *ssc_info_constraints( ssc_info_t p_inf );
 /** Returns additional information for use in a target application about how to show the variable to the user.  Not used currently. */
 SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf );
 
+/** Specify whether the built-in execution handler prints messages and progress updates to the command line console. */
+SSCEXPORT void ssc_module_exec_set_print( int print );
+
 /** The simplest way to run a computation module over a data set. Simply specify the name of the module, and a data set.  If the whole process succeeded, the function returns 1, otherwise 0.  No error messages are available. This function can be thread-safe, depending on the computation module used. If the computation module requires the execution of external binary executables, it is not thread-safe. However, simpler implementations that do all calculations internally are probably thread-safe.  Unfortunately there is no standard way to report the thread-safety of a particular computation module. */
 SSCEXPORT ssc_bool_t ssc_module_exec_simple( const char *name, ssc_data_t p_data );
 
