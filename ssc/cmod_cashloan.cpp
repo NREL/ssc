@@ -13,7 +13,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",                          "Total installed cost",                               "$",      "",                      "Cashloan",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",                       "Salvage value percentage",                        "%",      "",                      "Cashloan",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
 	
-//	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
+//	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Value of electricity savings",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "energy_net",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
@@ -22,35 +22,35 @@ static var_info vtab_cashloan[] = {
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "AnnualOutput", "*", "INTEGER,MIN=0", "" },
 
 	/* financial outputs */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "Cashloan",      "*",                       "INTEGER",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cash flow",      "",             "",                      "Cashloan",      "*",                       "INTEGER",                                  "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback",                            "years",        "",                      "Cashloan",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback period",                            "years",        "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O and M",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O and M",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel O and M",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of Insurance and Prop Tax",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel expenses",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",             "Present value of insurance and property tax",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net annual energy in Year 1",  "", "",                      "",      "*",                     "",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Energy Value",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Value of electricity savings",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// real estate value added 6/24/13
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_value_added",      "Real Estate Value Added",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_value_added",      "Real estate value added",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M Fixed expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M Production-based expense",       "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M Capacity-based expense",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M Fuel expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "Fuel expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",       "O&M Optional Fuel 1 expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",       "O&M Optional Fuel 2 expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",       "Biomass feedstock expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",       "Coal feedstock expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -66,31 +66,31 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_principal","Principal payment",                  "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_debt_payment_total",    "Total P&I debt payment",             "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_fed",             "Federal IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_sta",             "State IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_uti",             "Utility IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_oth",             "Other IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total",             "Total IBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_fed",             "Federal IBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_sta",             "State IBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_uti",             "Utility IBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total_oth",             "Other IBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ibi_total",             "Total IBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_fed",             "Federal CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_sta",             "State CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_uti",             "Utility CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_oth",             "Other CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total",             "Total CBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_fed",             "Federal CBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_sta",             "State CBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_uti",             "Utility CBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total_oth",             "Other CBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cbi_total",             "Total CBI income",         "$",            "",                      "Cashloan",      "*",                     "",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_fed",             "Federal PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_sta",             "State PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_uti",             "Utility PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_oth",             "Other PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_fed",             "Federal PBI income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_sta",             "State PBI income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_uti",             "Utility PBI income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_oth",             "Other PBI income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI income",         "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_total",               "Total PTC income",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC",                 "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_total",               "Total PTC",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_fed",         "Federal ITC income",                 "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_sta",         "State ITC income",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",         "Total ITC income",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_fed",         "Federal ITC",                 "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_sta",         "State ITC",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",         "Total ITC",                   "$",            "",                      "Cashloan",      "*",                     "",                "" },
 	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depr_sched",                        "State depreciation schedule",              "%",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_depreciation",                      "State depreciation",                       "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -104,8 +104,8 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_taxable_income_less_deductions",    "Federal taxable income less deductions",   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_tax_savings",                       "Federal tax savings",                      "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_and_fed_tax_savings",               "Total tax savings (Federal & State)",      "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "After tax net equity cost flow",           "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_and_fed_tax_savings",               "Total tax savings (federal and state)",      "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "After tax annual costs",           "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After tax cash flow",                      "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -116,13 +116,13 @@ static var_info vtab_cashloan[] = {
 	
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized federal PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized federal PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized state PTC (real)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized state PTC (nominal)",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted average cost of capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective tax rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
 
 
 var_info_invalid };
