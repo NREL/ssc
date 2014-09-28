@@ -1019,7 +1019,7 @@ public:
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
-		add_var_info(vtab_advanced_financing_cost);
+//		add_var_info(vtab_advanced_financing_cost);
 		add_var_info(_cm_vtab_levpartflip);
 	}
 
@@ -2576,8 +2576,8 @@ public:
 		assign("size_of_equity", var_data((ssc_number_t)size_of_equity));
 		assign("cost_installedperwatt", var_data((ssc_number_t)(cost_installed / nameplate / 1000.0)));
 
-		advanced_financing_cost adv(this);
-		adv.compute_cost(cost_installed, size_of_equity, 0, cbi_total, ibi_total);
+//		advanced_financing_cost adv(this);
+//		adv.compute_cost(cost_installed, size_of_equity, 0, cbi_total, ibi_total);
 
 		assign("itc_fed_qual_macrs_5", var_data((ssc_number_t)itc_fed_qual_macrs_5));
 		assign( "itc_fed_qual_macrs_15", var_data((ssc_number_t) itc_fed_qual_macrs_15 ) );

@@ -917,7 +917,7 @@ public:
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
-		add_var_info(vtab_advanced_financing_cost);
+//		add_var_info(vtab_advanced_financing_cost);
 		add_var_info( _cm_vtab_singleowner );
 	}
 
@@ -2387,8 +2387,8 @@ public:
 		assign( "cost_installedperwatt", var_data((ssc_number_t)( cost_installed / nameplate / 1000.0 ) ));
 
 		// metric costs
-		advanced_financing_cost adv(this);
-		adv.compute_cost(cost_installed, size_of_equity, size_of_debt, cbi_total, ibi_total);
+		//advanced_financing_cost adv(this);
+		//adv.compute_cost(cost_installed, size_of_equity, size_of_debt, cbi_total, ibi_total);
 
 
 
