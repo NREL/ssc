@@ -2692,9 +2692,9 @@ bool dispatch_calculations::process_lifetime_dispatch_output()
 	return true;
 }
 
-
-var_info vtab_advanced_financing_cost[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+/*
+var_info vtab_advanced_financing_cost[] = {
 
 { SSC_INPUT, SSC_NUMBER, "total_direct_cost", "Total Direct Cost", "", "", "advanced_financing_costs", "*", "", "" },
 { SSC_OUTPUT, SSC_NUMBER, "direct_cost", "Total Direct Cost", "", "", "advanced_financing_cost", "*", "", "" },
@@ -2728,3 +2728,4 @@ bool advanced_financing_cost::compute_cost(double cost_installed, double equity,
 //	}
 	return true;
 }
+*/

@@ -36,7 +36,7 @@ public:
 	double tod_energy_value(int period, int year);
 };
 
-
+/*
 extern var_info vtab_advanced_financing_cost[];
 
 
@@ -49,7 +49,7 @@ public:
 	advanced_financing_cost(compute_module *cm);
 	bool compute_cost(double cost_installed, double equity, double debt, double cbi, double ibi);
 };
-
+*/
 
 
 #endif
