@@ -13,7 +13,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // TOU													     																	  
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",     "12x24 Time of Use Values for week days",                            "",             "",            "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",     "12x24 Time of Use Values for week end days",                        "",             "",            "tou_translator", "*",                       "",                      "" }, 
-															     																	  
+	/*
 	// Heliostat field (type 221) parameters				     																	  
     { SSC_INPUT,        SSC_MATRIX,      "eta_map",              "Field efficiency matrix",                                           "-",            "",            "heliostat",      "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_zen",                "Number of zenith angle data points in file",                        "-",            "",            "heliostat",      "*",                       "",                      "" },
@@ -25,7 +25,45 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "hel_stow_deploy",      "Heliostat field stow/deploy solar elevation angle",                 "deg",          "",            "heliostat",      "*",                       "",                      "" },
 	// Heliostat field (type 221) inputs					     																	  
     { SSC_INPUT,        SSC_NUMBER,      "field_control",        "Field defocus control",                                             "",             "",            "heliostat",      "*",                       "",                      "" },
-															     																	  
+	
+	*/
+
+
+	// sam_mw_pt_heliostatfield
+	{ SSC_INPUT, SSC_NUMBER, "run_type", "Run type", "-", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_width", "Heliostat width", "m", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_height", "Heliostat height", "m", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_optical_error", "Heliostat optical error", "rad", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_active_fraction", "Heliostat active frac.", "-", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_reflectance", "Heliostat reflectance", "-", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "rec_absorptance", "Receiver absorptance", "-", "", "heliostat_field", "*", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "rec_height", "Receiver height", "m", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "rec_aspect", "Receiver aspect ratio", "-", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "rec_hl_perm2", "Receiver design heatloss", "kW/m2", "", "heliostat_field", "*", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "q_design", "Field thermal power rating", "kW", "", "heliostat_field", "*", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "h_tower", "Tower height", "m", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "land_bound_type", "Land boundary type", "- ", "", "heliostat_field", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "land_max", "Land max boundary", "- OR m", "", "heliostat_field", "?=7.5", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "land_min", "Land min boundary", "- OR m", "", "heliostat_field", "?=0.75", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "land_bound_table", "Land boundary table", "m", "", "heliostat_field", "?", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "land_bound_list", "Boundary table listing", "", "", "heliostat_field", "?", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "p_start", "Heliostat startup energy", "kWe-hr", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "p_track", "Heliostat tracking energy", "kWe", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "hel_stow_deploy", "Stow/deploy elevation", "deg", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "v_wind_max", "Max. wind velocity", "m/s", "", "heliostat_field", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "interp_nug", "Interpolation nugget", "-", "", "heliostat_field", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "interp_beta", "Interpolation beta coef.", "-", "", "heliostat_field", "?=1.99", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_flux_x", "Flux map X resolution", "-", "", "heliostat_field", "?=10", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_flux_y", "Flux map Y resolution", "-", "", "heliostat_field", "?=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "helio_positions", "Heliostat position table", "m", "", "heliostat_field", "run_type=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "helio_aim_points", "Heliostat aim point table", "", "", "heliostat_field", "?", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "N_hel", "Number of heliostats", "-", "", "heliostat_field", "?", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "eta_map", "Field efficiency array", "-", "", "heliostat_field", "?", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "flux_positions", "Flux map sun positions", "deg", "", "heliostat_field", "?", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "flux_maps", "Flux map intensities", "-", "", "heliostat_field", "?", "", "" },
+
+
+
 	// Which type of receiver model to use in the simulation     																	  
     { SSC_INPUT,        SSC_NUMBER,      "receiver_type",        "External=0, Cavity=1",                                              "",             "",            "receiver",       "*",                       "INTEGER",               "" },
 															     																	  
@@ -258,7 +296,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                 "Wind speed",                                                        "m/s",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                 "Beam normal irradiance",                                            "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "twet",                 "Wet bulb temperature",                                              "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "phi",                  "Solar Azimuth",                                                     "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solazi",                  "Solar Azimuth",                                                     "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solzen",               "Solar Zenith",                                                      "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",		         "Parasitic tracking/startup power",						          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",	         "Total field efficiency",                                            "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
@@ -391,7 +429,8 @@ public:
 
 		// add other units		
 		int	tou = add_unit("tou_translator", "Time of Use Translator");
-		int type221_hel_field = add_unit("sam_mw_pt_type221");
+		//int type221_hel_field = add_unit("sam_mw_pt_type221");
+		int type_hel_field = add_unit("sam_mw_pt_heliostatfield");
 		int type222_receiver = 0, type232_cav_rec = 0;
 		if (as_integer("receiver_type") == 0)
 			type222_receiver = add_unit("sam_mw_pt_type222");
@@ -407,6 +446,7 @@ public:
 		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
 		set_unit_value_ssc_matrix(tou, "weekend_schedule");
 
+		/*
 		// Heliostat field (type 221) parameters
 		set_unit_value_ssc_matrix( type221_hel_field, "eta_map" );
 		set_unit_value_ssc_double( type221_hel_field, "n_zen" ); // 8
@@ -423,6 +463,41 @@ public:
 		bConnected &= connect( weather, "solzen", type221_hel_field, "theta" );
 		bConnected &= connect( weather, "solazi", type221_hel_field, "phi" );
 		bConnected &= connect( type251_controller, "defocus", type221_hel_field, "field_control" );
+		*/
+
+		// Heliostat field
+		set_unit_value_ssc_double(type_hel_field, "run_type");// , 0);	//0=auto, 1=user-type_hel_field, 2=user data
+		set_unit_value_ssc_double(type_hel_field, "helio_width");//, 12.);
+		set_unit_value_ssc_double(type_hel_field, "helio_height");//, 12.);
+		set_unit_value_ssc_double(type_hel_field, "helio_optical_error");//, 0.00153);
+		set_unit_value_ssc_double(type_hel_field, "helio_active_fraction");//, 0.97);
+		set_unit_value_ssc_double(type_hel_field, "helio_reflectance");//, 0.90);
+		set_unit_value_ssc_double(type_hel_field, "rec_absorptance");//, 0.94);
+		set_unit_value_ssc_double(type_hel_field, "rec_height", as_double("H_rec"));//, 5.);
+		set_unit_value_ssc_double(type_hel_field, "rec_aspect");//, 1);
+		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");//, 0.);
+		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("q_pb_design"));//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "h_tower", as_double("THT"));//, 50);
+		set_unit_value(type_hel_field, "weather_file", as_string("solar_resource_file"));
+		set_unit_value_ssc_double(type_hel_field, "land_bound_type");//, 0);
+		set_unit_value_ssc_double(type_hel_field, "land_max");//, 7.5);
+		set_unit_value_ssc_double(type_hel_field, "land_min");//, 0.75);
+		set_unit_value_ssc_double(type_hel_field, "p_start");//, 0.025);
+		set_unit_value_ssc_double(type_hel_field, "p_track");//, 0.055);
+		set_unit_value_ssc_double(type_hel_field, "hel_stow_deploy");//, 8);
+		set_unit_value_ssc_double(type_hel_field, "v_wind_max");//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
+		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
+// for user specified x,y field
+//		set_unit_value_ssc_matrix(type_hel_field, "helio_positions", pos_array);
+
+		bool bConnected = connect(weather, "wspd", type_hel_field, "vwind");
+		set_unit_value_ssc_double(type_hel_field, "field_control", 1.);
+		set_unit_value_ssc_double(weather, "solzen", 90.);	//initialize to be on the horizon
+		bConnected &= connect(weather, "solzen", type_hel_field, "solzen");
+		bConnected &= connect(weather, "solazi", type_hel_field, "solaz");
+
+
 
 		if ( as_integer("receiver_type") == 0 )
 		{
@@ -481,7 +556,7 @@ public:
 			bConnected &= connect(weather, "pres", type222_receiver, "P_amb");
 			bConnected &= connect(weather, "tdew", type222_receiver, "T_dp");
 			bConnected &= connect(weather, "beam", type222_receiver, "I_bn");
-			bConnected &= connect(type221_hel_field, "eta_field", type222_receiver, "field_eff");
+			bConnected &= connect(type_hel_field, "eta_field", type222_receiver, "field_eff");
 			bConnected &= connect(weather, "tdry", type222_receiver, "T_db");
 					   
 			bConnected &= connect( type222_receiver, "m_dot_salt_tot", type251_controller, "m_dot_field" );
@@ -545,7 +620,7 @@ public:
 			bConnected &= connect( weather, "pres", type232_cav_rec, "P_amb" );
 			bConnected &= connect( weather, "tdew", type232_cav_rec, "T_dp" );
 			bConnected &= connect( weather, "beam", type232_cav_rec, "I_bn" );
-			bConnected &= connect( type221_hel_field, "eta_field", type232_cav_rec, "eta_field" );
+			bConnected &= connect( type_hel_field, "eta_field", type232_cav_rec, "eta_field" );
 			bConnected &= connect(weather, "tdry", type232_cav_rec, "T_amb");
 			bConnected &= connect(weather, "wspd", type232_cav_rec, "u_wind");
 			bConnected &= connect(weather, "wdir", type232_cav_rec, "deg_wind");
@@ -699,7 +774,7 @@ public:
 
 		// Connect Parasitics (type 228) module to others
 		bConnected &= connect(type224_powerblock, "W_cool_par", type228_parasitics, "P_cooling_tower");
-		bConnected &= connect(type221_hel_field, "pparasi", type228_parasitics, "P_helio_track");
+		bConnected &= connect(type_hel_field, "pparasi", type228_parasitics, "P_helio_track");
 		bConnected &= connect(type224_powerblock, "P_cycle", type228_parasitics, "P_plant_output");
 		bConnected &= connect(type224_powerblock, "eta", type228_parasitics, "eta_cycle");
 		bConnected &= connect(type251_controller, "tank_fp_par", type228_parasitics, "P_cold_tank");
