@@ -131,7 +131,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_aux",		  "Q auxiliary",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_auxonly",	  "Q auxiliary only",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",		  "System energy",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                    "frac",    "",                      "Annual",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                    "",    "",                      "Annual",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                   "",         "",                   "Annual",                                   "*",           "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                 "",         "",                   "Annual",                                   "*",           "", "" },
 
@@ -283,9 +283,15 @@ public:
 
 		ssc_number_t *out_hourly_energy = allocate("hourly_energy", 8760);
 
-		double temp_sum = 0.;
+		double temp_sum = 0.0;
+		size_t temp_count = 0;
 		double monthly_avg_temp[12];
-		for (size_t i = 0; i < 12; i++) monthly_avg_temp[i] = 0.;
+		size_t monthly_avg_count[12];
+		for (size_t i = 0; i < 12; i++)
+		{
+			monthly_avg_temp[i] = 0.0;
+			monthly_avg_count[i] = 0;
+		}
 
 		size_t idx=0;
 		for (size_t hour = 0; hour<8760; hour++)
@@ -304,7 +310,11 @@ public:
 
 				// accumulate for averaging
 				temp_sum += T_amb[idx];
-				monthly_avg_temp[util::month_of(hour) - 1] += T_amb[idx];
+				temp_count++;
+
+				int imonth = util::month_of(hour) - 1;
+				monthly_avg_temp[ imonth ] += T_amb[idx];
+				monthly_avg_count[ imonth ]++;
 
 				/* **********************************************************************
 				Process radiation (Isotropic model), calculate Incident[i] through cover
@@ -394,14 +404,14 @@ public:
 			double max_monthly_avg = -1e99;
 			for (size_t m = 0; m < 12; m++)
 			{
-				monthly_avg_temp[m] = monthly_avg_temp[m] / (util::nday[m] * 24);
+				monthly_avg_temp[m] = monthly_avg_temp[m] / monthly_avg_count[m];
 				if (monthly_avg_temp[m] < min_monthly_avg) min_monthly_avg = monthly_avg_temp[m];
 				if (monthly_avg_temp[m] > max_monthly_avg) max_monthly_avg = monthly_avg_temp[m];
 			}
 
 			double avg_temp_high_f = 32. + 1.8 * max_monthly_avg; //F
 			double avg_temp_low_f = 32. + 1.8 * min_monthly_avg; // F
-			double annual_avg_temp = (temp_sum / 8760.) * 1.8 + 32.; // F
+			double annual_avg_temp = (temp_sum / temp_count) * 1.8 + 32.; // F
 
 			double mains_ratio = 0.4 + 0.01*(annual_avg_temp - 44.); // F
 			double lag = 35. - (annual_avg_temp - 44.); // F
@@ -410,32 +420,31 @@ public:
 			Calculate hourly mains water temperature
 			********************************************************************** */
 			size_t idx=0;
-			for ( size_t hr=0; hr<8760; hr++)
+			for ( size_t i=0; i<8760; i++)
 			{
-				for( size_t jj=0;jj<step_per_hour;jj++ )
+				// calculate hour of day  ( goes 1..24 )
+				// and julian day  ( goes 1..365 )
+
+				// (Julian day is used in the Julian date (JD) system of time measurement for scientific use by 
+				// the astronomy community, presenting the interval of time in days and fractions of a day since 
+				// January 1, 4713 BC Greenwich noon - WIKIPEDIA)
+				int hour = 0;
+				int julian_day = (int)(((double)(i + 1)) / 24);
+				if ((double)julian_day == (((double)(i + 1)) / 24.0))
+					hour = 24;
+				else
 				{
-					// calculate hour of day  ( goes 1..24 )
-					// and julian day  ( goes 1..365 )
-
-					// (Julian day is used in the Julian date (JD) system of time measurement for scientific use by 
-					// the astronomy community, presenting the interval of time in days and fractions of a day since 
-					// January 1, 4713 BC Greenwich noon - WIKIPEDIA)
-					int hour = 0;
-					int julian_day = (int)(((double)(hr + 1)) / 24);
-					if ((double)julian_day == (((double)(hr + 1)) / 24.0))
-						hour = 24;
-					else
-					{
-						hour = (hr + 1) - (julian_day * 24);
-						julian_day++;
-					}
-
-					T_mains[idx] = (ssc_number_t)(annual_avg_temp + 6. + mains_ratio * ((avg_temp_high_f - avg_temp_low_f) / 2.)
-						* sin(M_PI / 180 * (0.986*(julian_day - 15 - lag) - 90.)));
-					T_mains[idx] = (ssc_number_t)((T_mains[idx] - 32) / 1.8); // convert to 'C
-
-					idx++;
+					hour = (i + 1) - (julian_day * 24);
+					julian_day++;
 				}
+
+				double tmain = (annual_avg_temp + 6. + mains_ratio * ((avg_temp_high_f - avg_temp_low_f) / 2.)
+					* sin(M_PI / 180 * (0.986*(julian_day - 15 - lag) - 90.)));
+				tmain = ((tmain - 32) / 1.8); // convert to 'C
+
+				// load into mains temp array
+				for( size_t jj=0;jj<step_per_hour;jj++ )
+					T_mains[idx++] = (ssc_number_t)tmain;
 			}
 		}
 
@@ -481,6 +490,14 @@ public:
 		idx = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
+#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
+			if ( hour % (8760/NSTATUS_UPDATES) == 0 )
+			{
+				float percent = 100.0f * ((float)hour+1) / ((float)8760);
+				if ( !update( "calculating", percent , (float)hour ) )
+					throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour+1.0) );
+			}
+
 			for( size_t jj=0;jj<step_per_hour;jj++ )
 			{
 				// Note -> "use" in this case simply refers to one element of a vector, not to a modified value
@@ -695,18 +712,15 @@ public:
 			}
 		}
 				
-		accumulate_monthly( "Q_deliv", "monthly_Q_deliv" );
-		accumulate_monthly( "Q_aux", "monthly_Q_aux" );
-		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly");
+		accumulate_monthly( "Q_deliv", "monthly_Q_deliv", 0.001*ts_hour );
+		accumulate_monthly( "Q_aux", "monthly_Q_aux", 0.001*ts_hour );
+		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly", 0.001*ts_hour );
 		accumulate_monthly( "hourly_energy", "monthly_energy" );
 				
-		accumulate_annual( "Q_deliv", "annual_Q_deliv" );
-		accumulate_annual( "Q_aux", "annual_Q_aux" );
-		accumulate_annual( "Q_auxonly", "annual_Q_auxonly" );
-		accumulate_annual( "hourly_energy", "annual_energy" );
-
-		double deliv = as_number("annual_energy");
-		double auxonly = as_number("annual_Q_auxonly");
+		accumulate_annual( "Q_deliv", "annual_Q_deliv", 0.001*ts_hour );
+		accumulate_annual( "Q_aux", "annual_Q_aux", 0.001*ts_hour );
+		double auxonly = accumulate_annual( "Q_auxonly", "annual_Q_auxonly", 0.001*ts_hour );
+		double deliv = accumulate_annual( "hourly_energy", "annual_energy" );
 
 		assign("solar_fraction", var_data( (ssc_number_t)(deliv/auxonly) ));
 
