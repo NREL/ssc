@@ -982,9 +982,32 @@ public:
 		double m_N_mc;
 		double m_N_t;
 
+		bool m_is_rc;
+
 		S_design_solved()
 		{
 			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = m_N_mc = m_N_t = std::numeric_limits<double>::quiet_NaN();
+
+			m_is_rc = true;
+		}
+	};
+
+	struct S_od_solved
+	{
+		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
+		double m_eta_thermal;
+		double m_W_dot_net;
+		double m_Q_dot;
+		double m_m_dot_mc;
+		double m_m_dot_rc;
+		double m_m_dot_t;
+		double m_recomp_frac;
+		double m_N_mc;
+		double m_N_t;
+
+		S_od_solved()
+		{
+			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = m_N_mc = m_N_t = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -1119,6 +1142,7 @@ private:
 	S_opt_od_parameters ms_opt_od_par;
 	S_target_od_parameters ms_tar_od_par;
 	S_opt_target_od_parameters ms_opt_tar_od_par;
+	S_od_solved ms_od_solved;
 
 		// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
@@ -1212,6 +1236,11 @@ public:
 	{
 		return &ms_des_solved;
 	}	
+
+	const S_od_solved * get_od_solved()
+	{
+		return &ms_od_solved;
+	}
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_point_eta(const std::vector<double> &x);

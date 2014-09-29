@@ -1290,7 +1290,11 @@ void C_RecompCycle::finalize_design(int & error_code)
 			error_code = recomp_size_error_code;
 			return;
 		}
+
+		ms_des_solved.m_is_rc = true;
 	}
+	else
+		ms_des_solved.m_is_rc = false;
 	
 	// Size turbine
 	C_turbine::S_design_parameters  t_des_par;
@@ -1880,6 +1884,23 @@ void C_RecompCycle::off_design_core(int & error_code)
 	m_W_dot_net_od = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;			
 	m_eta_thermal_od = m_W_dot_net_od / m_Q_dot_PHX_od;
 
+	// Set ms_od_solved
+	ms_od_solved.m_eta_thermal = m_eta_thermal_od;
+	ms_od_solved.m_W_dot_net = m_W_dot_net_od;
+	ms_od_solved.m_Q_dot = m_Q_dot_PHX_od;
+	ms_od_solved.m_m_dot_mc = m_dot_mc;
+	ms_od_solved.m_m_dot_rc = m_dot_rc;
+	ms_od_solved.m_m_dot_t = m_dot_t;
+	ms_od_solved.m_recomp_frac = ms_od_par.m_recomp_frac;
+	ms_od_solved.m_N_mc = ms_od_par.m_N_mc;
+	ms_od_solved.m_N_t = ms_od_par.m_N_t;
+
+	ms_od_solved.m_temp = m_temp_od;
+	ms_od_solved.m_pres = m_pres_od;
+	ms_od_solved.m_enth = m_enth_od;
+	ms_od_solved.m_entr = m_entr_od;
+	ms_od_solved.m_dens = m_dens_od;
+
 	return;
 }
 
@@ -2125,7 +2146,7 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 		opt_od_cycle.set_lower_bounds(lb);
 		opt_od_cycle.set_upper_bounds(ub);
 		opt_od_cycle.set_initial_step(scale);
-		opt_od_cycle.set_xtol_rel(ms_opt_od_par.m_opt_tol*1.E-3);
+		opt_od_cycle.set_xtol_rel(ms_opt_od_par.m_opt_tol);
 
 		// Set max objective function
 		opt_od_cycle.set_max_objective(nlopt_cb_opt_od, this);
@@ -2222,8 +2243,8 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 		off_design_point_value = m_eta_thermal_od;
 
 	// Hardcode some compressor checks to 'true', per John's code. Could revisit later
-	bool surge_allowed = true;
-	bool supersonic_tip_speed_allowed = true;
+	bool surge_allowed = false;
+	bool supersonic_tip_speed_allowed = false;
 	
 	// Check validity
 	if( m_pres_od[2 - 1] > ms_des_par.m_P_high_limit )		// above high-pressure limit; provide optimizer with more information
@@ -2245,14 +2266,16 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 
 	if(!supersonic_tip_speed_allowed)
 	{
+		double penalty = 5.0;
+
 		if( m_mc.get_od_solved()->m_w_tip_ratio > 1.0 )
-			off_design_point_value = 0.0;
+			off_design_point_value = fabs(off_design_point_value)*(1.0 - penalty*max(0.0, m_mc.get_od_solved()->m_w_tip_ratio - 1.0));
 
 		if( ms_od_par.m_recomp_frac > 0.0 && m_rc.get_od_solved()->m_w_tip_ratio > 1.0 )
-			off_design_point_value = 0.0;
+			off_design_point_value = fabs(off_design_point_value)*(1.0 - penalty*max(0.0, m_rc.get_od_solved()->m_w_tip_ratio - 1.0));
 
 		if( m_t.get_od_solved()->m_w_tip_ratio > 1.0 )
-			off_design_point_value = 0.0;
+			off_design_point_value = fabs(off_design_point_value)*(1.0 - penalty*max(0.0, m_t.get_od_solved()->m_w_tip_ratio - 1.0));
 	}
 
 	// Check if this is the optimal cycle?
@@ -2488,7 +2511,8 @@ double C_RecompCycle::eta_at_target(const std::vector<double> &x)
 	double eta_at_target = std::numeric_limits<double>::quiet_NaN();
 	if(target_od_error_code==26)
 	{
-		return 1.0 / (100.0 + m_W_dot_net_od);
+		//return 1.0 / (100.0 + m_W_dot_net_od);
+		return 0.0;
 	}
 	else if(target_od_error_code != 0)
 	{
@@ -2507,8 +2531,8 @@ double C_RecompCycle::eta_at_target(const std::vector<double> &x)
 	}
 
 	// Hardcode some compressor checks to 'true', per John's code. Could revisit later
-	bool surge_allowed = true;
-	bool supersonic_tip_speed_allowed = true;
+	bool surge_allowed = false;
+	bool supersonic_tip_speed_allowed = false;
 
 	if( !surge_allowed )		// twn: Note that 'surge_allowed' is currently hardcoded to true so this won't be executed
 	{
@@ -2521,14 +2545,16 @@ double C_RecompCycle::eta_at_target(const std::vector<double> &x)
 
 	if( !supersonic_tip_speed_allowed )
 	{
+		double penalty = 5.0;
+
 		if( m_mc.get_od_solved()->m_w_tip_ratio > 1.0 )
-			eta_at_target = 0.0;
+			eta_at_target = fabs(eta_at_target)*(1.0 - penalty*max(0.0, m_mc.get_od_solved()->m_w_tip_ratio - 1.0));
 
 		if( ms_od_par.m_recomp_frac > 0.0 && m_rc.get_od_solved()->m_w_tip_ratio > 1.0 )
-			eta_at_target = 0.0;
+			eta_at_target = fabs(eta_at_target)*(1.0 - penalty*max(0.0, m_rc.get_od_solved()->m_w_tip_ratio - 1.0));
 
 		if( m_t.get_od_solved()->m_w_tip_ratio > 1.0 )
-			eta_at_target = 0.0;
+			eta_at_target = fabs(eta_at_target)*(1.0 - penalty*max(0.0, m_t.get_od_solved()->m_w_tip_ratio - 1.0));
 	}
 
 	// Check if this is the optimal cycle?
