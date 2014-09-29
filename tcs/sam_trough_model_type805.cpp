@@ -16,7 +16,7 @@
 #endif
 
 #ifndef SIGN
-#define SIGN(a,b) ( (b)>=0 ? abs(a) : -abs(a) )
+#define SIGN(a,b) ( (b)>=0 ? fabs(a) : -fabs(a) )
 #endif
 
 enum {
@@ -905,7 +905,7 @@ public:
 		double AzNum = (sin(Dec)*cos(Site_Lat)-cos(Dec)*cos(Hour_Angle)*sin(Site_Lat));
 		double AzDen = cos(SolarAlt);
 
-		if (abs(AzNum-AzDen)<= 0.0001) 
+		if (fabs(AzNum-AzDen)<= 0.0001) 
 			AzDen = AzDen + 0.01;
 
 		// cos theta
@@ -946,7 +946,7 @@ public:
 
 		// Row_Distance is distance between rows of SCA; 15m @ SEGS
 		// SCA_Aper is SCA aperature; 5m LS-2
-		double RowShadow = abs(sin(PH)) * Row_Distance / SCA_aper;
+		double RowShadow = fabs(sin(PH)) * Row_Distance / SCA_aper;
    
 		if ((RowShadow < 0.5) || (SolarAlt < 0)) 
 			RowShadow = 0;
@@ -984,8 +984,8 @@ public:
 
 		double Ttemp, HtfVolGal, HtfMassKg, dThtf;
 		
-		//DO WHILE ((ABS(SfTo - SfTo_hold) > 0.1).AND.(CALCSFTi.EQ..FALSE.)) // HP Changed 12-08-06
-		//DO WHILE ((ABS(SfTo - SfTo_hold) > 0.1).OR.(CALCSFTi.EQ..FALSE.)) // HP Changed AND 12-08-06
+		//DO WHILE ((fabs(SfTo - SfTo_hold) > 0.1).AND.(CALCSFTi.EQ..FALSE.)) // HP Changed 12-08-06
+		//DO WHILE ((fabs(SfTo - SfTo_hold) > 0.1).OR.(CALCSFTi.EQ..FALSE.)) // HP Changed AND 12-08-06
 		// HP Was not recalculating the thermal losses with the final temperatures
 
 		do // HP Changed 12-08-06 ***************************************************************
@@ -1235,10 +1235,10 @@ public:
 
 			//NB HERE IS WHERE THE LOOP ENDS TO ITERATE ON THE OUTLET TEMPERATURE BY RECALCULATING THE HEAT LOSSES, ETC.
 		
-			if((abs(SfTo - SfTo_hold) < 0.1) && (CALCSFTi )) break; //HP Added 12-08-06
+			if((fabs(SfTo - SfTo_hold) < 0.1) && (CALCSFTi )) break; //HP Added 12-08-06
 			}
-		//if((abs(SfTo - SfTo_hold) < 0.1) && (CALCSFTi )) break; //HP Added 12-08-06
-		//while ((abs(SfTo - SfTo_hold) >= 0.1) || (!CALCSFTi ));
+		//if((fabs(SfTo - SfTo_hold) < 0.1) && (CALCSFTi )) break; //HP Added 12-08-06
+		//while ((fabs(SfTo - SfTo_hold) >= 0.1) || (!CALCSFTi ));
 		while (true);
 		//END DO // **** HP Changed 12-08-06
 
