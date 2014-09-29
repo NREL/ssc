@@ -375,7 +375,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 	// if it is an input or an inout variable
 
 	const var_info &inf = info(name);
-	if (inf.required_if == NULL)
+	if (inf.required_if == NULL || strlen(inf.required_if)==0)
 		return false;
 
 	std::string reqexpr = inf.required_if;
