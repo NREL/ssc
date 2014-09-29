@@ -64,32 +64,32 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 DC power loss",                              "%",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
 
 	// loss diagram outputs
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_mismatch_derate", "Sub-array 1 DC mismatch loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_diodeconn_derate", "Sub-array 1 DC diodes and connections loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_dcwiring_derate", "Sub-array 1 DC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_tracking_derate", "Sub-array 1 DC tracking error loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_nameplate_derate", "Sub-array 1 DC nameplate loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_mismatch_loss", "Sub-array 1 DC mismatch loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_diodeconn_loss", "Sub-array 1 DC diodes and connections loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_dcwiring_loss", "Sub-array 1 DC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_tracking_loss", "Sub-array 1 DC tracking error loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_nameplate_loss", "Sub-array 1 DC nameplate loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_mismatch_derate", "Sub-array 2 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_diodeconn_derate", "Sub-array 2 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_dcwiring_derate", "Sub-array 2 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_tracking_derate", "Sub-array 2 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_nameplate_derate", "Sub-array 2 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_mismatch_loss", "Sub-array 2 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_diodeconn_loss", "Sub-array 2 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_dcwiring_loss", "Sub-array 2 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_tracking_loss", "Sub-array 2 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_nameplate_loss", "Sub-array 2 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_mismatch_derate", "Sub-array 3 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_diodeconn_derate", "Sub-array 3 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_dcwiring_derate", "Sub-array 3 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_tracking_derate", "Sub-array 3 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_nameplate_derate", "Sub-array 3 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_mismatch_loss", "Sub-array 3 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_diodeconn_loss", "Sub-array 3 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_dcwiring_loss", "Sub-array 3 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_tracking_loss", "Sub-array 3 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_nameplate_loss", "Sub-array 3 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_mismatch_derate", "Sub-array 4 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_diodeconn_derate", "Sub-array 4 DC diodes and connections loss", "%", "?", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_dcwiring_derate", "Sub-array 4 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_tracking_derate", "Sub-array 4 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_nameplate_derate", "Sub-array 4 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_mismatch_loss", "Sub-array 4 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_diodeconn_loss", "Sub-array 4 DC diodes and connections loss", "%", "?", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_dcwiring_loss", "Sub-array 4 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_tracking_loss", "Sub-array 4 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_nameplate_loss", "Sub-array 4 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "acwiring_derate", "AC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "transformer_derate", "AC step-up transformer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "acwiring_loss", "AC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "transformer_loss", "AC step-up transformer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	//
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
@@ -1787,11 +1787,11 @@ public:
 			if ( sa[nn].enable )
 			{
 				std::string prefix = "subarray" + util::to_string((int)(nn + 1)) + "_";
-				double mismatch = as_double(prefix + "mismatch_derate");
-				double diodes = as_double(prefix + "diodeconn_derate");
-				double wiring = as_double(prefix + "dcwiring_derate");
-				double tracking = as_double(prefix + "tracking_derate");
-				double nameplate = as_double(prefix + "nameplate_derate");
+				double mismatch = as_double(prefix + "mismatch_loss");
+				double diodes = as_double(prefix + "diodeconn_loss");
+				double wiring = as_double(prefix + "dcwiring_loss");
+				double tracking = as_double(prefix + "tracking_loss");
+				double nameplate = as_double(prefix + "nameplate_loss");
 				double total_percent = mismatch + diodes + wiring + tracking + nameplate;
 
 				double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0;
@@ -1859,8 +1859,8 @@ public:
 		//assert(fabs(annual_ac_gross - sys_output) < 1e-3);
 
 
-		double acwiring = as_double("acwiring_derate");
-		double transformer = as_double("transformer_derate");
+		double acwiring = as_double("acwiring_loss");
+		double transformer = as_double("transformer_loss");
 		double total_percent = acwiring + transformer;
 		double acwiring_loss = 0, transformer_loss = 0;
 
