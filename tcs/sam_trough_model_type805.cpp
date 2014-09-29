@@ -759,7 +759,10 @@ public:
 		double Site_Lat    = value(I_Site_Lat)*M_PI/180.0;
 		double Site_LongD  = value(I_Site_LongD)*M_PI/180.0; // trnsys has negative convention
 //		double SHIFT       = value(I_SHIFT)*M_PI/180.0;
-		double SHIFT = (value(I_Site_LongD) - value(I_SHIFT)*15.)*M_PI/180.0; // from Mike
+		//double SHIFT = (value(I_Site_LongD) - value(I_SHIFT)*15.)*M_PI/180.0; // from Mike
+		
+		double SHIFT = value(I_SHIFT)*M_PI / 180.0;
+		
 		double TurbOutG    = value(I_TurbOutG); //Gross Turbine Output (SETS THE DESIGN POINT) 
 		double TurbEffG    = value(I_TurbEffG); //Gross Turbine Eff (SETS THE DESIGN POINT) 
 
