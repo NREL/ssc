@@ -898,7 +898,7 @@ public:
 						if( set_upper )
 							Q_dot_PHX = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
 						else
-							Q_dot_PHX *= min(1.25*Q_dot_PHX, m_Q_dot_rec_des_calc);
+							Q_dot_PHX = min(1.25*Q_dot_PHX, m_Q_dot_rec_des_calc);
 					}
 				}
 
