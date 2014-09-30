@@ -2,6 +2,7 @@
 #define __compact_hx_dis_
 
 #include <limits>
+#include "htf_props.h"
 
 /* 8.3.14 twn: The goal here is to model a multi-pass cross-flow air-cooler. Model is discretized
 to account for varying properties of carbon dioxide around the critical.
@@ -48,6 +49,10 @@ public:
 	};
 
 private:
+
+	// Classes
+	HTFProperties mc_air;				// Instance of HTFProperties class for ambient air
+
 	// Remaining Air-Cooler Specs
 		// Inputs
 	int m_N_loops;
@@ -69,6 +74,7 @@ private:
 	double m_UA_total;		//[W/K]		Total air-side conductance at design
 	double m_V_total;		//[m^3]		Total HX volume
 	double m_material_V;	//[m^3]		Total Material volume - no headers
+	double m_A_surf_node;	//[m^2]
 
 	// Design Ambient Conditions
 	double m_T_amb_des;		//[K]
@@ -83,6 +89,8 @@ private:
 	double m_W_dot_fan_des;		//[MW]
 	double m_delta_P_des;		//[kPa]
 	double m_T_hot_out_des;		//[K]
+	double m_m_dot_air_des;		//[kg/s]
+	double m_Q_dot_des;			//[W]
 
 	// Calculated Performance Target
 	double m_P_hot_out_des;		//[kPa]
@@ -102,6 +110,8 @@ private:
 	double m_s_v;		//[m]
 	double m_fin_V_per_m;	//[1/m]
 
+	int m_final_outlet_index;
+
 	// Structures
 	S_hx_design_solved m_hx_design_solved;
 
@@ -112,6 +122,9 @@ public:
 	bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, 
 		double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);
 
+	double off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
+		double m_dot_hot_kg_s, double T_hot_out_K);
+
 	const S_hx_design_solved * get_hx_design_solved()
 	{
 		m_hx_design_solved.m_material_V = m_material_V;
@@ -120,36 +133,6 @@ public:
 	}
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
