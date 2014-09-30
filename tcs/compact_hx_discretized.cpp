@@ -78,10 +78,12 @@ compact_hx::compact_hx()
 	m_th = m_eta_fan = m_roughness = 
 		m_d_in = m_A_cs = m_relRough = m_Depth = m_W_par = m_N_par = m_N_tubes = m_L_tube = m_L_path = m_A_surf_total = m_UA_total = m_V_total =
 		m_T_amb_des = m_P_amb_des =
-		m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total = m_W_dot_fan_des = m_delta_P_des = m_T_hot_out_des = m_P_hot_out_des = 
+		m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total = m_W_dot_fan_des = m_delta_P_des = m_T_hot_out_des = m_m_dot_air_des = m_Q_dot_des = m_P_hot_out_des =
 		m_d_out = m_fin_pitch = m_D_h = m_fin_thk = m_sigma = m_alpha = m_A_fin_to_surf = m_s_h = m_s_v = m_fin_V_per_m = numeric_limits<double>::quiet_NaN();
 
 	m_N_loops = m_N_nodes = m_enum_compact_hx_config = -1;
+
+	mc_air.SetFluid(mc_air.Air);
 }
 
 bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, 
@@ -150,15 +152,13 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	T_air.fill(numeric_limits<double>::quiet_NaN());
 
 	// index that gives outlet temperatur and pressure: depends on whether odd or even loops
-	double final_outlet_index = ((m_N_loops + 2) % 2)*m_N_nodes + 1;
+	m_final_outlet_index = ((m_N_loops + 2) % 2)*m_N_nodes + 1;
 
-	HTFProperties air;				// Instance of HTFProperties class for ambient air
-	air.SetFluid(air.Air);
 		// Assume air props don't change significantly in air cooler
-	double mu_air = air.visc(m_T_amb_des);
-	double v_air = 1.0/air.dens(m_T_amb_des,m_P_amb_des);
-	double cp_air = air.Cp(m_T_amb_des)*1000.0;
-	double k_air = air.cond(m_T_amb_des);
+	double mu_air = mc_air.visc(m_T_amb_des);
+	double v_air = 1.0 / mc_air.dens(m_T_amb_des, m_P_amb_des);
+	double cp_air = mc_air.Cp(m_T_amb_des)*1000.0;
+	double k_air = mc_air.cond(m_T_amb_des);
 	double Pr_air = (cp_air*mu_air/k_air);
 
 		// Calculate the required heat rejection
@@ -222,6 +222,8 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	double V_total = numeric_limits<double>::quiet_NaN();
 	double N_par = numeric_limits<double>::quiet_NaN();
 	double N_tubes = numeric_limits<double>::quiet_NaN();
+	double m_dot_air_total = std::numeric_limits<double>::quiet_NaN();
+	double A_surf_node = std::numeric_limits<double>::quiet_NaN();
 
 	while( abs(diff_T_hot_out) > tol )
 	{
@@ -361,7 +363,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 				// Try reasonably overestimating air mass flow rate by energy balance assuming small increase in air temp
 				// Q_dot_des = m_dot_air_total*cp_air*deltaT
 				// *** After 1st iteration can do something smarter here ****
-			double m_dot_air_total = Q_dot_des / (5.0*cp_air);		// Assume 5K temp difference
+			m_dot_air_total = Q_dot_des / (5.0*cp_air);		// Assume 5K temp difference
 			//**********************************************************************************
 			// Overwrite here to test against EES code
 				// m_dot_air_total = 6165;
@@ -445,7 +447,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 
 			}	// Iteration on air mass flow rate
 
-			double A_surf_node = V_node*m_alpha;		//[-] Air-side surface area of node
+			A_surf_node = V_node*m_alpha;		//[-] Air-side surface area of node
 			double UA_node = A_surf_node*h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
 
 			// Set known inlet conditions: iteration thru # of loops needs previous loop info
@@ -618,15 +620,15 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 
 			}	// End iteration through loop in flow path
 
-			double T_co2_hot_calc = T_co2(final_outlet_index, m_N_loops);
+			double T_co2_hot_calc = T_co2(m_final_outlet_index, m_N_loops);
 
-			double deltaP_co2_calc = P_co2(final_outlet_index, m_N_loops) - m_P_hot_out_des;
+			double deltaP_co2_calc = P_co2(m_final_outlet_index, m_N_loops) - m_P_hot_out_des;
 
 			diff_deltaP = (deltaP_co2_calc - m_delta_P_des) / m_delta_P_des;
 
 		}	// Iteration on length of 1 tube length
 		
-		diff_T_hot_out = (T_co2(final_outlet_index,m_N_loops)- m_T_hot_in_des)/m_T_hot_in_des;
+		diff_T_hot_out = (T_co2(m_final_outlet_index, m_N_loops) - m_T_hot_in_des) / m_T_hot_in_des;
 
 	};
 
@@ -639,6 +641,9 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	m_A_surf_total = V_total*m_alpha;			//[-] Air-side surface area of node
 	m_UA_total = m_A_surf_total*h_conv_air;		//[W/K] Total HX Conductance
 	m_V_total = V_total;		//[m^3] Total HX "footprint" Volume
+	m_m_dot_air_des = m_dot_air_total;
+	m_Q_dot_des = Q_dot_des;	//[W]
+	m_A_surf_node = A_surf_node;	//[m^2]
 
 	double L_tube_total = m_L_tube*m_N_tubes;
 	double tube_volume = 0.25*CSP::pi*(pow(m_d_out,2)-pow(m_d_in,2))*L_tube_total;
@@ -646,3 +651,241 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 
 	return true;
 };
+
+double compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
+	double m_dot_hot_kg_s, double T_hot_out_K)
+{
+	double T_amb = T_amb_K;
+	double P_amb = P_amb_Pa;
+	double T_hot_in = T_hot_in_K;
+	double P_hot_in = P_hot_in_kPa;
+	double m_dot_hot = m_dot_hot_kg_s;
+	double T_hot_out = T_hot_out_K;
+
+	// Assume air props don't change significantly in air cooler
+	double mu_air = mc_air.visc(T_amb);
+	double v_air = 1.0 / mc_air.dens(T_amb, P_amb);
+	double cp_air = mc_air.Cp(T_amb)*1000.0;
+	double k_air = mc_air.cond(T_amb);
+	double Pr_air = (cp_air*mu_air / k_air);
+
+	// Calculate the required heat rejection
+	CO2_state co2_props;
+	CO2_TP(T_hot_in, P_hot_in, &co2_props);			// Assumes no pressure drop...
+	double h_in = co2_props.enth*1000.0;					//[J/kg]
+	CO2_TP(T_hot_out, P_hot_in, &co2_props);
+	double h_out = co2_props.enth*1000.0;					//[J/kg]
+	double Q_dot = m_dot_hot*(h_in - h_out);				//[W]
+	double deltaT_hot = T_hot_in - T_hot_out;				//[K,C] Hot side temperature difference
+	
+	// Set up matrices for HX
+	util::matrix_t<double>    T_co2(m_N_nodes + 2, m_N_loops + 1);
+	util::matrix_t<double>    P_co2(m_N_nodes + 2, m_N_loops + 1);
+	util::matrix_t<double>    T_air(m_N_nodes + 2, m_N_loops + 1);
+	T_co2.fill(numeric_limits<double>::quiet_NaN());
+	P_co2.fill(numeric_limits<double>::quiet_NaN());
+	T_air.fill(numeric_limits<double>::quiet_NaN());
+	
+	// Set known inlet conditions: iteration thru # of loops needs previous loop info
+	T_co2(1, 0) = T_hot_out;
+	P_co2(1, 0) = P_hot_in;			// Again, neglecting pressure drops
+	for( int i = 1; i < m_N_nodes + 2; i++ )
+		T_air(i, 0) = T_amb;
+
+	double T_hot_tol = 0.001;		//[-] Relative tolerance for convergence
+	double diff_T_hot_in = 2.0*T_hot_tol;
+
+	int iter_T_hot = -1;
+
+	double y_upper, y_lower, x_upper, x_lower;
+	y_upper = y_lower = x_upper = x_lower = std::numeric_limits<double>::quiet_NaN();
+	bool is_upper = false;
+	bool is_lower = false;
+
+	double m_dot_tube = m_dot_hot / m_N_par;
+
+	// Guess air mass flow rate through heat exchanger
+	double m_dot_air = (Q_dot / m_Q_dot_des)*m_m_dot_air_des;
+
+	double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+
+	// ********************************
+	// Iteration on air mass flow rate
+	// ********************************
+
+	while( fabs(diff_T_hot_in) > T_hot_tol )
+	{
+		iter_T_hot++;
+
+		if( iter_T_hot > 0 )
+		{
+			if( diff_T_hot_in > 0.0 )			// diff_T_hot_in = (T_co2(m_final_outlet_index, m_N_loops) - T_hot_in) / T_hot_in; ---> mass flow rate too high
+			{
+				y_upper = diff_T_hot_in;
+				x_upper = m_dot_air;
+				is_upper = true;
+				if( is_lower )
+					m_dot_air = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
+				else
+					m_dot_air *= 0.5;
+			}
+			else						// UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;  -> Q_dot_PHX too large	 
+			{
+				y_lower = diff_T_hot_in;
+				x_lower = m_dot_air;
+				is_lower = true;
+				if( is_upper )
+					m_dot_air = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
+				else
+					m_dot_air *= 1.5;
+			}
+		}
+
+		// Calculate air-side heat transfer coefficient and UA
+		double G_air = m_dot_air / (m_sigma*m_L_tube*m_W_par);
+		double Re_air = G_air*m_D_h / mu_air;
+		double f_air, j_H_air;
+		f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+
+		if( !get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
+			return -999;
+
+		double deltaP_air = pow(G_air, 2.0)*v_air*0.5*f_air*m_alpha*m_V_total / (m_sigma*m_L_tube*m_W_par);
+		double h_conv_air = j_H_air*G_air*cp_air / pow(Pr_air, (2.0 / 3.0));	//[W/m^2-K]
+
+		double V_dot_air = m_dot_air*v_air;
+		W_dot_fan = deltaP_air*V_dot_air / m_eta_fan / 1.E6;				//[MW]
+
+		double UA_node = m_A_surf_node*h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
+
+		for( int j = 1; j < m_N_loops + 1; j++ )
+		{
+			// Assuming constant air props, so can set those
+			double m_dot_air_tube = m_dot_air / (m_N_par*m_N_nodes);
+			double C_dot_air = cp_air*m_dot_air_tube;
+
+			// Set up constants and multipliers to switch direction of flow
+			double mult_const = (j + 1) % 2;
+			double constant = m_N_nodes + 2;
+			double mult_index = 1.0 - 2.0*mult_const;
+			double out_const = mult_index;
+
+			// Set inlet temperatures & pressures of current row
+			double mult_inlet = (j + 1) % 2;
+			double const_inlet = m_N_nodes;
+			double inlet = mult_inlet*const_inlet + 1;
+
+			// Set loop inlet conditions
+			T_co2(inlet, j) = T_co2(inlet, j - 1);
+			P_co2(inlet, j) = P_co2(inlet, j - 1);
+
+			double deltaT_prev = numeric_limits<double>::quiet_NaN();
+
+			for( int i = 1; i < m_N_nodes + 1; i++ )
+			{
+				double in = mult_const*constant + mult_index*i;
+				double out = in + out_const;
+				double air_in = min(in, out);
+
+				// Guess outlet temperature
+				double T_out_guess = T_co2(in, j) + 1.0;
+
+				double tol_T_in = T_hot_tol / 5.0;		//[-] Relative tolerance for convergence
+				double diff_T_in = 2.0*tol_T_in;		//[-] Set diff > tol
+				int iter_T_in = 0;
+
+				bool is_lowbound_T_out = false;
+				double x_lower_T_out = numeric_limits<double>::quiet_NaN();
+				double y_lower_T_out = numeric_limits<double>::quiet_NaN();
+
+				bool is_upbound_T_out = false;
+				double x_upper_T_out = numeric_limits<double>::quiet_NaN();
+				double y_upper_T_out = numeric_limits<double>::quiet_NaN();
+
+				// Values solved in inner nest required later in code
+				double Q_dot_node = numeric_limits<double>::quiet_NaN();
+
+				while( abs(diff_T_in) > tol_T_in )
+				{
+					iter_T_in++;
+
+					if( iter_T_in > 1 )
+					{
+						if( diff_T_in > 0.0 )		// Guessed temperature too high - reduce guess
+						{
+							is_upbound_T_out = true;
+							x_upper_T_out = T_out_guess;
+							y_upper_T_out = diff_T_in;
+							if( is_lowbound_T_out )
+							{
+								T_out_guess = -y_upper_T_out*(x_lower_T_out - x_upper_T_out) / (y_lower_T_out - y_upper_T_out) + x_upper_T_out;
+							}
+							else
+							{
+								T_out_guess = 0.5*(T_out_guess + T_co2(in, j));
+							}
+						}
+						else						// Calculated fan power too low - increase m_dot
+						{
+							is_lowbound_T_out = true;
+							x_lower_T_out = T_out_guess;
+							y_lower_T_out = diff_T_in;
+							if( is_upbound_T_out )
+							{
+								T_out_guess = -y_upper_T_out*(x_lower_T_out - x_upper_T_out) / (y_lower_T_out - y_upper_T_out) + x_upper_T_out;
+							}
+							else
+							{
+								T_out_guess = T_out_guess + (T_out_guess - T_co2(in, j));
+							}
+						}
+
+					}
+					T_out_guess = min(700.0 + 273.15, T_out_guess);
+
+					if( x_lower_T_out >= 700.0 + 273.15 )
+					{
+						break;
+					}
+
+					double T_out_ave = 0.5*(T_out_guess + T_co2(in, j));
+
+					// Check this error?
+					int co2_prop_error = CO2_TP(T_out_ave, P_hot_in, &co2_props);
+					double cp_co2_ave = co2_props.cp*1000.0;
+
+					// Capacitance rates
+					double C_dot_co2 = cp_co2_ave*m_dot_tube;
+					double C_dot_min = min(C_dot_air, C_dot_co2);
+					double C_dot_max = max(C_dot_air, C_dot_co2);
+					double Q_dot_max = C_dot_min*(T_out_guess - T_air(air_in, j - 1));
+					double NTU = UA_node / C_dot_min;
+					double CR = C_dot_min / C_dot_max;
+					// Unmixed cross-flow
+					double epsilon = 1 - exp(pow(NTU, 0.22) / CR*(exp(-CR*pow(NTU, 0.78)) - 1));
+					Q_dot_node = epsilon*Q_dot_max;
+
+					double T_in_check = T_out_guess - Q_dot_node / C_dot_co2;
+
+					deltaT_prev = T_co2(out, j) - T_co2(in, j);
+
+					double T_last = T_co2(in, j);
+
+					diff_T_in = (T_in_check - T_co2(in, j)) / T_co2(in, j);
+
+				}	// **** End T_out (node) iteration ***********************
+
+				T_co2(out, j) = min(700.0 + 273.15, T_out_guess);
+				T_air(air_in, j) = T_air(air_in, j - 1) + Q_dot_node / C_dot_air;
+
+			}	// **** End one row of nodes iteration		
+		}	// **** End number of passes iteration
+
+		double T_last = T_co2(m_final_outlet_index, m_N_loops);
+
+		diff_T_hot_in = (T_co2(m_final_outlet_index, m_N_loops) - T_hot_in) / T_hot_in;
+
+	}	// End air mass flow rate iteration
+
+	return W_dot_fan;		// return required fan power
+}
