@@ -12,7 +12,7 @@ static var_info _cm_vtab_tcsdish[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",                    "Tilt angle of surface/axis",                                                     "",             "",             "Weather",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",                 "Azimuth angle of surface/axis",                                                  "",             "",             "Weather",       "*",                       "",                      "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "dish", "*", "MIN=0.05,MAX=500000", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "dish", "*", "", "" },
 
 
 	// sam_pf_dish_collector_type295_variables

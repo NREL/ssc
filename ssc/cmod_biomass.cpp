@@ -8,7 +8,7 @@ static var_info _cm_vtab_biomass[] = {
 //	  VARTYPE          DATATYPE          NAME                                          LABEL                                            UNITS            META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
     { SSC_INPUT,       SSC_STRING,       "file_name",                                 "Local weather file path",                        "",              "",      "biopower",          "*",               "LOCAL_FILE",          "" },
 																								
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "biopower", "*", "MIN=0.05,MAX=500000", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "biopower", "*", "", "" },
 
 
 	{ SSC_INPUT,       SSC_NUMBER,       "biopwr.feedstock.total",                    "Total fuel resource (dt/yr)",                    "",              "",      "biopower",          "*",               "",                    "" },

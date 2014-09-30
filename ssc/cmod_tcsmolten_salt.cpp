@@ -8,7 +8,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 //    VARTYPE           DATATYPE          NAME                   LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "molten salt tower", "*", "MIN=0.05,MAX=500000", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "molten salt tower", "*", "", "" },
 
     // TOU													     																	  
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",     "12x24 Time of Use Values for week days",                            "",             "",            "tou_translator", "*",                       "",                      "" }, 
@@ -356,8 +356,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// Annual Outputs
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kW", "", "Net_E_Calc", "*", "", "" },
 
+
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage", "Annual fuel usage", "kWh", "", "", "*", "", "" },
+
 
 
 
@@ -825,14 +829,14 @@ public:
 		// performance adjustement factors
 		adjustment_factors haf(this);
 		if (!haf.setup())
-			throw exec_error("tcstrough_empirical", "failed to setup adjustment factors: " + haf.error());
+			throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 		// hourly_energy output
 		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("P_out_net", &count);//MWh
 		if (count != 8760)
-			throw exec_error("tcstrough_empirical", "hourly_energy count incorrect (should be 8760): " + count);
+			throw exec_error("tcsmolten_salt", "hourly_energy count incorrect (should be 8760): " + count);
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
@@ -848,6 +852,17 @@ public:
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+		double fuel_usage_mmbtu = 0;
+		ssc_number_t *hourly_fuel = as_array("q_aux_fuel", &count);//MWh
+		if (count != 8760)
+			throw exec_error("tcsmolten_salt", "q_aux_fuel count incorrect (should be 8760): " + count);
+		for (size_t i = 0; i < count; i++)
+			fuel_usage_mmbtu += hourly_fuel[i];
+		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
+		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_usage_mmbtu * 293.297)));
+
 
 	}
 

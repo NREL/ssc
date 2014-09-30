@@ -33,7 +33,7 @@ static inline double to_double(double x) { return x; }
 
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-		{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "pvsamv1", "*", "MIN=0.05,MAX=500000", "" },
+		{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "pvsamv1", "*", "", "" },
 		{ SSC_INPUT, SSC_STRING, "solar_resource_file", "Weather file in TMY2, TMY3, EPW, or SMW.", "", "", "pvsamv1", "*", "LOCAL_FILE", "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",                  "0/1",    "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
