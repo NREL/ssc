@@ -12,7 +12,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tilt",             "Tilt angle of surface/axis",                                     "",                 "",             "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",          "Azimuth angle of surface/axis",                                  "",                 "",             "Weather",        "*",                       "",                      "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "generic solar", "*", "MIN=0.05,MAX=500000", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "generic solar", "*", "", "" },
 
 
 	// TOU
@@ -156,8 +156,13 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 	// Other single value outputs
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor", "Gross to Net Conversion Factor",                                 "%",            "",            "Calculated",     "*",                       "",                      "" },
 
+
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage", "Annual fuel usage", "kWh", "", "", "*", "", "" },
+
+
 
 
 
@@ -343,7 +348,7 @@ public:
 		accumulate_annual("q_hl_tes",             "annual_q_hl_tes");
 		accumulate_annual("q_dump_tot",           "annual_q_dump_tot");
 		accumulate_annual("q_startup",            "annual_q_startup");
-		accumulate_annual("q_fossil",             "annual_q_fossil");
+		double fuel_MWht = accumulate_annual("q_fossil",             "annual_q_fossil");
 
 
 		// monthly accumulations
@@ -374,6 +379,9 @@ public:
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+		assign("system_heat_rate", 3.413); // samsim tcsgeneric_solar
+		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_MWht * 1000.0)));
 
 
 	}

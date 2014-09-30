@@ -34,6 +34,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel expenses",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",             "Present value of insurance and property tax",				   "$",            "",                      "ippppa",      "*",                       "",                                         "" },
 
+	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Adjusted installed costs", "$", "", "", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net annual energy in Year 1",  "", "",                      "",      "*",                     "",                "" },
 
@@ -808,7 +809,7 @@ public:
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
 //		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
-		assign( "adj_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
+		assign( "adjusted_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
 		
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );

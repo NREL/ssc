@@ -26,7 +26,7 @@ static var_info _cm_vtab_pvwattsv1_1ts[] = {
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",    "",                         "PVWatts",      "?=1",                     "POSITIVE",                  "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "system_size",              "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "MIN=0.05,MAX=500000",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_size",              "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                   "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",               "Tracking mode",                               "0/1/2/3","Fixed,1Axis,2Axis,AziAxis","PVWatts",      "*",                       "MIN=0,MAX=3,INTEGER",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                  "Azimuth angle",                               "deg",    "E=90,S=180,W=270",        "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },

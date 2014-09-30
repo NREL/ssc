@@ -788,6 +788,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "NPV of annual costs", "", "", "LCOE calculations", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Adjusted installed costs", "$", "", "", "*", "", "" },
 
 
 var_info_invalid };
@@ -2548,6 +2549,7 @@ public:
 
 	assign("cost_financing", var_data((ssc_number_t) cost_financing));
 
+	assign("adjusted_installed_cost", var_data((ssc_number_t)(cost_installed - cbi_total - ibi_total)));
 	assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
 	double size_of_equity = cost_installed - ibi_total - cbi_total;
 	assign("size_of_equity", var_data((ssc_number_t)size_of_equity));

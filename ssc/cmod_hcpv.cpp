@@ -18,7 +18,7 @@
 static var_info _cm_vtab_hcpv[] = {
 	/*VARTYPE           DATATYPE         NAME                               LABEL                                                              UNITS          META       GROUP            REQUIRED_IF             CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "file_name",                       "Weather file in TMY2, TMY3, EPW, or SMW.",                        "",            "",        "hcpv",          "*",                    "LOCAL_FILE",                    "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "PVWatts", "*", "MIN=0.05,MAX=500000", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "PVWatts", "*", "", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "module_cell_area",                "Single cell area",                                                "cm^2",        "",        "hcpv",          "*",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "module_concentration",            "Concentration ratio",                                             "none",        "",        "hcpv",          "*",                    "",                              "" },

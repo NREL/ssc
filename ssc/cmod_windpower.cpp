@@ -9,7 +9,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_STRING,      "wind_resource_filename",                  "local SWRF file path",		           "",       "",      "WindPower",      "*",                                        "LOCAL_FILE",                                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_shear",                     "Shear exponent",                      "",       "",      "WindPower",      "*",                                        "",                                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_turbulence_coeff",          "Turbulence coefficient",              "%",      "",      "WindPower",      "*",                                        "",                                                 "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "PVWatts", "*", "MIN=0.05,MAX=500000", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "PVWatts", "*", "", "" },
 
 
 //	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                                 "Height of resource measurement",      "m",      "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
