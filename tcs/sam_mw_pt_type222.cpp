@@ -28,8 +28,10 @@ enum{	//Parameters
 		P_A_sf,
 		P_IS_DIRECT_ISCC,
 		P_CYCLE_CONFIG,
-		P_fluxmap_angles,
-		P_fluxmap,       
+//		P_fluxmap_angles,
+//		P_fluxmap,       
+		P_n_flux_x,
+		P_n_flux_y,
 
 
 		//Inputs
@@ -46,7 +48,7 @@ enum{	//Parameters
 		I_T_db,
 		I_night_recirc,
 		I_hel_stow_deploy,
-
+		I_flux_map,
 
 		//Outputs
 		O_m_dot_salt_tot,
@@ -95,8 +97,10 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_A_sf,				"A_sf",				"Solar Field Area",                                                         "m^2",      "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_IS_DIRECT_ISCC,   "is_direct_iscc",   "Is receiver directly connected to an iscc power block",                    "-",        "", "", "-999"},
 	{TCS_PARAM, TCS_NUMBER, P_CYCLE_CONFIG,     "cycle_config",     "Configuration of ISCC power cycle",                                        "-",        "", "", "1"},
-	{TCS_PARAM, TCS_MATRIX, P_fluxmap_angles,   "fluxmap_angles",   "Matrix containing zenith and azimuth angles for flux maps",                "-",        "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided", "", "" },
-	{TCS_PARAM, TCS_MATRIX, P_fluxmap,          "fluxmap",          "Matrix containing flux map for various solar positions",                   "-",        "", "", "" },
+	{TCS_PARAM, TCS_NUMBER, P_n_flux_x,         "n_flux_x",         "Receiver flux map resolution - X",                                         "-",        "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_n_flux_y,         "n_flux_y",         "Receiver flux map resolution - Y",                                         "-",        "", "", ""},
+	//{TCS_PARAM, TCS_MATRIX, P_fluxmap_angles,   "fluxmap_angles",   "Matrix containing zenith and azimuth angles for flux maps",                "-",        "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided", "", "" },
+	//{TCS_PARAM, TCS_MATRIX, P_fluxmap,          "fluxmap",          "Matrix containing flux map for various solar positions",                   "-",        "", "", "" },
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_azimuth,			"azimuth",			"Solar azimuth angle",														"deg",		"", "", ""},
@@ -112,6 +116,7 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_INPUT, TCS_NUMBER, I_T_db,				"T_db",				"Ambient dry bulb temperature",												"C",		"", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_night_recirc,		"night_recirc",		"Flag to indicate night recirculation through the rec.",					"",			"", "", ""},
 	{TCS_INPUT, TCS_NUMBER, I_hel_stow_deploy,	"hel_stow_deploy",	"Heliostat field stow/deploy solar angle",									"deg",		"", "", ""},
+	{TCS_INPUT, TCS_MATRIX, I_flux_map,			"flux_map",			"Receiver flux map",														"-",		"", "", ""},
 
 	//OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_m_dot_salt_tot,	"m_dot_salt_tot",	"Total HTF flow rate through the receiver",									"kg/hr",	"", "", ""},
@@ -166,6 +171,8 @@ private:
 	double m_id_tube;
 	double m_A_tube;
 	int m_n_t;
+	int m_n_flux_x;
+	int m_n_flux_y;
 	
 	double m_A_rec_proj;
 	double m_A_node;
@@ -184,10 +191,10 @@ private:
 	double m_t_su;
 	double m_t_su_prev;
 
-	util::matrix_t<double> m_fluxmap_angles;	// matrix for fluxmap solar positions
-	util::matrix_t<double> m_fluxmap;         // matrix for flux values
-	int m_num_sol_pos;	
-
+	//util::matrix_t<double> m_fluxmap_angles;	// matrix for fluxmap solar positions
+	//util::matrix_t<double> m_fluxmap;         // matrix for flux values
+	//int m_num_sol_pos;	
+	
 	util::matrix_t<int> m_flow_pattern;
 	int m_n_lines;
 	
@@ -222,6 +229,8 @@ private:
 	double m_P_amb_low;
 	double m_P_amb_high;
 	double m_q_iscc_max;
+	double *m_i_flux_map;
+
 
 public:
 	sam_mw_pt_type222( tcscontext *cst, tcstypeinfo *ti)
@@ -263,15 +272,15 @@ public:
 		m_t_su = std::numeric_limits<double>::quiet_NaN();
 		m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
 
-		m_fluxmap_angles	= 0.0;
+		/*m_fluxmap_angles	= 0.0;
 		m_fluxmap			= 0.0;
-		m_num_sol_pos		= -1;
-
+		m_num_sol_pos		= -1;*/
+		
 		m_flow_pattern		= 0.0;
 		m_n_lines			= -1;
 
-		m_flux_in.resize(12, 1);
-		m_flux_in.fill(0.0);		 
+		/*m_flux_in.resize(12, 1);
+		m_flux_in.fill(0.0);*/		 
 
 		m_m_mixed = std::numeric_limits<double>::quiet_NaN();
 		m_LoverD = std::numeric_limits<double>::quiet_NaN();
@@ -286,6 +295,10 @@ public:
 		m_P_amb_high = std::numeric_limits<double>::quiet_NaN();
 
 		m_q_iscc_max = std::numeric_limits<double>::quiet_NaN();
+
+		m_n_flux_x = 0;
+		m_n_flux_y = 0;
+
 		
 	}
 
@@ -366,6 +379,9 @@ public:
 		m_rec_qf_delay		= value( P_rec_qf_delay );		//[-] Energy-based receiver startup delay (fraction of rated thermal power)
 		m_m_dot_htf_max		= value( P_m_dot_htf_max )/3600.0;	//[kg/s] Maximum mass flow rate through receiver -> convert from kg/hr
 		m_A_sf				= value( P_A_sf );				//[m^2] Solar field area
+		
+		m_n_flux_x          = (int)value( P_n_flux_x );
+		m_n_flux_y          = (int)value( P_n_flux_y );
 
 		m_id_tube	= m_od_tube - 2*m_th_tube;			//[m] Inner diameter of receiver tube
 		m_A_tube	= CSP::pi*m_od_tube/2.0*m_h_rec;	//[m^2] Outer surface area of each tube
@@ -389,49 +405,9 @@ public:
 		m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
 		m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
 
-		//**************************************************************************
-		// Set up matrix for solar positions of flux map. 2 rows: azimuth, zenith -- a column for each solar position
-		int angle_rows = 0, angle_cols = 0;
-		double *p_angle = value( P_fluxmap_angles, &angle_rows, &angle_cols );
-		m_fluxmap_angles.resize( angle_rows, angle_cols );
-		if( p_angle != 0 && angle_rows == 2 && angle_cols > 3 )
-		{
-			for( int r = 0; r < angle_rows; r++ )
-				for( int c = 0; c < angle_cols; c++ )
-					m_fluxmap_angles.at(r,c) = TCS_MATRIX_INDEX( var( P_fluxmap_angles ), r, c );
-		}
-		else
-		{
-			message( "Flux map solar position input is incorrect P_fluxmap_angles: %d x %d", angle_rows, angle_cols );
-			return -1;
-		}
-		m_num_sol_pos = angle_cols;
-		// ****************************************************************************
-		
+		//allocate the input array for the flux map
+		m_i_flux_map = allocate( I_flux_map, m_n_flux_y, m_n_flux_x );
 
-		// ********************************************************************************
-		// Set up matrix for solar flux. number of rows = num_sol_pos = number of solar positions, number of columns - 120 (10 height nodes x 12 circumferential nodes)
-		int flux_rows = 0, flux_cols = 0;
-		double *p_flux = value( P_fluxmap, &flux_rows, &flux_cols );
-		if( flux_rows != m_num_sol_pos )
-		{
-			message( "Number of flux maps is not equal to number of solar positions" );
-			return -1;
-		}
-		m_fluxmap.resize( flux_rows, flux_cols );
-		if( p_flux != 0 && flux_cols == 12 )
-		{
-			for( int r = 0; r < flux_rows; r++ )
-				for( int c = 0; c < flux_cols; c++ )
-					m_fluxmap.at(r,c) = TCS_MATRIX_INDEX( var( P_fluxmap ), r, c );
-		}
-		else
-		{
-			message( "Flux map input is incorrect" );
-			return -1;
-		}
-		// ********************************************************************************
-	
 		//Get flow pattern
 		//if(.not.allocated(Flow_pattern)) allocate(Flow_pattern(N_panels))
 		//call flowPatterns(N_panels,flowtype,Flow_pattern,salt_out,nlines)
@@ -446,45 +422,42 @@ public:
 		// OUT(7)=T_htf_cold_des  !mjw 3.29.11   565.0
 		// ***********************************************
 
-		m_q_dot_inc.resize(m_n_panels, 1);
+		m_q_dot_inc.resize(m_n_panels);
 		m_q_dot_inc.fill(0.0);
 		
-		m_T_s_guess.resize(m_n_panels, 1);
+		m_T_s_guess.resize(m_n_panels);
 		m_T_s_guess.fill(0.0);
-		m_T_s.resize(m_n_panels, 1);
+		m_T_s.resize(m_n_panels);
 		m_T_s.fill(0.0);
 
-		m_T_panel_out_guess.resize(m_n_panels, 1);
-		m_T_panel_out.resize(m_n_panels, 1);
+		m_T_panel_out_guess.resize(m_n_panels);
+		m_T_panel_out.resize(m_n_panels);
 		m_T_panel_out_guess.fill(0.0);
 		m_T_panel_out.fill(0.0);
 
-		m_T_panel_in_guess.resize(m_n_panels, 1);
+		m_T_panel_in_guess.resize(m_n_panels);
 		m_T_panel_in_guess.fill(0.0);
-		m_T_panel_in.resize(m_n_panels, 1);
+		m_T_panel_in.resize(m_n_panels);
 		m_T_panel_in.fill(0.0);
 		
-		m_T_panel_ave.resize(m_n_panels, 1);
+		m_T_panel_ave.resize(m_n_panels);
 		m_T_panel_ave.fill(0.0);
-		m_T_panel_ave_guess.resize(m_n_panels, 1);
+		m_T_panel_ave_guess.resize(m_n_panels);
 		m_T_panel_ave_guess.fill(0.0);
 
-		m_T_film.resize(m_n_panels, 1);
+		m_T_film.resize(m_n_panels);
 		m_T_film.fill(0.0);
 
-		m_q_dot_conv.resize(m_n_panels, 1);
+		m_q_dot_conv.resize(m_n_panels);
 		m_q_dot_conv.fill(0.0);
 
-		m_q_dot_rad.resize(m_n_panels, 1);
+		m_q_dot_rad.resize(m_n_panels);
 		m_q_dot_rad.fill(0.0);
 
-		m_q_dot_conv.resize(m_n_panels, 1);
-		m_q_dot_conv.fill(0.0);
-
-		m_q_dot_loss.resize(m_n_panels, 1);
+		m_q_dot_loss.resize(m_n_panels);
 		m_q_dot_loss.fill(0.0);
 
-		m_q_dot_abs.resize(m_n_panels, 1);
+		m_q_dot_abs.resize(m_n_panels);
 		m_q_dot_abs.fill(0.0);
 
 		m_m_mixed = 3.2;	//[-] Exponential for calculating mixed convection
@@ -530,7 +503,17 @@ public:
 		double T_amb = value( I_T_db ) + 273.15; //[K] Dry bulb temperature, convert from C
 		int night_recirc = (int) value( I_night_recirc );	//[-] Night recirculation control 0 = empty receiver, 1 = recirculate
 		double hel_stow_deploy = value( I_hel_stow_deploy );	//[deg] Solar elevation angle at which heliostats are stowed
-
+		
+		//get the flux map
+		int n_flux_y, n_flux_x;
+		m_i_flux_map = value(I_flux_map, &n_flux_y, &n_flux_x);
+		
+		if(n_flux_y > 1 ){
+			message("The Molten Salt External Receiver (Type222) model does not currently support 2-dimensional "
+				"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d",n_flux_y);
+		}
+		m_flux_in.resize(n_flux_x);
+		
 		double T_sky = CSP::skytemp( T_amb, T_dp, hour );		
 
 		// Set current timestep stored values to NaN so we know that code solved for them
@@ -615,38 +598,35 @@ public:
 			// Get the values of the flux from the fluxmap and store them  as flux_in(col, row)
 			if( I_bn > 1.0 )
 			{
-				double hold = 1.e6; int p1;
-				for( int i = 0; i < m_num_sol_pos; i++ )
-				{
-					double azi_i = m_fluxmap_angles.at(0,i);
-					double zen_i = m_fluxmap_angles.at(1,i);
-					double xdist = sqrt( pow( azi_i - azimuth, 2 ) + pow( zen_i - zenith, 2 ) );
-					if( xdist <= hold )
-					{
-						hold = xdist;
-						p1 = i;
-					}					
+				for(int j=0; j<n_flux_x; j++){
+					m_flux_in.at(j) = 0.;
+					for(int i=0; i<n_flux_y; i++){
+						m_flux_in.at(j) += m_i_flux_map[ j*n_flux_y + i ]
+							*I_bn*field_eff_adj*m_A_sf/1000./(CSP::pi*m_h_rec*m_d_rec/12.0);	//[kW/m^2];
+					}
 				}
-				for( int i = 0; i < 12; i++ )
-					m_flux_in.at(i,0) = m_fluxmap.at( p1, i )*I_bn*field_eff_adj*m_A_sf/1000./(CSP::pi*m_h_rec*m_d_rec/12.0);	//[kW/m^2]
 			}
 			else
 			{
 				m_flux_in.fill(0.0);
 			}
 			
-			if( m_n_panels >= 12 )
+			double n_flux_x_d = (double)m_n_flux_x;
+
+			if( m_n_panels >= m_n_flux_x )
 			{
 				// Translate to the number of panels, so each panel has its own linearly interpolated flux value
 				for( int i = 0; i < m_n_panels; i++ )
 				{
-					double ppos = (12.0/m_n_panels*i+6.0/m_n_panels);
-					double flo = floor( ppos );
-					double ceiling = ceil( ppos );
-					double ind = (ppos - flo)/max((ceiling - flo),1.e-6);
-					if( ceiling > 11 )	ceiling = 0;
-					double psp_field = (ind*(m_flux_in.at(ceiling,0)-m_flux_in.at(flo,0))+m_flux_in.at(flo,0));		//[kW/m^2] Average area-specific power for each node
-					m_q_dot_inc.at(i,0) = m_A_node*psp_field;	//[kW] The power incident on each node
+					double ppos = (n_flux_x_d/(double)m_n_panels*i+n_flux_x_d*0.5/(double)m_n_panels);
+					int flo = (int)floor( ppos );
+					int ceiling = (int)ceil( ppos );
+					double ind = (int)( (ppos - flo)/max((double)(ceiling - flo),1.e-6) );
+					if( ceiling > m_n_flux_x-1 ) ceiling = 0;
+					
+					double psp_field = (ind*(m_flux_in.at(ceiling)-m_flux_in.at(flo))+m_flux_in.at(flo));		//[kW/m^2] Average area-specific power for each node
+					m_q_dot_inc.at(i) = m_A_node*psp_field;	//[kW] The power incident on each node
+					
 				}
 			}
 			else
@@ -655,7 +635,7 @@ public:
 				int index_start = -1; int index_stop = -1;
 				double q_flux_sum = 0.0;
 				bool is_div = false;
-				if( 12%m_n_panels == 0 )
+				if( m_n_flux_x%m_n_panels == 0 )
 					is_div = true;
 
 				for( int i = 0; i < m_n_panels; i++ )
@@ -664,14 +644,14 @@ public:
 					index_start = index_stop;
 				
 					if( is_div )
-						index_stop = 12/m_n_panels*(i+1) - 1;
+						index_stop = m_n_flux_x/m_n_panels*(i+1) - 1;
 					else
-						index_stop = ceil( ((double)(12/m_n_panels)*(i+1)) ) - 1;
+						index_stop = (int)ceil( ((double)(m_n_flux_x/m_n_panels)*(i+1)) ) - 1;
 						
 					if( is_div )
 						back_mult = 1.0;
 					else
-						back_mult = (double)(12/m_n_panels)*(i+1) - (int)((double)(12/m_n_panels)*(i+1));
+						back_mult = (double)(m_n_flux_x/m_n_panels)*(i+1) - (int)((double)(m_n_flux_x/m_n_panels)*(i+1));
 									
 					double sum_fracs = 0.0; double sum_flux = 0.0;
 					for( int j = index_start; j <= index_stop; j++ )
@@ -680,31 +660,31 @@ public:
 						{
 							sum_fracs += front_mult;
 							if( j == -1 )
-								sum_flux += front_mult*m_flux_in.at(11,0);
+								sum_flux += front_mult*m_flux_in.at(m_n_flux_x-1);
 							else
-								sum_flux += front_mult*m_flux_in.at(j,0);
+								sum_flux += front_mult*m_flux_in.at(j);
 						}
 						else if( j == index_stop )
 						{
 							sum_fracs += back_mult;
 							if( j == 12 )
-								sum_flux += back_mult*m_flux_in.at(0,0);
+								sum_flux += back_mult*m_flux_in.at(0);
 							else
-								sum_flux += back_mult*m_flux_in.at(j,0);
+								sum_flux += back_mult*m_flux_in.at(j);
 						}
 						else
 						{
 							sum_fracs += 1.0;
-							sum_flux += m_flux_in.at(j,0);
+							sum_flux += m_flux_in.at(j);
 						}
 					}
-					m_q_dot_inc.at(i,0) = sum_flux*m_A_node/sum_fracs;
+					m_q_dot_inc.at(i) = sum_flux*m_A_node/sum_fracs;
 				}
 			}			
 
 			q_dot_inc_sum = 0.0;
 			for( int i = 0; i < m_n_panels; i++ )
-				q_dot_inc_sum += m_q_dot_inc.at(i,0);		//[kW] Total power absorbed by receiver
+				q_dot_inc_sum += m_q_dot_inc.at(i);		//[kW] Total power absorbed by receiver
 
 			// Set guess values
 			if( night_recirc == 1 )
@@ -731,7 +711,7 @@ public:
 			{
 				// Enter recirculation mode, where inlet/outlet temps switch
 				T_salt_hot_target = T_salt_cold_in;
-				T_salt_cold_in = m_T_s_guess.at(0,0);		//T_s_guess is set to T_salt_hot before, so this just completes 
+				T_salt_cold_in = m_T_s_guess.at(0);		//T_s_guess is set to T_salt_hot before, so this just completes 
 				m_dot_salt_guess = -3500.0/(c_guess*(T_salt_hot_target - T_salt_cold_in)/2.0);
 			}
 			T_salt_hot_guess = 9999.9;		//[K] Initial guess value for error calculation
@@ -767,19 +747,19 @@ public:
 				
 				for( int i = 0; i < m_n_panels; i++ )
 				{
-					m_T_s.at(i,0) = m_T_s_guess.at(i,0);
-					m_T_panel_out.at(i,0) = m_T_panel_out_guess.at(i,0);
-					m_T_panel_in.at(i,0) = m_T_panel_in_guess.at(i,0);
+					m_T_s.at(i) = m_T_s_guess.at(i);
+					m_T_panel_out.at(i) = m_T_panel_out_guess.at(i);
+					m_T_panel_in.at(i) = m_T_panel_in_guess.at(i);
 					// Now do the actual calculations
-					m_T_panel_ave.at(i,0) = (m_T_panel_in.at(i,0)+m_T_panel_out.at(i,0))/2.0;		//[K] The average coolant temperature in each control volume
+					m_T_panel_ave.at(i) = (m_T_panel_in.at(i)+m_T_panel_out.at(i))/2.0;		//[K] The average coolant temperature in each control volume
 					//m_T_film.at(i,0) = (m_T_s.at(i,0) + m_T_panel_out.at(i,0))/2.0;					//[K] Film temperature
-					m_T_film.at(i,0) = (m_T_s.at(i,0) + T_amb)/2.0;					//[K] Film temperature
+					m_T_film.at(i) = (m_T_s.at(i) + T_amb)/2.0;					//[K] Film temperature
 				}
 
 				// Calculate the average surface temperature
 				double T_s_sum = 0.0;
 				for( int i = 0; i < m_n_panels; i++ )
-					T_s_sum += m_T_s.at(i,0);
+					T_s_sum += m_T_s.at(i);
 				double T_s_ave = T_s_sum/m_n_panels;
 				double T_film_ave = (T_amb + T_salt_hot_target)/2.0;
 
@@ -807,18 +787,18 @@ public:
 						// int i_fp = m_flow_pattern.at(j,i);
 						int i_fp = i;
 						// Natural convection
-						double Gr_nat = max( 0.0, CSP::grav*beta*(m_T_s.at(i_fp,0) - T_amb)*pow(m_h_rec,3)/pow(nu_amb,2) );	//[-] Grashof Number at ambient conditions
-						double Nusselt_nat = 0.098*pow(Gr_nat,(1.0/3.0))*pow( m_T_s.at(i_fp,0)/T_amb, -0.14 );					//[-] Nusselt number
+						double Gr_nat = max( 0.0, CSP::grav*beta*(m_T_s.at(i_fp) - T_amb)*pow(m_h_rec,3)/pow(nu_amb,2) );	//[-] Grashof Number at ambient conditions
+						double Nusselt_nat = 0.098*pow(Gr_nat,(1.0/3.0))*pow( m_T_s.at(i_fp)/T_amb, -0.14 );					//[-] Nusselt number
 						double h_nat = Nusselt_nat*ambient_air.cond( T_amb )/m_h_rec*m_hl_ffact;							//[W/m^-K] Natural convection coefficient
 						// Mixed convection
 						double h_mixed = pow( (pow(h_for,m_m_mixed) + pow(h_nat,m_m_mixed)), 1.0/m_m_mixed )*4.0;			//(4.0) is a correction factor to match convection losses at Solar II (correspondance with G. Kolb, SNL)
-						m_q_dot_conv.at(i_fp,0) = h_mixed*m_A_node*(m_T_s.at(i_fp,0) - m_T_film.at(i_fp,0));							//[W] Convection losses per node
+						m_q_dot_conv.at(i_fp) = h_mixed*m_A_node*(m_T_s.at(i_fp) - m_T_film.at(i_fp));							//[W] Convection losses per node
 						// Radiation from the receiver - Calculate the radiation node by node
-						m_q_dot_rad.at(i_fp,0) = 0.5*CSP::sigma*m_epsilon*m_A_node*(2.0*pow(m_T_s.at(i_fp,0),4) - pow(T_amb,4) - pow(T_sky,4))*m_hl_ffact;	//[W] Total radiation losses per node
-						m_q_dot_loss.at(i_fp,0) = m_q_dot_rad.at(i_fp,0) + m_q_dot_conv.at(i_fp,0);			//[W] Total overall losses per node
-						m_q_dot_abs.at(i_fp,0) = m_q_dot_inc.at(i_fp,0)*1000.0 - m_q_dot_loss.at(i_fp,0);	//[W] Absorbed flux at each node
+						m_q_dot_rad.at(i_fp) = 0.5*CSP::sigma*m_epsilon*m_A_node*(2.0*pow(m_T_s.at(i_fp),4) - pow(T_amb,4) - pow(T_sky,4))*m_hl_ffact;	//[W] Total radiation losses per node
+						m_q_dot_loss.at(i_fp) = m_q_dot_rad.at(i_fp) + m_q_dot_conv.at(i_fp);			//[W] Total overall losses per node
+						m_q_dot_abs.at(i_fp) = m_q_dot_inc.at(i_fp)*1000.0 - m_q_dot_loss.at(i_fp);	//[W] Absorbed flux at each node
 						// Calculate the temperature drop across the receiver tube wall... assume a cylindrical thermal resistance
-						double T_wall = (m_T_s.at(i_fp,0) + m_T_panel_ave.at(i_fp,0))/2.0;				//[K] The temperature at which the conductivity of the wall is evaluated
+						double T_wall = (m_T_s.at(i_fp) + m_T_panel_ave.at(i_fp))/2.0;				//[K] The temperature at which the conductivity of the wall is evaluated
 						double k_tube = tube_material.cond( T_wall );								//[W/m-K] The conductivity of the wall
 						double R_tube_wall = m_th_tube/(k_tube*m_h_rec*m_d_rec*pow(CSP::pi,2)/2.0/(double)m_n_panels);	//[K/W] The thermal resistance of the wall
 						// Calculations for the inside of the tube						
@@ -867,16 +847,16 @@ public:
 								break;
 						}
 						if( i_comp == -1 )
-							m_T_panel_in_guess.at(i_fp,0) = T_salt_cold_in;
+							m_T_panel_in_guess.at(i_fp) = T_salt_cold_in;
 						else
-							m_T_panel_in_guess.at(i_fp,0) = m_T_panel_out.at(m_flow_pattern.at(j,i_comp),0);
+							m_T_panel_in_guess.at(i_fp) = m_T_panel_out.at(m_flow_pattern.at(j,i_comp));
 
 
-						m_T_panel_out_guess.at(i_fp,0) = m_T_panel_in_guess.at(i_fp,0) + m_q_dot_abs.at(i_fp,0)/(m_dot_salt*c_p_coolant);	//[K] Energy balance for each node																																																
-						m_T_panel_ave_guess.at(i_fp,0) = (m_T_panel_out_guess.at(i_fp,0) + m_T_panel_in_guess.at(i_fp,0))/2.0;				//[K] Panel average temperature
-						m_T_s_guess.at(i_fp,0) = m_T_panel_ave_guess.at(i_fp,0) + m_q_dot_abs.at(i_fp,0)*(R_conv_inner+R_tube_wall);			//[K] Surface temperature based on the absorbed heat
+						m_T_panel_out_guess.at(i_fp) = m_T_panel_in_guess.at(i_fp) + m_q_dot_abs.at(i_fp)/(m_dot_salt*c_p_coolant);	//[K] Energy balance for each node																																																
+						m_T_panel_ave_guess.at(i_fp) = (m_T_panel_out_guess.at(i_fp) + m_T_panel_in_guess.at(i_fp))/2.0;				//[K] Panel average temperature
+						m_T_s_guess.at(i_fp) = m_T_panel_ave_guess.at(i_fp) + m_q_dot_abs.at(i_fp)*(R_conv_inner+R_tube_wall);			//[K] Surface temperature based on the absorbed heat
 					
-						if( m_T_s_guess.at(i_fp,0) < 1.0 )
+						if( m_T_s_guess.at(i_fp) < 1.0 )
 						{
 							m_mode = 0.0;  // Set the startup mode
 							rec_is_off = true;
@@ -895,16 +875,16 @@ public:
 				double q_abs_sum = 0.0;
 				for( int i = 0; i < m_n_panels; i++ )
 				{
-					q_conv_sum += m_q_dot_conv.at(i,0);
-					double blah = m_q_dot_conv.at(i,0);
-					q_rad_sum += m_q_dot_rad.at(i,0);
+					q_conv_sum += m_q_dot_conv.at(i);
+					double blah = m_q_dot_conv.at(i);
+					q_rad_sum += m_q_dot_rad.at(i);
 					//q_inc_sum += m_q_dot_inc.at(i,0);
-					q_abs_sum += m_q_dot_abs.at(i,0);
+					q_abs_sum += m_q_dot_abs.at(i);
 				}
 			
 				double T_salt_hot_guess_sum = 0.0;
 				for( int j = 0; j < m_n_lines; j++ )
-					T_salt_hot_guess_sum += m_T_panel_out_guess.at(m_flow_pattern.at(j,m_n_panels/m_n_lines-1),0);		//[K] Update the calculated hot salt outlet temp
+					T_salt_hot_guess_sum += m_T_panel_out_guess.at(m_flow_pattern.at(j,m_n_panels/m_n_lines-1));		//[K] Update the calculated hot salt outlet temp
 				T_salt_hot_guess = T_salt_hot_guess_sum/(double)m_n_lines;
 			
 				if( q_dot_inc_sum > 0.0 )
