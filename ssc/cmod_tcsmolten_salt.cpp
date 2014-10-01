@@ -53,9 +53,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT, SSC_NUMBER, "v_wind_max", "Max. wind velocity", "m/s", "", "heliostat_field", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "interp_nug", "Interpolation nugget", "-", "", "heliostat_field", "?=0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "interp_beta", "Interpolation beta coef.", "-", "", "heliostat_field", "?=1.99", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "n_flux_x", "Flux map X resolution", "-", "", "heliostat_field", "?=10", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_flux_x", "Flux map X resolution", "-", "", "heliostat_field", "?=12", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "n_flux_y", "Flux map Y resolution", "-", "", "heliostat_field", "?=1", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "helio_positions", "Heliostat position table", "m", "", "heliostat_field", "run_type=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "helio_positions", "Heliostat position table", "m", "", "heliostat_field", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "helio_aim_points", "Heliostat aim point table", "", "", "heliostat_field", "?", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "N_hel", "Number of heliostats", "-", "", "heliostat_field", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "eta_map", "Field efficiency array", "-", "", "heliostat_field", "?", "", "" },
@@ -493,7 +493,7 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
 // for user specified x,y field
-//		set_unit_value_ssc_matrix(type_hel_field, "helio_positions", pos_array);
+		set_unit_value_ssc_matrix(type_hel_field, "helio_positions");// , pos_array);
 
 		bool bConnected = connect(weather, "wspd", type_hel_field, "vwind");
 		set_unit_value_ssc_double(type_hel_field, "field_control", 1.);
