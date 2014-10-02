@@ -140,7 +140,8 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	m_T_hot_out_des = T_hot_out_K;
 
 	m_P_hot_out_des = m_P_hot_in_des - m_delta_P_des;
-	double P_hot_ave = 0.5*(m_P_hot_out_des + m_P_hot_in_des);
+	//double P_hot_ave = 0.5*(m_P_hot_out_des + m_P_hot_in_des);
+	double P_hot_ave = m_P_hot_in_des;
 		// Set up 'matrix_t's for temperature and pressure
 		// Using index 1 for m_N_nodes, so 0 index remains undefined
 		// Also, each node requires inlet&outlet temp, so in total, m_N_nodes + 2 required
