@@ -1171,6 +1171,7 @@ private:
 		// Structures and data for optimal target off-design
 	S_od_parameters ms_od_par_tar_optimal;
 	double m_eta_best;
+	double m_biggest_target;
 
 	void design_core(int & error_code);	
 
@@ -1213,7 +1214,7 @@ public:
 
 		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
 
-		m_W_dot_net_max = m_eta_best = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_net_max = m_eta_best = m_biggest_target = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	~C_RecompCycle(){}
