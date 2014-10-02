@@ -35,21 +35,21 @@ static var_info _cm_vtab_windpower[] = {
 																																												                            
 																																												                            
 	// OUTPUTS ----------------------------------------------------------------------------																						                            
-	{ SSC_OUTPUT,       SSC_ARRAY,       "turbine_output_by_windspeed_bin",         "Turbine output",                      "kW",     "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                           "Hourly Energy",                       "kW",     "",      "WindPower",      "*",                                        "LENGTH=8760",                                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_wind_direction",                   "Wind direction",                      "deg",    "",      "WindPower",      "*",                                        "LENGTH=8760",                                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_wind_speed",                       "Wind speed",                          "m/s",    "",      "WindPower",      "*",                                        "LENGTH=8760",                                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_temp",                             "Air temperature",                     "'C",     "",      "WindPower",      "*",                                        "LENGTH=8760",                                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_pressure",                         "Pressure",                            "atm",    "",      "WindPower",      "*",                                        "LENGTH=8760",                                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "turbine_output_by_windspeed_bin",         "Turbine output",                      "kW",     "",      "Power Curve",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                           "Hourly Energy",                       "kW",     "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_wind_direction",                   "Wind direction",                      "deg",    "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_wind_speed",                       "Wind speed",                          "m/s",    "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_temp",                             "Air temperature",                     "'C",     "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_pressure",                         "Pressure",                            "atm",    "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
 //	{ SSC_OUTPUT,       SSC_MATRIX,      "wtpwr",                                   "Power at each WT",                    "kWhac",  "",      "WindPower",      "*",                                        "ROWS=8760",                                        "" },
 //	{ SSC_OUTPUT,       SSC_MATRIX,      "wteff",                                   "Eff at each WT",                      "kWhac",  "",      "WindPower",      "*",                                        "ROWS=8760",                                        "" },
 //	{ SSC_OUTPUT,       SSC_MATRIX,      "wtvel",                                   "Wind speed at each WT",               "kWhac",  "",      "WindPower",      "*",                                        "ROWS=8760",                                        "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                          "Monthly Energy",                      "kW",     "",      "WindPower",      "*",                                        "LENGTH=12",                                        "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                          "Monthly Energy",                      "kW",     "",      "Monthly",     "*",                                        "LENGTH=12",                                        "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                           "Annual Energy",                       "kW",     "",      "WindPower",      "*",                                        "",                                                 "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                           "Annual Energy",                       "kW",     "",      "Annual",      "*",                                        "",                                                 "" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "capacity_factor",							"Capacity factor",					   "",		 "",	  "Annual",		 "*",										"",													"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "kwh_per_kw",								"First year kWh/kW",				   "",		 "",	  "Annual",		 "*",										"",													"" },
 
 
 
