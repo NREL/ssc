@@ -2243,8 +2243,8 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 		off_design_point_value = m_eta_thermal_od;
 
 	// Hardcode some compressor checks to 'true', per John's code. Could revisit later
-	bool surge_allowed = false;
-	bool supersonic_tip_speed_allowed = false;
+	bool surge_allowed = true;
+	bool supersonic_tip_speed_allowed = true;
 	
 	// Check validity
 	if( m_pres_od[2 - 1] > ms_des_par.m_P_high_limit )		// above high-pressure limit; provide optimizer with more information
@@ -2353,22 +2353,23 @@ void C_RecompCycle::optimal_target_off_design(S_opt_target_od_parameters & opt_t
 
 	} while( true );
 
+	m_biggest_target = -999.9;
+
 	if( !point_found )
 	{
 		error_code = 99;
 		return;
 	}
 
-	double biggest_target = std::numeric_limits<double>::quiet_NaN();
 	if( ms_opt_tar_od_par.m_is_target_Q )
-		biggest_target = m_Q_dot_PHX_od;
+		m_biggest_target = m_Q_dot_PHX_od;
 	else
-		biggest_target = m_W_dot_net_od;
+		m_biggest_target = m_W_dot_net_od;
 
 	// If the target is not possible, return the cycle with the largest (based on power output)
-	if( biggest_target < ms_opt_tar_od_par.m_target )
+	if( m_biggest_target < ms_opt_tar_od_par.m_target )
 	{
-		error_code = 0;
+		error_code = 123;
 		return;
 	}
 
@@ -2531,8 +2532,8 @@ double C_RecompCycle::eta_at_target(const std::vector<double> &x)
 	}
 
 	// Hardcode some compressor checks to 'true', per John's code. Could revisit later
-	bool surge_allowed = false;
-	bool supersonic_tip_speed_allowed = false;
+	bool surge_allowed = true;
+	bool supersonic_tip_speed_allowed = true;
 
 	if( !surge_allowed )		// twn: Note that 'surge_allowed' is currently hardcoded to true so this won't be executed
 	{
