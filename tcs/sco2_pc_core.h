@@ -981,12 +981,15 @@ public:
 		double m_recomp_frac;
 		double m_N_mc;
 		double m_N_t;
+		double m_UA_LT;
+		double m_UA_HT;
 
 		bool m_is_rc;
 
 		S_design_solved()
 		{
-			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = m_N_mc = m_N_t = std::numeric_limits<double>::quiet_NaN();
+			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = 
+				m_N_mc = m_N_t = m_UA_LT = m_UA_HT = std::numeric_limits<double>::quiet_NaN();
 
 			m_is_rc = true;
 		}
@@ -1228,10 +1231,14 @@ public:
 	void off_design(S_od_parameters & od_par_in, int & error_code);
 
 	void optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code);
+	
+	void get_max_output_od(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
 
 	void target_off_design(S_target_od_parameters & tar_od_par_in, int & error_code);
 
 	void optimal_target_off_design(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
+
+	void optimal_target_off_design_no_check(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
 
 	const S_design_solved * get_design_solved()
 	{
@@ -1241,6 +1248,11 @@ public:
 	const S_od_solved * get_od_solved()
 	{
 		return &ms_od_solved;
+	}
+
+	double get_max_target()
+	{
+		return m_biggest_target;
 	}
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
