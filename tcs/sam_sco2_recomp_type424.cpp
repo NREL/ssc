@@ -15,13 +15,14 @@ enum{	//Parameters
 	P_eta_t,
 	P_P_high_limit,
 	P_DELTAT_PHX,
+	
 	P_DELTAT_ACC,
 	P_T_AMB_DES,
 	P_FAN_POWER_PERC,
 	P_PLANT_ELEVATION,
 
-	P_T_rec_hot,
-	P_T_rec_cold,
+	P_T_htf_hot,
+	P_T_htf_cold,
 	P_Q_dot_rec_des,
 	P_rec_fl,
 	P_rec_fl_props,
@@ -99,8 +100,8 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_PARAM, TCS_NUMBER, P_FAN_POWER_PERC, "fan_power_perc",  "Percent of net cycle power used for fan",        "%",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_PLANT_ELEVATION,"plant_elevation", "Plant Elevation",                                "m",    "", "", "" },
 		// Solar Receiver Design Parameters
-	{ TCS_PARAM, TCS_NUMBER, P_T_rec_hot,      "T_rec_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_T_rec_cold,     "T_rec_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_T_htf_hot,      "T_htf_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_T_htf_cold,     "T_htf_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_Q_dot_rec_des,  "Q_dot_rec_des",   "Receiver design thermal input",                  "MWt",  "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_rec_fl,         "rec_htf",         "The name of the HTF used in the receiver",       "",     "", "", "" },
 	{ TCS_PARAM, TCS_MATRIX, P_rec_fl_props,   "rec_fl_props",    "User defined rec fluid property data",           "-", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "" },
@@ -237,8 +238,8 @@ private:
 	double m_W_dot_fan_des;            // [kW]
 
 	// Solar Receiver Design Parameters
-	double m_T_rec_hot;              // [K] Tower design outlet temperature
-	double m_T_rec_cold;             // [K] Tower design inlet temperature
+	double m_T_htf_hot;              // [K] Tower design outlet temperature
+	double m_T_htf_cold;             // [K] Tower design inlet temperature
 	double m_Q_dot_rec_des_est;      // [MWt] Receiver design thermal input
 	double m_Q_dot_rec_des_calc;	 // [MWt] Calculate receiver design thermal input
 
@@ -302,8 +303,8 @@ public:
 		m_W_dot_fan_des = std::numeric_limits<double>::quiet_NaN();
 
 		// Solar Receiver Design Parameters
-		m_T_rec_hot = std::numeric_limits<double>::quiet_NaN();
-		m_T_rec_cold = std::numeric_limits<double>::quiet_NaN();
+		m_T_htf_hot = std::numeric_limits<double>::quiet_NaN();
+		m_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
 		m_Q_dot_rec_des_est = std::numeric_limits<double>::quiet_NaN();
 
 		// Calculated Receiver Design Parameters
@@ -342,13 +343,13 @@ public:
 		double fan_power_frac = value(P_FAN_POWER_PERC) / 100.0;			//[-] Fraction of cycle net power output used by cooler air fan, convert from %
 		// Solar Receiver Parameters
 		// Receiver inlet/outlet temps and thermal input
-		m_T_rec_hot = value(P_T_rec_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
-		m_T_rec_cold = value(P_T_rec_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
+		m_T_htf_hot = value(P_T_htf_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
+		m_T_htf_cold = value(P_T_htf_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
 		m_Q_dot_rec_des_est = value(P_Q_dot_rec_des);		//[MWt] Receiver thermal input at design
 
 		// Calculate other cycle design parameters based on User Parameters
 		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
-		m_T_t_in_des = m_T_rec_hot - m_delta_T_t;			//[K] Turbine inlet temperature
+		m_T_t_in_des = m_T_htf_hot - m_delta_T_t;			//[K] Turbine inlet temperature
 
 		double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 
@@ -472,29 +473,29 @@ public:
 		// **************************************************************************
 		// Check that receiver parameters are within limits
 			// Receiver outlet temperature should be greater than turbine inlet temperature
-		if(m_T_rec_hot < m_T_t_in_des + 1.0)
+		if(m_T_htf_hot < m_T_t_in_des + 1.0)
 		{
-			message("The receiver hot outlet temperature, %lg [C], must be at least 1 [C] greater than the turbine inlet temperature %lg [C]", m_T_rec_hot-273.15, m_T_t_in_des-273.15);
+			message("The htf hot temperature, %lg [C], must be at least 1 [C] greater than the turbine inlet temperature %lg [C]", m_T_htf_hot-273.15, m_T_t_in_des-273.15);
 			return -1;
 		}		
 
 			// Receiver inlet temperature must be less than the turbine inlet temperature
-		if(m_T_rec_cold > m_T_t_in_des - 1.0)
+		if(m_T_htf_cold > m_T_t_in_des - 1.0)
 		{
-			message("The receiver cold inlet temperature, %lg [C], must be at least 1 [C] less than the turbine inlet temperature %lg [C]", m_T_rec_cold-273.15, m_T_t_in_des-273.15);
+			message("The htf cold temperature, %lg [C], must be at least 1 [C] less than the turbine inlet temperature %lg [C]", m_T_htf_cold-273.15, m_T_t_in_des-273.15);
 			return -1;
 		}
 			// Set a "reasonable" lower limit for the receiver inlet temperature
 		double T_rec_cold_min = 150.0 + 273.15;
-		if(m_T_rec_cold < T_rec_cold_min)
+		if(m_T_htf_cold < T_rec_cold_min)
 		{
-			message("The receiver cold inlet temperature, %lg [C], must be greater than the internal limit for solution stability: %lg [C]", m_T_rec_cold-273.15, T_rec_cold_min-273.15);
+			message("The htf cold temperature, %lg [C], must be greater than the internal limit for solution stability: %lg [C]", m_T_htf_cold-273.15, T_rec_cold_min-273.15);
 			return -1;
 		}
 			// Receiver inlet temperature must be greater than the compressor inlet temperature
-		if(m_T_rec_cold <= m_T_mc_in_des)
+		if(m_T_htf_cold <= m_T_mc_in_des)
 		{
-			message("The receiver cold inlet temperature, %lg [C], must be greater than the specified compressor inlet temperature: %lg [C]", m_T_rec_cold-273.15, m_T_mc_in_des-273.15);
+			message("The htf cold temperature, %lg [C], must be greater than the specified compressor inlet temperature: %lg [C]", m_T_htf_cold-273.15, m_T_mc_in_des-273.15);
 			return -1;
 		}
 			// Receiver thermal input should be at least as large as the net cycle electric output, but, this input is only an estimate and is recalculated in the code
@@ -535,7 +536,7 @@ public:
 		}
 		// ********************************************************************************
 		// ********************************************************************************
-		m_T_PHX_in = m_T_rec_cold - m_delta_T_t;					//[K]
+		m_T_PHX_in = m_T_htf_cold - m_delta_T_t;					//[K]
 
 		/*
 		// Now need to vary UA_recup until m_T_PHX_in is achieved. This could be slow...
@@ -637,7 +638,7 @@ public:
 
 				if( x_lower / m_W_dot_net_des <= UA_net_power_ratio_min )
 				{
-					message("The receiver inlet temperature, %lg [C], is too cold to achieve with the available cycle model", m_T_rec_cold-273.15);
+					message("The receiver inlet temperature, %lg [C], is too cold to achieve with the available cycle model", m_T_htf_cold-273.15);
 					return -1;
 				}
 			}
@@ -661,7 +662,7 @@ public:
 
 				if( x_upper / m_W_dot_net_des >= UA_net_power_ratio_max )
 				{
-					message("The receiver inlet temperature, %lg [C], is too hot to achieve with the available cycle model", m_T_rec_cold-273.15);
+					message("The receiver inlet temperature, %lg [C], is too hot to achieve with the available cycle model", m_T_htf_cold-273.15);
 					message("The hottest possible receiver inlet temperature for these inputs is roughly %lg [C] ", ms_rc_cycle.get_design_solved()->m_temp[5 - 1] + m_delta_T_t);
 					return -1;
 				}
@@ -712,9 +713,9 @@ public:
 		// Also assumes that CR = 1
 		// ***************************************************************
 			// Receiver/hot side
-		double T_rec_ave = 0.5*(m_T_rec_cold + m_T_rec_hot);		//[K]
+		double T_rec_ave = 0.5*(m_T_htf_cold + m_T_htf_hot);		//[K]
 		m_cp_rec = rec_htfProps.Cp(T_rec_ave);					//[kJ/kg-K]
-		m_dot_rec_des = m_Q_dot_rec_des_calc / (m_cp_rec*(m_T_rec_hot - m_T_rec_cold));	//[kg/s]
+		m_dot_rec_des = m_Q_dot_rec_des_calc / (m_cp_rec*(m_T_htf_hot - m_T_htf_cold));	//[kg/s]
 		
 			// Cycle/cold side
 		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + m_T_PHX_in);		//[K]
@@ -722,7 +723,7 @@ public:
 		double cp_PHX_co2 = m_Q_dot_rec_des_calc / (m_m_dot_des*(m_T_t_in_des - m_T_PHX_in));
 
 			// Because C_dot_c = C_dot_h, q_dot_max = 
-		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_rec_hot - m_T_PHX_in);		//[kW]
+		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_htf_hot - m_T_PHX_in);		//[kW]
 
 			// Effectiveness & NTU
 		double eff_des = m_Q_dot_rec_des_calc / q_dot_max;
@@ -842,7 +843,7 @@ public:
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 
 		double m_T_htf_cold_sby = m_T_PHX_in_sby + 5.0;		// Estimate htf return temp w/o heat exchanger
-		double m_m_dot_htf_sby = m_Q_dot_rec_des_calc*m_q_sby_frac/(m_cp_rec*(m_T_rec_hot - m_T_htf_cold_sby));
+		double m_m_dot_htf_sby = m_Q_dot_rec_des_calc*m_q_sby_frac/(m_cp_rec*(m_T_htf_hot - m_T_htf_cold_sby));
 
 		// Set outputs that will be constant for this type (required because can share a cmod with molten salt tower)
 		value(O_M_DOT_MAKEUP, 0.0);
@@ -889,7 +890,7 @@ public:
 		//**************************************************
 		// Test by setting important inputs to design values
 		//**************************************************
-		T_htf_hot = m_T_rec_hot;
+		T_htf_hot = m_T_htf_hot;
 		m_dot_htf = m_dot_rec_des*0.75;
 		m_standby_control = 1;
 		T_db = value(P_T_AMB_DES) + 273.15;
