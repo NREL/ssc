@@ -179,7 +179,11 @@ enum{	//Parameters
 		P_N_hel, 
 		P_eta_map, 
 		P_flux_positions, 
-		P_flux_maps, 
+		P_flux_maps,
+		P_c_atm_0,
+		P_c_atm_1,
+		P_c_atm_2,
+		P_c_atm_3,
 
 		//Inputs
 		I_v_wind,
@@ -229,6 +233,10 @@ tcsvarinfo sam_mw_pt_heliostatfield_variables[] = {
 	{TCS_PARAM, TCS_MATRIX,	P_eta_map,				"eta_map",					"Field efficiency array",	"-", "", "", ""},
 	{TCS_PARAM, TCS_MATRIX,	P_flux_positions,		"flux_positions",			"Flux map sun positions",	"deg", "", "", ""},
 	{TCS_PARAM, TCS_MATRIX,	P_flux_maps,			"flux_maps",				"Flux map intensities",		"-", "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_0",					"Attenuation coefficient 0", "", "", "", "0.006789"},
+	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_1",					"Attenuation coefficient 1", "", "", "", "0.1046"},
+	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_2",					"Attenuation coefficient 2", "", "", "", "-0.0107"},
+	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_3",					"Attenuation coefficient 3", "", "", "", "0.002845"},
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_v_wind,			"vwind",			"Wind velocity",										"m/s",		"", "", ""},
@@ -299,6 +307,7 @@ private:
 	double* flux_positions;
 	double* flux_maps;
 	double* flux_map;
+	double c_atm_0, c_atm_1, c_atm_2, c_atm_3;
 
 	
 	//Stored Variables
@@ -349,6 +358,11 @@ public:
 		
 		eta_prev = std::numeric_limits<double>::quiet_NaN();
 		v_wind_prev = std::numeric_limits<double>::quiet_NaN();
+		c_atm_0 = std::numeric_limits<double>::quiet_NaN();
+		c_atm_1 = std::numeric_limits<double>::quiet_NaN();
+		c_atm_2 = std::numeric_limits<double>::quiet_NaN();
+		c_atm_3 = std::numeric_limits<double>::quiet_NaN();
+
 	}
 
 	virtual ~sam_mw_pt_heliostatfield()
@@ -400,7 +414,11 @@ public:
 			interp_beta = value(P_interp_beta);
 			n_flux_x = (int)value(P_n_flux_x);
 			n_flux_y = (int)value(P_n_flux_y);
-			pos_dim = 2;	//initialize with 2 dimensions (x,y) on helio positions
+			c_atm_0 = value(P_c_atm_0);
+			c_atm_1 = value(P_c_atm_1);
+			c_atm_2 = value(P_c_atm_2);
+			c_atm_3 = value(P_c_atm_3);
+			pos_dim = 2;	//initiaize with 2 dimensions (x,y) on helio positions
 			if( run_type != sam_mw_pt_heliostatfield::RUN_TYPE::USER_FIELD ) break;
 
 			helio_positions = value(P_helio_positions, &N_hel, &pos_dim);
@@ -429,7 +447,10 @@ public:
 			n_flux_y = (int)value(P_n_flux_y);
 			flux_positions = value(P_flux_positions, &nrows6, &ncols6);
 			flux_maps = value(P_flux_maps, &nrows7, &ncols7);
-
+			c_atm_0 = value(P_c_atm_0);
+			c_atm_1 = value(P_c_atm_1);
+			c_atm_2 = value(P_c_atm_2);
+			c_atm_3 = value(P_c_atm_3);
 			break;
 		default:
 			break;
@@ -493,7 +514,12 @@ public:
 			amb.site_latitude = wf.lat;
 			amb.site_longitude = wf.lon;
 			amb.site_time_zone = wf.tz;
-
+			amb.atten_model = sp_ambient::ATTEN_MODEL::USER_DEFINED;
+			amb.user_atten_coefs.clear();
+			amb.user_atten_coefs.push_back(c_atm_0);
+			amb.user_atten_coefs.push_back(c_atm_1);
+			amb.user_atten_coefs.push_back(c_atm_2);
+			amb.user_atten_coefs.push_back(c_atm_3);
 
 			if(run_type == sam_mw_pt_heliostatfield::RUN_TYPE::AUTO)
 			{

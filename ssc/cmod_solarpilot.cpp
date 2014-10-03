@@ -37,6 +37,10 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "land_max",                  "Max heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_min",                  "Min heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_0",					  "Attenuation coefficient 0",                  "",       "",         "SolarPILOT",   "?=0.006789",       "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_1",					  "Attenuation coefficient 1",                  "",       "",         "SolarPILOT",   "?=0.1046",         "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_2",					  "Attenuation coefficient 2",                  "",       "",         "SolarPILOT",   "?=-0.0107",        "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_3",					  "Attenuation coefficient 3",                  "",       "",         "SolarPILOT",   "?=0.002845",       "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",                 "Tower cost scaling exponent",                "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_cost",              "Receiver reference cost",                    "$",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -164,6 +168,12 @@ public:
 		amb.site_latitude = wf.lat;
 		amb.site_longitude = wf.lon;
 		amb.site_time_zone = wf.tz;
+		amb.atten_model = sp_ambient::ATTEN_MODEL::USER_DEFINED;
+		amb.user_atten_coefs.clear();
+		amb.user_atten_coefs.push_back( as_double("c_atm_0") );
+		amb.user_atten_coefs.push_back( as_double("c_atm_1") );
+		amb.user_atten_coefs.push_back( as_double("c_atm_2") );
+		amb.user_atten_coefs.push_back( as_double("c_atm_3") );
 
 		vector<string> wfdata;
 		wfdata.reserve( 8760 );
