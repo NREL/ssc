@@ -1337,6 +1337,10 @@ void C_RecompCycle::finalize_design(int & error_code)
 
 	ms_des_solved.m_N_mc = m_mc.get_design_solved()->m_N_design;
 	ms_des_solved.m_N_t = m_t.get_design_solved()->m_N_design;
+
+	ms_des_solved.m_UA_LT = ms_des_par.m_UA_LT;
+	ms_des_solved.m_UA_HT = ms_des_par.m_UA_HT;
+
 }
 
 void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
@@ -2289,9 +2293,209 @@ double C_RecompCycle::off_design_point_value(const std::vector<double> &x)
 
 }
 
+void C_RecompCycle::get_max_output_od(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code)
+{
+	ms_opt_tar_od_par = opt_tar_od_par_in;
+
+	// Determine the largest possible power output of the cycle
+	bool point_found = false;
+	double P_low = ms_opt_tar_od_par.m_lowest_pressure;
+
+	// Define known members of 'ms_opt_od_par' from 'ms_opt_tar_od_par'
+	ms_opt_od_par.m_T_mc_in = ms_opt_tar_od_par.m_T_mc_in;
+	ms_opt_od_par.m_T_t_in = ms_opt_tar_od_par.m_T_t_in;
+	// .m_is_max_W_dot   --- need to define in loop
+	ms_opt_od_par.m_N_sub_hxrs = ms_opt_tar_od_par.m_N_sub_hxrs;
+	// m_P_mc_in_guess   --- need to define in loop
+	// m_fixed_P_mc_in   --- should be 'false', but define in loop
+	ms_opt_od_par.m_recomp_frac_guess = ms_opt_tar_od_par.m_recomp_frac_guess;
+	ms_opt_od_par.m_fixed_recomp_frac = ms_opt_tar_od_par.m_fixed_recomp_frac;
+
+	ms_opt_od_par.m_N_mc_guess = ms_opt_tar_od_par.m_N_mc_guess*1.25;		// twn: Start with assuming at max power the compressor speed will be greater than design
+	ms_opt_od_par.m_fixed_N_mc = ms_opt_tar_od_par.m_fixed_N_mc;
+
+	ms_opt_od_par.m_N_t_guess = ms_opt_tar_od_par.m_N_t_guess;
+	ms_opt_od_par.m_fixed_N_t = ms_opt_tar_od_par.m_fixed_N_t;
+
+	ms_opt_od_par.m_tol = ms_opt_tar_od_par.m_tol;
+	ms_opt_od_par.m_opt_tol = ms_opt_tar_od_par.m_opt_tol;
+
+	do
+	{
+		ms_opt_od_par.m_is_max_W_dot = true;
+		ms_opt_od_par.m_P_mc_in_guess = P_low;
+		ms_opt_od_par.m_fixed_P_mc_in = false;
+
+		// Try fixing inlet pressure and see if f_recomp and N_mc are modified
+		// ms_opt_od_par.m_P_mc_in_guess = 8700.0;
+		// ms_opt_od_par.m_fixed_P_mc_in = true;
+
+		int od_error_code = 0;
+
+		optimal_off_design_core(od_error_code);
+
+		if( od_error_code == 0 )
+		{
+
+			// Update guess parameters
+			ms_opt_od_par.m_recomp_frac_guess = ms_od_par.m_recomp_frac;
+			ms_opt_od_par.m_N_mc_guess = ms_od_par.m_N_mc;
+			ms_opt_od_par.m_N_t_guess = ms_od_par.m_N_t;
+			ms_opt_od_par.m_P_mc_in_guess = ms_od_par.m_P_mc_in;
+
+			if( point_found )		// exit only after testing two starting points (prevents optimization near-misses)
+				break;
+
+			point_found = true;
+		}
+
+		P_low = 1.1*ms_opt_od_par.m_P_mc_in_guess;
+
+		if( P_low > ms_opt_tar_od_par.m_highest_pressure )
+			break;
+
+	} while( true );
+
+	m_biggest_target = -999.9;
+
+	if( !point_found )
+	{
+		error_code = 99;
+		return;
+	}
+
+	if( ms_opt_tar_od_par.m_is_target_Q )
+		m_biggest_target = m_Q_dot_PHX_od;
+	else
+		m_biggest_target = m_W_dot_net_od;
+
+	// If the target is not possible, return the cycle with the largest (based on power output)
+	if( m_biggest_target < ms_opt_tar_od_par.m_target )
+	{
+		error_code = 123;
+		return;
+	}
+}
+
+void C_RecompCycle::optimal_target_off_design_no_check(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code)
+{
+	ms_opt_tar_od_par = opt_tar_od_par_in;
+
+	// Populate 'ms_tar_od_par' from info in 'ms_opt_tar_od_par'
+	ms_tar_od_par.m_T_mc_in = ms_opt_tar_od_par.m_T_mc_in;
+	ms_tar_od_par.m_T_t_in = ms_opt_tar_od_par.m_T_t_in;
+	// ms_tar_od_par.m_recomp_frac ... Defined by optimizer
+	// ms_tar_od_par.m_N_mc ... Defined by optimizer
+	// ms_tar_od_par.m_N_t  ... Defined by optimizer
+	ms_tar_od_par.m_N_sub_hxrs = ms_opt_tar_od_par.m_N_sub_hxrs;
+	ms_tar_od_par.m_tol = ms_opt_tar_od_par.m_tol;
+	ms_tar_od_par.m_target = ms_opt_tar_od_par.m_target;
+	ms_tar_od_par.m_is_target_Q = ms_opt_tar_od_par.m_is_target_Q;
+	ms_tar_od_par.m_lowest_pressure = ms_opt_tar_od_par.m_lowest_pressure;
+	ms_tar_od_par.m_highest_pressure = ms_opt_tar_od_par.m_highest_pressure;
+
+	// Initialize guess array
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+
+	if( !ms_opt_tar_od_par.m_fixed_recomp_frac )
+	{
+		x.push_back(ms_opt_tar_od_par.m_recomp_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.01);
+
+		index++;
+	}
+
+	if( !ms_opt_tar_od_par.m_fixed_N_mc )
+	{
+		x.push_back(ms_opt_tar_od_par.m_N_mc_guess);
+		lb.push_back(1.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(0.25*ms_opt_tar_od_par.m_N_mc_guess);
+
+		index++;
+	}
+
+	if( !ms_opt_tar_od_par.m_fixed_N_t )
+	{
+		x.push_back(ms_opt_tar_od_par.m_N_t_guess);
+		lb.push_back(1.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(100.0);
+	}
+
+	bool solution_found = false;
+	m_eta_best = 0.0;
+
+	if( index > 0 )
+	{
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt		opt_tar_od_cycle(nlopt::LN_SBPLX, index);
+		opt_tar_od_cycle.set_lower_bounds(lb);
+		opt_tar_od_cycle.set_upper_bounds(ub);
+		opt_tar_od_cycle.set_initial_step(scale);
+		opt_tar_od_cycle.set_xtol_rel(ms_opt_tar_od_par.m_opt_tol);
+
+		// Set max objective function
+		opt_tar_od_cycle.set_max_objective(nlopt_cb_eta_at_target, this);
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result     result_tar_od_cycle = opt_tar_od_cycle.optimize(x, max_f);
+	}
+	else
+	{
+		eta_at_target(x);
+	}
+
+	// Final call to off-design model using 'ms_od_par_tar_optimal'
+	int od_error_code = 0;
+	if( m_eta_best > 0.0 )
+	{
+		ms_od_par = ms_od_par_tar_optimal;
+		off_design_core(od_error_code);
+		error_code = 0;
+	}
+	else
+	{
+		error_code = 98;
+		return;
+	}
+
+	if( od_error_code != 0 )
+	{
+		error_code = od_error_code;
+		return;
+	}
+}
 
 void C_RecompCycle::optimal_target_off_design(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code)
 {
+	int error_code_local = 0;
+
+	get_max_output_od(opt_tar_od_par_in, error_code_local);
+
+	if(error_code_local != 0)
+	{
+		error_code = error_code_local;
+		return;
+	}
+
+	optimal_target_off_design_no_check(opt_tar_od_par_in, error_code_local);
+
+	if(error_code_local != 0)
+	{
+		error_code = error_code_local;
+		return;
+	}
+
+	return;
+
+	/*
 	ms_opt_tar_od_par = opt_tar_od_par_in;
 
 	// Determine the largest possible power output of the cycle
@@ -2463,7 +2667,7 @@ void C_RecompCycle::optimal_target_off_design(S_opt_target_od_parameters & opt_t
 		error_code = od_error_code;
 		return;
 	}
-
+	*/
 }
 
 double C_RecompCycle::eta_at_target(const std::vector<double> &x)

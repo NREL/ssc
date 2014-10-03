@@ -1,6 +1,5 @@
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
-#include "sco2_power_cycle.h"
 #include "htf_props.h"
 //#include <vector>
 #include "CO2_properties.h"
@@ -12,15 +11,14 @@ using namespace std;
 
 enum{	//Parameters
 	P_W_dot_net_des,
-	P_T_mc_in_des,
-	P_T_t_in_des,
-	P_N_t_des,
 	P_eta_c,
 	P_eta_t,
 	P_P_high_limit,
-
+	P_DELTAT_PHX,
+	P_DELTAT_ACC,
 	P_T_AMB_DES,
 	P_FAN_POWER_PERC,
+	P_PLANT_ELEVATION,
 
 	P_T_rec_hot,
 	P_T_rec_cold,
@@ -74,9 +72,14 @@ enum{	//Parameters
 	O_N_SUB_HXRS,
 	O_P_HIGH_LIMIT,
 	O_N_turbine,
-	
-	
-	
+	O_DP_LT_C,
+	O_DP_LT_H,
+	O_DP_HT_C,
+	O_DP_HT_H,
+	O_DP_PC_H,
+	O_DP_PHX_C,
+	O_DELTAT_MC,
+	O_DELTAT_T,
 
 	//N_MAX
 	N_MAX
@@ -85,16 +88,16 @@ enum{	//Parameters
 tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	//PARAMETERS
 		// Cycle Design Parameters
-	{ TCS_PARAM, TCS_NUMBER, P_W_dot_net_des,  "W_dot_net_des",   "Design cycle power output",                      "MW",   "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_T_mc_in_des,    "T_mc_in_des",     "Main compressor inlet temp at design",           "C",    "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_T_t_in_des,     "T_t_in_des",      "Turbine inlet temp at design",                   "C",    "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_N_t_des,        "N_t_des",         "Design turbine speed, negative links to comp.",  "rpm",  "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_W_dot_net_des,  "W_dot_net_des",   "Design cycle power output",                      "MW",   "", "", "" },	
 	{ TCS_PARAM, TCS_NUMBER, P_eta_c,          "eta_c",           "Design compressor(s) isentropic efficiency",     "-",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_eta_t,          "eta_t",           "Design turbine isentropic efficiency",           "-",    "", "", "" },	
 	{ TCS_PARAM, TCS_NUMBER, P_P_high_limit,   "P_high_limit",    "High pressure limit in cycle",                   "MPa",  "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_DELTAT_PHX,     "deltaT_PHX",      "Temp diff btw hot HTF and turbine inlet",        "C",    "", "", "" },
 		// Air-cooler Design Parameters
+	{ TCS_PARAM, TCS_NUMBER, P_DELTAT_ACC,     "deltaT_ACC",      "Temp diff btw ambient air and compressor inlet", "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_T_AMB_DES,      "T_amb_des",       "Design: Ambient temperature for air cooler",     "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_FAN_POWER_PERC, "fan_power_perc",  "Percent of net cycle power used for fan",        "%",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_PLANT_ELEVATION,"plant_elevation", "Plant Elevation",                                "m",    "", "", "" },
 		// Solar Receiver Design Parameters
 	{ TCS_PARAM, TCS_NUMBER, P_T_rec_hot,      "T_rec_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_T_rec_cold,     "T_rec_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
@@ -148,7 +151,14 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER, O_N_SUB_HXRS,      "o_N_sub_hxrs",        "number of sub heat exchangers",                         "",      "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_HIGH_LIMIT,    "o_P_high_limit",      "high pressure limit",                                   "MPa",   "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_N_turbine,       "o_N_turbine",         "Turbine shaft speed",                                   "rpm",   "",  "",  "" },
-
+	{ TCS_OUTPUT, TCS_NUMBER, O_DP_LT_C,         "o_DP_LT_c",           "Cold-side pressure drop - LT recup",                    "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_DP_LT_H,         "o_DP_LT_h",           "Hot-side pressure drop - LT recup",                     "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_DP_HT_C,         "o_DP_HT_c",           "Cold-side pressure drop - HT recup",                    "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_DP_HT_H,         "o_DP_HT_h",           "Hot-side pressure drop - HT recup",                     "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_DP_PC_H,         "o_DP_PC_h",           "Hot-side pressure drop - pre-cooler",                   "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_DP_PHX_C,        "o_DP_PHX_c",          "Cold-side pressure drop - PHX",                         "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_DELTAT_MC,       "o_deltaT_mc",         "Temperature difference btw comp inlet and Tamb",        "K",     "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_DELTAT_T,        "o_deltaT_t",          "Temperature difference btw hot HTF and turbine inlet",  "K",     "",  "",  "" },
 
 	/*
 	double m_W_dot_net;					//[kW] Target net cycle power
@@ -207,13 +217,12 @@ private:
 	// Hardcoded Cycle Design Parameters
 	double m_tol;                      // "Convergence tolerance for performance calcs", "-", "",
 	double m_opt_tol;				   // "Convergence tolerance - optimization calcs", "-", "", 
-	int m_mc_type;                     // May someday have multiple compressor maps to choose from
-	int m_rc_type;                     // May someday have multiple compressor maps to choose from
 	vector<double> m_DP_LT;            // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	vector<double> m_DP_HT;		       // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	vector<double> m_DP_PC;		       // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	vector<double> m_DP_PHX;		   // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	int m_N_sub_hxrs;                  // [-] Number of sections to model in heat exchangers
+	double m_deltaP_cooler_frac;       // [-] Fraction of high side pressure that is allowed as pressure drop to design the ACC
 
 	// Calculated Cycle Design Parameters
 	double m_UA_total_des;			   // "Total UA allocatable to recuperators",           "kW/K",
@@ -270,8 +279,6 @@ public:
 		// Hardcoded values
 		m_tol = 1.E-3;
 		m_opt_tol = m_tol;
-		m_mc_type = 1;
-		m_rc_type = 1;
 		m_DP_LT.resize(2);
 		fill(m_DP_LT.begin(), m_DP_LT.end(), 0.0);
 		m_DP_HT.resize(2);
@@ -280,7 +287,9 @@ public:
 		fill(m_DP_PC.begin(), m_DP_PC.end(), 0.0);
 		m_DP_PHX.resize(2);
 		fill(m_DP_PHX.begin(), m_DP_PHX.end(), 0.0);
-		m_N_sub_hxrs = 20;
+		m_N_sub_hxrs = 10;
+		m_deltaP_cooler_frac = 0.002;
+		m_N_t_des = 3600.0;
 
 		// Calculated Cycle Design Parameters
 		m_UA_total_des = std::numeric_limits<double>::quiet_NaN();
@@ -317,22 +326,31 @@ public:
 		m_E_su = std::numeric_limits<double>::quiet_NaN();
 	}
 
-	virtual ~sam_sco2_recomp_type424()
-	{
-		//if(NULL != rc_cycle)
-		//	delete rc_cycle;
-	}
+	virtual ~sam_sco2_recomp_type424(){}
 
 	virtual int init()
 	{
-		// Set parameters to member data
-		m_W_dot_net_des = value(P_W_dot_net_des)*1000.0;		//[kW] Design cycle power outpt
-		m_T_mc_in_des = value(P_T_mc_in_des) + 273.15;		    //[K] Compressor inlet temp at design, convert from C
-		m_T_t_in_des = value(P_T_t_in_des) + 273.15;			//[K] Turbine inlet temp at design, convert from C
-		m_N_t_des = value(P_N_t_des);                           // "Design turbine speed, negative links to comp.",  "rpm",  
+		// Get Parameters
+		m_W_dot_net_des = value(P_W_dot_net_des)*1000.0;		//[kW] Design cycle power outpt 
 		m_eta_c = value(P_eta_c);								// "Design compressor(s) isentropic efficiency",     "-",    
 		m_eta_t = value(P_eta_t);								// "Design turbine isentropic efficiency",           "-",    		
-		m_P_high_limit = value(P_P_high_limit);					// "High pressure limit in cycle",                   "MPa",  
+		m_P_high_limit = value(P_P_high_limit);					// "High pressure limit in cycle",                   "MPa", 
+		m_delta_T_t = value(P_DELTAT_PHX);						//[C] temperature difference between hot htf and sco2 turbine inlet
+		// Air-cooler specific parameters
+		m_delta_T_acc = value(P_DELTAT_ACC);					//[C] temperature difference between ambient air and compressor inlet
+		double T_amb_cycle_des = value(P_T_AMB_DES) + 273.15;		//[K] Ambient temperature at power cycle design, convert from C
+		double fan_power_frac = value(P_FAN_POWER_PERC) / 100.0;			//[-] Fraction of cycle net power output used by cooler air fan, convert from %
+		// Solar Receiver Parameters
+		// Receiver inlet/outlet temps and thermal input
+		m_T_rec_hot = value(P_T_rec_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
+		m_T_rec_cold = value(P_T_rec_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
+		m_Q_dot_rec_des_est = value(P_Q_dot_rec_des);		//[MWt] Receiver thermal input at design
+
+		// Calculate other cycle design parameters based on User Parameters
+		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
+		m_T_t_in_des = m_T_rec_hot - m_delta_T_t;			//[K] Turbine inlet temperature
+
+		double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 
 		// Check cycle parameter values are reasonable
 			// Can't operate compressor in 2-phase region
@@ -402,13 +420,6 @@ public:
 		}
 		// ******************************************************************************************
 		// ******************************************************************************************
-		// ******************************************************************************************
-
-		// Set up cycle_design_parameters structure
-		// Integers for compressor maps (hardcoded)
-		// rc_des_par.m_mc_type = m_mc_type;
-		// rc_des_par.m_rc_type = m_rc_type;
-
 		// Setup recompressoin cycle autodes parameter structure
 		ms_rc_autodes_par.m_DP_HT = m_DP_HT;
 		ms_rc_autodes_par.m_DP_LT = m_DP_LT;
@@ -428,47 +439,8 @@ public:
 		ms_rc_autodes_par.m_T_mc_in = m_T_mc_in_des;
 		ms_rc_autodes_par.m_T_t_in = m_T_t_in_des;
 		ms_rc_autodes_par.m_W_dot_net = m_W_dot_net_des;
-
-		// Net output and temperatures
-		// rc_des_par.m_W_dot_net = m_W_dot_net_des;		//[kW]
-		// rc_des_par.m_T_mc_in = m_T_mc_in_des;           //[K]
-		// rc_des_par.m_T_t_in = m_T_t_in_des;				//[K]
-		// 
-		// // Pressure Drops (hardcoded)
-		// rc_des_par.m_DP_LT = m_DP_LT;
-		// rc_des_par.m_DP_HT = m_DP_HT;
-		// rc_des_par.m_DP_PC = m_DP_PC;
-		// rc_des_par.m_DP_PHX = m_DP_PHX;
-		// 
-		// // Turbine Speed
-		// rc_des_par.m_N_t = m_N_t_des;
-		// 
-		// // Turbomachinery isentropic efficiency
-		// rc_des_par.m_eta_mc = m_eta_c;
-		// rc_des_par.m_eta_rc = m_eta_c;
-		// rc_des_par.m_eta_t = m_eta_t;
-		// 
-		// // Number of heat exchanger sections (hardcoded)
-		// rc_des_par.m_N_sub_hxrs = m_N_sub_hxrs;
-		// 
-		// // Convergence tolerances (hardcoded)
-		// rc_des_par.m_tol = m_tol;
-		// rc_des_par.m_opt_tol = m_opt_tol;
-		// 
-		// // Upper pressure limit
-		// rc_des_par.m_P_high_limit = m_P_high_limit*1000.0;		// Convert to kPa
-		//************************************************
-		// cycle_design_parameters structure fully defined
-		// EXCEPT recup UA, which must be solved with iteration below
-		//************************************************
-
 		// ************************************************************************************
-		// Air-cooler specific parameters
-		double T_amb_cycle_des = value(P_T_AMB_DES) + 273.15;		//[K] Ambient temperature at power cycle design, convert from C
-		double fan_power_frac = value(P_FAN_POWER_PERC) / 100.0;			//[-] Fraction of cycle net power output used by cooler air fan, convert from %
-		//double deltaP_cooler_frac = value(P_DELTAP_COOL_DES) / 100.0;		//[-] Fraction of P_high allowed as CO2 pressure drop in air cooler design
-			// Hardcode deltaP_cooler_frac
-		double deltaP_cooler_frac = 0.002;
+		// ************************************************************************************
 
 		// Check air-cooler parameters are within limits
 			// Ambient temperature must be cooler than compressor inlet temperature
@@ -496,24 +468,15 @@ public:
 			message("The fraction of cycle net power used by the cooling fan, %lg, is less than the internal minimum %lg", fan_power_frac, fan_power_frac_min);
 			return -1;
 		}
-
-		m_delta_T_acc = m_T_mc_in_des - T_amb_cycle_des;
-
+		
 		// **************************************************************************
-		// Solar Receiver Parameters
-		// Receiver inlet/outlet temps and thermal input
-		m_T_rec_hot = value(P_T_rec_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
-		m_T_rec_cold = value(P_T_rec_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
-		m_Q_dot_rec_des_est = value(P_Q_dot_rec_des);		//[MWt] Receiver thermal input at design
-
 		// Check that receiver parameters are within limits
 			// Receiver outlet temperature should be greater than turbine inlet temperature
 		if(m_T_rec_hot < m_T_t_in_des + 1.0)
 		{
 			message("The receiver hot outlet temperature, %lg [C], must be at least 1 [C] greater than the turbine inlet temperature %lg [C]", m_T_rec_hot-273.15, m_T_t_in_des-273.15);
 			return -1;
-		}
-		m_delta_T_t = m_T_rec_hot - m_T_t_in_des;
+		}		
 
 			// Receiver inlet temperature must be less than the turbine inlet temperature
 		if(m_T_rec_cold > m_T_t_in_des - 1.0)
@@ -572,8 +535,7 @@ public:
 		}
 		// ********************************************************************************
 		// ********************************************************************************
-		double deltaT_co2_hot = m_T_rec_hot - m_T_t_in_des;			//[K]
-		m_T_PHX_in = m_T_rec_cold - deltaT_co2_hot;					//[K]
+		m_T_PHX_in = m_T_rec_cold - m_delta_T_t;					//[K]
 
 		/*
 		// Now need to vary UA_recup until m_T_PHX_in is achieved. This could be slow...
@@ -700,7 +662,7 @@ public:
 				if( x_upper / m_W_dot_net_des >= UA_net_power_ratio_max )
 				{
 					message("The receiver inlet temperature, %lg [C], is too hot to achieve with the available cycle model", m_T_rec_cold-273.15);
-					message("The hottest possible receiver inlet temperature for these inputs is roughly %lg [C] ", ms_rc_cycle.get_design_solved()->m_temp[5-1] + deltaT_co2_hot);
+					message("The hottest possible receiver inlet temperature for these inputs is roughly %lg [C] ", ms_rc_cycle.get_design_solved()->m_temp[5 - 1] + m_delta_T_t);
 					return -1;
 				}
 			}
@@ -771,9 +733,7 @@ public:
 
 		// *****************************************************************
 		// Call Air Cooled Condenser
-		// *****************************************************************
-
-		double P_amb_cycle_des = 101325.0;			//[Pa]
+		// *****************************************************************		
 
 		double T_acc_in = ms_rc_cycle.get_design_solved()->m_temp[9 - 1];
 		double P_acc_in = ms_rc_cycle.get_design_solved()->m_pres[9 - 1];
@@ -781,7 +741,7 @@ public:
 		
 		m_W_dot_fan_des = fan_power_frac*m_W_dot_net_des/1000.0;	//[MW] Cooler air fan power at design
 		
-		double deltaP_des = deltaP_cooler_frac*ms_rc_cycle.get_design_solved()->m_pres[2-1];
+		double deltaP_des = m_deltaP_cooler_frac*ms_rc_cycle.get_design_solved()->m_pres[2-1];
 				
 		double T_acc_out = m_T_mc_in_des;
 
@@ -852,7 +812,7 @@ public:
 			// m_T_t_in
 			// m_target
 			// m_recomp_frac_guess (if not 0)
-			// m_fixed_N_mc
+			// m_N_mc_guess
 
 		// Calculate standby info
 			// Call target off-design at standby frac to get
@@ -869,7 +829,10 @@ public:
 		int q_sby_error_code = 0;
 
 		ms_rc_cycle.optimal_target_off_design(ms_rc_opt_od_par, q_sby_error_code);
-		
+
+		// Check that broken up 'optimal_target_off_design' codes are working properly
+		ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, q_sby_error_code);
+
 		if(q_sby_error_code != 0)
 		{
 			message("The power cycle model crashes at the specified cutoff fraction, %lg. Try increasing this value", cutoff_frac);
@@ -881,11 +844,36 @@ public:
 		double m_T_htf_cold_sby = m_T_PHX_in_sby + 5.0;		// Estimate htf return temp w/o heat exchanger
 		double m_m_dot_htf_sby = m_Q_dot_rec_des_calc*m_q_sby_frac/(m_cp_rec*(m_T_rec_hot - m_T_htf_cold_sby));
 
+		// Set outputs that will be constant for this type (required because can share a cmod with molten salt tower)
 		value(O_M_DOT_MAKEUP, 0.0);
 		value(O_M_DOT_DEMAND, 0.0);					// This output is an input for the controller, but the controller doesn't use it...
 		value(O_M_DOT_HTF_REF, m_dot_rec_des);		// Not actually the RECEIVER des. should be HTF
 		value(O_F_BAYS, 0.0);
 		value(O_P_COND, 0.0);						// Probably do want to report some cycle info that is different from steam
+
+		// Set design parameter outputs for type251
+		value(O_W_DOT_NET, W_dot_net_des_calc);
+		value(O_T_MC_IN, m_T_mc_in_des);
+		value(O_T_T_IN, m_T_t_in_des);
+		value(O_P_MC_IN, ms_rc_cycle.get_design_solved()->m_pres[1-1]);
+		value(O_P_MC_OUT, ms_rc_cycle.get_design_solved()->m_pres[2-1]);
+		value(O_UA_LT, ms_rc_cycle.get_design_solved()->m_UA_LT);
+		value(O_UA_HT, ms_rc_cycle.get_design_solved()->m_UA_HT);
+		value(O_RECOMP_FRAC, ms_rc_cycle.get_design_solved()->m_recomp_frac);
+		value(O_ETA_MC, m_eta_c);
+		value(O_ETA_RC, m_eta_c);
+		value(O_ETA_T, m_eta_t);
+		value(O_N_SUB_HXRS, m_N_sub_hxrs);
+		value(O_P_HIGH_LIMIT, m_P_high_limit);
+		value(O_N_turbine, ms_rc_cycle.get_design_solved()->m_N_t);
+		value(O_DP_LT_C, m_DP_LT[0]);
+		value(O_DP_LT_H, m_DP_LT[1]);
+		value(O_DP_HT_C, m_DP_HT[0]);
+		value(O_DP_HT_H, m_DP_HT[1]);
+		value(O_DP_PC_H, m_DP_PC[1]);
+		value(O_DP_PHX_C, m_DP_PHX[0]);
+		value(O_DELTAT_MC, m_delta_T_acc);
+		value(O_DELTAT_T, m_delta_T_t);
 
 		return 0;
 	}
@@ -894,7 +882,7 @@ public:
 	{
 		double T_htf_hot = value(I_T_HTF_HOT) + 273.15;			//[K] Hot HTF temp from the receiver, convert from C
 		double m_dot_htf = value(I_M_DOT_HTF)/3600.0;			//[kg/s] Mass flow rate of htf from receiver, convert from kg/s
-		m_standby_control = (int)value(I_STANDBY_CONTROL);	//[-] Standby control from the controller
+		m_standby_control = (int)value(I_STANDBY_CONTROL);		//[-] Standby control from the controller
 		double T_db = value(I_T_DB) + 273.15;					//[K] Dry bulb temperature, convert from C
 		double P_amb = value(I_P_AMB);							//[atm] Ambient air pressure
 
@@ -938,8 +926,30 @@ public:
 			ms_rc_opt_od_par.m_T_mc_in = T_mc_in;
 			ms_rc_opt_od_par.m_T_t_in = T_t_in;
 
+			// **********************************************
+			// Do we ever want to reset these????
+			// **********************************************
+			if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
+				ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
+
+			ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
+			// **********************************************
+			// **********************************************
+
 			// Guess Q_dot_PHX based on design point mass flow rates
 			Q_dot_PHX = m_Q_dot_rec_des_calc*(m_dot_htf / m_dot_rec_des);			//[kWt]
+
+			// Get maximum possible Q_dot given conditions
+			int max_q_error_code = 0;
+			ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, max_q_error_code);
+			if(max_q_error_code != 0)
+			{
+				m_error_message_code = 1;		// Off-design model not solving
+				break;
+			}
+			double q_dot_cycle_max = ms_rc_cycle.get_max_target();
+
+			Q_dot_PHX = min(Q_dot_PHX, q_dot_cycle_max);
 
 			double y_upper, y_lower, x_upper, x_lower;
 			y_upper = y_lower = x_upper = x_lower = std::numeric_limits<double>::quiet_NaN();
@@ -972,20 +982,15 @@ public:
 						if( set_upper )
 							Q_dot_PHX = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
 						else
-							Q_dot_PHX = min(1.25*Q_dot_PHX, m_Q_dot_rec_des_calc);
+							Q_dot_PHX = min(1.25*Q_dot_PHX, q_dot_cycle_max);
 					}
 				}
 
 				ms_rc_opt_od_par.m_target = Q_dot_PHX;
 
-				if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
-					ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
-
-				ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
-
 				// Solve off-design model
 				int rc_error_code = 0;
-				ms_rc_cycle.optimal_target_off_design(ms_rc_opt_od_par, rc_error_code);
+				ms_rc_cycle.optimal_target_off_design_no_check(ms_rc_opt_od_par, rc_error_code);
 
 				// *******
 				if(rc_error_code != 0)
