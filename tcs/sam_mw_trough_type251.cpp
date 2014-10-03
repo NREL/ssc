@@ -5,6 +5,9 @@
 #include "storage_hx.h"
 #include "thermocline_tes.h"
 
+#include "CO2_properties.h"
+#include "sco2_pc_core.h"
+
 using namespace std;
 
 /* CSP Plant Controller Model
@@ -69,6 +72,7 @@ enum {
 	P_t_ch_out_max,
 	P_nodes,
 	P_f_tc_cold,
+	P_PB_TECH_TYPE,
 	
 	//Inputs
 	I_I_bn,
@@ -82,6 +86,28 @@ enum {
 	I_dnifc,
 	I_TOUPeriod,
 
+	I_W_DOT_NET,
+	I_T_MC_IN,
+	I_T_T_IN,
+	I_P_MC_IN,
+	I_P_MC_OUT,
+	I_UA_LT,
+	I_UA_HT,
+	I_RECOMP_FRAC,
+	I_ETA_MC,
+	I_ETA_RC,
+	I_ETA_T,
+	I_N_SUB_HXRS,
+	I_P_HIGH_LIMIT,
+	I_N_turbine,
+	I_DP_LT_C,
+	I_DP_LT_H,
+	I_DP_HT_C,
+	I_DP_HT_H,
+	I_DP_PC_H,
+	I_DP_PHX_C,
+	I_DELTAT_MC,
+	I_DELTAT_T,
 
 	//Outputs
 	O_defocus,
@@ -184,6 +210,8 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_t_ch_out_max,       "t_ch_out_max",         "Max allowable cold side outlet temp during charge",       "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_nodes,              "nodes",                "Nodes modeled in the flow path",                          "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_f_tc_cold,          "f_tc_cold",            "0=entire tank is hot, 1=entire tank is cold",             "-",            "",        "",        ""},
+		// 10.1.14 twn: added for sCO2 cycle logic
+	{ TCS_PARAM,    TCS_NUMBER,        P_PB_TECH_TYPE,       "pb_tech_type",         "Flag indicating which coef. set to use. (1=tower,2=trough,3=user)","none","",        "",        "2"},
 
     // INPUTS
     { TCS_INPUT,    TCS_NUMBER,        I_I_bn,               "I_bn",                 "Direct beam irradiance",                                  "W/m2",         "",        "",        ""},
@@ -196,6 +224,30 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_INPUT,    TCS_NUMBER,        I_q_startup,          "q_startup",            "Startup energy reported by the collector field",          "MWt",          "",        "",        ""},
     { TCS_INPUT,    TCS_NUMBER,        I_dnifc,              "dnifc",                "Forecast DNI",                                            "W/m2",         "",        "",        ""},
 	{ TCS_INPUT,    TCS_NUMBER,        I_TOUPeriod,          "TOUPeriod",            "The time-of-use period",                                  "",             "",        "",        ""},
+
+	// sCO2 cycle design parameters from type 424 - only used if "pb_tech_type" = 424
+	{ TCS_INPUT, TCS_NUMBER, I_W_DOT_NET,       "i_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_T_MC_IN,         "i_T_mc_in",           "Compressor inlet temperature",                          "K",     "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_T_T_IN,          "i_T_t_in",            "Turbine inlet temperature",                             "K",     "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_P_MC_IN,         "i_P_mc_in",           "Compressor inlet pressure",                             "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_P_MC_OUT,        "i_P_mc_out",          "Compressor outlet pressure",                            "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_UA_LT,           "i_UA_LT",             "UA in LTR",                                             "kW/K",  "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_UA_HT,           "i_UA_HT",             "UA in HTR",                                             "kW/K",  "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_RECOMP_FRAC,     "i_recomp_frac",       "recompresson fraction",                                 "",      "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_ETA_MC,          "i_eta_mc",            "main compressor isentropic efficiency",                 "",      "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_ETA_RC,          "i_eta_rc",            "re-compressor isentropic efficiency",                   "",      "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_ETA_T,           "i_eta_t",             "turbine isentropic efficiency",                         "",      "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_N_SUB_HXRS,      "i_N_sub_hxrs",        "number of sub heat exchangers",                         "",      "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_P_HIGH_LIMIT,    "i_P_high_limit",      "high pressure limit",                                   "MPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_N_turbine,       "i_N_turbine",         "Turbine shaft speed",                                   "rpm",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DP_LT_C,         "o_DP_LT_c",           "Cold-side pressure drop - LT recup",                    "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DP_LT_H,         "o_DP_LT_h",           "Hot-side pressure drop - LT recup",                     "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DP_HT_C,         "o_DP_HT_c",           "Cold-side pressure drop - HT recup",                    "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DP_HT_H,         "o_DP_HT_h",           "Hot-side pressure drop - HT recup",                     "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DP_PC_H,         "o_DP_PC_h",           "Hot-side pressure drop - pre-cooler",                   "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DP_PHX_C,        "o_DP_PHX_c",          "Cold-side pressure drop - PHX",                         "kPa",   "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DELTAT_MC,       "o_deltaT_mc",         "Temperature difference btw comp inlet and Tamb",        "K",     "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_DELTAT_T,        "o_deltaT_t",          "Temperature difference btw hot HTF and turbine inlet",  "K",     "",  "",  "" },
 
     // OUTPUTS
     { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
@@ -248,6 +300,8 @@ private:
 	HTFProperties store_htfProps;		// Instance of HTFProperties class for storage HTF
 	Storage_HX hx_storage;				// Instance of Storage_HX class for heat exchanger between storage and field HTFs
 	Thermocline_TES thermocline;
+	C_RecompCycle ms_rc_cycle;
+	C_RecompCycle::S_opt_target_od_parameters ms_opt_tar_od_par;
 
 	// Parameters
 	double tshours;	
@@ -309,6 +363,7 @@ private:
 
 	//Calculated variables
 	double ccoef;
+	double q_sby_frac;
 	double q_sby;
 	double m_dot_pb_max;
 	double ms_charge_max;
@@ -340,6 +395,12 @@ private:
 	double T_pb_in;
 
 	bool hx_err_flag;
+
+	int pb_tech_type;
+	bool initialize_sco2;
+	double m_deltaT_mc_in;
+	double m_deltaT_t_in;
+	double q_sco2_max_input;
 
 public:
 	
@@ -439,6 +500,12 @@ public:
 		m_tank_hot_fin	= std::numeric_limits<double>::quiet_NaN();
 		m_tank_cold_fin = std::numeric_limits<double>::quiet_NaN();
 		T_pb_in = std::numeric_limits<double>::quiet_NaN();
+
+		q_sby_frac = std::numeric_limits<double>::quiet_NaN();
+
+		m_deltaT_mc_in = std::numeric_limits<double>::quiet_NaN();
+		m_deltaT_t_in = std::numeric_limits<double>::quiet_NaN();
+		q_sco2_max_input = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_mw_trough_type251()
@@ -544,7 +611,7 @@ public:
 		I_bn_des	= value(P_I_bn_des);				//[W/m2]
 		fc_on		= (value(P_fc_on) != 0);			//[-]
 		
-		double q_sby_frac	= value(P_q_sby_frac);				//[-]
+		q_sby_frac	= value(P_q_sby_frac);				//[-]
 		
 		t_standby_reset	= value(P_t_standby_init)*3600;	//[s] convert from [hr]
 		sf_type		= (int) value(P_sf_type);			//[-] 1 = trough, 2 = tower
@@ -571,7 +638,8 @@ public:
 		nodes		= (int) value(P_nodes);				//[-]
 		f_tc_cold	= value(P_f_tc_cold);				//[-]
 		//*******************************************		
-
+		
+		/*
 		//Calculate standby power
 		q_sby = q_sby_frac * q_pb_design;
 
@@ -647,14 +715,201 @@ public:
 
 		//Set the heat exchanger error flag
 		hx_err_flag = false;
+		*/
+
+		pb_tech_type = value(P_PB_TECH_TYPE);
+
+		if( pb_tech_type != 424 )
+		{
+			int finalize_error_code = finalize_initial_calcs();
+
+			if( finalize_error_code != 0 )
+				return -1;
+
+			initialize_sco2 = false;
+		}
+		else
+		{
+			initialize_sco2 = true;		// boolean telling code to initialize heat exchangers, etc. during the first timestep call
+		}
 		
+
 		return 0;
+	}
+
+	int finalize_initial_calcs()
+	{
+		//Calculate standby power
+		q_sby = q_sby_frac * q_pb_design;
+
+		//Calculate heat exchanger size based on parameters
+		//hx_ua will be used as the heat exchanger size for simulation calculations
+		double duty = (solarm - 1.)*q_pb_design;	//[W]
+
+		if( tshours>0.0 )
+		{
+			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
+			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
+			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
+			{
+				message("Heat exchanger sizing failed");
+				return -1;
+			}
+		}
+
+		// Calculate maximum value for power block mass flow
+		double c_pb_ref = field_htfProps.Cp((T_field_in_des + T_field_out_des) / 2.0)*1000.;		//[J/kg-K] Reference power block specific heat 
+		m_dot_pb_max = cycle_max_frac * q_pb_design / (c_pb_ref*(T_field_out_des - T_field_in_des));	//[kg/s] Maximum power block mass flow rate
+
+		T_pb_in = T_field_out_des;
+
+		// Calculate the maximum charge/discharge rates for storage  MJW 7.13.2010
+		// Charge max is either the power block max flow, or the solar multiple-1 times the design PB mass flow rate
+		if( is_hx )
+		{
+			ms_charge_max = max(m_dot_pb_max, (solarm - 1.)*q_pb_design / (c_pb_ref*(T_field_out_des - T_field_in_des)));
+		}	//[kg/s]		
+		else	// MJW 10.18.2010: If we have direct storage, don't limit the maximum storage charge/discharge rate
+		{
+			ms_charge_max = 999.*m_dot_pb_max;
+		}
+		// limit discharge to what the power block can handle
+		ms_disch_max = m_dot_pb_max;
+		// *****************************************************
+
+		//Set initial storage values
+		V_tank_hot_prev = value(P_V_tank_hot_ini);			//[m3]
+		T_tank_hot_prev = value(P_T_tank_hot_ini) + 273.15;	//[K] convert from [C]
+		V_tank_cold_prev = vol_tank - V_tank_hot_prev;		//[m3] Initial cold tank fluid volume
+		T_tank_cold_prev = value(P_T_tank_cold_ini) + 273.15;	//[K] convert from [C]
+		mode_prev_ncall = 1;								//[-]
+		m_tank_hot_prev = V_tank_hot_prev*store_htfProps.dens(T_tank_hot_prev, 1.0);		//[kg]
+		m_tank_cold_prev = V_tank_cold_prev*store_htfProps.dens(T_tank_cold_prev, 1.0);	//[kg]
+		pb_on_prev = 0;								//[-] power block initially off
+		defocus_prev_ncall = 1.;								//[-] initial defocus
+		t_standby_prev = t_standby_reset;					//[s] 
+		//*********************************************************
+
+		V_tank_active = vol_tank*(1. - 2.*h_tank_min / h_tank);	//[m3] Active tank volume.. that is, volume above the minimum fluid level and below the maximum level
+
+		if( tes_type == 2 )
+		{
+			if( !thermocline.Initialize_TC(h_tank, vol_tank / h_tank, tc_fill, u_tank*3.6, u_tank*3.6, u_tank*3.6, tc_void,
+				1.0, t_dis_out_min, t_ch_out_max, nodes, T_tank_hot_prev - 273.15, T_tank_cold_prev - 273.15,
+				f_tc_cold, cold_tank_Thtr - 273.15, tank_max_heat, tank_pairs, store_htfProps) )
+			{
+				message("Thermocline initialization failed");
+				return -1;
+			}
+
+		}
+
+		double dt = time_step();
+
+		// Set the convergence coefficient
+		if( tes_type == 1. )
+		{
+			ccoef = .9 - .5*(3600. - dt) / 3600.;	// 3.5.11
+		}
+		else
+		{
+			ccoef = .5;		// 3.5.11	
+		}
+
+		ccoef = 0.5;
+
+		//Set the heat exchanger error flag
+		hx_err_flag = false;
+
+		return 0;	
 	}
 
 	virtual int call( double time, double step, int ncall )
 	{
 		//double dt = time_step();
 		
+		if( initialize_sco2 )
+		{
+			if( pb_tech_type == 424 )
+			{
+				if( time / step == 1.0 )
+				{
+					// Get cycle design parameters
+					C_RecompCycle::S_design_parameters  cycle_des_par;
+					cycle_des_par.m_W_dot_net = value(I_W_DOT_NET);
+					cycle_des_par.m_T_mc_in = value(I_T_MC_IN);
+					cycle_des_par.m_T_t_in = value(I_T_T_IN);
+					cycle_des_par.m_P_mc_in = value(I_P_MC_IN);
+					cycle_des_par.m_P_mc_out = value(I_P_MC_OUT);
+					cycle_des_par.m_UA_LT = value(I_UA_LT);
+					cycle_des_par.m_UA_HT = value(I_UA_HT);
+					cycle_des_par.m_recomp_frac = value(I_RECOMP_FRAC);
+					cycle_des_par.m_eta_mc = value(I_ETA_MC);
+					cycle_des_par.m_eta_rc = value(I_ETA_RC);
+					cycle_des_par.m_eta_t = value(I_ETA_T);
+					cycle_des_par.m_N_sub_hxrs = value(I_N_SUB_HXRS);
+					cycle_des_par.m_P_high_limit = value(I_P_HIGH_LIMIT);
+					cycle_des_par.m_tol = 1.E-3;
+					cycle_des_par.m_N_turbine = value(I_N_turbine);
+					cycle_des_par.m_DP_LT[0] = value(I_DP_LT_C);
+					cycle_des_par.m_DP_LT[1] = value(I_DP_LT_H);
+					cycle_des_par.m_DP_HT[0] = value(I_DP_HT_C);
+					cycle_des_par.m_DP_HT[1] = value(I_DP_HT_H);
+					cycle_des_par.m_DP_PC[1] = value(I_DP_PC_H);
+					cycle_des_par.m_DP_PHX[0] = value(I_DP_PHX_C);
+					
+					// Call recompression cycle design-point model
+					int rc_des_error_code = 0;
+					ms_rc_cycle.design(cycle_des_par, rc_des_error_code);
+					if(rc_des_error_code != 0)
+					{
+						message("Design point sco2 cycle model didn't solve. That is unexpected as inputs come from solved, optimized model in Type 424");
+						return -1;
+					}
+
+					// Get actual cycle thermal input at design
+					q_pb_design = ms_rc_cycle.get_design_solved()->m_W_dot_net / ms_rc_cycle.get_design_solved()->m_eta_thermal * 1000.0;	// Convert to W
+
+					int finalize_error_code = finalize_initial_calcs();
+
+					if( finalize_error_code != 0 )
+						return -1;
+
+					// Now set up structure to pass to 'get_max_output_od'
+					ms_opt_tar_od_par.m_is_target_Q = true;
+					ms_opt_tar_od_par.m_N_sub_hxrs = cycle_des_par.m_N_sub_hxrs;
+					ms_opt_tar_od_par.m_lowest_pressure = 1000.0;
+					ms_opt_tar_od_par.m_highest_pressure = cycle_des_par.m_P_high_limit;
+
+					if( ms_rc_cycle.get_design_solved()->m_is_rc )
+					{
+						ms_opt_tar_od_par.m_fixed_recomp_frac = false;
+						ms_opt_tar_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
+					}
+					else
+					{
+						ms_opt_tar_od_par.m_fixed_recomp_frac = true;
+						ms_opt_tar_od_par.m_recomp_frac_guess = 0.0;
+					}
+
+					ms_opt_tar_od_par.m_fixed_N_mc = false;
+					ms_opt_tar_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
+
+					ms_opt_tar_od_par.m_fixed_N_t = true;
+					ms_opt_tar_od_par.m_N_t_guess = ms_rc_cycle.get_design_solved()->m_N_t;
+
+					ms_opt_tar_od_par.m_tol = cycle_des_par.m_tol;
+					ms_opt_tar_od_par.m_opt_tol = cycle_des_par.m_tol;
+
+					ms_opt_tar_od_par.m_target = 0.0;		// NOT trying to hit target, only find max
+
+					m_deltaT_mc_in = value(I_DELTAT_MC);
+					m_deltaT_t_in = value(I_DELTAT_T);
+				}
+			}
+			initialize_sco2 = false;
+		}
+
 		double I_bn			= value(I_I_bn);				// [W/m2]
 		double m_dot_field	= value(I_m_dot_field)/3600.;	// [kg/s] convert from [kg/hr]
 		double m_dot_htf_ref= value(I_m_dot_htf_ref)/3600.;	// [kg/s] convert from [kg/hr]
@@ -669,6 +924,23 @@ public:
 			dnifc = value(I_dnifc);				// [W/m2]
 		else
 			dnifc = 0.0;						// [W/m2]
+
+		// Calculate maximum thermal input for sCO2 cycle
+		if( pb_tech_type == 424 && ncall == 0 )
+		{
+			ms_opt_tar_od_par.m_T_mc_in = T_amb + m_deltaT_mc_in;
+			ms_opt_tar_od_par.m_T_t_in = T_field_out - m_deltaT_t_in;
+
+			int max_q_error_code = 0;
+			ms_rc_cycle.get_max_output_od(ms_opt_tar_od_par, max_q_error_code);
+			if( max_q_error_code != 0 )
+			{
+				q_sco2_max_input = q_pb_design;
+				message("Could not calculate max thermal input for sCO2 cycle: value set to design thermal input");
+			}
+			else
+				q_sco2_max_input = ms_rc_cycle.get_max_target()*1000.0;		// Convert to W
+		}
 
 		// Determine which storage dispatch strategy to use, depending on if any solar resource is available
 		double * tselect;
@@ -812,12 +1084,25 @@ public:
 				ms_charge_avail = 0.0;
 			}
 		
-	
+			
+			// Maximum power cycle output can vary for sco2 cycle depending on ambient conditions
+			// so, for calculations determining the available mass flow rate and power cycle demand thermal input,
+			// need a new variable
+			double q_pb_max_input = 0.0;
+			if( pb_tech_type == 424 )
+			{
+				q_pb_max_input = q_sco2_max_input;
+			}
+			else
+			{
+				q_pb_max_input = q_pb_design;
+			}
+
 			//Account for any available auxiliary heater flow
 			c_htf_aux = field_htfProps.Cp( (T_set_aux + T_pb_out)/2. )*1000.0;		//[J/kg-K] Average specific heat
 			if(ffrac[touperiod] > 0.0)	//*** Need to be sure TOU schedule is provided with starting index of 0
 			{
-				m_dot_aux_avail = min( q_max_aux, ffrac[touperiod]*q_pb_design )/(c_htf_aux*max( (T_set_aux - T_pb_out), 1.0 ));	
+				m_dot_aux_avail = min( q_max_aux, ffrac[touperiod]*q_pb_max_input )/(c_htf_aux*max( (T_set_aux - T_pb_out), 1.0 ));	
 			}
 			else	{m_dot_aux_avail = 0.;}
 
@@ -827,7 +1112,7 @@ public:
 			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field;
 			// Calculate the demanded values from the power block
 			//*** Need to be sure TOU schedule is provided with starting index of 0
-			q_pb_demand = q_pb_design*tslogic_c[touperiod];		// [W] Adjust the power block demand energy for the TOU period*/
+			q_pb_demand = q_pb_max_input*tslogic_c[touperiod];		// [W] Adjust the power block demand energy for the TOU period*/
 
 			/*Calculate the maximum potentially available heat flows.  Flows are relative to the
 			power block outlet temperature, except in the case of the storage charge level and
@@ -936,7 +1221,7 @@ public:
 						// mode 2: Fossil tops off the available energy. The total fossil contrib. can't exceed the control fraction.
 						if (fossil_mode == 1)
 						{
-							q_demand_aux = ffrac[touperiod]*q_pb_design;
+							q_demand_aux = ffrac[touperiod]*q_pb_max_input;
 							if(q_int < q_demand_aux)
 							{
 								q_aux		= q_demand_aux - q_int;
