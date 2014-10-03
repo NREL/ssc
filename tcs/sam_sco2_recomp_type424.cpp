@@ -23,7 +23,7 @@ enum{	//Parameters
 
 	P_T_htf_hot,
 	P_T_htf_cold,
-	P_Q_dot_rec_des,
+	P_eta_des_est,
 	P_rec_fl,
 	P_rec_fl_props,
 
@@ -102,7 +102,7 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 		// Solar Receiver Design Parameters
 	{ TCS_PARAM, TCS_NUMBER, P_T_htf_hot,      "T_htf_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_T_htf_cold,     "T_htf_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_Q_dot_rec_des,  "Q_dot_rec_des",   "Receiver design thermal input",                  "MWt",  "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_eta_des_est,    "eta_des_est",     "Estimated PB thermal efficiency",                "",     "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_rec_fl,         "rec_htf",         "The name of the HTF used in the receiver",       "",     "", "", "" },
 	{ TCS_PARAM, TCS_MATRIX, P_rec_fl_props,   "rec_fl_props",    "User defined rec fluid property data",           "-", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "" },
 		// Cycle Controller Parameters
@@ -345,7 +345,7 @@ public:
 		// Receiver inlet/outlet temps and thermal input
 		m_T_htf_hot = value(P_T_htf_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
 		m_T_htf_cold = value(P_T_htf_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
-		m_Q_dot_rec_des_est = value(P_Q_dot_rec_des);		//[MWt] Receiver thermal input at design
+		m_Q_dot_rec_des_est = m_W_dot_net_des / 1.E3 / value(P_eta_des_est);		//[MWt] Receiver thermal input at design
 
 		// Calculate other cycle design parameters based on User Parameters
 		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
