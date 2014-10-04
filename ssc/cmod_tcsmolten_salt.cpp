@@ -445,7 +445,20 @@ public:
 		else
 			type232_cav_rec = add_unit("sam_lf_st_pt_type232");
 		int type251_controller = add_unit("sam_mw_trough_type251");
-		int type224_powerblock = add_unit("sam_mw_pt_type224");
+
+		// Logic to choose between steam and sco2 power cycle
+		bool is_steam_pc = true;
+		int pb_tech_type = 1;		// This should be an SSC input, eventually
+		if( pb_tech_type == 424 )
+			is_steam_pc = false;
+
+		int type224_powerblock = 0;
+		int type424_sco2 = 0;
+		if( is_steam_pc )
+			type224_powerblock = add_unit("sam_mw_pt_type224");
+		else
+			type424_sco2 = add_unit("sam_sco2_recomp_type424");
+				
 		int type228_parasitics = add_unit("sam_mw_pt_type228");
 		//E_net calculator
 		int sum_calculator = add_unit("sam_mw_csp_SumCalcs", "Net Energy Calculator");
@@ -700,48 +713,95 @@ public:
 
 		// Connect Controller (type 251) inputs
 		bConnected &= connect( weather, "beam", type251_controller, "I_bn" );
-		bConnected &= connect( type224_powerblock, "m_dot_htf_ref", type251_controller, "m_dot_htf_ref" );
-		bConnected &= connect( type224_powerblock, "T_htf_cold", type251_controller, "T_pb_out" );
-		bConnected &= connect( weather, "tdry", type251_controller, "T_amb" );
-		bConnected &= connect( type224_powerblock, "m_dot_demand", type251_controller, "m_pb_demand" );	//This is input is not used by the controller
+		if( is_steam_pc )
+		{
+			bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type251_controller, "m_dot_htf_ref");
+			bConnected &= connect(type224_powerblock, "T_htf_cold", type251_controller, "T_pb_out");
+			bConnected &= connect(type224_powerblock, "m_dot_demand", type251_controller, "m_pb_demand");	//This is input is not used by the controller
+		}
+		else
+		{
+			bConnected &= connect(type424_sco2, "m_dot_htf_ref", type251_controller, "m_dot_htf_ref");
+			bConnected &= connect(type424_sco2, "T_htf_cold", type251_controller, "T_pb_out");
+			bConnected &= connect(type424_sco2, "m_dot_demand", type251_controller, "m_pb_demand");	//This is input is not used by the controller
+		}
+		bConnected &= connect( weather, "tdry", type251_controller, "T_amb" );		
 		bConnected &= connect(tou, "tou_value", type251_controller, "TOUPeriod");
 
-		// Set Powerblock (type 224) Parameters
-		set_unit_value_ssc_double(type224_powerblock, "P_ref" ); //, 115);
-		set_unit_value_ssc_double(type224_powerblock, "eta_ref" ); //, 0.412);
-		set_unit_value_ssc_double(type224_powerblock, "T_htf_hot_ref" ); //, 574);
-		set_unit_value_ssc_double(type224_powerblock, "T_htf_cold_ref" ); //, 290);
-		set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref" ); //, 10);
-		set_unit_value_ssc_double(type224_powerblock, "T_amb_des" ); //, 43.0);
-		set_unit_value_ssc_double(type224_powerblock, "HTF" ); //, 17);
-		set_unit_value_ssc_double(type224_powerblock, "q_sby_frac" ); //, 0.2);
-		set_unit_value_ssc_double(type224_powerblock, "P_boil" ); //, 100);
-		set_unit_value_ssc_double(type224_powerblock, "CT" ); //, 2);
-		set_unit_value_ssc_double(type224_powerblock, "startup_time" ); //, 0.5);
-		set_unit_value_ssc_double(type224_powerblock, "startup_frac" ); //, 0.5);
-		set_unit_value_ssc_double(type224_powerblock, "tech_type" ); //, 1);
-		set_unit_value_ssc_double(type224_powerblock, "T_approach" ); //, 5);
-		set_unit_value_ssc_double(type224_powerblock, "T_ITD_des" ); //, 16);
-		set_unit_value_ssc_double(type224_powerblock, "P_cond_ratio" ); //, 1.0028);
-		set_unit_value_ssc_double(type224_powerblock, "pb_bd_frac" ); //, 0.02);
-		set_unit_value_ssc_double(type224_powerblock, "P_cond_min" ); //, 2);
-		set_unit_value_ssc_double(type224_powerblock, "n_pl_inc" ); //, 8);
-		set_unit_value_ssc_array(type224_powerblock, "F_wc" ); //, [0,0,0,0,0,0,0,0,0]);
+		// Set powerblock parameters
+		if( is_steam_pc )
+		{
+			// Set Powerblock (type 224) Parameters
+			set_unit_value_ssc_double(type224_powerblock, "P_ref"); //, 115);
+			set_unit_value_ssc_double(type224_powerblock, "eta_ref"); //, 0.412);
+			set_unit_value_ssc_double(type224_powerblock, "T_htf_hot_ref"); //, 574);
+			set_unit_value_ssc_double(type224_powerblock, "T_htf_cold_ref"); //, 290);
+			set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref"); //, 10);
+			set_unit_value_ssc_double(type224_powerblock, "T_amb_des"); //, 43.0);
+			set_unit_value_ssc_double(type224_powerblock, "HTF"); //, 17);
+			set_unit_value_ssc_double(type224_powerblock, "q_sby_frac"); //, 0.2);
+			set_unit_value_ssc_double(type224_powerblock, "P_boil"); //, 100);
+			set_unit_value_ssc_double(type224_powerblock, "CT"); //, 2);
+			set_unit_value_ssc_double(type224_powerblock, "startup_time"); //, 0.5);
+			set_unit_value_ssc_double(type224_powerblock, "startup_frac"); //, 0.5);
+			set_unit_value_ssc_double(type224_powerblock, "tech_type"); //, 1);
+			set_unit_value_ssc_double(type224_powerblock, "T_approach"); //, 5);
+			set_unit_value_ssc_double(type224_powerblock, "T_ITD_des"); //, 16);
+			set_unit_value_ssc_double(type224_powerblock, "P_cond_ratio"); //, 1.0028);
+			set_unit_value_ssc_double(type224_powerblock, "pb_bd_frac"); //, 0.02);
+			set_unit_value_ssc_double(type224_powerblock, "P_cond_min"); //, 2);
+			set_unit_value_ssc_double(type224_powerblock, "n_pl_inc"); //, 8);
+			set_unit_value_ssc_array(type224_powerblock, "F_wc"); //, [0,0,0,0,0,0,0,0,0]);
+		}
+		else
+		{
+			set_unit_value_ssc_double(type424_sco2, "W_dot_net_des", as_double("P_ref"));
+			set_unit_value_ssc_double(type424_sco2, "eta_c", 0.89);
+			set_unit_value_ssc_double(type424_sco2, "eta_t", 0.93);
+			set_unit_value_ssc_double(type424_sco2, "P_high_limit", 25.0);
+			set_unit_value_ssc_double(type424_sco2, "deltaT_PHX", 5.0);
 
-		// Set Powerblock (type 224) Inputs
-		set_unit_value_ssc_double( type224_powerblock, "mode" ); //, 2 );		//Always set to 2 for type 251
-		//set_unit_value_ssc_double( type224_powerblock, "demand_var" ); //, 110.0 );		//Don't need to set this?
+			set_unit_value_ssc_double(type424_sco2, "deltaT_ACC", as_double("T_ITD_des"));
+			set_unit_value_ssc_double(type424_sco2, "T_amb_des");
+			set_unit_value_ssc_double(type424_sco2, "fan_power_perc", 1.0);
+			set_unit_value_ssc_double(type424_sco2, "plant_elevation", 0.0);
 
-		// Connect Powerblock (type 224) inputs
-		bConnected &= connect( type251_controller, "T_pb_in", type224_powerblock, "T_htf_hot" );
-		bConnected &= connect( type251_controller, "m_dot_pb", type224_powerblock, "m_dot_htf" );
-		bConnected &= connect( weather, "twet", type224_powerblock, "T_wb" );
-		bConnected &= connect( type251_controller, "standby_control", type224_powerblock, "standby_control" );
-		bConnected &= connect( weather, "tdry", type224_powerblock, "T_db" );
-		bConnected &= connect( weather, "pres", type224_powerblock, "P_amb");
-		bConnected &= connect( weather, "rhum", type224_powerblock, "rh" );
-		bConnected &= connect( tou, "tou_value", type224_powerblock, "TOU");
+			set_unit_value_ssc_double(type424_sco2, "T_htf_hot", as_double("T_htf_hot_ref"));
+			set_unit_value_ssc_double(type424_sco2, "T_htf_cold", as_double("T_htf_cold_ref"));
+			set_unit_value_ssc_double(type424_sco2, "eta_des_est", as_double("eta_ref"));
+			set_unit_value_ssc_double(type424_sco2, "rec_htf", as_double("HTF"));
+			//set_unit_value_ssc_double(type424_sco2, "rec_fl_props" .... ?
 
+			set_unit_value_ssc_double(type424_sco2, "startup_time");
+			set_unit_value_ssc_double(type424_sco2, "startup_frac");
+			set_unit_value_ssc_double(type424_sco2, "q_sb_frac");
+			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac");
+		}
+
+		if( is_steam_pc )
+		{
+			// Set Powerblock (type 224) Inputs
+			set_unit_value_ssc_double(type224_powerblock, "mode"); //, 2 );		//Always set to 2 for type 251
+			//set_unit_value_ssc_double( type224_powerblock, "demand_var" ); //, 110.0 );		//Don't need to set this?
+
+			// Connect Powerblock (type 224) inputs
+			bConnected &= connect(type251_controller, "T_pb_in", type224_powerblock, "T_htf_hot");
+			bConnected &= connect(type251_controller, "m_dot_pb", type224_powerblock, "m_dot_htf");
+			bConnected &= connect(weather, "twet", type224_powerblock, "T_wb");
+			bConnected &= connect(type251_controller, "standby_control", type224_powerblock, "standby_control");
+			bConnected &= connect(weather, "tdry", type224_powerblock, "T_db");
+			bConnected &= connect(weather, "pres", type224_powerblock, "P_amb");
+			bConnected &= connect(weather, "rhum", type224_powerblock, "rh");
+			bConnected &= connect(tou, "tou_value", type224_powerblock, "TOU");
+		}
+		else
+		{
+			bConnected &= connect(type251_controller, "T_pb_in", type424_sco2, "T_htf_hot");
+			bConnected &= connect(type251_controller, "m_dot_pb", type424_sco2, "m_dot_htf");
+			bConnected &= connect(type251_controller, "standby_control", type424_sco2, "standby_control");
+			bConnected &= connect(weather, "tdry", type424_sco2, "T_db");
+			bConnected &= connect(weather, "pres", type424_sco2, "P_amb");
+		}
 
 		// Set Parasitics (type 228) Parameters
 		set_unit_value_ssc_double(type228_parasitics, "P_storage_pump"); //P_storage_pump);
@@ -770,12 +830,23 @@ public:
 		set_unit_value_ssc_double(type228_parasitics, "recirc_source", 0.0);
 
 		// Connect Parasitics (type 228) module to others
-		bConnected &= connect(type224_powerblock, "W_cool_par", type228_parasitics, "P_cooling_tower");
-		bConnected &= connect(type_hel_field, "pparasi", type228_parasitics, "P_helio_track");
-		bConnected &= connect(type224_powerblock, "P_cycle", type228_parasitics, "P_plant_output");
-		bConnected &= connect(type224_powerblock, "eta", type228_parasitics, "eta_cycle");
-		bConnected &= connect(type251_controller, "tank_fp_par", type228_parasitics, "P_cold_tank");
-		bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type228_parasitics, "ref_htf_flow");
+		if( is_steam_pc )
+		{
+			bConnected &= connect(type224_powerblock, "W_cool_par", type228_parasitics, "P_cooling_tower");
+			bConnected &= connect(type224_powerblock, "P_cycle", type228_parasitics, "P_plant_output");
+			bConnected &= connect(type224_powerblock, "eta", type228_parasitics, "eta_cycle");
+			bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type228_parasitics, "ref_htf_flow");
+		}
+		else
+		{
+			bConnected &= connect(type424_sco2, "W_cool_par", type228_parasitics, "P_cooling_tower");
+			bConnected &= connect(type424_sco2, "P_cycle", type228_parasitics, "P_plant_output");
+			bConnected &= connect(type424_sco2, "eta", type228_parasitics, "eta_cycle");
+			bConnected &= connect(type424_sco2, "m_dot_htf_ref", type228_parasitics, "ref_htf_flow");
+		}
+		
+		bConnected &= connect(type_hel_field, "pparasi", type228_parasitics, "P_helio_track");		
+		bConnected &= connect(type251_controller, "tank_fp_par", type228_parasitics, "P_cold_tank");		
 		bConnected &= connect(type251_controller, "q_aux_heat", type228_parasitics, "aux_power");
 		bConnected &= connect(type251_controller, "htf_pump_power", type228_parasitics, "P_htf_pump");
 
