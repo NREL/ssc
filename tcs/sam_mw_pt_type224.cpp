@@ -87,7 +87,7 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,        I_DEMAND_VAR,             "demand_var",                                              "Control signal indicating operational mode",         "none",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,   I_STANDBY_CONTROL,        "standby_control",                                                  "Control signal indicating standby mode",         "none",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,              I_T_DB,                   "T_db",                                                            "Ambient dry bulb temperature",            "C",             "",             "",             "" },
-	{ TCS_INPUT,          TCS_NUMBER,             I_P_AMB,                  "P_amb",                                                                        "Ambient pressure",          "atm",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,             I_P_AMB,                  "P_amb",                                                                        "Ambient pressure",          "mbar",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,               I_TOU,                    "TOU",                                                              "Current Time-of-use period",         "none",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,                I_RH,                     "rh",                                                    "Relative humidity of the ambient air",         "none",             "",             "",             "" },
 
