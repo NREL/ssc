@@ -116,7 +116,7 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_INPUT, TCS_NUMBER, I_M_DOT_HTF,      "m_dot_htf",       "HTF mass flow rate",                             "kg/hr","", "", "" },
 	{ TCS_INPUT, TCS_NUMBER, I_STANDBY_CONTROL,"standby_control", "Control signal indicating standby mode",         "none", "", "", "" },
 	{ TCS_INPUT, TCS_NUMBER, I_T_DB,           "T_db",            "Ambient dry bulb temperature",                   "C",    "", "", "" },
-	{ TCS_INPUT, TCS_NUMBER, I_P_AMB,          "P_amb",           "Ambient pressure",                               "atm",  "", "", "" },
+	{ TCS_INPUT, TCS_NUMBER, I_P_AMB,          "P_amb",           "Ambient pressure",                               "mbar", "", "", "" },
 
 	//OUTPUTS
 	{ TCS_OUTPUT, TCS_NUMBER, O_ETA_CYCLE_DES,   "eta_cycle_des",       "Design: Power cycle efficiency",           "%",    "", "", "" },
@@ -885,7 +885,7 @@ public:
 		double m_dot_htf = value(I_M_DOT_HTF)/3600.0;			//[kg/s] Mass flow rate of htf from receiver, convert from kg/s
 		m_standby_control = (int)value(I_STANDBY_CONTROL);		//[-] Standby control from the controller
 		double T_db = value(I_T_DB) + 273.15;					//[K] Dry bulb temperature, convert from C
-		double P_amb = value(I_P_AMB);							//[atm] Ambient air pressure
+		double P_amb = value(I_P_AMB)*100.0;					//[mbar] Ambient air pressure
 
 		//**************************************************
 		// Test by setting important inputs to design values
