@@ -457,7 +457,9 @@ public:
 		if( is_steam_pc )
 			type224_powerblock = add_unit("sam_mw_pt_type224");
 		else
+		{
 			type424_sco2 = add_unit("sam_sco2_recomp_type424");
+		}
 				
 		int type228_parasitics = add_unit("sam_mw_pt_type228");
 		//E_net calculator
@@ -774,7 +776,7 @@ public:
 
 			set_unit_value_ssc_double(type424_sco2, "startup_time");
 			set_unit_value_ssc_double(type424_sco2, "startup_frac");
-			set_unit_value_ssc_double(type424_sco2, "q_sb_frac");
+			set_unit_value_ssc_double(type424_sco2, "q_sby_frac");
 			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac");
 		}
 
