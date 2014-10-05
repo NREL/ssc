@@ -62,6 +62,7 @@ public:
 
 	virtual int init()
 	{
+		/*
 		// ****************************************
 		// ** Test update sCO2 power cycle code ***
 		// ****************************************
@@ -356,6 +357,7 @@ public:
 
 		std::vector<double> deltaP_od;
 		hx.hxr_pressure_drops(m_dots_od, deltaP_od);
+		*/
 
 		// ****************************************
 		// ** Test Air-Cooler Model **
@@ -367,7 +369,10 @@ public:
 		bool air_cooler_success = air_cooler.design_hx(32.0+273.15, 101325.0, 100.0+273.15, 8000.0,
 			938.9, 0.35, 62.5, 48.0+273.15);
 
-		bool gblah = air_cooler_success;
+		double W_dot_od = air_cooler.off_design_hx(32.0 + 273.15, 101325.0, 100.0 + 273.15, 8000.0,
+			938.9, 48.0 + 273.15);
+
+		double adfadf = 1.23;
 
 		// ************************************
 		// ** Test procedure to find Haynes Allowable Cycles for Fatige Cycles and Creept Life ***
