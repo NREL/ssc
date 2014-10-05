@@ -4,22 +4,37 @@ clear();
 tcs_dir = 'C:/Users/tneises/Documents/Projects';
 // *********************************************
 
+// Set up design-point thermal input and receiver outlet temperature for NREL and GE configs.
+cycle_config = 2;		// 1 = NREL, 2 = GE
+if(cycle_config == 1)
+{
+	Q_sf_des = 150.0;
+	T_rec_out = 364.0;
+}
+if(cycle_config == 2)
+{
+	Q_sf_des = 150.0;
+	T_rec_out = 379.0;
+}
+
 // Add TCS units
 iscc_pb = add_unit("sam_iscc_powerblock");
 
+// ISCC PB parameters
 set_value( iscc_pb, "HTF_code", 17 );
-set_value( iscc_pb, "Q_sf_des", 150 );
+set_value( iscc_pb, "Q_sf_des", Q_sf_des );
 set_value( iscc_pb, "plant_elevation", 600 );
-set_value( iscc_pb, "cycle_config", 1 );
+set_value( iscc_pb, "cycle_config", cycle_config );
+set_value( iscc_pb, "hot_side_delta_t", 30.0 );
+set_value( iscc_pb, "pinch_point", 10.0 );
 
 
+// ISCC PB inputs
+	// Don't need 'm_dot_ms_ss' or 'T_rec_in' if not connected to other types
 set_value( iscc_pb, "T_amb", 20 );
 set_value( iscc_pb, "P_amb", 943.2 );
-
-m_dot_ms = 2256 * 3600.0;			// kg/hr
-set_value( iscc_pb, "m_dot_ms", m_dot_ms ); 
 set_value( iscc_pb, "q_dot_rec_ss", 150 );		//MWt
-set_value( iscc_pb, "T_rec_out", 364.0 );	//C
+set_value( iscc_pb, "T_rec_out", T_rec_out );	//C
 
 
 simulate(1,8760,1,30,false);
