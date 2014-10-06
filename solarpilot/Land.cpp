@@ -32,7 +32,8 @@ void Land::Create(var_map &V)
 	setVar("is_land_max_restrict", _is_land_max_restrict, V, true);		//Restrict outer land boundary range
 	setVar("land_max_opt_max", _land_max_opt_max, V, 6., "[1,20]");		//Maximum outer boundary value
 	setVar("land_max_opt_min", _land_max_opt_min, V, 23., "[1,20]");		//Minimum outer boundary value
-
+	setVar("bound_area", _bound_area, V, 0.);		//Land area occupied by heliostats. This value is calculated from the heliostat field layout positions.
+	
 }
 
 void Land::Clean(){
@@ -351,5 +352,36 @@ double Land::calcPolyLandArea(){
 	excs = fabs(excs);
 
 	return area-excs;
+
+}
+
+double Land::getLandArea(){
+	return _bound_area;
+}
+
+void Land::setLayoutPositions(vector<Point> &layout, bool dolandcalc){
+	_layout_positions = layout;
+	if(dolandcalc)
+		calcLandArea();
+}
+
+void Land::calcLandArea()
+{
+	/* 
+	
+	*/
+
+	if(_is_bounds_array)
+	{
+		_bound_area = calcPolyLandArea();
+	}
+	else{
+		//Calculate the convex hull surrounding the heliostat positions
+		std::vector<Point> hull;
+		Toolbox::convex_hull(_layout_positions, hull);
+
+		//Calculate the area of the convex hull
+		_bound_area = Toolbox::area_polygon(hull);
+	}
 
 }

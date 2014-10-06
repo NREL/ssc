@@ -191,6 +191,7 @@ struct sp_layout
 	double 
 		land_max,	//Land maximum radial extent [tht || m]
 		land_min;	//Land minimum radial extent [tht || m]
+	double land_area;		//Land area calculated by SolarPILOT
 	double h_tower;	//tower height [m]
 	double 
 		span_cw, //[optional] default=+180, field span in clockwise direction 
@@ -227,6 +228,8 @@ struct sp_cost
 	double wiring_user_spec;
 	double plant_spec_cost;
 	double tes_spec_cost;
+	double land_area_const;	//acres
+	double land_area_mult;	
 	double land_spec_cost;
 	double contingency_rate;
 	double sales_tax_rate;

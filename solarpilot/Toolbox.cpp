@@ -1040,7 +1040,7 @@ void Toolbox::ellipse_bounding_box(double &A, double &B, double &phi, double sid
 
 }
 
-void Toolbox::convex_hull(std::vector<Point*> &points, std::vector<Point> &hull)
+void Toolbox::convex_hull(std::vector<Point> &points, std::vector<Point> &hull)
 {
 	/* 
 	Returns a list of points on the convex hull in counter-clockwise order.
@@ -1057,20 +1057,57 @@ void Toolbox::convex_hull(std::vector<Point*> &points, std::vector<Point> &hull)
  
 	// Build lower hull
 	for (int i = 0; i < n; ++i) {
-		while (k >= 2 && crossprod(H.at(k-2), H.at(k-1), *points.at(i)) <= 0) k--;
-		H.at(k++) = *points[i];
+		while (k >= 2 && crossprod(H.at(k-2), H.at(k-1), points.at(i)) <= 0) k--;
+		H.at(k++) = points[i];
 	}
  
 	// Build upper hull
 	for (int i = n-2, t = k+1; i >= 0; i--) {
-		while (k >= t && crossprod(H.at(k-2), H.at(k-1), *points.at(i)) <= 0) k--;
-		H.at(k++) = *points[i];
+		while (k >= t && crossprod(H.at(k-2), H.at(k-1), points.at(i)) <= 0) k--;
+		H.at(k++) = points[i];
 	}
  
-	hull = H;
+	
 
-	//H.resize(k);
-	//return H;
+	H.resize(k);
+	hull = H;
+}
+
+double Toolbox::area_polygon(std::vector<Point> &points){
+	/* 
+
+	INPUT: vector<Point> a list of 'Point' objects.
+	OUTPUT: Return the total area
+
+	ASSUME: we care about the area projected into the Z plane, therefore only x,y coordinates are considered.
+
+	Calculate the area contained within a generic polygon. Use the projected segments method. 
+	The polygon can be convex or non-convex and can be irregular. 
+
+	The vector "points" is an ordered list of points composing the polygon in CLOCKWISE order. 
+	The final point in "points" is assumed to be connected to the first point in "points".
+
+	*/
+
+	//add the first point to the end of the list
+	points.push_back(points.front());
+
+	int npt = (int)points.size();
+
+	double area = 0.;
+
+	for(int i=0; i<npt-1; i++){
+		double w = points.at(i).x - points.at(i+1).x;
+		double ybar = (points.at(i).y + points.at(i+1).y)*0.5;
+
+		area += w * ybar;
+	}
+	
+	//restore the array
+	points.pop_back();
+
+	return area;
+
 }
 
 Point Toolbox::rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point &pt){
