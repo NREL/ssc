@@ -187,6 +187,7 @@ struct sp_layout
 	void LoadDefaults(var_set &V);
 
 	double q_design;	//Design power [MWt]
+	double dni_design;	//Reference-point DNI [W/m2]
 	unsigned int land_bound_type; //See enum LAND_BOUND_TYPE
 	double 
 		land_max,	//Land maximum radial extent [tht || m]

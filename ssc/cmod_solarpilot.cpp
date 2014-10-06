@@ -34,6 +34,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_aspect",                "Receiver aspect ratio (H/W)",                "frac",   "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_hl_perm2",              "Receiver design heat loss",                  "kW/m2",  "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dni_des",                   "Design-point DNI",                           "W/m2",   "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_max",                  "Max heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_min",                  "Min heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -41,6 +42,14 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_1",					  "Attenuation coefficient 1",                  "",       "",         "SolarPILOT",   "?=0.1046",         "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_2",					  "Attenuation coefficient 2",                  "",       "",         "SolarPILOT",   "?=-0.0107",        "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_3",					  "Attenuation coefficient 3",                  "",       "",         "SolarPILOT",   "?=0.002845",       "",                "" },
+	
+	{ SSC_INPUT,        SSC_NUMBER,      "n_facet_x",                 "Number of heliostat facets - X",             "",       "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_facet_y",                 "Number of heliostat facets - Y",             "",       "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "focus_type",                "Heliostat focus method",                     "",       "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cant_type",                 "Heliostat cant method",                      "",       "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_flux_days",               "No. days in flux map lookup",                "",       "",         "SolarPILOT",   "?=8",              "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",            "Hourly frequency in flux map lookup",        "",       "",         "SolarPILOT",   "?=1",              "",                "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "SolarPILOT",   "?=1",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",                 "Tower cost scaling exponent",                "",       "",         "SolarPILOT",   "*",                "",                "" },
@@ -129,10 +138,37 @@ public:
 
 		helios.front().width = as_double("helio_width");
 		helios.front().height = as_double("helio_height");
-		helios.front().optical_error = as_double("helio_optical_error");
+		helios.front().optical_error = as_double("helio_optical_error"); 
 		helios.front().active_fraction = as_double("helio_active_fraction");
 		helios.front().reflectance = as_double("helio_reflectance");
-		
+		helios.front().npanels_h = as_integer("n_facet_y");
+		helios.front().npanels_w = as_integer("n_facet_x");
+		int cmap[5];
+		cmap[0] = sp_heliostat::CANT_TYPE::FLAT;
+		cmap[1] = sp_heliostat::CANT_TYPE::AT_SLANT;
+		cmap[2] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+		cmap[3] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+		cmap[4] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+		int cant_type = as_integer("cant_type");
+		helios.front().cant_type = cmap[ cant_type ];
+		if( cant_type == 2 ){
+			helios.front().cant_settings.point_day = 81;  //spring equinox
+			helios.front().cant_settings.point_hour = 12.;
+		}
+		else if( cant_type == 3 ){
+			helios.front().cant_settings.point_day = 172;  //Summer solstice
+			helios.front().cant_settings.point_hour = 12.;
+		}
+		else if( cant_type == 4){
+			helios.front().cant_settings.point_day = 355;  //Winter solstice
+			helios.front().cant_settings.point_hour = 12.;
+		}
+
+		int fmap[2];
+		fmap[0] = sp_heliostat::FOCUS_TYPE::FLAT;
+		fmap[1] = sp_heliostat::FOCUS_TYPE::AT_SLANT;
+		helios.front().focus_type = fmap[ as_integer("focus_type") ];
+
 
 		recs.front().absorptance = as_double("rec_absorptance");
 		recs.front().height = as_double("rec_height");
@@ -140,6 +176,7 @@ public:
 		recs.front().q_hl_perm2 = as_double("rec_hl_perm2");
 		
 		layout.q_design = as_double("q_design");
+		layout.dni_design = as_double("dni_des");
 		layout.land_max = as_double("land_max");
 		layout.land_min = as_double("land_min");
 		layout.h_tower = as_double("h_tower");
@@ -223,6 +260,9 @@ public:
 	
 			//sp_optical_table opttab;
 			sp_flux_table fluxtab;
+			fluxtab.is_user_spacing = true;
+			fluxtab.n_flux_days = as_integer("n_flux_days");
+			fluxtab.delta_flux_hrs = as_integer("delta_flux_hrs");
 		
 			int nflux_x = 12, nflux_y = 1;
 			sapi.CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true);

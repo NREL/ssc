@@ -97,14 +97,22 @@ This type can be run in three different modes.
 	23	|	<>Interpolation beta coef.	|	interp_beta				|	-		|
 	24	|	Flux map X resolution		|	n_flux_x				|	-		|
 	25	|	Flux map Y resolution		|	n_flux_y				|	-		|
-	26	|	Heliostat position table	|	helio_positions			|	m		|	{{x1,y1,z1},...}
-	27	|	<>Heliostat aim point table	|	helio_aim_points		|	m		|	{{x1,y1,z1},...} receiver coordinates
+	26  |   Atm. atten coef 0           |   c_atm_0                 |   -       |
+	27  |   Atm. atten coef 1           |   c_atm_1                 |   1/km    |
+	28  |   Atm. atten coef 2           |   c_atm_2                 |   1/km^2  |
+	29  |   Atm. atten coef 3           |   c_atm_3                 |   1/km^3  |
+	30  |   Number of helio. facets X   |   n_facet_x               |   -       |
+	31  |   Number of helio. facets Y   |   n_facet_y               |   -       |
+	32  |   Helio. canting type         |   cant_type               |   -       |   0=Flat, 1=Ideal, 2=Equinox, 3=Summer sol., 4=Winter sol
+	33  |   Helio. focus type           |   focus_type              |   -       |   0=Flat, 1=Ideal
+	34	|	Heliostat position table	|	helio_positions			|	m		|	{{x1,y1,z1},...}
+	35	|	<>Heliostat aim point table	|	helio_aim_points		|	m		|	{{x1,y1,z1},...} receiver coordinates
 	----- Parameters set on Init() ------------------------------------------------------------------------
-	27	|	<>Heliostat aim point table	|	helio_aim_points		|	m		|	{{x1,y1,z1},...} receiver coordinates
-	28	|	Number of heliostats		|	N_hel					|	-		|
-	29	|	Field efficiency array		|	eta_map					| deg,deg,-	|	{{az1,el1,eff1},{az2,...}}
-	30	|	Flux map sun positions		|	flux_positions			| deg,deg	|	{{az1,el1},{az2,...}}
-	31	|	Flux map intensities		|	flux_maps				|	-		|	{{f11,f12,f13...},{f21,f22...}..}
+	36	|	<>Heliostat aim point table	|	helio_aim_points		|	m		|	{{x1,y1,z1},...} receiver coordinates
+	37	|	Number of heliostats		|	N_hel					|	-		|
+	38	|	Field efficiency array		|	eta_map					| deg,deg,-	|	{{az1,el1,eff1},{az2,...}}
+	39	|	Flux map sun positions		|	flux_positions			| deg,deg	|	{{az1,el1},{az2,...}}
+	40	|	Flux map intensities		|	flux_maps				|	-		|	{{f11,f12,f13...},{f21,f22...}..}
 	########################################################################################################
 	<> = Optional
 
@@ -133,6 +141,14 @@ This type can be run in three different modes.
 	29	|	Field efficiency array		|	eta_map					| deg,deg,-	|	{{az1,el1,eff1},{az2,...}}
 	30	|	Flux map sun positions		|	flux_positions			| deg,deg	|	{{az1,el1},{az2,...}}
 	31	|	Flux map intensities		|	flux_maps				|	-		|	{{f11,f12,f13...},{f21,f22...}..}
+	32  |   Atm. atten coef 0           |   c_atm_0                 |   -       |
+	33  |   Atm. atten coef 1           |   c_atm_1                 |   1/km    |
+	34  |   Atm. atten coef 2           |   c_atm_2                 |   1/km^2  |
+	35  |   Atm. atten coef 3           |   c_atm_3                 |   1/km^3  |
+	36  |   Number of helio. facets X   |   n_facet_x               |   -       |
+	37  |   Number of helio. facets Y   |   n_facet_y               |   -       |
+	38  |   Helio. canting type         |   cant_type               |   -       |   0=Flat, 1=Ideal, 2=Equinox, 3=Summer sol., 4=Winter sol
+	39  |   Helio. focus type           |   focus_type              |   -       |   0=Flat, 1=Ideal
 	----- Parameters set on Init() ------------------------------------------------------------------------
 	None
 	########################################################################################################
@@ -184,6 +200,13 @@ enum{	//Parameters
 		P_c_atm_1,
 		P_c_atm_2,
 		P_c_atm_3,
+		P_n_facet_x,
+		P_n_facet_y,
+		P_cant_type,
+		P_focus_type,
+		P_n_flux_days,
+		P_delta_flux_hrs,
+		P_dni_des,
 
 		//Inputs
 		I_v_wind,
@@ -237,6 +260,13 @@ tcsvarinfo sam_mw_pt_heliostatfield_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_1",					"Attenuation coefficient 1", "", "", "", "0.1046"},
 	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_2",					"Attenuation coefficient 2", "", "", "", "-0.0107"},
 	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_3",					"Attenuation coefficient 3", "", "", "", "0.002845"},
+	{TCS_PARAM, TCS_NUMBER, P_n_facet_x,            "n_facet_x",                "Number of heliostat facets - X", "", "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_n_facet_y,            "n_facet_y",                "Number of heliostat facets - Y", "", "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_cant_type,            "cant_type",                "Heliostat cant method",    "", "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_focus_type,           "focus_type",               "Heliostat focus method", "", "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_n_flux_days,          "n_flux_days",              "No. days in flux map lookup", "", "", "", "8"},
+	{TCS_PARAM, TCS_NUMBER, P_delta_flux_hrs,       "delta_flux_hrs",           "Hourly frequency in flux map lookup", "hrs", "", "", "1"},
+	{TCS_PARAM, TCS_NUMBER, P_dni_des,              "dni_des",                  "Design-point DNI", "W/m2", "", "", ""},
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_v_wind,			"vwind",			"Wind velocity",										"m/s",		"", "", ""},
@@ -308,7 +338,10 @@ private:
 	double* flux_maps;
 	double* flux_map;
 	double c_atm_0, c_atm_1, c_atm_2, c_atm_3;
-
+	int n_facet_x, n_facet_y;
+	int cant_type, focus_type;
+	int n_flux_days, delta_flux_hrs;
+	double dni_des;
 	
 	//Stored Variables
 	double eta_prev;
@@ -354,7 +387,12 @@ public:
 		flux_positions	= NULL;
 		flux_maps	= NULL;
 		flux_map = NULL;
-
+		n_facet_x = 0;
+		n_facet_y = 0;
+		cant_type = 0;
+		focus_type = 0;
+		n_flux_days = 0;
+		delta_flux_hrs = 0;
 		
 		eta_prev = std::numeric_limits<double>::quiet_NaN();
 		v_wind_prev = std::numeric_limits<double>::quiet_NaN();
@@ -362,6 +400,7 @@ public:
 		c_atm_1 = std::numeric_limits<double>::quiet_NaN();
 		c_atm_2 = std::numeric_limits<double>::quiet_NaN();
 		c_atm_3 = std::numeric_limits<double>::quiet_NaN();
+		dni_des = std::numeric_limits<double>::quiet_NaN();
 
 	}
 
@@ -418,6 +457,14 @@ public:
 			c_atm_1 = value(P_c_atm_1);
 			c_atm_2 = value(P_c_atm_2);
 			c_atm_3 = value(P_c_atm_3);
+			n_facet_x = (int)value(P_n_facet_x);
+			n_facet_y = (int)value(P_n_facet_y);
+			cant_type = (int)value(P_cant_type);
+			focus_type = (int)value(P_focus_type);
+			n_flux_days = (int)value(P_n_flux_days);
+			delta_flux_hrs = (int)value(P_delta_flux_hrs);
+			dni_des = value(P_dni_des);
+
 			pos_dim = 2;	//initiaize with 2 dimensions (x,y) on helio positions
 			if( run_type != sam_mw_pt_heliostatfield::RUN_TYPE::USER_FIELD ) break;
 
@@ -451,6 +498,13 @@ public:
 			c_atm_1 = value(P_c_atm_1);
 			c_atm_2 = value(P_c_atm_2);
 			c_atm_3 = value(P_c_atm_3);
+			n_facet_x = (int)value(P_n_facet_x);
+			n_facet_y = (int)value(P_n_facet_y);
+			cant_type = (int)value(P_cant_type);
+			focus_type = (int)value(P_focus_type);
+			n_flux_days = (int)value(P_n_flux_days);
+			delta_flux_hrs = (int)value(P_delta_flux_hrs);
+			dni_des = value(P_dni_des);
 			break;
 		default:
 			break;
@@ -492,7 +546,30 @@ public:
 			helios.front().optical_error = helio_optical_error;
 			helios.front().active_fraction = helio_active_fraction;
 			helios.front().reflectance = helio_reflectance;
-		
+			int cmap[5];
+			cmap[0] = sp_heliostat::CANT_TYPE::FLAT;
+			cmap[1] = sp_heliostat::CANT_TYPE::AT_SLANT;
+			cmap[2] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+			cmap[3] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+			cmap[4] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+			helios.front().cant_type = cmap[ cant_type ];
+			if( cant_type == 2 ){
+				helios.front().cant_settings.point_day = 81;  //spring equinox
+				helios.front().cant_settings.point_hour = 12.;
+			}
+			else if( cant_type == 3 ){
+				helios.front().cant_settings.point_day = 172;  //Summer solstice
+				helios.front().cant_settings.point_hour = 12.;
+			}
+			else if( cant_type == 4){
+				helios.front().cant_settings.point_day = 355;  //Winter solstice
+				helios.front().cant_settings.point_hour = 12.;
+			}
+
+			int fmap[2];
+			fmap[0] = sp_heliostat::FOCUS_TYPE::FLAT;
+			fmap[1] = sp_heliostat::FOCUS_TYPE::AT_SLANT;
+			helios.front().focus_type = fmap[ focus_type ];
 
 			recs.front().absorptance = rec_absorptance;
 			recs.front().height = rec_height;
@@ -500,6 +577,7 @@ public:
 			recs.front().q_hl_perm2 = rec_hl_perm2;
 			
 			layout.q_design = q_design;
+			layout.dni_design = dni_des;
 			layout.land_max = land_max;
 			layout.land_min = land_min;
 			layout.h_tower = h_tower;
@@ -588,6 +666,11 @@ public:
 
 			sapi.SetSummaryCallbackStatus(true);
 			sapi.SetSummaryCallback( solarpilot_callback, (void*)this);
+
+			//set up flux map resolution
+			fluxtab.is_user_spacing = true;
+			fluxtab.n_flux_days = n_flux_days;
+			fluxtab.delta_flux_hrs = delta_flux_hrs;
 
 			//run the flux maps
 			sapi.CalculateFluxMaps(fluxtab, n_flux_x, n_flux_y, true);

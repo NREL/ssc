@@ -153,6 +153,7 @@ void sp_receiver::LoadDefaults(var_set &V)
 void sp_layout::LoadDefaults(var_set &V)
 {
 	q_design = V["solarfield"][0]["q_des"].value_double();	//Design power [MWt]
+	dni_design = V["solarfield"][0]["dni_des"].value_double();	//Reference-point DNI [W/m2]
 	land_bound_type = LAND_BOUND_TYPE::SCALED; //See enum LAND_BOUND_TYPE
 	land_max = V["land"][0]["max_scaled_rad"].value_double();	//Land maximum radial extent [tht || m]
 	land_min = V["land"][0]["min_scaled_rad"].value_double();	//Land minimum radial extent [tht || m]
