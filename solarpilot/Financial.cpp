@@ -22,7 +22,7 @@ double Financial::getTotalDirectCost(){return _total_direct_cost;}
 double Financial::getTotalIndirectCost(){return _total_indirect_cost;}
 double Financial::getTotalInstalledCost(){return _total_installed_cost;}
 double Financial::getCostPerCapacity(){return _cost_per_capacity;}
-	
+double Financial::getLandAreaTot(){return _land_area_tot;}
 	
 bool Financial::isPaymentFactors(){return _is_pmt_factors;}
 void Financial::isPaymentFactors(bool value){_is_pmt_factors = value;}
@@ -49,6 +49,9 @@ void Financial::Create(var_map &V){
 	setVar("fixed_cost", _fixed_cost, V, 0.);		//Cost that does not scale with any plant parameter
 	setVar("total_direct_cost", _total_direct_cost, V, 0.);		//Sum of all direct costs
 	setVar("land_cost", _land_cost, V, 0.);		//Land cost
+	setVar("land_const", _land_const, V, 45.);		//Fixed land area that is added to the area occupied by heliostats
+	setVar("land_mult", _land_mult, V, 1.3);		//Factor multiplying the land area occupied by heliostats
+	setVar("land_area_tot", _land_area_tot, V, 0.);		//Total calculated land area
 	setVar("land_spec_cost", _land_spec_cost, V, 10000.);		//Cost of land per acre including the footprint of the land occupied by the entire plant.
 	setVar("contingency_rate", _contingency_rate, V, 7.);		//Fraction of the direct capital costs added to account for contingency
 	setVar("contingency_cost", _contingency_cost, V, 0.);		//Contingency cost
@@ -159,9 +162,9 @@ void Financial::calcPlantCapitalCost(SolarField &SF){
 
 	_total_direct_cost += _contingency_cost;
 
-	double Aland = SF.calcLandArea();
-	if(Aland < 0. || Aland > 9.e9) Aland = 0.;
-	_land_cost = Aland * _land_spec_cost / 4046.86;		//[m2 -> acre]
+	double Aland = SF.getLandObject()->getLandArea();
+	_land_area_tot = (Aland * _land_mult/4046.86 + _land_const) * (Aland > 1.e-6 ? 1. : 0.) ;
+	_land_cost = _land_area_tot * _land_spec_cost;		
 
 	_sales_tax_cost = _sales_tax_rate * _sales_tax_frac * _total_direct_cost / 1.e4;
 

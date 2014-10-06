@@ -23,6 +23,10 @@ class Land : public mod_base
 		_min_fixed_rad,		//_bound_type = 2
 		_land_max_opt_max,
 		_land_max_opt_min;
+	
+	double 
+		_bound_area;	//land area inside the bounding box around the heliostat positions
+	
 	bool 
 		_is_bounds_scaled,		//Land boundary scales with tower hight value
 		_is_bounds_fixed,		//Land boundary has fixed limits (not more than | not less than)
@@ -32,6 +36,8 @@ class Land : public mod_base
 
 	vector<Point> 
 		_topo_grid;	//Grid with regularly spaced x-y points describing the topology in the z direction
+	vector<Point>
+		_layout_positions;	//list of heliostat positions -- used to calculate land area
 	bounds_array		//--- vector<vector<double> > ----
 		_inclusions,	//Vector of land inclusion maps
 		_exclusions;	//Vector of exclusion maps 
@@ -47,8 +53,13 @@ class Land : public mod_base
 	void getRadialExtents(double rval[2], double tht=1.);
 	bounds_array *getInclusions();
 	bounds_array *getExclusions();
+	vector<Point> *getLayoutPositions();
+	double getLandArea();
 	double calcPolyLandArea();
 	
+	void calcLandArea();
+	void setLayoutPositions(vector<Point> &layout, bool dolandcalc = true);
+
 	bool isBoundsScaled();
 	void isBoundsScaled(bool &val);
 	bool isBoundsFixed();

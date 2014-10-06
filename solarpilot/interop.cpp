@@ -315,6 +315,13 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 
 	//--------end of plant page-----
 	
+	//------ land calculation
+	double acre = 4046.86; //m2
+	double land_const = V["financial"][0]["land_const"].value_double() * acre;
+	double land_mult = V["financial"][0]["land_mult"].value_double();
+	double bound_area = V["land"][0]["bound_area"].value_double();
+	double land_area_tot = (land_const + land_mult * bound_area) * (bound_area < 1.e-6 ? 0. : 1.);
+	V["financial"][0]["land_area_tot"].value = my_to_string(land_area_tot); //m2
 
 	//----- Costs/financials page -----------
 	double tower_fixed_cost, tower_exp, tower_cost;

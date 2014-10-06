@@ -30,6 +30,9 @@ class Financial : public mod_base
 		_tes_cost,		//Thermal storage cost
 		_tes_spec_cost,	//Cost of thermal storage per kilowatt hour (thermal) capacity
 		_land_cost,		//Land cost
+		_land_const,  //fixed land area [acre]
+		_land_mult,	  //bounding land area multiplier 
+		_land_area_tot,  //calculated total land area [m2]
 		_land_spec_cost,	//Cost of land per acre including the footprint of the land occupied by the entire plant.
 		_fixed_cost,	//Cost that does not scale with any plant parameter
 		_contingency_rate,	//Fraction of the direct capital costs added to account for contingency
@@ -95,7 +98,7 @@ public:
 	double getTotalIndirectCost();
 	double getTotalInstalledCost();
 	double getCostPerCapacity();
-	
+	double getLandAreaTot();
 	
 	bool isPaymentFactors();
 	void isPaymentFactors(bool value);

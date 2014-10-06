@@ -547,6 +547,9 @@ struct Point {
 	void Add(double _x, double _y, double _z);
 	void Subtract( Point &P );
 	double operator [](const int &index);
+	bool operator <(const Point &p) const {
+		return x < p.x || (x == p.x && y < p.y);
+	};
 };
 
 struct Vect {
@@ -714,7 +717,9 @@ namespace Toolbox
 	//Axis-aligned bounding box of a rotated ellipse
 	void ellipse_bounding_box(double &A, double &B, double &phi, double sides[4], double cx = 0., double cy = 0.);
 	//Calculate the convex hull surrounding a set of points
-	void convex_hull(std::vector<Point*> &points, std::vector<Point> &hull);
+	void convex_hull(std::vector<Point> &points, std::vector<Point> &hull);
+	//Calculate the area of an irregular polygon
+	double area_polygon(std::vector<Point> &points);
 	//Rotation of a point about an arbitrary axis centered at point 'axloc'
 	Point rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point &pt);
 	//Calculate the z-rotation angle of a heliostat that's undergone a normal-vector transform

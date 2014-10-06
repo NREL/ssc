@@ -461,6 +461,7 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 		WeatherData empty;
 		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
 		_SF->calcHeliostatShadows();
+		_variables["land"][0]["bound_area"].set( _SF->getLandObject()->getLandArea() );
 	}
 
 	
@@ -501,6 +502,14 @@ bool AutoPilot::SetupExpert(var_set &vset, sp_ambient &ambient, sp_cost &cost, s
 	//Create the solar field object
 	_SF->Create(_variables);
 	
+	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
+	if(layout.heliostat_positions.size() > 0){
+		WeatherData empty;
+		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
+		_SF->calcHeliostatShadows();
+		_variables["land"][0]["bound_area"].set( _SF->getLandObject()->getLandArea() );
+	}
+
 	//pass the callback along to the solar field, if applicable
 	if(_has_detail_callback){
 		_detail_siminfo = _SF->getSimInfoObject();
@@ -903,7 +912,7 @@ void AutoPilot::PostProcessLayout()
 		hp.user_optics = false;
 		_layout->heliostat_positions.push_back( hp );
 	}
-
+	_layout->land_area = _SF->getLandObject()->getLandArea();
 }
 
 void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)

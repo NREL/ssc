@@ -853,6 +853,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		for(int i=0; i<nh; i++){
 			HelPos.at(i) = layout->at(i).location;
 		}
+
 	}
 	
 	//Weed out the heliostats that lie outside of the land boundary
@@ -872,6 +873,9 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		}
 	}
 
+	if(layout_method == 3 || refresh_only)
+		//update the layout positions in the land object here since the post-process call isn't made after this
+		SF.getLandObject()->setLayoutPositions(HelPos);
 
 	//----For all of the heliostat positions, create the heliostat objects and assign the correct canting/focusing
 	int Npos = HelPos.size();
@@ -1418,7 +1422,12 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 		}
 	}
 
-
+	//update the layout positions in the land area calculation
+	vector<Point> lpos(_heliostats.size());
+	for(int i=0; i<(int)_heliostats.size(); i++)
+		lpos.at(i) = *_heliostats.at(i)->getLocation();
+	_land.setLayoutPositions(lpos);
+	
 
 	return;
 }
@@ -2877,34 +2886,7 @@ double *SolarField::getPlotBounds(bool use_land){
 
 }
 
-double SolarField::calcLandArea(){
-	/* 
-	Calculate the land area consumed by a layout. Handle this differently for scaled layouts and polygonal boundary layouts.
 
-	For scaled/fixed layouts, (i.e. the bounds are simple circles or open circles), return the bounding box.
-
-	For polygonal layouts, return the summation of area contained within "inclusions" minus area contained within "exclusions".
-	Note that the program doesn't test for overlap in Inclusions or in Exclusions.
-	*/
-
-	if(_land.isBoundsArray()){
-		return _land.calcPolyLandArea();
-	}
-	else
-	{
-
-		//collect the heliostat locations
-		vector<Point*> hlocs;
-		for(int i=0; i<(int)_heliostats.size(); i++){
-			hlocs.push_back( _heliostats.at(i)->getLocation() );
-		}
-
-
-		return (_helio_extents[0] - _helio_extents[1])*(_helio_extents[2] - _helio_extents[3]);
-	}
-
-
-}
 
 void SolarField::updateAllTrackVectors(){
 	int npos = _heliostats.size();

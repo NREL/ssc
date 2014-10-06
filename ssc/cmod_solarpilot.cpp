@@ -41,6 +41,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_1",					  "Attenuation coefficient 1",                  "",       "",         "SolarPILOT",   "?=0.1046",         "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_2",					  "Attenuation coefficient 2",                  "",       "",         "SolarPILOT",   "?=-0.0107",        "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_3",					  "Attenuation coefficient 3",                  "",       "",         "SolarPILOT",   "?=0.002845",       "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "SolarPILOT",   "?=1",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",                 "Tower cost scaling exponent",                "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_cost",              "Receiver reference cost",                    "$",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -211,59 +212,69 @@ public:
 		//return the number of heliostats
 		assign("number_heliostats", layout.heliostat_positions.size() ); 
 		
-		sapi.SetDetailCallbackStatus(false);
-		sapi.SetSummaryCallbackStatus(true);
-		sapi.SetSummaryCallback( solarpilot_callback, (void*)this);
+		//check if flux map calculations are desired
+		if( as_boolean("calc_fluxmaps") ){
+
+			sapi.SetDetailCallbackStatus(false);
+			sapi.SetSummaryCallbackStatus(true);
+			sapi.SetSummaryCallback( solarpilot_callback, (void*)this);
 		
-		//	sapi.Optimize(opt, recs, layout);
+			//	sapi.Optimize(opt, recs, layout);
 	
-		//sp_optical_table opttab;
-		sp_flux_table fluxtab;
+			//sp_optical_table opttab;
+			sp_flux_table fluxtab;
 		
-		int nflux_x = 12, nflux_y = 1;
-		sapi.CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true);
+			int nflux_x = 12, nflux_y = 1;
+			sapi.CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true);
 		
-		//collect the optical efficiency data and sun positions
-		if ( fluxtab.zeniths.size() > 0 && fluxtab.azimuths.size() > 0
-			&& fluxtab.efficiency.size() > 0 )
-		{
-			ssc_number_t *zeniths = allocate( "opteff_zeniths", fluxtab.zeniths.size() );
-			for( size_t i=0;i<fluxtab.zeniths.size();i++ )
-				zeniths[i] = (float)fluxtab.zeniths[i];
+			//collect the optical efficiency data and sun positions
+			if ( fluxtab.zeniths.size() > 0 && fluxtab.azimuths.size() > 0
+				&& fluxtab.efficiency.size() > 0 )
+			{
+				ssc_number_t *zeniths = allocate( "opteff_zeniths", fluxtab.zeniths.size() );
+				for( size_t i=0;i<fluxtab.zeniths.size();i++ )
+					zeniths[i] = (float)fluxtab.zeniths[i];
 
-			ssc_number_t *azimuths = allocate( "opteff_azimuths", fluxtab.azimuths.size() );
-			for( size_t i=0;i<fluxtab.azimuths.size();i++ )
-				azimuths[i] = (float)fluxtab.azimuths[i];
+				ssc_number_t *azimuths = allocate( "opteff_azimuths", fluxtab.azimuths.size() );
+				for( size_t i=0;i<fluxtab.azimuths.size();i++ )
+					azimuths[i] = (float)fluxtab.azimuths[i];
 
-			size_t nvals = fluxtab.efficiency.size();
-			ssc_number_t *opteff = allocate( "opteff_table", nvals );
-			for( size_t i=0;i<nvals;i++ )
-				opteff[ i ] = (float)fluxtab.efficiency[i];
-		}
-		else
-			throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+				size_t nvals = fluxtab.efficiency.size();
+				ssc_number_t *opteff = allocate( "opteff_table", nvals );
+				for( size_t i=0;i<nvals;i++ )
+					opteff[ i ] = (float)fluxtab.efficiency[i];
+			}
+			else
+				throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
 		
-		//collect the flux map data
-		block_t<double> *flux_data = &fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
-		if( flux_data->ncols() > 0 && flux_data->nlayers() > 0 ){
+			//collect the flux map data
+			block_t<double> *flux_data = &fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
+			if( flux_data->ncols() > 0 && flux_data->nlayers() > 0 ){
 			
-			ssc_number_t *fluxdata = allocate( "flux_table", nflux_y * flux_data->nlayers(), nflux_x );
+				ssc_number_t *fluxdata = allocate( "flux_table", nflux_y * flux_data->nlayers(), nflux_x );
 			
-			int cur_row=0;
+				int cur_row=0;
 			
-			for( size_t i=0; i<flux_data->nlayers(); i++){
-				for( int j=0; j<nflux_y; j++){
-					for( int k=0; k<nflux_x; k++){
-						fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+				for( size_t i=0; i<flux_data->nlayers(); i++){
+					for( int j=0; j<nflux_y; j++){
+						for( int k=0; k<nflux_x; k++){
+							fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+						}
+						cur_row++;
 					}
-					cur_row++;
 				}
 			}
-		}
-		else
-			throw exec_error("solarpilot", "failed to calculate a correct flux map table");
+			else
+				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
-		
+		}
+		else{
+			//fluxmaps not required, so declare required variables and fill with zeros
+			ssc_number_t *zeniths = allocate( "opteff_zeniths", 1 );
+			ssc_number_t *azimuths = allocate( "opteff_azimuths", 1 );
+			ssc_number_t *opteff = allocate( "opteff_table", 1 );
+			ssc_number_t *fluxdata = allocate( "flux_table", 1, 1 );
+		}
 
 	}
 };

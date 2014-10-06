@@ -116,7 +116,6 @@ protected:
 		_estimated_annual_power,	//Calculated in ProcessLayoutResults().. Estimate of total annual heliostat power output
 		_q_des_withloss;			//[MW] The design point thermal power that must be met
 
-	
 	bool
 		_is_power_opt, 		//Vary the power output during optimization to identify optimal level?
 		_is_tht_opt,		//Vary the tower height during optimization to identify optimal level?
@@ -318,7 +317,7 @@ public:
 	int getActiveReceiverCount();
 	static bool parseHeliostatXYZFile(const std::string &filedat, layout_shell &layout );
 	int calcNumRequiredSimulations();
-	double calcLandArea();
+	//double calcLandArea();
 	double calcPipingHeatLoss();
 	double calcTotalHeatLoss();
 	void HermiteFluxSimulation(Hvector &helios, bool keep_existing_profile = false);
