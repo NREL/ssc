@@ -267,10 +267,10 @@ namespace N_sco2_rec
 				return m_deltaP_kPa;
 			}
 
-			bool calc_th_1Dmaxflux_Tout(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+			bool calc_th_1Dmaxflux_Tout(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
 				double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa);
 
-			bool calc_th_1Dmaxflux_mdot(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+			bool calc_th_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
 				double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs);
 
 		private:
@@ -311,7 +311,7 @@ namespace N_sco2_rec
 
 			util::matrix_t<double> m_element_results_temp;
 
-			bool calc_th_1Dmaxflux(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+			bool calc_th_1Dmaxflux(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
 				double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, double m_dot_tube, bool know_Tout);
 
 			bool calc_min_thick_general();

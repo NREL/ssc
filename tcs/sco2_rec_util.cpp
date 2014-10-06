@@ -386,21 +386,23 @@ N_sco2_rec::C_calc_tube_min_th::C_calc_tube_min_th()
 	m_know_T_out = true;
 };
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_Tout(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_Tout(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
 	double d_out_m,
 	double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa)
 {
+	/* Calculate tube thickness when a 1D flux profile and the fluid outlet temperature are known */
 	return calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, T_fluid_out_C, P_fluid_in_MPa, -999.0, true);
 }
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_mdot(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
 	double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs)
 {
+	/* Calculate tube thickness when a 1D flux profile and the mass flow rate are known */
 	return calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
 }
 
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> max_flux_axial_1D_Wm2, double L_tube_m,
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
 	double d_out_m,
 	double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, double m_dot_tube, bool know_Tout)
 {
@@ -410,6 +412,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> max_
 	m_T_fluid_out = T_fluid_out_C;		//[C]
 	m_P_fluid_in = P_fluid_in_MPa;		//[MPa]
 	m_L_tube = L_tube_m;				//[m]
+	m_m_dot_tube = m_dot_tube;			//[kg/s] ?? MJW 10-6-14
 	m_know_T_out = know_Tout;			//[-]
 
 	// Could check T_out > T_in and that pressure is in MPa...

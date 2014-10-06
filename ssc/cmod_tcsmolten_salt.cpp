@@ -31,17 +31,14 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "helio_active_fraction","Heliostat active frac.",                                            "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",    "Heliostat reflectance",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",      "Receiver absorptance",                                              "-",            "",            "heliostat",      "*",                       "",                     "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                   "",             "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_hl_perm2",         "Receiver design heatloss",                                          "kW/m2",        "",            "heliostat",      "*",                       "",                     "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "q_design",             "Field thermal power rating",                                        "kW",           "",            "heliostat",      "*",                       "",                     "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                      "m",            "",            "heliostat",      "*",                       "",                     "" },
-    //{ SSC_INPUT,        SSC_STRING,      "weather_file",         "Weather file location",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "land_bound_type",      "Land boundary type",                                                "-",            "",            "heliostat",      "?=0",                     "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "land_max",             "Land max boundary",                                                 "-ORm",         "",            "heliostat",      "?=7.5",                   "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "land_min",             "Land min boundary",                                                 "-ORm",         "",            "heliostat",      "?=0.75",                  "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "land_bound_table",     "Land boundary table",                                               "m",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_ARRAY,       "land_bound_list",      "Boundary table listing",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dni_des",              "Design-point DNI",                                                  "W/m2",         "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "p_start",              "Heliostat startup energy",                                          "kWe-hr",       "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "p_track",              "Heliostat tracking energy",                                         "kWe",          "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "hel_stow_deploy",      "Stow/deploy elevation",                                             "deg",          "",            "heliostat",      "*",                       "",                     "" },
@@ -56,7 +53,17 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_MATRIX,      "eta_map",              "Field efficiency array",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "flux_positions",       "Flux map sun positions",                                            "deg",          "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "flux_maps",            "Flux map intensities",                                              "-",            "",            "heliostat",      "?",                       "",                     "" },
-    
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_0",              "Attenuation coefficient 0",                                         "",             "",            "heliostat",      "?=0.006789",              "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_1",              "Attenuation coefficient 1",                                         "",             "",            "heliostat",      "?=0.1046",                "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_2",              "Attenuation coefficient 2",                                         "",             "",            "heliostat",      "?=-0.0107",               "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_3",              "Attenuation coefficient 3",                                         "",             "",            "heliostat",      "?=0.002845",              "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_facet_x",            "Number of heliostat facets - X",                                    "",             "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_facet_y",            "Number of heliostat facets - Y",                                    "",             "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "focus_type",           "Heliostat focus method",                                            "",             "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cant_type",            "Heliostat cant method",                                             "",             "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_flux_days",          "No. days in flux map lookup",                                       "",             "",            "heliostat",      "?=8",                     "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",       "Hourly frequency in flux map lookup",                               "",             "",            "heliostat",      "?=1",                     "",                     "" },
+
 	//// Heliostat field inputs					     																	  
  //   { SSC_INPUT,        SSC_NUMBER,      "field_control",        "Field defocus control",                                             "",             "",            "heliostat",      "*",                       "",                      "" },
  //   { SSC_INPUT,        SSC_NUMBER,      "vwind",                "Wind velocity",                                                     "m/s",          "",            "heliostat",      "*",                       "",                     "" },
@@ -481,6 +488,7 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "rec_aspect");//, 1);
 		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");//, 0.);
 		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("Q_rec_des"));//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "dni_des");
 		set_unit_value_ssc_double(type_hel_field, "h_tower", as_double("THT"));//, 50);
 		set_unit_value(type_hel_field, "weather_file", as_string("solar_resource_file"));
 		set_unit_value_ssc_double(type_hel_field, "land_bound_type");//, 0);
@@ -493,6 +501,17 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
 		set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_0");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_1");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_2");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_3");
+		set_unit_value_ssc_double(type_hel_field, "n_facet_x");
+		set_unit_value_ssc_double(type_hel_field, "n_facet_y");
+		set_unit_value_ssc_double(type_hel_field, "focus_type");
+		set_unit_value_ssc_double(type_hel_field, "cant_type");
+		set_unit_value_ssc_double(type_hel_field, "n_flux_days");
+		set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs");
+		
 		/*set_unit_value_ssc_matrix(type_hel_field, "eta_map");
 		set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
 		set_unit_value_ssc_matrix(type_hel_field, "flux_maps");*/

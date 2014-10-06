@@ -645,10 +645,11 @@ void AutoPilot::update_cost(var_set &vset, sp_cost &cost){
 
 void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 	//set the one-off values
-	vset["solarfield"][0]["q_des"].value = my_to_string(layout.q_design);
-	vset["solarfield"][0]["accept_max"].value = my_to_string(layout.span_cw);
-	vset["solarfield"][0]["accept_min"].value = my_to_string(layout.span_ccw);
-	vset["solarfield"][0]["tht"].value = my_to_string(layout.h_tower);
+	vset["solarfield"][0]["q_des"].set(layout.q_design);
+	vset["solarfield"][0]["accept_max"].set(layout.span_cw);
+	vset["solarfield"][0]["accept_min"].set(layout.span_ccw);
+	vset["solarfield"][0]["tht"].set(layout.h_tower);
+	vset["solarfield"][0]["dni_des"].set( layout.dni_design );
 
 	//Handle land restrictions here
 	switch (layout.land_bound_type)
