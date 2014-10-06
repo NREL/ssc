@@ -415,6 +415,10 @@ public:
 
 				if ( ac > ac_nameplate ) // clipping
 					ac = ac_nameplate;
+
+				// prevent any negative output from numerical issues at extremely low PLRs
+				// also, no nighttime parasitic losses calculated
+				if ( ac < 0 ) ac = 0;
 			
 				p_poa[i] = (ssc_number_t)poa;
 				p_tpoa[i] = (ssc_number_t)tpoa;
