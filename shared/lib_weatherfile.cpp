@@ -902,7 +902,10 @@ bool weatherfile::open( const std::string &file, bool header_only, bool interp )
 			}
 		}
 	}
-	
+
+	// by default, subtract 1 from hour of TMY3 files to switch
+	// from 1-24 standard to 0-23
+	int tmy3_hour_shift = 1; 	
 	m_errorLine = 0;
 	for( int i=0;i<nrecords;i++ )
 	{
@@ -997,7 +1000,15 @@ bool weatherfile::open( const std::string &file, bool header_only, bool interp )
 			p++;
 			m_columns[YEAR].data[i] = atoi( p );
 
-			m_columns[HOUR].data[i] = atoi( cols[1] ) - 1;  // hour goes 0-23, not 1-24
+			m_columns[HOUR].data[i] = atoi( cols[1] ) - tmy3_hour_shift;  // hour goes 0-23, not 1-24
+			if ( i==0 && m_columns[HOUR].data[i] < 0 )
+			{
+				// this was a TMY3 file but with hours going 0-23 (against the tmy3 spec)
+				// handle it anyway by NOT subtracting from the hour to convert from 1-24
+				tmy3_hour_shift = 0;
+				m_columns[HOUR].data[i] = 0;
+			}
+
 			m_columns[MINUTE].data[i] = 30;
 
 			m_columns[GHI].data[i] = (double)atof( cols[4] );
