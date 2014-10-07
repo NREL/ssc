@@ -288,10 +288,11 @@ public:
 				int code = irr.calc();
 
 				if ( 0 != code )
-					sunup = 0; // if for some reason the irradiance processor fails, ignore this hour
-				else
-					irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
-			
+					throw exec_error( "pvwattsv5", 
+						util::format("failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d]", 
+							code, wf.year, wf.month, wf.day, wf.hour));
+
+				irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );			
 				p_sunup[idx] = (ssc_number_t)sunup;
 				p_shad_beam[idx] = (ssc_number_t) shad.fbeam( hour, solalt, solazi );
 
