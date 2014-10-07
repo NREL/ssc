@@ -72,6 +72,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_OUTPUT,       SSC_MATRIX,      "flux_table",                "Flux intensity table (flux(X) x (flux(y) x position)",  "frac", "", "SolarPILOT",  "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "heliostat_positions",       "Heliostat positions (x,y)",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "number_heliostats",         "Number of heliostats",                       "",        "",        "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "base_land_area",            "Land area occupied by heliostats",           "acre",   "",         "SolarPILOT",   "*",                "",                "" },
 	
 	var_info_invalid };
 
@@ -249,6 +250,9 @@ public:
 		//return the number of heliostats
 		assign("number_heliostats", layout.heliostat_positions.size() ); 
 		
+		//return the land area
+		assign("base_land_area", layout.land_area );
+
 		//check if flux map calculations are desired
 		if( as_boolean("calc_fluxmaps") ){
 

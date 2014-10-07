@@ -461,7 +461,9 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 		WeatherData empty;
 		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
 		_SF->calcHeliostatShadows();
-		_variables["land"][0]["bound_area"].set( _SF->getLandObject()->getLandArea() );
+        double area = _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
+		_variables["land"][0]["bound_area"].set( area );
+        layout.land_area = area;
 	}
 
 	

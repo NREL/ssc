@@ -307,6 +307,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solzen",               "Solar Zenith",                                                      "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",		         "Parasitic tracking/startup power",						          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",	         "Total field efficiency",                                            "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	
+	{ SSC_OUTPUT,       SSC_MATRIX,      "eff_lookup",              "Field efficiency lookup matrix",                                    "",             "",            "Outputs",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "flux_lookup",            "Receiver flux map lookup matrix",                                   "",             "",            "Outputs",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "sunpos_eval",       "Sun positions for lookup calcs",                                    "deg",          "",            "Outputs",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "land_area",            "Calculated solar field land area",                                  "acre",         "",            "Outputs",        "*",                       "",                      "" },
 
 	// These outputs come from either type 222 (external), or type 232(cavity), depending on which receiver type the user chose.
 	// Therefore, these outputs have to have the same name in both types, or TCS will throw an error when trying to read the results.
@@ -500,7 +505,6 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "v_wind_max");//, 25.);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
-		set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_0");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_1");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_2");
@@ -512,9 +516,20 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "n_flux_days");
 		set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs");
 		
-		/*set_unit_value_ssc_matrix(type_hel_field, "eta_map");
-		set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
-		set_unit_value_ssc_matrix(type_hel_field, "flux_maps");*/
+        int run_type = (int)get_unit_value_number(type_hel_field, "run_type");
+        /*if(run_type == 0){
+            
+        }
+        else */
+        if(run_type == 1){
+            set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
+        }
+        else if(run_type == 2){
+            set_unit_value_ssc_matrix(type_hel_field, "eta_map");
+		    set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
+		    set_unit_value_ssc_matrix(type_hel_field, "flux_maps");
+        }
+        
 
 		
 // for user specified x,y field
@@ -934,11 +949,32 @@ public:
 			throw exec_error( "tcsmolten_salt", util::format("there was a problem returning the results from the simulation.") );
 
 
-
 		set_output_array("hourly_energy", "P_out_net", 8760, 1000.0); // MWh to kWh
 
-		//set_output_array("i_SfTi",8760);
-		// Annual accumulations
+		//calculated field parameters
+		int nr, nc;
+		if ( double *fm = get_unit_value(type_hel_field, "flux_maps", &nr, &nc ) )
+		{
+			ssc_number_t *ssc_fm = allocate( "flux_lookup", nr, nc );
+			for( size_t i=0;i<nr*nc;i++ )
+				ssc_fm[i] = (ssc_number_t)fm[i];
+		}
+
+        if( double *etam = get_unit_value(type_hel_field, "eta_map", &nr, &nc ) )
+        {
+            ssc_number_t *ssc_etam = allocate( "eff_lookup", nr, nc );
+            for( size_t i=0; i<nr*nc; i++ )
+                ssc_etam[i] = (ssc_number_t)etam[i];
+        }
+
+        if( double *fpm = get_unit_value(type_hel_field, "flux_positions", &nr, &nc ) )
+        {
+            ssc_number_t *ssc_fpm = allocate( "sunpos_eval", nr, nc );
+            for( size_t i=0; i<nr*nc; i++ )
+                ssc_fpm[i] = (ssc_number_t)fpm[i];
+        }
+        assign( "land_area", var_data( (ssc_number_t) get_unit_value_number(type_hel_field, "land_area" ) ) );
+		//-----------
 
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
 

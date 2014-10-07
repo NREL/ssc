@@ -95,6 +95,11 @@ public:
 	void set_unit_value( int id, const char *name, double *p, int nr, int nc );
 	void set_unit_value( int id, const char *name, const char *s );
 
+	double get_unit_value_number( int id, const char *name );
+	const char *get_unit_value_string( int id, const char *name );
+	double *get_unit_value( int id, const char *name, int *len );
+	double *get_unit_value( int id, const char *name, int *nr, int *nc );
+
 	bool parse_unit_value( int id, const char *name, const char *value );
 	static bool parse_unit_value( tcsvalue *v, int type, const char *value );
 
