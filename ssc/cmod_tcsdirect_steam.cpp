@@ -10,11 +10,14 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 */														     
 														     
 //    VARTYPE           DATATYPE          NAME                   LABEL                                                            UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
-    { SSC_INPUT,        SSC_STRING,      "file_name",           "local weather file path",                                        "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
+	{ SSC_INPUT, SSC_STRING, "solar_resource_file", "local weather file path", "", "", "Weather", "*", "LOCAL_FILE", "" },
+	
+	/*
+	{ SSC_INPUT, SSC_STRING, "file_name", "local weather file path", "", "", "Weather", "*", "LOCAL_FILE", "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",          "Tracking mode",                                                  "",             "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tilt",                "Tilt angle of surface/axis",                                     "",             "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",             "Azimuth angle of surface/axis",                                  "",             "",            "Weather",        "*",                       "",                      "" },
-														     
+	*/													     
     // TOU												     
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",    "12x24 Time of Use Values for week days",                         "",             "",            "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",    "12x24 Time of Use Values for week end days",                     "",             "",            "tou_translator", "*",                       "",                      "" }, 
@@ -124,8 +127,8 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",      "Cycle maximum overdesign fraction",                                "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "A_sf",                "Solar field area",                                                 "m^2",          "",            "dsg_controller", "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_ARRAY,       "ffrac",               "Fossil dispatch logic",                                            "-",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "fluxmap_angles",      "Matrix containing zenith and azimuth angles for flux maps",        "-",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "fluxmap",             "Matrix containing flux map for various solar positions",           "-",            "",            "dsg_controller", "*",                       "",                      "" },
+//    { SSC_INPUT,        SSC_MATRIX,      "fluxmap_angles",      "Matrix containing zenith and azimuth angles for flux maps",        "-",            "",            "dsg_controller", "*",                       "",                      "" },
+ //   { SSC_INPUT,        SSC_MATRIX,      "fluxmap",             "Matrix containing flux map for various solar positions",           "-",            "",            "dsg_controller", "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_ARRAY,       "TOU_schedule",        "Annual hourly time-of-use schedule",                               "-",            "",            "dsg_controller", "*",                       "",                      "" },
 	// Direct steam controller (type 265) inputs		       
   //{ SSC_INPUT,        SSC_NUMBER,      "azimuth",             "Solar azimuth",                                                    "deg",          "",            "dsg_controller", "*",                       "",                      "" },
@@ -343,10 +346,17 @@ public:
 		else
 		{
 			//Set weatherreader parameters
-			set_unit_value_ssc_string( weather, "file_name" );
-			set_unit_value_ssc_double( weather, "track_mode" );
-			set_unit_value_ssc_double( weather, "tilt" );
-			set_unit_value_ssc_double( weather, "azimuth" );
+			//set_unit_value_ssc_string( weather, "file_name" );
+			//set_unit_value_ssc_double( weather, "track_mode" );
+			//set_unit_value_ssc_double( weather, "tilt" );
+			//set_unit_value_ssc_double( weather, "azimuth" );
+
+			//Set weatherreader parameters
+			set_unit_value(weather, "file_name", as_string("solar_resource_file"));
+			set_unit_value(weather, "track_mode", 0.0);
+			set_unit_value(weather, "tilt", 0.0);
+			set_unit_value(weather, "azimuth", 0.0);
+
 		}
 
 		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
