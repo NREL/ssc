@@ -226,7 +226,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	{ TCS_INPUT,    TCS_NUMBER,        I_TOUPeriod,          "TOUPeriod",            "The time-of-use period",                                  "",             "",        "",        ""},
 
 	// sCO2 cycle design parameters from type 424 - only used if "pb_tech_type" = 424
-	{ TCS_INPUT, TCS_NUMBER, I_W_DOT_NET,       "i_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "" },
+	{ TCS_INPUT, TCS_NUMBER, I_W_DOT_NET,       "i_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "0.0" },
 	{ TCS_INPUT, TCS_NUMBER, I_T_MC_IN,         "i_T_mc_in",           "Compressor inlet temperature",                          "K",     "",  "",  "" },
 	{ TCS_INPUT, TCS_NUMBER, I_T_T_IN,          "i_T_t_in",            "Turbine inlet temperature",                             "K",     "",  "",  "" },
 	{ TCS_INPUT, TCS_NUMBER, I_P_MC_IN,         "i_P_mc_in",           "Compressor inlet pressure",                             "kPa",   "",  "",  "" },
@@ -830,6 +830,11 @@ public:
 		
 		if( initialize_sco2 )
 		{
+			if(ncall == 0)		// Inputs aren't updated yet..
+			{
+				return 0;
+			}
+
 			if( pb_tech_type == 424 )
 			{
 				if( time / step == 1.0 )
@@ -867,8 +872,8 @@ public:
 						return -1;
 					}
 
-					// Get actual cycle thermal input at design
-					q_pb_design = ms_rc_cycle.get_design_solved()->m_W_dot_net / ms_rc_cycle.get_design_solved()->m_eta_thermal * 1000.0;	// Convert to W
+					// Get actual receiver inlet temperature at design
+					T_field_in_des = ms_rc_cycle.get_design_solved()->m_temp[5-1];
 
 					int finalize_error_code = finalize_initial_calcs();
 
@@ -884,7 +889,7 @@ public:
 					if( ms_rc_cycle.get_design_solved()->m_is_rc )
 					{
 						ms_opt_tar_od_par.m_fixed_recomp_frac = false;
-						ms_opt_tar_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
+						ms_opt_tar_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
 					}
 					else
 					{
@@ -933,13 +938,15 @@ public:
 
 			int max_q_error_code = 0;
 			ms_rc_cycle.get_max_output_od(ms_opt_tar_od_par, max_q_error_code);
+
+			double m_q_max_sf = 0.97;
 			if( max_q_error_code != 0 )
 			{
 				q_sco2_max_input = q_pb_design;
 				message("Could not calculate max thermal input for sCO2 cycle: value set to design thermal input");
 			}
 			else
-				q_sco2_max_input = ms_rc_cycle.get_max_target()*1000.0;		// Convert to W
+				q_sco2_max_input = m_q_max_sf*ms_rc_cycle.get_max_target()*1000.0;		// Convert to W
 		}
 
 		// Determine which storage dispatch strategy to use, depending on if any solar resource is available
