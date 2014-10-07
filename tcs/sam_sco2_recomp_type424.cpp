@@ -238,6 +238,7 @@ private:
 	double m_m_dot_htf_sby;			   // [kg/s] 
 	double m_W_dot_fan_des;            // [kW]
 	double m_eta_thermal_des;		   // [-] Power cycle design thermal efficiency
+	double m_T_htf_cold_des;           // [K]
 
 	// Solar Receiver Design Parameters
 	double m_T_htf_hot;              // [K] Tower design outlet temperature
@@ -261,6 +262,11 @@ private:
 	double m_E_su_prev;
 	double m_E_su;
 	int    m_error_message_code;
+
+	bool   m_is_first_t_call;
+
+	double m_q_dot_cycle_max;
+	double m_P_mc_in_q_max;
 
 public:
 	sam_sco2_recomp_type424(tcscontext *cst, tcstypeinfo *ti)
@@ -304,6 +310,7 @@ public:
 		m_m_dot_htf_sby = std::numeric_limits<double>::quiet_NaN();
 		m_W_dot_fan_des = std::numeric_limits<double>::quiet_NaN();
 		m_eta_thermal_des = std::numeric_limits<double>::quiet_NaN();
+		m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
 
 		// Solar Receiver Design Parameters
 		m_T_htf_hot = std::numeric_limits<double>::quiet_NaN();
@@ -327,6 +334,11 @@ public:
 		m_time_su = std::numeric_limits<double>::quiet_NaN();
 		m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
 		m_E_su = std::numeric_limits<double>::quiet_NaN();
+
+		m_is_first_t_call = true;
+
+		m_q_dot_cycle_max = std::numeric_limits<double>::quiet_NaN();
+		m_P_mc_in_q_max = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_sco2_recomp_type424(){}
@@ -733,6 +745,8 @@ public:
 		message("The calculated cold HTF temperature is %lg [C]. The estimated cold HTF temperature is %lg [C]. This difference may affect the receiver design and hours of thermal storage. Try adjusting the receiver inlet temperature or design cycle efficiency",
 			T_htf_cold - 273.15, T_htf_cold_est - 273.15);
 
+		m_T_htf_cold_des = T_htf_cold;		//[K]
+
 		// Can give PHX inlet --or-- HX UA, but there is going to be a conflict between
 		// 1) Assumed thermal input to cycle
 		// -- and --
@@ -914,10 +928,10 @@ public:
 
 		// Set outputs that will be constant for this type (required because can share a cmod with molten salt tower)
 		value(O_M_DOT_MAKEUP, 0.0);
-		value(O_M_DOT_DEMAND, 0.0);					// This output is an input for the controller, but the controller doesn't use it...
-		value(O_M_DOT_HTF_REF, m_dot_rec_des);		// Not actually the RECEIVER des. should be HTF
+		value(O_M_DOT_DEMAND, 0.0);							// This output is an input for the controller, but the controller doesn't use it...
+		value(O_M_DOT_HTF_REF, m_dot_rec_des*3600.0);		// Not actually the RECEIVER des. should be HTF
 		value(O_F_BAYS, 0.0);
-		value(O_P_COND, 0.0);						// Probably do want to report some cycle info that is different from steam
+		value(O_P_COND, 0.0);								// Probably do want to report some cycle info that is different from steam
 
 		// Set design parameter outputs for type251
 		value(O_W_DOT_NET, W_dot_net_des_calc);
@@ -1012,24 +1026,29 @@ public:
 			Q_dot_PHX = m_Q_dot_rec_des*(m_dot_htf / m_dot_rec_des);			//[kWt]
 
 			// Get maximum possible Q_dot given conditions
-			int max_q_error_code = 0;
-			ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, max_q_error_code);
-			if(max_q_error_code != 0)
+			if( m_is_first_t_call )
 			{
-				m_error_message_code = 1;		// Off-design model not solving
-				break;
+				int max_q_error_code = 0;
+				ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, max_q_error_code);
+				if( max_q_error_code != 0 )
+				{
+					m_error_message_code = 1;		// Off-design model not solving
+					break;
+				}
+				m_q_dot_cycle_max = m_q_max_sf*ms_rc_cycle.get_max_target();
+
+				// Set up structure of parameters for when guess q_dot is close to maximum			
+				ms_rc_max_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_od_solved()->m_recomp_frac;
+				ms_rc_max_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_od_solved()->m_N_mc;
+				ms_rc_max_opt_od_par.m_target = m_q_dot_cycle_max;
+				m_P_mc_in_q_max = ms_rc_cycle.get_od_solved()->m_pres[1 - 1];
+
+				m_is_first_t_call = false;
 			}
-			double q_dot_cycle_max = m_q_max_sf*ms_rc_cycle.get_max_target();
-
-			// Set up structure of parameters for when guess q_dot is close to maximum			
-			ms_rc_max_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_od_solved()->m_recomp_frac;
-			ms_rc_max_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_od_solved()->m_N_mc;
-			ms_rc_max_opt_od_par.m_target = q_dot_cycle_max;
-			double P_mc_in_q_max = ms_rc_cycle.get_od_solved()->m_pres[1-1];
 			// ************************************************************************
 			// ************************************************************************
 
-			Q_dot_PHX = min(Q_dot_PHX, q_dot_cycle_max);
+			Q_dot_PHX = min(Q_dot_PHX, m_q_dot_cycle_max);
 
 			double y_upper, y_lower, x_upper, x_lower;
 			y_upper = y_lower = x_upper = x_lower = std::numeric_limits<double>::quiet_NaN();
@@ -1062,25 +1081,25 @@ public:
 						if( set_upper )
 							Q_dot_PHX = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
 						else
-							Q_dot_PHX = min(1.25*Q_dot_PHX, q_dot_cycle_max);
+							Q_dot_PHX = min(1.25*Q_dot_PHX, m_q_dot_cycle_max);
 					}
 				}
 
-				if(Q_dot_PHX / q_dot_cycle_max < 0.85)				// 0.85 arbitrary here. hopefully structures with different guess values don't result in different optimized cases at 0.85...
+				if(Q_dot_PHX / m_q_dot_cycle_max < 0.85)				// 0.85 arbitrary here. hopefully structures with different guess values don't result in different optimized cases at 0.85...
 				{
 					ms_rc_opt_od_par = ms_rc_des_opt_od_par;
 				}
 				else
 				{
-					if( Q_dot_PHX / q_dot_cycle_max < 0.95 )
+					if( Q_dot_PHX / m_q_dot_cycle_max < 0.95 )
 					{
-						ms_rc_max_opt_od_par.m_lowest_pressure = P_mc_in_q_max - 3000.0;
-						ms_rc_max_opt_od_par.m_highest_pressure = P_mc_in_q_max + 3000.0;
+						ms_rc_max_opt_od_par.m_lowest_pressure = m_P_mc_in_q_max - 3000.0;
+						ms_rc_max_opt_od_par.m_highest_pressure = m_P_mc_in_q_max + 3000.0;
 					}
 					else
 					{
-						ms_rc_max_opt_od_par.m_lowest_pressure = P_mc_in_q_max - 1000.0;
-						ms_rc_max_opt_od_par.m_highest_pressure = P_mc_in_q_max + 1000.0;
+						ms_rc_max_opt_od_par.m_lowest_pressure = m_P_mc_in_q_max - 1000.0;
+						ms_rc_max_opt_od_par.m_highest_pressure = m_P_mc_in_q_max + 1000.0;
 					}
 					ms_rc_opt_od_par = ms_rc_max_opt_od_par;
 				}
@@ -1155,9 +1174,10 @@ public:
 
 			break;
 
-		case 3:			// OFF
+		case 3:
+		default:			// OFF
 			W_dot_net = 0.0;
-			T_htf_cold = m_T_htf_cold_sby;
+			T_htf_cold = m_T_htf_cold_des;;
 			eta_thermal = 0.0;
 			W_dot_par = 0.0;
 
@@ -1200,15 +1220,15 @@ public:
 		}
 
 		// Set Outputs
-		value(O_P_CYCLE, W_dot_net_output);
-		value(O_ETA, eta_thermal);
-		value(O_T_HTF_COLD, T_htf_cold);
-		value(O_W_COOL_PAR, W_dot_par);
-
-		return 0;
-	}
-
-	virtual int converged(double time)
+		value(O_P_CYCLE, W_dot_net_output/1.E3);	//[MWe] 
+		value(O_ETA, eta_thermal);					//[-]	
+		value(O_T_HTF_COLD, T_htf_cold - 273.15);	//[C]	
+		value(O_W_COOL_PAR, W_dot_par);				//[MWe]	
+														 
+		return 0;										 
+	}													 
+														 
+	virtual int converged(double time)					 
 	{
 		if(m_standby_control == 3)
 		{
@@ -1229,6 +1249,8 @@ public:
 		}
 
 		m_error_message_code = 0;
+
+		m_is_first_t_call = true;
 
 		return 0;
 	}
