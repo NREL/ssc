@@ -15,15 +15,15 @@ enum{	//Parameters
 	P_eta_t,
 	P_P_high_limit,
 	P_DELTAT_PHX,
-	
+
 	P_DELTAT_ACC,
 	P_T_AMB_DES,
 	P_FAN_POWER_PERC,
 	P_PLANT_ELEVATION,
 
 	P_T_htf_hot,
-	P_T_htf_cold,
-	P_eta_des_est,
+	P_T_htf_cold_est,
+	P_eta_des,
 	P_rec_fl,
 	P_rec_fl_props,
 
@@ -43,7 +43,6 @@ enum{	//Parameters
 	O_ETA_CYCLE_DES,
 	O_P_LOW_DES,
 	O_F_RECOMP_DES,
-	O_Q_DOT_CALC_DES,
 	O_UA_RECUP_DES,
 	O_T_COOLER_IN_DES,
 	O_COOLER_VOLUME,
@@ -100,9 +99,9 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_PARAM, TCS_NUMBER, P_FAN_POWER_PERC, "fan_power_perc",  "Percent of net cycle power used for fan",        "%",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_PLANT_ELEVATION,"plant_elevation", "Plant Elevation",                                "m",    "", "", "" },
 		// Solar Receiver Design Parameters
-	{ TCS_PARAM, TCS_NUMBER, P_T_htf_hot,      "T_htf_hot",       "Tower design outlet temp",                       "C",    "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_T_htf_cold,     "T_htf_cold",      "Tower design inlet temp",                        "C",    "", "", "" },
-	{ TCS_PARAM, TCS_NUMBER, P_eta_des_est,    "eta_des_est",     "Estimated PB thermal efficiency",                "",     "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_T_htf_hot,      "T_htf_hot_des",   "Tower design outlet temp",                       "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_T_htf_cold_est, "T_htf_cold_est",  "Estimated tower design inlet temp",              "C",    "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_eta_des,        "eta_des",         "Power cycle thermal efficiency",                 "",     "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_rec_fl,         "rec_htf",         "The name of the HTF used in the receiver",       "",     "", "", "" },
 	{ TCS_PARAM, TCS_MATRIX, P_rec_fl_props,   "rec_fl_props",    "User defined rec fluid property data",           "-", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "" },
 		// Cycle Controller Parameters
@@ -122,7 +121,6 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER, O_ETA_CYCLE_DES,   "eta_cycle_des",       "Design: Power cycle efficiency",           "%",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_LOW_DES,       "P_low_des",           "Design: Compressor inlet pressure",        "kPa",  "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_F_RECOMP_DES,    "f_recomp_des",        "Design: Recompression fraction",           "-",    "", "", "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_CALC_DES,  "Q_dot_calc_des",      "Design: Calculated thermal",               "MWt",  "", "", "" },	
 	{ TCS_OUTPUT, TCS_NUMBER, O_UA_RECUP_DES,    "UA_recup_des",        "Design: Recuperator conductance UA",       "kW/K", "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_COOLER_IN_DES, "T_cooler_in_des",     "Design: Cooler CO2 inlet temp",            "C",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_COOLER_VOLUME,   "cooler_volume",       "Estimated required cooler material vol.",  "m^3",  "", "", "" },
@@ -200,6 +198,8 @@ private:
 	C_RecompCycle ms_rc_cycle;
 	C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
 	C_RecompCycle::S_opt_target_od_parameters ms_rc_opt_od_par;
+	C_RecompCycle::S_opt_target_od_parameters ms_rc_max_opt_od_par;
+	C_RecompCycle::S_opt_target_od_parameters ms_rc_des_opt_od_par;
 
 	HTFProperties rec_htfProps;		// Instance of HTFProperties class for field HTF
 	CO2_state co2_props;
@@ -224,10 +224,11 @@ private:
 	vector<double> m_DP_PHX;		   // (cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	int m_N_sub_hxrs;                  // [-] Number of sections to model in heat exchangers
 	double m_deltaP_cooler_frac;       // [-] Fraction of high side pressure that is allowed as pressure drop to design the ACC
+	double m_q_max_sf;
 
 	// Calculated Cycle Design Parameters
 	double m_UA_total_des;			   // "Total UA allocatable to recuperators",           "kW/K",
-	double m_T_PHX_in;                 // [K] CO2 cold inlet to Primary Heat Exchanger
+	//double m_T_PHX_in;                 // [K] CO2 cold inlet to Primary Heat Exchanger
 	double m_delta_T_acc;			   // [K/C] Temperature difference between compressor inlet temp and ambient
 	double m_delta_T_t;				   // [K/C] Temperature difference between htf hot side and turbine inlet
 	double m_m_dot_des;			       // [kg/s] CO2 mass flow rat thru cycle at design
@@ -236,12 +237,12 @@ private:
 	double m_T_htf_cold_sby;		   // [K] HTF cold return temperature for standby mode
 	double m_m_dot_htf_sby;			   // [kg/s] 
 	double m_W_dot_fan_des;            // [kW]
+	double m_eta_thermal_des;		   // [-] Power cycle design thermal efficiency
 
 	// Solar Receiver Design Parameters
 	double m_T_htf_hot;              // [K] Tower design outlet temperature
-	double m_T_htf_cold;             // [K] Tower design inlet temperature
-	double m_Q_dot_rec_des_est;      // [MWt] Receiver design thermal input
-	double m_Q_dot_rec_des_calc;	 // [MWt] Calculate receiver design thermal input
+	//double m_T_htf_cold;             // [K] Tower design inlet temperature	
+	double m_Q_dot_rec_des;			// [MWt] Receiver design thermal input
 
 	// Calculated Receiver Design Parameters
 	double m_dot_rec_des;				// [kg/s] Receiver design point mass flow rate
@@ -291,6 +292,7 @@ public:
 		m_N_sub_hxrs = 10;
 		m_deltaP_cooler_frac = 0.002;
 		m_N_t_des = 3600.0;
+		m_q_max_sf = 0.97;			// Safety factor for optimizer: can safely get with m_q_max_sf * q_max_calculated
 
 		// Calculated Cycle Design Parameters
 		m_UA_total_des = std::numeric_limits<double>::quiet_NaN();
@@ -301,15 +303,15 @@ public:
 		m_T_htf_cold_sby = std::numeric_limits<double>::quiet_NaN();
 		m_m_dot_htf_sby = std::numeric_limits<double>::quiet_NaN();
 		m_W_dot_fan_des = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_des = std::numeric_limits<double>::quiet_NaN();
 
 		// Solar Receiver Design Parameters
 		m_T_htf_hot = std::numeric_limits<double>::quiet_NaN();
-		m_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
-		m_Q_dot_rec_des_est = std::numeric_limits<double>::quiet_NaN();
+		//m_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		m_Q_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
 
 		// Calculated Receiver Design Parameters
 		m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
-		m_Q_dot_rec_des_calc = std::numeric_limits<double>::quiet_NaN();
 		m_UA_PHX_des = std::numeric_limits<double>::quiet_NaN();
 
 		// Cycle Control Parameters
@@ -344,8 +346,9 @@ public:
 		// Solar Receiver Parameters
 		// Receiver inlet/outlet temps and thermal input
 		m_T_htf_hot = value(P_T_htf_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
-		m_T_htf_cold = value(P_T_htf_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
-		m_Q_dot_rec_des_est = m_W_dot_net_des / 1.E3 / value(P_eta_des_est);		//[MWt] Receiver thermal input at design
+		//m_T_htf_cold = value(P_T_htf_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
+		m_eta_thermal_des = value(P_eta_des);
+		m_Q_dot_rec_des = m_W_dot_net_des / m_eta_thermal_des;		//[kWt] Receiver thermal input at design
 
 		// Calculate other cycle design parameters based on User Parameters
 		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
@@ -479,6 +482,9 @@ public:
 			return -1;
 		}		
 
+		///*********************************
+		// Don't need these checks if user input is cycle efficiency
+		/*
 			// Receiver inlet temperature must be less than the turbine inlet temperature
 		if(m_T_htf_cold > m_T_t_in_des - 1.0)
 		{
@@ -502,6 +508,22 @@ public:
 		if(m_Q_dot_rec_des_est <= m_W_dot_net_des/1.E3)
 		{
 			m_Q_dot_rec_des_est = m_W_dot_net_des / 1.E3;
+		}
+		*/
+
+		// Instead, check thermal efficiency
+		if(m_eta_thermal_des <= 0.0)
+		{
+			message("The design cycle thermal efficiency, %lg, must be at least greater than 0 ", m_eta_thermal_des);
+			return -1;
+		}
+
+		double eta_carnot = 1.0 - T_amb_cycle_des / m_T_htf_hot;
+		if(m_eta_thermal_des >= eta_carnot)
+		{
+			message("The design cycle thermal efficiency, %lg, must be at least greater than the Carnot efficiency: %lg ", m_eta_thermal_des, eta_carnot);
+			message("To solve the cycle within the allowable recuperator conductance, the efficiency should be significantly less than the Carnot efficiency");
+			return -1;
 		}
 
 		// Declare instance of fluid class for FIELD fluid.
@@ -536,7 +558,7 @@ public:
 		}
 		// ********************************************************************************
 		// ********************************************************************************
-		m_T_PHX_in = m_T_htf_cold - m_delta_T_t;					//[K]
+		// double T_PHX_in = m_T_htf_cold - m_delta_T_t;					//[K]
 
 		/*
 		// Now need to vary UA_recup until m_T_PHX_in is achieved. This could be slow...
@@ -597,12 +619,13 @@ public:
 		}
 
 		// double T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
-		double T_PHX_in_calc = ms_rc_cycle.get_design_solved()->m_temp[5-1];
-
+		// double T_PHX_in_calc = ms_rc_cycle.get_design_solved()->m_temp[5-1];
+		double eta_calc = ms_rc_cycle.get_design_solved()->m_eta_thermal;
 		// **********************************************************************
 
-		// Now need to iterate UA_total_des until T_PHX_in_calc = m_T_PHX_in
-		double diff_T_PHX_in = (T_PHX_in_calc - m_T_PHX_in)/m_T_PHX_in;			//[-]
+		// Now need to iterate UA_total_des until eta_thermal_calc = eta_thermal_in
+		// double diff_T_PHX_in = (T_PHX_in_calc - m_T_PHX_in)/m_T_PHX_in;			//[-]
+		double diff_eta = (eta_calc - m_eta_thermal_des);
 		bool low_flag = false;
 		bool high_flag = false;
 		double y_upper = numeric_limits<double>::quiet_NaN();
@@ -614,15 +637,15 @@ public:
 		
 		int opt_des_calls = 1;
 
-		while( abs(diff_T_PHX_in) > m_tol )
+		while( abs(diff_eta) > m_tol )
 		{
 			opt_des_calls++;
 
-			if(diff_T_PHX_in > 0.0)		// Calc > target, UA is too large, decrease UA
+			if(diff_eta > 0.0)		// Calc > target, UA is too large, decrease UA
 			{
 				low_flag = true;
 				x_lower = UA_recups_guess;
-				y_lower = diff_T_PHX_in;
+				y_lower = diff_eta;
 
 				if(high_flag)	// Upper and lower bounds set, use false positon interpolation method
 				{
@@ -638,7 +661,8 @@ public:
 
 				if( x_lower / m_W_dot_net_des <= UA_net_power_ratio_min )
 				{
-					message("The receiver inlet temperature, %lg [C], is too cold to achieve with the available cycle model", m_T_htf_cold-273.15);
+					message("The design thermal efficiency, %lg [-], is too small to achieve with the available cycle model and inputs", m_eta_thermal_des);
+					message("The lowest possible thermal efficiency for these inputs is roughly %lg [-]", ms_rc_cycle.get_design_solved()->m_eta_thermal);
 					return -1;
 				}
 			}
@@ -646,7 +670,7 @@ public:
 			{
 				high_flag = true;
 				x_upper = UA_recups_guess;
-				y_upper = diff_T_PHX_in;
+				y_upper = diff_eta;
 				
 				if(low_flag)
 				{
@@ -662,8 +686,8 @@ public:
 
 				if( x_upper / m_W_dot_net_des >= UA_net_power_ratio_max )
 				{
-					message("The receiver inlet temperature, %lg [C], is too hot to achieve with the available cycle model", m_T_htf_cold-273.15);
-					message("The hottest possible receiver inlet temperature for these inputs is roughly %lg [C] ", ms_rc_cycle.get_design_solved()->m_temp[5 - 1] + m_delta_T_t);
+					message("The design thermal efficiency, %lg [-], is too large to achieve with the available cycle model and inputs", m_eta_thermal_des);
+					message("The largest possible thermal efficiency for these inputs is roughly %lg [-] ", ms_rc_cycle.get_design_solved()->m_eta_thermal);
 					return -1;
 				}
 			}
@@ -684,20 +708,30 @@ public:
 			}
 			
 			//T_PHX_in_calc = rc_cycle->get_cycle_design_metrics()->m_T[5 - 1];
-			T_PHX_in_calc = ms_rc_cycle.get_design_solved()->m_temp[5 - 1];
+			//T_PHX_in_calc = ms_rc_cycle.get_design_solved()->m_temp[5 - 1];
+			eta_calc = ms_rc_cycle.get_design_solved()->m_eta_thermal;
 			// **********************************************************************
 
 			// Now need to iterate UA_total_des until T_PHX_in_calc = m_T_PHX_in
-			diff_T_PHX_in = (T_PHX_in_calc - m_T_PHX_in) / m_T_PHX_in;			//[-]
+			// diff_T_PHX_in = (T_PHX_in_calc - m_T_PHX_in) / m_T_PHX_in;			//[-]
+			diff_eta = (eta_calc - m_eta_thermal_des);
 		}
 
 		// Design metrics
 		double design_eta = ms_rc_cycle.get_design_solved()->m_eta_thermal;
 		double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
-		m_Q_dot_rec_des_calc = m_W_dot_net_des / design_eta;							//[kW]
 		m_m_dot_des = ms_rc_cycle.get_design_solved()->m_m_dot_t;			//[kg/s]
 		double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
 		double P_PHX_in = ms_rc_cycle.get_design_solved()->m_pres[5-1];			//[kPa]
+
+		// Calculate HTF cold temperature
+		double T_PHX_co2_in = ms_rc_cycle.get_design_solved()->m_temp[5-1];
+		double T_htf_cold = T_PHX_co2_in + m_delta_T_t;
+
+		double T_htf_cold_est = value(P_T_htf_cold_est) + 273.15;
+
+		message("The calculated cold HTF temperature is %lg [C]. The estimated cold HTF temperature is %lg [C]. This difference may affect the receiver design and hours of thermal storage. Try adjusting the receiver inlet temperature or design cycle efficiency",
+			T_htf_cold - 273.15, T_htf_cold_est - 273.15);
 
 		// Can give PHX inlet --or-- HX UA, but there is going to be a conflict between
 		// 1) Assumed thermal input to cycle
@@ -713,20 +747,20 @@ public:
 		// Also assumes that CR = 1
 		// ***************************************************************
 			// Receiver/hot side
-		double T_rec_ave = 0.5*(m_T_htf_cold + m_T_htf_hot);		//[K]
+		double T_rec_ave = 0.5*(T_htf_cold + m_T_htf_hot);		//[K]
 		m_cp_rec = rec_htfProps.Cp(T_rec_ave);					//[kJ/kg-K]
-		m_dot_rec_des = m_Q_dot_rec_des_calc / (m_cp_rec*(m_T_htf_hot - m_T_htf_cold));	//[kg/s]
+		m_dot_rec_des = m_Q_dot_rec_des / (m_cp_rec*(m_T_htf_hot - T_htf_cold));	//[kg/s]
 		
 			// Cycle/cold side
-		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + m_T_PHX_in);		//[K]
+		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + T_PHX_co2_in);		//[K]
 		co2_error = CO2_TP(T_PHX_co2_ave, P_PHX_in, &co2_props);	
-		double cp_PHX_co2 = m_Q_dot_rec_des_calc / (m_m_dot_des*(m_T_t_in_des - m_T_PHX_in));
+		double cp_PHX_co2 = m_Q_dot_rec_des / (m_m_dot_des*(m_T_t_in_des - T_PHX_co2_in));
 
 			// Because C_dot_c = C_dot_h, q_dot_max = 
-		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_htf_hot - m_T_PHX_in);		//[kW]
+		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_htf_hot - T_PHX_co2_in);		//[kW]
 
 			// Effectiveness & NTU
-		double eff_des = m_Q_dot_rec_des_calc / q_dot_max;
+		double eff_des = m_Q_dot_rec_des / q_dot_max;
 		double NTU = eff_des/(1.0 - eff_des);
 
 			// UA
@@ -757,7 +791,6 @@ public:
 		value(O_ETA_CYCLE_DES, design_eta);
 		value(O_P_LOW_DES, ms_rc_cycle.get_design_solved()->m_pres[1-1]);
 		value(O_F_RECOMP_DES, ms_rc_cycle.get_design_solved()->m_recomp_frac);
-		value(O_Q_DOT_CALC_DES, m_Q_dot_rec_des_calc);
 		value(O_UA_RECUP_DES, m_UA_total_des);
 		value(O_T_COOLER_IN_DES, T_acc_in-273.15);
 		value(O_COOLER_VOLUME, ACC.get_hx_design_solved()->m_material_V);
@@ -820,19 +853,27 @@ public:
 		ms_rc_opt_od_par.m_T_mc_in = m_T_mc_in_des;
 		ms_rc_opt_od_par.m_T_t_in = m_T_t_in_des;
 
-		ms_rc_opt_od_par.m_target = m_Q_dot_rec_des_calc*cutoff_frac;
+		ms_rc_opt_od_par.m_target = m_Q_dot_rec_des*cutoff_frac;
+
+		ms_rc_opt_od_par.m_use_default_res = true;
 
 		if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
 			ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
 
 		ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
 
+		// Separately save design guesses
+		ms_rc_des_opt_od_par = ms_rc_opt_od_par;
+		// And initialize structure for max_q guesses
+		ms_rc_max_opt_od_par = ms_rc_des_opt_od_par;
+
 		int q_sby_error_code = 0;
 
-		ms_rc_cycle.optimal_target_off_design(ms_rc_opt_od_par, q_sby_error_code);
+		// Checking minimum cycle power
+		ms_rc_cycle.optimal_target_off_design_no_check(ms_rc_opt_od_par, q_sby_error_code);
 
 		// Check that broken up 'optimal_target_off_design' codes are working properly
-		ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, q_sby_error_code);
+		// ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, q_sby_error_code);
 
 		if(q_sby_error_code != 0)
 		{
@@ -842,8 +883,34 @@ public:
 
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 
-		double m_T_htf_cold_sby = m_T_PHX_in_sby + 5.0;		// Estimate htf return temp w/o heat exchanger
-		double m_m_dot_htf_sby = m_Q_dot_rec_des_calc*m_q_sby_frac/(m_cp_rec*(m_T_htf_hot - m_T_htf_cold_sby));
+		//***********************************************************************
+		// Test max off-design
+		ms_rc_opt_od_par.m_T_mc_in = 32.0 + 273.15;
+
+		int max_q_error_code = 0;
+		ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, max_q_error_code);
+
+		ms_rc_des_opt_od_par = ms_rc_opt_od_par;
+		ms_rc_max_opt_od_par = ms_rc_opt_od_par;
+
+		ms_rc_max_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_od_solved()->m_recomp_frac;
+		ms_rc_max_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_od_solved()->m_N_mc;
+
+		// Set tighter bounds on upper and lower pressures because we know target is close to max
+		ms_rc_max_opt_od_par.m_lowest_pressure = ms_rc_cycle.get_od_solved()->m_pres[1-1] - 1000.0;
+		ms_rc_max_opt_od_par.m_highest_pressure = ms_rc_cycle.get_od_solved()->m_pres[1-1] + 1000.0;
+		ms_rc_max_opt_od_par.m_use_default_res = false;
+
+		double q_dot_cycle_max = ms_rc_cycle.get_max_target();
+		
+		ms_rc_max_opt_od_par.m_target = m_q_max_sf*q_dot_cycle_max;
+
+		ms_rc_cycle.optimal_target_off_design_no_check(ms_rc_max_opt_od_par, max_q_error_code);
+		//***********************************************************************
+		//***********************************************************************
+
+		m_T_htf_cold_sby = m_T_PHX_in_sby + 5.0;		// Estimate htf return temp w/o heat exchanger
+		//double m_m_dot_htf_sby = m_Q_dot_rec_des*m_q_sby_frac/(m_cp_rec*(m_T_htf_hot - m_T_htf_cold_sby));
 
 		// Set outputs that will be constant for this type (required because can share a cmod with molten salt tower)
 		value(O_M_DOT_MAKEUP, 0.0);
@@ -865,7 +932,7 @@ public:
 		value(O_ETA_RC, m_eta_c);
 		value(O_ETA_T, m_eta_t);
 		value(O_N_SUB_HXRS, m_N_sub_hxrs);
-		value(O_P_HIGH_LIMIT, m_P_high_limit);
+		value(O_P_HIGH_LIMIT, m_P_high_limit*1000.0);
 		value(O_N_turbine, ms_rc_cycle.get_design_solved()->m_N_t);
 		value(O_DP_LT_C, m_DP_LT[0]);
 		value(O_DP_LT_H, m_DP_LT[1]);
@@ -890,11 +957,11 @@ public:
 		//**************************************************
 		// Test by setting important inputs to design values
 		//**************************************************
-		T_htf_hot = m_T_htf_hot;
-		m_dot_htf = m_dot_rec_des*0.75;
-		m_standby_control = 1;
-		T_db = value(P_T_AMB_DES) + 273.15;
-		P_amb = 101325.0;
+		// T_htf_hot = m_T_htf_hot;
+		// m_dot_htf = m_dot_rec_des*1.15;
+		// m_standby_control = 1;
+		// T_db = value(P_T_AMB_DES) + 273.15;
+		// P_amb = 101325.0;
 		//**************************************************
 		//**************************************************
 		//**************************************************
@@ -924,21 +991,25 @@ public:
 			double T_t_in = T_htf_hot - m_delta_T_t;
 
 			// Set structure parameters constant for timestep
-			ms_rc_opt_od_par.m_T_mc_in = T_mc_in;
-			ms_rc_opt_od_par.m_T_t_in = T_t_in;
+				// design structure
+			ms_rc_des_opt_od_par.m_T_mc_in = T_mc_in;
+			ms_rc_des_opt_od_par.m_T_t_in = T_t_in;
+				// max q structure
+			ms_rc_max_opt_od_par.m_T_mc_in = T_mc_in;
+			ms_rc_max_opt_od_par.m_T_t_in = T_t_in;
 
 			// **********************************************
 			// Do we ever want to reset these????
 			// **********************************************
-			if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
-				ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
-
-			ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
+			// if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
+			// 	ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
+			// 
+			// ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
 			// **********************************************
 			// **********************************************
 
 			// Guess Q_dot_PHX based on design point mass flow rates
-			Q_dot_PHX = m_Q_dot_rec_des_calc*(m_dot_htf / m_dot_rec_des);			//[kWt]
+			Q_dot_PHX = m_Q_dot_rec_des*(m_dot_htf / m_dot_rec_des);			//[kWt]
 
 			// Get maximum possible Q_dot given conditions
 			int max_q_error_code = 0;
@@ -948,7 +1019,15 @@ public:
 				m_error_message_code = 1;		// Off-design model not solving
 				break;
 			}
-			double q_dot_cycle_max = ms_rc_cycle.get_max_target();
+			double q_dot_cycle_max = m_q_max_sf*ms_rc_cycle.get_max_target();
+
+			// Set up structure of parameters for when guess q_dot is close to maximum			
+			ms_rc_max_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_od_solved()->m_recomp_frac;
+			ms_rc_max_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_od_solved()->m_N_mc;
+			ms_rc_max_opt_od_par.m_target = q_dot_cycle_max;
+			double P_mc_in_q_max = ms_rc_cycle.get_od_solved()->m_pres[1-1];
+			// ************************************************************************
+			// ************************************************************************
 
 			Q_dot_PHX = min(Q_dot_PHX, q_dot_cycle_max);
 
@@ -985,6 +1064,25 @@ public:
 						else
 							Q_dot_PHX = min(1.25*Q_dot_PHX, q_dot_cycle_max);
 					}
+				}
+
+				if(Q_dot_PHX / q_dot_cycle_max < 0.85)				// 0.85 arbitrary here. hopefully structures with different guess values don't result in different optimized cases at 0.85...
+				{
+					ms_rc_opt_od_par = ms_rc_des_opt_od_par;
+				}
+				else
+				{
+					if( Q_dot_PHX / q_dot_cycle_max < 0.95 )
+					{
+						ms_rc_max_opt_od_par.m_lowest_pressure = P_mc_in_q_max - 3000.0;
+						ms_rc_max_opt_od_par.m_highest_pressure = P_mc_in_q_max + 3000.0;
+					}
+					else
+					{
+						ms_rc_max_opt_od_par.m_lowest_pressure = P_mc_in_q_max - 1000.0;
+						ms_rc_max_opt_od_par.m_highest_pressure = P_mc_in_q_max + 1000.0;
+					}
+					ms_rc_opt_od_par = ms_rc_max_opt_od_par;
 				}
 
 				ms_rc_opt_od_par.m_target = Q_dot_PHX;
