@@ -1922,7 +1922,13 @@ void C_RecompCycle::target_off_design(S_target_od_parameters & tar_od_par_in, in
 void C_RecompCycle::target_off_design_core(int & error_code)
 {
 	int max_iter = 100;
-	int search_intervals = 20;		// number of intervals to check for valid bounds before starting secant loop
+
+	// 10.6.14 twn: Increase from 20 to 40 to hopefully improve convergence when q_target is close (but less than) q_max
+	int search_intervals; 
+	if( ms_tar_od_par.m_use_default_res )
+		search_intervals = 20;
+	else
+		search_intervals = 50;		// number of intervals to check for valid bounds before starting secant loop
 
 	// Determine the interval containing the solution
 	bool lower_bound_found = false;
@@ -1932,7 +1938,8 @@ void C_RecompCycle::target_off_design_core(int & error_code)
 	double right_residual = 1.E12;		// Initialized to large positive value
 
 	double P_low = ms_tar_od_par.m_lowest_pressure;
-	double P_high = ms_tar_od_par.m_highest_pressure;
+	//double P_high = ms_tar_od_par.m_highest_pressure;
+	double P_high = min(ms_tar_od_par.m_highest_pressure, 12000.0);
 
 	std::vector<double> P_guesses(search_intervals+1);
 	for( int i = 0; i <= search_intervals; i++ )
@@ -2342,14 +2349,18 @@ void C_RecompCycle::get_max_output_od(S_opt_target_od_parameters & opt_tar_od_pa
 			ms_opt_od_par.m_N_mc_guess = ms_od_par.m_N_mc;
 			ms_opt_od_par.m_N_t_guess = ms_od_par.m_N_t;
 			ms_opt_od_par.m_P_mc_in_guess = ms_od_par.m_P_mc_in;
+			P_low = ms_od_par.m_P_mc_in;
 
 			if( point_found )		// exit only after testing two starting points (prevents optimization near-misses)
 				break;
 
 			point_found = true;
 		}
-
-		P_low = 1.1*ms_opt_od_par.m_P_mc_in_guess;
+		else
+		{
+			P_low = 1.1*P_low;
+		}
+		
 
 		if( P_low > ms_opt_tar_od_par.m_highest_pressure )
 			break;
@@ -2369,12 +2380,6 @@ void C_RecompCycle::get_max_output_od(S_opt_target_od_parameters & opt_tar_od_pa
 	else
 		m_biggest_target = m_W_dot_net_od;
 
-	// If the target is not possible, return the cycle with the largest (based on power output)
-	if( m_biggest_target < ms_opt_tar_od_par.m_target )
-	{
-		error_code = 123;
-		return;
-	}
 }
 
 void C_RecompCycle::optimal_target_off_design_no_check(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code)
@@ -2393,6 +2398,8 @@ void C_RecompCycle::optimal_target_off_design_no_check(S_opt_target_od_parameter
 	ms_tar_od_par.m_is_target_Q = ms_opt_tar_od_par.m_is_target_Q;
 	ms_tar_od_par.m_lowest_pressure = ms_opt_tar_od_par.m_lowest_pressure;
 	ms_tar_od_par.m_highest_pressure = ms_opt_tar_od_par.m_highest_pressure;
+
+	ms_tar_od_par.m_use_default_res = ms_opt_tar_od_par.m_use_default_res;
 
 	// Initialize guess array
 	int index = 0;
@@ -2482,6 +2489,13 @@ void C_RecompCycle::optimal_target_off_design(S_opt_target_od_parameters & opt_t
 	if(error_code_local != 0)
 	{
 		error_code = error_code_local;
+		return;
+	}
+
+	// If the target is not possible, return the cycle with the largest (based on power output)
+	if( m_biggest_target < ms_opt_tar_od_par.m_target )
+	{
+		error_code = 123;
 		return;
 	}
 

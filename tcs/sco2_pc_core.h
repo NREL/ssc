@@ -1082,6 +1082,8 @@ public:
 
 		double m_lowest_pressure;	//[-] lowest pressure to check
 		double m_highest_pressure;	//[-] highest pressure to check
+		bool m_use_default_res;		//[-] If true, use 20 intervals in pressure range
+									// If q_target is close to q_max, use false apply 100 intervals
 
 		S_target_od_parameters()
 		{
@@ -1091,6 +1093,8 @@ public:
 			m_is_target_Q = true;
 
 			m_N_sub_hxrs = -1;
+
+			m_use_default_res = true;
 		}
 	};
 
@@ -1118,6 +1122,9 @@ public:
 		double m_tol;					//[-] Convergence tolerance
 		double m_opt_tol;				//[-] Optimization convergence tolerance
 
+		bool m_use_default_res;		//[-] If true, use 20 intervals in pressure range
+									// If q_target is close to q_max, use false apply 100 intervals
+
 		S_opt_target_od_parameters()
 		{
 			m_T_mc_in = m_T_t_in = m_target = m_lowest_pressure = m_highest_pressure = m_recomp_frac_guess =
@@ -1126,6 +1133,8 @@ public:
 			m_N_sub_hxrs = -1;
 			
 			m_is_target_Q = m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_t = true;
+
+			m_use_default_res = true;
 		}
 	};
 
