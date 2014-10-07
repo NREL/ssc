@@ -573,8 +573,13 @@ GaussMarkov::GaussMarkov(MatDoub &xx, VectDoub &yy, Powvargram &vargram, const d
 	vi->solve(y,yvi);
 }
 
+GaussMarkov::GaussMarkov(){
+    vi = 0;  //initialize null
+}
+
 GaussMarkov::~GaussMarkov() { 
-	delete vi; 
+	if(vi != 0)
+        delete vi; 
 }
 
 double GaussMarkov::interp(VectDoub &xstar) {

@@ -207,6 +207,7 @@ enum{	//Parameters
 		P_n_flux_days,
 		P_delta_flux_hrs,
 		P_dni_des,
+		P_land_area,
 
 		//Inputs
 		I_v_wind,
@@ -223,61 +224,60 @@ enum{	//Parameters
 		N_MAX};
 
 tcsvarinfo sam_mw_pt_heliostatfield_variables[] = {
-	//PARAMETERS
-	{TCS_PARAM, TCS_NUMBER,	P_run_type,				"run_type",					"Run type",					"-",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_helio_width,			"helio_width",				"Heliostat width",			"m",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_helio_height,			"helio_height",				"Heliostat height",			"m",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_helio_optical_error,	"helio_optical_error",		"Heliostat optical error",	"rad",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_helio_active_fraction, "helio_active_fraction",	"Heliostat active frac.",	"-",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_helio_reflectance,	"helio_reflectance",		"Heliostat reflectance",	"-",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_rec_absorptance,		"rec_absorptance",			"Receiver absorptance",		"-",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_rec_height,			"rec_height",				"Receiver height", "m",		"",		"", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_rec_aspect,			"rec_aspect",				"Receiver aspect ratio",	"- ",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_rec_hl_perm2,			"rec_hl_perm2",				"Receiver design heatloss", "kW/m2", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_q_design,				"q_design",					"Field thermal power rating", "kW",	"", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_h_tower,				"h_tower",					"Tower height",				"m", "", "", ""},
-	{TCS_PARAM, TCS_STRING,	P_weather_file,			"weather_file",				"Weather file location",	"-", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_land_bound_type,		"land_bound_type",			"Land boundary type",		"- ", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_land_max,				"land_max",					"Land max boundary",		"- OR m", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_land_min,				"land_min",					"Land min boundary",		"- OR m", "", "", ""},
-	{TCS_PARAM, TCS_MATRIX,	P_land_bound_table,		"land_bound_table",			"Land boundary table",		"m", "", "", ""},
-	{TCS_PARAM, TCS_ARRAY,	P_land_bound_list,		"land_bound_list",			"Boundary table listing",	"-", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_p_start,				"p_start",					"Heliostat startup energy", "kWe-hr", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_p_track,				"p_track",					"Heliostat tracking energy", "kWe", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_hel_stow_deploy,		"hel_stow_deploy",			"Stow/deploy elevation",	"deg", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_v_wind_max,			"v_wind_max",				"Max. wind velocity",		"m/s", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_interp_nug,			"interp_nug",				"Interpolation nugget",		"-", "", "", "0.0"},
-	{TCS_PARAM, TCS_NUMBER,	P_interp_beta,			"interp_beta",				"Interpolation beta coef.", "-", "", "", "1.99"},
-	{TCS_PARAM, TCS_NUMBER,	P_n_flux_x,				"n_flux_x",					"Flux map X resolution",	"-", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_n_flux_y,				"n_flux_y",					"Flux map Y resolution",	"-", "", "", ""},
-	{TCS_PARAM, TCS_MATRIX,	P_helio_positions,		"helio_positions",			"Heliostat position table", "m", "", "", ""},
-	{TCS_PARAM, TCS_MATRIX,	P_helio_aim_points,		"helio_aim_points",			"Heliostat aim point table", "m", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER,	P_N_hel,				"N_hel",					"Number of heliostats",		"-", "", "", ""},
-	{TCS_PARAM, TCS_MATRIX,	P_eta_map,				"eta_map",					"Field efficiency array",	"-", "", "", ""},
-	{TCS_PARAM, TCS_MATRIX,	P_flux_positions,		"flux_positions",			"Flux map sun positions",	"deg", "", "", ""},
-	{TCS_PARAM, TCS_MATRIX,	P_flux_maps,			"flux_maps",				"Flux map intensities",		"-", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_0",					"Attenuation coefficient 0", "", "", "", "0.006789"},
-	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_1",					"Attenuation coefficient 1", "", "", "", "0.1046"},
-	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_2",					"Attenuation coefficient 2", "", "", "", "-0.0107"},
-	{TCS_PARAM, TCS_NUMBER, P_c_atm_0,				"c_atm_3",					"Attenuation coefficient 3", "", "", "", "0.002845"},
-	{TCS_PARAM, TCS_NUMBER, P_n_facet_x,            "n_facet_x",                "Number of heliostat facets - X", "", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_n_facet_y,            "n_facet_y",                "Number of heliostat facets - Y", "", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_cant_type,            "cant_type",                "Heliostat cant method",    "", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_focus_type,           "focus_type",               "Heliostat focus method", "", "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_n_flux_days,          "n_flux_days",              "No. days in flux map lookup", "", "", "", "8"},
-	{TCS_PARAM, TCS_NUMBER, P_delta_flux_hrs,       "delta_flux_hrs",           "Hourly frequency in flux map lookup", "hrs", "", "", "1"},
-	{TCS_PARAM, TCS_NUMBER, P_dni_des,              "dni_des",                  "Design-point DNI", "W/m2", "", "", ""},
+    { TCS_PARAM,    TCS_NUMBER,   P_run_type,                "run_type",              "Run type",                                             "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_helio_width,             "helio_width",           "Heliostat width",                                      "m",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_helio_height,            "helio_height",          "Heliostat height",                                     "m",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_helio_optical_error,     "helio_optical_error",   "Heliostat optical error",                              "rad",    "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_helio_active_fraction,   "helio_active_fraction", "Heliostat active frac.",                               "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_helio_reflectance,       "helio_reflectance",     "Heliostat reflectance",                                "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_rec_absorptance,         "rec_absorptance",       "Receiver absorptance",                                 "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_rec_height,              "rec_height",            "Receiver height",                                      "m",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_rec_aspect,              "rec_aspect",            "Receiver aspect ratio",                                "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_rec_hl_perm2,            "rec_hl_perm2",          "Receiver design heatloss",                             "kW/m2",  "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_q_design,                "q_design",              "Field thermal power rating",                           "kW",     "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_h_tower,                 "h_tower",               "Tower height",                                         "m",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_STRING,   P_weather_file,            "weather_file",          "Weather file location",                                "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_land_bound_type,         "land_bound_type",       "Land boundary type",                                   "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_land_max,                "land_max",              "Land max boundary",                                    "- OR m", "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_land_min,                "land_min",              "Land min boundary",                                    "- OR m", "",                              "", ""          },
+    { TCS_PARAM,    TCS_MATRIX,   P_land_bound_table,        "land_bound_table",      "Land boundary table",                                  "m",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_ARRAY,    P_land_bound_list,         "land_bound_list",       "Boundary table listing",                               "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_p_start,                 "p_start",               "Heliostat startup energy",                             "kWe-hr", "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_p_track,                 "p_track",               "Heliostat tracking energy",                            "kWe",    "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_hel_stow_deploy,         "hel_stow_deploy",       "Stow/deploy elevation",                                "deg",    "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_v_wind_max,              "v_wind_max",            "Max. wind velocity",                                   "m/s",    "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_interp_nug,              "interp_nug",            "Interpolation nugget",                                 "-",      "",                              "", "0.0"       },
+    { TCS_PARAM,    TCS_NUMBER,   P_interp_beta,             "interp_beta",           "Interpolation beta coef.",                             "-",      "",                              "", "1.99"      },
+    { TCS_PARAM,    TCS_NUMBER,   P_n_flux_x,                "n_flux_x",              "Flux map X resolution",                                "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_n_flux_y,                "n_flux_y",              "Flux map Y resolution",                                "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_MATRIX,   P_helio_positions,         "helio_positions",       "Heliostat position table",                             "m",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_MATRIX,   P_helio_aim_points,        "helio_aim_points",      "Heliostat aim point table",                            "m",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_N_hel,                   "N_hel",                 "Number of heliostats",                                 "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_MATRIX,   P_eta_map,                 "eta_map",               "Field efficiency array",                               "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_MATRIX,   P_flux_positions,          "flux_positions",        "Flux map sun positions",                               "deg",    "",                              "", ""          },
+    { TCS_PARAM,    TCS_MATRIX,   P_flux_maps,               "flux_maps",             "Flux map intensities",                                 "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_c_atm_0,                 "c_atm_0",               "Attenuation coefficient 0",                            "",       "",                              "", "0.006789"  },
+    { TCS_PARAM,    TCS_NUMBER,   P_c_atm_0,                 "c_atm_1",               "Attenuation coefficient 1",                            "",       "",                              "", "0.1046"    },
+    { TCS_PARAM,    TCS_NUMBER,   P_c_atm_0,                 "c_atm_2",               "Attenuation coefficient 2",                            "",       "",                              "", "-0.0107"   },
+    { TCS_PARAM,    TCS_NUMBER,   P_c_atm_0,                 "c_atm_3",               "Attenuation coefficient 3",                            "",       "",                              "", "0.002845"  },
+    { TCS_PARAM,    TCS_NUMBER,   P_n_facet_x,               "n_facet_x",             "Number of heliostat facets - X",                       "",       "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_n_facet_y,               "n_facet_y",             "Number of heliostat facets - Y",                       "",       "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_cant_type,               "cant_type",             "Heliostat cant method",                                "",       "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_focus_type,              "focus_type",            "Heliostat focus method",                               "",       "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_n_flux_days,             "n_flux_days",           "No. days in flux map lookup",                          "",       "",                              "", "8"         },
+    { TCS_PARAM,    TCS_NUMBER,   P_delta_flux_hrs,          "delta_flux_hrs",        "Hourly frequency in flux map lookup",                  "hrs",    "",                              "", "1"         },
+    { TCS_PARAM,    TCS_NUMBER,   P_dni_des,                 "dni_des",               "Design-point DNI",                                     "W/m2",   "",                              "", ""          },
+	{ TCS_PARAM,    TCS_NUMBER,   P_land_area,               "land_area",             "CALCULATED land area",                                 "acre",   "",                              "", ""          },
+    
+	{ TCS_INPUT,    TCS_NUMBER,   I_v_wind,                  "vwind",                 "Wind velocity",                                        "m/s",    "",                              "", ""          },
+    { TCS_INPUT,    TCS_NUMBER,   I_field_control,           "field_control",         "Field defocus control",                                "",       "",                              "", ""          },
+    { TCS_INPUT,    TCS_NUMBER,   I_solaz,                   "solaz",                 "Solar azimuth angle: 0 due north - clockwise to +360", "deg",    "",                              "", ""          },
+    { TCS_INPUT,    TCS_NUMBER,   I_solzen,                  "solzen",                "Solar zenith angle",                                   "deg",    "",                              "", ""          },
+    
+	{ TCS_OUTPUT,   TCS_NUMBER,   O_pparasi,                 "pparasi",               "Parasitic tracking/startup power",                     "MWe",    "",                              "", ""          },
+    { TCS_OUTPUT,   TCS_NUMBER,   O_eta_field,               "eta_field",             "Total field efficiency",                               "",       "",                              "", ""          },
+    { TCS_OUTPUT,   TCS_MATRIX,   O_flux_map,                "flux_map",              "Receiver flux map",                                    "",       "n_flux_x cols x n_flux_y rows", "", ""          },
 
-	//INPUTS
-	{TCS_INPUT, TCS_NUMBER, I_v_wind,			"vwind",			"Wind velocity",										"m/s",		"", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_field_control,	"field_control",	"Field defocus control",								"",			"", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_solaz,			"solaz",			"Solar azimuth angle: 0 due north, clockwise to +360",	"deg",		"", "", ""},
-	{TCS_INPUT, TCS_NUMBER, I_solzen,			"solzen",			"Solar zenith angle",									"deg",	    "", "", ""},
-
-	//OUTPUTS
-	{TCS_OUTPUT, TCS_NUMBER, O_pparasi,			"pparasi",			"Parasitic tracking/startup power",						"MWe",		"", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_eta_field,		"eta_field",		"Total field efficiency",								"",			"", "", ""},
-	{TCS_OUTPUT, TCS_MATRIX, O_flux_map,		"flux_map",			"Receiver flux map",									"",			"n_flux_x cols x n_flux_y rows", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	}
@@ -335,6 +335,7 @@ private:
 	int n_flux_x;
 	int n_flux_y;
 	double* flux_positions;
+    MatDoub m_flux_positions;
 	double* flux_maps;
 	double* flux_map;
 	double c_atm_0, c_atm_1, c_atm_2, c_atm_3;
@@ -402,11 +403,13 @@ public:
 		c_atm_3 = std::numeric_limits<double>::quiet_NaN();
 		dni_des = std::numeric_limits<double>::quiet_NaN();
 
+        field_efficiency_table = 0;
 	}
 
 	virtual ~sam_mw_pt_heliostatfield()
 	{
-		delete field_efficiency_table;
+        if(field_efficiency_table != 0)
+		    delete field_efficiency_table;
 	}
 
 	virtual int init()
@@ -417,8 +420,8 @@ public:
 		int nrows2;
 		int nrows4, ncols4;
 		int nrows5, ncols5;
-		int nrows6, ncols6;
-		int nrows7, ncols7;
+		int nfluxpos, nfposdim;
+		int nfluxmap, nfluxcol;
 
 		run_type = (int)value(P_run_type);
 		
@@ -492,8 +495,10 @@ public:
 			eta_map = value(P_eta_map, &nrows5, &ncols5);
 			n_flux_x = (int)value(P_n_flux_x);
 			n_flux_y = (int)value(P_n_flux_y);
-			flux_positions = value(P_flux_positions, &nrows6, &ncols6);
-			flux_maps = value(P_flux_maps, &nrows7, &ncols7);
+            /*int nfluxpos, nfposdim;
+		    int nfluxmap, nfluxcol;*/
+			flux_positions = value(P_flux_positions, &nfluxpos, &nfposdim);
+			flux_maps = value(P_flux_maps, &nfluxmap, &nfluxcol);
 			c_atm_0 = value(P_c_atm_0);
 			c_atm_1 = value(P_c_atm_1);
 			c_atm_2 = value(P_c_atm_2);
@@ -505,6 +510,20 @@ public:
 			n_flux_days = (int)value(P_n_flux_days);
 			delta_flux_hrs = (int)value(P_delta_flux_hrs);
 			dni_des = value(P_dni_des);
+
+            //check that flux maps match dimensions
+            if( nfluxmap % nfluxpos != 0 ){
+                message("The number of flux maps provided does not match the number of flux map sun positions provided. Please "
+                    "ensure that the dimensionality of each flux map is consistent and that one sun position is provided for "
+                    "each flux map. (Sun pos. = %d, mismatch lines = %d)", nfluxpos, nfluxmap % nfluxpos);
+                return -1;
+            }
+            //copy the flux positions over to the local member
+            m_flux_positions.resize( nfluxpos, VectDoub(nfposdim) );
+            for(int i=0; i<nfluxpos; i++)
+                for(int j=0; j<nfposdim; j++)
+                    m_flux_positions.at(i).at(j) = flux_positions[i*2 + j];
+            
 			break;
 		default:
 			break;
@@ -659,9 +678,12 @@ public:
 					
 				}
 
-				sapi.Setup(amb, cost, layout, helios, recs);
+                sapi.Setup(amb, cost, layout, helios, recs);
 								
 			}
+            //land area update
+			value(P_land_area, layout.land_area);
+            //number of heliostats
 			value(P_N_hel, (double)N_hel);
 
 			sapi.SetSummaryCallbackStatus(true);
@@ -681,19 +703,28 @@ public:
 			int npos = (int)fluxtab.azimuths.size();
 			sunpos.reserve(npos);
 			effs.reserve(npos);
+
+            eta_map = allocate( P_eta_map, npos, 3, 0.);
+            m_flux_positions.resize(npos, VectDoub(2) );
+
 			for(int i=0; i<npos; i++){
 				sunpos.push_back( vector<double>(2, 0.) );
 
 				sunpos.back().at(0) = fluxtab.azimuths.at(i) / az_scale;
 				sunpos.back().at(1) = fluxtab.zeniths.at(i) / zen_scale;
 				effs.push_back( fluxtab.efficiency.at(i) / eff_scale );
+
+                //fill the parameter matrix to return this data to calling program
+                //also fill the flux sun positions matrix
+                eta_map[i*3    ] = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180./pi;
+                eta_map[i*3 + 1] = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180./pi;
+                eta_map[i*3 + 2] = fluxtab.efficiency.at(i);
+
 			}
 
 			//collect flux's
 			flux_maps = allocate( P_flux_maps, n_flux_y * npos, n_flux_x );
-			//size the output
-			flux_map = allocate( O_flux_map, n_flux_y, n_flux_x );
-
+			
 			block_t<double> *f = &fluxtab.flux_surfaces.front().flux_data;
 
 			int nfl = f->nlayers();
@@ -724,17 +755,27 @@ public:
 			sunpos.resize(nrows, VectDoub(2));
 			effs.resize(nrows);
 			for(int i=0; i<nrows; i++){
-				sunpos.at(i).at(0) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 0 ) / az_scale;
-				sunpos.at(i).at(1) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 1 ) / zen_scale;
+				sunpos.at(i).at(0) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 0 ) / az_scale * pi/180.;
+				sunpos.at(i).at(1) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 1 ) / zen_scale * pi/180.;
 				effs.at(i) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 2 ) / eff_scale;
 			}
 
-			
-			break;
+            break;
 		}
 		default:
 			break;
 		}
+
+        //size the output
+		flux_map = allocate( O_flux_map, n_flux_y, n_flux_x );
+
+        //report back the flux positions used
+        int nflux = (int)m_flux_positions.size();
+        flux_positions = allocate(P_flux_positions, nflux, 2);
+        for(int i=0; i<nflux; i++){
+            flux_positions[i*2] = m_flux_positions.at(i).at(0);
+            flux_positions[i*2 + 1] = m_flux_positions.at(i).at(1);
+        }
 
 		/* 
 		------------------------------------------------------------------------------
@@ -810,7 +851,7 @@ public:
 		}
 		else{
 				
-			// Use current solar position to interpolate field efficiency table and fied solar field efficiency
+			// Use current solar position to interpolate field efficiency table and find solar field efficiency
 			vector<double> sunpos;
 			sunpos.push_back(solaz/az_scale);
 			sunpos.push_back(solzen/zen_scale);
@@ -819,7 +860,6 @@ public:
 			eta_field = min( max ( eta_field, 0.0 ), 1.0 ) * field_control;		// Ensure physical behavior 
 
 			//Set the active flux map
-			MatDoub *map_sunpos = &field_efficiency_table->x;
 			VectDoub pos_now(sunpos);
 			/*VectDoub pos_now(2);
 			pos_now.at(0) = solaz/az_scale;
@@ -827,8 +867,8 @@ public:
 			//find the nearest neighbors to the current point
 			vector<double> distances;
 			vector<int> indices;
-			for(int i=0; i<(int)map_sunpos->size(); i++){
-				distances.push_back( rdist( & pos_now, &map_sunpos->at(i) ) );
+			for(int i=0; i<(int)m_flux_positions.size(); i++){
+				distances.push_back( rdist( & pos_now, &m_flux_positions.at(i) ) );
 				indices.push_back( i );
 			}
 			quicksort<double,int>( distances, indices );

@@ -526,6 +526,65 @@ void tcskernel::set_unit_value( int id, const char *name, const char *s )
 	set_unit_value( id, find_var(id, name), s );
 }
 
+double tcskernel::get_unit_value_number( int id, const char *name )
+{
+	int idx = find_var( id,name );
+	if ( id >= 0 && id < (int) m_units.size()
+		&& idx >= 0 && idx < (int) m_units[id].values.size() )
+	{
+		if ( m_units[id].values[idx].type == TCS_NUMBER )
+			return m_units[id].values[idx].data.value;
+	}
+	else
+		return std::numeric_limits<double>::quiet_NaN();
+}
+
+const char *tcskernel::get_unit_value_string( int id, const char *name )
+{
+	int idx = find_var( id,name );
+	if ( id >= 0 && id < (int) m_units.size()
+		&& idx >= 0 && idx < (int) m_units[id].values.size() )
+	{
+		if ( m_units[id].values[idx].type == TCS_STRING )
+			return m_units[id].values[idx].data.cstr;
+	}
+
+	return 0;
+}
+
+double *tcskernel::get_unit_value( int id, const char *name, int *len )
+{
+	int idx = find_var( id,name );
+	if ( id >= 0 && id < (int) m_units.size()
+		&& idx >= 0 && idx < (int) m_units[id].values.size() )
+	{
+		if ( m_units[id].values[idx].type == TCS_ARRAY )
+		{
+			*len = (int)m_units[id].values[idx].data.array.length;
+			return m_units[id].values[idx].data.array.values;
+		}
+	}
+	return 0;
+}
+
+double *tcskernel::get_unit_value( int id, const char *name, int *nr, int *nc )
+{
+	int idx = find_var( id,name );
+	if ( id >= 0 && id < (int) m_units.size()
+		&& idx >= 0 && idx < (int) m_units[id].values.size() )
+	{
+		if ( m_units[id].values[idx].type  == TCS_MATRIX )
+		{
+			*nr = (int)m_units[id].values[idx].data.matrix.nrows;
+			*nc = (int)m_units[id].values[idx].data.matrix.ncols;
+			return m_units[id].values[idx].data.matrix.values;
+		}
+	}
+
+	return 0;
+}
+
+
 bool tcskernel::parse_unit_value( tcsvalue *v, int type, const char *value )
 {
 	switch( type )

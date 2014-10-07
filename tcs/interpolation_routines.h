@@ -130,6 +130,7 @@ struct GaussMarkov {
 	double SQR( const double a );
 
     GaussMarkov(MatDoub &xx, VectDoub &yy, Powvargram &vargram, const double *err=NULL);
+    GaussMarkov();
 
     ~GaussMarkov();
 
