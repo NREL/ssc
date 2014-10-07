@@ -910,6 +910,9 @@ public:
 
 					m_deltaT_mc_in = value(I_DELTAT_MC);
 					m_deltaT_t_in = value(I_DELTAT_T);
+
+					// Set this here for initialize timestep because return call will be ncall == 1 so next sco2 branch won't be hit
+					q_sco2_max_input = q_pb_design;
 				}
 			}
 			initialize_sco2 = false;
