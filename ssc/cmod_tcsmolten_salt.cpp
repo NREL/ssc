@@ -455,7 +455,7 @@ public:
 
 		// Logic to choose between steam and sco2 power cycle
 		bool is_steam_pc = true;
-		int pb_tech_type = 1;		// This should be an SSC input, eventually
+		int pb_tech_type = 2;		// This should be an SSC input, eventually
 		if( pb_tech_type == 424 )
 			is_steam_pc = false;
 
@@ -726,6 +726,10 @@ public:
 		set_unit_value_ssc_double(type251_controller, "t_ch_out_max" ); //, 400);
 		set_unit_value_ssc_double(type251_controller, "nodes" ); //, 100);
 		set_unit_value_ssc_double(type251_controller, "f_tc_cold" ); //, 0.7);
+		if( !is_steam_pc )
+		{
+			set_unit_value_ssc_double(type251_controller, "pb_tech_type", pb_tech_type);
+		}
 	  //set_unit_value_ssc_array( type251_controller, "TOU_schedule");
 
 		// Set initial values for inputs generated from subsequently called types
@@ -748,6 +752,33 @@ public:
 		}
 		bConnected &= connect( weather, "tdry", type251_controller, "T_amb" );		
 		bConnected &= connect(tou, "tou_value", type251_controller, "TOUPeriod");
+
+		// Inputs for sCO2 connection: design parameters solved in type 424 initial call
+		if( !is_steam_pc )
+		{
+			bConnected &= connect(type424_sco2, "o_W_dot_net",     type251_controller,   "i_W_dot_net"      );
+			bConnected &= connect(type424_sco2, "o_T_mc_in",       type251_controller,	 "i_T_mc_in"      	);
+			bConnected &= connect(type424_sco2,	"o_T_t_in",        type251_controller,	 "i_T_t_in"       	);
+			bConnected &= connect(type424_sco2,	"o_P_mc_in",       type251_controller,	 "i_P_mc_in"      	);
+			bConnected &= connect(type424_sco2,	"o_P_mc_out",      type251_controller,	 "i_P_mc_out"     	);
+			bConnected &= connect(type424_sco2,	"o_UA_LT",         type251_controller,	 "i_UA_LT"        	);
+			bConnected &= connect(type424_sco2,	"o_UA_HT",         type251_controller,	 "i_UA_HT"        	);
+			bConnected &= connect(type424_sco2,	"o_recomp_frac",   type251_controller,	 "i_recomp_frac"  	);
+			bConnected &= connect(type424_sco2,	"o_eta_mc",        type251_controller,	 "i_eta_mc"       	);
+			bConnected &= connect(type424_sco2,	"o_eta_rc",        type251_controller,	 "i_eta_rc"       	);
+			bConnected &= connect(type424_sco2,	"o_eta_t",         type251_controller,	 "i_eta_t"        	);
+			bConnected &= connect(type424_sco2,	"o_N_sub_hxrs",    type251_controller,	 "i_N_sub_hxrs"   	);
+			bConnected &= connect(type424_sco2,	"o_P_high_limit",  type251_controller,	 "i_P_high_limit" 	);
+			bConnected &= connect(type424_sco2,	"o_N_turbine",     type251_controller,	 "i_N_turbine"    	);
+			bConnected &= connect(type424_sco2,	"o_DP_LT_c",       type251_controller,	 "o_DP_LT_c"      	);
+			bConnected &= connect(type424_sco2,	"o_DP_LT_h",       type251_controller,	 "o_DP_LT_h"      	);
+			bConnected &= connect(type424_sco2,	"o_DP_HT_c",       type251_controller,	 "o_DP_HT_c"      	);
+			bConnected &= connect(type424_sco2,	"o_DP_HT_h",       type251_controller,	 "o_DP_HT_h"      	);
+			bConnected &= connect(type424_sco2,	"o_DP_PC_h",       type251_controller,	 "o_DP_PC_h"      	);
+			bConnected &= connect(type424_sco2,	"o_DP_PHX_c",      type251_controller,	 "o_DP_PHX_c"     	);
+			bConnected &= connect(type424_sco2,	"o_deltaT_mc",     type251_controller,	 "o_deltaT_mc"    	);
+			bConnected &= connect(type424_sco2,	"o_deltaT_t",      type251_controller,	 "o_deltaT_t"     	);
+		}
 
 		// Set powerblock parameters
 		if( is_steam_pc )
@@ -787,9 +818,9 @@ public:
 			set_unit_value_ssc_double(type424_sco2, "fan_power_perc", 1.0);
 			set_unit_value_ssc_double(type424_sco2, "plant_elevation", 0.0);
 
-			set_unit_value_ssc_double(type424_sco2, "T_htf_hot", as_double("T_htf_hot_ref"));
-			set_unit_value_ssc_double(type424_sco2, "T_htf_cold", as_double("T_htf_cold_ref"));
-			set_unit_value_ssc_double(type424_sco2, "eta_des_est", as_double("eta_ref"));
+			set_unit_value_ssc_double(type424_sco2, "T_htf_hot_des", as_double("T_htf_hot_ref"));
+			set_unit_value_ssc_double(type424_sco2, "T_htf_cold_est", as_double("T_htf_cold_ref"));
+			set_unit_value_ssc_double(type424_sco2, "eta_des", as_double("eta_ref"));
 			set_unit_value_ssc_double(type424_sco2, "rec_htf", as_double("HTF"));
 			//set_unit_value_ssc_double(type424_sco2, "rec_fl_props" .... ?
 
