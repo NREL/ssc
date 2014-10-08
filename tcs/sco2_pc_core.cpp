@@ -2786,6 +2786,149 @@ double C_RecompCycle::eta_at_target(const std::vector<double> &x)
 	return eta_at_target;
 }
 
+void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_parameters phx_od_par_in, int & error_code)
+{
+	ms_od_par = od_par_in;
+	ms_phx_od_par = phx_od_par_in;
+
+	// Set up 3-D optimization in NLOPT
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+	int index = 0;
+
+	// Inlet pressure
+	//x.push_back(ms_des_solved.m_pres[1 - 1]);
+	x.push_back(1000.0);
+	lb.push_back(1000.0);		// This must be set to a variable somewhere?
+	ub.push_back(12000.0);		// This also must be set somewhere?
+	scale.push_back(4000.0);	// Solution is probably less than design pressure
+	index++;
+
+	// Recompression Fraction
+	if( ms_des_solved.m_is_rc )
+	{
+		x.push_back(ms_des_solved.m_recomp_frac);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(-.02);
+		index++;
+	}
+
+	// Compressor Speed
+	x.push_back(ms_des_solved.m_N_mc);
+	lb.push_back(ms_des_solved.m_N_mc*0.1);
+	ub.push_back(ms_des_solved.m_N_mc*1.5);
+	scale.push_back(ms_des_solved.m_N_mc*0.1);
+	index++;
+
+	// Set up instance of nlopt class and set optimization parameters
+	nlopt::opt          opt_od_cycle(nlopt::LN_SBPLX, index);
+	opt_od_cycle.set_lower_bounds(lb);
+	opt_od_cycle.set_upper_bounds(ub);
+	opt_od_cycle.set_initial_step(scale);
+	opt_od_cycle.set_xtol_rel(ms_des_par.m_tol);
+
+	// Set max objective function
+	opt_od_cycle.set_max_objective(nlopt_cb_opt_od_eta, this);
+	double max_f = std::numeric_limits<double>::quiet_NaN();
+	nlopt::result       result_od_cycle = opt_od_cycle.optimize(x, max_f);
+
+	index = 0;
+	ms_od_par.m_P_mc_in = x[index];
+	index++;
+
+	ms_od_par.m_recomp_frac = 0.0;
+	if( ms_des_solved.m_is_rc )
+	{
+		ms_od_par.m_recomp_frac = x[index];
+		index++;
+	}
+
+	ms_od_par.m_N_mc = x[index];
+	index++;
+
+	int od_error_code = 0;
+
+	off_design_core(od_error_code);
+
+	if( od_error_code != 0 )
+	{
+		error_code = od_error_code;
+		return;
+	}
+		
+}
+
+double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
+{
+	int index = 0;
+
+	ms_od_par.m_P_mc_in = x[index];
+	index++;
+
+	ms_od_par.m_recomp_frac = 0.0;
+	if( ms_des_solved.m_is_rc )
+	{
+		ms_od_par.m_recomp_frac = x[index];
+		index++;
+	}
+
+	ms_od_par.m_N_mc = x[index];
+	index++;
+
+	// return ms_od_par.m_P_mc_in + ms_od_par.m_recomp_frac + ms_od_par.m_N_mc;
+
+	int od_error_code = 0;
+
+	off_design_core(od_error_code);
+
+	if( od_error_code != 0 )
+		return 0.0;
+
+	// Get off design values for PHX calcs
+	double m_dot_PHX = ms_od_solved.m_m_dot_t;
+	double T_PHX_in = ms_od_solved.m_temp[5-1];
+
+	double Q_dot_PHX = ms_od_solved.m_Q_dot;
+
+	// Calculate off-design UA
+	double m_dot_ratio = 0.5*(ms_phx_od_par.m_m_dot_htf/ms_phx_od_par.m_m_dot_htf_des + m_dot_PHX/ms_des_solved.m_m_dot_t);
+	double UA_PHX_od = ms_phx_od_par.m_UA_PHX_des*pow(m_dot_ratio, 0.8);
+
+	double C_dot_co2 = m_dot_PHX*(ms_od_solved.m_enth[6 - 1] - ms_od_solved.m_enth[5 - 1]) /
+		(ms_od_solved.m_temp[6 - 1] - ms_od_solved.m_temp[5 - 1]);	//[kW/K]
+
+	double C_dot_htf = ms_phx_od_par.m_cp_htf*ms_phx_od_par.m_m_dot_htf;
+
+	double C_dot_min = min(C_dot_co2, C_dot_htf);
+	double C_dot_max = max(C_dot_co2, C_dot_htf);
+
+	double C_R = C_dot_min / C_dot_max;
+
+	double eff = Q_dot_PHX / (C_dot_min*(ms_phx_od_par.m_T_htf_hot - T_PHX_in));
+
+	if( eff > 0.999 )
+		return 0.0;
+
+	double NTU = 0.0;
+	if( C_R != 1.0 )
+		NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
+	else
+		NTU = eff / (1.0 - eff);
+
+	double UA_calc = NTU*C_dot_min;
+
+	double UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;
+
+	double eta_thermal = ms_od_solved.m_eta_thermal;
+
+	double over_deltaP = max( 0.0, ms_od_solved.m_pres[2-1] - ms_des_par.m_P_high_limit );
+
+	return eta_thermal * exp(-abs(UA_diff)) * exp(-over_deltaP);
+}
+
 double fmin_callback_opt_eta_1(double x, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
@@ -2809,6 +2952,12 @@ double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> 
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) return frame->eta_at_target(x);
+}
+
+double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
+	if( frame != NULL ) return frame->opt_od_eta(x);
 }
 
 double P_pseudocritical_1(double T_K)
