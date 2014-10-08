@@ -200,9 +200,9 @@ private:
 		// New sco2 cycle code
 	C_RecompCycle ms_rc_cycle;
 	C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
-	C_RecompCycle::S_opt_target_od_parameters ms_rc_opt_od_par;
-	C_RecompCycle::S_opt_target_od_parameters ms_rc_max_opt_od_par;
-	C_RecompCycle::S_opt_target_od_parameters ms_rc_des_opt_od_par;
+	//C_RecompCycle::S_opt_target_od_parameters ms_rc_opt_od_par;
+	//C_RecompCycle::S_opt_target_od_parameters ms_rc_max_opt_od_par;
+	//C_RecompCycle::S_opt_target_od_parameters ms_rc_des_opt_od_par;
 	C_RecompCycle::S_od_parameters ms_rc_od_par;
 	C_RecompCycle::S_PHX_od_parameters ms_phx_od_par;
 
@@ -369,7 +369,7 @@ public:
 
 		// Calculate other cycle design parameters based on User Parameters
 		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
-		m_T_t_in_des = m_T_htf_hot - m_delta_T_t;			//[K] Turbine inlet temperature
+		m_T_t_in_des = m_T_htf_hot - m_delta_T_t;			//[K] Turbine inlet temperature		
 
 		double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 
@@ -493,11 +493,11 @@ public:
 		// **************************************************************************
 		// Check that receiver parameters are within limits
 			// Receiver outlet temperature should be greater than turbine inlet temperature
-		if(m_T_htf_hot < m_T_t_in_des + 1.0)
-		{
-			message("The htf hot temperature, %lg [C], must be at least 1 [C] greater than the turbine inlet temperature %lg [C]", m_T_htf_hot-273.15, m_T_t_in_des-273.15);
-			return -1;
-		}		
+		// if(m_T_htf_hot < m_T_t_in_des + 1.0)
+		// {
+		// 	message("The htf hot temperature, %lg [C], must be at least 1 [C] greater than the turbine inlet temperature %lg [C]", m_T_htf_hot-273.15, m_T_t_in_des-273.15);
+		// 	return -1;
+		// }		
 
 		///*********************************
 		// Don't need these checks if user input is cycle efficiency
@@ -739,18 +739,13 @@ public:
 		double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
 		m_m_dot_des = ms_rc_cycle.get_design_solved()->m_m_dot_t;			//[kg/s]
 		double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
-		double P_PHX_in = ms_rc_cycle.get_design_solved()->m_pres[5-1];			//[kPa]
-
-		// Calculate HTF cold temperature
-		double T_PHX_co2_in = ms_rc_cycle.get_design_solved()->m_temp[5-1];
-		double T_htf_cold = T_PHX_co2_in + m_delta_T_t;
+		double P_PHX_in = ms_rc_cycle.get_design_solved()->m_pres[5 - 1];			//[kPa]
 
 		double T_htf_cold_est = value(P_T_htf_cold_est) + 273.15;
+		// Calculate HTF cold temperature
 
-		message("The calculated cold HTF temperature is %lg [C]. The estimated cold HTF temperature is %lg [C]. This difference may affect the receiver design and hours of thermal storage. Try adjusting the receiver inlet temperature or design cycle efficiency",
-			T_htf_cold - 273.15, T_htf_cold_est - 273.15);
-
-		m_T_htf_cold_des = T_htf_cold;		//[K]
+		double T_PHX_co2_in = ms_rc_cycle.get_design_solved()->m_temp[5 - 1];
+		double T_htf_cold = T_PHX_co2_in + m_delta_T_t;
 
 		// Can give PHX inlet --or-- HX UA, but there is going to be a conflict between
 		// 1) Assumed thermal input to cycle
@@ -765,25 +760,115 @@ public:
 		// Assumes properties behave well here, which is reasonable given distance from critical point
 		// Also assumes that CR = 1
 		// ***************************************************************
-			// Receiver/hot side
+		// Receiver/hot side
 		double T_rec_ave = 0.5*(T_htf_cold + m_T_htf_hot);		//[K]
 		m_cp_rec = rec_htfProps.Cp(T_rec_ave);					//[kJ/kg-K]
 		m_dot_rec_des = m_Q_dot_rec_des / (m_cp_rec*(m_T_htf_hot - T_htf_cold));	//[kg/s]
-		
-			// Cycle/cold side
+
+		// Cycle/cold side
 		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + T_PHX_co2_in);		//[K]
-		co2_error = CO2_TP(T_PHX_co2_ave, P_PHX_in, &co2_props);	
+		co2_error = CO2_TP(T_PHX_co2_ave, P_PHX_in, &co2_props);
 		double cp_PHX_co2 = m_Q_dot_rec_des / (m_m_dot_des*(m_T_t_in_des - T_PHX_co2_in));
 
-			// Because C_dot_c = C_dot_h, q_dot_max = 
+		// Because C_dot_c = C_dot_h, q_dot_max = 
 		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_htf_hot - T_PHX_co2_in);		//[kW]
 
-			// Effectiveness & NTU
+		// Effectiveness & NTU
 		double eff_des = m_Q_dot_rec_des / q_dot_max;
-		double NTU = eff_des/(1.0 - eff_des);
+		double NTU = eff_des / (1.0 - eff_des);
 
-			// UA
+		// UA
 		m_UA_PHX_des = NTU * m_dot_rec_des * m_cp_rec;
+
+		//// Now set-up iteration on T_cold
+		//double T_htf_lower = 0.0;
+		//bool know_htf_lower = false;
+
+		//double T_htf_upper = 0.0;
+		//bool know_htf_upper = false;
+
+		//double diff_T_htf_cold = ms_rc_autodes_par.m_tol*2.0;
+
+		//C_RecompCycle::S_od_parameters rc_od_par;
+		//rc_od_par.m_T_mc_in = m_T_mc_in_des;
+		//rc_od_par.m_T_t_in = m_T_t_in_des;
+		//rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
+		//rc_od_par.m_N_sub_hxrs = ms_rc_autodes_par.m_N_sub_hxrs;
+		//rc_od_par.m_tol = ms_rc_autodes_par.m_tol;
+
+		//C_RecompCycle::S_PHX_od_parameters phx_od_par;
+		//phx_od_par.m_m_dot_htf_des = m_dot_rec_des;
+		//phx_od_par.m_T_htf_hot = m_T_htf_hot;
+		//phx_od_par.m_m_dot_htf = m_dot_rec_des;
+		//phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
+		//phx_od_par.m_cp_htf = m_cp_rec;
+
+		//int hx_od_error = 0;
+
+		//for( int iter_T_htf_cold = 0; fabs(diff_T_htf_cold) > ms_rc_autodes_par.m_tol; iter_T_htf_cold++ )
+		//{
+		//	if(iter_T_htf_cold > 0)			// diff_T_htf_cold = (T_htf_cold_calc - T_htf_cold) / T_htf_cold;
+		//	{
+		//		if(diff_T_htf_cold > 0.0)		// T_htf_cold is too small
+		//		{
+		//			T_htf_lower = T_htf_cold;
+		//			know_htf_lower = true;
+		//			if( know_htf_upper )
+		//				T_htf_cold = 0.5*(T_htf_lower + T_htf_upper);
+		//			else
+		//				T_htf_cold = T_htf_cold + 10.0;
+		//		}
+		//		else
+		//		{
+		//			T_htf_upper = T_htf_cold;
+		//			know_htf_upper = true;
+		//			if( know_htf_lower )
+		//				T_htf_cold = 0.5*(T_htf_lower + T_htf_upper);
+		//			else
+		//				T_htf_cold = T_htf_cold - 10.0;
+		//		}			
+		//	}
+
+		//	if(iter_T_htf_cold > 30)
+		//	{
+		//		hx_od_error = 1;
+		//		break;
+		//	}
+
+		//	// ***************************************************************************
+		//	// Run Off-Design Model @ Design Conditions to get behavior with optimized PHX
+		//	// ***************************************************************************
+		//	m_dot_rec_des = m_Q_dot_rec_des / (m_cp_rec*(m_T_htf_hot - T_htf_cold));	//[kg/s]
+
+		//	phx_od_par.m_m_dot_htf = m_dot_rec_des;
+
+		//	hx_od_error = 0;
+
+		//	double C_dot_htf = phx_od_par.m_m_dot_htf * phx_od_par.m_cp_htf;
+
+		//	ms_rc_cycle.opt_od_eta_for_hx(rc_od_par, phx_od_par, hx_od_error);
+
+		//	if( hx_od_error != 0 )
+		//		break;
+
+		//	double Q_dot_PHX = ms_rc_cycle.get_od_solved()->m_Q_dot;
+		//	
+		//	double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX / C_dot_htf;
+
+		//	diff_T_htf_cold = (T_htf_cold_calc - T_htf_cold) / T_htf_cold;
+		//}
+		//
+		//if(hx_od_error != 0)
+		//{
+		//	message("Primary heat exchanger sizing failed");
+		//	return -1;
+		//}
+
+		m_T_htf_cold_des = T_htf_cold;		//[K]
+
+		message("The calculated cold HTF temperature is %lg [C]. The estimated cold HTF temperature is %lg [C]. This difference may affect the receiver design and hours of thermal storage. Try adjusting the receiver inlet temperature or design cycle efficiency",
+			T_htf_cold - 273.15, T_htf_cold_est - 273.15);
+
 
 		// *****************************************************************
 		// Call Air Cooled Condenser
@@ -834,99 +919,93 @@ public:
 		m_error_message_code = 0;
 
 		// Initialize member data in 'ms_rc_opt_od_par' that is held constant for CSP simulations
-		ms_rc_opt_od_par.m_is_target_Q = true;
-
-		ms_rc_opt_od_par.m_N_sub_hxrs = 10;
-		ms_rc_opt_od_par.m_lowest_pressure = 1000.0;			// twn: this isn't really based on anything...
-		ms_rc_opt_od_par.m_highest_pressure = ms_rc_autodes_par.m_P_high_limit;
-
-		// Check if design cycle has a recompressor
-		if( ms_rc_cycle.get_design_solved()->m_is_rc )
-		{
-			ms_rc_opt_od_par.m_fixed_recomp_frac = false;			
-		}
-		else
-		{
-			
-			ms_rc_opt_od_par.m_fixed_recomp_frac = true;
-			ms_rc_opt_od_par.m_recomp_frac_guess = 0.0;
-		}
-
-		ms_rc_opt_od_par.m_fixed_N_mc = false;
-
-		ms_rc_opt_od_par.m_fixed_N_t = true;
-		ms_rc_opt_od_par.m_N_t_guess = ms_rc_cycle.get_design_solved()->m_N_t;
-
-		ms_rc_opt_od_par.m_tol = ms_rc_autodes_par.m_tol;
-		ms_rc_opt_od_par.m_opt_tol = ms_rc_autodes_par.m_opt_tol;
-
-		// Remaining member data to define:
-			// m_T_mc_in
-			// m_T_t_in
-			// m_target
-			// m_recomp_frac_guess (if not 0)
-			// m_N_mc_guess
-
-		// Calculate standby info
-			// Call target off-design at standby frac to get
-		ms_rc_opt_od_par.m_T_mc_in = m_T_mc_in_des;
-		ms_rc_opt_od_par.m_T_t_in = m_T_t_in_des;
-
-		ms_rc_opt_od_par.m_target = m_Q_dot_rec_des*cutoff_frac;
-
-		ms_rc_opt_od_par.m_use_default_res = true;
-
-		if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
-			ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
-
-		ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
-
-		// Separately save design guesses
-		ms_rc_des_opt_od_par = ms_rc_opt_od_par;
-		// And initialize structure for max_q guesses
-		ms_rc_max_opt_od_par = ms_rc_des_opt_od_par;
+		// ms_rc_opt_od_par.m_is_target_Q = true;
+		// 
+		// ms_rc_opt_od_par.m_N_sub_hxrs = 10;
+		// ms_rc_opt_od_par.m_lowest_pressure = 1000.0;			// twn: this isn't really based on anything...
+		// ms_rc_opt_od_par.m_highest_pressure = ms_rc_autodes_par.m_P_high_limit;
+		// 
+		// // Check if design cycle has a recompressor
+		// if( ms_rc_cycle.get_design_solved()->m_is_rc )
+		// {
+		// 	ms_rc_opt_od_par.m_fixed_recomp_frac = false;			
+		// }
+		// else
+		// {
+		// 	
+		// 	ms_rc_opt_od_par.m_fixed_recomp_frac = true;
+		// 	ms_rc_opt_od_par.m_recomp_frac_guess = 0.0;
+		// }
+		// 
+		// ms_rc_opt_od_par.m_fixed_N_mc = false;
+		// 
+		// ms_rc_opt_od_par.m_fixed_N_t = true;
+		// ms_rc_opt_od_par.m_N_t_guess = ms_rc_cycle.get_design_solved()->m_N_t;
+		// 
+		// ms_rc_opt_od_par.m_tol = ms_rc_autodes_par.m_tol;
+		// ms_rc_opt_od_par.m_opt_tol = ms_rc_autodes_par.m_opt_tol;
+		// 
+		// // Remaining member data to define:
+		// 	// m_T_mc_in
+		// 	// m_T_t_in
+		// 	// m_target
+		// 	// m_recomp_frac_guess (if not 0)
+		// 	// m_N_mc_guess
+		// 
+		// // Calculate standby info
+		// 	// Call target off-design at standby frac to get
+		// ms_rc_opt_od_par.m_T_mc_in = m_T_mc_in_des;
+		// ms_rc_opt_od_par.m_T_t_in = m_T_t_in_des;
+		// 
+		// ms_rc_opt_od_par.m_target = m_Q_dot_rec_des*cutoff_frac;
+		// 
+		// ms_rc_opt_od_par.m_use_default_res = true;
+		// 
+		// if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
+		// 	ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
+		// 
+		// ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
+		// 
+		// // Separately save design guesses
+		// ms_rc_des_opt_od_par = ms_rc_opt_od_par;
+		// // And initialize structure for max_q guesses
+		// ms_rc_max_opt_od_par = ms_rc_des_opt_od_par;
 
 		int q_sby_error_code = 0;
 
 		// Checking minimum cycle power
-		ms_rc_cycle.optimal_target_off_design_no_check(ms_rc_opt_od_par, q_sby_error_code);
+		// ms_rc_cycle.optimal_target_off_design_no_check(ms_rc_opt_od_par, q_sby_error_code);
 
 		// Check that broken up 'optimal_target_off_design' codes are working properly
 		// ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, q_sby_error_code);
 
-		if(q_sby_error_code != 0)
+		ms_rc_od_par.m_T_mc_in = m_T_mc_in_des;
+		ms_rc_od_par.m_T_t_in = m_T_t_in_des;
+		ms_rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
+		ms_rc_od_par.m_N_sub_hxrs = ms_rc_autodes_par.m_N_sub_hxrs;
+		ms_rc_od_par.m_tol = ms_rc_autodes_par.m_tol;
+
+		ms_phx_od_par.m_m_dot_htf_des = m_dot_rec_des;
+		ms_phx_od_par.m_T_htf_hot = m_T_htf_hot;
+		ms_phx_od_par.m_m_dot_htf = m_dot_rec_des*cutoff_frac;
+		ms_phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
+		ms_phx_od_par.m_cp_htf = m_cp_rec;
+
+		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
+
+		ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
+
+		if( q_sby_error_code != 0 )
 		{
 			message("The power cycle model crashes at the specified cutoff fraction, %lg. Try increasing this value", cutoff_frac);
 			return -1;
 		}
 
-		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
+		double Q_dot_PHX_sby = ms_rc_cycle.get_od_solved()->m_Q_dot;
 
-		//***********************************************************************
-		// Test max off-design
-		// ms_rc_opt_od_par.m_T_mc_in = 32.0 + 273.15;
-		// 
-		// int max_q_error_code = 0;
-		// ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, max_q_error_code);
-		// 
-		// ms_rc_des_opt_od_par = ms_rc_opt_od_par;
-		// ms_rc_max_opt_od_par = ms_rc_opt_od_par;
-		// 
-		// ms_rc_max_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_od_solved()->m_recomp_frac;
-		// ms_rc_max_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_od_solved()->m_N_mc;
-		// 
-		// // Set tighter bounds on upper and lower pressures because we know target is close to max
-		// ms_rc_max_opt_od_par.m_lowest_pressure = ms_rc_cycle.get_od_solved()->m_pres[1-1] - 1000.0;
-		// ms_rc_max_opt_od_par.m_highest_pressure = ms_rc_cycle.get_od_solved()->m_pres[1-1] + 1000.0;
-		// ms_rc_max_opt_od_par.m_use_default_res = false;
-		// 
-		// double q_dot_cycle_max = ms_rc_cycle.get_max_target();
-		// 
-		// ms_rc_max_opt_od_par.m_target = m_q_max_sf*q_dot_cycle_max;
-		// 
-		// ms_rc_cycle.optimal_target_off_design_no_check(ms_rc_max_opt_od_par, max_q_error_code);
-		//***********************************************************************
-		//***********************************************************************
+		double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
+
+		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 
 		m_T_htf_cold_sby = m_T_PHX_in_sby + 5.0;		// Estimate htf return temp w/o heat exchanger
 		//double m_m_dot_htf_sby = m_Q_dot_rec_des*m_q_sby_frac/(m_cp_rec*(m_T_htf_hot - m_T_htf_cold_sby));
@@ -963,46 +1042,46 @@ public:
 		value(O_DELTAT_T, m_delta_T_t);
 
 		// Dummy inputs
-
-		double m_dot_htf = 601.4;
-		double T_db = 0.0;
-		double T_htf_hot = 846.1;
-
-		
-
-		// Assume compressor inlet temperature is always design point delta T above ambient: (T_amb_des - T_comp_in)
-		// Floor is ~ critical temp + 1 = 32 C
-		double T_mc_in = max(32.0 + 273.15, T_db + m_delta_T_acc);
-
-		// Assume turbine inlet temperature is always design point delta T below receiver hot side
-		double T_t_in = T_htf_hot - m_delta_T_t;
-
-		C_RecompCycle::S_od_parameters rc_od_par;
-		rc_od_par.m_T_mc_in = T_mc_in;
-		rc_od_par.m_T_t_in = T_t_in;
-		rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
-		rc_od_par.m_N_sub_hxrs = ms_rc_autodes_par.m_N_sub_hxrs;
-		rc_od_par.m_tol = ms_rc_autodes_par.m_tol;
-
-		C_RecompCycle::S_PHX_od_parameters phx_od_par;
-		phx_od_par.m_m_dot_htf_des = m_dot_rec_des;
-		phx_od_par.m_T_htf_hot = T_htf_hot;
-		phx_od_par.m_m_dot_htf = m_dot_htf;
-		phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
-		phx_od_par.m_cp_htf = m_cp_rec;
-
-		int hx_od_error = 0;
-
-		double C_dot_htf = phx_od_par.m_m_dot_htf * phx_od_par.m_cp_htf;
-
-		ms_rc_cycle.opt_od_eta_for_hx(rc_od_par, phx_od_par, hx_od_error);		
-
-		double Q_dot_PHX = ms_rc_cycle.get_od_solved()->m_Q_dot;
-		T_htf_cold = T_htf_hot - Q_dot_PHX / C_dot_htf;
-
-		// Check error code
-		int blah = hx_od_error;
-
+		//
+		//double m_dot_htf = 601.4;
+		//double T_db = 0.0;
+		//double T_htf_hot = 846.1;
+		//
+		//
+		//
+		//// Assume compressor inlet temperature is always design point delta T above ambient: (T_amb_des - T_comp_in)
+		//// Floor is ~ critical temp + 1 = 32 C
+		//double T_mc_in = max(32.0 + 273.15, T_db + m_delta_T_acc);
+		//
+		//// Assume turbine inlet temperature is always design point delta T below receiver hot side
+		//double T_t_in = T_htf_hot - m_delta_T_t;
+		//
+		//C_RecompCycle::S_od_parameters rc_od_par;
+		//rc_od_par.m_T_mc_in = T_mc_in;
+		//rc_od_par.m_T_t_in = T_t_in;
+		//rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
+		//rc_od_par.m_N_sub_hxrs = ms_rc_autodes_par.m_N_sub_hxrs;
+		//rc_od_par.m_tol = ms_rc_autodes_par.m_tol;
+		//
+		//C_RecompCycle::S_PHX_od_parameters phx_od_par;
+		//phx_od_par.m_m_dot_htf_des = m_dot_rec_des;
+		//phx_od_par.m_T_htf_hot = T_htf_hot;
+		//phx_od_par.m_m_dot_htf = m_dot_htf;
+		//phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
+		//phx_od_par.m_cp_htf = m_cp_rec;
+		//
+		//int hx_od_error = 0;
+		//
+		//double C_dot_htf = phx_od_par.m_m_dot_htf * phx_od_par.m_cp_htf;
+		//
+		//ms_rc_cycle.opt_od_eta_for_hx(rc_od_par, phx_od_par, hx_od_error);		
+		//
+		//double Q_dot_PHX = ms_rc_cycle.get_od_solved()->m_Q_dot;
+		//T_htf_cold = T_htf_hot - Q_dot_PHX / C_dot_htf;
+		//
+		//// Check error code
+		//int blah = hx_od_error;
+		//
 		/*
 		// Set guess values
 		rc_od_par.m_P_mc_in = ms_rc_cycle.get_design_solved()->m_pres[1 - 1];
