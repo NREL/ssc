@@ -50,6 +50,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT, SSC_NUMBER, "land_min", "Land min boundary", "-ORm", "", "heliostat", "?=0.75", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "land_bound_table", "Land boundary table", "m", "", "heliostat", "?", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "land_bound_list", "Boundary table listing", "-", "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "dni_des", "Design-point DNI", "W/m2", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "p_start", "Heliostat startup energy", "kWe-hr", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "p_track", "Heliostat tracking energy", "kWe", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "hel_stow_deploy", "Stow/deploy elevation", "deg", "", "heliostat", "*", "", "" },
@@ -64,6 +65,22 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT, SSC_MATRIX, "eta_map", "Field efficiency array", "-", "", "heliostat", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "flux_positions", "Flux map sun positions", "deg", "", "heliostat", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "flux_maps", "Flux map intensities", "-", "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_0", "Attenuation coefficient 0", "", "", "heliostat", "?=0.006789", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_1", "Attenuation coefficient 1", "", "", "heliostat", "?=0.1046", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_2", "Attenuation coefficient 2", "", "", "heliostat", "?=-0.0107", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_3", "Attenuation coefficient 3", "", "", "heliostat", "?=0.002845", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_facet_x", "Number of heliostat facets - X", "", "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_facet_y", "Number of heliostat facets - Y", "", "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "focus_type", "Heliostat focus method", "", "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "cant_type", "Heliostat cant method", "", "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_flux_days", "No. days in flux map lookup", "", "", "heliostat", "?=8", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "delta_flux_hrs", "Hourly frequency in flux map lookup", "", "", "heliostat", "?=1", "", "" },
+
+	//
+
+
+	{ SSC_INPUT, SSC_NUMBER, "H_rec", "The height of the receiver", "m", "", "receiver", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "THT", "The height of the tower (hel. pivot to rec equator)", "m", "", "receiver", "*", "", "" },
 
 	//// Heliostat field inputs					     																	  
 	//   { SSC_INPUT,        SSC_NUMBER,      "field_control",        "Field defocus control",                                             "",             "",            "heliostat",      "*",                       "",                      "" },
@@ -479,8 +496,8 @@ public:
 		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
 		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
 		set_unit_value_ssc_double( type265_dsg_controller, "A_sf");//, A_sf );
-		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap_angles"); //arr_sol_pos);
-		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap"); //arr_flux);
+//		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap_angles"); //arr_sol_pos);
+//		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap"); //arr_flux);
 		//set_unit_value_ssc_array( type265_dsg_controller, "TOU_schedule");
 
 		// initial values for dsg controller
@@ -511,6 +528,9 @@ public:
 		bConnected &= connect(type234_powerblock, "T_cold", type265_dsg_controller, "T_fw");
 		bConnected &= connect(type234_powerblock, "P_cond", type265_dsg_controller, "P_cond");
 		bConnected &= connect(tou, "tou_value", type265_dsg_controller, "TOUPeriod");
+		bConnected &= connect(type_hel_field, "flux_map", type265_dsg_controller, "fluxmap");
+		bConnected &= connect(type_hel_field, "flux_positions", type265_dsg_controller, "fluxmap_angles");
+
 
 		// Set Powerblock Parameters
 		set_unit_value_ssc_double(type234_powerblock, "P_ref"); //P_cycle_design);
