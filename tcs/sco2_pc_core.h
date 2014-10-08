@@ -1138,6 +1138,23 @@ public:
 		}
 	};
 
+	struct S_PHX_od_parameters
+	{
+		double m_m_dot_htf_des;		//[kg/s] Design point htf mass flow rate
+		
+		double m_T_htf_hot;			//[K] Current htf inlet temperature
+		double m_m_dot_htf;			//[kg/s] Current htf mass flow rate
+
+		double m_UA_PHX_des;		//[kW/K] Design point PHX conductance
+
+		double m_cp_htf;			//[kW/K] Constant HTF specific heat
+
+		S_PHX_od_parameters()
+		{
+			m_m_dot_htf_des = m_T_htf_hot = m_m_dot_htf = m_UA_PHX_des = m_cp_htf = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 private:
 		// Component classes
 	C_turbine m_t;
@@ -1155,6 +1172,7 @@ private:
 	S_target_od_parameters ms_tar_od_par;
 	S_opt_target_od_parameters ms_opt_tar_od_par;
 	S_od_solved ms_od_solved;
+	S_PHX_od_parameters ms_phx_od_par;
 
 		// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
@@ -1195,7 +1213,7 @@ private:
 
 	void optimal_off_design_core(int & error_code);
 
-	void target_off_design_core(int & error_code);
+	void target_off_design_core(int & error_code);	
 
 public:
 
@@ -1249,6 +1267,8 @@ public:
 
 	void optimal_target_off_design_no_check(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
 
+	void opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_parameters phx_od_par_in, int & error_code);
+
 	const S_design_solved * get_design_solved()
 	{
 		return &ms_des_solved;
@@ -1276,6 +1296,8 @@ public:
 	// Called by 'nlopt...', so needs to be public
 	double eta_at_target(const std::vector<double> &x);
 	
+	// Called by 'nlopt...', so needs to be public
+	double opt_od_eta(const std::vector<double> &x);
 };
 
 double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data);
@@ -1285,6 +1307,8 @@ double fmin_callback_opt_eta_1(double x, void *data);
 double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data);
+
+double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double P_pseudocritical_1(double T_K);
 
