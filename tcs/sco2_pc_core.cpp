@@ -2802,7 +2802,7 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 	//x.push_back(ms_des_solved.m_pres[1 - 1]);
 	x.push_back(1000.0);
 	lb.push_back(1000.0);		// This must be set to a variable somewhere?
-	ub.push_back(12000.0);		// This also must be set somewhere?
+	ub.push_back(17000.0);		// This also must be set somewhere?
 	scale.push_back(4000.0);	// Solution is probably less than design pressure
 	index++;
 
@@ -2816,12 +2816,21 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 		index++;
 	}
 
+	m_found_opt = false;
+	m_eta_phx_max = 0.0;
+
 	// Compressor Speed
 	x.push_back(ms_des_solved.m_N_mc);
 	lb.push_back(ms_des_solved.m_N_mc*0.1);
 	ub.push_back(ms_des_solved.m_N_mc*1.5);
 	scale.push_back(ms_des_solved.m_N_mc*0.1);
 	index++;
+
+	// Save initial vectors
+	std::vector<double> x_base = x;
+	std::vector<double> lb_base = lb;
+	std::vector<double> ub_base = ub;
+	std::vector<double> sc_base = scale;
 
 	// Set up instance of nlopt class and set optimization parameters
 	nlopt::opt          opt_od_cycle(nlopt::LN_SBPLX, index);
@@ -2834,6 +2843,34 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 	opt_od_cycle.set_max_objective(nlopt_cb_opt_od_eta, this);
 	double max_f = std::numeric_limits<double>::quiet_NaN();
 	nlopt::result       result_od_cycle = opt_od_cycle.optimize(x, max_f);
+
+	int od_error_code = 0;
+
+	if( !m_found_opt )
+	{
+		x = x_base;
+		lb = lb_base;
+		ub = ub_base;
+		scale = sc_base;
+
+		x[2] = ms_des_solved.m_N_mc*1.5;
+		lb[2] = ms_des_solved.m_N_mc*0.5;
+		ub[2] = ms_des_solved.m_N_mc*1.75;
+		scale[2] = -ms_des_solved.m_N_mc*0.1;
+		
+		opt_od_cycle.set_lower_bounds(lb);
+		opt_od_cycle.set_upper_bounds(ub);
+		opt_od_cycle.set_initial_step(scale);
+
+		max_f = 0.0;
+
+		result_od_cycle = opt_od_cycle.optimize(x, max_f);
+
+		if( !m_found_opt )
+		{
+			od_error_code = 1;
+		}
+	}
 
 	index = 0;
 	ms_od_par.m_P_mc_in = x[index];
@@ -2848,8 +2885,6 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 
 	ms_od_par.m_N_mc = x[index];
 	index++;
-
-	int od_error_code = 0;
 
 	off_design_core(od_error_code);
 
@@ -2877,6 +2912,10 @@ double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
 
 	ms_od_par.m_N_mc = x[index];
 	index++;
+
+	// ms_od_par.m_P_mc_in = 3438.0;
+	// ms_od_par.m_recomp_frac = 0.0;
+	// ms_od_par.m_N_mc = 10244.0;
 
 	// return ms_od_par.m_P_mc_in + ms_od_par.m_recomp_frac + ms_od_par.m_N_mc;
 
@@ -2909,6 +2948,8 @@ double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
 
 	double eff = Q_dot_PHX / (C_dot_min*(ms_phx_od_par.m_T_htf_hot - T_PHX_in));
 
+	double T_htf_cold = ms_phx_od_par.m_T_htf_hot - Q_dot_PHX / C_dot_htf;
+
 	if( eff > 0.999 )
 		return 0.0;
 
@@ -2926,7 +2967,21 @@ double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
 
 	double over_deltaP = max( 0.0, ms_od_solved.m_pres[2-1] - ms_des_par.m_P_high_limit );
 
-	return eta_thermal * exp(-abs(UA_diff)) * exp(-over_deltaP);
+	double eta_return = eta_thermal * exp(-abs(UA_diff)) * exp(-over_deltaP);
+
+	if(fabs(UA_diff) < ms_od_par.m_tol && over_deltaP == 0.0)
+	{
+		m_found_opt = true;
+	}
+
+	if(eta_return > m_eta_phx_max)
+	{
+		m_eta_phx_max = eta_return;
+		m_UA_diff_eta_max = UA_diff;
+		m_over_deltaP_eta_max = over_deltaP;
+	}
+
+	return eta_return;
 }
 
 double fmin_callback_opt_eta_1(double x, void *data)
