@@ -203,6 +203,8 @@ private:
 	C_RecompCycle::S_opt_target_od_parameters ms_rc_opt_od_par;
 	C_RecompCycle::S_opt_target_od_parameters ms_rc_max_opt_od_par;
 	C_RecompCycle::S_opt_target_od_parameters ms_rc_des_opt_od_par;
+	C_RecompCycle::S_od_parameters ms_rc_od_par;
+	C_RecompCycle::S_PHX_od_parameters ms_phx_od_par;
 
 	HTFProperties rec_htfProps;		// Instance of HTFProperties class for field HTF
 	CO2_state co2_props;
@@ -966,7 +968,7 @@ public:
 		double T_db = 0.0;
 		double T_htf_hot = 846.1;
 
-		double C_dot_htf = m_dot_htf * m_cp_rec;
+		
 
 		// Assume compressor inlet temperature is always design point delta T above ambient: (T_amb_des - T_comp_in)
 		// Floor is ~ critical temp + 1 = 32 C
@@ -990,11 +992,18 @@ public:
 		phx_od_par.m_cp_htf = m_cp_rec;
 
 		int hx_od_error = 0;
-		ms_rc_cycle.opt_od_eta_for_hx(rc_od_par, phx_od_par, hx_od_error);
+
+		double C_dot_htf = phx_od_par.m_m_dot_htf * phx_od_par.m_cp_htf;
+
+		ms_rc_cycle.opt_od_eta_for_hx(rc_od_par, phx_od_par, hx_od_error);		
+
+		double Q_dot_PHX = ms_rc_cycle.get_od_solved()->m_Q_dot;
+		T_htf_cold = T_htf_hot - Q_dot_PHX / C_dot_htf;
 
 		// Check error code
 		int blah = hx_od_error;
 
+		/*
 		// Set guess values
 		rc_od_par.m_P_mc_in = ms_rc_cycle.get_design_solved()->m_pres[1 - 1];
 		rc_od_par.m_recomp_frac = ms_rc_cycle.get_design_solved()->m_recomp_frac;
@@ -1183,6 +1192,8 @@ public:
 			}
 
 		}
+		*/
+
 		return 0;
 	}
 
@@ -1219,119 +1230,6 @@ public:
 
 		switch( m_standby_control )
 		{
-		case 0:
-		{
-			C_dot_htf = m_dot_htf * m_cp_rec;
-
-			// Assume compressor inlet temperature is always design point delta T above ambient: (T_amb_des - T_comp_in)
-			// Floor is ~ critical temp + 1 = 32 C
-			double T_mc_in = max(32.0 + 273.15, T_db + m_delta_T_acc);
-
-			// Assume turbine inlet temperature is always design point delta T below receiver hot side
-			double T_t_in = T_htf_hot - m_delta_T_t;
-
-			C_RecompCycle::S_od_parameters rc_od_par;
-			rc_od_par.m_T_mc_in = T_mc_in;
-			rc_od_par.m_T_t_in = T_t_in;
-			rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
-			rc_od_par.m_N_sub_hxrs = ms_rc_autodes_par.m_N_sub_hxrs;
-			rc_od_par.m_tol = ms_rc_autodes_par.m_tol;
-
-			// Set guess values
-			rc_od_par.m_P_mc_in = ms_rc_cycle.get_design_solved()->m_pres[1-1];
-			rc_od_par.m_recomp_frac = ms_rc_cycle.get_design_solved()->m_recomp_frac;
-
-			// Cycle through compressor speeds
-			double N_mc_low = ms_rc_cycle.get_design_solved()->m_N_mc*0.1;
-			double N_mc_high = ms_rc_cycle.get_design_solved()->m_N_mc*1.5;
-
-			int n_N_mc_intervals = 100;
-
-			double y_upper, y_lower, x_upper, x_lower;
-			y_upper = y_lower = x_upper = x_lower = std::numeric_limits<double>::quiet_NaN();
-			bool set_upper = false;
-			bool set_lower = false;
-
-			double UA_tol = 2.0*ms_rc_opt_od_par.m_tol;
-
-			double UA_diff = 2.0*UA_tol;
-
-			double N_mc_guess = N_mc_low;
-			for( int i_N_mc = 0; N_mc_guess < N_mc_high; N_mc_guess = N_mc_guess + (N_mc_high-N_mc_low)/(double)n_N_mc_intervals )
-			{
-				if( i_N_mc > 0 )
-				{
-					if( UA_diff > 0.0 )			// UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;  -> Q_dot_PHX too large
-					{
-						y_upper = UA_diff;
-						x_upper = Q_dot_PHX;
-						set_upper = true;
-						if( set_lower )
-							Q_dot_PHX = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
-						else
-							Q_dot_PHX *= 0.75;
-					}
-					else						// UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;  -> Q_dot_PHX too large	
-					{
-						y_lower = UA_diff;
-						x_lower = Q_dot_PHX;
-						set_lower = true;
-						if( set_upper )
-							Q_dot_PHX = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
-						else
-							Q_dot_PHX = min(1.25*Q_dot_PHX, m_q_dot_cycle_max);
-					}
-				}
-
-				rc_od_par.m_N_mc = N_mc_guess;
-
-				int od_error_code = 0;
-
-				ms_rc_cycle.off_design(rc_od_par, od_error_code);
-
-				if( od_error_code != 0 )
-					continue;
-				
-				// Get off design values for PHX calcs
-				double m_dot_PHX = ms_rc_cycle.get_od_solved()->m_m_dot_t;
-				double T_PHX_in = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
-
-				// Calculate off-design UA
-				double m_dot_ratio = 0.5*(m_dot_htf / m_dot_rec_des + m_dot_PHX / m_m_dot_des);
-				double UA_PHX_od = m_UA_PHX_des*pow(m_dot_ratio, 0.8);
-
-				double C_dot_co2 = m_dot_PHX*(ms_rc_cycle.get_od_solved()->m_enth[6 - 1] - ms_rc_cycle.get_od_solved()->m_enth[5 - 1]) /
-					(ms_rc_cycle.get_od_solved()->m_temp[6 - 1] - ms_rc_cycle.get_od_solved()->m_temp[5 - 1]);	//[kW/K]
-
-				double C_dot_min = min(C_dot_co2, C_dot_htf);
-				double C_dot_max = max(C_dot_co2, C_dot_htf);
-
-				double C_R = C_dot_min / C_dot_max;
-
-				double eff = Q_dot_PHX / (C_dot_min*(T_htf_hot - T_PHX_in));
-
-				if( eff > 0.999 )
-					continue;
-
-				double NTU = 0.0;
-				if( C_R != 1.0 )
-					NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
-				else
-					NTU = eff / (1.0 - eff);
-
-				double UA_calc = NTU*C_dot_min;
-
-				UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;				
-
-				if(abs(UA_diff) < UA_tol)
-				{
-					
-				}
-			}
-
-			break;
-		}
-
 		case 1:
 		{
 			C_dot_htf = m_dot_htf * m_cp_rec;
@@ -1343,159 +1241,36 @@ public:
 			// Assume turbine inlet temperature is always design point delta T below receiver hot side
 			double T_t_in = T_htf_hot - m_delta_T_t;
 
-			// Set structure parameters constant for timestep
-				// design structure
-			ms_rc_des_opt_od_par.m_T_mc_in = T_mc_in;
-			ms_rc_des_opt_od_par.m_T_t_in = T_t_in;
-				// max q structure
-			ms_rc_max_opt_od_par.m_T_mc_in = T_mc_in;
-			ms_rc_max_opt_od_par.m_T_t_in = T_t_in;
+			ms_rc_od_par.m_T_mc_in = T_mc_in;
+			ms_rc_od_par.m_T_t_in = T_t_in;
+			ms_rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
+			ms_rc_od_par.m_N_sub_hxrs = ms_rc_autodes_par.m_N_sub_hxrs;
+			ms_rc_od_par.m_tol = ms_rc_autodes_par.m_tol;
+			
+			ms_phx_od_par.m_m_dot_htf_des = m_dot_rec_des;
+			ms_phx_od_par.m_T_htf_hot = T_htf_hot;
+			ms_phx_od_par.m_m_dot_htf = m_dot_htf;
+			ms_phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
+			ms_phx_od_par.m_cp_htf = m_cp_rec;
 
-			// **********************************************
-			// Do we ever want to reset these????
-			// **********************************************
-			// if( !ms_rc_opt_od_par.m_fixed_recomp_frac )
-			// 	ms_rc_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
-			// 
-			// ms_rc_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
-			// **********************************************
-			// **********************************************
+			int hx_od_error = 0;
+			ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, hx_od_error);
 
-			// Guess Q_dot_PHX based on design point mass flow rates
-			Q_dot_PHX = m_Q_dot_rec_des*(m_dot_htf / m_dot_rec_des);			//[kWt]
-
-			// Get maximum possible Q_dot given conditions
-			if( m_is_first_t_call )
+			if( hx_od_error != 0 )
 			{
-				int max_q_error_code = 0;
-				ms_rc_cycle.get_max_output_od(ms_rc_opt_od_par, max_q_error_code);
-				if( max_q_error_code != 0 )
+				if( hx_od_error != 1 )
 				{
 					m_error_message_code = 1;		// Off-design model not solving
 					break;
 				}
-				m_q_dot_cycle_max = m_q_max_sf*ms_rc_cycle.get_max_target();
-
-				// Set up structure of parameters for when guess q_dot is close to maximum			
-				ms_rc_max_opt_od_par.m_recomp_frac_guess = ms_rc_cycle.get_od_solved()->m_recomp_frac;
-				ms_rc_max_opt_od_par.m_N_mc_guess = ms_rc_cycle.get_od_solved()->m_N_mc;
-				ms_rc_max_opt_od_par.m_target = m_q_dot_cycle_max;
-				m_P_mc_in_q_max = ms_rc_cycle.get_od_solved()->m_pres[1 - 1];
-
-				m_is_first_t_call = false;
-			}
-			// ************************************************************************
-			// ************************************************************************
-
-			Q_dot_PHX = min(Q_dot_PHX, m_q_dot_cycle_max);
-
-			double y_upper, y_lower, x_upper, x_lower;
-			y_upper = y_lower = x_upper = x_lower = std::numeric_limits<double>::quiet_NaN();
-			bool set_upper = false;
-			bool set_lower = false;
-
-			double UA_tol = 2.0*ms_rc_opt_od_par.m_tol;
-
-			double UA_diff = 100.0 * UA_tol;
-
-			for( int UA_iter = 0; UA_iter < 25 && abs(UA_diff) > UA_tol; UA_iter++ )
-			{
-				if( UA_iter > 0 )
-				{
-					if( UA_diff > 0.0 )			// UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;  -> Q_dot_PHX too large
-					{
-						y_upper = UA_diff;
-						x_upper = Q_dot_PHX;
-						set_upper = true;
-						if( set_lower )
-							Q_dot_PHX = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
-						else
-							Q_dot_PHX *= 0.75;
-					}
-					else						// UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;  -> Q_dot_PHX too large	           
-					{
-						y_lower = UA_diff;
-						x_lower = Q_dot_PHX;
-						set_lower = true;
-						if( set_upper )
-							Q_dot_PHX = -y_upper*(x_lower - x_upper) / (y_lower - y_upper) + x_upper;
-						else
-							Q_dot_PHX = min(1.25*Q_dot_PHX, m_q_dot_cycle_max);
-					}
-				}
-
-				if(Q_dot_PHX / m_q_dot_cycle_max < 0.85)				// 0.85 arbitrary here. hopefully structures with different guess values don't result in different optimized cases at 0.85...
-				{
-					ms_rc_opt_od_par = ms_rc_des_opt_od_par;
-				}
 				else
 				{
-					if( Q_dot_PHX / m_q_dot_cycle_max < 0.95 )
-					{
-						ms_rc_max_opt_od_par.m_lowest_pressure = m_P_mc_in_q_max - 3000.0;
-						ms_rc_max_opt_od_par.m_highest_pressure = m_P_mc_in_q_max + 3000.0;
-					}
-					else
-					{
-						ms_rc_max_opt_od_par.m_lowest_pressure = m_P_mc_in_q_max - 1000.0;
-						ms_rc_max_opt_od_par.m_highest_pressure = m_P_mc_in_q_max + 1000.0;
-					}
-					ms_rc_opt_od_par = ms_rc_max_opt_od_par;
+					m_error_message_code = 2;
 				}
-
-				ms_rc_opt_od_par.m_target = Q_dot_PHX;
-
-				// Solve off-design model
-				int rc_error_code = 0;
-				ms_rc_cycle.optimal_target_off_design_no_check(ms_rc_opt_od_par, rc_error_code);
-
-				// *******
-				if(rc_error_code != 0)
-				{
-					if(rc_error_code == 123)
-					{
-						UA_diff = m_UA_PHX_des*10.0;
-						continue;
-					}
-					else
-					{
-						m_error_message_code = 1;		// Off-design model not solving
-						break;
-					}
-				}
-
-				// Get off design values for PHX calcs
-				double m_dot_PHX = ms_rc_cycle.get_od_solved()->m_m_dot_t;
-				double T_PHX_in = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
-
-				// Calculate off-design UA
-				double m_dot_ratio = 0.5*(m_dot_htf / m_dot_rec_des + m_dot_PHX / m_m_dot_des);
-				double UA_PHX_od = m_UA_PHX_des*pow(m_dot_ratio, 0.8);
-
-				double C_dot_co2 = m_dot_PHX*(ms_rc_cycle.get_od_solved()->m_enth[6 - 1] - ms_rc_cycle.get_od_solved()->m_enth[5 - 1]) /
-					(ms_rc_cycle.get_od_solved()->m_temp[6 - 1] - ms_rc_cycle.get_od_solved()->m_temp[5 - 1]);	//[kW/K]
-
-				double C_dot_min = min(C_dot_co2, C_dot_htf);
-				double C_dot_max = max(C_dot_co2, C_dot_htf);
-
-				double C_R = C_dot_min / C_dot_max;
-
-				double eff_base = Q_dot_PHX / (C_dot_min*(T_htf_hot - T_PHX_in));
-
-				double eff = min(eff_base, 0.999);
-
-				double NTU = 0.0;
-				if( C_R != 1.0 )
-					NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
-				else
-					NTU = eff / (1.0 - eff);
-
-				double UA_calc = NTU*C_dot_min;
-
-				UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;
 			}
 
 			W_dot_net = ms_rc_cycle.get_od_solved()->m_W_dot_net;
+			Q_dot_PHX = ms_rc_cycle.get_od_solved()->m_Q_dot;
 			T_htf_cold = T_htf_hot - Q_dot_PHX/C_dot_htf;
 			eta_thermal = ms_rc_cycle.get_od_solved()->m_eta_thermal;
 			W_dot_par = ACC.off_design_hx(T_db, P_amb, ms_rc_cycle.get_od_solved()->m_temp[9 - 1], ms_rc_cycle.get_od_solved()->m_pres[9 - 1],
@@ -1585,6 +1360,11 @@ public:
 		if(m_error_message_code == 1)
 		{
 			message("The off-design power cylce model did not solve. Performance values for this timestep are design point values scaled by HTF mass flow rate");
+		}
+
+		if(m_error_message_code == 2)
+		{
+			message("The off-design power cycle model solved, but the the PHX performance did not converge. The results at this timestep may be non-physical");
 		}
 
 		m_error_message_code = 0;
