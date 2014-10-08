@@ -2898,6 +2898,8 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 
 double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
 {
+	CO2_state co2_props;
+	
 	int index = 0;
 
 	ms_od_par.m_P_mc_in = x[index];
@@ -2919,66 +2921,132 @@ double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
 
 	// return ms_od_par.m_P_mc_in + ms_od_par.m_recomp_frac + ms_od_par.m_N_mc;
 
+	double T_t_in_upper = ms_phx_od_par.m_T_htf_hot - 0.01;
+	bool know_T_in_upper = false;
+	
+	double T_t_in_lower = ms_phx_od_par.m_T_htf_hot - 50.0;
+	bool know_T_in_lower = false;
+
+	double T_t_in_guess = ms_od_par.m_T_t_in;
+
+	double diff_T_t_in = ms_od_par.m_tol*2.0;
+
 	int od_error_code = 0;
 
-	off_design_core(od_error_code);
+	double Q_dot_PHX = 0.0;
+	double C_dot_htf = 0.0;
+	double T_t_in_calc = 0.0;
 
-	if( od_error_code != 0 )
-		return 0.0;
+	for( int iter_T_t_in = 0; fabs(diff_T_t_in) > ms_od_par.m_tol && iter_T_t_in < 50; iter_T_t_in++ )
+	{
 
-	// Get off design values for PHX calcs
-	double m_dot_PHX = ms_od_solved.m_m_dot_t;
-	double T_PHX_in = ms_od_solved.m_temp[5-1];
+		if(iter_T_t_in > 0)	// Guess new T_t_in.... diff_T_t_in = (T_t_in_calc - T_t_in_guess) / T_t_in_guess;
+		{
+			if(od_error_code != 0)
+			{
+				T_t_in_lower = T_t_in_guess;
+				know_T_in_lower = true;
+				T_t_in_guess = 0.5*(T_t_in_lower + T_t_in_guess);
+			}
+			else
+			{
+				if( diff_T_t_in > 0.0 )	// T_t_in_guess too small
+				{
+					T_t_in_lower = T_t_in_guess;
+					know_T_in_lower = true;
+					if( know_T_in_upper )
+						T_t_in_guess = 0.5*(T_t_in_lower + T_t_in_upper);
+					else
+						T_t_in_guess = T_t_in_upper;
+				}
+				else
+				{
+					T_t_in_upper = T_t_in_guess;
+					know_T_in_upper = true;
+					if( know_T_in_lower )
+						T_t_in_guess = 0.5*(T_t_in_lower + T_t_in_upper);
+					else
+						T_t_in_guess = T_t_in_guess - 10.0;
+				}
+			}
+		}
 
-	double Q_dot_PHX = ms_od_solved.m_Q_dot;
+		if(fabs(T_t_in_upper-T_t_in_lower) < 0.1)
+		{
+			break;
+		}
 
-	// Calculate off-design UA
-	double m_dot_ratio = 0.5*(ms_phx_od_par.m_m_dot_htf/ms_phx_od_par.m_m_dot_htf_des + m_dot_PHX/ms_des_solved.m_m_dot_t);
-	double UA_PHX_od = ms_phx_od_par.m_UA_PHX_des*pow(m_dot_ratio, 0.8);
+		ms_od_par.m_T_t_in = T_t_in_guess;
 
-	double C_dot_co2 = m_dot_PHX*(ms_od_solved.m_enth[6 - 1] - ms_od_solved.m_enth[5 - 1]) /
-		(ms_od_solved.m_temp[6 - 1] - ms_od_solved.m_temp[5 - 1]);	//[kW/K]
+		od_error_code = 0;
 
-	double C_dot_htf = ms_phx_od_par.m_cp_htf*ms_phx_od_par.m_m_dot_htf;
+		off_design_core(od_error_code);
 
-	double C_dot_min = min(C_dot_co2, C_dot_htf);
-	double C_dot_max = max(C_dot_co2, C_dot_htf);
+		if( od_error_code != 0 && iter_T_t_in == 0 )
+			return 0.0;
+		else if( od_error_code != 0 )
+			continue;
 
-	double C_R = C_dot_min / C_dot_max;
+		// Get off design values for PHX calcs
+		double m_dot_PHX = ms_od_solved.m_m_dot_t;
+		double T_PHX_in = ms_od_solved.m_temp[5 - 1];
 
-	double eff = Q_dot_PHX / (C_dot_min*(ms_phx_od_par.m_T_htf_hot - T_PHX_in));
+		//double Q_dot_PHX = ms_od_solved.m_Q_dot;
+
+		// Calculate off-design UA
+		double m_dot_ratio = 0.5*(ms_phx_od_par.m_m_dot_htf / ms_phx_od_par.m_m_dot_htf_des + m_dot_PHX / ms_des_solved.m_m_dot_t);
+		double UA_PHX_od = ms_phx_od_par.m_UA_PHX_des*pow(m_dot_ratio, 0.8);
+
+		double C_dot_co2 = m_dot_PHX*(ms_od_solved.m_enth[6 - 1] - ms_od_solved.m_enth[5 - 1]) /
+			(ms_od_solved.m_temp[6 - 1] - ms_od_solved.m_temp[5 - 1]);	//[kW/K]
+
+		C_dot_htf = ms_phx_od_par.m_cp_htf*ms_phx_od_par.m_m_dot_htf;
+
+		double C_dot_min = min(C_dot_co2, C_dot_htf);
+		double C_dot_max = max(C_dot_co2, C_dot_htf);
+
+		double C_R = C_dot_min / C_dot_max;
+
+		double NTU = UA_PHX_od / C_dot_min;
+
+		double eff = 0.0;
+		if(C_R < 1.0)
+			eff = (1.0 - exp(-NTU*(1.0-C_R)))/(1.0 - C_R*exp(-NTU*(1.0-C_R)));
+		else
+			eff = NTU / (1.0 + NTU);
+
+		Q_dot_PHX = eff * (C_dot_min*(ms_phx_od_par.m_T_htf_hot - T_PHX_in));
+
+		//m_dot(h_t_in - h_phx_in) = Q_dot_PHX
+		double h_t_in = ms_od_solved.m_enth[5 - 1] + Q_dot_PHX / m_dot_PHX;
+
+		CO2_PH(ms_od_solved.m_pres[6-1], h_t_in, &co2_props);
+
+		T_t_in_calc = co2_props.temp;
+
+		double T_htf_cold = ms_phx_od_par.m_T_htf_hot - Q_dot_PHX / C_dot_htf;
+
+		diff_T_t_in = (T_t_in_calc - T_t_in_guess) / T_t_in_guess;
+	}
 
 	double T_htf_cold = ms_phx_od_par.m_T_htf_hot - Q_dot_PHX / C_dot_htf;
 
-	if( eff > 0.999 )
-		return 0.0;
-
-	double NTU = 0.0;
-	if( C_R != 1.0 )
-		NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
-	else
-		NTU = eff / (1.0 - eff);
-
-	double UA_calc = NTU*C_dot_min;
-
-	double UA_diff = (UA_calc - UA_PHX_od) / UA_PHX_od;
-
 	double eta_thermal = ms_od_solved.m_eta_thermal;
 
-	double over_deltaP = max( 0.0, ms_od_solved.m_pres[2-1] - ms_des_par.m_P_high_limit );
+	double over_deltaT = max(0.0, fabs(diff_T_t_in) - ms_od_par.m_tol);
 
-	double eta_return = eta_thermal * exp(-abs(UA_diff)) * exp(-over_deltaP);
+	double over_deltaP = max(0.0, ms_od_solved.m_pres[2-1] - ms_des_par.m_P_high_limit);
 
-	if(fabs(UA_diff) < ms_od_par.m_tol && over_deltaP == 0.0)
-	{
+	double eta_return = eta_thermal*exp(-over_deltaP)*exp(-over_deltaT);
+
+	if( fabs(diff_T_t_in) < ms_od_par.m_tol && over_deltaP == 0.0 )
 		m_found_opt = true;
-	}
 
-	if(eta_return > m_eta_phx_max)
+	if( eta_return > m_eta_phx_max )
 	{
 		m_eta_phx_max = eta_return;
-		m_UA_diff_eta_max = UA_diff;
 		m_over_deltaP_eta_max = over_deltaP;
+		m_UA_diff_eta_max = diff_T_t_in;
 	}
 
 	return eta_return;
