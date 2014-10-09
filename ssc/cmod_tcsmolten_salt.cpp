@@ -771,28 +771,29 @@ public:
 		// Inputs for sCO2 connection: design parameters solved in type 424 initial call
 		if( !is_steam_pc )
 		{
-			bConnected &= connect(type424_sco2, "o_W_dot_net",     type251_controller,   "i_W_dot_net"      );
-			bConnected &= connect(type424_sco2, "o_T_mc_in",       type251_controller,	 "i_T_mc_in"      	);
-			bConnected &= connect(type424_sco2,	"o_T_t_in",        type251_controller,	 "i_T_t_in"       	);
-			bConnected &= connect(type424_sco2,	"o_P_mc_in",       type251_controller,	 "i_P_mc_in"      	);
-			bConnected &= connect(type424_sco2,	"o_P_mc_out",      type251_controller,	 "i_P_mc_out"     	);
-			bConnected &= connect(type424_sco2,	"o_UA_LT",         type251_controller,	 "i_UA_LT"        	);
-			bConnected &= connect(type424_sco2,	"o_UA_HT",         type251_controller,	 "i_UA_HT"        	);
-			bConnected &= connect(type424_sco2,	"o_recomp_frac",   type251_controller,	 "i_recomp_frac"  	);
-			bConnected &= connect(type424_sco2,	"o_eta_mc",        type251_controller,	 "i_eta_mc"       	);
-			bConnected &= connect(type424_sco2,	"o_eta_rc",        type251_controller,	 "i_eta_rc"       	);
-			bConnected &= connect(type424_sco2,	"o_eta_t",         type251_controller,	 "i_eta_t"        	);
-			bConnected &= connect(type424_sco2,	"o_N_sub_hxrs",    type251_controller,	 "i_N_sub_hxrs"   	);
-			bConnected &= connect(type424_sco2,	"o_P_high_limit",  type251_controller,	 "i_P_high_limit" 	);
-			bConnected &= connect(type424_sco2,	"o_N_turbine",     type251_controller,	 "i_N_turbine"    	);
-			bConnected &= connect(type424_sco2,	"o_DP_LT_c",       type251_controller,	 "o_DP_LT_c"      	);
-			bConnected &= connect(type424_sco2,	"o_DP_LT_h",       type251_controller,	 "o_DP_LT_h"      	);
-			bConnected &= connect(type424_sco2,	"o_DP_HT_c",       type251_controller,	 "o_DP_HT_c"      	);
-			bConnected &= connect(type424_sco2,	"o_DP_HT_h",       type251_controller,	 "o_DP_HT_h"      	);
-			bConnected &= connect(type424_sco2,	"o_DP_PC_h",       type251_controller,	 "o_DP_PC_h"      	);
-			bConnected &= connect(type424_sco2,	"o_DP_PHX_c",      type251_controller,	 "o_DP_PHX_c"     	);
-			bConnected &= connect(type424_sco2,	"o_deltaT_mc",     type251_controller,	 "o_deltaT_mc"    	);
-			bConnected &= connect(type424_sco2,	"o_deltaT_t",      type251_controller,	 "o_deltaT_t"     	);
+			// bConnected &= connect(type424_sco2, "o_W_dot_net",     type251_controller,   "i_W_dot_net"      );
+			// bConnected &= connect(type424_sco2, "o_T_mc_in",       type251_controller,	 "i_T_mc_in"      	);
+			// bConnected &= connect(type424_sco2,	"o_T_t_in",        type251_controller,	 "i_T_t_in"       	);
+			// bConnected &= connect(type424_sco2,	"o_P_mc_in",       type251_controller,	 "i_P_mc_in"      	);
+			// bConnected &= connect(type424_sco2,	"o_P_mc_out",      type251_controller,	 "i_P_mc_out"     	);
+			// bConnected &= connect(type424_sco2,	"o_UA_LT",         type251_controller,	 "i_UA_LT"        	);
+			// bConnected &= connect(type424_sco2,	"o_UA_HT",         type251_controller,	 "i_UA_HT"        	);
+			// bConnected &= connect(type424_sco2,	"o_recomp_frac",   type251_controller,	 "i_recomp_frac"  	);
+			// bConnected &= connect(type424_sco2,	"o_eta_mc",        type251_controller,	 "i_eta_mc"       	);
+			// bConnected &= connect(type424_sco2,	"o_eta_rc",        type251_controller,	 "i_eta_rc"       	);
+			// bConnected &= connect(type424_sco2,	"o_eta_t",         type251_controller,	 "i_eta_t"        	);
+			// bConnected &= connect(type424_sco2,	"o_N_sub_hxrs",    type251_controller,	 "i_N_sub_hxrs"   	);
+			// bConnected &= connect(type424_sco2,	"o_P_high_limit",  type251_controller,	 "i_P_high_limit" 	);
+			// bConnected &= connect(type424_sco2,	"o_N_turbine",     type251_controller,	 "i_N_turbine"    	);
+			// bConnected &= connect(type424_sco2,	"o_DP_LT_c",       type251_controller,	 "o_DP_LT_c"      	);
+			// bConnected &= connect(type424_sco2,	"o_DP_LT_h",       type251_controller,	 "o_DP_LT_h"      	);
+			// bConnected &= connect(type424_sco2,	"o_DP_HT_c",       type251_controller,	 "o_DP_HT_c"      	);
+			// bConnected &= connect(type424_sco2,	"o_DP_HT_h",       type251_controller,	 "o_DP_HT_h"      	);
+			// bConnected &= connect(type424_sco2,	"o_DP_PC_h",       type251_controller,	 "o_DP_PC_h"      	);
+			// bConnected &= connect(type424_sco2,	"o_DP_PHX_c",      type251_controller,	 "o_DP_PHX_c"     	);
+			// bConnected &= connect(type424_sco2,	"o_deltaT_mc",     type251_controller,	 "o_deltaT_mc"    	);
+			// bConnected &= connect(type424_sco2,	"o_deltaT_t",      type251_controller,	 "o_deltaT_t"     	);
+			bConnected &= connect(type424_sco2, "o_T_htf_cold_des", type251_controller, "i_T_htf_cold_des");
 		}
 
 		// Set powerblock parameters
