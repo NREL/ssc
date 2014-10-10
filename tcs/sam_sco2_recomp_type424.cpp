@@ -60,29 +60,31 @@ enum{	//Parameters
 	O_F_BAYS,
 	O_P_COND,
 
+	O_T_HTF_COLD_DES,
+
 	
-	O_W_DOT_NET,
-	O_T_MC_IN,
-	O_T_T_IN,
-	O_P_MC_IN,
-	O_P_MC_OUT,
-	O_UA_LT,
-	O_UA_HT,
-	O_RECOMP_FRAC,
-	O_ETA_MC,
-	O_ETA_RC,
-	O_ETA_T,
-	O_N_SUB_HXRS,
-	O_P_HIGH_LIMIT,
-	O_N_turbine,
-	O_DP_LT_C,
-	O_DP_LT_H,
-	O_DP_HT_C,
-	O_DP_HT_H,
-	O_DP_PC_H,
-	O_DP_PHX_C,
-	O_DELTAT_MC,
-	O_DELTAT_T,
+	// O_W_DOT_NET,
+	// O_T_MC_IN,
+	// O_T_T_IN,
+	// O_P_MC_IN,
+	// O_P_MC_OUT,
+	// O_UA_LT,
+	// O_UA_HT,
+	// O_RECOMP_FRAC,
+	// O_ETA_MC,
+	// O_ETA_RC,
+	// O_ETA_T,
+	// O_N_SUB_HXRS,
+	// O_P_HIGH_LIMIT,
+	// O_N_turbine,
+	// O_DP_LT_C,
+	// O_DP_LT_H,
+	// O_DP_HT_C,
+	// O_DP_HT_H,
+	// O_DP_PC_H,
+	// O_DP_PHX_C,
+	// O_DELTAT_MC,
+	// O_DELTAT_T,
 
 	//N_MAX
 	N_MAX
@@ -138,29 +140,31 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER, O_F_BAYS,          "f_bays",              "Fraction of operating heat rejection bays",             "none",  "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_COND,          "P_cond",              "Condenser pressure",                                    "Pa",    "",  "",  "" },
 	
+	{ TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD_DES,  "o_T_htf_cold_des",    "Calculated htf cold temperature at design",             "C",     "",  "",  "" },
+
 	// Cycle Design Parameters to pass to controller
-	{ TCS_OUTPUT, TCS_NUMBER, O_W_DOT_NET,       "o_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_T_MC_IN,         "o_T_mc_in",           "Compressor inlet temperature",                          "K",     "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_T_T_IN,          "o_T_t_in",            "Turbine inlet temperature",                             "K",     "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_P_MC_IN,         "o_P_mc_in",           "Compressor inlet pressure",                             "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_P_MC_OUT,        "o_P_mc_out",          "Compressor outlet pressure",                            "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_UA_LT,           "o_UA_LT",             "UA in LTR",                                             "kW/K",  "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_UA_HT,           "o_UA_HT",             "UA in HTR",                                             "kW/K",  "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_RECOMP_FRAC,     "o_recomp_frac",       "recompresson fraction",                                 "",      "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_ETA_MC,          "o_eta_mc",            "main compressor isentropic efficiency",                 "",      "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_ETA_RC,          "o_eta_rc",            "re-compressor isentropic efficiency",                   "",      "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_ETA_T,           "o_eta_t",             "turbine isentropic efficiency",                         "",      "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_N_SUB_HXRS,      "o_N_sub_hxrs",        "number of sub heat exchangers",                         "",      "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_P_HIGH_LIMIT,    "o_P_high_limit",      "high pressure limit",                                   "MPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_N_turbine,       "o_N_turbine",         "Turbine shaft speed",                                   "rpm",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DP_LT_C,         "o_DP_LT_c",           "Cold-side pressure drop - LT recup",                    "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DP_LT_H,         "o_DP_LT_h",           "Hot-side pressure drop - LT recup",                     "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DP_HT_C,         "o_DP_HT_c",           "Cold-side pressure drop - HT recup",                    "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DP_HT_H,         "o_DP_HT_h",           "Hot-side pressure drop - HT recup",                     "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DP_PC_H,         "o_DP_PC_h",           "Hot-side pressure drop - pre-cooler",                   "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DP_PHX_C,        "o_DP_PHX_c",          "Cold-side pressure drop - PHX",                         "kPa",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DELTAT_MC,       "o_deltaT_mc",         "Temperature difference btw comp inlet and Tamb",        "K",     "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER, O_DELTAT_T,        "o_deltaT_t",          "Temperature difference btw hot HTF and turbine inlet",  "K",     "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_W_DOT_NET,       "o_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_T_MC_IN,         "o_T_mc_in",           "Compressor inlet temperature",                          "K",     "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_T_T_IN,          "o_T_t_in",            "Turbine inlet temperature",                             "K",     "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_P_MC_IN,         "o_P_mc_in",           "Compressor inlet pressure",                             "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_P_MC_OUT,        "o_P_mc_out",          "Compressor outlet pressure",                            "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_UA_LT,           "o_UA_LT",             "UA in LTR",                                             "kW/K",  "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_UA_HT,           "o_UA_HT",             "UA in HTR",                                             "kW/K",  "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_RECOMP_FRAC,     "o_recomp_frac",       "recompresson fraction",                                 "",      "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_ETA_MC,          "o_eta_mc",            "main compressor isentropic efficiency",                 "",      "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_ETA_RC,          "o_eta_rc",            "re-compressor isentropic efficiency",                   "",      "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_ETA_T,           "o_eta_t",             "turbine isentropic efficiency",                         "",      "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_N_SUB_HXRS,      "o_N_sub_hxrs",        "number of sub heat exchangers",                         "",      "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_P_HIGH_LIMIT,    "o_P_high_limit",      "high pressure limit",                                   "MPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_N_turbine,       "o_N_turbine",         "Turbine shaft speed",                                   "rpm",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DP_LT_C,         "o_DP_LT_c",           "Cold-side pressure drop - LT recup",                    "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DP_LT_H,         "o_DP_LT_h",           "Hot-side pressure drop - LT recup",                     "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DP_HT_C,         "o_DP_HT_c",           "Cold-side pressure drop - HT recup",                    "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DP_HT_H,         "o_DP_HT_h",           "Hot-side pressure drop - HT recup",                     "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DP_PC_H,         "o_DP_PC_h",           "Hot-side pressure drop - pre-cooler",                   "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DP_PHX_C,        "o_DP_PHX_c",          "Cold-side pressure drop - PHX",                         "kPa",   "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DELTAT_MC,       "o_deltaT_mc",         "Temperature difference btw comp inlet and Tamb",        "K",     "",  "",  "" },
+	//{ TCS_OUTPUT, TCS_NUMBER, O_DELTAT_T,        "o_deltaT_t",          "Temperature difference btw hot HTF and turbine inlet",  "K",     "",  "",  "" },
 
 	/*
 	double m_W_dot_net;					//[kW] Target net cycle power
@@ -272,6 +276,8 @@ private:
 
 	double m_q_dot_cycle_max;
 	double m_P_mc_in_q_max;
+
+	double m_ncall;
 
 public:
 	sam_sco2_recomp_type424(tcscontext *cst, tcstypeinfo *ti)
@@ -870,6 +876,8 @@ public:
 			T_htf_cold - 273.15, T_htf_cold_est - 273.15);
 
 
+		value(O_T_HTF_COLD_DES, m_T_htf_cold_des - 273.15);
+
 		// *****************************************************************
 		// Call Air Cooled Condenser
 		// *****************************************************************		
@@ -988,8 +996,9 @@ public:
 		ms_phx_od_par.m_m_dot_htf_des = m_dot_rec_des;
 		ms_phx_od_par.m_T_htf_hot = m_T_htf_hot;
 		ms_phx_od_par.m_m_dot_htf = m_dot_rec_des*cutoff_frac;
+		ms_phx_od_par.m_T_htf_cold = m_T_htf_cold_des;
 		ms_phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
-		ms_phx_od_par.m_cp_htf = m_cp_rec;
+		ms_phx_od_par.m_cp_htf = m_cp_rec;		
 
 		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
 
@@ -1018,28 +1027,28 @@ public:
 		value(O_P_COND, 0.0);								// Probably do want to report some cycle info that is different from steam
 
 		// Set design parameter outputs for type251
-		value(O_W_DOT_NET, W_dot_net_des_calc);
-		value(O_T_MC_IN, m_T_mc_in_des);
-		value(O_T_T_IN, m_T_t_in_des);
-		value(O_P_MC_IN, ms_rc_cycle.get_design_solved()->m_pres[1-1]);
-		value(O_P_MC_OUT, ms_rc_cycle.get_design_solved()->m_pres[2-1]);
-		value(O_UA_LT, ms_rc_cycle.get_design_solved()->m_UA_LT);
-		value(O_UA_HT, ms_rc_cycle.get_design_solved()->m_UA_HT);
-		value(O_RECOMP_FRAC, ms_rc_cycle.get_design_solved()->m_recomp_frac);
-		value(O_ETA_MC, m_eta_c);
-		value(O_ETA_RC, m_eta_c);
-		value(O_ETA_T, m_eta_t);
-		value(O_N_SUB_HXRS, m_N_sub_hxrs);
-		value(O_P_HIGH_LIMIT, m_P_high_limit*1000.0);
-		value(O_N_turbine, ms_rc_cycle.get_design_solved()->m_N_t);
-		value(O_DP_LT_C, m_DP_LT[0]);
-		value(O_DP_LT_H, m_DP_LT[1]);
-		value(O_DP_HT_C, m_DP_HT[0]);
-		value(O_DP_HT_H, m_DP_HT[1]);
-		value(O_DP_PC_H, m_DP_PC[1]);
-		value(O_DP_PHX_C, m_DP_PHX[0]);
-		value(O_DELTAT_MC, m_delta_T_acc);
-		value(O_DELTAT_T, m_delta_T_t);
+		// value(O_W_DOT_NET, W_dot_net_des_calc);
+		// value(O_T_MC_IN, m_T_mc_in_des);
+		// value(O_T_T_IN, m_T_t_in_des);
+		// value(O_P_MC_IN, ms_rc_cycle.get_design_solved()->m_pres[1-1]);
+		// value(O_P_MC_OUT, ms_rc_cycle.get_design_solved()->m_pres[2-1]);
+		// value(O_UA_LT, ms_rc_cycle.get_design_solved()->m_UA_LT);
+		// value(O_UA_HT, ms_rc_cycle.get_design_solved()->m_UA_HT);
+		// value(O_RECOMP_FRAC, ms_rc_cycle.get_design_solved()->m_recomp_frac);
+		// value(O_ETA_MC, m_eta_c);
+		// value(O_ETA_RC, m_eta_c);
+		// value(O_ETA_T, m_eta_t);
+		// value(O_N_SUB_HXRS, m_N_sub_hxrs);
+		// value(O_P_HIGH_LIMIT, m_P_high_limit*1000.0);
+		// value(O_N_turbine, ms_rc_cycle.get_design_solved()->m_N_t);
+		// value(O_DP_LT_C, m_DP_LT[0]);
+		// value(O_DP_LT_H, m_DP_LT[1]);
+		// value(O_DP_HT_C, m_DP_HT[0]);
+		// value(O_DP_HT_H, m_DP_HT[1]);
+		// value(O_DP_PC_H, m_DP_PC[1]);
+		// value(O_DP_PHX_C, m_DP_PHX[0]);
+		// value(O_DELTAT_MC, m_delta_T_acc);
+		// value(O_DELTAT_T, m_delta_T_t);
 
 		// Dummy inputs
 		//
@@ -1296,6 +1305,9 @@ public:
 		//**************************************************
 		//**************************************************
 
+		// track ncall so it's available in 'convergence' call
+		m_ncall = ncall;
+
 		// Reset error message code
 		m_error_message_code = 0;
 
@@ -1351,6 +1363,9 @@ public:
 			W_dot_net = ms_rc_cycle.get_od_solved()->m_W_dot_net;
 			Q_dot_PHX = ms_rc_cycle.get_od_solved()->m_Q_dot;
 			T_htf_cold = T_htf_hot - Q_dot_PHX/C_dot_htf;
+
+			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
+
 			eta_thermal = ms_rc_cycle.get_od_solved()->m_eta_thermal;
 			W_dot_par = ACC.off_design_hx(T_db, P_amb, ms_rc_cycle.get_od_solved()->m_temp[9 - 1], ms_rc_cycle.get_od_solved()->m_pres[9 - 1],
 											ms_rc_cycle.get_od_solved()->m_m_dot_mc, T_mc_in);
@@ -1362,6 +1377,9 @@ public:
 		case 2:			// Standby mode
 			W_dot_net = 0.0;
 			T_htf_cold = m_T_htf_cold_sby;
+
+			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
+
 			eta_thermal = 0.0;
 			W_dot_par = 0.0;
 
@@ -1370,7 +1388,10 @@ public:
 		case 3:
 		default:			// OFF
 			W_dot_net = 0.0;
-			T_htf_cold = m_T_htf_cold_des;;
+			T_htf_cold = m_T_htf_cold_des;
+
+			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
+
 			eta_thermal = 0.0;
 			W_dot_par = 0.0;
 
@@ -1383,6 +1404,9 @@ public:
 			eta_thermal = ms_rc_cycle.get_design_solved()->m_eta_thermal;
 			double Q_dot_PHX_guess = W_dot_net / eta_thermal;
 			T_htf_cold = T_htf_hot - Q_dot_PHX_guess / C_dot_htf;
+
+			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
+
 			W_dot_par = (m_dot_htf / m_dot_rec_des)*m_W_dot_fan_des;
 		}
 

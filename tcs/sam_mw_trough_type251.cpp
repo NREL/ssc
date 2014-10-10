@@ -86,28 +86,30 @@ enum {
 	I_dnifc,
 	I_TOUPeriod,
 
-	I_W_DOT_NET,
-	I_T_MC_IN,
-	I_T_T_IN,
-	I_P_MC_IN,
-	I_P_MC_OUT,
-	I_UA_LT,
-	I_UA_HT,
-	I_RECOMP_FRAC,
-	I_ETA_MC,
-	I_ETA_RC,
-	I_ETA_T,
-	I_N_SUB_HXRS,
-	I_P_HIGH_LIMIT,
-	I_N_turbine,
-	I_DP_LT_C,
-	I_DP_LT_H,
-	I_DP_HT_C,
-	I_DP_HT_H,
-	I_DP_PC_H,
-	I_DP_PHX_C,
-	I_DELTAT_MC,
-	I_DELTAT_T,
+	I_T_HTF_COLD_DES,
+
+	// I_W_DOT_NET,
+	// I_T_MC_IN,
+	// I_T_T_IN,
+	// I_P_MC_IN,
+	// I_P_MC_OUT,
+	// I_UA_LT,
+	// I_UA_HT,
+	// I_RECOMP_FRAC,
+	// I_ETA_MC,
+	// I_ETA_RC,
+	// I_ETA_T,
+	// I_N_SUB_HXRS,
+	// I_P_HIGH_LIMIT,
+	// I_N_turbine,
+	// I_DP_LT_C,
+	// I_DP_LT_H,
+	// I_DP_HT_C,
+	// I_DP_HT_H,
+	// I_DP_PC_H,
+	// I_DP_PHX_C,
+	// I_DELTAT_MC,
+	// I_DELTAT_T,
 
 	//Outputs
 	O_defocus,
@@ -226,28 +228,29 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	{ TCS_INPUT,    TCS_NUMBER,        I_TOUPeriod,          "TOUPeriod",            "The time-of-use period",                                  "",             "",        "",        ""},
 
 	// sCO2 cycle design parameters from type 424 - only used if "pb_tech_type" = 424
-	{ TCS_INPUT, TCS_NUMBER, I_W_DOT_NET,       "i_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "0.0" },
-	{ TCS_INPUT, TCS_NUMBER, I_T_MC_IN,         "i_T_mc_in",           "Compressor inlet temperature",                          "K",     "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_T_T_IN,          "i_T_t_in",            "Turbine inlet temperature",                             "K",     "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_P_MC_IN,         "i_P_mc_in",           "Compressor inlet pressure",                             "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_P_MC_OUT,        "i_P_mc_out",          "Compressor outlet pressure",                            "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_UA_LT,           "i_UA_LT",             "UA in LTR",                                             "kW/K",  "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_UA_HT,           "i_UA_HT",             "UA in HTR",                                             "kW/K",  "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_RECOMP_FRAC,     "i_recomp_frac",       "recompresson fraction",                                 "",      "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_ETA_MC,          "i_eta_mc",            "main compressor isentropic efficiency",                 "",      "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_ETA_RC,          "i_eta_rc",            "re-compressor isentropic efficiency",                   "",      "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_ETA_T,           "i_eta_t",             "turbine isentropic efficiency",                         "",      "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_N_SUB_HXRS,      "i_N_sub_hxrs",        "number of sub heat exchangers",                         "",      "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_P_HIGH_LIMIT,    "i_P_high_limit",      "high pressure limit",                                   "MPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_N_turbine,       "i_N_turbine",         "Turbine shaft speed",                                   "rpm",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DP_LT_C,         "o_DP_LT_c",           "Cold-side pressure drop - LT recup",                    "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DP_LT_H,         "o_DP_LT_h",           "Hot-side pressure drop - LT recup",                     "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DP_HT_C,         "o_DP_HT_c",           "Cold-side pressure drop - HT recup",                    "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DP_HT_H,         "o_DP_HT_h",           "Hot-side pressure drop - HT recup",                     "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DP_PC_H,         "o_DP_PC_h",           "Hot-side pressure drop - pre-cooler",                   "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DP_PHX_C,        "o_DP_PHX_c",          "Cold-side pressure drop - PHX",                         "kPa",   "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DELTAT_MC,       "o_deltaT_mc",         "Temperature difference btw comp inlet and Tamb",        "K",     "",  "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_DELTAT_T,        "o_deltaT_t",          "Temperature difference btw hot HTF and turbine inlet",  "K",     "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, I_T_HTF_COLD_DES,  "i_T_htf_cold_des",    "Calculated htf cold temperature at design",             "C",     "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_W_DOT_NET,       "i_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "0.0" },
+	//{ TCS_INPUT, TCS_NUMBER, I_T_MC_IN,         "i_T_mc_in",           "Compressor inlet temperature",                          "K",     "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_T_T_IN,          "i_T_t_in",            "Turbine inlet temperature",                             "K",     "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_P_MC_IN,         "i_P_mc_in",           "Compressor inlet pressure",                             "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_P_MC_OUT,        "i_P_mc_out",          "Compressor outlet pressure",                            "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_UA_LT,           "i_UA_LT",             "UA in LTR",                                             "kW/K",  "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_UA_HT,           "i_UA_HT",             "UA in HTR",                                             "kW/K",  "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_RECOMP_FRAC,     "i_recomp_frac",       "recompresson fraction",                                 "",      "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_ETA_MC,          "i_eta_mc",            "main compressor isentropic efficiency",                 "",      "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_ETA_RC,          "i_eta_rc",            "re-compressor isentropic efficiency",                   "",      "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_ETA_T,           "i_eta_t",             "turbine isentropic efficiency",                         "",      "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_N_SUB_HXRS,      "i_N_sub_hxrs",        "number of sub heat exchangers",                         "",      "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_P_HIGH_LIMIT,    "i_P_high_limit",      "high pressure limit",                                   "MPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_N_turbine,       "i_N_turbine",         "Turbine shaft speed",                                   "rpm",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DP_LT_C,         "o_DP_LT_c",           "Cold-side pressure drop - LT recup",                    "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DP_LT_H,         "o_DP_LT_h",           "Hot-side pressure drop - LT recup",                     "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DP_HT_C,         "o_DP_HT_c",           "Cold-side pressure drop - HT recup",                    "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DP_HT_H,         "o_DP_HT_h",           "Hot-side pressure drop - HT recup",                     "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DP_PC_H,         "o_DP_PC_h",           "Hot-side pressure drop - pre-cooler",                   "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DP_PHX_C,        "o_DP_PHX_c",          "Cold-side pressure drop - PHX",                         "kPa",   "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DELTAT_MC,       "o_deltaT_mc",         "Temperature difference btw comp inlet and Tamb",        "K",     "",  "",  "" },
+	//{ TCS_INPUT, TCS_NUMBER, I_DELTAT_T,        "o_deltaT_t",          "Temperature difference btw hot HTF and turbine inlet",  "K",     "",  "",  "" },
 
     // OUTPUTS
     { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
@@ -300,8 +303,6 @@ private:
 	HTFProperties store_htfProps;		// Instance of HTFProperties class for storage HTF
 	Storage_HX hx_storage;				// Instance of Storage_HX class for heat exchanger between storage and field HTFs
 	Thermocline_TES thermocline;
-	C_RecompCycle ms_rc_cycle;
-	C_RecompCycle::S_opt_target_od_parameters ms_opt_tar_od_par;
 
 	// Parameters
 	double tshours;	
@@ -398,9 +399,9 @@ private:
 
 	int pb_tech_type;
 	bool initialize_sco2;
-	double m_deltaT_mc_in;
-	double m_deltaT_t_in;
-	double q_sco2_max_input;
+	// double m_deltaT_mc_in;
+	// double m_deltaT_t_in;
+	// double q_sco2_max_input;
 
 public:
 	
@@ -503,9 +504,9 @@ public:
 
 		q_sby_frac = std::numeric_limits<double>::quiet_NaN();
 
-		m_deltaT_mc_in = std::numeric_limits<double>::quiet_NaN();
-		m_deltaT_t_in = std::numeric_limits<double>::quiet_NaN();
-		q_sco2_max_input = std::numeric_limits<double>::quiet_NaN();
+		// m_deltaT_mc_in = std::numeric_limits<double>::quiet_NaN();
+		// m_deltaT_t_in = std::numeric_limits<double>::quiet_NaN();
+		// q_sco2_max_input = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_mw_trough_type251()
@@ -839,80 +840,10 @@ public:
 			{
 				if( time / step == 1.0 )
 				{
-					// Get cycle design parameters
-					C_RecompCycle::S_design_parameters  cycle_des_par;
-					cycle_des_par.m_W_dot_net = value(I_W_DOT_NET);
-					cycle_des_par.m_T_mc_in = value(I_T_MC_IN);
-					cycle_des_par.m_T_t_in = value(I_T_T_IN);
-					cycle_des_par.m_P_mc_in = value(I_P_MC_IN);
-					cycle_des_par.m_P_mc_out = value(I_P_MC_OUT);
-					cycle_des_par.m_UA_LT = value(I_UA_LT);
-					cycle_des_par.m_UA_HT = value(I_UA_HT);
-					cycle_des_par.m_recomp_frac = value(I_RECOMP_FRAC);
-					cycle_des_par.m_eta_mc = value(I_ETA_MC);
-					cycle_des_par.m_eta_rc = value(I_ETA_RC);
-					cycle_des_par.m_eta_t = value(I_ETA_T);
-					cycle_des_par.m_N_sub_hxrs = value(I_N_SUB_HXRS);
-					cycle_des_par.m_P_high_limit = value(I_P_HIGH_LIMIT);
-					cycle_des_par.m_tol = 1.E-3;
-					cycle_des_par.m_N_turbine = value(I_N_turbine);
-					cycle_des_par.m_DP_LT[0] = value(I_DP_LT_C);
-					cycle_des_par.m_DP_LT[1] = value(I_DP_LT_H);
-					cycle_des_par.m_DP_HT[0] = value(I_DP_HT_C);
-					cycle_des_par.m_DP_HT[1] = value(I_DP_HT_H);
-					cycle_des_par.m_DP_PC[1] = value(I_DP_PC_H);
-					cycle_des_par.m_DP_PHX[0] = value(I_DP_PHX_C);
-					
-					// Call recompression cycle design-point model
-					int rc_des_error_code = 0;
-					ms_rc_cycle.design(cycle_des_par, rc_des_error_code);
-					if(rc_des_error_code != 0)
-					{
-						message("Design point sco2 cycle model didn't solve. That is unexpected as inputs come from solved, optimized model in Type 424");
-						return -1;
-					}
-
 					// Get actual receiver inlet temperature at design
-					T_field_in_des = ms_rc_cycle.get_design_solved()->m_temp[5-1];
+					T_field_in_des = value(I_T_HTF_COLD_DES) + 273.15;		//[K] convert from C
 
-					int finalize_error_code = finalize_initial_calcs();
-
-					if( finalize_error_code != 0 )
-						return -1;
-
-					// Now set up structure to pass to 'get_max_output_od'
-					ms_opt_tar_od_par.m_is_target_Q = true;
-					ms_opt_tar_od_par.m_N_sub_hxrs = cycle_des_par.m_N_sub_hxrs;
-					ms_opt_tar_od_par.m_lowest_pressure = 1000.0;
-					ms_opt_tar_od_par.m_highest_pressure = cycle_des_par.m_P_high_limit;
-
-					if( ms_rc_cycle.get_design_solved()->m_is_rc )
-					{
-						ms_opt_tar_od_par.m_fixed_recomp_frac = false;
-						ms_opt_tar_od_par.m_recomp_frac_guess = ms_rc_cycle.get_design_solved()->m_recomp_frac;
-					}
-					else
-					{
-						ms_opt_tar_od_par.m_fixed_recomp_frac = true;
-						ms_opt_tar_od_par.m_recomp_frac_guess = 0.0;
-					}
-
-					ms_opt_tar_od_par.m_fixed_N_mc = false;
-					ms_opt_tar_od_par.m_N_mc_guess = ms_rc_cycle.get_design_solved()->m_N_mc;
-
-					ms_opt_tar_od_par.m_fixed_N_t = true;
-					ms_opt_tar_od_par.m_N_t_guess = ms_rc_cycle.get_design_solved()->m_N_t;
-
-					ms_opt_tar_od_par.m_tol = cycle_des_par.m_tol;
-					ms_opt_tar_od_par.m_opt_tol = cycle_des_par.m_tol;
-
-					ms_opt_tar_od_par.m_target = 0.0;		// NOT trying to hit target, only find max
-
-					m_deltaT_mc_in = value(I_DELTAT_MC);
-					m_deltaT_t_in = value(I_DELTAT_T);
-
-					// Set this here for initialize timestep because return call will be ncall == 1 so next sco2 branch won't be hit
-					q_sco2_max_input = q_pb_design;
+					finalize_initial_calcs();
 				}
 			}
 			initialize_sco2 = false;
@@ -934,23 +865,23 @@ public:
 			dnifc = 0.0;						// [W/m2]
 
 		// Calculate maximum thermal input for sCO2 cycle
-		if( pb_tech_type == 424 && ncall == 0 )
-		{
-			ms_opt_tar_od_par.m_T_mc_in = T_amb + m_deltaT_mc_in;
-			ms_opt_tar_od_par.m_T_t_in = T_field_out - m_deltaT_t_in;
-
-			int max_q_error_code = 0;
-			ms_rc_cycle.get_max_output_od(ms_opt_tar_od_par, max_q_error_code);
-
-			double m_q_max_sf = 0.97;
-			if( max_q_error_code != 0 )
-			{
-				q_sco2_max_input = q_pb_design;
-				message("Could not calculate max thermal input for sCO2 cycle: value set to design thermal input");
-			}
-			else
-				q_sco2_max_input = m_q_max_sf*ms_rc_cycle.get_max_target()*1000.0;		// Convert to W
-		}
+		// if( pb_tech_type == 424 && ncall == 0 )
+		// {
+		// 	ms_opt_tar_od_par.m_T_mc_in = T_amb + m_deltaT_mc_in;
+		// 	ms_opt_tar_od_par.m_T_t_in = T_field_out - m_deltaT_t_in;
+		// 
+		// 	int max_q_error_code = 0;
+		// 	ms_rc_cycle.get_max_output_od(ms_opt_tar_od_par, max_q_error_code);
+		// 
+		// 	double m_q_max_sf = 0.97;
+		// 	if( max_q_error_code != 0 )
+		// 	{
+		// 		q_sco2_max_input = q_pb_design;
+		// 		message("Could not calculate max thermal input for sCO2 cycle: value set to design thermal input");
+		// 	}
+		// 	else
+		// 		q_sco2_max_input = m_q_max_sf*ms_rc_cycle.get_max_target()*1000.0;		// Convert to W
+		// }
 
 		// Determine which storage dispatch strategy to use, depending on if any solar resource is available
 		double * tselect;
@@ -1101,7 +1032,7 @@ public:
 			double q_pb_max_input = 0.0;
 			if( pb_tech_type == 424 )
 			{
-				q_pb_max_input = q_sco2_max_input;
+				q_pb_max_input = q_pb_design;
 			}
 			else
 			{
