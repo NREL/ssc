@@ -111,7 +111,7 @@ public:
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwattsv1", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("pvwattsv1", wf.error_message());
 					
 		double dcrate = as_double("system_size");
 		double derate = as_double("derate");

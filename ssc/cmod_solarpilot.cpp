@@ -201,7 +201,7 @@ public:
 		const char *wffile = as_string("solar_resource_file" );
 		if ( !wffile ) throw exec_error( "solarpilot", "no weather file specified" );
 		weatherfile wf( wffile );
-		if ( !wf.ok() || wf.type() == weatherfile::INVALID ) throw exec_error("solarpilot", "could not open weather file or invalid weather file format");
+		if ( !wf.ok() || wf.type() == weatherfile::INVALID ) throw exec_error("solarpilot", wf.error_message());
 
 		
 		amb.site_latitude = wf.lat;

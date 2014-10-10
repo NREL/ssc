@@ -41,7 +41,7 @@ public:
 	void exec() throw( general_error )
 	{
 		weatherfile wf( as_string("input_file") );
-		if ( !wf.ok() ) throw general_error( "could not open weather file for read: " + wf.filename() );
+		if ( !wf.ok() ) throw general_error( wf.error_message() );
 
 		nwarnings = nerrors = 0;
 

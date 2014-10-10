@@ -153,7 +153,7 @@ public:
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf(file);
-		if (!wf.ok()) throw exec_error("swh", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("swh", wf.error_message());
 
 		/* **********************************************************************
 		Read user specified system parameters from compute engine
