@@ -1144,6 +1144,7 @@ public:
 		
 		double m_T_htf_hot;			//[K] Current htf inlet temperature
 		double m_m_dot_htf;			//[kg/s] Current htf mass flow rate
+		double m_T_htf_cold;		//[K] Target htf cold return temp
 
 		double m_UA_PHX_des;		//[kW/K] Design point PHX conductance
 
@@ -1151,7 +1152,7 @@ public:
 
 		S_PHX_od_parameters()
 		{
-			m_m_dot_htf_des = m_T_htf_hot = m_m_dot_htf = m_UA_PHX_des = m_cp_htf = std::numeric_limits<double>::quiet_NaN();
+			m_m_dot_htf_des = m_T_htf_hot = m_m_dot_htf = m_T_htf_cold = m_UA_PHX_des = m_cp_htf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

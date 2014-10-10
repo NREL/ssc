@@ -2853,10 +2853,10 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 		ub = ub_base;
 		scale = sc_base;
 
-		x[2] = ms_des_solved.m_N_mc*1.5;
-		lb[2] = ms_des_solved.m_N_mc*0.5;
-		ub[2] = ms_des_solved.m_N_mc*1.75;
-		scale[2] = -ms_des_solved.m_N_mc*0.1;
+		x[index-1] = ms_des_solved.m_N_mc*1.5;
+		lb[index-1] = ms_des_solved.m_N_mc*0.5;
+		ub[index-1] = ms_des_solved.m_N_mc*1.75;
+		scale[index-1] = -ms_des_solved.m_N_mc*0.1;
 		
 		opt_od_cycle.set_lower_bounds(lb);
 		opt_od_cycle.set_upper_bounds(ub);
@@ -3033,13 +3033,16 @@ double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
 
 	double eta_thermal = ms_od_solved.m_eta_thermal;
 
+	double diff_T_cold = max(0.0, fabs(ms_phx_od_par.m_T_htf_cold - T_htf_cold) / T_htf_cold - ms_od_par.m_tol);
+	//diff_T_cold = 0.0;	// overwrite for now...
+
 	double over_deltaT = max(0.0, fabs(diff_T_t_in) - ms_od_par.m_tol);
 
 	double over_deltaP = max(0.0, ms_od_solved.m_pres[2-1] - ms_des_par.m_P_high_limit);
 
-	double eta_return = eta_thermal*exp(-over_deltaP)*exp(-over_deltaT);
+	double eta_return = eta_thermal*exp(-diff_T_cold)*exp(-over_deltaP)*exp(-over_deltaT);
 
-	if( fabs(diff_T_t_in) < ms_od_par.m_tol && over_deltaP == 0.0 )
+	if( diff_T_cold == 0.0 && over_deltaT == 0.0 && over_deltaP == 0.0 )
 		m_found_opt = true;
 
 	if( eta_return > m_eta_phx_max )
