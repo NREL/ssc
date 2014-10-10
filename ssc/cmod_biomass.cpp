@@ -422,7 +422,7 @@ public:
 		}
 
 		weatherfile wf(as_string("file_name"));
-		if (!wf.ok()) throw exec_error("biopower", "failed to open weather file for reading");
+		if (!wf.ok()) throw exec_error("biopower", wf.error_message());
 
 		//const char *wf = SVal("climate.location");
 		//if (!wf)

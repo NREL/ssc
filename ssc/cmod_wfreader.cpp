@@ -66,7 +66,11 @@ public:
 		const char *file = as_string("file_name");
 
 		weatherfile wf( file, header_only );
-		if (!wf.ok()) throw exec_error("wfreader", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) 
+		{
+			assign( "error", var_data(wf.error_message()) );
+			throw exec_error("wfreader", "failed to read local weather file: " + std::string(file) + "  " + wf.error_message());
+		}
 
 		int records = wf.nrecords;
 		

@@ -50,8 +50,8 @@ private:
 	std::string m_file;
 	int m_startYear;
 	double m_time;
-	int m_errorLine;
-	
+	std::string m_errorStr;
+
 	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
 		GHI, DNI, DHI, 
 		TDRY, TWET, TDEW, 
@@ -84,6 +84,7 @@ public:
 	std::string filename();
 	bool open( const std::string &file, bool header_only = false, bool interp = false );
 	void rewind();
+	std::string error_message() { return m_errorStr; }
 
 	static std::string normalize_city( const std::string &in );
 	static bool convert_to_wfcsv( const std::string &input, const std::string &output );

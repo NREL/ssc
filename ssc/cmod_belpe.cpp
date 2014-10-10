@@ -165,7 +165,7 @@ public:
 		// read weather file inputs 		
 		const char *file = as_string("solar_resource_file");
 		weatherfile wf(file);
-		if (!wf.ok()) throw exec_error("belpe", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("belpe", wf.error_message());
 
 		//allocate input arrays
 		ssc_number_t *T_ambF = allocate("T_ambF", 8760);

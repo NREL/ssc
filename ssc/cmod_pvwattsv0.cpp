@@ -982,7 +982,7 @@ public:
 		const char *file = as_string("file_name");
 
 		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwattsv1", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("pvwattsv1", wf.error_message());
 		
 		double dcrate = as_double("system_size"); /* DC rating */
 		double derate = as_double("derate"); /* Derate factor */

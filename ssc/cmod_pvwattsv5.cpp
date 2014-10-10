@@ -147,7 +147,7 @@ public:
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwattsv5", "failed to read local weather file: " + std::string(file));
+		if (!wf.ok()) throw exec_error("pvwattsv5", wf.error_message());
 										
 		double dc_nameplate = as_double("system_capacity")*1000;
 		double dc_ac_ratio = as_double("dc_ac_ratio");

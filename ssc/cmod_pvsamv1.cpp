@@ -660,7 +660,7 @@ public:
 		
 
 		weatherfile wf( as_string("solar_resource_file") );
-		if ( !wf.ok() ) throw exec_error( "pvsamv1", "failed to open weather file for reading");
+		if ( !wf.ok() ) throw exec_error( "pvsamv1", wf.error_message() );
 		
 		size_t nrec = wf.nrecords;
 		size_t step_per_hour = nrec/8760;
