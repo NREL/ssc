@@ -4066,9 +4066,11 @@ lab_keep_guess:
 			if(D_m[i] >= De) return D_m[i];
 		}
 		//Nothing was found, so return an error
-		message("No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in. "
-			"Maximum schedule is %.2f in. Using the exact pipe diameter instead.", De*mtoinch, D_m[np-1]*mtoinch);
-		return std::numeric_limits<double>::quiet_NaN();
+		message("No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
+			"Maximum schedule is %.2f in ID. Using the exact pipe diameter instead." 
+            "Consider increasing the header design velocity range or the number of field subsections.", 
+            De*mtoinch, D_m[np-1]*mtoinch);
+		return De;  //mjw 10/10/2014 - NO! ---> std::numeric_limits<double>::quiet_NaN();
 	}
 
 	//***************************************************************************************************

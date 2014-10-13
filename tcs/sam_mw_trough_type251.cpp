@@ -745,7 +745,8 @@ public:
 
 		//Calculate heat exchanger size based on parameters
 		//hx_ua will be used as the heat exchanger size for simulation calculations
-		double duty = (solarm - 1.)*q_pb_design;	//[W]
+		//double duty = max(1.,(solarm - 1.))*q_pb_design;	//[W]
+        double duty = q_pb_design * solarm;     //mjw 10/13/14   Allow all energy from the field to go into storage at any time.
 
 		if( tshours>0.0 )
 		{
@@ -768,7 +769,7 @@ public:
 		// Charge max is either the power block max flow, or the solar multiple-1 times the design PB mass flow rate
 		if( is_hx )
 		{
-			ms_charge_max = max(m_dot_pb_max, (solarm - 1.)*q_pb_design / (c_pb_ref*(T_field_out_des - T_field_in_des)));
+			ms_charge_max = max(m_dot_pb_max, duty / (c_pb_ref*(T_field_out_des - T_field_in_des)));
 		}	//[kg/s]		
 		else	// MJW 10.18.2010: If we have direct storage, don't limit the maximum storage charge/discharge rate
 		{
@@ -943,12 +944,14 @@ public:
 
 		t_standby = t_standby_prev;	//[s] Initialize t_standby
 
+        bool has_TES = tshours > 1.e-4;
+
 		iter_tank = 1;
 		do		// Iteration on average storage tank temperatures
 		{
 			iter_tank++;
 
-			if(tshours > 0.001)
+			if(has_TES)
 			{
 				if(tes_type==1)
 				{
@@ -1021,8 +1024,24 @@ public:
 			}
 			else	//No storage
 			{
+                //mjw 10/10/14
+                //Adding initializers for non-TES option. Fortran initializes values to 0.0, c++ does not! This caused errors for the no-TES cases.
 				ms_disch_avail	= 0.0;
 				ms_charge_avail = 0.0;
+                rho_tank_hot_avg = 0.;
+                V_tank_hot_avg = 0.;
+                V_tank_hot_avail - 0.;
+                m_tank_disch_avail = 0.;
+                rho_tank_cold_avg = 0.;
+                V_tank_cold_avg = 0.;
+                V_tank_cold_avail = 0.;
+                m_tank_charge_avail = 0.;
+                T_tank_hot_out = 0.;
+                T_tank_cold_out = 0.;
+                Ts_hot = 0.;
+                Ts_cold = 0.;
+                q_htr_tank_hot = 0.;
+                q_htr_tank_cold = 0.;
 			}
 		
 			
@@ -1079,8 +1098,14 @@ public:
 				T_field_in = T_field_in_guess;
 
 				// Calculate available heat flows
-				c_htf_disch		= field_htfProps.Cp( (Ts_hot + T_pb_out)/2. )*1000.0;				// mjw 1.18.2011
-				c_htf_charge	= field_htfProps.Cp( (T_field_out + Ts_cold)/2. )*1000.0;			// Specific heat for charge flow
+                if(has_TES){
+				    c_htf_disch		= field_htfProps.Cp( (Ts_hot + T_pb_out)/2. )*1000.0;				// mjw 1.18.2011
+				    c_htf_charge	= field_htfProps.Cp( (T_field_out + Ts_cold)/2. )*1000.0;			// Specific heat for charge flow
+                }
+                else{
+                    c_htf_disch = 0.;
+                    c_htf_charge = 0.;
+                }
 				c_htf_field		= field_htfProps.Cp( (T_field_out + T_field_in_guess)/2. )*1000.0;	// mjw 1.18.2011
 				c_htf_pb		= field_htfProps.Cp( (T_pb_in + T_pb_out)/2. )*1000.0;				// mjw 7.12.2010 Specific heat for the power block
 
@@ -1096,7 +1121,7 @@ public:
 				else
 				{q_pb_demand_guess = q_pb_demand;}
 
-				if(tes_type==2)
+				if(tes_type==2 || ! has_TES)
 				{
 					qs_disch_avail	= 0.0;
 					qs_charge_avail = 0.0;
@@ -1290,7 +1315,7 @@ public:
 						//**********************************************
 						//********** Standby Operation *****************
 						//**********************************************			
-						if( tshours > 0.0 )
+						if( has_TES )
 						{
 							if( q_field_avail < q_sby )	// discharge  
 							{         
@@ -1391,7 +1416,7 @@ public:
 						m_dot_pb	= 0.0;
 						T_pb_in		= T_pb_out;
 
-						if(tshours > 0.)
+						if(has_TES)
 						{    
 							if(m_dot_field > 0.)
 							{
@@ -1646,7 +1671,7 @@ public:
 
 			double err_tank;
 			iterate_tank_temp = false;
-			if(tshours > 0.0)
+			if(has_TES)
 			{
 				if(tes_type==1)
 				{
@@ -1736,7 +1761,7 @@ public:
 		else	{aux_par = 0.0;}
 
 		double q_to_tes;
-		if(tshours > 0.0)
+		if(has_TES)
 		{
 			if(ms_disch != 0)	q_to_tes = -ms_disch*c_htf_disch*(Ts_hot - T_pb_out)*1.e-6;			//[MW]
 			if(ms_charge != 0)	q_to_tes = ms_charge*c_htf_charge*(T_field_out - Ts_cold)*1.e-6;	//[MW]
