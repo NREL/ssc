@@ -2133,7 +2133,7 @@ public:
 				if (acPower[i] > maxACOutput) maxACOutput = acPower[i]; 
 			}
 		}
-		if (numHoursClipped > 0) 
+		if (numHoursClipped >= 2190) //more than one quarter of the entire year (8760) is clipped
 			log( util::format("Inverter undersized: The array output exceeded the inverter rating %.2lf kWdc for %d hours.", 
 				ratedDCOutput, numHoursClipped), 
 				SSC_WARNING );
