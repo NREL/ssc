@@ -377,14 +377,60 @@ double N_sco2_rec::C_rec_des_props::interpolate_cycles_to_failure(int enum_T_low
 // Constructor
 N_sco2_rec::C_calc_tube_min_th::C_calc_tube_min_th()
 {
-	m_d_out = m_T_fluid_in = m_T_fluid_out = m_P_fluid_in = m_L_tube = m_d_in = m_L_node = m_m_dot_tube = m_deltaP_kPa = std::numeric_limits<double>::quiet_NaN();
+	m_d_out = m_T_fluid_in = m_T_fluid_out = m_P_fluid_in = m_L_tube = m_d_in 
+        = m_L_node = m_m_dot_tube = m_deltaP_kPa = m_max_damage = std::numeric_limits<double>::quiet_NaN();
 
 	m_e_roughness = 4.5E-5;
 
 	m_n_tube_elements = m_n_temps = m_n_results_cols - 1;
 
 	m_know_T_out = true;
+
+    m_th_min_guess = 0.0002;
+    m_th_step = 0.00005;
+    m_max_deltaP_frac = 0.2;
+    m_iter_d_in_max = 9999;
+
 };
+
+double N_sco2_rec::C_calc_tube_min_th::get_min_d_in()
+{
+	return m_d_in;
+}
+
+double N_sco2_rec::C_calc_tube_min_th::get_m_dot_tube_kgsec()
+{
+	return m_m_dot_tube;
+}
+
+double N_sco2_rec::C_calc_tube_min_th::get_T_out_C()
+{
+	return m_T_fluid_out;
+}
+
+double N_sco2_rec::C_calc_tube_min_th::get_deltaP_kPa()
+{
+	return m_deltaP_kPa;
+}
+
+double N_sco2_rec::C_calc_tube_min_th::get_max_damage(){
+    return m_max_damage;
+}
+
+util::matrix_t<double> *N_sco2_rec::C_calc_tube_min_th::get_damage_matrix()
+{
+    return &m_total_damage;
+}
+
+void N_sco2_rec::C_calc_tube_min_th::get_damage_matrix(vector<vector<double> > &damage){
+    //resize
+    int nr = (int)m_total_damage.nrows();
+    int nc = (int)m_total_damage.ncols();
+    damage.resize(nr, vector<double>(nc));
+    for(int i=0; i<nr; i++)
+        for(int j=0; j<nc; j++)
+        damage.at(i).at(j) = m_total_damage.at(i,j);
+}
 
 bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_Tout(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
 	double d_out_m,
@@ -401,10 +447,27 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_mdot(const vector<double>
 	return calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
 }
 
+bool N_sco2_rec::C_calc_tube_min_th::calc_perf_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+		double d_out_m, double th_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs)
+{
+    int last_iter_max = m_iter_d_in_max;    //save the current max iteration setting
+    double last_th_min = m_th_min_guess;    //save the current min thickness
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
-	double d_out_m,
-	double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, double m_dot_tube, bool know_Tout)
+    m_iter_d_in_max = 1;    //Don't allow iteration on thickness
+    m_th_min_guess = th_m;  //use the specified thickness
+    
+    bool simok = calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
+    
+    //return member values to original
+    m_iter_d_in_max = last_iter_max;
+    m_th_min_guess = last_th_min;
+
+    return simok;
+}
+
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> &max_flux_axial_1D_Wm2, 
+    double L_tube_m, double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, 
+    double m_dot_tube, bool know_Tout)
 {
 	// Initialize member data
 	m_d_out = d_out_m;					//[m]
@@ -467,9 +530,9 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 
 	// Set up parameters for minimum thickness search
 	// May want to make these inputs at some point
-	double th_min_guess = 0.001;	// Smallest possible thickness = 1 mm
-	double th_step = 0.0002;		// Increase to find next thickness to try
-	double max_deltaP_frac = 0.2;	// Largest allowable fractional pressure drop through tubes
+	double th_min_guess = m_th_min_guess;	// Smallest possible thickness = 1 mm
+	double th_step = m_th_step;		// Increase to find next thickness to try
+	double max_deltaP_frac = m_max_deltaP_frac;	// Largest allowable fractional pressure drop through tubes
 
 	// Set up numerical control parameters
 	bool search_min_th = true;				// Will be set to false when/if min thickness is found
@@ -493,9 +556,9 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 
 	do	// Outer loop: iterates until min thickness is found or broken because pressure drop is exceeded
 	{
-		iter_d_in++;
-
-		m_d_in = m_d_out - 2.0*(th_min_guess + th_step*iter_d_in);	//[m] Inner diameter
+        iter_d_in++;
+		
+        m_d_in = m_d_out - 2.0*(th_min_guess + th_step*iter_d_in);	//[m] Inner diameter
 
 		double A_cs = 0.25*CSP::pi*pow(m_d_in, 2);		//[m2] flow cross-section area
 
@@ -714,9 +777,14 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 			m_total_damage(i-1,m_n_results_cols-1) =  max(inner_total_damage, outer_total_damage);
 		}
 
+        m_max_damage = total_damage;  //keep track of the max damage value
+
 		if( total_damage <= 1.0 )
 			search_min_th = false;
 
+        //check to see if the iteration number is at the max
+        if(! (iter_d_in < m_iter_d_in_max ) )
+            search_min_th = false;
 	
 	} while( search_min_th );
 
@@ -725,8 +793,8 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 
 	m_deltaP_kPa = m_Pres[m_n_temps - 1] - m_Pres[0];
 
-	if( is_deltaP_too_large )
-		return false;
+	if( is_deltaP_too_large ||  m_max_damage > 1.)
+        return false;
 
 	return true;
 }

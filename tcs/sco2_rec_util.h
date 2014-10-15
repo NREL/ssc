@@ -247,31 +247,31 @@ namespace N_sco2_rec
 		public:
 			C_calc_tube_min_th();
 
-			double get_min_d_in()
-			{
-				return m_d_in;
-			}
+			double get_min_d_in();
 
-			double get_m_dot_tube_kgsec()
-			{
-				return m_m_dot_tube;
-			}
+			double get_m_dot_tube_kgsec();
 
-			double get_T_out_C()
-			{
-				return m_T_fluid_out;
-			}
+			double get_T_out_C();
 
-			double get_deltaP_kPa()
-			{
-				return m_deltaP_kPa;
-			}
+			double get_deltaP_kPa();
+
+            double get_max_damage();
+
+            util::matrix_t<double> *get_damage_matrix();
+
+            void get_damage_matrix(vector<vector<double> > &damage);
 
 			bool calc_th_1Dmaxflux_Tout(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
-				double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa);
+				                        double d_out_m, double T_fluid_in_C, double T_fluid_out_C, 
+                                        double P_fluid_in_MPa);
 
 			bool calc_th_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
-				double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs);
+				                        double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, 
+                                        double m_dot_tube_kgs);
+
+            bool calc_perf_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+				                          double d_out_m, double th_m, double T_fluid_in_C, double P_fluid_in_MPa, 
+                                          double m_dot_tube_kgs);
 
 		private:
 			CO2_state co2_props;
@@ -296,6 +296,13 @@ namespace N_sco2_rec
 			double m_d_in;
 			double m_L_node;
 			double m_deltaP_kPa;
+            double m_max_damage;
+
+            //iteration properties
+            double m_th_min_guess;      //[m] Smallest possible thickness / initial thickness
+            double m_th_step;           //[m] Step size to increase thickness each iteration
+            double m_max_deltaP_frac;   //[-] Largest allowable fractional pressure drop
+            int m_iter_d_in_max;        //maximum number of tube thickness iterations allowed
 
 			vector<double> m_Temp, m_Pres, m_Enth, m_h_conv_ave;
 			
