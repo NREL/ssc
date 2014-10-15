@@ -6,8 +6,7 @@ static var_info _cm_vtab_wfreader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,         SSC_STRING,      "file_name",               "local weather file path",          "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
 	{ SSC_INPUT,         SSC_NUMBER,      "header_only",             "read header only",                 "0/1",    "",                      "Weather Reader",      "?=0",                     "BOOLEAN",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "syn_albedo_from_snow",    "synthesize albedo from snow depth?","0/1",   "uses PVwatts convention to calculate albedo from snow depth", "Weather Reader", "?=0", "BOOLEAN", "" },
-
+	
 // header data
 	{ SSC_OUTPUT,        SSC_NUMBER,      "lat",                     "Latitude",                         "deg",    "",                      "Weather Reader",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "lon",                     "Longitude",                        "deg",    "",                      "Weather Reader",      "*",                        "",                      "" },
@@ -48,6 +47,13 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "pres",                    "Atmospheric Pressure",             "millibar", "",                    "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "snow",                    "Snow Depth",                       "cm",    "",                       "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "albedo",                  "Ground Reflectance",               "frac",  "0..1",                   "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",     "" },
+
+// annual statistics
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_global",           "Average daily global horizontal",  "kWh/m2/day",   "",                "Weather Reader",      "header_only=0",                        "",     "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_beam",             "Average daily beam normal",        "kWh/m2/day",   "",                "Weather Reader",      "header_only=0",                        "",     "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_diffuse",          "Average daily diffuse",            "kWh/m2/day",   "",                "Weather Reader",      "header_only=0",                        "",     "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_tdry",             "Average dry bulb temperature",     "'C",           "",                "Weather Reader",      "header_only=0",                        "",     "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_wspd",             "Average wind speed",               "m/s",          "",                "Weather Reader",      "header_only=0",                        "",     "" },
 
 var_info_invalid };
 
@@ -123,7 +129,10 @@ public:
 		ssc_number_t *p_snow = allocate( "snow", records );
 		ssc_number_t *p_albedo = allocate( "albedo", records );
 
-		bool syn_albedo = as_boolean("syn_albedo_from_snow");
+		double gh_sum = 0.0, dn_sum = 0.0, df_sum = 0.0;
+		double temp_sum = 0.0, wind_sum = 0.0;
+
+		double ts_hour = wf.step / 3600.0;
 
 		for (int i=0;i<records;i++)
 		{
@@ -150,17 +159,19 @@ public:
 			p_snow[i] = (ssc_number_t)wf.snow;
 			p_albedo[i] = (ssc_number_t)wf.albedo;	
 
-			if ( syn_albedo
-				&& ( p_albedo[i] < 0 || p_albedo[i] > 1)
-				&& ( p_snow[i] >= 0 && p_snow[i] < 150 ))
-			{
-				// if we're synthesizing an albedo from snow depth
-				// and there's an invalid albedo and a valid snow depth,
-				// use the PVWatts V1. convention for higher ground 
-				// reflectance in the presence of snow
-				p_albedo[i] = (ssc_number_t)( p_snow[i] > 0 ? 0.6 : 0.2 );
-			}
+
+			gh_sum += wf.gh * ts_hour;
+			dn_sum += wf.dn * ts_hour;
+			df_sum += wf.df * ts_hour;
+			temp_sum += wf.tdry;
+			wind_sum += wf.wspd; 
 		}
+		
+		assign( "annual_global", var_data( 0.001 * gh_sum / 365 ));
+		assign( "annual_beam", var_data( 0.001 * dn_sum / 365 ));
+		assign( "annual_diffuse", var_data( 0.001 * df_sum / 365 ));
+		assign( "annual_tdry", var_data( temp_sum / records ));
+		assign( "annual_wspd", var_data( wind_sum / records ));
 	}
 };
 
