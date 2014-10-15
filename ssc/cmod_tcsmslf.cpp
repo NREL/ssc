@@ -103,13 +103,15 @@ static var_info _cm_vtab_tcsmslf[] = {
 	{ SSC_INPUT, SSC_NUMBER, "P_amb", "Ambient pressure", "atm", "", "controller", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "T_dp", "The dewpoint temperature", "C", "", "controller", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "T_cold_in", "HTF return temperature", "C", "", "controller", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "m_dot_in", "HTF mass flow rate at the inlet ", "kg/hr", "", "controller", "*", "", "" },
+// not used
+//	{ SSC_INPUT, SSC_NUMBER, "m_dot_in", "HTF mass flow rate at the inlet ", "kg/hr", "", "controller", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "defocus", "Defocus control ", "", "", "controller", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "SolarAz", "Solar azimuth angle ", "deg", "", "controller", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "SolarZen", "Solar zenith angle", "deg", "", "controller", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "latitude", "Site latitude read from weather file", "deg", "", "controller", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "longitude", "Site longitude read from weather file", "deg", "", "controller", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "timezone", "Time zone", "hr", "", "controller", "*", "", "" },
+	// connected to weather file
+//	{ SSC_INPUT, SSC_NUMBER, "SolarAz", "Solar azimuth angle ", "deg", "", "controller", "*", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "SolarZen", "Solar zenith angle", "deg", "", "controller", "*", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "latitude", "Site latitude read from weather file", "deg", "", "controller", "*", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "longitude", "Site longitude read from weather file", "deg", "", "controller", "*", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "timezone", "Time zone", "hr", "", "controller", "*", "", "" },
 
 
 
@@ -216,7 +218,7 @@ static var_info _cm_vtab_tcsmslf[] = {
 	//	{ SSC_INPUT,        SSC_NUMBER,      "P_amb", 			            "Label", 			                                                         "", 			            "", 			            "powerblock", 			   "*", 			                      "", 			                     "" },
 	{ SSC_INPUT, SSC_NUMBER, "rh", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
 //	{ SSC_INPUT, SSC_NUMBER, "T_htf_hot", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
-	{ SSC_INPUT, SSC_NUMBER, "m_dot_htf_init", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
+//	{ SSC_INPUT, SSC_NUMBER, "m_dot_htf_init", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
 	{ SSC_INPUT, SSC_NUMBER, "demand_var", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
 	{ SSC_INPUT, SSC_NUMBER, "standby_control", 			"Label", 			"", 			"", 			"powerblock", 			"*", 			"", 			"" },
 	//{ SSC_INPUT,        SSC_NUMBER,      "TOU", 			              "Label", 			                                                         "", 			            "", 			            "powerblock", 			   "*", 			                      "", 			                     "" },
@@ -563,8 +565,8 @@ public:
 		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
 		set_unit_value_ssc_double(powerblock, "rh" ); // 0.25);
 //		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
-		set_unit_value(controller, "T_htf_hot", as_double("T_loop_out"));
-		set_unit_value_ssc_double(powerblock, "m_dot_htf_init"); // 0.);
+//		set_unit_value(controller, "T_htf_hot", as_double("T_loop_out"));
+//		set_unit_value_ssc_double(powerblock, "m_dot_htf_init"); // 0.);
 		set_unit_value_ssc_double(powerblock, "demand_var" ); // E_gross);
 		set_unit_value_ssc_double(powerblock, "standby_control" ); // 0);
 
@@ -617,7 +619,8 @@ public:
 		bConnected &= connect(weather, "pres", powerblock, "P_amb");
 		bConnected &= connect(weather, "rhum", powerblock, "rh");
 
-		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot");
+//		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot");
+		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot_ref");
 		bConnected &= connect(controller, "m_dot_pb", powerblock, "m_dot_htf");
 		bConnected &= connect(controller, "m_dot_pb", powerblock, "demand_var");
 		bConnected &= connect(controller, "standby_control", powerblock, "standby_control");
