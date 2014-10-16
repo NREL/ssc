@@ -407,10 +407,10 @@ public:
 		set_unit_value_ssc_array(solarfield, "Flow_type" ); // [1, 1, 1, 1]);
 		set_unit_value_ssc_array(solarfield, "Rough" ); // [4.50E-05, 4.50E-05, 4.50E-05, 4.50E-05]);
 		set_unit_value_ssc_array(solarfield, "alpha_env" ); // [0.02, 0.02, 0, 0]);
-		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_1" ); // [[100, 150, 200, 250, 300, 350, 400, 450, 500], [0.064, 0.0665, 0.07, 0.0745, 0.08, 0.0865, 0.094, 0.1025, 0.112]]);
-		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_2" ); // [[0], [0.65]]);
-		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_3" ); // [[0], [0.65]]);
-		set_unit_value_ssc_matrix(solarfield, "epsilon_abs_4" ); // [[0], [0]]);
+		set_unit_value_ssc_matrix_transpose(solarfield, "epsilon_abs_1"); // [[100, 150, 200, 250, 300, 350, 400, 450, 500], [0.064, 0.0665, 0.07, 0.0745, 0.08, 0.0865, 0.094, 0.1025, 0.112]]);
+		set_unit_value_ssc_matrix_transpose(solarfield, "epsilon_abs_2"); // [[0], [0.65]]);
+		set_unit_value_ssc_matrix_transpose(solarfield, "epsilon_abs_3"); // [[0], [0.65]]);
+		set_unit_value_ssc_matrix_transpose(solarfield, "epsilon_abs_4"); // [[0], [0]]);
 		set_unit_value_ssc_array(solarfield, "alpha_abs" ); // alpha_abs);
 		set_unit_value_ssc_array(solarfield, "Tau_envelope" ); // Tau_envelope);
 		set_unit_value_ssc_array(solarfield, "epsilon_glass" ); // [0.86, 0.86, 1, 0]);
