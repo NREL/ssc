@@ -159,7 +159,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                                      "cents/kWh",   "", "Solution Mode",         "?=100",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",                     "",   "", "Solution Mode",         "?=100",                     "INTEGER,MIN=1",            "" },
                                                                                   
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			              "First year PPA price",			                               "$/kWh",	 "",			  "PPA Price",			 "?=10",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			              "PPA price in first year",			                               "$/kWh",	 "",			  "PPA Price",			 "?=10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",                         "PPA escalation rate",					                               "%/year",	 "",					  "PPA Price",             "?=0",                     "MIN=0,MAX=100",      			"" },
                                                                                   
 /* DHF construction period */                                                     
@@ -548,7 +548,7 @@ static var_info _cm_vtab_singleowner[] = {
 
 /* model outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cf_length",                              "Number of periods in cashflow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_price",			                  "Initial year PPA price",			"cents/kWh",	"",				   "PPA Price",			  "*",                         "",      					   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_price",			                  "PPA price in first year",			"cents/kWh",	"",				   "PPA Price",			  "*",                         "",      					   "" },
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */	
@@ -700,41 +700,39 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_fedtax",				              "Federal tax benefit/(liability)",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// metrics table 
-	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Net Annual Energy",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt fraction",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "IRR target year",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "IRR actual year",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "Real LCOE", "", "", "Metrics", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "Nominal LCOE", "", "", "Metrics", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_real",                              "Real LPPA", "", "", "Metrics", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_nom",                               "Nominal LPPA", "", "", "Metrics", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "ppa",                                    "PPA price", "", "", "Metrics", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_escalation",                         "PPA price escalation",                       "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "After-tax IRR",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "After-tax NPV",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ppa_revenue",                        "NPV of PPA revenue",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "NPV of net annual energy (nominal)",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "NPV of net annual energy (real)",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O and M",				   "$",            "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm_nonfuel",            "Present value of non-fuel O and M",				   "$",            "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_fuel",                     "Present value of fuel O and M",				   "$",            "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_insandproptax",            "Present value of Insurance and Prop Tax",				   "$",            "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_real",                        "Levelized Federal PTC (real)",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_nom",                         "Levelized Federal PTC (nominal)",                       "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_real",                        "Levelized State PTC (real)",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_nom",                         "Levelized State PTC (nominal)",                       "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "wacc",                                   "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "effective_tax_rate",                     "Effective Tax Rate",                       "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "Analysis Period IRR",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "analysis_period_irr", "Analysis Period IRR", "", "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Net Annual Energy",                         "kWh",                 "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt fraction",                             "% of installed cost", "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "Target year to meet IRR",                   "year",                "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was met",                   "year",                "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "LCOE (real)",                               "¢/kWh",               "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "LCOE (nominal)",                            "¢/kWh",               "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_real",                              "LPPA price (real)",                         "¢/kWh",               "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_nom",                               "LPPA price (nominal)",                      "¢/kWh",               "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "ppa",                                    "PPA price (Year 1)",                        "¢/kWh",               "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_escalation",                         "PPA price escalation",                      "%/year",              "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "After-tax IRR",                             "%",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "After-tax NPV",                             "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ppa_revenue",                        "NPV of PPA revenue",                        "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "NPV of net annual energy (nominal)",        "kWh",                 "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "NPV of net annual energy (real)",           "kWh",                 "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O and M",				   "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm_nonfuel",            "Present value of non-fuel O and M",         "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_fuel",                     "Present value of fuel O and M",             "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_insandproptax",            "Present value of Insurance and Prop Tax",   "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_real",                        "Levelized Federal PTC (real)",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_nom",                         "Levelized Federal PTC (nominal)",           "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_real",                        "Levelized State PTC (real)",                "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_nom",                         "Levelized State PTC (nominal)",             "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "wacc",                                   "Weighted Average Cost of Capital (WACC)",   "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "effective_tax_rate",                     "Effective tax rate",                        "%",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "IRR at end of analysis period",             "%",                   "", "Metrics", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "NPV of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Adjusted installed costs", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Installed costs less incentives", "$", "", "System Costs", "*", "", "" },
 
 
 var_info_invalid };
