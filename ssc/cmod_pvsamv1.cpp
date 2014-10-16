@@ -95,7 +95,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmodx",                             "Sub-array 1 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmody",                             "Sub-array 1 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rowspace",                          "Sub-array 1 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray1_shade_mode=0", "POSITIVE",                      "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rowspace",                          "Sub-array 1 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray1_shade_mode=0", "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_backtrack",                         "Sub-array 1 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray1_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable",                            "Sub-array 2 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -116,7 +116,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mod_orient",                        "Sub-array 2 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmodx",                             "Sub-array 2 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmody",                             "Sub-array 2 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_rowspace",                          "Sub-array 2 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray2_shade_mode=0",  "POSITIVE",                      "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_rowspace",                          "Sub-array 2 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray2_shade_mode=0",  "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_backtrack",                         "Sub-array 2 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray2_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_enable",                            "Sub-array 3 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -137,7 +137,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mod_orient",                        "Sub-array 3 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmodx",                             "Sub-array 3 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray3_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmody",                             "Sub-array 3 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray3_shade_mode=0", "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_rowspace",                          "Sub-array 3 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray3_shade_mode=0", "POSITIVE",                      "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_rowspace",                          "Sub-array 3 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray3_shade_mode=0", "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_backtrack",                         "Sub-array 3 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray3_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_enable",                            "Sub-array 4 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -158,7 +158,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mod_orient",                        "Sub-array 4 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmodx",                             "Sub-array 4 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmody",                             "Sub-array 4 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_rowspace",                          "Sub-array 4 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray4_shade_mode=0", "POSITIVE",                      "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_rowspace",                          "Sub-array 4 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray4_shade_mode=0", "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_backtrack",                         "Sub-array 4 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray4_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "module_model",                                "Photovoltaic module model specifier",                     "",       "0=spe,1=cec,2=6par_user,3=snl", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
@@ -727,6 +727,10 @@ public:
 
 			sa[nn].azimuth = as_double( prefix+"azimuth" );
 			sa[nn].rotlim = as_double( prefix+"rotlim" );
+
+			sa[nn].gcr = as_double(prefix + "gcr");
+			if (sa[nn].gcr < 0.01 || sa[nn].gcr > 0.99)
+				throw exec_error("pvsamv1", "array ground coverage ratio must obey 0.01 < gcr < 0.99");
 			
 
 			if (!sa[nn].shad.setup( this, prefix ))
@@ -738,6 +742,8 @@ public:
 				sa[nn].backtrack = as_boolean(prefix + "backtrack");
 			}
 
+			
+
 			// shading mode- only required for fixed tilt or one-axis, not backtracking systems
 			if (sa[nn].track_mode == 0 || (sa[nn].track_mode == 1 && sa[nn].backtrack == 0))
 			{
@@ -746,12 +752,6 @@ public:
 				// shading inputs only required if shade mode is self-shaded
 				if (sa[nn].shade_mode == 0)
 				{
-					sa[nn].gcr = as_double(prefix + "gcr");
-
-					if (sa[nn].gcr < 0.01 || sa[nn].gcr > 0.99)
-						throw exec_error("pvsamv1", "array ground coverage ratio must obey 0.01 < gcr < 0.99");
-
-					sa[nn].sscalc.row_space = as_double(prefix + "rowspace");
 					sa[nn].sscalc.mod_orient = as_integer(prefix + "mod_orient");
 					sa[nn].sscalc.nmody = as_integer(prefix + "nmody");
 					sa[nn].sscalc.nmodx = as_integer(prefix + "nmodx");
@@ -777,7 +777,7 @@ public:
 			}
 		}
 		
-		double aspect_ratio = 1.7; 
+		double aspect_ratio = 1.7; //aspect ratio assumption for self-shading
 
 		if (sa[0].nstrings < 0)
 			throw exec_error("pvsamv1", "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
@@ -1111,6 +1111,12 @@ public:
 			sa[nn].sscalc.length = width * aspect_ratio;
 			sa[nn].sscalc.FF0 = self_shading_fill_factor;
 			sa[nn].sscalc.Vmp = ssVmp;
+			double b = 0;
+			if (sa[nn].sscalc.mod_orient == 0)
+				b = sa[nn].sscalc.nmody * sa[nn].sscalc.length;
+			else
+				b = sa[nn].sscalc.nmody * sa[nn].sscalc.width;
+			sa[nn].sscalc.row_space = b / sa[nn].gcr;
 		}
 		
 		double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc/1000.0;
