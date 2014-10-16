@@ -919,7 +919,6 @@ public:
 
 			//Total load for the hour
 			load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
-
 		}
 
 		//Aux heating fans(if gas heat)
@@ -969,8 +968,9 @@ public:
 		std::vector<double> x_hvac(12); 
 		for (int i = 0; i < 12; i++)
 		{
+			if (monthly_hvac_load[i] < 1) //error checking to avoid negative spikes
+				monthly_hvac_load[i] = 0;
 			x_hvac[i] = (monthly_diff[i] - (monthly_load[i] * closest_scale_avg)) / monthly_hvac_load[i]; //hvac fraction of scaling
-			x_hvac[i] = (x_hvac[i] < 1) ? x_hvac[i] : 1; //error checking to avoid crazy negative values
 		}
 		//loop through 8760 and scale according to what month it's in
 		for (int i = 0; i < 8760; i++)
