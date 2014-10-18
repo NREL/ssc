@@ -619,8 +619,8 @@ public:
 		bConnected &= connect(weather, "pres", powerblock, "P_amb");
 		bConnected &= connect(weather, "rhum", powerblock, "rh");
 
-//		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot");
-		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot_ref");
+		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot");
+//		bConnected &= connect(controller, "T_pb_in", powerblock, "T_htf_hot_ref");
 		bConnected &= connect(controller, "m_dot_pb", powerblock, "m_dot_htf");
 		bConnected &= connect(controller, "m_dot_pb", powerblock, "demand_var");
 		bConnected &= connect(controller, "standby_control", powerblock, "standby_control");
