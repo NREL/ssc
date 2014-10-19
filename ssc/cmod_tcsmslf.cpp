@@ -576,7 +576,7 @@ public:
 		set_unit_value_ssc_double(enet, "fp_mode" ); // freeze_prot_mode);
 
 
-		//Set the inputs
+		//Set the connections
 		bool bConnected = connect(weather, "beam", solarfield, "I_b",0);
 		bConnected &= connect(weather, "tdry", solarfield, "T_db");
 		bConnected &= connect(weather, "wspd", solarfield, "V_wind");
@@ -589,6 +589,9 @@ public:
 		bConnected &= connect(weather, "tz", solarfield, "timezone");
 		if (!bConnected)
 			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of weather to inputs of solarfield for the simulation."));
+
+
+
 
 
 		bConnected &= connect(tou_translator, "tou_value", controller, "TOUPeriod");
