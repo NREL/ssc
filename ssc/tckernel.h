@@ -14,7 +14,7 @@ public:
 	virtual bool converged( double time );
 	void set_store_array_matrix_data( bool b ) { m_storeArrMatData = b; }
 	void set_store_all_parameters( bool b ) { m_storeAllParameters = b; }
-	virtual int simulate( double start, double end, double step );
+	virtual int simulate( double start, double end, double step, int max_iter = 100 );
 	void set_unit_value_ssc_string( int id, const char *name );
 	void set_unit_value_ssc_double( int id, const char *name );
 	void set_unit_value_ssc_double( int id, const char *name, double x );

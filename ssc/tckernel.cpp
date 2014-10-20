@@ -98,7 +98,7 @@ bool tcKernel::converged( double time )
 	return true;
 }
 
-int tcKernel::simulate( double start, double end, double step )
+int tcKernel::simulate( double start, double end, double step, int max_iter )
 {
 
 	// find all output variables and add to results vector
@@ -154,7 +154,7 @@ int tcKernel::simulate( double start, double end, double step )
 			idx++;
 		}
 	}
-	
+	tcskernel::set_max_iterations(max_iter, true);
 	return tcskernel::simulate( start, end, step );
 }
 
