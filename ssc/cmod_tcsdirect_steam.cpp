@@ -1,5 +1,7 @@
 #include "core.h"
 #include "tckernel.h"
+// for adjustment factors
+#include "common.h"
 
 static var_info _cm_vtab_tcsdirect_steam[] = {
 /*	EXAMPLE LINES FOR INPUTS
@@ -12,6 +14,8 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 //    VARTYPE           DATATYPE          NAME                   LABEL                                                            UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
 	{ SSC_INPUT, SSC_STRING, "solar_resource_file", "local weather file path", "", "", "Weather", "*", "LOCAL_FILE", "" },
 	
+	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "direct steam tower", "*", "", "" },
+
 	/*
 	{ SSC_INPUT, SSC_STRING, "file_name", "local weather file path", "", "", "Weather", "*", "LOCAL_FILE", "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",          "Tracking mode",                                                  "",             "",            "Weather",        "*",                       "",                      "" },
@@ -306,6 +310,17 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "f_bays",              "Fraction of operating heat rejection bays",                      "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cond",              "Condenser pressure",                                             "Pa",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly Energy", "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
+
+	// Annual Outputs
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kW", "", "Net_E_Calc", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage", "Annual fuel usage", "kWh", "", "", "*", "", "" },
+
 	var_info_invalid };
 
 class cm_tcsdirect_steam : public tcKernel
@@ -317,6 +332,8 @@ public:
 	{
 		add_var_info( _cm_vtab_tcsdirect_steam );
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
+		// performance adjustment factors
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -496,6 +513,9 @@ public:
 		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
 		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
 		set_unit_value_ssc_double( type265_dsg_controller, "A_sf");//, A_sf );
+		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_x");
+		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_y");
+
 //		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap_angles"); //arr_sol_pos);
 //		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap"); //arr_flux);
 		//set_unit_value_ssc_array( type265_dsg_controller, "TOU_schedule");
@@ -528,8 +548,8 @@ public:
 		bConnected &= connect(type234_powerblock, "T_cold", type265_dsg_controller, "T_fw");
 		bConnected &= connect(type234_powerblock, "P_cond", type265_dsg_controller, "P_cond");
 		bConnected &= connect(tou, "tou_value", type265_dsg_controller, "TOUPeriod");
-		bConnected &= connect(type_hel_field, "flux_map", type265_dsg_controller, "fluxmap");
-		bConnected &= connect(type_hel_field, "flux_positions", type265_dsg_controller, "fluxmap_angles");
+		bConnected &= connect(type_hel_field, "flux_map", type265_dsg_controller, "flux_map");
+//		bConnected &= connect(type_hel_field, "flux_positions", type265_dsg_controller, "fluxmap_angles");
 
 
 		// Set Powerblock Parameters
@@ -629,8 +649,73 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsdirect_steam", util::format("there was a problem returning the results from the simulation.") );
 
+		set_output_array("hourly_energy", "P_out_net", 8760, 1000.0); // MWh to kWh
 
-		//set_output_array("i_SfTi",8760);
+		//calculated field parameters
+		int nr, nc;
+		if (double *fm = get_unit_value(type_hel_field, "flux_maps", &nr, &nc))
+		{
+			ssc_number_t *ssc_fm = allocate("flux_lookup", nr, nc);
+			for (size_t i = 0; i<nr*nc; i++)
+				ssc_fm[i] = (ssc_number_t)fm[i];
+		}
+
+		if (double *etam = get_unit_value(type_hel_field, "eta_map", &nr, &nc))
+		{
+			ssc_number_t *ssc_etam = allocate("eff_lookup", nr, nc);
+			for (size_t i = 0; i<nr*nc; i++)
+				ssc_etam[i] = (ssc_number_t)etam[i];
+		}
+
+		if (double *fpm = get_unit_value(type_hel_field, "flux_positions", &nr, &nc))
+		{
+			ssc_number_t *ssc_fpm = allocate("sunpos_eval", nr, nc);
+			for (size_t i = 0; i<nr*nc; i++)
+				ssc_fpm[i] = (ssc_number_t)fpm[i];
+		}
+		assign("land_area", var_data((ssc_number_t)get_unit_value_number(type_hel_field, "land_area")));
+		//-----------
+
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		// performance adjustement factors
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
+		// hourly_energy output
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		// set hourly energy = tcs output Enet
+		size_t count;
+		ssc_number_t *hourly_energy = as_array("P_out_net", &count);//MWh
+		if (count != 8760)
+			throw exec_error("tcsmolten_salt", "hourly_energy count incorrect (should be 8760): " + count);
+		// apply performance adjustments and convert from MWh to kWh
+		for (size_t i = 0; i < count; i++)
+			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
+
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += p_hourly_energy[i];
+		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+		double fuel_usage_mmbtu = 0;
+		ssc_number_t *hourly_fuel = as_array("q_aux_fuel", &count);//MWh
+		if (count != 8760)
+			throw exec_error("tcsmolten_salt", "q_aux_fuel count incorrect (should be 8760): " + count);
+		for (size_t i = 0; i < count; i++)
+			fuel_usage_mmbtu += hourly_fuel[i];
+		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
+		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_usage_mmbtu * 293.297)));
+
+
 	}
 
 };

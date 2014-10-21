@@ -8,7 +8,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 //    VARTYPE           DATATYPE          NAME                   LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",      "Nameplate capacity",                                                "kW",           "",            "molten salt tower", "*",                    "MIN=0.05,MAX=500000",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",      "Nameplate capacity",                                                "kW",           "",            "molten salt tower", "*",                    "",   "" },
 
     // TOU													     																	  
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",     "12x24 Time of Use Values for week days",                            "",             "",            "tou_translator", "*",                       "",                      "" }, 

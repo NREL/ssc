@@ -64,8 +64,10 @@ enum {
 	P_cycle_max_frac,
 	P_A_sf,  
 	P_ffrac,
-	P_fluxmap_angles,
-	P_fluxmap,       
+//		P_fluxmap_angles,
+//		P_fluxmap,       
+	P_n_flux_x,
+	P_n_flux_y,
 	//P_TOU_schedule,
 
 	I_azimuth,
@@ -84,6 +86,7 @@ enum {
 	I_T_fw,         
 	I_P_cond,     
 	I_TOUPeriod,
+	I_flux_map,
 
 	O_T_fw,
 	O_T_b_in,      
@@ -194,8 +197,10 @@ tcsvarinfo sam_dsg_controller_type265_variables[] = {
 	{ TCS_PARAM,  TCS_NUMBER, P_cycle_max_frac, "cycle_max_frac",         "Cycle maximum overdesign fraction",          "-",   "", "", "" },
 	{ TCS_PARAM,  TCS_NUMBER, P_A_sf,           "A_sf",                   "Solar field area",                           "m^2", "", "", "" },
 	{ TCS_PARAM,  TCS_ARRAY,  P_ffrac,          "ffrac",                  "Fossil dispatch logic",                      "-",   "", "", "" },
-	{ TCS_PARAM,  TCS_MATRIX, P_fluxmap_angles, "fluxmap_angles",         "Matrix containing zenith and azimuth angles for flux maps",   "-",     "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided", "", "" },
-	{ TCS_PARAM,  TCS_MATRIX, P_fluxmap,        "fluxmap",                "Matrix containing flux map for various solar positions","-",     "",    "",  "" },
+	{ TCS_PARAM, TCS_NUMBER, P_n_flux_x, "n_flux_x", "Receiver flux map resolution - X", "-", "", "", "" },
+	{ TCS_PARAM, TCS_NUMBER, P_n_flux_y, "n_flux_y", "Receiver flux map resolution - Y", "-", "", "", "" },
+	//{TCS_PARAM, TCS_MATRIX, P_fluxmap_angles,   "fluxmap_angles",   "Matrix containing zenith and azimuth angles for flux maps",                "-",        "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided", "", "" },
+	//{TCS_PARAM, TCS_MATRIX, P_fluxmap,          "fluxmap",          "Matrix containing flux map for various solar positions",                   "-",        "", "", "" },
 	/*{ TCS_PARAM,  TCS_ARRAY,  P_TOU_schedule,   "TOU_schedule",           "Annual hourly time-of-use schedule",         "-",   "", "",
         "5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,"
         "5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,4,4,"
@@ -303,6 +308,9 @@ tcsvarinfo sam_dsg_controller_type265_variables[] = {
 	{ TCS_INPUT,  TCS_NUMBER, I_T_fw,        "T_fw",                   "Feedwater outlet temperature",    "C",     "", "", "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_P_cond,      "P_cond",                 "Condenser pressure",              "Pa",    "", "", "" },	
 	{ TCS_INPUT,  TCS_NUMBER, I_TOUPeriod,   "TOUPeriod",              "The time-of-use period",          "",      "", "", "" },
+	{ TCS_INPUT, TCS_MATRIX, I_flux_map, "flux_map", "Receiver flux map", "-", "", "", "" },
+
+
 
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_fw,        "T_fw",				   "Feedwater outlet temp",                  "C",     "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_b_in,      "T_b_in",                 "Boiler Inlet Temperature",               "C",     "", "", "" },
@@ -432,10 +440,13 @@ private:
 	int m_numtou;
 	//double * m_tou_schedule;
 	//int m_l_tou_schedule;
+	int m_n_flux_x;
+	int m_n_flux_y;
+	double *m_i_flux_map;
 
-	util::matrix_t<double> fluxmap_angles;	// matrix for fluxmap solar positions
-	util::matrix_t<double> fluxmap;         // matrix for flux values
-	int m_num_sol_pos;
+	//util::matrix_t<double> fluxmap_angles;	// matrix for fluxmap solar positions
+	//util::matrix_t<double> fluxmap;         // matrix for flux values
+	//int m_num_sol_pos;
 
 	// Calculated
 	double m_q_rec_min;
@@ -468,7 +479,10 @@ private:
 	double m_defocus;
 	bool m_df_flag;
 
-	util::matrix_t<double> m_solarflux;		// matrix for solar flux values at timesteps	
+	//util::matrix_t<double> m_solarflux;		// matrix for solar flux values at timestep
+	util::matrix_t<double> m_flux_in;
+
+	
 	util::matrix_t<double> m_q_inc_base;
 	util::matrix_t<double> m_q_inc;
 	util::matrix_t<double> m_q_inc_rh;
@@ -575,9 +589,9 @@ public:
 		//m_tou_schedule = 0;
 		//m_l_tou_schedule = -1;
 		
-		fluxmap_angles  = 0.0;
+		/*fluxmap_angles  = 0.0;
 		fluxmap         = 0.0;
-		m_num_sol_pos   = -1;
+		m_num_sol_pos   = -1;*/
 
 		// Calculated
 		m_q_rec_min = std::numeric_limits<double>::quiet_NaN();
@@ -607,8 +621,8 @@ public:
 
 		m_q_aux = m_m_dot_aux = m_defocus = std::numeric_limits<double>::quiet_NaN();
 		m_df_flag = false;
-		m_solarflux.resize(12, 1);
-		m_solarflux.fill(0.0);
+		/*m_solarflux.resize(12, 1);
+		m_solarflux.fill(0.0);*/
 		m_success = false;				
 		m_q_total = std::numeric_limits<double>::quiet_NaN();	
 		m_A_panel = std::numeric_limits<double>::quiet_NaN();
@@ -660,6 +674,10 @@ public:
 		f_timestep_prev_ncall = std::numeric_limits<double>::quiet_NaN();
 
 		m_standby_control = -1;
+
+		m_n_flux_x = 0;
+		m_n_flux_y = 0;
+
 	}
 
 	virtual ~sam_dsg_controller_type265()  {}
@@ -682,6 +700,11 @@ public:
 		m_h_tower = value( P_h_tower );					//[m] Tower height   
 		int n_panels = value( P_n_panels );				//[-] Number of vertical panels on receiver
 		int flowtype = value( P_flowtype );				//[-] Flow pattern
+
+		m_n_flux_x = (int)value(P_n_flux_x);
+		m_n_flux_y = (int)value(P_n_flux_y);
+
+
 
 		m_q_inc_base.resize(n_panels, 1);
 		m_q_inc_base.fill(0.0);
@@ -885,6 +908,7 @@ public:
 
 		//**************************************************************************
 		// Set up matrix for solar positions of flux map. 2 rows: azimuth, zenith -- a column for each solar position
+		/*
 		int angle_rows = 0, angle_cols = 0;
 		double *p_angle = value( P_fluxmap_angles, &angle_rows, &angle_cols );
 		fluxmap_angles.resize( angle_rows, angle_cols );
@@ -900,11 +924,13 @@ public:
 			return -1;
 		}
 		m_num_sol_pos = angle_cols;
+		*/
 		// ****************************************************************************
 		
 
 		// ********************************************************************************
 		// Set up matrix for solar flux. number of rows = num_sol_pos = number of solar positions, number of columns - 120 (10 height nodes x 12 circumferential nodes)
+		/*
 		int flux_rows = 0, flux_cols = 0;
 		double *p_flux = value( P_fluxmap, &flux_rows, &flux_cols );
 		if( flux_rows != m_num_sol_pos )
@@ -924,7 +950,10 @@ public:
 			message( "Flux map input is incorrect" );
 			return -1;
 		}
+		*/
 		// ********************************************************************************
+		//allocate the input array for the flux map
+		m_i_flux_map = allocate(I_flux_map, m_n_flux_y, m_n_flux_x);
 
 		return 0;
 	}
@@ -979,6 +1008,19 @@ public:
 		double P_sh_out = 0.0;
 		double P_rh_out = 0.0;
 
+
+		//get the flux map
+		int n_flux_y, n_flux_x;
+		m_i_flux_map = value(I_flux_map, &n_flux_y, &n_flux_x);
+
+		if (n_flux_y > 1){
+			message("The Direct Steam External Receiver (Type265) model does not currently support 2-dimensional "
+				"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d", n_flux_y);
+		}
+		m_flux_in.resize(n_flux_x);
+
+
+
 		water_state wp;
 
 		while( !skip_rec_calcs )	// 'while' loop around receiver calcs allows code to break out if certain flags are tripped. Only go through once, so reset 'skip_rec_calcs' upon entry
@@ -1021,6 +1063,24 @@ public:
 				m_df_flag = false;					//[-] Defocus flag: true = defocus < 1
 
 				// Calculate Flux
+				if (m_I_bn > 150.0)
+				{
+					for (int j = 0; j<n_flux_x; j++){
+						m_flux_in.at(j) = 0.;
+						for (int i = 0; i<n_flux_y; i++){
+							m_flux_in.at(j) += m_i_flux_map[j*n_flux_y + i]
+								* m_I_bn*m_field_eff*m_A_sf / 1000. / (m_h_total*dsg_rec.Get_per_rec() / 12.0);	//[kW/m^2]	12 or n_flux_x?								
+						}
+					}
+				}
+				else
+				{
+					m_flux_in.fill(0.0);
+				}
+
+				double n_flux_x_d = (double)m_n_flux_x;
+
+				/*
 				if( m_I_bn > 150.0 )
 				{
 					double hold = 1.e6; int p1;
@@ -1045,8 +1105,10 @@ public:
 					break;
 					// GOTO 375
 				}
+				*/
 				// Translate to the number of panels, so each panel has its own linearly interpolated flux value
 				// Originally from Type 222
+				/*
 				double n_panels = (double) dsg_rec.Get_n_panels_rec();
 				for( int i = 0; i < n_panels; i++ )
 				{
@@ -1057,9 +1119,88 @@ public:
 					if( ceiling > 11 )	ceiling = 0;
 					m_q_inc_base.at(i,0) = (ind*(m_solarflux.at(ceiling,0)-m_solarflux.at(flo,0))+m_solarflux.at(flo,0))*1000.0;	//[W/m^2] Average area-specific power for each node
 				}
+				*/
+
+
+				double n_panels = (double)dsg_rec.Get_n_panels_rec();
+
+				if (n_panels >= m_n_flux_x)
+				{
+					// Translate to the number of panels, so each panel has its own linearly interpolated flux value
+					for (int i = 0; i < n_panels; i++)
+					{
+						double ppos = (n_flux_x_d / (double)n_panels*i + n_flux_x_d*0.5 / (double)n_panels);
+						int flo = (int)floor(ppos);
+						int ceiling = (int)ceil(ppos);
+						double ind = (int)((ppos - flo) / max((double)(ceiling - flo), 1.e-6));
+						if (ceiling > m_n_flux_x - 1) ceiling = 0;
+
+						double psp_field = (ind*(m_flux_in.at(ceiling) - m_flux_in.at(flo)) + m_flux_in.at(flo));		//[kW/m^2] Average area-specific power for each node
+						m_q_inc_base.at(i) = m_A_panel*psp_field;	//[kW] The power incident on each node   ?? correct area?
+
+					}
+				}
+				else
+				{
+					double back_mult = 1.0; double front_mult = 0.0;
+					int index_start = -1; int index_stop = -1;
+					double q_flux_sum = 0.0;
+					bool is_div = false;
+					if (m_n_flux_x%(int)n_panels == 0)
+						is_div = true;
+
+					for (int i = 0; i < n_panels; i++)
+					{
+						front_mult = 1.0 - back_mult;
+						index_start = index_stop;
+
+						if (is_div)
+							index_stop = m_n_flux_x / n_panels*(i + 1) - 1;
+						else
+							index_stop = (int)ceil(((double)(m_n_flux_x / n_panels)*(i + 1))) - 1;
+
+						if (is_div)
+							back_mult = 1.0;
+						else
+							back_mult = (double)(m_n_flux_x / n_panels)*(i + 1) - (int)((double)(m_n_flux_x / n_panels)*(i + 1));
+
+						double sum_fracs = 0.0; double sum_flux = 0.0;
+						for (int j = index_start; j <= index_stop; j++)
+						{
+							if (j == index_start)
+							{
+								sum_fracs += front_mult;
+								if (j == -1)
+									sum_flux += front_mult*m_flux_in.at(m_n_flux_x - 1);
+								else
+									sum_flux += front_mult*m_flux_in.at(j);
+							}
+							else if (j == index_stop)
+							{
+								sum_fracs += back_mult;
+								if (j == 12)
+									sum_flux += back_mult*m_flux_in.at(0);
+								else
+									sum_flux += back_mult*m_flux_in.at(j);
+							}
+							else
+							{
+								sum_fracs += 1.0;
+								sum_flux += m_flux_in.at(j);
+							}
+						}
+						m_q_inc_base.at(i) = sum_flux*m_A_panel / sum_fracs;
+					}
+				}
+
+
+
+			/////////////
+
+
 				double sum_q_inc = 0.0;
-				for( int i = 0; i < n_panels; i++ )
-					sum_q_inc += m_q_inc_base.at(i,0);
+				for (int i = 0; i < n_panels; i++)
+					sum_q_inc += m_q_inc_base.at(i);// , 0);
 				m_q_total = sum_q_inc*m_A_panel;	//[W] Available 'incident' thermal power
 
 				// If available thermal power is less than specified receiver minimum, then receiver is shut down, go to post-receiver calcs
