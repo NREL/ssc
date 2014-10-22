@@ -429,6 +429,7 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "rec_aspect");//, 1);
 		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");//, 0.);
 		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("Q_rec_des"));//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "dni_des");
 		set_unit_value_ssc_double(type_hel_field, "h_tower", as_double("THT"));//, 50);
 		set_unit_value(type_hel_field, "weather_file", as_string("solar_resource_file"));
 		set_unit_value_ssc_double(type_hel_field, "land_bound_type");//, 0);
@@ -440,11 +441,30 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "v_wind_max");//, 25.);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
-		set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
-		/*set_unit_value_ssc_matrix(type_hel_field, "eta_map");
-		set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
-		set_unit_value_ssc_matrix(type_hel_field, "flux_maps");*/
+		set_unit_value_ssc_double(type_hel_field, "c_atm_0");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_1");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_2");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_3");
+		set_unit_value_ssc_double(type_hel_field, "n_facet_x");
+		set_unit_value_ssc_double(type_hel_field, "n_facet_y");
+		set_unit_value_ssc_double(type_hel_field, "focus_type");
+		set_unit_value_ssc_double(type_hel_field, "cant_type");
+		set_unit_value_ssc_double(type_hel_field, "n_flux_days");
+		set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs");
 
+		int run_type = (int)get_unit_value_number(type_hel_field, "run_type");
+		/*if(run_type == 0){
+
+		}
+		else */
+		if (run_type == 1){
+			set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
+		}
+		else if (run_type == 2){
+			set_unit_value_ssc_matrix(type_hel_field, "eta_map");
+			set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
+			set_unit_value_ssc_matrix(type_hel_field, "flux_maps");
+		}
 
 		// for user specified x,y field
 

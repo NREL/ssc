@@ -705,17 +705,26 @@ public:
 		m_n_flux_y = (int)value(P_n_flux_y);
 
 
-
+		/*
 		m_q_inc_base.resize(n_panels, 1);
 		m_q_inc_base.fill(0.0);
 		m_q_inc.resize(n_panels, 1);
-		m_q_inc.fill(0.0);	
+		m_q_inc.fill(0.0);
 		m_q_inc_rh.resize(n_panels, 1);
 		m_q_inc_rh.fill(0.0);
 		m_q_inc_b.resize(n_panels, 1);
 		m_q_inc_sh.resize(n_panels, 1);
+		*/
+		m_q_inc_base.resize(n_panels);
+		m_q_inc_base.fill(0.0);
+		m_q_inc.resize(n_panels);
+		m_q_inc.fill(0.0);
+		m_q_inc_rh.resize(n_panels);
+		m_q_inc_rh.fill(0.0);
+		m_q_inc_b.resize(n_panels);
+		m_q_inc_sh.resize(n_panels);
 
-		double d_rec = value( P_d_rec );						//[m] Diameter of receiver - used in external convection correlation 
+		double d_rec = value(P_d_rec);						//[m] Diameter of receiver - used in external convection correlation 
 		double per_rec = CSP::pi * d_rec;					//[m] Perimeter of receiver
 		
 		m_q_rec_des = value( P_q_rec_des )*1.0E6;		//[W] Design-point thermal power 
@@ -1063,7 +1072,8 @@ public:
 				m_df_flag = false;					//[-] Defocus flag: true = defocus < 1
 
 				// Calculate Flux
-				if (m_I_bn > 150.0)
+				//if (m_I_bn > 150.0)
+				if (m_I_bn > 1.0)
 				{
 					for (int j = 0; j<n_flux_x; j++){
 						m_flux_in.at(j) = 0.;
@@ -1369,7 +1379,7 @@ public:
 				defocus_mode = false;
 				df_count++;							//[-] Increase defocus iteration counter
 				for( int i = 0; i < dsg_rec.Get_n_panels_rec(); i++ )
-					m_q_inc.at(i,0) = m_defocus*m_q_inc_base.at(i,0);		//[W/m^2] Defocused incident radiation on receiver
+					m_q_inc.at(i) = m_defocus*m_q_inc_base.at(i);		//[W/m^2] Defocused incident radiation on receiver
 				m_q_total_df = m_defocus*m_q_total; //[W] Defocused total power on receiver
 				
 				// Need to recalculate mass flow rate and flux fraction guesses when defocus changes
@@ -1643,8 +1653,8 @@ public:
 					double sum_q_inc_rh = 0.0;
 					for( int i = 0; i < dsg_rec.Get_n_panels_rec(); i++ )
 					{
-						m_q_inc_rh.at(i,0) = m_f_rh * m_q_inc.at(i,0) * m_h_total / m_h_rh;	//[W/m^2] Incident radiation on reheater
-						sum_q_inc_rh += m_q_inc_rh.at(i,0);
+						m_q_inc_rh.at(i) = m_f_rh * m_q_inc.at(i) * m_h_total / m_h_rh;	//[W/m^2] Incident radiation on reheater
+						sum_q_inc_rh += m_q_inc_rh.at(i);
 					}
 					double q_inc_b_sh = m_q_total_df - sum_q_inc_rh*(m_h_rh/m_h_total)*m_A_panel;
 					diff_T_rh = 999.9;		//[K]
@@ -1833,8 +1843,8 @@ public:
 					
 						for( int i = 0; i < dsg_rec.Get_n_panels_rec(); i++ )
 						{
-							m_q_inc_b.at(i,0) = m_f_b*(1.0-m_f_rh)*m_q_inc.at(i,0)*m_h_total/m_h_boiler;
-							m_q_inc_sh.at(i,0) = (1.0 - m_f_b)*(1.0 - m_f_rh)*m_q_inc.at(i,0)*m_h_total/m_h_sh;
+							m_q_inc_b.at(i) = m_f_b*(1.0-m_f_rh)*m_q_inc.at(i)*m_h_total/m_h_boiler;
+							m_q_inc_sh.at(i) = (1.0 - m_f_b)*(1.0 - m_f_rh)*m_q_inc.at(i)*m_h_total/m_h_sh;
 						}
 					
 						double m_dot_lower = 0.75*m_m_dot_guess/m_mguessmult;
