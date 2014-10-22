@@ -68,9 +68,9 @@ public:
 
 			if ( !std::isnan( wf.dn ) && !std::isnan( wf.df ) && !std::isnan( wf.gh ) )
 			{
-				if ( gh_est > 500 && (gh_est-wf.gh)/wf.gh > 0.2 )
+				if ( gh_est > 500 && fabs(gh_est-wf.gh)/wf.gh > 0.2 )
 					warn( "beam+diffuse (%lg) inconsistent with global (%lg) at record %d by greater than 20 percent", gh_est, wf.gh, i );
-				else if ( gh_est > 200 && (gh_est-wf.gh)/wf.gh > 0.5 )
+				else if ( gh_est > 200 && fabs(gh_est-wf.gh)/wf.gh > 0.5 )
 					warn( "beam+diffuse (%lg) inconsistent with global (%lg) at record %d by greater than 50 percent", gh_est, wf.gh, i );
 
 				// don't do checks on less than 200 W/m2, errors are too big to really check

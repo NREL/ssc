@@ -6,7 +6,7 @@ static var_info _cm_vtab_wfcsvconv[] =
 {	
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP                     REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "input_file",               "Input weather file name",         "",       "tmy2,tmy3,intl,epw,smw",      "Weather File Converter", "*",                       "",                     "" },
-	{ SSC_INPUT,        SSC_STRING,      "output_file",              "Output file name",                "",       "",                       "Weather File Converter", "?",                       "",                     "" },
+	{ SSC_INOUT,        SSC_STRING,      "output_file",              "Output file name",                "",       "",                       "Weather File Converter", "?",                       "",                     "" },
 	{ SSC_INPUT,        SSC_STRING,      "output_folder",            "Output folder",                   "",       "",                       "Weather File Converter", "?",                       "",                     "" },
 	{ SSC_INPUT,        SSC_STRING,      "output_filename_format",   "Output file name format",         "",       "recognizes $city $state $country $type $loc",         "Weather File Converter", "?",                       "",                     "" },
 
@@ -80,6 +80,8 @@ public:
 			
 			if (!weatherfile::convert_to_wfcsv( input, output ))
 				throw exec_error( "wfcsvconv", "could not convert " + input + " to " + output );
+
+			assign( "output_file", var_data( output ) );
 		}
 	}
 };
