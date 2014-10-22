@@ -19,9 +19,9 @@ static var_info _cm_vtab_belpe[] =
 /*   VARTYPE			DATATYPE        NAME                LABEL								UNITS		META			GROUP                     REQUIRED_IF	CONSTRAINTS		UI_HINTS*/
 	{ SSC_INPUT,		SSC_NUMBER,		"en_belpe",			"Enable building load calculator",	"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
-	//e_load_input and p_load_input are NOT used in belpe. They are taken as inputs to be passed through to the financial module when belpe is NOT enabled
-	{ SSC_INPUT,		SSC_ARRAY,		"e_load_input",		"Electric load input",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"p_load_input",		"Peak electric load input",			"kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	//e_load and p_load are modified in BELPE. They are passed straight through if BELPE is disabled.
+	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Year 1 Electric load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"p_load",			"Year 1 Peak electric load",		"kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
 
 	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "en_belpe=1",			"LOCAL_FILE",	"" },
 //	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "en_belpe=1",			"",				"Time Step" },
@@ -53,8 +53,8 @@ static var_info _cm_vtab_belpe[] =
 	//OUTPUTS
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Year 1 Electric Load",				"kWh",      "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Year 1 Peak Electric Load",		"kW",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Year 1 Electric Load",				"kWh",      "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Year 1 Peak Electric Load",		"kW",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 
 
 	//DEBUGGING OUTPUTS
@@ -120,10 +120,6 @@ public:
 	//MAIN FUNCTION*******************************************************************************************************************************************************************************
 	void exec() throw(general_error)
 	{		
-		//e_load and p_load are passed through regardless of which load model is selected (including no load!)
-		ssc_number_t *load = allocate("e_load", 8760);
-		ssc_number_t *p_load = allocate("p_load", 8760);
-
 		//This compute module is going to automatically be run in series between pvsamv1 and utilityrate3 for residential and commercial systems.
 		//However, the building load profile option will not be selected by default.
 		//The enable flag allows us to exit the program without doing any calculations if the user hasn't selected to use it.
@@ -131,19 +127,15 @@ public:
 		if (!en_belpe)
 		{
 			size_t count;
-			ssc_number_t *e_load_input = as_array("e_load_input", &count);
-			if (count != 8760) throw exec_error("belpe", "e_load_input must have 8760 values");
-			ssc_number_t *p_load_input = as_array("p_load_input", &count);
-			if (count != 8760) throw exec_error("belpe", "p_load_input must have 8760 values");
-			for (int i = 0; i < 8760; i++)
-			{
-				load[i] = e_load_input[i];
-				p_load[i] = p_load_input[i];
-			}
+			//these inputs are required if en_belpe = 0 and they are constrained to length=8760, so no additional checks are necessary here
+			ssc_number_t *e_load = as_array("e_load", &count);
+			ssc_number_t *p_load = as_array("p_load", &count);
 			return;
 		}
 
-		//Program continues here if the user HAS selected the building load calculator.
+		//if BELPE is enabled, e_load and p_load are overwritten (don't take anything in from the UI- just reallocate)
+		ssc_number_t *load = allocate("e_load", 8760);
+		ssc_number_t *p_load = allocate("p_load", 8760);
 		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
 		int month[8760], day[8760], hour[8760];
