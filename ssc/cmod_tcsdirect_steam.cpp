@@ -428,7 +428,7 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "rec_height", as_double("H_rec"));//, 5.);
 		set_unit_value_ssc_double(type_hel_field, "rec_aspect");//, 1);
 		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");//, 0.);
-		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("Q_rec_des"));//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("q_rec_des"));//, 25.);
 		set_unit_value_ssc_double(type_hel_field, "dni_des");
 		set_unit_value_ssc_double(type_hel_field, "h_tower", as_double("THT"));//, 50);
 		set_unit_value(type_hel_field, "weather_file", as_string("solar_resource_file"));
@@ -662,7 +662,9 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		if (0 > simulate(3600, hours*3600, 3600) )
+		int error = simulate(3600, hours * 3600, 3600, 30);
+//		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0>error)
 			throw exec_error( "tcsdirect_steam", util::format("there was a problem simulating in the TCS direct steam power tower model.") );
 
 		// get the outputs

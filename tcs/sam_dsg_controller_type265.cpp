@@ -489,6 +489,8 @@ private:
 	util::matrix_t<double> m_q_inc_b;
 	util::matrix_t<double> m_q_inc_sh;
 
+	string m_msg;
+
 	bool m_success;
 	double m_q_total;
 	double m_A_panel;
@@ -1073,7 +1075,7 @@ public:
 
 				// Calculate Flux
 				//if (m_I_bn > 150.0)
-				if (m_I_bn > 1.0)
+				if (m_I_bn > 150.0)
 				{
 					for (int j = 0; j<n_flux_x; j++){
 						m_flux_in.at(j) = 0.;
@@ -1086,6 +1088,10 @@ public:
 				else
 				{
 					m_flux_in.fill(0.0);
+					m_success = false;
+					m_q_total = 0.0;
+					m_msg = "type 265: fail at m_I_bn=" + util::to_string(m_I_bn) + " <= 1.0";
+					break;
 				}
 
 				double n_flux_x_d = (double)m_n_flux_x;
@@ -1129,11 +1135,21 @@ public:
 					if( ceiling > 11 )	ceiling = 0;
 					m_q_inc_base.at(i,0) = (ind*(m_solarflux.at(ceiling,0)-m_solarflux.at(flo,0))+m_solarflux.at(flo,0))*1000.0;	//[W/m^2] Average area-specific power for each node
 				}
-				*/
-
-
+				
 				double n_panels = (double)dsg_rec.Get_n_panels_rec();
-
+				for (int i = 0; i < n_panels; i++)
+				{
+					double ppos = (n_flux_x_d / n_panels*i + 6.0 / n_panels);
+					double flo = floor(ppos);
+					double ceiling = ceil(ppos);
+					double ind = (ppos - flo) / max((ceiling - flo), 1.e-6);
+					if (ceiling > n_flux_x_d)	ceiling = 0;
+					m_q_inc_base.at(i) = (ind*(m_flux_in.at(ceiling) - m_flux_in.at(flo)) + m_flux_in.at(flo))*1000.0;	//[W/m^2] Average area-specific power for each node
+				}
+				*/
+				
+				double n_panels = (double)dsg_rec.Get_n_panels_rec();
+				
 				if (n_panels >= m_n_flux_x)
 				{
 					// Translate to the number of panels, so each panel has its own linearly interpolated flux value
@@ -1146,9 +1162,11 @@ public:
 						if (ceiling > m_n_flux_x - 1) ceiling = 0;
 
 						double psp_field = (ind*(m_flux_in.at(ceiling) - m_flux_in.at(flo)) + m_flux_in.at(flo));		//[kW/m^2] Average area-specific power for each node
-						m_q_inc_base.at(i) = m_A_panel*psp_field;	//[kW] The power incident on each node   ?? correct area?
-
+//						m_q_inc_base.at(i) = m_A_panel*psp_field;	//[kW] The power incident on each node   ?? correct area?
+						m_q_inc_base.at(i) = psp_field * 1000; // [W/m^2]
 					}
+
+					
 				}
 				else
 				{
@@ -1199,11 +1217,12 @@ public:
 								sum_flux += m_flux_in.at(j);
 							}
 						}
-						m_q_inc_base.at(i) = sum_flux*m_A_panel / sum_fracs;
+//						m_q_inc_base.at(i) = sum_flux*m_A_panel / sum_fracs;
+						m_q_inc_base.at(i) = sum_flux*1000 / sum_fracs; // [W/m^2]
 					}
 				}
 
-
+				
 
 			/////////////
 
@@ -1216,7 +1235,10 @@ public:
 				// If available thermal power is less than specified receiver minimum, then receiver is shut down, go to post-receiver calcs
 				if(m_q_total < m_q_rec_min)
 				{
-					m_success = 0;
+					m_success = false;
+					m_msg = "type 265: receiver is shut down, m_q_total=" 
+						+ util::to_string(m_q_total) + "<m_q_rec_min=" 
+						+ util::to_string(m_q_rec_min);
 					break;
 					// GOTO 375
 				}
@@ -1601,7 +1623,8 @@ public:
 							(rh_br_lower==4 && rh_br_upper==1) || (rh_br_lower==4 && rh_br_upper==2) ||
 							(rh_br_lower==5 && rh_br_upper==1) )
 						{
-							m_success = 0.0;
+							m_success = false;
+							m_msg = "type 265: low receiver flux";
 							break_rec_calcs = true;
 							break;
 							// Exit !?!
@@ -1906,6 +1929,7 @@ public:
 							if( boiler_exit == 1 )
 							{
 								m_success = false;
+								m_msg = "type 265: boiler exit == 1";
 								break_rec_calcs = true;
 								break_def_calcs = true;
 								break;
@@ -1961,6 +1985,7 @@ public:
 					if( iter_T_sh==20 && abs(diff_T_sh)>tol_T_sh )
 					{
 						m_success = false;
+						m_msg = "type 265: The receiver model did not converge at this timestep (SH), iter_T_sh=" + util::to_string(iter_T_sh) + ", diff_T_sh=" + util::to_string(diff_T_sh) + ", tol_T_sh=" + util::to_string(tol_T_sh) + ", boiler_exit=" + util::to_string(boiler_exit);
 						// message: "The receiver model did not converge at this timestep (SH)"
 						break_rec_calcs = true;
 						break_def_calcs = true;
@@ -2019,6 +2044,7 @@ public:
 				if( iter_T_rh==20 && abs(diff_T_rh)>m_tol_T_rh )
 				{
 					m_success = false;
+					m_msg = "type 265: The receiver model did not converge at this timestep (RH), iter_T_rh=" + util::to_string(iter_T_rh) + ", diff_T_sh=" + util::to_string(diff_T_rh) + ", tol_T_sh=" + util::to_string(m_tol_T_rh);
 					// Message: "The receiver model did not converge at this timestep (RH)"
 				}
 
@@ -2290,8 +2316,9 @@ public:
 		boiler.Get_Other_Boiler_Outputs( b_m_dot, b_T_max, b_q_out, b_q_in, b_q_conv, b_q_rad, b_q_abs );
 		
 		double sh_q_conv, sh_q_rad, sh_q_abs, sh_T_surf_max, sh_v_exit, sh_q_in;
-		if( m_success )
-		{  
+//		if (m_success)
+		if (true)
+		{
 			value( O_T_b_in, (T_in - 273.15) );		//[C] Boiler Inlet Temperature
 			value( O_T_boil, (T_boil - 273.15) );	//[C] Boiler Temperature (= recirc temp, steam drum temp)			
 			value( O_P_b_out, P_b_out );			//[kPa] Boiler Outlet Pressure
@@ -2420,6 +2447,23 @@ public:
 		value( O_standby_control, m_standby_control );			//[-] 1: Turbine can operate, 2: Turbine can be in standby, 3: Turbine is off
 		value( O_f_timestep, f_timestep );						//[-] Fraction of timestep turbine can operate due to receiver start-up
 		value( O_m_dot_toPB, m_dot_toPB*3600.0 );				//[kg/hr] Mass flow rate to power block (m_dot_sh + m_dot_aux)
+
+		// testing
+
+		double sum_q_inc = 0.0;
+		int n_panels = value(P_n_panels);				//[-] Number of vertical panels on 
+		for (int i = 0; i < n_panels; i++)
+			sum_q_inc += m_q_inc_base.at(i);// , 0);
+		m_q_total = sum_q_inc*m_A_panel;	//[W] Available 'incident' thermal power
+
+		string msg;
+		if (m_success)
+			msg = "SUCCESS type 265: m_A_panel=" + util::to_string(m_A_panel) + ", sum_q_inc = " + util::to_string(sum_q_inc) + ", n_panels=" + util::to_string(n_panels);
+		else
+			 msg = "FAIL type 265: m_A_panel=" + util::to_string(m_A_panel) + ", sum_q_inc = " + util::to_string(sum_q_inc) + ", n_panels=" + util::to_string(n_panels) + "\n" + m_msg;
+		message(msg.c_str());
+
+
 
 		return 0;
 	}
