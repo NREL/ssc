@@ -1150,9 +1150,6 @@ public:
 				if(m_q_total < m_q_rec_min)
 				{
 					m_success = false;
-					m_msg = "type 265: receiver is shut down, m_q_total=" 
-						+ util::to_string(m_q_total) + "<m_q_rec_min=" 
-						+ util::to_string(m_q_rec_min);
 					break;
 					// GOTO 375
 				}
@@ -1538,7 +1535,6 @@ public:
 							(rh_br_lower==5 && rh_br_upper==1) )
 						{
 							m_success = false;
-							m_msg = "type 265: low receiver flux";
 							break_rec_calcs = true;
 							break;
 							// Exit !?!
@@ -1843,7 +1839,6 @@ public:
 							if( boiler_exit == 1 )
 							{
 								m_success = false;
-								m_msg = "type 265: boiler exit == 1";
 								break_rec_calcs = true;
 								break_def_calcs = true;
 								break;
@@ -1899,7 +1894,6 @@ public:
 					if( iter_T_sh==20 && abs(diff_T_sh)>tol_T_sh )
 					{
 						m_success = false;
-						m_msg = "type 265: The receiver model did not converge at this timestep (SH), iter_T_sh=" + util::to_string(iter_T_sh) + ", diff_T_sh=" + util::to_string(diff_T_sh) + ", tol_T_sh=" + util::to_string(tol_T_sh) + ", boiler_exit=" + util::to_string(boiler_exit);
 						// message: "The receiver model did not converge at this timestep (SH)"
 						break_rec_calcs = true;
 						break_def_calcs = true;
@@ -1958,7 +1952,6 @@ public:
 				if( iter_T_rh==20 && abs(diff_T_rh)>m_tol_T_rh )
 				{
 					m_success = false;
-					m_msg = "type 265: The receiver model did not converge at this timestep (RH), iter_T_rh=" + util::to_string(iter_T_rh) + ", diff_T_sh=" + util::to_string(diff_T_rh) + ", tol_T_sh=" + util::to_string(m_tol_T_rh);
 					// Message: "The receiver model did not converge at this timestep (RH)"
 				}
 
@@ -2360,14 +2353,6 @@ public:
 		value( O_standby_control, m_standby_control );			//[-] 1: Turbine can operate, 2: Turbine can be in standby, 3: Turbine is off
 		value( O_f_timestep, f_timestep );						//[-] Fraction of timestep turbine can operate due to receiver start-up
 		value( O_m_dot_toPB, m_dot_toPB*3600.0 );				//[kg/hr] Mass flow rate to power block (m_dot_sh + m_dot_aux)
-
-		// testing
-
-		double sum_q_inc = 0.0;
-		int n_panels = value(P_n_panels);				//[-] Number of vertical panels on 
-		for (int i = 0; i < n_panels; i++)
-			sum_q_inc += m_q_inc_base.at(i);// , 0);
-		m_q_total = sum_q_inc*m_A_panel;	//[W] Available 'incident' thermal power
 
 		return 0;
 	}
