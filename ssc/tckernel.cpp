@@ -25,9 +25,9 @@ void tcKernel::log( const std::string & text )
 	compute_module::log( text, SSC_NOTICE, (float)tcskernel::current_time() );
 }
 
-void tcKernel::progress( float percent, const std::string &status )
+bool tcKernel::progress( float percent, const std::string &status )
 {
-	compute_module::update( status, percent );
+	return compute_module::update( status, percent );
 }
 
 bool tcKernel::converged( double time )
@@ -42,7 +42,7 @@ bool tcKernel::converged( double time )
 		{
 			double percent = 100 * (((double)istep) / ((double)nstep) );
 
-			if ( !compute_module::update( "calculating", percent, (float)istep ) )
+			if ( !compute_module::update( "", percent, (float)istep ) )
 				return false; // abort simulation if compute_module update returned false from controller
 		}
 	}

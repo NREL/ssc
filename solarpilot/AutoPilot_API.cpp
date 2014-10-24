@@ -1951,7 +1951,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	if(_has_summary_callback){
 		_summary_siminfo->ResetValues();
 		_summary_siminfo->setTotalSimulationCount(_sim_total);
-		_summary_siminfo->addSimulationNotice("Simulating flux maps");
+		_summary_siminfo->addSimulationNotice("Generating flux maps");
 	}
 
 	//From the day and time array, produce an azimuth/zenith array
@@ -2392,7 +2392,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 	if(_has_summary_callback){
 		_summary_siminfo->ResetValues();
 		_summary_siminfo->setTotalSimulationCount(_sim_total);
-		_summary_siminfo->addSimulationNotice("Simulating flux maps");
+		_summary_siminfo->addSimulationNotice("Generating flux maps");
 	}
 
 

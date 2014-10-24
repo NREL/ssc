@@ -585,7 +585,7 @@ public:
 		{
 			// send progress update notification to any callback
 			if (istep % (nstep / 20) == 0)
-				update("calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep);
+				update( "", 100.0f * ((float)istep) / ((float)nstep), (float)istep );
 
 			//int year, month, day, hour;
 			//double gh, dn, df, wind, tdry, twet, relhum, pres, wdir, snow, alb;

@@ -199,7 +199,7 @@ public:
 		for (i=0;i<nstep;i++)
 		{
 			if ( i % (nstep/20) == 0)
-				update( "calculating", 100.0f * ((float)i) / ((float)nstep), (float)i );
+				update( "", 100.0f * ((float)i) / ((float)nstep), (float)i );
 
 			// if wf.read is set to interpolate (last input), and it's able to do so, then it will set wpc.m_dMeasurementHeight equal to hub_ht
 			// direction will not be interpolated, pressure and temperature will be if possible

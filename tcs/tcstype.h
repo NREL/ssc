@@ -40,7 +40,7 @@ extern "C" {
 		void *kernel_internal;
 		int unit_internal;
 		void (*notice) ( struct _tcscontext *cxt, const char *message );
-		void (*progress) ( struct _tcscontext *cxt, float percent, const char *status );
+		bool (*progress) ( struct _tcscontext *cxt, float percent, const char *status );
 		tcsvalue *(*get_value)( struct _tcscontext *cxt, int idx );
 		int (*get_num_values)( struct _tcscontext *cxt );
 		void (*tcsvalue_set_number)( tcsvalue *, double );
@@ -227,9 +227,9 @@ protected:
 		m_context->notice( m_context, buf );
 	}
 
-	void progress( float percent, const char *status )
+	bool progress( float percent, const char *status )
 	{
-		m_context->progress( m_context, percent, status );
+		return m_context->progress( m_context, percent, status );
 	}
 
 	// these calls are always available to access internal unit variable storage

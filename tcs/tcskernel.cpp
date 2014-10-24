@@ -390,11 +390,11 @@ static void _notice( struct _tcscontext *t, const char *message )
 	k->log( uid, message );
 }
 
-static void _progress( struct _tcscontext *t, float percent, const char *message )
+static bool _progress( struct _tcscontext *t, float percent, const char *message )
 {
 	tcskernel *k = (tcskernel*)t->kernel_internal;
 	int uid = t->unit_internal;
-	k->progress( percent, message ? std::string(message) : std::string("") );
+	return k->progress( percent, message ? std::string(message) : std::string("") );
 }
 
 static tcsvalue *_get_value( struct _tcscontext *t, int idx )
@@ -473,9 +473,10 @@ void tcskernel::log( const std::string &text )
 	std::cout << text << std::endl;
 }
 
-void tcskernel::progress( float percent, const std::string &status )
+bool tcskernel::progress( float percent, const std::string &status )
 {
 	std::cout << percent << "% " << status << std::endl;
+	return true;
 }
 
 bool tcskernel::converged( double )
@@ -547,8 +548,9 @@ double tcskernel::get_unit_value_number( int id, const char *name )
 		if ( m_units[id].values[idx].type == TCS_NUMBER )
 			return m_units[id].values[idx].data.value;
 	}
-	else
-		return std::numeric_limits<double>::quiet_NaN();
+	
+	// otherwise NaN
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 const char *tcskernel::get_unit_value_string( int id, const char *name )
