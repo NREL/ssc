@@ -45,6 +45,7 @@ enum{	//Parameters
 	//Outputs
 	O_ETA_CYCLE_DES,
 	O_P_LOW_DES,
+	O_P_HIGH_DES,
 	O_F_RECOMP_DES,
 	O_UA_RECUP_DES,
 	O_T_COOLER_IN_DES,
@@ -62,7 +63,12 @@ enum{	//Parameters
 
 	O_T_HTF_COLD_DES,
 
-	
+	O_T_TURBINE_IN,
+	O_P_MC_IN,
+	O_P_MC_OUT,
+	O_F_RECOMP,
+	O_N_MC,
+
 	// O_W_DOT_NET,
 	// O_T_MC_IN,
 	// O_T_T_IN,
@@ -125,11 +131,13 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	//OUTPUTS
 	{ TCS_OUTPUT, TCS_NUMBER, O_ETA_CYCLE_DES,   "eta_cycle_des",       "Design: Power cycle efficiency",           "%",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_LOW_DES,       "P_low_des",           "Design: Compressor inlet pressure",        "kPa",  "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_P_HIGH_DES,      "P_high_des",          "Design: Comp. outlet pressure",            "kPa",  "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_F_RECOMP_DES,    "f_recomp_des",        "Design: Recompression fraction",           "-",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_UA_RECUP_DES,    "UA_recup_des",        "Design: Recuperator conductance UA",       "kW/K", "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_COOLER_IN_DES, "T_cooler_in_des",     "Design: Cooler CO2 inlet temp",            "C",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_COOLER_VOLUME,   "cooler_volume",       "Estimated required cooler material vol.",  "m^3",  "", "", "" },
 
+	//OUTPUTS TO MATCH SSC REQUIRED OUTPUTS FOR MOLTEN-SALT POWER TOWER
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_CYCLE,         "P_cycle",             "Cycle power output",                                    "MWe",   "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_ETA,             "eta",                 "Cycle thermal efficiency",                              "none",  "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD,      "T_htf_cold",          "Heat transfer fluid outlet temperature ",               "C",     "",  "",  "" },
@@ -140,7 +148,15 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER, O_F_BAYS,          "f_bays",              "Fraction of operating heat rejection bays",             "none",  "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_COND,          "P_cond",              "Condenser pressure",                                    "Pa",    "",  "",  "" },
 	
+	//OUTPUT SENT TO CONTROLLER TO GIVE NEW RECEIVER INLET TEMPERATURE AT DESIGN
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD_DES,  "o_T_htf_cold_des",    "Calculated htf cold temperature at design",             "C",     "",  "",  "" },
+
+	// Other interesting outputs: they are only used as outputs: need to reconsider if used by other types in performance code
+	{ TCS_OUTPUT, TCS_NUMBER, O_T_TURBINE_IN,    "T_turbine_in",        "Turbine inlet temperature",                             "C",     "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_P_MC_IN,         "P_mc_in",             "Main compressor inlet pressure",                        "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_P_MC_OUT,        "P_mc_out",            "Main compressor outlet pressure",                       "kPa",   "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_F_RECOMP,        "f_recomp",            "Recompression fraction",                                "",      "",  "",  "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_N_MC,            "N_MC",                "Main comp. shaft speed",                                "rpm",   "",  "",  "" },
 
 	// Cycle Design Parameters to pass to controller
 	//{ TCS_OUTPUT, TCS_NUMBER, O_W_DOT_NET,       "o_W_dot_net",         "Target net cycle power",                                "kW",    "",  "",  "" },
@@ -544,8 +560,7 @@ public:
 		double eta_carnot = 1.0 - T_amb_cycle_des / m_T_htf_hot;
 		if(m_eta_thermal_des >= eta_carnot)
 		{
-			message("The design cycle thermal efficiency, %lg, must be at least greater than the Carnot efficiency: %lg ", m_eta_thermal_des, eta_carnot);
-			message("To solve the cycle within the allowable recuperator conductance, the efficiency should be significantly less than the Carnot efficiency");
+			message("To solve the cycle within the allowable recuperator conductance, the design cycle thermal efficiency, %lg, must be at least less than the Carnot efficiency: %lg ", m_eta_thermal_des, eta_carnot);
 			return -1;
 		}
 
@@ -902,6 +917,7 @@ public:
 		// Write outputs
 		value(O_ETA_CYCLE_DES, design_eta);
 		value(O_P_LOW_DES, ms_rc_cycle.get_design_solved()->m_pres[1-1]);
+		value(O_P_HIGH_DES, ms_rc_cycle.get_design_solved()->m_pres[2-1]);
 		value(O_F_RECOMP_DES, ms_rc_cycle.get_design_solved()->m_recomp_frac);
 		value(O_UA_RECUP_DES, m_UA_total_des);
 		value(O_T_COOLER_IN_DES, T_acc_in-273.15);
@@ -1319,6 +1335,9 @@ public:
 		double Q_dot_PHX = std::numeric_limits<double>::quiet_NaN();
 		double C_dot_htf = std::numeric_limits<double>::quiet_NaN();
 
+		double T_turbine_in, P_main_comp_in, P_main_comp_out, frac_recomp, N_mc_od;
+		T_turbine_in = P_main_comp_in = P_main_comp_out = frac_recomp = N_mc_od = std::numeric_limits<double>::quiet_NaN();
+
 		switch( m_standby_control )
 		{
 		case 1:
@@ -1364,11 +1383,30 @@ public:
 			Q_dot_PHX = ms_rc_cycle.get_od_solved()->m_Q_dot;
 			T_htf_cold = T_htf_hot - Q_dot_PHX/C_dot_htf;
 
+			T_turbine_in = ms_rc_cycle.get_od_solved()->m_temp[6-1];
+			P_main_comp_in = ms_rc_cycle.get_od_solved()->m_pres[1-1];
+			P_main_comp_out = ms_rc_cycle.get_od_solved()->m_pres[2-1];
+			frac_recomp = ms_rc_cycle.get_od_solved()->m_recomp_frac;
+			N_mc_od = ms_rc_cycle.get_od_solved()->m_N_mc;
+
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
 
 			eta_thermal = ms_rc_cycle.get_od_solved()->m_eta_thermal;
-			W_dot_par = ACC.off_design_hx(T_db, P_amb, ms_rc_cycle.get_od_solved()->m_temp[9 - 1], ms_rc_cycle.get_od_solved()->m_pres[9 - 1],
-											ms_rc_cycle.get_od_solved()->m_m_dot_mc, T_mc_in);
+			
+			// Call off-design air-cooler model
+			int acc_error_code = 0;
+			ACC.off_design_hx(T_db, P_amb, ms_rc_cycle.get_od_solved()->m_temp[9 - 1], ms_rc_cycle.get_od_solved()->m_pres[9 - 1],
+											ms_rc_cycle.get_od_solved()->m_m_dot_mc, T_mc_in, W_dot_par, acc_error_code);
+
+			if(acc_error_code == 1)
+			{
+				W_dot_par = (m_dot_htf / m_dot_rec_des)*m_W_dot_fan_des;
+				message("Off-design air cooler model did not solve. Fan power was set to the design value scaled by the timestep/design HTF mass flow rate");
+			}
+			if(acc_error_code == 2)
+			{
+				message("Off-design air cooler model did not converge within its numerical tolerance");
+			}
 
 			break;
 		}
@@ -1376,9 +1414,15 @@ public:
 
 		case 2:			// Standby mode
 			W_dot_net = 0.0;
-			T_htf_cold = m_T_htf_cold_sby;
+			// T_htf_cold = m_T_htf_cold_sby;
 
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
+
+			T_turbine_in = 0.0;
+			P_main_comp_in = 0.0;
+			P_main_comp_out = 0.0;
+			frac_recomp = 0.0;
+			N_mc_od = 0.0;
 
 			eta_thermal = 0.0;
 			W_dot_par = 0.0;
@@ -1388,9 +1432,16 @@ public:
 		case 3:
 		default:			// OFF
 			W_dot_net = 0.0;
-			T_htf_cold = m_T_htf_cold_des;
+			// T_htf_cold = m_T_htf_cold_des;
 
+			// This value needs to stay at its operational value or the first timestep with DNI has problems with a guess value so low (in type 222)...
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
+
+			T_turbine_in = 0.0 + 273.15;	//[K] Output expected in K and converted to C
+			P_main_comp_in = 0.0;
+			P_main_comp_out = 0.0;
+			frac_recomp = 0.0;
+			N_mc_od = 0.0;
 
 			eta_thermal = 0.0;
 			W_dot_par = 0.0;
@@ -1404,6 +1455,12 @@ public:
 			eta_thermal = ms_rc_cycle.get_design_solved()->m_eta_thermal;
 			double Q_dot_PHX_guess = W_dot_net / eta_thermal;
 			T_htf_cold = T_htf_hot - Q_dot_PHX_guess / C_dot_htf;
+
+			// For now, set these to 0 because they are only used as outputs: need to reconsider if used by other types in performance code
+			T_turbine_in = 0.0;
+			P_main_comp_in = 0.0;
+			P_main_comp_out = 0.0;
+			frac_recomp = 0.0;
 
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
 
@@ -1441,6 +1498,12 @@ public:
 		value(O_ETA, eta_thermal);					//[-]	
 		value(O_T_HTF_COLD, T_htf_cold - 273.15);	//[C]	
 		value(O_W_COOL_PAR, W_dot_par);				//[MWe]	
+
+		value(O_T_TURBINE_IN, T_turbine_in - 273.15);	//[C]
+		value(O_P_MC_IN, P_main_comp_in);				//[kPa]
+		value(O_P_MC_OUT, P_main_comp_out);             //[kPa]
+		value(O_F_RECOMP, frac_recomp);                 //[-]
+		value(O_N_MC, N_mc_od);							//[rpm]
 														 
 		return 0;										 
 	}													 
