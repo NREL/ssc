@@ -369,8 +369,12 @@ public:
 		bool air_cooler_success = air_cooler.design_hx(32.0+273.15, 101325.0, 100.0+273.15, 8000.0,
 			938.9, 0.35, 62.5, 48.0+273.15);
 
-		double W_dot_od = air_cooler.off_design_hx(32.0 + 273.15, 101325.0, 100.0 + 273.15, 8000.0,
-			938.9, 48.0 + 273.15);
+		double W_dot_od = 0.0;
+		
+		int air_cooler_error_code = 0;
+
+		air_cooler.off_design_hx(32.0 + 273.15, 101325.0, 100.0 + 273.15, 8000.0,
+			938.9, 48.0 + 273.15, W_dot_od, air_cooler_error_code);
 
 		double adfadf = 1.23;
 
