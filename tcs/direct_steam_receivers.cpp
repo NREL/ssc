@@ -271,7 +271,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	double energy_in = 0.0;
 	for( int i = 0; i < m_n_panels; i++ )
 	{
-		m_q_inc.at(i) = I_q_inc_b.at(i,0);
+		m_q_inc.at(i) = I_q_inc_b.at(i);
 		energy_in += m_per_panel*m_h_rec.at(i)*m_q_inc.at(i);
 	}
 
@@ -1181,7 +1181,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double energy_in = 0.0;
 	for( int i = 0; i < m_n_panels; i++ )
 	{
-		m_q_inc.at(i) = I_q_inc_b.at(i,0);
+		m_q_inc.at(i) = I_q_inc_b.at(i);
 		energy_in += m_per_panel*m_h_rec.at(i)*m_q_inc.at(i);
 	}
 
