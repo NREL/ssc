@@ -917,8 +917,8 @@ public:
 		return 0;
 	}
 
-	int relay_message( string &msg, double progress ){
-		message("SolarPILOT progress (%s): %.1f%s\n", msg.c_str(), progress, "%");
+	int relay_message( string &msg, double percent ){
+		progress( percent/2.0f, msg.c_str() ); // only show percentage up to 50% in SAM, because compute will report rest of overall simulation
 		return 0;
 	}
 

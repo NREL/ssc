@@ -390,6 +390,13 @@ static void _notice( struct _tcscontext *t, const char *message )
 	k->log( uid, message );
 }
 
+static void _progress( struct _tcscontext *t, float percent, const char *message )
+{
+	tcskernel *k = (tcskernel*)t->kernel_internal;
+	int uid = t->unit_internal;
+	k->progress( percent, message ? std::string(message) : std::string("") );
+}
+
 static tcsvalue *_get_value( struct _tcscontext *t, int idx )
 {
 	tcskernel::unit *u = (tcskernel::unit*) t->unit_internal;
@@ -463,7 +470,12 @@ void tcskernel::log( int unit, const char *message )
 
 void tcskernel::log( const std::string &text )
 {
-	std::cout << text;
+	std::cout << text << std::endl;
+}
+
+void tcskernel::progress( float percent, const std::string &status )
+{
+	std::cout << percent << "% " << status << std::endl;
 }
 
 bool tcskernel::converged( double )
@@ -698,6 +710,7 @@ int tcskernel::add_unit( const std::string &type, const std::string &name )
 	u.context.kernel_internal = this;
 	u.context.unit_internal = id;
 	u.context.notice = _notice;
+	u.context.progress = _progress;
 	u.context.get_value = _get_value;
 	u.context.get_num_values = _get_num_values;
 	u.context.tcsvalue_set_number = tcsvalue_set_number;
