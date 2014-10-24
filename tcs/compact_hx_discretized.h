@@ -119,11 +119,13 @@ public:
 
 	compact_hx();
 
+	~compact_hx(){};
+
 	bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, 
 		double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);
 
-	double off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
-		double m_dot_hot_kg_s, double T_hot_out_K);
+	void off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
+		double m_dot_hot_kg_s, double T_hot_out_K, double & W_dot_fan_MW, int & error_code);
 
 	const S_hx_design_solved * get_hx_design_solved()
 	{
