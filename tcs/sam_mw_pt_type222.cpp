@@ -602,7 +602,7 @@ public:
 					m_flux_in.at(j) = 0.;
 					for(int i=0; i<n_flux_y; i++){
 						m_flux_in.at(j) += m_i_flux_map[ j*n_flux_y + i ]
-							*I_bn*field_eff_adj*m_A_sf/1000./(CSP::pi*m_h_rec*m_d_rec/12.0);	//[kW/m^2];
+							*I_bn*field_eff_adj*m_A_sf/1000./(CSP::pi*m_h_rec*m_d_rec/(double)n_flux_x);	//[kW/m^2];
 					}
 				}
 			}
