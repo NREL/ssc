@@ -338,7 +338,8 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		//bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		bool debug_mode = false;
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
@@ -581,14 +582,29 @@ public:
 		set_unit_value_ssc_double(type234_powerblock, "T_amb_des"); //T_amb_des);
 		set_unit_value_ssc_double(type234_powerblock, "q_sby_frac"); //F_standby);
 		set_unit_value_ssc_double(type234_powerblock, "P_boil_des"); //P_HP_in);
-		set_unit_value_ssc_double(type234_powerblock, "is_rh"); //is_rh);
+		
+		
+		//set_unit_value_ssc_double(type234_powerblock, "is_rh"); //is_rh);
+		set_unit_value_ssc_double(type234_powerblock, "is_rh", 1);
+		
+		
 		set_unit_value_ssc_double(type234_powerblock, "P_rh_ref"); //P_HP_out);
-		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); //T_rh_out_ref);
+		
+		
+		//set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); //T_rh_out_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref", as_double("T_rh_out_des"));
+		
+		
 		set_unit_value_ssc_double(type234_powerblock, "rh_frac_ref"); //rh_frac_ref);
 		set_unit_value_ssc_double(type234_powerblock, "CT"); //Cool_type);
 		set_unit_value_ssc_double(type234_powerblock, "startup_time"); //startup_time);
 		set_unit_value_ssc_double(type234_powerblock, "startup_frac"); //startup_frac);
-		set_unit_value_ssc_double(type234_powerblock, "tech_type"); //tech_type);
+		
+		
+		//set_unit_value_ssc_double(type234_powerblock, "tech_type"); //tech_type);
+		set_unit_value_ssc_double(type234_powerblock, "tech_type", 5);
+		
+		
 		set_unit_value_ssc_double(type234_powerblock, "T_approach"); //T_approach);
 		set_unit_value_ssc_double(type234_powerblock, "T_ITD_des"); //T_ITD_des);
 		set_unit_value_ssc_double(type234_powerblock, "P_cond_ratio"); //P_cond_ratio);
