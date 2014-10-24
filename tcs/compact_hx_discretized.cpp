@@ -653,8 +653,8 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	return true;
 };
 
-double compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
-	double m_dot_hot_kg_s, double T_hot_out_K)
+void compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
+	double m_dot_hot_kg_s, double T_hot_out_K, double & W_dot_fan_MW, int & error_code)
 {
 	double T_amb = T_amb_K;
 	double P_amb = P_amb_Pa;
@@ -718,6 +718,22 @@ double compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_i
 	{
 		iter_T_hot++;
 
+		if(iter_T_hot > 25)
+		{
+			if( fabs(W_dot_fan - m_W_dot_fan_des) / m_W_dot_fan_des < 2.0 )		// value "close enough" to be "reasonable"
+			{
+				W_dot_fan_MW = W_dot_fan;
+				error_code = 2;
+				return;
+			}
+			else
+			{
+				W_dot_fan_MW = -999.9;
+				error_code = 1;
+				return;
+			}
+		}
+
 		if( iter_T_hot > 0 )
 		{
 			if( diff_T_hot_in > 0.0 )			// diff_T_hot_in = (T_co2(m_final_outlet_index, m_N_loops) - T_hot_in) / T_hot_in; ---> mass flow rate too high
@@ -749,7 +765,12 @@ double compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_i
 		f_air, j_H_air = numeric_limits<double>::quiet_NaN();
 
 		if( !get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
-			return -999;
+		{
+			W_dot_fan_MW = -999.9;
+			error_code = 1;
+			return;
+		}
+			
 
 		double deltaP_air = pow(G_air, 2.0)*v_air*0.5*f_air*m_alpha*m_V_total / (m_sigma*m_L_tube*m_W_par);
 		double h_conv_air = j_H_air*G_air*cp_air / pow(Pr_air, (2.0 / 3.0));	//[W/m^2-K]
@@ -791,7 +812,7 @@ double compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_i
 				// Guess outlet temperature
 				double T_out_guess = T_co2(in, j) + 1.0;
 
-				double tol_T_in = T_hot_tol / 5.0;		//[-] Relative tolerance for convergence
+				double tol_T_in = T_hot_tol / 50.0;		//[-] Relative tolerance for convergence
 				double diff_T_in = 2.0*tol_T_in;		//[-] Set diff > tol
 				int iter_T_in = 0;
 
@@ -888,5 +909,7 @@ double compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_i
 
 	}	// End air mass flow rate iteration
 
-	return W_dot_fan;		// return required fan power
+	W_dot_fan_MW = W_dot_fan;
+	error_code = 0;
+	return;
 }
