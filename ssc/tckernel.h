@@ -11,6 +11,7 @@ public:
 	virtual ~tcKernel();
 	
 	virtual void log( const std::string & text );
+	virtual void progress( float percent, const std::string &status );
 	virtual bool converged( double time );
 	void set_store_array_matrix_data( bool b ) { m_storeArrMatData = b; }
 	void set_store_all_parameters( bool b ) { m_storeAllParameters = b; }
