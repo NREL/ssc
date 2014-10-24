@@ -502,6 +502,7 @@ public:
 				double h_t_outs = wp.enth;		//[kJ/kg]
 				h_t_out = h_hot_ref - (h_hot_ref - h_t_outs)*0.88;	//[kJ/kg] Turbine outlet enthlapy
 				h_rh_out = 0.0;
+				h_LP_out = 0.0;
 			}
 			m_m_dot_ref = m_P_ref/( (h_hot_ref - h_t_out) + m_rh_frac_ref*(h_rh_out - h_LP_out) );		//[kg/s] Reference mass flow rate
 
