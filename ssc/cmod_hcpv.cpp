@@ -375,7 +375,7 @@ public:
 		{
 			// send progress update notification to any callback
 			if (istep % (nstep / 20) == 0)
-				update("calculating", 100.0f * ((float)istep) / ((float)nstep), (float)istep);
+				update( "", 100.0f * ((float)istep) / ((float)nstep), (float)istep);
 
 			irrad irr;
 			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, dTS);

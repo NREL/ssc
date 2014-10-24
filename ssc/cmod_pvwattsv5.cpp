@@ -245,7 +245,7 @@ public:
 			if ( hour % (8760/NSTATUS_UPDATES) == 0 )
 			{
 				float percent = 100.0f * ((float)hour+1) / ((float)8760);
-				if ( !update( "calculating", percent , (float)hour ) )
+				if ( !update( "", percent , (float)hour ) )
 					throw exec_error("pvwattsv5", "simulation canceled at hour " + util::to_string(hour+1.0) );
 			}
 

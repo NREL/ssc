@@ -70,7 +70,7 @@ public:
 	int copy( tcskernel &tk );
 	
 	virtual void log( const std::string & text );
-	virtual void progress( float perecent, const std::string &text );
+	virtual bool progress( float perecent, const std::string &text );
 	virtual bool converged( double time );
 	virtual int simulate( double start, double end, double step );
 

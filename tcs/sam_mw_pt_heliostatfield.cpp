@@ -918,8 +918,7 @@ public:
 	}
 
 	int relay_message( string &msg, double percent ){
-		progress( percent/2.0f, msg.c_str() ); // only show percentage up to 50% in SAM, because compute will report rest of overall simulation
-		return 0;
+		return progress( percent, msg.c_str() ) ? 0 : -1;
 	}
 
 	double rdist(VectDoub *p1, VectDoub *p2, int dim=2){
