@@ -124,14 +124,17 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 		The coordinates of the flux map are with respect to the xyz location of the receiver centroid.
 		These coordinates account for zenith rotation of the receiver. 
 		*/
+        
+        double intmult = ( rec_geom == Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV ? -1. : 1. );   //-1 multiplier for values that are inverted on the internal face of a cylinder
+        double spansize = (_span_cw - _span_ccw) * intmult;
 
-		_area = _height * _radius * (_span_cw - _span_ccw);
+		_area = _height * _radius * spansize;
 
 		//Resize
 		_flux_grid.resize(_nflux_x); //Number of rows
 		
 		//The azimuthal span taken up by each point
-		double daz = (_span_cw - _span_ccw)/double(_nflux_x);
+		double daz = spansize/double(_nflux_x)  ;
 		double rec_az = atan2(_normal.i, _normal.j);	//The azimuth angle of the receiver
 		double rec_zen = acos(_normal.k);	//The zenith angle of the receiver at rec_az
 		double rec_dh = _height/double(_nflux_y);
@@ -150,8 +153,8 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 				floc.y = _radius*cos(faz);
 				floc.z = -_height/2.+rec_dh*(0.5 + double(j));
 				//Calculate the normal vector
-				fnorm.i = sin(faz)*cos(fzen);
-				fnorm.j = cos(faz)*cos(fzen);
+				fnorm.i = sin(faz)*cos(fzen)*intmult;
+				fnorm.j = cos(faz)*cos(fzen)*intmult;
 				fnorm.k = sin(fzen);
 
 				//rotate about the x axis (zenith)

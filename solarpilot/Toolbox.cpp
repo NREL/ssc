@@ -11,47 +11,49 @@ using namespace std;
 
 void Point::Set(double _x, double _y, double _z)
 {
-	x = _x; 
-	y = _y; 
-	z = _z;
+	this->x = _x; 
+	this->y = _y; 
+	this->z = _z;
 }
 
 void Point::Set( Point &P )
 {
-	x = P.x; 
-	y = P.y;
-	z = P.z;
+	this->x = P.x; 
+	this->y = P.y;
+	this->z = P.z;
 }
 
 void Point::Add( Point &P )
 {
-	x+=P.x; 
-	y+=P.y; 
-	z+=P.z;
+	this->x+=P.x; 
+	this->y+=P.y; 
+	this->z+=P.z;
 }
 
 void Point::Add(double _x, double _y, double _z)
 {
-	x += _x; 
-	y += _y; 
-	z += _z;
+	this->x += _x; 
+	this->y += _y; 
+	this->z += _z;
 }
 
 void Point::Subtract( Point &P )
 {
-	x += -P.x; 
-	y += -P.y; 
-	z += -P.z;
+	this->x += -P.x; 
+	this->y += -P.y; 
+	this->z += -P.z;
 }
 
 double Point::operator [](const int &index){
-	if(index==0) {return x;}
-	else if(index==1) {return y;}
-	else if(index==2) {return z;}
+	if(index==0) {return this->x;}
+	else if(index==1) {return this->y;}
+	else if(index==2) {return this->z;}
 	else {throw spexception("Index out of range in Point()"); }	//range error
 };
 
-
+bool Point::operator <(const Point &p) const {
+	return this->x < p.x || (this->x == p.x && this->y < p.y);
+};
 
 void Vect::Set(double _i, double _j, double _k)
 {
@@ -1108,6 +1110,101 @@ double Toolbox::area_polygon(std::vector<Point> &points){
 
 	return area;
 
+}
+
+typedef vector<Point> Poly;  //Local definitino of polygon, used only in polyclip
+class polyclip  
+{
+    /*
+    
+    A class dedicated to clipping polygons
+    
+    This class must remain in Toolbox.cpp to compile!
+
+    */
+public:
+
+    Poly clip(Poly &subjectPolygon, Poly &clipPolygon)
+    {
+        /* 
+        
+        http://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
+    
+        */        
+
+        outputList = subjectPolygon;
+        cp1 = clipPolygon.back();
+    
+        for(int i=0; i<(int)clipPolygon.size(); i++)
+        {
+            cp2 = clipPolygon.at(i);
+            inputList = outputList;
+            outputList.clear();
+
+            s = inputList.back();
+
+            for(int j=0; j<(int)inputList.size(); j++)
+            {
+                e = inputList.at(j);
+
+                if(inside(&e) ){
+                    if(! inside(&s) )
+                        outputList.push_back( computeIntersection() );
+                    outputList.push_back(e);
+                }
+                else if( inside(&s) ){
+                    outputList.push_back( computeIntersection() );
+                }
+
+                s = e;
+            }
+
+            cp1 = cp2;
+
+        }
+
+        return outputList;
+    }
+
+private:
+    Point cp1, cp2;
+    Poly outputList, inputList;
+    Point s, e;
+
+    bool inside(Point *P){
+        return (cp2.x - cp1.x)*(P->y - cp1.y) > (cp2.y - cp1.y)*(P->x - cp1.x);
+    };
+
+    Point computeIntersection()
+    {
+        Point dc = cp1;
+        dc.Subtract(cp2);
+
+        Point dp = s;
+        dp.Subtract(e);
+
+        double n1 = cp1.x * cp2.y - cp1.y * cp2.x;
+        double n2 = s.x * e.y - s.y * e.x;
+        double n3 = 1./ (dc.x * dp.y - dc.y * dp.x);
+
+        Point ret;
+        ret.Set((n1*dp.x - n2*dc.x) * n3, (n1*dp.y - n2*dc.y)*n3, 0.);
+
+        return ret;
+    }
+ };
+
+vector<Point> Toolbox::clipPolygon(std::vector<Point> &A, std::vector<Point> &B)     
+{
+    /* 
+    Compute the polygon that forms the intersection of two polygons subjectPolygon 
+    and clipPolygon. (clipPolygon clips subjectPolygon).
+
+    This only considers 2D polygons -- vertices X and Y in "Point" structure!
+    */
+    polyclip P;
+
+    return P.clip(A,B);
 }
 
 Point Toolbox::rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point &pt){

@@ -136,12 +136,25 @@ void sp_heliostat::LoadDefaults(var_set &V)
 void sp_receiver::LoadDefaults(var_set &V)
 {
 	type = V["receiver"][0]["rec_type"].value_int();
-	offset.Set(
-		V["receiver"][0]["rec_offset_x"].value_double(),
-		V["receiver"][0]["rec_offset_y"].value_double(),
-		V["receiver"][0]["rec_offset_z"].value_double() );
+	offset.x = V["receiver"][0]["rec_offset_x"].value_double();
+    offset.y = V["receiver"][0]["rec_offset_y"].value_double();
+	offset.z = V["receiver"][0]["rec_offset_z"].value_double();
+
 	height = V["receiver"][0]["rec_height"].value_double();
-	aspect = height/V["receiver"][0]["rec_width"].value_double();
+    double width; 
+    
+    switch (V["receiver"][0]["rec_type"].value_int())
+    {
+    case sp_receiver::TYPE::CYLINDRICAL:
+        width = V["receiver"][0]["rec_diameter"].value_double();
+        break;
+    case sp_receiver::TYPE::CAVITY:
+    case sp_receiver::TYPE::FLAT:
+        width = V["receiver"][0]["rec_width"].value_double();
+        break;
+    }
+
+    aspect = height/width;
 	absorptance = V["receiver"][0]["absorptance"].value_double();
 	q_hl_perm2 = V["receiver"][0]["therm_loss_base"].value_double();	//Receiver Heat loss [kWt] per square meter aperture area
 	azimuth = V["receiver"][0]["rec_azimuth"].value_double();	//[optional]

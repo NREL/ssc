@@ -23,24 +23,6 @@ const int _demo_date[] = {2014,8,1};
 //crete local make-dir functions
 //#define SP_USE_MKDIR
 
-//enum VMAP
-//{
-//	VDOMAIN=0,		//Variable domain (solarfield, receiver, etc.)
-//	STRING_NAME,	//Variable name (dictionary)
-//	VAR_NAME,		//Local variable name
-//	TYPE,			//Data type of the variable (bool, string, int, etc)
-//	VALUE,			//Default value
-//	UNITS,			//Variable units
-//	RANGE,			//Allowable range of values
-//	IS_PARAM,		//Include the variable in parameterizable lists
-//	//DEL_NL,			//(unused) DELSOL namelist containing analogous variable
-//	//DEL_NAME,		//(unused) DELSOL analogous variable name
-//	CONTROL,		//Type of UI control for the variable
-//	SPECIAL,		//Arguments for constructing non-textctrl controls
-//	UI_DISABLE,		//Disable this variable in the UI - always
-//	LABEL,			//UI label
-//	DESCRIPTION		//Tooltip detailed description
-//};
 
 struct vardefs
 {

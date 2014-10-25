@@ -233,7 +233,8 @@ public:
 	
 		sapi.Setup(amb, cost, layout, helios, recs);
 
-		sapi.CreateLayout();
+		if(! sapi.CreateLayout() )
+            return;
 
 		//Collect the heliostat position data
 		if( layout.heliostat_positions.size() > 0 )
@@ -269,8 +270,9 @@ public:
 			fluxtab.delta_flux_hrs = as_integer("delta_flux_hrs");
 		
 			int nflux_x = 12, nflux_y = 1;
-			sapi.CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true);
-		
+			if(! sapi.CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true) )
+                return;  //simulation failed or was cancelled.
+            
 			//collect the optical efficiency data and sun positions
 			if ( fluxtab.zeniths.size() > 0 && fluxtab.azimuths.size() > 0
 				&& fluxtab.efficiency.size() > 0 )

@@ -695,7 +695,10 @@ public:
 			fluxtab.delta_flux_hrs = delta_flux_hrs;
 
 			//run the flux maps
-			sapi.CalculateFluxMaps(fluxtab, n_flux_x, n_flux_y, true);
+			if(! sapi.CalculateFluxMaps(fluxtab, n_flux_x, n_flux_y, true) ){
+                message("Simulation cancelled during fluxmap preparation");
+                return -1;
+            }
 
 			//collect efficiencies
 			sunpos.clear();
