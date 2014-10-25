@@ -200,6 +200,8 @@ protected:
 
 public:
 
+    struct HELIO_SPACING_METHOD { enum A {DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
+
 	//Constructors - destructor
 	SolarField (); //constructor
 
@@ -289,9 +291,9 @@ public:
 	void CancelSimulation();
 	bool CheckCancelStatus();
 	
-	void FieldLayout();	//Master layout method for DELSOL solar field geometries
+	bool FieldLayout();	//Master layout method for DELSOL solar field geometries
 	static bool PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool refresh_only=false);	//Field layout preparation call for multithreaded apps
-	static void DoLayout( SolarField *SF, sim_results *results, WeatherData *wdata, int sim_first=-1, int sim_last=-1);
+	static bool DoLayout( SolarField *SF, sim_results *results, WeatherData *wdata, int sim_first=-1, int sim_last=-1);
 	void ProcessLayoutResults(sim_results *results, int nsim_total);	//Call after simulation for multithreaded apps
 	static void AnnualEfficiencySimulation( var_set &vset, SolarField &SF, sim_results &results); //, double *azs, double *zens, double *met);
 	static void AnnualEfficiencySimulation( string weather_file, SolarField *SF, sim_results &results); //, double *azs, double *zens, double *met);	//overload

@@ -187,7 +187,6 @@ struct spvar
 //
 //};
 
-
 //Create a standard variable map type
 typedef unordered_map<string, spvar> var_map;
 //The variable set is an unordered map/map of form [Module type][instance][variable name]

@@ -1,8 +1,23 @@
 #ifndef _SOLARFIELD_API_
 #define _SOLARFIELD_API_ 1
 
-#include "SolarField.h"
+
 #include "API_structures.h"
+#include "definitions.h"
+
+
+#if defined(__WINDOWS__)&&defined(__DLL__)
+#define SPEXPORT __declspec(dllexport)
+#else
+#define SPEXPORT
+#endif
+
+
+class simulation_info;
+class sim_result;
+class SolarField;
+class LayoutSimThread;
+
 
 
 //-------------------------------------------------------------------------------------------------
@@ -19,7 +34,6 @@ protected:
 
 	SolarField *_SF;
 	var_set _variables;
-	vector<sim_result> _results;
 	int _sim_total;
 	int _sim_complete;
 	
@@ -64,9 +78,12 @@ public:
 	void SetSummaryCallbackStatus(bool is_enabled);
 	void SetDetailCallbackStatus(bool is_enabled);
 	//setup
+    void LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_set *variables = 0);
 	void SetExternalSFObject(SolarField *SF);
 	bool Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs);
-	bool SetupExpert(var_set &variables, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, vector<string> &weather_data);
+	bool SetupExpert(var_set &variables, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
+                                         sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, 
+                                         vector<string> &weather_data, bool defaults_only=false);
 	//generate weather data
 	void GenerateDesignPointSimulations(sp_ambient &amb, var_set &variables, vector<string> &hourly_weather_data);
 	//Simulation methods
@@ -86,7 +103,7 @@ public:
 };
 
 
-class AutoPilot_S : public AutoPilot
+class SPEXPORT AutoPilot_S : public AutoPilot
 {
 	
 	
@@ -102,7 +119,7 @@ public:
 
 #ifdef SP_USE_THREADS
 
-class AutoPilot_MT : public AutoPilot
+class SPEXPORT AutoPilot_MT : public AutoPilot
 {
 	int _n_threads;	//the maximum number of threads to simulate
 	int _n_threads_active;	//the number of threads currently used for simulation

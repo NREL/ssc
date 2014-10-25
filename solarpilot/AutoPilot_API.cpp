@@ -1,6 +1,8 @@
 #include "AutoPilot_API.h"
 #include "LayoutSimulateThread.h"
 #include "IOUtil.h"
+#include "SolarField.h"
+#include "definitions.h"
 
 #ifdef SP_USE_THREADS
 #include <thread>
@@ -473,7 +475,33 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	return true;
 }
 
-bool AutoPilot::SetupExpert(var_set &vset, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, vector<string> &weather_data)
+void AutoPilot::LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
+                                     sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_set *variables)
+{
+    bool var_in = variables == 0;
+
+    var_set *var_use;
+
+    if(var_in){
+        var_use = variables;
+    }
+    else{
+        var_use = new var_set();
+    }
+
+    ioutil::parseDefinitionArray(*var_use);
+
+    vector<string> wfdummy; //not used
+    SetupExpert(*var_use, ambient, cost, layout, helios, recs, opt, wfdummy, true);
+
+
+    if(! var_in) delete var_use;
+
+
+}
+
+bool AutoPilot::SetupExpert(var_set &vset, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, 
+                            sp_receivers &recs, sp_optimize &opt, vector<string> &weather_data, bool defaults_only)
 {
 	_cancel_simulation = false;
 
@@ -489,8 +517,11 @@ bool AutoPilot::SetupExpert(var_set &vset, sp_ambient &ambient, sp_cost &cost, s
 		recs.at(i).LoadDefaults(vset);
 	opt.LoadDefaults(vset);
 
-	//set up the weather data for simulation
+    if(defaults_only) return true;
+	
+    //set up the weather data for simulation
 	GenerateDesignPointSimulations(ambient, vset, weather_data);
+
 
 	//Dynamically allocate the solar field object, if needed
 	if(! _is_solarfield_external ){
@@ -904,9 +935,11 @@ void AutoPilot::PostProcessLayout()
 		hp.location.y = hpos->at(i)->getLocation()->y;
 		hp.location.z = hpos->at(i)->getLocation()->z;
 
-		hp.cant_vector.Set( *hpos->at(i)->getCantVector() );
-		//hp.aimpoint.Set( *hpos->at(i)->getAimPoint() );
-		hp.aimpoint.x = hpos->at(i)->getAimPoint()->x;
+		hp.cant_vector.i = hpos->at(i)->getCantVector()->i;
+        hp.cant_vector.j = hpos->at(i)->getCantVector()->j;
+        hp.cant_vector.k = hpos->at(i)->getCantVector()->k;
+		
+        hp.aimpoint.x = hpos->at(i)->getAimPoint()->x;
 		hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
 		hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
 
@@ -1801,7 +1834,9 @@ bool AutoPilot_S::CreateLayout(bool do_post_process)
 		throw spexception("The solar field Create() method must be called before generating the field layout.");
 	}
 	if(! _cancel_simulation){
-		_SF->FieldLayout();			if(_SF->ErrCheck()){return false;}
+		bool simok = _SF->FieldLayout();			
+        
+        if(_SF->ErrCheck() || !simok) return false;
 	}
 	if(do_post_process){
 		if(! _cancel_simulation)
@@ -1951,7 +1986,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	if(_has_summary_callback){
 		_summary_siminfo->ResetValues();
 		_summary_siminfo->setTotalSimulationCount(_sim_total);
-		_summary_siminfo->addSimulationNotice("Generating flux maps");
+		_summary_siminfo->addSimulationNotice("Simulating flux maps");
 	}
 
 	//From the day and time array, produce an azimuth/zenith array
@@ -2158,8 +2193,12 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 		else{
 			_n_threads_active = 1;
 			_in_mt_simulation = false;
-			if(! _cancel_simulation)
-				_SF->FieldLayout();			if(_SF->ErrCheck()){return false;}
+
+			if(! _cancel_simulation){
+				bool simok = _SF->FieldLayout();			
+            
+                if(_SF->ErrCheck() || !simok) return false;
+            }
 		}
 		if(do_post_process){
 			if(! _cancel_simulation)
@@ -2392,7 +2431,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 	if(_has_summary_callback){
 		_summary_siminfo->ResetValues();
 		_summary_siminfo->setTotalSimulationCount(_sim_total);
-		_summary_siminfo->addSimulationNotice("Generating flux maps");
+		_summary_siminfo->addSimulationNotice("Simulating flux maps");
 	}
 
 

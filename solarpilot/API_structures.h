@@ -6,6 +6,7 @@
 #include <limits>
 using namespace std;
 
+
 struct sp_optimize
 {
 private:
@@ -156,7 +157,7 @@ struct sp_receiver
 
 	struct TYPE { enum A { CYLINDRICAL, CAVITY, FLAT}; };
 	int type;
-	Point offset;
+	struct { double x, y, z; } offset;
 	double aspect, height;
 	double absorptance;
 	double q_hl_perm2;	//Receiver Heat loss [kWt] per square meter aperture area
@@ -173,14 +174,12 @@ struct sp_layout
 
 	struct h_position
 	{
-		struct { 
-			double x; 
-			double y; 
-			double z; 
-		} location, aimpoint;
+        struct { double x, y, z; } 
+            location, 
+            aimpoint;
 		int template_number; //0 based
 		bool user_optics;	//Indicate whether the user will provide a cant/focus vector
-		Vect cant_vector;	//[optional] Canting aim vector of total magnitude equal to the cant radius
+        struct {double i, j, k; } cant_vector;	//[optional] Canting aim vector of total magnitude equal to the cant radius
 		double focal_length;	//[optional] Heliostat focal length
 	};
 

@@ -326,7 +326,7 @@ void SolarField::Create(var_set &V, int var_index){
 	setVar("min_zone_size_az", _min_zone_size_az, V["solarfield"][var_index], 0.1, "(0,100]");		//Minimum zone size (azimuthal direction) for grouping optical intercept factor calculations
 	setVar("zone_div_tol", _zone_div_tol, V["solarfield"][var_index], 0.001, "[0.001,1]");		//Allowable variation in optical intercept factor within a layout zone
 	setVar("is_opt_zoning", _is_opt_zoning, V["solarfield"][var_index], true);		//Enables grouping of heliostats into zones for intercept factor calculation during layout only
-	setVar("rad_spacing_method", _rad_spacing_method, V["solarfield"][var_index], 2, "[1,3]");		//Method for determining radial spacing during field layout for radial-stagger
+	setVar("rad_spacing_method", _rad_spacing_method, V["solarfield"][var_index], 2, "[1,2]");		//Method for determining radial spacing during field layout for radial-stagger
 	setVar("row_spacing_x", _row_spacing_x, V["solarfield"][var_index], 1.1, "(1,1000.]");		//Separation between adjacent heliostats in the X-direction, multiplies heliostat radius
 	setVar("row_spacing_y", _row_spacing_y, V["solarfield"][var_index], 1.1, "(1,1000.]");		//Separation between adjacent heliostats in the Y-direction, multiplies heliostat radius
 	setVar("xy_field_shape", _xy_field_shape, V["solarfield"][var_index], 0, "[0,2]");		//Enforced shape of the heliostat field
@@ -750,7 +750,7 @@ bool SolarField::UpdateLayoutGroups(double lims[4]){
 
 }
 
-void SolarField::FieldLayout(){
+bool SolarField::FieldLayout(){
 	/* 
 	This should only be called by the API. If using the GUI, manually call PrepareFieldLayout(), 
 	DoLayout(), and ProcessLayoutResults() from the interface. This call is not capable of 
@@ -765,7 +765,8 @@ void SolarField::FieldLayout(){
 		int sim_first, sim_last;
 		sim_first = 0;
 		sim_last = wdata.DNI.size();
-		DoLayout(this, &results, &wdata, sim_first, sim_last);
+		if(! DoLayout(this, &results, &wdata, sim_first, sim_last) )
+            return false;
 
 		//For the map-to-annual case, run a simulation here
 		if(_des_sim_detail == LAYOUT_DETAIL::MAP_TO_ANNUAL)
@@ -774,6 +775,8 @@ void SolarField::FieldLayout(){
 
 		ProcessLayoutResults(&results, sim_last - sim_first);
 	}
+
+    return true;
 
 }
 
@@ -1144,7 +1147,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 
 }
 
-void SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wdata, int sim_first, int sim_last){
+bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wdata, int sim_first, int sim_last){
 	/* 
 	This algorithm is static (i.e. it only refers to arguments passed to it and not to the
 	"this" SolarField object. 
@@ -1171,7 +1174,7 @@ void SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
 	//int nsim_actual=0;	//keep track of the day of the year for _des_sim_detail = 3
 	//double dni_ave=0.;	//keep track of the average DNI value
 
-	if(SF->CheckCancelStatus()) return;	//check for cancelled simulation
+	if(SF->CheckCancelStatus()) return false;	//check for cancelled simulation
 
 	if(sim_first < 0) sim_first = 0;
 	if(sim_last < 0) sim_last = wdata->size();
@@ -1179,7 +1182,8 @@ void SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
 	int nsim = sim_last - sim_first + 1;
 	
 	for(int i=sim_first; i<sim_last; i++){
-		SF->getSimInfoObject()->setCurrentSimulation(i+1);
+		if(! SF->getSimInfoObject()->setCurrentSimulation(i+1) )
+            return false;
 
 		//Get the design-point day, hour, and DNI
 		wdata->getStep(i, dom, hour, month, dni, tdb, pres, wind, step_weight);
@@ -1208,8 +1212,10 @@ void SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
 		results->push_back( sim_result() );
 		results->back().process_analytical_simulation( *SF, 0); //2);
 
-		if(SF->CheckCancelStatus()) return;	//check for cancelled simulation				
+		if(SF->CheckCancelStatus()) return false;	//check for cancelled simulation				
 	}
+
+    return true;
 }		
 
 void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
@@ -1811,7 +1817,7 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 	Point hloc;
 
 	//how to calculate radial spacing of the rows?
-	if(_rad_spacing_method == 1 || _rad_spacing_method == 4){	//use the empirical relationship from delsol
+	if(_rad_spacing_method == HELIO_SPACING_METHOD::DELSOL_EMPIRICAL){	//use the empirical relationship from delsol
 
 		/* 
 		Documentation on these methods is from Kistler (1986), pages 39-41.
@@ -1941,12 +1947,13 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 			nr++;	//Row number, starts at 1
 			//now with the solved radius, prepare for the next radius
 			phi_0 = atan(_tht/r_c);
-			
+			tan_phi_0 = _tht/r_c;
 		}
 
 
 	}
-	else if(_rad_spacing_method == 2 && _helio_templates.at(0)->IsRound()){
+	else if(_rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCKING 
+            && _helio_templates.at(0)->IsRound()){
 		/* 
 		Space using radial stagger with the row position chosen for "close packing"
 		from the perspective of the receiver.
@@ -2045,7 +2052,8 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 		}
 
 	}
-	else if(_rad_spacing_method == 2 && !_helio_templates.at(0)->IsRound()){	//Space to eliminate blocking - rectangular heliostats
+	else if(_rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCKING 
+            && !_helio_templates.at(0)->IsRound()){	//Space to eliminate blocking - rectangular heliostats
 		//***calculate the row positions***
 		
 		nr=1;	//row counter

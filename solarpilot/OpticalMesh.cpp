@@ -289,7 +289,7 @@ void optical_hash_tree::create_mesh(LayoutData *data){
 	//Try reserving the number of required nodes, catch any memory error
 	try
 	{
-		nodes.reserve(nmaxnodes*3/2); //include a 50% buffer
+		nodes.reserve(nmaxnodes*2); //include a 100% buffer
 	}
 	catch(...)
 	{

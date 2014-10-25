@@ -230,17 +230,19 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		int rec_type;
 		to_integer(it->second["rec_type"].value, &rec_type);
 		double aspect, area;
-		if(rec_type == 0){
+		if(rec_type == Receiver::REC_TYPE::CYLINDRICAL){
 			//External receiver
 			aspect = height/diam;
 			area = acos(-1.)*diam*height;
 		}
-		else if(rec_type == 1){
+		else if(rec_type == Receiver::REC_TYPE::CAVITY){
 			//cavity
 			aspect = height/width;
-			double rec_cav_rad, rec_cav_cdepth;
-			to_double(it->second["rec_cav_rad"].value, &rec_cav_rad);
-			to_double(it->second["rec_cav_cdepth"].value, &rec_cav_cdepth);
+			double span_max = it->second["span_max"].value_double();
+			double span_min = it->second["span_min"].value_double();
+			double rec_cav_rad = it->second["rec_cav_rad"].value_double();
+			double rec_cav_cdepth = it->second["rec_cav_cdepth"].value_double();
+			
 			area = rec_cav_rad * 2.* acos(rec_cav_cdepth/rec_cav_rad) * height;	//area should be scaled according to the arc length of the cavity
 			//check to see if the cavity curvature radius is less than the aperture width. if so, warn the user
 			if(rec_cav_rad*2.<width){
@@ -249,11 +251,14 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 
 
 		}
-		else{
+		else if(rec_type == Receiver::REC_TYPE::FLAT_PLATE){
 			//flat plate
 			aspect = height/width;
 			area = height*width;
 		}
+        else{
+            throw spexception("Invalid receiver type in UpdateCalculatedMapValues()");
+        }
 		it->second["rec_aspect"].value = my_to_string(aspect);
 		it->second["absorber_area"].value = my_to_string(area);
 		rec_area_total += area;	//keep track of the total receiver area for later

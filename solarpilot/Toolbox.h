@@ -1,7 +1,7 @@
 #ifndef _TOOLBOX_H_
 #define _TOOLBOX_H_ 1
 
-#include "math.h"
+#include <math.h>
 //#include <ctime>
 #include <vector>
 #include "exceptions.hpp"
@@ -30,6 +30,7 @@ bool mmtest = MM.find(4)==MM.end();
 #define VEC_ASSERT(X) assert(X)
 #endif
 //----
+
 
 
 template< typename T >
@@ -541,15 +542,20 @@ public:
 
 struct Point {
 	double x, y, z;
-	void Set(double _x, double _y, double _z);
-	void Set( Point &P );
-	void Add( Point &P );
-	void Add(double _x, double _y, double _z);
-	void Subtract( Point &P );
-	double operator [](const int &index);
-	bool operator <(const Point &p) const {
-		return x < p.x || (x == p.x && y < p.y);
-	};
+	
+    void Set(double _x, double _y, double _z);
+
+    void Set( Point &P );
+
+    void Add( Point &P );
+
+    void Add(double _x, double _y, double _z);
+
+    void Subtract( Point &P );
+
+    double operator [](const int &index);
+
+    bool operator <(const Point &p) const;
 };
 
 struct Vect {
@@ -580,6 +586,7 @@ public:
 	Vect *vect();
 
 };
+
 
 //---
 
@@ -688,13 +695,8 @@ namespace Toolbox
 	double atan3(double &x, double &y);	//my custom atan function [0..360]
 	void map_profiles(double *source, int nsource, double *dest, int ndest, double *weights = (double*)NULL);
 
-	//Polygon-point hit test
-	bool pointInPolygon( const std::vector<Point> &poly, const Point &pt);
-	int polywind(const std::vector< Point> &vt, const Point &pt);
-	std::vector<Point> projectPolygon(std::vector<Point> &poly, PointVect &plane) ; 
-
-	//geometrical operators
-	double dotprod(const Vect &A, const Vect &B);
+	//Vector geometry
+    double dotprod(const Vect &A, const Vect &B);
 	double dotprod(const Vect &A, const Point &B);
 	Vect crossprod(const Vect &A, const Vect &B); 
 	double crossprod(const Point &O, const Point &A, const Point &B);
@@ -702,11 +704,11 @@ namespace Toolbox
 	double vectmag(double i, double j, double k);
 	double vectmag(const Vect &A);
 	double vectmag(const Point &P);
-	//Determine the angle between two vectors
-	double vectangle(const Vect &A, const Vect&B);
-	//Rotation of a point about the origin
-	void rotation(double theta, int axis, Point &P);
-	void rotation(double theta, int axis, Vect &V);
+	double vectangle(const Vect &A, const Vect&B);      //Determine the angle between two vectors
+	void rotation(double theta, int axis, Point &P);    //Rotation of a point about the origin
+	void rotation(double theta, int axis, Vect &V);     //Rotation of a point about the origin
+	
+    //computational geometry 
 	//Intersection of a vector on a plane
 	bool plane_intersect(Point &P, Vect &N, Point &C, Vect &L, Point &Int);
 	//Point on a line closest to external point
@@ -725,7 +727,11 @@ namespace Toolbox
 	//Calculate the z-rotation angle of a heliostat that's undergone a normal-vector transform
 	double ZRotationTransform(double Az, double Zen);
 	double ZRotationTransform(Vect &norm_vect);
-
+    //Polygon-point hit test
+	bool pointInPolygon( const std::vector<Point> &poly, const Point &pt);
+	int polywind(const std::vector< Point> &vt, const Point &pt);
+	std::vector<Point> projectPolygon(std::vector<Point> &poly, PointVect &plane) ; 
+    std::vector<Point> clipPolygon(std::vector<Point> &A, std::vector<Point> &B); //construct a polygon that is the intersection of two polygons A and B
 
 	//File handling functions
 	std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );
