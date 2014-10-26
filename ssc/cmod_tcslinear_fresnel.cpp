@@ -137,14 +137,14 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                                       "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",        "Fraction of thermal power required for standby mode",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_boil_des",        "Boiler operating pressure @ design",                                                  "bar",           "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_rh",             "Flag indicating whether reheat is used 0:no, 1:yes",                                  "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
+//    { SSC_INPUT,        SSC_NUMBER,      "is_rh",             "Flag indicating whether reheat is used 0:no, 1:yes",                                  "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_rh_ref",          "Reheater operating pressure at design",                                               "bar",           "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_rh_hot_ref",      "Reheater design outlet temperature",                                                  "C",             "",            "powerblock",     "*",                       "",                      "" },
+//    { SSC_INPUT,        SSC_NUMBER,      "T_rh_hot_ref",      "Reheater design outlet temperature",                                                  "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rh_frac_ref",       "Reheater flow fraction at design",                                                    "none",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                                    "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_time",      "Time needed for power block startup",                                                 "hr",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_frac",      "Fraction of design thermal power needed for startup",                                 "none",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tech_type",         "Flag indicating which coef. set to use. (1=tower,2=trough,3=user)",                   "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
+ //   { SSC_INPUT,        SSC_NUMBER,      "tech_type",         "Flag indicating which coef. set to use. (1=tower,2=trough,3=user)",                   "none",          "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                                  "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",      "Condenser pressure ratio",                                                            "none",          "",            "powerblock",     "*",                       "",                      "" },
@@ -439,14 +439,20 @@ public:
 		set_unit_value_ssc_double(type234_powerblock, "T_amb_des"); // T_amb_des);
 		set_unit_value_ssc_double(type234_powerblock, "q_sby_frac"); // q_sby_frac);
 		set_unit_value_ssc_double(type234_powerblock, "P_boil_des"); // P_boil_ref);
-		set_unit_value_ssc_double(type234_powerblock, "is_rh"); // is_rh);
+		//set_unit_value_ssc_double(type234_powerblock, "is_rh"); // is_rh);
+		set_unit_value_ssc_double(type234_powerblock, "is_rh", 0); // is_rh);
 		set_unit_value_ssc_double(type234_powerblock, "P_rh_ref"); // P_rh_ref);
-		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); // T_rh_hot_ref);
+		//set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); // T_rh_hot_ref);
+		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref", 0);
+
+
+
 		set_unit_value_ssc_double(type234_powerblock, "rh_frac_ref"); // rh_frac_ref);
 		set_unit_value_ssc_double(type234_powerblock, "CT"); // CT);
 		set_unit_value_ssc_double(type234_powerblock, "startup_time"); // startup_time);
 		set_unit_value_ssc_double(type234_powerblock, "startup_frac"); // startup_frac);
-		set_unit_value_ssc_double(type234_powerblock, "tech_type"); // tech_type);
+//		set_unit_value_ssc_double(type234_powerblock, "tech_type"); // tech_type);
+		set_unit_value_ssc_double(type234_powerblock, "tech_type", 3); // tech_type);
 		set_unit_value_ssc_double(type234_powerblock, "T_approach"); // T_approach);
 		set_unit_value_ssc_double(type234_powerblock, "T_ITD_des"); // T_ITD_des);
 		set_unit_value_ssc_double(type234_powerblock, "P_cond_ratio"); // P_cond_ratio);
