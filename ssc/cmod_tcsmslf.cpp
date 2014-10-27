@@ -680,14 +680,14 @@ public:
 		// performance adjustement factors
 		adjustment_factors haf(this);
 		if (!haf.setup())
-			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
+			throw exec_error("tcsmslf", "failed to setup adjustment factors: " + haf.error());
 
 		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
 		if (count != 8760)
-			throw exec_error("tcslinear_fresnel", "hourly_energy count incorrect (should be 8760): " + count);
+			throw exec_error("tcsmslf", "hourly_energy count incorrect (should be 8760): " + count);
 
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
