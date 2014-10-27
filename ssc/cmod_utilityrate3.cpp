@@ -614,6 +614,8 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1", "Electricity cost with system", "$/yr", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity cost without system", "$/yr", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1", "Year 1 Savings", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "year1_electric_load",             "Year 1 total electric load",     "kWh",    "",                      "",             "*",                         "",   "" },
+
 
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 electricity to/from grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -623,7 +625,7 @@ static var_info vtab_utility_rate3[] = {
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 Hourly Electric Load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 Hourly Electric Load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -828,6 +830,9 @@ public:
 				p_load[i] = -parr[i]; // by default p_load = e_load
 			}
 		}
+
+		//accumulate annual load for outputs
+		double year1_elec_load = accumulate_annual("e_load", "year1_electric_load");
 
 //		if (is_assigned("p_without_system"))
 		if (is_assigned("p_load"))
