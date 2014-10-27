@@ -20,7 +20,7 @@ static var_info _cm_vtab_belpe[] =
 	{ SSC_INPUT,		SSC_NUMBER,		"en_belpe",			"Enable building load calculator",	"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
 	//e_load and p_load are modified in BELPE. They are passed straight through if BELPE is disabled.
-	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Year 1 Electric load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Year 1 Hourly Electric Load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
 	{ SSC_INOUT,		SSC_ARRAY,		"p_load",			"Year 1 Peak electric load",		"kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
 
 	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "en_belpe=1",			"LOCAL_FILE",	"" },
@@ -58,10 +58,10 @@ static var_info _cm_vtab_belpe[] =
 
 
 	//DEBUGGING OUTPUTS
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_E",		"Radiation on East wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_S",		"Radiation on South wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_W",		"Radiation on West wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_E",		"Radiation on East wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_S",		"Radiation on South wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_W",		"Radiation on West wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 
 
 var_info_invalid };
