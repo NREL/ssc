@@ -9,7 +9,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_STRING,      "wind_resource_filename",                  "local SWRF file path",		           "",       "",      "WindPower",      "*",                                        "LOCAL_FILE",                                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_shear",                     "Shear exponent",                      "",       "",      "WindPower",      "*",                                        "",                                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_turbulence_coeff",          "Turbulence coefficient",              "%",      "",      "WindPower",      "*",                                        "",                                                 "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "PVWatts", "*", "", "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "system_capacity",							"Nameplate capacity",				   "kW",	 "",	  "WindPower",		"*",										"",													"" },
 
 
 //	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                                 "Height of resource measurement",      "m",      "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
@@ -143,6 +143,16 @@ public:
 
 			accumulate_monthly("hourly_energy", "monthly_energy");
 			accumulate_annual("hourly_energy", "annual_energy");
+
+			// metric outputs moved to technology
+			double kWhperkW = 0.0;
+			double nameplate = as_double("system_capacity");
+			double annual_energy = 0.0;
+			for (int i = 0; i < 8760; i++)
+				annual_energy += farmpwr[i];
+			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+			assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
 			return;
 		}
