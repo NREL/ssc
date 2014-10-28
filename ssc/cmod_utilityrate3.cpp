@@ -599,6 +599,7 @@ static var_info vtab_utility_rate3[] = {
 	// outputs
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_electric_load",            "Total electric load in each year",  "kWh",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 
 	// use output from annualoutput not scaled output from here
 	//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Net energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
@@ -858,6 +859,7 @@ public:
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears);
+		ssc_number_t *annual_electric_load = allocate("annual_electric_load", nyears);
 		ssc_number_t *energy_net = allocate("scaled_annual_energy", nyears);
 		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears);
 		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears);
@@ -1040,6 +1042,7 @@ public:
 			// determine net-revenue benefit due to solar for year 'i'
 			
 			annual_net_revenue[i] = 0.0;
+			annual_electric_load[i] = 0.0;
 			energy_net[i] = 0.0;
 			annual_revenue_w_sys[i] = 0.0;
 			annual_revenue_wo_sys[i] = 0.0;
@@ -1048,6 +1051,7 @@ public:
 			{
 				energy_net[i] +=  e_sys[j]*sys_scale[i];
 				annual_net_revenue[i] += revenue_w_sys[j] - revenue_wo_sys[j];
+				annual_electric_load[i] += -e_load_cy[j];
 				annual_revenue_w_sys[i] += revenue_w_sys[j];
 				annual_revenue_wo_sys[i] += revenue_wo_sys[j];
 			}
