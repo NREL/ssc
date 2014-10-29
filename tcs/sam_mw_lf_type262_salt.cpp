@@ -1223,11 +1223,6 @@ public:
 		longitude = value(I_LONGITUDE);		//Site longitude read from weather file [deg]
 		timezone = value(I_TIMEZONE);		//Time zone [hr]
 
-		if( T_cold_in > T_loop_in_des + 50.0 )
-			m_dot_htfmin = max(0.65*m_dot_design, m_dot_htfmin);
-		else
-			m_dot_htfmin = value(P_M_DOT_HTFMIN);
-
 		shift = (longitude - timezone*15.)*d2r;
 
 		//Unit conversions
