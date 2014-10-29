@@ -24,7 +24,7 @@ TES_hrs = 4.;			//[hr]	Hours of thermal storage
 //Operating specs
 T_hot_des = 525.;		//[C]	Design-point hot field outlet temperature
 T_cold_des = 293.;		//[C]	Design-point cold field inlet temperature
-T_startup = 450.;		//[C]	Power block startup temperature
+T_startup = 300.;		//[C]	Power block startup temperature
 T_amb_des = 25.;		//[C]	Ambient temperature at design
 V_wind_des = 4.;		//[m/s]	Design point wind velocity
 I_bn_des = 950.;		//[W/m2] Design point DNI
@@ -151,7 +151,7 @@ nLoops = ceil(Qsf/Q_loop);
 //Estimate max and min mass flow rates in a single loop
 m_dot_loop = m_dot_sf/nLoops;
 m_dot_max = m_dot_loop*1.2;
-m_dot_min = m_dot_loop*0.1;
+m_dot_min = m_dot_loop*0.25;
 	
 //Calculate storage volume
 hx_dt_hot = 0.;		//IF TES HEAT EXCHANGER: the hot-side dT
@@ -384,7 +384,7 @@ set_value(controller, "tes_pump_coef", 0.15);
 set_value(controller, "pb_fixed_par", 0.0055);
 set_value(controller, "bop_array", [0,1,0.483,0.517,0]);
 set_value(controller, "aux_array", [0.02273,1,0.483,0.517,0]);
-set_value(controller, "T_startup", T_sf_ave);
+set_value(controller, "T_startup", T_startup);
 set_value(controller, "fossil_mode", 1);
 set_value(controller, "fthr_ok", 1);
 set_value(controller, "nSCA", nMod);
