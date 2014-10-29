@@ -490,6 +490,8 @@ private:
 	int day_of_year, SolveMode, dfcount;
 	double HCEguessargs[3];
 
+	double m_htf_prop_min;
+
 public:
 
 	sam_mw_lf_type262( tcscontext *cxt, tcstypeinfo *ti ) 
@@ -653,6 +655,7 @@ public:
 		E_field	= std::numeric_limits<double>::quiet_NaN();
 		piping_summary	= "";
 
+		m_htf_prop_min = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_mw_lf_type262(){
@@ -672,6 +675,9 @@ public:
 		Do any setup required here.
 		Get the values of the inputs and parameters
 		*/
+
+		m_htf_prop_min = 275.0;
+
 		dt = time_step();
 		start_time = -1; 
 
@@ -1217,6 +1223,11 @@ public:
 		longitude = value(I_LONGITUDE);		//Site longitude read from weather file [deg]
 		timezone = value(I_TIMEZONE);		//Time zone [hr]
 
+		if( T_cold_in > T_loop_in_des + 50.0 )
+			m_dot_htfmin = max(0.65*m_dot_design, m_dot_htfmin);
+		else
+			m_dot_htfmin = value(P_M_DOT_HTFMIN);
+
 		shift = (longitude - timezone*15.)*d2r;
 
 		//Unit conversions
@@ -1513,7 +1524,8 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 									 //outputs
 									 q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j, HCEguessargs);
 					
-						if(q_abs[j] != q_abs[j]) {	//cc--> Check for NaN
+						if(q_abs[j] != q_abs[j]) 
+						{	//cc--> Check for NaN
 							m_dot_htfX = m_dot_htfmax;
 							if(dfcount > 20) {
 								message("The solution encountered an unresolvable NaN error in the heat loss calculations. Retrying solar field calculations...");
@@ -2393,8 +2405,13 @@ lab_keep_guess:
 		T3upflag = false;
 		T3lowflag = false;
 
+		double T3_adjust = 0.0;
+		double T3_prev_qq = 0.0;
+
 		while( ( (abs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2)){    //Outer loop: Find T_3 such than energy balance is satisfied
 			qq=qq+1; //loop counter
+
+			T3_prev_qq = T_3;
 
 			if(qq>1){
 				if((T3upflag)&&(T3lowflag)){
@@ -2424,12 +2441,18 @@ lab_keep_guess:
 					if((T3upflag)&&(T3lowflag)){  
 						T_3 = (y_T3_upper)/(y_T3_upper-y_T3_lower)*(T3_lower - T3_upper) + T3_upper;
 					} 
-					else {
-						T_3 = T_3 - abs_diffT3;         //Note that recalculating T_3 using this exact equation, rather than T_3 = T_3 - frac*diff_T3 was found to solve in fewer iterations
+					else 
+					{
+						if( Diff_T3 > 0. )
+							T_3 = T_3 - 50.0;
+						else
+							T_3 = T_3 + 50.0;
+						//T_3 = max(T_7, T_3 - abs_diffT3);         //Note that recalculating T_3 using this exact equation, rather than T_3 = T_3 - frac*diff_T3 was found to solve in fewer iterations
 					}
 				}
 			}
             
+			T3_adjust = T_3 - T3_prev_qq;
 
 			//Calculate temperature sensitive emissivity using T_3, if required
 			if(is_e_table) eps_3 = epsilon_abs.interpolate(hv, (T_3-273.15)); //call interp((T_3-273.15),eps_mode,xx,yy,eps3old,eps_3)
@@ -2442,16 +2465,40 @@ lab_keep_guess:
 				//************* SET UP T_4 ITERATION **********************
 				//**********************************************
         
-				if(qq==1){               //If first iteration, set T_4 bounds to phyiscal limits defined by T_3 and T_sky
-					T_lower = T_sky;         //Lowest possible temperature of T_4 is sky temp        
-					T_upper = max(T_upper_max,T_amb);    //Highest possible temperature is the highest temperature on either side of T_4: either T_3 or ambient
-					q5_tol_1= 0.001;           //Just get T4 in the ball park.  '20' may not be the optimum value.....
-				} 
-				else {                                            //For additional iterations:
-					T_lower = T_lower - max(abs_diffT3,0.0);       //If diff_T3 is + then new T3 < old T3 so adjust lower limit
-					T_upper = T_upper + abs(min(abs_diffT3,0.0));  //If diff_T3 is (-) then new T3 > old T3 so adjust upper limit
-					q5_tol_1= q5_tol;        //For remaining T3 iterations, use specified tolerance (note that 2 iterations for T3 are gauranteed)                   
+				// if(qq==1){               //If first iteration, set T_4 bounds to phyiscal limits defined by T_3 and T_sky
+				// 	T_lower = T_sky;         //Lowest possible temperature of T_4 is sky temp        
+				// 	T_upper = max(T_upper_max,T_amb);    //Highest possible temperature is the highest temperature on either side of T_4: either T_3 or ambient
+				// 	q5_tol_1= 0.001;           //Just get T4 in the ball park.  '20' may not be the optimum value.....
+				// } 
+				// else {                                            //For additional iterations:
+				// 	T_lower = T_lower - max(abs_diffT3,0.0);       //If diff_T3 is + then new T3 < old T3 so adjust lower limit
+				// 	T_upper = T_upper + abs(min(abs_diffT3,0.0));  //If diff_T3 is (-) then new T3 > old T3 so adjust upper limit
+				// 	q5_tol_1= q5_tol;        //For remaining T3 iterations, use specified tolerance (note that 2 iterations for T3 are gauranteed)                   
+				// }
+				if( qq == 1 )
+				{
+					T_lower = T_sky;
+					T_upper = max(T_3, T_amb);
 				}
+				else
+				{
+					if( T3_adjust > 0.0 )	// new T3 > old T3 so adjust upper limit
+					{
+						T_upper = min(T_3, T_upper + 1.25*T3_adjust);
+						T_lower = T_4;
+						T_4 = T_4 + 0.5*T3_adjust;
+					}
+					else	// T3_adjust negative
+					{
+						T_lower = max(T_sky, T_lower + 1.25*T3_adjust);
+						T_upper = T_4;
+						T_4 = T_4 + 0.5*T3_adjust;
+					}
+				}
+				q5_tol_1 = q5_tol;
+
+				//if( T_4 > T_upper || T_4 < T_lower )
+				//	T_4 = 0.5*(T_upper + T_lower);
         
 				diff_q5 = q5_tol_1 + 1.0;       //Set diff > tolerance
 				q5_iter = 0;                     //Set iteration counter
@@ -2609,6 +2656,15 @@ lab_keep_guess:
 			q_conv_iter = 0;                 //Set iteration counter
 			diff_T2 = 1.0 + T2_tol;         //Set diff > tolerance
     
+			bool T2upflag = false;
+			bool T2lowflag = false;
+
+			double y_T2_low = std::numeric_limits<double>::quiet_NaN();
+			double y_T2_up = std::numeric_limits<double>::quiet_NaN();
+
+			double T2_low = min(T_1_ave,T_3);
+			double T2_up = max(T_1_ave, T_3);
+
 			//Ensure convective calculations are correct (converge on T_2)
 			while( (abs(diff_T2)>T2_tol) && (q_conv_iter<100)){
  
@@ -2616,11 +2672,36 @@ lab_keep_guess:
 
 				T_2 = fT_2(q_12conv, T_1_ave, T_2g, v_1, hv);	//Calculate T_2 (with previous T_2 as input)
 				diff_T2 = (T_2 - T_2g)/T_2;          //T_2 difference
-				T_2g = T_2 - 0.5*(T_2-T_2g);         //Reset T_2
-        
-				if(qq<2){        //For first T3 iteration, do not iterate on T_2 (again, this control is based on observation of solve time and may not be optimal for all simulations)
-					break;
+				
+				if(diff_T2 > 0.0)		// Calculated > Guessed, set lower limit and increase guessed
+				{
+					T2_low = T_2g;
+					T2lowflag = true;
+					y_T2_low = diff_T2;
+					if( T2upflag )
+						T_2g = y_T2_up / (y_T2_up - y_T2_low)*(T2_low - T2_up) + T2_up;
+					else
+						T_2g = T2_up;
 				}
+				else					// Calculated < Guessed, set upper limit and decrease guessed
+				{
+					T2_up = T_2g;
+					T2upflag = true;
+					y_T2_up = diff_T2;
+					if( T2lowflag )
+						T_2g = y_T2_up / (y_T2_up - y_T2_low)*(T2_low - T2_up) + T2_up;
+					else
+						T_2g = T2_low;
+				}
+				
+				if( (T2_up - T2_low) / T2_low < T2_tol / 10.0 )
+					break;
+				
+				//T_2g = T_2 - 0.5*(T_2-T_2g);         //Reset T_2
+        
+				// if(qq<2){        //For first T3 iteration, do not iterate on T_2 (again, this control is based on observation of solve time and may not be optimal for all simulations)
+				// 	break;
+				// }
  
 			}
     
@@ -2765,6 +2846,8 @@ lab_keep_guess:
 		double Cp_1, Cp_2, f, h_1, k_1, k_2, mu_1, mu_2, Nu_D2, Pr_1, Pr_2, Re_D2, rho_1, DRatio;
 		bool includelaminar = true;	//cc -- this is always set to TRUE in TRNSYS
 	
+		T_2g = max(T_2g, m_htf_prop_min);
+
 		// Thermophysical properties for HTF 
 		mu_1 = htfProps.visc(T_1);  //[kg/m-s]
 		mu_2 = htfProps.visc(T_2g);  //[kg/m-s]
