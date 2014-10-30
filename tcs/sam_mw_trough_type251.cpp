@@ -1545,9 +1545,13 @@ public:
 				else if(tempmode == 2)
 				{
 					if( sf_type == 1 )
-						T_field_in_guess = min(T_field_out,T_startup);
+						T_field_in_guess = min(T_field_out, T_startup);
 					else
-						T_field_in_guess = (m_dot_pb*T_pb_out + ms_charge*Ts_cold)/(m_dot_pb + ms_charge);
+						T_field_in_guess = T_field_in_des;
+						
+					//T_field_in_guess = T_field_in_des;
+						
+					//T_field_in_guess = (m_dot_pb*T_pb_out + ms_charge*Ts_cold)/(m_dot_pb + ms_charge);
 				}
 				
 				// convergence error is based on actual field mass flow rate compared to balance of mass flow rates
