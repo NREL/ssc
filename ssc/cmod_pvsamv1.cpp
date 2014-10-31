@@ -741,13 +741,17 @@ public:
 			{
 				sa[nn].backtrack = as_boolean(prefix + "backtrack");
 			}
-
-			
+		}
+		// loop over subarrays AGAIN to calculate shading inputs because nstrings in subarray 1 isn't correct until AFTER the previous loop
+		for (size_t nn = 0; nn < 4; nn++)
+		{
+			std::string prefix = "subarray" + util::to_string((int)(nn + 1)) + "_";
 
 			// shading mode- only required for fixed tilt or one-axis, not backtracking systems
 			if (sa[nn].track_mode == 0 || (sa[nn].track_mode == 1 && sa[nn].backtrack == 0))
 			{
 				sa[nn].shade_mode = as_integer(prefix + "shade_mode");
+				if (!sa[nn].enable) continue; //skip disabled subarrays
 
 				// shading inputs only required if shade mode is self-shaded
 				if (sa[nn].shade_mode == 0)
@@ -760,15 +764,15 @@ public:
 					// SELF-SHADING ASSUMPTIONS
 
 					// Calculate the number of rows given the module dimensions of each row.
-					sa[nn].sscalc.nrows = (int) floor((sa[nn].nstrings * modules_per_string) / (sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody));
+					sa[nn].sscalc.nrows = (int)floor((sa[nn].nstrings * modules_per_string) / (sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody));
 					//if nrows comes out to be zero, this will cause a divide by zero error. Give an error in this case.
 					if (sa[nn].sscalc.nrows == 0 && sa[nn].nstrings != 0) //no need to give an error if the subarray has 0 strings
 						throw exec_error("pvsamv1", "Self-shading: Number of rows calculated for subarray " + util::to_string(to_double(nn + 1)) + " was zero. Please check your inputs.");
 					// Otherwise, if self-shading configuration does not have equal number of modules as specified on system design page for that subarray,
 					// compute dc derate using the self-shading configuration and apply it to the whole subarray. Give warning.
-					if ((sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody * sa[nn].sscalc.nrows) != (sa[nn].nstrings * modules_per_string) )
+					if ((sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody * sa[nn].sscalc.nrows) != (sa[nn].nstrings * modules_per_string))
 						log(util::format("The self-shading configuration for subarray %d does not match the number of modules specified on the System Design page. Please check your inputs.",
-						(nn+1)), SSC_WARNING);
+						(nn + 1)), SSC_WARNING);
 					// assume aspect ratio of 1.7 (see variable "aspect_ratio" below to change this assumption)
 					sa[nn].sscalc.str_orient = 1;	//assume horizontal wiring
 					sa[nn].sscalc.mask_angle_calc_method = 0; //assume worst case mask angle calc method
