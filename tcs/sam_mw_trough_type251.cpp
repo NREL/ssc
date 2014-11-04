@@ -1567,7 +1567,7 @@ public:
 				if(iter > 20)
 				{
 					// Write the error message in preparation for failure, but don't call the printer yet.. 
-					message( "After ", iter, " iterations, the controller convergence error of ", err, " could not resolve below the tolerance of ", tol );
+					message("After %d iterations, the controller convergence error of %lg could not resolve below the tolerance of %lg. Check that results at this timestep are not unreasonably biasing annual metrics.", iter, err, tol);
 					//200 format("After ",I2," iterations, the controller convergence error of ",E8.3," could not resolve below the tolerance of ",F6.4)
 					//continue on, don't iterate further
 					iterate_mass_temp = false;
