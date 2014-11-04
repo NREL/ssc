@@ -841,7 +841,8 @@ public:
 			parr = as_array("p_load", &count);
 			if (count != 8760) throw general_error("p_load must have 8760 values");
 			for (i=0;i<8760;i++)
-				p_load[i] = parr[i]; // input sign change 9/12/14
+				p_load[i] = -parr[i]; // input sign change 9/12/14
+//			p_load[i] = parr[i]; // input sign change 9/12/14
 		}
 
 		/* allocate intermediate data arrays */
