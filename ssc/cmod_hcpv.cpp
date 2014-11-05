@@ -472,8 +472,8 @@ public:
 				double cellpwr = (celleff / 100.0*poa*concen*cellarea);
 
 				// todo: check reference conditions for 20 'C tdry and 4 m/s wspd
-				double tmod = sandia_celltemp_t::sandia_module_temperature(poa, 0, wf.wspd, wf.tdry, 0, a, b);
-				double tcell = sandia_celltemp_t::sandia_tcell_from_tmodule(tmod, poa, 0, 0, dT);
+				double tmod = sandia_celltemp_t::sandia_module_temperature(wf.dn, 0, wf.wspd, wf.tdry, 0, a, b);
+				double tcell = sandia_celltemp_t::sandia_tcell_from_tmodule(tmod, wf.dn, 0, 0, dT);
 
 				cellpwr += cellpwr*(gamma / 100.0)*(tcell - 20.0);
 				if (cellpwr < 0) cellpwr = 0;
