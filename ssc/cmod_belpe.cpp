@@ -971,6 +971,8 @@ public:
 				load[i] = load[i] * (1 - closest_scale_avg) - x_hvac[month[i]] * hvac_load[i];
 			else
 				load[i] = load[i] * (1 - monthly_scale[month[i]]);
+			if (monthly_util[month[i]] == 0) //set all loads for the month to zero if the input month was zero
+				load[i] = 0;
 		}
 		
 		//CONVERT LOADS TO KWH AND ASSIGN PEAK LOAD*********************************************************************************************************************************************************
