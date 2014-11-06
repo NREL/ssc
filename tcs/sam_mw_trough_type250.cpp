@@ -1348,16 +1348,20 @@ public:
 		shift *= d2r;
 
 		//Initialize the field geometry if it hasn't been already
-		if(! is_fieldgeom_init) 
-			if(! init_fieldgeom()) return -1;
+		if( !is_fieldgeom_init )
+		{
+			if( !init_fieldgeom() ) 
+				return -1;
+		}
 
 		//If no change in inputs between calls, then no need to go through calculations.  Sometimes an extra call was run.....
-		if (ncall>0) {
-    		if( (! no_fp) && (T_cold_in_1 > T_cold_in) ){
+		if (ncall>0) 
+		{
+    		if( (! no_fp) && (T_cold_in_1 > T_cold_in) )
+			{
 				E_fp_tot = m_dot_htf_tot * c_hdr_cold * (T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 				goto set_outputs_and_return;
-			}
-    
+			}    
 		}
 		//**********************************************************************************************************************
 
@@ -1390,11 +1394,13 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 		defocus = defocus_new / defocus_old;
 		defocus_old = defocus_new;
 
-		if(ncall == 0){        //Always reset the defocus control at the begining of the timestep
+		if(ncall == 0)        //Always reset the defocus control at the begining of the timestep
+		{
 			defocus_new = 1.;
 			defocus_old = 1.;
 			defocus = 1.0;
 		}
+
 		//calculate the hour of the day
 		time_hr = time/3600.;
 		dt_hr = dt/3600.;
@@ -1417,7 +1423,8 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 		//}
 		//T_loop_in = T_sys_c
 
-		if (ncall==0) { //mjw 3.5.11 We only need to calculate these values once per timestep..
+		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
+		{
 			//Time calculations
 			day_of_year = (int)ceil(time_hr/24.);  //Day of the year
 			// Duffie & Beckman 1.5.3b
@@ -1551,11 +1558,15 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 				RowShadow_ave = RowShadow_ave + RowShadow[CT]*L_actSCA[CT]/L_tot;
 				EndLoss_ave = EndLoss_ave + EndLoss(CT,i)*L_actSCA[CT]/L_tot;
 			}
-		} else { //mjw 3.5.11
-			for(int i=0; i<nSCA; i++){
+		} 
+		else  //mjw 3.5.11
+		{	
+			for(int i=0; i<nSCA; i++)
+			{	
 				q_SCA[i] = q_i[(int)SCAInfoArray(i,1)-1]*costh;
 			}
 		}  //mjw 3.5.11 ---------- } of the items that only need to be calculated once per time step
+		
 		q_SCA_tot = 0.;
 		for(int i=0; i<nSCA; i++){ q_SCA_tot += q_SCA[i]; } //W/m
 
@@ -1565,24 +1576,28 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 		//3=constrain mass flow above min
 		SolveMode = 1;
 		//MJW 12.14.2010 Only calculate the estimate on the first call of the timestep
-		if(ncall==0) {
+		if(ncall==0) 
+		{
 			SCAs_def = 1.;
-			if(I_b > 25.) {
-					m_dot_htfX = max(min(10./950.*I_b,m_dot_htfmax),m_dot_htfmin);   //*defocus[kg/s] guess Heat transfer fluid mass flow rate through one loop
-			} else {
+			if(I_b > 25.)
+				m_dot_htfX = max(min(10./950.*I_b,m_dot_htfmax),m_dot_htfmin);   //*defocus[kg/s] guess Heat transfer fluid mass flow rate through one loop
+			else
 				m_dot_htfX = m_dot_htfmin;
-			}
-		} else {
+			
+		} 
+		else
 			m_dot_htfX = max(min(m_dot_htfmax, m_dot_htfX),m_dot_htfmin);
-		}
+		
 
 		//TWN 6/14/11  if defous is < 1 { calculate defocus from previous call's q_abs and { come back to temperature loop.
-		if(defocus<1.) {
+		if(defocus<1.) 
+		{
 			dfcount = dfcount +1;	//cc--> Not sure why this counts.. the dfcount variable is always set to 0 when the simulation is called.. Ask Ty.
 			goto post_convergence_flag; // goto 11;
 		}
 
 overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
+		
 		dfcount ++;   //The defocus iteration counter
 
 		// ******* Initial values *******
@@ -1612,7 +1627,8 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		t_tol = 1.5e-3;          //Tolerance for T_loop_out
 
 		//Decreasing the tolerance helps get out of repeating defocus iterations
-		if(ncall>8){
+		if(ncall>8)
+		{
 			t_tol = 1.5e-4;
 		}
 
@@ -1620,9 +1636,9 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		// ******************************************************************************************************************************
 		//                   Iterative section
 		// ******************************************************************************************************************************
-		while ((abs(err) > t_tol) && (qq < 30)){
-		//for(int      //Main convergence loop
-    
+		while ((abs(err) > t_tol) && (qq < 30))
+		{
+  
 			qq++; //Iteration counter
 			q_loss_SCAtot.fill(0.); 
 			q_abs_SCAtot.fill(0.);
@@ -1634,16 +1650,20 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			c_htf.fill(0.);
 			rho_htf.fill(0.);
    
-			if(accept_mode) {  //mjw 1.3.2011 accommodate acceptance testing
+			if(accept_mode)  //mjw 1.3.2011 accommodate acceptance testing
+			{	
 				m_dot_htf = m_dot_in/float(nLoops);
 				m_dot_htfX = m_dot_htf;
-			} else {
+			} 
+			else 
+			{
 				m_dot_htf = m_dot_htfX;
 			}
     
 			m_dot_htf_tot = m_dot_htf*float(nLoops);
     
-			if(!accept_mode || ( (accept_loc!=2) || (time==start_time) )) {
+			if(!accept_mode || ( (accept_loc!=2) || (time==start_time) )) 
+			{
 				T_sys_c  = (T_sys_c_last - T_cold_in_1)*exp(-(m_dot_htf*float(nLoops))/(v_cold*rho_hdr_cold+mc_bal_cold/c_hdr_cold_last)*dt) + T_cold_in_1;
 				c_hdr_cold = htfProps.Cp(T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 				//Consider heat loss from cold piping
@@ -1651,12 +1671,14 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				Header_hl_cold = 0.0;
 				Runner_hl_cold = 0.0;
 				//Header
-				for(int i=0; i<nhdrsec; i++){
+				for(int i=0; i<nhdrsec; i++)
+				{
 					//Pipe_hl_cold = Pipe_hl_cold + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_sys_c - T_db)  //[W]
 					Header_hl_cold = Header_hl_cold + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_sys_c - T_db);  //[W]
 				}
 				//Runner
-				for(int i=0; i<nrunsec; i++){
+				for(int i=0; i<nrunsec; i++)
+				{
 					//Pipe_hl_cold = Pipe_hl_cold + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_sys_c - T_db)  //[W]
 					Runner_hl_cold = Runner_hl_cold + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_sys_c - T_db);  //[W]
 				}
@@ -1664,12 +1686,15 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
         
 				T_loop_in   = T_sys_c - Pipe_hl_cold/(m_dot_htf*float(nLoops)*c_hdr_cold);
 				T_htf_in[0] = T_loop_in;
-			} else {
+			} 
+			else 
+			{
 				T_htf_in[0] = T_loop_in;
 			}    
     
 			//---------------------
-			for(int i=0; i<nSCA; i++){
+			for(int i=0; i<nSCA; i++)
+			{
 				q_loss.fill(0.);
 				q_abs.fill(0.);
 				q_1abs.fill(0.);
@@ -1677,7 +1702,8 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type
        
-				for(int j=0; j<nHCEVar; j++){
+				for(int j=0; j<nHCEVar; j++)
+				{
 					            
 					//Check to see if the field fraction for this HCE is zero.  if so, don't bother calculating for this variation
 					if(HCE_FieldFrac(HT,j)==0.0) continue;
@@ -1694,9 +1720,11 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 								 //outputs
 								 q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j );
 					
-					if(q_abs[j] != q_abs[j]) {	//cc--> Check for NaN
+					if(q_abs[j] != q_abs[j])	//cc--> Check for NaN
+					{	
 						m_dot_htfX = m_dot_htfmax;
-						if(dfcount > 20) {
+						if(dfcount > 20) 
+						{
 							message("The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...");
 							return 0;
 						}
@@ -1734,7 +1762,8 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
         
 				//Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
 				//MJW 1.16.2011 Include the thermal inertia term
-				if(q_abs_SCAtot[i] > 0.0) {
+				if(q_abs_SCAtot[i] > 0.0) 
+				{
 					//E_avail[i] = max(q_abs_SCAtot[i]*dt*3600. - A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i]*(T_htf_ave[i]- T_htf_ave0[i]),0.0)
 					double x1 = (A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i] + L_actSCA[CT]*mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
 					E_accum[i] = x1*(T_htf_ave[i]- T_htf_ave0[i]);
@@ -1748,12 +1777,16 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
         
 				//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
 				//minus the heat losses in intermediate piping
-				if(i < nSCA-1) {
+				if(i < nSCA-1) 
+				{
 					//Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
 					double L_int;
-					if(i==nSCA/2-1) { 
+					if(i==nSCA/2-1) 
+					{ 
 						L_int = 2.+ Row_Distance;
-					} else {
+					} 
+					else 
+					{
 						L_int = Distance_SCA[CT];
 					}
             
@@ -1772,12 +1805,15 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			//Pipe_hl_hot = 0.0 //initialize
 			Runner_hl_hot = 0.0;    //initialize
 			Header_hl_hot = 0.0;   //initialize
-			for(int i=0; i<nhdrsec; i++){
+			for(int i=0; i<nhdrsec; i++)
+			{
 				//Pipe_hl_hot = Pipe_hl_hot + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_loop_outX - T_db)
 				Header_hl_hot = Header_hl_hot + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_loop_outX - T_db);
 			}
+
 			//Add the runner length
-			for(int i=0; i<nrunsec; i++){
+			for(int i=0; i<nrunsec; i++)
+			{
 				//Pipe_hl_hot = Pipe_hl_hot + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_loop_outX - T_db)  //Wt
 				Runner_hl_hot = Runner_hl_hot + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_loop_outX - T_db);  //Wt
 			}
@@ -1796,58 +1832,73 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
     
 freeze_prot_flag: //7   continue    
 			    
-			if(SolveMode==3) {  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
-    
-				if((no_fp) && (T_sys_h > T_fp)) goto freeze_prot_ok; //goto 9
+			if(SolveMode==3)  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
+			{    
+				if((no_fp) && (T_sys_h > T_fp)) 
+					goto freeze_prot_ok; //goto 9
                 
 				no_fp   = false;
         
 				err = (T_fp - T_sys_h)/T_fp;
         
-				if(abs(err) <= t_tol) goto freeze_prot_ok; //goto 9
+				if(abs(err) <= t_tol) 
+					goto freeze_prot_ok; //goto 9
 
-				if((fp_lowflag) && (fp_upflag)){
-					if(err > 0.0){      //Outlet too low, set lower limit of inlet temperature
+				if((fp_lowflag) && (fp_upflag))
+				{
+					if(err > 0.0)      //Outlet too low, set lower limit of inlet temperature
+					{
 						T_in_lower  = T_cold_in_1;
 						y_fp_lower  = err;
-					} else {                    //Outlet too high, set upper limit of inlet temperature
+					} 
+					else                     //Outlet too high, set upper limit of inlet temperature
+					{
 						T_in_upper  = T_cold_in_1;
 						y_fp_upper  = err;
 					}
-						T_cold_in_1 = (y_fp_upper)/(y_fp_upper-y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
-				} else {
-        
-					if(err > 0.0){      //Outlet too low, set lower limit of inlet temperature
+					T_cold_in_1 = (y_fp_upper)/(y_fp_upper-y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
+				} 
+				else 
+				{
+					if(err > 0.0)      //Outlet too low, set lower limit of inlet temperature
+					{
 						T_in_lower  = T_cold_in_1;
 						y_fp_lower  = err;
 						fp_lowflag  = true;
 						upmult      = 0.50;
-					} else {                    //Outlet too high, set upper limit of inlet temperature
+					} 
+					else                    //Outlet too high, set upper limit of inlet temperature
+					{
 						T_in_upper  = T_cold_in_1;
 						y_fp_upper  = err;
 						fp_upflag   = true;
 						upmult      = 0.50;
 					}
             
-					if((fp_lowflag) && (fp_upflag)){    //if results of bracket are defined, use false position
-						T_cold_in_1 = (y_fp_upper)/(y_fp_upper-y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
-                
-					} else {                            //if not, recalculate value based on approximate energy balance
-						T_cold_in_1 = T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature
-                
+					if( (fp_lowflag) && (fp_upflag) )    //if results of bracket are defined, use false position
+					{
+						T_cold_in_1 = (y_fp_upper) / (y_fp_upper - y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
+					}
+					else                             //if not, recalculate value based on approximate energy balance
+					{
+						T_cold_in_1 = T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature                
 					}
 				}    
     
-			} else {    //Solve to find mass flow that results in target outlet temperature
-                 
+			} 
+			else    //Solve to find mass flow that results in target outlet temperature
+			{     
 				err = (T_loop_out - T_loop_outX)/T_loop_out;
         
-				if(m_dot_htf==m_dot_htfmin){
-					if(T_loop_outX < T_fp){         //freeze protection mode
+				if(m_dot_htf==m_dot_htfmin)
+				{
+					if(T_loop_outX < T_fp)         //freeze protection mode
+					{
 						SolveMode = 3;       
 						goto freeze_prot_flag; //goto 7
 					}
-					else if(err>0.0){
+					else if(err>0.0)
+					{
 						goto freeze_prot_ok; //goto 9      //M_dot may already equal m_dot_min while the temperature is still too low, this saves 1 more iteration    
 					}
 				}
@@ -1861,39 +1912,53 @@ freeze_prot_flag: //7   continue
 				//defined a bracket but not the results.  Use the initial mass flow rate guess to get the results at one } of a new bracket.  { calculate a new mass flow rate based on the appoximation 
 				//We eventually want a result for undefined result in the bracket.  After 2 iterations using approximation without defining bracket, switch to bisection.
 				//Once results for both sides are { defined, "lowflag" and "upflag" will be true, and false position method will be applied.
-				if((lowflag) && (upflag)){
-					if(err > 0.0){
+				if((lowflag) && (upflag))
+				{
+					if(err > 0.0)
+					{
 						m_dot_upper = m_dot_htf;
 						y_upper     = err;
-					} else {
+					}
+					else
+					{
 						m_dot_lower = m_dot_htf;
 						y_lower     = err;
 					}
-						m_dot_htfX = (y_upper)/(y_upper-y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
-				} else {
-        
-					if(err > 0.0){      //Prescribed is greater than calculated, so decrease mass flow, so set upper limit
+					m_dot_htfX = (y_upper)/(y_upper-y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
+				} 
+				else 
+				{
+        			if(err > 0.0)      //Prescribed is greater than calculated, so decrease mass flow, so set upper limit
+					{
 						m_dot_upper = m_dot_htf;
 						y_upper     = err;
 						upflag      = true;
 						upmult      = 0.50;
-					} else {                    //Presribed is less than calculated, so increase mass flow, so set lower limit
+					}
+					else                    //Presribed is less than calculated, so increase mass flow, so set lower limit
+					{
 						m_dot_lower = m_dot_htf;
 						y_lower     = err;
 						lowflag     = true;
 						upmult      = 0.50;
 					}
             
-					if((lowflag) && (upflag)){  //if results of bracket are defined, use false position
+					if((lowflag) && (upflag))  //if results of bracket are defined, use false position
+					{
 						m_dot_htfX = (y_upper)/(y_upper-y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
-					} else {                            //if not, recalculate value based on approximate energy balance
-						if(qq<3){
+					}
+					else                            //if not, recalculate value based on approximate energy balance
+					{	
+						if(qq<3)
+						{
 							c_htf_ave = htfProps.Cp((T_loop_out+T_loop_in)/2.0)*1000.;    //Specific heat
 							double qsum = 0.;
 							for(int i=0; i<nSCA; i++){qsum += q_abs_SCAtot[i]; }
 							m_dot_htfX = qsum/(c_htf_ave*(T_loop_out - T_loop_in));
 							m_dot_htfX = max( m_dot_htfmin, min( m_dot_htfX, m_dot_htfmax));
-						} else {
+						}
+						else
+						{
 							m_dot_htfX = 0.5*m_dot_upper + 0.5*m_dot_lower;
 						}
 					}
@@ -1903,11 +1968,13 @@ freeze_prot_flag: //7   continue
 				// ****** } Hyrbid False Position Iteration Method *************************
 				// ***************************************************************************
 
-				if(m_dot_lower > m_dot_htfmax){      //Once the minimum possible m_dot to solve energy balance is greater than maximum allowable, exit loop and go to defocus
+				if(m_dot_lower > m_dot_htfmax)      //Once the minimum possible m_dot to solve energy balance is greater than maximum allowable, exit loop and go to defocus
+				{
 					break;
 				}
 
-				if(m_dot_upper < m_dot_htfmin){      //Once the maximum possible m_dot to solve energy balance is less than minimum allowable, set to min value and get final T_out
+				if(m_dot_upper < m_dot_htfmin)      //Once the maximum possible m_dot to solve energy balance is less than minimum allowable, set to min value and get final T_out
+				{
 					m_dot_htfX = m_dot_htfmin;
 					SolveMode = 3;
 				}
@@ -1923,11 +1990,13 @@ freeze_prot_flag: //7   continue
 freeze_prot_ok:		//9 continue
 		
 		E_fp_tot = 0.0;
-		if(! no_fp){
+		if(! no_fp)
+		{
 			E_fp_tot = m_dot_htf_tot * c_hdr_cold * (T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 		}
 
-		if(qq>29) {
+		if(qq>29)
+		{
 			message("Mass Flow Rate Convergence Error");
 			return -1;
 		}
@@ -1941,7 +2010,8 @@ freeze_prot_ok:		//9 continue
 		//After convergence, check to see if the HTF flow rate is over the maximum level
 
 post_convergence_flag: //11 continue
-		if(((m_dot_htf > m_dot_htfmax) && (dfcount<5)) || ((defocus<1.0) && (dfcount==1))){
+		if(((m_dot_htf > m_dot_htfmax) && (dfcount<5)) || ((defocus<1.0) && (dfcount==1)))
+		{
 
 			//if so, the field defocus control must be engaged. for(int this by calculating the maximum
 			//amount of absorbed energy that corresponds to the maximum mass flow rate
@@ -1954,10 +2024,12 @@ post_convergence_flag: //11 continue
 			if(dfcount==1) q_abs_maxOT = min(q_check*defocus,c_htf_ave*m_dot_htfmax*(T_loop_out - T_loop_in_des));  //mjw 11.30.2010
     
 			//Select the method of defocusing used for this system
-			if(fthrctrl == 0){
+			if(fthrctrl == 0)
+			{
 				//Standard defocusing.. 1 SCA at a time completely defocuses
 				int j;
-				for(j=0; j<nSCA; j++){
+				for(j=0; j<nSCA; j++)
+				{
 					//Incrementally subtract the losses, but limit to positive absorption values to avoid 
 					//accounting for losses from previously defocused SCA's
 					//q_check = q_check - max(q_abs_SCAtot(SCADefocusArray[j])-q_loss_SCAtot(SCADefocusArray[j]), 0.0)
@@ -1968,56 +2040,72 @@ post_convergence_flag: //11 continue
 				}
         
 				//Reassign the flux on each SCA
-				for(int i=0; i<j; i++){
+				for(int i=0; i<j; i++)
+				{
 					q_SCA[(int)SCADefocusArray[i]-1] = 0.0;
 				}
 			}
-			else if(fthrctrl == 1){
+			else if(fthrctrl == 1)
+			{
 				//Partial defocusing in the sequence specified by the SCADefocusArray
 				int j;
-				for(j=0; j<nSCA; j++){
+				for(j=0; j<nSCA; j++)
+				{
 					//Incrementally subtract the losses, but limit to positive absorption values to avoid 
 					//accounting for losses from previously defocused SCA's
 					//q_check = q_check - min(max(q_abs_SCAtot(SCADefocusArray[j])-q_loss_SCAtot(SCADefocusArray[j]), 0.0),q_check-q_abs_maxOT)
 					//4/9/11, TN: Don't need to subtract losses: see equation for q_check above
 					q_check += -max(q_abs_SCAtot[(int)SCADefocusArray[j]-1], 0.0);
-					if(q_check <= q_abs_maxOT) break;
+					if(q_check <= q_abs_maxOT) 
+						break;
 				}
         
 				//Reassign the flux on each SCA
-				for(int i=0; i<j; i++){
+				for(int i=0; i<j; i++)
+				{
 					q_SCA[(int)SCADefocusArray[i]-1] = 0.0;
 				}
+				
 				double tsum = 0.;
 				for(int k=j+1; k<nSCA; k++){ tsum += q_abs_SCAtot[(int)SCADefocusArray[k]-1]; }
+				
 				q_SCA[(int)SCADefocusArray[j]-1] *= (q_check-tsum)/q_abs_SCAtot[(int)SCADefocusArray[j]-1];
 			}
-			else if(fthrctrl == 2){
-			
+			else if(fthrctrl == 2)
+			{			
 				//Partial defocusing of each SCA in the loop simultaneously. Specified defocus order is disregarded.
-				for(int k=0; k<nSCA; k++){
+				for(int k=0; k<nSCA; k++)
+				{
 					q_SCA[k] *= min(q_abs_maxOT/max(q_check,1.e-6),1.0);  //MJW 7.23.2010::Limit fraction to 1
 				}
 			}
 
-			if(q_SCA_tot>0.) {
+			if(q_SCA_tot>0.) 
+			{
 				double tsum = 0.;
 				for(int k=0; k<nSCA; k++){ tsum += q_SCA[k]; }
 				SCAs_def = min(tsum/q_SCA_tot,1.0);  //MJW 7.23.2010::Limit fraction to 1
-			} else {
+			} 
+			else 
+			{
 				SCAs_def = 1.;
 			}
     
 			SolveMode=2;  //Mode 2 -> defocusing
 			//mjw 11.4.2010 added conditional statement
-			if(dfcount<5) goto overtemp_iter_flag; //Return to recalculate with new defocus arrangement
+			if(dfcount<5) 
+				goto overtemp_iter_flag; //Return to recalculate with new defocus arrangement
 		}
 		//Calculate the amount of defocusing
-		if(q_SCA_tot>0.) {
+		if(q_SCA_tot>0.) 
+		{
 			double tsum = 0.;
 			for(int k=0; k<nSCA; k++){ tsum += q_SCA[k]; }
+			
 			SCAs_def = min(tsum/q_SCA_tot,1.0);  //MJW 7.23.2010::Limit fraction to 1
-		} else {
+		} 
+		else 
+		{
 			SCAs_def = 1.;
 		}
 
@@ -2054,18 +2142,23 @@ post_convergence_flag: //11 continue
 										HDR_rough,(40.+Row_Distance),0.0,0.0,2.0,0.0,0.0,2.0,0.0,0.0,2.0,1.0,0.0);
 						//if(ErrorFound()) return 1
 		//-------HCE's
-		DP_tube.fill(0.);
-		for(int j=0; j<nHCEVar; j++){
-			for(int i=0; i<nSCA; i++){
+		DP_tube.fill(0.0);
+		for(int j=0; j<nHCEVar; j++)
+		{
+			for(int i=0; i<nSCA; i++)
+			{
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type    
 				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
         
 				//Account for extra fittings on the first HCE
 				double x1, x2;
-				if(i==0) { 
+				if(i==0) 
+				{ 
 					x1 = 10.0;
 					x2 = 3.0;
-				} else {
+				} 
+				else 
+				{
 					x1 = 0.0;
 					x2 = 1.0;
 				}
@@ -2092,16 +2185,22 @@ post_convergence_flag: //11 continue
 
 		m_dot_htf_tot = m_dot_htf*float(nLoops);
 		m_dot_run_in = std::numeric_limits<double>::quiet_NaN();
-		if(nfsec>2) {  //mjw 5.4.11 Correct the mass flow for situations where nfsec/2==odd
+		
+		if(nfsec>2)  //mjw 5.4.11 Correct the mass flow for situations where nfsec/2==odd
+		{
 			m_dot_run_in = m_dot_htf_tot/2.0 * (1. - float(nfsec%4)/float(nfsec));
-		} else {
+		} 
+		else 
+		{
 			m_dot_run_in = m_dot_htf_tot/2.0; 
 		}
+		
 		x3 = float(nrunsec) - 1.0;  //Number of contractions/expansions
 		m_dot_temp = m_dot_run_in;
 		DP_toField = 0.0;
 		DP_fromField = 0.0;
-		for(int i=0; i<nrunsec; i++){
+		for(int i=0; i<nrunsec; i++)
+		{
 			DP_toField = DP_toField + PressureDrop(m_dot_temp,T_loop_in,1.0,D_runner[i],HDR_rough,L_runner[i],0.0,x3,0.0,0.0,
 									  max(float(CSP::nint(L_runner[i]/70.))*4.,8.),1.0,0.0,1.0,0.0,0.0,0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 			//if(ErrorFound()) return 1                  
@@ -2109,36 +2208,22 @@ post_convergence_flag: //11 continue
 			DP_fromField = DP_fromField + PressureDrop(m_dot_temp,T_loop_outX,1.0,D_runner[i],HDR_rough,L_runner[i],x3,0.0,0.0,0.0,
 										  max(float(CSP::nint(L_runner[i]/70.))*4.,8.),1.0,0.0,0.0,0.0,0.0,0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 			//if(ErrorFound()) return 1
-			if(i>1) m_dot_temp = max(m_dot_temp - 2.*m_dot_htf_tot/float(nfsec),0.0);
+			if(i>1) 
+				m_dot_temp = max(m_dot_temp - 2.*m_dot_htf_tot/float(nfsec),0.0);
 		}
-		//Calculation for heat losses from hot header and runner pipe
-		//Pipe_hl_cold = 0.0; Pipe_hl_hot = 0.0 //initialize
-		//for(int i=1,size(D_hdr)
-			//Pipe_hl_hot = Pipe_hl_hot + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_loop_outX - T_db)
-			//Pipe_hl_cold = Pipe_hl_cold + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_sys_c - T_db)
-		//}
-		//Add the runner length
-		//for(int i=1,nrunsec
-			//Pipe_hl_hot = Pipe_hl_hot + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_loop_outX - T_db)  //Wt
-			//Pipe_hl_cold = Pipe_hl_cold + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_sys_c - T_db)
-		//}
-
-		//-------field header loop
-		//if(FieldConfig==1.) {    //"H" type
-		//    x1 = 1.
-		//} else {                        //"I" type
-		//    x1 = 2.
-		//}
 
 		m_dot_header_in = m_dot_htf_tot/float(nfsec);
 		m_dot_header = m_dot_header_in;
 		DP_hdr_cold = 0.0;
 		DP_hdr_hot = 0.0;
-		for(int i=0; i<nhdrsec; i++){
+		for(int i=0; i<nhdrsec; i++)
+		{
 			//Determine whether the particular section has an expansion valve
 			double x2=0.0;
-			if(i>0) {
-				if(D_hdr[i] != D_hdr[i-1]) x2=1.;
+			if(i>0) 
+			{
+				if(D_hdr[i] != D_hdr[i-1]) 
+					x2=1.;
 			}
     
 			//Calculate pressure drop in cold header and hot header sections.. both use similar information
@@ -2149,10 +2234,8 @@ post_convergence_flag: //11 continue
 							(Row_Distance+4.275)*2.,x2,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
 			//if(ErrorFound()) return 1
 			//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
-			m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);
-			
+			m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);			
 		}
-
 
 		//The total pressure drop in all of the piping
 		DP_tot = (DP_loop + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
@@ -2161,16 +2244,14 @@ post_convergence_flag: //11 continue
 		W_dot_pump = DP_tot*m_dot_htf_tot/(rho_hdr_cold*eta_pump)/ 1000.;  //[kW]
 
 		//The parasitic power consumed by electronics and SCA drives
-		if(EqOpteff>0.0) {
+		if(EqOpteff>0.0) 
+		{
 			SCA_par_tot = SCA_drives_elec*SCAs_def*float(nSCA*nLoops);
-		} else {
+		}
+		else 
+		{
 			SCA_par_tot = 0.0;
 		}
-
-
-		// ******************************************************************************************************************************
-		 
-
 
 		// ******************************************************************
 		// Calculate the system transient temperature for the next time step
@@ -2179,7 +2260,8 @@ post_convergence_flag: //11 continue
 		//heating up the solar field
 		E_avail_tot = 0.;
 		E_loop_accum = 0.;
-		for(int i=0; i<nSCA; i++){
+		for(int i=0; i<nSCA; i++)
+		{
 			E_avail_tot += E_avail[i];  //[J]
 			E_loop_accum += E_accum[i]; //[J]
 		}
@@ -2190,25 +2272,6 @@ post_convergence_flag: //11 continue
 		//v_tot = v_hot + v_cold	//cc--> not used
 		c_hdr_cold = htfProps.Cp(T_loop_in)* 1000.;
 		c_hdr_hot = htfProps.Cp(T_loop_outX)* 1000.;
-
-		//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-		//T_loop_outX = T_loop_outX - Pipe_hl_hot/(m_dot_htf_tot*c_hdr_hot)
-		//
-		////Calculate the system temperature of the hot portion of the collector field. 
-		////This will serve as the fluid outlet temperature
-		//T_sys_h = (T_sys_h_last - T_loop_outX)*exp(-m_dot_htf_tot/(v_hot*rho_hdr_hot+mc_bal_hot/c_hdr_hot)*dt*3600.) + T_loop_outX
-		//
-		////Enforce freeze protection on the system temperatures
-		//if(T_sys_h < T_fp) {
-		//    //E_fp_tot = E_fp_tot + max((T_fp - T_sys_h)*(v_header + v_tofrom_sgs)*rho_hdr_hot*c_hdr_hot + Pipe_hl_hot , 0.0)
-		//    E_fp_tot = E_fp_tot + Pipe_hl_hot*dt*3600.0 //[J]
-		//    T_sys_h = T_fp
-		//}
-		//if(T_sys_c < T_fp) {
-		//    //E_fp_tot = E_fp_tot + max((T_fp - T_sys_c)*(v_header + v_tofrom_sgs)*rho_hdr_cold*c_hdr_cold + pipe_hl_cold , 0.0)
-		//    E_fp_tot = E_fp_tot + Pipe_hl_cold*dt*3600.0 //[J]
-		//    T_sys_c = T_fp
-		//}
 
 		//Half of the plant thermal mass must be heated up to the startup temperature (think hot header, hot half of heat
 		//exchangers) and the other half must be heated up to the design loop inlet temperature
@@ -2244,13 +2307,17 @@ post_convergence_flag: //11 continue
 		// Calculate final output values
 		// ******************************************************************
 		DP_tot = DP_tot * 1.e-5; //[bar]
+		
 		//Calculate the thermal power produced by the field
-		if(T_sys_h >= T_startup) {  //MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+		if(T_sys_h >= T_startup)   //MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+		{
 			q_avail = E_avail_tot/(dt)*1.e-6;  //[MW]
 			//Calculate the available mass flow of HTF
 			m_dot_avail = max(q_avail*1.e6/(c_htf_ave*(T_sys_h - T_cold_in_1)),0.0); //[kg/s] 
     
-		} else {
+		} 
+		else 
+		{
 			q_avail = 0.0;
 			m_dot_avail = 0.0;
 		}
@@ -2260,23 +2327,28 @@ post_convergence_flag: //11 continue
 
 		//Total field performance
 		q_field_delivered = m_dot_htf_tot * c_htf_ave * (T_sys_h - T_cold_in_1) / 1.e6; //MJW 1.11.11 [MWt]
-		if(I_b*CosTh_ave == 0.){	//cc--> Adding case for zero output. Was reporting -Infinity in original version
+		if(I_b*CosTh_ave == 0.)	//cc--> Adding case for zero output. Was reporting -Infinity in original version
+		{
 			eta_thermal = 0.;
 		}
-		else{
+		else
+		{
 			eta_thermal = q_field_delivered / (I_b*CosTh_ave*Ap_tot / 1.e6);  //MJW 1.11.11	
 		}
 
-
 		//------mjw 1.5.2011 For initialization in acceptance testing mode, check to see if the solar field is in equilibrium. 
 		//if not (and if it's the first call), go back and keep warming up.
-		if(accept_init){	//cc-> switching the order of accept_init test. More efficient this way and no change in functionality
-			if((time == start_time) && (ncall==0)) {
-				if(E_bal_startup > 0.0) {
+		if(accept_init)	//cc-> switching the order of accept_init test. More efficient this way and no change in functionality
+		{	
+			if((time == start_time) && (ncall==0)) 
+			{
+				if(E_bal_startup > 0.0) 
+				{
 					// Set the system state values for the next calculation as if we were proceeding to the next timestep
 					T_sys_c_last = T_sys_c;       //Set T_sys_c_last
 					T_sys_h_last = T_sys_h;       //Set T_sys_h_last
-					for(int i=0; i<nSCA; i++){
+					for(int i=0; i<nSCA; i++)
+					{
 						T_htf_in0[i] = T_htf_in[i];  //Set T_htf_in0
 						T_htf_out0[i] = T_htf_out[i];  //Set T_htf_out0
 					}
@@ -2295,37 +2367,42 @@ set_outputs_and_return:
 
 		//---------Do unit conversions and final calculations-------------
 		 
-		double T_sys_h_out = T_sys_h - 273.15;
-		double m_dot_avail_out = m_dot_avail*3600.;
-		double W_dot_pump_out = W_dot_pump/1000.;
-		double E_fp_tot_out = E_fp_tot*1.e-6;
-		double T_sys_c_out = T_sys_c - 273.15;
+		double T_sys_h_out = T_sys_h - 273.15;			//[C] from K
+		double m_dot_avail_out = m_dot_avail*3600.;		//[kg/hr] from kg/s
+		double W_dot_pump_out = W_dot_pump/1000.;		//[MW] from kW
+		double E_fp_tot_out = E_fp_tot*1.e-6;			//[MW] from W
+		double T_sys_c_out = T_sys_c - 273.15;			//[C] from K
 		double EqOpteff_out = EqOpteff*ftrack*CosTh_ave;
-		double m_dot_htf_tot_out = m_dot_htf_tot *3600.;
-		double E_bal_startup_out = E_bal_startup/(dt*1.e6);
+		double m_dot_htf_tot_out = m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
+		double E_bal_startup_out = E_bal_startup/(dt*1.e6);	//[MW] from J
 		q_inc_sf_tot = Ap_tot*I_b/1.e6;
 		q_abs_tot = 0.;
 		q_loss_tot = 0.;
 		q_loss_spec_tot = 0.;
-		for(int i=0; i<nSCA; i++){
+		for(int i=0; i<nSCA; i++)
+		{
 			q_abs_tot += q_abs_SCAtot[i]*1.e-6*float(nLoops);
 			q_loss_tot += q_loss_SCAtot[i]*1.e-6*float(nLoops);
 			q_loss_spec_tot += q_1abs_tot[i]/float(nSCA);
 		}
+		
 		double
 			SCA_par_tot_out = SCA_par_tot * 1.e-6,
 			Pipe_hl_out = Pipe_hl * 1.e-6,
 			Theta_ave_out = Theta_ave/d2r,
 			CosTh_ave_out = CosTh_ave * ftrack;
+		
 		dni_costh = I_b*CosTh_ave;
 		qinc_costh = dni_costh * Ap_tot/1.e6;
 		t_loop_outlet = T_loop_outX - 273.15;
+		
 		double
 			E_loop_accum_out = E_loop_accum * 3.6e-9,
 			E_hdr_accum_out = E_hdr_accum * 3.6e-9;
+		
 		E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
-		double
-			E_field_out = E_field*3.6e-9;
+		
+		double E_field_out = E_field*3.6e-9;
 		//------------------------------------------------------------------
 
 		//Set outputs
