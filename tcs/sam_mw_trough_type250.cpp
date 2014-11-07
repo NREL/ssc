@@ -1305,11 +1305,11 @@ public:
 		sprintf(tstr, fmt.c_str(), v_cold, v_hot, v_loop_tot/float(nLoops), v_loop_tot, (v_hot*2. + v_loop_tot), v_sgs, (v_hot*2. + v_loop_tot + v_sgs));
 		summary.append(tstr);
 
-		if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
-		{
-			fprintf(file, summary.c_str());
-			fclose(file);
-		}
+		//if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
+		//{
+		//	fprintf(file, summary.c_str());
+		//	fclose(file);
+		//}
 				
 		//Include the pump/SGS volume with the header
 		v_hot = v_hot + v_sgs/2.;
