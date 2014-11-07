@@ -8,11 +8,11 @@ static var_info vtab_utility_rate3[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
-//	{ SSC_INPUT,        SSC_ARRAY,      "e_with_system",            "Net energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",            "Net energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+//	{ SSC_INPUT,        SSC_ARRAY,      "e_with_system",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "p_with_system",            "Max power at grid with system",                 "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
-//	{ SSC_INPUT, SSC_ARRAY, "e_without_system", "Net energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
-	{ SSC_INPUT, SSC_ARRAY, "e_load", "Net energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "e_without_system", "Energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "e_load", "Energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
 //	{ SSC_INPUT, SSC_ARRAY, "p_without_system", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
 	{ SSC_INPUT, SSC_ARRAY, "p_load", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
@@ -597,12 +597,12 @@ static var_info vtab_utility_rate3[] = {
 
 	
 	// outputs
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Net energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_electric_load",            "Total electric load in each year",  "kWh",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 
 	// use output from annualoutput not scaled output from here
-	//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Net energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 
 
 		// outputs from Paul, Nate and Sean 9/9/13
