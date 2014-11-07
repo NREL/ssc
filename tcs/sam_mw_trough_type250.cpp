@@ -1076,7 +1076,8 @@ public:
 		return 0;
 	}
 
-	bool init_fieldgeom(){
+	bool init_fieldgeom()
+	{
 
 		/* 
 		Call this method once when call() is first invoked. The calculations require location information that
@@ -1085,26 +1086,32 @@ public:
 
 		//Calculate the actual length of the SCA's based on the aperture length and the collectors per SCA
 		L_actSCA.resize(nColt);
-		for(int i=0; i<nColt; i++){
+		for(int i=0; i<nColt; i++)
+		{
 			L_actSCA[i] = L_aperture[i] * ColperSCA[i];
 		}
 
 		//Calculate the total field aperture area
 		Ap_tot = 0.;
-		for(int i=0; i<nSCA; i++){
-			//int ct = (int)SCAInfoArray.at(i,0);			// 7/1/13, tn: change j index to 1 because aperture is a collector property, not a receiver property?
+		for(int i=0; i<nSCA; i++)
+		{
 			int ct = (int)SCAInfoArray.at(i,1);
 			Ap_tot += A_aperture[ct-1]*float(nLoops);
 		}
+		
 		//Calculate the cross-sectional flow area of the receiver piping
 		D_h.resize(nHCEt, nHCEVar);
 		A_cs.resize(nHCEt, nHCEVar);
-		for(int i=0; i<nHCEt; i++){
-			for(int j=0; j<nHCEVar; j++){
-				if(Flow_type.at(i,j) == 2){
+		for(int i=0; i<nHCEt; i++)
+		{
+			for(int j=0; j<nHCEVar; j++)
+			{
+				if(Flow_type.at(i,j) == 2)
+				{
 					D_h.at(i,j) = D_2.at(i,j) - D_p.at(i,j);
 				}
-				else{
+				else
+				{
 					D_h.at(i,j) = D_2.at(i,j);
 					D_p.at(i,j) = 0.;
 				}
@@ -1116,7 +1123,8 @@ public:
 		//output file with calculated header diameter "header_diam.out"
 		nfsec = FieldConfig;  //MJW 1.12.11 allow the user to specify the number of field sections
 		//Check to make sure the number of field sections is an even number
-		if( nfsec%2 != 0){
+		if( nfsec%2 != 0)
+		{
 			message("Number of field subsections must equal an even number");
 			return false;
 		}
@@ -1140,12 +1148,14 @@ public:
 		opteff_des=0.0; 
 		m_dot_design=0.0; 
 		L_tot=0.0;
-		for(int i=0; i<nSCA; i++){
+		for(int i=0; i<nSCA; i++)
+		{
 			int ct = (int)SCAInfoArray.at(i,1);
 			L_tot += L_actSCA[ct-1];
 		}
 		
-		for(int i=0; i<nSCA; i++){
+		for(int i=0; i<nSCA; i++)
+		{
 			int CT = (int)SCAInfoArray.at(i,1);    //Collector type    
 			//Calculate the CosTheta value at summer solstice noon
 			//x1 = sqrt(1. - pow(cos((latitude - 23.5/180.*pi)-ColTilt) - cos(ColTilt) * cos((latitude - 23.5/180.*pi)) * (1. - cos(0. -ColAz)), 2)); //costheta
@@ -1154,7 +1164,8 @@ public:
 			//calculate end loss
 			//el_des =  1. - (Ave_Focal_Length[CT-1] * tan(acos(x1)) - (float(nSCA) - 1.) /float(nSCA)* x2) / L_actSCA[CT-1];
 			
-			for(int j=0; j<nHCEVar; j++){
+			for(int j=0; j<nHCEVar; j++)
+			{
 				int HT = (int)SCAInfoArray.at(i,0);    //HCE type
 				//Calculate optical efficiency approximating use of the first collector only
 				opteff_des += Shadowing.at(HT-1,j)*TrackingError[CT-1]*GeomEffects[CT-1]*Rho_mirror_clean[CT-1]*Dirt_mirror[CT-1]*
@@ -1211,22 +1222,27 @@ public:
 		If the number of subfields were 6 (3 spans), the two runner pipe segments would both be equal to the full
 		distance between spans.
 		*/
-		if(nfsec/2 % 2==1) {
+		if(nfsec/2 % 2==1) 
+		{
 			x1 = 2.;     //the first runners are normal
 		}
-		else{
+		else
+		{
 			x1 = 1.;     //the first runners are short
 		}
 		L_runner[0] = 50.;  //Assume 50 [m] of runner piping in and around the power block before it heads out to the field in the main runners
-		if(nrunsec > 1) {
-			for(int i=1; i<nrunsec; i++){
+		if(nrunsec > 1) 
+		{
+			for(int i=1; i<nrunsec; i++)
+			{
 				int j = (int)SCAInfoArray.at(0,1)-1;
 				L_runner[i] = x1 * (2*Row_Distance + (L_SCA[j] + Distance_SCA[j])*float(nSCA)/2.);
 				x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
 			}
 		}
 		double v_tofrom_sgs = 0.0;
-		for(int i=0; i<nrunsec; i++){
+		for(int i=0; i<nrunsec; i++)
+		{
 			v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i]*pi*pow(D_runner[i],2)/4.;  //This is the volume of the runner in 1 direction.
 		}
     
@@ -1239,14 +1255,17 @@ public:
     
 		//-------piping from header into and out of the HCE's
 		double v_loop_tot = 0.;
-		for(int j=0; j< nHCEVar; j++){
-			for(int i=0; i<nSCA; i++){
+		for(int j=0; j< nHCEVar; j++)
+		{
+			for(int i=0; i<nSCA; i++)
+			{
 				int CT = (int)SCAInfoArray.at(i,1)-1;   //Collector type    
 				int HT = (int)SCAInfoArray.at(i,0)-1;    //HCE type
 				//v_loop_bal = v_loop_bal + Distance_SCA(CT)*A_cs(HT,j)*HCE_FieldFrac(HT,j)*float(nLoops)
 				v_loop_tot += (L_SCA[CT] + Distance_SCA[CT])*A_cs(HT,j)*HCE_FieldFrac(HT,j)*float(nLoops);
 			}
 		}
+		
 		//mjw 1.13.2011 Add on volume for the crossover piping 
 		//v_loop_tot = v_loop_tot + Row_Distance*A_cs(SCAInfoArray(nSCA/2,1),1)*float(nLoops)
 		v_loop_tot += Row_Distance*A_cs((int)SCAInfoArray(max(2,nSCA)/2-1,0),0)*float(nLoops);      //TN 6/20: need to solve for nSCA = 1
@@ -1254,7 +1273,8 @@ public:
     
 		//-------field header loop
 		double v_header = 0.0;
-		for(int i=0; i<nhdrsec; i++){
+		for(int i=0; i<nhdrsec; i++)
+		{
 			//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
 			v_header += D_hdr[i]*D_hdr[i]/4.*pi*(Row_Distance+4.275)*float(nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
 		}
@@ -1290,7 +1310,6 @@ public:
 			fprintf(file, summary.c_str());
 			fclose(file);
 		}
-
 				
 		//Include the pump/SGS volume with the header
 		v_hot = v_hot + v_sgs/2.;
@@ -1365,15 +1384,6 @@ public:
 		}
 		//**********************************************************************************************************************
 
-		
-
-		// ******* Read in stored variables every timestep*******
-		/*if(accept_init) {
-			if((time == start_time) && (ncall==0)) {
-				print *,"Initializing..."
-			}
-		}*/	//cc --> No analog to the "print" statement
-
 		double hour, T_sky, rho_hdr_cold, rho_hdr_hot;
 		double c_hdr_cold_last, m_dot_lower, m_dot_upper;
 		bool upflag, lowflag, fp_lowflag, fp_upflag;
@@ -1394,37 +1404,24 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 		defocus = defocus_new / defocus_old;
 		defocus_old = defocus_new;
 
-		if(ncall == 0)        //Always reset the defocus control at the begining of the timestep
-		{
-			defocus_new = 1.;
-			defocus_old = 1.;
-			defocus = 1.0;
-		}
-
-		//calculate the hour of the day
-		time_hr = time/3600.;
-		dt_hr = dt/3600.;
-		hour = fmod(time_hr,24.);       //hour of the day (1..24)  //tn 4.25.11 mod returns a natural number. This messes with the ftrack HrA/HrB calculations
-		T_sky = CSP::skytemp(T_db,T_dp,hour);     //[K] Effective sky temperature 
-		
-		// *******Recalculate values that are time-dependent***********
-
 		//First calculate the cold header temperature, which will serve as the loop inlet temperature
 		rho_hdr_cold = htfProps.dens(T_sys_c_last, 1.);
 		rho_hdr_hot = htfProps.dens(T_sys_h_last, 1.);
 		c_hdr_cold_last = htfProps.Cp(T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 
-		//MJW 1.17.2011 In acceptance test mode, select whether to enforce the cold inlet temperature at the heat exchanger
-		//outlet (==1) or at the loop inlet (} else {).
-		//if((accept_loc!=2.0) || (time==start_time)) {
-		//    T_sys_c = (T_sys_c_last - T_cold_in)*exp(-m_dot_in/(v_cold*rho_hdr_cold+mc_bal_cold/c_hdr_cold)*dt*3600.) + T_cold_in
-		//} else {
-		//    T_sys_c = T_cold_in
-		//}
-		//T_loop_in = T_sys_c
-
 		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 		{
+			//calculate the hour of the day
+			time_hr = time / 3600.;
+			dt_hr = dt / 3600.;
+			hour = fmod(time_hr, 24.);       //hour of the day (1..24)  //tn 4.25.11 mod returns a natural number. This messes with the ftrack HrA/HrB calculations
+			T_sky = CSP::skytemp(T_db, T_dp, hour);     //[K] Effective sky temperature 
+
+			// Always reset the defocus control at the first call of a timestep
+			defocus_new = 1.;
+			defocus_old = 1.;
+			defocus = 1.0;
+
 			//Time calculations
 			day_of_year = (int)ceil(time_hr/24.);  //Day of the year
 			// Duffie & Beckman 1.5.3b
@@ -1456,24 +1453,31 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 
 			double  MidTrack;
 			// Solar field operates
-			if ((HrB > DepTime)  &&  (HrA < StwTime)) {
+			if ((HrB > DepTime)  &&  (HrA < StwTime)) 
+			{
 				// solar field deploys during time period
-				if (HrA < DepTime) {
+				if (HrA < DepTime) 
+				{
 					ftrack = (HrB - DepTime) / dt_hr;
 					MidTrack = HrB - ftrack * 0.5 *dt_hr;
 
 				// Solar field stows during time period
 				}
-				else if (HrB > StwTime) {
+				else if (HrB > StwTime) 
+				{
 					ftrack = (StwTime - HrA) / dt_hr;
 					MidTrack = HrA + ftrack * 0.5 *dt_hr;
 				// solar field operates during entire period
-				} else {
+				} 
+				else 
+				{
 					ftrack = 1.0;
 					MidTrack = HrA + 0.5 *dt_hr;
 				}
 			// solar field doesn't operate
-			} else {
+			} 
+			else
+			{
 				ftrack = 0.0;
 				MidTrack = HrA + 0.5 *dt_hr;
 			}
@@ -1484,7 +1488,8 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 			double omega = (SolarTime - 12.0)*15.0*pi/180.0;
 			// B. Stine equation for Solar Altitude angle in radians
 			SolarAlt = asin(sin(Dec)*sin(latitude)+cos(latitude)*cos(Dec)*cos(omega));
-			if(accept_init  &&  time==start_time) {  //MJW 1.14.2011 
+			if(accept_init  &&  time==start_time) 
+			{  //MJW 1.14.2011 
 				SolarAz = CSP::sign(omega)*abs(acos(min(1.0,(cos(pi/2.-SolarAlt)*sin(latitude)-sin(Dec))/(sin(pi/2.-SolarAlt)*cos(latitude)))));
 			}
     
@@ -1492,37 +1497,53 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 			double TrackAngle = atan ( cos(SolarAlt) * sin(SolarAz-ColAz) / 
 						 (sin(SolarAlt-ColTilt)+sin(ColTilt)*cos(SolarAlt)*(1-cos(SolarAz-ColAz))) );
 			// Calculation of solar incidence angle for trough.. Stine reference
-			if(ftrack==0.0) {
+			if(ftrack==0.0) 
+			{
 				costh=1.0;
-			} else {
+			} 
+			else 
+			{
 				costh = sqrt(1.0 - pow(cos(SolarAlt-ColTilt) - cos(ColTilt) * cos(SolarAlt) * (1.0 - cos(SolarAz -ColAz)), 2));
 			}
+
 			// theta in radians
 			theta = acos(costh);
         
-			for(int i=0; i<nColt; i++){
+			for(int i=0; i<nColt; i++)
+			{
 				q_i[i] = I_b*A_aperture[i]/L_actSCA[i]; //[W/m] The incoming solar irradiation per aperture length
 				//incidence angle modifier (radians)
 				IAM[i] = IamF0[i] + IamF1[i] * theta / costh + IamF2[i] * theta*theta/ costh;
 				//Calculate the Optical efficiency of the collector
-				for(int j=0; j<nSCA; j++){
+				for(int j=0; j<nSCA; j++)
+				{
 					ColOptEff(i,j) = TrackingError[i] * GeomEffects[i] * Rho_mirror_clean[i] * Dirt_mirror[i] * Error[i] * IAM[i];
 				}
 
 				//Account for light reflecting off the collector and missing the receiver, also light from other 
 				//collectors hitting a different receiver
 				//mjw 4.21.11 - rescope this to be for each specific collector j=1,nSCA
-				for(int j=0; j<nSCA; j++){
-					if(abs(SolarAz) <= 90.0) {  //mjw 5.1.11 The sun is in the southern sky (towards equator)
-						if(j==0 || j==nSCA-1) {
+				for(int j=0; j<nSCA; j++)
+				{
+					if(abs(SolarAz) <= 90.0) 
+					{  //mjw 5.1.11 The sun is in the southern sky (towards equator)
+						if(j==0 || j==nSCA-1) 
+						{
 							EndGain(i,j) =  0.0; //No gain for the first or last collector
-						} else {
+						} 
+						else 
+						{
 							EndGain(i,j) = max(Ave_Focal_Length[i] * tan(theta) - Distance_SCA[i], 0.0)/ L_actSCA[i];
 						}
-					} else {  //mjw 5.1.11 The sun is in the northern sky (away from equator)
-						if((j==floor(float(nSCA)/2.)-1) || (j==floor(float(nSCA)/2.))) {
+					} 
+					else 
+					{  //mjw 5.1.11 The sun is in the northern sky (away from equator)
+						if((j==floor(float(nSCA)/2.)-1) || (j==floor(float(nSCA)/2.))) 
+						{
 							EndGain(i,j) = 0.0; //No gain for the loops at the ends of the rows
-						} else {
+						}
+						else 
+						{
 							EndGain(i,j) = max(Ave_Focal_Length[i] * tan(theta) - Distance_SCA[i], 0.0)/ L_actSCA[i];
 						}
 					}
@@ -1532,23 +1553,27 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 				// Row to Row Shadowing Lossess
 				//PH = pi / 2.0 - TrackAngle[i]
 				RowShadow[i] = abs(cos(TrackAngle)) * Row_Distance / W_aperture[i];
-				if ( RowShadow[i] < 0.5  ||  SolarAlt < 0. ) {
+				if ( RowShadow[i] < 0.5  ||  SolarAlt < 0. ) 
+				{
 					RowShadow[i] = 0.;
 				} 
-				else if (RowShadow[i] > 1.) {
+				else if (RowShadow[i] > 1.) 
+				{
 					RowShadow[i] = 1.;
 				}
         
 				//Finally correct for these losses on the collector optical efficiency value
-				for(int j=0; j<nSCA; j++){
+				for(int j=0; j<nSCA; j++)
+				{
 					ColOptEff(i,j) = ColOptEff(i,j)*RowShadow[i]*EndLoss(i,j)*ftrack;  //mjw 4.21.11 now a separate value for each SCA
 				}
-
 			}
+
 			//Calculate the flux level associated with each SCA
 			//but only calculate for the first call of the timestep<----[NO// messes with defocusing control: mjw 11.4.2010]
 			Theta_ave = 0.0; CosTh_ave = 0.0; IAM_ave = 0.0; RowShadow_ave = 0.0; EndLoss_ave = 0.0;
-			for(int i=0; i<nSCA; i++){
+			for(int i=0; i<nSCA; i++)
+			{
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type
 				q_SCA[i] = q_i[CT]*costh;        //The flux corresponding with the collector type
 				//Also use this chance to calculate average optical values
