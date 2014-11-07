@@ -15,10 +15,10 @@ static var_info vtab_cashloan[] = {
 	
 //	{ SSC_INPUT,        SSC_ARRAY,       "energy_value",             "Value of electricity savings",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
-//	{ SSC_INPUT,        SSC_ARRAY,       "energy_net",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
-//	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy",               "Net energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
-	{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Net energy at grid with system", "kWh", "", "", "*", "LENGTH=8760", "" },
-	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
+//	{ SSC_INPUT,        SSC_ARRAY,       "energy_net",               "Energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
+//	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy",               "Energy",                         "kWh",          "",                      "Cashloan",      "*",                       "",                                         "" },
+	{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Energy at grid with system", "kWh", "", "", "*", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "AnnualOutput", "*", "INTEGER,MIN=0", "" },
 
 	/* financial outputs */
