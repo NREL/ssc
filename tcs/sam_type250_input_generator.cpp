@@ -145,7 +145,7 @@ public:
 
 		m_dot_in = value(P_M_DOT_IN, &nval_m_dot_in);		//[kg/hr] HTF inlet mass flow rate
 
-		defocus = value(P_M_DOT_IN, &nval_defocus);			//[-] Defocus
+		defocus = value(P_DEFOCUS, &nval_defocus);			//[-] Defocus
 
 		if( nval_I_b != nval_T_db || nval_T_db != nval_V_wind || nval_V_wind != nval_P_amb || nval_P_amb != nval_T_dp || nval_T_dp != nval_T_cold_in || nval_T_cold_in != nval_m_dot_in || nval_m_dot_in != nval_defocus )
 		{
@@ -170,14 +170,14 @@ public:
 			return -1;
 		}
 
-		value( O_I_B, I_b[nval_current] );      
-		value( O_T_DB, T_db[nval_current] );    
-		value( O_V_WIND, V_wind[nval_current] );  
-		value( O_P_AMB, P_amb[nval_current] );
-		value( O_T_DP, T_dp[nval_current] );
-		value( O_T_COLD_IN, T_cold_in[nval_current] );
-		value( O_M_DOT_IN, m_dot_in[nval_current] );
-		value( O_DEFOCUS, defocus[nval_current] );
+		value( O_I_B, I_b[nval_current-1] );      
+		value( O_T_DB, T_db[nval_current-1] );    
+		value( O_V_WIND, V_wind[nval_current-1] );  
+		value( O_P_AMB, P_amb[nval_current-1] );
+		value( O_T_DP, T_dp[nval_current-1] );
+		value( O_T_COLD_IN, T_cold_in[nval_current-1] );
+		value( O_M_DOT_IN, m_dot_in[nval_current-1] );
+		value( O_DEFOCUS, defocus[nval_current-1] );
 
 		return 0;
 	}
