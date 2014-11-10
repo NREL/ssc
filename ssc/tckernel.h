@@ -10,7 +10,7 @@ public:
 	tcKernel(tcstypeprovider *prov);
 	virtual ~tcKernel();
 	
-	virtual void log( const std::string & text );
+	virtual void message( const std::string & text, int msgtype );
 	virtual bool progress( float percent, const std::string &status );
 	virtual bool converged( double time );
 	void set_store_array_matrix_data( bool b ) { m_storeArrMatData = b; }

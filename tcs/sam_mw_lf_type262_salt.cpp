@@ -701,7 +701,7 @@ public:
 
 				if ( !htfProps.SetUserDefinedFluid( mat ) )
 				{
-					message( htfProps.UserFluidErrMessage(), nrows, ncols );
+					message( TCS_ERROR, htfProps.UserFluidErrMessage(), nrows, ncols );
 					return -1;
 				}
 			}
@@ -958,7 +958,7 @@ public:
 		nfsec = FieldConfig;  //MJW 1.12.11 allow the user to specify the number of field sections
 		//Check to make sure the number of field sections is an even number
 		if( nfsec%2 != 0){
-			message("Number of field subsections must equal an even number");
+			message(TCS_ERROR, "Number of field subsections must equal an even number");
 			return false;
 		}
 
@@ -1006,8 +1006,8 @@ public:
 			opteff_des = eta_opt_fixed * iam_t * iam_l;
 			break;
 		default:
-			message("The selected optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials",opt_model);
-			false;
+			message(TCS_ERROR, "The selected optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials",opt_model);
+			return false;
 		}
 
 		//Determine the heat loss efficiency at design
@@ -1047,7 +1047,7 @@ public:
 			opteff_des *= hceopt;
 			break;
 		default:
-			message("The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model",rec_model);
+			message(TCS_ERROR, "The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model",rec_model);
 			return false;
 		}
 
@@ -1144,7 +1144,7 @@ public:
 			v_loop_tot += L_crossover*A_cs.at(0)*(float)nLoops;      //TN 6/20: need to solve for nMod = 1
 			break;
 		default:
-			message("The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model",rec_model);
+			message(TCS_ERROR, "The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model",rec_model);
 			return false;
 		}
     
@@ -1375,7 +1375,7 @@ public:
 					break;
 				default:
 					//error
-					message("No corresponding optical model. Error in solar angle calculation.");
+					message(TCS_ERROR, "No corresponding optical model. Error in solar angle calculation.");
 					return -1;
 				}
                 				
@@ -1523,7 +1523,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 						{	//cc--> Check for NaN
 							m_dot_htfX = m_dot_htfmax;
 							if(dfcount > 20) {
-								message("The solution encountered an unresolvable NaN error in the heat loss calculations. Retrying solar field calculations...");
+								message(TCS_WARNING, "The solution encountered an unresolvable NaN error in the heat loss calculations. Retrying solar field calculations...");
 								return 0;
 							}
 							goto overtemp_iter_flag;
@@ -1593,7 +1593,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					
 					break;
 				default:
-					message("The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model",rec_model);
+					message(TCS_ERROR, "The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model",rec_model);
 					return -1;
 				}
 
@@ -1786,7 +1786,7 @@ freeze_prot_ok:		//continue on ok freeze protection check
 		}
 
 		if(qq>29) {
-			message("Mass Flow Rate Convergence Error");
+			message(TCS_ERROR, "Mass Flow Rate Convergence Error");
 			return -1;
 		}
 
@@ -1931,7 +1931,7 @@ post_convergence_flag: //11 continue
 
 		default:
 			//error
-			message("No such heat loss model. Error in loop pressure drop calculations.");
+			message(TCS_ERROR, "No such heat loss model. Error in loop pressure drop calculations.");
 			return -1;
 		}
 
@@ -3918,7 +3918,7 @@ lab_keep_guess:
 			if(D_m[i] >= De) return D_m[i];
 		}
 		//Nothing was found, so return an error
-		message("No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in. "
+		message(TCS_WARNING, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in. "
 			"Maximum schedule is %.2f in. Using the exact pipe diameter instead.", De*mtoinch, D_m[np-1]*mtoinch);
 		return std::numeric_limits<double>::quiet_NaN();
 	}

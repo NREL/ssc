@@ -1009,7 +1009,7 @@ public:
 			{
 				// Fatal error. NOT SURE IF THIS WILL BE THE RIGHT ERROR MESSAGE BUT FOR NOW...
 			//	call Messages(-1,'CSP Trough model exceeded internal iteration limit.','fatal',info(1),info(2))
-				message( "Warning - Empirical trough (805) model exceeded interal iteration limit" );		// 7.3.13 twn: Changed from 'fatal' to 'warning' in TRNSYS to stop simulation from crashing for some weather files
+				message( TCS_WARNING, "Warning - Empirical trough (805) model exceeded interal iteration limit" );		// 7.3.13 twn: Changed from 'fatal' to 'warning' in TRNSYS to stop simulation from crashing for some weather files
 				break;
 				//return 1;
 			}

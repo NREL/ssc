@@ -228,7 +228,7 @@ public:
 			break;
 
 		default:
-			message( "Manufacturer integer needs to be from 1 to 5" );
+			message( TCS_ERROR, "Manufacturer integer needs to be from 1 to 5" );
 			return -1;
 		}
 
@@ -268,7 +268,7 @@ public:
 		}
 		else
 		{
-			message( "Receiver type must be set to 1 or 2" );
+			message( TCS_ERROR, "Receiver type must be set to 1 or 2" );
 			return -1;
 		}
 

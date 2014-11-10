@@ -407,7 +407,7 @@ public:
 
 				if ( !rec_htf.SetUserDefinedFluid( mat ) )
 				{
-					message( "user defined htf property table was invalid (rows=%d cols=%d)", htf_rows, htf_cols );
+					message( TCS_ERROR, "user defined htf property table was invalid (rows=%d cols=%d)", htf_rows, htf_cols );
 					return -1;
 				}
 			}
@@ -423,7 +423,7 @@ public:
 		}
 		else
 		{
-			message( "user defined properties are not an option for tubing material. Select an available material number." );
+			message(TCS_ERROR,  "user defined properties are not an option for tubing material. Select an available material number." );
 			return -1;
 		}
 		//********************************************************************************
@@ -480,7 +480,7 @@ public:
 		}
 		else
 		{
-			message( "Flux map solar position input is incorrect P_fluxmap_angles: %d x %d", angle_rows, angle_cols );
+			message(TCS_ERROR,  "Flux map solar position input is incorrect P_fluxmap_angles: %d x %d", angle_rows, angle_cols );
 			return -1;
 		}
 		num_sol_pos = angle_cols;
@@ -493,7 +493,7 @@ public:
 		double *p_flux = value( P_fluxmap, &flux_rows, &flux_cols );
 		if( flux_rows != num_sol_pos )
 		{
-			message( "Number of flux maps is not equal to number of solar positions" );
+			message(TCS_ERROR,  "Number of flux maps is not equal to number of solar positions" );
 			return -1;
 		}
 		fluxmap.resize( flux_rows, flux_cols );
@@ -505,7 +505,7 @@ public:
 		}
 		else
 		{
-			message( "Flux map input is incorrect" );
+			message(TCS_ERROR,  "Flux map input is incorrect" );
 			return -1;
 		}
 		// ********************************************************************************

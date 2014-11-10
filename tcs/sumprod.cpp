@@ -47,7 +47,7 @@ public:
 		
 		if ( a < -999 )
 		{
-			message("invalid value for a: %lg", a);
+			message( TCS_ERROR, "invalid value for a: %lg", a);
 			return -1;
 		}
 

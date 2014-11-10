@@ -688,7 +688,7 @@ public:
 		}
 		else
 		{
-			message( "Aperature area matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Aperature area matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -703,7 +703,7 @@ public:
 		}
 		else
 		{
-			message( "Collector length matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Collector length matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -718,7 +718,7 @@ public:
 		}
 		else
 		{
-			message( "Optical char. method matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message(TCS_ERROR,  "Optical char. method matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -733,7 +733,7 @@ public:
 		}
 		else
 		{
-			message( "Transverse IAM matrix should have %d rows (b,SH) and 5 columns (0 - 4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Transverse IAM matrix should have %d rows (b,SH) and 5 columns (0 - 4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -748,7 +748,7 @@ public:
 		}
 		else
 		{
-			message( "Longitudinal IAM matrix should have %d rows (b,SH) and 5 columns (0 - 4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Longitudinal IAM matrix should have %d rows (b,SH) and 5 columns (0 - 4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -763,7 +763,7 @@ public:
 		}
 		else
 		{
-			message( "Tracking error derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Tracking error derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -778,7 +778,7 @@ public:
 		}
 		else
 		{
-			message( "Geometry effects derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Geometry effects derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -793,7 +793,7 @@ public:
 		}
 		else
 		{
-			message( "Clean mirror reflectivity matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Clean mirror reflectivity matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -808,7 +808,7 @@ public:
 		}
 		else
 		{
-			message( "Dirt on mirror derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message(TCS_ERROR,  "Dirt on mirror derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -823,7 +823,7 @@ public:
 		}
 		else
 		{
-			message( "General optical error derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "General optical error derate matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -838,7 +838,7 @@ public:
 		}
 		else
 		{
-			message( "Heat loss model type matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Heat loss model type matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -853,7 +853,7 @@ public:
 		}
 		else
 		{
-			message( "HTF temperature heat loss coef. matrix should have %d rows (b,SH) and 5 columns (0-4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HTF temperature heat loss coef. matrix should have %d rows (b,SH) and 5 columns (0-4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -868,7 +868,7 @@ public:
 		}
 		else
 		{
-			message( "Wind speed heat loss coef. matrix should have %d rows (b,SH) and 5 columns (0-4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Wind speed heat loss coef. matrix should have %d rows (b,SH) and 5 columns (0-4th order terms) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -883,7 +883,7 @@ public:
 		}
 		else
 		{
-			message( "Inner absorber tube diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Inner absorber tube diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -898,7 +898,7 @@ public:
 		}
 		else
 		{
-			message( "Outer absorber tube diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Outer absorber tube diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -913,7 +913,7 @@ public:
 		}
 		else
 		{
-			message( "Inner glass envelope diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Inner glass envelope diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -928,7 +928,7 @@ public:
 		}
 		else
 		{
-			message( "Outer glass envelope diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Outer glass envelope diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -943,7 +943,7 @@ public:
 		}
 		else
 		{
-			message( "Absorber flow plug diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Absorber flow plug diameter matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -958,7 +958,7 @@ public:
 		}
 		else
 		{
-			message( "Internal surface roughness matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Internal surface roughness matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -968,7 +968,7 @@ public:
 			m_Flow_type.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "Absorber flow-type matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message(TCS_ERROR,  "Absorber flow-type matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -994,7 +994,7 @@ public:
 			AbsorberMaterial.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "Absorber material type matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Absorber material type matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1010,7 +1010,7 @@ public:
 			m_HCE_FieldFrac.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE field fraction matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE field fraction matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1020,7 +1020,7 @@ public:
 			m_alpha_abs.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE absorber absorptance matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE absorber absorptance matrix should have %d rows (b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1032,7 +1032,7 @@ public:
 			b_eps_HCE1.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "Boiler epsilon HCE2 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+			message( TCS_ERROR, "Boiler epsilon HCE2 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 			return -1;
 		}
 
@@ -1043,7 +1043,7 @@ public:
 			b_eps_HCE2.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "Boiler epsilon HCE2 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+			message( TCS_ERROR, "Boiler epsilon HCE2 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 			return -1;
 		}
 
@@ -1054,7 +1054,7 @@ public:
 			b_eps_HCE3.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "Boiler epsilon HCE3 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+			message( TCS_ERROR, "Boiler epsilon HCE3 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 			return -1;
 		}
 
@@ -1065,7 +1065,7 @@ public:
 			b_eps_HCE4.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "Boiler epsilon HCE4 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+			message( TCS_ERROR, "Boiler epsilon HCE4 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 			return -1;
 		}														
 
@@ -1078,7 +1078,7 @@ public:
 				sh_eps_HCE1.assign( p_matrix_t, n_rows, n_cols );
 			else
 			{
-				message( "Superheater epsilon HCE1 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+				message( TCS_ERROR, "Superheater epsilon HCE1 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 				return -1;
 			}
 
@@ -1089,7 +1089,7 @@ public:
 				sh_eps_HCE2.assign( p_matrix_t, n_rows, n_cols );
 			else
 			{
-				message( "Superheater epsilon HCE2 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+				message( TCS_ERROR, "Superheater epsilon HCE2 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 				return -1;
 			}
 
@@ -1100,7 +1100,7 @@ public:
 				sh_eps_HCE3.assign( p_matrix_t, n_rows, n_cols );
 			else
 			{
-				message( "Superheater epsilon HCE3 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+				message( TCS_ERROR, "Superheater epsilon HCE3 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 				return -1;
 			}
 
@@ -1111,7 +1111,7 @@ public:
 				sh_eps_HCE4.assign( p_matrix_t, n_rows, n_cols );
 			else
 			{
-				message( "Superheater epsilon HCE4 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
+				message( TCS_ERROR, "Superheater epsilon HCE4 matrix should have 2 rows (Temp,eps) and at least 1 column - the input matrix has %d rows and %d columns", n_rows, n_cols );
 				return -1;
 			}
 
@@ -1143,7 +1143,7 @@ public:
 			m_alpha_env.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE envelope absorptance matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE envelope absorptance matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1154,7 +1154,7 @@ public:
 			m_EPSILON_4.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE inner glass envelope absorptance matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE inner glass envelope absorptance matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1168,7 +1168,7 @@ public:
 			m_Tau_envelope.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE envelope transmittance matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE envelope transmittance matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1180,7 +1180,7 @@ public:
 			glaz_intact.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE glazing intact matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE glazing intact matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 		m_GlazingIntactIn.resize( n_rows, n_cols );
@@ -1197,7 +1197,7 @@ public:
 			AnnulusGas.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1219,7 +1219,7 @@ public:
 			m_P_a.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE annulus gas pressure matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE annulus gas pressure matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1230,7 +1230,7 @@ public:
 			m_Design_loss.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "Receiver heat loss at design matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "Receiver heat loss at design matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1241,7 +1241,7 @@ public:
 			m_Shadowing.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE bellows shadowing loss factor matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE bellows shadowing loss factor matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1252,7 +1252,7 @@ public:
 			m_Dirt_HCE.assign( p_matrix_t, n_rows, n_cols );
 		else
 		{
-			message( "HCE dirt on receiver loss factor matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
+			message( TCS_ERROR, "HCE dirt on receiver loss factor matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows, n_cols );
 			return -1;
 		}
 
@@ -1363,7 +1363,7 @@ public:
 		{
 			if( m_x_b_des < 0.01 || m_x_b_des > 1.0 )
 			{
-				message( "For recirculated boiler systems, the specified boiler outlet quality %d must be greater than 0.01 and less than or equal to 1.0", m_x_b_des );
+				message( TCS_ERROR, "For recirculated boiler systems, the specified boiler outlet quality %d must be greater than 0.01 and less than or equal to 1.0", m_x_b_des );
 				return -1;
 			}
 		}
@@ -1445,7 +1445,7 @@ public:
 		}
 		else
 		{
-			message( "The selected boiler optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials", m_OptCharType.at(0,0));
+			message( TCS_ERROR, "The selected boiler optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials", m_OptCharType.at(0,0));
 			return -1;
 		}
 		
@@ -1475,7 +1475,7 @@ public:
 			}
 			else
 			{
-				message( "The selected superheater optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials", m_OptCharType.at(1,0));
+				message(TCS_ERROR,  "The selected superheater optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials", m_OptCharType.at(1,0));
 				return -1;
 			}
 		}
@@ -1502,7 +1502,7 @@ public:
 
 		if( m_P_turb_des*(1.0+m_fP_sf_tot) > 220.6 )
 		{
-			message("The design-point pressure at the inlet of the solar field exceeds the critical pressure (220.6 bar). Review your settings for turbine inlet pressure and solar field pressure drop to maintain reasonable design pressure conditions");
+			message(TCS_ERROR, "The design-point pressure at the inlet of the solar field exceeds the critical pressure (220.6 bar). Review your settings for turbine inlet pressure and solar field pressure drop to maintain reasonable design pressure conditions");
 			return -1;
 		}
 
@@ -1665,7 +1665,7 @@ public:
 		// Calculate the design-point mass flow rate leaving the solar field
 		if( h_sh_out_des == 0.0 || h_pb_out_des == 0.0 )
 		{
-			message( "At design, either the superheater outlet enthlalpy (%d) or the solarfield inlet density (%d) is not set", h_sh_out_des, h_pb_out_des );
+			message( TCS_WARNING, "At design, either the superheater outlet enthlalpy (%d) or the solarfield inlet density (%d) is not set", h_sh_out_des, h_pb_out_des );
 		}
 
 		m_m_dot_des = q_abs_tot_des/(h_sh_out_des - h_pb_out_des);
@@ -1731,14 +1731,14 @@ public:
 
 			if( dvar6 > 25.0 )
 			{
-				message( "The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
+				message( TCS_WARNING, "The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
 					" of %d [C] which is %d [C] away from the design-point value of %d [C]. Based on the specified collector geometry, the ideal fraction"
 					" number of superheater modules is approximately %d. Consider adjusting the design-point steam settings, the module geometry, and/or"
 					" the module distribution to better match the desired steam conditions", m_nModBoil, m_nModSH, dvar5-273.15, dvar6, m_T_field_out_des-273.15, dvar9 );					
 			}
 			if( dvar6 < -25.0 )
 			{
-				message( "The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
+				message( TCS_WARNING,  "The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
 					" of %d [C] which is %d [C] away from the design-point value of %d [C]. Based on the specified collector geometry, the ideal fraction"
 					" number of superheater modules is approximately %d. Consider adjusting the design-point steam settings, the module geometry, and/or"
 					" the module distribution to better match the desired steam conditions", m_nModBoil, m_nModSH, dvar5-273.15, -dvar6, m_T_field_out_des-273.15, dvar9 );								
@@ -1952,7 +1952,7 @@ public:
 						break;
 					default:
 						//error
-						message("No corresponding optical model. Error in solar angle calculation.");
+						message(TCS_ERROR, "No corresponding optical model. Error in solar angle calculation.");
 						return -1;
 					}
 					m_eta_optical.at(i,0) *= m_ftrack;

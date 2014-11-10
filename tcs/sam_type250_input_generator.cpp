@@ -149,13 +149,13 @@ public:
 
 		if( nval_I_b != nval_T_db || nval_T_db != nval_V_wind || nval_V_wind != nval_P_amb || nval_P_amb != nval_T_dp || nval_T_dp != nval_T_cold_in || nval_T_cold_in != nval_m_dot_in || nval_m_dot_in != nval_defocus )
 		{
-			message("All parameters arrays must be the same length");
+			message(TCS_ERROR, "All parameters arrays must be the same length");
 			return -1;
 		}
 
 		if( nval_I_b < 1 )
 		{
-			message("Parameter arrays must have at least 1 value");
+			message(TCS_ERROR, "Parameter arrays must have at least 1 value");
 			return -1;
 		}
 
@@ -166,7 +166,7 @@ public:
 	{
 		if(nval_current > nval_I_b)
 		{
-			message("The simulation is running simulation %d. The length of the parameter arrays is %d.", nval_current, nval_I_b);
+			message(TCS_ERROR, "The simulation is running simulation %d. The length of the parameter arrays is %d.", nval_current, nval_I_b);
 			return -1;
 		}
 

@@ -506,8 +506,8 @@ public:
 		else if(varargin == "gueymard1993")
 			AM = 1./(coszen + 0.00176759 * zenith * pow(94.37515-zenith, -1.21563) );
 		else{
-			string msg = varargin + " is not a valid model type for relative airmass. The \"kastenyoung1989\" model was used.";
-			message(msg.c_str());
+			string msg = varargin + " is not a valid model type for relative airmass. The kastenyoung1989 model was used.";
+			message(TCS_WARNING, msg.c_str());
 			AM = 1./(coszen+0.50572*(pow(6.07995+(90-zenith), -1.6364)));
 		}
 

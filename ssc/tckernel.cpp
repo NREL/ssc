@@ -19,10 +19,12 @@ tcKernel::~tcKernel()
 #define mysnprintf snprintf
 #endif
 
-
-void tcKernel::log( const std::string & text )
+void tcKernel::message( const std::string & text, int msgtype )
 {
-	compute_module::log( text, SSC_NOTICE, (float)tcskernel::current_time() );
+	int ssctype = SSC_ERROR;
+	if ( msgtype == TCS_WARNING ) ssctype = SSC_WARNING;
+	else if ( msgtype == TCS_NOTICE ) ssctype = SSC_NOTICE;
+	compute_module::log( text, ssctype, (float)tcskernel::current_time()/8760.0f );
 }
 
 bool tcKernel::progress( float percent, const std::string &status )

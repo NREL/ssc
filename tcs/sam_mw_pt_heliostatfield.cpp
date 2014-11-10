@@ -513,7 +513,7 @@ public:
 
             //check that flux maps match dimensions
             if( nfluxmap % nfluxpos != 0 ){
-                message("The number of flux maps provided does not match the number of flux map sun positions provided. Please "
+                message(TCS_ERROR, "The number of flux maps provided does not match the number of flux map sun positions provided. Please "
                     "ensure that the dimensionality of each flux map is consistent and that one sun position is provided for "
                     "each flux map. (Sun pos. = %d, mismatch lines = %d)", nfluxpos, nfluxmap % nfluxpos);
                 return -1;
@@ -603,9 +603,9 @@ public:
 
 			//set up the weather data for simulation
 			const char *wffile = weather_file.c_str();
-			if ( !wffile ) message( "solarpilot: no weather file specified" );
+			if ( !wffile ) message(TCS_WARNING,  "solarpilot: no weather file specified" );
 			weatherfile wf( wffile );
-			if ( !wf.ok() || wf.type() == weatherfile::INVALID ) message("solarpilot: could not open weather file or invalid weather file format");
+			if ( !wf.ok() || wf.type() == weatherfile::INVALID ) message( TCS_WARNING, "solarpilot: could not open weather file or invalid weather file format");
 
 
 			amb.site_latitude = wf.lat;
@@ -630,7 +630,7 @@ public:
 				{
 					if( !wf.read() ){
 						string msg = "solarpilot: could not read data line " + util::to_string(i+1) + " of 8760 in weather file";
-						message(msg.c_str());
+						message(TCS_WARNING, msg.c_str());
 					}
 
 					mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
@@ -696,7 +696,7 @@ public:
 
 			//run the flux maps
 			if(! sapi.CalculateFluxMaps(fluxtab, n_flux_x, n_flux_y, true) ){
-                message("Simulation cancelled during fluxmap preparation");
+                message(TCS_ERROR, "Simulation cancelled during fluxmap preparation");
                 return -1;
             }
 
@@ -749,7 +749,7 @@ public:
 			double *p_map = value( P_eta_map, &nrows, &ncols);
 		
 			if(ncols != 3){
-				message("The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
+				message(TCS_ERROR,  "The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
 					" (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
 				return -1;
 			}
@@ -805,7 +805,7 @@ public:
 		}
 		err_fit = sqrt(err_fit);
 		if( err_fit > 0.01 )
-			message("The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
+			message(TCS_WARNING, "The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
 
 		// Initialize stored variables
 		eta_prev = 0.0;

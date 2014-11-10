@@ -42,12 +42,12 @@ public:
 		int nrows, ncols;
 		double *weekdays = value( P_WEEKDAY_SCHEDULE, &nrows, &ncols );
 		if ( nrows != 12 || ncols != 24 ) {
-			message( "The TOU translator did not get a 12x24 matrix for the weekday schedule." );
+			message(TCS_ERROR,  "The TOU translator did not get a 12x24 matrix for the weekday schedule." );
 			return -1;
 		}
 		double *weekends = value( P_WEEKEND_SCHEDULE, &nrows, &ncols );		
 		if ( nrows != 12 || ncols != 24 ) {
-			message( "The TOU translator did not get a 12x24 matrix for the weekend schedule." );
+			message( TCS_ERROR, "The TOU translator did not get a 12x24 matrix for the weekend schedule." );
 			return -1;
 		}
 

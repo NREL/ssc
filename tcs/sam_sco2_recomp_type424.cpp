@@ -399,66 +399,66 @@ public:
 			// Can't operate compressor in 2-phase region
 		if(m_T_mc_in_des <= N_co2_props::T_crit)
 		{
-			message("Only single phase cycle operation is allowed in this model. The compressor inlet temperature (%lg [C]) must be great than the critical temperature: %lg [C]", m_T_mc_in_des-273.15, ((N_co2_props::T_crit)-273.15));
+			message(TCS_ERROR, "Only single phase cycle operation is allowed in this model. The compressor inlet temperature (%lg [C]) must be great than the critical temperature: %lg [C]", m_T_mc_in_des-273.15, ((N_co2_props::T_crit)-273.15));
 			return -1;
 		}
 			// "Reasonable" ceiling on compressor inlet temp
 		double T_mc_in_max = 70.0 + 273.15;			//[K] Arbitrary value for max compressor inlet temperature
 		if(m_T_mc_in_des > T_mc_in_max)
 		{
-			message("The compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]", m_T_mc_in_des-273.15, T_mc_in_max-273.15);
+			message(TCS_WARNING, "The compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]", m_T_mc_in_des-273.15, T_mc_in_max-273.15);
 			m_T_mc_in_des = T_mc_in_max;
 		}
 			// "Reasonable" floor on turbine inlet temp
 		double T_t_in_min = 300.0 + 273.15;			//[K] Arbitrary value for min turbine inlet temperature
 		if(m_T_t_in_des < T_t_in_min)
 		{
-			message("The turbine inlet temperature input was %lg [C]. This value was reset internally to the min allowable inlet temperature: %lg [C]", m_T_t_in_des-273.15, T_t_in_min-273.15);
+			message(TCS_WARNING, "The turbine inlet temperature input was %lg [C]. This value was reset internally to the min allowable inlet temperature: %lg [C]", m_T_t_in_des-273.15, T_t_in_min-273.15);
 			m_T_t_in_des = T_t_in_min;
 		}
 			// Turbine inlet temperature must be hotter than compressor outlet temperature
 		if(m_T_t_in_des <= m_T_mc_in_des)
 		{
-			message("The turbine inlet temperature, %lg [C], is colder than the specified compressor inlet temperature %lg [C]", m_T_t_in_des-273.15, m_T_mc_in_des-273.15);
+			message(TCS_ERROR, "The turbine inlet temperature, %lg [C], is colder than the specified compressor inlet temperature %lg [C]", m_T_t_in_des-273.15, m_T_mc_in_des-273.15);
 			return -1;
 		}
 			// Turbine inlet temperature must be colder than property limits
 		if(m_T_t_in_des >= N_co2_props::T_upper_limit)
 		{
-			message("The turbine inlet temperature, %lg [C], is hotter than the maximum allow temperature in the CO2 property code %lg [C]", m_T_t_in_des-273.15, N_co2_props::T_upper_limit-273.15);
+			message(TCS_ERROR, "The turbine inlet temperature, %lg [C], is hotter than the maximum allow temperature in the CO2 property code %lg [C]", m_T_t_in_des-273.15, N_co2_props::T_upper_limit-273.15);
 			return -1;
 		}
 			// Check for realistic isentropic efficiencies
 		if(m_eta_c > 1.0)
 		{
-			message("The compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0", m_eta_c);
+			message(TCS_WARNING, "The compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0", m_eta_c);
 			m_eta_c = 1.0;
 		}
 		if( m_eta_t > 1.0 )
 		{
-			message("The turbine isentropic efficiency, %lg, was reset to theoretical maximum 1.0", m_eta_t);
+			message(TCS_WARNING, "The turbine isentropic efficiency, %lg, was reset to theoretical maximum 1.0", m_eta_t);
 			m_eta_t = 1.0;
 		}
 		if(m_eta_c < 0.1)
 		{
-			message("The compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability", m_eta_c);
+			message(TCS_WARNING,"The compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability", m_eta_c);
 			m_eta_c = 0.1;
 		}
 		if( m_eta_t < 0.1 )
 		{
-			message("The turbine isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability", m_eta_t);
+			message(TCS_WARNING,"The turbine isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability", m_eta_t);
 			m_eta_t = 0.1;
 		}
 			// Limits on high pressure limit
 		if(m_P_high_limit >= N_co2_props::P_upper_limit/1.E3)
 		{
-			message("The upper pressure limit, %lg [MPa], was set to the internal limit in the CO2 properties code %lg [MPa]", m_P_high_limit, N_co2_props::P_upper_limit/1.E3);
+			message(TCS_WARNING,"The upper pressure limit, %lg [MPa], was set to the internal limit in the CO2 properties code %lg [MPa]", m_P_high_limit, N_co2_props::P_upper_limit/1.E3);
 			m_P_high_limit = N_co2_props::P_upper_limit / 1.E3;
 		}
 		double P_high_limit_min = 10.0;
 		if(m_P_high_limit <= P_high_limit_min)
 		{
-			message("The upper pressure limit, %lg [MPa], must be greater than %lg [MPa] to ensure solution stability", m_P_high_limit, P_high_limit_min);
+			message(TCS_ERROR, "The upper pressure limit, %lg [MPa], must be greater than %lg [MPa] to ensure solution stability", m_P_high_limit, P_high_limit_min);
 			return -1;
 		}
 		// ******************************************************************************************
@@ -489,26 +489,26 @@ public:
 			// Ambient temperature must be cooler than compressor inlet temperature
 		if(T_amb_cycle_des > m_T_mc_in_des - 2.0)
 		{
-			message("The ambient temperature used for the air cooler design, %lg [C], must be 2 [C] less than the specified compressor inlet temperature %lg [C]", T_amb_cycle_des-273.15, m_T_mc_in_des-273.15);
+			message(TCS_ERROR, "The ambient temperature used for the air cooler design, %lg [C], must be 2 [C] less than the specified compressor inlet temperature %lg [C]", T_amb_cycle_des-273.15, m_T_mc_in_des-273.15);
 			return -1;
 		}
 			// Also need some "reasonable" lower limit on the ambient temperature
 		if(T_amb_cycle_des < 273.15)
 		{
-			message("The ambient temperature used for the air cooler design, %lg [C], was reset to 0 [C] to improve solution stability", T_amb_cycle_des-273.15);
+			message(TCS_WARNING,"The ambient temperature used for the air cooler design, %lg [C], was reset to 0 [C] to improve solution stability", T_amb_cycle_des-273.15);
 			T_amb_cycle_des = 273.15;
 		}
 			// Set an upper limit on the fraction of cycle net power allocated to the fan on the air cooler
 		double fan_power_frac_max = 0.1;
 		if(fan_power_frac > fan_power_frac_max)
 		{
-			message("The fraction of cycle net power used by the cooling fan, %lg, is greater than the internal maximum %lg", fan_power_frac, fan_power_frac_max);
+			message(TCS_ERROR, "The fraction of cycle net power used by the cooling fan, %lg, is greater than the internal maximum %lg", fan_power_frac, fan_power_frac_max);
 			return -1;
 		}
 		double fan_power_frac_min = 0.001;
 		if(fan_power_frac < fan_power_frac_min)
 		{
-			message("The fraction of cycle net power used by the cooling fan, %lg, is less than the internal minimum %lg", fan_power_frac, fan_power_frac_min);
+			message(TCS_ERROR, "The fraction of cycle net power used by the cooling fan, %lg, is less than the internal minimum %lg", fan_power_frac, fan_power_frac_min);
 			return -1;
 		}
 		
@@ -553,14 +553,14 @@ public:
 		// Instead, check thermal efficiency
 		if(m_eta_thermal_des <= 0.0)
 		{
-			message("The design cycle thermal efficiency, %lg, must be at least greater than 0 ", m_eta_thermal_des);
+			message(TCS_ERROR, "The design cycle thermal efficiency, %lg, must be at least greater than 0 ", m_eta_thermal_des);
 			return -1;
 		}
 
 		double eta_carnot = 1.0 - T_amb_cycle_des / m_T_htf_hot;
 		if(m_eta_thermal_des >= eta_carnot)
 		{
-			message("To solve the cycle within the allowable recuperator conductance, the design cycle thermal efficiency, %lg, must be at least less than the Carnot efficiency: %lg ", m_eta_thermal_des, eta_carnot);
+			message(TCS_ERROR, "To solve the cycle within the allowable recuperator conductance, the design cycle thermal efficiency, %lg, must be at least less than the Carnot efficiency: %lg ", m_eta_thermal_des, eta_carnot);
 			return -1;
 		}
 
@@ -584,14 +584,14 @@ public:
 				if( !rec_htfProps.SetUserDefinedFluid(mat) )
 				{
 					//message( "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
-					message(rec_htfProps.UserFluidErrMessage(), nrows, ncols);
+					message(TCS_ERROR, rec_htfProps.UserFluidErrMessage(), nrows, ncols);
 					return -1;
 				}
 			}
 		}
 		else
 		{
-			message("Receiver HTF code is not recognized");
+			message(TCS_ERROR, "Receiver HTF code is not recognized");
 			return -1;
 		}
 		// ********************************************************************************
@@ -652,7 +652,7 @@ public:
 		ms_rc_cycle.auto_opt_design(ms_rc_autodes_par, auto_opt_error_code);
 		if(auto_opt_error_code != 0)
 		{
-			message("Can't optimize sCO2 power cycle with current inputs");
+			message(TCS_ERROR, "Can't optimize sCO2 power cycle with current inputs");
 			return -1;
 		}
 
@@ -699,8 +699,8 @@ public:
 
 				if( x_lower / m_W_dot_net_des <= UA_net_power_ratio_min )
 				{
-					message("The design thermal efficiency, %lg [-], is too small to achieve with the available cycle model and inputs", m_eta_thermal_des);
-					message("The lowest possible thermal efficiency for these inputs is roughly %lg [-]", ms_rc_cycle.get_design_solved()->m_eta_thermal);
+					message(TCS_ERROR, "The design thermal efficiency, %lg [-], is too small to achieve with the available cycle model and inputs", m_eta_thermal_des);
+					message(TCS_ERROR, "The lowest possible thermal efficiency for these inputs is roughly %lg [-]", ms_rc_cycle.get_design_solved()->m_eta_thermal);
 					return -1;
 				}
 			}
@@ -724,8 +724,8 @@ public:
 
 				if( x_upper / m_W_dot_net_des >= UA_net_power_ratio_max )
 				{
-					message("The design thermal efficiency, %lg [-], is too large to achieve with the available cycle model and inputs", m_eta_thermal_des);
-					message("The largest possible thermal efficiency for these inputs is roughly %lg [-] ", ms_rc_cycle.get_design_solved()->m_eta_thermal);
+					message(TCS_ERROR, "The design thermal efficiency, %lg [-], is too large to achieve with the available cycle model and inputs", m_eta_thermal_des);
+					message(TCS_ERROR, "The largest possible thermal efficiency for these inputs is roughly %lg [-] ", ms_rc_cycle.get_design_solved()->m_eta_thermal);
 					return -1;
 				}
 			}
@@ -741,7 +741,7 @@ public:
 			ms_rc_cycle.auto_opt_design(ms_rc_autodes_par,auto_opt_error_code);
 			if( auto_opt_error_code != 0 )
 			{
-				message("Can't optimize sCO2 power cycle with current inputs");
+				message(TCS_ERROR, "Can't optimize sCO2 power cycle with current inputs");
 				return -1;
 			}
 			
@@ -887,7 +887,7 @@ public:
 
 		m_T_htf_cold_des = T_htf_cold;		//[K]
 
-		message("The calculated cold HTF temperature is %lg [C]. The estimated cold HTF temperature is %lg [C]. This difference may affect the receiver design and hours of thermal storage. Try adjusting the receiver inlet temperature or design cycle efficiency",
+		message(TCS_WARNING, "The calculated cold HTF temperature is %lg [C]. The estimated cold HTF temperature is %lg [C]. This difference may affect the receiver design and hours of thermal storage. Try adjusting the receiver inlet temperature or design cycle efficiency",
 			T_htf_cold - 273.15, T_htf_cold_est - 273.15);
 
 
@@ -1022,7 +1022,7 @@ public:
 
 		if( q_sby_error_code != 0 )
 		{
-			message("The power cycle model crashes at the specified cutoff fraction, %lg. Try increasing this value", cutoff_frac);
+			message(TCS_ERROR, "The power cycle model crashes at the specified cutoff fraction, %lg. Try increasing this value", cutoff_frac);
 			return -1;
 		}
 
@@ -1401,11 +1401,11 @@ public:
 			if(acc_error_code == 1)
 			{
 				W_dot_par = (m_dot_htf / m_dot_rec_des)*m_W_dot_fan_des;
-				message("Off-design air cooler model did not solve. Fan power was set to the design value scaled by the timestep/design HTF mass flow rate");
+				message(TCS_WARNING, "Off-design air cooler model did not solve. Fan power was set to the design value scaled by the timestep/design HTF mass flow rate");
 			}
 			if(acc_error_code == 2)
 			{
-				message("Off-design air cooler model did not converge within its numerical tolerance");
+				message(TCS_WARNING, "Off-design air cooler model did not converge within its numerical tolerance");
 			}
 
 			break;
@@ -1525,12 +1525,12 @@ public:
 
 		if(m_error_message_code == 1)
 		{
-			message("The off-design power cylce model did not solve. Performance values for this timestep are design point values scaled by HTF mass flow rate");
+			message(TCS_WARNING, "The off-design power cylce model did not solve. Performance values for this timestep are design point values scaled by HTF mass flow rate");
 		}
 
 		if(m_error_message_code == 2)
 		{
-			message("The off-design power cycle model solved, but the the PHX performance did not converge. The results at this timestep may be non-physical");
+			message(TCS_WARNING, "The off-design power cycle model solved, but the the PHX performance did not converge. The results at this timestep may be non-physical");
 		}
 
 		m_error_message_code = 0;

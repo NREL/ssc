@@ -217,12 +217,12 @@ public:
 		double f_tes_ini = value(I_E_TES_INI);	// [-] Fraction of max stored thermal energy at initialization
 		if( f_tes_ini < 0.0 )
 		{
-			message("Fraction of TES at initialization was less than 0: %d. It was reset to the minimum of 0 for this simulation", f_tes_ini);
+			message(TCS_WARNING, "Fraction of TES at initialization was less than 0: %d. It was reset to the minimum of 0 for this simulation", f_tes_ini);
 			f_tes_ini = 0.0;
 		}
 		else if( f_tes_ini > 1.0)
 		{
-			message("Fraction of TES at initialization was greater than 1: %d. It was reset to the maximum of 1 for this simulation", f_tes_ini);
+			message(TCS_WARNING, "Fraction of TES at initialization was greater than 1: %d. It was reset to the maximum of 1 for this simulation", f_tes_ini);
 			f_tes_ini = 1.0;
 		}
 		m_Ets0 = f_tes_ini*E_tes_max;	// [MWth-hr] Initial stored thermal energy

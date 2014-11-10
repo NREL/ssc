@@ -69,14 +69,13 @@ public:
 	
 	int copy( tcskernel &tk );
 	
-	virtual void log( const std::string & text );
+	virtual void message( const std::string & text, int msgtype );
 	virtual bool progress( float perecent, const std::string &text );
 	virtual bool converged( double time );
 	virtual int simulate( double start, double end, double step );
 
 	std::string netlist();
 
-	void notice( const char *fmt, ... );
 	int version();
 	void set_max_iterations( int iter, bool proceed_anyway );
 
@@ -115,7 +114,8 @@ public:
 			double tol = 0.1,
 			int arridx = -1 );
 	
-	void log( int unit, const char *message );
+	void message( int msgtype, const char *fmt, ... );
+	void message( int unit, int msgtype, const char *message );
 	
 	static bool check_tolerance( double val1, double val2, double ftol );
 

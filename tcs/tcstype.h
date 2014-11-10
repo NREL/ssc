@@ -36,10 +36,12 @@ extern "C" {
 
 #define TCS_MATRIX_INDEX( v, r, c )  ((v)->data.matrix.values[ (v)->data.matrix.ncols * (r) + (c) ])
 
+	enum { TCS_NOTICE, TCS_WARNING, TCS_ERROR }; // message types
+
 	struct _tcscontext {
 		void *kernel_internal;
 		int unit_internal;
-		void (*notice) ( struct _tcscontext *cxt, const char *message );
+		void (*message) ( struct _tcscontext *cxt, int msgtype, const char *message );
 		bool (*progress) ( struct _tcscontext *cxt, float percent, const char *status );
 		tcsvalue *(*get_value)( struct _tcscontext *cxt, int idx );
 		int (*get_num_values)( struct _tcscontext *cxt );
@@ -213,7 +215,7 @@ protected:
 		return v->data.matrix.values;
 	}
 
-	void message( const char *fmt, ... )
+	void message( int msgtype, const char *fmt, ... )
 	{
 		char buf[512];
 		va_list ap;
@@ -224,7 +226,7 @@ protected:
 		vsnprintf(buf, 509, fmt, ap);
 #endif
 		va_end(ap);
-		m_context->notice( m_context, buf );
+		m_context->message( m_context, msgtype, buf );
 	}
 
 	bool progress( float percent, const char *status )
@@ -269,7 +271,7 @@ static int __invoke( tcscontext *cxt, void *inst,
 	tcstypeinterface *ti = static_cast<tcstypeinterface*>( inst );
 	if ( ti == 0 )
 	{
-		cxt->notice( cxt, "invalid type invocation: null instance" );
+		cxt->message( cxt, TCS_ERROR, "invalid type invocation: null instance" );
 		return -1;
 	}
 
