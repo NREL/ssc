@@ -42,6 +42,7 @@ enum{
 	P_ACCEPT_MODE,
 	P_ACCEPT_INIT,
 	P_ACCEPT_LOC,
+	P_USING_INPUT_GEN,
 	P_SOLAR_MULT,
 	P_MC_BAL_HOT,
 	P_MC_BAL_COLD,
@@ -195,6 +196,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,       P_ACCEPT_MODE,            "accept_mode",                                                  "Acceptance testing mode? (1=yes, 0=no)",         "none",             "",             "",            "0" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_ACCEPT_INIT,            "accept_init",                               "In acceptance testing mode - require steady-state startup",         "none",             "",             "",            "0" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_ACCEPT_LOC,             "accept_loc",                  "In acceptance testing mode - temperature sensor location (1=hx,2=loop)",         "none",             "",             "",            "1" },
+	{ TCS_PARAM,          TCS_NUMBER,   P_USING_INPUT_GEN,        "using_input_gen",             "Are weather inputs from weather file reader (0) or Type250 input generator?",         "none",             "",             "",            "0" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_SOLAR_MULT,             "solar_mult",                                                                          "Solar multiple",         "none",             "",             "",            "2" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_MC_BAL_HOT,             "mc_bal_hot",                               "The heat capacity of the balance of plant on the hot side",   "kWht/K-MWt",             "",             "",          "0.2" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_MC_BAL_COLD,            "mc_bal_cold",                              "The heat capacity of the balance of plant on the cold side",   "kWht/K-MWt",             "",             "",          "0.2" },
@@ -259,7 +261,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,      P_SCAINFOARRAY,        "SCAInfoArray",                       "(:,1) = HCE type, (:,2)= Collector type for each SCA in the loop ",         "none",             "",             "","[1,1][1,1][1,1][1,1][1,1][1,1][1,1][1,1]" },
 	{ TCS_PARAM,           TCS_ARRAY,   P_SCADEFOCUSARRAY,        "SCADefocusArray",                                            "Order in which the SCA's should be defocused",         "none",             "",             "","8,7,6,5,4,3,2,1" },
 
-	{ TCS_INPUT,          TCS_NUMBER,               I_I_B,                    "I_b",                                                "Direct normal incident solar irradiation",     "kJ/m2-hr",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,               I_I_B,                    "I_b",                                                "Direct normal incident solar irradiation",        "W/m^2",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,              I_T_DB,                   "T_db",                                                                "Dry bulb air temperature",            "C",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,            I_V_WIND,                 "V_wind",                                                                      "Ambient windspeed ",          "m/s",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,             I_P_AMB,                  "P_amb",                                                                        "Ambient pressure",         "mbar",             "",             "",             "" },
@@ -351,9 +353,12 @@ private:
 	int fthrctrl;		//Defocusing strategy
 	double ColTilt;		//Collector tilt angle (0 is horizontal, 90deg is vertical)
 	double ColAz;		//Collector azimuth angle
+	
 	int accept_mode;		//Acceptance testing mode? (1=yes, 0=no)
 	bool accept_init;		//In acceptance testing mode - require steady-state startup
-	int accept_loc;		//In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+	int accept_loc;			//In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+	bool is_using_input_gen;
+	
 	double solar_mult;		//Solar multiple
 	double mc_bal_hot;		//The heat capacity of the balance of plant on the hot side
 	double mc_bal_cold;		//The heat capacity of the balance of plant on the cold side
@@ -569,6 +574,8 @@ private:
 	double T_save[5];
 	double reguess_args[3];
 	
+	double hour, T_sky;
+
 	double m_htf_prop_min;
 
 public:
@@ -616,9 +623,12 @@ public:
 		fthrctrl	= -1;
 		ColTilt	= std::numeric_limits<double>::quiet_NaN();
 		ColAz	= std::numeric_limits<double>::quiet_NaN();
+		
 		accept_mode	= -1;
 		accept_init	= false;
 		accept_loc	= -1;
+		is_using_input_gen = false;
+
 		solar_mult	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_hot	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_cold	= std::numeric_limits<double>::quiet_NaN();
@@ -783,6 +793,8 @@ public:
 		E_tot_accum	= std::numeric_limits<double>::quiet_NaN();
 		E_field	= std::numeric_limits<double>::quiet_NaN();
 
+		hour = T_sky = std::numeric_limits<double>::quiet_NaN();
+
 		for( int i = 0; i < 5; i++ )
 			T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
@@ -876,9 +888,12 @@ public:
 		fthrctrl = (int)value(P_FTHRCTRL);		//Defocusing strategy [none]
 		ColTilt = value(P_COLTILT);		//Collector tilt angle (0 is horizontal, 90deg is vertical) [deg]
 		ColAz = value(P_COLAZ);		//Collector azimuth angle [deg]
-		accept_mode = (int)value(P_ACCEPT_MODE);		//Acceptance testing mode? (1=yes, 0=no) [none]
-		accept_init = value(P_ACCEPT_INIT) == 1;		//In acceptance testing mode - require steady-state startup [none]
-		accept_loc = (int)value(P_ACCEPT_LOC);		//In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
+		
+		accept_mode = (int)value(P_ACCEPT_MODE);				// Acceptance testing mode? (1=yes, 0=no) [none]
+		accept_init = value(P_ACCEPT_INIT) == 1;				// In acceptance testing mode - require steady-state startup [none]
+		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
+		is_using_input_gen = (bool)value(P_USING_INPUT_GEN);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
+		
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
 		mc_bal_cold = value(P_MC_BAL_COLD);		//The heat capacity of the balance of plant on the cold side [kWht/K-MWt]
@@ -1321,24 +1336,20 @@ public:
 	}
 
 	virtual int call(double time, double step, int ncall){
-		/* 
-		-- Standard timestep call --
-		
-		*get inputs
-		*do calculations
-		*set outputs
 
-		*/
 		//reset defocus counter
 		dfcount = 0;
 
 		//record the start time
-		if(start_time < 0){ start_time = current_time(); }
+		if(start_time < 0)
+		{ 
+			start_time = current_time(); 
+		}
 
 		//******************************************************************************************************************************
 		//               Time-dependent conditions
 		//******************************************************************************************************************************
-		I_b = value(I_I_B);		//Direct normal incident solar irradiation [kJ/m2-hr]
+		I_b = value(I_I_B);		//Direct normal incident solar irradiation [W/m^2]
 		T_db = value(I_T_DB);		//Dry bulb air temperature [C]
 		V_wind = value(I_V_WIND);		//Ambient windspeed  [m/s]
 		P_amb = value(I_P_AMB);		//Ambient pressure [mbar]
@@ -1350,10 +1361,6 @@ public:
 		latitude = value(I_LATITUDE);		//Site latitude read from weather file [deg]
 		longitude = value(I_LONGITUDE);		//Site longitude read from weather file [deg]
 		shift = value(I_SHIFT);			// [deg]
-
-		//timezone = value(I_TIMEZONE);		//Time zone [hr]
-
-		//shift = (longitude - timezone*15.)*d2r;
 
 		//Unit conversions
 		T_db += 273.15;
@@ -1384,7 +1391,7 @@ public:
 		}
 		//**********************************************************************************************************************
 
-		double hour, T_sky, rho_hdr_cold, rho_hdr_hot;
+		double rho_hdr_cold, rho_hdr_hot;
 		double c_hdr_cold_last, m_dot_lower, m_dot_upper;
 		bool upflag, lowflag, fp_lowflag, fp_upflag;
 		double T_in_lower, y_fp_lower, T_in_upper, y_fp_upper;
@@ -1488,7 +1495,7 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 			double omega = (SolarTime - 12.0)*15.0*pi/180.0;
 			// B. Stine equation for Solar Altitude angle in radians
 			SolarAlt = asin(sin(Dec)*sin(latitude)+cos(latitude)*cos(Dec)*cos(omega));
-			if(accept_init  &&  time==start_time) 
+			if( (accept_init  &&  time == start_time) || is_using_input_gen )
 			{  //MJW 1.14.2011 
 				SolarAz = CSP::sign(omega)*abs(acos(min(1.0,(cos(pi/2.-SolarAlt)*sin(latitude)-sin(Dec))/(sin(pi/2.-SolarAlt)*cos(latitude)))));
 			}
@@ -2338,8 +2345,7 @@ post_convergence_flag: //11 continue
 		{
 			q_avail = E_avail_tot/(dt)*1.e-6;  //[MW]
 			//Calculate the available mass flow of HTF
-			m_dot_avail = max(q_avail*1.e6/(c_htf_ave*(T_sys_h - T_cold_in_1)),0.0); //[kg/s] 
-    
+			m_dot_avail = max(q_avail*1.e6/(c_htf_ave*(T_sys_h - T_cold_in_1)),0.0); //[kg/s]     
 		} 
 		else 
 		{
