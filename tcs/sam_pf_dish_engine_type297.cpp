@@ -202,7 +202,7 @@ public:
 			break;
 
 		default:
-			message( "Manufacturer integer needs to be from 1 to 5" );
+			message(TCS_ERROR,  "Manufacturer integer needs to be from 1 to 5" );
 			return -1;
 		}
 

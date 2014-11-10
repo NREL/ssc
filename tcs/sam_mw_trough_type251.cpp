@@ -538,7 +538,7 @@ public:
 				if ( !field_htfProps.SetUserDefinedFluid( mat ) )
 				{
 					//message( "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
-					message( field_htfProps.UserFluidErrMessage(), nrows, ncols );
+					message(TCS_ERROR,  field_htfProps.UserFluidErrMessage(), nrows, ncols );
 					return -1;
 				}
 			}
@@ -569,7 +569,7 @@ public:
 
 				if ( !store_htfProps.SetUserDefinedFluid( mat ) )
 				{
-					message( "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
+					message( TCS_ERROR, "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
 					return -1;
 				}
 			}
@@ -625,7 +625,7 @@ public:
 		ffrac		= value(P_ffrac, &l_ffrac);
 		if( l_tslogic_a != l_tslogic_b || l_tslogic_a != l_tslogic_c || l_tslogic_a != l_ffrac )
 			{
-				message( "Time-of-use schedules do not contain the same number of periods" );
+				message( TCS_ERROR, "Time-of-use schedules do not contain the same number of periods" );
 				return -1;
 			}
 		numtou = l_tslogic_a;
@@ -754,7 +754,7 @@ public:
 			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
 			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
 			{
-				message("Heat exchanger sizing failed");
+				message(TCS_ERROR, "Heat exchanger sizing failed");
 				return -1;
 			}
 		}
@@ -800,7 +800,7 @@ public:
 				1.0, t_dis_out_min, t_ch_out_max, nodes, T_tank_hot_prev - 273.15, T_tank_cold_prev - 273.15,
 				f_tc_cold, cold_tank_Thtr - 273.15, tank_max_heat, tank_pairs, store_htfProps) )
 			{
-				message("Thermocline initialization failed");
+				message(TCS_ERROR, "Thermocline initialization failed");
 				return -1;
 			}
 
@@ -892,7 +892,7 @@ public:
 		//int touperiod = CSP::TOU_Reader(TOU_schedule, time, nTOU_schedule);
 
 		if(touperiod < 0){
-			message("The time-of-use (TOU) schedule reader returned with an invalid value of %d.", touperiod);
+			message(TCS_ERROR, "The time-of-use (TOU) schedule reader returned with an invalid value of %d.", touperiod);
 			return -1;
 		}
 		double f_storage = tselect[touperiod];				//*** Need to be sure TOU schedule is provided with starting index of 0
@@ -1567,7 +1567,7 @@ public:
 				if(iter > 20)
 				{
 					// Write the error message in preparation for failure, but don't call the printer yet.. 
-					message("After %d iterations, the controller convergence error of %lg could not resolve below the tolerance of %lg. Check that results at this timestep are not unreasonably biasing annual metrics.", iter, err, tol);
+					message(TCS_NOTICE, "After %d iterations, the controller convergence error of %lg could not resolve below the tolerance of %lg. Check that results at this timestep are not unreasonably biasing annual metrics.", iter, err, tol);
 					//200 format("After ",I2," iterations, the controller convergence error of ",E8.3," could not resolve below the tolerance of ",F6.4)
 					//continue on, don't iterate further
 					iterate_mass_temp = false;
@@ -1614,7 +1614,7 @@ public:
 				{
 					if( ! hx_storage.hx_performance( true, false, T_field_out, ms_charge, T_tank_cold_out, eff_charge, Ts_cold, T_tank_hot_in, q_charge, m_tank_charge ) )
 					{
-						message( "heat exchanger performance calculations failed" );
+						message( TCS_ERROR, "heat exchanger performance calculations failed" );
 						return -1;
 					}
 					eff_disch = -9.99; T_tank_cold_in = T_tank_cold_prev; q_disch = 0; m_tank_disch = 0.;
@@ -1628,7 +1628,7 @@ public:
 				{
 					if( ! hx_storage.hx_performance( false, false, T_tank_hot_out, ms_disch, T_pb_out, eff_disch, T_tank_cold_in, Ts_hot, q_disch, m_tank_disch ) )
 					{
-						message( "heat exchanger performance calculations failed" );
+						message( TCS_ERROR, "heat exchanger performance calculations failed" );
 						return -1;
 					}
 					eff_charge = -9.99; T_tank_hot_in = T_tank_hot_prev; q_charge = 0; m_tank_charge = 0.;
@@ -1886,7 +1886,7 @@ public:
 		defocus_prev_ncall = 1.;
 
 		//Warn if the heat exchanger performance calculations are having problems at convergence
-		if(hx_err_flag) message( "Heat exchanger performance calculations failed" );
+		if(hx_err_flag) message(TCS_WARNING,  "Heat exchanger performance calculations failed" );
 
 		if(time > 3600.0)
 		{

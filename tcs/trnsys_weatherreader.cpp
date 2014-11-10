@@ -344,7 +344,7 @@ public:
 			}
 			else
 			{
-				message("failed to read from weather file %s at time %lg", value_str(I_FILENAME).c_str(), time );
+				message(TCS_ERROR, "failed to read from weather file %s at time %lg", value_str(I_FILENAME).c_str(), time );
 				return -1; // error code
 			}
 		}

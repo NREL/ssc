@@ -838,7 +838,7 @@ public:
 
 				if ( !htfProps.SetUserDefinedFluid( mat ) )
 				{
-					message( htfProps.UserFluidErrMessage(), nrows, ncols );
+					message( TCS_ERROR, htfProps.UserFluidErrMessage(), nrows, ncols );
 					return -1;
 				}
 			}
@@ -1125,7 +1125,7 @@ public:
 		//Check to make sure the number of field sections is an even number
 		if( nfsec%2 != 0)
 		{
-			message("Number of field subsections must equal an even number");
+			message(TCS_ERROR, "Number of field subsections must equal an even number");
 			return false;
 		}
 
@@ -1750,7 +1750,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 						m_dot_htfX = m_dot_htfmax;
 						if(dfcount > 20) 
 						{
-							message("The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...");
+							message(TCS_WARNING, "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...");
 							return 0;
 						}
 						goto overtemp_iter_flag;
@@ -2022,7 +2022,7 @@ freeze_prot_ok:		//9 continue
 
 		if(qq>29)
 		{
-			message("Mass Flow Rate Convergence Error");
+			message(TCS_ERROR, "Mass Flow Rate Convergence Error");
 			return -1;
 		}
 
@@ -4239,7 +4239,7 @@ lab_keep_guess:
 			if(D_m[i] >= De) return D_m[i];
 		}
 		//Nothing was found, so return an error
-		message("No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
+		message( TCS_WARNING, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
 			"Maximum schedule is %.2f in ID. Using the exact pipe diameter instead." 
             "Consider increasing the header design velocity range or the number of field subsections.", 
             De*mtoinch, D_m[np-1]*mtoinch);

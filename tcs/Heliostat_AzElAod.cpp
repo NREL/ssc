@@ -182,7 +182,7 @@ public:
 		}
 
 		if(size_error){
-			message("The heliostat efficiency matrix is not properly dimensioned. Please ensure the number of zenith and azimuth values are consistent in all dimensions.");
+			message(TCS_ERROR, "The heliostat efficiency matrix is not properly dimensioned. Please ensure the number of zenith and azimuth values are consistent in all dimensions.");
 			return -1;
 		}
 		
@@ -192,7 +192,7 @@ public:
 
 		//make sure there is sufficient data to interpolate
 		if( n_zen < 2 || n_azi < 2 ||n_layer < 2 ){
-			message("The field efficiency matrix contains insufficient data. Each dimension must have at least 2 levels.");
+			message(TCS_ERROR, "The field efficiency matrix contains insufficient data. Each dimension must have at least 2 levels.");
 			return -1;
 		}
 
@@ -216,7 +216,7 @@ public:
 		// Set up Bilinear Interpolation class for field efficiency data
 		if( !field_efficiency_table.Set_3D_Lookup_Table( eta_map ) )
 		{
-			message( "Initialization of 2D interpolation class failed" );
+			message( TCS_ERROR, "Initialization of 2D interpolation class failed" );
 			return -1;
 		}
 

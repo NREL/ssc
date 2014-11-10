@@ -110,14 +110,14 @@ public:
 		}
 		else
 		{
-			message( "Solar efficiency map must have at least 25 solar positions. P_eta_map: %d", angle_rows*angle_cols );
+			message( TCS_ERROR, "Solar efficiency map must have at least 25 solar positions. P_eta_map: %d", angle_rows*angle_cols );
 			return -1;
 		}
 		
 		// Set up Bilinear Interpolation class for field efficiency data
 		if( !field_efficiency_table.Set_2D_Lookup_Table( eta_map ) )
 		{
-			message( "Initialization of 2D interpolation class failed" );
+			message( TCS_ERROR, "Initialization of 2D interpolation class failed" );
 			return -1;
 		}
 

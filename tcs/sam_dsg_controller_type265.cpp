@@ -661,7 +661,7 @@ public:
 
 		if( m_P_hp_in_des > 18000.0 || m_P_hp_out_des > 18000.0 )
 		{
-			message( "The design cycle pressure(s) are greater than the 180 bar limit" );
+			message( TCS_ERROR, "The design cycle pressure(s) are greater than the 180 bar limit" );
 			return -1;
 		}
 
@@ -695,14 +695,14 @@ public:
 
 		if( !dsg_rec.Initialize_Receiver( n_panels, d_rec, per_rec, hl_ffact, flowtype, false, 0, 0.0 ))
 		{
-			message( "Receiver initialization failed" );
+			message(TCS_ERROR,  "Receiver initialization failed" );
 			return -1;
 		}
 
 		if( !boiler.Initialize_Boiler( dsg_rec, m_h_boiler, d_t_boiler, th_t_boiler, emis_boiler, mat_boiler, 0.0,
 			th_fin, l_fin, emis_fin, mat_fin, false ) )
 		{
-			message( "Boiler initialization failed" );
+			message( TCS_ERROR, "Boiler initialization failed" );
 			return -1;
 		}
 
@@ -719,7 +719,7 @@ public:
    
 		if( !superheater.Initialize_Boiler( dsg_rec, m_h_sh, m_d_sh, m_th_sh, m_emis_sh, m_mat_sh, h_sh_max, 0.0, 0.0, 0.0, 0.0, false ) )
 		{
-			message( "Superheater initialization failed" );
+			message( TCS_ERROR, "Superheater initialization failed" );
 			return -1;
 		}
 
@@ -736,7 +736,7 @@ public:
 
 		if( !reheater.Initialize_Boiler( dsg_rec, m_h_rh, m_d_rh, m_th_rh, m_emis_rh, m_mat_rh, h_rh_max, 0.0, 0.0, 0.0, 0.0, false ) )
 		{
-			message( "Reheater initialization failed" );
+			message( TCS_ERROR, "Reheater initialization failed" );
 			return -1;
 		}
 
@@ -939,7 +939,7 @@ public:
 		m_i_flux_map = value(I_flux_map, &n_flux_y, &n_flux_x);
 
 		if (n_flux_y > 1){
-			message("The Direct Steam External Receiver (Type265) model does not currently support 2-dimensional "
+			message(TCS_WARNING, "The Direct Steam External Receiver (Type265) model does not currently support 2-dimensional "
 				"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d", n_flux_y);
 		}
 		m_flux_in.resize(n_flux_x);

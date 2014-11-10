@@ -113,7 +113,7 @@ public:
 		std::string file = value_str( P_FILENAME ).c_str();
 		if (! m_wf.open( file ) )
 		{
-			message("could not open %s for reading", file.c_str() );
+			message(TCS_ERROR, "could not open %s for reading", file.c_str() );
 			return -1;
 		}
 		m_first = true; //True the first time call() is accessed
@@ -135,7 +135,7 @@ public:
 				
 				if ( !m_wf.read() )
 				{
-					message("failed to read from weather file %s at time %lg", m_wf.filename().c_str(), time );
+					message(TCS_ERROR, "failed to read from weather file %s at time %lg", m_wf.filename().c_str(), time );
 					return -1; // error code
 				}
 
@@ -146,7 +146,7 @@ public:
 		int trackmode = (int) value( P_TRACKMODE );
 		if (trackmode < 0 || trackmode > 2)
 		{
-			message("invalid tracking mode specified %d [0..2]", trackmode);
+			message(TCS_ERROR, "invalid tracking mode specified %d [0..2]", trackmode);
 			return -1;
 		}
 

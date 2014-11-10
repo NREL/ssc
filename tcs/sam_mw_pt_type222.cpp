@@ -331,14 +331,14 @@ public:
 				if ( !field_htfProps.SetUserDefinedFluid( mat ) )
 				{
 					//message( "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
-					message( field_htfProps.UserFluidErrMessage(), nrows, ncols );
+					message( TCS_ERROR, field_htfProps.UserFluidErrMessage(), nrows, ncols );
 					return -1;
 				}
 			}
 		}
 		else
 		{
-			message( "Receiver HTF code is not recognized" );
+			message(TCS_ERROR,  "Receiver HTF code is not recognized" );
 			return -1;
 		}
 
@@ -350,12 +350,12 @@ public:
 		}
 		else if( field_fl = HTFProperties::User_defined )
 		{
-			message( "Receiver material code is not recognized" );
+			message( TCS_ERROR, "Receiver material code is not recognized" );
 			return -1;
 		}
 		else
 		{
-			message( "Receiver material code is not recognized" );
+			message( TCS_ERROR, "Receiver material code is not recognized" );
 			return -1;
 		}
 
@@ -509,7 +509,7 @@ public:
 		m_i_flux_map = value(I_flux_map, &n_flux_y, &n_flux_x);
 		
 		if(n_flux_y > 1 ){
-			message("The Molten Salt External Receiver (Type222) model does not currently support 2-dimensional "
+			message(TCS_WARNING, "The Molten Salt External Receiver (Type222) model does not currently support 2-dimensional "
 				"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d",n_flux_y);
 		}
 		m_flux_in.resize(n_flux_x);

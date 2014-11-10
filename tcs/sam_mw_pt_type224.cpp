@@ -257,7 +257,7 @@ public:
 
 				if ( !htfProps.SetUserDefinedFluid( mat ) )
 				{
-					message( htfProps.UserFluidErrMessage(), nrows, ncols );
+					message( TCS_ERROR, htfProps.UserFluidErrMessage(), nrows, ncols );
 					return -1;
 				}
 			}
