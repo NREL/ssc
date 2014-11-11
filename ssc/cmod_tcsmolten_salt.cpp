@@ -474,9 +474,6 @@ public:
 		}
 				
 		int type228_parasitics = add_unit("sam_mw_pt_type228");
-		//E_net calculator
-		int sum_calculator = add_unit("sam_mw_csp_SumCalcs", "Net Energy Calculator");
-
 
 		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
 		set_unit_value_ssc_matrix(tou, "weekend_schedule");
@@ -918,24 +915,6 @@ public:
 		bConnected &= connect(type251_controller, "q_aux_heat", type228_parasitics, "aux_power");
 		bConnected &= connect(type251_controller, "htf_pump_power", type228_parasitics, "P_htf_pump");
 
-	/*	// TODO
-		//Set enet calculator inputs and connect it to the parasitic values ===========================================
-		set_unit_value_ssc_double(sum_calculator, "eta_lhv", 0.9);
-		set_unit_value_ssc_double(sum_calculator, "eta_tes_htr", 0.98);
-		set_unit_value_ssc_double(sum_calculator, "fp_mode" , 1);
-//		bConnected &= connect(type224_powerblock, "P_cycle", sum_calculator, "W_cycle_gross");
-		bConnected &= connect(type228_parasitics, "P_out_net", sum_calculator, "W_cycle_gross");
-		bConnected &= connect(type224_powerblock, "W_cool_par", sum_calculator, "W_par_heatrej");
-	//	bConnected &= connect(type221_hel_field, "W_dot_pump", sum_calculator, "W_par_sf_pump");
-		bConnected &= connect(type251_controller, "htf_pump_power", sum_calculator, "W_par_tes_pump");
-		bConnected &= connect(type251_controller, "bop_par", sum_calculator, "W_par_BOP");
-		bConnected &= connect(type251_controller, "fixed_par", sum_calculator, "W_par_fixed");
-		bConnected &= connect(type221_hel_field, "pparasi", sum_calculator, "W_par_tracking");
-		bConnected &= connect(type251_controller, "aux_par", sum_calculator, "W_par_aux_boiler");
-		bConnected &= connect(type251_controller, "tank_fp_par", sum_calculator, "Q_par_tes_fp");
-	//	bConnected &= connect(type221_hel_field, "E_fp_tot", sum_calculator, "Q_par_sf_fp");
-		bConnected &= connect(type251_controller, "q_aux_heat", sum_calculator, "Q_aux_backup");
-		*/
 		// check if all connections worked
 		if ( !bConnected )
 			throw exec_error( "tcsmolten_salt", util::format("there was a problem connecting outputs of one unit to inputs of another for the simulation.") );
