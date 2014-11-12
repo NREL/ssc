@@ -2106,12 +2106,9 @@ public:
 				m_m_dot_aux = m_ffrac[m_touperiod]*m_m_dot_des;
 				if( (m_m_dot_aux + m_dot_sh)<(m_f_pb_cutoff*m_m_dot_des) )
 					m_m_dot_aux = 0.0;
-				else
-					m_m_dot_aux = m_cycle_max_frac*m_m_dot_des - m_dot_sh;
+				else if( ((m_m_dot_aux + m_dot_sh)/m_m_dot_des - m_cycle_max_frac)/m_cycle_max_frac > 0.005 )
+					m_m_dot_aux = max(0.0, m_cycle_max_frac*m_m_dot_des - m_dot_sh);
 			}
-
-			if( ncall == 3 )
-				m_m_dot_aux = 0.0;
 
 			m_q_aux = m_m_dot_aux*((h_hp_in - h_fw_Jkg) + f_mdotrh*(h_lp_in - h_rh_in));	//[W]
 
@@ -2207,11 +2204,6 @@ public:
 		m_dp_b_prev_ncall = dp_b;
 		m_dp_sh_prev_ncall = dp_sh;
 		m_dp_rh_prev_ncall = dp_rh;
-
-		if( ncall == 0 )
-		{
-
-		}
 
 		bool PB_on = true;
 		if( !m_success && m_dot_toPB == 0.0 )
