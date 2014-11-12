@@ -147,7 +147,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_rh_out_des",        "Target reheater outlet temperature",                               "C",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",      "Cycle maximum overdesign fraction",                                "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "A_sf",                "Solar field area",                                                 "m^2",          "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_ARRAY,       "ffrac",               "Fossil dispatch logic",                                            "-",            "",            "dsg_controller", "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "ffrac",               "Fossil dispatch logic",                                            "-",            "",            "dsg_controller", "*",                       "",                      "" },
 //    { SSC_INPUT,        SSC_MATRIX,      "fluxmap_angles",      "Matrix containing zenith and azimuth angles for flux maps",        "-",            "",            "dsg_controller", "*",                       "",                      "" },
  //   { SSC_INPUT,        SSC_MATRIX,      "fluxmap",             "Matrix containing flux map for various solar positions",           "-",            "",            "dsg_controller", "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_ARRAY,       "TOU_schedule",        "Annual hourly time-of-use schedule",                               "-",            "",            "dsg_controller", "*",                       "",                      "" },
@@ -453,6 +453,9 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "n_flux_days");
 		set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs");
 
+		//set_unit_value_ssc_double(type_hel_field, "n_flux_days", 2.0);
+		//set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs", 2.0);
+
 		int run_type = (int)get_unit_value_number(type_hel_field, "run_type");
 		/*if(run_type == 0){
 
@@ -534,6 +537,7 @@ public:
 		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
 		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
 		set_unit_value_ssc_double( type265_dsg_controller, "A_sf");//, A_sf );
+		set_unit_value_ssc_array( type265_dsg_controller, "ffrac");
 		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_x");
 		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_y");
 
