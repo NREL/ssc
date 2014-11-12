@@ -346,7 +346,7 @@ public:
 		standby_control = (int)value(I_STANDBY_CONTROL);		//Control signal indicating standby mode [none]
 		T_db = value(I_T_DB);		//Ambient dry bulb temperature [C]
 		P_amb = value(I_P_AMB);		//Ambient pressure [mbar]
-		TOU = (int)value(I_TOU);		//Current Time-of-use period [none]
+		TOU = (int)value(I_TOU) - 1;		//Current Time-of-use period [none]
 		rh = value(I_RH)/100.0;		//Relative humidity of the ambient air [none]
 
 		
