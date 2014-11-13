@@ -612,13 +612,14 @@ public:
 			}
 			
 			double n_flux_x_d = (double)m_n_flux_x;
+            double n_panels_d = (double)m_n_panels;
 
 			if( m_n_panels >= m_n_flux_x )
 			{
 				// Translate to the number of panels, so each panel has its own linearly interpolated flux value
 				for( int i = 0; i < m_n_panels; i++ )
 				{
-					double ppos = (n_flux_x_d/(double)m_n_panels*i+n_flux_x_d*0.5/(double)m_n_panels);
+					double ppos = (n_flux_x_d/n_panels_d*i+n_flux_x_d*0.5/n_panels_d);
 					int flo = (int)floor( ppos );
 					int ceiling = (int)ceil( ppos );
 					double ind = (int)( (ppos - flo)/max((double)(ceiling - flo),1.e-6) );
@@ -631,55 +632,68 @@ public:
 			}
 			else
 			{
-				double back_mult = 1.0; double front_mult = 0.0;
-				int index_start = -1; int index_stop = -1;
-				double q_flux_sum = 0.0;
-				bool is_div = false;
-				if( m_n_flux_x%m_n_panels == 0 )
-					is_div = true;
+				/* 
+                The number of panels is always even, therefore the receiver panels are symmetric about the N-S plane.
 
-				for( int i = 0; i < m_n_panels; i++ )
-				{
-					front_mult = 1.0 - back_mult;
-					index_start = index_stop;
-				
-					if( is_div )
-						index_stop = m_n_flux_x/m_n_panels*(i+1) - 1;
-					else
-						index_stop = (int)ceil( ((double)(m_n_flux_x/m_n_panels)*(i+1)) ) - 1;
-						
-					if( is_div )
-						back_mult = 1.0;
-					else
-						back_mult = (double)(m_n_flux_x/m_n_panels)*(i+1) - (int)((double)(m_n_flux_x/m_n_panels)*(i+1));
-									
-					double sum_fracs = 0.0; double sum_flux = 0.0;
-					for( int j = index_start; j <= index_stop; j++ )
-					{
-						if( j == index_start )
-						{
-							sum_fracs += front_mult;
-							if( j == -1 )
-								sum_flux += front_mult*m_flux_in.at(m_n_flux_x-1);
-							else
-								sum_flux += front_mult*m_flux_in.at(j);
-						}
-						else if( j == index_stop )
-						{
-							sum_fracs += back_mult;
-							if( j == 12 )
-								sum_flux += back_mult*m_flux_in.at(0);
-							else
-								sum_flux += back_mult*m_flux_in.at(j);
-						}
-						else
-						{
-							sum_fracs += 1.0;
-							sum_flux += m_flux_in.at(j);
-						}
-					}
-					m_q_dot_inc.at(i) = sum_flux*m_A_node/sum_fracs;
-				}
+                The number of flux points may be even or odd. The distribution is assumed to be symmetric
+                about North, therefore:
+                    (a) A distribution with an odd number of points includes a center point (n_flux_x - 1)/2+1 
+                        whose normal faces exactly north
+                    (b) A distribution with an even number of points includes 2 points n_flux_x/2, n_flux_x/2+1 
+                        which straddle the North vector. 
+                In either scenario, two points straddle the South vector and no scenario allows a point to fall 
+                directly on the South vector. Hence, the first and last flux points fall completely on the first
+                and last panel, respectively.
+                */
+                
+                double leftovers = 0.;
+				int index_start = 0; int index_stop = 0;
+				double q_flux_sum = 0.0;
+
+                double panel_step = n_flux_x_d/n_panels_d;   //how many flux points are stepped over by each panel?
+
+                for( int i=0; i<m_n_panels; i++)
+                {
+					double panel_pos = panel_step*(i+1);   //Where does the current panel end in the flux array?
+    
+                    index_start = (int)floor(panel_step*i);
+                    index_stop = (int)floor(panel_pos);
+
+                    q_flux_sum = 0.;
+    
+                    for(int j=index_start; j<index_stop+1; j++)
+                    {
+                        if(j==m_n_flux_x)
+                        {
+                            if(leftovers > 0.)
+                                message(TCS_WARNING, "An error occurred during interpolation of the receiver flux map. The results may be inaccurate! Contact SAM support to resolve this issue.");
+
+                            break;
+                        }
+                        if( j == 0 )
+                        {
+                            q_flux_sum = m_flux_in.at(j);
+                            leftovers = 0.;
+                        }
+                        else if(j == index_start)
+                        {
+                            q_flux_sum += leftovers;
+                            leftovers = 0.;
+                        }
+                        else if(j == index_stop)
+                        {
+                            double stop_mult = (panel_pos - floor(panel_pos));
+                            q_flux_sum += stop_mult * m_flux_in.at(j);
+                            leftovers = (1 - stop_mult)*m_flux_in.at(j);
+                        }
+                        else
+                        {
+                            q_flux_sum += m_flux_in[j];
+                        }
+                    }
+                    m_q_dot_inc.at(i) = q_flux_sum * m_A_node/n_flux_x_d*n_panels_d ;
+                }
+
 			}			
 
 			q_dot_inc_sum = 0.0;

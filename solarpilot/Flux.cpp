@@ -687,6 +687,13 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	PointVect NV;
 	Rec->CalculateNormalVector(*H.getLocation(), NV);
 	bool view_ok = false;
+	
+    double h_rad = H.getRadialPos();		//[m] Get the heliostat radius from the tower
+
+    /*if(Rec->getReceiverType() == Receiver::REC_TYPE::CYLINDRICAL
+        && h_rad < Rec->getReceiverWidth()/2.)
+        return 0.0;
+   */     
 	Vect rnorm;
 	rnorm.Set(NV.i, NV.j, NV.k);
 	if(Toolbox::dotprod(rnorm, *H.getTowerVector()) < 0.) view_ok = true;	//We actually want the opposite of the tower vector, so take negative dot products to be ok.
@@ -696,7 +703,7 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 
 	//Variable declarations
 	int i, j, jmax, jmin;
-	double h_rad, slant, tht;
+	double slant, tht;
 
 	//--------Calculate the moments of the sun-----------
 	tht = SF.getTowerHeight();
@@ -709,7 +716,6 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	//Receiver *Rec = SF.getReceivers()->at(rec);
 
 	//Calculate the range-dependent expansion coefficients
-	h_rad = H.getRadialPos();		//[m] Get the heliostat radius from the tower
 	//Calculate the slant range
 	if(Rec->getReceiverType() == 0){	//External cylindrical 
 		double rec_width = Rec->getReceiverWidth();
@@ -1309,7 +1315,13 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 
 
 	//Now evaluate the hermite coefficients and assign the spillage intercept value
-	return hermiteIntEval(SF, H, Rec);
+	double heval = hermiteIntEval(SF, H, Rec);
+
+    if(Rec->getReceiverType() == Receiver::REC_TYPE::CYLINDRICAL
+        && h_rad < Rec->getReceiverWidth()/2.)
+        return 0.0;
+    else
+        return heval;
 
 	// ** probably here is where we should call the flux density calculation. The flux will depend on 
 	// information calculated in the hermiteIntEval method. _hcoef array.
