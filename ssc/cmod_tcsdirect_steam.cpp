@@ -63,6 +63,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT, SSC_NUMBER, "interp_beta", "Interpolation beta coef.", "-", "", "heliostat", "?=1.99", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "n_flux_x", "Flux map X resolution", "-", "", "heliostat", "?=12", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "n_flux_y", "Flux map Y resolution", "-", "", "heliostat", "?=1", "", "" },
+    { SSC_INPUT, SSC_NUMBER, "dens_mirror", "Ratio of reflective area to profile", "-", "", "heliostat", "*", "", ""},
 	{ SSC_INPUT, SSC_MATRIX, "helio_positions", "Heliostat position table", "m", "", "heliostat", "run_type=1", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "helio_aim_points", "Heliostat aim point table", "m", "", "heliostat", "?", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "N_hel", "Number of heliostats", "-", "", "heliostat", "?", "", "" },
@@ -442,6 +443,7 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "v_wind_max");//, 25.);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
 		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
+        set_unit_value_ssc_double(type_hel_field, "dens_mirror");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_0");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_1");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_2");
