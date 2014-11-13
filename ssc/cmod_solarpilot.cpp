@@ -28,7 +28,8 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_height",              "Heliostat height",                           "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_optical_error",       "Optical error",                              "rad",    "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_active_fraction",     "Active fraction of reflective area",         "frac",   "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",         "Mirror reflectance",                         "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dens_mirror",               "Ratio of reflective area to profile",        "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",         "Mirror reflectance",                         "frac",   "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",           "Absorptance",                                "frac",   "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_height",                "Receiver height",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_aspect",                "Receiver aspect ratio (H/W)",                "frac",   "",         "SolarPILOT",   "*",                "",                "" },
@@ -140,7 +141,7 @@ public:
 		helios.front().width = as_double("helio_width");
 		helios.front().height = as_double("helio_height");
 		helios.front().optical_error = as_double("helio_optical_error"); 
-		helios.front().active_fraction = as_double("helio_active_fraction");
+		helios.front().active_fraction = as_double("helio_active_fraction") * as_double("dens_mirror");
 		helios.front().reflectance = as_double("helio_reflectance");
 		helios.front().npanels_h = as_integer("n_facet_y");
 		helios.front().npanels_w = as_integer("n_facet_x");

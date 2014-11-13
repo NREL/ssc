@@ -773,42 +773,44 @@ void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
 void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 	int h=0;
 	for( sp_heliostats::iterator helio = helios.begin(); helio != helios.end(); helio++){
-		_variables["heliostat"][h]["width"].value = my_to_string(helio->width);
-		_variables["heliostat"][h]["height"].value = my_to_string(helio->height);
-		_variables["heliostat"][h]["n_cant_x"].value = my_to_string(helio->npanels_w);
-		_variables["heliostat"][h]["n_cant_y"].value = my_to_string(helio->npanels_h);
+		_variables["heliostat"][h]["width"].set(helio->width);
+		_variables["heliostat"][h]["height"].set(helio->height);
+		_variables["heliostat"][h]["n_cant_x"].set(helio->npanels_w);
+		_variables["heliostat"][h]["n_cant_y"].set(helio->npanels_h);
+        _variables["heliostat"][h]["is_faceted"].set( helio->npanels_h > 1 || helio->npanels_w > 1 );
 		_variables["heliostat"][h]["err_elevation"].value = "0.";
 		_variables["heliostat"][h]["err_azimuth"].value = "0.";
-		_variables["heliostat"][h]["err_surface_x"].value = my_to_string(helio->optical_error);
-		_variables["heliostat"][h]["err_surface_y"].value = my_to_string(helio->optical_error);
+		_variables["heliostat"][h]["err_surface_x"].set(helio->optical_error);
+		_variables["heliostat"][h]["err_surface_y"].set(helio->optical_error);
 		_variables["heliostat"][h]["err_reflect_x"].value = "0.";
 		_variables["heliostat"][h]["err_reflect_y"].value = "0.";
-		_variables["heliostat"][h]["reflectivity"].value = my_to_string(helio->reflectance);
+		_variables["heliostat"][h]["reflectivity"].set(helio->reflectance);
+        _variables["heliostat"][h]["reflect_ratio"].set( helio->active_fraction );
 		_variables["heliostat"][h]["soiling"].value = "1.";
 
 		//Canting
-		_variables["heliostat"][h]["cant_method"].value = my_to_string(helio->cant_type);
+		_variables["heliostat"][h]["cant_method"].set(helio->cant_type);
 		switch (helio->focus_type)
 		{
 		case sp_heliostat::CANT_TYPE::FLAT:
 		case sp_heliostat::CANT_TYPE::AT_SLANT:
 			break;
 		case sp_heliostat::CANT_TYPE::AT_DAY_HOUR:
-			_variables["heliostat"][h]["cant_day"].value = my_to_string(helio->cant_settings.point_day);
-			_variables["heliostat"][h]["cant_hour"].value = my_to_string(helio->cant_settings.point_hour);
+			_variables["heliostat"][h]["cant_day"].set(helio->cant_settings.point_day);
+			_variables["heliostat"][h]["cant_hour"].set(helio->cant_settings.point_hour);
 			break;
 		case sp_heliostat::CANT_TYPE::USER_VECTOR:
 			_variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
-			_variables["heliostat"][h]["cant_vect_i"].value = my_to_string(helio->cant_settings.point_vector.i);
-			_variables["heliostat"][h]["cant_vect_j"].value = my_to_string(helio->cant_settings.point_vector.j);
-			_variables["heliostat"][h]["cant_vect_k"].value = my_to_string(helio->cant_settings.point_vector.k);
+			_variables["heliostat"][h]["cant_vect_i"].set(helio->cant_settings.point_vector.i);
+			_variables["heliostat"][h]["cant_vect_j"].set(helio->cant_settings.point_vector.j);
+			_variables["heliostat"][h]["cant_vect_k"].set(helio->cant_settings.point_vector.k);
 			break;
 		default:
 			break;
 		}
 
 		//Focusing
-		_variables["heliostat"][h]["focus_method"].value = my_to_string(helio->focus_type);
+		_variables["heliostat"][h]["focus_method"].set(helio->focus_type);
 		_variables["heliostat"][h]["is_focal_equal"].value = "TRUE";
 		switch (helio->focus_type)
 		{
@@ -817,7 +819,7 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 			_variables["heliostat"][h]["is_yfocus"].value = "FALSE";
 			break;
 		case sp_heliostat::FOCUS_TYPE::USER_DEFINED:
-			_variables["heliostat"][h]["x_focal_length"].value = my_to_string(helio->user_focal_length);
+			_variables["heliostat"][h]["x_focal_length"].set(helio->user_focal_length);
 			//don't break.. also set the x and y focus bools to true
 		case sp_heliostat::FOCUS_TYPE::AT_SLANT:
 			_variables["heliostat"][h]["is_xfocus"].value = "TRUE";
@@ -948,7 +950,7 @@ void AutoPilot::PostProcessLayout()
 		hp.user_optics = false;
 		_layout->heliostat_positions.push_back( hp );
 	}
-	_layout->land_area = _SF->getLandObject()->getLandArea();
+	_layout->land_area = _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
 }
 
 void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)

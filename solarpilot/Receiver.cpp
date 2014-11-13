@@ -600,6 +600,8 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 				Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED;		/*	0 | Continuous closed cylinder - external	*/
 
 			S->setSurfaceSpanAngle(-Pi,Pi);	//Full surround
+            _span_min = -Pi;
+            _span_max = Pi; //enforce closedness - overwrite any other values
 		}
 		else{
 			_rec_geom = _is_polygon ? 

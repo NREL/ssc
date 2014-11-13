@@ -169,6 +169,7 @@ enum{	//Parameters
 		P_helio_height, 
 		P_helio_optical_error, 
 		P_helio_active_fraction, 
+        P_dens_mirror,
 		P_helio_reflectance, 
 		P_rec_absorptance, 
 		P_rec_height, 
@@ -229,6 +230,7 @@ tcsvarinfo sam_mw_pt_heliostatfield_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,   P_helio_height,            "helio_height",          "Heliostat height",                                     "m",      "",                              "", ""          },
     { TCS_PARAM,    TCS_NUMBER,   P_helio_optical_error,     "helio_optical_error",   "Heliostat optical error",                              "rad",    "",                              "", ""          },
     { TCS_PARAM,    TCS_NUMBER,   P_helio_active_fraction,   "helio_active_fraction", "Heliostat active frac.",                               "-",      "",                              "", ""          },
+    { TCS_PARAM,    TCS_NUMBER,   P_dens_mirror,             "dens_mirror",           "Ratio of reflective area to profile",                  "-",      "",                              "", ""          },
     { TCS_PARAM,    TCS_NUMBER,   P_helio_reflectance,       "helio_reflectance",     "Heliostat reflectance",                                "-",      "",                              "", ""          },
     { TCS_PARAM,    TCS_NUMBER,   P_rec_absorptance,         "rec_absorptance",       "Receiver absorptance",                                 "-",      "",                              "", ""          },
     { TCS_PARAM,    TCS_NUMBER,   P_rec_height,              "rec_height",            "Receiver height",                                      "m",      "",                              "", ""          },
@@ -310,6 +312,7 @@ private:
 	double helio_height;
 	double helio_optical_error;
 	double helio_active_fraction;
+    double dens_mirror;
 	double helio_reflectance;
 	double rec_absorptance;
 	double rec_height;
@@ -360,7 +363,8 @@ public:
 		helio_height	=std::numeric_limits<double>::quiet_NaN();
 		helio_optical_error	=std::numeric_limits<double>::quiet_NaN();
 		helio_active_fraction	=std::numeric_limits<double>::quiet_NaN();
-		helio_reflectance	=std::numeric_limits<double>::quiet_NaN();
+		dens_mirror = std::numeric_limits<double>::quiet_NaN();
+        helio_reflectance	=std::numeric_limits<double>::quiet_NaN();
 		rec_absorptance	=std::numeric_limits<double>::quiet_NaN();
 		rec_height	=std::numeric_limits<double>::quiet_NaN();
 		rec_aspect	=std::numeric_limits<double>::quiet_NaN();
@@ -435,6 +439,7 @@ public:
 			helio_height = value(P_helio_height);
 			helio_optical_error = value(P_helio_optical_error);
 			helio_active_fraction = value(P_helio_active_fraction);
+            dens_mirror = value(P_dens_mirror);
 			helio_reflectance = value(P_helio_reflectance);
 			rec_absorptance = value(P_rec_absorptance);
 			rec_height = value(P_rec_height);
@@ -563,7 +568,7 @@ public:
 			helios.front().width = helio_width;
 			helios.front().height = helio_height;
 			helios.front().optical_error = helio_optical_error;
-			helios.front().active_fraction = helio_active_fraction;
+			helios.front().active_fraction = helio_active_fraction * dens_mirror;   //availability * mirror area fraction
 			helios.front().reflectance = helio_reflectance;
 			int cmap[5];
 			cmap[0] = sp_heliostat::CANT_TYPE::FLAT;
@@ -649,6 +654,8 @@ public:
 
 				//Copy the heliostat field positions into the 'helio_positions' data structure
 				N_hel = (int)layout.heliostat_positions.size();
+                string msg = "Auto-generated field: Number of heliostats " + util::to_string(N_hel);
+                message(TCS_NOTICE, msg.c_str());
 				helio_positions = allocate(P_helio_positions, N_hel, pos_dim);
 				for( int i=0; i<N_hel; i++){
 					TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 ) = layout.heliostat_positions.at(i).location.x;

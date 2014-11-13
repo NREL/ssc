@@ -29,6 +29,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "helio_height",         "Heliostat height",                                                  "m",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_optical_error",  "Heliostat optical error",                                           "rad",          "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_active_fraction","Heliostat active frac.",                                            "-",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dens_mirror",          "Ratio of Reflective Area to Profile",                               "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",    "Heliostat reflectance",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",      "Receiver absorptance",                                              "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
@@ -484,6 +485,7 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "helio_height");//, 12.);
 		set_unit_value_ssc_double(type_hel_field, "helio_optical_error");//, 0.00153);
 		set_unit_value_ssc_double(type_hel_field, "helio_active_fraction");//, 0.97);
+        set_unit_value_ssc_double(type_hel_field, "dens_mirror");
 		set_unit_value_ssc_double(type_hel_field, "helio_reflectance");//, 0.90);
 		set_unit_value_ssc_double(type_hel_field, "rec_absorptance");//, 0.94);
 		set_unit_value_ssc_double(type_hel_field, "rec_height", as_double("H_rec"));//, 5.);
@@ -515,9 +517,13 @@ public:
 		
         int run_type = (int)get_unit_value_number(type_hel_field, "run_type");
         /*if(run_type == 0){
+            set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
+            set_unit_value_ssc_matrix(type_hel_field, "eta_map");
+		    set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
+		    set_unit_value_ssc_matrix(type_hel_field, "flux_maps");
             
         }
-        else */
+        else*/ 
         if(run_type == 1){
             set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
         }
@@ -952,6 +958,14 @@ public:
             ssc_number_t *ssc_fpm = allocate( "sunpos_eval", nr, nc );
             for( size_t i=0; i<nr*nc; i++ )
                 ssc_fpm[i] = (ssc_number_t)fpm[i];
+        }
+        if( run_type == 0){
+            if( double *hl = get_unit_value(type_hel_field, "helio_positions", &nr, &nc ) )
+            {
+                ssc_number_t *ssc_hl = allocate( "layout_positions", nr, nc );
+                for(size_t i=0; i<nr*nc; i++)
+                    ssc_hl[i] = (ssc_number_t)hl[i];
+            }
         }
         assign( "land_area", var_data( (ssc_number_t) get_unit_value_number(type_hel_field, "land_area" ) ) );
 		//-----------
