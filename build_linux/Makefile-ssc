@@ -13,6 +13,7 @@ TARGET = ssc.so
 
 OBJECTS = \
 	cmod_solarpilot.o \
+	cmod_dsg_flux_preprocess.o \
 	cmod_belpe.o \
 	cmod_biomass.o \
 	cmod_annualoutput.o \
