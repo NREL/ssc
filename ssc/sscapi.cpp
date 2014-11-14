@@ -67,6 +67,7 @@ extern module_entry_info
 	cm_entry_biomass,
 	cm_entry_solarpilot,
 	cm_entry_belpe,
+	cm_entry_dsg_flux_preprocess,
 	cm_entry_layoutarea;
 
 /* official module table */
@@ -116,6 +117,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_biomass,
 	&cm_entry_solarpilot,
 	&cm_entry_belpe,
+	&cm_entry_dsg_flux_preprocess,
 	&cm_entry_layoutarea,
 	0 };
 
