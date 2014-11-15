@@ -666,6 +666,18 @@ public:
 		}
 
 		m_f_mdotrh_des = value( P_f_mdotrh_des );			//[-] Design reheat mass flow rate fraction
+
+		if(m_f_mdotrh_des > 1.0)
+		{
+			message(TCS_ERROR, "The design reheat mass flow rate fraction, %lg, must be less than or equal to 1.0", m_f_mdotrh_des);
+			return -1;
+		}
+
+		if(m_f_mdotrh_des < 0.5)
+		{
+			message(TCS_ERROR, "For this model, the design reheat mass flow rate fraction, %lg, must be greater than or equal to 0.5", m_f_mdotrh_des);
+		}
+
 		m_p_cycle_design = value( P_p_cycle_design )*1.E3;	//[kW] Design cycle power (convert from MW)
 		m_eta_des = m_p_cycle_design * 1000.0 / m_q_pb_design;	//[-] Design cycle efficiency
 
