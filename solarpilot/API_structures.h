@@ -18,8 +18,8 @@ private:
 public:
 	void LoadDefaults(var_set &V);
 
-	//struct METHOD { enum { SUBPLEX, DIRECT_L, EVOLUTIONARY }; };
-	//int method;
+	struct METHOD { enum { BOBYQA=0, COBYLA=1, NEWOUA=2, NelderMead=3, Subplex=4, RSGS=5 }; };
+	int method;
 	double range_tht[2];	//[m] {min, max}
 	double range_rec_aspect[2];	//[m] {min, max}
 	double range_rec_height[2];	//[m] {min, max}

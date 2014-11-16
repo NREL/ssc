@@ -55,13 +55,11 @@ protected:
 
 	vector<double> interpolate_vectors( vector<double> &A, vector<double> &B, double alpha);
 
-	void PreSimCallbackUpdate();
 
 	void PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized);
 	void PostProcessLayout();
 	void PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int flux_layer = 0);
 	
-	void PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux);
 
 	bool CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
@@ -78,9 +76,10 @@ public:
 	void SetSummaryCallbackStatus(bool is_enabled);
 	void SetDetailCallbackStatus(bool is_enabled);
 	//setup
+	void PreSimCallbackUpdate();
     void LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_set *variables = 0);
 	void SetExternalSFObject(SolarField *SF);
-	bool Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs);
+	bool Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, bool for_optimize = false);
 	bool SetupExpert(var_set &variables, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
                                          sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, 
                                          vector<string> &weather_data, bool defaults_only=false);
@@ -89,13 +88,15 @@ public:
 	//Simulation methods
 	bool SimulateFlux(sp_flux_map &fluxmap);  //individual flux simulation - not multi-threaded
 	bool EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max);
+	void PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux);
 	virtual bool CreateLayout(bool do_post_process = true);
 	virtual bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	virtual bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 	virtual bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 	bool Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout);
-	bool Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout);
+	bool Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
+    bool OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
 	//cancellation methods
 	void CancelSimulation();
 	bool IsSimulationCancelled();
