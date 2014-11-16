@@ -24,7 +24,7 @@ void sp_optimize::LoadDefaults(var_set &V)
 		is_optimize_bound = V["land"][0]["is_land_max_opt"].value_bool();
 
 	//collect other range settings
-	//method = METHOD::DIRECT_L;
+	method = V["optimize"][0]["algorithm"].value_int();
 	range_tht[0] = V["solarfield"][0]["tht_opt_min"].value_double();	//[m] {min, max}
 	range_tht[1] = V["solarfield"][0]["tht_opt_max"].value_double();
 	range_rec_height[0] = V["receiver"][0]["height_opt_min"].value_double();	//[m] {min, max}

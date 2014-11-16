@@ -3,6 +3,7 @@
 #include "IOUtil.h"
 #include "SolarField.h"
 #include "definitions.h"
+#include <iomanip> 
 
 #ifdef SP_USE_THREADS
 #include <thread>
@@ -216,6 +217,85 @@ public:
 
 };
 
+struct AutoOptHelper
+{
+    int m_iter;
+    AutoPilot *m_autopilot;
+    vector<vector<double> > m_all_points;
+    vector<double> m_normalizers;
+    vector<double> m_objective;
+    vector<double*> m_opt_vars;
+    vector<string> m_opt_names;
+    sp_receivers *m_recs;
+    sp_optimize *m_opt;
+    sp_layout *m_layout;
+    nlopt::opt *m_opt_obj;
+
+    void SetObjects( void *autopilot, sp_receivers *recs, sp_optimize *opt, sp_layout *layout, nlopt::opt *optobj ){
+        m_autopilot = static_cast<AutoPilot*>( autopilot );
+        m_recs = recs;
+        m_opt = opt;
+        m_layout = layout;
+        m_opt_obj = optobj;
+    };
+
+    void Initialize()
+    {
+        m_iter = 0;
+        m_autopilot = 0;
+        m_recs = 0;
+        m_opt = 0;
+        m_layout = 0;
+        m_opt_obj = 0;
+        m_all_points.clear();
+        m_normalizers.clear();
+        m_objective.clear();
+        m_opt_vars.clear();
+        m_opt_names.clear();
+    };
+
+    double Simulate(const double *x, int n)
+    {
+        /* 
+        Run a simulation and update points as needed. Report outcome from each step.
+        */
+        if(m_autopilot->IsSimulationCancelled() )
+        {
+            m_opt_obj->force_stop();
+            return 0.;
+        }
+
+        m_iter += 1;
+
+        vector<double> current;
+
+        //update the objective variables
+        for(int i=0; i<(int)m_opt_vars.size(); i++)
+        {
+            current.push_back( x[i] );
+            *m_opt_vars.at(i) = current.at(i) * m_normalizers.at(i);
+        }
+
+        m_all_points.push_back( current );
+
+        double obj, flux;
+        
+        //Evaluate the objective function value
+        if(! 
+        m_autopilot->EvaluateDesign( *m_opt, *m_recs, *m_layout, obj, flux) 
+            ){
+            string errmsg = "Optimization failed at iteration " + std::to_string(m_iter) + ". Terminating simulation.";   
+            throw spexception(errmsg.c_str());
+        }
+        //Update variables as needed
+        m_autopilot->PostEvaluationUpdate(m_iter, current, m_normalizers, obj, flux);
+
+        m_objective.push_back(obj);
+                
+        return obj;
+    };
+};
+
 double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *data)
 {
 	/* 
@@ -286,6 +366,16 @@ double optimize_maxstep_eval(unsigned n, const double *x, double *grad, void *da
 	return ssize - D->max_step_size;
 
 }
+
+double optimize_auto_eval(unsigned n, const double *x, double *grad, void *data)
+{
+    AutoOptHelper *D = static_cast<AutoOptHelper*>( data );
+    //Only calls to methods available in AutoPilot base class are allowed!
+
+    return D->Simulate(x, n);
+};
+
+
 
 void TestQuadSurface(vector<double*> &vptrs, double &opt, double &flux)
 {
@@ -387,7 +477,7 @@ void AutoPilot::SetExternalSFObject( SolarField *SF )
 	_is_solarfield_external = true;
 }
 
-bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs){
+bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, bool for_optimize){
 
 	/* 
 	Using the information provided in the data structures, construct a new SolarField object.
@@ -437,10 +527,13 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	//---Set a couple of parameters here that should be consistent for simple API use
 	
 	//make sure the aiming strategy is correct
-	if(recs.front().type == sp_receiver::TYPE::CYLINDRICAL)
+	if(recs.front().type == sp_receiver::TYPE::CYLINDRICAL && !for_optimize)
 		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::SIMPLE );
 	else
+    {
 		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::IMAGE_SIZE );
+        _variables["fluxsim"][0]["sigma_limit"].set(2.5);
+    }
 
 	//set the receiver flux surfaces to the correct resolution to balance run time with accuracy
 	if( _variables["receiver"][0]["rec_type"].value_int() == 0 ){
@@ -1192,6 +1285,11 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 	obj_metric = cost/power 
 		* (1. + (flux_overage_ratio - 1.) * opt.flux_penalty) 
 		* (1. + (1. - power_shortage_ratio)*opt.power_penalty);
+
+    /*obj_metric = (cost - power*3250)*1.e-7 + 
+        max(flux_max - opt.flux_max, 0.)*opt.flux_penalty + 
+        max(qminimum - qactual, 0.)*opt.power_penalty;*/
+
 	//Additive? may cause too much interaction
 	
 	//Set the aiming method back to the original value
@@ -1214,11 +1312,13 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 
 	
 	//Create a vector of variables that will be optimized. Create companion vectors that indicate upper and lower feasible ranges for each variable.
-	vector<double*> optvars;	//A vector of pointers to the memory locations of the variables being optimized
+    vector<string> names;
+    vector<double*> optvars;	//A vector of pointers to the memory locations of the variables being optimized
 	vector<double>
 		upper_range,	//A vector of upper variable limits
 		lower_range;	//A vector of lower variable limits
 	if(opt.is_optimize_tht){
+        names.push_back("THT");
 		optvars.push_back( &layout.h_tower );
 		if(opt.is_range_constr_tht){
 			lower_range.push_back( opt.range_tht[0]/layout.h_tower );
@@ -1231,6 +1331,7 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 	}
 	if(opt.is_optimize_rec_aspect){
+        names.push_back("Aspect");
 		optvars.push_back( &recs.front().aspect);
 		if(opt.is_range_constr_aspect){
 			lower_range.push_back( opt.range_rec_aspect[0] );
@@ -1243,6 +1344,7 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 	}
 	if(opt.is_optimize_rec_height){
+        names.push_back("RecHeight");
 		optvars.push_back( &recs.front().height);
 		if(opt.is_range_constr_rech){
 			lower_range.push_back( opt.range_rec_height[0]/recs.front().height );
@@ -1255,6 +1357,7 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 	}
 	if(opt.is_optimize_bound){
+        names.push_back("MaxRad");
 		optvars.push_back( &layout.land_max);
 		if(opt.is_range_constr_bound){
 			lower_range.push_back( opt.range_land_bound[0]/layout.land_max );
@@ -1267,11 +1370,18 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 	}
 
-	return Optimize(optvars, upper_range, lower_range, opt, recs, layout);
+    switch(opt.method)
+    {
+    case sp_optimize::METHOD::RSGS:  //Response surface gradient search - original method
+	    return Optimize(optvars, upper_range, lower_range, opt, recs, layout);
+        break;
+    default:
+        return OptimizeAuto( optvars, upper_range, lower_range, opt, recs, layout, &names);
+    }
 
 }
 
-bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout)
+bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
 {
 	//Number of variables to be optimized
 	int nvars = (int)optvars.size();
@@ -1286,13 +1396,23 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 	bool converged = false;
 	int opt_iter = 0;
 
+    int sim_count = 0;
+
 	vector<vector<double> > all_sim_points; //keep track of all of the positions simulated
 	vector<double> objective;
 	vector<double> max_flux;
 	double objective_old=9.e22;
 	double objective_new=9.e21;
 	int sim_count_begin = 0;
-	_summary_siminfo->addSimulationNotice("\n\n\n---------------Beginning simulation ------------------");
+
+    //Add a formatted simulation notice
+    ostringstream os;
+    os << "\n\nBeginning Simulation\nIter ";
+    for(int i=0; i<(int)optvars.size(); i++)
+        os << setw(9) << (names==0 ? "Var "+std::to_string(i+1) : names->at(i)) << "|";
+    os << "| Obj.    | Flux";
+
+	_summary_siminfo->addSimulationNotice(os.str());
 	while( ! converged ){
 		sim_count_begin = objective.size() - 1;	//keep track of the simulation number at the beginning of the main iteration
 
@@ -1314,13 +1434,13 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		//----------------------
 
 		//Start iteration by evaluating the current point
-		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "] Simulating base point");
+		_summary_siminfo->addSimulationNotice("--- Iteration " + my_to_string(opt_iter+1) + " ---\n...Simulating base point");
 		for(int i=0; i<(int)optvars.size(); i++)
 			*optvars.at(i) = current.at(i) * normalizers.at(i);
 		all_sim_points.push_back( current );
 		double base_obj, base_flux;
 		EvaluateDesign(opt, recs, layout, base_obj, base_flux);			
-		PostEvaluationUpdate(opt_iter, current, normalizers, base_obj, base_flux);
+		PostEvaluationUpdate(sim_count++, current, normalizers, base_obj, base_flux);
 		if(_cancel_simulation) return false;
 		objective.push_back( base_obj );
 		max_flux.push_back( base_flux );
@@ -1363,7 +1483,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
 		//Run the evaluation points
 		_summary_siminfo->setTotalSimulationCount((int)runs.size());
-		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + "Creating local response surface");
+		_summary_siminfo->addSimulationNotice("...Creating local response surface");
 		for(int i=0; i<(int)runs.size(); i++){
 			_summary_siminfo->setCurrentSimulation(i);
 
@@ -1375,7 +1495,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			double obj, flux;
 			all_sim_points.push_back( runs.at(i) );
 			EvaluateDesign(opt, recs, layout, obj, flux);
-			PostEvaluationUpdate(opt_iter, runs.at(i), normalizers, obj, flux);
+			PostEvaluationUpdate(sim_count++, runs.at(i), normalizers, obj, flux);
 			if(_cancel_simulation) return false;
 			surface_objective.push_back(obj);
 			surface_eval_points.push_back( runs.at(i) );
@@ -1384,8 +1504,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		}
 
 		//construct a bilinear regression model
-		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + 
-			" Generating regression fit");
+		_summary_siminfo->addSimulationNotice("...Generating regression fit");
 		
 		//----------------------
 		//	Descent vector
@@ -1480,13 +1599,11 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				i_best_fact = i;
 			}
 		}
-		_summary_siminfo->addSimulationNotice("... Best regression objective value = " + my_to_string(min_val) ); 
+		_summary_siminfo->addSimulationNotice("...Best regression objective value = " + my_to_string(min_val) ); 
 
 		//if so, use the best simulated point
 		if(best_fact_obj < min_val ){
-			_summary_siminfo->addSimulationNotice(
-				"\n[Iter " + my_to_string(opt_iter+1) + "] Correcting step direction to use best response surface point."
-				);
+			_summary_siminfo->addSimulationNotice("...Correcting step direction to use best response surface point.");
 
 			step_vector.resize( stepto.size() );
 			for(int i=0; i<(int)current.size(); i++){
@@ -1525,8 +1642,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		bool steep_converged = false;
 		double prev_obj = base_obj;
 		_summary_siminfo->setTotalSimulationCount(opt.max_desc_iter);
-		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + 
-				" Moving along steepest descent");
+		_summary_siminfo->addSimulationNotice("...Moving along steepest descent");
 		
 		vector<double> start_point = current;
 		vector<double> all_steep_objs;
@@ -1544,7 +1660,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			double obj, flux;
 			all_sim_points.push_back( current );
 			EvaluateDesign(opt, recs, layout, obj, flux);
-			PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+			PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
 			if(_cancel_simulation) return false;
 			if(minmax_iter > 0)
 				prev_obj = objective.back();	//update the latest objective function value
@@ -1586,8 +1702,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 						}
 						if( sqrt(step_diff) > opt.max_step/100. && new_step_size > 1.e-8){
 							tried_steep_mod = true;
-							_summary_siminfo->addSimulationNotice("[Iter " + my_to_string(opt_iter+1) + "]" + 
-								"Moving back to original point.. trying alternate descent direction.");
+							_summary_siminfo->addSimulationNotice("...Moving back to original point, trying alternate descent direction.");
 						
 							//correct the step to maintain the maximum step size
 							step_vector = new_step_vector;
@@ -1651,7 +1766,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				site_a_gs, site_b_gs;
 		
 		_summary_siminfo->setTotalSimulationCount(opt.max_gs_iter*2);
-		_summary_siminfo->addSimulationNotice("\n[Iter " + my_to_string(opt_iter+1) + "]" + " Refining with golden section");
+		_summary_siminfo->addSimulationNotice("...Refining with golden section");
 
 		bool site_a_sim_ok = false;
 		bool site_b_sim_ok = false;
@@ -1673,7 +1788,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 					*optvars.at(i) = current.at(i) * normalizers.at(i);
 				all_sim_points.push_back( current );
 				EvaluateDesign(opt, recs, layout, obj, flux);			
-				PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
 				if(_cancel_simulation) return false;
 				za = obj;
 				objective.push_back( obj );
@@ -1689,7 +1804,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 					*optvars.at(i) = current.at(i) * normalizers.at(i);
 				all_sim_points.push_back( current );
 				EvaluateDesign(opt, recs, layout, obj, flux);			
-				PostEvaluationUpdate(opt_iter, current, normalizers, obj, flux);
+				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
 				if(_cancel_simulation) return false;
 				zb = obj;
 				objective.push_back( obj );
@@ -1751,7 +1866,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 	best_point = all_sim_points.at(ibest);
 	_summary_siminfo->addSimulationNotice("\nBest point found:");
 	vector<double> ones(best_point.size(), 1.);
-	PostEvaluationUpdate(opt_iter, best_point, ones, zbest, max_flux.at(ibest));
+	PostEvaluationUpdate(sim_count++, best_point, ones, zbest, max_flux.at(ibest));
 
 	_summary_siminfo->addSimulationNotice("\n\nOptimization complete!");
 	
@@ -1763,6 +1878,90 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
 }
 
+bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
+{
+    /* 
+    Use canned algorithm to optimize
+    */
+
+    
+    //set up NLOPT algorithm
+   
+    //map the method
+    nlopt::algorithm nlm;
+    switch(opt.method)
+    {
+    case sp_optimize::METHOD::BOBYQA:
+        nlm = nlopt::LN_BOBYQA;
+        break;
+    case sp_optimize::METHOD::COBYLA:
+        nlm = nlopt::LN_COBYLA;
+        break;
+    case sp_optimize::METHOD::NelderMead:
+        nlm = nlopt::LN_NELDERMEAD;
+        break;
+    case sp_optimize::METHOD::NEWOUA:
+        nlm = nlopt::LN_NEWUOA;
+        break;
+    case sp_optimize::METHOD::Subplex:
+        nlm = nlopt::LN_SBPLX;
+        break;
+    }
+
+    nlopt::opt nlobj(nlm, optvars.size() );
+    
+    //Create optimization helper class
+    AutoOptHelper AO;
+    AO.Initialize();
+    AO.SetObjects( (void*)this,  &recs, &opt, &layout, &nlobj);
+    AO.m_opt_vars = optvars;
+    //-------
+    nlobj.set_min_objective( optimize_auto_eval, &AO  );
+    nlobj.set_xtol_rel(1.e-4);
+    nlobj.set_ftol_rel(opt.converge_tol);
+    nlobj.set_initial_step( vector<double>( optvars.size(), opt.max_step ) );
+    nlobj.set_maxeval( opt.max_iter );
+
+    //Number of variables to be optimized
+	int nvars = (int)optvars.size();
+	//Store the initial dimensional value of each variable
+	for(int i=0; i<nvars; i++)
+		AO.m_normalizers.push_back( *optvars.at(i) );
+	
+	//the initial normalized point is '1'
+	vector<double> start(nvars, 1.);
+    
+    //Add a formatted simulation notice
+    ostringstream os;
+    os << "\n\nBeginning Simulation\nIter ";
+    for(int i=0; i<(int)optvars.size(); i++)
+        os << setw(9) << (names==0 ? "Var "+std::to_string(i+1) : names->at(i)) << "|";
+    os << "| Obj.    | Flux";
+
+    string hmsg = os.str();
+
+    string ol;
+    for(int i=0; i<(int)hmsg.size(); i++)
+        ol.append("-");
+
+    _summary_siminfo->addSimulationNotice( os.str() );
+    _summary_siminfo->addSimulationNotice( ol.c_str() );
+
+    double fmin;
+    try{
+        nlopt::result resopt = nlobj.optimize( start, fmin );
+        
+        _summary_siminfo->addSimulationNotice( ol.c_str() );
+
+    }
+    catch(...){
+        return false;
+    }
+
+    return true;
+}
+
+
 bool AutoPilot::IsSimulationCancelled()
 {
 	return _cancel_simulation;
@@ -1770,12 +1969,15 @@ bool AutoPilot::IsSimulationCancelled()
 
 void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux)
 {
-	string msg = "[Iter " + my_to_string(iter+1) + "] ";
-	for(int i=0; i<(int)pos.size(); i++){
-		msg.append( my_to_string( pos.at(i) * normalizers.at(i) ) + " | " );
-	}
-	msg.append( "| Obj = " + my_to_string(obj) + " | Flux = " + my_to_string( flux ) );
-	_summary_siminfo->addSimulationNotice( (string)msg );
+	ostringstream os;
+    os << "[" << setw(2) << iter << "] ";
+    for(int i=0; i<(int)pos.size(); i++)
+        os << setw(8) << pos.at(i) * normalizers.at(i) << " |";
+
+    os << "|" << setw(8) << obj << " |" << setw(8) << flux;
+
+    _summary_siminfo->addSimulationNotice( os.str() );
+
 }
 
 bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)

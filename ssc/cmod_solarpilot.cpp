@@ -66,6 +66,14 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",            "Sales tax rate",                             "%",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_frac",            "Percent of cost to which sales tax applies", "%",      "",         "SolarPILOT",   "*",                "",                "" },
 
+    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",               "Do SolarPILOT optimization",                 "",       "",         "SolarPILOT",   "?=0",              "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "flux_max",                  "Maximum allowable flux",                     "",       "",         "SolarPILOT",   "?=1000",           "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",             "Optimization initial step size",             "",       "",         "SolarPILOT",   "?=0.05",           "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",              "Max. number iteration steps",                "",       "",         "SolarPILOT",   "?=200",            "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",              "Optimization convergence tol",               "",       "",         "SolarPILOT",   "?=0.001",          "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",             "Optimization algorithm",                     "",       "",         "SolarPILOT",   "?=0",              "",                "" },
+
+
 	/* outputs */
 	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_zeniths",            "Optical efficiency table zenith angles",     "deg",    "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_azimuths",           "Optical efficiency table azimuth angles",    "deg",    "",         "SolarPILOT",   "*",                "",                "" },
@@ -74,10 +82,14 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_OUTPUT,       SSC_MATRIX,      "heliostat_positions",       "Heliostat positions (x,y)",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "number_heliostats",         "Number of heliostats",                       "",        "",        "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "base_land_area",            "Land area occupied by heliostats",           "acre",   "",         "SolarPILOT",   "*",                "",                "" },
-	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "h_tower_opt",               "Optimized tower height",                     "m",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_height_opt",            "Optimized receiver height",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_aspect_opt",            "Optimized receiver aspect ratio",            "-",      "",         "SolarPILOT",   "*",                "",                "" },
+    	
 	var_info_invalid };
 
 static bool solarpilot_callback( simulation_info *siminfo, void *data );
+static bool optimize_callback( simulation_info *siminfo, void *data );
 
 #ifdef _MSC_VER
 #define mysnprintf _snprintf
@@ -119,9 +131,18 @@ public:
 		layout.LoadDefaults(V);
 
 		// read inputs from SSC module
+		
+		bool isopt = as_boolean( "is_optimize" );
+        if(isopt){
+		    opt.flux_max = as_double("flux_max");
+            opt.max_step = as_double("opt_init_step");
+            opt.max_iter = as_integer("opt_max_iter");
+            opt.converge_tol = as_double("opt_conv_tol");
+            opt.method = as_integer("opt_algorithm");
+            opt.is_optimize_bound = false;
+        }
 		/*
-		bool isopt = as_boolean( "optimize" );
-		opt.is_optimize_rec_aspect = isopt;
+        opt.is_optimize_rec_aspect = isopt;
 		opt.is_optimize_bound = isopt;
 		opt.is_optimize_rec_height = isopt;
 		opt.is_optimize_tht = isopt;
@@ -135,7 +156,6 @@ public:
 		opt.range_rec_aspect[1] = as_double("range_rec_aspect_max");
 		opt.range_rec_height[0] = as_double("range_rec_height_min");
 		opt.range_rec_height[1] = as_double("range_rec_height_max");
-		opt.flux_max = as_double("flux_max");
 		*/
 
 		helios.front().width = as_double("helio_width");
@@ -232,11 +252,31 @@ public:
 
 		sapi.GenerateDesignPointSimulations( amb, V, wfdata );
 	
-		sapi.Setup(amb, cost, layout, helios, recs);
+        if(isopt){
+            log("Optimizing...", SSC_WARNING, 0.);
+            sapi.SetSummaryCallback( optimize_callback, (void*)this);
+		    sapi.Setup(amb, cost, layout, helios, recs, true);
+            
+            if(! sapi.Optimize(opt, recs, layout) )
+                return;
 
-		if(! sapi.CreateLayout() )
+            sapi.SetSummaryCallbackStatus(false);
+            sapi.PreSimCallbackUpdate();
+            
+        }
+        else{
+		    sapi.Setup(amb, cost, layout, helios, recs);
+        }
+
+
+        //assign("h_tower_opt", 222.222);
+        assign("h_tower_opt", layout.h_tower);
+        assign("rec_height_opt", recs.front().height);
+        assign("rec_aspect_opt", recs.front().aspect);
+
+        if(! sapi.CreateLayout() )
             return;
-
+		
 		//Collect the heliostat position data
 		if( layout.heliostat_positions.size() > 0 )
 		{
@@ -334,6 +374,16 @@ static bool solarpilot_callback( simulation_info *siminfo, void *data )
 
 	return cm->update( *siminfo->getSimulationNotices(),
 		simprogress*100.0f );
+
+}
+
+static bool optimize_callback( simulation_info *siminfo, void *data )
+{
+    cm_solarpilot *cm = static_cast<cm_solarpilot*>( data );
+    if(! cm) return false;
+    
+    std::string notices = *siminfo->getSimulationNotices();
+    cm->log( notices, SSC_WARNING, 0. );
 
 }
 
