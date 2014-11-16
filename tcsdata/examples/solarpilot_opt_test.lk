@@ -1,0 +1,48 @@
+var("solar_resource_file","C:/SAM/2014.1.14/weather/CA Daggett.tm2");           //Solar weather data file
+var("helio_width",12.2);           //Heliostat widthm
+var("helio_height",12.2);           //Heliostat heightm
+var("helio_optical_error",0.00153);           //Optical errorrad
+var("helio_active_fraction",0.99);           //Active fraction of reflective areafrac
+var("dens_mirror",0.97);           //Ratio of reflective area to profilefrac
+var("helio_reflectance",0.9);           //Mirror reflectancefrac
+var("rec_absorptance",0.94);           //Absorptancefrac
+var("rec_height",22);           //Receiver heightm
+var("rec_aspect",1.4);           //Receiver aspect ratio (H/W)frac
+var("rec_hl_perm2",0);           //Receiver design heat losskW/m2
+var("q_design",650);           //Receiver thermal design powerMW
+var("dni_des",950);           //Design-point DNIW/m2
+var("land_max",7.5);           //Max heliostat-dist-to-tower-height ratio
+var("land_min",0.75);           //Min heliostat-dist-to-tower-height ratio
+var("h_tower",200);           //Tower heightm
+var("c_atm_0",0.006789);           //"Attenuation coefficient 0"
+var("c_atm_1",0.1046);           //"Attenuation coefficient 1"
+var("c_atm_2",0.0107);           //"Attenuation coefficient 2"
+var("c_atm_3",0.002845);           //"Attenuation coefficient 3"
+var("n_facet_x",8);           //Number of heliostat facets - X
+var("n_facet_y",2);           //Number of heliostat facets - Y
+var("focus_type",1);           //Heliostat focus method
+var("cant_type",0);           //Heliostat cant method
+var("n_flux_days",8);           //No. days in flux map lookup
+var("delta_flux_hrs",2);           //Hourly frequency in flux map lookup
+var("calc_fluxmaps",0);           //Include fluxmap calculations
+var("tower_fixed_cost",3000000);           //Tower fixed cost$
+var("tower_exp",0.0113);           //Tower cost scaling exponent
+var("rec_ref_cost",110000000);           //Receiver reference cost$
+var("rec_ref_area",1571);           //Receiver reference area for cost scale
+var("rec_cost_exp",0.7);           //Receiver cost scaling exponent
+var("site_spec_cost",15);           //Site improvement cost$/m2
+var("heliostat_spec_cost",180);           //Heliostat field cost$/m2
+var("plant_spec_cost",1200);           //Power cycle and BOS cost$/kWe
+var("tes_spec_cost",27);           //Thermal energy storage cost$/kWht
+var("land_spec_cost",10000);           //Total land area cost$/acre
+var("contingency_rate",7);           //Contingency for cost overrun%
+var("sales_tax_rate",5);           //Sales tax rate%
+var("sales_tax_frac",80);           //Percent of cost to which sales tax applies%
+var("is_optimize",1);           //Do SolarPILOT optimization
+var("flux_max",800);           //Maximum allowable flux
+var("opt_init_step",0.05);           //Optimization initial step size
+var("opt_max_iter",200);           //Max. number iteration steps
+var("opt_conv_tol",0.001);           //Optimization convergence tol
+var("opt_algorithm",0);           //Optimization algorithm
+
+run("solarpilot");
