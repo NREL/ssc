@@ -670,7 +670,7 @@ static var_info vtab_utility_rate3[] = {
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "Year 1 monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Year 1 monthly electricity to/from grid",           "kWh", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Year 1 monthly net metering electricity credit",           "kWh", "", "Monthly",          "*",                         "LENGTH=12",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Year 1 monthly net metering credit",           "kWh", "", "Monthly",          "*",                         "LENGTH=12",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases",    "Year 1 monthly sales/purchases with system",           "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases_wo_sys",    "Year 1 monthly sales/purchases without system",           "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 
