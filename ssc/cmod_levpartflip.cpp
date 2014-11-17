@@ -2574,7 +2574,7 @@ public:
 
 		assign("adjusted_installed_cost", var_data((ssc_number_t)(cost_installed - cbi_total - ibi_total)));
 		assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
-		double size_of_equity = cost_installed - ibi_total - cbi_total;
+		double size_of_equity = cost_installed - ibi_total - cbi_total - size_of_debt; //cpg added size of debt to be consistent with single owner
 		assign("size_of_equity", var_data((ssc_number_t)size_of_equity));
 		assign("cost_installedperwatt", var_data((ssc_number_t)(cost_installed / nameplate / 1000.0)));
 
