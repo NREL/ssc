@@ -20,8 +20,8 @@ static var_info _cm_vtab_belpe[] =
 	{ SSC_INPUT,		SSC_NUMBER,		"en_belpe",			"Enable building load calculator",	"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
 	//e_load and p_load are modified in BELPE. They are passed straight through if BELPE is disabled.
-	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Year 1 Hourly Electric Load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
-	{ SSC_INOUT,		SSC_ARRAY,		"p_load",			"Year 1 Peak electric load",		"kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Year 1 hourly electric load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"p_load",			"Year 1 peak electric load",		"kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
 
 	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "en_belpe=1",			"LOCAL_FILE",	"" },
 //	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "en_belpe=1",			"",				"Time Step" },
