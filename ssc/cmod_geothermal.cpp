@@ -17,9 +17,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "resource_type",                      "Type of Resource",                             "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_temp",                      "Resource Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_depth",                     "Resource Depth",                               "m",              "",             "GeoHourly",        "*",                        "",                "" },
-										 								       						
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "GeoHourly", "*", "", "" },
-
+										
     // Other inputs						 								       											   				     
     { SSC_INPUT,        SSC_NUMBER,      "geothermal_analysis_period",         "Analysis Lifetime",                            "years",          "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "model_choice",                       "Which model to run (0,1,2)",                   "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
@@ -148,9 +146,12 @@ static var_info _cm_vtab_geothermal[] = {
 var_info_invalid };
 
 
-static void my_update_function( float percent, void *data )
+static bool my_update_function( float percent, void *data )
 {
-	if (data) ((compute_module*)data)->update("working...", percent);
+	if ( data != 0 ) 
+		return ((compute_module*)data)->update("working...", percent);
+	else 
+		return true;
 }
 
 class cm_geothermal : public compute_module
@@ -277,6 +278,9 @@ public:
 			assign("reservoir_pressure", var_data((ssc_number_t)geo_outputs.md_PressureChangeAcrossReservoir));
 			assign("reservoir_avg_temp", var_data((ssc_number_t)physics::FarenheitToCelcius(geo_outputs.md_AverageReservoirTemperatureF)));
 			assign("bottom_hole_pressure", var_data((ssc_number_t)geo_outputs.md_BottomHolePressure));
+			
+			assign("capacity_factor", var_data((ssc_number_t)(0)));
+			assign("kwh_per_kw", var_data((ssc_number_t)0));
 		}
 		else {
 			// running the model, we need to specify other inputs
@@ -397,7 +401,7 @@ public:
 
 			// metric outputs moved to technology
 			double kWhperkW = 0.0;
-			double nameplate = as_double("system_capacity");
+			double nameplate = geo_outputs.md_GrossPlantOutputMW*1000; // in kW
 			double annual_energy = 0.0;
 			for (int i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)
 				annual_energy += geo_outputs.maf_hourly_power[i];

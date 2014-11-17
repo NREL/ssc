@@ -143,7 +143,7 @@ struct SGeothermal_Outputs
 	float * maf_hourly_power;				// hourly values even if the timestep is monthly
 };
 
-int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, std::string &err_msg, 
+int RunGeothermalAnalysis(bool (*update_function)(float,void*),void*user_data, std::string &err_msg, 
 	 const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs, 
 	 const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs); 
 
