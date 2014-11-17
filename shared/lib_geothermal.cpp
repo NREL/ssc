@@ -395,7 +395,7 @@ public:
 	CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
 	~CGeothermalAnalyzer();
 
-	bool RunAnalysis( void (*update_function)(float, void*), void *user_data );
+	bool RunAnalysis( bool (*update_function)(float, void*), void *user_data );
 	bool InterfaceOutputsFilled(void);
 	std::string error() { return ms_ErrorString; }
 
@@ -1636,7 +1636,7 @@ bool CGeothermalAnalyzer::ReadyToAnalyze()
 	return true;
 }
 
-bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), void *user_data )
+bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), void *user_data )
 {
 	if (!ReadyToAnalyze()) return false;   // open weather file m_wf
 
@@ -1664,10 +1664,16 @@ bool CGeothermalAnalyzer::RunAnalysis( void (*update_function)(float, void*), vo
 		mp_geo_out->maf_ReplacementsByYear[year] = 0;
 		for (unsigned int month=1; month<13; month++)
 		{
-			fPercentDone = (float)iElapsedMonths/(float)(12*mo_geo_in.mi_ProjectLifeYears)*100.0f;
+			fPercentDone = (float)iElapsedMonths/(float)(12*mo_geo_in.mi_ProjectLifeYears) * 100.0f;
 
-			if ( (update_function != 0) && (TimeToUpdateInterface( fPercentDone, 5.0f )) )
-				(*update_function)( fPercentDone, user_data );
+			if ( (update_function != 0) && (TimeToUpdateInterface( fPercentDone, 2.0f )) )
+			{
+				if ( ! (*update_function)( fPercentDone, user_data ) )
+				{
+					ms_ErrorString = "Aborted by user.";
+					return false;
+				}
+			}
 
 			fMonthlyPowerTotal = 0;
 			for (unsigned int hour=0; hour < (unsigned int)util::hours_in_month(month); hour++)
@@ -1803,7 +1809,7 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RunGeothermalAnalysis
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int RunGeothermalAnalysis(void (*update_function)(float,void*),void*user_data, std::string &err_msg, 
+int RunGeothermalAnalysis(bool (*update_function)(float,void*),void*user_data, std::string &err_msg, 
 				 const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs, 
 				 const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
 {
