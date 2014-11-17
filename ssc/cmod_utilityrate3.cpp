@@ -614,7 +614,7 @@ static var_info vtab_utility_rate3[] = {
 	// year 1 values for metrics
 	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity cost with system",    "$/yr", "", "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity cost without system", "$/yr", "", "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Year 1 Savings",                  "$",    "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Year 1 savings",                  "$",    "", "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Year 1 total electric load",      "kWh",  "", "Financial Metrics", "*", "", "" },
 
 
@@ -626,7 +626,7 @@ static var_info vtab_utility_rate3[] = {
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 Hourly Electric Load",     "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 hourly electric load",     "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
