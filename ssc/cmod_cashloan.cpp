@@ -35,7 +35,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",             "Present value of insurance and property tax",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Adjusted installed costs", "$", "", "Financial Metrics", "*", "", "" },
-
+	{ SSC_OUTPUT, SSC_NUMBER, "loan_amount", "Debt", "$", "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "first_cost", "Equity", "$", "", "Financial Metrics", "*", "", "" },
+		
 	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net annual energy in Year 1",  "", "",                      "",      "*",                     "",                "" },
 
 
@@ -521,7 +523,7 @@ public:
 			- cbi_oth_amount;
 
 		double loan_amount = debt_frac * adjusted_installed_cost;
-		double first_cost = adjusted_installed_cost - loan_amount;
+		double first_cost = adjusted_installed_cost - loan_amount;  //cpg: What is the difference between adjusted_installed_cost and capital_investment?
 		double capital_investment = loan_amount + first_cost;
 		
 		cf.at(CF_after_tax_net_equity_cost_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
@@ -810,6 +812,8 @@ public:
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
 //		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
 		assign( "adjusted_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
+		assign( "first_cost", var_data((ssc_number_t)first_cost ));		
+		assign( "loan_amount", var_data((ssc_number_t)loan_amount ));		
 		
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
