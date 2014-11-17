@@ -261,11 +261,16 @@ public:
 
 		// --------------------------------------------------------------------------------------------------------------------------
 		std::string err_msg;
+		
+		// in all cases, save the UI values in the outputs
+		// needed to have the gross power plant size for capacity factor
+		// calculation
+		if (FillOutputsForUI(err_msg, geo_inputs, geo_outputs) != 0)
+			throw general_error("input error: " + err_msg + ".");
 
 		if (iControl == 1) {
-			// just doing calculations for the UI, not running the model
-			if (FillOutputsForUI(err_msg, geo_inputs, geo_outputs) != 0)
-				throw general_error("input error: " + err_msg + ".");
+			
+		// just doing calculations for the UI, not running the model
 
 			// assign values for UI results
 			assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
