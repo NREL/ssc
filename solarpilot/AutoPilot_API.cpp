@@ -284,7 +284,7 @@ struct AutoOptHelper
         if(! 
         m_autopilot->EvaluateDesign( *m_opt, *m_recs, *m_layout, obj, flux) 
             ){
-            string errmsg = "Optimization failed at iteration " + std::to_string(m_iter) + ". Terminating simulation.";   
+            string errmsg = "Optimization failed at iteration " + my_to_string(m_iter) + ". Terminating simulation.";   
             throw spexception(errmsg.c_str());
         }
         //Update variables as needed
@@ -1409,7 +1409,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     ostringstream os;
     os << "\n\nBeginning Simulation\nIter ";
     for(int i=0; i<(int)optvars.size(); i++)
-        os << setw(9) << (names==0 ? "Var "+std::to_string(i+1) : names->at(i)) << "|";
+        os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i)) << "|";
     os << "| Obj.    | Flux";
 
 	_summary_siminfo->addSimulationNotice(os.str());
@@ -1935,7 +1935,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     ostringstream os;
     os << "\n\nBeginning Simulation\nIter ";
     for(int i=0; i<(int)optvars.size(); i++)
-        os << setw(9) << (names==0 ? "Var "+std::to_string(i+1) : names->at(i)) << "|";
+        os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i)) << "|";
     os << "| Obj.    | Flux";
 
     string hmsg = os.str();
