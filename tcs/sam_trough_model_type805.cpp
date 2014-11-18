@@ -810,7 +810,9 @@ public:
 		//int TimeSteps = int(1.0 / Delt);
 		int TimeSteps = int(1.0 / m_delt);
 
-		double time_hour = (time+3600)/3600;
+		//double time_hour = (time+3600)/3600;
+		double time_hour = time / 3600.0;
+
 		int Julian_Day = int(time_hour/24)+1;
 		int StartDay = int(m_time0/24) + 1;
 		int StopDay = int(m_tFinal/24) + 1;
