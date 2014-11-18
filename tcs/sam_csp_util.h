@@ -169,7 +169,24 @@ public:
 		//Get the dimensions of the table thats up for addition
 		int nr = table->nrows();
 		int nc = table->ncols();
-		if( nr != 2) return false;
+
+		// 11.17.14 twn: SAM is reporting single emis as 1 value, instead of original TCS convention of (0, emis)
+		// maybe we can make a quick fix here?
+		if( nr == 1 && nc == 1 )
+		{
+			lengths[nloaded] = 1;
+			starts[nloaded] = datasize;
+
+			T[datasize] = 0.0;
+			E[datasize] = table->at(0, 0);
+
+			datasize++;
+			nloaded++;
+
+			return true;
+		}
+		else if( nr != 2) 
+			return false;
 
 		//if we need to add space, copy data to a new array
 		if(datasize + nc > memsize){
