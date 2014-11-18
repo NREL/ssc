@@ -34,9 +34,10 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",             "Present value of insurance and property tax",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Adjusted installed costs", "$", "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Initial cost less cash incentives", "$", "", "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "loan_amount", "Debt", "$", "", "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "first_cost", "Equity", "$", "", "Financial Metrics", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "total_cost", "Initial cost", "$", "", "Financial Metrics", "*", "", "" },
 		
 	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net annual energy in Year 1",  "", "",                      "",      "*",                     "",                "" },
 
@@ -813,6 +814,7 @@ public:
 //		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
 		assign( "adjusted_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
 		assign( "first_cost", var_data((ssc_number_t)first_cost ));		
+		assign( "total_cost", var_data((ssc_number_t)total_cost ));		
 		assign( "loan_amount", var_data((ssc_number_t)loan_amount ));		
 		
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
