@@ -1320,6 +1320,9 @@ public:
 		sprintf(tstr, fmt.c_str(), v_cold, v_hot, v_loop_tot/float(nLoops), v_loop_tot, (v_hot*2. + v_loop_tot), v_sgs, (v_hot*2. + v_loop_tot + v_sgs));
 		summary.append(tstr);
 
+		// Can uncomment this when other code is updated to write/display more than ~700 characters
+		//message(TCS_NOTICE, summary.c_str());
+
 		//if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
 		//{
 		//	fprintf(file, summary.c_str());
