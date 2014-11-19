@@ -1025,15 +1025,17 @@ int tcskernel::solve( double time, double step )
 
 void tcskernel::message( int msgtype, const char *fmt, ... )
 {
-	char buf[512];
+	char buf[2048];
 	va_list ap;
 	va_start(ap, fmt);
 #if defined(_MSC_VER)||defined(_WIN32)
-	_vsnprintf(buf, 509, fmt, ap);
+	_vsnprintf(buf, 2047, fmt, ap);
 #else
-	vsnprintf(buf, 509, fmt, ap);
+	vsnprintf(buf, 2047, fmt, ap);
 #endif
 	va_end(ap);
+
+	buf[2047] = 0;
 	
 	message( std::string( buf ), msgtype );
 }
