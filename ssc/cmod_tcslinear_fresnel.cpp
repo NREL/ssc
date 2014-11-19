@@ -16,7 +16,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                                       "",              "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                                       "",              "",            "Weather",        "*",                       "",                      "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "linear fresnelr", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",   "Nameplate capacity",                                                                 "kW",             "",            "linear fresnelr", "*", "", "" },
 
     // TOU
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                                              "",             "",             "tou_translator", "*",                       "",                      "" }, 
@@ -255,6 +255,9 @@ public:
 	void exec( ) throw( general_error )
 	{
 		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
+		
+		debug_mode = false;
+
 		//Add weather file reader unit
 		int weather = 0;
 		if(debug_mode) weather = add_unit("trnsys_weatherreader", "TRNSYS weather reader");
@@ -285,7 +288,7 @@ public:
 			set_unit_value( weather, "i_lon", "Longitude" );
 			set_unit_value( weather, "i_shift", "Shift" );
 		}
-		else
+		else 
 		{
 			//Set weather parameters
 			set_unit_value_ssc_string( weather, "file_name" );
@@ -545,7 +548,7 @@ public:
 		double nameplate = as_double("system_capacity");
 		double annual_energy = 0.0;
 		for (int i = 0; i < 8760; i++)
-			annual_energy += hourly_energy[i];
+			annual_energy += p_hourly_energy[i];
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
