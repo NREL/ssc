@@ -1500,6 +1500,7 @@ public:
 					energy_net[m][todp] += e[c];
 					// hours per period per month
 					hours[m][todp]++;
+					hours_per_month[m]++;
 					energy_use[m] += e[c];
 					c++;
 				}
@@ -1639,19 +1640,20 @@ public:
 			c=0;
 			for (m=0;m<12;m++)
 			{
-				if (hours_per_month[m] <= 0) continue; 
+				if (hours_per_month[m] <= 0) continue;
+				ssc_number_t credit_amt = -ec_charge[m] / (ssc_number_t)hours_per_month[m];
+				ssc_number_t charge_amt = ec_charge[m] / (ssc_number_t)hours_per_month[m];
+//				throw exec_error("cmod_utilityrate3", util::format("m=%d,ec_charge[m]=%lg,hours_per_month[m]=%d,credit=%lg,charge=%lg", m, ec_charge[m], hours_per_month[m], credit_amt, charge_amt));
 				for (d=0;d<util::nday[m];d++)
 				{
 					for(h=0;h<24;h++)
 					{
 						if (ec_charge[m] < 0.0)
 						{ // calculate income or credit
-							ssc_number_t credit_amt = -ec_charge[m] / hours_per_month[m];
 							income[c] += credit_amt;
 						}
 						else
-						{ // calculate payment or charge
-							ssc_number_t charge_amt = ec_charge[m] / hours_per_month[m];
+						{// calculate payment or charge
 							payment[c] += charge_amt;
 						}
 						c++;
