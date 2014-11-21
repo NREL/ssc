@@ -24,9 +24,9 @@ Overall Steps for Maintaining Documentation
 
 1. As needed, revise content in ssc_guide.tex and the Doxygen-formatted comments in sscapi.h.
 
-2. Run Doxygen to generate the sscapi_8h.tex document from Doxygen-formatted comments in the sscapi.h header file.
+2. Run Doxygen on ssc_api_doxyconfig to generate the sscapi_8h.tex document from Doxygen-formatted comments in the sscapi.h header file.
 
-3. Run TeXworks to convert LaTex document to PDF. (Run it twice to generate TOC, cross references, etc.)
+3. Run TeXworks on ssc_guide.tex to convert LaTex document to PDF. (Run it twice to generate TOC, cross references, etc.)
 
 
 Notes
