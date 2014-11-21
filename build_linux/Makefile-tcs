@@ -35,6 +35,7 @@ OBJECTS = tcskernel.o \
     sam_dsg_controller_type265.o \
     sam_lf_st_pt_type232.o \
     sam_mw_csp_SumCalcs.o \
+	sam_mw_pt_heliostatfield.o \
     sam_mw_gen_Type260.o \
     sam_mw_lf_type261_steam.o \
     sam_mw_lf_type261_Wnet.o \
