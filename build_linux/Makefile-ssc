@@ -21,12 +21,12 @@ OBJECTS = \
 	cmod_wfcheck.o \
 	cmod_pvwattsv5.o \
 	cmod_windfile.o \
-	cmod_pvwattsfunc.o \
+	cmod_pvwattsv1_1ts.o \
 	cmod_wfcsv.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
 	cmod_windbos.o \
-	cmod_pvwattsfrompoa.o \
+	cmod_pvwattsv1_poa.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
 	cmod_pvsamv1.o \
