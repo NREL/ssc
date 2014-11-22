@@ -46,15 +46,14 @@ copy apiwrappers\java\SSC\Info.java sdk-release\languages\java\SSC
 copy apiwrappers\java\SSC\Module.java sdk-release\languages\java\SSC
 copy apiwrappers\java\SSC\SSCAPIJNI.java sdk-release\languages\java\SSC
 
-copy "examples\AZ Phoenix.tm2" sdk-release\examples
 copy examples\abilene.tm2 sdk-release\examples
 copy examples\daggett.tm2 sdk-release\examples
 copy examples\rocksprings.tm2 sdk-release\examples
 copy examples\example1_pvwatts.c sdk-release\examples
-copy examples\pvwattsfunc_example.c sdk-release\examples
-copy examples\pvsamv1_c3d_comppa.lk sdk-release\examples
-copy examples\pvsamv1_c3d_rescom.lk sdk-release\examples
-copy examples\pvwattsfunc_test.lk sdk-release\examples
+copy examples\pvwatts1ts_ex.c sdk-release\examples
+copy examples\pvwatts1ts_test.lk sdk-release\examples
+copy examples\pvwattsv5run.c sdk-release\examples
+copy examples\ver.c sdk-release\examples
 
 copy ..\lk\docs\lk_guide.pdf sdk-release\
 copy ssc\sscapi.h sdk-release\
