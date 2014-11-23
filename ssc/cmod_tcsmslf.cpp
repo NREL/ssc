@@ -669,8 +669,9 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		int error = simulate(3600, hours * 3600, 3600, 30);
-		if (0 > error )
+//		int error = simulate(3600, hours * 3600, 3600, 30);
+		int error = simulate(3600, hours * 3600, 3600);
+		if (0 > error)
 			throw exec_error( "tcsmslf", util::format("there was a problem simulating in the TCS molten salt linear fresnel model. Error %d", error) );
 
 		// get the outputs
@@ -712,7 +713,7 @@ public:
 		double nameplate = as_double("system_capacity");
 		double annual_energy = 0.0;
 		for (int i = 0; i < 8760; i++)
-			annual_energy += hourly_energy[i];
+			annual_energy += p_hourly_energy[i];
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
