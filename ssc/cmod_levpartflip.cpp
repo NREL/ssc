@@ -2517,7 +2517,11 @@ public:
 	analysis_period_irr = cf.at(CF_tax_investor_aftertax_irr, nyears)/100.0; //fraction for calculations
 
 	double debt_fraction =0.0;
-	if (cost_installed > 0) debt_fraction = size_of_debt / cost_installed;
+	double size_of_equity = cost_installed - ibi_total - cbi_total - size_of_debt;
+	//cpg added size of debt to be consistent with single owner
+	//	if (cost_installed > 0) debt_fraction = size_of_debt / cost_installed;
+	if ((size_of_debt + size_of_equity) > 0) 
+		debt_fraction = size_of_debt / (size_of_debt + size_of_equity);
 
 
 	double wacc = 0.0;
@@ -2574,7 +2578,6 @@ public:
 
 		assign("adjusted_installed_cost", var_data((ssc_number_t)(cost_installed - cbi_total - ibi_total)));
 		assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
-		double size_of_equity = cost_installed - ibi_total - cbi_total - size_of_debt; //cpg added size of debt to be consistent with single owner
 		assign("size_of_equity", var_data((ssc_number_t)size_of_equity));
 		assign("cost_installedperwatt", var_data((ssc_number_t)(cost_installed / nameplate / 1000.0)));
 
