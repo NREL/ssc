@@ -8,9 +8,9 @@ static var_info _cm_vtab_tcsdish[] = {
 //   weather reader inputs
 //   VARTYPE            DATATYPE          NAME                      LABEL                                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "file_name",               "local weather file path",                                                        "",             "",             "Weather",       "*",                       "LOCAL_FILE",            "" },
-    { SSC_INPUT,        SSC_NUMBER,      "track_mode",              "Tracking mode",                                                                  "",             "",             "Weather",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",                    "Tilt angle of surface/axis",                                                     "",             "",             "Weather",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth",                 "Azimuth angle of surface/axis",                                                  "",             "",             "Weather",       "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "track_mode",              "Tracking mode",                                                                  "",             "",             "Weather",       "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "tilt",                    "Tilt angle of surface/axis",                                                     "",             "",             "Weather",       "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                 "Azimuth angle of surface/axis",                                                  "",             "",             "Weather",       "*",                       "",                      "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "dish", "*", "", "" },
 
@@ -27,7 +27,7 @@ static var_info _cm_vtab_tcsdish[] = {
     { SSC_INPUT,        SSC_NUMBER,      "slope_ew",                "East-West ground slope",                                                         "%",            "",             "type295",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "w_slot_gap",              "Slot gap width",                                                                 "m",            "",             "type295",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_slot_gap",              "Slot gap height",                                                                "m",            "",             "type295",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "manufacturer",            "Dish manufacturer (fixed as 5 = other)",                                         "-",            "",             "type295",       "*",                       "",                      "" },
+ //   { SSC_INPUT,        SSC_NUMBER,      "manufacturer",            "Dish manufacturer (fixed as 5 = other)",                                         "-",            "",             "type295",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",         "Wind stow speed",                                                                "m/s",          "",             "type295",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "A_proj",                  "Projected mirror area",                                                          "m^2",          "",             "type295",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_cut_in",                "Insolation cut in value",                                                        "W/m^2",        "",             "type295",       "*",                       "",                      "" },
@@ -277,9 +277,9 @@ public:
 		{
 			//Set weatherreader parameters
 			set_unit_value_ssc_string( weather, "file_name" );
-			set_unit_value_ssc_double( weather, "track_mode" );    //, 1 );
-			set_unit_value_ssc_double( weather, "tilt" );          //, 0 );
-			set_unit_value_ssc_double( weather, "azimuth" );       //, 0 );
+			set_unit_value_ssc_double( weather, "track_mode", 1 );    //, 1 );
+			set_unit_value_ssc_double( weather, "tilt", 0.0 );          //, 0 );
+			set_unit_value_ssc_double( weather, "azimuth", 180.0 );       //, 0 );
 		}
 
 		// Set Collector Parameters
@@ -293,7 +293,7 @@ public:
 		set_unit_value_ssc_double( type295_collector, "slope_ew"); //  slope_EW );
 		set_unit_value_ssc_double( type295_collector, "w_slot_gap"); //  width_slot_gap );
 		set_unit_value_ssc_double( type295_collector, "h_slot_gap"); //  height_slot_gap );
-		set_unit_value_ssc_double( type295_collector, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type295_collector, "manufacturer", 5 );
 		set_unit_value_ssc_double( type295_collector, "wind_stow_speed"); //  wind_stow_speed );
 		set_unit_value_ssc_double( type295_collector, "A_proj"); //  proj_area );
 		set_unit_value_ssc_double( type295_collector, "I_cut_in"); //  i_cut_in );
@@ -313,7 +313,7 @@ public:
 		// Set Receiver Parameters
 		set_unit_value_ssc_double( type296_receiver, "rec_type"); //  rec_type );
 		set_unit_value_ssc_double( type296_receiver, "transmittance_cover"); //  trans_cover );
-		set_unit_value_ssc_double( type296_receiver, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type296_receiver, "manufacturer", 5 );
 		set_unit_value_ssc_double( type296_receiver, "alpha_absorber"); //  alpha_absorb );
 		set_unit_value_ssc_double( type296_receiver, "A_absorber"); //  A_absorb );
 		set_unit_value_ssc_double( type296_receiver, "alpha_wall"); //  alpha_wall );
@@ -340,7 +340,7 @@ public:
 		bConnected &= connect( type295_collector, "d_ap_out", type296_receiver, "d_ap" );
 
 		// Set Engine Parameters
-		set_unit_value_ssc_double( type297_dishengine, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type297_dishengine, "manufacturer",  5 );
 		set_unit_value_ssc_double( type297_dishengine, "T_heater_head_high"); //  T_heater_head_high );
 		set_unit_value_ssc_double( type297_dishengine, "T_heater_head_low"); //  T_heater_head_low );
 		set_unit_value_ssc_double( type297_dishengine, "Beale_const_coef"); //  Beale_const_coef );
@@ -383,7 +383,7 @@ public:
 		set_unit_value_ssc_double( type298_dishparasitics, "epsilon_cooler_test"); //  EPS_COOL );
 		set_unit_value_ssc_double( type298_dishparasitics, "epsilon_radiator_test"); //  EPS_RADTR );
 		set_unit_value_ssc_double( type298_dishparasitics, "cooling_fluid"); //  coolfluid );
-		set_unit_value_ssc_double( type298_dishparasitics, "manufacturer"); //  5 );
+		set_unit_value_ssc_double( type298_dishparasitics, "manufacturer",  5 );
 		set_unit_value_ssc_double( type298_dishparasitics, "P_controls"); //  P_controls );
 		set_unit_value_ssc_double( type298_dishparasitics, "test_P_pump"); //  TEST_P_pump );
 		set_unit_value_ssc_double( type298_dishparasitics, "test_pump_speed"); //  TEST_pump_speed );
