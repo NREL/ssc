@@ -585,7 +585,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	double THETAZ = input.Zenith;
 
-	if (THETAZ > 86.0) THETAZ = 86.0; // !Zenith angle must be < 90°	  
+	if (THETAZ > 86.0) THETAZ = 86.0; // !Zenith angle must be < 90 degrees	  
 
 	// !INCIDENCE ANGLE MODIFIER CALCULATIONS
 	double THETA = input.IncAng;
