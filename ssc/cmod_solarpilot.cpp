@@ -385,6 +385,7 @@ static bool optimize_callback( simulation_info *siminfo, void *data )
     std::string notices = *siminfo->getSimulationNotices();
     cm->log( notices, SSC_WARNING, 0. );
 
+	return true;
 }
 
 DEFINE_MODULE_ENTRY( solarpilot, "SolarPILOT - CSP tower solar field layout tool.", 0 )
