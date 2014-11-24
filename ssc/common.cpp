@@ -303,7 +303,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		else
 		{
 			ok = false;
-			m_errors.push_back("hourly shading beam factors must have 8760 values");
+			m_errors.push_back("hourly shading beam losses must have 8760 values");
 		}
 	}
 
@@ -315,7 +315,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		if ( nrows != 12 || ncols != 24 )
 		{
 			ok = false;
-			m_errors.push_back("month x hour shading factors must have 12 rows and 24 columns");
+			m_errors.push_back("month x hour shading losses must have 12 rows and 24 columns");
 		}
 		else
 		{
@@ -335,7 +335,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		if ( nrows < 3 || ncols < 3 )
 		{
 			ok = false;
-			m_errors.push_back("azimuth x altitude shading factors must have at least 3 rows and 3 columns");
+			m_errors.push_back("azimuth x altitude shading losses must have at least 3 rows and 3 columns");
 		}
 
 		m_azaltvals.resize_fill( nrows, ncols, 1.0 );
