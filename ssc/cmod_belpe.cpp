@@ -56,12 +56,27 @@ static var_info _cm_vtab_belpe[] =
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Year 1 Electric Load",				"kWh",      "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Year 1 Peak Electric Load",		"kW",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 
-
+/*
 	//DEBUGGING OUTPUTS
-//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_E",		"Radiation on East wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_S",		"Radiation on South wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_W",		"Radiation on West wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_N",		"Radiation on North wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_E",		"Radiation on East wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_S",		"Radiation on South wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Rad_W",		"Radiation on West wall",		"W/m2",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"QN",			"QN",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"Cair",			"Cair",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"TAnew",		"TAnew",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"TAnewTop",		"TAnewTop",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"TAnewBot",		"TAnewBot",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"UAinf",		"UAinf",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"bar",		"bar",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"bardub",		"bardub",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
+	{ SSC_OUTPUT,       SSC_NUMBER,		"Renvdebug",		"Renvdebug",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"xhvac",		"xhvac",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=12",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"newscale",		"newscale",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=12",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"monthlytotelecactual",		"monthlytotelecactual",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=12",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"monthlytotelec_lpgen",		"monthlytotelec_lpgen",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=12",	"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,		"monthlyhvac_lpgen",		"monthlyhvac_lpgen",							"",			  "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=12",	"" },
+*/
 
 
 var_info_invalid };
@@ -172,6 +187,21 @@ public:
 		ssc_number_t *rade = allocate("Rad_E", 8760);
 		ssc_number_t *rads = allocate("Rad_S", 8760);
 		ssc_number_t *radw = allocate("Rad_W", 8760);
+		/* debugging outputs
+		ssc_number_t *QNdebug = allocate("QN", 8760);
+		ssc_number_t *Cairdebug = allocate("Cair", 8760);
+		ssc_number_t *TAnewdebug = allocate("TAnew", 8760);
+		ssc_number_t *TAnewTopdebug = allocate("TAnewTop", 8760);
+		ssc_number_t *TAnewBotdebug = allocate("TAnewBot", 8760);
+		ssc_number_t *UAinfdebug = allocate("UAinf", 8760);
+		ssc_number_t *bardebug = allocate("bar", 8760);
+		ssc_number_t *bardubdebug = allocate("bardub", 8760);
+		ssc_number_t *xhvacdebug = allocate("xhvac", 12);
+		ssc_number_t *newscaledebug = allocate("newscale", 12);
+		ssc_number_t *monthlytotelecactualdebug = allocate("monthlytotelecactual", 12);
+		ssc_number_t *monthlytotelec_lpgendebug = allocate("monthlytotelec_lpgen", 12);
+		ssc_number_t *monthlyhvac_lpgendebug = allocate("monthlyhvac_lpgen", 12);
+		*/
 
 		for (size_t i = 0; i < 8760; i++)
 		{
@@ -345,7 +375,7 @@ public:
 			//Uwin = 0.4;
 			SHGC = 0.25;
 		}
-		else if (YrBuilt > 1980)
+		else if (YrBuilt >= 1980)
 		{
 			Renv = 12;
 			//Uwin = 0.4;
@@ -357,6 +387,7 @@ public:
 			//Uwin = 1;
 			SHGC = 0.53; //This basically matches BEOPT 0.76.WHY ? ? ? ? Possibly Bldg AM 0.7 factor for internal shading.MJB suggests shading or diffuse.Says 0.5, 025 fine!
 		}
+		//assign("Renvdebug", var_data(Renv));
 
 		double Cenv = 2; //BTU / ft^2degF    Note that this is stick frame - more like 10 for masonry, or 18 for heavy masonry(comm)
 		double hsurf = 0.68; //Same units as Renv hr*ft ^ 2 * degF / Btu
@@ -652,6 +683,7 @@ public:
 		//MAIN 8760 LOOP STARTS HERE********************************************************************************************************************************************************************
 
 		for (int j = 0; j < 8763; j++) //need to re-run the first three hours, since they depend on previous hours. Therefore, run this loop **8762** times.
+		//for (int j = 0; j < 8760; j++)
 		{
 			//counters to enable re-running the first two hours
 			int i = j;
@@ -883,7 +915,7 @@ public:
 					TAnew[i] = Cset[i];
 					QN[inext] = Cair / dT / 1 * (TAnew[i] * TAnewBot - TAnewTop);  //BTU
 					if (ClEn[Mon] == 0 && ClEn[NextMon] == 1)
-						QN[inext] = -1 * (abs(QN[i + 1]) < CoolMaxBTU) ? abs(QN[inext]) : CoolMaxBTU;
+						QN[inext] = -1 * ((abs(QN[inext]) < CoolMaxBTU) ? abs(QN[inext]) : CoolMaxBTU);
 					QHV2[inext] = QN[i] / SEER*en_cool;
 				}
 			}
@@ -900,7 +932,7 @@ public:
 				TAnew[i] = Hset[i];
 				QN[inext] = Cair / dT*(TAnew[i] * TAnewBot - TAnewTop);  //BTU
 				if (HtEn[Mon] == 0 && HtEn[NextMon] == 1)
-					QN[inext] = (QN[inext] < HeatMaxBTU) ? QN[i + 1] : HeatMaxBTU;
+					QN[inext] = (QN[inext] < HeatMaxBTU) ? QN[inext] : HeatMaxBTU;
 				QHV2[inext] = (QN[i] * 0.2931)*en_heat; //Wh
 			}
 			TMnew[i] = (Tmass[i] + dT / Cmass*(TAnew[i] / hsurf + SolMassFrac*(Q_SolWin[i] + QInt_Rad[i]) / AIntMass)) / bardub;
@@ -911,6 +943,27 @@ public:
 
 			//Total load for the hour
 			load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
+
+			/*//Debugging outputs
+			QNdebug[i] = QN[i];
+			Cairdebug[i] = Cair;
+			TAnewdebug[i] = TAnew[i];
+			TAnewTopdebug[i] = TAnewTop;
+			TAnewBotdebug[i] = TAnewBot;
+			UAinfdebug[i] = UAInf[i];
+			bardebug[i] = bar;
+			bardubdebug[i] = bardub;
+			*/
+			/*
+			int dayz = day[i];
+			int hourz = hour[i];
+			double loadz = load[i];
+			double hvacz = hvac_load[i]; 
+			double non_hvacz = non_hvac_load[i];
+			double qhvz = QHV2[i];
+			int stophere = 1;
+			*/
+
 		}
 
 		//Aux heating fans(if gas heat)
@@ -960,15 +1013,34 @@ public:
 		std::vector<double> x_hvac(12); 
 		for (int i = 0; i < 12; i++)
 		{
-			if (monthly_hvac_load[i] < 1) //error checking to avoid negative spikes
+			if (monthly_hvac_load[i] < 5) //error checking to avoid negative spikes
 				monthly_hvac_load[i] = 0;
 			x_hvac[i] = (monthly_diff[i] - (monthly_load[i] * closest_scale_avg)) / monthly_hvac_load[i]; //hvac fraction of scaling
+			//new error checking from Sara 11/21
+			if (x_hvac[i] > 0.9) x_hvac[i] = 0.9;
+			if (x_hvac[i] < -1) x_hvac[i] = -1;
+			//end new error checking from Sara
+			//xhvacdebug[i] = x_hvac[i];
 		}
+		//new error checking from Sara
+		std::vector<double> NewScale(12);
+		for (int z = 0; z < 12; z++)
+		{
+			NewScale[z] = (monthly_load[z] - monthly_util[z]*1000 - x_hvac[z] * monthly_hvac_load[z]) / monthly_load[z]; //monthly utility is in kWh
+			/*
+			newscaledebug[z] = NewScale[z];
+			monthlytotelecactualdebug[z] = monthly_util[z];
+			monthlytotelec_lpgendebug[z] = monthly_load[z];
+			monthlyhvac_lpgendebug[z] = monthly_hvac_load[z];
+			*/
+		}
+		//end new error checking from Sara
+
 		//loop through 8760 and scale according to what month it's in
 		for (int i = 0; i < 8760; i++)
 		{
 			if (monthly_hvac_load[month[i]] > 0)
-				load[i] = load[i] * (1 - closest_scale_avg) - x_hvac[month[i]] * hvac_load[i];
+				load[i] = load[i] * (1 - NewScale[month[i]]) - x_hvac[month[i]] * hvac_load[i]; //new from Sara 11/21
 			else
 				load[i] = load[i] * (1 - monthly_scale[month[i]]);
 			if (monthly_util[month[i]] == 0) //set all loads for the month to zero if the input month was zero
