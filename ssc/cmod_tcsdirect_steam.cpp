@@ -2,6 +2,11 @@
 #include "tckernel.h"
 // for adjustment factors
 #include "common.h"
+// solarpilot header files
+#include "AutoPilot_API.h"
+#include "SolarField.h"
+#include "IOUtil.h"
+#include "csp_common.h"
 
 static var_info _cm_vtab_tcsdirect_steam[] = {
 /*	EXAMPLE LINES FOR INPUTS
@@ -48,6 +53,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT, SSC_NUMBER, "helio_reflectance", "Heliostat reflectance", "-", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "rec_absorptance", "Receiver absorptance", "-", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "rec_aspect", "Receiver aspect ratio", "-", "", "heliostat", "*", "", "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT, SSC_NUMBER, "rec_hl_perm2", "Receiver design heatloss", "kW/m2", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "land_bound_type", "Land boundary type", "-", "", "heliostat", "?=0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "land_max", "Land max boundary", "-ORm", "", "heliostat", "?=7.5", "", "" },
@@ -86,6 +92,50 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 
 	{ SSC_INPUT, SSC_NUMBER, "H_rec", "The height of the receiver", "m", "", "receiver", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "THT", "The height of the tower (hel. pivot to rec equator)", "m", "", "receiver", "*", "", "" },
+
+        
+	//{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "heliostat",   "*",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "heliostat",   "?=1",              "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",                 "Tower cost scaling exponent",                "",       "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_cost",              "Receiver reference cost",                    "$",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_area",              "Receiver reference area for cost scale",     "",       "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_cost_exp",              "Receiver cost scaling exponent",             "",       "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "site_spec_cost",            "Site improvement cost",                      "$/m2",   "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_spec_cost",       "Heliostat field cost",                       "$/m2",   "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "plant_spec_cost",           "Power cycle specific cost",                  "$/kWe",  "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "bop_spec_cost",             "BOS specific cost",                          "$/kWe",  "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tes_spec_cost",             "Thermal energy storage cost",                "$/kWht", "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "land_spec_cost",            "Total land area cost",                       "$/acre", "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "contingency_rate",          "Contingency for cost overrun",               "%",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",            "Sales tax rate",                             "%",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_frac",            "Percent of cost to which sales tax applies", "%",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",             "Solar field fixed cost",                     "$",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fossil_spec_cost",          "Fossil system specific cost",                "$/kWe",      "",     "heliostat",   "*",                "",                "" },
+
+    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",          "Do SolarPILOT optimization",                                        "",             "",            "heliostat",       "?=0",                    "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "flux_max",             "Maximum allowable flux",                                            "",             "",            "heliostat",       "?=1000",                 "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",        "Optimization initial step size",                                    "",             "",            "heliostat",       "?=0.05",                 "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",         "Max. number iteration steps",                                       "",             "",            "heliostat",       "?=200",                 "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",         "Optimization convergence tol",                                      "",             "",            "heliostat",       "?=0.001",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",        "Optimization algorithm",                                            "",             "",            "heliostat",       "?=0",                    "",                "" },
+
+    //other costs needed for optimization update
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_acre",       "EPC cost per acre",                 "$/acre",   "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.percent",        "EPC cost percent of direct",        "",         "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_watt",       "EPC cost per watt",                 "$/W",      "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.fixed",          "EPC fixed",                         "$",        "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_acre",       "PLM cost per acre",                 "$/acre",   "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.percent",        "PLM cost percent of direct",        "",         "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_watt",       "PLM cost per watt",                 "$/W",      "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.fixed",          "PLM fixed",                         "$",        "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.fixed_land_area",      "Fixed land area",                   "acre",     "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.land_overhead_factor", "Land overhead factor",              "",         "",     "heliostat",   "*",                "",                "" },
+	//The total installed cost from the cost page
+    { SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",           "Total installed cost",              "$",        "",     "heliostat",   "*",                "",                "" },
+
+
 
 	//// Heliostat field inputs					     																	  
 	//   { SSC_INPUT,        SSC_NUMBER,      "field_control",        "Field defocus control",                                             "",             "",            "heliostat",      "*",                       "",                      "" },
@@ -213,6 +263,8 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     {SSC_INPUT,         SSC_NUMBER,      "P_storage_pump",      "Storage pump power, rated per MWt of storage use",                  "MWe/MWt",     "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_loss",         "Thermal loss per meter of piping",                                  "Wt/m",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_length",       "Total length of exposed piping",                                    "m",           "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_mult",     "Piping length multiplier",                             "",             "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_const",    "Piping constant length",                               "m",            "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Design_power",        "Power production at design conditions",                             "MWe",         "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",      "Recirculation heater efficiency",                                   "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "design_eff",          "Power cycle efficiency at design",                                  "none",        "",            "parasitics",     "*",                       "",                      "" },
@@ -427,12 +479,147 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "helio_active_fraction");//, 0.97);
 		set_unit_value_ssc_double(type_hel_field, "helio_reflectance");//, 0.90);
 		set_unit_value_ssc_double(type_hel_field, "rec_absorptance");//, 0.94);
-		set_unit_value_ssc_double(type_hel_field, "rec_height", as_double("H_rec"));//, 5.);
-		set_unit_value_ssc_double(type_hel_field, "rec_aspect");//, 1);
+
+                
+        bool is_optimize = as_boolean("is_optimize");
+        
+        /* 
+        Any parameter that's dependent on the size of the solar field must be recalculated here 
+        if the optimization is happening within the cmod
+        */
+        double H_rec, d_rec, rec_aspect, THT, A_sf;
+
+        if(is_optimize)
+        {
+            message("Sorry, auto-optimization of Direct Steam systems is still under development and not yet available. Please optimize within the Solar Field page!", SSC_ERROR);
+            return;
+
+
+            //Run solarpilot right away to update values as needed
+            solarpilot_invoke spi( this );
+            spi.run();
+            //AutoPilot_S *sapi = spi.GetSAPI();
+
+            H_rec = spi.recs.front().height;
+            rec_aspect = spi.recs.front().aspect;
+            THT = spi.layout.h_tower;
+            //update heliostat position table
+            int nr = (int)spi.layout.heliostat_positions.size();
+            ssc_number_t *ssc_hl = allocate( "helio_positions", nr, 2 );
+            for(int i=0; i<nr; i++){
+                ssc_hl[i*2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
+                ssc_hl[i*2+1] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+            }
+
+            A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
+
+            //update piping length for parasitic calculation
+            double piping_length = THT * as_double("csp.pt.par.piping_length_mult") + as_double("csp.pt.par.piping_length_const");
+            
+            //update assignments for cost model
+		    assign("H_rec", var_data((ssc_number_t)H_rec));
+            assign("rec_height", var_data((ssc_number_t)H_rec));
+		    assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
+            assign("d_rec", var_data((ssc_number_t)(H_rec/rec_aspect)));
+		    assign("THT", var_data((ssc_number_t)THT));
+            assign("h_tower", var_data((ssc_number_t)THT));
+		    assign("A_sf", var_data((ssc_number_t)A_sf));
+            assign("Piping_length", var_data((ssc_number_t)piping_length) );
+
+            //Update the total installed cost
+            double total_direct_cost = 0.;
+            double A_rec;
+            switch (spi.recs.front().type)
+            {
+            case sp_receiver::TYPE::CYLINDRICAL:
+            {
+                double h = spi.recs.front().height;
+                double d = h/spi.recs.front().aspect;
+                A_rec =  h*d*3.1415926;
+                break;
+            }
+            case sp_receiver::TYPE::CAVITY:
+            case sp_receiver::TYPE::FLAT:
+                double h = spi.recs.front().height;
+                double w = h/spi.recs.front().aspect;
+                A_rec = h*w;
+                break;
+            }
+            double receiver = as_double("rec_ref_cost")*pow(A_rec/as_double("rec_ref_area"), as_double("rec_cost_exp"));     //receiver cost
+
+            //storage cost
+            double storage = as_double("q_pb_design")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
+
+            //power block + BOP
+            double P_ref = as_double("P_ref") * 1000.;  //kWe
+            double power_block = P_ref * (as_double("plant_spec_cost") + as_double("bop_spec_cost") ); //$/kWe --> $
+
+            //site improvements
+            double site_improvements = A_sf * as_double("site_spec_cost");
+            
+            //heliostats
+            double heliostats = A_sf * as_double("heliostat_spec_cost");
+            
+            //fixed cost
+            double cost_fixed = as_double("cost_sf_fixed");
+
+            //fossil
+            double fossil = P_ref * as_double("fossil_spec_cost");
+
+            //tower cost
+            double tower = as_double("tower_fixed_cost") * exp( as_double("tower_exp") * (THT + 0.5*(-H_rec + as_double("helio_height")) ) );
+
+            //---- total direct cost -----
+            total_direct_cost = (1. + as_double("contingency_rate")/100.) * (
+                site_improvements + heliostats + power_block + 
+                cost_fixed + storage + fossil + tower + receiver);
+            //-----
+
+            //land area
+            double land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+
+            //EPC
+            double cost_epc = 
+                as_double("csp.pt.cost.epc.per_acre") * land_area
+                + as_double("csp.pt.cost.epc.percent") * total_direct_cost / 100.
+                + P_ref * 1000. * as_double("csp.pt.cost.epc.per_watt") 
+                + as_double("csp.pt.cost.epc.fixed");
+
+            //PLM
+            double cost_plm = 
+                as_double("csp.pt.cost.plm.per_acre") * land_area
+                + as_double("csp.pt.cost.plm.percent") * total_direct_cost / 100.
+                + P_ref * 1000. * as_double("csp.pt.cost.plm.per_watt") 
+                + as_double("csp.pt.cost.plm.fixed");
+
+            //sales tax
+            //return ${csp.pt.cost.sales_tax.value}/100*${total_direct_cost}*${csp.pt.cost.sales_tax.percent}/100; };
+            double cost_sales_tax = as_double("sales_tax_rate")/100. * total_direct_cost * as_double("sales_tax_frac")/100.;
+
+            //----- indirect cost
+            double total_indirect_cost = cost_epc + cost_plm + cost_sales_tax;
+            
+            //----- total installed cost!
+            double total_installed_cost = total_direct_cost + total_indirect_cost;
+            assign("total_installed_cost", var_data((ssc_number_t)total_installed_cost ));
+            
+        }
+        else
+        {
+		    H_rec = as_double("H_rec");
+            rec_aspect = as_double("rec_aspect");
+            THT = as_double("THT");
+            A_sf = as_double("A_sf");
+        }
+        d_rec = H_rec/rec_aspect;
+
+        set_unit_value_ssc_double(type_hel_field, "rec_height", H_rec);//, 5.);
+		set_unit_value_ssc_double(type_hel_field, "rec_aspect", rec_aspect);
+		set_unit_value_ssc_double(type_hel_field, "h_tower", THT);//, 50);
 		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");//, 0.);
-		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("q_rec_des"));//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("Q_rec_des"));//, 25.);
 		set_unit_value_ssc_double(type_hel_field, "dni_des");
-		set_unit_value_ssc_double(type_hel_field, "h_tower", as_double("THT"));//, 50);
+		//set_unit_value_ssc_double(type_hel_field, "h_tower", as_double("THT"));//, 50);
 		set_unit_value(type_hel_field, "weather_file", as_string("solar_resource_file"));
 		set_unit_value_ssc_double(type_hel_field, "land_bound_type");//, 0);
 		set_unit_value_ssc_double(type_hel_field, "land_max");//, 7.5);
@@ -489,10 +676,10 @@ public:
         set_unit_value_ssc_double( type265_dsg_controller, "q_pb_design"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design") );
 		set_unit_value_ssc_double( type265_dsg_controller, "q_aux_max"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design")); //q_pb_design);
 		set_unit_value_ssc_double( type265_dsg_controller, "lhv_eff"); //LHV_eff);
-		set_unit_value_ssc_double( type265_dsg_controller, "h_tower"); //h_tower);
+		set_unit_value_ssc_double( type265_dsg_controller, "h_tower", THT); //h_tower);
 		set_unit_value_ssc_double( type265_dsg_controller, "n_panels"); //num_panels);
 		set_unit_value_ssc_double( type265_dsg_controller, "flowtype"); //flow_pattern);
-		set_unit_value_ssc_double( type265_dsg_controller, "d_rec"); //d_rec);
+		set_unit_value_ssc_double( type265_dsg_controller, "d_rec", d_rec);
 		set_unit_value_ssc_double( type265_dsg_controller, "q_rec_des"); //Q_rec_des);
 		set_unit_value_ssc_double( type265_dsg_controller, "f_rec_min"); //f_rec_min);
 		set_unit_value_ssc_double( type265_dsg_controller, "rec_qf_delay"); //rec_qf_delay);
@@ -538,7 +725,7 @@ public:
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_rh"); //Mat_RH);
 		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
 		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
-		set_unit_value_ssc_double( type265_dsg_controller, "A_sf");//, A_sf );
+		set_unit_value_ssc_double( type265_dsg_controller, "A_sf", A_sf );
 		set_unit_value_ssc_array( type265_dsg_controller, "ffrac");
 		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_x");
 		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_y");

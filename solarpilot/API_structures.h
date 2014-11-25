@@ -136,7 +136,7 @@ public:
 	void LoadDefaults(var_set &V);
 
 	struct FOCUS_TYPE { enum A { FLAT, AT_SLANT, USER_DEFINED }; };
-	struct CANT_TYPE { enum A {FLAT, AT_SLANT, AT_DAY_HOUR, USER_VECTOR }; };
+	struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
 	int focus_type;
 	int cant_type;	
 	Cant_settings cant_settings;
@@ -235,6 +235,7 @@ struct sp_cost
 	double sales_tax_rate;
 	double sales_tax_frac;
 	double sales_tax_cost;
+    double cost_fixed;
 };
 
 

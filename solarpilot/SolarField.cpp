@@ -817,7 +817,11 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 	
 	*/
 	
-	SF.getSimInfoObject()->addSimulationNotice("Generating solar field heliostat layout");
+	if(! SF.getSimInfoObject()->addSimulationNotice("Generating solar field heliostat layout") )
+    {
+        SF.CancelSimulation();
+        return false;
+    }
 	if(SF.CheckCancelStatus()) return false;	//check for cancelled simulation
 
 	//variables
@@ -861,7 +865,10 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 	
 	//Weed out the heliostats that lie outside of the land boundary
 	//Exclude any points that aren't within the land boundaries
-	SF.getSimInfoObject()->addSimulationNotice("Checking for land boundary exclusions");
+    if(! SF.getSimInfoObject()->addSimulationNotice("Checking for land boundary exclusions") ){
+        SF.CancelSimulation();
+        return false;
+    }
 	if(SF.CheckCancelStatus()) return false;	//check for cancelled simulation
 	if(SF.getLandObject()->isBoundsArray()){
 		vector<int> dels;
@@ -883,7 +890,10 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 	//----For all of the heliostat positions, create the heliostat objects and assign the correct canting/focusing
 	int Npos = HelPos.size();
 	
-	SF.getSimInfoObject()->addSimulationNotice("Calculating heliostat canting and aim point information");
+    if(! SF.getSimInfoObject()->addSimulationNotice("Calculating heliostat canting and aim point information") ){
+        SF.CancelSimulation();
+        return false;
+    }
 	if(SF.CheckCancelStatus()) return false;	//check for cancelled simulation
 
 	//Clear out the _heliostats array, we'll reconstruct it here
@@ -1049,14 +1059,20 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		helio_objects->at(i).setInLayout(refresh_only);
 	}
 	
-	SF.getSimInfoObject()->addSimulationNotice("Determining nearest neighbors for each heliostat");
+    if(! SF.getSimInfoObject()->addSimulationNotice("Determining nearest neighbors for each heliostat") ){
+        SF.CancelSimulation();
+        return false;
+    }
 	
 	//Update the neighbor list based on zenith. Also initialize the layout groups.
 	double *helio_extents = SF.getHeliostatExtents();
 	bool isok = SF.UpdateNeighborList(helio_extents, 0. );	//_ambient.getSolarZenith());   don't include shadowing effects in layout (zenith = 0.)
 	if(SF.CheckCancelStatus() || !isok) return false;	//check for cancelled simulation
 	if(SF.isOpticalZoning() ){
-		SF.getSimInfoObject()->addSimulationNotice("Calculating layout optical groups");
+        if(! SF.getSimInfoObject()->addSimulationNotice("Calculating layout optical groups") ){
+            SF.CancelSimulation();
+            return false;
+        }
 		isok = SF.UpdateLayoutGroups(helio_extents); //Assign heliostats to groups for simplified intercept factor calculations
 		if(SF.CheckCancelStatus() || !isok) return false;
 		SF.getSimInfoObject()->addSimulationNotice("Optical group calculations complete");
@@ -1163,7 +1179,10 @@ bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
 	for predictable simulation behavior.
 
 	*/
-	SF->getSimInfoObject()->addSimulationNotice("Simulating design-point conditions");
+    if(! SF->getSimInfoObject()->addSimulationNotice("Simulating design-point conditions") ){
+        SF->CancelSimulation();
+        return false;
+    }
 		
 	double dni, dom, doy, hour, month, tdb, pres, wind, step_weight;
 	double az, zen, azzen[2];
@@ -1234,7 +1253,10 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	*/
 
 	_sim_info.ResetValues();
-	_sim_info.addSimulationNotice("Ranking and filtering heliostats");
+    if(! _sim_info.addSimulationNotice("Ranking and filtering heliostats") ) {
+        CancelSimulation();
+        return;
+    }
 
 	int Npos = _heliostats.size();
 	//Update each heliostat with the ranking metric and sort the heliostats by the value 
@@ -1264,39 +1286,17 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
 	quicksort(hsort, _heliostats, 0, Npos-1);
 
-	//Simulate the default design point to ensure equal comparison
-	char stepdat[120];
-	char format[] = "%d,%d,%d,%f,25.,1.,0.,1.";		//d.o.m., hour, month, dni, Tdb, pressure, wind, weight
+    //Simulate the default design point to ensure equal comparison
+	double az_des, zen_des;
+    if(! CalcDesignPtSunPosition(_sun_loc_des, az_des, zen_des) )
+        return;
 	double args[] = {_dni_des, 25., 1., 0., 1.};;
-	switch((int)_sun_loc_des)
-	{
-	case 0:		//Summer solstice
-		//June 21st at noon
-		sprintf(stepdat, format, 21, 12, 6, _dni_des);
-		SimulateTime( string(stepdat) );
-		break;
-	case 1:		//Equinox
-		//Use spring equinox (doesn't matter). March 20th
-		sprintf(stepdat, format, 20, 12, 3, _dni_des);
-		SimulateTime( string(stepdat) );
-		break;
-	case 2:		//Winter solstice
-		//December 21st
-		sprintf(stepdat, format, 21, 12, 12, _dni_des);
-		SimulateTime( string(stepdat) );
-		break;
-	case 3:		//Zenith
-		//Simulate at the zenith
-		SimulateTime(90., 180., args, 5);
-		break;
-	case 4:		//User specified
-		SimulateTime(_sun_loc_des_el, _sun_loc_des_az, args, 5);
-		break;
-	default:
-		_sim_error.addSimulationError("This design-point sun position option is not available", true); 
-		return;
-	}
-		
+	if(! SimulateTime(90.-zen_des, az_des, args, 5) ){
+        throw spexception("The design point sun position is invalid. Simulation could not be completed.");
+        return;
+    }
+	
+
 	_q_to_rec = 0.;
 	for(int i=0; i<Npos; i++){
 		_q_to_rec += _heliostats.at(i)->getPowerToReceiver();
@@ -1422,9 +1422,9 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	_estimated_annual_power = 0.;
 
 	for(int i=0; i<Npos; i++){
-		int hid = _heliostats.at(i)->getId();	//use the heliostat ID from the first result to collect all of the other results
-		for(int j=0; j<nresults; j++){
-			_estimated_annual_power += results->at(j).data_by_helio[ hid ].getDataByIndex( helio_perf_data::POWER_VALUE );
+        int hid = _heliostats.at(i)->getId();
+	    for(int j=0; j<nresults; j++){
+			_estimated_annual_power += results->at(j).data_by_helio[ hid ].getDataByIndex( helio_perf_data::POWER_VALUE );  //this include receiver efficiency penalty
 		}
 	}
 
@@ -1499,7 +1499,10 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 	siminfo->setTotalSimulationCount(nsim);
 	siminfo->setCurrentSimulation(0);
 	
-	siminfo->addSimulationNotice("Simulating hourly weather profile...");
+    if(! siminfo->addSimulationNotice("Simulating hourly weather profile...") ){
+        SF->CancelSimulation();
+        return;
+    }
 	
 	for(int i=0; i<nsim; i++){
 
@@ -1601,7 +1604,9 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 			
 		}
 		
-		if(i%200==0) siminfo->setCurrentSimulation(i);
+		if(i%200==0){
+            if(! siminfo->setCurrentSimulation(i) ) break;
+        }
 	}
 	siminfo->setCurrentSimulation(0);
 	//Clear the results array and set up a dummy result that can be used to sort the field
@@ -2517,7 +2522,7 @@ void SolarField::Simulate(double args[], int nargs, bool is_layout)
 
 	//Update the estimated receiver thermal efficiency for each receiver
 	for(int i=0; i<(int)_receivers.size(); i++){
-		_receivers.at(i)->CalculateThermalEfficiency(args[0], _dni_des, args[2]);
+		_receivers.at(i)->CalculateThermalEfficiency(args[0], _dni_des, args[2], _q_des);
 	}
 	
 	setSimulatedPowerToReceiver(0.);	//reset the simulated power to the receiver
@@ -2571,14 +2576,6 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect *sunvector, He
 	*/
 	
 	int hid = helios->getId();
-
-	//cloudy?
-	//double eta_cloud=1.;
-	//if(SF->getCloudObject()->isCloudy() && !is_layout){
-	//	//is this particular heliostat shaded?
-	//	eta_cloud = SF->getCloudObject()->ShadowLoss(*helios->getLocation());
-	//}
-	//helios->setEfficiencyCloudiness( eta_cloud );
 
 	//Cosine loss
 	helios->setEfficiencyCosine( Toolbox::dotprod(*sunvector, *helios->getTrackVector()) );
@@ -3043,7 +3040,9 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 		}		
 
 		//Update the progress bar
-		if(i%update_every==0) _sim_info.setCurrentSimulation(i+1);
+		if(i%update_every==0) {
+            if(! _sim_info.setCurrentSimulation(i+1) ) break;
+        }
 	}
 	_sim_info.Reset();
 	_sim_info.setCurrentSimulation(0);
@@ -3257,10 +3256,78 @@ void SolarField::copySimulationStepData(WeatherData &wdata){
 
 }
 
-void SolarField::getSunPositionDesign(double pos[2])
+void SolarField::getSunPosDesignUser(double pos[2])
 {
 	pos[0] = _sun_loc_des_az;
 	pos[1] = _sun_loc_des_el;
+}
+
+bool SolarField::CalcDesignPtSunPosition(int sun_loc_des, double &az_des, double &zen_des)
+{
+    /* 
+    Calculate the design-point sun position given a design point specified by the user.
+
+    sun_loc_des:
+        0   Summer Solstice (June 21)
+        1   Equinox (March 20, = Sept 20)
+        2   Winter solstice (Dec 21)
+        3   Zenith (180, 90 elev)
+        4   User specified
+
+    Sets:
+        az_des      [deg]
+        zen_des     [deg]
+
+    Returns:   
+        Bool (success)
+    */
+
+    int month, day;
+
+    switch (sun_loc_des)
+    {
+    case SolarField::SUNPOS_DESIGN::ZENITH:
+        az_des = 180.;
+        zen_des = 0.;
+        return true;
+    case SolarField::SUNPOS_DESIGN::USER:
+        az_des = _sun_loc_des_az;
+        zen_des = 90. - _sun_loc_des_el;
+        return true;
+
+    // ^^^^ these methods are done and have returned without calling sun position 
+
+    case SolarField::SUNPOS_DESIGN::SOLSTICE_S:
+        month = 6;
+        day = 21;
+        break;
+    case SolarField::SUNPOS_DESIGN::EQUINOX:
+        month = 3;
+        day = 20;
+        break;
+    case SolarField::SUNPOS_DESIGN::SOLSTICE_W:
+        month = 12;
+        day = 21;
+        break;
+    default:
+		_sim_error.addSimulationError("This design-point sun position option is not available", true); 
+        return false;;
+    }
+
+    //call the sun position algorithm here
+
+    //Convert the day of the month to a day of year
+	int doy = _ambient.getDateTimeObj()->GetDayOfYear(2011,month,day);
+
+	//Calculate the sun position
+	_ambient.setDateTime(12., doy);
+
+	double azzen[2];
+	_ambient.calcSunPosition(azzen);
+	az_des = azzen[0]*r2d; 
+	zen_des = azzen[1]*r2d;
+	//If the sun is not above the horizon plus a very small amount, fail
+	return zen_des < 90.;
 }
 
 double SolarField::getAnnualPowerApproximation()

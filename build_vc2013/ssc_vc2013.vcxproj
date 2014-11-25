@@ -68,6 +68,7 @@
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
     <ClCompile Include="..\ssc\common_financial.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
+    <ClCompile Include="..\ssc\csp_common.cpp" />
     <ClCompile Include="..\ssc\sscapi.cpp" />
     <ClCompile Include="..\ssc\tckernel.cpp" />
     <ClCompile Include="..\ssc\vartab.cpp" />
@@ -77,6 +78,7 @@
     <ClInclude Include="..\ssc\common_financial.h" />
     <ClInclude Include="..\ssc\core.h" />
     <ClInclude Include="..\ssc\common.h" />
+    <ClInclude Include="..\ssc\csp_common.h" />
     <ClInclude Include="..\ssc\sscapi.h" />
     <ClInclude Include="..\ssc\tckernel.h" />
     <ClInclude Include="..\ssc\vartab.h" />
