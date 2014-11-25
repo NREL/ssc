@@ -860,6 +860,9 @@ void Receiver::CalculateThermalLoss(double load, double v_wind){
 	/* 
 	Calculate the thermal loss from the receiver. Update the local values of thermal and piping loss.
 
+    _therm_loss [MWt]   Local value updated
+    _piping_loss [MWt]   Local value updated
+
 	Load is a normalized thermal load for the receiver. 
 	V_wind is m/s.
 	*/
@@ -872,18 +875,33 @@ void Receiver::CalculateThermalLoss(double load, double v_wind){
 	for(int i=0; i<(int)_therm_loss_wind.ncells(); i++)
 		fwind += _therm_loss_wind.at(i)*pow(v_wind, i);
 
-	_therm_loss = _therm_loss_base * fload * fwind * _absorber_area / 1000.;
+	_therm_loss = _therm_loss_base * fload * fwind * _absorber_area *1.e-3;    //_therm_loss_base [kWt/m2]
 
 	//piping
-	_piping_loss = (_piping_loss_coef * _opt_height + _piping_loss_const)/1.e3;
+	_piping_loss = (_piping_loss_coef * _opt_height + _piping_loss_const)*1.e-3;
 
 }
 
-void Receiver::CalculateThermalEfficiency(double dni, double dni_des, double v_wind){
+void Receiver::CalculateThermalEfficiency(double dni, double dni_des, double v_wind, double q_des){
+    /* 
+    Calculate thermal efficiency and update local values.
+
+    Inputs:
+        DNI         W/m2    DNI at current time
+        dni_des     W/m2    DNI at system design point
+        v_wind      m/s     Wind velocity at current time
+        q_des       MWt     Design-point receiver output power
+
+    Sets:
+        _thermal_eff
+        _therm_loss     (via CalculateThermalLoss)
+        _piping_loss    (via CalculateThermalLoss)
+    */
+
 	double load = dni/dni_des;
 	CalculateThermalLoss(load, v_wind);
 
-	_thermal_eff = 1.-_therm_loss/(_absorber_area * dni_des);
+    _thermal_eff = 1. - _therm_loss / (_therm_loss + q_des );
 
 }
 

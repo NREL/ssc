@@ -201,6 +201,7 @@ protected:
 public:
 
     struct HELIO_SPACING_METHOD { enum A {DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
+    struct SUNPOS_DESIGN { enum A {SOLSTICE_S, EQUINOX, SOLSTICE_W, ZENITH, USER }; };
 
 	//Constructors - destructor
 	SolarField (); //constructor
@@ -243,7 +244,7 @@ public:
 	int getDesignSimDetail();
 	WeatherData *getSimulationStepData();
 	void copySimulationStepData(WeatherData &wdata);
-	void getSunPositionDesign(double pos[2]);	//fills pos={azimuth, elevation} [deg]
+	void getSunPosDesignUser(double pos[2]);	//fills pos={azimuth, elevation} [deg]
 	double getAnnualPowerApproximation();
 	double getDesignThermalPowerWithLoss();
 	double getActualThermalPowerWithLoss();
@@ -325,6 +326,7 @@ public:
 	void HermiteFluxSimulation(Hvector &helios, bool keep_existing_profile = false);
 	void AnalyticalFluxSimulation(Hvector &helios);
 	void CalcDimensionalFluxProfiles(Hvector &helios);
+    bool CalcDesignPtSunPosition(int sun_loc_des, double &az_des, double &zen_des);
 
  } ;
 

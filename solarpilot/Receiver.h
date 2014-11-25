@@ -248,7 +248,7 @@ public:
 	void DefineReceiverGeometry(int nflux_x = 1, int nflux_y = 1);
 	void CalculateAbsorberArea();
 	void CalculateThermalLoss(double load, double v_wind);
-	void CalculateThermalEfficiency(double dni, double dni_des, double v_wind);
+	void CalculateThermalEfficiency(double dni, double dni_des, double v_wind, double q_des);
 	double CalculateApparentDiameter(Point &Hloc); //[m] Return the apparent receiver diameter given the polygonal structure
  } ;
 

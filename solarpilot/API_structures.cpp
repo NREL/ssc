@@ -207,6 +207,7 @@ void sp_cost::LoadDefaults(var_set &V)
 	sales_tax_rate = V["financial"][0]["sales_tax_rate"].value_double();
 	sales_tax_frac = V["financial"][0]["sales_tax_frac"].value_double();
 	sales_tax_cost = V["financial"][0]["sales_tax_cost"].value_double();
+    cost_fixed = V["financial"][0]["fixed_cost"].value_double();
 }
 
 

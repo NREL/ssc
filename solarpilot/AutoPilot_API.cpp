@@ -676,7 +676,7 @@ void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
 		avals.clear();
 		for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++){
 			avals.append( my_to_string(ambient.user_atten_coefs.at(i)) );
-			if( i == ambient.user_atten_coefs.size() ) avals.append(",");
+			if( i < ambient.user_atten_coefs.size()-1 ) avals.append(",");
 		}
 		
 		_variables["ambient"][0]["atm_model"].value = "2";
@@ -767,6 +767,7 @@ void AutoPilot::update_cost(var_set &vset, sp_cost &cost){
 	vset["financial"][0]["sales_tax_rate"].set(cost.sales_tax_rate);
 	vset["financial"][0]["sales_tax_frac"].set(cost.sales_tax_frac);
 	vset["financial"][0]["sales_tax_cost"].set(cost.sales_tax_cost);
+    vset["financial"][0]["fixed_cost"].set(cost.cost_fixed);
 }
 
 void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
@@ -1231,20 +1232,28 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 		_SF->Create(_variables);	if(_SF->ErrCheck()){return false;}
 	}
 	//Do the layout simulation
-	bool layout_success;
 	if(! _cancel_simulation){
-		layout_success = CreateLayout(false);
+		if(! CreateLayout(false) )
+        {
+            CancelSimulation();
+            obj_metric = 0.;
+            flux_max = 0.;
+            return false;
+        }
 		if(_SF->ErrCheck()){return false;}
 	}
 	//Do the flux simulation at the design point
 	if(! _cancel_simulation){
 		//update the flux simulation sun position to match the layout reference point sun position
-		double pos[2];
-		_SF->getSunPositionDesign(pos);
+		double az_des, zen_des;
+		if(! 
+            _SF->CalcDesignPtSunPosition( _variables["solarfield"][0]["sun_loc_des"].value_int(), az_des, zen_des) 
+            ) return false;
+
 		double d2r = acos(-1.)/180.;
-		_SF->getAmbientObject()->setSolarPosition( pos[0]*d2r, (90.-pos[1])*d2r );
-		_variables["fluxsim"][0]["flux_solar_az_in"].set( pos[0] );	//[deg]
-		_variables["fluxsim"][0]["flux_solar_el_in"].set( pos[1] );
+		_SF->getAmbientObject()->setSolarPosition( az_des*d2r, zen_des*d2r );
+		_variables["fluxsim"][0]["flux_solar_az_in"].set( az_des );	//[deg]
+		_variables["fluxsim"][0]["flux_solar_el_in"].set( 90.0 - zen_des );
 		_variables["fluxsim"][0]["flux_time_type"].set( 0 );	//sun position specified
 
 		//prep for performance simulation (aim points, etc.)
@@ -1483,9 +1492,15 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
 		//Run the evaluation points
 		_summary_siminfo->setTotalSimulationCount((int)runs.size());
-		_summary_siminfo->addSimulationNotice("...Creating local response surface");
+		if(! _summary_siminfo->addSimulationNotice("...Creating local response surface") ){
+            CancelSimulation();
+            return false;
+        }
 		for(int i=0; i<(int)runs.size(); i++){
-			_summary_siminfo->setCurrentSimulation(i);
+            if(! _summary_siminfo->setCurrentSimulation(i) ){
+                CancelSimulation();
+                return false;
+            }
 
 			//update the data structures
 			for(int j=0; j<(int)optvars.size(); j++)
@@ -1648,7 +1663,10 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		vector<double> all_steep_objs;
 		bool tried_steep_mod = false;
 		while( true ){
-			_summary_siminfo->setCurrentSimulation(minmax_iter);
+            if(! _summary_siminfo->setCurrentSimulation(minmax_iter) ){
+                CancelSimulation();
+                return false;
+            }
 
 			//update the variable values
 			for(int i=0; i<(int)optvars.size(); i++){
@@ -1774,7 +1792,10 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
 		for(int gsiter=0; gsiter<opt.max_gs_iter; gsiter++)
 		{
-			_summary_siminfo->setCurrentSimulation(gsiter*2);
+            if(! _summary_siminfo->setCurrentSimulation(gsiter*2) ){
+                CancelSimulation();
+                return false;
+            }
 
 			//lower and upper points for golden section
 			site_a_gs = interpolate_vectors(lower_gs, upper_gs, 1. - golden_ratio);
@@ -1795,7 +1816,10 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				max_flux.push_back( flux );
 			}
 
-			_summary_siminfo->setCurrentSimulation(gsiter*2 + 1);
+            if(! _summary_siminfo->setCurrentSimulation(gsiter*2 + 1) ){
+                CancelSimulation();
+                return false;
+            }
 
 			//Evaluate at the upper point
 			if(! site_b_sim_ok){
@@ -2261,7 +2285,7 @@ AutoPilot_MT::AutoPilot_MT()
 	_summary_siminfo = 0;
 	_SF = 0;
 	//initialize with the maximum number of threads
-	SetMaxThreadCount(3); //999999);
+	SetMaxThreadCount(999999);
 }
 
 bool AutoPilot_MT::CreateLayout(bool do_post_process)
@@ -2355,8 +2379,10 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 					_sim_total = nsim_req;
 					_sim_complete = nsim_done;
 
-					if(_has_detail_callback)
-						_detail_siminfo->setCurrentSimulation(nsim_done);
+					if(_has_detail_callback){
+						if(! _detail_siminfo->setCurrentSimulation(nsim_done) )
+                            break;
+                    }
 					
 				
 					if(nthread_done == nthreads) break;
