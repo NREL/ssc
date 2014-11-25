@@ -5,6 +5,7 @@ CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt
 CXXFLAGS = $(CFLAGS)
 
 OBJECTS = \
+	fluxsim.o \
 	API_structures.o \
 	Ambient.o \
 	AutoPilot_API.o \

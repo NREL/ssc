@@ -12,6 +12,7 @@ TARGET = ssc.so
 
 
 OBJECTS = \
+	csp_common.o \
 	cmod_solarpilot.o \
 	cmod_dsg_flux_preprocess.o \
 	cmod_belpe.o \
