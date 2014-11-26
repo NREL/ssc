@@ -80,14 +80,20 @@ def variables_list(module):
 
 def pvwatts_test():
 	     data = ssc.Data()
-	     data.set_string("file_name", "../../examples/abilene.tm2") 
-	     data.set_number("system_size", 4.0)
-	     data.set_number("derate", 0.77)
-	     data.set_number("track_mode", 0)
+	     data.set_string("solar_resource_file", "../../examples/abilene.tm2") 
+	     data.set_number("system_capacity", 4.0)
+	     data.set_number("dc_ac_ratio", 1.1)
 	     data.set_number("tilt", 20)
 	     data.set_number("azimuth", 180)
+	     data.set_number( 'inv_eff', 96 );
+	     data.set_number( 'losses', 14.0757 );
+	     data.set_number( 'array_type', 0 );
+	     data.set_number( 'tilt', 20 );
+	     data.set_number( 'azimuth', 180 );
+	     data.set_number( 'gcr', 0.4 );
+	     data.set_number( 'adjust:factor', 1 );
  
-	     mod = ssc.Module("pvwattsv1")
+	     mod = ssc.Module("pvwattsv5")
 	     if (mod.exec_(data)):
 			  tot = data.get_number("ac_annual")
 			  ac = data.get_array("ac_monthly")
@@ -106,7 +112,7 @@ def pvwatts_test():
 	     
 
 def pvwatts_func_test():
-	     ssc_module = ssc.Module("pvwattsfunc")
+	     ssc_module = ssc.Module("pvwattsv1_1ts")
 	     ssc_data = ssc.Data()
 	     ssc_data.set_number("year", 1970) # general year (tiny effect in sun position)
 	     ssc_data.set_number("month", 1) # 1-12
@@ -146,6 +152,10 @@ def pvwatts_func_test():
 			  print "tcell: " , tcell , " C" 
 			  print "dc: " , dc , " W"
 			  print "ac: " , ac , " W" 
+			  print "PVWatts func test OK"
+	     else:
+			  print "PVWatts func test failed"
+	     
 	     
 
 # ############################################################
