@@ -1,199 +1,237 @@
-# pvsamv1.py created from pvsamv1.lk
-# example script for running pvsamv1
-   
-#   runs 1 sub-array, cec 5 par module, snl inverter */
-import ssc
+#pvsamv1 compute module call from 2014.11.24 "Photovoltaic, Residential" configuration
 
-from math import ceil
+import ssc # contains all Python classes for accessing ssc
+
+ssc_module = ssc.Module("pvsamv1")
+ssc_data = ssc.Data()
+
+ssc_data.set_number( 'system_capacity', 3.8745 );
+ssc_data.set_string( 'solar_resource_file', '../../examples/USA AZ Phoenix (TMY2).csv' );
+ssc_data.set_number( 'use_wf_albedo', 0 );
+ssc_data.set_array( 'albedo', [ 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 ] );
+ssc_data.set_number( 'irrad_mode', 0 );
+ssc_data.set_number( 'sky_model', 2 );
+ssc_data.set_number( 'ac_loss', 1 );
+ssc_data.set_number( 'modules_per_string', 9 );
+ssc_data.set_number( 'strings_in_parallel', 2 );
+ssc_data.set_number( 'inverter_count', 1 );
+ssc_data.set_number( 'enable_mismatch_vmax_calc', 0 );
+ssc_data.set_number( 'subarray1_tilt', 20 );
+ssc_data.set_number( 'subarray1_tilt_eq_lat', 0 );
+ssc_data.set_number( 'subarray1_azimuth', 180 );
+ssc_data.set_number( 'subarray1_track_mode', 0 );
+ssc_data.set_number( 'subarray1_rotlim', 45 );
+ssc_data.set_number( 'subarray1_shade_mode', 1 );
+ssc_data.set_number( 'subarray1_gcr', 0.3 );
+ssc_data.set_array( 'subarray1_soiling', [ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ] );
+ssc_data.set_number( 'subarray1_dcloss', 4.4402 );
+ssc_data.set_number( 'subarray1_mismatch_loss', 2 );
+ssc_data.set_number( 'subarray1_diodeconn_loss', 0.5 );
+ssc_data.set_number( 'subarray1_dcwiring_loss', 2 );
+ssc_data.set_number( 'subarray1_tracking_loss', 0 );
+ssc_data.set_number( 'subarray1_nameplate_loss', 0 );
+ssc_data.set_number( 'subarray2_mismatch_loss', 2 );
+ssc_data.set_number( 'subarray2_diodeconn_loss', 0.5 );
+ssc_data.set_number( 'subarray2_dcwiring_loss', 2 );
+ssc_data.set_number( 'subarray2_tracking_loss', 0 );
+ssc_data.set_number( 'subarray2_nameplate_loss', 0 );
+ssc_data.set_number( 'subarray3_mismatch_loss', 2 );
+ssc_data.set_number( 'subarray3_diodeconn_loss', 0.5 );
+ssc_data.set_number( 'subarray3_dcwiring_loss', 2 );
+ssc_data.set_number( 'subarray3_tracking_loss', 0 );
+ssc_data.set_number( 'subarray3_nameplate_loss', 0 );
+ssc_data.set_number( 'subarray4_mismatch_loss', 2 );
+ssc_data.set_number( 'subarray4_diodeconn_loss', 0.5 );
+ssc_data.set_number( 'subarray4_dcwiring_loss', 2 );
+ssc_data.set_number( 'subarray4_tracking_loss', 0 );
+ssc_data.set_number( 'subarray4_nameplate_loss', 0 );
+ssc_data.set_number( 'acwiring_loss', 1 );
+ssc_data.set_number( 'transformer_loss', 0 );
+ssc_data.set_number( 'subarray1_mod_orient', 0 );
+ssc_data.set_number( 'subarray1_nmodx', 9 );
+ssc_data.set_number( 'subarray1_nmody', 2 );
+ssc_data.set_number( 'subarray1_backtrack', 0 );
+ssc_data.set_number( 'subarray2_enable', 0 );
+ssc_data.set_number( 'subarray2_nstrings', 0 );
+ssc_data.set_number( 'subarray2_tilt', 20 );
+ssc_data.set_number( 'subarray2_tilt_eq_lat', 0 );
+ssc_data.set_number( 'subarray2_azimuth', 180 );
+ssc_data.set_number( 'subarray2_track_mode', 0 );
+ssc_data.set_number( 'subarray2_rotlim', 45 );
+ssc_data.set_number( 'subarray2_shade_mode', 1 );
+ssc_data.set_number( 'subarray2_gcr', 0.3 );
+ssc_data.set_array( 'subarray2_soiling', [ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ] );
+ssc_data.set_number( 'subarray2_dcloss', 4.4402 );
+ssc_data.set_number( 'subarray2_mod_orient', 0 );
+ssc_data.set_number( 'subarray2_nmodx', 9 );
+ssc_data.set_number( 'subarray2_nmody', 2 );
+ssc_data.set_number( 'subarray2_backtrack', 0 );
+ssc_data.set_number( 'subarray3_enable', 0 );
+ssc_data.set_number( 'subarray3_nstrings', 0 );
+ssc_data.set_number( 'subarray3_tilt', 20 );
+ssc_data.set_number( 'subarray3_tilt_eq_lat', 0 );
+ssc_data.set_number( 'subarray3_azimuth', 180 );
+ssc_data.set_number( 'subarray3_track_mode', 0 );
+ssc_data.set_number( 'subarray3_rotlim', 45 );
+ssc_data.set_number( 'subarray3_shade_mode', 1 );
+ssc_data.set_number( 'subarray3_gcr', 0.3 );
+ssc_data.set_array( 'subarray3_soiling', [ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ] );
+ssc_data.set_number( 'subarray3_dcloss', 4.4402 );
+ssc_data.set_number( 'subarray3_mod_orient', 0 );
+ssc_data.set_number( 'subarray3_nmodx', 9 );
+ssc_data.set_number( 'subarray3_nmody', 2 );
+ssc_data.set_number( 'subarray3_backtrack', 0 );
+ssc_data.set_number( 'subarray4_enable', 0 );
+ssc_data.set_number( 'subarray4_nstrings', 0 );
+ssc_data.set_number( 'subarray4_tilt', 20 );
+ssc_data.set_number( 'subarray4_tilt_eq_lat', 0 );
+ssc_data.set_number( 'subarray4_azimuth', 180 );
+ssc_data.set_number( 'subarray4_track_mode', 0 );
+ssc_data.set_number( 'subarray4_rotlim', 45 );
+ssc_data.set_number( 'subarray4_shade_mode', 1 );
+ssc_data.set_number( 'subarray4_gcr', 0.3 );
+ssc_data.set_array( 'subarray4_soiling', [ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ] );
+ssc_data.set_number( 'subarray4_dcloss', 4.4402 );
+ssc_data.set_number( 'subarray4_mod_orient', 0 );
+ssc_data.set_number( 'subarray4_nmodx', 9 );
+ssc_data.set_number( 'subarray4_nmody', 2 );
+ssc_data.set_number( 'subarray4_backtrack', 0 );
+ssc_data.set_number( 'module_model', 1 );
+ssc_data.set_number( 'spe_area', 0.74074 );
+ssc_data.set_number( 'spe_rad0', 200 );
+ssc_data.set_number( 'spe_rad1', 400 );
+ssc_data.set_number( 'spe_rad2', 600 );
+ssc_data.set_number( 'spe_rad3', 800 );
+ssc_data.set_number( 'spe_rad4', 1000 );
+ssc_data.set_number( 'spe_eff0', 13.5 );
+ssc_data.set_number( 'spe_eff1', 13.5 );
+ssc_data.set_number( 'spe_eff2', 13.5 );
+ssc_data.set_number( 'spe_eff3', 13.5 );
+ssc_data.set_number( 'spe_eff4', 13.5 );
+ssc_data.set_number( 'spe_reference', 4 );
+ssc_data.set_number( 'spe_module_structure', 0 );
+ssc_data.set_number( 'spe_a', -3.56 );
+ssc_data.set_number( 'spe_b', -0.075 );
+ssc_data.set_number( 'spe_dT', 3 );
+ssc_data.set_number( 'spe_temp_coeff', -0.5 );
+ssc_data.set_number( 'spe_fd', 1 );
+ssc_data.set_number( 'cec_area', 1.244 );
+ssc_data.set_number( 'cec_a_ref', 1.9816 );
+ssc_data.set_number( 'cec_adjust', 20.8 );
+ssc_data.set_number( 'cec_alpha_sc', 0.002651 );
+ssc_data.set_number( 'cec_beta_oc', -0.14234 );
+ssc_data.set_number( 'cec_gamma_r', -0.407 );
+ssc_data.set_number( 'cec_i_l_ref', 5.754 );
+ssc_data.set_number( 'cec_i_mp_ref', 5.25 );
+ssc_data.set_number( 'cec_i_o_ref', 1.919e-010 );
+ssc_data.set_number( 'cec_i_sc_ref', 5.75 );
+ssc_data.set_number( 'cec_n_s', 72 );
+ssc_data.set_number( 'cec_r_s', 0.105 );
+ssc_data.set_number( 'cec_r_sh_ref', 160.48 );
+ssc_data.set_number( 'cec_t_noct', 49.2 );
+ssc_data.set_number( 'cec_v_mp_ref', 41 );
+ssc_data.set_number( 'cec_v_oc_ref', 47.7 );
+ssc_data.set_number( 'cec_temp_corr_mode', 0 );
+ssc_data.set_number( 'cec_standoff', 6 );
+ssc_data.set_number( 'cec_height', 0 );
+ssc_data.set_number( 'cec_mounting_config', 0 );
+ssc_data.set_number( 'cec_heat_transfer', 0 );
+ssc_data.set_number( 'cec_mounting_orientation', 0 );
+ssc_data.set_number( 'cec_gap_spacing', 0.05 );
+ssc_data.set_number( 'cec_module_width', 1 );
+ssc_data.set_number( 'cec_module_length', 1.244 );
+ssc_data.set_number( 'cec_array_rows', 1 );
+ssc_data.set_number( 'cec_array_cols', 10 );
+ssc_data.set_number( 'cec_backside_temp', 20 );
+ssc_data.set_number( '6par_celltech', 1 );
+ssc_data.set_number( '6par_vmp', 30 );
+ssc_data.set_number( '6par_imp', 6 );
+ssc_data.set_number( '6par_voc', 37 );
+ssc_data.set_number( '6par_isc', 7 );
+ssc_data.set_number( '6par_bvoc', -0.11 );
+ssc_data.set_number( '6par_aisc', 0.004 );
+ssc_data.set_number( '6par_gpmp', -0.41 );
+ssc_data.set_number( '6par_nser', 60 );
+ssc_data.set_number( '6par_area', 1.3 );
+ssc_data.set_number( '6par_tnoct', 46 );
+ssc_data.set_number( '6par_standoff', 6 );
+ssc_data.set_number( '6par_mounting', 0 );
+ssc_data.set_number( 'snl_module_structure', 0 );
+ssc_data.set_number( 'snl_a', -3.62 );
+ssc_data.set_number( 'snl_b', -0.075 );
+ssc_data.set_number( 'snl_dtc', 3 );
+ssc_data.set_number( 'snl_ref_a', -3.62 );
+ssc_data.set_number( 'snl_ref_b', -0.075 );
+ssc_data.set_number( 'snl_ref_dT', 3 );
+ssc_data.set_number( 'snl_fd', 1 );
+ssc_data.set_number( 'snl_a0', 0.94045 );
+ssc_data.set_number( 'snl_a1', 0.052641 );
+ssc_data.set_number( 'snl_a2', -0.0093897 );
+ssc_data.set_number( 'snl_a3', 0.00072623 );
+ssc_data.set_number( 'snl_a4', -1.9938e-005 );
+ssc_data.set_number( 'snl_aimp', -0.00038 );
+ssc_data.set_number( 'snl_aisc', 0.00061 );
+ssc_data.set_number( 'snl_area', 1.244 );
+ssc_data.set_number( 'snl_b0', 1 );
+ssc_data.set_number( 'snl_b1', -0.002438 );
+ssc_data.set_number( 'snl_b2', 0.0003103 );
+ssc_data.set_number( 'snl_b3', -1.246e-005 );
+ssc_data.set_number( 'snl_b4', 2.11e-007 );
+ssc_data.set_number( 'snl_b5', -1.36e-009 );
+ssc_data.set_number( 'snl_bvmpo', -0.139 );
+ssc_data.set_number( 'snl_bvoco', -0.136 );
+ssc_data.set_number( 'snl_c0', 1.0039 );
+ssc_data.set_number( 'snl_c1', -0.0039 );
+ssc_data.set_number( 'snl_c2', 0.291066 );
+ssc_data.set_number( 'snl_c3', -4.73546 );
+ssc_data.set_number( 'snl_c4', 0.9942 );
+ssc_data.set_number( 'snl_c5', 0.0058 );
+ssc_data.set_number( 'snl_c6', 1.0723 );
+ssc_data.set_number( 'snl_c7', -0.0723 );
+ssc_data.set_number( 'snl_impo', 5.25 );
+ssc_data.set_number( 'snl_isco', 5.75 );
+ssc_data.set_number( 'snl_ixo', 5.65 );
+ssc_data.set_number( 'snl_ixxo', 3.85 );
+ssc_data.set_number( 'snl_mbvmp', 0 );
+ssc_data.set_number( 'snl_mbvoc', 0 );
+ssc_data.set_number( 'snl_n', 1.221 );
+ssc_data.set_number( 'snl_series_cells', 72 );
+ssc_data.set_number( 'snl_vmpo', 40 );
+ssc_data.set_number( 'snl_voco', 47.7 );
+ssc_data.set_number( 'inverter_model', 0 );
+ssc_data.set_number( 'inv_snl_c0', -6.57929e-006 );
+ssc_data.set_number( 'inv_snl_c1', 4.72925e-005 );
+ssc_data.set_number( 'inv_snl_c2', 0.00202195 );
+ssc_data.set_number( 'inv_snl_c3', 0.000285321 );
+ssc_data.set_number( 'inv_snl_paco', 4000 );
+ssc_data.set_number( 'inv_snl_pdco', 4186 );
+ssc_data.set_number( 'inv_snl_pnt', 0.17 );
+ssc_data.set_number( 'inv_snl_pso', 19.7391 );
+ssc_data.set_number( 'inv_snl_vdco', 310.67 );
+ssc_data.set_number( 'inv_snl_vdcmax', 600 );
+ssc_data.set_number( 'inv_ds_paco', 4000 );
+ssc_data.set_number( 'inv_ds_eff', 96 );
+ssc_data.set_number( 'inv_ds_pnt', 1 );
+ssc_data.set_number( 'inv_ds_pso', 0 );
+ssc_data.set_number( 'inv_ds_vdco', 310 );
+ssc_data.set_number( 'inv_ds_vdcmax', 600 );
+ssc_data.set_number( 'inv_pd_paco', 4000 );
+ssc_data.set_number( 'inv_pd_pdco', 4210.53 );
+ssc_data.set_array( 'inv_pd_partload', [ 0, 0.404, 0.808, 1.212, 1.616, 2.02, 2.424, 2.828, 3.232, 3.636, 4.04, 4.444, 4.848, 5.252, 5.656, 6.06, 6.464, 6.868, 7.272, 7.676, 8.08, 8.484, 8.888, 9.292, 9.696, 10.1, 10.504, 10.908, 11.312, 11.716, 12.12, 12.524, 12.928, 13.332, 13.736, 14.14, 14.544, 14.948, 15.352, 15.756, 16.16, 16.564, 16.968, 17.372, 17.776, 18.18, 18.584, 18.988, 19.392, 19.796, 20.2, 20.604, 21.008, 21.412, 21.816, 22.22, 22.624, 23.028, 23.432, 23.836, 24.24, 24.644, 25.048, 25.452, 25.856, 26.26, 26.664, 27.068, 27.472, 27.876, 28.28, 28.684, 29.088, 29.492, 29.896, 30.3, 30.704, 31.108, 31.512, 31.916, 32.32, 32.724, 33.128, 33.532, 33.936, 34.34, 34.744, 35.148, 35.552, 35.956, 36.36, 36.764, 37.168, 37.572, 37.976, 38.38, 38.784, 39.188, 39.592, 39.996, 40.4, 40.804, 41.208, 41.612, 42.016, 42.42, 42.824, 43.228, 43.632, 44.036, 44.44, 44.844, 45.248, 45.652, 46.056, 46.46, 46.864, 47.268, 47.672, 48.076, 48.48, 48.884, 49.288, 49.692, 50.096, 50.5, 50.904, 51.308, 51.712, 52.116, 52.52, 52.924, 53.328, 53.732, 54.136, 54.54, 54.944, 55.348, 55.752, 56.156, 56.56, 56.964, 57.368, 57.772, 58.176, 58.58, 58.984, 59.388, 59.792, 60.196, 60.6, 61.004, 61.408, 61.812, 62.216, 62.62, 63.024, 63.428, 63.832, 64.236, 64.64, 65.044, 65.448, 65.852, 66.256, 66.66, 67.064, 67.468, 67.872, 68.276, 68.68, 69.084, 69.488, 69.892, 70.296, 70.7, 71.104, 71.508, 71.912, 72.316, 72.72, 73.124, 73.528, 73.932, 74.336, 74.74, 75.144, 75.548, 75.952, 76.356, 76.76, 77.164, 77.568, 77.972, 78.376, 78.78, 79.184, 79.588, 79.992, 80.396, 80.8, 81.204, 81.608, 82.012, 82.416, 82.82, 83.224, 83.628, 84.032, 84.436, 84.84, 85.244, 85.648, 86.052, 86.456, 86.86, 87.264, 87.668, 88.072, 88.476, 88.88, 89.284, 89.688, 90.092, 90.496, 90.9, 91.304, 91.708, 92.112, 92.516, 92.92, 93.324, 93.728, 94.132, 94.536, 94.94, 95.344, 95.748, 96.152, 96.556, 96.96, 97.364, 97.768, 98.172, 98.576, 98.98, 99.384, 99.788, 100.192, 100.596, 101 ] );
+ssc_data.set_array( 'inv_pd_efficiency', [ 0, 0, 34.42, 55.2, 65.59, 71.82, 75.97, 78.94, 81.17, 82.9, 84.28, 85.42, 86.36, 87.16, 87.84, 88.44, 88.95, 89.41, 89.82, 90.18, 90.51, 90.81, 91.08, 91.32, 91.55, 91.75, 91.95, 92.12, 92.29, 92.44, 92.58, 92.72, 92.84, 92.96, 93.07, 93.17, 93.27, 93.37, 93.45, 93.54, 93.62, 93.69, 93.76, 93.83, 93.9, 93.96, 94.02, 94.08, 94.13, 94.18, 94.23, 94.28, 94.33, 94.37, 94.42, 94.46, 94.5, 94.54, 94.57, 94.61, 94.64, 94.68, 94.71, 94.74, 94.77, 94.8, 94.83, 94.86, 94.89, 94.91, 94.94, 94.96, 94.98, 95.01, 95.03, 95.05, 95.07, 95.09, 95.11, 95.13, 95.15, 95.17, 95.19, 95.21, 95.23, 95.24, 95.26, 95.28, 95.29, 95.31, 95.32, 95.34, 95.35, 95.36, 95.38, 95.39, 95.4, 95.42, 95.43, 95.44, 95.45, 95.47, 95.48, 95.49, 95.5, 95.51, 95.52, 95.53, 95.54, 95.55, 95.56, 95.57, 95.58, 95.59, 95.6, 95.61, 95.62, 95.63, 95.64, 95.64, 95.65, 95.66, 95.67, 95.68, 95.68, 95.69, 95.7, 95.71, 95.71, 95.72, 95.73, 95.73, 95.74, 95.75, 95.75, 95.76, 95.77, 95.77, 95.78, 95.78, 95.79, 95.8, 95.8, 95.81, 95.81, 95.82, 95.82, 95.83, 95.83, 95.84, 95.84, 95.85, 95.85, 95.86, 95.86, 95.87, 95.87, 95.88, 95.88, 95.89, 95.89, 95.89, 95.9, 95.9, 95.91, 95.91, 95.91, 95.92, 95.92, 95.93, 95.93, 95.93, 95.94, 95.94, 95.94, 95.95, 95.95, 95.96, 95.96, 95.96, 95.97, 95.97, 95.97, 95.98, 95.98, 95.98, 95.98, 95.99, 95.99, 95.99, 96, 96, 96, 96.01, 96.01, 96.01, 96.01, 96.02, 96.02, 96.02, 96.02, 96.03, 96.03, 96.03, 96.03, 96.04, 96.04, 96.04, 96.04, 96.05, 96.05, 96.05, 96.05, 96.06, 96.06, 96.06, 96.06, 96.06, 96.07, 96.07, 96.07, 96.07, 96.07, 96.08, 96.08, 96.08, 96.08, 96.08, 96.09, 96.09, 96.09, 96.09, 96.09, 96.09, 96.1, 96.1, 96.1, 96.1, 96.1, 96.1, 96.11, 96.11, 96.11, 96.11, 96.11, 96.11, 96.12, 96.12, 96.12, 96.12, 96.12 ] );
+ssc_data.set_number( 'inv_pd_pnt', 0 );
+ssc_data.set_number( 'inv_pd_vdco', 310 );
+ssc_data.set_number( 'inv_pd_vdcmax', 600 );
+ssc_data.set_number( 'adjust:factor', 1 );
 
 
-# web service input variables
-latitude = 33;
-longitude = 104;
-
-# array parameters
-ac_derate = 0.99;
-num_modules = 80;
-
-# module parameters
-cec_area = 1.244;
-cec_alpha_sc = 2.651e-003;
-cec_beta_oc = -1.423e-001;
-cec_gamma_r = -4.070e-001;
-cec_i_mp_ref = 5.25;
-cec_i_sc_ref = 5.75;
-cec_n_s = 72;
-cec_t_noct = 49.2;
-cec_v_mp_ref = 41;
-cec_v_oc_ref = 47.7;
-cec_standoff = 6;
-cec_height = 0;
-cec_r_s = 0.105;
-cec_r_sh_ref = 160.48;
-cec_i_o_ref = 1.919e-010;
-cec_i_l_ref = 5.754;
-cec_adjust = 20.8;
-cec_a_ref = 1.9816;
-
-# inverter parameters
-inv_snl_c0 = -6.57929e-006;
-inv_snl_c1 = 4.72925e-005;
-inv_snl_c2 = 0.00202195;
-inv_snl_c3 = 0.000285321;
-inv_snl_paco = 4000;
-inv_snl_pdco = 4186;
-inv_snl_pnt = 0.17;
-inv_snl_pso = 19.7391;
-inv_snl_vdco = 310.67;
-inv_snl_vdcmax = 0;
-inv_snl_vmin = 250;
-inv_snl_vmax = 480;
-
-tilt = 30;
-azimuth = 180;
-track_mode = 0;
-soiling = 0.95;
-albedo = 0.2;
-dc_derate = 0.95558;
-
-# shading derate table
-shading_mxh =[ [ 0,0,0,0,0,0,0,0,0.475,0.95,1,1,0.7875,0.2375,0.25,0.3625,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0,0.4875,1,1,1,0.925,0.6375,0.6625,0.225,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0.15,0.925,1,1,1,1,1,0.75,0.2,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0.45,0.9125,1,1,1,1,1,0.625,0.375,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0.075,0.05,0.7875,1,1,1,1,1,1,0.625,0.4875,0.025,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0.15,0.075,0.9,1,1,1,1,1,1,0.675,0.5,0.05,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0.1,0.0625,0.8375,1,1,1,1,1,1,0.6375,0.4875,0.025,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0.6625,0.9625,1,1,1,1,1,0.6125,0.4,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0.2,0.9125,1,1,1,1,1,0.7375,0.2125,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0.0625,0.7,1,1,1,0.9375,0.8,0.7,0.1875,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0,0.45,0.95,1,1,0.8125,0.3625,0.3625,0.375,0,0,0,0,0,0,0,0 ],
-	  [ 0,0,0,0,0,0,0,0.0125,0.525,0.95,1,0.9875,0.75,0.175,0.2125,0.275,0,0,0,0,0,0,0,0 ] ];
-
-
-# END OF INPUT VARIABLES */
-
-
-# internal calculations to determine array electrical wiring
-mod_power = cec_v_mp_ref * cec_i_mp_ref;
-num_series = 0.5 * (inv_snl_vmin + inv_snl_vmax) / cec_v_mp_ref;
-
-if (inv_snl_vdcmax > 0):
-	while ((num_series > 0) and ((num_series * cec_v_oc_ref) > inv_snl_vdcmax)):
-		num_series -= 1
-
-if (num_series < 1):
-	num_series = 1;
-
-num_series = int( num_series );
-
-num_parallel = num_modules / num_series;
-if (num_parallel < 1):
-	num_parallel = 1
-
-num_inverters = ceil(num_series * num_parallel * mod_power / inv_snl_paco);
-if (num_inverters < 1):
-	num_inverters = 1
-
-num_parallel = int( num_parallel );
-num_inverters = int( num_inverters );
-
-
-print "Modules per string = ", num_series 
-print "Strings in parallel = " , num_parallel 
-print "Number of inverters = ", num_inverters
-
-
-
-
-
-
-
-
-
-data = ssc.Data()
-
-# set the weather file.  the web service should take a 
-# lat-long and use the perez satellite data or tmy2/3 data
-# in the same way that the PVWatts service specifies the weather data
-# --> essentially, this service and PVWatts should use exactly the same
-#     method to get weather data for a location request
-data.set_string( 'weather_file', '../../examples/abilene.tm2' );
-data.set_array( 'albedo', [albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo, albedo ] );
-data.set_number( 'ac_derate', ac_derate );
-data.set_number( 'modules_per_string', num_series );
-data.set_number( 'strings_in_parallel', num_parallel );
-data.set_number( 'inverter_count', num_inverters );
-data.set_number( 'subarray1_tilt', tilt );
-data.set_number( 'subarray1_azimuth', azimuth );
-data.set_number( 'subarray1_track_mode', track_mode );
-data.set_matrix( 'subarray1_shading_mxh', shading_mxh );
-data.set_array( 'subarray1_soiling', [soiling, soiling, soiling, soiling, soiling, soiling, soiling, soiling, soiling, soiling, soiling, soiling ] );
-data.set_number( 'subarray1_derate', dc_derate );
-
-# set up values for other sub arrays - not used (currently)
-data.set_number( 'subarray2_tilt', 0 );
-data.set_number( 'subarray3_tilt', 0 );
-data.set_number( 'subarray4_tilt', 0 );
-
-data.set_number( 'module_model', 1 );
-
-data.set_number( 'cec_area', cec_area );
-data.set_number( 'cec_a_ref', cec_a_ref );
-data.set_number( 'cec_adjust', cec_adjust );
-data.set_number( 'cec_alpha_sc', cec_alpha_sc );
-data.set_number( 'cec_beta_oc', cec_beta_oc );
-data.set_number( 'cec_gamma_r', cec_gamma_r );
-data.set_number( 'cec_i_l_ref', cec_i_l_ref );
-data.set_number( 'cec_i_mp_ref', cec_i_mp_ref );
-data.set_number( 'cec_i_o_ref', cec_i_o_ref );
-data.set_number( 'cec_i_sc_ref', cec_i_sc_ref );
-data.set_number( 'cec_n_s', cec_n_s );
-data.set_number( 'cec_r_s', cec_r_s );
-data.set_number( 'cec_r_sh_ref', cec_r_sh_ref );
-data.set_number( 'cec_t_noct', cec_t_noct );
-data.set_number( 'cec_v_mp_ref', cec_v_mp_ref );
-data.set_number( 'cec_v_oc_ref', cec_v_oc_ref );
-data.set_number( 'cec_temp_corr_mode', 0 );
-data.set_number( 'cec_standoff', cec_standoff );
-data.set_number( 'cec_height', cec_height );
-
-data.set_number( 'inverter_model', 0 );
-
-data.set_number( 'inv_snl_c0', inv_snl_c0 );
-data.set_number( 'inv_snl_c1', inv_snl_c1 );
-data.set_number( 'inv_snl_c2', inv_snl_c2 );
-data.set_number( 'inv_snl_c3', inv_snl_c3 );
-data.set_number( 'inv_snl_paco', inv_snl_paco );
-data.set_number( 'inv_snl_pdco', inv_snl_pdco );
-data.set_number( 'inv_snl_pnt', inv_snl_pnt );
-data.set_number( 'inv_snl_pso', inv_snl_pso );
-data.set_number( 'inv_snl_vdco', inv_snl_vdco );
-data.set_number( 'inv_snl_vdcmax', inv_snl_vdcmax );
-
-
-# all variables have been set up for pvsamv1
-# run the model
-
-module = ssc.Module('pvsamv1')
-
-if (module.exec_(data)):
-# return the relevant outputs desired
-	ac_hourly = data.get_array('hourly_ac_net');
-	ac_monthly = data.get_array('monthly_ac_net');
-	ac_annual = data.get_number('annual_ac_net');
-
-	for i in range(len(ac_monthly)):
-		print 'ac_monthly [' , i, '](kWh) = ' , ac_monthly[i]
-	print 'ac_annual (kWh) = ' , ac_annual
-	
+if (ssc_module.exec_(ssc_data)):
+	     enet = ssc_data.get_number("annual_energy") 
+	     cf = ssc_data.get_number("capacity_factor") 
+	     kWhperkW = ssc_data.get_number("kwh_per_kw") 
+	     print "Annual energy : " , enet , " kWh" 
+	     print "Capacity factor : " , cf , "%" 
+	     print "First year kWhAC/kWDC : " , kWhperkW 
+	     print "pvsamv1 test OK"
 else:
-	idx = 0
-	msg = module.log(idx)
-	while (msg is not None):
-		print "Error [", idx," ]: " , msg
-		idx += 1
-		msg = module.log(idx)
-	print "pvsamv1 example failed"
-
-
+	     print "pvsamv1 test failed"
