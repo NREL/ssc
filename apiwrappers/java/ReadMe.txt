@@ -13,7 +13,7 @@ All Platforms
 Appropriate JDK from Oracle Java SE 
 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
 
-Note: The ssc sdk examples and Makefile built against JDK version 1.7.0_10
+Note: The ssc sdk examples and Makefile built against JDK version 1.7.0_71
 Different versions may require updating the CIFLAGS variable in the Makefile for your installation
 
 To build the SSC java library and to run the examples

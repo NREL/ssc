@@ -10,10 +10,10 @@ ifdef SystemRoot
 		BITS = 64
 		CCCOMP = c:/MinGW64/bin/gcc.exe
 #Update based on your Java installation location		
- 		CIFLAGS = -Wl,--kill-at -I"C:\Program Files\Java\jdk1.7.0_11\include"  -I"C:\Program Files\Java\jdk1.7.0_11\include\win32"
-		JC = C:\Program Files\Java\jdk1.7.0_11\bin\javac.exe
-		JAR = C:\Program Files\Java\jdk1.7.0_11\bin\jar.exe
-		JAVA = C:\Program Files\Java\jdk1.7.0_11\bin\java.exe
+ 		CIFLAGS = -Wl,--kill-at -I"C:\Program Files\Java\jdk1.7.0_71\include"  -I"C:\Program Files\Java\jdk1.7.0_71\include\win32"
+		JC = C:\Program Files\Java\jdk1.7.0_71\bin\javac.exe
+		JAR = C:\Program Files\Java\jdk1.7.0_71\bin\jar.exe
+		JAVA = C:\Program Files\Java\jdk1.7.0_71\bin\java.exe
 		
 		CP_DLL = ..\..\Win64\ssc.dll ssc.dll
 		SSCLIB = ssc.dll
@@ -21,10 +21,10 @@ ifdef SystemRoot
 		BITS = 32
 		CCCOMP = c:/MinGW/bin/gcc.exe
 #Update based on your Java installation location		
-		CIFLAGS = -Wl,--kill-at -I"C:\Program Files (x86)\Java\jdk1.7.0_11\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_11\include\win32"
-		JC = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\javac.exe
-		JAR = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\jar.exe
-		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_11\bin\java.exe
+		CIFLAGS = -Wl,--kill-at -I"C:\Program Files (x86)\Java\jdk1.7.0_71\include"  -I"C:\Program Files (x86)\Java\jdk1.7.0_71\include\win32"
+		JC = C:\Program Files (x86)\Java\jdk1.7.0_71\bin\javac.exe
+		JAR = C:\Program Files (x86)\Java\jdk1.7.0_71\bin\jar.exe
+		JAVA = C:\Program Files (x86)\Java\jdk1.7.0_71\bin\java.exe
 
 		CP_DLL = ..\..\Win32\ssc.dll ssc.dll
 		SSCLIB = ssc.dll
@@ -67,7 +67,7 @@ else
     	endif
     else 
         ifneq (,$findstring(Linux, $(PF)))
-	    CIFLAGS = -I/usr/java/jdk1.7.0_11/include -I/usr/java/jdk1.7.0_11/include/linux -fPIC 
+	    CIFLAGS = -I/usr/java/jdk1.7.0_71/include -I/usr/java/jdk1.7.0_71/include/linux -fPIC 
 	    CP_DLL = ../../linux64/ssc.so ./ssc.so
 	    SSCLIB = ./ssc.so
 	    RM_ALL = *.so *.jnilib *.class ./SSC/*.class ./SSC/*.dylib *.jar *.h  *.tm2
