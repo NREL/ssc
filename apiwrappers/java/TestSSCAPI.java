@@ -54,7 +54,7 @@ public class TestSSCAPI {
     public static void TestMatrices()
     {
         SSC.Data sscData = new SSC.Data();
-        float[][] matrix = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
+        float[][] matrix = { { 1, 2, 3 }, new float[]{ 4, 5, 6 }, new float[]{ 7, 8, 9f } };
         sscData.setMatrix("TestMatrix", matrix);
 
         float[][] retMatrix = sscData.getMatrix("TestMatrix");
@@ -78,7 +78,7 @@ public class TestSSCAPI {
 	    data.setNumber("dc_ac_ratio", 1.1f);
 	    data.setNumber("inv_eff", 96f );
 	    data.setNumber("losses", 14.0757f );
-	    data.setNumber("array_type", 0f );
+	    data.setNumber("array_type", 0 );
 	    data.setNumber("tilt", 20f );
 	    data.setNumber("azimuth", 180f );
 	    data.setNumber("gcr", 0.4f );
@@ -210,6 +210,9 @@ public class TestSSCAPI {
         }
         System.out.println("Module list end");
     }
+
+
+
     public static void main(String[] args) throws Exception
     {
         // address dll path issues (if necessary)
@@ -222,11 +225,5 @@ public class TestSSCAPI {
         TestMatrices();
         PVWatts();
         PVWattsFunc();
-// TODO for 2014.11.24 release
-// pvsamv1, belpe, utilityrate3, cashloan
-// 		PVSamV1();
-//		Belpe();
-//		UtilityRate3();
-//		CashLoan();
     }
 }

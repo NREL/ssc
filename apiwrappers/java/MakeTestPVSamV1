@@ -105,7 +105,6 @@ JFLAGS = -g
 
 CLASSES = \
 	TestPVSamV1.java \
-	TestSSCAPI.java \
 	SSC/SSCAPIJNI.java \
 	SSC/API.java \
 	SSC/Data.java \
@@ -116,9 +115,7 @@ CLASSES = \
 
 
 run: all
-	$(JAVA) $(LIBPATH) -jar TestSSCAPI.jar
 	$(JAVA) $(LIBPATH) -jar TestPVSamV1.jar
-#	$(JAVA) $(LIBPATH) -jar TestBelpe.jar
 
 all: jar
 
@@ -129,9 +126,7 @@ java_classes: $(CLASSES:.java=.class)
 
 
 jar: java_classes dll
-	$(JAR) cvfm TestSSCAPI.jar TestSSCAPI.Manifest.txt TestSSCAPI.class SSC/*.class		
 	$(JAR) cvfm TestPVSamV1.jar TestPVSamV1.Manifest.txt TestPVSamV1.class SSC/*.class		
-#	$(JAR) cvfm TestPVSamV1.jar TestBelpe.Manifest.txt TestBelpe.class SSC/*.class		
 
 java_clean:
 	$(RM) $(RM_JAVA)
