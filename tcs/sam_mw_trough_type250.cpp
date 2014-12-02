@@ -1409,16 +1409,6 @@ public:
 
 acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 
-
-		//9-27-12, TWN: This model uses relative defocus. Changed controller to provide absolute defocus, so now convert to relative here
-		defocus = defocus_new / defocus_old;
-		defocus_old = defocus_new;
-
-		//First calculate the cold header temperature, which will serve as the loop inlet temperature
-		rho_hdr_cold = htfProps.dens(T_sys_c_last, 1.);
-		rho_hdr_hot = htfProps.dens(T_sys_h_last, 1.);
-		c_hdr_cold_last = htfProps.Cp(T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
-
 		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 		{
 			//calculate the hour of the day
@@ -1593,6 +1583,13 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 				RowShadow_ave = RowShadow_ave + RowShadow[CT]*L_actSCA[CT]/L_tot;
 				EndLoss_ave = EndLoss_ave + EndLoss(CT,i)*L_actSCA[CT]/L_tot;
 			}
+
+			SCAs_def = 1.;
+			if( I_b > 25. )
+				m_dot_htfX = max(min(10. / 950.*I_b, m_dot_htfmax), m_dot_htfmin);   //*defocus[kg/s] guess Heat transfer fluid mass flow rate through one loop
+			else
+				m_dot_htfX = m_dot_htfmin;
+
 		} 
 		else  //mjw 3.5.11
 		{	
@@ -1605,24 +1602,14 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 		q_SCA_tot = 0.;
 		for(int i=0; i<nSCA; i++){ q_SCA_tot += q_SCA[i]; } //W/m
 
-		//mode for solving the field 
-		//1=constrain temperature
-		//2=defocusing array
-		//3=constrain mass flow above min
-		SolveMode = 1;
-		//MJW 12.14.2010 Only calculate the estimate on the first call of the timestep
-		if(ncall==0) 
-		{
-			SCAs_def = 1.;
-			if(I_b > 25.)
-				m_dot_htfX = max(min(10./950.*I_b,m_dot_htfmax),m_dot_htfmin);   //*defocus[kg/s] guess Heat transfer fluid mass flow rate through one loop
-			else
-				m_dot_htfX = m_dot_htfmin;
-			
-		} 
-		else
-			m_dot_htfX = max(min(m_dot_htfmax, m_dot_htfX),m_dot_htfmin);
-		
+		//9-27-12, TWN: This model uses relative defocus. Changed controller to provide absolute defocus, so now convert to relative here
+		defocus = defocus_new / defocus_old;
+		defocus_old = defocus_new;
+
+		//First calculate the cold header temperature, which will serve as the loop inlet temperature
+		rho_hdr_cold = htfProps.dens(T_sys_c_last, 1.);
+		rho_hdr_hot = htfProps.dens(T_sys_h_last, 1.);
+		c_hdr_cold_last = htfProps.Cp(T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 
 		//TWN 6/14/11  if defous is < 1 { calculate defocus from previous call's q_abs and { come back to temperature loop.
 		if(defocus<1.) 
@@ -1639,7 +1626,15 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		//if(T_loop_in == T_loop_out) T_loop_in = T_loop_out - 1. //Don't allow equal temperatures
 		//T_htf_in(1) = T_loop_in
 
+		//mode for solving the field 
+		//1=constrain temperature
+		//2=defocusing array
+		//3=constrain mass flow above min
+		SolveMode = 1;
+
 		qq = 0;                  //Set iteration counter
+
+		m_dot_htfX = max(min(m_dot_htfmax, m_dot_htfX), m_dot_htfmin);
 
 		//Set ends of iteration bracket.  Make bracket greater than bracket defined on system limits so a value less than system limit can be tried earlier in iteration
 		m_dot_lower = 0.7*m_dot_htfmin;
