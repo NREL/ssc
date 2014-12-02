@@ -1585,10 +1585,18 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 			}
 
 			SCAs_def = 1.;
-			if( I_b > 25. )
-				m_dot_htfX = max(min(10. / 950.*I_b, m_dot_htfmax), m_dot_htfmin);   //*defocus[kg/s] guess Heat transfer fluid mass flow rate through one loop
+
+			if( accept_mode )
+			{
+				m_dot_htfX = m_dot_in / float(nLoops);
+			}
 			else
-				m_dot_htfX = m_dot_htfmin;
+			{
+				if( I_b > 25. )
+					m_dot_htfX = max(min(10. / 950.*I_b, m_dot_htfmax), m_dot_htfmin);   //*defocus[kg/s] guess Heat transfer fluid mass flow rate through one loop
+				else
+					m_dot_htfX = m_dot_htfmin;
+			}
 
 		} 
 		else  //mjw 3.5.11
@@ -1679,20 +1687,12 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			EqOpteff = 0.0;
 			c_htf.fill(0.);
 			rho_htf.fill(0.);
-   
-			if(accept_mode)  //mjw 1.3.2011 accommodate acceptance testing
-			{	
-				m_dot_htf = m_dot_in/float(nLoops);
-				m_dot_htfX = m_dot_htf;
-			} 
-			else 
-			{
-				m_dot_htf = m_dot_htfX;
-			}
+
+			m_dot_htf = m_dot_htfX;
     
 			m_dot_htf_tot = m_dot_htf*float(nLoops);
     
-			if(!accept_mode || ( (accept_loc!=2) || (time==start_time) )) 
+			if(accept_loc == 1) 
 			{
 				T_sys_c  = (T_sys_c_last - T_cold_in_1)*exp(-(m_dot_htf*float(nLoops))/(v_cold*rho_hdr_cold+mc_bal_cold/c_hdr_cold_last)*dt) + T_cold_in_1;
 				c_hdr_cold = htfProps.Cp(T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
