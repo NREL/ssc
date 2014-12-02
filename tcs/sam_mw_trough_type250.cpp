@@ -1717,9 +1717,9 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				T_loop_in   = T_sys_c - Pipe_hl_cold/(m_dot_htf*float(nLoops)*c_hdr_cold);
 				T_htf_in[0] = T_loop_in;
 			} 
-			else 
+			else		// accept_loc == 2, only modeling loop
 			{
-				T_htf_in[0] = T_loop_in;
+				T_htf_in[0] = T_cold_in_1;
 			}    
     
 			//---------------------
@@ -1828,35 +1828,42 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			}
 
-			//Set the loop outlet temperature
-			T_loop_outX = T_htf_out[nSCA-1];
-
-			//Calculation for heat losses from hot header and runner pipe
-			//Pipe_hl_hot = 0.0 //initialize
-			Runner_hl_hot = 0.0;    //initialize
-			Header_hl_hot = 0.0;   //initialize
-			for(int i=0; i<nhdrsec; i++)
+			if( accept_loc == 1 )
 			{
-				//Pipe_hl_hot = Pipe_hl_hot + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_loop_outX - T_db)
-				Header_hl_hot = Header_hl_hot + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_loop_outX - T_db);
-			}
+				//Set the loop outlet temperature
+				T_loop_outX = T_htf_out[nSCA - 1];
 
-			//Add the runner length
-			for(int i=0; i<nrunsec; i++)
+				//Calculation for heat losses from hot header and runner pipe
+				//Pipe_hl_hot = 0.0 //initialize
+				Runner_hl_hot = 0.0;    //initialize
+				Header_hl_hot = 0.0;   //initialize
+				for( int i = 0; i < nhdrsec; i++ )
+				{
+					//Pipe_hl_hot = Pipe_hl_hot + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_loop_outX - T_db)
+					Header_hl_hot = Header_hl_hot + Row_Distance*D_hdr[i] * pi*Pipe_hl_coef*(T_loop_outX - T_db);
+				}
+
+				//Add the runner length
+				for( int i = 0; i < nrunsec; i++ )
+				{
+					//Pipe_hl_hot = Pipe_hl_hot + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_loop_outX - T_db)  //Wt
+					Runner_hl_hot = Runner_hl_hot + L_runner[i] * pi*D_runner[i] * Pipe_hl_coef*(T_loop_outX - T_db);  //Wt
+				}
+				Pipe_hl_hot = Header_hl_hot + Runner_hl_hot;
+
+				c_hdr_hot = htfProps.Cp(T_loop_outX)* 1000.;
+
+				//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
+				T_sys_h = T_loop_outX - Pipe_hl_hot / (m_dot_htf_tot*c_hdr_hot);
+
+				//Calculate the system temperature of the hot portion of the collector field. 
+				//This will serve as the fluid outlet temperature
+				T_sys_h = (T_sys_h_last - T_sys_h)*exp(-m_dot_htf_tot / (v_hot*rho_hdr_hot + mc_bal_hot / c_hdr_hot)*dt) + T_sys_h;
+			}
+			else
 			{
-				//Pipe_hl_hot = Pipe_hl_hot + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_loop_outX - T_db)  //Wt
-				Runner_hl_hot = Runner_hl_hot + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_loop_outX - T_db);  //Wt
+				T_sys_h = T_loop_outX;
 			}
-			Pipe_hl_hot = Header_hl_hot + Runner_hl_hot;
-
-			c_hdr_hot = htfProps.Cp(T_loop_outX)* 1000.;
-
-			//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-			T_sys_h = T_loop_outX - Pipe_hl_hot/(m_dot_htf_tot*c_hdr_hot);
-
-			//Calculate the system temperature of the hot portion of the collector field. 
-			//This will serve as the fluid outlet temperature
-			T_sys_h = (T_sys_h_last - T_sys_h)*exp(-m_dot_htf_tot/(v_hot*rho_hdr_hot+mc_bal_hot/c_hdr_hot)*dt) + T_sys_h;
 
 			if(accept_mode) return 0;    //mjw 1.4.2011
     
