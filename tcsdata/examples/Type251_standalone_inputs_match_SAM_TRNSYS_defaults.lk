@@ -83,7 +83,6 @@ set_value(input_gen, "P_amb", trough_data.P_amb);
 set_value(input_gen, "T_dp", trough_data.T_dp);
 set_value(input_gen, "T_cold_in", trough_data.T_cold_in);
 set_value(input_gen, "m_dot_in", trough_data.T_cold_in);		// Need to fill this input array, but not required in this mode
-set_value(input_gen, "defocus", trough_data.defocus);
 
 //Add the solar field collector unit
 solarfield = add_unit("sam_mw_trough_type250");
@@ -217,7 +216,7 @@ connect(input_gen, "O_P_amb", solarfield, "P_amb");
 connect(input_gen, "O_T_dp", solarfield, "T_dp");
 connect(input_gen, "O_T_cold_in", solarfield, "T_cold_in");
 connect(input_gen, "O_m_dot_in", solarfield, "m_dot_in");
-connect(input_gen, "O_defocus", solarfield, "defocus");
+
 set_value(solarfield, "SolarAz", 0.0);			// Not used as input in 'this' mode
 set_value(solarfield, "latitude", 32.11667);
 set_value(solarfield, "longitude", 110.9333);
