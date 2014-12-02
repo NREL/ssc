@@ -578,6 +578,8 @@ private:
 
 	double m_htf_prop_min;
 
+	bool ss_init_complete;
+
 public:
 
 	sam_mw_trough_type250( tcscontext *cxt, tcstypeinfo *ti ) 
@@ -1335,6 +1337,11 @@ public:
 
 		is_fieldgeom_init = true;	//The field geometry has been initialized. Make note.
 
+		if( accept_init )
+			ss_init_complete = false;
+		else
+			ss_init_complete = true;
+
 		return true;
 	}
 
@@ -1614,11 +1621,6 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 		defocus = defocus_new / defocus_old;
 		defocus_old = defocus_new;
 
-		//First calculate the cold header temperature, which will serve as the loop inlet temperature
-		rho_hdr_cold = htfProps.dens(T_sys_c_last, 1.);
-		rho_hdr_hot = htfProps.dens(T_sys_h_last, 1.);
-		c_hdr_cold_last = htfProps.Cp(T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
-
 		//TWN 6/14/11  if defous is < 1 { calculate defocus from previous call's q_abs and { come back to temperature loop.
 		if(defocus<1.) 
 		{
@@ -1628,6 +1630,11 @@ acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
 
 overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		
+		//First calculate the cold header temperature, which will serve as the loop inlet temperature
+		rho_hdr_cold = htfProps.dens(T_sys_c_last, 1.);
+		rho_hdr_hot = htfProps.dens(T_sys_h_last, 1.);
+		c_hdr_cold_last = htfProps.Cp(T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
+
 		dfcount ++;   //The defocus iteration counter
 
 		// ******* Initial values *******
@@ -1865,7 +1872,42 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				T_sys_h = T_loop_outX;
 			}
 
-			if(accept_mode) return 0;    //mjw 1.4.2011
+			if( !ss_init_complete && accept_init )
+			{
+				// Check if solution has reached steady state
+				double ss_diff = 0.0;
+				ss_diff += abs(T_sys_c - T_sys_c_last) + abs(T_sys_h_last - T_sys_h);
+				for( int i = 0; i < nSCA; i++ )
+				{
+					ss_diff += abs(T_htf_in0[i] - T_htf_in[i]) + abs(T_htf_out0[i] - T_htf_out[i]) + abs(T_htf_ave0[i] - (T_htf_in[i] + T_htf_out[i]) / 2.0);
+				}
+
+				if( ss_diff / 300.0 > 0.001 )	// If not in steady state, updated previous temperatures and re-run energy balances
+				{			// Should be similar to Converged call
+					
+					T_sys_c_last = T_sys_c;		// Get T_sys from the last timestep
+					T_sys_h_last = T_sys_h;
+					
+					for( int i = 0; i<nSCA; i++ )
+					{
+						T_htf_in0[i] = T_htf_in[i];
+						T_htf_out0[i] = T_htf_out[i];
+						T_htf_ave0[i] = (T_htf_in0[i] + T_htf_out0[i]) / 2.0;
+					}
+
+					goto overtemp_iter_flag;
+				}
+				else
+				{
+					ss_init_complete = true;
+				}
+
+			}
+
+			if( accept_mode )
+			{
+				goto calc_final_metrics_goto;
+			}
     
 freeze_prot_flag: //7   continue    
 			    
@@ -2169,6 +2211,7 @@ post_convergence_flag: //11 continue
 		////Reset the loop outlet temperature if it's different
 		//T_loop_outX = T_htf_out(nSCA)
 
+calc_final_metrics_goto:
 
 		// ******************************************************************************************************************************
 		// Calculate the pressure drop across the piping system
@@ -2374,25 +2417,25 @@ post_convergence_flag: //11 continue
 
 		//------mjw 1.5.2011 For initialization in acceptance testing mode, check to see if the solar field is in equilibrium. 
 		//if not (and if it's the first call), go back and keep warming up.
-		if(accept_init)	//cc-> switching the order of accept_init test. More efficient this way and no change in functionality
-		{	
-			if((time == start_time) && (ncall==0)) 
-			{
-				if(E_bal_startup > 0.0) 
-				{
-					// Set the system state values for the next calculation as if we were proceeding to the next timestep
-					T_sys_c_last = T_sys_c;       //Set T_sys_c_last
-					T_sys_h_last = T_sys_h;       //Set T_sys_h_last
-					for(int i=0; i<nSCA; i++)
-					{
-						T_htf_in0[i] = T_htf_in[i];  //Set T_htf_in0
-						T_htf_out0[i] = T_htf_out[i];  //Set T_htf_out0
-					}
-
-					goto acc_test_init;  //Loop back
-				}
-			}
-		}
+		//if(accept_init)	//cc-> switching the order of accept_init test. More efficient this way and no change in functionality
+		//{	
+		//	if((time == start_time) && (ncall==0)) 
+		//	{
+		//		if(E_bal_startup > 0.0) 
+		//		{
+		//			// Set the system state values for the next calculation as if we were proceeding to the next timestep
+		//			T_sys_c_last = T_sys_c;       //Set T_sys_c_last
+		//			T_sys_h_last = T_sys_h;       //Set T_sys_h_last
+		//			for(int i=0; i<nSCA; i++)
+		//			{
+		//				T_htf_in0[i] = T_htf_in[i];  //Set T_htf_in0
+		//				T_htf_out0[i] = T_htf_out[i];  //Set T_htf_out0
+		//			}
+		//
+		//			goto acc_test_init;  //Loop back
+		//		}
+		//	}
+		//}
 		//----------------------------
 
 		////----set iteration-dependent storage variables
