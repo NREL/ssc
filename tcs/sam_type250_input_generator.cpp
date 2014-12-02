@@ -11,7 +11,6 @@ enum {
 	P_T_DP,
 	P_T_COLD_IN,
 	P_M_DOT_IN,
-	P_DEFOCUS,
 
 	O_I_B,
 	O_T_DB,
@@ -20,7 +19,6 @@ enum {
 	O_T_DP,
 	O_T_COLD_IN,
 	O_M_DOT_IN,
-	O_DEFOCUS,
 
 	N_MAX
 };
@@ -34,7 +32,6 @@ tcsvarinfo sam_type250_input_generator_variables[] = {
 	{ TCS_PARAM, TCS_ARRAY,  P_T_DP,     "T_dp",      "Dew point temperature",                      "C",       "",  "",  "" },
 	{ TCS_PARAM, TCS_ARRAY,  P_T_COLD_IN,"T_cold_in", "HTF inlet temperature",                      "C",       "",  "",  "" },
 	{ TCS_PARAM, TCS_ARRAY,  P_M_DOT_IN, "m_dot_in",  "HTF mass flow rate at inlet",                "kg/hr",   "",  "",  "" },
-	{ TCS_PARAM, TCS_ARRAY,  P_DEFOCUS,  "defocus",   "Mirror defocus fraction",                    "",        "",  "",  "" },
 
 	{ TCS_OUTPUT, TCS_NUMBER,  O_I_B,      "O_I_b",       "Direct normal incident solar irradiation",   "W/m^2",   "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER,  O_T_DB,     "O_T_db",      "Dry bulb temperature",                       "C",       "",  "",  "" },
@@ -43,7 +40,6 @@ tcsvarinfo sam_type250_input_generator_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER,  O_T_DP,     "O_T_dp",      "Dew point temperature",                      "C",       "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER,  O_T_COLD_IN,"O_T_cold_in", "HTF inlet temperature",                      "C",       "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER,  O_M_DOT_IN, "O_m_dot_in",  "HTF mass flow rate at inlet",                "kg/hr",   "",  "",  "" },
-	{ TCS_OUTPUT, TCS_NUMBER,  O_DEFOCUS,  "O_defocus",   "Mirror defocus fraction",                    "",        "",  "",  "" },
 
 	{ TCS_INVALID, TCS_INVALID, N_MAX, 0, 0, 0, 0, 0, 0 }
 };
@@ -78,10 +74,6 @@ private:
 	// HTF inlet mass flow rate
 	double * m_dot_in;
 	int nval_m_dot_in;
-
-	// Defocus
-	double * defocus;
-	int nval_defocus;
 
 	// Index counter
 	int nval_current;
@@ -119,10 +111,6 @@ public:
 		m_dot_in = NULL;
 		nval_m_dot_in = -1;
 
-		// Defocus
-		defocus = NULL;
-		nval_defocus = -1;
-
 		nval_current = 1;
 	}
 
@@ -145,9 +133,7 @@ public:
 
 		m_dot_in = value(P_M_DOT_IN, &nval_m_dot_in);		//[kg/hr] HTF inlet mass flow rate
 
-		defocus = value(P_DEFOCUS, &nval_defocus);			//[-] Defocus
-
-		if( nval_I_b != nval_T_db || nval_T_db != nval_V_wind || nval_V_wind != nval_P_amb || nval_P_amb != nval_T_dp || nval_T_dp != nval_T_cold_in || nval_T_cold_in != nval_m_dot_in || nval_m_dot_in != nval_defocus )
+		if( nval_I_b != nval_T_db || nval_T_db != nval_V_wind || nval_V_wind != nval_P_amb || nval_P_amb != nval_T_dp || nval_T_dp != nval_T_cold_in || nval_T_cold_in != nval_m_dot_in )
 		{
 			message(TCS_ERROR, "All parameters arrays must be the same length");
 			return -1;
@@ -177,7 +163,6 @@ public:
 		value( O_T_DP, T_dp[nval_current-1] );
 		value( O_T_COLD_IN, T_cold_in[nval_current-1] );
 		value( O_M_DOT_IN, m_dot_in[nval_current-1] );
-		value( O_DEFOCUS, defocus[nval_current-1] );
 
 		return 0;
 	}
