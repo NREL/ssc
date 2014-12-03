@@ -13,10 +13,10 @@ copy "apiwrappers\matlab\+SSC\@Module\Module.m" "sdk-release\languages\matlab\+S
 copy apiwrappers\python\sscapi.py sdk-release\languages\python
 copy apiwrappers\python\ssc.py sdk-release\languages\python
 copy apiwrappers\python\testssc.py sdk-release\languages\python
-copy apiwrappers\python\sam_solar_time_ppa.py sdk-release\languages\python
 copy apiwrappers\python\pvsamv1.py sdk-release\languages\python
-copy apiwrappers\python\pvres.py sdk-release\languages\python
-copy apiwrappers\python\pvcom.py sdk-release\languages\python
+copy apiwrappers\python\belpe.py sdk-release\languages\python
+copy apiwrappers\python\utilityrate3.py sdk-release\languages\python
+copy apiwrappers\python\cashloan.py sdk-release\languages\python
 
 copy apiwrappers\php\ExtensionWin32Howto.pdf sdk-release\languages\php
 copy apiwrappers\php\ssimphp.cpp sdk-release\languages\php
@@ -34,8 +34,21 @@ copy apiwrappers\csharp\Properties\AssemblyInfo.cs sdk-release\languages\csharp\
 copy apiwrappers\csharp\Properties\Resources.Designer.cs sdk-release\languages\csharp\Properties
 copy apiwrappers\csharp\Properties\Resources.resx sdk-release\languages\csharp\Properties
 
-copy apiwrappers\java\Makefile sdk-release\languages\java
-copy apiwrappers\java\Manifest.txt sdk-release\languages\java
+copy apiwrappers\java\TestBelpe.data sdk-release\languages\java
+copy apiwrappers\java\TestBelpe.java sdk-release\languages\java
+copy apiwrappers\java\TestBelpe.make sdk-release\languages\java
+copy apiwrappers\java\TestBelpe.Manifest.txt sdk-release\languages\java
+copy apiwrappers\java\TestCashLoan.data sdk-release\languages\java
+copy apiwrappers\java\TestCashLoan.java sdk-release\languages\java
+copy apiwrappers\java\TestCashLoan.make sdk-release\languages\java
+copy apiwrappers\java\TestCashLoan.Manifest.txt sdk-release\languages\java
+copy apiwrappers\java\TestPVSamV1.java sdk-release\languages\java
+copy apiwrappers\java\TestPVSamV1.make sdk-release\languages\java
+copy apiwrappers\java\TestPVSamV1.Manifest.txt sdk-release\languages\java
+copy apiwrappers\java\TestUtilityRate3.data sdk-release\languages\java
+copy apiwrappers\java\TestUtilityRate3.java sdk-release\languages\java
+copy apiwrappers\java\TestUtilityRate3.make sdk-release\languages\java
+copy apiwrappers\java\TestUtilityRate3.Manifest.txt sdk-release\languages\java
 copy apiwrappers\java\ReadMe.txt sdk-release\languages\java
 copy apiwrappers\java\sscapi_wrap.c sdk-release\languages\java
 copy apiwrappers\java\TestSSCAPI.java sdk-release\languages\java
@@ -54,6 +67,8 @@ copy examples\pvwatts1ts_ex.c sdk-release\examples
 copy examples\pvwatts1ts_test.lk sdk-release\examples
 copy examples\pvwattsv5run.c sdk-release\examples
 copy examples\ver.c sdk-release\examples
+copy "examples\USA AZ Phoenix (TMY2).csv" sdk-release\examples
+
 
 copy ..\lk\docs\lk_guide.pdf sdk-release\
 copy ssc\sscapi.h sdk-release\
