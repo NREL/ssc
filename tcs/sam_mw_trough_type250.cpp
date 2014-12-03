@@ -2371,26 +2371,12 @@ calc_final_metrics_goto:
 		//heating up the solar field
 		E_avail_tot = 0.;
 		E_loop_accum = 0.;
+		E_int_sum = 0.;
 		for(int i=0; i<nSCA; i++)
 		{
 			E_avail_tot += E_avail[i];  //[J]
 			E_loop_accum += E_accum[i]; //[J]
-		}
-		
-		if( accept_loc == 1 )
-		{
-			E_avail_tot *= float(nLoops) - E_fp_tot;
-			E_loop_accum *= float(nLoops);
-		}
-		else
-		{
-			E_avail_tot -= E_fp_tot;
-		}
-
-		E_int_sum = 0.;
-		for( int i = 0; i < nSCA; i++ )
-		{
-			E_int_sum += E_int_loop[i];
+			E_int_sum += E_int_loop[i]; //[J]
 		}
 
 		E_field = E_int_sum;
@@ -2401,6 +2387,10 @@ calc_final_metrics_goto:
 
 		if( accept_loc == 1 )		// Consider entire internal energy of entire field, not just the loop
 		{
+			E_avail_tot *= float(nLoops);
+			E_loop_accum *= float(nLoops);
+			E_field *= float(nLoops);
+
 			//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS)
 			//The mass of HTF in the system will be calculated based on the design loop inlet temperature
 			//v_tot = v_hot + v_cold	//cc--> not used
@@ -2416,8 +2406,7 @@ calc_final_metrics_goto:
 				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last);   //cold half
 			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
 
-			//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]
-			E_field *= float(nLoops);
+			//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]			
 			E_field += ((v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - 298.150) +       //hot header and piping
 				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150));   //cold header and piping
 
