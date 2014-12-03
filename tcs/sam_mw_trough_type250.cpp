@@ -1840,11 +1840,11 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			}
 
-			if( accept_loc == 1 )
-			{
-				//Set the loop outlet temperature
-				T_loop_outX = T_htf_out[nSCA - 1];
+			//Set the loop outlet temperature
+			T_loop_outX = T_htf_out[nSCA - 1];
 
+			if( accept_loc == 1 )
+			{								
 				//Calculation for heat losses from hot header and runner pipe
 				//Pipe_hl_hot = 0.0 //initialize
 				Runner_hl_hot = 0.0;    //initialize
@@ -2376,12 +2376,16 @@ calc_final_metrics_goto:
 			E_avail_tot += E_avail[i];  //[J]
 			E_loop_accum += E_accum[i]; //[J]
 		}
-		E_avail_tot *= float(nLoops) - E_fp_tot;
-		E_loop_accum *= float(nLoops);
-
-		// Average properties
-		rho_ave = htfProps.dens((T_loop_outX + T_sys_c) / 2.0, 0.0); //kg/m3
-		c_htf_ave = htfProps.Cp((T_sys_h + T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
+		
+		if( accept_loc == 1 )
+		{
+			E_avail_tot *= float(nLoops) - E_fp_tot;
+			E_loop_accum *= float(nLoops);
+		}
+		else
+		{
+			E_avail_tot -= E_fp_tot;
+		}
 
 		E_int_sum = 0.;
 		for( int i = 0; i < nSCA; i++ )
@@ -2389,7 +2393,11 @@ calc_final_metrics_goto:
 			E_int_sum += E_int_loop[i];
 		}
 
-		E_field = E_int_sum*float(nLoops);
+		E_field = E_int_sum;
+
+		// Average properties
+		rho_ave = htfProps.dens((T_loop_outX + T_sys_c) / 2.0, 0.0); //kg/m3
+		c_htf_ave = htfProps.Cp((T_sys_h + T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
 
 		if( accept_loc == 1 )		// Consider entire internal energy of entire field, not just the loop
 		{
@@ -2409,7 +2417,7 @@ calc_final_metrics_goto:
 			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
 
 			//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]
-
+			E_field *= float(nLoops);
 			E_field += ((v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - 298.150) +       //hot header and piping
 				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150));   //cold header and piping
 
