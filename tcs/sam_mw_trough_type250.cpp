@@ -2364,58 +2364,73 @@ calc_final_metrics_goto:
 		}
 		E_avail_tot *= float(nLoops) - E_fp_tot;
 		E_loop_accum *= float(nLoops);
-		//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS)
-		//The mass of HTF in the system will be calculated based on the design loop inlet temperature
-		//v_tot = v_hot + v_cold	//cc--> not used
-		c_hdr_cold = htfProps.Cp(T_loop_in)* 1000.;
-		c_hdr_hot = htfProps.Cp(T_loop_outX)* 1000.;
 
-		//Half of the plant thermal mass must be heated up to the startup temperature (think hot header, hot half of heat
-		//exchangers) and the other half must be heated up to the design loop inlet temperature
-		//MJW 12.8.2010 modified startup temp calc to be based on previous system temperature
-		//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
-		//.. This may cause a minor underestimation of annual energy output (<<.5%).
-		E_hdr_accum = (v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - T_sys_h_last) + //Hot half
-					  (v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last);   //cold half
-		E_bal_startup = max(E_hdr_accum,0.0); //cold half
+		if( accept_loc == 1 )		// Consider entire internal energy of entire field, not just the loop
+		{
+			//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS)
+			//The mass of HTF in the system will be calculated based on the design loop inlet temperature
+			//v_tot = v_hot + v_cold	//cc--> not used
+			c_hdr_cold = htfProps.Cp(T_loop_in)* 1000.;
+			c_hdr_hot = htfProps.Cp(T_loop_outX)* 1000.;
 
-		//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]
-		rho_ave = htfProps.dens((T_loop_outX+T_sys_c)/2.0, 0.0); //kg/m3
-		c_htf_ave = htfProps.Cp( (T_sys_h + T_cold_in_1)/2.0)*1000.0;  //MJW 12.7.2010
-		
-		E_int_sum = 0.;
-		for(int i=0; i<nSCA; i++){E_int_sum += E_int_loop[i]; }
-		
-		E_field = ((v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - 298.150) +       //hot header and piping
-				   (v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150) +   //cold header and piping
-				   E_int_sum*float(nLoops));  //Field loops
+			//Half of the plant thermal mass must be heated up to the startup temperature (think hot header, hot half of heat
+			//exchangers) and the other half must be heated up to the design loop inlet temperature
+			//MJW 12.8.2010 modified startup temp calc to be based on previous system temperature
+			//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
+			//.. This may cause a minor underestimation of annual energy output (<<.5%).
+			E_hdr_accum = (v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - T_sys_h_last) + //Hot half
+				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last);   //cold half
+			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
 
-		//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
-		Pipe_hl_hot = N_run_mult*Runner_hl_hot + float(nfsec)*Header_hl_hot;
-		Pipe_hl_cold = N_run_mult*Runner_hl_cold + float(nfsec)*Header_hl_cold;
+			//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]
+			rho_ave = htfProps.dens((T_loop_outX + T_sys_c) / 2.0, 0.0); //kg/m3
+			c_htf_ave = htfProps.Cp((T_sys_h + T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
 
-		Pipe_hl = Pipe_hl_hot + Pipe_hl_cold;
+			E_int_sum = 0.;
+			for( int i = 0; i < nSCA; i++ ){
+				E_int_sum += E_int_loop[i];
+			}
 
-		E_avail_tot = max(E_avail_tot - Pipe_hl*dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+			E_field = ((v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - 298.150) +       //hot header and piping
+				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150) +   //cold header and piping
+				E_int_sum*float(nLoops));  //Field loops
 
-		E_avail_tot = max(E_avail_tot - E_bal_startup, 0.0);  //[J]
+			//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
+			Pipe_hl_hot = N_run_mult*Runner_hl_hot + float(nfsec)*Header_hl_hot;
+			Pipe_hl_cold = N_run_mult*Runner_hl_cold + float(nfsec)*Header_hl_cold;
+
+			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold;
+
+			E_avail_tot = max(E_avail_tot - Pipe_hl*dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+
+			E_avail_tot = max(E_avail_tot - E_bal_startup, 0.0);  //[J]
+		}
 
 		// ******************************************************************
 		// Calculate final output values
 		// ******************************************************************
 		DP_tot = DP_tot * 1.e-5; //[bar]
 		
-		//Calculate the thermal power produced by the field
-		if(T_sys_h >= T_startup)   //MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+		if( !is_using_input_gen )
 		{
-			q_avail = E_avail_tot/(dt)*1.e-6;  //[MW]
+			//Calculate the thermal power produced by the field
+			if( T_sys_h >= T_startup )   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+			{
+				q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
+				//Calculate the available mass flow of HTF
+				m_dot_avail = max(q_avail*1.e6 / (c_htf_ave*(T_sys_h - T_cold_in_1)), 0.0); //[kg/s]     
+			}
+			else
+			{
+				q_avail = 0.0;
+				m_dot_avail = 0.0;
+			}
+		}
+		else
+		{
+			q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
 			//Calculate the available mass flow of HTF
-			m_dot_avail = max(q_avail*1.e6/(c_htf_ave*(T_sys_h - T_cold_in_1)),0.0); //[kg/s]     
-		} 
-		else 
-		{
-			q_avail = 0.0;
-			m_dot_avail = 0.0;
+			m_dot_avail = max(q_avail*1.e6 / (c_htf_ave*(T_sys_h - T_cold_in_1)), 0.0); //[kg/s]     
 		}
 
 		//Dumped energy
@@ -2475,41 +2490,41 @@ set_outputs_and_return:
 		//------------------------------------------------------------------
 
 		//Set outputs
-		value(O_T_SYS_H, T_sys_h_out);		//[C] Solar field HTF outlet temperature
+		value(O_T_SYS_H, T_sys_h_out);				//[C] Solar field HTF outlet temperature
 		value(O_M_DOT_AVAIL, m_dot_avail_out);		//[kg/hr] HTF mass flow rate from the field
-		value(O_Q_AVAIL, q_avail);		//[MWt] Thermal power produced by the field
-		value(O_DP_TOT, DP_tot);		//[bar] Total HTF pressure drop
+		value(O_Q_AVAIL, q_avail);					//[MWt] Thermal power produced by the field
+		value(O_DP_TOT, DP_tot);					//[bar] Total HTF pressure drop
 		value(O_W_DOT_PUMP, W_dot_pump_out);		//[MWe] Required solar field pumping power
-		value(O_E_FP_TOT, E_fp_tot_out);		//[J] Freeze protection energy
-		value(O_QQ, qq);		//[none] Number of iterations required to solve
-		value(O_T_SYS_C, T_sys_c_out);		//[C] Collector inlet temperature
-		value(O_EQOPTEFF, EqOpteff_out);		//[none] Collector equivalent optical efficiency
-		value(O_SCAS_DEF, SCAs_def);		//[none] The fraction of focused SCA's
-		value(O_M_DOT_HTF_TOT, m_dot_htf_tot_out);		//[kg/hr] The actual flow rate through the field..
-		value(O_E_BAL_STARTUP, E_bal_startup_out);		//[MWt] Startup energy consumed
+		value(O_E_FP_TOT, E_fp_tot_out);			//[J] Freeze protection energy
+		value(O_QQ, qq);							//[none] Number of iterations required to solve
+		value(O_T_SYS_C, T_sys_c_out);				//[C] Collector inlet temperature
+		value(O_EQOPTEFF, EqOpteff_out);			//[none] Collector equivalent optical efficiency
+		value(O_SCAS_DEF, SCAs_def);				//[none] The fraction of focused SCA's
+		value(O_M_DOT_HTF_TOT, m_dot_htf_tot_out);	//[kg/hr] The actual flow rate through the field..
+		value(O_E_BAL_STARTUP, E_bal_startup_out);	//[MWt] Startup energy consumed
 		value(O_Q_INC_SF_TOT, q_inc_sf_tot);		//[MWt] Total power incident on the field
-		value(O_Q_ABS_TOT, q_abs_tot);		//[MWt] Total absorbed energy
-		value(O_Q_LOSS_TOT, q_loss_tot);		//[MWt] Total receiver thermal and optical losses
-		value(O_M_DOT_HTF, m_dot_htf);		//[kg/s] Flow rate in a single loop
-		value(O_Q_LOSS_SPEC_TOT, q_loss_spec_tot);		//[W/m] Field-average receiver thermal losses (convection and radiation)
+		value(O_Q_ABS_TOT, q_abs_tot);				//[MWt] Total absorbed energy
+		value(O_Q_LOSS_TOT, q_loss_tot);			//[MWt] Total receiver thermal and optical losses
+		value(O_M_DOT_HTF, m_dot_htf);				//[kg/s] Flow rate in a single loop
+		value(O_Q_LOSS_SPEC_TOT, q_loss_spec_tot);	//[W/m] Field-average receiver thermal losses (convection and radiation)
 		value(O_SCA_PAR_TOT, SCA_par_tot_out);		//[MWe] Parasitic electric power consumed by the SC
-		value(O_PIPE_HL, Pipe_hl_out);		//[MWt] Pipe heat loss in the hot header and the hot runner
-		value(O_Q_DUMP, q_dump);		//[MWt] Dumped thermal energy
-		value(O_THETA_AVE, Theta_ave_out);		//[deg] Field average theta value
-		value(O_COSTH_AVE, CosTh_ave_out);		//[none] Field average costheta value
-		value(O_IAM_AVE, IAM_ave);		//[none] Field average incidence angle modifier
+		value(O_PIPE_HL, Pipe_hl_out);				//[MWt] Pipe heat loss in the hot header and the hot runner
+		value(O_Q_DUMP, q_dump);					//[MWt] Dumped thermal energy
+		value(O_THETA_AVE, Theta_ave_out);			//[deg] Field average theta value
+		value(O_COSTH_AVE, CosTh_ave_out);			//[none] Field average costheta value
+		value(O_IAM_AVE, IAM_ave);					//[none] Field average incidence angle modifier
 		value(O_ROWSHADOW_AVE, RowShadow_ave);		//[none] Field average row shadowing loss
-		value(O_ENDLOSS_AVE, EndLoss_ave);		//[none] Field average end loss
-		value(O_DNI_COSTH, dni_costh);		//[W/m2] DNI_x_CosTh
-		value(O_QINC_COSTH, qinc_costh);		//[MWt] Q_inc_x_CosTh
+		value(O_ENDLOSS_AVE, EndLoss_ave);			//[none] Field average end loss
+		value(O_DNI_COSTH, dni_costh);				//[W/m2] DNI_x_CosTh
+		value(O_QINC_COSTH, qinc_costh);			//[MWt] Q_inc_x_CosTh
 		value(O_T_LOOP_OUTLET, t_loop_outlet);		//[C] HTF temperature immediately subsequent to the loop outlet
-		value(O_C_HTF_AVE, c_htf_ave);		//[J/kg-K] Average solar field specific heat
+		value(O_C_HTF_AVE, c_htf_ave);				//[J/kg-K] Average solar field specific heat
 		value(O_Q_FIELD_DELIVERED, q_field_delivered);		//[MWt] Total solar field thermal power delivered
-		value(O_ETA_THERMAL, eta_thermal);		//[none] Solar field thermal efficiency (power out/ANI)
-		value(O_E_LOOP_ACCUM, E_loop_accum_out);		//[MWht] Accumulated internal energy change rate in the loops ONLY
+		value(O_ETA_THERMAL, eta_thermal);			//[none] Solar field thermal efficiency (power out/ANI)
+		value(O_E_LOOP_ACCUM, E_loop_accum_out);	//[MWht] Accumulated internal energy change rate in the loops ONLY
 		value(O_E_HDR_ACCUM, E_hdr_accum_out);		//[MWht] Accumulated internal energy change rate in the headers/SGS
-		value(O_E_TOT_ACCUM, E_tot_accum);		//[MWht] Total accumulated internal energy change rate
-		value(O_E_FIELD, E_field_out);		//[MWht] Accumulated internal energy in the entire solar field
+		value(O_E_TOT_ACCUM, E_tot_accum);			//[MWht] Total accumulated internal energy change rate
+		value(O_E_FIELD, E_field_out);				//[MWht] Accumulated internal energy in the entire solar field
 
 		return 0;
 	}
