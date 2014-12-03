@@ -1414,8 +1414,6 @@ public:
 		double q_abs_maxOT;
 		q_abs_maxOT=0;
 
-acc_test_init: //mjw 1.5.2011 Acceptance test initialization entry point
-
 		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 		{
 			//calculate the hour of the day
@@ -2317,20 +2315,39 @@ calc_final_metrics_goto:
 			m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);			
 		}
 
-		//The total pressure drop in all of the piping
-		DP_tot = (DP_loop + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
-
-		//The total pumping power consumption
-		W_dot_pump = DP_tot*m_dot_htf_tot/(rho_hdr_cold*eta_pump)/ 1000.;  //[kW]
-
-		//The parasitic power consumed by electronics and SCA drives
-		if(EqOpteff>0.0) 
+		if( accept_loc == 1 )
 		{
-			SCA_par_tot = SCA_drives_elec*SCAs_def*float(nSCA*nLoops);
+			// The total pressure drop in all of the piping
+			DP_tot = (DP_loop + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
+			// The total pumping power consumption
+			W_dot_pump = DP_tot*m_dot_htf_tot / (rho_hdr_cold*eta_pump) / 1000.;  //[kW]
+
+			//The parasitic power consumed by electronics and SCA drives
+			if( EqOpteff>0.0 )
+			{
+				SCA_par_tot = SCA_drives_elec*SCAs_def*float(nSCA*nLoops);
+			}
+			else
+			{
+				SCA_par_tot = 0.0;
+			}
 		}
-		else 
+		else
 		{
-			SCA_par_tot = 0.0;
+			// The total pressure drop in all of the piping
+			DP_tot = (DP_loop + DP_IOCOP);
+			// The total pumping power consumption
+			W_dot_pump = DP_tot*m_dot_htf / (rho_hdr_cold*eta_pump) / 1000.;  //[kW]
+
+			//The parasitic power consumed by electronics and SCA drives
+			if( EqOpteff>0.0 )
+			{
+				SCA_par_tot = SCA_drives_elec*SCAs_def*float(nSCA);
+			}
+			else
+			{
+				SCA_par_tot = 0.0;
+			}
 		}
 
 		// ******************************************************************
@@ -2414,33 +2431,6 @@ calc_final_metrics_goto:
 		{
 			eta_thermal = q_field_delivered / (I_b*CosTh_ave*Ap_tot / 1.e6);  //MJW 1.11.11	
 		}
-
-		//------mjw 1.5.2011 For initialization in acceptance testing mode, check to see if the solar field is in equilibrium. 
-		//if not (and if it's the first call), go back and keep warming up.
-		//if(accept_init)	//cc-> switching the order of accept_init test. More efficient this way and no change in functionality
-		//{	
-		//	if((time == start_time) && (ncall==0)) 
-		//	{
-		//		if(E_bal_startup > 0.0) 
-		//		{
-		//			// Set the system state values for the next calculation as if we were proceeding to the next timestep
-		//			T_sys_c_last = T_sys_c;       //Set T_sys_c_last
-		//			T_sys_h_last = T_sys_h;       //Set T_sys_h_last
-		//			for(int i=0; i<nSCA; i++)
-		//			{
-		//				T_htf_in0[i] = T_htf_in[i];  //Set T_htf_in0
-		//				T_htf_out0[i] = T_htf_out[i];  //Set T_htf_out0
-		//			}
-		//
-		//			goto acc_test_init;  //Loop back
-		//		}
-		//	}
-		//}
-		//----------------------------
-
-		////----set iteration-dependent storage variables
-		//stored(3) = 1.
-		//call setStorageVars(stored,nS,INFO)
 		
 set_outputs_and_return:
 
