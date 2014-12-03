@@ -36,10 +36,11 @@
             this.btn4Version = new System.Windows.Forms.Button();
             this.txtData = new System.Windows.Forms.RichTextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.btnPVRes = new System.Windows.Forms.Button();
+            this.btnCashLoan = new System.Windows.Forms.Button();
+            this.btnPVCom = new System.Windows.Forms.Button();
+            this.btnBelpe = new System.Windows.Forms.Button();
             this.btnPVSamV1 = new System.Windows.Forms.Button();
             this.btn4ArrayTest = new System.Windows.Forms.Button();
-            this.btnPVCom = new System.Windows.Forms.Button();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -113,8 +114,9 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btnCashLoan);
             this.groupBox2.Controls.Add(this.btnPVCom);
-            this.groupBox2.Controls.Add(this.btnPVRes);
+            this.groupBox2.Controls.Add(this.btnBelpe);
             this.groupBox2.Controls.Add(this.btnPVSamV1);
             this.groupBox2.Controls.Add(this.btn4PVWattsFunc);
             this.groupBox2.Controls.Add(this.btn4ModulesAndVariables);
@@ -131,15 +133,35 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "SSC API c# test";
             // 
-            // btnPVRes
+            // btnCashLoan
             // 
-            this.btnPVRes.Location = new System.Drawing.Point(312, 63);
-            this.btnPVRes.Name = "btnPVRes";
-            this.btnPVRes.Size = new System.Drawing.Size(98, 23);
-            this.btnPVRes.TabIndex = 17;
-            this.btnPVRes.Text = "PV Residential";
-            this.btnPVRes.UseVisualStyleBackColor = true;
-            this.btnPVRes.Click += new System.EventHandler(this.button1_Click);
+            this.btnCashLoan.Location = new System.Drawing.Point(458, 65);
+            this.btnCashLoan.Name = "btnCashLoan";
+            this.btnCashLoan.Size = new System.Drawing.Size(75, 23);
+            this.btnCashLoan.TabIndex = 19;
+            this.btnCashLoan.Text = "Cash Loan";
+            this.btnCashLoan.UseVisualStyleBackColor = true;
+            this.btnCashLoan.Click += new System.EventHandler(this.btnCashLoan_Click);
+            // 
+            // btnPVCom
+            // 
+            this.btnPVCom.Location = new System.Drawing.Point(365, 63);
+            this.btnPVCom.Name = "btnPVCom";
+            this.btnPVCom.Size = new System.Drawing.Size(87, 23);
+            this.btnPVCom.TabIndex = 18;
+            this.btnPVCom.Text = "Utility Rate 3";
+            this.btnPVCom.UseVisualStyleBackColor = true;
+            this.btnPVCom.Click += new System.EventHandler(this.btnUtilityRate3_Click);
+            // 
+            // btnBelpe
+            // 
+            this.btnBelpe.Location = new System.Drawing.Point(312, 63);
+            this.btnBelpe.Name = "btnBelpe";
+            this.btnBelpe.Size = new System.Drawing.Size(47, 23);
+            this.btnBelpe.TabIndex = 17;
+            this.btnBelpe.Text = "Belpe";
+            this.btnBelpe.UseVisualStyleBackColor = true;
+            this.btnBelpe.Click += new System.EventHandler(this.btnBelpe_Click);
             // 
             // btnPVSamV1
             // 
@@ -160,16 +182,6 @@
             this.btn4ArrayTest.Text = "Test Arrays";
             this.btn4ArrayTest.UseVisualStyleBackColor = true;
             this.btn4ArrayTest.Click += new System.EventHandler(this.btn4ArrayTest_Click);
-            // 
-            // btnPVCom
-            // 
-            this.btnPVCom.Location = new System.Drawing.Point(416, 63);
-            this.btnPVCom.Name = "btnPVCom";
-            this.btnPVCom.Size = new System.Drawing.Size(111, 23);
-            this.btnPVCom.TabIndex = 18;
-            this.btnPVCom.Text = "PV Commercial";
-            this.btnPVCom.UseVisualStyleBackColor = true;
-            this.btnPVCom.Click += new System.EventHandler(this.btnPVCom_Click);
             // 
             // Form1
             // 
@@ -196,8 +208,9 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button btn4ArrayTest;
         private System.Windows.Forms.Button btnPVSamV1;
-        private System.Windows.Forms.Button btnPVRes;
+        private System.Windows.Forms.Button btnBelpe;
         private System.Windows.Forms.Button btnPVCom;
+        private System.Windows.Forms.Button btnCashLoan;
     }
 }
 

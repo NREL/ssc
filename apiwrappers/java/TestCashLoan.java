@@ -244,7 +244,6 @@ public class TestCashLoan {
 		data.setNumber( "salvage_percentage", 0 );
 		data.setArray("annual_energy_value",GetFloatArray("annual_energy_value"));
 		data.setArray("hourly_energy",GetFloatArray("hourly_energy"));
-
 		data.setArray( "degradation", new float[] { 0.5f } );
 		data.setNumber( "system_use_lifetime_output", 0 );
 

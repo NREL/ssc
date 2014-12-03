@@ -117,19 +117,12 @@ copy /y $(SolutionDir)..\..\Win64\ssc.dll $(SolutionDir)bin\x64\Release\ssc64.dl
 copy /y $(SolutionDir)..\..\Win32\ssc.dll $(SolutionDir)bin\Debug\ssc32.dll
 copy /y $(SolutionDir)..\..\Win32\ssc.dll $(SolutionDir)bin\x86\Debug\ssc32.dll
 copy /y $(SolutionDir)..\..\Win64\ssc.dll $(SolutionDir)bin\x64\Debug\ssc64.dll
-copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Release\abilene.tm2
-copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Release\abilene.tm2 
-copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Release\abilene.tm2           
-copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\Debug\abilene.tm2
-copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x86\Debug\abilene.tm2
-copy /y $(SolutionDir)..\..\examples\abilene.tm2 $(SolutionDir)bin\x64\Debug\abilene.tm2
-copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\Release\AZ Phoenix.tm2"
-copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x86\Release\AZ Phoenix.tm2"
-copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x64\Release\AZ Phoenix.tm2"           
-copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\Debug\AZ Phoenix.tm2"
-copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x86\Debug\AZ Phoenix.tm2"
-copy /y "$(SolutionDir)..\..\examples\AZ Phoenix.tm2" "$(SolutionDir)bin\x64\Debug\AZ Phoenix.tm2"
-</PostBuildEvent>
+copy /y "$(SolutionDir)..\..\examples\USA AZ Phoenix (TMY2).csv" "$(SolutionDir)bin\Release\USA AZ Phoenix (TMY2).csv"
+copy /y "$(SolutionDir)..\..\examples\USA AZ Phoenix (TMY2).csv" "$(SolutionDir)bin\x86\Release\USA AZ Phoenix (TMY2).csv"
+copy /y "$(SolutionDir)..\..\examples\USA AZ Phoenix (TMY2).csv" "$(SolutionDir)bin\x64\Release\USA AZ Phoenix (TMY2).csv"
+copy /y "$(SolutionDir)..\..\examples\USA AZ Phoenix (TMY2).csv" "$(SolutionDir)bin\Debug\USA AZ Phoenix (TMY2).csv"
+copy /y "$(SolutionDir)..\..\examples\USA AZ Phoenix (TMY2).csv" "$(SolutionDir)bin\x86\Debug\USA AZ Phoenix (TMY2).csv"
+copy /y "$(SolutionDir)..\..\examples\USA AZ Phoenix (TMY2).csv" "$(SolutionDir)bin\x64\Debug\USA AZ Phoenix (TMY2).csv"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
