@@ -1694,8 +1694,11 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			rho_htf.fill(0.);
 
 			m_dot_htf = m_dot_htfX;
-    
-			m_dot_htf_tot = m_dot_htf*float(nLoops);
+			
+			if( accept_loc == 1 )
+				m_dot_htf_tot = m_dot_htf*float(nLoops);
+			else
+				m_dot_htf_tot = m_dot_htf;
     
 			if(accept_loc == 1) 
 			{
@@ -1725,6 +1728,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			else		// accept_loc == 2, only modeling loop
 			{
 				T_htf_in[0] = T_cold_in_1;
+				T_sys_c = T_htf_in[0];
 			}    
     
 			//---------------------
@@ -2249,6 +2253,11 @@ calc_final_metrics_goto:
 		DP_loop = 0.;
 		for(int j=0; j<nSCA; j++){ DP_loop += DP_tube[j];}
 
+		if( accept_loc == 1 )
+			m_dot_htf_tot = m_dot_htf*float(nLoops);
+		else
+			m_dot_htf_tot = m_dot_htf;
+
 		//-------SGS to field section
 		//if(FieldConfig==1.) { //"H" type
 		//    x1 = 1.  
@@ -2261,58 +2270,60 @@ calc_final_metrics_goto:
 		//    x3 = 0.
 		//}
 
-		m_dot_htf_tot = m_dot_htf*float(nLoops);
-		m_dot_run_in = std::numeric_limits<double>::quiet_NaN();
-		
-		if(nfsec>2)  //mjw 5.4.11 Correct the mass flow for situations where nfsec/2==odd
+		if( accept_loc == 1 )
 		{
-			m_dot_run_in = m_dot_htf_tot/2.0 * (1. - float(nfsec%4)/float(nfsec));
-		} 
-		else 
-		{
-			m_dot_run_in = m_dot_htf_tot/2.0; 
-		}
-		
-		x3 = float(nrunsec) - 1.0;  //Number of contractions/expansions
-		m_dot_temp = m_dot_run_in;
-		DP_toField = 0.0;
-		DP_fromField = 0.0;
-		for(int i=0; i<nrunsec; i++)
-		{
-			DP_toField = DP_toField + PressureDrop(m_dot_temp,T_loop_in,1.0,D_runner[i],HDR_rough,L_runner[i],0.0,x3,0.0,0.0,
-									  max(float(CSP::nint(L_runner[i]/70.))*4.,8.),1.0,0.0,1.0,0.0,0.0,0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
-			//if(ErrorFound()) return 1                  
-			//-------SGS from field section
-			DP_fromField = DP_fromField + PressureDrop(m_dot_temp,T_loop_outX,1.0,D_runner[i],HDR_rough,L_runner[i],x3,0.0,0.0,0.0,
-										  max(float(CSP::nint(L_runner[i]/70.))*4.,8.),1.0,0.0,0.0,0.0,0.0,0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
-			//if(ErrorFound()) return 1
-			if(i>1) 
-				m_dot_temp = max(m_dot_temp - 2.*m_dot_htf_tot/float(nfsec),0.0);
-		}
+			m_dot_run_in = std::numeric_limits<double>::quiet_NaN();
 
-		m_dot_header_in = m_dot_htf_tot/float(nfsec);
-		m_dot_header = m_dot_header_in;
-		DP_hdr_cold = 0.0;
-		DP_hdr_hot = 0.0;
-		for(int i=0; i<nhdrsec; i++)
-		{
-			//Determine whether the particular section has an expansion valve
-			double x2=0.0;
-			if(i>0) 
+			if( nfsec > 2 )  //mjw 5.4.11 Correct the mass flow for situations where nfsec/2==odd
 			{
-				if(D_hdr[i] != D_hdr[i-1]) 
-					x2=1.;
+				m_dot_run_in = m_dot_htf_tot / 2.0 * (1. - float(nfsec % 4) / float(nfsec));
 			}
-    
-			//Calculate pressure drop in cold header and hot header sections.. both use similar information
-			DP_hdr_cold = DP_hdr_cold + PressureDrop(m_dot_header,T_loop_in,1.0,D_hdr[i],HDR_rough,
-							(Row_Distance+4.275)*2.,0.0,x2,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
-			//if(ErrorFound()) return 1
-			DP_hdr_hot =  DP_hdr_hot + PressureDrop(m_dot_header,T_loop_outX,1.0,D_hdr[i],HDR_rough,
-							(Row_Distance+4.275)*2.,x2,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
-			//if(ErrorFound()) return 1
-			//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
-			m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);			
+			else
+			{
+				m_dot_run_in = m_dot_htf_tot / 2.0;
+			}
+
+			x3 = float(nrunsec) - 1.0;  //Number of contractions/expansions
+			m_dot_temp = m_dot_run_in;
+			DP_toField = 0.0;
+			DP_fromField = 0.0;
+			for( int i = 0; i<nrunsec; i++ )
+			{
+				DP_toField = DP_toField + PressureDrop(m_dot_temp, T_loop_in, 1.0, D_runner[i], HDR_rough, L_runner[i], 0.0, x3, 0.0, 0.0,
+					max(float(CSP::nint(L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
+				//if(ErrorFound()) return 1                  
+				//-------SGS from field section
+				DP_fromField = DP_fromField + PressureDrop(m_dot_temp, T_loop_outX, 1.0, D_runner[i], HDR_rough, L_runner[i], x3, 0.0, 0.0, 0.0,
+					max(float(CSP::nint(L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
+				//if(ErrorFound()) return 1
+				if( i>1 )
+					m_dot_temp = max(m_dot_temp - 2.*m_dot_htf_tot / float(nfsec), 0.0);
+			}
+
+			m_dot_header_in = m_dot_htf_tot / float(nfsec);
+			m_dot_header = m_dot_header_in;
+			DP_hdr_cold = 0.0;
+			DP_hdr_hot = 0.0;
+			for( int i = 0; i<nhdrsec; i++ )
+			{
+				//Determine whether the particular section has an expansion valve
+				double x2 = 0.0;
+				if( i>0 )
+				{
+					if( D_hdr[i] != D_hdr[i - 1] )
+						x2 = 1.;
+				}
+
+				//Calculate pressure drop in cold header and hot header sections.. both use similar information
+				DP_hdr_cold = DP_hdr_cold + PressureDrop(m_dot_header, T_loop_in, 1.0, D_hdr[i], HDR_rough,
+					(Row_Distance + 4.275)*2., 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
+				//if(ErrorFound()) return 1
+				DP_hdr_hot = DP_hdr_hot + PressureDrop(m_dot_header, T_loop_outX, 1.0, D_hdr[i], HDR_rough,
+					(Row_Distance + 4.275)*2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
+				//if(ErrorFound()) return 1
+				//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
+				m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);
+			}
 		}
 
 		if( accept_loc == 1 )
@@ -2438,6 +2449,7 @@ calc_final_metrics_goto:
 
 		//Total field performance
 		q_field_delivered = m_dot_htf_tot * c_htf_ave * (T_sys_h - T_cold_in_1) / 1.e6; //MJW 1.11.11 [MWt]
+		
 		if(I_b*CosTh_ave == 0.)	//cc--> Adding case for zero output. Was reporting -Infinity in original version
 		{
 			eta_thermal = 0.;
@@ -2495,7 +2507,7 @@ set_outputs_and_return:
 		value(O_Q_AVAIL, q_avail);					//[MWt] Thermal power produced by the field
 		value(O_DP_TOT, DP_tot);					//[bar] Total HTF pressure drop
 		value(O_W_DOT_PUMP, W_dot_pump_out);		//[MWe] Required solar field pumping power
-		value(O_E_FP_TOT, E_fp_tot_out);			//[J] Freeze protection energy
+		value(O_E_FP_TOT, E_fp_tot_out);			//[MW] Freeze protection energy
 		value(O_QQ, qq);							//[none] Number of iterations required to solve
 		value(O_T_SYS_C, T_sys_c_out);				//[C] Collector inlet temperature
 		value(O_EQOPTEFF, EqOpteff_out);			//[none] Collector equivalent optical efficiency
