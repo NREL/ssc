@@ -1090,6 +1090,9 @@ public:
 		defocus_old = 0.;
 		is_fieldgeom_init = false;
 
+		Pipe_hl = 0.0;
+		E_hdr_accum = 0.0;
+
 		return 0;
 	}
 
@@ -2376,6 +2379,18 @@ calc_final_metrics_goto:
 		E_avail_tot *= float(nLoops) - E_fp_tot;
 		E_loop_accum *= float(nLoops);
 
+		// Average properties
+		rho_ave = htfProps.dens((T_loop_outX + T_sys_c) / 2.0, 0.0); //kg/m3
+		c_htf_ave = htfProps.Cp((T_sys_h + T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
+
+		E_int_sum = 0.;
+		for( int i = 0; i < nSCA; i++ )
+		{
+			E_int_sum += E_int_loop[i];
+		}
+
+		E_field = E_int_sum*float(nLoops);
+
 		if( accept_loc == 1 )		// Consider entire internal energy of entire field, not just the loop
 		{
 			//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS)
@@ -2394,17 +2409,9 @@ calc_final_metrics_goto:
 			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
 
 			//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]
-			rho_ave = htfProps.dens((T_loop_outX + T_sys_c) / 2.0, 0.0); //kg/m3
-			c_htf_ave = htfProps.Cp((T_sys_h + T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
 
-			E_int_sum = 0.;
-			for( int i = 0; i < nSCA; i++ ){
-				E_int_sum += E_int_loop[i];
-			}
-
-			E_field = ((v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - 298.150) +       //hot header and piping
-				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150) +   //cold header and piping
-				E_int_sum*float(nLoops));  //Field loops
+			E_field += ((v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - 298.150) +       //hot header and piping
+				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150));   //cold header and piping
 
 			//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
 			Pipe_hl_hot = N_run_mult*Runner_hl_hot + float(nfsec)*Header_hl_hot;
@@ -2520,7 +2527,7 @@ set_outputs_and_return:
 		value(O_M_DOT_HTF, m_dot_htf);				//[kg/s] Flow rate in a single loop
 		value(O_Q_LOSS_SPEC_TOT, q_loss_spec_tot);	//[W/m] Field-average receiver thermal losses (convection and radiation)
 		value(O_SCA_PAR_TOT, SCA_par_tot_out);		//[MWe] Parasitic electric power consumed by the SC
-		value(O_PIPE_HL, Pipe_hl_out);				//[MWt] Pipe heat loss in the hot header and the hot runner
+		value(O_PIPE_HL, Pipe_hl_out);				//[MWt] Pipe heat loss in the header and the hot runner
 		value(O_Q_DUMP, q_dump);					//[MWt] Dumped thermal energy
 		value(O_THETA_AVE, Theta_ave_out);			//[deg] Field average theta value
 		value(O_COSTH_AVE, CosTh_ave_out);			//[none] Field average costheta value
