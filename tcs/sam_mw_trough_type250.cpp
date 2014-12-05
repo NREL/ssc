@@ -1116,227 +1116,236 @@ public:
 		for(int i=0; i<nSCA; i++)
 		{
 			int ct = (int)SCAInfoArray.at(i,1);
-			Ap_tot += A_aperture[ct-1]*float(nLoops);
-		}
+			Ap_tot += A_aperture[ct-1];
+		}		
 		
 		//Calculate the cross-sectional flow area of the receiver piping
 		D_h.resize(nHCEt, nHCEVar);
 		A_cs.resize(nHCEt, nHCEVar);
-		for(int i=0; i<nHCEt; i++)
+		for( int i = 0; i < nHCEt; i++ )
 		{
-			for(int j=0; j<nHCEVar; j++)
+			for( int j = 0; j < nHCEVar; j++ )
 			{
-				if(Flow_type.at(i,j) == 2)
+				if( Flow_type.at(i, j) == 2 )
 				{
-					D_h.at(i,j) = D_2.at(i,j) - D_p.at(i,j);
+					D_h.at(i, j) = D_2.at(i, j) - D_p.at(i, j);
 				}
 				else
 				{
-					D_h.at(i,j) = D_2.at(i,j);
-					D_p.at(i,j) = 0.;
+					D_h.at(i, j) = D_2.at(i, j);
+					D_p.at(i, j) = 0.;
 				}
-				A_cs.at(i,j) =  pi * (D_2.at(i,j)*D_2.at(i,j) - D_p.at(i,j)*D_p.at(i,j)) / 4.;  //[m2] The cross-sectional flow area
+				A_cs.at(i, j) = pi * (D_2.at(i, j)*D_2.at(i, j) - D_p.at(i, j)*D_p.at(i, j)) / 4.;  //[m2] The cross-sectional flow area
 			}
 		}
-		
-		//Calculate header diameters here based on min/max velocities
-		//output file with calculated header diameter "header_diam.out"
-		nfsec = FieldConfig;  //MJW 1.12.11 allow the user to specify the number of field sections
-		//Check to make sure the number of field sections is an even number
-		if( nfsec%2 != 0)
+
+		L_tot = 0.0;
+		for( int i = 0; i < nSCA; i++ )
 		{
-			message(TCS_ERROR, "Number of field subsections must equal an even number");
-			return false;
+			int ct = (int)SCAInfoArray.at(i, 1);
+			L_tot += L_actSCA[ct - 1];
 		}
 
-		/*
-		The number of header sections per field section is equal to the total number of loops divided
-		by the number of distinct headers. Since two loops are connected to the same header section,
-		the total number of header sections is then divided by 2.
-		*/
-		nhdrsec = (int)ceil(float(nLoops)/float(nfsec*2));
+		if( accept_loc == 1 )
+		{
+			Ap_tot *= float(nLoops);
 
-		//Allocate space for the D_hdr array
-		D_hdr.resize_fill(nhdrsec, 0.);
-		
-		//We need to determine design information about the field for purposes of header sizing ONLY
-		c_htf_ave = htfProps.Cp((T_loop_out+T_loop_in_des)/2.0)*1000.;    //Specific heat
-		
-		//Need to loop through to calculate the weighted average optical efficiency at design
-		//Start by initializing sensitive variables
-		double x1=0.0, x2=0.0, loss_tot=0.0;
-		opteff_des=0.0; 
-		m_dot_design=0.0; 
-		L_tot=0.0;
-		for(int i=0; i<nSCA; i++)
-		{
-			int ct = (int)SCAInfoArray.at(i,1);
-			L_tot += L_actSCA[ct-1];
-		}
-		
-		for(int i=0; i<nSCA; i++)
-		{
-			int CT = (int)SCAInfoArray.at(i,1);    //Collector type    
-			//Calculate the CosTheta value at summer solstice noon
-			//x1 = sqrt(1. - pow(cos((latitude - 23.5/180.*pi)-ColTilt) - cos(ColTilt) * cos((latitude - 23.5/180.*pi)) * (1. - cos(0. -ColAz)), 2)); //costheta
-			//Calculate end gain factor
-			//x2 = max((Ave_Focal_Length[CT-1]*tan(acos(x1))-Distance_SCA[CT-1]),0.0);  //end gain
-			//calculate end loss
-			//el_des =  1. - (Ave_Focal_Length[CT-1] * tan(acos(x1)) - (float(nSCA) - 1.) /float(nSCA)* x2) / L_actSCA[CT-1];
-			
-			for(int j=0; j<nHCEVar; j++)
+			//Calculate header diameters here based on min/max velocities
+			//output file with calculated header diameter "header_diam.out"
+			nfsec = FieldConfig;  //MJW 1.12.11 allow the user to specify the number of field sections
+			//Check to make sure the number of field sections is an even number
+			if( nfsec % 2 != 0 )
 			{
-				int HT = (int)SCAInfoArray.at(i,0);    //HCE type
-				//Calculate optical efficiency approximating use of the first collector only
-				opteff_des += Shadowing.at(HT-1,j)*TrackingError[CT-1]*GeomEffects[CT-1]*Rho_mirror_clean[CT-1]*Dirt_mirror[CT-1]*
-										 Dirt_HCE.at(HT-1,j)*Error[CT-1]*(L_actSCA[CT-1]/L_tot)*HCE_FieldFrac.at(HT-1,j);
-				loss_tot += Design_loss.at(HT-1,j)*L_actSCA[CT-1]*HCE_FieldFrac.at(HT-1,j);
+				message(TCS_ERROR, "Number of field subsections must equal an even number");
+				return false;
 			}
-		}
-		//the estimated mass flow rate at design
-		m_dot_design = (Ap_tot*I_bn_des*opteff_des - loss_tot*float(nLoops))/(c_htf_ave*(T_loop_out - T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
-		//mjw 1.16.2011 Design field thermal power 
-		q_design = m_dot_design * c_htf_ave * (T_loop_out - T_loop_in_des); //[Wt]
-		//mjw 1.16.2011 Convert the thermal inertia terms here
-		mc_bal_hot = mc_bal_hot * 3.6 * q_design;    //[J/K]
-		mc_bal_cold = mc_bal_cold * 3.6 * q_design;  //[J/K]
 
-	    //need to provide fluid density
-		double rho_ave = htfProps.dens((T_loop_out+T_loop_in_des)/2.0,0.0); //kg/m3
-		//Calculate the header design
-		nrunsec = (int)floor(float(nfsec)/4.0)+1;  //The number of unique runner diameters
-		D_runner.resize(nrunsec);
-		L_runner.resize(nrunsec);
-		D_hdr.resize(nhdrsec);
-		
-		std::string summary;
-		header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_max, V_hdr_min, m_dot_design, D_hdr, D_runner, &summary);
-		//if(ErrorFound()) return
+			/*
+			The number of header sections per field section is equal to the total number of loops divided
+			by the number of distinct headers. Since two loops are connected to the same header section,
+			the total number of header sections is then divided by 2.
+			*/
+			nhdrsec = (int)ceil(float(nLoops) / float(nfsec * 2));
+
+			//Allocate space for the D_hdr array
+			D_hdr.resize_fill(nhdrsec, 0.);
+
+			//We need to determine design information about the field for purposes of header sizing ONLY
+			c_htf_ave = htfProps.Cp((T_loop_out + T_loop_in_des) / 2.0)*1000.;    //Specific heat
+
+			//Need to loop through to calculate the weighted average optical efficiency at design
+			//Start by initializing sensitive variables
+			double x1 = 0.0, x2 = 0.0, loss_tot = 0.0;
+			opteff_des = 0.0;
+			m_dot_design = 0.0;																		
+
+			for( int i = 0; i < nSCA; i++ )
+			{
+				int CT = (int)SCAInfoArray.at(i, 1);    //Collector type    
+				//Calculate the CosTheta value at summer solstice noon
+				//x1 = sqrt(1. - pow(cos((latitude - 23.5/180.*pi)-ColTilt) - cos(ColTilt) * cos((latitude - 23.5/180.*pi)) * (1. - cos(0. -ColAz)), 2)); //costheta
+				//Calculate end gain factor
+				//x2 = max((Ave_Focal_Length[CT-1]*tan(acos(x1))-Distance_SCA[CT-1]),0.0);  //end gain
+				//calculate end loss
+				//el_des =  1. - (Ave_Focal_Length[CT-1] * tan(acos(x1)) - (float(nSCA) - 1.) /float(nSCA)* x2) / L_actSCA[CT-1];
+
+				for( int j = 0; j < nHCEVar; j++ )
+				{
+					int HT = (int)SCAInfoArray.at(i, 0);    //HCE type
+					//Calculate optical efficiency approximating use of the first collector only
+					opteff_des += Shadowing.at(HT - 1, j)*TrackingError[CT - 1] * GeomEffects[CT - 1] * Rho_mirror_clean[CT - 1] * Dirt_mirror[CT - 1] *
+						Dirt_HCE.at(HT - 1, j)*Error[CT - 1] * (L_actSCA[CT - 1] / L_tot)*HCE_FieldFrac.at(HT - 1, j);
+					loss_tot += Design_loss.at(HT - 1, j)*L_actSCA[CT - 1] * HCE_FieldFrac.at(HT - 1, j);
+				}
+			}
+			//the estimated mass flow rate at design
+			m_dot_design = (Ap_tot*I_bn_des*opteff_des - loss_tot*float(nLoops)) / (c_htf_ave*(T_loop_out - T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
+			//mjw 1.16.2011 Design field thermal power 
+			q_design = m_dot_design * c_htf_ave * (T_loop_out - T_loop_in_des); //[Wt]
+			//mjw 1.16.2011 Convert the thermal inertia terms here
+			mc_bal_hot = mc_bal_hot * 3.6 * q_design;    //[J/K]
+			mc_bal_cold = mc_bal_cold * 3.6 * q_design;  //[J/K]
+
+			//need to provide fluid density
+			double rho_ave = htfProps.dens((T_loop_out + T_loop_in_des) / 2.0, 0.0); //kg/m3
+			//Calculate the header design
+			nrunsec = (int)floor(float(nfsec) / 4.0) + 1;  //The number of unique runner diameters
+			D_runner.resize(nrunsec);
+			L_runner.resize(nrunsec);
+			D_hdr.resize(nhdrsec);
+
+			std::string summary;
+			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_max, V_hdr_min, m_dot_design, D_hdr, D_runner, &summary);
+			//if(ErrorFound()) return
+
+			/*
+			Do one-time calculations for system geometry. Calculate all HTF volume, set runner piping length
+			Assume there are two field subsections per span, then if there's an even number of spans in the field,
+			we count the first header section as half-length. I.e., if a field looks like this:
+			(1)        (2)
+			|||||||   |||||||
+			-----------------
+			||||||| : |||||||
+			:
+			[P]
+			:
+			||||||| : |||||||
+			-----------------
+			|||||||   |||||||
+			(3)        (4)
+			Then the field has 4 subfields and two spans. The runner pipe (:) is half the distance between the two spans.
+			If the number of subfields were 6 (3 spans), the two runner pipe segments would both be equal to the full
+			distance between spans.
+			*/
+			if( nfsec / 2 % 2 == 1 )
+			{
+				x1 = 2.;     //the first runners are normal
+			}
+			else
+			{
+				x1 = 1.;     //the first runners are short
+			}
+			L_runner[0] = 50.;  //Assume 50 [m] of runner piping in and around the power block before it heads out to the field in the main runners
+			if( nrunsec > 1 )
+			{
+				for( int i = 1; i < nrunsec; i++ )
+				{
+					int j = (int)SCAInfoArray.at(0, 1) - 1;
+					L_runner[i] = x1 * (2 * Row_Distance + (L_SCA[j] + Distance_SCA[j])*float(nSCA) / 2.);
+					x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
+				}
+			}
+			double v_tofrom_sgs = 0.0;
+			for( int i = 0; i < nrunsec; i++ )
+			{
+				v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i] * pi*pow(D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
+			}
+
+			//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
+			//Since there will be two symmetric paths (when nrunsec > 1), need to calculate multiplier for heat loss, considering
+			//that the first 50 meters of runner is assumed shared.
+			double lsum = 0.;
+			for( int i = 0; i < nrunsec; i++ ){
+				lsum += L_runner[i];
+			}
+			N_run_mult = 1.0 + (1.0 - 50.0 / lsum);
+
+			//-------piping from header into and out of the HCE's
+			double v_loop_tot = 0.;
+			for( int j = 0; j < nHCEVar; j++ )
+			{
+				for( int i = 0; i < nSCA; i++ )
+				{
+					int CT = (int)SCAInfoArray.at(i, 1) - 1;   //Collector type    
+					int HT = (int)SCAInfoArray.at(i, 0) - 1;    //HCE type
+					//v_loop_bal = v_loop_bal + Distance_SCA(CT)*A_cs(HT,j)*HCE_FieldFrac(HT,j)*float(nLoops)
+					v_loop_tot += (L_SCA[CT] + Distance_SCA[CT])*A_cs(HT, j)*HCE_FieldFrac(HT, j)*float(nLoops);
+				}
+			}
+
+			//mjw 1.13.2011 Add on volume for the crossover piping 
+			//v_loop_tot = v_loop_tot + Row_Distance*A_cs(SCAInfoArray(nSCA/2,1),1)*float(nLoops)
+			v_loop_tot += Row_Distance*A_cs((int)SCAInfoArray(max(2, nSCA) / 2 - 1, 0), 0)*float(nLoops);      //TN 6/20: need to solve for nSCA = 1
+
+
+			//-------field header loop
+			double v_header = 0.0;
+			for( int i = 0; i < nhdrsec; i++ )
+			{
+				//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
+				v_header += D_hdr[i] * D_hdr[i] / 4.*pi*(Row_Distance + 4.275)*float(nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
+			}
+			//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
+			v_header = v_header + 20.*A_cs(0, 0)*float(nLoops);
+
+			//Calculate the HTF volume associated with pumps and the SGS
+			double v_sgs = Pump_SGS(rho_ave, m_dot_design, solar_mult);
+
+			//Calculate the hot and cold balance-of-plant volumes
+			v_hot = v_header + v_tofrom_sgs;
+			v_cold = v_hot;
+
+			//Write the volume totals to the piping diameter file
+			summary.append(
+				"\n----------------------------------------------\n"
+				"Plant HTF volume information:\n"
+				"----------------------------------------------\n");
+			char tstr[500];
+			string fmt = "Cold header pipe volume:   %10.4e m3\n"
+				"Hot header pipe volume:    %10.4e m3\n"
+				"Volume per loop:           %10.4e m3\n"
+				"Total volume in all loops: %10.4e m3\n"
+				"Total solar field volume:  %10.4e m3\n"
+				"Pump / SGS system volume:  %10.4e m3\n"
+				"---------------------------\n"
+				"Total plant HTF volume:    %10.4e m3\n";
+			sprintf(tstr, fmt.c_str(), v_cold, v_hot, v_loop_tot / float(nLoops), v_loop_tot, (v_hot*2. + v_loop_tot), v_sgs, (v_hot*2. + v_loop_tot + v_sgs));
+			summary.append(tstr);
+
+			// Can uncomment this when other code is updated to write/display more than ~700 characters
+			//message(TCS_NOTICE, summary.c_str());
+
+			//if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
+			//{
+			//	fprintf(file, summary.c_str());
+			//	fclose(file);
+			//}
+
+			//Include the pump/SGS volume with the header
+			v_hot = v_hot + v_sgs / 2.;
+			v_cold = v_cold + v_sgs / 2.;
+		}
 
 		/* ----- Set initial storage values ------ */
 		T_sys_c_last = T_field_ini;
 		T_sys_h_last = T_field_ini;
 		//cc--> Note that stored(3) -> Iter is no longer used in the TRNSYS code. It is omitted here.
-		for(int i=0; i<nSCA; i++){
+		for( int i = 0; i < nSCA; i++ )
+		{
 			T_htf_in0[i] = T_field_ini;
 			T_htf_out0[i] = T_field_ini;
 			T_htf_ave0[i] = T_field_ini;
 		}
-		
-		/*
-		Do one-time calculations for system geometry. Calculate all HTF volume, set runner piping length
-		Assume there are two field subsections per span, then if there's an even number of spans in the field, 
-		we count the first header section as half-length. I.e., if a field looks like this:
-		   (1)        (2)
-		 |||||||   |||||||
-		 -----------------
-		 ||||||| : |||||||
-				 :
-				[P]
-				 :
-		 ||||||| : |||||||
-		 -----------------
-		 |||||||   |||||||
-		   (3)        (4)
-		Then the field has 4 subfields and two spans. The runner pipe (:) is half the distance between the two spans. 
-		If the number of subfields were 6 (3 spans), the two runner pipe segments would both be equal to the full
-		distance between spans.
-		*/
-		if(nfsec/2 % 2==1) 
-		{
-			x1 = 2.;     //the first runners are normal
-		}
-		else
-		{
-			x1 = 1.;     //the first runners are short
-		}
-		L_runner[0] = 50.;  //Assume 50 [m] of runner piping in and around the power block before it heads out to the field in the main runners
-		if(nrunsec > 1) 
-		{
-			for(int i=1; i<nrunsec; i++)
-			{
-				int j = (int)SCAInfoArray.at(0,1)-1;
-				L_runner[i] = x1 * (2*Row_Distance + (L_SCA[j] + Distance_SCA[j])*float(nSCA)/2.);
-				x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
-			}
-		}
-		double v_tofrom_sgs = 0.0;
-		for(int i=0; i<nrunsec; i++)
-		{
-			v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i]*pi*pow(D_runner[i],2)/4.;  //This is the volume of the runner in 1 direction.
-		}
-    
-		//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
-		//Since there will be two symmetric paths (when nrunsec > 1), need to calculate multiplier for heat loss, considering
-		//that the first 50 meters of runner is assumed shared.
-		double lsum=0.;
-		for(int i=0; i<nrunsec; i++){ lsum += L_runner[i]; }
-		N_run_mult = 1.0 + (1.0 - 50.0/lsum);
-    
-		//-------piping from header into and out of the HCE's
-		double v_loop_tot = 0.;
-		for(int j=0; j< nHCEVar; j++)
-		{
-			for(int i=0; i<nSCA; i++)
-			{
-				int CT = (int)SCAInfoArray.at(i,1)-1;   //Collector type    
-				int HT = (int)SCAInfoArray.at(i,0)-1;    //HCE type
-				//v_loop_bal = v_loop_bal + Distance_SCA(CT)*A_cs(HT,j)*HCE_FieldFrac(HT,j)*float(nLoops)
-				v_loop_tot += (L_SCA[CT] + Distance_SCA[CT])*A_cs(HT,j)*HCE_FieldFrac(HT,j)*float(nLoops);
-			}
-		}
-		
-		//mjw 1.13.2011 Add on volume for the crossover piping 
-		//v_loop_tot = v_loop_tot + Row_Distance*A_cs(SCAInfoArray(nSCA/2,1),1)*float(nLoops)
-		v_loop_tot += Row_Distance*A_cs((int)SCAInfoArray(max(2,nSCA)/2-1,0),0)*float(nLoops);      //TN 6/20: need to solve for nSCA = 1
-    
-    
-		//-------field header loop
-		double v_header = 0.0;
-		for(int i=0; i<nhdrsec; i++)
-		{
-			//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
-			v_header += D_hdr[i]*D_hdr[i]/4.*pi*(Row_Distance+4.275)*float(nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
-		}
-		//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
-		v_header = v_header + 20.*A_cs(0,0)*float(nLoops);
-    
-		//Calculate the HTF volume associated with pumps and the SGS
-		double v_sgs = Pump_SGS(rho_ave,m_dot_design,solar_mult);
-    
-		//Calculate the hot and cold balance-of-plant volumes
-		v_hot = v_header + v_tofrom_sgs;
-		v_cold = v_hot;
-    
-		//Write the volume totals to the piping diameter file
-		summary.append(
-		"\n----------------------------------------------\n"
-		"Plant HTF volume information:\n"
-		"----------------------------------------------\n");
-		char tstr[500];
-		string fmt = "Cold header pipe volume:   %10.4e m3\n"
-				   "Hot header pipe volume:    %10.4e m3\n"
-				   "Volume per loop:           %10.4e m3\n"
-				   "Total volume in all loops: %10.4e m3\n"
-				   "Total solar field volume:  %10.4e m3\n"
-				   "Pump / SGS system volume:  %10.4e m3\n"
-				   "---------------------------\n"
-				   "Total plant HTF volume:    %10.4e m3\n";
-		sprintf(tstr, fmt.c_str(), v_cold, v_hot, v_loop_tot/float(nLoops), v_loop_tot, (v_hot*2. + v_loop_tot), v_sgs, (v_hot*2. + v_loop_tot + v_sgs));
-		summary.append(tstr);
-
-		// Can uncomment this when other code is updated to write/display more than ~700 characters
-		//message(TCS_NOTICE, summary.c_str());
-
-		//if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
-		//{
-		//	fprintf(file, summary.c_str());
-		//	fclose(file);
-		//}
-				
-		//Include the pump/SGS volume with the header
-		v_hot = v_hot + v_sgs/2.;
-		v_cold = v_cold + v_sgs/2.;
 
 		is_fieldgeom_init = true;	//The field geometry has been initialized. Make note.
 
@@ -1596,7 +1605,10 @@ public:
 
 			if( accept_mode )
 			{
-				m_dot_htfX = m_dot_in / float(nLoops);
+				if( accept_loc == 1 )
+					m_dot_htfX = m_dot_in / float(nLoops);
+				else
+					m_dot_htfX = m_dot_in;
 			}
 			else
 			{
@@ -2479,13 +2491,20 @@ set_outputs_and_return:
 		q_abs_tot = 0.;
 		q_loss_tot = 0.;
 		q_loss_spec_tot = 0.;
+
 		for(int i=0; i<nSCA; i++)
 		{
-			q_abs_tot += q_abs_SCAtot[i]*1.e-6*float(nLoops);
-			q_loss_tot += q_loss_SCAtot[i]*1.e-6*float(nLoops);
+			q_abs_tot += q_abs_SCAtot[i] * 1.e-6;               //*float(nLoops);
+			q_loss_tot += q_loss_SCAtot[i] * 1.e-6;             //*float(nLoops);
 			q_loss_spec_tot += q_1abs_tot[i]/float(nSCA);
 		}
 		
+		if(accept_loc == 1)
+		{
+			q_abs_tot *= float(nLoops);
+			q_loss_tot *= float(nLoops);
+		}
+
 		double
 			SCA_par_tot_out = SCA_par_tot * 1.e-6,
 			Pipe_hl_out = Pipe_hl * 1.e-6,
