@@ -24,6 +24,8 @@ static var_info _cm_vtab_pv6parmod[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "elev",                       "Site elevation",                 "m",      "",                    "Weather",      "*",                        "",                      "" },
 	
 
+	{ SSC_INPUT,        SSC_ARRAY,       "opvoltage",               "Module operating voltage",       "Volt",    "",                     "CEC 6 Parameter PV Module Model",      "?"                        "",              "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "area",                    "Module area",                    "m2",      "",                     "CEC 6 Parameter PV Module Model",      "*",                       "",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Vmp",                     "Maximum power point voltage",    "V",       "",                     "CEC 6 Parameter PV Module Model",      "*",                       "",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Imp",                     "Maximum power point current",    "A",       "",                     "CEC 6 Parameter PV Module Model",      "*",                       "",              "" },
@@ -108,6 +110,15 @@ public:
 		if ( height == 1 )
 			tc.ffv_wind = 0.61;
 
+		ssc_number_t *opvoltage = 0;
+		if ( is_assigned("opvoltage") )
+		{
+			size_t opvlen = 0;
+			opvoltage = as_array( "opvoltage", &opvlen );
+			if ( opvlen != arr_len )
+				throw general_error("operating voltage array must be same length as input vectors");
+		}
+
 		ssc_number_t *p_tcell = allocate("tcell", arr_len);
 		ssc_number_t *p_volt = allocate("dc_voltage", arr_len);
 		ssc_number_t *p_amp = allocate("dc_current", arr_len);
@@ -130,9 +141,13 @@ public:
 
 			pvoutput_t out;
 
+			double opv = -1; // by default, calculate MPPT
+			if ( opvoltage != 0 )
+				opv = opvoltage[i];
+
 			double tcell = in.Tdry;
-			if (! tc( in, mod, -1, tcell ) ) throw general_error("error calculating cell temperature", (float)i);
-			if (! mod( in, tcell, -1, out ) ) throw general_error( "error calculating module power and temperature with given parameters", (float) i);
+			if (! tc( in, mod, opv, tcell ) ) throw general_error("error calculating cell temperature", (float)i);
+			if (! mod( in, tcell, opv, out ) ) throw general_error( "error calculating module power and temperature with given parameters", (float) i);
 
 			p_tcell[i] = (ssc_number_t)out.CellTemp;
 			p_volt[i] = (ssc_number_t)out.Voltage;
