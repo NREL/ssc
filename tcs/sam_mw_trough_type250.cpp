@@ -2484,7 +2484,7 @@ set_outputs_and_return:
 		double W_dot_pump_out = W_dot_pump/1000.;		//[MW] from kW
 		double E_fp_tot_out = E_fp_tot*1.e-6;			//[MW] from W
 		double T_sys_c_out = T_sys_c - 273.15;			//[C] from K
-		double EqOpteff_out = EqOpteff*ftrack*CosTh_ave;
+		double EqOpteff_out = EqOpteff*CosTh_ave;
 		double m_dot_htf_tot_out = m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
 		double E_bal_startup_out = E_bal_startup/(dt*1.e6);	//[MW] from J
 		q_inc_sf_tot = Ap_tot*I_b/1.e6;
@@ -2509,7 +2509,7 @@ set_outputs_and_return:
 			SCA_par_tot_out = SCA_par_tot * 1.e-6,
 			Pipe_hl_out = Pipe_hl * 1.e-6,
 			Theta_ave_out = Theta_ave/d2r,
-			CosTh_ave_out = CosTh_ave * ftrack;
+			CosTh_ave_out = CosTh_ave;
 		
 		dni_costh = I_b*CosTh_ave;
 		qinc_costh = dni_costh * Ap_tot/1.e6;
