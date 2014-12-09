@@ -154,8 +154,10 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",                     "Net pre-tax cash salvage value",	                               "%",	 "",					  "Salvage Value",             "?=10",                     "MIN=0,MAX=100",      			"" },
 /* DHF market specific inputs - leveraged partnership flip */                     
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",                          "PPA solution mode",                                             "0/1",   "0=solve ppa,1=specify ppa", "Solution Mode",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",                     "PPA solution tolerance",                                        "",   "", "Solution Mode",         "?=1e-3",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",                           "PPA solution minimum ppa",                                      "cents/kWh",   "", "Solution Mode",         "?=0",                     "",            "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_tolerance", "PPA solution tolerance", "", "", "Solution Mode", "?=1e-3", "", "" },
+
+	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_tolerance", "PPA solution tolerance", "", "", "Solution Mode", "?=1e-5", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_min", "PPA solution minimum ppa", "cents/kWh", "", "Solution Mode", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                                      "cents/kWh",   "", "Solution Mode",         "?=100",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",                     "",   "", "Solution Mode",         "?=100",                     "INTEGER,MIN=1",            "" },
                                                                                   
@@ -2142,9 +2144,11 @@ public:
 			if (flip_year <=0) 
 			{
 				double residual = cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent;
-				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (  fabs( residual ) < ppa_soln_tolerance ) ) 
+				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (  fabs( residual ) < ppa_soln_tolerance ) 	
+					&& (flip_target_percent > ppa_soln_tolerance) // added condition statement for target irr = 0 12/9/14
+					)
 				{
-					flip_year=i;
+					flip_year = i;
 					cf.at(CF_project_return_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
 				}
 				else if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_project_return_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
@@ -3400,7 +3404,8 @@ public:
 	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-6, int max_iterations=100 )
 	{
 		int number_of_iterations=0;
-		double calculated_irr=0;
+//		double calculated_irr = 0;
+		double calculated_irr = -999;
 
 
 		if (count < 1)
@@ -3455,7 +3460,8 @@ public:
 
 			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
 			{
-				calculated_irr = 0.0; // did not converge
+//				calculated_irr = 0.0; // did not converge
+				calculated_irr = -999; // did not converge
 			}
 
 		}
@@ -3465,8 +3471,9 @@ public:
 
 	double irr_calc( int cf_line, int count, double initial_guess, double tolerance, int max_iterations, double scale_factor, int &number_of_iterations, double &residual )
 	{
-		double calculated_irr=0;
-		double deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
+//		double calculated_irr = 0;
+		double calculated_irr = -999;
+		double deriv_sum = irr_derivative_sum(initial_guess, cf_line, count);
 		if (deriv_sum != 0.0)
 			calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
 		else
