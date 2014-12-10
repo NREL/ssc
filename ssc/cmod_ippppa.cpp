@@ -45,7 +45,7 @@ static var_info vtab_ippppa[] = {
 
 
 /* Recapitalization */
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_recapitalization",		"Recapitalization expenses",	"0/1",   "0=None,1=Recapitalize",                      "ippppa",             "?=0",						   "INTEGER,MIN=0",                 "" },
+	{ SSC_INOUT, SSC_NUMBER, "system_use_recapitalization", "Recapitalization expenses", "0/1", "0=None,1=Recapitalize", "ippppa", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_recapitalization_cost",	"Recapitalization cost",	"$",   "",                      "ippppa",             "?=0",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation", "Recapitalization escalation (above inflation)",					"%",	 "",					  "ippppa",             "?=0",                     "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_ARRAY,      "system_recapitalization_boolean",		"Recapitalization boolean",	"",   "",                      "ippppa",             "?=0",						   "",                              "" },

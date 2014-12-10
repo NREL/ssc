@@ -17,7 +17,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
 /* Recapitalization */
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_recapitalization",		"Recapitalization expenses",	"0/1",   "0=None,1=Recapitalize",                      "DHF",             "?=0",						   "INTEGER,MIN=0",                 "" },
+	{ SSC_INOUT, SSC_NUMBER, "system_use_recapitalization", "Recapitalization expenses", "0/1", "0=None,1=Recapitalize", "DHF", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_recapitalization_cost",	"Recapitalization cost",	"$",   "",                      "DHF",             "?=0",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation", "Recapitalization escalation (above inflation)",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		"Recapitalization boolean",	"",   "",                      "DHF",             "?=0",						   "",                              "" },
