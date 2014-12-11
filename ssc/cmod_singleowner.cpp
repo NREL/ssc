@@ -2151,7 +2151,8 @@ public:
 					flip_year = i;
 					cf.at(CF_project_return_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
 				}
-				else if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  ( cf.at(CF_project_return_aftertax_max_irr,i) >= flip_target_percent ) ) flip_year=i;
+//				else if ((cf.at(CF_project_return_aftertax_max_irr, i - 1) < flip_target_percent) && (cf.at(CF_project_return_aftertax_max_irr, i) >= flip_target_percent)) flip_year = i;
+				else if ((cf.at(CF_project_return_aftertax_max_irr, i - 1) < flip_target_percent) && (fabs(cf.at(CF_project_return_aftertax_max_irr, i) - flip_target_percent)) < ppa_soln_tolerance) flip_year = i;
 			}
 
 
@@ -3405,7 +3406,7 @@ public:
 	{
 		int number_of_iterations=0;
 //		double calculated_irr = 0;
-		double calculated_irr = -999;
+		double calculated_irr = std::numeric_limits<double>::quiet_NaN();
 
 
 		if (count < 1)
@@ -3461,7 +3462,7 @@ public:
 			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
 			{
 //				calculated_irr = 0.0; // did not converge
-				calculated_irr = -999; // did not converge
+				calculated_irr = std::numeric_limits<double>::quiet_NaN(); // did not converge
 			}
 
 		}
@@ -3472,7 +3473,7 @@ public:
 	double irr_calc( int cf_line, int count, double initial_guess, double tolerance, int max_iterations, double scale_factor, int &number_of_iterations, double &residual )
 	{
 //		double calculated_irr = 0;
-		double calculated_irr = -999;
+		double calculated_irr = std::numeric_limits<double>::quiet_NaN();
 		double deriv_sum = irr_derivative_sum(initial_guess, cf_line, count);
 		if (deriv_sum != 0.0)
 			calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
