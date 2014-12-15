@@ -26,7 +26,6 @@ copy apiwrappers\csharp\App.config sdk-release\languages\csharp
 copy apiwrappers\csharp\Program.cs sdk-release\languages\csharp
 copy apiwrappers\csharp\TestSSCAPI.csproj sdk-release\languages\csharp
 copy apiwrappers\csharp\TestSSCAPI.sln sdk-release\languages\csharp
-copy apiwrappers\csharp\TestSSCAPI.v11.suo sdk-release\languages\csharp
 copy apiwrappers\csharp\TestSSCAPIForm.cs sdk-release\languages\csharp
 copy apiwrappers\csharp\TestSSCAPIForm.Designer.cs sdk-release\languages\csharp
 copy apiwrappers\csharp\TestSSCAPIForm.resx sdk-release\languages\csharp
@@ -63,6 +62,7 @@ copy examples\abilene.tm2 sdk-release\examples
 copy examples\daggett.tm2 sdk-release\examples
 copy examples\rocksprings.tm2 sdk-release\examples
 copy "examples\USA AZ Phoenix (TMY2).csv" sdk-release\examples
+copy examples\example1_pvwatts.c sdk-release\examples
 copy examples\pvwatts1ts_ex.c sdk-release\examples
 copy examples\pvwattsv5run.c sdk-release\examples
 copy examples\ver.c sdk-release\examples
@@ -71,6 +71,7 @@ copy examples\ssc-belpe.lk sdk-release\examples
 copy examples\ssc-cashloan.lk sdk-release\examples
 copy examples\ssc-pvsamv1.lk sdk-release\examples
 copy examples\ssc-utilityrate3.lk sdk-release\examples
+copy examples\ssc-pvres.lk sdk-release\examples
 
 
 copy ..\lk\docs\lk_guide.pdf sdk-release\
