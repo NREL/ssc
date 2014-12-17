@@ -18,22 +18,20 @@ void Land::isBoundsArray(bool &val){_is_bounds_array = val;}
 
 void Land::Create(var_map &V)
 {
-	setVar("max_scaled_rad", _max_scaled_rad, V, 7.5, "(0.,100.]");		//Maximum radius (in units of tower height) for positioning of the heliostats
-	setVar("min_scaled_rad", _min_scaled_rad, V, 0.75, "[0.,100.]");		//Minimum radius (in units of tower height) for positioning of the heliostats
-	setVar("max_fixed_rad", _max_fixed_rad, V, 1500., "(0.,9e99]");		//Outer land boundary for circular land plot
-	setVar("min_fixed_rad", _min_fixed_rad, V, 100., "(0.,9e99]");		//Inner land boundary for circular land plot
-	setVar("topo_grid", _topo_grid, V);		//Regular grid of the land topology of the solar field
-	setVar("inclusions", _inclusions, V);		//Vector of arrays that specify the regions of land to include in the heliostat layout
 	setVar("exclusions", _exclusions, V);		//Vector of arrays that specify the regions of land to exclude in the heliostat layout
-	setVar("is_bounds_scaled", _is_bounds_scaled, V, true);		//Land boundary scales with tower hight value
-	setVar("is_bounds_fixed", _is_bounds_fixed, V, false);		//Land boundary has fixed limits (not more than | not less than)
+	setVar("inclusions", _inclusions, V);		//Vector of arrays that specify the regions of land to include in the heliostat layout
 	setVar("is_bounds_array", _is_bounds_array, V, false);		//Land boundary is specified by points array
+	setVar("is_bounds_fixed", _is_bounds_fixed, V, false);		//Land boundary has fixed limits (not more than | not less than)
+	setVar("is_bounds_scaled", _is_bounds_scaled, V, true);		//Land boundary scales with tower hight value
 	setVar("is_land_max_opt", _is_land_max_opt, V, true);		//Optimize outer land boundary
-	setVar("is_land_max_restrict", _is_land_max_restrict, V, true);		//Restrict outer land boundary range
-	setVar("land_max_opt_max", _land_max_opt_max, V, 6., "[1,20]");		//Maximum outer boundary value
-	setVar("land_max_opt_min", _land_max_opt_min, V, 23., "[1,20]");		//Minimum outer boundary value
-	setVar("bound_area", _bound_area, V, 0.);		//Land area occupied by heliostats. This value is calculated from the heliostat field layout positions.
-	
+	setVar("is_land_max_restrict", _is_land_max_restrict, V, false);		//Restrict outer land boundary range
+	setVar("land_max_opt_max", _land_max_opt_max, V, 1.5, "[.01,10]");		//Multiplier on max outer boundary to determine maximum allowable value
+	setVar("land_max_opt_min", _land_max_opt_min, V, 0.8, "[.01,10]");		//Multiplier on max outer boundary to determine minimum allowable value
+	setVar("max_fixed_rad", _max_fixed_rad, V, 1500., "(0.,9e99]");		//Outer land boundary for circular land plot
+	setVar("max_scaled_rad", _max_scaled_rad, V, 7.5, "(0.,100.]");		//Maximum radius (in units of tower height) for positioning of the heliostats
+	setVar("min_fixed_rad", _min_fixed_rad, V, 100., "(0.,9e99]");		//Inner land boundary for circular land plot
+	setVar("min_scaled_rad", _min_scaled_rad, V, 0.75, "[0.,100.]");		//Minimum radius (in units of tower height) for positioning of the heliostats
+	setVar("topo_grid", _topo_grid, V);		//Regular grid of the land topology of the solar field
 }
 
 void Land::Clean(){

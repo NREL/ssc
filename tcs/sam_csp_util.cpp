@@ -1102,7 +1102,7 @@ double enth_lim::check( double h_in )
 		return h_in;
 }
 
-void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matrix_t<int> & flow_pattern )
+bool CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matrix_t<int> & flow_pattern, std::string *messages )
 {
 	/* !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	! This subroutine takes the number of panels, the requested flow type, and 
@@ -1110,41 +1110,97 @@ void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
 	! WF passes, this code is modified from the version in Type222
 	!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 	
+    if(n_panels % 2 != 0){
+        if( messages )
+            messages->append("The number of panels must be divisible by 2. Simulation initialization failed.\n");
+        return false;
+    }
+    
 	int n_p_quarter = n_panels/4;
 
 	switch( flow_type )
 	{
 	case 1:
+    {
 		/* This flow pattern begins at the northmost 2 panels, splits into 2 flows, and crosses over
 		at the quarter position, exiting in 2 flows on the southmost 2 panels. This is the flow
 		configuration that was used for SOLAR II
-		!Example = [13,14,15,16,17,18,6,5,4,3,2,1] [12,11,10,9,8,7,19,20,21,22,23,24] */
+		!Example = [13,14,15,16,17,18,6,5,4,3,2,1] [12,11,10,9,8,7,19,20,21,22,23,24] 
+
+        If the number of panels is not divisible by 4, the pre-crossover sections have 1 more panel 
+        than the post-crossover sections.
+        Example = [7, 6, 5, 4, <> 12, 13, 14] [8, 9, 10, 11, <> 3, 2, 1]
+        
+        */
 		n_lines = 2;
 		flow_pattern.resize( n_lines, n_panels/n_lines );
 
-		for( int i = 0; i < n_p_quarter; i++)
-		{
-			flow_pattern.at( 0, n_p_quarter + i) = n_p_quarter - 1 - i;			// NE Quadrant - final half of flow path 0
-			flow_pattern.at( 1, i ) = 2*n_p_quarter - 1 - i;					// SE Quadrant - first half of flow path 1
-			flow_pattern.at( 0, i ) = 2*n_p_quarter + i;						// SW Quadrant - first half of flow path 0
-			flow_pattern.at( 1, n_p_quarter + i) = 3*n_p_quarter + i;			// NW Quadrant - final half of flow path 1
-		}
-		return;
+        double npq = (double)n_panels/4.;
+
+        int nq1, nq2;
+        if(n_panels % 4 != 0){
+            nq2 = (int)floor(npq);
+            nq1 = nq2 + 1;
+            if(messages)
+                messages->append("Flow Path Setup: Allocating " + to_string(nq1) + "panels to flow quadrant 1 and " 
+                                 + to_string(nq2) + " panels to flow quadrant 2.\n");
+        }
+        else{
+            nq2 = nq1 = (int)floor(npq + 1.e-6);
+        }
+        
+        int nhalf = n_panels/n_lines;
+
+        for( int i=0; i<nq1; i++){
+			flow_pattern.at( 0, i ) = nhalf + i;						// NE Quadrant - first half of flow path 0
+            flow_pattern.at( 1, i ) = nhalf - 1 - i;					// NW Quadrant - first half of flow path 1
+        }
+        for( int i=0; i<nq2; i++){
+			flow_pattern.at( 0, nq1 + i) = nq2 - 1 - i;	        		// SW Quadrant - final half of flow path 0
+			flow_pattern.at( 1, nq1 + i) = n_panels - nq2 + i;			// SE Quadrant - final half of flow path 1
+        }
+
+        return true;
+    }
 	case 2:
+    {
 		 /* This flow pattern is the same as flow pattern #1, but in reverse. The salt enters
 		on the 2 southmost panels, crosses over, and exits on the 2 northmost panels.
-		Example = [1,2,3,4,5,6,17,16,15,14,13,12] [24,23,22,21,20,19,18,7,8,9,10,11,12] */
+		Example = [1,2,3,4,5,6,17,16,15,14,13,12] [24,23,22,21,20,19,18,7,8,9,10,11,12] 
+        
+        If the number of panels is not divisible by 4, the post-crossover sections have 1 more panel 
+        than the pre-crossover sections.
+        Example = [1, 2, 3 <> 11, 10, 9, 8] [14, 13, 12, <> 4, 5, 6, 7]
+        */
 		n_lines = 2;
 		flow_pattern.resize( n_lines, n_panels/n_lines );
+        
+        double npq = (double)n_panels/4.;
 
-		for( int i = 0; i < n_p_quarter; i++)
-		{
-			flow_pattern.at( 0, i ) = i;										// NE Quadrant - first half of flow path 0
-			flow_pattern.at( 1, n_p_quarter + i ) = n_p_quarter + i;			// SE Quadrant - final half of flow path 1
-			flow_pattern.at( 0, n_p_quarter + i ) = 3*n_p_quarter - 1 - i;		// SW Quadrant - final half of flow path 0
-			flow_pattern.at( 1, i ) = 4*n_p_quarter - 1 - i;					// NW Quadrant - first half of flow path 1
-		}
-		return;
+        int nq1, nq2;
+        if(n_panels % 4 != 0){
+            nq1 = (int)floor(npq);
+            nq2 = nq1 + 1;
+            if(messages)
+                messages->append("Flow Path Setup: Allocating " + to_string(nq1) + " panels to flow quadrant 1 and " 
+                                 + to_string(nq2) + " panels to flow quadrant 2.\n");
+        }
+        else{
+            nq2 = nq1 = (int)floor(npq + 1.e-6);
+        }
+        
+        int nhalf = n_panels/n_lines;
+        for( int i=0; i<nq1; i++){
+			flow_pattern.at( 0, i ) = i;			        			// SW Quadrant - first half of flow path 0
+            flow_pattern.at( 1, i ) = n_panels - 1 - i;					// SE Quadrant - first half of flow path 1
+        }
+        for( int i=0; i<nq2; i++){
+			flow_pattern.at( 0, nq1 + i) = nhalf + nq2 - 1 - i;			// NE Quadrant - second half of flow path 0
+			flow_pattern.at( 1, nq1 + i) = nq1 + i;	        		    // NW Quadrant - second half of flow path 1
+        }
+
+		return true;
+    }
 	case 3:
 		/* This flow pattern has 2 separate flows that enter in 2 of the northmost panels
 		  and flow around (without crossing over), exiting at the 2 southmost panels */
@@ -1156,7 +1212,7 @@ void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
 			flow_pattern.at( 0, i ) = n_panels/2 - 1 - i;
 			flow_pattern.at( 1, i ) = n_panels/2 + i;
 		}
-		return;
+		return true;
 	case 4:
 		/* This flow pattern has 2 separate flows that enter in 2 of the southmost panels
 			and flow around (without crossing over), exiting at the 2 northmost panels */
@@ -1168,7 +1224,7 @@ void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
 			flow_pattern.at( 0, i ) = i;
 			flow_pattern.at( 1, i ) = n_panels - 1 - i;
 		}
-		return;
+		return true;
 	case 5:
 		/* This flow type enters on a panel at the southmost side of the receiver,
 			travels completely around the receiver in a clockwise direction,
@@ -1180,7 +1236,7 @@ void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
 		{
 			flow_pattern.at( 0, i ) = i;
 		}
-		return;
+		return true;
 	case 6:
 		/* This flow type enters on a panel at the southmost side of the receiver,
 			travels completely around the receiver in a counter-clockwise direction,
@@ -1190,7 +1246,7 @@ void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
 
 		for( int i = 0; i < n_panels; i++ )
 			flow_pattern.at( 0, i ) = n_panels - 1 - i;
-		return;
+		return true;
 	case 7:
 		/* This flow type enters on a panel at the northmost side of the receiver,
 			travels completely around the receiver in a clockwise direction,
@@ -1200,7 +1256,7 @@ void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
 
 		for( int i = 0; i < n_panels; i++ )
 			flow_pattern.at( 0, i ) = n_panels/2 + i - i/(n_panels/2)*n_panels;
-		return;
+		return true;
 	case 8:
 		/* This flow type enters on a panel at the northmost side of the receiver,
 			travels completely around the receiver in a counter-clockwise direction,
@@ -1210,9 +1266,9 @@ void CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
 
 		for( int i = 0; i < n_panels; i++ )
 			flow_pattern.at( 0, i ) = n_panels/2 - 1 - i + i/(n_panels/2)*n_panels;
-		return;
+		return true;
 	};
-	return;
+	return false;
 }
 
 /******************************************************************************************************************************

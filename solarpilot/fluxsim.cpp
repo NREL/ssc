@@ -2,7 +2,7 @@
 
 void FluxSimData::Create(var_map &V)
 {
-    setVar("aim_method", _aim_method, V, 3);		//Method for determining the aim point for each heliostat
+	setVar("aim_method", _aim_method, V, 3);		//Method for determining the aim point for each heliostat
 	setVar("class_name", _class_name, V, "Performance Simulation");		//Class name
 	setVar("cloud_depth", _cloud_depth, V, 250.);		//Depth of the cloud shape
 	setVar("cloud_loc_x", _cloud_loc_x, V, 200.);		//Base location of the cloud(s) relative to the tower position - X dimension
@@ -42,5 +42,5 @@ void FluxSimData::Create(var_map &V)
 	setVar("is_autoscale", _is_autoscale, V, true);		//Autoscale the Z-axis of the contour plot
 	setVar("plot_zmax", _plot_zmax, V, 1000.);		//Z-axis maximum value
 	setVar("plot_zmin", _plot_zmin, V, 0.);		//Z-axis minimum value
-    setVar("flux_data", _flux_data, V);     //Flux data in string format
+	setVar("flux_data", _flux_data, V, "");		//2D matrix of flux data
 }
