@@ -224,6 +224,7 @@ struct AutoOptHelper
     vector<vector<double> > m_all_points;
     vector<double> m_normalizers;
     vector<double> m_objective;
+    vector<double> m_flux;
     vector<double*> m_opt_vars;
     vector<string> m_opt_names;
     sp_receivers *m_recs;
@@ -250,6 +251,7 @@ struct AutoOptHelper
         m_all_points.clear();
         m_normalizers.clear();
         m_objective.clear();
+        m_flux.clear();
         m_opt_vars.clear();
         m_opt_names.clear();
     };
@@ -291,6 +293,7 @@ struct AutoOptHelper
         m_autopilot->PostEvaluationUpdate(m_iter, current, m_normalizers, obj, flux);
 
         m_objective.push_back(obj);
+        m_flux.push_back(flux);
                 
         return obj;
     };
@@ -1326,7 +1329,10 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 	vector<double>
 		upper_range,	//A vector of upper variable limits
 		lower_range;	//A vector of lower variable limits
-	if(opt.is_optimize_tht){
+	vector<bool>
+        is_range_constr;
+    if(opt.is_optimize_tht){
+        names.push_back("THT");
         names.push_back("THT");
 		optvars.push_back( &layout.h_tower );
 		if(opt.is_range_constr_tht){
@@ -1335,9 +1341,10 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 		else
 		{
-			lower_range.push_back( .1 );
-			upper_range.push_back( 10. );
+			lower_range.push_back( .5 );
+			upper_range.push_back( 2. );
 		}
+        is_range_constr.push_back(opt.is_range_constr_tht);
 	}
 	if(opt.is_optimize_rec_aspect){
         names.push_back("Aspect");
@@ -1348,9 +1355,10 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 		else
 		{
-			lower_range.push_back( .1 );
-			upper_range.push_back( 10. );
+			lower_range.push_back( .5 );
+			upper_range.push_back( 2. );
 		}
+        is_range_constr.push_back(opt.is_range_constr_aspect);
 	}
 	if(opt.is_optimize_rec_height){
         names.push_back("RecHeight");
@@ -1361,9 +1369,10 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 		else
 		{
-			lower_range.push_back( .1 );
-			upper_range.push_back( 10. );
+			lower_range.push_back( .5 );
+			upper_range.push_back( 2. );
 		}
+        is_range_constr.push_back(opt.is_range_constr_rech);
 	}
 	if(opt.is_optimize_bound){
         names.push_back("MaxRad");
@@ -1374,23 +1383,25 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		}
 		else
 		{
-			lower_range.push_back( .1 );
-			upper_range.push_back( 10. );
+			lower_range.push_back( .5 );
+			upper_range.push_back( 2. );
 		}
+        is_range_constr.push_back(opt.is_range_constr_bound);
 	}
 
     switch(opt.method)
     {
     case sp_optimize::METHOD::RSGS:  //Response surface gradient search - original method
-	    return Optimize(optvars, upper_range, lower_range, opt, recs, layout);
+	    return Optimize(optvars, upper_range, lower_range, is_range_constr, opt, recs, layout);
         break;
     default:
-        return OptimizeAuto( optvars, upper_range, lower_range, opt, recs, layout, &names);
+        return OptimizeAuto( optvars, upper_range, lower_range, is_range_constr, opt, recs, layout, &names);
     }
 
 }
 
-bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
+bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, 
+                         sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
 {
 	//Number of variables to be optimized
 	int nvars = (int)optvars.size();
@@ -1896,13 +1907,26 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 	
 
 	//copy the optimization data to the optimization structure
-	opt.setOptimizationSimulationHistory(all_sim_points, objective, max_flux);
+    vector<vector<double> > dimsimpt;
+    size_t nr = all_sim_points.size();
+    size_t nc = all_sim_points.front().size();
+
+    for(size_t i=0; i<nr; i++){
+        if( nc == 0 ) break;
+        vector<double> tmp;
+        for(size_t j=0; j<nc; j++){
+            tmp.push_back( all_sim_points.at(i).at(j) * normalizers.at(j) );
+        }
+        dimsimpt.push_back(tmp);
+    }
+	opt.setOptimizationSimulationHistory(dimsimpt, objective, max_flux);
 
 	return true;
 
 }
 
-bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
+bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, 
+                             sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
 {
     /* 
     Use canned algorithm to optimize
@@ -1946,6 +1970,16 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     nlobj.set_initial_step( vector<double>( optvars.size(), opt.max_step ) );
     nlobj.set_maxeval( opt.max_iter );
 
+    vector<double>
+        range_l, 
+        range_u;
+    for(int i=0; i<(int)lower_range.size(); i++)
+        range_l.push_back( is_range_constr.at(i) ? lower_range.at(i) : -1e9 );
+    for(int i=0; i<(int)upper_range.size(); i++)
+        range_u.push_back( is_range_constr.at(i) ? upper_range.at(i) : 1e9 );
+    //nlobj.set_lower_bounds(range_l);
+    //nlobj.set_upper_bounds(range_u);
+    
     //Number of variables to be optimized
 	int nvars = (int)optvars.size();
 	//Store the initial dimensional value of each variable
@@ -1976,11 +2010,43 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         nlopt::result resopt = nlobj.optimize( start, fmin );
         
         _summary_siminfo->addSimulationNotice( ol.c_str() );
+        
+        int iopt = 0;
+        double objbest = 9.e9;
+        for(int i=0; i<(int)AO.m_all_points.size(); i++){
+            double obj = AO.m_objective.at(i);
+            if( obj < objbest ){
+                objbest = obj;
+                iopt = i;
+            }
+        }
 
+        //write the optimal point found
+        ostringstream oo;
+        oo << "Best point found:\n";
+        for(int i=0; i<(int)optvars.size(); i++)
+            oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) * AO.m_normalizers.at(i) << "   ";
+        oo << "\mObjective: " << objbest;
+        _summary_siminfo->addSimulationNotice(oo.str() );
     }
     catch(...){
         return false;
     }
+
+    //copy the optimization data to the optimization structure
+    vector<vector<double> > dimsimpt;
+    size_t nr = AO.m_all_points.size();
+    size_t nc = AO.m_all_points.front().size();
+
+    for(size_t i=0; i<nr; i++){
+        if( nc == 0 ) break;
+        vector<double> tmp;
+        for(size_t j=0; j<nc; j++){
+            tmp.push_back( AO.m_all_points.at(i).at(j) * AO.m_normalizers.at(j) );
+        }
+        dimsimpt.push_back(tmp);
+    }
+    opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
 
     return true;
 }

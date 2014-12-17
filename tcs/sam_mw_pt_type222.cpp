@@ -413,8 +413,12 @@ public:
 		//call flowPatterns(N_panels,flowtype,Flow_pattern,salt_out,nlines)
 		//m_n_lines = 2;	// Need remaining flow patterns
 		//m_flow_pattern.resize( m_n_lines, m_n_panels/m_n_lines );		// Try to use flow pattern in direct steam receiver
-		
-		CSP::flow_patterns( m_n_panels, flowtype, m_n_lines, m_flow_pattern );
+		std::string flow_msg;
+		if(! CSP::flow_patterns( m_n_panels, flowtype, m_n_lines, m_flow_pattern, &flow_msg ) )
+        {
+            message(TCS_ERROR, flow_msg.c_str() );
+            return -1;
+        }
 		
 		// ****** Is this necessary ?!? ******************
 		// Set outputs

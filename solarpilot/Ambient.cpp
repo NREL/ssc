@@ -78,35 +78,35 @@ void Ambient::Create(var_map &V)
 	_date_time.setDefaults();
 	
 	//Set defaults for the ambient object
-	setVar("sun_type", _suntype, V, 1, "[0,3]");		//Sunshape model - {0=point sun, 1=limb darkened sun, 2=square wave sun, 3=user sun}
-	setVar("sun_csr", _sun_csr, V, 0.1, "[0,1)");		//Ratio of solar flux contained in the circumsolar ring over the solar disc flux
-	setVar("sun_rad_limit", _sun_rad_limit, V, 4.65, "(0,1000]");		//Half-angle of sunshape size (4.65mrad for Pillbox, 2.73mrad for Gaussian)
-	setVar("insol_type", _insol_type, V, 2, "[-1,4]");		//Model used to determine insolation as a function of time
+	setVar("atm_coefs", _atm_coefs, V);		//Atmospheric attenuation coefficients for user-defined analysis
+	setVar("atm_model", _atm_model, V, 0, "[0,3]");		//Atmospheric attenuation model {0=25km Barstow, 1 = 5km Barstow, 2 = user defined}
+	setVar("date_mday", _date_time._mday, V, _date_time._mday, "[1,31]");		//Day of the month setting for date object
+	setVar("date_month", _date_time._month, V, _date_time._month, "[1,12]");		//Month setting for date object
+	setVar("date_wday", _date_time._wday, V, _date_time._wday, "[1,7]");		//Day of the week setting for date object
+	setVar("date_yday", _date_time._yday, V, _date_time._yday, "[1,365]");		//Day of the year  setting for date object
+	setVar("date_year", _date_time._year, V, _date_time._year, "[0.,2150.]");		//Year setting for date object
 	setVar("del_h2o", _del_h2o, V, 20., "[0,9e9]");		//Atmospheric precipitable water depth for use in the Allen insolation model
-	setVar("dpres", _dpres, V, 1., "[0,2]");		//Local ambient pressure relative to sea-level pressure
 	setVar("dni_layout", _dni_layout, V, 950., "[0,9999]");		//DNI to use during all layout calculations. CONSTANT model only.
-	setVar("weather_file", _weather_file, V, "CA Daggett.tm2");		//Weather file to use for analysis
-	setVar("wf_type", _wf_type, V, "TM2");		//weather file type {TM2, TM3, SMW, EPW, USER}
-	setVar("wf_data", _wf_data, V);		//Data entries in the weather file
-	setVar("user_sun", _user_sun, V);		//Array of intensity at various angles from the centroid of the sun
-	setVar("sun_pos_map", _sun_pos, V);		//Map of sun positions to use for calculations
-	setVar("sun_zenith", _zenith, V, 0.5, "[0.,90]");		//User-set solar zenith angle
-	setVar("sun_azimuth", _azimuth, V, 0., "[-180.,180.]");		//User-set solar azimuth angle
+	setVar("dpres", _dpres, V, 1., "[0,2]");		//Local ambient pressure relative to sea-level pressure
+	setVar("elevation", _elevation, V, 588., "[-424.,8850.]");		//Plant mean elevation
+	setVar("insol_type", _insol_type, V, -1, "[-1,4]");		//Model used to determine insolation as a function of time
 	setVar("latitude", _latitude, V, 34.867, "[-90.,90.]");		//Plant latitude
 	setVar("longitude", _longitude, V, -116.783, "[-180.,180.]");		//Plant longitude
-	setVar("elevation", _elevation, V, 588., "[-424.,8850.]");		//Plant mean elevation
-	setVar("atm_model", _atm_model, V, 0, "[0,3]");		//Atmospheric attenuation model {0=25km Barstow, 1 = 5km Barstow, 2 = user defined}
-	setVar("atm_coefs", _atm_coefs, V);		//Atmospheric attenuation coefficients for user-defined analysis
-	setVar("time_zone", _time_zone, V, -8., "[-12,12]");		//Time zone
-	setVar("date_year", _date_time._year, V, _date_time._year, "[0.,2150.]");		//Year setting for date object
-	setVar("date_month", _date_time._month, V, _date_time._month, "[1,12]");		//Month setting for date object
-	setVar("date_yday", _date_time._yday, V, _date_time._yday, "[1,365]");		//Day of the year  setting for date object
-	setVar("date_mday", _date_time._mday, V, _date_time._mday, "[1,31]");		//Day of the month setting for date object
-	setVar("date_wday", _date_time._wday, V, _date_time._wday, "[1,7]");		//Day of the week setting for date object
+	setVar("sun_azimuth", _azimuth, V, 0., "[-180.,180.]");		//User-set solar azimuth angle
+	setVar("sun_csr", _sun_csr, V, 0.1, "[0,1)");		//Ratio of solar flux contained in the circumsolar ring over the solar disc flux
+	setVar("sun_pos_map", _sun_pos, V);		//Map of sun positions to use for calculations
+	setVar("sun_rad_limit", _sun_rad_limit, V, 4.65, "(0,1000]");		//Half-angle of sunshape size (4.65mrad for Pillbox, 2.73mrad for Gaussian)
+	setVar("sun_type", _suntype, V, 1, "[0,3]");		//Sunshape model - {0=point sun, 1=limb darkened sun, 2=square wave sun, 3=user sun}
+	setVar("sun_zenith", _zenith, V, 0.5, "[0.,90]");		//User-set solar zenith angle
 	setVar("time_hour", _date_time._hour, V, _date_time._hour, "[0,24)");		//Hour of the day setting for date object
 	setVar("time_min", _date_time._min, V, _date_time._min, "[0,60)");		//Minute of the hour setting for date object
-	setVar("time_sec", _date_time._sec, V, _date_time._sec, "[0,60)");		//Second of the minute setting for date object
 	setVar("time_ms", _date_time._ms, V, _date_time._ms, "[0,1000)");		//Millisecond of the second setting for date object
+	setVar("time_sec", _date_time._sec, V, _date_time._sec, "[0,60)");		//Second of the minute setting for date object
+	setVar("time_zone", _time_zone, V, -8., "[-12,12]");		//Time zone
+	setVar("user_sun", _user_sun, V);		//Array of intensity at various angles from the centroid of the sun
+	setVar("weather_file", _weather_file, V, "CA Daggett.tm2");		//Weather file to use for analysis
+	setVar("wf_data", _wf_data, V);		//Data entries in the weather file
+	setVar("wf_type", _wf_type, V, "TM2");		//weather file type {TM2, TM3, SMW, EPW, USER}
 	
 	//Unit correction
 	_latitude *= d2r;

@@ -29,41 +29,20 @@ void Financial::isPaymentFactors(bool value){_is_pmt_factors = value;}
 
 //
 void Financial::Create(var_map &V){
-	setVar("tower_fixed_cost", _tower_fixed_cost, V, 1927000., "[0,9e9]");		//Fixed tower cost - used as the basis for scaling tower cost as a function of height
-	setVar("tower_exp", _tower_exp, V, 0.0113, "[-9e9,9e9]");		//Exponent in the equation (total cost) = (fixed cost) * exp( X * (tower height) )
-	setVar("tower_cost", _tower_cost, V, 14736146.);		//Tower cost
-	setVar("rec_ref_cost", _rec_ref_cost, V, 126200000., "[-9e9,9e9]");		//Cost of the receiver at the sizing indicated by the reference receiver area
-	setVar("rec_ref_area", _rec_ref_area, V, 1571.);		//Receiver surface area corresponding to the receiver reference cost
-	setVar("rec_cost_exp", _rec_cost_exp, V, 0.7, "[-9e9,9e9]");		//Exponent in the equation (total cost) = (ref. cost) * ( (area) / (ref. area) ) ^ X
-	setVar("rec_cost", _rec_cost, V, 84944751.6);		//Receiver cost
-	setVar("site_spec_cost", _site_spec_cost, V, 20., "[-9e9,9e9]");		//Cost per square meter of heliostat aperture area of site improvements
-	setVar("site_cost", _site_cost, V, 0.);		//Site improvements cost
-	setVar("heliostat_spec_cost", _heliostat_spec_cost, V, 180., "[-9e9,9e9]");		//Cost per square meter of heliostat aperture area of the heliostat field
-	setVar("heliostat_cost", _heliostat_cost, V, 0.);		//Heliostat field cost
-	setVar("wiring_cost", _wiring_cost, V, 0.);		//Wiring cost
-	setVar("wiring_user_spec", _wiring_user_spec, V, 9., "[-9e9,9e9]");		//Cost of wiring per square meter of heliostat aperture area
-	setVar("plant_cost", _plant_cost, V, 0.);		//Cost of the power block and balance of plant equipment
-	setVar("plant_spec_cost", _plant_spec_cost, V, 1200.);		//Cost of the power block and balance of plant equipment per kilowatt (electric) gross design power
-	setVar("tes_cost", _tes_cost, V, 0.);		//Thermal storage cost
-	setVar("tes_spec_cost", _tes_spec_cost, V, 27.);		//Cost of thermal storage per kilowatt hour (thermal) capacity
+	setVar("contingency_cost", _contingency_cost, V, 0.);		//Contingency cost
+	setVar("contingency_rate", _contingency_rate, V, 7.);		//Fraction of the direct capital costs added to account for contingency
+	setVar("cost_per_capacity", _cost_per_capacity, V, 0.);		//Estimated capital cost per capacity (net)
 	setVar("fixed_cost", _fixed_cost, V, 0.);		//Cost that does not scale with any plant parameter
-	setVar("total_direct_cost", _total_direct_cost, V, 0.);		//Sum of all direct costs
+	setVar("heliostat_cost", _heliostat_cost, V, 0.);		//Heliostat field cost
+	setVar("heliostat_spec_cost", _heliostat_spec_cost, V, 180., "[-9e9,9e9]");		//Cost per square meter of heliostat aperture area of the heliostat field
+	setVar("is_pmt_factors", _is_pmt_factors, V, false);		//Enable or disable the use of weighting factors in determining field layout
 	setVar("land_cost", _land_cost, V, 0.);		//Land cost
 	setVar("land_const", _land_const, V, 45.);		//Fixed land area that is added to the area occupied by heliostats
 	setVar("land_mult", _land_mult, V, 1.3);		//Factor multiplying the land area occupied by heliostats
 	setVar("land_area_tot", _land_area_tot, V, 0.);		//Total calculated land area
 	setVar("land_spec_cost", _land_spec_cost, V, 10000.);		//Cost of land per acre including the footprint of the land occupied by the entire plant.
-	setVar("contingency_rate", _contingency_rate, V, 7.);		//Fraction of the direct capital costs added to account for contingency
-	setVar("contingency_cost", _contingency_cost, V, 0.);		//Contingency cost
-	setVar("sales_tax_rate", _sales_tax_rate, V, 5.);		//Sales tax rate applid to the total direct capital cost
-	setVar("sales_tax_frac", _sales_tax_frac, V, 80.);		//Fraction of the direct capital costs for which sales tax applies
-	setVar("sales_tax_cost", _sales_tax_cost, V, 0.);		//Sales tax cost
-	setVar("total_indirect_cost", _total_indirect_cost, V, 0.);		//Sum of all indirect costs
-	setVar("total_installed_cost", _total_installed_cost, V, 0.);		//Sum of direct and indirect costs
-	setVar("cost_per_capacity", _cost_per_capacity, V, 0.);		//Estimated capital cost per capacity (net)
-	setVar("weekday_sched", _weekday_sched, V, "666666554444444444444555666666554444444444444555666666554444444444444555666666554444444444444555666666554444444444444555333333332222111111222333333333332222111111222333333333332222111111222333333333332222111111222333666666554444444444444555666666554444444444444555666666554444444444444555");		//Weekday dispatch period schedule
-	setVar("weekend_sched", _weekend_sched, V, "666666555555555555555555666666555555555555555555666666555555555555555555666666555555555555555555666666555555555555555555333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333666666555555555555555555666666555555555555555555666666555555555555555555");		//Weekend dispatch period schedule
-	setVar("is_pmt_factors", _is_pmt_factors, V, false);		//Enable or disable the use of weighting factors in determining field layout
+	setVar("plant_cost", _plant_cost, V, 0.);		//Cost of the power block and balance of plant equipment
+	setVar("plant_spec_cost", _plant_spec_cost, V, 1200.);		//Cost of the power block and balance of plant equipment per kilowatt (electric) gross design power
 	setVar("pmt_factor_1", _pmt_factor_1, V, 2.064);		//Relative value of electricity produced during this period compared to the average
 	setVar("pmt_factor_2", _pmt_factor_2, V, 1.2);		//Relative value of electricity produced during this period compared to the average
 	setVar("pmt_factor_3", _pmt_factor_3, V, 1.);		//Relative value of electricity produced during this period compared to the average
@@ -73,6 +52,27 @@ void Financial::Create(var_map &V){
 	setVar("pmt_factor_7", _pmt_factor_7, V, 1.);		//Relative value of electricity produced during this period compared to the average
 	setVar("pmt_factor_8", _pmt_factor_8, V, 1.);		//Relative value of electricity produced during this period compared to the average
 	setVar("pmt_factor_9", _pmt_factor_9, V, 1.);		//Relative value of electricity produced during this period compared to the average
+	setVar("rec_cost", _rec_cost, V, 84944751.6);		//Receiver cost
+	setVar("rec_cost_exp", _rec_cost_exp, V, 0.7, "[-9e9,9e9]");		//Exponent in the equation (total cost) = (ref. cost) * ( (area) / (ref. area) ) ^ X
+	setVar("rec_ref_area", _rec_ref_area, V, 1571.);		//Receiver surface area corresponding to the receiver reference cost
+	setVar("rec_ref_cost", _rec_ref_cost, V, 126200000., "[-9e9,9e9]");		//Cost of the receiver at the sizing indicated by the reference receiver area
+	setVar("sales_tax_cost", _sales_tax_cost, V, 0.);		//Sales tax cost
+	setVar("sales_tax_frac", _sales_tax_frac, V, 80.);		//Fraction of the direct capital costs for which sales tax applies
+	setVar("sales_tax_rate", _sales_tax_rate, V, 5.);		//Sales tax rate applid to the total direct capital cost
+	setVar("site_cost", _site_cost, V, 0.);		//Site improvements cost
+	setVar("site_spec_cost", _site_spec_cost, V, 20., "[-9e9,9e9]");		//Cost per square meter of heliostat aperture area of site improvements
+	setVar("tes_cost", _tes_cost, V, 0.);		//Thermal storage cost
+	setVar("tes_spec_cost", _tes_spec_cost, V, 27.);		//Cost of thermal storage per kilowatt hour (thermal) capacity
+	setVar("total_direct_cost", _total_direct_cost, V, 0.);		//Sum of all direct costs
+	setVar("total_indirect_cost", _total_indirect_cost, V, 0.);		//Sum of all indirect costs
+	setVar("total_installed_cost", _total_installed_cost, V, 0.);		//Sum of direct and indirect costs
+	setVar("tower_cost", _tower_cost, V, 14736146.);		//Tower cost
+	setVar("tower_exp", _tower_exp, V, 0.0113, "[-9e9,9e9]");		//Exponent in the equation (total cost) = (fixed cost) * exp( X * (tower height) )
+	setVar("tower_fixed_cost", _tower_fixed_cost, V, 1927000., "[0,9e9]");		//Fixed tower cost - used as the basis for scaling tower cost as a function of height
+	setVar("weekday_sched", _weekday_sched, V, "666666554444444444444555666666554444444444444555666666554444444444444555666666554444444444444555666666554444444444444555333333332222111111222333333333332222111111222333333333332222111111222333333333332222111111222333666666554444444444444555666666554444444444444555666666554444444444444555");		//Weekday dispatch period schedule
+	setVar("weekend_sched", _weekend_sched, V, "666666555555555555555555666666555555555555555555666666555555555555555555666666555555555555555555666666555555555555555555333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333666666555555555555555555666666555555555555555555666666555555555555555555");		//Weekend dispatch period schedule
+	setVar("wiring_cost", _wiring_cost, V, 0.);		//Wiring cost
+	setVar("wiring_user_spec", _wiring_user_spec, V, 9., "[-9e9,9e9]");		//Cost of wiring per square meter of heliostat aperture area
 
 	//Assign the hourly schedules
 	CreateHourlyTODSchedule(_weekday_sched, _weekend_sched, _schedule_array);

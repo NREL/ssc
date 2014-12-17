@@ -360,10 +360,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",		         "Parasitic tracking/startup power",						          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",	         "Total field efficiency",                                            "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	
-	{ SSC_OUTPUT,       SSC_MATRIX,      "eff_lookup",              "Field efficiency lookup matrix",                                    "",             "",            "Outputs",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_MATRIX,      "flux_lookup",            "Receiver flux map lookup matrix",                                   "",             "",            "Outputs",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_MATRIX,      "sunpos_eval",       "Sun positions for lookup calcs",                                    "deg",          "",            "Outputs",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "eff_lookup",           "Field efficiency lookup matrix",                                    "",             "",            "Outputs",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "flux_lookup",          "Receiver flux map lookup matrix",                                   "",             "",            "Outputs",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "sunpos_eval",          "Sun positions for lookup calcs",                                    "deg",          "",            "Outputs",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "land_area",            "Calculated solar field land area",                                  "acre",         "",            "Outputs",        "*",                       "",                      "" },
+
 
 	// These outputs come from either type 222 (external), or type 232(cavity), depending on which receiver type the user chose.
 	// Therefore, these outputs have to have the same name in both types, or TCS will throw an error when trying to read the results.
@@ -417,6 +418,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	//Heliostat field outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",              "Parasitic tracking/startup power",                                  "Mwe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Total field efficiency",                                            "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    //optimization outputs
+    { SSC_OUTPUT,       SSC_MATRIX,      "opt_history",          "Step history of optimization",                                      "",             "",            "Outputs",        "",                       "",           "" },
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly Energy", "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
@@ -554,11 +557,28 @@ public:
             spi.run();
             //AutoPilot_S *sapi = spi.GetSAPI();
 
+            //Optimization iteration history
+            vector<vector<double> > steps;
+            vector<double> obj, flux;
+            spi.opt.getOptimizationSimulationHistory(steps, obj, flux);
+            int nr = steps.size();
+            int nc = steps.front().size() + 2;
+            ssc_number_t *ssc_hist = allocate( "opt_history", nr, nc );
+            for( size_t i=0; i<nr; i++){
+                
+                for( size_t j=0; j<steps.front().size(); j++)
+                    ssc_hist[i*nc + j] = steps.at(i).at(j);
+                ssc_hist[i*nc + nc-2] = obj.at(i);
+                ssc_hist[i*nc + nc-1] = flux.at(i);
+
+            }
+
+		    //receiver calculations
             H_rec = spi.recs.front().height;
             rec_aspect = spi.recs.front().aspect;
             THT = spi.layout.h_tower;
             //update heliostat position table
-            int nr = (int)spi.layout.heliostat_positions.size();
+            nr = (int)spi.layout.heliostat_positions.size();
             ssc_number_t *ssc_hl = allocate( "helio_positions", nr, 2 );
             for(int i=0; i<nr; i++){
                 ssc_hl[i*2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
@@ -1150,7 +1170,7 @@ public:
         assign( "land_area", var_data( (ssc_number_t) get_unit_value_number(type_hel_field, "land_area" ) ) );
 		//-----------
 
-		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+        accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
 
 		// performance adjustement factors
 		adjustment_factors haf(this);

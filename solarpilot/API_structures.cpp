@@ -22,16 +22,31 @@ void sp_optimize::LoadDefaults(var_set &V)
 		is_optimize_bound = false;
 	else
 		is_optimize_bound = V["land"][0]["is_land_max_opt"].value_bool();
+    double max_rad;
+    if( is_bounds_fixed ) 
+    {
+        max_rad = V["land"][0]["max_fixed_rad"].value_double();
+    }
+    else if( is_bounds_scaled )
+    {
+        max_rad = V["land"][0]["max_scaled_rad"].value_double();
+    }
+    range_land_bound[0] = V["land"][0]["land_max_opt_min"].value_double() * max_rad;
+    range_land_bound[1] = V["land"][0]["land_max_opt_max"].value_double() * max_rad;
 
 	//collect other range settings
 	method = V["optimize"][0]["algorithm"].value_int();
-	range_tht[0] = V["solarfield"][0]["tht_opt_min"].value_double();	//[m] {min, max}
-	range_tht[1] = V["solarfield"][0]["tht_opt_max"].value_double();
-	range_rec_height[0] = V["receiver"][0]["height_opt_min"].value_double();	//[m] {min, max}
-	range_rec_height[1] = V["receiver"][0]["height_opt_max"].value_double();
-	range_rec_aspect[0] = V["receiver"][0]["aspect_opt_min"].value_double();	//[m] {min, max}
-	range_rec_aspect[1] = V["receiver"][0]["aspect_opt_max"].value_double();	
-		
+    double tht = V["solarfield"][0]["tht"].value_double();
+	range_tht[0] = V["solarfield"][0]["tht_opt_min"].value_double() * tht;	//[m] {min, max}
+	range_tht[1] = V["solarfield"][0]["tht_opt_max"].value_double() * tht;
+    double rec_height = V["receiver"][0]["rec_height"].value_double();
+	range_rec_height[0] = V["receiver"][0]["height_opt_min"].value_double() * rec_height;	//[m] {min, max}
+	range_rec_height[1] = V["receiver"][0]["height_opt_max"].value_double() * rec_height;
+	double rec_aspect = V["receiver"][0]["rec_aspect"].value_double();
+    range_rec_aspect[0] = V["receiver"][0]["aspect_opt_min"].value_double() * rec_aspect;	//[m] {min, max}
+	range_rec_aspect[1] = V["receiver"][0]["aspect_opt_max"].value_double() * rec_aspect;	
+	
+
 	flux_max = V["receiver"][0]["peak_flux"].value_double();	//[kw/m2] Maximum allowable flux
 	
 	is_optimize_tht = V["solarfield"][0]["is_tht_opt"].value_bool();

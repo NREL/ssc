@@ -95,8 +95,10 @@ public:
 	virtual bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 	bool Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout);
-	bool Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
-    bool OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
+	bool Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, 
+                  sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
+    bool OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr,
+                      sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
 	//cancellation methods
 	void CancelSimulation();
 	bool IsSimulationCancelled();
