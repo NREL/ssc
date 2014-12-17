@@ -571,6 +571,8 @@ private:
 		T_loop_outX, Runner_hl_hot, Header_hl_hot, Pipe_hl_hot, c_hdr_hot, time_hr, dt_hr;
 	int day_of_year, SolveMode, dfcount;
 
+	double ncall_track;
+
 	double T_save[5];
 	double reguess_args[3];
 	
@@ -1323,7 +1325,7 @@ public:
 			summary.append(tstr);
 
 			// Can uncomment this when other code is updated to write/display more than ~700 characters
-			//message(TCS_NOTICE, summary.c_str());
+			// message(TCS_NOTICE, summary.c_str());
 
 			//if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
 			//{
@@ -1358,6 +1360,8 @@ public:
 	}
 
 	virtual int call(double time, double step, int ncall){
+
+		//ncall_track = ncall;
 
 		//reset defocus counter
 		dfcount = 0;
@@ -1432,7 +1436,10 @@ public:
 			time_hr = time / 3600.;
 			dt_hr = dt / 3600.;
 			hour = fmod(time_hr, 24.);       //hour of the day (1..24)  //tn 4.25.11 mod returns a natural number. This messes with the ftrack HrA/HrB calculations
-			T_sky = CSP::skytemp(T_db, T_dp, hour);     //[K] Effective sky temperature 
+			if(T_dp > -300.0)
+				T_sky = CSP::skytemp(T_db, T_dp, hour);     //[K] Effective sky temperature 
+			else
+				T_sky = T_db - 20.0;
 
 			// Always reset the defocus control at the first call of a timestep
 			defocus_new = 1.;
