@@ -4,7 +4,7 @@ clear();
 // 7/17/14: Removed UA_recup_des as parameter. Will be calculated based on PHX cold and hot side temps
 
 // Values from ssc example (7/17/14)
-W_dot_net_des = 35.0;		//[MW] Design cycle power output
+W_dot_net_des = 111.0;		//[MW] Design cycle power output
 eta_c = 0.89;				//[-] Compressor Isentropic Efficiency
 eta_t = 0.93;				//[-] Turbine Isentropic Efficiency
 P_high_limit = 25.0;		//[MPa] High pressure limit in cycle
@@ -15,9 +15,9 @@ T_amb_des = 32.0;
 fan_power_perc = 1.0;
 plant_elevation = 0.0;
 
-T_htf_hot = 574.0;
-T_htf_cold = 290.0;
-eta_des_est = 0.3;
+T_htf_hot_des = 574.0;
+T_htf_cold_est = 290.0;
+eta_des = 0.412;
 rec_htf = 17;
 
 startup_frac = 0.5;
@@ -37,9 +37,9 @@ set_value(powercycle, "T_amb_des", T_amb_des);				//[C]
 set_value(powercycle, "fan_power_perc", fan_power_perc);	//[%]
 set_value(powercycle, "plant_elevation", plant_elevation);	//[m]
 
-set_value(powercycle, "T_htf_hot", T_htf_hot);			    //[C]
-set_value(powercycle, "T_htf_cold", T_htf_cold);            //[C]
-set_value(powercycle, "eta_des_est", eta_des_est);		//[C]
+set_value(powercycle, "T_htf_hot_des", T_htf_hot_des);			    //[C]
+set_value(powercycle, "T_htf_cold_est", T_htf_cold_est);    //[C]
+set_value(powercycle, "eta_des", eta_des);					//[C]
 set_value(powercycle, "rec_htf", rec_htf);                  //[-]
 
 set_value(powercycle, "startup_frac", startup_frac);
