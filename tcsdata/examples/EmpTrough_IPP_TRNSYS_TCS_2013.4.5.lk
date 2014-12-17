@@ -10,6 +10,40 @@ debug_mode = true;
 if(debug_mode) weather = add_unit("trnsys_weatherreader");
 else weather = add_unit("weatherreader");
 
+//Add TOU reader
+tou_reader = add_unit("tou_translator");
+
+tou_week = 
+[ [ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 ] ];
+
+tou_end = 
+[ [ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 ], 
+[ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ], 
+[ 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ] ];
+
+set_value( tou_reader, "weekday_schedule", tou_week );
+set_value( tou_reader, "weekend_schedule", tou_end );
+
 //Add Empirical Solar Field Model
 u1 = add_unit( "sam_trough_model_type805", "Test Trough" );
 //Add Empirical Storage Model
@@ -19,7 +53,7 @@ u3 = add_unit( "sam_trough_plant_type807", "Test Plant" );
 
 if(debug_mode)
 {
-	file_loc = tcs_dir + '/tcs/Conversion_Coordination/Debugging/tucson_trnsys_weather.out';
+	file_loc = tcs_dir + '/ssc/tcsdata/typelib/TRNSYS_weather_outputs/tucson_trnsys_weather.out';
 	set_value( weather, "file_name", file_loc );
 	set_value( weather, "i_hour", "TIME" );
 	set_value( weather, "i_month", "month" );
@@ -67,17 +101,17 @@ else
 	set_value( u1, "HCEdust", [0.98,0.98,0.98,0.98] );
 	set_value( u1, "HCEBelShad", [0.963,0.963,0.963,0.963] );
 	set_value( u1, "HCEEnvTrans", [0.963,0.963,1,0.963] );    
-	set_value( u1, "HCEabs", [0.96,0.96,0.8,0.96] );         
-	set_value( u1, "HCEmisc", [1,1,1,1] );         
-	set_value( u1, "PerfFac", [1,1,1,1] );                 
+	set_value( u1, "HCEabs", [0.96,0.96,0.8,0] );         
+	set_value( u1, "HCEmisc", [1,1,1,0] );         
+	set_value( u1, "PerfFac", [1,1,1,0] );                 
 	set_value( u1, "RefMirrAper", [5,5,5,5] );     
-	set_value( u1, "HCE_A0", [4.05,      50.8,      -9.95,     11.8] );         
-	set_value( u1, "HCE_A1", [0.247,     0.904,      0.465,    1.35] );         
-	set_value( u1, "HCE_A2", [-0.00146,  0.000579,  -0.000854, 0.00075] );         
-	set_value( u1, "HCE_A3", [5.65e-6,   1.13e-5,    1.85e-5,  4.07e-6] );         
-	set_value( u1, "HCE_A4", [7.62e-8,   1.73e-7,    6.89e-7,  5.85e-8] );         
-	set_value( u1, "HCE_A5", [-1.7,     -43.2,       24.7,     4.48] );         
-	set_value( u1, "HCE_A6", [0.0125,    0.524,      3.37,     0.285] );         
+	set_value( u1, "HCE_A0", [4.05,      50.8,      -9.95,     0] );         
+	set_value( u1, "HCE_A1", [0.247,     0.904,      0.465,    0] );         
+	set_value( u1, "HCE_A2", [-0.00146,  0.000579,  -0.000854, 0] );         
+	set_value( u1, "HCE_A3", [5.65e-6,   1.13e-5,    1.85e-5,  0] );         
+	set_value( u1, "HCE_A4", [7.62e-8,   1.73e-7,    6.89e-7,  0] );         
+	set_value( u1, "HCE_A5", [-1.7,     -43.2,       24.7,     0] );         
+	set_value( u1, "HCE_A6", [0.0125,    0.524,      3.37,     0] );         
 	set_value( u1, "LU_Fl",  21 );         
 	set_value( u1, "LuFlEr", 0 );         
 	set_value( u1, "i_SfTi",   -999 );           
@@ -135,10 +169,11 @@ else
 	set_value(u2, "E2TPLF2", -0.064991);
 	set_value(u2, "E2TPLF3", 0.039388);
 	set_value(u2, "E2TPLF4", 0);
-	set_value(u2, "TSLogic", [[0.1,0.1,1.05],[0.1,0.1,1],[0.1,0.1,1],[0.1,0.1,1],[0.1,0.1,1],[0.1,0.1,1],[0.1,0.1,1],[0.1,0.1,1],[0.1,0.1,1]]);
+	set_value(u2, "TSLogic", [[1,0.1,0.1,1.05],[2,0.1,0.1,1],[3,0.1,0.1,1],[4,0.1,0.1,1],[5,0.1,0.1,1],[6,0.1,0.1,1],[7,0.1,0.1,1],[8,0.1,0.1,1],[9,0.1,0.1,1]]);
 
 	//Connect Storage Inputs
-	set_value(u2,"TOUPeriod", 1 );    
+	// set_value(u2,"TOUPeriod", 1 );
+	connect(tou_reader, "tou_value", u2, "TOUPeriod");     
 	set_value(u2, "TnkHL", 	 0.97);   
 	set_value(u2, "PTSmax",  294.118);	    
 	set_value(u2, "PFSmax",  297.999);	    
@@ -198,7 +233,10 @@ else
 	set_value(u3,"HtrParF2", 0);   
 	
 	set_value(u3,"LHVBoilEff", 0.9);
-	set_value(u3,"TOUPeriod", 1 );  // uniform dispatch
+	
+	//set_value(u3,"TOUPeriod", 1 );  // uniform dispatch
+	connect(tou_reader, "tou_value", u2, "TOUPeriod"); 
+	
 	set_value(u3,"CtOpF", 1); 
 
 	//Set Powerblock Inputs
