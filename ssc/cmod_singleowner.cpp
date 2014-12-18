@@ -2143,16 +2143,13 @@ public:
 
 			if (flip_year <=0) 
 			{
-				double residual = cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent;
-				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (  fabs( residual ) < ppa_soln_tolerance ) 	
-					&& (flip_target_percent > ppa_soln_tolerance) // added condition statement for target irr = 0 12/9/14
-					)
+				double residual = fabs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
+				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (   residual  < ppa_soln_tolerance ) 	) 
 				{
 					flip_year = i;
 					cf.at(CF_project_return_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
 				}
-//				else if ((cf.at(CF_project_return_aftertax_max_irr, i - 1) < flip_target_percent) && (cf.at(CF_project_return_aftertax_max_irr, i) >= flip_target_percent)) flip_year = i;
-				else if ((cf.at(CF_project_return_aftertax_max_irr, i - 1) < flip_target_percent) && (fabs(cf.at(CF_project_return_aftertax_max_irr, i) - flip_target_percent)) < ppa_soln_tolerance) flip_year = i;
+				else if ((cf.at(CF_project_return_aftertax_max_irr, i - 1) < flip_target_percent) && (cf.at(CF_project_return_aftertax_max_irr, i) >= flip_target_percent)) flip_year = i;
 			}
 
 
@@ -2256,6 +2253,7 @@ public:
 
 	}	// target tax investor return in target year
 	while (!solved && !irr_is_minimally_met  && (its < ppa_soln_max_iteations) && (ppa >= 0) );
+
 
 		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
 	if (ppa < 0) ppa = ppa_old;	
@@ -3407,6 +3405,7 @@ public:
 		int number_of_iterations=0;
 //		double calculated_irr = 0;
 		double calculated_irr = std::numeric_limits<double>::quiet_NaN();
+//		double calculated_irr = -999;
 
 
 		if (count < 1)
@@ -3463,6 +3462,7 @@ public:
 			{
 //				calculated_irr = 0.0; // did not converge
 				calculated_irr = std::numeric_limits<double>::quiet_NaN(); // did not converge
+//				double calculated_irr = -999;
 			}
 
 		}
@@ -3474,6 +3474,7 @@ public:
 	{
 //		double calculated_irr = 0;
 		double calculated_irr = std::numeric_limits<double>::quiet_NaN();
+//		double calculated_irr = -999;
 		double deriv_sum = irr_derivative_sum(initial_guess, cf_line, count);
 		if (deriv_sum != 0.0)
 			calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
