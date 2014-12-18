@@ -708,7 +708,7 @@ public:
 		// store variables for next iteration - TRNSYS post convergence call
 		//m_Ets0 = Ets;
 		m_PBMode0 = PBMode;
-		m_TurSuE0 = TurSUE;//? TurSue0 in TRNSYS
+		//m_TurSuE0 = TurSUE;//? TurSue0 in TRNSYS
 
 		return 0;
 	}
