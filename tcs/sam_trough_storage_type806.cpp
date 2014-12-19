@@ -503,6 +503,7 @@ public:
 					Qfts = 0;   //  nothing from thermal storage
 					Ets = m_Ets0 + Qtts / TimeSteps;  
 					Qtpb = 0;
+					QTurSu = 0; 
 				}      
 			// **********************************************************
 			// ******        plant is already operating             *****
