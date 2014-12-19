@@ -2297,8 +2297,8 @@ public:
 		//	- cf.at(CF_operating_expenses, i) - cf.at(CF_debt_payment_interest, i)
 		//	- cf.at(CF_debt_payment_principal, i);
 	}
-	double npv_annual_costs = npv(CF_Annual_Costs, nyears, nom_discount_rate) 
-		- cf.at(CF_Annual_Costs, 0);
+	double npv_annual_costs = -(npv(CF_Annual_Costs, nyears, nom_discount_rate) 
+		+ cf.at(CF_Annual_Costs, 0));
 	if (npv_energy_nom != 0) lcoe_nom = npv_annual_costs / npv_energy_nom * 100.0;
 	if (npv_energy_real != 0) lcoe_real = npv_annual_costs / npv_energy_real * 100.0;
 
