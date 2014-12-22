@@ -190,7 +190,7 @@ class PySSC:
 		return self.pdll.ssc_module_exec( c_void_p(p_mod), c_void_p(p_data) )
 
 	def module_log( self, p_mod, index ):
-		type = c_int()
+		log_type = c_int()
 		time = c_float()
 		self.pdll.ssc_module_log.restype = c_char_p
 		return self.pdll.ssc_module_log( c_void_p(p_mod), c_int(index), byref(type), byref(time) )
@@ -224,15 +224,15 @@ if __name__ == "__main__":
 		print 'data set:'
 		name = ssc.data_first(d)
 		while (name != None):
-			type = ssc.data_query(d,name)
+			data_type = ssc.data_query(d,name)
 			outstr = '\t'
-			if type == PySSC.STRING:
+			if data_type == PySSC.STRING:
 				outstr += ' str: ' + name + '    \'' + ssc.data_get_string(d,name) + '\''
-			elif type == PySSC.NUMBER:
+			elif data_type == PySSC.NUMBER:
 				outstr += ' num: ' + name + '    ' + str(ssc.data_get_number(d,name))
-			elif type == PySSC.ARRAY:
+			elif data_type == PySSC.ARRAY:
 				outstr += ' arr: ' + name + '    [ ' + arr_to_str( ssc.data_get_array(d,name) ) + ' ]'
-			elif type == PySSC.MATRIX:
+			elif data_type == PySSC.MATRIX:
 				outstr += ' mat: ' + name + '    [ ' + mat_to_str( ssc.data_get_matrix(d,name) ) + ' ]'
 			else:
 				outstr += ' inv! ' + name
