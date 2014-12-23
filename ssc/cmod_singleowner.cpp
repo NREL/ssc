@@ -172,6 +172,12 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "term_int_rate",                          "Term financing interest rate",		                            "%",	 "",					  "Project Term Debt",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dscr",						              "Debt service coverage ratio",		                            "",	     "",				      "Project Term Debt",             "?=1.5",					"MIN=0",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		              "Debt service reserve account",		                            "months P&I","",			      "Project Term Debt",             "?=6",					    "INTEGER,MIN=0",      			        "" },
+	/* Debt fraction input option */
+	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt fraction", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt fraction,1=dscr", "Solution Mode", "?=1", "INTEGER,MIN=0,MAX=1", "" },
+
+
+
 /* DHF Capital Cost */                                                            
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_closing",		              "Debt closing cost",                                              "$",                 "",       "Other Capital Costs",        "?=250000",         "MIN=0",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_fee",		                  "Debt closing fee (% of total debt amount)",                      "%",                 "",       "Other Capital Costs",        "?=1.5",            "MIN=0",              "" },
@@ -961,6 +967,12 @@ public:
 
 		int ppa_mode = as_integer("ppa_soln_mode");
 
+		bool constant_dscr_mode = (as_integer("debt_option")==1);
+//		log(util::format("debt option=%d and constant dscr mode=%s.",
+//			as_integer("debt_option"), (constant_dscr_mode ? "true":"false")),
+//			SSC_WARNING);
+
+
 		// general financial expenses and incentives - stdlib?
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
@@ -1079,7 +1091,7 @@ public:
 		double equip3_reserve_cost = as_double("equip3_reserve_cost");
 		int equip3_reserve_freq = as_integer("equip3_reserve_freq");
 
-		//  calculate debt
+		//  calculate debt for constant dscr mode
 		int term_tenor = as_integer("term_tenor"); 
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
@@ -1087,6 +1099,7 @@ public:
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
 		double size_of_debt=0;
+
 
 		// pre calculate reserves
 		int i_equip1=1;
@@ -1668,6 +1681,75 @@ public:
 		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
 		double ppa_old=ppa;
 
+
+		// debt fraction input
+		if (!constant_dscr_mode)
+		{
+			double debt_frac = as_double("debt_percent")*0.01;
+			double adjusted_installed_cost = cost_prefinancing + constr_total_financing
+				- ibi_fed_amount 
+				- ibi_sta_amount
+				- ibi_uti_amount
+				- ibi_oth_amount
+				- ibi_fed_per
+				- ibi_sta_per
+				- ibi_uti_per
+				- ibi_oth_per
+				- cbi_fed_amount
+				- cbi_sta_amount
+				- cbi_uti_amount
+				- cbi_oth_amount;
+			double loan_amount = debt_frac * adjusted_installed_cost;
+			if (term_tenor == 0) loan_amount = 0;
+//			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
+			for (int i = 1; i <= nyears; i++)
+			{
+				if (i == 1)
+				{
+					cf.at(CF_debt_balance, i) = -loan_amount;
+					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
+					cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
+						i,           // Period
+						term_tenor,   // Number periods
+						loan_amount, // Present Value
+						0,           // future Value
+						0);         // cash flow at end of period
+				}
+				else
+				{
+					if (i <= term_tenor)
+					{
+						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) + cf.at(CF_debt_payment_principal, i - 1);
+						cf.at(CF_debt_payment_interest, i) = -term_int_rate * cf.at(CF_debt_balance, i);
+
+						if (term_int_rate != 0.0)
+						{
+							cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -term_tenor))
+								- cf.at(CF_debt_payment_interest, i);
+						}
+						else
+						{
+							cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
+						}
+					}
+				}
+
+				cf.at(CF_debt_payment_total, i) = cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i);
+				cf.at(CF_debt_size, i) = cf.at(CF_debt_payment_principal, i);
+//				log(util::format("year=%d, debt balance =%lg, debt interest=%lg, debt principal=%lg, total debt payment=%lg, debt size=%lg", i, cf.at(CF_debt_balance, i), cf.at(CF_debt_payment_interest, i), cf.at(CF_debt_payment_principal, i), cf.at(CF_debt_payment_total, i), cf.at(CF_debt_size, i)), SSC_WARNING);
+
+				size_of_debt += cf.at(CF_debt_size, i);
+			}
+			cf.at(CF_debt_balance, 0) = size_of_debt;
+//			log(util::format("size of debt=%lg.", size_of_debt), SSC_WARNING);
+
+		}
+
+//		log(util::format("before loop  - size of debt =%lg .",	size_of_debt),	SSC_WARNING);
+
+
+
+
 /***************** begin iterative solution *********************************************************************/
 
 	do
@@ -1676,7 +1758,7 @@ public:
 		flip_year=-1;
 		cash_for_debt_service=0;
 		pv_cafds=0;
-		size_of_debt=0;
+		if (constant_dscr_mode)	size_of_debt=0;
 		if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
 
 		// debt pre calculation
@@ -1709,30 +1791,38 @@ public:
 
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 		
+
 			// term financing
-			if (i<=term_tenor)
+			if (i <= term_tenor)
 			{
-				cf.at(CF_cash_for_ds,i) = cf.at(CF_ebitda,i) - cf.at(CF_funding_equip1,i) - cf.at(CF_funding_equip2,i) - cf.at(CF_funding_equip3,i);
-				cash_for_debt_service += cf.at(CF_cash_for_ds,i);
-				if (i==1) 
-					cf.at(CF_pv_interest_factor,i) = 1.0/(1.0+term_int_rate);
+				cf.at(CF_cash_for_ds, i) = cf.at(CF_ebitda, i) - cf.at(CF_funding_equip1, i) - cf.at(CF_funding_equip2, i) - cf.at(CF_funding_equip3, i);
+				cash_for_debt_service += cf.at(CF_cash_for_ds, i);
+				if (i == 1)
+					cf.at(CF_pv_interest_factor, i) = 1.0 / (1.0 + term_int_rate);
 				else
-					cf.at(CF_pv_interest_factor,i) = cf.at(CF_pv_interest_factor,i-1)/(1.0+term_int_rate);
-				cf.at(CF_pv_cash_for_ds,i) = cf.at(CF_pv_interest_factor,i) * cf.at(CF_cash_for_ds,i);
-				pv_cafds += cf.at(CF_pv_cash_for_ds,i);
-				if (dscr!=0) cf.at(CF_debt_size,i) = cf.at(CF_pv_cash_for_ds,i) / dscr;
-				size_of_debt += cf.at(CF_debt_size,i);
+					cf.at(CF_pv_interest_factor, i) = cf.at(CF_pv_interest_factor, i - 1) / (1.0 + term_int_rate);
+				cf.at(CF_pv_cash_for_ds, i) = cf.at(CF_pv_interest_factor, i) * cf.at(CF_cash_for_ds, i);
+				pv_cafds += cf.at(CF_pv_cash_for_ds, i);
+				if (constant_dscr_mode)
+				{
+					if (dscr != 0) cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
+					size_of_debt += cf.at(CF_debt_size, i);
+				}
 			}
+			
 		}
 
-		cf.at(CF_debt_balance,0) = size_of_debt;
-
-		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
+		if (constant_dscr_mode)
 		{
-			if(dscr!=0) cf.at(CF_debt_payment_total,i) = cf.at(CF_cash_for_ds,i) / dscr;
-			cf.at(CF_debt_payment_interest,i) = cf.at(CF_debt_balance,i-1) * term_int_rate;
-			cf.at(CF_debt_payment_principal,i) = cf.at(CF_debt_payment_total,i) - cf.at(CF_debt_payment_interest,i);
-			cf.at(CF_debt_balance,i) = cf.at(CF_debt_balance,i-1) - cf.at(CF_debt_payment_principal,i);
+			cf.at(CF_debt_balance, 0) = size_of_debt;
+
+			for (i = 1; ((i <= nyears) && (i <= term_tenor)); i++)
+			{
+				if (dscr != 0) cf.at(CF_debt_payment_total, i) = cf.at(CF_cash_for_ds, i) / dscr;
+				cf.at(CF_debt_payment_interest, i) = cf.at(CF_debt_balance, i - 1) * term_int_rate;
+				cf.at(CF_debt_payment_principal, i) = cf.at(CF_debt_payment_total, i) - cf.at(CF_debt_payment_interest, i);
+				cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
+			}
 		}
 
 		// debt service reserve
@@ -2259,6 +2349,10 @@ public:
 	if (ppa < 0) ppa = ppa_old;	
 
 /***************** end iterative solution *********************************************************************/
+
+//	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
+
+
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
