@@ -317,7 +317,7 @@ public:
 		{
 			field_htfProps.SetFluid( field_fl ); // field_fl should match up with the constants
 		}
-		else if( field_fl = HTFProperties::User_defined )
+		else if( field_fl == HTFProperties::User_defined )
 		{
 			int nrows = 0, ncols = 0;
 			double *fl_mat = value( P_field_fl_props, &nrows, &ncols );
@@ -344,18 +344,18 @@ public:
 
 		// Declare instance of htf class for receiver tube material
 		int mat_tube = (int) value( P_mat_tube );
-		if( field_fl != HTFProperties::User_defined && field_fl < HTFProperties::End_Library_Fluids )
+		if( mat_tube == HTFProperties::Stainless_AISI316 || mat_tube == HTFProperties::T91_Steel )
 		{
 			tube_material.SetFluid( mat_tube );
 		}
-		else if( field_fl = HTFProperties::User_defined )
+		else if( mat_tube == HTFProperties::User_defined )
 		{
-			message( TCS_ERROR, "Receiver material code is not recognized" );
+			message( TCS_ERROR, "Receiver material currently does not accept user defined properties" );
 			return -1;
 		}
 		else
 		{
-			message( TCS_ERROR, "Receiver material code is not recognized" );
+			message( TCS_ERROR, "Receiver material code, %d, is not recognized", mat_tube );
 			return -1;
 		}
 
