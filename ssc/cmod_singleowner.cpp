@@ -3512,7 +3512,7 @@ public:
 //		double calculated_irr = -999;
 
 
-		if (count < 1)
+		if (count < 1) 
 			return calculated_irr;
 
 		// only possible for first value negative
