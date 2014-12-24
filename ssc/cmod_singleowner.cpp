@@ -174,7 +174,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		              "Debt service reserve account",		                            "months P&I","",			      "Project Term Debt",             "?=6",					    "INTEGER,MIN=0",      			        "" },
 	/* Debt fraction input option */
 	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt fraction", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt fraction,1=dscr", "Solution Mode", "?=1", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt fraction,1=dscr", "Project Term Debt", "?=1", "INTEGER,MIN=0,MAX=1", "" },
 
 
 
@@ -2389,10 +2389,6 @@ public:
 			- cf.at(CF_operating_expenses, i) 
 			- cf.at(CF_debt_payment_interest, i)
 			- cf.at(CF_debt_payment_principal, i);
-		//cf.at(CF_Annual_Costs, i) =
-		//	cf.at(CF_pbi_total, i) + cf.at(CF_sta_tax_savings, i) + cf.at(CF_fed_tax_savings, i)
-		//	- cf.at(CF_operating_expenses, i) - cf.at(CF_debt_payment_interest, i)
-		//	- cf.at(CF_debt_payment_principal, i);
 	}
 	double npv_annual_costs = -(npv(CF_Annual_Costs, nyears, nom_discount_rate) 
 		+ cf.at(CF_Annual_Costs, 0));
