@@ -741,6 +741,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "NPV of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Installed costs less incentives", "$", "", "System Costs", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR",  "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_pretax_dscr", "Pre-tax DSCR", "", "", "DSCR", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
 var_info_invalid };
@@ -907,6 +909,7 @@ enum {
 	CF_Recapitalization_boolean,
 
 	CF_Annual_Costs,
+	CF_pretax_dscr,
 
 	CF_max };
 
@@ -2400,6 +2403,17 @@ public:
 	save_cf(CF_Annual_Costs, nyears, "cf_annual_costs");
 
 
+	// DSCR calculations
+	for (i = 0; i <= nyears; i++)
+	{
+		if (cf.at(CF_debt_payment_total, i) != 0.0)
+			cf.at(CF_pretax_dscr, i) = cf.at(CF_cash_for_ds, i) / cf.at(CF_debt_payment_total, i);
+	}
+	double min_dscr = min_cashflow_value(CF_pretax_dscr, nyears);
+	assign("min_dscr", var_data((ssc_number_t)min_dscr));
+	save_cf(CF_pretax_dscr, nyears, "cf_pretax_dscr");
+
+
 
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
@@ -3605,6 +3619,13 @@ public:
 		return (a > b) ? a : b;
 	}
 
+	double min_cashflow_value(int cf_line, int nyears)
+	{
+		double min_value = DBL_MAX;
+		for (int i = 1; i <= nyears; i++)
+			if ((cf.at(cf_line, i)<min_value) && (cf.at(cf_line, i) != 0)) min_value = cf.at(cf_line, i);
+		return min_value;
+	}
 
 
 };
