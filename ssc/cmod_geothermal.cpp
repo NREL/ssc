@@ -119,8 +119,9 @@ static var_info _cm_vtab_geothermal[] = {
     // The array outputs are only meaningful when the model is run (not UI calculations)																											             
     // User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.																             
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.														             
-	{ SSC_OUTPUT,       SSC_ARRAY,       "annual_replacements",                "Resource replacement? (1=yes)",                       "kWhac",   "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-																																													   			                 
+//	{ SSC_OUTPUT, SSC_ARRAY, "annual_replacements", "Resource replacement? (1=yes)", "kWhac", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "system_lifetime_recapitalize", "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                     "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -357,7 +358,8 @@ public:
 			// since we're going to run the model, we have to allocate the arrays
 
 			// allocate lifetime annual arrays (one element per year, over lifetime of project)
-			geo_outputs.maf_ReplacementsByYear = allocate("annual_replacements", geo_inputs.mi_ProjectLifeYears);
+//			geo_outputs.maf_ReplacementsByYear = allocate("annual_replacements", geo_inputs.mi_ProjectLifeYears);
+			geo_outputs.maf_ReplacementsByYear = allocate("system_lifetime_recapitalize", geo_inputs.mi_ProjectLifeYears);
 			//ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
 
 			// allocate lifetime monthly arrays (one element per month, over lifetime of project)
