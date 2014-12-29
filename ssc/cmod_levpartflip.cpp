@@ -2576,7 +2576,9 @@ public:
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)
 	{
-		if (cf.at(CF_debt_payment_total, i) != 0.0)
+		if (cf.at(CF_debt_payment_total, i) == 0.0)
+			cf.at(CF_pretax_dscr, i) = std::numeric_limits<double>::quiet_NaN();
+		else
 			cf.at(CF_pretax_dscr, i) = cf.at(CF_cash_for_ds, i) / cf.at(CF_debt_payment_total, i);
 	}
 	double min_dscr = min_cashflow_value(CF_pretax_dscr, nyears);
@@ -3818,6 +3820,12 @@ public:
 
 	double min_cashflow_value(int cf_line, int nyears)
 	{
+		// check for NaN
+		bool is_nan = true;
+		for (int i = 1; i <= nyears; i++)
+			is_nan &= isnan(cf.at(cf_line, i));
+		if (is_nan) return std::numeric_limits<double>::quiet_NaN();
+
 		double min_value = DBL_MAX;
 		for (int i = 1; i <= nyears; i++)
 			if ((cf.at(cf_line, i)<min_value) && (cf.at(cf_line, i) != 0)) min_value = cf.at(cf_line, i);
