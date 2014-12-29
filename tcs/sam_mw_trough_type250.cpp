@@ -1648,6 +1648,9 @@ public:
 			goto post_convergence_flag; // goto 11;
 		}
 
+		// 12.29.2014, twn: want this before 'overtemp_iter_flag' so temp doesn't reset when flag is called
+		T_cold_in_1 = T_cold_in; //Inlet temperature may change due to new freeze protection model
+
 overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		
 		//First calculate the cold header temperature, which will serve as the loop inlet temperature
@@ -1686,8 +1689,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		y_fp_upper=std::numeric_limits<double>::quiet_NaN(); 
 		y_upper = std::numeric_limits<double>::quiet_NaN();
 		y_lower = std::numeric_limits<double>::quiet_NaN();
-		upmult=std::numeric_limits<double>::quiet_NaN();
-		T_cold_in_1 = T_cold_in; //Inlet temperature may change due to new freeze protection model
+		upmult=std::numeric_limits<double>::quiet_NaN();		
 
 		t_tol = 1.5e-3;          //Tolerance for T_loop_out
 
@@ -1921,11 +1923,6 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 					goto overtemp_iter_flag;
 				}
-				else
-				{
-					ss_init_complete = true;
-				}
-
 			}
 
 			if( accept_mode )
@@ -1937,6 +1934,8 @@ freeze_prot_flag: //7   continue
 			    
 			if(SolveMode==3)  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
 			{    
+				t_tol *= 0.1;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
+
 				if((no_fp) && (T_sys_h > T_fp)) 
 					goto freeze_prot_ok; //goto 9
                 
@@ -2092,10 +2091,30 @@ freeze_prot_flag: //7   continue
 
 freeze_prot_ok:		//9 continue
 		
+		if( is_using_input_gen && !accept_mode )
+		{	
+			// 12.29.2014 twn:
+			// If the trough is model is called as a stand-alone, but is solving for mass flow rate, then need a method to enter recirculation when outlet temperature and useful energy are too low
+			// Choosing here to enter recirculation when the outlet temperature is less than the user specified inlet temperature. Then, if there is no freeze-protection adjustment of the inlet temperature
+			// the code should iterate until the inlet and outlet temperatures are roughly equal.
+			// Could consider implementing a faster, more robust method than successive substitution to solve for the inlet temperature.
+			if( T_sys_h < T_cold_in )
+			{
+				if( no_fp && abs(T_cold_in_1 - T_sys_h) / T_sys_h > 0.001 )
+				{
+					T_cold_in_1 = T_sys_h;
+					goto overtemp_iter_flag;
+				}
+			}
+		}
+
 		E_fp_tot = 0.0;
 		if(! no_fp)
 		{
-			E_fp_tot = m_dot_htf_tot * c_hdr_cold * (T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			if( is_using_input_gen )
+				E_fp_tot = m_dot_htf_tot * c_hdr_cold * (T_cold_in_1 - T_sys_h);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			else
+				E_fp_tot = m_dot_htf_tot * c_hdr_cold * (T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 		}
 
 		if(qq>29)
@@ -2196,8 +2215,11 @@ post_convergence_flag: //11 continue
     
 			SolveMode=2;  //Mode 2 -> defocusing
 			//mjw 11.4.2010 added conditional statement
-			if(dfcount<5) 
+			if( dfcount<5 )
+			{
+				T_cold_in_1 = T_cold_in;		//12.29.14 twn: Shouldn't need to worry about freeze protection AND defocus, but, if both occur and defocus is adjusted, should try inlet temperature
 				goto overtemp_iter_flag; //Return to recalculate with new defocus arrangement
+			}
 		}
 		//Calculate the amount of defocusing
 		if(q_SCA_tot>0.) 
@@ -2530,6 +2552,8 @@ set_outputs_and_return:
 		
 		double E_field_out = E_field*3.6e-9;
 		//------------------------------------------------------------------
+
+		ss_init_complete = true;
 
 		//Set outputs
 		value(O_T_SYS_H, T_sys_h_out);				//[C] Solar field HTF outlet temperature
