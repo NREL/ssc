@@ -1827,18 +1827,32 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
         
 				//Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
 				//MJW 1.16.2011 Include the thermal inertia term
-				if(q_abs_SCAtot[i] > 0.0) 
+				if( !is_using_input_gen )
+				{
+					if( q_abs_SCAtot[i] > 0.0 )
+					{
+						//E_avail[i] = max(q_abs_SCAtot[i]*dt*3600. - A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i]*(T_htf_ave[i]- T_htf_ave0[i]),0.0)
+						double x1 = (A_cs(HT, 1)*L_actSCA[CT] * rho_htf[i] * c_htf[i] + L_actSCA[CT] * mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
+						E_accum[i] = x1*(T_htf_ave[i] - T_htf_ave0[i]);
+						E_int_loop[i] = x1*(T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
+						E_avail[i] = max(q_abs_SCAtot[i] * dt - E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+
+						//Equation: m_dot_avail*c_htf[i]*(T_hft_out - T_htf_in) = E_avail/(dt*3600)
+						//m_dot_avail = (E_avail[i]/(dt*3600.))/(c_htf[i]*(T_htf_out[i] - T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
+					}
+				}
+				else
 				{
 					//E_avail[i] = max(q_abs_SCAtot[i]*dt*3600. - A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i]*(T_htf_ave[i]- T_htf_ave0[i]),0.0)
-					double x1 = (A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i] + L_actSCA[CT]*mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
-					E_accum[i] = x1*(T_htf_ave[i]- T_htf_ave0[i]);
+					double x1 = (A_cs(HT, 1)*L_actSCA[CT] * rho_htf[i] * c_htf[i] + L_actSCA[CT] * mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
+					E_accum[i] = x1*(T_htf_ave[i] - T_htf_ave0[i]);
 					E_int_loop[i] = x1*(T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
-					E_avail[i] = max(q_abs_SCAtot[i]*dt - E_accum[i],0.0);      //[J/s]*[hr]*[s/hr]: [J]
-            
+					//E_avail[i] = max(q_abs_SCAtot[i] * dt - E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+					E_avail[i] = (q_abs_SCAtot[i] * dt - E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
+
 					//Equation: m_dot_avail*c_htf[i]*(T_hft_out - T_htf_in) = E_avail/(dt*3600)
 					//m_dot_avail = (E_avail[i]/(dt*3600.))/(c_htf[i]*(T_htf_out[i] - T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
 				}
-
         
 				//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
 				//minus the heat losses in intermediate piping
@@ -1923,7 +1937,13 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 						T_htf_ave0[i] = (T_htf_in0[i] + T_htf_out0[i]) / 2.0;
 					}
 
-					goto overtemp_iter_flag;
+					rho_hdr_cold = htfProps.dens(T_sys_c_last, 1.);
+					rho_hdr_hot = htfProps.dens(T_sys_h_last, 1.);
+					c_hdr_cold_last = htfProps.Cp(T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
+
+					//goto overtemp_iter_flag;
+					qq = 0;
+					continue;
 				}
 			}
 
@@ -1936,7 +1956,7 @@ freeze_prot_flag: //7   continue
 			    
 			if(SolveMode==3)  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
 			{    
-				t_tol *= 0.1;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
+				t_tol = 1.5e-4;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
 
 				if((no_fp) && (T_sys_h > T_fp)) 
 					goto freeze_prot_ok; //goto 9
@@ -2396,7 +2416,7 @@ calc_final_metrics_goto:
 			// The total pumping power consumption
 			W_dot_pump = DP_tot*m_dot_htf / (rho_hdr_cold*eta_pump) / 1000.;  //[kW]
 
-			//The parasitic power consumed by electronics and SCA drives
+			//The parasitic power consumed by electronics and SCA drives 
 			if( EqOpteff>0.0 )
 			{
 				SCA_par_tot = SCA_drives_elec*SCAs_def*float(nSCA);
@@ -2434,7 +2454,7 @@ calc_final_metrics_goto:
 			E_loop_accum *= float(nLoops);
 			E_field *= float(nLoops);
 
-			//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS)
+			//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS) 
 			//The mass of HTF in the system will be calculated based on the design loop inlet temperature
 			//v_tot = v_hot + v_cold	//cc--> not used
 			c_hdr_cold = htfProps.Cp(T_loop_in)* 1000.;
@@ -2447,7 +2467,11 @@ calc_final_metrics_goto:
 			//.. This may cause a minor underestimation of annual energy output (<<.5%).
 			E_hdr_accum = (v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - T_sys_h_last) + //Hot half
 				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last);   //cold half
-			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
+			
+			if( !is_using_input_gen )
+				E_bal_startup = max(E_hdr_accum, 0.0); //cold half
+			else
+				E_bal_startup = E_hdr_accum; //cold half
 
 			//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]			
 			E_field += ((v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - 298.150) +       //hot header and piping
@@ -2459,7 +2483,10 @@ calc_final_metrics_goto:
 
 			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold;
 
-			E_avail_tot = max(E_avail_tot - Pipe_hl*dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+			if( !is_using_input_gen )
+				E_avail_tot = max(E_avail_tot - Pipe_hl*dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+			else
+				E_avail_tot = E_avail_tot - Pipe_hl*dt;    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
 
 			E_avail_tot = max(E_avail_tot - E_bal_startup, 0.0);  //[J]
 		}
