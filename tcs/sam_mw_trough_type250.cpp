@@ -155,6 +155,7 @@ enum{
 	O_E_HDR_ACCUM,
 	O_E_TOT_ACCUM,
 	O_E_FIELD,
+	O_T_C_IN_CALC,
 
 	//Include N_max
 	N_MAX
@@ -310,6 +311,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_E_HDR_ACCUM,            "E_hdr_accum",                              "Accumulated internal energy change rate in the headers/SGS",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_E_TOT_ACCUM,            "E_tot_accum",                                           "Total accumulated internal energy change rate",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_E_FIELD,                "E_field",                                   "Accumulated internal energy in the entire solar field",         "MWht",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_NUMBER,       O_T_C_IN_CALC,            "T_c_in_calc",                                 "Calculated HTF inlet temp (freeze prot. or stand-alone)",            "C",             "",             "",             "" },
 
 	{ TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
 };
@@ -2553,7 +2555,7 @@ set_outputs_and_return:
 		double E_field_out = E_field*3.6e-9;
 		//------------------------------------------------------------------
 
-		ss_init_complete = true;
+		
 
 		//Set outputs
 		value(O_T_SYS_H, T_sys_h_out);				//[C] Solar field HTF outlet temperature
@@ -2591,6 +2593,7 @@ set_outputs_and_return:
 		value(O_E_HDR_ACCUM, E_hdr_accum_out);		//[MWht] Accumulated internal energy change rate in the headers/SGS
 		value(O_E_TOT_ACCUM, E_tot_accum);			//[MWht] Total accumulated internal energy change rate
 		value(O_E_FIELD, E_field_out);				//[MWht] Accumulated internal energy in the entire solar field
+		value(O_T_C_IN_CALC, T_cold_in_1 - 273.15);	//[C] Calculated cold HTF inlet temperature - used in freeze protection and for stand-alone model in recirculation
 
 		return 0;
 	}
@@ -2601,6 +2604,8 @@ set_outputs_and_return:
 
 		Update values that should be transferred to the next time step
 		*/
+
+		ss_init_complete = true;
 
 		T_sys_c_last = T_sys_c;   //Get T_sys from the last timestep
 		T_sys_h_last = T_sys_h;
