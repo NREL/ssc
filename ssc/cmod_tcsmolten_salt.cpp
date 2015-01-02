@@ -306,7 +306,16 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
   //{ SSC_INPUT,        SSC_NUMBER,      "P_amb",                "Ambient pressure",                                                  "atm",          "",            "powerblock",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "TOU",                  "Current Time-of-use period",                                        "none",         "",            "powerblock",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "rh",                   "Relative humidity of the ambient air",                              "none",         "",            "powerblock",     "*",                       "",                      "" },
-															     																	  
+	
+	// sCO2 Powerblock (type 424) inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: sCO2 Recompression (424)",               "none",         "",            "powerblock",     "*",                       "INTEGER",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "deltaT_PHX",           "Design temperature difference in PHX",						      "C",	          "",            "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fan_power_perc_net",   "% of net cycle output used for fan power at design",			      "%",	          "",            "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "elev",                 "Site elevation",                                                    "m",            "",            "powerblock",     "*",                       "",                      "" },
+
 	// Parasitics (type 228) parameters						     																	  
     {SSC_INPUT,         SSC_NUMBER,      "P_storage_pump",       "Storage pump power, rated per MWt of storage use",                  "MWe/MWt",      "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_loss",          "Thermal loss per meter of piping",                                  "Wt/m",         "",            "parasitics",     "*",                       "",                      "" },
@@ -421,6 +430,16 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     //optimization outputs
     { SSC_OUTPUT,       SSC_MATRIX,      "opt_history",          "Step history of optimization",                                      "",             "",            "Outputs",        "",                       "",           "" },
 
+	// Add sco2 specific outputs: will need to figure out how to merge this with molten salt model
+	// { SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "P_low_des",            "Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "P_high_des",           "Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "f_recomp_des",         "Recompression fraction",                                            "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "T_turbine_in",         "Turbine inlet temperature",                                         "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "P_mc_in",              "Main comp inlet pressure",                                          "kPa",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "P_mc_out",             "Main comp outlet pressure",                                         "kPa",		  "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "f_recomp",             "Recomp fraction",                                                   "",			  "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// { SSC_OUTPUT,       SSC_ARRAY,       "N_MC",                 "Main comp. shaft speed",                                            "rpm",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly Energy", "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
 
@@ -501,22 +520,44 @@ public:
 		avg_temp = ( as_integer("receiver_type") == 0 ) ? 10.3 : 15;
 		avg_wind_v = 0;
 
+		// Logic to choose between steam and sco2 power cycle 
+		bool is_steam_pc = true;
+		int pb_tech_type = as_integer("pc_config");
+		if( pb_tech_type == 1 )
+		{
+			pb_tech_type = 424;
+			is_steam_pc = false;
+		}
+
 		// add other units		
 		int	tou = add_unit("tou_translator", "Time of Use Translator");
 		//int type221_hel_field = add_unit("sam_mw_pt_type221");
-		int type_hel_field = add_unit("sam_mw_pt_heliostatfield");
-		int type222_receiver = 0, type232_cav_rec = 0;
-		if (as_integer("receiver_type") == 0)
-			type222_receiver = add_unit("sam_mw_pt_type222");
-		else
-			type232_cav_rec = add_unit("sam_lf_st_pt_type232");
-		int type251_controller = add_unit("sam_mw_trough_type251");
 
-		// Logic to choose between steam and sco2 power cycle
-		bool is_steam_pc = true;
-		int pb_tech_type = 2;		// This should be an SSC input, eventually
-		if( pb_tech_type == 424 )
-			is_steam_pc = false;
+		int type251_controller = 0;
+		int type_hel_field = 0;
+		int type222_receiver = 0, type232_cav_rec = 0;
+
+		if( is_steam_pc )
+		{
+			type_hel_field = add_unit("sam_mw_pt_heliostatfield");
+
+			if( as_integer("receiver_type") == 0 )
+				type222_receiver = add_unit("sam_mw_pt_type222");
+			else
+				type232_cav_rec = add_unit("sam_lf_st_pt_type232");
+
+			type251_controller = add_unit("sam_mw_trough_type251");
+		}
+		else
+		{
+			type251_controller = add_unit("sam_mw_trough_type251");
+			type_hel_field = add_unit("sam_mw_pt_heliostatfield");
+
+			if( as_integer("receiver_type") == 0 )
+				type222_receiver = add_unit("sam_mw_pt_type222");
+			else
+				type232_cav_rec = add_unit("sam_lf_st_pt_type232");
+		}
 
 		int type224_powerblock = 0;
 		int type424_sco2 = 0;
@@ -1026,15 +1067,15 @@ public:
 		}
 		else
 		{
-			set_unit_value_ssc_double(type424_sco2, "W_dot_net_des", as_double("P_ref"));
-			set_unit_value_ssc_double(type424_sco2, "eta_c", 0.89);
-			set_unit_value_ssc_double(type424_sco2, "eta_t", 0.93);
-			set_unit_value_ssc_double(type424_sco2, "P_high_limit", 25.0);
-			set_unit_value_ssc_double(type424_sco2, "deltaT_PHX", 5.0);
+			set_unit_value_ssc_double(type424_sco2, "W_dot_net_des", as_double("P_ref"));					
+			set_unit_value_ssc_double(type424_sco2, "eta_c");												
+			set_unit_value_ssc_double(type424_sco2, "eta_t");												
+			set_unit_value_ssc_double(type424_sco2, "P_high_limit");										
+			set_unit_value_ssc_double(type424_sco2, "deltaT_PHX");											
 
 			set_unit_value_ssc_double(type424_sco2, "deltaT_ACC", as_double("T_ITD_des"));
 			set_unit_value_ssc_double(type424_sco2, "T_amb_des");
-			set_unit_value_ssc_double(type424_sco2, "fan_power_perc", 1.0);
+			set_unit_value_ssc_double(type424_sco2, "fan_power_perc", as_double("fan_power_perc_net"));
 			set_unit_value_ssc_double(type424_sco2, "plant_elevation", 0.0);
 
 			set_unit_value_ssc_double(type424_sco2, "T_htf_hot_des", as_double("T_htf_hot_ref"));
