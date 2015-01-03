@@ -149,18 +149,18 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     //{ SSC_INPUT,        SSC_MATRIX,      "fluxmap",              "Matrix containing flux map for various solar positions",            "-",            "",            "receiver",       "*",                       "",                      "" },
 															     																	  
     // Receiver (type 222) inputs							     																	  
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth_ini",          "Solar azimuth angle",                                               "deg",          "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "zenith_ini",           "Solar zenith angle",                                                "deg",          "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "azimuth_ini",          "Solar azimuth angle",                                               "deg",          "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "zenith_ini",           "Solar zenith angle",                                                "deg",          "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_salt_cold",          "Desired HTF inlet temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "V_wind_10",            "Ambient wind velocity, ground level",                               "m/s",          "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_amb",                "Ambient atmospheric pressure",                                      "mbar",         "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "V_wind_10",            "Ambient wind velocity, ground level",                               "m/s",          "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "P_amb",                "Ambient atmospheric pressure",                                      "mbar",         "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_pump",             "Receiver HTF pump efficiency",                                      "",             "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_dp",                 "Ambient dew point temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "I_bn",                 "Direct (beam) normal radiation",                                    "W/m^2-K",      "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "field_eff",            "Heliostat field efficiency",                                        "",             "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_dp",                 "Ambient dew point temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "I_bn",                 "Direct (beam) normal radiation",                                    "W/m^2-K",      "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "field_eff",            "Heliostat field efficiency",                                        "",             "",            "receiver",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "T_db",                 "Ambient dry bulb temperature",                                      "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "night_recirc",         "Flag to indicate night recirculation through the rec.",             "",             "",            "receiver",       "*",                       "INTEGER",               "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "night_recirc",         "Flag to indicate night recirculation through the rec.",             "",             "",            "receiver",       "*",                       "INTEGER",               "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "hel_stow_deploy",      "Heliostat field stow/deploy solar angle",                           "deg",          "",            "receiver",       "*",                       "",                      "" },
 															     																	  
 															     																	  
@@ -812,27 +812,29 @@ public:
 			set_unit_value_ssc_double( type222_receiver, "n_flux_y" );
 
 			// Set Receiver (type 222) inputs (initial values)
-			set_unit_value_ssc_double( type222_receiver, "azimuth", as_double("azimuth_ini") ); //, 174.309 );
-			set_unit_value_ssc_double( type222_receiver, "zenith", as_double("zenith_ini") ); //, 58.0268 );
+			//set_unit_value_ssc_double( type222_receiver, "azimuth", as_double("azimuth_ini") ); //, 174.309 );
+			//set_unit_value_ssc_double( type222_receiver, "zenith", as_double("zenith_ini") ); //, 58.0268 );
 			// reset below, this line doesn't do anything:  set_unit_value_ssc_double( type222_receiver, "T_salt_hot_target" ); //, 574 );
 			// reset below, this line doesn't do anything:  set_unit_value_ssc_double( type222_receiver, "T_salt_cold" ); //, 289.874 );
-			set_unit_value_ssc_double( type222_receiver, "V_wind_10", avg_wind_v ); //, 0.0 );
-			set_unit_value_ssc_double( type222_receiver, "P_amb" ); //, 956.0 );
+			//set_unit_value_ssc_double( type222_receiver, "V_wind_10", avg_wind_v ); //, 0.0 );
+			//set_unit_value_ssc_double( type222_receiver, "P_amb" ); //, 956.0 );
 			// reset below, this line doesn't do anything:  set_unit_value_ssc_double( type222_receiver, "eta_pump" ); //, 0.85 );
-			set_unit_value_ssc_double( type222_receiver, "T_dp" ); //, -5.65 );
-			set_unit_value_ssc_double( type222_receiver, "I_bn" ); //, 941.0 );
+			//set_unit_value_ssc_double( type222_receiver, "T_dp" ); //, -5.65 );
+			//set_unit_value_ssc_double( type222_receiver, "I_bn" ); //, 941.0 );
 			// reset below, this line doesn't do anything.  set_unit_value_ssc_double( type222_receiver, "field_eff" ); //, 0.535 );
-			set_unit_value_ssc_double( type222_receiver, "T_db", avg_temp ); //, 10.3 );
+			//set_unit_value_ssc_double( type222_receiver, "T_db", avg_temp ); //, 10.3 );
 			// reset below, this line doesn't do anything.  set_unit_value_ssc_double( type222_receiver, "night_recirc" ); //, 0 );
 			// reset below, this line doesn't do anything.  set_unit_value_ssc_double( type222_receiver, "hel_stow_deploy" ); //, 8 );
 
-			set_unit_value_ssc_double( type222_receiver, "T_salt_hot_target" ); //, 574.0 );
-			set_unit_value_ssc_double( type222_receiver, "eta_pump" ); //, 0.85 );
-			set_unit_value_ssc_double( type222_receiver, "night_recirc" ); //, 0 );
-			set_unit_value_ssc_double( type222_receiver, "hel_stow_deploy" ); //, 8 );
 			// Set initial values for inputs generated from subsequently called types
-			set_unit_value_ssc_double( type222_receiver, "T_salt_cold" ); //, 290.0 );
-			set_unit_value_ssc_double( type222_receiver, "field_eff" ); //, 0.0 );
+			// set_unit_value_ssc_double( type222_receiver, "T_salt_cold" ); //, 290.0 );
+			// set_unit_value_ssc_double( type222_receiver, "field_eff" ); //, 0.0 ); 
+
+			// Constant inputs (so ... should be parameters??)
+			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target"); //, 574.0 );
+			set_unit_value_ssc_double(type222_receiver, "eta_pump"); //, 0.85 );
+			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0); //, 0 );
+			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy"); //, 8 );
 
 			// Make all the connections to/from the Receiver (type 222)
 			bConnected &= connect(weather, "solazi", type222_receiver, "azimuth");
@@ -1122,7 +1124,7 @@ public:
 		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
 		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff"); //recirc_htr_eff );
 		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "night_recirc"); //night_recirc );
+		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0); //night_recirc );
 		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
