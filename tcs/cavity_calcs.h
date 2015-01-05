@@ -1,7 +1,8 @@
 #ifndef __CAVITY_CALCS_
 #define __CAVITY_CALCS_
 
-#include <shared/lib_util.h>
+//#include <shared/lib_util.h>
+#include "lib_util.h"
 
 /* class array4d
 {

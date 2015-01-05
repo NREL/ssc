@@ -5,8 +5,10 @@
 #include <cmath>
 #include <math.h>
 #include "htf_props.h"
-#include <shared/lib_util.h>
-#include <shared/lib_physics.h>
+//#include <shared/lib_util.h>
+#include "lib_util.h"
+//#include <shared/lib_physics.h>
+#include "lib_physics.h"
 
 struct S_Indirect_PB_Parameters
 {

@@ -2,7 +2,8 @@
 #include "direct_steam_receivers.h"
 
 #include "sam_csp_util.h"
-#include <shared/lib_util.h>
+//#include <shared/lib_util.h>
+#include "lib_util.h"
 //#include "waterprop.h"
 #include "water_properties.h"
 
