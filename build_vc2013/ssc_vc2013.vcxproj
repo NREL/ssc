@@ -32,6 +32,7 @@
     <ClCompile Include="..\ssc\cmod_hcpv.cpp" />
     <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
     <ClCompile Include="..\ssc\cmod_irradproc.cpp" />
+    <ClCompile Include="..\ssc\cmod_iscc_design_point.cpp" />
     <ClCompile Include="..\ssc\cmod_layoutarea.cpp" />
     <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
     <ClCompile Include="..\ssc\cmod_poacalib.cpp" />
