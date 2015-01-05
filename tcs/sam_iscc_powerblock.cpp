@@ -45,7 +45,7 @@ enum{	//Parameters
 
 tcsvarinfo sam_iscc_powerblock_variables[] = {
 	//PARAMETERS
-	{TCS_PARAM, TCS_MATRIX, P_HTF,             "HTF_code",          "HTF fluid code",	                                    "-",     "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_HTF,             "HTF_code",          "HTF fluid code",	                                    "-",     "", "", ""},
 	{TCS_PARAM, TCS_MATRIX, P_USER_HTF_PROPS,  "field_fl_props",    "User defined field fluid property data",               "-",     "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},			
 	{TCS_PARAM, TCS_NUMBER, P_Q_SF_DES,        "Q_sf_des",          "Design point solar field thermal output",              "MW",    "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_PLANT_ELEVATION, "plant_elevation",   "Plant Elevation",                                      "m",     "", "", ""},
