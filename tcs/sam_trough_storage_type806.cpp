@@ -1,7 +1,8 @@
 #define _TCSTYPEINTERFACE_
 
 #include "tcstype.h"
-#include <shared/lib_util.h>
+//#include <shared/lib_util.h>
+#include "lib_util.h"
 
 #ifndef MAX
 #define MAX(a,b) ( (a)>(b) ? (a) : (b) )

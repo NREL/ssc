@@ -1,7 +1,8 @@
 #ifndef __DSG_RECS_
 #define __DSG_RECS_
 
-#include <shared/lib_util.h>
+//#include <shared/lib_util.h>
+#include "lib_util.h"
 #include "htf_props.h"
 //#include "waterprop.h"
 #include "water_properties.h"

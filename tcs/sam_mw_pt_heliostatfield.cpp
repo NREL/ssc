@@ -1,7 +1,9 @@
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
-#include <shared/lib_util.h>
-#include "shared/lib_weatherfile.h"
+//#include <shared/lib_util.h>
+#include "lib_util.h"
+//#include "shared/lib_weatherfile.h"
+#include "lib_weatherfile.h"
 #include <algorithm>
 
 #include "interpolation_routines.h"

@@ -5,7 +5,8 @@
 
 #include "htf_props.h"
 #include "CO2_properties.h"
-#include <shared/lib_util.h>
+//#include <shared/lib_util.h>
+#include "lib_util.h"
 #include "sam_csp_util.h"
 
 using namespace std;
