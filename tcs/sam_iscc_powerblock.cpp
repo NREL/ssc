@@ -46,7 +46,7 @@ enum{	//Parameters
 tcsvarinfo sam_iscc_powerblock_variables[] = {
 	//PARAMETERS
 	{TCS_PARAM, TCS_MATRIX, P_HTF,             "HTF_code",          "HTF fluid code",	                                    "-",     "", "", ""},
-	{TCS_PARAM, TCS_MATRIX, P_USER_HTF_PROPS,  "User_htf_props",    "User defined field fluid property data",               "-",     "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},			
+	{TCS_PARAM, TCS_MATRIX, P_USER_HTF_PROPS,  "field_fl_props",    "User defined field fluid property data",               "-",     "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},			
 	{TCS_PARAM, TCS_NUMBER, P_Q_SF_DES,        "Q_sf_des",          "Design point solar field thermal output",              "MW",    "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_PLANT_ELEVATION, "plant_elevation",   "Plant Elevation",                                      "m",     "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_CYCLE_CONFIG,    "cycle_config",      "Cycle configuration code, 1 = HP evap injection",      "-",     "", "", ""},
@@ -209,12 +209,12 @@ public:
 		// Check ambient pressure
 		if( m_P_amb_des < m_P_amb_low )
 		{
-			message(TCS_ERROR, "The design ambient pressure, %d, [bar] is lower than the lowest value of ambient pressure, %d [bar] in the cycle performance lookup table.", m_P_amb_des, m_P_amb_low);
+			message(TCS_ERROR, "The design ambient pressure, %lg, [bar] is lower than the lowest value of ambient pressure, %lg [bar] in the cycle performance lookup table.", m_P_amb_des, m_P_amb_low);
 			return -1;
 		}
 		if( m_P_amb_des > m_P_amb_high )
 		{
-			message(TCS_ERROR, "The design ambient pressure, %d, [bar] is greater than the largest value of ambient pressure, %d [bar] in the cycle performance lookup table.", m_P_amb_des, m_P_amb_high);
+			message(TCS_ERROR, "The design ambient pressure, %lg, [bar] is greater than the largest value of ambient pressure, %lg [bar] in the cycle performance lookup table.", m_P_amb_des, m_P_amb_high);
 			return -1;
 		}
 
@@ -222,7 +222,7 @@ public:
 		double q_dot_sf_max = cycle_calcs.get_ngcc_data(0.0, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_heat_max);				//[MWt]
 		if( m_q_sf_des > q_dot_sf_max )
 		{		
-			message(TCS_ERROR, "The design solar thermal input, %d MWt, is greater than the ngcc can accept, %d MWt at the design ambient pressure, %d bar, and designt ambient temperature"
+			message(TCS_ERROR, "The design solar thermal input, %lg MWt, is greater than the ngcc can accept, %lg MWt at the design ambient pressure, %lg bar, and designt ambient temperature"
 				    "20 C. The HTF-steam HX was sized using the maximum solar thermal input.", m_q_sf_des, q_dot_sf_max, m_P_amb_des);
 			m_q_sf_des = q_dot_sf_max;
 		}
