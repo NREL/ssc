@@ -340,8 +340,13 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 
 		m_azaltvals.resize_fill( nrows, ncols, 1.0 );
 		for ( size_t r=0;r<nrows;r++ )
-			for ( size_t c=0;c<ncols;c++ )
-				m_azaltvals.at(r,c) = 1-mat[r*ncols+c]/100;
+			for (size_t c = 0; c < ncols; c++)
+			{	
+				if (r == 0 || c == 0)
+					m_azaltvals.at(r, c) = mat[r*ncols + c]; //first row and column contain azimuth by altitude values
+				else
+					m_azaltvals.at(r, c) = 1 - mat[r*ncols + c] / 100; //all other entries must be converted from % to factor
+			}
 
 		m_enAzAlt = true;
 	}
