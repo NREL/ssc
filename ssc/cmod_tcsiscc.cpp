@@ -1,63 +1,151 @@
 // Integrated Solar Combined Cycle
 #include "core.h"
 #include "tckernel.h"
+// for adjustment factors
+#include "common.h"
+// solarpilot header files
+#include "AutoPilot_API.h"
+#include "SolarField.h"
+#include "IOUtil.h"
+#include "csp_common.h"
 
 static var_info _cm_vtab_tcsiscc[] = {
-//   weather reader inputs
-//   VARTYPE            DATATYPE          NAME                LABEL                                                                      UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
-    { SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                                 "",             "",             "weather",        "*",                       "LOCAL_FILE",            "" },
-																															           
-	{ SSC_INPUT,        SSC_MATRIX,      "eta_map",           "Solar field efficiency map",                                              "",             "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "n_zen",             "Number of zenith positions in efficiency map",                            "",             "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "n_azi",             "Number of azimuth positions in efficiency map",                           "",             "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "n_hel",             "Number of heliostats in the field",                                       "",             "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "q_start",           "Electric work for starting up one heliostat",                            "kWe-hr",        "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "p_run",             "Electric power for tracking one heliostat",                              "kWe",           "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "v_wind_max",        "Maximum tolerable wind speed",                                           "m/s",           "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hel_stow_deploy",   "Heliostat field stow/deploy solar elevation angle",                      "deg",           "",             "solarfield",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "eta_pump",          "HTF pump efficiency",                                                    "",              "",             "solarfield",     "*",                       "",                      "" },	
+//    VARTYPE           DATATYPE          NAME                   LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
+    { SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",      "Nameplate capacity",                                                "kW",           "",            "molten salt tower", "*",                    "",   "" },
+														     																	  
+	// Heliostat field  parameters				     																	  
+	{ SSC_INPUT,        SSC_NUMBER,      "run_type",             "Run type",                                                          "-",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "helio_width",          "Heliostat width",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "helio_height",         "Heliostat height",                                                  "m",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "helio_optical_error",  "Heliostat optical error",                                           "rad",          "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "helio_active_fraction","Heliostat active frac.",                                            "-",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dens_mirror",          "Ratio of Reflective Area to Profile",                               "-",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",    "Heliostat reflectance",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",      "Receiver absorptance",                                              "-",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_hl_perm2",         "Receiver design heatloss",                                          "kW/m2",        "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "land_bound_type",      "Land boundary type",                                                "-",            "",            "heliostat",      "?=0",                     "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "land_max",             "Land max boundary",                                                 "-ORm",         "",            "heliostat",      "?=7.5",                   "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "land_min",             "Land min boundary",                                                 "-ORm",         "",            "heliostat",      "?=0.75",                  "",                     "" },
+    { SSC_INPUT,        SSC_MATRIX,      "land_bound_table",     "Land boundary table",                                               "m",            "",            "heliostat",      "?",                       "",                     "" },
+    { SSC_INPUT,        SSC_ARRAY,       "land_bound_list",      "Boundary table listing",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dni_des",              "Design-point DNI",                                                  "W/m2",         "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "p_start",              "Heliostat startup energy",                                          "kWe-hr",       "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "p_track",              "Heliostat tracking energy",                                         "kWe",          "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "hel_stow_deploy",      "Stow/deploy elevation",                                             "deg",          "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "v_wind_max",           "Max. wind velocity",                                                "m/s",          "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "interp_nug",           "Interpolation nugget",                                              "-",            "",            "heliostat",      "?=0",                     "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "interp_beta",          "Interpolation beta coef.",                                          "-",            "",            "heliostat",      "?=1.99",                  "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_flux_x",             "Flux map X resolution",                                             "-",            "",            "heliostat",      "?=12",                    "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_flux_y",             "Flux map Y resolution",                                             "-",            "",            "heliostat",      "?=1",                     "",                     "" },
+    { SSC_INPUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                                          "m",            "",            "heliostat",      "run_type=1",              "",                     "" },
+    { SSC_INPUT,        SSC_MATRIX,      "helio_aim_points",     "Heliostat aim point table",                                         "m",            "",            "heliostat",      "?",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                              "-",            "",            "heliostat",      "?",                       "",                     "" },
+    { SSC_INPUT,        SSC_MATRIX,      "eta_map",              "Field efficiency array",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
+    { SSC_INPUT,        SSC_MATRIX,      "flux_positions",       "Flux map sun positions",                                            "deg",          "",            "heliostat",      "?",                       "",                     "" },
+    { SSC_INPUT,        SSC_MATRIX,      "flux_maps",            "Flux map intensities",                                              "-",            "",            "heliostat",      "?",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_0",              "Attenuation coefficient 0",                                         "",             "",            "heliostat",      "?=0.006789",              "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_1",              "Attenuation coefficient 1",                                         "",             "",            "heliostat",      "?=0.1046",                "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_2",              "Attenuation coefficient 2",                                         "",             "",            "heliostat",      "?=-0.0107",               "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_3",              "Attenuation coefficient 3",                                         "",             "",            "heliostat",      "?=0.002845",              "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_facet_x",            "Number of heliostat facets - X",                                    "",             "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_facet_y",            "Number of heliostat facets - Y",                                    "",             "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "focus_type",           "Heliostat focus method",                                            "",             "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cant_type",            "Heliostat cant method",                                             "",             "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_flux_days",          "No. days in flux map lookup",                                       "",             "",            "heliostat",      "?=8",                     "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",       "Hourly frequency in flux map lookup",                               "",             "",            "heliostat",      "?=1",                     "",                     "" },
+    
+    
+	{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "heliostat",   "*",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "heliostat",   "?=1",              "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",                 "Tower cost scaling exponent",                "",       "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_cost",              "Receiver reference cost",                    "$",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_area",              "Receiver reference area for cost scale",     "",       "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rec_cost_exp",              "Receiver cost scaling exponent",             "",       "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "site_spec_cost",            "Site improvement cost",                      "$/m2",   "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_spec_cost",       "Heliostat field cost",                       "$/m2",   "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "plant_spec_cost",           "Power cycle specific cost",                  "$/kWe",  "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "bop_spec_cost",             "BOS specific cost",                          "$/kWe",  "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tes_spec_cost",             "Thermal energy storage cost",                "$/kWht", "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "land_spec_cost",            "Total land area cost",                       "$/acre", "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "contingency_rate",          "Contingency for cost overrun",               "%",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",            "Sales tax rate",                             "%",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_frac",            "Percent of cost to which sales tax applies", "%",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",             "Solar field fixed cost",                     "$",      "",         "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fossil_spec_cost",          "Fossil system specific cost",                "$/kWe",      "",     "heliostat",   "*",                "",                "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "N_panels",          "Number of individual panels on the receiver",                            "",              "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "D_rec",             "The overall outer diameter of the receiver",                             "m",             "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "H_rec",             "The height of the receiver",                                             "m",             "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "THT",               "The height of the tower (hel. pivot to rec equator)",                    "m",             "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "d_tube_out",        "The outer diameter of an individual receiver tube",                      "mm",            "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "th_tube",           "The wall thickness of a single receiver tube",                           "mm",            "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mat_tube",          "The material name of the receiver tubes",                                "",              "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "rec_htf",           "The name of the HTF used in the receiver",                               "",              "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "field_fl_props",    "User defined field fluid property data",                                 "-",              "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "receiver", "*", "",     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "Flow_type",		  "A flag indicating which flow pattern is used",				           	"",			     "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "epsilon",			  "The emissivity of the receiver surface coating",				           	"",		         "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hl_ffact",	      "The heat loss factor (thermal loss fudge factor)",			           	"",			     "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",	  "Hot HTF outlet temperature at design conditions",			           	"C",		     "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",	  "Cold HTF inlet temperature at design conditions",			           	"C",		     "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "f_rec_min",		  "Minimum receiver mass flow rate turn down fraction",			           	"",		         "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "Q_rec_des",		  "Design-point receiver thermal power output",					           	"MWt",	         "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "rec_su_delay",	  "Fixed startup delay time for the receiver",					           	"hr",	         "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "rec_qf_delay",	  "Energy-based receiver startup delay (fraction of rated thermal power)",	"",		         "",             "receiver",       "*",                       "",                      "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_max",	  "Maximum receiver mass flow rate",									    "kg/hr",         "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "A_sf",			  "Solar Field Area",                                                       "m^2",           "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "cycle_config",      "Configuration of ISCC power cycle",                                      "-",             "",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,		 "fluxmap_angles",    "Matrix containing zenith and azimuth angles for flux maps",              "-",              "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided",             "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,		 "fluxmap",           "Matrix containing flux map for various solar positions",                 "-",             "",             "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",          "Do SolarPILOT optimization",                                        "",             "",            "heliostat",       "?=0",                    "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "flux_max",             "Maximum allowable flux",                                            "",             "",            "heliostat",       "?=1000",                 "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",        "Optimization initial step size",                                    "",             "",            "heliostat",       "?=0.05",                 "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",         "Max. number iteration steps",                                       "",             "",            "heliostat",       "?=200",                 "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",         "Optimization convergence tol",                                      "",             "",            "heliostat",       "?=0.001",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",        "Optimization algorithm",                                            "",             "",            "heliostat",       "?=0",                    "",                "" },
 
-	// sam_iscc_powerblock.cpp: not reading in parameters that have already been read in for type 222! need to set these below
-	{ SSC_INPUT,        SSC_NUMBER,		 "plant_elevation",   "Plant Elevation",                                                        "m",             "",             "powerblock",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "hot_side_delta_t",  "Hot side temperature HX temperature difference",                         "C",             "",             "powerblock",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "pinch_point",       "Cold side HX pinch point",                                               "C",             "",             "powerblock",     "*",                       "",                      "" },
+    //other costs needed for optimization update
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_acre",       "EPC cost per acre",                 "$/acre",   "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.percent",        "EPC cost percent of direct",        "",         "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_watt",       "EPC cost per watt",                 "$/W",      "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.fixed",          "EPC fixed",                         "$",        "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_acre",       "PLM cost per acre",                 "$/acre",   "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.percent",        "PLM cost percent of direct",        "",         "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_watt",       "PLM cost per watt",                 "$/W",      "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.fixed",          "PLM fixed",                         "$",        "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.fixed_land_area",      "Fixed land area",                   "acre",     "",     "heliostat",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.land_overhead_factor", "Land overhead factor",              "",         "",     "heliostat",   "*",                "",                "" },
+	//The total installed cost from the cost page
+    { SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",           "Total installed cost",              "$",        "",     "heliostat",   "*",                "",                "" },
+	
+	
+	{ SSC_INPUT,        SSC_NUMBER,      "receiver_type",        "External=0, Cavity=1",                                              "",             "",            "receiver",       "*",                       "INTEGER",               "" },															     																	  
+	// Receiver (type 222) parameters						     																	  
+    { SSC_INPUT,        SSC_NUMBER,      "N_panels",             "Number of individual panels on the receiver",                       "",             "",            "receiver",       "*",                       "INTEGER",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",                        "m",            "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "H_rec",                "The height of the receiver",                                        "m",            "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "THT",                  "The height of the tower (hel. pivot to rec equator)",               "m",            "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "d_tube_out",           "The outer diameter of an individual receiver tube",                 "mm",           "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "th_tube",              "The wall thickness of a single receiver tube",                      "mm",           "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "mat_tube",             "The material name of the receiver tubes",                           "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_htf",              "The name of the HTF used in the receiver",                          "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",       "User defined field fluid property data",                            "-",            "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "Flow_type",            "A flag indicating which flow pattern is used",                      "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "epsilon",              "The emissivity of the receiver surface coating",                    "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "hl_ffact",             "The heat loss factor (thermal loss fudge factor)",                  "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",        "Hot HTF outlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",       "Cold HTF inlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "f_rec_min",            "Minimum receiver mass flow rate turn down fraction",                "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "Q_rec_des",            "Design-point receiver thermal power output",                        "MWt",          "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_su_delay",         "Fixed startup delay time for the receiver",                         "hr",           "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_qf_delay",         "Energy-based rcvr startup delay (fraction of rated thermal power)", "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_max",        "Maximum receiver mass flow rate",                                   "kg/hr",        "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                                  "m^2",          "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_salt_cold",          "Desired HTF inlet temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_pump",             "Receiver HTF pump efficiency",                                      "",             "",            "receiver",       "*",                       "",                      "" },
 
-	// sam_iscc_parasitics
-	{ SSC_INPUT,        SSC_NUMBER,      "W_htf_pc_pump",     "Required pumping power for HTF through power block",                     "kJ/kg",         "",             "parasitics",     "*",                       "",                      "" },
+	
+	// sam_iscc_powerblock.cpp: not reading in parameters that have already been read in for type 222! need to set these below 
+	{ SSC_INPUT,  SSC_NUMBER,  "q_pb_design",          "Design point power block thermal power",         "MWt",     "",    "powerblock",     "*",     "",                "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "elev",                 "Plant elevation",                                "m",       "",    "powerblock",     "*",     "",                "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "ngcc_model",           "1: NREL, 2: GE",                                 "",        "",    "powerblock",     "*",     "",                "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "pinch_point_hotside",  "Hot side temperature HX temperature difference", "C",       "",    "powerblock",     "*",     "",                "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "pinch_point_coldside", "Cold side HX pinch point",                       "C",       "",    "powerblock",     "*",     "",                "" },
+	 
+	// // sam_iscc_parasitics
+	{ SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",      "Required pumping power for HTF through power block",                     "kJ/kg",         "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Piping_loss",       "Thermal loss per meter of piping",                                       "Wt/m",          "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Piping_length",     "Total length of exposed piping",                                         "m",             "",             "parasitics",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "Q_sf_des",          "Design point solar field thermal output",                                "MW",            "",             "parasitics",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "Q_rec_des",         "Design point solar field thermal output",                                "MW",            "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",      "Fixed parasitic load - runs at all times",                               "MWe/MWcap",     "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "bop_par",           "Balance of plant parasitic power fraction",                              "MWe/MWcap",     "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "bop_par_f",         "Balance of plant parasitic power fraction - mult frac",                  "none",          "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "bop_par_0",         "Balance of plant parasitic power fraction - const coeff",                "none",          "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "bop_par_1",         "Balance of plant parasitic power fraction - linear coeff",               "none",          "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "bop_par_2",         "Balance of plant parasitic power fraction - quadratic coeff",            "none",          "",             "parasitics",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "W_dot_fossil_des",  "Fossil-only cycle output at design",                                     "MWe",           "",             "parasitics",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fossil_output",     "Fossil-only cycle output at design",                                     "MWe",           "",             "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "W_dot_solar_des",   "Solar contribution to cycle output at design"                            "MWe",           "",             "parasitics",     "*",                       "",                      "" },
 
 	// OUTPUTS
@@ -111,121 +199,315 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		//Add weather file reader unit
 		int weather = add_unit("weatherreader", "TCS weather reader");
-		int hel_field = add_unit("sam_mw_pt_type221", "solarfield");
-		int receiver = add_unit("sam_mw_pt_type222", "receiver");
+		int type_hel_field = add_unit("sam_mw_pt_heliostatfield");
+		int type222_receiver = add_unit("sam_mw_pt_type222");		
 		int iscc_pb = add_unit("sam_iscc_powerblock");
 		int iscc_parasitics = add_unit("sam_iscc_parasitics");
-
-		//int blah = as_integer("n_zen");
+		bool bConnected = true;
 
 		//Set weatherreader parameters
-		set_unit_value_ssc_string( weather, "file_name" );
-		set_unit_value( weather, "track_mode", 1.0 );
-		set_unit_value( weather, "tilt", 0.0 );
-		set_unit_value( weather, "azimuth", 0.0 );
+		set_unit_value(weather, "file_name", as_string("solar_resource_file"));
+		set_unit_value(weather, "track_mode", 0.0);
+		set_unit_value(weather, "tilt", 0.0);
+		set_unit_value(weather, "azimuth", 0.0);
 
-		// Set solarfield (type 221) parameters
-		set_unit_value_ssc_matrix(hel_field, "eta_map");
-		set_unit_value_ssc_double(hel_field, "n_zen"); // 8
-		set_unit_value_ssc_double(hel_field, "n_azi"); // 13
-		set_unit_value_ssc_double(hel_field, "n_hel"); // 8929
-		set_unit_value_ssc_double(hel_field, "q_start");
-		set_unit_value_ssc_double(hel_field, "p_run");
-		set_unit_value_ssc_double(hel_field, "v_wind_max");
-		set_unit_value_ssc_double(hel_field, "hel_stow_deploy");
+		// Heliostat field
+		set_unit_value_ssc_double(type_hel_field, "run_type");// , 0);	//0=auto, 1=user-type_hel_field, 2=user data
+		set_unit_value_ssc_double(type_hel_field, "helio_width");//, 12.);
+		set_unit_value_ssc_double(type_hel_field, "helio_height");//, 12.);
+		set_unit_value_ssc_double(type_hel_field, "helio_optical_error");//, 0.00153);
+		set_unit_value_ssc_double(type_hel_field, "helio_active_fraction");//, 0.97);
+		set_unit_value_ssc_double(type_hel_field, "dens_mirror");
+		set_unit_value_ssc_double(type_hel_field, "helio_reflectance");//, 0.90);
+		set_unit_value_ssc_double(type_hel_field, "rec_absorptance");//, 0.94);
 
-		// Heliostat field (type 221) inputs
-		bool bConnected = connect(weather, "wspd", hel_field, "vwind");
-		bConnected = connect(weather, "solzen", hel_field, "theta");
-		bConnected = connect(weather, "solazi", hel_field, "phi");
-		set_unit_value(hel_field, "field_control", 1.0);
+		bool is_optimize = as_boolean("is_optimize");
 
-		// Receiver (type 222) parameters
-		set_unit_value_ssc_double(receiver, "N_panels");
-		set_unit_value_ssc_double(receiver, "D_rec");
-		set_unit_value_ssc_double(receiver, "H_rec");
-		set_unit_value_ssc_double(receiver, "THT");
-		set_unit_value_ssc_double(receiver, "d_tube_out");
-		set_unit_value_ssc_double(receiver, "th_tube");
-		set_unit_value_ssc_double(receiver, "mat_tube");
-		set_unit_value_ssc_double(receiver, "rec_htf");
-		set_unit_value_ssc_matrix(receiver, "field_fl_props");
-		set_unit_value_ssc_double(receiver, "Flow_type");
-		set_unit_value_ssc_double(receiver, "epsilon");
-		set_unit_value_ssc_double(receiver, "hl_ffact");
-		set_unit_value_ssc_double(receiver, "T_htf_hot_des");
-		set_unit_value_ssc_double(receiver, "T_htf_cold_des");
-		set_unit_value_ssc_double(receiver, "f_rec_min");
-		set_unit_value_ssc_double(receiver, "Q_rec_des");
-		set_unit_value_ssc_double(receiver, "rec_su_delay");
-		set_unit_value_ssc_double(receiver, "rec_qf_delay");
-		set_unit_value_ssc_double(receiver, "m_dot_htf_max");
-		set_unit_value_ssc_double(receiver, "A_sf");
-		set_unit_value(receiver, "is_direct_iscc", 1.0);
-		set_unit_value_ssc_double(receiver, "cycle_config");
-		set_unit_value_ssc_matrix(receiver, "fluxmap_angles");
-		set_unit_value_ssc_matrix(receiver, "fluxmap");
+		/*
+		Any parameter that's dependent on the size of the solar field must be recalculated here
+		if the optimization is happening within the cmod
+		*/
+		double H_rec, D_rec, rec_aspect, THT, A_sf;
 
-		// Connect Receiver (type 222) inputs
-		bConnected = connect(weather, "solazi", receiver, "azimuth");
-		bConnected = connect(weather, "solzen", receiver, "zenith");
-		set_unit_value(receiver, "T_salt_hot_target", as_double("T_htf_hot_des"));	
-		bConnected = connect(iscc_pb, "T_htf_cold", receiver, "T_salt_cold");
-		bConnected = connect(weather, "wspd", receiver, "V_wind_10");
-		bConnected = connect(weather, "pres", receiver, "P_amb");
-		set_unit_value_ssc_double(receiver, "eta_pump");
-		bConnected = connect(weather, "tdew", receiver, "T_dp");
-		bConnected = connect(weather, "beam", receiver, "I_bn");
-		bConnected = connect(hel_field, "eta_field", receiver, "field_eff");
-		bConnected = connect(weather, "tdry", receiver, "T_db");
-		set_unit_value(receiver, "night_recirc", 0.0);							// Hardcoded - night_recirc not set in or passed from UI
-		set_unit_value_ssc_double(receiver, "hel_stow_deploy");
+		if( is_optimize )
+		{
+			//Run solarpilot right away to update values as needed
+			solarpilot_invoke spi(this);
+			spi.run();
+			//AutoPilot_S *sapi = spi.GetSAPI();
 
-		// Set necessary receiver initial values
-		set_unit_value(receiver, "T_salt_cold", as_double("T_htf_cold_des"));			
+			//Optimization iteration history
+			vector<vector<double> > steps;
+			vector<double> obj, flux;
+			spi.opt.getOptimizationSimulationHistory(steps, obj, flux);
+			int nr = steps.size();
+			int nc = steps.front().size() + 2;
+			ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
+			for( size_t i = 0; i<nr; i++ ){
+
+				for( size_t j = 0; j<steps.front().size(); j++ )
+					ssc_hist[i*nc + j] = steps.at(i).at(j);
+				ssc_hist[i*nc + nc - 2] = obj.at(i);
+				ssc_hist[i*nc + nc - 1] = flux.at(i);
+
+			}
+
+			//receiver calculations
+			H_rec = spi.recs.front().height;
+			rec_aspect = spi.recs.front().aspect;
+			THT = spi.layout.h_tower;
+			//update heliostat position table
+			nr = (int)spi.layout.heliostat_positions.size();
+			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
+			for( int i = 0; i<nr; i++ ){
+				ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
+				ssc_hl[i * 2 + 1] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+			}
+
+			A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
+
+			//update piping length for parasitic calculation
+			double piping_length = THT * as_double("csp.pt.par.piping_length_mult") + as_double("csp.pt.par.piping_length_const");
+
+			//update assignments for cost model
+			assign("H_rec", var_data((ssc_number_t)H_rec));
+			assign("rec_height", var_data((ssc_number_t)H_rec));
+			assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
+			assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
+			assign("THT", var_data((ssc_number_t)THT));
+			assign("h_tower", var_data((ssc_number_t)THT));
+			assign("A_sf", var_data((ssc_number_t)A_sf));
+			assign("Piping_length", var_data((ssc_number_t)piping_length));
+
+			//Update the total installed cost
+			double total_direct_cost = 0.;
+			double A_rec;
+			switch( spi.recs.front().type )
+			{
+			case sp_receiver::TYPE::CYLINDRICAL:
+			{
+												   double h = spi.recs.front().height;
+												   double d = h / spi.recs.front().aspect;
+												   A_rec = h*d*3.1415926;
+												   break;
+			}
+			case sp_receiver::TYPE::CAVITY:
+			case sp_receiver::TYPE::FLAT:
+				double h = spi.recs.front().height;
+				double w = h / spi.recs.front().aspect;
+				A_rec = h*w;
+				break;
+			}
+			double receiver = as_double("rec_ref_cost")*pow(A_rec / as_double("rec_ref_area"), as_double("rec_cost_exp"));     //receiver cost
+
+			//storage cost
+			double storage = as_double("q_pb_design")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
+
+			//power block + BOP
+			double P_ref = as_double("P_ref") * 1000.;  //kWe
+			double power_block = P_ref * (as_double("plant_spec_cost") + as_double("bop_spec_cost")); //$/kWe --> $
+
+			//site improvements
+			double site_improvements = A_sf * as_double("site_spec_cost");
+
+			//heliostats
+			double heliostats = A_sf * as_double("heliostat_spec_cost");
+
+			//fixed cost
+			double cost_fixed = as_double("cost_sf_fixed");
+
+			//fossil
+			double fossil = P_ref * as_double("fossil_spec_cost");
+
+			//tower cost
+			double tower = as_double("tower_fixed_cost") * exp(as_double("tower_exp") * (THT + 0.5*(-H_rec + as_double("helio_height"))));
+
+			//---- total direct cost -----
+			total_direct_cost = (1. + as_double("contingency_rate") / 100.) * (
+				site_improvements + heliostats + power_block +
+				cost_fixed + storage + fossil + tower + receiver);
+			//-----
+
+			//land area
+			double land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+
+			//EPC
+			double cost_epc =
+				as_double("csp.pt.cost.epc.per_acre") * land_area
+				+ as_double("csp.pt.cost.epc.percent") * total_direct_cost / 100.
+				+ P_ref * 1000. * as_double("csp.pt.cost.epc.per_watt")
+				+ as_double("csp.pt.cost.epc.fixed");
+
+			//PLM
+			double cost_plm =
+				as_double("csp.pt.cost.plm.per_acre") * land_area
+				+ as_double("csp.pt.cost.plm.percent") * total_direct_cost / 100.
+				+ P_ref * 1000. * as_double("csp.pt.cost.plm.per_watt")
+				+ as_double("csp.pt.cost.plm.fixed");
+
+			//sales tax
+			//return ${csp.pt.cost.sales_tax.value}/100*${total_direct_cost}*${csp.pt.cost.sales_tax.percent}/100; };
+			double cost_sales_tax = as_double("sales_tax_rate") / 100. * total_direct_cost * as_double("sales_tax_frac") / 100.;
+
+			//----- indirect cost
+			double total_indirect_cost = cost_epc + cost_plm + cost_sales_tax;
+
+			//----- total installed cost!
+			double total_installed_cost = total_direct_cost + total_indirect_cost;
+			assign("total_installed_cost", var_data((ssc_number_t)total_installed_cost));
+
+		}
+		else
+		{
+			H_rec = as_double("H_rec");
+			rec_aspect = as_double("rec_aspect");
+			THT = as_double("THT");
+			A_sf = as_double("A_sf");
+		}
+		D_rec = H_rec / rec_aspect;
+
+		set_unit_value_ssc_double(type_hel_field, "rec_height", H_rec);//, 5.);
+		set_unit_value_ssc_double(type_hel_field, "rec_aspect", rec_aspect);
+		set_unit_value_ssc_double(type_hel_field, "h_tower", THT);//, 50);
+		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");//, 0.);
+		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("Q_rec_des"));//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "dni_des");
+		set_unit_value(type_hel_field, "weather_file", as_string("solar_resource_file"));
+		set_unit_value_ssc_double(type_hel_field, "land_bound_type");//, 0);
+		set_unit_value_ssc_double(type_hel_field, "land_max");//, 7.5);
+		set_unit_value_ssc_double(type_hel_field, "land_min");//, 0.75);
+		set_unit_value_ssc_double(type_hel_field, "p_start");//, 0.025);
+		set_unit_value_ssc_double(type_hel_field, "p_track");//, 0.055);
+		set_unit_value_ssc_double(type_hel_field, "hel_stow_deploy");//, 8);
+		set_unit_value_ssc_double(type_hel_field, "v_wind_max");//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
+		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
+		set_unit_value_ssc_double(type_hel_field, "c_atm_0");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_1");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_2");
+		set_unit_value_ssc_double(type_hel_field, "c_atm_3");
+		set_unit_value_ssc_double(type_hel_field, "n_facet_x");
+		set_unit_value_ssc_double(type_hel_field, "n_facet_y");
+		set_unit_value_ssc_double(type_hel_field, "focus_type");
+		set_unit_value_ssc_double(type_hel_field, "cant_type");
+		set_unit_value_ssc_double(type_hel_field, "n_flux_days");
+		set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs");
+
+		int run_type = (int)get_unit_value_number(type_hel_field, "run_type");
+		/*if(run_type == 0){
+		set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
+		set_unit_value_ssc_matrix(type_hel_field, "eta_map");
+		set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
+		set_unit_value_ssc_matrix(type_hel_field, "flux_maps");
+
+		}
+		else*/
+		if( run_type == 1 ){
+			set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
+		}
+		else if( run_type == 2 ){
+			set_unit_value_ssc_matrix(type_hel_field, "eta_map");
+			set_unit_value_ssc_matrix(type_hel_field, "flux_positions");
+			set_unit_value_ssc_matrix(type_hel_field, "flux_maps");
+		}
+
+		bConnected = connect(weather, "wspd", type_hel_field, "vwind");
+		set_unit_value_ssc_double(type_hel_field, "field_control", 1.);
+		set_unit_value_ssc_double(weather, "solzen", 90.);	//initialize to be on the horizon
+		bConnected &= connect(weather, "solzen", type_hel_field, "solzen");
+		bConnected &= connect(weather, "solazi", type_hel_field, "solaz");
+
+		if( as_integer("receiver_type") == 0 )
+		{
+			// Receiver (type 222) parameters
+			set_unit_value_ssc_double(type222_receiver, "N_panels");//, 20 );
+			set_unit_value_ssc_double(type222_receiver, "D_rec", D_rec);//, 17.67 );
+			set_unit_value_ssc_double(type222_receiver, "H_rec", H_rec);//, 20.41 );
+			set_unit_value_ssc_double(type222_receiver, "THT", THT);//, 203.33 );
+			set_unit_value_ssc_double(type222_receiver, "d_tube_out");//, 40.0 );
+			set_unit_value_ssc_double(type222_receiver, "th_tube");//, 1.25 );
+			set_unit_value_ssc_double(type222_receiver, "mat_tube");//, 2 );
+			set_unit_value_ssc_double(type222_receiver, "rec_htf");//, 17 );
+			set_unit_value_ssc_matrix(type222_receiver, "field_fl_props");//, {} );
+			set_unit_value_ssc_double(type222_receiver, "Flow_type");//, 1 );
+			set_unit_value_ssc_double(type222_receiver, "epsilon");//, 0.88 );
+			set_unit_value_ssc_double(type222_receiver, "hl_ffact");//, 1 );
+			set_unit_value_ssc_double(type222_receiver, "T_htf_hot_des");//, 574 );
+			set_unit_value_ssc_double(type222_receiver, "T_htf_cold_des");//, 290 );
+			set_unit_value_ssc_double(type222_receiver, "f_rec_min");//, 0.25 );
+			set_unit_value_ssc_double(type222_receiver, "Q_rec_des");//, 669.903 );
+			set_unit_value_ssc_double(type222_receiver, "rec_su_delay");//, 0.2 );
+			set_unit_value_ssc_double(type222_receiver, "rec_qf_delay");//, 0.25 );
+			set_unit_value_ssc_double(type222_receiver, "m_dot_htf_max");//, 6.764E6 );
+			set_unit_value_ssc_double(type222_receiver, "A_sf", A_sf);
+			set_unit_value_ssc_double(type222_receiver, "n_flux_x");
+			set_unit_value_ssc_double(type222_receiver, "n_flux_y");
+
+			// Constant inputs (so ... should be parameters??)
+			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target"); //, 574.0 );
+			set_unit_value_ssc_double(type222_receiver, "eta_pump"); //, 0.85 );
+			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0); //, 0 );
+			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy"); //, 8 );
+
+
+			// Make all the connections to/from the Receiver (type 222)
+			bConnected &= connect(weather, "solazi", type222_receiver, "azimuth");
+			bConnected &= connect(weather, "solzen", type222_receiver, "zenith");
+			bConnected &= connect(iscc_pb, "T_htf_cold", type222_receiver, "T_salt_cold");
+			bConnected &= connect(weather, "wspd", type222_receiver, "V_wind_10");
+			bConnected &= connect(weather, "pres", type222_receiver, "P_amb");
+			bConnected &= connect(weather, "tdew", type222_receiver, "T_dp");
+			bConnected &= connect(weather, "beam", type222_receiver, "I_bn");
+			bConnected &= connect(type_hel_field, "eta_field", type222_receiver, "field_eff");
+			bConnected &= connect(weather, "tdry", type222_receiver, "T_db");
+			bConnected &= connect(type_hel_field, "flux_map", type222_receiver, "flux_map");
+			
+			// Set necessary receiver initial values
+			set_unit_value(type222_receiver, "T_salt_cold", as_double("T_htf_cold_des"));
+
+		} // external receiver
+
 
 		// Set NGCC Parameters
 		set_unit_value(iscc_pb, "HTF_code", as_double("rec_htf"));						
-		set_unit_value_ssc_matrix(iscc_pb, "User_htf_props");
-		set_unit_value(iscc_pb, "Q_sf_des", as_double("Q_rec_des"));
-		set_unit_value_ssc_double(iscc_pb, "plant_elevation");
-		set_unit_value(iscc_pb, "cycle_config", as_double("cycle_config"));
-		set_unit_value_ssc_double(iscc_pb, "hot_side_delta_t");
-		set_unit_value_ssc_double(iscc_pb, "pinch_point");
+		set_unit_value_ssc_matrix(iscc_pb, "field_fl_props");
+		set_unit_value(iscc_pb, "Q_sf_des", as_double("q_pb_design"));
+		set_unit_value_ssc_double(iscc_pb, "plant_elevation", as_double("elev"));
+		set_unit_value(iscc_pb, "cycle_config", as_double("ngcc_model"));
+		set_unit_value_ssc_double(iscc_pb, "hot_side_delta_t", as_double("pinch_point_hotside"));
+		set_unit_value_ssc_double(iscc_pb, "pinch_point", as_double("pinch_point_coldside"));
 
 		// Connect NGCC Inputs
 		bConnected = connect(weather, "tdry", iscc_pb, "T_amb");
 		bConnected = connect(weather, "pres", iscc_pb, "P_amb");
-		bConnected = connect(receiver, "m_dot_salt_tot", iscc_pb, "m_dot_ms_ss");
-		bConnected = connect(receiver, "q_dot_ss", iscc_pb, "q_dot_rec_ss");
-		bConnected = connect(receiver, "T_salt_cold", iscc_pb, "T_rec_in");
-		bConnected = connect(receiver, "T_salt_hot", iscc_pb, "T_rec_out");
-		//bConnected = connect(receiver, "f_timestep", iscc_pb, "f_timestep");		// 12/5/13, twn: input removed from cpp code
+		bConnected = connect(type222_receiver, "m_dot_salt_tot", iscc_pb, "m_dot_ms_ss");
+		bConnected = connect(type222_receiver, "q_dot_ss", iscc_pb, "q_dot_rec_ss");
+		bConnected = connect(type222_receiver, "T_salt_cold", iscc_pb, "T_rec_in");
+		bConnected = connect(type222_receiver, "T_salt_hot", iscc_pb, "T_rec_out");
 
 		// Set ISCC Parasitic Parameters
-		set_unit_value_ssc_double(iscc_parasitics, "W_htf_pc_pump");
+		set_unit_value_ssc_double(iscc_parasitics, "W_htf_pc_pump", as_double("pb_pump_coef"));
 		set_unit_value_ssc_double(iscc_parasitics, "Piping_loss");
 		set_unit_value_ssc_double(iscc_parasitics, "Piping_length");
-		set_unit_value_ssc_double(iscc_parasitics, "Q_sf_des");
+		set_unit_value_ssc_double(iscc_parasitics, "Q_sf_des", as_double("Q_rec_des"));
 		set_unit_value_ssc_double(iscc_parasitics, "pb_fixed_par");
 		set_unit_value_ssc_double(iscc_parasitics, "bop_par");
 		set_unit_value_ssc_double(iscc_parasitics, "bop_par_f");
 		set_unit_value_ssc_double(iscc_parasitics, "bop_par_0");
 		set_unit_value_ssc_double(iscc_parasitics, "bop_par_1");
 		set_unit_value_ssc_double(iscc_parasitics, "bop_par_2");
-		set_unit_value_ssc_double(iscc_parasitics, "W_dot_fossil_des");
+		set_unit_value_ssc_double(iscc_parasitics, "W_dot_fossil_des", as_double("fossil_output"));
 		set_unit_value_ssc_double(iscc_parasitics, "W_dot_solar_des");
 
 		// Connect ISCC Parasitic Inputs
-		bConnected = connect(hel_field, "pparasi", iscc_parasitics, "W_dot_tracking");
-		bConnected = connect(receiver, "W_dot_pump", iscc_parasitics, "W_dot_rec_pump");
-		bConnected = connect(receiver, "m_dot_ss", iscc_parasitics, "m_dot_htf_ss");
+		bConnected = connect(type_hel_field, "pparasi", iscc_parasitics, "W_dot_tracking");
+		bConnected = connect(type222_receiver, "W_dot_pump", iscc_parasitics, "W_dot_rec_pump");
+		bConnected = connect(type222_receiver, "m_dot_ss", iscc_parasitics, "m_dot_htf_ss");
 		bConnected = connect(iscc_pb, "W_dot_pc_hybrid", iscc_parasitics, "W_dot_pc_hybrid");
 		bConnected = connect(iscc_pb, "W_dot_pc_fossil", iscc_parasitics, "W_dot_pc_fossil");
-		bConnected = connect(receiver, "f_timestep", iscc_parasitics, "f_timestep");
-		bConnected = connect(receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss");
+		bConnected = connect(type222_receiver, "f_timestep", iscc_parasitics, "f_timestep");
+		bConnected = connect(type222_receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss");
 		bConnected = connect(iscc_pb, "q_dot_fuel", iscc_parasitics, "q_dot_fuel");
 
 		// check if all connections worked
