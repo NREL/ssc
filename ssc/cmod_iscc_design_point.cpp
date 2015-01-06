@@ -22,6 +22,7 @@ static var_info _cm_vtab_iscc_design_point[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold",         "HTF return temp from HRSG",                      "C",	      "",    "",      "*",     "",                "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "W_dot_solar",        "Solar contribution to hybrid output",            "MWe",     "",    "",      "*",     "",                "" },
 
+
 	var_info_invalid };
 
 class cm_iscc_design_point : public compute_module

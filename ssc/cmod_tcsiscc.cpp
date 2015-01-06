@@ -184,6 +184,23 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_fuel",          "Electrical efficiency of fossil only operation",                         "%",             "",             "Outputs",        "*",                      "",                       "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solar_fraction",    "Solar fraction",                                                         "",              "",             "Outputs",        "*",                      "",                       "" },
 
+
+
+
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy",       "Hourly Energy",      "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
+																	      
+	// Annual Outputs		   										                                        
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",      "Annual Energy",      "kW", "", "Net_E_Calc", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor",    "Capacity factor",    "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw",         "First year kWh/kW",  "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate",   "System heat rate",   "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage",  "Annual fuel usage",  "kWh", "", "", "*", "", "" },
+
+
 	var_info_invalid };
 
 class cm_tcsiscc : public tcKernel
@@ -195,6 +212,7 @@ public:
 	{
 		add_var_info( _cm_vtab_tcsiscc );
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above 
+		add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -522,6 +540,43 @@ public:
 		// get the outputs
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcs_iscc", util::format("there was a problem returning the results from the simulation.") );
+
+		// performance adjustement factors
+		adjustment_factors haf(this);
+		if( !haf.setup() )
+			throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
+		// hourly_energy output
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		// set hourly energy = tcs output Enet
+		size_t count;
+		ssc_number_t *hourly_energy = as_array("W_dot_plant_solar", &count);//MWh
+		if( count != 8760 )
+			throw exec_error("tcsmolten_salt", "hourly_energy count incorrect (should be 8760): " + count);
+		// apply performance adjustments and convert from MWh to kWh
+		for( size_t i = 0; i < count; i++ )
+			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
+
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		// metric outputs moved to technology
+		double kWhperkW = 0.0;
+		double nameplate = as_double("system_capacity");
+		double annual_energy = 0.0;
+		for( int i = 0; i < 8760; i++ )
+			annual_energy += p_hourly_energy[i];
+		if( nameplate > 0 ) kWhperkW = annual_energy / nameplate;
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+		double fuel_usage_mmbtu = 0;
+		//ssc_number_t *hourly_fuel = as_array("q_aux_fuel", &count);//MWh
+		//if( count != 8760 )
+		//	throw exec_error("tcsmolten_salt", "q_aux_fuel count incorrect (should be 8760): " + count);
+		//for( size_t i = 0; i < count; i++ )
+		//	fuel_usage_mmbtu += hourly_fuel[i];
+		assign("system_heat_rate", 0.0); // samsim tcstrough_physical
+		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
+		assign("annual_fuel_usage", 0.0);
 
 	}
 
