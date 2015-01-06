@@ -549,7 +549,7 @@ static var_info _cm_vtab_singleowner[] = {
 
 /* State taxes */
 	/* intermediate outputs for validation */
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cash_for_debt_service",                  "Cash avaialble for debt service (CAFDS)",   "$",     "",					  "Debt Sizing",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cash_for_debt_service",                  "Cash available for debt service (CAFDS)",   "$",     "",					  "Debt Sizing",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "pv_cafds",                               "Present value of CAFDS","$", "",				  "Debt Sizing",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_debt",			                  "Total debt",	"",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_equity",			              "Total equity",	"",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
