@@ -441,10 +441,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// { SSC_OUTPUT,       SSC_ARRAY,       "f_recomp",             "Recomp fraction",                                                   "",			  "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	// { SSC_OUTPUT,       SSC_ARRAY,       "N_MC",                 "Main comp. shaft speed",                                            "rpm",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly Energy", "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
 
 	// Annual Outputs
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kW", "", "Net_E_Calc", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Net_E_Calc", "*", "", "" },
 
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },

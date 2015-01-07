@@ -39,7 +39,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "first_cost", "Equity", "$", "", "Financial Metrics", "*", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "total_cost", "Initial cost", "$", "", "Financial Metrics", "*", "", "" },
 		
-	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net annual energy in Year 1",  "", "",                      "",      "*",                     "",                "" },
+//	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net annual energy in Year 1",  "", "",                      "",      "*",                     "",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -806,7 +806,7 @@ public:
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 
-		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+//		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));

@@ -751,7 +751,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 
 	// metrics table
-	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
+//	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "", "",                      "DHF",      "*",                     "",                "" },
@@ -2623,7 +2623,7 @@ public:
 	assign("itc_total_sta", var_data((ssc_number_t) itc_sta_total));
 	assign("itc_total", var_data((ssc_number_t) itc_total));
 
-	assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+//	assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
 	assign("tax_investor_aftertax_irr", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_irr, nyears)));
 	assign("tax_investor_aftertax_npv", var_data((ssc_number_t) cf.at(CF_tax_investor_aftertax_npv, nyears)));
