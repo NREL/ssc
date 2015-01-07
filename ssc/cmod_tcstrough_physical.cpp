@@ -683,6 +683,15 @@ public:
 			throw exec_error( "tcstrough_physical", "there was a problem returning the results from the simulation." );
 		//set_output_array("i_SfTi",8760);
 
+		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross", 1000); // convert from MWh to kWh
+		// Calculated outputs
+		ssc_number_t ae = as_number("annual_energy");
+		ssc_number_t pg = as_number("annual_W_cycle_gross");
+		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
+		assign("conversion_factor", convfactor);
+
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("hourly_energy", &count);//already kWh
 		if (count != 8760)
@@ -719,14 +728,7 @@ public:
 		accumulate_annual("m_dot_makeup", "annual_m_dot_makeup");
 		accumulate_annual("q_pb", "annual_q_pb");
 		accumulate_annual("q_to_tes", "annual_q_to_tes");
-
-		// Calculated outputs
-		ssc_number_t ae = as_number("annual_energy");
-		ssc_number_t pg = as_number("annual_W_cycle_gross");
-		ssc_number_t convfactor = (pg != 0) ? 100*ae / pg : 0;
-		assign("conversion_factor", convfactor);
-
-
+		
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");

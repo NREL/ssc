@@ -210,6 +210,7 @@ static var_info _cm_vtab_tcsdish[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_P_parasitic",       "Total parasitic power load",                                       "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_rec_losses",      "Receiver thermal losses",                                          "MW",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
 
+	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 
@@ -433,6 +434,14 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsdish", util::format("there was a problem returning the results from the simulation.") );
 
+		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
+		accumulate_annual("net_power", "annual_energy");					// MWh
+		accumulate_annual("P_SE_losses", "annual_Power_in_collector");		// MWh USING DUMMY VARIABLE HERE: IS OVERWRITTEN BELOW
+		// Calculated outputs
+		ssc_number_t ae = as_number("annual_energy");
+		ssc_number_t pg = as_number("annual_Power_in_collector");
+		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
+		assign("conversion_factor", convfactor);
 
 		// annual accumulations
 		size_t count = 0;
