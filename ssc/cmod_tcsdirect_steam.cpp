@@ -366,9 +366,10 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly Energy", "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
 
 	// Annual Outputs
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kW", "", "Net_E_Calc", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",        "Annual Energy",                                "kWh", "", "Type228", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_W_cycle_gross", "Electrical source - Power cycle gross output", "kWh", "", "Type228", "*", "", "" },
 
-
+	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
@@ -908,6 +909,14 @@ public:
 		//-----------
 
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		accumulate_annual("P_cycle", "annual_W_cycle_gross", 1000.0);	// convert to kWh
+
+		// Calculated outputs
+		ssc_number_t ae = as_number("annual_energy");
+		ssc_number_t pg = as_number("annual_W_cycle_gross");
+		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
+		assign("conversion_factor", convfactor);
 
 		// performance adjustement factors
 		adjustment_factors haf(this);

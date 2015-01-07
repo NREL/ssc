@@ -228,9 +228,10 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 
 	// single values
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",               "Annual Energy",                                                             "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
-  //{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",  "Use lifetime output",                                                       "0/1",          "",            "Linear Fresnel", "*",                       "INTEGER",               "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross",        "Electrical source - Power cycle gross output",                              "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",  "Use lifetime output",                                                       "0/1",          "",            "Linear Fresnel", "*",                       "INTEGER",               "" },
 
-
+	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
@@ -518,6 +519,16 @@ public:
 		if (!haf.setup())
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
 	
+		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
+		accumulate_annual("W_net", "annual_energy");				// MWh
+		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross");		// MWh
+		// Calculated outputs
+		ssc_number_t ae = as_number("annual_energy");
+		ssc_number_t pg = as_number("annual_W_cycle_gross");
+		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
+		assign("conversion_factor", convfactor);
+
+		
 		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;

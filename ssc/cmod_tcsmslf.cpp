@@ -294,10 +294,11 @@ static var_info _cm_vtab_tcsmslf[] = {
 
 
 	// single values
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kWh", "", "mslf", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",        "Annual Energy",                                "kWh", "", "mslf", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_W_cycle_gross", "Electrical source - Power cycle gross output", "kWh", "", "mslf", "*", "", "" },
 	//{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",  "Use lifetime output",                                                       "0/1",          "",            "Linear Fresnel", "*",                       "INTEGER",               "" },
 
-
+	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
@@ -678,21 +679,31 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsmslf", util::format("there was a problem returning the results from the simulation.") );
 
+		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
+		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+		accumulate_annual("P_cycle", "annual_W_cycle_gross", 1000); // convert from MWh to kWh
+		// Calculated outputs
+		ssc_number_t ae = as_number("annual_energy");
+		ssc_number_t pg = as_number("annual_W_cycle_gross");
+		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
+		assign("conversion_factor", convfactor);
+
 		// performance adjustement factors
 		adjustment_factors haf(this);
 		if (!haf.setup())
 			throw exec_error("tcsmslf", "failed to setup adjustment factors: " + haf.error());
-
-		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
-		// set hourly energy = tcs output Enet
+		
 		size_t count;
-		ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
+		ssc_number_t *p_hourly_energy = as_array("hourly_energy", &count);
+		// set hourly energy = tcs output Enet
+		
+		//ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
 		if (count != 8760)
 			throw exec_error("tcsmslf", "hourly_energy count incorrect (should be 8760): " + count);
 
-		// apply performance adjustments and convert from MWh to kWh
+		// apply performance adjustments and convert from MWh to kWh 
 		for (size_t i = 0; i < count; i++)
-			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i)*1000.0);
+			p_hourly_energy[i] = p_hourly_energy[i] * (ssc_number_t)(haf(i));	// already in kWh
 
 
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
