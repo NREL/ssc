@@ -1179,7 +1179,9 @@ public:
 		}
 
 
-		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for pp_mode=0
+		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
+		if (ppa_mode == 0) ppa = 0; // initial guess for target irr mode
+
 
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
@@ -2531,11 +2533,22 @@ public:
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
-	assign("flip_actual_year", var_data((ssc_number_t) flip_year));
+/*	assign("flip_actual_year", var_data((ssc_number_t) flip_year));
 	double actual_flip_irr = 0;
 	if (flip_year > -1) actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
 	assign("flip_actual_irr", var_data((ssc_number_t) actual_flip_irr ));
-
+	*/
+	double actual_flip_irr = std::numeric_limits<double>::quiet_NaN();
+	if (flip_year > -1)
+	{
+		actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
+		assign("flip_actual_year", var_data((ssc_number_t)flip_year));
+	}
+	else
+	{
+		assign("flip_actual_year", var_data((ssc_number_t)actual_flip_irr));
+	}
+	assign("flip_actual_irr", var_data((ssc_number_t)actual_flip_irr));
 	// LPPA
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 	double npv_energy_nom = npv(CF_energy_net, nyears, nom_discount_rate);
