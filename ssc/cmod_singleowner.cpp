@@ -708,7 +708,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_fedtax",				              "Federal tax benefit/(liability)",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// metrics table 
-	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt fraction",                             "% of installed cost", "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "Target year to meet IRR",                   "",                    "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
@@ -2568,7 +2568,7 @@ public:
 		assign("itc_total_sta", var_data((ssc_number_t) itc_sta_total));
 		assign("itc_total", var_data((ssc_number_t) itc_total));
 
-		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+//		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
 		assign("lcoe_nom", var_data((ssc_number_t)lcoe_nom));
 		assign("lcoe_real", var_data((ssc_number_t)lcoe_real));

@@ -206,7 +206,7 @@ static var_info vtab_ippppa[] = {
 
 
 	// metrics table 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
+//	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "ippppa",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa",                 "PPA price",                       "",    "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "",    "",                      "ippppa",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "", "",                      "ippppa",      "*",                     "",                "" },
@@ -1010,7 +1010,7 @@ public:
 		assign( "actual_debt_frac",  var_data((ssc_number_t)(100.0*debt_frac)) );
 		assign( "actual_ppa_escalation",  var_data((ssc_number_t)(100.0*ppa_escalation)) );
 
-		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
+//		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
 		assign( "ppa",var_data((ssc_number_t) ppa) );
 		assign( "ppa_escalation",var_data((ssc_number_t) ppa_escalation) );
