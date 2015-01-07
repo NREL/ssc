@@ -937,7 +937,8 @@ public:
 
 	double compute_payback( int cf_cpb, int cf_pb, int nyears )
 	{	
-		double dPayback = 1e99; // report as > analysis period
+//		double dPayback = 1e99; // report as > analysis period
+		double dPayback = std::numeric_limits<double>::quiet_NaN(); // report as > analysis period
 		bool bolPayback = false;
 		int iPayback = 0;
 		int i = 1; 
