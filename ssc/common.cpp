@@ -211,7 +211,7 @@ var_info_invalid };
 var_info vtab_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "adjust:factor",                 "Constant adjustment factor",                "%",    "",                                     "Adjustment factors",      "*",                     "MIN=0",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "adjust:factor",                 "Constant adjustment factor",                "%",    "",                                     "Adjustment factors",      "*",                     "MAX=100",                     "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly adjustment factors",                 "%",    "",                                     "Adjustment factors",      "?",                     "LENGTH=8760",                "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based adjustment factors",           "%",    "n x 3 matrix [ start, end, factor ]",  "Adjustment factors",      "?",                     "COLS=3",                     "" },
 	
