@@ -211,9 +211,9 @@ var_info_invalid };
 var_info vtab_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "adjust:factor",                 "Constant adjustment factor",                "0..1",    "",                                     "Adjustment factors",      "*",                     "POSITIVE",                     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly adjustment factors",                 "0..1",    "",                                     "Adjustment factors",      "?",                     "LENGTH=8760",                "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based adjustment factors",           "0..1",    "n x 3 matrix [ start, end, factor ]",  "Adjustment factors",      "?",                     "COLS=3",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "adjust:factor",                 "Constant adjustment factor",                "%",    "",                                     "Adjustment factors",      "*",                     "MIN=0",                     "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly adjustment factors",                 "%",    "",                                     "Adjustment factors",      "?",                     "LENGTH=8760",                "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based adjustment factors",           "%",    "n x 3 matrix [ start, end, factor ]",  "Adjustment factors",      "?",                     "COLS=3",                     "" },
 	
 var_info_invalid };
 
@@ -223,9 +223,11 @@ adjustment_factors::adjustment_factors( compute_module *cm )
 {	
 }
 
+//adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup()
 {
 	float f = (float)m_cm->as_number( "adjust:factor" );
+	f = 1 - f / 100; //convert from percentage to factor
 	m_factors.resize( 8760, f );
 
 	if ( m_cm->is_assigned("adjust:hourly") )
@@ -235,7 +237,7 @@ bool adjustment_factors::setup()
 		if ( p != 0 && n == 8760 )
 		{
 			for( size_t i=0;i<8760;i++ )
-				m_factors[i] *= p[i];
+				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
 		}
 	}
 
@@ -260,7 +262,7 @@ bool adjustment_factors::setup()
 				if ( end >= 8760 ) end = 8759;
 
 				for( int i=start;i<=end;i++ )
-					m_factors[i] *= factor;
+					m_factors[i] *= (1 - factor/100); //convert from percentages to factors
 			}
 		}
 	}

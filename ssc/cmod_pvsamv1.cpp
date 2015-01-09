@@ -572,7 +572,7 @@ struct subarray
 		shade_mode = 0; // 0=C. Deline self-shading, 1=none
 		backtrack = 0;
 
-		gcr = 0.3; //WILL THIS GO AWAY? AGAIN BELOW
+		gcr = 0.3;
 
 		derate = 1.0;
 		
