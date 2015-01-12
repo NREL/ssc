@@ -47,7 +47,7 @@ static var_info _cm_vtab_windpower[] = {
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                          "Monthly Energy",                      "kW",     "",      "Monthly",     "*",                                        "LENGTH=12",                                        "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                           "Annual Energy",                       "kW",     "",      "Annual",      "*",                                        "",                                                 "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                           "Annual Energy",                       "kWh",     "",      "Annual",      "*",                                        "",                                                 "" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		 "capacity_factor",							"Capacity factor",					   "",		 "",	  "Annual",		 "*",										"",													"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		 "kwh_per_kw",								"First year kWh/kW",				   "",		 "",	  "Annual",		 "*",										"",													"" },
 
