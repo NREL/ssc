@@ -85,7 +85,7 @@ public:
 			double irrmax = 1.5*(hextra+150);			
 			if ( irrmax > 1500 ) irrmax = 1500;
 
-			if ( !std::isnan( wf.df ) && wf.df > irrmax ) warn( "diffuse irradiance (%lg) at record %d is greater than threshold (%lg)", wf.dn, i, irrmax );
+			if ( !std::isnan( wf.df ) && wf.df > irrmax ) warn( "diffuse irradiance (%lg) at record %d is greater than threshold (%lg)", wf.df, i, irrmax );
 			if ( !std::isnan( wf.df ) && wf.df < 0 ) warn( "diffuse irradiance (%lg) at record %d is negative", wf.df, i );
 			
 			if ( !std::isnan( wf.gh ) && wf.gh > irrmax ) warn( "global irradiance (%lg) at record %d is greater than threshold (%lg)", wf.gh, i, irrmax );
