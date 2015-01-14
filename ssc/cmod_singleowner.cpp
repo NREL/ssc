@@ -2387,7 +2387,8 @@ public:
 	double lcoe_real = lppa_real;
 
 	// from single_owner.xlsm
-	cf.at(CF_Annual_Costs, 0) = cf.at(CF_project_investing_activities,0);
+//	cf.at(CF_Annual_Costs, 0) =  cf.at(CF_project_investing_activities, 0);
+	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
 	for (i = 1; i <= nyears; i++)
 	{
 		cf.at(CF_Annual_Costs, i) =

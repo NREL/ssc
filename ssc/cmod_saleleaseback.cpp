@@ -2467,20 +2467,18 @@ public:
 	double lcoe_real = lppa_real;
 
 	// from single_owner.xlsm
-	cf.at(CF_Annual_Costs, 0) = cf.at(CF_tax_investor_investing_activities, 0);
-	for (i = 1; i < nyears; i++)
+//	cf.at(CF_Annual_Costs, 0) = cf.at(CF_tax_investor_investing_activities, 0);
+	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
+	for (i = 1; i <= nyears; i++)
 	{
 		cf.at(CF_Annual_Costs, i) =
 			cf.at(CF_pbi_total, i)
 			+ cf.at(CF_tax_investor_statax, i)
 			+ cf.at(CF_tax_investor_fedtax, i)
 			- cf.at(CF_operating_expenses, i);
-//		cf.at(CF_Annual_Costs, i) =
-//			cf.at(CF_pbi_total, i) + cf.at(CF_sta_tax_savings, i) + cf.at(CF_fed_tax_savings, i)
-//			- cf.at(CF_operating_expenses, i);
 	}
-	double npv_annual_costs = npv(CF_Annual_Costs, nyears, nom_discount_rate)
-		- cf.at(CF_Annual_Costs, 0);
+	double npv_annual_costs = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
+		+ cf.at(CF_Annual_Costs, 0));
 	if (npv_energy_nom != 0) lcoe_nom = npv_annual_costs / npv_energy_nom * 100.0;
 	if (npv_energy_real != 0) lcoe_real = npv_annual_costs / npv_energy_real * 100.0;
 
