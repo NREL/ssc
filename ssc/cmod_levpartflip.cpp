@@ -2563,8 +2563,9 @@ public:
 	double lcoe_real = lppa_real;
 
 	// from single_owner.xlsm
-	cf.at(CF_Annual_Costs, 0) = cf.at(CF_project_investing_activities, 0);
-	for (i = 1; i < nyears; i++)
+//	cf.at(CF_Annual_Costs, 0) = cf.at(CF_project_investing_activities, 0);
+	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
+	for (i = 1; i <= nyears; i++)
 	{
 		cf.at(CF_Annual_Costs, i) =
 			cf.at(CF_pbi_total, i)
@@ -2573,13 +2574,9 @@ public:
 			- cf.at(CF_operating_expenses, i)
 			- cf.at(CF_debt_payment_interest, i)
 			- cf.at(CF_debt_payment_principal, i);
-//		cf.at(CF_Annual_Costs, i) =
-//			cf.at(CF_pbi_total, i) + cf.at(CF_sta_tax_savings, i) + cf.at(CF_fed_tax_savings, i)
-//			- cf.at(CF_operating_expenses, i) - cf.at(CF_debt_payment_interest, i)
-//			- cf.at(CF_debt_payment_principal, i);
 	}
-	double npv_annual_costs = npv(CF_Annual_Costs, nyears, nom_discount_rate)
-		- cf.at(CF_Annual_Costs, 0);
+	double npv_annual_costs = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
+		+ cf.at(CF_Annual_Costs, 0));
 	if (npv_energy_nom != 0) lcoe_nom = npv_annual_costs / npv_energy_nom * 100.0;
 	if (npv_energy_real != 0) lcoe_real = npv_annual_costs / npv_energy_real * 100.0;
 
@@ -2730,7 +2727,7 @@ public:
 
 		// output variable and cashflow line item assignments
 
-		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
+		assign("0issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
 		assign("purchase_of_property", var_data((ssc_number_t) purchase_of_property));
 		assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
 		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
