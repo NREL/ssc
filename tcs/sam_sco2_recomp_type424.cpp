@@ -1401,11 +1401,11 @@ public:
 			if(acc_error_code == 1)
 			{
 				W_dot_par = (m_dot_htf / m_dot_rec_des)*m_W_dot_fan_des;
-				message(TCS_WARNING, "Off-design air cooler model did not solve. Fan power was set to the design value scaled by the timestep/design HTF mass flow rate");
+				message(TCS_NOTICE, "Off-design air cooler model did not solve. Fan power was set to the design value scaled by the timestep/design HTF mass flow rate");
 			}
 			if(acc_error_code == 2)
 			{
-				message(TCS_WARNING, "Off-design air cooler model did not converge within its numerical tolerance");
+				message(TCS_NOTICE, "Off-design air cooler model did not converge within its numerical tolerance");
 			}
 
 			break;
@@ -1525,12 +1525,12 @@ public:
 
 		if(m_error_message_code == 1)
 		{
-			message(TCS_WARNING, "The off-design power cylce model did not solve. Performance values for this timestep are design point values scaled by HTF mass flow rate");
+			message(TCS_NOTICE, "The off-design power cylce model did not solve. Performance values for this timestep are design point values scaled by HTF mass flow rate");
 		}
 
 		if(m_error_message_code == 2)
 		{
-			message(TCS_WARNING, "The off-design power cycle model solved, but the the PHX performance did not converge. The results at this timestep may be non-physical");
+			message(TCS_NOTICE, "The off-design power cycle model solved, but the the PHX performance did not converge. The results at this timestep may be non-physical");
 		}
 
 		m_error_message_code = 0;
