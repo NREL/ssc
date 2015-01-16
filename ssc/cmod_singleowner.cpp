@@ -2389,17 +2389,34 @@ public:
 	// from single_owner.xlsm
 //	cf.at(CF_Annual_Costs, 0) =  cf.at(CF_project_investing_activities, 0);
 	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
+//		- cf.at(CF_funding_equip1, 0)
+//		- cf.at(CF_funding_equip2, 0)
+//		- cf.at(CF_funding_equip3, 0)
+//		- cf.at(CF_funding_om, 0)
+//		- cf.at(CF_funding_debtservice, 0)
+//		;
 	for (i = 1; i <= nyears; i++)
 	{
 		cf.at(CF_Annual_Costs, i) =
 			cf.at(CF_pbi_total, i) 
 			+ cf.at(CF_statax, i) 
 			+ cf.at(CF_fedtax, i)
-			- cf.at(CF_operating_expenses, i) 
 			- cf.at(CF_debt_payment_interest, i)
-			- cf.at(CF_debt_payment_principal, i);
+			- cf.at(CF_debt_payment_principal, i)
+			- cf.at(CF_operating_expenses, i)
+			- cf.at(CF_funding_equip1, i)
+			- cf.at(CF_funding_equip2, i)
+			- cf.at(CF_funding_equip3, i)
+			- cf.at(CF_funding_om, i)
+			- cf.at(CF_funding_debtservice,i)
+			+ cf.at(CF_reserve_interest, i)
+			- cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
+			-cf.at(CF_disbursement_om, i); // note sign is negative for positive disbursement
 	}
-	double npv_annual_costs = -(npv(CF_Annual_Costs, nyears, nom_discount_rate) 
+	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
+	if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;
+
+	double npv_annual_costs = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
 		+ cf.at(CF_Annual_Costs, 0));
 	if (npv_energy_nom != 0) lcoe_nom = npv_annual_costs / npv_energy_nom * 100.0;
 	if (npv_energy_real != 0) lcoe_real = npv_annual_costs / npv_energy_real * 100.0;
