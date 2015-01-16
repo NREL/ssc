@@ -359,76 +359,85 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // OUTPUTS
 	// The names of the output variables should match the parameter names for the TCS units in order to signal to the TCS kernel to store the values by timestep
 
-	// VARTYPE          DATATYPE          NAME                   LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",                 "Dry bulb temperature",                                              "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                 "Wind speed",                                                        "m/s",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                 "Beam normal irradiance",                                            "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "twet",                 "Wet bulb temperature",                                              "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "solazi",                  "Solar Azimuth",                                                     "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "solzen",               "Solar Zenith",                                                      "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",		         "Parasitic tracking/startup power",						          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",	         "Total field efficiency",                                            "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// VARTYPE          DATATYPE          NAME                 LABEL                                                            UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
+    { SSC_OUTPUT,       SSC_ARRAY,       "month",             "Resource Month",                                                  "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hour",              "Resource Hour of Day",                                            "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",            "Resource Solar Azimuth",                                          "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",            "Resource Solar Zenith",                                           "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Resource Beam normal irradiance",                                 "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Resource Dry bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "twet",              "Resource Wet bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Resource Wind Speed",                                             "m/s",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pres",              "Resource Pressure",                                               "mbar",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",         "Resource Time-of-use value",                                      "",             "",            "tou",            "*",                       "LENGTH=8760",           "" },
+
+    //solar field
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Field optical focus fraction",                                 "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
+    // These outputs come from either type 222 (external), or type 232(cavity), depending on which receiver type the user chose.
+	// Therefore, these outputs have to have the same name in both types, or TCS will throw an error when trying to read the results.
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Receiver thermal efficiency",                                    "",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_solar_total",        "Receiver thermal power absorbed",                                "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_conv",         "Receiver thermal power loss to convection",                      "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_rad",          "Receiver thermal power loss to radiation",                       "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Receiver thermal power to HTF",                                  "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field",          "Receiver HTF mass flow rate",                                    "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_field_in",           "Receiver HTF temperature in",                                    "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_field_out",          "Receiver HTF temperature out",                                   "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
+    //thermal storage
+    { SSC_OUTPUT,       SSC_ARRAY,       "mass_tank_cold",       "TES HTF mass in cold tank",                                      "kg",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "mass_tank_hot",        "TES HTF mass in hot tank",                                       "kg",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_cold_fin",    "TES HTF volume in cold tank",                                    "m3",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_hot_fin",     "TES HTF volume in hot tank",                                     "m3",           "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_charge_field",   "TES HTF mass flow rate (charging)",                              "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",          "TES thermal losses from tank(s)",                                "MWt",          "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_to_tes",             "TES thermal energy into storage",                                "MWt",          "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_hot_node",           "TES [thermocline] temperature - hot node",                       "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold_node",          "TES [thermocline] temperature - cold node",                      "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_max",                "TES [thermocline] temperature - max",                            "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "f_hot",                "TES [thermocline] Hot depth fraction",                           "",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "f_cold",               "TES [thermocline] Cold depth fraction",                          "",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+
+    //power block
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta",               "Cycle efficiency (gross)",                                          "",         "",            "Type224",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",         "Cycle electrical power output (net)",                               "MWe",          "",            "Net_E_Calc",     "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",           "Cycle electrical power output (gross)",                             "MWe",          "",            "Net_E_Calc",     "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pb",          "Cycle HTF mass flow rate",                                          "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_in",           "Cycle HTF temperature in (hot)",                                    "C",            "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_out",          "Cycle HTF temperature out (cold)",                                  "C",            "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_makeup",      "Cycle mass flow rate cooling water makeup",                         "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",              "Cycle thermal power input",                                         "MWt",          "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_cond",            "Condenser pressure",                                                "Pa",           "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "f_bays",            "Condenser fraction of operating bays",                              "",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+
+
+    //fossil backup
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_aux_heat",           "Fossil thermal power produced",                                  "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_aux_fuel",           "Fossil fuel usage",                                              "MMBTU",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+
+    //parasitics
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_pump",         "Parasitic power receiver HTF pump",                              "MWe",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "htf_pump_power",       "Parasitic power TES and Cycle HTF pump",                         "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",              "Parasitic power heliostat drives",                               "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",  "Parasitic power generation-dependent load",                      "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",              "Parasitic power fixed load",                                     "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_aux",                "Parasitic power auxiliary heater operation",                     "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",  "Parasitic power condenser operation",                            "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",         "Parasitic power equiv. header pipe losses",                      "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tank_heater",        "Parasitic power TES freeze protection",                          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_par",          "Parasitic power receiver freeze protection",                     "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_parasitics",         "Parasitic power total consumption",                              "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+
 	
+    //additional SDK parameters
 	{ SSC_OUTPUT,       SSC_MATRIX,      "eff_lookup",           "Field efficiency lookup matrix",                                    "",             "",            "Outputs",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "flux_lookup",          "Receiver flux map lookup matrix",                                   "",             "",            "Outputs",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "sunpos_eval",          "Sun positions for lookup calcs",                                    "deg",          "",            "Outputs",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "land_area",            "Calculated solar field land area",                                  "acre",         "",            "Outputs",        "*",                       "",                      "" },
-
-
-	// These outputs come from either type 222 (external), or type 232(cavity), depending on which receiver type the user chose.
-	// Therefore, these outputs have to have the same name in both types, or TCS will throw an error when trying to read the results.
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Thermal efficiency of the receiver",                                "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_pump",         "Estimated power for pumping the working fluid",                     "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,       "?????????????",        "Thermal energy incident on receiver",                               "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_solar_total",        "Thermal energy absorbed by the receiver",                           "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_conv",         "Thermal convection losses from the receiver",                       "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_rad",          "Radiation losses from the receiver",                                "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Thermal energy absorbed by the heat transfer fluid",                "MW",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-
-	// No longer from the type 222 and 232
-	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_hot_fin",     "Hot tank HTF volume at end of timestep",                            "m3",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",          "Thermal losses from tank",                                          "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",              "Gross cycle power output",                                          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",            "Net cycle power output",                                            "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                  "Cycle thermal efficiency",                                          "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "f_bays",               "Fraction of operating heat rejection bays",                         "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cond",               "Condenser pressure",                                                "Pa",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "vol_tank_cold_fin",    "Cold tank HTF volume at end of timestep",                           "m3",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "htf_pump_power",       "Pumping power for storage, power block loops",                      "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",  "Total balance of plant parasitic power",                            "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",  "Total cooling tower parasitic power",                               "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",         "Total piping loss parasitic power",                                 "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tank_heater",        "Total tank heater parasitic power",                                 "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_par",          "Total tower heater parasitic loss",                                 "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",              "Total fixed parasitic loss",                                        "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_aux",                "Total auxiliary heater parasitic loss",                             "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_parasitics",         "Overall parasitic losses",                                          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Absolute defocus",                                                  "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "TOU",                  "Time of use period",                                                "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_aux_heat",           "Thermal energy provided to fluid by aux heater",                    "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_aux_fuel",           "Heat content of fuel required to provided aux heat",                "MMBTU",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pb",             "Mass flow rate of HTF to PB",                                       "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field",          "Mass flow rate from the field",                                     "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_charge_field",   "Mass flow rate on field side of HX",                                "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_discharge_tank", "Mass flow rate on storage side of HX",                              "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_in",              "HTF temperature to power block",                                    "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_htf_cold",           "Heat transfer fluid outlet temperature ",                           "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_makeup",         "Cooling water makeup flow rate",                                    "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_field_in",           "HTF temperature into collector field header",                       "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_field_out",          "HTF temperature from the field",                                    "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_to_tes",             "Thermal energy into storage",                                       "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,       "?????????",            "Thermal energy from thermal storage",                               "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pb",                 "Thermal energy to the power block",                                 "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_hot_node",           "Thermocline: Hot node temperature",                                 "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold_node",          "Thermocline: Cold node temperature",                                "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_max",                "Thermocline: Maximum temperature",                                  "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "f_hot",                "Thermocline: Hot depth fraction",                                   "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "f_cold",               "Thermocline: Cold depth fraction",                                  "-",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	//Heliostat field outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",              "Parasitic tracking/startup power",                                  "Mwe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Total field efficiency",                                            "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    //optimization outputs
     { SSC_OUTPUT,       SSC_MATRIX,      "opt_history",          "Step history of optimization",                                      "",             "",            "Outputs",        "",                       "",           "" },
+
 
 	// Add sco2 specific outputs: will need to figure out how to merge this with molten salt model
 	// { SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
