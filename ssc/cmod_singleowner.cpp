@@ -240,7 +240,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_closing_total",                "Total debt closing cost",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancingperwatt",               "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Initial cost",                   "",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Initial cost",                   "$",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installedperwatt",                  "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "nominal_discount_rate",                  "Nominal discount rate",            "%",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "prop_tax_assessed_value",                "Assessed value of property for tax purposes","$", "",				  "Intermediate Costs",			 "*",                         "",                             "" },
@@ -551,8 +551,8 @@ static var_info _cm_vtab_singleowner[] = {
 	/* intermediate outputs for validation */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cash_for_debt_service",                  "Cash available for debt service (CAFDS)",   "$",     "",					  "Debt Sizing",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "pv_cafds",                               "Present value of CAFDS","$", "",				  "Debt Sizing",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_debt",			                  "Total debt",	"",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_equity",			              "Total equity",	"",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_debt",			                  "Total debt",	"$",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_equity",			              "Total equity",	"$",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
 
 /* model outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cf_length",                              "Number of periods in cashflow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
@@ -712,7 +712,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt fraction",                             "% of installed cost", "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "Target year to meet IRR",                   "",                    "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was achieved",              "",                    "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was achieved",              "year",                    "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "LCOE (real)",                               "cents/kWh",               "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "LCOE (nominal)",                            "cents/kWh",               "", "Metrics", "*", "", "" },
