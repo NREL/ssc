@@ -81,49 +81,64 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 // OUTPUTS
 // The names of the output variables should match the parameter names for the TCS units in order to signal the TCS kernel to store the values by timestep
 
-//   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
-    { SSC_OUTPUT,       SSC_ARRAY,       "global",            "Global horizontal irradiance",                                   "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Beam normal irradiance",                                         "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "diff",              "Diffuse horizontal irradiance",                                  "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "irr_used",          "Irradiation value used in simulation",                           "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Dry bulb temperature",                                           "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "twet",              "Wet bulb temperature",                                           "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Wind velocity",                                                  "m/s",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "hour_of_day",       "Hour of the day",                                                "hour",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "day_of_year",       "Day of the year",                                                "day",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solalt",            "Solar elevation angle",                                          "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solaz",             "Solar azimuth angle (-180..180, 0deg=South)",                    "deg",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "eta_opt_sf",        "Solar field optical efficiency",                                 "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_qdni",       "Solar field load-based thermal loss correction",                 "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_tamb",       "Solar field temp.-based thermal loss correction",                "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_vwind",      "Solar field wind-based thermal loss correction",                 "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_hl_sf",           "Solar field thermal losses",                                     "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_sf",              "Solar field delivered thermal power",                            "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_inc",             "Qdni - Solar incident energy, before all losses",                "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_to_pb",           "Thermal energy to the power conversion system",                  "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_startup",         "Power conversion startup energy",                                "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_to_tes",          "Thermal energy into storage",                                    "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_from_tes",        "Thermal energy from storage",                                    "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "e_in_tes",          "Energy in storage",                                              "MWt-hr",       "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_hl_tes",          "Thermal losses from storage",                                    "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_tesfull",    "Dumped energy  exceeding storage charge level max",              "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_teschg",     "Dumped energy exceeding exceeding storage charge rate",          "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_umin",       "Dumped energy from falling below min. operation fraction",       "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_tot",        "Total dumped energy",                                            "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_fossil",          "Thermal energy supplied from aux firing",                        "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_gas",             "Energy content of fuel required to supply Qfos",                 "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "f_effpc_qtpb",      "Load-based conversion efficiency correction",                    "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "f_effpc_tamb",      "Temp-based conversion efficiency correction",                    "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "eta_cycle",         "Adjusted power conversion efficiency",                           "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "w_gr_solar",        "Power produced from the solar component",                        "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "w_gr_fossil",       "Power produced from the fossil component",                       "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "w_gr",              "Total gross power production",                                   "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	// VARTYPE          DATATYPE          NAME                 LABEL                                                            UNITS           META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
+    { SSC_OUTPUT,       SSC_ARRAY,       "month",             "Resource Month",                                                  "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hour",              "Resource Hour of Day",                                            "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",            "Resource Solar Azimuth",                                          "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",            "Resource Solar Zenith",                                           "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Resource Beam normal irradiance",                                 "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "global",            "Resource Global horizontal irradiance",                           "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "diff",              "Resource Diffuse horizontal irradiance",                          "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Resource Dry bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "twet",              "Resource Wet bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Resource Wind Speed",                                             "m/s",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pres",              "Resource Pressure",                                               "mbar",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "irr_used",          "Irradiation value used in simulation",                           "W/m2",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
+    //solar field
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta_opt_sf",        "Field collector optical efficiency",                             "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_inc",             "Field thermal power incident",                                   "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_qdni",       "Field thermal power load-based loss correction",                 "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_tamb",       "Field thermal power temp.-based loss correction",                "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "f_sfhl_vwind",      "Field thermal power wind-based loss correction",                 "none",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_hl_sf",           "Field thermal power loss total",                                 "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_sf",              "Field thermal power total produced",                             "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
+    //thermal storage
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_to_tes",          "TES thermal energy into storage",                                "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_from_tes",        "TES thermal energy from storage",                                "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "e_in_tes",          "TES thermal energy available",                                   "MWht",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_hl_tes",          "TES thermal losses from tank(s)",                                "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
+    //power block
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta_cycle",         "Cycle efficiency (gross)",                                       "",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "f_effpc_qtpb",      "Cycle efficiency load-based correction",                         "",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "f_effpc_tamb",      "Cycle efficiency temperature-based correction",                  "",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
+    { SSC_OUTPUT,       SSC_ARRAY,       "enet",              "Cycle electrical power output (net)",                            "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "w_gr",              "Cycle electrical power output (gross)",                          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "w_gr_solar",        "Cycle electrical power output (gross, solar share)",             "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "w_gr_fossil",       "Cycle electrical power output (gross, fossil share)",            "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_to_pb",           "Cycle thermal power input",                                      "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_startup",         "Cycle thermal startup energy",                                   "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_tesfull",    "Cycle thermal energy dumped - TES is full",                      "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_umin",       "Cycle thermal energy dumped - min. load requirement",            "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_teschg",     "Cycle thermal energy dumped - solar field",                      "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump_tot",        "Cycle thermal energy dumped total",                              "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+
+    //Fossil backup
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_fossil",          "Fossil thermal power produced",                                  "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_gas",             "Fossil fuel used",                                               "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+
+    //parasitics
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_fixed",       "Fixed parasitic losses",                                         "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_prod",        "Production-based parasitic losses",                              "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_tot",         "Total parasitic losses",                                         "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_online",      "Online parasitics",                                              "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_offline",     "Offline parasitics",                                             "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "enet",              "Net electric output",                                            "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+    
     { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly outputs

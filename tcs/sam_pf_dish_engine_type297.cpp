@@ -65,7 +65,7 @@ tcsvarinfo sam_pf_dish_engine_type297_variables[] = {
 
 	// OUTPUTS 
 	{TCS_OUTPUT, TCS_NUMBER, O_P_OUT_SE,             "P_out_SE",                  "Stirling engine gross output",     "kW", "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_P_SE_LOSSES,          "P_SE_losses",				  "Stirling engine losses",           "-", "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_P_SE_LOSSES,          "P_SE_losses",				  "Stirling engine losses",           "kW", "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_ETA_SE,               "eta_SE",					  "Stirling engine efficiency",       "-", "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HEATER_HEAD_LOW,    "T_heater_head_low",		  "Header Head Lowest Temperature",   "K", "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HEATER_HEAD_HIGH,   "T_heater_head_high",		  "Heater Head Set Temperature",      "K", "", "", ""},
