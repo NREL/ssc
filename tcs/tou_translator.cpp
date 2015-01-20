@@ -82,7 +82,8 @@ public:
 
 	virtual int call( double time, double step, int ncall )
 	{
-		int ihour = (int)(floor(time/3600.0 + 1.e-6)-1);
+		//int ihour = (int)(floor(time/3600.0 + 1.e-6)-1);
+		int ihour = (int)(ceil(time / 3600.0 - 1.e-6)-1);
 		if(ihour>8760-1 || ihour<0) {
 			return -1;	//ERROR
 		}
