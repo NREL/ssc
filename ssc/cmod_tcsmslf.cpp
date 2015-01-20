@@ -306,7 +306,7 @@ static var_info _cm_vtab_tcsmslf[] = {
     
     // sum calcs
 
-    { SSC_OUTPUT,   SSC_ARRAY,          "hourly_energy",          "Hourly Energy",                                    "kWh",           "",  "Outputs",               "*",        "LENGTH=8760",   ""},
+    { SSC_OUTPUT,   SSC_ARRAY,          "hourly_energy",      "Hourly Energy",                                                  "kWh",          "",            "Calculated",     "*",					    "LENGTH=8760",           ""},
 
     // monthly values
     { SSC_OUTPUT,   SSC_ARRAY,          "monthly_energy",         "Monthly Energy",                                                                        "kWh",           "",  "mslf",                  "*",        "LENGTH=12",     ""},
@@ -695,6 +695,25 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsmslf", util::format("there was a problem returning the results from the simulation.") );
 
+		// performance adjustement factors
+		adjustment_factors haf(this);
+		if (!haf.setup())
+			throw exec_error("tcsmslf", "failed to setup adjustment factors: " + haf.error());
+		
+		size_t count;
+		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		ssc_number_t *timestep_energy_MW = as_array("W_net", &count);			//MW
+		char tstr[500];
+		std::string out_msg = "hourly energy count %d is incorrect (should be %d)";
+		sprintf(tstr, out_msg.c_str(), count, 8760);
+		out_msg = tstr;
+		if( count != 8760 )
+			throw exec_error("tcsmslf", out_msg);
+
+		// Get hourly energy
+		for( size_t i = 0; i < count; i++ )
+			p_hourly_energy[i] = timestep_energy_MW[i] * 1000.0;	// convert to kW
+
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
 		accumulate_annual("P_cycle", "annual_W_cycle_gross", 1000); // convert from MWh to kWh
@@ -704,18 +723,13 @@ public:
 		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
 		assign("conversion_factor", convfactor);
 
-		// performance adjustement factors
-		adjustment_factors haf(this);
-		if (!haf.setup())
-			throw exec_error("tcsmslf", "failed to setup adjustment factors: " + haf.error());
-		
-		size_t count;
-		ssc_number_t *p_hourly_energy = as_array("hourly_energy", &count);
+		// size_t count;
+		// ssc_number_t *p_hourly_energy = as_array("hourly_energy", &count);
 		// set hourly energy = tcs output Enet
 		
 		//ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
-		if (count != 8760)
-			throw exec_error("tcsmslf", "hourly_energy count incorrect (should be 8760): " + count);
+		//if (count != 8760)
+		//	throw exec_error("tcsmslf", "hourly_energy count incorrect (should be 8760): " + count);
 
 		// apply performance adjustments and convert from MWh to kWh 
 		for (size_t i = 0; i < count; i++)
