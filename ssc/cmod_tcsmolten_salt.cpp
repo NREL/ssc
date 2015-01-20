@@ -440,15 +440,15 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// Add sco2 specific outputs: will need to figure out how to merge this with molten salt model
-	// { SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "P_low_des",            "Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "P_high_des",           "Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "f_recomp_des",         "Recompression fraction",                                            "",             "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "T_turbine_in",         "Turbine inlet temperature",                                         "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "P_mc_in",              "Main comp inlet pressure",                                          "kPa",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "P_mc_out",             "Main comp outlet pressure",                                         "kPa",		  "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "f_recomp",             "Recomp fraction",                                                   "",			  "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	// { SSC_OUTPUT,       SSC_ARRAY,       "N_MC",                 "Main comp. shaft speed",                                            "rpm",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_low_des",            "Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_high_des",           "Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp_des",         "Recompression fraction",                                            "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_turbine_in",         "Turbine inlet temperature",                                         "C",            "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_in",              "Main comp inlet pressure",                                          "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_out",             "Main comp outlet pressure",                                         "kPa",		  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp",             "Recomp fraction",                                                   "",			  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "N_MC",                 "Main comp. shaft speed",                                            "rpm",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Net_E_Calc", "*", "LENGTH=8760", "" },  
 
