@@ -284,7 +284,7 @@ bool C_Indirect_PB::SetNewTime(const long lTimeInSeconds)
 void C_Indirect_PB::Step(const long lNewSecondsFromStart)
 {
 	// moving to next time step, power block code used hours, so calculate it
-	m_dHoursSinceLastStep = (lNewSecondsFromStart - m_lCurrentSecondsFromStart)/3600;
+	m_dHoursSinceLastStep = (lNewSecondsFromStart - m_lCurrentSecondsFromStart)/3600.0;
 	m_lCurrentSecondsFromStart = lNewSecondsFromStart;
 
 	// Execute may get called several times for the same time step, these only get saved once we've started the next time step
@@ -461,14 +461,14 @@ bool C_Indirect_PB::Execute(const long lSecondsFromStart, const S_Indirect_PB_In
 			// ******
 			double startup_e_used = dmin1(Q_cycle * m_dHoursSinceLastStep, m_dStartupERemain);       // The used startup energy is the less of the energy to the power block and the remaining startup requirement
 
-			double f_st = 1.0 - dmax1(dmin1(1.0, m_dStartupRemain/m_dHoursSinceLastStep), startup_e_used/Q_cycle);
+			double f_st = 1.0 - dmax1(dmin1(1.0, m_dStartupRemain/m_dHoursSinceLastStep), startup_e_used/(Q_cycle*m_dHoursSinceLastStep));
 			m_pbo.P_cycle = m_pbo.P_cycle*f_st;
 			// *****
 
 			// Fraction of the timestep running at full capacity
 			// The power cycle still requires mass flow to satisfy the energy demand requirement, so only subtract demand mass flow
 			// for the case when startup time exceeds startup energy.
-			m_pbo.m_dot_demand = m_pbo.m_dot_demand * (1.0 - dmax1(dmin1(1.0, m_dStartupRemain/m_dHoursSinceLastStep) - startup_e_used/Q_cycle, 0.0));
+			m_pbo.m_dot_demand = m_pbo.m_dot_demand * (1.0 - dmax1(dmin1(1.0, m_dStartupRemain/m_dHoursSinceLastStep) - startup_e_used/(Q_cycle*m_dHoursSinceLastStep), 0.0));
 
 			m_pbo.eta = m_pbp.eta_ref;
 			m_pbo.T_htf_cold = m_pbp.T_htf_cold_ref;
