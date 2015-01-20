@@ -48,7 +48,7 @@ tcsvarinfo sam_mw_csp_SumCalcs_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,      I_Q_AUX_BACKUP,           "Q_aux_backup","Thermal source - Thermal power provided by the auxiliary fossil backup system for generation",       "MW",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,             O_W_NET,                  "W_net",                                      "Net electricity generation (or usage) by the plant",           "MW",             "",             "",             "" },
-	{ TCS_OUTPUT,          TCS_NUMBER,     O_HOURLY_ENERGY,          "hourly_energy",                                                                           "Hourly Energy",           "kW",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_NUMBER,     O_HOURLY_ENERGY,               "W_net_kW",                                                                           "Hourly Energy",           "kW",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,         O_W_PAR_TOT,              "W_par_tot",                          "Total electrical parasitic consumption by all plant subsystems",           "MW",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,        O_FUEL_USAGE,             "Fuel_usage",                                         "Total fossil fuel usage by all plant subsystems",        "MMBTU",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,          O_Q_FP_TOT,               "Q_fp_tot",                                      "Total freeze protection thermal energy requirement",           "MW",             "",             "",             "" },
