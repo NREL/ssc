@@ -882,7 +882,14 @@ public:
 		T_loop_in_des = value(P_T_LOOP_IN_DES);		//Design loop inlet temperature [C]
 		T_loop_out = value(P_T_LOOP_OUT);		//Target loop outlet temperature [C]
 		Fluid = (int)value(P_FLUID);		//Field HTF fluid number [none]
+		
+		
+		
 		T_field_ini = value(P_T_FIELD_INI);		//Initial field temperature [C]
+		
+		T_field_ini = 0.5*(T_field_ini + T_loop_in_des);
+		
+		
 		HTF_data_in = value(P_HTF_DATA, &nrow_HTF_data, &ncol_HTF_data);		//Fluid property data [none]
 		T_fp = value(P_T_FP);		//Freeze protection temperature (heat trace activation temperature) [C]
 		I_bn_des = value(P_I_BN_DES);		//Solar irradiation at design [W/m2]
@@ -1954,16 +1961,105 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
     
 freeze_prot_flag: //7   continue    
 			    
-			if(SolveMode==3)  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
+			if(SolveMode==4)
+			{
+				// assumptions...
+				// 1) solver won't enter both modes 3 & 4 in the SAME CALL. so, don't need unique flags or to reset flags
+								
+				t_tol = 1.5e-4;
+
+				no_fp = false;
+
+				// Energy gain in HTF by boosting the inlet temperature
+				double E_fp_field = std::numeric_limits<double>::quiet_NaN(); 
+				
+				if( is_using_input_gen )
+					E_fp_field = m_dot_htf_tot*c_hdr_cold*(T_cold_in_1 - T_sys_h)*dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
+				else
+					E_fp_field = m_dot_htf_tot*c_hdr_cold*(T_cold_in_1 - T_cold_in)*dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
+
+
+				// Energy losses in field
+				double E_field_loss_tot = 0.;
+
+				for( int i = 0; i<nSCA; i++ )
+				{
+					E_field_loss_tot += q_loss_SCAtot[i] * 1.e-6;             //*float(nLoops);
+				}
+
+				E_field_loss_tot *= 1.e-6 * dt;
+
+				double E_field_pipe_hl = N_run_mult*Runner_hl_hot + float(nfsec)*Header_hl_hot + N_run_mult*Runner_hl_cold + float(nfsec)*Header_hl_cold;
+
+				E_field_pipe_hl *= dt;		//[J]
+
+				E_field_loss_tot += E_field_pipe_hl;
+
+				err = (E_field_loss_tot - E_fp_field) / E_field_loss_tot;
+
+				if( abs(err) <= t_tol )
+					goto freeze_prot_ok;
+
+				if( (fp_lowflag) && (fp_upflag) )
+				{
+					if( err > 0.0 )      //Outlet too low, set lower limit of inlet temperature
+					{
+						T_in_lower = T_cold_in_1;
+						y_fp_lower = err;
+					}
+					else                     //Outlet too high, set upper limit of inlet temperature
+					{
+						T_in_upper = T_cold_in_1;
+						y_fp_upper = err;
+					}
+					T_cold_in_1 = (y_fp_upper) / (y_fp_upper - y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
+				}
+				else
+				{
+					if( is_using_input_gen && T_in_lower != T_in_lower && T_in_upper != T_in_upper )
+					{
+						T_cold_in_1 = T_fp;
+						T_in_lower = T_cold_in_1;
+					}
+					else
+					{
+						if( err > 0.0 )      //Outlet too low, set lower limit of inlet temperature
+						{
+							T_in_lower = T_cold_in_1;
+							y_fp_lower = err;
+							fp_lowflag = true;
+							upmult = 0.50;
+						}
+						else                    //Outlet too high, set upper limit of inlet temperature
+						{
+							T_in_upper = T_cold_in_1;
+							y_fp_upper = err;
+							fp_upflag = true;
+							upmult = 0.50;
+						}
+
+						if( (fp_lowflag) && (fp_upflag) )    //if results of bracket are defined, use false position
+						{
+							T_cold_in_1 = (y_fp_upper) / (y_fp_upper - y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
+						}
+						else                             //if not, recalculate value based on approximate energy balance
+						{
+							T_cold_in_1 = T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature
+							qq = 0;
+						}
+					}
+				}
+			}			
+			else if(SolveMode==3)  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
 			{    
 				t_tol = 1.5e-4;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
 
-				if((no_fp) && (T_sys_h > T_fp)) 
+				if( (no_fp) && ((T_loop_outX > T_fp) || abs(T_fp - T_loop_outX)/T_fp <= t_tol) )
 					goto freeze_prot_ok; //goto 9
                 
 				no_fp   = false;
         
-				err = (T_fp - T_sys_h)/T_fp;
+				err = (T_fp - T_loop_outX) / T_fp;
         
 				if(abs(err) <= t_tol) 
 					goto freeze_prot_ok; //goto 9
@@ -1984,28 +2080,37 @@ freeze_prot_flag: //7   continue
 				} 
 				else 
 				{
-					if(err > 0.0)      //Outlet too low, set lower limit of inlet temperature
+					if(is_using_input_gen && T_in_lower != T_in_lower && T_in_upper != T_in_upper)
 					{
-						T_in_lower  = T_cold_in_1;
-						y_fp_lower  = err;
-						fp_lowflag  = true;
-						upmult      = 0.50;
-					} 
-					else                    //Outlet too high, set upper limit of inlet temperature
+						T_cold_in_1 = T_fp;
+						T_in_lower = T_cold_in_1;
+					}					
+					else
 					{
-						T_in_upper  = T_cold_in_1;
-						y_fp_upper  = err;
-						fp_upflag   = true;
-						upmult      = 0.50;
-					}
-            
-					if( (fp_lowflag) && (fp_upflag) )    //if results of bracket are defined, use false position
-					{
-						T_cold_in_1 = (y_fp_upper) / (y_fp_upper - y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
-					}
-					else                             //if not, recalculate value based on approximate energy balance
-					{
-						T_cold_in_1 = T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature                
+						if( err > 0.0 )      //Outlet too low, set lower limit of inlet temperature
+						{
+							T_in_lower = T_cold_in_1;
+							y_fp_lower = err;
+							fp_lowflag = true;
+							upmult = 0.50;
+						}
+						else                    //Outlet too high, set upper limit of inlet temperature
+						{
+							T_in_upper = T_cold_in_1;
+							y_fp_upper = err;
+							fp_upflag = true;
+							upmult = 0.50;
+						}
+
+						if( (fp_lowflag) && (fp_upflag) )    //if results of bracket are defined, use false position
+						{
+							T_cold_in_1 = (y_fp_upper) / (y_fp_upper - y_fp_lower)*(T_in_lower - T_in_upper) + T_in_upper;
+						}
+						else                             //if not, recalculate value based on approximate energy balance
+						{
+							T_cold_in_1 = T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature  
+							qq = 0;
+						}
 					}
 				}    
     
@@ -2016,10 +2121,18 @@ freeze_prot_flag: //7   continue
         
 				if(m_dot_htf==m_dot_htfmin)
 				{
-					if(T_loop_outX < T_fp)         //freeze protection mode
+					if(T_loop_outX < T_fp + 10.0)         //freeze protection mode
 					{
-						SolveMode = 3;       
-						goto freeze_prot_flag; //goto 7
+						if( T_loop_outX < T_fp )
+						{
+							SolveMode = 3;
+							goto freeze_prot_flag; //goto 7
+						}
+						else
+						{
+							SolveMode = 4;
+							goto freeze_prot_flag; 
+						}
 					}
 					else if(err>0.0)
 					{
