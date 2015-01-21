@@ -3648,7 +3648,7 @@ public:
 		// check for NaN
 		bool is_nan = true;
 		for (int i = 1; i <= nyears; i++)
-			is_nan &= isnan(cf.at(cf_line, i));
+			is_nan &= std::isnan(cf.at(cf_line, i));
 		if (is_nan) return std::numeric_limits<double>::quiet_NaN();
 
 		double min_value = DBL_MAX;
