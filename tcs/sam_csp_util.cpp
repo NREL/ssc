@@ -1142,8 +1142,8 @@ bool CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
             nq2 = (int)floor(npq);
             nq1 = nq2 + 1;
             if(messages)
-                messages->append("Flow Path Setup: Allocating " + to_string(nq1) + "panels to flow quadrant 1 and " 
-                                 + to_string(nq2) + " panels to flow quadrant 2.\n");
+                messages->append("Flow Path Setup: Allocating " + util::to_string(nq1) + "panels to flow quadrant 1 and " 
+                                 + util::to_string(nq2) + " panels to flow quadrant 2.\n");
         }
         else{
             nq2 = nq1 = (int)floor(npq + 1.e-6);
@@ -1182,8 +1182,8 @@ bool CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
             nq1 = (int)floor(npq);
             nq2 = nq1 + 1;
             if(messages)
-                messages->append("Flow Path Setup: Allocating " + to_string(nq1) + " panels to flow quadrant 1 and " 
-                                 + to_string(nq2) + " panels to flow quadrant 2.\n");
+                messages->append("Flow Path Setup: Allocating " + util::to_string(nq1) + " panels to flow quadrant 1 and " 
+                                 + util::to_string(nq2) + " panels to flow quadrant 2.\n");
         }
         else{
             nq2 = nq1 = (int)floor(npq + 1.e-6);
