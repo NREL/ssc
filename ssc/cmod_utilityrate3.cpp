@@ -277,10 +277,11 @@ static var_info vtab_utility_rate3[] = {
 	// Demand Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable Demand Charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 
-//	{ SSC_INPUT,        SSC_STRING,     "ur_dc_sched_weekday",     "Demand Charge Weekday Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_dc_enable=1",           "TOUSCHED",                      "" },
-//	{ SSC_INPUT,        SSC_STRING,     "ur_dc_sched_weekend",     "Demend Charge Weekend Schedule",            "",       "288 digits 1-12, 24x12", "",             "ur_dc_enable=1",           "TOUSCHED",                      "" },
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demend Charge Weekday Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demend Charge Weekend Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
+//	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demend Charge Weekday Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
+//	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demend Charge Weekend Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
+// optional input for flat monthly demand charge per email from Mike Gleason 1/16/15
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demend Charge Weekday Schedule", "", "12x24", "", "", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demend Charge Weekend Schedule", "", "12x24", "", "", "", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t1_dc",       "Period 1 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t1_ub",       "Period 1 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
@@ -1796,28 +1797,34 @@ public:
 		// 2. multiply each period's peak demand by period price and add to payment for that month
 
 		// extract schedules
-		//const char *schedwkday = as_string("ur_dc_sched_weekday");
-		//const char *schedwkend = as_string("ur_dc_sched_weekend");
-
 		size_t nrows, ncols;
-		ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
+		ssc_number_t *dc_weekday;
+		ssc_number_t *dc_weekend;
+		// initialize to diurnal all 1 if only flat monthly demand charge specified per Mike Gleason 1/16/15
+		util::matrix_t<float> schedwkday(12, 24,1);
+		util::matrix_t<float> schedwkend(12, 24,1);
+		if (is_assigned("ur_dc_sched_weekday"))
 		{
-			std::ostringstream ss;
-			ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
-			throw exec_error("utilityrate3", ss.str());
+			dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+			if (nrows != 12 || ncols != 24)
+			{
+				std::ostringstream ss;
+				ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
+				throw exec_error("utilityrate3", ss.str());
+			}
+			schedwkday.assign(dc_weekday, nrows, ncols);
 		}
-		ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
+		if (is_assigned("ur_dc_sched_weekend"))
 		{
-			std::ostringstream ss;
-			ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
-			throw exec_error("utilityrate3", ss.str());
+			dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+			if (nrows != 12 || ncols != 24)
+			{
+				std::ostringstream ss;
+				ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
+				throw exec_error("utilityrate3", ss.str());
+			}
+			schedwkend.assign(dc_weekend, nrows, ncols);
 		}
-		util::matrix_t<float> schedwkday(12, 24);
-		schedwkday.assign(dc_weekday, nrows, ncols);
-		util::matrix_t<float> schedwkend(12, 24);
-		schedwkend.assign(dc_weekend, nrows, ncols);
 
 
 
