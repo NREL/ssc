@@ -2026,7 +2026,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         oo << "Best point found:\n";
         for(int i=0; i<(int)optvars.size(); i++)
             oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) * AO.m_normalizers.at(i) << "   ";
-        oo << "\mObjective: " << objbest;
+        oo << "\nObjective: " << objbest;
         _summary_siminfo->addSimulationNotice(oo.str() );
     }
     catch(...){
