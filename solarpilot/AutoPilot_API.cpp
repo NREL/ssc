@@ -1333,7 +1333,6 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
         is_range_constr;
     if(opt.is_optimize_tht){
         names.push_back("THT");
-        names.push_back("THT");
 		optvars.push_back( &layout.h_tower );
 		if(opt.is_range_constr_tht){
 			lower_range.push_back( opt.range_tht[0]/layout.h_tower );
