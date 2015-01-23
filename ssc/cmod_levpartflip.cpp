@@ -2580,6 +2580,11 @@ public:
 			- cf.at(CF_debt_payment_interest, i)
 			- cf.at(CF_debt_payment_principal, i)
 			- cf.at(CF_operating_expenses, i)
+			// incentives (cbi and ibi in installed cost and itc in year 1 below
+			// TODO - check PBI
+			+ cf.at(CF_ptc_fed, i)
+			+ cf.at(CF_ptc_sta, i)
+			// reserve accounts
 			- cf.at(CF_funding_equip1, i)
 			- cf.at(CF_funding_equip2, i)
 			- cf.at(CF_funding_equip3, i)

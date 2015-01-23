@@ -2467,13 +2467,7 @@ public:
 	double lcoe_real = lppa_real;
 
 	// from single_owner.xlsm
-//	cf.at(CF_Annual_Costs, 0) = cf.at(CF_tax_investor_investing_activities, 0);
 	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
-//		- cf.at(CF_funding_equip1, 0)
-///		- cf.at(CF_funding_equip2, 0)
-//		- cf.at(CF_funding_equip3, 0)
-//		- cf.at(CF_funding_om, 0)
-//		;
 	for (i = 1; i <= nyears; i++)
 	{
 		cf.at(CF_Annual_Costs, i) =
@@ -2481,6 +2475,11 @@ public:
 			+ cf.at(CF_tax_investor_statax, i)
 			+ cf.at(CF_tax_investor_fedtax, i)
 			- cf.at(CF_operating_expenses, i)
+			// incentives (cbi and ibi in installed cost and itc in year 1 below
+			// TODO - check PBI
+			+ cf.at(CF_ptc_fed, i)
+			+ cf.at(CF_ptc_sta, i)
+			// reserve accounts
 			- cf.at(CF_funding_equip1, i)
 			- cf.at(CF_funding_equip2, i)
 			- cf.at(CF_funding_equip3, i)
