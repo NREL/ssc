@@ -1639,6 +1639,7 @@ public:
 		{
 			// non-net metering without monthly reconciliation
 			c=0;
+			/* remove monthly charges per emails from Paul and Eric Wilson 1/23/15 
 			for (m=0;m<12;m++)
 			{
 				if (hours_per_month[m] <= 0) continue;
@@ -1661,6 +1662,57 @@ public:
 					}
 				}
 			}
+			*/
+			for (int i = 0; i<8760; i++)
+			{
+				int period = tod[i] - 1;
+				if (e[i] >= 0.0)
+				{ // calculate income or credit
+					ssc_number_t credit_amt = 0;
+					ssc_number_t energy_surplus = e[i];
+					tier = 0;
+					while (tier<6)
+					{
+						// add up the charge amount for this block
+						ssc_number_t e_upper = energy_ub[period][tier];
+						ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier - 1] : (ssc_number_t)0.0;
+
+						if (energy_surplus > e_upper)
+							credit_amt += (e_upper - e_lower)*rates[period][tier][1];
+						else
+							credit_amt += (energy_surplus - e_lower)*rates[period][tier][1];
+
+						if (energy_surplus < e_upper)
+							break;
+						tier++;
+					}
+					income[i] += credit_amt;
+				}
+				else
+				{ // calculate payment or charge
+					ssc_number_t charge_amt = 0;
+					ssc_number_t energy_deficit = -e[i];
+					tier = 0;
+					while (tier<6)
+					{
+						// add up the charge amount for this block
+						ssc_number_t e_upper = energy_ub[period][tier];
+						ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier - 1] : (ssc_number_t)0.0;
+
+						if (energy_deficit > e_upper)
+							charge_amt += (e_upper - e_lower)*rates[period][tier][0];
+						else
+							charge_amt += (energy_deficit - e_lower)*rates[period][tier][0];
+
+						if (energy_deficit < e_upper)
+							break;
+						tier++;
+					}
+					payment[i] += charge_amt;
+				}
+
+			}
+
 		}
 
 		// calculate energy charge for both scenarios hour by hour basis
