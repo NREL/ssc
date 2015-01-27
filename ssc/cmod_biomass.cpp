@@ -234,8 +234,8 @@ static var_info _cm_vtab_biomass[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.qtoboil_tot",            "Q to Boiler",                                   "kWh",        "",      "biomass",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.qtopb_tot",              "Q to Power Block",                              "kWh",        "",      "biomass",           "*",               "",                    "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "", "*", "", "" },
 
 
 

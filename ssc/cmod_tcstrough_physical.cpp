@@ -350,8 +350,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	// Other single value outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",         "Hourly energy",                                              "kWh",           "",            "Caclulated",     "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",     "Gross to Net Conversion Factor",                             "%",             "",            "Calculated",     "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                                            "",              "",            "",               "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                                          "",              "",            "",               "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                                            "%",              "",            "",               "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                                          "kWh/kW",              "",            "",               "*",                       "",                      "" },
 	// TODO - consistent fuel usage and o and m caclulations						                                            					            	              	                         	                      
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",      "System heat rate",                                           "MMBtu/MWh",     "",            "",               "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",     "Annual fuel usage",                                          "kWht",          "",            "",               "*",                       "",                      "" },

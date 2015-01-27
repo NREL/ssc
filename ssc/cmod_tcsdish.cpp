@@ -224,8 +224,8 @@ static var_info _cm_vtab_tcsdish[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_rec_losses",      "Receiver thermal losses",                                          "MWh",           "",             "Outputs",        "*",                       "LENGTH=12",           "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "", "*", "", "" },
 
 
 	var_info_invalid };
