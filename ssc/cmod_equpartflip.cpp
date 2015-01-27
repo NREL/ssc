@@ -2391,13 +2391,11 @@ public:
 	double lcoe_nom = lppa_nom;
 	double lcoe_real = lppa_real;
 
-	// from single_owner.xlsm - tax investor point of view since used for IRR calculation
-//	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
-	cf.at(CF_Annual_Costs, 0) = -equity_tax_investor;
+	// from single_owner.xlsm - project returns used but tax investor for IRR and NPV
+	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
 	for (i = 1; i <= nyears; i++)
 	{
-		cf.at(CF_Annual_Costs, i) = ((cf.at(CF_tax_investor_aftertax_max_irr, i - 1) < flip_target_percent) ?
-		tax_investor_preflip_tax_frac : tax_investor_postflip_tax_frac) * (
+		cf.at(CF_Annual_Costs, i) = 
 			cf.at(CF_pbi_total, i)
 			+ cf.at(CF_statax, i)
 			+ cf.at(CF_fedtax, i)
@@ -2412,8 +2410,7 @@ public:
 			- cf.at(CF_funding_equip3, i)
 			- cf.at(CF_funding_om, i)
 			+ cf.at(CF_reserve_interest, i)
-			- cf.at(CF_disbursement_om,i )
-			); // disbusement negative for benefit
+			- cf.at(CF_disbursement_om,i ); // disbusement negative for benefit
 	}
 	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
 	if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;
