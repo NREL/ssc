@@ -239,7 +239,7 @@ static var_info _cm_vtab_singleowner[] = {
 /* intermediate outputs */                                                        
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_closing_total",                "Total debt closing cost",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancingperwatt",               "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancingperwatt",               "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Initial cost",                   "$",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installedperwatt",                  "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "nominal_discount_rate",                  "Nominal discount rate",            "%",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
@@ -740,8 +740,10 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Installed costs less incentives", "$", "", "System Costs", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR",  "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Installed costs less incentives", "$", "", "System Costs", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Initial cost less cash incentives", "$", "", "", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_pretax_dscr", "Pre-tax DSCR", "", "", "DSCR", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
@@ -2520,7 +2522,6 @@ public:
 
 		assign("cost_financing", var_data((ssc_number_t) cost_financing));
 		assign("cost_debt_closing_total", var_data((ssc_number_t) cost_debt_closing_total));
-		assign( "cost_installed", var_data((ssc_number_t) cost_installed ) );
 
 
 		assign( "size_of_equity", var_data((ssc_number_t) size_of_equity) );
