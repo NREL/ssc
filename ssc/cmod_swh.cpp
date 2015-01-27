@@ -132,8 +132,8 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_auxonly",	  "Q auxiliary only",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",		  "System energy",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                    "",    "",                      "Annual",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                   "",         "",                   "Annual",                                   "*",           "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                 "",         "",                   "Annual",                                   "*",           "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                   "%",         "",                   "Annual",                                   "*",           "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                 "kWh/kW",         "",                   "Annual",                                   "*",           "", "" },
 
 	
 	var_info_invalid };

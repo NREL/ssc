@@ -553,8 +553,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Adj",                                    "CEC 6-parameter: Adj",                                   "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
 	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",                                      "",       "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",                                        "",       "", "", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh/kW",                                      "",       "", "", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",                                        "%",       "", "", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh/kW",                                      "kWh/kW",       "", "", "*", "", "" },
 
 
 var_info_invalid };
