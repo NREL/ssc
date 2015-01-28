@@ -196,8 +196,8 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		"Debt service reserve account",		"months P&I","",			      "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
 
 	/* Debt fraction input option */
-	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt fraction", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt fraction,1=dscr", "Project Term Debt", "?=1", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt percent,1=dscr", "Project Term Debt", "?=1", "INTEGER,MIN=0,MAX=1", "" },
 
 
 /* DHF Capital Cost */
@@ -782,7 +782,7 @@ static var_info _cm_vtab_levpartflip[] = {
 
 	// metrics table 
 //	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "%", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt percent",  "%", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "%", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_year",    "IRR actual year",  "%", "",                      "DHF",      "*",                     "",                "" },

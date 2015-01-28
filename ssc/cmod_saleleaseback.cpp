@@ -752,7 +752,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	// metrics table
 //	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt fraction",  "%", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt percent",  "%", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "%", "",                      "DHF",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_year",    "IRR actual year",  "", "",                      "DHF",      "*",                     "",                "" },
