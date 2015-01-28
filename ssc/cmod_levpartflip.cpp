@@ -2538,6 +2538,10 @@ public:
 	if (flip_year > -1) actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
 	assign("flip_actual_irr", var_data((ssc_number_t) actual_flip_irr ));
 	*/
+
+	// Paul 1/27/15 - update for ppa specified and IRR year requested
+	if (ppa_mode == 1) flip_year = flip_target_year;
+
 	double actual_flip_irr = std::numeric_limits<double>::quiet_NaN();
 	if (flip_year > -1)
 	{

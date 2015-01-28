@@ -2362,6 +2362,10 @@ public:
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
+
+	// Paul 1/27/15 - update for ppa specified and IRR year requested
+	if (ppa_mode == 1) flip_year = flip_target_year;
+
 	double actual_flip_irr = std::numeric_limits<double>::quiet_NaN();
 	if (flip_year > -1)
 	{
