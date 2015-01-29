@@ -295,7 +295,7 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_TOD8Energy, m_nyears, "cf_energy_net_dispatch8");
 	save_cf( m_cm, m_cf,  CF_TOD9Energy, m_nyears, "cf_energy_net_dispatch9");
 
-	// dispatch revenue
+	// dispatch revenue cents/kWh ppa input in cents per kWh - revenue in dollars
 	for (i = 1; i <= (size_t)m_nyears; i++)
 	{
 		m_cf.at(CF_TOD1Revenue, i) = ppa[i-1] / 100.0 * dispatch_factor1 * m_cf.at(CF_TOD1Energy, i);
@@ -928,16 +928,16 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cm->assign("firstyear_energy_dispatch7", var_data((ssc_number_t)m_cf.at(CF_TOD7Energy, 1)));
 	m_cm->assign("firstyear_energy_dispatch8", var_data((ssc_number_t)m_cf.at(CF_TOD8Energy, 1)));
 	m_cm->assign("firstyear_energy_dispatch9", var_data((ssc_number_t)m_cf.at(CF_TOD9Energy, 1)));
-
-	m_cm->assign("firstyear_energy_price1", var_data((ssc_number_t)((m_cf.at(CF_TOD1Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD1Revenue, 1) / m_cf.at(CF_TOD1Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price2", var_data((ssc_number_t)((m_cf.at(CF_TOD2Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD2Revenue, 1) / m_cf.at(CF_TOD2Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price3", var_data((ssc_number_t)((m_cf.at(CF_TOD3Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD3Revenue, 1) / m_cf.at(CF_TOD3Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price4", var_data((ssc_number_t)((m_cf.at(CF_TOD4Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD4Revenue, 1) / m_cf.at(CF_TOD4Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price5", var_data((ssc_number_t)((m_cf.at(CF_TOD5Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD5Revenue, 1) / m_cf.at(CF_TOD5Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price6", var_data((ssc_number_t)((m_cf.at(CF_TOD6Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD6Revenue, 1) / m_cf.at(CF_TOD6Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price7", var_data((ssc_number_t)((m_cf.at(CF_TOD7Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD7Revenue, 1) / m_cf.at(CF_TOD7Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price8", var_data((ssc_number_t)((m_cf.at(CF_TOD8Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD8Revenue, 1) / m_cf.at(CF_TOD8Energy, 1)) / 100.0)));
-	m_cm->assign("firstyear_energy_price9", var_data((ssc_number_t)((m_cf.at(CF_TOD9Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD9Revenue, 1) / m_cf.at(CF_TOD9Energy, 1)) / 100.0)));
+	// revenue in $
+	m_cm->assign("firstyear_energy_price1", var_data((ssc_number_t)((m_cf.at(CF_TOD1Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD1Revenue, 1) / m_cf.at(CF_TOD1Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price2", var_data((ssc_number_t)((m_cf.at(CF_TOD2Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD2Revenue, 1) / m_cf.at(CF_TOD2Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price3", var_data((ssc_number_t)((m_cf.at(CF_TOD3Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD3Revenue, 1) / m_cf.at(CF_TOD3Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price4", var_data((ssc_number_t)((m_cf.at(CF_TOD4Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD4Revenue, 1) / m_cf.at(CF_TOD4Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price5", var_data((ssc_number_t)((m_cf.at(CF_TOD5Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD5Revenue, 1) / m_cf.at(CF_TOD5Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price6", var_data((ssc_number_t)((m_cf.at(CF_TOD6Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD6Revenue, 1) / m_cf.at(CF_TOD6Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price7", var_data((ssc_number_t)((m_cf.at(CF_TOD7Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD7Revenue, 1) / m_cf.at(CF_TOD7Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price8", var_data((ssc_number_t)((m_cf.at(CF_TOD8Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD8Revenue, 1) / m_cf.at(CF_TOD8Energy, 1)) * 100.0)));
+	m_cm->assign("firstyear_energy_price9", var_data((ssc_number_t)((m_cf.at(CF_TOD9Energy, 1) == 0) ? 0 : (m_cf.at(CF_TOD9Revenue, 1) / m_cf.at(CF_TOD9Energy, 1)) * 100.0)));
 
 	return true;
 }
