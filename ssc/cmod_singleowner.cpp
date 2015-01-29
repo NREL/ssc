@@ -1771,7 +1771,7 @@ public:
 		for (i=1; i<=nyears; i++)
 		{			
 		// Project partial income statement			
-			// energy_value = DHF Total PPA Revenue
+			// energy_value = DHF Total PPA Revenue (cents/kWh)
 			cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); // ppa_mode==1
 //			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 			// dispatch
