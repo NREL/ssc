@@ -3,7 +3,7 @@
 clear();
 
 var( 'system_capacity', 3.8745 );
-var( 'solar_resource_file', 'C:/Projects/SAM/trunk/SAMnt/deploy/solar_resource/USA AZ Phoenix (TMY2).csv' );
+var( 'solar_resource_file', '../examples/USA AZ Phoenix (TMY2).csv' );
 var( 'use_wf_albedo', 0 );
 var( 'albedo', [ 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 ] );
 var( 'irrad_mode', 0 );
