@@ -652,7 +652,8 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_without_system",       "Year 1 demand charge by hour without system",      "$/kW", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_ec_tou_schedule",       "Hourly energy charge TOU period",      "", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "Hourly demand charge TOU period",      "", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_tou_schedule", "Hourly demand charge TOU period", "", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_peak_per_period", "Year 1 peak per period", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Year 1 monthly demand charge (Fixed) with system",    "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
@@ -849,7 +850,7 @@ public:
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
 			payment(8760), income(8760), price(8760), demand_charge(8760), 
-			ec_tou_sched(8760), dc_tou_sched(8760), load(8760),
+			ec_tou_sched(8760), dc_tou_sched(8760), load(8760), dc_hourly_peak(8760),
 			e_tofromgrid(8760), p_tofromgrid(8760),	salespurchases(8760);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12),
@@ -927,7 +928,7 @@ public:
 				&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0] );
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0] );
 
 			if (i == 0)
 			{
@@ -939,8 +940,9 @@ public:
 //				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
 //				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
 				assign( "year1_hourly_ec_tou_schedule", var_data( &ec_tou_sched[0], 8760) );
-				assign( "year1_hourly_dc_tou_schedule", var_data( &dc_tou_sched[0], 8760) );
-				
+				assign("year1_hourly_dc_tou_schedule", var_data(&dc_tou_sched[0], 8760));
+				assign("year1_hourly_dc_peak_per_period", var_data(&dc_hourly_peak[0], 8760));
+
 				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
 				{
@@ -1004,7 +1006,7 @@ public:
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0] );
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0] );
 
 			if (i == 0)
 			{
@@ -1172,12 +1174,12 @@ public:
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12],
-		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760] ) throw(general_error)
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], ssc_number_t dc_hourly_peak[8760]) throw(general_error)
 	{
 		int i;
 
 		for (i=0;i<8760;i++)
-			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = 0.0;
+			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = 0.0;
 
 		for (i=0;i<12;i++)
 		{
@@ -1194,7 +1196,7 @@ public:
 
 		// process demand charges
 		if (as_boolean("ur_dc_enable"))
-			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou, dc_tou_sched );
+			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou, dc_tou_sched, dc_hourly_peak );
 
 		// process energy charges
 		if (as_boolean("ur_ec_enable"))
@@ -1775,7 +1777,8 @@ public:
 			ssc_number_t demand_charge[8760],
 			ssc_number_t dc_fixed[12],
 			ssc_number_t dc_tou[12],
-			ssc_number_t dc_tou_sched[8760] )
+			ssc_number_t dc_tou_sched[8760], 
+			ssc_number_t dc_hourly_peak[8760])
 	{
 		int i,m,d,h,c,tier;
 
@@ -1803,13 +1806,17 @@ public:
 		{
 			ssc_number_t charge = 0.0;
 			ssc_number_t mpeak = 0.0;  // peak usage for the month (negative value)
-			ssc_number_t peak_demand=0;
-			for (d=0;d<util::nday[m];d++)
+			ssc_number_t peak_demand = 0;
+			int peak_hour = 0;
+			for (d = 0; d<util::nday[m]; d++)
 			{
 				for (h=0;h<24;h++)
 				{
 					if (p[c] < 0 && p[c] < mpeak)
+					{
 						mpeak = p[c];
+						peak_hour = c;
+					}
 
 					if (d==util::nday[m]-1 && h==23)
 					{
@@ -1835,6 +1842,7 @@ public:
 						dc_fixed[m] = charge;
 						payment[c] += dc_fixed[m];
 						demand_charge[c] = charge;
+						dc_hourly_peak[peak_hour] = peak_demand;
 					}
 
 					c++;
@@ -1905,10 +1913,15 @@ public:
 
 		// find peak demand per month for each of the twelve periods
 		ssc_number_t ppeaks[12]; // period peak demand 
-		c=0;
+		ssc_number_t phpeaks[12]; // period peak demand hour
+		c = 0;
 		for (m=0;m<12;m++)
 		{
-			for (i=0;i<12;i++) ppeaks[i] = 0; // reset each month
+			for (i = 0; i < 12; i++)
+			{
+				ppeaks[i] = 0; // reset each month
+				phpeaks[i] = 0; // reset each month
+			}
 
 			for (d=0;d<util::nday[m];d++)
 			{
@@ -1916,17 +1929,22 @@ public:
 				{
 					int todp = tod[c]-1;
 					if (p[c] < 0 && p[c] < ppeaks[todp])
+					{
 						ppeaks[todp] = p[c];
+						phpeaks[todp] = c;
+					}
 
 					if (d==util::nday[m]-1 && h==23)
 					{
 						// sum up all peak demand charges at end of month
 						ssc_number_t charge=0;
 						ssc_number_t peak_demand=0;
+						int peak_hour = 0;
 						for (period=0;period<12;period++)
 						{
 							tier=0;
 							peak_demand=-ppeaks[period];
+							peak_hour = phpeaks[period];
 							while (tier<6)
 							{
 								// add up the charge amount for this block
@@ -1943,6 +1961,7 @@ public:
 
 								tier++;
 							}
+							dc_hourly_peak[peak_hour] = peak_demand;
 						}
 						// add to payments
 						dc_tou[m] = charge;
