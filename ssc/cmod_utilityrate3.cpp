@@ -1947,6 +1947,7 @@ public:
 						// add to payments
 						dc_tou[m] = charge;
 						payment[c] += dc_tou[m]; // apply to last hour of the month
+						demand_charge[c] += charge; // add TOU charge to hourly demand charge
 					}
 
 					c++;
