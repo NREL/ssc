@@ -20,22 +20,22 @@ static var_info _cm_vtab_belpe[] =
 	{ SSC_INPUT,		SSC_NUMBER,		"en_belpe",			"Enable building load calculator",	"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
 	//e_load and p_load are modified in BELPE. They are passed straight through if BELPE is disabled.
-	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Year 1 hourly electric load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
-	{ SSC_INOUT,		SSC_ARRAY,		"p_load",			"Year 1 peak electric load",		"kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Electric load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"p_load",			"Electric peak load", 		    "kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
 
 	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "en_belpe=1",			"LOCAL_FILE",	"" },
 //	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "en_belpe=1",			"",				"Time Step" },
 	{ SSC_INPUT,        SSC_NUMBER,		"floor_area",		"Building floor area",				"m2",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"Floor area" },
 	{ SSC_INPUT,        SSC_NUMBER,		"Stories",			"Number of stories",				"#",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"Stories" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year Built",						"yr",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"Retrofits",		"Energy Retrofitted",				"0/1",		"0=No, 1=Yes",	"Load Profile Estimator", "en_belpe=1",			"",				"" },//energy retrofits
+	{ SSC_INPUT,		SSC_NUMBER,		"YrBuilt",			"Year built",						"yr",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"Retrofits",		"Energy retrofitted",				"0/1",		"0=No, 1=Yes",	"Load Profile Estimator", "en_belpe=1",			"",				"" },//energy retrofits
 	{ SSC_INPUT,		SSC_NUMBER,		"Occupants",		"Occupants",						"#",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
 	{ SSC_INPUT,		SSC_ARRAY,		"Occ_Schedule",		"Hourly occupant schedule",			"frac/hr",	"",				"Load Profile Estimator", "en_belpe=1",			"LENGTH=24",	"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"heating setpoint",					"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
-	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling SetPoint",					"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"heating setpoint SetBack",			"degf",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"cooling setpoint SetBack",			"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeat",			"Heating setpoint",					"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,        SSC_NUMBER,		"TCool",			"Cooling setpoint",					"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"THeatSB",			"Heating setpoint setback",			"degf",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"TCoolSB",			"Cooling setpoint setback",			"degF",		"",				"Load Profile Estimator", "en_belpe=1",			"",				"" },
 	{ SSC_INPUT,		SSC_ARRAY,		"T_Sched",			"Temperature schedule",				"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"LENGTH=24",	"" },
 	
 	{ SSC_INPUT,		SSC_NUMBER,		"en_heat",			"Enable electric heat",				"0/1",		"",				"Load Profile Estimator", "en_belpe=1",			"BOOLEAN",		"" },
