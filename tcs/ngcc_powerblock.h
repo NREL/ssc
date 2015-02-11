@@ -57,11 +57,11 @@ public:
 
 	void get_table_range(double & T_amb_low, double & T_amb_high, double & P_amb_low, double & P_amb_high )
 	{
-		T_amb_low = m_T_amb_start;
-		T_amb_high = m_T_amb_end - 0.001;
+		T_amb_low = m_T_amb_start + 0.001*abs(m_delta_T);
+		T_amb_high = m_T_amb_end - 0.001*abs(m_delta_T);
 
-		P_amb_low = m_P_amb_end;
-		P_amb_high = m_P_amb_start + 0.001;
+		P_amb_low = m_P_amb_end + 0.001*abs(m_delta_P);
+		P_amb_high = m_P_amb_start - 0.001*abs(m_delta_P);
 	}
 
 	/*
@@ -86,10 +86,13 @@ public:
 			return get_performance_results( &m_solar_injection_t );
 		case E_solar_extraction_t:
 			return get_performance_results( &m_solar_extraction_t );
-		case E_solar_extraction_h:
-			return get_performance_results( &m_solar_extraction_h );
-		case E_solar_injection_h:
-			return get_performance_results( &m_solar_injection_h );
+		
+		// 2.10.15 twn: Not using enthalpy currently in performance calcs - GE injection enthalpy is representing saturated, not superheater, steam and must be fixed if used in future
+		// case E_solar_extraction_h:
+		// 	return get_performance_results( &m_solar_extraction_h );
+		// case E_solar_injection_h:
+		// 	return get_performance_results( &m_solar_injection_h );
+		
 		case E_plant_power_net:
 			return get_performance_results( &m_plant_power_net );
 		case E_plant_fuel_mass:

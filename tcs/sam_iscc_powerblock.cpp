@@ -39,6 +39,7 @@ enum{	//Parameters
 		O_Q_DOT_MAX,
 		O_FUEL_USE,
 		O_Q_DOT_FUEL,
+		O_M_DOT_STEAM,
 
 		//N_MAX
 		N_MAX};
@@ -64,8 +65,8 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	//OUTPUTS
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD,    "T_htf_cold",       "Outlet molten salt temp - inlet rec. temp",           "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_HTF_HOT,     "T_htf_hot",        "Inlet molten salt temp - outlet rec. temp",           "C",     "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_FOSSIL,"W_dot_pc_fossil", "POWER CYCLE output - no solar thermal input",   "MWe",   "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_HYBRID,"W_dot_pc_hybrid", "POWER CYCLE output at timestep with solar",     "MWe",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_FOSSIL,"W_dot_pc_fossil", "POWER CYCLE output - no solar thermal input",         "MWe",   "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_W_DOT_PC_HYBRID,"W_dot_pc_hybrid", "POWER CYCLE output at timestep with solar",           "MWe",   "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_ST_COLD,     "T_st_cold",        "Steam extraction temp TO molten salt HX",             "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_T_ST_HOT,      "T_st_hot",         "Steam injection temp TO ngcc",                        "C",     "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_P_ST_COLD,     "P_st_cold",        "Steam extraction pressure TO molten salt HX",         "bar",   "", "", ""},
@@ -74,6 +75,7 @@ tcsvarinfo sam_iscc_powerblock_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_MAX,     "Q_dot_max",        "Maximum allowable thermal power to power cycle",      "MWt",   "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_FUEL_USE,      "fuel_use",         "Total fossil fuel used during timestep",              "MMBTU", "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_Q_DOT_FUEL,    "q_dot_fuel",       "Fuel thermal power into gas turbines",                "kW",    "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_M_DOT_STEAM,   "m_dot_steam",      "Solar steam mass flow rate",                          "kg/hr", "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
@@ -229,13 +231,18 @@ public:
 
 		// ********************************************************************************************************
 		// Get Steam Pressure, Extraction, Injection, and mass flow rate at design solar input from Regression Model
-		m_m_dot_st_des = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_steam_mass )*2.0;			// [kg/s]
+		m_m_dot_st_des = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_steam_mass );			// [kg/s]
 		double P_st_extract = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_extraction_p )*100.0;	// [kPa] convert from [bar]
 		double P_st_inject = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_injection_p )*100.0;	// [kPa] convert from [bar]
 		double T_st_extract = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_extraction_t );		// [C]
 		double T_st_inject = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_injection_t );			// [C]
-		double h_st_extract = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_extraction_h );		// [kJ/kg]
-		double h_st_inject = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_injection_h );			// [kJ/kg]
+		
+		water_TP(T_st_extract + 273.15, P_st_extract, &wp);
+		double h_st_extract = wp.enth;			// [kJ/kg]
+		water_TP(T_st_inject + 273.15, P_st_inject, &wp);
+		double h_st_inject = wp.enth;			// [kJ/kg]
+		// double h_st_extract = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_extraction_h );		// [kJ/kg]
+		// double h_st_inject = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_injection_h );			// [kJ/kg]
 		double m_dot2 = m_q_sf_des*1000.0 / (h_st_inject - h_st_extract);
 		// ********************************************************************************************************
 
@@ -341,8 +348,8 @@ public:
 		//T_amb = max( m_T_amb_low, min( m_T_amb_high, T_amb ) );
 		if( P_amb < m_P_amb_low || P_amb > m_P_amb_high )
 		{
-			message(TCS_ERROR, "The design ambient pressure, %d, is outside of the bounds"
-				    "for ambient pressure (%d, %d) [bar] in the cycle performance lookup table and has been set to the appropriate bound"
+			message(TCS_NOTICE, "The design ambient pressure, %lg, is outside of the bounds"
+				    "for ambient pressure (%lg, %lg) [bar] in the cycle performance lookup table and has been set to the appropriate bound"
 					"for this timestep", m_P_amb_des, m_P_amb_low, m_P_amb_high);
 			P_amb = max(m_P_amb_low, min(m_P_amb_high, P_amb));
 		}
@@ -374,13 +381,14 @@ public:
 			value( O_P_ST_COLD, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_p ) );
 			value( O_P_ST_HOT, cycle_calcs.get_ngcc_data( 0.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_p ) );
 			value( O_ETA_SOLAR_PC, 0.0 );
+			value( O_M_DOT_STEAM );
 
 			return 0;
 		}
 		else if( q_dot_rec > m_q_dot_rec_max )
 		{
-			q_dot_rec = m_q_dot_rec_max;
-			message(TCS_WARNING, "Solar thermal input from the receiver, %d MWt, is greater than the allowable maximum, %d MWt", q_dot_rec, m_q_dot_rec_max);			
+			message(TCS_NOTICE, "Solar thermal input from the receiver, %lg MWt, is greater than the allowable maximum, %lg MWt", q_dot_rec / 1.E3, m_q_dot_rec_max / 1.E3);
+			q_dot_rec = m_q_dot_rec_max;						
 		}
 
 
@@ -392,8 +400,13 @@ public:
 		double P_st_inject = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_p )*100.0;		// [kPa] convert from [bar]
 		double T_st_extract = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_t );			// [C]
 		double T_st_inject = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_t );			// [C]
-		double h_st_extract = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_h );			// [kJ/kg]
-		double h_st_inject = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_h );			// [kJ/kg]
+		
+		// double h_st_extract = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_extraction_h );			// [kJ/kg]
+		// double h_st_inject = cycle_calcs.get_ngcc_data( q_dot_rec/1000.0, T_amb, P_amb, ngcc_power_cycle::E_solar_injection_h );			// [kJ/kg]
+		water_TP(T_st_extract + 273.15, P_st_extract, &wp);
+		double h_st_extract = wp.enth;			// [kJ/kg]
+		water_TP(T_st_inject + 273.15, P_st_inject, &wp);
+		double h_st_inject = wp.enth;			// [kJ/kg]
 		double m_dot_st = q_dot_rec / (h_st_inject - h_st_extract);
 		
 		// 3) Calculate remaining steam cycle state points
@@ -581,6 +594,8 @@ public:
 		value( O_P_ST_HOT, P_st_inject  );
 
 		value( O_ETA_SOLAR_PC, (W_dot_pc_hybrid - m_W_dot_pc_fossil)/(q_dot_rec/1000.0) );
+
+		value( O_M_DOT_STEAM, m_dot_st*3600.0 );
 
 		return 0;
 
