@@ -36,6 +36,9 @@ enum{	//Parameters
 		O_ETA_SOLAR_USE,
 		O_ETA_FUEL,
 		O_SOLAR_FRACTION,
+		O_P_PLANT_BALANCE_TOT,
+		O_P_PIPING_TOT,
+		O_P_FIXED,
 
 		//N_MAX
 		N_MAX};
@@ -74,6 +77,9 @@ tcsvarinfo sam_iscc_parasitics_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_ETA_SOLAR_USE,     "eta_solar_use",          "Solar use efficiency considering parasitics",              "",         "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_ETA_FUEL,          "eta_fuel",               "Electrical efficiency of fossil only operation",           "%",        "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_SOLAR_FRACTION,    "solar_fraction",         "Solar contribution to total electrical power",             "-",        "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_P_PLANT_BALANCE_TOT, "P_plant_balance_tot",  "Total solar balance of plant parasitic power",             "MWe",      "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_P_PIPING_TOT,      "P_piping_tot",           "Parasitic power estimated from piping thermal losses",     "MWe",      "", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_P_FIXED,           "P_fixed",                "Total fixed parasitic losses",                             "MWe",      "", "", ""},
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	} } ;
@@ -159,7 +165,8 @@ public:
 		double W_dot_piping_tot = 0.0;
 		if( q_solar > 0.0 )
 		{
-			eta_cycle_base = (W_dot_pc_hybrid - W_dot_pc_fossil) / (f_timestep*q_solar);
+			//eta_cycle_base = min(0.5, max(0.0, (W_dot_pc_hybrid - W_dot_pc_fossil) / (f_timestep*q_solar)));
+			eta_cycle_base = abs(W_dot_pc_hybrid - W_dot_pc_fossil) / (q_solar);
 			W_dot_piping_tot = Piping_loss * Piping_length * eta_cycle_base * (q_solar / q_solar_design)*1.E-6;	//[MWe] Electric equivalent loss from receiver piping heat loss
 		}
 		//double W_piping_tot = f_timestep*W_dot_piping_tot*step / 3600.0;	//[MWe-hr] Energy considering timestep and fraction receiver operated
@@ -205,6 +212,10 @@ public:
 		value( O_ETA_SOLAR_USE, eta_solar_use );					//[MWe]
 		value(O_ETA_FUEL, eta_fuel);					//[%]
 		value(O_SOLAR_FRACTION, (W_dot_plant_hybrid - W_dot_plant_fossil) / W_dot_plant_hybrid);	//[-]
+
+		value(O_P_PLANT_BALANCE_TOT, W_dot_BOP);
+		value(O_P_PIPING_TOT, W_dot_piping_tot);
+		value(O_P_FIXED, W_dot_fixed);
 		
 		return 0;
 
