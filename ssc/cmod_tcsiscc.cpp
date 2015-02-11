@@ -150,43 +150,59 @@ static var_info _cm_vtab_tcsiscc[] = {
 
 	// OUTPUTS
 	// weather
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Ambient dry bulb temperature",                                   "C",            "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Wind Speed",                                                     "m/s",          "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Beam normal irradiance",                                         "W/m2",         "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Ambient dry bulb temperature",                                   "C",            "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Wind Speed",                                                     "m/s",          "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Beam normal irradiance",                                         "W/m2",         "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "month",             "Resource Month",                                                  "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hour",              "Resource Hour of Day",                                            "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",            "Resource Solar Azimuth",                                          "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",            "Resource Solar Zenith",                                           "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Resource Beam normal irradiance",                                 "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Resource Dry bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "twet",              "Resource Wet bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Resource Wind Speed",                                             "m/s",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pres",              "Resource Pressure",                                               "mbar",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
 
 	// sam_type221
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",           "Parasitic tracking/startup power",                                       "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",         "Solar field efficiency (no defocusing)",                                 "",              "",             "Outputs",        "*",                      "",                       "" },
-	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",         "Field optical efficiency",                                        "",             "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "field_eff_adj",     "Solar field efficiency w/ defocusing",                            "",             "",            "Outputs",        "*",                       "",                       "" },
+
 	// sam_type222 MS receiver
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_salt_tot",    "Receiver m_dot, derated for startup",                                    "kg/s",          "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_ss",          "Receiver m_dot, steady state",                                           "kg/s",          "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",         "Receiver thermal efficiency",                                            "",              "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pump",        "Receiver pump power",                                                    "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "field_eff_adj",     "Solar field efficiency w/ defocusing",                                   "",              "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",         "Startup power",                                                          "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "f_timestep",        "Fraction of timestep receiver is operating - not starting up",           "",              "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",         "Receiver thermal efficiency",                                     "",             "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_solar_total",     "Receiver thermal power absorbed",                                 "MWt",          "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_conv_sum",        "Receiver thermal power loss to convection",                       "MWt",          "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_rad_sum",         "Receiver thermal power loss to radiation",                        "MWt",          "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",         "Receiver thermal power to HTF",                                   "MWt",          "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_ss",          "Receiver mass flow rate, steady state",                           "kg/s",         "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_salt_tot",    "Receiver mass flow rate, derated for startup",                    "kg/s",         "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_htf_cold",        "Receiver HTF temperature in",                                     "C",            "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_salt_hot",        "Receiver HTF temperature out",                                    "C",            "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",         "Receiver startup power",                                          "MWt",          "",            "Outputs",        "*",                       "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "f_timestep",        "Receiver operating fraction after startup",                       "",             "",            "Outputs",        "*",                       "",                       "" },
 	
 	// sam_iscc_powerblock
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_htf_cold",        "HTF temp at outlet of HTF-steam HX",                                     "C",             "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_st_cold",         "Steam temp from NGCC to HX",                                             "C",             "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_st_hot",          "Steam temp from HX back to NGCC",                                        "C",             "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_dot_max",         "Max allowable thermal power to NGCC",                                    "MWt",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "fuel_use",          "Natural gas used during timestep",                                 "MMBTU",         "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_steam",       "Cycle solar steam mass flow rate",                                "kg/hr",         "",             "Outputs",        "*",                      "",                       "" },	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_st_cold",         "Cycle steam temp from NGCC to HX",                                "C",             "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_st_hot",          "Cycle steam temp from HX back to NGCC",                           "C",             "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_dot_max",         "Cycle max allowable thermal power to NGCC",                       "MWt",           "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuel_use",          "Cycle natural gas used during timestep",                          "MMBTU",         "",             "Outputs",        "*",                      "",                       "" },
 
-	// sam_iscc_parasitics
-	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_hybrid",   "Net power cycle output including solar power",                           "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_fossil",   "Net power cycle output only considering fossil power",                   "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_hybrid","Net plant output including solar power & parasitics",                    "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_fossil","Net plant output only considering fossil power & parasitics",            "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_solar", "Net plant output attributable to solar",                                 "MWe",           "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_solar_use",     "Solar use efficiency considering parasitics",                            "",              "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_fuel",          "Electrical efficiency of fossil only operation",                         "%",             "",             "Outputs",        "*",                      "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "solar_fraction",    "Solar fraction",                                                         "",              "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_hybrid",   "Cycle net output including solar power",                          "MWe",           "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_fossil",   "Cycle net output only considering fossil power",                  "MWe",           "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_hybrid","Plant net output including solar power & parasitics",             "MWe",           "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_fossil","Plant net output only considering fossil power & parasitics",     "MWe",           "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_plant_solar", "Plant net output attributable to solar",                          "MWe",           "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_solar_use",     "Plant solar use efficiency considering parasitics",               "-",             "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_fuel",          "Plant efficiency of fossil only operation (LHV basis)",           "%",             "",             "Outputs",        "*",                      "",                       "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solar_fraction",    "Plant solar fraction",                                            "-",             "",             "Outputs",        "*",                      "",                       "" },
 
-
-
-
+	// sam_iscc_parasitics		
+	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pump",        "Parasitic power receiver HTF pump",                               "MWe",           "",             "Outputs",        "*",                      "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",           "Parasitic power heliostat drives",                                "MWe",           "",             "Outputs",        "*",                      "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot","Parasitic power generation-dependent load",                      "MWe",           "",             "Outputs",        "*",                      "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",           "Parasitic power fixed load",                                      "MWe",           "",             "Outputs",        "*",                      "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",      "Parasitic power equiv. header pipe losses",                       "MWe",           "",             "Outputs",        "*",                      "",           "" },
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy",       "Hourly Energy",      "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
