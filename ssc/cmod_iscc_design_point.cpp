@@ -119,7 +119,7 @@ public:
 		
 		// ********************************************************************************************************
 		// Get Steam Pressure, Extraction, Injection, and mass flow rate at design solar input from Regression Model
-		double m_dot_st_des = cycle_calcs.get_ngcc_data(q_pb_des, T_amb_des, P_amb_des, ngcc_power_cycle::E_solar_steam_mass)*2.0;			// [kg/s]
+		double m_dot_st_des = cycle_calcs.get_ngcc_data(q_pb_des, T_amb_des, P_amb_des, ngcc_power_cycle::E_solar_steam_mass);			// [kg/s]
 		double P_st_extract = cycle_calcs.get_ngcc_data(q_pb_des, T_amb_des, P_amb_des, ngcc_power_cycle::E_solar_extraction_p)*100.0;	// [kPa] convert from [bar]
 		double P_st_inject = cycle_calcs.get_ngcc_data(q_pb_des, T_amb_des, P_amb_des, ngcc_power_cycle::E_solar_injection_p)*100.0;	// [kPa] convert from [bar]
 		double T_st_extract = cycle_calcs.get_ngcc_data(q_pb_des, T_amb_des, P_amb_des, ngcc_power_cycle::E_solar_extraction_t);		// [C]
@@ -129,9 +129,17 @@ public:
 		double W_dot_solar = W_dot_hybrid - W_dot_fossil;
 		// ********************************************************************************************************
 		
-		// Calculate evaporator and superheater duty
 		water_state wp;
-		
+
+		water_TP(T_st_extract + 273.15, P_st_extract, &wp);
+		double h_st_extract = wp.enth;			// [kJ/kg]
+		water_TP(T_st_inject + 273.15, P_st_inject, &wp);
+		double h_st_inject = wp.enth;			// [kJ/kg]
+		// double h_st_extract = cycle_calcs.get_ngcc_data(q_pb_des, T_amb_des, P_amb_des, ngcc_power_cycle::E_solar_extraction_h);		// [kJ/kg]
+		// double h_st_inject = cycle_calcs.get_ngcc_data(q_pb_des, T_amb_des, P_amb_des, ngcc_power_cycle::E_solar_injection_h);			// [kJ/kg]
+		double m_dot2 = q_pb_des*1000.0 / (h_st_inject - h_st_extract);
+
+		// Calculate evaporator and superheater duty
 		water_PQ(P_st_extract, 0.0, &wp);						// Steam props at design pressure and quality = 0
 		double h_x0 = wp.enth;									//[kJ/kg] Steam enthalpy at evaporator inlet
 
