@@ -16,6 +16,7 @@ OBJECTS = \
 	cmod_solarpilot.o \
 	cmod_dsg_flux_preprocess.o \
 	cmod_iscc_design_point.o \
+	cmod_sco2_design_point.o \
 	cmod_belpe.o \
 	cmod_biomass.o \
 	cmod_annualoutput.o \
