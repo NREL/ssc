@@ -378,15 +378,21 @@ public:
 		m_eta_t = value(P_eta_t);								// "Design turbine isentropic efficiency",           "-",    		
 		m_P_high_limit = value(P_P_high_limit);					// "High pressure limit in cycle",                   "MPa", 
 		m_delta_T_t = value(P_DELTAT_PHX);						//[C] temperature difference between hot htf and sco2 turbine inlet
+		
 		// Air-cooler specific parameters
 		m_delta_T_acc = value(P_DELTAT_ACC);					//[C] temperature difference between ambient air and compressor inlet
 		double T_amb_cycle_des = value(P_T_AMB_DES) + 273.15;		//[K] Ambient temperature at power cycle design, convert from C
 		double fan_power_frac = value(P_FAN_POWER_PERC) / 100.0;			//[-] Fraction of cycle net power output used by cooler air fan, convert from %
+		
 		// Solar Receiver Parameters
 		// Receiver inlet/outlet temps and thermal input
 		m_T_htf_hot = value(P_T_htf_hot) + 273.15;		//[K] Tower outlet temp at design, convert from C
-		//m_T_htf_cold = value(P_T_htf_cold) + 273.15;	//[K] Tower inlet temp at design, convert from C
 		m_eta_thermal_des = value(P_eta_des);
+		
+		// ***********************************************************
+		// ***********************************************************
+		// ***********************************************************
+
 		m_Q_dot_rec_des = m_W_dot_net_des / m_eta_thermal_des;		//[kWt] Receiver thermal input at design
 
 		// Calculate other cycle design parameters based on User Parameters
