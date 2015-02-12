@@ -1,5 +1,4 @@
 #include "core.h"
-
 #include "sco2_pc_core.h"
 
 static var_info _cm_vtab_sco2_design_point[] = {
@@ -372,10 +371,22 @@ public:
 		double eta_thermal_des = as_double("eta_des");
 
 		// Define hardcoded sco2 design point parameters
-		vector<double> DP_LT = { 0, 0 };  /*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-		vector<double> DP_HT = { 0, 0 };  /*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-		vector<double> DP_PC = { 0, 0 };  /*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-		vector<double> DP_PHX = { 0, 0 }; /*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+		std::vector<double> DP_LT(2);
+ 		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+                DP_LT[0] = 0;
+                DP_LT[1] = 0;
+		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+		std::vector<double> DP_HT(2);
+                DP_HT[0] = 0;  
+                DP_HT[1] = 0;  
+		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+		std::vector<double> DP_PC(2);  
+                DP_PC[0] = 0;  
+                DP_PC[1] = 0;  
+		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+		std::vector<double> DP_PHX(2);
+                DP_PHX[0] = 0;  
+                DP_PHX[1] = 0;  
 		int N_sub_hxrs = 10;
 		double N_t_des = 3600.0;
 		double tol = 1.E-3;
