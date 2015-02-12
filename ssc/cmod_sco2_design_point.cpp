@@ -23,7 +23,7 @@ static var_info _cm_vtab_sco2_design_point[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_out",      "Compressor outlet pressure",                     "MPa",        "",    "",      "*",     "",                "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold",      "Calculated cold HTF temp",                       "C",          "",    "",      "*",     "",                "" },
 
-	//{ SSC_OUTPUT, SSC_STRING,  "warning messages","Warning messages from optimization",             "-",          "",    "",      "*",      "",               "" },
+	//{ SSC_OUTPUT, SSC_STRING,  "warning_messages","Warning messages from optimization",             "-",          "",    "",      "*",      "",               "" },
 
 	var_info_invalid };
 
@@ -401,6 +401,7 @@ public:
 		// Structure for optimized design parameters
 		C_RecompCycle::S_design_solved opt_des_target_eta_pars;
 
+		log("Begin design point optimization...");
 		// Call design point optimization routine for a target cycle efficiency
 		
 		bool opt_sco2_success = sco2_opt_design_target_eta(W_dot_net_des, eta_c, eta_t, P_high_limit, delta_T_t, delta_T_acc, T_amb_cycle_des,
@@ -435,7 +436,16 @@ public:
 		assign("recomp_frac", recomp_frac);
 		assign("P_comp_in", P_comp_in);
 		assign("P_comp_out", P_comp_out);
-		assign("T_htf_cold", T_htf_cold);
+		assign("T_htf_cold", T_htf_cold); 
+
+		if( warning_msg[0] == NULL )
+			log("Design point optimization was successful!");
+		else
+		{
+			assign("warning_messages", warning_msg);
+			log("The sCO2 design point optimization solved with the following warning(s):\n" + warning_msg);
+		}
+
 	}
 
 
