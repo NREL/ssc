@@ -231,7 +231,7 @@ public:
 
 		// ********************************************************************************************************
 		// Get Steam Pressure, Extraction, Injection, and mass flow rate at design solar input from Regression Model
-		m_m_dot_st_des = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_steam_mass );			// [kg/s]
+		// m_m_dot_st_des = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_steam_mass );			// [kg/s]
 		double P_st_extract = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_extraction_p )*100.0;	// [kPa] convert from [bar]
 		double P_st_inject = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_injection_p )*100.0;	// [kPa] convert from [bar]
 		double T_st_extract = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_extraction_t );		// [C]
@@ -243,7 +243,7 @@ public:
 		double h_st_inject = wp.enth;			// [kJ/kg]
 		// double h_st_extract = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_extraction_h );		// [kJ/kg]
 		// double h_st_inject = cycle_calcs.get_ngcc_data( m_q_sf_des, m_T_amb_des, m_P_amb_des, ngcc_power_cycle::E_solar_injection_h );			// [kJ/kg]
-		double m_dot2 = m_q_sf_des*1000.0 / (h_st_inject - h_st_extract);
+		m_m_dot_st_des = m_q_sf_des*1000.0 / (h_st_inject - h_st_extract);
 		// ********************************************************************************************************
 
 		m_P_st_extract	= P_st_extract;
