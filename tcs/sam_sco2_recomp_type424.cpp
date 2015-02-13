@@ -48,6 +48,7 @@ enum{	//Parameters
 	O_P_HIGH_DES,
 	O_F_RECOMP_DES,
 	O_UA_RECUP_DES,
+	O_UA_PHX_DES,
 	O_T_COOLER_IN_DES,
 	O_COOLER_VOLUME,
 
@@ -134,6 +135,7 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_HIGH_DES,      "P_high_des",          "Design: Comp. outlet pressure",            "kPa",  "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_F_RECOMP_DES,    "f_recomp_des",        "Design: Recompression fraction",           "-",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_UA_RECUP_DES,    "UA_recup_des",        "Design: Recuperator conductance UA",       "kW/K", "", "", "" },
+	{ TCS_OUTPUT, TCS_NUMBER, O_UA_PHX_DES,      "UA_PHX_des",          "Design: PHX conductance (UA)",             "kW/K", "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_COOLER_IN_DES, "T_cooler_in_des",     "Design: Cooler CO2 inlet temp",            "C",    "", "", "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_COOLER_VOLUME,   "cooler_volume",       "Estimated required cooler material vol.",  "m^3",  "", "", "" },
 
@@ -926,6 +928,7 @@ public:
 		value(O_P_HIGH_DES, ms_rc_cycle.get_design_solved()->m_pres[2-1]);
 		value(O_F_RECOMP_DES, ms_rc_cycle.get_design_solved()->m_recomp_frac);
 		value(O_UA_RECUP_DES, m_UA_total_des);
+		value(O_UA_PHX_DES, m_UA_PHX_des);
 		value(O_T_COOLER_IN_DES, T_acc_in-273.15);
 		value(O_COOLER_VOLUME, ACC.get_hx_design_solved()->m_material_V);
 
