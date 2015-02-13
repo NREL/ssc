@@ -308,7 +308,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
   //{ SSC_INPUT,        SSC_NUMBER,      "rh",                   "Relative humidity of the ambient air",                              "none",         "",            "powerblock",     "*",                       "",                      "" },
 	
 	// sCO2 Powerblock (type 424) inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: sCO2 Recompression (424)",               "none",         "",            "powerblock",     "*",                       "INTEGER",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: sCO2 Recompression (424)",               "none",         "",            "powerblock",     "?=0",                       "INTEGER",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "powerblock",     "*",                       "",                      "" },
@@ -449,11 +449,16 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 	// Add sco2 specific outputs: will need to figure out how to merge this with molten salt model
 		// These values are imported from TCS to get design-point values - do NOT pass to SAM
-	{ SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance - array",                                           "kW/K",         "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_low_des",            "Main compressor inlet pressure - array",                                    "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_high_des",           "Main compressor outlet pressure - array",                                   "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp_des",         "Recompression fraction - array",                                            "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "UA_PHX_des",           "PHX conductance - array",                                                   "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },	
+	//{ SSC_OUTPUT, SSC_ARRAY, "UA_recup_des", "Recuperator conductance - array", "kW/K", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "P_low_des", "Main compressor inlet pressure - array", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "P_high_des", "Main compressor outlet pressure - array", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "f_recomp_des", "Recompression fraction - array", "", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "UA_PHX_des", "PHX conductance - array", "", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "UA_recup_des", "", "kW/K", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_low_des", "", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_high_des", "", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "f_recomp_des", "", "", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "UA_PHX_des", "", "", "", "Outputs", "", "LENGTH=8760", "" },
 
 		// Single values from design-point hourly arrays
 	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_recup_des_value",         "Cycle: Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "",           "" },
@@ -1283,22 +1288,25 @@ public:
 
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
 
-		// Single values for sCO2 power cycle
-		ssc_number_t *array_place_holder = as_array("UA_recup_des", &count);
-		assign("UA_recup_des_value", array_place_holder[0]);
 
-		array_place_holder = as_array("P_low_des", &count);
-		assign("P_low_des_value", array_place_holder[0]);
+		if (!is_steam_pc)
+		{
+			// Single values for sCO2 power cycle
+			ssc_number_t *array_place_holder = as_array("UA_recup_des", &count);
+			assign("UA_recup_des_value", array_place_holder[0]);
 
-		array_place_holder = as_array("P_high_des", &count);
-		assign("P_high_des_value", array_place_holder[0]);
+			array_place_holder = as_array("P_low_des", &count);
+			assign("P_low_des_value", array_place_holder[0]);
 
-		array_place_holder = as_array("f_recomp_des", &count);
-		assign("f_recomp_des_value", array_place_holder[0]);
+			array_place_holder = as_array("P_high_des", &count);
+			assign("P_high_des_value", array_place_holder[0]);
 
-		array_place_holder = as_array("UA_PHX_des", &count);
-		assign("UA_PHX_des_value", array_place_holder[0]);
+			array_place_holder = as_array("f_recomp_des", &count);
+			assign("f_recomp_des_value", array_place_holder[0]);
 
+			array_place_holder = as_array("UA_PHX_des", &count);
+			assign("UA_PHX_des_value", array_place_holder[0]);
+		}
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
