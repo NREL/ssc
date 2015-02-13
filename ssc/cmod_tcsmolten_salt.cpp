@@ -456,11 +456,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "UA_PHX_des",           "PHX conductance - array",                                                   "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },	
 
 		// Single values from design-point hourly arrays
-	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_recup_des_value",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,       "P_low_des_value",            "Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,       "P_high_des_value",           "Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,       "f_recomp_des_value",         "Recompression fraction",                                            "",             "",            "Outputs",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_PHX_des_value",           "PHX conductance",                                                   "kW/K",         "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_recup_des_value",         "Cycle: Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "P_low_des_value",            "Cycle: Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "P_high_des_value",           "Cycle: Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "f_recomp_des_value",         "Cycle: Recompression fraction",                                            "",             "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_PHX_des_value",           "Cycle: PHX conductance",                                                   "kW/K",         "",            "Outputs",        "",                       "",           "" },
 	
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Net_E_Calc", "*", "LENGTH=8760", "" },  
 
