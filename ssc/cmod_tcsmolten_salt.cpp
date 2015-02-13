@@ -409,9 +409,17 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_out",          "Cycle HTF temperature out (cold)",                                  "C",            "",            "Type251",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_makeup",      "Cycle cooling water mass flow rate - makeup",                       "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",              "Cycle thermal power input",                                         "MWt",          "",            "Type251",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_cond",            "Condenser pressure",                                                "Pa",           "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "f_bays",            "Condenser fraction of operating bays",                              "",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    
+	// add sco2 power block outputs here so they line up in Time Series display
+	// Hourly off-design values. These should be displayed as Time Series data in SAM
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_turbine_in",         "Cycle turbine inlet temperature",                                         "C",            "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_in",              "Cycle main comp inlet pressure",                                          "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_out",             "Cycle main comp outlet pressure",                                         "kPa",		  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp",             "Cycle recomp fraction",                                                   "",			  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "N_MC",                 "Cycle main comp. shaft speed",                                            "rpm",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cond",            "Condenser pressure",                                                "Pa",           "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "f_bays",            "Condenser fraction of operating bays",                              "",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
 
     //fossil backup
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_aux_heat",           "Fossil thermal power produced",                                  "MWt",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
@@ -440,16 +448,20 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// Add sco2 specific outputs: will need to figure out how to merge this with molten salt model
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_low_des",            "Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_high_des",           "Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp_des",         "Recompression fraction",                                            "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_turbine_in",         "Turbine inlet temperature",                                         "C",            "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_in",              "Main comp inlet pressure",                                          "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_out",             "Main comp outlet pressure",                                         "kPa",		  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp",             "Recomp fraction",                                                   "",			  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "N_MC",                 "Main comp. shaft speed",                                            "rpm",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+		// These values are imported from TCS to get design-point values - do NOT pass to SAM
+	{ SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance - array",                                           "kW/K",         "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_low_des",            "Main compressor inlet pressure - array",                                    "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_high_des",           "Main compressor outlet pressure - array",                                   "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp_des",         "Recompression fraction - array",                                            "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "UA_PHX_des",           "PHX conductance - array",                                                   "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },	
 
+		// Single values from design-point hourly arrays
+	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_recup_des_value",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "P_low_des_value",            "Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "P_high_des_value",           "Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "f_recomp_des_value",         "Recompression fraction",                                            "",             "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_PHX_des_value",           "PHX conductance",                                                   "kW/K",         "",            "Outputs",        "",                       "",           "" },
+	
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Net_E_Calc", "*", "LENGTH=8760", "" },  
 
 	// Annual Outputs
@@ -970,7 +982,27 @@ public:
 		set_unit_value_ssc_double(type251_controller, "q_pb_design" ); //, 115/0.412);
 		set_unit_value_ssc_double(type251_controller, "W_pb_design" ); //, 115);
 		set_unit_value_ssc_double(type251_controller, "cycle_max_frac" ); //, 1.05);
-		set_unit_value_ssc_double(type251_controller, "cycle_cutoff_frac" ); //, 0.25);
+
+		double cycle_cutoff_fraction = as_double("cycle_cutoff_frac");
+		bool is_cycle_cutoff_message = false;
+		string msg_to_log = "is this working?";
+		if( !is_steam_pc )
+		{
+			if(cycle_cutoff_fraction < 0.5)
+			{
+				char tstr[300];
+				sprintf(tstr, "The cycle cutoff fraction, %lg, was reset to 0.5 to improve the sCO2 model off-design convergence\n", cycle_cutoff_fraction);
+
+				msg_to_log = "";
+				msg_to_log.append(tstr);
+
+				cycle_cutoff_fraction = 0.5;
+				is_cycle_cutoff_message = true;
+			}
+		}
+		set_unit_value_ssc_double(type251_controller, "cycle_cutoff_frac", cycle_cutoff_fraction ); //, 0.25);
+		
+
 		set_unit_value_ssc_double(type251_controller, "solarm" ); //, 669.903/(115/0.412) );
 		set_unit_value_ssc_double(type251_controller, "pb_pump_coef" ); //, 0.55);
 		set_unit_value_ssc_double(type251_controller, "tes_pump_coef" ); //, 0.15);
@@ -1099,7 +1131,7 @@ public:
 			set_unit_value_ssc_double(type424_sco2, "startup_time");
 			set_unit_value_ssc_double(type424_sco2, "startup_frac");
 			set_unit_value_ssc_double(type424_sco2, "q_sby_frac");
-			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac");
+			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac", cycle_cutoff_fraction);
 		}
 
 		if( is_steam_pc )
@@ -1187,6 +1219,8 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsmolten_salt", util::format("there was a problem returning the results from the simulation.") );
 
+		if(is_cycle_cutoff_message)
+			log(msg_to_log, SSC_WARNING);
 
 		set_output_array("hourly_energy", "P_out_net", 8760, 1000.0); // MWh to kWh
 
@@ -1248,6 +1282,22 @@ public:
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
 
 		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+
+		// Single values for sCO2 power cycle
+		ssc_number_t *array_place_holder = as_array("UA_recup_des", &count);
+		assign("UA_recup_des_value", array_place_holder[0]);
+
+		array_place_holder = as_array("P_low_des", &count);
+		assign("P_low_des_value", array_place_holder[0]);
+
+		array_place_holder = as_array("P_high_des", &count);
+		assign("P_high_des_value", array_place_holder[0]);
+
+		array_place_holder = as_array("f_recomp_des", &count);
+		assign("f_recomp_des_value", array_place_holder[0]);
+
+		array_place_holder = as_array("UA_PHX_des", &count);
+		assign("UA_PHX_des_value", array_place_holder[0]);
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;

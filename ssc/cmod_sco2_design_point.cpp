@@ -23,8 +23,6 @@ static var_info _cm_vtab_sco2_design_point[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_out",      "Compressor outlet pressure",                     "MPa",        "",    "",      "*",     "",                "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold",      "Calculated cold HTF temp",                       "C",          "",    "",      "*",     "",                "" },
 
-	//{ SSC_OUTPUT, SSC_STRING,  "warning_messages","Warning messages from optimization",             "-",          "",    "",      "*",      "",               "" },
-
 	var_info_invalid };
 
 class cm_sco2_design_point : public compute_module
@@ -349,8 +347,20 @@ public:
 			diff_eta = (eta_calc - eta_thermal_des);
 		}
 
-
 		opt_des_target_eta_pars = *ms_rc_cycle.get_design_solved();
+
+		double m_dot_des = ms_rc_cycle.get_design_solved()->m_m_dot_t;		//[kg/s]
+		double T_PHX_co2_in = ms_rc_cycle.get_design_solved()->m_temp[5 - 1];
+		double T_htf_cold = T_PHX_co2_in + delta_T_t;
+
+		// ***************************************************************
+		// Calculate Design UA of PHX
+		// Assumes properties behave well here, which is reasonable given distance from critical point
+		// Also assumes that CR = 1
+		// ***************************************************************
+		// Receiver/hot side
+		double T_htf_ave = 0.5*(T_htf_cold + T_htf_hot);		//[K]
+		//double cp_rec = rec_htfProps.Cp(T_rec_ave);				//[kJ/kg-K]
 
 		return true;
 	}
@@ -442,7 +452,6 @@ public:
 			log("Design point optimization was successful!");
 		else
 		{
-			assign("warning_messages", warning_msg);
 			log("The sCO2 design point optimization solved with the following warning(s):\n" + warning_msg);
 		}
 
