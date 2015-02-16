@@ -69,7 +69,7 @@ var('I_P_high_limit',P_high_limit);
 // Set run_once = true if you want to run one case that optimizes for the design point inputs and then run the off-design model at design conditions
 // Useful for making sure the models run and understanding the outputs. The code breaks after this simulation
 // The 'design' and 'off-design' models share some SSC_INPUT names - not sure if this is a good idea...
-run_once = false;
+run_once = true;
 // ******************************************************************************
 
 if(run_once)
@@ -93,6 +93,8 @@ if(run_once)
 	outln("Primary Heat Exchanger Temp Diff = ", T_diff_PHX);
 	m_dot_PHX = var('O_m_dot_PHX');
 	outln("Mass flow rate through PHX = ",m_dot_PHX);
+	
+	break;
 	
 	// Define remaining off-design inputs (remember that off-design model shares some input names with design)
 		// Inputs defined by design-point model
