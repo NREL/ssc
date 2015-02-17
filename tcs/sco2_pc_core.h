@@ -1212,6 +1212,10 @@ private:
 
 	void design_core(int & error_code);	
 
+	void design_core_standard(int & error_code);
+	
+	void design_core_bypass(int & error_code);
+
 	void opt_design_core(int & error_code);
 
 	void finalize_design(int & error_code);	
