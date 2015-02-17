@@ -9,7 +9,8 @@ static var_info _cm_vtab_sco2_design_cycle[] = {
 { SSC_INPUT,  SSC_NUMBER,     "I_T_mc_in_des",       "Main compressor inlet temp at design",              "C",      "",         "sCO2 power cycle",         "*",                "",           "" },
 { SSC_INPUT,  SSC_NUMBER,     "I_T_t_in_des",        "Turbine inlet temp at design",                      "C",      "",         "sCO2 power cycle",         "*",                "",           "" },								
 { SSC_INPUT,  SSC_NUMBER,     "I_N_t_des",           "Design turbine speed, negative links to comp.",     "rpm",    "",         "sCO2 power cycle",         "*",                "",           "" },
-{ SSC_INPUT,  SSC_NUMBER,     "I_eta_c",             "Design compressor(s) isentropic efficiency",        "-",      "",         "sCO2 power cycle",         "*",                "",           "" },
+{ SSC_INPUT,  SSC_NUMBER,     "I_eta_mc",            "Design main compressor isentropic efficiency",      "-",      "",         "sCO2 power cycle",         "*",                "",           "" },
+{ SSC_INPUT,  SSC_NUMBER,     "I_eta_rc",            "Design re-compressor isentropic efficiency",        "-",      "",         "sCO2 power cycle",         "*",                "",           "" },
 { SSC_INPUT,  SSC_NUMBER,     "I_eta_t",             "Design turbine isentropic efficiency",              "-",      "",         "sCO2 power cycle",         "*",                "",           "" },
 { SSC_INPUT,  SSC_NUMBER,     "I_tol",               "Convergence tolerance for performance calcs",       "-",      "",         "sCO2 power cycle",         "*",                "",           "" },
 { SSC_INPUT,  SSC_NUMBER,     "I_opt_tol",           "Convergence tolerance - optimization calcs",        "-",      "",         "sCO2 power cycle",         "*",                "",           "" },
@@ -43,7 +44,8 @@ public:
 		double T_mc_in_des = as_double("I_T_mc_in_des")+273.15;		//[K] convert from [C]
 		double T_t_in_des = as_double("I_T_t_in_des")+273.15;		//[K] convert from [C]
 		double N_t_des = as_double("I_N_t_des");					//[rpm], if negative, then link to compressor
-		double eta_c = as_double("I_eta_c");						//[-]
+		double eta_mc = as_double("I_eta_mc");						//[-]
+		double eta_rc = as_double("I_eta_rc");						//[-]
 		double eta_t = as_double("I_eta_t");						//[-]
 		double tol = as_double("I_tol");							//[-]
 		double opt_tol = as_double("I_opt_tol");					//[-]
@@ -76,8 +78,8 @@ public:
 		ms_rc_autodes_par.m_DP_PC = DP_PC;
 		ms_rc_autodes_par.m_DP_PHX = DP_PHX;
 
-		ms_rc_autodes_par.m_eta_mc = eta_c;
-		ms_rc_autodes_par.m_eta_rc = eta_c;
+		ms_rc_autodes_par.m_eta_mc = eta_mc;
+		ms_rc_autodes_par.m_eta_rc = eta_rc;
 		ms_rc_autodes_par.m_eta_t = eta_t;
 
 		ms_rc_autodes_par.m_N_sub_hxrs = N_sub_hxrs;
