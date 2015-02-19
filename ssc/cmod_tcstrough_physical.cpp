@@ -127,7 +127,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 //   controller (type 251) inputs							          
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                             UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
   //{ SSC_INPUT,        SSC_NUMBER,      "field_fluid",               "Material number for the collector field",                        "-",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "field_fl_props",            "User defined field fluid property data",                         "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                         "-",            "",             "controller",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                       "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                     "hr",           "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_hx",                     "Heat exchanger (HX) exists (1=yes, 0=no)" ,                       "-",            "",             "controller",     "*",                       "",                      "" },
@@ -469,6 +470,7 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "T_loop_out" ); // , 391);
         set_unit_value_ssc_double(type250_solarfield, "Fluid" ); // , 21);
         set_unit_value_ssc_double(type250_solarfield, "T_field_ini" ); // , 150);
+		set_unit_value_ssc_matrix(type250_solarfield, "field_fl_props");
         set_unit_value_ssc_double(type250_solarfield, "T_fp" ); // , 150);
         set_unit_value_ssc_double(type250_solarfield, "I_bn_des" ); // , 950);
         set_unit_value_ssc_double(type250_solarfield, "V_hdr_max" ); // , 3);
@@ -566,8 +568,9 @@ public:
 
 		//Set controller parameters ===========================================
 		set_unit_value_ssc_double(type251_controller, "field_fluid", as_double("Fluid") ); // , 21);
-		set_unit_value_ssc_array(type251_controller, "field_fl_props" ); // , [0]);
+		set_unit_value_ssc_matrix(type251_controller, "field_fl_props" ); // , [0]);
 		set_unit_value_ssc_double(type251_controller, "store_fluid" ); // , 18);
+		set_unit_value_ssc_matrix(type251_controller, "store_fl_props" );
 		set_unit_value_ssc_double(type251_controller, "tshours" ); // , 6);
 		set_unit_value_ssc_double(type251_controller, "is_hx" ); // , 1);
 		set_unit_value_ssc_double(type251_controller, "dt_hot" ); // , 5);
@@ -649,6 +652,7 @@ public:
 		set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref" ); // , 10);
 		set_unit_value_ssc_double(type224_powerblock, "T_amb_des" ); // , 20);
 		set_unit_value_ssc_double(type224_powerblock, "HTF", as_double("Fluid") ); // , 21);
+		set_unit_value_ssc_matrix(type224_powerblock, "field_fl_props");
 		set_unit_value_ssc_double(type224_powerblock, "q_sby_frac" ); // , 0.2);
 		set_unit_value_ssc_double(type224_powerblock, "P_boil" ); // , 100);
 		set_unit_value_ssc_double(type224_powerblock, "CT" ); // , 1);
@@ -722,6 +726,7 @@ public:
 		size_t count;
 		ssc_number_t *p_hourly_energy = allocate("hourly_energy", hours_year);
 		ssc_number_t *timestep_energy_MW = as_array("W_net", &count);			//MW
+
 		char tstr[500];
 		std::string out_msg = "hourly energy count %d is incorrect (should be %d)";
 		sprintf(tstr, out_msg.c_str(), count, nrec);
