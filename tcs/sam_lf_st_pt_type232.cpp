@@ -393,7 +393,11 @@ public:
 		// Set fluid number or copy over fluid matrix, depending on specified fluid.
 		if( htf != HTFProperties::User_defined )
 		{
-			rec_htf.SetFluid( htf ); // store_fl should match up with the constants
+			if( !rec_htf.SetFluid( htf ) ); // store_fl should match up with the constants
+			{
+				message(TCS_ERROR, "Receiver HTF code is not recognized");
+				return -1;
+			}
 		}
 		else
 		{
@@ -411,6 +415,11 @@ public:
 					message( TCS_ERROR, "user defined htf property table was invalid (rows=%d cols=%d)", htf_rows, htf_cols );
 					return -1;
 				}
+			}
+			else
+			{
+				message(TCS_ERROR, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", htf_rows, htf_cols);
+				return -1;
 			}
 		}
 		//********************************************************************************
