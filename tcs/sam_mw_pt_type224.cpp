@@ -15,6 +15,7 @@ enum{
 	P_DT_CW_REF,
 	P_T_AMB_DES,
 	P_HTF,
+	P_FIELD_FL_PROPS,
 	P_Q_SBY_FRAC,
 	P_P_BOIL,
 	P_CT,
@@ -65,6 +66,7 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,         P_DT_CW_REF,              "dT_cw_ref",                                   "Reference condenser cooling water inlet/outlet T diff",            "C",             "",             "",           "10" },
 	{ TCS_PARAM,          TCS_NUMBER,         P_T_AMB_DES,              "T_amb_des",                                           "Reference ambient temperature at design point",            "C",             "",             "",           "20" },
 	{ TCS_PARAM,          TCS_NUMBER,               P_HTF,                    "HTF",                                             "Integer flag identifying HTF in power block",         "none",             "",             "",           "21" },
+	{ TCS_PARAM,          TCS_NUMBER,    P_FIELD_FL_PROPS,         "field_fl_props",                                                  "User defined field fluid property data",            "-",             "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
 	{ TCS_PARAM,          TCS_NUMBER,        P_Q_SBY_FRAC,             "q_sby_frac",                                     "Fraction of thermal power required for standby mode",         "none",             "",             "",          "0.2" },
 	{ TCS_PARAM,          TCS_NUMBER,            P_P_BOIL,                 "P_boil",                                                               "Boiler operating pressure",          "bar",             "",             "",          "100" },
 	{ TCS_PARAM,          TCS_NUMBER,                P_CT,                     "CT",                                        "Flag for using dry cooling or wet cooling system",         "none",             "",             "",            "1" },
@@ -242,24 +244,35 @@ public:
 
 		//Get fluid properties
 		HTF = (int) value(P_HTF);
-		if(HTF != HTFProperties::User_defined ){
-			htfProps.SetFluid( HTF );
+		if(HTF != HTFProperties::User_defined )
+		{
+			if( !htfProps.SetFluid( HTF ) )
+			{
+				message(TCS_ERROR, "Field HTF code is not recognized");
+				return -1;
+			}
 		}
-		else{
+		else
+		{
 			int nrows = 0, ncols = 0;
-			double *fl_mat = value( P_HTF, &nrows, &ncols );
+			double *fl_mat = value(P_FIELD_FL_PROPS, &nrows, &ncols);
 			if ( fl_mat != 0 && nrows > 2 && ncols == 7 )
 			{
 				util::matrix_t<double> mat( nrows, ncols, 0.0 );
 				for (int r=0;r<nrows;r++)
 					for (int c=0;c<ncols;c++)
-						mat.at(r,c) = TCS_MATRIX_INDEX( var( P_HTF ), r, c );
+						mat.at(r, c) = TCS_MATRIX_INDEX(var(P_FIELD_FL_PROPS ), r, c);
 
 				if ( !htfProps.SetUserDefinedFluid( mat ) )
 				{
 					message( TCS_ERROR, htfProps.UserFluidErrMessage(), nrows, ncols );
 					return -1;
 				}
+			}
+			else
+			{
+				message(TCS_ERROR, "The user defined HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+				return -1;
 			}
 		}
 
