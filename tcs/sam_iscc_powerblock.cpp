@@ -173,9 +173,13 @@ public:
 		int field_fl	= (int) value(P_HTF);
 		if( field_fl != HTFProperties::User_defined )
 		{
-			htfProps.SetFluid( field_fl ); // field_fl should match up with the constants
+			if( !htfProps.SetFluid( field_fl ) ) // field_fl should match up with the constants
+			{
+				message(TCS_ERROR, "Receiver HTF code is not recognized");
+				return -1;
+			}
 		}
-		else
+		else if( field_fl == HTFProperties::User_defined )
 		{
 			int nrows = 0, ncols = 0;
 			double *htf_mat = value( P_USER_HTF_PROPS, &nrows, &ncols );
@@ -194,6 +198,11 @@ public:
 				message(TCS_ERROR,  "The htf properties matrix must have more than 2 rows and exactly 7 columns - the input matrix has %d rows and %d columns", nrows, ncols );
 				return -1;
 			}
+		}
+		else
+		{
+			message(TCS_ERROR, "Receiver HTF code is not recognized");
+			return -1;
 		}
 
 		// Set cycle configuration in class
