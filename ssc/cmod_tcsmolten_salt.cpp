@@ -953,16 +953,20 @@ public:
 		}// cavity receiver
 
 
+
+		/* Ty - added separate function to change name
+		*/
 		// Set Controller (type 251) Parameters
-		size_t fl_rows = 0;
-		size_t fl_cols = 0;
-		ssc_number_t * store_fl_props = as_matrix("field_fl_props", &fl_rows, &fl_cols);
-		store_fl_props = allocate("store_fl_props", fl_rows, fl_cols);
+//		size_t fl_rows = 0;
+//		size_t fl_cols = 0;
+//		ssc_number_t * store_fl_props = as_matrix("field_fl_props", &fl_rows, &fl_cols);
+//		store_fl_props = allocate("store_fl_props", fl_rows, fl_cols);
 
 		set_unit_value_ssc_double(type251_controller, "field_fluid" ); //, 17);
 		set_unit_value_ssc_matrix(type251_controller, "field_fl_props" ); //, [0]);
 		set_unit_value_ssc_double(type251_controller, "store_fluid", as_integer("field_fluid") ); //, 17);
-		set_unit_value_ssc_matrix(type251_controller, "store_fl_props" ); //, [0]);
+//		set_unit_value_ssc_matrix(type251_controller, "store_fl_props" ); //, [0]);
+		set_unit_value_ssc_matrix(type251_controller, "field_fl_props", "store_fl_props");
 		set_unit_value_ssc_double(type251_controller, "tshours" ); //, 10);
 		set_unit_value_ssc_double(type251_controller, "is_hx" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "dt_hot" ); //, 0);
