@@ -214,7 +214,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "field_fluid",          "Material number for the collector field",                           "-",            "",            "controller",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_MATRIX,      "field_fl_props",       "User defined field fluid property data",                            "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",          "Material number for storage fluid",                                 "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "user_fluid",           "User defined fluid property data",                                  "-",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_MATRIX,      "user_fluid",           "User defined fluid property data",                                  "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_hx",                "1=yes, 0=no"                                                        "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dt_hot",               "Hot side HX approach temp",                                         "C",            "",            "controller",     "*",                       "",                      "" },
@@ -954,10 +954,15 @@ public:
 
 
 		// Set Controller (type 251) Parameters
+		size_t fl_rows = 0;
+		size_t fl_cols = 0;
+		ssc_number_t * store_fl_props = as_matrix("field_fl_props", &fl_rows, &fl_cols);
+		store_fl_props = allocate("store_fl_props", fl_rows, fl_cols);
+
 		set_unit_value_ssc_double(type251_controller, "field_fluid" ); //, 17);
 		set_unit_value_ssc_matrix(type251_controller, "field_fl_props" ); //, [0]);
-		set_unit_value_ssc_double(type251_controller, "store_fluid" ); //, 17);
-		set_unit_value_ssc_matrix(type251_controller, "user_fluid" ); //, [0]);
+		set_unit_value_ssc_double(type251_controller, "store_fluid", as_integer("field_fluid") ); //, 17);
+		set_unit_value_ssc_matrix(type251_controller, "store_fl_props" ); //, [0]);
 		set_unit_value_ssc_double(type251_controller, "tshours" ); //, 10);
 		set_unit_value_ssc_double(type251_controller, "is_hx" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "dt_hot" ); //, 0);
@@ -1100,6 +1105,7 @@ public:
 			set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref"); //, 10);
 			set_unit_value_ssc_double(type224_powerblock, "T_amb_des"); //, 43.0);
 			set_unit_value_ssc_double(type224_powerblock, "HTF"); //, 17);
+			set_unit_value_ssc_matrix(type224_powerblock, "field_fl_props");
 			set_unit_value_ssc_double(type224_powerblock, "q_sby_frac"); //, 0.2);
 			set_unit_value_ssc_double(type224_powerblock, "P_boil"); //, 100);
 			set_unit_value_ssc_double(type224_powerblock, "CT"); //, 2);
@@ -1131,6 +1137,7 @@ public:
 			set_unit_value_ssc_double(type424_sco2, "T_htf_cold_est", as_double("T_htf_cold_ref"));
 			set_unit_value_ssc_double(type424_sco2, "eta_des", as_double("eta_ref"));
 			set_unit_value_ssc_double(type424_sco2, "rec_htf", as_double("HTF"));
+			set_unit_value_ssc_matrix(type424_sco2, "field_fl_props");
 			//set_unit_value_ssc_double(type424_sco2, "rec_fl_props" .... ?
 
 			set_unit_value_ssc_double(type424_sco2, "startup_time");
