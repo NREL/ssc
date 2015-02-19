@@ -115,7 +115,7 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_PARAM, TCS_NUMBER, P_T_htf_cold_est, "T_htf_cold_est",  "Estimated tower design inlet temp",              "C",    "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_eta_des,        "eta_des",         "Power cycle thermal efficiency",                 "",     "", "", "" },
 	{ TCS_PARAM, TCS_NUMBER, P_rec_fl,         "rec_htf",         "The name of the HTF used in the receiver",       "",     "", "", "" },
-	{ TCS_PARAM, TCS_MATRIX, P_rec_fl_props,   "rec_fl_props",    "User defined rec fluid property data",           "-", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "" },
+	{ TCS_PARAM, TCS_MATRIX, P_rec_fl_props,   "field_fl_props",  "User defined rec fluid property data",           "-", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "" },
 		// Cycle Controller Parameters
 	{ TCS_PARAM, TCS_NUMBER, P_STARTUP_TIME,   "startup_time",    "Time needed for power block startup",                   "hr",   "", "", "0.5" },
 	{ TCS_PARAM, TCS_NUMBER, P_STARTUP_FRAC,   "startup_frac",    "Fraction of design thermal power needed for startup",   "none", "", "", "0.2" },
@@ -576,7 +576,11 @@ public:
 		int rec_fl = (int)value(P_rec_fl);
 		if( rec_fl != HTFProperties::User_defined && rec_fl < HTFProperties::End_Library_Fluids )
 		{
-			rec_htfProps.SetFluid(rec_fl); // field_fl should match up with the constants
+			if( !rec_htfProps.SetFluid(rec_fl) ); // field_fl should match up with the constants
+			{
+				message(TCS_ERROR, "Receiver HTF code is not recognized");
+				return -1;
+			}
 		}
 		else if( rec_fl = HTFProperties::User_defined )
 		{
@@ -595,6 +599,11 @@ public:
 					message(TCS_ERROR, rec_htfProps.UserFluidErrMessage(), nrows, ncols);
 					return -1;
 				}
+			}
+			else
+			{
+				message(TCS_ERROR, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+				return -1;
 			}
 		}
 		else
