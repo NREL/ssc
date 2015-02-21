@@ -860,7 +860,7 @@ public:
 			// Constant inputs (so ... should be parameters??)
 			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target"); //, 574.0 );
 			set_unit_value_ssc_double(type222_receiver, "eta_pump"); //, 0.85 );
-			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0); //, 0 );
+			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0.0); //, 0 );
 			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy"); //, 8 );
 
 			// Make all the connections to/from the Receiver (type 222)
@@ -955,8 +955,9 @@ public:
 		set_unit_value_ssc_double(type251_controller, "field_fluid" ); //, 17);
 		set_unit_value_ssc_matrix(type251_controller, "field_fl_props" ); //, [0]);
 		set_unit_value_ssc_double(type251_controller, "store_fluid", as_integer("field_fluid") ); //, 17);
-		set_unit_value_ssc_matrix(type251_controller, "field_fl_props", "store_fl_props");
-		set_unit_value_ssc_double(type251_controller, "tshours" ); //, 10);
+//		set_unit_value_ssc_matrix(type251_controller, "field_fl_props", "store_fl_props");
+		set_unit_value_ssc_matrix(type251_controller, "store_fl_props", "field_fl_props");
+		set_unit_value_ssc_double(type251_controller, "tshours"); //, 10);
 		set_unit_value_ssc_double(type251_controller, "is_hx" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "dt_hot" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "dt_cold" ); //, 0);
@@ -1171,7 +1172,7 @@ public:
 		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
 		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff"); //recirc_htr_eff );
 		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0); //night_recirc );
+		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
 		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
