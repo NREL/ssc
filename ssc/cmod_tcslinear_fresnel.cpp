@@ -460,10 +460,10 @@ public:
 		set_unit_value_ssc_double(type234_powerblock, "q_sby_frac"); // q_sby_frac);
 		set_unit_value_ssc_double(type234_powerblock, "P_boil_des"); // P_boil_ref);
 		//set_unit_value_ssc_double(type234_powerblock, "is_rh"); // is_rh);
-		set_unit_value_ssc_double(type234_powerblock, "is_rh", 0); // is_rh);
+		set_unit_value_ssc_double(type234_powerblock, "is_rh", 0.0); // is_rh);
 		set_unit_value_ssc_double(type234_powerblock, "P_rh_ref"); // P_rh_ref);
 		//set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); // T_rh_hot_ref);
-		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref", 0);
+		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref", 0.0);
 
 
 
