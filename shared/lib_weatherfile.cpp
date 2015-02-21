@@ -760,6 +760,16 @@ bool weatherfile::open( const std::string &file, bool header_only, bool interp )
 		
 			// now determine timestep as best as possible
 			int nmult = nrecords / 8760;
+			// divide by zero error 2/20/19
+			if (nmult <= 0)
+			{
+				m_errorStr = "could not determine number of records in CSV weather file";
+				m_ok = false;
+				fclose(fp);
+				return false;
+			}
+
+
 
 			if ( hdr_step_sec > 0 )
 			{  // if explicitly specified in header?
