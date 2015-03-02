@@ -249,7 +249,7 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_OUTPUT,   SSC_ARRAY,          "E_field",                "Accumulated internal energy in the entire solar field",                                 "MWht",          "",  "mslf",                  "*",        "LENGTH=8760",   ""},*/
     //{ SSC_OUTPUT,   SSC_ARRAY,          "m_dot_htf_tot",          "The actual flow rate through the field..",                                              "kg/hr",         "",  "mslf",                  "*",        "LENGTH=8760",   ""},
     { SSC_OUTPUT,   SSC_ARRAY,          "m_dot_avail",            "Field HTF mass flow rate total",                                 "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,   SSC_ARRAY,          "m_dot_htf",              "Field HTF mass flow rate loop",                                  "kg/hr",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,   SSC_ARRAY,          "m_dot_htf2",             "Field HTF mass flow rate loop",                                  "kg/s",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,   SSC_ARRAY,          "DP_tot",                 "Field HTF pressure drop total",                                  "bar",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
   	{ SSC_OUTPUT,   SSC_ARRAY,          "T_sys_c",                "Field HTF temperature cold header inlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,          "T_sys_h",                "Field HTF temperature hot header outlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
@@ -541,6 +541,7 @@ public:
 		set_unit_value_ssc_double(controller, "fc_on" ); // 0);
 		set_unit_value_ssc_double(controller, "q_sby_frac" ); // 0.2);
 		set_unit_value_ssc_double(controller, "t_standby_reset" ); // 2);
+		set_unit_value_ssc_double(controller, "sf_type");
 		set_unit_value_ssc_double(controller, "tes_type" ); // 1);
 		set_unit_value_ssc_array(controller, "tslogic_a" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
 		set_unit_value_ssc_array(controller, "tslogic_b" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
