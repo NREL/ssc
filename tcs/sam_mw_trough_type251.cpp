@@ -200,7 +200,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_fc_on,              "fc_on",                "DNI forecasting enabled",                                 "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_q_sby_frac,         "q_sby_frac",           "Fraction of thermal power required for standby",          "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_t_standby_init,     "t_standby_reset",      "Maximum allowable time for PB standby operation",         "hr",           "",        "",        ""},
-	{ TCS_PARAM,    TCS_NUMBER,        P_sf_type,            "sf_type",              "Solar field type, 1 = trough, 2 = tower",                 "-",            "",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,        P_sf_type,            "sf_type",              "Solar field type, 1 = trough & MSLF, 2 = tower",          "-",            "",        "",        ""},
 	{ TCS_PARAM,    TCS_NUMBER,        P_tes_type,           "tes_type",             "1=2-tank, 2=thermocline",                                 "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_tslogic_a,          "tslogic_a",            "Dispatch logic without solar",                            "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_tslogic_b,          "tslogic_b",            "Dispatch logic with solar",                               "-",            "",        "",        ""},
