@@ -161,7 +161,8 @@ def pvwatts_func_test():
 # ############################################################
 # Test program 'main'
 
-
+ssc_api = ssc.API()
+ssc_api.set_print(0)
 version_test()
 module_list()
 module_and_variables_test()

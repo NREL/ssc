@@ -193,7 +193,10 @@ class PySSC:
 		log_type = c_int()
 		time = c_float()
 		self.pdll.ssc_module_log.restype = c_char_p
-		return self.pdll.ssc_module_log( c_void_p(p_mod), c_int(index), byref(type), byref(time) )
+		return self.pdll.ssc_module_log( c_int(index), byref(log_type), byref(time) )
+
+	def module_exec_set_print( set_print ):
+		return self.pdll.ssc_module_exec_set_print( c_int(set_print) )
 
 
 
