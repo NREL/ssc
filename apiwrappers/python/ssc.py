@@ -226,6 +226,10 @@ class SSCAPI:
 		return SSCAPI._dll.ssc_module_exec( c_void_p(p_mod), c_void_p(p_data) )
 
 	@staticmethod
+	def ssc_module_exec_set_print( set_print ):
+		return SSCAPI._dll.ssc_module_exec_set_print( c_int(set_print) )
+
+	@staticmethod
 	def ssc_module_log( p_mod, index ):
 		type = c_int()
 		time = c_float()
@@ -266,8 +270,8 @@ class API:
 	def build_info(self):
 		return SSCAPI.ssc_build_info()
 	
-	
-	
+	def set_print(self, setprint):
+		return SSCAPI.ssc_module_exec_set_print(setprint)
 
     
 class Entry:
