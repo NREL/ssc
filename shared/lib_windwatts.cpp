@@ -269,7 +269,7 @@ double wind_power_calculator::turbine_output_using_weibull(double weibull_k, dou
 {	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((m_dHubHeight/50.0),m_dShearExponent) * resource_class;
-	double denom = exp(gammaln(1+(1/hub_ht_windspeed)));
+	double denom = exp(gammaln(1+(1/weibull_k))); //fixed jmf 2/18/15- weibull_k was accidentally replaced with hub_ht_windspeed previously
 
 	double lambda = hub_ht_windspeed/denom;
 	//double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
