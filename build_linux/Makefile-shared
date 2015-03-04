@@ -5,6 +5,7 @@ CFLAGS = -Wall -g -O3 -D__64BIT__ -fPIC
 CXXFLAGS = $(CFLAGS)
 
 OBJECTS = \
+	lsqfit.o \
 	lib_cec6par.o \
 	lib_financial.o \
 	lib_geothermal.o \
