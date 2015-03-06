@@ -465,7 +465,7 @@ public:
 			// Constant inputs (so ... should be parameters??)
 			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target"); //, 574.0 );
 			set_unit_value_ssc_double(type222_receiver, "eta_pump"); //, 0.85 );
-			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0); //, 0 );
+			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0.0); //, 0 );
 			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy"); //, 8 );
 
 

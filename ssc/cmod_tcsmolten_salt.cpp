@@ -1109,7 +1109,7 @@ public:
 			set_unit_value_ssc_double(type424_sco2, "startup_time");
 			set_unit_value_ssc_double(type424_sco2, "startup_frac");
 			set_unit_value_ssc_double(type424_sco2, "q_sby_frac");
-			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac", cycle_cutoff_fraction);
+			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac");
 		}
 
 		if( is_steam_pc )

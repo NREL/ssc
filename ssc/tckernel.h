@@ -23,6 +23,13 @@ public:
 	void set_unit_value_ssc_matrix(int id, const char *name);
 	void set_unit_value_ssc_matrix_transpose(int id, const char *name);
 
+	// change ssc name to tcs name
+	void set_unit_value_ssc_string(int id, const char *tcs_name, const char *ssc_name);
+	void set_unit_value_ssc_double(int id, const char *tcs_name, const char *ssc_name);
+	void set_unit_value_ssc_array(int id, const char *tcs_name, const char *ssc_name);
+	void set_unit_value_ssc_matrix(int id, const char *tcs_name, const char *ssc_name);
+	void set_unit_value_ssc_matrix_transpose(int id, const char *tcs_name, const char *ssc_name);
+
 	bool set_output_array(const char *output_name, size_t len, double scaling = 1);
 	bool set_output_array(const char *ssc_output_name, const char *tcs_output_name, size_t len, double scaling = 1);
 	bool set_all_output_arrays();

@@ -171,15 +171,26 @@ tcKernel::dataset *tcKernel::get_results(int idx)
 	else return &m_results[idx];
 }
 
-void tcKernel::set_unit_value_ssc_string( int id, const char *name )
+void tcKernel::set_unit_value_ssc_string(int id, const char *name)
 {
-	set_unit_value( id, name, as_string(name) );
+	set_unit_value(id, name, as_string(name));
+}
+
+void tcKernel::set_unit_value_ssc_string(int id, const char *tcs_name, const char *ssc_name)
+{
+	set_unit_value(id, tcs_name, as_string(ssc_name));
 }
 
 void tcKernel::set_unit_value_ssc_double( int id, const char *name )
 {
 	set_unit_value( id, name, as_double(name) );
 }
+
+void tcKernel::set_unit_value_ssc_double(int id, const char *tcs_name, const char *ssc_name)
+{
+	set_unit_value(id, tcs_name, as_double(ssc_name));
+}
+
 
 void tcKernel::set_unit_value_ssc_double( int id, const char *name, double x )
 {
@@ -198,6 +209,18 @@ void tcKernel::set_unit_value_ssc_array( int id, const char *name )
 	return;
 }
 
+void tcKernel::set_unit_value_ssc_array(int id, const char *tcs_name, const char *ssc_name)
+{
+	size_t len;
+	ssc_number_t * p = as_array(ssc_name, &len);
+	double *pt = new double[len];
+	for (size_t i = 0; i<len; i++) pt[i] = (double)p[i];
+	set_unit_value(id, tcs_name, pt, len);
+	delete[] pt;
+	return;
+}
+
+
 void tcKernel::set_unit_value_ssc_matrix(int id, const char *name)
 {
 	size_t nr, nc;
@@ -205,6 +228,17 @@ void tcKernel::set_unit_value_ssc_matrix(int id, const char *name)
 	double *pt = new double[nr*nc];
 	for (size_t i = 0; i<nr*nc; i++) pt[i] = (double)p[i];
 	set_unit_value(id, name, pt, nr, nc);
+	delete[] pt;
+	return;
+}
+
+void tcKernel::set_unit_value_ssc_matrix(int id, const char *tcs_name, const char *ssc_name)
+{
+	size_t nr, nc;
+	ssc_number_t *p = as_matrix(ssc_name, &nr, &nc);
+	double *pt = new double[nr*nc];
+	for (size_t i = 0; i<nr*nc; i++) pt[i] = (double)p[i];
+	set_unit_value(id, tcs_name, pt, nr, nc);
 	delete[] pt;
 	return;
 }
@@ -222,6 +256,21 @@ void tcKernel::set_unit_value_ssc_matrix_transpose(int id, const char *name)
 	delete[] pt;
 	return;
 }
+
+void tcKernel::set_unit_value_ssc_matrix_transpose(int id, const char *tcs_name, const char *ssc_name)
+{
+	size_t nr, nc;
+	ssc_number_t *p = as_matrix(ssc_name, &nr, &nc);
+	double *pt = new double[nr*nc];
+	size_t i = 0;
+	for (size_t c = 0; c< nc; c++)
+		for (size_t r = 0; r < nr; r++)
+			pt[i++] = (double)p[r*nc + c];
+	set_unit_value(id, tcs_name, pt, nc, nr);
+	delete[] pt;
+	return;
+}
+
 
 bool tcKernel::set_output_array(const char *output_name, size_t len, double scaling)
 {
