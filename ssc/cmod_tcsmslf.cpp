@@ -3,13 +3,6 @@
 #include "common.h"
 
 static var_info _cm_vtab_tcsmslf[] = {
-/*	EXAMPLE LINES FOR INPUTS
-    { SSC_INPUT,        SSC_NUMBER,      "XXXXXXXXXXXXXX",    "Label",                                                                               "",              "",            "sca",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "INTINTINTINT",      "Label",                                                                               "",              "",            "parasitic",      "*",                       "INTEGER",               "" },
-    { SSC_INPUT,        SSC_ARRAY,       "XXXXXXXXXXX",       "Number indicating the receiver type",                                                 "",              "",            "hce",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "XXXXXXXXXXX",       "Label",                                                                               "",              "",            "tes",            "*",                       "",                      "" },
-*/
-
 //    VARTYPE           DATATYPE          NAME                 LABEL                                                                                 UNITS            META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                                             "",              "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
     { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                                       "",              "",            "Weather",        "*",                       "",                      "" },
@@ -111,11 +104,7 @@ static var_info _cm_vtab_tcsmslf[] = {
     //VARTYPE      DATATYPE           NAME                      LABEL                                                                                    UNITS           META  GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
     { SSC_INPUT,    SSC_NUMBER,         "T_pb_out_init",          "Fluid temperature from the power block",                                                "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "field_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    
-	// 2015.3.5 twn: rename user-defined HTF matrices to SAMNT 1.30.15 UI names so we can send patch out...
-	//{ SSC_INPUT,    SSC_MATRIX,         "store_fl_props",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "user_fluid",             "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-	
+    { SSC_INPUT,    SSC_MATRIX,         "store_fl_props",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
 	{ SSC_INPUT,    SSC_NUMBER,         "store_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "tshours",                "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "is_hx",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
@@ -497,11 +486,7 @@ public:
 		set_unit_value_ssc_double(controller, "field_fluid" ); // field_fluid);
 		set_unit_value_ssc_matrix(controller, "field_fl_props" ); // [0]);
 		set_unit_value_ssc_double(controller, "store_fluid" ); // tes_fluid);
-		
-		// 2015.3.5 twn: rename user-defined HTF matrices to SAMNT 1.30.15 UI names so we can send patch out...
-		//set_unit_value_ssc_matrix(controller, "store_fl_props" );
-		set_unit_value_ssc_matrix(controller, "store_fl_props", "user_fluid");
-		
+		set_unit_value_ssc_matrix(controller, "store_fl_props" );		
 		set_unit_value_ssc_double(controller, "tshours" ); // TES_hrs);
 		set_unit_value_ssc_double(controller, "is_hx" ); // is_hx);
 		set_unit_value_ssc_double(controller, "dt_hot" ); // hx_dt_hot);
