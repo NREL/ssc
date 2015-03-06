@@ -155,7 +155,7 @@ tcsvarinfo sam_mw_lf_type262_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,        P_T_LOOP_OUT,             "T_loop_out",                                                          "Target loop outlet temperature",            "C",             "",             "",          "500" },
 	{ TCS_PARAM,          TCS_NUMBER,             P_FLUID,                  "Fluid",                                                                  "Field HTF fluid number",         "none",             "",             "",           "17" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_T_FIELD_INI,            "T_field_ini",                                                               "Initial field temperature",            "C",             "",             "",          "300" },
-	{ TCS_PARAM,          TCS_MATRIX,          P_HTF_DATA,               "HTF_data",                                                                     "Fluid property data",         "none","7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",             "",             "" },
+	{ TCS_PARAM,          TCS_MATRIX,          P_HTF_DATA,         "field_fl_props",                                                                     "Fluid property data",         "none","7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",             "",             "" },
 	{ TCS_PARAM,          TCS_NUMBER,              P_T_FP,                   "T_fp",                       "Freeze protection temperature (heat trace activation temperature)",            "C",             "",             "",          "260" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_I_BN_DES,               "I_bn_des",                                                             "Solar irradiation at design",         "W/m2",             "",             "",          "950" },
 	{ TCS_PARAM,          TCS_NUMBER,         P_V_HDR_MAX,              "V_hdr_max",                                            "Maximum HTF velocity in the header at design",          "m/s",             "",             "",            "3" },
@@ -245,7 +245,8 @@ tcsvarinfo sam_mw_lf_type262_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,      O_Q_INC_SF_TOT,           "q_inc_sf_tot",                                                       "Total power incident on the field",          "MWt",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,         O_Q_ABS_TOT,              "q_abs_tot",                                                                   "Total absorbed energy",          "MWt",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,        O_Q_LOSS_TOT,             "q_loss_tot",                                               "Total receiver thermal and optical losses",          "MWt",             "",             "",             "" },
-	{ TCS_OUTPUT,          TCS_NUMBER,         O_M_DOT_HTF,              "m_dot_htf",                                                              "Flow rate in a single loop",         "kg/s",             "",             "",             "" },
+	// Feb 27, 2015, twn: renamed "m_dot_htf" (below) to "m_dot_htf2" because it conflicted with an input variable of the same name in "sam_mw_pt_type224.cpp" when retrieving outputs in "cmod_tcsmslf.cpp"
+	{ TCS_OUTPUT,          TCS_NUMBER,         O_M_DOT_HTF,             "m_dot_htf2",                                                              "Flow rate in a single loop",         "kg/s",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,   O_Q_LOSS_SPEC_TOT,        "q_loss_spec_tot",                        "Field-average receiver thermal losses (convection and radiation)",          "W/m",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,     O_TRACK_PAR_TOT,          "track_par_tot",                                "Parasitic electric power consumed by the tracking drives",          "MWe",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_PIPE_HL,                "Pipe_hl",                                     "Pipe heat loss in the hot header and the hot runner",          "MWt",             "",             "",             "" },
@@ -686,18 +687,24 @@ public:
 
 		//Get fluid properties
 		Fluid = (int) value(P_FLUID);
-		if(Fluid != HTFProperties::User_defined ){
-			htfProps.SetFluid( Fluid );
+		if(Fluid != HTFProperties::User_defined )
+		{
+			if( !htfProps.SetFluid( Fluid ) )
+			{
+				message(TCS_ERROR, "Field HTF code is not recognized");
+				return -1;
+			}
 		}
-		else{
+		else if( Fluid == HTFProperties::User_defined )
+		{
 			int nrows = 0, ncols = 0;
-			double *fl_mat = value( P_FLUID, &nrows, &ncols );
+			double *fl_mat = value(P_HTF_DATA, &nrows, &ncols);
 			if ( fl_mat != 0 && nrows > 2 && ncols == 7 )
 			{
 				util::matrix_t<double> mat( nrows, ncols, 0.0 );
 				for (int r=0;r<nrows;r++)
 					for (int c=0;c<ncols;c++)
-						mat.at(r,c) = TCS_MATRIX_INDEX( var( P_FLUID ), r, c );
+						mat.at(r, c) = TCS_MATRIX_INDEX(var(P_HTF_DATA), r, c);
 
 				if ( !htfProps.SetUserDefinedFluid( mat ) )
 				{
@@ -705,7 +712,16 @@ public:
 					return -1;
 				}
 			}
-
+			else
+			{
+				message(TCS_ERROR, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+				return -1;
+			}
+		}
+		else
+		{
+			message(TCS_ERROR, "Field HTF code is not recognized");
+			return -1;
 		}
 
 		//Get values for any parameters here
