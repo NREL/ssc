@@ -28,7 +28,7 @@ enum{
 	P_T_LOOP_OUT,
 	P_FLUID,
 	P_T_FIELD_INI,
-	P_HTF_DATA,
+	P_FIELD_FL_PROPS,
 	P_T_FP,
 	P_I_BN_DES,
 	P_V_HDR_MAX,
@@ -183,7 +183,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,        P_T_LOOP_OUT,             "T_loop_out",                                                          "Target loop outlet temperature",            "C",             "",             "",          "391" },
 	{ TCS_PARAM,          TCS_NUMBER,             P_FLUID,                  "Fluid",                                                                  "Field HTF fluid number",         "none",             "",             "",           "21" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_T_FIELD_INI,            "T_field_ini",                                                               "Initial field temperature",            "C",             "",             "",          "150" },
-	{ TCS_PARAM,          TCS_MATRIX,          P_HTF_DATA,            "HTF_data_in",                                                                     "Fluid property data",         "none","7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",             "",             "" },
+	{ TCS_PARAM,          TCS_MATRIX,    P_FIELD_FL_PROPS,         "field_fl_props",                                                                     "Fluid property data",         "none","7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",             "",             "" },
 	{ TCS_PARAM,          TCS_NUMBER,              P_T_FP,                   "T_fp",                       "Freeze protection temperature (heat trace activation temperature)",            "C",             "",             "",          "150" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_I_BN_DES,               "I_bn_des",                                                             "Solar irradiation at design",         "W/m2",             "",             "",          "950" },
 	{ TCS_PARAM,          TCS_NUMBER,         P_V_HDR_MAX,              "V_hdr_max",                                            "Maximum HTF velocity in the header at design",          "m/s",             "",             "",            "3" },
@@ -343,7 +343,7 @@ private:
 	double T_loop_out;		//Target loop outlet temperature
 	int Fluid;		//Field HTF fluid number
 	double T_field_ini;		//Initial field temperature
-	double* HTF_data_in;		//Fluid property data
+	//double* HTF_data_in;		//Fluid property data
 	int nrow_HTF_data,	ncol_HTF_data;
 	double T_fp;		//Freeze protection temperature (heat trace activation temperature)
 	double I_bn_des;		//Solar irradiation at design
@@ -531,7 +531,7 @@ private:
 	double E_field;		//Accumulated internal energy in the entire solar field
 
 
-	util::matrix_t<double> HTF_data, HCE_FieldFrac, D_2, D_3, D_4, D_5, D_p, Flow_type, Rough, alpha_env, epsilon_3_11, epsilon_3_12, 
+	util::matrix_t<double> HCE_FieldFrac, D_2, D_3, D_4, D_5, D_p, Flow_type, Rough, alpha_env, epsilon_3_11, epsilon_3_12, 
 		epsilon_3_13, epsilon_3_14, epsilon_3_21, epsilon_3_22, epsilon_3_23, epsilon_3_24, epsilon_3_31, epsilon_3_32, epsilon_3_33, 
 		epsilon_3_34, epsilon_3_41, epsilon_3_42, epsilon_3_43, epsilon_3_44, alpha_abs, Tau_envelope, EPSILON_4, EPSILON_5, 
 		GlazingIntactIn, P_a, AnnulusGas, AbsorberMaterial, Shadowing, Dirt_HCE, Design_loss, SCAInfoArray;
@@ -617,7 +617,7 @@ public:
 		T_loop_out	= std::numeric_limits<double>::quiet_NaN();
 		Fluid	= -1;
 		T_field_ini	= std::numeric_limits<double>::quiet_NaN();
-		HTF_data_in	= NULL;
+		
 		nrow_HTF_data = -1, ncol_HTF_data = -1;
 		T_fp	= std::numeric_limits<double>::quiet_NaN();
 		I_bn_des	= std::numeric_limits<double>::quiet_NaN();
@@ -841,18 +841,24 @@ public:
 
 		//Get fluid properties
 		Fluid = (int) value(P_FLUID);
-		if(Fluid != HTFProperties::User_defined ){
-			htfProps.SetFluid( Fluid );
+		if(Fluid != HTFProperties::User_defined )
+		{
+			if( !htfProps.SetFluid( Fluid ) )
+			{
+				message(TCS_ERROR, "Field HTF code is not recognized");
+				return -1;
+			}
 		}
-		else{
+		else if( Fluid == HTFProperties::User_defined )
+		{
 			int nrows = 0, ncols = 0;
-			double *fl_mat = value( P_FLUID, &nrows, &ncols );
+			double *fl_mat = value(P_FIELD_FL_PROPS, &nrows, &ncols);
 			if ( fl_mat != 0 && nrows > 2 && ncols == 7 )
 			{
 				util::matrix_t<double> mat( nrows, ncols, 0.0 );
 				for (int r=0;r<nrows;r++)
 					for (int c=0;c<ncols;c++)
-						mat.at(r,c) = TCS_MATRIX_INDEX( var( P_FLUID ), r, c );
+						mat.at(r, c) = TCS_MATRIX_INDEX(var(P_FIELD_FL_PROPS), r, c);
 
 				if ( !htfProps.SetUserDefinedFluid( mat ) )
 				{
@@ -860,7 +866,16 @@ public:
 					return -1;
 				}
 			}
-
+			else
+			{
+				message(TCS_ERROR, "The user defined HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+				return -1;
+			}
+		}
+		else
+		{
+			message(TCS_ERROR, "Field HTF code is not recognized");
+			return -1;
 		}
 
 		//Get values for any parameters here
@@ -890,7 +905,6 @@ public:
 		T_field_ini = 0.5*(T_field_ini + T_loop_in_des);
 		
 		
-		HTF_data_in = value(P_HTF_DATA, &nrow_HTF_data, &ncol_HTF_data);		//Fluid property data [none]
 		T_fp = value(P_T_FP);		//Freeze protection temperature (heat trace activation temperature) [C]
 		I_bn_des = value(P_I_BN_DES);		//Solar irradiation at design [W/m2]
 		V_hdr_max = value(P_V_HDR_MAX);		//Maximum HTF velocity in the header at design [m/s]
@@ -972,7 +986,6 @@ public:
 		SCADefocusArray = value(P_SCADEFOCUSARRAY, &nval_SCADefocusArray);		//Order in which the SCA's should be defocused [none]
 
 		//Put all of the matrices into a more handlable format
-		HTF_data.assign(HTF_data_in, nrow_HTF_data, ncol_HTF_data);
 		HCE_FieldFrac.assign(HCE_FieldFrac_in, nrow_HCE_FieldFrac, ncol_HCE_FieldFrac);
 		D_2.assign(D_2_in, nrow_D_2, ncol_D_2);
 		D_3.assign(D_3_in, nrow_D_3, ncol_D_3);
