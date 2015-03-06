@@ -38,7 +38,7 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "T_loop_out",             "Target loop outlet temperature",                                                        "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "Fluid",                  "Field HTF fluid number",                                                                "",              "",  "controller",            "*",        "INTEGER",       ""},
     { SSC_INPUT,    SSC_NUMBER,         "T_field_ini",            "Initial field temperature",                                                             "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "HTF_data",               "Fluid property data",                                                                   "",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_MATRIX,         "field_fl_props",         "Fluid property data",                                                                   "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "T_fp",                   "Freeze protection temperature (heat trace activation temperature)",                     "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "I_bn_des",               "Solar irradiation at design",                                                           "W/m2",          "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",              "Maximum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
@@ -111,8 +111,12 @@ static var_info _cm_vtab_tcsmslf[] = {
     //VARTYPE      DATATYPE           NAME                      LABEL                                                                                    UNITS           META  GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
     { SSC_INPUT,    SSC_NUMBER,         "T_pb_out_init",          "Fluid temperature from the power block",                                                "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "field_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "field_fl_props",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "store_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
+    
+	// 2015.3.5 twn: rename user-defined HTF matrices to SAMNT 1.30.15 UI names so we can send patch out...
+	//{ SSC_INPUT,    SSC_MATRIX,         "store_fl_props",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_MATRIX,         "user_fluid",             "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
+	
+	{ SSC_INPUT,    SSC_NUMBER,         "store_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "tshours",                "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "is_hx",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "dt_hot",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
@@ -249,7 +253,7 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_OUTPUT,   SSC_ARRAY,          "E_field",                "Accumulated internal energy in the entire solar field",                                 "MWht",          "",  "mslf",                  "*",        "LENGTH=8760",   ""},*/
     //{ SSC_OUTPUT,   SSC_ARRAY,          "m_dot_htf_tot",          "The actual flow rate through the field..",                                              "kg/hr",         "",  "mslf",                  "*",        "LENGTH=8760",   ""},
     { SSC_OUTPUT,   SSC_ARRAY,          "m_dot_avail",            "Field HTF mass flow rate total",                                 "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,   SSC_ARRAY,          "m_dot_htf",              "Field HTF mass flow rate loop",                                  "kg/hr",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,   SSC_ARRAY,          "m_dot_htf2",             "Field HTF mass flow rate loop",                                  "kg/s",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,   SSC_ARRAY,          "DP_tot",                 "Field HTF pressure drop total",                                  "bar",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
   	{ SSC_OUTPUT,   SSC_ARRAY,          "T_sys_c",                "Field HTF temperature cold header inlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,          "T_sys_h",                "Field HTF temperature hot header outlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
@@ -409,6 +413,7 @@ public:
 		set_unit_value_ssc_double(solarfield, "T_loop_out" ); // T_hot_des);
 		set_unit_value_ssc_double(solarfield, "Fluid" ); // field_fluid);
 		set_unit_value_ssc_double(solarfield, "T_field_ini" ); // T_startup);
+		set_unit_value_ssc_matrix(solarfield, "field_fl_props");	// User-defined HTF data
 		set_unit_value_ssc_double(solarfield, "T_fp" ); // T_cold_fp);
 		set_unit_value_ssc_double(solarfield, "I_bn_des" ); // I_bn_des);
 		set_unit_value_ssc_double(solarfield, "V_hdr_max" ); // 3);
@@ -492,6 +497,11 @@ public:
 		set_unit_value_ssc_double(controller, "field_fluid" ); // field_fluid);
 		set_unit_value_ssc_matrix(controller, "field_fl_props" ); // [0]);
 		set_unit_value_ssc_double(controller, "store_fluid" ); // tes_fluid);
+		
+		// 2015.3.5 twn: rename user-defined HTF matrices to SAMNT 1.30.15 UI names so we can send patch out...
+		//set_unit_value_ssc_matrix(controller, "store_fl_props" );
+		set_unit_value_ssc_matrix(controller, "store_fl_props", "user_fluid");
+		
 		set_unit_value_ssc_double(controller, "tshours" ); // TES_hrs);
 		set_unit_value_ssc_double(controller, "is_hx" ); // is_hx);
 		set_unit_value_ssc_double(controller, "dt_hot" ); // hx_dt_hot);
@@ -539,6 +549,7 @@ public:
 		set_unit_value_ssc_double(controller, "fc_on" ); // 0);
 		set_unit_value_ssc_double(controller, "q_sby_frac" ); // 0.2);
 		set_unit_value_ssc_double(controller, "t_standby_reset" ); // 2);
+		set_unit_value_ssc_double(controller, "sf_type");
 		set_unit_value_ssc_double(controller, "tes_type" ); // 1);
 		set_unit_value_ssc_array(controller, "tslogic_a" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
 		set_unit_value_ssc_array(controller, "tslogic_b" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
@@ -582,6 +593,7 @@ public:
 		set_unit_value_ssc_double(powerblock, "dT_cw_ref" ); // 10);
 		set_unit_value_ssc_double(powerblock, "T_amb_des" ); // 20);
 		set_unit_value_ssc_double(powerblock, "HTF" ); // field_fluid);
+		set_unit_value_ssc_matrix(powerblock, "field_fl_props");
 		set_unit_value_ssc_double(powerblock, "q_sby_frac" ); // 0.2);
 		set_unit_value_ssc_double(powerblock, "P_boil" ); // 100);
 		set_unit_value_ssc_double(powerblock, "CT" ); // 1);
