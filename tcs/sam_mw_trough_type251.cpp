@@ -160,7 +160,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	{ TCS_PARAM,    TCS_NUMBER,        P_field_fl,           "field_fluid",          "Material number for the collector field",                 "-",            "",        "",        ""},
 	{ TCS_PARAM,    TCS_MATRIX,        P_field_fl_props,     "field_fl_props",       "User defined field fluid property data",                  "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},			
 	{ TCS_PARAM,    TCS_NUMBER,        P_store_fl,           "store_fluid",          "Material number for storage fluid",                       "-",            "",        "",        ""},
-	{ TCS_PARAM,    TCS_MATRIX,        P_store_fl_props,     "user_fluid",           "User defined fluid property data",                        "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
+	{ TCS_PARAM,    TCS_MATRIX,        P_store_fl_props,     "store_fl_props",       "User defined fluid property data",                        "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
 	{ TCS_PARAM,    TCS_NUMBER,        P_tshours,            "tshours",              "Equivalent full-load thermal storage hours",              "hr",           "",        "",        ""},            
     { TCS_PARAM,    TCS_NUMBER,        P_is_hx,              "is_hx",                "1=yes, 0=no"                                              "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_dt_hot,             "dt_hot",               "Hot side HX approach temp",                               "C",            "",        "",        ""},    
@@ -200,7 +200,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_fc_on,              "fc_on",                "DNI forecasting enabled",                                 "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_q_sby_frac,         "q_sby_frac",           "Fraction of thermal power required for standby",          "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_t_standby_init,     "t_standby_reset",      "Maximum allowable time for PB standby operation",         "hr",           "",        "",        ""},
-	{ TCS_PARAM,    TCS_NUMBER,        P_sf_type,            "sf_type",              "Solar field type, 1 = trough, 2 = tower",                 "-",            "",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,        P_sf_type,            "sf_type",              "Solar field type, 1 = trough & MSLF, 2 = tower",          "-",            "",        "",        ""},
 	{ TCS_PARAM,    TCS_NUMBER,        P_tes_type,           "tes_type",             "1=2-tank, 2=thermocline",                                 "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_tslogic_a,          "tslogic_a",            "Dispatch logic without solar",                            "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_tslogic_b,          "tslogic_b",            "Dispatch logic with solar",                               "-",            "",        "",        ""},
@@ -522,7 +522,11 @@ public:
 		field_fl	= (int) value(P_field_fl);
 		if( field_fl != HTFProperties::User_defined )
 		{
-			field_htfProps.SetFluid( field_fl ); // field_fl should match up with the constants
+			if( !field_htfProps.SetFluid( field_fl ) ) // field_fl should match up with the constants
+			{
+				message(TCS_ERROR, "Field HTF code is not recognized");
+				return -1;
+			}
 		}
 		else
 		{
@@ -542,37 +546,56 @@ public:
 					return -1;
 				}
 			}
+			else
+			{
+				message(TCS_ERROR, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+				return -1;
+			}
 		}
 
 		is_hx		= (value(P_is_hx) != 0);			//[-]
-		if(is_hx)	
-		{store_fl	= (int) value(P_store_fl);}
-		else		// If no heat exchanger, then storage fluid is field fluid
-		{store_fl	= field_fl;}
+		if( is_hx )
+		{
+			store_fl = (int)value(P_store_fl);
 
-		// Declare instance of fluid class for STORAGE fluid.
-		// Set fluid number and copy over fluid matrix if it makes sense.
-		if( store_fl != HTFProperties::User_defined )
-		{
-			store_htfProps.SetFluid( store_fl ); // store_fl should match up with the constants
-		}
-		else
-		{
-			int nrows = 0, ncols = 0;
-			double *fl_mat = value( P_store_fl_props, &nrows, &ncols );
-			if ( fl_mat != 0 && nrows > 2 && ncols == 7 )
+			// Declare instance of fluid class for STORAGE fluid.
+			// Set fluid number and copy over fluid matrix if it makes sense.
+			if( store_fl != HTFProperties::User_defined )
 			{
-				util::matrix_t<double> mat( nrows, ncols, 0.0 );
-				for (int r=0;r<nrows;r++)
-					for (int c=0;c<ncols;c++)
-						mat.at(r,c) = TCS_MATRIX_INDEX( var( P_store_fl_props ), r, c );
-
-				if ( !store_htfProps.SetUserDefinedFluid( mat ) )
+				if( !store_htfProps.SetFluid(store_fl) ) // store_fl should match up with the constants
 				{
-					message( TCS_ERROR, "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
+					message(TCS_ERROR, "Field HTF code is not recognized");
 					return -1;
 				}
 			}
+			else
+			{
+				int nrows = 0, ncols = 0;
+				double *fl_mat = value(P_store_fl_props, &nrows, &ncols);
+				if( fl_mat != 0 && nrows > 2 && ncols == 7 )
+				{
+					util::matrix_t<double> mat(nrows, ncols, 0.0);
+					for( int r = 0; r < nrows; r++ )
+					for( int c = 0; c < ncols; c++ )
+						mat.at(r, c) = TCS_MATRIX_INDEX(var(P_store_fl_props), r, c);
+
+					if( !store_htfProps.SetUserDefinedFluid(mat) )
+					{
+						message(TCS_ERROR, "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols);
+						return -1;
+					}
+				}
+				else
+				{
+					message(TCS_ERROR, "The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+					return -1;
+				}
+			}
+		}
+		else		// If no heat exchanger, then storage fluid is field fluid
+		{
+			store_fl = field_fl;
+			store_htfProps = field_htfProps;
 		}
 
 		tshours		= value(P_tshours);					//[hr]
