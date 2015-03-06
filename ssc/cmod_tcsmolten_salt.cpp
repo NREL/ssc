@@ -214,7 +214,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "field_fluid",          "Material number for the collector field",                           "-",            "",            "controller",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_MATRIX,      "field_fl_props",       "User defined field fluid property data",                            "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",          "Material number for storage fluid",                                 "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "user_fluid",           "User defined fluid property data",                                  "-",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_MATRIX,      "user_fluid",           "User defined fluid property data",                                  "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_hx",                "1=yes, 0=no"                                                        "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dt_hot",               "Hot side HX approach temp",                                         "C",            "",            "controller",     "*",                       "",                      "" },
@@ -308,7 +308,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
   //{ SSC_INPUT,        SSC_NUMBER,      "rh",                   "Relative humidity of the ambient air",                              "none",         "",            "powerblock",     "*",                       "",                      "" },
 	
 	// sCO2 Powerblock (type 424) inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: sCO2 Recompression (424)",               "none",         "",            "powerblock",     "*",                       "INTEGER",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: sCO2 Recompression (424)",               "none",         "",            "powerblock",     "?=0",                       "INTEGER",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "powerblock",     "*",                       "",                      "" },
@@ -440,16 +440,25 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// Add sco2 specific outputs: will need to figure out how to merge this with molten salt model
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "UA_recup_des",         "Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_low_des",            "Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_high_des",           "Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp_des",         "Recompression fraction",                                            "",             "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_turbine_in",         "Turbine inlet temperature",                                         "C",            "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_in",              "Main comp inlet pressure",                                          "kPa",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_mc_out",             "Main comp outlet pressure",                                         "kPa",		  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "f_recomp",             "Recomp fraction",                                                   "",			  "",            "Outputs",        "",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "N_MC",                 "Main comp. shaft speed",                                            "rpm",          "",            "Outputs",        "",                       "LENGTH=8760",           "" },
+		// These values are imported from TCS to get design-point values - do NOT pass to SAM
+	//{ SSC_OUTPUT, SSC_ARRAY, "UA_recup_des", "Recuperator conductance - array", "kW/K", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "P_low_des", "Main compressor inlet pressure - array", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "P_high_des", "Main compressor outlet pressure - array", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "f_recomp_des", "Recompression fraction - array", "", "", "Outputs", "", "LENGTH=8760", "" },
+	//{ SSC_OUTPUT, SSC_ARRAY, "UA_PHX_des", "PHX conductance - array", "", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "UA_recup_des", "", "kW/K", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_low_des", "", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "P_high_des", "", "kPa", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "f_recomp_des", "", "", "", "Outputs", "", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "UA_PHX_des", "", "", "", "Outputs", "", "LENGTH=8760", "" },
 
+		// Single values from design-point hourly arrays
+	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_recup_des_value",         "Cycle: Recuperator conductance",                                           "kW/K",         "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "P_low_des_value",            "Cycle: Main compressor inlet pressure",                                    "kPa",          "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "P_high_des_value",           "Cycle: Main compressor outlet pressure",                                   "kPa",          "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "f_recomp_des_value",         "Cycle: Recompression fraction",                                            "",             "",            "Outputs",        "",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,       "UA_PHX_des_value",           "Cycle: PHX conductance",                                                   "kW/K",         "",            "Outputs",        "",                       "",           "" },
+	
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Net_E_Calc", "*", "LENGTH=8760", "" },  
 
 	// Annual Outputs
@@ -843,7 +852,7 @@ public:
 			// Constant inputs (so ... should be parameters??)
 			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target"); //, 574.0 );
 			set_unit_value_ssc_double(type222_receiver, "eta_pump"); //, 0.85 );
-			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0); //, 0 );
+			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0.0); //, 0 );
 			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy"); //, 8 );
 
 			// Make all the connections to/from the Receiver (type 222)
@@ -935,13 +944,12 @@ public:
 			bConnected &= connect( type232_cav_rec, "Q_rad_loss", type228_parasitics, "P_tower_rad");
 		}// cavity receiver
 
-
-		// Set Controller (type 251) Parameters
 		set_unit_value_ssc_double(type251_controller, "field_fluid" ); //, 17);
 		set_unit_value_ssc_matrix(type251_controller, "field_fl_props" ); //, [0]);
-		set_unit_value_ssc_double(type251_controller, "store_fluid" ); //, 17);
-		set_unit_value_ssc_matrix(type251_controller, "user_fluid" ); //, [0]);
-		set_unit_value_ssc_double(type251_controller, "tshours" ); //, 10);
+		set_unit_value_ssc_double(type251_controller, "store_fluid", as_integer("field_fluid") ); //, 17);
+//		set_unit_value_ssc_matrix(type251_controller, "field_fl_props", "store_fl_props");
+		set_unit_value_ssc_matrix(type251_controller, "store_fl_props", "field_fl_props");
+		set_unit_value_ssc_double(type251_controller, "tshours"); //, 10);
 		set_unit_value_ssc_double(type251_controller, "is_hx" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "dt_hot" ); //, 0);
 		set_unit_value_ssc_double(type251_controller, "dt_cold" ); //, 0);
@@ -1063,6 +1071,7 @@ public:
 			set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref"); //, 10);
 			set_unit_value_ssc_double(type224_powerblock, "T_amb_des"); //, 43.0);
 			set_unit_value_ssc_double(type224_powerblock, "HTF"); //, 17);
+			set_unit_value_ssc_matrix(type224_powerblock, "field_fl_props");
 			set_unit_value_ssc_double(type224_powerblock, "q_sby_frac"); //, 0.2);
 			set_unit_value_ssc_double(type224_powerblock, "P_boil"); //, 100);
 			set_unit_value_ssc_double(type224_powerblock, "CT"); //, 2);
@@ -1094,12 +1103,13 @@ public:
 			set_unit_value_ssc_double(type424_sco2, "T_htf_cold_est", as_double("T_htf_cold_ref"));
 			set_unit_value_ssc_double(type424_sco2, "eta_des", as_double("eta_ref"));
 			set_unit_value_ssc_double(type424_sco2, "rec_htf", as_double("HTF"));
+			set_unit_value_ssc_matrix(type424_sco2, "field_fl_props");
 			//set_unit_value_ssc_double(type424_sco2, "rec_fl_props" .... ?
 
 			set_unit_value_ssc_double(type424_sco2, "startup_time");
 			set_unit_value_ssc_double(type424_sco2, "startup_frac");
 			set_unit_value_ssc_double(type424_sco2, "q_sby_frac");
-			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac");
+			set_unit_value_ssc_double(type424_sco2, "cycle_cutoff_frac", cycle_cutoff_fraction);
 		}
 
 		if( is_steam_pc )
@@ -1134,7 +1144,7 @@ public:
 		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
 		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff"); //recirc_htr_eff );
 		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0); //night_recirc );
+		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
 		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
