@@ -315,7 +315,11 @@ public:
 		int field_fl	= (int) value( P_field_fl );
 		if( field_fl != HTFProperties::User_defined && field_fl < HTFProperties::End_Library_Fluids )
 		{
-			field_htfProps.SetFluid( field_fl ); // field_fl should match up with the constants
+			if( !field_htfProps.SetFluid( field_fl ) ) // field_fl should match up with the constants
+			{
+				message(TCS_ERROR, "Receiver HTF code is not recognized");
+				return -1;
+			}
 		}
 		else if( field_fl == HTFProperties::User_defined )
 		{
@@ -334,6 +338,11 @@ public:
 					message( TCS_ERROR, field_htfProps.UserFluidErrMessage(), nrows, ncols );
 					return -1;
 				}
+			}
+			else
+			{
+				message(TCS_ERROR, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+				return -1;
 			}
 		}
 		else
