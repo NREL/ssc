@@ -76,6 +76,10 @@ public:
 	double temp( double H );
 	double enth( double T_K );
 
+	const util::matrix_t<double> *get_prop_table();
+	//bool equals(const util::matrix_t<double> *comp_table);
+	bool equals(HTFProperties *comp_class);
+
 private:
 	static const int m_m = 2;		// Integer for interpolation routine
 
@@ -84,7 +88,7 @@ private:
 	int m_fluid;	// Store fluid number as member integer
 	util::matrix_t<double> m_userTable;	// User table of properties
 
-	std::string uf_err_msg;	//Error message when the user HTF table is invalid
+	std::string uf_err_msg;	//Error message when the user HTF table is invalid	
 };
 
 class AbsorberProps
