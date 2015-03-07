@@ -45,6 +45,7 @@
     <ClCompile Include="..\ssc\cmod_pvwattsv1.cpp" />
     <ClCompile Include="..\ssc\cmod_pvwattsv5.cpp" />
     <ClCompile Include="..\ssc\cmod_saleleaseback.cpp" />
+    <ClCompile Include="..\ssc\cmod_sco2_design_cycle.cpp" />
     <ClCompile Include="..\ssc\cmod_sco2_design_point.cpp" />
     <ClCompile Include="..\ssc\cmod_singleowner.cpp" />
     <ClCompile Include="..\ssc\cmod_solarpilot.cpp" />
@@ -59,6 +60,7 @@
     <ClCompile Include="..\ssc\cmod_tcstrough_empirical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical.cpp" />
     <ClCompile Include="..\ssc\cmod_timeseq.cpp" />
+    <ClCompile Include="..\ssc\cmod_user_htf_comparison.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate3.cpp" />
