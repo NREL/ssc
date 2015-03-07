@@ -52,6 +52,16 @@ bool HTFProperties::SetFluid( int fluid )
 	return true;
 }
 
+const util::matrix_t<double> *HTFProperties::get_prop_table()
+{
+	return &m_userTable;
+}
+
+bool HTFProperties::equals(HTFProperties *comp_class)
+{
+	return m_userTable.equals(	(*comp_class->get_prop_table()) );
+}
+
 double HTFProperties::Cp( double T_K )
 {
 	/* Inputs: temperature [K]
