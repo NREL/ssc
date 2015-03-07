@@ -70,6 +70,8 @@ extern module_entry_info
 	cm_entry_dsg_flux_preprocess,
 	cm_entry_layoutarea,
 	cm_entry_sco2_design_point,
+	cm_entry_sco2_design_cycle,
+	cm_entry_user_htf_comparison,
 	cm_entry_iscc_design_point;
 
 /* official module table */
@@ -122,6 +124,8 @@ static module_entry_info *module_table[] = {
 	&cm_entry_dsg_flux_preprocess,
 	&cm_entry_layoutarea,
 	&cm_entry_sco2_design_point,
+	&cm_entry_sco2_design_cycle,
+	&cm_entry_user_htf_comparison,
 	&cm_entry_iscc_design_point,
 	0 };
 
