@@ -553,49 +553,61 @@ public:
 			}
 		}
 
-		is_hx		= (value(P_is_hx) != 0);			//[-]
-		if( is_hx )
-		{
-			store_fl = (int)value(P_store_fl);
+		store_fl = (int)value(P_store_fl);
 
-			// Declare instance of fluid class for STORAGE fluid.
-			// Set fluid number and copy over fluid matrix if it makes sense.
-			if( store_fl != HTFProperties::User_defined )
+		// Declare instance of fluid class for STORAGE fluid.
+		// Set fluid number and copy over fluid matrix if it makes sense.
+		if( store_fl != HTFProperties::User_defined )
+		{
+			if( !store_htfProps.SetFluid(store_fl) ) // store_fl should match up with the constants
 			{
-				if( !store_htfProps.SetFluid(store_fl) ) // store_fl should match up with the constants
+				message(TCS_ERROR, "Field HTF code is not recognized");
+				return -1;
+			}
+		}
+		else
+		{
+			int nrows = 0, ncols = 0;
+			double *fl_mat = value(P_store_fl_props, &nrows, &ncols);
+			if( fl_mat != 0 && nrows > 2 && ncols == 7 )
+			{
+				util::matrix_t<double> mat(nrows, ncols, 0.0);
+				for( int r = 0; r < nrows; r++ )
+				for( int c = 0; c < ncols; c++ )
+					mat.at(r, c) = TCS_MATRIX_INDEX(var(P_store_fl_props), r, c);
+
+				if( !store_htfProps.SetUserDefinedFluid(mat) )
 				{
-					message(TCS_ERROR, "Field HTF code is not recognized");
+					message(TCS_ERROR, "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols);
 					return -1;
 				}
 			}
 			else
 			{
-				int nrows = 0, ncols = 0;
-				double *fl_mat = value(P_store_fl_props, &nrows, &ncols);
-				if( fl_mat != 0 && nrows > 2 && ncols == 7 )
-				{
-					util::matrix_t<double> mat(nrows, ncols, 0.0);
-					for( int r = 0; r < nrows; r++ )
-					for( int c = 0; c < ncols; c++ )
-						mat.at(r, c) = TCS_MATRIX_INDEX(var(P_store_fl_props), r, c);
-
-					if( !store_htfProps.SetUserDefinedFluid(mat) )
-					{
-						message(TCS_ERROR, "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols);
-						return -1;
-					}
-				}
-				else
-				{
-					message(TCS_ERROR, "The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
-					return -1;
-				}
+				message(TCS_ERROR, "The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+				return -1;
 			}
 		}
-		else		// If no heat exchanger, then storage fluid is field fluid
+
+		bool is_hx_calc = true;
+
+		if( store_fl != field_fl )
+			is_hx_calc = true;
+		else if( field_fl != HTFProperties::User_defined )
+			is_hx_calc = false;
+		else
 		{
-			store_fl = field_fl;
-			store_htfProps = field_htfProps;
+			is_hx_calc = !field_htfProps.equals(&store_htfProps);
+		}
+
+		is_hx		= (value(P_is_hx) != 0);			//[-]
+
+		if(is_hx != is_hx_calc)
+		{
+			if( is_hx_calc )
+				message(TCS_NOTICE, "Input field and storage fluids are identical, but the inputs specified a field-to-storage heat exchanger. The system was modeled assuming no heat exchanger.");
+			else
+				message(TCS_NOTICE, "Input field and storage fluids are different, but the inputs did not specify a field-to-storage heat exchanger. The system was modeled assuming a heat exchanger.");
 		}
 
 		tshours		= value(P_tshours);					//[hr]
