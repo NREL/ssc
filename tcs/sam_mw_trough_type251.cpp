@@ -605,9 +605,11 @@ public:
 		if(is_hx != is_hx_calc)
 		{
 			if( is_hx_calc )
-				message(TCS_NOTICE, "Input field and storage fluids are identical, but the inputs specified a field-to-storage heat exchanger. The system was modeled assuming no heat exchanger.");
+				message(TCS_NOTICE, "Input field and storage fluids are different, but the inputs did not specify a field-to-storage heat exchanger. The system was modeled assuming a heat exchanger.");				
 			else
-				message(TCS_NOTICE, "Input field and storage fluids are different, but the inputs did not specify a field-to-storage heat exchanger. The system was modeled assuming a heat exchanger.");
+				message(TCS_NOTICE, "Input field and storage fluids are identical, but the inputs specified a field-to-storage heat exchanger. The system was modeled assuming no heat exchanger.");
+
+			is_hx = is_hx_calc;
 		}
 
 		tshours		= value(P_tshours);					//[hr]
