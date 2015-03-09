@@ -605,16 +605,18 @@ public:
 		if(is_hx != is_hx_calc)
 		{
 			if( is_hx_calc )
-				message(TCS_NOTICE, "Input field and storage fluids are identical, but the inputs specified a field-to-storage heat exchanger. The system was modeled assuming no heat exchanger.");
+				message(TCS_NOTICE, "Input field and storage fluids are different, but the inputs did not specify a field-to-storage heat exchanger. The system was modeled assuming a heat exchanger.");				
 			else
-				message(TCS_NOTICE, "Input field and storage fluids are different, but the inputs did not specify a field-to-storage heat exchanger. The system was modeled assuming a heat exchanger.");
+				message(TCS_NOTICE, "Input field and storage fluids are identical, but the inputs specified a field-to-storage heat exchanger. The system was modeled assuming no heat exchanger.");
+
+			is_hx = is_hx_calc;
 		}
 
 		tshours		= value(P_tshours);					//[hr]
 		dt_hot		= value(P_dt_hot);					//[K]
 		dt_cold		= value(P_dt_cold);					//[K]
 		hx_config	= (int) value(P_hx_config);			//[-]
-		q_max_aux	= value(P_q_max_aux)*1.E6;			//[W] convert from [MW]	
+		q_max_aux	= value(P_q_max_aux)*1.E6;			//[W] convert from [MW]	 
 		lhv_eff     = value(P_lhv_eff);
 		T_set_aux	= value(P_T_set_aux)+273.15;		//[K] convert from [C]				
 		vol_tank		= value(P_vol_tank);			//[m3]
