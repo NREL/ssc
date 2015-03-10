@@ -9,6 +9,7 @@ Define Capacity Model
 capacity_t::capacity_t(double q20, double I20, double V)
 {
 	_q20 = q20;
+	_q0 = q20;
 	_I20 = I20;
 	_V = V;
 
@@ -25,6 +26,15 @@ bool capacity_t::chargeChanged()
 double capacity_t::getDOD()
 {
 	return _DOD;
+}
+
+double capacity_t::get20HourCapacity()
+{
+	return _q20;
+}
+double capacity_t::getTotalCapacity()
+{
+	return _q0;
 }
 /*
 Define KiBam Capacity Model
@@ -46,7 +56,6 @@ capacity_t(q20, I20, V)
 
 	// Initialize charge quantities.  
 	// Assumes battery is initially fully charged
-	_q0 = q20;
 	_q1_0 = q20*_c;
 	_q2_0 = _q0 - _q1_0;
 	_chargeChange = false;
@@ -68,6 +77,14 @@ capacity_t(q20, I20, V)
 	_output[MAX_CHARGE_AT_CURRENT].name = "qmaxI"; 
 	_output[CURRENT].name = "I"; 
 
+	_output[TOTAL_CHARGE].value = q20;
+	_output[AVAILABLE_CHARGE].value = _q1_0;
+	_output[BOUND_CHARGE].value = _q2_0;
+	_output[POWER_DURING_STEP].value = 0;
+	_output[STATE_OF_CHARGE].value = 1.0;
+	_output[DEPTH_OF_DISCHARGE].value = 0.;
+	_output[MAX_CHARGE_AT_CURRENT].value = _qmaxI;
+	_output[CURRENT].value = I20;
 }
 
 capacity_kibam_t::~capacity_kibam_t()
@@ -209,6 +226,10 @@ output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
 	return _output;
 }
 
+double capacity_kibam_t::getAvailableCapacity()
+{
+	return _q1_0;
+}
 
 
 /*
@@ -509,4 +530,24 @@ output* battery_t::getCapacityOutput()
 output* battery_t::getLifetimeOutput()
 {
 	return _LifetimeOutput;
+}
+
+double battery_t::chargeNeededToFill()
+{
+	// do we assume max capacity as the 20-hour rate?
+	return _capacity->get20HourCapacity() - _capacity->getTotalCapacity();
+}
+
+double battery_t::getCurrentCharge()
+{
+	return _capacity->getAvailableCapacity();
+}
+
+
+/*
+Non-class function
+*/
+double getMonthHour(int hourOfYear, int * month, int * hour)
+{
+	return 0;
 }

@@ -51,11 +51,15 @@ public:
 	capacity_t(double q20, double I20, double V);
 	virtual output* updateCapacity(double P, double V, double dt)=0;
 	double getDOD();
+	double get20HourCapacity();
+	double getTotalCapacity();
+	virtual double getAvailableCapacity()=0;
 	bool chargeChanged();
 
 
 protected:
 	double _q20;
+	double _q0; 
 	double _I20;
 	double _V;
 	double _SOC;
@@ -74,6 +78,7 @@ public:
 	// Public APIs 
 	capacity_kibam_t(double q20, double I20, double V, double t1, double t2, double q1, double q2);
 	output* updateCapacity(double P, double V, double dt);
+	double getAvailableCapacity();
 	~capacity_kibam_t();
 
 protected:
@@ -103,9 +108,16 @@ protected:
 	// charge which changes with time
 	double _q1_0; // charge available
 	double _q2_0; // charge bound
-	double _q0;   // total charge
 	double _qmaxI;// theoretical max charge at this current
 	bool _prev_charging; // indicates if last state was charging;
+};
+
+/*
+Voltage Base class.  
+*/
+class voltage_t
+{
+
 };
 
 
@@ -149,6 +161,21 @@ protected:
 	};
 };
 
+/*
+Thermal Base class.
+*/
+class thermal_t
+{
+
+};
+
+/*
+Losses Base class.
+*/
+class losses_t
+{
+
+};
 
 /*
 Class which encapsulates a battery and all its models
@@ -171,6 +198,10 @@ public:
 	output* getCapacityOutput();
 	output* getLifetimeOutput();
 
+	// Get capacity quantities
+	double chargeNeededToFill();
+	double getCurrentCharge();
+
 private:
 	capacity_t * _capacity;
 	lifetime_t * _lifetime;
@@ -186,3 +217,4 @@ private:
 Non-class functions
 */
 double life_vs_DOD(double R, double *a, void * user_data);
+double getMonthHour(int hourOfYear, int * month, int * hour);
