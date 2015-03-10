@@ -52,9 +52,9 @@ enum{
 	P_COLLECTORTYPE,
 	P_W_APERTURE,
 	P_A_APERTURE,
-	P_IAMF0,
-	P_IAMF1,
-	P_IAMF2,
+	//P_IAMF0,
+	//P_IAMF1,
+	//P_IAMF2,
 	P_REFLECTIVITY,
 	P_TRACKINGERROR,
 	P_GEOMEFFECTS,
@@ -209,9 +209,9 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,           TCS_ARRAY,     P_COLLECTORTYPE,          "CollectorType",                                                "{1=user defined, 2=LS-2, 3=LS-3, 4=IST} ",         "none",             "",             "",      "1,1,1,1" },
 	{ TCS_PARAM,           TCS_ARRAY,        P_W_APERTURE,             "W_aperture",               "The collector aperture width (Total structural area.. used for shadowing)",            "m",             "",             "",      "5,5,5,5" },
 	{ TCS_PARAM,           TCS_ARRAY,        P_A_APERTURE,             "A_aperture",                                               "Reflective aperture area of the collector",           "m2",             "",             "","470.3,470.3,470.3,470.3" },
-	{ TCS_PARAM,           TCS_ARRAY,             P_IAMF0,                  "IamF0",                                                  "Incident angle modifier 0th order term",         "none",             "",             "",      "1,1,1,1" },
-	{ TCS_PARAM,           TCS_ARRAY,             P_IAMF1,                  "IamF1",                                                  "Incident angle modifier 1st order term",         "none",             "",             "","0.0506,0.0506,0.0506,0.0506" },
-	{ TCS_PARAM,           TCS_ARRAY,             P_IAMF2,                  "IamF2",                                                  "Incident angle modifier 2nd order term",         "none",             "",             "","-0.1763,-0.1763,-0.1763,-0.1763" },
+	//{ TCS_PARAM,           TCS_ARRAY,             P_IAMF0,                  "IamF0",                                                  "Incident angle modifier 0th order term",         "none",             "",             "",      "1,1,1,1" },
+	//{ TCS_PARAM,           TCS_ARRAY,             P_IAMF1,                  "IamF1",                                                  "Incident angle modifier 1st order term",         "none",             "",             "","0.0506,0.0506,0.0506,0.0506" },
+	//{ TCS_PARAM,           TCS_ARRAY,             P_IAMF2,                  "IamF2",                                                  "Incident angle modifier 2nd order term",         "none",             "",             "","-0.1763,-0.1763,-0.1763,-0.1763" },
 	{ TCS_PARAM,           TCS_ARRAY,      P_REFLECTIVITY,           "reflectivity",                                          "Base solar-weighted mirror reflectivity value ",         "none",             "",             "",      "1,1,1,1" },
 	{ TCS_PARAM,           TCS_ARRAY,     P_TRACKINGERROR,          "TrackingError",                                                      "User-defined tracking error derate",         "none",             "",             "","0.994,0.994,0.994,0.994" },
 	{ TCS_PARAM,           TCS_ARRAY,       P_GEOMEFFECTS,            "GeomEffects",                                                    "User-defined geometry effects derate",         "none",             "",             "","0.98,0.98,0.98,0.98" },
@@ -378,12 +378,12 @@ private:
 	int nval_W_aperture;
 	double* A_aperture;		//Reflective aperture area of the collector
 	int nval_A_aperture;
-	double* IamF0;		//Incident angle modifier 0th order term
-	int nval_IamF0;
-	double* IamF1;		//Incident angle modifier 1st order term
-	int nval_IamF1;
-	double* IamF2;		//Incident angle modifier 2nd order term
-	int nval_IamF2;
+	//double* IamF0;		//Incident angle modifier 0th order term
+	//int nval_IamF0;
+	//double* IamF1;		//Incident angle modifier 1st order term
+	//int nval_IamF1;
+	//double* IamF2;		//Incident angle modifier 2nd order term
+	//int nval_IamF2;
 	double* reflectivity;		//Base solar-weighted mirror reflectivity value 
 	int nval_reflectivity;
 	double* TrackingError;		//User-defined tracking error derate
@@ -654,12 +654,12 @@ public:
 		nval_W_aperture = -1;
 		A_aperture	= NULL;
 		nval_A_aperture = -1;
-		IamF0	= NULL;
-		nval_IamF0 = -1;
-		IamF1	= NULL;
-		nval_IamF1 = -1;
-		IamF2	= NULL;
-		nval_IamF2 = -1;
+		//IamF0	= NULL;
+		//nval_IamF0 = -1;
+		//IamF1	= NULL;
+		//nval_IamF1 = -1;
+		//IamF2	= NULL;
+		//nval_IamF2 = -1;
 
 		n_c_iam_matrix = -1;
 		n_r_iam_matrix = -1;
@@ -952,9 +952,9 @@ public:
 		CollectorType = value(P_COLLECTORTYPE, &nval_CollectorType);		//{1=user defined, 2=LS-2, 3=LS-3, 4=IST}  [none]
 		W_aperture = value(P_W_APERTURE, &nval_W_aperture);		//The collector aperture width (Total structural area.. used for shadowing) [m]
 		A_aperture = value(P_A_APERTURE, &nval_A_aperture);		//Reflective aperture area of the collector [m2]
-		IamF0 = value(P_IAMF0, &nval_IamF0);		//Incident angle modifier 0th order term [none]
-		IamF1 = value(P_IAMF1, &nval_IamF1);		//Incident angle modifier 1st order term [none]
-		IamF2 = value(P_IAMF2, &nval_IamF2);		//Incident angle modifier 2nd order term [none]
+		//IamF0 = value(P_IAMF0, &nval_IamF0);		//Incident angle modifier 0th order term [none]
+		//IamF1 = value(P_IAMF1, &nval_IamF1);		//Incident angle modifier 1st order term [none]
+		//IamF2 = value(P_IAMF2, &nval_IamF2);		//Incident angle modifier 2nd order term [none]
 		
 		// Check IAM matrix against number of collectors: nColt
 
