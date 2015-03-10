@@ -118,8 +118,8 @@ public:
 			assign("are_equal", 0.0);
 			return;
 		}
-
-		assign("are_equal", 1.0);	
+		else
+			assign("are_equal", 1.0);	
 	}
 
 };
