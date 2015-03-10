@@ -29,6 +29,7 @@
     <ClCompile Include="..\ssc\cmod_fossilgen.cpp" />
     <ClCompile Include="..\ssc\cmod_generic_system.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal.cpp" />
+    <ClCompile Include="..\ssc\cmod_gridnet.cpp" />
     <ClCompile Include="..\ssc\cmod_hcpv.cpp" />
     <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
     <ClCompile Include="..\ssc\cmod_irradproc.cpp" />
@@ -64,6 +65,7 @@
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate3.cpp" />
+    <ClCompile Include="..\ssc\cmod_utilityrate3b.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcheck.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
     <ClCompile Include="..\ssc\cmod_wfreader.cpp" />

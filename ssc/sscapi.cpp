@@ -72,7 +72,9 @@ extern module_entry_info
 	cm_entry_sco2_design_point,
 	cm_entry_sco2_design_cycle,
 	cm_entry_user_htf_comparison,
-	cm_entry_iscc_design_point;
+	cm_entry_iscc_design_point,
+	cm_entry_utilityrate3b,
+	cm_entry_gridnet;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -127,6 +129,8 @@ static module_entry_info *module_table[] = {
 	&cm_entry_sco2_design_cycle,
 	&cm_entry_user_htf_comparison,
 	&cm_entry_iscc_design_point,
+	&cm_entry_utilityrate3b,
+	&cm_entry_gridnet,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
