@@ -67,6 +67,8 @@ enum{
 	P_COLPERSCA,
 	P_DISTANCE_SCA,
 
+	P_IAM_MATRIX,
+
 	P_HCE_FIELDFRAC,
 	P_D_2,
 	P_D_3,
@@ -221,6 +223,8 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,           TCS_ARRAY,        P_L_APERTURE,             "L_aperture",                                                  "The length of a single mirror/HCE unit",            "m",             "",             "","8.33333,8.33333,8.33333,8.33333" },
 	{ TCS_PARAM,           TCS_ARRAY,         P_COLPERSCA,              "ColperSCA",                                  "The number of individual collector sections in an SCA ",         "none",             "",             "",  "12,12,12,12" },
 	{ TCS_PARAM,           TCS_ARRAY,      P_DISTANCE_SCA,           "Distance_SCA",                                             " piping distance between SCA's in the field",            "m",             "",             "",      "1,1,1,1" },
+
+	{ TCS_PARAM,          TCS_MATRIX,        P_IAM_MATRIX,          "IAM_matrix",                                    "Rows = # of collectors, Cols = max # of coefficients",         "none",             "",             "","[[0]]" },
 
 	{ TCS_PARAM,          TCS_MATRIX,     P_HCE_FIELDFRAC,       "HCE_FieldFrac",                                    "The fraction of the field occupied by this HCE type ",         "none",             "",             "","[0.985,0.01,0.005,0][0.985,0.01,0.005,0][0.985,0.01,0.005,0][0.985,0.01,0.005,0]" },
 	{ TCS_PARAM,          TCS_MATRIX,               P_D_2,                 "D_2",                                                        "The inner absorber tube diameter",            "m",             "",             "","[0.066,0.066,0.066,0.066][0.066,0.066,0.066,0.066][0.066,0.066,0.066,0.066][0.066,0.066,0.066,0.066]" },
@@ -536,6 +540,9 @@ private:
 		epsilon_3_34, epsilon_3_41, epsilon_3_42, epsilon_3_43, epsilon_3_44, alpha_abs, Tau_envelope, EPSILON_4, EPSILON_5, 
 		GlazingIntactIn, P_a, AnnulusGas, AbsorberMaterial, Shadowing, Dirt_HCE, Design_loss, SCAInfoArray;
 
+	util::matrix_t<double> IAM_matrix;
+	int n_c_iam_matrix = 0;
+	int n_r_iam_matrix = 0;
 	
 	//Declare variables that require storage from step to step
 	double 
@@ -653,6 +660,10 @@ public:
 		nval_IamF1 = -1;
 		IamF2	= NULL;
 		nval_IamF2 = -1;
+
+		n_c_iam_matrix = -1;
+		n_r_iam_matrix = -1;
+
 		reflectivity	= NULL;
 		nval_reflectivity = -1;
 		TrackingError	= NULL;
@@ -808,19 +819,30 @@ public:
 			reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
 
 		m_htf_prop_min = std::numeric_limits<double>::quiet_NaN();
+
+		AnnulusGasMat.fill(NULL);
+		AbsorberPropMat.fill(NULL);
 	}
 
-	virtual ~sam_mw_trough_type250(){
-		// Clean up on simulation terminate 
-		try{
-			for(int i=0; i<nHCEt; i++){
-				for(int j=0; j<nHCEVar; j++){
-					delete AbsorberPropMat(i,j);
-					delete AnnulusGasMat(i,j);
-				}
+	virtual ~sam_mw_trough_type250()
+	{
+		for( int i = 0; i < AbsorberPropMat.nrows(); i ++ )
+		{
+			for( int j = 0; j < AbsorberPropMat.ncols(); j++ )
+			{
+				if( AbsorberPropMat(i, j) != NULL )
+					delete AbsorberPropMat(i, j);
 			}
 		}
-		catch(...){};
+		
+		for( int i = 0; i < AnnulusGasMat.nrows(); i++ )
+		{
+			for( int j = 0; j < AnnulusGasMat.ncols(); j++ )
+			{
+				if( AnnulusGasMat(i, j) != NULL )
+					delete AnnulusGasMat(i, j);
+			}
+		}
 	}
 
 	virtual int init(){
@@ -933,6 +955,49 @@ public:
 		IamF0 = value(P_IAMF0, &nval_IamF0);		//Incident angle modifier 0th order term [none]
 		IamF1 = value(P_IAMF1, &nval_IamF1);		//Incident angle modifier 1st order term [none]
 		IamF2 = value(P_IAMF2, &nval_IamF2);		//Incident angle modifier 2nd order term [none]
+		
+		// Check IAM matrix against number of collectors: nColt
+
+		n_c_iam_matrix = -1;
+		n_r_iam_matrix = -1;
+		double *p_iam_matrix = value(P_IAM_MATRIX, &n_r_iam_matrix, &n_c_iam_matrix);
+		
+		if( n_c_iam_matrix < 3 )
+		{
+			message(TCS_ERROR, "There must be at least 3 incident angle modifier coefficients");
+			return -1;
+		}
+
+		if( n_r_iam_matrix < nColt )
+		{
+			message(TCS_ERROR, "The number of groups of IAM coefficients (%d) is less than the number of collector types in this simulation (%d)", n_r_iam_matrix, nColt);
+			return -1;
+		}
+
+		// Load p_iam_matrix in matrix_t
+		IAM_matrix.resize_fill(n_r_iam_matrix, n_c_iam_matrix, 0.0);
+		for( int r = 0; r < n_r_iam_matrix; r++ )
+		{
+			for( int c = 0; c < n_c_iam_matrix; c++ )
+			{
+				IAM_matrix(r, c) = TCS_MATRIX_INDEX(var(P_IAM_MATRIX), r, c);
+			}
+		}
+
+		// Check that for each collector, at least 3 coefficients are != 0.0
+		for( int i = 0; i < nColt; i++ )
+		{
+			for( int j = 0; j < 3; j++ )
+			{
+				if(IAM_matrix(i,j)==0.0)
+				{
+					message(TCS_ERROR, "For %d collectors and groups of IAM coefficients, each group of IAM coefficients must begin with at least 3 non-zero values. There are only %d non-zero coefficients for collector %d", nColt, j, i+1);
+					return -1;
+				}
+			}
+		}
+		// ******************************************************************
+
 		reflectivity = value(P_REFLECTIVITY, &nval_reflectivity);		//Base solar-weighted mirror reflectivity value  [none]
 		TrackingError = value(P_TRACKINGERROR, &nval_TrackingError);		//User-defined tracking error derate [none]
 		GeomEffects = value(P_GEOMEFFECTS, &nval_GeomEffects);		//User-defined geometry effects derate [none]
@@ -1559,7 +1624,14 @@ public:
 			{
 				q_i[i] = I_b*A_aperture[i]/L_actSCA[i]; //[W/m] The incoming solar irradiation per aperture length
 				//incidence angle modifier (radians)
-				IAM[i] = IamF0[i] + IamF1[i] * theta / costh + IamF2[i] * theta*theta/ costh;
+				//IAM[i] = IamF0[i] + IamF1[i] * theta / costh + IamF2[i] * theta*theta/ costh;
+				
+				IAM[i] = IAM_matrix(i,0);
+				for( int j = 1; j < n_c_iam_matrix; j++ )
+					IAM[i] += IAM_matrix(i, j)*pow(theta, j) / costh;
+				
+				IAM[i] = fmax(0.0, fmin(IAM[i], 1.0));
+
 				//Calculate the Optical efficiency of the collector
 				for(int j=0; j<nSCA; j++)
 				{
