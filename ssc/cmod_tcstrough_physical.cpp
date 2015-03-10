@@ -58,9 +58,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "CollectorType",             "Collector type (constant, not used)",                                              "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "W_aperture",                "The collector aperture width (Total structural area used for shadowing)",          "m",            "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "A_aperture",                "Reflective aperture area of the collector",                                        "m2",           "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "IamF0",                     "Incident angle modifier 0th order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "IamF1",                     "Incident angle modifier 1st order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "IamF2",                     "Incident angle modifier 2nd order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_ARRAY,       "IamF0",                     "Incident angle modifier 0th order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_ARRAY,       "IamF1",                     "Incident angle modifier 1st order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_ARRAY,       "IamF2",                     "Incident angle modifier 2nd order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "reflectivity",              "Base solar-weighted mirror reflectivity value (constant, not used)",               "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "TrackingError",             "User-defined tracking error derate",                                               "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "GeomEffects",               "User-defined geometry effects derate",                                             "none",         "",             "solar_field",    "*",                       "",                      "" },
@@ -72,6 +72,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "L_aperture",                "Length of a single mirror/HCE unit",                                               "m",            "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "ColperSCA",                 "Number of individual collector sections in an SCA ",                               "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "Distance_SCA",              "Piping distance between SCA's in the field",                                       "m",            "",             "solar_field",    "*",                       "",                      "" },
+
+	{ SSC_INPUT,        SSC_MATRIX,      "IAM_matrix",                "IAM coefficients, matrix for 4 collectors",                                        "none",         "",             "solar_field",    "*",                       "",                      "" },
 
     { SSC_INPUT,        SSC_MATRIX,      "HCE_FieldFrac",             "Fraction of the field occupied by this HCE type ",                                 "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "D_2",                       "Inner absorber tube diameter",                                                     "m",            "",             "solar_field",    "*",                       "",                      "" },
@@ -492,9 +494,9 @@ public:
         set_unit_value_ssc_array(type250_solarfield, "CollectorType" ); // , [1,1,1,1]);
         set_unit_value_ssc_array(type250_solarfield, "W_aperture" ); // , [5,5,5,5]);
         set_unit_value_ssc_array(type250_solarfield, "A_aperture" ); // , [470.3,470.3,470.3,470.3]);
-        set_unit_value_ssc_array(type250_solarfield, "IamF0" ); // , [1,1,1,1]);
-        set_unit_value_ssc_array(type250_solarfield, "IamF1" ); // , [0.0506,0.0506,0.0506,0.0506]);
-        set_unit_value_ssc_array(type250_solarfield, "IamF2" ); // , [-0.1763,-0.1763,-0.1763,-0.1763]);
+        //set_unit_value_ssc_array(type250_solarfield, "IamF0" ); // , [1,1,1,1]);
+        //set_unit_value_ssc_array(type250_solarfield, "IamF1" ); // , [0.0506,0.0506,0.0506,0.0506]);
+        //set_unit_value_ssc_array(type250_solarfield, "IamF2" ); // , [-0.1763,-0.1763,-0.1763,-0.1763]);
         set_unit_value_ssc_array(type250_solarfield, "reflectivity" ); // , [1,1,1,1]);
         set_unit_value_ssc_array(type250_solarfield, "TrackingError" ); // , [0.994,0.994,0.994,0.994]);
         set_unit_value_ssc_array(type250_solarfield, "GeomEffects" ); // , [0.98,0.98,0.98,0.98]);
@@ -506,6 +508,9 @@ public:
         set_unit_value_ssc_array(type250_solarfield, "L_aperture" ); // , [8.33333,8.33333,8.33333,8.33333]);
         set_unit_value_ssc_array(type250_solarfield, "ColperSCA" ); // , [12,12,12,12]);
         set_unit_value_ssc_array(type250_solarfield, "Distance_SCA" ); // , [1,1,1,1]);
+
+		set_unit_value_ssc_matrix(type250_solarfield, "IAM_matrix");
+
         set_unit_value_ssc_matrix(type250_solarfield, "HCE_FieldFrac" ); // , [[0.985,0.01,0.005,0],[0.985,0.01,0.005,0],[0.985,0.01,0.005,0],[0.985,0.01,0.005,0]]);
         set_unit_value_ssc_matrix(type250_solarfield, "D_2" ); // , [[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066]]);
         set_unit_value_ssc_matrix(type250_solarfield, "D_3" ); // , [[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07]]);
