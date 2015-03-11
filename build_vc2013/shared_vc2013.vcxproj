@@ -25,6 +25,7 @@
     <ClInclude Include="..\shared\6par_newton.h" />
     <ClInclude Include="..\shared\6par_search.h" />
     <ClInclude Include="..\shared\6par_solve.h" />
+    <ClInclude Include="..\shared\lib_battery.h" />
     <ClInclude Include="..\shared\lib_cec6par.h" />
     <ClInclude Include="..\shared\lib_financial.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
@@ -43,6 +44,7 @@
     <ClInclude Include="..\shared\lsqfit.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\shared\lib_battery.cpp" />
     <ClCompile Include="..\shared\lib_cec6par.cpp" />
     <ClCompile Include="..\shared\lib_financial.cpp" />
     <ClCompile Include="..\shared\lib_geothermal.cpp" />
