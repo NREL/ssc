@@ -173,6 +173,7 @@ output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
 	double q1 = 0.;
 	double q2 = 0.;
 	bool charging = false;
+	bool no_charge = false;
 
 	if (I > 0)
 	{
@@ -180,16 +181,20 @@ output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
 		Id = fmin(I, Idmax);
 		I = Id;
 	}
-	else
+	else if (I < 0 )
 	{
 		Icmax = Icmax_compute(_q1_0, _q0, dt);
 		Ic = -fmin(fabs(I), fabs(Icmax));
 		I = Ic;
 		charging = true;
 	}
+	else
+	{
+		no_charge = true;
+	}
 
 	// Check if charge changed
-	if (charging != _prev_charging)
+	if (charging != _prev_charging && !no_charge)
 		_chargeChange = true;
 	else
 		_chargeChange = false;
@@ -202,7 +207,10 @@ output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
 	if (fabs(I) > 0)
 		_qmaxI = qmax_of_i_compute(fabs(_qmaxI / I));
 	else
+	{
+		//  just leave alone for timestep?
 		_qmaxI = _qmax;
+	}
 
 	// update the SOC
 	_SOC = (q1 + q2) / _qmaxI;
@@ -230,7 +238,10 @@ double capacity_kibam_t::getAvailableCapacity()
 {
 	return _q1_0;
 }
-
+double capacity_kibam_t::getMaxCapacityAtCurrent()
+{
+	return _qmaxI;
+}
 
 /*
 Define Lifetime Model
@@ -534,8 +545,11 @@ output* battery_t::getLifetimeOutput()
 
 double battery_t::chargeNeededToFill()
 {
-	// do we assume max capacity as the 20-hour rate?
-	return _capacity->get20HourCapacity() - _capacity->getTotalCapacity();
+	double charge_needed =_capacity->getMaxCapacityAtCurrent() - _capacity->getTotalCapacity();
+	if (charge_needed > 0)
+		return charge_needed;
+	else
+		return 0.;
 }
 
 double battery_t::getCurrentCharge()
@@ -547,7 +561,28 @@ double battery_t::getCurrentCharge()
 /*
 Non-class function
 */
-double getMonthHour(int hourOfYear, int * month, int * hour)
+void getMonthHour(int hourOfYear, int * out_month, int * out_hour)
 {
-	return 0;
+	int tmpSum = 0;
+	int hour = 0;
+	int month;
+
+	for ( month = 1; month <= 12; month++)
+	{
+		int hoursInMonth = util::hours_in_month(month);
+		tmpSum += hoursInMonth;
+
+		// found the month
+		if (hourOfYear + 1 <= tmpSum)
+		{
+			// get the day of the month
+			int tmp = floor((float)(hourOfYear) / 24);
+			hour = (hourOfYear + 1) - (tmp * 24);
+			break;
+		}
+	}
+
+	*out_month = month;
+	*out_hour = hour;
+
 }
