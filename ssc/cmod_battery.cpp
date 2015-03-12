@@ -27,8 +27,8 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"R",					"Battery Internal Resistance",			"Ohm",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_ARRAY,		"DOD_vect",				"Depth of Discharge Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_ARRAY,		"cycle_vect",			"Cycles to Failure Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
-	{ SSC_INOUT,		SSC_ARRAY,		"hourly_energy",		"Hourly energy",						"kWh",		"",						"Time Series",	"*",						"LENGTH=8760",						"" },
-	{ SSC_INOUT,		SSC_ARRAY,		"e_load",				"Electric load",						"kWh",		"",						"Load Profile Estimator", "",		"LENGTH=8760",						"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"hourly_energy",		"Hourly energy",						"kWh",		"",						"Time Series",	"*",						"",						"" },
+	{ SSC_INOUT,		SSC_ARRAY,		"e_load",				"Electric load",						"kWh",		"",						"Load Profile Estimator", "",				"",						"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p1.charge", "Period 1 Charging Allowed?", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p2.charge", "Period 2 Charging Allowed?", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p3.charge", "Period 3 Charging Allowed?", "", "", "Battery", "*", "", "" },
@@ -50,20 +50,20 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INOUT, SSC_ARRAY, "rate_escalation", "Annual utility rate escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INOUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
 
-	
-	{ SSC_OUTPUT, SSC_ARRAY, "q0", "Total Charge", "Ah", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "q1", "Available Charge", "Ah", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "q2", "Bound Charge", "Ah", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "SOC",					"State of Charge",						"%",        "",						"Annual",       "*",						"LENGTH=8760",						"" },
-	{ SSC_OUTPUT, SSC_ARRAY, "DOD", "Depth of Discharge", "%", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Damage", "Fractional Damage", "", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Cycles", "Number of Cycles", "", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "battery_energy", "Power to/from Battery", "kWh", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "grid_energy", "Power from Grid to Battery", "kWh", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_mode", "Dispatch Mode for Hour", "", "", "Annual", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_profile", "Dispatch Profile for Hour", "", "", "Annual", "*", "LENGTH=8760", "" },
+	// outputs, currently allows all subhourly.  May want to acculumulate up to hourly for most 
+	{ SSC_OUTPUT, SSC_ARRAY, "q0", "Total Charge", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q1", "Available Charge", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q2", "Bound Charge", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "SOC",					"State of Charge",						"%",        "",						"Battery",       "*",						"",						"" },
+	{ SSC_OUTPUT, SSC_ARRAY, "DOD", "Depth of Discharge", "%", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Damage", "Fractional Damage", "", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Cycles", "Number of Cycles", "", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "battery_energy", "Power to/from Battery", "kWh", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "grid_energy", "Power from Grid to Battery", "kWh", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_mode", "Dispatch Mode for Hour", "", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_profile", "Dispatch Profile for Hour", "", "", "Battery", "*", "", "" },
 
 
 
@@ -118,13 +118,6 @@ public:
 		util::matrix_t<float> schedule(12, 24);
 		schedule.assign(pv_storage_schedule, months, hours);
 
-		/* arrays */
-		size_t len;
-		ssc_number_t *hourly_energy = as_array("hourly_energy", &len);
-		if (len != 8760) throw exec_error("battery", "hourly energy must have 8760 values");
-		
-		ssc_number_t *e_load = as_array("e_load", &len);
-		if (len != 8760) throw exec_error("battery", "load profile must have 8760 values");
 
 
 		size_t numberOfPoints1, numberOfPoints2;
@@ -135,14 +128,21 @@ public:
 		if (numberOfPoints1 != numberOfPoints2) throw exec_error("battery", "Number of Cycles-to-Failure inputs must equal Depth-of-Discharge inputs");		
 
 		/* **********************************************************************
-		Read weather file to get subhourly
+		Ensure can handle subhourly
 		********************************************************************** */
 		const char *file = as_string("solar_resource_file");
-
 		weatherfile wf(file);
 		if (!wf.ok()) throw exec_error("battery", wf.error_message());
-
 		size_t nrec = wf.nrecords;
+
+		// check against actual inputs
+		size_t len;
+		ssc_number_t *hourly_energy = as_array("hourly_energy", &len);
+		ssc_number_t *e_load = as_array("e_load", &len);
+
+		if (len != nrec) 
+			throw exec_error("battery", "Load and PV power do not match weatherfile length");
+
 		size_t step_per_hour = nrec / 8760;
 		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
 			throw exec_error("swh", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
@@ -176,6 +176,7 @@ public:
 		double SOC;
 		double dt = ts_hour; 
 		capacity_kibam_t CapacityModel(q20, I20, V20, t1, t2, q1, q2);
+		// voltage_copetti_t VoltageModel(num_cells, V20);
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
 		battery_t Battery(&CapacityModel,&LifetimeModel, dt);
 		output* LifetimeOutput;
@@ -186,8 +187,8 @@ public:
 		*********************************************************************************************** */
 		int profile;
 		bool can_charge, can_discharge, grid_charge;
-		double p_grid=0.;			// energy needed from grid to charge battery
-		double p_tofrom_batt=0.;	// energy transferred to/from the battery.  Positive indicates discharging, Negative indicates charging
+		double p_grid=0.;			// energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
+		double p_tofrom_batt=0.;	// energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 		int month;
 		int curr_hour;
 
@@ -195,6 +196,7 @@ public:
 		Run Simulation
 		*********************************************************************************************** */
 
+		int count = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
 			// Get Dispatch Settings for current hour
@@ -205,6 +207,7 @@ public:
 			can_discharge = can_discharge_array[profile - 1];
 			grid_charge = grid_charge_array[profile - 1];
 
+			// Loop over subhourly
 			for (size_t jj = 0; jj<step_per_hour; jj++)
 			{
 
@@ -215,14 +218,14 @@ public:
 				double current_power = (current_charge * V20) *watt_to_kilowatt;		// [KWh]
 
 				// Is there extra energy from array
-				if (hourly_energy[hour] > e_load[hour])
+				if (hourly_energy[count] > e_load[count])
 				{
 					if (can_charge)
 					{
-						if (hourly_energy[hour] - e_load[hour] > (powerNeededToFill))
+						if (hourly_energy[count] - e_load[count] > (powerNeededToFill))
 						{
 							p_tofrom_batt = -powerNeededToFill;
-							hourly_energy[hour] += p_tofrom_batt;
+							hourly_energy[count] += p_tofrom_batt;
 						}
 						else
 						{
@@ -230,13 +233,13 @@ public:
 							if (grid_charge)
 							{
 								p_tofrom_batt = -powerNeededToFill;
-								hourly_energy[hour] += (-(hourly_energy[hour] - e_load[hour]));
-								p_grid = powerNeededToFill - (hourly_energy[hour] - e_load[hour]);
+								hourly_energy[count] += (-(hourly_energy[count] - e_load[count]));
+								p_grid = powerNeededToFill - (hourly_energy[count] - e_load[count]);
 							}
 							else
 							{
-								p_tofrom_batt = -(hourly_energy[hour] - e_load[hour]);
-								hourly_energy[hour] += p_tofrom_batt;
+								p_tofrom_batt = -(hourly_energy[count] - e_load[count]);
+								hourly_energy[count] += p_tofrom_batt;
 							}
 						}
 					}
@@ -249,19 +252,19 @@ public:
 
 				}
 				// Or, is the demand greater than or equal to what the array provides
-				else if (e_load[hour] >= hourly_energy[hour])
+				else if (e_load[count] >= hourly_energy[count])
 				{
 					if (can_discharge)
 					{
-						if (e_load[hour] - hourly_energy[hour] > current_power)
+						if (e_load[count] - hourly_energy[count] > current_power)
 						{
 							p_tofrom_batt = current_power;
-							hourly_energy[hour] += p_tofrom_batt;
+							hourly_energy[count] += p_tofrom_batt;
 						}
 						else
 						{
-							p_tofrom_batt = e_load[hour] - hourly_energy[hour];
-							hourly_energy[hour] += p_tofrom_batt;
+							p_tofrom_batt = e_load[count] - hourly_energy[count];
+							hourly_energy[count] += p_tofrom_batt;
 						}
 					}
 					// if we want to charge from grid
@@ -273,7 +276,7 @@ public:
 				}
 
 				// Run Battery Model to update charge based on charge/discharge
-				// Battery.run(power[hour], V20);
+				// Battery.run(power[count], V20);
 				Battery.run(kilowatt_to_watt*p_tofrom_batt, V20);
 				// Battery.run(0, V20);
 				CapacityOutput = Battery.getCapacityOutput();
@@ -281,26 +284,31 @@ public:
 
 
 				// save output variables 
-				outTotalCharge[hour] = (ssc_number_t)(CapacityOutput[TOTAL_CHARGE].value);
-				outAvailableCharge[hour] = (ssc_number_t)(CapacityOutput[AVAILABLE_CHARGE].value);
-				outBoundCharge[hour] = (ssc_number_t)(CapacityOutput[BOUND_CHARGE].value);
-				outSOC[hour] = (ssc_number_t)(CapacityOutput[STATE_OF_CHARGE].value);
-				outDOD[hour] = (ssc_number_t)(CapacityOutput[DEPTH_OF_DISCHARGE].value);
-				outMaxChargeAtCurrent[hour] = (ssc_number_t)(CapacityOutput[MAX_CHARGE_AT_CURRENT].value);
-				outCurrent[hour] = (ssc_number_t)(CapacityOutput[CURRENT].value);
-				outDamage[hour] = (ssc_number_t)(LifetimeOutput[FRACTIONAL_DAMAGE].value);
-				outCycles[hour] = (int)(LifetimeOutput[NUMBER_OF_CYCLES].value);
-				outBatteryEnergy[hour] = p_tofrom_batt;
-				outGridEnergy[hour] = hourly_energy[hour] - e_load[hour];
-				outDispatchProfile[hour] = profile;
-			}
-		}
+				outTotalCharge[count] = (ssc_number_t)(CapacityOutput[TOTAL_CHARGE].value);
+				outAvailableCharge[count] = (ssc_number_t)(CapacityOutput[AVAILABLE_CHARGE].value);
+				outBoundCharge[count] = (ssc_number_t)(CapacityOutput[BOUND_CHARGE].value);
+				outSOC[count] = (ssc_number_t)(CapacityOutput[STATE_OF_CHARGE].value);
+				outDOD[count] = (ssc_number_t)(CapacityOutput[DEPTH_OF_DISCHARGE].value);
+				outMaxChargeAtCurrent[count] = (ssc_number_t)(CapacityOutput[MAX_CHARGE_AT_CURRENT].value);
+				outCurrent[count] = (ssc_number_t)(CapacityOutput[CURRENT].value);
+				outDamage[count] = (ssc_number_t)(LifetimeOutput[FRACTIONAL_DAMAGE].value);
+				outCycles[count] = (int)(LifetimeOutput[NUMBER_OF_CYCLES].value);
+				outBatteryEnergy[count] = p_tofrom_batt;
+				outGridEnergy[count] = hourly_energy[count] - e_load[count];
+				outDispatchProfile[count] = profile;
+
+				count++;
+			}	// End loop over subhourly
+		} // End loop over hourly
+
+
+
 		// Have to finish up the lifetime model
 		Battery.finish();
 		LifetimeOutput = Battery.getLifetimeOutput();
 
-		outDamage[hour - 1] = (ssc_number_t)(LifetimeOutput[FRACTIONAL_DAMAGE].value);
-		outCycles[hour - 1] = (int)(LifetimeOutput[NUMBER_OF_CYCLES].value);
+		outDamage[count - 1] = (ssc_number_t)(LifetimeOutput[FRACTIONAL_DAMAGE].value);
+		outCycles[count - 1] = (int)(LifetimeOutput[NUMBER_OF_CYCLES].value);
 	}
 
 };
