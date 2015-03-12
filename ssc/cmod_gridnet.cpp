@@ -8,8 +8,14 @@ static var_info vtab_grid_net[] = {
 // name kept same for now to work with existing systems and belpe
 // can extend to subhourly
 // what about instantaneous energy at each timestep? if we go subhourly?
-		{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Energy output from system", "kWh", "", "", "*", "LENGTH=8760", "" },
-		{ SSC_INPUT, SSC_ARRAY, "e_load", "Energy required by load)", "kWh", "", "", "*", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Energy output from system", "kWh", "", "", "*", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "e_load", "Energy required by load", "kWh", "", "", "*", "LENGTH=8760", "" },
+	// optional battery energy sign convention + to grid and - from grid
+	{ SSC_INPUT, SSC_ARRAY, "battery_energy", "Energy output/consumption from battery", "kWh", "", "", "", "LENGTH=8760", "" },
+	// optional battery degradation for out years separate from system degradation
+	{ SSC_INPUT, SSC_ARRAY, "battery_degradation", "Annual battery energy degradation", "%", "", "", "", "", "" },
+
+
 // future for subhourly
 //		{ SSC_INPUT, SSC_ARRAY, "system_energy", "Energy output from system", "kWh", "", "", "*", "", "" },
 //		{ SSC_INPUT, SSC_ARRAY, "system_load", "Energy required by load)", "kWh", "", "", "*", "", "" },
@@ -17,7 +23,7 @@ static var_info vtab_grid_net[] = {
 
 // for multi-year extensions
 	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Number of years in analysis", "years", "", "", "*", "INTEGER,POSITIVE", "" },
-	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
@@ -67,6 +73,24 @@ public:
 			for (i = 0; i < nyears && i < count; i++)
 				sys_scale[i] = (ssc_number_t)(1.0 - parr[i] * 0.01);
 		}
+		// battery scale
+		std::vector<ssc_number_t> batt_scale(nyears);
+		for (i = 0; i < nyears; i++) batt_scale[i] = 1.0;
+		if (is_assigned("battery_degradation"))
+		{
+			parr = as_array("battery_degradation", &count);
+			if (count == 1)
+			{
+				for (i = 0; i < nyears; i++)
+					batt_scale[i] = (ssc_number_t)pow((double)(1 - parr[0] * 0.01), (double)i);
+			}
+			else
+			{
+				for (i = 0; i < nyears && i < count; i++)
+					batt_scale[i] = (ssc_number_t)(1.0 - parr[i] * 0.01);
+			}
+		}
+
 		// compute load (electric demand) annual escalation multipliers
 		std::vector<ssc_number_t> load_scale(nyears);
 		parr = as_array("load_escalation", &count);
@@ -83,7 +107,7 @@ public:
 
 
 		// prepare 8760 arrays for load and grid values
-		std::vector<ssc_number_t> e_sys(8760), p_sys(8760),
+		std::vector<ssc_number_t> e_sys(8760), p_sys(8760), e_batt(8760),
 			e_load(8760), p_load(8760);
 
 		parr = as_array("hourly_energy", &count);
@@ -91,7 +115,7 @@ public:
 		{
 			e_sys[i] = p_sys[i] = parr[i]; // by default p_sys = e_sys (since it's hourly)
 			// others are 0.0
-			e_load[i] = p_load[i] = 0.0;
+			e_load[i] = p_load[i] = e_batt[i] = 0.0;
 		}
 
 
@@ -106,6 +130,13 @@ public:
 			}
 		}
 
+		if (is_assigned("battery_energy"))
+		{
+			parr = as_array("battery_energy", &count);
+			if (count != 8760) throw general_error("battery_energy must have 8760 values");
+			for (i = 0; i < 8760; i++)
+				e_batt[i] = parr[i];
+		}
 
 		ssc_number_t *e_grid = allocate("grid_energy", 8760 * nyears);
 		ssc_number_t *p_grid = allocate("grid_peak", 8760 * nyears);
@@ -125,9 +156,12 @@ public:
 
 				// calculate e_grid value (e_sys + e_load)
 				// note: load is assumed to have negative sign
+				// energy to grid assumed to be positive and energy from grid to be negative
 				e_system[ndx] = e_sys[j] * sys_scale[i];
-				e_grid[ndx] = e_system[ndx] + e_load_out[ndx];
-				p_grid[ndx] = p_sys[j] * sys_scale[i] + p_load_out[ndx];
+				e_grid[ndx] = e_system[ndx] + e_load_out[ndx] 
+					+ e_batt[j] * batt_scale[i];
+				p_grid[ndx] = p_sys[j] * sys_scale[i] + p_load_out[ndx] 
+					+ e_batt[j] * batt_scale[i];
 				ndx++;
 			}
 		}
