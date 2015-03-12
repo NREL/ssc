@@ -1,8 +1,15 @@
 #ifndef battery_h
 #define battery_h
 
+#include "lib_util.h"
 #include "lsqfit.h"
+
 #include <vector>
+
+const double watt_to_kilowatt = 1. / 1000;
+const double kilowatt_to_watt = 1000;
+
+
 /*
 Output Structure 
 */
@@ -53,19 +60,20 @@ public:
 	double getDOD();
 	double get20HourCapacity();
 	double getTotalCapacity();
+	virtual double getMaxCapacityAtCurrent() = 0;
 	virtual double getAvailableCapacity()=0;
 	bool chargeChanged();
 
 
 protected:
-	double _q20;
-	double _q0; 
-	double _I20;
-	double _V;
-	double _SOC;
-	double _DOD;
-	bool _chargeChange; // indicates if charging state has changed since last step
-	output *_output;
+	double _q20; // [Ah] - Capacity at 20 hour discharge rate
+	double _q0;  // [Ah] - Total capacity at timestep 
+	double _I20; // [A]  - Current at 20 hour discharge rate
+	double _V;   // [V]  - Voltage (maybe will be dynamic eventually)
+	double _SOC; // [0-1] - State of Charge
+	double _DOD; // [0-1] - Depth of Discharge
+	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
+	output *_output; // Output structure
 };
 
 /*
@@ -79,6 +87,7 @@ public:
 	capacity_kibam_t(double q20, double I20, double V, double t1, double t2, double q1, double q2);
 	output* updateCapacity(double P, double V, double dt);
 	double getAvailableCapacity();
+	double getMaxCapacityAtCurrent();
 	~capacity_kibam_t();
 
 protected:
@@ -93,23 +102,23 @@ protected:
 	void parameter_compute();
 	
 	// parameters for finding c, k, qmax
-	double _t1;
-	double _t2;
-	double _q1;
-	double _q2;
-	double _F1;
-	double _F2;
+	double _t1;  // [h] - discharge rate for capacity at _q1
+	double _t2;  // [h] - discharge rate for capacity at _q2
+	double _q1;  // [Ah]- capacity at discharge rate t1
+	double _q2;  // [Ah] - capacity at discharge rate t2
+	double _F1;  // [unitless] - internal ratio computation
+	double _F2;  // [unitless] - internal ratio computation
 
 	// model parameters
-	double _c;
-	double _k;
-	double _qmax;
+	double _c;  // [0-1] - capacity fraction
+	double _k;  // [1/hour] - rate constant
+	double _qmax; // [Ah] - maximum possible capacity
 
 	// charge which changes with time
-	double _q1_0; // charge available
-	double _q2_0; // charge bound
-	double _qmaxI;// theoretical max charge at this current
-	bool _prev_charging; // indicates if last state was charging;
+	double _q1_0; // [Ah] - charge available
+	double _q2_0; // [Ah] - charge bound
+	double _qmaxI;// [Ah] - theoretical max charge at this current
+	bool _prev_charging; // [true/false] - indicates if last state was charging;
 };
 
 /*
@@ -217,4 +226,4 @@ private:
 Non-class functions
 */
 double life_vs_DOD(double R, double *a, void * user_data);
-double getMonthHour(int hourOfYear, int * month, int * hour);
+void getMonthHour(int hourOfYear, int * month, int * hour);
