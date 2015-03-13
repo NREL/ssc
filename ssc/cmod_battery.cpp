@@ -58,6 +58,9 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "DOD", "Depth of Discharge", "%", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "voltage_cell", "Cell Voltage", "V", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "voltage_battery", "Battery Voltage", "V", "", "Battery", "*", "", "" },
+
 	{ SSC_OUTPUT, SSC_ARRAY, "Damage", "Fractional Damage", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Cycles", "Number of Cycles", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "battery_energy", "Power to/from Battery", "kWh", "", "Battery", "*", "", "" },
@@ -160,6 +163,8 @@ public:
 		ssc_number_t *outDOD = allocate("DOD", nrec);
 		ssc_number_t *outMaxChargeAtCurrent = allocate("qmaxI", nrec);
 		ssc_number_t *outCurrent = allocate("I", nrec);
+		ssc_number_t *outCellVoltage = allocate("voltage_cell", nrec);
+		ssc_number_t *outBatteryVoltage = allocate("voltage_battery", nrec);
 		ssc_number_t *outDamage = allocate("Damage", nrec);
 		ssc_number_t *outCycles = allocate("Cycles", nrec);
 		ssc_number_t *outBatteryEnergy = allocate("battery_energy", nrec);
@@ -175,12 +180,18 @@ public:
 		size_t hour = 0;
 		double SOC;
 		double dt = ts_hour; 
+
+		// HACK - Define in UI
+		int num_cells = 3;
+		double dT = 0;
+
 		capacity_kibam_t CapacityModel(q20, I20, V20, t1, t2, q1, q2);
-		// voltage_copetti_t VoltageModel(num_cells, V20);
+		voltage_copetti_t VoltageModel(num_cells, V20);
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
-		battery_t Battery(&CapacityModel,&LifetimeModel, dt);
-		output* LifetimeOutput;
+		battery_t Battery(&CapacityModel,&VoltageModel, &LifetimeModel, dt);
 		output* CapacityOutput;
+		output* VoltageOutput;
+		output* LifetimeOutput;
 
 		/* *********************************************************************************************
 		Storage Dispatch Initialization
@@ -212,10 +223,11 @@ public:
 			{
 
 				// current charge state of battery
-				double chargeNeededToFill = Battery.chargeNeededToFill();				// [Ah]
-				double powerNeededToFill = (chargeNeededToFill * V20)*watt_to_kilowatt;	// [kWh]
-				double current_charge = Battery.getCurrentCharge();						// [Ah]
-				double current_power = (current_charge * V20) *watt_to_kilowatt;		// [KWh]
+				double chargeNeededToFill = Battery.chargeNeededToFill();							// [Ah]
+				double battery_voltage = Battery.batteryVoltage();									// [V]
+				double powerNeededToFill = (chargeNeededToFill * battery_voltage)*watt_to_kilowatt;	// [kWh]
+				double current_charge = Battery.getCurrentCharge();									// [Ah]
+				double current_power = (current_charge * battery_voltage) *watt_to_kilowatt;		// [KWh]
 
 				// Is there extra energy from array
 				if (hourly_energy[count] > e_load[count])
@@ -276,14 +288,12 @@ public:
 				}
 
 				// Run Battery Model to update charge based on charge/discharge
-				// Battery.run(power[count], V20);
-				Battery.run(kilowatt_to_watt*p_tofrom_batt, V20);
-				// Battery.run(0, V20);
+				Battery.run(kilowatt_to_watt*p_tofrom_batt, dT);
 				CapacityOutput = Battery.getCapacityOutput();
 				LifetimeOutput = Battery.getLifetimeOutput();
+				VoltageOutput = Battery.getVoltageOutput();
 
-
-				// save output variables 
+				// Capacity Output 
 				outTotalCharge[count] = (ssc_number_t)(CapacityOutput[TOTAL_CHARGE].value);
 				outAvailableCharge[count] = (ssc_number_t)(CapacityOutput[AVAILABLE_CHARGE].value);
 				outBoundCharge[count] = (ssc_number_t)(CapacityOutput[BOUND_CHARGE].value);
@@ -291,6 +301,12 @@ public:
 				outDOD[count] = (ssc_number_t)(CapacityOutput[DEPTH_OF_DISCHARGE].value);
 				outMaxChargeAtCurrent[count] = (ssc_number_t)(CapacityOutput[MAX_CHARGE_AT_CURRENT].value);
 				outCurrent[count] = (ssc_number_t)(CapacityOutput[CURRENT].value);
+
+				// Voltage Output
+				outCellVoltage[count] = (ssc_number_t)(VoltageOutput[CELL_VOLTAGE].value);
+				outBatteryVoltage[count] = (ssc_number_t)(VoltageOutput[TOTAL_VOLTAGE].value);
+
+				// Lifetime Output
 				outDamage[count] = (ssc_number_t)(LifetimeOutput[FRACTIONAL_DAMAGE].value);
 				outCycles[count] = (int)(LifetimeOutput[NUMBER_OF_CYCLES].value);
 				outBatteryEnergy[count] = p_tofrom_batt;
