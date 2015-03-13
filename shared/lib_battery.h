@@ -38,6 +38,14 @@ enum capacity_out
 	TOTAL_CAPACITY_OUT
 };
 
+enum voltage_out
+{
+	CELL_VOLTAGE, // Voltage per cell [V]
+	TOTAL_VOLTAGE, // Total battery voltage [V]
+
+	// ALWAYS LEAVE THIS AT END
+	TOTAL_VOLTAGE_OUT
+};
 enum lifetime_out
 {
 	FRACTIONAL_DAMAGE, // Damage between 0 & 1.  1 indicates replacement needed
@@ -56,19 +64,27 @@ class capacity_t
 public:
 	capacity_t();
 	capacity_t(double q20, double I20, double V);
+	virtual ~capacity_t(){};
+	
+	// pure virtual functions which need to be defined in derived classes
 	virtual output* updateCapacity(double P, double V, double dt)=0;
+	virtual double getMaxCapacityAtCurrent() = 0;
+	virtual double getAvailableCapacity() = 0;
+	virtual double get10HourCapacity() = 0;
+
+	// functions which should be able to be constant across all derived classes
 	double getDOD();
 	double get20HourCapacity();
 	double getTotalCapacity();
-	virtual double getMaxCapacityAtCurrent() = 0;
-	virtual double getAvailableCapacity()=0;
+	double getCurrent();
 	bool chargeChanged();
-
 
 protected:
 	double _q20; // [Ah] - Capacity at 20 hour discharge rate
 	double _q0;  // [Ah] - Total capacity at timestep 
 	double _I20; // [A]  - Current at 20 hour discharge rate
+	double _I;   // [A]  - Current draw during last step
+	double _P;   // [Ah] - Power draw during last step [ P > 0 discharge, P < 0 charge]
 	double _V;   // [V]  - Voltage (maybe will be dynamic eventually)
 	double _SOC; // [0-1] - State of Charge
 	double _DOD; // [0-1] - Depth of Discharge
@@ -88,6 +104,7 @@ public:
 	output* updateCapacity(double P, double V, double dt);
 	double getAvailableCapacity();
 	double getMaxCapacityAtCurrent();
+	double get10HourCapacity();
 	~capacity_kibam_t();
 
 protected:
@@ -126,8 +143,31 @@ Voltage Base class.
 */
 class voltage_t
 {
+public:
+	voltage_t(int num_cells, double voltage);
+
+	virtual output* updateVoltage(capacity_t * capacity, double dT)=0;
+	double getVoltage();
+	double getCellVoltage();
+
+protected:
+	int _num_cells;    // number of cells per battery
+	double _cell_voltage; // closed circuit voltage per cell [V]
+	output* _output;   // output structure
+};
+
+class voltage_copetti_t : public voltage_t
+{
+public:
+	voltage_copetti_t(int num_cells, double voltage);
+	~voltage_copetti_t();
+
+	output* updateVoltage(capacity_t * capacity, double dT);
+	double voltage_charge(double DOD, double q10, double I, double dT);
+	double voltage_discharge(double DOD, double q10, double I, double dT);
 
 };
+
 
 
 /*
@@ -194,30 +234,38 @@ class battery_t
 {
 public:
 	battery_t();
-	battery_t(capacity_t *, lifetime_t *, double dt);
+	battery_t(capacity_t *, voltage_t *, lifetime_t *, double dt);
 
 	// Run all
-	void run(double P, double V);
+	void run(double P, double dT);
 	void finish();
 
 	// Run a component level model
 	output* runCapacityModel(double P, double V);
+	output* runVoltageModel(double dT);
 	output* runLifetimeModel(double DOD);
 
 	output* getCapacityOutput();
 	output* getLifetimeOutput();
+	output* getVoltageOutput();
 
 	// Get capacity quantities
 	double chargeNeededToFill();
 	double getCurrentCharge();
 
+	// Get Voltage
+	double cellVoltage();
+	double batteryVoltage();
+
 private:
 	capacity_t * _capacity;
 	lifetime_t * _lifetime;
+	voltage_t * _voltage;
 	double _dt;
 	bool _firstStep;
 	output* _CapacityOutput;
 	output* _LifetimeOutput;
+	output* _VoltageOutput;
 };
 
 #endif

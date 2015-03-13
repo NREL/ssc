@@ -11,7 +11,9 @@ capacity_t::capacity_t(double q20, double I20, double V)
 	_q20 = q20;
 	_q0 = q20;
 	_I20 = I20;
+	_I = 0.;
 	_V = V;
+	_P = 0.;
 
 	// Initialize SOC to 1, DOD to 0
 	_SOC = 1;
@@ -35,6 +37,10 @@ double capacity_t::get20HourCapacity()
 double capacity_t::getTotalCapacity()
 {
 	return _q0;
+}
+double capacity_t::getCurrent()
+{
+	return _I;
 }
 /*
 Define KiBam Capacity Model
@@ -216,10 +222,12 @@ output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
 	_SOC = (q1 + q2) / _qmaxI;
 	_DOD = 1 - _SOC;
 
-	// update internal variables for next time
+	// update internal variables 
 	_q1_0 = q1;
 	_q2_0 = q2;
 	_q0 = q1 + q2;
+	_I = I;
+	_V = V;
 	
 	// return variables
 	_output[TOTAL_CHARGE].value = _q0;
@@ -233,7 +241,6 @@ output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
 
 	return _output;
 }
-
 double capacity_kibam_t::getAvailableCapacity()
 {
 	return _q1_0;
@@ -241,6 +248,91 @@ double capacity_kibam_t::getAvailableCapacity()
 double capacity_kibam_t::getMaxCapacityAtCurrent()
 {
 	return _qmaxI;
+}
+double capacity_kibam_t::get10HourCapacity()
+{
+	return _q1;
+}
+
+
+
+/*
+Define Voltage Model
+*/
+voltage_t::voltage_t(int num_cells, double voltage )
+{
+	_num_cells = num_cells;
+	_cell_voltage = voltage;
+}
+
+double voltage_t::getVoltage()
+{
+	return _num_cells*_cell_voltage;
+}
+
+double voltage_t::getCellVoltage()
+{
+	return _cell_voltage;
+}
+
+voltage_copetti_t::voltage_copetti_t(int num_cells, double voltage) :
+voltage_t(num_cells, voltage)
+{
+	_output = new output[TOTAL_VOLTAGE_OUT];
+	_output[CELL_VOLTAGE].name = "voltage_cell";
+	_output[TOTAL_VOLTAGE].name = "voltage_battery";
+
+	_output[CELL_VOLTAGE].value = voltage;
+	_output[TOTAL_VOLTAGE].value = voltage*num_cells;
+}
+
+voltage_copetti_t::~voltage_copetti_t()
+{
+	delete[] _output;
+}
+
+output* voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT)
+{
+	double I = capacity->getCurrent();
+	double DOD = capacity->getDOD();
+	double q10 = capacity->get10HourCapacity();
+
+	// discharge
+	if (I > 0)
+		voltage_discharge(DOD, q10, I, dT);
+	// charge
+	else if (I < 0)
+		voltage_charge(DOD, q10, fabs(I), dT);
+	// or nothing
+
+	_output[CELL_VOLTAGE].value = _cell_voltage;
+	_output[TOTAL_VOLTAGE].value = _cell_voltage*_num_cells;
+
+	return _output;
+}
+
+double voltage_copetti_t::voltage_charge(double DOD, double q10, double I, double dT)
+{
+	if (DOD < 0)
+		DOD = 0.;
+
+	double term1 = 2 + 0.16*DOD;
+	double term2 = (I / q10)*(6 / (1 + std::pow(I,0.6)) + 0.48 / std::pow((1 - DOD),1.2) + 0.036);
+	double term3 = (1 - 0.025 * dT);
+	_cell_voltage = term1 - term2*term3;
+	return (_cell_voltage);
+}
+
+double voltage_copetti_t::voltage_discharge(double DOD, double q10, double I, double dT)
+{
+	if (DOD < 0)
+		DOD = 0.;
+
+	double term1 = 2.085 - 0.12*(DOD);
+	double term2 = (1. / q10)*( (4. / (1 + std::pow(I,1.3))) + (0.27 / (1 - std::pow(DOD,1.5))) + 0.02);
+	double term3 = (1. - 0.007 * dT);
+	_cell_voltage = term1 - term2*term3;
+	return (_cell_voltage);
 }
 
 /*
@@ -496,14 +588,16 @@ double life_vs_DOD(double R, double * a, void * user_data)
 /* 
 Define Battery 
 */
-battery_t::battery_t(capacity_t *capacity, lifetime_t * lifetime, double dt)
+battery_t::battery_t(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, double dt)
 {
 	_capacity = capacity;
 	_lifetime = lifetime;
+	_voltage = voltage;
 	_dt = dt;
 	_firstStep = true;
 }
-void battery_t::run(double P, double V)
+
+void battery_t::run(double P, double dT)
 {
 	double lastDOD = _capacity->getDOD();
 
@@ -515,7 +609,10 @@ void battery_t::run(double P, double V)
 			_firstStep = false;
 		}
 	}
-	_CapacityOutput = runCapacityModel(P, V);
+
+	_CapacityOutput = runCapacityModel(P, _voltage->getVoltage() );
+	_VoltageOutput = runVoltageModel(dT);
+
 }
 
 void battery_t::finish()
@@ -528,6 +625,11 @@ output* battery_t::runCapacityModel(double P, double V)
 	return _capacity->updateCapacity(P, V, _dt);
 }
 
+output* battery_t::runVoltageModel(double dT)
+{
+	return _voltage->updateVoltage(_capacity, dT);
+}
+
 output* battery_t::runLifetimeModel(double DOD)
 {
 	return _lifetime->rainflow(DOD);
@@ -536,6 +638,11 @@ output* battery_t::runLifetimeModel(double DOD)
 output* battery_t::getCapacityOutput()
 {
 	return _CapacityOutput;
+}
+
+output* battery_t::getVoltageOutput()
+{
+	return _VoltageOutput;
 }
 
 output* battery_t::getLifetimeOutput()
@@ -557,7 +664,14 @@ double battery_t::getCurrentCharge()
 	return _capacity->getAvailableCapacity();
 }
 
-
+double battery_t::cellVoltage()
+{
+	return _voltage->getCellVoltage();
+}
+double battery_t::batteryVoltage()
+{
+	return _voltage->getVoltage();
+}
 /*
 Non-class function
 */
