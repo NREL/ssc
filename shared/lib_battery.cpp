@@ -46,9 +46,11 @@ double capacity_t::getCurrent()
 Define KiBam Capacity Model
 */
 
-capacity_kibam_t::capacity_kibam_t(double q20, double I20, double V, double t1, double t2, double q1, double q2) : 
+capacity_kibam_t::capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2) : 
 capacity_t(q20, I20, V)
 {
+	_q10 = q10;
+
 	// parameters for c, k calculation
 	_q1 = q1;
 	_q2 = q2;
@@ -251,7 +253,7 @@ double capacity_kibam_t::getMaxCapacityAtCurrent()
 }
 double capacity_kibam_t::get10HourCapacity()
 {
-	return _q1;
+	return _q10;
 }
 
 
@@ -699,4 +701,8 @@ void getMonthHour(int hourOfYear, int * out_month, int * out_hour)
 	*out_month = month;
 	*out_hour = hour;
 
+}
+bool compare(int i, int j)
+{
+	return i == j;
 }
