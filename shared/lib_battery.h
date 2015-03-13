@@ -100,7 +100,7 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
-	capacity_kibam_t(double q20, double I20, double V, double t1, double t2, double q1, double q2);
+	capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2);
 	output* updateCapacity(double P, double V, double dt);
 	double getAvailableCapacity();
 	double getMaxCapacityAtCurrent();
@@ -134,6 +134,7 @@ protected:
 	// charge which changes with time
 	double _q1_0; // [Ah] - charge available
 	double _q2_0; // [Ah] - charge bound
+	double _q10; //  [Ah] - Capacity at 10 hour discharge rate
 	double _qmaxI;// [Ah] - theoretical max charge at this current
 	bool _prev_charging; // [true/false] - indicates if last state was charging;
 };
@@ -275,3 +276,4 @@ Non-class functions
 */
 double life_vs_DOD(double R, double *a, void * user_data);
 void getMonthHour(int hourOfYear, int * month, int * hour);
+bool compare(int, int);

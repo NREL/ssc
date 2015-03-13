@@ -18,13 +18,13 @@ static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,		SSC_STRING,		"solar_resource_file",	"local weather file path",				"",			"",						"Weather",		"*",						"LOCAL_FILE",						"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"q20",					"Capacity at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"q2",					"Capacity at discharge rate for t=t2",	"Ah",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"q1",					"Capacity at discharge rate for t=t1",	"Ah",		"",						"Battery",		"*",						"",									"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"q10",					"Capacity at 10-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"qn",					"Capacity at discharge rate for n-hour rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"I20",					"Current at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"t1",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"t2",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"tn",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"V20",					"Voltage at 20 hour discharge rate",	"V",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"R",					"Battery Internal Resistance",			"Ohm",		"",						"Battery",		"*",						"",									"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"num_cells",			"Number of Cells in Battery",			"",			"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_ARRAY,		"DOD_vect",				"Depth of Discharge Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_ARRAY,		"cycle_vect",			"Cycles to Failure Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
 	{ SSC_INOUT,		SSC_ARRAY,		"hourly_energy",		"Hourly energy",						"kWh",		"",						"Time Series",	"*",						"",						"" },
@@ -42,7 +42,7 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p3.gridcharge", "Period 3 Grid Charging Allowed?", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p4.gridcharge", "Period 4 Grid Charging Allowed?", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT,		SSC_MATRIX,		"pv_storage_sched", "Battery Dispatch Schedule", "", "", "Battery", "*", "", "" },
-
+	
 	// economic inputs
 	{ SSC_INOUT, SSC_NUMBER, "analysis_period", "Number of years in analysis", "years", "", "", "*", "INTEGER,POSITIVE", "" },
 	{ SSC_INOUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
@@ -90,13 +90,13 @@ public:
 		
 		/* Battery Properties */
 		double q20 = as_double("q20"); // [Ah]
-		double q2 = as_double("q2"); //   [Ah]
-		double q1 = as_double("q1"); //   [Ah]
+		double q10 = as_double("q10"); // [Ah]
+		double qn = as_double("qn"); //   [Ah]
 		int I20 = as_double("I20"); //	  [A]
-		int t1 = as_double("t1"); //	  [h]
-		int t2 = as_double("t2"); //	  [h]
+		int tn = as_double("tn"); //	  [h]
 		int V20 = as_double("V20"); //	  [V]
 		int R = as_double("R"); //		  [Ohm]
+		int num_cells = as_integer("num_cells"); 
 
 		/* Dispatch Timing Control*/
 		size_t months = 12;
@@ -121,8 +121,18 @@ public:
 		util::matrix_t<float> schedule(12, 24);
 		schedule.assign(pv_storage_schedule, months, hours);
 
+		// if KiBam, check capacity inputs
 
+		double capacities[] = { qn, q10, q20 };
+		std::vector<double> vect_capacities(3);
+		std::vector<double>::iterator it;
+		it = std::unique_copy(capacities, capacities + 3, vect_capacities.begin());
+		std::sort(vect_capacities.begin(), it);
+		it = std::unique_copy(vect_capacities.begin(), it, vect_capacities.begin(), compare);
+		vect_capacities.resize(std::distance(vect_capacities.begin(), it) );
+		if (vect_capacities.size() < 3) throw exec_error("battery", "Must enter at least 3 unique capacity values (20 hour, 10 hour, and one other)");
 
+		// check lifetime inputs
 		size_t numberOfPoints1, numberOfPoints2;
 		std::vector<double> DOD_vect = as_doublevec("DOD_vect");
 		std::vector<double> cycle_vect = as_doublevec("cycle_vect");
@@ -182,10 +192,9 @@ public:
 		double dt = ts_hour; 
 
 		// HACK - Define in UI
-		int num_cells = 3;
 		double dT = 0;
 
-		capacity_kibam_t CapacityModel(q20, I20, V20, t1, t2, q1, q2);
+		capacity_kibam_t CapacityModel(q10, q20, I20, V20, tn, 10, qn, q10);
 		voltage_copetti_t VoltageModel(num_cells, V20);
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
 		battery_t Battery(&CapacityModel,&VoltageModel, &LifetimeModel, dt);
