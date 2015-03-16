@@ -17,18 +17,34 @@
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,		SSC_STRING,		"solar_resource_file",	"local weather file path",				"",			"",						"Weather",		"*",						"LOCAL_FILE",						"" },
+
+	// generic battery inputs
+	{ SSC_INPUT, SSC_NUMBER, "num_cells", "Number of Cells in Battery", "", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "battery_chemistry", "Battery Chemistry", "", "", "Battery", "", "", "" },
+
+	// lead-acid inputs
 	{ SSC_INPUT,		SSC_NUMBER,		"q20",					"Capacity at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"q10",					"Capacity at 10-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"qn",					"Capacity at discharge rate for n-hour rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"qn",					"Capacity at discharge rate for n-hour rate",	"Ah",		"",				"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"I20",					"Current at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"tn",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"V20",					"Voltage at 20 hour discharge rate",	"V",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"R",					"Battery Internal Resistance",			"Ohm",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"num_cells",			"Number of Cells in Battery",			"",			"",						"Battery",		"*",						"",									"" },
+
+	// lithium-ion inputs
+	{ SSC_INPUT, SSC_NUMBER, "qmax_liIon", "Lithium Ion max capacity", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "V_liIon", "Lithium Ion nominal voltage", "V", "", "Battery", "*", "", "" },
+
+
+	// lifetime inputs
 	{ SSC_INPUT,		SSC_ARRAY,		"DOD_vect",				"Depth of Discharge Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_ARRAY,		"cycle_vect",			"Cycles to Failure Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
-	{ SSC_INOUT,		SSC_ARRAY,		"hourly_energy",		"Hourly energy",						"kWh",		"",						"Time Series",	"*",						"",						"" },
-	{ SSC_INOUT,		SSC_ARRAY,		"e_load",				"Electric load",						"kWh",		"",						"Load Profile Estimator", "",				"",						"" },
+	
+	// system energy and load
+	{ SSC_INOUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Time Series", "*", "", "" },
+	{ SSC_INOUT, SSC_ARRAY, "e_load", "Electric load", "kWh", "", "Load Profile Estimator", "", "", "" },
+
+	// storage dispatch
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p1.charge", "Period 1 Charging Allowed?", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p2.charge", "Period 2 Charging Allowed?", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p3.charge", "Period 3 Charging Allowed?", "", "", "Battery", "*", "", "" },
@@ -52,11 +68,11 @@ static var_info _cm_vtab_battery[] = {
 
 	// outputs, currently allows all subhourly.  May want to acculumulate up to hourly for most 
 	{ SSC_OUTPUT, SSC_ARRAY, "q0", "Total Charge", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "q1", "Available Charge", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "q2", "Bound Charge", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q1", "Available Charge", "Ah", "", "Battery", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "q2", "Bound Charge", "Ah", "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "SOC",					"State of Charge",						"%",        "",						"Battery",       "*",						"",						"" },
 	{ SSC_OUTPUT, SSC_ARRAY, "DOD", "Depth of Discharge", "%", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Battery", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_cell", "Cell Voltage", "V", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_battery", "Battery Voltage", "V", "", "Battery", "*", "", "" },
@@ -87,8 +103,12 @@ public:
 		/* **********************************************************************
 		Read user specified system parameters from compute engine
 		********************************************************************** */
-		
-		/* Battery Properties */
+
+		// generic battery properties
+		int num_cells = as_integer("num_cells");
+		int battery_chemistry = as_integer("battery_chemistry");
+
+		// Lead acid battery properties 		
 		double q20 = as_double("q20"); // [Ah]
 		double q10 = as_double("q10"); // [Ah]
 		double qn = as_double("qn"); //   [Ah]
@@ -96,9 +116,12 @@ public:
 		int tn = as_double("tn"); //	  [h]
 		int V20 = as_double("V20"); //	  [V]
 		int R = as_double("R"); //		  [Ohm]
-		int num_cells = as_integer("num_cells"); 
 
-		/* Dispatch Timing Control*/
+		// Lithium Ion properties
+		double qmax_liIon = as_double("qmax_liIon"); // [Ah]
+		double V_liIon = as_double("V_liIon"); // [V]
+
+		// Dispatch Timing Control
 		size_t months = 12;
 		size_t hours = 24;
 		bool can_charge_array[4];
@@ -121,18 +144,20 @@ public:
 		util::matrix_t<float> schedule(12, 24);
 		schedule.assign(pv_storage_schedule, months, hours);
 
-		// if KiBam, check capacity inputs
+		// if lead-acid KiBam, check capacity inputs
+		if (battery_chemistry==0)
+		{
+			double capacities[] = { qn, q10, q20 };
+			std::vector<double> vect_capacities(3);
+			std::vector<double>::iterator it;
+			it = std::unique_copy(capacities, capacities + 3, vect_capacities.begin());
+			std::sort(vect_capacities.begin(), it);
+			it = std::unique_copy(vect_capacities.begin(), it, vect_capacities.begin(), compare);
+			vect_capacities.resize(std::distance(vect_capacities.begin(), it));
+			if (vect_capacities.size() < 3) throw exec_error("battery", "Must enter at least 3 unique capacity values (20 hour, 10 hour, and one other)");
+		}
 
-		double capacities[] = { qn, q10, q20 };
-		std::vector<double> vect_capacities(3);
-		std::vector<double>::iterator it;
-		it = std::unique_copy(capacities, capacities + 3, vect_capacities.begin());
-		std::sort(vect_capacities.begin(), it);
-		it = std::unique_copy(vect_capacities.begin(), it, vect_capacities.begin(), compare);
-		vect_capacities.resize(std::distance(vect_capacities.begin(), it) );
-		if (vect_capacities.size() < 3) throw exec_error("battery", "Must enter at least 3 unique capacity values (20 hour, 10 hour, and one other)");
-
-		// check lifetime inputs
+		// lifetime inputs
 		size_t numberOfPoints1, numberOfPoints2;
 		std::vector<double> DOD_vect = as_doublevec("DOD_vect");
 		std::vector<double> cycle_vect = as_doublevec("cycle_vect");
@@ -167,11 +192,20 @@ public:
 		Initialize outputs
 		********************************************************************** */
 		ssc_number_t *outTotalCharge = allocate("q0", nrec);
-		ssc_number_t *outAvailableCharge = allocate("q1", nrec);
-		ssc_number_t *outBoundCharge = allocate("q2", nrec);
+		ssc_number_t *outAvailableCharge;
+		ssc_number_t *outBoundCharge;
+		ssc_number_t *outMaxChargeAtCurrent;
+
+		// only allocate if lead-acid
+		if (battery_chemistry==0)
+		{
+			outAvailableCharge = allocate("q1", nrec);
+			outBoundCharge = allocate("q2", nrec);
+			outMaxChargeAtCurrent = allocate("qmaxI", nrec);
+		}
+
 		ssc_number_t *outSOC = allocate("SOC", nrec);
 		ssc_number_t *outDOD = allocate("DOD", nrec);
-		ssc_number_t *outMaxChargeAtCurrent = allocate("qmaxI", nrec);
 		ssc_number_t *outCurrent = allocate("I", nrec);
 		ssc_number_t *outCellVoltage = allocate("voltage_cell", nrec);
 		ssc_number_t *outBatteryVoltage = allocate("voltage_battery", nrec);
@@ -194,14 +228,23 @@ public:
 		// HACK - Define in UI
 		double dT = 0;
 
-		capacity_kibam_t CapacityModel(q10, q20, I20, V20, tn, 10, qn, q10);
-		voltage_copetti_t VoltageModel(num_cells, V20);
+		// Component Models
+		voltage_copetti_t VoltageModelLeadAcid(num_cells, V20);
+		voltage_basic_t VoltageModelBasic(1, V_liIon);
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
-		battery_t Battery(&CapacityModel,&VoltageModel, &LifetimeModel, dt);
-		output* CapacityOutput;
-		output* VoltageOutput;
-		output* LifetimeOutput;
+		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, V20, tn, 10, qn, q10);
+		capacity_lithium_ion_t CapacityModelLithiumIon(qmax_liIon,V_liIon);
+		battery_t Battery;
 
+		if (battery_chemistry==0)
+			Battery.initialize(&CapacityModelLeadAcid, &VoltageModelLeadAcid, &LifetimeModel, dt);
+		else if (battery_chemistry==1)
+			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelBasic, &LifetimeModel, dt);
+
+		// Component output
+		output_map CapacityOutput;
+		output_map VoltageOutput;
+		output_map LifetimeOutput;
 		/* *********************************************************************************************
 		Storage Dispatch Initialization
 		*********************************************************************************************** */
@@ -303,21 +346,24 @@ public:
 				VoltageOutput = Battery.getVoltageOutput();
 
 				// Capacity Output 
-				outTotalCharge[count] = (ssc_number_t)(CapacityOutput[TOTAL_CHARGE].value);
-				outAvailableCharge[count] = (ssc_number_t)(CapacityOutput[AVAILABLE_CHARGE].value);
-				outBoundCharge[count] = (ssc_number_t)(CapacityOutput[BOUND_CHARGE].value);
-				outSOC[count] = (ssc_number_t)(CapacityOutput[STATE_OF_CHARGE].value);
-				outDOD[count] = (ssc_number_t)(CapacityOutput[DEPTH_OF_DISCHARGE].value);
-				outMaxChargeAtCurrent[count] = (ssc_number_t)(CapacityOutput[MAX_CHARGE_AT_CURRENT].value);
-				outCurrent[count] = (ssc_number_t)(CapacityOutput[CURRENT].value);
+				if (battery_chemistry==0)
+				{
+					outAvailableCharge[count] = (ssc_number_t)(CapacityOutput["q1"]);
+					outBoundCharge[count] = (ssc_number_t)(CapacityOutput["q2"]);
+					outMaxChargeAtCurrent[count] = (ssc_number_t)(CapacityOutput["qmaxI"]);
+				}
+				outTotalCharge[count] = (ssc_number_t)(CapacityOutput["q0"]);
+				outSOC[count] = (ssc_number_t)(CapacityOutput["SOC"]);
+				outDOD[count] = (ssc_number_t)(CapacityOutput["DOD"]);
+				outCurrent[count] = (ssc_number_t)(CapacityOutput["I"]);
 
 				// Voltage Output
-				outCellVoltage[count] = (ssc_number_t)(VoltageOutput[CELL_VOLTAGE].value);
-				outBatteryVoltage[count] = (ssc_number_t)(VoltageOutput[TOTAL_VOLTAGE].value);
+				outCellVoltage[count] = (ssc_number_t)(VoltageOutput["voltage_cell"]);
+				outBatteryVoltage[count] = (ssc_number_t)(VoltageOutput["voltage_battery"]);
 
 				// Lifetime Output
-				outDamage[count] = (ssc_number_t)(LifetimeOutput[FRACTIONAL_DAMAGE].value);
-				outCycles[count] = (int)(LifetimeOutput[NUMBER_OF_CYCLES].value);
+				outDamage[count] = (ssc_number_t)(LifetimeOutput["Damage"]);
+				outCycles[count] = (int)(LifetimeOutput["Cycles"]);
 				outBatteryEnergy[count] = p_tofrom_batt;
 				outGridEnergy[count] = hourly_energy[count] - e_load[count];
 				outDispatchProfile[count] = profile;
@@ -332,8 +378,8 @@ public:
 		Battery.finish();
 		LifetimeOutput = Battery.getLifetimeOutput();
 
-		outDamage[count - 1] = (ssc_number_t)(LifetimeOutput[FRACTIONAL_DAMAGE].value);
-		outCycles[count - 1] = (int)(LifetimeOutput[NUMBER_OF_CYCLES].value);
+		outDamage[count - 1] = (ssc_number_t)(LifetimeOutput["Damage"]);
+		outCycles[count - 1] = (int)(LifetimeOutput["Cycles"]);
 	}
 
 };

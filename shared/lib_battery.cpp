@@ -1,16 +1,13 @@
 #include <math.h>
 
 #include "lib_battery.h"
-
 /* 
 Define Capacity Model 
 */
 
-capacity_t::capacity_t(double q20, double I20, double V)
+capacity_t::capacity_t(double q, double V)
 {
-	_q20 = q20;
-	_q0 = q20;
-	_I20 = I20;
+	_q0 = q;
 	_I = 0.;
 	_V = V;
 	_P = 0.;
@@ -30,10 +27,6 @@ double capacity_t::getDOD()
 	return _DOD;
 }
 
-double capacity_t::get20HourCapacity()
-{
-	return _q20;
-}
 double capacity_t::getTotalCapacity()
 {
 	return _q0;
@@ -45,11 +38,12 @@ double capacity_t::getCurrent()
 /*
 Define KiBam Capacity Model
 */
-
-capacity_kibam_t::capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2) : 
-capacity_t(q20, I20, V)
+capacity_kibam_t::capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2) :
+capacity_t(q20, V)
 {
 	_q10 = q10;
+	_q20 = q20;
+	_I20 = I20;
 
 	// parameters for c, k calculation
 	_q1 = q1;
@@ -74,30 +68,15 @@ capacity_t(q20, I20, V)
 	double T = _q0 / _I20;
 	_qmaxI = qmax_of_i_compute(T);
 
-	// Setup output structure
-	_output = new output[TOTAL_CAPACITY_OUT];
-	_output[TOTAL_CHARGE].name = "q0"; 
-	_output[AVAILABLE_CHARGE].name = "q1"; 
-	_output[BOUND_CHARGE].name = "q2"; 
-	_output[POWER_DURING_STEP].name = "P";
-	_output[STATE_OF_CHARGE].name = "SOC";
-	_output[DEPTH_OF_DISCHARGE].name = "DOD"; 
-	_output[MAX_CHARGE_AT_CURRENT].name = "qmaxI"; 
-	_output[CURRENT].name = "I"; 
-
-	_output[TOTAL_CHARGE].value = q20;
-	_output[AVAILABLE_CHARGE].value = _q1_0;
-	_output[BOUND_CHARGE].value = _q2_0;
-	_output[POWER_DURING_STEP].value = 0;
-	_output[STATE_OF_CHARGE].value = 1.0;
-	_output[DEPTH_OF_DISCHARGE].value = 0.;
-	_output[MAX_CHARGE_AT_CURRENT].value = _qmaxI;
-	_output[CURRENT].value = I20;
-}
-
-capacity_kibam_t::~capacity_kibam_t()
-{
-	delete[] _output;
+	// output structure
+	_output["q0"]= q20;
+	_output["q1"] = _q1_0;
+	_output["q2"] = _q2_0;
+	_output["P"] = _P;
+	_output["SOC"] = _SOC;
+	_output["DOD"]= _DOD;
+	_output["qmaxI"] = _qmaxI;
+	_output["I"]= _I20;
 }
 
 double capacity_kibam_t::c_compute(double F, double t1, double t2, double k_guess)
@@ -171,7 +150,7 @@ void capacity_kibam_t::parameter_compute()
 	_qmax = qmax_compute();
 }
 
-output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
+output_map capacity_kibam_t::updateCapacity(double P, double V, double dt)
 {
 	double I = P / V;
 	double Idmax = 0.;
@@ -230,16 +209,17 @@ output* capacity_kibam_t::updateCapacity(double P, double V, double dt)
 	_q0 = q1 + q2;
 	_I = I;
 	_V = V;
+	_P = P;
 	
 	// return variables
-	_output[TOTAL_CHARGE].value = _q0;
-	_output[AVAILABLE_CHARGE].value = _q1_0;
-	_output[BOUND_CHARGE].value = _q2_0;
-	_output[POWER_DURING_STEP].value = P;
-	_output[STATE_OF_CHARGE].value = _SOC;
-	_output[DEPTH_OF_DISCHARGE].value = _DOD;
-	_output[MAX_CHARGE_AT_CURRENT].value = _qmaxI;
-	_output[CURRENT].value = I;
+	_output["q0"] = _q0;
+	_output["q1"] = _q1_0;
+	_output["q2"] = _q2_0;
+	_output["P"] = _P;
+	_output["SOC"] = _SOC;
+	_output["DOD"] = _DOD;
+	_output["qmaxI"] = _qmaxI;
+	_output["I"] = _I;
 
 	return _output;
 }
@@ -254,6 +234,70 @@ double capacity_kibam_t::getMaxCapacityAtCurrent()
 double capacity_kibam_t::get10HourCapacity()
 {
 	return _q10;
+}
+double capacity_kibam_t::get20HourCapacity()
+{
+	return _q20;
+}
+
+/*
+Define Lithium Ion capacity model
+*/
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V) :capacity_t(q, V)
+{
+	_qmax = q;
+
+	_output["q0"] = q;
+	_output["P"] = _P;
+	_output["SOC"] = _SOC;
+	_output["DOD"] = _DOD;
+	_output["I"] = _I;
+};
+
+output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt)
+{
+	// currently just a tank of coloumbs
+	_I = P / V;
+	P = _P;
+
+	// update charge ( I > 0 discharging, I < 0 charging)
+	_q0 -= _I*dt;
+
+	// check if overcharged
+	if (_q0 > _qmax)
+		_q0 = _qmax;
+
+	// check if undercharged (implement minimum charge limit)
+	if (_q0 < 0)
+		_q0 = 0;
+
+	// update SOC, DOD
+	_SOC = _q0 / _qmax;
+	_DOD = 1 - _SOC;
+
+
+	// outputs
+	_output["q0"] = _q0;
+	_output["P"] = _P;
+	_output["SOC"] = _SOC;
+	_output["DOD"] = _DOD;
+	_output["I"] = _I;
+
+	return _output;
+}
+
+
+double capacity_lithium_ion_t::getAvailableCapacity()
+{
+	return _q0;
+}
+double capacity_lithium_ion_t::getMaxCapacityAtCurrent()
+{
+	return _qmax;
+}
+double capacity_lithium_ion_t::get10HourCapacity()
+{
+	return _qmax;
 }
 
 
@@ -280,20 +324,11 @@ double voltage_t::getCellVoltage()
 voltage_copetti_t::voltage_copetti_t(int num_cells, double voltage) :
 voltage_t(num_cells, voltage)
 {
-	_output = new output[TOTAL_VOLTAGE_OUT];
-	_output[CELL_VOLTAGE].name = "voltage_cell";
-	_output[TOTAL_VOLTAGE].name = "voltage_battery";
-
-	_output[CELL_VOLTAGE].value = voltage;
-	_output[TOTAL_VOLTAGE].value = voltage*num_cells;
+	_output["voltage_cell"] = voltage;
+	_output["voltage_battery"] = voltage*num_cells;
 }
 
-voltage_copetti_t::~voltage_copetti_t()
-{
-	delete[] _output;
-}
-
-output* voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT)
+output_map voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT)
 {
 	double I = capacity->getCurrent();
 	double DOD = capacity->getDOD();
@@ -307,8 +342,8 @@ output* voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT)
 		voltage_charge(DOD, q10, fabs(I), dT);
 	// or nothing
 
-	_output[CELL_VOLTAGE].value = _cell_voltage;
-	_output[TOTAL_VOLTAGE].value = _cell_voltage*_num_cells;
+	_output["voltage_cell"] = _cell_voltage;
+	_output["voltage_battery"] = _cell_voltage*_num_cells;
 
 	return _output;
 }
@@ -336,6 +371,25 @@ double voltage_copetti_t::voltage_discharge(double DOD, double q10, double I, do
 	_cell_voltage = term1 - term2*term3;
 	return (_cell_voltage);
 }
+
+// Basic voltage model
+voltage_basic_t::voltage_basic_t(int num_cells, double voltage) :
+voltage_t(num_cells, voltage)
+{
+	_output["voltage_cell"] = voltage;
+	_output["voltage_battery"] = voltage*num_cells;
+
+}
+
+output_map voltage_basic_t::updateVoltage(capacity_t * capacity, double dT)
+{
+	// do nothing;
+	_output["voltage_cell"] = _cell_voltage;
+	_output["voltage_battery"] = _cell_voltage*_num_cells;
+
+	return _output;
+}
+
 
 /*
 Define Lifetime Model
@@ -370,9 +424,8 @@ lifetime_t::lifetime_t( std::vector<double> DOD_vect, std::vector<double> cycle_
 	_Range = 0;
 
 	// initialize output
-	_output = new output[TOTAL_LIFETIME_OUT];
-	_output[FRACTIONAL_DAMAGE].name = "Dlt";
-	_output[NUMBER_OF_CYCLES].name = "nCycles";
+	_output["Damage"] = 0.;
+	_output["Cycles"] = 0.;
 }
 
 lifetime_t::~lifetime_t()
@@ -380,10 +433,9 @@ lifetime_t::~lifetime_t()
 	delete[] _DOD_vect;
 	delete[] _cycle_vect;
 	delete[] _a;
-	delete[] _output;
 }
 
-output* lifetime_t::rainflow(double DOD)
+output_map lifetime_t::rainflow(double DOD)
 {
 	// initialize return code
 	int retCode = LT_GET_DATA;
@@ -424,8 +476,8 @@ output* lifetime_t::rainflow(double DOD)
 		_jlt++;
 
 	// Return output
-	_output[FRACTIONAL_DAMAGE].value = _Dlt;
-	_output[NUMBER_OF_CYCLES].value = _nCycles;
+	_output["Damage"] = _Dlt;
+	_output["Cycles"] = _nCycles;
 
 	return _output;
 }
@@ -509,7 +561,7 @@ int lifetime_t::rainflow_compareRanges()
 	return retCode;
 }
 
-output* lifetime_t::rainflow_finish()
+output_map lifetime_t::rainflow_finish()
 {
 	// starting indices, must decrement _jlt by 1
 	int ii = 0;
@@ -575,8 +627,8 @@ output* lifetime_t::rainflow_finish()
 		}
 	}
 	// Return output
-	_output[FRACTIONAL_DAMAGE].value = _Dlt;
-	_output[NUMBER_OF_CYCLES].value = _nCycles;
+	_output["Damage"] = _Dlt;
+	_output["Cycles"] = _nCycles;
 
 	return _output;
 }
@@ -590,7 +642,12 @@ double life_vs_DOD(double R, double * a, void * user_data)
 /* 
 Define Battery 
 */
+battery_t::battery_t(){};
 battery_t::battery_t(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, double dt)
+{
+	initialize(capacity, voltage, lifetime, dt);
+}
+void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, double dt)
 {
 	_capacity = capacity;
 	_lifetime = lifetime;
@@ -622,32 +679,32 @@ void battery_t::finish()
 	_LifetimeOutput = _lifetime->rainflow_finish();
 }
 
-output* battery_t::runCapacityModel(double P, double V)
+output_map battery_t::runCapacityModel(double P, double V)
 {
 	return _capacity->updateCapacity(P, V, _dt);
 }
 
-output* battery_t::runVoltageModel(double dT)
+output_map battery_t::runVoltageModel(double dT)
 {
 	return _voltage->updateVoltage(_capacity, dT);
 }
 
-output* battery_t::runLifetimeModel(double DOD)
+output_map battery_t::runLifetimeModel(double DOD)
 {
 	return _lifetime->rainflow(DOD);
 }
 
-output* battery_t::getCapacityOutput()
+output_map battery_t::getCapacityOutput()
 {
 	return _CapacityOutput;
 }
 
-output* battery_t::getVoltageOutput()
+output_map battery_t::getVoltageOutput()
 {
 	return _VoltageOutput;
 }
 
-output* battery_t::getLifetimeOutput()
+output_map battery_t::getLifetimeOutput()
 {
 	return _LifetimeOutput;
 }

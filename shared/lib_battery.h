@@ -5,56 +5,13 @@
 #include "lsqfit.h"
 
 #include <vector>
+#include <map>
+#include <string>
 
 const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
 
-
-/*
-Output Structure 
-*/
-struct output
-{
-	const char *name;
-	double value;
-};
-
-/*
-Output Enumerations
-*/
-
-enum capacity_out
-{	
-	TOTAL_CHARGE, // Total Charge [Ah]
-	AVAILABLE_CHARGE, // Available Charge [Ah] (Debugging Only)
-	BOUND_CHARGE, // Bound Charge [Ah] (Debugging Only)
-	POWER_DURING_STEP, // Power [W]
-	STATE_OF_CHARGE,// State of Charge [%]
-	DEPTH_OF_DISCHARGE, // Depth of Discharge [%] 
-	MAX_CHARGE_AT_CURRENT, // Max Charge at Current [Ah]
-	CURRENT, // Current [A]
-
-	// ALWAYS LEAVE THIS AT END
-	TOTAL_CAPACITY_OUT
-};
-
-enum voltage_out
-{
-	CELL_VOLTAGE, // Voltage per cell [V]
-	TOTAL_VOLTAGE, // Total battery voltage [V]
-
-	// ALWAYS LEAVE THIS AT END
-	TOTAL_VOLTAGE_OUT
-};
-enum lifetime_out
-{
-	FRACTIONAL_DAMAGE, // Damage between 0 & 1.  1 indicates replacement needed
-	NUMBER_OF_CYCLES, // Number of cycles battery has gone through
-
-	// ALWAYS LEAVE THIS AT END
-	TOTAL_LIFETIME_OUT
-};
-
+typedef std::map<std::string, double> output_map;
 /*
 Base class from which capacity models derive
 */
@@ -62,34 +19,31 @@ Base class from which capacity models derive
 class capacity_t
 {
 public:
-	capacity_t();
-	capacity_t(double q20, double I20, double V);
+	capacity_t(double q, double V);
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions which need to be defined in derived classes
-	virtual output* updateCapacity(double P, double V, double dt)=0;
+	virtual output_map updateCapacity(double P, double V, double dt)=0;
 	virtual double getMaxCapacityAtCurrent() = 0;
 	virtual double getAvailableCapacity() = 0;
 	virtual double get10HourCapacity() = 0;
 
+
 	// functions which should be able to be constant across all derived classes
 	double getDOD();
-	double get20HourCapacity();
 	double getTotalCapacity();
 	double getCurrent();
 	bool chargeChanged();
 
 protected:
-	double _q20; // [Ah] - Capacity at 20 hour discharge rate
 	double _q0;  // [Ah] - Total capacity at timestep 
-	double _I20; // [A]  - Current at 20 hour discharge rate
 	double _I;   // [A]  - Current draw during last step
 	double _P;   // [Ah] - Power draw during last step [ P > 0 discharge, P < 0 charge]
 	double _V;   // [V]  - Voltage (maybe will be dynamic eventually)
 	double _SOC; // [0-1] - State of Charge
 	double _DOD; // [0-1] - Depth of Discharge
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
-	output *_output; // Output structure
+	output_map _output; // Output structure
 };
 
 /*
@@ -101,11 +55,11 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2);
-	output* updateCapacity(double P, double V, double dt);
+	output_map updateCapacity(double P, double V, double dt);
 	double getAvailableCapacity();
 	double getMaxCapacityAtCurrent();
 	double get10HourCapacity();
-	~capacity_kibam_t();
+	double get20HourCapacity();
 
 protected:
 	// unique to kibam
@@ -135,9 +89,32 @@ protected:
 	double _q1_0; // [Ah] - charge available
 	double _q2_0; // [Ah] - charge bound
 	double _q10; //  [Ah] - Capacity at 10 hour discharge rate
+	double _q20; // [Ah] - Capacity at 20 hour discharge rate
+	double _I20; // [A]  - Current at 20 hour discharge rate
 	double _qmaxI;// [Ah] - theoretical max charge at this current
 	bool _prev_charging; // [true/false] - indicates if last state was charging;
 };
+
+/*
+Lithium Ion specific capacity model
+*/
+class capacity_lithium_ion_t : public capacity_t
+{
+public:
+	capacity_lithium_ion_t(double q, double V);
+
+	// override public api
+	output_map updateCapacity(double P, double V, double dt);
+	double getMaxCapacityAtCurrent();
+	double getAvailableCapacity();
+	double get10HourCapacity();
+
+
+protected:
+	double _qmax; // [Ah] - maximum possible capacity
+
+};
+
 
 /*
 Voltage Base class.  
@@ -147,26 +124,32 @@ class voltage_t
 public:
 	voltage_t(int num_cells, double voltage);
 
-	virtual output* updateVoltage(capacity_t * capacity, double dT)=0;
+	virtual output_map updateVoltage(capacity_t * capacity, double dT)=0;
 	double getVoltage();
 	double getCellVoltage();
 
 protected:
 	int _num_cells;    // number of cells per battery
 	double _cell_voltage; // closed circuit voltage per cell [V]
-	output* _output;   // output structure
+	output_map _output;   // output structure
 };
 
 class voltage_copetti_t : public voltage_t
 {
 public:
 	voltage_copetti_t(int num_cells, double voltage);
-	~voltage_copetti_t();
 
-	output* updateVoltage(capacity_t * capacity, double dT);
+	output_map updateVoltage(capacity_t * capacity, double dT);
 	double voltage_charge(double DOD, double q10, double I, double dT);
 	double voltage_discharge(double DOD, double q10, double I, double dT);
 
+};
+
+class voltage_basic_t : public voltage_t
+{
+public:
+	voltage_basic_t(int num_cells, double voltage);
+	output_map updateVoltage(capacity_t * capacity, double dT);
 };
 
 
@@ -181,8 +164,8 @@ class lifetime_t
 public:
 	lifetime_t(std::vector<double> DOD_vect, std::vector<double> cycle_vect, int n);
 	~lifetime_t();
-	output* rainflow(double DOD);
-	output* rainflow_finish();
+	output_map rainflow(double DOD);
+	output_map rainflow_finish();
 
 protected:
 	void rainflow_ranges();
@@ -201,7 +184,7 @@ protected:
 	double _Slt;
 	std::vector<double> _Peaks;
 	double _Range;
-	output* _output;
+	output_map _output;
 
 	enum RETURN_CODES
 	{
@@ -236,19 +219,20 @@ class battery_t
 public:
 	battery_t();
 	battery_t(capacity_t *, voltage_t *, lifetime_t *, double dt);
+	void initialize(capacity_t *, voltage_t *, lifetime_t *, double dt);
 
 	// Run all
 	void run(double P, double dT);
 	void finish();
 
 	// Run a component level model
-	output* runCapacityModel(double P, double V);
-	output* runVoltageModel(double dT);
-	output* runLifetimeModel(double DOD);
+	output_map runCapacityModel(double P, double V);
+	output_map runVoltageModel(double dT);
+	output_map runLifetimeModel(double DOD);
 
-	output* getCapacityOutput();
-	output* getLifetimeOutput();
-	output* getVoltageOutput();
+	output_map getCapacityOutput();
+	output_map getLifetimeOutput();
+	output_map getVoltageOutput();
 
 	// Get capacity quantities
 	double chargeNeededToFill();
@@ -264,9 +248,9 @@ private:
 	voltage_t * _voltage;
 	double _dt;
 	bool _firstStep;
-	output* _CapacityOutput;
-	output* _LifetimeOutput;
-	output* _VoltageOutput;
+	output_map _CapacityOutput;
+	output_map _LifetimeOutput;
+	output_map _VoltageOutput;
 };
 
 #endif
