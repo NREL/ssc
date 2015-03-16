@@ -255,6 +255,14 @@ public:
 		int month;
 		int curr_hour;
 
+		// mode = 0: NO CHARGE, NO DISCHARGE
+		// mode = 1: CHARGED ALL FROM GRID
+		// mode = 2: CHARGED SOME FROM ARRAY, REST FROM GRID
+		// mode = 3: CHARGED SOME FROM ARRAY, NONE FROM GRID
+		// mode = 4: CHARGED ALL FROM ARRAY
+		// mode = -1: DISCHARGED SOME TO MEET ALL OF LOAD
+		// mode = -2: DISCHARGED ALL TO MEET SOME OF LOAD
+
 		/* *********************************************************************************************
 		Run Simulation
 		*********************************************************************************************** */
@@ -281,6 +289,8 @@ public:
 				double current_charge = Battery.getCurrentCharge();									// [Ah]
 				double current_power = (current_charge * battery_voltage) *watt_to_kilowatt;		// [KWh]
 
+				mode = 0; // NO CHARGE, NO DISCHARGE (can be overwritten)
+
 				// Is there extra energy from array
 				if (hourly_energy[count] > e_load[count])
 				{
@@ -290,6 +300,7 @@ public:
 						{
 							p_tofrom_batt = -powerNeededToFill;
 							hourly_energy[count] += p_tofrom_batt;
+							mode = 4; // CHARGED ALL FROM ARRAY
 						}
 						else
 						{
@@ -299,11 +310,13 @@ public:
 								p_tofrom_batt = -powerNeededToFill;
 								hourly_energy[count] += (-(hourly_energy[count] - e_load[count]));
 								p_grid = powerNeededToFill - (hourly_energy[count] - e_load[count]);
+								mode = 2; // CHARGED SOME FROM ARRAY, REST FROM GRID
 							}
 							else
 							{
 								p_tofrom_batt = -(hourly_energy[count] - e_load[count]);
 								hourly_energy[count] += p_tofrom_batt;
+								mode = 3; // CHARGED SOME FROM ARRAY
 							}
 						}
 					}
@@ -312,6 +325,7 @@ public:
 					{
 						p_tofrom_batt = -powerNeededToFill;
 						p_grid = powerNeededToFill;
+						mode = 1; // CHARGED ALL FROM GRID
 					}
 
 				}
@@ -324,11 +338,13 @@ public:
 						{
 							p_tofrom_batt = current_power;
 							hourly_energy[count] += p_tofrom_batt;
+							mode = -2; // DISCHARGED ALL TO MEET SOME OF LOAD
 						}
 						else
 						{
 							p_tofrom_batt = e_load[count] - hourly_energy[count];
 							hourly_energy[count] += p_tofrom_batt;
+							mode = -1; // DISCHARGED SOME TO MEET ALL OF LOAD
 						}
 					}
 					// if we want to charge from grid
@@ -336,6 +352,7 @@ public:
 					{
 						p_tofrom_batt = -powerNeededToFill;
 						p_grid = powerNeededToFill;
+						mode = 1; // CHARGED ALL FROM GRID
 					}
 				}
 
@@ -366,7 +383,10 @@ public:
 				outCycles[count] = (int)(LifetimeOutput["Cycles"]);
 				outBatteryEnergy[count] = p_tofrom_batt;
 				outGridEnergy[count] = hourly_energy[count] - e_load[count];
+
+				// Dispatch output
 				outDispatchProfile[count] = profile;
+				outDispatchMode[count] = mode;
 
 				count++;
 			}	// End loop over subhourly
