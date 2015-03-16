@@ -22,7 +22,7 @@ public:
 	capacity_t(double q, double V);
 	virtual ~capacity_t(){};
 	
-	// pure virtual functions which need to be defined in derived classes
+	// pure virtual functions (abstract) which need to be defined in derived classes
 	virtual output_map updateCapacity(double P, double V, double dt)=0;
 	virtual double getMaxCapacityAtCurrent() = 0;
 	virtual double getAvailableCapacity() = 0;
