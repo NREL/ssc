@@ -305,7 +305,7 @@ double capacity_lithium_ion_t::get10HourCapacity()
 /*
 Define Voltage Model
 */
-voltage_t::voltage_t(int num_cells, double voltage )
+voltage_t::voltage_t(int num_cells, double voltage, double *other)
 {
 	_num_cells = num_cells;
 	_cell_voltage = voltage;
@@ -321,6 +321,7 @@ double voltage_t::getCellVoltage()
 	return _cell_voltage;
 }
 
+// Lead-Acid voltage model
 voltage_copetti_t::voltage_copetti_t(int num_cells, double voltage) :
 voltage_t(num_cells, voltage)
 {
@@ -328,7 +329,7 @@ voltage_t(num_cells, voltage)
 	_output["voltage_battery"] = voltage*num_cells;
 }
 
-output_map voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT)
+output_map voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT, double dt)
 {
 	double I = capacity->getCurrent();
 	double DOD = capacity->getDOD();
@@ -372,6 +373,64 @@ double voltage_copetti_t::voltage_discharge(double DOD, double q10, double I, do
 	return (_cell_voltage);
 }
 
+// Dynamic voltage model
+voltage_dynamic_t::voltage_dynamic_t(int num_cells, double voltage, double *other) : 
+voltage_t(num_cells, voltage, other)
+{
+	_Vfull = other[0];
+	_Vexp = other[1];
+	_Vnom = other[2];
+	_Qfull = other[3];
+	_Qexp = other[4];
+	_Qnom = other[5];
+	_C_rate = other[6];
+
+	// assume fully charged, not the nominal value
+	_cell_voltage = _Vfull;
+
+	parameter_compute();
+};
+
+void voltage_dynamic_t::parameter_compute()
+{
+	double eta = 0.995;
+	double I = _Qfull*_C_rate;
+	_R = _Vnom*(1. - eta) / (_C_rate*_Qnom);
+	_A = _Vfull - _Vexp; // [V]
+	_B = 3. / _Qexp;     // [1/Ah]
+	_K = ((_Vfull - _Vnom + _A*(std::exp(-_B*_Qnom) - 1))*(_Qfull - _Qnom)) / (_Qnom);
+	_E0 = _Vfull + _K + _R*I - _A;
+}
+
+output_map voltage_dynamic_t::updateVoltage(capacity_t * capacity, double dT, double dt)
+{
+
+	double Q = capacity->getMaxCapacityAtCurrent();
+	double I = capacity->getCurrent();
+	double q0 = capacity->getTotalCapacity();
+
+	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
+
+	_output["voltage_cell"] = _cell_voltage;
+	_output["voltage_battery"] = _cell_voltage*_num_cells;
+
+	return _output;
+}
+double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
+{
+	// Should increase when charge increases, decrease when charge decreases
+	// everything in here is on a per-cell basis
+	// http://www.posterus.sk/?p=13560
+	// Moore s. ;Ehsani M., “An Empirically based Electrosource Horizon Lead-acid Battery Model”, SAE Transactions, Vol.105, no6, p.p. 421-424, 1996
+
+	double term1 = _R*I;
+	double term2 = _K*(1 - q0/Q);
+	double V = _E0 - term1 - term2; 
+	return V;
+}
+
+
+
 // Basic voltage model
 voltage_basic_t::voltage_basic_t(int num_cells, double voltage) :
 voltage_t(num_cells, voltage)
@@ -381,7 +440,7 @@ voltage_t(num_cells, voltage)
 
 }
 
-output_map voltage_basic_t::updateVoltage(capacity_t * capacity, double dT)
+output_map voltage_basic_t::updateVoltage(capacity_t * capacity, double dT, double dt)
 {
 	// do nothing;
 	_output["voltage_cell"] = _cell_voltage;
@@ -686,7 +745,7 @@ output_map battery_t::runCapacityModel(double P, double V)
 
 output_map battery_t::runVoltageModel(double dT)
 {
-	return _voltage->updateVoltage(_capacity, dT);
+	return _voltage->updateVoltage(_capacity, dT, _dt);
 }
 
 output_map battery_t::runLifetimeModel(double DOD)

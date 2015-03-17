@@ -122,9 +122,9 @@ Voltage Base class.
 class voltage_t
 {
 public:
-	voltage_t(int num_cells, double voltage);
+	voltage_t(int num_cells, double voltage, double * other=0);
 
-	virtual output_map updateVoltage(capacity_t * capacity, double dT)=0;
+	virtual output_map updateVoltage(capacity_t * capacity, double dT, double dt)=0;
 	double getVoltage();
 	double getCellVoltage();
 
@@ -139,7 +139,9 @@ class voltage_copetti_t : public voltage_t
 public:
 	voltage_copetti_t(int num_cells, double voltage);
 
-	output_map updateVoltage(capacity_t * capacity, double dT);
+	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
+
+protected:
 	double voltage_charge(double DOD, double q10, double I, double dT);
 	double voltage_discharge(double DOD, double q10, double I, double dT);
 
@@ -149,10 +151,33 @@ class voltage_basic_t : public voltage_t
 {
 public:
 	voltage_basic_t(int num_cells, double voltage);
-	output_map updateVoltage(capacity_t * capacity, double dT);
+	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
 };
 
+class voltage_dynamic_t : public voltage_t
+{
+public:
+	voltage_dynamic_t(int num_cells, double voltage, double *other);
+	void parameter_compute();
+	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
 
+protected:
+	double voltage_model(double capacity, double current,  double q0);
+
+private:
+	double _Vfull;
+	double _Vexp;
+	double _Vnom;
+	double _Qfull;
+	double _Qexp;
+	double _Qnom;
+	double _C_rate;
+	double _R;
+	double _A;
+	double _B;
+	double _E0;
+	double _K;
+};
 
 /*
 Lifetime class.  Currently only one lifetime model anticipated
