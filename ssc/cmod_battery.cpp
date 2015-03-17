@@ -34,6 +34,13 @@ static var_info _cm_vtab_battery[] = {
 	// lithium-ion inputs
 	{ SSC_INPUT, SSC_NUMBER, "qmax_liIon", "Lithium Ion max capacity", "Ah", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "V_liIon", "Lithium Ion nominal voltage", "V", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Vfull", "Fully charged voltage", "V", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Vexp", "Voltage at end of exponential zone", "V", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Vnom", "Voltage at end of nominal zone", "V", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Qfull", "Fully charged capacity", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Qexp", "Capacity at end of exponential zone", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Qnom", "Capacity at end of nominal zone", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "C_rate", "Rate at which voltage vs. capacity curve input", "", "", "Battery", "*", "", "" },
 
 
 	// lifetime inputs
@@ -120,6 +127,13 @@ public:
 		// Lithium Ion properties
 		double qmax_liIon = as_double("qmax_liIon"); // [Ah]
 		double V_liIon = as_double("V_liIon"); // [V]
+		double Vfull = as_double("Vfull");	   // [V]
+		double Vexp = as_double("Vexp");	   // [V]
+		double Vnom = as_double("Vnom");	   // [V]
+		double Qfull = as_double("Qfull");	   // [Ah]
+		double Qexp = as_double("Qexp");	   // [Ah]
+		double Qnom = as_double("Qnom");	   // [Ah]
+		double C_rate = as_double("C_rate");	   // [Ah]
 
 		// Dispatch Timing Control
 		size_t months = 12;
@@ -230,7 +244,11 @@ public:
 
 		// Component Models
 		voltage_copetti_t VoltageModelLeadAcid(num_cells, V20);
-		voltage_basic_t VoltageModelBasic(1, V_liIon);
+		voltage_basic_t VoltageModelBasic(num_cells, V_liIon);
+
+		double other[] = { Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate };
+		voltage_dynamic_t VoltageModelDynamic(num_cells, V_liIon, other);
+
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, V20, tn, 10, qn, q10);
 		capacity_lithium_ion_t CapacityModelLithiumIon(qmax_liIon,V_liIon);
@@ -239,7 +257,7 @@ public:
 		if (battery_chemistry==0)
 			Battery.initialize(&CapacityModelLeadAcid, &VoltageModelLeadAcid, &LifetimeModel, dt);
 		else if (battery_chemistry==1)
-			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelBasic, &LifetimeModel, dt);
+			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelDynamic, &LifetimeModel, dt);
 
 		// Component output
 		output_map CapacityOutput;
