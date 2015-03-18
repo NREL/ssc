@@ -251,7 +251,7 @@ public:
 		battery_t Battery;
 
 		if (battery_chemistry==0)
-			Battery.initialize(&CapacityModelLeadAcid, &VoltageModelLeadAcid, &LifetimeModel, dt);
+			Battery.initialize(&CapacityModelLeadAcid, &VoltageModelDynamic, &LifetimeModel, dt);
 		else if (battery_chemistry==1)
 			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelDynamic, &LifetimeModel, dt);
 
@@ -296,7 +296,7 @@ public:
 			for (size_t jj = 0; jj<step_per_hour; jj++)
 			{
 
-				// current charge state of battery
+				// current charge state of battery from last time step.  
 				double chargeNeededToFill = Battery.chargeNeededToFill();							// [Ah]
 				double battery_voltage = Battery.batteryVoltage();									// [V]
 				double powerNeededToFill = (chargeNeededToFill * battery_voltage)*watt_to_kilowatt;	// [kWh]

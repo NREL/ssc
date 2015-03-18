@@ -142,8 +142,8 @@ public:
 	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
 
 protected:
-	double voltage_charge(double DOD, double q10, double I, double dT);
-	double voltage_discharge(double DOD, double q10, double I, double dT);
+	double voltage_charge(double SOC, double q10, double I, double dT);
+	double voltage_discharge(double SOC, double q10, double I, double dT);
 
 };
 

@@ -56,20 +56,23 @@ capacity_t(q20, V)
 	// compute the parameters
 	parameter_compute();
 
+	// Assume initial current is 20 hour discharge current
+	// Assume initial charge is the maximum 
+	double T = _q0 / _I20;
+	_qmaxI = qmax_of_i_compute(T);
+	_q0 = _qmaxI;
+
 	// Initialize charge quantities.  
 	// Assumes battery is initially fully charged
-	_q1_0 = q20*_c;
+	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
 	_chargeChange = false;
 	_prev_charging = false;
 
-	// Initialize other variables
-	// Assumes initial current is 20 hour discharge current
-	double T = _q0 / _I20;
-	_qmaxI = qmax_of_i_compute(T);
+
 
 	// output structure
-	_output["q0"]= q20;
+	_output["q0"]= _q0;
 	_output["q1"] = _q1_0;
 	_output["q2"] = _q2_0;
 	_output["P"] = _P;
@@ -193,14 +196,16 @@ output_map capacity_kibam_t::updateCapacity(double P, double V, double dt)
 	// update max charge at this current
 	if (fabs(I) > 0)
 		_qmaxI = qmax_of_i_compute(fabs(_qmaxI / I));
-	else
-	{
-		//  just leave alone for timestep?
-		_qmaxI = _qmax;
-	}
 
 	// update the SOC
 	_SOC = (q1 + q2) / _qmaxI;
+	
+	// due to dynamics, it's possible SOC could be slightly above 1 or below 0
+	if (_SOC > 1.)
+		_SOC = 1.;
+	else if (_SOC < 0.)
+		_SOC = 0.;
+
 	_DOD = 1 - _SOC;
 
 	// update internal variables 
@@ -332,15 +337,27 @@ voltage_t(num_cells, voltage)
 output_map voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT, double dt)
 {
 	double I = capacity->getCurrent();
-	double DOD = capacity->getDOD();
 	double q10 = capacity->get10HourCapacity();
+	double I10 = q10 / 10; 
+	double q0 = capacity->getTotalCapacity();
+	double qmaxI = capacity->getMaxCapacityAtCurrent();
+	double DOD = capacity->getDOD();
+
+	double ct = (1.67*q10*(1 + 0.005*dT));
+	double c = ct / (1 + 0.67* std::pow( fabs(I) / I10, 0.9));
+	double qct = (qmaxI-q0) / ct;
+	double qc = (qmaxI-q0) / c;
+	double SOC = 1 - DOD;
+
+	// double qct = DOD;
+	// double qc = (q0 - qmaxI) / ct;
 
 	// discharge
 	if (I > 0)
-		voltage_discharge(DOD, q10, I, dT);
+		voltage_discharge(SOC, q10, I, dT);
 	// charge
 	else if (I < 0)
-		voltage_charge(DOD, q10, fabs(I), dT);
+		voltage_charge(SOC, q10, fabs(I), dT);
 	// or nothing
 
 	_output["voltage_cell"] = _cell_voltage;
@@ -349,25 +366,19 @@ output_map voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT, dou
 	return _output;
 }
 
-double voltage_copetti_t::voltage_charge(double DOD, double q10, double I, double dT)
+double voltage_copetti_t::voltage_charge(double SOC, double q10,  double I, double dT)
 {
-	if (DOD < 0)
-		DOD = 0.;
-
-	double term1 = 2 + 0.16*DOD;
-	double term2 = (I / q10)*(6 / (1 + std::pow(I,0.6)) + 0.48 / std::pow((1 - DOD),1.2) + 0.036);
+	double term1 = 2 - 0.16*SOC;
+	double term2 = (I / q10)*(6 / (1 + std::pow(I,0.86)) + 0.48 / std::pow((1 - SOC),1.2) + 0.036);
 	double term3 = (1 - 0.025 * dT);
 	_cell_voltage = term1 - term2*term3;
 	return (_cell_voltage);
 }
 
-double voltage_copetti_t::voltage_discharge(double DOD, double q10, double I, double dT)
+double voltage_copetti_t::voltage_discharge(double SOC, double q10,  double I, double dT)
 {
-	if (DOD < 0)
-		DOD = 0.;
-
-	double term1 = 2.085 - 0.12*(DOD);
-	double term2 = (1. / q10)*( (4. / (1 + std::pow(I,1.3))) + (0.27 / (1 - std::pow(DOD,1.5))) + 0.02);
+	double term1 = 2.085 - 0.12*(1-SOC);
+	double term2 = (I / q10)*( (4. / (1 + std::pow(I,1.3))) + (0.27 / (std::pow(SOC,1.5))) + 0.02);
 	double term3 = (1. - 0.007 * dT);
 	_cell_voltage = term1 - term2*term3;
 	return (_cell_voltage);
@@ -719,13 +730,10 @@ void battery_t::run(double P, double dT)
 {
 	double lastDOD = _capacity->getDOD();
 
-	if (lastDOD <= 1. && lastDOD >= 0.)
+	if (_capacity->chargeChanged() || _firstStep)
 	{
-		if (_capacity->chargeChanged() || _firstStep)
-		{
-			_LifetimeOutput = runLifetimeModel(lastDOD);
-			_firstStep = false;
-		}
+		_LifetimeOutput = runLifetimeModel(lastDOD);
+		_firstStep = false;
 	}
 
 	_CapacityOutput = runCapacityModel(P, _voltage->getVoltage() );
@@ -770,6 +778,9 @@ output_map battery_t::getLifetimeOutput()
 
 double battery_t::chargeNeededToFill()
 {
+	// Leads to minor discrepency, since gets max capacity from the old time step, which is based on the previous current level
+	// Since the new time step will have a different power requirement, and a different current level, this leads to charge_needed not truly equaling the charge needed at the new current.
+	// I don't know if there is simple way to correct this, or if it is necessary to correct
 	double charge_needed =_capacity->getMaxCapacityAtCurrent() - _capacity->getTotalCapacity();
 	if (charge_needed > 0)
 		return charge_needed;
