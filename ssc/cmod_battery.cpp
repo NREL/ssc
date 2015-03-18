@@ -32,8 +32,6 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"R",					"Battery Internal Resistance",			"Ohm",		"",						"Battery",		"*",						"",									"" },
 
 	// lithium-ion inputs
-	{ SSC_INPUT, SSC_NUMBER, "qmax_liIon", "Lithium Ion max capacity", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "V_liIon", "Lithium Ion nominal voltage", "V", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "Vfull", "Fully charged voltage", "V", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "Vexp", "Voltage at end of exponential zone", "V", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "Vnom", "Voltage at end of nominal zone", "V", "", "Battery", "*", "", "" },
@@ -125,8 +123,6 @@ public:
 		int R = as_double("R"); //		  [Ohm]
 
 		// Lithium Ion properties
-		double qmax_liIon = as_double("qmax_liIon"); // [Ah]
-		double V_liIon = as_double("V_liIon"); // [V]
 		double Vfull = as_double("Vfull");	   // [V]
 		double Vexp = as_double("Vexp");	   // [V]
 		double Vnom = as_double("Vnom");	   // [V]
@@ -244,14 +240,14 @@ public:
 
 		// Component Models
 		voltage_copetti_t VoltageModelLeadAcid(num_cells, V20);
-		voltage_basic_t VoltageModelBasic(num_cells, V_liIon);
+		voltage_basic_t VoltageModelBasic(num_cells, Vnom);
 
 		double other[] = { Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate };
-		voltage_dynamic_t VoltageModelDynamic(num_cells, V_liIon, other);
+		voltage_dynamic_t VoltageModelDynamic(num_cells, Vnom, other);
 
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, V20, tn, 10, qn, q10);
-		capacity_lithium_ion_t CapacityModelLithiumIon(qmax_liIon,V_liIon);
+		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull,Vfull);
 		battery_t Battery;
 
 		if (battery_chemistry==0)
