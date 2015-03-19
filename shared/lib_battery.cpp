@@ -326,64 +326,6 @@ double voltage_t::getCellVoltage()
 	return _cell_voltage;
 }
 
-// Lead-Acid voltage model
-voltage_copetti_t::voltage_copetti_t(int num_cells, double voltage) :
-voltage_t(num_cells, voltage)
-{
-	_output["voltage_cell"] = voltage;
-	_output["voltage_battery"] = voltage*num_cells;
-}
-
-output_map voltage_copetti_t::updateVoltage(capacity_t* capacity, double dT, double dt)
-{
-	double I = capacity->getCurrent();
-	double q10 = capacity->get10HourCapacity();
-	double I10 = q10 / 10; 
-	double q0 = capacity->getTotalCapacity();
-	double qmaxI = capacity->getMaxCapacityAtCurrent();
-	double DOD = capacity->getDOD();
-
-	double ct = (1.67*q10*(1 + 0.005*dT));
-	double c = ct / (1 + 0.67* std::pow( fabs(I) / I10, 0.9));
-	double qct = (qmaxI-q0) / ct;
-	double qc = (qmaxI-q0) / c;
-	double SOC = 1 - DOD;
-
-	// double qct = DOD;
-	// double qc = (q0 - qmaxI) / ct;
-
-	// discharge
-	if (I > 0)
-		voltage_discharge(SOC, q10, I, dT);
-	// charge
-	else if (I < 0)
-		voltage_charge(SOC, q10, fabs(I), dT);
-	// or nothing
-
-	_output["voltage_cell"] = _cell_voltage;
-	_output["voltage_battery"] = _cell_voltage*_num_cells;
-
-	return _output;
-}
-
-double voltage_copetti_t::voltage_charge(double SOC, double q10,  double I, double dT)
-{
-	double term1 = 2 - 0.16*SOC;
-	double term2 = (I / q10)*(6 / (1 + std::pow(I,0.86)) + 0.48 / std::pow((1 - SOC),1.2) + 0.036);
-	double term3 = (1 - 0.025 * dT);
-	_cell_voltage = term1 - term2*term3;
-	return (_cell_voltage);
-}
-
-double voltage_copetti_t::voltage_discharge(double SOC, double q10,  double I, double dT)
-{
-	double term1 = 2.085 - 0.12*(1-SOC);
-	double term2 = (I / q10)*( (4. / (1 + std::pow(I,1.3))) + (0.27 / (std::pow(SOC,1.5))) + 0.02);
-	double term3 = (1. - 0.007 * dT);
-	_cell_voltage = term1 - term2*term3;
-	return (_cell_voltage);
-}
-
 // Dynamic voltage model
 voltage_dynamic_t::voltage_dynamic_t(int num_cells, double voltage, double *other) : 
 voltage_t(num_cells, voltage, other)
