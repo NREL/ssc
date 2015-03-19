@@ -66,6 +66,11 @@ OBJECTS = \
 	cmod_tcsiscc.o \
 	cmod_hcpv.o \
 	cmod_tcsmslf.o \
+	cmod_battery.o \
+	cmod_gridnet.o \
+	cmod_utilityrate3b.o \
+	cmod_user_htf_comparison.o \
+	cmod_sco2_design_cycle.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)

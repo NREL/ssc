@@ -20,7 +20,8 @@ OBJECTS = \
 	lib_util.o \
 	lib_weatherfile.o \
 	lib_windfile.o \
-	lib_windwatts.o
+	lib_windwatts.o \
+	lib_battery.o
 
 
 TARGET=shared.a
