@@ -15,6 +15,10 @@ capacity_t::capacity_t(double q, double V)
 	// Initialize SOC to 1, DOD to 0
 	_SOC = 1;
 	_DOD = 0;
+
+	// Initialize charging states
+	_prev_charging = false;
+	_chargeChange = false;
 }
 
 bool capacity_t::chargeChanged()
@@ -66,10 +70,6 @@ capacity_t(q20, V)
 	// Assumes battery is initially fully charged
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
-	_chargeChange = false;
-	_prev_charging = false;
-
-
 
 	// output structure
 	_output["q0"]= _q0;
@@ -215,7 +215,11 @@ output_map capacity_kibam_t::updateCapacity(double P, double V, double dt)
 	_I = I;
 	_V = V;
 	_P = P;
-	
+	if (I > 0)
+		_prev_charging = false;
+	else
+		_prev_charging = true;
+
 	// return variables
 	_output["q0"] = _q0;
 	_output["q1"] = _q1_0;
@@ -264,6 +268,26 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt)
 	// currently just a tank of coloumbs
 	_I = P / V;
 	P = _P;
+	bool charging = false;
+	bool no_charge = false;
+
+	// charge state 
+	if (_I < 0)
+		charging = true;
+	else if (_I == 0)
+		no_charge = true;
+
+	// Check if charge changed
+	if (charging != _prev_charging && !no_charge)
+		_chargeChange = true;
+	else
+		_chargeChange = false;
+
+	// Update for next time
+	if (_I < 0)
+		_prev_charging = true;
+	else
+		_prev_charging = false;
 
 	// update charge ( I > 0 discharging, I < 0 charging)
 	_q0 -= _I*dt;
@@ -279,7 +303,6 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt)
 	// update SOC, DOD
 	_SOC = _q0 / _qmax;
 	_DOD = 1 - _SOC;
-
 
 	// outputs
 	_output["q0"] = _q0;

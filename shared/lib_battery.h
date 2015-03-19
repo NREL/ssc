@@ -43,6 +43,7 @@ protected:
 	double _SOC; // [0-1] - State of Charge
 	double _DOD; // [0-1] - Depth of Discharge
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
+	bool _prev_charging; // [true/false] - indicates if last state was charging;
 	output_map _output; // Output structure
 };
 
@@ -92,7 +93,6 @@ protected:
 	double _q20; // [Ah] - Capacity at 20 hour discharge rate
 	double _I20; // [A]  - Current at 20 hour discharge rate
 	double _qmaxI;// [Ah] - theoretical max charge at this current
-	bool _prev_charging; // [true/false] - indicates if last state was charging;
 };
 
 /*
