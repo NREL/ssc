@@ -134,19 +134,6 @@ protected:
 	output_map _output;   // output structure
 };
 
-class voltage_copetti_t : public voltage_t
-{
-public:
-	voltage_copetti_t(int num_cells, double voltage);
-
-	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
-
-protected:
-	double voltage_charge(double SOC, double q10, double I, double dT);
-	double voltage_discharge(double SOC, double q10, double I, double dT);
-
-};
-
 class voltage_basic_t : public voltage_t
 {
 public:

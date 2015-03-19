@@ -26,9 +26,7 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"q20",					"Capacity at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"q10",					"Capacity at 10-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"qn",					"Capacity at discharge rate for n-hour rate",	"Ah",		"",				"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"I20",					"Current at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"tn",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"V20",					"Voltage at 20 hour discharge rate",	"V",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"R",					"Battery Internal Resistance",			"Ohm",		"",						"Battery",		"*",						"",									"" },
 
 	// lithium-ion inputs
@@ -117,10 +115,9 @@ public:
 		double q20 = as_double("q20"); // [Ah]
 		double q10 = as_double("q10"); // [Ah]
 		double qn = as_double("qn"); //   [Ah]
-		int I20 = as_double("I20"); //	  [A]
+		double I20 = q20 / 20; //	  [A]
 		int tn = as_double("tn"); //	  [h]
-		int V20 = as_double("V20"); //	  [V]
-		int R = as_double("R"); //		  [Ohm]
+		double R = as_double("R"); //		  [Ohm]
 
 		// Lithium Ion properties
 		double Vfull = as_double("Vfull");	   // [V]
@@ -239,14 +236,11 @@ public:
 		double dT = 0;
 
 		// Component Models
-		voltage_copetti_t VoltageModelLeadAcid(num_cells, V20);
-		voltage_basic_t VoltageModelBasic(num_cells, Vnom);
-
 		double other[] = { Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate };
 		voltage_dynamic_t VoltageModelDynamic(num_cells, Vnom, other);
 
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
-		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, V20, tn, 10, qn, q10);
+		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);
 		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull,Vfull);
 		battery_t Battery;
 
