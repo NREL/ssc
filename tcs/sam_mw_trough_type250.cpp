@@ -541,8 +541,10 @@ private:
 		GlazingIntactIn, P_a, AnnulusGas, AbsorberMaterial, Shadowing, Dirt_HCE, Design_loss, SCAInfoArray;
 
 	util::matrix_t<double> IAM_matrix;
-	int n_c_iam_matrix = 0;
-	int n_r_iam_matrix = 0;
+	//int n_c_iam_matrix = 0;
+	//int n_r_iam_matrix = 0;
+	int n_c_iam_matrix;
+	int n_r_iam_matrix;
 	
 	//Declare variables that require storage from step to step
 	double 
