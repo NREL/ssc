@@ -141,6 +141,7 @@ public:
 	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
 };
 
+// Unnewehr Universal Model
 class voltage_dynamic_t : public voltage_t
 {
 public:
