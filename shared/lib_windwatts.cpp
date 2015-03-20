@@ -269,7 +269,7 @@ double wind_power_calculator::turbine_output_using_weibull(double weibull_k, dou
 {	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((m_dHubHeight/50.0),m_dShearExponent) * resource_class;
-	double denom = exp(gammaln(1+(1/hub_ht_windspeed)));
+	double denom = exp(gammaln(1+(1/weibull_k))); //fixed jmf 2/18/15- weibull_k was accidentally replaced with hub_ht_windspeed previously
 
 	double lambda = hub_ht_windspeed/denom;
 	//double air_density = physics::Pa_PER_Atm * pow( (1-((0.0065*elevation)/288.0)), (physics::GRAVITY_MS2/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation));
@@ -282,15 +282,21 @@ double wind_power_calculator::turbine_output_using_weibull(double weibull_k, dou
 	//std::vector<double> energy_turbine(m_iLengthOfTurbinePowerCurveArray, 0);	// energy from turbine chosen from library
 
 	// weibull_k = 2.10; // used for testing: this is off in the 5th significant digit when passed into SSC from samwx
-	weibull_cummulative[0] = 0.0;
-	weibull_bin[0] = 0.0;
+
+	// CHANGE IN METHODOLOGY JMF 3/17/15
+	/* The cost and scaling model calculates the POINT weibull probability and multiplies it by the width of the bin (0.25 m/s)- implemented by dividing by 4 in "Energy Capture" result.
+	This is effectively a midpoint integration. We were effectively calculating a right-hand integration by assuming that the cumulative weibull_bin (more accurate)
+	should be paired with the power curve at the upper end of the bin. To fix this, we will calculate the weibull probabilities shifted up by half of the bin width 
+	(0.5 * 0.25 m/s = 0.125 m/s), so that the WS lies at the midpoint of the probability bin.
+	*/
+	weibull_cummulative[0] = 1.0 - exp(-pow((0.125) / lambda, weibull_k)); //first bin is probability from 0 to 0.125 m/s
+	weibull_bin[0] = weibull_cummulative[0]; //first bin is equal to first cumulative calculation
 	energy_turbine[0] = 0.0;
 	for (size_t i=1; i<m_iLengthOfTurbinePowerCurveArray; i++)
 	{
-		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i-1] to windspeed[i]
-		weibull_cummulative[i] = 1.0 - exp(-pow(m_adPowerCurveWS[i]/lambda,weibull_k));
+		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i - 0.5*bin_width] to windspeed[i + 0.5*bin_width]
+		weibull_cummulative[i] = 1.0 - exp(-pow((m_adPowerCurveWS[i]+0.125)/lambda,weibull_k)); //the 0.125 shifts the probability bin so that the WS lies at the midpoint of the bin
 		weibull_bin[i] = weibull_cummulative[i] - weibull_cummulative[i-1];
-		// THIS IS NOT FOR THE BIN wind speed[i to i-1]: weibull_probability[i] = ( (weibull_k / pow(lambda,weibull_k)) * pow(wind_speed[i],(weibull_k - 1)) * exp(-pow(wind_speed[i]/lambda,weibull_k)) );
 
 		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
 		energy_turbine[i] = (8760.0 * weibull_bin[i]) * m_adPowerCurveKW[i];
