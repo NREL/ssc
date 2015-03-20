@@ -396,8 +396,7 @@ double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 {
 	// Should increase when charge increases, decrease when charge decreases
 	// everything in here is on a per-cell basis
-	// http://www.posterus.sk/?p=13560
-	// Moore s. ;Ehsani M., “An Empirically based Electrosource Horizon Lead-acid Battery Model”, SAE Transactions, Vol.105, no6, p.p. 421-424, 1996
+	// Unnewehr Universal Model
 
 	double term1 = _R*I;
 	double term2 = _K*(1 - q0/Q);
