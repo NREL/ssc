@@ -296,6 +296,8 @@ public:
 				double powerNeededToFill = (chargeNeededToFill * battery_voltage)*watt_to_kilowatt;	// [kWh]
 				double current_charge = Battery.getCurrentCharge();									// [Ah]
 				double current_power = (current_charge * battery_voltage) *watt_to_kilowatt;		// [KWh]
+				double p_grid = 0.;																	// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
+				double p_tofrom_batt = 0.;															// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 
 				mode = 0; // NO CHARGE, NO DISCHARGE (can be overwritten)
 
@@ -307,7 +309,7 @@ public:
 						if (hourly_energy[count] - e_load[count] > (powerNeededToFill))
 						{
 							p_tofrom_batt = -powerNeededToFill;
-							hourly_energy[count] += p_tofrom_batt;
+							// hourly_energy[count] += p_tofrom_batt;
 							mode = 4; // CHARGED ALL FROM ARRAY
 						}
 						else
@@ -316,14 +318,14 @@ public:
 							if (grid_charge)
 							{
 								p_tofrom_batt = -powerNeededToFill;
-								hourly_energy[count] += (-(hourly_energy[count] - e_load[count]));
+								// hourly_energy[count] += (-(hourly_energy[count] - e_load[count]));
 								p_grid = powerNeededToFill - (hourly_energy[count] - e_load[count]);
 								mode = 2; // CHARGED SOME FROM ARRAY, REST FROM GRID
 							}
 							else
 							{
 								p_tofrom_batt = -(hourly_energy[count] - e_load[count]);
-								hourly_energy[count] += p_tofrom_batt;
+								// hourly_energy[count] += p_tofrom_batt;
 								mode = 3; // CHARGED SOME FROM ARRAY
 							}
 						}
@@ -345,13 +347,13 @@ public:
 						if (e_load[count] - hourly_energy[count] > current_power)
 						{
 							p_tofrom_batt = current_power;
-							hourly_energy[count] += p_tofrom_batt;
+							// hourly_energy[count] += p_tofrom_batt;
 							mode = -2; // DISCHARGED ALL TO MEET SOME OF LOAD
 						}
 						else
 						{
 							p_tofrom_batt = e_load[count] - hourly_energy[count];
-							hourly_energy[count] += p_tofrom_batt;
+							// hourly_energy[count] += p_tofrom_batt;
 							mode = -1; // DISCHARGED SOME TO MEET ALL OF LOAD
 						}
 					}
@@ -390,7 +392,7 @@ public:
 				outDamage[count] = (ssc_number_t)(LifetimeOutput["Damage"]);
 				outCycles[count] = (int)(LifetimeOutput["Cycles"]);
 				outBatteryEnergy[count] = p_tofrom_batt;
-				outGridEnergy[count] = hourly_energy[count] - e_load[count];
+				outGridEnergy[count] = p_grid;
 
 				// Dispatch output
 				outDispatchProfile[count] = profile;

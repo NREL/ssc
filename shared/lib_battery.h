@@ -24,6 +24,7 @@ public:
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
 	virtual output_map updateCapacity(double P, double V, double dt)=0;
+	virtual double getMaxCapacity() = 0;
 	virtual double getMaxCapacityAtCurrent() = 0;
 	virtual double getAvailableCapacity() = 0;
 	virtual double get10HourCapacity() = 0;
@@ -58,6 +59,7 @@ public:
 	capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2);
 	output_map updateCapacity(double P, double V, double dt);
 	double getAvailableCapacity();
+	double getMaxCapacity();
 	double getMaxCapacityAtCurrent();
 	double get10HourCapacity();
 	double get20HourCapacity();
@@ -105,6 +107,7 @@ public:
 
 	// override public api
 	output_map updateCapacity(double P, double V, double dt);
+	double getMaxCapacity();
 	double getMaxCapacityAtCurrent();
 	double getAvailableCapacity();
 	double get10HourCapacity();
