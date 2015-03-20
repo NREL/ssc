@@ -198,7 +198,7 @@ output_map capacity_kibam_t::updateCapacity(double P, double V, double dt)
 		_qmaxI = qmax_of_i_compute(fabs(_qmaxI / I));
 
 	// update the SOC
-	_SOC = (q1 + q2) / _qmaxI;
+	_SOC = (q1 + q2) / _qmax;
 	
 	// due to dynamics, it's possible SOC could be slightly above 1 or below 0
 	if (_SOC > 1.)
@@ -235,6 +235,10 @@ output_map capacity_kibam_t::updateCapacity(double P, double V, double dt)
 double capacity_kibam_t::getAvailableCapacity()
 {
 	return _q1_0;
+}
+double capacity_kibam_t::getMaxCapacity()
+{
+	return _qmax;
 }
 double capacity_kibam_t::getMaxCapacityAtCurrent()
 {
@@ -318,6 +322,10 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt)
 double capacity_lithium_ion_t::getAvailableCapacity()
 {
 	return _q0;
+}
+double capacity_lithium_ion_t::getMaxCapacity()
+{
+	return _qmax;
 }
 double capacity_lithium_ion_t::getMaxCapacityAtCurrent()
 {
@@ -745,7 +753,8 @@ double battery_t::chargeNeededToFill()
 	// Leads to minor discrepency, since gets max capacity from the old time step, which is based on the previous current level
 	// Since the new time step will have a different power requirement, and a different current level, this leads to charge_needed not truly equaling the charge needed at the new current.
 	// I don't know if there is simple way to correct this, or if it is necessary to correct
-	double charge_needed =_capacity->getMaxCapacityAtCurrent() - _capacity->getTotalCapacity();
+	// double charge_needed =_capacity->getMaxCapacityAtCurrent() - _capacity->getTotalCapacity();
+	double charge_needed = _capacity->getMaxCapacity() - _capacity->getTotalCapacity();
 	if (charge_needed > 0)
 		return charge_needed;
 	else
