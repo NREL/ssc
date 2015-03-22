@@ -613,110 +613,111 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_without_system", "Electricity cost without system", "$/yr", "", "Annual", "*", "LENGTH_EQUAL=analysis_period", "" },
 
 	// year 1 values for metrics
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity cost with system",    "$/yr", "", "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity cost without system", "$/yr", "", "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Year 1 savings",                  "$",    "", "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Year 1 total electric load",      "kWh",  "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity cost with system",    "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity cost without system", "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Electricity savings",             "$/yr",    "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Electricity load",                "kWh/yr",  "", "Financial Metrics", "*", "", "" },
 
 
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 electricity to/from grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_tofromgrid",         "Year 1 electricity to/from grid",       "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_tofromgrid",         "Electricity to/from grid",       "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_output",  "Year 1 hourly electricity from system",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_demand",       "Year 1 hourly electricity from grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Year 1 hourly electric load",     "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Electricity load",     "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Electricity to/from grid peak", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_demand",       "Year 1 subhourly peak from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Year 1 subhourly peak load", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Electricity peak load met by system", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
 	
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_with_system",     "Year 1 hourly sales/purchases with sytem",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Year 1 hourly sales/purchases with sytem",    "$", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with sytem",    "$", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_with_system",     "Year 1 hourly electricity purchases with system",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_with_system",      "Year 1 hourly electricity sales with system",     "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_with_system",       "Year 1 hourly energy charge with system",      "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_without_system",  "Year 1 hourly sales/purchases without sytem", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_without_system",  "Year 1 hourly sales/purchases without sytem", "$", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_without_system",  "Electricity sales/purchases without sytem", "$", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_payment_without_system",  "Year 1 hourly electricity purchases without system", "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_without_system",   "Year 1 hourly electricity sales without system",  "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_without_system",    "Year 1 hourly energy charge without system",   "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_with_system",       "Year 1 demand charge by hour with system",      "$/kW", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_without_system",       "Year 1 demand charge by hour without system",      "$/kW", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_with_system",        "Electricity demand charge with system",      "$/kW", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_without_system",     "Electricity demand charge without system",      "$/kW", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_ec_tou_schedule",       "Hourly energy charge TOU period",      "", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "Hourly demand charge TOU period",      "", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_ec_tou_schedule",       "Electricity TOU period for energy charges", "", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "Electricity TOU period for demand charges", "", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_peak_per_period",    "Electricity from grid peak per TOU period",        "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Year 1 monthly demand charge (Fixed) with system",    "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_with_system",        "Year 1 monthly demand charge (TOU) with system",      "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_with_system",     "Year 1 monthly energy charge with system",            "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Electricity demand charge (Fixed) with system",    "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_with_system",        "Electricity demand charge (TOU) with system",      "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_with_system",     "Electricity energy charge with system",            "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_with_system",       "Year 1 monthly energy rate with system",              "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_without_system",   "Year 1 monthly demand charge (Fixed) without system", "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_without_system",     "Year 1 monthly demand charge (TOU) without system",   "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_without_system",  "Year 1 monthly energy charge without system",         "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_without_system",   "Electricity demand charge (Fixed) without system", "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_without_system",     "Electricity demand charge (TOU) without system",   "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_without_system",  "Electricity energy charge without system",         "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_without_system",    "Year 1 monthly energy rate without system",           "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 
 
 	// monthly outputs from Sean 7/29/13 "Net Metering Accounting.xlsx" updates from Paul and Sean 8/9/13 and 8/12/13
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_load",    "Year 1 monthly electric load",           "kWh", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_load",    "Electricity load",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "Year 1 monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Year 1 monthly electricity to/from grid",           "kWh", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Year 1 monthly net metering credit",           "kWh", "", "Monthly",          "*",                         "LENGTH=12",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases",    "Year 1 monthly sales/purchases with system",           "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases_wo_sys",    "Year 1 monthly sales/purchases without system",           "$", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Electricity net metering credit",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases",    "Electricity sales/purchases with system",           "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_salespurchases_wo_sys",    "Electricity sales/purchases without system",           "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 
 
 
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jan",      "Demand Charge (Fixed) in Jan",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_feb",      "Demand Charge (Fixed) in Feb",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_mar",      "Demand Charge (Fixed) in Mar",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_apr",      "Demand Charge (Fixed) in Apr",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_may",      "Demand Charge (Fixed) in May",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jun",      "Demand Charge (Fixed) in Jun",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jul",      "Demand Charge (Fixed) in Jul",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_aug",      "Demand Charge (Fixed) in Aug",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_sep",      "Demand Charge (Fixed) in Sep",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_oct",      "Demand Charge (Fixed) in Oct",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_nov",      "Demand Charge (Fixed) in Nov",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_dec",      "Demand Charge (Fixed) in Dec",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jan",      "Demand charge (fixed) in Jan",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_feb",      "Demand charge (fixed) in Feb",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_mar",      "Demand charge (fixed) in Mar",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_apr",      "Demand charge (fixed) in Apr",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_may",      "Demand charge (fixed) in May",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jun",      "Demand charge (fixed) in Jun",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jul",      "Demand charge (fixed) in Jul",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_aug",      "Demand charge (fixed) in Aug",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_sep",      "Demand charge (fixed) in Sep",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_oct",      "Demand charge (fixed) in Oct",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_nov",      "Demand charge (fixed) in Nov",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_dec",      "Demand charge (fixed) in Dec",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 
 		
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jan",        "Demand Charge (TOU) in Jan",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_feb",        "Demand Charge (TOU) in Feb",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_mar",        "Demand Charge (TOU) in Mar",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_apr",        "Demand Charge (TOU) in Apr",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_may",        "Demand Charge (TOU) in May",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jun",        "Demand Charge (TOU) in Jun",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jul",        "Demand Charge (TOU) in Jul",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_aug",        "Demand Charge (TOU) in Aug",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_sep",        "Demand Charge (TOU) in Sep",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_oct",        "Demand Charge (TOU) in Oct",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_nov",        "Demand Charge (TOU) in Nov",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_dec",        "Demand Charge (TOU) in Dec",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jan",        "Demand charge (TOU) in Jan",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_feb",        "Demand charge (TOU) in Feb",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_mar",        "Demand charge (TOU) in Mar",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_apr",        "Demand charge (TOU) in Apr",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_may",        "Demand charge (TOU) in May",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jun",        "Demand charge (TOU) in Jun",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jul",        "Demand charge (TOU) in Jul",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_aug",        "Demand charge (TOU) in Aug",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_sep",        "Demand charge (TOU) in Sep",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_oct",        "Demand charge (TOU) in Oct",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_nov",        "Demand charge (TOU) in Nov",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_dec",        "Demand charge (TOU) in Dec",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jan",            "Energy Charge in Jan",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_feb",            "Energy Charge in Feb",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_mar",            "Energy Charge in Mar",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_apr",            "Energy Charge in Apr",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_may",            "Energy Charge in May",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jun",            "Energy Charge in Jun",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jul",            "Energy Charge in Jul",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_aug",            "Energy Charge in Aug",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_sep",            "Energy Charge in Sep",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_oct",            "Energy Charge in Oct",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_nov",            "Energy Charge in Nov",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_dec",            "Energy Charge in Dec",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jan",            "Energy charge in Jan",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_feb",            "Energy charge in Feb",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_mar",            "Energy charge in Mar",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_apr",            "Energy charge in Apr",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_may",            "Energy charge in May",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jun",            "Energy charge in Jun",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jul",            "Energy charge in Jul",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_aug",            "Energy charge in Aug",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_sep",            "Energy charge in Sep",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_oct",            "Energy charge in Oct",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_nov",            "Energy charge in Nov",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_dec",            "Energy charge in Dec",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 	
 var_info_invalid };
 
@@ -849,7 +850,7 @@ public:
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
 			payment(8760), income(8760), price(8760), demand_charge(8760), 
-			ec_tou_sched(8760), dc_tou_sched(8760), load(8760),
+			ec_tou_sched(8760), dc_tou_sched(8760), load(8760), dc_hourly_peak(8760),
 			e_tofromgrid(8760), p_tofromgrid(8760),	salespurchases(8760);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12),
@@ -927,7 +928,7 @@ public:
 				&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0] );
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0] );
 
 			if (i == 0)
 			{
@@ -939,8 +940,9 @@ public:
 //				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
 //				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
 				assign( "year1_hourly_ec_tou_schedule", var_data( &ec_tou_sched[0], 8760) );
-				assign( "year1_hourly_dc_tou_schedule", var_data( &dc_tou_sched[0], 8760) );
-				
+				assign("year1_hourly_dc_tou_schedule", var_data(&dc_tou_sched[0], 8760));
+				assign("year1_hourly_dc_peak_per_period", var_data(&dc_hourly_peak[0], 8760));
+
 				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
 				{
@@ -1004,7 +1006,7 @@ public:
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0] );
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0] );
 
 			if (i == 0)
 			{
@@ -1138,7 +1140,7 @@ public:
 					energy_use[m] += e_grid[c];
 					// Sean's sign convention
 					monthly_load[m] -= e_load[c];
-					monthly_generation[m] += e_sys[c];
+					monthly_generation[m] += e_sys[c]; // does not include first year sys_scale
 					monthly_elec_to_grid[m] += e_grid[c];
 // 9/10/13 update from Paul
 					monthly_salespurchases[m] += salespurchases[c];
@@ -1172,12 +1174,12 @@ public:
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12],
-		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760] ) throw(general_error)
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], ssc_number_t dc_hourly_peak[8760]) throw(general_error)
 	{
 		int i;
 
 		for (i=0;i<8760;i++)
-			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = 0.0;
+			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = 0.0;
 
 		for (i=0;i<12;i++)
 		{
@@ -1194,7 +1196,7 @@ public:
 
 		// process demand charges
 		if (as_boolean("ur_dc_enable"))
-			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou, dc_tou_sched );
+			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou, dc_tou_sched, dc_hourly_peak );
 
 		// process energy charges
 		if (as_boolean("ur_ec_enable"))
@@ -1775,7 +1777,8 @@ public:
 			ssc_number_t demand_charge[8760],
 			ssc_number_t dc_fixed[12],
 			ssc_number_t dc_tou[12],
-			ssc_number_t dc_tou_sched[8760] )
+			ssc_number_t dc_tou_sched[8760], 
+			ssc_number_t dc_hourly_peak[8760])
 	{
 		int i,m,d,h,c,tier;
 
@@ -1803,13 +1806,17 @@ public:
 		{
 			ssc_number_t charge = 0.0;
 			ssc_number_t mpeak = 0.0;  // peak usage for the month (negative value)
-			ssc_number_t peak_demand=0;
-			for (d=0;d<util::nday[m];d++)
+			ssc_number_t peak_demand = 0;
+			int peak_hour = 0;
+			for (d = 0; d<util::nday[m]; d++)
 			{
 				for (h=0;h<24;h++)
 				{
 					if (p[c] < 0 && p[c] < mpeak)
+					{
 						mpeak = p[c];
+						peak_hour = c;
+					}
 
 					if (d==util::nday[m]-1 && h==23)
 					{
@@ -1835,6 +1842,7 @@ public:
 						dc_fixed[m] = charge;
 						payment[c] += dc_fixed[m];
 						demand_charge[c] = charge;
+						dc_hourly_peak[peak_hour] = peak_demand;
 					}
 
 					c++;
@@ -1905,10 +1913,15 @@ public:
 
 		// find peak demand per month for each of the twelve periods
 		ssc_number_t ppeaks[12]; // period peak demand 
-		c=0;
+		ssc_number_t phpeaks[12]; // period peak demand hour
+		c = 0;
 		for (m=0;m<12;m++)
 		{
-			for (i=0;i<12;i++) ppeaks[i] = 0; // reset each month
+			for (i = 0; i < 12; i++)
+			{
+				ppeaks[i] = 0; // reset each month
+				phpeaks[i] = 0; // reset each month
+			}
 
 			for (d=0;d<util::nday[m];d++)
 			{
@@ -1916,17 +1929,22 @@ public:
 				{
 					int todp = tod[c]-1;
 					if (p[c] < 0 && p[c] < ppeaks[todp])
+					{
 						ppeaks[todp] = p[c];
+						phpeaks[todp] = c;
+					}
 
 					if (d==util::nday[m]-1 && h==23)
 					{
 						// sum up all peak demand charges at end of month
 						ssc_number_t charge=0;
 						ssc_number_t peak_demand=0;
+						int peak_hour = 0;
 						for (period=0;period<12;period++)
 						{
 							tier=0;
 							peak_demand=-ppeaks[period];
+							peak_hour = phpeaks[period];
 							while (tier<6)
 							{
 								// add up the charge amount for this block
@@ -1943,10 +1961,12 @@ public:
 
 								tier++;
 							}
+							dc_hourly_peak[peak_hour] = peak_demand;
 						}
 						// add to payments
 						dc_tou[m] = charge;
 						payment[c] += dc_tou[m]; // apply to last hour of the month
+						demand_charge[c] += charge; // add TOU charge to hourly demand charge
 					}
 
 					c++;
