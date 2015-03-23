@@ -726,16 +726,17 @@ double life_vs_DOD(double R, double * a, void * user_data)
 Define Battery 
 */
 battery_t::battery_t(){};
-battery_t::battery_t(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, double dt)
+battery_t::battery_t(int num_batteries, double power_conversion_efficiency, double dt)
 {
-	initialize(capacity, voltage, lifetime, dt);
+	_num_batteries = num_batteries;
+	_power_conversion_efficiency = power_conversion_efficiency;
+	_dt = dt;
 }
-void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, double dt)
+void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime)
 {
 	_capacity = capacity;
 	_lifetime = lifetime;
 	_voltage = voltage;
-	_dt = dt;
 	_firstStep = true;
 }
 
@@ -815,8 +816,92 @@ double battery_t::batteryVoltage()
 {
 	return _voltage->getVoltage();
 }
+
 /*
-Non-class function
+Define Battery Bank
+*/
+battery_bank_t::battery_bank_t(battery_t * battery, int num_batteries, int battery_chemistry, double power_conversion_efficiency)
+{
+	_battery = battery;
+	_num_batteries = num_batteries;
+	_battery_chemistry = battery_chemistry;
+	_power_conversion_efficiency = power_conversion_efficiency; // currently unused
+
+	adjustOutputs();
+}
+output_map battery_bank_t::run(double P, double dT)
+{
+	_battery->run(P / _num_batteries, dT);
+	adjustOutputs();
+	return _output;
+}
+output_map battery_bank_t::finish()
+{
+	_battery->finish();
+	
+	// lifetime output update
+	output_map LifetimeOutput = _battery->getLifetimeOutput();
+	_output["Damage"] = LifetimeOutput["Damage"];
+	_output["Cycles"] = LifetimeOutput["Cycles"];
+	return _output;
+}
+double battery_bank_t::chargeNeededToFill()
+{
+	return ( _num_batteries*_battery->chargeNeededToFill() );
+}
+double battery_bank_t::getCurrentCharge()
+{
+	return ( _num_batteries*_battery->getCurrentCharge() );
+}
+double battery_bank_t::getBankVoltage()
+{
+	return _num_batteries*_battery->batteryVoltage();
+}
+output_map battery_bank_t::getOutputs()
+{
+	adjustOutputs();
+	return _output;
+}
+void battery_bank_t::adjustOutputs()
+{
+	// outputs are on a single battery basis
+	// needs to be adjusted for battery bank
+	output_map CapacityOutput = _battery->getCapacityOutput();
+	output_map VoltageOutput = _battery->getVoltageOutput();
+
+	// lifetime outputs do not need adjustment
+	output_map LifetimeOutput = _battery->getLifetimeOutput();
+
+	// capacity output adjustment
+	if (_battery_chemistry == 0)
+	{
+		_output["q1"] = _num_batteries*CapacityOutput["q1"];
+		_output["q2"] = _num_batteries*CapacityOutput["q2"];
+		_output["qmaxI"] = _num_batteries*CapacityOutput["qmaxI"];
+	}
+	else
+		_output["qmax"] = _num_batteries*CapacityOutput["qmax"];
+
+
+	_output["q0"] = _num_batteries*CapacityOutput["q0"];
+	_output["P"] = 0;
+	_output["SOC"] = CapacityOutput["SOC"];
+	_output["DOD"] = CapacityOutput["DOD"];
+	_output["I"] = CapacityOutput["I"];
+
+	// voltage output 
+	_output["voltage_bank"] = _num_batteries*VoltageOutput["voltage_battery"];
+	_output["voltage_battery"] = VoltageOutput["voltage_battery"];
+	_output["voltage_cell"] = VoltageOutput["voltage_cell"];
+
+	// lifetime output
+	_output["Damage"] = LifetimeOutput["Damage"];
+	_output["Cycles"] = LifetimeOutput["Cycles"];
+}
+
+
+/*
+Non-class functions
 */
 void getMonthHour(int hourOfYear, int * out_month, int * out_hour)
 {

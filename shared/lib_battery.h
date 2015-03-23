@@ -14,6 +14,7 @@ const double kilowatt_to_watt = 1000;
 typedef std::map<std::string, double> output_map;
 /*
 Base class from which capacity models derive
+Note, all capacity models are based on the capacity of one battery
 */
 
 class capacity_t
@@ -130,6 +131,7 @@ protected:
 
 /*
 Voltage Base class.  
+All voltage models are based on one-cell, but return the voltage for one battery
 */
 class voltage_t
 {
@@ -244,8 +246,8 @@ class battery_t
 {
 public:
 	battery_t();
-	battery_t(capacity_t *, voltage_t *, lifetime_t *, double dt);
-	void initialize(capacity_t *, voltage_t *, lifetime_t *, double dt);
+	battery_t(int num_batteries, double power_conversion_efficiency, double dt);
+	void initialize(capacity_t *, voltage_t *, lifetime_t *);
 
 	// Run all
 	void run(double P, double dT);
@@ -273,13 +275,38 @@ private:
 	lifetime_t * _lifetime;
 	voltage_t * _voltage;
 	double _dt;
+	int _num_batteries;
+	double _power_conversion_efficiency;
 	bool _firstStep;
 	output_map _CapacityOutput;
 	output_map _LifetimeOutput;
 	output_map _VoltageOutput;
 };
 
-#endif
+/* 
+Battery bank class
+Accounts for multiple batteries and power conversion efficiency
+*/
+class battery_bank_t
+{
+public:
+	battery_bank_t(battery_t * battery, int num_batteries, int battery_chemistry, double power_conversion_efficiency);
+	output_map run(double P, double dT);
+	output_map finish();
+	double chargeNeededToFill();
+	double getCurrentCharge();
+	double getBankVoltage();
+	output_map getOutputs();
+
+protected:
+	void adjustOutputs();
+	battery_t * _battery;
+	int _num_batteries;
+	int _battery_chemistry;
+	double _power_conversion_efficiency;
+	output_map _output;
+
+};
 
 /*
 Non-class functions
@@ -288,3 +315,5 @@ double life_vs_DOD(double R, double *a, void * user_data);
 double capacity_vs_cycles(double cycles, double *a, void *user_data);
 void getMonthHour(int hourOfYear, int * month, int * hour);
 bool compare(int, int);
+
+#endif

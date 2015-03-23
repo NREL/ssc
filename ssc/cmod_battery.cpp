@@ -19,15 +19,18 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,		SSC_STRING,		"solar_resource_file",	"local weather file path",				"",			"",						"Weather",		"*",						"LOCAL_FILE",						"" },
 
 	// generic battery inputs
+	{ SSC_INPUT, SSC_NUMBER, "num_batteries", "Number of Batteries in Serial", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "num_cells", "Number of Cells in Battery", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_chemistry", "Battery Chemistry", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "R", "Battery Internal Resistance", "Ohm", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "power_conversion_efficiency", "Power Conversion Efficiency", "", "", "Battery", "*", "", "" },
+
 
 	// lead-acid inputs
 	{ SSC_INPUT,		SSC_NUMBER,		"q20",					"Capacity at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"q10",					"Capacity at 10-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"qn",					"Capacity at discharge rate for n-hour rate",	"Ah",		"",				"Battery",		"*",						"",									"" },
 	{ SSC_INPUT,		SSC_NUMBER,		"tn",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"R",					"Battery Internal Resistance",			"Ohm",		"",						"Battery",		"*",						"",									"" },
 
 	// lithium-ion inputs
 	{ SSC_INPUT, SSC_NUMBER, "Vfull", "Fully charged voltage", "V", "", "Battery", "*", "", "" },
@@ -81,6 +84,7 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_cell", "Cell Voltage", "V", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_battery", "Battery Voltage", "V", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "voltage_bank", "Battery Bank Voltage", "V", "", "Battery", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "Damage", "Fractional Damage", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Cycles", "Number of Cycles", "", "", "Battery", "*", "", "" },
@@ -110,8 +114,12 @@ public:
 		********************************************************************** */
 
 		// generic battery properties
+		int num_batteries = as_integer("num_batteries");
 		int num_cells = as_integer("num_cells");
+		double power_conversion_efficiency = as_integer("power_conversion_efficiency");
 		int battery_chemistry = as_integer("battery_chemistry");
+		double R = as_double("R"); //		  [Ohm]
+
 
 		// Lead acid battery properties 		
 		double q20 = as_double("q20"); // [Ah]
@@ -119,7 +127,6 @@ public:
 		double qn = as_double("qn"); //   [Ah]
 		double I20 = q20 / 20; //	  [A]
 		int tn = as_double("tn"); //	  [h]
-		double R = as_double("R"); //		  [Ohm]
 
 		// Lithium Ion properties
 		double Vfull = as_double("Vfull");	   // [V]
@@ -228,6 +235,7 @@ public:
 		ssc_number_t *outCurrent = allocate("I", nrec);
 		ssc_number_t *outCellVoltage = allocate("voltage_cell", nrec);
 		ssc_number_t *outBatteryVoltage = allocate("voltage_battery", nrec);
+		ssc_number_t *outBatteryBankVoltage = allocate("voltage_bank", nrec);
 		ssc_number_t *outDamage = allocate("Damage", nrec);
 		ssc_number_t *outCycles = allocate("Cycles", nrec);
 		ssc_number_t *outBatteryEnergy = allocate("battery_energy", nrec);
@@ -254,17 +262,17 @@ public:
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);
 		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull, Vfull, capacities_vect, cycle_capacities_vect);
-		battery_t Battery;
+		battery_t Battery(num_batteries, power_conversion_efficiency, dt);
 
 		if (battery_chemistry==0)
-			Battery.initialize(&CapacityModelLeadAcid, &VoltageModelDynamic, &LifetimeModel, dt);
+			Battery.initialize(&CapacityModelLeadAcid, &VoltageModelDynamic, &LifetimeModel);
 		else if (battery_chemistry==1)
-			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelDynamic, &LifetimeModel, dt);
+			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelDynamic, &LifetimeModel);
+
+		battery_bank_t BatteryBank(&Battery, num_batteries, battery_chemistry, power_conversion_efficiency);
 
 		// Component output
-		output_map CapacityOutput;
-		output_map VoltageOutput;
-		output_map LifetimeOutput;
+		output_map BatteryBankOutput;
 		/* *********************************************************************************************
 		Storage Dispatch Initialization
 		*********************************************************************************************** */
@@ -303,11 +311,11 @@ public:
 			{
 
 				// current charge state of battery from last time step.  
-				double chargeNeededToFill = Battery.chargeNeededToFill();							// [Ah]
-				double battery_voltage = Battery.batteryVoltage();									// [V]
-				double powerNeededToFill = (chargeNeededToFill * battery_voltage)*watt_to_kilowatt;	// [kWh]
-				double current_charge = Battery.getCurrentCharge();									// [Ah]
-				double current_power = (current_charge * battery_voltage) *watt_to_kilowatt;		// [KWh]
+				double chargeNeededToFill = BatteryBank.chargeNeededToFill();						// [Ah]
+				double bank_voltage = BatteryBank.getBankVoltage();									// [V]
+				double powerNeededToFill = (chargeNeededToFill * bank_voltage)*watt_to_kilowatt;	// [kWh]
+				double current_charge = BatteryBank.getCurrentCharge();								// [Ah]
+				double current_power = (current_charge * bank_voltage) *watt_to_kilowatt;			// [KWh]
 				double p_grid = 0.;																	// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
 				double p_tofrom_batt = 0.;															// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 
@@ -379,33 +387,31 @@ public:
 				}
 
 				// Run Battery Model to update charge based on charge/discharge
-				Battery.run(kilowatt_to_watt*p_tofrom_batt, dT);
-				CapacityOutput = Battery.getCapacityOutput();
-				LifetimeOutput = Battery.getLifetimeOutput();
-				VoltageOutput = Battery.getVoltageOutput();
+				BatteryBankOutput = BatteryBank.run(kilowatt_to_watt*p_tofrom_batt, dT);
 
 				// Capacity Output 
 				if (battery_chemistry == 0)
 				{
-					outAvailableCharge[count] = (ssc_number_t)(CapacityOutput["q1"]);
-					outBoundCharge[count] = (ssc_number_t)(CapacityOutput["q2"]);
-					outMaxChargeAtCurrent[count] = (ssc_number_t)(CapacityOutput["qmaxI"]);
+					outAvailableCharge[count] = (ssc_number_t)(BatteryBankOutput["q1"]);
+					outBoundCharge[count] = (ssc_number_t)(BatteryBankOutput["q2"]);
+					outMaxChargeAtCurrent[count] = (ssc_number_t)(BatteryBankOutput["qmaxI"]);
 				}
 				else
-					outMaxCharge[count] = (ssc_number_t)(CapacityOutput["qmax"]);
+					outMaxCharge[count] = (ssc_number_t)(BatteryBankOutput["qmax"]);
 
-				outTotalCharge[count] = (ssc_number_t)(CapacityOutput["q0"]);
-				outSOC[count] = (ssc_number_t)(CapacityOutput["SOC"]);
-				outDOD[count] = (ssc_number_t)(CapacityOutput["DOD"]);
-				outCurrent[count] = (ssc_number_t)(CapacityOutput["I"]);
+				outTotalCharge[count] = (ssc_number_t)(BatteryBankOutput["q0"]);
+				outSOC[count] = (ssc_number_t)(BatteryBankOutput["SOC"]);
+				outDOD[count] = (ssc_number_t)(BatteryBankOutput["DOD"]);
+				outCurrent[count] = (ssc_number_t)(BatteryBankOutput["I"]);
 
 				// Voltage Output
-				outCellVoltage[count] = (ssc_number_t)(VoltageOutput["voltage_cell"]);
-				outBatteryVoltage[count] = (ssc_number_t)(VoltageOutput["voltage_battery"]);
+				outCellVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_cell"]);
+				outBatteryVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_battery"]);
+				outBatteryBankVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_bank"]);
 
 				// Lifetime Output
-				outDamage[count] = (ssc_number_t)(LifetimeOutput["Damage"]);
-				outCycles[count] = (int)(LifetimeOutput["Cycles"]);
+				outDamage[count] = (ssc_number_t)(BatteryBankOutput["Damage"]);
+				outCycles[count] = (int)(BatteryBankOutput["Cycles"]);
 				outBatteryEnergy[count] = p_tofrom_batt;
 				outGridEnergy[count] = p_grid;
 
@@ -418,13 +424,11 @@ public:
 		} // End loop over hourly
 
 
-
 		// Have to finish up the lifetime model
-		Battery.finish();
-		LifetimeOutput = Battery.getLifetimeOutput();
+		BatteryBankOutput = BatteryBank.finish();
 
-		outDamage[count - 1] = (ssc_number_t)(LifetimeOutput["Damage"]);
-		outCycles[count - 1] = (int)(LifetimeOutput["Cycles"]);
+		outDamage[count - 1] = (ssc_number_t)(BatteryBankOutput["Damage"]);
+		outCycles[count - 1] = (int)(BatteryBankOutput["Cycles"]);
 	}
 
 };
