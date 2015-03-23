@@ -263,19 +263,19 @@ capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V, std::vector<d
 
 	// fit polynomial to cycles vs capacity
 	_n = capacities.size();
-	// _cycle_vect = new double[_n];
-	// _capacities_vect = new double[_n];
-	// _a = new double[_n];
+	_cycle_vect = new double[_n];
+	_capacities_vect = new double[_n];
+	 _a = new double[_n];
 
-	for (int i = 0; i != _n; i++)
+	for (int i = 0; i < _n; i++)
 	{
-		_capacities_vect.push_back(capacities[i]);
-		_cycle_vect.push_back(cycles[i]);
+		_capacities_vect[i] = (capacities[i]);
+		_cycle_vect[i] = (cycles[i]);
+		_a[i] = 0;
 	}
 
 	// Perform Curve fit
-	// int info = lsqfit(capacity_vs_cycles, 0, _a, _n, _capacities_vect, _cycle_vect, _n);
-	_m = (_capacities_vect[_n - 1] - _capacities_vect[0]) / (_cycle_vect[_n - 1] - _cycle_vect[0]);
+	int info = lsqfit(capacity_vs_cycles, 0, _a, _n, _cycle_vect, _capacities_vect, _n);
 
 	_output["q0"] = q;
 	_output["qmax"] = _qmax;
@@ -286,15 +286,14 @@ capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V, std::vector<d
 };
 capacity_lithium_ion_t::~capacity_lithium_ion_t()
 {
-	// delete[] _cycle_vect;
-	// delete[] _capacities_vect;
-	// delete[] _a;
+	delete[] _cycle_vect;
+	delete[] _capacities_vect;
+	delete[] _a;
 }
 output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt, int cycles)
 {
 	// update maximum capacity based on number of cycles
-	// double capacity_modifier = capacity_vs_cycles(cycles, _a, 0);
-	double capacity_modifier = _capacities_vect[0] + _m*(cycles - _cycle_vect[0]);
+	 double capacity_modifier = capacity_vs_cycles(cycles, _a, 0);
 	 _qmax = _qmax0 * capacity_modifier / 100;
 
 	// currently just a tank of coloumbs
@@ -367,9 +366,8 @@ double capacity_lithium_ion_t::get10HourCapacity()
 
 double capacity_vs_cycles(double cycles, double * a, void * user_data)
 {
-	return (a[0] + a[1] * cycles + a[2]*std::pow(cycles,2) /* + a[3]*std::pow(cycles,3) */ );
+	return (a[0] + a[1] * cycles + a[2] * pow(cycles, 2) + a[3] * pow(cycles, 3));
 }
-
 
 /*
 Define Voltage Model
