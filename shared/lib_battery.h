@@ -118,12 +118,9 @@ public:
 protected:
 	double _qmax; // [Ah] - maximum possible capacity
 	double _qmax0; // [Ah] - original maximum capacity
-	// double * _capacities_vect; // % of original
-	// double *_cycle_vect; 
-	std::vector<double> _capacities_vect;
-	std::vector<double> _cycle_vect;
-	// double *_a;
-	double _m; // slope
+	double * _capacities_vect; // % of original
+	double *_cycle_vect; 
+	double *_a;
 	int _n; // number of points
 
 };
