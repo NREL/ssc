@@ -153,7 +153,7 @@ void capacity_kibam_t::parameter_compute()
 	_qmax = qmax_compute();
 }
 
-output_map capacity_kibam_t::updateCapacity(double P, double V, double dt)
+output_map capacity_kibam_t::updateCapacity(double P, double V, double dt, int cycles)
 {
 	double I = P / V;
 	double Idmax = 0.;
@@ -256,19 +256,47 @@ double capacity_kibam_t::get20HourCapacity()
 /*
 Define Lithium Ion capacity model
 */
-capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V) :capacity_t(q, V)
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V, std::vector<double> capacities, std::vector<double> cycles) :capacity_t(q, V)
 {
 	_qmax = q;
+	_qmax0 = q;
+
+	// fit polynomial to cycles vs capacity
+	_n = capacities.size();
+	// _cycle_vect = new double[_n];
+	// _capacities_vect = new double[_n];
+	// _a = new double[_n];
+
+	for (int i = 0; i != _n; i++)
+	{
+		_capacities_vect.push_back(capacities[i]);
+		_cycle_vect.push_back(cycles[i]);
+	}
+
+	// Perform Curve fit
+	// int info = lsqfit(capacity_vs_cycles, 0, _a, _n, _capacities_vect, _cycle_vect, _n);
+	_m = (_capacities_vect[_n - 1] - _capacities_vect[0]) / (_cycle_vect[_n - 1] - _cycle_vect[0]);
 
 	_output["q0"] = q;
+	_output["qmax"] = _qmax;
 	_output["P"] = _P;
 	_output["SOC"] = _SOC;
 	_output["DOD"] = _DOD;
 	_output["I"] = _I;
 };
-
-output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt)
+capacity_lithium_ion_t::~capacity_lithium_ion_t()
 {
+	// delete[] _cycle_vect;
+	// delete[] _capacities_vect;
+	// delete[] _a;
+}
+output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt, int cycles)
+{
+	// update maximum capacity based on number of cycles
+	// double capacity_modifier = capacity_vs_cycles(cycles, _a, 0);
+	double capacity_modifier = _capacities_vect[0] + _m*(cycles - _cycle_vect[0]);
+	 _qmax = _qmax0 * capacity_modifier / 100;
+
 	// currently just a tank of coloumbs
 	_I = P / V;
 	P = _P;
@@ -310,6 +338,7 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt)
 
 	// outputs
 	_output["q0"] = _q0;
+	_output["qmax"] = _qmax;
 	_output["P"] = _P;
 	_output["SOC"] = _SOC;
 	_output["DOD"] = _DOD;
@@ -336,6 +365,10 @@ double capacity_lithium_ion_t::get10HourCapacity()
 	return _qmax;
 }
 
+double capacity_vs_cycles(double cycles, double * a, void * user_data)
+{
+	return (a[0] + a[1] * cycles + a[2]*std::pow(cycles,2) /* + a[3]*std::pow(cycles,3) */ );
+}
 
 
 /*
@@ -441,18 +474,17 @@ lifetime_t::lifetime_t( std::vector<double> DOD_vect, std::vector<double> cycle_
 {
 	_DOD_vect = new double[n];
 	_cycle_vect = new double[n]; 
+	_a = new double[n];
 
 	for (int i = 0; i != n; i++)
 	{
 		_DOD_vect[i] = DOD_vect[i];
 		_cycle_vect[i] = cycle_vect[i];
+		_a[i] = 0;
 	}
 
 	// Perform Curve fit
-	_a = new double[n];
-	for (int i = 0; i != n; i++)
-		_a[i] = 0;
-	int info = lsqfit(life_vs_DOD, 0, _a, n, _DOD_vect, _cycle_vect, n);
+		int info = lsqfit(life_vs_DOD, 0, _a, n, _DOD_vect, _cycle_vect, n);
 	int j;
 
 	// initialize other member variables
@@ -641,8 +673,13 @@ output_map lifetime_t::rainflow_finish()
 					ii = _jlt;
 					rainflow_ranges_circular(ii);
 				}
+				// _jlt == 0
 				else
+				{
+					// force out of while
+					rereadCount++;
 					break;
+				}
 			}
 
 			// Step 8: compare X,Y
@@ -673,6 +710,10 @@ output_map lifetime_t::rainflow_finish()
 	_output["Cycles"] = _nCycles;
 
 	return _output;
+}
+int lifetime_t::getNumberOfCycles()
+{
+	return _nCycles;
 }
 
 double life_vs_DOD(double R, double * a, void * user_data)
@@ -720,7 +761,7 @@ void battery_t::finish()
 
 output_map battery_t::runCapacityModel(double P, double V)
 {
-	return _capacity->updateCapacity(P, V, _dt);
+	return _capacity->updateCapacity(P, V, _dt,_lifetime->getNumberOfCycles() );
 }
 
 output_map battery_t::runVoltageModel(double dT)

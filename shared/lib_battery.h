@@ -23,7 +23,7 @@ public:
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual output_map updateCapacity(double P, double V, double dt)=0;
+	virtual output_map updateCapacity(double P, double V, double dt, int cycles)=0;
 	virtual double getMaxCapacity() = 0;
 	virtual double getMaxCapacityAtCurrent() = 0;
 	virtual double getAvailableCapacity() = 0;
@@ -57,7 +57,7 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2);
-	output_map updateCapacity(double P, double V, double dt);
+	output_map updateCapacity(double P, double V, double dt, int cycles=0);
 	double getAvailableCapacity();
 	double getMaxCapacity();
 	double getMaxCapacityAtCurrent();
@@ -103,10 +103,11 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t(double q, double V);
+	capacity_lithium_ion_t(double q, double V, std::vector<double> capacities, std::vector<double> cycles);
+	~capacity_lithium_ion_t();
 
 	// override public api
-	output_map updateCapacity(double P, double V, double dt);
+	output_map updateCapacity(double P, double V, double dt, int cycles);
 	double getMaxCapacity();
 	double getMaxCapacityAtCurrent();
 	double getAvailableCapacity();
@@ -115,6 +116,14 @@ public:
 
 protected:
 	double _qmax; // [Ah] - maximum possible capacity
+	double _qmax0; // [Ah] - original maximum capacity
+	// double * _capacities_vect; // % of original
+	// double *_cycle_vect; 
+	std::vector<double> _capacities_vect;
+	std::vector<double> _cycle_vect;
+	// double *_a;
+	double _m; // slope
+	int _n; // number of points
 
 };
 
@@ -182,6 +191,7 @@ public:
 	~lifetime_t();
 	output_map rainflow(double DOD);
 	output_map rainflow_finish();
+	int getNumberOfCycles();
 
 protected:
 	void rainflow_ranges();
@@ -275,5 +285,6 @@ private:
 Non-class functions
 */
 double life_vs_DOD(double R, double *a, void * user_data);
+double capacity_vs_cycles(double cycles, double *a, void *user_data);
 void getMonthHour(int hourOfYear, int * month, int * hour);
 bool compare(int, int);

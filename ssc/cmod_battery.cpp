@@ -37,7 +37,8 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT, SSC_NUMBER, "Qexp", "Capacity at end of exponential zone", "Ah", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "Qnom", "Capacity at end of nominal zone", "Ah", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "C_rate", "Rate at which voltage vs. capacity curve input", "", "", "Battery", "*", "", "" },
-
+	{ SSC_INPUT, SSC_ARRAY, "cycle_capacities_vect", "Number of cycles at which capacity measured", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "capacities_vect", "Percent of original maximum capacity at cycle number", "", "", "Battery", "", "", "" },
 
 	// lifetime inputs
 	{ SSC_INPUT,		SSC_ARRAY,		"DOD_vect",				"Depth of Discharge Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
@@ -76,6 +77,7 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "SOC",					"State of Charge",						"%",        "",						"Battery",       "*",						"",						"" },
 	{ SSC_OUTPUT, SSC_ARRAY, "DOD", "Depth of Discharge", "%", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Battery", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "qmax", "Max Charge", "Ah", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_cell", "Cell Voltage", "V", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_battery", "Battery Voltage", "V", "", "Battery", "*", "", "" },
@@ -128,6 +130,13 @@ public:
 		double Qnom = as_double("Qnom");	   // [Ah]
 		double C_rate = as_double("C_rate");	   // [Ah]
 
+		size_t numberOfPoints1, numberOfPoints2;
+		std::vector<double> capacities_vect = as_doublevec("capacities_vect");
+		std::vector<double> cycle_capacities_vect = as_doublevec("cycle_capacities_vect");
+		numberOfPoints1 = capacities_vect.size();
+		numberOfPoints2 = cycle_capacities_vect.size();
+		if (numberOfPoints1 != numberOfPoints2) throw exec_error("battery", "Number of Capacities-vs-cycles inputs must equal number oc cycles inputs");
+
 		// Dispatch Timing Control
 		size_t months = 12;
 		size_t hours = 24;
@@ -165,7 +174,6 @@ public:
 		}
 
 		// lifetime inputs
-		size_t numberOfPoints1, numberOfPoints2;
 		std::vector<double> DOD_vect = as_doublevec("DOD_vect");
 		std::vector<double> cycle_vect = as_doublevec("cycle_vect");
 		numberOfPoints1 = DOD_vect.size();
@@ -202,6 +210,7 @@ public:
 		ssc_number_t *outAvailableCharge;
 		ssc_number_t *outBoundCharge;
 		ssc_number_t *outMaxChargeAtCurrent;
+		ssc_number_t *outMaxCharge;
 
 		// only allocate if lead-acid
 		if (battery_chemistry==0)
@@ -210,6 +219,9 @@ public:
 			outBoundCharge = allocate("q2", nrec);
 			outMaxChargeAtCurrent = allocate("qmaxI", nrec);
 		}
+		else
+			outMaxCharge = allocate("qmax", nrec);
+
 
 		ssc_number_t *outSOC = allocate("SOC", nrec);
 		ssc_number_t *outDOD = allocate("DOD", nrec);
@@ -241,7 +253,7 @@ public:
 
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);
-		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull,Vfull);
+		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull, Vfull, capacities_vect, cycle_capacities_vect);
 		battery_t Battery;
 
 		if (battery_chemistry==0)
@@ -373,12 +385,15 @@ public:
 				VoltageOutput = Battery.getVoltageOutput();
 
 				// Capacity Output 
-				if (battery_chemistry==0)
+				if (battery_chemistry == 0)
 				{
 					outAvailableCharge[count] = (ssc_number_t)(CapacityOutput["q1"]);
 					outBoundCharge[count] = (ssc_number_t)(CapacityOutput["q2"]);
 					outMaxChargeAtCurrent[count] = (ssc_number_t)(CapacityOutput["qmaxI"]);
 				}
+				else
+					outMaxCharge[count] = (ssc_number_t)(CapacityOutput["qmax"]);
+
 				outTotalCharge[count] = (ssc_number_t)(CapacityOutput["q0"]);
 				outSOC[count] = (ssc_number_t)(CapacityOutput["SOC"]);
 				outDOD[count] = (ssc_number_t)(CapacityOutput["DOD"]);
