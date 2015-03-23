@@ -33,12 +33,12 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"tn",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
 
 	// lithium-ion inputs
-	{ SSC_INPUT, SSC_NUMBER, "Vfull", "Fully charged voltage", "V", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Vexp", "Voltage at end of exponential zone", "V", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Vnom", "Voltage at end of nominal zone", "V", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Qfull", "Fully charged capacity", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Qexp", "Capacity at end of exponential zone", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Qnom", "Capacity at end of nominal zone", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Vfull", "Fully charged cell voltage", "V", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Vexp", "Cell Voltage at end of exponential zone", "V", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Vnom", "Cell Voltage at end of nominal zone", "V", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Qfull", "Fully charged cell capacity", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Qexp", "Cell capacity at end of exponential zone", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "Qnom", "Cell capacity at end of nominal zone", "Ah", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "C_rate", "Rate at which voltage vs. capacity curve input", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "cycle_capacities_vect", "Number of cycles at which capacity measured", "", "", "Battery", "", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "capacities_vect", "Percent of original maximum capacity at cycle number", "", "", "Battery", "", "", "" },
@@ -80,7 +80,7 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "SOC",					"State of Charge",						"%",        "",						"Battery",       "*",						"",						"" },
 	{ SSC_OUTPUT, SSC_ARRAY, "DOD", "Depth of Discharge", "%", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Battery", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "qmax", "Max Charge", "Ah", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "qmax", "Max Charge", "Ah", "", "Battery", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_cell", "Cell Voltage", "V", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "voltage_battery", "Battery Voltage", "V", "", "Battery", "*", "", "" },
@@ -261,7 +261,7 @@ public:
 
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);
-		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull, Vfull, capacities_vect, cycle_capacities_vect);
+		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull*num_cells, Vfull*num_cells, capacities_vect, cycle_capacities_vect);
 		battery_t Battery(num_batteries, power_conversion_efficiency, dt);
 
 		if (battery_chemistry==0)
