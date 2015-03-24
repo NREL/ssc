@@ -61,6 +61,7 @@
     <ClCompile Include="..\ssc\cmod_tcsmslf.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_empirical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical.cpp" />
+    <ClCompile Include="..\ssc\cmod_thirdpartyownership.cpp" />
     <ClCompile Include="..\ssc\cmod_timeseq.cpp" />
     <ClCompile Include="..\ssc\cmod_user_htf_comparison.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
