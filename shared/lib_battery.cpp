@@ -417,7 +417,7 @@ void voltage_dynamic_t::parameter_compute()
 	_E0 = _Vfull + _K + _R*I - _A;
 }
 
-output_map voltage_dynamic_t::updateVoltage(capacity_t * capacity, double dT, double dt)
+output_map voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 {
 
 	double Q = capacity->getMaxCapacityAtCurrent();
@@ -454,7 +454,7 @@ voltage_t(num_cells, voltage)
 
 }
 
-output_map voltage_basic_t::updateVoltage(capacity_t * capacity, double dT, double dt)
+output_map voltage_basic_t::updateVoltage(capacity_t * capacity,  double dt)
 {
 	// do nothing;
 	_output["voltage_cell"] = _cell_voltage;
@@ -725,6 +725,48 @@ double life_vs_DOD(double R, double * a, void * user_data)
 	return (a[0] + a[1] * exp(a[2] * R) + a[3] * exp(a[4] * R));
 }
 
+/*
+Define Thermal Model
+*/
+thermal_t::thermal_t(double mass, double length, double width, double height, double thickness,
+	double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R)
+{
+	_mass = mass;
+	_length = length;
+	_width = width;
+	_height = height;
+	_thickness = thickness;
+	_Cp = Cp;
+	_k = k;
+	_h = h;
+	_T_room = T_room;
+	_shade_factor = shade_factor;
+	_storage_configuration = storage_configuration;
+	_R = R;
+
+	// assume all surfaces are exposed
+	_A = 2 * (length*width + length*height + width*height);
+
+	// initialize to room temperature
+	_T_battery = T_room;
+
+	_output["T_battery"] = _T_battery;
+}
+
+output_map thermal_t::updateTemperature(double I, double dt)
+{
+	double T_new = _T_battery + dt * 3600 * simpleModel(I);
+	_T_battery = T_new;
+	_output["T_battery"] = _T_battery;
+	return _output;
+}
+double thermal_t::simpleModel(double I)
+{
+	return (1 / (_mass*_Cp)) * ((_h*(_T_room - _T_battery)*_A) + pow(I, 2)*_R);
+}
+
+
+
 /* 
 Define Battery 
 */
@@ -735,15 +777,16 @@ battery_t::battery_t(int num_batteries, double power_conversion_efficiency, doub
 	_power_conversion_efficiency = power_conversion_efficiency;
 	_dt = dt;
 }
-void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime)
+void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal)
 {
 	_capacity = capacity;
 	_lifetime = lifetime;
 	_voltage = voltage;
+	_thermal = thermal;
 	_firstStep = true;
 }
 
-void battery_t::run(double P, double dT)
+void battery_t::run(double P)
 {
 	double lastDOD = _capacity->getDOD();
 
@@ -752,9 +795,9 @@ void battery_t::run(double P, double dT)
 		_LifetimeOutput = runLifetimeModel(lastDOD);
 		_firstStep = false;
 	}
-
+	_ThermalOutput = runThermalModel(P / _voltage->getVoltage());
 	_CapacityOutput = runCapacityModel(P, _voltage->getVoltage() );
-	_VoltageOutput = runVoltageModel(dT);
+	_VoltageOutput = runVoltageModel();
 
 }
 
@@ -762,15 +805,19 @@ void battery_t::finish()
 {
 	_LifetimeOutput = _lifetime->rainflow_finish();
 }
+output_map battery_t::runThermalModel(double I)
+{
+	return _thermal->updateTemperature(I, _dt);
+}
 
 output_map battery_t::runCapacityModel(double P, double V)
 {
 	return _capacity->updateCapacity(P, V, _dt,_lifetime->getNumberOfCycles() );
 }
 
-output_map battery_t::runVoltageModel(double dT)
+output_map battery_t::runVoltageModel()
 {
-	return _voltage->updateVoltage(_capacity, dT, _dt);
+	return _voltage->updateVoltage(_capacity, _dt);
 }
 
 output_map battery_t::runLifetimeModel(double DOD)
@@ -792,7 +839,10 @@ output_map battery_t::getLifetimeOutput()
 {
 	return _LifetimeOutput;
 }
-
+output_map battery_t::getThermalOutput()
+{
+	return _ThermalOutput;
+}
 double battery_t::chargeNeededToFill()
 {
 	// Leads to minor discrepency, since gets max capacity from the old time step, which is based on the previous current level
@@ -832,9 +882,9 @@ battery_bank_t::battery_bank_t(battery_t * battery, int num_batteries, int batte
 
 	adjustOutputs();
 }
-output_map battery_bank_t::run(double P, double dT)
+output_map battery_bank_t::run(double P)
 {
-	_battery->run(P / _num_batteries, dT);
+	_battery->run(P / _num_batteries);
 	adjustOutputs();
 	return _output;
 }
@@ -872,8 +922,9 @@ void battery_bank_t::adjustOutputs()
 	output_map CapacityOutput = _battery->getCapacityOutput();
 	output_map VoltageOutput = _battery->getVoltageOutput();
 
-	// lifetime outputs do not need adjustment
+	// lifetime & thermal outputs do not need adjustment
 	output_map LifetimeOutput = _battery->getLifetimeOutput();
+	output_map ThermalOutput = _battery->getThermalOutput();
 
 	// capacity output adjustment
 	if (_battery_chemistry == 0)
@@ -900,6 +951,9 @@ void battery_bank_t::adjustOutputs()
 	// lifetime output
 	_output["Damage"] = LifetimeOutput["Damage"];
 	_output["Cycles"] = LifetimeOutput["Cycles"];
+
+	// thermal output
+	_output["T_battery"] = ThermalOutput["T_battery"];
 }
 
 
