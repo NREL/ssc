@@ -135,7 +135,7 @@ class voltage_t
 public:
 	voltage_t(int num_cells, double voltage, double * other=0);
 
-	virtual output_map updateVoltage(capacity_t * capacity, double dT, double dt)=0;
+	virtual output_map updateVoltage(capacity_t * capacity, double dt)=0;
 	double getVoltage();
 	double getCellVoltage();
 
@@ -149,7 +149,7 @@ class voltage_basic_t : public voltage_t
 {
 public:
 	voltage_basic_t(int num_cells, double voltage);
-	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
+	output_map updateVoltage(capacity_t * capacity, double dt);
 };
 
 // Unnewehr Universal Model
@@ -158,7 +158,7 @@ class voltage_dynamic_t : public voltage_t
 public:
 	voltage_dynamic_t(int num_cells, double voltage, double *other);
 	void parameter_compute();
-	output_map updateVoltage(capacity_t * capacity, double dT, double dt);
+	output_map updateVoltage(capacity_t * capacity, double dt);
 
 protected:
 	double voltage_model(double capacity, double current,  double q0);
@@ -224,7 +224,30 @@ Thermal Base class.
 */
 class thermal_t
 {
+public:
+	thermal_t(double mass, double length, double width, double height, double thickness,
+			  double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R );
 
+	output_map updateTemperature(double I, double dt);
+	double simpleModel(double I);
+
+protected:
+
+	double _mass;		// [kg]
+	double _length;		// [m]
+	double _width;		// [m]
+	double _height;		// [m]
+	double _thickness;	// [m] - wall thickness
+	double _Cp;			// [J/KgK] - battery specific heat capacity
+	double _k;			// [W/mK] - wall thermal conductivity
+	double _h;			// [Wm2K] - general heat transfer coefficient
+	double _T_room;		// [K] - storage room temperature
+	double _R;			// [Ohm] - internal resistance
+	double _A;			// [m2] - exposed surface area
+	double _shade_factor; 
+	int _storage_configuration; 
+	double _T_battery;   // [K]
+	output_map _output;
 };
 
 /*
@@ -244,20 +267,22 @@ class battery_t
 public:
 	battery_t();
 	battery_t(int num_batteries, double power_conversion_efficiency, double dt);
-	void initialize(capacity_t *, voltage_t *, lifetime_t *);
+	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *);
 
 	// Run all
-	void run(double P, double dT);
+	void run(double P);
 	void finish();
 
 	// Run a component level model
 	output_map runCapacityModel(double P, double V);
-	output_map runVoltageModel(double dT);
+	output_map runVoltageModel();
+	output_map runThermalModel(double I);
 	output_map runLifetimeModel(double DOD);
 
 	output_map getCapacityOutput();
 	output_map getLifetimeOutput();
 	output_map getVoltageOutput();
+	output_map getThermalOutput();
 
 	// Get capacity quantities
 	double chargeNeededToFill();
@@ -271,6 +296,7 @@ private:
 	capacity_t * _capacity;
 	lifetime_t * _lifetime;
 	voltage_t * _voltage;
+	thermal_t * _thermal;
 	double _dt;
 	int _num_batteries;
 	double _power_conversion_efficiency;
@@ -278,6 +304,7 @@ private:
 	output_map _CapacityOutput;
 	output_map _LifetimeOutput;
 	output_map _VoltageOutput;
+	output_map _ThermalOutput;
 };
 
 /* 
@@ -288,7 +315,7 @@ class battery_bank_t
 {
 public:
 	battery_bank_t(battery_t * battery, int num_batteries, int battery_chemistry, double power_conversion_efficiency);
-	output_map run(double P, double dT);
+	output_map run(double P);
 	output_map finish();
 	double chargeNeededToFill();
 	double getCurrentCharge();
