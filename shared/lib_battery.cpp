@@ -617,7 +617,10 @@ int lifetime_t::rainflow_compareRanges()
 	{
 		_Range = _Ylt;
 		double Cf = life_vs_DOD(_Range, _a, 0);
-		_Dlt += 1. / Cf;
+
+		if (fabs(Cf) > 0)
+			_Dlt += 1. / Cf;
+
 		_nCycles++;
 		// discard peak & valley of Y
 		double save = _Peaks[_jlt];
@@ -691,7 +694,9 @@ output_map lifetime_t::rainflow_finish()
 			{
 				_Range = _Ylt;
 				double Cf = life_vs_DOD(_Range, _a, 0);
-				_Dlt += 1. / Cf;
+				if (fabs(Cf) > 0)
+					_Dlt += 1. / Cf;
+
 				_nCycles++;
 				// Discard peak and vally of Y
 				double save = _Peaks[_jlt];
