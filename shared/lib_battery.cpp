@@ -61,10 +61,10 @@ capacity_t(q20, V)
 	parameter_compute();
 
 	// Assume initial current is 20 hour discharge current
-	// Assume initial charge is the maximum 
+	// Assume initial charge is 20 capacity
 	double T = _q0 / _I20;
 	_qmaxI = qmax_of_i_compute(T);
-	_q0 = _qmaxI;
+	_q0 = _q20;
 
 	// Initialize charge quantities.  
 	// Assumes battery is initially fully charged
