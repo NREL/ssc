@@ -165,7 +165,7 @@ public:
 
 		
 		//Sum all of the strictly electrical parasitic components
-		W_par_tot = W_par_heatrej + W_par_sf_pump + W_par_tes_pump + W_par_fixed + W_par_tracking + W_par_aux_boiler;
+		W_par_tot = W_par_heatrej + W_par_sf_pump + W_par_tes_pump + W_par_BOP + W_par_fixed + W_par_tracking + W_par_aux_boiler;
 
 		//Sum all of the freeze protection components
 		Q_fp_tot = Q_par_tes_fp + Q_par_sf_fp;
