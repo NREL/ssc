@@ -352,28 +352,17 @@ public:
 				{
 					if (can_charge)
 					{
-						if (hourly_energy[count] - e_load[count] > (powerNeededToFill))
+						if (hourly_energy[count] - e_load[count] > p_tofrom_batt)
+						{
+							// use all energy available, it will only use what it can handle
+							p_tofrom_batt = -(hourly_energy[count] - e_load[count]);
+						}
+						else if (grid_charge)
 						{
 							p_tofrom_batt = -powerNeededToFill;
-							// hourly_energy[count] += p_tofrom_batt;
-							mode = 4; // CHARGED ALL FROM ARRAY
-						}
-						else
-						{
-							// check if we want to charge from the grid
-							if (grid_charge)
-							{
-								p_tofrom_batt = -powerNeededToFill;
-								// hourly_energy[count] += (-(hourly_energy[count] - e_load[count]));
-								p_grid = powerNeededToFill - (hourly_energy[count] - e_load[count]);
-								mode = 2; // CHARGED SOME FROM ARRAY, REST FROM GRID
-							}
-							else
-							{
-								p_tofrom_batt = -(hourly_energy[count] - e_load[count]);
-								// hourly_energy[count] += p_tofrom_batt;
-								mode = 3; // CHARGED SOME FROM ARRAY
-							}
+							p_grid = powerNeededToFill;
+							mode = 2; // CHARGED SOME FROM ARRAY, REST FROM GRID
+
 						}
 					}
 					// if we want to charge from grid without charging from array
@@ -390,20 +379,11 @@ public:
 				{
 					if (can_discharge)
 					{
-						if (e_load[count] - hourly_energy[count] > current_power)
-						{
-							p_tofrom_batt = current_power;
-							// hourly_energy[count] += p_tofrom_batt;
-							mode = -2; // DISCHARGED ALL TO MEET SOME OF LOAD
-						}
-						else
-						{
-							p_tofrom_batt = e_load[count] - hourly_energy[count];
-							// hourly_energy[count] += p_tofrom_batt;
-							mode = -1; // DISCHARGED SOME TO MEET ALL OF LOAD
-						}
+						// try to discharge full amount.  Will only use what battery can provide
+						p_tofrom_batt = e_load[count] - hourly_energy[count];
 					}
 					// if we want to charge from grid
+					// this scenario doesn't really make sense
 					else if (grid_charge)
 					{
 						p_tofrom_batt = -powerNeededToFill;
@@ -414,6 +394,20 @@ public:
 
 				// Run Battery Model to update charge based on charge/discharge
 				BatteryBankOutput = BatteryBank.run(kilowatt_to_watt*p_tofrom_batt);
+
+				// Update powers
+				double current = (ssc_number_t)(BatteryBankOutput["I"]);
+				outBatteryEnergy[count] = current * bank_voltage / 1000;// [kWh]
+
+				if (p_grid > 0)
+				{
+					// charged some from grid, so grid power is solar power - energy to battery
+					if (mode == 2)
+						outGridEnergy[count] = (-outBatteryEnergy[count] - (hourly_energy[count] - e_load[count]));
+					// charged all from grid, so grid power is all power to battery
+					else
+						outGridEnergy[count] = -outBatteryEnergy[count];
+				}
 
 				// Capacity Output 
 				if (battery_chemistry == 0)
@@ -428,7 +422,7 @@ public:
 				outTotalCharge[count] = (ssc_number_t)(BatteryBankOutput["q0"]);
 				outSOC[count] = (ssc_number_t)(BatteryBankOutput["SOC"]);
 				outDOD[count] = (ssc_number_t)(BatteryBankOutput["DOD"]);
-				outCurrent[count] = (ssc_number_t)(BatteryBankOutput["I"]);
+				outCurrent[count] = current;
 
 				// Voltage Output
 				outCellVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_cell"]);
@@ -438,8 +432,7 @@ public:
 				// Lifetime Output
 				outDamage[count] = (ssc_number_t)(BatteryBankOutput["Damage"]);
 				outCycles[count] = (int)(BatteryBankOutput["Cycles"]);
-				outBatteryEnergy[count] = p_tofrom_batt;
-				outGridEnergy[count] = p_grid;
+				
 
 				// Thermal Output
 				outBatteryTemperature[count] = (ssc_number_t)(BatteryBankOutput["T_battery"]) - 273.15;
@@ -447,6 +440,17 @@ public:
 				// Dispatch output
 				outDispatchProfile[count] = profile;
 				outDispatchMode[count] = mode;
+
+				// Power quantities, which need to be adjusted as the current may have been modified
+				outBatteryEnergy[count] = outCurrent[count] * bank_voltage / 1000;// [kWh]
+
+				if (p_grid > 0)
+				{
+					if (mode == 2)
+						outGridEnergy[count] = (-outBatteryEnergy[count] - (hourly_energy[count] - e_load[count]));
+					else
+						outGridEnergy[count] = -outBatteryEnergy[count];
+				}
 
 				count++;
 			}	// End loop over subhourly

@@ -292,6 +292,8 @@ capacity_lithium_ion_t::~capacity_lithium_ion_t()
 }
 output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt, int cycles)
 {
+	double q0_old = _q0;
+
 	// update maximum capacity based on number of cycles
 	 double capacity_modifier = capacity_vs_cycles(cycles, _a, 0);
 	 _qmax = _qmax0 * capacity_modifier / 100;
@@ -325,11 +327,19 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt,
 
 	// check if overcharged
 	if (_q0 > _qmax)
+	{
+		_I = -(_qmax - q0_old)/dt;
+		_P = _I*V;
 		_q0 = _qmax;
+	}
 
 	// check if undercharged (implement minimum charge limit)
 	if (_q0 < 0)
+	{
+		_I = (q0_old) / dt;
+		_P = _I*V;
 		_q0 = 0;
+	}
 
 	// update SOC, DOD
 	_SOC = _q0 / _qmax;
