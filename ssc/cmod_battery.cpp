@@ -59,7 +59,8 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT, SSC_NUMBER, "h_battery_to_ambient", "Heat transfer coefficient between battery and environment", "W/m2K", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "T_room", "Temperature of storage room", "C", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_shade", "Shade factor", "", "", "Battery", "", "", "" },
-
+	{ SSC_INPUT, SSC_ARRAY, "temperature_for_capacity", "Temperature vector for capacity modification", "", "", "Battery", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "capacity_vs_temperature", "Capacity percent based on temperature", "", "", "Battery", "*", "", "" },
 
 	// system energy and load
 	{ SSC_INOUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Time Series", "*", "", "" },
@@ -104,7 +105,8 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "Cycles", "Number of Cycles", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "battery_energy", "Power to/from Battery", "kWh", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "grid_energy", "Power from Grid to Battery", "kWh", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "battery_temperature", "Battery temperature", "C", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "battery_temperature", "Battery temperature", "C", "", "Battery", "*", "", "" }, 
+	{ SSC_OUTPUT, SSC_ARRAY, "capacity_thermal_percent", "Relative capacity percent due to temperature", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_mode", "Dispatch Mode for Hour", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_profile", "Dispatch Profile for Hour", "", "", "Battery", "*", "", "" },
 
@@ -152,12 +154,9 @@ public:
 		double Qnom = as_double("Qnom");	   // [Ah]
 		double C_rate = as_double("C_rate");	   // [Ah]
 
-		size_t numberOfPoints1, numberOfPoints2;
 		std::vector<double> capacities_vect = as_doublevec("capacities_vect");
 		std::vector<double> cycle_capacities_vect = as_doublevec("cycle_capacities_vect");
-		numberOfPoints1 = capacities_vect.size();
-		numberOfPoints2 = cycle_capacities_vect.size();
-		if (numberOfPoints1 != numberOfPoints2) throw exec_error("battery", "Number of Capacities-vs-cycles inputs must equal number oc cycles inputs");
+		if (capacities_vect.size() != cycle_capacities_vect.size() ) throw exec_error("battery", "Number of Capacities-vs-cycles inputs must equal number of cycles inputs");
 		
 		// Thermal properties
 		double battery_mass = as_double("battery_mass"); // [kg]
@@ -171,6 +170,10 @@ public:
 		double h_battery_to_ambient = as_double("h_battery_to_ambient"); // W/m2K
 		double battery_shade = as_double("battery_shade"); 
 		double T_room = 273.15 + as_double("T_room"); // K
+
+		std::vector<double> temperature_vect = as_doublevec("temperature_for_capacity");
+		std::vector<double> capacity_vs_temperature_vect = as_doublevec("capacity_vs_temperature");
+		if (temperature_vect.size() != capacity_vs_temperature_vect.size()) throw exec_error("battery", "Number of Capacities-vs-temperature inputs must equal number of temperature inputs");
 
 		// Dispatch Timing Control
 		size_t months = 12;
@@ -211,20 +214,18 @@ public:
 		// lifetime inputs
 		std::vector<double> DOD_vect = as_doublevec("DOD_vect");
 		std::vector<double> cycle_vect = as_doublevec("cycle_vect");
-		numberOfPoints1 = DOD_vect.size();
-		numberOfPoints2 = DOD_vect.size();
 
 		// only valid for lead-acid, zero out for anything else
 		if (battery_chemistry != 0)
 		{
-			for (int ii = 0; ii != numberOfPoints1; ii++)
+			for (int ii = 0; ii != DOD_vect.size(); ii++)
 			{
 				DOD_vect[ii] = 0.;
 				cycle_vect[ii] = 0.;
 			}
 		}
 		else
-			if (numberOfPoints1 != numberOfPoints2) throw exec_error("battery", "Number of Cycles-to-Failure inputs must equal Depth-of-Discharge inputs");		
+			if (DOD_vect.size() != cycle_vect.size() ) throw exec_error("battery", "Number of Cycles-to-Failure inputs must equal Depth-of-Discharge inputs");		
 
 		/* **********************************************************************
 		Ensure can handle subhourly
@@ -280,6 +281,7 @@ public:
 		ssc_number_t *outBatteryEnergy = allocate("battery_energy", nrec);
 		ssc_number_t *outGridEnergy = allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 		ssc_number_t *outBatteryTemperature = allocate("battery_temperature", nrec);
+		ssc_number_t *outCapacityThermalPercent = allocate("capacity_thermal_percent", nrec);
 		ssc_number_t *outDispatchMode = allocate("Dispatch_mode", nrec);
 		ssc_number_t *outDispatchProfile = allocate("Dispatch_profile", nrec);
 
@@ -295,8 +297,10 @@ public:
 		// Component Models
 		double other[] = { Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate };
 		voltage_dynamic_t VoltageModelDynamic(num_cells, Vnom, other);
-		lifetime_t LifetimeModel(DOD_vect, cycle_vect, numberOfPoints1);
-		thermal_t ThermalModel(battery_mass, battery_length, battery_width, battery_height, battery_wall_thickness, battery_Cp, battery_k, h_battery_to_ambient, T_room, battery_shade, storage_configuration, R);
+		lifetime_t LifetimeModel(DOD_vect, cycle_vect, cycle_vect.size() );
+		thermal_t ThermalModel(battery_mass, battery_length, battery_width, battery_height, battery_wall_thickness, 
+							   battery_Cp, battery_k, h_battery_to_ambient, T_room, battery_shade, storage_configuration, R,
+							   temperature_vect, capacity_vs_temperature_vect);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);
 		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull*num_cells, Vfull*num_cells, capacities_vect, cycle_capacities_vect);
 		battery_t Battery(num_batteries, power_conversion_efficiency, dt);
@@ -450,6 +454,7 @@ public:
 
 				// Thermal Output
 				outBatteryTemperature[count] = (ssc_number_t)(BatteryBankOutput["T_battery"]) - 273.15;
+				outCapacityThermalPercent[count] = (ssc_number_t)(BatteryBankOutput["Capacity_thermal_percent"]);
 
 				// Dispatch output
 				outDispatchProfile[count] = profile;

@@ -232,6 +232,20 @@ output_map capacity_kibam_t::updateCapacity(double P, double V, double dt, int c
 
 	return _output;
 }
+output_map capacity_kibam_t::updateCapacityForThermal(thermal_t * thermal)
+{
+	double capacity_percent = thermal->getCapacityPercent();
+	_q0 *= capacity_percent;
+	_q1_0 *= capacity_percent;
+	_q2_0 *= capacity_percent;
+
+	_output["q0"] = _q0;
+	_output["q1"] = _q1_0;
+	_output["q2"] = _q2_0;
+
+
+	return _output;
+}
 double capacity_kibam_t::getAvailableCapacity()
 {
 	return _q1_0;
@@ -275,7 +289,7 @@ capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V, std::vector<d
 	}
 
 	// Perform Curve fit
-	int info = lsqfit(capacity_vs_cycles, 0, _a, _n, _cycle_vect, _capacities_vect, _n);
+	int info = lsqfit(third_order_polynomial, 0, _a, _n, _cycle_vect, _capacities_vect, _n);
 
 	_output["q0"] = q;
 	_output["qmax"] = _qmax;
@@ -295,7 +309,7 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt,
 	double q0_old = _q0;
 
 	// update maximum capacity based on number of cycles
-	 double capacity_modifier = capacity_vs_cycles(cycles, _a, 0);
+	double capacity_modifier = third_order_polynomial(cycles, _a, 0);
 	 _qmax = _qmax0 * capacity_modifier / 100;
 
 	// currently just a tank of coloumbs
@@ -355,7 +369,14 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt,
 
 	return _output;
 }
-
+output_map capacity_lithium_ion_t::updateCapacityForThermal(thermal_t * thermal)
+{
+	double capacity_percent = thermal->getCapacityPercent();
+	_q0 *= capacity_percent;
+	
+	_output["q0"] = _q0;
+	return _output;
+}
 
 double capacity_lithium_ion_t::getAvailableCapacity()
 {
@@ -374,7 +395,7 @@ double capacity_lithium_ion_t::get10HourCapacity()
 	return _qmax;
 }
 
-double capacity_vs_cycles(double cycles, double * a, void * user_data)
+double third_order_polynomial(double cycles, double * a, void * user_data)
 {
 	return (a[0] + a[1] * cycles + a[2] * pow(cycles, 2) + a[3] * pow(cycles, 3));
 }
@@ -739,7 +760,8 @@ double life_vs_DOD(double R, double * a, void * user_data)
 Define Thermal Model
 */
 thermal_t::thermal_t(double mass, double length, double width, double height, double thickness,
-	double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R)
+	double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R,
+	std::vector<double> temperature_vect, std::vector<double> capacity_vect)
 {
 	_mass = mass;
 	_length = length;
@@ -760,21 +782,59 @@ thermal_t::thermal_t(double mass, double length, double width, double height, do
 	// initialize to room temperature
 	_T_battery = T_room;
 
-	_output["T_battery"] = _T_battery;
-}
+	// curve fit
+	int n = capacity_vect.size();
+	_temperature_vect = new double[n];
+	_capacity_vect = new double[n];
+	_a = new double[n];
 
+	for (int ii = 0; ii != n; ii++)
+	{
+		// user inputs F, modify to K
+		_temperature_vect[ii] = (temperature_vect[ii]-32.)*(5./9.)+273.15;
+		_capacity_vect[ii] = capacity_vect[ii];
+		_a[ii] = 0.;
+	}
+	int info = lsqfit(third_order_polynomial, 0, _a, n, _temperature_vect, _capacity_vect, n);
+
+
+	_output["T_battery"] = _T_battery;
+	_output["Capacity_thermal_percent"] = 1.;
+
+}
+thermal_t::~thermal_t()
+{
+	delete[] _temperature_vect;
+	delete[] _capacity_vect;
+	delete[] _a;
+}
 output_map thermal_t::updateTemperature(double I, double dt)
 {
-	double T_new = _T_battery + dt * 3600 * simpleModel(I);
+	// double T_new = _T_battery + dt * 3600 * simpleModel(I);
+	double T_new = rk4(I, dt*_hours_to_seconds);
 	_T_battery = T_new;
 	_output["T_battery"] = _T_battery;
+	_output["Capacity_thermal_percent"] = getCapacityPercent();
+
 	return _output;
 }
-double thermal_t::simpleModel(double I)
+double thermal_t::getCapacityPercent()
 {
-	return (1 / (_mass*_Cp)) * ((_h*(_T_room - _T_battery)*_A) + pow(I, 2)*_R);
+	return third_order_polynomial(_T_battery, _a, 0);
 }
 
+double thermal_t::f(double T_battery, double I)
+{
+	return (1 / (_mass*_Cp)) * ((_h*(_T_room - T_battery)*_A) + pow(I, 2)*_R);
+}
+double thermal_t::rk4( double I, double dt)
+{
+	double k1 = dt*f(_T_battery, I);
+	double k2 = dt*f(_T_battery + k1 / 2, I);
+	double k3 = dt*f(_T_battery + k2 / 2, I);
+	double k4 = dt*f(_T_battery + k3, I);
+	return (_T_battery + (1. / 6)*(k1 + k4) + (1. / 3.)*(k2 + k3));
+}
 
 
 /* 
@@ -805,10 +865,11 @@ void battery_t::run(double P)
 		_LifetimeOutput = runLifetimeModel(lastDOD);
 		_firstStep = false;
 	}
+	
+	// Compute temperature at end of timestep
 	_ThermalOutput = runThermalModel(P / _voltage->getVoltage());
-	_CapacityOutput = runCapacityModel(P, _voltage->getVoltage() );
+	_CapacityOutput = runCapacityModel(P, _voltage->getVoltage());
 	_VoltageOutput = runVoltageModel();
-
 }
 
 void battery_t::finish()
@@ -822,7 +883,8 @@ output_map battery_t::runThermalModel(double I)
 
 output_map battery_t::runCapacityModel(double P, double V)
 {
-	return _capacity->updateCapacity(P, V, _dt,_lifetime->getNumberOfCycles() );
+	_capacity->updateCapacity(P, V, _dt,_lifetime->getNumberOfCycles() );
+	return _capacity->updateCapacityForThermal(_thermal);
 }
 
 output_map battery_t::runVoltageModel()
@@ -964,6 +1026,8 @@ void battery_bank_t::adjustOutputs()
 
 	// thermal output
 	_output["T_battery"] = ThermalOutput["T_battery"];
+	_output["Capacity_thermal_percent"] = ThermalOutput["Capacity_thermal_percent"];
+
 }
 
 

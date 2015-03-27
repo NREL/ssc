@@ -12,6 +12,49 @@ const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
 
 typedef std::map<std::string, double> output_map;
+
+/*
+Thermal Base class.
+*/
+class thermal_t
+{
+public:
+	thermal_t(double mass, double length, double width, double height, double thickness,
+		double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R,
+		std::vector<double> temperature_vect, std::vector<double> capacity_vect);
+	~thermal_t();
+
+	output_map updateTemperature(double I, double dt);
+	double getCapacityPercent();
+
+protected:
+	double f(double T_battery, double I);
+	double thermal_t::rk4(double I, double dt);
+
+protected:
+
+	double * _capacity_vect; // [0-1] - capacity percents
+	double *_temperature_vect; // [K] - temperatures
+	double *_a;
+
+	double _mass;		// [kg]
+	double _length;		// [m]
+	double _width;		// [m]
+	double _height;		// [m]
+	double _thickness;	// [m] - wall thickness
+	double _Cp;			// [J/KgK] - battery specific heat capacity
+	double _k;			// [W/mK] - wall thermal conductivity
+	double _h;			// [Wm2K] - general heat transfer coefficient
+	double _T_room;		// [K] - storage room temperature
+	double _R;			// [Ohm] - internal resistance
+	double _A;			// [m2] - exposed surface area
+	double _shade_factor;
+	int _storage_configuration;
+	double _T_battery;   // [K]
+	output_map _output;
+	const double _hours_to_seconds = 3600;
+};
+
 /*
 Base class from which capacity models derive
 Note, all capacity models are based on the capacity of one battery
@@ -24,7 +67,8 @@ public:
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual output_map updateCapacity(double P, double V, double dt, int cycles)=0;
+	virtual output_map updateCapacity(double P, double V, double dt, int cycles) = 0;
+	virtual output_map updateCapacityForThermal(thermal_t * thermal)=0;
 	virtual double getMaxCapacity() = 0;
 	virtual double getMaxCapacityAtCurrent() = 0;
 	virtual double getAvailableCapacity() = 0;
@@ -58,7 +102,8 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2);
-	output_map updateCapacity(double P, double V, double dt, int cycles=0);
+	output_map updateCapacity(double P, double V, double dt, int cycles = 0);
+	output_map updateCapacityForThermal(thermal_t * thermal);
 	double getAvailableCapacity();
 	double getMaxCapacity();
 	double getMaxCapacityAtCurrent();
@@ -109,6 +154,7 @@ public:
 
 	// override public api
 	output_map updateCapacity(double P, double V, double dt, int cycles);
+	output_map updateCapacityForThermal(thermal_t * thermal);
 	double getMaxCapacity();
 	double getMaxCapacityAtCurrent();
 	double getAvailableCapacity();
@@ -220,37 +266,6 @@ protected:
 };
 
 /*
-Thermal Base class.
-*/
-class thermal_t
-{
-public:
-	thermal_t(double mass, double length, double width, double height, double thickness,
-			  double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R );
-
-	output_map updateTemperature(double I, double dt);
-	double simpleModel(double I);
-
-protected:
-
-	double _mass;		// [kg]
-	double _length;		// [m]
-	double _width;		// [m]
-	double _height;		// [m]
-	double _thickness;	// [m] - wall thickness
-	double _Cp;			// [J/KgK] - battery specific heat capacity
-	double _k;			// [W/mK] - wall thermal conductivity
-	double _h;			// [Wm2K] - general heat transfer coefficient
-	double _T_room;		// [K] - storage room temperature
-	double _R;			// [Ohm] - internal resistance
-	double _A;			// [m2] - exposed surface area
-	double _shade_factor; 
-	int _storage_configuration; 
-	double _T_battery;   // [K]
-	output_map _output;
-};
-
-/*
 Losses Base class.
 */
 class losses_t
@@ -336,7 +351,7 @@ protected:
 Non-class functions
 */
 double life_vs_DOD(double R, double *a, void * user_data);
-double capacity_vs_cycles(double cycles, double *a, void *user_data);
+double third_order_polynomial(double independent_variable, double *a, void *user_data);
 void getMonthHour(int hourOfYear, int * month, int * hour);
 bool compare(int, int);
 
