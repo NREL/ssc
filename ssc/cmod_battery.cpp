@@ -213,7 +213,18 @@ public:
 		std::vector<double> cycle_vect = as_doublevec("cycle_vect");
 		numberOfPoints1 = DOD_vect.size();
 		numberOfPoints2 = DOD_vect.size();
-		if (numberOfPoints1 != numberOfPoints2) throw exec_error("battery", "Number of Cycles-to-Failure inputs must equal Depth-of-Discharge inputs");		
+
+		// only valid for lead-acid, zero out for anything else
+		if (battery_chemistry != 0)
+		{
+			for (int ii = 0; ii != numberOfPoints1; ii++)
+			{
+				DOD_vect[ii] = 0.;
+				cycle_vect[ii] = 0.;
+			}
+		}
+		else
+			if (numberOfPoints1 != numberOfPoints2) throw exec_error("battery", "Number of Cycles-to-Failure inputs must equal Depth-of-Discharge inputs");		
 
 		/* **********************************************************************
 		Ensure can handle subhourly
