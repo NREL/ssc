@@ -208,6 +208,8 @@ public:
 
 protected:
 	double voltage_model(double capacity, double current,  double q0);
+	double voltage_model_tremblay_hybrid(double capacity, double current, double q0, double dt);
+
 
 private:
 	double _Vfull;

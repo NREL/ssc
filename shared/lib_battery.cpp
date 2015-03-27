@@ -439,12 +439,14 @@ voltage_t(num_cells, voltage, other)
 
 void voltage_dynamic_t::parameter_compute()
 {
+	// Determines parameters according to page 2 of:
+	// Tremblay 2009 "A Generic Bettery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
 	double eta = 0.995;
-	double I = _Qfull*_C_rate;
-	_R = _Vnom*(1. - eta) / (_C_rate*_Qnom);
+	double I = _Qfull*_C_rate; // [A]
+	_R = _Vnom*(1. - eta) / (_C_rate*_Qnom); // [Ohm]
 	_A = _Vfull - _Vexp; // [V]
 	_B = 3. / _Qexp;     // [1/Ah]
-	_K = ((_Vfull - _Vnom + _A*(std::exp(-_B*_Qnom) - 1))*(_Qfull - _Qnom)) / (_Qnom);
+	_K = ((_Vfull - _Vnom + _A*(std::exp(-_B*_Qnom) - 1))*(_Qfull - _Qnom)) / (_Qnom); // [V] - polarization voltage
 	_E0 = _Vfull + _K + _R*I - _A;
 }
 
@@ -456,6 +458,7 @@ output_map voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	double q0 = capacity->getTotalCapacity();
 
 	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
+// 	_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_cells, I / _num_cells, q0 / _num_cells, dt);
 
 	_output["voltage_cell"] = _cell_voltage;
 	_output["voltage_battery"] = _cell_voltage*_num_cells;
@@ -468,12 +471,24 @@ double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 	// everything in here is on a per-cell basis
 	// Unnewehr Universal Model
 
-	double term1 = _R*I;
+	double term1 = _E0 - _R*I;
 	double term2 = _K*(1 - q0/Q);
-	double V = _E0 - term1 - term2; 
+	double V = term1 - term2; 
 	return V;
 }
+double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, double q0, double dt)
+{
+	// everything in here is on a per-cell basis
+	// Unnewehr Universal Model + Tremblay Dynamic Model
+	// dt - should be in hours
 
+	double term1 = _E0 -_R*I; // common to both
+	double term2 = _K*(1 - q0 / Q); // from Unnewehr.  
+	// double term2 = _K*(Q / (Q - q0)); // from Tremblay.  Singularity as q0 -> Q
+	double term3 = _A*exp(-_B*fabs(I)*dt); // from Tremblay
+	double V = term1 - term2 + term3;
+	return V;
+}
 
 
 // Basic voltage model
