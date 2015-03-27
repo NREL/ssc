@@ -311,9 +311,11 @@ public:
 			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelDynamic, &LifetimeModel, &ThermalModel);
 
 		battery_bank_t BatteryBank(&Battery, num_batteries, battery_chemistry, power_conversion_efficiency);
+		dispatch_manual_t Dispatch(&BatteryBank, dt);
 
 		// Component output
 		output_map BatteryBankOutput;
+		output_map DispatchOutput;
 		/* *********************************************************************************************
 		Storage Dispatch Initialization
 		*********************************************************************************************** */
@@ -321,13 +323,6 @@ public:
 		bool can_charge, can_discharge, grid_charge;
 		int month;
 		int curr_hour;
-
-		// mode = 0: NO CHARGE, NO DISCHARGE
-		// mode = 1: CHARGED ALL FROM GRID
-		// mode = 2: CHARGED SOME FROM ARRAY, REST FROM GRID
-		// mode = 3: CHARGED SOME FROM ARRAY, NONE FROM GRID
-		// mode = 4: CHARGED ALL FROM ARRAY
-		// mode = -1: DISCHARGED TO MEET LOAD
 
 		/* *********************************************************************************************
 		Run Simulation
@@ -348,84 +343,10 @@ public:
 			for (size_t jj = 0; jj<step_per_hour; jj++)
 			{
 
-				// current charge state of battery from last time step.  
-				double chargeNeededToFill = BatteryBank.chargeNeededToFill();						// [Ah] - qmax - qtotal
-				double bank_voltage = BatteryBank.getBankVoltage();									// [V] 
-				double energyNeededToFill = (chargeNeededToFill * bank_voltage)*watt_to_kilowatt;	// [kWh]
-				double current_charge = BatteryBank.getCurrentCharge();								// [Ah]
-				double current_energy = (current_charge * bank_voltage) *watt_to_kilowatt;			// [KWh]
-				double e_grid = 0.;																	// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
-				double e_tofrom_batt = 0.;															// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
-
-				mode = 0; // NO CHARGE, NO DISCHARGE (can be overwritten)
-
-				// Is there extra energy from array
-				if (hourly_energy[count] > e_load[count])
-				{
-					if (can_charge)
-					{
-						if (hourly_energy[count] - e_load[count] > energyNeededToFill)
-						{
-							// use all energy available, it will only use what it can handle
-							e_tofrom_batt = -(hourly_energy[count] - e_load[count]);
-							mode = 4; // CHARGED ALL FROM ARRAY
-						}
-						else if (grid_charge)
-						{
-							e_tofrom_batt = -energyNeededToFill;
-							e_grid = energyNeededToFill;
-							mode = 2; // CHARGED SOME FROM ARRAY, REST FROM GRID
-						}
-						else
-						{
-							e_tofrom_batt = -(hourly_energy[count] - e_load[count]);
-							mode = 3; // CHARGED SOME FROM ARRAY, NONE FROM GRID
-						}
-					}
-					// if we want to charge from grid without charging from array
-					else if (grid_charge)
-					{
-						e_tofrom_batt = -energyNeededToFill;
-						e_grid = energyNeededToFill;
-						mode = 1; // CHARGED ALL FROM GRID
-					}
-
-				}
-				// Or, is the demand greater than or equal to what the array provides
-				else if (e_load[count] >= hourly_energy[count])
-				{
-					if (can_discharge)
-					{
-						// try to discharge full amount.  Will only use what battery can provide
-						e_tofrom_batt = e_load[count] - hourly_energy[count];
-						mode = -1; // DISCHARGED TO MEET LOAD
-					}
-					// if we want to charge from grid
-					// this scenario doesn't really make sense
-					else if (grid_charge)
-					{
-						e_tofrom_batt = -energyNeededToFill;
-						e_grid = energyNeededToFill;
-						mode = 1; // CHARGED ALL FROM GRID
-					}
-				}
-
-				// Run Battery Model to update charge based on charge/discharge
-				BatteryBankOutput = BatteryBank.run(kilowatt_to_watt*e_tofrom_batt/dt);
-
-				// Update how much power was actually used to/from battery/grid
-				double current = (ssc_number_t)(BatteryBankOutput["I"]);
-				outBatteryEnergy[count] = current * bank_voltage * dt / 1000;// [kWh]
-
-				if (e_grid > 0)
-				{
-					// charged some from grid, so [energy to battery] = [excess solar power] + [grid power]
-					if (mode == 2)
-						outGridEnergy[count] = (-outBatteryEnergy[count] - (hourly_energy[count] - e_load[count]));
-					// charged all from grid, so grid power is all power to battery
-					else
-						outGridEnergy[count] = -outBatteryEnergy[count];
-				}
+				// This is the main calculation, the rest is outputs
+				Dispatch.set_profiles(can_charge, can_discharge, grid_charge);
+				DispatchOutput = Dispatch.dispatch(hourly_energy[count], e_load[count]);
+				BatteryBankOutput = Dispatch.getBatteryBankOutput();
 
 				// Capacity Output 
 				if (battery_chemistry == 0)
@@ -440,7 +361,7 @@ public:
 				outTotalCharge[count] = (ssc_number_t)(BatteryBankOutput["q0"]);
 				outSOC[count] = (ssc_number_t)(BatteryBankOutput["SOC"]);
 				outDOD[count] = (ssc_number_t)(BatteryBankOutput["DOD"]);
-				outCurrent[count] = current;
+				outCurrent[count] = (BatteryBankOutput["I"]);
 
 				// Voltage Output
 				outCellVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_cell"]);
@@ -461,15 +382,8 @@ public:
 				outDispatchMode[count] = mode;
 
 				// Power quantities, which need to be adjusted as the current may have been modified
-				outBatteryEnergy[count] = outCurrent[count] * bank_voltage / 1000;// [kWh]
-
-				if (e_grid > 0)
-				{
-					if (mode == 2)
-						outGridEnergy[count] = (-outBatteryEnergy[count] - (hourly_energy[count] - e_load[count]));
-					else
-						outGridEnergy[count] = -outBatteryEnergy[count];
-				}
+				outBatteryEnergy[count] = (ssc_number_t)(DispatchOutput["battery_energy"]);
+				outGridEnergy[count] = (ssc_number_t)(DispatchOutput["grid_energy"]);
 
 				count++;
 			}	// End loop over subhourly

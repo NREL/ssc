@@ -350,6 +350,43 @@ protected:
 };
 
 /*
+Dispatch Base Class - can envision many potential modifications. Goal is to define standard API
+*/
+class dispatch_t
+{
+public:
+	dispatch_t(battery_bank_t * BatteryBank, double dt);
+
+	// Public APIs
+	virtual void set_profiles(bool can_charge, bool can_discharge, bool grid_charge) = 0;
+	virtual output_map dispatch(double e_pv, double e_load) = 0;
+
+	output_map getBatteryBankOutput();
+
+protected:
+	battery_bank_t * _BatteryBank;
+	output_map _output;
+	bool _can_charge;
+	bool _can_discharge;
+	bool _can_grid_charge;
+	int _mode;
+	double _dt;
+
+};
+
+/*
+Manual dispatch class
+*/
+class dispatch_manual_t : public dispatch_t
+{
+public:
+	dispatch_manual_t(battery_bank_t * BatteryBank, double dt);
+	void set_profiles(bool can_charge, bool can_discharge, bool grid_charge);
+	output_map dispatch(double e_pv, double e_load);
+};
+
+
+/*
 Non-class functions
 */
 double life_vs_DOD(double R, double *a, void * user_data);
