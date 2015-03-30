@@ -20,7 +20,7 @@ class thermal_t
 {
 public:
 	thermal_t(double mass, double length, double width, double height, double thickness,
-		double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R,
+		double Cp, double h, double T_room, double R,
 		std::vector<double> temperature_vect, std::vector<double> capacity_vect);
 	~thermal_t();
 
@@ -43,13 +43,10 @@ protected:
 	double _height;		// [m]
 	double _thickness;	// [m] - wall thickness
 	double _Cp;			// [J/KgK] - battery specific heat capacity
-	double _k;			// [W/mK] - wall thermal conductivity
 	double _h;			// [Wm2K] - general heat transfer coefficient
 	double _T_room;		// [K] - storage room temperature
 	double _R;			// [Ohm] - internal resistance
 	double _A;			// [m2] - exposed surface area
-	double _shade_factor;
-	int _storage_configuration;
 	double _T_battery;   // [K]
 	output_map _output;
 	const double _hours_to_seconds = 3600;
