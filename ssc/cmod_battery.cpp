@@ -103,13 +103,16 @@ static var_info _cm_vtab_battery[] = {
 
 	{ SSC_OUTPUT, SSC_ARRAY, "Damage", "Fractional Damage", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Cycles", "Number of Cycles", "", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "battery_energy", "Power to/from Battery", "kWh", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "grid_energy", "Power from Grid to Battery", "kWh", "", "Battery", "*", "", "" },
+
 	{ SSC_OUTPUT, SSC_ARRAY, "battery_temperature", "Battery temperature", "C", "", "Battery", "*", "", "" }, 
 	{ SSC_OUTPUT, SSC_ARRAY, "capacity_thermal_percent", "Relative capacity percent due to temperature", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_mode", "Dispatch Mode for Hour", "", "", "Battery", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_profile", "Dispatch Profile for Hour", "", "", "Battery", "*", "", "" },
-
+	{ SSC_OUTPUT, SSC_ARRAY, "battery_energy", "Energy to/from Battery", "kWh", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "grid_energy", "Energy from Grid to Battery", "kWh", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "pv_to_load", "Energy to load from PV", "kWh", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "battery_to_load", "Energy to load from battery", "kWh", "", "Battery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "grid_to_load", "Energy to load from grid", "kWh", "", "Battery", "*", "", "" },
 
 
 	var_info_invalid };
@@ -278,12 +281,15 @@ public:
 		ssc_number_t *outBatteryBankVoltage = allocate("voltage_bank", nrec);
 		ssc_number_t *outDamage = allocate("Damage", nrec);
 		ssc_number_t *outCycles = allocate("Cycles", nrec);
-		ssc_number_t *outBatteryEnergy = allocate("battery_energy", nrec);
-		ssc_number_t *outGridEnergy = allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 		ssc_number_t *outBatteryTemperature = allocate("battery_temperature", nrec);
 		ssc_number_t *outCapacityThermalPercent = allocate("capacity_thermal_percent", nrec);
 		ssc_number_t *outDispatchMode = allocate("Dispatch_mode", nrec);
 		ssc_number_t *outDispatchProfile = allocate("Dispatch_profile", nrec);
+		ssc_number_t *outBatteryEnergy = allocate("battery_energy", nrec);
+		ssc_number_t *outGridEnergy = allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+		ssc_number_t *outPVToLoad = allocate("pv_to_load", nrec);
+		ssc_number_t *outBatteryToLoad = allocate("battery_to_load", nrec);
+		ssc_number_t *outGridToLoad = allocate("grid_to_load", nrec);
 
 		/* *********************************************************************************************
 		Battery and Model Initialization
@@ -380,10 +386,11 @@ public:
 				// Dispatch output
 				outDispatchProfile[count] = profile;
 				outDispatchMode[count] = mode;
-
-				// Power quantities, which need to be adjusted as the current may have been modified
 				outBatteryEnergy[count] = (ssc_number_t)(DispatchOutput["battery_energy"]);
 				outGridEnergy[count] = (ssc_number_t)(DispatchOutput["grid_energy"]);
+				outPVToLoad[count] = (ssc_number_t)(DispatchOutput["pv_to_load"]);
+				outBatteryToLoad[count] = (ssc_number_t)(DispatchOutput["battery_to_load"]);
+				outGridToLoad[count] = (ssc_number_t)(DispatchOutput["grid_to_load"]);
 
 				count++;
 			}	// End loop over subhourly
