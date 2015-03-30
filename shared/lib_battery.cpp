@@ -775,7 +775,7 @@ double life_vs_DOD(double R, double * a, void * user_data)
 Define Thermal Model
 */
 thermal_t::thermal_t(double mass, double length, double width, double height, double thickness,
-	double Cp, double k, double h, double T_room, double shade_factor, int storage_configuration, double R,
+	double Cp,  double h, double T_room, double R,
 	std::vector<double> temperature_vect, std::vector<double> capacity_vect)
 {
 	_mass = mass;
@@ -784,11 +784,8 @@ thermal_t::thermal_t(double mass, double length, double width, double height, do
 	_height = height;
 	_thickness = thickness;
 	_Cp = Cp;
-	_k = k;
 	_h = h;
 	_T_room = T_room;
-	_shade_factor = shade_factor;
-	_storage_configuration = storage_configuration;
 	_R = R;
 
 	// assume all surfaces are exposed

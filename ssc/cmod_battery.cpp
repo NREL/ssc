@@ -48,17 +48,14 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,		SSC_ARRAY,		"cycle_vect",			"Cycles to Failure Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
 	
 	// thermal inputs
-	{ SSC_INPUT, SSC_NUMBER, "Configuration", "Storage environment configuration", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_mass", "Mass of the battery", "kg", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_wall_thickness", "Thickness of battery wall", "m", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_length", "Battery length", "m", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_width", "Battery width", "m", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_height", "Battery height", "m", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_Cp", "Battery specific heat capacity", "J/KgK", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_k", "Battery thermal conductivity", "W/mK", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "h_battery_to_ambient", "Heat transfer coefficient between battery and environment", "W/m2K", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "T_room", "Temperature of storage room", "C", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_shade", "Shade factor", "", "", "Battery", "", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "temperature_for_capacity", "Temperature vector for capacity modification", "", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "capacity_vs_temperature", "Capacity percent based on temperature", "", "", "Battery", "*", "", "" },
 
@@ -167,11 +164,8 @@ public:
 		double battery_length = as_double("battery_length"); // [m]
 		double battery_width = as_double("battery_width"); // [m]
 		double battery_height = as_double("battery_height"); // [m]
-		int storage_configuration = as_integer("Configuration"); 
 		double battery_Cp = as_double("battery_Cp"); // [J/kgK]
-		double battery_k = as_double("battery_k"); // [W/mK]
 		double h_battery_to_ambient = as_double("h_battery_to_ambient"); // W/m2K
-		double battery_shade = as_double("battery_shade"); 
 		double T_room = 273.15 + as_double("T_room"); // K
 
 		std::vector<double> temperature_vect = as_doublevec("temperature_for_capacity");
@@ -305,7 +299,7 @@ public:
 		voltage_dynamic_t VoltageModelDynamic(num_cells, Vnom, other);
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, cycle_vect.size() );
 		thermal_t ThermalModel(battery_mass, battery_length, battery_width, battery_height, battery_wall_thickness, 
-							   battery_Cp, battery_k, h_battery_to_ambient, T_room, battery_shade, storage_configuration, R,
+							   battery_Cp, h_battery_to_ambient, T_room, R,
 							   temperature_vect, capacity_vs_temperature_vect);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);
 		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull*num_cells, Vfull*num_cells, capacities_vect, cycle_capacities_vect);
