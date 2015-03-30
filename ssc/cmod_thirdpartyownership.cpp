@@ -29,9 +29,8 @@ static var_info vtab_thirdpartyownership[] = {
 	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cash flow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback period",                            "years",        "",                      "Cash Flow",      "*",                       "",                                         "" },
+	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -244,15 +243,11 @@ public:
 
 		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
 
-		double payback = compute_payback( CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears );
-
-
-
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
 
-		assign( "payback", var_data((ssc_number_t)payback) );
-		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
-		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
+		//LCOE's commented out so as not to confuse the user. They don't compare to other LCOEs.
+//		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
+//		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
@@ -281,33 +276,6 @@ public:
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
 
-	double compute_payback( int cf_cpb, int cf_pb, int nyears )
-	{	
-//		double dPayback = 1e99; // report as > analysis period
-		double dPayback = std::numeric_limits<double>::quiet_NaN(); // report as > analysis period
-		bool bolPayback = false;
-		int iPayback = 0;
-		int i = 1; 
-		while ((i<=nyears) && (!bolPayback))
-		{
-			if (cf.at(cf_cpb,i) > 0)
-			{
-				bolPayback = true;
-				iPayback = i;
-			}
-			i++;
-		}
-
-		if (bolPayback)
-		{
-			dPayback = iPayback;
-			if (cf.at(cf_pb, iPayback) != 0.0)
-				dPayback -= cf.at(cf_cpb,iPayback) / cf.at(cf_pb,iPayback);
-		}
-
-		return dPayback;
-	}
-
 	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
 	{		
 		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
@@ -320,99 +288,6 @@ public:
 		return result*rr;
 	}
 
-	void compute_production_incentive( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
-	{
-		size_t len = 0;
-		ssc_number_t *parr = as_array(s_val, &len);
-		int term = as_integer(s_term);
-		double escal = as_double(s_escal)/100.0;
-
-		if (len == 1)
-		{
-			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
-		}
-		else
-		{
-			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
-		}
-	}
-
-		void compute_production_incentive_IRS_2010_37( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
-	{
-		// rounding based on IRS document and emails from John and Matt from DHF Financials 2/24/2011 and DHF model v4.4
-		size_t len = 0;
-		ssc_number_t *parr = as_array(s_val, &len);
-		int term = as_integer(s_term);
-		double escal = as_double(s_escal)/100.0;
-
-		if (len == 1)
-		{
-			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_dhf(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
-		}
-		else
-		{
-			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
-		}
-	}
-
-
-	void single_or_schedule( int cf_line, int nyears, double scale, const std::string &name )
-	{
-		size_t len = 0;
-		ssc_number_t *p = as_array(name, &len);
-		for (int i=1;i<=(int)len && i <= nyears;i++)
-			cf.at(cf_line, i) = scale*p[i-1];
-	}
-	
-	void single_or_schedule_check_max( int cf_line, int nyears, double scale, const std::string &name, const std::string &maxvar )
-	{
-		double max = as_double(maxvar);
-		size_t len = 0;
-		ssc_number_t *p = as_array(name, &len);
-		for (int i=1;i<=(int)len && i <= nyears;i++)
-			cf.at(cf_line, i) = min( scale*p[i-1], max );
-	}
-
-	
-	void escal_or_annual( int cf_line, int nyears, const std::string &variable, 
-			double inflation_rate, double scale, bool as_rate=true, double escal = 0.0)
-	{
-		size_t count;
-		ssc_number_t *arrp = as_array(variable, &count);
-
-		if (as_rate)
-		{
-			if (count == 1)
-			{
-				escal = inflation_rate + scale*arrp[0];
-				for (int i=0; i < nyears; i++)
-					cf.at(cf_line, i+1) = pow( 1+escal, i );
-			}
-			else
-			{
-				for (int i=0; i < nyears && i < (int)count; i++)
-					cf.at(cf_line, i+1) = 1 + arrp[i]*scale;
-			}
-		}
-		else
-		{
-			if (count == 1)
-			{
-				for (int i=0;i<nyears;i++)
-					cf.at(cf_line, i+1) = arrp[0]*scale*pow( 1+escal+inflation_rate, i );
-			}
-			else
-			{
-				for (int i=0;i<nyears && i<(int)count;i++)
-					cf.at(cf_line, i+1) = arrp[i]*scale;
-			}
-		}
-	}
-
 	double min( double a, double b )
 	{
 		return (a < b) ? a : b;
@@ -420,4 +295,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( thirdpartyownership, "Residential/Commerical 3rd Party Ownership Finance model.", 1 );
+DEFINE_MODULE_ENTRY( thirdpartyownership, "Residential/Commercial 3rd Party Ownership Finance model.", 1 );
