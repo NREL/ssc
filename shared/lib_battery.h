@@ -19,7 +19,7 @@ Thermal Base class.
 class thermal_t
 {
 public:
-	thermal_t(double mass, double length, double width, double height, double thickness,
+	thermal_t(double mass, double length, double width, double height, 
 		double Cp, double h, double T_room, double R,
 		std::vector<double> temperature_vect, std::vector<double> capacity_vect);
 	~thermal_t();

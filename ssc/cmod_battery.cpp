@@ -49,7 +49,6 @@ static var_info _cm_vtab_battery[] = {
 	
 	// thermal inputs
 	{ SSC_INPUT, SSC_NUMBER, "battery_mass", "Mass of the battery", "kg", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_wall_thickness", "Thickness of battery wall", "m", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_length", "Battery length", "m", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_width", "Battery width", "m", "", "Battery", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "battery_height", "Battery height", "m", "", "Battery", "*", "", "" },
@@ -160,7 +159,6 @@ public:
 		
 		// Thermal properties
 		double battery_mass = as_double("battery_mass"); // [kg]
-		double battery_wall_thickness = as_double("battery_wall_thickness"); // [m]
 		double battery_length = as_double("battery_length"); // [m]
 		double battery_width = as_double("battery_width"); // [m]
 		double battery_height = as_double("battery_height"); // [m]
@@ -298,7 +296,7 @@ public:
 		double other[] = { Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate };
 		voltage_dynamic_t VoltageModelDynamic(num_cells, Vnom, other);
 		lifetime_t LifetimeModel(DOD_vect, cycle_vect, cycle_vect.size() );
-		thermal_t ThermalModel(battery_mass, battery_length, battery_width, battery_height, battery_wall_thickness, 
+		thermal_t ThermalModel(battery_mass, battery_length, battery_width, battery_height, 
 							   battery_Cp, h_battery_to_ambient, T_room, R,
 							   temperature_vect, capacity_vs_temperature_vect);
 		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);

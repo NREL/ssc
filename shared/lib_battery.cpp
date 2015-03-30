@@ -774,7 +774,7 @@ double life_vs_DOD(double R, double * a, void * user_data)
 /*
 Define Thermal Model
 */
-thermal_t::thermal_t(double mass, double length, double width, double height, double thickness,
+thermal_t::thermal_t(double mass, double length, double width, double height, 
 	double Cp,  double h, double T_room, double R,
 	std::vector<double> temperature_vect, std::vector<double> capacity_vect)
 {
@@ -782,7 +782,6 @@ thermal_t::thermal_t(double mass, double length, double width, double height, do
 	_length = length;
 	_width = width;
 	_height = height;
-	_thickness = thickness;
 	_Cp = Cp;
 	_h = h;
 	_T_room = T_room;
@@ -804,7 +803,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height, do
 	{
 		// user inputs F, modify to K
 		_temperature_vect[ii] = (temperature_vect[ii]-32.)*(5./9.)+273.15;
-		_capacity_vect[ii] = capacity_vect[ii];
+		_capacity_vect[ii] = capacity_vect[ii]/100.;
 		_a[ii] = 0.;
 	}
 	int info = lsqfit(third_order_polynomial, 0, _a, n, _temperature_vect, _capacity_vect, n);
