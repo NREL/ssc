@@ -2,114 +2,370 @@
 
 #include "common.h"
 #include "core.h"
-
 #include "lib_util.h"
-#include "lib_battery.h"
-#include "lib_weatherfile.h"
+#include "cmod_battery.h"
 
-/* -------------------------------------
--------------------------------------- */
 
-#ifndef M_PI
-#define M_PI 3.141592653589793238462643
-#endif
 
-static var_info _cm_vtab_battery[] = {
-	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,		SSC_STRING,		"solar_resource_file",	"local weather file path",				"",			"",						"Weather",		"*",						"LOCAL_FILE",						"" },
 
+var_info vtab_battery[] = {
+/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	
 	// generic battery inputs
-	{ SSC_INPUT, SSC_NUMBER, "num_batteries", "Number of Batteries in Serial", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "num_cells", "Number of Cells in Battery", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_chemistry", "Battery Chemistry", "", "", "Battery", "", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "R", "Battery Internal Resistance", "Ohm", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "power_conversion_efficiency", "Power Conversion Efficiency", "", "", "Battery", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_nser",                                  "Number of Batteries in Serial",                           "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_ncells",                                "Number of Cells in Battery",                              "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_R",                                     "Battery Internal Resistance",                             "Ohm",     "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_rt_eff",                                "Battery round trip efficiency",                           "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vfull",                                 "Fully charged cell voltage",                              "V",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vexp",                                  "Cell Voltage at end of exponential zone",                 "V",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vnom",                                  "Cell Voltage at end of nominal zone",                     "V",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qfull",                                 "Fully charged cell capacity",                             "Ah",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qexp",                                  "Cell capacity at end of exponential zone",                "Ah",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qnom",                                  "Cell capacity at end of nominal zone",                    "Ah",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_C_rate",                                "Rate at which voltage vs. capacity curve input",          "",        "",                     "Battery",       "",                           "",                              "" },
 
 
 	// lead-acid inputs
-	{ SSC_INPUT,		SSC_NUMBER,		"q20",					"Capacity at 20-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"q10",					"Capacity at 10-hour discharge rate",	"Ah",		"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"qn",					"Capacity at discharge rate for n-hour rate",	"Ah",		"",				"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"tn",					"Time to discharge",					"h",		"",						"Battery",		"*",						"",									"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q20",	                               "Capacity at 20-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                         "",                             "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q10",	                               "Capacity at 10-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                         "",                             "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_qn",	                               "Capacity at discharge rate for n-hour rate",             "Ah",       "",                     "Battery",       "",                         "",                             "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                         "",                             "" },
 
 	// lithium-ion inputs
-	{ SSC_INPUT, SSC_NUMBER, "Vfull", "Fully charged cell voltage", "V", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Vexp", "Cell Voltage at end of exponential zone", "V", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Vnom", "Cell Voltage at end of nominal zone", "V", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Qfull", "Fully charged cell capacity", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Qexp", "Cell capacity at end of exponential zone", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "Qnom", "Cell capacity at end of nominal zone", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "C_rate", "Rate at which voltage vs. capacity curve input", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "cycle_capacities_vect", "Number of cycles at which capacity measured", "", "", "Battery", "", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "capacities_vect", "Percent of original maximum capacity at cycle number", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "LiIon_cycle_capacities_vect",                 "Number of cycles at which capacity measured",            "",         "",                     "Battery",       "",                         "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "LiIon_capacities_vect",                       "Percent of original maximum capacity at cycle number",   "",         "",                     "Battery",       "",                         "",                             "" },
 
 	// lifetime inputs
-	{ SSC_INPUT,		SSC_ARRAY,		"DOD_vect",				"Depth of Discharge Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
-	{ SSC_INPUT,		SSC_ARRAY,		"cycle_vect",			"Cycles to Failure Curve Fit",			"",			"",						"Battery",		"*",						"",									"" },
+	{ SSC_INPUT,		SSC_ARRAY,		"batt_life_DOD",                               "Depth of Discharge Curve Fit",                           "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,		SSC_ARRAY,		"batt_life_cycle",                             "Cycles to Failure Curve Fit",                            "",         "",                     "Battery",       "",                           "",                             "" },
 	
 	// thermal inputs
-	{ SSC_INPUT, SSC_NUMBER, "battery_mass", "Mass of the battery", "kg", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_length", "Battery length", "m", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_width", "Battery width", "m", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_height", "Battery height", "m", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "battery_Cp", "Battery specific heat capacity", "J/KgK", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "h_battery_to_ambient", "Heat transfer coefficient between battery and environment", "W/m2K", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "T_room", "Temperature of storage room", "C", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "temperature_for_capacity", "Temperature vector for capacity modification", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "capacity_vs_temperature", "Capacity percent based on temperature", "", "", "Battery", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Mass of the battery",                                    "kg",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_length",                                 "Battery length",                                         "m",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_width",                                  "Battery width",                                          "m",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_height",                                 "Battery height",                                         "m",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_Cp",                                     "Battery specific heat capacity",                         "J/KgK",    "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_h_to_ambient",                           "Heat transfer between battery and environment",          "W/m2K",    "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "T_room",                                      "Temperature of storage room",                            "C",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "Battery",       "",                           "",                             "" },
 
+	// storage dispatch
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-4 Charging Allowed?",                          "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-4 Discharging Allowed?",                       "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-4 Grid Charging Allowed?",                     "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery Dispatch Schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
+		
+
+
+// battery/storage outputs, currently allows all subhourly.  May want to acculumulate up to hourly for most 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q0",                              "Battery Total Charge",                                  "Ah",    "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q1",                              "Battery Available Charge",                              "Ah",    "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q2",                              "Battery Bound Charge",                                  "Ah",    "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "SOC",                                  "Battery State of Charge",                               "%",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "DOD",                                  "Battery Depth of Discharge",                            "%",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "qmaxI",                                "Battery Max Capacity at Current",                       "Ah",    "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "qmax",                                 "Battery Max Charge",                                    "Ah",    "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_I",                               "Battery Current",                                       "A",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_cell",                         "Battery Cell Voltage",                                  "V",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_battery",                      "Battery Voltage",                                       "V",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_bank",                         "Battery Bank Voltage",                                  "V",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "Damage",                               "Battery Fractional Damage",                             "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                               "Battery Number of Cycles",                              "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                  "Battery temperature",                                   "C",     "", "Battery", "", "", "" }, 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Relative capacity percent due to temperature",  "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "Dispatch_mode",                        "Battery Dispatch Mode for Hour",                        "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "Dispatch_profile",                     "Battery Dispatch Profile for Hour",                     "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                       "Energy to/from Battery",                                "kWh",   "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                          "Energy from Grid to Battery",                           "kWh",   "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                           "Energy to load from PV",                                "kWh",   "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_to_load",                      "Energy to load from battery",                           "kWh",   "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                         "Energy to load from grid",                              "kWh",   "", "Battery", "", "", "" },
+
+var_info_invalid };
+
+
+
+
+battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr )
+{
+	voltage_model = 0;
+	lifetime_model = 0;
+	thermal_model = 0;
+	battery_model = 0;
+	capacity_model = 0;
+	battery_bank_model = 0;
+	dispatch_model = 0;
+
+	outTotalCharge = 0;
+	outAvailableCharge = 0;
+	outBoundCharge = 0;
+	outMaxChargeAtCurrent = 0;
+	outMaxCharge = 0;
+	outSOC = 0;
+	outDOD = 0;
+	outCurrent = 0;
+	outCellVoltage = 0;
+	outBatteryVoltage = 0;
+	outBatteryBankVoltage = 0;
+	outDamage = 0;
+	outCycles = 0;
+	outBatteryTemperature = 0;
+	outCapacityThermalPercent = 0;
+	outDispatchMode = 0;
+	outDispatchProfile = 0;
+	outBatteryEnergy = 0;
+	outGridEnergy = 0;
+	outPVToLoad = 0;
+	outBatteryToLoad = 0;
+	outGridToLoad = 0;
+
+
+	en = setup_model;
+	if ( !en ) return;
+
+	chem = cm.as_integer( "batt_chem" );
+
+	size_t ncharge, ndischarge, ngridcharge;
+	ssc_number_t *pcharge = cm.as_array( "dispatch_manual_charge", &ncharge );
+	ssc_number_t *pdischarge = cm.as_array( "dispatch_manual_discharge", &ndischarge );
+	ssc_number_t *pgridcharge = cm.as_array( "dispatch_manual_gridcharge", &ngridcharge );
+	if ( ncharge != 4 || ndischarge != 4 || ngridcharge != 4 )
+		throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
+
+	for( size_t i=0;i<4;i++ )
+	{
+		dm_charge[i] = pcharge[i]!=0.0f ? 1 : 0;
+		dm_discharge[i] = pdischarge[i]!=0.0f ? 1 : 0;
+		dm_gridcharge[i] = pgridcharge[i]!=0.0f ? 1 : 0;
+	}
+	size_t m,n;
+	ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
+	if ( m != 12 || n != 24 )
+		throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24" );
+
+	for( size_t i=0;i<12;i++ )
+		for( size_t j=0;j<24;j++ )
+			dm_sched(i,j) = psched[ i*24 + j ];
+	
+	lft_DoD = cm.as_doublevec( "batt_life_dod" );
+	lft_cycle = cm.as_doublevec( "batt_life_cycle" );
+	if ( lft_DoD.size() != lft_cycle.size() )
+		throw compute_module::exec_error("battery", "DoD and cycle vectors for lifetime model must be equal" );
+
+		
+	// only valid for lead-acid, zero out for anything else
+	if ( chem != 0)
+	{
+		for (int ii = 0; ii != lft_DoD.size(); ii++)
+		{
+			lft_DoD[ii] = 0.;
+			lft_cycle[ii] = 0.;
+		}
+	}
+
+	/* **********************************************************************
+	Initialize outputs
+	********************************************************************** */		
+	outTotalCharge = cm.allocate("q0", nrec);
+
+	// only allocate if lead-acid
+	if ( chem == 0 )
+	{
+		outAvailableCharge = cm.allocate("q1", nrec);
+		outBoundCharge = cm.allocate("q2", nrec);
+		outMaxChargeAtCurrent = cm.allocate("qmaxI", nrec);
+	}
+	else
+		outMaxCharge = cm.allocate("qmax", nrec);
+
+
+	outSOC = cm.allocate("SOC", nrec);
+	outDOD = cm.allocate("DOD", nrec);
+	outCurrent = cm.allocate("I", nrec);
+	outCellVoltage = cm.allocate("voltage_cell", nrec);
+	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
+	outBatteryBankVoltage = cm.allocate("voltage_bank", nrec);
+	outDamage = cm.allocate("Damage", nrec);
+	outCycles = cm.allocate("Cycles", nrec);
+	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
+	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
+	outDispatchMode = cm.allocate("Dispatch_mode", nrec);
+	outDispatchProfile = cm.allocate("Dispatch_profile", nrec);
+	outBatteryEnergy = cm.allocate("battery_energy", nrec);
+	outGridEnergy = cm.allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+	outPVToLoad = cm.allocate("pv_to_load", nrec);
+	outBatteryToLoad = cm.allocate("battery_to_load", nrec);
+	outGridToLoad = cm.allocate("grid_to_load", nrec);
+
+
+	// model initialization
+	double other[] = { 		
+		cm.as_double("batt_Vfull"),	   // [V]
+		cm.as_double("batt_Vexp"),	   // [V]
+		cm.as_double("batt_Vnom"),	   // [V]
+		cm.as_double("batt_Qfull"),	   // [Ah]
+		cm.as_double("batt_Qexp"),	   // [Ah]
+		cm.as_double("batt_Qnom"),	   // [Ah]
+		cm.as_double("batt_C_rate") }; // [Ah]
+
+	voltage_model = new voltage_dynamic_t( cm.as_integer("batt_ncells"), cm.as_double("batt_Vnom"), other);
+	lifetime_model = new  lifetime_t(lft_DoD, lft_cycle, lft_cycle.size() );
+
+	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
+	if ( cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2 )
+		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
+
+
+	thermal_model = new thermal_t(
+		cm.as_double("batt_mass"), // [kg]
+		cm.as_double("batt_length"), // [m]
+		cm.as_double("batt_width"), // [m]
+		cm.as_double("batt_height"), // [m]
+		cm.as_double("batt_Cp"), // [J/kgK]
+		cm.as_double("batt_h_to_ambient"), // W/m2K
+		273.15 + cm.as_double("T_room"), // K
+		cm.as_double("batt_R"),
+		cap_vs_temp );
+		
+		
+	battery_model = new battery_t( 
+		cm.as_double("batt_nser"), 
+		cm.as_double("batt_rt_eff"), 
+		dt_hr );
+
+	double Vfull = cm.as_double("batt_Vfull");
+	int ncell = cm.as_integer("batt_ncells");
+
+	if ( chem == 0 )
+	{
+		double q10 = cm.as_double( "LeadAcid_q10" );
+		capacity_model = new capacity_kibam_t(
+			q10,
+			cm.as_double( "LeadAcid_q20" ),
+			cm.as_double( "LeadAcid_I20" ),
+			Vfull,
+			cm.as_double( "LeadAcid_tn" ),
+			10.0,
+			cm.as_double( "LeadAcid_qn" ),
+			q10 );
+	}
+	else if ( chem == 1 )
+	{
+		std::vector<double> LiIon_cap = cm.as_doublevec("LiIon_capacities_vect");
+		std::vector<double> LiIon_cycle_cap = cm.as_doublevec("LiIon_cycle_capacities_vect");
+		if (LiIon_cap.size() != LiIon_cycle_cap.size() ) 
+			throw compute_module::exec_error("battery", "Number of Capacities-vs-cycles inputs must equal number of cycles inputs (li-ion battery)");
+
+
+		capacity_model = new capacity_lithium_ion_t(
+			cm.as_double("batt_Qfull"),
+			Vfull*ncell, LiIon_cap, LiIon_cycle_cap);
+	}
+		
+	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model);
+
+	battery_bank_model = new battery_bank_t( battery_model, 
+		cm.as_double("batt_nser"),
+		chem,
+		cm.as_double("batt_rt_eff") );
+
+	dispatch_model = new dispatch_manual_t( battery_bank_model, dt_hr );
+}
+
+battstor::~battstor()
+{
+	if( voltage_model ) delete voltage_model;
+	if( lifetime_model ) delete lifetime_model;
+	if( thermal_model ) delete thermal_model;
+	if( battery_model ) delete battery_model;
+	if( capacity_model ) delete capacity_model;
+	if( battery_bank_model ) delete battery_bank_model;
+	if( dispatch_model ) delete dispatch_model;
+}
+
+void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD )
+{
+	int iprofile = -1;
+
+	if ( dispatch_manual_t *dm = dynamic_cast<dispatch_manual_t*>(dispatch_model) )
+	{
+		int m, h;
+		getMonthHour( hour_of_year, &m, &h );
+		iprofile = dm_sched(m-1,h-1) - 1;
+		if ( iprofile < 0 || iprofile > 3 ) throw compute_module::exec_error( "battery", "invalid battery dispatch schedule profile [0..3] ok");
+			
+		dm->set_profiles( dm_charge[iprofile], dm_discharge[iprofile], dm_gridcharge[iprofile] );
+	}
+	else
+		throw compute_module::exec_error("battery", "internal error: no dispatch method enabled.");
+
+	output_map DispatchOutput = dispatch_model->dispatch( PV, LOAD );
+	output_map BatteryBankOutput = dispatch_model->getBatteryBankOutput();
+
+	// Capacity Output 
+	if ( chem == 0 )
+	{
+		outAvailableCharge[idx] = (ssc_number_t)(BatteryBankOutput["q1"]);
+		outBoundCharge[idx] = (ssc_number_t)(BatteryBankOutput["q2"]);
+		outMaxChargeAtCurrent[idx] = (ssc_number_t)(BatteryBankOutput["qmaxI"]);
+	}
+	else
+		outMaxCharge[idx] = (ssc_number_t)(BatteryBankOutput["qmax"]);
+
+
+	outTotalCharge[idx] = (ssc_number_t)(BatteryBankOutput["q0"]);
+	outSOC[idx] = (ssc_number_t)(BatteryBankOutput["SOC"]);
+	outDOD[idx] = (ssc_number_t)(BatteryBankOutput["DOD"]);
+	outCurrent[idx] = (BatteryBankOutput["I"]);
+
+	// Voltage Output
+	outCellVoltage[idx] = (ssc_number_t)(BatteryBankOutput["voltage_cell"]);
+	outBatteryVoltage[idx] = (ssc_number_t)(BatteryBankOutput["voltage_battery"]);
+	outBatteryBankVoltage[idx] = (ssc_number_t)(BatteryBankOutput["voltage_bank"]);
+
+	// Lifetime Output
+	outDamage[idx] = (ssc_number_t)(BatteryBankOutput["Damage"]);
+	outCycles[idx] = (int)(BatteryBankOutput["Cycles"]);
+				
+
+	// Thermal Output
+	outBatteryTemperature[idx] = (ssc_number_t)(BatteryBankOutput["T_battery"]) - 273.15;
+	outCapacityThermalPercent[idx] = (ssc_number_t)(BatteryBankOutput["Capacity_thermal_percent"]);
+
+	// Dispatch output
+	outDispatchProfile[idx] = iprofile;
+	outDispatchMode[idx] = 0; // ? what to do with this
+	outBatteryEnergy[idx] = (ssc_number_t)(DispatchOutput["battery_energy"]);
+	outGridEnergy[idx] = (ssc_number_t)(DispatchOutput["grid_energy"]);
+	outPVToLoad[idx] = (ssc_number_t)(DispatchOutput["pv_to_load"]);
+	outBatteryToLoad[idx] = (ssc_number_t)(DispatchOutput["battery_to_load"]);
+	outGridToLoad[idx] = (ssc_number_t)(DispatchOutput["grid_to_load"]);
+
+}
+
+void battstor::finalize( size_t nrec )
+{
+	output_map BatteryBankOutput = battery_bank_model->finish();
+	outDamage[nrec - 1] = (ssc_number_t)(BatteryBankOutput["Damage"]);
+	outCycles[nrec - 1] = (int)(BatteryBankOutput["Cycles"]);
+}
+
+
+
+
+
+///////////////////////////////////////////////////
+
+
+static var_info _cm_vtab_battery[] = {
+	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	
 	// system energy and load
 	{ SSC_INOUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Time Series", "*", "", "" },
 	{ SSC_INOUT, SSC_ARRAY, "e_load", "Electric load", "kWh", "", "Load Profile Estimator", "", "", "" },
 
-	// storage dispatch
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p1.charge", "Period 1 Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p2.charge", "Period 2 Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p3.charge", "Period 3 Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p4.charge", "Period 4 Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p1.discharge", "Period 1 Discharging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p2.discharge", "Period 2 Discharging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p3.discharge", "Period 3 Discharging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p4.discharge", "Period 4 Discharging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p1.gridcharge", "Period 1 Grid Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p2.gridcharge", "Period 2 Grid Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p3.gridcharge", "Period 3 Grid Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pv.storage.p4.gridcharge", "Period 4 Grid Charging Allowed?", "", "", "Battery", "*", "", "" },
-	{ SSC_INPUT,		SSC_MATRIX,		"pv_storage_sched", "Battery Dispatch Schedule", "", "", "Battery", "*", "", "" },
-	
-	// economic inputs
-	{ SSC_INOUT, SSC_NUMBER, "analysis_period", "Number of years in analysis", "years", "", "", "*", "INTEGER,POSITIVE", "" },
-	{ SSC_INOUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
-	{ SSC_INOUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
-	{ SSC_INOUT, SSC_ARRAY, "rate_escalation", "Annual utility rate escalation", "%/year", "", "", "?=0", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
-
-	// outputs, currently allows all subhourly.  May want to acculumulate up to hourly for most 
-	{ SSC_OUTPUT, SSC_ARRAY, "q0", "Total Charge", "Ah", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "q1", "Available Charge", "Ah", "", "Battery", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "q2", "Bound Charge", "Ah", "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "SOC",					"State of Charge",						"%",        "",						"Battery",       "*",						"",						"" },
-	{ SSC_OUTPUT, SSC_ARRAY, "DOD", "Depth of Discharge", "%", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "qmaxI", "Max Capacity at Current", "Ah", "", "Battery", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "qmax", "Max Charge", "Ah", "", "Battery", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "I", "Current", "A", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "voltage_cell", "Cell Voltage", "V", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "voltage_battery", "Battery Voltage", "V", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "voltage_bank", "Battery Bank Voltage", "V", "", "Battery", "*", "", "" },
-
-	{ SSC_OUTPUT, SSC_ARRAY, "Damage", "Fractional Damage", "", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Cycles", "Number of Cycles", "", "", "Battery", "*", "", "" },
-
-	{ SSC_OUTPUT, SSC_ARRAY, "battery_temperature", "Battery temperature", "C", "", "Battery", "*", "", "" }, 
-	{ SSC_OUTPUT, SSC_ARRAY, "capacity_thermal_percent", "Relative capacity percent due to temperature", "", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_mode", "Dispatch Mode for Hour", "", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "Dispatch_profile", "Dispatch Profile for Hour", "", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "battery_energy", "Energy to/from Battery", "kWh", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "grid_energy", "Energy from Grid to Battery", "kWh", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "pv_to_load", "Energy to load from PV", "kWh", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "battery_to_load", "Energy to load from battery", "kWh", "", "Battery", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "grid_to_load", "Energy to load from grid", "kWh", "", "Battery", "*", "", "" },
-
+	// other variables come from battstor common table
 
 	var_info_invalid };
 
@@ -120,119 +376,14 @@ public:
 	cm_battery()
 	{
 		add_var_info(_cm_vtab_battery);
-		// add_var_info(vtab_adjustment_factors);
+		add_var_info( vtab_battery );
 	}
 
 	void exec() throw(general_error)
 	{
-		/* **********************************************************************
-		Read user specified system parameters from compute engine
-		********************************************************************** */
-
-		// generic battery properties
-		int num_batteries = as_integer("num_batteries");
-		int num_cells = as_integer("num_cells");
-		double power_conversion_efficiency = as_integer("power_conversion_efficiency");
-		int battery_chemistry = as_integer("battery_chemistry");
-		double R = as_double("R"); //		  [Ohm]
-
-
-		// Lead acid battery properties 		
-		double q20 = as_double("q20"); // [Ah]
-		double q10 = as_double("q10"); // [Ah]
-		double qn = as_double("qn"); //   [Ah]
-		double I20 = q20 / 20; //	  [A]
-		int tn = as_double("tn"); //	  [h]
-
-		// Lithium Ion properties
-		double Vfull = as_double("Vfull");	   // [V]
-		double Vexp = as_double("Vexp");	   // [V]
-		double Vnom = as_double("Vnom");	   // [V]
-		double Qfull = as_double("Qfull");	   // [Ah]
-		double Qexp = as_double("Qexp");	   // [Ah]
-		double Qnom = as_double("Qnom");	   // [Ah]
-		double C_rate = as_double("C_rate");	   // [Ah]
-
-		std::vector<double> capacities_vect = as_doublevec("capacities_vect");
-		std::vector<double> cycle_capacities_vect = as_doublevec("cycle_capacities_vect");
-		if (capacities_vect.size() != cycle_capacities_vect.size() ) throw exec_error("battery", "Number of Capacities-vs-cycles inputs must equal number of cycles inputs");
 		
-		// Thermal properties
-		double battery_mass = as_double("battery_mass"); // [kg]
-		double battery_length = as_double("battery_length"); // [m]
-		double battery_width = as_double("battery_width"); // [m]
-		double battery_height = as_double("battery_height"); // [m]
-		double battery_Cp = as_double("battery_Cp"); // [J/kgK]
-		double h_battery_to_ambient = as_double("h_battery_to_ambient"); // W/m2K
-		double T_room = 273.15 + as_double("T_room"); // K
-
-		std::vector<double> temperature_vect = as_doublevec("temperature_for_capacity");
-		std::vector<double> capacity_vs_temperature_vect = as_doublevec("capacity_vs_temperature");
-		if (temperature_vect.size() != capacity_vs_temperature_vect.size()) throw exec_error("battery", "Number of Capacities-vs-temperature inputs must equal number of temperature inputs");
-
-		// Dispatch Timing Control
-		size_t months = 12;
-		size_t hours = 24;
-		bool can_charge_array[4];
-		bool can_discharge_array[4];
-		bool grid_charge_array[4];
-		
-		can_charge_array[0] = as_boolean("pv.storage.p1.charge");
-		can_charge_array[1] = as_boolean("pv.storage.p2.charge");
-		can_charge_array[2] = as_boolean("pv.storage.p3.charge");
-		can_charge_array[3] = as_boolean("pv.storage.p4.charge");
-		can_discharge_array[0] = as_boolean("pv.storage.p1.discharge");
-		can_discharge_array[1] = as_boolean("pv.storage.p2.discharge");
-		can_discharge_array[2] = as_boolean("pv.storage.p3.discharge");
-		can_discharge_array[3] = as_boolean("pv.storage.p4.discharge");
-		grid_charge_array[0] = as_boolean("pv.storage.p1.gridcharge");
-		grid_charge_array[1] = as_boolean("pv.storage.p2.gridcharge");
-		grid_charge_array[2] = as_boolean("pv.storage.p3.gridcharge");
-		grid_charge_array[3] = as_boolean("pv.storage.p4.gridcharge");
-		ssc_number_t * pv_storage_schedule = as_matrix("pv_storage_sched", &months, &hours);
-		util::matrix_t<float> schedule(12, 24);
-		schedule.assign(pv_storage_schedule, months, hours);
-
-		// if lead-acid KiBam, check capacity inputs
-		if (battery_chemistry==0)
-		{
-			double capacities[] = { qn, q10, q20 };
-			std::vector<double> vect_capacities(3);
-			std::vector<double>::iterator it;
-			it = std::unique_copy(capacities, capacities + 3, vect_capacities.begin());
-			std::sort(vect_capacities.begin(), it);
-			it = std::unique_copy(vect_capacities.begin(), it, vect_capacities.begin(), compare);
-			vect_capacities.resize(std::distance(vect_capacities.begin(), it));
-			if (vect_capacities.size() < 3) throw exec_error("battery", "Must enter at least 3 unique capacity values (20 hour, 10 hour, and one other)");
-		}
-
-		// lifetime inputs
-		std::vector<double> DOD_vect = as_doublevec("DOD_vect");
-		std::vector<double> cycle_vect = as_doublevec("cycle_vect");
-
-		// only valid for lead-acid, zero out for anything else
-		if (battery_chemistry != 0)
-		{
-			for (int ii = 0; ii != DOD_vect.size(); ii++)
-			{
-				DOD_vect[ii] = 0.;
-				cycle_vect[ii] = 0.;
-			}
-		}
-		else
-			if (DOD_vect.size() != cycle_vect.size() ) throw exec_error("battery", "Number of Cycles-to-Failure inputs must equal Depth-of-Discharge inputs");		
-
-		/* **********************************************************************
-		Ensure can handle subhourly
-		********************************************************************** */
-		const char *file = as_string("solar_resource_file");
-		weatherfile wf(file);
-		if (!wf.ok()) throw exec_error("battery", wf.error_message());
-		size_t nrec = wf.nrecords;
-
-		// check against actual inputs
-		size_t len;
-		ssc_number_t *hourly_energy = as_array("hourly_energy", &len);
+		size_t nrec, len;
+		ssc_number_t *hourly_energy = as_array("hourly_energy", &nrec);
 		ssc_number_t *e_load = as_array("e_load", &len);
 
 		if (len != nrec) 
@@ -245,83 +396,11 @@ public:
 		double ts_hour = 1.0 / step_per_hour;
 		double ts_sec = 3600.0 / step_per_hour;
 
-		/* **********************************************************************
-		Initialize outputs
-		********************************************************************** */
-		ssc_number_t *outTotalCharge = allocate("q0", nrec);
-		ssc_number_t *outAvailableCharge;
-		ssc_number_t *outBoundCharge;
-		ssc_number_t *outMaxChargeAtCurrent;
-		ssc_number_t *outMaxCharge;
 
-		// only allocate if lead-acid
-		if (battery_chemistry==0)
-		{
-			outAvailableCharge = allocate("q1", nrec);
-			outBoundCharge = allocate("q2", nrec);
-			outMaxChargeAtCurrent = allocate("qmaxI", nrec);
-		}
-		else
-			outMaxCharge = allocate("qmax", nrec);
+		battstor batt( *this, true, nrec, ts_hour );
 
-
-		ssc_number_t *outSOC = allocate("SOC", nrec);
-		ssc_number_t *outDOD = allocate("DOD", nrec);
-		ssc_number_t *outCurrent = allocate("I", nrec);
-		ssc_number_t *outCellVoltage = allocate("voltage_cell", nrec);
-		ssc_number_t *outBatteryVoltage = allocate("voltage_battery", nrec);
-		ssc_number_t *outBatteryBankVoltage = allocate("voltage_bank", nrec);
-		ssc_number_t *outDamage = allocate("Damage", nrec);
-		ssc_number_t *outCycles = allocate("Cycles", nrec);
-		ssc_number_t *outBatteryTemperature = allocate("battery_temperature", nrec);
-		ssc_number_t *outCapacityThermalPercent = allocate("capacity_thermal_percent", nrec);
-		ssc_number_t *outDispatchMode = allocate("Dispatch_mode", nrec);
-		ssc_number_t *outDispatchProfile = allocate("Dispatch_profile", nrec);
-		ssc_number_t *outBatteryEnergy = allocate("battery_energy", nrec);
-		ssc_number_t *outGridEnergy = allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
-		ssc_number_t *outPVToLoad = allocate("pv_to_load", nrec);
-		ssc_number_t *outBatteryToLoad = allocate("battery_to_load", nrec);
-		ssc_number_t *outGridToLoad = allocate("grid_to_load", nrec);
-
-		/* *********************************************************************************************
-		Battery and Model Initialization
-		*********************************************************************************************** */
-		int mode = 0;
-		double annual_wh = 0.0;
 		size_t hour = 0;
-		double SOC;
-		double dt = ts_hour; 
-
-		// Component Models
-		double other[] = { Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate };
-		voltage_dynamic_t VoltageModelDynamic(num_cells, Vnom, other);
-		lifetime_t LifetimeModel(DOD_vect, cycle_vect, cycle_vect.size() );
-		thermal_t ThermalModel(battery_mass, battery_length, battery_width, battery_height, 
-							   battery_Cp, h_battery_to_ambient, T_room, R,
-							   temperature_vect, capacity_vs_temperature_vect);
-		capacity_kibam_t CapacityModelLeadAcid(q10, q20, I20, Vfull, tn, 10, qn, q10);
-		capacity_lithium_ion_t CapacityModelLithiumIon(Qfull*num_cells, Vfull*num_cells, capacities_vect, cycle_capacities_vect);
-		battery_t Battery(num_batteries, power_conversion_efficiency, dt);
-
-		if (battery_chemistry==0)
-			Battery.initialize(&CapacityModelLeadAcid, &VoltageModelDynamic, &LifetimeModel, &ThermalModel);
-		else if (battery_chemistry==1)
-			Battery.initialize(&CapacityModelLithiumIon, &VoltageModelDynamic, &LifetimeModel, &ThermalModel);
-
-		battery_bank_t BatteryBank(&Battery, num_batteries, battery_chemistry, power_conversion_efficiency);
-		dispatch_manual_t Dispatch(&BatteryBank, dt);
-
-		// Component output
-		output_map BatteryBankOutput;
-		output_map DispatchOutput;
-		/* *********************************************************************************************
-		Storage Dispatch Initialization
-		*********************************************************************************************** */
-		int profile;
-		bool can_charge, can_discharge, grid_charge;
-		int month;
-		int curr_hour;
-
+		
 		/* *********************************************************************************************
 		Run Simulation
 		*********************************************************************************************** */
@@ -329,71 +408,18 @@ public:
 		int count = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
-			// Get Dispatch Settings for current hour
-			// Remotely possible this could need to be updated for sub-hourly profiles
-			getMonthHour(hour, &month, &curr_hour);
-			profile = schedule.at(month - 1, curr_hour - 1);
-			can_charge = can_charge_array[profile - 1];
-			can_discharge = can_discharge_array[profile - 1];
-			grid_charge = grid_charge_array[profile - 1];
-
 			// Loop over subhourly
 			for (size_t jj = 0; jj<step_per_hour; jj++)
 			{
 
-				// This is the main calculation, the rest is outputs
-				Dispatch.set_profiles(can_charge, can_discharge, grid_charge);
-				DispatchOutput = Dispatch.dispatch(hourly_energy[count], e_load[count]);
-				BatteryBankOutput = Dispatch.getBatteryBankOutput();
-
-				// Capacity Output 
-				if (battery_chemistry == 0)
-				{
-					outAvailableCharge[count] = (ssc_number_t)(BatteryBankOutput["q1"]);
-					outBoundCharge[count] = (ssc_number_t)(BatteryBankOutput["q2"]);
-					outMaxChargeAtCurrent[count] = (ssc_number_t)(BatteryBankOutput["qmaxI"]);
-				}
-				else
-					outMaxCharge[count] = (ssc_number_t)(BatteryBankOutput["qmax"]);
-
-				outTotalCharge[count] = (ssc_number_t)(BatteryBankOutput["q0"]);
-				outSOC[count] = (ssc_number_t)(BatteryBankOutput["SOC"]);
-				outDOD[count] = (ssc_number_t)(BatteryBankOutput["DOD"]);
-				outCurrent[count] = (BatteryBankOutput["I"]);
-
-				// Voltage Output
-				outCellVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_cell"]);
-				outBatteryVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_battery"]);
-				outBatteryBankVoltage[count] = (ssc_number_t)(BatteryBankOutput["voltage_bank"]);
-
-				// Lifetime Output
-				outDamage[count] = (ssc_number_t)(BatteryBankOutput["Damage"]);
-				outCycles[count] = (int)(BatteryBankOutput["Cycles"]);
-				
-
-				// Thermal Output
-				outBatteryTemperature[count] = (ssc_number_t)(BatteryBankOutput["T_battery"]) - 273.15;
-				outCapacityThermalPercent[count] = (ssc_number_t)(BatteryBankOutput["Capacity_thermal_percent"]);
-
-				// Dispatch output
-				outDispatchProfile[count] = profile;
-				outDispatchMode[count] = mode;
-				outBatteryEnergy[count] = (ssc_number_t)(DispatchOutput["battery_energy"]);
-				outGridEnergy[count] = (ssc_number_t)(DispatchOutput["grid_energy"]);
-				outPVToLoad[count] = (ssc_number_t)(DispatchOutput["pv_to_load"]);
-				outBatteryToLoad[count] = (ssc_number_t)(DispatchOutput["battery_to_load"]);
-				outGridToLoad[count] = (ssc_number_t)(DispatchOutput["grid_to_load"]);
-
+				batt.advance( *this, count, hour, jj, hourly_energy[count], e_load[count] );
 				count++;
+
 			}	// End loop over subhourly
 		} // End loop over hourly
 
 
-		// Have to finish up the lifetime model
-		BatteryBankOutput = BatteryBank.finish();
-
-		outDamage[count - 1] = (ssc_number_t)(BatteryBankOutput["Damage"]);
-		outCycles[count - 1] = (int)(BatteryBankOutput["Cycles"]);
+		batt.finalize( nrec );
 	}
 
 };

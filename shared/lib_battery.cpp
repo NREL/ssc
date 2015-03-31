@@ -777,8 +777,9 @@ Define Thermal Model
 */
 thermal_t::thermal_t(double mass, double length, double width, double height, 
 	double Cp,  double h, double T_room, double R,
-	std::vector<double> temperature_vect, std::vector<double> capacity_vect)
+	const util::matrix_t<double> &c_vs_t )
 {
+	_cap_vs_temp = c_vs_t;
 	_mass = mass;
 	_length = length;
 	_width = width;
@@ -795,20 +796,12 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	_T_battery = T_room;
 
 	// curve fit
-	int n = capacity_vect.size();
-	_temperature_vect = new double[n];
-	_capacity_vect = new double[n];
-	_a = new double[n];
-
-	for (int ii = 0; ii != n; ii++)
+	int n = _cap_vs_temp.nrows();
+	for (int i = 0; i < n; i++)
 	{
-		// user inputs F, modify to K
-		_temperature_vect[ii] = temperature_vect[ii]+273.15;
-		_capacity_vect[ii] = capacity_vect[ii]/100.;
-		_a[ii] = 0.;
+		_cap_vs_temp(i,0) += 273.15; // convert C to K
+		_cap_vs_temp(i,1) *= 0.01; // convert % to frac
 	}
-	int info = lsqfit(third_order_polynomial, 0, _a, n, _temperature_vect, _capacity_vect, n);
-
 
 	_output["T_battery"] = _T_battery;
 	_output["Capacity_thermal_percent"] = 1.;
@@ -816,9 +809,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 }
 thermal_t::~thermal_t()
 {
-	delete[] _temperature_vect;
-	delete[] _capacity_vect;
-	delete[] _a;
+	// nothing to do
 }
 output_map thermal_t::updateTemperature(double I, double dt)
 {
@@ -832,7 +823,10 @@ output_map thermal_t::updateTemperature(double I, double dt)
 }
 double thermal_t::getCapacityPercent()
 {
-	return third_order_polynomial(_T_battery, _a, 0);
+	// linearly interpolate table 
+	// use column 0 (temp, K) as X values
+	// return interpolated value in column 1 (fraction of capacity)
+	return util::linterp_col( _cap_vs_temp, 0, _T_battery, 1 );
 }
 
 double thermal_t::f(double T_battery, double I)

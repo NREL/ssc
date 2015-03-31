@@ -993,3 +993,47 @@ double util::interpolate(double x1, double y1, double x2, double y2, double xVal
 	double inter = y1 - (slope * x1);
 	return (slope*xValueToGetYValueFor) + inter;
 }
+
+double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, double xval, size_t iycol )
+{
+	// NOTE:  must assume values in ixcol are in increasing sorted order!!
+
+	size_t n = mat.nrows();
+
+	// basic checks
+	if ( ixcol >= mat.ncols() 
+		|| iycol >= mat.ncols() 
+		|| n < 2 )
+		return std::numeric_limits<double>::quiet_NaN();
+
+
+	double last = mat( 0, ixcol );
+	size_t i = 1;
+	while( i < n )
+	{
+		double x = mat( i, ixcol );
+		// check that values in ixcol are in increasing sorted order
+		if ( x < last ) 
+			return std::numeric_limits<double>::quiet_NaN(); 
+
+		if ( x > xval )
+			break;
+
+		last = x;
+		i++;
+	}
+
+	// at this point 'i' represents row index
+	// with X value just greater than interpolation value
+
+	// if at the end of the list, interpolate with last two values
+	if ( i == n ) 
+		i--;
+
+	// now do linear interpolation between current row value
+	// and previous row value.  xval is between these row X values.
+	return util::interpolate( 
+			mat( i-1, ixcol ), mat( i-1, iycol ), 
+			mat( i,   ixcol ), mat( i,   iycol ),
+			xval );
+}

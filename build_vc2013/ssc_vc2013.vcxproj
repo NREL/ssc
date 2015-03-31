@@ -83,6 +83,7 @@
     <ClCompile Include="..\ssc\common.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ssc\cmod_battery.h" />
     <ClInclude Include="..\ssc\common_financial.h" />
     <ClInclude Include="..\ssc\core.h" />
     <ClInclude Include="..\ssc\common.h" />

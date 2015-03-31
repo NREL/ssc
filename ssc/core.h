@@ -200,6 +200,7 @@ public:
 	ssc_number_t *as_array( const std::string &name, size_t *count ) throw( general_error );
 	std::vector<double> as_doublevec( const std::string &name ) throw( general_error );
 	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
+	util::matrix_t<double> as_matrix( const std::string & name ) throw( general_error );
 	bool get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error);
 
 	
