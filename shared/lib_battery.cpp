@@ -137,9 +137,9 @@ void capacity_kibam_t::parameter_compute()
 	double c2 = 0.;
 	double minRes = 10000.;
 
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 5000; i++)
 	{
-		k_guess = i*0.01;
+		k_guess = i*0.001;
 		c1 = c_compute(_F1, _t1, 20, k_guess);
 		c2 = c_compute(_F2, _t1, _t2, k_guess);
 
@@ -314,7 +314,7 @@ output_map capacity_lithium_ion_t::updateCapacity(double P, double V, double dt,
 
 	// currently just a tank of coloumbs
 	_I = P / V;
-	P = _P;
+	_P = P;
 	bool charging = false;
 	bool no_charge = false;
 
@@ -457,8 +457,9 @@ output_map voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	double I = capacity->getCurrent();
 	double q0 = capacity->getTotalCapacity();
 
-	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
-// 	_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_cells, I / _num_cells, q0 / _num_cells, dt);
+//	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
+	if (q0/Q > 0.01)
+		_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_cells, fabs(I) / _num_cells, q0 / _num_cells, dt);
 
 	_output["voltage_cell"] = _cell_voltage;
 	_output["voltage_battery"] = _cell_voltage*_num_cells;
@@ -483,9 +484,9 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 	// dt - should be in hours
 
 	double term1 = _E0 -_R*I; // common to both
-	double term2 = _K*(1 - q0 / Q); // from Unnewehr.  
-	// double term2 = _K*(Q / (Q - q0)); // from Tremblay.  Singularity as q0 -> Q
-	double term3 = _A*exp(-_B*fabs(I)*dt); // from Tremblay
+	double f = 1 - q0 / Q;
+	double term2 = _K*(1. / (1 - f));
+	double term3 = _A*exp(-_B*I*dt); // from Tremblay
 	double V = term1 - term2 + term3;
 	return V;
 }
@@ -802,7 +803,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	for (int ii = 0; ii != n; ii++)
 	{
 		// user inputs F, modify to K
-		_temperature_vect[ii] = (temperature_vect[ii]-32.)*(5./9.)+273.15;
+		_temperature_vect[ii] = temperature_vect[ii]+273.15;
 		_capacity_vect[ii] = capacity_vect[ii]/100.;
 		_a[ii] = 0.;
 	}
