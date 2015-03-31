@@ -28,6 +28,7 @@ var_info vtab_battery[] = {
 
 	// lead-acid inputs
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q20",	                               "Capacity at 20-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                         "",                             "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_I20",	                               "Current at 20-hour discharge rate",                      "A",       "",                     "Battery",       "",                         "",                             "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q10",	                               "Capacity at 10-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                         "",                             "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_qn",	                               "Capacity at discharge rate for n-hour rate",             "Ah",       "",                     "Battery",       "",                         "",                             "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                         "",                             "" },
@@ -37,7 +38,7 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "LiIon_capacities_vect",                       "Percent of original maximum capacity at cycle number",   "",         "",                     "Battery",       "",                         "",                             "" },
 
 	// lifetime inputs
-	{ SSC_INPUT,		SSC_ARRAY,		"batt_life_DOD",                               "Depth of Discharge Curve Fit",                           "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,		SSC_ARRAY,		"batt_life_dod",                               "Depth of Discharge Curve Fit",                           "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,		SSC_ARRAY,		"batt_life_cycle",                             "Cycles to Failure Curve Fit",                            "",         "",                     "Battery",       "",                           "",                             "" },
 	
 	// thermal inputs
