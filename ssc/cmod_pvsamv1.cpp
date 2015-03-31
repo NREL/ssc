@@ -8,6 +8,9 @@
 // for adjustment factors
 #include "common.h"
 
+// for battery model, leverage common code with standalone compute module.
+#include "cmod_battery.h"
+
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
 #include "lib_cec6par.h"
@@ -21,6 +24,8 @@
 #include "6par_solve.h"
 #include "lib_pvshade.h"
 
+#include "lib_util.h"
+
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -33,35 +38,35 @@ static inline double to_double(double x) { return x; }
 
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-		{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "pvsamv1", "*", "", "" },
-		{ SSC_INPUT, SSC_STRING, "solar_resource_file", "Weather file in TMY2, TMY3, EPW, or SMW.", "", "", "pvsamv1", "*", "LOCAL_FILE", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",                              "Nameplate capacity",                                   "kW",       "", "pvsamv1", "*", "", "" },
+	{ SSC_INPUT,        SSC_STRING,     "solar_resource_file",                          "Weather file in TMY2, TMY3, EPW, or SAM CSV.",         "",         "", "pvsamv1", "*", "LOCAL_FILE", "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",                  "0/1",    "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                            "0..1",   "",                              "pvsamv1",              "*",						  "LENGTH=12",					   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                       "",       "0=beam&diffuse,1=total&beam,2=total&diffuse",   "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=2",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                       "",       "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",               "0/1",      "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                         "0..1",     "",                              "pvsamv1",              "*",						  "LENGTH=12",					   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                    "",         "0=beam&diffuse,1=total&beam,2=total&diffuse",   "pvsamv1",              "?=0",                      "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                    "",         "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "ac_loss",                                   "Interconnection AC loss",                               "%",   "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ac_loss",                                     "Interconnection AC loss",                               "%",       "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
+	 
+	{ SSC_INPUT,        SSC_NUMBER,      "modules_per_string",                          "Modules per string",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                              "Number of inverters",                                   "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "modules_per_string",                          "Modules per string",                                      "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                      "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                              "Number of inverters",                                     "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,      "enable_mismatch_vmax_calc",                   "Enable mismatched subarray Vmax calculation",             "",       "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "enable_mismatch_vmax_calc",                   "Enable mismatched subarray Vmax calculation",           "",        "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt",                              "Sub-array 1 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray1_tilt_eq_lat", "MIN=0,MAX=90",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt_eq_lat",                       "Sub-array 1 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray1_tilt",          "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_azimuth",                           "Sub-array 1 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "*",                        "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_track_mode",                        "Sub-array 1 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rotlim",                            "Sub-array 1 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "subarray1_shade_mode",				     	"Sub-array 1 shading mode (fixed tilt or 1x tracking)",	   "0/1",	 "0=selfshaded,1=none",			  "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=1",		   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_gcr",                               "Sub-array 1 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading:hourly",                    "Sub-array 1 Hourly beam shading losses",                 "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:mxh",                       "Sub-array 1 Month x Hour beam shading losses",           "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading losses",     "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading loss",                       "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling loss",                       "%",   "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 DC power loss",                              "%",   "",                              "pvsamv1",              "*",                        "MIN=-5,MAX=100",                   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt",                              "Sub-array 1 Tilt",                                      "deg",     "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray1_tilt_eq_lat", "MIN=0,MAX=90",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt_eq_lat",                       "Sub-array 1 Tilt=latitude override",                    "0/1",     "",                              "pvsamv1",              "na:subarray1_tilt",          "BOOLEAN",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_azimuth",                           "Sub-array 1 Azimuth",                                   "deg",     "0=N,90=E,180=S,270=W",          "pvsamv1",              "*",                        "MIN=0,MAX=359.9",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_track_mode",                        "Sub-array 1 Tracking mode",                             "",        "0=fixed,1=1axis,2=2axis,3=azi", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rotlim",                            "Sub-array 1 Tracker rotation limit",                    "deg",     "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "subarray1_shade_mode",				     	"Sub-array 1 shading mode (fixed tilt or 1x tracking)",	 "0/1",	    "0=selfshaded,1=none",			  "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=1",		   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_gcr",                               "Sub-array 1 Ground coverage ratio",                     "0..1",    "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_shading:hourly",                    "Sub-array 1 Hourly beam shading losses",                "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:mxh",                       "Sub-array 1 Month x Hour beam shading losses",          "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading losses",    "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading loss",                      "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling loss",                      "%",       "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 DC power loss",                             "%",       "",                              "pvsamv1",              "*",                        "MIN=-5,MAX=100",                   "" },
 
 	// loss diagram outputs
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_mismatch_loss", "Sub-array 1 DC mismatch loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
@@ -95,7 +100,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmodx",                             "Sub-array 1 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmody",                             "Sub-array 1 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,POSITIVE",              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rowspace",                          "Sub-array 1 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray1_shade_mode=0", "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_backtrack",                         "Sub-array 1 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray1_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable",                            "Sub-array 2 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -116,7 +120,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mod_orient",                        "Sub-array 2 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmodx",                             "Sub-array 2 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmody",                             "Sub-array 2 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,POSITIVE",              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_rowspace",                          "Sub-array 2 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray2_shade_mode=0",  "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_backtrack",                         "Sub-array 2 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray2_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_enable",                            "Sub-array 3 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -137,7 +140,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mod_orient",                        "Sub-array 3 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmodx",                             "Sub-array 3 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray3_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmody",                             "Sub-array 3 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray3_shade_mode=0", "INTEGER,POSITIVE",              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_rowspace",                          "Sub-array 3 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray3_shade_mode=0", "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_backtrack",                         "Sub-array 3 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray3_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_enable",                            "Sub-array 4 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -158,7 +160,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mod_orient",                        "Sub-array 4 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmodx",                             "Sub-array 4 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmody",                             "Sub-array 4 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,POSITIVE",              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_rowspace",                          "Sub-array 4 Row spacing for self-shading",                "m",      "",                              "pvsamv1",              "subarray4_shade_mode=0", "POSITIVE",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_backtrack",                         "Sub-array 4 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray4_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "module_model",                                "Photovoltaic module model specifier",                     "",       "0=spe,1=cec,2=6par_user,3=snl", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=3",           "" },
@@ -270,7 +271,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_vmpo",                                    "Max power point voltage",                                 "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_voco",                                    "Open circuit voltage",                                    "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	
-
+// inverter model
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",       "0=cec,1=datasheet,2=partload",        "pvsamv1",       "*",                                 "INTEGER,MIN=0,MAX=2",           "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c0",                                  "Curvature between ac-power and dc-power at ref",          "1/W",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
@@ -299,7 +300,13 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated ac-power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum dc input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 
-// outputs
+	// battery storage and dispatch
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "e_load",                                     "Electric load",                                           "kWh",     "",                     "Battery",       "en_batt=1",                           "",                              "" },
+
+	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
+	
+	// outputs
 
 /* environmental conditions */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Global horizontal irradiance",                                      "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
@@ -648,7 +655,8 @@ public:
 	cm_pvsamv1()
 	{
 		add_var_info( _cm_vtab_pvsamv1 );
-		add_var_info(vtab_adjustment_factors);
+		add_var_info( vtab_adjustment_factors );
+		add_var_info( vtab_battery );
 	}
 
 
@@ -1176,6 +1184,7 @@ public:
 		}
 
 
+
 		// setup output arrays
 
 		// output arrays for weather info- same for all four subarrays	
@@ -1278,13 +1287,29 @@ public:
 		adjustment_factors haf(this);
 		if (!haf.setup())
 			throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
-
-
+		
+		// setup battery model
+		battstor batt( *this, as_boolean("en_batt"), nrec, ts_hour );
+		
+		double cur_load = 0.0;
+		size_t nload = 0;
+		ssc_number_t *p_load_in = 0;
+		if ( batt.en )
+		{
+			p_load_in = as_array( "e_load", &nload );
+			if ( nload != nrec || nload != 8760 )
+				throw exec_error("pvsamv1", "with batteries enabled, electric load profile must have same number of values as weather file, or 8760");
+		}
+		
 		// begin 8760 loop through each timestep
 		size_t idx=0;
 		size_t hour=0;
 		while( hour < 8760 )
 		{
+			// only hourly electric load, even
+			// if PV simulation is subhourly.  load is assumed constant over the hour.
+			if ( nload == 8760 )
+				cur_load = p_load_in[hour];
 			
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 			if ( hour % (8760/NSTATUS_UPDATES) == 0 )
@@ -1296,6 +1321,9 @@ public:
 
 			for( size_t jj=0;jj<step_per_hour;jj++ )
 			{
+				// electric load is subhourly
+				if ( nload == nrec )
+					cur_load = p_load_in[idx];
 
 				if (!wf.read())
 					throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx+1)) + " in weather file");
@@ -1665,9 +1693,16 @@ public:
 				p_invpsoloss[idx] = (ssc_number_t) ( psoloss * 0.001 );
 				p_invpntloss[idx] = (ssc_number_t) ( pntloss * 0.001 );
 
-				
-				// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-				p_hourly_energy[hour] += p_energy[idx];
+				if ( batt.en )
+				{
+					batt.advance( *this, idx, hour, jj, p_energy[idx], cur_load );
+					p_hourly_energy[hour] += batt.outGridEnergy[idx];
+				}
+				else
+				{				
+					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
+					p_hourly_energy[hour] += (p_energy[idx] - cur_load);
+				}
 
 				idx++;
 			}
@@ -1675,8 +1710,11 @@ public:
 			hour++;
 		}
 
+		if ( batt.en )
+			batt.finalize( nrec );
+
 		if (hour != 8760)
-			throw exec_error( "pvsamv1", "failed to simulate all 8760 hours, error in weather file?");
+			throw exec_error( "pvsamv1", "failed to simulate all 8760 hours, error in weather file ?");
 	
 		// calculate monthly_poa_nom, monthly_poa_eff, monthly_poa_eff_beam
 		// sum up monthly_inc for each subarray.  

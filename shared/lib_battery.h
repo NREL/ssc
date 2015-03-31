@@ -21,7 +21,7 @@ class thermal_t
 public:
 	thermal_t(double mass, double length, double width, double height, 
 		double Cp, double h, double T_room, double R,
-		std::vector<double> temperature_vect, std::vector<double> capacity_vect);
+		const util::matrix_t<double> &cap_vs_temp);
 	~thermal_t();
 
 	output_map updateTemperature(double I, double dt);
@@ -33,9 +33,7 @@ protected:
 
 protected:
 
-	double * _capacity_vect; // [0-1] - capacity percents
-	double *_temperature_vect; // [K] - temperatures
-	double *_a;
+	util::matrix_t<double> _cap_vs_temp;
 
 	double _mass;		// [kg]
 	double _length;		// [m]

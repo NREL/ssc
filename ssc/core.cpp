@@ -329,6 +329,19 @@ ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, 
 	return x.num.data();
 }
 
+util::matrix_t<double> compute_module::as_matrix( const std::string &name )
+{
+	var_data &x = value(name);
+	if ( x.type != SSC_MATRIX ) throw cast_error("matrix", x, name);
+
+	util::matrix_t<double> mat( x.num.nrows(), x.num.ncols(), 0.0 );
+	for (size_t r = 0; r<x.num.nrows(); r++)
+		for (size_t c = 0; c<x.num.ncols(); c++)
+			mat.at(r, c) = (double)x.num(r,c);
+
+	return mat;
+}
+
 bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error)
 {
 	var_data &x = value(name);

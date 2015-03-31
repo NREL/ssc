@@ -173,6 +173,13 @@ namespace util
 			t_array = new T[1];
 			n_rows = n_cols = 1;
 		}
+
+		matrix_t( const matrix_t &cc )
+		{
+			n_rows = n_cols = 0;
+			t_array = NULL;
+			copy( cc );
+		}
 		
 		matrix_t(size_t len)
 		{
@@ -246,7 +253,9 @@ namespace util
 
 		matrix_t &operator=(const matrix_t &rhs)
 		{
-			copy( rhs );
+			if ( this != &rhs )
+				copy( rhs );
+
 			return *this;
 		}
 		
@@ -651,6 +660,7 @@ namespace util
 
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
+	double linterp_col( const matrix_t<double> &mat, size_t ixcol, double xval, size_t iycol );
 	bool translate_schedule(int tod[8760], const matrix_t<float> &wkday, const matrix_t<float> &wkend, int min_val, int max_val);
 };
 
