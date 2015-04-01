@@ -813,8 +813,8 @@ thermal_t::~thermal_t()
 }
 output_map thermal_t::updateTemperature(double I, double dt)
 {
-	// double T_new = _T_battery + dt * 3600 * simpleModel(I);
-	double T_new = rk4(I, dt*_hours_to_seconds);
+	//double T_new = rk4(I, dt*_hours_to_seconds);
+	double T_new = trapezoidal(I, dt*_hours_to_seconds);
 	_T_battery = T_new;
 	_output["T_battery"] = _T_battery;
 	_output["Capacity_thermal_percent"] = getCapacityPercent();
@@ -840,6 +840,15 @@ double thermal_t::rk4( double I, double dt)
 	double k3 = dt*f(_T_battery + k2 / 2, I);
 	double k4 = dt*f(_T_battery + k3, I);
 	return (_T_battery + (1. / 6)*(k1 + k4) + (1. / 3.)*(k2 + k3));
+}
+double thermal_t::trapezoidal(double I, double dt)
+{
+	double B = 1 / (_mass*_Cp);
+	double C = _h*_A;
+	double D = pow(I, 2)*_R;
+	double T_prime = f(_T_battery, I);
+
+	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
 }
 
 
