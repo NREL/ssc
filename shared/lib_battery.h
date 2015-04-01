@@ -29,7 +29,8 @@ public:
 
 protected:
 	double f(double T_battery, double I);
-	double thermal_t::rk4(double I, double dt);
+	double rk4(double I, double dt);
+	double trapezoidal(double I, double dt);
 
 protected:
 
