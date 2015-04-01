@@ -302,7 +302,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "e_load",                                     "Electric load",                                           "kWh",     "",                     "Battery",       "en_batt=1",                           "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "e_load",                                     "Electric load",                                           "kW",      "",                     "Battery",       "?",                                   "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
@@ -410,13 +410,13 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "POA total radiation after shading only",                "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "POA total radiation after shading and soiling",         "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inverter_dc_voltage",                  "Inverter dc input voltage",                             "V",     "",                       "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_gross",                             "Gross dc array power",                                  "kW",    "",                        "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Net dc array power",                                    "kW",    "",                        "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Gross ac power",                                        "kW",    "",                        "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_net",                               "Net ac power",                                          "kW",    "",                        "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "energy",                               "Net ac energy",                                         "kWh",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_gross",                             "Gross dc array power",                                  "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Net dc array power",                                    "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Gross PV ac power",                                     "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_net",                               "Net PV ac power",                                       "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "energy",                               "Net PV ac energy",                                      "kWh",   "",                       "Time Series",       "*",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                        "Hourly energy",                                          "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                        "Hourly grid energy",                                     "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
 	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",           "Use lifetime output",                                    "0/1",    "",                      "Miscellaneous",       "*",                    "INTEGER",                                  "" },
 
@@ -1294,11 +1294,12 @@ public:
 		double cur_load = 0.0;
 		size_t nload = 0;
 		ssc_number_t *p_load_in = 0;
-		if ( batt.en )
+
+		if ( is_assigned( "e_load" ) )
 		{
 			p_load_in = as_array( "e_load", &nload );
 			if ( nload != nrec || nload != 8760 )
-				throw exec_error("pvsamv1", "with batteries enabled, electric load profile must have same number of values as weather file, or 8760");
+				throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 		}
 		
 		// begin 8760 loop through each timestep
@@ -1308,7 +1309,8 @@ public:
 		{
 			// only hourly electric load, even
 			// if PV simulation is subhourly.  load is assumed constant over the hour.
-			if ( nload == 8760 )
+			// if no load profile supplied, load = 0
+			if ( p_load_in != 0 && nload == 8760 )
 				cur_load = p_load_in[hour];
 			
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
@@ -1322,7 +1324,8 @@ public:
 			for( size_t jj=0;jj<step_per_hour;jj++ )
 			{
 				// electric load is subhourly
-				if ( nload == nrec )
+				// if no load profile supplied, load = 0
+				if ( p_load_in != 0 && nload == nrec )
 					cur_load = p_load_in[idx];
 
 				if (!wf.read())
