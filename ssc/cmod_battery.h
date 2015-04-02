@@ -17,7 +17,6 @@ struct battstor
 
 
 	// member data
-
 	voltage_dynamic_t *voltage_model;
 	lifetime_t *lifetime_model;
 	thermal_t *thermal_model;
@@ -26,6 +25,7 @@ struct battstor
 	battery_bank_t *battery_bank_model;
 	dispatch_manual_t *dispatch_model;
 
+	thermal_outputs_t * thermal_outputs;
 
 	bool en;
 	int chem;
@@ -53,7 +53,6 @@ struct battstor
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
 		*outDispatchMode,
-		*outDispatchProfile,
 		*outBatteryEnergy,
 		*outGridEnergy,
 		*outPVToLoad,

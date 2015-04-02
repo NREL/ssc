@@ -420,16 +420,16 @@ double voltage_t::getCellVoltage()
 }
 
 // Dynamic voltage model
-voltage_dynamic_t::voltage_dynamic_t(int num_cells, double voltage, double *other) : 
-voltage_t(num_cells, voltage, other)
+voltage_dynamic_t::voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vnom, double Vexp, double Qfull, double Qexp, double Qnom, double C_rate):
+voltage_t(num_cells, voltage)
 {
-	_Vfull = other[0];
-	_Vexp = other[1];
-	_Vnom = other[2];
-	_Qfull = other[3];
-	_Qexp = other[4];
-	_Qnom = other[5];
-	_C_rate = other[6];
+	_Vfull = Vfull;
+	_Vexp = Vexp;
+	_Vnom = Vnom;
+	_Qfull = Qfull;
+	_Qexp = Qexp;
+	_Qnom = Qnom;
+	_C_rate = C_rate;
 
 	// assume fully charged, not the nominal value
 	_cell_voltage = _Vfull;
@@ -777,7 +777,7 @@ Define Thermal Model
 */
 thermal_t::thermal_t(double mass, double length, double width, double height, 
 	double Cp,  double h, double T_room, double R,
-	const util::matrix_t<double> &c_vs_t )
+	const util::matrix_t<double> &c_vs_t, thermal_outputs_t * thermal_outputs)
 {
 	_cap_vs_temp = c_vs_t;
 	_mass = mass;
@@ -803,21 +803,18 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 		_cap_vs_temp(i,1) *= 0.01; // convert % to frac
 	}
 
-	_output["T_battery"] = _T_battery;
-	_output["Capacity_thermal_percent"] = 1.;
+	_output = thermal_outputs;
+	_output->capacity_thermal_percent = 1.;
+	_output->T_battery = _T_battery;
+}
 
-}
-thermal_t::~thermal_t()
-{
-	// nothing to do
-}
-output_map thermal_t::updateTemperature(double I, double dt)
+thermal_outputs_t * thermal_t::updateTemperature(double I, double dt)
 {
 	//double T_new = rk4(I, dt*_hours_to_seconds);
 	double T_new = trapezoidal(I, dt*_hours_to_seconds);
 	_T_battery = T_new;
-	_output["T_battery"] = _T_battery;
-	_output["Capacity_thermal_percent"] = getCapacityPercent();
+	_output->T_battery =_T_battery;
+	_output->capacity_thermal_percent = getCapacityPercent();
 
 	return _output;
 }
@@ -828,7 +825,10 @@ double thermal_t::getCapacityPercent()
 	// return interpolated value in column 1 (fraction of capacity)
 	return util::linterp_col( _cap_vs_temp, 0, _T_battery, 1 );
 }
-
+thermal_outputs_t * thermal_t::getOutputs()
+{
+	return _output;
+}
 double thermal_t::f(double T_battery, double I)
 {
 	return (1 / (_mass*_Cp)) * ((_h*(_T_room - T_battery)*_A) + pow(I, 2)*_R);
@@ -851,6 +851,15 @@ double thermal_t::trapezoidal(double I, double dt)
 	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
 }
 
+thermal_outputs_t::thermal_outputs_t()
+{
+	T_battery = capacity_thermal_percent = std::numeric_limits<double>::quiet_NaN();
+}
+thermal_outputs_t::thermal_outputs_t(double T_batt, double cap_therm_percent)
+{
+	T_battery = T_batt;
+	capacity_thermal_percent = cap_therm_percent;
+}
 
 /* 
 Define Battery 
@@ -869,6 +878,8 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_voltage = voltage;
 	_thermal = thermal;
 	_firstStep = true;
+
+	_ThermalOutput = thermal->getOutputs();
 }
 
 void battery_t::run(double P)
@@ -891,7 +902,7 @@ void battery_t::finish()
 {
 	_LifetimeOutput = _lifetime->rainflow_finish();
 }
-output_map battery_t::runThermalModel(double I)
+thermal_outputs_t * battery_t::runThermalModel(double I)
 {
 	return _thermal->updateTemperature(I, _dt);
 }
@@ -926,7 +937,7 @@ output_map battery_t::getLifetimeOutput()
 {
 	return _LifetimeOutput;
 }
-output_map battery_t::getThermalOutput()
+thermal_outputs_t * battery_t::getThermalOutput()
 {
 	return _ThermalOutput;
 }
@@ -1011,7 +1022,7 @@ void battery_bank_t::adjustOutputs()
 
 	// lifetime & thermal outputs do not need adjustment
 	output_map LifetimeOutput = _battery->getLifetimeOutput();
-	output_map ThermalOutput = _battery->getThermalOutput();
+	thermal_outputs_t * ThermalOutput = _battery->getThermalOutput();
 
 	// capacity output adjustment
 	if (_battery_chemistry == 0)
@@ -1040,8 +1051,8 @@ void battery_bank_t::adjustOutputs()
 	_output["Cycles"] = LifetimeOutput["Cycles"];
 
 	// thermal output
-	_output["T_battery"] = ThermalOutput["T_battery"];
-	_output["Capacity_thermal_percent"] = ThermalOutput["Capacity_thermal_percent"];
+	_output["T_battery"] = ThermalOutput->T_battery;
+	_output["Capacity_thermal_percent"] = ThermalOutput->capacity_thermal_percent;
 
 }
 
@@ -1052,9 +1063,6 @@ dispatch_t::dispatch_t(battery_bank_t * BatteryBank, double dt)
 {
 	_BatteryBank = BatteryBank;
 	_dt = dt;
-	_can_charge = false;
-	_can_discharge = false;
-	_can_grid_charge = false;
 	_output["mode"] = _mode;
 
 	// positive quantities describing how much went to load
@@ -1084,16 +1092,27 @@ output_map dispatch_t::getBatteryBankOutput()
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_bank_t * BatteryBank, double dt) : dispatch_t(BatteryBank, dt){}
-
-void dispatch_manual_t::set_profiles(bool can_charge, bool can_discharge, bool grid_charge)
+dispatch_manual_t::dispatch_manual_t(battery_bank_t * BatteryBank, double dt, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
+	: dispatch_t(BatteryBank, dt)
 {
-	_can_charge = can_charge;
-	_can_discharge = can_discharge;
-	_can_grid_charge = grid_charge;
+	_sched = dm_sched;
+	_charge_array = dm_charge;
+	_discharge_array = dm_discharge;
+	_gridcharge_array = dm_gridcharge;
 }
-output_map dispatch_manual_t::dispatch(double e_pv, double e_load)
+output_map dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load)
 {
+	int m, h;
+	int iprofile = -1;
+	getMonthHour(hour_of_year, &m, &h);
+	iprofile = _sched(m - 1, h - 1) - 1;
+	//if (iprofile < 0 || iprofile > 3) throw compute_module::exec_error("battery", "invalid battery dispatch schedule profile [0..3] ok");
+
+	_can_charge = _charge_array[iprofile];
+	_can_discharge = _discharge_array[iprofile];
+	_can_grid_charge = _gridcharge_array[iprofile];
+
+
 	// current charge state of battery from last time step.  
 	double chargeNeededToFill = _BatteryBank->chargeNeededToFill();						// [Ah] - qmax - qtotal
 	double bank_voltage = _BatteryBank->getBankVoltage();								// [V] 

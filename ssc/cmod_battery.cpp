@@ -114,7 +114,6 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outBatteryTemperature = 0;
 	outCapacityThermalPercent = 0;
 	outDispatchMode = 0;
-	outDispatchProfile = 0;
 	outBatteryEnergy = 0;
 	outGridEnergy = 0;
 	outPVToLoad = 0;
@@ -192,7 +191,6 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
 	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
 	outDispatchMode = cm.allocate("Dispatch_mode", nrec);
-	outDispatchProfile = cm.allocate("Dispatch_profile", nrec);
 	outBatteryEnergy = cm.allocate("battery_energy", nrec);
 	outGridEnergy = cm.allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outPVToLoad = cm.allocate("pv_to_load", nrec);
@@ -201,23 +199,15 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 
 	// model initialization
-	double other[] = { 		
-		cm.as_double("batt_Vfull"),	   // [V]
-		cm.as_double("batt_Vexp"),	   // [V]
-		cm.as_double("batt_Vnom"),	   // [V]
-		cm.as_double("batt_Qfull"),	   // [Ah]
-		cm.as_double("batt_Qexp"),	   // [Ah]
-		cm.as_double("batt_Qnom"),	   // [Ah]
-		cm.as_double("batt_C_rate") }; // [Ah]
-
-	voltage_model = new voltage_dynamic_t( cm.as_integer("batt_ncells"), cm.as_double("batt_Vnom"), other);
+	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_ncells"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
+		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
 	lifetime_model = new  lifetime_t(lft_DoD, lft_cycle, lft_cycle.size() );
 
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
 	if ( cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2 )
 		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
 
-
+	thermal_outputs = new thermal_outputs_t();
 	thermal_model = new thermal_t(
 		cm.as_double("batt_mass"), // [kg]
 		cm.as_double("batt_length"), // [m]
@@ -227,7 +217,8 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		cm.as_double("batt_h_to_ambient"), // W/m2K
 		273.15 + cm.as_double("T_room"), // K
 		cm.as_double("batt_R"),
-		cap_vs_temp );
+		cap_vs_temp,
+		thermal_outputs);
 		
 		
 	battery_model = new battery_t( 
@@ -271,7 +262,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		chem,
 		cm.as_double("batt_rt_eff") );
 
-	dispatch_model = new dispatch_manual_t( battery_bank_model, dt_hr );
+	dispatch_model = new dispatch_manual_t( battery_bank_model, dt_hr, dm_sched, dm_charge, dm_discharge, dm_gridcharge );
 }
 
 battstor::~battstor()
@@ -283,25 +274,13 @@ battstor::~battstor()
 	if( capacity_model ) delete capacity_model;
 	if( battery_bank_model ) delete battery_bank_model;
 	if( dispatch_model ) delete dispatch_model;
+
+	if (thermal_outputs) delete thermal_outputs;
 }
 
 void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD )
 {
-	int iprofile = -1;
-
-	if ( dispatch_manual_t *dm = dynamic_cast<dispatch_manual_t*>(dispatch_model) )
-	{
-		int m, h;
-		getMonthHour( hour_of_year, &m, &h );
-		iprofile = dm_sched(m-1,h-1) - 1;
-		if ( iprofile < 0 || iprofile > 3 ) throw compute_module::exec_error( "battery", "invalid battery dispatch schedule profile [0..3] ok");
-			
-		dm->set_profiles( dm_charge[iprofile], dm_discharge[iprofile], dm_gridcharge[iprofile] );
-	}
-	else
-		throw compute_module::exec_error("battery", "internal error: no dispatch method enabled.");
-
-	output_map DispatchOutput = dispatch_model->dispatch( PV, LOAD );
+	output_map DispatchOutput = dispatch_model->dispatch( hour_of_year, PV, LOAD );
 	output_map BatteryBankOutput = dispatch_model->getBatteryBankOutput();
 
 	// Capacity Output 
@@ -335,7 +314,6 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outCapacityThermalPercent[idx] = (ssc_number_t)(BatteryBankOutput["Capacity_thermal_percent"]);
 
 	// Dispatch output
-	outDispatchProfile[idx] = iprofile;
 	outDispatchMode[idx] = 0; // ? what to do with this
 	outBatteryEnergy[idx] = (ssc_number_t)(DispatchOutput["battery_energy"]);
 	outGridEnergy[idx] = (ssc_number_t)(DispatchOutput["grid_energy"]);

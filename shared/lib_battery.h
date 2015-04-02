@@ -14,18 +14,29 @@ const double kilowatt_to_watt = 1000;
 typedef std::map<std::string, double> output_map;
 
 /*
-Thermal Base class.
+Thermal classes
 */
+
+struct thermal_outputs_t
+{
+	thermal_outputs_t();
+	thermal_outputs_t(double T_battery, double capacity_thermal_percent);
+
+	double T_battery;
+	double capacity_thermal_percent;
+};
+
 class thermal_t
 {
 public:
 	thermal_t(double mass, double length, double width, double height, 
 		double Cp, double h, double T_room, double R,
-		const util::matrix_t<double> &cap_vs_temp);
-	~thermal_t();
+		const util::matrix_t<double> &cap_vs_temp, thermal_outputs_t * thermal_outputs);
+	// ~thermal_t();
 
-	output_map updateTemperature(double I, double dt);
+	thermal_outputs_t * updateTemperature(double I, double dt);
 	double getCapacityPercent();
+	thermal_outputs_t * getOutputs();
 
 protected:
 	double f(double T_battery, double I);
@@ -47,15 +58,15 @@ protected:
 	double _R;			// [Ohm] - internal resistance
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
-	output_map _output;
+	thermal_outputs_t * _output;
 	const double _hours_to_seconds = 3600;
 };
+
 
 /*
 Base class from which capacity models derive
 Note, all capacity models are based on the capacity of one battery
 */
-
 class capacity_t
 {
 public:
@@ -194,11 +205,11 @@ public:
 	output_map updateVoltage(capacity_t * capacity, double dt);
 };
 
-// Unnewehr Universal Model
+// Shepard + Tremblay Model
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells, double voltage, double *other);
+	voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vnom, double Vexp, double Qfull, double Qexp, double Qnom, double C_rate);
 	void parameter_compute();
 	output_map updateVoltage(capacity_t * capacity, double dt);
 
@@ -289,13 +300,13 @@ public:
 	// Run a component level model
 	output_map runCapacityModel(double P, double V);
 	output_map runVoltageModel();
-	output_map runThermalModel(double I);
+	thermal_outputs_t * runThermalModel(double I);
 	output_map runLifetimeModel(double DOD);
 
 	output_map getCapacityOutput();
 	output_map getLifetimeOutput();
 	output_map getVoltageOutput();
-	output_map getThermalOutput();
+	thermal_outputs_t * getThermalOutput();
 
 	// Get capacity quantities
 	double chargeNeededToFill();
@@ -317,7 +328,7 @@ private:
 	output_map _CapacityOutput;
 	output_map _LifetimeOutput;
 	output_map _VoltageOutput;
-	output_map _ThermalOutput;
+	thermal_outputs_t * _ThermalOutput;
 };
 
 /* 
@@ -354,17 +365,13 @@ public:
 	dispatch_t(battery_bank_t * BatteryBank, double dt);
 
 	// Public APIs
-	virtual void set_profiles(bool can_charge, bool can_discharge, bool grid_charge) = 0;
-	virtual output_map dispatch(double e_pv, double e_load) = 0;
+	virtual output_map dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
 
 	output_map getBatteryBankOutput();
 
 protected:
 	battery_bank_t * _BatteryBank;
 	output_map _output;
-	bool _can_charge;
-	bool _can_discharge;
-	bool _can_grid_charge;
 	int _mode;
 	double _dt;
 
@@ -376,9 +383,17 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	dispatch_manual_t(battery_bank_t * BatteryBank, double dt);
-	void set_profiles(bool can_charge, bool can_discharge, bool grid_charge);
-	output_map dispatch(double e_pv, double e_load);
+	dispatch_manual_t(battery_bank_t * BatteryBank, double dt, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
+	output_map dispatch(size_t hour_of_year, double e_pv, double e_load);
+
+protected:
+	util::matrix_static_t<float, 12, 24> _sched;
+	bool * _charge_array;
+	bool * _discharge_array;
+	bool * _gridcharge_array;
+	bool  _can_charge;
+	bool  _can_discharge;
+	bool  _can_grid_charge;
 };
 
 
