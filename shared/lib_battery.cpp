@@ -1141,7 +1141,6 @@ output_map dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double 
 			else if (_can_grid_charge)
 			{
 				e_tofrom_batt = -energyNeededToFill;
-				e_grid = energyNeededToFill;
 				_mode = 2; // CHARGED SOME FROM ARRAY, REST FROM GRID
 			}
 			else
@@ -1154,7 +1153,6 @@ output_map dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double 
 		else if (_can_grid_charge)
 		{
 			e_tofrom_batt = -energyNeededToFill;
-			e_grid = energyNeededToFill;
 			_mode = 1; // CHARGED ALL FROM GRID
 		}
 
@@ -1173,7 +1171,6 @@ output_map dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double 
 		else if (_can_grid_charge)
 		{
 			e_tofrom_batt = -energyNeededToFill;
-			e_grid = energyNeededToFill;
 			_mode = 1; // CHARGED ALL FROM GRID
 		}
 	}
@@ -1185,16 +1182,12 @@ output_map dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double 
 	double current = (BatteryBankOutput["I"]);
 	e_tofrom_batt = current * bank_voltage * _dt / 1000;// [kWh]
 
+	
 	// Update how much power was actually used to/from grid
-	if (e_grid > 0)
-	{
-		// charged some from grid, so [energy to battery] = [excess solar power] + [grid power]
-		if (_mode == 2)
-			e_grid = (-e_tofrom_batt - e_pv - e_load);
-		// charged all from grid, so grid power is all power to battery
-		else
-			e_grid = -e_tofrom_batt;
-	}
+	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
+	// e_grid > 0 (sending to grid) e_grid < 0 (pulling from grid)
+	e_grid = e_pv + e_tofrom_batt - e_load;
+
 	// Next, get how much of each component will meet the load.  
 	// PV always meets load before battery
 	if (e_pv > e_load)
