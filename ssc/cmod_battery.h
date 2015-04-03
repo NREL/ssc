@@ -25,7 +25,7 @@ struct battstor
 	battery_bank_t *battery_bank_model;
 	dispatch_manual_t *dispatch_model;
 
-	thermal_outputs_t * thermal_outputs;
+	// thermal_outputs_t * thermal_outputs;
 
 	bool en;
 	int chem;

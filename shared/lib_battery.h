@@ -11,32 +11,22 @@
 const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
 
-typedef std::map<std::string, double> output_map;
-
 /*
 Thermal classes
 */
-
-struct thermal_outputs_t
-{
-	thermal_outputs_t();
-	thermal_outputs_t(double T_battery, double capacity_thermal_percent);
-
-	double T_battery;
-	double capacity_thermal_percent;
-};
-
 class thermal_t
 {
 public:
 	thermal_t(double mass, double length, double width, double height, 
 		double Cp, double h, double T_room, double R,
-		const util::matrix_t<double> &cap_vs_temp, thermal_outputs_t * thermal_outputs);
-	// ~thermal_t();
+		const util::matrix_t<double> &cap_vs_temp );
 
-	thermal_outputs_t * updateTemperature(double I, double dt);
+	void updateTemperature(double I, double dt);
 	double getCapacityPercent();
-	thermal_outputs_t * getOutputs();
+
+	// outputs
+	double T_battery();
+	double CapacityPercent();
 
 protected:
 	double f(double T_battery, double I);
@@ -58,7 +48,7 @@ protected:
 	double _R;			// [Ohm] - internal resistance
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
-	thermal_outputs_t * _output;
+	double _capacity_percent; //[%]
 	const double _hours_to_seconds = 3600;
 };
 
@@ -74,18 +64,20 @@ public:
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual output_map updateCapacity(double P, double V, double dt, int cycles) = 0;
-	virtual output_map updateCapacityForThermal(thermal_t * thermal)=0;
-	virtual double getMaxCapacity() = 0;
-	virtual double getMaxCapacityAtCurrent() = 0;
-	virtual double getAvailableCapacity() = 0;
-	virtual double get10HourCapacity() = 0;
+	virtual void updateCapacity(double P, double V, double dt, int cycles) = 0;
+	virtual void updateCapacityForThermal(thermal_t * thermal)=0;
+	virtual double qmax() = 0; // max capacity
+	virtual double qmaxI() = 0; // max capacity at current
+	virtual double q1() = 0; // available charge
+	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
 
-	// functions which should be able to be constant across all derived classes
-	double getDOD();
-	double getTotalCapacity();
-	double getCurrent();
+	// common outputs
+	double SOC();
+	double DOD();
+	double q0();
+	double I();
+	double P();
 	bool chargeChanged();
 
 protected:
@@ -93,11 +85,10 @@ protected:
 	double _I;   // [A]  - Current draw during last step
 	double _P;   // [Ah] - Power draw during last step [ P > 0 discharge, P < 0 charge]
 	double _V;   // [V]  - Voltage (maybe will be dynamic eventually)
-	double _SOC; // [0-1] - State of Charge
-	double _DOD; // [0-1] - Depth of Discharge
+	double _SOC; // [%] - State of Charge
+	double _DOD; // [%] - Depth of Discharge
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
 	bool _prev_charging; // [true/false] - indicates if last state was charging;
-	output_map _output; // Output structure
 };
 
 /*
@@ -109,13 +100,14 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2);
-	output_map updateCapacity(double P, double V, double dt, int cycles = 0);
-	output_map updateCapacityForThermal(thermal_t * thermal);
-	double getAvailableCapacity();
-	double getMaxCapacity();
-	double getMaxCapacityAtCurrent();
-	double get10HourCapacity();
-	double get20HourCapacity();
+	void updateCapacity(double P, double V, double dt, int cycles = 0);
+	void updateCapacityForThermal(thermal_t * thermal);
+	double q1(); // Available charge
+	double q2(); // Bound charge
+	double qmax(); // Max charge
+	double qmaxI(); // Max charge at current
+	double q10(); // Capacity at 10 hour discharge rate
+	double q20(); // Capacity at 20 hour discharge rate
 
 protected:
 	// unique to kibam
@@ -160,13 +152,12 @@ public:
 	~capacity_lithium_ion_t();
 
 	// override public api
-	output_map updateCapacity(double P, double V, double dt, int cycles);
-	output_map updateCapacityForThermal(thermal_t * thermal);
-	double getMaxCapacity();
-	double getMaxCapacityAtCurrent();
-	double getAvailableCapacity();
-	double get10HourCapacity();
-
+	void updateCapacity(double P, double V, double dt, int cycles);
+	void updateCapacityForThermal(thermal_t * thermal);
+	double q1(); // Available charge
+	double qmax(); // Max charge
+	double qmaxI(); // Max charge at current
+	double q10(); // Capacity at 10 hour discharge rate
 
 protected:
 	double _qmax; // [Ah] - maximum possible capacity
@@ -188,21 +179,20 @@ class voltage_t
 public:
 	voltage_t(int num_cells, double voltage, double * other=0);
 
-	virtual output_map updateVoltage(capacity_t * capacity, double dt)=0;
-	double getVoltage();
-	double getCellVoltage();
+	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
+	double battery_voltage(); // voltage of one battery
+	double cell_voltage(); // voltage of one cell
 
 protected:
 	int _num_cells;    // number of cells per battery
 	double _cell_voltage; // closed circuit voltage per cell [V]
-	output_map _output;   // output structure
 };
 
 class voltage_basic_t : public voltage_t
 {
 public:
 	voltage_basic_t(int num_cells, double voltage);
-	output_map updateVoltage(capacity_t * capacity, double dt);
+	void updateVoltage(capacity_t * capacity, double dt);
 };
 
 // Shepard + Tremblay Model
@@ -211,7 +201,7 @@ class voltage_dynamic_t : public voltage_t
 public:
 	voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vnom, double Vexp, double Qfull, double Qexp, double Qnom, double C_rate);
 	void parameter_compute();
-	output_map updateVoltage(capacity_t * capacity, double dt);
+	void updateVoltage(capacity_t * capacity, double dt);
 
 protected:
 	double voltage_model(double capacity, double current,  double q0);
@@ -243,9 +233,10 @@ class lifetime_t
 public:
 	lifetime_t(std::vector<double> DOD_vect, std::vector<double> cycle_vect, int n);
 	~lifetime_t();
-	output_map rainflow(double DOD);
-	output_map rainflow_finish();
-	int getNumberOfCycles();
+	void rainflow(double DOD);
+	void rainflow_finish();
+	int cycles_elapsed();
+	double damage();
 
 protected:
 	void rainflow_ranges();
@@ -264,7 +255,6 @@ protected:
 	double _Slt;
 	std::vector<double> _Peaks;
 	double _Range;
-	output_map _output;
 
 	enum RETURN_CODES
 	{
@@ -290,7 +280,7 @@ class battery_t
 {
 public:
 	battery_t();
-	battery_t(int num_batteries, double power_conversion_efficiency, double dt);
+	battery_t(double power_conversion_efficiency, double dt);
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *);
 
 	// Run all
@@ -298,23 +288,21 @@ public:
 	void finish();
 
 	// Run a component level model
-	output_map runCapacityModel(double P, double V);
-	output_map runVoltageModel();
-	thermal_outputs_t * runThermalModel(double I);
-	output_map runLifetimeModel(double DOD);
+	void runCapacityModel(double P, double V);
+	void runVoltageModel();
+	void runThermalModel(double I);
+	void runLifetimeModel(double DOD);
 
-	output_map getCapacityOutput();
-	output_map getLifetimeOutput();
-	output_map getVoltageOutput();
-	thermal_outputs_t * getThermalOutput();
+	capacity_t * capacity_model();
+	voltage_t * voltage_model();
 
 	// Get capacity quantities
 	double chargeNeededToFill();
 	double getCurrentCharge();
 
 	// Get Voltage
-	double cellVoltage();
-	double batteryVoltage();
+	double cell_voltage();
+	double battery_voltage();
 
 private:
 	capacity_t * _capacity;
@@ -322,13 +310,8 @@ private:
 	voltage_t * _voltage;
 	thermal_t * _thermal;
 	double _dt;
-	int _num_batteries;
 	double _power_conversion_efficiency;
 	bool _firstStep;
-	output_map _CapacityOutput;
-	output_map _LifetimeOutput;
-	output_map _VoltageOutput;
-	thermal_outputs_t * _ThermalOutput;
 };
 
 /* 
@@ -338,21 +321,22 @@ Accounts for multiple batteries and power conversion efficiency
 class battery_bank_t
 {
 public:
-	battery_bank_t(battery_t * battery, int num_batteries, int battery_chemistry, double power_conversion_efficiency);
-	output_map run(double P);
-	output_map finish();
-	double chargeNeededToFill();
-	double getCurrentCharge();
-	double getBankVoltage();
-	output_map getOutputs();
+	battery_bank_t(battery_t * battery, int num_batteries_series, int num_batteries_parallel, int battery_chemistry, double power_conversion_efficiency);
+	void run(double P);
+	void finish();
+	double bank_charge_needed();
+	double bank_charge_available();
+	double bank_voltage();
+	int num_batteries();
+	battery_t * battery();
 
 protected:
-	void adjustOutputs();
 	battery_t * _battery;
+	int _num_batteries_series;
+	int _num_batteries_parallel;
 	int _num_batteries;
 	int _battery_chemistry;
 	double _power_conversion_efficiency;
-	output_map _output;
 
 };
 
@@ -365,15 +349,24 @@ public:
 	dispatch_t(battery_bank_t * BatteryBank, double dt);
 
 	// Public APIs
-	virtual output_map dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
+	virtual void dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
 
-	output_map getBatteryBankOutput();
+	double energy_tofrom_battery();
+	double energy_tofrom_grid();
+	double pv_to_load();
+	double battery_to_load();
+	double grid_to_load();
 
 protected:
 	battery_bank_t * _BatteryBank;
-	output_map _output;
-	int _mode;
 	double _dt;
+	int _mode;
+
+	double _e_tofrom_batt;
+	double _e_grid;
+	double _pv_to_load;
+	double _battery_to_load;
+	double _grid_to_load;
 
 };
 
@@ -384,7 +377,7 @@ class dispatch_manual_t : public dispatch_t
 {
 public:
 	dispatch_manual_t(battery_bank_t * BatteryBank, double dt, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
-	output_map dispatch(size_t hour_of_year, double e_pv, double e_load);
+	void dispatch(size_t hour_of_year, double e_pv, double e_load);
 
 protected:
 	util::matrix_static_t<float, 12, 24> _sched;
@@ -394,6 +387,8 @@ protected:
 	bool  _can_charge;
 	bool  _can_discharge;
 	bool  _can_grid_charge;
+
+
 };
 
 
