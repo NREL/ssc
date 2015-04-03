@@ -71,12 +71,11 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_cell",                         "Battery Cell Voltage",                                  "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_battery",                      "Battery Voltage",                                       "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_bank",                         "Battery Bank Voltage",                                  "V",     "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "Damage",                               "Battery Fractional Damage",                             "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "Damage",                               "Battery Percent Damage",                                "%",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                               "Battery Number of Cycles",                              "",      "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                  "Battery temperature",                                   "C",     "", "Battery", "", "", "" }, 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Relative capacity percent due to temperature",  "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                  "Battery Temperature",                                   "C",     "", "Battery", "", "", "" }, 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Capacity Percent for Temperature",              "%",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Dispatch_mode",                        "Battery Dispatch Mode for Hour",                        "",      "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "Dispatch_profile",                     "Battery Dispatch Profile for Hour",                     "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                       "Energy to/from Battery",                                "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                          "Energy from Grid to Battery",                           "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                           "Energy to load from PV",                                "kWh",   "", "Battery", "", "", "" },
@@ -167,13 +166,13 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	/* **********************************************************************
 	Initialize outputs
 	********************************************************************** */		
-	outTotalCharge = cm.allocate("q0", nrec);
+	outTotalCharge = cm.allocate("batt_q0", nrec);
 
 	// only allocate if lead-acid
 	if ( chem == 0 )
 	{
-		outAvailableCharge = cm.allocate("q1", nrec);
-		outBoundCharge = cm.allocate("q2", nrec);
+		outAvailableCharge = cm.allocate("batt_q1", nrec);
+		outBoundCharge = cm.allocate("batt_q2", nrec);
 		outMaxChargeAtCurrent = cm.allocate("qmaxI", nrec);
 	}
 	else
@@ -182,7 +181,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 	outSOC = cm.allocate("SOC", nrec);
 	outDOD = cm.allocate("DOD", nrec);
-	outCurrent = cm.allocate("I", nrec);
+	outCurrent = cm.allocate("batt_I", nrec);
 	outCellVoltage = cm.allocate("voltage_cell", nrec);
 	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
 	outBatteryBankVoltage = cm.allocate("voltage_bank", nrec);
@@ -207,7 +206,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	if ( cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2 )
 		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
 
-	thermal_outputs = new thermal_outputs_t();
+	// thermal_outputs = new thermal_outputs_t();
 	thermal_model = new thermal_t(
 		cm.as_double("batt_mass"), // [kg]
 		cm.as_double("batt_length"), // [m]
@@ -217,12 +216,10 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		cm.as_double("batt_h_to_ambient"), // W/m2K
 		273.15 + cm.as_double("T_room"), // K
 		cm.as_double("batt_R"),
-		cap_vs_temp,
-		thermal_outputs);
+		cap_vs_temp);
 		
 		
 	battery_model = new battery_t( 
-		cm.as_double("batt_nser"), 
 		cm.as_double("batt_rt_eff"), 
 		dt_hr );
 
@@ -259,6 +256,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 	battery_bank_model = new battery_bank_t( battery_model, 
 		cm.as_double("batt_nser"),
+		0, // need to input number of batteries in series
 		chem,
 		cm.as_double("batt_rt_eff") );
 
@@ -274,60 +272,57 @@ battstor::~battstor()
 	if( capacity_model ) delete capacity_model;
 	if( battery_bank_model ) delete battery_bank_model;
 	if( dispatch_model ) delete dispatch_model;
-
-	if (thermal_outputs) delete thermal_outputs;
 }
 
 void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD )
 {
-	output_map DispatchOutput = dispatch_model->dispatch( hour_of_year, PV, LOAD );
-	output_map BatteryBankOutput = dispatch_model->getBatteryBankOutput();
+	dispatch_model->dispatch( hour_of_year, PV, LOAD );
+	int num_batteries = battery_bank_model->num_batteries();
 
 	// Capacity Output 
-	if ( chem == 0 )
+	if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
 	{
-		outAvailableCharge[idx] = (ssc_number_t)(BatteryBankOutput["q1"]);
-		outBoundCharge[idx] = (ssc_number_t)(BatteryBankOutput["q2"]);
-		outMaxChargeAtCurrent[idx] = (ssc_number_t)(BatteryBankOutput["qmaxI"]);
+		outAvailableCharge[idx] = (ssc_number_t)(num_batteries*kibam->q1());
+		outBoundCharge[idx] = (ssc_number_t)(num_batteries*kibam->q2());
+		outMaxChargeAtCurrent[idx] = (ssc_number_t)(num_batteries*kibam->qmaxI());
 	}
 	else
-		outMaxCharge[idx] = (ssc_number_t)(BatteryBankOutput["qmax"]);
+		outMaxCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->qmax());
 
 
-	outTotalCharge[idx] = (ssc_number_t)(BatteryBankOutput["q0"]);
-	outSOC[idx] = (ssc_number_t)(BatteryBankOutput["SOC"]);
-	outDOD[idx] = (ssc_number_t)(BatteryBankOutput["DOD"]);
-	outCurrent[idx] = (BatteryBankOutput["I"]);
+	outTotalCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->q0());
+	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
+	outDOD[idx] = (ssc_number_t)(capacity_model->DOD());
+	outCurrent[idx] = (capacity_model->I());
 
 	// Voltage Output
-	outCellVoltage[idx] = (ssc_number_t)(BatteryBankOutput["voltage_cell"]);
-	outBatteryVoltage[idx] = (ssc_number_t)(BatteryBankOutput["voltage_battery"]);
-	outBatteryBankVoltage[idx] = (ssc_number_t)(BatteryBankOutput["voltage_bank"]);
+	outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage());
+	outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());
+	outBatteryBankVoltage[idx] = (ssc_number_t)(battery_bank_model->bank_voltage());
 
 	// Lifetime Output
-	outDamage[idx] = (ssc_number_t)(BatteryBankOutput["Damage"]);
-	outCycles[idx] = (int)(BatteryBankOutput["Cycles"]);
+	outDamage[idx] = (ssc_number_t)(lifetime_model->damage());
+	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 				
-
 	// Thermal Output
-	outBatteryTemperature[idx] = (ssc_number_t)(BatteryBankOutput["T_battery"]) - 273.15;
-	outCapacityThermalPercent[idx] = (ssc_number_t)(BatteryBankOutput["Capacity_thermal_percent"]);
+	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
+	outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->CapacityPercent());
 
 	// Dispatch output
 	outDispatchMode[idx] = 0; // ? what to do with this
-	outBatteryEnergy[idx] = (ssc_number_t)(DispatchOutput["battery_energy"]);
-	outGridEnergy[idx] = (ssc_number_t)(DispatchOutput["grid_energy"]);
-	outPVToLoad[idx] = (ssc_number_t)(DispatchOutput["pv_to_load"]);
-	outBatteryToLoad[idx] = (ssc_number_t)(DispatchOutput["battery_to_load"]);
-	outGridToLoad[idx] = (ssc_number_t)(DispatchOutput["grid_to_load"]);
+	outBatteryEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery());
+	outGridEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid());
+	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load() );
+	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load());
+	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load());
 
 }
 
 void battstor::finalize( size_t nrec )
 {
-	output_map BatteryBankOutput = battery_bank_model->finish();
-	outDamage[nrec - 1] = (ssc_number_t)(BatteryBankOutput["Damage"]);
-	outCycles[nrec - 1] = (int)(BatteryBankOutput["Cycles"]);
+	battery_bank_model->finish();
+	outDamage[nrec - 1] = (ssc_number_t)(lifetime_model->damage());
+	outCycles[nrec - 1] = (int)(lifetime_model->cycles_elapsed());
 }
 
 
