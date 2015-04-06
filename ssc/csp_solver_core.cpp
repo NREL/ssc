@@ -26,7 +26,7 @@ void C_csp_component::set_csp_component_value_ssc_double(const char *name, doubl
 	set_csp_component_value(name, val);
 }
 
-void C_csp_component::set_csp_component_value_ssc_array(const char *name, ssc_number_t *p_array, size_t &l_array)
+void C_csp_component::set_csp_component_value_ssc_array(const char *name, ssc_number_t *p_array, size_t l_array)
 {
 	double *pt = new double[l_array];
 	for( size_t i = 0; i < l_array; i++ )
@@ -37,7 +37,7 @@ void C_csp_component::set_csp_component_value_ssc_array(const char *name, ssc_nu
 	delete [] pt;
 }
 
-void C_csp_component::set_csp_component_value_ssc_matrix(const char *name, ssc_number_t *p_array, size_t &nr, size_t &nc )
+void C_csp_component::set_csp_component_value_ssc_matrix(const char *name, ssc_number_t *p_array, size_t nr, size_t nc )
 {
 	double *pt = new double[nr*nc];
 	for( size_t i = 0; i < nr*nc; i++ )
@@ -58,12 +58,12 @@ void C_csp_component::set_csp_component_value(const char *name, double val)
 	set_csp_component_value(find_var(name), val);
 }
 
-void C_csp_component::set_csp_component_value(const char *name, double *p_array, size_t &l_array)
+void C_csp_component::set_csp_component_value(const char *name, double *p_array, size_t l_array)
 {
 	set_csp_component_value(find_var(name), p_array, l_array);
 }
 
-void C_csp_component::set_csp_component_value(const char *name, double *p_array, size_t &nr, size_t &nc)
+void C_csp_component::set_csp_component_value(const char *name, double *p_array, size_t nr, size_t nc)
 {
 	set_csp_component_value(find_var(name), p_array, nr, nc);
 }
@@ -81,7 +81,7 @@ void C_csp_component::set_csp_component_value(int idx, double val)
 		throw exec_error("Setting parameter values", "Exceeded values vector size");
 }
 
-void C_csp_component::set_csp_component_value(int idx, double *p_array, size_t &l_array)
+void C_csp_component::set_csp_component_value(int idx, double *p_array, size_t l_array)
 {
 	if( idx < (int)param_values.size() )
 		tcsvalue_set_array(idx, p_array, l_array);
@@ -89,7 +89,7 @@ void C_csp_component::set_csp_component_value(int idx, double *p_array, size_t &
 		throw exec_error("Setting parameter values", "Exceeded values vector size");
 }
 
-void C_csp_component::set_csp_component_value(int idx, double *p_array, size_t &nr, size_t &nc)
+void C_csp_component::set_csp_component_value(int idx, double *p_array, size_t nr, size_t nc)
 {
 	if( idx < (int)param_values.size() )
 		tcsvalue_set_matrix(idx, p_array, nr, nc);
@@ -112,7 +112,7 @@ void C_csp_component::tcsvalue_set_number(int idx, double val)
 	param_values[idx].data.value = val;
 }
 
-void C_csp_component::tcsvalue_set_array(int idx, double *p_array, size_t &l_array)
+void C_csp_component::tcsvalue_set_array(int idx, double *p_array, size_t l_array)
 {
 	tcsvalue_free(idx);
 	if( !p_array || l_array < 1 )
@@ -126,7 +126,7 @@ void C_csp_component::tcsvalue_set_array(int idx, double *p_array, size_t &l_arr
 		param_values[idx].data.array.values[i] = p_array[i];
 }
 
-void C_csp_component::tcsvalue_set_matrix(int idx, double *p_array, size_t &nr, size_t &nc)
+void C_csp_component::tcsvalue_set_matrix(int idx, double *p_array, size_t nr, size_t nc)
 {
 	tcsvalue_free(idx);
 	if( !p_array || nr*nc < 1 )
@@ -142,7 +142,7 @@ void C_csp_component::tcsvalue_set_matrix(int idx, double *p_array, size_t &nr, 
 }
 
 void C_csp_component::tcsvalue_set_string(int idx, const char *s)
-{
+{ 
 	tcsvalue_free(idx);
 
 	param_values[idx].type = TCS_STRING;
@@ -199,29 +199,29 @@ double C_csp_component::value(size_t idx)
 	return param_values[idx].data.value;
 }
 
-double *C_csp_component::value(size_t idx, int &len)
+double *C_csp_component::value(size_t idx, int *len)
 {
 	if( param_values[idx].type != TCS_ARRAY || &len == NULL )
 	{
-		len = 0;
+		*len = 0;
 		return 0;
 	}
 
-	len = param_values[idx].data.array.length;
+	*len = param_values[idx].data.array.length;
 	return param_values[idx].data.array.values;
 }
 
-double *C_csp_component::value(size_t idx, int &nr, int &nc)
+double *C_csp_component::value(size_t idx, int *nr, int *nc)
 {
 	if( param_values[idx].type != TCS_MATRIX || &nr == NULL || &nc == NULL )
 	{
-		nr = 0;
-		nc = 0;
+		*nr = 0;
+		*nc = 0;
 		return 0;
 	}
 
-	nr = param_values[idx].data.matrix.nrows;
-	nc = param_values[idx].data.matrix.ncols;
+	*nr = param_values[idx].data.matrix.nrows;
+	*nc = param_values[idx].data.matrix.ncols;
 	return param_values[idx].data.matrix.values;
 }
 
