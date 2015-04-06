@@ -168,7 +168,7 @@ int C_csp_component::find_var(const char *name)
 		idx++;
 	}
 
-	throw exec_error("Setting parameter values", "Parameter name not found");
+	throw exec_error("Setting parameter values", "SSC INPUT: '" + (std::string)name + "' does not match any System Input Name!\n");
 
 	return -1;
 }
