@@ -4,7 +4,7 @@
 #include "tcstype.h"
 #include "core.h"
 
-class C_csp_component : compute_module
+class C_csp_component : public compute_module
 {
 private:
 	const tcsvarinfo *params;
@@ -26,14 +26,7 @@ private:
 	void tcsvalue_set_number(int idx, double val);
 	void tcsvalue_set_array(int idx, double *p_array, size_t &l_array);
 	void tcsvalue_set_matrix(int idx, double *p_array, size_t &nr, size_t &nc);
-	void tcsvalue_set_string(int idx, const char *s);
-
-	// Have to have this to access 'compute_module' public methods??
-	void exec() throw(general_error)
-	{
-		
-	}
-	// *************************************************************
+	void tcsvalue_set_string(int idx, const char *s);	
 
 protected:
 	void set_params_and_size_vector(const tcsvarinfo *params_in);
@@ -42,9 +35,13 @@ protected:
 	double *value(size_t idx, int &nr, int &nc);
 	std::string value_str(size_t idx);
 
-
-	
-
+	// Have to have this to access 'compute_module' public methods??
+	virtual void exec() throw(general_error) = 0;
+	//virtual void exec() throw(general_error)
+	//{
+	//
+	//}
+	//// *************************************************************
 	
 
 public:
@@ -57,28 +54,31 @@ public:
 	void set_csp_component_value_ssc_matrix(const char *name, ssc_number_t *p_array, size_t &nr, size_t &nc);
 	void set_csp_component_value_ssc_string(const char *name, const char *s);
 
+
 	virtual void init() {return;}
 
-	// converged   
+	// converged  
+
+	
 };
 
 
-class C_csp_solar_field : public C_csp_component
+class C_csp_collector_receiver : public C_csp_component
 {
 private:
-	double test_var;
 
+protected:
+
+	virtual void exec() throw(general_error) = 0;
 
 public:
-	C_csp_solar_field()
-	{
-		test_var = 1.23;
-	};
+	C_csp_collector_receiver()	{};
 
-	~C_csp_solar_field(){};
+	~C_csp_collector_receiver(){};
 
-	// throw exception here
-	virtual void init() {return;}
+	virtual void init() = 0;	// pure virtual function
+
+	
 
 	// solve_field
 
@@ -86,20 +86,6 @@ public:
 
 	// internal_energy || time_to_startup
 
-};
-
-
-class C_csp_mspt_221_222 : public C_csp_solar_field
-{
-private:
-	double place_holder;
-
-public:
-	C_csp_mspt_221_222();
-
-	virtual ~C_csp_mspt_221_222(){};
-
-	virtual void init();
 };
 
 
