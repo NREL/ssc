@@ -12,11 +12,15 @@ var_info vtab_battery[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
 	// generic battery inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_nser",                                  "Number of Batteries in Serial",                           "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ncells",                                "Number of Cells in Battery",                              "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_bank_ncells_parallel",                  "Number of Cells in Parallel",                             "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_bank_ncells_serial",                    "Number of Cells in Serial",                               "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_R",                                     "Battery Internal Resistance",                             "Ohm",     "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_rt_eff",                                "Battery round trip efficiency",                           "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_voltage",                          "Battery bank desired chemistry",                          "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_size_choice",                           "Battery bank choice how to size",                         "",        "0=BankSize,1=CellSize","Battery",       "",                           "" },
+
+	// Voltage discharge curve
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_rt_eff",                                "Battery round trip efficiency",                           "%",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vfull",                                 "Fully charged cell voltage",                              "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vexp",                                  "Cell Voltage at end of exponential zone",                 "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vnom",                                  "Cell Voltage at end of nominal zone",                     "V",       "",                     "Battery",       "",                           "",                              "" },
@@ -25,23 +29,20 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qnom",                                  "Cell capacity at end of nominal zone",                    "Ah",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_C_rate",                                "Rate at which voltage vs. capacity curve input",          "",        "",                     "Battery",       "",                           "",                              "" },
 
-
 	// lead-acid inputs
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q20",	                               "Capacity at 20-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                         "",                             "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_I20",	                               "Current at 20-hour discharge rate",                      "A",       "",                     "Battery",       "",                         "",                             "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q10",	                               "Capacity at 10-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                         "",                             "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_qn",	                               "Capacity at discharge rate for n-hour rate",             "Ah",       "",                     "Battery",       "",                         "",                             "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                         "",                             "" },
-
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q20_computed",	                   "Capacity at 20-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q10_computed",	                   "Capacity at 10-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_qn_computed",	                       "Capacity at discharge rate for n-hour rate",             "Ah",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                           "",                             "" },
+																																																						     
 	// lithium-ion inputs
-	{ SSC_INPUT,        SSC_ARRAY,      "LiIon_cycle_capacities_vect",                 "Number of cycles at which capacity measured",            "",         "",                     "Battery",       "",                         "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "LiIon_capacities_vect",                       "Percent of original maximum capacity at cycle number",   "",         "",                     "Battery",       "",                         "",                             "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "batt_cap_vs_cycles",                          "Capacity vs cycles elapsed",                             "",         "",                     "Battery",       "",                           "",                             "" },
 
 	// lifetime inputs
-	{ SSC_INPUT,		SSC_ARRAY,		"batt_life_dod",                               "Depth of Discharge Curve Fit",                           "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,		SSC_ARRAY,		"batt_life_cycle",                             "Cycles to Failure Curve Fit",                            "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"batt_cycles_vs_DOD",                          "Cycles to failure vs depth-of-discharge",                "",         "",                     "Battery",       "",                           "",                             "" },
 	
 	// thermal inputs
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_R",                                      "Battery Internal Resistance",                            "Ohm",      "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Mass of the battery",                                    "kg",       "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_length",                                 "Battery length",                                         "m",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_width",                                  "Battery width",                                          "m",        "",                     "Battery",       "",                           "",                             "" },
@@ -147,19 +148,21 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		for( size_t j=0;j<24;j++ )
 			dm_sched(i,j) = psched[ i*24 + j ];
 	
-	lft_DoD = cm.as_doublevec( "batt_life_dod" );
-	lft_cycle = cm.as_doublevec( "batt_life_cycle" );
-	if ( lft_DoD.size() != lft_cycle.size() )
-		throw compute_module::exec_error("battery", "DoD and cycle vectors for lifetime model must be equal" );
-
-		
+	util::matrix_t<double>  cap_vs_cycles = cm.as_matrix("batt_cap_vs_cycles");
+	if (cap_vs_cycles.nrows() < 2 || cap_vs_cycles.ncols() != 2)
+		throw compute_module::exec_error("battery", "capacity vs cycles matrix must have two columns and at least two rows");
+	
+	util::matrix_t<double>  cycles_vs_DOD = cm.as_matrix("batt_cycles_vs_DOD");
+	if (cycles_vs_DOD.nrows() < 2 || cycles_vs_DOD.ncols() != 2)
+		throw compute_module::exec_error("battery", "cycles vs DOD matrix must have two columns and at least two rows");
+	
 	// only valid for lead-acid, zero out for anything else
 	if ( chem != 0)
 	{
-		for (int ii = 0; ii != lft_DoD.size(); ii++)
+		int nn = cycles_vs_DOD.nrows()*cycles_vs_DOD.ncols();
+		for (int ii = 0; ii != nn; ii++)
 		{
-			lft_DoD[ii] = 0.;
-			lft_cycle[ii] = 0.;
+			cycles_vs_DOD[ii] = 0.;
 		}
 	}
 
@@ -198,9 +201,9 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 
 	// model initialization
-	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_ncells"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
+	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_bank_ncells_serial"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
 		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
-	lifetime_model = new  lifetime_t(lft_DoD, lft_cycle, lft_cycle.size() );
+	lifetime_model = new  lifetime_t(cycles_vs_DOD, lft_cycle.size());
 
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
 	if ( cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2 )
@@ -224,38 +227,31 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		dt_hr );
 
 	double Vfull = cm.as_double("batt_Vfull");
-	int ncell = cm.as_integer("batt_ncells");
+	int ncell = cm.as_integer("batt_bank_ncells_serial") + cm.as_integer("batt_bank_ncells_parallel");
 
 	if ( chem == 0 )
 	{
-		double q10 = cm.as_double( "LeadAcid_q10" );
+		double q10 = cm.as_double( "LeadAcid_q10_computed" );
 		capacity_model = new capacity_kibam_t(
 			q10,
-			cm.as_double( "LeadAcid_q20" ),
-			cm.as_double( "LeadAcid_I20" ),
+			cm.as_double( "LeadAcid_q20_computed" ),
 			Vfull,
 			cm.as_double( "LeadAcid_tn" ),
 			10.0,
-			cm.as_double( "LeadAcid_qn" ),
+			cm.as_double( "LeadAcid_qn_computed" ),
 			q10 );
 	}
 	else if ( chem == 1 )
 	{
-		std::vector<double> LiIon_cap = cm.as_doublevec("LiIon_capacities_vect");
-		std::vector<double> LiIon_cycle_cap = cm.as_doublevec("LiIon_cycle_capacities_vect");
-		if (LiIon_cap.size() != LiIon_cycle_cap.size() ) 
-			throw compute_module::exec_error("battery", "Number of Capacities-vs-cycles inputs must equal number of cycles inputs (li-ion battery)");
-
-
 		capacity_model = new capacity_lithium_ion_t(
 			cm.as_double("batt_Qfull"),
-			Vfull*ncell, LiIon_cap, LiIon_cycle_cap);
+			Vfull*ncell, cap_vs_cycles);
 	}
 		
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model);
 
 	battery_bank_model = new battery_bank_t( battery_model, 
-		cm.as_double("batt_nser"),
+		1, // cm.as_double("batt_nser"),
 		0, // need to input number of batteries in series
 		chem,
 		cm.as_double("batt_rt_eff") );

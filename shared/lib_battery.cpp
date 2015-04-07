@@ -35,12 +35,12 @@ double capacity_t::P(){ return _P; }
 /*
 Define KiBam Capacity Model
 */
-capacity_kibam_t::capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2) :
+capacity_kibam_t::capacity_kibam_t(double q10, double q20, double V, double t1, double t2, double q1, double q2) :
 capacity_t(q20, V)
 {
 	_q10 = q10;
 	_q20 = q20;
-	_I20 = I20;
+	_I20 = q20/20.;
 
 	// parameters for c, k calculation
 	_q1 = q1;
@@ -221,39 +221,20 @@ double capacity_kibam_t::q20(){return _q20;}
 /*
 Define Lithium Ion capacity model
 */
-capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V, std::vector<double> capacities, std::vector<double> cycles) :capacity_t(q, V)
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double V, const util::matrix_t<double> &cap_vs_cycles) :capacity_t(q, V)
 {
 	_qmax = q;
 	_qmax0 = q;
-
-	// fit polynomial to cycles vs capacity
-	_n = capacities.size();
-	_cycle_vect = new double[_n];
-	_capacities_vect = new double[_n];
-	 _a = new double[_n];
-
-	for (int i = 0; i < _n; i++)
-	{
-		_capacities_vect[i] = (capacities[i]);
-		_cycle_vect[i] = (cycles[i]);
-		_a[i] = 0;
-	}
-
-	// Perform Curve fit
-	int info = lsqfit(third_order_polynomial, 0, _a, _n, _cycle_vect, _capacities_vect, _n);
+	_cap_vs_cycles = cap_vs_cycles;
 };
-capacity_lithium_ion_t::~capacity_lithium_ion_t()
-{
-	delete[] _cycle_vect;
-	delete[] _capacities_vect;
-	delete[] _a;
-}
+capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
+
 void capacity_lithium_ion_t::updateCapacity(double P, double V, double dt, int cycles)
 {
 	double q0_old = _q0;
 
 	// update maximum capacity based on number of cycles
-	double capacity_modifier = third_order_polynomial(cycles, _a, 0);
+	double capacity_modifier = util::linterp_col(_cap_vs_cycles, 0, cycles, 1);
 	 _qmax = _qmax0 * capacity_modifier / 100;
 
 	// currently just a tank of coloumbs
@@ -429,16 +410,18 @@ void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
 Define Lifetime Model
 */
 
-lifetime_t::lifetime_t( std::vector<double> DOD_vect, std::vector<double> cycle_vect, int n )
+lifetime_t::lifetime_t(const util::matrix_t<double> &cycles_vs_DOD, int n)
 {
+	_cycles_vs_DOD = cycles_vs_DOD;
+
 	_DOD_vect = new double[n];
 	_cycle_vect = new double[n]; 
 	_a = new double[n];
 
 	for (int i = 0; i != n; i++)
 	{
-		_DOD_vect[i] = DOD_vect[i];
-		_cycle_vect[i] = cycle_vect[i];
+		_DOD_vect[i] = _cycles_vs_DOD.at(i,0);
+		_cycle_vect[i] = _cycles_vs_DOD.at(i, 1);
 		_a[i] = 0;
 	}
 
