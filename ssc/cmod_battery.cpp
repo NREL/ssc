@@ -17,7 +17,9 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_voltage",                          "Battery bank desired chemistry",                          "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_size_choice",                           "Battery bank choice how to size",                         "",        "0=BankSize,1=CellSize","Battery",       "",                           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_size_choice",                           "Battery bank choice how to size",                         "",        "0=BankSize,1=CellSize","Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_cell_cutoff_voltage",                   "Cell cutoff voltage",                                     "V",        "",                    "Battery",       "",                           "",                              "" },
+
 
 	// Voltage discharge curve
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_rt_eff",                                "Battery round trip efficiency",                           "%",       "",                     "Battery",       "",                           "",                              "" },
@@ -202,7 +204,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 	// model initialization
 	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_bank_ncells_serial"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
-		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
+		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"), cm.as_double("batt_cell_cutoff_voltage"));
 	lifetime_model = new  lifetime_t(cycles_vs_DOD, lft_cycle.size());
 
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
@@ -231,21 +233,17 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 	if ( chem == 0 )
 	{
-		double q10 = cm.as_double( "LeadAcid_q10_computed" );
 		capacity_model = new capacity_kibam_t(
-			q10,
 			cm.as_double( "LeadAcid_q20_computed" ),
-			Vfull,
 			cm.as_double( "LeadAcid_tn" ),
-			10.0,
 			cm.as_double( "LeadAcid_qn_computed" ),
-			q10 );
+			cm.as_double("LeadAcid_q10_computed"));
 	}
 	else if ( chem == 1 )
 	{
 		capacity_model = new capacity_lithium_ion_t(
 			cm.as_double("batt_Qfull"),
-			Vfull*ncell, cap_vs_cycles);
+			cap_vs_cycles);
 	}
 		
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model);

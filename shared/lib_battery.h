@@ -57,14 +57,15 @@ protected:
 Base class from which capacity models derive
 Note, all capacity models are based on the capacity of one battery
 */
+class voltage_t;
 class capacity_t
 {
 public:
-	capacity_t(double q, double V);
+	capacity_t(double q);
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual void updateCapacity(double P, double V, double dt, int cycles) = 0;
+	virtual void updateCapacity(double P, voltage_t * V, double dt, int cycles) = 0;
 	virtual void updateCapacityForThermal(thermal_t * thermal)=0;
 	virtual double qmax() = 0; // max capacity
 	virtual double qmaxI() = 0; // max capacity at current
@@ -84,7 +85,6 @@ protected:
 	double _q0;  // [Ah] - Total capacity at timestep 
 	double _I;   // [A]  - Current draw during last step
 	double _P;   // [Ah] - Power draw during last step [ P > 0 discharge, P < 0 charge]
-	double _V;   // [V]  - Voltage (maybe will be dynamic eventually)
 	double _SOC; // [%] - State of Charge
 	double _DOD; // [%] - Depth of Discharge
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
@@ -99,8 +99,8 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
-	capacity_kibam_t(double q10, double q20, double V, double t1, double t2, double q1, double q2);
-	void updateCapacity(double P, double V, double dt, int cycles = 0);
+	capacity_kibam_t(double q20, double t1, double q1, double q10);
+	void updateCapacity(double P, voltage_t * V, double dt, int cycles = 0);
 	void updateCapacityForThermal(thermal_t * thermal);
 	double q1(); // Available charge
 	double q2(); // Bound charge
@@ -148,11 +148,11 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t(double q, double V, const util::matrix_t<double> &cap_vs_cycles);
+	capacity_lithium_ion_t(double q, const util::matrix_t<double> &cap_vs_cycles);
 	~capacity_lithium_ion_t();
 
 	// override public api
-	void updateCapacity(double P, double V, double dt, int cycles);
+	void updateCapacity(double P, voltage_t *, double dt, int cycles);
 	void updateCapacityForThermal(thermal_t * thermal);
 	double q1(); // Available charge
 	double qmax(); // Max charge
@@ -173,15 +173,18 @@ All voltage models are based on one-cell, but return the voltage for one battery
 class voltage_t
 {
 public:
-	voltage_t(int num_cells, double voltage, double * other=0);
+	voltage_t(int num_cells, double voltage, double cutoff);
 
 	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
 	double battery_voltage(); // voltage of one battery
 	double cell_voltage(); // voltage of one cell
+	double cutoff_voltage(); // cutoff voltage of one cell
+
 
 protected:
 	int _num_cells;    // number of cells per battery
 	double _cell_voltage; // closed circuit voltage per cell [V]
+	double _cutoff_voltage; // cutoff voltage of one cell
 };
 
 class voltage_basic_t : public voltage_t
@@ -195,7 +198,7 @@ public:
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vnom, double Vexp, double Qfull, double Qexp, double Qnom, double C_rate);
+	voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double cutoff);
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, double dt);
 
@@ -240,9 +243,6 @@ protected:
 	int rainflow_compareRanges();
 
 	util::matrix_t<double> _cycles_vs_DOD;
-	double * _DOD_vect;
-	double *_cycle_vect;
-	double *_a;
 	double _nCycles;
 	double _Dlt;
 	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
@@ -285,7 +285,7 @@ public:
 	void finish();
 
 	// Run a component level model
-	void runCapacityModel(double P, double V);
+	void runCapacityModel(double P, voltage_t * voltage);
 	void runVoltageModel();
 	void runThermalModel(double I);
 	void runLifetimeModel(double DOD);
@@ -392,8 +392,6 @@ protected:
 /*
 Non-class functions
 */
-double life_vs_DOD(double R, double *a, void * user_data);
-double third_order_polynomial(double independent_variable, double *a, void *user_data);
 void getMonthHour(int hourOfYear, int * month, int * hour);
 bool compare(int, int);
 
