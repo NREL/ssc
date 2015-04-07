@@ -33,7 +33,12 @@ protected:
 	double value(size_t idx);
 	double *value(size_t idx, int *len);
 	double *value(size_t idx, int *nr, int *nc);
+	void value(size_t idx, double val);
 	std::string value_str(size_t idx);
+	double *allocate(size_t idx, int nr, int nc);
+
+	void tcsmatrix_index(size_t idx, int row, int col, double val);
+	double tcsmatrix_index(size_t idx, int row, int col);
 
 	// Have to have this to access 'compute_module' public methods??
 	virtual void exec() throw(general_error) = 0;
@@ -50,8 +55,8 @@ public:
 	C_csp_component(){};
 
 	void set_csp_component_value_ssc_double(const char *name, double val);
-	void set_csp_component_value_ssc_array(const char *name, ssc_number_t *p_array, size_t l_array);
-	void set_csp_component_value_ssc_matrix(const char *name, ssc_number_t *p_array, size_t nr, size_t nc);
+	void set_csp_component_value_ssc_array(const char *name, ssc_number_t *p_array, size_t *l_array_in);
+	void set_csp_component_value_ssc_matrix(const char *name, ssc_number_t *p_array, size_t *nr_in, size_t *nc_in);
 	void set_csp_component_value_ssc_string(const char *name, const char *s);
 
 
