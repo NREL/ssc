@@ -495,7 +495,38 @@ public:
 			throw exec_error("MSPT CSP Solver", error_msg);
 		}
 
+		// *********************************************************
+		// *********************************************************
+		// *********************************************************
+		//      Now set Type 222 parameters in solar_field
+		// *********************************************************
+		// *********************************************************
+		// *********************************************************
+		solar_field.set_csp_component_value_ssc_double("N_panels", as_double("N_panels"));
+		solar_field.set_csp_component_value_ssc_double("D_rec", as_double("D_rec"));
+		solar_field.set_csp_component_value_ssc_double("H_rec", as_double("H_rec"));
+		solar_field.set_csp_component_value_ssc_double("THT", as_double("THT"));
+		solar_field.set_csp_component_value_ssc_double("d_tube_out", as_double("d_tube_out"));
+		solar_field.set_csp_component_value_ssc_double("th_tube", as_double("th_tube"));
+		solar_field.set_csp_component_value_ssc_double("mat_tube", as_double("mat_tube"));
+		solar_field.set_csp_component_value_ssc_double("rec_htf", as_double("rec_htf"));
+		solar_field.set_csp_component_value_ssc_matrix("field_fl_props", as_matrix("field_fl_props", &n_rows, &n_cols), &n_rows, &n_cols);
+		solar_field.set_csp_component_value_ssc_double("Flow_type", as_double("Flow_type"));
+		solar_field.set_csp_component_value_ssc_double("epsilon", as_double("epsilon"));
+		solar_field.set_csp_component_value_ssc_double("hl_ffact", as_double("hl_ffact"));
+		solar_field.set_csp_component_value_ssc_double("T_htf_hot_des", as_double("T_htf_hot_des"));
+		solar_field.set_csp_component_value_ssc_double("T_htf_cold_des", as_double("T_htf_cold_des"));
+		solar_field.set_csp_component_value_ssc_double("f_rec_min", as_double("f_rec_min"));
+		solar_field.set_csp_component_value_ssc_double("Q_rec_des", as_double("Q_rec_des"));
+		solar_field.set_csp_component_value_ssc_double("rec_su_delay", as_double("rec_su_delay"));
+		solar_field.set_csp_component_value_ssc_double("rec_qf_delay", as_double("rec_qf_delay"));
+		solar_field.set_csp_component_value_ssc_double("m_dot_htf_max", as_double("m_dot_htf_max"));
+		solar_field.set_csp_component_value_ssc_double("A_sf", as_double("A_sf"));
+
+
 		solar_field.init();
+
+		log("Solar Field Initialization was incredibly successful");
 
 		//solar_field.set_csp_component_value_ssc_double("run_type", as_double("run_type"));
 		//solar_field.set_csp_component_value_ssc_double("helio_width", as_double("helio_width"));
