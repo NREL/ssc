@@ -22,12 +22,13 @@ static bool solarpilot_callback(simulation_info *siminfo, void *data);
 #define mysnprintf snprintf
 #endif
 
-#define pi 3.141592654
+//#define pi 3.141592654
 #define az_scale 6.283125908 
 #define zen_scale 1.570781477 
 #define eff_scale 0.7
 
 enum{	//Parameters
+			// SolarPILOT	
 		P_run_type,                              
 		P_helio_width, 
 		P_helio_height, 
@@ -74,6 +75,30 @@ enum{	//Parameters
 		P_dni_des,
 		P_land_area,
 
+			// Molten Salt Power Tower Receiver (222)
+		P_N_panels,
+		P_D_rec,
+		P_H_rec,
+		P_THT,
+		P_D_out,
+		P_th_tu,
+		P_mat_tube,
+		P_field_fl,
+		P_field_fl_props,
+		P_Flow_type,
+		P_epsilon,
+		P_hl_ffact,
+		P_T_htf_hot_des,
+		P_T_htf_cold_des,
+		P_f_rec_min,
+		P_Q_rec_des,
+		P_rec_su_delay,
+		P_rec_qf_delay,
+		P_m_dot_htf_max,
+		P_A_sf,
+		P_IS_DIRECT_ISCC,
+		P_CYCLE_CONFIG,
+
 		O_pparasi,
 		O_eta_field,
 		O_flux_map,
@@ -82,6 +107,7 @@ enum{	//Parameters
 		N_MAX};
 
 const tcsvarinfo csp_solver_221_222_params[] = {
+		// SolarPILOT (sam_mw_pt_heliostatfield)
 	{ TCS_PARAM,    TCS_NUMBER,   P_run_type,                "run_type",              "Run type",                                             "-",      "",                              "", ""          },
 	{ TCS_PARAM,    TCS_NUMBER,   P_helio_width,             "helio_width",           "Heliostat width",                                      "m",      "",                              "", ""          },
 	{ TCS_PARAM,    TCS_NUMBER,   P_helio_height,            "helio_height",          "Heliostat height",                                     "m",      "",                              "", ""          },
@@ -128,6 +154,31 @@ const tcsvarinfo csp_solver_221_222_params[] = {
 	{ TCS_PARAM,    TCS_NUMBER,   P_dni_des,                 "dni_des",               "Design-point DNI",                                     "W/m2",   "",                              "", ""          },
 	{ TCS_PARAM,    TCS_NUMBER,   P_land_area,               "land_area",             "CALCULATED land area",                                 "acre",   "",                              "", ""          },
 
+		// Molten Salt Power Tower Receiver (sam_mw_pt_type222)
+	{ TCS_PARAM,    TCS_NUMBER,    P_N_panels,			     "N_panels",			"Number of individual panels on the receiver",								"",			"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_D_rec,			         "D_rec",			    "The overall outer diameter of the receiver",								"m",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_H_rec,			         "H_rec",			    "The height of the receiver",												"m",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_THT,				     "THT",				    "The height of the tower (hel. pivot to rec equator)",						"m",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_D_out,			         "d_tube_out",		    "The outer diameter of an individual receiver tube",						"mm",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_th_tu,			         "th_tube",			    "The wall thickness of a single receiver tube",								"mm",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_mat_tube,			     "mat_tube",            "The material name of the receiver tubes",									"",			"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_field_fl,			     "rec_htf",			    "The name of the HTF used in the receiver",									"",			"", "", ""},
+	{ TCS_PARAM,    TCS_MATRIX,    P_field_fl_props,         "field_fl_props",      "User defined field fluid property data",                                   "-",        "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_Flow_type,		         "Flow_type",		    "A flag indicating which flow pattern is used",								"",			"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_epsilon,			     "epsilon",			    "The emissivity of the receiver surface coating",							"",			"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_hl_ffact,			     "hl_ffact",			"The heat loss factor (thermal loss fudge factor)",							"",			"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_T_htf_hot_des,	         "T_htf_hot_des",	    "Hot HTF outlet temperature at design conditions",							"C",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_T_htf_cold_des,	     "T_htf_cold_des",	    "Cold HTF inlet temperature at design conditions",							"C",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_f_rec_min,		         "f_rec_min",		    "Minimum receiver mass flow rate turn down fraction",						"",			"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_Q_rec_des,		         "Q_rec_des",		    "Design-point receiver thermal power output",								"MWt",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_rec_su_delay,		     "rec_su_delay",		"Fixed startup delay time for the receiver",								"hr",		"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_rec_qf_delay,		     "rec_qf_delay",		"Energy-based receiver startup delay (fraction of rated thermal power)",	"",			"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_m_dot_htf_max,	         "m_dot_htf_max",	    "Maximum receiver mass flow rate",											"kg/hr",	"", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_A_sf,				     "A_sf",				"Solar Field Area",                                                         "m^2",      "", "", ""},
+	{ TCS_PARAM,    TCS_NUMBER,    P_IS_DIRECT_ISCC,         "is_direct_iscc",      "Is receiver directly connected to an iscc power block",                    "-",        "", "", "-999"},
+	{ TCS_PARAM,    TCS_NUMBER,    P_CYCLE_CONFIG,           "cycle_config",        "Configuration of ISCC power cycle",                                        "-",        "", "", "1"},
+
+
 
 	{ TCS_OUTPUT,   TCS_NUMBER,   O_pparasi,                 "pparasi",               "Parasitic tracking/startup power",                     "MWe",    "",                              "", ""          },
     { TCS_OUTPUT,   TCS_NUMBER,   O_eta_field,               "eta_field",             "Total field efficiency",                               "",       "",                              "", ""          },
@@ -143,6 +194,7 @@ C_csp_mspt_221_222::C_csp_mspt_221_222()
 {
 	set_params_and_size_vector(csp_solver_221_222_params);
 
+		// SolarPILOT
 	run_type = 0;
 	helio_width = std::numeric_limits<double>::quiet_NaN();
 	helio_height = std::numeric_limits<double>::quiet_NaN();
@@ -193,6 +245,67 @@ C_csp_mspt_221_222::C_csp_mspt_221_222()
 	dni_des = std::numeric_limits<double>::quiet_NaN();
 
 	field_efficiency_table = 0;
+
+	// *********************************************************
+	// *********************************************************
+	// *********************************************************
+		// Type 222
+	m_n_panels = -1;
+	m_d_rec = std::numeric_limits<double>::quiet_NaN();
+	m_h_rec = std::numeric_limits<double>::quiet_NaN();
+	m_h_tower = std::numeric_limits<double>::quiet_NaN();
+	m_od_tube = std::numeric_limits<double>::quiet_NaN();
+	m_th_tube = std::numeric_limits<double>::quiet_NaN();
+	m_epsilon = std::numeric_limits<double>::quiet_NaN();
+	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
+	m_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
+	m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
+	m_f_rec_min = std::numeric_limits<double>::quiet_NaN();
+	m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
+	m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
+	m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
+	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
+	m_A_sf = std::numeric_limits<double>::quiet_NaN();
+
+	m_id_tube = std::numeric_limits<double>::quiet_NaN();
+	m_A_tube = std::numeric_limits<double>::quiet_NaN();
+	m_n_t = -1;
+
+	m_A_rec_proj = std::numeric_limits<double>::quiet_NaN();
+	m_A_node = std::numeric_limits<double>::quiet_NaN();
+
+	m_itermode = -1;
+	m_od_control = std::numeric_limits<double>::quiet_NaN();
+	m_tol_od = std::numeric_limits<double>::quiet_NaN();
+	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
+	m_q_rec_min = std::numeric_limits<double>::quiet_NaN();
+	m_mode = -1;
+	m_mode_prev = -1;
+	m_E_su = std::numeric_limits<double>::quiet_NaN();
+	m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
+	m_t_su = std::numeric_limits<double>::quiet_NaN();
+	m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
+
+	m_flow_pattern = 0.0;
+	m_n_lines = -1;
+
+	m_m_mixed = std::numeric_limits<double>::quiet_NaN();
+	m_LoverD = std::numeric_limits<double>::quiet_NaN();
+	m_RelRough = std::numeric_limits<double>::quiet_NaN();
+
+	m_is_iscc = false;
+	m_cycle_config = 1;
+
+	m_T_amb_low = std::numeric_limits<double>::quiet_NaN();
+	m_T_amb_high = std::numeric_limits<double>::quiet_NaN();
+	m_P_amb_low = std::numeric_limits<double>::quiet_NaN();
+	m_P_amb_high = std::numeric_limits<double>::quiet_NaN();
+
+	m_q_iscc_max = std::numeric_limits<double>::quiet_NaN();
+
+	m_n_flux_x = 0;
+	m_n_flux_y = 0;
+
 }
 
 C_csp_mspt_221_222::~C_csp_mspt_221_222()
@@ -238,7 +351,7 @@ void C_csp_mspt_221_222::init()
 		land_bound_list = value(P_land_bound_list, &nrows2);
 		p_start = value(P_p_start);
 		p_track = value(P_p_track);
-		hel_stow_deploy = value(P_hel_stow_deploy)*pi / 180.;
+		hel_stow_deploy = value(P_hel_stow_deploy)*CSP::pi / 180.;
 		v_wind_max = value(P_v_wind_max);
 		interp_nug = value(P_interp_nug);
 		interp_beta = value(P_interp_beta);
@@ -273,7 +386,7 @@ void C_csp_mspt_221_222::init()
 		land_bound_list = value(P_land_bound_list, &nrows2);
 		p_start = value(P_p_start);
 		p_track = value(P_p_track);
-		hel_stow_deploy = value(P_hel_stow_deploy)*pi / 180.;
+		hel_stow_deploy = value(P_hel_stow_deploy)*CSP::pi / 180.;
 		v_wind_max = value(P_v_wind_max);
 		interp_nug = value(P_interp_nug);
 		interp_beta = value(P_interp_beta);
@@ -528,12 +641,12 @@ void C_csp_mspt_221_222::init()
 
             //fill the parameter matrix to return this data to calling program
             //also fill the flux sun positions matrix
-			double check1    = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180. / pi;
-			double check2    = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180. / pi;
+			double check1    = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180. / CSP::pi;
+			double check2 = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180. / CSP::pi;
 			double check3    = fluxtab.efficiency.at(i);
 
-            eta_map[i*3    ] = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180./pi;
-            eta_map[i*3 + 1] = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180./pi;
+			eta_map[i * 3] = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180. / CSP::pi;
+			eta_map[i * 3 + 1] = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180. / CSP::pi;
             eta_map[i*3 + 2] = fluxtab.efficiency.at(i);
 
 		}
@@ -578,8 +691,8 @@ void C_csp_mspt_221_222::init()
 		sunpos.resize(nrows, VectDoub(2));
 		effs.resize(nrows);
 		for(int i=0; i<nrows; i++){
-			sunpos.at(i).at(0) = tcsmatrix_index(P_eta_map, i, 0) / az_scale * pi / 180.;
-			sunpos.at(i).at(1) = tcsmatrix_index(P_eta_map, i, 1) / zen_scale * pi / 180.;
+			sunpos.at(i).at(0) = tcsmatrix_index(P_eta_map, i, 0) / az_scale * CSP::pi / 180.;
+			sunpos.at(i).at(1) = tcsmatrix_index(P_eta_map, i, 1) / zen_scale * CSP::pi / 180.;
 			effs.at(i) = tcsmatrix_index(P_eta_map, i, 2) / eff_scale;
 		}
 
@@ -639,6 +752,202 @@ void C_csp_mspt_221_222::init()
 	v_wind_prev = 0.0;
 
 	return;
+}
+
+void C_csp_mspt_221_222::init_rec(double time_step)
+{
+	double dt = time_step;
+
+	ambient_air.SetFluid(ambient_air.Air);
+	// Declare instance of fluid class for FIELD fluid.
+	int field_fl = (int)value(P_field_fl);
+	if( field_fl != HTFProperties::User_defined && field_fl < HTFProperties::End_Library_Fluids )
+	{
+		if( !field_htfProps.SetFluid(field_fl) ) // field_fl should match up with the constants
+		{
+			char tstr[300];
+			sprintf(tstr, "Receiver HTF code %d is not recognized", field_fl);
+			throw exec_error("Molten Salt Power Tower Initialization", tstr);
+			//message(TCS_ERROR, "Receiver HTF code is not recognized");
+			//return -1;
+		}
+	}
+	else if( field_fl == HTFProperties::User_defined )
+	{
+		int nrows = 0, ncols = 0;
+		double *fl_mat = value(P_field_fl_props, &nrows, &ncols);
+		if( fl_mat != 0 && nrows > 2 && ncols == 7 )
+		{
+			util::matrix_t<double> mat(nrows, ncols, 0.0);
+			for( int r = 0; r<nrows; r++ )
+				for( int c = 0; c<ncols; c++ )
+					mat.at(r, c) = tcsmatrix_index(P_field_fl_props, r, c);
+
+			if( !field_htfProps.SetUserDefinedFluid(mat) )
+			{
+				char tstr[300];
+				sprintf(tstr, field_htfProps.UserFluidErrMessage(), nrows, ncols);
+				throw exec_error("Molten Salt Power Tower Initialization", tstr);
+				//message( "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
+				//message(TCS_ERROR, field_htfProps.UserFluidErrMessage(), nrows, ncols);
+				//return -1;
+			}
+		}
+		else
+		{
+			char tstr[300];
+			sprintf(tstr, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+			throw exec_error("Molten Salt Power Tower Initialization", tstr);
+			//message(TCS_ERROR, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
+			//return -1;
+		}
+	}
+	else
+	{
+		throw exec_error("Molten Salt Power Tower Initialization","Receiver HTF code is not recognized");
+		//message(TCS_ERROR, "Receiver HTF code is not recognized");
+		//return -1;
+	}
+
+	// Declare instance of htf class for receiver tube material
+	int mat_tube = (int)value(P_mat_tube);
+	if( mat_tube == HTFProperties::Stainless_AISI316 || mat_tube == HTFProperties::T91_Steel )
+	{
+		tube_material.SetFluid(mat_tube);
+	}
+	else if( mat_tube == HTFProperties::User_defined )
+	{
+		throw exec_error("Molten Salt Power Tower Initialization", "Receiver material currently does not accept user defined properties");
+		//message(TCS_ERROR, "Receiver material currently does not accept user defined properties");
+		//return -1;
+	}
+	else
+	{
+		char tstr[300];
+		sprintf(tstr, "Receiver material code, %d, is not recognized", mat_tube);
+		throw exec_error("Molten Salt Power Tower Initialization", tstr);
+		//message(TCS_ERROR, "Receiver material code, %d, is not recognized", mat_tube);
+		//return -1;
+	}
+
+	m_n_panels = (int)value(P_N_panels);	//[-] Number of panels in receiver
+	m_d_rec = value(P_D_rec);				//[m] Diameter of receiver
+	m_h_rec = value(P_H_rec);				//[m] Height of receiver
+	m_h_tower = value(P_THT);				//[m] Height of tower
+	m_od_tube = value(P_D_out) / 1.E3;		//[m] Outer diameter of receiver tubes -> convert from mm
+	m_th_tube = value(P_th_tu) / 1.E3;		//[m] Thickness of receiver tubes -> convert from mm
+
+	int flowtype = (int)value(P_Flow_type);	//[-] Numerical code to designate receiver flow type
+
+	m_epsilon = value(P_epsilon);			//[-] Emissivity of receiver
+	m_hl_ffact = value(P_hl_ffact);			//[-] Heat Loss Fudge FACTor
+	m_T_htf_hot_des = value(P_T_htf_hot_des) + 273.15;	 //[K] Design receiver outlet temperature -> convert from K
+	m_T_htf_cold_des = value(P_T_htf_cold_des) + 273.15; //[K] Design receiver inlet temperature -> convert from C
+	m_f_rec_min = value(P_f_rec_min);			//[-] Minimum receiver mass flow rate turn down fraction
+	m_q_rec_des = value(P_Q_rec_des)*1.E6;	//[W] Design receiver thermal input -> convert from MW
+	m_rec_su_delay = value(P_rec_su_delay);		//[hr] Receiver startup time duration
+	m_rec_qf_delay = value(P_rec_qf_delay);		//[-] Energy-based receiver startup delay (fraction of rated thermal power)
+	m_m_dot_htf_max = value(P_m_dot_htf_max) / 3600.0;	//[kg/s] Maximum mass flow rate through receiver -> convert from kg/hr
+	m_A_sf = value(P_A_sf);				//[m^2] Solar field area
+
+	m_n_flux_x = (int)value(P_n_flux_x);
+	m_n_flux_y = (int)value(P_n_flux_y);
+
+	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
+	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
+	m_n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
+
+	int n_tubes = m_n_t * m_n_panels;				//[-] Number of tubes in the system
+	m_A_rec_proj = m_od_tube*m_h_rec*n_tubes;		//[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
+	m_A_node = CSP::pi*m_d_rec / m_n_panels*m_h_rec; //[m^2] The area associated with each node
+
+
+	m_mode = 0;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+	m_itermode = 1;			//[-] 1: Solve for design temp, 2: solve to match mass flow restriction
+	m_od_control = 1.0;			//[-] Additional defocusing for over-design conditions
+	m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
+
+	double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0)*1000.0;		//[J/kg-K] Specific heat at design conditions
+	m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
+	m_q_rec_min = m_q_rec_des * m_f_rec_min;	//[W] Minimum receiver thermal power
+
+	m_mode_prev = m_mode;
+	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
+	m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
+
+	//allocate the input array for the flux map
+	//m_i_flux_map = allocate(I_flux_map, m_n_flux_y, m_n_flux_x);
+
+	//Get flow pattern
+	//if(.not.allocated(Flow_pattern)) allocate(Flow_pattern(N_panels))
+	//call flowPatterns(N_panels,flowtype,Flow_pattern,salt_out,nlines)
+	//m_n_lines = 2;	// Need remaining flow patterns
+	//m_flow_pattern.resize( m_n_lines, m_n_panels/m_n_lines );		// Try to use flow pattern in direct steam receiver
+	std::string flow_msg;
+	if( !CSP::flow_patterns(m_n_panels, flowtype, m_n_lines, m_flow_pattern, &flow_msg) )
+	{
+		throw exec_error("Molten Salt Power Tower Initialization", flow_msg.c_str());
+		//message(TCS_ERROR, flow_msg.c_str());
+		//return -1;
+	}
+
+	m_q_dot_inc.resize(m_n_panels);
+	m_q_dot_inc.fill(0.0);
+
+	m_T_s_guess.resize(m_n_panels);
+	m_T_s_guess.fill(0.0);
+	m_T_s.resize(m_n_panels);
+	m_T_s.fill(0.0);
+
+	m_T_panel_out_guess.resize(m_n_panels);
+	m_T_panel_out.resize(m_n_panels);
+	m_T_panel_out_guess.fill(0.0);
+	m_T_panel_out.fill(0.0);
+
+	m_T_panel_in_guess.resize(m_n_panels);
+	m_T_panel_in_guess.fill(0.0);
+	m_T_panel_in.resize(m_n_panels);
+	m_T_panel_in.fill(0.0);
+
+	m_T_panel_ave.resize(m_n_panels);
+	m_T_panel_ave.fill(0.0);
+	m_T_panel_ave_guess.resize(m_n_panels);
+	m_T_panel_ave_guess.fill(0.0);
+
+	m_T_film.resize(m_n_panels);
+	m_T_film.fill(0.0);
+
+	m_q_dot_conv.resize(m_n_panels);
+	m_q_dot_conv.fill(0.0);
+
+	m_q_dot_rad.resize(m_n_panels);
+	m_q_dot_rad.fill(0.0);
+
+	m_q_dot_loss.resize(m_n_panels);
+	m_q_dot_loss.fill(0.0);
+
+	m_q_dot_abs.resize(m_n_panels);
+	m_q_dot_abs.fill(0.0);
+
+	m_m_mixed = 3.2;	//[-] Exponential for calculating mixed convection
+
+	m_LoverD = m_h_rec / m_id_tube;
+	m_RelRough = (4.5e-5) / m_id_tube;	//[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
+
+	// Are we modeling a direct ISCC case?
+	m_is_iscc = value(P_IS_DIRECT_ISCC) == 1;
+
+	// If so, get cycle information
+	if( m_is_iscc )
+	{
+		// Set cycle configuration in class
+		m_cycle_config = value(P_CYCLE_CONFIG);
+		cycle_calcs.set_cycle_config(m_cycle_config);
+
+		// Get table limits
+		cycle_calcs.get_table_range(m_T_amb_low, m_T_amb_high, m_P_amb_low, m_P_amb_high);
+	}
+
 }
 
 int C_csp_mspt_221_222::relay_message(string &msg, double percent)
