@@ -28,7 +28,7 @@ static bool solarpilot_callback(simulation_info *siminfo, void *data);
 #define eff_scale 0.7
 
 enum{	//Parameters
-		P_run_type, 
+		P_run_type,                              
 		P_helio_width, 
 		P_helio_height, 
 		P_helio_optical_error, 
@@ -74,8 +74,9 @@ enum{	//Parameters
 		P_dni_des,
 		P_land_area,
 
-		P_ffrac,
-		P_field_fl_props,
+		O_pparasi,
+		O_eta_field,
+		O_flux_map,
 
 		//N_MAX
 		N_MAX};
@@ -127,8 +128,12 @@ const tcsvarinfo csp_solver_221_222_params[] = {
 	{ TCS_PARAM,    TCS_NUMBER,   P_dni_des,                 "dni_des",               "Design-point DNI",                                     "W/m2",   "",                              "", ""          },
 	{ TCS_PARAM,    TCS_NUMBER,   P_land_area,               "land_area",             "CALCULATED land area",                                 "acre",   "",                              "", ""          },
 
-	{ TCS_PARAM,    TCS_ARRAY,    P_ffrac,              "ffrac",                "Fossil dispatch logic",                                   "-",            "",        "",        ""},
-	{ TCS_PARAM,    TCS_MATRIX,   P_field_fl_props,     "field_fl_props",       "User defined field fluid property data",                  "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
+
+	{ TCS_OUTPUT,   TCS_NUMBER,   O_pparasi,                 "pparasi",               "Parasitic tracking/startup power",                     "MWe",    "",                              "", ""          },
+    { TCS_OUTPUT,   TCS_NUMBER,   O_eta_field,               "eta_field",             "Total field efficiency",                               "",       "",                              "", ""          },
+    { TCS_OUTPUT,   TCS_MATRIX,   O_flux_map,                "flux_map",              "Receiver flux map",                                    "",       "n_flux_x cols x n_flux_y rows", "", ""          },
+
+
 
 	//N_MAX
 	{TCS_INVALID, TCS_INVALID, N_MAX,			0,					0, 0, 0, 0, 0	}
@@ -450,12 +455,13 @@ void C_csp_mspt_221_222::init()
 			//message(TCS_NOTICE, msg.c_str());
 			
 			helio_positions = allocate(P_helio_positions, N_hel, pos_dim);
+			
 			for( int i=0; i<N_hel; i++)
 			{
-				TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 ) = layout.heliostat_positions.at(i).location.x;
-				TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 ) = layout.heliostat_positions.at(i).location.y;
-				if(pos_dim==3)
-					TCS_MATRIX_INDEX( var(P_helio_positions), i, 2) = layout.heliostat_positions.at(i).location.z;
+				tcsmatrix_index(P_helio_positions, i, 0, layout.heliostat_positions.at(i).location.x);
+				tcsmatrix_index(P_helio_positions, i, 1, layout.heliostat_positions.at(i).location.y);
+				if( pos_dim == 3 )
+					tcsmatrix_index(P_helio_positions, i, 2, layout.heliostat_positions.at(i).location.z);
 			}
 				
 			//update the callbacks
@@ -472,10 +478,10 @@ void C_csp_mspt_221_222::init()
 				
 			for( int i=0; i<N_hel; i++){
 
-				layout.heliostat_positions.at(i).location.x = TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 );
-				layout.heliostat_positions.at(i).location.y = TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 );
+				layout.heliostat_positions.at(i).location.x = tcsmatrix_index(P_helio_positions, i, 0);
+				layout.heliostat_positions.at(i).location.y = tcsmatrix_index(P_helio_positions, i, 1);
 				if(pos_dim==3)
-					layout.heliostat_positions.at(i).location.z = TCS_MATRIX_INDEX( var(P_helio_positions), i, 2);
+					layout.heliostat_positions.at(i).location.z = tcsmatrix_index(P_helio_positions, i, 2);
 					
 			}
 
@@ -496,9 +502,11 @@ void C_csp_mspt_221_222::init()
 		fluxtab.delta_flux_hrs = delta_flux_hrs;
 
 		//run the flux maps
-		if(! sapi.CalculateFluxMaps(fluxtab, n_flux_x, n_flux_y, true) ){
-            message(TCS_ERROR, "Simulation cancelled during fluxmap preparation");
-            return -1;
+		if(! sapi.CalculateFluxMaps(fluxtab, n_flux_x, n_flux_y, true) )
+		{
+			throw exec_error("SolarPILOT", "Simulation cancelled during fluxmap preparation");
+			//message(TCS_ERROR, "Simulation cancelled during fluxmap preparation");
+            //return -1;
         }
 
 		//collect efficiencies
@@ -508,7 +516,7 @@ void C_csp_mspt_221_222::init()
 		sunpos.reserve(npos);
 		effs.reserve(npos);
 
-        eta_map = allocate( P_eta_map, npos, 3, 0.);
+        eta_map = allocate( P_eta_map, npos, 3 );
         m_flux_positions.resize(npos, VectDoub(2) );
 
 		for(int i=0; i<npos; i++){
@@ -520,6 +528,10 @@ void C_csp_mspt_221_222::init()
 
             //fill the parameter matrix to return this data to calling program
             //also fill the flux sun positions matrix
+			double check1    = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180. / pi;
+			double check2    = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180. / pi;
+			double check3    = fluxtab.efficiency.at(i);
+
             eta_map[i*3    ] = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180./pi;
             eta_map[i*3 + 1] = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180./pi;
             eta_map[i*3 + 2] = fluxtab.efficiency.at(i);
@@ -537,7 +549,7 @@ void C_csp_mspt_221_222::init()
 		for( int i = 0; i<nfl; i++ ){
 			for( int j = 0; j<n_flux_y; j++ ){
 				for( int k = 0; k<n_flux_x; k++ ){
-					TCS_MATRIX_INDEX(var(P_flux_maps), i*n_flux_y + j, k) = f->at(j, k, i);
+					tcsmatrix_index(P_flux_maps, i*n_flux_y + j, k, f->at(j, k, i));
 				}
 			}
 		}
@@ -550,19 +562,25 @@ void C_csp_mspt_221_222::init()
 		int nrows, ncols;
 		double *p_map = value( P_eta_map, &nrows, &ncols);
 		
-		if(ncols != 3){
-			message(TCS_ERROR,  "The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
-				" (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
-			return -1;
+		if(ncols != 3)
+		{
+			char tstr[300];
+			sprintf(tstr, "The heliostat field efficiency file is not formatted correctly. Type expects 3 columns", "(zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
+
+			throw exec_error("SolarPILOT", tstr);
+
+			//message(TCS_ERROR,  "The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
+			//	" (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
+			//return -1;
 		}
 		
 		//read the data from the array into the local storage arrays
 		sunpos.resize(nrows, VectDoub(2));
 		effs.resize(nrows);
 		for(int i=0; i<nrows; i++){
-			sunpos.at(i).at(0) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 0 ) / az_scale * pi/180.;
-			sunpos.at(i).at(1) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 1 ) / zen_scale * pi/180.;
-			effs.at(i) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 2 ) / eff_scale;
+			sunpos.at(i).at(0) = tcsmatrix_index(P_eta_map, i, 0) / az_scale * pi / 180.;
+			sunpos.at(i).at(1) = tcsmatrix_index(P_eta_map, i, 1) / zen_scale * pi / 180.;
+			effs.at(i) = tcsmatrix_index(P_eta_map, i, 2) / eff_scale;
 		}
 
         break;
@@ -574,71 +592,68 @@ void C_csp_mspt_221_222::init()
     //size the output
 	flux_map = allocate( O_flux_map, n_flux_y, n_flux_x );
 
+	//report back the flux positions used
+	int nflux = (int)m_flux_positions.size();
+	flux_positions = allocate(P_flux_positions, nflux, 2);
+	for( int i = 0; i<nflux; i++ ){
+		flux_positions[i * 2] = m_flux_positions.at(i).at(0);
+		flux_positions[i * 2 + 1] = m_flux_positions.at(i).at(1);
+	}
 
+	/*
+	------------------------------------------------------------------------------
+	Create the regression fit on the efficiency map
+	------------------------------------------------------------------------------
+	*/
 
+	//collect nug and beta
+	interp_beta = value(P_interp_beta);
+	interp_nug = value(P_interp_nug);
 
+	//Create the field efficiency table
+	Powvargram vgram(sunpos, effs, interp_beta, interp_nug);
+	field_efficiency_table = new GaussMarkov(sunpos, effs, vgram);
 
+	//test how well the fit matches the data
+	double err_fit = 0.;
+	int npoints = (int)sunpos.size();
+	for( int i = 0; i<npoints; i++ ){
+		double zref = effs.at(i);
+		double zfit = field_efficiency_table->interp(sunpos.at(i));
+		double dz = zref - zfit;
+		err_fit += dz * dz;
+	}
+	err_fit = sqrt(err_fit);
+	if( err_fit > 0.01 )
+	{
+		char tstr[300];
 
+		sprintf(tstr, "The heliostat field interpolation function fit is poor! (err_fit=%f RMS) %d", err_fit);
+		
+		log(tstr);
+		//message(TCS_WARNING, "The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
+	}
 
+	// Initialize stored variables
+	eta_prev = 0.0;
+	v_wind_prev = 0.0;
 
+	return;
+}
 
+int C_csp_mspt_221_222::relay_message(string &msg, double percent)
+{
+	double time = 1.234567;
+	return update(msg, percent, time) ? 0 : -1;
+}
 
+static bool solarpilot_callback(simulation_info *siminfo, void *data)
+{
+	C_csp_mspt_221_222 *cm = static_cast<C_csp_mspt_221_222*>(data);
+	if( !cm )
+		return false;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//double helio_width = value(P_helio_width);
+	float simprogress = (float)siminfo->getCurrentSimulation() / (float)(max(siminfo->getTotalSimulationCount(), 1));
 	
-	//double *ffrac;
-
-	//int l_ffrac = 0;
-	//ffrac = value(P_ffrac, l_ffrac);
-
-	//double abc = ffrac[8];
-
-	//double should_be_weird = ffrac[9];
-
-	//HTFProperties field_htfProps;
-
-	//int nrows = 0, ncols = 0;
-	//double *fl_mat = value(P_field_fl_props, nrows, ncols);
-	//if( fl_mat != 0 && nrows > 2 && ncols == 7 )
-	//{
-	//	util::matrix_t<double> mat(nrows, ncols, 0.0);
-	//	for( int r = 0; r<nrows; r++ )
-	//		for( int c = 0; c<ncols; c++ )
-	//			mat(r,c) = fl_mat[ncols*r + c];
-	//
-	//	if( !field_htfProps.SetUserDefinedFluid(mat) )
-	//	{
-	//		double blah = 12.34;
-	//	//	//message( "user defined htf property table was invalid (rows=%d cols=%d)", nrows, ncols );
-	//	//	message(TCS_ERROR, field_htfProps.UserFluidErrMessage(), nrows, ncols);
-	//	//	return -1;
-	//	}
-	//}
-	//else
-	//{
-	//	double uh_huh = 1.23;
-	//	//message(TCS_ERROR, "The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
-	//	//return -1;
-	//}
-
-
-	//int agda = 1;
+	return cm->relay_message(*siminfo->getSimulationNotices(), simprogress*100.0f) == 0;
 }

@@ -478,12 +478,12 @@ public:
 		size_t n_cols = 0;
 
 		if( run_type == 1 )
-			solar_field.set_csp_component_value_ssc_matrix("helio_positions", as_matrix("helio_positions", &n_rows, &n_cols), n_rows, n_cols);
+			solar_field.set_csp_component_value_ssc_matrix("helio_positions", as_matrix("helio_positions", &n_rows, &n_cols), &n_rows, &n_cols);
 		else if( run_type == 2 )
 		{
-			solar_field.set_csp_component_value_ssc_matrix("eta_map", as_matrix("eta_map", &n_rows, &n_cols), n_rows, n_cols);
-			solar_field.set_csp_component_value_ssc_matrix("flux_positions", as_matrix("flux_positions", &n_rows, &n_cols), n_rows, n_cols);
-			solar_field.set_csp_component_value_ssc_matrix("flux_maps", as_matrix("flux_maps", &n_rows, &n_cols), n_rows, n_cols);
+			solar_field.set_csp_component_value_ssc_matrix("eta_map", as_matrix("eta_map", &n_rows, &n_cols), &n_rows, &n_cols);
+			solar_field.set_csp_component_value_ssc_matrix("flux_positions", as_matrix("flux_positions", &n_rows, &n_cols), &n_rows, &n_cols);
+			solar_field.set_csp_component_value_ssc_matrix("flux_maps", as_matrix("flux_maps", &n_rows, &n_cols), &n_rows, &n_cols);
 		}
 		else
 		{

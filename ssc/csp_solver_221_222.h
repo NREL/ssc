@@ -85,7 +85,9 @@ public:
 	virtual ~C_csp_mspt_221_222();
 
 	virtual void init();
-	
+
+	int relay_message(string &msg, double percent);
+
 };
 
 
