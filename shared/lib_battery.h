@@ -99,7 +99,7 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
-	capacity_kibam_t(double q10, double q20, double I20, double V, double t1, double t2, double q1, double q2);
+	capacity_kibam_t(double q10, double q20, double V, double t1, double t2, double q1, double q2);
 	void updateCapacity(double P, double V, double dt, int cycles = 0);
 	void updateCapacityForThermal(thermal_t * thermal);
 	double q1(); // Available charge
@@ -148,7 +148,7 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t(double q, double V, std::vector<double> capacities, std::vector<double> cycles);
+	capacity_lithium_ion_t(double q, double V, const util::matrix_t<double> &cap_vs_cycles);
 	~capacity_lithium_ion_t();
 
 	// override public api
@@ -162,11 +162,7 @@ public:
 protected:
 	double _qmax; // [Ah] - maximum possible capacity
 	double _qmax0; // [Ah] - original maximum capacity
-	double * _capacities_vect; // % of original
-	double *_cycle_vect; 
-	double *_a;
-	int _n; // number of points
-
+	util::matrix_t<double> _cap_vs_cycles;
 };
 
 
@@ -231,7 +227,7 @@ class lifetime_t
 {
 
 public:
-	lifetime_t(std::vector<double> DOD_vect, std::vector<double> cycle_vect, int n);
+	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD, int n);
 	~lifetime_t();
 	void rainflow(double DOD);
 	void rainflow_finish();
@@ -243,6 +239,7 @@ protected:
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
 
+	util::matrix_t<double> _cycles_vs_DOD;
 	double * _DOD_vect;
 	double *_cycle_vect;
 	double *_a;
