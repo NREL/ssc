@@ -524,7 +524,20 @@ public:
 		solar_field.set_csp_component_value_ssc_double("A_sf", as_double("A_sf"));
 
 
-		solar_field.init();
+		//solar_field.init();
+
+		C_csp_weatherreader weather;
+
+		weather.set_csp_component_value_ssc_string("file_name", as_string("solar_resource_file"));
+		weather.set_csp_component_value_ssc_double("track_mode", 0.0);
+		weather.set_csp_component_value_ssc_double("tilt", 0.0);
+		weather.set_csp_component_value_ssc_double("azimuth", 0.0);
+
+		//weather.init();
+
+		C_csp_solver csp_solver;
+
+		csp_solver.setup_technology_model(&weather, &solar_field);
 
 		log("Solar Field Initialization was incredibly successful");
 

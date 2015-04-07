@@ -751,6 +751,11 @@ void C_csp_mspt_221_222::init()
 	eta_prev = 0.0;
 	v_wind_prev = 0.0;
 
+
+	init_rec(3600.0);
+
+
+
 	return;
 }
 

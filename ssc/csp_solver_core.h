@@ -4,6 +4,8 @@
 #include "tcstype.h"
 #include "core.h"
 
+#include "lib_weatherfile.h"
+
 class C_csp_component : public compute_module
 {
 private:
@@ -42,11 +44,6 @@ protected:
 
 	// Have to have this to access 'compute_module' public methods??
 	virtual void exec() throw(general_error) = 0;
-	//virtual void exec() throw(general_error)
-	//{
-	//
-	//}
-	//// *************************************************************
 	
 
 public:
@@ -66,6 +63,32 @@ public:
 
 	
 };
+
+
+class C_csp_weatherreader : public C_csp_component
+{
+private:
+	weatherfile m_wf;
+	bool m_first;		// flag to indicate whether this is the first call
+
+	virtual void exec() throw(general_error)
+	{
+
+	}
+
+protected:
+
+public:
+
+	C_csp_weatherreader();
+
+	~C_csp_weatherreader(){};
+
+	virtual void init();
+
+	void timestep_call(double time, double step);
+};
+
 
 
 class C_csp_collector_receiver : public C_csp_component
@@ -92,6 +115,30 @@ public:
 	// internal_energy || time_to_startup
 
 };
+
+
+
+
+class C_csp_solver : public compute_module
+{
+private:
+	C_csp_weatherreader *mp_weatherreader;
+	C_csp_collector_receiver *mp_collector_receiver;
+
+	virtual void exec() throw(general_error)
+	{
+
+	}
+
+
+public:
+	C_csp_solver(){};
+
+	~C_csp_solver(){};
+
+	void setup_technology_model(C_csp_weatherreader *p_weatherreader, C_csp_collector_receiver *p_collector_receiver);
+};
+
 
 
 #endif // !__csp_solver_core_
