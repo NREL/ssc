@@ -56,11 +56,9 @@ public:
 	void set_csp_component_value_ssc_matrix(const char *name, ssc_number_t *p_array, size_t *nr_in, size_t *nc_in);
 	void set_csp_component_value_ssc_string(const char *name, const char *s);
 
-
 	virtual void init() {return;}
 
-	// converged  
-
+	virtual void converged() {return;}
 	
 };
 
@@ -86,6 +84,8 @@ public:
 
 	virtual void init();
 
+	virtual void converged() {return;}
+
 	void timestep_call(double time, double step);
 };
 
@@ -100,19 +100,61 @@ protected:
 	virtual void exec() throw(general_error) = 0;
 
 public:
-	C_csp_collector_receiver()	{};
+	C_csp_collector_receiver(){};
 
 	~C_csp_collector_receiver(){};
 
 	virtual void init() = 0;	// pure virtual function
 
-	
+	virtual void converged() = 0;
 
 	// solve_field
 
 	// optical_efficiency
 
 	// internal_energy || time_to_startup
+
+};
+
+class C_csp_thermal_storage : public C_csp_component
+{
+private:
+
+protected:
+
+	virtual void exec() throw(general_error) = 0;
+
+public:
+	C_csp_thermal_storage(){};
+
+	~C_csp_thermal_storage(){};
+
+	virtual void init() = 0;		// pure virtual function
+
+	virtual void converged() = 0;
+
+	virtual double estimate_charging_availability() = 0;
+
+	virtual double estimate_discharging_availability() = 0;
+};
+
+class C_csp_power_cycle : public C_csp_component
+{
+private:
+
+protected:
+
+	virtual void exec() throw(general_error) = 0;
+
+public:
+
+	C_csp_power_cycle(){};
+
+	~C_csp_power_cycle(){};
+
+	virtual void init() = 0;
+
+	virtual void converged() = 0;
 
 };
 
@@ -124,6 +166,8 @@ class C_csp_solver : public compute_module
 private:
 	C_csp_weatherreader *mp_weatherreader;
 	C_csp_collector_receiver *mp_collector_receiver;
+	C_csp_thermal_storage *mp_thermal_storage;
+	C_csp_power_cycle *mp_power_cycle;
 
 	virtual void exec() throw(general_error)
 	{
@@ -132,11 +176,14 @@ private:
 
 
 public:
-	C_csp_solver(){};
+	C_csp_solver();
 
 	~C_csp_solver(){};
 
-	void setup_technology_model(C_csp_weatherreader *p_weatherreader, C_csp_collector_receiver *p_collector_receiver);
+	void setup_technology_model(C_csp_weatherreader *p_weatherreader, C_csp_collector_receiver *p_collector_receiver,
+		C_csp_thermal_storage *p_thermal_storage, C_csp_power_cycle *p_power_cycle);
+
+	void timeseries_simulation();
 };
 
 
