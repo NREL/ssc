@@ -955,6 +955,11 @@ void C_csp_mspt_221_222::init_rec(double time_step)
 
 }
 
+void C_csp_mspt_221_222::converged()
+{
+	return;
+}
+
 int C_csp_mspt_221_222::relay_message(string &msg, double percent)
 {
 	double time = 1.234567;

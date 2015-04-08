@@ -176,6 +176,8 @@ public:
 
 	virtual void init();
 
+	virtual void converged();
+
 	int relay_message(string &msg, double percent);
 
 };

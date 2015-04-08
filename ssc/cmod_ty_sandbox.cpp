@@ -2,6 +2,8 @@
 
 #include "csp_solver_core.h"
 #include "csp_solver_221_222.h"
+#include "csp_solver_thermal_storage.h"
+#include "csp_solver_power_cycle.h"
 
 // solarpilot header files
 #include "AutoPilot_API.h"
@@ -535,9 +537,15 @@ public:
 
 		//weather.init();
 
+		C_csp_no_storage thermal_storage;
+
+		C_csp_indirect_Rankine_224 power_cycle;
+
 		C_csp_solver csp_solver;
 
-		csp_solver.setup_technology_model(&weather, &solar_field);
+		csp_solver.setup_technology_model(&weather, &solar_field, &thermal_storage, &power_cycle);
+
+		csp_solver.timeseries_simulation();
 
 		log("Solar Field Initialization was incredibly successful");
 
