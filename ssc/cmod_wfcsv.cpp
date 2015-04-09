@@ -1,5 +1,5 @@
 #include "core.h"
-
+#include <iostream>
 #include "lib_weatherfile.h"
 
 static var_info _cm_vtab_wfcsvconv[] = 

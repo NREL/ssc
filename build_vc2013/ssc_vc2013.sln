@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2013 for Windows Desktop
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ssc", "ssc_vc2013.vcxproj", "{46D1EE84-840B-4325-910A-BC205A0D4C08}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -32,6 +32,12 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nlopt", "nlopt_vc2013.vcxproj", "{84021BC1-C2DB-4F98-8B7D-7A03A53C5533}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "solarpilot", "solarpilot_vc2013.vcxproj", "{B8621771-3ACE-4339-92D6-80461D033DEB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D9D9D8F4-D5FB-486F-BCD9-3478202D57AD}"
+	ProjectSection(SolutionItems) = preProject
+		..\shared\lib_snowmodel.cpp = ..\shared\lib_snowmodel.cpp
+		..\shared\lib_snowmodel.h = ..\shared\lib_snowmodel.h
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
