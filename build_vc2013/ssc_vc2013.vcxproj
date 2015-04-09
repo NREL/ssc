@@ -50,6 +50,8 @@
     <ClCompile Include="..\ssc\cmod_sco2_design_cycle.cpp" />
     <ClCompile Include="..\ssc\cmod_sco2_design_point.cpp" />
     <ClCompile Include="..\ssc\cmod_singleowner.cpp" />
+    <ClCompile Include="..\ssc\cmod_oldsnowmodel.cpp" />
+    <ClCompile Include="..\ssc\cmod_snowmodel.cpp" />
     <ClCompile Include="..\ssc\cmod_solarpilot.cpp" />
     <ClCompile Include="..\ssc\cmod_swh.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsdirect_steam.cpp" />

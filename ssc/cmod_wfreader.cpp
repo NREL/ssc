@@ -67,7 +67,7 @@ public:
 	}
 	
 	void exec( ) throw( general_error )
-	{	
+	{
 		bool header_only = as_boolean("header_only");
 		const char *file = as_string("file_name");
 
@@ -80,6 +80,10 @@ public:
 
 		int records = wf.nrecords;
 		
+		for (int i = 3; i < 100; i++){
+
+		}
+
 		assign( "lat", var_data( (ssc_number_t)wf.lat ) );
 		assign( "lon", var_data( (ssc_number_t)wf.lon ) );
 		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
@@ -158,7 +162,6 @@ public:
 			p_pres[i] = (ssc_number_t)wf.pres;
 			p_snow[i] = (ssc_number_t)wf.snow;
 			p_albedo[i] = (ssc_number_t)wf.albedo;	
-
 
 			gh_sum += wf.gh * ts_hour;
 			dn_sum += wf.dn * ts_hour;
