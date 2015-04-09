@@ -757,6 +757,11 @@ void C_mspt_receiver_222::call(double azimuth, double zenith, double T_salt_hot_
 
 void C_mspt_receiver_222::converged()
 {
+	// Check HTF props?
+	//!MJW 9.8.2010 :: Call the property range check subroutine with the inlet and outlet HTF temps to make sure they're in the valid range
+	//call check_htf(Coolant,T_salt_hot)
+	//call check_htf(Coolant,T_salt_cold)
+
 	if( m_mode == 0 )
 	{
 		m_E_su = m_q_rec_des * m_rec_qf_delay;
