@@ -67,6 +67,8 @@ public:
 	// pure virtual functions (abstract) which need to be defined in derived classes
 	virtual void updateCapacity(double P, voltage_t * V, double dt, int cycles) = 0;
 	virtual void updateCapacityForThermal(thermal_t * thermal)=0;
+	virtual void updateCapacityForLifetime(double capacity_percent)=0;
+
 	virtual double qmax() = 0; // max capacity
 	virtual double qmaxI() = 0; // max capacity at current
 	virtual double q1() = 0; // available charge
@@ -100,8 +102,9 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q20, double t1, double q1, double q10);
-	void updateCapacity(double P, voltage_t * V, double dt, int cycles = 0);
+	void updateCapacity(double P, voltage_t * V, double dt, int cycles);
 	void updateCapacityForThermal(thermal_t * thermal);
+	void updateCapacityForLifetime(double capacity_percent);
 	double q1(); // Available charge
 	double q2(); // Bound charge
 	double qmax(); // Max charge
@@ -148,12 +151,14 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t(double q, const util::matrix_t<double> &cap_vs_cycles);
+	capacity_lithium_ion_t(double q);
 	~capacity_lithium_ion_t();
 
 	// override public api
 	void updateCapacity(double P, voltage_t *, double dt, int cycles);
 	void updateCapacityForThermal(thermal_t * thermal);
+	void updateCapacityForLifetime(double capacity_percent);
+
 	double q1(); // Available charge
 	double qmax(); // Max charge
 	double qmaxI(); // Max charge at current
@@ -162,7 +167,6 @@ public:
 protected:
 	double _qmax; // [Ah] - maximum possible capacity
 	double _qmax0; // [Ah] - original maximum capacity
-	util::matrix_t<double> _cap_vs_cycles;
 };
 
 
@@ -230,21 +234,29 @@ class lifetime_t
 {
 
 public:
-	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD, int n);
+	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD);
 	~lifetime_t();
 	void rainflow(double DOD);
 	void rainflow_finish();
 	int cycles_elapsed();
-	double damage();
+	double capacity_percent();
 
 protected:
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
+	double bilinear(double DOD, double cycle_number);
 
 	util::matrix_t<double> _cycles_vs_DOD;
+	util::matrix_t<double> _batt_lifetime_matrix;
+	std::vector<double> _DOD_vect;
+	std::vector<double> _cycles_vect;
+	std::vector<double> _capacities_vect;
+
+
 	double _nCycles;
-	double _Dlt;
+	double _Dlt;			// % damage according to rainflow
+	double _Clt;			// % capacity 
 	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
 	double _klt;			// current index in Peaks where _Slt is stored
 	double _Xlt;
@@ -252,6 +264,7 @@ protected:
 	double _Slt;
 	std::vector<double> _Peaks;
 	double _Range;
+	double _average_range;
 
 	enum RETURN_CODES
 	{

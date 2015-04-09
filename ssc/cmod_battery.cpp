@@ -37,12 +37,11 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_qn_computed",	                       "Capacity at discharge rate for n-hour rate",             "Ah",       "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                           "",                             "" },
 																																																						     
-	// lithium-ion inputs
-	{ SSC_INPUT,        SSC_MATRIX,     "batt_cap_vs_cycles",                          "Capacity vs cycles elapsed",                             "",         "",                     "Battery",       "",                           "",                             "" },
+	// lithium-ion inputs (currently none specific to LiIon)
 
 	// lifetime inputs
-	{ SSC_INPUT,		SSC_MATRIX,		"batt_cycles_vs_DOD",                          "Cycles to failure vs depth-of-discharge",                "",         "",                     "Battery",       "",                           "",                             "" },
-	
+	{ SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "Battery",       "",                           "",                             "" },
+
 	// thermal inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_R",                                      "Battery Internal Resistance",                            "Ohm",      "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Mass of the battery",                                    "kg",       "",                     "Battery",       "",                           "",                             "" },
@@ -74,10 +73,10 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_cell",                         "Battery Cell Voltage",                                  "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_battery",                      "Battery Voltage",                                       "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_bank",                         "Battery Bank Voltage",                                  "V",     "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "Damage",                               "Battery Percent Damage",                                "%",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                               "Battery Number of Cycles",                              "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                  "Battery Temperature",                                   "C",     "", "Battery", "", "", "" }, 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Capacity Percent for Temperature",              "%",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_percent",                     "Battery Capacity Percent for Lifetime",                 "%",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Capacity Percent for Temperature",              "%",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Dispatch_mode",                        "Battery Dispatch Mode for Hour",                        "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                       "Energy to/from Battery",                                "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                          "Energy from Grid to Battery",                           "kWh",   "", "Battery", "", "", "" },
@@ -111,7 +110,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outCellVoltage = 0;
 	outBatteryVoltage = 0;
 	outBatteryBankVoltage = 0;
-	outDamage = 0;
+	outCapacityPercent = 0;
 	outCycles = 0;
 	outBatteryTemperature = 0;
 	outCapacityThermalPercent = 0;
@@ -150,23 +149,9 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		for( size_t j=0;j<24;j++ )
 			dm_sched(i,j) = psched[ i*24 + j ];
 	
-	util::matrix_t<double>  cap_vs_cycles = cm.as_matrix("batt_cap_vs_cycles");
-	if (cap_vs_cycles.nrows() < 2 || cap_vs_cycles.ncols() != 2)
-		throw compute_module::exec_error("battery", "capacity vs cycles matrix must have two columns and at least two rows");
-	
-	util::matrix_t<double>  cycles_vs_DOD = cm.as_matrix("batt_cycles_vs_DOD");
-	if (cycles_vs_DOD.nrows() < 2 || cycles_vs_DOD.ncols() != 2)
-		throw compute_module::exec_error("battery", "cycles vs DOD matrix must have two columns and at least two rows");
-	
-	// only valid for lead-acid, zero out for anything else
-	if ( chem != 0)
-	{
-		int nn = cycles_vs_DOD.nrows()*cycles_vs_DOD.ncols();
-		for (int ii = 0; ii != nn; ii++)
-		{
-			cycles_vs_DOD[ii] = 0.;
-		}
-	}
+	util::matrix_t<double>  batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
+	if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
+		throw compute_module::exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
 
 	/* **********************************************************************
 	Initialize outputs
@@ -190,7 +175,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outCellVoltage = cm.allocate("voltage_cell", nrec);
 	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
 	outBatteryBankVoltage = cm.allocate("voltage_bank", nrec);
-	outDamage = cm.allocate("Damage", nrec);
+	outCapacityPercent = cm.allocate("capacity_percent", nrec);
 	outCycles = cm.allocate("Cycles", nrec);
 	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
 	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
@@ -205,7 +190,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	// model initialization
 	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_bank_ncells_serial"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
 		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"), cm.as_double("batt_cell_cutoff_voltage"));
-	lifetime_model = new  lifetime_t(cycles_vs_DOD, lft_cycle.size());
+	lifetime_model = new  lifetime_t(batt_lifetime_matrix);
 
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
 	if ( cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2 )
@@ -242,8 +227,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	else if ( chem == 1 )
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			cm.as_double("batt_Qfull"),
-			cap_vs_cycles);
+			cm.as_double("batt_Qfull"));
 	}
 		
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model);
@@ -295,7 +279,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outBatteryBankVoltage[idx] = (ssc_number_t)(battery_bank_model->bank_voltage());
 
 	// Lifetime Output
-	outDamage[idx] = (ssc_number_t)(lifetime_model->damage());
+	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
 	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 				
 	// Thermal Output
@@ -315,7 +299,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 void battstor::finalize( size_t nrec )
 {
 	battery_bank_model->finish();
-	outDamage[nrec - 1] = (ssc_number_t)(lifetime_model->damage());
+	outCapacityPercent[nrec - 1] = (ssc_number_t)(lifetime_model->capacity_percent());
 	outCycles[nrec - 1] = (int)(lifetime_model->cycles_elapsed());
 }
 

@@ -224,6 +224,13 @@ void capacity_kibam_t::updateCapacityForThermal(thermal_t * thermal)
 	_q1_0 *= capacity_percent*0.01;
 	_q2_0 *= capacity_percent*0.01;
 }
+void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
+{
+	_q0 *= capacity_percent*0.01;
+	_q1_0 *= capacity_percent*0.01;
+	_q2_0 *= capacity_percent*0.01;
+}
+
 double capacity_kibam_t::q1(){ return _q1_0; }
 double capacity_kibam_t::q2(){ return _q2_0; }
 double capacity_kibam_t::qmax(){return _qmax;}
@@ -235,21 +242,16 @@ double capacity_kibam_t::q20(){return _q20;}
 /*
 Define Lithium Ion capacity model
 */
-capacity_lithium_ion_t::capacity_lithium_ion_t(double q, const util::matrix_t<double> &cap_vs_cycles) :capacity_t(q)
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q)
 {
 	_qmax = q;
 	_qmax0 = q;
-	_cap_vs_cycles = cap_vs_cycles;
 };
 capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
 
 void capacity_lithium_ion_t::updateCapacity(double P, voltage_t * voltage_model, double dt, int cycles)
 {
 	double q0_old = _q0;
-
-	// update maximum capacity based on number of cycles
-	double capacity_modifier = util::linterp_col(_cap_vs_cycles, 0, cycles, 1);
-	 _qmax = _qmax0 * capacity_modifier / 100;
 
 	// currently just a tank of coloumbs
 	 double V = voltage_model->battery_voltage();
@@ -320,28 +322,16 @@ void capacity_lithium_ion_t::updateCapacityForThermal(thermal_t * thermal)
 	_q0 *= capacity_percent*0.01;
 }
 
-double capacity_lithium_ion_t::q1()
-{
-	return _q0;
-}
-double capacity_lithium_ion_t::qmax()
-{
-	return _qmax;
-}
-double capacity_lithium_ion_t::qmaxI()
-{
-	return _qmax;
-}
-double capacity_lithium_ion_t::q10()
-{
-	return _qmax;
-}
+double capacity_lithium_ion_t::q1(){return _q0;}
+double capacity_lithium_ion_t::qmax(){return _qmax;}
+double capacity_lithium_ion_t::qmaxI(){return _qmax;}
+double capacity_lithium_ion_t::q10(){return _qmax;}
 
-double third_order_polynomial(double cycles, double * a, void * user_data)
+void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
 {
-	return (a[0] + a[1] * cycles + a[2] * pow(cycles, 2) + a[3] * pow(cycles, 3));
+	// update maximum capacity based on number of cycles
+	_qmax = _qmax0 * capacity_percent / 100;
 }
-
 /*
 Define Voltage Model
 */
@@ -436,19 +426,27 @@ void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
 Define Lifetime Model
 */
 
-lifetime_t::lifetime_t(const util::matrix_t<double> &cycles_vs_DOD, int n)
+lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix)
 {
-	_cycles_vs_DOD = cycles_vs_DOD;
+	_batt_lifetime_matrix = batt_lifetime_matrix;
 
+	for (int i = 0; i < _batt_lifetime_matrix.nrows(); i++)
+	{
+		_DOD_vect.push_back(batt_lifetime_matrix.at(i,0));
+		_cycles_vect.push_back(batt_lifetime_matrix.at(i,1));
+		_capacities_vect.push_back(batt_lifetime_matrix.at(i, 2));
+	}
 	// initialize other member variables
 	_nCycles = 0;
 	_Dlt = 0;
+	_Clt = 100.;
 	_jlt = 0;
 	_klt = 0; 
 	_Xlt = 0;
 	_Ylt = 0;
 	_Slt = 0;
 	_Range = 0;
+	_average_range = 0;
 }
 
 lifetime_t::~lifetime_t(){}
@@ -555,13 +553,17 @@ int lifetime_t::rainflow_compareRanges()
 	// Step 5: Count range Y, discard peak & valley of Y, go to Step 2
 	if (!contained)
 	{
+		
 		_Range = _Ylt;
-		double Cf = util::linterp_col(_cycles_vs_DOD, 0, _Range, 1);
-
-		if (fabs(Cf) > 0)
-			_Dlt += 100. / Cf;
+		_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
 
 		_nCycles++;
+		// double Cf = util::linterp_col(_cycles_vs_DOD, 0, _Range, 1);
+		// if (fabs(Cf) > 0)
+		//	_Dlt += 100. / Cf;
+		_Clt = bilinear(_average_range, _nCycles);
+
+
 		// discard peak & valley of Y
 		double save = _Peaks[_jlt];
 		_Peaks.pop_back(); 
@@ -633,13 +635,14 @@ void lifetime_t::rainflow_finish()
 			else
 			{
 				_Range = _Ylt;
-				// double Cf = life_vs_DOD(_Range, _a, 0);
-				double Cf = util::linterp_col(_cycles_vs_DOD, 0, _Range, 1);
-
-				if (fabs(Cf) > 0)
-					_Dlt += 100. / Cf;
+				_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
 
 				_nCycles++;
+				// double Cf = util::linterp_col(_cycles_vs_DOD, 0, _Range, 1);
+				// if (fabs(Cf) > 0)
+				//	_Dlt += 100. / Cf;
+				_Clt = bilinear(_average_range, _nCycles);
+
 				// Discard peak and vally of Y
 				double save = _Peaks[_jlt];
 				_Peaks.pop_back();
@@ -652,7 +655,107 @@ void lifetime_t::rainflow_finish()
 	}
 }
 int lifetime_t::cycles_elapsed(){return _nCycles;}
-double lifetime_t::damage(){ return _Dlt; }
+double lifetime_t::capacity_percent(){ return _Clt; }
+
+double lifetime_t::bilinear(double DOD, double cycle_number)
+{
+	// get where DOD is bracketed [D_lo, DOD, D_hi]
+	double D_lo = 0;
+	double D_hi = 100;
+
+	for (int i = 0; i < _DOD_vect.size(); i++)
+	{
+		double D = _DOD_vect[i];
+		if (D < DOD && D > D_lo)
+			D_lo = D;
+		else if (D > DOD && D < D_hi)
+			D_hi = D;
+	}
+
+	std::vector<double> D_low_vect;
+	std::vector<double> C_n_low_vect;
+	std::vector<double> D_high_vect;
+	std::vector<double> C_n_high_vect;
+	std::vector<int> low_indices;
+	std::vector<int> high_indices;
+
+
+	// Seperate table into bins
+	double D = 0.;
+	double D_min = 100.;
+	double D_max = 0.;
+
+	for (int i = 0; i < _DOD_vect.size(); i++)
+	{
+		D = _DOD_vect[i];
+		if (D == D_lo)
+			low_indices.push_back(i);
+		else if (D == D_hi)
+			high_indices.push_back(i);
+
+		if (D < D_min){ D_min = D; }
+		else if (D > D_max){ D_max = D; }
+	}
+	size_t n_rows_lo = low_indices.size();
+	size_t n_rows_hi = high_indices.size();
+	size_t n_cols = 2;
+
+	// If we aren't bounded, fill in values
+	if (n_rows_lo == 0)
+	{
+		// Assumes 0% DOD
+		for (int i = 0; i < n_rows_hi; i++)
+		{
+			C_n_low_vect.push_back(0. + i * 1000); // cycles
+			C_n_low_vect.push_back(100.); // 100 % capacity
+		}
+	}
+	else if (n_rows_hi == 0)
+	{
+		// Assume 100% DOD
+		for (int i = 0; i < n_rows_lo; i++)
+		{
+			C_n_high_vect.push_back(100. + i * 1000); // cycles
+			C_n_high_vect.push_back(0.); // 100 % capacity
+		}
+	}
+	
+	if (n_rows_lo != 0)
+	{
+		for (int i = 0; i < n_rows_lo; i++)
+		{
+			C_n_low_vect.push_back(_cycles_vect[low_indices[i]]);
+			C_n_low_vect.push_back(_capacities_vect[low_indices[i]]);
+		}
+	}
+	if (n_rows_hi != 0)
+	{
+		for (int i = 0; i < n_rows_hi; i++)
+		{
+			C_n_high_vect.push_back(_cycles_vect[high_indices[i]]);
+			C_n_high_vect.push_back(_capacities_vect[high_indices[i]]);
+		}
+	}
+	n_rows_lo = C_n_low_vect.size()/n_cols;
+	n_rows_hi = C_n_high_vect.size()/n_cols;
+
+	if (n_rows_lo == 0 || n_rows_hi == 0)
+	{
+		// need a safeguard here
+	}
+
+	util::matrix_t<double> C_n_low(n_rows_lo, n_cols, &C_n_low_vect);
+	util::matrix_t<double> C_n_high(n_rows_lo, n_cols, &C_n_high_vect);
+
+
+	// Compute C(D_lo, n), C(D_hi, n)
+	double C_Dlo = util::linterp_col(C_n_low, 0, cycle_number, 1);
+	double C_Dhi = util::linterp_col(C_n_high, 0, cycle_number, 1);
+
+	// Interpolate to get C(D, n)
+	return util::interpolate(D_lo, C_Dlo, D_hi, C_Dhi, DOD);
+}
+
 
 /*
 Define Thermal Model
@@ -769,6 +872,7 @@ void battery_t::runThermalModel(double I)
 void battery_t::runCapacityModel(double P, voltage_t * V)
 {
 	_capacity->updateCapacity(P, V, _dt,_lifetime->cycles_elapsed() );
+	_capacity->updateCapacityForLifetime( _lifetime->capacity_percent() );
 	_capacity->updateCapacityForThermal(_thermal);
 }
 
