@@ -34,81 +34,28 @@ private:
 	S_message_def mS_placeholder;
 
 public:
-	C_csp_messages()
-	{
-		m_message_list.resize(0);
-	}
+	C_csp_messages();
 
-	void add_message(int type, std::string msg)
-	{
-		mS_placeholder.m_type = type;
-		mS_placeholder.msg = msg;
+	void add_message(int type, std::string msg);
 
-		m_message_list.push_back(mS_placeholder);
-	}
+	bool get_message(int *type, std::string *msg);
 
-	bool get_message(int *type, std::string *msg)
-	{
-		int size = m_message_list.size();
-		if(size > 0)
-		{
-			mS_placeholder = m_message_list[size-1];
-			*type = mS_placeholder.m_type;
-			*msg = mS_placeholder.msg;
-
-			m_message_list.resize(size-1);
-
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	bool get_message(std::string *msg)
-	{
-		int size = m_message_list.size();
-		if( size > 0 )
-		{
-			mS_placeholder = m_message_list[size - 1];
-			*msg = mS_placeholder.msg;
-
-			m_message_list.resize(size - 1);
-
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
+	bool get_message(std::string *msg);
 
 };
 
-class C_csp_exception : public exception
+class C_csp_exception : public std::exception
 {
 public:
 	std::string m_error_message;
 	std::string m_code_location;
 	
-	//virtual const char* what()
-	//{
-	//	return "CSP exception";
-	//}
+	// Useful in case exception goes uncatched
+	virtual const char* what();
 
-	C_csp_exception(const std::string &error_message, const std::string &code_location)
-	{
-		m_error_message = error_message;
-		m_code_location = code_location;
-	}
+	C_csp_exception(const std::string &error_message, const std::string &code_location);
 
 };
-
-
-
-
-
 
 
 
