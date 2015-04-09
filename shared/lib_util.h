@@ -207,6 +207,17 @@ namespace util
 			resize(nr,nc);
 			fill(val);
 		}
+		matrix_t(size_t nr, size_t nc, const std::vector<T> *val)
+		{
+			n_rows = n_cols = 0;
+			t_array = NULL;
+			if (nr < 1) nr = 1;
+			if (nc < 1) nc = 1;
+			resize(nr, nc);
+			size_t ncells = n_rows*n_cols;
+			for (size_t i = 0; i<ncells; i++)
+				t_array[i] = (*val)[i];
+		}
 
 
 		virtual ~matrix_t()
@@ -300,7 +311,6 @@ namespace util
 			for (size_t i=0;i<ncells;i++)
 				t_array[i] = val;
 		}
-
 		void resize(size_t nr, size_t nc)
 		{
 			if (nr < 1 || nc < 1) return;

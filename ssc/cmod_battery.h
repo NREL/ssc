@@ -25,16 +25,12 @@ struct battstor
 	battery_bank_t *battery_bank_model;
 	dispatch_manual_t *dispatch_model;
 
-	// thermal_outputs_t * thermal_outputs;
-
 	bool en;
 	int chem;
 	
 
 	bool dm_charge[4], dm_discharge[4], dm_gridcharge[4]; // manual dispatch
 	util::matrix_static_t<float, 12, 24> dm_sched;
-
-	std::vector<double> lft_DoD, lft_cycle; // lifetime
 	
 	// outputs
 	ssc_number_t *outTotalCharge,
@@ -48,7 +44,7 @@ struct battstor
 		*outCellVoltage,
 		*outBatteryVoltage,
 		*outBatteryBankVoltage,
-		*outDamage,
+		*outCapacityPercent,
 		*outCycles,
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
