@@ -304,7 +304,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "e_load",                                     "Electric load",                                           "kW",      "",                     "Battery",       "?",                                   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electric load",                                           "kW",      "",                     "Battery",       "?",                                   "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
@@ -425,14 +425,15 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_gross",                             "Gross dc array power",                                  "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Net dc array power",                                    "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Gross PV ac power",                                     "kW",    "",                       "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_net",                               "Net PV ac power",                                       "kW",    "",                       "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "energy",                               "Net PV ac energy",                                      "kWh",   "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "gen",                                  "Net PV ac power",                                       "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid",                                 "Net grid power",                                        "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                        "Net PV ac energy",                                      "kWh",   "",                       "Time Series",       "*",                    "",                              "" },
+	
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Snow Loss DC",										  "kW",    "",                       "Monthly",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Snow Loss DC",										  "kW",    "",                       "Annual",       "",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                        "Hourly grid energy",                                     "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
-	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",           "Use lifetime output",                                    "0/1",    "",                      "Miscellaneous",       "*",                    "INTEGER",                                  "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual", "*", "", "" },
@@ -464,8 +465,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA total radiation after shading and soiling",  "kWh/m2", "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff_beam",                        "POA beam radiation after shading and soiling",   "kWh/m2", "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc_net",                              "Net dc energy",                                          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_ac_net",                              "Net ac energy",                                          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                              "Net dc energy",                                          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "Monthly energy",                                         "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Global horizontal irradiance",                           "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
@@ -478,7 +478,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_gross",                             "Gross dc energy",                                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                               "Net dc energy",                                          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "Gross ac energy",                                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_net",                               "Net ac energy",                                          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                         "Nameplate system dc rating",                             "kW",     "",                      "Miscellaneous",       "*",                    "",                              "" },
 
 
@@ -1311,16 +1310,17 @@ public:
 		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec );
 		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec );
 		ssc_number_t *p_acgross = allocate( "ac_gross", nrec );
-		ssc_number_t *p_acpwr = allocate("ac_net", nrec);
-		ssc_number_t *p_energy = allocate("energy", nrec );
+		ssc_number_t *p_gen = allocate("gen", nrec);
+		ssc_number_t *p_grid = allocate("grid", nrec);
+		
+		ssc_number_t *p_hourlygen = allocate("hourly_energy", 8760);
 		
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
 		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
 		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec );
 
-		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
-
+		
 		// hourly adjustement factors
 		adjustment_factors haf(this);
 		if (!haf.setup())
@@ -1333,9 +1333,9 @@ public:
 		size_t nload = 0;
 		ssc_number_t *p_load_in = 0;
 
-		if ( is_assigned( "e_load" ) )
+		if ( is_assigned( "load" ) )
 		{
-			p_load_in = as_array( "e_load", &nload );
+			p_load_in = as_array( "load", &nload );
 			if ( nload != nrec || nload != 8760 )
 				throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 		}
@@ -1742,11 +1742,12 @@ public:
 				p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
 				p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
-				p_acpwr[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001);
+				p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) );
 
-				p_energy[idx] = (ssc_number_t)(p_acpwr[idx] * ts_hour * haf(hour));
+				// accumulate hourly PV system generation too
+				p_hourlygen[hour] += (ssc_number_t)(p_gen[idx]*ts_hour);
 
-
+			
 				p_inveff[idx] = (ssc_number_t)(aceff);
 				p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
 				p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
@@ -1754,13 +1755,13 @@ public:
 
 				if (batt.en)
 				{
-					batt.advance(*this, idx, hour, jj, p_energy[idx], cur_load);
-					p_hourly_energy[hour] += batt.outGridEnergy[idx];
+					batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
+					p_grid[idx] = batt.outGridEnergy[idx];
 				}
 				else
 				{
 					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-					p_hourly_energy[hour] += (p_energy[idx] - cur_load);
+					p_grid[idx] = (p_gen[idx] - cur_load);
 				}
 
 				idx++;
@@ -1818,9 +1819,8 @@ public:
 			p_monthly_poa_eff_beam[i] = (ssc_number_t) ( beam / num_strings );
 		}
 
-		accumulate_monthly( "ac_net", "monthly_ac_net", ts_hour );
-		accumulate_monthly( "dc_net", "monthly_dc_net", ts_hour );
-		accumulate_monthly( "hourly_energy", "monthly_energy" );
+		accumulate_monthly( "dc_net", "monthly_dc", ts_hour );
+		accumulate_monthly( "gen", "monthly_energy", ts_hour );
 
 		accumulate_annual( "gh", "annual_gh", ts_hour );
 		accumulate_annual( "input_radiation", "annual_input_radiation", ts_hour );
@@ -1832,7 +1832,7 @@ public:
 		accumulate_annual( "dc_gross", "annual_dc_gross", ts_hour );
 		double annual_dc_net = accumulate_annual("dc_net", "annual_dc_net", ts_hour);
 		double annual_ac_gross = accumulate_annual( "ac_gross", "annual_ac_gross", ts_hour );
-		double annual_ac_net = accumulate_annual("ac_net", "annual_ac_net", ts_hour);
+		double annual_ac_net = accumulate_annual("gen", "annual_ac_net", ts_hour);
 
 
 		double annual_inv_cliploss = accumulate_annual("inv_cliploss", "annual_inv_cliploss", ts_hour);
@@ -2247,7 +2247,7 @@ public:
 		ratedACOutput = ratedACOutput / 1000.0; // W to kW to compare to hourly output
 		ratedDCOutput = ratedDCOutput / 1000.0; // W to kW to compare to hourly output
 
-		acPower = as_array("ac_net", &acCount);
+		acPower = as_array("gen", &acCount);
 		dcPower = as_array("dc_net", &dcCount);
 		if ((acCount == 8760) && (dcCount == 8760))
 		{

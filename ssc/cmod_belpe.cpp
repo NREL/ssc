@@ -19,9 +19,10 @@ static var_info _cm_vtab_belpe[] =
 /*   VARTYPE			DATATYPE        NAME                LABEL								UNITS		META			GROUP                     REQUIRED_IF	CONSTRAINTS		UI_HINTS*/
 	{ SSC_INPUT,		SSC_NUMBER,		"en_belpe",			"Enable building load calculator",	"0/1",		"",				"Load Profile Estimator", "*",			"BOOLEAN",		"" },
 
-	//e_load and p_load are modified in BELPE. They are passed straight through if BELPE is disabled.
-	{ SSC_INOUT,		SSC_ARRAY,		"e_load",			"Electric load",			    "kWh",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
-	{ SSC_INOUT,		SSC_ARRAY,		"p_load",			"Electric peak load", 		    "kW",	    "",				"Load Profile Estimator", "en_belpe=0",	"LENGTH=8760",	"" },
+	// load is modified in BELPE. It is passed straight through 
+	// if BELPE is disabled, and subhourly loads can be pass through.
+	// but BELPE always runs hourly, at least for now....
+	{ SSC_INOUT,		SSC_ARRAY,		"load",			    "Electric load",			        "kW",	    "",				"Load Profile Estimator", "en_belpe=0",	 "",	 "" },
 
 	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "en_belpe=1",			"LOCAL_FILE",	"" },
 //	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "en_belpe=1",			"",				"Time Step" },
@@ -53,8 +54,6 @@ static var_info _cm_vtab_belpe[] =
 	//OUTPUTS
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"HVAC_load",		"Electric Load due to HVAC",		"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,		"non_HVAC_load",	"Electric Load due to Non-HVAC",	"Wh",       "",		"Load Profile Estimator", "en_belpe=1",			"LENGTH=8760",	"" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,		"e_load",			"Year 1 Electric Load",				"kWh",      "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,		"p_load",			"Year 1 Peak Electric Load",		"kW",       "",		"Load Profile Estimator", "*",			"LENGTH=8760",	"" },
 
 /*
 	//DEBUGGING OUTPUTS
@@ -142,15 +141,13 @@ public:
 		if (!en_belpe)
 		{
 			size_t count;
-			//these inputs are required if en_belpe = 0 and they are constrained to length=8760, so no additional checks are necessary here
-			ssc_number_t *e_load = as_array("e_load", &count);
-			ssc_number_t *p_load = as_array("p_load", &count);
-			return;
+			//these inputs are required if en_belpe = 0, so no additional checks are necessary here
+			if ( !is_assigned("load") )
+				throw general_error("variable 'load' is required but not assigned." );
 		}
 
-		//if BELPE is enabled, e_load and p_load are overwritten (don't take anything in from the UI- just reallocate)
-		ssc_number_t *load = allocate("e_load", 8760);
-		ssc_number_t *p_load = allocate("p_load", 8760);
+		//if BELPE is enabled, e_load is overwritten (don't take anything in from the UI- just reallocate)
+		ssc_number_t *load = allocate("load", 8760);
 		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
 		int month[8760], day[8760], hour[8760];
@@ -1037,32 +1034,34 @@ public:
 		//end new error checking from Sara
 
 		//loop through 8760 and scale according to what month it's in
+		// also check for any negative values and convert to kWh
+		int nneg = 0;
 		for (int i = 0; i < 8760; i++)
 		{
 			if (monthly_hvac_load[month[i]] > 0)
 				load[i] = load[i] * (1 - NewScale[month[i]]) - x_hvac[month[i]] * hvac_load[i]; //new from Sara 11/21
 			else
 				load[i] = load[i] * (1 - monthly_scale[month[i]]);
+
 			if (monthly_util[month[i]] == 0) //set all loads for the month to zero if the input month was zero
 				load[i] = 0;
-		}
-		
-		//CONVERT LOADS TO KWH AND ASSIGN PEAK LOAD*********************************************************************************************************************************************************
-		int count = 0;
-		for (int i = 0; i < 8760; i++)
-		{
+
+			
 			if (load[i] < 0) //error checking for negative loads
 			{
 				load[i] = 0;
-				count++;
+				nneg++;
 			}
-			load[i] /= 1000; //kWh
-			p_load[i] = load[i]; //kW (because timestep is hourly). peak load is equal to hourly load for this hourly calculator.
-			
+
+			load[i] *= 0.001; // convert to kWh
 		}
-		if (count > 0)
-			log(util::format("The building electric load profile estimator calculated negative loads for %d hours. Loads for these hours were set to zero; however, this may indicate a problem with your inputs.",
-			count), SSC_WARNING);
+		
+		if (nneg > 0)
+		{
+			log(util::format("The building electric load profile estimator calculated negative loads for %d hours. "
+			"Loads for these hours were set to zero; however, this may indicate a problem with your inputs.",
+				nneg), SSC_WARNING);
+		}
 	}
 };
 
