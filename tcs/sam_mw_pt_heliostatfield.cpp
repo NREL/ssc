@@ -308,46 +308,47 @@ private:
 	sp_flux_table fluxtab;
 
 	//Parameters
-	string weather_file;
-	int run_type;
-	double helio_width;
-	double helio_height;
-	double helio_optical_error;
-	double helio_active_fraction;
-    double dens_mirror;
-	double helio_reflectance;
-	double rec_absorptance;
-	double rec_height;
-	double rec_aspect;
-	double rec_hl_perm2;
-	double q_design;
-	double h_tower;
-	int land_bound_type;
-	double land_max;
-	double land_min;
-	double* land_bound_table;
-	double* land_bound_list;
+	//string weather_file;
+	//int run_type;
+	//double helio_width;
+	//double helio_height;
+	//double helio_optical_error;
+	//double helio_active_fraction;
+    //double dens_mirror;
+	//double helio_reflectance;
+	//double rec_absorptance;
+	//double rec_height;
+	//double rec_aspect;
+	//double rec_hl_perm2;
+	//double q_design;
+	//double h_tower;
+	//int land_bound_type;
+	//double land_max;
+	//double land_min;
+	//double* land_bound_table;
+	//double* land_bound_list;
 	double p_start;
 	double p_track;
 	double hel_stow_deploy;
 	double v_wind_max;
-	double interp_nug;
-	double interp_beta;
-	double* helio_positions;
-	double* helio_aim_points;
-	int N_hel, pos_dim;
-	double* eta_map;
+	//double interp_nug;
+	//double interp_beta;
+	//double* helio_positions;
+	//double* helio_aim_points;
+	int N_hel; 
+	//int pos_dim;
+	//double* eta_map;
 	int n_flux_x;
 	int n_flux_y;
-	double* flux_positions;
+	//double* flux_positions;
     MatDoub m_flux_positions;
-	double* flux_maps;
-	double* flux_map;
-	double c_atm_0, c_atm_1, c_atm_2, c_atm_3;
-	int n_facet_x, n_facet_y;
-	int cant_type, focus_type;
-	int n_flux_days, delta_flux_hrs;
-	double dni_des;
+	//double* flux_maps;
+	//double* flux_map;
+	//double c_atm_0, c_atm_1, c_atm_2, c_atm_3;
+	//int n_facet_x, n_facet_y;
+	//int cant_type, focus_type;
+	//int n_flux_days, delta_flux_hrs;
+	//double dni_des;
 	
 	//Stored Variables
 	double eta_prev;
@@ -360,54 +361,54 @@ public:
 	sam_mw_pt_heliostatfield( tcscontext *cst, tcstypeinfo *ti)
 		: tcstypeinterface( cst, ti)
 	{
-		run_type	=0;
-		helio_width	=std::numeric_limits<double>::quiet_NaN();
-		helio_height	=std::numeric_limits<double>::quiet_NaN();
-		helio_optical_error	=std::numeric_limits<double>::quiet_NaN();
-		helio_active_fraction	=std::numeric_limits<double>::quiet_NaN();
-		dens_mirror = std::numeric_limits<double>::quiet_NaN();
-        helio_reflectance	=std::numeric_limits<double>::quiet_NaN();
-		rec_absorptance	=std::numeric_limits<double>::quiet_NaN();
-		rec_height	=std::numeric_limits<double>::quiet_NaN();
-		rec_aspect	=std::numeric_limits<double>::quiet_NaN();
-		rec_hl_perm2	=std::numeric_limits<double>::quiet_NaN();
-		q_design	=std::numeric_limits<double>::quiet_NaN();
-		h_tower	=std::numeric_limits<double>::quiet_NaN();
-		land_bound_type	=0;
-		land_max	=std::numeric_limits<double>::quiet_NaN();
-		land_min	=std::numeric_limits<double>::quiet_NaN();
-		land_bound_table	= NULL;
-		land_bound_list	= NULL;
+		//run_type	=0;
+		//helio_width	=std::numeric_limits<double>::quiet_NaN();
+		//helio_height	=std::numeric_limits<double>::quiet_NaN();
+		//helio_optical_error	=std::numeric_limits<double>::quiet_NaN();
+		//helio_active_fraction	=std::numeric_limits<double>::quiet_NaN();
+		//dens_mirror = std::numeric_limits<double>::quiet_NaN();
+        //helio_reflectance	=std::numeric_limits<double>::quiet_NaN();
+		//rec_absorptance	=std::numeric_limits<double>::quiet_NaN();
+		//rec_height	=std::numeric_limits<double>::quiet_NaN();
+		//rec_aspect	=std::numeric_limits<double>::quiet_NaN();
+		//rec_hl_perm2	=std::numeric_limits<double>::quiet_NaN();
+		//q_design	=std::numeric_limits<double>::quiet_NaN();
+		//h_tower	=std::numeric_limits<double>::quiet_NaN();
+		//land_bound_type	=0;
+		//land_max	=std::numeric_limits<double>::quiet_NaN();
+		//land_min	=std::numeric_limits<double>::quiet_NaN();
+		//land_bound_table	= NULL;
+		//land_bound_list	= NULL;
 		p_start	=std::numeric_limits<double>::quiet_NaN();
 		p_track	=std::numeric_limits<double>::quiet_NaN();
 		hel_stow_deploy	=std::numeric_limits<double>::quiet_NaN();
 		v_wind_max	=std::numeric_limits<double>::quiet_NaN();
-		interp_nug	=std::numeric_limits<double>::quiet_NaN();
-		interp_beta	=std::numeric_limits<double>::quiet_NaN();
-		helio_positions	= NULL;
-		helio_aim_points	= NULL;
+		//interp_nug	=std::numeric_limits<double>::quiet_NaN();
+		//interp_beta	=std::numeric_limits<double>::quiet_NaN();
+		//helio_positions	= NULL;
+		//helio_aim_points	= NULL;
 		N_hel	=0;
-		pos_dim = 0;
-		eta_map	= NULL;
+		//pos_dim = 0;
+		//eta_map	= NULL;
 		n_flux_x	=0;
 		n_flux_y	=0;
-		flux_positions	= NULL;
-		flux_maps	= NULL;
-		flux_map = NULL;
-		n_facet_x = 0;
-		n_facet_y = 0;
-		cant_type = 0;
-		focus_type = 0;
-		n_flux_days = 0;
-		delta_flux_hrs = 0;
+		//flux_positions	= NULL;
+		//flux_maps	= NULL;
+		//flux_map = NULL;
+		//n_facet_x = 0;
+		//n_facet_y = 0;
+		//cant_type = 0;
+		//focus_type = 0;
+		//n_flux_days = 0;
+		//delta_flux_hrs = 0;
 		
 		eta_prev = std::numeric_limits<double>::quiet_NaN();
 		v_wind_prev = std::numeric_limits<double>::quiet_NaN();
-		c_atm_0 = std::numeric_limits<double>::quiet_NaN();
-		c_atm_1 = std::numeric_limits<double>::quiet_NaN();
-		c_atm_2 = std::numeric_limits<double>::quiet_NaN();
-		c_atm_3 = std::numeric_limits<double>::quiet_NaN();
-		dni_des = std::numeric_limits<double>::quiet_NaN();
+		//c_atm_0 = std::numeric_limits<double>::quiet_NaN();
+		//c_atm_1 = std::numeric_limits<double>::quiet_NaN();
+		//c_atm_2 = std::numeric_limits<double>::quiet_NaN();
+		//c_atm_3 = std::numeric_limits<double>::quiet_NaN();
+		//dni_des = std::numeric_limits<double>::quiet_NaN();
 
         field_efficiency_table = 0;
 	}
@@ -420,7 +421,6 @@ public:
 
 	virtual int init()
 	{
-
 		//Read in parameters
 		int nrows1, ncols1;
 		int nrows2;
@@ -429,8 +429,56 @@ public:
 		int nfluxpos, nfposdim;
 		int nfluxmap, nfluxcol;
 
-		run_type = (int)value(P_run_type);
-		
+		// Declare and initialize variables that are only used in initial call
+		string weather_file;
+
+		double helio_width = std::numeric_limits<double>::quiet_NaN();
+		double helio_height = std::numeric_limits<double>::quiet_NaN();
+		double helio_optical_error = std::numeric_limits<double>::quiet_NaN();
+		double helio_active_fraction = std::numeric_limits<double>::quiet_NaN();
+		double dens_mirror = std::numeric_limits<double>::quiet_NaN();
+		double helio_reflectance = std::numeric_limits<double>::quiet_NaN();
+		double rec_absorptance = std::numeric_limits<double>::quiet_NaN();
+		double rec_height = std::numeric_limits<double>::quiet_NaN();
+		double rec_aspect = std::numeric_limits<double>::quiet_NaN();
+		double rec_hl_perm2 = std::numeric_limits<double>::quiet_NaN();
+		double q_design = std::numeric_limits<double>::quiet_NaN();
+		double h_tower = std::numeric_limits<double>::quiet_NaN();
+		int land_bound_type = 0;
+		double land_max = std::numeric_limits<double>::quiet_NaN();
+		double land_min = std::numeric_limits<double>::quiet_NaN();
+		double *land_bound_table = NULL;
+		double *land_bound_list = NULL;
+		double interp_nug = std::numeric_limits<double>::quiet_NaN();
+		double interp_beta = std::numeric_limits<double>::quiet_NaN();
+
+		double c_atm_0 = std::numeric_limits<double>::quiet_NaN();
+		double c_atm_1 = std::numeric_limits<double>::quiet_NaN();
+		double c_atm_2 = std::numeric_limits<double>::quiet_NaN();
+		double c_atm_3 = std::numeric_limits<double>::quiet_NaN();
+
+		int n_facet_x = 0;
+		int n_facet_y = 0;
+
+		int cant_type = 0;
+		int focus_type = 0;
+
+		int n_flux_days = 0;
+		int delta_flux_hrs = 0;
+
+		double dni_des = std::numeric_limits<double>::quiet_NaN();
+
+		double *helio_positions = NULL;
+		double *helio_aim_points = NULL;
+		double *eta_map = NULL;
+		double *flux_positions = NULL;
+		double *flux_maps = NULL;
+
+		int pos_dim = 0;
+
+		double *flux_map = NULL;
+
+		int run_type = (int)value(P_run_type);
 
 		//Read in only those parameters that are relevant to the run scheme
 		switch (run_type)
