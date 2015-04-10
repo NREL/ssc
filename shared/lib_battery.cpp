@@ -385,9 +385,9 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	double I = capacity->I();
 	double q0 = capacity->q0();
 
-//	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
-	if (q0/Q > 0.01)
-		_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_cells, fabs(I) / _num_cells, q0 / _num_cells, dt);
+	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
+//	if (q0/Q > 0.01)
+//		_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_cells, fabs(I) / _num_cells, q0 / _num_cells, dt);
 }
 double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 {
@@ -439,7 +439,7 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix)
 	// initialize other member variables
 	_nCycles = 0;
 	_Dlt = 0;
-	_Clt = 100.;
+	_Clt = bilinear(0.,0);
 	_jlt = 0;
 	_klt = 0; 
 	_Xlt = 0;
@@ -657,103 +657,140 @@ void lifetime_t::rainflow_finish()
 int lifetime_t::cycles_elapsed(){return _nCycles;}
 double lifetime_t::capacity_percent(){ return _Clt; }
 
-double lifetime_t::bilinear(double DOD, double cycle_number)
+double lifetime_t::bilinear(double DOD, int cycle_number)
 {
-	// get where DOD is bracketed [D_lo, DOD, D_hi]
-	double D_lo = 0;
-	double D_hi = 100;
+	/*
+	Work could be done to make this simpler
+	Current idea is to interpolate first along the C = f(n) curves for each DOD to get C_DOD_, C_DOD_+ 
+	Then interpolate C_, C+ to get C at the DOD of interest
+	*/
 
-	for (int i = 0; i < _DOD_vect.size(); i++)
-	{
-		double D = _DOD_vect[i];
-		if (D < DOD && D > D_lo)
-			D_lo = D;
-		else if (D > DOD && D < D_hi)
-			D_hi = D;
-	}
-
-	std::vector<double> D_low_vect;
+	std::vector<double> D_unique_vect;
 	std::vector<double> C_n_low_vect;
 	std::vector<double> D_high_vect;
 	std::vector<double> C_n_high_vect;
 	std::vector<int> low_indices;
 	std::vector<int> high_indices;
-
-
-	// Seperate table into bins
 	double D = 0.;
-	double D_min = 100.;
-	double D_max = 0.;
+	int n = 0;
+	double C = 100;
 
-	for (int i = 0; i < _DOD_vect.size(); i++)
-	{
-		D = _DOD_vect[i];
-		if (D == D_lo)
-			low_indices.push_back(i);
-		else if (D == D_hi)
-			high_indices.push_back(i);
-
-		if (D < D_min){ D_min = D; }
-		else if (D > D_max){ D_max = D; }
-	}
-	size_t n_rows_lo = low_indices.size();
-	size_t n_rows_hi = high_indices.size();
-	size_t n_cols = 2;
-
-	// If we aren't bounded, fill in values
-	if (n_rows_lo == 0)
-	{
-		// Assumes 0% DOD
-		for (int i = 0; i < n_rows_hi; i++)
-		{
-			C_n_low_vect.push_back(0. + i * 1000); // cycles
-			C_n_low_vect.push_back(100.); // 100 % capacity
+	// get unique values of D
+	D_unique_vect.push_back(_DOD_vect[0]);
+	for (int i = 0; i < _DOD_vect.size(); i++){
+		bool contained = false;
+		for (int j = 0; j < D_unique_vect.size(); j++){
+			if (_DOD_vect[i] == D_unique_vect[j]){
+				contained = true;
+				break;
+			}
+		}
+		if (!contained){
+			D_unique_vect.push_back(_DOD_vect[i]);
 		}
 	}
-	else if (n_rows_hi == 0)
+	n = D_unique_vect.size();
+
+	if (n > 1)
 	{
-		// Assume 100% DOD
-		for (int i = 0; i < n_rows_lo; i++)
+		// get where DOD is bracketed [D_lo, DOD, D_hi]
+		double D_lo = 0;
+		double D_hi = 100;
+
+		for (int i = 0; i < _DOD_vect.size(); i++)
 		{
-			C_n_high_vect.push_back(100. + i * 1000); // cycles
-			C_n_high_vect.push_back(0.); // 100 % capacity
+			D = _DOD_vect[i];
+			if (D < DOD && D > D_lo)
+				D_lo = D;
+			else if (D > DOD && D < D_hi)
+				D_hi = D;
 		}
-	}
-	
-	if (n_rows_lo != 0)
-	{
-		for (int i = 0; i < n_rows_lo; i++)
+
+		// Seperate table into bins
+		double D_min = 100.;
+		double D_max = 0.;
+
+		for (int i = 0; i < _DOD_vect.size(); i++)
 		{
-			C_n_low_vect.push_back(_cycles_vect[low_indices[i]]);
-			C_n_low_vect.push_back(_capacities_vect[low_indices[i]]);
+			D = _DOD_vect[i];
+			if (D == D_lo)
+				low_indices.push_back(i);
+			else if (D == D_hi)
+				high_indices.push_back(i);
+
+			if (D < D_min){ D_min = D; }
+			else if (D > D_max){ D_max = D; }
 		}
-	}
-	if (n_rows_hi != 0)
-	{
-		for (int i = 0; i < n_rows_hi; i++)
+		size_t n_rows_lo = low_indices.size();
+		size_t n_rows_hi = high_indices.size();
+		size_t n_cols = 2;
+
+		// If we aren't bounded, fill in values
+		if (n_rows_lo == 0)
 		{
-			C_n_high_vect.push_back(_cycles_vect[high_indices[i]]);
-			C_n_high_vect.push_back(_capacities_vect[high_indices[i]]);
+			// Assumes 0% DOD
+			for (int i = 0; i < n_rows_hi; i++)
+			{
+				C_n_low_vect.push_back(0. + i * 500); // cycles
+				C_n_low_vect.push_back(100.); // 100 % capacity
+			}
 		}
-	}
-	n_rows_lo = C_n_low_vect.size()/n_cols;
-	n_rows_hi = C_n_high_vect.size()/n_cols;
+		else if (n_rows_hi == 0)
+		{
+			// Assume 100% DOD
+			for (int i = 0; i < n_rows_lo; i++)
+			{
+				C_n_high_vect.push_back(100. + i * 500); // cycles
+				C_n_high_vect.push_back(0.); // 100 % capacity
+			}
+		}
 
-	if (n_rows_lo == 0 || n_rows_hi == 0)
+		if (n_rows_lo != 0)
+		{
+			for (int i = 0; i < n_rows_lo; i++)
+			{
+				C_n_low_vect.push_back(_cycles_vect[low_indices[i]]);
+				C_n_low_vect.push_back(_capacities_vect[low_indices[i]]);
+			}
+		}
+		if (n_rows_hi != 0)
+		{
+			for (int i = 0; i < n_rows_hi; i++)
+			{
+				C_n_high_vect.push_back(_cycles_vect[high_indices[i]]);
+				C_n_high_vect.push_back(_capacities_vect[high_indices[i]]);
+			}
+		}
+		n_rows_lo = C_n_low_vect.size() / n_cols;
+		n_rows_hi = C_n_high_vect.size() / n_cols;
+
+		if (n_rows_lo == 0 || n_rows_hi == 0)
+		{
+			// need a safeguard here
+		}
+
+		util::matrix_t<double> C_n_low(n_rows_lo, n_cols, &C_n_low_vect);
+		util::matrix_t<double> C_n_high(n_rows_lo, n_cols, &C_n_high_vect);
+
+		// Compute C(D_lo, n), C(D_hi, n)
+		double C_Dlo = util::linterp_col(C_n_low, 0, cycle_number, 1);
+		double C_Dhi = util::linterp_col(C_n_high, 0, cycle_number, 1);
+
+		if (C_Dlo < 0.)
+			C_Dlo = 0.;
+		if (C_Dhi > 100.)
+			C_Dhi = 100.;
+
+		// Interpolate to get C(D, n)
+		C = util::interpolate(D_lo, C_Dlo, D_hi, C_Dhi, DOD);
+	}
+	// just have one row, single level interpolation
+	else
 	{
-		// need a safeguard here
+		C = util::linterp_col(_batt_lifetime_matrix, 1, cycle_number, 2);
 	}
 
-	util::matrix_t<double> C_n_low(n_rows_lo, n_cols, &C_n_low_vect);
-	util::matrix_t<double> C_n_high(n_rows_lo, n_cols, &C_n_high_vect);
-
-
-	// Compute C(D_lo, n), C(D_hi, n)
-	double C_Dlo = util::linterp_col(C_n_low, 0, cycle_number, 1);
-	double C_Dhi = util::linterp_col(C_n_high, 0, cycle_number, 1);
-
-	// Interpolate to get C(D, n)
-	return util::interpolate(D_lo, C_Dlo, D_hi, C_Dhi, DOD);
+	return C;
 }
 
 

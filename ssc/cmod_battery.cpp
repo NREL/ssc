@@ -12,12 +12,10 @@ var_info vtab_battery[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
 	// generic battery inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_bank_ncells_parallel",                  "Number of Cells in Parallel",                             "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_bank_ncells_serial",                    "Number of Cells in Serial",                               "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_parallel",                     "Number of Cells in Parallel",                             "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of Cells in Serial",                               "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_voltage",                          "Battery bank desired chemistry",                          "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_size_choice",                           "Battery bank choice how to size",                         "",        "0=BankSize,1=CellSize","Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_cell_cutoff_voltage",                   "Cell cutoff voltage",                                     "V",        "",                    "Battery",       "",                           "",                              "" },
 
 
@@ -188,7 +186,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 
 	// model initialization
-	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_bank_ncells_serial"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
+	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
 		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"), cm.as_double("batt_cell_cutoff_voltage"));
 	lifetime_model = new  lifetime_t(batt_lifetime_matrix);
 
@@ -214,7 +212,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		dt_hr );
 
 	double Vfull = cm.as_double("batt_Vfull");
-	int ncell = cm.as_integer("batt_bank_ncells_serial") + cm.as_integer("batt_bank_ncells_parallel");
+	int ncell = cm.as_integer("batt_computed_series") + cm.as_integer("batt_computed_parallel");
 
 	if ( chem == 0 )
 	{
