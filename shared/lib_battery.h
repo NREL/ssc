@@ -245,7 +245,7 @@ protected:
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
-	double bilinear(double DOD, double cycle_number);
+	double bilinear(double DOD, int cycle_number);
 
 	util::matrix_t<double> _cycles_vs_DOD;
 	util::matrix_t<double> _batt_lifetime_matrix;
