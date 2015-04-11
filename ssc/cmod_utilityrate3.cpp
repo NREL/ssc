@@ -2,29 +2,36 @@
 #include <sstream>
 
 
-// version 3 upgrade in process!
 
 static var_info vtab_utility_rate3[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
-//	{ SSC_INPUT,        SSC_ARRAY,      "e_with_system",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+
+
+	/* change to load, grid and gen per 4/9/15 meeting
 	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "p_with_system",            "Max power at grid with system",                 "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
-//	{ SSC_INPUT, SSC_ARRAY, "e_without_system", "Energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
 	{ SSC_INPUT, SSC_ARRAY, "e_load", "Energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
-//	{ SSC_INPUT, SSC_ARRAY, "p_without_system", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
 	{ SSC_INPUT, SSC_ARRAY, "p_load", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
+	*/
+	// First year hourly or subhourly
+	{ SSC_OUTPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "gen", "Net PV ac power", "kW", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "grid", "Net grid power", "kW", "", "Time Series", "*", "", "" },
+
+
+
+
+
+
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
 
-//	{ SSC_INPUT,        SSC_ARRAY,      "system_availability",       "Annual availability of system",    "%/year", "",                      "",             "?=100",                       "",                              "" },
-//	{ SSC_INPUT,        SSC_ARRAY,      "system_degradation",       "Annual degradation of system",    "%/year", "",                      "",             "?=0",                       "",                              "" },
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
 	{ SSC_INPUT, SSC_NUMBER, "ur_enable_net_metering", "Enable net metering", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
-//	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Force sell rate equal to buy", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
@@ -39,8 +46,6 @@ static var_info vtab_utility_rate3[] = {
 	// Energy Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_enable",            "Enable energy charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 
-//	{ SSC_INPUT, SSC_STRING, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "288 digits 1-C, 24x12", "", "ur_ec_enable=1", "TOUSCHED", "" },
-//	{ SSC_INPUT, SSC_STRING, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "288 digits 1-C, 24x12", "", "ur_ec_enable=1", "TOUSCHED", "" },
 	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
 
@@ -743,7 +748,6 @@ public:
 
 		// compute annual system output degradation multipliers
 		std::vector<ssc_number_t> sys_scale(nyears);
-//		parr = as_array("system_degradation", &count);
 		parr = as_array("degradation", &count);
 		if (count == 1)
 		{
@@ -755,21 +759,6 @@ public:
 			for (i=0;i<nyears && i<count;i++)
 				sys_scale[i] = (ssc_number_t)(1.0 - parr[i]*0.01);
 		}
-		// curtailment and availability already applied in system output = hourly_energy
-		/*
-		// annual availability multipliers
-		parr = as_array("system_availability", &count);
-		if (count == 1)
-		{
-			for (i=0;i<nyears;i++)
-				sys_scale[i] *= (ssc_number_t) ( parr[0]*0.01 ) ;
-		}
-		else
-		{
-			for (i=0;i<nyears && i<count;i++)
-				sys_scale[i] *= (ssc_number_t)( parr[i]*0.01 );
-		}
-		*/
 		// compute load (electric demand) annual escalation multipliers
 		std::vector<ssc_number_t> load_scale(nyears);
 		parr = as_array("load_escalation", &count);
@@ -805,6 +794,40 @@ public:
 			e_grid(8760), p_grid(8760),
 			e_load_cy(8760), p_load_cy(8760); // current year load (accounts for escal)
 		
+
+
+
+		/* Update all e_sys and e_load values based on new inputs
+		1. scale load and system value to hourly values as necessary
+		2. use (kWh) e_sys[i] = sum((e_grid-load) * timestep ) over the hour for each hour i
+		3. use (kW)  p_sys[i] = max( e_grid-load) over the hour for each hour i
+		3. use (kWh) e_load[i] = sum(load * timestep ) over the hour for each hour i
+		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
+		5. After above assignment, proceed as before with same outputs
+		*/
+		ssc_number_t* pgrid = as_array("grid", &count);
+		size_t nrec = count;
+		size_t step_per_hour = nrec / 8760;
+		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
+			throw exec_error("utilityrate3", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
+		double ts_hour = 1.0 / step_per_hour;
+
+		count = 0;
+		ssc_number_t* pload;
+		if (is_assigned("e_load"))
+		{
+			pload = as_array("load", &count);
+			if (count != nrec)
+				throw exec_error("utilityrate3", util::format("invalid number of load records (%d): must match number of grid records (%d)", (int)nrec, (int)count));
+		}
+
+		// assign hourly values for utility rate calculations
+		for (i = 0; i<8760; i++)
+		{
+			e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
+		}
+
+		/*
 		parr = as_array("hourly_energy", &count);
 		for (i=0;i<8760;i++)
 		{
@@ -821,10 +844,8 @@ public:
 				p_sys[i] = parr[i];
 		}
 
-//		if (is_assigned("e_without_system"))
 		if (is_assigned("e_load"))
 			{
-//			parr = as_array("e_without_system", &count);
 			parr = as_array("e_load", &count);
 			if (count != 8760) throw general_error("e_load must have 8760 values");
 			for (i=0;i<8760;i++)
@@ -837,15 +858,16 @@ public:
 		//accumulate annual load for outputs
 		double year1_elec_load = accumulate_annual("e_load", "year1_electric_load");
 
-//		if (is_assigned("p_without_system"))
 		if (is_assigned("p_load"))
 			{
 			parr = as_array("p_load", &count);
 			if (count != 8760) throw general_error("p_load must have 8760 values");
 			for (i=0;i<8760;i++)
 				p_load[i] = -parr[i]; // input sign change 9/12/14
-//			p_load[i] = parr[i]; // input sign change 9/12/14
 		}
+
+		*/
+
 
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
