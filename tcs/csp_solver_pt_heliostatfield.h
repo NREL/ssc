@@ -4,11 +4,17 @@
 #include "csp_solver_util.h"
 
 #include "interpolation_routines.h"
+#include "solarpilot/AutoPilot_API.h"
+#include "solarpilot/IOUtil.h"
+#include "solarpilot/sort_method.h"
 
 class C_pt_heliostatfield
 {
 private:
+	// Class Instances
+	GaussMarkov *field_efficiency_table;
 	MatDoub m_flux_positions;
+	sp_flux_table fluxtab;
 	
 	double m_p_start;
 	double m_p_track;
@@ -19,12 +25,20 @@ private:
 	int m_n_flux_y;
 	int m_N_hel;
 
+	//Stored Variables
+	double m_eta_prev;
+	double m_v_wind_prev;
+
 	// member string for exception messages
 	std::string error_msg;
 
 public:
+	// Class to save messages for up stream classes
+	C_csp_messages mc_csp_messages;
 
 	C_pt_heliostatfield();
+
+	~C_pt_heliostatfield();
 
 	struct RUN_TYPE { enum A {AUTO, USER_FIELD, USER_DATA}; };
 
@@ -48,12 +62,14 @@ public:
 		double m_land_max;
 		double m_land_min;
 
-		double *m_land_bound_table;
-		int m_nrows_land_bound_table;
-		int m_ncols_land_bound_table;
+		//double *m_land_bound_table;
+		//int m_nrows_land_bound_table;
+		//int m_ncols_land_bound_table;
+		util::matrix_t<double> m_land_bound_table;
 
-		double *m_land_bound_list;
-		int m_nrows_land_bound_list;
+		//double *m_land_bound_list;
+		//int m_nrows_land_bound_list;
+		util::matrix_t<double> m_land_bound_list;
 
 		double m_p_start;
 		double m_p_track;
@@ -65,25 +81,30 @@ public:
 		int m_n_flux_x;
 		int m_n_flux_y;
 
-		double *m_helio_positions;
-		int m_N_hel;
-		int m_pos_dim;
+		//double *m_helio_positions;
+		//int m_N_hel;
+		//int m_pos_dim;
+		util::matrix_t<double> m_helio_positions;
 
-		double *m_helio_aim_points;
-		int m_nrows_helio_aim_points;
-		int m_ncols_helio_aim_points;
+		//double *m_helio_aim_points;
+		//int m_nrows_helio_aim_points;
+		//int m_ncols_helio_aim_points;
+		util::matrix_t<double> m_helio_aim_points;
 
-		double *m_eta_map;
-		int m_nrows_eta_map;
-		int m_ncols_eta_map;
+		//double *m_eta_map;
+		//int m_nrows_eta_map;
+		//int m_ncols_eta_map;
+		util::matrix_t<double> m_eta_map;
 
-		double *m_flux_positions;
-		int m_nfluxpos;
-		int m_nfposdim;
+		//double *m_flux_positions;
+		//int m_nfluxpos;
+		//int m_nfposdim;
+		util::matrix_t<double> m_flux_positions;
 
-		double *m_flux_maps;
-		int m_nfluxmap;
-		int m_nfluxcol;
+		//double *m_flux_maps;
+		//int m_nfluxmap;
+		//int m_nfluxcol;
+		util::matrix_t<double> m_flux_maps;
 
 		double m_c_atm_0;
 		double m_c_atm_1;
@@ -103,9 +124,9 @@ public:
 		S_params()
 		{
 			// Integers
-			m_run_type = m_land_bound_type = m_nrows_land_bound_table = m_ncols_land_bound_table = m_nrows_land_bound_list = m_n_flux_x = m_n_flux_y = m_N_hel = m_pos_dim =
-				m_nrows_helio_aim_points = m_ncols_helio_aim_points = m_N_hel = m_nrows_eta_map = m_ncols_eta_map = m_nfluxpos = m_nfposdim =
-				m_nfluxmap = m_nfluxcol = m_n_facet_x = m_n_facet_y = m_cant_type = m_focus_type = m_n_flux_days = m_delta_flux_hrs = -1;
+			m_run_type = m_land_bound_type = /*m_nrows_land_bound_table = m_ncols_land_bound_table =*/ /* m_nrows_land_bound_list =*/ m_n_flux_x = m_n_flux_y = /*m_N_hel = m_pos_dim = */
+				/*m_nrows_helio_aim_points = m_ncols_helio_aim_points =*/ /*m_nrows_eta_map = m_ncols_eta_map =*/ /*m_nfluxpos = m_nfposdim = */
+				/*m_nfluxmap = m_nfluxcol =*/ m_n_facet_x = m_n_facet_y = m_cant_type = m_focus_type = m_n_flux_days = m_delta_flux_hrs = -1;
 
 			// Doubles
 			m_helio_width = m_helio_height = m_helio_optical_error = m_helio_active_fraction = m_dens_mirror = m_helio_reflectance = m_rec_absorptance = m_rec_height = m_rec_aspect =
@@ -113,7 +134,7 @@ public:
 				m_interp_beta = m_c_atm_0 = m_c_atm_1 = m_c_atm_2 = m_c_atm_3 = m_dni_des = m_land_area = std::numeric_limits<double>::quiet_NaN();
 
 			// double *
-			m_land_bound_table = m_land_bound_list = m_helio_positions = m_helio_aim_points = m_eta_map = m_flux_positions = m_flux_maps = NULL;
+			/*m_land_bound_table = m_land_bound_list = m_helio_positions = */ /*m_helio_aim_points =*/ /*m_eta_map =*/ /*m_flux_positions =*/ /*m_flux_maps =*/ /*NULL;*/
 
 			// strings
 			m_weather_file = "";
@@ -122,7 +143,12 @@ public:
 
 	S_params ms_params;
 
+	struct S_outputs
+	{
+		util::matrix_t<double> flux_map_out;
+	};
 
+	S_outputs ms_outputs;
 
 	void init();
 
