@@ -16,6 +16,8 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_INPUT, SSC_ARRAY, "p_load", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
 	*/
 	// First year hourly or subhourly
+	// load and gen expecte to be > 0
+	// grid positive if system generation > load, negative otherwise
 	{ SSC_OUTPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "gen", "Net PV ac power", "kW", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "grid", "Net grid power", "kW", "", "Time Series", "*", "", "" },
@@ -674,7 +676,7 @@ static var_info vtab_utility_rate3[] = {
 
 	// monthly outputs from Sean 7/29/13 "Net Metering Accounting.xlsx" updates from Paul and Sean 8/9/13 and 8/12/13
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_load",    "Electricity load",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "Year 1 monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "Year 1 monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_cumulative_excess_generation",    "Electricity net metering credit",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                      "" },
@@ -798,9 +800,10 @@ public:
 
 
 		/* Update all e_sys and e_load values based on new inputs
+		grid = gen -load where gen = sys + batt
 		1. scale load and system value to hourly values as necessary
-		2. use (kWh) e_sys[i] = sum((e_grid-load) * timestep ) over the hour for each hour i
-		3. use (kW)  p_sys[i] = max( e_grid-load) over the hour for each hour i
+		2. use (kWh) e_sys[i] = sum((grid+load) * timestep ) over the hour for each hour i
+		3. use (kW)  p_sys[i] = max( grid+load) over the hour for each hour i
 		3. use (kWh) e_load[i] = sum(load * timestep ) over the hour for each hour i
 		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
 		5. After above assignment, proceed as before with same outputs
@@ -810,11 +813,11 @@ public:
 		size_t step_per_hour = nrec / 8760;
 		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
 			throw exec_error("utilityrate3", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
-		double ts_hour = 1.0 / step_per_hour;
+		ssc_number_t ts_hour = 1.0f / step_per_hour;
 
 		count = 0;
 		ssc_number_t* pload;
-		if (is_assigned("e_load"))
+		if (is_assigned("load"))
 		{
 			pload = as_array("load", &count);
 			if (count != nrec)
@@ -822,10 +825,32 @@ public:
 		}
 
 		// assign hourly values for utility rate calculations
-		for (i = 0; i<8760; i++)
+		size_t idx = 0;
+		bool bload = (count>0);
+		ssc_number_t ts_power = 0;
+		ssc_number_t ts_load = 0;
+		ssc_number_t year1_elec_load = 0;
+		for (i = 0; i < 8760; i++)
 		{
 			e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
+			for (size_t ii = 0; ii < step_per_hour; ii++)
+			{
+				ts_load = (bload ? pload[idx] : 0);
+				ts_power = pgrid[idx] + ts_load; 
+				e_sys[i] += ts_power * ts_hour;
+				p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
+				e_load[i] += ts_load * ts_hour;
+				p_load[i] = ((ts_load > p_load[i]) ? ts_load : p_load[i]);
+				idx++;
+			}
+			year1_elec_load += e_load[i];
+			// sign correction for utility rate calculations
+			e_load[i] = -e_load[i];
+			p_load[i] = -p_load[i];
 		}
+
+
+		assign("year1_electric_load", year1_elec_load);
 
 		/*
 		parr = as_array("hourly_energy", &count);
@@ -1935,7 +1960,7 @@ public:
 
 		// find peak demand per month for each of the twelve periods
 		ssc_number_t ppeaks[12]; // period peak demand 
-		ssc_number_t phpeaks[12]; // period peak demand hour
+		int phpeaks[12]; // period peak demand hour
 		c = 0;
 		for (m=0;m<12;m++)
 		{
