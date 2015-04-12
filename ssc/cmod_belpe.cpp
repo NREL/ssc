@@ -144,6 +144,8 @@ public:
 			//these inputs are required if en_belpe = 0, so no additional checks are necessary here
 			if ( !is_assigned("load") )
 				throw general_error("variable 'load' is required but not assigned." );
+
+			return; // do not modify input "load"
 		}
 
 		//if BELPE is enabled, e_load is overwritten (don't take anything in from the UI- just reallocate)
