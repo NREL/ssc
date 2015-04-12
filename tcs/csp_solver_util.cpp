@@ -10,22 +10,31 @@ void C_csp_messages::add_message(int type, std::string msg)
 	// Want first message last...
 	int size = m_message_list.size();
 
-	std::vector<S_message_def> message_list_copy;
+	if( size > 0 )
+	{
+		std::vector<S_message_def> message_list_copy;
 
-	message_list_copy = m_message_list;
-	
-	mS_placeholder.m_type = type;
-	mS_placeholder.msg = msg;
+		message_list_copy = m_message_list;
 
-	m_message_list[0] = mS_placeholder;
+		mS_placeholder.m_type = type;
+		mS_placeholder.msg = msg;
 
-	for( int i = 1; i < size; i++ )
-		m_message_list[i] = message_list_copy[size - i];
+		m_message_list[0] = mS_placeholder;
 
-	mS_placeholder.m_type = message_list_copy[size - 1].m_type;
-	mS_placeholder.msg = message_list_copy[size - 1].msg;
+		for( int i = 1; i < size; i++ )
+			m_message_list[i] = message_list_copy[size - i];
 
-	m_message_list.push_back(mS_placeholder);
+		mS_placeholder.m_type = message_list_copy[size - 1].m_type;
+		mS_placeholder.msg = message_list_copy[size - 1].msg;
+
+		m_message_list.push_back(mS_placeholder);
+	}
+	else
+	{
+		mS_placeholder.m_type = type;
+		mS_placeholder.msg = msg;
+		m_message_list.push_back(mS_placeholder);
+	}
 }
 
 bool C_csp_messages::get_message(int *type, std::string *msg)
