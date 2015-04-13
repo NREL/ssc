@@ -77,7 +77,8 @@ extern module_entry_info
 	cm_entry_user_htf_comparison,
 	cm_entry_iscc_design_point,
 	cm_entry_gridnet,
-	cm_entry_battery;
+	cm_entry_battery,
+    cm_entry_lcoefcr;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -137,6 +138,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iscc_design_point,
 	&cm_entry_gridnet,
 	&cm_entry_battery,
+	&cm_entry_lcoefcr,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
