@@ -148,6 +148,13 @@ int Linear_Interp::hunt( int col, double x )
 		}
 
 	}
+	
+	// 4.13.15 twn: Check that indices are within bounds
+	if( ju > m_rows - 1 )
+		ju = m_rows - 1;
+	if( jl < 0 )
+		jl = 0;
+	
 	while (ju - jl > 1)	// Hunt is done, begin final bisection phase
 	{
 		jm = (ju + jl) / 2;
