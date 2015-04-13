@@ -74,6 +74,7 @@
     <ClCompile Include="..\ssc\cmod_windbos.cpp" />
     <ClCompile Include="..\ssc\cmod_windfile.cpp" />
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
+    <ClCompile Include="..\ssc\cmod_lcoefcr.cpp" />
     <ClCompile Include="..\ssc\common_financial.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
     <ClCompile Include="..\ssc\csp_common.cpp" />
@@ -81,7 +82,7 @@
     <ClCompile Include="..\ssc\tckernel.cpp" />
     <ClCompile Include="..\ssc\vartab.cpp" />
     <ClCompile Include="..\ssc\common.cpp" />
-  </ItemGroup>
+	</ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssc\cmod_battery.h" />
     <ClInclude Include="..\ssc\common_financial.h" />
