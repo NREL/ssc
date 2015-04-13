@@ -327,6 +327,7 @@ private:
 /* 
 Battery bank class
 Accounts for multiple batteries and power conversion efficiency
+Currently, only bank is treated as one large battery in series, so class isn't very useful
 */
 class battery_bank_t
 {
@@ -370,7 +371,6 @@ public:
 protected:
 	battery_bank_t * _BatteryBank;
 	double _dt;
-	int _mode;
 
 	double _e_tofrom_batt;
 	double _e_grid;
