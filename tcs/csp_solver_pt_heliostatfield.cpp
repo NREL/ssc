@@ -28,7 +28,7 @@ C_pt_heliostatfield::~C_pt_heliostatfield()
 		delete field_efficiency_table;
 }
 
-void C_pt_heliostatfield::init()
+void C_pt_heliostatfield::init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata)
 {
 	//Read in parameters
 	int nrows1, ncols1;
@@ -386,8 +386,8 @@ void C_pt_heliostatfield::init()
 					//wfdata.push_back( std::string(buf) );
 				}
 
-				//sapi.SetDetailCallback( solarpilot_callback, (void*)this);
-				//sapi.SetSummaryCallbackStatus(false);
+				sapi.SetDetailCallback( callback, cdata );
+				sapi.SetSummaryCallbackStatus(false);
 
 				sapi.GenerateDesignPointSimulations( amb, V, wfdata );
 	
@@ -448,8 +448,8 @@ void C_pt_heliostatfield::init()
 				//twn: get from matrix_t: ms_params.m_helio_positions
 			//ms_params.m_N_hel = m_N_hel;					//value(P_N_hel, (double)m_N_hel);
 
-			//sapi.SetSummaryCallbackStatus(true);
-			//sapi.SetSummaryCallback( solarpilot_callback, (void*)this);
+			sapi.SetSummaryCallbackStatus(true);
+			sapi.SetSummaryCallback( callback, cdata );
 
 			//set up flux map resolution
 			fluxtab.is_user_spacing = true;
