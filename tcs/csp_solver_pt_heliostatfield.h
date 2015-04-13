@@ -160,7 +160,7 @@ public:
 
 	S_outputs ms_outputs;
 
-	void init();
+	void init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata);
 
 	void call(double wind_in, double field_control_in, double solaz_in, double solzen_in, double time, double ncall, double step);
 
