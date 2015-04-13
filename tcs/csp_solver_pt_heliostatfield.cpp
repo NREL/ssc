@@ -14,7 +14,8 @@
 
 C_pt_heliostatfield::C_pt_heliostatfield()
 {
-	m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = std::numeric_limits<double>::quiet_NaN();
+	m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max =
+		m_eta_prev = m_v_wind_prev = m_v_wind_current = std::numeric_limits<double>::quiet_NaN();
 
 	m_n_flux_x = m_n_flux_y = m_N_hel = -1;
 
@@ -406,7 +407,7 @@ void C_pt_heliostatfield::init()
 					ms_params.m_helio_positions(i,0) = layout.heliostat_positions.at(i).location.x;
 					ms_params.m_helio_positions(i,1) = layout.heliostat_positions.at(i).location.y;
 					if(pos_dim==3)
-						ms_params.m_helio_positions(i, 1) = layout.heliostat_positions.at(i).location.z;
+						ms_params.m_helio_positions(i, 2) = layout.heliostat_positions.at(i).location.z;
 					//TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 ) = layout.heliostat_positions.at(i).location.x;
 					//TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 ) = layout.heliostat_positions.at(i).location.y;
 					//if(pos_dim==3)
@@ -551,7 +552,7 @@ void C_pt_heliostatfield::init()
 			break;
 		}
 
-		ms_outputs.flux_map_out.resize_fill(m_n_flux_y, m_n_flux_x);
+		ms_outputs.m_flux_map_out.resize_fill(m_n_flux_y, m_n_flux_x, 0.0);
 
 		//report back the flux positions used
 		int nflux = (int)m_flux_positions.size();
@@ -599,4 +600,121 @@ void C_pt_heliostatfield::init()
 		// Initialize stored variables
 		m_eta_prev = 0.0;
 		m_v_wind_prev = 0.0;
+}
+
+void C_pt_heliostatfield::call(double wind_in, double field_control_in, double solaz_in, double solzen_in, double time, double ncall, double step)
+{
+	double v_wind = wind_in;
+	m_v_wind_current = v_wind;
+	double field_control = field_control_in;	// Control Parameter ( range from 0 to 1; 0=off, 1=all on)
+	if( field_control_in > 1.0 )
+		field_control = 1.0;
+	if( field_control_in < 0.0 )
+		field_control = 0.0;
+
+	double solzen = solzen_in*CSP::pi / 180.0;
+
+	if( solzen >= CSP::pi / 2.0 )
+		field_control = 0.0;			// No tracking before sunrise or after sunset
+
+	double solaz = solaz_in*CSP::pi / 180.0;
+
+	// clear out the existing flux map
+	ms_outputs.m_flux_map_out.fill(0.0);
+
+	// Parasitics for startup or shutdown
+	double pparasi = 0.0;
+
+	// If starting up or shutting down, calculate parasitics
+	if( (field_control > 1.e-4 && m_eta_prev < 1.e-4) ||		// Startup by setting of control paramter (Field_control 0-> 1)
+		(field_control < 1.e-4 && m_eta_prev >= 1.e-4) ||			// OR Shutdown by setting of control paramter (Field_control 1->0 )
+		(field_control > 1.e-4 && v_wind >= m_v_wind_max) ||		// OR Shutdown by high wind speed
+		(m_eta_prev > 1.e-4 && m_v_wind_prev >= m_v_wind_max && v_wind < m_v_wind_max) )	// OR Startup after high wind speed
+		pparasi = m_N_hel * m_p_start / (step / 3600.0);			// kJ/hr 
+
+	// Parasitics for tracking      
+	if( v_wind < m_v_wind_max && m_v_wind_prev < m_v_wind_max )
+		pparasi += m_N_hel * m_p_track * field_control;	// kJ/hr
+
+	double eta_field = 0.;
+
+	if( solzen > (CSP::pi / 2 - .001 - m_hel_stow_deploy) || v_wind > m_v_wind_max || time < 3601 )
+	{
+		eta_field = 1.e-6;
+	}
+	else
+	{
+		// Use current solar position to interpolate field efficiency table and find solar field efficiency
+		vector<double> sunpos;
+		sunpos.push_back(solaz / az_scale);
+		sunpos.push_back(solzen / zen_scale);
+
+		eta_field = field_efficiency_table->interp(sunpos) * eff_scale;
+		eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control;		// Ensure physical behavior 
+
+		//Set the active flux map
+		VectDoub pos_now(sunpos);
+		/*VectDoub pos_now(2);
+		pos_now.at(0) = solaz/az_scale;
+		pos_now.at(1) = solzen/zen_scale;*/
+		//find the nearest neighbors to the current point
+		vector<double> distances;
+		vector<int> indices;
+		for( int i = 0; i<(int)m_flux_positions.size(); i++ ){
+			distances.push_back(rdist(&pos_now, &m_flux_positions.at(i)));
+			indices.push_back(i);
+		}
+		quicksort<double, int>(distances, indices);
+		//calculate weights for the nearest 6 points
+		double avepoints = 0.;
+		const int npt = 6;
+		for( int i = 0; i<npt; i++ )
+			avepoints += distances.at(i);
+		avepoints *= 1. / (double)npt;
+		VectDoub weights(npt);
+		double normalizer = 0.;
+		for( int i = 0; i<npt; i++ ){
+			double w = exp(-pow(distances.at(i) / avepoints, 2));
+			weights.at(i) = w;
+			normalizer += w;
+		}
+		for( int i = 0; i<npt; i++ )
+			weights.at(i) *= 1. / normalizer;
+
+		//set the values
+		for( int k = 0; k<npt; k++ )
+		{
+			int imap = indices.at(k);
+			for( int j = 0; j<m_n_flux_y; j++ )
+			{
+				for( int i = 0; i<m_n_flux_x; i++ )
+				{
+					ms_outputs.m_flux_map_out(j, i) += ms_params.m_flux_maps(imap*m_n_flux_y + j, i)*weights.at(k);
+					//TCS_MATRIX_INDEX(var(O_flux_map), j, i) +=
+					//	TCS_MATRIX_INDEX(var(P_flux_maps), imap*n_flux_y + j, i) * weights.at(k);
+				}
+			}
+		}
+
+	}
+
+	ms_outputs.m_pparasi = pparasi / 3.E6;		//[MW], convert from kJ/hr: Parasitic power for tracking
+	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency
+
+}
+
+void C_pt_heliostatfield::converged()
+{
+	m_eta_prev = ms_outputs.m_eta_field;
+	m_v_wind_prev = m_v_wind_prev;
+}
+
+double C_pt_heliostatfield::rdist(VectDoub *p1, VectDoub *p2, int dim )
+{
+	double d = 0;
+	for( int i = 0; i<dim; i++ ){
+		double rd = p1->at(i) - p2->at(i);
+		d += rd * rd;
+	}
+	return sqrt(d);
 }

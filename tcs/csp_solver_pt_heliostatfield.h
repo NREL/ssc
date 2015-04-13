@@ -28,9 +28,12 @@ private:
 	//Stored Variables
 	double m_eta_prev;
 	double m_v_wind_prev;
+	double m_v_wind_current;
 
 	// member string for exception messages
 	std::string error_msg;
+
+	double rdist(VectDoub *p1, VectDoub *p2, int dim = 2);
 
 public:
 	// Class to save messages for up stream classes
@@ -145,13 +148,23 @@ public:
 
 	struct S_outputs
 	{
-		util::matrix_t<double> flux_map_out;
+		util::matrix_t<double> m_flux_map_out;
+		double m_pparasi;
+		double m_eta_field;
+
+		S_outputs()
+		{
+			m_pparasi = m_eta_field = std::numeric_limits<double>::quiet_NaN();
+		}
 	};
 
 	S_outputs ms_outputs;
 
 	void init();
 
+	void call(double wind_in, double field_control_in, double solaz_in, double solzen_in, double time, double ncall, double step);
+
+	void converged();
 };
 
 
