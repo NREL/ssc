@@ -16,7 +16,7 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_INPUT, SSC_ARRAY, "p_load", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
 	*/
 	// First year hourly or subhourly
-	// load and gen expecte to be > 0
+	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
 	{ SSC_OUTPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "gen", "Net PV ac power", "kW", "", "Time Series", "*", "", "" },
