@@ -1010,15 +1010,6 @@ dispatch_t::dispatch_t(battery_bank_t * BatteryBank, double dt)
 	// note, do not include pv, since we don't modify from pv module
 	_e_tofrom_batt = 0.;
 	_e_grid = 0.;
-
-	// modes for tracking
-	_mode = 0;
-	// mode = 0: NO CHARGE, NO DISCHARGE
-	// mode = 1: CHARGED ALL FROM GRID
-	// mode = 2: CHARGED SOME FROM ARRAY, REST FROM GRID
-	// mode = 3: CHARGED SOME FROM ARRAY, NONE FROM GRID
-	// mode = 4: CHARGED ALL FROM ARRAY
-	// mode = -1: DISCHARGED TO MEET LOAD
 }
 double dispatch_t::energy_tofrom_battery(){ return _e_tofrom_batt; };
 double dispatch_t::energy_tofrom_grid(){ return _e_grid; };
@@ -1052,64 +1043,41 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 
 	// current charge state of battery from last time step.  
 	double chargeNeededToFill = _BatteryBank->bank_charge_needed();						// [Ah] - qmax - qtotal
-	double bank_voltage = _BatteryBank->bank_voltage();								// [V] 
+	double bank_voltage = _BatteryBank->bank_voltage();									// [V] 
 	double energyNeededToFill = (chargeNeededToFill * bank_voltage)*watt_to_kilowatt;	// [kWh]
-	double current_charge = _BatteryBank->bank_charge_available();							// [Ah]
+	double current_charge = _BatteryBank->bank_charge_available();						// [Ah]
 	double current_energy = (current_charge * bank_voltage) *watt_to_kilowatt;			// [KWh]
-	_e_grid = 0.;																	// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
-	_e_tofrom_batt = 0.;															// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
+	_e_grid = 0.;																		// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
+	_e_tofrom_batt = 0.;																// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 	_pv_to_load = 0.;
 	_battery_to_load = 0.;
 	_grid_to_load = 0.;
-
-	_mode = 0; // NO CHARGE, NO DISCHARGE (can be overwritten)
 
 	// Is there extra energy from array
 	if (e_pv > e_load)
 	{
 		if (_can_charge)
 		{
-			if (e_pv - e_load > energyNeededToFill)
-			{
-				// use all energy available, it will only use what it can handle
-				_e_tofrom_batt = -(e_pv - e_load);
-				_mode = 4; // CHARGED ALL FROM ARRAY
-			}
-			else if (_can_grid_charge)
-			{
+			// use all energy available, it will only use what it can handle
+			_e_tofrom_batt = -(e_pv - e_load);
+
+			if ( (e_pv - e_load < energyNeededToFill) && _can_grid_charge)
 				_e_tofrom_batt = -energyNeededToFill;
-				_mode = 2; // CHARGED SOME FROM ARRAY, REST FROM GRID
-			}
-			else
-			{
-				_e_tofrom_batt = -(e_pv - e_load);
-				_mode = 3; // CHARGED SOME FROM ARRAY, NONE FROM GRID
-			}
 		}
 		// if we want to charge from grid without charging from array
 		else if (_can_grid_charge)
-		{
 			_e_tofrom_batt = -energyNeededToFill;
-			_mode = 1; // CHARGED ALL FROM GRID
-		}
-
 	}
 	// Or, is the demand greater than or equal to what the array provides
 	else if (e_load >= e_pv)
 	{
+		// try to discharge full amount.  Will only use what battery can provide
 		if (_can_discharge)
-		{
-			// try to discharge full amount.  Will only use what battery can provide
 			_e_tofrom_batt = e_load - e_pv;
-			_mode = -1; // DISCHARGED TO MEET LOAD
-		}
 		// if we want to charge from grid
 		// this scenario doesn't really make sense
 		else if (_can_grid_charge)
-		{
 			_e_tofrom_batt = -energyNeededToFill;
-			_mode = 1; // CHARGED ALL FROM GRID
-		}
 	}
 
 	// Run Battery Model to update charge based on charge/discharge
@@ -1120,10 +1088,11 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	_e_tofrom_batt = current * bank_voltage * _dt / 1000;// [kWh]
 
 	
-	// Update how much power was actually used to/from grid
+	// Update net grid energy
 	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
 	// e_grid > 0 (sending to grid) e_grid < 0 (pulling from grid)
 	_e_grid = e_pv + _e_tofrom_batt - e_load;
+
 
 	// Next, get how much of each component will meet the load.  
 	// PV always meets load before battery

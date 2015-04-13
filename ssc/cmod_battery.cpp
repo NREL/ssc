@@ -69,13 +69,11 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "qmax",                                 "Battery Max Charge",                                    "Ah",    "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_I",                               "Battery Current",                                       "A",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_cell",                         "Battery Cell Voltage",                                  "V",     "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_battery",                      "Battery Voltage",                                       "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_bank",                         "Battery Bank Voltage",                                  "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                               "Battery Number of Cycles",                              "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                  "Battery Temperature",                                   "C",     "", "Battery", "", "", "" }, 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_percent",                     "Battery Capacity Percent for Lifetime",                 "%",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Capacity Percent for Temperature",              "%",     "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "Dispatch_mode",                        "Battery Dispatch Mode for Hour",                        "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                       "Energy to/from Battery",                                "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                          "Energy from Grid to Battery",                           "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                           "Energy to load from PV",                                "kWh",   "", "Battery", "", "", "" },
@@ -106,13 +104,11 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outDOD = 0;
 	outCurrent = 0;
 	outCellVoltage = 0;
-	outBatteryVoltage = 0;
 	outBatteryBankVoltage = 0;
 	outCapacityPercent = 0;
 	outCycles = 0;
 	outBatteryTemperature = 0;
 	outCapacityThermalPercent = 0;
-	outDispatchMode = 0;
 	outBatteryEnergy = 0;
 	outGridEnergy = 0;
 	outPVToLoad = 0;
@@ -171,13 +167,11 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outDOD = cm.allocate("DOD", nrec);
 	outCurrent = cm.allocate("batt_I", nrec);
 	outCellVoltage = cm.allocate("voltage_cell", nrec);
-	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
 	outBatteryBankVoltage = cm.allocate("voltage_bank", nrec);
 	outCapacityPercent = cm.allocate("capacity_percent", nrec);
 	outCycles = cm.allocate("Cycles", nrec);
 	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
 	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
-	outDispatchMode = cm.allocate("Dispatch_mode", nrec);
 	outBatteryEnergy = cm.allocate("battery_energy", nrec);
 	outGridEnergy = cm.allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outPVToLoad = cm.allocate("pv_to_load", nrec);
@@ -273,7 +267,6 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 
 	// Voltage Output
 	outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage());
-	outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());
 	outBatteryBankVoltage[idx] = (ssc_number_t)(battery_bank_model->bank_voltage());
 
 	// Lifetime Output
@@ -285,7 +278,6 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->CapacityPercent());
 
 	// Dispatch output
-	outDispatchMode[idx] = 0; // ? what to do with this
 	outBatteryEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery());
 	outGridEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid());
 	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load() );
