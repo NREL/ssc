@@ -6,8 +6,12 @@
 #include "IOUtil.h"
 #include "csp_common.h"
 
-// Can probably delete this header later...
+// Can probably delete these headers later...
 #include "csp_solver_util.h"
+#include "csp_solver_pt_heliostatfield.h"
+#include "csp_solver_mspt_receiver_222.h"
+
+static bool ssc_mspt_solarpilot_callback(simulation_info *siminfo, void *data);
 
 static var_info _cm_vtab_ty_sandbox[] = {
 	/*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -279,6 +283,12 @@ public:
 		add_var_info(_cm_vtab_ty_sandbox);
 	}
 
+	bool relay_message(string &msg, double percent)
+	{
+		log(msg);
+		return update(msg, percent);
+	}
+
 	void exec() throw(general_error)
 	{
 		std::string example_msg = "Does this work?";
@@ -303,252 +313,255 @@ public:
 		{
 			std::string error_message_out = csp_exception.m_error_message;
 			std::string code_location_out = csp_exception.m_code_location;
-			double blahblhahaf = 1.23;
 		}
 
-		int blah = 1.23;
+		C_pt_heliostatfield heliostatfield;
 
-		//C_csp_mspt_221_222 solar_field;
+		heliostatfield.ms_params.m_run_type = (int) as_double("run_type");
+		heliostatfield.ms_params.m_helio_width = as_double("helio_width");
+		heliostatfield.ms_params.m_helio_height = as_double("helio_height");
+		heliostatfield.ms_params.m_helio_optical_error = as_double("helio_optical_error");
+		heliostatfield.ms_params.m_helio_active_fraction = as_double("helio_active_fraction");
+		heliostatfield.ms_params.m_dens_mirror = as_double("dens_mirror");
+		heliostatfield.ms_params.m_helio_reflectance = as_double("helio_reflectance");
+		heliostatfield.ms_params.m_rec_absorptance = as_double("rec_absorptance");
 
-		//	// First set all parameters corresponding to 'type_hel_field' in 'cmod_tcsmolten_salt.cpp'
-		//	// C_csp_mspt_221_222 will also contain Type 222, so will need to set those parameters directly after
+		bool is_optimize = as_boolean("is_optimize");
 
-		//solar_field.set_csp_component_value_ssc_double("run_type", as_double("run_type"));
-		//solar_field.set_csp_component_value_ssc_double("helio_width", as_double("helio_width"));
-		//solar_field.set_csp_component_value_ssc_double("helio_height", as_double("helio_height"));
-		//solar_field.set_csp_component_value_ssc_double("helio_optical_error", as_double("helio_optical_error"));
-		//solar_field.set_csp_component_value_ssc_double("helio_active_fraction", as_double("helio_active_fraction"));
-		//solar_field.set_csp_component_value_ssc_double("dens_mirror", as_double("dens_mirror"));
-		//solar_field.set_csp_component_value_ssc_double("helio_reflectance", as_double("helio_reflectance"));
-		//solar_field.set_csp_component_value_ssc_double("rec_absorptance", as_double("rec_absorptance"));
+		/*
+		Any parameter that's dependent on the size of the solar field must be recalculated here
+		if the optimization is happening within the cmod
+		*/
+		double H_rec, D_rec, rec_aspect, THT, A_sf;
 
+		if( is_optimize )
+		{
+			//Run solarpilot right away to update values as needed
+			solarpilot_invoke spi(this);
+			spi.run();
+			//AutoPilot_S *sapi = spi.GetSAPI();
 
-		//bool is_optimize = as_boolean("is_optimize");
+			//Optimization iteration history
+			vector<vector<double> > steps;
+			vector<double> obj, flux;
+			spi.opt.getOptimizationSimulationHistory(steps, obj, flux);
+			int nr = steps.size();
+			int nc = steps.front().size() + 2;
+			ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
+			for( size_t i = 0; i<nr; i++ ){
 
-		///*
-		//Any parameter that's dependent on the size of the solar field must be recalculated here
-		//if the optimization is happening within the cmod
-		//*/
-		//double H_rec, D_rec, rec_aspect, THT, A_sf;
+				for( size_t j = 0; j<steps.front().size(); j++ )
+					ssc_hist[i*nc + j] = steps.at(i).at(j);
+				ssc_hist[i*nc + nc - 2] = obj.at(i);
+				ssc_hist[i*nc + nc - 1] = flux.at(i);
 
-		//if( is_optimize )
-		//{
-		//	//Run solarpilot right away to update values as needed
-		//	solarpilot_invoke spi(this);
-		//	spi.run();
-		//	//AutoPilot_S *sapi = spi.GetSAPI();
+			}
+		
+			//receiver calculations
+			H_rec = spi.recs.front().height;
+			rec_aspect = spi.recs.front().aspect;
+			THT = spi.layout.h_tower;
+			//update heliostat position table
+			nr = (int)spi.layout.heliostat_positions.size();
+			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
+			for( int i = 0; i<nr; i++ ){
+				ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
+				ssc_hl[i * 2 + 1] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+			}
 
-		//	//Optimization iteration history
-		//	vector<vector<double> > steps;
-		//	vector<double> obj, flux;
-		//	spi.opt.getOptimizationSimulationHistory(steps, obj, flux);
-		//	int nr = steps.size();
-		//	int nc = steps.front().size() + 2;
-		//	ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-		//	for( size_t i = 0; i<nr; i++ ){
+			A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
-		//		for( size_t j = 0; j<steps.front().size(); j++ )
-		//			ssc_hist[i*nc + j] = steps.at(i).at(j);
-		//		ssc_hist[i*nc + nc - 2] = obj.at(i);
-		//		ssc_hist[i*nc + nc - 1] = flux.at(i);
+			//update piping length for parasitic calculation
+			double piping_length = THT * as_double("csp.pt.par.piping_length_mult") + as_double("csp.pt.par.piping_length_const");
 
-		//	}
-		//
-		//	//receiver calculations
-		//	H_rec = spi.recs.front().height;
-		//	rec_aspect = spi.recs.front().aspect;
-		//	THT = spi.layout.h_tower;
-		//	//update heliostat position table
-		//	nr = (int)spi.layout.heliostat_positions.size();
-		//	ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
-		//	for( int i = 0; i<nr; i++ ){
-		//		ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
-		//		ssc_hl[i * 2 + 1] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
-		//	}
+			//update assignments for cost model
+			assign("H_rec", var_data((ssc_number_t)H_rec));
+			assign("rec_height", var_data((ssc_number_t)H_rec));
+			assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
+			assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
+			assign("THT", var_data((ssc_number_t)THT));
+			assign("h_tower", var_data((ssc_number_t)THT));
+			assign("A_sf", var_data((ssc_number_t)A_sf));
+			assign("Piping_length", var_data((ssc_number_t)piping_length));
+		
+			//Update the total installed cost
+			double total_direct_cost = 0.;
+			double A_rec;
+			switch( spi.recs.front().type )
+			{
+			case sp_receiver::TYPE::CYLINDRICAL:
+			{
+												   double h = spi.recs.front().height;
+												   double d = h / spi.recs.front().aspect;
+												   A_rec = h*d*3.1415926;
+												   break;
+			}
+			case sp_receiver::TYPE::CAVITY:
+			case sp_receiver::TYPE::FLAT:
+				double h = spi.recs.front().height;
+				double w = h / spi.recs.front().aspect;
+				A_rec = h*w;
+				break;
+			}
+			double receiver = as_double("rec_ref_cost")*pow(A_rec / as_double("rec_ref_area"), as_double("rec_cost_exp"));     //receiver cost
 
-		//	A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
+			//storage cost
+			double storage = as_double("q_pb_design")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
 
-		//	//update piping length for parasitic calculation
-		//	double piping_length = THT * as_double("csp.pt.par.piping_length_mult") + as_double("csp.pt.par.piping_length_const");
+			//power block + BOP
+			double P_ref = as_double("P_ref") * 1000.;  //kWe
+			double power_block = P_ref * (as_double("plant_spec_cost") + as_double("bop_spec_cost")); //$/kWe --> $
 
-		//	//update assignments for cost model
-		//	assign("H_rec", var_data((ssc_number_t)H_rec));
-		//	assign("rec_height", var_data((ssc_number_t)H_rec));
-		//	assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
-		//	assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
-		//	assign("THT", var_data((ssc_number_t)THT));
-		//	assign("h_tower", var_data((ssc_number_t)THT));
-		//	assign("A_sf", var_data((ssc_number_t)A_sf));
-		//	assign("Piping_length", var_data((ssc_number_t)piping_length));
-		//
-		//	//Update the total installed cost
-		//	double total_direct_cost = 0.;
-		//	double A_rec;
-		//	switch( spi.recs.front().type )
-		//	{
-		//	case sp_receiver::TYPE::CYLINDRICAL:
-		//	{
-		//										   double h = spi.recs.front().height;
-		//										   double d = h / spi.recs.front().aspect;
-		//										   A_rec = h*d*3.1415926;
-		//										   break;
-		//	}
-		//	case sp_receiver::TYPE::CAVITY:
-		//	case sp_receiver::TYPE::FLAT:
-		//		double h = spi.recs.front().height;
-		//		double w = h / spi.recs.front().aspect;
-		//		A_rec = h*w;
-		//		break;
-		//	}
-		//	double receiver = as_double("rec_ref_cost")*pow(A_rec / as_double("rec_ref_area"), as_double("rec_cost_exp"));     //receiver cost
+			//site improvements
+			double site_improvements = A_sf * as_double("site_spec_cost");
 
-		//	//storage cost
-		//	double storage = as_double("q_pb_design")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
+			//heliostats
+			double heliostats = A_sf * as_double("heliostat_spec_cost");
 
-		//	//power block + BOP
-		//	double P_ref = as_double("P_ref") * 1000.;  //kWe
-		//	double power_block = P_ref * (as_double("plant_spec_cost") + as_double("bop_spec_cost")); //$/kWe --> $
+			//fixed cost
+			double cost_fixed = as_double("cost_sf_fixed");
 
-		//	//site improvements
-		//	double site_improvements = A_sf * as_double("site_spec_cost");
+			//fossil
+			double fossil = P_ref * as_double("fossil_spec_cost");
 
-		//	//heliostats
-		//	double heliostats = A_sf * as_double("heliostat_spec_cost");
+			//tower cost
+			double tower = as_double("tower_fixed_cost") * exp(as_double("tower_exp") * (THT + 0.5*(-H_rec + as_double("helio_height"))));
 
-		//	//fixed cost
-		//	double cost_fixed = as_double("cost_sf_fixed");
+			//---- total direct cost -----
+			total_direct_cost = (1. + as_double("contingency_rate") / 100.) * (
+				site_improvements + heliostats + power_block +
+				cost_fixed + storage + fossil + tower + receiver);
+			//-----
 
-		//	//fossil
-		//	double fossil = P_ref * as_double("fossil_spec_cost");
+			//land area
+			double land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
 
-		//	//tower cost
-		//	double tower = as_double("tower_fixed_cost") * exp(as_double("tower_exp") * (THT + 0.5*(-H_rec + as_double("helio_height"))));
+			//EPC
+			double cost_epc =
+				as_double("csp.pt.cost.epc.per_acre") * land_area
+				+ as_double("csp.pt.cost.epc.percent") * total_direct_cost / 100.
+				+ P_ref * 1000. * as_double("csp.pt.cost.epc.per_watt")
+				+ as_double("csp.pt.cost.epc.fixed");
 
-		//	//---- total direct cost -----
-		//	total_direct_cost = (1. + as_double("contingency_rate") / 100.) * (
-		//		site_improvements + heliostats + power_block +
-		//		cost_fixed + storage + fossil + tower + receiver);
-		//	//-----
+			//PLM
+			double cost_plm =
+				as_double("csp.pt.cost.plm.per_acre") * land_area
+				+ as_double("csp.pt.cost.plm.percent") * total_direct_cost / 100.
+				+ P_ref * 1000. * as_double("csp.pt.cost.plm.per_watt")
+				+ as_double("csp.pt.cost.plm.fixed");
 
-		//	//land area
-		//	double land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+			//sales tax
+			//return ${csp.pt.cost.sales_tax.value}/100*${total_direct_cost}*${csp.pt.cost.sales_tax.percent}/100; };
+			double cost_sales_tax = as_double("sales_tax_rate") / 100. * total_direct_cost * as_double("sales_tax_frac") / 100.;
 
-		//	//EPC
-		//	double cost_epc =
-		//		as_double("csp.pt.cost.epc.per_acre") * land_area
-		//		+ as_double("csp.pt.cost.epc.percent") * total_direct_cost / 100.
-		//		+ P_ref * 1000. * as_double("csp.pt.cost.epc.per_watt")
-		//		+ as_double("csp.pt.cost.epc.fixed");
+			//----- indirect cost
+			double total_indirect_cost = cost_epc + cost_plm + cost_sales_tax;
 
-		//	//PLM
-		//	double cost_plm =
-		//		as_double("csp.pt.cost.plm.per_acre") * land_area
-		//		+ as_double("csp.pt.cost.plm.percent") * total_direct_cost / 100.
-		//		+ P_ref * 1000. * as_double("csp.pt.cost.plm.per_watt")
-		//		+ as_double("csp.pt.cost.plm.fixed");
+			//----- total installed cost!
+			double total_installed_cost = total_direct_cost + total_indirect_cost;
+			assign("total_installed_cost", var_data((ssc_number_t)total_installed_cost));
 
-		//	//sales tax
-		//	//return ${csp.pt.cost.sales_tax.value}/100*${total_direct_cost}*${csp.pt.cost.sales_tax.percent}/100; };
-		//	double cost_sales_tax = as_double("sales_tax_rate") / 100. * total_direct_cost * as_double("sales_tax_frac") / 100.;
+		}
+		else
+		{
+			H_rec = as_double("H_rec");
+			rec_aspect = as_double("rec_aspect");
+			THT = as_double("THT");
+			A_sf = as_double("A_sf");
+		}
 
-		//	//----- indirect cost
-		//	double total_indirect_cost = cost_epc + cost_plm + cost_sales_tax;
+		D_rec = H_rec / rec_aspect;
+		
+		heliostatfield.ms_params.m_rec_height = as_double("rec_height");
+		heliostatfield.ms_params.m_rec_aspect = as_double("rec_aspect");
+		heliostatfield.ms_params.m_h_tower = as_double("h_tower");
+		heliostatfield.ms_params.m_rec_hl_perm2 = as_double("rec_hl_perm2");
+		heliostatfield.ms_params.m_q_design = as_double("Q_rec_des");
+		heliostatfield.ms_params.m_dni_des = as_double("dni_des");
+		heliostatfield.ms_params.m_weather_file = as_string("solar_resource_file");
+		heliostatfield.ms_params.m_land_bound_type = (int) as_double("land_bound_type");
+		heliostatfield.ms_params.m_land_max = as_double("land_max");
+		heliostatfield.ms_params.m_land_min = as_double("land_min");
+		heliostatfield.ms_params.m_p_start = as_double("p_start");
+		heliostatfield.ms_params.m_p_track = as_double("p_track");
+		heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");
+		heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");
+		heliostatfield.ms_params.m_n_flux_x = (int) as_double("n_flux_x");
+		heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");
+		heliostatfield.ms_params.m_c_atm_0 = as_double("c_atm_0");
+		heliostatfield.ms_params.m_c_atm_1 = as_double("c_atm_1");
+		heliostatfield.ms_params.m_c_atm_2 = as_double("c_atm_2");
+		heliostatfield.ms_params.m_c_atm_3 = as_double("c_atm_3");
+		heliostatfield.ms_params.m_n_facet_x = (int) as_double("n_facet_x");
+		heliostatfield.ms_params.m_n_facet_y = (int) as_double("n_facet_y");
+		heliostatfield.ms_params.m_focus_type = (int) as_double("focus_type");
+		heliostatfield.ms_params.m_cant_type = (int) as_double("cant_type");
+		heliostatfield.ms_params.m_n_flux_days = (int) as_double("n_flux_days");
+		heliostatfield.ms_params.m_delta_flux_hrs = (int) as_double("delta_flux_hrs");
 
-		//	//----- total installed cost!
-		//	double total_installed_cost = total_direct_cost + total_indirect_cost;
-		//	assign("total_installed_cost", var_data((ssc_number_t)total_installed_cost));
+		int run_type = heliostatfield.ms_params.m_run_type;
 
-		//}
-		//else
-		//{
-		//	H_rec = as_double("H_rec");
-		//	rec_aspect = as_double("rec_aspect");
-		//	THT = as_double("THT");
-		//	A_sf = as_double("A_sf");
-		//}
+		if( run_type == 1 )
+		{
+			heliostatfield.ms_params.m_helio_positions = as_matrix("helio_positions");
+		}
+		else if( run_type == 2 )
+		{
+			heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
+			heliostatfield.ms_params.m_flux_positions = as_matrix("flux_positions");
+			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
+		}
+		else
+		{
+			string msg = util::format("SSC INPUT 'run_type' must be set to either 1 or 2. Its input value is %d", run_type);
 
-		//D_rec = H_rec / rec_aspect;
-		//
-		//solar_field.set_csp_component_value_ssc_double("rec_height", H_rec);
-		//solar_field.set_csp_component_value_ssc_double("rec_aspect", rec_aspect);
-		//solar_field.set_csp_component_value_ssc_double("h_tower", THT);
-		//solar_field.set_csp_component_value_ssc_double("rec_hl_perm2", as_double("rec_hl_perm2"));
-		//solar_field.set_csp_component_value_ssc_double("q_design", as_double("Q_rec_des"));
-		//solar_field.set_csp_component_value_ssc_double("dni_des", as_double("dni_des"));
-		//solar_field.set_csp_component_value_ssc_string("weather_file", as_string("solar_resource_file"));
-		//solar_field.set_csp_component_value_ssc_double("land_bound_type", as_double("land_bound_type"));
-		//solar_field.set_csp_component_value_ssc_double("land_max", as_double("land_max"));
-		//solar_field.set_csp_component_value_ssc_double("land_min", as_double("land_min"));
-		//solar_field.set_csp_component_value_ssc_double("p_start", as_double("p_start"));
-		//solar_field.set_csp_component_value_ssc_double("p_track", as_double("p_track"));
-		//solar_field.set_csp_component_value_ssc_double("hel_stow_deploy", as_double("hel_stow_deploy"));
-		//solar_field.set_csp_component_value_ssc_double("v_wind_max", as_double("v_wind_max"));
-		//solar_field.set_csp_component_value_ssc_double("n_flux_x", as_double("n_flux_x"));
-		//solar_field.set_csp_component_value_ssc_double("n_flux_y", as_double("n_flux_y"));
-		//solar_field.set_csp_component_value_ssc_double("c_atm_0", as_double("c_atm_0"));
-		//solar_field.set_csp_component_value_ssc_double("c_atm_1", as_double("c_atm_1"));
-		//solar_field.set_csp_component_value_ssc_double("c_atm_2", as_double("c_atm_2"));
-		//solar_field.set_csp_component_value_ssc_double("c_atm_3", as_double("c_atm_3"));
-		//solar_field.set_csp_component_value_ssc_double("n_facet_x", as_double("n_facet_x"));
-		//solar_field.set_csp_component_value_ssc_double("n_facet_y", as_double("n_facet_y"));
-		//solar_field.set_csp_component_value_ssc_double("focus_type", as_double("focus_type"));
-		//solar_field.set_csp_component_value_ssc_double("cant_type", as_double("cant_type"));
-		//solar_field.set_csp_component_value_ssc_double("n_flux_days", as_double("n_flux_days"));
-		//solar_field.set_csp_component_value_ssc_double("delta_flux_hrs", as_double("delta_flux_hrs"));   
+			throw exec_error("MSPT CSP Solver", msg);
+		}
 
-		//int run_type = (int) as_double("run_type");
+		// Set callback information
+		heliostatfield.mf_callback = ssc_mspt_solarpilot_callback;
+		heliostatfield.m_cdata = (void*)this;
 
-		//size_t n_rows = 0;
-		//size_t n_cols = 0;
+		// Try running pt heliostat init() call just for funsies
+			// What happens when no callback to reference?
+		heliostatfield.init();
 
-		//if( run_type == 1 )
-		//	solar_field.set_csp_component_value_ssc_matrix("helio_positions", as_matrix("helio_positions", &n_rows, &n_cols), &n_rows, &n_cols);
-		//else if( run_type == 2 )
-		//{
-		//	solar_field.set_csp_component_value_ssc_matrix("eta_map", as_matrix("eta_map", &n_rows, &n_cols), &n_rows, &n_cols);
-		//	solar_field.set_csp_component_value_ssc_matrix("flux_positions", as_matrix("flux_positions", &n_rows, &n_cols), &n_rows, &n_cols);
-		//	solar_field.set_csp_component_value_ssc_matrix("flux_maps", as_matrix("flux_maps", &n_rows, &n_cols), &n_rows, &n_cols);
-		//}
-		//else
-		//{
-		//	char tstr[300];
-		//	sprintf(tstr, "SSC INPUT 'run_type' must be set to either 1 or 2. Its input value is %d", run_type);
-
-		//	error_msg.append(tstr);
-
-		//	throw exec_error("MSPT CSP Solver", error_msg);
-		//}
 
 		//// *********************************************************
 		//// *********************************************************
 		//// *********************************************************
-		////      Now set Type 222 parameters in solar_field
+		////      Now set Type 222 parameters
 		//// *********************************************************
 		//// *********************************************************
 		//// *********************************************************
-		//solar_field.set_csp_component_value_ssc_double("N_panels", as_double("N_panels"));
-		//solar_field.set_csp_component_value_ssc_double("D_rec", as_double("D_rec"));
-		//solar_field.set_csp_component_value_ssc_double("H_rec", as_double("H_rec"));
-		//solar_field.set_csp_component_value_ssc_double("THT", as_double("THT"));
-		//solar_field.set_csp_component_value_ssc_double("d_tube_out", as_double("d_tube_out"));
-		//solar_field.set_csp_component_value_ssc_double("th_tube", as_double("th_tube"));
-		//solar_field.set_csp_component_value_ssc_double("mat_tube", as_double("mat_tube"));
-		//solar_field.set_csp_component_value_ssc_double("rec_htf", as_double("rec_htf"));
-		//solar_field.set_csp_component_value_ssc_matrix("field_fl_props", as_matrix("field_fl_props", &n_rows, &n_cols), &n_rows, &n_cols);
-		//solar_field.set_csp_component_value_ssc_double("Flow_type", as_double("Flow_type"));
-		//solar_field.set_csp_component_value_ssc_double("epsilon", as_double("epsilon"));
-		//solar_field.set_csp_component_value_ssc_double("hl_ffact", as_double("hl_ffact"));
-		//solar_field.set_csp_component_value_ssc_double("T_htf_hot_des", as_double("T_htf_hot_des"));
-		//solar_field.set_csp_component_value_ssc_double("T_htf_cold_des", as_double("T_htf_cold_des"));
-		//solar_field.set_csp_component_value_ssc_double("f_rec_min", as_double("f_rec_min"));
-		//solar_field.set_csp_component_value_ssc_double("Q_rec_des", as_double("Q_rec_des"));
-		//solar_field.set_csp_component_value_ssc_double("rec_su_delay", as_double("rec_su_delay"));
-		//solar_field.set_csp_component_value_ssc_double("rec_qf_delay", as_double("rec_qf_delay"));
-		//solar_field.set_csp_component_value_ssc_double("m_dot_htf_max", as_double("m_dot_htf_max"));
-		//solar_field.set_csp_component_value_ssc_double("A_sf", as_double("A_sf"));
+		C_mspt_receiver_222 receiver;
+		receiver.m_n_panels = as_double("N_panels");
+		receiver.m_d_rec = D_rec;
+		receiver.m_h_rec = H_rec;
+		receiver.m_h_tower = THT;
+		receiver.m_od_tube = as_double("d_tube_out");
+		receiver.m_th_tube = as_double("th_tube");
+		receiver.m_mat_tube = as_double("mat_tube");
+		receiver.m_field_fl = (int) as_double("rec_htf");
+		receiver.m_field_fl_props = as_matrix("field_fl_props");
+		receiver.m_flow_type = as_double("Flow_type");
+		receiver.m_epsilon = as_double("epsilon");
+		receiver.m_hl_ffact = as_double("hl_ffact");
+		receiver.m_T_htf_hot_des = as_double("T_htf_hot_des");
+		receiver.m_T_htf_cold_des = as_double("T_htf_cold_des");
+		receiver.m_f_rec_min = as_double("f_rec_min");
+		receiver.m_q_rec_des = as_double("Q_rec_des");
+		receiver.m_rec_su_delay = as_double("rec_su_delay");
+		receiver.m_rec_qf_delay = as_double("rec_qf_delay");
+		receiver.m_m_dot_htf_max = as_double("m_dot_htf_max");
+		receiver.m_A_sf = A_sf;
+		receiver.m_n_flux_x = as_double("n_flux_x");
+		receiver.m_n_flux_y = as_double("n_flux_y");
+
+		// Optional ISCC stuff...
+		receiver.init();
 
 
-		////solar_field.init();
 
 		//C_csp_weatherreader weather;
 
@@ -596,5 +609,15 @@ public:
 
 	}
 };
+
+static bool ssc_mspt_solarpilot_callback( simulation_info *siminfo, void *data )
+{
+	cm_ty_sandbox *cm = static_cast<cm_ty_sandbox*> (data);
+	if( !cm )
+		false;
+	float simprogress = (float)siminfo->getCurrentSimulation() / (float)(max(siminfo->getTotalSimulationCount(), 1));
+
+	return cm->relay_message(*siminfo->getSimulationNotices(), simprogress*100.0f);
+}
 
 DEFINE_MODULE_ENTRY(ty_sandbox, "trying out code", 1)
