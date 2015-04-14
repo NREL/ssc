@@ -3,10 +3,10 @@
 
 #include "csp_solver_util.h"
 
-#include "solarpilot/sort_method.h"
+#include "sort_method.h"
 #include "interpolation_routines.h"
-#include "solarpilot/AutoPilot_API.h" 
-#include "solarpilot/IOUtil.h"
+#include "AutoPilot_API.h" 
+#include "IOUtil.h"
 
 
 class C_pt_heliostatfield
