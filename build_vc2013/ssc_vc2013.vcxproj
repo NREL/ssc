@@ -30,7 +30,6 @@
     <ClCompile Include="..\ssc\cmod_fossilgen.cpp" />
     <ClCompile Include="..\ssc\cmod_generic_system.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal.cpp" />
-    <ClCompile Include="..\ssc\cmod_gridnet.cpp" />
     <ClCompile Include="..\ssc\cmod_hcpv.cpp" />
     <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
     <ClCompile Include="..\ssc\cmod_irradproc.cpp" />
@@ -82,7 +81,7 @@
     <ClCompile Include="..\ssc\tckernel.cpp" />
     <ClCompile Include="..\ssc\vartab.cpp" />
     <ClCompile Include="..\ssc\common.cpp" />
-	</ItemGroup>
+  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssc\cmod_battery.h" />
     <ClInclude Include="..\ssc\common_financial.h" />
