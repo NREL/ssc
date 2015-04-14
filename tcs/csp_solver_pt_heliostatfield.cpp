@@ -20,6 +20,8 @@ C_pt_heliostatfield::C_pt_heliostatfield()
 	m_n_flux_x = m_n_flux_y = m_N_hel = -1;
 
 	field_efficiency_table = 0;
+
+	m_cdata = NULL;
 }
 
 C_pt_heliostatfield::~C_pt_heliostatfield()
@@ -28,7 +30,8 @@ C_pt_heliostatfield::~C_pt_heliostatfield()
 		delete field_efficiency_table;
 }
 
-void C_pt_heliostatfield::init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata)
+//void C_pt_heliostatfield::init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata)
+void C_pt_heliostatfield::init()
 {
 	//Read in parameters
 	int nrows1, ncols1;
@@ -386,7 +389,7 @@ void C_pt_heliostatfield::init(bool(*callback)(simulation_info* siminfo, void *d
 					//wfdata.push_back( std::string(buf) );
 				}
 
-				sapi.SetDetailCallback( callback, cdata );
+				sapi.SetDetailCallback( mf_callback, m_cdata );
 				sapi.SetSummaryCallbackStatus(false);
 
 				sapi.GenerateDesignPointSimulations( amb, V, wfdata );
@@ -449,7 +452,7 @@ void C_pt_heliostatfield::init(bool(*callback)(simulation_info* siminfo, void *d
 			//ms_params.m_N_hel = m_N_hel;					//value(P_N_hel, (double)m_N_hel);
 
 			sapi.SetSummaryCallbackStatus(true);
-			sapi.SetSummaryCallback( callback, cdata );
+			sapi.SetSummaryCallback( mf_callback, m_cdata );
 
 			//set up flux map resolution
 			fluxtab.is_user_spacing = true;

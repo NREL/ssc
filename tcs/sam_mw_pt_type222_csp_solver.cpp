@@ -164,7 +164,7 @@ public:
 	{
 		mspt_receiver.m_field_fl = (int) value(P_field_fl);
 
-		int n_rows = 0;
+		int n_rows = 0; 
 		int n_cols = 0;
 		double *field_fl_props = value(P_field_fl_props, &n_rows, &n_cols);
 		mspt_receiver.m_field_fl_props.resize(n_rows, n_cols);

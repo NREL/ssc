@@ -22,7 +22,7 @@ static bool solarpilot_callback( simulation_info *siminfo, void *data );
 A self-contained heliostat field type that directly calls SolarPilot through the AutoPilot API. The user
 may optionally specify the heliostat field positions or may use this type to generate positions based on
 input parameters.
-
+ 
 This type can be run in three different modes. 
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -548,12 +548,16 @@ public:
 
 		mc_heliostatfield.ms_params.m_land_area = value(P_land_area);
 
+		mc_heliostatfield.mf_callback = solarpilot_callback;
+		mc_heliostatfield.m_cdata = (void*)this;
+
 		int out_type = -1;
 		std::string out_msg = "";
 
 		try
 		{
-			mc_heliostatfield.init(solarpilot_callback, (void*)this);
+			//mc_heliostatfield.init(solarpilot_callback, (void*)this);
+			mc_heliostatfield.init();
 		}
 
 		catch( C_csp_exception &csp_exception )
