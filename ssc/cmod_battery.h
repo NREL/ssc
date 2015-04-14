@@ -32,6 +32,9 @@ struct battstor
 	bool dm_charge[4], dm_discharge[4], dm_gridcharge[4]; // manual dispatch
 	util::matrix_static_t<float, 12, 24> dm_sched;
 	
+	double e_charge;
+	double e_discharge;
+
 	// outputs
 	ssc_number_t *outTotalCharge,
 		*outAvailableCharge,
@@ -40,12 +43,14 @@ struct battstor
 		*outMaxCharge,
 		*outSOC,
 		*outDOD,
-		*outCurrent ,
+		*outCurrent,
 		*outCellVoltage,
 		*outBatteryVoltage,
 		*outBatteryBankVoltage,
 		*outCapacityPercent,
 		*outCycles,
+		*out40Cycles,
+		*out100Cycles,
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
 		*outDispatchMode,
@@ -54,6 +59,8 @@ struct battstor
 		*outPVToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad;
+	
+	double outAverageCycleEfficiency;
 };
 
 

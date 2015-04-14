@@ -74,10 +74,13 @@ public:
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
+	void check_charge_change(); 
+
 
 	// common outputs
 	double SOC();
 	double DOD();
+	double prev_DOD();
 	double q0();
 	double I();
 	double P();
@@ -89,8 +92,11 @@ protected:
 	double _P;   // [Ah] - Power draw during last step [ P > 0 discharge, P < 0 charge]
 	double _SOC; // [%] - State of Charge
 	double _DOD; // [%] - Depth of Discharge
+	double _DOD_prev; // [%] - Depth of Discharge of previous step
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
-	bool _prev_charging; // [true/false] - indicates if last state was charging;
+	int _prev_charge; // {CHARGE, NO_CHARGE, DISCHARGE}
+
+	enum {CHARGE, NO_CHARGE, DISCHARGE};
 };
 
 /*
@@ -240,6 +246,8 @@ public:
 	void rainflow_finish();
 	int cycles_elapsed();
 	double capacity_percent();
+	int lifetime_t::forty_percent_cycles();
+	int lifetime_t::hundred_percent_cycles();
 
 protected:
 	void rainflow_ranges();
@@ -254,7 +262,7 @@ protected:
 	std::vector<double> _capacities_vect;
 
 
-	double _nCycles;
+	int _nCycles;
 	double _Dlt;			// % damage according to rainflow
 	double _Clt;			// % capacity 
 	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
@@ -262,6 +270,8 @@ protected:
 	double _Xlt;
 	double _Ylt;
 	double _Slt;
+	int _fortyPercent;
+	int _hundredPercent;
 	std::vector<double> _Peaks;
 	double _Range;
 	double _average_range;

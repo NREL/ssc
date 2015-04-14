@@ -71,6 +71,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_cell",                         "Battery Cell Voltage",                                  "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_bank",                         "Battery Bank Voltage",                                  "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                               "Battery Number of Cycles",                              "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "forty_percent_cycles",                 "Battery Number of 40% DOD Cycles",                      "",      "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "hundred_percent_cycles",               "Battery Number of 100% DOD Cycles",                     "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                  "Battery Temperature",                                   "C",     "", "Battery", "", "", "" }, 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_percent",                     "Battery Capacity Percent for Lifetime",                 "%",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Capacity Percent for Temperature",              "%",     "", "Battery", "", "", "" },
@@ -79,7 +81,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                           "Energy to load from PV",                                "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_to_load",                      "Energy to load from battery",                           "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                         "Energy to load from grid",                              "kWh",   "", "Battery", "", "", "" },
-
+	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",             "Battery Cycle Efficiency",                              "%",     "", "Annual", "*", "", "" },
+	
 var_info_invalid };
 
 
@@ -107,6 +110,8 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outBatteryBankVoltage = 0;
 	outCapacityPercent = 0;
 	outCycles = 0;
+	out40Cycles = 0;
+	out100Cycles = 0;
 	outBatteryTemperature = 0;
 	outCapacityThermalPercent = 0;
 	outBatteryEnergy = 0;
@@ -114,6 +119,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outPVToLoad = 0;
 	outBatteryToLoad = 0;
 	outGridToLoad = 0;
+	outAverageCycleEfficiency = 0;
 
 
 	en = setup_model;
@@ -170,6 +176,8 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outBatteryBankVoltage = cm.allocate("voltage_bank", nrec);
 	outCapacityPercent = cm.allocate("capacity_percent", nrec);
 	outCycles = cm.allocate("Cycles", nrec);
+	out40Cycles = cm.allocate("forty_percent_cycles", nrec);
+	out100Cycles = cm.allocate("hundred_percent_cycles", nrec);
 	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
 	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
 	outBatteryEnergy = cm.allocate("battery_energy", nrec);
@@ -177,7 +185,6 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outPVToLoad = cm.allocate("pv_to_load", nrec);
 	outBatteryToLoad = cm.allocate("battery_to_load", nrec);
 	outGridToLoad = cm.allocate("grid_to_load", nrec);
-
 
 	// model initialization
 	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
@@ -272,7 +279,9 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	// Lifetime Output
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
 	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
-				
+	out40Cycles[idx] = (int)(lifetime_model->forty_percent_cycles());
+	out100Cycles[idx] = (int)(lifetime_model->hundred_percent_cycles());
+
 	// Thermal Output
 	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
 	outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->CapacityPercent());
@@ -284,6 +293,10 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load());
 	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load());
 
+	if (outBatteryEnergy[idx] > 0)
+		e_discharge += outBatteryEnergy[idx];
+	else
+		e_charge += (-outBatteryEnergy[idx]);
 }
 
 void battstor::finalize( size_t nrec )
@@ -291,6 +304,7 @@ void battstor::finalize( size_t nrec )
 	battery_bank_model->finish();
 	outCapacityPercent[nrec - 1] = (ssc_number_t)(lifetime_model->capacity_percent());
 	outCycles[nrec - 1] = (int)(lifetime_model->cycles_elapsed());
+	outAverageCycleEfficiency = (100.*(e_discharge / e_charge));
 }
 
 
