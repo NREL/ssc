@@ -14,18 +14,36 @@ capacity_t::capacity_t(double q)
 	// Initialize SOC to 100, DOD to 0
 	_SOC = 100;
 	_DOD = 0;
+	_DOD_prev = 0;
 
 	// Initialize charging states
-	_prev_charging = false;
+	_prev_charge = DISCHARGE;
 	_chargeChange = false;
 }
-
-bool capacity_t::chargeChanged()
+void capacity_t::check_charge_change()
 {
-	return _chargeChange;
+	int charging = NO_CHARGE;
+
+	// charge state 
+	if (_I < 0)
+		charging = CHARGE;
+	else if (_I > 0)
+		charging = DISCHARGE;
+
+	// Check if charge changed 
+	_chargeChange = false;
+	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE))
+	{
+		_chargeChange = true;
+		_prev_charge = charging;
+	}
 }
+
+
+bool capacity_t::chargeChanged(){return _chargeChange;}
 double capacity_t::SOC(){ return _SOC; }
 double capacity_t::DOD(){ return _DOD; }
+double capacity_t::prev_DOD(){ return _DOD_prev; }
 double capacity_t::q0(){ return _q0; }
 double capacity_t::I(){ return _I; }
 double capacity_t::P(){ return _P; }
@@ -137,40 +155,29 @@ void capacity_kibam_t::parameter_compute()
 
 void capacity_kibam_t::updateCapacity(double P, voltage_t * voltage_model, double dt, int cycles)
 {
+	_DOD_prev = _DOD;
 	double V = voltage_model->battery_voltage();
-	double I = P / V;
+	_P = P;
+	_I = _P / V;
 	double Idmax = 0.;
 	double Icmax = 0.;
 	double Id = 0.;
 	double Ic = 0.;
 	double q1 = 0.;
 	double q2 = 0.;
-	bool charging = false;
-	bool no_charge = false;
 
-	if (I > 0)
+	if (_I > 0)
 	{
 		Idmax = Idmax_compute(_q1_0, _q0, dt);
-		Id = fmin(I, Idmax);
-		I = Id;
+		Id = fmin(_I, Idmax);
+		_I = Id;
 	}
-	else if (I < 0 )
+	else if (_I < 0 )
 	{
 		Icmax = Icmax_compute(_q1_0, _q0, dt);
-		Ic = -fmin(fabs(I), fabs(Icmax));
-		I = Ic;
-		charging = true;
+		Ic = -fmin(fabs(_I), fabs(Icmax));
+		_I = Ic;
 	}
-	else
-	{
-		no_charge = true;
-	}
-
-	// Check if charge changed
-	if (charging != _prev_charging && !no_charge)
-		_chargeChange = true;
-	else
-		_chargeChange = false;
 
 	/*
 	// Loop so we don't discharge much beyond cut-off voltage
@@ -184,16 +191,16 @@ void capacity_kibam_t::updateCapacity(double P, voltage_t * voltage_model, doubl
 			break;
 	*/
 		// new charge levels
-		q1 = q1_compute(_q1_0, _q0, dt, I);
-		q2 = q2_compute(_q2_0, _q0, dt, I);
+		q1 = q1_compute(_q1_0, _q0, dt, _I);
+		q2 = q2_compute(_q2_0, _q0, dt, _I);
 
 		// update max charge at this current
-		if (fabs(I) > 0)
-			_qmaxI = qmax_of_i_compute(fabs(_qmaxI / I));
+		if (fabs(_I) > 0)
+			_qmaxI = qmax_of_i_compute(fabs(_qmaxI / _I));
 
 		// update the SOC
 		_SOC = ((q1 + q2) / _qmax) * 100;
-
+		
 		// due to dynamics, it's possible SOC could be slightly above 1 or below 0
 		if (_SOC > 100.)
 			_SOC = 100.;
@@ -206,12 +213,8 @@ void capacity_kibam_t::updateCapacity(double P, voltage_t * voltage_model, doubl
 		_q1_0 = q1;
 		_q2_0 = q2;
 		_q0 = q1 + q2;
-		_I = I;
-		_P = P;
-		if (I > 0)
-			_prev_charging = false;
-		else
-			_prev_charging = true;
+
+		check_charge_change(); 
 
 		// update voltage
 		voltage_model->updateVoltage(this, dt);
@@ -246,37 +249,19 @@ capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q)
 {
 	_qmax = q;
 	_qmax0 = q;
+	_prev_charge = DISCHARGE;
 };
 capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
 
 void capacity_lithium_ion_t::updateCapacity(double P, voltage_t * voltage_model, double dt, int cycles)
 {
+	_DOD_prev = _DOD;
 	double q0_old = _q0;
 
 	// currently just a tank of coloumbs
 	 double V = voltage_model->battery_voltage();
 	_I = P / V;
 	_P = P;
-	bool charging = false;
-	bool no_charge = false;
-
-	// charge state 
-	if (_I < 0)
-		charging = true;
-	else if (_I == 0)
-		no_charge = true;
-
-	// Check if charge changed
-	if (charging != _prev_charging && !no_charge)
-		_chargeChange = true;
-	else
-		_chargeChange = false;
-
-	// Update for next time
-	if (_I < 0)
-		_prev_charging = true;
-	else
-		_prev_charging = false;
 
 	/*
 	// Loop so we don't discharge much beyond cut-off voltage
@@ -312,6 +297,8 @@ void capacity_lithium_ion_t::updateCapacity(double P, voltage_t * voltage_model,
 		_SOC = (_q0 / _qmax) * 100;
 		_DOD = 100 - _SOC;
 
+		check_charge_change();
+		
 		// update voltage
 		voltage_model->updateVoltage(this, dt);
 	// }
@@ -447,6 +434,8 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix)
 	_Slt = 0;
 	_Range = 0;
 	_average_range = 0;
+	_fortyPercent = 0;
+	_hundredPercent = 0;
 }
 
 lifetime_t::~lifetime_t(){}
@@ -556,13 +545,14 @@ int lifetime_t::rainflow_compareRanges()
 		
 		_Range = _Ylt;
 		_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
-
 		_nCycles++;
-		// double Cf = util::linterp_col(_cycles_vs_DOD, 0, _Range, 1);
-		// if (fabs(Cf) > 0)
-		//	_Dlt += 100. / Cf;
 		_Clt = bilinear(_average_range, _nCycles);
 
+		// check DOD, increment counters
+		if (_Range > 40.)
+			_fortyPercent++;
+		else if (_Range > 98)
+			_hundredPercent++;
 
 		// discard peak & valley of Y
 		double save = _Peaks[_jlt];
@@ -636,19 +626,34 @@ void lifetime_t::rainflow_finish()
 			{
 				_Range = _Ylt;
 				_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
-
 				_nCycles++;
-				// double Cf = util::linterp_col(_cycles_vs_DOD, 0, _Range, 1);
-				// if (fabs(Cf) > 0)
-				//	_Dlt += 100. / Cf;
 				_Clt = bilinear(_average_range, _nCycles);
 
+				// check DOD, increment counters
+				if (_Range > 40.)
+					_fortyPercent++;
+				else if (_Range > 98.)
+					_hundredPercent++;
+
 				// Discard peak and vally of Y
-				double save = _Peaks[_jlt];
-				_Peaks.pop_back();
-				_Peaks.pop_back();
-				_Peaks.pop_back();
-				_Peaks.push_back(save);
+				if (ii = 0)
+				{
+					// Ylt is at end 
+					_Peaks.pop_back();
+					_Peaks.pop_back();
+				}
+				else if (ii = 1)
+				{	// Ylt is at index 0 and end
+					_Peaks.erase(_Peaks.begin());
+					_Peaks.pop_back();
+					//ii--;
+				}
+				else
+				{
+					// Ylt is at index-1, index-2
+					_Peaks.erase(_Peaks.begin() + ii - 2, _Peaks.begin() + ii - 1);
+					//ii -= 2;
+				}
 				_jlt -= 2;
 			}
 		}
@@ -656,6 +661,9 @@ void lifetime_t::rainflow_finish()
 }
 int lifetime_t::cycles_elapsed(){return _nCycles;}
 double lifetime_t::capacity_percent(){ return _Clt; }
+int lifetime_t::forty_percent_cycles(){ return _fortyPercent; }
+int lifetime_t::hundred_percent_cycles(){ return _hundredPercent; }
+
 
 double lifetime_t::bilinear(double DOD, int cycle_number)
 {
@@ -883,7 +891,7 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 
 void battery_t::run(double P)
 {
-	double lastDOD = _capacity->DOD();
+	double lastDOD = _capacity->prev_DOD();
 
 	if (_capacity->chargeChanged() || _firstStep)
 	{

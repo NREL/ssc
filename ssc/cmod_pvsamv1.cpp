@@ -1853,6 +1853,7 @@ public:
 		// reference: (http://files.sma.de/dl/7680/Perfratio-UEN100810.pdf)
 		// PR = net_ac (kWh) / ( total input radiation (kWh) * stc efficiency (%) )
 		assign( "performance_ratio", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
+		assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
 
 		// calculate nominal dc input
 		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
