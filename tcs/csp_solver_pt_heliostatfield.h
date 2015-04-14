@@ -3,10 +3,11 @@
 
 #include "csp_solver_util.h"
 
-#include "interpolation_routines.h"
-#include "solarpilot/AutoPilot_API.h"
-#include "solarpilot/IOUtil.h"
 #include "solarpilot/sort_method.h"
+#include "interpolation_routines.h"
+#include "solarpilot/AutoPilot_API.h" 
+#include "solarpilot/IOUtil.h"
+
 
 class C_pt_heliostatfield
 {
@@ -44,6 +45,10 @@ public:
 	~C_pt_heliostatfield();
 
 	struct RUN_TYPE { enum A {AUTO, USER_FIELD, USER_DATA}; };
+
+	// Callback funtion
+	bool(*mf_callback)(simulation_info* siminfo, void *data);
+	void *m_cdata;
 
 	struct S_params
 	{
@@ -160,7 +165,8 @@ public:
 
 	S_outputs ms_outputs;
 
-	void init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata);
+	//void init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata);
+	void init();
 
 	void call(double wind_in, double field_control_in, double solaz_in, double solzen_in, double time, double ncall, double step);
 
