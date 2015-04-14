@@ -23,10 +23,15 @@
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
     <ClCompile Include="..\tcs\co2_compressor_library.cpp" />
     <ClCompile Include="..\tcs\compact_hx_discretized.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_mspt_collector_receiver.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_mspt_receiver_222.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_pt_heliostatfield.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_util.cpp" />
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_heliostatfield.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_pt_type222.cpp" />
     <ClCompile Include="..\tcs\sam_type250_input_generator.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_core.cpp" />
     <ClCompile Include="..\tcs\water_properties.cpp" />
@@ -48,7 +53,6 @@
     <ClCompile Include="..\tcs\sam_mw_lf_type261_Wnet.cpp" />
     <ClCompile Include="..\tcs\sam_mw_lf_type262_salt.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type221.cpp" />
-    <ClCompile Include="..\tcs\sam_mw_pt_type222.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type224.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type228.cpp" />
     <ClCompile Include="..\tcs\sam_mw_trough_type250.cpp" />
@@ -62,7 +66,6 @@
     <ClCompile Include="..\tcs\sam_trough_model_type805.cpp" />
     <ClCompile Include="..\tcs\sam_trough_plant_type807.cpp" />
     <ClCompile Include="..\tcs\sam_trough_storage_type806.cpp" />
-    <ClCompile Include="..\tcs\sco2_power_cycle.cpp" />
     <ClCompile Include="..\tcs\sco2_rec_util.cpp" />
     <ClCompile Include="..\tcs\sco2_test_type401.cpp" />
     <ClCompile Include="..\tcs\solarcollector.cpp" />
@@ -81,6 +84,11 @@
     <ClInclude Include="..\tcs\cavity_calcs.h" />
     <ClInclude Include="..\tcs\co2_compressor_library.h" />
     <ClInclude Include="..\tcs\compact_hx_discretized.h" />
+    <ClInclude Include="..\tcs\csp_solver_core.h" />
+    <ClInclude Include="..\tcs\csp_solver_mspt_collector_receiver.h" />
+    <ClInclude Include="..\tcs\csp_solver_mspt_receiver_222.h" />
+    <ClInclude Include="..\tcs\csp_solver_pt_heliostatfield.h" />
+    <ClInclude Include="..\tcs\csp_solver_util.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
     <ClInclude Include="..\tcs\sco2_pc_core.h" />
@@ -91,7 +99,6 @@
     <ClInclude Include="..\tcs\ngcc_powerblock.h" />
     <ClInclude Include="..\tcs\powerblock.h" />
     <ClInclude Include="..\tcs\sam_csp_util.h" />
-    <ClInclude Include="..\tcs\sco2_power_cycle.h" />
     <ClInclude Include="..\tcs\sco2_rec_util.h" />
     <ClInclude Include="..\tcs\storage_hx.h" />
     <ClInclude Include="..\tcs\tcskernel.h" />
@@ -170,7 +177,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt;$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt;$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -181,7 +188,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -194,7 +201,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt;$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\nlopt;$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -211,7 +218,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
