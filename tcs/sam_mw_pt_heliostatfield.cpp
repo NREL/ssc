@@ -7,9 +7,9 @@
 #include <algorithm>
 
 #include "interpolation_routines.h"
-#include "solarpilot/AutoPilot_API.h"
-#include "solarpilot/IOUtil.h"
-#include "solarpilot/sort_method.h"
+#include "AutoPilot_API.h"
+#include "IOUtil.h"
+#include "sort_method.h"
 
 using namespace std;
 
