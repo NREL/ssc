@@ -303,16 +303,9 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 		e_discharge += outBatteryEnergy[idx];
 	else
 		e_charge += (-outBatteryEnergy[idx]);
-}
 
-void battstor::finalize( size_t nrec )
-{
-	battery_bank_model->finish();
-	outCapacityPercent[nrec - 1] = (ssc_number_t)(lifetime_model->capacity_percent());
-	outCycles[nrec - 1] = (int)(lifetime_model->cycles_elapsed());
 	outAverageCycleEfficiency = (100.*(e_discharge / e_charge));
 }
-
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -373,9 +366,6 @@ public:
 
 			}	// End loop over subhourly
 		} // End loop over hourly
-
-
-		batt.finalize( nrec );
 	}
 
 };
