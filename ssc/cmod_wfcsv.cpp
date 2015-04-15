@@ -25,6 +25,7 @@ public:
 	{
 		std::string input = as_string("input_file");
 
+
 		if ( is_assigned("output_file") )
 		{
 			std::string output = as_string("output_file");

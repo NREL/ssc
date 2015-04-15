@@ -1075,7 +1075,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		}
 		else if (m_type == EPW)
 		{
-			//char *pret = fgets(buf, NBUF, fp);
+			char *pret = fgets(buf, NBUF, fp);
 			int ncols = locate(buf, cols, NCOL, ',');
 
 			if (ncols < 32)
@@ -1085,37 +1085,31 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				return false;
 			}
 
-			if (!(atoi(cols[1]) == 2 && atoi(cols[2]) == 29)){
+			m_columns[YEAR].data[i] = atoi(cols[0]);
+			m_columns[MONTH].data[i] = atoi(cols[1]);
+			m_columns[DAY].data[i] = atoi(cols[2]);
+			m_columns[HOUR].data[i] = atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
+			m_columns[MINUTE].data[i] = 30;
 
-				m_columns[YEAR].data[i] = atoi(cols[0]);
-				m_columns[MONTH].data[i] = atoi(cols[1]);
-				m_columns[DAY].data[i] = atoi(cols[2]);
-				m_columns[HOUR].data[i] = atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
-				m_columns[MINUTE].data[i] = 30;
+			m_columns[GHI].data[i] = (double)atof(cols[13]);
+			m_columns[DNI].data[i] = (double)atof(cols[14]);
+			m_columns[DHI].data[i] = (double)atof(cols[15]);
 
-				m_columns[GHI].data[i] = (double)atof(cols[13]);
-				m_columns[DNI].data[i] = (double)atof(cols[14]);
-				m_columns[DHI].data[i] = (double)atof(cols[15]);
+			m_columns[WSPD].data[i] = (double)atof(cols[21]);
+			m_columns[WDIR].data[i] = (double)atof(cols[20]);
 
-				m_columns[WSPD].data[i] = (double)atof(cols[21]);
-				m_columns[WDIR].data[i] = (double)atof(cols[20]);
+			m_columns[TDRY].data[i] = (double)atof(cols[6]);
+			m_columns[TWET].data[i] = (double)atof(cols[7]);
 
-				m_columns[TDRY].data[i] = (double)atof(cols[6]);
-				m_columns[TWET].data[i] = (double)atof(cols[7]);
+			m_columns[RH].data[i] = (double)atof(cols[8]);
+			m_columns[PRES].data[i] = (double)atof(cols[9]) * 0.01; /* convert Pa in to mbar */
+			m_columns[SNOW].data[i] = (double)atof(cols[30]); // snowfall
+			m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
+			m_columns[AOD].data[i] = -999; /* no AOD in EPW */
 
-				m_columns[RH].data[i] = (double)atof(cols[8]);
-				m_columns[PRES].data[i] = (double)atof(cols[9]) * 0.01; /* convert Pa in to mbar */
-				m_columns[SNOW].data[i] = (double)atof(cols[30]); // snowfall
-				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
-				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
+			m_columns[TDEW].data[i] = wiki_dew_calc(tdry, rhum);
 
-				m_columns[TDEW].data[i] = wiki_dew_calc(tdry, rhum);
-
-				i++;
-			}
-
-			//if ( pret!=buf )
-			if (ferror(fp))
+			if ( pret!=buf )
 			{
 				m_errorStr = "EPW: data line formatting error at record " + util::to_string(i);
 				fclose(fp);
@@ -1124,7 +1118,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		}
 		else if (m_type == SMW)
 		{
-			//char *pret = fgets(buf, NBUF, fp);
+			char *pret = fgets(buf, NBUF, fp);
 			int ncols = locate(buf, cols, NCOL, ',');
 
 			if (ncols < 12)
@@ -1136,39 +1130,33 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 			double T = m_time;
 
-			if (!(atoi(cols[1]) == 2 && atoi(cols[2]) == 29)){
-
-				m_columns[YEAR].data[i] = (float)m_startYear; // start year
-				m_columns[MONTH].data[i] = (float)util::month_of(T / 3600.0); // 1-12
-				m_columns[DAY].data[i] = (float)util::day_of_month(month, T / 3600.0); // 1-nday
-				m_columns[HOUR].data[i] = (float)(((int)(T / 3600.0)) % 24);  // hour goes 0-23, not 1-24;
-				m_columns[MINUTE].data[i] = (float)fmod(T / 60.0, 60.0);      // minute goes 0-59
+			m_columns[YEAR].data[i] = (float)m_startYear; // start year
+			m_columns[MONTH].data[i] = (float)util::month_of(T / 3600.0); // 1-12
+			m_columns[DAY].data[i] = (float)util::day_of_month(month, T / 3600.0); // 1-nday
+			m_columns[HOUR].data[i] = (float)(((int)(T / 3600.0)) % 24);  // hour goes 0-23, not 1-24;
+			m_columns[MINUTE].data[i] = (float)fmod(T / 60.0, 60.0);      // minute goes 0-59
 
 
-				m_time += step; // increment by step
+			m_time += step; // increment by step
 
-				m_columns[GHI].data[i] = (float)atof(cols[7]);
-				m_columns[DNI].data[i] = (float)atof(cols[8]);
-				m_columns[DHI].data[i] = (float)atof(cols[9]);
+			m_columns[GHI].data[i] = (float)atof(cols[7]);
+			m_columns[DNI].data[i] = (float)atof(cols[8]);
+			m_columns[DHI].data[i] = (float)atof(cols[9]);
 
-				m_columns[WSPD].data[i] = (float)atof(cols[4]);
-				m_columns[WDIR].data[i] = (float)atof(cols[5]);
+			m_columns[WSPD].data[i] = (float)atof(cols[4]);
+			m_columns[WDIR].data[i] = (float)atof(cols[5]);
 
-				m_columns[TDRY].data[i] = (float)atof(cols[0]);
-				m_columns[TDEW].data[i] = (float)atof(cols[1]);
-				m_columns[TWET].data[i] = (float)atof(cols[2]);
+			m_columns[TDRY].data[i] = (float)atof(cols[0]);
+			m_columns[TDEW].data[i] = (float)atof(cols[1]);
+			m_columns[TWET].data[i] = (float)atof(cols[2]);
 
-				m_columns[RH].data[i] = (float)atof(cols[3]);
-				m_columns[PRES].data[i] = (float)atof(cols[6]);
-				m_columns[SNOW].data[i] = (float)atof(cols[11]);
-				m_columns[ALB].data[i] = (float)atof(cols[10]);
-				m_columns[AOD].data[i] = -999; /* no AOD in SMW */
+			m_columns[RH].data[i] = (float)atof(cols[3]);
+			m_columns[PRES].data[i] = (float)atof(cols[6]);
+			m_columns[SNOW].data[i] = (float)atof(cols[11]);
+			m_columns[ALB].data[i] = (float)atof(cols[10]);
+			m_columns[AOD].data[i] = -999; /* no AOD in SMW */
 
-				i++;
-			}
-
-			//if ( pret!=buf )
-			if (ferror(fp))
+			if ( pret!=buf )
 			{
 				m_errorStr = "SMW: data line formatting error at record " + util::to_string(i);
 				fclose(fp);
