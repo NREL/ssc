@@ -1336,7 +1336,7 @@ public:
 		if ( is_assigned( "load" ) )
 		{
 			p_load_in = as_array( "load", &nload );
-			if ( nload != nrec || nload != 8760 )
+			if ( nload != nrec && nload != 8760 )
 				throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 		}
 		
