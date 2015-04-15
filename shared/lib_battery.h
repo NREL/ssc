@@ -243,8 +243,10 @@ public:
 	void rainflow_finish();
 	int cycles_elapsed();
 	double capacity_percent();
-	int lifetime_t::forty_percent_cycles();
-	int lifetime_t::hundred_percent_cycles();
+	int forty_percent_cycles();
+	int hundred_percent_cycles();
+	double cycle_range();
+
 
 protected:
 	void rainflow_ranges();

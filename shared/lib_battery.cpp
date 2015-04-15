@@ -244,7 +244,7 @@ void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
 	_q0 *= capacity_percent*0.01;
 	_q1_0 *= capacity_percent*0.01;
 	_q2_0 *= capacity_percent*0.01;
-	_qmax = _qmax0* capacity_percent*0.01;
+	//_qmax = _qmax0* capacity_percent*0.01;
 	update_SOC();
 }
 
@@ -319,7 +319,7 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
 {
 	_q0 *= capacity_percent*0.01;
-	_qmax = _qmax0 * capacity_percent * 0.01;
+	//_qmax = _qmax0 * capacity_percent * 0.01;
 	update_SOC();
 }
 double capacity_lithium_ion_t::q1(){return _q0;}
@@ -553,6 +553,8 @@ int lifetime_t::rainflow_compareRanges()
 		_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
 		_nCycles++;
 		_Clt = bilinear(_average_range, _nCycles);
+		if (_Clt < 0)
+			_Clt = 0.;
 
 		// check DOD, increment counters
 		if (_Range > 40.)
@@ -634,6 +636,8 @@ void lifetime_t::rainflow_finish()
 				_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
 				_nCycles++;
 				_Clt = bilinear(_average_range, _nCycles);
+				if (_Clt < 0)
+					_Clt = 0.;
 
 				// check DOD, increment counters
 				if (_Range > 40.)
@@ -669,6 +673,7 @@ int lifetime_t::cycles_elapsed(){return _nCycles;}
 double lifetime_t::capacity_percent(){ return _Clt; }
 int lifetime_t::forty_percent_cycles(){ return _fortyPercent; }
 int lifetime_t::hundred_percent_cycles(){ return _hundredPercent; }
+double lifetime_t::cycle_range(){ return _Range; }
 
 
 double lifetime_t::bilinear(double DOD, int cycle_number)
@@ -929,7 +934,6 @@ void battery_t::run(double P)
 	runThermalModel(P / _voltage->battery_voltage());
 	runCapacityModel(P, _voltage);
 	runLossesModel();
-	// runVoltageModel();
 }
 
 void battery_t::finish()
@@ -944,8 +948,6 @@ void battery_t::runThermalModel(double I)
 void battery_t::runCapacityModel(double P, voltage_t * V)
 {
 	_capacity->updateCapacity(P, V, _dt,_lifetime->cycles_elapsed() );
-	// _capacity->updateCapacityForLifetime( _lifetime->capacity_percent() );
-	// _capacity->updateCapacityForThermal(_thermal);
 }
 
 void battery_t::runVoltageModel()

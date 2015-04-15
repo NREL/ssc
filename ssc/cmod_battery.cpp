@@ -64,7 +64,7 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q1",                              "Battery Available Charge",                              "Ah",    "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q2",                              "Battery Bound Charge",                                  "Ah",    "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "SOC",                                  "Battery State of Charge",                               "%",     "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "DOD",                                  "Battery Depth of Discharge",                            "%",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "DOD",                                  "Battery Cycle Depth of Discharge",                      "%",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "qmaxI",                                "Battery Max Capacity at Current",                       "Ah",    "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "qmax",                                 "Battery Max Charge",                                    "Ah",    "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_I",                               "Battery Current",                                       "A",     "", "Battery", "", "", "" },
@@ -275,7 +275,6 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 
 	outTotalCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->q0());
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
-	outDOD[idx] = (ssc_number_t)(capacity_model->DOD());
 	outCurrent[idx] = (capacity_model->I());
 
 	// Voltage Output
@@ -287,6 +286,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 	out40Cycles[idx] = (int)(lifetime_model->forty_percent_cycles());
 	out100Cycles[idx] = (int)(lifetime_model->hundred_percent_cycles());
+	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
 
 	// Thermal Output
 	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
@@ -313,13 +313,7 @@ void battstor::finalize( size_t nrec )
 	outAverageCycleEfficiency = (100.*(e_discharge / e_charge));
 }
 
-
-
-
-
 ///////////////////////////////////////////////////
-
-
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
