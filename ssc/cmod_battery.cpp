@@ -77,7 +77,7 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_percent",                     "Battery Capacity Percent for Lifetime",                 "%",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Capacity Percent for Temperature",              "%",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                       "Energy to/from Battery",                                "kWh",   "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                          "Energy from Grid to Battery",                           "kWh",   "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                          "Energy to/from Grid",                                   "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                           "Energy to load from PV",                                "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_to_load",                      "Energy to load from battery",                           "kWh",   "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                         "Energy to load from grid",                              "kWh",   "", "Battery", "", "", "" },
@@ -228,8 +228,13 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		capacity_model = new capacity_lithium_ion_t(
 			cm.as_double("batt_Qfull"));
 	}
-		
-	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model);
+	
+	losses_model = new losses_t(
+		lifetime_model,
+		thermal_model,
+		capacity_model);
+
+	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 
 	battery_bank_model = new battery_bank_t( battery_model, 
 		1, // cm.as_double("batt_nser"),
@@ -247,6 +252,7 @@ battstor::~battstor()
 	if( thermal_model ) delete thermal_model;
 	if( battery_model ) delete battery_model;
 	if( capacity_model ) delete capacity_model;
+	if (losses_model) delete losses_model;
 	if( battery_bank_model ) delete battery_bank_model;
 	if( dispatch_model ) delete dispatch_model;
 }
@@ -256,7 +262,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	dispatch_model->dispatch( hour_of_year, PV, LOAD );
 	int num_batteries = battery_bank_model->num_batteries();
 
-	// Capacity Output 
+	// Capacity Output with Losses Applied
 	if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
 	{
 		outAvailableCharge[idx] = (ssc_number_t)(num_batteries*kibam->q1());
@@ -284,7 +290,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 
 	// Thermal Output
 	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
-	outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->CapacityPercent());
+	outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent()); 
 
 	// Dispatch output
 	outBatteryEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery());

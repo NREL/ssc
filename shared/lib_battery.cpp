@@ -8,6 +8,8 @@ Define Capacity Model
 capacity_t::capacity_t(double q)
 {
 	_q0 = q;
+	_qmax = q;
+	_qmax0 = q;
 	_I = 0.;
 	_P = 0.;
 
@@ -38,13 +40,22 @@ void capacity_t::check_charge_change()
 		_prev_charge = charging;
 	}
 }
-
-
+void capacity_t::update_SOC(double q0)
+{
+	_SOC = 100.*(q0 / _qmax);
+	_DOD = 100. - _SOC;
+}
+void capacity_t::update_SOC()
+{
+	_SOC = 100.*(_q0 / _qmax);
+	_DOD = 100. - _SOC;
+}
 bool capacity_t::chargeChanged(){return _chargeChange;}
 double capacity_t::SOC(){ return _SOC; }
 double capacity_t::DOD(){ return _DOD; }
 double capacity_t::prev_DOD(){ return _DOD_prev; }
 double capacity_t::q0(){ return _q0; }
+double capacity_t::qmax(){ return _qmax; }
 double capacity_t::I(){ return _I; }
 double capacity_t::P(){ return _P; }
 
@@ -69,6 +80,7 @@ capacity_t(q20)
 
 	// compute the parameters
 	parameter_compute();
+	_qmax0 = _qmax;
 
 	// Assume initial current is 20 hour discharge current
 	// Assume initial charge is 20 capacity
@@ -220,23 +232,24 @@ void capacity_kibam_t::updateCapacity(double P, voltage_t * voltage_model, doubl
 		voltage_model->updateVoltage(this, dt);
 	// }
 }
-void capacity_kibam_t::updateCapacityForThermal(thermal_t * thermal)
+void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 {
-	double capacity_percent = thermal->getCapacityPercent();
 	_q0 *= capacity_percent*0.01;
 	_q1_0 *= capacity_percent*0.01;
 	_q2_0 *= capacity_percent*0.01;
+	update_SOC();
 }
 void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
 {
 	_q0 *= capacity_percent*0.01;
 	_q1_0 *= capacity_percent*0.01;
 	_q2_0 *= capacity_percent*0.01;
+	_qmax = _qmax0* capacity_percent*0.01;
+	update_SOC();
 }
 
 double capacity_kibam_t::q1(){ return _q1_0; }
 double capacity_kibam_t::q2(){ return _q2_0; }
-double capacity_kibam_t::qmax(){return _qmax;}
 double capacity_kibam_t::qmaxI(){return _qmaxI;}
 double capacity_kibam_t::q10(){ return _q10; }
 double capacity_kibam_t::q20(){return _q20;}
@@ -245,12 +258,7 @@ double capacity_kibam_t::q20(){return _q20;}
 /*
 Define Lithium Ion capacity model
 */
-capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q)
-{
-	_qmax = q;
-	_qmax0 = q;
-	_prev_charge = DISCHARGE;
-};
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q){};
 capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
 
 void capacity_lithium_ion_t::updateCapacity(double P, voltage_t * voltage_model, double dt, int cycles)
@@ -303,22 +311,22 @@ void capacity_lithium_ion_t::updateCapacity(double P, voltage_t * voltage_model,
 		voltage_model->updateVoltage(this, dt);
 	// }
 }
-void capacity_lithium_ion_t::updateCapacityForThermal(thermal_t * thermal)
+void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
-	double capacity_percent = thermal->getCapacityPercent();
 	_q0 *= capacity_percent*0.01;
+	update_SOC();
 }
-
+void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
+{
+	_q0 *= capacity_percent*0.01;
+	_qmax = _qmax0 * capacity_percent * 0.01;
+	update_SOC();
+}
 double capacity_lithium_ion_t::q1(){return _q0;}
-double capacity_lithium_ion_t::qmax(){return _qmax;}
 double capacity_lithium_ion_t::qmaxI(){return _qmax;}
 double capacity_lithium_ion_t::q10(){return _qmax;}
 
-void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
-{
-	// update maximum capacity based on number of cycles
-	_qmax = _qmax0 * capacity_percent / 100;
-}
+
 /*
 Define Voltage Model
 */
@@ -401,13 +409,11 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 	return V;
 }
 
-
 // Basic voltage model
 voltage_basic_t::voltage_basic_t(int num_cells, double voltage) :
 voltage_t(num_cells, voltage, 0.){}
 
 void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
-
 
 /*
 Define Lifetime Model
@@ -831,7 +837,6 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	for (int i = 0; i < n; i++)
 	{
 		_cap_vs_temp(i,0) += 273.15; // convert C to K
-		_cap_vs_temp(i,1) *= 0.01; // convert % to frac
 	}
 }
 
@@ -840,13 +845,6 @@ void thermal_t::updateTemperature(double I, double dt)
 	//double T_new = rk4(I, dt*_hours_to_seconds);
 	double T_new = trapezoidal(I, dt*_hours_to_seconds);
 	_T_battery = T_new;
-}
-double thermal_t::getCapacityPercent()
-{
-	// linearly interpolate table 
-	// use column 0 (temp, K) as X values
-	// return interpolated value in column 1 (fraction of capacity)
-	return 100* util::linterp_col( _cap_vs_temp, 0, _T_battery, 1 );
 }
 double thermal_t::f(double T_battery, double I)
 {
@@ -870,7 +868,34 @@ double thermal_t::trapezoidal(double I, double dt)
 	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
 }
 double thermal_t::T_battery(){ return _T_battery; }
-double thermal_t::CapacityPercent(){ return getCapacityPercent(); }
+double thermal_t::capacity_percent()
+{ 
+	return util::linterp_col(_cap_vs_temp, 0, _T_battery, 1); 
+}
+/*
+Define Losses
+*/
+losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity)
+{
+	_lifetime = lifetime;
+	_thermal = thermal;
+	_capacity = capacity;
+	_nCycle = 0;
+}
+void losses_t::run_losses()
+{
+	// only update losses if there is power flow from
+	if (_capacity->I() > 0)
+	{
+		// only update capacity for lifetime if cycle number has changed
+		if (_lifetime->cycles_elapsed() > _nCycle)
+		{
+			_nCycle++;
+			_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
+		}
+		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	}
+}
 /* 
 Define Battery 
 */
@@ -880,12 +905,13 @@ battery_t::battery_t(double power_conversion_efficiency, double dt)
 	_power_conversion_efficiency = power_conversion_efficiency;
 	_dt = dt;
 }
-void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal)
+void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal, losses_t * losses)
 {
 	_capacity = capacity;
 	_lifetime = lifetime;
 	_voltage = voltage;
 	_thermal = thermal;
+	_losses = losses;
 	_firstStep = true;
 }
 
@@ -902,6 +928,7 @@ void battery_t::run(double P)
 	// Compute temperature at end of timestep
 	runThermalModel(P / _voltage->battery_voltage());
 	runCapacityModel(P, _voltage);
+	runLossesModel();
 	// runVoltageModel();
 }
 
@@ -917,8 +944,8 @@ void battery_t::runThermalModel(double I)
 void battery_t::runCapacityModel(double P, voltage_t * V)
 {
 	_capacity->updateCapacity(P, V, _dt,_lifetime->cycles_elapsed() );
-	_capacity->updateCapacityForLifetime( _lifetime->capacity_percent() );
-	_capacity->updateCapacityForThermal(_thermal);
+	// _capacity->updateCapacityForLifetime( _lifetime->capacity_percent() );
+	// _capacity->updateCapacityForThermal(_thermal);
 }
 
 void battery_t::runVoltageModel()
@@ -929,6 +956,10 @@ void battery_t::runVoltageModel()
 void battery_t::runLifetimeModel(double DOD)
 {
 	_lifetime->rainflow(DOD);
+}
+void battery_t::runLossesModel()
+{
+	_losses->run_losses();
 }
 capacity_t * battery_t::capacity_model()
 {
@@ -998,6 +1029,10 @@ double battery_bank_t::bank_voltage()
 {
 	return _num_batteries_series*_battery->battery_voltage();
 }
+double battery_bank_t::cell_voltage()
+{
+	return _battery->cell_voltage();
+}
 int battery_bank_t::num_batteries(){ return _num_batteries; };
 battery_t * battery_bank_t::battery(){ return _battery; };
 
@@ -1052,9 +1087,9 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	// current charge state of battery from last time step.  
 	double chargeNeededToFill = _BatteryBank->bank_charge_needed();						// [Ah] - qmax - qtotal
 	double bank_voltage = _BatteryBank->bank_voltage();									// [V] 
-	double energyNeededToFill = (chargeNeededToFill * bank_voltage)*watt_to_kilowatt;	// [kWh]
-	double current_charge = _BatteryBank->bank_charge_available();						// [Ah]
-	double current_energy = (current_charge * bank_voltage) *watt_to_kilowatt;			// [KWh]
+	double cell_voltage = _BatteryBank->cell_voltage();									// [V]
+	double energyNeededToFill = (chargeNeededToFill * cell_voltage)*watt_to_kilowatt;	// [kWh]
+	
 	_e_grid = 0.;																		// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
 	_e_tofrom_batt = 0.;																// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 	_pv_to_load = 0.;

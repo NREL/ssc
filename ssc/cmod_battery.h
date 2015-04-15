@@ -24,6 +24,7 @@ struct battstor
 	battery_t *battery_model;
 	battery_bank_t *battery_bank_model;
 	dispatch_manual_t *dispatch_model;
+	losses_t *losses_model;
 
 	bool en;
 	int chem;
