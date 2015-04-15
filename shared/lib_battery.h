@@ -22,11 +22,10 @@ public:
 		const util::matrix_t<double> &cap_vs_temp );
 
 	void updateTemperature(double I, double dt);
-	double getCapacityPercent();
 
 	// outputs
 	double T_battery();
-	double CapacityPercent();
+	double capacity_percent();
 
 protected:
 	double f(double T_battery, double I);
@@ -66,28 +65,31 @@ public:
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
 	virtual void updateCapacity(double P, voltage_t * V, double dt, int cycles) = 0;
-	virtual void updateCapacityForThermal(thermal_t * thermal)=0;
+	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
 
-	virtual double qmax() = 0; // max capacity
 	virtual double qmaxI() = 0; // max capacity at current
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
 	void check_charge_change(); 
-
+	void update_SOC(double q0);
+	void update_SOC();
 
 	// common outputs
 	double SOC();
 	double DOD();
 	double prev_DOD();
 	double q0();
+	double qmax(); 
 	double I();
 	double P();
 	bool chargeChanged();
 
 protected:
 	double _q0;  // [Ah] - Total capacity at timestep 
+	double _qmax; // [Ah] - maximum possible capacity
+	double _qmax0; // [Ah] - original maximum capacity
 	double _I;   // [A]  - Current draw during last step
 	double _P;   // [Ah] - Power draw during last step [ P > 0 discharge, P < 0 charge]
 	double _SOC; // [%] - State of Charge
@@ -109,11 +111,10 @@ public:
 	// Public APIs 
 	capacity_kibam_t(double q20, double t1, double q1, double q10);
 	void updateCapacity(double P, voltage_t * V, double dt, int cycles);
-	void updateCapacityForThermal(thermal_t * thermal);
+	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
 	double q1(); // Available charge
 	double q2(); // Bound charge
-	double qmax(); // Max charge
 	double qmaxI(); // Max charge at current
 	double q10(); // Capacity at 10 hour discharge rate
 	double q20(); // Capacity at 20 hour discharge rate
@@ -140,7 +141,6 @@ protected:
 	// model parameters
 	double _c;  // [0-1] - capacity fraction
 	double _k;  // [1/hour] - rate constant
-	double _qmax; // [Ah] - maximum possible capacity
 
 	// charge which changes with time
 	double _q1_0; // [Ah] - charge available
@@ -162,17 +162,14 @@ public:
 
 	// override public api
 	void updateCapacity(double P, voltage_t *, double dt, int cycles);
-	void updateCapacityForThermal(thermal_t * thermal);
+	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
 
 	double q1(); // Available charge
-	double qmax(); // Max charge
 	double qmaxI(); // Max charge at current
 	double q10(); // Capacity at 10 hour discharge rate
 
 protected:
-	double _qmax; // [Ah] - maximum possible capacity
-	double _qmax0; // [Ah] - original maximum capacity
 };
 
 
@@ -285,11 +282,19 @@ protected:
 };
 
 /*
-Losses Base class.
+Losses Base class
 */
 class losses_t
 {
+public:
+	losses_t(lifetime_t *, thermal_t *, capacity_t*);
+	void run_losses();
 
+protected:
+	lifetime_t * _lifetime;
+	thermal_t * _thermal;
+	capacity_t * _capacity;
+	int _nCycle;
 };
 
 /*
@@ -301,7 +306,7 @@ class battery_t
 public:
 	battery_t();
 	battery_t(double power_conversion_efficiency, double dt);
-	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *);
+	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
 	// Run all
 	void run(double P);
@@ -312,6 +317,7 @@ public:
 	void runVoltageModel();
 	void runThermalModel(double I);
 	void runLifetimeModel(double DOD);
+	void runLossesModel();
 
 	capacity_t * capacity_model();
 	voltage_t * voltage_model();
@@ -329,6 +335,7 @@ private:
 	lifetime_t * _lifetime;
 	voltage_t * _voltage;
 	thermal_t * _thermal;
+	losses_t * _losses;
 	double _dt;
 	double _power_conversion_efficiency;
 	bool _firstStep;
@@ -348,6 +355,7 @@ public:
 	double bank_charge_needed();
 	double bank_charge_available();
 	double bank_voltage();
+	double cell_voltage();
 	int num_batteries();
 	battery_t * battery();
 
@@ -358,7 +366,6 @@ protected:
 	int _num_batteries;
 	int _battery_chemistry;
 	double _power_conversion_efficiency;
-
 };
 
 /*
