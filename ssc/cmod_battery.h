@@ -13,7 +13,6 @@ struct battstor
 	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr );
 	~battstor();
 	void advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD );
-	void finalize( size_t nrec );
 
 
 	// member data

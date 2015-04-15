@@ -1784,9 +1784,6 @@ public:
 			accumulate_annual( "dc_snow_loss", "annual_snow_loss", ts_hour);
 		}
 		 
-		if (batt.en)
-			batt.finalize(nrec);
-
 		if (hour != 8760)
 			throw exec_error("pvsamv1", "failed to simulate all 8760 hours, error in weather file ?");
 

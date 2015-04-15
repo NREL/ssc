@@ -13,7 +13,7 @@ capacity_t::capacity_t(double q)
 	_I = 0.;
 	_P = 0.;
 
-	// Initialize SOC to 100, DOD to 0
+	// Initialize SOC, DOD
 	_SOC = 100;
 	_DOD = 0;
 	_DOD_prev = 0;
@@ -434,14 +434,18 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix)
 	_Dlt = 0;
 	_Clt = bilinear(0.,0);
 	_jlt = 0;
-	_klt = 0; 
 	_Xlt = 0;
 	_Ylt = 0;
-	_Slt = 0;
 	_Range = 0;
 	_average_range = 0;
 	_fortyPercent = 0;
 	_hundredPercent = 0;
+
+	FILE * life_file;
+	life_file = fopen("lifetime_metrics.txt", "w+");
+	fprintf(life_file,"Cycle Peaks\n");
+	fclose(life_file);
+
 }
 
 lifetime_t::~lifetime_t(){}
@@ -454,13 +458,10 @@ void lifetime_t::rainflow(double DOD)
 	// Begin algorithm
 	_Peaks.push_back(DOD);
 	bool atStepTwo = true;
-
-	// Assign S, which is the starting peak or valley
-	if (_jlt == 0)
-	{
-		_Slt = DOD;
-		_klt = _jlt;
-	}
+	FILE * life_file;
+	life_file = fopen("lifetime_metrics.txt", "a");
+	fprintf(life_file, "%.2f\n",DOD);
+	fclose(life_file);
 
 	// Loop until break
 	while (atStepTwo)
@@ -514,41 +515,15 @@ int lifetime_t::rainflow_compareRanges()
 	int retCode = LT_SUCCESS;
 	bool contained = true;
 
+	// modified to disregard some of algorithm which doesn't work well
 	if (_Xlt < _Ylt)
 		retCode = LT_GET_DATA;
-	else if (_Xlt == _Ylt)
-	{
-		if ((_Slt == _Peaks[_jlt - 1]) || (_Slt == _Peaks[_jlt - 2]))
-			retCode = LT_GET_DATA;
-		else
-			contained = false;
-	}
 	else if (_Xlt >= _Ylt)
-	{
-		if (_Xlt > _Ylt)
-		{
-			if ((_Slt == _Peaks[_jlt - 1]) || (_Slt == _Peaks[_jlt - 2]))
-			{
-				// Step 4: Move S to next point in vector, then go to step 1
-				_klt++;
-				_Slt = _Peaks[_klt];
-				retCode = LT_GET_DATA;
-			}
-			else
-				contained = false;
-		}
-		else if (_Xlt == _Ylt)
-		{
-			if ((_Slt != _Peaks[_jlt - 1]) && (_Slt != _Peaks[_jlt - 2]))
-				contained = false;
-		}
-
-	}
+		contained = false;
 
 	// Step 5: Count range Y, discard peak & valley of Y, go to Step 2
 	if (!contained)
 	{
-		
 		_Range = _Ylt;
 		_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
 		_nCycles++;
@@ -574,100 +549,6 @@ int lifetime_t::rainflow_compareRanges()
 	}
 
 	return retCode;
-}
-
-void lifetime_t::rainflow_finish()
-{
-	// starting indices, must decrement _jlt by 1
-	int ii = 0;
-	_jlt--;
-	double P = 0.;
-	int rereadCount = 0;
-
-
-	while ( rereadCount <= 1 )
-	{
-		if (ii < _Peaks.size())
-			P = _Peaks[ii];
-		else
-			break;
-
-		// Step 6
-		if (P == _Slt)
-			rereadCount++;
-
-		bool atStepSeven = true;
-
-		// Step 7: Form ranges X,Y
-		while (atStepSeven)
-		{
-			if (_jlt >= 2)
-				rainflow_ranges_circular(ii);
-			else
-			{
-				atStepSeven = false;
-				if (_jlt == 1)
-				{
-					_Peaks.push_back(P);
-					_jlt++;
-					// move to end point
-					ii = _jlt;
-					rainflow_ranges_circular(ii);
-				}
-				// _jlt == 0
-				else
-				{
-					// force out of while
-					rereadCount++;
-					break;
-				}
-			}
-
-			// Step 8: compare X,Y
-			if (_Xlt < _Ylt)
-			{
-				atStepSeven = false;
-				// move to next point (Step 6)
-				ii++;
-			}
-			else
-			{
-				_Range = _Ylt;
-				_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
-				_nCycles++;
-				_Clt = bilinear(_average_range, _nCycles);
-				if (_Clt < 0)
-					_Clt = 0.;
-
-				// check DOD, increment counters
-				if (_Range > 40.)
-					_fortyPercent++;
-				else if (_Range > 98.)
-					_hundredPercent++;
-
-				// Discard peak and vally of Y
-				if (ii = 0)
-				{
-					// Ylt is at end 
-					_Peaks.pop_back();
-					_Peaks.pop_back();
-				}
-				else if (ii = 1)
-				{	// Ylt is at index 0 and end
-					_Peaks.erase(_Peaks.begin());
-					_Peaks.pop_back();
-					//ii--;
-				}
-				else
-				{
-					// Ylt is at index-1, index-2
-					_Peaks.erase(_Peaks.begin() + ii - 2, _Peaks.begin() + ii - 1);
-					//ii -= 2;
-				}
-				_jlt -= 2;
-			}
-		}
-	}
 }
 int lifetime_t::cycles_elapsed(){return _nCycles;}
 double lifetime_t::capacity_percent(){ return _Clt; }
@@ -921,24 +802,20 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 }
 
 void battery_t::run(double P)
-{
-	double lastDOD = _capacity->prev_DOD();
-
-	if (_capacity->chargeChanged() || _firstStep)
-	{
-		runLifetimeModel(lastDOD);
-		_firstStep = false;
-	}
-	
+{	
 	// Compute temperature at end of timestep
 	runThermalModel(P / _voltage->battery_voltage());
 	runCapacityModel(P, _voltage);
-	runLossesModel();
-}
 
-void battery_t::finish()
-{
-	_lifetime->rainflow_finish();
+	if (_capacity->chargeChanged())
+		runLifetimeModel(_capacity->prev_DOD());
+	else if (_firstStep)
+	{
+		runLifetimeModel(_capacity->DOD());
+		_firstStep = false;
+	}
+
+	runLossesModel();
 }
 void battery_t::runThermalModel(double I)
 {
@@ -1014,10 +891,6 @@ battery_bank_t::battery_bank_t(battery_t * battery, int num_batteries_series, in
 void battery_bank_t::run(double P)
 {
 	_battery->run(P / _num_batteries_series);
-}
-void battery_bank_t::finish()
-{
-	_battery->finish();
 }
 double battery_bank_t::bank_charge_needed()
 {

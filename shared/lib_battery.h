@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <stdio.h>
 
 const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
@@ -240,7 +241,6 @@ public:
 	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD);
 	~lifetime_t();
 	void rainflow(double DOD);
-	void rainflow_finish();
 	int cycles_elapsed();
 	double capacity_percent();
 	int forty_percent_cycles();
@@ -265,10 +265,8 @@ protected:
 	double _Dlt;			// % damage according to rainflow
 	double _Clt;			// % capacity 
 	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
-	double _klt;			// current index in Peaks where _Slt is stored
 	double _Xlt;
 	double _Ylt;
-	double _Slt;
 	int _fortyPercent;
 	int _hundredPercent;
 	std::vector<double> _Peaks;
@@ -312,7 +310,6 @@ public:
 
 	// Run all
 	void run(double P);
-	void finish();
 
 	// Run a component level model
 	void runCapacityModel(double P, voltage_t * voltage);
@@ -353,7 +350,6 @@ class battery_bank_t
 public:
 	battery_bank_t(battery_t * battery, int num_batteries_series, int num_batteries_parallel, int battery_chemistry, double power_conversion_efficiency);
 	void run(double P);
-	void finish();
 	double bank_charge_needed();
 	double bank_charge_available();
 	double bank_voltage();
