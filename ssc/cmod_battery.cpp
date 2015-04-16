@@ -90,9 +90,6 @@ var_info_invalid };
 
 battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr )
 {
-	en = setup_model;
-	if (!en) return;
-
 	voltage_model = 0;
 	lifetime_model = 0;
 	thermal_model = 0;
@@ -100,6 +97,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	capacity_model = 0;
 	battery_bank_model = 0;
 	dispatch_model = 0;
+	losses_model = 0;
 
 	outTotalCharge = 0;
 	outAvailableCharge = 0;
@@ -124,6 +122,9 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outGridToLoad = 0;
 	outAverageCycleEfficiency = 0;
 
+
+	en = setup_model;
+	if ( !en ) return;
 
 	chem = cm.as_integer( "batt_chem" );
 
@@ -247,17 +248,14 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 battstor::~battstor()
 {
-	if (en)
-	{
-		if (voltage_model) delete voltage_model;
-		if (lifetime_model) delete lifetime_model;
-		if (thermal_model) delete thermal_model;
-		if (battery_model) delete battery_model;
-		if (capacity_model) delete capacity_model;
-		if (losses_model) delete losses_model;
-		if (battery_bank_model) delete battery_bank_model;
-		if (dispatch_model) delete dispatch_model;
-	}
+	if( voltage_model ) delete voltage_model;
+	if( lifetime_model ) delete lifetime_model;
+	if( thermal_model ) delete thermal_model;
+	if( battery_model ) delete battery_model;
+	if( capacity_model ) delete capacity_model;
+	if (losses_model) delete losses_model;
+	if( battery_bank_model ) delete battery_bank_model;
+	if( dispatch_model ) delete dispatch_model;
 }
 
 void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD )
