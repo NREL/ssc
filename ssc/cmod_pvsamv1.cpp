@@ -1327,8 +1327,10 @@ public:
 			throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
 		
 		// setup battery model
-		battstor batt( *this, as_boolean("en_batt"), nrec, ts_hour );
-		
+//		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
+		bool en_batt = as_boolean("en_batt");
+		battstor batt(*this, en_batt, nrec, ts_hour);
+
 		double cur_load = 0.0;
 		size_t nload = 0;
 		ssc_number_t *p_load_in = 0;
@@ -1753,7 +1755,7 @@ public:
 				p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
 				p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
 
-				if (batt.en)
+				if (en_batt)
 				{
 					batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
 					p_grid[idx] = batt.outGridEnergy[idx];
@@ -1850,7 +1852,11 @@ public:
 		// reference: (http://files.sma.de/dl/7680/Perfratio-UEN100810.pdf)
 		// PR = net_ac (kWh) / ( total input radiation (kWh) * stc efficiency (%) )
 		assign( "performance_ratio", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
-		assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
+
+		if (en_batt)
+			assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
+		else
+			assign("average_cycle_efficiency", 0);
 
 		// calculate nominal dc input
 		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
