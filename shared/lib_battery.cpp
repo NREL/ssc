@@ -40,14 +40,19 @@ void capacity_t::check_charge_change()
 		_prev_charge = charging;
 	}
 }
-void capacity_t::update_SOC(double q0)
-{
-	_SOC = 100.*(q0 / _qmax);
-	_DOD = 100. - _SOC;
-}
 void capacity_t::update_SOC()
 {
-	_SOC = 100.*(_q0 / _qmax);
+	if (_qmax > 0)
+		_SOC = 100.*(_q0 / _qmax);
+	else
+		_SOC = 0.;
+
+	// due to dynamics, it's possible SOC could be slightly above 1 or below 0
+	if (_SOC > 100.)
+		_SOC = 100.;
+	else if (_SOC < 0.)
+		_SOC = 0.;
+
 	_DOD = 100. - _SOC;
 }
 bool capacity_t::chargeChanged(){return _chargeChange;}
@@ -210,22 +215,12 @@ void capacity_kibam_t::updateCapacity(double P, voltage_t * voltage_model, doubl
 		if (fabs(_I) > 0)
 			_qmaxI = qmax_of_i_compute(fabs(_qmaxI / _I));
 
-		// update the SOC
-		_SOC = ((q1 + q2) / _qmax) * 100;
-		
-		// due to dynamics, it's possible SOC could be slightly above 1 or below 0
-		if (_SOC > 100.)
-			_SOC = 100.;
-		else if (_SOC < 0.)
-			_SOC = 0.;
-
-		_DOD = 100. - _SOC;
-
 		// update internal variables 
 		_q1_0 = q1;
 		_q2_0 = q2;
 		_q0 = q1 + q2;
 
+		update_SOC();
 		check_charge_change(); 
 
 		// update voltage
@@ -239,12 +234,21 @@ void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 	_q2_0 *= capacity_percent*0.01;
 	update_SOC();
 }
-void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
+void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)
 {
-	_q0 *= capacity_percent*0.01;
-	_q1_0 *= capacity_percent*0.01;
-	_q2_0 *= capacity_percent*0.01;
-	//_qmax = _qmax0* capacity_percent*0.01;
+	if (update_max_capacity)
+	{
+		if (_qmax0* capacity_percent*0.01 <= _qmax)
+			_qmax = _qmax0* capacity_percent*0.01;
+	}
+	if (_q0 > _qmax)
+	{
+		double p_q1 = _q1 / _q0;
+		_q0 = _qmax;
+		_q1 = p_q1 * _q0;
+		_q2 = (1 - p_q1)* _q0;
+	}
+
 	update_SOC();
 }
 
@@ -316,10 +320,16 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 	_q0 *= capacity_percent*0.01;
 	update_SOC();
 }
-void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
+void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)
 {
-	_q0 *= capacity_percent*0.01;
-	//_qmax = _qmax0 * capacity_percent * 0.01;
+	if (update_max_capacity)
+	{
+		if (_qmax0* capacity_percent*0.01 <= _qmax)
+			_qmax = _qmax0* capacity_percent*0.01;
+	}
+	if (_q0 > _qmax)
+		_q0 = _qmax;
+
 	update_SOC();
 }
 double capacity_lithium_ion_t::q1(){return _q0;}
@@ -381,8 +391,8 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	double q0 = capacity->q0();
 
 	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
-//	if (q0/Q > 0.01)
-//		_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_cells, fabs(I) / _num_cells, q0 / _num_cells, dt);
+	if (!isfinite(_cell_voltage))
+		_cell_voltage = 0.;
 }
 double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 {
@@ -441,10 +451,12 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix)
 	_fortyPercent = 0;
 	_hundredPercent = 0;
 
+	/*
 	FILE * life_file;
 	life_file = fopen("lifetime_metrics.txt", "w+");
 	fprintf(life_file,"Cycle Peaks\n");
 	fclose(life_file);
+	*/
 
 }
 
@@ -458,10 +470,13 @@ void lifetime_t::rainflow(double DOD)
 	// Begin algorithm
 	_Peaks.push_back(DOD);
 	bool atStepTwo = true;
+
+	/*
 	FILE * life_file;
 	life_file = fopen("lifetime_metrics.txt", "a");
 	fprintf(life_file, "%.2f\n",DOD);
 	fclose(life_file);
+	*/
 
 	// Loop until break
 	while (atStepTwo)
@@ -527,7 +542,11 @@ int lifetime_t::rainflow_compareRanges()
 		_Range = _Ylt;
 		_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
 		_nCycles++;
-		_Clt = bilinear(_average_range, _nCycles);
+
+		// the capacity percent cannot increase
+		if (bilinear(_average_range, _nCycles) <= _Clt)
+			_Clt = bilinear(_average_range, _nCycles);
+
 		if (_Clt < 0)
 			_Clt = 0.;
 
@@ -770,17 +789,22 @@ losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capac
 }
 void losses_t::run_losses()
 {
-	// only update losses if there is power flow from
-	if (_capacity->I() > 0)
+	bool update_max_capacity = false;
+
+	// only update lifetime losses if there is power flow & cycle change
+	if (fabs(_capacity->I()) > 0)
 	{
-		// only update capacity for lifetime if cycle number has changed
+		// if cycle number has changed, update max capacity
 		if (_lifetime->cycles_elapsed() > _nCycle)
 		{
 			_nCycle++;
-			_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
+			update_max_capacity = true;
 		}
-		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+		_capacity->updateCapacityForLifetime(_lifetime->capacity_percent(), update_max_capacity);
 	}
+	else if (_capacity->I() > 0)
+		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	
 }
 /* 
 Define Battery 

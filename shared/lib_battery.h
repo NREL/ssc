@@ -67,14 +67,13 @@ public:
 	// pure virtual functions (abstract) which need to be defined in derived classes
 	virtual void updateCapacity(double P, voltage_t * V, double dt, int cycles) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
-	virtual void updateCapacityForLifetime(double capacity_percent)=0;
+	virtual void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)=0;
 
 	virtual double qmaxI() = 0; // max capacity at current
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
 	void check_charge_change(); 
-	void update_SOC(double q0);
 	void update_SOC();
 
 	// common outputs
@@ -113,7 +112,7 @@ public:
 	capacity_kibam_t(double q20, double t1, double q1, double q10);
 	void updateCapacity(double P, voltage_t * V, double dt, int cycles);
 	void updateCapacityForThermal(double capacity_percent);
-	void updateCapacityForLifetime(double capacity_percent);
+	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
 	double q1(); // Available charge
 	double q2(); // Bound charge
 	double qmaxI(); // Max charge at current
@@ -164,7 +163,7 @@ public:
 	// override public api
 	void updateCapacity(double P, voltage_t *, double dt, int cycles);
 	void updateCapacityForThermal(double capacity_percent);
-	void updateCapacityForLifetime(double capacity_percent);
+	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
 
 	double q1(); // Available charge
 	double qmaxI(); // Max charge at current
