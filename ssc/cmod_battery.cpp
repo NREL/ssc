@@ -164,12 +164,8 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	{
 		outAvailableCharge = cm.allocate("batt_q1", nrec);
 		outBoundCharge = cm.allocate("batt_q2", nrec);
-		outMaxChargeAtCurrent = cm.allocate("qmaxI", nrec);
 	}
-	else
-		outMaxCharge = cm.allocate("qmax", nrec);
-
-
+	outMaxCharge = cm.allocate("qmax", nrec);
 	outSOC = cm.allocate("SOC", nrec);
 	outDOD = cm.allocate("DOD", nrec);
 	outCurrent = cm.allocate("batt_I", nrec);
@@ -268,12 +264,9 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	{
 		outAvailableCharge[idx] = (ssc_number_t)(num_batteries*kibam->q1());
 		outBoundCharge[idx] = (ssc_number_t)(num_batteries*kibam->q2());
-		outMaxChargeAtCurrent[idx] = (ssc_number_t)(num_batteries*kibam->qmaxI());
 	}
-	else
-		outMaxCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->qmax());
-
-
+	
+	outMaxCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->qmax());
 	outTotalCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->q0());
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
 	outCurrent[idx] = (capacity_model->I());
