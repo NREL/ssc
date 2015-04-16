@@ -470,7 +470,7 @@ bool C_Indirect_PB::Execute(const long lSecondsFromStart, const S_Indirect_PB_In
 			// for the case when startup time exceeds startup energy.
 			m_pbo.m_dot_demand = m_pbo.m_dot_demand * (1.0 - dmax1(dmin1(1.0, m_dStartupRemain/m_dHoursSinceLastStep) - startup_e_used/(Q_cycle*m_dHoursSinceLastStep), 0.0));
 
-			m_pbo.eta = m_pbp.eta_ref;
+			m_pbo.eta = m_pbp.eta_ref;		// Using reference efficiency because starting up during this timestep
 			m_pbo.T_htf_cold = m_pbp.T_htf_cold_ref;
 			// m_dot_htf_ref = m_dot_htf_ref // TFF - huh? Is this a typo?
 
