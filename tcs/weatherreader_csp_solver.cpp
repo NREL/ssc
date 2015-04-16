@@ -104,8 +104,7 @@ class weatherreader : public tcstypeinterface
 private:
 	C_csp_weatherreader c_wr;
 	const C_csp_weatherreader::S_outputs * m_wf;
-	//weatherfile m_wf;
-	//bool m_first;	//flag to indicate whether this is the first call
+
 public:
 	weatherreader( tcscontext *cxt, tcstypeinfo *ti )
 		: tcstypeinterface( cxt, ti ) { }
@@ -153,16 +152,6 @@ public:
 		}
 
 		return 0;
-
-
-		//std::string file = value_str( P_FILENAME ).c_str();
-		//if (! m_wf.open( file ) )
-		//{
-		//	message(TCS_ERROR, "could not open %s for reading", file.c_str() );
-		//	return -1;
-		//}
-		//m_first = true; //True the first time call() is accessed
-		//return 0; // success
 	}
 
 	virtual int call( double time, double step, int ncall )
@@ -230,88 +219,6 @@ public:
 		value(O_ELEV, m_wf->m_elev);
 
 		return 0;
-
-		//if ( ncall == 0 ) // only read data values once per timestep
-		//{
-		//	//If the start time does not correspond to the first record in the weather file, loop to the correct record
-		//	int nread=1;
-		//	if(m_first){
-		//		nread = (int)time/step;
-		//		m_first = false;
-		//	}
-
-		//	for(int i=0; i<nread; i++){		//for all calls except the first, nread=1
-		//		
-		//		if ( !m_wf.read() )
-		//		{
-		//			message(TCS_ERROR, "failed to read from weather file %s at time %lg", m_wf.filename().c_str(), time );
-		//			return -1; // error code
-		//		}
-
-		//	}
-
-		//}
-
-		//int trackmode = (int) value( P_TRACKMODE );
-		//if (trackmode < 0 || trackmode > 2)
-		//{
-		//	message(TCS_ERROR, "invalid tracking mode specified %d [0..2]", trackmode);
-		//	return -1;
-		//}
-
-		//double tilt = value( P_TILT );
-		//double azimuth = value( P_AZIMUTH );
-
-		//double sunn[9], angle[5], poa[3], diffc[3];
-		//
-		//poa[0] = poa[1] = poa[2] = 0;
-		//angle[0] = angle[1] = angle[2] = angle[3] = angle[4] = 0;
-		//diffc[0] = diffc[1] = diffc[2] = 0;
-	
-		//solarpos( m_wf.year, m_wf.month, m_wf.day, m_wf.hour, m_wf.minute,
-		//	m_wf.lat, m_wf.lon, m_wf.tz, sunn );
-
-		//if (sunn[2] > 0.0087)
-		//{
-		//	/* sun elevation > 0.5 degrees */
-		//	incidence( trackmode, tilt, azimuth, 45.0, sunn[1], sunn[0], 0, 0, angle );
-		//	perez( sunn[8], m_wf.dn, m_wf.df, 0.2, angle[0], angle[1], sunn[1], poa, diffc );
-		//}
-		//
-		//// set some output values
-		//value( O_YEAR, m_wf.year );
-		//value( O_MONTH, m_wf.month );
-		//value( O_DAY, m_wf.day );
-		//value( O_HOUR, m_wf.hour );
-		//value( O_MINUTE, m_wf.minute );
-
-		//value( O_GLOBAL, m_wf.gh );
-		//value( O_BEAM, m_wf.dn );
-		//value( O_DIFFUSE, m_wf.df );
-		//value( O_TDRY, m_wf.tdry );
-		//value( O_TWET, m_wf.twet );
-		//value( O_TDEW, m_wf.tdew );
-		//value( O_WSPD, m_wf.wspd );
-		//value( O_WDIR, m_wf.wdir );
-		//value( O_RHUM, m_wf.rhum );
-		//value( O_PRES, m_wf.pres );
-		//value( O_SNOW, m_wf.snow );
-		//value( O_ALBEDO, m_wf.albedo );
-
-		//value( O_POA,  poa[0]+poa[1]+poa[2] );
-		//value( O_SOLAZI, sunn[0]*180/M_PI );
-		//value( O_SOLZEN, sunn[1]*180/M_PI );
-		//value( O_LAT, m_wf.lat );
-		//value( O_LON, m_wf.lon );
-		//value( O_TZ, m_wf.tz );
-		//value( O_SHIFT, (m_wf.lon - m_wf.tz*15.0));
-		//value( O_ELEV, m_wf.elev );
-
-		//value( D_POABEAM, poa[0] );
-		//value( D_POADIFF, poa[1] );
-		//value( D_POAGND, poa[2] );
-
-		//return 0; // success
 	}
 };
 
