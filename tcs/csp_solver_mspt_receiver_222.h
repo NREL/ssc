@@ -68,7 +68,7 @@ private:
 	double m_P_amb_high;
 	double m_q_iscc_max;
 
-	const double *m_i_flux_map;
+	//const double *m_i_flux_map;
 
 	// member string for exception messages
 	std::string error_msg;
@@ -150,7 +150,7 @@ public:
 	void init();
 
 	void call(const C_csp_weatherreader::S_outputs *p_weather, double T_salt_hot_target, double T_salt_cold_in, double eta_pump, double field_eff, int night_recirc,
-		double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, const C_csp_solver_sim_info *p_sim_info);
+		double hel_stow_deploy, util::matrix_t<double> flux_map_input, const C_csp_solver_sim_info *p_sim_info);
 
 	//void call(double azimuth, double zenith, double T_salt_hot_target, double T_salt_cold_in, double v_wind_10, double P_amb,
 	//	double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,

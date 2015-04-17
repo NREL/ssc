@@ -262,8 +262,13 @@ public:
 		double hel_stow_deploy_csp = value(I_hel_stow_deploy);	//[deg] Solar elevation angle at which heliostats are stowed
 
 		//get the flux map
-		int n_flux_y_csp, n_flux_x_csp;
+		int n_flux_y_csp, n_flux_x_csp;	 
 		double *p_i_flux_map = value(I_flux_map, &n_flux_y_csp, &n_flux_x_csp);
+		util::matrix_t<double> flux_map_in(n_flux_y_csp, n_flux_x_csp);
+		for( int i = 0; i < n_flux_y_csp; i++ )
+			for( int j = 0; j < n_flux_x_csp; j++ )
+				flux_map_in(i, j) = p_i_flux_map[j*n_flux_y_csp + i];
+
 
 		// set sim info
 		ms_sim_info.m_time = time;
@@ -278,7 +283,7 @@ public:
 		{
 			mspt_receiver.call(&ms_weather, T_salt_hot_target_csp, T_salt_cold_in_csp,
 				eta_pump_csp, field_eff_csp, night_recirc_csp,
-				hel_stow_deploy_csp, p_i_flux_map, n_flux_y_csp, n_flux_x_csp, &ms_sim_info);
+				hel_stow_deploy_csp, flux_map_in, &ms_sim_info);
 		}
 		
 		catch( C_csp_exception &csp_exception )
