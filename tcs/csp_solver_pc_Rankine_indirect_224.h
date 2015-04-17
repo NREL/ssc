@@ -141,7 +141,7 @@ public:
 	void init();
 
 	void call(const C_csp_weatherreader::S_outputs *p_weather, const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
-		double time_sec, double step_sec, int ncall);
+		const C_csp_solver_sim_info *p_sim_info);
 
 	void converged();
 
