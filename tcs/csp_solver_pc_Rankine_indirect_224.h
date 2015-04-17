@@ -2,6 +2,7 @@
 #define __csp_solver_pc_Rankine_indirect_224_
 
 #include "csp_solver_util.h"
+#include "csp_solver_core.h"
 
 #include "lib_util.h"
 #include "htf_props.h"
@@ -95,16 +96,16 @@ public:
 	{
 		double m_T_htf_hot;			//[C] Hot HTF inlet temperature
 		double m_m_dot_htf;			//[kg/hr] HTF mass flow rate
-		double m_T_wb;				//[C] Wet bulb temp
+		//double m_T_wb;				//[C] Wet bulb temp
 		int m_standby_control;		//[-] Control signal indicating standby mode
-		double m_T_db;				//[C] Ambient dry bulb temperature
-		double m_P_amb;				//[mbar] Ambient pressure
+		//double m_T_db;				//[C] Ambient dry bulb temperature
+		//double m_P_amb;				//[mbar] Ambient pressure
 		int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
-		double m_rh;				//[%] Relative humidity
+		//double m_rh;				//[%] Relative humidity
 
 		S_inputs()
 		{
-			m_T_htf_hot = m_m_dot_htf = m_T_wb = m_T_db = m_P_amb = m_rh = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_hot = m_m_dot_htf = /*m_T_wb = m_T_db = m_P_amb = m_rh =*/ std::numeric_limits<double>::quiet_NaN();
 
 			m_standby_control = m_tou = -1;
 		}
@@ -139,7 +140,7 @@ public:
 
 	void init();
 
-	void call(const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
+	void call(const C_csp_weatherreader::S_outputs *p_weather, const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
 		double time_sec, double step_sec, int ncall);
 
 	void converged();

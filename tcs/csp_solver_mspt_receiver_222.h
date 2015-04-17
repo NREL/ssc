@@ -5,6 +5,7 @@
 
 #include "htf_props.h"
 #include "ngcc_powerblock.h"
+#include "csp_solver_core.h"
 
 class C_mspt_receiver_222
 {
@@ -148,9 +149,12 @@ public:
 
 	void init();
 
-	void call(double azimuth, double zenith, double T_salt_hot_target, double T_salt_cold_in, double v_wind_10, double P_amb,
-		double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,
-		double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, double time, int ncall, double step);
+	void call(const C_csp_weatherreader::S_outputs *p_weather, double T_salt_hot_target, double T_salt_cold_in, double eta_pump, double field_eff, int night_recirc,
+		double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, const C_csp_solver_sim_info *p_sim_info);
+
+	//void call(double azimuth, double zenith, double T_salt_hot_target, double T_salt_cold_in, double v_wind_10, double P_amb,
+	//	double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,
+	//	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, double time, int ncall, double step);
 
 	void converged();
 

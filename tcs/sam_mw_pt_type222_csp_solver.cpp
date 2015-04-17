@@ -6,6 +6,7 @@
 
 #include "csp_solver_mspt_receiver_222.h"
 #include "csp_solver_util.h"
+#include "csp_solver_core.h"
 
 enum{	//Parameters
 		P_N_panels,
@@ -148,7 +149,8 @@ class sam_mw_pt_type222 : public tcstypeinterface
 {
 private:
 	C_mspt_receiver_222 mspt_receiver;
-
+	C_csp_weatherreader::S_outputs ms_weather;
+	C_csp_solver_sim_info ms_sim_info;
 
 public:
 	sam_mw_pt_type222( tcscontext *cst, tcstypeinfo *ti)
@@ -244,18 +246,18 @@ public:
 	virtual int call( double time, double step, int ncall )
 	{		
 		// Pass inputs to mspt_receiver class - NO CONVERSIONS!
-		double azimuth_csp = value(I_azimuth);							//[deg] Solar azimuth angle 0 - 360, clockwise from due north, northern hemisphere
-		double zenith_csp = value(I_zenith);							//[deg] Solar zenith angle
+		ms_weather.m_solazi = value(I_azimuth);							//[deg] Solar azimuth angle 0 - 360, clockwise from due north, northern hemisphere
+		ms_weather.m_solzen = value(I_zenith);							//[deg] Solar zenith angle
 		double T_salt_hot_target_csp = value(I_T_salt_hot);				//[K] Desired hot temp, convert from C
 		double T_salt_cold_in_csp = value(I_T_salt_cold);				//[K] Cold salt inlet temp, convert from C
-		double v_wind_10_csp = value(I_v_wind_10);						//[m/s] Wind velocity
-		double P_amb_csp = value(I_P_amb);								//[Pa] Ambient pressure, convert from mbar
+		ms_weather.m_wspd = value(I_v_wind_10);						//[m/s] Wind velocity
+		ms_weather.m_pres = value(I_P_amb);								//[Pa] Ambient pressure, convert from mbar
 		double eta_pump_csp = value(I_eta_pump);						//[-] Receiver HTF pump efficiency
 	
-		double T_dp_csp = value(I_T_dp);					//[K] Dewpoint temperature, convert from C
-		double I_bn_csp = value(I_I_bn);					//[W/m^2-K] Beam normal radiation
+		ms_weather.m_tdew = value(I_T_dp);					//[K] Dewpoint temperature, convert from C
+		ms_weather.m_beam = value(I_I_bn);					//[W/m^2-K] Beam normal radiation
 		double field_eff_csp = value(I_field_eff);			//[-] Field efficiency value
-		double T_amb_csp = value(I_T_db);						//[K] Dry bulb temperature, convert from C
+		ms_weather.m_tdry = value(I_T_db);						//[K] Dry bulb temperature, convert from C
 		int night_recirc_csp = (int)value(I_night_recirc);		//[-] Night recirculation control 0 = empty receiver, 1 = recirculate
 		double hel_stow_deploy_csp = value(I_hel_stow_deploy);	//[deg] Solar elevation angle at which heliostats are stowed
 
@@ -263,15 +265,20 @@ public:
 		int n_flux_y_csp, n_flux_x_csp;
 		double *p_i_flux_map = value(I_flux_map, &n_flux_y_csp, &n_flux_x_csp);
 
+		// set sim info
+		ms_sim_info.m_time = time;
+		ms_sim_info.m_step = step;
+		ms_sim_info.m_ncall = ncall;
+
 
 		int out_type = -1;
 		std::string out_msg = "";
 
 		try
 		{
-			mspt_receiver.call(azimuth_csp, zenith_csp, T_salt_hot_target_csp, T_salt_cold_in_csp, v_wind_10_csp, P_amb_csp,
-				eta_pump_csp, T_dp_csp, I_bn_csp, field_eff_csp, T_amb_csp, night_recirc_csp,
-				hel_stow_deploy_csp, p_i_flux_map, n_flux_y_csp, n_flux_x_csp, time, ncall, step);
+			mspt_receiver.call(&ms_weather, T_salt_hot_target_csp, T_salt_cold_in_csp,
+				eta_pump_csp, field_eff_csp, night_recirc_csp,
+				hel_stow_deploy_csp, p_i_flux_map, n_flux_y_csp, n_flux_x_csp, &ms_sim_info);
 		}
 		
 		catch( C_csp_exception &csp_exception )

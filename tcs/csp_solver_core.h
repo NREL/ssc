@@ -4,6 +4,20 @@
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 
+class C_csp_solver_sim_info
+{
+public:
+	double m_time;
+	double m_step;
+	int m_ncall;
+
+	C_csp_solver_sim_info()
+	{
+		m_time = m_step = std::numeric_limits<double>::quiet_NaN();
+		m_ncall = -1;
+	}
+};
+
 class C_csp_collector_receiver
 {
 
@@ -38,33 +52,33 @@ public:
 
 	struct S_outputs
 	{
-		int m_year;
-		int m_month;
-		int m_day;
-		int m_hour;
-		double m_minute;
+		int m_year;				//[yr]
+		int m_month;			//[mn]
+		int m_day;				//[day]
+		int m_hour;				//[hr]
+		double m_minute;		//[min]
 
-		double m_global;
-		double m_beam;
-		double m_diffuse;
-		double m_tdry;
-		double m_twet;
-		double m_tdew;
-		double m_wspd;
-		double m_wdir;
-		double m_rhum;
-		double m_pres;
-		double m_snow;
-		double m_albedo;
+		double m_global;		//[W/m2]
+		double m_beam;			//[W/m2]
+		double m_diffuse;		//[W/m2]
+		double m_tdry;			//[C]
+		double m_twet;			//[C]
+		double m_tdew;			//[C]
+		double m_wspd;			//[m/s]
+		double m_wdir;			//[deg]
+		double m_rhum;			//[%]
+		double m_pres;			//[mbar]
+		double m_snow;			//[cm]
+		double m_albedo;		//[-] (0..1)
 
-		double m_poa;
-		double m_solazi;
-		double m_solzen;
-		double m_lat;
-		double m_lon;
-		double m_tz;
-		double m_shift;
-		double m_elev;
+		double m_poa;			//[W/m2]
+		double m_solazi;		//[deg]
+		double m_solzen;		//[deg]
+		double m_lat;			//[deg]
+		double m_lon;			//[deg]
+		double m_tz;			//[deg]
+		double m_shift;			//[deg]
+		double m_elev;			//[m]
 
 		S_outputs()
 		{
