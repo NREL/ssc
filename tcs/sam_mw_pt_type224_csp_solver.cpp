@@ -117,7 +117,8 @@ private:
 	C_pc_Rankine_indirect_224 mc_power_cycle;
 	C_csp_weatherreader::S_outputs ms_weather;
 	C_csp_solver_sim_info ms_sim_info;
-	C_pc_Rankine_indirect_224::S_inputs ms_inputs;
+	C_csp_solver_htf_state ms_htf_state;
+	C_csp_power_cycle::S_control_inputs ms_inputs;
 	C_pc_Rankine_indirect_224::S_outputs ms_outputs;
 
 public:
@@ -208,8 +209,8 @@ public:
 	virtual int call(double time, double step, int ncall)
 	{
 
-		ms_inputs.m_T_htf_hot = value(I_T_HTF_HOT);		//Hot HTF inlet temperature, from storage tank [C]
-		ms_inputs.m_m_dot_htf = value(I_M_DOT_HTF);		//HTF mass flow rate [kg/hr]
+		ms_htf_state.m_temp_in = value(I_T_HTF_HOT);		//Hot HTF inlet temperature, from storage tank [C]
+		ms_htf_state.m_m_dot = value(I_M_DOT_HTF);		//HTF mass flow rate [kg/hr]
 		ms_weather.m_twet = value(I_T_WB);				//Ambient wet bulb temperature [C]
 		ms_inputs.m_standby_control = (int)value(I_STANDBY_CONTROL);		//Control signal indicating standby mode [none]
 		ms_weather.m_tdry = value(I_T_DB);				//Ambient dry bulb temperature [C]
@@ -227,7 +228,7 @@ public:
 
 		try
 		{
-			mc_power_cycle.call(&ms_weather, ms_inputs, ms_outputs, &ms_sim_info);
+			mc_power_cycle.call(&ms_weather, &ms_htf_state, ms_inputs, ms_outputs, &ms_sim_info);
 		}
 		catch(C_csp_exception &csp_exception)
 		{

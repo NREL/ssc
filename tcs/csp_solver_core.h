@@ -4,6 +4,25 @@
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 
+class C_csp_solver_htf_state
+{
+public:
+	double m_m_dot;		//[kg/hr]
+	double m_temp_in;	//[C]
+	double m_pres_in;	//[kPa]
+	double m_qual_in;	//[-]
+	double m_temp_out;	//[C]
+	double m_pres_out;	//[kPa]
+	double m_qual_out;	//[-]
+
+	C_csp_solver_htf_state()
+	{
+		m_m_dot = 
+			m_temp_in = m_pres_in = m_qual_in = 
+			m_temp_out = m_pres_out = m_qual_out = std::numeric_limits<double>::quiet_NaN();
+	}
+};
+
 class C_csp_solver_sim_info
 {
 public:
@@ -29,6 +48,29 @@ public:
 	virtual void init() = 0;
 };
 
+class C_csp_power_cycle
+{
+
+public:
+	C_csp_power_cycle(){};
+
+	~C_csp_power_cycle(){};
+
+	virtual void init() = 0;
+
+	struct S_control_inputs
+	{
+		int m_standby_control;		//[-] Control signal indicating standby mode
+		int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
+
+		S_control_inputs()
+		{
+			m_standby_control = m_tou = -1;
+		}
+	};
+
+};
+
 class C_csp_weatherreader
 {
 private:
@@ -45,7 +87,7 @@ public:
 
 	void init();
 
-	void timestep_call(double time, double step, int ncall);
+	void timestep_call(const C_csp_solver_sim_info *p_sim_info);
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;

@@ -261,7 +261,10 @@ void C_pc_Rankine_indirect_224::init()
 
 }
 
-void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_weather, const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
+void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_weather, 
+	C_csp_solver_htf_state *p_htf_state,
+	const C_csp_power_cycle::S_control_inputs & inputs, 
+	C_pc_Rankine_indirect_224::S_outputs & outputs,
 	const C_csp_solver_sim_info *p_sim_info)
 {
 	// Get sim info
@@ -270,8 +273,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_wea
 	int ncall = p_sim_info->m_ncall;
 
 	// Check and convert inputs
-	double T_htf_hot = inputs.m_T_htf_hot;			//[C] 
-	double m_dot_htf = inputs.m_m_dot_htf;			//[kg/hr]
+	double T_htf_hot = p_htf_state->m_temp_in;		//[C] 
+	double m_dot_htf = p_htf_state->m_m_dot;		//[kg/hr]
 	double T_wb = p_weather->m_twet + 273.15;		//[K], converted from C
 	int standby_control = inputs.m_standby_control;	//[-]
 	double T_db = p_weather->m_tdry + 273.15;		//[K], converted from C
