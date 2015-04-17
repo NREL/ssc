@@ -145,6 +145,7 @@ void C_mspt_receiver_222::init()
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
 	m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
 
+	m_T_salt_hot_target += 273.15;			//[K] convert from C
 	
 	// *******************************************************************
 	// *******************************************************************
@@ -213,19 +214,29 @@ void C_mspt_receiver_222::init()
 	return;
 }
 
-//void C_mspt_receiver_222::call(double azimuth, double zenith, double T_salt_hot_target, double T_salt_cold_in, double v_wind_10, double P_amb,
-//	double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,
-//	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, double time, int ncall, double step)
-void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, double T_salt_hot_target, double T_salt_cold_in, double eta_pump, double field_eff, int night_recirc,
-	double hel_stow_deploy, util::matrix_t<double> flux_map_input, const C_csp_solver_sim_info *p_sim_info)
+void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
+	C_csp_solver_htf_state *p_htf_state,
+	C_mspt_receiver_222::S_inputs *p_inputs,
+	const C_csp_solver_sim_info *p_sim_info)
 {
+	// Get inputs
+	//double T_salt_hot_target = p_inputs->m_T_salt_hot_target;	//[C]
+	//double eta_pump = p_inputs->m_eta_pump;						//[-]
+	double field_eff = p_inputs->m_field_eff;					//[-]
+	//int night_recirc = p_inputs->m_night_recirc;				//[-]
+	//double hel_stow_deploy = p_inputs->m_hel_stow_deploy;		//[-]
+	const util::matrix_t<double> *flux_map_input = p_inputs->m_flux_map_input;
 
+	// Get sim info
 	double time = p_sim_info->m_time;
 	double step = p_sim_info->m_step;
 	int ncall = p_sim_info->m_ncall;
 
+	// Get applicable htf state info
+	double T_salt_cold_in = p_htf_state->m_temp_in;		//[C]
+
 	// Complete necessary conversions/calculations of input variables
-	T_salt_hot_target += 273.15;			//[K] desired hot temperature, convert from C
+	//T_salt_hot_target += 273.15;			//[K] desired hot temperature, convert from C
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
 	double P_amb = p_weather->m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
 	double hour = time / 3600.0;			//[hr] Hour of the year
@@ -240,14 +251,14 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 	double v_wind_10 = p_weather->m_wspd;
 	double I_bn = p_weather->m_beam;
 
-	int n_flux_y = flux_map_input.nrows();
+	int n_flux_y = flux_map_input->nrows();
 	if(n_flux_y > 1)
 	{
 		error_msg = util::format("The Molten Salt External Receiver (Type222) model does not currently support 2-dimensional "
 			"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d", n_flux_y);
 		csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 	}
-	int n_flux_x = flux_map_input.ncols();
+	int n_flux_x = flux_map_input->ncols();
 	m_flux_in.resize(n_flux_x);
 
 	double T_sky = CSP::skytemp(T_amb, T_dp, hour);
@@ -277,9 +288,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 	// Do an initial check to make sure the solar position called is valid
 	// If it's not, return the output equal to zeros. Also check to make sure
 	// the solar flux is at a certain level, otherwise the correlations aren't valid
-	if( zenith>(90.0 - hel_stow_deploy) || I_bn <= 1.E-6 || (zenith == 0.0 && azimuth == 180.0) )
+	if( zenith>(90.0 - m_hel_stow_deploy) || I_bn <= 1.E-6 || (zenith == 0.0 && azimuth == 180.0) )
 	{
-		if( night_recirc == 1 )
+		if( m_night_recirc == 1 )
 		{
 			I_bn = 0.0;
 		}
@@ -291,7 +302,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 		}
 	}
 
-	double T_coolant_prop = (T_salt_hot_target + T_salt_cold_in) / 2.0;		//[K] The temperature at which the coolant properties are evaluated. Validated as constant (mjw)
+	double T_coolant_prop = (m_T_salt_hot_target + T_salt_cold_in) / 2.0;		//[K] The temperature at which the coolant properties are evaluated. Validated as constant (mjw)
 	c_p_coolant = field_htfProps.Cp(T_coolant_prop)*1000.0;					//[kJ/kg-K] Specific heat of the coolant
 
 	double m_dot_htf_max = m_m_dot_htf_max;
@@ -304,7 +315,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 			m_q_iscc_max = cycle_calcs.get_ngcc_data(0.0, T_amb_C, P_amb_bar, ngcc_power_cycle::E_solar_heat_max)*1.E6;	// kWth, convert from MWth
 		}
 
-		double m_dot_iscc_max = m_q_iscc_max / (c_p_coolant*(T_salt_hot_target - T_salt_cold_in));		// [kg/s]
+		double m_dot_iscc_max = m_q_iscc_max / (c_p_coolant*(m_T_salt_hot_target - T_salt_cold_in));		// [kg/s]
 		m_dot_htf_max = fmin(m_m_dot_htf_max, m_dot_iscc_max);
 	}
 
@@ -324,7 +335,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 			for( int j = 0; j<n_flux_x; j++ ){
 				m_flux_in.at(j) = 0.;
 				for( int i = 0; i<n_flux_y; i++ ){
-					m_flux_in.at(j) += flux_map_input(i,j)
+					m_flux_in.at(j) += (*flux_map_input)(i,j)
 						* I_bn*field_eff_adj*m_A_sf / 1000. / (CSP::pi*m_h_rec*m_d_rec / (double)n_flux_x);	//[kW/m^2];
 				}
 			}
@@ -426,37 +437,37 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 			q_dot_inc_sum += m_q_dot_inc.at(i);		//[kW] Total power absorbed by receiver
 
 		// Set guess values
-		if( night_recirc == 1 )
+		if( m_night_recirc == 1 )
 		{
-			m_T_s_guess.fill(T_salt_hot_target);		//[K] Guess the temperature for the surface nodes
-			m_T_panel_out_guess.fill((T_salt_hot_target + T_salt_cold_in) / 2.0);	//[K] Guess values for the fluid temp coming out of the control volume
-			m_T_panel_in_guess.fill((T_salt_hot_target + T_salt_cold_in) / 2.0);	//[K] Guess values for the fluid temp coming into the control volume
+			m_T_s_guess.fill(m_T_salt_hot_target);		//[K] Guess the temperature for the surface nodes
+			m_T_panel_out_guess.fill((m_T_salt_hot_target + T_salt_cold_in) / 2.0);	//[K] Guess values for the fluid temp coming out of the control volume
+			m_T_panel_in_guess.fill((m_T_salt_hot_target + T_salt_cold_in) / 2.0);	//[K] Guess values for the fluid temp coming into the control volume
 		}
 		else
 		{
-			m_T_s_guess.fill(T_salt_hot_target);		//[K] Guess the temperature for the surface nodes
+			m_T_s_guess.fill(m_T_salt_hot_target);		//[K] Guess the temperature for the surface nodes
 			m_T_panel_out_guess.fill(T_salt_cold_in);	//[K] Guess values for the fluid temp coming out of the control volume
 			m_T_panel_in_guess.fill(T_salt_cold_in);	//[K] Guess values for the fluid temp coming into the control volume
 		}
 
-		double c_guess = field_htfProps.Cp((T_salt_hot_target + T_salt_cold_in) / 2.0);	//[kJ/kg-K] Estimate the specific heat of the fluid in receiver
+		double c_guess = field_htfProps.Cp((m_T_salt_hot_target + T_salt_cold_in) / 2.0);	//[kJ/kg-K] Estimate the specific heat of the fluid in receiver
 		double m_dot_salt_guess = std::numeric_limits<double>::quiet_NaN();
 		if( I_bn > 1.E-6 )
 		{
 			double q_guess = 0.5*q_dot_inc_sum;		//[kW] Estimate the thermal power produced by the receiver				
-			m_dot_salt_guess = q_guess / (c_guess*(T_salt_hot_target - T_salt_cold_in)*m_n_lines);	//[kg/s] Mass flow rate for each flow path
+			m_dot_salt_guess = q_guess / (c_guess*(m_T_salt_hot_target - T_salt_cold_in)*m_n_lines);	//[kg/s] Mass flow rate for each flow path
 		}
 		else	// The tower recirculates at night (based on earlier conditions)
 		{
 			// Enter recirculation mode, where inlet/outlet temps switch
-			T_salt_hot_target = T_salt_cold_in;
+			m_T_salt_hot_target = T_salt_cold_in;
 			T_salt_cold_in = m_T_s_guess.at(0);		//T_s_guess is set to T_salt_hot before, so this just completes 
-			m_dot_salt_guess = -3500.0 / (c_guess*(T_salt_hot_target - T_salt_cold_in) / 2.0);
+			m_dot_salt_guess = -3500.0 / (c_guess*(m_T_salt_hot_target - T_salt_cold_in) / 2.0);
 		}
 		T_salt_hot_guess = 9999.9;		//[K] Initial guess value for error calculation
 		double err = -999.9;					//[-] Relative outlet temperature error
 		double tol = std::numeric_limits<double>::quiet_NaN();
-		if( night_recirc == 1 )
+		if( m_night_recirc == 1 )
 			tol = 0.0057;
 		else
 			tol = 0.001;
@@ -500,7 +511,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 			for( int i = 0; i < m_n_panels; i++ )
 				T_s_sum += m_T_s.at(i);
 			double T_s_ave = T_s_sum / m_n_panels;
-			double T_film_ave = (T_amb + T_salt_hot_target) / 2.0;
+			double T_film_ave = (T_amb + m_T_salt_hot_target) / 2.0;
 
 			// Convective coefficient for external forced convection using Siebers & Kraabel
 			double k_film = ambient_air.cond(T_film_ave);				//[W/m-K] The conductivity of the ambient air
@@ -631,11 +642,11 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 			else
 				eta_therm = 0.0;
 
-			err = (T_salt_hot_guess - T_salt_hot_target) / T_salt_hot_target;
+			err = (T_salt_hot_guess - m_T_salt_hot_target) / m_T_salt_hot_target;
 
 			if( abs(err) > tol )
 			{
-				m_dot_salt_guess = q_abs_sum / (m_n_lines*c_p_coolant*(T_salt_hot_target - T_salt_cold_in));			//[kg/s]
+				m_dot_salt_guess = q_abs_sum / (m_n_lines*c_p_coolant*(m_T_salt_hot_target - T_salt_cold_in));			//[kg/s]
 
 				if( m_dot_salt_guess < 1.E-5 )
 				{
@@ -721,7 +732,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 		double DELTAP_net = DELTAP*m_n_panels / (double)m_n_lines + DELTAP_h_tower;		//[Pa] The new pressure drop across the receiver panels
 		Pres_D = DELTAP_net*1.E-6;			//[MPa]
 		double est_load = fmax(0.25, m_dot_salt_tot / m_m_dot_htf_des) * 100;		//[%] Relative pump load. Limit to 25%
-		double eta_pump_adj = eta_pump*(-2.8825E-9*pow(est_load, 4) + 6.0231E-7*pow(est_load, 3) - 1.3867E-4*pow(est_load, 2) + 2.0683E-2*est_load);	//[-] Adjusted pump efficiency
+		double eta_pump_adj = m_eta_pump*(-2.8825E-9*pow(est_load, 4) + 6.0231E-7*pow(est_load, 3) - 1.3867E-4*pow(est_load, 2) + 2.0683E-2*est_load);	//[-] Adjusted pump efficiency
 		W_dot_pump = DELTAP_net*m_dot_salt_tot / rho_coolant / eta_pump_adj;
 		q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
 		q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
