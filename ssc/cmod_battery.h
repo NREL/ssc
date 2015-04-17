@@ -21,7 +21,6 @@ struct battstor
 	thermal_t *thermal_model;
 	capacity_t *capacity_model;
 	battery_t *battery_model;
-	battery_bank_t *battery_bank_model;
 	dispatch_manual_t *dispatch_model;
 	losses_t *losses_model;
 
@@ -46,7 +45,6 @@ struct battstor
 		*outCurrent,
 		*outCellVoltage,
 		*outBatteryVoltage,
-		*outBatteryBankVoltage,
 		*outCapacityPercent,
 		*outCycles,
 		*out40Cycles,
