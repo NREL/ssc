@@ -247,7 +247,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",            "Coefficients for auxiliary heater parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_startup",            "Startup temperature",                                               "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",          "Fossil backup mode 1=Normal 2=Topping",                             "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fthr_ok",              "Does the defocus control allow partial defocusing",                 "-",            "",            "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "fthr_ok",              "Does the defocus control allow partial defocusing",                 "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nSCA",                 "Number of SCAs in a single loop",                                   "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",             "Design point irradiation value",                                    "W/m2",         "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fc_on",                "DNI forecasting enabled",                                           "-",            "",            "controller",     "?=0",                       "",                      "" },
@@ -791,6 +791,8 @@ public:
             
         }
         else*/ 
+
+
         if(run_type == 1){
             set_unit_value_ssc_matrix(type_hel_field, "helio_positions");
         }
@@ -807,6 +809,9 @@ public:
 		bool bConnected = connect(weather, "wspd", type_hel_field, "vwind");
 		set_unit_value_ssc_double(type_hel_field, "field_control", 1.);
 		set_unit_value_ssc_double(weather, "solzen", 90.);	//initialize to be on the horizon
+		
+		// 4.17.15 twn: Need to connect controller defocus to heliostat field model
+		bConnected &= connect(type251_controller, "defocus", type_hel_field, "field_control");
 		bConnected &= connect(weather, "solzen", type_hel_field, "solzen");
 		bConnected &= connect(weather, "solazi", type_hel_field, "solaz");
 
@@ -1015,7 +1020,11 @@ public:
 		set_unit_value_ssc_array(type251_controller, "aux_array" ); //, [0.0,0.0,0.0,0.0,0.0]);
 		set_unit_value_ssc_double(type251_controller, "T_startup" ); //, 500);
 		set_unit_value_ssc_double(type251_controller, "fossil_mode" ); //, 1);
-		set_unit_value_ssc_double(type251_controller, "fthr_ok" ); //, 1);
+		
+		// 4.17.15 twn: for heliostat solar fields, should always assume partial defocusing is possible
+		set_unit_value_ssc_double(type251_controller, "fthr_ok", 1);
+		//double check_fthr_ok = as_double("fthr_ok"); 
+
 		set_unit_value_ssc_double(type251_controller, "nSCA" ); //, 1);
 		set_unit_value_ssc_double(type251_controller, "I_bn_des" ); //, 950);
 		set_unit_value_ssc_double(type251_controller, "fc_on" ); //, 0);
