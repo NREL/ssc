@@ -98,6 +98,12 @@ public:
 	int m_n_flux_x;
 	int m_n_flux_y;
 
+		// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
+	double m_T_salt_hot_target;			//[C], convert to K in init() call
+	double m_eta_pump;					//[-]
+	int m_night_recirc;					//[-]
+	double m_hel_stow_deploy;			//[-]
+
 		// Added for csp_solver/tcs wrappers:
 	int m_field_fl;
 	util::matrix_t<double> m_field_fl_props;	
@@ -108,7 +114,23 @@ public:
 	bool m_is_iscc;
 	int m_cycle_config;
 	
-	
+	struct S_inputs
+	{
+		//double m_T_salt_hot_target;			//[C] *could be constant*?
+		//double m_eta_pump;					//[-] *could be constant*?
+		double m_field_eff;					//[-] 
+		//int m_night_recirc;					//[-] *could be constant*?
+		//double m_hel_stow_deploy;			//[-] *could be constant*?
+		util::matrix_t<double> *m_flux_map_input;		//[-]
+
+		S_inputs()
+		{
+			/*m_T_salt_hot_target = m_eta_pump = m_hel_stow_deploy = */ m_field_eff = std::numeric_limits<double>::quiet_NaN();
+
+			/*m_night_recirc = -1;*/
+		}
+	};
+
 		// Let's put outputs in a structure...
 	struct S_outputs
 	{
@@ -149,12 +171,13 @@ public:
 
 	void init();
 
-	void call(const C_csp_weatherreader::S_outputs *p_weather, double T_salt_hot_target, double T_salt_cold_in, double eta_pump, double field_eff, int night_recirc,
-		double hel_stow_deploy, util::matrix_t<double> flux_map_input, const C_csp_solver_sim_info *p_sim_info);
+	//void call(const C_csp_weatherreader::S_outputs *p_weather, C_csp_solver_htf_state *p_htf_state, double T_salt_hot_target, double eta_pump, double field_eff, int night_recirc,
+	//	double hel_stow_deploy, util::matrix_t<double> flux_map_input, const C_csp_solver_sim_info *p_sim_info);
 
-	//void call(double azimuth, double zenith, double T_salt_hot_target, double T_salt_cold_in, double v_wind_10, double P_amb,
-	//	double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,
-	//	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, double time, int ncall, double step);
+	void call(const C_csp_weatherreader::S_outputs *p_weather, 
+		C_csp_solver_htf_state *p_htf_state, 
+		C_mspt_receiver_222::S_inputs *p_inputs,
+		const C_csp_solver_sim_info *p_sim_info);
 
 	void converged();
 

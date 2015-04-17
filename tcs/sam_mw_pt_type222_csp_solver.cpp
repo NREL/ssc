@@ -150,6 +150,8 @@ class sam_mw_pt_type222 : public tcstypeinterface
 private:
 	C_mspt_receiver_222 mspt_receiver;
 	C_csp_weatherreader::S_outputs ms_weather;
+	C_csp_solver_htf_state ms_htf_state;
+	C_mspt_receiver_222::S_inputs ms_inputs;
 	C_csp_solver_sim_info ms_sim_info;
 
 public:
@@ -197,6 +199,12 @@ public:
 
 		mspt_receiver.m_n_flux_x = (int)value(P_n_flux_x);
 		mspt_receiver.m_n_flux_y = (int)value(P_n_flux_y);
+
+		mspt_receiver.m_T_salt_hot_target = value(I_T_salt_hot);
+		mspt_receiver.m_eta_pump = value(I_eta_pump);
+		mspt_receiver.m_night_recirc = (int) value(I_night_recirc);
+		mspt_receiver.m_hel_stow_deploy = value(I_hel_stow_deploy);
+
 		//allocate the input array for the flux map
 		double *p_i_flux_map = allocate(I_flux_map, mspt_receiver.m_n_flux_y, mspt_receiver.m_n_flux_x);
 
@@ -248,18 +256,18 @@ public:
 		// Pass inputs to mspt_receiver class - NO CONVERSIONS!
 		ms_weather.m_solazi = value(I_azimuth);							//[deg] Solar azimuth angle 0 - 360, clockwise from due north, northern hemisphere
 		ms_weather.m_solzen = value(I_zenith);							//[deg] Solar zenith angle
-		double T_salt_hot_target_csp = value(I_T_salt_hot);				//[K] Desired hot temp, convert from C
+		//ms_inputs.m_T_salt_hot_target = value(I_T_salt_hot);			//[K] Desired hot temp, convert from C
 		double T_salt_cold_in_csp = value(I_T_salt_cold);				//[K] Cold salt inlet temp, convert from C
-		ms_weather.m_wspd = value(I_v_wind_10);						//[m/s] Wind velocity
+		ms_weather.m_wspd = value(I_v_wind_10);							//[m/s] Wind velocity
 		ms_weather.m_pres = value(I_P_amb);								//[Pa] Ambient pressure, convert from mbar
-		double eta_pump_csp = value(I_eta_pump);						//[-] Receiver HTF pump efficiency
+		//ms_inputs.m_eta_pump = value(I_eta_pump);						//[-] Receiver HTF pump efficiency
 	
 		ms_weather.m_tdew = value(I_T_dp);					//[K] Dewpoint temperature, convert from C
 		ms_weather.m_beam = value(I_I_bn);					//[W/m^2-K] Beam normal radiation
-		double field_eff_csp = value(I_field_eff);			//[-] Field efficiency value
+		ms_inputs.m_field_eff = value(I_field_eff);			//[-] Field efficiency value
 		ms_weather.m_tdry = value(I_T_db);						//[K] Dry bulb temperature, convert from C
-		int night_recirc_csp = (int)value(I_night_recirc);		//[-] Night recirculation control 0 = empty receiver, 1 = recirculate
-		double hel_stow_deploy_csp = value(I_hel_stow_deploy);	//[deg] Solar elevation angle at which heliostats are stowed
+		//ms_inputs.m_night_recirc = (int)value(I_night_recirc);		//[-] Night recirculation control 0 = empty receiver, 1 = recirculate
+		//ms_inputs.m_hel_stow_deploy = value(I_hel_stow_deploy);	//[deg] Solar elevation angle at which heliostats are stowed
 
 		//get the flux map
 		int n_flux_y_csp, n_flux_x_csp;	 
@@ -269,21 +277,24 @@ public:
 			for( int j = 0; j < n_flux_x_csp; j++ )
 				flux_map_in(i, j) = p_i_flux_map[j*n_flux_y_csp + i];
 
+		ms_inputs.m_flux_map_input = &flux_map_in;
 
 		// set sim info
 		ms_sim_info.m_time = time;
 		ms_sim_info.m_step = step;
 		ms_sim_info.m_ncall = ncall;
 
+		// Set applicable htf state info
+		ms_htf_state.m_temp_in = T_salt_cold_in_csp;
 
 		int out_type = -1;
 		std::string out_msg = "";
 
 		try
 		{
-			mspt_receiver.call(&ms_weather, T_salt_hot_target_csp, T_salt_cold_in_csp,
-				eta_pump_csp, field_eff_csp, night_recirc_csp,
-				hel_stow_deploy_csp, flux_map_in, &ms_sim_info);
+			mspt_receiver.call(&ms_weather, &ms_htf_state, 
+				&ms_inputs, 
+				&ms_sim_info);
 		}
 		
 		catch( C_csp_exception &csp_exception )
