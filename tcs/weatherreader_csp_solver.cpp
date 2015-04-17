@@ -104,6 +104,7 @@ class weatherreader : public tcstypeinterface
 private:
 	C_csp_weatherreader c_wr;
 	const C_csp_weatherreader::S_outputs * m_wf;
+	C_csp_solver_sim_info ms_sim_info;
 
 public:
 	weatherreader( tcscontext *cxt, tcstypeinfo *ti )
@@ -156,12 +157,17 @@ public:
 
 	virtual int call( double time, double step, int ncall )
 	{
+		// set sim info
+		ms_sim_info.m_time = time;
+		ms_sim_info.m_step = step;
+		ms_sim_info.m_ncall = ncall;
+
 		int out_type = -1;
 		std::string out_msg = "";
 
 		try
 		{
-			c_wr.timestep_call(time, step, ncall);
+			c_wr.timestep_call(&ms_sim_info);
 		}
 
 		catch( C_csp_exception &csp_exception)

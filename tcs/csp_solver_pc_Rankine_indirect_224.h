@@ -77,7 +77,6 @@ public:
 		double m_P_cond_min;		//[inHG] minimum condenser pressure, converted to Pa in code
 		int m_n_pl_inc;				//[-] Number of part-load increments for the heat rejection system
 		std::vector<double> m_F_wc;		//[-] hybrid cooling dispatch fractions 1 thru 9 (array index 0-8)
-		//double m_F_wc[9];			//[-] hybrid cooling dispatch fractions 1 thru 9 (array index 0-8)
 
 		S_params()
 		{
@@ -86,28 +85,6 @@ public:
 				m_P_cond_ratio = m_pb_bd_frac = m_P_cond_min = std::numeric_limits<double>::quiet_NaN();
 
 			m_pc_fl = m_CT = m_tech_type = m_n_pl_inc = -1;
-			
-			//for( int i = 0; i < 9; i++ )
-			//	m_F_wc[i] = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-
-	struct S_inputs
-	{
-		double m_T_htf_hot;			//[C] Hot HTF inlet temperature
-		double m_m_dot_htf;			//[kg/hr] HTF mass flow rate
-		//double m_T_wb;				//[C] Wet bulb temp
-		int m_standby_control;		//[-] Control signal indicating standby mode
-		//double m_T_db;				//[C] Ambient dry bulb temperature
-		//double m_P_amb;				//[mbar] Ambient pressure
-		int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
-		//double m_rh;				//[%] Relative humidity
-
-		S_inputs()
-		{
-			m_T_htf_hot = m_m_dot_htf = /*m_T_wb = m_T_db = m_P_amb = m_rh =*/ std::numeric_limits<double>::quiet_NaN();
-
-			m_standby_control = m_tou = -1;
 		}
 	};
 
@@ -140,7 +117,10 @@ public:
 
 	void init();
 
-	void call(const C_csp_weatherreader::S_outputs *p_weather, const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
+	void call(const C_csp_weatherreader::S_outputs *p_weather, 
+		C_csp_solver_htf_state *p_htf_state,
+		const C_csp_power_cycle::S_control_inputs &inputs, 
+		C_pc_Rankine_indirect_224::S_outputs &outputs,
 		const C_csp_solver_sim_info *p_sim_info);
 
 	void converged();
