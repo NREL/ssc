@@ -180,18 +180,15 @@ All voltage models are based on one-cell, but return the voltage for one battery
 class voltage_t
 {
 public:
-	voltage_t(int num_cells, double voltage, double cutoff);
+	voltage_t(int num_cells, double voltage);
 
 	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
 	double battery_voltage(); // voltage of one battery
 	double cell_voltage(); // voltage of one cell
-	double cutoff_voltage(); // cutoff voltage of one cell
-
 
 protected:
 	int _num_cells;    // number of cells per battery
 	double _cell_voltage; // closed circuit voltage per cell [V]
-	double _cutoff_voltage; // cutoff voltage of one cell
 };
 
 class voltage_basic_t : public voltage_t
@@ -205,7 +202,7 @@ public:
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double cutoff);
+	voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate);
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, double dt);
 
@@ -304,7 +301,7 @@ class battery_t
 {
 public:
 	battery_t();
-	battery_t(double power_conversion_efficiency, double dt);
+	battery_t(double dt, int battery_chemistry);
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
 	// Run all
@@ -321,8 +318,9 @@ public:
 	voltage_t * voltage_model();
 
 	// Get capacity quantities
-	double chargeNeededToFill();
-	double getCurrentCharge();
+	double battery_charge_needed();
+	double battery_charge_total();
+	double battery_charge_maximum();
 
 	// Get Voltage
 	double cell_voltage();
@@ -334,44 +332,17 @@ private:
 	voltage_t * _voltage;
 	thermal_t * _thermal;
 	losses_t * _losses;
+	int _battery_chemistry;
 	double _dt;
-	double _power_conversion_efficiency;
 	bool _firstStep;
 };
-
-/* 
-Battery bank class
-Accounts for multiple batteries and power conversion efficiency
-Currently, only bank is treated as one large battery in series, so class isn't very useful
-*/
-class battery_bank_t
-{
-public:
-	battery_bank_t(battery_t * battery, int num_batteries_series, int num_batteries_parallel, int battery_chemistry, double power_conversion_efficiency);
-	void run(double P);
-	double bank_charge_needed();
-	double bank_charge_available();
-	double bank_voltage();
-	double cell_voltage();
-	int num_batteries();
-	battery_t * battery();
-
-protected:
-	battery_t * _battery;
-	int _num_batteries_series;
-	int _num_batteries_parallel;
-	int _num_batteries;
-	int _battery_chemistry;
-	double _power_conversion_efficiency;
-};
-
 /*
 Dispatch Base Class - can envision many potential modifications. Goal is to define standard API
 */
 class dispatch_t
 {
 public:
-	dispatch_t(battery_bank_t * BatteryBank, double dt);
+	dispatch_t(battery_t * Battery, double dt, double SOC_min);
 
 	// Public APIs
 	virtual void dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
@@ -383,7 +354,7 @@ public:
 	double grid_to_load();
 
 protected:
-	battery_bank_t * _BatteryBank;
+	battery_t * _Battery;
 	double _dt;
 
 	double _e_tofrom_batt;
@@ -391,6 +362,7 @@ protected:
 	double _pv_to_load;
 	double _battery_to_load;
 	double _grid_to_load;
+	double _SOC_min;
 
 };
 
@@ -400,7 +372,7 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	dispatch_manual_t(battery_bank_t * BatteryBank, double dt, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
+	dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
 	void dispatch(size_t hour_of_year, double e_pv, double e_load);
 
 protected:

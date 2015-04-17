@@ -16,11 +16,10 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of Cells in Serial",                               "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_cell_cutoff_voltage",                   "Cell cutoff voltage",                                     "V",        "",                    "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",        "",                    "Battery",       "",                           "",                              "" },
 
 
 	// Voltage discharge curve
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_rt_eff",                                "Battery round trip efficiency",                           "%",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vfull",                                 "Fully charged cell voltage",                              "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vexp",                                  "Cell Voltage at end of exponential zone",                 "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vnom",                                  "Cell Voltage at end of nominal zone",                     "V",       "",                     "Battery",       "",                           "",                              "" },
@@ -69,7 +68,7 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "qmax",                                 "Battery Max Charge",                                    "Ah",    "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_I",                               "Battery Current",                                       "A",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_cell",                         "Battery Cell Voltage",                                  "V",     "", "Battery", "", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_bank",                         "Battery Bank Voltage",                                  "V",     "", "Battery", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_battery",                      "Battery Voltage",	                                      "V",     "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                               "Battery Number of Cycles",                              "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "forty_percent_cycles",                 "Battery Number of 40% DOD Cycles",                      "",      "", "Battery", "", "", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hundred_percent_cycles",               "Battery Number of 100% DOD Cycles",                     "",      "", "Battery", "", "", "" },
@@ -95,7 +94,6 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	thermal_model = 0;
 	battery_model = 0;
 	capacity_model = 0;
-	battery_bank_model = 0;
 	dispatch_model = 0;
 	losses_model = 0;
 
@@ -108,7 +106,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outDOD = 0;
 	outCurrent = 0;
 	outCellVoltage = 0;
-	outBatteryBankVoltage = 0;
+	outBatteryVoltage = 0;
 	outCapacityPercent = 0;
 	outCycles = 0;
 	out40Cycles = 0;
@@ -170,7 +168,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outDOD = cm.allocate("DOD", nrec);
 	outCurrent = cm.allocate("batt_I", nrec);
 	outCellVoltage = cm.allocate("voltage_cell", nrec);
-	outBatteryBankVoltage = cm.allocate("voltage_bank", nrec);
+	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
 	outCapacityPercent = cm.allocate("capacity_percent", nrec);
 	outCycles = cm.allocate("Cycles", nrec);
 	out40Cycles = cm.allocate("forty_percent_cycles", nrec);
@@ -185,7 +183,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 	// model initialization
 	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
-		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"), cm.as_double("batt_cell_cutoff_voltage"));
+		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
 	lifetime_model = new  lifetime_t(batt_lifetime_matrix);
 
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
@@ -206,8 +204,8 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		
 		
 	battery_model = new battery_t( 
-		cm.as_double("batt_rt_eff"), 
-		dt_hr );
+		dt_hr,
+		chem);
 
 	double Vfull = cm.as_double("batt_Vfull");
 	int ncell = cm.as_integer("batt_computed_series") + cm.as_integer("batt_computed_parallel");
@@ -223,7 +221,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	else if ( chem == 1 )
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			cm.as_double("batt_Qfull"));
+			cm.as_double("batt_Qfull") );
 	}
 	
 	losses_model = new losses_t(
@@ -232,14 +230,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		capacity_model);
 
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
-
-	battery_bank_model = new battery_bank_t( battery_model, 
-		1, // cm.as_double("batt_nser"),
-		0, // need to input number of batteries in series
-		chem,
-		cm.as_double("batt_rt_eff") );
-
-	dispatch_model = new dispatch_manual_t( battery_bank_model, dt_hr, dm_sched, dm_charge, dm_discharge, dm_gridcharge );
+	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), dm_sched, dm_charge, dm_discharge, dm_gridcharge);
 }
 
 battstor::~battstor()
@@ -250,30 +241,28 @@ battstor::~battstor()
 	if( battery_model ) delete battery_model;
 	if( capacity_model ) delete capacity_model;
 	if (losses_model) delete losses_model;
-	if( battery_bank_model ) delete battery_bank_model;
 	if( dispatch_model ) delete dispatch_model;
 }
 
 void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD )
 {
 	dispatch_model->dispatch( hour_of_year, PV, LOAD );
-	int num_batteries = battery_bank_model->num_batteries();
 
 	// Capacity Output with Losses Applied
 	if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
 	{
-		outAvailableCharge[idx] = (ssc_number_t)(num_batteries*kibam->q1());
-		outBoundCharge[idx] = (ssc_number_t)(num_batteries*kibam->q2());
+		outAvailableCharge[idx] = (ssc_number_t)(kibam->q1());
+		outBoundCharge[idx] = (ssc_number_t)(kibam->q2());
 	}
 	
-	outMaxCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->qmax());
-	outTotalCharge[idx] = (ssc_number_t)(num_batteries*capacity_model->q0());
+	outMaxCharge[idx] = (ssc_number_t)(capacity_model->qmax());
+	outTotalCharge[idx] = (ssc_number_t)(capacity_model->q0());
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
 	outCurrent[idx] = (capacity_model->I());
 
 	// Voltage Output
-	outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage());
-	outBatteryBankVoltage[idx] = (ssc_number_t)(battery_bank_model->bank_voltage());
+	outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage() );
+	outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage() );
 
 	// Lifetime Output
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
@@ -354,10 +343,8 @@ public:
 			// Loop over subhourly
 			for (size_t jj = 0; jj<step_per_hour; jj++)
 			{
-
 				batt.advance( *this, count, hour, jj, hourly_energy[count], e_load[count] );
 				count++;
-
 			}	// End loop over subhourly
 		} // End loop over hourly
 	}

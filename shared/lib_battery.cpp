@@ -340,21 +340,19 @@ double capacity_lithium_ion_t::q10(){return _qmax;}
 /*
 Define Voltage Model
 */
-voltage_t::voltage_t(int num_cells, double voltage, double cutoff)
+voltage_t::voltage_t(int num_cells, double voltage)
 {
 	_num_cells = num_cells;
 	_cell_voltage = voltage;
-	_cutoff_voltage = cutoff;
 }
 
 double voltage_t::battery_voltage(){ return _num_cells*_cell_voltage; }
 double voltage_t::cell_voltage(){ return _cell_voltage; }
-double voltage_t::cutoff_voltage(){ return _cutoff_voltage; }
 
 
 // Dynamic voltage model
-voltage_dynamic_t::voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double V_cutoff):
-voltage_t(num_cells, voltage, V_cutoff)
+voltage_dynamic_t::voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate):
+voltage_t(num_cells, voltage)
 {
 	_Vfull = Vfull;
 	_Vexp = Vexp;
@@ -421,7 +419,7 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 
 // Basic voltage model
 voltage_basic_t::voltage_basic_t(int num_cells, double voltage) :
-voltage_t(num_cells, voltage, 0.){}
+voltage_t(num_cells, voltage){}
 
 void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
 
@@ -810,10 +808,10 @@ void losses_t::run_losses()
 Define Battery 
 */
 battery_t::battery_t(){};
-battery_t::battery_t(double power_conversion_efficiency, double dt)
+battery_t::battery_t(double dt, int battery_chemistry)
 {
-	_power_conversion_efficiency = power_conversion_efficiency;
 	_dt = dt;
+	_battery_chemistry = battery_chemistry;
 }
 void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal, losses_t * losses)
 {
@@ -872,12 +870,8 @@ voltage_t * battery_t::voltage_model()
 {
 	return _voltage;
 }
-double battery_t::chargeNeededToFill()
+double battery_t::battery_charge_needed()
 {
-	// Leads to minor discrepency, since gets max capacity from the old time step, which is based on the previous current level
-	// Since the new time step will have a different power requirement, and a different current level, this leads to charge_needed not truly equaling the charge needed at the new current.
-	// I don't know if there is simple way to correct this, or if it is necessary to correct
-	// double charge_needed =_capacity->getMaxCapacityAtCurrent() - _capacity->getTotalCapacity();
 	double charge_needed = _capacity->qmax() - _capacity->q0();
 	if (charge_needed > 0)
 		return charge_needed;
@@ -885,63 +879,19 @@ double battery_t::chargeNeededToFill()
 		return 0.;
 }
 
-double battery_t::getCurrentCharge()
-{
-	// return available capacity
-	return _capacity->q1();
-}
-
-double battery_t::cell_voltage()
-{
-	return _voltage->cell_voltage();
-}
-double battery_t::battery_voltage()
-{
-	return _voltage->battery_voltage();
-}
-
-/*
-Define Battery Bank
-*/
-battery_bank_t::battery_bank_t(battery_t * battery, int num_batteries_series, int num_batteries_parallel, int battery_chemistry, double power_conversion_efficiency)
-{
-	_battery = battery;
-	_num_batteries_series = num_batteries_series;
-	_num_batteries_parallel = num_batteries_parallel;
-	_num_batteries = num_batteries_parallel + num_batteries_series;
-	_battery_chemistry = battery_chemistry;
-	_power_conversion_efficiency = power_conversion_efficiency; // currently unused
-}
-void battery_bank_t::run(double P)
-{
-	_battery->run(P / _num_batteries_series);
-}
-double battery_bank_t::bank_charge_needed()
-{
-	return ( _num_batteries*_battery->chargeNeededToFill() );
-}
-double battery_bank_t::bank_charge_available()
-{
-	return ( _num_batteries*_battery->getCurrentCharge() );
-}
-double battery_bank_t::bank_voltage()
-{
-	return _num_batteries_series*_battery->battery_voltage();
-}
-double battery_bank_t::cell_voltage()
-{
-	return _battery->cell_voltage();
-}
-int battery_bank_t::num_batteries(){ return _num_batteries; };
-battery_t * battery_bank_t::battery(){ return _battery; };
+double battery_t::battery_charge_total(){return _capacity->q0();}
+double battery_t::battery_charge_maximum(){ return _capacity->qmax(); }
+double battery_t::cell_voltage(){ return _voltage->cell_voltage();}
+double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_bank_t * BatteryBank, double dt)
+dispatch_t::dispatch_t(battery_t * Battery, double dt, double SOC_min)
 {
-	_BatteryBank = BatteryBank;
+	_Battery = Battery;
 	_dt = dt;
+	_SOC_min = SOC_min;
 
 	// positive quantities describing how much went to load
 	_pv_to_load = 0.;
@@ -962,8 +912,8 @@ double dispatch_t::grid_to_load(){ return _grid_to_load; };
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_bank_t * BatteryBank, double dt, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
-	: dispatch_t(BatteryBank, dt)
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
+	: dispatch_t(Battery, dt, SOC_min)
 {
 	_sched = dm_sched;
 	_charge_array = dm_charge;
@@ -984,11 +934,12 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 
 
 	// current charge state of battery from last time step.  
-	double chargeNeededToFill = _BatteryBank->bank_charge_needed();						// [Ah] - qmax - qtotal
-	double bank_voltage = _BatteryBank->bank_voltage();									// [V] 
-	double cell_voltage = _BatteryBank->cell_voltage();									// [V]
-	double energyNeededToFill = (chargeNeededToFill * cell_voltage)*watt_to_kilowatt;	// [kWh]
-	
+	double battery_voltage = _Battery->battery_voltage();								// [V] 
+	double chargeNeededToFill = _Battery->battery_charge_needed();						// [Ah] - qmax - q0
+	double energyNeededToFill = (chargeNeededToFill * battery_voltage)*watt_to_kilowatt;// [kWh]
+	double chargeTotal = _Battery->battery_charge_total();								// [Ah]
+	double chargeMax = _Battery->battery_charge_maximum();								// [Ah]
+
 	_e_grid = 0.;																		// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
 	_e_tofrom_batt = 0.;																// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 	_pv_to_load = 0.;
@@ -1022,12 +973,20 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 			_e_tofrom_batt = -energyNeededToFill;
 	}
 
+	// Implement minimum SOC cut-off
+	if (_e_tofrom_batt > 0)
+	{
+		double e_max_discharge = battery_voltage *(chargeTotal - chargeMax*_SOC_min*0.01)*watt_to_kilowatt;
+		if (fabs(_e_tofrom_batt) > e_max_discharge)
+			_e_tofrom_batt = e_max_discharge;
+	}
+
 	// Run Battery Model to update charge based on charge/discharge
-	_BatteryBank->run(kilowatt_to_watt*_e_tofrom_batt / _dt);
+	_Battery->run(kilowatt_to_watt*_e_tofrom_batt / _dt);
 
 	// Update how much power was actually used to/from battery
-	double current = _BatteryBank->battery()->capacity_model()->I();
-	_e_tofrom_batt = current * bank_voltage * _dt / 1000;// [kWh]
+	double current = _Battery->capacity_model()->I();
+	_e_tofrom_batt = current * battery_voltage * _dt / 1000;// [kWh]
 
 	
 	// Update net grid energy
