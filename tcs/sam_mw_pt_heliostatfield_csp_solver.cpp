@@ -13,6 +13,7 @@
 
 #include "csp_solver_pt_heliostatfield.h"
 #include "csp_solver_util.h"
+#include "csp_solver_core.h"
 
 using namespace std;
 
@@ -306,7 +307,9 @@ class sam_mw_pt_heliostatfield : public tcstypeinterface
 {
 private:
 	C_pt_heliostatfield mc_heliostatfield;
-	
+	C_csp_weatherreader::S_outputs ms_weather;
+	C_csp_solver_sim_info ms_sim_info;
+
 	// Class Instances
 	//GaussMarkov *field_efficiency_table;
 	// Flux table
@@ -653,18 +656,22 @@ public:
 
 	virtual int call( double time, double step, int ncall )
 	{						
-		double v_wind_csp = value(I_v_wind);
+		ms_weather.m_wspd = value(I_v_wind);
 		double field_control_csp = value(I_field_control);
-		double solzen_csp = value(I_solzen);
-		double solaz_csp = value(I_solaz);
+		ms_weather.m_solzen = value(I_solzen);
+		ms_weather.m_solazi = value(I_solaz);
+
+		// set sim info
+		ms_sim_info.m_time = time;
+		ms_sim_info.m_step = step;
+		ms_sim_info.m_ncall = ncall;
 
 		int out_type = -1;
 		std::string out_msg = "";
 
 		try
 		{
-			mc_heliostatfield.call(v_wind_csp, field_control_csp, solaz_csp, solzen_csp,
-				time, ncall, step);
+			mc_heliostatfield.call(&ms_weather, field_control_csp, &ms_sim_info);
 		}
 
 		catch( C_csp_exception &csp_exception )

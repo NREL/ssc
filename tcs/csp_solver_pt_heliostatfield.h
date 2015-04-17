@@ -2,6 +2,7 @@
 #define __csp_solver_pt_heliostatfield_
 
 #include "csp_solver_util.h"
+#include "csp_solver_core.h"
 
 #include "sort_method.h"
 #include "interpolation_routines.h"
@@ -168,7 +169,7 @@ public:
 	//void init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata);
 	void init();
 
-	void call(double wind_in, double field_control_in, double solaz_in, double solzen_in, double time, double ncall, double step);
+	void call(const C_csp_weatherreader::S_outputs *p_weather, double field_control_in, const C_csp_solver_sim_info *p_sim_info);
 
 	void converged();
 };

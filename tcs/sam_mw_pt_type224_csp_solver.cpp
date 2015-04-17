@@ -116,6 +116,7 @@ class sam_mw_pt_type224 : public tcstypeinterface
 private:
 	C_pc_Rankine_indirect_224 mc_power_cycle;
 	C_csp_weatherreader::S_outputs ms_weather;
+	C_csp_solver_sim_info ms_sim_info;
 	C_pc_Rankine_indirect_224::S_inputs ms_inputs;
 	C_pc_Rankine_indirect_224::S_outputs ms_outputs;
 
@@ -216,13 +217,17 @@ public:
 		ms_inputs.m_tou = (int)value(I_TOU);		//Current Time-of-use period [none]
 		ms_weather.m_rhum = value(I_RH) / 100.0;			//Relative humidity of the ambient air [none]
 
+		// set sim info
+		ms_sim_info.m_time = time;
+		ms_sim_info.m_step = step;
+		ms_sim_info.m_ncall = ncall;
 
 		int out_type = -1;
 		std::string out_msg = "";
 
 		try
 		{
-			mc_power_cycle.call(&ms_weather, ms_inputs, ms_outputs, time, step, ncall);
+			mc_power_cycle.call(&ms_weather, ms_inputs, ms_outputs, &ms_sim_info);
 		}
 		catch(C_csp_exception &csp_exception)
 		{

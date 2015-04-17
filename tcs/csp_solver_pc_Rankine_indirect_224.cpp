@@ -262,8 +262,13 @@ void C_pc_Rankine_indirect_224::init()
 }
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_weather, const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
-	double time_sec, double step_sec, int ncall)
+	const C_csp_solver_sim_info *p_sim_info)
 {
+	// Get sim info
+	double time = p_sim_info->m_time;
+	double step_sec = p_sim_info->m_step;
+	int ncall = p_sim_info->m_ncall;
+
 	// Check and convert inputs
 	double T_htf_hot = inputs.m_T_htf_hot;			//[C] 
 	double m_dot_htf = inputs.m_m_dot_htf;			//[kg/hr]

@@ -1,5 +1,6 @@
 #include "csp_solver_pt_heliostatfield.h"
 #include "sam_csp_util.h"
+#include "csp_solver_core.h"
 
 #include "interpolation_routines.h"
 #include "AutoPilot_API.h"
@@ -618,9 +619,14 @@ void C_pt_heliostatfield::init()
 		m_v_wind_prev = 0.0;
 }
 
-void C_pt_heliostatfield::call(double wind_in, double field_control_in, double solaz_in, double solzen_in, double time, double ncall, double step)
+void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs *p_weather, double field_control_in, const C_csp_solver_sim_info *p_sim_info)
 {
-	double v_wind = wind_in;
+	// Get sim info
+	double time = p_sim_info->m_time;
+	double step = p_sim_info->m_step;
+	int ncall = p_sim_info->m_ncall;
+
+	double v_wind = p_weather->m_wspd;
 	m_v_wind_current = v_wind;
 	double field_control = field_control_in;	// Control Parameter ( range from 0 to 1; 0=off, 1=all on)
 	if( field_control_in > 1.0 )
@@ -628,12 +634,12 @@ void C_pt_heliostatfield::call(double wind_in, double field_control_in, double s
 	if( field_control_in < 0.0 )
 		field_control = 0.0;
 
-	double solzen = solzen_in*CSP::pi / 180.0;
+	double solzen = p_weather->m_solzen*CSP::pi / 180.0;
 
 	if( solzen >= CSP::pi / 2.0 )
 		field_control = 0.0;			// No tracking before sunrise or after sunset
 
-	double solaz = solaz_in*CSP::pi / 180.0;
+	double solaz = p_weather->m_solazi*CSP::pi / 180.0;
 
 	// clear out the existing flux map
 	ms_outputs.m_flux_map_out.fill(0.0);

@@ -7,9 +7,9 @@
 class C_csp_solver_sim_info
 {
 public:
-	double m_time;
-	double m_step;
-	int m_ncall;
+	double m_time;		//[s]
+	double m_step;		//[s]
+	int m_ncall;		//[-]
 
 	C_csp_solver_sim_info()
 	{
