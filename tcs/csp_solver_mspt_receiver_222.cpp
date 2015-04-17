@@ -1,4 +1,5 @@
 #include "csp_solver_mspt_receiver_222.h"
+#include "csp_solver_core.h"
 
 C_mspt_receiver_222::C_mspt_receiver_222()
 {
@@ -212,19 +213,32 @@ void C_mspt_receiver_222::init()
 	return;
 }
 
-void C_mspt_receiver_222::call(double azimuth, double zenith, double T_salt_hot_target, double T_salt_cold_in, double v_wind_10, double P_amb,
-	double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,
-	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, double time, int ncall, double step)
+//void C_mspt_receiver_222::call(double azimuth, double zenith, double T_salt_hot_target, double T_salt_cold_in, double v_wind_10, double P_amb,
+//	double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,
+//	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, double time, int ncall, double step)
+void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, double T_salt_hot_target, double T_salt_cold_in, double eta_pump, double field_eff, int night_recirc,
+	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, const C_csp_solver_sim_info *p_sim_info)
 {
+
+	double time = p_sim_info->m_time;
+	double step = p_sim_info->m_step;
+	int ncall = p_sim_info->m_ncall;
+
 	// Complete necessary conversions/calculations of input variables
 	T_salt_hot_target += 273.15;			//[K] desired hot temperature, convert from C
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
-	P_amb *= 100.0;							//[Pa] Ambient pressure, convert from mbar
+	double P_amb = p_weather->m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
 	double hour = time / 3600.0;			//[hr] Hour of the year
 	double hour_day = (int) hour%24;		//[hr] Hour of the day
-	T_dp += 273.15;							//[K] Dewpoint temperature, convert from C
-	T_amb += 273.15;						//[K] Dry bulb temperature, convert from C
+	double T_dp = p_weather->m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
+	double T_amb = p_weather->m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
 	// **************************************************************************************
+
+	// Read in remaining weather inputs from weather output structure
+	double zenith = p_weather->m_solzen;
+	double azimuth = p_weather->m_solazi;
+	double v_wind_10 = p_weather->m_wspd;
+	double I_bn = p_weather->m_beam;
 
 	m_i_flux_map = i_flux_map;
 	if(n_flux_y > 1)

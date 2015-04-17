@@ -261,18 +261,18 @@ void C_pc_Rankine_indirect_224::init()
 
 }
 
-void C_pc_Rankine_indirect_224::call(const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
+void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_weather, const C_pc_Rankine_indirect_224::S_inputs & inputs, C_pc_Rankine_indirect_224::S_outputs & outputs,
 	double time_sec, double step_sec, int ncall)
 {
 	// Check and convert inputs
-	double T_htf_hot = inputs.m_T_htf_hot;		//[C] 
-	double m_dot_htf = inputs.m_m_dot_htf;		//[kg/hr]
-	double T_wb = inputs.m_T_wb + 273.15;		//[K], converted from C
+	double T_htf_hot = inputs.m_T_htf_hot;			//[C] 
+	double m_dot_htf = inputs.m_m_dot_htf;			//[kg/hr]
+	double T_wb = p_weather->m_twet + 273.15;		//[K], converted from C
 	int standby_control = inputs.m_standby_control;	//[-]
-	double T_db = inputs.m_T_db + 273.15;		//[K], converted from C
-	double P_amb = inputs.m_P_amb*100.0;		//[Pa], converted from mbar
-	int tou = inputs.m_tou - 1;			//[-], convert from 1-based index
-	double rh = inputs.m_rh/100.0;			//[-], convert from %
+	double T_db = p_weather->m_tdry + 273.15;		//[K], converted from C
+	double P_amb = p_weather->m_pres*100.0;			//[Pa], converted from mbar
+	int tou = inputs.m_tou - 1;						//[-], convert from 1-based index
+	double rh = p_weather->m_rhum/100.0;			//[-], convert from %
 
 	double m_dot_st_bd = 0.0;
 
