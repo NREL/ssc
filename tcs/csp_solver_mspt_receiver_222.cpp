@@ -66,7 +66,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 	m_q_iscc_max = std::numeric_limits<double>::quiet_NaN();
 	
-	m_i_flux_map = NULL;
+	//m_i_flux_map = NULL;
 }
 
 void C_mspt_receiver_222::init()
@@ -217,7 +217,7 @@ void C_mspt_receiver_222::init()
 //	double eta_pump, double T_dp, double I_bn, double field_eff, double T_amb, int night_recirc,
 //	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, double time, int ncall, double step)
 void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, double T_salt_hot_target, double T_salt_cold_in, double eta_pump, double field_eff, int night_recirc,
-	double hel_stow_deploy, const double * i_flux_map, int n_flux_y, int n_flux_x, const C_csp_solver_sim_info *p_sim_info)
+	double hel_stow_deploy, util::matrix_t<double> flux_map_input, const C_csp_solver_sim_info *p_sim_info)
 {
 
 	double time = p_sim_info->m_time;
@@ -240,13 +240,14 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 	double v_wind_10 = p_weather->m_wspd;
 	double I_bn = p_weather->m_beam;
 
-	m_i_flux_map = i_flux_map;
+	int n_flux_y = flux_map_input.nrows();
 	if(n_flux_y > 1)
 	{
 		error_msg = util::format("The Molten Salt External Receiver (Type222) model does not currently support 2-dimensional "
 			"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d", n_flux_y);
 		csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 	}
+	int n_flux_x = flux_map_input.ncols();
 	m_flux_in.resize(n_flux_x);
 
 	double T_sky = CSP::skytemp(T_amb, T_dp, hour);
@@ -323,7 +324,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 			for( int j = 0; j<n_flux_x; j++ ){
 				m_flux_in.at(j) = 0.;
 				for( int i = 0; i<n_flux_y; i++ ){
-					m_flux_in.at(j) += m_i_flux_map[j*n_flux_y + i]
+					m_flux_in.at(j) += flux_map_input(i,j)
 						* I_bn*field_eff_adj*m_A_sf / 1000. / (CSP::pi*m_h_rec*m_d_rec / (double)n_flux_x);	//[kW/m^2];
 				}
 			}
