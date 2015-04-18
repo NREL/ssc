@@ -68,8 +68,6 @@ private:
 	double m_P_amb_high;
 	double m_q_iscc_max;
 
-	//const double *m_i_flux_map;
-
 	// member string for exception messages
 	std::string error_msg;
 
@@ -116,18 +114,12 @@ public:
 	
 	struct S_inputs
 	{
-		//double m_T_salt_hot_target;			//[C] *could be constant*?
-		//double m_eta_pump;					//[-] *could be constant*?
 		double m_field_eff;					//[-] 
-		//int m_night_recirc;					//[-] *could be constant*?
-		//double m_hel_stow_deploy;			//[-] *could be constant*?
 		util::matrix_t<double> *m_flux_map_input;		//[-]
 
 		S_inputs()
 		{
-			/*m_T_salt_hot_target = m_eta_pump = m_hel_stow_deploy = */ m_field_eff = std::numeric_limits<double>::quiet_NaN();
-
-			/*m_night_recirc = -1;*/
+			m_field_eff = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -171,12 +163,9 @@ public:
 
 	void init();
 
-	//void call(const C_csp_weatherreader::S_outputs *p_weather, C_csp_solver_htf_state *p_htf_state, double T_salt_hot_target, double eta_pump, double field_eff, int night_recirc,
-	//	double hel_stow_deploy, util::matrix_t<double> flux_map_input, const C_csp_solver_sim_info *p_sim_info);
-
 	void call(const C_csp_weatherreader::S_outputs *p_weather, 
 		C_csp_solver_htf_state *p_htf_state, 
-		C_mspt_receiver_222::S_inputs *p_inputs,
+		const C_mspt_receiver_222::S_inputs *p_inputs,
 		const C_csp_solver_sim_info *p_sim_info);
 
 	void converged();

@@ -256,18 +256,14 @@ public:
 		// Pass inputs to mspt_receiver class - NO CONVERSIONS!
 		ms_weather.m_solazi = value(I_azimuth);							//[deg] Solar azimuth angle 0 - 360, clockwise from due north, northern hemisphere
 		ms_weather.m_solzen = value(I_zenith);							//[deg] Solar zenith angle
-		//ms_inputs.m_T_salt_hot_target = value(I_T_salt_hot);			//[K] Desired hot temp, convert from C
 		double T_salt_cold_in_csp = value(I_T_salt_cold);				//[K] Cold salt inlet temp, convert from C
 		ms_weather.m_wspd = value(I_v_wind_10);							//[m/s] Wind velocity
 		ms_weather.m_pres = value(I_P_amb);								//[Pa] Ambient pressure, convert from mbar
-		//ms_inputs.m_eta_pump = value(I_eta_pump);						//[-] Receiver HTF pump efficiency
 	
 		ms_weather.m_tdew = value(I_T_dp);					//[K] Dewpoint temperature, convert from C
 		ms_weather.m_beam = value(I_I_bn);					//[W/m^2-K] Beam normal radiation
 		ms_inputs.m_field_eff = value(I_field_eff);			//[-] Field efficiency value
 		ms_weather.m_tdry = value(I_T_db);						//[K] Dry bulb temperature, convert from C
-		//ms_inputs.m_night_recirc = (int)value(I_night_recirc);		//[-] Night recirculation control 0 = empty receiver, 1 = recirculate
-		//ms_inputs.m_hel_stow_deploy = value(I_hel_stow_deploy);	//[deg] Solar elevation angle at which heliostats are stowed
 
 		//get the flux map
 		int n_flux_y_csp, n_flux_x_csp;	 

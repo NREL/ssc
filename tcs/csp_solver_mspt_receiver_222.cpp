@@ -27,6 +27,11 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_n_flux_x = 0;
 	m_n_flux_y = 0;
 
+	m_T_salt_hot_target = std::numeric_limits<double>::quiet_NaN();
+	m_eta_pump = std::numeric_limits<double>::quiet_NaN();
+	m_night_recirc = -1;
+	m_hel_stow_deploy = std::numeric_limits<double>::quiet_NaN();
+
 		// Added for csp_solver/tcs wrapper
 	m_field_fl = -1;
 	error_msg = "";
@@ -66,7 +71,6 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 	m_q_iscc_max = std::numeric_limits<double>::quiet_NaN();
 	
-	//m_i_flux_map = NULL;
 }
 
 void C_mspt_receiver_222::init()
@@ -216,18 +220,14 @@ void C_mspt_receiver_222::init()
 
 void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
 	C_csp_solver_htf_state *p_htf_state,
-	C_mspt_receiver_222::S_inputs *p_inputs,
+	const C_mspt_receiver_222::S_inputs *p_inputs,
 	const C_csp_solver_sim_info *p_sim_info)
 {
 	// Get inputs
-	//double T_salt_hot_target = p_inputs->m_T_salt_hot_target;	//[C]
-	//double eta_pump = p_inputs->m_eta_pump;						//[-]
 	double field_eff = p_inputs->m_field_eff;					//[-]
-	//int night_recirc = p_inputs->m_night_recirc;				//[-]
-	//double hel_stow_deploy = p_inputs->m_hel_stow_deploy;		//[-]
 	const util::matrix_t<double> *flux_map_input = p_inputs->m_flux_map_input;
 
-	// Get sim info
+	// Get sim info 
 	double time = p_sim_info->m_time;
 	double step = p_sim_info->m_step;
 	int ncall = p_sim_info->m_ncall;
@@ -236,7 +236,6 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather,
 	double T_salt_cold_in = p_htf_state->m_temp_in;		//[C]
 
 	// Complete necessary conversions/calculations of input variables
-	//T_salt_hot_target += 273.15;			//[K] desired hot temperature, convert from C
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
 	double P_amb = p_weather->m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
 	double hour = time / 3600.0;			//[hr] Hour of the year
