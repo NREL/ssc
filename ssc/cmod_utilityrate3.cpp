@@ -18,14 +18,14 @@ static var_info vtab_utility_rate3[] = {
 	// First year hourly or subhourly
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
-	{ SSC_OUTPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "gen", "Net PV ac power", "kW", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "grid", "Net grid power", "kW", "", "Time Series", "*", "", "" },
+	//	{ SSC_INPUT, SSC_ARRAY, "gen", "Net PV ac power", "kW", "", "Time Series", "*", "", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "grid", "Net grid power", "kW", "", "Time Series", "*", "", "" },
 
-
-
-
-
+// 4/16/15 meeting update
+// load can be subhourly but hourly_grid is hourly from performance models.
+	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "hourly_grid", "Net grid power", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
 
@@ -808,21 +808,28 @@ public:
 		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
 		5. After above assignment, proceed as before with same outputs
 		*/
-		ssc_number_t* pgrid = as_array("grid", &count);
-		size_t nrec = count;
-		size_t step_per_hour = nrec / 8760;
-		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
-			throw exec_error("utilityrate3", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
-		ssc_number_t ts_hour = 1.0f / step_per_hour;
+		ssc_number_t* pgrid = as_array("hourly_grid", &count);
+		size_t nrec = 8760;
+		size_t step_per_hour = 1;
+		if (count != 8760 )
+			throw exec_error("utilityrate3", util::format("invalid number of hourly grid records (%d)", (int)count));
+//		size_t nrec = count;
+//		size_t step_per_hour = nrec / 8760;
+//		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
+//			throw exec_error("utilityrate3", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
 
 		count = 0;
 		ssc_number_t* pload;
 		if (is_assigned("load"))
 		{
-			pload = as_array("load", &count);
-			if (count != nrec)
-				throw exec_error("utilityrate3", util::format("invalid number of load records (%d): must match number of grid records (%d)", (int)nrec, (int)count));
+			pload = as_array("load", &nrec);
+			step_per_hour = nrec / 8760;
+			count = nrec;
+			if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
+				throw exec_error("utilityrate3", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec));
 		}
+		ssc_number_t ts_hour = 1.0f / step_per_hour;
+
 
 		// assign hourly values for utility rate calculations
 		size_t idx = 0;
@@ -836,14 +843,17 @@ public:
 			for (size_t ii = 0; ii < step_per_hour; ii++)
 			{
 				ts_load = (bload ? pload[idx] : 0);
-				ts_power = pgrid[idx] + ts_load; 
-				e_sys[i] += ts_power * ts_hour;
-				p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
+// 4/16/15 meeting update that pgrid is now hourly
+//				ts_power = pgrid[idx] + ts_load; 
+//				e_sys[i] += ts_power * ts_hour;
+//				p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
 				e_load[i] += ts_load * ts_hour;
 				p_load[i] = ((ts_load > p_load[i]) ? ts_load : p_load[i]);
 				idx++;
 			}
 			year1_elec_load += e_load[i];
+			e_sys[i] = pgrid[i] + e_load[i];
+			p_sys[i] = pgrid[i] + p_load[i]; // without subhourly - system peak can be off!
 			// sign correction for utility rate calculations
 			e_load[i] = -e_load[i];
 			p_load[i] = -p_load[i];

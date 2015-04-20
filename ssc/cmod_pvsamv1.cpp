@@ -428,8 +428,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gen",                                  "Net PV ac power",                                       "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid",                                 "Net grid power",                                        "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                        "Net PV ac energy",                                      "kWh",   "",                       "Time Series",       "*",                    "",                              "" },
-	
+//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Net PV ac energy", "kWh", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_gen", "System energy generated", "kWh", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "hourly_grid", "System energy delivered to grid", "kWh", "", "Time Series", "*", "", "" },
+
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Snow Loss DC",										  "kW",    "",                       "Monthly",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Snow Loss DC",										  "kW",    "",                       "Annual",       "",                    "",                              "" },
@@ -1313,8 +1315,10 @@ public:
 		ssc_number_t *p_gen = allocate("gen", nrec);
 		ssc_number_t *p_grid = allocate("grid", nrec);
 		
-		ssc_number_t *p_hourlygen = allocate("hourly_energy", 8760);
-		
+//		ssc_number_t *p_hourlygen = allocate("hourly_energy", 8760);
+		ssc_number_t *p_hourlygen = allocate("hourly_gen", 8760);
+		ssc_number_t *p_hourlygrid = allocate("hourly_grid", 8760);
+
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
 		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
@@ -1762,9 +1766,11 @@ public:
 				}
 				else
 				{
-					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
 					p_grid[idx] = (p_gen[idx] - cur_load);
 				}
+
+				// accumulate hourly system energy delivered to grid
+				p_hourlygrid[hour] += (ssc_number_t)(p_grid[idx] * ts_hour);
 
 				idx++;
 			}
@@ -1869,7 +1875,8 @@ public:
 		inverter_size_check();
 
 		assign("system_use_lifetime_output", 0);
-		double annual_energy = accumulate_annual("hourly_energy", "annual_energy");
+//		double annual_energy = accumulate_annual("hourly_energy", "annual_energy");
+		double annual_energy = accumulate_annual("hourly_gen", "annual_energy");
 
 
 
