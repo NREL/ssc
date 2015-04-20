@@ -67,6 +67,8 @@ public:
 		double m_T_amb_des;			//[C] design ambient temperature
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
+		double m_cycle_max_frac;	//[-] Maximum turbine over-design operation fraction
+		double m_cycle_cutoff_frac;	//[-] Minimum turbine operation fraction
 		double m_q_sby_frac;		//[-] fraction of thermal power required for standby mode
 		double m_P_boil;			//[bar] boiler operating pressure
 		int m_CT;					//[-] integer flag for cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
@@ -121,6 +123,8 @@ public:
 	~C_pc_Rankine_indirect_224(){};
 
 	virtual void init();
+
+	virtual void get_design_parameters(double *p_cycle_max_frac, double *p_cycle_cutoff_frac, double *p_cycle_sb_frac);
 
 	virtual void call(const C_csp_weatherreader::S_outputs *p_weather, 
 		C_csp_solver_htf_state *p_htf_state,

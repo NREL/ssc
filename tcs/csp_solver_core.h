@@ -28,12 +28,10 @@ class C_csp_solver_sim_info
 public:
 	double m_time;		//[s]
 	double m_step;		//[s]
-	//int m_ncall;		//[-]
 
 	C_csp_solver_sim_info()
 	{
 		m_time = m_step = std::numeric_limits<double>::quiet_NaN();
-		//m_ncall = -1;
 	}
 };
 
@@ -128,15 +126,29 @@ public:
 		}
 	};
 
+	struct S_csp_cr_outputs
+	{
+		double m_q_thermal;		//[MW] 'Available' receiver thermal output
+
+		S_csp_cr_outputs()
+		{
+			m_q_thermal = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	virtual void init() = 0;
 
 	virtual void call(const C_csp_weatherreader::S_outputs *p_weather,
 		C_csp_solver_htf_state *p_htf_state,
 		const C_csp_collector_receiver::S_csp_cr_inputs *p_inputs,
+		C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
 		const C_csp_solver_sim_info *p_sim_info) = 0;
 
-	//virtual void converged() = 0;
+	virtual void get_design_parameters(double *p_T_htf_cold_des) = 0;
+
+	virtual void converged() = 0;
 };
+
 
 class C_csp_power_cycle
 {
@@ -159,6 +171,8 @@ public:
 	
 	virtual void init() = 0;
 
+	virtual void get_design_parameters(double *p_cycle_max_frac, double *p_cycle_cutoff_frac, double *p_cycle_sb_frac) = 0;
+
 	virtual void call(const C_csp_weatherreader::S_outputs *p_weather,
 		C_csp_solver_htf_state *p_htf_state,
 		const C_csp_power_cycle::S_control_inputs &inputs,
@@ -170,18 +184,27 @@ public:
 
 class C_csp_solver
 {
+
 private:
 	C_csp_weatherreader *mpc_weather;
 	C_csp_collector_receiver *mpc_collector_receiver;
 	C_csp_power_cycle *mpc_power_cycle;
+
+	C_csp_solver_sim_info mc_sim_info;
+
+		// Collector receiver design parameters
+	double m_T_htf_cold_des;			//[K]
+
+		// Power cycle design parameters
+	double m_cycle_max_frac;			//[-]
+	double m_cycle_cutoff_frac;			//[-]
+	double m_cycle_sb_frac;				//[-]
 
 	void init_independent();
 
 	void simulate();
 
 public:
-	
-	
 
 	C_csp_solver(C_csp_weatherreader *p_weather,
 		C_csp_collector_receiver *p_collector_receiver,

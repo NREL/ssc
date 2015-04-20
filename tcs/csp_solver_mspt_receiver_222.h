@@ -79,22 +79,22 @@ public:
 	C_csp_messages csp_messages;
 
 	// Data
-	int m_n_panels;
-	double m_d_rec;
-	double m_h_rec;
-	double m_h_tower;
-	double m_od_tube;
-	double m_th_tube;
-	double m_epsilon;
-	double m_hl_ffact;
-	double m_T_htf_hot_des;
-	double m_T_htf_cold_des;
-	double m_f_rec_min;
-	double m_q_rec_des;
-	double m_rec_su_delay;
-	double m_rec_qf_delay;
-	double m_m_dot_htf_max;
-	double m_A_sf;
+	int m_n_panels;					//[-]
+	double m_d_rec;					//[m]
+	double m_h_rec;					//[m]
+	double m_h_tower;				//[m]
+	double m_od_tube;				//[mm], convert to [m] in init()
+	double m_th_tube;				//[mm], convert to [m] in init()
+	double m_epsilon;				//[-]
+	double m_hl_ffact;				//[-]
+	double m_T_htf_hot_des;			//[C], convert to [K] in init()
+	double m_T_htf_cold_des;		//[C], convert to [K] in init()
+	double m_f_rec_min;				//[-]
+	double m_q_rec_des;				//[MW], convert to [W] in init()
+	double m_rec_su_delay;			//[-]
+	double m_rec_qf_delay;			//[-]
+	double m_m_dot_htf_max;			//[kg/hr], convert to [kg/s] in init()
+	double m_A_sf;					//[m2]
 
 	int m_n_flux_x;
 	int m_n_flux_y;
@@ -155,7 +155,7 @@ public:
 		}
 	};
 
-	S_outputs outputs;
+	S_outputs ms_outputs;
 
 	void clear_outputs();
 	

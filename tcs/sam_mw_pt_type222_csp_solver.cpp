@@ -177,25 +177,25 @@ public:
 				mspt_receiver.m_field_fl_props(r, c) = TCS_MATRIX_INDEX(var(P_field_fl_props), r, c);
 
 		mspt_receiver.m_mat_tube = (int)value(P_mat_tube);
-		mspt_receiver.m_n_panels = (int)value(P_N_panels);	//[-] Number of panels in receiver
-		mspt_receiver.m_d_rec = value(P_D_rec);				//[m] Diameter of receiver
-		mspt_receiver.m_h_rec = value(P_H_rec);				//[m] Height of receiver
-		mspt_receiver.m_h_tower = value(P_THT);				//[m] Height of tower
-		mspt_receiver.m_od_tube = value(P_D_out) / 1.E3;		//[m] Outer diameter of receiver tubes -> convert from mm
-		mspt_receiver.m_th_tube = value(P_th_tu) / 1.E3;		//[m] Thickness of receiver tubes -> convert from mm
+		mspt_receiver.m_n_panels = (int)value(P_N_panels);		//[-] Number of panels in receiver
+		mspt_receiver.m_d_rec = value(P_D_rec);					//[m] Diameter of receiver
+		mspt_receiver.m_h_rec = value(P_H_rec);					//[m] Height of receiver
+		mspt_receiver.m_h_tower = value(P_THT);					//[m] Height of tower
+		mspt_receiver.m_od_tube = value(P_D_out);				//[mm] Outer diameter of receiver tubes
+		mspt_receiver.m_th_tube = value(P_th_tu);				//[mm] Thickness of receiver tubes
 
 		mspt_receiver.m_flow_type = (int)value(P_Flow_type);	//[-] Numerical code to designate receiver flow type
 
-		mspt_receiver.m_epsilon = value(P_epsilon);			//[-] Emissivity of receiver
+		mspt_receiver.m_epsilon = value(P_epsilon);				//[-] Emissivity of receiver
 		mspt_receiver.m_hl_ffact = value(P_hl_ffact);			//[-] Heat Loss Fudge FACTor
-		mspt_receiver.m_T_htf_hot_des = value(P_T_htf_hot_des) + 273.15;	 //[K] Design receiver outlet temperature -> convert from K
-		mspt_receiver.m_T_htf_cold_des = value(P_T_htf_cold_des) + 273.15; //[K] Design receiver inlet temperature -> convert from C
-		mspt_receiver.m_f_rec_min = value(P_f_rec_min);			//[-] Minimum receiver mass flow rate turn down fraction
-		mspt_receiver.m_q_rec_des = value(P_Q_rec_des)*1.E6;	//[W] Design receiver thermal input -> convert from MW
+		mspt_receiver.m_T_htf_hot_des = value(P_T_htf_hot_des);	//[C] Design receiver outlet temperature
+		mspt_receiver.m_T_htf_cold_des = value(P_T_htf_cold_des);	//[C] Design receiver inlet temperature
+		mspt_receiver.m_f_rec_min = value(P_f_rec_min);				//[-] Minimum receiver mass flow rate turn down fraction
+		mspt_receiver.m_q_rec_des = value(P_Q_rec_des);				//[MW] Design receiver thermal input
 		mspt_receiver.m_rec_su_delay = value(P_rec_su_delay);		//[hr] Receiver startup time duration
 		mspt_receiver.m_rec_qf_delay = value(P_rec_qf_delay);		//[-] Energy-based receiver startup delay (fraction of rated thermal power)
-		mspt_receiver.m_m_dot_htf_max = value(P_m_dot_htf_max) / 3600.0;	//[kg/s] Maximum mass flow rate through receiver -> convert from kg/hr
-		mspt_receiver.m_A_sf = value(P_A_sf);				//[m^2] Solar field area
+		mspt_receiver.m_m_dot_htf_max = value(P_m_dot_htf_max);		//[kg/hr] Maximum mass flow rate through receiver
+		mspt_receiver.m_A_sf = value(P_A_sf);						//[m^2] Solar field area
 
 		mspt_receiver.m_n_flux_x = (int)value(P_n_flux_x);
 		mspt_receiver.m_n_flux_y = (int)value(P_n_flux_y);
@@ -318,23 +318,23 @@ public:
 		}
 	
 		// Get outputs from mspt_receiver class and set to TCS OUTPUT values - do NOT convert
-		value(O_m_dot_salt_tot, mspt_receiver.outputs.m_m_dot_salt_tot);	//[kg/hr]
-		value(O_eta_therm, mspt_receiver.outputs.m_eta_therm);				//[-]
-		value(O_W_dot_pump, mspt_receiver.outputs.m_W_dot_pump);			//[MW]
-		value(O_q_conv_sum, mspt_receiver.outputs.m_q_conv_sum);			//[MW]
-		value(O_q_rad_sum, mspt_receiver.outputs.m_q_rad_sum);				//[MW]
-		value(O_Q_thermal, mspt_receiver.outputs.m_Q_thermal);				//[MW]
-		value(O_T_salt_hot, mspt_receiver.outputs.m_T_salt_hot);			//[C] 
-		value(O_field_eff_adj, mspt_receiver.outputs.m_field_eff_adj);		//[-]
-		value(O_q_solar_total, mspt_receiver.outputs.m_Q_solar_total);		//[MW]
-		value(O_q_startup, mspt_receiver.outputs.m_q_startup);				//[MW]
-		value(O_dP_receiver, mspt_receiver.outputs.m_dP_receiver);			//[bar]
-		value(O_dP_total, mspt_receiver.outputs.m_dP_total);				//[bar]
-		value(O_vel_htf, mspt_receiver.outputs.m_vel_htf);					//[m/s]
-		value(O_T_salt_in, mspt_receiver.outputs.m_T_salt_cold);			//[C]
-		value(O_M_DOT_SS, mspt_receiver.outputs.m_m_dot_ss);				//[kg/hr]
-		value(O_Q_DOT_SS, mspt_receiver.outputs.m_q_dot_ss);				//[MW]
-		value(O_F_TIMESTEP, mspt_receiver.outputs.m_f_timestep);			//[-]
+		value(O_m_dot_salt_tot, mspt_receiver.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
+		value(O_eta_therm, mspt_receiver.ms_outputs.m_eta_therm);				//[-]
+		value(O_W_dot_pump, mspt_receiver.ms_outputs.m_W_dot_pump);			//[MW]
+		value(O_q_conv_sum, mspt_receiver.ms_outputs.m_q_conv_sum);			//[MW]
+		value(O_q_rad_sum, mspt_receiver.ms_outputs.m_q_rad_sum);				//[MW]
+		value(O_Q_thermal, mspt_receiver.ms_outputs.m_Q_thermal);				//[MW]
+		value(O_T_salt_hot, mspt_receiver.ms_outputs.m_T_salt_hot);			//[C] 
+		value(O_field_eff_adj, mspt_receiver.ms_outputs.m_field_eff_adj);		//[-]
+		value(O_q_solar_total, mspt_receiver.ms_outputs.m_Q_solar_total);		//[MW]
+		value(O_q_startup, mspt_receiver.ms_outputs.m_q_startup);				//[MW]
+		value(O_dP_receiver, mspt_receiver.ms_outputs.m_dP_receiver);			//[bar]
+		value(O_dP_total, mspt_receiver.ms_outputs.m_dP_total);				//[bar]
+		value(O_vel_htf, mspt_receiver.ms_outputs.m_vel_htf);					//[m/s]
+		value(O_T_salt_in, mspt_receiver.ms_outputs.m_T_salt_cold);			//[C]
+		value(O_M_DOT_SS, mspt_receiver.ms_outputs.m_m_dot_ss);				//[kg/hr]
+		value(O_Q_DOT_SS, mspt_receiver.ms_outputs.m_q_dot_ss);				//[MW]
+		value(O_F_TIMESTEP, mspt_receiver.ms_outputs.m_f_timestep);			//[-]
 
 		return 0;
 	}
