@@ -95,8 +95,13 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT, SSC_NUMBER, "subarray4_tracking_loss", "Sub-array 4 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray4_nameplate_loss", "Sub-array 4 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=-5,MAX=100", "" },
 
+	//this is a DC loss that is applied uniformly to all subarrays
+	{ SSC_INPUT, SSC_NUMBER, "dcoptimizer_loss", "DC power optimizer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+	//AC losses are also applied uniformly to all subarrays
 	{ SSC_INPUT, SSC_NUMBER, "acwiring_loss", "AC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "transformer_loss", "AC step-up transformer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+
+
 	//
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
@@ -519,6 +524,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss", "DC wiring loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss", "DC tracking loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss", "DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual", "*", "", "" },
 
 	// loss diagram energy outputs nominal poa, nominal array at STC, net dc, net ac, system output
 	// annual_poa_nom, annual_dc_nominal, annual_dc_net, annual_ac_net, annual_energy
@@ -535,6 +541,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss_percent", "DC wiring loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss_percent", "DC tracking loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss_percent", "DC nameplate loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss_percent", "DC power optimizer loss", "%", "", "Loss", "*", "", "" },
 	//annual_dc_net
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter clipping loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
@@ -543,6 +550,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
+
 	// annual_ac_net
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "*", "", "" },
 	// annual_energy
@@ -560,6 +568,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	*/
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual", "*", "", "" },
 
 	/*
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual", "*", "", "" },
@@ -1914,8 +1923,10 @@ public:
 		assign("annual_subarray1_dc_nameplate_loss", var_data((ssc_number_t)nameplate_loss));
 		*/
 
-		double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0;
+		double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0, annual_dcopt_loss = 0;
 		double annual_dc_gross = 0;
+		//dc optimizer losses are the same for all four subarrays, assign outside of subarray loop but calculate inside loop
+		double dc_opt = as_double("dcoptimizer_loss");
 		// loop over subarrays
 		for (size_t nn = 0; nn < 4; nn++)
 		{
@@ -1927,9 +1938,9 @@ public:
 				double wiring = as_double(prefix + "dcwiring_loss");
 				double tracking = as_double(prefix + "tracking_loss");
 				double nameplate = as_double(prefix + "nameplate_loss");
-				double total_percent = mismatch + diodes + wiring + tracking + nameplate;
+				double total_percent = mismatch + diodes + wiring + tracking + nameplate + dc_opt;
 
-				double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0;
+				double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0, dcopt_loss = 0;
 				double dc_gross = 0;
 				// gross for each subarray
 				dc_gross = accumulate_annual( prefix + "dc_gross", "annual_" + prefix + "dc_gross", ts_hour);
@@ -1943,12 +1954,14 @@ public:
 					wiring_loss = wiring / total_percent * dc_loss;
 					tracking_loss = tracking / total_percent * dc_loss;
 					nameplate_loss = nameplate / total_percent * dc_loss;
+					dcopt_loss = dc_opt / total_percent * dc_loss;
 				}
 				annual_mismatch_loss += mismatch_loss;
 				annual_diode_loss += diode_loss;
 				annual_wiring_loss += wiring_loss;
 				annual_tracking_loss += tracking_loss;
 				annual_nameplate_loss += nameplate_loss;
+				annual_dcopt_loss += dcopt_loss;
 			
 				assign("annual_" + prefix + "dc_mismatch_loss", var_data((ssc_number_t)mismatch_loss));
 				assign("annual_" + prefix + "dc_diodes_loss", var_data((ssc_number_t)diode_loss));
@@ -1963,6 +1976,7 @@ public:
 		assign("annual_dc_wiring_loss", var_data((ssc_number_t)annual_wiring_loss));
 		assign("annual_dc_tracking_loss", var_data((ssc_number_t)annual_tracking_loss));
 		assign("annual_dc_nameplate_loss", var_data((ssc_number_t)annual_nameplate_loss));
+		assign("annual_dc_optimizer_loss", var_data((ssc_number_t)annual_dcopt_loss));
 
 		// dc user input losses
 		// order taken from ui - meaningless if out of order - use percentages per 9/18/14 meeting
@@ -2048,6 +2062,8 @@ public:
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_nameplate_loss / annual_dc_gross;
 		assign("annual_dc_nameplate_loss_percent", var_data((ssc_number_t)percent));
+		if (annual_dc_gross > 0) percent = 100 * annual_dcopt_loss / annual_dc_gross;
+		assign("annual_dc_optimizer_loss_percent", var_data((ssc_number_t)percent));
 		//annual_dc_net
 		percent = 0;
 		if (annual_dc_net > 0) percent = 100 *annual_inv_cliploss / annual_dc_net;
