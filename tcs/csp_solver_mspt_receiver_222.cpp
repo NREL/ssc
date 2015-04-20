@@ -71,6 +71,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 	m_q_iscc_max = std::numeric_limits<double>::quiet_NaN();
 	
+	m_ncall = -1;
 }
 
 void C_mspt_receiver_222::init()
@@ -215,6 +216,8 @@ void C_mspt_receiver_222::init()
 		cycle_calcs.get_table_range(m_T_amb_low, m_T_amb_high, m_P_amb_low, m_P_amb_high);
 	}
 
+	m_ncall = -1;
+
 	return;
 }
 
@@ -223,6 +226,10 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather,
 	const C_mspt_receiver_222::S_inputs *p_inputs,
 	const C_csp_solver_sim_info *p_sim_info)
 {
+	// Increase call-per-timestep counter
+	// Converge() sets it to -1, so on first call this line will adjust it = 0
+	m_ncall++;
+	
 	// Get inputs
 	double field_eff = p_inputs->m_field_eff;					//[-]
 	const util::matrix_t<double> *flux_map_input = p_inputs->m_flux_map_input;
@@ -230,7 +237,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather,
 	// Get sim info 
 	double time = p_sim_info->m_time;
 	double step = p_sim_info->m_step;
-	int ncall = p_sim_info->m_ncall;
+	//int ncall = p_sim_info->m_ncall;
 
 	// Get applicable htf state info
 	double T_salt_cold_in = p_htf_state->m_temp_in;		//[C]
@@ -307,7 +314,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather,
 	double m_dot_htf_max = m_m_dot_htf_max;
 	if( m_is_iscc )
 	{
-		if( ncall == 0 )
+		if( m_ncall == 0 )
 		{
 			double T_amb_C = fmax(m_P_amb_low, fmin(m_T_amb_high, T_amb - 273.15));
 			double P_amb_bar = fmax(m_P_amb_low, fmin(m_P_amb_high, P_amb / 1.E5));
@@ -799,6 +806,8 @@ void C_mspt_receiver_222::converged()
 
 	m_itermode = 1;
 	m_od_control = 1.0;
+
+	m_ncall = -1;
 }
 
 void C_mspt_receiver_222::clear_outputs()

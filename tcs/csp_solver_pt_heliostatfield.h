@@ -37,6 +37,9 @@ private:
 
 	double rdist(VectDoub *p1, VectDoub *p2, int dim = 2);
 
+	// track number of calls per timestep, reset = -1 in converged() call
+	int m_ncall;
+
 public:
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
@@ -169,7 +172,9 @@ public:
 	//void init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata);
 	void init();
 
-	void call(const C_csp_weatherreader::S_outputs *p_weather, double field_control_in, const C_csp_solver_sim_info *p_sim_info);
+	void call(const C_csp_weatherreader::S_outputs *p_weather, 
+		double field_control_in, 
+		const C_csp_solver_sim_info *p_sim_info);
 
 	void converged();
 };

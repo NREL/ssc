@@ -7,7 +7,7 @@
 #include "lib_util.h"
 #include "htf_props.h"
 
-class C_pc_Rankine_indirect_224
+class C_pc_Rankine_indirect_224 : public C_csp_power_cycle
 {
 private:
 	bool m_is_initialized;
@@ -32,6 +32,9 @@ private:
 
 	// member string for exception messages
 	std::string error_msg;
+
+	// track number of calls per timestep, reset = -1 in converged() call
+	int m_ncall;
 
 	double GetFieldToTurbineTemperatureDropC() { return 25.0; }
 
@@ -111,19 +114,20 @@ public:
 
 	S_params ms_params;
 
+	S_outputs ms_outputs;
+
 	C_pc_Rankine_indirect_224();
 
 	~C_pc_Rankine_indirect_224(){};
 
-	void init();
+	virtual void init();
 
-	void call(const C_csp_weatherreader::S_outputs *p_weather, 
+	virtual void call(const C_csp_weatherreader::S_outputs *p_weather, 
 		C_csp_solver_htf_state *p_htf_state,
 		const C_csp_power_cycle::S_control_inputs &inputs, 
-		C_pc_Rankine_indirect_224::S_outputs &outputs,
 		const C_csp_solver_sim_info *p_sim_info);
 
-	void converged();
+	virtual void converged();
 
 };
 
