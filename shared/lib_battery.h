@@ -11,6 +11,7 @@
 
 const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
+const double hour_to_min = 1. / 60.;
 
 /*
 Thermal classes
@@ -19,10 +20,10 @@ class thermal_t
 {
 public:
 	thermal_t(double mass, double length, double width, double height, 
-		double Cp, double h, double T_room, double R,
+		double Cp, double h, double T_room,
 		const util::matrix_t<double> &cap_vs_temp );
 
-	void updateTemperature(double I, double dt);
+	void updateTemperature(double I, double R, double dt);
 
 	// outputs
 	double T_battery();
@@ -65,7 +66,7 @@ public:
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual void updateCapacity(double P, voltage_t * V, double dt, int cycles) = 0;
+	virtual void updateCapacity(double I, double dt, int cycles) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)=0;
 
@@ -83,7 +84,6 @@ public:
 	double q0();
 	double qmax(); 
 	double I();
-	double P();
 	bool chargeChanged();
 
 protected:
@@ -91,7 +91,6 @@ protected:
 	double _qmax; // [Ah] - maximum possible capacity
 	double _qmax0; // [Ah] - original maximum capacity
 	double _I;   // [A]  - Current draw during last step
-	double _P;   // [Ah] - Power draw during last step [ P > 0 discharge, P < 0 charge]
 	double _SOC; // [%] - State of Charge
 	double _DOD; // [%] - Depth of Discharge
 	double _DOD_prev; // [%] - Depth of Discharge of previous step
@@ -110,7 +109,7 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q20, double t1, double q1, double q10);
-	void updateCapacity(double P, voltage_t * V, double dt, int cycles);
+	void updateCapacity(double I, double dt, int cycles);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
 	double q1(); // Available charge
@@ -161,7 +160,7 @@ public:
 	~capacity_lithium_ion_t();
 
 	// override public api
-	void updateCapacity(double P, voltage_t *, double dt, int cycles);
+	void updateCapacity(double I, double dt, int cycles);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
 
@@ -185,10 +184,13 @@ public:
 	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
 	double battery_voltage(); // voltage of one battery
 	double cell_voltage(); // voltage of one cell
+	double R(); // computed resistance
 
 protected:
 	int _num_cells;    // number of cells per battery
 	double _cell_voltage; // closed circuit voltage per cell [V]
+	double _R;
+
 };
 
 class voltage_basic_t : public voltage_t
@@ -219,7 +221,6 @@ private:
 	double _Qexp;
 	double _Qnom;
 	double _C_rate;
-	double _R;
 	double _A;
 	double _B;
 	double _E0;
@@ -308,7 +309,7 @@ public:
 	void run(double P);
 
 	// Run a component level model
-	void runCapacityModel(double P, voltage_t * voltage);
+	void runCapacityModel(double I);
 	void runVoltageModel();
 	void runThermalModel(double I);
 	void runLifetimeModel(double DOD);
@@ -333,7 +334,8 @@ private:
 	thermal_t * _thermal;
 	losses_t * _losses;
 	int _battery_chemistry;
-	double _dt;
+	double _dt_hour;			// [hr] - timestep
+	double _dt_min;				// [min] - timestep
 	bool _firstStep;
 };
 /*
@@ -342,11 +344,17 @@ Dispatch Base Class - can envision many potential modifications. Goal is to defi
 class dispatch_t
 {
 public:
-	dispatch_t(battery_t * Battery, double dt, double SOC_min);
+	dispatch_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max);
 
 	// Public APIs
 	virtual void dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
 
+	// Controllers
+	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
+	void switch_controller();
+	double current_controller(double battery_voltage);
+
+	// Outputs
 	double energy_tofrom_battery();
 	double energy_tofrom_grid();
 	double pv_to_load();
@@ -355,15 +363,24 @@ public:
 
 protected:
 	battery_t * _Battery;
-	double _dt;
+	double _dt_hour;
 
 	double _e_tofrom_batt;
 	double _e_grid;
 	double _pv_to_load;
 	double _battery_to_load;
 	double _grid_to_load;
-	double _SOC_min;
 
+	// Charge & current limits controllers
+	double _SOC_min;
+	double _Ic_max;
+	double _Id_max;
+
+	// rapid charge change controller
+	int _t_at_mode; // [minutes]
+	bool _charging;
+	bool _prev_charging;
+	enum { CHARGE_FLIP_LIMIT = 10};
 };
 
 /*
@@ -372,7 +389,7 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
+	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
 	void dispatch(size_t hour_of_year, double e_pv, double e_load);
 
 protected:

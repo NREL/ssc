@@ -16,7 +16,9 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of Cells in Serial",                               "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",        "",                    "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
 
 
 	// Voltage discharge curve
@@ -40,7 +42,6 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "Battery",       "",                           "",                             "" },
 
 	// thermal inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_R",                                      "Battery Internal Resistance",                            "Ohm",      "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Mass of the battery",                                    "kg",       "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_length",                                 "Battery length",                                         "m",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_width",                                  "Battery width",                                          "m",        "",                     "Battery",       "",                           "",                             "" },
@@ -199,7 +200,6 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		cm.as_double("batt_Cp"), // [J/kgK]
 		cm.as_double("batt_h_to_ambient"), // W/m2K
 		273.15 + cm.as_double("T_room"), // K
-		cm.as_double("batt_R"),
 		cap_vs_temp);
 		
 		
@@ -230,7 +230,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		capacity_model);
 
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
-	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), dm_sched, dm_charge, dm_discharge, dm_gridcharge);
+	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), dm_sched, dm_charge, dm_discharge, dm_gridcharge);
 }
 
 battstor::~battstor()
