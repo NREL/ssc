@@ -59,7 +59,7 @@ public:
 
 	struct S_params
 	{
-		double m_P_ref;				//[MW] design electric power output, converted to kW in code
+		double m_P_ref;				//[MW] design electric power output, converted to kW in init()
 		double m_eta_ref;			//[%] design conversion efficiency
 		double m_T_htf_hot_ref;		//[C] design HTF inlet temperature
 		double m_T_htf_cold_ref;	//[C] design HTF output temperature
@@ -124,7 +124,7 @@ public:
 
 	virtual void init();
 
-	virtual void get_design_parameters(double *p_cycle_max_frac, double *p_cycle_cutoff_frac, double *p_cycle_sb_frac);
+	virtual void get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params);
 
 	virtual void call(const C_csp_weatherreader::S_outputs *p_weather, 
 		C_csp_solver_htf_state *p_htf_state,

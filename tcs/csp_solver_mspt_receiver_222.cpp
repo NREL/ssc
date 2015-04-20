@@ -229,7 +229,7 @@ void C_mspt_receiver_222::init()
 	return;
 }
 
-void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather, 
+void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &p_weather, 
 	C_csp_solver_htf_state *p_htf_state,
 	const C_mspt_receiver_222::S_inputs *p_inputs,
 	const C_csp_solver_sim_info *p_sim_info)
@@ -252,18 +252,18 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather,
 
 	// Complete necessary conversions/calculations of input variables
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
-	double P_amb = p_weather->m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
+	double P_amb = p_weather.m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
 	double hour = time / 3600.0;			//[hr] Hour of the year
 	double hour_day = (int) hour%24;		//[hr] Hour of the day
-	double T_dp = p_weather->m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
-	double T_amb = p_weather->m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
+	double T_dp = p_weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
+	double T_amb = p_weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
 	// **************************************************************************************
 
 	// Read in remaining weather inputs from weather output structure
-	double zenith = p_weather->m_solzen;
-	double azimuth = p_weather->m_solazi;
-	double v_wind_10 = p_weather->m_wspd;
-	double I_bn = p_weather->m_beam;
+	double zenith = p_weather.m_solzen;
+	double azimuth = p_weather.m_solazi;
+	double v_wind_10 = p_weather.m_wspd;
+	double I_bn = p_weather.m_beam;
 
 	int n_flux_y = flux_map_input->nrows();
 	if(n_flux_y > 1)

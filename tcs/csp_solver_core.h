@@ -53,7 +53,7 @@ public:
 
 	void init();
 
-	void timestep_call(const C_csp_solver_sim_info *p_sim_info);
+	void timestep_call(const C_csp_solver_sim_info &p_sim_info);
 
 	void converged();
 
@@ -138,7 +138,7 @@ public:
 
 	virtual void init() = 0;
 
-	virtual void call(const C_csp_weatherreader::S_outputs *p_weather,
+	virtual void call(const C_csp_weatherreader::S_outputs &p_weather,
 		C_csp_solver_htf_state *p_htf_state,
 		const C_csp_collector_receiver::S_csp_cr_inputs *p_inputs,
 		C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
@@ -168,10 +168,26 @@ public:
 			m_standby_control = m_tou = -1;
 		}
 	};
+
+	struct S_solved_params
+	{
+		double m_W_dot_des;			//[MW]
+		double m_eta_des;		//[MW]
+		double m_q_dot_des;		//[MW]
+		double m_cycle_max_frac;			//[-]
+		double m_cycle_cutoff_frac;			//[-]
+		double m_cycle_sb_frac;				//[-]
+		
+
+		S_solved_params()
+		{
+			m_W_dot_des = m_eta_des = m_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac = m_cycle_sb_frac = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
 	
 	virtual void init() = 0;
 
-	virtual void get_design_parameters(double *p_cycle_max_frac, double *p_cycle_cutoff_frac, double *p_cycle_sb_frac) = 0;
+	virtual void get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
 	virtual void call(const C_csp_weatherreader::S_outputs *p_weather,
 		C_csp_solver_htf_state *p_htf_state,
@@ -196,6 +212,9 @@ private:
 	double m_T_htf_cold_des;			//[K]
 
 		// Power cycle design parameters
+	double m_cycle_W_dot_des;			//[MW]
+	double m_cycle_eta_des;				//[-]
+	double m_cycle_q_dot_des;			//[MW]
 	double m_cycle_max_frac;			//[-]
 	double m_cycle_cutoff_frac;			//[-]
 	double m_cycle_sb_frac;				//[-]
