@@ -1124,11 +1124,12 @@ bool dispatch_calculations::compute_dispatch_output()
 
 	// hourly energy
 
-	hourly_enet =m_cm->as_array("hourly_energy", &count);
+//	hourly_enet = m_cm->as_array("hourly_energy", &count);
+	hourly_enet = m_cm->as_array("hourly_gen", &count);
 	if (count != 8760)
 	{
 		std::stringstream outm;
-		outm << "Bad hourly energy output length (" << count << "), should be 8760 value";
+		outm << "Bad hourly gen output length (" << count << "), should be 8760 value";
 		m_cm->log(outm.str());
 		return false;
 	}
@@ -1225,11 +1226,11 @@ bool dispatch_calculations::process_dispatch_output()
 	size_t count;
 
 	// hourly energy
-	hourly_enet = m_cm->as_array("hourly_energy", &count);
+	hourly_enet = m_cm->as_array("hourly_gen", &count);
 	if (count != 8760)
 	{
 		std::stringstream outm;
-		outm << "Bad hourly energy output length (" << count << "), should be 8760 value";
+		outm << "Bad hourly gen output length (" << count << "), should be 8760 value";
 		m_cm->log(outm.str());
 		return false;
 	}
@@ -2055,11 +2056,11 @@ bool dispatch_calculations::compute_lifetime_dispatch_output()
 	size_t count;
 
 	// hourly energy includes all curtailment, availability
-	hourly_enet = m_cm->as_array("hourly_energy", &count);
+	hourly_enet = m_cm->as_array("hourly_gen", &count);
 	if ((int)count != (8760 * m_nyears))
 	{
 		std::stringstream outm;
-		outm << "Bad hourly energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760 * m_nyears << ")";
+		outm << "Bad hourly gen output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760 * m_nyears << ")";
 		m_cm->log(outm.str());
 		return false;
 	}
@@ -2130,11 +2131,11 @@ bool dispatch_calculations::process_lifetime_dispatch_output()
 	size_t count;
 
 	// hourly energy include all curtailment, availability 
-	hourly_enet = m_cm->as_array("hourly_energy", &count);
+	hourly_enet = m_cm->as_array("hourly_gen", &count);
 	if ((int)count != (8760 * m_nyears))
 	{
 		std::stringstream outm;
-		outm << "Bad hourly energy output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760 * m_nyears << ")";
+		outm << "Bad hourly gen output length (" << count << "), should be (analysis period-1) * 8760 value (" << 8760 * m_nyears << ")";
 		m_cm->log(outm.str());
 		return false;
 	}

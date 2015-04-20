@@ -13,7 +13,8 @@ static var_info vtab_thirdpartyownership[] = {
 	{ SSC_INPUT, SSC_NUMBER, "lease_or_ppa", "Lease or PPA agreement", "0/1", "0=lease,1=ppa", "thirdpartyownership", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	
 	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Energy at grid with system", "kWh", "", "", "*", "LENGTH=8760", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Energy at grid with system", "kWh", "", "", "*", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "hourly_gen", "Energy at grid with system", "kWh", "", "", "*", "LENGTH=8760", "" },
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "AnnualOutput", "*", "INTEGER,MIN=0", "" },
 
@@ -120,7 +121,7 @@ public:
 		ssc_number_t *hourly_energy;
 		if (as_integer("system_use_lifetime_output")==0)
 		{
-			hourly_energy = as_array("hourly_energy", &count); 
+			hourly_energy = as_array("hourly_gen", &count); 
 			if ((int)count != (8760))
 			{
 				std::stringstream outm;
@@ -136,7 +137,7 @@ public:
 		}
 		else
 		{
-			hourly_energy = as_array("hourly_energy", &count);
+			hourly_energy = as_array("hourly_gen", &count);
 			if ((int)count != (8760 * nyears))
 			{
 				std::stringstream outm;

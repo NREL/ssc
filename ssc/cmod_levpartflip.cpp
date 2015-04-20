@@ -12,8 +12,9 @@ static var_info _cm_vtab_levpartflip[] = {
 
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",	"Hourly energy produced by the system",	"kWh",   "",                      "DHF",             "*",						   "",                 "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "DHF",             "*",						   "",                              "" },
+//		{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Hourly energy produced by the system", "kWh", "", "DHF", "*", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "hourly_gen", "Hourly energy produced by the system", "kWh", "", "DHF", "*", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "DHF", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
 /* Recapitalization */
@@ -1119,7 +1120,7 @@ public:
 
 		size_t count_energy = 0;
 		ssc_number_t *energy = 0;
-		energy = as_array("hourly_energy", &count_energy);
+		energy = as_array("hourly_gen", &count_energy);
 
 		// dispatch
 		if (as_integer("system_use_lifetime_output") == 1)

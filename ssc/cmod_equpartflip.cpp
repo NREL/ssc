@@ -28,8 +28,9 @@ static var_info _cm_vtab_equpartflip[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	/* modify to apply availability and degradation until separate compute module constructed. */
-	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",	"Hourly energy produced by the system",	"kWh",   "",                      "DHF",             "*",						   "",                 "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "DHF",             "*",						   "",                              "" },
+//		{ SSC_INPUT, SSC_ARRAY, "hourly_energy", "Hourly energy produced by the system", "kWh", "", "DHF", "*", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "hourly_gen", "Hourly energy produced by the system", "kWh", "", "DHF", "*", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "DHF", "*", "", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
 
@@ -1085,7 +1086,7 @@ public:
 
 		size_t count_energy = 0;
 		ssc_number_t *energy = 0;
-		energy = as_array("hourly_energy", &count_energy);
+		energy = as_array("hourly_gen", &count_energy);
 
 		// dispatch
 		if (as_integer("system_use_lifetime_output") == 1)

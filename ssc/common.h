@@ -13,6 +13,7 @@ extern var_info vtab_tax_credits[];
 extern var_info vtab_payment_incentives[];
 
 extern var_info vtab_adjustment_factors[];
+extern var_info vtab_technology_outputs[];
 
 class adjustment_factors
 {

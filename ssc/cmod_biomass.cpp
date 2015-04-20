@@ -132,7 +132,7 @@ static var_info _cm_vtab_biomass[] = {
 
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
 //	  VARTYPE           DATATYPE         NAME                          LABEL                                                   UNITS            META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",              "Hourly Energy",                                        "kW",            "",      "biomass",           "*",               "LENGTH=8760",         "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",              "Hourly Energy",                                        "kWh",            "",      "biomass",           "*",               "LENGTH=8760",         "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_q_to_pb",             "Q To Power Block",                                     "kW",            "",      "biomass",           "*",               "LENGTH=8760",         "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_boiler_eff",          "Boiler Efficiency",                                    "",              "",      "biomass",           "*",               "LENGTH=8760",         "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_pbeta",               "Power Block Efficiency",                               "",              "",      "biomass",           "*",               "LENGTH=8760",         "" },
