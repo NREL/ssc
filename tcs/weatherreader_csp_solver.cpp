@@ -167,7 +167,7 @@ public:
 
 		try
 		{
-			c_wr.timestep_call(&ms_sim_info);
+			c_wr.timestep_call(ms_sim_info);
 		}
 
 		catch( C_csp_exception &csp_exception)

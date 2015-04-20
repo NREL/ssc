@@ -264,11 +264,14 @@ void C_pc_Rankine_indirect_224::init()
 	m_ncall = -1;
 }
 
-void C_pc_Rankine_indirect_224::get_design_parameters(double *p_cycle_max_frac, double *p_cycle_cutoff_frac, double *p_cycle_sb_frac)
+void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params)
 {
-	*p_cycle_max_frac = ms_params.m_cycle_max_frac;
-	*p_cycle_cutoff_frac = ms_params.m_cycle_cutoff_frac;
-	*p_cycle_sb_frac = ms_params.m_q_sby_frac;
+	solved_params.m_W_dot_des = ms_params.m_P_ref / 1000.0;		//[MW], convert from kW
+	solved_params.m_eta_des = ms_params.m_eta_ref;				//[-]
+	solved_params.m_q_dot_des = solved_params.m_W_dot_des / solved_params.m_eta_des;	//[MW]
+	solved_params.m_cycle_max_frac = ms_params.m_cycle_max_frac;		//[-]
+	solved_params.m_cycle_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
+	solved_params.m_cycle_sb_frac = ms_params.m_q_sby_frac;				//[-]
 }
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_weather, 

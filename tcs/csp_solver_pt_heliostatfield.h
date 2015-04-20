@@ -172,7 +172,7 @@ public:
 	//void init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata);
 	void init();
 
-	void call(const C_csp_weatherreader::S_outputs *p_weather, 
+	void call(const C_csp_weatherreader::S_outputs &p_weather, 
 		double field_control_in, 
 		const C_csp_solver_sim_info *p_sim_info);
 

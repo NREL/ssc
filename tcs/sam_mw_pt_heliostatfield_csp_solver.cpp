@@ -565,7 +565,7 @@ public:
 
 		try
 		{
-			mc_heliostatfield.call(&ms_weather, field_control_csp, &ms_sim_info);
+			mc_heliostatfield.call(ms_weather, field_control_csp, &ms_sim_info);
 		}
 
 		catch( C_csp_exception &csp_exception )
