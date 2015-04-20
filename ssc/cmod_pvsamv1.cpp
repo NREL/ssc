@@ -425,13 +425,15 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_gross",                             "Gross dc array power",                                  "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Net dc array power",                                    "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Gross PV ac power",                                     "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+
+	/*
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gen",                                  "Net PV ac power",                                       "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid",                                 "Net grid power",                                        "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	
 //	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Net PV ac energy", "kWh", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_gen", "System energy generated", "kWh", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "hourly_grid", "System energy delivered to grid", "kWh", "", "Time Series", "*", "", "" },
-
+*/
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Snow Loss DC",										  "kW",    "",                       "Monthly",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Snow Loss DC",										  "kW",    "",                       "Annual",       "",                    "",                              "" },
@@ -674,8 +676,9 @@ public:
 	cm_pvsamv1()
 	{
 		add_var_info( _cm_vtab_pvsamv1 );
-		add_var_info( vtab_adjustment_factors );
-		add_var_info( vtab_battery );
+		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
+		add_var_info(vtab_battery);
 	}
 
 
@@ -1317,7 +1320,7 @@ public:
 		
 //		ssc_number_t *p_hourlygen = allocate("hourly_energy", 8760);
 		ssc_number_t *p_hourlygen = allocate("hourly_gen", 8760);
-		ssc_number_t *p_hourlygrid = allocate("hourly_grid", 8760);
+//		ssc_number_t *p_hourlygrid = allocate("hourly_grid", 8760);
 
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
@@ -1770,7 +1773,7 @@ public:
 				}
 
 				// accumulate hourly system energy delivered to grid
-				p_hourlygrid[hour] += (ssc_number_t)(p_grid[idx] * ts_hour);
+//				p_hourlygrid[hour] += (ssc_number_t)(p_grid[idx] * ts_hour);
 
 				idx++;
 			}

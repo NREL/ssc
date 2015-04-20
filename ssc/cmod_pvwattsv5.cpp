@@ -63,8 +63,8 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                         "Net system energy",                           "Wh",     "",                        "Time Series",      "*",                       "",                          "" },
 
 //	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "hourly_gen", "System energy generated", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "hourly_grid", "System energy delivered to grid", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_gen", "System energy generated", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_grid", "System energy delivered to grid", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
@@ -367,7 +367,8 @@ public:
 		add_var_info( _cm_vtab_pvwattsv5_part1 );
 		add_var_info( _cm_vtab_pvwattsv5_common );
 		add_var_info( _cm_vtab_pvwattsv5_part2 );
-		add_var_info( vtab_adjustment_factors );
+		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 
 
@@ -411,10 +412,11 @@ public:
 		ssc_number_t *p_dc = allocate("dc", nrec);
 		ssc_number_t *p_ac = allocate("ac", nrec);
 		ssc_number_t *p_energy = allocate("energy", nrec);
-		
+		ssc_number_t *p_gen = allocate("gen", nrec);
+
 //		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
 		ssc_number_t *p_hourly_gen = allocate("hourly_gen", 8760);
-		ssc_number_t *p_hourly_grid = allocate("hourly_grid", 8760);
+//		ssc_number_t *p_hourly_grid = allocate("hourly_grid", 8760);
 
 		double ts_hour = 1.0/step_per_hour;
 
@@ -480,15 +482,15 @@ public:
 					p_tcell[idx] = (ssc_number_t)pvt;
 					p_dc[idx] = (ssc_number_t)dc; // power, Watts
 					p_ac[idx] = (ssc_number_t)ac; // power, Watts
-					p_energy[idx] = (ssc_number_t)( ac * ts_hour * haf(hour) ); // Wh energy, with adjustment factors applied
-
+					p_energy[idx] = (ssc_number_t)(ac * ts_hour * haf(hour)); // Wh energy, with adjustment factors applied
 					// accumulate annual total energy for capacity factor calculation
 					annual_wh += p_energy[idx];
 
 					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
 					//p_hourly_energy[hour] += p_energy[idx] * 0.001f;
-					p_hourly_grid[hour] += p_energy[idx] * 0.001f;
-					p_hourly_gen[hour] += p_energy[idx] * 0.001f;
+//					p_hourly_grid[hour] += p_energy[idx] * 0.001f;
+					p_gen[idx] = (ssc_number_t)(ac * haf(hour) *0.001f); // W to kW
+					p_hourly_gen[hour] += p_gen[idx] * (ssc_number_t)ts_hour;
 				}
 						
 				idx++;
