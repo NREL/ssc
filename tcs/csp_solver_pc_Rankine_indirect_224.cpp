@@ -15,6 +15,8 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj =
 		m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
+
+	m_ncall = -1;
 }
 
 void C_pc_Rankine_indirect_224::init()
@@ -259,18 +261,22 @@ void C_pc_Rankine_indirect_224::init()
 	m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
 	m_startup_time_remain_prev = ms_params.m_startup_time;
 
+	m_ncall = -1;
 }
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_weather, 
 	C_csp_solver_htf_state *p_htf_state,
 	const C_csp_power_cycle::S_control_inputs & inputs, 
-	C_pc_Rankine_indirect_224::S_outputs & outputs,
 	const C_csp_solver_sim_info *p_sim_info)
 {
+	// Increase call-per-timestep counter
+	// Converge() sets it to -1, so on first call this line will adjust it = 0
+	m_ncall++;
+
 	// Get sim info
 	double time = p_sim_info->m_time;
 	double step_sec = p_sim_info->m_step;
-	int ncall = p_sim_info->m_ncall;
+	//int ncall = p_sim_info->m_ncall;
 
 	// Check and convert inputs
 	double T_htf_hot = p_htf_state->m_temp_in;		//[C] 
@@ -430,17 +436,17 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_wea
 	m_standby_control_calc = standby_control;
 
 	// Set outputs
-	outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] convert from kWe
-	outputs.m_eta = eta;
-	outputs.m_T_htf_cold = T_htf_cold;
-	outputs.m_m_dot_makeup = m_dot_makeup*3600.0;	//[kg/hr] convert from kg/s
-	outputs.m_m_dot_demand = m_dot_demand;
-	outputs.m_m_dot_htf = m_dot_htf;
-	outputs.m_m_dot_htf_ref = m_dot_htf_ref;
-	outputs.m_W_cool_par = W_cool_par;
-	outputs.m_P_ref = ms_params.m_P_ref/1000.0;		//[MWe] convert from kWe
-	outputs.m_f_hrsys = f_hrsys;
-	outputs.m_P_cond = P_cond;
+	ms_outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] convert from kWe
+	ms_outputs.m_eta = eta;
+	ms_outputs.m_T_htf_cold = T_htf_cold;
+	ms_outputs.m_m_dot_makeup = m_dot_makeup*3600.0;	//[kg/hr] convert from kg/s
+	ms_outputs.m_m_dot_demand = m_dot_demand;
+	ms_outputs.m_m_dot_htf = m_dot_htf;
+	ms_outputs.m_m_dot_htf_ref = m_dot_htf_ref;
+	ms_outputs.m_W_cool_par = W_cool_par;
+	ms_outputs.m_P_ref = ms_params.m_P_ref/1000.0;		//[MWe] convert from kWe
+	ms_outputs.m_f_hrsys = f_hrsys;
+	ms_outputs.m_P_cond = P_cond;
 
 }
 
@@ -449,6 +455,8 @@ void C_pc_Rankine_indirect_224::converged()
 	m_standby_control_prev = m_standby_control_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
+
+	m_ncall = -1;
 }
 
 void C_pc_Rankine_indirect_224::RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb,

@@ -24,6 +24,8 @@ C_pt_heliostatfield::C_pt_heliostatfield()
 
 	m_cdata = 0;		// = NULL
 	mf_callback = 0;	// = NULL
+
+	m_ncall = -1;
 }
 
 C_pt_heliostatfield::~C_pt_heliostatfield()
@@ -617,14 +619,20 @@ void C_pt_heliostatfield::init()
 		// Initialize stored variables
 		m_eta_prev = 0.0;
 		m_v_wind_prev = 0.0;
+
+		m_ncall = -1;
 }
 
 void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs *p_weather, double field_control_in, const C_csp_solver_sim_info *p_sim_info)
 {
+	// Increase call-per-timestep counter
+	// Converge() sets it to -1, so on first call this line will adjust it = 0
+	m_ncall++;
+	
 	// Get sim info
 	double time = p_sim_info->m_time;
 	double step = p_sim_info->m_step;
-	int ncall = p_sim_info->m_ncall;
+	//int ncall = p_sim_info->m_ncall;
 
 	double v_wind = p_weather->m_wspd;
 	m_v_wind_current = v_wind;
@@ -729,6 +737,8 @@ void C_pt_heliostatfield::converged()
 {
 	m_eta_prev = ms_outputs.m_eta_field;
 	m_v_wind_prev = m_v_wind_prev;
+
+	m_ncall = -1;
 }
 
 double C_pt_heliostatfield::rdist(VectDoub *p1, VectDoub *p2, int dim )

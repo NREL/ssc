@@ -71,6 +71,9 @@ private:
 	// member string for exception messages
 	std::string error_msg;
 
+	// track number of calls per timestep, reset = -1 in converged() call
+	int m_ncall;
+
 public:
 	// Class to save messages for up stream classes
 	C_csp_messages csp_messages;
@@ -115,7 +118,7 @@ public:
 	struct S_inputs
 	{
 		double m_field_eff;					//[-] 
-		util::matrix_t<double> *m_flux_map_input;		//[-]
+		const util::matrix_t<double> *m_flux_map_input;		//[-]
 
 		S_inputs()
 		{

@@ -278,7 +278,7 @@ public:
 		// set sim info
 		ms_sim_info.m_time = time;
 		ms_sim_info.m_step = step;
-		ms_sim_info.m_ncall = ncall;
+		//ms_sim_info.m_ncall = ncall;
 
 		// Set applicable htf state info
 		ms_htf_state.m_temp_in = T_salt_cold_in_csp;

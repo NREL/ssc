@@ -160,7 +160,7 @@ public:
 		// set sim info
 		ms_sim_info.m_time = time;
 		ms_sim_info.m_step = step;
-		ms_sim_info.m_ncall = ncall;
+		//ms_sim_info.m_ncall = ncall;
 
 		int out_type = -1;
 		std::string out_msg = "";
@@ -226,6 +226,44 @@ public:
 
 		return 0;
 	}
+
+	virtual int converged( double time )
+	{
+		int out_type = -1;
+		std::string out_msg = "";
+
+		try
+		{
+			c_wr.converged();
+		}
+
+		catch( C_csp_exception &csp_exception )
+		{
+			// Report warning before exiting with error
+			while( c_wr.mc_csp_messages.get_message(&out_type, &out_msg) )
+			{
+				if( out_type == C_csp_messages::NOTICE )
+					message(TCS_NOTICE, out_msg.c_str());
+				else if( out_type == C_csp_messages::WARNING )
+					message(TCS_WARNING, out_msg.c_str());
+			}
+
+			message(TCS_ERROR, csp_exception.m_error_message.c_str());
+			return -1;
+		}
+
+		// If no exception, then report messages and move on
+		while( c_wr.mc_csp_messages.get_message(&out_type, &out_msg) )
+		{
+			if( out_type == C_csp_messages::NOTICE )
+				message(TCS_NOTICE, out_msg.c_str());
+			else if( out_type == C_csp_messages::WARNING )
+				message(TCS_WARNING, out_msg.c_str());
+		}
+
+		return 0;
+	
+	}
 };
 
-TCS_IMPLEMENT_TYPE( weatherreader, "Standard Weather File format reader", "Aron Dobos", 1, weatherreader_variables, NULL, 0 )
+TCS_IMPLEMENT_TYPE( weatherreader, "Standard Weather File format reader", "Aron Dobos", 1, weatherreader_variables, NULL, 1 )

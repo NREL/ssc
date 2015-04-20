@@ -11,6 +11,8 @@ C_csp_weatherreader::C_csp_weatherreader()
 	m_trackmode = -1;
 	m_tilt = std::numeric_limits<double>::quiet_NaN();
 	m_azimuth = std::numeric_limits<double>::quiet_NaN();
+
+	m_ncall = -1;
 }
 
 
@@ -33,11 +35,15 @@ void C_csp_weatherreader::init()
 
 void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info *p_sim_info)
 {
+	// Increase call-per-timestep counter
+	// Converge() sets it to -1, so on first call this line will adjust it = 0
+	m_ncall++;
+	
 	double time = p_sim_info->m_time;
 	double step = p_sim_info->m_step;
-	int ncall = p_sim_info->m_ncall;
+	//int ncall = p_sim_info->m_ncall;
 
-	if( ncall == 0 ) // only read data values once per timestep
+	if( m_ncall == 0 ) // only read data values once per timestep
 	{
 		//If the start time does not correspond to the first record in the weather file, loop to the correct record
 		int nread = 1;
@@ -101,4 +107,9 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info *p_sim_info)
 	ms_outputs.m_shift = (m_wf.lon - m_wf.tz*15.0);
 	ms_outputs.m_elev = m_wf.elev;
 
+}
+
+void C_csp_weatherreader::converged()
+{
+	m_ncall = -1;
 }
