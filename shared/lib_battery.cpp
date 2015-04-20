@@ -11,7 +11,6 @@ capacity_t::capacity_t(double q)
 	_qmax = q;
 	_qmax0 = q;
 	_I = 0.;
-	_P = 0.;
 
 	// Initialize SOC, DOD
 	_SOC = 100;
@@ -34,7 +33,7 @@ void capacity_t::check_charge_change()
 
 	// Check if charge changed 
 	_chargeChange = false;
-	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE))
+	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE) && (fabs(_I) > 1) )
 	{
 		_chargeChange = true;
 		_prev_charge = charging;
@@ -62,7 +61,6 @@ double capacity_t::prev_DOD(){ return _DOD_prev; }
 double capacity_t::q0(){ return _q0; }
 double capacity_t::qmax(){ return _qmax; }
 double capacity_t::I(){ return _I; }
-double capacity_t::P(){ return _P; }
 
 
 /*
@@ -97,6 +95,11 @@ capacity_t(q20)
 	// Assumes battery is initially fully charged
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
+
+	FILE * kibam_file;
+	kibam_file = fopen("kibam_metrics.txt", "w+");
+	fprintf(kibam_file, "Power\t Voltage\t Id_max\t Ic_max\t I\t dt\n");
+	fclose(kibam_file);
 }
 
 double capacity_kibam_t::c_compute(double F, double t1, double t2, double k_guess)
@@ -170,12 +173,10 @@ void capacity_kibam_t::parameter_compute()
 	_qmax = qmax_compute();
 }
 
-void capacity_kibam_t::updateCapacity(double P, voltage_t * voltage_model, double dt, int cycles)
+void capacity_kibam_t::updateCapacity(double I, double dt_hour, int cycles)
 {
-	_DOD_prev = _DOD;
-	double V = voltage_model->battery_voltage();
-	_P = P;
-	_I = _P / V;
+	_DOD_prev = _DOD;							 
+	_I = I;
 	double Idmax = 0.;
 	double Icmax = 0.;
 	double Id = 0.;
@@ -185,47 +186,32 @@ void capacity_kibam_t::updateCapacity(double P, voltage_t * voltage_model, doubl
 
 	if (_I > 0)
 	{
-		Idmax = Idmax_compute(_q1_0, _q0, dt);
+		Idmax = Idmax_compute(_q1_0, _q0, dt_hour);
 		Id = fmin(_I, Idmax);
 		_I = Id;
 	}
 	else if (_I < 0 )
 	{
-		Icmax = Icmax_compute(_q1_0, _q0, dt);
+		Icmax = Icmax_compute(_q1_0, _q0, dt_hour);
 		Ic = -fmin(fabs(_I), fabs(Icmax));
 		_I = Ic;
 	}
 
-	/*
-	// Loop so we don't discharge much beyond cut-off voltage
-	// double v_dt = 1. / 60.;
-	// int n = dt / v_dt;
-	// int n = 1; // need to determine if this is a good way to implement
+	// new charge levels
+	q1 = q1_compute(_q1_0, _q0, dt_hour, _I);
+	q2 = q2_compute(_q2_0, _q0, dt_hour, _I);
 
-	// for (int ii = 0; ii != n; ii++)
-	// {
-		if (voltage_model->cutoff_voltage() > voltage_model->cell_voltage())
-			break;
-	*/
-		// new charge levels
-		q1 = q1_compute(_q1_0, _q0, dt, _I);
-		q2 = q2_compute(_q2_0, _q0, dt, _I);
+	// update max charge at this current
+	if (fabs(_I) > 0)
+		_qmaxI = qmax_of_i_compute(fabs(_qmaxI / _I));
 
-		// update max charge at this current
-		if (fabs(_I) > 0)
-			_qmaxI = qmax_of_i_compute(fabs(_qmaxI / _I));
+	// update internal variables 
+	_q1_0 = q1;
+	_q2_0 = q2;
+	_q0 = q1 + q2;
 
-		// update internal variables 
-		_q1_0 = q1;
-		_q2_0 = q2;
-		_q0 = q1 + q2;
-
-		update_SOC();
-		check_charge_change(); 
-
-		// update voltage
-		voltage_model->updateVoltage(this, dt);
-	// }
+	update_SOC();
+	check_charge_change(); 
 }
 void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 {
@@ -265,55 +251,32 @@ Define Lithium Ion capacity model
 capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q){};
 capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
 
-void capacity_lithium_ion_t::updateCapacity(double P, voltage_t * voltage_model, double dt, int cycles)
+void capacity_lithium_ion_t::updateCapacity(double I, double dt, int cycles)
 {
 	_DOD_prev = _DOD;
 	double q0_old = _q0;
+	_I = I;
 
-	// currently just a tank of coloumbs
-	 double V = voltage_model->battery_voltage();
-	_I = P / V;
-	_P = P;
+	// update charge ( I > 0 discharging, I < 0 charging)
+	_q0 -= _I*dt;
 
-	/*
-	// Loop so we don't discharge much beyond cut-off voltage
-	// double v_dt = 1.;// / 60.;
-	// int n = dt / v_dt;
-	// int n = 1; // need to determine if this is a good way to implement
-
-	// for (int ii = 0; ii != n; ii++)
+	// check if overcharged
+	if (_q0 > _qmax)
 	{
-		if (voltage_model->cutoff_voltage() > voltage_model->cell_voltage())
-			break;
-	*/
-		// update charge ( I > 0 discharging, I < 0 charging)
-		_q0 -= _I*dt;
+		_I = -(_qmax - q0_old) / dt;
+		_q0 = _qmax;
+	}
 
-		// check if overcharged
-		if (_q0 > _qmax)
-		{
-			_I = -(_qmax - q0_old) / dt;
-			_P = _I*V;
-			_q0 = _qmax;
-		}
+	// check if undercharged 
+	if (_q0 < 0)
+	{
+		_I = (q0_old) / dt;
+		_q0 = 0;
+	}
 
-		// check if undercharged (implement minimum charge limit)
-		if (_q0 < 0)
-		{
-			_I = (q0_old) / dt;
-			_P = _I*V;
-			_q0 = 0;
-		}
-
-		// update SOC, DOD
-		_SOC = (_q0 / _qmax) * 100;
-		_DOD = 100 - _SOC;
-
-		check_charge_change();
-		
-		// update voltage
-		voltage_model->updateVoltage(this, dt);
-	// }
+	// update SOC, DOD
+	update_SOC();
+	check_charge_change();
 }
 void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
@@ -344,10 +307,12 @@ voltage_t::voltage_t(int num_cells, double voltage)
 {
 	_num_cells = num_cells;
 	_cell_voltage = voltage;
+	_R = 0.004;
 }
 
 double voltage_t::battery_voltage(){ return _num_cells*_cell_voltage; }
 double voltage_t::cell_voltage(){ return _cell_voltage; }
+double voltage_t::R(){ return _R; }
 
 
 // Dynamic voltage model
@@ -448,14 +413,6 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix)
 	_average_range = 0;
 	_fortyPercent = 0;
 	_hundredPercent = 0;
-
-	/*
-	FILE * life_file;
-	life_file = fopen("lifetime_metrics.txt", "w+");
-	fprintf(life_file,"Cycle Peaks\n");
-	fclose(life_file);
-	*/
-
 }
 
 lifetime_t::~lifetime_t(){}
@@ -468,13 +425,6 @@ void lifetime_t::rainflow(double DOD)
 	// Begin algorithm
 	_Peaks.push_back(DOD);
 	bool atStepTwo = true;
-
-	/*
-	FILE * life_file;
-	life_file = fopen("lifetime_metrics.txt", "a");
-	fprintf(life_file, "%.2f\n",DOD);
-	fclose(life_file);
-	*/
 
 	// Loop until break
 	while (atStepTwo)
@@ -715,7 +665,7 @@ double lifetime_t::bilinear(double DOD, int cycle_number)
 Define Thermal Model
 */
 thermal_t::thermal_t(double mass, double length, double width, double height, 
-	double Cp,  double h, double T_room, double R,
+	double Cp,  double h, double T_room, 
 	const util::matrix_t<double> &c_vs_t )
 {
 	_cap_vs_temp = c_vs_t;
@@ -726,7 +676,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	_Cp = Cp;
 	_h = h;
 	_T_room = T_room;
-	_R = R;
+	_R = 0.004;
 	_capacity_percent = 100;
 
 	// assume all surfaces are exposed
@@ -743,10 +693,17 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	}
 }
 
-void thermal_t::updateTemperature(double I, double dt)
+void thermal_t::updateTemperature(double I, double R, double dt)
 {
-	//double T_new = rk4(I, dt*_hours_to_seconds);
-	double T_new = trapezoidal(I, dt*_hours_to_seconds);
+	_R = R;
+	double T_new = _T_battery;
+
+	// use RK4 iff timestep is 5 minutes or less
+	if (dt <= 5./60)
+		T_new = rk4(I, dt*_hours_to_seconds);
+	else
+		T_new = trapezoidal(I, dt*_hours_to_seconds);
+
 	_T_battery = T_new;
 }
 double thermal_t::f(double T_battery, double I)
@@ -763,10 +720,10 @@ double thermal_t::rk4( double I, double dt)
 }
 double thermal_t::trapezoidal(double I, double dt)
 {
-	double B = 1 / (_mass*_Cp);
-	double C = _h*_A;
-	double D = pow(I, 2)*_R;
-	double T_prime = f(_T_battery, I);
+	double B = 1 / (_mass*_Cp); // [K/J]
+	double C = _h*_A;			// [W/K]
+	double D = pow(I, 2)*_R;	// [Ohm A*A]
+	double T_prime = f(_T_battery, I);	// [K]
 
 	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
 }
@@ -808,9 +765,10 @@ void losses_t::run_losses()
 Define Battery 
 */
 battery_t::battery_t(){};
-battery_t::battery_t(double dt, int battery_chemistry)
+battery_t::battery_t(double dt_hour, int battery_chemistry)
 {
-	_dt = dt;
+	_dt_hour = dt_hour;
+	_dt_min = dt_hour * 60;
 	_battery_chemistry = battery_chemistry;
 }
 void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal, losses_t * losses)
@@ -823,11 +781,12 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_firstStep = true;
 }
 
-void battery_t::run(double P)
+void battery_t::run(double I)
 {	
 	// Compute temperature at end of timestep
-	runThermalModel(P / _voltage->battery_voltage());
-	runCapacityModel(P, _voltage);
+	runThermalModel(I);
+	runCapacityModel(I);
+	runVoltageModel();
 
 	if (_capacity->chargeChanged())
 		runLifetimeModel(_capacity->prev_DOD());
@@ -841,17 +800,17 @@ void battery_t::run(double P)
 }
 void battery_t::runThermalModel(double I)
 {
-	_thermal->updateTemperature(I, _dt);
+	_thermal->updateTemperature(I, _voltage->R(), _dt_hour);
 }
 
-void battery_t::runCapacityModel(double P, voltage_t * V)
+void battery_t::runCapacityModel(double I)
 {
-	_capacity->updateCapacity(P, V, _dt,_lifetime->cycles_elapsed() );
+	_capacity->updateCapacity(I, _dt_hour,_lifetime->cycles_elapsed() );
 }
 
 void battery_t::runVoltageModel()
 {
-	_voltage->updateVoltage(_capacity, _dt);
+	_voltage->updateVoltage(_capacity, _dt_hour);
 }
 
 void battery_t::runLifetimeModel(double DOD)
@@ -887,11 +846,13 @@ double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_t * Battery, double dt, double SOC_min)
+dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max)
 {
 	_Battery = Battery;
-	_dt = dt;
+	_dt_hour = dt_hour;
 	_SOC_min = SOC_min;
+	_Ic_max = Ic_max;
+	_Id_max = Id_max;
 
 	// positive quantities describing how much went to load
 	_pv_to_load = 0.;
@@ -902,6 +863,11 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt, double SOC_min)
 	// note, do not include pv, since we don't modify from pv module
 	_e_tofrom_batt = 0.;
 	_e_grid = 0.;
+
+	// limit the switch from charging to discharge so that doesn't flip-flop subhourly
+	_t_at_mode = 1000; 
+	_prev_charging = false;
+	_charging = false;
 }
 double dispatch_t::energy_tofrom_battery(){ return _e_tofrom_batt; };
 double dispatch_t::energy_tofrom_grid(){ return _e_grid; };
@@ -909,11 +875,55 @@ double dispatch_t::pv_to_load(){ return _pv_to_load; };
 double dispatch_t::battery_to_load(){ return _battery_to_load; };
 double dispatch_t::grid_to_load(){ return _grid_to_load; };
 
+void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max)
+{
+	// Implement minimum SOC cut-off
+	if (_e_tofrom_batt > 0)
+	{
+		_charging = false;
+		double e_max_discharge = battery_voltage *(charge_total - charge_max*_SOC_min*0.01)*watt_to_kilowatt;
+		if (fabs(_e_tofrom_batt) > e_max_discharge)
+			_e_tofrom_batt = e_max_discharge;
+	}
+}
+void dispatch_t::switch_controller()
+{
+	// Implement rapid switching check
+	if (_charging != _prev_charging)
+	{
+		if (_t_at_mode <= CHARGE_FLIP_LIMIT)
+		{
+			_e_tofrom_batt = 0.;
+		}
+		else
+			_t_at_mode = 0.;
+	}
+	_t_at_mode += round(_dt_hour * hour_to_min);
+	_prev_charging = _charging;
+}
+double dispatch_t::current_controller(double battery_voltage)
+{
+	// Implement current limits
+	double P, I = 0.; // [W],[V]
+	P = kilowatt_to_watt*_e_tofrom_batt / _dt_hour;
+	I = P / battery_voltage;
+	if (_charging)
+	{
+		if (fabs(I) > _Ic_max)
+			I = -_Ic_max;
+	}
+	else
+	{
+		if (I > _Id_max)
+			I = _Id_max;
+	}
+	return I;
+}
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
-	: dispatch_t(Battery, dt, SOC_min)
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
+	: dispatch_t(Battery, dt, SOC_min, Ic_max, Id_max)
 {
 	_sched = dm_sched;
 	_charge_array = dm_charge;
@@ -937,14 +947,15 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	double battery_voltage = _Battery->battery_voltage();								// [V] 
 	double chargeNeededToFill = _Battery->battery_charge_needed();						// [Ah] - qmax - q0
 	double energyNeededToFill = (chargeNeededToFill * battery_voltage)*watt_to_kilowatt;// [kWh]
-	double chargeTotal = _Battery->battery_charge_total();								// [Ah]
-	double chargeMax = _Battery->battery_charge_maximum();								// [Ah]
+	double charge_total = _Battery->battery_charge_total();								// [Ah]
+	double charge_max = _Battery->battery_charge_maximum();								// [Ah]
 
 	_e_grid = 0.;																		// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
 	_e_tofrom_batt = 0.;																// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 	_pv_to_load = 0.;
 	_battery_to_load = 0.;
 	_grid_to_load = 0.;
+	_charging = true;
 
 	// Is there extra energy from array
 	if (e_pv > e_load)
@@ -973,27 +984,23 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 			_e_tofrom_batt = -energyNeededToFill;
 	}
 
-	// Implement minimum SOC cut-off
-	if (_e_tofrom_batt > 0)
-	{
-		double e_max_discharge = battery_voltage *(chargeTotal - chargeMax*_SOC_min*0.01)*watt_to_kilowatt;
-		if (fabs(_e_tofrom_batt) > e_max_discharge)
-			_e_tofrom_batt = e_max_discharge;
-	}
+	// Controllers
+	SOC_controller(battery_voltage, charge_total, charge_max);
+	switch_controller();
+	double I = current_controller(battery_voltage);
 
 	// Run Battery Model to update charge based on charge/discharge
-	_Battery->run(kilowatt_to_watt*_e_tofrom_batt / _dt);
+	_Battery->run(I);
 
 	// Update how much power was actually used to/from battery
-	double current = _Battery->capacity_model()->I();
-	_e_tofrom_batt = current * battery_voltage * _dt / 1000;// [kWh]
+	I = _Battery->capacity_model()->I();
+	_e_tofrom_batt = I * battery_voltage * _dt_hour / 1000;// [kWh]
 
 	
 	// Update net grid energy
 	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
 	// e_grid > 0 (sending to grid) e_grid < 0 (pulling from grid)
 	_e_grid = e_pv + _e_tofrom_batt - e_load;
-
 
 	// Next, get how much of each component will meet the load.  
 	// PV always meets load before battery
@@ -1008,6 +1015,7 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 
 		_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
 	}
+
 }
 
 
