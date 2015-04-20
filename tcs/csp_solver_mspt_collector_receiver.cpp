@@ -17,9 +17,15 @@ void C_csp_mspt_collector_receiver::init()
 	return;
 }
 
+void C_csp_mspt_collector_receiver::get_design_parameters(double *p_T_htf_cold_des)
+{
+	*p_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;
+}
+
 void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs *p_weather,
 	C_csp_solver_htf_state *p_htf_state,
 	const C_csp_collector_receiver::S_csp_cr_inputs *p_inputs,
+	C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
 	const C_csp_solver_sim_info *p_sim_info)
 {
 	// What about catching errors here?
@@ -38,4 +44,11 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs *p
 	mc_mspt_receiver_222.call(p_weather, p_htf_state, &receiver_inputs, p_sim_info);
 		
 	// Set collector/receiver parent class outputs and return
+	cr_outputs.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;		//[MW]
+}
+
+void C_csp_mspt_collector_receiver::converged()
+{
+	mc_pt_heliostatfield.converged();
+	mc_mspt_receiver_222.converged();
 }

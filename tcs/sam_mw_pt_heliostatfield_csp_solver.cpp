@@ -310,121 +310,15 @@ private:
 	C_csp_weatherreader::S_outputs ms_weather;
 	C_csp_solver_sim_info ms_sim_info;
 
-	// Class Instances
-	//GaussMarkov *field_efficiency_table;
-	// Flux table
-	//sp_flux_table fluxtab;
-
-	//Parameters
-	//string weather_file;
-	//int run_type;
-	//double helio_width;
-	//double helio_height;
-	//double helio_optical_error;
-	//double helio_active_fraction;
-    //double dens_mirror;
-	//double helio_reflectance;
-	//double rec_absorptance;
-	//double rec_height;
-	//double rec_aspect;
-	//double rec_hl_perm2;
-	//double q_design;
-	//double h_tower;
-	//int land_bound_type;
-	//double land_max;
-	//double land_min;
-	//double* land_bound_table;
-	//double* land_bound_list;
-	//double p_start;
-	//double p_track;
-	//double hel_stow_deploy;
-	//double v_wind_max;
-	//double interp_nug;
-	//double interp_beta;
-	//double* helio_positions;
-	//double* helio_aim_points;
-	//int N_hel; 
-	//int pos_dim;
-	//double* eta_map;
-	//int n_flux_x;
-	//int n_flux_y;
-	//double* flux_positions;
-    //MatDoub m_flux_positions;
-	//double* flux_maps;
-	//double* flux_map;
-	//double c_atm_0, c_atm_1, c_atm_2, c_atm_3;
-	//int n_facet_x, n_facet_y;
-	//int cant_type, focus_type;
-	//int n_flux_days, delta_flux_hrs;
-	//double dni_des;
-	
-	//Stored Variables
-	//double eta_prev;
-	//double v_wind_prev;
-
 public:
-
-	//struct RUN_TYPE { enum A {AUTO, USER_FIELD, USER_DATA}; };
 
 	sam_mw_pt_heliostatfield( tcscontext *cst, tcstypeinfo *ti)
 		: tcstypeinterface( cst, ti)
 	{
-		//run_type	=0;
-		//helio_width	=std::numeric_limits<double>::quiet_NaN();
-		//helio_height	=std::numeric_limits<double>::quiet_NaN();
-		//helio_optical_error	=std::numeric_limits<double>::quiet_NaN();
-		//helio_active_fraction	=std::numeric_limits<double>::quiet_NaN();
-		//dens_mirror = std::numeric_limits<double>::quiet_NaN();
-        //helio_reflectance	=std::numeric_limits<double>::quiet_NaN();
-		//rec_absorptance	=std::numeric_limits<double>::quiet_NaN();
-		//rec_height	=std::numeric_limits<double>::quiet_NaN();
-		//rec_aspect	=std::numeric_limits<double>::quiet_NaN();
-		//rec_hl_perm2	=std::numeric_limits<double>::quiet_NaN();
-		//q_design	=std::numeric_limits<double>::quiet_NaN();
-		//h_tower	=std::numeric_limits<double>::quiet_NaN();
-		//land_bound_type	=0;
-		//land_max	=std::numeric_limits<double>::quiet_NaN();
-		//land_min	=std::numeric_limits<double>::quiet_NaN();
-		//land_bound_table	= NULL;
-		//land_bound_list	= NULL;
-		//p_start	=std::numeric_limits<double>::quiet_NaN();
-		//p_track	=std::numeric_limits<double>::quiet_NaN();
-		//hel_stow_deploy	=std::numeric_limits<double>::quiet_NaN();
-		//v_wind_max	=std::numeric_limits<double>::quiet_NaN();
-		//interp_nug	=std::numeric_limits<double>::quiet_NaN();
-		//interp_beta	=std::numeric_limits<double>::quiet_NaN();
-		//helio_positions	= NULL;
-		//helio_aim_points	= NULL;
-		//N_hel	=0;
-		//pos_dim = 0;
-		//eta_map	= NULL;
-		//n_flux_x	=0;
-		//n_flux_y	=0;
-		//flux_positions	= NULL;
-		//flux_maps	= NULL;
-		//flux_map = NULL;
-		//n_facet_x = 0;
-		//n_facet_y = 0;
-		//cant_type = 0;
-		//focus_type = 0;
-		//n_flux_days = 0;
-		//delta_flux_hrs = 0; 
-		
-		//eta_prev = std::numeric_limits<double>::quiet_NaN();
-		//v_wind_prev = std::numeric_limits<double>::quiet_NaN();
-		//c_atm_0 = std::numeric_limits<double>::quiet_NaN();
-		//c_atm_1 = std::numeric_limits<double>::quiet_NaN();
-		//c_atm_2 = std::numeric_limits<double>::quiet_NaN();
-		//c_atm_3 = std::numeric_limits<double>::quiet_NaN();
-		//dni_des = std::numeric_limits<double>::quiet_NaN();
-
-        //field_efficiency_table = 0;
 	}
 
 	virtual ~sam_mw_pt_heliostatfield()
 	{
-        //if(field_efficiency_table != 0)
-		//    delete field_efficiency_table;
 	}
 
 	virtual int init()

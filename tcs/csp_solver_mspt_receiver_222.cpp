@@ -129,6 +129,14 @@ void C_mspt_receiver_222::init()
 		throw(C_csp_exception(error_msg, "MSPT receiver"));
 	}
 
+	// Unit Conversions
+	m_od_tube /= 1.E3;			//[m] Convert from input in [mm]
+	m_th_tube /= 1.E3;			//[m] Convert from input in [mm]
+	m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
+	m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
+	m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
+	m_m_dot_htf_max /= 3600.0;	//[kg/s] Convert from input in [kg/hr]
+
 	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
 	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
 	m_n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
@@ -767,23 +775,23 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs *p_weather,
 		m_dot_salt_tot_ss = 0.0; f_rec_timestep = 0.0; q_thermal_ss = 0.0;
 	}
 
-	outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
-	outputs.m_eta_therm = eta_therm;						//[-]
-	outputs.m_W_dot_pump = W_dot_pump / 1.E6;				//[MW] convert from W
-	outputs.m_q_conv_sum = q_conv_sum / 1.E6;				//[MW] convert from W
-	outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
-	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
-	outputs.m_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] convert from K
-	outputs.m_field_eff_adj = field_eff_adj;				//[-]
-	outputs.m_Q_solar_total = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
-	outputs.m_q_startup = q_startup;						//[MW]
-	outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
-	outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
-	outputs.m_vel_htf = u_coolant;							//[m/s]
-	outputs.m_T_salt_cold = T_salt_cold_in - 273.15;		//[C] convert from K
-	outputs.m_m_dot_ss = m_dot_salt_tot_ss*3600.0;			//[kg/hr] convert from kg/s
-	outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
-	outputs.m_f_timestep = f_rec_timestep;					//[-]
+	ms_outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
+	ms_outputs.m_eta_therm = eta_therm;							//[-]
+	ms_outputs.m_W_dot_pump = W_dot_pump / 1.E6;				//[MW] convert from W
+	ms_outputs.m_q_conv_sum = q_conv_sum / 1.E6;				//[MW] convert from W
+	ms_outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
+	ms_outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
+	ms_outputs.m_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] convert from K
+	ms_outputs.m_field_eff_adj = field_eff_adj;					//[-]
+	ms_outputs.m_Q_solar_total = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
+	ms_outputs.m_q_startup = q_startup;							//[MW]
+	ms_outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
+	ms_outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
+	ms_outputs.m_vel_htf = u_coolant;							//[m/s]
+	ms_outputs.m_T_salt_cold = T_salt_cold_in - 273.15;			//[C] convert from K
+	ms_outputs.m_m_dot_ss = m_dot_salt_tot_ss*3600.0;			//[kg/hr] convert from kg/s
+	ms_outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
+	ms_outputs.m_f_timestep = f_rec_timestep;					//[-]
 
 }
 
@@ -812,22 +820,22 @@ void C_mspt_receiver_222::converged()
 
 void C_mspt_receiver_222::clear_outputs()
 {
-	outputs.m_m_dot_salt_tot = 
-		outputs.m_eta_therm = 
-		outputs.m_W_dot_pump = 
-		outputs.m_q_conv_sum = 
-		outputs.m_q_rad_sum = 
-		outputs.m_Q_thermal =
-		outputs.m_T_salt_hot = 
-		outputs.m_field_eff_adj = 
-		outputs.m_Q_solar_total = 
-		outputs.m_q_startup = 
-		outputs.m_dP_receiver = 
-		outputs.m_dP_total =
-		outputs.m_vel_htf = 
-		outputs.m_T_salt_cold = 
-		outputs.m_m_dot_ss = 
-		outputs.m_q_dot_ss = 
-		outputs.m_f_timestep = std::numeric_limits<double>::quiet_NaN();
+	ms_outputs.m_m_dot_salt_tot = 
+		ms_outputs.m_eta_therm = 
+		ms_outputs.m_W_dot_pump = 
+		ms_outputs.m_q_conv_sum = 
+		ms_outputs.m_q_rad_sum = 
+		ms_outputs.m_Q_thermal =
+		ms_outputs.m_T_salt_hot = 
+		ms_outputs.m_field_eff_adj = 
+		ms_outputs.m_Q_solar_total = 
+		ms_outputs.m_q_startup = 
+		ms_outputs.m_dP_receiver = 
+		ms_outputs.m_dP_total =
+		ms_outputs.m_vel_htf = 
+		ms_outputs.m_T_salt_cold = 
+		ms_outputs.m_m_dot_ss = 
+		ms_outputs.m_q_dot_ss = 
+		ms_outputs.m_f_timestep = std::numeric_limits<double>::quiet_NaN();
 }
 
