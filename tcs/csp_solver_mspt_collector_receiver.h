@@ -19,6 +19,12 @@ public:
 
 	virtual void init();
 
+	virtual void call(const C_csp_weatherreader::S_outputs *p_weather,
+		C_csp_solver_htf_state *p_htf_state,
+		const C_csp_collector_receiver::S_csp_cr_inputs *p_inputs,
+		const C_csp_solver_sim_info *p_sim_info);
+
+	//virtual void converged();
 };
 
 

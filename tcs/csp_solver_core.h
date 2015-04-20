@@ -28,47 +28,13 @@ class C_csp_solver_sim_info
 public:
 	double m_time;		//[s]
 	double m_step;		//[s]
-	int m_ncall;		//[-]
+	//int m_ncall;		//[-]
 
 	C_csp_solver_sim_info()
 	{
 		m_time = m_step = std::numeric_limits<double>::quiet_NaN();
-		m_ncall = -1;
+		//m_ncall = -1;
 	}
-};
-
-class C_csp_collector_receiver
-{
-
-public:
-	C_csp_collector_receiver(){};
-
-	~C_csp_collector_receiver(){};
-
-	virtual void init() = 0;
-};
-
-class C_csp_power_cycle
-{
-
-public:
-	C_csp_power_cycle(){};
-
-	~C_csp_power_cycle(){};
-
-	virtual void init() = 0;
-
-	struct S_control_inputs
-	{
-		int m_standby_control;		//[-] Control signal indicating standby mode
-		int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
-
-		S_control_inputs()
-		{
-			m_standby_control = m_tou = -1;
-		}
-	};
-
 };
 
 class C_csp_weatherreader
@@ -80,6 +46,8 @@ private:
 	// member string for exception messages
 	std::string m_error_msg;
 
+	int m_ncall;
+
 public:
 	C_csp_weatherreader();
 
@@ -88,6 +56,8 @@ public:
 	void init();
 
 	void timestep_call(const C_csp_solver_sim_info *p_sim_info);
+
+	void converged();
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
@@ -136,9 +106,93 @@ public:
 	int m_trackmode;
 	double m_tilt;
 	double m_azimuth;
-	
+
 	S_outputs ms_outputs;
 };
+
+class C_csp_collector_receiver
+{
+
+public:
+	C_csp_collector_receiver(){};
+
+	~C_csp_collector_receiver(){};
+
+	struct S_csp_cr_inputs
+	{	
+		double m_field_control;		//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
+
+		S_csp_cr_inputs()
+		{
+			m_field_control = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	virtual void init() = 0;
+
+	virtual void call(const C_csp_weatherreader::S_outputs *p_weather,
+		C_csp_solver_htf_state *p_htf_state,
+		const C_csp_collector_receiver::S_csp_cr_inputs *p_inputs,
+		const C_csp_solver_sim_info *p_sim_info) = 0;
+
+	//virtual void converged() = 0;
+};
+
+class C_csp_power_cycle
+{
+
+public:
+	C_csp_power_cycle(){};
+
+	~C_csp_power_cycle(){};
+
+	struct S_control_inputs
+	{
+		int m_standby_control;		//[-] Control signal indicating standby mode
+		int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
+
+		S_control_inputs()
+		{
+			m_standby_control = m_tou = -1;
+		}
+	};
+	
+	virtual void init() = 0;
+
+	virtual void call(const C_csp_weatherreader::S_outputs *p_weather,
+		C_csp_solver_htf_state *p_htf_state,
+		const C_csp_power_cycle::S_control_inputs &inputs,
+		const C_csp_solver_sim_info *p_sim_info) = 0;
+
+	virtual void converged() = 0;
+
+};
+
+class C_csp_solver
+{
+private:
+	C_csp_weatherreader *mpc_weather;
+	C_csp_collector_receiver *mpc_collector_receiver;
+	C_csp_power_cycle *mpc_power_cycle;
+
+	void init_independent();
+
+	void simulate();
+
+public:
+	
+	
+
+	C_csp_solver(C_csp_weatherreader *p_weather,
+		C_csp_collector_receiver *p_collector_receiver,
+		C_csp_power_cycle *p_power_cycle);
+
+	~C_csp_solver(){};
+
+	
+
+};
+
 
 
 
