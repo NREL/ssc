@@ -19,6 +19,7 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
 
 
 	// Voltage discharge curve
@@ -230,7 +231,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		capacity_model);
 
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
-	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), dm_sched, dm_charge, dm_discharge, dm_gridcharge);
+	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), dm_sched, dm_charge, dm_discharge, dm_gridcharge);
 }
 
 battstor::~battstor()

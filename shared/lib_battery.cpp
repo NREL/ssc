@@ -846,13 +846,14 @@ double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max)
+dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, double t_min)
 {
 	_Battery = Battery;
 	_dt_hour = dt_hour;
 	_SOC_min = SOC_min;
 	_Ic_max = Ic_max;
 	_Id_max = Id_max;
+	_t_min = t_min;
 
 	// positive quantities describing how much went to load
 	_pv_to_load = 0.;
@@ -891,10 +892,8 @@ void dispatch_t::switch_controller()
 	// Implement rapid switching check
 	if (_charging != _prev_charging)
 	{
-		if (_t_at_mode <= CHARGE_FLIP_LIMIT)
-		{
+		if (_t_at_mode <= _t_min)
 			_e_tofrom_batt = 0.;
-		}
 		else
 			_t_at_mode = 0.;
 	}
@@ -922,8 +921,8 @@ double dispatch_t::current_controller(double battery_voltage)
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
-	: dispatch_t(Battery, dt, SOC_min, Ic_max, Id_max)
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
+	: dispatch_t(Battery, dt, SOC_min, Ic_max, Id_max, t_min)
 {
 	_sched = dm_sched;
 	_charge_array = dm_charge;
