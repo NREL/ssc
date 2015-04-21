@@ -12,7 +12,7 @@ static var_info vtab_ippppa[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		 "market",                   "Utility IPP or Commercial PPA",   "0/1",          "0=ipp,1=ppa", "ippppa",      "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
 /* Dispatch */
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "ippppa",             "*",						   "INTEGER,MIN=0",                 "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",	"Hourly energy produced by the system",	"kWh",   "",                      "ippppa",             "*",						   "",                 "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "hourly_gen",	"Hourly energy produced by the system",	"kWh",   "",                      "ippppa",             "*",						   "",                 "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,      "degradation",		"Annual energy degradation",	"",   "",                      "ippppa",             "*",						   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "ippppa",             "*",						   "MIN=1e-3",                         "" },
@@ -510,7 +510,7 @@ public:
 
 		size_t count_energy = 0;
 		ssc_number_t *energy = 0;
-		energy = as_array("hourly_energy", &count_energy);
+		energy = as_array("hourly_gen", &count_energy);
 
 		// dispatch
 		if (as_integer("system_use_lifetime_output")==1)

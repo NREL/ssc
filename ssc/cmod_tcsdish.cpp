@@ -199,7 +199,7 @@ static var_info _cm_vtab_tcsdish[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "hourly_P_out_SE",          "System total: Engine power output (gross)",                                      "MWe",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hourly_P_parasitic",       "System total: Parasitic power",                                        "MWe",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
 	
-    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",            "Hourly Energy",                                                     "kWe",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
+//    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",            "Hourly Energy",                                                     "kWe",           "",             "Outputs",        "*",                      "LENGTH=8760",           "" },
 
 	// annual outputs
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",            "Annual Energy",                                                     "kWh",           "",             "Outputs",        "*",                       "",                    "" },
@@ -243,6 +243,7 @@ public:
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
@@ -473,7 +474,8 @@ public:
 		ssc_number_t collectors = as_number("n_ns") * as_number("n_ew");
 		ssc_number_t converter = collectors * 0.001; // convert from kWh per collector to MWh for the field
 
-		ssc_number_t *hourly = allocate("hourly_energy", count);
+		ssc_number_t *hourly = allocate("hourly_gen", count);
+		ssc_number_t *p_gen = allocate("gen", count);
 		ssc_number_t *po1 = allocate("hourly_Power_in_collector", count);
 		ssc_number_t *po2 = allocate("hourly_Power_out_col", count);
 		ssc_number_t *po3 = allocate("hourly_Power_in_rec", count);
@@ -500,7 +502,7 @@ public:
 			po7[i] = p7[i] * converter/1000; // Watts to MWatts
 			po8[i] = p8[i] * converter;
 		}
-		accumulate_annual("hourly_energy",             "annual_energy");
+		accumulate_annual("hourly_gen",             "annual_energy");
 		accumulate_annual("hourly_Power_in_collector", "annual_Power_in_collector");
 		accumulate_annual("hourly_Power_out_col",      "annual_Power_out_col");
 		accumulate_annual("hourly_Power_in_rec",       "annual_Power_in_rec");
@@ -511,7 +513,7 @@ public:
 		accumulate_annual("hourly_Q_rec_losses",       "annual_Q_rec_losses");
 
 		// monthly accumulations
-		accumulate_monthly("hourly_energy",             "monthly_energy");
+		accumulate_monthly("hourly_gen",             "monthly_energy");
 		accumulate_monthly("hourly_Power_in_collector", "monthly_Power_in_collector");
 		accumulate_monthly("hourly_Power_out_col",      "monthly_Power_out_col");
 		accumulate_monthly("hourly_Power_in_rec",       "monthly_Power_in_rec");
@@ -526,7 +528,10 @@ public:
 		double nameplate = as_double("system_capacity");
 		double annual_energy = 0.0;
 		for (int i = 0; i < 8760; i++)
+		{
 			annual_energy += hourly[i];
+			p_gen[i] = hourly[i];
+		}
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));

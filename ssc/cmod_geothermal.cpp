@@ -137,7 +137,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "first_year_output",                  "First Year Output",                                   "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                      "Hourly energy",                                       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_gen",                      "Hourly energy",                                       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
@@ -165,6 +165,7 @@ public:
 		add_var_info( _cm_vtab_geothermal );
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+//		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
@@ -380,7 +381,8 @@ public:
 			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-			geo_outputs.maf_hourly_power = allocate("hourly_energy", geo_inputs.mi_ProjectLifeYears * 8760);
+			geo_outputs.maf_hourly_power = allocate("hourly_gen", geo_inputs.mi_ProjectLifeYears * 8760);
+			ssc_number_t *pgen = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
 
 
 			// TODO - implement performance factors 
@@ -411,7 +413,10 @@ public:
 			double nameplate = geo_outputs.md_GrossPlantOutputMW*1000; // in kW
 			double annual_energy = 0.0;
 			for (int i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)
+			{
 				annual_energy += geo_outputs.maf_hourly_power[i];
+				pgen[i] = geo_outputs.maf_hourly_power[i];
+			}
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
 			assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));

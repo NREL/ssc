@@ -36,7 +36,7 @@ static var_info _cm_vtab_windpower[] = {
 																																												                            
 	// OUTPUTS ----------------------------------------------------------------------------													annual_energy									                            
 	{ SSC_OUTPUT,       SSC_ARRAY,       "turbine_output_by_windspeed_bin",         "Turbine output",                      "kW",     "",      "Power Curve",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                           "Hourly Energy",                       "kW",     "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",                           "Hourly Energy",                       "kW",     "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_wind_direction",                   "Wind direction",                      "deg",    "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_wind_speed",                       "Wind speed",                          "m/s",    "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_temp",                             "Air temperature",                     "'C",     "",      "Time Series",      "*",                                        "LENGTH=8760",                                      "" },
@@ -65,6 +65,7 @@ public:
 		add_var_info( _cm_vtab_windpower );
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
@@ -97,7 +98,8 @@ public:
 
 		// have to be allocated to return without errors
 		ssc_number_t *turbine_output = allocate( "turbine_output_by_windspeed_bin", wpc.m_iLengthOfTurbinePowerCurveArray );
-		ssc_number_t *farmpwr = allocate( "hourly_energy", nstep );
+		ssc_number_t *farmpwr = allocate("hourly_gen", nstep);
+		ssc_number_t *p_gen = allocate("gen", nstep);
 		ssc_number_t *wspd = allocate("hourly_wind_speed", nstep);
 		ssc_number_t *wdir = allocate("hourly_wind_direction", nstep);
 		ssc_number_t *air_temp = allocate("hourly_temp", nstep);
@@ -135,14 +137,14 @@ public:
 
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
 
-			for (i=0;i<nstep;i++)
-				farmpwr[i] = farm_kw/ (ssc_number_t) nstep; // fill "hourly_energy"
+			for (i = 0; i < nstep; i++)
+				farmpwr[i] = farm_kw / (ssc_number_t)nstep; // fill "hourly_gen"
 
 			for (i=0; i<wpc.m_iLengthOfTurbinePowerCurveArray; i++)
 				turbine_output[i] = (ssc_number_t) turbine_outkW[i];
 
-			accumulate_monthly("hourly_energy", "monthly_energy");
-			accumulate_annual("hourly_energy", "annual_energy");
+			accumulate_monthly("hourly_gen", "monthly_energy");
+			accumulate_annual("hourly_gen", "annual_energy");
 
 			// metric outputs moved to technology
 			double kWhperkW = 0.0;
@@ -256,6 +258,8 @@ public:
 
 
 			farmpwr[i] = (ssc_number_t) farmp*haf(i);
+			p_gen[i] = farmpwr[i];
+
 			wspd[i] = (ssc_number_t) wind;
 			wdir[i] = (ssc_number_t) dir;
 			air_temp[i] = (ssc_number_t) temp;
@@ -277,8 +281,8 @@ public:
 			}
 		} // end hourly loop -> i = 0 to 8760
 
-		accumulate_monthly("hourly_energy", "monthly_energy");
-		accumulate_annual("hourly_energy", "annual_energy");
+		accumulate_monthly("hourly_gen", "monthly_energy");
+		accumulate_annual("hourly_gen", "annual_energy");
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;

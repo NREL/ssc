@@ -351,7 +351,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_to_tes",       "Thermal energy into storage",                                "MWht",          "",            "Type251",        "*",                       "",                      "" },
 
 	// Other single value outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",         "Hourly energy",                                              "kWh",           "",            "Caclulated",     "*",                       "LENGTH=8760",           "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",         "Hourly energy",                                              "kWh",           "",            "Caclulated",     "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",     "Gross to Net Conversion Factor",                             "%",             "",            "Calculated",     "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                                            "%",              "",            "",               "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                                          "kWh/kW",              "",            "",               "*",                       "",                      "" },
@@ -375,6 +375,7 @@ public:
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
@@ -729,8 +730,9 @@ public:
 		//set_output_array("i_SfTi",8760);
 
 		size_t count;
-		ssc_number_t *p_hourly_energy = allocate("hourly_energy", hours_year);
+		ssc_number_t *p_hourly_energy = allocate("hourly_gen", hours_year);
 		ssc_number_t *timestep_energy_MW = as_array("W_net", &count);			//MW
+		ssc_number_t *p_gen = allocate("gen", count);
 
 		char tstr[500];
 		std::string out_msg = "hourly energy count %d is incorrect (should be %d)";
@@ -739,6 +741,7 @@ public:
 		if( count != nrec )
 			throw exec_error("tcstrough_physical", out_msg);
 
+		size_t idx=0;
 		// Need to define an hourly array from potentially subhourly data
 		for( size_t i_ts = 0; i_ts < hours_year; i_ts++ )
 		{
@@ -746,12 +749,14 @@ public:
 			for( size_t j_sh = 0; j_sh < step_per_hour; j_sh++ )
 			{
 				accumulated_energy += timestep_energy_MW[i_ts*step_per_hour + j_sh]*1000.0*ts_hour;		// Convert to kWh
+				p_gen[idx] = timestep_energy_MW[i_ts*step_per_hour + j_sh] * 1000.0;
+				idx++;
 			}
 			p_hourly_energy[i_ts] = accumulated_energy;
 		}
 
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
-		accumulate_annual("hourly_energy", "annual_energy");						// already in kWh
+		accumulate_annual("hourly_gen", "annual_energy");						// already in kWh
 		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross", ts_hour*1000);	// convert from MW to kWh
 		// Calculated outputs
 		ssc_number_t ae = as_number("annual_energy");
@@ -773,7 +778,7 @@ public:
 			p_hourly_energy[i] = p_hourly_energy[i] * (ssc_number_t)(haf(i));
 	
 		// Monthly accumulations
-		accumulate_monthly("hourly_energy", "monthly_energy"); // already in kWh
+		accumulate_monthly("hourly_gen", "monthly_energy"); // already in kWh
 		accumulate_monthly("W_cycle_gross", "monthly_W_cycle_gross", ts_hour); 
 		accumulate_monthly("q_inc_sf_tot", "monthly_q_inc_sf_tot", ts_hour);
 		accumulate_monthly("q_abs_tot", "monthly_q_abs_tot", ts_hour);
@@ -785,7 +790,7 @@ public:
 		accumulate_monthly("q_to_tes", "monthly_q_to_tes", ts_hour);
 
 		// Annual accumulations
-		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
 		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross", ts_hour); 
 		accumulate_annual("q_inc_sf_tot", "annual_q_inc_sf_tot", ts_hour);
 		accumulate_annual("q_abs_tot", "annual_q_abs_tot", ts_hour);
