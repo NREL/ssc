@@ -139,7 +139,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_online",      "Online parasitics",                                              "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "w_par_offline",     "Offline parasitics",                                             "MWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
     
-    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
@@ -195,6 +195,7 @@ public:
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
@@ -349,11 +350,15 @@ public:
 			throw exec_error("tcsgeneric_solar", "failed to setup adjustment factors: " + haf.error());
 
 
-		ssc_number_t *hourly = allocate("hourly_energy", count);
-		for (int i = 0; i<count; i++)
-			hourly[i]= enet[i]*1000*haf(i); // convert from MWh to kWh
+		ssc_number_t *hourly = allocate("hourly_gen", count);
+		ssc_number_t *p_gen = allocate("gen", count);
+		for (int i = 0; i < count; i++)
+		{
+			hourly[i] = enet[i] * 1000 * haf(i); // convert from MWh to kWh
+			p_gen[i] = hourly[i];
+		}
 
-		accumulate_annual("hourly_energy",        "annual_energy");
+		accumulate_annual("hourly_gen",        "annual_energy");
 		accumulate_annual("w_gr",                 "annual_w_gr",1000); // convert from MWh to kWh
 		accumulate_annual("q_sf",                 "annual_q_sf");
 		accumulate_annual("q_to_pb",              "annual_q_to_pb");
@@ -367,7 +372,7 @@ public:
 
 
 		// monthly accumulations
-		accumulate_monthly("hourly_energy",       "monthly_energy");
+		accumulate_monthly("hourly_gen",       "monthly_energy");
 		accumulate_monthly("w_gr",                "monthly_w_gr",1000); // convert from MWh to kWh
 		accumulate_monthly("q_sf",                "monthly_q_sf");
 		accumulate_monthly("q_to_pb",             "monthly_q_to_pb");

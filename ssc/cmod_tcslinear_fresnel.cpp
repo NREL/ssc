@@ -236,7 +236,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_aux",          "Parasitic power auxiliary heater operation",       	            "MWe",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "W_cool_par",         "Parasitic power condenser operation",                           "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	
-    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",      "Hourly Energy",                                                 "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+//    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",      "Hourly Energy",                                                 "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly values
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly Energy",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
@@ -265,6 +265,7 @@ public:
 	{
 		add_var_info(_cm_vtab_tcslinear_fresnel);
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 	}
@@ -545,20 +546,23 @@ public:
 		assign("conversion_factor", convfactor);
 
 		
-		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
+		ssc_number_t *p_gen = allocate("gen", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
 		if (count != 8760)
-			throw exec_error("tcslinear_fresnel", "hourly_energy count incorrect (should be 8760): " + count);
+			throw exec_error("tcslinear_fresnel", "hourly_gen count incorrect (should be 8760): " + count);
 
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
+		{
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i)*1000.0);
+			p_gen[i] = p_hourly_energy[i];
+		}
 
-
-		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
-		accumulate_monthly("hourly_energy", "monthly_energy"); // already in kWh
+		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
+		accumulate_monthly("hourly_gen", "monthly_energy"); // already in kWh
 
 
 		double fuel_usage_mmbtu = 0;

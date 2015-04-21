@@ -30,7 +30,7 @@ static var_info _cm_vtab_snowmodel[] =
 	//{ SSC_INPUT,        SSC_ARRAY,      "subarray1_poa_eff_beam",   "Plane of Array Incidence", "W/m^2",			"",					"PV Snow Model", "*",           "LENGTH=8760",            "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "subarray1_poa_shaded",   "Plane of Array Incidence",	"W/m^2",			"",					"PV Snow Model", "*",           "LENGTH=8760",            "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "wspd",						"Wind Speed",				"m/s",				"",					"PV Snow Model", "*",           "LENGTH=8760",            "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",			"Hourly Energy",			"kwh",				"",					"Time Series",		"*",           "LENGTH=8760",            "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "hourly_gen",			"Hourly Energy",			"kwh",				"",					"Time Series",		"*",           "LENGTH=8760",            "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "tdry",						"Ambient Temperature",		"Degrees Celsius",	"",					"PV Snow Model", "*",           "LENGTH=8760",            "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "subarray1_surf_tilt",		"Surface Tilt",				"Degrees",			"",					"PV Snow Model", "*",           "LENGTH=8760",            "" },
 	{ SSC_INPUT,		SSC_ARRAY,		"sunup",					"Sun up over horizon",		"0/1",				"",					"Time Series",		"*",		"",							"" },
@@ -44,7 +44,7 @@ static var_info _cm_vtab_snowmodel[] =
 	{ SSC_OUTPUT,       SSC_NUMBER,     "annual_energy_before_snow","Annual Energy Without Snow Losses","kwh",		"",                 "Annual",			"*",           "",								"" },
 	//{ SSC_OUTPUT,       SSC_ARRAY,      "snow_loss",				"PV loss due to snow",		"",					"",                 "PV Snow Model", "*",           "",			"" },
 	//{ SSC_OUTPUT,       SSC_ARRAY,      "snow_fall_flag",			"Snow Fall Flag",			"",					"",                 "PV Snow Model", "*",           "",			"" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "hourly_energy",			"Hourly Energy",			"kwh",				"",                 "Time Series",		"*",           "",			"" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "hourly_gen",			"Hourly Energy",			"kwh",				"",                 "Time Series",		"*",           "",			"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",			"Monthly Energy",			"kwh",				"",                 "Monthly",			"*",           "",			"" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "annual_energy",			"Annual Energy",			"kwh",				"",                 "Annual",			"*",           "",								"" },
 	//{ SSC_OUTPUT,       SSC_ARRAY,      "smout",			"Hourly Energy",			"kwh",				"",                 "Time Series",		"*",           "",			"" },
@@ -71,7 +71,7 @@ public:
 		//ssc_number_t *poa  = as_array( "subarray1_poa_eff_beam", &num_steps );	// Plane of array Irradiance
 		ssc_number_t *poa  = as_array( "subarray1_poa_shaded", &num_steps );	// Plane of array Irradiance
 		ssc_number_t *wSpd = as_array( "wspd", &num_steps );					// Wind Speed
-		ssc_number_t *hrEn = as_array( "hourly_energy", &num_steps );			// Hourly Energy
+		ssc_number_t *hrEn = as_array( "hourly_gen", &num_steps );			// Hourly Energy
 		ssc_number_t *tAmb = as_array( "tdry", &num_steps );					// Ambient Temperature
 		ssc_number_t *tilt = as_array( "subarray1_surf_tilt", &num_steps );		// Surface Tilt
 		ssc_number_t *sDep = as_array( "snowdepth", &num_steps );				// Snow Depth
@@ -107,8 +107,8 @@ public:
 
 		accumulate_annual("hourly_energy_before_snow", "annual_energy_before_snow");
 		accumulate_monthly("hourly_energy_before_snow", "monthly_energy_before_snow");
-		accumulate_annual("hourly_energy", "annual_energy");
-		accumulate_monthly("hourly_energy", "monthly_energy");
+		accumulate_annual("hourly_gen", "annual_energy");
+		accumulate_monthly("hourly_gen", "monthly_energy");
 
 		/*ssc_number_t *smOut = allocate( "smout", num_steps);	// Hourly Energy with Snow Modeld
 		for (int i = 0; i < 8760; i++){

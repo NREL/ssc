@@ -205,7 +205,7 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",      "Parasitic power equiv. header pipe losses",                       "MWe",           "",             "Outputs",        "*",                      "",           "" },
 
 
-	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy",       "Hourly Energy",      "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy",       "Hourly Energy",      "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
 																	      
 	// Annual Outputs		   										                                        
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",      "Annual Energy",      "kW", "", "Net_E_Calc", "*", "", "" },
@@ -229,6 +229,7 @@ public:
 		add_var_info( _cm_vtab_tcsiscc );
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above 
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
@@ -562,17 +563,21 @@ public:
 		if( !haf.setup() )
 			throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 		// hourly_energy output
-		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
+		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
+		ssc_number_t *p_gen = allocate("gen", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("W_dot_plant_solar", &count);//MWh
 		if( count != 8760 )
-			throw exec_error("tcsmolten_salt", "hourly_energy count incorrect (should be 8760): " + count);
+			throw exec_error("tcsiscc", "hourly_gen count incorrect (should be 8760): " + count);
 		// apply performance adjustments and convert from MWh to kWh
-		for( size_t i = 0; i < count; i++ )
+		for (size_t i = 0; i < count; i++)
+		{
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
+			p_gen[i] = p_hourly_energy[i];
+		}
 
-		accumulate_annual("hourly_energy", "annual_energy"); // already in kWh
+		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;

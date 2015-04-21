@@ -6,7 +6,7 @@ static var_info vtab_utility_rate2[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
 //	{ SSC_INPUT,        SSC_ARRAY,      "e_with_system",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "hourly_gen",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "p_with_system",            "Max power at grid with system",                 "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
 //	{ SSC_INPUT, SSC_ARRAY, "e_without_system", "Energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
 	{ SSC_INPUT, SSC_ARRAY, "e_load", "Energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
@@ -782,7 +782,7 @@ public:
 			e_grid(8760), p_grid(8760),
 			e_load_cy(8760), p_load_cy(8760); // current year load (accounts for escal)
 		
-		parr = as_array("hourly_energy", &count);
+		parr = as_array("hourly_gen", &count);
 		for (i=0;i<8760;i++)
 		{
 			e_sys[i] = p_sys[i] = parr[i]; // by default p_sys = e_sys (since it's hourly)

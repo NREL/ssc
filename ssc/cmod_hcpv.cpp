@@ -108,7 +108,7 @@ static var_info _cm_vtab_hcpv[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc",                       "DC gross",                                                        "kWh",    "",        "Hourly",          "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_dc_net",                   "DC net",                                                          "kWh",    "",        "Hourly",          "*",                    "LENGTH=8760",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_ac",                       "AC gross",                                                        "kWh",    "",        "Hourly",          "*",                    "LENGTH=8760",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                   "Hourly Energy",                                                   "kWh",    "",        "Hourly",          "*",                    "LENGTH=8760",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                   "Hourly Energy",                                                   "kWh",    "",        "Hourly",          "*",                    "LENGTH=8760",                              "" },
 	
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                  "Monthly Energy",                                                  "kWh",    "",        "Monthly",          "*",                   "LENGTH=12",                                 "" },
@@ -147,6 +147,7 @@ public:
 		add_var_info( _cm_vtab_hcpv );
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 	
 	double eff_interpolate(double irrad, ssc_number_t *rad, ssc_number_t *eff, int count)
@@ -357,7 +358,8 @@ public:
 		ssc_number_t *p_dc = allocate("hourly_dc", 8760);
 		ssc_number_t *p_dcnet = allocate("hourly_dc_net", 8760);
 		ssc_number_t *p_ac = allocate("hourly_ac", 8760);
-		ssc_number_t *p_enet = allocate("hourly_energy", 8760); // kWh
+		ssc_number_t *p_enet = allocate("hourly_gen", 8760); // kWh
+		ssc_number_t *p_gen = allocate("gen", 8760); // kW
 
 		double dc_loss_stowing = 0;
 		double ac_loss_tracker = 0;
@@ -536,6 +538,7 @@ public:
 				p_dcnet[istep] = (ssc_number_t)dcpwr * 0.001; // kwh
 				p_ac[istep] = (ssc_number_t)acgross * 0.001; // kwh
 				p_enet[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
+				p_gen[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
 
 			}
 
@@ -552,7 +555,7 @@ public:
 			throw exec_error("hcpv", util::format("failed to simulate all 8760 hours"));
 
 		// annual accumulations
-		accumulate_annual("hourly_energy", "annual_energy");
+		accumulate_annual("hourly_gen", "annual_energy");
 		accumulate_annual("hourly_beam", "annual_beam");
 		accumulate_annual("hourly_input_radiation", "annual_input_radiation");
 		accumulate_annual("hourly_dc", "annual_dc");
@@ -560,7 +563,7 @@ public:
 		accumulate_annual("hourly_ac", "annual_ac");
 
 		// monthly accumulations
-		accumulate_monthly("hourly_energy", "monthly_energy");
+		accumulate_monthly("hourly_gen", "monthly_energy");
 		accumulate_monthly("hourly_beam", "monthly_beam");
 		accumulate_monthly("hourly_input_radiation", "monthly_input_radiation");
 		accumulate_monthly("hourly_dc_net", "monthly_dc_net");

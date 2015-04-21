@@ -16,7 +16,7 @@ static var_info _cm_vtab_generic_system[] = {
 																														      														   
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
 //	  VARTYPE           DATATYPE         NAME                          LABEL                                   UNITS           META     GROUP                 REQUIRED_IF        CONSTRAINTS           UI_HINTS
-	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",              "Hourly Energy",                        "kWh",           "",      "Time Series",      "*",               "LENGTH=8760",         "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",              "Hourly Energy",                        "kWh",           "",      "Time Series",      "*",               "LENGTH=8760",         "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy",                       "kWh",          "",      "Monthly",      "*",               "LENGTH=12",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual Energy",                        "kWh",          "",      "Annual",      "*",               "",                    "" },
 
@@ -40,12 +40,14 @@ public:
 		add_var_info( _cm_vtab_generic_system );
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
 	{
 		int spec_mode = as_integer("spec_mode");
-		ssc_number_t *enet = allocate("hourly_energy", 8760);
+		ssc_number_t *enet = allocate("hourly_gen", 8760);
+		ssc_number_t *p_gen = allocate("gen", 8760);
 
 		double derate = (1 - (double)as_number("derate") / 100);
 		double annual_output = 0;
@@ -62,8 +64,11 @@ public:
 
 			annual_output = 8760 * output;
 
-			for (int i = 0; i<8760; i++)
+			for (int i = 0; i < 8760; i++)
+			{
 				enet[i] = output*haf(i);
+				p_gen[i] = enet[i];
+			}
 		}
 		else
 		{
@@ -89,13 +94,15 @@ public:
 				}
 
 				enet[c] = integ*derate*haf(c);
+				p_gen[c] = enet[c];
+
 				annual_output += enet[c];
 				c++;
 			}
 		}
 
-		accumulate_monthly("hourly_energy", "monthly_energy");
-		accumulate_annual("hourly_energy", "annual_energy");
+		accumulate_monthly("hourly_gen", "monthly_energy");
+		accumulate_annual("hourly_gen", "annual_energy");
 
 		// if conversion efficiency is zero then set fuel usage to zero per email from Paul 5/17/12
 		double fuel_usage = 0.0;
