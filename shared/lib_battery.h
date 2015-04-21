@@ -357,6 +357,7 @@ public:
 	// Outputs
 	double energy_tofrom_battery();
 	double energy_tofrom_grid();
+	double gen();
 	double pv_to_load();
 	double battery_to_load();
 	double grid_to_load();
@@ -367,6 +368,7 @@ protected:
 
 	double _e_tofrom_batt;
 	double _e_grid;
+	double _e_gen;
 	double _pv_to_load;
 	double _battery_to_load;
 	double _grid_to_load;

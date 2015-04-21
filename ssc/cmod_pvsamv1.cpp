@@ -1773,7 +1773,7 @@ public:
 				{
 					batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
 //					p_grid[idx] = batt.outGridEnergy[idx];
-					p_gen[idx] = batt.outGridEnergy[idx];
+					p_gen[idx] = batt.outGenEnergy[idx];
 				}
 //				else
 //				{

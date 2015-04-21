@@ -864,6 +864,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	// note, do not include pv, since we don't modify from pv module
 	_e_tofrom_batt = 0.;
 	_e_grid = 0.;
+	_e_gen = 0.;
 
 	// limit the switch from charging to discharge so that doesn't flip-flop subhourly
 	_t_at_mode = 1000; 
@@ -875,6 +876,7 @@ double dispatch_t::energy_tofrom_grid(){ return _e_grid; };
 double dispatch_t::pv_to_load(){ return _pv_to_load; };
 double dispatch_t::battery_to_load(){ return _battery_to_load; };
 double dispatch_t::grid_to_load(){ return _grid_to_load; };
+double dispatch_t::gen(){ return _e_gen; }
 
 void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max)
 {
@@ -999,7 +1001,8 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	// Update net grid energy
 	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
 	// e_grid > 0 (sending to grid) e_grid < 0 (pulling from grid)
-	_e_grid = e_pv + _e_tofrom_batt - e_load;
+	_e_gen = e_pv + _e_tofrom_batt;
+	_e_grid = _e_gen - e_load;
 
 	// Next, get how much of each component will meet the load.  
 	// PV always meets load before battery
