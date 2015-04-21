@@ -22,10 +22,10 @@ public:
 	virtual void get_design_parameters(double *p_T_htf_cold_des);
 
 	virtual void call(const C_csp_weatherreader::S_outputs &p_weather,
-		C_csp_solver_htf_state *p_htf_state,
-		const C_csp_collector_receiver::S_csp_cr_inputs *p_inputs,
+		C_csp_solver_htf_state &p_htf_state,
+		const C_csp_collector_receiver::S_csp_cr_inputs &p_inputs,
 		C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
-		const C_csp_solver_sim_info *p_sim_info);
+		const C_csp_solver_sim_info &p_sim_info);
 
 	virtual void converged();
 };

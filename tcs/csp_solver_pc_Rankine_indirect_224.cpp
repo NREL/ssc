@@ -274,29 +274,29 @@ void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solve
 	solved_params.m_cycle_sb_frac = ms_params.m_q_sby_frac;				//[-]
 }
 
-void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs *p_weather, 
-	C_csp_solver_htf_state *p_htf_state,
+void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &p_weather, 
+	C_csp_solver_htf_state &p_htf_state,
 	const C_csp_power_cycle::S_control_inputs & inputs, 
-	const C_csp_solver_sim_info *p_sim_info)
+	const C_csp_solver_sim_info &p_sim_info)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 
 	// Get sim info
-	double time = p_sim_info->m_time;
-	double step_sec = p_sim_info->m_step;
+	double time = p_sim_info.m_time;
+	double step_sec = p_sim_info.m_step;
 	//int ncall = p_sim_info->m_ncall;
 
 	// Check and convert inputs
-	double T_htf_hot = p_htf_state->m_temp_in;		//[C] 
-	double m_dot_htf = p_htf_state->m_m_dot;		//[kg/hr]
-	double T_wb = p_weather->m_twet + 273.15;		//[K], converted from C
+	double T_htf_hot = p_htf_state.m_temp_in;		//[C] 
+	double m_dot_htf = p_htf_state.m_m_dot;		//[kg/hr]
+	double T_wb = p_weather.m_twet + 273.15;		//[K], converted from C
 	int standby_control = inputs.m_standby_control;	//[-]
-	double T_db = p_weather->m_tdry + 273.15;		//[K], converted from C
-	double P_amb = p_weather->m_pres*100.0;			//[Pa], converted from mbar
+	double T_db = p_weather.m_tdry + 273.15;		//[K], converted from C
+	double P_amb = p_weather.m_pres*100.0;			//[Pa], converted from mbar
 	int tou = inputs.m_tou - 1;						//[-], convert from 1-based index
-	double rh = p_weather->m_rhum/100.0;			//[-], convert from %
+	double rh = p_weather.m_rhum/100.0;			//[-], convert from %
 
 	double m_dot_st_bd = 0.0;
 

@@ -174,7 +174,7 @@ public:
 
 	void call(const C_csp_weatherreader::S_outputs &p_weather, 
 		double field_control_in, 
-		const C_csp_solver_sim_info *p_sim_info);
+		const C_csp_solver_sim_info &p_sim_info);
 
 	void converged();
 };

@@ -227,7 +227,7 @@ public:
 
 		try
 		{
-			mc_power_cycle.call(&ms_weather, &ms_htf_state, ms_inputs, &ms_sim_info);
+			mc_power_cycle.call(ms_weather, ms_htf_state, ms_inputs, ms_sim_info);
 		}
 		catch(C_csp_exception &csp_exception)
 		{

@@ -623,15 +623,15 @@ void C_pt_heliostatfield::init()
 		m_ncall = -1;
 }
 
-void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &p_weather, double field_control_in, const C_csp_solver_sim_info *p_sim_info)
+void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &p_weather, double field_control_in, const C_csp_solver_sim_info &p_sim_info)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 	
 	// Get sim info
-	double time = p_sim_info->m_time;
-	double step = p_sim_info->m_step;
+	double time = p_sim_info.m_time;
+	double step = p_sim_info.m_step;
 	//int ncall = p_sim_info->m_ncall;
 
 	double v_wind = p_weather.m_wspd;

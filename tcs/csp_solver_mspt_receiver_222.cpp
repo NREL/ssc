@@ -230,25 +230,25 @@ void C_mspt_receiver_222::init()
 }
 
 void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &p_weather, 
-	C_csp_solver_htf_state *p_htf_state,
-	const C_mspt_receiver_222::S_inputs *p_inputs,
-	const C_csp_solver_sim_info *p_sim_info)
+	C_csp_solver_htf_state &p_htf_state,
+	const C_mspt_receiver_222::S_inputs &p_inputs,
+	const C_csp_solver_sim_info &p_sim_info)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 	
 	// Get inputs
-	double field_eff = p_inputs->m_field_eff;					//[-]
-	const util::matrix_t<double> *flux_map_input = p_inputs->m_flux_map_input;
+	double field_eff = p_inputs.m_field_eff;					//[-]
+	const util::matrix_t<double> *flux_map_input = p_inputs.m_flux_map_input;
 
 	// Get sim info 
-	double time = p_sim_info->m_time;
-	double step = p_sim_info->m_step;
+	double time = p_sim_info.m_time;
+	double step = p_sim_info.m_step;
 	//int ncall = p_sim_info->m_ncall;
 
 	// Get applicable htf state info
-	double T_salt_cold_in = p_htf_state->m_temp_in;		//[C]
+	double T_salt_cold_in = p_htf_state.m_temp_in;		//[C]
 
 	// Complete necessary conversions/calculations of input variables
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
