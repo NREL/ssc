@@ -274,29 +274,29 @@ void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solve
 	solved_params.m_cycle_sb_frac = ms_params.m_q_sby_frac;				//[-]
 }
 
-void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &p_weather, 
-	C_csp_solver_htf_state &p_htf_state,
+void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weather, 
+	C_csp_solver_htf_state &htf_state,
 	const C_csp_power_cycle::S_control_inputs & inputs, 
-	const C_csp_solver_sim_info &p_sim_info)
+	const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 
 	// Get sim info
-	double time = p_sim_info.m_time;
-	double step_sec = p_sim_info.m_step;
+	double time = sim_info.m_time;
+	double step_sec = sim_info.m_step;
 	//int ncall = p_sim_info->m_ncall;
 
 	// Check and convert inputs
-	double T_htf_hot = p_htf_state.m_temp_in;		//[C] 
-	double m_dot_htf = p_htf_state.m_m_dot;		//[kg/hr]
-	double T_wb = p_weather.m_twet + 273.15;		//[K], converted from C
-	int standby_control = inputs.m_standby_control;	//[-]
-	double T_db = p_weather.m_tdry + 273.15;		//[K], converted from C
-	double P_amb = p_weather.m_pres*100.0;			//[Pa], converted from mbar
-	int tou = inputs.m_tou - 1;						//[-], convert from 1-based index
-	double rh = p_weather.m_rhum/100.0;			//[-], convert from %
+	double T_htf_hot = htf_state.m_temp_in;		//[C] 
+	double m_dot_htf = htf_state.m_m_dot;		//[kg/hr]
+	double T_wb = weather.m_twet + 273.15;		//[K], converted from C
+	int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
+	double T_db = weather.m_tdry + 273.15;		//[K], converted from C
+	double P_amb = weather.m_pres*100.0;		//[Pa], converted from mbar
+	int tou = inputs.m_tou - 1;					//[-], convert from 1-based index
+	double rh = weather.m_rhum/100.0;			//[-], convert from %
 
 	double m_dot_st_bd = 0.0;
 
@@ -307,11 +307,47 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &p_wea
 	int mode = 2;
 	double demand_var = 0.0;
 
+	double time_required_su = 0.0;
+
 	switch(standby_control)
 	{
-	case 1:
-		
+	case E_csp_power_cycle_modes::STARTUP:
+		{
+			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));
 
+			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref) * 3600);	//[hr]
+			double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
+
+			double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);
+
+			double time_step_hrs = step_sec / 3600.0;	//[hr]
+
+
+			if( time_step_hrs > time_required_max )
+			{
+				time_required_su = time_step_hrs;		//[hr]
+				m_standby_control_calc = E_csp_power_cycle_modes::STARTUP;	//[-] Power cycle requires additional startup next timestep
+			}
+			else
+			{
+				time_required_su = time_required_max;	//[hr]
+				m_standby_control_calc = E_csp_power_cycle_modes::ON;	//[-] Power cycle has started up, next time step it will be ON
+			}
+
+			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);
+			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - time_required_su*m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref) * 3600, 0.0);
+		}
+
+		// *****
+		m_dot_demand = 0.0;
+		eta = 0.0;									// Using reference efficiency because starting up during this timestep
+		T_htf_cold = ms_params.m_T_htf_cold_ref;
+		// *****
+
+		break;
+
+	case E_csp_power_cycle_modes::ON:
+		
 		RankineCycle(ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, T_db, T_wb, P_amb, ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER,
 			T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, ms_params.m_F_wc[tou],
 			m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, ms_params.m_P_cond_ratio, ms_params.m_P_cond_min,
@@ -339,7 +375,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &p_wea
 
 		break;
 
-	case 2:
+	case E_csp_power_cycle_modes::STANDBY:
 		{
 			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));
 			// double c_htf = specheat(m_pbp.HTF, physics::CelciusToKelvin((m_pbi.T_htf_hot + m_pbp.T_htf_cold_ref)/2.0), 1.0);
@@ -365,7 +401,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &p_wea
 
 		break;
 
-	case 3:
+	case E_csp_power_cycle_modes::OFF:
 
 		// Set other output values
 		P_cycle = 0.0;

@@ -126,6 +126,16 @@ public:
 		}
 	};
 
+	struct S_csp_cr_solved_params
+	{
+		double m_T_htf_cold_des;
+
+		S_csp_cr_solved_params()
+		{
+			m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_csp_cr_outputs
 	{
 		double m_q_thermal;		//[MW] 'Available' receiver thermal output
@@ -138,13 +148,13 @@ public:
 
 	virtual void init() = 0;
 
-	virtual void call(const C_csp_weatherreader::S_outputs &p_weather,
-		C_csp_solver_htf_state &p_htf_state,
-		const C_csp_collector_receiver::S_csp_cr_inputs &p_inputs,
+	virtual void call(const C_csp_weatherreader::S_outputs &weather,
+		C_csp_solver_htf_state &htf_state,
+		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 		C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
-		const C_csp_solver_sim_info &p_sim_info) = 0;
+		const C_csp_solver_sim_info &sim_info) = 0;
 
-	virtual void get_design_parameters(double *p_T_htf_cold_des) = 0;
+	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
 	virtual void converged() = 0;
 };
@@ -157,6 +167,14 @@ public:
 	C_csp_power_cycle(){};
 
 	~C_csp_power_cycle(){};
+
+	enum E_csp_power_cycle_modes
+	{
+		STARTUP = 0,
+		ON,
+		STANDBY,
+		OFF	
+	};
 
 	struct S_control_inputs
 	{
@@ -189,10 +207,10 @@ public:
 
 	virtual void get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
-	virtual void call(const C_csp_weatherreader::S_outputs &p_weather,
-		C_csp_solver_htf_state &p_htf_state,
+	virtual void call(const C_csp_weatherreader::S_outputs &weather,
+		C_csp_solver_htf_state &htf_state,
 		const C_csp_power_cycle::S_control_inputs &inputs,
-		const C_csp_solver_sim_info &p_sim_info) = 0;
+		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void converged() = 0;
 
@@ -202,9 +220,9 @@ class C_csp_solver
 {
 
 private:
-	C_csp_weatherreader &mpc_weather;
-	C_csp_collector_receiver &mpc_collector_receiver;
-	C_csp_power_cycle &mpc_power_cycle;
+	C_csp_weatherreader &mc_weather;
+	C_csp_collector_receiver &mc_collector_receiver;
+	C_csp_power_cycle &mc_power_cycle;
 
 	C_csp_solver_sim_info mc_sim_info;
 
@@ -225,9 +243,9 @@ private:
 
 public:
 
-	C_csp_solver(C_csp_weatherreader &p_weather,
-		C_csp_collector_receiver &p_collector_receiver,
-		C_csp_power_cycle &p_power_cycle);
+	C_csp_solver(C_csp_weatherreader &weather,
+		C_csp_collector_receiver &collector_receiver,
+		C_csp_power_cycle &power_cycle);
 
 	~C_csp_solver(){};
 
