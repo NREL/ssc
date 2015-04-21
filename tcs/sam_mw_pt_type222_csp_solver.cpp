@@ -288,9 +288,10 @@ public:
 
 		try
 		{
-			mspt_receiver.call(ms_weather, &ms_htf_state, 
-				&ms_inputs, 
-				&ms_sim_info);
+			mspt_receiver.call(ms_weather, 
+				ms_htf_state, 
+				ms_inputs, 
+				ms_sim_info);
 		}
 		
 		catch( C_csp_exception &csp_exception )
