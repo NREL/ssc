@@ -166,10 +166,10 @@ public:
 
 	void init();
 
-	void call(const C_csp_weatherreader::S_outputs &p_weather, 
-		C_csp_solver_htf_state &p_htf_state, 
-		const C_mspt_receiver_222::S_inputs &p_inputs,
-		const C_csp_solver_sim_info &p_sim_info);
+	void call(const C_csp_weatherreader::S_outputs &weather, 
+		C_csp_solver_htf_state &htf_state, 
+		const C_mspt_receiver_222::S_inputs &inputs,
+		const C_csp_solver_sim_info &sim_info);
 
 	void converged();
 
