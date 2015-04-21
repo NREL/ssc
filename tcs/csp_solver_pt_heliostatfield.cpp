@@ -623,18 +623,18 @@ void C_pt_heliostatfield::init()
 		m_ncall = -1;
 }
 
-void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &p_weather, double field_control_in, const C_csp_solver_sim_info &p_sim_info)
+void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, double field_control_in, const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 	
 	// Get sim info
-	double time = p_sim_info.m_time;
-	double step = p_sim_info.m_step;
+	double time = sim_info.m_time;
+	double step = sim_info.m_step;
 	//int ncall = p_sim_info->m_ncall;
 
-	double v_wind = p_weather.m_wspd;
+	double v_wind = weather.m_wspd;
 	m_v_wind_current = v_wind;
 	double field_control = field_control_in;	// Control Parameter ( range from 0 to 1; 0=off, 1=all on)
 	if( field_control_in > 1.0 )
@@ -642,12 +642,12 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &p_weather, 
 	if( field_control_in < 0.0 )
 		field_control = 0.0;
 
-	double solzen = p_weather.m_solzen*CSP::pi / 180.0;
+	double solzen = weather.m_solzen*CSP::pi / 180.0;
 
 	if( solzen >= CSP::pi / 2.0 )
 		field_control = 0.0;			// No tracking before sunrise or after sunset
 
-	double solaz = p_weather.m_solazi*CSP::pi / 180.0;
+	double solaz = weather.m_solazi*CSP::pi / 180.0;
 
 	// clear out the existing flux map
 	ms_outputs.m_flux_map_out.fill(0.0);
