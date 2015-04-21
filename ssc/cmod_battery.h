@@ -54,6 +54,7 @@ struct battstor
 		*outDispatchMode,
 		*outBatteryEnergy,
 		*outGridEnergy,
+		*outGenEnergy,
 		*outPVToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad;
