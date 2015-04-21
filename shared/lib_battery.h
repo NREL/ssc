@@ -344,7 +344,7 @@ Dispatch Base Class - can envision many potential modifications. Goal is to defi
 class dispatch_t
 {
 public:
-	dispatch_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max);
+	dispatch_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min);
 
 	// Public APIs
 	virtual void dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
@@ -375,12 +375,12 @@ protected:
 	double _SOC_min;
 	double _Ic_max;
 	double _Id_max;
+	double _t_min;
 
 	// rapid charge change controller
 	int _t_at_mode; // [minutes]
 	bool _charging;
 	bool _prev_charging;
-	enum { CHARGE_FLIP_LIMIT = 10};
 };
 
 /*
@@ -389,7 +389,7 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
+	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, double t_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
 	void dispatch(size_t hour_of_year, double e_pv, double e_load);
 
 protected:
