@@ -1325,7 +1325,7 @@ public:
 		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec );
 		ssc_number_t *p_acgross = allocate( "ac_gross", nrec );
 		ssc_number_t *p_gen = allocate("gen", nrec);
-		ssc_number_t *p_grid = allocate("grid", nrec);
+//		ssc_number_t *p_grid = allocate("grid", nrec);
 		
 //		ssc_number_t *p_hourlygen = allocate("hourly_energy", 8760);
 		ssc_number_t *p_hourlygen = allocate("hourly_gen", 8760);
@@ -1762,8 +1762,6 @@ public:
 				p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
 				p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) );
 
-				// accumulate hourly PV system generation too
-				p_hourlygen[hour] += (ssc_number_t)(p_gen[idx]*ts_hour);
 
 			
 				p_inveff[idx] = (ssc_number_t)(aceff);
@@ -1774,16 +1772,19 @@ public:
 				if (en_batt)
 				{
 					batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
-					p_grid[idx] = batt.outGridEnergy[idx];
+//					p_grid[idx] = batt.outGridEnergy[idx];
+					p_gen[idx] = batt.outGridEnergy[idx];
 				}
-				else
-				{
-					p_grid[idx] = (p_gen[idx] - cur_load);
-				}
+//				else
+//				{
+//					p_grid[idx] = (p_gen[idx] - cur_load);
+//				}
 
 				// accumulate hourly system energy delivered to grid
 //				p_hourlygrid[hour] += (ssc_number_t)(p_grid[idx] * ts_hour);
 
+				// accumulate hourly PV system generation too
+				p_hourlygen[hour] += (ssc_number_t)(p_gen[idx] * ts_hour);
 				idx++;
 			}
 
