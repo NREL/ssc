@@ -712,7 +712,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 	q_startup = 0.0;
 
-	double time_required_su = 0.0;
+	double time_required_su = step/3600.0;
 
 	if( !rec_is_off )
 	{
@@ -803,17 +803,26 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			rec_is_off = true;
 		}
 	}
+	else
+	{	// If receiver was off BEFORE startup deductions
+		m_mode = C_csp_collector_receiver::OFF;
+
+		// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
+		W_dot_pump = 0.0;
+		// Pressure drops
+		DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
+	}
 
 	if( rec_is_off )
 	{
 		// 900 continue	// Receiver isn't producing usable energy
-		m_dot_salt_tot = 0.0; eta_therm = 0.0; W_dot_pump = 0.0;
+		m_dot_salt_tot = 0.0; eta_therm = 0.0; /*W_dot_pump = 0.0;*/
 		q_conv_sum = 0.0; q_rad_sum = 0.0; m_T_s.fill(0.0); q_thermal = 0.0;
 		// Set the receiver outlet temperature equal to the inlet design temperature
 		T_salt_hot_guess = m_T_htf_cold_des;
 		q_dot_inc_sum = 0.0;
 		// Pressure drops
-		DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
+		/*DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;*/
 		// Set receiver startup energy to 0
 		// q_startup = 0.0;
 		// ISCC outputs
@@ -837,6 +846,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_m_dot_ss = m_dot_salt_tot_ss*3600.0;			//[kg/hr] convert from kg/s
 	ms_outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
 	ms_outputs.m_f_timestep = f_rec_timestep;					//[-]
+	ms_outputs.m_time_required_su = time_required_su*3600.0;	//[s], convert from hr in code
 
 }
 
@@ -861,6 +871,11 @@ void C_mspt_receiver_222::converged()
 	m_od_control = 1.0;
 
 	m_ncall = -1;
+}
+
+int C_mspt_receiver_222::get_operating_state()
+{
+	return m_mode_prev;
 }
 
 void C_mspt_receiver_222::clear_outputs()
