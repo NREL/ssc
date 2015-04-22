@@ -49,9 +49,11 @@ void C_csp_solver::init()
 
 void C_csp_solver::simulate()
 {
-	size_t hour = 0;					//[hr] hardcode simulation to start at first of year, for now
-	size_t hour_end = 8760;				//[hr] hardcode simulation to run through entire year, for now
-	mc_sim_info.m_step = 3600.0;		//[hr] hardcode steps = 1 hr, for now
+	
+	double sim_time_start = 0.0;			//[s] hardcode simulation to start at first of year, for now
+	double sim_time_end = 8760.0*3600;		//[s] hardcode simulation to run through entire year, for now
+	double sim_step_size_baseline = 3600.0;			//[s]
+	mc_sim_info.m_step = sim_step_size_baseline;		//[s] hardcode steps = 1 hr, for now
 
 	C_csp_solver_htf_state cr_htf_state;
 	C_csp_collector_receiver::S_csp_cr_inputs cr_inputs;
@@ -71,10 +73,18 @@ void C_csp_solver::simulate()
 
 	double tol_mode_switching = 0.05;		// Give buffer to account for uncertainty in estimates
 
-	while( hour < 8760 )
+	double step_local = mc_sim_info.m_step;	//[hr] Step size might adjust during receiver and/or power cycle startup
+	bool is_sim_timestep_complete = true;		//[-] Are we running serial simulations at partial timesteps inside of one typical timestep?
+
+	double time_previous = sim_time_start;
+
+	while( mc_sim_info.m_time < sim_time_end )
 	{
-		mc_sim_info.m_time = mc_sim_info.m_step*(hour + 1);
-		
+		// If m_step is set to step_local here, then need to figure out where/how to reset step_local...
+
+		mc_sim_info.m_step = step_local;						//[s]
+		mc_sim_info.m_time = time_previous + step_local;		//[s]
+				
 		// Get collector/receiver & power cycle operating states
 		cr_operating_state = mc_collector_receiver.get_operating_state();
 		pc_operating_state = mc_power_cycle.get_operating_state();
@@ -118,7 +128,8 @@ void C_csp_solver::simulate()
 		// Determine which operating mode to try first
 		if( is_est_rec_output_useful )		// Can receiver produce power and can it be used somewhere (power cycle, in this case)
 		{
-			if(cr_operating_state==C_csp_collector_receiver::OFF && pc_operating_state==C_csp_power_cycle::OFF)
+			if( (cr_operating_state==C_csp_collector_receiver::OFF || cr_operating_state==C_csp_collector_receiver::STARTUP) 
+				&& pc_operating_state==C_csp_power_cycle::OFF)
 			{	// At start of this timestep, are power cycle AND collector/receiver off?
 				
 				if(is_rec_su_allowed && is_pc_su_allowed)
@@ -146,7 +157,8 @@ void C_csp_solver::simulate()
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 				}
 			}
-			else if(cr_operating_state==C_csp_collector_receiver::ON && pc_operating_state==C_csp_power_cycle::OFF)
+			else if(cr_operating_state==C_csp_collector_receiver::ON && 
+					(pc_operating_state==C_csp_power_cycle::OFF || pc_operating_state==C_csp_power_cycle::STARTUP) )
 			{	// At start of this timestep, is collector/receiver on, but the power cycle is off?
 				
 			
@@ -178,7 +190,33 @@ void C_csp_solver::simulate()
 					cr_outputs,
 					mc_sim_info);
 
-				// GET NEW TIME!!!!!
+				// Check for new timestep
+				step_local = cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
+				if(step_local < sim_step_size_baseline)
+				{
+					is_sim_timestep_complete = false;
+				}
+
+				// Reset sim_info values
+				if( !is_sim_timestep_complete )
+				{
+					mc_sim_info.m_step = step_local;						//[s]
+					mc_sim_info.m_time = time_previous + step_local;		//[s]
+				}
+
+				// Power Cycle: OFF
+				pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
+				// Inputs
+				pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
+				pc_inputs.m_tou = tou_timestep;
+				// Performance Call
+				mc_power_cycle.call(mc_weather.ms_outputs,
+					pc_htf_state,
+					pc_inputs,
+					mc_sim_info);
+
+				are_models_converged = true;
 
 				break;
 
@@ -194,7 +232,7 @@ void C_csp_solver::simulate()
 					cr_outputs,
 					mc_sim_info);
 					
-					// Power Cycle
+					// Power Cycle: OFF
 						// HTF State
 				pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des-273.15;	//[C]
 				pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
@@ -223,10 +261,24 @@ void C_csp_solver::simulate()
 		mc_collector_receiver.converged();
 		mc_power_cycle.converged();
 
-			// Don't converge weather file if working with partial timesteps
-		mc_weather.converged();
+				
+		// Don't converge weather file if working with partial timesteps
+		if( !is_sim_timestep_complete )
+		{
+			// Calculate new timestep
+			//step_local = 
+		}
+		else
+		{
+			// If partial timestep, use constant weather data for all partial timesteps
+			mc_weather.converged();
+		}
 
-		hour++;
+		// Track time and step forward
+		time_previous = mc_sim_info.m_time;
+		
+		
+					
 	}	// End timestep loop
 
 }	// End simulate() method
