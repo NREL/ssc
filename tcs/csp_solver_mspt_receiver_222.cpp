@@ -729,7 +729,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				double time_step_hrs = step / 3600.0;		//[hr]
 
-				if( time_step_hrs > time_required_max )		// Can't completely startup receiver in maximum allowable timestep
+				if( time_required_max  > time_step_hrs )		// Can't completely startup receiver in maximum allowable timestep
 				{											// Need to advance timestep and try again
 					time_required_su = time_step_hrs;		
 					m_mode = C_csp_collector_receiver::E_csp_cr_modes::STARTUP;
