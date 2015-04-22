@@ -272,6 +272,7 @@ void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solve
 	solved_params.m_cycle_max_frac = ms_params.m_cycle_max_frac;		//[-]
 	solved_params.m_cycle_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
 	solved_params.m_cycle_sb_frac = ms_params.m_q_sby_frac;				//[-]
+	solved_params.m_T_htf_hot_ref = ms_params.m_T_htf_hot_ref;			//[C]
 }
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weather, 
@@ -503,6 +504,11 @@ void C_pc_Rankine_indirect_224::converged()
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
 
 	m_ncall = -1;
+}
+
+int C_pc_Rankine_indirect_224::get_operating_state()
+{
+	return m_standby_control_prev;
 }
 
 void C_pc_Rankine_indirect_224::RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb,

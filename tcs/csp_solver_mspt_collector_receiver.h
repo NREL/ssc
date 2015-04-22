@@ -19,6 +19,8 @@ public:
 
 	virtual void init();
 
+	virtual int get_operating_state();
+
 	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather,

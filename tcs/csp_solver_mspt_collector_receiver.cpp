@@ -17,6 +17,11 @@ void C_csp_mspt_collector_receiver::init()
 	return;
 }
 
+int C_csp_mspt_collector_receiver::get_operating_state()
+{
+	return mc_mspt_receiver_222.get_operating_state();
+}
+
 void C_csp_mspt_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	solved_params.m_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;
@@ -40,6 +45,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	// Get heliostat field outputs and set corresponding receiver inputs
 	C_mspt_receiver_222::S_inputs receiver_inputs;
 	receiver_inputs.m_field_eff = mc_pt_heliostatfield.ms_outputs.m_eta_field;
+	receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;
 	receiver_inputs.m_flux_map_input = &mc_pt_heliostatfield.ms_outputs.m_flux_map_out;
 	mc_mspt_receiver_222.call(weather, htf_state, receiver_inputs, sim_info);
 		
