@@ -150,12 +150,14 @@ public:
 		double m_m_dot_ss;
 		double m_q_dot_ss;
 		double m_f_timestep;
+		double m_time_required_su;		//[s]
 	
 		S_outputs()
 		{
 			m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
 				m_T_salt_hot = m_field_eff_adj = m_Q_solar_total = m_q_startup = m_dP_receiver = m_dP_total =
-				m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep = std::numeric_limits<double>::quiet_NaN();
+				m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep = 
+				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -169,6 +171,8 @@ public:
 	~C_mspt_receiver_222(){};
 
 	void init();
+
+	int get_operating_state();
 
 	void call(const C_csp_weatherreader::S_outputs &weather, 
 		C_csp_solver_htf_state &htf_state, 

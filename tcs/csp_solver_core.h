@@ -125,11 +125,14 @@ public:
 
 	struct S_csp_cr_inputs
 	{	
-		double m_field_control;		//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
+		double m_field_control;			//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
+		int m_input_operation_mode;		//[-]
 
 		S_csp_cr_inputs()
 		{
 			m_field_control = std::numeric_limits<double>::quiet_NaN();
+
+			m_input_operation_mode = -1;
 		}
 	};
 
@@ -145,15 +148,23 @@ public:
 
 	struct S_csp_cr_outputs
 	{
-		double m_q_thermal;		//[MW] 'Available' receiver thermal output
+		double m_q_thermal;				//[MW] 'Available' receiver thermal output
+
+		double m_time_required_su;		//[s] Time required for receiver to startup
+		int m_mode_calculated;			//[-] Receiver operation mode after last performance CALL - could still change this timestep
 
 		S_csp_cr_outputs()
 		{
-			m_q_thermal = std::numeric_limits<double>::quiet_NaN();
+			m_q_thermal = 
+				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
+
+			m_mode_calculated = -1;
 		}
 	};
 
 	virtual void init() = 0;
+
+	virtual int get_operating_state() = 0;
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather,
 		C_csp_solver_htf_state &htf_state,
@@ -196,21 +207,24 @@ public:
 
 	struct S_solved_params
 	{
-		double m_W_dot_des;			//[MW]
-		double m_eta_des;		//[MW]
-		double m_q_dot_des;		//[MW]
-		double m_cycle_max_frac;			//[-]
-		double m_cycle_cutoff_frac;			//[-]
-		double m_cycle_sb_frac;				//[-]
-		
+		double m_W_dot_des;				//[MW]
+		double m_eta_des;				//[MW]
+		double m_q_dot_des;				//[MW]
+		double m_cycle_max_frac;		//[-]
+		double m_cycle_cutoff_frac;		//[-]
+		double m_cycle_sb_frac;			//[-]
+		double m_T_htf_hot_ref;			//[C]
 
 		S_solved_params()
 		{
-			m_W_dot_des = m_eta_des = m_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac = m_cycle_sb_frac = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_des = m_eta_des = m_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac = 
+				m_cycle_sb_frac = m_T_htf_hot_ref = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	
 	virtual void init() = 0;
+
+	virtual int get_operating_state() = 0;
 
 	virtual void get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
@@ -242,13 +256,20 @@ private:
 	double m_cycle_q_dot_des;			//[MW]
 	double m_cycle_max_frac;			//[-]
 	double m_cycle_cutoff_frac;			//[-]
-	double m_cycle_sb_frac;				//[-]
+	double m_cycle_sb_frac_des;			//[-]
+	double m_cycle_T_htf_hot_des;		//[K]
 
 	void init_independent();
 
 	
 
 public:
+
+	enum tech_operating_modes
+	{
+		CR_OFF__PC_OFF__TES_OFF__AUX_OFF = 1,
+		CR_SU__PC_OFF__TES_OFF__AUX_OFF
+	};
 
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
