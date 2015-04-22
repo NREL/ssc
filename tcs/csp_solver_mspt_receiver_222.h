@@ -118,11 +118,15 @@ public:
 	struct S_inputs
 	{
 		double m_field_eff;					//[-] 
+		int m_input_operation_mode;			//[-]
+
 		const util::matrix_t<double> *m_flux_map_input;		//[-]
 
 		S_inputs()
 		{
 			m_field_eff = std::numeric_limits<double>::quiet_NaN();
+
+			m_input_operation_mode = -1;
 		}
 	};
 

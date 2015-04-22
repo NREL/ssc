@@ -241,6 +241,14 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	// Get inputs
 	double field_eff = inputs.m_field_eff;					//[-]
 	const util::matrix_t<double> *flux_map_input = inputs.m_flux_map_input;
+		// When this function is called from TCS solver, input_operation_mode should always be == 2
+	int input_operation_mode = inputs.m_input_operation_mode;
+
+	if(input_operation_mode < 0 || input_operation_mode > 2)
+	{
+		error_msg = util::format("Input operation mode must be either [0,1,2], but value is %d", input_operation_mode);
+		throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
+	}
 
 	// Get sim info 
 	double step = sim_info.m_step;
@@ -263,6 +271,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double azimuth = weather.m_solazi;
 	double v_wind_10 = weather.m_wspd;
 	double I_bn = weather.m_beam;
+
 
 	int n_flux_y = flux_map_input->nrows();
 	if(n_flux_y > 1)
@@ -301,6 +310,11 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	// Do an initial check to make sure the solar position called is valid
 	// If it's not, return the output equal to zeros. Also check to make sure
 	// the solar flux is at a certain level, otherwise the correlations aren't valid
+	if( input_operation_mode == C_csp_collector_receiver::E_csp_cr_modes::OFF )
+	{
+		rec_is_off = true;
+	}
+
 	if( zenith>(90.0 - m_hel_stow_deploy) || I_bn <= 1.E-6 || (zenith == 0.0 && azimuth == 180.0) )
 	{
 		if( m_night_recirc == 1 )
@@ -316,7 +330,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	}
 
 	double T_coolant_prop = (m_T_salt_hot_target + T_salt_cold_in) / 2.0;		//[K] The temperature at which the coolant properties are evaluated. Validated as constant (mjw)
-	c_p_coolant = field_htfProps.Cp(T_coolant_prop)*1000.0;					//[kJ/kg-K] Specific heat of the coolant
+	c_p_coolant = field_htfProps.Cp(T_coolant_prop)*1000.0;						//[J/kg-K] Specific heat of the coolant
 
 	double m_dot_htf_max = m_m_dot_htf_max;
 	if( m_is_iscc )
@@ -325,7 +339,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		{
 			double T_amb_C = fmax(m_P_amb_low, fmin(m_T_amb_high, T_amb - 273.15));
 			double P_amb_bar = fmax(m_P_amb_low, fmin(m_P_amb_high, P_amb / 1.E5));
-			m_q_iscc_max = cycle_calcs.get_ngcc_data(0.0, T_amb_C, P_amb_bar, ngcc_power_cycle::E_solar_heat_max)*1.E6;	// kWth, convert from MWth
+			m_q_iscc_max = cycle_calcs.get_ngcc_data(0.0, T_amb_C, P_amb_bar, ngcc_power_cycle::E_solar_heat_max)*1.E6;	// W-th, convert from MWth
 		}
 
 		double m_dot_iscc_max = m_q_iscc_max / (c_p_coolant*(m_T_salt_hot_target - T_salt_cold_in));		// [kg/s]
@@ -702,37 +716,74 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	DELTAP = Pres_D = W_dot_pump = q_thermal = q_startup = std::numeric_limits<double>::quiet_NaN();
 
 	q_startup = 0.0;
+
+	double time_required_su = 0.0;
+
 	if( !rec_is_off )
 	{
 		m_dot_salt_tot_ss = m_dot_salt_tot;
-		if( m_E_su_prev > 0.0 || m_t_su_prev > 0.0 )
+
+		switch( input_operation_mode )
 		{
-			m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0);
-			m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);
-			if( m_E_su + m_t_su > 0.0 )
+		case C_csp_collector_receiver::E_csp_cr_modes::STARTUP:
 			{
-				m_mode = 1.0;		// If either are greater than 0, we're staring up but not finished
+				double time_require_su_energy = m_E_su_prev / (m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in));	//[hr]
+				double time_require_su_ramping = m_t_su_prev;
+
+				double time_required_max = fmax(time_require_su_energy, time_require_su_ramping);	//[hr]
+
+				double time_step_hrs = step / 3600.0;		//[hr]
+
+				if( time_step_hrs > time_required_max )		// Can't completely startup receiver in maximum allowable timestep
+				{											// Need to advance timestep and try again
+					time_required_su = time_step_hrs;		
+					m_mode = C_csp_collector_receiver::E_csp_cr_modes::STARTUP;
+				}
+				else
+				{
+					time_required_su = time_required_max;
+					m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+				}
+
+				m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0);
+				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);
+			}
+
+			break;
+
+		case C_csp_collector_receiver::E_csp_cr_modes::ON:
+			
+			if( m_E_su_prev > 0.0 || m_t_su_prev > 0.0 )
+			{
+				m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0);
+				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);
+				if( m_E_su + m_t_su > 0.0 )
+				{
+					m_mode = 1.0;		// If either are greater than 0, we're staring up but not finished
+					q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
+					rec_is_off = true;
+					f_rec_timestep = 0.0;
+					// GOTO 900
+				}
+				else
+				{
+					m_mode = 2.0;
+					// Adjust the available mass flow to reflect startup
+					m_dot_salt_tot = fmin((1.0 - m_t_su_prev / (step / 3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev / ((step / 3600.0)*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)));
+					f_rec_timestep = fmax(0.0, fmin(1.0 - m_t_su_prev / (step / 3600.0), 1.0 - m_E_su_prev / (m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in))));
+				}
 				q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
-				rec_is_off = true;
-				f_rec_timestep = 0.0;
-				// GOTO 900
 			}
 			else
 			{
+				m_E_su = m_E_su_prev;
+				m_t_su = m_t_su_prev;
 				m_mode = 2.0;
-				// Adjust the available mass flow to reflect startup
-				m_dot_salt_tot = fmin((1.0 - m_t_su_prev / (step / 3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev / ((step / 3600.0)*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)));
-				f_rec_timestep = fmax(0.0, fmin(1.0 - m_t_su_prev / (step / 3600.0), 1.0 - m_E_su_prev / (m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in))));
+				q_startup = 0.0;
 			}
-			q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
-		}
-		else
-		{
-			m_E_su = m_E_su_prev;
-			m_t_su = m_t_su_prev;
-			m_mode = 2.0;
-			q_startup = 0.0;
-		}
+			break;
+		
+		}	// End switch() on input_operation_mode
 
 		// Pressure drop calculations
 		double L_e_45 = 16.0;						// The equivalent length produced by the 45 degree bends in the tubes - Into to Fluid Mechanics, Fox et al.
