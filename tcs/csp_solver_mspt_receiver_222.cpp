@@ -145,7 +145,7 @@ void C_mspt_receiver_222::init()
 	m_A_rec_proj = m_od_tube*m_h_rec*n_tubes;		//[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
 	m_A_node = CSP::pi*m_d_rec / m_n_panels*m_h_rec; //[m^2] The area associated with each node
 
-	m_mode = 0;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+	m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
 	m_itermode = 1;			//[-] 1: Solve for design temp, 2: solve to match mass flow restriction
 	m_od_control = 1.0;			//[-] Additional defocusing for over-design conditions
 	m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
@@ -323,9 +323,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		}
 		else
 		{
-			m_mode = 0.0;
+			m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 			rec_is_off = true;
-			// GOTO 900 - return zeros
 		}
 	}
 
@@ -514,10 +513,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			// ..the zero set can be returned
 			if( qq > qq_max )
 			{
-				m_mode = 0.0;  // Set the startup mode
+				m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;  // Set the startup mode
 				rec_is_off = true;
 				break;
-				// goto 900
 			}
 
 			m_dot_salt = m_dot_salt_guess;
@@ -590,10 +588,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				CSP::PipeFlow(Re_inner, Pr_inner, m_LoverD, m_RelRough, Nusselt_t, f);
 				if( Nusselt_t <= 0.0 )
 				{
-					m_mode = 0.0;		// Set the startup mode
+					m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;		// Set the startup mode
 					rec_is_off = true;
 					break;
-					//GOTO 900
 				}
 				double h_inner = Nusselt_t*k_coolant / m_id_tube;								//[W/m^2-K] Convective coefficient between the inner tube wall and the coolant
 				double R_conv_inner = 1.0 / (h_inner*CSP::pi*m_id_tube / 2.0*m_h_rec*m_n_t);	//[K/W] Thermal resistance associated with this value
@@ -635,9 +632,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				if( m_T_s_guess.at(i_fp) < 1.0 )
 				{
-					m_mode = 0.0;  // Set the startup mode
+					m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;  // Set the startup mode
 					rec_is_off = true;
-					break;
 				}
 
 				//}	// End of panels in flow path
@@ -677,9 +673,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				if( m_dot_salt_guess < 1.E-5 )
 				{
-					m_mode = 0.0;				//[-] Set the startup mode
+					m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;				//[-] Set the startup mode
 					rec_is_off = true;
-					// GOTO 900
 				}
 			}
 		}
@@ -759,7 +754,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);
 				if( m_E_su + m_t_su > 0.0 )
 				{
-					m_mode = 1.0;		// If either are greater than 0, we're staring up but not finished
+					m_mode = C_csp_collector_receiver::E_csp_cr_modes::STARTUP;		// If either are greater than 0, we're staring up but not finished
 					q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
 					rec_is_off = true;
 					f_rec_timestep = 0.0;
@@ -767,7 +762,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				}
 				else
 				{
-					m_mode = 2.0;
+					m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
 					// Adjust the available mass flow to reflect startup
 					m_dot_salt_tot = fmin((1.0 - m_t_su_prev / (step / 3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev / ((step / 3600.0)*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)));
 					f_rec_timestep = fmax(0.0, fmin(1.0 - m_t_su_prev / (step / 3600.0), 1.0 - m_E_su_prev / (m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in))));
@@ -778,7 +773,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			{
 				m_E_su = m_E_su_prev;
 				m_t_su = m_t_su_prev;
-				m_mode = 2.0;
+				m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
 				q_startup = 0.0;
 			}
 			break;
@@ -852,7 +847,7 @@ void C_mspt_receiver_222::converged()
 	//call check_htf(Coolant,T_salt_hot)
 	//call check_htf(Coolant,T_salt_cold)
 
-	if( m_mode == 0 )
+	if( m_mode == C_csp_collector_receiver::E_csp_cr_modes::OFF )
 	{
 		m_E_su = m_q_rec_des * m_rec_qf_delay;
 		m_t_su = m_rec_su_delay;
