@@ -324,7 +324,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			double time_step_hrs = step_sec / 3600.0;	//[hr]
 
 
-			if( time_step_hrs > time_required_max )
+			if( time_required_max > time_step_hrs )
 			{
 				time_required_su = time_step_hrs;		//[hr]
 				m_standby_control_calc = E_csp_power_cycle_modes::STARTUP;	//[-] Power cycle requires additional startup next timestep
