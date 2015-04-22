@@ -56,10 +56,22 @@ void C_csp_solver::simulate()
 	C_csp_collector_receiver::S_csp_cr_inputs cr_inputs;
 	C_csp_collector_receiver::S_csp_cr_outputs cr_outputs;
 
+	bool is_rec_su_allowed = true;
+	bool is_pc_su_allowed = true;
+	bool is_pc_sb_allowed = true;
+
+	int cr_operating_state = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+	int pc_operating_state = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
+
+	bool is_est_rec_output_useful = false;
+
 	while( hour < 8760 )
 	{
 		mc_sim_info.m_time = mc_sim_info.m_step*(hour + 1);
-	
+		
+		// Get collector/receiver & power cycle operating states
+
+
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
 		mc_weather.timestep_call(mc_sim_info);
 		

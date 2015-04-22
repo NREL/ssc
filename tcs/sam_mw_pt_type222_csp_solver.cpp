@@ -283,6 +283,9 @@ public:
 		// Set applicable htf state info
 		ms_htf_state.m_temp_in = T_salt_cold_in_csp;
 
+		// Set operation mode == 2
+		ms_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+
 		int out_type = -1;
 		std::string out_msg = "";
 

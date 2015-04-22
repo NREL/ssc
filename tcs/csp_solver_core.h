@@ -116,6 +116,13 @@ public:
 
 	~C_csp_collector_receiver(){};
 
+	enum E_csp_cr_modes
+	{
+		OFF = 0,
+		STARTUP,
+		ON
+	};
+
 	struct S_csp_cr_inputs
 	{	
 		double m_field_control;		//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
