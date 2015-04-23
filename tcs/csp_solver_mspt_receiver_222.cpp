@@ -244,7 +244,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		// When this function is called from TCS solver, input_operation_mode should always be == 2
 	int input_operation_mode = inputs.m_input_operation_mode;
 
-	if(input_operation_mode < 0 || input_operation_mode > 2)
+	if(input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE)
 	{
 		error_msg = util::format("Input operation mode must be either [0,1,2], but value is %d", input_operation_mode);
 		throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
@@ -736,7 +736,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				}
 				else
 				{
-					time_required_su = time_required_max;
+					time_required_su = time_required_max;		//[hr]
 					m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
 				}
 
@@ -776,6 +776,13 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
 				q_startup = 0.0;
 			}
+			break;
+
+		case C_csp_collector_receiver::STEADY_STATE:
+
+			m_mode = C_csp_collector_receiver::STEADY_STATE;
+			f_rec_timestep = 1.0;
+
 			break;
 		
 		}	// End switch() on input_operation_mode
@@ -856,6 +863,12 @@ void C_mspt_receiver_222::converged()
 	//!MJW 9.8.2010 :: Call the property range check subroutine with the inlet and outlet HTF temps to make sure they're in the valid range
 	//call check_htf(Coolant,T_salt_hot)
 	//call check_htf(Coolant,T_salt_cold)
+
+	if( m_mode == C_csp_collector_receiver::STEADY_STATE )
+	{
+		throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
+			"MSPT receiver converged method"));
+	}
 
 	if( m_mode == C_csp_collector_receiver::E_csp_cr_modes::OFF )
 	{

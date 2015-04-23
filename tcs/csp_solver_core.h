@@ -120,7 +120,8 @@ public:
 	{
 		OFF = 0,
 		STARTUP,
-		ON
+		ON,
+		STEADY_STATE
 	};
 
 	struct S_csp_cr_inputs
@@ -149,16 +150,18 @@ public:
 	struct S_csp_cr_outputs
 	{
 		double m_q_thermal;				//[MW] 'Available' receiver thermal output
+		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
+		double m_T_salt_hot;			//[C] Hot HTF from receiver
 
 		double m_time_required_su;		//[s] Time required for receiver to startup
-		int m_mode_calculated;			//[-] Receiver operation mode after last performance CALL - could still change this timestep
+		//int m_mode_calculated;			//[-] Receiver operation mode after last performance CALL - could still change this timestep
 
 		S_csp_cr_outputs()
 		{
-			m_q_thermal = 
+			m_q_thermal = m_m_dot_salt_tot = m_T_salt_hot =
 				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
 
-			m_mode_calculated = -1;
+			//m_mode_calculated = -1;
 		}
 	};
 
@@ -221,6 +224,31 @@ public:
 				m_cycle_sb_frac = m_T_htf_hot_ref = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
+
+	struct S_csp_pc_outputs
+	{
+		double m_P_cycle;			//[MWe] Cycle power output
+		double m_eta;				//[-] Cycle thermal efficiency
+		double m_T_htf_cold;		//[C] Heat transfer fluid outlet temperature
+		double m_m_dot_makeup;		//[kg/hr] Cooling water makeup flow rate
+		double m_m_dot_demand;		//[kg/hr] HTF required flow rate to meet power load
+		double m_m_dot_htf;			//[kg/hr] Actual HTF flow rate passing through the power cycle
+		double m_m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
+		double m_W_cool_par;		//[MWe] Cooling system parasitic load
+		double m_P_ref;				//[MWe] Reference power level output at design
+		double m_f_hrsys;			//[-] Fraction of operating heat rejection system
+		double m_P_cond;			//[Pa] Condenser pressure
+		
+		double m_time_required_su;		//[s] Time required for receiver to startup MIN(controller timestep, calculated time to startup during call)
+
+		S_csp_pc_outputs()
+		{
+			m_P_cycle = m_eta = m_T_htf_cold = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf = m_m_dot_htf_ref =
+				m_W_cool_par = m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
+			
+			m_time_required_su = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
 	
 	virtual void init() = 0;
 
@@ -231,6 +259,7 @@ public:
 	virtual void call(const C_csp_weatherreader::S_outputs &weather,
 		C_csp_solver_htf_state &htf_state,
 		const C_csp_power_cycle::S_control_inputs &inputs,
+		C_csp_power_cycle::S_csp_pc_outputs &outputs,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void converged() = 0;
@@ -268,7 +297,8 @@ public:
 	enum tech_operating_modes
 	{
 		CR_OFF__PC_OFF__TES_OFF__AUX_OFF = 1,
-		CR_SU__PC_OFF__TES_OFF__AUX_OFF
+		CR_SU__PC_OFF__TES_OFF__AUX_OFF,
+		CR_ON__PC_SU__TES_OFF__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,

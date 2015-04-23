@@ -50,7 +50,11 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_mspt_receiver_222.call(weather, htf_state, receiver_inputs, sim_info);
 		
 	// Set collector/receiver parent class outputs and return
-	cr_outputs.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;		//[MW]
+	cr_outputs.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				//[MW]
+	cr_outputs.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
+	cr_outputs.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]
+
+	cr_outputs.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	//[s]
 }
 
 void C_csp_mspt_collector_receiver::converged()

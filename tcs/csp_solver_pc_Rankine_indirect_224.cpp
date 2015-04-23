@@ -277,7 +277,8 @@ void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solve
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weather, 
 	C_csp_solver_htf_state &htf_state,
-	const C_csp_power_cycle::S_control_inputs & inputs, 
+	const C_csp_power_cycle::S_control_inputs & inputs,
+	C_csp_power_cycle::S_csp_pc_outputs &outputs,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
@@ -316,7 +317,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		{
 			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));
 
-			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref) * 3600);	//[hr]
+			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref))*3600;	//[hr]
 			double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
 
 			double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);
@@ -483,18 +484,19 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	m_standby_control_calc = standby_control;
 
 	// Set outputs
-	ms_outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] convert from kWe
-	ms_outputs.m_eta = eta;
-	ms_outputs.m_T_htf_cold = T_htf_cold;
-	ms_outputs.m_m_dot_makeup = m_dot_makeup*3600.0;	//[kg/hr] convert from kg/s
-	ms_outputs.m_m_dot_demand = m_dot_demand;
-	ms_outputs.m_m_dot_htf = m_dot_htf;
-	ms_outputs.m_m_dot_htf_ref = m_dot_htf_ref;
-	ms_outputs.m_W_cool_par = W_cool_par;
-	ms_outputs.m_P_ref = ms_params.m_P_ref/1000.0;		//[MWe] convert from kWe
-	ms_outputs.m_f_hrsys = f_hrsys;
-	ms_outputs.m_P_cond = P_cond;
+	outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] convert from kWe
+	outputs.m_eta = eta;
+	outputs.m_T_htf_cold = T_htf_cold;
+	outputs.m_m_dot_makeup = m_dot_makeup*3600.0;	//[kg/hr] convert from kg/s
+	outputs.m_m_dot_demand = m_dot_demand;
+	outputs.m_m_dot_htf = m_dot_htf;
+	outputs.m_m_dot_htf_ref = m_dot_htf_ref;
+	outputs.m_W_cool_par = W_cool_par;
+	outputs.m_P_ref = ms_params.m_P_ref/1000.0;		//[MWe] convert from kWe
+	outputs.m_f_hrsys = f_hrsys;
+	outputs.m_P_cond = P_cond;
 
+	outputs.m_time_required_su = time_required_su*3600.0;	//[s]
 }
 
 void C_pc_Rankine_indirect_224::converged()
