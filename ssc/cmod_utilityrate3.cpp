@@ -25,7 +25,7 @@ static var_info vtab_utility_rate3[] = {
 
 // 4/16/15 meeting update
 // load can be subhourly but hourly_grid is hourly from performance models.
-	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
 //	{ SSC_INPUT, SSC_ARRAY, "hourly_grid", "Net grid power", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
@@ -810,23 +810,26 @@ public:
 		5. After above assignment, proceed as before with same outputs
 		*/
 		ssc_number_t *pload, *pgen;
-		size_t nrec_load = 0, nrec_gen = 0, step_per_hour;
+		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
 		bool bload=false;
 		pgen = as_array("gen", &nrec_gen);
-		step_per_hour = nrec_gen / 8760;
-		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec_gen)
+		step_per_hour_gen = nrec_gen / 8760;
+		if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen)
 			throw exec_error("utilityrate3", util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen));
+		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
+
+
 		if (is_assigned("load"))
 		{
 			bload = true;
 			pload = as_array("load", &nrec_load);
-			step_per_hour = nrec_load / 8760;
-			if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec_load)
+			step_per_hour_load = nrec_load / 8760;
+			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
 				throw exec_error("utilityrate3", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
-			if (nrec_load != nrec_gen)
-				throw exec_error("utilityrate3", util::format("number of load records (%d) must be equal to number of gen records (%d)", (int)nrec_load, (int)nrec_gen));
+//			if (nrec_load != nrec_gen)
+//				throw exec_error("utilityrate3", util::format("number of load records (%d) must be equal to number of gen records (%d)", (int)nrec_load, (int)nrec_gen));
 		}
-		ssc_number_t ts_hour = 1.0f / step_per_hour;
+		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
 
 		// assign hourly values for utility rate calculations
@@ -837,13 +840,22 @@ public:
 		for (i = 0; i < 8760; i++)
 		{
 			e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
-			for (size_t ii = 0; ii < step_per_hour; ii++)
+			for (size_t ii = 0; ii < step_per_hour_gen; ii++)
+			{
+				ts_power = pgen[idx];
+				e_sys[i] += ts_power * ts_hour_gen;
+				p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
+				idx++;
+			}
+		}
+		//load
+		idx = 0;
+		for (i = 0; i < 8760; i++)
+		{
+			for (size_t ii = 0; ii < step_per_hour_load; ii++)
 			{
 				ts_load = (bload ? pload[idx] : 0);
-				ts_power = pgen[idx];
-				e_sys[i] += ts_power * ts_hour;
-				p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
-				e_load[i] += ts_load * ts_hour;
+				e_load[i] += ts_load * ts_hour_load;
 				p_load[i] = ((ts_load > p_load[i]) ? ts_load : p_load[i]);
 				idx++;
 			}
