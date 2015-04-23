@@ -61,6 +61,7 @@ void C_csp_solver::simulate()
 
 	C_csp_solver_htf_state pc_htf_state;
 	C_csp_power_cycle::S_control_inputs pc_inputs;
+	C_csp_power_cycle::S_csp_pc_outputs pc_outputs;
 
 	bool is_rec_su_allowed = true;
 	bool is_pc_su_allowed = true;
@@ -73,18 +74,18 @@ void C_csp_solver::simulate()
 
 	double tol_mode_switching = 0.05;		// Give buffer to account for uncertainty in estimates
 
-	double step_local = mc_sim_info.m_step;	//[hr] Step size might adjust during receiver and/or power cycle startup
+	double step_local = mc_sim_info.m_step;		//[hr] Step size might adjust during receiver and/or power cycle startup
 	bool is_sim_timestep_complete = true;		//[-] Are we running serial simulations at partial timesteps inside of one typical timestep?
 
-	double time_previous = sim_time_start;
+	double time_previous = sim_time_start;		//[s]
 
-	while( mc_sim_info.m_time < sim_time_end )
+	double time_sim_step_next = sim_time_start + sim_step_size_baseline;	//[s]
+
+	mc_sim_info.m_step = step_local;						//[s]
+	mc_sim_info.m_time = time_previous + step_local;		//[s]
+
+	while( mc_sim_info.m_time <= sim_time_end )
 	{
-		// If m_step is set to step_local here, then need to figure out where/how to reset step_local...
-
-		mc_sim_info.m_step = step_local;						//[s]
-		mc_sim_info.m_time = time_previous + step_local;		//[s]
-				
 		// Get collector/receiver & power cycle operating states
 		cr_operating_state = mc_collector_receiver.get_operating_state();
 		pc_operating_state = mc_power_cycle.get_operating_state();
@@ -108,7 +109,7 @@ void C_csp_solver::simulate()
 			// May replace this call with a simple proxy model later...
 		cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 		cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-		cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+		cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::STEADY_STATE;
 		mc_collector_receiver.call(mc_weather.ms_outputs,
 			cr_htf_state,
 			cr_inputs,
@@ -161,9 +162,28 @@ void C_csp_solver::simulate()
 					(pc_operating_state==C_csp_power_cycle::OFF || pc_operating_state==C_csp_power_cycle::STARTUP) )
 			{	// At start of this timestep, is collector/receiver on, but the power cycle is off?
 				
-			
-			}
+				if( is_pc_su_allowed )
+				{	// Is power cycle startup allowed?
+					
+					if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min_frac )
+					{
+						operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
+					}
+					else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb_frac )
+					{
+						operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
+					}
+					else
+					{
+						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					}					
+				}
+				else
+				{	// If startup isn't allowed, then don't try
 
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+				}				
+			}
 		}
 		else
 		{
@@ -175,6 +195,67 @@ void C_csp_solver::simulate()
 		{
 			switch(operating_mode)
 			{
+			case CR_ON__PC_SU__TES_OFF__AUX_OFF:
+				// Collector/receiver is ON
+				// Startup power cycle
+				// During startup, assume power cycle HTF return temperature is constant and = m_T_htf_cold_des
+					// so shouldn't need to iterate between collector/receiver and power cycle
+				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
+
+				// CR: ON
+				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
+
+				mc_collector_receiver.call(mc_weather.ms_outputs,
+					cr_htf_state,
+					cr_inputs,
+					cr_outputs,
+					mc_sim_info);
+
+				if(cr_outputs.m_q_thermal == 0.0)
+				{	// Collector/receiver can't produce useful energy
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					are_models_converged = false;
+				}
+
+				// If receiver IS producing energy, try starting up power cycle
+					// Power Cycle: STARTUP
+				pc_htf_state.m_temp_in = cr_outputs.m_T_salt_hot;		//[C]
+				pc_htf_state.m_m_dot = cr_outputs.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
+				// Inputs
+				pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STARTUP;
+				pc_inputs.m_tou = tou_timestep;
+				// Performance Call
+				mc_power_cycle.call(mc_weather.ms_outputs,
+					pc_htf_state,
+					pc_inputs,
+					pc_outputs,
+					mc_sim_info);
+
+
+
+				// Check for new timestep
+				step_local = pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+				if( step_local < mc_sim_info.m_step )
+				{
+					is_sim_timestep_complete = false;
+				}
+
+				// Reset sim_info values
+				if( !is_sim_timestep_complete )
+				{
+					mc_sim_info.m_step = step_local;						//[s]
+					mc_sim_info.m_time = time_previous + step_local;		//[s]
+				}
+
+
+
+
+				are_models_converged = true;
+
+				break;
+			
 			case CR_SU__PC_OFF__TES_OFF__AUX_OFF:
 				// Run the collector/receiver under startup mode
 					// **************
@@ -192,7 +273,7 @@ void C_csp_solver::simulate()
 
 				// Check for new timestep
 				step_local = cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
-				if(step_local < sim_step_size_baseline)
+				if(step_local < mc_sim_info.m_step)
 				{
 					is_sim_timestep_complete = false;
 				}
@@ -214,6 +295,7 @@ void C_csp_solver::simulate()
 				mc_power_cycle.call(mc_weather.ms_outputs,
 					pc_htf_state,
 					pc_inputs,
+					pc_outputs,
 					mc_sim_info);
 
 				are_models_converged = true;
@@ -243,6 +325,7 @@ void C_csp_solver::simulate()
 				mc_power_cycle.call(mc_weather.ms_outputs,
 					pc_htf_state,
 					pc_inputs,
+					pc_outputs,
 					mc_sim_info);
 
 				are_models_converged = true;
@@ -252,7 +335,7 @@ void C_csp_solver::simulate()
 			default: 
 				double catch_here_for_now = 1.23;
 
-			}
+			}	// End switch() on receiver operating modes
 		
 		}	// End loop to find correct operating mode and system performance
 
@@ -266,18 +349,23 @@ void C_csp_solver::simulate()
 		if( !is_sim_timestep_complete )
 		{
 			// Calculate new timestep
-			//step_local = 
+			step_local = time_sim_step_next - mc_sim_info.m_time;
 		}
 		else
 		{
 			// If partial timestep, use constant weather data for all partial timesteps
 			mc_weather.converged();
+
+			step_local = sim_step_size_baseline;
+
+			time_sim_step_next += sim_step_size_baseline;
 		}
 
 		// Track time and step forward
-		time_previous = mc_sim_info.m_time;
-		
-		
+		is_sim_timestep_complete = true;
+		time_previous = mc_sim_info.m_time;						//[s]
+		mc_sim_info.m_step = step_local;						//[s]
+		mc_sim_info.m_time = time_previous + step_local;		//[s]
 					
 	}	// End timestep loop
 

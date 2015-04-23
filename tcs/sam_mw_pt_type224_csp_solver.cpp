@@ -119,6 +119,7 @@ private:
 	C_csp_solver_sim_info ms_sim_info;
 	C_csp_solver_htf_state ms_htf_state;
 	C_csp_power_cycle::S_control_inputs ms_inputs;
+	C_csp_power_cycle::S_csp_pc_outputs ms_outputs;
 
 public:
 
@@ -227,7 +228,7 @@ public:
 
 		try
 		{
-			mc_power_cycle.call(ms_weather, ms_htf_state, ms_inputs, ms_sim_info);
+			mc_power_cycle.call(ms_weather, ms_htf_state, ms_inputs, ms_outputs, ms_sim_info);
 		}
 		catch(C_csp_exception &csp_exception)
 		{
@@ -254,86 +255,20 @@ public:
 		}
 
 
-		value(O_P_CYCLE, mc_power_cycle.ms_outputs.m_P_cycle);				//[MWe] Cycle power output
-		value(O_ETA, mc_power_cycle.ms_outputs.m_eta);						//[none] Cycle thermal efficiency
-		value(O_T_HTF_COLD, mc_power_cycle.ms_outputs.m_T_htf_cold);		//[C] Heat transfer fluid outlet temperature 
-		value(O_M_DOT_MAKEUP, mc_power_cycle.ms_outputs.m_m_dot_makeup);	//[kg/hr] Cooling water makeup flow rate
-		value(O_M_DOT_DEMAND, mc_power_cycle.ms_outputs.m_m_dot_demand);	//[kg/hr] HTF required flow rate to meet power load
-		value(O_M_DOT_HTF_OUT, mc_power_cycle.ms_outputs.m_m_dot_htf);		//[kg/hr] Actual HTF flow rate passing through the power cycle
-		value(O_M_DOT_HTF_REF, mc_power_cycle.ms_outputs.m_m_dot_htf_ref);	//[kg/hr] Calculated reference HTF flow rate at design
-		value(O_W_COOL_PAR, mc_power_cycle.ms_outputs.m_W_cool_par);		//[MWe] Cooling system parasitic load
-		value(O_P_REF_OUT, mc_power_cycle.ms_outputs.m_P_ref);				//[MWe] Reference power level output at design (mirror param)
-		value(O_F_BAYS, mc_power_cycle.ms_outputs.m_f_hrsys);				//[none] Fraction of operating heat rejection bays
-		value(O_P_COND, mc_power_cycle.ms_outputs.m_P_cond);				//[Pa] Condenser pressure
+		value(O_P_CYCLE, ms_outputs.m_P_cycle);				//[MWe] Cycle power output
+		value(O_ETA, ms_outputs.m_eta);						//[none] Cycle thermal efficiency
+		value(O_T_HTF_COLD, ms_outputs.m_T_htf_cold);		//[C] Heat transfer fluid outlet temperature 
+		value(O_M_DOT_MAKEUP, ms_outputs.m_m_dot_makeup);	//[kg/hr] Cooling water makeup flow rate
+		value(O_M_DOT_DEMAND, ms_outputs.m_m_dot_demand);	//[kg/hr] HTF required flow rate to meet power load
+		value(O_M_DOT_HTF_OUT, ms_outputs.m_m_dot_htf);		//[kg/hr] Actual HTF flow rate passing through the power cycle
+		value(O_M_DOT_HTF_REF, ms_outputs.m_m_dot_htf_ref);	//[kg/hr] Calculated reference HTF flow rate at design
+		value(O_W_COOL_PAR, ms_outputs.m_W_cool_par);		//[MWe] Cooling system parasitic load
+		value(O_P_REF_OUT, ms_outputs.m_P_ref);				//[MWe] Reference power level output at design (mirror param)
+		value(O_F_BAYS, ms_outputs.m_f_hrsys);				//[none] Fraction of operating heat rejection bays
+		value(O_P_COND, ms_outputs.m_P_cond);				//[Pa] Condenser pressure
 
 		return 0;
 
-
-
-		//mode = (int)value(I_MODE);		//Cycle part load control, from plant controller [none]
-		//T_htf_hot = value(I_T_HTF_HOT);		//Hot HTF inlet temperature, from storage tank [C]
-		//m_dot_htf = value(I_M_DOT_HTF);		//HTF mass flow rate [kg/hr]
-		//T_wb = value(I_T_WB);		//Ambient wet bulb temperature [C]
-		//demand_var = value(I_DEMAND_VAR);		//Control signal indicating operational mode [none]
-		//standby_control = (int)value(I_STANDBY_CONTROL);		//Control signal indicating standby mode [none]
-		//T_db = value(I_T_DB);		//Ambient dry bulb temperature [C]
-		//P_amb = value(I_P_AMB);		//Ambient pressure [mbar]
-		//TOU = (int)value(I_TOU) - 1;		//Current Time-of-use period [none]
-		//rh = value(I_RH)/100.0;		//Relative humidity of the ambient air [none]
-
-		//
-		////Set the inputs
-		//inputs.mode = mode;
-		//inputs.T_htf_hot = T_htf_hot;
-		//inputs.m_dot_htf = m_dot_htf;
-		//inputs.T_wb = T_wb + 273.15;		//Convert C to K
-		//inputs.demand_var = demand_var;
-		//inputs.standby_control = standby_control;
-		//inputs.T_db = T_db + 273.15;		//Convert C to K
-		//inputs.P_amb = P_amb*100.0;			//Convert mbar to Pa
-		//inputs.TOU = TOU;
-		//inputs.rel_humidity = rh;
-
-		////Get the stored values
-		///*
-		//stored.iLastStandbyControl = standby_control0;
-		//stored.dStartupTimeRemaining = startup_remain0;
-		//stored.dLastP_Cycle = P_cycle0;
-		//stored.dStartupEnergyRemaining = startup_e_remain0;
-		//*/
-
-		////Simulate
-		//type224.Execute((long)time, inputs);
-		//outputs = type224.GetOutputs();
-
-		//
-		////Set the outputs
-		//P_cycle = outputs.P_cycle;
-		//eta = outputs.eta;
-		//T_htf_cold = outputs.T_htf_cold;
-		//m_dot_makeup = outputs.m_dot_makeup;
-		//m_dot_demand = outputs.m_dot_demand;
-		//m_dot_htf_out = outputs.m_dot_htf;
-		//m_dot_htf_ref = outputs.m_dot_htf_ref;
-		//W_cool_par = outputs.W_cool_par;
-		//P_ref_out = outputs.P_ref;
-		//f_bays = outputs.f_hrsys;
-		//P_cond = outputs.P_cond;
-		
-
-		//value(O_P_CYCLE, P_cycle);		//[MWe] Cycle power output
-		//value(O_ETA, eta);		//[none] Cycle thermal efficiency
-		//value(O_T_HTF_COLD, T_htf_cold);		//[C] Heat transfer fluid outlet temperature 
-		//value(O_M_DOT_MAKEUP, m_dot_makeup);		//[kg/hr] Cooling water makeup flow rate
-		//value(O_M_DOT_DEMAND, m_dot_demand);		//[kg/hr] HTF required flow rate to meet power load
-		//value(O_M_DOT_HTF_OUT, m_dot_htf_out);		//[kg/hr] Actual HTF flow rate passing through the power cycle
-		//value(O_M_DOT_HTF_REF, m_dot_htf_ref);		//[kg/hr] Calculated reference HTF flow rate at design
-		//value(O_W_COOL_PAR, W_cool_par);		//[MWe] Cooling system parasitic load
-		//value(O_P_REF_OUT, P_ref_out);		//[MWe] Reference power level output at design (mirror param)
-		//value(O_F_BAYS, f_bays);		//[none] Fraction of operating heat rejection bays
-		//value(O_P_COND, P_cond);		//[Pa] Condenser pressure
-		
-		return 0;
 	}
 
 	virtual int converged(double time)
