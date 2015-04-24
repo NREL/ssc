@@ -192,7 +192,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	outGridToLoad = cm.allocate("grid_to_load", nrec);
 
 	// model initialization
-	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
+	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_parallel"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
 		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
 	lifetime_model = new  lifetime_t(batt_lifetime_matrix);
 
