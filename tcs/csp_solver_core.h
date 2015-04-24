@@ -210,18 +210,18 @@ public:
 
 	struct S_solved_params
 	{
-		double m_W_dot_des;				//[MW]
-		double m_eta_des;				//[MW]
-		double m_q_dot_des;				//[MW]
-		double m_cycle_max_frac;		//[-]
-		double m_cycle_cutoff_frac;		//[-]
-		double m_cycle_sb_frac;			//[-]
-		double m_T_htf_hot_ref;			//[C]
+		double m_W_dot_des;			//[MW]
+		double m_eta_des;			//[MW]
+		double m_q_dot_des;			//[MW]
+		double m_max_frac;			//[-]
+		double m_cutoff_frac;		//[-]
+		double m_sb_frac;			//[-]
+		double m_T_htf_hot_ref;		//[C]
 
 		S_solved_params()
 		{
-			m_W_dot_des = m_eta_des = m_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac = 
-				m_cycle_sb_frac = m_T_htf_hot_ref = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_des = m_eta_des = m_q_dot_des = m_max_frac = m_cutoff_frac = 
+				m_sb_frac = m_T_htf_hot_ref = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -276,6 +276,9 @@ private:
 
 	C_csp_solver_sim_info mc_sim_info;
 
+	// member string for exception messages
+	std::string error_msg;
+
 		// Collector receiver design parameters
 	double m_T_htf_cold_des;			//[K]
 
@@ -294,11 +297,17 @@ private:
 
 public:
 
+	// Class to save messages for up stream classes
+	C_csp_messages mc_csp_messages;
+
 	enum tech_operating_modes
 	{
 		CR_OFF__PC_OFF__TES_OFF__AUX_OFF = 1,
 		CR_SU__PC_OFF__TES_OFF__AUX_OFF,
-		CR_ON__PC_SU__TES_OFF__AUX_OFF
+		CR_ON__PC_SU__TES_OFF__AUX_OFF,
+		CR_ON__PC_SB__TES_OFF__AUX_OFF,
+		CR_ON__PC_RM__TES_OFF__AUX_OFF,			// PC_RM = Resource Match
+		CR_DF__PC_FULL__TES_OFF__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,
