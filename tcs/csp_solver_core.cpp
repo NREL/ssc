@@ -14,6 +14,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	m_T_htf_cold_des = m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
 
+	m_op_mode_tracking.resize(0);
 }
 
 void C_csp_solver::init_independent()
@@ -84,6 +85,8 @@ void C_csp_solver::simulate()
 
 	mc_sim_info.m_step = step_local;						//[s]
 	mc_sim_info.m_time = time_previous + step_local;		//[s]
+
+	m_op_mode_tracking.resize(0);
 
 	while( mc_sim_info.m_time <= sim_time_end )
 	{
@@ -240,6 +243,9 @@ void C_csp_solver::simulate()
 				// 2) Receiver cannot maintain minimum operation fraction
 				//		* Go to power cycle standby or shutdown
 
+				
+				// Store operating mode
+				m_op_mode_tracking.push_back(operating_mode);
 
 				// Solution procedure
 				// 1) Guess the receiver inlet temperature
@@ -267,8 +273,6 @@ void C_csp_solver::simulate()
 				double diff_T_in = 999.9*tol;		// (Calc - Guess)/Guess: (+) Guess was too low, (-) Guess was too high
 
 				int iter_T_in = 0;
-
-				//bool did_iteration_fail = false;
 
 				// If convergence/iteration loop breaks without solution, then 'are_models_converged' MUST BE RESET = FALSE before break
 					// otherwise, loop exits to TRUE
@@ -542,6 +546,10 @@ void C_csp_solver::simulate()
 					// so shouldn't need to iterate between CR and PC
 				// Assume power cycle can remain in standby the entirety of the timestep
 
+				
+				// Store operating mode
+				m_op_mode_tracking.push_back(operating_mode);
+
 				// First, solve the CR. Again, we're assuming HTF inlet temperature is always = m_T_htf_cold_des
 				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
@@ -572,6 +580,10 @@ void C_csp_solver::simulate()
 				// During startup, assume power cycle HTF return temperature is constant and = m_T_htf_cold_des
 					// so shouldn't need to iterate between collector/receiver and power cycle
 				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
+
+
+				// Store operating mode
+				m_op_mode_tracking.push_back(operating_mode);
 
 				// CR: ON
 				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
@@ -631,6 +643,9 @@ void C_csp_solver::simulate()
 					// **************
 				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
 
+				// Store operating mode
+				m_op_mode_tracking.push_back(operating_mode);
+
 				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
@@ -675,6 +690,10 @@ void C_csp_solver::simulate()
 			case tech_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
 				// Solve all models as 'off' or 'idle'
 					// Collector/receiver
+
+				// Store operating mode
+				m_op_mode_tracking.push_back(operating_mode);
+
 				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
@@ -737,6 +756,9 @@ void C_csp_solver::simulate()
 		mc_sim_info.m_step = step_local;						//[s]
 		mc_sim_info.m_time = time_previous + step_local;		//[s]
 					
+		// Reset operating mode tracker, so get "save" or write or pass results somewhere
+		m_op_mode_tracking.resize(0);
+
 	}	// End timestep loop
 
 }	// End simulate() method

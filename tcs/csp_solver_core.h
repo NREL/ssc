@@ -300,6 +300,9 @@ public:
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
 
+	// Vector to track operating modes
+	std::vector<int> m_op_mode_tracking;
+
 	enum tech_operating_modes
 	{
 		CR_OFF__PC_OFF__TES_OFF__AUX_OFF = 1,
