@@ -11,7 +11,7 @@
 
 const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
-const double hour_to_min = 1. / 60.;
+const double hour_to_min = 60.;
 
 /*
 Thermal classes
@@ -318,6 +318,7 @@ public:
 
 	capacity_t * capacity_model();
 	voltage_t * voltage_model();
+	lifetime_t * lifetime_model();
 
 	// Get capacity quantities
 	double battery_charge_needed();
@@ -354,8 +355,11 @@ public:
 	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
 	void switch_controller();
 	double current_controller(double battery_voltage);
-
+	
 	// Outputs
+	double cycle_efficiency();
+	double average_efficiency();
+
 	double energy_tofrom_battery();
 	double energy_tofrom_grid();
 	double gen();
@@ -364,6 +368,9 @@ public:
 	double grid_to_load();
 
 protected:
+
+	void compute_efficiency();
+
 	battery_t * _Battery;
 	double _dt_hour;
 
@@ -384,6 +391,11 @@ protected:
 	int _t_at_mode; // [minutes]
 	bool _charging;
 	bool _prev_charging;
+
+	// efficiency
+	double _charge_accumulated;		// [Kwh]
+	double _discharge_accumulated;  // [Kwh]
+	double _average_efficiency;		// [%]
 };
 
 /*
