@@ -66,7 +66,7 @@ public:
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual void updateCapacity(double I, double dt, int cycles) = 0;
+	virtual void updateCapacity(double I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)=0;
 
@@ -109,7 +109,7 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q20, double t1, double q1, double q10);
-	void updateCapacity(double I, double dt, int cycles);
+	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
 	double q1(); // Available charge
@@ -160,7 +160,7 @@ public:
 	~capacity_lithium_ion_t();
 
 	// override public api
-	void updateCapacity(double I, double dt, int cycles);
+	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
 
@@ -179,7 +179,7 @@ All voltage models are based on one-cell, but return the voltage for one battery
 class voltage_t
 {
 public:
-	voltage_t(int num_cells, double voltage);
+	voltage_t(int num_cells_series, int num_cells_parallel, double voltage);
 
 	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
 	double battery_voltage(); // voltage of one battery
@@ -187,7 +187,8 @@ public:
 	double R(); // computed resistance
 
 protected:
-	int _num_cells;    // number of cells per battery
+	int _num_cells_series;    // number of cells in series
+	int _num_cells_parallel;  // addition number in parallel
 	double _cell_voltage; // closed circuit voltage per cell [V]
 	double _R;
 
@@ -196,7 +197,7 @@ protected:
 class voltage_basic_t : public voltage_t
 {
 public:
-	voltage_basic_t(int num_cells, double voltage);
+	voltage_basic_t(int num_cells_series, int num_cells_parallel, double voltage);
 	void updateVoltage(capacity_t * capacity, double dt);
 };
 
@@ -204,13 +205,13 @@ public:
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate);
+	voltage_dynamic_t(int num_cells_series, int num_cells_parallel, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate);
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, double dt);
 
 protected:
 	double voltage_model(double capacity, double current,  double q0);
-	double voltage_model_tremblay_hybrid(double capacity, double current, double q0, double dt);
+	double voltage_model_tremblay_hybrid(double capacity, double current, double q0);
 
 
 private:

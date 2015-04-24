@@ -173,7 +173,7 @@ void capacity_kibam_t::parameter_compute()
 	_qmax = qmax_compute();
 }
 
-void capacity_kibam_t::updateCapacity(double I, double dt_hour, int cycles)
+void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 {
 	_DOD_prev = _DOD;							 
 	_I = I;
@@ -251,7 +251,7 @@ Define Lithium Ion capacity model
 capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q){};
 capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
 
-void capacity_lithium_ion_t::updateCapacity(double I, double dt, int cycles)
+void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 {
 	_DOD_prev = _DOD;
 	double q0_old = _q0;
@@ -303,21 +303,22 @@ double capacity_lithium_ion_t::q10(){return _qmax;}
 /*
 Define Voltage Model
 */
-voltage_t::voltage_t(int num_cells, double voltage)
+voltage_t::voltage_t(int num_cells_series, int num_cells_parallel, double voltage)
 {
-	_num_cells = num_cells;
+	_num_cells_series = num_cells_series;
+	_num_cells_parallel = num_cells_parallel;
 	_cell_voltage = voltage;
-	_R = 0.004;
+	_R = 0.004; // just a default, will get recalculated upon construction
 }
 
-double voltage_t::battery_voltage(){ return _num_cells*_cell_voltage; }
+double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
 double voltage_t::cell_voltage(){ return _cell_voltage; }
 double voltage_t::R(){ return _R; }
 
 
 // Dynamic voltage model
-voltage_dynamic_t::voltage_dynamic_t(int num_cells, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate):
-voltage_t(num_cells, voltage)
+voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_cells_parallel, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate):
+voltage_t(num_cells_series, num_cells_parallel, voltage)
 {
 	_Vfull = Vfull;
 	_Vexp = Vexp;
@@ -349,13 +350,18 @@ void voltage_dynamic_t::parameter_compute()
 void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 {
 
-	double Q = capacity->qmaxI();
+	double Q = capacity->qmax();
 	double I = capacity->I();
 	double q0 = capacity->q0();
+	int num_cells = _num_cells_parallel + _num_cells_series;
+	int num_strings = num_cells / _num_cells_series;
+	
 
-	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
-	if (!isfinite(_cell_voltage))
-		_cell_voltage = 0.;
+	// is on a per-cell basis
+	_cell_voltage = voltage_model_tremblay_hybrid(Q / num_cells, I/num_strings , q0 / num_cells);
+
+	//	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
+
 }
 double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 {
@@ -368,23 +374,27 @@ double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 	double V = term1 - term2; 
 	return V;
 }
-double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, double q0, double dt)
+double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, double q0)
 {
 	// everything in here is on a per-cell basis
-	// Unnewehr Universal Model + Tremblay Dynamic Model
-	// dt - should be in hours
+	// Tremblay Dynamic Model
+	double it = Q - q0;
+	double E = _E0 - _K*(Q / (Q - it)) + _A*exp(-_B*it);
+	double V = E - _R*I;
 
-	double term1 = _E0 -_R*I; // common to both
-	double f = 1 - q0 / Q;
-	double term2 = _K*(1. / (1 - f));
-	double term3 = _A*exp(-_B*I*dt); // from Tremblay
-	double V = term1 - term2 + term3;
+	// Discharged lower than model can handle ( < 1% SOC)
+	if (V < 0 || !isfinite(V))
+		V = 0.5*_Vnom;
+	/*
+	else if (V > 1000)
+		V = _Vfull;
+	*/
 	return V;
 }
 
 // Basic voltage model
-voltage_basic_t::voltage_basic_t(int num_cells, double voltage) :
-voltage_t(num_cells, voltage){}
+voltage_basic_t::voltage_basic_t(int num_cells_series, int num_cells_parallel, double voltage) :
+voltage_t(num_cells_series, num_cells_parallel, voltage){}
 
 void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
 
@@ -805,7 +815,7 @@ void battery_t::runThermalModel(double I)
 
 void battery_t::runCapacityModel(double I)
 {
-	_capacity->updateCapacity(I, _dt_hour,_lifetime->cycles_elapsed() );
+	_capacity->updateCapacity(I, _dt_hour );
 }
 
 void battery_t::runVoltageModel()
