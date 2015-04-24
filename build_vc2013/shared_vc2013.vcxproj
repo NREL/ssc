@@ -29,6 +29,7 @@
     <ClInclude Include="..\shared\lib_cec6par.h" />
     <ClInclude Include="..\shared\lib_financial.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
+    <ClInclude Include="..\shared\lib_iec61853.h" />
     <ClInclude Include="..\shared\lib_irradproc.h" />
     <ClInclude Include="..\shared\lib_physics.h" />
     <ClInclude Include="..\shared\lib_powerblock.h" />
@@ -49,6 +50,7 @@
     <ClCompile Include="..\shared\lib_cec6par.cpp" />
     <ClCompile Include="..\shared\lib_financial.cpp" />
     <ClCompile Include="..\shared\lib_geothermal.cpp" />
+    <ClCompile Include="..\shared\lib_iec61853.cpp" />
     <ClCompile Include="..\shared\lib_irradproc.cpp" />
     <ClCompile Include="..\shared\lib_physics.cpp" />
     <ClCompile Include="..\shared\lib_powerblock.cpp" />
