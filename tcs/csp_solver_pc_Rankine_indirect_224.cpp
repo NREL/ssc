@@ -269,9 +269,9 @@ void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solve
 	solved_params.m_W_dot_des = ms_params.m_P_ref / 1000.0;		//[MW], convert from kW
 	solved_params.m_eta_des = ms_params.m_eta_ref;				//[-]
 	solved_params.m_q_dot_des = solved_params.m_W_dot_des / solved_params.m_eta_des;	//[MW]
-	solved_params.m_cycle_max_frac = ms_params.m_cycle_max_frac;		//[-]
-	solved_params.m_cycle_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
-	solved_params.m_cycle_sb_frac = ms_params.m_q_sby_frac;				//[-]
+	solved_params.m_max_frac = ms_params.m_cycle_max_frac;		//[-]
+	solved_params.m_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
+	solved_params.m_sb_frac = ms_params.m_q_sby_frac;				//[-]
 	solved_params.m_T_htf_hot_ref = ms_params.m_T_htf_hot_ref;			//[C]
 }
 
@@ -310,6 +310,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double demand_var = 0.0;
 
 	double time_required_su = 0.0;
+
+	m_standby_control_calc = standby_control;
 
 	switch(standby_control)
 	{
@@ -479,22 +481,20 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - step_hrs, 0.0);
 			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - startup_e_used, 0.0);
 		}
-	}
-
-	m_standby_control_calc = standby_control;
+	}	
 
 	// Set outputs
-	outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] convert from kWe
-	outputs.m_eta = eta;
-	outputs.m_T_htf_cold = T_htf_cold;
-	outputs.m_m_dot_makeup = m_dot_makeup*3600.0;	//[kg/hr] convert from kg/s
-	outputs.m_m_dot_demand = m_dot_demand;
-	outputs.m_m_dot_htf = m_dot_htf;
-	outputs.m_m_dot_htf_ref = m_dot_htf_ref;
-	outputs.m_W_cool_par = W_cool_par;
-	outputs.m_P_ref = ms_params.m_P_ref/1000.0;		//[MWe] convert from kWe
-	outputs.m_f_hrsys = f_hrsys;
-	outputs.m_P_cond = P_cond;
+	outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
+	outputs.m_eta = eta;							//[-] Cycle thermal efficiency
+	outputs.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
+	outputs.m_m_dot_makeup = m_dot_makeup*3600.0;	//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+	outputs.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	outputs.m_m_dot_htf = m_dot_htf;				//[kg/hr] Actual HTF flow rate passing through the power cycle
+	outputs.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
+	outputs.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
+	outputs.m_P_ref = ms_params.m_P_ref/1000.0;		//[MWe] Reference power level output at design, convert from kWe
+	outputs.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
+	outputs.m_P_cond = P_cond;						//[Pa] Condenser pressure
 
 	outputs.m_time_required_su = time_required_su*3600.0;	//[s]
 }
