@@ -58,7 +58,7 @@ bool capacity_t::chargeChanged(){return _chargeChange;}
 double capacity_t::SOC(){ return _SOC; }
 double capacity_t::DOD(){ return _DOD; }
 double capacity_t::prev_DOD(){ return _DOD_prev; }
-double capacity_t::q0(){ return _q0; }
+double capacity_t::q0(){ return _q0;}
 double capacity_t::qmax(){ return _qmax; }
 double capacity_t::I(){ return _I; }
 
@@ -234,7 +234,6 @@ void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent, bool u
 		_q1 = p_q1 * _q0;
 		_q2 = (1 - p_q1)* _q0;
 	}
-
 	update_SOC();
 }
 
@@ -755,20 +754,21 @@ losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capac
 void losses_t::run_losses()
 {
 	bool update_max_capacity = false;
-
-	// only update lifetime losses if there is power flow & cycle change
-	if (fabs(_capacity->I()) > 0)
+	
+	// if cycle number has changed, update max capacity
+	if (_lifetime->cycles_elapsed() > _nCycle)
 	{
-		// if cycle number has changed, update max capacity
-		if (_lifetime->cycles_elapsed() > _nCycle)
-		{
-			_nCycle++;
-			update_max_capacity = true;
-		}
+		_nCycle++;
+		update_max_capacity = true;
+	}
+	
+	// apply losses on charge + discharge
+	if (_capacity->I() != 0)
+	{
+		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
 		_capacity->updateCapacityForLifetime(_lifetime->capacity_percent(), update_max_capacity);
 	}
-	else if (_capacity->I() > 0)
-		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	
 	
 }
 /* 
@@ -839,6 +839,10 @@ voltage_t * battery_t::voltage_model()
 {
 	return _voltage;
 }
+lifetime_t * battery_t::lifetime_model()
+{
+	return _lifetime;
+}
 double battery_t::battery_charge_needed()
 {
 	double charge_needed = _capacity->qmax() - _capacity->q0();
@@ -880,6 +884,11 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_t_at_mode = 1000; 
 	_prev_charging = false;
 	_charging = false;
+
+	// efficiency
+	_charge_accumulated = _Battery->battery_charge_total()*_Battery->battery_voltage()*watt_to_kilowatt;
+	_discharge_accumulated = 0.;
+	_average_efficiency = 100.;
 }
 double dispatch_t::energy_tofrom_battery(){ return _e_tofrom_batt; };
 double dispatch_t::energy_tofrom_grid(){ return _e_grid; };
@@ -887,17 +896,22 @@ double dispatch_t::pv_to_load(){ return _pv_to_load; };
 double dispatch_t::battery_to_load(){ return _battery_to_load; };
 double dispatch_t::grid_to_load(){ return _grid_to_load; };
 double dispatch_t::gen(){ return _e_gen; }
+double dispatch_t::average_efficiency(){ return _average_efficiency; }
 
 void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max)
 {
 	// Implement minimum SOC cut-off
-	if (_e_tofrom_batt > 0)
+	if (_e_tofrom_batt > 0.0001)
 	{
 		_charging = false;
 		double e_max_discharge = battery_voltage *(charge_total - charge_max*_SOC_min*0.01)*watt_to_kilowatt;
 		if (fabs(_e_tofrom_batt) > e_max_discharge)
 			_e_tofrom_batt = e_max_discharge;
 	}
+	else if (_e_tofrom_batt < -0.0001)
+		_charging = true;
+	else
+		_charging = _prev_charging;
 }
 void dispatch_t::switch_controller()
 {
@@ -905,12 +919,16 @@ void dispatch_t::switch_controller()
 	if (_charging != _prev_charging)
 	{
 		if (_t_at_mode <= _t_min)
+		{
 			_e_tofrom_batt = 0.;
+			_charging = _prev_charging;
+			_t_at_mode += round(_dt_hour * hour_to_min);
+		}
 		else
 			_t_at_mode = 0.;
 	}
 	_t_at_mode += round(_dt_hour * hour_to_min);
-	_prev_charging = _charging;
+
 }
 double dispatch_t::current_controller(double battery_voltage)
 {
@@ -929,6 +947,20 @@ double dispatch_t::current_controller(double battery_voltage)
 			I = _Id_max;
 	}
 	return I;
+}
+void dispatch_t::compute_efficiency()
+{
+
+	// average cycle efficiency
+	if (_e_tofrom_batt > 0.)
+		_discharge_accumulated += _e_tofrom_batt;
+	else if (_e_tofrom_batt < 0.)
+		_charge_accumulated += (-_e_tofrom_batt);
+
+	_average_efficiency = 100.*(_discharge_accumulated / _charge_accumulated);
+
+	// update for next step
+	_prev_charging = _charging;
 }
 /*
 Manual Dispatch
@@ -1005,8 +1037,11 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 
 	// Update how much power was actually used to/from battery
 	I = _Battery->capacity_model()->I();
-	_e_tofrom_batt = I * battery_voltage * _dt_hour / 1000;// [kWh]
+	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
+	_e_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;// [kWh]
 
+	// compute efficiency
+	compute_efficiency();
 	
 	// Update net grid energy
 	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
@@ -1027,7 +1062,6 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 
 		_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
 	}
-
 }
 
 

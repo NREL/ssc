@@ -88,8 +88,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_to_load",                      "Energy to load from battery",                                  "kWh",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                         "Energy to load from grid",                                     "kWh",      "",                     "Battery",       "",                           "",                              "" },
 	
-	// Annual outputs
-	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",             "Battery Cycle Efficiency",                                     "%",        "",                     "Annual",        "*",                          "",                              "" },
+	// Efficiency outputs
+	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",             "Average Battery Cycle Efficiency",                             "%",        "",                     "Annual",        "*",                          "",                              "" },
 	
 var_info_invalid };
 
@@ -230,7 +230,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 	else if ( chem == 1 )
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			cm.as_double("batt_Qfull") );
+			cm.as_double("batt_Qfull")*ncell );
 	}
 	
 	losses_model = new losses_t(
@@ -292,12 +292,9 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load());
 	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load());
 
-	if (outBatteryEnergy[idx] > 0)
-		e_discharge += outBatteryEnergy[idx];
-	else
-		e_charge += (-outBatteryEnergy[idx]);
+	// Average efficiency
+	outAverageCycleEfficiency = (ssc_number_t)dispatch_model->average_efficiency();
 
-	outAverageCycleEfficiency = (100.*(e_discharge / e_charge));
 }
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
