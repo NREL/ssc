@@ -29,9 +29,13 @@ public:
 	double m_time;		//[s]
 	double m_step;		//[s]
 
+	int m_tou;		//[-]
+
 	C_csp_solver_sim_info()
 	{
 		m_time = m_step = std::numeric_limits<double>::quiet_NaN();
+
+		m_tou = -1;
 	}
 };
 
@@ -200,11 +204,11 @@ public:
 	struct S_control_inputs
 	{
 		int m_standby_control;		//[-] Control signal indicating standby mode
-		int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
+		//int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
 
 		S_control_inputs()
 		{
-			m_standby_control = m_tou = -1;
+			m_standby_control = /*m_tou =*/ -1;
 		}
 	};
 
@@ -274,6 +278,14 @@ private:
 	C_csp_collector_receiver &mc_collector_receiver;
 	C_csp_power_cycle &mc_power_cycle;
 
+	C_csp_solver_htf_state mc_cr_htf_state;
+	C_csp_collector_receiver::S_csp_cr_inputs mc_cr_inputs;
+	C_csp_collector_receiver::S_csp_cr_outputs mc_cr_outputs;
+
+	C_csp_solver_htf_state mc_pc_htf_state;
+	C_csp_power_cycle::S_control_inputs mc_pc_inputs;
+	C_csp_power_cycle::S_csp_pc_outputs mc_pc_outputs;
+
 	C_csp_solver_sim_info mc_sim_info;
 
 	// member string for exception messages
@@ -293,6 +305,14 @@ private:
 
 	void init_independent();
 
+	void solver_cr_to_pc_to_cr(double field_control_in, int &exit_mode, double &exit_tolerance);
+
+	enum E_solver_outcomes
+	{
+		NO_SOLUTION,		// Models did not provide enough information with which to iterate on T_rec_in
+		POOR_CONVERGENCE,	// Models solved, but convergence on T_rec_in was not within specified tolerance
+		CONVERGED			// Models solved; convergence within specified tolerance
+	};
 	
 
 public:
