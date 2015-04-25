@@ -215,12 +215,13 @@ public:
 		ms_inputs.m_standby_control = (int)value(I_STANDBY_CONTROL);		//Control signal indicating standby mode [none]
 		ms_weather.m_tdry = value(I_T_DB);				//Ambient dry bulb temperature [C]
 		ms_weather.m_pres = value(I_P_AMB);				//Ambient pressure [mbar]
-		ms_inputs.m_tou = (int)value(I_TOU);		//Current Time-of-use period [none]
+			//ms_inputs.m_tou = (int)value(I_TOU);		
 		ms_weather.m_rhum = value(I_RH) / 100.0;			//Relative humidity of the ambient air [none]
 
 		// set sim info
 		ms_sim_info.m_time = time;
 		ms_sim_info.m_step = step;
+		ms_sim_info.m_tou = (int)value(I_TOU);		//Current Time-of-use period [none]
 		//ms_sim_info.m_ncall = ncall;
 
 		int out_type = -1;

@@ -57,14 +57,6 @@ void C_csp_solver::simulate()
 	double sim_step_size_baseline = 3600.0;			//[s]
 	mc_sim_info.m_step = sim_step_size_baseline;		//[s] hardcode steps = 1 hr, for now
 
-	C_csp_solver_htf_state cr_htf_state;
-	C_csp_collector_receiver::S_csp_cr_inputs cr_inputs;
-	C_csp_collector_receiver::S_csp_cr_outputs cr_outputs;
-
-	C_csp_solver_htf_state pc_htf_state;
-	C_csp_power_cycle::S_control_inputs pc_inputs;
-	C_csp_power_cycle::S_csp_pc_outputs pc_outputs;
-
 	bool is_rec_su_allowed = true;
 	bool is_pc_su_allowed = true;
 	bool is_pc_sb_allowed = true;
@@ -101,7 +93,7 @@ void C_csp_solver::simulate()
 		bool is_rec_su_allowed = true;
 		bool is_pc_su_allowed = true;
 		bool is_pc_sb_allowed = true;
-		int tou_timestep = 1;			//[base 1] used by power cycle model for hybrid cooling - may also want to move this to controller
+		mc_sim_info.m_tou = 1;			//[base 1] used by power cycle model for hybrid cooling - may also want to move this to controller
 
 		// Get standby fraction and min operating fraction
 			// Could eventually be a method in PC class...
@@ -114,16 +106,16 @@ void C_csp_solver::simulate()
 
 		// Solve collector/receiver with design inputs and weather to estimate output
 			// May replace this call with a simple proxy model later...
-		cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-		cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-		cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::STEADY_STATE;
+		mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+		mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::STEADY_STATE;
 		mc_collector_receiver.call(mc_weather.ms_outputs,
-			cr_htf_state,
-			cr_inputs,
-			cr_outputs,
+			mc_cr_htf_state,
+			mc_cr_inputs,
+			mc_cr_outputs,
 			mc_sim_info);
 
-		double q_dot_cr_output = cr_outputs.m_q_thermal;		//[MW]
+		double q_dot_cr_output = mc_cr_outputs.m_q_thermal;		//[MW]
 
 		// Can receiver output be used?
 			// No TES
@@ -294,7 +286,7 @@ void C_csp_solver::simulate()
 							are_models_converged = false;
 							break;	// Gets out of while() loop?							
 						}
-						else if(abs(diff_T_in) < safety_tol)
+						else if(abs(diff_T_in) > safety_tol)
 						{	// Models are producing power, but convergence errors are not within Safety Tolerance. Shut down receiver and power cycle
 							// Shut down receiver and power cycle
 							operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
@@ -304,8 +296,9 @@ void C_csp_solver::simulate()
 						else
 						{	// Getting results and convergence errors are within Safety Tolerance. *Report message* and continue timeseries simulation with receiver ON
 							
-							error_msg = util::format("At time = %lg the collector/receiver and power cycle solution only reached a converge"
-								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results", mc_sim_info.m_time / 3600.0, diff_T_in);
+							error_msg = util::format("At time = %lg the collector/receiver and power cycle solution only reached a convergence"
+								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results", 
+								mc_sim_info.m_time / 3600.0, diff_T_in);
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 							are_models_converged = true;
@@ -375,18 +368,18 @@ void C_csp_solver::simulate()
 					// 2) Solve the receiver model
 
 					// CR: ON
-					cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-					cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
+					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 					mc_collector_receiver.call(mc_weather.ms_outputs,
-						cr_htf_state,
-						cr_inputs,
-						cr_outputs,
+						mc_cr_htf_state,
+						mc_cr_inputs,
+						mc_cr_outputs,
 						mc_sim_info);
 
 					// Check if receiver is OFF or model didn't solve
-					if( cr_outputs.m_m_dot_salt_tot == 0.0 || cr_outputs.m_q_thermal == 0.0 )
+					if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
 					{
 						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 						// Go to Receiver OFF power cycle OFF
@@ -437,20 +430,20 @@ void C_csp_solver::simulate()
 
 					// 3) Solve the power cycle model using receiver outputs
 					// Power Cycle: ON
-					pc_htf_state.m_temp_in = cr_outputs.m_T_salt_hot;		//[C]
-					pc_htf_state.m_m_dot = cr_outputs.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
+					mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+					mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;	//[kg/hr] no mass flow rate to power cycle
 					// Inputs
-					pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::ON;
-					pc_inputs.m_tou = tou_timestep;
+					mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::ON;
+						//mc_pc_inputs.m_tou = tou_timestep;
 					// Performance Call
 					mc_power_cycle.call(mc_weather.ms_outputs,
-						pc_htf_state,
-						pc_inputs,
-						pc_outputs,
+						mc_pc_htf_state,
+						mc_pc_inputs,
+						mc_pc_outputs,
 						mc_sim_info);
 
 					// Check that power cycle is producing power or model didn't solve
-					if( pc_outputs.m_P_cycle == 0.0 )
+					if( mc_pc_outputs.m_P_cycle == 0.0 )
 					{
 						// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 						// Go to Receiver OFF power cycle OFF
@@ -500,18 +493,18 @@ void C_csp_solver::simulate()
 						}
 					}	// end Power Cycle OFF decisions
 
-					diff_T_in = (pc_outputs.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
+					diff_T_in = (mc_pc_outputs.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
 
 				}	// end iteration on T_rec_in
 
 				// Now, check whether we need to defocus the receiver
-				if( cr_outputs.m_q_thermal > q_pc_max )
+				if( mc_cr_outputs.m_q_thermal > q_pc_max )
 				{	// Too much power to PC, try defocusing
 					operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
 
 					are_models_converged = false;
 				}
-				else if( cr_outputs.m_q_thermal < q_pc_min )
+				else if( mc_cr_outputs.m_q_thermal < q_pc_min )
 				{	// Not enough thermal power to run power cycle at Min Cutoff fraction: check if we can try standby
 					
 					if( is_pc_sb_allowed )
@@ -551,17 +544,17 @@ void C_csp_solver::simulate()
 				m_op_mode_tracking.push_back(operating_mode);
 
 				// First, solve the CR. Again, we're assuming HTF inlet temperature is always = m_T_htf_cold_des
-				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-				cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
+				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					cr_htf_state,
-					cr_inputs,
-					cr_outputs,
+					mc_cr_htf_state,
+					mc_cr_inputs,
+					mc_cr_outputs,
 					mc_sim_info);
 
-				if( cr_outputs.m_q_thermal == 0.0 )
+				if( mc_cr_outputs.m_q_thermal == 0.0 )
 				{	// Collector/receiver can't produce useful energy
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					are_models_converged = false;
@@ -586,17 +579,17 @@ void C_csp_solver::simulate()
 				m_op_mode_tracking.push_back(operating_mode);
 
 				// CR: ON
-				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-				cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
+				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					cr_htf_state,
-					cr_inputs,
-					cr_outputs,
+					mc_cr_htf_state,
+					mc_cr_inputs,
+					mc_cr_outputs,
 					mc_sim_info);
 
-				if(cr_outputs.m_q_thermal == 0.0)
+				if( mc_cr_outputs.m_q_thermal == 0.0 )
 				{	// Collector/receiver can't produce useful energy
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					are_models_converged = false;
@@ -604,23 +597,23 @@ void C_csp_solver::simulate()
 
 				// If receiver IS producing energy, try starting up power cycle
 					// Power Cycle: STARTUP
-				pc_htf_state.m_temp_in = cr_outputs.m_T_salt_hot;		//[C]
-				pc_htf_state.m_m_dot = cr_outputs.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+				mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
-				pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STARTUP;
-				pc_inputs.m_tou = tou_timestep;
+				mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STARTUP;
+					//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					pc_htf_state,
-					pc_inputs,
-					pc_outputs,
+					mc_pc_htf_state,
+					mc_pc_inputs,
+					mc_pc_outputs,
 					mc_sim_info);
 
 				// Would be nice to have some check to know whether startup solved appropriately...
 
 
 				// Check for new timestep
-				step_local = pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+				step_local = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 				if( step_local < mc_sim_info.m_step )
 				{
 					is_sim_timestep_complete = false;
@@ -646,18 +639,18 @@ void C_csp_solver::simulate()
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
 
-				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-				cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
+				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					cr_htf_state,
-					cr_inputs,
-					cr_outputs,
+					mc_cr_htf_state,
+					mc_cr_inputs,
+					mc_cr_outputs,
 					mc_sim_info);
 
 				// Check for new timestep
-				step_local = cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
+				step_local = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
 				if(step_local < mc_sim_info.m_step)
 				{
 					is_sim_timestep_complete = false;
@@ -671,16 +664,16 @@ void C_csp_solver::simulate()
 				}
 
 				// Power Cycle: OFF
-				pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
-				pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
-				pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
-				pc_inputs.m_tou = tou_timestep;
+				mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
+					//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					pc_htf_state,
-					pc_inputs,
-					pc_outputs,
+					mc_pc_htf_state,
+					mc_pc_inputs,
+					mc_pc_outputs,
 					mc_sim_info);
 
 				are_models_converged = true;
@@ -694,27 +687,27 @@ void C_csp_solver::simulate()
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
 
-				cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-				cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					cr_htf_state,
-					cr_inputs,
-					cr_outputs,
+					mc_cr_htf_state,
+					mc_cr_inputs,
+					mc_cr_outputs,
 					mc_sim_info);
 					
 					// Power Cycle: OFF
 						// HTF State
-				pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des-273.15;	//[C]
-				pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
 						// Inputs
-				pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
-				pc_inputs.m_tou = tou_timestep;
+				mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
+					//mc_pc_inputs.m_tou = tou_timestep;
 						// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					pc_htf_state,
-					pc_inputs,
-					pc_outputs,
+					mc_pc_htf_state,
+					mc_pc_inputs,
+					mc_pc_outputs,
 					mc_sim_info);
 
 				are_models_converged = true;
@@ -762,3 +755,252 @@ void C_csp_solver::simulate()
 	}	// End timestep loop
 
 }	// End simulate() method
+
+void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, int &exit_mode, double &exit_tolerance)
+{
+	// Method to solve scenario where the CR is on (under some fixed operating conditions, i.e. defocus)
+	// and the PC is on. No TES or AUX, so the output of the CR connects directly to the PC
+
+	// Ouputs:
+	// int exit_mode: E_solver_outcomes 
+	
+	// Solution procedure
+	// 1) Guess the receiver inlet temperature
+	// Use design temperature for now, but this is an area where "smart" guesses could be applied
+	double T_rec_in_guess_ini = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+	double T_rec_in_guess = T_rec_in_guess_ini;
+	// Set lower and upper bounds, or find through iteration?
+	// Lower bound could be freeze protection temperature...
+	double T_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
+	double T_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
+	double y_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
+	double y_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
+	// Booleans for bounds and convergence error
+	bool is_upper_bound = false;
+	bool is_lower_bound = false;
+	bool is_upper_error = false;
+	bool is_lower_error = false;
+
+	double tol_C = 2.0;
+	double tol = tol_C / m_T_htf_cold_des;
+
+	double safety_tol_multiplier = 5.0;
+	double safety_tol = safety_tol_multiplier*tol;
+
+	double diff_T_in = 999.9*tol;		// (Calc - Guess)/Guess: (+) Guess was too low, (-) Guess was too high
+
+	int iter_T_in = 0;
+
+	// Start iteration loop
+	while( abs(diff_T_in) > tol )
+	{
+		iter_T_in++;			// First iteration = 1
+
+		// Check if distance between bounds is "too small"
+		double diff_T_bounds = T_rec_in_upper - T_rec_in_lower;
+		if( diff_T_bounds / T_rec_in_upper < tol / 2.0 )
+		{
+			if( diff_T_in != diff_T_in )
+			{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
+				
+				exit_mode = NO_SOLUTION;
+				exit_tolerance = diff_T_in;
+				return;
+			}
+			else
+			{	// Models are producing power, but convergence errors are not within Tolerance
+
+				exit_mode = NO_SOLUTION;
+				exit_tolerance = diff_T_in;
+				return;
+			}
+		}
+
+
+		// Subsequent iterations need to re-calcualte T_in
+		if( iter_T_in > 1 )
+		{
+			if( diff_T_in != diff_T_in )
+			{	// Models did not solve such that a convergence error could be generated
+				// However, we know that upper and lower bounds are set, so we can calculate a new guess via bisection method
+				// but check that bounds exist, to be careful
+				if( !is_lower_bound || !is_upper_bound )
+				{
+					exit_mode = NO_SOLUTION;
+					exit_tolerance = diff_T_in;
+					return;
+				}
+				T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]
+			}
+			else if( diff_T_in > 0.0 )		// Guess receiver inlet temperature was too low
+			{
+				is_lower_bound = true;
+				is_lower_error = true;
+				T_rec_in_lower = T_rec_in_guess;		// Set lower bound
+				y_rec_in_lower = diff_T_in;				// Set lower convergence error
+
+				if( is_upper_bound && is_upper_error )		// False-position method
+				{
+					T_rec_in_guess = y_rec_in_upper / (y_rec_in_upper - y_rec_in_lower)*(T_rec_in_lower - T_rec_in_upper) + T_rec_in_upper;	//[C]
+				}
+				else if( is_upper_bound )						// Bisection method
+				{
+					T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]
+				}
+				else				// Constant adjustment
+				{
+					T_rec_in_guess += 15.0;			//[C]
+				}
+			}
+			else							// Guess receiver inlet temperature was too high
+			{
+				is_upper_bound = true;
+				is_upper_error = true;
+				T_rec_in_upper = T_rec_in_guess;		// Set upper bound
+				y_rec_in_upper = diff_T_in;				// Set upper convergence error
+
+				if( is_lower_bound && is_lower_error )		// False-position method
+				{
+					T_rec_in_guess = y_rec_in_upper / (y_rec_in_upper - y_rec_in_lower)*(T_rec_in_lower - T_rec_in_upper) + T_rec_in_upper;	//[C]
+				}
+				else if( is_lower_bound )
+				{
+					T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]
+				}
+				else
+				{
+					T_rec_in_guess -= 15.0;			//[C] 
+				}
+			}
+		}
+
+		// 2) Solve the receiver model
+
+		// CR: ON
+		mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+		mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
+
+		mc_collector_receiver.call(mc_weather.ms_outputs,
+			mc_cr_htf_state,
+			mc_cr_inputs,
+			mc_cr_outputs,
+			mc_sim_info);
+
+		// Check if receiver is OFF or model didn't solve
+		if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+		{
+			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
+			if( iter_T_in == 1 )
+			{	
+				exit_mode = NO_SOLUTION;
+				exit_tolerance = diff_T_in;
+				return;
+			}
+			else
+			{	// Set this T_rec_in_guess as either upper or lower bound, depending on which end of DESIGN temp it falls
+				// Assumption here is that receiver solved at first guess temperature
+				// and that the failure wouldn't occur between established bounds
+				if( T_rec_in_guess < T_rec_in_guess_ini )
+				{
+					if( is_lower_bound && !is_upper_bound )
+					{
+						exit_mode = NO_SOLUTION;
+						exit_tolerance = diff_T_in;
+						return;
+					}
+					T_rec_in_lower = T_rec_in_guess;
+					is_lower_bound = true;
+					is_lower_error = false;
+					// At this point, both and upper and lower bound should exist, so can generate new guess
+					// And communicate this to Guess-Generator by setting diff_T_in to NaN
+					diff_T_in = std::numeric_limits<double>::quiet_NaN();
+				}
+				else
+				{
+					if( is_upper_bound && !is_lower_bound )
+					{
+						exit_mode = NO_SOLUTION;
+						exit_tolerance = diff_T_in;
+						return;
+					}
+					T_rec_in_upper = T_rec_in_guess;
+					is_upper_bound = true;
+					is_upper_error = false;
+					// At this point, both and upper and lower bound should exist, so can generate new guess
+					// And communicate this to Guess-Generator by setting diff_T_in to NaN
+					diff_T_in = std::numeric_limits<double>::quiet_NaN();
+				}
+			}
+		}	// End Collector/Receiver OFF decisions
+
+		// 3) Solve the power cycle model using receiver outputs
+		// Power Cycle: ON
+		mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+		mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;	//[kg/hr] no mass flow rate to power cycle
+		// Inputs
+		mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::ON;
+			//mc_pc_inputs.m_tou = tou_timestep;
+		// Performance Call
+		mc_power_cycle.call(mc_weather.ms_outputs,
+			mc_pc_htf_state,
+			mc_pc_inputs,
+			mc_pc_outputs,
+			mc_sim_info);
+
+		// Check that power cycle is producing power or model didn't solve
+		if( mc_pc_outputs.m_P_cycle == 0.0 )
+		{
+			// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
+			// Go to Receiver OFF power cycle OFF
+			if( iter_T_in == 1 )
+			{
+				exit_mode = NO_SOLUTION;
+				exit_tolerance = diff_T_in;
+				return;
+			}
+			else
+			{	// Set this T_rec_in_guess as either upper or lower bound, depending on which end of DESIGN temp it falls
+				// Assumption here is that receiver solved at first guess temperature
+				// and that the failure wouldn't occur between established bounds
+				if( T_rec_in_guess < T_rec_in_guess_ini )
+				{
+					if( is_lower_bound && !is_upper_bound )
+					{
+						exit_mode = NO_SOLUTION;
+						exit_tolerance = diff_T_in;
+						return;
+					}
+					T_rec_in_lower = T_rec_in_guess;
+					is_lower_bound = true;
+					is_lower_error = false;
+					// At this point, both and upper and lower bound should exist, so can generate new guess
+					// And communicate this to Guess-Generator by setting diff_T_in to NaN
+					diff_T_in = std::numeric_limits<double>::quiet_NaN();
+				}
+				else
+				{
+					if( is_upper_bound && !is_lower_bound )
+					{
+						exit_mode = NO_SOLUTION;
+						exit_tolerance = diff_T_in;
+						return;
+					}
+					T_rec_in_upper = T_rec_in_guess;
+					is_upper_bound = true;
+					is_upper_error = false;
+					// At this point, both and upper and lower bound should exist, so can generate new guess
+					// And communicate this to Guess-Generator by setting diff_T_in to NaN
+					diff_T_in = std::numeric_limits<double>::quiet_NaN();
+				}
+			}
+		}	// end Power Cycle OFF decisions
+
+		diff_T_in = (mc_pc_outputs.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
+
+	}	// end iteration on T_rec_in
+
+	exit_mode = CONVERGED;
+
+	return;
+}
