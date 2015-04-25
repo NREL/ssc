@@ -222,6 +222,7 @@ void C_csp_solver::simulate()
 			switch(operating_mode)
 			{
 			case CR_DF__PC_FULL__TES_OFF__AUX_OFF:
+			{
 				// Running CR at full power results in too much thermal power to power cycle
 				// Therefore, must defocus CR and operating PC at FULL POWER
 
@@ -233,14 +234,288 @@ void C_csp_solver::simulate()
 				
 				// Should have CR thermal output results from either steady state call at beginning of timestep or previouso mode
 				// Use this to estimate required defocus as a starting point for iteration
+					// But.. check anyway
+				double defocus_guess_ini = std::numeric_limits<double>::quiet_NaN();
+				if(mc_cr_outputs.m_q_thermal > 0.0)
+				{
+					// Controller hierarchy doesn't allow to go back to No Defocus and PC_RM, so check that defocus is <= 1
+					defocus_guess_ini = fmin(1.0, q_pc_max / mc_cr_outputs.m_q_thermal);
+				}
+				else
+				{
+					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+					mc_collector_receiver.call(mc_weather.ms_outputs,
+						mc_cr_htf_state,
+						mc_cr_inputs,
+						mc_cr_outputs,
+						mc_sim_info);
 
+					if(mc_cr_outputs.m_q_thermal > 0.0)
+					{
+						// Controller hierarchy doesn't allow to go back to No Defocus and PC_RM, so check that defocus is <= 1
+						defocus_guess_ini = fmin(1.0, q_pc_max / mc_cr_outputs.m_q_thermal);
+					}
+					else
+					{	// CR not producing power at design inlet temperature
+
+						// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
+						error_msg = util::format("At time = %lg the controller chose Defocus operating mode, but the collector/receiver"
+							"did not produce power with the design inlet temperature. Controller will shut-down CR and PC",
+							mc_sim_info.m_time / 3600.0);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+						are_models_converged = false;
+
+						break;
+					}
+				}
+				
+				// Solve for inner loop: cr-pc convergence tolerances
+
+				double tol_cr_pc_C = 2.0;
+				double tol_cr_pc = tol_cr_pc_C / m_T_htf_cold_des;
+
+				double relaxed_tol_cr_pc_mult = 5.0;
+				double relaxed_tol_cr_pc = relaxed_tol_cr_pc_mult*tol_cr_pc;
+
+				double defocus_guess = defocus_guess_ini;
+
+				// Consider upper and lower bounds on defocus
+				// Know that upper bound on defocus = 1, so can set that
+				// Some combination of CR & PC methods (existing or otherwise) could *possibly* be used to guess lower, but let's assume we don't know it
+					// Upper bound, error, and booleans
+				double defocus_upper = 1.0;
+				double y_defocus_uppper = std::numeric_limits<double>::quiet_NaN();
+				bool is_upper_bound = true;
+				bool is_upper_error = false;
+					// Lower bound, error, and booleans
+				double defocus_lower = std::numeric_limits<double>::quiet_NaN();
+				double y_defocus_lower = std::numeric_limits<double>::quiet_NaN();
+				bool is_lower_bound = false;
+				bool is_lower_error = false;
 
 				
-				error_msg = util::format("Defocus mode not yet available. Time = %lg", mc_sim_info.m_time/3600.0);
+				// Iterating on defocus until q_rec_thermal = q_pc_max AND CR_to_PC iteration solves successfully
+				// Tolerance should be greater than inner loop tolerance
+				double tol = tol_cr_pc*1.2;
+				double relax_tol_mult = 5.0;
+				double relax_tol = relax_tol_mult*tol;
+				double bounds_tol = tol / 2.0;			// (upper - lower)/upper if no solution, when upper and lower get this close, make decision and get out
 
-				throw(C_csp_exception(error_msg, "CSP Solver"));
+				// Defocus: 1 = full power, 0 = no power
+				double diff_q_dot = 999.9*tol;			// (Rec - q_pc_max)/q_pc_max: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
 
-				break;
+				// CR-PC solver outputs are needed to determine whether defocus iteration solved within convergence
+				double cr_pc_exit_tol = std::numeric_limits<double>::quiet_NaN();
+				int cr_pc_exit_mode = -1;		
+
+				// Will be reset in while() loop under other outcomes
+				int defocus_exit_mode = CONVERGED;		// Need this because have to use 'break' to exit the while() iteration loop
+
+				int iter_defocus = 0;
+
+				// Start iteration loop
+				while( abs(diff_q_dot) > tol )
+				{
+					iter_defocus++;			// First iteration = 1
+				
+					// Check if distance between bounds is "too small" (using 'bounds_tol' defined above)
+					double diff_defocus_bounds = defocus_upper - defocus_lower;
+					if( diff_defocus_bounds / defocus_upper < bounds_tol )
+					{
+						if( diff_q_dot != diff_q_dot )
+						{	// CR-PC aren't converging, so need to shut them down
+
+							diff_q_dot = std::numeric_limits<double>::quiet_NaN();
+							defocus_exit_mode = NO_SOLUTION;
+							break;		// Get out of while()					
+						}
+						else
+						{	// Poor convergence between power delivered to PC and power requested
+
+							defocus_exit_mode = POOR_CONVERGENCE;
+							break;		// Get out of while()
+						}
+					}
+
+					// Subsequent iterations need to re-calculate defocus
+					if(iter_defocus > 1)
+					{
+						if(diff_q_dot != diff_q_dot)		// Check if solution was found
+						{	// CR-PC model did not converge, so we don't know anything about this defocus
+							// However, we know that we should now have an upper or lower bound (else code would have exited from logic below)
+							// But, check that bounds exist, just to be careful
+							if(!is_lower_bound || !is_upper_bound)
+							{
+
+								diff_q_dot = std::numeric_limits<double>::quiet_NaN();
+								defocus_exit_mode = NO_SOLUTION;
+								break;		// Get out of while()	
+							}
+							defocus_guess = 0.5*(defocus_lower + defocus_upper);
+						}
+						else if( diff_q_dot > 0.0 )		// q_dot was too high, decrease defocus
+						{
+							is_upper_bound = true;
+							is_upper_error = true;
+							defocus_upper = defocus_guess;		// Set upper bound
+							y_defocus_uppper = diff_q_dot;		// Set upper convergence error
+
+							if(is_lower_bound && is_upper_bound)	// False-position method
+							{
+								defocus_guess = y_defocus_uppper/(y_defocus_uppper-y_defocus_lower)*(defocus_lower-defocus_upper);
+							}
+							else if(is_lower_bound)
+							{
+								defocus_guess = 0.5*(defocus_upper + defocus_lower);
+							}
+							else
+							{
+								defocus_guess = fmax(0.01, defocus_guess - 0.05);			// Could perhaps use last solution to make a smarter guess...
+							}
+
+						}
+						else							// q_dot was too low, increase defocus 
+						{
+							is_lower_bound = true;
+							is_lower_error = true;
+							defocus_lower = defocus_guess;	// Set lower bound
+							y_defocus_lower = diff_q_dot;	// Set lower convergence error
+
+							if(is_lower_bound && is_upper_bound)
+							{
+								defocus_guess = y_defocus_uppper / (y_defocus_uppper - y_defocus_lower)*(defocus_lower - defocus_upper);
+							}
+							else if(is_upper_bound)
+							{	// should always have upper bound, but keep this framework for consistency...
+								defocus_guess = 0.5*(defocus_upper + defocus_lower);
+							}
+							else
+							{
+								defocus_guess = fmin(1.0, defocus_guess + 0.05);
+							}
+						}
+					}
+
+					// Use defocus_guess and call method to solve CR-PC iteration
+					cr_pc_exit_tol = std::numeric_limits<double>::quiet_NaN();
+					solver_cr_to_pc_to_cr(defocus_guess, tol_cr_pc, cr_pc_exit_mode, cr_pc_exit_tol);
+
+					// Process results from CR-PC iteration:
+					if(cr_pc_exit_mode == NO_SOLUTION)
+					{	// CR and PC did not produce power or did not solve
+						
+						if(iter_defocus == 1)
+						{	// If this happened on first iteration, assume guess is lower bound and try again?
+						
+							defocus_lower = defocus_guess;
+							is_lower_bound = true;
+							is_lower_error = false;			
+							diff_q_dot = std::numeric_limits<double>::quiet_NaN();
+						}
+						else
+						{	// CR_PC has solved successfully at least once
+							// And assume upper bound always solves
+							// So assume that NO_SOLUTION corresponds to lower bound
+							// So if a lower bound is already known, then nowhere to go
+							if(is_lower_bound)
+							{
+								diff_q_dot = std::numeric_limits<double>::quiet_NaN();
+								defocus_exit_mode = NO_SOLUTION;
+								break;		// Get out of while()	
+							}
+							else
+							{
+								defocus_lower = defocus_guess;
+								is_lower_bound = true;
+								is_lower_error = false;
+								diff_q_dot = std::numeric_limits<double>::quiet_NaN();
+							}
+						}	// end logic on iteration count for NO SOLUTION					
+					}	// end code for NO SOLUTION
+
+					// CR-PC iteration found a solution (though perhaps at POOR CONVERGENCE)
+					// Calculate the difference between thermal power delivered to PC and thermal power requested
+					// (Rec - q_pc_max)/q_pc_max: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
+					diff_q_dot = (mc_cr_outputs.m_q_thermal / q_pc_max) / q_pc_max;
+
+				}	// end iteration on CR defocus
+
+				// Reached convergence on defocus, but it is *possibly* that the CR-PC iteration only solved at POOR CONVERGENCE
+				// Check here...?
+				if(cr_pc_exit_mode == POOR_CONVERGENCE)
+				{
+					if( abs(cr_pc_exit_tol) > relaxed_tol_cr_pc )
+					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
+
+						// update 'exit_mode'
+						cr_pc_exit_mode = NO_SOLUTION;
+					}
+					else
+					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
+
+						error_msg = util::format("At time = %lg the collector/receiver and power cycle solution only reached a convergence"
+							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							mc_sim_info.m_time / 3600.0, cr_pc_exit_mode);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+						// update 'exit_mode' for following logic branches
+						cr_pc_exit_mode = CONVERGED;
+					}
+				}
+				if(defocus_exit_mode == POOR_CONVERGENCE)
+				{
+					if( abs(diff_q_dot) > relax_tol )
+					{	// Defocus did not converge within Relaxed Tolerance, shut off CR & PC
+					
+						// update defocus Exit Mode
+						defocus_exit_mode = NO_SOLUTION;
+					}
+					else
+					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
+
+						error_msg = util::format("At time = %lg the defocus iteration only reached a convergence"
+							" = &lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							mc_sim_info.m_time / 3600.0, cr_pc_exit_mode);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+						// update Exit Mode
+						defocus_exit_mode = CONVERGED;
+					}
+				}
+
+				if(defocus_exit_mode == NO_SOLUTION || cr_pc_exit_mode == NO_SOLUTION)
+				{
+					error_msg = util::format("At time = %lg the controller chose Defocus operating mode, but the solver failed to reach convergence "
+						"Controller will shut-down CR and PC",
+						mc_sim_info.m_time / 3600.0);
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					// Shut down CR and PC
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					are_models_converged = false;
+
+					break;
+				}
+				else if(defocus_exit_mode == CONVERGED && cr_pc_exit_mode == CONVERGED)
+				{
+					// If defocus solution has converged, then q_pc = q_pc_max, and shouldn't need to double-check anything...
+
+					are_models_converged = true;
+				}
+				else
+				{
+					throw(C_csp_exception("Solver tried mode 'CR_DF__PC_FULL__TES_OFF__AUX_OFF' and did not receive useful exit instructions", "CSP Solver"));
+				}
+
+
+
+
+				break;		// Get out of switch()
+			}
 
 			case CR_ON__PC_RM__TES_OFF__AUX_OFF:
 			{
@@ -257,42 +532,17 @@ void C_csp_solver::simulate()
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
 
-				// Solution procedure
-				// 1) Guess the receiver inlet temperature
-						// Use design temperature for now, but this is an area where "smart" guesses could be applied
-				double T_rec_in_guess_ini = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				double T_rec_in_guess = T_rec_in_guess_ini;
-						// Set lower and upper bounds, or find through iteration?
-						// Lower bound could be freeze protection temperature...
-				double T_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
-				double T_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
-				double y_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
-				double y_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
-						// Booleans for bounds and convergence error
-				bool is_upper_bound = false;
-				bool is_lower_bound = false;
-				bool is_upper_error = false;
-				bool is_lower_error = false;
-
 				double tol_C = 2.0;
 				double tol = tol_C / m_T_htf_cold_des;
 
 				double relaxed_tol_multiplier = 5.0;
 				double relaxed_tol = relaxed_tol_multiplier*tol;
-
-				double diff_T_in = 999.9*tol;		// (Calc - Guess)/Guess: (+) Guess was too low, (-) Guess was too high
-
-				int iter_T_in = 0;
-
-				// If convergence/iteration loop breaks without solution, then 'are_models_converged' MUST BE RESET = FALSE before break
-					// otherwise, loop exits to TRUE
-				// are_models_converged = true;
 				
 				// Call CR-PC_CR Solver
 				int exit_mode = -1;
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				double field_control = 1.0;
-				solver_cr_to_pc_to_cr(field_control, exit_mode, exit_tolerance);
+				solver_cr_to_pc_to_cr(field_control, tol, exit_mode, exit_tolerance);
 
 				// If CR and PC models solved and produced power, but did not converge within tolerance,
 				// check whether achieved convergence is "good enough" to report and continue
@@ -300,21 +550,16 @@ void C_csp_solver::simulate()
 				{
 					if(abs(exit_tolerance) > relaxed_tol)
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
-						
-						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						are_models_converged = false;
 
-						// update 'exit_mode' in case it is needed in subsequent calculations
+						// update 'exit_mode'
 						exit_mode = NO_SOLUTION;
-
-						break;		// exits switch(operating mode)
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
 
 						error_msg = util::format("At time = %lg the collector/receiver and power cycle solution only reached a convergence"
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							mc_sim_info.m_time / 3600.0, diff_T_in);
+							mc_sim_info.m_time / 3600.0, exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 						// update 'exit_mode' for following logic branches
@@ -322,7 +567,16 @@ void C_csp_solver::simulate()
 					}
 				}
 
-				if( exit_mode == CONVERGED )
+				if( exit_mode == NO_SOLUTION )
+				{	// Either CR & PC did not solve/produce power, or did not solve within Relaxed Tolerance: shut off CR and PC
+
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					are_models_converged = false;
+
+					break;		// exits switch(operating mode)
+				}
+
+				else if( exit_mode == CONVERGED )
 				{
 					// Now, check whether we need to defocus the receiver
 					if( mc_cr_outputs.m_q_thermal > q_pc_max )
@@ -590,7 +844,7 @@ void C_csp_solver::simulate()
 
 }	// End simulate() method
 
-void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, int &exit_mode, double &exit_tolerance)
+void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, int &exit_mode, double &exit_tolerance)
 {
 	// Method to solve scenario where the CR is on (under some fixed operating conditions, i.e. defocus)
 	// and the PC is on. No TES or AUX, so the output of the CR connects directly to the PC
@@ -614,12 +868,6 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, int &exit_mode
 	bool is_lower_bound = false;
 	bool is_upper_error = false;
 	bool is_lower_error = false;
-
-	double tol_C = 2.0;
-	double tol = tol_C / m_T_htf_cold_des;
-
-	double safety_tol_multiplier = 5.0;
-	double safety_tol = safety_tol_multiplier*tol;
 
 	double diff_T_in = 999.9*tol;		// (Calc - Guess)/Guess: (+) Guess was too low, (-) Guess was too high
 
@@ -711,8 +959,8 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, int &exit_mode
 		// 2) Solve the receiver model
 
 		// CR: ON
-		mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-		mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+		mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C], convert from [K]
+		mc_cr_inputs.m_field_control = 1.0;					//[-] no defocusing for initial simulation
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 		mc_collector_receiver.call(mc_weather.ms_outputs,

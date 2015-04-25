@@ -305,7 +305,7 @@ private:
 
 	void init_independent();
 
-	void solver_cr_to_pc_to_cr(double field_control_in, int &exit_mode, double &exit_tolerance);
+	void solver_cr_to_pc_to_cr(double field_control_in, double tol, int &exit_mode, double &exit_tolerance);
 
 	enum E_solver_outcomes
 	{
