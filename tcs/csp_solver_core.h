@@ -342,6 +342,13 @@ public:
 	void init();
 
 	void simulate();
+
+
+
+	// Output vectors
+	std::vector<double> mv_time;
+	std::vector<double> mv_solzen;
+
 };
 
 
