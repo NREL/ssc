@@ -15,6 +15,12 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
 
 	m_op_mode_tracking.resize(0);
+
+	error_msg = "";
+
+	// Output vectors
+	mv_time.resize(0);
+	mv_solzen.resize(0);
 }
 
 void C_csp_solver::init_independent()
@@ -299,8 +305,8 @@ void C_csp_solver::simulate()
 
 				
 				// Iterating on defocus until q_rec_thermal = q_pc_max AND CR_to_PC iteration solves successfully
-				// Tolerance should be greater than inner loop tolerance
-				double tol = tol_cr_pc*1.2;
+				// Tolerance, in this case, probably doesn't need to be larger than inner nest tolerance
+				double tol = 0.001;
 				double relax_tol_mult = 5.0;
 				double relax_tol = relax_tol_mult*tol;
 				double bounds_tol = tol / 2.0;			// (upper - lower)/upper if no solution, when upper and lower get this close, make decision and get out
@@ -364,9 +370,9 @@ void C_csp_solver::simulate()
 							defocus_upper = defocus_guess;		// Set upper bound
 							y_defocus_uppper = diff_q_dot;		// Set upper convergence error
 
-							if(is_lower_bound && is_upper_bound)	// False-position method
+							if(is_lower_bound && is_lower_error)	// False-position method
 							{
-								defocus_guess = y_defocus_uppper/(y_defocus_uppper-y_defocus_lower)*(defocus_lower-defocus_upper);
+								defocus_guess = y_defocus_uppper/(y_defocus_uppper-y_defocus_lower)*(defocus_lower-defocus_upper) + defocus_upper;
 							}
 							else if(is_lower_bound)
 							{
@@ -385,9 +391,9 @@ void C_csp_solver::simulate()
 							defocus_lower = defocus_guess;	// Set lower bound
 							y_defocus_lower = diff_q_dot;	// Set lower convergence error
 
-							if(is_lower_bound && is_upper_bound)
+							if(is_upper_bound && is_upper_error)
 							{
-								defocus_guess = y_defocus_uppper / (y_defocus_uppper - y_defocus_lower)*(defocus_lower - defocus_upper);
+								defocus_guess = y_defocus_uppper/(y_defocus_uppper-y_defocus_lower)*(defocus_lower-defocus_upper) + defocus_upper;
 							}
 							else if(is_upper_bound)
 							{	// should always have upper bound, but keep this framework for consistency...
@@ -440,7 +446,7 @@ void C_csp_solver::simulate()
 					// CR-PC iteration found a solution (though perhaps at POOR CONVERGENCE)
 					// Calculate the difference between thermal power delivered to PC and thermal power requested
 					// (Rec - q_pc_max)/q_pc_max: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
-					diff_q_dot = (mc_cr_outputs.m_q_thermal / q_pc_max) / q_pc_max;
+					diff_q_dot = (mc_cr_outputs.m_q_thermal - q_pc_max) / q_pc_max;
 
 				}	// end iteration on CR defocus
 
@@ -831,6 +837,11 @@ void C_csp_solver::simulate()
 			time_sim_step_next += sim_step_size_baseline;
 		}
 
+		// Save timestep outputs
+		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs
+		mv_time.push_back(mc_sim_info.m_time/3600.0);			//[hr] Time at end of timestep
+		mv_solzen.push_back(mc_weather.ms_outputs.m_solzen);	//[deg] Solar zenith
+
 		// Track time and step forward
 		is_sim_timestep_complete = true;
 		time_previous = mc_sim_info.m_time;						//[s]
@@ -960,7 +971,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 
 		// CR: ON
 		mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C], convert from [K]
-		mc_cr_inputs.m_field_control = 1.0;					//[-] no defocusing for initial simulation
+		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 		mc_collector_receiver.call(mc_weather.ms_outputs,
