@@ -19,8 +19,14 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	error_msg = "";
 
 	// Output vectors
-	mv_time.resize(0);
+	mv_time_mid.resize(0);
 	mv_solzen.resize(0);
+	mv_beam.resize(0);
+	mv_defocus.resize(0);
+	mv_eta_field.resize(0);
+
+	// Solved Controller Variables
+	m_defocus = std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_csp_solver::init_independent()
@@ -84,7 +90,11 @@ void C_csp_solver::simulate()
 	mc_sim_info.m_step = step_local;						//[s]
 	mc_sim_info.m_time = time_previous + step_local;		//[s]
 
+	// Reset vector that tracks operating modes
 	m_op_mode_tracking.resize(0);
+
+	// Reset Controller Variables to Defaults
+	m_defocus = 1.0;		//[-]  
 
 	while( mc_sim_info.m_time <= sim_time_end )
 	{
@@ -450,6 +460,9 @@ void C_csp_solver::simulate()
 
 				}	// end iteration on CR defocus
 
+				// Set Member Defocus Here
+				m_defocus = defocus_guess;
+
 				// Reached convergence on defocus, but it is *possibly* that the CR-PC iteration only solved at POOR CONVERGENCE
 				// Check here...?
 				if(cr_pc_exit_mode == POOR_CONVERGENCE)
@@ -534,7 +547,9 @@ void C_csp_solver::simulate()
 				// 2) Receiver cannot maintain minimum operation fraction
 				//		* Go to power cycle standby or shutdown
 
-				
+				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
+				m_defocus = 1.0;
+
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
 
@@ -633,6 +648,8 @@ void C_csp_solver::simulate()
 					// so shouldn't need to iterate between CR and PC
 				// Assume power cycle can remain in standby the entirety of the timestep
 
+				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
+				m_defocus = 1.0;
 				
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
@@ -668,6 +685,8 @@ void C_csp_solver::simulate()
 					// so shouldn't need to iterate between collector/receiver and power cycle
 				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
 
+				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
+				m_defocus = 1.0;
 
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
@@ -730,6 +749,9 @@ void C_csp_solver::simulate()
 					// **************
 				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
 
+				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
+				m_defocus = 1.0;
+
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
 
@@ -777,6 +799,9 @@ void C_csp_solver::simulate()
 			case tech_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
 				// Solve all models as 'off' or 'idle'
 					// Collector/receiver
+
+				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
+				m_defocus = 1.0;
 
 				// Store operating mode
 				m_op_mode_tracking.push_back(operating_mode);
@@ -839,8 +864,12 @@ void C_csp_solver::simulate()
 
 		// Save timestep outputs
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs
-		mv_time.push_back(mc_sim_info.m_time/3600.0);			//[hr] Time at end of timestep
-		mv_solzen.push_back(mc_weather.ms_outputs.m_solzen);	//[deg] Solar zenith
+		mv_time_mid.push_back((time_previous+mc_sim_info.m_time)/2.0/3600.0);		//[hr] Time at end of timestep
+		mv_solzen.push_back(mc_weather.ms_outputs.m_solzen);		//[deg] Solar zenith
+		mv_beam.push_back(mc_weather.ms_outputs.m_beam);			//[W/m2] DNI
+		mv_eta_field.push_back(mc_cr_outputs.m_eta_field);			//[-] Field efficiency (= eta_field_full * defocus)
+		mv_defocus.push_back(m_defocus);							//[-] Defocus
+		
 
 		// Track time and step forward
 		is_sim_timestep_complete = true;
