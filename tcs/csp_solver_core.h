@@ -153,6 +153,8 @@ public:
 
 	struct S_csp_cr_outputs
 	{
+		double m_eta_field;				//[-] Field optical efficiency
+		
 		double m_q_thermal;				//[MW] 'Available' receiver thermal output
 		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
@@ -162,6 +164,8 @@ public:
 
 		S_csp_cr_outputs()
 		{
+			m_eta_field =  
+
 			m_q_thermal = m_m_dot_salt_tot = m_T_salt_hot =
 				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
 
@@ -313,6 +317,9 @@ private:
 		POOR_CONVERGENCE,	// Models solved, but convergence on T_rec_in was not within specified tolerance
 		CONVERGED			// Models solved; convergence within specified tolerance
 	};
+
+	// Solved Controller Variables
+	double m_defocus;		//[-] (1..0) Should only be less than 1 if receiver is on, but defocused
 	
 
 public:
@@ -346,8 +353,12 @@ public:
 
 
 	// Output vectors
-	std::vector<double> mv_time;
-	std::vector<double> mv_solzen;
+	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep
+	std::vector<double> mv_time_mid;		//[hr]
+	std::vector<double> mv_solzen;			//[deg]
+	std::vector<double> mv_beam;			//[W/m2]
+	std::vector<double> mv_eta_field;		//[-]
+	std::vector<double> mv_defocus;			//[-] = m_defocus 
 
 };
 
