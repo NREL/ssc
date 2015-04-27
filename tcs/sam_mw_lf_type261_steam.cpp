@@ -1363,7 +1363,7 @@ public:
 		{
 			if( m_x_b_des < 0.01 || m_x_b_des > 1.0 )
 			{
-				message( TCS_ERROR, "For recirculated boiler systems, the specified boiler outlet quality %d must be greater than 0.01 and less than or equal to 1.0", m_x_b_des );
+				message( TCS_ERROR, "For recirculated boiler systems, the specified boiler outlet quality %.3f must be greater than 0.01 and less than or equal to 1.0", m_x_b_des );
 				return -1;
 			}
 		}
@@ -1665,7 +1665,7 @@ public:
 		// Calculate the design-point mass flow rate leaving the solar field
 		if( h_sh_out_des == 0.0 || h_pb_out_des == 0.0 )
 		{
-			message( TCS_WARNING, "At design, either the superheater outlet enthlalpy (%d) or the solarfield inlet density (%d) is not set", h_sh_out_des, h_pb_out_des );
+			message( TCS_WARNING, "At design, either the superheater outlet enthlalpy (%.1f) or the solarfield inlet density (%f) is not set", h_sh_out_des, h_pb_out_des );
 		}
 
 		m_m_dot_des = q_abs_tot_des/(h_sh_out_des - h_pb_out_des);
@@ -1729,20 +1729,20 @@ public:
 			double dvar8 = wp.enth;
 			double dvar9 = (dvar8 - dvar7)/(dvar2 - dvar1)*m_nModBoil;
 
-			if( dvar6 > 25.0 )
+			if( abs(dvar6) > 25.0 )
 			{
 				message( TCS_WARNING, "The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
-					" of %d [C] which is %d [C] away from the design-point value of %d [C]. Based on the specified collector geometry, the ideal fraction"
-					" number of superheater modules is approximately %d. Consider adjusting the design-point steam settings, the module geometry, and/or"
+					" of %.1f [C] which is %.1f [C] away from the design-point value of %.1f [C]. Based on the specified collector geometry, the ideal fractional"
+					" number of superheater modules is approximately %.2f. Consider adjusting the design-point steam settings, the module geometry, and/or"
 					" the module distribution to better match the desired steam conditions", m_nModBoil, m_nModSH, dvar5-273.15, dvar6, m_T_field_out_des-273.15, dvar9 );					
 			}
-			if( dvar6 < -25.0 )
+			/*if( dvar6 < -25.0 )
 			{
 				message( TCS_WARNING,  "The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
-					" of %d [C] which is %d [C] away from the design-point value of %d [C]. Based on the specified collector geometry, the ideal fraction"
+					" of %d [C] which is %d [C] away from the design-point value of %d [C]. Based on the specified collector geometry, the ideal fractional"
 					" number of superheater modules is approximately %d. Consider adjusting the design-point steam settings, the module geometry, and/or"
 					" the module distribution to better match the desired steam conditions", m_nModBoil, m_nModSH, dvar5-273.15, -dvar6, m_T_field_out_des-273.15, dvar9 );								
-			}
+			}*/
 			T_burn = max( dvar5, m_T_field_out_des ) - 273.15;
 		}
 		else
@@ -3005,7 +3005,7 @@ public:
 		value( O_W_DOT_FIXED, W_dot_fixed );					   //[MW] Fixed parasitic power losses.. for every hour of operation
 		value( O_W_DOT_PUMP, W_dot_pump );						   //[MW] Required solar field pumping power
 		value( O_W_DOT_PAR_TOT, W_dot_aux+W_dot_bop+W_dot_col+W_dot_fixed+W_dot_pump );	//[MW] Total parasitic power losses
-		value( O_P_SF_IN, P_turb_in - dP_tot );						//[bar] Solar field inlet pressure
+		value( O_P_SF_IN, P_turb_in + dP_tot );						//[bar] Solar field inlet pressure
 
 		return 0;
 	}

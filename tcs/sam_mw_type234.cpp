@@ -711,7 +711,12 @@ public:
 			P_rh_in = m_Psat_ref;
 			m_P_rh_ref = m_Psat_ref;
 		}
+        /* MW 2015.4.27
+        For fixed pressure applications, I think we can comment out the sliding pressure calculation and just set to the design
+        point pressure. Do this here..
+        */
 		P_turb_in = pow( ( pow(P_rh_in,2) + pow(max(0.5,m_dot_ND),2)*(pow(m_P_boil_des,2)-pow(m_P_rh_ref,2)) ), 0.5 );
+        //P_turb_in = m_P_boil_des;     // For fixed pressure applications...
 
 		double h_t_out = 0.0;
 		// Determine HP turbine outlet conditions
