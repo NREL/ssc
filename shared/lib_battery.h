@@ -286,7 +286,7 @@ class losses_t
 {
 public:
 	losses_t(lifetime_t *, thermal_t *, capacity_t*);
-	void run_losses();
+	void run_losses(double dt_hour);
 
 protected:
 	lifetime_t * _lifetime;
