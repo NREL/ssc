@@ -96,10 +96,6 @@ capacity_t(q20)
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
 
-	FILE * kibam_file;
-	kibam_file = fopen("kibam_metrics.txt", "w+");
-	fprintf(kibam_file, "Power\t Voltage\t Id_max\t Ic_max\t I\t dt\n");
-	fclose(kibam_file);
 }
 
 double capacity_kibam_t::c_compute(double F, double t1, double t2, double k_guess)
@@ -215,24 +211,25 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 }
 void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 {
-	_q0 *= capacity_percent*0.01;
-	_q1_0 *= capacity_percent*0.01;
-	_q2_0 *= capacity_percent*0.01;
+
+	_I *= capacity_percent*0.01;
 	update_SOC();
 }
 void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)
 {
+
 	if (update_max_capacity)
 	{
 		if (_qmax0* capacity_percent*0.01 <= _qmax)
 			_qmax = _qmax0* capacity_percent*0.01;
 	}
+	// scale to q0 = qmax if q0 > qmax
 	if (_q0 > _qmax)
 	{
-		double p_q1 = _q1 / _q0;
-		_q0 = _qmax;
-		_q1 = p_q1 * _q0;
-		_q2 = (1 - p_q1)* _q0;
+		double p = _qmax / _q0;
+		_q0 *= p;
+		_q1 *= p;
+		_q2 *= p;
 	}
 	update_SOC();
 }
@@ -279,7 +276,7 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 }
 void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
-	_q0 *= capacity_percent*0.01;
+	_I *= capacity_percent*0.01;
 	update_SOC();
 }
 void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)
@@ -383,11 +380,9 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 
 	// Discharged lower than model can handle ( < 1% SOC)
 	if (V < 0 || !isfinite(V))
-		V = 0.5*_Vnom;
-	/*
-	else if (V > 1000)
+		V = 0.5*_Vnom; 
+	else if (V > _Vfull*1.25)
 		V = _Vfull;
-	*/
 	return V;
 }
 
@@ -751,7 +746,7 @@ losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capac
 	_capacity = capacity;
 	_nCycle = 0;
 }
-void losses_t::run_losses()
+void losses_t::run_losses(double dt_hour)
 {
 	bool update_max_capacity = false;
 	
@@ -762,14 +757,12 @@ void losses_t::run_losses()
 		update_max_capacity = true;
 	}
 	
-	// apply losses on charge + discharge
-	if (_capacity->I() != 0)
+	// apply losses only on discharge
+	if (_capacity->I() > 0)
 	{
 		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
 		_capacity->updateCapacityForLifetime(_lifetime->capacity_percent(), update_max_capacity);
 	}
-	
-	
 }
 /* 
 Define Battery 
@@ -829,7 +822,7 @@ void battery_t::runLifetimeModel(double DOD)
 }
 void battery_t::runLossesModel()
 {
-	_losses->run_losses();
+	_losses->run_losses(_dt_hour);
 }
 capacity_t * battery_t::capacity_model()
 {
@@ -950,7 +943,6 @@ double dispatch_t::current_controller(double battery_voltage)
 }
 void dispatch_t::compute_efficiency()
 {
-
 	// average cycle efficiency
 	if (_e_tofrom_batt > 0.)
 		_discharge_accumulated += _e_tofrom_batt;
