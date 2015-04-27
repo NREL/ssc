@@ -22,8 +22,13 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	mv_time_mid.resize(0);
 	mv_solzen.resize(0);
 	mv_beam.resize(0);
-	mv_defocus.resize(0);
 	mv_eta_field.resize(0);
+	mv_defocus.resize(0);
+	mv_rec_eta_thermal.resize(0);
+	mv_rec_q_thermal.resize(0);
+	mv_pc_eta.resize(0);
+	mv_pc_W_gross.resize(0);
+	
 
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
@@ -807,7 +812,7 @@ void C_csp_solver::simulate()
 				m_op_mode_tracking.push_back(operating_mode);
 
 				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				mc_cr_inputs.m_field_control = 0.0;						//[-] Field OFF when receiver is OFF!
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 				mc_collector_receiver.call(mc_weather.ms_outputs,
 					mc_cr_htf_state,
@@ -862,6 +867,8 @@ void C_csp_solver::simulate()
 			time_sim_step_next += sim_step_size_baseline;
 		}
 
+
+		double step_hr = mc_sim_info.m_step/3600.0;
 		// Save timestep outputs
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs
 		mv_time_mid.push_back((time_previous+mc_sim_info.m_time)/2.0/3600.0);		//[hr] Time at end of timestep
@@ -869,7 +876,10 @@ void C_csp_solver::simulate()
 		mv_beam.push_back(mc_weather.ms_outputs.m_beam);			//[W/m2] DNI
 		mv_eta_field.push_back(mc_cr_outputs.m_eta_field);			//[-] Field efficiency (= eta_field_full * defocus)
 		mv_defocus.push_back(m_defocus);							//[-] Defocus
-		
+		mv_rec_eta_thermal.push_back(mc_cr_outputs.m_eta_thermal);	//[-] Receiver thermal efficiency
+		mv_rec_q_thermal.push_back(mc_cr_outputs.m_q_thermal*step_hr);	//[MWt-hr] Receiver thermal output
+		mv_pc_eta.push_back(mc_pc_outputs.m_eta);					//[-] Power cycle efficiency (gross - no parasitics outside of power block)
+		mv_pc_W_gross.push_back(mc_pc_outputs.m_P_cycle*step_hr);	//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
 
 		// Track time and step forward
 		is_sim_timestep_complete = true;

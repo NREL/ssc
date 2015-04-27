@@ -343,10 +343,16 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		}
 
 		// *****
-		m_dot_demand = 0.0;
-		eta = 0.0;									// Using reference efficiency because starting up during this timestep
+		P_cycle = 0.0;		
+		eta = 0.0;									
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
 		// *****
+		m_dot_demand = 0.0;
+		m_dot_makeup = 0.0;
+		W_cool_par = 0.0;
+		f_hrsys = 0.0;
+		P_cond = 0.0;
+		m_dot_st_bd = 0.0;
 
 		break;
 
