@@ -52,6 +52,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	// Set collector/receiver parent class outputs and return
 	cr_outputs.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
 
+	cr_outputs.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				//[-]
 	cr_outputs.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				//[MW]
 	cr_outputs.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
 	cr_outputs.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]

@@ -155,6 +155,7 @@ public:
 	{
 		double m_eta_field;				//[-] Field optical efficiency
 		
+		double m_eta_thermal;			//[-] Receiver thermal efficiency
 		double m_q_thermal;				//[MW] 'Available' receiver thermal output
 		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
@@ -166,7 +167,7 @@ public:
 		{
 			m_eta_field =  
 
-			m_q_thermal = m_m_dot_salt_tot = m_T_salt_hot =
+			m_eta_thermal = m_q_thermal = m_m_dot_salt_tot = m_T_salt_hot =
 				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
 
 			//m_mode_calculated = -1;
@@ -359,6 +360,10 @@ public:
 	std::vector<double> mv_beam;			//[W/m2]
 	std::vector<double> mv_eta_field;		//[-]
 	std::vector<double> mv_defocus;			//[-] = m_defocus 
+	std::vector<double> mv_rec_eta_thermal;	//[-] Receiver thermal efficiency
+	std::vector<double> mv_rec_q_thermal;	//[MWt-hr] Receiver thermal energy output over (perhaps varying length) timestep 
+	std::vector<double> mv_pc_eta;			//[-] Power cycle efficiency (gross - no parasitics outside of power block)
+	std::vector<double> mv_pc_W_gross;		//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
 
 };
 
