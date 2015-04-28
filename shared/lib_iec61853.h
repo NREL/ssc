@@ -2,6 +2,7 @@
 #define _iec61853_h
 
 #include "lib_util.h"
+#include "lib_pvmodel.h"
 
 class Imessage_api {
 public: virtual ~Imessage_api() { }
@@ -9,12 +10,13 @@ public: virtual ~Imessage_api() { }
 		virtual void Outln(const char *) = 0;
 };
 
-struct iec61853par
+class iec61853_module_t : public pvmodule_t
 {
+public:
 	enum { monoSi, multiSi, CdTe, CIS, CIGS, Amorphous, _maxTypeNames };
 	static const char *module_type_names[_maxTypeNames];
 
-	iec61853par();
+	iec61853_module_t();
 	void set_fs267_from_matlab();
 
 	// model parameters
@@ -34,6 +36,15 @@ struct iec61853par
 	double betaVoc;
 	double gammaPmp;
 	
+	// STC parameters
+	double Vmp0, Imp0, Voc0, Isc0;
+	
+	// physical data
+	int NcellSer;
+	double Area;
+	bool GlassAR;
+	double AMA[5];
+
 	Imessage_api *_imsg;
 
 
@@ -50,7 +61,16 @@ struct iec61853par
 			double *p_Il, double *p_Io, double *p_Rs, double *p_Rsh );
 	bool tcoeff( util::matrix_t<double> &input, size_t icol, double irr, 
 		double *tempc, bool verbose );
+
+	virtual double AreaRef() { return Area; }
+	virtual double VmpRef() { return Vmp0; }
+	virtual double ImpRef() { return Imp0; }
+	virtual double VocRef() { return Voc0; }
+	virtual double IscRef() { return Isc0; }
+	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output );
 };
+
+
 
 
 

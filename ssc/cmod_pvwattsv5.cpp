@@ -6,6 +6,7 @@
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
+#include "lib_pvmodel.h"
 
 #ifndef DTOR
 #define DTOR 0.0174532925
@@ -183,54 +184,6 @@ public:
 		
 		gcr = 0.4;
 		if ( track_mode == 1 && is_assigned("gcr") ) gcr = as_double("gcr");
-	}
-
-	double transmittance( double theta1, double n_material, double n_incoming, double k, double l, double *theta2_ret = 0 )
-	{
-		double theta2 = asind( n_incoming / n_material * sind(theta1 ) ); // % snell's law, assuming n_air = 1.0
-		if ( theta2_ret != 0 ) *theta2_ret = theta2;
-
-		// fresnel's equation for non-reflected unpolarized radiation as an average of perpendicular and parallel components
-		double tr0 = 1 - 0.5 *
-			( pow( sind(theta2-theta1), 2 )/pow( sind(theta2+theta1), 2)
-			+ pow( tand(theta2-theta1), 2 )/pow( tand(theta2+theta1), 2 ) );
-
-		return tr0; //* exp( -k * l / cosd(theta2) ); // Ignore Bouger's law since it has a truly tiny effect
-	}
-	
-	double iam( double theta, bool ar_glass )
-	{
-		double normal = iam_nonorm( 1, ar_glass );
-		double actual = iam_nonorm( theta, ar_glass );
-		return actual/normal;	
-	}
-
-	double iam_nonorm( double theta, bool ar_glass )
-	{
-		double n_air = 1.0;
-
-		double n_g = 1.526;
-		double k_g = 4;
-		double l_g = 0.002;
-
-		double n_arc = 1.3;
-		double k_arc = 4;
-		double l_arc = l_g*0.01;  // assume 1/100th thickness of glass for AR coating
-
-		if ( theta < 1 ) theta = 1;
-		if ( theta > 89 ) theta = 89;
-
-		if ( ar_glass )
-		{
-			double theta2 = 1;
-			double tau_coating = transmittance( theta, n_arc, n_air, k_arc, l_arc, &theta2 );
-			double tau_glass = transmittance( theta2, n_g, n_arc, k_g, l_g );
-			return tau_coating*tau_glass;
-		}
-		else
-		{
-			return transmittance(theta, n_g, n_air, k_g, l_g );
-		}
 	}
 
 	void initialize_cell_temp( double ts_hour, double last_tcell = -9999, double last_poa = -9999 )

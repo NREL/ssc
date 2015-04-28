@@ -103,4 +103,18 @@ public:
 };
 
 
+double current_5par( double V, double IMR, double A, double IL, double IO, double RS, double RSH );
+double openvoltage_5par( double Voc0, double a, double IL, double IO, double Rsh );
+double maxpower_5par( double Voc_ubound, double a, double Il, double Io, double Rs, double Rsh, double *Vmp=0, double *Imp=0 );
+double air_mass_modifier( double Zenith_deg, double Elev_m, double a[5] );
+double transmittance( double theta1_deg, /* incidence angle of incoming radiation (deg) */
+		double n_cover,  /* refractive index of cover material, n_glass = 1.586 */
+		double n_incoming, /* refractive index of incoming material, typically n_air = 1.0 */
+		double k = 0,        /* proportionality constant assumed to be 4 (1/m) for derivation of Bouguer's law (set to zero to skip bougeur's law */
+		double l_thick = 0,  /* material thickness (set to zero to skip Bouguer's law */
+		double *_theta2_deg = 0 ); /* thickness of cover material (m), usually 2 mm for typical module */
+double iam( double theta_deg, bool ar_glass ); // incidence angle modifier factor relative to normal incidence
+double iam_nonorm( double theta_deg, bool ar_glass );  // non-normalized cover loss (typically use one above!)
+
+
 #endif

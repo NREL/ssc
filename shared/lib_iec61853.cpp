@@ -6,18 +6,28 @@
 #include "lib_iec61853.h"
 
 
-const char *iec61853par::module_type_names[_maxTypeNames] = { "monoSi", "multiSi", "CdTe", "CIS", "CIGS", "Amorphous" };
-const char *iec61853par::col_names[COL_MAX] = { "Irr (W/m2)", "Temp (C)", "Pmp (W)", "Vmp (V)", "Voc (V)", "Isc (A)" };
-const char *iec61853par::par_names[PARMAX] = { "IL", "IO", "RS", "RSH" };
+const char *iec61853_module_t::module_type_names[_maxTypeNames] = { "monoSi", "multiSi", "CdTe", "CIS", "CIGS", "Amorphous" };
+const char *iec61853_module_t::col_names[COL_MAX] = { "Irr (W/m2)", "Temp (C)", "Pmp (W)", "Vmp (V)", "Voc (V)", "Isc (A)" };
+const char *iec61853_module_t::par_names[PARMAX] = { "IL", "IO", "RS", "RSH" };
 
-iec61853par::iec61853par()
+iec61853_module_t::iec61853_module_t()
 {
 	_imsg = 0;
 	alphaIsc = n = Il = Io = C1 = C2 = C3
 			= D1 = D2 = D3 = Egref = std::numeric_limits<double>::quiet_NaN();
+		
+	betaVoc = gammaPmp = Area = std::numeric_limits<double>::quiet_NaN();
+	
+	Vmp0 = Imp0 = Voc0 = Isc0 = std::numeric_limits<double>::quiet_NaN();
+
+	NcellSer = 0;
+	GlassAR = false;
+	for( int i=0;i<5;i++ )
+		AMA[i] = std::numeric_limits<double>::quiet_NaN();
+
 }
 
-void iec61853par::set_fs267_from_matlab()
+void iec61853_module_t::set_fs267_from_matlab()
 {		
 	alphaIsc=0.000472; n=1.451; Il=1.18952; Io=2.08556e-09;
 	C1=1932.09; C2=474.895; C3=1.48756;
@@ -105,7 +115,7 @@ bool linfit( std::vector<double> &yvec, std::vector<double> &xvec, double *mout,
 	return true;
 }
 
-bool iec61853par::tcoeff( util::matrix_t<double> &input, size_t icol, double irr, double *tempc, bool print_table )
+bool iec61853_module_t::tcoeff( util::matrix_t<double> &input, size_t icol, double irr, double *tempc, bool print_table )
 {
 	*tempc = std::numeric_limits<double>::quiet_NaN();
 	
@@ -211,7 +221,7 @@ int gauss( double A[4][4], double B[4] )
 	return 0;
 }
 
-bool iec61853par::solve( double Voc, double Isc, double Vmp, double Imp, double a,
+bool iec61853_module_t::solve( double Voc, double Isc, double Vmp, double Imp, double a,
 			double *p_Il, double *p_Io, double *p_Rs, double *p_Rsh )
 {
 	// initial guesses must be passed in
@@ -367,7 +377,7 @@ double Rs_fit_eqn( double _x, double *par, void * )
 	return par[0] + ( 1-_x/1000) *par[1]*pow(1000/_x, 2.0);
 }
 
-bool iec61853par::calculate( util::matrix_t<double> &input, int nseries, int Type, 
+bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, int Type, 
 	util::matrix_t<double> &par, bool verbose )
 {
 	if (input.ncols() != COL_MAX) {
@@ -382,7 +392,7 @@ bool iec61853par::calculate( util::matrix_t<double> &input, int nseries, int Typ
 
 	// get STC module conditions (1000 W/m2, 25 deg C)
 	// assume these are the 'official' STC ratings
-	double Vmp0=-1, Imp0=-1, Pmp0=-1, Voc0=-1, Isc0=-1;
+	double Pmp0=-1;
 	int idx_stc = -1;
 	for( size_t i=0;i<input.nrows();i++ )
 	{
@@ -703,4 +713,62 @@ bool iec61853par::calculate( util::matrix_t<double> &input, int nseries, int Typ
 	C3 = C[2];
 
 	return true;
+}
+
+bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &out )
+{
+	/* initialize output first */
+	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
+	
+	// plane of array irradiance, W/m2
+	double poa = input.Ibeam + input.Idiff + input.Ignd; 
+
+	// transmitted poa through module cover
+	double tpoa = poa - ( 1.0 - iam( input.IncAng, GlassAR ) )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
+	if( tpoa < 0.0 ) tpoa = 0.0;
+	
+	// spectral effect via AM modifier
+	tpoa *= air_mass_modifier( input.Zenith, input.Elev, AMA );	
+	
+	double Tc = input.Tdry + 273.15;
+	if ( tpoa >= 1.0 )
+	{
+		Tc = TcellC + 273.15;
+		double q = 1.6e-19;
+		double k = 1.38e-23;
+		double aop = NcellSer*n*k*Tc/q;
+		double Ilop = tpoa/1000*(Il + alphaIsc*(Tc-298.15));
+		double Egop = (1-0.0002677*(Tc-298.15))*Egref;
+		double Ioop = Io*pow(Tc/298.15,3.0)*exp( 11600 * (Egref/298.15 - Egop/Tc));
+		double Rsop = D1 + D2*(Tc-298.15) + D3*( 1-tpoa/1000.0)*pow(1000.0/poa,2.0);
+		double Rshop = C1 + C2*( pow(1000.0/tpoa,C3)-1 );
+					
+		double V_oc = openvoltage_5par( Voc0, aop, Ilop, Ioop, Rshop );
+		double I_sc = Ilop/(1+Rsop/Rshop);
+		
+		double P, V, I;
+		
+		if ( opvoltage < 0 )
+		{
+			P = maxpower_5par( V_oc, aop, Ilop, Ioop, Rsop, Rshop, &V, &I );			
+		}
+		else
+		{ // calculate power at specified operating voltage
+			V = opvoltage;
+			if (V >= V_oc) I = 0;
+			else I = current_5par( V, 0.9*Ilop, aop, Ilop, Ioop, Rsop, Rshop );
+
+			P = V*I;
+		}
+		
+		out.Power = P;
+		out.Voltage  = V;
+		out.Current = I;
+		out.Efficiency = P/(Area*poa);
+		out.Voc_oper = V_oc;
+		out.Isc_oper = I_sc;
+		out.CellTemp = Tc - 273.15;
+	}
+
+	return out.Power >= 0;
 }
