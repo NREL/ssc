@@ -55,12 +55,12 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		iec61853par solver;
+		iec61853_module_t solver;
 		msg_handler msgs( *this );
 		solver._imsg = &msgs;
 
 		util::matrix_t<double> input = as_matrix("input"), par;
-		if ( input.ncols() != iec61853par::COL_MAX )
+		if ( input.ncols() != iec61853_module_t::COL_MAX )
 			throw exec_error( "iec61853", "six data columns required for input matrix: IRR,TC,PMP,VMP,VOC,ISC");
 
 		if (!solver.calculate( input, as_number("nser"), as_number("type"), par, as_boolean("verbose") ))
