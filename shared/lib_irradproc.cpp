@@ -793,10 +793,11 @@ void irrad::set_location( double lat, double lon, double tz )
 	this->tz = tz;
 }
 
-void irrad::set_sky_model( int skymodel, double albedo )
+void irrad::set_sky_model(int skymodel, double albedo, double diff_view_factor)
 {
 	this->skymodel = skymodel;
 	this->alb = albedo;
+	this->diff_vf = diff_view_factor;
 }
 
 void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr )
@@ -969,6 +970,10 @@ int irrad::calc()
 		}
 
 		ghi = idiff;
+
+		// apply diffuse view factor to sky diffuse radiation if "reasonable" and not equal to 1 (default that uses sky model calculations)
+		if ((diff_vf >= 0) && (diff_vf < 1.0))
+			poa[1] = idiff * diff_vf;
 	}
 
 	return 0;

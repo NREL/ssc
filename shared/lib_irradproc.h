@@ -23,7 +23,7 @@ private:
 
 	double lat, lon, tz;
 	int radmode, skymodel, track;
-	double gh, dn, df, alb;
+	double gh, dn, df, alb, diff_vf;
 	double tilt, sazm, rlim, gcr;
 	bool en_backtrack;
 	double sun[9], angle[5], poa[3], diffc[3];
@@ -40,7 +40,7 @@ public:
 	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
 	void set_location( double lat, double lon, double tz );
 	//skymodel: 0 is isotropic, 1 is hdkr, 2 is perez
-	void set_sky_model( int skymodel, double albedo );
+	void set_sky_model( int skymodel, double albedo, double diff_view_factor=1.0 );
 	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr );
 	void set_beam_diffuse( double beam, double diffuse );
 	void set_global_beam( double global, double beam );
