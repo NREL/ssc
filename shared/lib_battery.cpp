@@ -505,7 +505,7 @@ int lifetime_t::rainflow_compareRanges()
 		// check DOD, increment counters
 		if (_Range > 40.)
 			_fortyPercent++;
-		else if (_Range > 98)
+		if (_Range >= 99.5)
 			_hundredPercent++;
 
 		// discard peak & valley of Y
