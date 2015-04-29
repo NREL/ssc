@@ -787,7 +787,13 @@ public:
 
 			// Initialize snow model if activated
 			if (activate_snow_model)
-				sa[nn].sm.setup( as_integer(prefix + "nmody"), sa[nn].tilt );
+				if( !sa[nn].sm.setup( as_integer(prefix + "nmody"), sa[nn].tilt )){
+					if(sa[nn].sm.good)log(sa[nn].sm.msg, SSC_WARNING);
+					else{
+						log(sa[nn].sm.msg, SSC_ERROR);
+						return; 
+					}
+				}
 		}
 		// loop over subarrays AGAIN to calculate shading inputs because nstrings in subarray 1 isn't correct until AFTER the previous loop
 		for (size_t nn = 0; nn < 4; nn++)
@@ -1677,7 +1683,7 @@ public:
 						if (!sa[nn].sm.getLoss(p_poashaded[nn][idx], p_surftilt[nn][idx], wf.wspd, wf.tdry, wf.snow, sunup, 1.0/step_per_hour, &smLoss)){
 							if (!sa[nn].sm.good) { 
 								log(sa[nn].sm.msg, SSC_ERROR);
-								// What is the correct way to force a quit?
+								// What is the best way to force a quit?
 								return; 
 							}
 						} 

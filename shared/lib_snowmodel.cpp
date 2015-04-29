@@ -48,6 +48,14 @@ bool pvsnowmodel::setup(int nmody_in, float baseTilt_in){
 
 	nmody = nmody_in;
 	baseTilt = baseTilt_in;
+
+	if(baseTilt>45 || baseTilt < 10){
+		good = true;
+		msg = "The snow model was designed for systems with base tilt angle between 10 and 45 degrees. Snow loss estimations for systems outside this range are not guarenteed";
+		return false;
+	}
+
+	good = true;
 	return true;
 }
 
@@ -57,7 +65,8 @@ bool pvsnowmodel::getLoss(float poa, float tilt, float wspd, float tdry, float s
 	bool isGood = true;
 
 	// Check if snow depth value is valid
-	if (snowDepth == -9999 || snowDepth == -999 || isnan(snowDepth)){
+	// * 610 cm ~= 20 ft
+	if (snowDepth < 0 || snowDepth > 610 || isnan(snowDepth)){
 		isGood = false;
 		snowDepth = 0;
 		badValues++;

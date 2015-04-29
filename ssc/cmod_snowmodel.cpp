@@ -85,7 +85,13 @@ public:
 
 		/* NOTE: All input arrays must have a length of 8760 */
 		pvsnowmodel snowModule;
-		snowModule.setup(nmody, baseTilt);
+		if( !snowModule.setup(nmody, baseTilt) ){
+			if (snowModule.good) log(snowModule.msg, SSC_WARNING);
+			else{
+				log(snowModule.msg, SSC_ERROR);
+				return;
+			}	
+		}
 
 		float loss; 
 
