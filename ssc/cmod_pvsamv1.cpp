@@ -1224,6 +1224,9 @@ public:
 			celltemp_model = &noct_tc;
 			module_model = &sd11;
 			module_watts_stc = sd11.Vmp0 * sd11.Imp0;
+			ref_area_m2 = sd11.Area;			
+			self_shading_fill_factor = sd11.Vmp0 * sd11.Imp0 / sd11.Voc0 / sd11.Isc0;
+			ssVmp = sd11.Vmp0;
 		}
 		else
 			throw exec_error("pvsamv1", "invalid pv module model type");
@@ -1713,6 +1716,18 @@ public:
 						(*module_model)( in, tcell, module_voltage, out );
 					}
 
+					if ( !isfinite(out.Power) )
+					{
+						out.Power = 0;
+						out.Voltage = 0;
+						out.Current = 0;
+						out.Efficiency = 0;
+						out.CellTemp = tcell;
+						log( util::format(	"Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
+											"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
+											wf.month, wf.day, wf.hour, wf.minute, sa[nn].poa ), SSC_NOTICE );
+					}
+
 					// save DC module outputs for this subarray
 					sa[nn].module.dcpwr = out.Power;
 					sa[nn].module.dceff = out.Efficiency*100;
@@ -1939,7 +1954,7 @@ public:
 
 		double inp_rad = is_cpv ? as_double("annual_input_radiation_beam") : as_double("annual_input_radiation");
 		double ac_net = as_double("annual_ac_net");
-		double mod_eff = module_eff();
+		double mod_eff = module_eff( mod_type );
 
 		// calculate system performance factor
 		// reference: (http://files.sma.de/dl/7680/Perfratio-UEN100810.pdf)
@@ -2203,11 +2218,10 @@ public:
 	}
 
 
-	double module_eff()
+	double module_eff(int mod_type)
 	{
 		double eff = -1;
 	
-		int mod_type = as_integer("module_model");
 		switch (mod_type)
 		{
 		case 0: // SPE
@@ -2246,6 +2260,15 @@ public:
 					eff = eff/area;
 				eff = eff / 1000.0;
 				eff = eff * 100;
+			}
+			break;
+		case 4: // IEC 61853
+			{
+				double area = as_double("sd11par_area");
+				double vmp = as_double("sd11par_Vmp0");
+				double imp = as_double("sd11par_Imp0");
+				if (area == 0) area = 1;
+				eff = 100.0 * ((vmp*imp)/area)/1000.0;
 			}
 			break;
 		}
