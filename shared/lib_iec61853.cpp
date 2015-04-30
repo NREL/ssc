@@ -724,14 +724,16 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	double poa = input.Ibeam + input.Idiff + input.Ignd; 
 
 	// transmitted poa through module cover
-	double tpoa = poa - ( 1.0 - iam( input.IncAng, GlassAR ) )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
+	double iamf = iam( input.IncAng, GlassAR );
+	double tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
 	if( tpoa < 0.0 ) tpoa = 0.0;
 	
 	// spectral effect via AM modifier
-	tpoa *= air_mass_modifier( input.Zenith, input.Elev, AMA );	
+	double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );
+	tpoa *= ama;	
 	
 	double Tc = input.Tdry + 273.15;
-	if ( tpoa >= 1.0 )
+	if ( poa >= 0.5 && tpoa >= 0.5 )
 	{
 		Tc = TcellC + 273.15;
 		double q = 1.6e-19;
@@ -743,6 +745,12 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		double Rsop = D1 + D2*(Tc-298.15) + D3*( 1-tpoa/1000.0)*pow(1000.0/poa,2.0);
 		double Rshop = C1 + C2*( pow(1000.0/tpoa,C3)-1 );
 					
+
+		// at some very low irradiances, these parameters can blow up due to
+		// equations and keep the model from solving
+		//if ( Rsop > 1000 ) Rsop = 10000;
+		//if ( Rshop > 25000 ) Rshop = 25000;
+
 		double V_oc = openvoltage_5par( Voc0, aop, Ilop, Ioop, Rshop );
 		double I_sc = Ilop/(1+Rsop/Rshop);
 		
@@ -750,7 +758,8 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		
 		if ( opvoltage < 0 )
 		{
-			P = maxpower_5par( V_oc, aop, Ilop, Ioop, Rsop, Rshop, &V, &I );			
+			P = maxpower_5par( V_oc, aop, Ilop, Ioop, Rsop, Rshop, &V, &I );
+			if ( P < 0 ) P = 0;
 		}
 		else
 		{ // calculate power at specified operating voltage
@@ -758,9 +767,10 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 			if (V >= V_oc) I = 0;
 			else I = current_5par( V, 0.9*Ilop, aop, Ilop, Ioop, Rsop, Rshop );
 
+			if ( I < 0 ) { I=0; V=0; }
 			P = V*I;
 		}
-		
+						
 		out.Power = P;
 		out.Voltage  = V;
 		out.Current = I;

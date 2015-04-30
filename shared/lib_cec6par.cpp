@@ -107,7 +107,8 @@ double air_mass_modifier( double Zenith_deg, double Elev_m, double a[5] )
 	// !Calculation of Air Mass Modifier
 	double air_mass = 1/(cos( Zenith_deg*M_PI/180 )+0.5057*pow(96.080-Zenith_deg, -1.634));
 	air_mass *= exp(-0.0001184 * Elev_m); // 'optional' correction for elevation (m), as applied in Sandia PV model
-	return a[0] + a[1]*air_mass + a[2]*pow(air_mass,2) + a[3]*pow(air_mass,3) + a[4]*pow(air_mass,4);
+	double f1 = a[0] + a[1]*air_mass + a[2]*pow(air_mass,2) + a[3]*pow(air_mass,3) + a[4]*pow(air_mass,4);
+	return f1 > 0.0 ? f1 : 0.0;
 }
 
 bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &out )
