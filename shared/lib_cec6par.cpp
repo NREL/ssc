@@ -71,18 +71,18 @@ static double irradiance_through_cover(
 	// effective irradiance transmitted through glass cover
 
 	// transmittance at angle normal to surface (0 deg), use 1 (deg) to avoid numerical probs.
-	double tau_norm = transmittance( 1.0, n_cover, k_trans, l_thick );
+	double tau_norm = transmittance( 1.0, n_cover, 1.0, k_trans, l_thick );
 	
 	// transmittance of beam radiation, at incidence angle
-	double tau_beam = transmittance( theta, n_cover, k_trans, l_thick );
+	double tau_beam = transmittance( theta, n_cover, 1.0, k_trans, l_thick );
 
 	// transmittance of sky diffuse, at modified angle by (D&B Eqn 5.4.2)
 	double theta_sky = 59.7 - 0.1388*tilt + 0.001497*tilt*tilt;
-	double tau_sky = transmittance( theta_sky, n_cover, k_trans, l_thick );
+	double tau_sky = transmittance( theta_sky, n_cover, 1.0,  k_trans, l_thick );
 	
 	// transmittance of ground diffuse, at modified angle by (D&B Eqn 5.4.1)
 	double theta_gnd = 90.0 - 0.5788*tilt  + 0.002693*tilt*tilt;
-	double tau_gnd = transmittance( theta_gnd, n_cover, k_trans, l_thick );
+	double tau_gnd = transmittance( theta_gnd, n_cover, 1.0, k_trans, l_thick );
 
 	// calculate component incidence angle modifiers, D&B Chap. 5 eqn 5.12.1, DeSoto'04
 	double Kta_beam = tau_beam / tau_norm;
