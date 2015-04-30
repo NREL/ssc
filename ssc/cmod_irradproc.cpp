@@ -175,7 +175,7 @@ public:
 
 			x.set_time( (int)year[i], (int)month[i], (int)day[i], (int)hour[i], minute[i], delt );
 			x.set_location( lat, lon, tz );
-			x.set_sky_model( sky_model, alb );
+			x.set_sky_model( sky_model, alb, false ); // diffuse shading factor not enabled (set to 1.0 by default)
 			if ( irrad_mode == 1 ) x.set_global_beam( glob[i], beam[i] );
 			else if (irrad_mode == 2) x.set_global_diffuse(glob[i], diff[i]);
 			else x.set_beam_diffuse( beam[i], diff[i] );

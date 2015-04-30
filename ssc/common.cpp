@@ -287,6 +287,7 @@ float adjustment_factors::operator()( size_t time )
 shading_factor_calculator::shading_factor_calculator()
 {
 	m_enAzAlt = false;
+	m_diff_enabled = false;
 	m_diffFactor = 1.0;
 }
 
@@ -360,9 +361,11 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		m_enAzAlt = true;
 	}
 
-	if ( cm->is_assigned( prefix+"shading:diff" ) )
-		m_diffFactor = 1-cm->as_double( prefix+"shading:diff" )/100;
-
+	if (cm->is_assigned(prefix + "shading:diff"))
+	{
+		m_diffFactor = 1 - cm->as_double(prefix + "shading:diff") / 100;
+		m_diff_enabled = true; // allows for inputs of 1
+	}
 
 	return ok;
 }
@@ -389,4 +392,9 @@ double shading_factor_calculator::fbeam( size_t hour, double solalt, double sola
 double shading_factor_calculator::fdiff()
 {
 	return m_diffFactor;
+}
+
+bool shading_factor_calculator::en_diff()
+{
+	return m_diff_enabled;
 }

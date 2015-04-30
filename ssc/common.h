@@ -34,6 +34,7 @@ class shading_factor_calculator
 	std::vector<double> m_beamFactors;
 	util::matrix_t<double> m_azaltvals;
 	bool m_enAzAlt;
+	bool m_diff_enabled;
 	double m_diffFactor;
 
 public:
@@ -44,6 +45,7 @@ public:
 	// beam and diffuse loss factors (0: full loss, 1: no loss )
 	double fbeam( size_t hour /* 0-8759 */, double solalt, double solazi );
 	double fdiff();
+	bool en_diff();
 };
 
 #endif

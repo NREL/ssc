@@ -137,7 +137,7 @@ public:
 		if (snow > 0 && snow < 150)
 			alb = 0.6;
 
-		irr.set_sky_model( 2, alb );
+		irr.set_sky_model( 2, alb, false ); // diffuse shading factor not enabled (set to 1.0 by default)
 		irr.set_beam_diffuse( beam, diff );
 		irr.set_surface( track_mode, tilt, azimuth, rlim, -1, -1 );
 			
