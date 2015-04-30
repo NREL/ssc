@@ -1512,9 +1512,8 @@ public:
 					irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour );
 					irr.set_location( wf.lat, wf.lon, wf.tz );
 			
-					// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-					irr.set_sky_model(skymodel, alb, sa[nn].shad.fdiff());
-					//irr.set_sky_model(skymodel, alb);
+					// if enabled apply sky diffuse shading factor after irradiation processor 
+					irr.set_sky_model(skymodel, alb, sa[nn].shad.en_diff());
 					if (radmode == 0) irr.set_beam_diffuse(wf.dn, wf.df);
 					else if (radmode == 1) irr.set_global_beam( wf.gh, wf.dn );
 					else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);
@@ -1554,9 +1553,8 @@ public:
 					// apply hourly shading factors to beam (if none enabled, factors are 1.0)
 					ibeam *= beam_shad_factor;
 						
-					// 4/27/15 applied in irraditaion processor if necessary
 					// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-					//iskydiff *= sa[nn].shad.fdiff();
+					iskydiff *= sa[nn].shad.fdiff();
 
 					//self-shading calculations
 					if ((sa[nn].track_mode == 0 && sa[nn].shade_mode == 0) //fixed tilt, self-shading OR

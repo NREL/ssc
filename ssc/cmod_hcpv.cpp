@@ -382,7 +382,7 @@ public:
 			irrad irr;
 			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, dTS);
 			irr.set_location(wf.lat, wf.lon, wf.tz);
-			irr.set_sky_model(0, 0.2); // isotropic sky, 0.2 albedo (doesn't matter for CPV)
+			irr.set_sky_model(0, 0.2, false); // isotropic sky, 0.2 albedo (doesn't matter for CPV) and diffuse shading factor not enabled (set to 1.0 by default)
 			irr.set_beam_diffuse(wf.dn, wf.df);
 			irr.set_surface(2, 0, 0, 90, -1, -1); // 2 axis tracking, other parameters don't matter
 			int code = irr.calc();

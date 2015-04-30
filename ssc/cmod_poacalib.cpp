@@ -91,7 +91,7 @@ public:
 					x.set_location(lat, lon, timezone);
 					x.set_time(year, m, d, h, 30, 1);
 					x.set_surface(0, tilt, az, 0, 0, 0);
-					x.set_sky_model(2, alb);
+					x.set_sky_model(2, alb, false); // diffuse shading factor not enabled (set to 1.0 by default)
 					x.set_beam_diffuse(B, D);
 					double solaz, zen;
 					int err = x.calc();
@@ -111,7 +111,7 @@ public:
 					// compute calculated POA using Perez method starting with input B & D
 					double poa[3] = {0,0,0};
 					double diffc[3] = {0,0,0};
-					perez(0, B, D, alb, inc, DTOR*tilt, zen, poa, diffc);
+					perez(0, B, D, alb, inc, DTOR*tilt, zen, poa, diffc, false);  // diffuse shading factor not enabled (set to 1.0 by default)
 					double Pcalc = poa[0] + poa[1] + poa[2];
 
 					// for high zenith angles, save original values to check for unreasonable values after iteration
@@ -137,7 +137,7 @@ public:
 							B = B_o;
 
 						// compute new calculated P
-						perez(0, B, D, alb, inc, DTOR*tilt, zen, poa, diffc);
+						perez(0, B, D, alb, inc, DTOR*tilt, zen, poa, diffc, false);  // diffuse shading factor not enabled (set to 1.0 by default)
 						Pcalc = poa[0] + poa[1] + poa[2];
 
 						// check that high zenith Beam isn't getting ridiculous
@@ -148,7 +148,7 @@ public:
 								flag = 1; // turn on flag so that beam does not get incremented
 								B = B_o; // reset beam and diffuse
 								D = D_o;
-								perez(0, B, D, alb, inc, DTOR*tilt, zen, poa, diffc);
+								perez(0, B, D, alb, inc, DTOR*tilt, zen, poa, diffc, false); // diffuse shading factor not enabled (set to 1.0 by default)
 								Pcalc = poa[0] + poa[1] + poa[2]; // reset Pcalc
 								counter = 0; // reset counter
 							}

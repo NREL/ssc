@@ -194,16 +194,13 @@ public:
 	}
 
 	
-//		int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour,
-//		double lat, double lon, double tz, double dn, double df, double alb)
 	int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour,
-		double lat, double lon, double tz, double dn, double df, double alb, double shad_diff)
+		double lat, double lon, double tz, double dn, double df, double alb, bool en_diff)
 	{
 		irrad irr;
 		irr.set_time( year, month, day, hour, minute, ts_hour );
 		irr.set_location( lat, lon, tz );
-//		irr.set_sky_model(2, alb);
-		irr.set_sky_model(2, alb, shad_diff);
+		irr.set_sky_model(2, alb, en_diff);
 		irr.set_beam_diffuse(dn, df);
 		irr.set_surface( track_mode, tilt, azimuth, 45.0, 
 			shade_mode_1x == 1, // backtracking mode
@@ -219,8 +216,7 @@ public:
 		return code;
 	}
 
-//	void powerout(double time, double &shad_beam, double shad_diff, double beam, double alb, double wspd, double tdry)
-	void powerout(double time, double &shad_beam, double beam, double alb, double wspd, double tdry)
+	void powerout(double time, double &shad_beam, double shad_diff, double beam, double alb, double wspd, double tdry)
 	{
 		
 		if (sunup > 0)
@@ -263,9 +259,8 @@ public:
 			// apply hourly shading factors to beam (if none enabled, factors are 1.0)
 			ibeam *= shad_beam;
 				
-			// 4/27/15 - moved to process_irradiance and set_sky_model
 			// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-			//iskydiff *= shad_diff;
+			iskydiff *= shad_diff;
 				
 			poa = ibeam + iskydiff +ignddiff;
 				
@@ -419,10 +414,8 @@ public:
 				}
 
 				
-//				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,
-//					wf.lat, wf.lon, wf.tz, wf.dn, wf.df, alb);
 				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,
-					wf.lat, wf.lon, wf.tz, wf.dn, wf.df, alb, shad.fdiff());
+					wf.lat, wf.lon, wf.tz, wf.dn, wf.df, alb, shad.en_diff());
 
 				if ( 0 != code )
 					throw exec_error( "pvwattsv5", 
@@ -436,8 +429,7 @@ public:
 				
 				if ( sunup > 0 )
 				{
-//					powerout((double)idx, shad_beam, shad.fdiff(), wf.dn, alb, wf.wspd, wf.tdry);
-					powerout((double)idx, shad_beam, wf.dn, alb, wf.wspd, wf.tdry);
+					powerout((double)idx, shad_beam, shad.fdiff(), wf.dn, alb, wf.wspd, wf.tdry);
 					p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
 
 					p_poa[idx] = (ssc_number_t)poa; // W/m2
@@ -570,14 +562,12 @@ public:
 		setup_system_inputs();
 		initialize_cell_temp( time_step, last_tcell, last_poa );
 		
-//		int code = process_irradiance(year, month, day, hour, minute, time_step, lat, lon, tz, beam, diff, alb);
-		int code = process_irradiance(year, month, day, hour, minute, time_step, lat, lon, tz, beam, diff, alb, 1.0);
+		int code = process_irradiance(year, month, day, hour, minute, time_step, lat, lon, tz, beam, diff, alb, false);  // diffuse shading factor not enabled (set to 1.0 by default)
 		if (code != 0)
 			throw exec_error( "pvwattsv5_1ts", "failed to calculate plane of array irradiance with given input parameters" );
 
 		double shad_beam = 1.0;
-//		powerout(0, shad_beam, 1.0, beam, alb, wspd, tamb);
-		powerout(0, shad_beam, beam, alb, wspd, tamb);
+		powerout(0, shad_beam, 1.0, beam, alb, wspd, tamb);
 
 		assign( "poa", var_data( (ssc_number_t)poa ) );
 		assign( "tcell", var_data( (ssc_number_t)pvt ) );

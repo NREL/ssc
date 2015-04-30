@@ -166,7 +166,7 @@ public:
 		{
 			/* sun elevation > 0.5 degrees */
 			incidence( trackmode, tilt, azimuth, 45.0, sunn[1], sunn[0], 0, 0, angle );
-			perez( sunn[8], m_wf.dn, m_wf.df, 0.2, angle[0], angle[1], sunn[1], poa, diffc );
+			perez( sunn[8], m_wf.dn, m_wf.df, 0.2, angle[0], angle[1], sunn[1], poa, diffc, false );  // diffuse shading factor not enabled (set to 1.0 by default)
 		}
 		
 		// set some output values

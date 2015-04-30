@@ -249,7 +249,7 @@ public:
 					alb = wf.albedo;
 			}
 
-			irr.set_sky_model( 2, alb );
+			irr.set_sky_model( 2, alb, shad.en_diff() );
 			irr.set_beam_diffuse( wf.dn, wf.df );
 			irr.set_surface( track_mode, tilt, azimuth, rlim, 
 				shade_mode_1x == 1, // backtracking mode
