@@ -287,7 +287,7 @@ float adjustment_factors::operator()( size_t time )
 shading_factor_calculator::shading_factor_calculator()
 {
 	m_enAzAlt = false;
-	m_diff_enabled = false;
+	m_en_skydiff_viewfactor = false;
 	m_diffFactor = 1.0;
 }
 
@@ -364,7 +364,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	if (cm->is_assigned(prefix + "shading:diff"))
 	{
 		m_diffFactor = 1 - cm->as_double(prefix + "shading:diff") / 100;
-		m_diff_enabled = true; // allows for inputs of 1
+		m_en_skydiff_viewfactor = false; // user or shadetool input for sky diffuse view factor
 	}
 
 	return ok;
@@ -394,7 +394,7 @@ double shading_factor_calculator::fdiff()
 	return m_diffFactor;
 }
 
-bool shading_factor_calculator::en_diff()
+bool shading_factor_calculator::en_skydiff_viewfactor()
 {
-	return m_diff_enabled;
+	return m_en_skydiff_viewfactor;
 }

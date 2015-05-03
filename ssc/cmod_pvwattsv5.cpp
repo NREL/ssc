@@ -415,7 +415,7 @@ public:
 
 				
 				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,
-					wf.lat, wf.lon, wf.tz, wf.dn, wf.df, alb, shad.en_diff());
+					wf.lat, wf.lon, wf.tz, wf.dn, wf.df, alb, shad.en_skydiff_viewfactor());
 
 				if ( 0 != code )
 					throw exec_error( "pvwattsv5", 

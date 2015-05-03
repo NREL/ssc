@@ -8,9 +8,9 @@
 
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9]);
 void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5]);
-void perez(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */, bool en_diff);
-void isotropic(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */, bool en_diff);
-void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */, bool en_diff );
+void perez(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */, bool en_skydiff_viewfactor);
+void isotropic(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */, bool en_skydiff_viewfactor);
+void hdkr(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */, bool en_skydiff_viewfactor);
 
 
 
@@ -25,7 +25,7 @@ private:
 	int radmode, skymodel, track;
 	double gh, dn, df, alb;
 	double tilt, sazm, rlim, gcr;
-	bool en_backtrack, en_diff;
+	bool en_backtrack, en_skydiff_viewfactor;
 	double sun[9], angle[5], poa[3], diffc[3];
 	int tms[3];
 	double ghi;
