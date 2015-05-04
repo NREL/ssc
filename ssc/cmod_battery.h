@@ -29,6 +29,7 @@ struct battstor
 	
 
 	bool dm_charge[4], dm_discharge[4], dm_gridcharge[4]; // manual dispatch
+	std::map<int, double> dm_percent_discharge; // <profle, discharge_percent>
 	util::matrix_static_t<float, 12, 24> dm_sched;
 	
 	double e_charge;

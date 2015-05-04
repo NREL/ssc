@@ -891,7 +891,9 @@ double dispatch_t::grid_to_load(){ return _grid_to_load; };
 double dispatch_t::gen(){ return _e_gen; }
 double dispatch_t::average_efficiency(){ return _average_efficiency; }
 
-void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max)
+
+
+void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max, double percent_discharge)
 {
 	// Implement minimum SOC cut-off
 	if (_e_tofrom_batt > 0.0001)
@@ -900,6 +902,12 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 		double e_max_discharge = battery_voltage *(charge_total - charge_max*_SOC_min*0.01)*watt_to_kilowatt;
 		if (fabs(_e_tofrom_batt) > e_max_discharge)
 			_e_tofrom_batt = e_max_discharge;
+
+		// implement discharge percent
+		double e_percent = e_max_discharge*percent_discharge*0.01;
+
+		if (_e_tofrom_batt > e_percent)
+			_e_tofrom_batt = e_percent;
 	}
 	else if (_e_tofrom_batt < -0.0001)
 		_charging = true;
@@ -957,13 +965,14 @@ void dispatch_t::compute_efficiency()
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge)
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double>  dm_percent_discharge)
 	: dispatch_t(Battery, dt, SOC_min, Ic_max, Id_max, t_min)
 {
 	_sched = dm_sched;
 	_charge_array = dm_charge;
 	_discharge_array = dm_discharge;
 	_gridcharge_array = dm_gridcharge;
+	_percent_discharge_array = dm_percent_discharge;
 }
 void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load)
 {
@@ -976,7 +985,8 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	_can_charge = _charge_array[iprofile];
 	_can_discharge = _discharge_array[iprofile];
 	_can_grid_charge = _gridcharge_array[iprofile];
-
+	_percent_discharge = 0.;
+	if (_can_discharge){ _percent_discharge = _percent_discharge_array[iprofile]; }
 
 	// current charge state of battery from last time step.  
 	double battery_voltage = _Battery->battery_voltage();								// [V] 
@@ -1020,7 +1030,7 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	}
 
 	// Controllers
-	SOC_controller(battery_voltage, charge_total, charge_max);
+	SOC_controller(battery_voltage, charge_total, charge_max, _percent_discharge);
 	switch_controller();
 	double I = current_controller(battery_voltage);
 
