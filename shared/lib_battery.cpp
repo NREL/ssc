@@ -396,9 +396,12 @@ void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
 Define Lifetime Model
 */
 
-lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix)
+lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const bool enable_replacement, const double replacement_capacity)
 {
 	_batt_lifetime_matrix = batt_lifetime_matrix;
+	_enable_replacement = enable_replacement;
+	_replacement_capacity = replacement_capacity;
+	_replacements = 0;
 
 	for (int i = 0; i < _batt_lifetime_matrix.nrows(); i++)
 	{
@@ -521,6 +524,19 @@ int lifetime_t::rainflow_compareRanges()
 
 	return retCode;
 }
+void lifetime_t::check_replaced()
+{
+	if (_Clt < _replacement_capacity)
+	{
+		_replacements++;
+		// reset battery 
+		_Clt = 100.;
+		_nCycles = 0;
+		_fortyPercent = 0;
+		_hundredPercent = 0;
+	}
+}
+int lifetime_t::replacements(){ return _replacements; }
 int lifetime_t::cycles_elapsed(){return _nCycles;}
 double lifetime_t::capacity_percent(){ return _Clt; }
 int lifetime_t::forty_percent_cycles(){ return _fortyPercent; }
@@ -819,6 +835,7 @@ void battery_t::runVoltageModel()
 void battery_t::runLifetimeModel(double DOD)
 {
 	_lifetime->rainflow(DOD);
+	_lifetime->check_replaced();
 }
 void battery_t::runLossesModel()
 {

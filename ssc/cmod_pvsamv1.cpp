@@ -338,6 +338,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt_replacement",                        "Enable Battery Replacement?",                             "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
+
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electric load",                                           "kW",      "",                     "Battery",       "?",                                   "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
@@ -1421,7 +1423,8 @@ public:
 		// setup battery model
 //		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
 		bool en_batt = as_boolean("en_batt");
-		battstor batt(*this, en_batt, nrec, ts_hour);
+		bool en_batt_replacement = as_boolean("en_batt_replacement");
+		battstor batt(*this, en_batt, en_batt_replacement, nrec, ts_hour);
 
 		double cur_load = 0.0;
 		size_t nload = 0;
@@ -1962,7 +1965,13 @@ public:
 		assign( "performance_ratio", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
 
 		if (en_batt)
+		{
 			assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
+			if (en_batt_replacement)
+				assign("battery_bank_replacement", var_data((ssc_number_t)batt.outBatteryBankReplacement));
+			else
+				assign("battery_bank_replacement", 0);
+		}
 		else
 			assign("average_cycle_efficiency", 0);
 

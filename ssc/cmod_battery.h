@@ -10,7 +10,7 @@ extern var_info vtab_battery[];
 struct battstor
 {
 
-	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr );
+	battstor( compute_module &cm, bool setup_model, bool enable_replacement, size_t nrec, double dt_hr );
 	~battstor();
 	void advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD );
 
@@ -29,7 +29,7 @@ struct battstor
 	
 
 	bool dm_charge[4], dm_discharge[4], dm_gridcharge[4]; // manual dispatch
-	std::map<int, double> dm_percent_discharge; // <profle, discharge_percent>
+	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
 	util::matrix_static_t<float, 12, 24> dm_sched;
 	
 	double e_charge;
@@ -61,6 +61,7 @@ struct battstor
 		*outGridToLoad;
 	
 	double outAverageCycleEfficiency;
+	int outBatteryBankReplacement;
 };
 
 
