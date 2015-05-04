@@ -9,7 +9,6 @@ static var_info vtab_lcoefcr[] =
 	{ SSC_INPUT,        SSC_NUMBER,      "variable_operating_cost",  "Annual variable operating cost", "$/kWh",  "",       "Simple LCOE", "*",           "",         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fixed_charge_rate",        "Fixed charge rate",              "",       "",       "Simple LCOE", "*",           "",         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",       "kWh/yr", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",          "System capacity",                "kW",     "",       "Simple LCOE", "*",           "",         "" },
 	
 	{ SSC_OUTPUT,       SSC_NUMBER,       "lcoe_fcr",                "Levelized cost of energy",      "$/kWh",  "",       "Simple LCOE", "*",           "",         "" },
 
@@ -27,22 +26,20 @@ public:
 	void exec( ) throw( general_error )
 	{
 		double aep = 1; // annual output, get from performance model
-		double p = 0;   // system capacity
 		double aoe = 0; // annual operating costs
-		double fcr = 1; // fixed charge rate, before tax revenues required
+		double fcr = 0; // fixed charge rate, before tax revenues required
 		double icc = 0; // initial investment, or capital cost
 		double voc = 0; // variable operating cost
 		double foc = 0; // fixed operating cost
 
 		aep = as_double("annual_energy");           // kWh
-		p = as_double("system_capacity");           // kW
 		foc = as_double("fixed_operating_cost");    // $/kW
 		voc = as_double("variable_operating_cost"); // $/kWh
 		fcr = as_double("fixed_charge_rate");       // unitless fraction
 		icc = as_double("capital_cost");            // $
 		
 		double lcoe;
-		lcoe = (fcr*icc + foc*p) / aep + voc; //$/kWh
+		lcoe = (fcr*icc + foc) / aep + voc; //$/kWh
 		assign("lcoe_fcr", var_data((ssc_number_t)lcoe));
 
 	}
