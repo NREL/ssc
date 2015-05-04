@@ -352,7 +352,7 @@ public:
 	virtual void dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
 
 	// Controllers
-	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
+	void SOC_controller(double battery_voltage, double charge_total, double charge_max, double percent_discharge);
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	
@@ -404,7 +404,8 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, double t_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge);
+	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, double t_min, 
+					 util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double> dm_percent_discharge);
 	void dispatch(size_t hour_of_year, double e_pv, double e_load);
 
 protected:
@@ -412,9 +413,12 @@ protected:
 	bool * _charge_array;
 	bool * _discharge_array;
 	bool * _gridcharge_array;
+	std::map<int, double>  _percent_discharge_array;
+
 	bool  _can_charge;
 	bool  _can_discharge;
 	bool  _can_grid_charge;
+	double _percent_discharge;
 
 
 };

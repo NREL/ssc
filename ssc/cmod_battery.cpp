@@ -56,6 +56,7 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-4 Charging Allowed?",                          "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-4 Discharging Allowed?",                       "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-4 Grid Charging Allowed?",                     "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-4 Discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery Dispatch Schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
 		
 
@@ -135,18 +136,30 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 
 	chem = cm.as_integer( "batt_chem" );
 
-	size_t ncharge, ndischarge, ngridcharge;
+	size_t ncharge, ndischarge, ngridcharge, ndischarge_percent;
 	ssc_number_t *pcharge = cm.as_array( "dispatch_manual_charge", &ncharge );
 	ssc_number_t *pdischarge = cm.as_array( "dispatch_manual_discharge", &ndischarge );
+	ssc_number_t *pdischarge_percent = cm.as_array("dispatch_manual_percent_discharge", &ndischarge_percent);
 	ssc_number_t *pgridcharge = cm.as_array( "dispatch_manual_gridcharge", &ngridcharge );
 	if ( ncharge != 4 || ndischarge != 4 || ngridcharge != 4 )
 		throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
 
+	int discharge_index = 0;
 	for( size_t i=0;i<4;i++ )
 	{
 		dm_charge[i] = pcharge[i]!=0.0f ? 1 : 0;
 		dm_discharge[i] = pdischarge[i]!=0.0f ? 1 : 0;
 		dm_gridcharge[i] = pgridcharge[i]!=0.0f ? 1 : 0;
+		if (dm_discharge[i])
+		{
+			if (discharge_index < ndischarge_percent)
+			{
+				dm_percent_discharge[i] = pdischarge_percent[discharge_index];
+				discharge_index++;
+			}
+			else
+				throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
+		}
 	}
 	size_t m,n;
 	ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
@@ -239,7 +252,7 @@ battstor::battstor( compute_module &cm, bool setup_model, size_t nrec, double dt
 		capacity_model);
 
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
-	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), dm_sched, dm_charge, dm_discharge, dm_gridcharge);
+	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), dm_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
 }
 
 battstor::~battstor()
