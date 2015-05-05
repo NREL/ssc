@@ -1967,10 +1967,13 @@ public:
 		if (en_batt)
 		{
 			assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
-			if (en_batt_replacement)
-				assign("battery_bank_replacement", var_data((ssc_number_t)batt.outBatteryBankReplacement));
-			else
-				assign("battery_bank_replacement", 0);
+			if (en_batt_replacement && batt.year < 25)
+			{
+				int year = batt.year;
+				int replacements = batt.outBatteryBankReplacement[year - 1];
+				for (year; year <= 25; year++)
+					batt.outBatteryBankReplacement[year] = replacements;
+			}
 		}
 		else
 			assign("average_cycle_efficiency", 0);

@@ -15,6 +15,11 @@ struct battstor
 	void advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD );
 
 
+	// time quantities
+	int year;
+	size_t step_per_hour;
+	const size_t hours_per_year = 8760;
+
 	// member data
 	voltage_dynamic_t *voltage_model;
 	lifetime_t *lifetime_model;
@@ -48,8 +53,7 @@ struct battstor
 		*outBatteryVoltage,
 		*outCapacityPercent,
 		*outCycles,
-		*out40Cycles,
-		*out100Cycles,
+		*outBatteryBankReplacement,
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
 		*outDispatchMode,
@@ -61,7 +65,6 @@ struct battstor
 		*outGridToLoad;
 	
 	double outAverageCycleEfficiency;
-	int outBatteryBankReplacement;
 };
 
 
