@@ -77,12 +77,10 @@ var_info vtab_battery[] = {
 
 	// Lifecycle related outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                               "Battery Number of Cycles",                                     "",         "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "forty_percent_cycles",                 "Battery Number of 40% DOD Cycles",                             "",         "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "hundred_percent_cycles",               "Battery Number of 100% DOD Cycles",                            "",         "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                  "Battery Temperature",                                          "C",        "",                     "Battery",       "",                           "",                              "" }, 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_percent",                     "Battery Capacity Percent for Lifetime",                        "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",             "Battery Capacity Percent for Temperature",                     "%",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "battery_bank_replacement",             "Battery Bank Replacements Per Year",                           "number/year", "",                  "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_bank_replacement",             "Battery Bank Replacementss Per Year",                           "number/year", "",                  "Battery",       "",                           "",                              "" },
 
 	// Energy outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                       "Energy to/from Battery",                                       "kWh",      "",                     "Battery",       "",                           "",                              "" },
@@ -102,6 +100,11 @@ var_info_invalid };
 
 battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacement, size_t nrec, double dt_hr )
 {
+	// time quantities
+	year = 0;
+	step_per_hour = nrec / 8760;
+
+	// component models
 	voltage_model = 0;
 	lifetime_model = 0;
 	thermal_model = 0;
@@ -110,6 +113,7 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 	dispatch_model = 0;
 	losses_model = 0;
 
+	// outputs
 	outTotalCharge = 0;
 	outAvailableCharge = 0;
 	outBoundCharge = 0;
@@ -122,8 +126,6 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 	outBatteryVoltage = 0;
 	outCapacityPercent = 0;
 	outCycles = 0;
-	out40Cycles = 0;
-	out100Cycles = 0;
 	outBatteryBankReplacement = 0;
 	outBatteryTemperature = 0;
 	outCapacityThermalPercent = 0;
@@ -197,8 +199,10 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
 	outCapacityPercent = cm.allocate("capacity_percent", nrec);
 	outCycles = cm.allocate("Cycles", nrec);
-	out40Cycles = cm.allocate("forty_percent_cycles", nrec);
-	out100Cycles = cm.allocate("hundred_percent_cycles", nrec);
+
+	// currently hardcoded for 25 years, change when lifetime capability added
+	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", 25); 
+
 	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
 	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
 	outBatteryEnergy = cm.allocate("battery_energy", nrec);
@@ -293,10 +297,10 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	// Lifetime Output
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
 	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
-	out40Cycles[idx] = (int)(lifetime_model->forty_percent_cycles());
-	out100Cycles[idx] = (int)(lifetime_model->hundred_percent_cycles());
 	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
-	outBatteryBankReplacement = (ssc_number_t)(lifetime_model->replacements());
+	outBatteryBankReplacement[year] = (ssc_number_t)(lifetime_model->replacements());
+	if ( (hour_of_year == hours_per_year-1) && (step == step_per_hour - 1) )
+		year++;
 
 	// Thermal Output
 	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
