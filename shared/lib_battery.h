@@ -14,47 +14,6 @@ const double kilowatt_to_watt = 1000;
 const double hour_to_min = 60.;
 
 /*
-Thermal classes
-*/
-class thermal_t
-{
-public:
-	thermal_t(double mass, double length, double width, double height, 
-		double Cp, double h, double T_room,
-		const util::matrix_t<double> &cap_vs_temp );
-
-	void updateTemperature(double I, double R, double dt);
-
-	// outputs
-	double T_battery();
-	double capacity_percent();
-
-protected:
-	double f(double T_battery, double I);
-	double rk4(double I, double dt);
-	double trapezoidal(double I, double dt);
-
-protected:
-
-	util::matrix_t<double> _cap_vs_temp;
-
-	double _mass;		// [kg]
-	double _length;		// [m]
-	double _width;		// [m]
-	double _height;		// [m]
-	double _thickness;	// [m] - wall thickness
-	double _Cp;			// [J/KgK] - battery specific heat capacity
-	double _h;			// [Wm2K] - general heat transfer coefficient
-	double _T_room;		// [K] - storage room temperature
-	double _R;			// [Ohm] - internal resistance
-	double _A;			// [m2] - exposed surface area
-	double _T_battery;   // [K]
-	double _capacity_percent; //[%]
-	const double _hours_to_seconds = 3600;
-};
-
-
-/*
 Base class from which capacity models derive
 Note, all capacity models are based on the capacity of one battery
 */
@@ -69,8 +28,8 @@ public:
 	virtual void updateCapacity(double I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)=0;
+	virtual void replace_battery()=0;
 
-	virtual double qmaxI() = 0; // max capacity at current
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
@@ -112,9 +71,9 @@ public:
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
+	void replace_battery();
 	double q1(); // Available charge
 	double q2(); // Bound charge
-	double qmaxI(); // Max charge at current
 	double q10(); // Capacity at 10 hour discharge rate
 	double q20(); // Capacity at 20 hour discharge rate
 
@@ -147,7 +106,6 @@ protected:
 	double _q10; //  [Ah] - Capacity at 10 hour discharge rate
 	double _q20; // [Ah] - Capacity at 20 hour discharge rate
 	double _I20; // [A]  - Current at 20 hour discharge rate
-	double _qmaxI;// [Ah] - theoretical max charge at this current
 };
 
 /*
@@ -163,9 +121,9 @@ public:
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
+	void replace_battery();
 
 	double q1(); // Available charge
-	double qmaxI(); // Max charge at current
 	double q10(); // Capacity at 10 hour discharge rate
 
 protected:
@@ -239,7 +197,7 @@ public:
 	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD, const bool enable_replacement, const double replacement_capacity  );
 	~lifetime_t();
 	void rainflow(double DOD);
-	void check_replaced();
+	bool check_replaced();
 	int replacements();
 	int cycles_elapsed();
 	double capacity_percent();
@@ -286,6 +244,46 @@ protected:
 };
 
 /*
+Thermal classes
+*/
+class thermal_t
+{
+public:
+	thermal_t(double mass, double length, double width, double height,
+		double Cp, double h, double T_room,
+		const util::matrix_t<double> &cap_vs_temp);
+
+	void updateTemperature(double I, double R, double dt);
+	void replace_battery();
+
+	// outputs
+	double T_battery();
+	double capacity_percent();
+
+protected:
+	double f(double T_battery, double I);
+	double rk4(double I, double dt);
+	double trapezoidal(double I, double dt);
+
+protected:
+
+	util::matrix_t<double> _cap_vs_temp;
+
+	double _mass;		// [kg]
+	double _length;		// [m]
+	double _width;		// [m]
+	double _height;		// [m]
+	double _thickness;	// [m] - wall thickness
+	double _Cp;			// [J/KgK] - battery specific heat capacity
+	double _h;			// [Wm2K] - general heat transfer coefficient
+	double _T_room;		// [K] - storage room temperature
+	double _R;			// [Ohm] - internal resistance
+	double _A;			// [m2] - exposed surface area
+	double _T_battery;   // [K]
+	double _capacity_percent; //[%]
+	const double _hours_to_seconds = 3600;
+};
+/*
 Losses Base class
 */
 class losses_t
@@ -293,6 +291,7 @@ class losses_t
 public:
 	losses_t(lifetime_t *, thermal_t *, capacity_t*);
 	void run_losses(double dt_hour);
+	void replace_battery();
 
 protected:
 	lifetime_t * _lifetime;
