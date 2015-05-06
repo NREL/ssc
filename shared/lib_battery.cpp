@@ -85,18 +85,18 @@ capacity_t(q20)
 	parameter_compute();
 	_qmax0 = _qmax;
 
-	// Assume initial current is 20 hour discharge current
+	// initializes to full battery
+	replace_battery();
+}
+void capacity_kibam_t::replace_battery()
+{
 	// Assume initial charge is 20 capacity
-	double T = _q0 / _I20;
-	_qmaxI = qmax_of_i_compute(T);
 	_q0 = _q20;
-
-	// Initialize charge quantities.  
-	// Assumes battery is initially fully charged
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
-
+	_qmax = _qmax0;
 }
+
 
 double capacity_kibam_t::c_compute(double F, double t1, double t2, double k_guess)
 {
@@ -197,10 +197,6 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 	q1 = q1_compute(_q1_0, _q0, dt_hour, _I);
 	q2 = q2_compute(_q2_0, _q0, dt_hour, _I);
 
-	// update max charge at this current
-	if (fabs(_I) > 0)
-		_qmaxI = qmax_of_i_compute(fabs(_qmaxI / _I));
-
 	// update internal variables 
 	_q1_0 = q1;
 	_q2_0 = q2;
@@ -236,7 +232,6 @@ void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent, bool u
 
 double capacity_kibam_t::q1(){ return _q1_0; }
 double capacity_kibam_t::q2(){ return _q2_0; }
-double capacity_kibam_t::qmaxI(){return _qmaxI;}
 double capacity_kibam_t::q10(){ return _q10; }
 double capacity_kibam_t::q20(){return _q20;}
 
@@ -246,7 +241,11 @@ Define Lithium Ion capacity model
 */
 capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q){};
 capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
-
+void capacity_lithium_ion_t::replace_battery()
+{
+	_q0 = _qmax0;
+	_qmax = _qmax0;
+}
 void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 {
 	_DOD_prev = _DOD;
@@ -292,7 +291,6 @@ void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent, 
 	update_SOC();
 }
 double capacity_lithium_ion_t::q1(){return _q0;}
-double capacity_lithium_ion_t::qmaxI(){return _qmax;}
 double capacity_lithium_ion_t::q10(){return _qmax;}
 
 
@@ -352,12 +350,8 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	int num_cells = _num_cells_parallel + _num_cells_series;
 	int num_strings = num_cells / _num_cells_series;
 	
-
 	// is on a per-cell basis
 	_cell_voltage = voltage_model_tremblay_hybrid(Q / num_cells, I/num_strings , q0 / num_cells);
-
-	//	_cell_voltage = voltage_model(Q/_num_cells,I/_num_cells,q0/_num_cells);
-
 }
 double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 {
@@ -524,17 +518,25 @@ int lifetime_t::rainflow_compareRanges()
 
 	return retCode;
 }
-void lifetime_t::check_replaced()
+bool lifetime_t::check_replaced()
 {
-	if (_Clt < _replacement_capacity)
+	bool replaced = false;
+	if (_Clt <= _replacement_capacity)
 	{
 		_replacements++;
-		// reset battery 
-		_Clt = 100.;
+		_Clt = bilinear(0.,0);
+		_Dlt = 0.;
 		_nCycles = 0;
 		_fortyPercent = 0;
 		_hundredPercent = 0;
+		_jlt = 0;
+		_Xlt = 0;
+		_Ylt = 0;
+		_Range = 0;
+		_Peaks.clear();
+		replaced = true;
 	}
+	return replaced;
 }
 int lifetime_t::replacements(){ return _replacements; }
 int lifetime_t::cycles_elapsed(){return _nCycles;}
@@ -712,7 +714,11 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 		_cap_vs_temp(i,0) += 273.15; // convert C to K
 	}
 }
-
+void thermal_t::replace_battery()
+{ 
+	_T_battery = _T_room; 
+	_capacity_percent = 100.;
+}
 void thermal_t::updateTemperature(double I, double R, double dt)
 {
 	_R = R;
@@ -762,6 +768,7 @@ losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capac
 	_capacity = capacity;
 	_nCycle = 0;
 }
+void losses_t::replace_battery(){ _nCycle = 0; }
 void losses_t::run_losses(double dt_hour)
 {
 	bool update_max_capacity = false;
@@ -835,7 +842,12 @@ void battery_t::runVoltageModel()
 void battery_t::runLifetimeModel(double DOD)
 {
 	_lifetime->rainflow(DOD);
-	_lifetime->check_replaced();
+	if (_lifetime->check_replaced())
+	{
+		_capacity->replace_battery();
+		_thermal->replace_battery();
+		_losses->replace_battery();
+	}
 }
 void battery_t::runLossesModel()
 {
