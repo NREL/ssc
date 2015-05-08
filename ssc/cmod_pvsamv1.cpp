@@ -339,7 +339,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt_replacement",                        "Enable Battery Replacement?",                             "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electric load",                                           "kW",      "",                     "Battery",       "?",                                   "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
@@ -742,8 +741,6 @@ public:
 	{
 		// open the weather file
 		// define variables consistent across subarrays
-		
-
 		weatherfile wf( as_string("solar_resource_file") );
 		if ( !wf.ok() ) throw exec_error( "pvsamv1", wf.error_message() );
 		
@@ -1967,13 +1964,16 @@ public:
 		if (en_batt)
 		{
 			assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
-			if (en_batt_replacement && batt.year < 25)
+			/*
+			// should be removed upon lifetime completion
+			if (en_batt_replacement && batt.year < nyears)
 			{
 				int year = batt.year;
 				int replacements = batt.outBatteryBankReplacement[year - 1];
-				for (year; year <= 25; year++)
+				for (year; year <= nyears; year++)
 					batt.outBatteryBankReplacement[year] = replacements;
 			}
+			*/
 		}
 		else
 			assign("average_cycle_efficiency", 0);
