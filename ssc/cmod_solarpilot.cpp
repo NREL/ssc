@@ -8,6 +8,9 @@
 #include "IOUtil.h"
 #include "csp_common.h"
 
+#define pi 3.141592654
+
+
 static var_info _cm_vtab_solarpilot[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                          UNITS     META        GROUP          REQUIRED_IF         CONSTRAINTS         UI_HINTS*/
 
@@ -77,17 +80,23 @@ static var_info _cm_vtab_solarpilot[] = {
 
 
 	/* outputs */
-	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_zeniths",            "Optical efficiency table zenith angles",     "deg",    "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_azimuths",           "Optical efficiency table azimuth angles",    "deg",    "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "opteff_table",              "Optical efficiency (azi x zen)",             "frac",   "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_MATRIX,      "opteff_table",              "Optical efficiency (azi, zen, eff x nsim)",  "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "flux_table",                "Flux intensity table (flux(X) x (flux(y) x position)",  "frac", "", "SolarPILOT",  "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_MATRIX,      "heliostat_positions",       "Heliostat positions (x,y)",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "number_heliostats",         "Number of heliostats",                       "",        "",        "SolarPILOT",   "*",                "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "area_sf",                   "Total reflective heliostat area",            "m^2",    "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "base_land_area",            "Land area occupied by heliostats",           "acre",   "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "land_area",                 "Total land area",                            "acre",   "",         "SolarPILOT",   "*",                "",                "" }, 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "h_tower_opt",               "Optimized tower height",                     "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_height_opt",            "Optimized receiver height",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_aspect_opt",            "Optimized receiver aspect ratio",            "-",      "",         "SolarPILOT",   "*",                "",                "" },
-    	
+    
+    { SSC_OUTPUT,       SSC_NUMBER,      "cost_rec_tot",              "Total receiver cost",                        "$",      "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "cost_sf_tot",               "Total heliostat field cost",                 "$",      "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "cost_tower_tot",            "Total tower cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "cost_land_tot",             "Total land cost",                            "$",      "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "cost_site_tot",             "Total site cost",                            "$",      "",         "SolarPILOT",   "*",                "",                "" },
+
 	var_info_invalid };
 
 //static bool solarpilot_callback( simulation_info *siminfo, void *data );
@@ -115,10 +124,17 @@ public:
         spi.run();
         AutoPilot_S *sapi = spi.GetSAPI();
 
-        //assign("h_tower_opt", 222.222);
         assign("h_tower_opt", spi.layout.h_tower);
         assign("rec_height_opt", spi.recs.front().height);
         assign("rec_aspect_opt", spi.recs.front().aspect);
+        assign("cost_rec_tot", spi.cost.cost_rec_tot);
+        assign("cost_sf_tot", spi.cost.cost_heliostat_tot);
+        assign("cost_tower_tot", spi.cost.cost_tower_tot);
+        assign("cost_land_tot", spi.cost.cost_land_tot);
+        assign("cost_site_tot", spi.cost.cost_site_tot);
+        assign("land_area", spi.layout.land_area);
+        assign("area_sf", spi.layout.area_sf);
+
 
 		//Collect the heliostat position data
 		if(  spi.layout.heliostat_positions.size() > 0 )
@@ -146,18 +162,22 @@ public:
 			if ( spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
 				&& spi.fluxtab.efficiency.size() > 0 )
 			{
-				ssc_number_t *zeniths = allocate( "opteff_zeniths", spi.fluxtab.zeniths.size() );
+				/*ssc_number_t *zeniths = allocate( "opteff_zeniths", spi.fluxtab.zeniths.size() );
 				for( size_t i=0;i<spi.fluxtab.zeniths.size();i++ )
 					zeniths[i] = (float)spi.fluxtab.zeniths[i];
 
 				ssc_number_t *azimuths = allocate( "opteff_azimuths", spi.fluxtab.azimuths.size() );
 				for( size_t i=0;i<spi.fluxtab.azimuths.size();i++ )
-					azimuths[i] = (float)spi.fluxtab.azimuths[i];
+					azimuths[i] = (float)spi.fluxtab.azimuths[i];*/
 
 				size_t nvals = spi.fluxtab.efficiency.size();
-				ssc_number_t *opteff = allocate( "opteff_table", nvals );
+				ssc_number_t *opteff = allocate( "opteff_table", nvals, 3 );
 				for( size_t i=0;i<nvals;i++ )
-					opteff[ i ] = (float)spi.fluxtab.efficiency[i];
+                {
+					opteff[ i*3     ] = (float)spi.fluxtab.azimuths[i]*180./pi - 180.;      //Convention is usually S=0, E<0, W>0 
+                    opteff[ i*3 + 1 ] = (float)spi.fluxtab.zeniths[i]*180./pi;     //Provide zenith angle
+                    opteff[ i*3 + 2 ] = (float)spi.fluxtab.efficiency[i];
+                }
 			}
 			else
 				throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
@@ -188,9 +208,7 @@ public:
 		}
 		else{
 			//fluxmaps not required, so declare required variables and fill with zeros
-			ssc_number_t *zeniths = allocate( "opteff_zeniths", 1 );
-			ssc_number_t *azimuths = allocate( "opteff_azimuths", 1 );
-			ssc_number_t *opteff = allocate( "opteff_table", 1 );
+			ssc_number_t *opteff = allocate( "opteff_table", 1, 3 );
 			ssc_number_t *fluxdata = allocate( "flux_table", 1, 1 );
 		}
 

@@ -499,6 +499,7 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 
 	//Save pointers for later reference
 	_layout = &layout;
+    _cost = &cost;
 
 	//-----------------------------------------------------------------
 	//	Alter settings according to what's provided in the structures
@@ -1048,6 +1049,30 @@ void AutoPilot::PostProcessLayout()
 		_layout->heliostat_positions.push_back( hp );
 	}
 	_layout->land_area = _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
+
+    //Update calculated cost values here
+    double sfarea = _SF->getHeliostatArea();
+    //set the solar field area
+    _layout->area_sf = sfarea;
+
+    Financial *f = _SF->getFinancialObject();
+
+    f->calcPlantCapitalCost( *_SF );
+    
+    _cost->cost_rec_tot = f->getReceiverCost(); 
+    _cost->cost_tower_tot = f->getTowerCost(); 
+    _cost->cost_land_tot = f->getLandCost(); 
+    _cost->cost_heliostat_tot =  f->getHeliostatCost(); 
+    _cost->cost_site_tot = f->getSiteCost(); 
+    _cost->cost_plant_tot = f->getPlantCost(); 
+    _cost->cost_tes_tot = f->getTESCost(); 
+    _cost->cost_fossil_tot = 0.;
+    _cost->cost_salestax_tot = f->getSalesTaxCost();
+    _cost->cost_direct_tot = f->getTotalDirectCost();
+    _cost->cost_epc_tot = 0.;
+    _cost->cost_indirect_tot = f->getTotalIndirectCost();
+    _cost->cost_installed_tot = f->getTotalInstalledCost();
+    
 }
 
 void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)

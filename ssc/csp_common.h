@@ -23,6 +23,7 @@ public:
     ~solarpilot_invoke();
     AutoPilot_S *GetSAPI();
     bool run();
+    bool postsim_calcs( compute_module *cm );
 };
 
 

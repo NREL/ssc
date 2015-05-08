@@ -65,7 +65,9 @@ enum{
 	P_DISWOS,
 	P_QDISP,
 	P_FDISP,
+    P_ISTABLEUNSORTED,
 	P_OPTICALTABLE,
+    //P_OPTICALTABLEUNS,
 
 	I_IBN,
 	I_IBH,
@@ -255,7 +257,9 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
 	{ TCS_PARAM,           TCS_ARRAY,            P_DISWOS,                 "diswos",                                   "Time-of-dispatch control for without-solar conditions",         "none",             "",             "","0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1" },
 	{ TCS_PARAM,           TCS_ARRAY,             P_QDISP,                  "qdisp",                                                        "TOD power output control factors",         "none",             "",             "","1,1,1,1,1,1,1,1,1" },
 	{ TCS_PARAM,           TCS_ARRAY,             P_FDISP,                  "fdisp",                                                    "Fossil backup output control factors",         "none",             "",             "","0,0,0,0,0,0,0,0,0" },
-	{ TCS_PARAM,          TCS_MATRIX,      P_OPTICALTABLE,           "OpticalTable",                                                                           "Optical table",         "none",             "",             "",             "" },
+    { TCS_PARAM,          TCS_NUMBER,   P_ISTABLEUNSORTED,        "istableunsorted",                                                "Is optical table unsorted? (1=yes, 0=no)",         "none",             "",             "",            "0" },
+    { TCS_PARAM,          TCS_MATRIX,      P_OPTICALTABLE,           "OpticalTable",                                                                           "Optical table",         "none",             "",             "",             "" },
+    //{ TCS_PARAM,          TCS_MATRIX,   P_OPTICALTABLEUNS,        "OpticalTableUns",                                                              "Optical table Unstructured",         "none",             "",             "",             "" },
 
 	{ TCS_INPUT,          TCS_NUMBER,               I_IBN,                    "ibn",                                                           "Beam-normal (DNI) irradiation",    "kJ/hr-m^2",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,               I_IBH,                    "ibh",                                                             "Beam-horizontal irradiation",    "kJ/hr-m^2",             "",             "",             "" },
@@ -318,6 +322,12 @@ class sam_mw_gen_type260 : public tcstypeinterface
 private:
 	
 	OpticalDataTable optical_table;
+    GaussMarkov *optical_table_uns;
+
+    //Constants for scaling GM table
+    const double zen_scale = 1.570781477;
+    const double az_scale = 6.283125908;
+    double eff_scale;   //defined later based on max value
 
 	double pi,Pi,d2r,r2d, g, mtoinch;
 
@@ -379,8 +389,11 @@ private:
 	int nval_qdisp;
 	double* fdisp;		//Fossil backup output control factors
 	int nval_fdisp;
-	double* OpticalTable_in;		//Optical table
+	bool istableunsorted;
+    double* OpticalTable_in;		//Optical table
 	int nrow_OpticalTable,	ncol_OpticalTable;
+    /*double* OpticalTableUns_in;
+    int nrow_OpticalTableUns, ncol_OpticalTableUns;*/
 
 	double ibn;		//Beam-normal (DNI) irradiation
 	double ibh;		//Beam-horizontal irradiation
@@ -432,6 +445,7 @@ private:
 	double enet;		//Net electric output
 
 	util::matrix_t<double> OpticalTable;
+    //util::matrix_t<double> OpticalTableUns;
 
 	//Declare variables that require storage from step to step
 	double dt, start_time, q_des, etesmax, omega, dec, eta_opt_ref, f_qsf, qttmin, qttmax, ptsmax, pfsmax;
@@ -516,6 +530,11 @@ public:
 		nval_fdisp = -1;
 		OpticalTable_in	= NULL;
 		nrow_OpticalTable = -1, ncol_OpticalTable = -1;
+        istableunsorted = false;
+        optical_table_uns = 0;  //NULL
+        eff_scale = 1.;     //Set here just in case
+        /*OpticalTableUns_in = NULL;
+        nrow_OpticalTableUns = -1, ncol_OpticalTableUns = -1;*/
 		ibn	= std::numeric_limits<double>::quiet_NaN();
 		ibh	= std::numeric_limits<double>::quiet_NaN();
 		itoth	= std::numeric_limits<double>::quiet_NaN();
@@ -568,6 +587,8 @@ public:
 
 	virtual ~sam_mw_gen_type260(){
 		/* Clean up on simulation terminate */
+        if(optical_table_uns != 0) 
+            delete optical_table_uns;
 	}
 
 	virtual int init(){
@@ -626,6 +647,7 @@ public:
 		qdisp = value(P_QDISP, &nval_qdisp);		//touperiod power output control factors [none]
 		fdisp = value(P_FDISP, &nval_fdisp);		//Fossil backup output control factors [none]
 		OpticalTable_in = value(P_OPTICALTABLE, &nrow_OpticalTable, &ncol_OpticalTable);		//Optical table [none]
+        istableunsorted = value(P_ISTABLEUNSORTED) == 1.;
 
 		//Rearrange the optical table into a more useful format
 		OpticalTable.assign(OpticalTable_in, nrow_OpticalTable, ncol_OpticalTable);
@@ -662,32 +684,111 @@ public:
 		- First nx+1 values (row 1) are x-axis values, not data, starting at index 1
 		- First value of remaining ny rows are y-axis values, not data
 		- Data is contained in cells i,j : where i>1, j>1
+
+        A second option using an unstructured array is also possible. The data should be defined as:
+        - N rows
+        - 3 values per row
+        - Azimuth, Zenith, Efficiency point
+
+        If the OpticalTableUns is given data, it will be used by default.
+
 		*/
-		if ( nrow_OpticalTable<=0 || ncol_OpticalTable<=0 ) // If these were not set correctly, it will create memory allocation crash not caught by error handling.
-			return -1;
-		double *xax = new double[ncol_OpticalTable-1];
-		double *yax = new double[nrow_OpticalTable-1];
-		double *data = new double[(ncol_OpticalTable -1) * (nrow_OpticalTable -1)];
+        if( ! istableunsorted )
+        {
+            /* 
+            Standard azimuth-elevation table
+            */
 
-		//get the xaxis data values
-		for(int i=1; i<ncol_OpticalTable; i++){
-			xax[i-1] = OpticalTable.at(0, i)*d2r;
-		}
-		//get the yaxis data values
-		for(int j=1; j<nrow_OpticalTable; j++){
-			yax[j-1] = OpticalTable.at(j, 0)*d2r;
-		}
-		//Get the data values
-		for(int j=1; j<nrow_OpticalTable; j++){
-			for(int i=1; i<ncol_OpticalTable; i++){
-				data[ i-1 + (ncol_OpticalTable-1)*(j-1) ] = OpticalTable.at(j, i);
+            //does the table look right?
+            if( (nrow_OpticalTable < 5 && ncol_OpticalTable > 3 ) || (ncol_OpticalTable == 3 && nrow_OpticalTable > 4) )
+                message(TCS_WARNING, "The optical efficiency table option flag may not match the specified table format. If running SSC, ensure \"IsTableUnsorted\""
+                " =0 if regularly-spaced azimuth-zenith matrix is used and =1 if azimuth,zenith,efficiency points are specified.");
+
+            if ( nrow_OpticalTable<=0 || ncol_OpticalTable<=0 ) // If these were not set correctly, it will create memory allocation crash not caught by error handling.
+			    return -1;
+		    double *xax = new double[ncol_OpticalTable-1];
+		    double *yax = new double[nrow_OpticalTable-1];
+		    double *data = new double[(ncol_OpticalTable -1) * (nrow_OpticalTable -1)];
+
+		    //get the xaxis data values
+		    for(int i=1; i<ncol_OpticalTable; i++){
+			    xax[i-1] = OpticalTable.at(0, i)*d2r;
+		    }
+		    //get the yaxis data values
+		    for(int j=1; j<nrow_OpticalTable; j++){
+			    yax[j-1] = OpticalTable.at(j, 0)*d2r;
+		    }
+		    //Get the data values
+		    for(int j=1; j<nrow_OpticalTable; j++){
+			    for(int i=1; i<ncol_OpticalTable; i++){
+				    data[ i-1 + (ncol_OpticalTable-1)*(j-1) ] = OpticalTable.at(j, i);
+			    }
+		    }
+
+		    optical_table.AddXAxis(xax, ncol_OpticalTable-1);
+		    optical_table.AddYAxis(yax, nrow_OpticalTable-1);
+		    optical_table.AddData(data);
+		    delete [] xax, yax, data;
+        }
+        else
+        {
+            /* 
+            Use the unstructured data table
+            */
+
+            /* 
+		    ------------------------------------------------------------------------------
+		    Create the regression fit on the efficiency map
+		    ------------------------------------------------------------------------------
+		    */
+		    
+            if(ncol_OpticalTable != 3){
+				message(TCS_ERROR,  "The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
+					" (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncol_OpticalTable);
+				return -1;
 			}
-		}
+		    
+            MatDoub sunpos;
+		    vector<double> effs;
 
-		optical_table.AddXAxis(xax, ncol_OpticalTable-1);
-		optical_table.AddYAxis(yax, nrow_OpticalTable-1);
-		optical_table.AddData(data);
-		delete [] xax, yax, data;
+			//read the data from the array into the local storage arrays
+			sunpos.resize(nrow_OpticalTable, VectDoub(2));
+			effs.resize(nrow_OpticalTable);
+            double eff_maxval = -9.e9;
+			for(int i=0; i<nrow_OpticalTable; i++){
+				sunpos.at(i).at(0) = TCS_MATRIX_INDEX( var( P_OPTICALTABLE ), i, 0 ) / az_scale * pi/180.;
+				sunpos.at(i).at(1) = TCS_MATRIX_INDEX( var( P_OPTICALTABLE ), i, 1 ) / zen_scale * pi/180.;
+				double eff = TCS_MATRIX_INDEX( var( P_OPTICALTABLE ), i, 2 );
+                
+                effs.at(i) = eff;
+                if(eff > eff_maxval) eff_maxval = eff;    
+			}
+
+            //scale values based on maximum. This helps the GM interpolation routine
+            eff_scale = eff_maxval;
+            for( int i=0; i<nrow_OpticalTable; i++)
+                effs.at(i) /= eff_scale;
+
+		    //Create the field efficiency table
+            Powvargram vgram(sunpos, effs, 1.99, 0.);
+		    optical_table_uns = new GaussMarkov(sunpos, effs, vgram);
+
+		    //test how well the fit matches the data
+		    double err_fit = 0.;
+		    int npoints = (int)sunpos.size();
+		    for(int i=0; i<npoints; i++){
+			    double zref = effs.at(i);
+			    double zfit = optical_table_uns->interp( sunpos.at(i) );
+			    double dz = zref - zfit;
+			    err_fit += dz * dz;
+		    }
+		    err_fit = sqrt(err_fit);
+		    if( err_fit > 0.01 )
+			    message(TCS_WARNING, "The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
+
+
+        }
+
 
 		return true;
 	}
@@ -701,9 +802,22 @@ public:
 		dec = 23.45*d2r; //declination at summer solstice
 		//Solar altitude at noon on the summer solstice
 		solalt = asin(sin(dec)*sin(latitude)+cos(latitude)*cos(dec)*cos(omega));
-		double opt_des = interp_arr == 1 ? 
-			optical_table.interpolate(0.0, max(pi/2.-solalt, 0.0)) :
-			optical_table.nearest(0.0, max(pi/2.-solalt, 0.0)) ;
+        double opt_des; 
+        if(istableunsorted)
+        {
+            // Use current solar position to interpolate field efficiency table and find solar field efficiency
+			vector<double> sunpos;
+			sunpos.push_back(0.);
+			sunpos.push_back((pi/2. - solalt)/zen_scale);
+
+			opt_des = optical_table_uns->interp( sunpos ) * eff_scale;
+        }
+        else
+        {
+            opt_des = interp_arr == 1 ? 
+			    optical_table.interpolate(0.0, max(pi/2.-solalt, 0.0)) :
+			    optical_table.nearest(0.0, max(pi/2.-solalt, 0.0)) ;
+        }
 		eta_opt_ref = eta_opt_soil*eta_opt_gen*opt_des;
 		f_qsf = qsf_des/(irr_des*eta_opt_ref*(1.-f_sfhl_ref));    //[MWt/([W/m2] * [-] * [-])]
     
@@ -870,9 +984,21 @@ public:
 
 		//Get the current optical efficiency
 		double opt_val;
-		opt_val = interp_arr == 1 ? 
-			optical_table.interpolate(solaz, max(pi/2.-solalt, 0.0)) :
-			optical_table.nearest(solaz, max(pi/2.-solalt, 0.0) );
+        if(istableunsorted)
+        {
+            // Use current solar position to interpolate field efficiency table and find solar field efficiency
+			vector<double> sunpos;
+			sunpos.push_back(solaz/az_scale);
+			sunpos.push_back((pi/2. - solalt)/zen_scale);
+
+			opt_val = optical_table_uns->interp( sunpos ) * eff_scale;
+        }
+        else
+        {
+		    opt_val = interp_arr == 1 ? 
+			    optical_table.interpolate(solaz, max(pi/2.-solalt, 0.0)) :
+			    optical_table.nearest(solaz, max(pi/2.-solalt, 0.0) );
+        }
 		
 		double eta_arr = max(opt_val*Ftrack, 0.0);  //mjw 7.25.11 limit zenith to <90, otherwise the interpolation error message gets called during night hours.
 		eta_opt_sf = eta_arr*eta_opt_soil*eta_opt_gen;
