@@ -183,8 +183,9 @@ bool solarpilot_invoke::run()
     if(! m_sapi->CreateLayout() )
         return false;
 
+    
     //check if flux map calculations are desired
-	if( false ){ //m_cmod->as_boolean("calc_fluxmaps") ){
+	if( m_cmod->as_boolean("calc_fluxmaps") ){      // <<--- was set "false" for some reason
 
 		m_sapi->SetDetailCallbackStatus(false);
 		m_sapi->SetSummaryCallbackStatus(true);
@@ -214,6 +215,124 @@ bool solarpilot_invoke::run()
     return true;
 }
 
+bool solarpilot_invoke::postsim_calcs(compute_module *cm)
+{
+    /* 
+    Update calculated values and cost model number to be used in subsequent simulation and analysis.
+
+    The variable values used in this are consistent with the solarpilot compute module. These same variables are used in all 
+    tower modules that use solarpilot API.
+
+    */
+
+
+    //receiver calculations
+    double H_rec = recs.front().height;
+    double rec_aspect = recs.front().aspect;
+    double THT = layout.h_tower;
+    //update heliostat position table
+    int nr = (int)layout.heliostat_positions.size();
+    ssc_number_t *ssc_hl = cm->allocate( "helio_positions", nr, 2 );
+    for(int i=0; i<nr; i++){
+        ssc_hl[i*2] = (ssc_number_t)layout.heliostat_positions.at(i).location.x;
+        ssc_hl[i*2+1] = (ssc_number_t)layout.heliostat_positions.at(i).location.y;
+    }
+
+    double A_sf = cm->as_double("helio_height") * cm->as_double("helio_width") * cm->as_double("dens_mirror") * (double)nr;
+
+    //update piping length for parasitic calculation
+    double piping_length = THT * cm->as_double("csp.pt.par.piping_length_mult") + cm->as_double("csp.pt.par.piping_length_const");
+            
+    //update assignments for cost model
+	cm->assign("H_rec", var_data((ssc_number_t)H_rec));
+    cm->assign("rec_height", var_data((ssc_number_t)H_rec));
+	cm->assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
+    cm->assign("D_rec", var_data((ssc_number_t)(H_rec/rec_aspect)));
+	cm->assign("THT", var_data((ssc_number_t)THT));
+    cm->assign("h_tower", var_data((ssc_number_t)THT));
+	cm->assign("A_sf", var_data((ssc_number_t)A_sf));
+    cm->assign("Piping_length", var_data((ssc_number_t)piping_length) );
+
+    //Update the total installed cost
+    double total_direct_cost = 0.;
+    double A_rec;
+    switch (recs.front().type)
+    {
+    case sp_receiver::TYPE::CYLINDRICAL:
+    {
+        double h = recs.front().height;
+        double d = h/recs.front().aspect;
+        A_rec =  h*d*3.1415926;
+        break;
+    }
+    case sp_receiver::TYPE::CAVITY:
+    case sp_receiver::TYPE::FLAT:
+        double h = recs.front().height;
+        double w = h/recs.front().aspect;
+        A_rec = h*w;
+        break;
+    }
+    double receiver = cm->as_double("rec_ref_cost")*pow(A_rec/cm->as_double("rec_ref_area"), cm->as_double("rec_cost_exp"));     //receiver cost
+
+    //storage cost
+    double storage = cm->as_double("q_pb_design")*cm->as_double("tshours")*cm->as_double("tes_spec_cost")*1000.;
+
+    //power block + BOP
+    double P_ref = cm->as_double("P_ref") * 1000.;  //kWe
+    double power_block = P_ref * (cm->as_double("plant_spec_cost") + cm->as_double("bop_spec_cost") ); //$/kWe --> $
+
+    //site improvements
+    double site_improvements = A_sf * cm->as_double("site_spec_cost");
+            
+    //heliostats
+    double heliostats = A_sf * cm->as_double("heliostat_spec_cost");
+            
+    //fixed cost
+    double cost_fixed = cm->as_double("cost_sf_fixed");
+
+    //fossil
+    double fossil = P_ref * cm->as_double("fossil_spec_cost");
+
+    //tower cost
+    double tower = cm->as_double("tower_fixed_cost") * exp( cm->as_double("tower_exp") * (THT + 0.5*(-H_rec + cm->as_double("helio_height")) ) );
+
+    //---- total direct cost -----
+    total_direct_cost = (1. + cm->as_double("contingency_rate")/100.) * (
+        site_improvements + heliostats + power_block + 
+        cost_fixed + storage + fossil + tower + receiver);
+    //-----
+
+    //land area
+    double land_area = layout.land_area * cm->as_double("csp.pt.sf.land_overhead_factor") + cm->as_double("csp.pt.sf.fixed_land_area");
+
+    //EPC
+    double cost_epc = 
+        cm->as_double("csp.pt.cost.epc.per_acre") * land_area
+        + cm->as_double("csp.pt.cost.epc.percent") * total_direct_cost / 100.
+        + P_ref * 1000. * cm->as_double("csp.pt.cost.epc.per_watt") 
+        + cm->as_double("csp.pt.cost.epc.fixed");
+
+    //PLM
+    double cost_plm = 
+        cm->as_double("csp.pt.cost.plm.per_acre") * land_area
+        + cm->as_double("csp.pt.cost.plm.percent") * total_direct_cost / 100.
+        + P_ref * 1000. * cm->as_double("csp.pt.cost.plm.per_watt") 
+        + cm->as_double("csp.pt.cost.plm.fixed");
+
+    //sales tax
+    //return ${csp.pt.cost.sales_tax.value}/100*${total_direct_cost}*${csp.pt.cost.sales_tax.percent}/100; };
+    double cost_sales_tax = cm->as_double("sales_tax_rate")/100. * total_direct_cost * cm->as_double("sales_tax_frac")/100.;
+
+    //----- indirect cost
+    double total_indirect_cost = cost_epc + cost_plm + cost_sales_tax;
+            
+    //----- total installed cost!
+    double total_installed_cost = total_direct_cost + total_indirect_cost;
+    cm->assign("total_installed_cost", var_data((ssc_number_t)total_installed_cost ));
+
+    return true;
+
+}
 
 static bool solarpilot_callback( simulation_info *siminfo, void *data )
 {

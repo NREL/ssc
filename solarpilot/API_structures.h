@@ -196,6 +196,7 @@ struct sp_layout
 	double 
 		span_cw, //[optional] default=+180, field span in clockwise direction 
 		span_ccw;	//[optional] default=-180, field span in counterclockwise direction
+    double area_sf;     //Total solar field reflective area
 	
 	struct LAND_BOUND_TYPE { enum A {SCALED, FIXED, POLYGON }; };
 	
@@ -236,6 +237,21 @@ struct sp_cost
 	double sales_tax_frac;
 	double sales_tax_cost;
     double cost_fixed;
+
+    //calculated values
+    double cost_rec_tot;
+    double cost_tower_tot;
+    double cost_land_tot;
+    double cost_heliostat_tot;
+    double cost_site_tot;
+    double cost_plant_tot;
+    double cost_tes_tot;
+    double cost_fossil_tot;
+    double cost_salestax_tot;
+    double cost_direct_tot;
+    double cost_epc_tot;
+    double cost_indirect_tot;
+    double cost_installed_tot;
 };
 
 

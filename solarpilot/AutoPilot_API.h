@@ -46,6 +46,7 @@ protected:
 		_simflag;	//add bool flags here to indicate simulation/setup status
 
 	sp_layout *_layout;
+    sp_cost *_cost;
 
 	void update_ambient(var_set &vset, sp_ambient &ambient);
 	void update_cost(var_set &vset, sp_cost &cost);

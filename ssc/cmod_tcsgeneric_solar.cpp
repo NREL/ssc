@@ -67,7 +67,9 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "diswos",           "Time-of-dispatch control for without-solar conditions",          "none",             "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "qdisp",            "TOD power output control factors",                               "none",             "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "fdisp",            "Fossil backup output control factors",                           "none",             "",             "type_260",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "OpticalTable",     "Optical table",                                                  "none",             "",             "type_260",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "istableunsorted",  "Is optical table unsorted format?"                               "none",             "",             "type_260",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "OpticalTable",     "Optical table",                                                  "none",             "",             "type_260",       "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_MATRIX,      "OpticalTableUns",  "Optical table Unstructured",                                     "none",             "",             "type_260",       "*",                       "",                      "" },
 
 	// initial values
 	{ SSC_INPUT,        SSC_NUMBER,      "ibn",              "Beam-normal (DNI) irradiation",                                  "kJ/hr-m^2",        "",             "type_260",       "*",                       "",                      "" },
@@ -256,7 +258,9 @@ public:
 		//Set parameters
         set_unit_value_ssc_double(type260_genericsolar, "latitude" ); //, 35);
         set_unit_value_ssc_double(type260_genericsolar, "longitude" ); //, -117);
+        set_unit_value_ssc_double(type260_genericsolar, "istableunsorted");
 		set_unit_value_ssc_matrix(type260_genericsolar, "OpticalTable" ); //, opt_data);
+        //set_unit_value_ssc_matrix(type260_genericsolar, "OpticalTableUns" );
         set_unit_value_ssc_double(type260_genericsolar, "timezone" ); //, -8);
         set_unit_value_ssc_double(type260_genericsolar, "theta_stow" ); //, 170);
         set_unit_value_ssc_double(type260_genericsolar, "theta_dep" ); //, 10);

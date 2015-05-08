@@ -188,6 +188,7 @@ void sp_layout::LoadDefaults(var_set &V)
 	h_tower = V["solarfield"][0]["tht"].value_double();	//tower height [m]
 	span_cw = V["solarfield"][0]["accept_max"].value_double(); //[optional] default=+180, field span in clockwise direction 
 	span_ccw = V["solarfield"][0]["accept_min"].value_double();	//[optional] default=-180, field span in counterclockwise direction
+    area_sf = 0.;   //calculated value -- initialize
 }
 
 void sp_layout::land_table::add_point(double x, double y, polygon &poly){
@@ -223,6 +224,21 @@ void sp_cost::LoadDefaults(var_set &V)
 	sales_tax_frac = V["financial"][0]["sales_tax_frac"].value_double();
 	sales_tax_cost = V["financial"][0]["sales_tax_cost"].value_double();
     cost_fixed = V["financial"][0]["fixed_cost"].value_double();
+
+    //Initialize calculated values
+    cost_rec_tot = 0.;
+    cost_tower_tot = 0.;
+    cost_land_tot = 0.;
+    cost_heliostat_tot = 0.;
+    cost_site_tot = 0.;
+    cost_plant_tot = 0.;
+    cost_tes_tot = 0.;
+    cost_fossil_tot = 0.;
+    cost_salestax_tot = 0.;
+    cost_direct_tot = 0.;
+    cost_epc_tot = 0.;
+    cost_indirect_tot = 0.;
+    cost_installed_tot = 0.;
 }
 
 
