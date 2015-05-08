@@ -11,6 +11,9 @@
 var_info vtab_battery[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
+	// simulation inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",              "",                           "",                              "" },
+
 	// configuration inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to Battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
@@ -42,8 +45,6 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_qn_computed",	                       "Capacity at discharge rate for n-hour rate",             "Ah",       "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                           "",                             "" },
 																																																						     
-	// lithium-ion inputs (currently none specific to LiIon)
-
 	// lifetime inputs
 	{ SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity Degradation at which to replace battery",       "%",        "",                     "Battery",       "",                           "",                             "" },
@@ -105,9 +106,7 @@ var_info_invalid };
 
 battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacement, size_t nrec, double dt_hr )
 {
-	// time quantities
-	year = 0;
-	step_per_hour = nrec / 8760;
+
 
 	// component models
 	voltage_model = 0;
@@ -144,6 +143,11 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 
 	en = setup_model;
 	if ( !en ) return;
+
+	// time quantities
+	year = 0;
+	step_per_hour = nrec / 8760;
+	nyears = cm.as_integer("analysis_period");
 
 	chem = cm.as_integer( "batt_chem" );
 
@@ -204,10 +208,7 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
 	outCapacityPercent = cm.allocate("capacity_percent", nrec);
 	outCycles = cm.allocate("Cycles", nrec);
-
-	// currently hardcoded for 25 years, change when lifetime capability added
-	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", 25); 
-
+	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", nyears); 
 	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
 	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
 	outBatteryEnergy = cm.allocate("battery_energy", nrec);
