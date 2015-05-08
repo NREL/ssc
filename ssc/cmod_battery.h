@@ -37,6 +37,9 @@ struct battstor
 	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
 	util::matrix_static_t<float, 12, 24> dm_sched;
 	
+	bool ac_or_dc;
+	double dc_dc, ac_dc, dc_ac;
+
 	double e_charge;
 	double e_discharge;
 

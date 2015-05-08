@@ -351,7 +351,7 @@ Dispatch Base Class - can envision many potential modifications. Goal is to defi
 class dispatch_t
 {
 public:
-	dispatch_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min);
+	dispatch_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac);
 
 	// Public APIs
 	virtual void dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
@@ -361,6 +361,10 @@ public:
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	
+	// Conversion losses at AC or DC connection points
+	double conversion_loss_in(double);
+	double conversion_loss_out(double);
+
 	// Outputs
 	double cycle_efficiency();
 	double average_efficiency();
@@ -379,6 +383,13 @@ protected:
 	battery_t * _Battery;
 	double _dt_hour;
 
+	// configuration
+	bool _ac_or_dc;
+	double _dc_dc;
+	double _dc_ac;
+	double _ac_dc;
+
+	// energy quantities
 	double _e_tofrom_batt;
 	double _e_grid;
 	double _e_gen;
@@ -410,6 +421,7 @@ class dispatch_manual_t : public dispatch_t
 {
 public:
 	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, double t_min, 
+					 bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
 					 util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double> dm_percent_discharge);
 	void dispatch(size_t hour_of_year, double e_pv, double e_load);
 

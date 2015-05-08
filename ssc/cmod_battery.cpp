@@ -11,6 +11,12 @@
 var_info vtab_battery[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
+	// configuration inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to Battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_ac_efficiency",                      "Battery DC to AC efficiency",                             "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_dc_efficiency",                      "Inverter AC to Battery DC efficiency",                    "",        "",                     "Battery",       "",                           "",                              "" },
+
 	// generic battery inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_parallel",                     "Number of Cells in Parallel",                             "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of Cells in Serial",                               "",        "",                     "Battery",       "",                           "",                              "" },
@@ -20,7 +26,6 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
-
 
 	// Voltage discharge curve
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vfull",                                 "Fully charged cell voltage",                              "V",       "",                     "Battery",       "",                           "",                              "" },
@@ -260,7 +265,21 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 		capacity_model);
 
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
-	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), dm_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
+
+	dc_dc = ac_dc = dc_ac = 100.;
+	ac_or_dc = cm.as_boolean("batt_ac_or_dc");
+	if (ac_or_dc == 0)
+		dc_dc = cm.as_double("batt_dc_dc_efficiency");
+	else
+	{
+		ac_dc = cm.as_double("batt_ac_dc_efficiency");
+		dc_ac = cm.as_double("batt_dc_ac_efficiency");
+	}
+	
+
+	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), 
+		ac_or_dc, dc_dc, ac_dc, dc_ac,
+		dm_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
 }
 
 battstor::~battstor()

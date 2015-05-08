@@ -882,7 +882,7 @@ double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, double t_min)
+dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double Ic_max, double Id_max, double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac)
 {
 	_Battery = Battery;
 	_dt_hour = dt_hour;
@@ -890,6 +890,10 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_Ic_max = Ic_max;
 	_Id_max = Id_max;
 	_t_min = t_min;
+	_ac_or_dc = ac_or_dc;
+	_dc_dc = dc_ac;
+	_ac_dc = ac_dc;
+	_dc_ac = dc_ac;
 
 	// positive quantities describing how much went to load
 	_pv_to_load = 0.;
@@ -991,11 +995,29 @@ void dispatch_t::compute_efficiency()
 	// update for next step
 	_prev_charging = _charging;
 }
+double dispatch_t::conversion_loss_in(double I)
+{
+	if (_ac_or_dc == 0)
+		I*=_dc_dc*0.01;
+	else
+		I*=_ac_dc*0.01;
+	return I;
+}
+double dispatch_t::conversion_loss_out(double I)
+{
+	if (_ac_or_dc == 0)
+		I*=_dc_dc*0.01;
+	else
+		I*=_dc_ac*0.01;
+	return I;
+}
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min, util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double>  dm_percent_discharge)
-	: dispatch_t(Battery, dt, SOC_min, Ic_max, Id_max, t_min)
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min, 
+	bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
+	util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double>  dm_percent_discharge)
+	: dispatch_t(Battery, dt, SOC_min, Ic_max, Id_max, t_min, ac_or_dc, dc_dc, ac_dc, dc_ac)
 {
 	_sched = dm_sched;
 	_charge_array = dm_charge;
@@ -1063,15 +1085,19 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	switch_controller();
 	double I = current_controller(battery_voltage);
 
+	// Apply conversion loss on AC or DC side
+	I = conversion_loss_in(I);
+
 	// Run Battery Model to update charge based on charge/discharge
 	_Battery->run(I);
 
 	// Update how much power was actually used to/from battery
 	I = _Battery->capacity_model()->I();
+	I = conversion_loss_out(I);
 	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
 	_e_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;// [kWh]
 
-	// compute efficiency
+	// compute internal round-trip efficiency
 	compute_efficiency();
 	
 	// Update net grid energy
