@@ -916,6 +916,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_t_at_mode = 1000; 
 	_prev_charging = false;
 	_charging = false;
+	_e_max_discharge = 0.;
 
 	// efficiency
 	_charge_accumulated = _Battery->battery_charge_total()*_Battery->battery_voltage()*watt_to_kilowatt;
@@ -942,8 +943,11 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 		if (fabs(_e_tofrom_batt) > e_max_discharge)
 			_e_tofrom_batt = e_max_discharge;
 
+		if (_charging != _prev_charging)
+			_e_max_discharge = e_max_discharge;
+
 		// implement discharge percent
-		double e_percent = e_max_discharge*percent_discharge*0.01;
+		double e_percent = _e_max_discharge*percent_discharge*0.01;
 
 		if (_e_tofrom_batt > e_percent)
 			_e_tofrom_batt = e_percent;
