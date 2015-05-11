@@ -733,16 +733,23 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				{											// Need to advance timestep and try again
 					time_required_su = time_step_hrs;		
 					m_mode = C_csp_collector_receiver::E_csp_cr_modes::STARTUP;
+					q_startup = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0;
 				}
 				else
 				{
 					time_required_su = time_required_max;		//[hr]
 					m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+
+					double q_startup_energy_req = m_E_su_prev;	//[W-hr]
+					double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*m_t_su;	//[W-hr]
+					q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);
 				}
 
 				m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0);
 				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);
 			}
+
+			rec_is_off = true;
 
 			break;
 
@@ -750,24 +757,35 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			
 			if( m_E_su_prev > 0.0 || m_t_su_prev > 0.0 )
 			{
-				m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0);
-				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);
+				
+				m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0);	//[W-hr]
+				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);	//[hr]
+
 				if( m_E_su + m_t_su > 0.0 )
 				{
 					m_mode = C_csp_collector_receiver::E_csp_cr_modes::STARTUP;		// If either are greater than 0, we're staring up but not finished
-					q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
+					
+					// 4.28.15 twn: Startup energy also needs to consider energy consumed during time requirement, if that is greater than energy requirement
+						//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
+					q_startup = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0;
+
 					rec_is_off = true;
 					f_rec_timestep = 0.0;
-					// GOTO 900
 				}
 				else
 				{
 					m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+
+					double q_startup_energy_req = m_E_su_prev;	//[W-hr]
+					double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*m_t_su;	//[W-hr]
+					q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);
+
 					// Adjust the available mass flow to reflect startup
 					m_dot_salt_tot = fmin((1.0 - m_t_su_prev / (step / 3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev / ((step / 3600.0)*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)));
 					f_rec_timestep = fmax(0.0, fmin(1.0 - m_t_su_prev / (step / 3600.0), 1.0 - m_E_su_prev / (m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in))));
 				}
-				q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
+					//4.28.15 twn: Startup energy needs to consider
+				//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
 			}
 			else
 			{
@@ -775,6 +793,19 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				m_t_su = m_t_su_prev;
 				m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
 				q_startup = 0.0;
+
+				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
+
+				if( q_thermal < m_q_rec_min )
+				{
+					// If output here is less than specified allowed minimum, then need to shut off receiver
+					m_mode = C_csp_collector_receiver::OFF;
+
+					// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
+					W_dot_pump = 0.0;
+					// Pressure drops
+					DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
+				}
 			}
 			break;
 
@@ -807,7 +838,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		if( q_thermal < m_q_rec_min )
 		{
 			// GOTO 900
-			rec_is_off = true;
+			if(m_mode != C_csp_collector_receiver::STEADY_STATE)
+				rec_is_off = true;
 		}
 	}
 	else
@@ -845,7 +877,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] convert from K
 	ms_outputs.m_field_eff_adj = field_eff_adj;					//[-]
 	ms_outputs.m_Q_solar_total = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
-	ms_outputs.m_q_startup = q_startup;							//[MW]
+	ms_outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	ms_outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
 	ms_outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
 	ms_outputs.m_vel_htf = u_coolant;							//[m/s]
