@@ -56,6 +56,7 @@ enum{
 	O_P_REF_OUT,
 	O_F_BAYS,
 	O_P_COND,
+	O_Q_STARTUP,
 
 	//Include N_max
 	N_MAX
@@ -108,6 +109,8 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,            O_F_BAYS,                 "f_bays",                                               "Fraction of operating heat rejection bays",         "none",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,            O_P_COND,                 "P_cond",                                                                      "Condenser pressure",           "Pa",             "",             "",             "" },
 	
+	{ TCS_OUTPUT,          TCS_NUMBER,         O_Q_STARTUP,           "q_pc_startup",                                                              "Power cycle startup energy",       "MWt-hr",             "",             "",             "" },
+
 	{ TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
 };
 
@@ -267,6 +270,8 @@ public:
 		value(O_P_REF_OUT, ms_outputs.m_P_ref);				//[MWe] Reference power level output at design (mirror param)
 		value(O_F_BAYS, ms_outputs.m_f_hrsys);				//[none] Fraction of operating heat rejection bays
 		value(O_P_COND, ms_outputs.m_P_cond);				//[Pa] Condenser pressure
+
+		value(O_Q_STARTUP, ms_outputs.m_q_startup);			//[MWt-hr] Power cycle startup energy
 
 		return 0;
 
