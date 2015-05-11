@@ -40,7 +40,11 @@ static inline double to_double(double x) { return x; }
 
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,     "activate_snow_model",                          "Toggle Snow Loss Estimation",                          "0/1",      "",								"snowmodel",			"?=0",						"BOOLEAN",							"" },
+	// optional for lifetime analysis
+	{ SSC_INPUT, SSC_NUMBER, "pv_lifetime_simulation", "PV lifetime simulation", "0/1", "", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "", "pv_lifetime_simulation=1", "", "" },
+
+	{ SSC_INPUT, SSC_NUMBER, "activate_snow_model", "Toggle Snow Loss Estimation", "0/1", "", "snowmodel", "?=0", "BOOLEAN", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",                              "Nameplate capacity",                                   "kW",       "", "pvsamv1", "*", "", "" },
 	{ SSC_INPUT,        SSC_STRING,     "solar_resource_file",                          "Weather file in TMY2, TMY3, EPW, or SAM CSV.",         "",         "", "pvsamv1", "*", "LOCAL_FILE", "" },
 	
@@ -1355,61 +1359,68 @@ public:
 		ssc_number_t *p_snowloss[4];
 		ssc_number_t *p_snowcoverage[4];
 
+		int pv_lifetime_simulation = as_integer("pv_lifetime_simulation");
+		int nyears = 1;
+		if (pv_lifetime_simulation == 1)
+			nyears = as_integer("analysis_period");
+
+
+
 		// allocate output arrays for all subarray-specific parameters
 		for (int nn=0;nn<4;nn++)
 		{
 			if ( sa[nn].enable )
 			{
 				std::string prefix = "subarray" + util::to_string( (int)(nn+1) ) + "_";
-				p_aoi[nn]        = allocate( prefix+"aoi", nrec );
-				p_surftilt[nn]   = allocate( prefix+"surf_tilt", nrec);
-				p_surfazi[nn]    = allocate( prefix+"surf_azi", nrec);		
-				p_rot[nn]        = allocate( prefix+"axisrot", nrec );
-				p_idealrot[nn]   = allocate( prefix+"idealrot", nrec);
-				p_poanom[nn]     = allocate( prefix+"poa_nom", nrec);
-				p_poashaded[nn]  = allocate( prefix+"poa_shaded", nrec);
-				p_poaeffbeam[nn]    = allocate( prefix+"poa_eff_beam", nrec );
-				p_poaeffdiff[nn]    = allocate( prefix+"poa_eff_diff", nrec );
-				p_poaeff[nn]   = allocate( prefix+"poa_eff", nrec );		
-				p_soiling[nn]    = allocate( prefix+"soiling_derate", nrec);
-				p_shad[nn]       = allocate( prefix+"beam_shading_factor", nrec );
-				p_tcell[nn]      = allocate( prefix+"celltemp", nrec );
-				p_modeff[nn]     = allocate( prefix+"modeff", nrec );
-				p_dcv[nn]        = allocate( prefix+"dc_voltage", nrec );
-				p_dcsubarray[nn] = allocate( prefix+"dc_gross", nrec );
-				p_ss_derate[nn] = allocate(prefix + "ss_derate", nrec);
-				p_ss_diffuse_derate[nn] = allocate(prefix + "ss_diffuse_derate", nrec);
-				p_ss_reflected_derate[nn] = allocate(prefix + "ss_reflected_derate", nrec);
+				p_aoi[nn]        = allocate( prefix+"aoi", nrec*nyears );
+				p_surftilt[nn]   = allocate( prefix+"surf_tilt", nrec*nyears);
+				p_surfazi[nn]    = allocate( prefix+"surf_azi", nrec*nyears);		
+				p_rot[nn]        = allocate( prefix+"axisrot", nrec*nyears );
+				p_idealrot[nn]   = allocate( prefix+"idealrot", nrec*nyears);
+				p_poanom[nn]     = allocate( prefix+"poa_nom", nrec*nyears);
+				p_poashaded[nn]  = allocate( prefix+"poa_shaded", nrec*nyears);
+				p_poaeffbeam[nn]    = allocate( prefix+"poa_eff_beam", nrec*nyears );
+				p_poaeffdiff[nn]    = allocate( prefix+"poa_eff_diff", nrec*nyears );
+				p_poaeff[nn]   = allocate( prefix+"poa_eff", nrec*nyears );		
+				p_soiling[nn]    = allocate( prefix+"soiling_derate", nrec*nyears);
+				p_shad[nn]       = allocate( prefix+"beam_shading_factor", nrec*nyears );
+				p_tcell[nn]      = allocate( prefix+"celltemp", nrec*nyears );
+				p_modeff[nn]     = allocate( prefix+"modeff", nrec*nyears );
+				p_dcv[nn]        = allocate( prefix+"dc_voltage", nrec*nyears );
+				p_dcsubarray[nn] = allocate( prefix+"dc_gross", nrec*nyears );
+				p_ss_derate[nn] = allocate(prefix + "ss_derate", nrec*nyears);
+				p_ss_diffuse_derate[nn] = allocate(prefix + "ss_diffuse_derate", nrec*nyears);
+				p_ss_reflected_derate[nn] = allocate(prefix + "ss_reflected_derate", nrec*nyears);
 
 				if (activate_snow_model){
-					p_snowloss[nn] = allocate(prefix + "snow_loss", nrec);
-					p_snowcoverage[nn] = allocate(prefix + "snow_coverage", nrec);
+					p_snowloss[nn] = allocate(prefix + "snow_loss", nrec*nyears);
+					p_snowcoverage[nn] = allocate(prefix + "snow_coverage", nrec*nyears);
 				}
 			}
 		}
 		
 		// hourly outputs summed across all subarrays
-		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec );
-		ssc_number_t *p_inrad = allocate( "input_radiation", nrec );
-		ssc_number_t *p_inradbeam = allocate( "input_radiation_beam", nrec );
-		ssc_number_t *p_poanom_ts_total = allocate( "poa_nom", nrec );
-		ssc_number_t *p_poashaded_ts_total = allocate("poa_shaded", nrec );
-		ssc_number_t *p_poaeff_ts_total = allocate("poa_eff", nrec );
-		ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec);
-		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec );
-		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec );
-		ssc_number_t *p_acgross = allocate( "ac_gross", nrec );
-		ssc_number_t *p_gen = allocate("gen", nrec);
-//		ssc_number_t *p_grid = allocate("grid", nrec);
+		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec*nyears );
+		ssc_number_t *p_inrad = allocate( "input_radiation", nrec*nyears );
+		ssc_number_t *p_inradbeam = allocate( "input_radiation_beam", nrec*nyears );
+		ssc_number_t *p_poanom_ts_total = allocate( "poa_nom", nrec*nyears );
+		ssc_number_t *p_poashaded_ts_total = allocate("poa_shaded", nrec*nyears );
+		ssc_number_t *p_poaeff_ts_total = allocate("poa_eff", nrec*nyears );
+		ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec*nyears);
+		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec*nyears );
+		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec*nyears );
+		ssc_number_t *p_acgross = allocate( "ac_gross", nrec*nyears );
+		ssc_number_t *p_gen = allocate("gen", nrec*nyears);
+//		ssc_number_t *p_grid = allocate("grid", nrec*nyears);
 		
 //		ssc_number_t *p_hourlygen = allocate("hourly_energy", 8760);
-		ssc_number_t *p_hourlygen = allocate("hourly_gen", 8760);
+		ssc_number_t *p_hourlygen = allocate("hourly_gen", 8760*nyears);
 //		ssc_number_t *p_hourlygrid = allocate("hourly_grid", 8760);
 
-		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
-		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
-		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
-		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec );
+		ssc_number_t *p_inveff = allocate("inv_eff", nrec*nyears);
+		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec*nyears );
+		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec*nyears );
+		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec*nyears );
 
 		
 		// hourly adjustement factors
@@ -1421,7 +1432,7 @@ public:
 //		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
 		bool en_batt = as_boolean("en_batt");
 		bool en_batt_replacement = as_boolean("en_batt_replacement");
-		battstor batt(*this, en_batt, en_batt_replacement, nrec, ts_hour);
+		battstor batt(*this, en_batt, en_batt_replacement, nrec*nyears, ts_hour);
 
 		double cur_load = 0.0;
 		size_t nload = 0;
@@ -1434,451 +1445,461 @@ public:
 				throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 		}
 		
-		// begin 8760 loop through each timestep
-		size_t idx=0;
-		size_t hour=0;
-		while( hour < 8760 )
+
+		size_t idx = 0;
+		size_t hour = 0;
+		// lifetime analysis over nyears
+		for (int iyear = 0; iyear < nyears; iyear++)
 		{
-			// only hourly electric load, even
-			// if PV simulation is subhourly.  load is assumed constant over the hour.
-			// if no load profile supplied, load = 0
-			if ( p_load_in != 0 && nload == 8760 )
-				cur_load = p_load_in[hour];
-			
-#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
-			/*if ( hour % (8760/NSTATUS_UPDATES) == 0 )
+			// begin 8760 loop through each timestep
+			hour = 0;
+			while (hour < 8760)
 			{
+				// only hourly electric load, even
+				// if PV simulation is subhourly.  load is assumed constant over the hour.
+				// if no load profile supplied, load = 0
+				if (p_load_in != 0 && nload == 8760)
+					cur_load = p_load_in[hour];
+
+#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
+				/*if ( hour % (8760/NSTATUS_UPDATES) == 0 )
+				{
 				float percent = 100.0f * ((float)hour+1) / ((float)8760);
 				if ( !update( "", percent , (float)hour ) )
-					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour+1.0) );
-			}*/
+				throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour+1.0) );
+				}*/
 
-			for( size_t jj=0;jj<step_per_hour;jj++ )
-			{
-				// electric load is subhourly
-				// if no load profile supplied, load = 0
-				if ( p_load_in != 0 && nload == nrec )
-					cur_load = p_load_in[idx];
-
-				if (!wf.read())
-					throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx+1)) + " in weather file");
-		
-				double solazi=0, solzen=0, solalt=0;
-				int sunup = 0;
-				double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
-				double inprad_total = 0.0;
-				double inprad_beam = 0.0;
-				double poa_nom_ts_total = 0.0;
-				double poa_shaded_ts_total = 0.0;
-				double alb = 0.2;
-				double poa_eff_ts_total = 0.0;
-								
-				int month_idx = wf.month - 1;
-
-				if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
-					alb = wf.albedo;
-				else if ( month_idx >= 0 && month_idx < 12 )
-					alb = alb_array[month_idx];
-				else
-					throw exec_error( "pvsamv1", 
-							util::format("Error retrieving albedo value: Invalid month in weather file or invalid albedo value in weather file"));
-	
-				// calculate incident irradiance on each subarray
-				for (int nn=0;nn<4;nn++)
+				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
-					if ( !sa[nn].enable
-						|| sa[nn].nstrings < 1 )
-						continue; // skip disabled subarrays
+					// electric load is subhourly
+					// if no load profile supplied, load = 0
+					if (p_load_in != 0 && nload == nrec*nyears)
+						cur_load = p_load_in[idx];
+
+					if (!wf.read())
+						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
+
+					double solazi = 0, solzen = 0, solalt = 0;
+					int sunup = 0;
+					double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
+					double inprad_total = 0.0;
+					double inprad_beam = 0.0;
+					double poa_nom_ts_total = 0.0;
+					double poa_shaded_ts_total = 0.0;
+					double alb = 0.2;
+					double poa_eff_ts_total = 0.0;
+
+					int month_idx = wf.month - 1;
+
+					if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
+						alb = wf.albedo;
+					else if (month_idx >= 0 && month_idx < 12)
+						alb = alb_array[month_idx];
+					else
+						throw exec_error("pvsamv1",
+						util::format("Error retrieving albedo value: Invalid month in weather file or invalid albedo value in weather file"));
+
+					// calculate incident irradiance on each subarray
+					for (int nn = 0; nn < 4; nn++)
+					{
+						if (!sa[nn].enable
+							|| sa[nn].nstrings < 1)
+							continue; // skip disabled subarrays
 
 #define IRRMAX 1500
-				
-					if ( wf.gh < 0 || wf.gh > IRRMAX )
-					{
-						log( util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-							wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx );
-						wf.gh = 0;
-					}
-					if ( wf.dn < 0 || wf.dn > IRRMAX )
-					{
-						log( util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-							wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx );
-						wf.dn = 0;
-					}
-					if ( wf.df < 0 || wf.df > IRRMAX )
-					{
-						log( util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-							wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx );
-						wf.df = 0;
-					}
 
-					irrad irr;
-					irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour );
-					irr.set_location( wf.lat, wf.lon, wf.tz );
-			
-					// if enabled apply sky diffuse shading factor after irradiation processor 
-					irr.set_sky_model(skymodel, alb, sa[nn].shad.en_skydiff_viewfactor());
-					if (radmode == 0) irr.set_beam_diffuse(wf.dn, wf.df);
-					else if (radmode == 1) irr.set_global_beam( wf.gh, wf.dn );
-					else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);
-				
-					irr.set_surface( sa[nn].track_mode,
-						sa[nn].tilt,
-						sa[nn].azimuth,
-						sa[nn].rotlim,
-						sa[nn].backtrack == 1, // mode 1 is backtracking enabled
-						sa[nn].gcr );
-
-					int code = irr.calc();
-					if ( code != 0 )
-						throw exec_error( "pvsamv1", 
-							util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]", 
-							nn+1, code, wf.year, wf.month, wf.day, wf.hour));
-
-					double ibeam, iskydiff, ignddiff;
-					double aoi, stilt, sazi, rot, btd;
-
-					irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
-					irr.get_angles( &aoi, &stilt, &sazi, &rot, &btd );
-					irr.get_poa( &ibeam, &iskydiff, &ignddiff, 0, 0, 0);
-				
-					// record sub-array plane of array output before computing shading and soiling
-					p_poanom[nn][idx] = (ssc_number_t) ( (ibeam + iskydiff + ignddiff) );
-				
-					//record sub-array contribution to total plane of array for this hour
-					poa_nom_ts_total += p_poanom[nn][idx]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
-
-					//accumulate monthly nominal poa
-					sa[nn].monthly_poa_nom[ month_idx ] += ( (ibeam+iskydiff+ignddiff) * 0.001 );
-
-					// note: shading factors are still hourly inputs
-					double beam_shad_factor = sa[nn].shad.fbeam( hour, solalt, solazi );
-								
-					// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-					ibeam *= beam_shad_factor;
-						
-					// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-					iskydiff *= sa[nn].shad.fdiff();
-
-					//self-shading calculations
-					if ((sa[nn].track_mode == 0 && sa[nn].shade_mode == 0) //fixed tilt, self-shading OR
-						|| (sa[nn].track_mode == 1 && sa[nn].shade_mode == 0 && sa[nn].backtrack==0)) //one-axis tracking, self-shading, not backtracking
-					{
-						// info to be passed to self-shading function for one-axis trackers
-						bool trackbool = (sa[nn].track_mode == 1);	// 0 for fixed tilt, 1 for one-axis
-						double shad1xf = 0;
-						if (trackbool)	//shade fraction only needs to be given a meaningful value for one-axis trackers
+						if (wf.gh < 0 || wf.gh > IRRMAX)
 						{
-							shad1xf = shade_fraction_1x(solazi, solzen, sa[nn].tilt, sa[nn].azimuth, sa[nn].gcr, rot);
+							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+								wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+							wf.gh = 0;
+						}
+						if (wf.dn < 0 || wf.dn > IRRMAX)
+						{
+							log(util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+								wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+							wf.dn = 0;
+						}
+						if (wf.df < 0 || wf.df > IRRMAX)
+						{
+							log(util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+							wf.df = 0;
 						}
 
-						//execute self-shading calculations
-						if (ss_exec( sa[nn].sscalc, stilt, sazi, solzen, solazi, wf.dn, ibeam, (iskydiff + ignddiff), alb, trackbool, shad1xf, sa[nn].ssout))
+						irrad irr;
+						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
+						irr.set_location(wf.lat, wf.lon, wf.tz);
+
+						// if enabled apply sky diffuse shading factor after irradiation processor 
+						irr.set_sky_model(skymodel, alb, sa[nn].shad.en_skydiff_viewfactor());
+						if (radmode == 0) irr.set_beam_diffuse(wf.dn, wf.df);
+						else if (radmode == 1) irr.set_global_beam(wf.gh, wf.dn);
+						else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);
+
+						irr.set_surface(sa[nn].track_mode,
+							sa[nn].tilt,
+							sa[nn].azimuth,
+							sa[nn].rotlim,
+							sa[nn].backtrack == 1, // mode 1 is backtracking enabled
+							sa[nn].gcr);
+
+						int code = irr.calc();
+						if (code != 0)
+							throw exec_error("pvsamv1",
+							util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]",
+							nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
+
+						double ibeam, iskydiff, ignddiff;
+						double aoi, stilt, sazi, rot, btd;
+
+						irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
+						irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
+						irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+
+						// record sub-array plane of array output before computing shading and soiling
+						p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
+
+						//record sub-array contribution to total plane of array for this hour
+						poa_nom_ts_total += p_poanom[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+
+						//accumulate monthly nominal poa
+						sa[nn].monthly_poa_nom[month_idx] += ((ibeam + iskydiff + ignddiff) * 0.001);
+
+						// note: shading factors are still hourly inputs
+						double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi);
+
+						// apply hourly shading factors to beam (if none enabled, factors are 1.0)
+						ibeam *= beam_shad_factor;
+
+						// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
+						iskydiff *= sa[nn].shad.fdiff();
+
+						//self-shading calculations
+						if ((sa[nn].track_mode == 0 && sa[nn].shade_mode == 0) //fixed tilt, self-shading OR
+							|| (sa[nn].track_mode == 1 && sa[nn].shade_mode == 0 && sa[nn].backtrack == 0)) //one-axis tracking, self-shading, not backtracking
 						{
-							p_ss_diffuse_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_diffuse_derate;
-							p_ss_reflected_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_reflected_derate;
-							p_ss_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_dc_derate;
-
-							// Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
-							iskydiff *= sa[nn].ssout.m_diffuse_derate;
-							ignddiff *= sa[nn].ssout.m_reflected_derate;
-							// Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
-							sa[nn].poa.nonlinear_dc_shading_derate = sa[nn].ssout.m_dc_derate;
-						}
-						else
-							throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
-					}
-					
-					// record sub-array level output after shading, before soiling
-					p_poashaded[nn][idx] = (ssc_number_t) (ibeam + iskydiff + ignddiff);
-
-					//record sub-array contribution to total shaded plane of array for this hour
-					poa_shaded_ts_total += p_poashaded[nn][idx]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
-
-					// apply soiling derate to all components of irradiance
-					double soiling_factor = 1.0;
-					if ( month_idx >= 0 && month_idx < 12 )
-					{
-						soiling_factor = sa[nn].soiling[month_idx];
-						ibeam *= soiling_factor;
-						iskydiff *= soiling_factor;
-						ignddiff *= soiling_factor;
-						beam_shad_factor *= soiling_factor;
-					}
-
-					// record sub-array level outputs				
-					p_poaeffbeam[nn][idx] = (ssc_number_t) ibeam ;
-					p_poaeffdiff[nn][idx] = (ssc_number_t) (iskydiff+ignddiff);
-					p_poaeff[nn][idx] = (ssc_number_t) (ibeam+iskydiff+ignddiff);
-					p_shad[nn][idx] = (ssc_number_t) beam_shad_factor;
-					p_rot[nn][idx] = (ssc_number_t) rot;
-					p_idealrot[nn][idx] = (ssc_number_t) ( rot-btd );
-					p_aoi[nn][idx] = (ssc_number_t) aoi;
-					p_surftilt[nn][idx] = (ssc_number_t) stilt;
-					p_surfazi[nn][idx] = (ssc_number_t) sazi;
-					p_soiling[nn][idx] = (ssc_number_t) soiling_factor;
-
-					// save the required irradiance inputs on array plane for the module output calculations.
-					sa[nn].poa.ibeam = ibeam;
-					sa[nn].poa.iskydiff = iskydiff;
-					sa[nn].poa.ignddiff = ignddiff;
-					sa[nn].poa.aoi = aoi;
-					sa[nn].poa.sunup = sunup;
-					sa[nn].poa.stilt = stilt;
-					sa[nn].poa.sazi = sazi;
-
-					// accumulate incident total radiation in this timestep (all subarrays)
-					poa_eff_ts_total += p_poaeff[nn][idx]* ref_area_m2 * modules_per_string * sa[nn].nstrings;
-
-					// accumulate monthly incident total & beam
-					sa[nn].monthly_poa_eff[ month_idx ] += ( (ibeam+iskydiff+ignddiff) * 0.001 );
-					sa[nn].monthly_poa_eff_beam[ month_idx ] += ( ibeam * 0.001 );
-								
-					// calculate total input radiaton to system (array-level output)
-					inprad_total += (sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff)
-						* ref_area_m2 * modules_per_string * sa[nn].nstrings;
-
-					inprad_beam += sa[nn].poa.ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
-				}
-
-
-				// compute dc power output of one module in each subarray
-				double module_voltage = -1;
-
-				if ( enable_mismatch_vmax_calc && num_subarrays > 1 )
-				{
-					double vmax = module_model->VocRef()*1.3; // maximum voltage
-					double vmin = 0.4 * vmax; // minimum voltage
-					const int NP=100;
-					double V[NP], I[NP], P[NP];
-					double Pmax = 0;
-					// sweep voltage, calculating current for each subarray module, and adding
-					for( int i=0;i<NP;i++)
-					{
-						V[i] = vmin + (vmax-vmin)*i/((double)NP);
-						I[i] = 0;
-						for (int nn=0;nn<4;nn++)
-						{
-							if ( !sa[nn].enable	|| sa[nn].nstrings < 1 ) continue; // skip disabled subarrays
-
-							pvinput_t in( sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, 
-								wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres, 
-								solzen, sa[nn].poa.aoi, wf.elev, 
-								sa[nn].poa.stilt, sa[nn].poa.sazi, 
-								((double)wf.hour) + wf.minute/60.0 );
-							pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
-							if ( sa[nn].poa.sunup > 0 )
-							{	
-								double tcell = wf.tdry;
-								// calculate cell temperature using selected temperature model
-								(*celltemp_model)( in, *module_model, V[i], tcell );
-								// calculate module power output using conversion model previously specified
-								(*module_model)( in, tcell, V[i], out );
+							// info to be passed to self-shading function for one-axis trackers
+							bool trackbool = (sa[nn].track_mode == 1);	// 0 for fixed tilt, 1 for one-axis
+							double shad1xf = 0;
+							if (trackbool)	//shade fraction only needs to be given a meaningful value for one-axis trackers
+							{
+								shad1xf = shade_fraction_1x(solazi, solzen, sa[nn].tilt, sa[nn].azimuth, sa[nn].gcr, rot);
 							}
-							I[i] += out.Current;
-						}
 
-						P[i] = V[i]*I[i];
-						if (P[i] > Pmax)
-						{
-							Pmax = P[i];
-							module_voltage = V[i];
-						}
-					}
-				}
-			
+							//execute self-shading calculations
+							if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, wf.dn, ibeam, (iskydiff + ignddiff), alb, trackbool, shad1xf, sa[nn].ssout))
+							{
+								p_ss_diffuse_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_diffuse_derate;
+								p_ss_reflected_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_reflected_derate;
+								p_ss_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_dc_derate;
 
-				//  at this point we have 
-				// a array maximum power module voltage
-
-				// for averaging voltage in the case that mismatch calcs are disabled.
-				int n_voltage_values = 0; 
-				double voltage_sum = 0.0;
-
-				for (int nn=0;nn<4;nn++)
-				{
-					if ( !sa[nn].enable
-						|| sa[nn].nstrings < 1 )
-						continue; // skip disabled subarrays
-				
-					pvinput_t in( sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, 
-						wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres, 
-						solzen, sa[nn].poa.aoi, wf.elev, 
-						sa[nn].poa.stilt, sa[nn].poa.sazi, 
-						((double)wf.hour) + wf.minute/60.0 );
-					pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
-
-					double tcell = wf.tdry;
-					if ( sa[nn].poa.sunup > 0 )
-					{	
-						// calculate cell temperature using selected temperature model
-						// calculate module power output using conversion model previously specified
-						(*celltemp_model)( in, *module_model, module_voltage, tcell );
-						(*module_model)( in, tcell, module_voltage, out );
-					}
-
-					if ( !isfinite(out.Power) )
-					{
-						out.Power = 0;
-						out.Voltage = 0;
-						out.Current = 0;
-						out.Efficiency = 0;
-						out.CellTemp = tcell;
-						log( util::format(	"Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
-											"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
-											wf.month, wf.day, wf.hour, wf.minute, sa[nn].poa ), SSC_NOTICE );
-					}
-
-					// save DC module outputs for this subarray
-					sa[nn].module.dcpwr = out.Power;
-					sa[nn].module.dceff = out.Efficiency*100;
-					sa[nn].module.dcv = out.Voltage;
-					sa[nn].module.tcell = out.CellTemp;
-
-					voltage_sum += out.Voltage;
-					n_voltage_values++;
-				}
-			
-
-				if ( enable_mismatch_vmax_calc && num_subarrays > 1 )
-					dc_string_voltage = module_voltage * modules_per_string;
-				else // when mismatch calculation is disabled and subarrays are enabled, simply average the voltages together for the inverter input
-					dc_string_voltage = voltage_sum / n_voltage_values * modules_per_string;
-			
-				// sum up all DC power from the whole array
-				for (int nn=0;nn<4;nn++)
-				{
-					if ( !sa[nn].enable
-						|| sa[nn].nstrings < 1 )
-						continue; // skip disabled subarrays
-
-					// apply self-shading derate (by default it is 1.0 if disbled)
-					sa[nn].module.dcpwr *= sa[nn].poa.nonlinear_dc_shading_derate;
-				
-					// scale power and voltage to array dimensions
-					sa[nn].module.dcpwr *=  modules_per_string*sa[nn].nstrings;
-
-					// Calculate and apply snow coverage losses if activated
-					if (activate_snow_model){
-						float smLoss;
-						if (!sa[nn].sm.getLoss(p_poashaded[nn][idx], p_surftilt[nn][idx], wf.wspd, wf.tdry, wf.snow, sunup, 1.0/step_per_hour, &smLoss)){
-							if (!sa[nn].sm.good) { 
-								log(sa[nn].sm.msg, SSC_ERROR);
-								// What is the best way to force a quit?
-								return; 
+								// Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
+								iskydiff *= sa[nn].ssout.m_diffuse_derate;
+								ignddiff *= sa[nn].ssout.m_reflected_derate;
+								// Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
+								sa[nn].poa.nonlinear_dc_shading_derate = sa[nn].ssout.m_dc_derate;
 							}
-						} 
-						p_snowloss[nn][idx] = 0.001*sa[nn].module.dcpwr*smLoss;
-						p_dcsnowloss[idx] += 0.001*sa[nn].module.dcpwr*smLoss;
-						annual_snow_loss += 0.001*sa[nn].module.dcpwr*smLoss;
-						p_snowcoverage[nn][idx] = sa[nn].sm.coverage;
-						sa[nn].module.dcpwr *= (1 - smLoss);
+							else
+								throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
+						}
+
+						// record sub-array level output after shading, before soiling
+						p_poashaded[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
+
+						//record sub-array contribution to total shaded plane of array for this hour
+						poa_shaded_ts_total += p_poashaded[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+
+						// apply soiling derate to all components of irradiance
+						double soiling_factor = 1.0;
+						if (month_idx >= 0 && month_idx < 12)
+						{
+							soiling_factor = sa[nn].soiling[month_idx];
+							ibeam *= soiling_factor;
+							iskydiff *= soiling_factor;
+							ignddiff *= soiling_factor;
+							beam_shad_factor *= soiling_factor;
+						}
+
+						// record sub-array level outputs				
+						p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
+						p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
+						p_poaeff[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
+						p_shad[nn][idx] = (ssc_number_t)beam_shad_factor;
+						p_rot[nn][idx] = (ssc_number_t)rot;
+						p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
+						p_aoi[nn][idx] = (ssc_number_t)aoi;
+						p_surftilt[nn][idx] = (ssc_number_t)stilt;
+						p_surfazi[nn][idx] = (ssc_number_t)sazi;
+						p_soiling[nn][idx] = (ssc_number_t)soiling_factor;
+
+						// save the required irradiance inputs on array plane for the module output calculations.
+						sa[nn].poa.ibeam = ibeam;
+						sa[nn].poa.iskydiff = iskydiff;
+						sa[nn].poa.ignddiff = ignddiff;
+						sa[nn].poa.aoi = aoi;
+						sa[nn].poa.sunup = sunup;
+						sa[nn].poa.stilt = stilt;
+						sa[nn].poa.sazi = sazi;
+
+						// accumulate incident total radiation in this timestep (all subarrays)
+						poa_eff_ts_total += p_poaeff[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+
+						// accumulate monthly incident total & beam
+						sa[nn].monthly_poa_eff[month_idx] += ((ibeam + iskydiff + ignddiff) * 0.001);
+						sa[nn].monthly_poa_eff_beam[month_idx] += (ibeam * 0.001);
+
+						// calculate total input radiaton to system (array-level output)
+						inprad_total += (sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff)
+							* ref_area_m2 * modules_per_string * sa[nn].nstrings;
+
+						inprad_beam += sa[nn].poa.ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 					}
 
-					// apply pre-inverter power derate
-					dcpwr_gross += sa[nn].module.dcpwr;
-					dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
-				
-					// save to SSC output arrays
-					p_tcell[nn][idx] = (ssc_number_t) sa[nn].module.tcell;
-					p_modeff[nn][idx] = (ssc_number_t) sa[nn].module.dceff;
-					p_dcv[nn][idx] = (ssc_number_t) sa[nn].module.dcv * modules_per_string;
-					p_dcsubarray[nn][idx] = (ssc_number_t) ( sa[nn].module.dcpwr * 0.001 );
+
+					// compute dc power output of one module in each subarray
+					double module_voltage = -1;
+
+					if (enable_mismatch_vmax_calc && num_subarrays > 1)
+					{
+						double vmax = module_model->VocRef()*1.3; // maximum voltage
+						double vmin = 0.4 * vmax; // minimum voltage
+						const int NP = 100;
+						double V[NP], I[NP], P[NP];
+						double Pmax = 0;
+						// sweep voltage, calculating current for each subarray module, and adding
+						for (int i = 0; i < NP; i++)
+						{
+							V[i] = vmin + (vmax - vmin)*i / ((double)NP);
+							I[i] = 0;
+							for (int nn = 0; nn < 4; nn++)
+							{
+								if (!sa[nn].enable || sa[nn].nstrings < 1) continue; // skip disabled subarrays
+
+								pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff,
+									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+									solzen, sa[nn].poa.aoi, wf.elev,
+									sa[nn].poa.stilt, sa[nn].poa.sazi,
+									((double)wf.hour) + wf.minute / 60.0);
+								pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
+								if (sa[nn].poa.sunup > 0)
+								{
+									double tcell = wf.tdry;
+									// calculate cell temperature using selected temperature model
+									(*celltemp_model)(in, *module_model, V[i], tcell);
+									// calculate module power output using conversion model previously specified
+									(*module_model)(in, tcell, V[i], out);
+								}
+								I[i] += out.Current;
+							}
+
+							P[i] = V[i] * I[i];
+							if (P[i] > Pmax)
+							{
+								Pmax = P[i];
+								module_voltage = V[i];
+							}
+						}
+					}
+
+
+					//  at this point we have 
+					// a array maximum power module voltage
+
+					// for averaging voltage in the case that mismatch calcs are disabled.
+					int n_voltage_values = 0;
+					double voltage_sum = 0.0;
+
+					for (int nn = 0; nn < 4; nn++)
+					{
+						if (!sa[nn].enable
+							|| sa[nn].nstrings < 1)
+							continue; // skip disabled subarrays
+
+						pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff,
+							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+							solzen, sa[nn].poa.aoi, wf.elev,
+							sa[nn].poa.stilt, sa[nn].poa.sazi,
+							((double)wf.hour) + wf.minute / 60.0);
+						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
+
+						double tcell = wf.tdry;
+						if (sa[nn].poa.sunup > 0)
+						{
+							// calculate cell temperature using selected temperature model
+							// calculate module power output using conversion model previously specified
+							(*celltemp_model)(in, *module_model, module_voltage, tcell);
+							(*module_model)(in, tcell, module_voltage, out);
+						}
+
+						if (!isfinite(out.Power))
+						{
+							out.Power = 0;
+							out.Voltage = 0;
+							out.Current = 0;
+							out.Efficiency = 0;
+							out.CellTemp = tcell;
+							log(util::format("Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
+								"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
+								wf.month, wf.day, wf.hour, wf.minute, sa[nn].poa), SSC_NOTICE);
+						}
+
+						// save DC module outputs for this subarray
+						sa[nn].module.dcpwr = out.Power;
+						sa[nn].module.dceff = out.Efficiency * 100;
+						sa[nn].module.dcv = out.Voltage;
+						sa[nn].module.tcell = out.CellTemp;
+
+						voltage_sum += out.Voltage;
+						n_voltage_values++;
+					}
+
+
+					if (enable_mismatch_vmax_calc && num_subarrays > 1)
+						dc_string_voltage = module_voltage * modules_per_string;
+					else // when mismatch calculation is disabled and subarrays are enabled, simply average the voltages together for the inverter input
+						dc_string_voltage = voltage_sum / n_voltage_values * modules_per_string;
+
+					// sum up all DC power from the whole array
+					for (int nn = 0; nn < 4; nn++)
+					{
+						if (!sa[nn].enable
+							|| sa[nn].nstrings < 1)
+							continue; // skip disabled subarrays
+
+						// apply self-shading derate (by default it is 1.0 if disbled)
+						sa[nn].module.dcpwr *= sa[nn].poa.nonlinear_dc_shading_derate;
+
+						// scale power and voltage to array dimensions
+						sa[nn].module.dcpwr *= modules_per_string*sa[nn].nstrings;
+
+						// Calculate and apply snow coverage losses if activated
+						if (activate_snow_model){
+							float smLoss;
+							if (!sa[nn].sm.getLoss(p_poashaded[nn][idx], p_surftilt[nn][idx], wf.wspd, wf.tdry, wf.snow, sunup, 1.0 / step_per_hour, &smLoss)){
+								if (!sa[nn].sm.good) {
+									log(sa[nn].sm.msg, SSC_ERROR);
+									// What is the best way to force a quit?
+									return;
+								}
+							}
+							p_snowloss[nn][idx] = 0.001*sa[nn].module.dcpwr*smLoss;
+							p_dcsnowloss[idx] += 0.001*sa[nn].module.dcpwr*smLoss;
+							annual_snow_loss += 0.001*sa[nn].module.dcpwr*smLoss;
+							p_snowcoverage[nn][idx] = sa[nn].sm.coverage;
+							sa[nn].module.dcpwr *= (1 - smLoss);
+						}
+
+						// apply pre-inverter power derate
+						dcpwr_gross += sa[nn].module.dcpwr;
+						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
+
+						// save to SSC output arrays
+						p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
+						p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
+						p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
+						p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
+					}
+
+					// inverter: runs at all hours of the day, even if no DC power.  important
+					// for capturing tare losses			
+					double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0;
+					if ((inv_type == 0) || (inv_type == 1))
+					{
+						double _par, _plr;
+						snlinv.acpower(dcpwr_net / num_inverters, dc_string_voltage,
+							&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
+						acpwr_gross *= num_inverters;
+						cliploss *= num_inverters;
+						psoloss *= num_inverters;
+						pntloss *= num_inverters;
+						aceff *= 100;
+					}
+					else if (inv_type == 2)
+					{
+						double _par, _plr;
+						plinv.acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
+						acpwr_gross *= num_inverters;
+						cliploss *= num_inverters;
+						psoloss *= num_inverters;
+						pntloss *= num_inverters;
+						aceff *= 100;
+					}
+
+					// save array-level outputs		
+
+					p_beam[idx] = (ssc_number_t)(wf.dn);
+					// calculate global if beam & diffuse are selected as inputs
+					if (radmode == 0)
+						p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
+					else
+						p_glob[idx] = (ssc_number_t)(wf.gh);
+
+					// calculate diffuse if total & beam are selected as inputs
+					if (radmode == 1)
+						p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
+					else
+						p_diff[idx] = (ssc_number_t)(wf.df);
+
+					p_wspd[idx] = (ssc_number_t)wf.wspd;
+					p_tdry[idx] = (ssc_number_t)wf.tdry;
+					p_albedo[idx] = (ssc_number_t)alb;
+					p_snowdepth[idx] = (ssc_number_t)wf.snow;
+
+					p_solzen[idx] = (ssc_number_t)solzen;
+					p_solalt[idx] = (ssc_number_t)solalt;
+					p_solazi[idx] = (ssc_number_t)solazi;
+
+					// absolute relative airmass calculation as f(zenith angle, site elevation)
+					p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * wf.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
+					p_sunup[idx] = (ssc_number_t)sunup;
+
+					p_inrad[idx] = (ssc_number_t)(inprad_total * 0.001);
+					p_inradbeam[idx] = (ssc_number_t)(inprad_beam * 0.001);
+					p_poanom_ts_total[idx] = (ssc_number_t)(poa_nom_ts_total * 0.001);
+					p_poashaded_ts_total[idx] = (ssc_number_t)(poa_shaded_ts_total * 0.001);
+					p_poaeff_ts_total[idx] = (ssc_number_t)(poa_eff_ts_total * 0.001);
+
+					p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
+					p_dcgross[idx] = (ssc_number_t)(dcpwr_gross * 0.001);
+					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
+
+					p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
+					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour));
+
+
+
+					p_inveff[idx] = (ssc_number_t)(aceff);
+					p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
+					p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
+					p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
+
+					if (en_batt)
+					{
+						batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
+						//					p_grid[idx] = batt.outGridEnergy[idx];
+						p_gen[idx] = batt.outGenEnergy[idx];
+					}
+					//				else
+					//				{
+					//					p_grid[idx] = (p_gen[idx] - cur_load);
+					//				}
+
+					// accumulate hourly system energy delivered to grid
+					//				p_hourlygrid[hour] += (ssc_number_t)(p_grid[idx] * ts_hour);
+
+					// accumulate hourly PV system generation too
+					p_hourlygen[hour+iyear*8760] += (ssc_number_t)(p_gen[idx] * ts_hour);
+					idx++;
 				}
-			
-				// inverter: runs at all hours of the day, even if no DC power.  important
-				// for capturing tare losses			
-				double acpwr_gross=0, aceff=0, pntloss=0, psoloss=0, cliploss=0;
-				if (( inv_type == 0 ) || ( inv_type == 1 ))
-				{
-					double _par, _plr;
-					snlinv.acpower( dcpwr_net/num_inverters, dc_string_voltage, 
-						&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss );
-					acpwr_gross *= num_inverters;
-					cliploss *= num_inverters;
-					psoloss *= num_inverters;
-					pntloss *= num_inverters;
-					aceff *= 100;
-				}
-				else if (inv_type == 2)
-				{
-					double _par, _plr;
-					plinv.acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
-					acpwr_gross *= num_inverters;
-					cliploss *= num_inverters;
-					psoloss *= num_inverters;
-					pntloss *= num_inverters;
-					aceff *= 100;
-				}
 
-				// save array-level outputs		
+				hour++;
+			} // over single year
 
-				p_beam[idx] = (ssc_number_t)(wf.dn);
-				// calculate global if beam & diffuse are selected as inputs
-				if (radmode == 0)
-					p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
-				else
-					p_glob[idx] = (ssc_number_t)(wf.gh);
+			// using single weather file initially - so rewind to use for next year
+			wf.rewind();
 
-				// calculate diffuse if total & beam are selected as inputs
-				if (radmode == 1)
-					p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
-				else
-					p_diff[idx] = (ssc_number_t)(wf.df);
-
-				p_wspd[idx] = (ssc_number_t)wf.wspd;
-				p_tdry[idx] = (ssc_number_t)wf.tdry;
-				p_albedo[idx] = (ssc_number_t)alb;
-				p_snowdepth[idx] = (ssc_number_t)wf.snow;
-
-				p_solzen[idx] = (ssc_number_t)solzen;
-				p_solalt[idx] = (ssc_number_t)solalt;
-				p_solazi[idx] = (ssc_number_t)solazi;
-
-				// absolute relative airmass calculation as f(zenith angle, site elevation)
-				p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * wf.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
-				p_sunup[idx] = (ssc_number_t)sunup;
-
-				p_inrad[idx] = (ssc_number_t)(inprad_total * 0.001);
-				p_inradbeam[idx] = (ssc_number_t)(inprad_beam * 0.001);
-				p_poanom_ts_total[idx] = (ssc_number_t)(poa_nom_ts_total * 0.001);
-				p_poashaded_ts_total[idx] = (ssc_number_t)(poa_shaded_ts_total * 0.001);
-				p_poaeff_ts_total[idx] = (ssc_number_t)(poa_eff_ts_total * 0.001);
-
-				p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
-				p_dcgross[idx] = (ssc_number_t)(dcpwr_gross * 0.001);
-				p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
-
-				p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
-				p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) );
-
-
-			
-				p_inveff[idx] = (ssc_number_t)(aceff);
-				p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
-				p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
-				p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
-
-				if (en_batt)
-				{
-					batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
-//					p_grid[idx] = batt.outGridEnergy[idx];
-					p_gen[idx] = batt.outGenEnergy[idx];
-				}
-//				else
-//				{
-//					p_grid[idx] = (p_gen[idx] - cur_load);
-//				}
-
-				// accumulate hourly system energy delivered to grid
-//				p_hourlygrid[hour] += (ssc_number_t)(p_grid[idx] * ts_hour);
-
-				// accumulate hourly PV system generation too
-				p_hourlygen[hour] += (ssc_number_t)(p_gen[idx] * ts_hour);
-				idx++;
-			}
-
-			hour++;
-		}
+		} // over all nyears
 
 		// Check the snow models and if neccessary report a warning
 		//  *This only needs to be done for subarray1 since all of the activated subarrays should 
@@ -1984,14 +2005,20 @@ public:
 
 		assign( "nameplate_dc_rating", var_data( (ssc_number_t)nameplate_kw ) );
 
-		inverter_vdcmax_check();
-		
-		inverter_size_check();
+// sj 2015.5.11 Lifetime simulation issue
+//		inverter_vdcmax_check();
+//		inverter_size_check();
 
-		assign("system_use_lifetime_output", 0);
+
+
+
+		assign("system_use_lifetime_output", var_data((ssc_number_t) pv_lifetime_simulation));
 //		double annual_energy = accumulate_annual("hourly_energy", "annual_energy");
-		double annual_energy = accumulate_annual("hourly_gen", "annual_energy");
-
+//		double annual_energy = accumulate_annual("hourly_gen", "annual_energy");
+		double annual_energy = 0;
+		for (int i = 0; i < 8760; i++)
+			annual_energy += p_hourlygen[i];
+		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 
 
 		// dc gross to dc net

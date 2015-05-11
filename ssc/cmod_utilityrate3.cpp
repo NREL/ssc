@@ -8,6 +8,7 @@ static var_info vtab_utility_rate3[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "", "*", "INTEGER,MIN=0,MAX=1", "" },
 
 	/* change to load, grid and gen per 4/9/15 meeting
 	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -751,17 +752,32 @@ public:
 
 		// compute annual system output degradation multipliers
 		std::vector<ssc_number_t> sys_scale(nyears);
-		parr = as_array("degradation", &count);
-		if (count == 1)
+
+		// degradation
+		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
+		// lifetime degradation applied in technology compute modules
+		if (as_integer("system_use_lifetime_output") == 1)
 		{
-			for (i=0;i<nyears;i++)
-				sys_scale[i] = (ssc_number_t) pow( (double)(1-parr[0]*0.01), (double)i );
+			for (i = 0; i<nyears; i++)
+				sys_scale[i] = 1.0;
 		}
 		else
 		{
-			for (i=0;i<nyears && i<count;i++)
-				sys_scale[i] = (ssc_number_t)(1.0 - parr[i]*0.01);
+			parr = as_array("degradation", &count);
+			if (count == 1)
+			{
+				for (i = 0; i<nyears; i++)
+					sys_scale[i] = (ssc_number_t)pow((double)(1 - parr[0] * 0.01), (double)i);
+			}
+			else
+			{
+				for (i = 0; i<nyears && i<count; i++)
+					sys_scale[i] = (ssc_number_t)(1.0 - parr[i] * 0.01);
+			}
 		}
+
+
+
 		// compute load (electric demand) annual escalation multipliers
 		std::vector<ssc_number_t> load_scale(nyears);
 		parr = as_array("load_escalation", &count);

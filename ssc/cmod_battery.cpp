@@ -11,10 +11,11 @@
 var_info vtab_battery[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
-	// simulation inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",              "",                           "",                              "" },
+	// simulation inputs - required only if lifetime analysis
+	{ SSC_INPUT, SSC_NUMBER, "pv_lifetime_simulation", "PV lifetime simulation", "0/1", "", "", "?=0", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "", "pv_lifetime_simulation=1", "", "" },
 
-	// configuration inputs
+		// configuration inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to Battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_ac_efficiency",                      "Battery DC to AC efficiency",                             "",        "",                     "Battery",       "",                           "",                              "" },
@@ -146,8 +147,10 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 
 	// time quantities
 	year = 0;
+	nyears = 1;
 	step_per_hour = nrec / 8760;
-	nyears = cm.as_integer("analysis_period");
+	if (cm.as_boolean("pv_lifetime_simulation"))
+		nyears = cm.as_integer("analysis_period");
 
 	chem = cm.as_integer( "batt_chem" );
 
