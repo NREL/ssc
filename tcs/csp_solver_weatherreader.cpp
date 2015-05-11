@@ -76,7 +76,7 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 	{
 		/* sun elevation > 0.5 degrees */
 		incidence(m_trackmode, m_tilt, m_azimuth, 45.0, sunn[1], sunn[0], 0, 0, angle);
-		perez(sunn[8], m_wf.dn, m_wf.df, 0.2, angle[0], angle[1], sunn[1], poa, diffc);
+		perez(sunn[8], m_wf.dn, m_wf.df, 0.2, angle[0], angle[1], sunn[1], poa, diffc, false);		 // diffuse shading factor not enabled (set to 1.0 by default)
 	}
 	
 	ms_outputs.m_year = m_wf.year;
