@@ -26,8 +26,10 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	mv_defocus.resize(0);
 	mv_rec_eta_thermal.resize(0);
 	mv_rec_q_thermal.resize(0);
+	mv_rec_q_startup.resize(0);
 	mv_pc_eta.resize(0);
 	mv_pc_W_gross.resize(0);
+	mv_pc_q_startup.resize(0);
 	
 
 	// Solved Controller Variables
@@ -140,9 +142,9 @@ void C_csp_solver::simulate()
 
 		// Can receiver output be used?
 			// No TES
-		is_est_rec_output_useful = q_dot_cr_output*(1.0+tol_mode_switching) > q_pc_sb;
+			// 4.28.15 twn:  for now, remove PC restrictions on CR startup
+		is_est_rec_output_useful = q_dot_cr_output*(1.0+tol_mode_switching) > 0.0;
 
-		
 		int operating_mode = -1;
 		bool are_models_converged = false;
 		
@@ -156,21 +158,24 @@ void C_csp_solver::simulate()
 				if(is_rec_su_allowed && is_pc_su_allowed)
 				{	// Are receiver and power cycle startup allowed?
 					
-					if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
-					{	// Do we estimate that there is enough thermal power to operate cycle at min fraction?
+					operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
 
-						operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-					}
-					else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb )
-					{	// If not, is there enough to operate at standby, AND is standby allowed
+					// 4.28.15 twn:  for now, remove PC restrictions on CR startup
+					//if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
+					//{	// Do we estimate that there is enough thermal power to operate cycle at min fraction?
 
-						operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-					}
-					else
-					{	// If we can't use the receiver output, then don't start up
+					//	operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+					//}
+					//else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb )
+					//{	// If not, is there enough to operate at standby, AND is standby allowed
 
-						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}				
+					//	operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+					//}
+					//else
+					//{	// If we can't use the receiver output, then don't start up
+
+					//	operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					//}				
 				}
 				else
 				{	// If startup isn't allowed, then don't try
@@ -205,7 +210,7 @@ void C_csp_solver::simulate()
 				}				
 			}
 			else if(cr_operating_state==C_csp_collector_receiver::ON &&
-					pc_operating_state==C_csp_power_cycle::ON)
+					(pc_operating_state==C_csp_power_cycle::ON || pc_operating_state==C_csp_power_cycle::STANDBY) )
 			{	// Are the collector/receiver AND power cylce ON?
 
 				if( q_dot_cr_output*(1.0-tol_mode_switching) > q_pc_max )
@@ -614,6 +619,7 @@ void C_csp_solver::simulate()
 					else if( mc_cr_outputs.m_q_thermal < q_pc_min )
 					{	// Not enough thermal power to run power cycle at Min Cutoff fraction: check if we can try standby
 
+						// Controller initially entered PC_RM mode, so assume that we should try standby if allowed
 						if( is_pc_sb_allowed )
 						{	// If controller *was* trying to generate power, then assume that there is enough power to at least try standby
 
@@ -670,15 +676,26 @@ void C_csp_solver::simulate()
 					mc_cr_outputs,
 					mc_sim_info);
 
-				if( mc_cr_outputs.m_q_thermal == 0.0 )
+				if( mc_cr_outputs.m_q_thermal < q_pc_sb )
 				{	// Collector/receiver can't produce useful energy
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					are_models_converged = false;
+					break;
 				}
 
 				// If receiver is indeed producing power, then try power cycle at standby
 					// Power cycle: STANDBY
-
+				mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+				mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
+				// Inputs
+				mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STANDBY;
+				//mc_pc_inputs.m_tou = tou_timestep;
+				// Performance Call
+				mc_power_cycle.call(mc_weather.ms_outputs,
+					mc_pc_htf_state,
+					mc_pc_inputs,
+					mc_pc_outputs,
+					mc_sim_info);
 
 				break;
 
@@ -711,6 +728,7 @@ void C_csp_solver::simulate()
 				{	// Collector/receiver can't produce useful energy
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					are_models_converged = false;
+					break;
 				}
 
 				// If receiver IS producing energy, try starting up power cycle
@@ -769,6 +787,14 @@ void C_csp_solver::simulate()
 					mc_cr_inputs,
 					mc_cr_outputs,
 					mc_sim_info);
+
+				// Check that startup happened
+				if( mc_cr_outputs.m_q_startup == 0.0 )
+				{	// Collector/receiver can't produce useful energy
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					are_models_converged = false;
+					break;
+				}
 
 				// Check for new timestep
 				step_local = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
@@ -878,8 +904,10 @@ void C_csp_solver::simulate()
 		mv_defocus.push_back(m_defocus);							//[-] Defocus
 		mv_rec_eta_thermal.push_back(mc_cr_outputs.m_eta_thermal);	//[-] Receiver thermal efficiency
 		mv_rec_q_thermal.push_back(mc_cr_outputs.m_q_thermal*step_hr);	//[MWt-hr] Receiver thermal output
+		mv_rec_q_startup.push_back(mc_cr_outputs.m_q_startup);		//[MWt-hr] Receiver startup thermal energy
 		mv_pc_eta.push_back(mc_pc_outputs.m_eta);					//[-] Power cycle efficiency (gross - no parasitics outside of power block)
 		mv_pc_W_gross.push_back(mc_pc_outputs.m_P_cycle*step_hr);	//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
+		mv_pc_q_startup.push_back(mc_pc_outputs.m_q_startup);		//[MWt-hr] Power cycle startup thermal energy
 
 		// Track time and step forward
 		is_sim_timestep_complete = true;
