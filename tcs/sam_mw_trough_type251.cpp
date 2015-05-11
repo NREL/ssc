@@ -223,7 +223,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_INPUT,    TCS_NUMBER,        I_T_pb_out,           "T_pb_out",             "Fluid temperature from the power block",                  "C",            "",        "",        ""},
     { TCS_INPUT,    TCS_NUMBER,        I_T_amb,              "T_amb",                "Ambient temperature",                                     "C",            "",        "",        ""},
     { TCS_INPUT,    TCS_NUMBER,        I_m_pb_demand,        "m_pb_demand",          "Demand htf flow from the PB",                             "kg/hr",        "",        "",        ""},
-    { TCS_INPUT,    TCS_NUMBER,        I_q_startup,          "q_startup",            "Startup energy reported by the collector field",          "MWt",          "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_q_startup,          "q_startup",            "Startup energy reported by the collector field",          "MWt-hr",       "",        "",        ""},
     { TCS_INPUT,    TCS_NUMBER,        I_dnifc,              "dnifc",                "Forecast DNI",                                            "W/m2",         "",        "",        ""},
 	{ TCS_INPUT,    TCS_NUMBER,        I_TOUPeriod,          "TOUPeriod",            "The time-of-use period",                                  "",             "",        "",        ""},
 
@@ -894,7 +894,7 @@ public:
 		double T_pb_out		= value(I_T_pb_out)+273.15;		// [K] convert from [C]
 		double T_amb		= value(I_T_amb)+273.15;		// [K] convert from [C]
 		double m_pb_demand	= value(I_m_pb_demand)/3600.;	// [kg/s] convert from [kg/hr]
-		double q_startup	= value(I_q_startup);			// [MWt]
+		double q_startup	= value(I_q_startup);			// [MWt-hr]
 		int touperiod       = (int)value(I_TOUPeriod) - 1; // control value between 1 & 9, have to change to 0-8 for array index
 		double dnifc;		
 		if( fc_on ) 
