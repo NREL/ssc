@@ -142,7 +142,7 @@ public:
 		double m_T_salt_hot;
 		double m_field_eff_adj;
 		double m_Q_solar_total;
-		double m_q_startup;
+		double m_q_startup;				//[MWt-hr]
 		double m_dP_receiver;
 		double m_dP_total;
 		double m_vel_htf;
