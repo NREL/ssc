@@ -131,7 +131,7 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_T_salt_hot,		"T_salt_hot",		"HTF outlet temperature",													"C",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_field_eff_adj,	"field_eff_adj",	"Adjusted heliostat field efficiency - includes overdesign adjustment",		"",			"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_q_solar_total,	"Q_solar_total",	"Total incident power on the receiver",										"MWt",		"", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_q_startup,		"q_startup",		"Startup energy consumed during the current time step",						"MWt",		"", "", ""},
+	{TCS_OUTPUT, TCS_NUMBER, O_q_startup,		"q_startup",		"Startup energy consumed during the current time step",						"MWt-hr",   "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_dP_receiver,		"dP_receiver",		"Receiver HTF pressure drop",												"bar",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_dP_total,		"dP_total",			"Total receiver and tower pressure drop",									"bar",		"", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_vel_htf,			"vel_htf",			"Heat transfer fluid average velocity",										"m/s",		"", "", ""},
