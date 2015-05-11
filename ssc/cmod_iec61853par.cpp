@@ -44,7 +44,11 @@ public:
 			char buf[1024];
 			va_list ap;
 			va_start(ap, fmt);
+#ifdef _MSC_VER
 			_vsnprintf(buf, 1024, fmt, ap);
+#else
+			vsnprintf(buf,1024,fmt,ap);
+#endif
 			va_end(ap);
 			cm.log( buf, SSC_NOTICE );
 		}

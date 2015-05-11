@@ -18,7 +18,6 @@ struct battstor
 	// time quantities
 	int year;
 	size_t step_per_hour;
-	const size_t hours_per_year = 8760;
 	int nyears;
 
 	// member data

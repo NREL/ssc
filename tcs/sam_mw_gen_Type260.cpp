@@ -315,6 +315,8 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
 };
 
 
+static const double zen_scale = 1.570781477;
+static const double az_scale = 6.283125908;
 
 
 class sam_mw_gen_type260 : public tcstypeinterface
@@ -325,8 +327,6 @@ private:
     GaussMarkov *optical_table_uns;
 
     //Constants for scaling GM table
-    const double zen_scale = 1.570781477;
-    const double az_scale = 6.283125908;
     double eff_scale;   //defined later based on max value
 
 	double pi,Pi,d2r,r2d, g, mtoinch;

@@ -66,7 +66,7 @@ bool pvsnowmodel::getLoss(float poa, float tilt, float wspd, float tdry, float s
 
 	// Check if snow depth value is valid
 	// * 610 cm ~= 20 ft
-	if (snowDepth < 0 || snowDepth > 610 || isnan(snowDepth)){
+	if (snowDepth < 0 || snowDepth > 610 || std::isnan(snowDepth)){
 		isGood = false;
 		snowDepth = 0;
 		badValues++;
