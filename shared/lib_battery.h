@@ -401,6 +401,7 @@ protected:
 	double _Ic_max;
 	double _Id_max;
 	double _t_min;
+	double _e_max_discharge;
 
 	// rapid charge change controller
 	int _t_at_mode; // [minutes]
