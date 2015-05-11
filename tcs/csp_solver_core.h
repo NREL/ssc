@@ -157,6 +157,7 @@ public:
 		
 		double m_eta_thermal;			//[-] Receiver thermal efficiency
 		double m_q_thermal;				//[MW] 'Available' receiver thermal output
+		double m_q_startup;				//[MWt-hr] Receiver thermal output
 		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
 
@@ -249,13 +250,14 @@ public:
 		double m_P_cond;			//[Pa] Condenser pressure
 		
 		double m_time_required_su;		//[s] Time required for receiver to startup MIN(controller timestep, calculated time to startup during call)
+		double m_q_startup;			//[MWt-hr] Startup energy required
 
 		S_csp_pc_outputs()
 		{
 			m_P_cycle = m_eta = m_T_htf_cold = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf = m_m_dot_htf_ref =
 				m_W_cool_par = m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
 			
-			m_time_required_su = std::numeric_limits<double>::quiet_NaN();
+			m_time_required_su = m_q_startup = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	
@@ -362,8 +364,10 @@ public:
 	std::vector<double> mv_defocus;			//[-] = m_defocus 
 	std::vector<double> mv_rec_eta_thermal;	//[-] Receiver thermal efficiency
 	std::vector<double> mv_rec_q_thermal;	//[MWt-hr] Receiver thermal energy output over (perhaps varying length) timestep 
+	std::vector<double> mv_rec_q_startup;	//[MWt-hr] Receiver startup thermal energy
 	std::vector<double> mv_pc_eta;			//[-] Power cycle efficiency (gross - no parasitics outside of power block)
 	std::vector<double> mv_pc_W_gross;		//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
+	std::vector<double> mv_pc_q_startup;	//[MWt-hr] Power cycle startup thermal energy
 
 };
 
