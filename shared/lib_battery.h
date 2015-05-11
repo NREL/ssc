@@ -281,7 +281,6 @@ protected:
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
 	double _capacity_percent; //[%]
-	const double _hours_to_seconds = 3600;
 };
 /*
 Losses Base class

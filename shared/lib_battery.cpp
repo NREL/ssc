@@ -1,4 +1,6 @@
 #include <math.h>
+#include <cmath>
+#include <cfloat>
 
 #include "lib_battery.h"
 /* 
@@ -373,7 +375,7 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 	double V = E - _R*I;
 
 	// Discharged lower than model can handle ( < 1% SOC)
-	if (V < 0 || !isfinite(V))
+	if (V < 0 || !std::isfinite(V))
 		V = 0.5*_Vnom; 
 	else if (V > _Vfull*1.25)
 		V = _Vfull;
@@ -719,6 +721,10 @@ void thermal_t::replace_battery()
 	_T_battery = _T_room; 
 	_capacity_percent = 100.;
 }
+
+#define HR2SEC 3600.0
+
+
 void thermal_t::updateTemperature(double I, double R, double dt)
 {
 	_R = R;
@@ -726,9 +732,9 @@ void thermal_t::updateTemperature(double I, double R, double dt)
 
 	// use RK4 iff timestep is 5 minutes or less
 	if (dt <= 5./60)
-		T_new = rk4(I, dt*_hours_to_seconds);
+		T_new = rk4(I, dt*HR2SEC);
 	else
-		T_new = trapezoidal(I, dt*_hours_to_seconds);
+		T_new = trapezoidal(I, dt*HR2SEC);
 
 	_T_battery = T_new;
 }

@@ -1732,7 +1732,7 @@ public:
 							(*module_model)(in, tcell, module_voltage, out);
 						}
 
-						if (!isfinite(out.Power))
+						if (!std::isfinite(out.Power))
 						{
 							out.Power = 0;
 							out.Voltage = 0;

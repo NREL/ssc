@@ -1,7 +1,7 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared
+CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../solarpilot
 CXXFLAGS = $(CFLAGS)
 
 OBJECTS = tcskernel.o \

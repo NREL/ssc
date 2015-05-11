@@ -1,6 +1,8 @@
 #include <string>
 #include <numeric>
 #include <limits>
+#include <math.h>
+#include <float.h>
 
 #include "lsqfit.h"
 #include "lib_iec61853.h"
@@ -297,21 +299,21 @@ bool iec61853_module_t::solve( double Voc, double Isc, double Vmp, double Imp, d
 		{
 			PRINTF( "singularity in gauss() in solution of four parameter nonlinear equation, iteration %d", jj );
 			
-			PRINTF( "A matrix:");
+			OUTLN( "A matrix:");
 			for (int i=0;i<4;i++)
 				for( int j=0;j<4;j++ )
 					PRINTF( "%lg%c", A[i][j], j<3 ? '\t' : '\n' );
 
 				
-			PRINTF( "B vector:");
+			OUTLN( "B vector:");
 			for( int j=0;j<4;j++ )
 				PRINTF( "%lg", B[j]);
 
-			PRINTF( "tolerances:" );
+			OUTLN( "tolerances:" );
 			for( int j=0;j<4;j++ )
 				PRINTF( "%lg", T[j]);
 
-			PRINTF("current guesses:" );
+			OUTLN("current guesses:" );
 			PRINTF("Il=%lg Io=%lg Rs=%lg Rsh=%lg", Il, Io, Rs, Rsh );
 
 
@@ -411,7 +413,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 
 	if ( idx_stc < 0 )
 	{
-		PRINTF("a measurement at STC conditions (1000 W/m2, 25 C) is required, but could not be found.");
+		OUTLN("a measurement at STC conditions (1000 W/m2, 25 C) is required, but could not be found.");
 		return false;
 	}
 
@@ -574,7 +576,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 
 	if ( temps.size() < 3 )
 	{
-		PRINTF("insufficient test data, at least three different temperature conditions are required for fitting.");
+		OUTLN("insufficient test data, at least three different temperature conditions are required for fitting.");
 		return false;
 	}
 
@@ -604,7 +606,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	double Egref_fit[1] = { 1.0 };
 	if ( !lsqfit( Io_fit_eqn, 0, Egref_fit, 1, &temps[0], &Io_avgs[0], temps.size() ) )
 	{
-		PRINTF("error in nonlinear least squares fit for Io equation");
+		OUTLN("error in nonlinear least squares fit for Io equation");
 		return false;
 	}
 
@@ -646,7 +648,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	double C[3] = { 5000, 500, 0.5 }; // initial guesses for lsqfit
 	if ( !lsqfit( Rsh_fit_eqn, 0, C, 3, &irrads[0], &Rsh_avgs[0], irrads.size() ) )
 	{
-		PRINTF("error in nonlinear least squares fit for Rsh equation");
+		OUTLN("error in nonlinear least squares fit for Rsh equation");
 		return false;
 	}
 
@@ -694,14 +696,14 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	// now do a linear fit on the first parameter as a function of temperature	
 	if ( !linfit( Dpar0, temps, &D2, &D1 ) )
 	{
-		PRINTF("error in linear fit for Rs equation D1 and D2 parameters");
+		OUTLN("error in linear fit for Rs equation D1 and D2 parameters");
 		return false;
 	}
 
 	if( verbose ) PRINTF("determined Rs equation parameters D1=%lg D2=%lg D3=%lg", D1, D2, D3 );
 
 	
-	if( verbose ) PRINTF("parameter fitting to iec61853 test data successful." );
+	if( verbose ) OUTLN("parameter fitting to iec61853 test data successful." );
 	
 	// set outputs
 	n = nfac[idx_stc];

@@ -12,6 +12,10 @@ TARGET = ssc.dylib
 
 OBJECTS = \
 	csp_common.o \
+	cmod_lcoefcr.o \
+	cmod_thirdpartyownership.o \
+	cmod_snowmodel.o \
+	cmod_iec61853par.o \
 	cmod_layoutarea.o \
 	cmod_solarpilot.o \
 	cmod_dsg_flux_preprocess.o \
@@ -67,8 +71,6 @@ OBJECTS = \
 	cmod_hcpv.o \
 	cmod_tcsmslf.o \
 	cmod_battery.o \
-	cmod_gridnet.o \
-	cmod_utilityrate3b.o \
 	cmod_user_htf_comparison.o \
 	cmod_sco2_design_cycle.o \
 	tckernel.o 

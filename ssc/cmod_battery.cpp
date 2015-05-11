@@ -322,7 +322,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
 	outBatteryBankReplacement[year] = (ssc_number_t)(lifetime_model->replacements());
-	if ( (hour_of_year == hours_per_year-1) && (step == step_per_hour - 1) )
+	if ( (hour_of_year == 8759) && (step == step_per_hour - 1) )
 		year++;
 
 	// Thermal Output
