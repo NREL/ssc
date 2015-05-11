@@ -313,13 +313,15 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	m_standby_control_calc = standby_control;
 
+	double q_startup = 0.0;
+
 	switch(standby_control)
 	{
 	case E_csp_power_cycle_modes::STARTUP:
 		{
-			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));
+			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
 
-			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref))*3600;	//[hr]
+			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/3600);	//[hr]
 			double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
 
 			double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);
@@ -331,15 +333,20 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			{
 				time_required_su = time_step_hrs;		//[hr]
 				m_standby_control_calc = E_csp_power_cycle_modes::STARTUP;	//[-] Power cycle requires additional startup next timestep
+				q_startup = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*time_step_hrs/3600.0;	//[kW-hr]
 			}
 			else
 			{
 				time_required_su = time_required_max;	//[hr]
 				m_standby_control_calc = E_csp_power_cycle_modes::ON;	//[-] Power cycle has started up, next time step it will be ON
+				
+				double q_startup_energy_req = m_startup_energy_remain_prev;	//[kWt-hr]
+				double q_startup_ramping_req = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*m_startup_time_remain_prev/3600.0;	//[kWt-hr]
+				q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);	//[kWt-hr]
 			}
 
 			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);
-			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - time_required_su*m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref) * 3600, 0.0);
+			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);
 		}
 
 		// *****
@@ -486,6 +493,19 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - step_hrs, 0.0);
 			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - startup_e_used, 0.0);
+
+			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+			// If still starting up, then all of energy input going to startup
+			if(m_startup_time_remain_calc + m_startup_energy_remain_calc > 0.0)
+			{
+				q_startup = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*step_hrs / 3600.0;	//[kW-hr]
+			}
+			else
+			{
+				double q_startup_energy_req = m_startup_energy_remain_prev;	//[kWt-hr]
+				double q_startup_ramping_req = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*m_startup_time_remain_prev/3600.0;	//[kWt-hr]
+				q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);	//[kWt-hr]
+			}
 		}
 	}	
 
@@ -502,6 +522,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	outputs.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
 	outputs.m_P_cond = P_cond;						//[Pa] Condenser pressure
 
+	outputs.m_q_startup = q_startup / 1.E3;			//[MWt-hr] Startup energy
 	outputs.m_time_required_su = time_required_su*3600.0;	//[s]
 }
 
