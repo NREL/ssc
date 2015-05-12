@@ -1304,23 +1304,32 @@ public:
 
 
 
+
+		// lifetime control variables - used to set array sizes
+		int pv_lifetime_simulation = as_integer("pv_lifetime_simulation");
+		size_t nyears = 1;
+		if (pv_lifetime_simulation == 1)
+			nyears = as_integer("analysis_period");
+
+
+
 		// setup output arrays
 
 		// output arrays for weather info- same for all four subarrays	
-		ssc_number_t *p_glob = allocate( "gh", nrec );
-		ssc_number_t *p_beam = allocate( "dn", nrec );
-		ssc_number_t *p_diff = allocate( "df", nrec );
-		ssc_number_t *p_wspd = allocate( "wspd", nrec );
-		ssc_number_t *p_tdry = allocate( "tdry", nrec );
-		ssc_number_t *p_albedo = allocate( "alb", nrec );
-		ssc_number_t *p_snowdepth = allocate( "snowdepth", nrec );
+		ssc_number_t *p_glob = allocate( "gh", nrec*nyears );
+		ssc_number_t *p_beam = allocate("dn", nrec*nyears);
+		ssc_number_t *p_diff = allocate("df", nrec*nyears);
+		ssc_number_t *p_wspd = allocate("wspd", nrec*nyears);
+		ssc_number_t *p_tdry = allocate("tdry", nrec*nyears);
+		ssc_number_t *p_albedo = allocate("alb", nrec*nyears);
+		ssc_number_t *p_snowdepth = allocate("snowdepth", nrec*nyears);
 
 		//output arrays for solar position calculations- same for all four subarrays
-		ssc_number_t *p_solzen = allocate("sol_zen", nrec);
-		ssc_number_t *p_solalt = allocate("sol_alt", nrec);
-		ssc_number_t *p_solazi = allocate("sol_azi", nrec);
-		ssc_number_t *p_airmass = allocate("airmass", nrec);
-		ssc_number_t *p_sunup = allocate("sunup", nrec);
+		ssc_number_t *p_solzen = allocate("sol_zen", nrec*nyears);
+		ssc_number_t *p_solalt = allocate("sol_alt", nrec*nyears);
+		ssc_number_t *p_solazi = allocate("sol_azi", nrec*nyears);
+		ssc_number_t *p_airmass = allocate("airmass", nrec*nyears);
+		ssc_number_t *p_sunup = allocate("sunup", nrec*nyears);
 
 		/*
 		ssc_number_t *p_nonlinear_dc_derate0 = allocate("p_nonlinear_dc_derate0", nrec);
@@ -1358,13 +1367,6 @@ public:
 		// Snow model specific
 		ssc_number_t *p_snowloss[4];
 		ssc_number_t *p_snowcoverage[4];
-
-		int pv_lifetime_simulation = as_integer("pv_lifetime_simulation");
-		int nyears = 1;
-		if (pv_lifetime_simulation == 1)
-			nyears = as_integer("analysis_period");
-
-
 
 		// allocate output arrays for all subarray-specific parameters
 		for (int nn=0;nn<4;nn++)
@@ -1432,7 +1434,7 @@ public:
 //		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
 		bool en_batt = as_boolean("en_batt");
 		bool en_batt_replacement = as_boolean("en_batt_replacement");
-		battstor batt(*this, en_batt, en_batt_replacement, nrec*nyears, ts_hour);
+		battstor batt(*this, en_batt, en_batt_replacement, nrec, ts_hour);
 
 		double cur_load = 0.0;
 		size_t nload = 0;
@@ -1911,8 +1913,8 @@ public:
 				log(util::format("The snow model has detected %d bad snow depth values. These values have been set to zero.", sa[0].sm.badValues), SSC_WARNING);
 			}
 
-			accumulate_monthly( "dc_snow_loss", "monthly_snow_loss", ts_hour );
-			accumulate_annual( "dc_snow_loss", "annual_snow_loss", ts_hour);
+			accumulate_monthly_for_year( "dc_snow_loss", "monthly_snow_loss", 1.0 , step_per_hour );
+			accumulate_annual_for_year( "dc_snow_loss", "annual_snow_loss", 1.0, step_per_hour);
 		}
 		 
 		if (hour != 8760)
@@ -1947,25 +1949,25 @@ public:
 			p_monthly_poa_eff_beam[i] = (ssc_number_t) ( beam / num_strings );
 		}
 
-		accumulate_monthly( "dc_net", "monthly_dc", ts_hour );
-		accumulate_monthly( "gen", "monthly_energy", ts_hour );
-
-		accumulate_annual( "gh", "annual_gh", ts_hour );
-		accumulate_annual( "input_radiation", "annual_input_radiation", ts_hour );
-		accumulate_annual( "input_radiation_beam", "annual_input_radiation_beam", ts_hour );
-		double annual_poa_nom = accumulate_annual("poa_nom", "annual_poa_nom", ts_hour);
-		double annual_poa_shaded = accumulate_annual("poa_shaded", "annual_poa_shaded", ts_hour);
-		double annual_poa_eff = accumulate_annual("poa_eff", "annual_poa_eff", ts_hour);
+		accumulate_monthly_for_year("dc_net", "monthly_dc", 1.0, step_per_hour);
+		accumulate_monthly_for_year("gen", "monthly_energy", 1.0, step_per_hour);
 		
-		accumulate_annual( "dc_gross", "annual_dc_gross", ts_hour );
-		double annual_dc_net = accumulate_annual("dc_net", "annual_dc_net", ts_hour);
-		double annual_ac_gross = accumulate_annual( "ac_gross", "annual_ac_gross", ts_hour );
-		double annual_ac_net = accumulate_annual("gen", "annual_ac_net", ts_hour);
+		accumulate_annual_for_year("gh", "annual_gh", 1.0, step_per_hour);
+		accumulate_annual_for_year("input_radiation", "annual_input_radiation", 1.0, step_per_hour);
+		accumulate_annual_for_year("input_radiation_beam", "annual_input_radiation_beam", 1.0, step_per_hour);
+		double annual_poa_nom = accumulate_annual_for_year("poa_nom", "annual_poa_nom", 1.0, step_per_hour);
+		double annual_poa_shaded = accumulate_annual_for_year("poa_shaded", "annual_poa_shaded", 1.0, step_per_hour);
+		double annual_poa_eff = accumulate_annual_for_year("poa_eff", "annual_poa_eff", 1.0, step_per_hour);
+		
+		accumulate_annual_for_year("dc_gross", "annual_dc_gross", 1.0, step_per_hour);
+		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", 1.0, step_per_hour);
+		double annual_ac_gross = accumulate_annual_for_year("ac_gross", "annual_ac_gross", 1.0, step_per_hour);
+		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", 1.0, step_per_hour);
 
 
-		double annual_inv_cliploss = accumulate_annual("inv_cliploss", "annual_inv_cliploss", ts_hour);
-		double annual_inv_psoloss = accumulate_annual("inv_psoloss", "annual_inv_psoloss", ts_hour);
-		double annual_inv_pntloss = accumulate_annual("inv_pntloss", "annual_inv_pntloss", ts_hour);
+		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", 1.0, step_per_hour);
+		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour);
+		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", 1.0, step_per_hour);
 	
 		bool is_cpv = false;
 
@@ -2005,9 +2007,8 @@ public:
 
 		assign( "nameplate_dc_rating", var_data( (ssc_number_t)nameplate_kw ) );
 
-// sj 2015.5.11 Lifetime simulation issue
-//		inverter_vdcmax_check();
-//		inverter_size_check();
+		inverter_vdcmax_check();
+		inverter_size_check();
 
 
 
@@ -2072,7 +2073,7 @@ public:
 				double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0, dcopt_loss = 0;
 				double dc_gross = 0;
 				// gross for each subarray
-				dc_gross = accumulate_annual( prefix + "dc_gross", "annual_" + prefix + "dc_gross", ts_hour);
+				dc_gross = accumulate_annual_for_year(prefix + "dc_gross", "annual_" + prefix + "dc_gross", 1.0, step_per_hour);
 				// dc derate for each sub array
 				double dc_loss = dc_gross * (1.0 - sa[nn].derate);
 				annual_dc_gross += dc_gross;

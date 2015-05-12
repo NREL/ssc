@@ -92,13 +92,13 @@ var_info vtab_battery[] = {
 	// Energy outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                       "Energy to/from Battery",                                       "kWh",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                          "Energy to/from Grid",                                          "kWh",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "gen",                                  "Energy of PV+battery",                                         "kWh",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                  "Energy of PV+battery",                                         "kWh",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                           "Energy to load from PV",                                       "kWh",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_to_load",                      "Energy to load from battery",                                  "kWh",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                         "Energy to load from grid",                                     "kWh",      "",                     "Battery",       "",                           "",                              "" },
 	
 	// Efficiency outputs
-	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",             "Average Battery Cycle Efficiency",                             "%",        "",                     "Annual",        "*",                          "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",             "Average Battery Cycle Efficiency",                             "%",        "",                     "Annual",        "",                          "",                              "" },
 	
 var_info_invalid };
 
@@ -195,31 +195,31 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 	/* **********************************************************************
 	Initialize outputs
 	********************************************************************** */		
-	outTotalCharge = cm.allocate("batt_q0", nrec);
+	outTotalCharge = cm.allocate("batt_q0", nrec*nyears);
 
 	// only allocate if lead-acid
 	if ( chem == 0 )
 	{
-		outAvailableCharge = cm.allocate("batt_q1", nrec);
-		outBoundCharge = cm.allocate("batt_q2", nrec);
+		outAvailableCharge = cm.allocate("batt_q1", nrec*nyears);
+		outBoundCharge = cm.allocate("batt_q2", nrec*nyears);
 	}
-	outMaxCharge = cm.allocate("qmax", nrec);
-	outSOC = cm.allocate("SOC", nrec);
-	outDOD = cm.allocate("DOD", nrec);
-	outCurrent = cm.allocate("batt_I", nrec);
-	outCellVoltage = cm.allocate("voltage_cell", nrec);
-	outBatteryVoltage = cm.allocate("voltage_battery", nrec);
-	outCapacityPercent = cm.allocate("capacity_percent", nrec);
-	outCycles = cm.allocate("Cycles", nrec);
+	outMaxCharge = cm.allocate("qmax", nrec*nyears);
+	outSOC = cm.allocate("SOC", nrec*nyears);
+	outDOD = cm.allocate("DOD", nrec*nyears);
+	outCurrent = cm.allocate("batt_I", nrec*nyears);
+	outCellVoltage = cm.allocate("voltage_cell", nrec*nyears);
+	outBatteryVoltage = cm.allocate("voltage_battery", nrec*nyears);
+	outCapacityPercent = cm.allocate("capacity_percent", nrec*nyears);
+	outCycles = cm.allocate("Cycles", nrec*nyears);
 	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", nyears); 
-	outBatteryTemperature = cm.allocate("battery_temperature", nrec);
-	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec);
-	outBatteryEnergy = cm.allocate("battery_energy", nrec);
-	outGridEnergy = cm.allocate("grid_energy", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
-	outGenEnergy = cm.allocate("gen", nrec); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
-	outPVToLoad = cm.allocate("pv_to_load", nrec);
-	outBatteryToLoad = cm.allocate("battery_to_load", nrec);
-	outGridToLoad = cm.allocate("grid_to_load", nrec);
+	outBatteryTemperature = cm.allocate("battery_temperature", nrec*nyears);
+	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec*nyears);
+	outBatteryEnergy = cm.allocate("battery_energy", nrec*nyears);
+	outGridEnergy = cm.allocate("grid_energy", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+	outGenEnergy = cm.allocate("pv_batt_gen", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+	outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
+	outBatteryToLoad = cm.allocate("battery_to_load", nrec*nyears);
+	outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
 
 	// model initialization
 	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_parallel"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),

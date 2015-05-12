@@ -18,7 +18,7 @@ struct battstor
 	// time quantities
 	int year;
 	size_t step_per_hour;
-	int nyears;
+	size_t nyears;
 
 	// member data
 	voltage_dynamic_t *voltage_model;
