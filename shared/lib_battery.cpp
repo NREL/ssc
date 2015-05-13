@@ -397,6 +397,8 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const
 	_batt_lifetime_matrix = batt_lifetime_matrix;
 	_enable_replacement = enable_replacement;
 	_replacement_capacity = replacement_capacity;
+	// issues as capacity approaches 0%
+	if (replacement_capacity == 0.) { _replacement_capacity = 2.; }
 	_replacements = 0;
 
 	for (int i = 0; i < _batt_lifetime_matrix.nrows(); i++)
@@ -540,6 +542,7 @@ bool lifetime_t::check_replaced()
 	}
 	return replaced;
 }
+void lifetime_t::reset_replacements(){ _replacements = 0; }
 int lifetime_t::replacements(){ return _replacements; }
 int lifetime_t::cycles_elapsed(){return _nCycles;}
 double lifetime_t::capacity_percent(){ return _Clt; }

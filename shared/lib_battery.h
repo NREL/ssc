@@ -198,6 +198,8 @@ public:
 	~lifetime_t();
 	void rainflow(double DOD);
 	bool check_replaced();
+	void reset_replacements();
+
 	int replacements();
 	int cycles_elapsed();
 	double capacity_percent();

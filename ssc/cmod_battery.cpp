@@ -12,8 +12,8 @@ var_info vtab_battery[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
 	// simulation inputs - required only if lifetime analysis
-	{ SSC_INPUT, SSC_NUMBER, "pv_lifetime_simulation", "PV lifetime simulation", "0/1", "", "", "?=0", "BOOLEAN", "" },
-	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                     "PV lifetime simulation",                                  "0/1",     "",                     "",             "?=0",                        "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "pv_lifetime_simulation=1",   "",                               "" },
 
 		// configuration inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                "",        "",                     "Battery",       "",                           "",                              "" },
@@ -322,8 +322,11 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
 	outBatteryBankReplacement[year] = (ssc_number_t)(lifetime_model->replacements());
-	if ( (hour_of_year == 8759) && (step == step_per_hour - 1) )
+	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
+	{
 		year++;
+		lifetime_model->reset_replacements();
+	}
 
 	// Thermal Output
 	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
