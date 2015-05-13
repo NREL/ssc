@@ -1,5 +1,4 @@
 
-template< typename Real > Real mymax( Real a, Real b ) { return a > b ? a : b; }
 
 template< typename Real, typename F, int n >
 int newton( Real x[n], Real residual[n], bool &check, F &func, 

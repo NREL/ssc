@@ -10,7 +10,7 @@
 #include "6par_gamma.h"
 #include "6par_solve.h"
 
-static double to_double( double x ) { return x; }
+
 
 static var_info _cm_vtab_6parsolve[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
