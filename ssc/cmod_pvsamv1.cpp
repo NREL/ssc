@@ -35,9 +35,6 @@
 #define sind(x) sin( (M_PI/180.0)*(x) )
 #define cosd(x) cos( (M_PI/180.0)*(x) )
 
-static inline double to_double(double x) { return x; }
-
-
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	// optional for lifetime analysis

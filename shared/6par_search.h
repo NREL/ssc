@@ -1,4 +1,6 @@
 
+template< typename Real > Real mymax(Real a, Real b) { return a > b ? a : b; }
+
 template< typename Real, typename F, int n >
 Real fminsum ( Real x[n], Real f[n], F &func )
 {

@@ -4,6 +4,8 @@ public:
 	virtual bool notify( int iter, double x[], double resid[], const int n ) = 0;
 };
 
+static double to_double(double x) { return x; }
+
 template<typename Real>
 bool solve6par_callback( int iter, Real x[], Real resid[], const int n, void *data)
 {
