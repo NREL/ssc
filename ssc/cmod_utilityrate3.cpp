@@ -829,9 +829,13 @@ public:
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
 		bool bload=false;
 		pgen = as_array("gen", &nrec_gen);
-		step_per_hour_gen = nrec_gen / 8760;
-		if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen)
-			throw exec_error("utilityrate3", util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen));
+		// for lifetime analysis
+		size_t nrec_gen_per_year = nrec_gen;
+		if (as_integer("system_use_lifetime_output") == 1)
+			nrec_gen_per_year = nrec_gen / nyears;
+		step_per_hour_gen = nrec_gen_per_year / 8760;
+		if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
+			throw exec_error("utilityrate3", util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year));
 		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
 
 
@@ -986,6 +990,7 @@ public:
 		ssc_number_t *ch_ec_nov = allocate("charge_ec_nov", nyears );
 		ssc_number_t *ch_ec_dec = allocate("charge_ec_dec", nyears );
 
+		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
 			for (j=0;j<8760;j++)
@@ -994,10 +999,24 @@ public:
 				e_load_cy[j] = e_load[j] * load_scale[i];
 				p_load_cy[j] = p_load[j] * load_scale[i];
 
+				
+				// update e_sys per year if lifetime output
+				if (as_integer("system_use_lifetime_output") == 1)
+				{
+					e_sys[i] = p_sys[i] = 0.0;
+					for (size_t ii = 0; ii < step_per_hour_gen; ii++)
+					{
+						ts_power = pgen[idx];
+						e_sys[i] += ts_power * ts_hour_gen;
+						p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
+						idx++;
+					}
+
+				}
+
 				// calculate e_grid value (e_sys + e_load)
 				// note: load is assumed to have negative sign
-
-				e_grid[j] = e_sys[j]*sys_scale[i] + e_load_cy[j];
+				e_grid[j] = e_sys[j] * sys_scale[i] + e_load_cy[j];
 				p_grid[j] = p_sys[j]*sys_scale[i] + p_load_cy[j];
 			}
 
