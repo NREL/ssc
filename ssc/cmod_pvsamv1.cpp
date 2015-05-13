@@ -41,8 +41,12 @@ static inline double to_double(double x) { return x; }
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	// optional for lifetime analysis
-	{ SSC_INPUT, SSC_NUMBER, "pv_lifetime_simulation", "PV lifetime simulation", "0/1", "", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "pv_lifetime_simulation", "PV lifetime simulation", "0/1", "", "pvsamv1", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "dc_degradation", "Annual dc degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "ac_degradation", "Annual ac degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "dc_degrade_factor", "Annual dc degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "ac_degrade_factor", "Annual ac degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "activate_snow_model", "Toggle Snow Loss Estimation", "0/1", "", "snowmodel", "?=0", "BOOLEAN", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",                              "Nameplate capacity",                                   "kW",       "", "pvsamv1", "*", "", "" },
@@ -1312,8 +1316,53 @@ public:
 			nyears = as_integer("analysis_period");
 
 
-
 		// setup output arrays
+		ssc_number_t *p_dc_degrade_factor = allocate("dc_degrade_factor", nyears);
+		ssc_number_t *p_ac_degrade_factor = allocate("ac_degrade_factor", nyears);
+
+
+
+		if (pv_lifetime_simulation == 1)
+		{
+			size_t count_dc_degrad = 0;
+			ssc_number_t *dc_degrad = 0;
+			dc_degrad = as_array("dc_degradation", &count_dc_degrad);
+			p_dc_degrade_factor[0] = 1.0; // degradation assumed to start at year 2
+			if (count_dc_degrad == 1)
+			{
+				for (size_t i = 1; i < nyears; i++)
+					p_dc_degrade_factor[i] = pow((1.0 - dc_degrad[0] / 100.0), i);
+			}
+			else if (count_dc_degrad > 0)
+			{
+				for (size_t i = 1; i < nyears && i < count_dc_degrad; i++)
+					p_dc_degrade_factor[i] = (1.0 - dc_degrad[i] / 100.0);
+			}
+			size_t count_ac_degrad = 0;
+			ssc_number_t *ac_degrad = 0;
+			ac_degrad = as_array("ac_degradation", &count_ac_degrad);
+			p_ac_degrade_factor[0] = 1.0; // degradation assumed to start at year 2
+			if (count_ac_degrad == 1)
+			{
+				for (size_t i = 1; i < nyears; i++)
+					p_ac_degrade_factor[i] = pow((1.0 - ac_degrad[0] / 100.0), i);
+			}
+			else if (count_ac_degrad > 0)
+			{
+				for (size_t i = 1; i < nyears && i < count_ac_degrad; i++)
+					p_ac_degrade_factor[i] = (1.0 - ac_degrad[i] / 100.0);
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < nyears; i++)
+			{
+				p_dc_degrade_factor[i] = 1.0;
+				p_ac_degrade_factor[i] = 1.0;
+			}
+		}
+
+
 
 		// output arrays for weather info- same for all four subarrays	
 		ssc_number_t *p_glob = allocate( "gh", nrec*nyears );
@@ -1793,8 +1842,10 @@ public:
 						}
 
 						// apply pre-inverter power derate
+						// apply yearly degradation as necessary
 						dcpwr_gross += sa[nn].module.dcpwr;
-						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
+						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate 
+							* p_dc_degrade_factor[iyear];
 
 						// save to SSC output arrays
 						p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
@@ -1867,9 +1918,9 @@ public:
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
 					p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
-					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour));
 
-
+					// apply ac degradation 
+					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) * p_ac_degrade_factor[iyear]);
 
 					p_inveff[idx] = (ssc_number_t)(aceff);
 					p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
@@ -1879,16 +1930,8 @@ public:
 					if (en_batt)
 					{
 						batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
-						//					p_grid[idx] = batt.outGridEnergy[idx];
 						p_gen[idx] = batt.outGenEnergy[idx];
 					}
-					//				else
-					//				{
-					//					p_grid[idx] = (p_gen[idx] - cur_load);
-					//				}
-
-					// accumulate hourly system energy delivered to grid
-					//				p_hourlygrid[hour] += (ssc_number_t)(p_grid[idx] * ts_hour);
 
 					// accumulate hourly PV system generation too
 					p_hourlygen[hour+iyear*8760] += (ssc_number_t)(p_gen[idx] * ts_hour);
