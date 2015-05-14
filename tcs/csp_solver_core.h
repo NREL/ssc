@@ -277,6 +277,18 @@ public:
 
 };
 
+class C_csp_tes
+{
+
+public:
+	C_csp_tes(){};
+
+	~C_csp_tes(){};
+
+	virtual void init() = 0;
+
+};
+
 class C_csp_solver
 {
 
@@ -284,6 +296,7 @@ private:
 	C_csp_weatherreader &mc_weather;
 	C_csp_collector_receiver &mc_collector_receiver;
 	C_csp_power_cycle &mc_power_cycle;
+	C_csp_tes &mc_tes;
 
 	C_csp_solver_htf_state mc_cr_htf_state;
 	C_csp_collector_receiver::S_csp_cr_inputs mc_cr_inputs;
@@ -345,7 +358,8 @@ public:
 
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
-		C_csp_power_cycle &power_cycle);
+		C_csp_power_cycle &power_cycle,
+		C_csp_tes &tes);
 
 	~C_csp_solver(){};
 
