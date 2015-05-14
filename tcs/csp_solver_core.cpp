@@ -5,10 +5,12 @@
 
 C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	C_csp_collector_receiver &collector_receiver,
-	C_csp_power_cycle &power_cycle) : 
+	C_csp_power_cycle &power_cycle,
+	C_csp_tes &tes) : 
 	mc_weather(weather), 
 	mc_collector_receiver(collector_receiver), 
-	mc_power_cycle(power_cycle)
+	mc_power_cycle(power_cycle),
+	mc_tes(tes)
 {
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
@@ -41,6 +43,7 @@ void C_csp_solver::init_independent()
 	mc_weather.init();
 	mc_collector_receiver.init();
 	mc_power_cycle.init();
+	mc_tes.init();
 
 	return;
 }
@@ -109,6 +112,10 @@ void C_csp_solver::simulate()
 		cr_operating_state = mc_collector_receiver.get_operating_state();
 		pc_operating_state = mc_power_cycle.get_operating_state();
 
+		// Get TES operating state info
+		bool is_tes_charging_avail = false;
+		bool is_tes_discharging_avail = false;
+
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
 		mc_weather.timestep_call(mc_sim_info);
 
@@ -151,31 +158,25 @@ void C_csp_solver::simulate()
 		// Determine which operating mode to try first
 		if( is_est_rec_output_useful )		// Can receiver produce power and can it be used somewhere (power cycle, in this case)
 		{
-			if( (cr_operating_state==C_csp_collector_receiver::OFF || cr_operating_state==C_csp_collector_receiver::STARTUP) 
-				&& pc_operating_state==C_csp_power_cycle::OFF)
+			if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
+				&& pc_operating_state == C_csp_power_cycle::OFF )
 			{	// At start of this timestep, are power cycle AND collector/receiver off?
-				
-				if(is_rec_su_allowed && is_pc_su_allowed)
+
+				if( is_rec_su_allowed && is_pc_su_allowed )
 				{	// Are receiver and power cycle startup allowed?
-					
+
 					operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+				}
+				else if( is_tes_discharging_avail && is_pc_su_allowed )
+				{	// Start up power cycle with TES
 
-					// 4.28.15 twn:  for now, remove PC restrictions on CR startup
-					//if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
-					//{	// Do we estimate that there is enough thermal power to operate cycle at min fraction?
-
-					//	operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-					//}
-					//else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb )
-					//{	// If not, is there enough to operate at standby, AND is standby allowed
-
-					//	operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-					//}
-					//else
-					//{	// If we can't use the receiver output, then don't start up
-
-					//	operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					//}				
+					// operating_mode = CR_OFF__PC_SU__TES_DC__AUX_OFF;
+					// check if storage is enough to keep in standby?
+				
+				}
+				else if( is_tes_charging_avail && is_rec_su_allowed )
+				{
+				
 				}
 				else
 				{	// If startup isn't allowed, then don't try
@@ -183,13 +184,13 @@ void C_csp_solver::simulate()
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 				}
 			}
-			else if(cr_operating_state==C_csp_collector_receiver::ON && 
-					(pc_operating_state==C_csp_power_cycle::OFF || pc_operating_state==C_csp_power_cycle::STARTUP) )
+			else if( cr_operating_state == C_csp_collector_receiver::ON &&
+				(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
 			{	// At start of this timestep, is collector/receiver on, but the power cycle is off?
-				
-				if( is_pc_su_allowed )
+
+				if( is_rec_su_allowed && is_pc_su_allowed )
 				{	// Is power cycle startup allowed?
-					
+
 					if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
 					{
 						operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
@@ -201,41 +202,45 @@ void C_csp_solver::simulate()
 					else
 					{
 						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}					
+					}
 				}
 				else
 				{	// If startup isn't allowed, then don't try
 
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-				}				
+				}
 			}
-			else if(cr_operating_state==C_csp_collector_receiver::ON &&
-					(pc_operating_state==C_csp_power_cycle::ON || pc_operating_state==C_csp_power_cycle::STANDBY) )
+			else if( cr_operating_state == C_csp_collector_receiver::ON &&
+				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
 			{	// Are the collector/receiver AND power cylce ON?
 
-				if( q_dot_cr_output*(1.0-tol_mode_switching) > q_pc_max )
-				{	// Is it likely that the receiver will defocus?
-					// If this mode is entered as the initial mode, then controller can't go back to CR_ON__PC_RM__TES_OFF__AUX_OFF
-					
-					operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
-				}
-				else if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
-				{	// Receiver can likely operate at full available power
+				if( is_rec_su_allowed & is_pc_sb_allowed )
+				{
+					if( q_dot_cr_output*(1.0 - tol_mode_switching) > q_pc_max )
+					{	// Is it likely that the receiver will defocus?
+						// If this mode is entered as the initial mode, then controller can't go back to CR_ON__PC_RM__TES_OFF__AUX_OFF
 
-					operating_mode = CR_ON__PC_RM__TES_OFF__AUX_OFF;
-				}
-				else if(is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb ) // this is the entry logic to the outer nest 
-				{	// Receiver can likely operate in standby
-				
-					operating_mode = CR_ON__PC_SB__TES_OFF__AUX_OFF;
-				}
-				else
-				{	// Can't use receiver output, so shutdown CR and PC
-					// Shouldn't end up here because of outer-nest entry logic, but include as a safety check 
+						operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
+					}
+					else if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
+					{	// Receiver can likely operate at full available power
 
-					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+						operating_mode = CR_ON__PC_RM__TES_OFF__AUX_OFF;
+					}
+					else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb ) // this is the entry logic to the outer nest 
+					{	// Receiver can likely operate in standby
+
+						operating_mode = CR_ON__PC_SB__TES_OFF__AUX_OFF;
+					}
+					else
+					{	// Can't use receiver output, so shutdown CR and PC
+						// Shouldn't end up here because of outer-nest entry logic, but include as a safety check 
+
+						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					}
 				}
 			}
+
 		}
 		else
 		{
