@@ -2027,16 +2027,6 @@ public:
 		if (en_batt)
 		{
 			assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
-			/*
-			// should be removed upon lifetime completion
-			if (en_batt_replacement && batt.year < nyears)
-			{
-				int year = batt.year;
-				int replacements = batt.outBatteryBankReplacement[year - 1];
-				for (year; year <= nyears; year++)
-					batt.outBatteryBankReplacement[year] = replacements;
-			}
-			*/
 		}
 		else
 			assign("average_cycle_efficiency", 0);
