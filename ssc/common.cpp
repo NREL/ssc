@@ -19,6 +19,22 @@ var_info vtab_standard_financial[] = {
 
 var_info_invalid };
 
+var_info vtab_battery_replacement_cost[] = {
+
+	/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+		{ SSC_INPUT, SSC_ARRAY, "battery_bank_replacement", "Battery bank replacementss per year", "number/year", "", "Battery", "", "", "" },
+		// battery storage and dispatch
+		{ SSC_INPUT, SSC_NUMBER, "en_batt", "Enable battery storage model", "0/1", "", "Battery", "?=0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "en_batt_replacement", "Enable battery replacement?", "0/1", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+		{ SSC_INPUT, SSC_NUMBER, "battery_per_kWh", "Battery cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "batt_computed_bank_capacity", "Battery bank capacity", "kWh", "", "Battery", "?=0.0", "", "" },
+
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost", "Battery replacement cost", "$", "", "Cash Flow", "*", "", "" },
+
+		var_info_invalid };
+
+
+
 var_info vtab_standard_loan[] = {
 
 /*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/

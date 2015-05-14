@@ -138,7 +138,7 @@ extern var_info
 	vtab_standard_loan[],
 	vtab_oandm[],
 	vtab_depreciation[],
-//	vtab_utility_rate[],
+	vtab_battery_replacement_cost[],
 	vtab_tax_credits[],
 	vtab_payment_incentives[];
 
@@ -202,6 +202,8 @@ enum {
 	CF_payback_without_expenses,
 	CF_cumulative_payback_without_expenses,
 
+	CF_battery_replacement_cost,
+
 	CF_max };
 
 
@@ -232,8 +234,8 @@ public:
 		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
-				
-		add_var_info( vtab_cashloan );
+		add_var_info(vtab_battery_replacement_cost);
+		add_var_info(vtab_cashloan);
 	}
 
 	void exec( ) throw( general_error )
@@ -375,6 +377,16 @@ public:
 		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
+
+		// battery cost - replacement from lifetime analysis
+		if ((as_integer("en_batt") == 1) && (as_integer("en_batt_replacement") == 1))
+		{
+			ssc_number_t *batt_rep = as_array("battery_bank_replacement", &count);
+			double batt_cost = as_double("batt_computed_bank_capacity") * as_double("battery_per_kWh");
+			for (int i = 0; i < nyears && i<count; i++)
+				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * batt_cost * pow(1 + inflation_rate, i);
+		}
+
 
 		escal_or_annual( CF_om_opt_fuel_1_expense, nyears, "om_opt_fuel_1_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_1_cost_escal")*0.01 );  
 		escal_or_annual( CF_om_opt_fuel_2_expense, nyears, "om_opt_fuel_2_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_2_cost_escal")*0.01 );  
@@ -573,6 +585,7 @@ public:
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
+				+ cf.at(CF_battery_replacement_cost,i)
 				- cf.at(CF_net_salvage_value,i);
 
 			
@@ -850,7 +863,8 @@ public:
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
-		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
+		save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
+		save_cf(CF_operating_expenses, nyears, "cf_operating_expenses");
 
 		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");
 		
