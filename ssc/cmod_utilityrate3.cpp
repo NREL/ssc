@@ -1003,12 +1003,12 @@ public:
 				// update e_sys per year if lifetime output
 				if (as_integer("system_use_lifetime_output") == 1)
 				{
-					e_sys[i] = p_sys[i] = 0.0;
+					e_sys[j] = p_sys[j] = 0.0;
 					for (size_t ii = 0; ii < step_per_hour_gen; ii++)
 					{
 						ts_power = pgen[idx];
-						e_sys[i] += ts_power * ts_hour_gen;
-						p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
+						e_sys[j] += ts_power * ts_hour_gen;
+						p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
 						idx++;
 					}
 
