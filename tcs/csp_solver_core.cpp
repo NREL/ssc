@@ -113,8 +113,10 @@ void C_csp_solver::simulate()
 		pc_operating_state = mc_power_cycle.get_operating_state();
 
 		// Get TES operating state info
-		bool is_tes_charging_avail = false;
-		bool is_tes_discharging_avail = false;
+		//bool is_tes_charging_avail = false;
+		//bool is_tes_discharging_avail = false;
+		double q_dot_tes_dc = 0.0;			//[MW]
+		double q_dot_tes_ch = 0.0;			//[MW]
 
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
 		mc_weather.timestep_call(mc_sim_info);
@@ -133,6 +135,8 @@ void C_csp_solver::simulate()
 		double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
 		double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
 		double q_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MW]
+		double q_pc_target = q_pc_max;							//[MW]
+
 
 		// Solve collector/receiver with design inputs and weather to estimate output
 			// May replace this call with a simple proxy model later...
@@ -155,97 +159,399 @@ void C_csp_solver::simulate()
 		int operating_mode = -1;
 		bool are_models_converged = false;
 		
-		// Determine which operating mode to try first
-		if( is_est_rec_output_useful )		// Can receiver produce power and can it be used somewhere (power cycle, in this case)
+
+
+
+		if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
+			&& (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
+		{	// At start of this timestep, are power cycle AND collector/receiver off?
+
+			if( q_dot_cr_output > 0.0 && is_rec_su_allowed )
+			{	// Receiver startup is allowed and possible (will generate net energy)
+					
+				operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;		
+			}
+			else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed )		// Can power cycle startup using TES?
+			{
+				throw(C_csp_exception("'CR_OFF__PC_SU__TES_DC__AUX_OFF' not yet available", "CSP Solver"));
+			}
+			else
+			{
+				operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+			}
+		}	// End logic for CR_state == OFF or STARTUP    AND     PC_state == OFF or STARTUP
+
+		else if( cr_operating_state == C_csp_collector_receiver::ON &&
+			(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
+		{	
+			if( q_dot_cr_output > 0.0 && is_rec_su_allowed )
+			{	// Receiver is allowed to remain on, and it can produce useful energy. Now, need to find a home for it
+			
+				if( is_pc_su_allowed )	// Can receiver output go to power cycle?
+				{
+					operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
+				}
+				else if( q_dot_tes_ch )	// Can receiver output go to TES?
+				{
+					throw(C_csp_exception("'CR_SU__PC_OFF__TES_CH__AUX_OFF' not yet available", "CSP Solver"));
+				}
+				else	// Nowhere for receiver output to go, shut everything OFF
+				{
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+				}
+			}
+			else if( q_dot_tes_dc && is_pc_su_allowed )
+			{	// Can power cycle startup using TES?
+			
+				throw(C_csp_exception("'CR_OFF__PC_SU__TES_DC__AUX_OFF' not yet available", "CSP Solver"));
+			}
+			else
+			{
+				operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+			}				
+		}
+
+		else if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
+			pc_operating_state == C_csp_power_cycle::ON )
 		{
-			if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
-				&& pc_operating_state == C_csp_power_cycle::OFF )
-			{	// At start of this timestep, are power cycle AND collector/receiver off?
+			if( q_dot_cr_output > 0.0 && is_rec_su_allowed )
+			{	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
 
-				if( is_rec_su_allowed && is_pc_su_allowed )
-				{	// Are receiver and power cycle startup allowed?
+				if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target )
+				{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
 
+					throw(C_csp_exception("operating_mode = CR_SU__PC_TARGET__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
+				}
+				else if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min )
+				{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+					throw(C_csp_exception("operating_mode = CR_SU__PC_RM__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
+				}
+				else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb )
+				{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+					throw(C_csp_exception("operating_mode = CR_SU__PC_SU__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
+				}
+				else
+				{
 					operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
 				}
-				else if( is_tes_discharging_avail && is_pc_su_allowed )
-				{	// Start up power cycle with TES
+			}
+			else	// Receiver remains OFF - determine if power cycle can remain on
+			{
+				if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target )
+				{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
 
-					// operating_mode = CR_OFF__PC_SU__TES_DC__AUX_OFF;
-					// check if storage is enough to keep in standby?
-				
+					throw(C_csp_exception("operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
 				}
-				else if( is_tes_charging_avail && is_rec_su_allowed )
-				{
-				
+				else if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min )
+				{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+					throw(C_csp_exception("operating_mode = CR_OFF__PC_RM__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
+				}
+				else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb )
+				{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+					throw(C_csp_exception("operating_mode = CR_OFF__PC_SU__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
 				}
 				else
-				{	// If startup isn't allowed, then don't try
-
-					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-				}
-			}
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
-			{	// At start of this timestep, is collector/receiver on, but the power cycle is off?
-
-				if( is_rec_su_allowed && is_pc_su_allowed )
-				{	// Is power cycle startup allowed?
-
-					if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
-					{
-						operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
-					}
-					else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb )
-					{
-						operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
-					}
-					else
-					{
-						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-				else
-				{	// If startup isn't allowed, then don't try
-
-					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-				}
-			}
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
-			{	// Are the collector/receiver AND power cylce ON?
-
-				if( is_rec_su_allowed & is_pc_sb_allowed )
 				{
-					if( q_dot_cr_output*(1.0 - tol_mode_switching) > q_pc_max )
-					{	// Is it likely that the receiver will defocus?
-						// If this mode is entered as the initial mode, then controller can't go back to CR_ON__PC_RM__TES_OFF__AUX_OFF
-
-						operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
-					}
-					else if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
-					{	// Receiver can likely operate at full available power
-
-						operating_mode = CR_ON__PC_RM__TES_OFF__AUX_OFF;
-					}
-					else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb ) // this is the entry logic to the outer nest 
-					{	// Receiver can likely operate in standby
-
-						operating_mode = CR_ON__PC_SB__TES_OFF__AUX_OFF;
-					}
-					else
-					{	// Can't use receiver output, so shutdown CR and PC
-						// Shouldn't end up here because of outer-nest entry logic, but include as a safety check 
-
-						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 				}
-			}
-
+			}				
 		}
-		else
+
+		else if( cr_operating_state == C_csp_collector_receiver::ON &&
+			(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
 		{
-			operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-		}
+			if( q_dot_cr_output > 0.0 && is_rec_su_allowed )
+			{	// Receiver operation is allowed and possible - find a home for output
+				
+				if( is_pc_su_allowed )
+				{
+					if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_target )
+					{	// The power cycle cannot accept the entire receiver output
+						// Tolerance is applied so that if CR is *close* to reaching the PC target, the controller tries modes that fill TES
+					
+						// Is storage available to discharge to power cycle?
+						if( q_dot_tes_ch > 0.0 )
+						{
+							// 1) Try to fill storage while hitting power cycle target
+							if( (q_dot_cr_output - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_target )
+							{	// Storage can accept the remaining receiver output
+								// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
+
+								throw(C_csp_exception("operating_mode = CR_ON__PC_TARGET__TES_CH__AUX_OFF", "CSP Solver"));
+							}
+
+							// 2) Try operating power cycle at maximum capacity
+							// Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
+							else if( (q_dot_cr_output - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_max )
+							{	// Storage and the power cycle operating between target and max can accept the remaining receiver output
+								// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
+
+								throw(C_csp_exception("operating_mode = CR_ON__PC_RM__TES_CH__AUX_OFF", "CSP_Solver"));
+							}
+
+							// 3) Try defocusing the CR and operating the power cycle at maximum capacity
+							else
+							{
+								throw(C_csp_exception("operating_mode = CR_DF__PC_FULL__TES_CH__AUX_OFF", "CSP_Solver"));
+							}
+						}	// End if(q_dot_tes_ch > 0.0) logic
+
+						else
+						{	// No storage available for dispatch
+
+							// 1) Try operating power cycle at maximum capacity
+							if( q_dot_cr_output*(1.0 - tol_mode_switching) < q_pc_max )
+							{	// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
+
+								operating_mode = CR_ON__PC_RM__TES_OFF__AUX_OFF;
+							}
+							else
+							{
+								operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
+							}
+						}	// End else 'no storage available for dispatch'
+					}
+					else
+					{	// Power cycle is asking for more output than the receiver can supply
+						
+						if( q_dot_tes_dc > 0.0 )
+						{	// Storage dispatch is available
+
+							if( (q_dot_cr_output + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_target )
+							{	// Storage can provide enough dispatch to reach power cycle target
+								// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
+
+								throw(C_csp_exception("operating_mode = CR_ON__PC_TARGET__TES_DC__AUX_OFF", "CSP Solver"));
+							}
+							else if( (q_dot_cr_output + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_min )
+							{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+								// Run at highest possible PC fraction by dispatch all remaining storage
+								// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+							
+								throw(C_csp_exception("operating_mode = CR_ON__PC_RM__TES_DC__AUX_OFF", "CSP Solver"));
+							}
+							else if( is_pc_sb_allowed )
+							{	// If standby is allowed
+							
+								if( q_dot_cr_output*(1.0+tol_mode_switching) > q_pc_sb )
+								{	// Tolerance is applied so that if CR output is *close* to reaching standby, the controller tries that mode
+
+									if(q_dot_tes_ch > 0.0)
+									{
+										throw(C_csp_exception("operating_mode = CR_ON__PC_SB__TES_CH__AUX_OFF", "CSP Solver"));
+									}
+									else
+									{
+										// This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
+										operating_mode = CR_ON__PC_SB__TES_OFF__AUX_OFF;
+									}								
+								}
+								else if( (q_dot_cr_output + q_dot_tes_dc)*(1.0+tol_mode_switching) > q_pc_sb )
+								{	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
+
+									throw(C_csp_exception("operating_mode = CR_ON__PC_SB__TES_DC__AUX_OFF", "CSP Solver"));
+								}
+								else
+								{	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+
+									throw(C_csp_exception("operating_mode = CR_ON__PC_MIN__TES_EMPTY__AUX_OFF", "CSP Solver"));
+								}
+							}
+							else
+							{	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+							
+								throw(C_csp_exception("operating_mode = CR_ON__PC_MIN__TES_EMPTY__AUX_OFF", "CSP Solver"));
+							}
+						}
+						else
+						{	// Storage dispatch is not available
+
+							// Can the power cycle operate at or above the minimum operation fraction?
+							if( q_dot_cr_output*(1.0+tol_mode_switching) > q_pc_min )
+							{	// Tolerance is applied so that if CR is *close* to reaching PC min, the controller tries that mode
+
+								operating_mode = CR_ON__PC_RM__TES_OFF__AUX_OFF;
+							}
+							else if( is_pc_sb_allowed && q_dot_cr_output*(1.0+tol_mode_switching) > q_pc_sb )
+							{	// Receiver can likely operate in standby
+								// Tolerance is applied so that if CR is *close* to reaching PC standby, the controller tries that mode
+
+								operating_mode = CR_ON__PC_SB__TES_OFF__AUX_OFF;
+							}
+							else if(q_dot_tes_ch > 0.0)
+							{	// Charge storage with receiver output
+							
+								throw(C_csp_exception("operating_mode = CR_ON__PC_OFF__TES_CH__AUX_OFF", "CSP Solver"));
+							}
+							else
+							{	// No home for receiver output, and not enough thermal power for power cycle
+								
+								operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+							}
+						}	// End logic else 'storage dispatch not available'
+					}	// End logic else 'power cycle requires more q_dot than receiver can supply'				
+				}	// End logic if(is_rec_su_allowed)
+				else
+				{	// Power cycle startup is not allowed - see if receiver output can go to storage
+					
+					if( q_dot_tes_ch > 0.0 )
+					{	// Charge storage with receiver output
+
+						throw(C_csp_exception("operating_mode = CR_ON__PC_OFF__TES_CH__AUX_OFF", "CSP Solver"));
+					}
+					else
+					{	// No home for receiver output
+
+						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					}
+				}	// End logic else 'pc su is NOT allowed'		
+			}	// End logic if(q_dot_cr_output > 0.0 && is_rec_su_allowed)
+
+			else	// Receiver is off - determine if power cycle can remain on
+			{
+				if( is_pc_su_allowed )
+				{
+					if( q_dot_tes_dc > 0.0 )
+					{	// Storage dispatch is available
+
+						if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target )
+						{	// Storage can provide enough dispatch to reach power cycle target
+							// Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
+
+							throw(C_csp_exception("operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF", "CSP Solver"));
+						}
+						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min )
+						{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+							// Run at highest possible PC fraction by dispatch all remaining storage
+							// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+							throw(C_csp_exception("operating_mode = CR_OFF__PC_RM__TES_DC__AUX_OFF", "CSP Solver"));
+						}
+						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb )
+						{	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
+
+							throw(C_csp_exception("operating_mode = CR_OFF__PC_SB__TES_DC__AUX_OFF", "CSP Solver"));
+						}
+						else
+						{	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+
+							throw(C_csp_exception("operating_mode = CR_ON__PC_MIN__TES_EMPTY__AUX_OFF", "CSP Solver"));
+						}
+					}	// End logic for if( q_dot_tes_dc > 0.0 )
+					else
+					{	// Storage dispatch is not available
+
+						// No thermal power available to power cycle
+						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					}
+				}	// End logic if( is_pc_su_allowed )
+				else
+				{	// If neither receiver nor power cycle operation is allowed, then shut everything off
+
+					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+				}
+			}	// End logic for else 'receiver not on'
+		
+		}	// End operating state mode for CR ON, PC ON/STANDBY
+
+
+
+
+		// Determine which operating mode to try first
+		//if( is_est_rec_output_useful )		// Can receiver produce power and can it be used somewhere (power cycle, in this case)
+		//{
+		//	if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
+		//		&& pc_operating_state == C_csp_power_cycle::OFF )
+		//	{	// At start of this timestep, are power cycle AND collector/receiver off?
+
+		//		if( is_rec_su_allowed && is_pc_su_allowed )
+		//		{	// Are receiver and power cycle startup allowed?
+
+		//			operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+		//		}
+		//		else if( is_tes_discharging_avail && is_pc_su_allowed )
+		//		{	// Start up power cycle with TES
+
+		//			// operating_mode = CR_OFF__PC_SU__TES_DC__AUX_OFF;
+		//			// check if storage is enough to keep in standby?
+		//		
+		//		}
+		//		else if( is_tes_charging_avail && is_rec_su_allowed )
+		//		{
+		//		
+		//		}
+		//		else
+		//		{	// If startup isn't allowed, then don't try
+
+		//			operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+		//		}
+		//	}
+		//	else if( cr_operating_state == C_csp_collector_receiver::ON &&
+		//		(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
+		//	{	// At start of this timestep, is collector/receiver on, but the power cycle is off?
+
+		//		if( is_rec_su_allowed && is_pc_su_allowed )
+		//		{	// Is power cycle startup allowed?
+
+		//			if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
+		//			{
+		//				operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
+		//			}
+		//			else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb )
+		//			{
+		//				operating_mode = CR_ON__PC_SU__TES_OFF__AUX_OFF;
+		//			}
+		//			else
+		//			{
+		//				operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+		//			}
+		//		}
+		//		else
+		//		{	// If startup isn't allowed, then don't try
+
+		//			operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+		//		}
+		//	}
+		//	else if( cr_operating_state == C_csp_collector_receiver::ON &&
+		//		(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
+		//	{	// Are the collector/receiver AND power cylce ON?
+
+		//		if( is_rec_su_allowed & is_pc_sb_allowed )
+		//		{
+		//			if( q_dot_cr_output*(1.0 - tol_mode_switching) > q_pc_max )
+		//			{	// Is it likely that the receiver will defocus?
+		//				// If this mode is entered as the initial mode, then controller can't go back to CR_ON__PC_RM__TES_OFF__AUX_OFF
+
+		//				operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
+		//			}
+		//			else if( q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_min )
+		//			{	// Receiver can likely operate at full available power
+
+		//				operating_mode = CR_ON__PC_RM__TES_OFF__AUX_OFF;
+		//			}
+		//			else if( is_pc_sb_allowed && q_dot_cr_output*(1.0 + tol_mode_switching) > q_pc_sb ) // this is the entry logic to the outer nest 
+		//			{	// Receiver can likely operate in standby
+
+		//				operating_mode = CR_ON__PC_SB__TES_OFF__AUX_OFF;
+		//			}
+		//			else
+		//			{	// Can't use receiver output, so shutdown CR and PC
+		//				// Shouldn't end up here because of outer-nest entry logic, but include as a safety check 
+
+		//				operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+		//			}
+		//		}
+		//	}
+
+		//}
+		//else
+		//{
+		//	operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+		//}
 
 
 		while(!are_models_converged)		// Solve for correct operating mode and performance in following loop:

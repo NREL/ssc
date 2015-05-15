@@ -287,6 +287,8 @@ public:
 
 	virtual void init() = 0;
 
+	virtual double q_dot_dc_avail() = 0;
+
 };
 
 class C_csp_solver
