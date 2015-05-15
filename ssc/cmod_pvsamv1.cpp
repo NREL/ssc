@@ -1493,6 +1493,12 @@ public:
 				throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 		}
 		
+		// for reporting status updates
+		size_t nreports = 50 * nyears;
+		size_t ireport = 0;
+		size_t ireplast = 0;
+		size_t insteps = nyears * 8760;
+		size_t irepfreq = insteps/nreports;
 
 		size_t idx = 0;
 		size_t hour = 0;
@@ -1503,20 +1509,24 @@ public:
 			hour = 0;
 			while (hour < 8760)
 			{
+				// report progress updates to the caller	
+				ireport++;
+				if ( ireport - ireplast > irepfreq )
+				{
+					float percent = 100.0f * ((float)ireport) / ((float)insteps);
+					if ( !update( "", percent , (float)idx ) )
+						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour+1.0) + " in year " + util::to_string(iyear+1) );
+
+					ireplast = ireport;
+				}
+
+
 				// only hourly electric load, even
 				// if PV simulation is subhourly.  load is assumed constant over the hour.
 				// if no load profile supplied, load = 0
 				if (p_load_in != 0 && nload == 8760)
 					cur_load = p_load_in[hour];
-
-#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
-				/*if ( hour % (8760/NSTATUS_UPDATES) == 0 )
-				{
-				float percent = 100.0f * ((float)hour+1) / ((float)8760);
-				if ( !update( "", percent , (float)hour ) )
-				throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour+1.0) );
-				}*/
-
+				
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
 					// electric load is subhourly

@@ -352,6 +352,11 @@ public:
 	{
 		Output( tt );
 	}
+	virtual void OnSyntaxCheck( int line, const wxString &err )
+	{
+		ClearOutput();
+		Output( err );
+	}
 };
 
 EditorWindow::EditorWindow( wxWindow *parent )
