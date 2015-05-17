@@ -40,8 +40,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// optional for lifetime analysis
 	{ SSC_INPUT, SSC_NUMBER, "pv_lifetime_simulation", "PV lifetime simulation", "0/1", "", "pvsamv1", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "dc_degradation", "Annual dc degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "ac_degradation", "Annual ac degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "dc_degradation", "Annual module degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "ac_degradation", "Annual ac degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "dc_degrade_factor", "Annual dc degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "ac_degrade_factor", "Annual ac degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
 
@@ -1323,7 +1323,7 @@ public:
 
 		// setup output arrays
 		ssc_number_t *p_dc_degrade_factor = allocate("dc_degrade_factor", nyears);
-		ssc_number_t *p_ac_degrade_factor = allocate("ac_degrade_factor", nyears);
+		//ssc_number_t *p_ac_degrade_factor = allocate("ac_degrade_factor", nyears);
 
 
 
@@ -1343,6 +1343,7 @@ public:
 				for (size_t i = 1; i < nyears && i < count_dc_degrad; i++)
 					p_dc_degrade_factor[i] = (1.0 - dc_degrad[i] / 100.0);
 			}
+			/*
 			size_t count_ac_degrad = 0;
 			ssc_number_t *ac_degrad = 0;
 			ac_degrad = as_array("ac_degradation", &count_ac_degrad);
@@ -1357,13 +1358,14 @@ public:
 				for (size_t i = 1; i < nyears && i < count_ac_degrad; i++)
 					p_ac_degrade_factor[i] = (1.0 - ac_degrad[i] / 100.0);
 			}
+			*/
 		}
 		else
 		{
 			for (size_t i = 0; i < nyears; i++)
 			{
 				p_dc_degrade_factor[i] = 1.0;
-				p_ac_degrade_factor[i] = 1.0;
+//				p_ac_degrade_factor[i] = 1.0;
 			}
 		}
 
@@ -1934,8 +1936,9 @@ public:
 
 					p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
 
-					// apply ac degradation 
-					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) * p_ac_degrade_factor[iyear]);
+					// apply ac degradation  
+//					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) * p_ac_degrade_factor[iyear]);
+					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) );
 
 					p_inveff[idx] = (ssc_number_t)(aceff);
 					p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
