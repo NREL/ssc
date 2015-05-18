@@ -42,8 +42,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dc_degradation", "Annual module degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
 //	{ SSC_INPUT, SSC_ARRAY, "ac_degradation", "Annual ac degradation", "%/year", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "dc_degrade_factor", "Annual dc degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "ac_degrade_factor", "Annual ac degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "dc_degrade_factor", "Annual module degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "ac_degrade_factor", "Annual ac degrade factor", "", "", "pvsamv1", "pv_lifetime_simulation=1", "", "" },
 
 	//SEV: Activating the snow model
 	{ SSC_INPUT, SSC_NUMBER, "en_snow_model", "Toggle Snow Loss Estimation", "0/1", "", "snowmodel", "?=0", "BOOLEAN", "" },
@@ -344,8 +344,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "en_batt_replacement",                        "Enable Battery Replacement?",                             "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electric load",                                           "kW",      "",                     "Battery",       "?",                                   "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_replacement_option", "Enable battery replacement?", "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
+	{ SSC_INPUT, SSC_ARRAY, "batt_replacement_schedule", "Battery bank replacements per year (user specified)", "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
+
+	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Battery", "?", "", "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
@@ -1489,8 +1491,15 @@ public:
 		// setup battery model
 //		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
 		bool en_batt = as_boolean("en_batt");
-		bool en_batt_replacement = as_boolean("en_batt_replacement");
-		battstor batt(*this, en_batt, en_batt_replacement, nrec, ts_hour);
+		int batt_replacement_option = as_boolean("batt_replacement_option");
+		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
+		// user replacement schedule
+		size_t count_batt_replacement = 0;
+		ssc_number_t *batt_replacement = 0;
+		if (batt_replacement_option==2)
+			batt_replacement = as_array("batt_replacement_schedule", &count_batt_replacement);
+
+
 
 		double cur_load = 0.0;
 		size_t nload = 0;
@@ -1517,6 +1526,7 @@ public:
 		{
 			// begin 8760 loop through each timestep
 			hour = 0;
+
 			while (hour < 8760)
 			{
 				// report progress updates to the caller	
@@ -1947,6 +1957,26 @@ public:
 
 					if (en_batt)
 					{
+						// user replacement schedule - ugly code Steve - please update Nick :-)
+						if (batt_replacement_option == 2)
+						{
+							bool replace = false;
+							if (iyear < count_batt_replacement)
+							{
+								int num_repl = batt_replacement[iyear];
+								for (int j_repl = 0; j_repl < num_repl; j_repl++)
+								{
+									if (hour = (int)(j_repl*8760.0 / num_repl))
+									{
+										replace = true;
+										break;
+									}
+								}
+							}
+							if (replace)
+								batt.force_replacement();
+						}
+
 						batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
 						p_gen[idx] = batt.outGenEnergy[idx];
 					}

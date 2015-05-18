@@ -194,7 +194,7 @@ class lifetime_t
 {
 
 public:
-	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD, const bool enable_replacement, const double replacement_capacity  );
+	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD, const int replacement_option, const double replacement_capacity  );
 	~lifetime_t();
 	void rainflow(double DOD);
 	bool check_replaced();
@@ -206,6 +206,9 @@ public:
 	int forty_percent_cycles();
 	int hundred_percent_cycles();
 	double cycle_range();
+
+	// for user replacement schedule
+	void force_replacement();
 
 protected:
 	void rainflow_ranges();
@@ -233,7 +236,7 @@ protected:
 	double _average_range;
 
 	// battery replacement
-	bool _enable_replacement;
+	int _replacement_option;
 	double _replacement_capacity;
 	int _replacements;
 
