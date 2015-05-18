@@ -105,7 +105,7 @@ var_info_invalid };
 
 
 
-battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacement, size_t nrec, double dt_hr )
+battstor::battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr )
 {
 
 
@@ -225,7 +225,7 @@ battstor::battstor( compute_module &cm, bool setup_model, bool enable_replacemen
 	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_parallel"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
 		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
 
-	lifetime_model = new  lifetime_t(batt_lifetime_matrix, enable_replacement, cm.as_double("batt_replacement_capacity") );
+	lifetime_model = new  lifetime_t(batt_lifetime_matrix, replacement_option, cm.as_double("batt_replacement_capacity") );
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
 	if ( cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2 )
 		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
@@ -296,6 +296,13 @@ battstor::~battstor()
 	if (losses_model) delete losses_model;
 	if( dispatch_model ) delete dispatch_model;
 }
+
+void battstor::force_replacement()
+{
+	lifetime_model->force_replacement();
+	lifetime_model->reset_replacements();
+}
+
 
 void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD )
 {

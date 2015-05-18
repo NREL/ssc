@@ -392,10 +392,10 @@ void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
 Define Lifetime Model
 */
 
-lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const bool enable_replacement, const double replacement_capacity)
+lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const int replacement_option, const double replacement_capacity)
 {
 	_batt_lifetime_matrix = batt_lifetime_matrix;
-	_enable_replacement = enable_replacement;
+	_replacement_option = replacement_option;
 	_replacement_capacity = replacement_capacity;
 	// issues as capacity approaches 0%
 	if (replacement_capacity == 0.) { _replacement_capacity = 2.; }
@@ -542,6 +542,21 @@ bool lifetime_t::check_replaced()
 	}
 	return replaced;
 }
+void lifetime_t::force_replacement()
+{
+	_replacements++;
+	_Clt = bilinear(0., 0);
+	_Dlt = 0.;
+	_nCycles = 0;
+	_fortyPercent = 0;
+	_hundredPercent = 0;
+	_jlt = 0;
+	_Xlt = 0;
+	_Ylt = 0;
+	_Range = 0;
+	_Peaks.clear();
+}
+
 void lifetime_t::reset_replacements(){ _replacements = 0; }
 int lifetime_t::replacements(){ return _replacements; }
 int lifetime_t::cycles_elapsed(){return _nCycles;}

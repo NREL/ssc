@@ -202,6 +202,7 @@ enum {
 	CF_payback_without_expenses,
 	CF_cumulative_payback_without_expenses,
 
+	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
 
 	CF_max };
@@ -379,12 +380,18 @@ public:
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 
 		// battery cost - replacement from lifetime analysis
-		if ((as_integer("en_batt") == 1) && (as_integer("en_batt_replacement") == 1))
+		if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0))
 		{
-			ssc_number_t *batt_rep = as_array("battery_bank_replacement", &count);
-			double batt_cost = as_double("batt_computed_bank_capacity") * as_double("battery_per_kWh");
+			ssc_number_t *batt_rep = 0;
+			if (as_integer("batt_replacement_option")==1)
+				batt_rep = as_array("battery_bank_replacement", &count);
+			else // user specified
+				batt_rep = as_array("batt_replacement_schedule", &count);
+			double batt_cap = as_double("batt_computed_bank_capacity");
+			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "batt_replacement_cost", inflation_rate, batt_cap, false, as_double("batt_replacement_cost_escal")*0.01);
 			for (int i = 0; i < nyears && i<count; i++)
-				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * batt_cost * pow(1 + inflation_rate, i);
+				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
+					cf.at(CF_battery_replacement_cost_schedule, i + 1);
 		}
 
 
@@ -864,6 +871,7 @@ public:
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
+		save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
 		save_cf(CF_operating_expenses, nyears, "cf_operating_expenses");
 
 		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");
