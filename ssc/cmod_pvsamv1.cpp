@@ -1884,28 +1884,9 @@ public:
 					}
 
 					// Battery replacement
-					// user replacement schedule - ugly code Steve - please update Nick :-)
 					if (en_batt)
-					{
-						if (batt_replacement_option == 2)
-						{
-							bool replace = false;
-							if (iyear < count_batt_replacement)
-							{
-								int num_repl = batt_replacement[iyear];
-								for (int j_repl = 0; j_repl < num_repl; j_repl++)
-								{
-									if (hour = (int)(j_repl*8760.0 / num_repl))
-									{
-										replace = true;
-										break;
-									}
-								}
-							}
-							if (replace)
-								batt.force_replacement();
-						}
-					}
+						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour);
+
 
 					// DC Connected Battery
 					if (en_batt && (ac_or_dc == 0) )

@@ -17,6 +17,8 @@ struct battstor
 
 	// for user schedule
 	void force_replacement();
+	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour);
+
 
 	// time quantities
 	int year;
