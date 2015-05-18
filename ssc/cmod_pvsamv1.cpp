@@ -348,6 +348,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT, SSC_ARRAY, "batt_replacement_schedule", "Battery bank replacements per year (user specified)", "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
 
 	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Battery", "?", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                  "",      "",                     "Battery",       "",                                    "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
@@ -1492,6 +1493,7 @@ public:
 //		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
 		bool en_batt = as_boolean("en_batt");
 		int batt_replacement_option = as_boolean("batt_replacement_option");
+		int ac_or_dc = as_integer("batt_ac_or_dc");
 		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
 		// user replacement schedule
 		size_t count_batt_replacement = 0;
@@ -1881,6 +1883,36 @@ public:
 						p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
 					}
 
+					// Battery replacement
+					// user replacement schedule - ugly code Steve - please update Nick :-)
+					if (en_batt)
+					{
+						if (batt_replacement_option == 2)
+						{
+							bool replace = false;
+							if (iyear < count_batt_replacement)
+							{
+								int num_repl = batt_replacement[iyear];
+								for (int j_repl = 0; j_repl < num_repl; j_repl++)
+								{
+									if (hour = (int)(j_repl*8760.0 / num_repl))
+									{
+										replace = true;
+										break;
+									}
+								}
+							}
+							if (replace)
+								batt.force_replacement();
+						}
+					}
+
+					// DC Connected Battery
+					if (en_batt && (ac_or_dc == 0) )
+					{
+						batt.advance(*this, idx, hour, jj, dcpwr_net*0.001, cur_load);
+						dcpwr_net = 1000*batt.outGenEnergy[idx];
+					}
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
 					double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0;
@@ -1889,6 +1921,7 @@ public:
 						double _par, _plr;
 						snlinv.acpower(dcpwr_net / num_inverters, dc_string_voltage,
 							&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
+			
 						acpwr_gross *= num_inverters;
 						cliploss *= num_inverters;
 						psoloss *= num_inverters;
@@ -1905,7 +1938,12 @@ public:
 						pntloss *= num_inverters;
 						aceff *= 100;
 					}
-
+					
+					
+					// if dc connected battery, update post-inverted quantities
+					if (en_batt && (ac_or_dc == 0) )
+						batt.update_post_inverted(*this, idx, acpwr_gross*0.001, cur_load);
+						
 					// save array-level outputs		
 
 					p_beam[idx] = (ssc_number_t)(wf.dn);
@@ -1955,28 +1993,8 @@ public:
 					p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
 					p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
 
-					if (en_batt)
+					if (en_batt && ac_or_dc == 1)
 					{
-						// user replacement schedule - ugly code Steve - please update Nick :-)
-						if (batt_replacement_option == 2)
-						{
-							bool replace = false;
-							if (iyear < count_batt_replacement)
-							{
-								int num_repl = batt_replacement[iyear];
-								for (int j_repl = 0; j_repl < num_repl; j_repl++)
-								{
-									if (hour = (int)(j_repl*8760.0 / num_repl))
-									{
-										replace = true;
-										break;
-									}
-								}
-							}
-							if (replace)
-								batt.force_replacement();
-						}
-
 						batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
 						p_gen[idx] = batt.outGenEnergy[idx];
 					}

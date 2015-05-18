@@ -379,7 +379,7 @@ public:
 	double pv_to_load();
 	double battery_to_load();
 	double grid_to_load();
-
+	void compute_grid_net( double e_pv, double e_load);
 protected:
 
 	void compute_efficiency();
@@ -400,6 +400,8 @@ protected:
 	double _pv_to_load;
 	double _battery_to_load;
 	double _grid_to_load;
+	double _battery_fraction;
+	double _pv_fraction;
 
 	// Charge & current limits controllers
 	double _SOC_min;

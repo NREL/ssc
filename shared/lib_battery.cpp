@@ -929,6 +929,8 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_e_tofrom_batt = 0.;
 	_e_grid = 0.;
 	_e_gen = 0.;
+	_battery_fraction = 0.;
+	_pv_fraction = 0.;
 
 	// limit the switch from charging to discharge so that doesn't flip-flop subhourly
 	_t_at_mode = 1000; 
@@ -1039,6 +1041,29 @@ double dispatch_t::conversion_loss_out(double I)
 		I*=_dc_ac*0.01;
 	return I;
 }
+void dispatch_t::compute_grid_net(double e_gen, double e_load)
+{
+	// Update net grid energy
+	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
+	// e_grid > 0 (sending to grid) e_grid < 0 (pulling from grid)
+	double e_pv = e_gen*_pv_fraction;
+	double e_tofrom_battery = e_gen*_battery_fraction;
+	_e_grid = e_gen - e_load;
+
+	// Next, get how much of each component will meet the load.  
+	// PV always meets load before battery
+	if (e_pv > e_load)
+		_pv_to_load = e_load;
+	else
+	{
+		_pv_to_load = e_pv;
+
+		if (_e_tofrom_batt > 0)
+			_battery_to_load = e_tofrom_battery;
+
+		_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
+	}
+}
 /*
 Manual Dispatch
 */
@@ -1128,25 +1153,24 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	// compute internal round-trip efficiency
 	compute_efficiency();
 	
-	// Update net grid energy
-	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
-	// e_grid > 0 (sending to grid) e_grid < 0 (pulling from grid)
 	_e_gen = e_pv + _e_tofrom_batt;
-	_e_grid = _e_gen - e_load;
 
-	// Next, get how much of each component will meet the load.  
-	// PV always meets load before battery
-	if (e_pv > e_load)
-		_pv_to_load = e_load;
+	if (fabs(_e_gen) > 1e-6)
+	{
+		_battery_fraction = _e_tofrom_batt / _e_gen;
+		_pv_fraction = e_pv / _e_gen;
+	}
 	else
 	{
-		_pv_to_load = e_pv;
-		
-		if (_e_tofrom_batt > 0)
-			_battery_to_load = _e_tofrom_batt;
-
-		_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
+		_battery_fraction = 0.;
+		_pv_fraction = 0.;
 	}
+
+	// if ac-connected, compute metrics for net grid, pv to load, batt to load, grid to load
+	// note, could add in efficiency of battery micro-inverter
+	if (_ac_or_dc == 1)
+		compute_grid_net(_e_gen , e_load);
+	// else dc connected, must compute post inverter
 }
 
 
