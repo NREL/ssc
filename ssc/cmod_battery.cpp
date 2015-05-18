@@ -271,7 +271,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 
 	dc_dc = ac_dc = dc_ac = 100.;
-	ac_or_dc = cm.as_boolean("batt_ac_or_dc");
+	ac_or_dc = cm.as_integer("batt_ac_or_dc");
 	if (ac_or_dc == 0)
 		dc_dc = cm.as_double("batt_dc_dc_efficiency");
 	else
@@ -341,8 +341,9 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 
 	// Dispatch output
 	outBatteryEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery());
-	outGridEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid());
 	outGenEnergy[idx] = (ssc_number_t)(dispatch_model->gen());
+
+	outGridEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid());
 	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load() );
 	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load());
 	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load());
@@ -350,6 +351,14 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	// Average efficiency
 	outAverageCycleEfficiency = (ssc_number_t)dispatch_model->average_efficiency();
 
+}
+void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD)
+{
+	dispatch_model->compute_grid_net(PV, LOAD);
+	outGridEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid());
+	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load());
+	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load());
+	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load());
 }
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
