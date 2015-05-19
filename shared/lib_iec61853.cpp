@@ -1,8 +1,11 @@
 #include <string>
 #include <numeric>
 #include <limits>
+#include <cmath>
 #include <math.h>
 #include <float.h>
+
+#include <algorithm>
 
 #include "lsqfit.h"
 #include "lib_iec61853.h"

@@ -13,6 +13,11 @@ TARGET = ssc.so
 
 OBJECTS = \
 	csp_common.o \
+	cmod_battery.o \
+	cmod_lcoefcr.o \
+	cmod_thirdpartyownership.o \
+	cmod_snowmodel.o \
+	cmod_iec61853par.o \
 	cmod_solarpilot.o \
 	cmod_dsg_flux_preprocess.o \
 	cmod_iscc_design_point.o \
@@ -66,6 +71,8 @@ OBJECTS = \
 	cmod_tcsdish.o \
 	cmod_tcsiscc.o \
 	cmod_hcpv.o \
+	cmod_user_htf_comparison.o \
+	cmod_sco2_design_cycle.o \
 	cmod_tcsmslf.o \
 	tckernel.o 
 
