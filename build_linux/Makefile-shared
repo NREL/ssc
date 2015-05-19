@@ -6,6 +6,9 @@ CXXFLAGS = $(CFLAGS)
 
 OBJECTS = \
 	lsqfit.o \
+	lib_snowmodel.o \
+	lib_iec61853.o \
+	lib_battery.o \
 	lib_cec6par.o \
 	lib_financial.o \
 	lib_geothermal.o \
