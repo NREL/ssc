@@ -499,7 +499,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		int ncols = locate(buf, cols, NCOL, ',');
 		int ncols1 = locate(buf1, cols1, NCOL, ',');
 
-		if (ncols == 7 && ncols1 == 68)
+		if (ncols == 7 && (ncols1 == 68 || ncols1 == 71))
 			m_type = TMY3;
 
 		::rewind(fp);
@@ -885,6 +885,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	{
 		if (m_type == TMY2)
 		{
+			
 			int yr, mn, dy, hr, ethor, etdn;
 			int d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21;      /* which of these are used? d3, d10, d15 & d20 */
 			int u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15, u16, u17, u18, u19, u20, u21;  /* are any of these ever used?? */
@@ -995,7 +996,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		}
 		else if (m_type == TMY3)
 		{
-
 			char *pret = fgets(buf, NBUF, fp);
 
 			// Sev March 11th
@@ -1165,6 +1165,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		}
 		else if (m_type == WFCSV)
 		{
+			
 			buf[0] = 0;
 			fgets(buf, NBUF, fp);
 			pbuf = trimboth(buf);
