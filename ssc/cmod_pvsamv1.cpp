@@ -344,11 +344,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "batt_replacement_option", "Enable battery replacement?", "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
-	{ SSC_INPUT, SSC_ARRAY, "batt_replacement_schedule", "Battery bank replacements per year (user specified)", "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "batt_replacement_schedule",                   "Battery bank replacements per year (user specified)",    "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
 
-	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Battery", "?", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                  "",      "",                     "Battery",       "",                                    "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electric load",                                           "kW", "", "Battery", "?", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                 "",      "",                     "Battery",       "?=0",                                    "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
