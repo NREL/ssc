@@ -12,6 +12,8 @@ struct battstor
 
 	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr );
 	~battstor();
+
+	// Note, PV & LOAD are energy quantities, not power
 	void advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD );
 	void update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD);
 

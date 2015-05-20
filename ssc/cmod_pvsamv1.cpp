@@ -1889,10 +1889,11 @@ public:
 
 
 					// DC Connected Battery
+					// Note for all battery inputs, PV & LOAD must be converted to energy in [kWh]
 					if (en_batt && (ac_or_dc == 0) )
 					{
-						batt.advance(*this, idx, hour, jj, dcpwr_net*0.001, cur_load);
-						dcpwr_net = 1000*batt.outGenEnergy[idx];
+						batt.advance(*this, idx, hour, jj, dcpwr_net*0.001*ts_hour, cur_load*ts_hour);
+						dcpwr_net = 1000*batt.outGenEnergy[idx]/ts_hour;
 					}
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
@@ -1923,7 +1924,7 @@ public:
 					
 					// if dc connected battery, update post-inverted quantities
 					if (en_batt && (ac_or_dc == 0) )
-						batt.update_post_inverted(*this, idx, acpwr_gross*0.001, cur_load);
+						batt.update_post_inverted(*this, idx, acpwr_gross*0.001*ts_hour, cur_load*ts_hour);
 						
 					// save array-level outputs		
 
@@ -1976,8 +1977,8 @@ public:
 
 					if (en_batt && ac_or_dc == 1)
 					{
-						batt.advance(*this, idx, hour, jj, p_gen[idx], cur_load);
-						p_gen[idx] = batt.outGenEnergy[idx];
+						batt.advance(*this, idx, hour, jj, p_gen[idx]*ts_hour, cur_load*ts_hour);
+						p_gen[idx] = batt.outGenEnergy[idx]/ts_hour;
 					}
 
 					// accumulate hourly PV system generation too
