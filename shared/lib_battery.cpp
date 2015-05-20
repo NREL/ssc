@@ -199,6 +199,17 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 	q1 = q1_compute(_q1_0, _q0, dt_hour, _I);
 	q2 = q2_compute(_q2_0, _q0, dt_hour, _I);
 
+	// potentially a bug that needs to be fixed, for now hack
+	if (q1 + q2 > _qmax)
+	{
+		double q0 = q1 + q2;
+		double p1 = q1 / q0;
+		double p2 = q2 / q0;
+		_q0 = _qmax;
+		q1 = _q0*p1;
+		q2 = _q0*p2;
+	}
+
 	// update internal variables 
 	_q1_0 = q1;
 	_q2_0 = q2;
