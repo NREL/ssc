@@ -358,7 +358,10 @@ public:
 	dispatch_t(battery_t * Battery, double dt, double SOC_min, double Ic_max, double Id_max, double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac);
 
 	// Public APIs
-	virtual void dispatch(size_t hour_of_year, double e_pv, double e_load) = 0;
+	virtual void dispatch(size_t hour_of_year, 
+						  double e_pv,     // PV energy [kWh]
+						  double e_load)   // Load energy [kWh]
+						  = 0;
 
 	// Controllers
 	void SOC_controller(double battery_voltage, double charge_total, double charge_max, double percent_discharge);

@@ -325,7 +325,7 @@ void battstor::force_replacement()
 }
 
 
-void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD )
+void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV /* [kWh] */, double LOAD /* [kWh] */ )
 {
 	dispatch_model->dispatch( hour_of_year, PV, LOAD );
 
