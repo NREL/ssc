@@ -62,6 +62,8 @@ enum{	//Parameters
 	O_F_BAYS,
 	O_P_COND,
 
+	O_Q_STARTUP,
+
 	O_T_HTF_COLD_DES,
 
 	O_T_TURBINE_IN,
@@ -150,6 +152,8 @@ tcsvarinfo sam_sco2_recomp_type424_variables[] = {
 	{ TCS_OUTPUT, TCS_NUMBER, O_F_BAYS,          "f_bays",              "Fraction of operating heat rejection bays",             "none",  "",  "",  "" },
 	{ TCS_OUTPUT, TCS_NUMBER, O_P_COND,          "P_cond",              "Condenser pressure",                                    "Pa",    "",  "",  "" },
 	
+	{ TCS_OUTPUT, TCS_NUMBER, O_Q_STARTUP,       "q_pc_startup",        "Power cycle startup energy",                            "MWt-hr","",  "",  "" },
+
 	//OUTPUT SENT TO CONTROLLER TO GIVE NEW RECEIVER INLET TEMPERATURE AT DESIGN
 	{ TCS_OUTPUT, TCS_NUMBER, O_T_HTF_COLD_DES,  "o_T_htf_cold_des",    "Calculated htf cold temperature at design",             "C",     "",  "",  "" },
 
@@ -576,7 +580,7 @@ public:
 		int rec_fl = (int)value(P_rec_fl);
 		if( rec_fl != HTFProperties::User_defined && rec_fl < HTFProperties::End_Library_Fluids )
 		{
-			if( !rec_htfProps.SetFluid(rec_fl) ); // field_fl should match up with the constants
+			if( !rec_htfProps.SetFluid(rec_fl) )	// field_fl should match up with the constants
 			{
 				message(TCS_ERROR, "Receiver HTF code is not recognized");
 				return -1;
@@ -1356,6 +1360,8 @@ public:
 		double T_turbine_in, P_main_comp_in, P_main_comp_out, frac_recomp, N_mc_od;
 		T_turbine_in = P_main_comp_in = P_main_comp_out = frac_recomp = N_mc_od = std::numeric_limits<double>::quiet_NaN();
 
+		double q_startup = 0.0;
+
 		switch( m_standby_control )
 		{
 		case 1:
@@ -1506,9 +1512,10 @@ public:
 				}
 				else
 				{
-					m_E_su = m_E_su_prev - Q_dot_PHX*step / 3600.0;
+					m_E_su = m_E_su_prev - Q_dot_PHX*step / 3600.0;					
 				}						
 			}
+			q_startup = m_E_su_prev - m_E_su;
 		}
 
 		// Set Outputs
@@ -1522,7 +1529,9 @@ public:
 		value(O_P_MC_OUT, P_main_comp_out);             //[kPa]
 		value(O_F_RECOMP, frac_recomp);                 //[-]
 		value(O_N_MC, N_mc_od);							//[rpm]
-														 
+		
+		value(O_Q_STARTUP, q_startup / 1.E3);		//[MWt-hr]
+
 		return 0;										 
 	}													 
 														 
