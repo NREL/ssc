@@ -995,13 +995,13 @@ public:
 					// Hot tank
 					rho_tank_hot_avg	= store_htfProps.dens( T_tank_hot_avg_guess, 1.0 );			//[kg/m3] density at average (w/r/t timestep) hot tank temperature
 					V_tank_hot_avg		= m_tank_hot_prev/rho_tank_hot_avg;							//[m3] The total fluid volume in the tank based on density at average (w/r/t timestep) hot tank temperature
-					V_tank_hot_avail	= max(V_tank_hot_avg - vol_tank*h_tank_min/h_tank, 0.0);	//[m3] Available fluid volume in the tank based on density at average (w/r/t timestep) hot tank temperature
+					V_tank_hot_avail	= max(V_tank_hot_avg - 0.5*vol_tank*h_tank_min/h_tank, 0.0);	//[m3] Available fluid volume in the tank based on density at average (w/r/t timestep) hot tank temperature
 					m_tank_disch_avail	= max(V_tank_hot_avail - V_tank_active*f_storage, 0.0)*rho_tank_hot_avg/step;	//[kg/s] Available discharge mass flow rate
 
 					// Cold tank
 					rho_tank_cold_avg	= store_htfProps.dens( T_tank_cold_avg_guess, 1.0 );		//[kg/m3] density at average (w/r/t timestep) cold tank temperature
 					V_tank_cold_avg		= m_tank_cold_prev/rho_tank_cold_avg;						//[m3] The total fluid volume in the tank based on density at average (w/r/t timestep) cold tank temperature
-					V_tank_cold_avail	= max(V_tank_cold_avg - vol_tank*h_tank_min/h_tank, 0.0);	//[m3] Available fluid volume in the tank based on density at average (w/r/t timestep) cold tank temperature
+					V_tank_cold_avail	= max(V_tank_cold_avg - 0.5*vol_tank*h_tank_min/h_tank, 0.0);	//[m3] Available fluid volume in the tank based on density at average (w/r/t timestep) cold tank temperature
 					m_tank_charge_avail = max(V_tank_cold_avail, 0.0)*rho_tank_cold_avg/step;		//[kg/s] Available charge mass flow rate
 				}
 				else if(tes_type==2)
