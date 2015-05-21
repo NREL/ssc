@@ -214,19 +214,60 @@ protected:
 		if (nc) *nc = v->data.matrix.ncols;
 		return v->data.matrix.values;
 	}
+#if defined(_MSC_VER)||defined(_WIN32)
+#define MyVsnprintf _vsnprintf
+#else
+#define MyVsnprintf vsnprintf
+#endif
 
 	void message( int msgtype, const char *fmt, ... )
 	{
-		char buf[512];
+		int len = 512;
+		char *buf = new char[len];
 		va_list ap;
 		va_start(ap, fmt);
-#if defined(_MSC_VER)||defined(_WIN32)
-		_vsnprintf(buf, 509, fmt, ap);
-#else
-		vsnprintf(buf, 509, fmt, ap);
+
+		while( 0!=buf )
+		{		
+			va_list argptr_copy;
+			va_copy( argptr_copy, ap );
+			int ret = MyVsnprintf(buf, len, fmt, argptr_copy);
+			va_end( argptr_copy );
+
+#ifndef _MSC_VER
+			// microsoft snprintf returns negative if buffer too small,
+			// and is not C'99 compliant:
+			// https://msdn.microsoft.com/en-us/library/1kt27hek.aspx
+			// http://bytes.com/topic/c/answers/590845-snprintf-return-value
+			// so we skip the check for encoding errors and let the buffer be increased
+			// anyways
+			if ( ret < 0 )
+			{
+				strcpy( buf, "tcs.message: format encoding error" );
+				break;
+			}
 #endif
+
+			if ( ret >= 0 && ret < len )
+				break; // success, all characters written
+
+			// increase buffer size
+			delete [] buf;
+			len *= 2;
+			buf = new char[len];
+		}
+
 		va_end(ap);
+		
+		if ( !buf )
+		{
+			buf = new char[32];
+			sprintf(buf, "tcs.message: out of memory allocating string buffer size %d\n", len );
+		}
+
 		m_context->message( m_context, msgtype, buf );
+
+		delete [] buf;
 	}
 
 	bool progress( float percent, const char *status )
