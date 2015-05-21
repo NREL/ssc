@@ -427,8 +427,6 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const
 	_Ylt = 0;
 	_Range = 0;
 	_average_range = 0;
-	_fortyPercent = 0;
-	_hundredPercent = 0;
 }
 
 lifetime_t::~lifetime_t(){}
@@ -504,7 +502,7 @@ int lifetime_t::rainflow_compareRanges()
 	if (!contained)
 	{
 		_Range = _Ylt;
-		_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);
+		_average_range = (_average_range*_nCycles + _Range) / (_nCycles + 1);		
 		_nCycles++;
 
 		// the capacity percent cannot increase
@@ -513,15 +511,9 @@ int lifetime_t::rainflow_compareRanges()
 
 		if (_Clt < 0)
 			_Clt = 0.;
-
-		// check DOD, increment counters
-		if (_Range > 40.)
-			_fortyPercent++;
-		if (_Range >= 99.5)
-			_hundredPercent++;
-
+		
 		// discard peak & valley of Y
-		double save = _Peaks[_jlt];
+		double save = _Peaks[_jlt]; 
 		_Peaks.pop_back(); 
 		_Peaks.pop_back();
 		_Peaks.pop_back();
@@ -542,8 +534,6 @@ bool lifetime_t::check_replaced()
 		_Clt = bilinear(0.,0);
 		_Dlt = 0.;
 		_nCycles = 0;
-		_fortyPercent = 0;
-		_hundredPercent = 0;
 		_jlt = 0;
 		_Xlt = 0;
 		_Ylt = 0;
@@ -559,8 +549,6 @@ void lifetime_t::force_replacement()
 	_Clt = bilinear(0., 0);
 	_Dlt = 0.;
 	_nCycles = 0;
-	_fortyPercent = 0;
-	_hundredPercent = 0;
 	_jlt = 0;
 	_Xlt = 0;
 	_Ylt = 0;
@@ -572,8 +560,6 @@ void lifetime_t::reset_replacements(){ _replacements = 0; }
 int lifetime_t::replacements(){ return _replacements; }
 int lifetime_t::cycles_elapsed(){return _nCycles;}
 double lifetime_t::capacity_percent(){ return _Clt; }
-int lifetime_t::forty_percent_cycles(){ return _fortyPercent; }
-int lifetime_t::hundred_percent_cycles(){ return _hundredPercent; }
 double lifetime_t::cycle_range(){ return _Range; }
 
 
