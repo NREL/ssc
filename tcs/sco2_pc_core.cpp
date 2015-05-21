@@ -2300,6 +2300,17 @@ void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_
 {
 	ms_auto_opt_des_par = auto_opt_des_par_in;
 
+	int auto_opt_des_error_code = 0;
+
+	auto_opt_design_core(auto_opt_des_error_code);
+
+	error_code = auto_opt_des_error_code;
+	
+	return;
+}
+
+void C_RecompCycle::auto_opt_design_core(int & error_code)
+{
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
 	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;
 	ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;
@@ -2372,7 +2383,7 @@ void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_
 	int optimal_design_error_code = 0;
 	design_core(optimal_design_error_code);
 
-	if(optimal_design_error_code != 0)
+	if( optimal_design_error_code != 0 )
 	{
 		error_code = optimal_design_error_code;
 		return;
@@ -2552,7 +2563,7 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 	ms_auto_opt_des_par.m_UA_rec_total = UA_recups_guess;
 
 	int auto_opt_error_code = 0;
-	auto_opt_design(ms_auto_opt_des_par, auto_opt_error_code);
+	auto_opt_design_core(auto_opt_error_code);
 	if(auto_opt_error_code != 0)
 	{
 		error_msg.append("Can't optimize sCO2 power cycle with current inputs");
@@ -2639,7 +2650,7 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 		// If still searching for target efficiency, solve auto optimized design point model with updated guessed recup UA
 		ms_auto_opt_des_par.m_UA_rec_total = UA_recups_guess;
 
-		auto_opt_design(ms_auto_opt_des_par, auto_opt_error_code);
+		auto_opt_design_core(auto_opt_error_code);
 		if( auto_opt_error_code != 0 )
 		{
 			error_msg.append("Can't optimize sCO2 power cycle with current inputs");

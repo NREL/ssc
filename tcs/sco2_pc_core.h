@@ -1256,6 +1256,8 @@ private:
 
 	void opt_design_core(int & error_code);
 
+	void auto_opt_design_core(int & error_code);
+
 	void finalize_design(int & error_code);	
 
 	void off_design_core(int & error_code);
