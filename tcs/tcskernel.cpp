@@ -453,19 +453,20 @@ double tcskernel::time_step()
 
 void tcskernel::message( int unit, int msgtype, const char *text )
 {
-	char tbuf[768];
+#define TBUFLEN 128
+	char tbuf[TBUFLEN];
 	if (unit >= 0 && unit < (int) m_units.size())
 	{
-		my_snprintf( tbuf, 766, "time %.2lf { %s %d }:\n\t%s", current_time(),
-			m_units[unit].name.c_str(), unit, text );
+		my_snprintf( tbuf, TBUFLEN, "time %.2lf { %s %d }:\n", current_time(),
+			m_units[unit].name.c_str(), unit );
 	}
 	else
 	{
-		my_snprintf( tbuf, 766, "time %.2lf { invalid unit %d }:\n\t%s", current_time(),
-			 unit, text );
+		my_snprintf( tbuf, TBUFLEN, "time %.2lf { invalid unit %d }:\n", current_time(),
+			 unit );
 	}
 
-	message( std::string( tbuf ), msgtype );
+	message( std::string(tbuf) + std::string( text ), msgtype );
 }
 
 void tcskernel::message( const std::string &text, int msgtype )

@@ -1397,24 +1397,34 @@ public:
 			v_cold = v_hot;
 
 			//Write the volume totals to the piping diameter file
-			summary.append(
-				"\n----------------------------------------------\n"
-				"Plant HTF volume information:\n"
-				"----------------------------------------------\n");
-			char tstr[500];
-			string fmt = "Cold header pipe volume:   %10.4e m3\n"
-				"Hot header pipe volume:    %10.4e m3\n"
-				"Volume per loop:           %10.4e m3\n"
-				"Total volume in all loops: %10.4e m3\n"
-				"Total solar field volume:  %10.4e m3\n"
-				"Pump / SGS system volume:  %10.4e m3\n"
+			summary.append(	"\n----------------------------------------------\n"
+							"Plant HTF volume information:\n"
+							"----------------------------------------------\n" );
+#ifdef _MSC_VER
+#define MySnprintf _snprintf
+#else
+#define MySnprintf snprintf
+#endif
+#define TSTRLEN 512
+
+			char tstr[TSTRLEN];
+			MySnprintf(tstr, TSTRLEN, 
+				"Cold header pipe volume:   %10.4le m3\n"
+				"Hot header pipe volume:    %10.4le m3\n"
+				"Volume per loop:           %10.4le m3\n"
+				"Total volume in all loops: %10.4le m3\n"
+				"Total solar field volume:  %10.4le m3\n"
+				"Pump / SGS system volume:  %10.4le m3\n"
 				"---------------------------\n"
-				"Total plant HTF volume:    %10.4e m3\n";
-			sprintf(tstr, fmt.c_str(), v_cold, v_hot, v_loop_tot / float(nLoops), v_loop_tot, (v_hot*2. + v_loop_tot), v_sgs, (v_hot*2. + v_loop_tot + v_sgs));
+				"Total plant HTF volume:    %10.4le m3\n",
+
+				v_cold, v_hot, v_loop_tot / double(nLoops), v_loop_tot, 
+				(v_hot*2. + v_loop_tot), v_sgs, (v_hot*2. + v_loop_tot + v_sgs));
+
 			summary.append(tstr);
 
 			// Can uncomment this when other code is updated to write/display more than ~700 characters
-			// message(TCS_NOTICE, summary.c_str());
+			message(TCS_NOTICE, summary.c_str());
 
 			//if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
 			//{
@@ -4543,25 +4553,26 @@ lab_keep_guess:
 		//Print the results to a string
 		if(summary != NULL){
 			summary->clear();
-			char tstr[200];
+			char tstr[TSTRLEN];
 			//Write runner diam
-			sprintf(tstr, "Piping geometry file\n\nMaximum fluid velocity: %.2f\nMinimum fluid velocity: %.2f\n\n", V_max, V_min);
+			MySnprintf(tstr, TSTRLEN, 
+				"Piping geometry file\n\nMaximum fluid velocity: %.2lf\nMinimum fluid velocity: %.2lf\n\n", 
+				V_max, V_min );
 			summary->append(tstr);
 
 			for(int i=0; i<nrunsec; i++){
-				sprintf(tstr, "To section %d header pipe diameter: %.4f m (%.2f in)\n",i+1, D_runner[i], D_runner[i]*mtoinch);
+				MySnprintf(tstr, TSTRLEN, "To section %d header pipe diameter: %.4lf m (%.2lf in)\n",i+1, D_runner[i], D_runner[i]*mtoinch);
 				summary->append(tstr);
 			}
 			//Write header diams
-			sprintf(tstr, "Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n");
-			summary->append(tstr);
+			summary->append( "Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n" );
 
 			nd=1;
 			for(int i=0; i<nhsec; i++){
 				if(i>1) {
 					if(D_hdr[i] != D_hdr.at(i-1)) nd=nd+1;
 				}
-				sprintf(tstr, "  %4d   |    %6.4f    |    %6.4f     | %3d\n", i+1, D_hdr[i], D_hdr[i]*mtoinch, nd);
+				MySnprintf(tstr, TSTRLEN, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i+1, D_hdr[i], D_hdr[i]*mtoinch, nd);
 				summary->append(tstr);
 			}
 			//110 format(2X,I4,3X,"|",4X,F6.4,4X,"|",4X,F6.3,5X,"|",1X,I3)
