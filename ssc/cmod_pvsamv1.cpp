@@ -392,7 +392,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	//SEV: Snow loss and coverage % time series arrays for SA1
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",					 "Subarray 1 Energy Loss Due to Snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",				 "Subarray 1 Snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 1)",       "*",                    "",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_aoi",                        "Subarray 2 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -415,7 +415,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	//SEV: Snow loss and coverage % time series arrays for SA2
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Energy Loss Due to Snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                   "Subarray 2 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 2)",       "",                    "",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                   "Subarray 2 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_aoi",                        "Subarray 3 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -438,7 +438,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	//SEV: Snow loss and coverage % time series arrays for SA3
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Energy Loss Due to Snow (DC)",							  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                   "Subarray 3 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 3)",       "",                    "",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                   "Subarray 3 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_aoi",                        "Subarray 4 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -461,7 +461,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	//SEV: Snow loss and coverage % time series arrays for SA3
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Energy Loss Due to Snow (DC)",						      "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                   "Subarray 4 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 4)",       "",                    "",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                   "Subarray 4 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 
 
@@ -472,11 +472,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inverter_dc_voltage",                  "Inverter dc input voltage",                             "V",     "",                       "Time Series",       "*",                    "",                              "" },
 	//SEV: total dc snow loss time series (not a required output) 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Energy Loss Due to Snow (DC)",						  "kW",    "",                       "Time Series",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_gross",                             "Gross dc array power",                                  "kW",    "",                       "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Net dc array power",                                    "kW",    "",                       "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Gross PV ac power",                                     "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_gross",                             "Gross dc array power",                                  "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array power (DC)",                                    "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Gross PV ac power",                                     "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "gen",                                  "Net PV ac power",                                       "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "gen",                                  "//Power generated by system",                                       "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 /*
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid",                                 "Net grid power",                                        "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 	
@@ -520,7 +520,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA total radiation after shading and soiling",  "kWh/m2", "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff_beam",                        "POA beam radiation after shading and soiling",   "kWh/m2", "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                              "Net dc energy",                                          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                              "Array power (DC)",                                          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "Monthly energy",                                         "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Global horizontal irradiance",                           "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
