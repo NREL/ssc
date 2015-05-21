@@ -3,6 +3,9 @@
 #include "sco2_pc_core.h"
 #include <vector>
 
+// This compute module finds the optimal cycle efficiency given design point conditions
+//    the user must provide the recuperator UA
+
 static var_info _cm_vtab_sco2_design_cycle[] = {
 /*  VARTYPE   DATATYPE         NAME                  LABEL                                                UNITS     META        GROUP                      REQUIRED_IF          CONSTRAINTS   UI_HINTS*/
 { SSC_INPUT,  SSC_NUMBER,     "I_W_dot_net_des",     "Design cycle power output",                         "MW",     "",         "sCO2 power cycle",         "*",                "",           "" },		
