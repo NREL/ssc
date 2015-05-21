@@ -934,6 +934,42 @@ public:
 		}
 	};
 
+	struct S_auto_opt_design_hit_eta_parameters
+	{
+		double m_W_dot_net;					//[kW] Target net cycle power
+		double m_eta_thermal;				//[-] Cycle thermal efficiency
+		double m_T_mc_in;					//[K] Compressor inlet temperature
+		double m_T_t_in;					//[K] Turbine inlet temperature
+		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
+		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
+		double m_tol;						//[-] Convergence tolerance
+		double m_opt_tol;					//[-] Optimization tolerance
+		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+	
+		S_auto_opt_design_hit_eta_parameters()
+		{
+			m_W_dot_net = m_T_mc_in = m_T_t_in = m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_opt_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
+
+			m_N_sub_hxrs = -1;
+
+			m_DP_LT.resize(2);
+			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_HT.resize(2);
+			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC.resize(2);
+			std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PHX.resize(2);
+			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
+		}
+	};
+	
 	struct S_auto_opt_design_parameters
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
@@ -1271,6 +1307,8 @@ public:
 	void opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code);
 
 	void auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code);
+
+	void auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, int & error_code, string & error_msg);
 
 	void off_design(S_od_parameters & od_par_in, int & error_code);
 
