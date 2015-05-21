@@ -229,8 +229,6 @@ protected:
 	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
 	double _Xlt;
 	double _Ylt;
-	int _fortyPercent;
-	int _hundredPercent;
 	std::vector<double> _Peaks;
 	double _Range;
 	double _average_range;
