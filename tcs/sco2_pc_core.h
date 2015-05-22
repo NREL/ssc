@@ -1009,8 +1009,8 @@ public:
 	struct S_design_solved
 	{
 		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-		double m_eta_thermal;
-		double m_W_dot_net;
+		double m_eta_thermal;	//[-]
+		double m_W_dot_net;		//[kW]
 		double m_m_dot_mc;
 		double m_m_dot_rc;
 		double m_m_dot_t;
