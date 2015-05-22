@@ -3966,19 +3966,23 @@ void C_RecompCycle::optimal_target_off_design(S_opt_target_od_parameters & opt_t
 {
 	int error_code_local = 0;
 
-	get_max_output_od(opt_tar_od_par_in, error_code_local);
-
-	if(error_code_local != 0)
+	if( !opt_tar_od_par_in.m_is_target_Q )		// If W_dot_net is target, can check max value. This exercise isn't useful for q_dot_in target
 	{
-		error_code = error_code_local;
-		return;
-	}
 
-	// If the target is not possible, return the cycle with the largest (based on power output)
-	if( m_biggest_target < ms_opt_tar_od_par.m_target )
-	{
-		error_code = 123;
-		return;
+		get_max_output_od(opt_tar_od_par_in, error_code_local);
+
+		if( error_code_local != 0 )
+		{
+			error_code = error_code_local;
+			return;
+		}
+
+		// If the target is not possible, return the cycle with the largest (based on power output)
+		if( m_biggest_target < ms_opt_tar_od_par.m_target )
+		{
+			error_code = 123;
+			return;
+		}
 	}
 
 	optimal_target_off_design_no_check(opt_tar_od_par_in, error_code_local);
