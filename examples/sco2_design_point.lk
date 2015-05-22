@@ -1,0 +1,46 @@
+var('W_dot_net_des',10);
+var('eta_c', 0.89);
+var('eta_t', 0.93);
+var('P_high_limit',25);
+var('deltaT_PHX',10);
+
+var('deltaT_ACC',15);
+var('T_amb_des',30);
+
+var('T_htf_hot_des',560);
+var('eta_des',0.41);
+
+var('run_off_des_study',1);
+
+var('part_load_fracs',[1,0.9,0.8]);
+var('T_amb_array',[30,35,40]);
+
+run('sco2_design_point');
+
+
+
+
+
+
+
+/*
+var('ngcc_model',1);
+var('q_pb_design',150);
+var('pinch_point_cold',10);
+var('pinch_point_hot',30);
+var('elev',588);
+var('HTF_code',17);
+var('field_fl_props',[[0]]);
+
+run('iscc_design_point');
+
+W_dot_fossil = var('W_dot_fossil');
+T_st_inject = var('T_st_inject');
+q_solar_max = var('q_solar_max');
+T_st_extract = var('T_st_extract');
+
+outln("W_dot_fossil = ",W_dot_fossil);
+outln("T_st_inject = ",T_st_inject);
+outln("q_solar_max = ",q_solar_max);
+outln("T_st_extract = ",T_st_extract);
+*/
