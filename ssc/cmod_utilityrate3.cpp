@@ -1323,8 +1323,8 @@ public:
 		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
 
 		
-		if (sell_eq_buy)
-		{
+//		if (sell_eq_buy)
+//		{
 
 			// calculate the monthly net energy and monthly hours
 			int m,d,h;
@@ -1372,13 +1372,23 @@ public:
 					{
 						if (d==util::nday[m]-1 && h==23)
 						{
-						// monthly rollover with year end sell at reduced rate
-							if ( cumulative_excess_energy[m] == 0 ) // buy from grid
+							if (sell_eq_buy)
 							{
-								if ( m > 0 )
-									payment[c] += -(energy_use[m]+cumulative_excess_energy[m-1]) * buy;
-								else
+								// monthly rollover with year end sell at reduced rate
+								if (cumulative_excess_energy[m] == 0) // buy from grid
+								{
+									if (m > 0)
+										payment[c] += -(energy_use[m] + cumulative_excess_energy[m - 1]) * buy;
+									else
+										payment[c] += -energy_use[m] * buy;
+								}
+							}
+							else // no net metering - so no rollover.
+							{
+								if (energy_use[m] < 0) // must buy from grid
 									payment[c] += -energy_use[m] * buy;
+								else
+									income[c] += energy_use[m] * sell;
 							}
 						}
 						c++;
@@ -1386,11 +1396,13 @@ public:
 				}
 			}
 
-		// monthly rollover with year end sell at reduced rate
-			if ( cumulative_excess_energy[11] > 0 )
-				income[8759] += cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
-
-
+			if (sell_eq_buy)
+			{
+				// monthly rollover with year end sell at reduced rate
+				if (cumulative_excess_energy[11] > 0)
+					income[8759] += cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
+			}
+			/*
 		}
 		else // no net metering 
 		{
@@ -1402,7 +1414,7 @@ public:
 					income[i] += e[i]*sell;
 			}
 		}
-
+		*/
 
 		// calculate hourly energy charge regardless of scenario - email from Paul 7/29/13
 		for (int i=0;i<8760;i++)
