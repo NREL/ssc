@@ -1706,7 +1706,6 @@ public:
 
 
 
-		if (sell_eq_buy)
 		{ // net metering reconciliation with excess rollover
 			/* update 9/1/14 based on feedback from Peter Jeavons 8/28/14
 			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
@@ -1730,13 +1729,23 @@ public:
 						if (d==util::nday[m]-1 && h==23)
 						{
 						// monthly rollover with year end sell at reduced rate
-							if ( cumulative_excess_energy[m] == 0 ) // buy from grid
+							if (sell_eq_buy)
 							{
-								payment[c] += ec_charge[m];
-							//	if ( m > 0 )
-							//		payment[c] += (energy_use[m] - cumulative_excess_energy[m - 1]) * ec_rate[m];
-							//	else
-							//		payment[c] += energy_use[m] * ec_rate[m];
+								if (cumulative_excess_energy[m] == 0) // buy from grid
+								{
+									payment[c] += ec_charge[m];
+									//	if ( m > 0 )
+									//		payment[c] += (energy_use[m] - cumulative_excess_energy[m - 1]) * ec_rate[m];
+									//	else
+									//		payment[c] += energy_use[m] * ec_rate[m];
+								}
+							}
+							else // non-net metering - no rollover 
+							{
+								if (energy_use[m] < 0) // must buy from grid
+									payment[c] += ec_charge[m];
+								else // surplus - sell to grid
+									income[c] -= ec_charge[m]; // charge is negative for income!
 							}
 						}
 						c++;
@@ -1745,35 +1754,12 @@ public:
 			}
 		}
 
+		/*
 		else
 
 		{
 			// non-net metering without monthly reconciliation
 			c=0;
-			/* remove monthly charges per emails from Paul and Eric Wilson 1/23/15 
-			for (m=0;m<12;m++)
-			{
-				if (hours_per_month[m] <= 0) continue;
-				ssc_number_t credit_amt = -ec_charge[m] / (ssc_number_t)hours_per_month[m];
-				ssc_number_t charge_amt = ec_charge[m] / (ssc_number_t)hours_per_month[m];
-//				throw exec_error("cmod_utilityrate3", util::format("m=%d,ec_charge[m]=%lg,hours_per_month[m]=%d,credit=%lg,charge=%lg", m, ec_charge[m], hours_per_month[m], credit_amt, charge_amt));
-				for (d=0;d<util::nday[m];d++)
-				{
-					for(h=0;h<24;h++)
-					{
-						if (ec_charge[m] < 0.0)
-						{ // calculate income or credit
-							income[c] += credit_amt;
-						}
-						else
-						{// calculate payment or charge
-							payment[c] += charge_amt;
-						}
-						c++;
-					}
-				}
-			}
-			*/
 			for (int i = 0; i<8760; i++)
 			{
 				int period = tod[i] - 1;
@@ -1825,7 +1811,7 @@ public:
 			}
 
 		}
-
+		*/
 		// calculate energy charge for both scenarios hour by hour basis
 		for (int i=0;i<8760;i++)
 		{
