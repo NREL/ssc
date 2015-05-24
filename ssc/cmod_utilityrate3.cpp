@@ -1323,98 +1323,83 @@ public:
 		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
 
 		
-//		if (sell_eq_buy)
-//		{
 
-			// calculate the monthly net energy and monthly hours
-			int m,d,h;
-			ssc_number_t energy_use[12]; // 12 months
-			ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
-			int hours[12];
-			int c=0;
-			for (m=0;m<12;m++)
+		// calculate the monthly net energy and monthly hours
+		int m,d,h;
+		ssc_number_t energy_use[12]; // 12 months
+		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
+		int hours[12];
+		int c=0;
+		for (m=0;m<12;m++)
+		{
+			energy_use[m] = 0;
+			cumulative_excess_energy[m] = 0;
+			hours[m] = 0;
+			for (d=0;d<util::nday[m];d++)
 			{
-				energy_use[m] = 0;
-				cumulative_excess_energy[m] = 0;
-				hours[m] = 0;
-				for (d=0;d<util::nday[m];d++)
+				for(h=0;h<24;h++)
 				{
-					for(h=0;h<24;h++)
-					{
-						// net energy use per month
-						energy_use[m] += e[c];
-						// hours per period per month
-						hours[m]++;
-						c++;
-					}
+					// net energy use per month
+					energy_use[m] += e[c];
+					// hours per period per month
+					hours[m]++;
+					c++;
 				}
 			}
+		}
 
 
-			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
-			ssc_number_t prev_value = 0;
-			for (m=0;m<12;m++)
+		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
+		ssc_number_t prev_value = 0;
+		for (m=0;m<12;m++)
+		{
+			prev_value = ( m > 0 ) ? cumulative_excess_energy[m-1] : 0;
+			cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
+		}
+
+
+		// back out hourly values based on monthly reconciliation
+		c=0;
+		for (m=0;m<12;m++)
+		{
+			if (hours[m] <= 0) break;
+
+			for (d=0;d<util::nday[m];d++)
 			{
-				prev_value = ( m > 0 ) ? cumulative_excess_energy[m-1] : 0;
-				cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
-			}
-
-
-			// back out hourly values based on monthly reconciliation
-			c=0;
-			for (m=0;m<12;m++)
-			{
-				if (hours[m] <= 0) break;
-
-				for (d=0;d<util::nday[m];d++)
+				for(h=0;h<24;h++)
 				{
-					for(h=0;h<24;h++)
+					if (d==util::nday[m]-1 && h==23)
 					{
-						if (d==util::nday[m]-1 && h==23)
+						if (sell_eq_buy)
 						{
-							if (sell_eq_buy)
+							// monthly rollover with year end sell at reduced rate
+							if (cumulative_excess_energy[m] == 0) // buy from grid
 							{
-								// monthly rollover with year end sell at reduced rate
-								if (cumulative_excess_energy[m] == 0) // buy from grid
-								{
-									if (m > 0)
-										payment[c] += -(energy_use[m] + cumulative_excess_energy[m - 1]) * buy;
-									else
-										payment[c] += -energy_use[m] * buy;
-								}
-							}
-							else // no net metering - so no rollover.
-							{
-								if (energy_use[m] < 0) // must buy from grid
-									payment[c] += -energy_use[m] * buy;
+								if (m > 0)
+									payment[c] += -(energy_use[m] + cumulative_excess_energy[m - 1]) * buy;
 								else
-									income[c] += energy_use[m] * sell;
+									payment[c] += -energy_use[m] * buy;
 							}
 						}
-						c++;
+						else // no net metering - so no rollover.
+						{
+							if (energy_use[m] < 0) // must buy from grid
+								payment[c] += -energy_use[m] * buy;
+							else
+								income[c] += energy_use[m] * sell;
+						}
 					}
+					c++;
 				}
 			}
+		}
 
-			if (sell_eq_buy)
-			{
-				// monthly rollover with year end sell at reduced rate
-				if (cumulative_excess_energy[11] > 0)
-					income[8759] += cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
-			}
-			/*
-		}
-		else // no net metering 
+		if (sell_eq_buy)
 		{
-			for (int i=0;i<8760;i++)
-			{
-				if (e[i] < 0) // must buy from grid
-					payment[i] += -1.0f*e[i]*buy;
-				else
-					income[i] += e[i]*sell;
-			}
+			// monthly rollover with year end sell at reduced rate
+			if (cumulative_excess_energy[11] > 0)
+				income[8759] += cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
 		}
-		*/
 
 		// calculate hourly energy charge regardless of scenario - email from Paul 7/29/13
 		for (int i=0;i<8760;i++)
@@ -1531,8 +1516,6 @@ public:
 		ssc_number_t energy_ub[12][6];
 
 
-//		const char *schedwkday = as_string("ur_ec_sched_weekday");
-//		const char *schedwkend = as_string("ur_ec_sched_weekend");
 
 		size_t nrows, ncols;
 		ssc_number_t *dc_weekday = as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
@@ -1561,7 +1544,6 @@ public:
 
 		for (int i=0;i<8760; i++) ec_tou_sched[i] = (ssc_number_t)(tod[i]);
 
-		//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
 
 
@@ -1706,112 +1688,40 @@ public:
 
 
 
-		{ // net metering reconciliation with excess rollover
-			/* update 9/1/14 based on feedback from Peter Jeavons 8/28/14
-			// monthly cumulative excess energy (positive = excess energy, negative = excess load)
-			ssc_number_t prev_value = 0;
-			cumulative_excess_energy[0] = 0.0;
-			for (m=1;m<12;m++)
+		c=0;
+		for (m=0;m<12;m++)
+		{
+			for (d=0;d<util::nday[m];d++)
 			{
-				prev_value = cumulative_excess_energy[m-1];
-				cumulative_excess_energy[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
-			}
-
-			*/
-			// back out hourly values based on monthly reconciliation
-			c=0;
-			for (m=0;m<12;m++)
-			{
-				for (d=0;d<util::nday[m];d++)
+				for(h=0;h<24;h++)
 				{
-					for(h=0;h<24;h++)
+					if (d==util::nday[m]-1 && h==23)
 					{
-						if (d==util::nday[m]-1 && h==23)
+					// monthly rollover with year end sell at reduced rate
+						if (sell_eq_buy)
 						{
-						// monthly rollover with year end sell at reduced rate
-							if (sell_eq_buy)
+							if (cumulative_excess_energy[m] == 0) // buy from grid
 							{
-								if (cumulative_excess_energy[m] == 0) // buy from grid
-								{
-									payment[c] += ec_charge[m];
-									//	if ( m > 0 )
-									//		payment[c] += (energy_use[m] - cumulative_excess_energy[m - 1]) * ec_rate[m];
-									//	else
-									//		payment[c] += energy_use[m] * ec_rate[m];
-								}
-							}
-							else // non-net metering - no rollover 
-							{
-								if (energy_use[m] < 0) // must buy from grid
-									payment[c] += ec_charge[m];
-								else // surplus - sell to grid
-									income[c] -= ec_charge[m]; // charge is negative for income!
+								payment[c] += ec_charge[m];
+								//	if ( m > 0 )
+								//		payment[c] += (energy_use[m] - cumulative_excess_energy[m - 1]) * ec_rate[m];
+								//	else
+								//		payment[c] += energy_use[m] * ec_rate[m];
 							}
 						}
-						c++;
+						else // non-net metering - no rollover 
+						{
+							if (energy_use[m] < 0) // must buy from grid
+								payment[c] += ec_charge[m];
+							else // surplus - sell to grid
+								income[c] -= ec_charge[m]; // charge is negative for income!
+						}
 					}
+					c++;
 				}
 			}
 		}
 
-		/*
-		else
-
-		{
-			// non-net metering without monthly reconciliation
-			c=0;
-			for (int i = 0; i<8760; i++)
-			{
-				int period = tod[i] - 1;
-				if (e[i] >= 0.0)
-				{ // calculate income or credit
-					ssc_number_t credit_amt = 0;
-					ssc_number_t energy_surplus = e[i];
-					tier = 0;
-					while (tier<6)
-					{
-						// add up the charge amount for this block
-						ssc_number_t e_upper = energy_ub[period][tier];
-						ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier - 1] : (ssc_number_t)0.0;
-
-						if (energy_surplus > e_upper)
-							credit_amt += (e_upper - e_lower)*rates[period][tier][1];
-						else
-							credit_amt += (energy_surplus - e_lower)*rates[period][tier][1];
-
-						if (energy_surplus < e_upper)
-							break;
-						tier++;
-					}
-					income[i] += credit_amt;
-				}
-				else
-				{ // calculate payment or charge
-					ssc_number_t charge_amt = 0;
-					ssc_number_t energy_deficit = -e[i];
-					tier = 0;
-					while (tier<6)
-					{
-						// add up the charge amount for this block
-						ssc_number_t e_upper = energy_ub[period][tier];
-						ssc_number_t e_lower = tier > 0 ? energy_ub[period][tier - 1] : (ssc_number_t)0.0;
-
-						if (energy_deficit > e_upper)
-							charge_amt += (e_upper - e_lower)*rates[period][tier][0];
-						else
-							charge_amt += (energy_deficit - e_lower)*rates[period][tier][0];
-
-						if (energy_deficit < e_upper)
-							break;
-						tier++;
-					}
-					payment[i] += charge_amt;
-				}
-
-			}
-
-		}
-		*/
 		// calculate energy charge for both scenarios hour by hour basis
 		for (int i=0;i<8760;i++)
 		{
