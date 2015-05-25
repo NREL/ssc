@@ -1715,7 +1715,7 @@ public:
 			{
 				if (i == 1)
 				{
-					cf.at(CF_debt_balance, i) = -loan_amount;
+					cf.at(CF_debt_balance, i - 1) = loan_amount;
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
 					cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
 						i,           // Period
@@ -1723,13 +1723,13 @@ public:
 						loan_amount, // Present Value
 						0,           // future Value
 						0);         // cash flow at end of period
+					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 				}
 				else
 				{
 					if (i <= term_tenor)
 					{
-						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) + cf.at(CF_debt_payment_principal, i - 1);
-						cf.at(CF_debt_payment_interest, i) = -term_int_rate * cf.at(CF_debt_balance, i);
+						cf.at(CF_debt_payment_interest, i) = term_int_rate * cf.at(CF_debt_balance, i - 1);
 
 						if (term_int_rate != 0.0)
 						{
@@ -1740,6 +1740,7 @@ public:
 						{
 							cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
 						}
+						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 					}
 				}
 
