@@ -741,7 +741,6 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 
-//	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Installed costs less incentives", "$", "", "System Costs", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Initial cost less cash incentives", "$", "", "", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
@@ -1695,7 +1694,14 @@ public:
 		if (!constant_dscr_mode)
 		{
 			double debt_frac = as_double("debt_percent")*0.01;
-			double adjusted_installed_cost = cost_prefinancing + constr_total_financing
+
+			cost_installed = 
+				cost_prefinancing 
+				+ constr_total_financing
+				+ cost_debt_closing 
+				+ cost_other_financing
+				+ cf.at(CF_reserve_debtservice, 0)
+				+ cf.at(CF_reserve_om, 0)
 				- ibi_fed_amount 
 				- ibi_sta_amount
 				- ibi_uti_amount
@@ -1708,7 +1714,8 @@ public:
 				- cbi_sta_amount
 				- cbi_uti_amount
 				- cbi_oth_amount;
-			double loan_amount = debt_frac * adjusted_installed_cost;
+			cost_installed += cost_installed*cost_debt_fee_frac;
+			double loan_amount = debt_frac * cost_installed;
 			if (term_tenor == 0) loan_amount = 0;
 //			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
 			for (int i = 1; i <= nyears; i++)
@@ -1855,18 +1862,20 @@ public:
 		for (i=1; i<=nyears; i++)
 			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
-		cost_financing = 
-			cost_debt_closing + 
-			cost_debt_fee_frac * size_of_debt +
-			cost_other_financing +
-			cf.at(CF_reserve_debtservice,0) +
-			constr_total_financing +
-			cf.at(CF_reserve_om,0);
+		if (constant_dscr_mode)
+		{
+			cost_financing =
+				cost_debt_closing +
+				cost_debt_fee_frac * size_of_debt +
+				cost_other_financing +
+				cf.at(CF_reserve_debtservice, 0) +
+				constr_total_financing +
+				cf.at(CF_reserve_om, 0);
 
 
-		cost_debt_closing_total = cost_debt_closing + cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
-		cost_installed = cost_prefinancing + cost_financing;
-
+			cost_debt_closing_total = cost_debt_closing + cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
+			cost_installed = cost_prefinancing + cost_financing;
+		}
 		depr_alloc_total = depr_alloc_total_frac * cost_installed;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
