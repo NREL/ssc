@@ -847,6 +847,20 @@ public:
 class C_RecompCycle
 {
 public:
+	
+	struct S_design_limits
+	{
+		double m_UA_net_power_ratio_max;		//[-/K]
+		double m_UA_net_power_ratio_min;		//[-/K]
+
+		double m_T_mc_in_min;					//[K]
+
+		S_design_limits()
+		{
+			m_UA_net_power_ratio_max = m_UA_net_power_ratio_min = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_design_parameters
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
@@ -1200,6 +1214,7 @@ private:
 	C_HeatExchanger m_LT, m_HT, m_PHX, m_PC;
 
 		// Input/Ouput structures for class methods
+	S_design_limits ms_des_limits;
 	S_design_parameters ms_des_par;
 	S_opt_design_parameters ms_opt_des_par;
 	S_auto_opt_design_parameters ms_auto_opt_des_par;
@@ -1300,6 +1315,11 @@ public:
 		m_found_opt = false;
 
 		m_eta_phx_max = m_over_deltaP_eta_max = m_UA_diff_eta_max = std::numeric_limits<double>::quiet_NaN();
+
+		// Set design limits!!!!
+		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
+		ms_des_limits.m_UA_net_power_ratio_min = 1.E-5;		//[-/K]
+		ms_des_limits.m_T_mc_in_min = ceil(N_co2_props::T_crit);	//[K]
 	}
 
 	~C_RecompCycle(){}
@@ -1339,6 +1359,11 @@ public:
 	double get_max_target()
 	{
 		return m_biggest_target;
+	}
+
+	const S_design_limits & get_design_limits()
+	{
+		return ms_des_limits;
 	}
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
