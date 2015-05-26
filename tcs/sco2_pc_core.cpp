@@ -2555,8 +2555,10 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 
 
 	// Initialize parameters used to find UA_recup that results in target cycle thermal efficiency
-	double UA_net_power_ratio_max = 2.0;			//[-]
-	double UA_net_power_ratio_min = 1.E-5;			//[-]
+	//double UA_net_power_ratio_max = 2.0;			//[-]
+	//double UA_net_power_ratio_min = 1.E-5;			//[-]
+	double UA_net_power_ratio_max = ms_des_limits.m_UA_net_power_ratio_max;
+	double UA_net_power_ratio_min = ms_des_limits.m_UA_net_power_ratio_min;
 	double UA_recups_guess = 0.1*ms_auto_opt_des_par.m_W_dot_net;
 
 	// Solve the auto-optimized design point model with the guessed recuperator UA
