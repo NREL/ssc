@@ -607,19 +607,19 @@ static var_info vtab_utility_rate3[] = {
 
 	
 	// outputs
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Energy value in each year",     "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Energy value in each year",     "$",    "",                      "Annual",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_electric_load",            "Total electric load in each year",  "kWh",    "",                      "Annual",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Energy value in each year",     "$",    "",                      "",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Energy value in each year",     "$",    "",                      "Annual",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_electric_load",            "Total electric load in each year",  "kWh",    "",                      "Annual",             "*",                         "",   "" },
 
 	// use output from annualoutput not scaled output from here
-	//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Energy in each year",           "kW",   "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Energy in each year",           "kW",   "",                      "",             "*",                         "",   "" },
 
 
 		// outputs from Paul, Nate and Sean 9/9/13
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_with_system",    "Electricity cost with system",    "$/yr", "", "Annual", "*", "LENGTH_EQUAL=analysis_period", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_without_system", "Electricity cost without system", "$/yr", "", "Annual", "*", "LENGTH_EQUAL=analysis_period", "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "",   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_with_system",    "Electricity cost with system",    "$/yr", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_without_system", "Electricity cost without system", "$/yr", "", "Annual", "*", "", "" },
 
 	// year 1 values for metrics
 	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity cost with system",    "$/yr", "",    "Financial Metrics", "*", "", "" },
@@ -636,7 +636,10 @@ static var_info vtab_utility_rate3[] = {
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_load",    "Electricity load",     "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_load", "Electricity load (first year)", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
+
+// lifetime load (optional for lifetime analysis)
+	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Electricity load", "kW", "", "Time Series", "system_use_lifetime_output=1", "", "" },
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Electricity to/from grid peak", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
@@ -688,45 +691,45 @@ static var_info vtab_utility_rate3[] = {
 
 
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jan",      "Demand charge (fixed) in Jan",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_feb",      "Demand charge (fixed) in Feb",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_mar",      "Demand charge (fixed) in Mar",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_apr",      "Demand charge (fixed) in Apr",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_may",      "Demand charge (fixed) in May",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jun",      "Demand charge (fixed) in Jun",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jul",      "Demand charge (fixed) in Jul",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_aug",      "Demand charge (fixed) in Aug",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_sep",      "Demand charge (fixed) in Sep",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_oct",      "Demand charge (fixed) in Oct",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_nov",      "Demand charge (fixed) in Nov",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_dec",      "Demand charge (fixed) in Dec",    "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jan",      "Demand charge (fixed) in Jan",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_feb",      "Demand charge (fixed) in Feb",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_mar",      "Demand charge (fixed) in Mar",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_apr",      "Demand charge (fixed) in Apr",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_may",      "Demand charge (fixed) in May",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jun",      "Demand charge (fixed) in Jun",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_jul",      "Demand charge (fixed) in Jul",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_aug",      "Demand charge (fixed) in Aug",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_sep",      "Demand charge (fixed) in Sep",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_oct",      "Demand charge (fixed) in Oct",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_nov",      "Demand charge (fixed) in Nov",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_fixed_dec",      "Demand charge (fixed) in Dec",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 
 		
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jan",        "Demand charge (TOU) in Jan",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_feb",        "Demand charge (TOU) in Feb",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_mar",        "Demand charge (TOU) in Mar",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_apr",        "Demand charge (TOU) in Apr",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_may",        "Demand charge (TOU) in May",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jun",        "Demand charge (TOU) in Jun",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jul",        "Demand charge (TOU) in Jul",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_aug",        "Demand charge (TOU) in Aug",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_sep",        "Demand charge (TOU) in Sep",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_oct",        "Demand charge (TOU) in Oct",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_nov",        "Demand charge (TOU) in Nov",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_dec",        "Demand charge (TOU) in Dec",      "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jan",        "Demand charge (TOU) in Jan",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_feb",        "Demand charge (TOU) in Feb",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_mar",        "Demand charge (TOU) in Mar",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_apr",        "Demand charge (TOU) in Apr",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_may",        "Demand charge (TOU) in May",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jun",        "Demand charge (TOU) in Jun",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_jul",        "Demand charge (TOU) in Jul",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_aug",        "Demand charge (TOU) in Aug",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_sep",        "Demand charge (TOU) in Sep",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_oct",        "Demand charge (TOU) in Oct",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_nov",        "Demand charge (TOU) in Nov",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_dc_tou_dec",        "Demand charge (TOU) in Dec",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jan",            "Energy charge in Jan",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_feb",            "Energy charge in Feb",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_mar",            "Energy charge in Mar",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_apr",            "Energy charge in Apr",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_may",            "Energy charge in May",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jun",            "Energy charge in Jun",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jul",            "Energy charge in Jul",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_aug",            "Energy charge in Aug",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_sep",            "Energy charge in Sep",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_oct",            "Energy charge in Oct",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_nov",            "Energy charge in Nov",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_dec",            "Energy charge in Dec",       "$",      "",                      "Charges by Month",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jan",            "Energy charge in Jan",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_feb",            "Energy charge in Feb",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_mar",            "Energy charge in Mar",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_apr",            "Energy charge in Apr",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_may",            "Energy charge in May",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jun",            "Energy charge in Jun",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_jul",            "Energy charge in Jul",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_aug",            "Energy charge in Aug",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_sep",            "Energy charge in Sep",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_oct",            "Energy charge in Oct",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_nov",            "Energy charge in Nov",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_ec_dec",            "Energy charge in Dec",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 	
 var_info_invalid };
 
@@ -840,7 +843,7 @@ public:
 
 
 		if (is_assigned("load"))
-		{
+		{ // hourly or sub hourly loads for single yer
 			bload = true;
 			pload = as_array("load", &nrec_load);
 			step_per_hour_load = nrec_load / 8760;
@@ -943,75 +946,98 @@ public:
 			monthly_elec_needed_from_grid(12), monthly_cumulative_excess(12);
 
 		/* allocate outputs */		
-		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears);
-		ssc_number_t *annual_electric_load = allocate("annual_electric_load", nyears);
-		ssc_number_t *energy_net = allocate("scaled_annual_energy", nyears);
-		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears);
-		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears);
-		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears);
-		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears);
+		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears+1);
+		ssc_number_t *annual_electric_load = allocate("annual_electric_load", nyears+1);
+		ssc_number_t *energy_net = allocate("scaled_annual_energy", nyears+1);
+		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears+1);
+		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears+1);
+		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears+1);
+		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears+1);
 
-		ssc_number_t *ch_dc_fixed_jan = allocate("charge_dc_fixed_jan", nyears );
-		ssc_number_t *ch_dc_fixed_feb = allocate("charge_dc_fixed_feb", nyears );
-		ssc_number_t *ch_dc_fixed_mar = allocate("charge_dc_fixed_mar", nyears );
-		ssc_number_t *ch_dc_fixed_apr = allocate("charge_dc_fixed_apr", nyears );
-		ssc_number_t *ch_dc_fixed_may = allocate("charge_dc_fixed_may", nyears );
-		ssc_number_t *ch_dc_fixed_jun = allocate("charge_dc_fixed_jun", nyears );
-		ssc_number_t *ch_dc_fixed_jul = allocate("charge_dc_fixed_jul", nyears );
-		ssc_number_t *ch_dc_fixed_aug = allocate("charge_dc_fixed_aug", nyears );
-		ssc_number_t *ch_dc_fixed_sep = allocate("charge_dc_fixed_sep", nyears );
-		ssc_number_t *ch_dc_fixed_oct = allocate("charge_dc_fixed_oct", nyears );
-		ssc_number_t *ch_dc_fixed_nov = allocate("charge_dc_fixed_nov", nyears );
-		ssc_number_t *ch_dc_fixed_dec = allocate("charge_dc_fixed_dec", nyears );
+		ssc_number_t *ch_dc_fixed_jan = allocate("charge_dc_fixed_jan", nyears+1 );
+		ssc_number_t *ch_dc_fixed_feb = allocate("charge_dc_fixed_feb", nyears+1 );
+		ssc_number_t *ch_dc_fixed_mar = allocate("charge_dc_fixed_mar", nyears+1 );
+		ssc_number_t *ch_dc_fixed_apr = allocate("charge_dc_fixed_apr", nyears+1 );
+		ssc_number_t *ch_dc_fixed_may = allocate("charge_dc_fixed_may", nyears+1 );
+		ssc_number_t *ch_dc_fixed_jun = allocate("charge_dc_fixed_jun", nyears+1 );
+		ssc_number_t *ch_dc_fixed_jul = allocate("charge_dc_fixed_jul", nyears+1 );
+		ssc_number_t *ch_dc_fixed_aug = allocate("charge_dc_fixed_aug", nyears+1 );
+		ssc_number_t *ch_dc_fixed_sep = allocate("charge_dc_fixed_sep", nyears+1 );
+		ssc_number_t *ch_dc_fixed_oct = allocate("charge_dc_fixed_oct", nyears+1 );
+		ssc_number_t *ch_dc_fixed_nov = allocate("charge_dc_fixed_nov", nyears+1 );
+		ssc_number_t *ch_dc_fixed_dec = allocate("charge_dc_fixed_dec", nyears+1 );
 		
-		ssc_number_t *ch_dc_tou_jan = allocate("charge_dc_tou_jan", nyears );
-		ssc_number_t *ch_dc_tou_feb = allocate("charge_dc_tou_feb", nyears );
-		ssc_number_t *ch_dc_tou_mar = allocate("charge_dc_tou_mar", nyears );
-		ssc_number_t *ch_dc_tou_apr = allocate("charge_dc_tou_apr", nyears );
-		ssc_number_t *ch_dc_tou_may = allocate("charge_dc_tou_may", nyears );
-		ssc_number_t *ch_dc_tou_jun = allocate("charge_dc_tou_jun", nyears );
-		ssc_number_t *ch_dc_tou_jul = allocate("charge_dc_tou_jul", nyears );
-		ssc_number_t *ch_dc_tou_aug = allocate("charge_dc_tou_aug", nyears );
-		ssc_number_t *ch_dc_tou_sep = allocate("charge_dc_tou_sep", nyears );
-		ssc_number_t *ch_dc_tou_oct = allocate("charge_dc_tou_oct", nyears );
-		ssc_number_t *ch_dc_tou_nov = allocate("charge_dc_tou_nov", nyears );
-		ssc_number_t *ch_dc_tou_dec = allocate("charge_dc_tou_dec", nyears );
+		ssc_number_t *ch_dc_tou_jan = allocate("charge_dc_tou_jan", nyears+1 );
+		ssc_number_t *ch_dc_tou_feb = allocate("charge_dc_tou_feb", nyears+1 );
+		ssc_number_t *ch_dc_tou_mar = allocate("charge_dc_tou_mar", nyears+1 );
+		ssc_number_t *ch_dc_tou_apr = allocate("charge_dc_tou_apr", nyears+1 );
+		ssc_number_t *ch_dc_tou_may = allocate("charge_dc_tou_may", nyears+1 );
+		ssc_number_t *ch_dc_tou_jun = allocate("charge_dc_tou_jun", nyears+1 );
+		ssc_number_t *ch_dc_tou_jul = allocate("charge_dc_tou_jul", nyears+1 );
+		ssc_number_t *ch_dc_tou_aug = allocate("charge_dc_tou_aug", nyears+1 );
+		ssc_number_t *ch_dc_tou_sep = allocate("charge_dc_tou_sep", nyears+1 );
+		ssc_number_t *ch_dc_tou_oct = allocate("charge_dc_tou_oct", nyears+1 );
+		ssc_number_t *ch_dc_tou_nov = allocate("charge_dc_tou_nov", nyears+1 );
+		ssc_number_t *ch_dc_tou_dec = allocate("charge_dc_tou_dec", nyears+1 );
 		
-		ssc_number_t *ch_ec_jan = allocate("charge_ec_jan", nyears );
-		ssc_number_t *ch_ec_feb = allocate("charge_ec_feb", nyears );
-		ssc_number_t *ch_ec_mar = allocate("charge_ec_mar", nyears );
-		ssc_number_t *ch_ec_apr = allocate("charge_ec_apr", nyears );
-		ssc_number_t *ch_ec_may = allocate("charge_ec_may", nyears );
-		ssc_number_t *ch_ec_jun = allocate("charge_ec_jun", nyears );
-		ssc_number_t *ch_ec_jul = allocate("charge_ec_jul", nyears );
-		ssc_number_t *ch_ec_aug = allocate("charge_ec_aug", nyears );
-		ssc_number_t *ch_ec_sep = allocate("charge_ec_sep", nyears );
-		ssc_number_t *ch_ec_oct = allocate("charge_ec_oct", nyears );
-		ssc_number_t *ch_ec_nov = allocate("charge_ec_nov", nyears );
-		ssc_number_t *ch_ec_dec = allocate("charge_ec_dec", nyears );
+		ssc_number_t *ch_ec_jan = allocate("charge_ec_jan", nyears+1 );
+		ssc_number_t *ch_ec_feb = allocate("charge_ec_feb", nyears+1 );
+		ssc_number_t *ch_ec_mar = allocate("charge_ec_mar", nyears+1 );
+		ssc_number_t *ch_ec_apr = allocate("charge_ec_apr", nyears+1 );
+		ssc_number_t *ch_ec_may = allocate("charge_ec_may", nyears+1 );
+		ssc_number_t *ch_ec_jun = allocate("charge_ec_jun", nyears+1 );
+		ssc_number_t *ch_ec_jul = allocate("charge_ec_jul", nyears+1 );
+		ssc_number_t *ch_ec_aug = allocate("charge_ec_aug", nyears+1 );
+		ssc_number_t *ch_ec_sep = allocate("charge_ec_sep", nyears+1 );
+		ssc_number_t *ch_ec_oct = allocate("charge_ec_oct", nyears+1 );
+		ssc_number_t *ch_ec_nov = allocate("charge_ec_nov", nyears+1 );
+		ssc_number_t *ch_ec_dec = allocate("charge_ec_dec", nyears+1 );
+
+
+		// lifetime hourly load
+		ssc_number_t *lifetime_hourly_load = allocate("lifetime_load", nrec_gen);
 
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
 			for (j=0;j<8760;j++)
 			{
+				/* for future implementation for lifetime loads
+				// update e_load and p_load per year if lifetime output
+				if ((as_integer("system_use_lifetime_output") == 1) && (idx < nrec_load))
+				{
+					e_load[j] = p_load[j] = 0.0;
+					for (size_t ii = 0; (ii < step_per_hour_load) && (idx < nrec_load); ii++)
+					{
+						ts_load = (bload ? pload[idx] : 0);
+						e_load[i] += ts_load * ts_hour_load;
+						p_load[i] = ((ts_load > p_load[i]) ? ts_load : p_load[i]);
+						idx++;
+					}
+					lifetime_hourly_load[i*8760 + j] = e_load[i];
+					// sign correction for utility rate calculations
+					e_load[i] = -e_load[i];
+					p_load[i] = -p_load[i];
+				}
+				*/
 				// apply load escalation appropriate for current year
 				e_load_cy[j] = e_load[j] * load_scale[i];
 				p_load_cy[j] = p_load[j] * load_scale[i];
 
 				
 				// update e_sys per year if lifetime output
-				if (as_integer("system_use_lifetime_output") == 1)
+				if ((as_integer("system_use_lifetime_output") == 1) )
 				{
 					e_sys[j] = p_sys[j] = 0.0;
-					for (size_t ii = 0; ii < step_per_hour_gen; ii++)
+					for (size_t ii = 0; (ii < step_per_hour_gen); ii++)
 					{
 						ts_power = pgen[idx];
 						e_sys[j] += ts_power * ts_hour_gen;
 						p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
+						// until lifetime load fully implemented
+						lifetime_hourly_load[idx] = -e_load_cy[j]*ts_hour_gen;
 						idx++;
 					}
-
 				}
 
 				// calculate e_grid value (e_sys + e_load)
@@ -1142,73 +1168,73 @@ public:
 
 			// determine net-revenue benefit due to solar for year 'i'
 			
-			annual_net_revenue[i] = 0.0;
-			annual_electric_load[i] = 0.0;
-			energy_net[i] = 0.0;
-			annual_revenue_w_sys[i] = 0.0;
-			annual_revenue_wo_sys[i] = 0.0;
+			annual_net_revenue[i+1] = 0.0;
+			annual_electric_load[i + 1] = 0.0;
+			energy_net[i + 1] = 0.0;
+			annual_revenue_w_sys[i + 1] = 0.0;
+			annual_revenue_wo_sys[i + 1] = 0.0;
 
 			for(j=0;j<8760;j++)
 			{
-				energy_net[i] +=  e_sys[j]*sys_scale[i];
-				annual_net_revenue[i] += revenue_w_sys[j] - revenue_wo_sys[j];
-				annual_electric_load[i] += -e_load_cy[j];
-				annual_revenue_w_sys[i] += revenue_w_sys[j];
-				annual_revenue_wo_sys[i] += revenue_wo_sys[j];
+				energy_net[i + 1] +=  e_sys[j]*sys_scale[i];
+				annual_net_revenue[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
+				annual_electric_load[i + 1] += -e_load_cy[j];
+				annual_revenue_w_sys[i + 1] += revenue_w_sys[j];
+				annual_revenue_wo_sys[i + 1] += revenue_wo_sys[j];
 			}
 
-			annual_net_revenue[i] *= rate_scale[i];
-			annual_revenue_w_sys[i] *= rate_scale[i];
-			annual_revenue_wo_sys[i] *= rate_scale[i];
+			annual_net_revenue[i + 1] *= rate_scale[i];
+			annual_revenue_w_sys[i + 1] *= rate_scale[i];
+			annual_revenue_wo_sys[i + 1] *= rate_scale[i];
 
 			//Outputs from Paul, Nate and Sean 9/9/13
-			annual_elec_cost_w_sys[i] = -annual_revenue_w_sys[i];
-			annual_elec_cost_wo_sys[i] = -annual_revenue_wo_sys[i];
+			annual_elec_cost_w_sys[i + 1] = -annual_revenue_w_sys[i+1];
+			annual_elec_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
 
 
-			ch_dc_fixed_jan[i] = monthly_dc_fixed[0] * rate_scale[i];
-			ch_dc_fixed_feb[i] = monthly_dc_fixed[1] * rate_scale[i];
-			ch_dc_fixed_mar[i] = monthly_dc_fixed[2] * rate_scale[i];
-			ch_dc_fixed_apr[i] = monthly_dc_fixed[3] * rate_scale[i];
-			ch_dc_fixed_may[i] = monthly_dc_fixed[4] * rate_scale[i];
-			ch_dc_fixed_jun[i] = monthly_dc_fixed[5] * rate_scale[i];
-			ch_dc_fixed_jul[i] = monthly_dc_fixed[6] * rate_scale[i];
-			ch_dc_fixed_aug[i] = monthly_dc_fixed[7] * rate_scale[i];
-			ch_dc_fixed_sep[i] = monthly_dc_fixed[8] * rate_scale[i];
-			ch_dc_fixed_oct[i] = monthly_dc_fixed[9] * rate_scale[i];
-			ch_dc_fixed_nov[i] = monthly_dc_fixed[10] * rate_scale[i];
-			ch_dc_fixed_dec[i] = monthly_dc_fixed[11] * rate_scale[i];
+			ch_dc_fixed_jan[i + 1] = monthly_dc_fixed[0] * rate_scale[i];
+			ch_dc_fixed_feb[i + 1] = monthly_dc_fixed[1] * rate_scale[i];
+			ch_dc_fixed_mar[i + 1] = monthly_dc_fixed[2] * rate_scale[i];
+			ch_dc_fixed_apr[i + 1] = monthly_dc_fixed[3] * rate_scale[i];
+			ch_dc_fixed_may[i + 1] = monthly_dc_fixed[4] * rate_scale[i];
+			ch_dc_fixed_jun[i + 1] = monthly_dc_fixed[5] * rate_scale[i];
+			ch_dc_fixed_jul[i + 1] = monthly_dc_fixed[6] * rate_scale[i];
+			ch_dc_fixed_aug[i + 1] = monthly_dc_fixed[7] * rate_scale[i];
+			ch_dc_fixed_sep[i + 1] = monthly_dc_fixed[8] * rate_scale[i];
+			ch_dc_fixed_oct[i + 1] = monthly_dc_fixed[9] * rate_scale[i];
+			ch_dc_fixed_nov[i + 1] = monthly_dc_fixed[10] * rate_scale[i];
+			ch_dc_fixed_dec[i + 1] = monthly_dc_fixed[11] * rate_scale[i];
 		
-			ch_dc_tou_jan[i] = monthly_dc_tou[0] * rate_scale[i];
-			ch_dc_tou_feb[i] = monthly_dc_tou[1] * rate_scale[i];
-			ch_dc_tou_mar[i] = monthly_dc_tou[2] * rate_scale[i];
-			ch_dc_tou_apr[i] = monthly_dc_tou[3] * rate_scale[i];
-			ch_dc_tou_may[i] = monthly_dc_tou[4] * rate_scale[i];
-			ch_dc_tou_jun[i] = monthly_dc_tou[5] * rate_scale[i];
-			ch_dc_tou_jul[i] = monthly_dc_tou[6] * rate_scale[i];
-			ch_dc_tou_aug[i] = monthly_dc_tou[7] * rate_scale[i];
-			ch_dc_tou_sep[i] = monthly_dc_tou[8] * rate_scale[i];
-			ch_dc_tou_oct[i] = monthly_dc_tou[9] * rate_scale[i];
-			ch_dc_tou_nov[i] = monthly_dc_tou[10] * rate_scale[i];
-			ch_dc_tou_dec[i] = monthly_dc_tou[11] * rate_scale[i];
+			ch_dc_tou_jan[i + 1] = monthly_dc_tou[0] * rate_scale[i];
+			ch_dc_tou_feb[i + 1] = monthly_dc_tou[1] * rate_scale[i];
+			ch_dc_tou_mar[i + 1] = monthly_dc_tou[2] * rate_scale[i];
+			ch_dc_tou_apr[i + 1] = monthly_dc_tou[3] * rate_scale[i];
+			ch_dc_tou_may[i + 1] = monthly_dc_tou[4] * rate_scale[i];
+			ch_dc_tou_jun[i + 1] = monthly_dc_tou[5] * rate_scale[i];
+			ch_dc_tou_jul[i + 1] = monthly_dc_tou[6] * rate_scale[i];
+			ch_dc_tou_aug[i + 1] = monthly_dc_tou[7] * rate_scale[i];
+			ch_dc_tou_sep[i + 1] = monthly_dc_tou[8] * rate_scale[i];
+			ch_dc_tou_oct[i + 1] = monthly_dc_tou[9] * rate_scale[i];
+			ch_dc_tou_nov[i + 1] = monthly_dc_tou[10] * rate_scale[i];
+			ch_dc_tou_dec[i + 1] = monthly_dc_tou[11] * rate_scale[i];
 		
-			ch_ec_jan[i] = monthly_ec_charges[0] * rate_scale[i];
-			ch_ec_feb[i] = monthly_ec_charges[1] * rate_scale[i];
-			ch_ec_mar[i] = monthly_ec_charges[2] * rate_scale[i];
-			ch_ec_apr[i] = monthly_ec_charges[3] * rate_scale[i];
-			ch_ec_may[i] = monthly_ec_charges[4] * rate_scale[i];
-			ch_ec_jun[i] = monthly_ec_charges[5] * rate_scale[i];
-			ch_ec_jul[i] = monthly_ec_charges[6] * rate_scale[i];
-			ch_ec_aug[i] = monthly_ec_charges[7] * rate_scale[i];
-			ch_ec_sep[i] = monthly_ec_charges[8] * rate_scale[i];
-			ch_ec_oct[i] = monthly_ec_charges[9] * rate_scale[i];
-			ch_ec_nov[i] = monthly_ec_charges[10] * rate_scale[i];
-			ch_ec_dec[i] = monthly_ec_charges[11] * rate_scale[i];			
+			ch_ec_jan[i + 1] = monthly_ec_charges[0] * rate_scale[i];
+			ch_ec_feb[i + 1] = monthly_ec_charges[1] * rate_scale[i];
+			ch_ec_mar[i + 1] = monthly_ec_charges[2] * rate_scale[i];
+			ch_ec_apr[i + 1] = monthly_ec_charges[3] * rate_scale[i];
+			ch_ec_may[i + 1] = monthly_ec_charges[4] * rate_scale[i];
+			ch_ec_jun[i + 1] = monthly_ec_charges[5] * rate_scale[i];
+			ch_ec_jul[i + 1] = monthly_ec_charges[6] * rate_scale[i];
+			ch_ec_aug[i + 1] = monthly_ec_charges[7] * rate_scale[i];
+			ch_ec_sep[i + 1] = monthly_ec_charges[8] * rate_scale[i];
+			ch_ec_oct[i + 1] = monthly_ec_charges[9] * rate_scale[i];
+			ch_ec_nov[i + 1] = monthly_ec_charges[10] * rate_scale[i];
+			ch_ec_dec[i + 1] = monthly_ec_charges[11] * rate_scale[i];			
 		}
 
-		assign("elec_cost_with_system_year1", annual_elec_cost_w_sys[0]);
-		assign("elec_cost_without_system_year1", annual_elec_cost_wo_sys[0]);
-		assign("savings_year1", annual_elec_cost_wo_sys[0] - annual_elec_cost_w_sys[0]);
+		assign("elec_cost_with_system_year1", annual_elec_cost_w_sys[1]);
+		assign("elec_cost_without_system_year1", annual_elec_cost_wo_sys[1]);
+		assign("savings_year1", annual_elec_cost_wo_sys[1] - annual_elec_cost_w_sys[1]);
 	}
 
 	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760], ssc_number_t salespurchases[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_salespurchases[12])
