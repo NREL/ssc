@@ -1319,7 +1319,7 @@ public:
 		// Set design limits!!!!
 		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
 		ms_des_limits.m_UA_net_power_ratio_min = 1.E-5;		//[-/K]
-		ms_des_limits.m_T_mc_in_min = ceil(N_co2_props::T_crit);	//[K]
+		ms_des_limits.m_T_mc_in_min = 32.0 + 273.15;	//[K]
 	}
 
 	~C_RecompCycle(){}
@@ -1393,5 +1393,39 @@ double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> 
 double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double P_pseudocritical_1(double T_K);
+
+
+
+bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
+
+
+class C_poly_curve_r_squared
+{
+private:
+	std::vector<double> m_x;
+	std::vector<double> m_y;
+	int m_n_points;
+	double m_y_bar;
+	double m_SS_tot;
+
+public:
+	C_poly_curve_r_squared()
+	{
+		m_x.resize(0);
+		m_y.resize(0);
+		m_n_points = -1;
+		m_y_bar = std::numeric_limits<double>::quiet_NaN();
+		m_SS_tot = std::numeric_limits<double>::quiet_NaN();
+	}
+
+	bool init(const std::vector<double> x_data, const std::vector<double> y_data);	
+
+
+	// Called by 'nlopt...', so needs to be public
+	double calc_r_squared(const std::vector<double> coefs);
+
+};
+
+double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 #endif

@@ -4578,3 +4578,118 @@ double P_pseudocritical_1(double T_K)
 {
 	return (0.191448*T_K + 45.6661)*T_K - 24213.3;
 }
+
+
+
+
+
+bool C_poly_curve_r_squared::init(const std::vector<double> x_data, const std::vector<double> y_data)
+{
+	m_x = x_data;
+	m_y = y_data;
+
+	m_n_points = x_data.size();
+	if(m_n_points != y_data.size() || m_n_points < 5)
+	{
+		return false;
+	}
+
+	m_y_bar = 0.0;
+
+	for( int i = 0; i < m_n_points; i++ )
+	{
+		m_y_bar += m_y[i];
+	}
+
+	m_y_bar /= (double)m_n_points;
+
+	m_SS_tot = 0.0;
+
+	for( int i = 0; i < m_n_points; i++ )
+	{
+		m_SS_tot += pow(m_y[i] - m_y_bar, 2);
+	}
+
+	return true;
+}
+
+double C_poly_curve_r_squared::calc_r_squared(const std::vector<double> coefs)
+{
+	double SS_res = 0.0;
+	int n_coefs = coefs.size();
+	double y_pred = 0.0;
+	for( int i = 0; i < m_n_points; i++ )
+	{
+		y_pred = 0.0;
+		for( int j = 0; j < n_coefs; j++ )
+		{
+			y_pred += coefs[j] * pow(m_x[i], j);
+		}
+		SS_res += pow(m_y[i] - y_pred, 2);
+	}
+
+	return 1.0 - SS_res / m_SS_tot;
+}
+
+double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_poly_curve_r_squared *frame = static_cast<C_poly_curve_r_squared*>(data);
+	if( frame != NULL ) return frame->calc_r_squared(x);
+}
+
+bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared)
+{
+	C_poly_curve_r_squared mc_data;
+
+	if( n_coefs < 1 || n_coefs > 5)
+	{
+		return false;
+	}
+	else
+	{
+		coefs_out.resize(n_coefs);
+		for( int i = 0; i < n_coefs; i++ )
+		{
+			coefs_out[i] = std::numeric_limits<double>::quiet_NaN();
+		}
+	}
+
+	if( !mc_data.init(x_data, y_data) )
+	{
+		return false;
+	}
+
+	std::vector<double> x(n_coefs);
+
+	bool solution_found = false;
+	
+	// Set up instance of nlopt class and set optimization parameters
+		// nlopt::opt surf(nlopt::LN_NELDERMEAD, nbeta); from Autopilot_api.cpp
+	nlopt::opt		opt_tar_od_cycle(nlopt::LN_NELDERMEAD, n_coefs);
+	opt_tar_od_cycle.set_xtol_rel(0.00001);
+
+	// Set max objective function
+	opt_tar_od_cycle.set_max_objective(nlopt_callback_poly_coefs, &mc_data);
+	double max_f = std::numeric_limits<double>::quiet_NaN();
+	nlopt::result     result_tar_od_cycle = opt_tar_od_cycle.optimize(x, max_f);
+
+
+	if( max_f > 0.01 && max_f <= 1.00 )
+	{
+		for( int i = 0; i < n_coefs; i++ )
+		{
+			coefs_out[i] = x[i];
+		}
+
+		r_squared = max_f;
+
+		return true;
+	}
+	else
+	{
+		r_squared = -999.9;
+
+		return false;
+	}
+
+}
