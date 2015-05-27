@@ -713,7 +713,7 @@ public:
 
 			// Assume compressor inlet temperature is always design point delta T above ambient: (T_amb_des - T_comp_in)
 			// Floor is ~ critical temp + 1 = 32 C
-			double T_mc_in = max(32.0 + 273.15, T_db + m_delta_T_acc);
+			double T_mc_in = max(ms_rc_cycle.get_design_limits().m_T_mc_in_min, T_db + m_delta_T_acc);
 
 			// Assume turbine inlet temperature is always design point delta T below receiver hot side
 			double T_t_in = T_htf_hot - m_delta_T_t;
