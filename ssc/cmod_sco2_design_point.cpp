@@ -32,8 +32,12 @@ static var_info _cm_vtab_sco2_design_point[] = {
 
 	{ SSC_OUTPUT, SSC_ARRAY,   "part_load_fracs_out", "Array of part load fractions that SOLVED at off design", "-",      "",    "",      "run_off_des_study=1", "",  "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "part_load_eta",   "Matrix of power cycle efficiency results for q_dot_in part load", "-", "",    "",      "run_off_des_study=1", "",  "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "part_load_coefs", "Part load polynomial coefficients",                      "-",          "",    "",      "run_off_des_study=1", "",  "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "part_load_r_squared", "Part load curve fit R squared",                      "-",          "",    "",      "run_off_des_study=1", "",  "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_array_out", "Array of ambient temps that SOLVED at off design",       "C",          "",    "",      "run_off_des_study=1", "",  "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_eta",       "Matrix of ambient temps and power cycle efficiency",     "-",          "",    "",      "run_off_des_study=1", "",  "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_coefs",     "Part load polynomial coefficients",                      "-",          "",    "",      "run_off_des_study=1", "",  "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "T_amb_r_squared", "T amb curve fit R squared",                              "-",          "",    "",      "run_off_des_study=1", "",  "" },
 
 	var_info_invalid };
 
@@ -241,7 +245,7 @@ public:
 
 				n_solved = part_load_fracs_out.size();
 			}
-			
+						
 			ssc_number_t * f_pl_out = allocate("part_load_fracs_out", n_solved);
 			ssc_number_t * eta_f_pl = allocate("part_load_eta", n_solved);
 
@@ -251,6 +255,27 @@ public:
 				eta_f_pl[i] = part_load_eta[i];
 			}
 
+			// Find and write polynomial coefficients for part load
+			std::vector<double> pl_coefs;
+			double pl_r_squared = std::numeric_limits<double>::quiet_NaN();
+			bool pl_success = find_polynomial_coefs(part_load_fracs_out, part_load_eta, 5, pl_coefs, pl_r_squared);
+			assign("Part_load_r_squared", pl_r_squared);
+
+			ssc_number_t * p_pl_coefs = allocate("part_load_coefs", 5);
+			if(pl_success)
+			{
+				for( int i = 0; i < 5; i++ )
+					p_pl_coefs[i] = pl_coefs[i];
+			}
+			else
+			{
+				log("Part load coefficient calcuations failed");
+				for( int i = 0; i < 5; i++ )
+					p_pl_coefs[i] = 0.0;
+			}
+			// ********************************************
+
+						
 			size_t n_T_amb_od = -1;
 			ssc_number_t * T_amb_od = as_array("T_amb_array", &n_T_amb_od);
 
@@ -278,7 +303,7 @@ public:
 				}
 
 				n_solved = T_amb_out.size();
-			}
+			}						
 
 			ssc_number_t * T_amb_od_out = allocate("T_amb_array_out", n_solved);
 			ssc_number_t * eta_T_amb = allocate("T_amb_eta", n_solved);
@@ -289,6 +314,34 @@ public:
 				eta_T_amb[i] = T_amb_eta[i];
 			}
 
+
+			// Find polynomial coefficients for part load
+			std::vector<double> T_amb_coefs;
+			std::vector<double> T_amb_od_less_des;
+			double T_amb_r_squared = std::numeric_limits<double>::quiet_NaN();
+
+			T_amb_od_less_des.resize(n_solved);
+			for( int i = 0; i < n_solved; i++ )
+			{
+				T_amb_od_less_des[i] = T_amb_od[i] - (T_amb_cycle_des - 273.15);
+			}
+			bool T_amb_success = find_polynomial_coefs(T_amb_od_less_des, T_amb_eta, 5, T_amb_coefs, T_amb_r_squared);
+			assign("T_amb_r_squared", T_amb_r_squared);
+
+			ssc_number_t * p_T_amb_coefs = allocate("T_amb_coefs", 5);
+			if( T_amb_success )
+			{
+				for( int i = 0; i < 5; i++ )
+					p_T_amb_coefs[i] = T_amb_coefs[i];
+			}
+			else
+			{
+				log("Ambient temperature coefficient calcuations failed");
+				for( int i = 0; i < 5; i++ )
+					p_T_amb_coefs[i] = 0.0;
+			}
+
+			// ******************************************************
 		}
 
 	}
