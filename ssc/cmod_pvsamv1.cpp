@@ -1323,28 +1323,28 @@ public:
 		if (pv_lifetime_simulation == 1)
 			nyears = as_integer("analysis_period");
 
-
-		// setup output arrays
-		ssc_number_t *p_dc_degrade_factor = allocate("dc_degrade_factor", nyears);
-		//ssc_number_t *p_ac_degrade_factor = allocate("ac_degrade_factor", nyears);
-
-
+		ssc_number_t *p_dc_degrade_factor;
 
 		if (pv_lifetime_simulation == 1)
 		{
 			size_t count_dc_degrad = 0;
 			ssc_number_t *dc_degrad = 0;
 			dc_degrad = as_array("dc_degradation", &count_dc_degrad);
+			// setup output arrays
+			p_dc_degrade_factor = allocate("dc_degrade_factor", nyears + 1);
+			//ssc_number_t *p_ac_degrade_factor = allocate("ac_degrade_factor", nyears);
+
 			p_dc_degrade_factor[0] = 1.0; // degradation assumed to start at year 2
+			p_dc_degrade_factor[1] = 1.0; // degradation assumed to start at year 2
 			if (count_dc_degrad == 1)
 			{
 				for (size_t i = 1; i < nyears; i++)
-					p_dc_degrade_factor[i] = pow((1.0 - dc_degrad[0] / 100.0), i);
+					p_dc_degrade_factor[i+1] = pow((1.0 - dc_degrad[0] / 100.0), i);
 			}
 			else if (count_dc_degrad > 0)
 			{
 				for (size_t i = 1; i < nyears && i < count_dc_degrad; i++)
-					p_dc_degrade_factor[i] = (1.0 - dc_degrad[i] / 100.0);
+					p_dc_degrade_factor[i+1] = (1.0 - dc_degrad[i] / 100.0);
 			}
 			/*
 			size_t count_ac_degrad = 0;
@@ -1363,15 +1363,16 @@ public:
 			}
 			*/
 		}
+		/*
 		else
 		{
 			for (size_t i = 0; i < nyears; i++)
 			{
-				p_dc_degrade_factor[i] = 1.0;
+				p_dc_degrade_factor[i+1] = 1.0;
 //				p_ac_degrade_factor[i] = 1.0;
 			}
 		}
-
+		*/
 
 
 		// output arrays for weather info- same for all four subarrays	
@@ -1873,8 +1874,9 @@ public:
 						// apply pre-inverter power derate
 						// apply yearly degradation as necessary
 						dcpwr_gross += sa[nn].module.dcpwr;
-						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate 
-							* p_dc_degrade_factor[iyear];
+						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
+						if (pv_lifetime_simulation==1)
+							dcpwr_net*= p_dc_degrade_factor[iyear + 1];
 
 						// save to SSC output arrays
 						p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
@@ -1887,7 +1889,7 @@ public:
 					if (en_batt)
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour);
 
-
+					 
 					// DC Connected Battery
 					// Note for all battery inputs, PV & LOAD must be converted to energy in [kWh]
 					if (en_batt && (ac_or_dc == 0) )

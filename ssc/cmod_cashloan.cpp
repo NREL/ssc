@@ -342,7 +342,7 @@ public:
 		i=0;
 		while ( i < nyears && i < (int)count )
 		{
-			cf.at(CF_energy_value, i+1) = (double) arrp[i];
+			cf.at(CF_energy_value, i+1) = (double) arrp[i+1];
 			i++;
 		}
 		
