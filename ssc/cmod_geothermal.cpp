@@ -135,7 +135,8 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "timestep_wet_bulb",                  "Wet bulb temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																																	             
     { SSC_OUTPUT,       SSC_NUMBER,      "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "first_year_output",                  "First Year Output",                                   "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "first_year_output", "First Year Output", "kWh", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kWh", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "hourly_gen",                      "Hourly energy",                                       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
@@ -421,6 +422,9 @@ public:
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
 			assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+			// 5/28/15 average provided for FCR market
+			assign("annual_energy", var_data(annual_energy / geo_inputs.mi_ProjectLifeYears));
+
 
 
 		}
