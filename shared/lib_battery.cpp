@@ -35,14 +35,14 @@ void capacity_t::check_charge_change()
 
 	// Check if charge changed 
 	_chargeChange = false;
-	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE) && (fabs(_I) > 1) )
+	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE) /* && (fabs(_I) > 1) */ ) // not sure why the fabs check was in
 	{
 		_chargeChange = true;
 		_prev_charge = charging;
 	}
 }
 void capacity_t::update_SOC()
-{
+{ 
 	if (_qmax > 0)
 		_SOC = 100.*(_q0 / _qmax);
 	else
