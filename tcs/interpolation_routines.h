@@ -2,8 +2,7 @@
 #ifndef __interpolation_routines_
 #define __interpolation_routines_
 
-//#include <shared/lib_util.h>
-#include "lib_util.h"
+#include <shared/lib_util.h>
 
 //#include "cavity_calcs.h"		// for access to "block_t"
 
