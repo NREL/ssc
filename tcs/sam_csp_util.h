@@ -3,7 +3,7 @@
 // fix compilation errors using gcc on linux
 #include <cmath>
 #include <limits>
-#include <shared/lib_util.h>
+#include "../shared/lib_util.h"
 #include "htf_props.h"
 
 
