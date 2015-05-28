@@ -137,7 +137,7 @@ All voltage models are based on one-cell, but return the voltage for one battery
 class voltage_t
 {
 public:
-	voltage_t(int num_cells_series, int num_cells_parallel, double voltage);
+	voltage_t(int num_cells_series, int num_strings, double voltage);
 
 	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
 	double battery_voltage(); // voltage of one battery
@@ -146,7 +146,7 @@ public:
 
 protected:
 	int _num_cells_series;    // number of cells in series
-	int _num_cells_parallel;  // addition number in parallel
+	int _num_strings;  // addition number in parallel
 	double _cell_voltage; // closed circuit voltage per cell [V]
 	double _R;
 
@@ -155,7 +155,7 @@ protected:
 class voltage_basic_t : public voltage_t
 {
 public:
-	voltage_basic_t(int num_cells_series, int num_cells_parallel, double voltage);
+	voltage_basic_t(int num_cells_series, int num_strings, double voltage);
 	void updateVoltage(capacity_t * capacity, double dt);
 };
 

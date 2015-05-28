@@ -22,8 +22,8 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_dc_efficiency",                      "Inverter AC to Battery DC efficiency",                    "",        "",                     "Battery",       "",                           "",                              "" },
 
 	// generic battery inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_parallel",                     "Number of Cells in Parallel",                             "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of Cells in Serial",                               "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_strings",                      "Number of strings of cells",                              "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of cells in series",                               "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
@@ -222,7 +222,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
 
 	// model initialization
-	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_parallel"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
+	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_strings"), cm.as_double("batt_Vnom"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
 		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
 
 	lifetime_model = new  lifetime_t(batt_lifetime_matrix, replacement_option, cm.as_double("batt_replacement_capacity") );
@@ -247,7 +247,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		chem);
 
 	double Vfull = cm.as_double("batt_Vfull");
-	int ncell = cm.as_integer("batt_computed_series") + cm.as_integer("batt_computed_parallel");
+	int ncell = cm.as_integer("batt_computed_series")*cm.as_integer("batt_computed_strings");
 
 	if ( chem == 0 )
 	{
@@ -260,7 +260,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	else if ( chem == 1 )
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			cm.as_double("batt_Qfull")*ncell );
+			cm.as_double("batt_Qfull")*cm.as_integer("batt_computed_strings"));
 	}
 	
 	losses_model = new losses_t(
