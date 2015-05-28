@@ -310,10 +310,10 @@ double capacity_lithium_ion_t::q10(){return _qmax;}
 /*
 Define Voltage Model
 */
-voltage_t::voltage_t(int num_cells_series, int num_cells_parallel, double voltage)
+voltage_t::voltage_t(int num_cells_series, int num_strings, double voltage)
 {
 	_num_cells_series = num_cells_series;
-	_num_cells_parallel = num_cells_parallel;
+	_num_strings = num_strings;
 	_cell_voltage = voltage;
 	_R = 0.004; // just a default, will get recalculated upon construction
 }
@@ -324,8 +324,8 @@ double voltage_t::R(){ return _R; }
 
 
 // Dynamic voltage model
-voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_cells_parallel, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate):
-voltage_t(num_cells_series, num_cells_parallel, voltage)
+voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate):
+voltage_t(num_cells_series, num_strings, voltage)
 {
 	_Vfull = Vfull;
 	_Vexp = Vexp;
@@ -360,11 +360,10 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	double Q = capacity->qmax();
 	double I = capacity->I();
 	double q0 = capacity->q0();
-	int num_cells = _num_cells_parallel + _num_cells_series;
-	int num_strings = num_cells / _num_cells_series;
 	
-	// is on a per-cell basis
-	_cell_voltage = voltage_model_tremblay_hybrid(Q / num_cells, I/num_strings , q0 / num_cells);
+	// is on a per-cell basis.
+	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
+	_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_strings, I/_num_strings , q0 / _num_strings);
 }
 double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 {
