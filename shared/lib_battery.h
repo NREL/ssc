@@ -27,7 +27,7 @@ public:
 	// pure virtual functions (abstract) which need to be defined in derived classes
 	virtual void updateCapacity(double I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
-	virtual void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)=0;
+	virtual void updateCapacityForLifetime(double capacity_percent)=0;
 	virtual void replace_battery()=0;
 
 	virtual double q1() = 0; // available charge
@@ -70,7 +70,7 @@ public:
 	capacity_kibam_t(double q20, double t1, double q1, double q10);
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
-	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
+	void updateCapacityForLifetime(double capacity_percent);
 	void replace_battery();
 	double q1(); // Available charge
 	double q2(); // Bound charge
@@ -120,7 +120,7 @@ public:
 	// override public api
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
-	void updateCapacityForLifetime(double capacity_percent, bool update_max_capacity);
+	void updateCapacityForLifetime(double capacity_percent);
 	void replace_battery();
 
 	double q1(); // Available charge
