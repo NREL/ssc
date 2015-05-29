@@ -224,14 +224,12 @@ void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 	_I *= capacity_percent*0.01;
 	update_SOC();
 }
-void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)
+void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
 {
 
-	if (update_max_capacity)
-	{
-		if (_qmax0* capacity_percent*0.01 <= _qmax)
-			_qmax = _qmax0* capacity_percent*0.01;
-	}
+	if (_qmax0* capacity_percent*0.01 <= _qmax)
+		_qmax = _qmax0* capacity_percent*0.01;
+
 	// scale to q0 = qmax if q0 > qmax
 	if (_q0 > _qmax)
 	{
@@ -291,13 +289,12 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 	_I *= capacity_percent*0.01;
 	update_SOC();
 }
-void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent, bool update_max_capacity)
+void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
 {
-	if (update_max_capacity)
-	{
-		if (_qmax0* capacity_percent*0.01 <= _qmax)
-			_qmax = _qmax0* capacity_percent*0.01;
-	}
+
+	if (_qmax0* capacity_percent*0.01 <= _qmax)
+		_qmax = _qmax0* capacity_percent*0.01;
+	
 	if (_q0 > _qmax)
 		_q0 = _qmax;
 
@@ -797,15 +794,12 @@ void losses_t::run_losses(double dt_hour)
 	if (_lifetime->cycles_elapsed() > _nCycle)
 	{
 		_nCycle++;
-		update_max_capacity = true;
+		_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 	}
 	
-	// apply losses only on discharge
+	// apply thermal losses only on discharge
 	if (_capacity->I() > 0)
-	{
 		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
-		_capacity->updateCapacityForLifetime(_lifetime->capacity_percent(), update_max_capacity);
-	}
 }
 /* 
 Define Battery 
@@ -932,7 +926,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_t_at_mode = 1000; 
 	_prev_charging = false;
 	_charging = false;
-	_e_max_discharge = 0.;
+	_e_max_discharge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_min*0.01)*watt_to_kilowatt;
 
 	// efficiency
 	_charge_accumulated = _Battery->battery_charge_total()*_Battery->battery_voltage()*watt_to_kilowatt;
