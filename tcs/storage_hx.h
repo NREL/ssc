@@ -21,7 +21,7 @@ public:
 	bool define_storage( HTFProperties &fluid_field, HTFProperties &fluid_store, bool is_direct, 
 		int config, double duty_des, double vol_des, double h_des, 
 		double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des,
-		double max_q_htr, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des );
+		double max_q_htr_cold, double max_q_htr_hot, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des );
 
 	//bool hx_size( HTFProperties &fluid_field, HTFProperties &fluid_store, 
 	//	int config, double duty_des, double vol_des, double h_des, 
@@ -34,6 +34,8 @@ public:
 
 	bool hx_performance( bool is_hot_side_mdot, bool is_storage_side, double T_hot_in, double m_dot_known, double T_cold_in, 
 							double &eff, double &T_hot_out, double &T_cold_out, double &q_trans, double &m_dot_solved );
+
+	bool hx_perf_q_transfer(bool is_hot_side_mdot, bool is_storage_side, double T_hot_in, double m_dot_known, double T_cold_in, double &q_trans);
 
 private:
 	HTFProperties m_field_htfProps;
@@ -52,7 +54,8 @@ private:
 	double m_dia;
 	double m_ua;
 	double m_dot_des;			//[kg/s]  7/9/14 twn: added
-	double m_max_q_htr;
+	double m_max_q_htr_cold;
+	double m_max_q_htr_hot;
 
 	// HX properties
 	double m_eff_des;
