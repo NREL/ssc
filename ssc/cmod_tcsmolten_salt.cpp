@@ -232,7 +232,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",           "Number of equivalent tank pairs",                                   "-",            "",            "controller",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "cold_tank_Thtr",       "Minimum allowable cold tank HTF temp",                              "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                               "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tank_max_heat",        "Rated heater capacity for tank heating",                            "MW",           "",            "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",                        "MW",           "",            "controller",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cold_tank_max_heat",   "Rated heater capacity for cold tank heating",                       "MW",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_field_in_des",       "Field design inlet temperature",                                    "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",      "Field design outlet temperature",                                   "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",          "Design heat input to power block",                                  "MWt",          "",            "controller",     "*",                       "",                      "" },
@@ -986,7 +987,8 @@ public:
 		set_unit_value_ssc_double(type251_controller, "tank_pairs" ); //, 1);
 		set_unit_value_ssc_double(type251_controller, "cold_tank_Thtr" ); //, 280.0);
 		set_unit_value_ssc_double(type251_controller, "hot_tank_Thtr" ); //, 500.);
-		set_unit_value_ssc_double(type251_controller, "tank_max_heat" ); //, 30);
+		set_unit_value_ssc_double(type251_controller, "cold_tank_max_heat"); //, 30);
+		set_unit_value_ssc_double(type251_controller, "hot_tank_max_heat");
 		set_unit_value_ssc_double(type251_controller, "T_field_in_des" ); //, 290);
 		set_unit_value_ssc_double(type251_controller, "T_field_out_des" ); //, 574);
 		set_unit_value_ssc_double(type251_controller, "q_pb_design" ); //, 115/0.412);
