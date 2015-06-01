@@ -595,7 +595,8 @@ public:
 		set_unit_value_ssc_double(type251_controller, "tank_pairs" ); // , 1);
 		set_unit_value_ssc_double(type251_controller, "cold_tank_Thtr" ); // , 250);
 		set_unit_value_ssc_double(type251_controller, "hot_tank_Thtr" ); // , 365);
-		set_unit_value_ssc_double(type251_controller, "tank_max_heat" ); // , 25);
+		set_unit_value_ssc_double(type251_controller, "cold_tank_max_heat","tank_max_heat"); // , 25);
+		set_unit_value_ssc_double(type251_controller, "hot_tank_max_heat", "tank_max_heat");
 		set_unit_value_ssc_double(type251_controller, "T_field_in_des", as_double("T_loop_in_des")); // , 293);
 		set_unit_value_ssc_double(type251_controller, "T_field_out_des", as_double("T_loop_out")); // , 391);
 		set_unit_value_ssc_double(type251_controller, "q_pb_design" ); // , 294.118);
