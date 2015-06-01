@@ -26,6 +26,7 @@ struct battstor
 	int year;
 	size_t step_per_hour;
 	size_t nyears;
+	double _dt_hour;
 
 	// member data
 	voltage_dynamic_t *voltage_model;
@@ -67,9 +68,9 @@ struct battstor
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
 		*outDispatchMode,
-		*outBatteryEnergy,
-		*outGridEnergy,
-		*outGenEnergy,
+		*outBatteryPower,
+		*outGridPower,
+		*outGenPower,
 		*outPVToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad;

@@ -1053,6 +1053,8 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 
 		_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
 	}
+	if (_grid_to_load < 0)
+		_grid_to_load = 0;
 }
 /*
 Manual Dispatch

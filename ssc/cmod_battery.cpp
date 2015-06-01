@@ -90,8 +90,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_bank_replacement",                   "Battery Bank Replacementss Per Year",                     "number/year", "",                 "Battery",       "",                           "",                              "" },
 																			          
 	// Energy outputs	- Power outputs at native time step													        
-	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_energy",                             "Power to/from Battery",                                 "kW",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_energy",                                "Power to/from Grid",                                    "kW",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_power",                              "Power to/from Battery",                                 "kW",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Power to/from Grid",                                    "kW",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery",                                   "kW",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                                 "Power to load from PV",                                 "kW",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_to_load",                            "Power to load from battery",                            "kW",      "",                     "Battery",       "",                           "",                              "" },
@@ -134,8 +134,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outBatteryBankReplacement = 0;
 	outBatteryTemperature = 0;
 	outCapacityThermalPercent = 0;
-	outBatteryEnergy = 0;
-	outGridEnergy = 0;
+	outBatteryPower = 0;
+	outGridPower = 0;
 	outPVToLoad = 0;
 	outBatteryToLoad = 0;
 	outGridToLoad = 0;
@@ -148,6 +148,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	// time quantities
 	year = 0;
 	nyears = 1;
+	_dt_hour = dt_hr;
 	step_per_hour = nrec / 8760;
 	if (cm.as_boolean("pv_lifetime_simulation"))
 		nyears = cm.as_integer("analysis_period");
@@ -214,9 +215,9 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", nyears); 
 	outBatteryTemperature = cm.allocate("battery_temperature", nrec*nyears);
 	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec*nyears);
-	outBatteryEnergy = cm.allocate("battery_energy", nrec*nyears);
-	outGridEnergy = cm.allocate("grid_energy", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
-	outGenEnergy = cm.allocate("pv_batt_gen", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+	outBatteryPower = cm.allocate("battery_power", nrec*nyears);
+	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
 	outBatteryToLoad = cm.allocate("battery_to_load", nrec*nyears);
 	outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
@@ -360,14 +361,13 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
 	outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent()); 
 
-	// Dispatch output
-	outBatteryEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery());
-	outGenEnergy[idx] = (ssc_number_t)(dispatch_model->gen());
-
-	outGridEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid());
-	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load() );
-	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load());
-	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load());
+	// Dispatch output (all Powers in kW)
+	outBatteryPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery())/_dt_hour;
+	outGenPower[idx] = (ssc_number_t)(dispatch_model->gen())/_dt_hour;
+	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid())/_dt_hour;
+	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load())/_dt_hour;
+	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
+	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
 
 	// Average efficiency
 	outAverageCycleEfficiency = (ssc_number_t)dispatch_model->average_efficiency();
@@ -376,10 +376,10 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD)
 {
 	dispatch_model->compute_grid_net(PV, LOAD);
-	outGridEnergy[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid());
-	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load());
-	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load());
-	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load());
+	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid())/_dt_hour;
+	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load())/_dt_hour;
+	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
+	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
 }
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
