@@ -38,8 +38,9 @@ enum {
 	P_u_tank,
 	P_tank_pairs,
 	P_cold_tank_Thtr,
-	P_hot_tank_Thtr,
-	P_tank_max_heat,
+	P_hot_tank_Thtr,	
+	P_cold_tank_max_heat,
+	P_hot_tank_max_heat,
 	P_T_field_in_des,
 	P_T_field_out_des,
 	P_q_pb_design,
@@ -179,7 +180,8 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_tank_pairs,         "tank_pairs",           "Number of equivalent tank pairs",                         "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_cold_tank_Thtr,     "cold_tank_Thtr",       "Minimum allowable cold tank HTF temp",                    "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_hot_tank_Thtr,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                     "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_tank_max_heat,      "tank_max_heat",        "Rated heater capacity for tank heating",                  "MW",           "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_cold_tank_max_heat, "cold_tank_max_heat",   "Rated heater capacity for cold tank heating",             "MW",           "",        "",        ""},
+	{ TCS_PARAM,    TCS_NUMBER,        P_hot_tank_max_heat,  "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",              "MW",           "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_in_des,     "T_field_in_des",       "Field design inlet temperature",                          "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_out_des,    "T_field_out_des",      "Field design outlet temperature",                         "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_q_pb_design,        "q_pb_design",          "Design heat input to power block",                        "MWt",          "",        "",        ""},
@@ -321,7 +323,8 @@ private:
 	int tank_pairs;
 	double cold_tank_Thtr;
 	double hot_tank_Thtr;
-	double tank_max_heat;
+	double cold_tank_max_heat;
+	double hot_tank_max_heat;
 	int field_fl;
 	double T_field_in_des;
 	double T_field_out_des;
@@ -431,7 +434,8 @@ public:
 		tank_pairs	= -1;
 		cold_tank_Thtr	= std::numeric_limits<double>::quiet_NaN();
 		hot_tank_Thtr	= std::numeric_limits<double>::quiet_NaN();
-		tank_max_heat	= std::numeric_limits<double>::quiet_NaN();
+		cold_tank_max_heat	= std::numeric_limits<double>::quiet_NaN();
+		hot_tank_max_heat = std::numeric_limits<double>::quiet_NaN();
 		field_fl		= -1;
 		T_field_in_des	= std::numeric_limits<double>::quiet_NaN();
 		T_field_out_des = std::numeric_limits<double>::quiet_NaN();
@@ -626,7 +630,8 @@ public:
 		tank_pairs	= (int) value(P_tank_pairs);		//[-]
 		cold_tank_Thtr	= value(P_cold_tank_Thtr)+273.15;	//[K] convert from [C]		
 		hot_tank_Thtr	= value(P_hot_tank_Thtr)+273.15;	//[K] convert from [C]	
-		tank_max_heat	= value(P_tank_max_heat);			//[MW]
+		cold_tank_max_heat	= value(P_cold_tank_max_heat);		//[MW]
+		hot_tank_max_heat = value(P_hot_tank_max_heat);			//[MW]
 		T_field_in_des	= value(P_T_field_in_des) + 273.15;		//[K] convert from [C]
 		T_field_out_des	= value(P_T_field_out_des) + 273.15;	//[K] convert from [C]
 		q_pb_design		= value(P_q_pb_design)*1.E6;		//[W] convert from [MW]
@@ -789,7 +794,8 @@ public:
 		{
 			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
 			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
-			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
+			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, 
+				cold_tank_max_heat, hot_tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
 			{
 				message(TCS_ERROR, "Heat exchanger sizing failed");
 				return -1;
@@ -835,7 +841,7 @@ public:
 		{
 			if( !thermocline.Initialize_TC(h_tank, vol_tank / h_tank, tc_fill, u_tank*3.6, u_tank*3.6, u_tank*3.6, tc_void,
 				1.0, t_dis_out_min, t_ch_out_max, nodes, T_tank_hot_prev - 273.15, T_tank_cold_prev - 273.15,
-				f_tc_cold, cold_tank_Thtr - 273.15, tank_max_heat, tank_pairs, store_htfProps) )
+				f_tc_cold, cold_tank_Thtr - 273.15, cold_tank_max_heat, tank_pairs, store_htfProps) )
 			{
 				message(TCS_ERROR, "Thermocline initialization failed");
 				return -1;
