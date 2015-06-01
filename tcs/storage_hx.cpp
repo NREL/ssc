@@ -21,13 +21,13 @@ Storage_HX::Storage_HX()
 	m_dia = std::numeric_limits<double>::quiet_NaN();
 	m_ua = std::numeric_limits<double>::quiet_NaN();
 	m_dot_des = std::numeric_limits<double>::quiet_NaN();
-	m_max_q_htr = std::numeric_limits<double>::quiet_NaN();
+	m_max_q_htr_cold = m_max_q_htr_hot = std::numeric_limits<double>::quiet_NaN();
 }
 
 bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &fluid_store, bool is_direct,
 		int config, double duty_des, double vol_des, double h_des, 
 		double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des,
-		double max_q_htr, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des )
+		double max_q_htr_cold, double max_q_htr_hot, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des )
 {	
 	/* Author: Michael J. Wagner
 	Converted from Fortran (sam_mw_trough_Type251) to c++ in November 2012 by Ty Neises	*/
@@ -47,14 +47,15 @@ bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &flui
 	m_Thtr_cold_des = cold_htr_set_point_des;
 	m_dt_cold_des = dt_cold_des;
 	m_dt_hot_des = dt_hot_des;
-	m_max_q_htr = max_q_htr;
+	m_max_q_htr_cold = max_q_htr_cold;
+	m_max_q_htr_hot = m_max_q_htr_hot;
 
 	// Geometric Calculations
 	m_a_cs	= m_vol_des/(m_h_des*m_tank_pairs_des);		//[m2] Cross-sectional area of a single tank
 	m_dia	= pow( (m_a_cs/CSP::pi), 0.5)*2.;				//[m] The diameter of a single tank
 	
 	// Calculate heat loss coefficient
-	m_ua	= m_u_des*(m_a_cs + CSP::pi*m_dia*m_h_des)*m_tank_pairs_des;		// u [W/m2-K]
+	m_ua	= m_u_des*(m_a_cs + CSP::pi*m_dia*m_h_des)*m_tank_pairs_des;		//[W/K]
 
 	if( is_direct )
 		m_eff_des = m_UA_des = -1.2345;
@@ -212,6 +213,13 @@ bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &flui
 //}
 
 
+bool Storage_HX::hx_perf_q_transfer(bool is_hot_side_mdot, bool is_storage_side, double T_hot_in, double m_dot_known, double T_cold_in, double &q_trans)
+{
+	double eff, T_hot_out, T_cold_out, m_dot_solved;
+	eff = T_hot_out = T_cold_out = m_dot_solved = std::numeric_limits<double>::quiet_NaN();
+
+	return hx_performance(is_hot_side_mdot, is_storage_side, T_hot_in, m_dot_known, T_cold_in, eff, T_hot_out, T_cold_out, q_trans, m_dot_solved);
+}
 
 bool Storage_HX::hx_performance( bool is_hot_side_mdot, bool is_storage_side,  double T_hot_in, double m_dot_known, double T_cold_in, 
 							double &eff, double &T_hot_out, double &T_cold_out, double &q_trans, double &m_dot_solved )
@@ -375,18 +383,26 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 
 	// If the temperature of the fluid in the tank is less than the 
 	// aux heater set point, heat the fluid in - and passing through the tank. MJW
-	double htr_set_point, Q_vol, Q_flow;
+	double htr_set_point, max_q_htr, Q_vol, Q_flow;
 	
-	if( is_hot_tank )	htr_set_point = m_Thtr_hot_des;
-	else				htr_set_point = m_Thtr_cold_des;
+	if( is_hot_tank )
+	{
+		htr_set_point = m_Thtr_hot_des;
+		max_q_htr = m_max_q_htr_hot;
+	}
+	else
+	{
+		htr_set_point = m_Thtr_cold_des;
+		max_q_htr = m_max_q_htr_cold;
+	}
 
 	if( T_fin < htr_set_point)
 	{
 		Q_vol	= cp*vol_fin*rho/dt*(htr_set_point-T_fin)/(1.E6);	// MW  4/30/12 - Fixed unit conversion
 		Q_flow	= cp*m_dot_out*(htr_set_point-T_fin)/(1.E6);		// MW  4/30/12 - Fixed unit conversion
     
-		q_heater = min(Q_flow+Q_vol, m_max_q_htr);					// MW
-		T_fin	= T_prev + dt * min(Q_vol*1.e6, m_max_q_htr*1.e6)/(cp*rho*vol_fin);
+		q_heater = min(Q_flow+Q_vol, max_q_htr);					// MW
+		T_fin	= T_prev + dt * min(Q_vol*1.e6, max_q_htr*1.e6)/(cp*rho*vol_fin);
 		T_ave	=(T_fin + T_prev)/2.;
 	}
 	else
