@@ -1895,7 +1895,7 @@ public:
 					if (en_batt && (ac_or_dc == 0) )
 					{
 						batt.advance(*this, idx, hour, jj, dcpwr_net*0.001*ts_hour, cur_load*ts_hour);
-						dcpwr_net = 1000*batt.outGenEnergy[idx]/ts_hour;
+						dcpwr_net = 1000*batt.outGenPower[idx];
 					}
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
@@ -1980,7 +1980,7 @@ public:
 					if (en_batt && ac_or_dc == 1)
 					{
 						batt.advance(*this, idx, hour, jj, p_gen[idx]*ts_hour, cur_load*ts_hour);
-						p_gen[idx] = batt.outGenEnergy[idx]/ts_hour;
+						p_gen[idx] = batt.outGenPower[idx];
 					}
 
 					// accumulate hourly PV system generation too
