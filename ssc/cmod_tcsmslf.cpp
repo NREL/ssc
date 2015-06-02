@@ -512,7 +512,8 @@ public:
 		set_unit_value(controller, "hot_tank_Thtr", (as_double("T_loop_out") - 100.0));
 		// Q_TES_htr = 1.5*TES_tank_vol/1000.;
 		//set_unit_value_ssc_double(controller, "tank_max_heat"); // Q_TES_htr);
-		set_unit_value(controller, "tank_max_heat", (1.5 * as_double("vol_Tank") / 1000.0));
+		set_unit_value(controller, "cold_tank_max_heat", (1.5 * as_double("vol_Tank") / 1000.0));
+		set_unit_value(controller, "hot_tank_max_heat", (1.5 * as_double("vol_Tank") / 1000.0));
 		set_unit_value_ssc_double(controller, "T_field_in_des"); // T_cold_des);
 		set_unit_value_ssc_double(controller, "T_field_out_des" ); // T_hot_des);
 		set_unit_value_ssc_double(controller, "q_pb_design" ); // Q_cycle_des);
