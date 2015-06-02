@@ -4,6 +4,7 @@
 #include <limits>
 #include <vector>
 #include <algorithm>
+#include <string>
 #include <math.h>
 #include "CO2_properties.h"
 
