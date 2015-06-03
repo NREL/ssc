@@ -1476,7 +1476,7 @@ public:
 //		ssc_number_t *p_grid = allocate("grid", nrec*nyears);
 		
 //		ssc_number_t *p_hourlygen = allocate("hourly_energy", 8760);
-		ssc_number_t *p_hourlygen = allocate("hourly_gen", 8760*nyears);
+//		ssc_number_t *p_hourlygen = allocate("hourly_gen", 8760*nyears);
 //		ssc_number_t *p_hourlygrid = allocate("hourly_grid", 8760);
 
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec*nyears);
@@ -1524,6 +1524,9 @@ public:
 
 		size_t idx = 0;
 		size_t hour = 0;
+
+		double annual_energy = 0;
+
 		// lifetime analysis over nyears
 		for (int iyear = 0; iyear < nyears; iyear++)
 		{
@@ -1984,7 +1987,9 @@ public:
 					}
 
 					// accumulate hourly PV system generation too
-					p_hourlygen[hour+iyear*8760] += (ssc_number_t)(p_gen[idx] * ts_hour);
+//					p_hourlygen[hour+iyear*8760] += (ssc_number_t)(p_gen[idx] * ts_hour);
+					// accumulate annual energy
+					annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
 					idx++;
 				}
 
@@ -2099,9 +2104,8 @@ public:
 		assign("system_use_lifetime_output", var_data((ssc_number_t) pv_lifetime_simulation));
 //		double annual_energy = accumulate_annual("hourly_energy", "annual_energy");
 //		double annual_energy = accumulate_annual("hourly_gen", "annual_energy");
-		double annual_energy = 0;
-		for (int i = 0; i < 8760; i++)
-			annual_energy += p_hourlygen[i];
+//		for (int i = 0; i < 8760; i++)
+//			annual_energy += p_hourlygen[i];
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 
 

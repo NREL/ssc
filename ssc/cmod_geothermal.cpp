@@ -138,7 +138,7 @@ static var_info _cm_vtab_geothermal[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "first_year_output", "First Year Output", "kWh", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kWh", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_gen",                      "Hourly energy",                                       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+//    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_gen",                      "Hourly energy",                                       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
@@ -382,7 +382,7 @@ public:
 			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-			geo_outputs.maf_hourly_power = allocate("hourly_gen", geo_inputs.mi_ProjectLifeYears * 8760);
+//			geo_outputs.maf_hourly_power = allocate("hourly_gen", geo_inputs.mi_ProjectLifeYears * 8760);
 			ssc_number_t *pgen = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
 
 

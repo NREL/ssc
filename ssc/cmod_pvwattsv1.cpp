@@ -139,8 +139,8 @@ public:
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
 		ssc_number_t *p_ac = allocate("ac", 8760);		
-		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
-		ssc_number_t *p_gen = allocate("gen", 8760);
+		ssc_number_t *p_hourly_energy = allocate("gen", 8760);
+//		ssc_number_t *p_gen = allocate("gen", 8760);
 		ssc_number_t *p_tcell = allocate("tcell", 8760);
 		ssc_number_t *p_poa = allocate("poa", 8760);
 		ssc_number_t *p_tpoa = allocate("tpoa", 8760);
@@ -354,7 +354,7 @@ public:
 				p_dc[i] = (ssc_number_t)dc;
 				p_ac[i] = (ssc_number_t)ac;
 				p_hourly_energy[i] = (ssc_number_t)(ac*haf(i) * 0.001f);
-				p_gen[i] = (ssc_number_t)(ac*haf(i) * 0.001f);
+//				p_gen[i] = (ssc_number_t)(ac*haf(i) * 0.001f);
 			}
 		
 			i++;
@@ -363,7 +363,7 @@ public:
 		ssc_number_t *poam = accumulate_monthly( "poa", "poa_monthly", 0.001 );
 		accumulate_monthly( "dc", "dc_monthly", 0.001 );
 		accumulate_monthly( "ac", "ac_monthly", 0.001 );		
-		accumulate_monthly( "hourly_gen", "monthly_energy" );
+		accumulate_monthly( "gen", "monthly_energy" );
 
 		ssc_number_t *solrad = allocate( "solrad_monthly", 12 );
 		ssc_number_t solrad_ann = 0;
@@ -376,7 +376,7 @@ public:
 
 
 		accumulate_annual( "ac", "ac_annual", 0.001 );
-		accumulate_annual( "hourly_gen", "annual_energy" ); 
+		accumulate_annual( "gen", "annual_energy" ); 
 
 		assign( "location", var_data( wf.location ) );
 		assign( "city", var_data( wf.city ) );
