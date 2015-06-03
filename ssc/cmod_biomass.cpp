@@ -889,8 +889,8 @@ public:
 
 		double rad_eff_loss = fabs(result / 100.0);
 
-		ssc_number_t *_enet = allocate("hourly_gen", 8760);
-		ssc_number_t *_gen = allocate("gen", 8760);
+		ssc_number_t *_enet = allocate("gen", 8760);
+//		ssc_number_t *_gen = allocate("gen", 8760);
 		ssc_number_t *_qtpb = allocate("hourly_q_to_pb", 8760);
 		std::vector<double> _tnorm(8760, 0.0);
 		std::vector<double> _gross(8760, 0.0);
@@ -1001,7 +1001,7 @@ public:
 			total_etaa += eta_adj / 8760.0; //for loss diagram
 			_qtpb[i] = Qtopb;
 			_enet[i] = Wnet*haf(i);
-			_gen[i] = _enet[i];
+//			_gen[i] = _enet[i];
 			_tnorm[i] = Tnorm;
 			capfactor[iMonth] += capfact / (nday[iMonth] * 24.0);
 			heatrate_hhv[iMonth] += heatrat_hhv / (nday[iMonth] * 24.0);
@@ -1253,7 +1253,7 @@ public:
 		//samsim_set_da((long)this, "system.hourly.pbeta", _pbeta.data(), 8760);
 
 		//monthly
-		accumulate_monthly("hourly_gen", "monthly_energy");
+		accumulate_monthly("gen", "monthly_energy");
 		accumulate_monthly("hourly_q_to_pb", "monthly_q_to_pb");
 		//samsim_set_da((long)this, "system.monthly.pb_eta", _etaa, 12);
 		//samsim_set_da((long)this, "system.monthly.boiler_eff", boiler_eff, 12);
@@ -1274,7 +1274,7 @@ public:
 		//samsim_set_da((long)this, "system.monthly.temp_c", temp_c, 12);
 
 
-		accumulate_annual("hourly_gen", "annual_energy");
+		accumulate_annual("gen", "annual_energy");
 
 
 		//annual

@@ -369,7 +369,7 @@ public:
 		ssc_number_t *p_gen = allocate("gen", nrec);
 
 //		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
-		ssc_number_t *p_hourly_gen = allocate("hourly_gen", 8760);
+//		ssc_number_t *p_hourly_gen = allocate("hourly_gen", 8760);
 //		ssc_number_t *p_hourly_grid = allocate("hourly_grid", 8760);
 
 		double ts_hour = 1.0/step_per_hour;
@@ -445,7 +445,7 @@ public:
 					//p_hourly_energy[hour] += p_energy[idx] * 0.001f;
 //					p_hourly_grid[hour] += p_energy[idx] * 0.001f;
 					p_gen[idx] = (ssc_number_t)(ac * haf(hour) *0.001f); // W to kW
-					p_hourly_gen[hour] += p_gen[idx] * (ssc_number_t)ts_hour;
+//					p_hourly_gen[hour] += p_gen[idx] * (ssc_number_t)ts_hour;
 				}
 						
 				idx++;
@@ -457,7 +457,8 @@ public:
 		accumulate_monthly( "dc", "dc_monthly", 0.001*ts_hour );
 		accumulate_monthly( "ac", "ac_monthly", 0.001*ts_hour );
 //		accumulate_monthly("hourly_energy", "monthly_energy");
-		accumulate_monthly("hourly_gen", "monthly_energy");
+//		accumulate_monthly("hourly_gen", "monthly_energy");
+		accumulate_monthly("gen", "monthly_energy", ts_hour);
 
 		ssc_number_t *poam = accumulate_monthly( "poa", "poa_monthly", 0.001*ts_hour ); // convert to energy
 		ssc_number_t *solrad = allocate( "solrad_monthly", 12 );
@@ -471,7 +472,7 @@ public:
 
 		accumulate_annual( "ac", "ac_annual", 0.001*ts_hour );
 //		accumulate_annual("hourly_energy", "annual_energy");
-		accumulate_annual("hourly_gen", "annual_energy");
+		accumulate_annual("gen", "annual_energy", ts_hour);
 
 		assign("system_use_lifetime_output", 0);
 		assign( "location", var_data( wf.location ) );

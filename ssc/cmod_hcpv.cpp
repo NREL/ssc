@@ -358,8 +358,8 @@ public:
 		ssc_number_t *p_dc = allocate("hourly_dc", 8760);
 		ssc_number_t *p_dcnet = allocate("hourly_dc_net", 8760);
 		ssc_number_t *p_ac = allocate("hourly_ac", 8760);
-		ssc_number_t *p_enet = allocate("hourly_gen", 8760); // kWh
-		ssc_number_t *p_gen = allocate("gen", 8760); // kW
+		ssc_number_t *p_enet = allocate("gen", 8760); // kWh
+//		ssc_number_t *p_gen = allocate("gen", 8760); // kW
 
 		double dc_loss_stowing = 0;
 		double ac_loss_tracker = 0;
@@ -538,7 +538,7 @@ public:
 				p_dcnet[istep] = (ssc_number_t)dcpwr * 0.001; // kwh
 				p_ac[istep] = (ssc_number_t)acgross * 0.001; // kwh
 				p_enet[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
-				p_gen[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
+//				p_gen[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
 
 			}
 
@@ -555,7 +555,7 @@ public:
 			throw exec_error("hcpv", util::format("failed to simulate all 8760 hours"));
 
 		// annual accumulations
-		accumulate_annual("hourly_gen", "annual_energy");
+		accumulate_annual("gen", "annual_energy");
 		accumulate_annual("hourly_beam", "annual_beam");
 		accumulate_annual("hourly_input_radiation", "annual_input_radiation");
 		accumulate_annual("hourly_dc", "annual_dc");
@@ -563,7 +563,7 @@ public:
 		accumulate_annual("hourly_ac", "annual_ac");
 
 		// monthly accumulations
-		accumulate_monthly("hourly_gen", "monthly_energy");
+		accumulate_monthly("gen", "monthly_energy");
 		accumulate_monthly("hourly_beam", "monthly_beam");
 		accumulate_monthly("hourly_input_radiation", "monthly_input_radiation");
 		accumulate_monthly("hourly_dc_net", "monthly_dc_net");

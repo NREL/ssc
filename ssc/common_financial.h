@@ -17,12 +17,13 @@ private:
 	std::string m_error;
 	util::matrix_t<double> m_cf;
 	std::vector<double> m_degradation;
+	std::vector<double> m_hourly_energy;
 	int m_nyears;
 
 public:
 	dispatch_calculations() {};
-	dispatch_calculations(compute_module *cm, std::vector<double>& degradation);
-	bool init(compute_module *cm, std::vector<double>& degradation);
+	dispatch_calculations(compute_module *cm, std::vector<double>& degradation, std::vector<double>& hourly_energy);
+	bool init(compute_module *cm, std::vector<double>& degradation, std::vector<double>& hourly_energy);
 	bool setup();
 	bool compute_outputs(std::vector<double>& ppa);
 	int operator()(size_t time);
@@ -35,6 +36,26 @@ public:
 	double tod_energy(int period, int year);
 	double tod_energy_value(int period, int year);
 };
+
+
+class hourly_energy_calculation
+{
+private:
+	compute_module *m_cm;
+	std::vector<double> m_hourly_energy;
+	std::string m_error;
+	int m_nyears;
+
+public:
+	bool calculate(compute_module *cm);
+	std::vector<double>& hourly_energy() {
+		return m_hourly_energy;
+	}
+	std::string error() { return m_error; }
+};
+
+
+
 
 /*
 extern var_info vtab_advanced_financing_cost[];
