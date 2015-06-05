@@ -928,7 +928,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_prev_charging = false;
 	_charging = false;
 	_e_max_discharge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_min*0.01)*watt_to_kilowatt;
-	_e_max_charge = Battery->battery_voltage()*(Battery->battery_charge_maximum()*SOC_max*0.01 - Battery->battery_charge_total())*watt_to_kilowatt;
+	_e_max_charge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_max*0.01)*watt_to_kilowatt;
 
 	// efficiency
 	_charge_accumulated = _Battery->battery_charge_total()*_Battery->battery_voltage()*watt_to_kilowatt;
