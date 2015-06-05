@@ -27,6 +27,7 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
@@ -282,7 +283,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	
 
-	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), 
+	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), 
 		ac_or_dc, dc_dc, ac_dc, dc_ac,
 		dm_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
 }
