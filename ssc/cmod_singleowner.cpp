@@ -2516,13 +2516,8 @@ public:
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)
 	{
-		if (cf.at(CF_debt_payment_total, i) == 0.0)
-			cf.at(CF_pretax_dscr, i) = std::numeric_limits<double>::quiet_NaN();
-		else {
-			if (cf.at(CF_debt_payment_total, i) == 0) 
-				cf.at(CF_pretax_dscr, i) = 0;
-			else cf.at(CF_pretax_dscr, i) = cf.at(CF_cash_for_ds, i) / cf.at(CF_debt_payment_total, i);
-		}
+		if (cf.at(CF_debt_payment_total, i) == 0.0) cf.at(CF_pretax_dscr, i) = 0; //cf.at(CF_pretax_dscr, i) = std::numeric_limits<double>::quiet_NaN();
+		else cf.at(CF_pretax_dscr, i) = cf.at(CF_cash_for_ds, i) / cf.at(CF_debt_payment_total, i);
 	}
 	double min_dscr = min_cashflow_value(CF_pretax_dscr, nyears);
 	assign("min_dscr", var_data((ssc_number_t)min_dscr));
