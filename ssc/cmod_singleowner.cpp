@@ -241,11 +241,11 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "pbi_oth_for_ds",                         "Other PBI available for debt service",     "0/1",      "",                      "Cash Incentives",      "?=0",                       "BOOLEAN",                                         "" },
                                                                                   
 /* intermediate outputs */                                                        
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_closing_total",                "Total debt closing cost",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_upfront",                      "Debt up-front fee",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancingperwatt",               "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Initial cost",                   "$",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installedperwatt",                  "Installed cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancing",                      "Total installed cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Total capital cost",                   "$",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installedperwatt",                  "Total capital cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "nominal_discount_rate",                  "Nominal discount rate",            "%",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "prop_tax_assessed_value",                "Assessed value of property for tax purposes","$", "",				  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "salvage_value",			              "Net pre-tax cash salvage value",	"$",	 "",					  "Intermediate Costs",			 "*",                         "",                             "" },
@@ -605,7 +605,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_disbursement_equip3",                 "Reserve disubrsement major equipment 3",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 		
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_cash_for_ds",                         "Cash available for debt service (CAFDS)",                       "$",            "",                      "Cash Flow Debt Sizing",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pv_interest_factor",                  "Present value interest factor for CAFDS",             "$",            "",                      "Cash Flow Debt Repayment",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pv_interest_factor",                  "Present value interest factor for CAFDS",             "",            "",                      "Cash Flow Debt Repayment",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pv_cash_for_ds",                      "Present value of CAFDS",                       "$",            "",                      "Cash Flow Debt Sizing",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_debt_size",                           "Size of debt",                       "$",            "",                      "Cash Flow Debt Sizing",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
@@ -629,7 +629,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_me2cs",                       "Reserve capital spending major equipment 2",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_me3cs",                       "Reserve capital spending major equipment 3",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_mecs",                        "Reserve capital spending major equipment total",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_investing_activities",        "After-tax annual costs",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_investing_activities",        "Cash flow from investing activities",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "issuance_of_equity",	                  "Issuance of equity",	"$",	 "",					  "Cash Flow Pre Tax",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_financing_activities",        "Cash flow from financing activities",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -747,7 +747,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Initial cost less cash incentives", "$", "", "", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_pretax_dscr", "Pre-tax DSCR", "", "", "DSCR", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_pretax_dscr", "DSCR (pre-tax)", "", "", "DSCR", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
 var_info_invalid };
@@ -969,7 +969,7 @@ public:
 		double cost_debt_closing = as_double("cost_debt_closing");
 		double cost_debt_fee_frac = as_double("cost_debt_fee")*0.01;
 		double cost_other_financing = as_double("cost_other_financing");
-		double cost_debt_closing_total;
+		double cost_debt_upfront;
 
 
 		double constr_total_financing = as_double("construction_financing_cost");
@@ -1761,6 +1761,7 @@ public:
 				- cbi_sta_amount
 				- cbi_uti_amount
 				- cbi_oth_amount;
+			cost_debt_upfront = debt_frac * cost_installed * cost_debt_fee_frac; // for cash flow output
 			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac; 
 			loan_amount = debt_frac * cost_installed;
 
@@ -1927,9 +1928,9 @@ public:
 				cf.at(CF_reserve_debtservice, 0) +
 				constr_total_financing +
 				cf.at(CF_reserve_om, 0);
+			
+			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 
-
-			cost_debt_closing_total = cost_debt_closing + cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 			cost_installed = cost_prefinancing + cost_financing
 				- ibi_fed_amount
 				- ibi_sta_amount
@@ -2517,8 +2518,11 @@ public:
 	{
 		if (cf.at(CF_debt_payment_total, i) == 0.0)
 			cf.at(CF_pretax_dscr, i) = std::numeric_limits<double>::quiet_NaN();
-		else
-			cf.at(CF_pretax_dscr, i) = cf.at(CF_cash_for_ds, i) / cf.at(CF_debt_payment_total, i);
+		else {
+			if (cf.at(CF_debt_payment_total, i) == 0) 
+				cf.at(CF_pretax_dscr, i) = 0;
+			else cf.at(CF_pretax_dscr, i) = cf.at(CF_cash_for_ds, i) / cf.at(CF_debt_payment_total, i);
+		}
 	}
 	double min_dscr = min_cashflow_value(CF_pretax_dscr, nyears);
 	assign("min_dscr", var_data((ssc_number_t)min_dscr));
@@ -2593,7 +2597,7 @@ public:
 		assign("cost_installed", var_data((ssc_number_t)cost_installed));
 
 		assign( "cost_prefinancing", var_data((ssc_number_t) cost_prefinancing ) );
-		assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
+		//assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
 
 		assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
 
@@ -2609,7 +2613,7 @@ public:
 
 
 		assign("cost_financing", var_data((ssc_number_t) cost_financing));
-		assign("cost_debt_closing_total", var_data((ssc_number_t) cost_debt_closing_total));
+		assign("cost_debt_upfront", var_data((ssc_number_t) cost_debt_upfront));
 
 
 		assign( "size_of_equity", var_data((ssc_number_t) size_of_equity) );
