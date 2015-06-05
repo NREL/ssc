@@ -286,8 +286,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	m_ncall++;
 
 	// Get sim info
-	double time = sim_info.m_time;
-	double step_sec = sim_info.m_step;
+	double time = sim_info.m_time;			//[s]
+	double step_sec = sim_info.m_step;		//[s]
 	//int ncall = p_sim_info->m_ncall;
 
 	// Check and convert inputs
@@ -431,8 +431,41 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cond = 0.0;
 		
 		// Cycle is off, so reset startup parameters!
-		m_startup_time_remain_calc = ms_params.m_startup_time;
-		m_startup_energy_remain_calc = m_startup_energy_required;
+		m_startup_time_remain_calc = ms_params.m_startup_time;			//[hr]
+		m_startup_energy_remain_calc = m_startup_energy_required;		//[kWt-hr]
+
+		break;
+
+	case E_csp_power_cycle_modes::STARTUP_CONTROLLED:
+		// Thermal input can be controlled (e.g. TES mass flow rate is adjustable, rather than direct connection
+		//     to the receiver), so find the mass flow rate that results in the required energy input achieved
+		//     simultaneously with the required startup time. If the timestep is less than the required startup time
+		//     scale the mass flow rate appropriately
+
+		double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+
+		double step_hr = step_sec / 3600.0;		//[hr]
+
+		time_required_su = fmin(step_hr, m_startup_energy_remain_prev);
+
+		double su_frac = time_required_su / m_startup_energy_remain_prev;
+
+		double q_dot_su_required = m_startup_energy_required / step_hr;		//[kWt]
+		double m_dot_htf_required = q_dot_su_required / (c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref));		
+
+
+
+		// Set other output values
+		P_cycle = 0.0;
+		eta = 0.0;
+		T_htf_cold = ms_params.m_T_htf_cold_ref;
+		m_dot_demand = 0.0;
+		m_dot_makeup = 0.0;
+		W_cool_par = 0.0;
+		f_hrsys = 0.0;
+		P_cond = 0.0;
+
+
 
 		break;
 	

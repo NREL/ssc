@@ -32,7 +32,10 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	mv_pc_eta.resize(0);
 	mv_pc_W_gross.resize(0);
 	mv_pc_q_startup.resize(0);
-	
+	mv_tes_q_losses.resize(0);
+	mv_tes_q_heater.resize(0);
+	mv_tes_T_hot.resize(0);
+	mv_tes_T_cold.resize(0);	
 
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
@@ -68,6 +71,9 @@ void C_csp_solver::init()
 	m_cycle_cutoff_frac = solved_params.m_cutoff_frac;		//[-]
 	m_cycle_sb_frac_des = solved_params.m_sb_frac;			//[-]
 	m_cycle_T_htf_hot_des = solved_params.m_T_htf_hot_ref+273.15;	//[K] convert from C
+		
+		// Thermal Storage
+	m_is_tes = mc_tes.does_tes_exist();
 }
 
 
@@ -113,10 +119,21 @@ void C_csp_solver::simulate()
 		pc_operating_state = mc_power_cycle.get_operating_state();
 
 		// Get TES operating state info
-		//bool is_tes_charging_avail = false;
-		//bool is_tes_discharging_avail = false;
-		double q_dot_tes_dc = 0.0;			//[MW]
-		double q_dot_tes_ch = 0.0;			//[MW]
+		double q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est;	//[MW, kg/s, K]
+		q_dot_tes_dc = m_dot_field_dc_est = T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
+		mc_tes.discharge_avail_est(m_T_htf_cold_des, mc_sim_info.m_step, q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est);
+		
+		double q_dot_tes_ch, m_dot_field_ch_est, T_cold_field_ch_est;	//[MW, kg/s, K]
+		q_dot_tes_ch = m_dot_field_ch_est = T_cold_field_ch_est = std::numeric_limits<double>::quiet_NaN();
+		mc_tes.charge_avail_est(m_cycle_T_htf_hot_des, mc_sim_info.m_step, q_dot_tes_ch, m_dot_field_ch_est, T_cold_field_ch_est);
+
+
+
+		q_dot_tes_dc = q_dot_tes_ch = 0.0;
+
+
+
+
 
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
 		mc_weather.timestep_call(mc_sim_info);
@@ -844,6 +861,12 @@ void C_csp_solver::simulate()
 				{
 					// If defocus solution has converged, then q_pc = q_pc_max, and shouldn't need to double-check anything...
 
+					// Solve for idle storage
+					if( m_is_tes )
+					{
+						mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_tes_outputs);
+					}
+
 					are_models_converged = true;
 				}
 				else
@@ -946,6 +969,10 @@ void C_csp_solver::simulate()
 					}
 					else
 					{	// Solved successfully within bounds of this operation mode: move on
+						if( m_is_tes )
+						{
+							mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_tes_outputs);
+						}
 
 						are_models_converged = true;
 					}
@@ -1007,6 +1034,13 @@ void C_csp_solver::simulate()
 					mc_pc_inputs,
 					mc_pc_outputs,
 					mc_sim_info);
+
+				if( m_is_tes )
+				{
+					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_tes_outputs);
+				}
+
+				are_models_converged = true;
 
 				break;
 
@@ -1073,6 +1107,10 @@ void C_csp_solver::simulate()
 					mc_sim_info.m_time = time_previous + step_local;		//[s]
 				}
 
+				if( m_is_tes )
+				{
+					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_tes_outputs);
+				}
 
 				are_models_converged = true;
 
@@ -1134,6 +1172,11 @@ void C_csp_solver::simulate()
 					mc_pc_outputs,
 					mc_sim_info);
 
+				if( m_is_tes )
+				{
+					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_tes_outputs);
+				}
+
 				are_models_converged = true;
 
 				break;
@@ -1171,12 +1214,17 @@ void C_csp_solver::simulate()
 					mc_pc_outputs,
 					mc_sim_info);
 
+				if( m_is_tes )
+				{
+					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_tes_outputs);
+				}
+
 				are_models_converged = true;
 			
 				break;		// exit switch() after CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
 
 			default: 
-				double catch_here_for_now = 1.23;
+				throw(C_csp_exception("Operation mode not recognized",""));
 
 			}	// End switch() on receiver operating modes
 		
@@ -1186,7 +1234,7 @@ void C_csp_solver::simulate()
 		// Timestep solved: run post-processing, converged()		
 		mc_collector_receiver.converged();
 		mc_power_cycle.converged();
-
+		mc_tes.converged();
 				
 		// Don't converge weather file if working with partial timesteps
 		if( !is_sim_timestep_complete )
@@ -1219,6 +1267,10 @@ void C_csp_solver::simulate()
 		mv_pc_eta.push_back(mc_pc_outputs.m_eta);					//[-] Power cycle efficiency (gross - no parasitics outside of power block)
 		mv_pc_W_gross.push_back(mc_pc_outputs.m_P_cycle*step_hr);	//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
 		mv_pc_q_startup.push_back(mc_pc_outputs.m_q_startup);		//[MWt-hr] Power cycle startup thermal energy
+		mv_tes_q_losses.push_back(mc_tes_outputs.m_q_dot_loss*step_hr);	//[MWt-hr] TES thermal losses to environment
+		mv_tes_q_heater.push_back(mc_tes_outputs.m_q_heater*step_hr);	//[MWt-hr] Energy into TES from heaters (hot+cold) to maintain tank temperatures
+		mv_tes_T_hot.push_back(mc_tes_outputs.m_T_hot_final-273.15);	//[C] TES hot temperature at end of timestep
+		mv_tes_T_cold.push_back(mc_tes_outputs.m_T_cold_final-273.15);	//[C] TES cold temperature at end of timestep
 
 		// Track time and step forward
 		is_sim_timestep_complete = true;

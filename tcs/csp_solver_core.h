@@ -204,7 +204,8 @@ public:
 		STARTUP = 0,
 		ON,
 		STANDBY,
-		OFF	
+		OFF,
+		STARTUP_CONTROLLED
 	};
 
 	struct S_control_inputs
@@ -285,10 +286,32 @@ public:
 
 	~C_csp_tes(){};
 
+	struct S_csp_tes_outputs
+	{
+		double m_q_heater;	//[MJ] Heating power required to keep tanks at a minimum temperature
+		double m_q_dot_loss;	//[MW] Storage thermal losses
+		double m_T_hot_final;	//[K] Hot temperature at end of timestep
+		double m_T_cold_final;	//[K] Cold temperature at end of timestep
+	
+		S_csp_tes_outputs()
+		{
+			m_q_heater = m_q_dot_loss = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	virtual void init() = 0;
 
-	virtual double q_dot_dc_avail() = 0;
+	virtual bool does_tes_exist() = 0;
+	
+	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) = 0;
+	
+	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est) = 0;
 
+	virtual bool discharge(double m_dot_htf_in /*kg/s*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/) = 0;
+	
+	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
+	
+	virtual void converged() = 0;
 };
 
 class C_csp_solver
@@ -308,6 +331,8 @@ private:
 	C_csp_power_cycle::S_control_inputs mc_pc_inputs;
 	C_csp_power_cycle::S_csp_pc_outputs mc_pc_outputs;
 
+	C_csp_tes::S_csp_tes_outputs mc_tes_outputs;
+
 	C_csp_solver_sim_info mc_sim_info;
 
 	// member string for exception messages
@@ -324,6 +349,9 @@ private:
 	double m_cycle_cutoff_frac;			//[-]
 	double m_cycle_sb_frac_des;			//[-]
 	double m_cycle_T_htf_hot_des;		//[K]
+
+		// Storage logic
+	bool m_is_tes;			//[-] True: plant has storage
 
 	void init_independent();
 
@@ -384,7 +412,10 @@ public:
 	std::vector<double> mv_pc_eta;			//[-] Power cycle efficiency (gross - no parasitics outside of power block)
 	std::vector<double> mv_pc_W_gross;		//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
 	std::vector<double> mv_pc_q_startup;	//[MWt-hr] Power cycle startup thermal energy
-
+	std::vector<double> mv_tes_q_losses;	//[MWt-hr] TES thermal losses to environment
+	std::vector<double> mv_tes_q_heater;	//[MWt-hr] Energy into TES from heaters (hot+cold) to maintain tank temperatures
+	std::vector<double> mv_tes_T_hot;		//[C] TES hot temperature at end of timestep
+	std::vector<double> mv_tes_T_cold;		//[C] TES cold temperature at end of timestep
 };
 
 
