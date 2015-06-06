@@ -382,8 +382,8 @@ public:
 			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-//			geo_outputs.maf_hourly_power = allocate("hourly_gen", geo_inputs.mi_ProjectLifeYears * 8760);
-			ssc_number_t *pgen = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
+			geo_outputs.maf_hourly_power = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
+//			ssc_number_t *pgen = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
 
 
 			// TODO - implement performance factors 
@@ -416,7 +416,7 @@ public:
 			for (int i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)
 			{
 				annual_energy += geo_outputs.maf_hourly_power[i];
-				pgen[i] = geo_outputs.maf_hourly_power[i];
+//				pgen[i] = geo_outputs.maf_hourly_power[i];
 			}
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
