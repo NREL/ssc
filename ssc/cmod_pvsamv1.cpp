@@ -1988,8 +1988,10 @@ public:
 
 					// accumulate hourly PV system generation too
 //					p_hourlygen[hour+iyear*8760] += (ssc_number_t)(p_gen[idx] * ts_hour);
-					// accumulate annual energy
-					annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
+					// accumulate first year annual energy
+					if (iyear==0)
+						annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
+
 					idx++;
 				}
 
