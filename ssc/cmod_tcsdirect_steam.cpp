@@ -901,7 +901,8 @@ public:
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsdirect_steam", util::format("there was a problem returning the results from the simulation.") );
 
-		set_output_array("hourly_gen", "P_out_net", 8760, 1000.0); // MWh to kWh
+//		set_output_array("hourly_gen", "P_out_net", 8760, 1000.0); // MWh to kWh
+		set_output_array("gen", "P_out_net", 8760, 1000.0); // MWh to kWh
 
 		//calculated field parameters
 		int nr, nc;
@@ -928,7 +929,7 @@ public:
 		assign("land_area", var_data((ssc_number_t)get_unit_value_number(type_hel_field, "land_area")));
 		//-----------
 
-		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
+		accumulate_annual("gen", "annual_energy"); // already in kWh
 
 		accumulate_annual("P_cycle", "annual_W_cycle_gross", 1000.0);	// convert to kWh
 
@@ -943,8 +944,9 @@ public:
 		if (!haf.setup())
 			throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 		// hourly_energy output
-		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
-		ssc_number_t *p_gen = allocate("gen", 8760);
+		ssc_number_t *p_hourly_energy = allocate("gen", 8760);
+		//ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
+		//		ssc_number_t *p_gen = allocate("gen", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("P_out_net", &count);//MWh
@@ -954,10 +956,10 @@ public:
 		for (size_t i = 0; i < count; i++)
 		{
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
-			p_gen[i] = p_hourly_energy[i];
+//			p_gen[i] = p_hourly_energy[i];
 		}
 
-		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
+		accumulate_annual("gen", "annual_energy"); // already in kWh
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;

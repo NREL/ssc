@@ -282,8 +282,9 @@ public:
 
 		ssc_number_t *Mode = allocate("mode", nrec);
 
-		ssc_number_t *out_hourly_energy = allocate("hourly_gen", 8760);
-		ssc_number_t *p_gen = allocate("gen", 8760);
+		ssc_number_t *out_hourly_energy = allocate("gen", 8760);
+//		ssc_number_t *out_hourly_energy = allocate("hourly_gen", 8760);
+//		ssc_number_t *p_gen = allocate("gen", 8760);
 
 		double temp_sum = 0.0;
 		size_t temp_count = 0;
@@ -709,7 +710,7 @@ public:
 
 				// accumulate hourly energy (kWh) (was initialized to zero when allocated)
 				out_hourly_energy[hour] += out_energy[idx] * 0.001f;
-				p_gen[hour] += out_energy[idx] * 0.001f;
+//				p_gen[hour] += out_energy[idx] * 0.001f;
 
 				idx++;
 			}
@@ -718,12 +719,14 @@ public:
 		accumulate_monthly( "Q_deliv", "monthly_Q_deliv", 0.001*ts_hour );
 		accumulate_monthly( "Q_aux", "monthly_Q_aux", 0.001*ts_hour );
 		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly", 0.001*ts_hour );
-		accumulate_monthly( "hourly_gen", "monthly_energy" );
-				
+//		accumulate_monthly("hourly_gen", "monthly_energy");
+		accumulate_monthly("gen", "monthly_energy");
+
 		accumulate_annual( "Q_deliv", "annual_Q_deliv", 0.001*ts_hour );
 		accumulate_annual( "Q_aux", "annual_Q_aux", 0.001*ts_hour );
 		double auxonly = accumulate_annual( "Q_auxonly", "annual_Q_auxonly", 0.001*ts_hour );
-		double deliv = accumulate_annual( "hourly_gen", "annual_energy" );
+//		double deliv = accumulate_annual("hourly_gen", "annual_energy");
+		double deliv = accumulate_annual("gen", "annual_energy");
 
 		assign("solar_fraction", var_data( (ssc_number_t)(deliv/auxonly) ));
 
