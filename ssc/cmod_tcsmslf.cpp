@@ -700,8 +700,9 @@ public:
 			throw exec_error("tcsmslf", "failed to setup adjustment factors: " + haf.error());
 		
 		size_t count;
-		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
-		ssc_number_t *p_gen = allocate("gen", 8760);
+		ssc_number_t *p_hourly_energy = allocate("gen", 8760);
+		//ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
+		//		ssc_number_t *p_gen = allocate("gen", 8760);
 		ssc_number_t *timestep_energy_MW = as_array("W_net", &count);			//MW
 		char tstr[500];
 		std::string out_msg = "hourly energy count %d is incorrect (should be %d)";
@@ -715,7 +716,7 @@ public:
 			p_hourly_energy[i] = timestep_energy_MW[i] * 1000.0;	// convert to kW
 
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
-		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
+		accumulate_annual("gen", "annual_energy"); // already in kWh
 		accumulate_annual("P_cycle", "annual_W_cycle_gross", 1000); // convert from MWh to kWh
 		// Calculated outputs
 		ssc_number_t ae = as_number("annual_energy");
@@ -735,12 +736,12 @@ public:
 		for (size_t i = 0; i < count; i++)
 		{
 			p_hourly_energy[i] = p_hourly_energy[i] * (ssc_number_t)(haf(i));	// already in kWh
-			p_gen[i] = p_hourly_energy[i];
+//			p_gen[i] = p_hourly_energy[i];
 		}
 
 
-		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
-		accumulate_monthly("hourly_gen", "monthly_energy"); // already in kWh
+		accumulate_annual("gen", "annual_energy"); // already in kWh
+		accumulate_monthly("gen", "monthly_energy"); // already in kWh
 
 
 		double fuel_usage_mmbtu = 0;
