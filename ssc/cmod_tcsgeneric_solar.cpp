@@ -354,15 +354,16 @@ public:
 			throw exec_error("tcsgeneric_solar", "failed to setup adjustment factors: " + haf.error());
 
 
-		ssc_number_t *hourly = allocate("hourly_gen", count);
-		ssc_number_t *p_gen = allocate("gen", count);
+		ssc_number_t *hourly = allocate("gen", count);
+//		ssc_number_t *hourly = allocate("hourly_gen", count);
+//		ssc_number_t *p_gen = allocate("gen", count);
 		for (int i = 0; i < count; i++)
 		{
 			hourly[i] = enet[i] * 1000 * haf(i); // convert from MWh to kWh
-			p_gen[i] = hourly[i];
+//			p_gen[i] = hourly[i];
 		}
 
-		accumulate_annual("hourly_gen",        "annual_energy");
+		accumulate_annual("gen",        "annual_energy");
 		accumulate_annual("w_gr",                 "annual_w_gr",1000); // convert from MWh to kWh
 		accumulate_annual("q_sf",                 "annual_q_sf");
 		accumulate_annual("q_to_pb",              "annual_q_to_pb");
@@ -376,7 +377,7 @@ public:
 
 
 		// monthly accumulations
-		accumulate_monthly("hourly_gen",       "monthly_energy");
+		accumulate_monthly("gen",       "monthly_energy");
 		accumulate_monthly("w_gr",                "monthly_w_gr",1000); // convert from MWh to kWh
 		accumulate_monthly("q_sf",                "monthly_q_sf");
 		accumulate_monthly("q_to_pb",             "monthly_q_to_pb");

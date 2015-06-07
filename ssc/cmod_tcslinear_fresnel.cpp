@@ -546,23 +546,24 @@ public:
 		assign("conversion_factor", convfactor);
 
 		
-		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
-		ssc_number_t *p_gen = allocate("gen", 8760);
+		ssc_number_t *p_hourly_energy = allocate("gen", 8760);
+//		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
+//		ssc_number_t *p_gen = allocate("gen", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
 		if (count != 8760)
-			throw exec_error("tcslinear_fresnel", "hourly_gen count incorrect (should be 8760): " + count);
+			throw exec_error("tcslinear_fresnel", "gen count incorrect (should be 8760): " + count);
 
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
 		{
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i)*1000.0);
-			p_gen[i] = p_hourly_energy[i];
+//			p_gen[i] = p_hourly_energy[i];
 		}
 
-		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
-		accumulate_monthly("hourly_gen", "monthly_energy"); // already in kWh
+		accumulate_annual("gen", "annual_energy"); // already in kWh
+		accumulate_monthly("gen", "monthly_energy"); // already in kWh
 
 
 		double fuel_usage_mmbtu = 0;

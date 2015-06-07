@@ -531,7 +531,7 @@ public:
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("Enet", &count);//MWh
 		if (count != 8760)
-			throw exec_error("tcstrough_empirical", "hourly_gen count incorrect (should be 8760): " + count);
+			throw exec_error("tcstrough_empirical", "gen count incorrect (should be 8760): " + count);
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
 		{

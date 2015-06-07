@@ -474,8 +474,9 @@ public:
 		ssc_number_t collectors = as_number("n_ns") * as_number("n_ew");
 		ssc_number_t converter = collectors * 0.001; // convert from kWh per collector to MWh for the field
 
-		ssc_number_t *hourly = allocate("hourly_gen", count);
-		ssc_number_t *p_gen = allocate("gen", count);
+		ssc_number_t *hourly = allocate("gen", count);
+		//ssc_number_t *hourly = allocate("hourly_gen", count);
+		//		ssc_number_t *p_gen = allocate("gen", count);
 		ssc_number_t *po1 = allocate("hourly_Power_in_collector", count);
 		ssc_number_t *po2 = allocate("hourly_Power_out_col", count);
 		ssc_number_t *po3 = allocate("hourly_Power_in_rec", count);
@@ -502,7 +503,7 @@ public:
 			po7[i] = p7[i] * converter/1000; // Watts to MWatts
 			po8[i] = p8[i] * converter;
 		}
-		accumulate_annual("hourly_gen",             "annual_energy");
+		accumulate_annual("gen",             "annual_energy");
 		accumulate_annual("hourly_Power_in_collector", "annual_Power_in_collector");
 		accumulate_annual("hourly_Power_out_col",      "annual_Power_out_col");
 		accumulate_annual("hourly_Power_in_rec",       "annual_Power_in_rec");
@@ -513,7 +514,7 @@ public:
 		accumulate_annual("hourly_Q_rec_losses",       "annual_Q_rec_losses");
 
 		// monthly accumulations
-		accumulate_monthly("hourly_gen",             "monthly_energy");
+		accumulate_monthly("gen",             "monthly_energy");
 		accumulate_monthly("hourly_Power_in_collector", "monthly_Power_in_collector");
 		accumulate_monthly("hourly_Power_out_col",      "monthly_Power_out_col");
 		accumulate_monthly("hourly_Power_in_rec",       "monthly_Power_in_rec");
@@ -530,7 +531,7 @@ public:
 		for (int i = 0; i < 8760; i++)
 		{
 			annual_energy += hourly[i];
-			p_gen[i] = hourly[i];
+//			p_gen[i] = hourly[i];
 		}
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
