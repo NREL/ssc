@@ -98,8 +98,9 @@ public:
 
 		// have to be allocated to return without errors
 		ssc_number_t *turbine_output = allocate( "turbine_output_by_windspeed_bin", wpc.m_iLengthOfTurbinePowerCurveArray );
-		ssc_number_t *farmpwr = allocate("hourly_gen", nstep);
-		ssc_number_t *p_gen = allocate("gen", nstep);
+		ssc_number_t *farmpwr = allocate("gen", nstep);
+//		ssc_number_t *farmpwr = allocate("hourly_gen", nstep);
+	//	ssc_number_t *p_gen = allocate("gen", nstep);
 		ssc_number_t *wspd = allocate("hourly_wind_speed", nstep);
 		ssc_number_t *wdir = allocate("hourly_wind_direction", nstep);
 		ssc_number_t *air_temp = allocate("hourly_temp", nstep);
@@ -138,13 +139,13 @@ public:
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
 
 			for (i = 0; i < nstep; i++)
-				farmpwr[i] = farm_kw / (ssc_number_t)nstep; // fill "hourly_gen"
+				farmpwr[i] = farm_kw / (ssc_number_t)nstep; // fill "gen"
 
 			for (i=0; i<wpc.m_iLengthOfTurbinePowerCurveArray; i++)
 				turbine_output[i] = (ssc_number_t) turbine_outkW[i];
 
-			accumulate_monthly("hourly_gen", "monthly_energy");
-			accumulate_annual("hourly_gen", "annual_energy");
+			accumulate_monthly("gen", "monthly_energy");
+			accumulate_annual("gen", "annual_energy");
 
 			// metric outputs moved to technology
 			double kWhperkW = 0.0;
@@ -258,7 +259,7 @@ public:
 
 
 			farmpwr[i] = (ssc_number_t) farmp*haf(i);
-			p_gen[i] = farmpwr[i];
+//			p_gen[i] = farmpwr[i];
 
 			wspd[i] = (ssc_number_t) wind;
 			wdir[i] = (ssc_number_t) dir;
@@ -281,8 +282,8 @@ public:
 			}
 		} // end hourly loop -> i = 0 to 8760
 
-		accumulate_monthly("hourly_gen", "monthly_energy");
-		accumulate_annual("hourly_gen", "annual_energy");
+		accumulate_monthly("gen", "monthly_energy");
+		accumulate_annual("gen", "annual_energy");
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
