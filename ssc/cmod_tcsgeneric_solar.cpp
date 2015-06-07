@@ -355,12 +355,9 @@ public:
 
 
 		ssc_number_t *hourly = allocate("gen", count);
-//		ssc_number_t *hourly = allocate("hourly_gen", count);
-//		ssc_number_t *p_gen = allocate("gen", count);
 		for (int i = 0; i < count; i++)
 		{
 			hourly[i] = enet[i] * 1000 * haf(i); // convert from MWh to kWh
-//			p_gen[i] = hourly[i];
 		}
 
 		accumulate_annual("gen",        "annual_energy");

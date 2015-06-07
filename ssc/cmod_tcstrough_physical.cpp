@@ -731,7 +731,6 @@ public:
 		//set_output_array("i_SfTi",8760);
 
 		size_t count;
-//		ssc_number_t *p_hourly_energy = allocate("hourly_gen", hours_year);
 		ssc_number_t *timestep_energy_MW = as_array("W_net", &count);			//MW
 		ssc_number_t *p_gen = allocate("gen", count);
 
@@ -751,34 +750,32 @@ public:
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
 
 		size_t idx=0;
+		ssc_number_t ae = 0;
 		// Need to define an hourly array from potentially subhourly data
 		for( size_t i_ts = 0; i_ts < hours_year; i_ts++ )
 		{
-//			double accumulated_energy = 0.0;
+			double ts_power = 0;
 			for( size_t j_sh = 0; j_sh < step_per_hour; j_sh++ )
 			{
-//				accumulated_energy += timestep_energy_MW[i_ts*step_per_hour + j_sh]*1000.0*ts_hour;		// Convert to kWh
+				// convert MWh to kWh 
+				ts_power += timestep_energy_MW[i_ts*step_per_hour + j_sh] * 1000.0;
 				// apply performance adjustments
 				p_gen[idx] = timestep_energy_MW[i_ts*step_per_hour + j_sh] * 1000.0 * haf(i_ts);
 				idx++;
 			}
-
-//			p_hourly_energy[i_ts] = accumulated_energy;
+			ae += ts_power * ts_hour; // honoring Ty's wishes below
 		}
 
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
-//		accumulate_annual("hourly_gen", "annual_energy");						// already in kWh
 		double annual_energy = accumulate_annual("gen", "annual_energy", ts_hour);						// already in kWh
 		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross", ts_hour * 1000);	// convert from MW to kWh
 		// Calculated outputs
-		ssc_number_t ae = as_number("annual_energy");
 		ssc_number_t pg = as_number("annual_W_cycle_gross");
 		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
 		assign("conversion_factor", convfactor);
 	
 		 
 		// Monthly accumulations
-//		accumulate_monthly("hourly_gen", "monthly_energy"); // already in kWh
 		accumulate_monthly("gen", "monthly_energy", ts_hour); // already in kWh
 		accumulate_monthly("W_cycle_gross", "monthly_W_cycle_gross", ts_hour);
 		accumulate_monthly("q_inc_sf_tot", "monthly_q_inc_sf_tot", ts_hour);
@@ -791,8 +788,6 @@ public:
 		accumulate_monthly("q_to_tes", "monthly_q_to_tes", ts_hour);
 
 		// Annual accumulations
-//		accumulate_annual("hourly_gen", "annual_energy"); // already in kWh
-//		accumulate_annual("gen", "annual_energy", ts_hour); // already in kWh
 		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross", ts_hour);
 		accumulate_annual("q_inc_sf_tot", "annual_q_inc_sf_tot", ts_hour);
 		accumulate_annual("q_abs_tot", "annual_q_abs_tot", ts_hour);
@@ -806,9 +801,6 @@ public:
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
-//		double annual_energy = 0.0;
-//		for (int i = 0; i < 8760; i++)
-//			annual_energy += p_hourly_energy[i];
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6))); 
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));

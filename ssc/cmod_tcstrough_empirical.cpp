@@ -525,8 +525,6 @@ public:
 			throw exec_error("tcstrough_empirical", "failed to setup adjustment factors: " + haf.error());
 		// hourly_energy output
 		ssc_number_t *p_hourly_energy = allocate("gen", 8760);
-//		ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
-//		ssc_number_t *p_gen = allocate("gen", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("Enet", &count);//MWh
@@ -536,7 +534,6 @@ public:
 		for (size_t i = 0; i < count; i++)
 		{
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
-//			p_gen[i] = p_hourly_energy[i];
 		}
 
 		accumulate_annual("gen", "annual_energy"); // already in kWh

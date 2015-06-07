@@ -1240,7 +1240,6 @@ public:
 		if(is_cycle_cutoff_message)
 			log(msg_to_log, SSC_WARNING);
 
-//		set_output_array("hourly_gen", "P_out_net", 8760, 1000.0); // MWh to kWh
 		set_output_array("gen", "P_out_net", 8760, 1000.0); // MWh to kWh
 
 		//calculated field parameters
@@ -1291,8 +1290,6 @@ public:
 			throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 		// hourly_energy output
 		ssc_number_t *p_hourly_energy = allocate("gen", 8760);
-		//ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
-		//		ssc_number_t *p_gen = allocate("gen", 8760);
 		// set hourly energy = tcs output Enet
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("P_out_net", &count);//MWh
