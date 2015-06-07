@@ -63,9 +63,6 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",     "",                         "Time Series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                         "Net system energy",                           "Wh",     "",                        "Time Series",      "*",                       "",                          "" },
 
-//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
-//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_gen", "System energy generated", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
-//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_grid", "System energy delivered to grid", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
@@ -368,10 +365,6 @@ public:
 		ssc_number_t *p_energy = allocate("energy", nrec);
 		ssc_number_t *p_gen = allocate("gen", nrec);
 
-//		ssc_number_t *p_hourly_energy = allocate("hourly_energy", 8760);
-//		ssc_number_t *p_hourly_gen = allocate("hourly_gen", 8760);
-//		ssc_number_t *p_hourly_grid = allocate("hourly_grid", 8760);
-
 		double ts_hour = 1.0/step_per_hour;
 
 		initialize_cell_temp( ts_hour );
@@ -442,10 +435,7 @@ public:
 					annual_wh += p_energy[idx];
 
 					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-					//p_hourly_energy[hour] += p_energy[idx] * 0.001f;
-//					p_hourly_grid[hour] += p_energy[idx] * 0.001f;
 					p_gen[idx] = (ssc_number_t)(ac * haf(hour) *0.001f); // W to kW
-//					p_hourly_gen[hour] += p_gen[idx] * (ssc_number_t)ts_hour;
 				}
 						
 				idx++;
@@ -456,8 +446,6 @@ public:
 
 		accumulate_monthly( "dc", "dc_monthly", 0.001*ts_hour );
 		accumulate_monthly( "ac", "ac_monthly", 0.001*ts_hour );
-//		accumulate_monthly("hourly_energy", "monthly_energy");
-//		accumulate_monthly("hourly_gen", "monthly_energy");
 		accumulate_monthly("gen", "monthly_energy", ts_hour);
 
 		ssc_number_t *poam = accumulate_monthly( "poa", "poa_monthly", 0.001*ts_hour ); // convert to energy
@@ -471,7 +459,6 @@ public:
 		assign( "solrad_annual", var_data( solrad_ann/12 ) );
 
 		accumulate_annual( "ac", "ac_annual", 0.001*ts_hour );
-//		accumulate_annual("hourly_energy", "annual_energy");
 		accumulate_annual("gen", "annual_energy", ts_hour);
 
 		assign("system_use_lifetime_output", 0);

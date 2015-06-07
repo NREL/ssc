@@ -1116,8 +1116,6 @@ int dispatch_calculations::operator()(size_t time)
 bool dispatch_calculations::compute_dispatch_output()
 {
 	//Calculate energy dispatched in each dispatch period 
-	//ssc_number_t *m_periods; // tou period 
-//	ssc_number_t *m_hourly_energy; // hourly energy output
 
 
 	int h;
@@ -1125,8 +1123,6 @@ bool dispatch_calculations::compute_dispatch_output()
 
 	// hourly energy
 
-//	m_hourly_energy = m_cm->as_array("hourly_energy", &count);
-//	m_hourly_energy = m_cm->as_array("hourly_gen", &count);
 	if (count != 8760)
 	{
 		std::stringstream outm;
@@ -1222,12 +1218,10 @@ bool dispatch_calculations::compute_dispatch_output()
 bool dispatch_calculations::process_dispatch_output()
 {
 	//Calculate energy dispatched in each dispatch period 
-//	ssc_number_t *m_hourly_energy; // hourly energy output
 
 	size_t count=m_hourly_energy.size();
 
 	// hourly energy
-//	m_hourly_energy = m_cm->as_array("hourly_gen", &count);
 	if (count != 8760)
 	{
 		std::stringstream outm;
@@ -2050,14 +2044,12 @@ bool dispatch_calculations::process_dispatch_output()
 bool dispatch_calculations::compute_lifetime_dispatch_output()
 {
 	//Calculate energy dispatched in each dispatch period 
-//	ssc_number_t *m_hourly_energy; // hourly energy output
 
 
 	int h;
 	size_t count=m_hourly_energy.size();
 
 	// hourly energy includes all curtailment, availability
-//	m_hourly_energy = m_cm->as_array("hourly_gen", &count);
 	if ((int)count != (8760 * m_nyears))
 	{
 		std::stringstream outm;
@@ -2127,12 +2119,10 @@ bool dispatch_calculations::compute_lifetime_dispatch_output()
 bool dispatch_calculations::process_lifetime_dispatch_output()
 {
 	//Calculate energy dispatched in each dispatch period 
-//	ssc_number_t *m_hourly_energy; // hourly energy output
 
 	size_t count=m_hourly_energy.size();
 
 	// hourly energy include all curtailment, availability 
-//	m_hourly_energy = m_cm->as_array("hourly_gen", &count);
 	if ((int)count != (8760 * m_nyears))
 	{
 		std::stringstream outm;

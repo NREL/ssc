@@ -701,8 +701,6 @@ public:
 		
 		size_t count;
 		ssc_number_t *p_hourly_energy = allocate("gen", 8760);
-		//ssc_number_t *p_hourly_energy = allocate("hourly_gen", 8760);
-		//		ssc_number_t *p_gen = allocate("gen", 8760);
 		ssc_number_t *timestep_energy_MW = as_array("W_net", &count);			//MW
 		char tstr[500];
 		std::string out_msg = "hourly energy count %d is incorrect (should be %d)";

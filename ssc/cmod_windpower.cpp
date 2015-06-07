@@ -99,8 +99,6 @@ public:
 		// have to be allocated to return without errors
 		ssc_number_t *turbine_output = allocate( "turbine_output_by_windspeed_bin", wpc.m_iLengthOfTurbinePowerCurveArray );
 		ssc_number_t *farmpwr = allocate("gen", nstep);
-//		ssc_number_t *farmpwr = allocate("hourly_gen", nstep);
-	//	ssc_number_t *p_gen = allocate("gen", nstep);
 		ssc_number_t *wspd = allocate("hourly_wind_speed", nstep);
 		ssc_number_t *wdir = allocate("hourly_wind_direction", nstep);
 		ssc_number_t *air_temp = allocate("hourly_temp", nstep);
