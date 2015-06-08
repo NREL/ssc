@@ -1887,6 +1887,7 @@ public:
 				if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at(CF_reserve_debtservice, i - 1);
 			}
 		}
+
 		// total reserves
 		for (i=0; i<=nyears; i++)
 			cf.at(CF_reserve_total,i) = 

@@ -1070,6 +1070,8 @@ public:
 		double cost_equity_closing = as_double("cost_equity_closing");
 		double cost_other_financing = as_double("cost_other_financing");
 		double cost_dev_fee_percent = as_double("cost_dev_fee_percent")*0.01;
+		double cost_debt_upfront;
+
 
 		double constr_total_financing = as_double("construction_financing_cost");
 
@@ -1790,7 +1792,14 @@ public:
 		if (!constant_dscr_mode)
 		{
 			double debt_frac = as_double("debt_percent")*0.01;
-			double adjusted_installed_cost = cost_prefinancing + constr_total_financing
+
+			cost_installed =
+				cost_prefinancing
+				+ constr_total_financing
+				+ cost_debt_closing
+				+ cost_other_financing
+				+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
+				+ cf.at(CF_reserve_om, 0)
 				- ibi_fed_amount
 				- ibi_sta_amount
 				- ibi_uti_amount
@@ -1803,14 +1812,55 @@ public:
 				- cbi_sta_amount
 				- cbi_uti_amount
 				- cbi_oth_amount;
-			double loan_amount = debt_frac * adjusted_installed_cost;
+			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac; // approximate up front fee
+			double loan_amount = debt_frac * cost_installed;
+
+
+			// first iteration - calculate debt reserve account based on initial installed cost
+			// debt service reserve
+			cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
+				1,           // Period
+				term_tenor,   // Number periods
+				loan_amount, // Present Value
+				0,           // future Value
+				0);         // cash flow at end of period
+
+			cf.at(CF_debt_payment_interest, 1) = loan_amount * term_int_rate;
+			cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
+			cf.at(CF_funding_debtservice, 0) = cf.at(CF_reserve_debtservice, 0);
+
+			// update installed cost with approximate debt reserve account for year 0
+			cost_installed =
+				cost_prefinancing
+				+ constr_total_financing
+				+ cost_debt_closing
+				+ cost_other_financing
+				+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
+				+ cf.at(CF_reserve_om, 0)
+				- ibi_fed_amount
+				- ibi_sta_amount
+				- ibi_uti_amount
+				- ibi_oth_amount
+				- ibi_fed_per
+				- ibi_sta_per
+				- ibi_uti_per
+				- ibi_oth_per
+				- cbi_fed_amount
+				- cbi_sta_amount
+				- cbi_uti_amount
+				- cbi_oth_amount;
+			cost_debt_upfront = debt_frac * cost_installed * cost_debt_fee_frac; // for cash flow output
+			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac;
+			loan_amount = debt_frac * cost_installed;
+
+
 			if (term_tenor == 0) loan_amount = 0;
 			//			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
 			for (int i = 1; i <= nyears; i++)
 			{
 				if (i == 1)
 				{
-					cf.at(CF_debt_balance, i) = -loan_amount;
+					cf.at(CF_debt_balance, i - 1) = loan_amount;
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
 					cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
 						i,           // Period
@@ -1818,13 +1868,14 @@ public:
 						loan_amount, // Present Value
 						0,           // future Value
 						0);         // cash flow at end of period
+					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
+
 				}
 				else
 				{
 					if (i <= term_tenor)
 					{
-						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) + cf.at(CF_debt_payment_principal, i - 1);
-						cf.at(CF_debt_payment_interest, i) = -term_int_rate * cf.at(CF_debt_balance, i);
+						cf.at(CF_debt_payment_interest, i) = term_int_rate * cf.at(CF_debt_balance, i - 1);
 
 						if (term_int_rate != 0.0)
 						{
@@ -1835,6 +1886,13 @@ public:
 						{
 							cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
 						}
+						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
+
+						// debt service reserve
+						cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 *		(cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
+						cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
+						cf.at(CF_funding_debtservice, i - 1) -= cf.at(CF_reserve_debtservice, i - 2);
+						if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at(CF_reserve_debtservice, i - 1);
 					}
 				}
 
@@ -1925,16 +1983,18 @@ public:
 				cf.at(CF_debt_payment_principal, i) = cf.at(CF_debt_payment_total, i) - cf.at(CF_debt_payment_interest, i);
 				cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 			}
+
+
+			// debt service reserve
+			for (i = 1; ((i <= nyears) && (i <= term_tenor)); i++)
+			{
+				cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
+				cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
+				if (i > 1) cf.at(CF_funding_debtservice, i - 1) -= cf.at(CF_reserve_debtservice, i - 2);
+				if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at(CF_reserve_debtservice, i - 1);
+			}
 		}
 
-		// debt service reserve
-		for (i=1; ((i<=nyears) && (i<=term_tenor)); i++)
-		{
-			cf.at(CF_reserve_debtservice,i-1) = dscr_reserve_months/12.0 * (cf.at(CF_debt_payment_principal,i) + cf.at(CF_debt_payment_interest,i));
-			cf.at(CF_funding_debtservice,i-1) = cf.at(CF_reserve_debtservice,i-1);
-			if (i>1) cf.at(CF_funding_debtservice,i-1) -= cf.at(CF_reserve_debtservice,i-2);
-			if (i==term_tenor) cf.at(CF_disbursement_debtservice,i)=0-cf.at(CF_reserve_debtservice,i-1);
-		}
 
 		// total reserves
 		for (i=0; i<=nyears; i++)
@@ -1947,17 +2007,33 @@ public:
 		for (i=1; i<=nyears; i++)
 			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
-		cost_financing = 
-			cost_dev_fee_percent * cost_prefinancing +
-			cost_equity_closing +
-			cost_debt_closing + 
-			cost_debt_fee_frac * size_of_debt +
-			cost_other_financing +
-			cf.at(CF_reserve_debtservice,0) +
-			constr_total_financing +
-			cf.at(CF_reserve_om,0);
+		if (constant_dscr_mode)
+		{
+			cost_financing =
+				cost_debt_closing +
+				cost_debt_fee_frac * size_of_debt +
+				cost_other_financing +
+				cf.at(CF_reserve_debtservice, 0) +
+				constr_total_financing +
+				cf.at(CF_reserve_om, 0);
 
-		cost_installed = cost_prefinancing + cost_financing;
+			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
+
+			cost_installed = cost_prefinancing + cost_financing
+				- ibi_fed_amount
+				- ibi_sta_amount
+				- ibi_uti_amount
+				- ibi_oth_amount
+				- ibi_fed_per
+				- ibi_sta_per
+				- ibi_uti_per
+				- ibi_oth_per
+				- cbi_fed_amount
+				- cbi_sta_amount
+				- cbi_uti_amount
+				- cbi_oth_amount;
+
+		}
 
 		depr_alloc_total = depr_alloc_total_frac * cost_installed;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
@@ -2200,9 +2276,11 @@ public:
 		
 		depr_fedbas_total = depr_fedbas_macrs_5 + depr_fedbas_macrs_15 + depr_fedbas_sl_5 + depr_fedbas_sl_15 + depr_fedbas_sl_20 + depr_fedbas_sl_39 + depr_fedbas_custom;
 
-		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice,0) + cf.at(CF_reserve_om,0);
-		issuance_of_equity = cost_installed - (size_of_debt + ibi_total + cbi_total);	
-		
+
+		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice, 0) + cf.at(CF_reserve_om, 0);
+		//		issuance_of_equity = cost_installed - (size_of_debt + ibi_total + cbi_total);
+		issuance_of_equity = cost_installed - size_of_debt;
+
 		equity_tax_investor = tax_investor_equity_frac * issuance_of_equity;
 
 		sponsor_pretax_equity_investment = -issuance_of_equity * (1.0 - tax_investor_equity_frac);
@@ -2634,11 +2712,12 @@ public:
 	double analysis_period_irr = 0.0;
 	analysis_period_irr = cf.at(CF_tax_investor_aftertax_irr, nyears)/100.0; //fraction for calculations
 
-	double debt_fraction =0.0;
-	double size_of_equity = cost_installed - ibi_total - cbi_total - size_of_debt;
-	//cpg added size of debt to be consistent with single owner
+	double debt_fraction = 0.0;
+	//	double size_of_equity = cost_installed - ibi_total - cbi_total - size_of_debt;
+	double size_of_equity = cost_installed - size_of_debt;
+	//cpg same as issuance_of_equity 
 	//	if (cost_installed > 0) debt_fraction = size_of_debt / cost_installed;
-	if ((size_of_debt + size_of_equity) > 0) 
+	if ((size_of_debt + size_of_equity) > 0)
 		debt_fraction = size_of_debt / (size_of_debt + size_of_equity);
 
 
