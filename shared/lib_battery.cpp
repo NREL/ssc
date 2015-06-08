@@ -948,7 +948,7 @@ double dispatch_t::average_efficiency(){ return _average_efficiency; }
 void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max, double percent_discharge)
 {
 	// Implement minimum SOC cut-off
-	if (_e_tofrom_batt > 0.0001)
+	if (_e_tofrom_batt > 0)
 	{
 		_charging = false;
 		double e_max_discharge = battery_voltage *(charge_total - charge_max*_SOC_min*0.01)*watt_to_kilowatt;
@@ -965,7 +965,7 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 			_e_tofrom_batt = e_percent;
 	}
 	// Maximum SOC cut-off
-	else if (_e_tofrom_batt < -0.0001)
+	else if (_e_tofrom_batt < 0)
 	{
 		_charging = true;
 		double e_max_charge = battery_voltage*(charge_total - charge_max*_SOC_max*0.01)*watt_to_kilowatt;
@@ -1062,10 +1062,12 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 		if (_e_tofrom_batt > 0)
 			_battery_to_load = e_tofrom_battery;
 
+		// could have slightly more dispatched than needed
+		if (_battery_to_load > e_load || (_battery_to_load + _pv_to_load > e_load ) )
+			_battery_to_load = e_load - _pv_to_load;
+
 		_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
 	}
-	if (_grid_to_load < 0)
-		_grid_to_load = 0;
 }
 /*
 Manual Dispatch
@@ -1158,7 +1160,7 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	
 	_e_gen = e_pv + _e_tofrom_batt;
 
-	if (fabs(_e_gen) > 1e-6)
+	if (fabs(_e_gen) > 0)
 	{
 		_battery_fraction = _e_tofrom_batt / _e_gen;
 		_pv_fraction = e_pv / _e_gen;
