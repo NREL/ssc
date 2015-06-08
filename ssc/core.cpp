@@ -880,7 +880,7 @@ ssc_number_t compute_module::accumulate_annual_for_year(const std::string &ts_va
 	for (size_t i = (year-1)*annual_values; i < year*annual_values; i++)
 		annual += ts[i];
 
-	assign(annual_var, var_data((ssc_number_t)(annual*scale)));
+	assign(annual_var, var_data((ssc_number_t)(annual*scale*(1.0 / step_per_hour))));
 
 	return (ssc_number_t)(annual*scale*(1.0/step_per_hour));
 }

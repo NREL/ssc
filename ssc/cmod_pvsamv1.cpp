@@ -524,7 +524,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "Gross ac energy",                                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                         "Nameplate system dc rating",                             "kW",     "",                      "Miscellaneous",       "*",                    "",                              "" },
 
-
+	 
 	// loss diagram - order applied
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_gross", "Subarray 1 gross DC energy", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_mismatch_loss", "Subarray 1 DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
@@ -1458,9 +1458,9 @@ public:
 		ssc_number_t *p_poashaded_ts_total = allocate("poa_shaded", nrec*nyears );
 		ssc_number_t *p_poaeff_ts_total = allocate("poa_eff", nrec*nyears );
 		ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec*nyears);
-		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec*nyears );
+//		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec*nyears );
 		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec*nyears );
-		ssc_number_t *p_acgross = allocate( "ac_gross", nrec*nyears );
+//		ssc_number_t *p_acgross = allocate( "ac_gross", nrec*nyears );
 		ssc_number_t *p_gen = allocate("gen", nrec*nyears);
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec*nyears);
 		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec*nyears );
@@ -1508,7 +1508,7 @@ public:
 		size_t idx = 0;
 		size_t hour = 0;
 
-		double annual_energy = 0;
+		double annual_energy = 0, annual_ac_gross = 0, dc_gross[4] = { 0, 0, 0, 0 };
 
 		// lifetime analysis over nyears
 		for (int iyear = 0; iyear < nyears; iyear++)
@@ -1548,7 +1548,8 @@ public:
 
 					double solazi = 0, solzen = 0, solalt = 0;
 					int sunup = 0;
-					double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
+//					double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
+					double dcpwr_net = 0.0, dc_string_voltage = 0.0;
 					double inprad_total = 0.0;
 					double inprad_beam = 0.0;
 					double poa_nom_ts_total = 0.0;
@@ -1859,7 +1860,9 @@ public:
 
 						// apply pre-inverter power derate
 						// apply yearly degradation as necessary
-						dcpwr_gross += sa[nn].module.dcpwr;
+//						dcpwr_gross += sa[nn].module.dcpwr;
+						if (iyear==0)
+							dc_gross[nn] += sa[nn].module.dcpwr*0.001*ts_hour; //power W to energy kWh
 						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
 						if (pv_lifetime_simulation==1)
 							dcpwr_net*= p_dc_degrade_factor[iyear + 1];
@@ -1949,10 +1952,10 @@ public:
 					p_poaeff_ts_total[idx] = (ssc_number_t)(poa_eff_ts_total * 0.001);
 
 					p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
-					p_dcgross[idx] = (ssc_number_t)(dcpwr_gross * 0.001);
+//					p_dcgross[idx] = (ssc_number_t)(dcpwr_gross * 0.001);
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
-					p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
+//					p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
 
 					// apply ac degradation  
 //					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) * p_ac_degrade_factor[iyear]);
@@ -1972,8 +1975,11 @@ public:
 					// accumulate hourly PV system generation too
 //					p_hourlygen[hour+iyear*8760] += (ssc_number_t)(p_gen[idx] * ts_hour);
 					// accumulate first year annual energy
-					if (iyear==0)
+					if (iyear == 0)
+					{
 						annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
+						annual_ac_gross += acpwr_gross * 0.001 * ts_hour;
+					}
 
 					idx++;
 				}
@@ -2042,9 +2048,9 @@ public:
 		double annual_poa_shaded = accumulate_annual_for_year("poa_shaded", "annual_poa_shaded", 1.0, step_per_hour);
 		double annual_poa_eff = accumulate_annual_for_year("poa_eff", "annual_poa_eff", 1.0, step_per_hour);
 		
-		accumulate_annual_for_year("dc_gross", "annual_dc_gross", 1.0, step_per_hour);
+//		accumulate_annual_for_year("dc_gross", "annual_dc_gross", 1.0, step_per_hour);
 		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", 1.0, step_per_hour);
-		double annual_ac_gross = accumulate_annual_for_year("ac_gross", "annual_ac_gross", 1.0, step_per_hour);
+//		double annual_ac_gross = accumulate_annual_for_year("ac_gross", "annual_ac_gross", 1.0, step_per_hour);
 		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", 1.0, step_per_hour);
 
 
@@ -2139,12 +2145,12 @@ public:
 				double total_percent = mismatch + diodes + wiring + tracking + nameplate + dc_opt;
 
 				double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0, dcopt_loss = 0;
-				double dc_gross = 0;
+//				double dc_gross = 0;
 				// gross for each subarray
-				dc_gross = accumulate_annual_for_year(prefix + "dc_gross", "annual_" + prefix + "dc_gross", 1.0, step_per_hour);
+//				dc_gross = accumulate_annual_for_year(prefix + "dc_gross", "annual_" + prefix + "dc_gross", 1.0, step_per_hour);
 				// dc derate for each sub array
-				double dc_loss = dc_gross * (1.0 - sa[nn].derate);
-				annual_dc_gross += dc_gross;
+				double dc_loss = dc_gross[nn] * (1.0 - sa[nn].derate);
+				annual_dc_gross += dc_gross[nn];
 				if (total_percent != 0)
 				{
 					mismatch_loss = mismatch / total_percent * dc_loss;
@@ -2161,6 +2167,7 @@ public:
 				annual_nameplate_loss += nameplate_loss;
 				annual_dcopt_loss += dcopt_loss;
 			
+				assign("annual_" + prefix + "dc_gross", var_data((ssc_number_t)dc_gross[nn]));
 				assign("annual_" + prefix + "dc_mismatch_loss", var_data((ssc_number_t)mismatch_loss));
 				assign("annual_" + prefix + "dc_diodes_loss", var_data((ssc_number_t)diode_loss));
 				assign("annual_" + prefix + "dc_wiring_loss", var_data((ssc_number_t)wiring_loss));
@@ -2168,6 +2175,9 @@ public:
 				assign("annual_" + prefix + "dc_nameplate_loss", var_data((ssc_number_t)nameplate_loss));
 			}
 		}
+
+		assign("annual_dc_gross", var_data((ssc_number_t)annual_dc_gross));
+		assign("annual_ac_gross", var_data((ssc_number_t)annual_ac_gross));
 
 		assign("annual_dc_mismatch_loss", var_data((ssc_number_t)annual_mismatch_loss));
 		assign("annual_dc_diodes_loss", var_data((ssc_number_t)annual_diode_loss));
