@@ -553,8 +553,8 @@ static var_info _cm_vtab_singleowner[] = {
 	/* intermediate outputs for validation */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cash_for_debt_service",                  "Cash available for debt service (CAFDS)",   "$",     "",					  "Debt Sizing",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "pv_cafds",                               "Present value of CAFDS","$", "",				  "Debt Sizing",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_debt",			                  "Total debt",	"$",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_equity",			              "Total equity",	"$",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_debt",			                  "Size of debt",	"$",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "size_of_equity",			              "Equity",	"$",	 "",					  "Debt Sizing",			 "*",                         "",                             "" },
 
 /* model outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cf_length",                              "Number of periods in cashflow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
@@ -588,7 +588,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_reserve_equip2",                      "Reserve account major equipment 2",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_reserve_equip3",                      "Reserve account major equipment 3",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_reserve_total",                       "Reserve account total reserves",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_reserve_interest",                    "Reserve account interest on reserves",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_reserve_interest",                    "Interest earned on reserve accounts",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_funding_debtservice",                 "Reserve funding debt service",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_funding_om",                          "Reserve funding working capital",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
