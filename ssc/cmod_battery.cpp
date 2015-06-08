@@ -197,28 +197,35 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	/* **********************************************************************
 	Initialize outputs
 	********************************************************************** */		
-	outTotalCharge = cm.allocate("batt_q0", nrec*nyears);
 
-	// only allocate if lead-acid
-	if ( chem == 0 )
+	// non-lifetime outputs
+	if (nyears <= 1)
 	{
-		outAvailableCharge = cm.allocate("batt_q1", nrec*nyears);
-		outBoundCharge = cm.allocate("batt_q2", nrec*nyears);
+		outTotalCharge = cm.allocate("batt_q0", nrec*nyears);
+
+		// only allocate if lead-acid
+		if (chem == 0)
+		{
+			outAvailableCharge = cm.allocate("batt_q1", nrec*nyears);
+			outBoundCharge = cm.allocate("batt_q2", nrec*nyears);
+		}
+		outMaxCharge = cm.allocate("qmax", nrec*nyears);
+		outCellVoltage = cm.allocate("voltage_cell", nrec*nyears);
+		outCurrent = cm.allocate("batt_I", nrec*nyears);
+		outCycles = cm.allocate("Cycles", nrec*nyears);
+		outBatteryVoltage = cm.allocate("voltage_battery", nrec*nyears);
+		outBatteryTemperature = cm.allocate("battery_temperature", nrec*nyears);
+		outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec*nyears);
+
 	}
-	outMaxCharge = cm.allocate("qmax", nrec*nyears);
+	
 	outSOC = cm.allocate("SOC", nrec*nyears);
 	outDOD = cm.allocate("DOD", nrec*nyears);
-	outCurrent = cm.allocate("batt_I", nrec*nyears);
-	outCellVoltage = cm.allocate("voltage_cell", nrec*nyears);
-	outBatteryVoltage = cm.allocate("voltage_battery", nrec*nyears);
 	outCapacityPercent = cm.allocate("capacity_percent", nrec*nyears);
-	outCycles = cm.allocate("Cycles", nrec*nyears);
 	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", nyears); 
-	outBatteryTemperature = cm.allocate("battery_temperature", nrec*nyears);
-	outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec*nyears);
 	outBatteryPower = cm.allocate("battery_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
-	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
 	outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
 	outBatteryToLoad = cm.allocate("battery_to_load", nrec*nyears);
 	outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
@@ -331,41 +338,40 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 {
 	dispatch_model->dispatch( hour_of_year, PV, LOAD );
 
-	// Capacity Output with Losses Applied
-	if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
+	// non-lifetime outputs
+	if (nyears <= 1)
 	{
-		outAvailableCharge[idx] = (ssc_number_t)(kibam->q1());
-		outBoundCharge[idx] = (ssc_number_t)(kibam->q2());
+		// Capacity Output with Losses Applied
+		if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
+		{
+			outAvailableCharge[idx] = (ssc_number_t)(kibam->q1());
+			outBoundCharge[idx] = (ssc_number_t)(kibam->q2());
+		}
+		outMaxCharge[idx] = (ssc_number_t)(capacity_model->qmax());
+		outTotalCharge[idx] = (ssc_number_t)(capacity_model->q0());
+		outCurrent[idx] = (capacity_model->I());
+		outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage());
+		outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());
+		outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
+		outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
+		outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent());
+
 	}
 	
-	outMaxCharge[idx] = (ssc_number_t)(capacity_model->qmax());
-	outTotalCharge[idx] = (ssc_number_t)(capacity_model->q0());
+	// Lifetime outputs
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
-	outCurrent[idx] = (capacity_model->I());
-
-	// Voltage Output
-	outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage() );
-	outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage() );
-
-	// Lifetime Output
-	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
-	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
+	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
 	outBatteryBankReplacement[year] = (ssc_number_t)(lifetime_model->replacements());
 	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
 	{
 		year++;
 		lifetime_model->reset_replacements();
 	}
-
-	// Thermal Output
-	outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
-	outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent()); 
-
 	// Dispatch output (all Powers in kW)
 	outBatteryPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery())/_dt_hour;
-	outGenPower[idx] = (ssc_number_t)(dispatch_model->gen())/_dt_hour;
-	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid())/_dt_hour;
+	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid()) / _dt_hour;
+	outGenPower[idx] = (ssc_number_t)(dispatch_model->gen()) / _dt_hour;
 	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load())/_dt_hour;
 	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
 	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
