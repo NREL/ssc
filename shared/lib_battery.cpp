@@ -1089,7 +1089,6 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	int iprofile = -1;
 	getMonthHour(hour_of_year, &m, &h);
 	iprofile = _sched(m - 1, h - 1) - 1;
-	//if (iprofile < 0 || iprofile > 3) throw compute_module::exec_error("battery", "invalid battery dispatch schedule profile [0..3] ok");
 
 	_can_charge = _charge_array[iprofile];
 	_can_discharge = _discharge_array[iprofile];

@@ -63,10 +63,10 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "Battery",       "",                           "",                             "" },
 
 	// storage dispatch
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-4 Charging Allowed?",                          "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-4 Discharging Allowed?",                       "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-4 Grid Charging Allowed?",                     "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-4 Discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 Charging Allowed?",                          "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 Discharging Allowed?",                       "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 Grid Charging Allowed?",                     "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 Discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery Dispatch Schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
 		
 
@@ -161,11 +161,11 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	ssc_number_t *pdischarge = cm.as_array( "dispatch_manual_discharge", &ndischarge );
 	ssc_number_t *pdischarge_percent = cm.as_array("dispatch_manual_percent_discharge", &ndischarge_percent);
 	ssc_number_t *pgridcharge = cm.as_array( "dispatch_manual_gridcharge", &ngridcharge );
-	if ( ncharge != 4 || ndischarge != 4 || ngridcharge != 4 )
+	if ( ncharge != 6 || ndischarge != 6 || ngridcharge != 6 )
 		throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
 
 	int discharge_index = 0;
-	for( size_t i=0;i<4;i++ )
+	for( size_t i=0;i<6;i++ )
 	{
 		dm_charge[i] = pcharge[i]!=0.0f ? 1 : 0;
 		dm_discharge[i] = pdischarge[i]!=0.0f ? 1 : 0;

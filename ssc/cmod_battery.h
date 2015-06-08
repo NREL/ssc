@@ -41,7 +41,7 @@ struct battstor
 	int chem;
 	
 
-	bool dm_charge[4], dm_discharge[4], dm_gridcharge[4]; // manual dispatch
+	bool dm_charge[6], dm_discharge[6], dm_gridcharge[6]; // manual dispatch
 	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
 	util::matrix_static_t<float, 12, 24> dm_sched;
 	
