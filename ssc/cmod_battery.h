@@ -52,7 +52,8 @@ struct battstor
 	double e_discharge;
 
 	// outputs
-	ssc_number_t *outTotalCharge,
+	ssc_number_t 
+		*outTotalCharge,
 		*outAvailableCharge,
 		*outBoundCharge,
 		*outMaxChargeAtCurrent,
