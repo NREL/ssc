@@ -119,17 +119,28 @@ void C_csp_solver::simulate()
 		pc_operating_state = mc_power_cycle.get_operating_state();
 
 		// Get TES operating state info
-		double q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est;	//[MW, kg/s, K]
-		q_dot_tes_dc = m_dot_field_dc_est = T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
-		mc_tes.discharge_avail_est(m_T_htf_cold_des, mc_sim_info.m_step, q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est);
+		double q_dot_tes_dc, q_dot_tes_ch;
+		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
+		if( m_is_tes )
+		{
+			double m_dot_field_dc_est, T_hot_field_dc_est;	//[MW, kg/s, K]
+			m_dot_field_dc_est = T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
+			mc_tes.discharge_avail_est(m_T_htf_cold_des, mc_sim_info.m_step, q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est);
+
+			double m_dot_field_ch_est, T_cold_field_ch_est;	//[MW, kg/s, K]
+			m_dot_field_ch_est = T_cold_field_ch_est = std::numeric_limits<double>::quiet_NaN();
+			mc_tes.charge_avail_est(m_cycle_T_htf_hot_des, mc_sim_info.m_step, q_dot_tes_ch, m_dot_field_ch_est, T_cold_field_ch_est);
+		}
+		else
+		{
+			q_dot_tes_dc = q_dot_tes_ch = 0.0;
+		}
+
+
 		
-		double q_dot_tes_ch, m_dot_field_ch_est, T_cold_field_ch_est;	//[MW, kg/s, K]
-		q_dot_tes_ch = m_dot_field_ch_est = T_cold_field_ch_est = std::numeric_limits<double>::quiet_NaN();
-		mc_tes.charge_avail_est(m_cycle_T_htf_hot_des, mc_sim_info.m_step, q_dot_tes_ch, m_dot_field_ch_est, T_cold_field_ch_est);
-
-
-
-		q_dot_tes_dc = q_dot_tes_ch = 0.0;
+		
+		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
+		// q_dot_tes_dc = q_dot_tes_ch = 0.0;
 
 
 
@@ -190,7 +201,7 @@ void C_csp_solver::simulate()
 			}
 			else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed )		// Can power cycle startup using TES?
 			{
-				throw(C_csp_exception("'CR_OFF__PC_SU__TES_DC__AUX_OFF' not yet available", "CSP Solver"));
+				operating_mode = CR_OFF__PC_SU__TES_DC__AUX_OFF;
 			}
 			else
 			{
@@ -210,7 +221,7 @@ void C_csp_solver::simulate()
 				}
 				else if( q_dot_tes_ch )	// Can receiver output go to TES?
 				{
-					throw(C_csp_exception("'CR_SU__PC_OFF__TES_CH__AUX_OFF' not yet available", "CSP Solver"));
+					throw(C_csp_exception("'CR_ON__PC_OFF__TES_CH__AUX_OFF' not yet available", "CSP Solver"));
 				}
 				else	// Nowhere for receiver output to go, shut everything OFF
 				{
@@ -672,7 +683,7 @@ void C_csp_solver::simulate()
 				int iter_defocus = 0;
 
 				// Start iteration loop
-				while( abs(diff_q_dot) > tol )
+				while( abs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
 				{
 					iter_defocus++;			// First iteration = 1
 				
@@ -790,11 +801,14 @@ void C_csp_solver::simulate()
 							}
 						}	// end logic on iteration count for NO SOLUTION					
 					}	// end code for NO SOLUTION
+					else
+					{
+						// CR-PC iteration found a solution (though perhaps at POOR CONVERGENCE)
+						// Calculate the difference between thermal power delivered to PC and thermal power requested
+						// (Rec - q_pc_max)/q_pc_max: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
 
-					// CR-PC iteration found a solution (though perhaps at POOR CONVERGENCE)
-					// Calculate the difference between thermal power delivered to PC and thermal power requested
-					// (Rec - q_pc_max)/q_pc_max: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
-					diff_q_dot = (mc_cr_outputs.m_q_thermal - q_pc_max) / q_pc_max;
+						diff_q_dot = (mc_cr_outputs.m_q_thermal - q_pc_max) / q_pc_max;
+					}
 
 				}	// end iteration on CR defocus
 
@@ -1222,6 +1236,215 @@ void C_csp_solver::simulate()
 				are_models_converged = true;
 			
 				break;		// exit switch() after CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
+
+			case tech_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF:
+			{
+				// Use thermal storage to startup power cycle
+				// This solver iterates to find the thermal storage outlet temperature to the power cycle
+				//    and the power cycle demand mass flow rate that reach system equilibrium
+				
+				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
+				m_defocus = 1.0;
+				m_op_mode_tracking.push_back(operating_mode);
+
+				double T_pc_in_guess = mc_tes.get_hot_temp();
+
+				double T_pc_in_upper = std::numeric_limits<double>::quiet_NaN();	//[K]
+				double T_pc_in_lower = std::numeric_limits<double>::quiet_NaN();	//[K]
+
+				double y_T_pc_in_upper = std::numeric_limits<double>::quiet_NaN();	//[-]
+				double y_T_pc_in_lower = std::numeric_limits<double>::quiet_NaN();	//[-]
+
+				bool is_upper_bound = false;
+				bool is_lower_bound = false;
+				bool is_upper_error = false;
+				bool is_lower_error = false;
+
+				double tol_C = 1.0;								//[K]
+				double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
+
+				double diff_T_pc_in = 999.9*tol;
+
+				int iter_T_pc_in = 0;
+
+				int exit_mode = NO_SOLUTION;
+				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
+
+				double T_pc_in_calc = std::numeric_limits<double>::quiet_NaN();
+
+				while( abs(diff_T_pc_in) > tol || diff_T_pc_in != diff_T_pc_in )
+				{
+					iter_T_pc_in++;			// First iteration = 1
+				
+					// Check if distance between bounds is "too small"
+					double diff_T_bounds = T_pc_in_upper - T_pc_in_lower;
+					if(diff_T_bounds / m_cycle_T_htf_hot_des < tol/2.0)
+					{
+							exit_mode = NO_SOLUTION;
+							exit_tolerance = diff_T_pc_in;
+							break;
+					}
+
+					// Subsequent iterations need to re-calculate T_pc_in_guess
+					if(iter_T_pc_in > 1)
+					{
+						if(diff_T_pc_in != diff_T_pc_in)
+						{	// Models did not solve such that a convergence error could be generated
+							// If upper bound exists, then assume this is lower bound and try iterating
+							// If upper bound does not exist, then we don't have information to move forward
+							// ... if can't move forward, then assume not enough storage to meet *optimal* PC startup requirements
+							// ... but, we can still attempt to begin PC startup during this timestep
+							if( !is_upper_bound )
+							{
+								exit_mode = NO_SOLUTION;
+								exit_tolerance = diff_T_pc_in;
+								break;
+							}
+							else
+							{
+								is_lower_bound = true;
+								is_lower_error = false;
+								T_pc_in_lower = T_pc_in_guess;
+								T_pc_in_guess = 0.5*(T_pc_in_lower + T_pc_in_upper);
+							}						
+						}
+						else if( diff_T_pc_in > 0.0 )	// T_pc_in_guess was too low
+						{
+							is_lower_bound = true;
+							is_lower_error = true;
+							T_pc_in_lower = T_pc_in_guess;		// Set lower bound
+							y_T_pc_in_lower = diff_T_pc_in;		// Set lower convergence error
+
+							if( is_upper_bound && is_upper_error )
+							{
+								T_pc_in_guess = y_T_pc_in_upper/(y_T_pc_in_upper-y_T_pc_in_lower)*(T_pc_in_lower - T_pc_in_upper) + T_pc_in_upper;
+							}
+							else if( is_upper_bound )
+							{
+								T_pc_in_guess = 0.5*(T_pc_in_lower + T_pc_in_upper);
+							}
+							else
+							{	// Initial guess is the hot side temperature at the beginning of the timestep
+								// Assume that the storage won't get hotter throughout the timestep,
+								// ... so if results from 1st guess suggests that a higher temperature is required, get out
+
+								exit_mode = NO_SOLUTION;
+								exit_tolerance = diff_T_pc_in;
+								break;
+							}
+						}
+						else							// T_pc_in_guess was too high
+						{
+							is_upper_bound = true;
+							is_upper_error = true;
+							T_pc_in_upper = T_pc_in_guess;		// Set upper bound
+							y_T_pc_in_upper = diff_T_pc_in;		// Set upper convergence error
+
+							if( is_lower_bound && is_lower_error )
+							{
+								T_pc_in_guess = y_T_pc_in_upper / (y_T_pc_in_upper - y_T_pc_in_lower)*(T_pc_in_lower - T_pc_in_upper) + T_pc_in_upper;
+							}
+							else if( is_lower_bound )
+							{
+								T_pc_in_guess = 0.5*(T_pc_in_lower + T_pc_in_upper);
+							}
+							else
+							{
+								T_pc_in_guess = T_pc_in_calc - 5.0;
+							}
+
+						}
+					}
+
+
+					// Call the power cycle in STARTUP_CONTROLLED mode
+					mc_pc_htf_state.m_temp_in = T_pc_in_guess - 273.15;		//[C] convert from K
+					mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STARTUP_CONTROLLED;
+
+					mc_power_cycle.call(mc_weather.ms_outputs,
+						mc_pc_htf_state,
+						mc_pc_inputs,
+						mc_pc_outputs,
+						mc_sim_info);
+
+					// Use 'm_m_dot_demand' as an input to TES model
+					// 'm_m_dot_htf' and 'm_m_dot_htf_ref' will be NaN, but that should be ok...
+
+					double m_dot_pc = mc_pc_outputs.m_m_dot_demand / 3600.0;		//[kg/s]
+					
+					bool dc_solved = mc_tes.discharge(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_pc, m_T_htf_cold_des, T_pc_in_calc, mc_tes_outputs);
+
+					if(dc_solved)
+					{
+						diff_T_pc_in = (T_pc_in_calc - T_pc_in_guess) / T_pc_in_guess;
+					}
+					else
+					{
+						diff_T_pc_in = std::numeric_limits<double>::quiet_NaN();	// Provided discharge mass flow rate is too large for amount of storage remaining
+						continue;
+					}
+					
+					exit_mode = CONVERGED;
+				}
+
+				if(exit_mode == NO_SOLUTION)
+				{	// Try fully discharging TES and beginning PC startup
+					// Check that power cycle hasn't completely started up, as that suggests an error above (in this mode)
+
+					// Get mass flow rate and temperature at a full discharge
+					double m_dot_pc = std::numeric_limits<double>::quiet_NaN();
+					mc_tes.discharge_full(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, m_T_htf_cold_des, T_pc_in_calc, m_dot_pc, mc_tes_outputs);
+
+
+					// If receiver IS producing energy, try starting up power cycle
+					// Power Cycle: STARTUP
+					mc_pc_htf_state.m_temp_in = T_pc_in_calc - 273.15;				//[C]
+					mc_pc_htf_state.m_m_dot = m_dot_pc*3600.0;								//[kg/hr] no mass flow rate to power cycle
+					// Inputs
+					mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STARTUP;
+					//mc_pc_inputs.m_tou = tou_timestep;
+					// Performance Call
+					mc_power_cycle.call(mc_weather.ms_outputs,
+						mc_pc_htf_state,
+						mc_pc_inputs,
+						mc_pc_outputs,
+						mc_sim_info);
+
+					// Would be nice to have some check to know whether startup solved appropriately...
+
+
+					// Check for new timestep
+					double step_local_su = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+					if( step_local_su < mc_sim_info.m_step )
+					{
+						throw(C_csp_exception("PC startup using TES failed...", ""));
+					}
+					
+					// Should probably just write a message above and then move to OFF
+				}
+				else if(exit_mode == CONVERGED)
+				{
+
+				}
+				else
+				{
+					throw(C_csp_exception("PC startup using TES failed to converge in a recognized mode", ""));
+				}
+
+				// Now run CR at 'OFF'
+				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_inputs.m_field_control = 0.0;							//[-] Field OFF when receiver is OFF!
+				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+				mc_collector_receiver.call(mc_weather.ms_outputs,
+					mc_cr_htf_state,
+					mc_cr_inputs,
+					mc_cr_outputs,
+					mc_sim_info);
+				
+				are_models_converged = true;
+			}
+
+				break;
 
 			default: 
 				throw(C_csp_exception("Operation mode not recognized",""));
