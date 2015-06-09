@@ -220,8 +220,14 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 }
 void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 {
-
-	_I *= capacity_percent*0.01;
+	double qmax_tmp = _qmax*capacity_percent;
+	if (_q0 > qmax_tmp)
+	{
+		double p = qmax_tmp / _q0;
+		_q0 *= p;
+		_q1 *= p;
+		_q2 *= p;
+	}
 	update_SOC();
 }
 void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
@@ -286,8 +292,11 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 }
 void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
-	_I *= capacity_percent*0.01;
+	double qmax_tmp = _qmax*capacity_percent;
+	if (_q0 > qmax_tmp)
+		_q0 = qmax_tmp;
 	update_SOC();
+
 }
 void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
 {
@@ -797,9 +806,8 @@ void losses_t::run_losses(double dt_hour)
 		_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 	}
 	
-	// apply thermal losses only on discharge
-	if (_capacity->I() > 0)
-		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	// modify max capacity based on temperature
+	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
 }
 /* 
 Define Battery 
@@ -1022,7 +1030,7 @@ void dispatch_t::compute_efficiency()
 		_charge_accumulated += (-_e_tofrom_batt);
 
 	_average_efficiency = 100.*(_discharge_accumulated / _charge_accumulated);
-
+	
 	// update for next step
 	_prev_charging = _charging;
 }
@@ -1143,14 +1151,18 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	double I = current_controller(battery_voltage);
 
 	// Apply conversion loss on AC or DC side
-	I = conversion_loss_in(I);
+	if (_charging)
+		I = conversion_loss_in(I);
 
 	// Run Battery Model to update charge based on charge/discharge
 	_Battery->run(I);
 
 	// Update how much power was actually used to/from battery
 	I = _Battery->capacity_model()->I();
-	I = conversion_loss_out(I);
+
+	if (!_charging)
+		I = conversion_loss_out(I);
+
 	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
 	_e_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;// [kWh]
 
