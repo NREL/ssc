@@ -1538,7 +1538,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 	int iter_T_in = 0;
 
 	// Start iteration loop
-	while( abs(diff_T_in) > tol )
+	while( abs(diff_T_in) > tol || diff_T_in != diff_T_in )
 	{
 		iter_T_in++;			// First iteration = 1
 
@@ -1661,6 +1661,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 					// At this point, both and upper and lower bound should exist, so can generate new guess
 					// And communicate this to Guess-Generator by setting diff_T_in to NaN
 					diff_T_in = std::numeric_limits<double>::quiet_NaN();
+					continue;
 				}
 				else
 				{
@@ -1676,6 +1677,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 					// At this point, both and upper and lower bound should exist, so can generate new guess
 					// And communicate this to Guess-Generator by setting diff_T_in to NaN
 					diff_T_in = std::numeric_limits<double>::quiet_NaN();
+					continue;
 				}
 			}
 		}	// End Collector/Receiver OFF decisions
@@ -1741,8 +1743,10 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 				}
 			}
 		}	// end Power Cycle OFF decisions
-
-		diff_T_in = (mc_pc_outputs.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
+		else
+		{
+			diff_T_in = (mc_pc_outputs.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
+		}
 
 	}	// end iteration on T_rec_in
 
