@@ -52,10 +52,6 @@ private:
 	double m_T_htr;				//[K] Tank heater set point
 	double m_max_q_htr;			//[MWt] Max tank heater capacity
 
-public:
-
-	C_storage_tank();
-
 	// Stored values from end of previous timestep
 	double m_V_prev;		//[m^3] Volume of storage fluid in tank
 	double m_T_prev;		//[K] Temperature of storage fluid in tank
@@ -66,10 +62,18 @@ public:
 	double m_T_calc;		//[K] Temperature of storage fluid in tank
 	double m_m_calc;		//[kg] Mass of storage fluid in tank
 
+public:
+
+	C_storage_tank();
+
 	double calc_mass_at_prev();
 
+	double get_m_T_prev();
+
+	double get_m_T_calc();
+
 	void init(HTFProperties htf_class_in, double V_tank_one_temp, double h_tank, double h_min, double u_tank, 
-		double tank_pairs, double T_htr, double max_q_htr);
+		double tank_pairs, double T_htr, double max_q_htr, double V_ini, double T_ini);
 
 	double m_dot_available(double f_unavail, double timestep);	
 
@@ -161,13 +165,17 @@ public:
 	virtual void init();
 
 	virtual bool does_tes_exist();
+
+	virtual double get_hot_temp();
 	
 	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est);
 
 	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est);
 
-	// Calculate pumping power...
-	virtual bool discharge(double m_dot_htf_in /*kg/s*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/);
+	// Calculate pumping power...???
+	virtual bool discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs);
+
+	virtual void discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs);
 
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs);
 	

@@ -345,8 +345,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);	//[kWt-hr]
 			}
 
-			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);
-			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);
+			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);	//[hr]
+			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);		//[kWt-hr]
 		}
 
 		// *****
@@ -438,7 +438,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	case E_csp_power_cycle_modes::STARTUP_CONTROLLED:
 		// Thermal input can be controlled (e.g. TES mass flow rate is adjustable, rather than direct connection
-		//     to the receiver), so find the mass flow rate that results in the required energy input achieved
+		//     to the receiver), so find the mass flow rate that results in the required energy input can be achieved
 		//     simultaneously with the required startup time. If the timestep is less than the required startup time
 		//     scale the mass flow rate appropriately
 
@@ -446,20 +446,33 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 		double step_hr = step_sec / 3600.0;		//[hr]
 
-		time_required_su = fmin(step_hr, m_startup_energy_remain_prev);
+		double su_frac = 1.0;
+		// Can the power cycle startup within the timestep?
+		if( m_startup_time_remain_prev > step_hr )	// No: power cycle start will require another timestep
+		{
+			time_required_su = step_hr;			//[hr]
+			su_frac = time_required_su / m_startup_time_remain_prev;	//[-]
+			m_standby_control_calc = E_csp_power_cycle_modes::STARTUP;	//[-] Power cycle requires additional startup next timestep
+		}
+		else	// Yes: the power cycle will complete startup within this timestep
+		{
+			time_required_su = m_startup_time_remain_prev;			//[hr]
+			m_standby_control_calc = E_csp_power_cycle_modes::ON;	//[-] Power cycle has started up, next time step it will be ON
+		}
 
-		double su_frac = time_required_su / m_startup_energy_remain_prev;
+		q_startup = m_startup_energy_required*su_frac;		//[kWt-hr]
 
-		double q_dot_su_required = m_startup_energy_required / step_hr;		//[kWt]
-		double m_dot_htf_required = q_dot_su_required / (c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref));		
+		double m_dot_htf_required = (q_startup/time_required_su) / (c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref));	//[kg/s]
 
+		m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);	//[hr]
+		m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);		//[kWt-hr]	
 
 
 		// Set other output values
 		P_cycle = 0.0;
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
-		m_dot_demand = 0.0;
+		m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
 		m_dot_makeup = 0.0;
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;

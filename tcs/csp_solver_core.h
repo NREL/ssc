@@ -288,27 +288,33 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;	//[MJ] Heating power required to keep tanks at a minimum temperature
+		double m_q_heater;		//[MJ] Heating power required to keep tanks at a minimum temperature
 		double m_q_dot_loss;	//[MW] Storage thermal losses
+		double m_T_hot_ave;		//[K] Average hot tank temperature over timestep
+		double m_T_cold_ave;	//[K] Average cold tank temperature over timestep
 		double m_T_hot_final;	//[K] Hot temperature at end of timestep
 		double m_T_cold_final;	//[K] Cold temperature at end of timestep
 	
 		S_csp_tes_outputs()
 		{
-			m_q_heater = m_q_dot_loss = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
+			m_q_heater = m_q_dot_loss = m_T_hot_ave = m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
 	virtual void init() = 0;
 
 	virtual bool does_tes_exist() = 0;
+
+	virtual double get_hot_temp() = 0;
 	
 	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) = 0;
 	
 	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est) = 0;
 
-	virtual bool discharge(double m_dot_htf_in /*kg/s*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/) = 0;
+	virtual bool discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
+	virtual void discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
+
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
 	virtual void converged() = 0;
@@ -383,7 +389,9 @@ public:
 		CR_ON__PC_SU__TES_OFF__AUX_OFF,
 		CR_ON__PC_SB__TES_OFF__AUX_OFF,
 		CR_ON__PC_RM__TES_OFF__AUX_OFF,			// PC_RM = Resource Match
-		CR_DF__PC_FULL__TES_OFF__AUX_OFF
+		CR_DF__PC_FULL__TES_OFF__AUX_OFF,
+
+		CR_OFF__PC_SU__TES_DC__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,
