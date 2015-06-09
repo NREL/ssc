@@ -914,7 +914,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_Id_max = Id_max;
 	_t_min = t_min;
 	_ac_or_dc = ac_or_dc;
-	_dc_dc = dc_ac;
+	_dc_dc = dc_dc;
 	_ac_dc = ac_dc;
 	_dc_ac = dc_ac;
 
