@@ -306,7 +306,7 @@ float adjustment_factors::operator()( size_t time )
 shading_factor_calculator::shading_factor_calculator()
 {
 	m_enAzAlt = false;
-	m_en_skydiff_viewfactor = false;
+	m_en_skydiff_viewfactor = true; // use sky model diffuse view factor by default.
 	m_diffFactor = 1.0;
 }
 
