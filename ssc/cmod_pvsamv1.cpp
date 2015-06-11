@@ -1365,20 +1365,20 @@ public:
 
 
 		// output arrays for weather info- same for all four subarrays	
-		ssc_number_t *p_glob = allocate( "gh", nrec*nyears );
-		ssc_number_t *p_beam = allocate("dn", nrec*nyears);
-		ssc_number_t *p_diff = allocate("df", nrec*nyears);
-		ssc_number_t *p_wspd = allocate("wspd", nrec*nyears);
-		ssc_number_t *p_tdry = allocate("tdry", nrec*nyears);
-		ssc_number_t *p_albedo = allocate("alb", nrec*nyears);
-		ssc_number_t *p_snowdepth = allocate("snowdepth", nrec*nyears);
+		ssc_number_t *p_glob = allocate( "gh", nrec );
+		ssc_number_t *p_beam = allocate("dn", nrec);
+		ssc_number_t *p_diff = allocate("df", nrec);
+		ssc_number_t *p_wspd = allocate("wspd", nrec);
+		ssc_number_t *p_tdry = allocate("tdry", nrec);
+		ssc_number_t *p_albedo = allocate("alb", nrec);
+		ssc_number_t *p_snowdepth = allocate("snowdepth", nrec);
 
 		//output arrays for solar position calculations- same for all four subarrays
-		ssc_number_t *p_solzen = allocate("sol_zen", nrec*nyears);
-		ssc_number_t *p_solalt = allocate("sol_alt", nrec*nyears);
-		ssc_number_t *p_solazi = allocate("sol_azi", nrec*nyears);
-		ssc_number_t *p_airmass = allocate("airmass", nrec*nyears);
-		ssc_number_t *p_sunup = allocate("sunup", nrec*nyears);
+		ssc_number_t *p_solzen = allocate("sol_zen", nrec);
+		ssc_number_t *p_solalt = allocate("sol_alt", nrec);
+		ssc_number_t *p_solazi = allocate("sol_azi", nrec);
+		ssc_number_t *p_airmass = allocate("airmass", nrec);
+		ssc_number_t *p_sunup = allocate("sunup", nrec);
 
 		/*
 		ssc_number_t *p_nonlinear_dc_derate0 = allocate("p_nonlinear_dc_derate0", nrec);
@@ -1423,49 +1423,54 @@ public:
 			if ( sa[nn].enable )
 			{
 				std::string prefix = "subarray" + util::to_string( (int)(nn+1) ) + "_";
-				p_aoi[nn]        = allocate( prefix+"aoi", nrec*nyears );
-				p_surftilt[nn]   = allocate( prefix+"surf_tilt", nrec*nyears);
-				p_surfazi[nn]    = allocate( prefix+"surf_azi", nrec*nyears);		
-				p_rot[nn]        = allocate( prefix+"axisrot", nrec*nyears );
-				p_idealrot[nn]   = allocate( prefix+"idealrot", nrec*nyears);
-				p_poanom[nn]     = allocate( prefix+"poa_nom", nrec*nyears);
-				p_poashaded[nn]  = allocate( prefix+"poa_shaded", nrec*nyears);
-				p_poaeffbeam[nn]    = allocate( prefix+"poa_eff_beam", nrec*nyears );
-				p_poaeffdiff[nn]    = allocate( prefix+"poa_eff_diff", nrec*nyears );
-				p_poaeff[nn]   = allocate( prefix+"poa_eff", nrec*nyears );		
-				p_soiling[nn]    = allocate( prefix+"soiling_derate", nrec*nyears);
-				p_shad[nn]       = allocate( prefix+"beam_shading_factor", nrec*nyears );
-				p_tcell[nn]      = allocate( prefix+"celltemp", nrec*nyears );
-				p_modeff[nn]     = allocate( prefix+"modeff", nrec*nyears );
-				p_dcv[nn]        = allocate( prefix+"dc_voltage", nrec*nyears );
-				p_dcsubarray[nn] = allocate( prefix+"dc_gross", nrec*nyears );
-				p_ss_derate[nn] = allocate(prefix + "ss_derate", nrec*nyears);
-				p_ss_diffuse_derate[nn] = allocate(prefix + "ss_diffuse_derate", nrec*nyears);
-				p_ss_reflected_derate[nn] = allocate(prefix + "ss_reflected_derate", nrec*nyears);
+				p_aoi[nn]        = allocate( prefix+"aoi", nrec );
+				p_surftilt[nn]   = allocate( prefix+"surf_tilt", nrec);
+				p_surfazi[nn]    = allocate( prefix+"surf_azi", nrec);		
+				p_rot[nn]        = allocate( prefix+"axisrot", nrec );
+				p_idealrot[nn]   = allocate( prefix+"idealrot", nrec);
+				p_poanom[nn]     = allocate( prefix+"poa_nom", nrec);
+				p_poashaded[nn]  = allocate( prefix+"poa_shaded", nrec);
+				p_poaeffbeam[nn]    = allocate( prefix+"poa_eff_beam", nrec );
+				p_poaeffdiff[nn]    = allocate( prefix+"poa_eff_diff", nrec );
+				p_poaeff[nn]   = allocate( prefix+"poa_eff", nrec );		
+				p_soiling[nn]    = allocate( prefix+"soiling_derate", nrec);
+				p_shad[nn]       = allocate( prefix+"beam_shading_factor", nrec );
+				p_tcell[nn]      = allocate( prefix+"celltemp", nrec );
+				p_modeff[nn]     = allocate( prefix+"modeff", nrec );
+				p_dcv[nn]        = allocate( prefix+"dc_voltage", nrec );
+				p_dcsubarray[nn] = allocate( prefix+"dc_gross", nrec );
+				p_ss_derate[nn] = allocate(prefix + "ss_derate", nrec);
+				p_ss_diffuse_derate[nn] = allocate(prefix + "ss_diffuse_derate", nrec);
+				p_ss_reflected_derate[nn] = allocate(prefix + "ss_reflected_derate", nrec);
 
 				if (en_snow_model){
-					p_snowloss[nn] = allocate(prefix + "snow_loss", nrec*nyears);
-					p_snowcoverage[nn] = allocate(prefix + "snow_coverage", nrec*nyears);
+					p_snowloss[nn] = allocate(prefix + "snow_loss", nrec);
+					p_snowcoverage[nn] = allocate(prefix + "snow_coverage", nrec);
 				}
 			}
 		}
 		
 		// hourly outputs summed across all subarrays
-		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec*nyears );
-		ssc_number_t *p_inrad = allocate( "input_radiation", nrec*nyears );
-		ssc_number_t *p_inradbeam = allocate( "input_radiation_beam", nrec*nyears );
-		ssc_number_t *p_poanom_ts_total = allocate( "poa_nom", nrec*nyears );
-		ssc_number_t *p_poashaded_ts_total = allocate("poa_shaded", nrec*nyears );
-		ssc_number_t *p_poaeff_ts_total = allocate("poa_eff", nrec*nyears );
-		ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec*nyears);
-//		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec*nyears );
-		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec*nyears );
-//		ssc_number_t *p_acgross = allocate( "ac_gross", nrec*nyears );
-		ssc_number_t *p_gen = allocate("gen", nrec*nyears);
-		ssc_number_t *p_inveff = allocate("inv_eff", nrec*nyears);
-		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec*nyears );
-		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec*nyears );
-		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec*nyears );
+		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec );
+		ssc_number_t *p_inrad = allocate( "input_radiation", nrec );
+		ssc_number_t *p_inradbeam = allocate( "input_radiation_beam", nrec );
+		ssc_number_t *p_poanom_ts_total = allocate( "poa_nom", nrec );
+		ssc_number_t *p_poashaded_ts_total = allocate("poa_shaded", nrec );
+		ssc_number_t *p_poaeff_ts_total = allocate("poa_eff", nrec );
+		ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec);
+//		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec );
+//		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec * nyears);
+//		ssc_number_t *p_acgross = allocate( "ac_gross", nrec );
+//		ssc_number_t *p_gen = allocate("gen", nrec * nyears);
+		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
+		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
+		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
+		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec );
+
+		// lifetime outputs
+		ssc_number_t *p_dcpwr = allocate("dc_net", nrec * nyears);
+		ssc_number_t *p_gen = allocate("gen", nrec * nyears);
+
 
 		
 		// hourly adjustement factors
@@ -1626,10 +1631,12 @@ public:
 						irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
 
 						// record sub-array plane of array output before computing shading and soiling
-						p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
+						if (iyear==0)
+							p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
 
 						//record sub-array contribution to total plane of array for this hour
-						poa_nom_ts_total += p_poanom[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						poa_nom_ts_total += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+//						poa_nom_ts_total += p_poanom[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 						//accumulate monthly nominal poa
 						sa[nn].monthly_poa_nom[month_idx] += ((ibeam + iskydiff + ignddiff) * 0.001);
@@ -1672,12 +1679,14 @@ public:
 								throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
 						}
 
-						// record sub-array level output after shading, before soiling
-						p_poashaded[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
+						if (iyear == 0)
+						{
+							// record sub-array level output after shading, before soiling
+							p_poashaded[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
 
-						//record sub-array contribution to total shaded plane of array for this hour
-						poa_shaded_ts_total += p_poashaded[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
-
+							//record sub-array contribution to total shaded plane of array for this hour
+							poa_shaded_ts_total += p_poashaded[nn][idx] * ref_area_m2 *				modules_per_string * sa[nn].nstrings;
+						}
 						// apply soiling derate to all components of irradiance
 						double soiling_factor = 1.0;
 						if (month_idx >= 0 && month_idx < 12)
@@ -1689,18 +1698,23 @@ public:
 							beam_shad_factor *= soiling_factor;
 						}
 
-						// record sub-array level outputs				
-						p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
-						p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
-						p_poaeff[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
-						p_shad[nn][idx] = (ssc_number_t)beam_shad_factor;
-						p_rot[nn][idx] = (ssc_number_t)rot;
-						p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
-						p_aoi[nn][idx] = (ssc_number_t)aoi;
-						p_surftilt[nn][idx] = (ssc_number_t)stilt;
-						p_surfazi[nn][idx] = (ssc_number_t)sazi;
-						p_soiling[nn][idx] = (ssc_number_t)soiling_factor;
+						if (iyear == 0)
+						{
+							// record sub-array level outputs				
+							p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
+							p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
+							p_poaeff[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
+							p_shad[nn][idx] = (ssc_number_t)beam_shad_factor;
+							p_rot[nn][idx] = (ssc_number_t)rot;
+							p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
+							p_aoi[nn][idx] = (ssc_number_t)aoi;
+							p_surftilt[nn][idx] = (ssc_number_t)stilt;
+							p_surfazi[nn][idx] = (ssc_number_t)sazi;
+							p_soiling[nn][idx] = (ssc_number_t)soiling_factor;
+							// accumulate incident total radiation in this timestep (all subarrays)
+							poa_eff_ts_total += p_poaeff[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
+						}
 						// save the required irradiance inputs on array plane for the module output calculations.
 						sa[nn].poa.ibeam = ibeam;
 						sa[nn].poa.iskydiff = iskydiff;
@@ -1711,7 +1725,7 @@ public:
 						sa[nn].poa.sazi = sazi;
 
 						// accumulate incident total radiation in this timestep (all subarrays)
-						poa_eff_ts_total += p_poaeff[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+//						poa_eff_ts_total += p_poaeff[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 						// accumulate monthly incident total & beam
 						sa[nn].monthly_poa_eff[month_idx] += ((ibeam + iskydiff + ignddiff) * 0.001);
@@ -1844,34 +1858,47 @@ public:
 						// Calculate and apply snow coverage losses if activated
 						if (en_snow_model){
 							float smLoss;
-							if (!sa[nn].sm.getLoss(p_poashaded[nn][idx], p_surftilt[nn][idx], wf.wspd, wf.tdry, wf.snow, sunup, 1.0 / step_per_hour, &smLoss)){
-								if (!sa[nn].sm.good) {
+//								if (!sa[nn].sm.getLoss(p_poashaded[nn][idx], p_surftilt[nn][idx], wf.wspd, wf.tdry, wf.snow, sunup, 1.0 / step_per_hour, &smLoss)){
+							if (!sa[nn].sm.getLoss(sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff, sa[nn].poa.stilt, wf.wspd, wf.tdry, wf.snow, sunup, 1.0 / step_per_hour, &smLoss)){
+									if (!sa[nn].sm.good) {
 									log(sa[nn].sm.msg, SSC_ERROR);
 									// What is the best way to force a quit?
 									return;
 								}
 							}
-							p_snowloss[nn][idx] = 0.001*sa[nn].module.dcpwr*smLoss;
-							p_dcsnowloss[idx] += 0.001*sa[nn].module.dcpwr*smLoss;
-							annual_snow_loss += 0.001*sa[nn].module.dcpwr*smLoss;
-							p_snowcoverage[nn][idx] = sa[nn].sm.coverage;
 							sa[nn].module.dcpwr *= (1 - smLoss);
+							if (iyear == 0)
+							{
+								p_snowloss[nn][idx] = 0.001*sa[nn].module.dcpwr*smLoss;
+								p_dcsnowloss[idx] += 0.001*sa[nn].module.dcpwr*smLoss;
+								p_snowcoverage[nn][idx] = sa[nn].sm.coverage;
+								annual_snow_loss += 0.001*sa[nn].module.dcpwr*smLoss;
+							}
 						}
 
 						// apply pre-inverter power derate
 						// apply yearly degradation as necessary
 //						dcpwr_gross += sa[nn].module.dcpwr;
-						if (iyear==0)
-							dc_gross[nn] += sa[nn].module.dcpwr*0.001*ts_hour; //power W to energy kWh
+						if (iyear == 0)
+						{
+							dc_gross[nn] += sa[nn].module.dcpwr*0.001*ts_hour; //power W to	energy kWh
+							// save to SSC output arrays
+							p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
+							p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
+							p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
+							p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
+						}
+
+
 						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
 						if (pv_lifetime_simulation==1)
 							dcpwr_net*= p_dc_degrade_factor[iyear + 1];
 
 						// save to SSC output arrays
-						p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
-						p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
-						p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
-						p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
+//						p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
+//						p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
+//						p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
+//						p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
 					}
 
 					// Battery replacement
@@ -1917,42 +1944,44 @@ public:
 					if (en_batt && (ac_or_dc == 0) )
 						batt.update_post_inverted(*this, idx, acpwr_gross*0.001*ts_hour, cur_load*ts_hour);
 						
-					// save array-level outputs		
+					// save array-level outputs	- year 1 only outputs
+					if (iyear == 0)
+					{
+						p_beam[idx] = (ssc_number_t)(wf.dn);
+						// calculate global if beam & diffuse are selected as inputs
+						if (radmode == 0)
+							p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
+						else
+							p_glob[idx] = (ssc_number_t)(wf.gh);
 
-					p_beam[idx] = (ssc_number_t)(wf.dn);
-					// calculate global if beam & diffuse are selected as inputs
-					if (radmode == 0)
-						p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
-					else
-						p_glob[idx] = (ssc_number_t)(wf.gh);
+						// calculate diffuse if total & beam are selected as inputs
+						if (radmode == 1)
+							p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
+						else
+							p_diff[idx] = (ssc_number_t)(wf.df);
 
-					// calculate diffuse if total & beam are selected as inputs
-					if (radmode == 1)
-						p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
-					else
-						p_diff[idx] = (ssc_number_t)(wf.df);
+						p_wspd[idx] = (ssc_number_t)wf.wspd;
+						p_tdry[idx] = (ssc_number_t)wf.tdry;
+						p_albedo[idx] = (ssc_number_t)alb;
+						p_snowdepth[idx] = (ssc_number_t)wf.snow;
 
-					p_wspd[idx] = (ssc_number_t)wf.wspd;
-					p_tdry[idx] = (ssc_number_t)wf.tdry;
-					p_albedo[idx] = (ssc_number_t)alb;
-					p_snowdepth[idx] = (ssc_number_t)wf.snow;
+						p_solzen[idx] = (ssc_number_t)solzen;
+						p_solalt[idx] = (ssc_number_t)solalt;
+						p_solazi[idx] = (ssc_number_t)solazi;
 
-					p_solzen[idx] = (ssc_number_t)solzen;
-					p_solalt[idx] = (ssc_number_t)solalt;
-					p_solazi[idx] = (ssc_number_t)solazi;
+						// absolute relative airmass calculation as f(zenith angle, site elevation)
+						p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * wf.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
+						p_sunup[idx] = (ssc_number_t)sunup;
 
-					// absolute relative airmass calculation as f(zenith angle, site elevation)
-					p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * wf.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
-					p_sunup[idx] = (ssc_number_t)sunup;
+						p_inrad[idx] = (ssc_number_t)(inprad_total * 0.001);
+						p_inradbeam[idx] = (ssc_number_t)(inprad_beam * 0.001);
+						p_poanom_ts_total[idx] = (ssc_number_t)(poa_nom_ts_total * 0.001);
+						p_poashaded_ts_total[idx] = (ssc_number_t)(poa_shaded_ts_total * 0.001);
+						p_poaeff_ts_total[idx] = (ssc_number_t)(poa_eff_ts_total * 0.001);
 
-					p_inrad[idx] = (ssc_number_t)(inprad_total * 0.001);
-					p_inradbeam[idx] = (ssc_number_t)(inprad_beam * 0.001);
-					p_poanom_ts_total[idx] = (ssc_number_t)(poa_nom_ts_total * 0.001);
-					p_poashaded_ts_total[idx] = (ssc_number_t)(poa_shaded_ts_total * 0.001);
-					p_poaeff_ts_total[idx] = (ssc_number_t)(poa_eff_ts_total * 0.001);
-
-					p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
-//					p_dcgross[idx] = (ssc_number_t)(dcpwr_gross * 0.001);
+						p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
+						//					p_dcgross[idx] = (ssc_number_t)(dcpwr_gross * 0.001);
+					}
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
 //					p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
@@ -1961,10 +1990,10 @@ public:
 //					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) * p_ac_degrade_factor[iyear]);
 					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) );
 
-					p_inveff[idx] = (ssc_number_t)(aceff);
-					p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
-					p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
-					p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
+//					p_inveff[idx] = (ssc_number_t)(aceff);
+//					p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
+//					p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
+//					p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
 
 					if (en_batt && ac_or_dc == 1)
 					{
@@ -1979,6 +2008,10 @@ public:
 					{
 						annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
 						annual_ac_gross += acpwr_gross * 0.001 * ts_hour;
+						p_inveff[idx] = (ssc_number_t)(aceff);
+						p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
+						p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
+						p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
 					}
 
 					idx++;
