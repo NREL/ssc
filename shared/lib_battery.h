@@ -163,7 +163,7 @@ public:
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells_series, int num_cells_parallel, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate);
+	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate);
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, double dt);
 
