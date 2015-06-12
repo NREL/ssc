@@ -1046,84 +1046,6 @@ public:
 				p_grid[j] = p_sys[j]*sys_scale[i] + p_load_cy[j];
 			}
 
-			// calculate revenue with solar system (using net grid energy & maxpower)
-			ur_calc( &e_grid[0], &p_grid[0],
-				&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-				&monthly_fixed_charges[0],
-				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0] );
-
-			if (i == 0)
-			{
-				//assign( "year1_hourly_revenue_with_system", var_data( &revenue_w_sys[0], 8760 ) );
-				//assign( "year1_hourly_payment_with_system", var_data( &payment[0], 8760 ) );
-				//assign( "year1_hourly_income_with_system", var_data( &income[0], 8760 ) );
-				//assign( "year1_hourly_price_with_system", var_data( &price[0], 8760 ) );
-				assign( "year1_hourly_dc_with_system", var_data( &demand_charge[0], 8760 ) );
-//				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
-//				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
-				assign( "year1_hourly_ec_tou_schedule", var_data( &ec_tou_sched[0], 8760) );
-				assign("year1_hourly_dc_tou_schedule", var_data(&dc_tou_sched[0], 8760));
-				assign("year1_hourly_dc_peak_per_period", var_data(&dc_hourly_peak[0], 8760));
-
-				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
-				for (int ii=0;ii<8760;ii++) 
-				{
-					load[ii] = -e_load[ii];
-					e_tofromgrid[ii] = e_grid[ii];
-					p_tofromgrid[ii] = p_grid[ii];
-					salespurchases[ii] = revenue_w_sys[ii];
-				}
-				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13 and 9/10/13
-				monthly_outputs( &e_load[0], &e_sys[0], &e_grid[0], &salespurchases[0],
-					&monthly_load[0], &monthly_system_generation[0],	&monthly_elec_to_grid[0], 
-					&monthly_elec_needed_from_grid[0], &monthly_cumulative_excess[0], 
-					&monthly_salespurchases[0]);
-
-				assign( "year1_hourly_e_tofromgrid", var_data( &e_tofromgrid[0], 8760 ) );
-				assign( "year1_hourly_p_tofromgrid", var_data( &p_tofromgrid[0], 8760 ) );
-				assign( "year1_hourly_load", var_data(&load[0], 8760) ); 
-				assign( "year1_hourly_salespurchases_with_system", var_data( &salespurchases[0], 8760 ) );
-				assign( "year1_monthly_load", var_data(&monthly_load[0], 12) );
-				assign( "year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12) );
-				assign( "year1_monthly_electricity_to_grid", var_data(&monthly_elec_to_grid[0], 12) );
-				assign( "year1_monthly_electricity_needed_from_grid", var_data(&monthly_elec_needed_from_grid[0], 12) );
-
-				assign( "year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess[0], 12) );
-				assign( "year1_monthly_salespurchases", var_data(&monthly_salespurchases[0], 12) );
-
-				// output and demand per Paul's email 9/10/10
-				// positive demand indicates system does not produce enough electricity to meet load
-				// zero if the system produces more than the demand
-				std::vector<ssc_number_t> output(8760), edemand(8760), pdemand(8760), e_sys_to_grid(8760), e_sys_to_load(8760), p_sys_to_load(8760);
-				for (j=0;j<8760;j++)
-				{
-					output[j] = e_sys[j] * sys_scale[i];
-					edemand[j] = e_grid[j] < 0.0 ? -e_grid[j] : (ssc_number_t)0.0;
-					pdemand[j] = p_grid[j] < 0.0 ? -p_grid[j] : (ssc_number_t)0.0;
-
-					ssc_number_t sys_e_net = output[j] + e_load[j];// loads are assumed negative
-					e_sys_to_grid[j] = sys_e_net > 0 ? sys_e_net : (ssc_number_t)0.0;
-					e_sys_to_load[j] = sys_e_net > 0 ? -e_load[j] : output[j];
-
-					ssc_number_t sys_p_net = output[j] + p_load[j];// loads are assumed negative
-					p_sys_to_load[j] = sys_p_net > 0 ? -p_load[j] : output[j];
-				}
-
-				assign( "year1_hourly_system_output", var_data(&output[0], 8760) );
-				assign( "year1_hourly_e_demand", var_data(&edemand[0], 8760) );
-				assign( "year1_hourly_p_demand", var_data(&pdemand[0], 8760) );
-
-				assign( "year1_hourly_system_to_grid", var_data(&e_sys_to_grid[0], 8760) ); 
-				assign( "year1_hourly_system_to_load", var_data(&e_sys_to_load[0], 8760) ); 
-				assign( "year1_hourly_p_system_to_load", var_data(&p_sys_to_load[0], 8760) );
-				
-				assign( "year1_monthly_dc_fixed_with_system", var_data(&monthly_dc_fixed[0], 12) );
-				assign( "year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12) );
-				assign( "year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12) );
-				//assign( "year1_monthly_ec_rate_with_system", var_data(&monthly_ec_rates[0], 12) );
-			}
-
 			// now recalculate revenue without solar system (using load only)
 			ur_calc( &e_load_cy[0], &p_load_cy[0],
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
@@ -1164,6 +1086,84 @@ public:
 				}
 				assign( "year1_hourly_salespurchases_without_system", var_data( &salespurchases[0], 8760 ) );
 				assign( "year1_monthly_salespurchases_wo_sys", var_data(&monthly_salespurchases[0], 12) );
+			}
+
+			// calculate revenue with solar system (using net grid energy & maxpower)
+			ur_calc(&e_grid[0], &p_grid[0],
+				&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+				&monthly_fixed_charges[0],
+				&monthly_dc_fixed[0], &monthly_dc_tou[0],
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0]);
+
+			if (i == 0)
+			{
+				//assign( "year1_hourly_revenue_with_system", var_data( &revenue_w_sys[0], 8760 ) );
+				//assign( "year1_hourly_payment_with_system", var_data( &payment[0], 8760 ) );
+				//assign( "year1_hourly_income_with_system", var_data( &income[0], 8760 ) );
+				//assign( "year1_hourly_price_with_system", var_data( &price[0], 8760 ) );
+				assign("year1_hourly_dc_with_system", var_data(&demand_charge[0], 8760));
+				//				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
+				//				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
+				assign("year1_hourly_ec_tou_schedule", var_data(&ec_tou_sched[0], 8760));
+				assign("year1_hourly_dc_tou_schedule", var_data(&dc_tou_sched[0], 8760));
+				assign("year1_hourly_dc_peak_per_period", var_data(&dc_hourly_peak[0], 8760));
+
+				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
+				for (int ii = 0; ii<8760; ii++)
+				{
+					load[ii] = -e_load[ii];
+					e_tofromgrid[ii] = e_grid[ii];
+					p_tofromgrid[ii] = p_grid[ii];
+					salespurchases[ii] = revenue_w_sys[ii];
+				}
+				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13 and 9/10/13
+				monthly_outputs(&e_load[0], &e_sys[0], &e_grid[0], &salespurchases[0],
+					&monthly_load[0], &monthly_system_generation[0], &monthly_elec_to_grid[0],
+					&monthly_elec_needed_from_grid[0], &monthly_cumulative_excess[0],
+					&monthly_salespurchases[0]);
+
+				assign("year1_hourly_e_tofromgrid", var_data(&e_tofromgrid[0], 8760));
+				assign("year1_hourly_p_tofromgrid", var_data(&p_tofromgrid[0], 8760));
+				assign("year1_hourly_load", var_data(&load[0], 8760));
+				assign("year1_hourly_salespurchases_with_system", var_data(&salespurchases[0], 8760));
+				assign("year1_monthly_load", var_data(&monthly_load[0], 12));
+				assign("year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12));
+				assign("year1_monthly_electricity_to_grid", var_data(&monthly_elec_to_grid[0], 12));
+				assign("year1_monthly_electricity_needed_from_grid", var_data(&monthly_elec_needed_from_grid[0], 12));
+
+				assign("year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess[0], 12));
+				assign("year1_monthly_salespurchases", var_data(&monthly_salespurchases[0], 12));
+
+				// output and demand per Paul's email 9/10/10
+				// positive demand indicates system does not produce enough electricity to meet load
+				// zero if the system produces more than the demand
+				std::vector<ssc_number_t> output(8760), edemand(8760), pdemand(8760), e_sys_to_grid(8760), e_sys_to_load(8760), p_sys_to_load(8760);
+				for (j = 0; j<8760; j++)
+				{
+					output[j] = e_sys[j] * sys_scale[i];
+					edemand[j] = e_grid[j] < 0.0 ? -e_grid[j] : (ssc_number_t)0.0;
+					pdemand[j] = p_grid[j] < 0.0 ? -p_grid[j] : (ssc_number_t)0.0;
+
+					ssc_number_t sys_e_net = output[j] + e_load[j];// loads are assumed negative
+					e_sys_to_grid[j] = sys_e_net > 0 ? sys_e_net : (ssc_number_t)0.0;
+					e_sys_to_load[j] = sys_e_net > 0 ? -e_load[j] : output[j];
+
+					ssc_number_t sys_p_net = output[j] + p_load[j];// loads are assumed negative
+					p_sys_to_load[j] = sys_p_net > 0 ? -p_load[j] : output[j];
+				}
+
+				assign("year1_hourly_system_output", var_data(&output[0], 8760));
+				assign("year1_hourly_e_demand", var_data(&edemand[0], 8760));
+				assign("year1_hourly_p_demand", var_data(&pdemand[0], 8760));
+
+				assign("year1_hourly_system_to_grid", var_data(&e_sys_to_grid[0], 8760));
+				assign("year1_hourly_system_to_load", var_data(&e_sys_to_load[0], 8760));
+				assign("year1_hourly_p_system_to_load", var_data(&p_sys_to_load[0], 8760));
+
+				assign("year1_monthly_dc_fixed_with_system", var_data(&monthly_dc_fixed[0], 12));
+				assign("year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12));
+				assign("year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12));
+				//assign( "year1_monthly_ec_rate_with_system", var_data(&monthly_ec_rates[0], 12) );
 			}
 
 			// determine net-revenue benefit due to solar for year 'i'
