@@ -652,7 +652,7 @@ double lifetime_t::bilinear(double DOD, int cycle_number)
 			for (int i = 0; i < n_rows_lo; i++)
 			{
 				C_n_high_vect.push_back(100. + i * 500); // cycles
-				C_n_high_vect.push_back(0.); // 100 % capacity
+				C_n_high_vect.push_back(80 - i*10); // % capacity
 			}
 		}
 
