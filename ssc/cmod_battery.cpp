@@ -219,11 +219,12 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec*nyears);
 
 	}
-	
+	 
 	outSOC = cm.allocate("SOC", nrec*nyears);
 	outDOD = cm.allocate("DOD", nrec*nyears);
 	outCapacityPercent = cm.allocate("capacity_percent", nrec*nyears);
-	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", nyears); 
+	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", nyears+1); 
+	outBatteryBankReplacement[0] = 0; // consistent with all annual items nyears + 1 length
 	outBatteryPower = cm.allocate("battery_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
@@ -364,7 +365,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
-	outBatteryBankReplacement[year] = (ssc_number_t)(lifetime_model->replacements());
+	outBatteryBankReplacement[year+1] = (ssc_number_t)(lifetime_model->replacements());
 	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
 	{
 		year++;
