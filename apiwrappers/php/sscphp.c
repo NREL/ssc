@@ -13,7 +13,7 @@
 typedef struct {
 	ssc_module_t p_mod;
 	ssc_data_t p_dat;
-	ssc_data_t p_datref;
+	int is_dat_const_ref;
 	ssc_info_t p_inf;
 	ssc_entry_t p_ent;
 } spobj;
@@ -24,19 +24,19 @@ static void _free_spobj( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 	spobj *p = (spobj*)rsrc->ptr;
 
 	if ( p->p_mod ) ssc_module_free( p->p_mod );
-	if ( p->p_dat ) ssc_data_free( p->p_dat );
+	if ( p->p_dat && !p->is_dat_const_ref ) ssc_data_free( p->p_dat );
 
-	// no need to free p_inf or p_ent p_datref
+	// no need to free p_inf or p_ent 
 	// these are just internal ssc references
 
 	efree(p);
 };
 
-static spobj *create_obj( ssc_module_t *m, ssc_data_t *d ) {
+static spobj *create_ref( ssc_module_t *m, ssc_data_t *d ) {
 	spobj *p = emalloc(sizeof(spobj));
 	p->p_mod = m;
 	p->p_dat = d;
-	p->p_datref = 0;
+	p->is_dat_const_ref = 0;
 	p->p_inf = 0;
 	p->p_ent = 0;
 	return p;
@@ -74,7 +74,7 @@ PHP_FUNCTION( sscphp_build_info ) {
 }
 
 PHP_FUNCTION( sscphp_data_create ) {
-	spobj *p = create_obj( 0, ssc_data_create() );
+	spobj *p = create_ref( 0, ssc_data_create() );
 	ZEND_REGISTER_RESOURCE( return_value, p, spobj_id );
 }
 
@@ -223,6 +223,266 @@ PHP_FUNCTION( sscphp_data_set_number )
 		ssc_data_set_number( p->p_dat, name, (ssc_number_t)value );
 }
 
+PHP_FUNCTION( sscphp_data_set_array )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	long i, len;
+	zval *arr;
+	zval **data;
+	HashTable *hash;
+	HashPosition pointer;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &res, &name, &name_len, &arr ) == FAILURE )
+		return;
+	
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if (!p || !p->p_dat) return;
+
+	hash = Z_ARRVAL_P(arr);
+	len = zend_hash_num_elements( hash );
+	if (len < 1 ) return;
+
+	ssc_number_t *vec = (ssc_number_t*) malloc( sizeof(ssc_number_t)*len );
+	if ( !vec ) return;
+
+
+	i=0;
+	for( zend_hash_internal_pointer_reset_ex( hash, &pointer );
+			zend_hash_get_current_data_ex(hash, (void**) &data, &pointer ) == SUCCESS;
+			zend_hash_move_forward_ex(hash, &pointer ) )
+	{
+
+		if ( i >= len ) break;
+
+		vec[i] = 0.0f;
+
+		if ( Z_TYPE_PP(data) == IS_DOUBLE )
+			vec[i] = (ssc_number_t)Z_DVAL_PP(data);
+		else if ( Z_TYPE_PP(data) == IS_LONG )
+			vec[i] = (ssc_number_t)Z_LVAL_PP(data);
+
+		i++;
+	}
+
+	ssc_data_set_array( p->p_dat, name, vec, len );
+
+	free( vec );
+}
+
+PHP_FUNCTION( sscphp_data_set_matrix )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	long i, j, nr, nc, nlen, index;
+	zval *mat;
+	zval **data;
+	HashTable *hash, *row;
+	HashPosition pointer1, pointer2;
+	ssc_number_t *vec;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &res, &name, &name_len, &mat ) == FAILURE )
+		return;
+	
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if (!p || !p->p_dat) return;
+
+	hash = Z_ARRVAL_P(mat);
+	nr = zend_hash_num_elements( hash );
+	if ( nr < 1 ) return;
+
+	zend_hash_internal_pointer_reset_ex( hash, &pointer1 );
+  	if ( zend_hash_get_current_data_ex(hash, (void**) &data, &pointer1 ) != SUCCESS 
+	 || Z_TYPE_PP(data) != IS_ARRAY )
+	 	return;
+
+	row = Z_ARRVAL_PP(data);
+	nc = zend_hash_num_elements( row );
+	if ( nc < 1 ) return;
+
+	nlen = nr * nc;
+
+	vec = (ssc_number_t*)malloc( sizeof(ssc_number_t)*nlen );
+	if ( !vec ) return;
+
+	i = 0;
+	for( zend_hash_internal_pointer_reset_ex( hash, &pointer1 );
+			zend_hash_get_current_data_ex(hash, (void**) &data, &pointer1 ) == SUCCESS;
+			zend_hash_move_forward_ex(hash, &pointer1) )
+	{
+
+		if ( i >= nr ) break;
+
+		if ( Z_TYPE_PP(data) != IS_ARRAY ) continue;
+
+		row = Z_ARRVAL_PP(data);
+
+		j = 0;
+		for( zend_hash_internal_pointer_reset_ex( row, &pointer2 );
+			zend_hash_get_current_data_ex(row, (void**)&data, &pointer2 ) == SUCCESS;
+			zend_hash_move_forward_ex(row, &pointer2 ) )
+		{
+			if ( j >= nc ) break;
+
+			index = i*nc+j;
+
+			if ( Z_TYPE_PP(data) == IS_DOUBLE )
+				vec[ index ] = (ssc_number_t)Z_DVAL_PP(data);
+			else if ( Z_TYPE_PP(data) == IS_LONG )
+				vec[ index ] = (ssc_number_t)Z_LVAL_PP(data);
+
+			j++;
+		}
+
+		i++;
+	}
+
+
+	ssc_data_set_matrix( p->p_dat, name, vec, nr, nc );
+	free( vec );
+}
+
+PHP_FUNCTION( sscphp_data_set_table )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	zval *tab;
+	spobj *t;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rsr", &res, &name, &name_len, &tab ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if (!p || !p->p_dat) return;
+
+	ZEND_FETCH_RESOURCE( t, spobj*, &tab, -1, spobj_name, spobj_id );
+	if (!t || !t->p_dat) return;
+
+	ssc_data_set_table( p->p_dat, name, t->p_dat );
+}
+
+PHP_FUNCTION( sscphp_data_get_string )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	const char *value;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rs", &res, &name, &name_len ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if (!p || !p->p_dat) return;
+
+	value = ssc_data_get_string( p->p_dat, name );
+	RETURN_STRING( value ? value : "" , 1 )
+}
+
+PHP_FUNCTION( sscphp_data_get_number )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	ssc_number_t value;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rs", &res, &name, &name_len ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if (!p || !p->p_dat) return;
+
+
+	if ( ssc_data_get_number( p->p_dat, name, &value ) )
+		RETURN_DOUBLE( (double)value );
+}
+
+PHP_FUNCTION( sscphp_data_get_array )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	ssc_number_t *arr;
+	int i, len;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rs", &res, &name, &name_len ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if (!p || !p->p_dat) return;
+
+	arr = ssc_data_get_array( p->p_dat, name, &len );
+	if ( !arr || len < 1 ) return;
+
+	array_init( return_value );
+	for( i=0;i<len;i++)
+		add_index_double( return_value, i, (double)arr[i] );
+}
+
+PHP_FUNCTION( sscphp_data_get_matrix )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	ssc_number_t *mat;
+	int i,j, nr, nc;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rs", &res, &name, &name_len ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if ( !p || !p->p_dat ) return;
+
+	mat = ssc_data_get_matrix( p->p_dat, name, &nr, &nc );
+	if ( !mat || nr < 1 || nc < 1 ) return;
+
+	array_init( return_value );
+	for( i=0;i<nr;i++ )
+	{
+		zval *row;
+		MAKE_STD_ZVAL( row );
+		array_init( row );
+		for( j=0;j<nc;j++ )
+		{
+			int index = i*nc+j;
+			add_index_double( row, j, (double)mat[index] );
+		}
+		add_index_zval( return_value, i, row );
+	}
+}
+
+PHP_FUNCTION( sscphp_data_get_table )
+{
+	spobj *p;
+	zval *res;
+	char *name;
+	int name_len;
+	ssc_data_t table;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rs", &res, &name, &name_len ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if ( !p || !p->p_dat ) return;
+
+	table = ssc_data_get_table( p->p_dat, name );
+	if ( !table ) return;
+	
+	spobj *t = create_ref( 0, 0);
+	t->p_dat = table;
+	t->is_dat_const_ref = 1; // ssc_data_get_table returns an internal reference
+	ZEND_REGISTER_RESOURCE( return_value, t, spobj_id );
+}
+
 static zend_function_entry sscphp_functions[] = {
 	PHP_FE( sscphp_version, NULL )
 		PHP_FE( sscphp_build_info, NULL )
@@ -234,6 +494,14 @@ static zend_function_entry sscphp_functions[] = {
 		PHP_FE( sscphp_data_next, NULL )
 		PHP_FE( sscphp_data_set_string, NULL )
 		PHP_FE( sscphp_data_set_number, NULL )
+		PHP_FE( sscphp_data_set_array, NULL )
+		PHP_FE( sscphp_data_set_matrix, NULL )
+		PHP_FE( sscphp_data_set_table, NULL )
+		PHP_FE( sscphp_data_get_string, NULL )
+		PHP_FE( sscphp_data_get_number, NULL )
+		PHP_FE( sscphp_data_get_array, NULL )
+		PHP_FE( sscphp_data_get_matrix, NULL )
+		PHP_FE( sscphp_data_get_table, NULL )
 		{ NULL, NULL, NULL }
 };
 
