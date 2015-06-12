@@ -1706,44 +1706,51 @@ public:
 			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac; // approximate up front fee
 			double loan_amount = debt_frac * cost_installed;
 
+			int i_repeat = 0;
+			double old_ds_reserve = 0, new_ds_reserve = 0;
 
-			// first iteration - calculate debt reserve account based on initial installed cost
-			// debt service reserve
-			cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
-				1,           // Period
-				term_tenor,   // Number periods
-				loan_amount, // Present Value
-				0,           // future Value
-				0);         // cash flow at end of period
+			do
+			{
+				// first iteration - calculate debt reserve account based on initial installed cost
+				old_ds_reserve = new_ds_reserve;
+				// debt service reserve
+				cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
+					1,           // Period
+					term_tenor,   // Number periods
+					loan_amount, // Present Value
+					0,           // future Value
+					0);         // cash flow at end of period
 
-			cf.at(CF_debt_payment_interest, 1) = loan_amount * term_int_rate;
-			cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
-			cf.at(CF_funding_debtservice, 0) = cf.at(CF_reserve_debtservice, 0);
+				cf.at(CF_debt_payment_interest, 1) = loan_amount * term_int_rate;
+				cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
+				cf.at(CF_funding_debtservice, 0) = cf.at(CF_reserve_debtservice, 0);
+				new_ds_reserve = cf.at(CF_reserve_debtservice, 0);
 
-// update installed cost with approximate debt reserve account for year 0
-			cost_installed =
-				cost_prefinancing
-				+ constr_total_financing
-				+ cost_debt_closing
-				+ cost_other_financing
-				+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
-				+ cf.at(CF_reserve_om, 0)
-				- ibi_fed_amount
-				- ibi_sta_amount
-				- ibi_uti_amount
-				- ibi_oth_amount
-				- ibi_fed_per
-				- ibi_sta_per
-				- ibi_uti_per
-				- ibi_oth_per
-				- cbi_fed_amount
-				- cbi_sta_amount
-				- cbi_uti_amount
-				- cbi_oth_amount;
-			cost_debt_upfront = debt_frac * cost_installed * cost_debt_fee_frac; // for cash flow output
-			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac; 
-			loan_amount = debt_frac * cost_installed;
-
+				// update installed cost with approximate debt reserve account for year 0
+				cost_installed =
+					cost_prefinancing
+					+ constr_total_financing
+					+ cost_debt_closing
+					+ cost_other_financing
+					+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
+					+ cf.at(CF_reserve_om, 0)
+					- ibi_fed_amount
+					- ibi_sta_amount
+					- ibi_uti_amount
+					- ibi_oth_amount
+					- ibi_fed_per
+					- ibi_sta_per
+					- ibi_uti_per
+					- ibi_oth_per
+					- cbi_fed_amount
+					- cbi_sta_amount
+					- cbi_uti_amount
+					- cbi_oth_amount;
+				cost_debt_upfront = debt_frac * cost_installed * cost_debt_fee_frac; // for cash flow output
+				cost_installed += debt_frac *cost_installed*cost_debt_fee_frac;
+				loan_amount = debt_frac * cost_installed;
+				i_repeat++;
+			} while ((fabs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
 
 			if (term_tenor == 0) loan_amount = 0;
 //			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
@@ -1760,7 +1767,10 @@ public:
 						0,           // future Value
 						0);         // cash flow at end of period
 					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
-
+// update reserve account
+					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
+					cf.at(CF_reserve_debtservice, i-1) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
+					cf.at(CF_funding_debtservice, i-1) = cf.at(CF_reserve_debtservice, i-1);
 				}
 				else
 				{
