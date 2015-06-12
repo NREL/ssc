@@ -89,7 +89,7 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                        "Battery Temperature",                                    "C",        "",                     "Battery",       "",                           "",                              "" }, 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_percent",                           "Battery Capacity Percent for Lifetime",                  "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",                   "Battery Capacity Percent for Temperature",               "%",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_bank_replacement",                   "Battery Bank Replacementss Per Year",                     "number/year", "",                 "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_bank_replacement",                   "Battery Bank Replacements Per Year",                     "number/year", "",                 "Battery",       "",                           "",                              "" },
 																			          
 	// Energy outputs	- Power outputs at native time step													        
 	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_power",                              "Power to/from Battery",                                 "kW",      "",                     "Battery",       "",                           "",                              "" },
@@ -368,6 +368,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	outBatteryBankReplacement[year+1] = (ssc_number_t)(lifetime_model->replacements());
 	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
 	{
+		int replacements = lifetime_model->replacements();
 		year++;
 		lifetime_model->reset_replacements();
 	}
