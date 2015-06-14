@@ -1594,6 +1594,9 @@ public:
 
 		ssc_number_t energy_use[12]; // 12 months
 		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
+		// handle monthly excess dollars
+		ssc_number_t cumulative_excess_dollars_sellrate[12]; // 12 months for year end 	
+		ssc_number_t cumulative_excess_dollars_buyrate[12]; // 12 months for year end reconciliation
 		// calculate the monthly net energy per period
 		int m,d,h,period,tier;
 		ssc_number_t energy_net[12][12]; // 12 months, 12 periods
