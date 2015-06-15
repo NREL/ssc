@@ -36,6 +36,9 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
 	{ SSC_INPUT, SSC_NUMBER, "ur_enable_net_metering", "Enable net metering", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Retail and wholesale rates", "", "?=1", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_excess_monthly_energy_or_dollars", "Net metering handling of monthly excess", "0=Rollover energy,1=Rollover dollars", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
+
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
@@ -1244,7 +1247,7 @@ public:
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
 //		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
+		bool enable_nm = as_boolean("ur_enable_net_metering");
 
 
 		for (m=0;m<12;m++)
@@ -1277,7 +1280,7 @@ public:
 		ssc_number_t prev_value = 0;
 		for (m=0;m<12;m++)
 		{
-			if (sell_eq_buy)
+			if (enable_nm)
 			{
 				prev_value = ( m > 0 ) ? monthly_cumulative_excess[m-1] : 0;
 				monthly_cumulative_excess[m]=( (prev_value+energy_use[m]) > 0) ? (prev_value+energy_use[m]) : 0;
@@ -1345,15 +1348,19 @@ public:
 		ssc_number_t buy = as_number("ur_flat_buy_rate");
 		ssc_number_t sell = as_number("ur_flat_sell_rate");
 
-		//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
+		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		bool enable_nm = as_boolean("ur_enable_net_metering");
+		bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
 
-		
+		if (sell_eq_buy)
+			sell = buy;
 
 		// calculate the monthly net energy and monthly hours
 		int m,d,h;
 		ssc_number_t energy_use[12]; // 12 months
 		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
+		ssc_number_t cumulative_excess_dollars[12]; // 12 months for year end reconciliation
+		// calculate the monthly net energy per period
 		int hours[12];
 		int c=0;
 		for (m=0;m<12;m++)
@@ -1389,22 +1396,46 @@ public:
 		for (m=0;m<12;m++)
 		{
 			if (hours[m] <= 0) break;
-
+			cumulative_excess_dollars[m] = 0;
 			for (d=0;d<util::nday[m];d++)
 			{
 				for(h=0;h<24;h++)
 				{
 					if (d==util::nday[m]-1 && h==23)
 					{
-						if (sell_eq_buy)
+						if (enable_nm)
 						{
 							// monthly rollover with year end sell at reduced rate
-							if (cumulative_excess_energy[m] == 0) // buy from grid
+							if (!excess_monthly_dollars &&(cumulative_excess_energy[m] == 0)) // buy from grid
 							{
 								if (m > 0)
 									payment[c] += -(energy_use[m] + cumulative_excess_energy[m - 1]) * buy;
 								else
 									payment[c] += -energy_use[m] * buy;
+							}
+							else if (excess_monthly_dollars) // may need to buy from grid
+							{
+								if (m > 0)
+								{
+									if (energy_use[m] < 0) // may need to buy from grid
+									{
+										ssc_number_t energy_cost = -energy_use[m] * buy;
+										ssc_number_t excess_dollars = cumulative_excess_dollars[m - 1] - energy_cost;
+										if (excess_dollars < 0) // buy from grid
+											payment[c] += -excess_dollars;
+										else // update excess dollars
+											cumulative_excess_dollars[m] = excess_dollars;
+									}
+									else // update excess dollars
+										cumulative_excess_dollars[m] = energy_use[m] * sell + cumulative_excess_dollars[m-1];
+								}
+								else
+								{
+									if (energy_use[m] < 0) // must buy from grid
+										payment[c] += -energy_use[m] * buy;
+									else // update excess dollars
+										cumulative_excess_dollars[m] = energy_use[m] * sell;
+								}
 							}
 						}
 						else // no net metering - so no rollover.
@@ -1420,17 +1451,19 @@ public:
 			}
 		}
 
-		if (sell_eq_buy)
+		if (enable_nm)
 		{
 			// monthly rollover with year end sell at reduced rate
-			if (cumulative_excess_energy[11] > 0)
+			if (!excess_monthly_dollars && (cumulative_excess_energy[11] > 0))
 				income[8759] += cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
+			else if (excess_monthly_dollars && (cumulative_excess_dollars[11] > 0))
+				income[8759] += cumulative_excess_dollars[11];
+
 		}
 
 		// calculate hourly energy charge regardless of scenario - email from Paul 7/29/13
 		for (int i=0;i<8760;i++)
 		{
-			if (sell_eq_buy) sell = buy;
 			if (e[i] < 0) // must buy from grid
 				price[i] += buy;
 			else
@@ -1570,8 +1603,9 @@ public:
 
 		for (int i=0;i<8760; i++) ec_tou_sched[i] = (ssc_number_t)(tod[i]);
 
-		bool sell_eq_buy = as_boolean("ur_enable_net_metering");
-
+		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		bool enable_nm = as_boolean("ur_enable_net_metering");
+		bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
 
 		// tiered rates for all 6 tiers in each of the 12 periods
 
@@ -1595,8 +1629,7 @@ public:
 		ssc_number_t energy_use[12]; // 12 months
 		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
 		// handle monthly excess dollars
-		ssc_number_t cumulative_excess_dollars_sellrate[12]; // 12 months for year end 	
-		ssc_number_t cumulative_excess_dollars_buyrate[12]; // 12 months for year end reconciliation
+		ssc_number_t cumulative_excess_dollars[12]; // 12 months for year end reconciliation
 		// calculate the monthly net energy per period
 		int m,d,h,period,tier;
 		ssc_number_t energy_net[12][12]; // 12 months, 12 periods
@@ -1630,9 +1663,6 @@ public:
 			}
 		}
 
-		// update 9/1/14 based on feedback from Peter Jeavons 8/28/14
-		bool monthly_reconciliation = sell_eq_buy; // can be user input 
-
 		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
 		ssc_number_t prev_value = 0;
 		cumulative_excess_energy[0] = 0.0;
@@ -1646,16 +1676,17 @@ public:
 
 		// go through each period and tier and calculate per SAM_V2_RATES.docx - Nathan Clark 3/6/13
 		// reconcile on monthly basis
-		ssc_number_t charge[12][12];
-		ssc_number_t credit[12][12];
+//		ssc_number_t charge[12][12];
+//		ssc_number_t credit[12][12];
 		c=0;
 		for (m=0;m<12;m++)
 		{
+			cumulative_excess_dollars[m] = 0;
 			ssc_number_t monthly_energy = 0;
 			for (period=0;period<12;period++)
 			{
-				charge[m][period]=0;
-				credit[m][period]=0;
+//				charge[m][period]=0;
+//				credit[m][period]=0;
 
 				if (energy_net[m][period] >= 0.0)
 				{ // calculate income or credit
@@ -1677,7 +1708,7 @@ public:
 							break;
 						tier++;
 			 		}
-					credit[m][period] = credit_amt;
+//					credit[m][period] = credit_amt;
 					ec_charge[m] -= credit_amt;
 					monthly_energy += energy_surplus;
 				}
@@ -1687,7 +1718,7 @@ public:
 					ssc_number_t energy_deficit = -energy_net[m][period];
 
 					// update 9/1/14 based on feedback from Peter Jeavons 8/28/14
-					if ((m>0) && monthly_reconciliation) // reduce energy used to calculate charge
+					if ((m>0) && !excess_monthly_dollars) // reduce energy used to calculate charge
 						energy_deficit -= fabs(cumulative_excess_energy[m - 1] * energy_net[m][period]/energy_use[m]);
 
 					tier=0;
@@ -1706,13 +1737,17 @@ public:
 							break;
 						tier++;
 					}
-					charge[m][period] = charge_amt;
+//					charge[m][period] = charge_amt;
 					ec_charge[m] += charge_amt;
 					monthly_energy -= energy_deficit;
 				}
 				//monthly_energy += energy_net[m][period];
 			}
-			ec_rate[m] = monthly_energy != 0 ? ec_charge[m]/monthly_energy : (ssc_number_t)0.0;
+			if ((m>0) && excess_monthly_dollars)
+				ec_charge[m] -= cumulative_excess_dollars[m - 1];
+			ec_rate[m] = monthly_energy != 0 ? ec_charge[m] / monthly_energy : (ssc_number_t)0.0;
+			// excess dollar for the month
+			cumulative_excess_dollars[m] = (ec_charge[m] < 0) ? -ec_charge[m] : 0;
 		}
 
 
@@ -1727,16 +1762,12 @@ public:
 					if (d==util::nday[m]-1 && h==23)
 					{
 					// monthly rollover with year end sell at reduced rate
-						if (sell_eq_buy)
+						if (enable_nm)
 						{
-							if (cumulative_excess_energy[m] == 0) // buy from grid
-							{
+							if (!excess_monthly_dollars && (cumulative_excess_energy[m] == 0)) // buy from grid
 								payment[c] += ec_charge[m];
-								//	if ( m > 0 )
-								//		payment[c] += (energy_use[m] - cumulative_excess_energy[m - 1]) * ec_rate[m];
-								//	else
-								//		payment[c] += energy_use[m] * ec_rate[m];
-							}
+							else if (excess_monthly_dollars && (cumulative_excess_dollars[m]==0)) // buy from grid
+								payment[c] += ec_charge[m];
 						}
 						else // non-net metering - no rollover 
 						{
@@ -1749,6 +1780,17 @@ public:
 					c++;
 				}
 			}
+		}
+
+		//TODO - test
+		if (enable_nm)
+		{
+			// monthly rollover with year end sell at reduced rate
+/*			if (!excess_monthly_dollars && (cumulative_excess_energy[11] > 0))
+				income[8759] += cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
+			else */ if (excess_monthly_dollars && (cumulative_excess_dollars[11] > 0))
+				income[8759] += cumulative_excess_dollars[11];
+
 		}
 
 		// calculate energy charge for both scenarios hour by hour basis
