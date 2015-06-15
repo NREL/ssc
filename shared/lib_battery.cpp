@@ -533,7 +533,7 @@ int lifetime_t::rainflow_compareRanges()
 bool lifetime_t::check_replaced()
 {
 	bool replaced = false;
-	if (_Clt <= _replacement_capacity)
+	if (_replacement_option !=0 && _Clt <= _replacement_capacity)
 	{
 		_replacements++;
 		_Clt = bilinear(0.,0);

@@ -1481,7 +1481,7 @@ public:
 		// setup battery model
 //		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
 		bool en_batt = as_boolean("en_batt");
-		int batt_replacement_option = as_boolean("batt_replacement_option");
+		int batt_replacement_option = as_integer("batt_replacement_option");
 		int ac_or_dc = as_integer("batt_ac_or_dc");
 		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
 		// user replacement schedule
