@@ -1235,6 +1235,13 @@ public:
 		else
 			throw exec_error("pvsamv1", "invalid pv module model type");
 
+		//boolean to determine if the sandia model is being used for CPV
+		bool is_cpv = false;
+
+		if (as_integer("module_model") == 3 // sandia model 
+			&& as_double("snl_fd") == 0)
+			is_cpv = true;
+
 		// SELF-SHADING MODULE INFORMATION
 		double width = sqrt((ref_area_m2 / aspect_ratio));
 		for (size_t nn = 0; nn < 4; nn++)
@@ -1408,6 +1415,9 @@ public:
 		ssc_number_t *p_dcv[4];
 		ssc_number_t *p_dcsubarray[4];
 
+		//output for CPV performance ratio
+		double poa_nom_beam = 0;
+
 		// self-shading outputs- also sub-array specific
 		ssc_number_t *p_ss_derate[4];
 		ssc_number_t *p_ss_diffuse_derate[4];
@@ -1429,7 +1439,7 @@ public:
 				p_rot[nn]        = allocate( prefix+"axisrot", nrec );
 				p_idealrot[nn]   = allocate( prefix+"idealrot", nrec);
 				p_poanom[nn]     = allocate( prefix+"poa_nom", nrec);
-				p_poashaded[nn]  = allocate( prefix+"poa_shaded", nrec);
+				p_poashaded[nn] = allocate(prefix + "poa_shaded", nrec);
 				p_poaeffbeam[nn]    = allocate( prefix+"poa_eff_beam", nrec );
 				p_poaeffdiff[nn]    = allocate( prefix+"poa_eff_diff", nrec );
 				p_poaeff[nn]   = allocate( prefix+"poa_eff", nrec );		
@@ -1632,11 +1642,14 @@ public:
 
 						// record sub-array plane of array output before computing shading and soiling
 						if (iyear==0)
-							p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
+							p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));							
 
 						//record sub-array contribution to total plane of array for this hour
 						poa_nom_ts_total += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 //						poa_nom_ts_total += p_poanom[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+
+						//record sub-array contribution to total POA beam for this hour (used for CPV performance ratio)
+						poa_nom_beam += ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 						//accumulate monthly nominal poa
 						sa[nn].monthly_poa_nom[month_idx] += ((ibeam + iskydiff + ignddiff) * 0.001);
@@ -2091,20 +2104,19 @@ public:
 		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour);
 		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", 1.0, step_per_hour);
 	
-		bool is_cpv = false;
-
-		if ( as_integer("module_model") == 3 /* sandia model */
-			&&  as_double("snl_fd") == 0 )
-			is_cpv = true;
 
 		double inp_rad = is_cpv ? as_double("annual_input_radiation_beam") : as_double("annual_input_radiation");
+		double pr_rad = is_cpv ? (poa_nom_beam / 1000) : as_double("annual_poa_nom"); //fix units to kWh for poa_nom_beam
 		double ac_net = as_double("annual_ac_net");
 		double mod_eff = module_eff( mod_type );
 
 		// calculate system performance factor
 		// reference: (http://files.sma.de/dl/7680/Perfratio-UEN100810.pdf)
+		// additional reference: (http://www.nrel.gov/docs/fy05osti/37358.pdf)
 		// PR = net_ac (kWh) / ( total input radiation (kWh) * stc efficiency (%) )
-		assign( "performance_ratio", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
+		// bug fix 6/15/15 jmf: total input radiation should NOT including shading or soiling.
+		//assign( "performance_ratio", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
+		assign("performance_ratio", var_data((ssc_number_t)(ac_net / (pr_rad * mod_eff / 100.0))));
 
 		if (en_batt)
 		{
