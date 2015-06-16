@@ -14,21 +14,14 @@ typedef struct {
 	ssc_module_t p_mod;
 	ssc_data_t p_dat;
 	int is_dat_const_ref;
-	ssc_info_t p_inf;
-	ssc_entry_t p_ent;
 } spobj;
 static int spobj_id;
 #define spobj_name "sscphpobj"
 
 static void _free_spobj( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 	spobj *p = (spobj*)rsrc->ptr;
-
 	if ( p->p_mod ) ssc_module_free( p->p_mod );
 	if ( p->p_dat && !p->is_dat_const_ref ) ssc_data_free( p->p_dat );
-
-	// no need to free p_inf or p_ent 
-	// these are just internal ssc references
-
 	efree(p);
 };
 
@@ -37,8 +30,6 @@ static spobj *create_ref( ssc_module_t *m, ssc_data_t *d ) {
 	p->p_mod = m;
 	p->p_dat = d;
 	p->is_dat_const_ref = 0;
-	p->p_inf = 0;
-	p->p_ent = 0;
 	return p;
 }
 
@@ -483,6 +474,143 @@ PHP_FUNCTION( sscphp_data_get_table )
 	ZEND_REGISTER_RESOURCE( return_value, t, spobj_id );
 }
 
+PHP_FUNCTION( sscphp_module_entry )
+{
+	ssc_entry_t ent;
+	long index;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "l", &index ) == FAILURE )
+		return;
+	
+	if ( ent = ssc_module_entry( index ) )
+	{
+		array_init( return_value );
+		add_assoc_string( return_value, "name", (char*)ssc_entry_name( ent ), 1 );
+		add_assoc_string( return_value, "description", (char*)ssc_entry_description( ent ), 1 );
+		add_assoc_long( return_value, "version", (long)ssc_entry_version( ent ) );
+	}
+	else
+	{
+		RETURN_NULL();
+	}
+}
+
+PHP_FUNCTION( sscphp_module_create )
+{
+	ssc_module_t mod;
+	char *name;
+	int name_len;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len ) == FAILURE )
+		return;
+	
+	if ( mod = ssc_module_create( name ) )
+	{
+		spobj *p = create_ref( mod, 0 );
+		ZEND_REGISTER_RESOURCE( return_value, p, spobj_id );
+	}
+	else
+	{
+		RETURN_NULL();
+	}
+}
+
+PHP_FUNCTION( sscphp_module_free )
+{
+	spobj *p;
+	zval *res;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "r", &res ) == FAILURE )
+		return;
+	
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if (!p || !p->p_mod ) return;
+
+	ssc_module_free( p->p_mod );
+	p->p_mod = 0;
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION( sscphp_module_var_info )
+{
+	spobj *p;
+	zval *res;
+	long index;
+	ssc_info_t inf;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rl", &res, &index ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if ( !p || !p->p_mod ) return;
+
+	if ( inf = ssc_module_var_info( p->p_mod, index ) )
+	{
+
+		array_init( return_value );
+		add_assoc_long( return_value, "var_type", (long)ssc_info_var_type( inf ) );
+		add_assoc_long( return_value, "data_type", (long)ssc_info_data_type( inf ) );
+		add_assoc_string( return_value, "name", (char*)ssc_info_name( inf ), 1 );
+		add_assoc_string( return_value, "label", (char*)ssc_info_label( inf ), 1 );
+		add_assoc_string( return_value, "units", (char*)ssc_info_units( inf ), 1 );
+		add_assoc_string( return_value, "meta", (char*)ssc_info_meta( inf ), 1 );
+		add_assoc_string( return_value, "group", (char*)ssc_info_group( inf ), 1 );
+		add_assoc_string( return_value, "required", (char*)ssc_info_required( inf ), 1 );
+		add_assoc_string( return_value, "constraints", (char*)ssc_info_constraints( inf ), 1 );
+	}
+}
+
+PHP_FUNCTION( sscphp_module_exec_set_print )
+{
+	long print;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "l", &print ) == FAILURE )
+		return;
+	
+	ssc_module_exec_set_print( print );
+}
+
+PHP_FUNCTION( sscphp_module_exec )
+{
+	spobj *mm, *dd;
+	zval *res1, *res2;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rr", &res1, &res2 ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( mm, spobj*, &res1, -1, spobj_name, spobj_id );
+	if ( !mm || !mm->p_mod ) return;
+
+	ZEND_FETCH_RESOURCE( dd, spobj*, &res2, -1, spobj_name, spobj_id );
+	if ( !dd || !dd->p_dat ) return;
+
+	RETURN_BOOL( ssc_module_exec( mm->p_mod, dd->p_dat ) );
+}
+
+PHP_FUNCTION( sscphp_module_log )
+{
+	spobj *p;
+	zval *res;
+	long index;
+	const char *msg;
+	int type;
+	float time;
+
+	if ( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "rl", &res, &index ) == FAILURE )
+		return;
+
+	ZEND_FETCH_RESOURCE( p, spobj*, &res, -1, spobj_name, spobj_id );
+	if ( !p || !p->p_mod ) return;
+
+	
+	if ( msg = ssc_module_log( p->p_mod, index, &type, &time ) )
+	{
+		RETURN_STRING( msg, 1 );
+	}
+
+}
+		
 static zend_function_entry sscphp_functions[] = {
 	PHP_FE( sscphp_version, NULL )
 		PHP_FE( sscphp_build_info, NULL )
@@ -502,6 +630,13 @@ static zend_function_entry sscphp_functions[] = {
 		PHP_FE( sscphp_data_get_array, NULL )
 		PHP_FE( sscphp_data_get_matrix, NULL )
 		PHP_FE( sscphp_data_get_table, NULL )
+		PHP_FE( sscphp_module_entry, NULL )
+		PHP_FE( sscphp_module_create, NULL )
+		PHP_FE( sscphp_module_free, NULL )
+		PHP_FE( sscphp_module_var_info, NULL )
+		PHP_FE( sscphp_module_exec_set_print, NULL )
+		PHP_FE( sscphp_module_exec, NULL )
+		PHP_FE( sscphp_module_log, NULL )
 		{ NULL, NULL, NULL }
 };
 
