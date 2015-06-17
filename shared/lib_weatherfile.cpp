@@ -11,16 +11,12 @@
 #define CASECMP(a,b) _stricmp(a,b)
 #define CASENCMP(a,b,n) _strnicmp(a,b,n)
 #else
-#define CASECMP(a,b) strcasecmp(a,b)
+#define CASECMP(a,b) strcasecmp(a,b) 
 #define CASENCMP(a,b,n) strncasecmp(a,b,n)
 #endif
 
 #include "lib_util.h"
 #include "lib_weatherfile.h"
-
-
-
-
 
 
 #ifdef _MSC_VER
@@ -401,6 +397,7 @@ weatherfile::weatherfile()
 weatherfile::weatherfile(const std::string &file, bool header_only, bool interp)
 {
 	reset();
+	m_msg = false;
 	m_ok = open(file, header_only, interp);
 }
 
@@ -441,6 +438,11 @@ void weatherfile::reset_record()
 bool weatherfile::ok()
 {
 	return m_ok;
+}
+
+bool weatherfile::msg()
+{
+	return m_msg;
 }
 
 int weatherfile::type()
@@ -656,6 +658,16 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 			::rewind(fp);
 			fgets(buf, NBUF, fp);
+			
+			if ( nrecords%8784==0 )
+			{
+				// Check if the weather file contains a leap day
+				// if so, exit out with an error 
+				m_errorStr = "could not determine timestep in CSV weather file. Does the file contain a leap day?";
+				m_ok = false;
+				fclose(fp);
+				return false;
+			}
 		}
 	}
 	else if (m_type == WFCSV)
@@ -783,6 +795,15 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				step = 3600 / nmult;
 				start = step / 2;
 			}
+			else if ( nrecords%8784==0 )
+			{ 
+				// Check if the weather file contains a leap day
+				// if so, correct the number of nrecords 
+				nrecords = nrecords/8784*8760;
+				nmult = nrecords/8760;
+				step = 3600 / nmult;
+				start = step / 2;
+			}
 			else
 			{
 				m_errorStr = "could not determine timestep in CSV weather file";
@@ -878,6 +899,8 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	// by default, subtract 1 from hour of TMY3 files to switch
 	// from 1-24 standard to 0-23
 	int tmy3_hour_shift = 1;
+	bool leapDayDetected = false;
+	int leapDayCount = 0;
 
 	std::string feb29 = "02/29/";
 
@@ -929,6 +952,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			// Sev March 11th
 			// If the month and day correspond to feb. 29th, skip the next 24 lines in the weather file
 			if (mn == 2 && dy == 29){
+				leapDayDetected = true;
 				for (int tossLine = 0; tossLine < 24; tossLine++){
 					char *pret = fgets(buf, NBUF, fp);
 				}
@@ -1001,6 +1025,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			// Sev March 11th
 			// If the month and day correspond to feb. 29th, skip the next 24 lines in the weather file
 			if (((std::string)buf).find(feb29) == 0){
+				leapDayDetected = true;
 				for (int tossLine = 0; tossLine < 24; tossLine++){
 					char* pret = fgets(buf, NBUF, fp);
 				}
@@ -1077,6 +1102,12 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		{
 			char *pret = fgets(buf, NBUF, fp);
 			int ncols = locate(buf, cols, NCOL, ',');
+
+			while( atoi(cols[1])==2 && atoi(cols[2])==29 ){
+				leapDayDetected = true;
+				char *pret = fgets(buf, NBUF, fp);
+				int ncols = locate(buf, cols, NCOL, ',');
+			}
 
 			if (ncols < 32)
 			{
@@ -1178,27 +1209,47 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 			int ncols = locate(pbuf, cols, NCOL, ',');
 
-			//if (!(atoi(cols[1]) == 2 && atoi(cols[2]) == 29)){
+			while ( (atoi(cols[1]) == 2 && atoi(cols[2]) == 29)){
+				leapDayCount++;
+				leapDayDetected = true;
+				buf[0] = 0;
+				fgets(buf, NBUF, fp);
+				pbuf = trimboth(buf);
+				if (!pbuf || !*pbuf)
+				{
+					m_errorStr = "CSV: data line formatting error at record " + util::to_string(i);
+					fclose(fp);
+					return false;
+				}
+
+				int ncols = locate(pbuf, cols, NCOL, ',');
+			}
+
 			for (size_t k = 0; k < _MAXCOL_; k++)
 			{
 				if (m_columns[k].index >= 0
 					&& m_columns[k].index < ncols)
 				{
 					m_columns[k].data[i] = (float)atof(trimboth(cols[m_columns[k].index]));
-				}
+				} 
 			}
 
-			//	i++;
-			//}
+
 		}
 
 	}
 
 	fclose(fp);
 
+
+	if( leapDayDetected ){
+		m_msg = true;
+		m_message= "Leap day data has been removed from this weather file.";
+	}
+
 	if (m_type == WFCSV)
 	{
-		// special handling for certain columns that we can calculate from others
+		// special handling for certain columns that we can calcul ate from others
 		// if the data doesn't exist
 
 		if (m_columns[TWET].index < 0
@@ -1290,7 +1341,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			j++;
 		}
 	}
-
 
 	return true;
 }

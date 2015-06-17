@@ -383,6 +383,7 @@ public:
 		// **************************************************************************
 		// Check weatherfile for timestep and such: use to setup TCS simulation
 		weatherfile wf(as_string("file_name"));
+		if( wf.msg() ) log( wf.message(), SSC_WARNING);
 		if( !wf.ok() ) throw exec_error("Physical Trough", wf.error_message());
 
 		size_t hours_year = 8760;

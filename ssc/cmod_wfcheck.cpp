@@ -41,6 +41,7 @@ public:
 	void exec() throw( general_error )
 	{
 		weatherfile wf( as_string("input_file") );
+		if( wf.msg() ) log( wf.message(), SSC_WARNING);
 		if ( !wf.ok() ) throw general_error( wf.error_message() );
 
 		nwarnings = nerrors = 0;
